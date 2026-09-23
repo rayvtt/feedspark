@@ -89,6 +89,19 @@ window.addEventListener('load',restore);
   /* a label and its select wrap together or not at all — the row wraps, and "INCLUDE" left
      stranded at the end of one line with its control on the next names nothing */
   .cw-ctl .cwp{display:inline-flex;align-items:center;gap:8px}
+  /* the views row sits UNDER the control block and above the chart, separated by a hairline: it
+     says what this reading is pointed at, which is a different question from how it is drawn */
+  .cw-views{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;
+    padding-top:10px;border-top:1px solid var(--line)}
+  .cw-views .cwp{display:inline-flex;align-items:center;gap:8px}
+  .cw-views .vsep{width:1px;height:20px;background:var(--line);margin:0 2px}
+  .cw-views .vname{display:inline-flex;align-items:center;gap:6px}
+  .cw-views .vname input{min-width:190px;padding:0 10px}
+  /* ONE sentence, so it stays on screen: the ⓘ collapse hides any explainer longer than that,
+     and the rule a view turns on is the one thing a reader has to know before saving one */
+  .vnote{font-size:11.5px;font-weight:600;color:var(--muted);flex:1 1 220px;min-width:0}
+  .vnote b{color:var(--ink-2,var(--ink))}
+  @media (max-width:760px){.cw-views .vname input{min-width:0;flex:1 1 120px}}
   /* SIDE BY SIDE, EXPANDED (Ray, 18 Sep 2026: "clicking on any chart will expand it as the main
      chart on the screen and showcase the different split legend in animation pls").
      The reveal is driven by a CLASS ON THE WRAPPER, and every animated element also carries its
@@ -105,8 +118,8 @@ window.addEventListener('load',restore);
   .tm-exp .lgi{animation:tmlgi .4s ease backwards}
   .tm-exp .ctr{animation:tmfade .45s .2s ease backwards}
   @media(prefers-reduced-motion:reduce){.tm-exp .arc,.tm-exp .lgi,.tm-exp .ctr{animation:none}}
-  .cw-ctl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  .cw-ctl select{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .cw-ctl label,.cw-views label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cw-ctl select,.cw-views select,.cw-views input{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
   .cstage{flex:1 1 460px;min-width:0}
@@ -169,7 +182,7 @@ window.addEventListener('load',restore);
   :root{--h-field:34px;--h-pill:30px}
   .btn{height:var(--h-field);padding:0 12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:6px}
   .btn.sm,.chip,.pq-x{height:var(--h-pill);padding:0 12px;border-radius:100px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:5px}
-  .cw-ctl select,.pq-bar input{height:var(--h-field);padding:0 10px;border-radius:9px;font-size:13px;line-height:1}
+  .cw-ctl select,.cw-views select,.cw-views input,.pq-bar input{height:var(--h-field);padding:0 10px;border-radius:9px;font-size:13px;line-height:1}
   .pq-x:hover{color:var(--orange-deep);border-color:var(--orange)}
   /* the totals row stays put while the list scrolls — the whole point is that you can read what
      the rows add up to without arriving at the end of them */
@@ -288,7 +301,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
 [data-theme=dark] a{color:var(--orange-ink)}
 [data-theme=dark] .kpi,[data-theme=dark] .card,[data-theme=dark] .src,[data-theme=dark] .drawer,[data-theme=dark] .bd .bx,[data-theme=dark] table.st th{background:var(--paper);border-color:var(--line);color:var(--ink)}
-[data-theme=dark] .btn,[data-theme=dark] .chip,[data-theme=dark] .cw-ctl select,[data-theme=dark] .dr-h .x{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn,[data-theme=dark] .chip,[data-theme=dark] .cw-ctl select,[data-theme=dark] .cw-views select,[data-theme=dark] .cw-views input,[data-theme=dark] .dr-h .x{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
 [data-theme=dark] .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
 [data-theme=dark] #q{background:#181B22;border-color:var(--line);color:var(--ink)}
@@ -416,6 +429,25 @@ window.addEventListener('load',restore);
            untagged bucket to leave out, and a control that does nothing is a control that lies -->
       <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
       <label class="tog"><input type="checkbox" id="ctab"> Table</label>
+    </div>
+    <!-- THE SHAPE, AND WHAT IT IS POINTED AT (Ray, 23 Sep 2026: "in this chart dissection > allow
+         option to save a view and that same view can be applied across different client"). The
+         account is NOT part of a view: it is the thing a view gets pointed at, so it has its own
+         control here and a saved view never carries one. -->
+    <div class="cw-views" id="cwviews">
+      <span class="cwp"><label for="cacct">Account</label>
+        <select id="cacct" title="Point this whole reading at another account — the split, the form, the series and the rest of the search all stay exactly as they are"></select></span>
+      <span class="vsep"></span>
+      <span class="cwp"><label for="cview">Saved view</label>
+        <select id="cview" title="A saved view restores the split, the form, the series, the labels and the rest of the search — and runs against whichever account is picked beside it"></select></span>
+      <button class="btn sm" id="vsave" type="button" title="Keep this reading on this device, without its account">★ Save view</button>
+      <button class="btn sm" id="vdel" type="button" hidden title="Remove this saved view from this device">✕ Delete</button>
+      <span class="vname" id="vname" hidden>
+        <input id="vnm" type="text" maxlength="40" placeholder="Name this view" aria-label="Name this view">
+        <button class="btn sm" id="vok" type="button">Save</button>
+        <button class="btn sm" id="vno" type="button">Cancel</button>
+      </span>
+      <span class="vnote" id="vnote"></span>
     </div>
     <div class="cbody">
       <div class="cstage" id="cstage"></div>
@@ -1292,6 +1324,95 @@ window.addEventListener('load',restore);
     if (allowance > 0 && balance > allowance * 2) return 'banked';
     return 'ok';
   }
+
+  /* SAVED CHART VIEWS — THE SHAPE, NEVER THE ACCOUNT (Ray, 23 Sep 2026: "in this chart dissection
+     > allow option to save a view and that same view can be applied across different client").
+     A view is what the chart splits by, how deep, which form, which series, what the labels say
+     and the rest of the query. The ACCOUNT is not part of that shape — it is the thing the shape
+     gets pointed at — so the client term is LIFTED OUT when a view is saved and put back when it
+     is applied, rather than riding inside it and quietly answering about Superdry on a screen
+     headed Reiss. A NEGATED client term is lifted too: leaving `-client:Superdry` in place and
+     then applying the view TO Superdry returns nothing and reads as a broken view, so the clause
+     comes out whole and what it was travels with the view as `was`.
+     Twin of src/taskbook.js — tools/test_reporttasks.mjs runs one table against both. */
+  var CLIENT_FIELDS = ['client', 'brand'];
+  var CLIENT_TOK = /^(-?)(?:client|brand):(.+)$/i;
+  var VIEW_MAX = 12;
+  // parseQuery's tokeniser throws the quotes away, which is right for matching and wrong for
+  // re-emitting — this one keeps each token's own text so the survivors re-join as a real query
+  function rawToks(src) {
+    var out = [], cur = '', quote = false, i, c;
+    for (i = 0; i < src.length; i++) {
+      c = src[i];
+      if (c === '"') { quote = !quote; cur += c; continue; }
+      if (!quote && /\s/.test(c)) { if (cur) out.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function liftClient(q) {
+    var keep = [], was = [], toks = rawToks(String(q || '')), i, m;
+    for (i = 0; i < toks.length; i++) {
+      m = toks[i].match(CLIENT_TOK);
+      if (m) { was.push((m[1] ? '-' : '') + m[2].split('"').join('')); continue; }
+      keep.push(toks[i]);
+    }
+    return { rest: keep.join(' ').trim(), was: was };
+  }
+  function withClient(rest, client) {
+    var r = String(rest || '').trim();
+    var c = String(client || '').split('"').join('').trim();
+    if (!c) return r;
+    // a name carrying a space reads as two terms and one carrying a comma reads as a LIST of
+    // accounts, so either has to be quoted or the view lands on the wrong rows
+    var v = /[\s,]/.test(c) ? '"' + c + '"' : c;
+    return 'client:' + v + (r ? ' ' + r : '');
+  }
+  // `multi` is the honest third answer: a query naming two accounts, or excluding one, has no
+  // single account to show, and a picker reading "every account" over it would be lying
+  function accountPick(q) {
+    var was = liftClient(q).was;
+    var pos = was.filter(function (w) { return w.charAt(0) !== '-'; });
+    if (was.length === 1 && pos.length === 1) return { v: pos[0], multi: false, was: was };
+    return { v: '', multi: was.length > 0, was: was };
+  }
+  function packView(name, st) {
+    var s = st || {}, lc = liftClient(s.q);
+    return {
+      name: String(name || '').trim().slice(0, 40) || 'Untitled view',
+      q: lc.rest,
+      was: lc.was,
+      dim: String(s.dim || 'total'),
+      dim2: String(s.dim2 || ''),
+      dim3: String(s.dim3 || ''),
+      form: String(s.form || 'donut'),
+      meas: String(s.meas || 'hours'),
+      lab: String(s.lab || 'hours'),
+      leg: s.leg !== false,
+      untag: s.untag !== false,
+      table: !!s.table,
+      at: Number(s.at) || Date.now()
+    };
+  }
+  function viewQuery(view, client) { return withClient(view && view.q, client); }
+  // `was` survives the round trip deliberately: packView would recompute it from an already
+  // lifted query and report that the view had never carried an account
+  function sanitizeViews(raw) {
+    var l = Array.isArray(raw) ? raw : [], out = [], seen = {}, i, v, p, k;
+    for (i = 0; i < l.length; i++) {
+      v = l[i];
+      if (!v || typeof v !== 'object' || !String(v.name || '').trim()) continue;
+      p = packView(v.name, v);
+      if (Array.isArray(v.was)) p.was = v.was.map(String).slice(0, 6);
+      k = p.name.toLowerCase();
+      if (seen[k]) continue;
+      seen[k] = 1;
+      out.push(p);
+      if (out.length >= VIEW_MAX) break;
+    }
+    return out;
+  }
   /* ENGINE:END */
 
   window.FSTM = { parseQuery: parseQuery, matchTask: matchTask, matchTicket: matchTicket,
@@ -2119,8 +2240,8 @@ window.addEventListener('load',restore);
       };
     });
     var add = document.createElement('button');
-    add.className = 'chip'; add.type = 'button'; add.textContent = '＋ Save this view';
-    add.title = 'Keep this query on this device. Alt-click a saved chip to remove it.';
+    add.className = 'chip'; add.type = 'button'; add.textContent = '＋ Save this search';
+    add.title = 'Keep this QUERY on this device — the chart\'s own shape is saved separately, by ★ Save view. Alt-click a saved chip to remove it.';
     add.onclick = saveView;
     $('qchips').appendChild(add);
   }
@@ -2170,7 +2291,7 @@ window.addEventListener('load',restore);
       if (live) u.searchParams.set('q', live); else u.searchParams.delete('q');
       history.replaceState(null, '', u.toString());
     } catch (e) {}
-    kpis(); chart(); breakdown(); pane(); chips();
+    kpis(); chart(); breakdown(); pane(); chips(); accts();
   }
 
   /* ---- chart ----------------------------------------------------------------------------- */
@@ -2436,6 +2557,177 @@ window.addEventListener('load',restore);
       return '<option value="' + o.v + '">' + esc(o.label) + '</option>';
     }).join('');
     el.value = CLAB;
+  }
+
+  /* ---- saved views, and the account a view is pointed at ---------------------------------- */
+  /* The engine (above, twinned into src/taskbook.js) lifts the account clause out of a query and
+     puts it back. Everything here is the surface: a roster to point a reading at, a per-device
+     shelf of named shapes, and one sentence saying which of the two a view carries.
+
+     PER DEVICE, like every other reading preference on this page (fcc-tm-meas / -lab / -cleg /
+     -untag): a view describes how one screen wants to read the book, not a fact about the work.
+     Handing one to a colleague is what 🔗 Link is for — it already carries the whole state. */
+  /* TMVIEW-SHELF — the per-device shelf of named shapes */
+  var VKEY = 'fcc-tm-chartviews';
+  // which saved view is on screen, if any — an index into the list, never a copy of it
+  var VSEL = null;
+  function viewsList() {
+    try { return sanitizeViews(JSON.parse(localStorage.getItem(VKEY) || '[]')); } catch (e) { return []; }
+  }
+  function viewsSave(l) {
+    try { localStorage.setItem(VKEY, JSON.stringify(sanitizeViews(l))); } catch (e) {}
+  }
+  /* The roster is the CLIENT MASTER plus anything the book itself carries — a market read into
+     the task rows before its account row arrived would otherwise be unreachable from the picker
+     while its hours sat on the chart. A scoped signin is served only its own clients, so the
+     list narrows itself with nothing here to do. */
+  function clientRoster() {
+    var seen = {}, out = [], i, c;
+    for (i = 0; i < ACCOUNTS.length; i++) {
+      c = String(ACCOUNTS[i].client || '').trim();
+      if (c && !seen[c.toLowerCase()]) { seen[c.toLowerCase()] = 1; out.push(c); }
+    }
+    for (i = 0; i < TASKS.length; i++) {
+      c = String(TASKS[i].client || '').trim();
+      if (c && !seen[c.toLowerCase()]) { seen[c.toLowerCase()] = 1; out.push(c); }
+    }
+    return out.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+  }
+  /* The picker FOLLOWS the query, wherever the query came from — a breakdown row click, a preset
+     chip, a typed `client:`, a deep link. Three states, and the third is why this is not a plain
+     select: a query naming two accounts (or excluding one) has no single account to show, and a
+     picker reading "every account" over `client:Reiss client:Schuh` would be the control lying
+     about what is on screen, so it says so in its own option instead.
+     A TYPED PREFIX is its own case: `client:rei` really does filter to Reiss, but it is not the
+     roster's spelling, so it is offered verbatim rather than snapped to a name nobody typed. */
+  /* TMVIEW-PICKER-FOLLOWS */
+  function accts() {
+    var el = $('cacct'); if (!el) return;
+    var pick = accountPick(Q.raw), roster = clientRoster(), opts = [], extra = '';
+    if (pick.multi) opts.push('<option value="\u0001multi" selected>' + esc(pick.was.join(' · ')) + '</option>');
+    opts.push('<option value=""' + (!pick.v && !pick.multi ? ' selected' : '') + '>— every account —</option>');
+    if (pick.v && !roster.some(function (c) { return c.toLowerCase() === pick.v.toLowerCase(); })) {
+      extra = '<option value="' + esc(pick.v) + '" selected>' + esc(pick.v) + ' — as typed</option>';
+    }
+    el.innerHTML = opts.join('') + extra + roster.map(function (c) {
+      return '<option value="' + esc(c) + '"' + (pick.v && c.toLowerCase() === pick.v.toLowerCase() ? ' selected' : '') + '>' + esc(c) + '</option>';
+    }).join('');
+  }
+  /* The same reading, pointed somewhere else: the query's account clause is replaced and NOTHING
+     else is touched — not the split, not the form, not the series, not the rest of the search. */
+  function acctGo(v) {
+    if (v === '\u0001multi') { accts(); return; }               // the honest state is not a destination
+    $('q').value = withClient(liftClient($('q').value).rest, v);
+    apply();
+  }
+
+  var FORM_WORD = {}, LAB_WORD = {};
+  function viewWords() {
+    FORMS.forEach(function (f) { FORM_WORD[f.v] = f.label; });
+    LABS.forEach(function (o) { LAB_WORD[o.v] = o.label; });
+  }
+  var MEAS_WORD = { hours: 'billable + non-billable', bill: 'billable only', nonbill: 'non-billable only' };
+  // read off the page's own FORMS / LABS / DIMS, so a view can never describe itself with a word
+  // the controls above it no longer use
+  function viewSummary(v) {
+    if (!v) return '';
+    var path = [v.dim].concat(v.dim2 ? [v.dim2] : [], v.dim3 ? [v.dim3] : []).map(function (k) {
+      var d = DIMS.filter(function (x) { return x.k === k; })[0];
+      return d ? d.label : k;
+    }).join(' › ');
+    return path + ' · ' + (FORM_WORD[v.form] || v.form) + ' · ' + (MEAS_WORD[v.meas] || v.meas)
+      + ' · labels: ' + (LAB_WORD[v.lab] || v.lab) + (v.q ? ' · ' + v.q : '');
+  }
+  function views() {
+    var el = $('cview'); if (!el) return;
+    var l = viewsList();
+    el.innerHTML = '<option value="">' + (l.length ? '— saved views —' : '— none saved yet —') + '</option>'
+      + l.map(function (v, i) { return '<option value="' + i + '" title="' + esc(viewSummary(v)) + '">' + esc(v.name) + '</option>'; }).join('');
+    el.value = VSEL == null ? '' : String(VSEL);
+    if (el.value !== (VSEL == null ? '' : String(VSEL))) { VSEL = null; el.value = ''; }
+    $('vdel').hidden = VSEL == null;
+    vnote();
+  }
+  function vnote() {
+    var el = $('vnote'); if (!el) return;
+    var v = VSEL == null ? null : viewsList()[VSEL];
+    if (v) {
+      el.innerHTML = '<b>' + esc(v.name) + '</b> — ' + esc(viewSummary(v))
+        + (v.was && v.was.length ? ' <span style="opacity:.75">(saved from ' + esc(v.was.join(' · ')) + ', account left out)</span>' : '');
+    } else {
+      el.textContent = 'A saved view keeps the shape, never the account — pick an account beside it and the same reading follows.';
+    }
+  }
+  function applyViewRec(v) {
+    if (!v) return;
+    expReset();
+    CDIM = v.dim; CDIM2 = v.dim2; CDIM3 = v.dim3;
+    CFORM = v.form; CMEAS = v.meas; CLAB = v.lab;
+    $('cdim').value = CDIM;
+    if ($('cdim').value !== CDIM) { CDIM = 'total'; $('cdim').value = 'total'; }   // a dim the book no longer offers
+    $('cleg').checked = v.leg; $('cuntag').checked = v.untag; $('ctab').checked = v.table;
+    // the view's own reading preferences become this device's, exactly as picking the control does
+    try {
+      localStorage.setItem('fcc-tm-meas', CMEAS); localStorage.setItem('fcc-tm-lab', CLAB);
+      localStorage.setItem('fcc-tm-cleg', v.leg ? '1' : '0'); localStorage.setItem('fcc-tm-untag', v.untag ? '1' : '0');
+    } catch (e) {}
+    // TMVIEW-ACCOUNT-ON-SCREEN
+    // THE ACCOUNT ON SCREEN WINS, which is the whole point: the view supplies the shape and the
+    // picker supplies what it is pointed at
+    $('q').value = viewQuery(v, accountPick($('q').value).v);
+    fillSubDims();
+    $('cmeas').value = CMEAS;
+    apply();
+  }
+  function vwire() {
+    viewWords();
+    $('cacct').onchange = function () { acctGo($('cacct').value); };
+    $('cview').onchange = function () {
+      var i = $('cview').value;
+      VSEL = i === '' ? null : Number(i);
+      $('vdel').hidden = VSEL == null;
+      if (VSEL != null) applyViewRec(viewsList()[VSEL]);
+      vnote();
+    };
+    $('vsave').onclick = function () {
+      $('vname').hidden = false; $('vsave').hidden = true;
+      var v = VSEL == null ? null : viewsList()[VSEL];
+      $('vnm').value = v ? v.name : '';
+      $('vnm').focus(); $('vnm').select();
+    };
+    $('vno').onclick = vcancel;
+    $('vnm').onkeydown = function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); vcommit(); }
+      if (e.key === 'Escape') { e.stopPropagation(); vcancel(); }
+    };
+    $('vok').onclick = vcommit;
+    $('vdel').onclick = function () {
+      var l = viewsList(); if (VSEL == null || !l[VSEL]) return;
+      var gone = l[VSEL].name;
+      l.splice(VSEL, 1); viewsSave(l); VSEL = null; views();
+      toast('Removed "' + gone + '"');
+    };
+  }
+  function vcancel() { $('vname').hidden = true; $('vsave').hidden = false; $('vnm').value = ''; }
+  function vcommit() {
+    var name = $('vnm').value.trim();
+    if (!name) { $('vnm').focus(); return; }
+    var v = packView(name, {
+      q: $('q').value, dim: CDIM, dim2: CDIM2, dim3: CDIM3, form: CFORM, meas: CMEAS, lab: CLAB,
+      leg: $('cleg').checked, untag: $('cuntag').checked, table: $('ctab').checked
+    });
+    var l = viewsList(), at = -1, i;
+    for (i = 0; i < l.length; i++) if (l[i].name.toLowerCase() === v.name.toLowerCase()) { at = i; break; }
+    if (at >= 0) l[at] = v; else l.unshift(v);
+    if (l.length > VIEW_MAX) l = l.slice(0, VIEW_MAX);
+    viewsSave(l);
+    for (i = 0; i < l.length; i++) if (l[i].name === v.name) { VSEL = i; break; }
+    vcancel(); views();
+    // what was left out is SAID, because dropping the account silently is the one thing that
+    // could make a saved view answer a question nobody asked
+    toast(v.was.length
+      ? 'Saved "' + v.name + '" without its account (' + v.was.join(' · ') + ') — point it at any client'
+      : 'Saved "' + v.name + '" — it runs against whichever account you pick');
   }
 
   function chart() {
@@ -3951,6 +4243,7 @@ window.addEventListener('load',restore);
       try { localStorage.setItem('fcc-tm-untag', $('cuntag').checked ? '1' : '0'); } catch (e) {}
       chart();
     };
+    vwire(); accts(); views();
     $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
     $('xtsv').onclick = function () { copy(tsv(), 'Chart table copied'); };
