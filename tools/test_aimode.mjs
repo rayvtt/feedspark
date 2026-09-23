@@ -467,9 +467,9 @@ ok(/function setBandGBP\(j,v\)/.test(src) && (src.match(/setBandGBP\(/g)||[]).le
 ok(!/rc\.upd\.tiers\[\+t\.getAttribute\('data-tier'\)\]\.gbp=/.test(src),
   '…so the input handler no longer writes the tier itself');
 /* the prepend trap */
-ok(/addEventListener\('focusin'/.test(src) && /_selFx=t; try\{ t\.select\(\); \}/.test(src),
+ok(/onUpd\('focusin'/.test(src) && /_selFx=t; try\{ t\.select\(\); \}/.test(src),
   'the band box selects its value on focus, so the first keystroke REPLACES');
-ok(/addEventListener\('mouseup',function\(e\)\{ if\(e\.target===_selFx\)\{ e\.preventDefault\(\);/.test(src),
+ok(/onUpd\('mouseup',function\(e\)\{ if\(e\.target===_selFx\)\{ e\.preventDefault\(\);/.test(src),
   '…and the mouseup that completes the click is swallowed, or it collapses the selection back to a caret');
 ok(/input\.tgbp\{width:78px/.test(src), 'the box is wide enough to read five digits');
 /* off-scale */
@@ -697,11 +697,16 @@ ok(/var gap=\(i&&tkGid\(k\)!==tkGid\(ids\[i-1\]\)\)\?'<tr class="t-gap" aria-hid
 ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0\}/.test(src)
   && /\.tk tr\.t-gap td::before\{content:'';display:block;border-top:1px dotted rgba\(51,51,51,\.28\)\}/.test(src) && /\[data-theme=dark\] \.tk tr\.t-gap td::before\{border-top-color:rgba\(255,255,255,\.2\)\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
   'the spacer is a subtle 1px dotted rule on a transparent row, no hover wash, its own dark-mode tone (Ray, 22 Sep 2026: "replace it with dotted lines instead and make it just subtle")');
-ok(/UPD-BUNDLE-FOLD/.test(src) && /#upd-card:not\(\.upd-bopen\) \.upd-box\.ucm\{display:none\}/.test(src)
-  && /updEvidence\(\)\)\s*\+'<label class="qopt upd-on">/.test(src) && /fcc-upd-bundle/.test(src) && /id="upd-binfo"/.test(src),
-  'the bundle price folds behind the heading\u2019s \u24d8 (closed by default) and the tick sits under the arrivals chart');
-ok(/UPD-NO-DUP-CHART/.test(src) && /var dupChart=aimOnType\(\);/.test(src) && /\(dupChart\?'':updEvidence\(\)\)/.test(src),
-  'the Monthly update card drops its arrivals chart while Spark AI (which draws the same chart) is on');
+ok(/UPD-BUNDLE-FOLD/.test(src) && /\.upd-grid:not\(\.bopen\) \.upd-box\.ucm\{display:none\}/.test(src)
+  && /updEvidence\(\)\)\s*\+'<label class="qopt upd-on">/.test(src) && /fcc-upd-bundle/.test(src) && /closest\('\.upd-binfo'\)/.test(src),
+  'the bundle price folds behind an ⓘ (closed by default) and the tick sits under the arrivals chart');
+ok(/UPD-NO-DUP-CHART/.test(src) && /var dupChart=inAim;/.test(src) && /\(dupChart\?'':updEvidence\(\)\)/.test(src),
+  'with Spark AI on, the bundle carries no second arrivals chart');
+ok(/UPD-IN-SPARK/.test(src) && /inAim\?\$\('#aim-upd'\):\$\('#upd-body'\)/.test(src) && /#upd-card\.upd-moved\{display:none\}/.test(src)
+  && /<div id="aim-chart"><\/div>\s*<div id="aim-upd"><\/div>/.test(src) && /class="aim-bh"><h4>New products a month<\/h4><button type="button" class="upd-binfo"/.test(src),
+  'with Spark AI on, the Monthly update card is gone and its tick + ⓘ bundle live under Spark AI\'s arrivals chart');
+ok((src.match(/\$\('#upd-card'\)\.addEventListener\(/g) || []).length === 0 && /var UPD_HOMES=\[\$\('#upd-card'\),\$\('#aim-upd'\)\]/.test(src),
+  'every bundle handler is bound to both homes, so the controls work wherever they are drawn');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
