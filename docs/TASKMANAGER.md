@@ -431,9 +431,12 @@ card saying "Urgent" is the same inconsistency in words that the rank palette wa
 keeps its true size, because shrinking the part nobody has judged would be the dishonest kind of
 hiding.
 
-**Legend on chart** (toggle, default on, remembered per device) draws the key *inside* the SVG, so
-the eye never travels to the rail — and so the **⬇ PNG carries it**, which it never did before: a
-downloaded pie used to be a set of unnamed wedges. One list feeds both legends, so the rail and the
+**Name the marks on the chart** (toggle, default on, remembered per device; it lives in
+**⚙ Display** and was called *Legend on chart* until it learned to draw a second thing) names them
+*inside* the SVG, so the eye never travels to the rail — and so the **⬇ PNG carries the naming**,
+which it never did before: a downloaded pie used to be a set of unnamed wedges. On a **pie or
+donut** that naming is a leader per slice (see *Naming the marks on the chart* above); on every
+other form it is the key across the top. One list feeds both legends, so the rail and the
 chart can never name the same colour differently; with the legend on the chart, the end-of-line
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
