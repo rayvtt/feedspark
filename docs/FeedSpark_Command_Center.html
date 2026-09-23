@@ -405,7 +405,7 @@ window.addEventListener('load',restore);
   .dzp-as{font-weight:900}
   .dzp-as.good{color:var(--good)}.dzp-as.warn{color:var(--orange-deep)}.dzp-as.bad{color:var(--risk)}
   /* Ray, 16 Sep 2026: "only Activity and Health actually look good. The other three tiles are not
-     well presented". Hours, Feed audit and Golden Record now carry a shape each, in Activity's and
+     well presented". Hours, AI Readiness and Golden Record now carry a shape each, in Activity's and
      Health's own language — a meter, per-market bars, a score ring — rather than a row of digits. */
   .dzp-mrow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:3.5px 0}
   .dzp-mrow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted)}
@@ -1099,7 +1099,8 @@ window.addEventListener('load',restore);
       var mkts=portMkts(name), pend=mkts.length;
       if(!pend)return cb(mkts);
       mkts.forEach(function(m){ var key=name+'|'+m;
-        // the feed audit is the read Feed Lab REWRITES when you scan — it expires like the rest
+        // this is the SAME score Feed Lab calls the AI-Readiness score — the read it REWRITES
+        // when you scan — it expires like the rest
         if(AUDC[key]!==undefined&&(Date.now()-(AUDAT[key]||0))<BRIEF_TTL){ if(--pend<=0)cb(mkts); return; }
         fetch(API+'/api/feed/audit?client='+encodeURIComponent(name)+'&market='+encodeURIComponent(m))
           .then(function(r){return r.json()})
@@ -1443,7 +1444,7 @@ window.addEventListener('load',restore);
     h += sec(1, 'What’s live today', 'The surface your team already sees.');
     h += '<div class="op-stats">'
       + stat(opNum(feeds), 'Markets live', feeds ? 'each with its own product feed' : 'no feed wired yet')
-      + stat(opNum(m.avgA), 'Feed quality score', m.avgA != null ? 'averaged across markets, out of 100' : 'not yet audited')
+      + stat(opNum(m.avgA), 'AI Readiness score', m.avgA != null ? 'averaged across markets, out of 100' : 'not yet audited')
       + stat(p && p.score ? p.score + '/100' : '—', 'Plan completion', 'breadth across the feed × depth in each area')
       + '</div>';
     if (feeds) {
@@ -1662,7 +1663,7 @@ window.addEventListener('load',restore);
     if(p&&openPct>40)hit(10,openPct+'% of the plan still open');
     if(crit)hit(Math.min(20,crit*10),crit+' critical guard alert'+(crit===1?'':'s'));
     else if(warn)hit(Math.min(9,warn*3),warn+' guard warning'+(warn===1?'':'s'));
-    if(avgA!=null){ if(avgA<70)hit(Math.min(15,Math.round((70-avgA)/2)),'feed audit avg '+avgA+'/100'); }
+    if(avgA!=null){ if(avgA<70)hit(Math.min(15,Math.round((70-avgA)/2)),'AI-readiness avg '+avgA+'/100'); }
     else if(mkts.length)hit(5,'no Feed Lab audit stored yet');
     if(satL.length){ var smin=Math.min.apply(null,satL.map(function(x){return x.pct}));
       if(smin<60)hit(8,'keyword saturation at '+smin+'%'); else if(smin<85)hit(4,'keyword saturation at '+smin+'%'); }
@@ -1683,7 +1684,7 @@ window.addEventListener('load',restore);
     if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes')+'?client='+C,ll:al.crit?'Label Guard':'PT Guard'});
     if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:WF('overdue'),ll:'Workflow'});
     var worstA=null; scored.forEach(function(a){ if(!worstA||a.score<worstA.score)worstA=a; });
-    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL+'&market='+encodeURIComponent(worstA.m),ll:'Feed Lab'});
+    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' AI readiness at '+worstA.score+'/100 — dissect the weak pillars.',l:FL+'&market='+encodeURIComponent(worstA.m),ll:'Feed Lab'});
     var unscanned=audL.filter(function(a){return a.score==null}).length;
     if(unscanned)sug.push({p:3,t:unscanned+' wired market'+(unscanned===1?'':'s')+' never scanned — run Feed Lab once for a baseline.',l:FL,ll:'Feed Lab'});
     var worstS=null; satL.forEach(function(x){ if(!worstS||x.pct<worstS.pct)worstS=x; });
@@ -1767,11 +1768,15 @@ window.addEventListener('load',restore);
       +'<span><em class="'+(done1?'':'')+'" style="'+(done1?'color:var(--good)':'')+'">'+(p?fmtN(done1):'—')+'</em><span class="lb">done · 30d</span></span>'
       +'</div></div>';
     var hl='<div class="dzp-card"><h5>Health</h5><div class="dzp-health"><span class="dzp-hn">'+h+'</span><span class="dzp-band '+band+'">'+bandL+'</span></div>'+fac.slice(0,4).join('')+'</div>';
-    /* Feed audit: one bar per market, so a brand's weakest feed is visible at a glance instead of
-       having to be found by reading numbers. An UNSCANNED market keeps its row — drawn as an empty
-       hatched track and named — rather than being dropped or drawn as a zero-length bar, which
-       would read as a score of 0. Keyword saturation rides the same row as a muted suffix; the
-       averages and the guard alerts sit under the rule, the way Activity's foot does. */
+    /* AI Readiness: one bar per market, so a brand's weakest feed is visible at a glance instead of
+       having to be found by reading numbers. This is Feed Lab's own AI-Readiness score (Ray, 22 Sep
+       2026: the tile read "Feed audit" but the number is Feed Lab's AI-readiness score.total — a
+       feed-quality reading is not what it measures, so the card is renamed rather than the source
+       swapped for a real quality score that doesn't exist yet). An UNSCANNED market keeps its row —
+       drawn as an empty hatched track and named — rather than being dropped or drawn as a zero-
+       length bar, which would read as a score of 0. Keyword saturation rides the same row as a
+       muted suffix; the averages and the guard alerts sit under the rule, the way Activity's foot
+       does. */
     var satAvgA=satL.length?Math.round(satL.reduce(function(s,x){return s+x.pct;},0)/satL.length*10)/10:null;
     var arows=audL.map(function(a){
       var sat=null; satL.forEach(function(x){ if(x.m===a.m)sat=x.pct; });
@@ -1790,7 +1795,7 @@ window.addEventListener('load',restore);
     if(audL.length)afoot.push('<span><em>'+audL.filter(function(a){return a.score!=null;}).length+'/'+audL.length
       +'</em><span class="lb">scanned</span></span>');
     if(satAvgA!=null)afoot.push('<span><em>'+satAvgA+'%</em><span class="lb">keyworded</span></span>');
-    var aud='<div class="dzp-card"><h5>Feed audit'+(avgA!=null?' — avg '+avgA+'/100':'')+'</h5>'
+    var aud='<div class="dzp-card"><h5>AI Readiness'+(avgA!=null?' — avg '+avgA+'/100':'')+'</h5>'
       +(arows||'<div class="dzp-arow" style="color:var(--muted)">no feed markets wired</div>')
       +(afoot.length?'<div class="dzp-foot">'+afoot.join('')+'</div>':'')
       +((crit||warn)?'<div style="margin-top:7px"><span class="dzp-al">'+(crit?crit+' crit':'')+(crit&&warn?' · ':'')+(warn?warn+' warn':'')+' guard alerts</span></div>':'')
@@ -1850,8 +1855,9 @@ window.addEventListener('load',restore);
   // So there should be two scores appearing for each market, each brand. Obviously, carefully
   // label them so we don't mistake. Feed scorecard and content quality score.") — the aggregate
   // ring above already carried an averaged "quality" figure for the whole brand; this is the
-  // per-market breakdown the ring can't show, capped the SAME way Feed audit's own per-market
-  // rows are (portMkts, max 8) so a 28-market brand like Reiss can't turn the card into a wall.
+  // per-market breakdown the ring can't show, capped the SAME way the AI Readiness card's own
+  // per-market rows are (portMkts, max 8) so a 28-market brand like Reiss can't turn the card into
+  // a wall.
   var GR_MROWS=8;
   function grPill(n,label,title){
     if(n==null)return '';
