@@ -52,6 +52,10 @@ echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
 
+echo "── validating: image library engine (shot tokens + collector)"
+node tools/test_images.mjs >/dev/null
+echo "   ✓ shot codes read off the image URLs; unpatterned feeds refused"
+
 echo "── validating: KWCal KPI band partition + market list"
 node tools/test_kwcal_kpis.mjs >/dev/null
 echo "   ✓ every stage lands in a bucket, the tiles sum, and -fb never reaches the chips"

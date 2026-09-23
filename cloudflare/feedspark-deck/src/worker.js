@@ -125,6 +125,11 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /images module (Ray, 15 Sep 2026): the client's whole media estate — image_link +
+// additional_image_link 1..10 — grouped by the SHOT TOKEN read off each URL, so one tag
+// lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
+import IMAGES_PAGE from "../../../docs/FeedSpark_Images.html";
+import IMAGE_ENGINE_SRC from "../../../docs/image_engine.js";
 // /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
 // year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
 import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
@@ -220,6 +225,7 @@ const PAGES = {
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
+  '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
@@ -465,6 +471,7 @@ export default {
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
+        '/api/images/scanpush': 'image-scan-live', '/api/images/tags': 'image-tags-save',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -847,7 +854,7 @@ export default {
           const snap = e.snap;
           if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') { results.push({ client, mkt, error: 'bad snapshot' }); continue; }
           try {
-            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol, e.ovl);
+            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol, e.ovl, e.img);
             results.push(r.skipped ? { client, mkt, skipped: true, retry: r.retry }
               : { client, mkt, ok: true, alerts: r.alerts, overlays: r.overlays });
           } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
@@ -1275,6 +1282,9 @@ export default {
     }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/images/engine.js' && request.method === 'GET') {
+      return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -1763,6 +1773,65 @@ export default {
       const q = (url.searchParams.get('client') || '').trim().toLowerCase();
       const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
       return json({ ok: true, results: results.slice(0, 200), total: results.length });
+    }
+
+    // ---- /images module reads: the estate board (full feed roster ∪ the scanned index, so
+    // a never-scanned feed shows as "not scanned yet", never silently absent) or one feed's
+    // full capture + its history + the brand's tag store
+    if (path === '/api/images' && request.method === 'GET') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (client) {
+        const mkt = mktOf(url.searchParams.get('market'));
+        const src = await feedSourceFor(env, client, mkt);
+        const snap = await env.EDITS.get('image:' + client + ':' + mkt, 'json');
+        const hist = (await env.EDITS.get('imagehist:' + client + ':' + mkt, 'json')) || [];
+        const tags = (await env.EDITS.get('imgtags:' + client, 'json')) || null;
+        return json({ ok: true, client, market: mkt, kind: src && src.xml ? 'xml' : (src && src.id ? 'sheet' : null),
+          snap: snap || null, hist, tags });
+      }
+      const roster = await feedRoster(env);
+      const idx = (await env.EDITS.get('imageidx', 'json')) || {};
+      const feeds = roster.map((f) => Object.assign({ client: f.client, mkt: f.mkt, kind: f.src && f.src.xml ? 'xml' : 'sheet' },
+        idx[f.client + '|' + f.mkt] ? { scan: idx[f.client + '|' + f.mkt] } : {}));
+      return json({ ok: true, feeds });
+    }
+    // the tag store: the brand's shot taxonomy + one rule per shot token (+ per-image
+    // overrides). Merged per key so two AMs tagging different tokens never clobber each
+    // other, exactly like /api/briefs.
+    if (path === '/api/images/tags' && (request.method === 'GET' || request.method === 'PUT')) {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const K = 'imgtags:' + client;
+      if (request.method === 'GET') return json({ ok: true, client, tags: (await env.EDITS.get(K, 'json')) || null });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const incoming = sanitizeImageTags(body && body.tags);
+      if (!incoming) return json({ ok: false, error: 'bad tags' }, 400);
+      const cur = (await env.EDITS.get(K, 'json')) || { v: 1, tok: {}, img: {} };
+      const merged = { v: 1, t: Date.now(),
+        tok: Object.assign({}, cur.tok || {}, incoming.tok),
+        img: Object.assign({}, cur.img || {}, incoming.img) };
+      if (incoming.tax) merged.tax = incoming.tax; else if (cur.tax) merged.tax = cur.tax;
+      // an explicit null clears one rule — the page sends it when a tag is removed
+      Object.entries((body && body.clear) || {}).forEach(([scope, keys]) => {
+        if ((scope === 'tok' || scope === 'img') && Array.isArray(keys)) keys.slice(0, 400).forEach((k) => { delete merged[scope][String(k)]; });
+      });
+      await env.EDITS.put(K, JSON.stringify(merged));
+      return json({ ok: true, client, tags: merged });
+    }
+    // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab
+    // parser + the image collector (the agent's exact code, served at /images/engine.js)
+    // and posts the computed capture. Identity forced server-side; the feed must resolve.
+    if (path === '/api/images/scanpush' && request.method === 'POST') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const r = await imageTrack(env, client, mkt, body && body.img);
+      if (!r) return json({ ok: false, error: 'bad capture' }, 400);
+      return json(Object.assign({ ok: true, client, market: mkt }, r));
     }
 
     // ---- /overlays module reads: the estate board (full feed roster ∪ the scanned index, so
@@ -3204,7 +3273,7 @@ async function volTrack(env, client, mkt, rows, vol) {
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
 // catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
 // confirming re-read). Identity fields are always forced server-side.
-async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
+async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img) {
   const wantPT = !/-fb$/.test(mkt);
   snap.client = client; snap.market = mkt; snap.v = 1;
   if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
@@ -3217,7 +3286,76 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
   // would otherwise fake an overlay drop-off
   let overlays = null;
   if (ovl) { try { overlays = await overlayTrack(env, client, mkt, ovl); } catch (e) {} }
-  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays };
+  // the image-library capture rides the same confirmed scan, for the same reason
+  let images = null;
+  if (img) { try { images = await imageTrack(env, client, mkt, img); } catch (e) {} }
+  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays, images };
+}
+
+// ---- /images module store (Ray, 15 Sep 2026: "manage the client's images from all the
+// media assets across image_link, additional_image_link 1,2,3,4… up to 10, and find a way
+// to tag / categorise it — the brand can't define which images are flat-lay and which are
+// on-model / upper-body; we can use this module to AI tag or manual tag it") ------------
+// One capture per feed scan: how deep the media estate runs (per-slot fill, images per
+// product, hosts, formats) and the SHOT TOKENS the engine read off the URLs, each with a
+// sample strip. Stored whole at image:<c>:<m>, appended (counts only) to imagehist:<c>:<m>
+// and rolled into the ONE estate index imageidx. The TAGS live apart, at imgtags:<client>,
+// because a tag is Ray's judgement and must survive every rescan that rewrites the capture.
+const IMG_HIST_CAP = 120, IMG_TOKENS_CAP = 60, IMG_SAMPLES_CAP = 24;
+function sanitizeImageCapture(client, mkt, raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.rows !== 'number' || !Array.isArray(raw.tokens)) return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const num = (v) => Math.max(0, Math.round(+v || 0));
+  const isHttp = (u) => /^https?:\/\//i.test(String(u || ''));
+  const cnt = (o, cap) => Object.fromEntries(Object.entries(o || {}).slice(0, cap).map(([k, v]) => [str(k, 12), num(v)]));
+  const tokens = raw.tokens.slice(0, IMG_TOKENS_CAP).map((t) => ({
+    tok: str(t.tok, 60), n: num(t.n), weak: !!t.weak, slots: cnt(t.slots, 12),
+    samples: (Array.isArray(t.samples) ? t.samples : []).slice(0, IMG_SAMPLES_CAP).filter((x) => x && isHttp(x.url)).map((x) => ({
+      id: str(x.id, 80), ti: str(x.ti, 140), pt: str(x.pt, 160),
+      link: isHttp(x.link) ? str(x.link, 500) : '', url: str(x.url, 900), slot: num(x.slot) })),
+  })).filter((t) => t.tok);
+  return { v: 1, t: Date.now(), client, market: mkt,
+    rows: num(raw.rows), withImg: num(raw.withImg), imgs: num(raw.imgs), dupRows: num(raw.dupRows),
+    slots: (Array.isArray(raw.slots) ? raw.slots : []).slice(0, 11).map(num),
+    depth: cnt(raw.depth, 12), hasImage: raw.hasImage !== false, addlSlots: num(raw.addlSlots),
+    hosts: (Array.isArray(raw.hosts) ? raw.hosts : []).slice(0, 5).map((h) => [str(h && h[0], 120), num(h && h[1])]),
+    exts: (Array.isArray(raw.exts) ? raw.exts : []).slice(0, 5).map((e) => [str(e && e[0], 12), num(e && e[1])]),
+    grouping: str(raw.grouping, 8), learnable: !!raw.learnable, overflow: !!raw.overflow,
+    tokCover: Math.max(0, Math.min(1, +raw.tokCover || 0)), tokKept: num(raw.tokKept), tokens };
+}
+async function imageTrack(env, client, mkt, raw) {
+  const cap = sanitizeImageCapture(client, mkt, raw);
+  if (!cap) return null;
+  const K = 'image:' + client + ':' + mkt, HK = 'imagehist:' + client + ':' + mkt;
+  const hist = (await env.EDITS.get(HK, 'json')) || [];
+  hist.push({ t: cap.t, rows: cap.rows, imgs: cap.imgs, withImg: cap.withImg, toks: cap.tokens.length });
+  await env.EDITS.put(K, JSON.stringify(cap));
+  await env.EDITS.put(HK, JSON.stringify(hist.slice(-IMG_HIST_CAP)));
+  const idx = (await env.EDITS.get('imageidx', 'json')) || {};
+  idx[client + '|' + mkt] = { client, mkt, t: cap.t, rows: cap.rows, withImg: cap.withImg, imgs: cap.imgs,
+    slots: cap.slots, learnable: cap.learnable, toks: cap.tokens.length, tokCover: cap.tokCover,
+    tops: cap.tokens.slice(0, 12).map((t) => ({ tok: t.tok, n: t.n })) };
+  await env.EDITS.put('imageidx', JSON.stringify(idx));
+  return { imgs: cap.imgs, tokens: cap.tokens.length, learnable: cap.learnable };
+}
+// A tag store is per CLIENT, not per market: the same studio convention runs across a
+// brand's markets, so tagging Reiss GB's shot codes answers Reiss DE too.
+function sanitizeImageTags(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const rule = (r) => (r && typeof r === 'object' && r.tag
+    ? { tag: str(r.tag, 40), by: str(r.by, 12) || 'manual', t: Math.max(0, Math.round(+r.t || 0)) || Date.now(),
+        note: str(r.note, 300), conf: Math.max(0, Math.min(1, +r.conf || 0)) || undefined }
+    : null);
+  const map = (o, cap, keyLen) => {
+    const out = {};
+    Object.entries(o || {}).slice(0, cap).forEach(([k, v]) => { const r = rule(v); if (r) out[str(k, keyLen)] = r; });
+    return out;
+  };
+  const tax = Array.isArray(raw.tax) ? raw.tax.slice(0, 40).map((t) => ({
+    id: str(t && t.id, 40), label: str(t && t.label, 60), hint: str(t && t.hint, 160) })).filter((t) => t.id && t.label) : null;
+  return Object.assign({ v: 1, t: Date.now(), tok: map(raw.tok, 400, 60), img: map(raw.img, 2000, 100) },
+    tax ? { tax } : {});
 }
 
 // ---- /overlays module store (Ray, 10 Sep 2026: "render the type of overlay that is

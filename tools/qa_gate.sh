@@ -199,6 +199,13 @@ else
   echo "   ✗ overlay harness FAILED — see node tools/test_overlays.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e2/7: image library engine (shot tokens off the URL + feed collector)"
+if node tools/test_images.mjs >/dev/null 2>&1; then
+  echo "   ✓ shot codes differenced per product; unpatterned feeds refused, not fudged"
+else
+  echo "   ✗ image harness FAILED — see node tools/test_images.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3f/7: KWCal event ⇄ ticket tie + result-window join"
 if node tools/test_kwcal_tie.mjs >/dev/null 2>&1; then
   echo "   ✓ stamped-id precedence, the name-collision guard and the half-month join hold"

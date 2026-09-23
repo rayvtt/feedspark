@@ -9700,6 +9700,54 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "LEAD_GAP)) * 2",
       "pr": 0
+    },
+    {
+      "name": "Image library: the shot code is the fragment of the URL that varies within one product",
+      "file": "docs/image_engine.js",
+      "pattern": "function shotTokens",
+      "pr": 0
+    },
+    {
+      "name": "Image library: a vocabulary no one could tag is not called learnable",
+      "file": "docs/image_engine.js",
+      "pattern": "LEARN_MAX_CODES",
+      "pr": 0
+    },
+    {
+      "name": "Image library: overflow is tracked per grouping, so a clean head vocabulary survives",
+      "file": "docs/image_engine.js",
+      "pattern": "var over = { full: false, head: false }",
+      "pr": 0
+    },
+    {
+      "name": "Image library: one tag on a shot code names every image that carries it",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "data-tagsel=",
+      "pr": 0
+    },
+    {
+      "name": "Image library: AI tagging looks at the actual images, and says what decided it",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "function aiTag(",
+      "pr": 0
+    },
+    {
+      "name": "Image library: tags are stored per client, so every market inherits them",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'imgtags:' + client",
+      "pr": 0
+    },
+    {
+      "name": "Image library: the capture rides the same confirmed scan as the guards",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function imageTrack",
+      "pr": 0
+    },
+    {
+      "name": "Image library: a shot keeps its code however deep the product's gallery is",
+      "file": "docs/image_engine.js",
+      "pattern": "function snapStem",
+      "pr": 0
     }
   ]
 }
