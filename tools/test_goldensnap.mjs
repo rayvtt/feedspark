@@ -53,7 +53,7 @@ const FEEDS = {
   'Schuh|gb': { client: 'Schuh', mkt: 'gb', score: 95, q: 91, ai: 4, status: 'ok' },
 };
 const api = new Function('GRC', 'esc', 'fmtN', `
-  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'auditBand')} ${lift(CC, 'grBand')}
   ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
   ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
   ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
@@ -91,7 +91,7 @@ ok('it offers the full snapshot', /data-gr="Reiss"/.test(card));
 ok('a brand with no Golden Record feeds renders nothing at all', api.portGolden('Nobody') === '');
 {
   const none = new Function('GRC', 'esc', 'fmtN', `
-    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'auditBand')} ${lift(CC, 'grBand')}
     ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
   ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
   ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
@@ -102,9 +102,11 @@ ok('a brand with no Golden Record feeds renders nothing at all', api.portGolden(
 }
 
 console.log('\n-- bands are the module’s own --');
-ok('90+ is good', api.grBand(95) === 'good');
-ok('75-89 is a warning', api.grBand(82) === 'warn' && api.grBand(75) === 'warn');
-ok('under 75 is bad', api.grBand(74) === 'bad');
+// the FCC-wide audit legend (Ray, 23 Sep 2026): <70 red · 70–85 orange · 85–95 yellow · 95+ green
+ok('95+ is green (good)', api.grBand(95) === 'good' && api.grBand(100) === 'good');
+ok('85–95 is yellow (mid)', api.grBand(85) === 'mid' && api.grBand(94.9) === 'mid');
+ok('70–85 is orange (warn)', api.grBand(70) === 'warn' && api.grBand(84.9) === 'warn');
+ok('under 70 is red (bad)', api.grBand(69.9) === 'bad' && api.grBand(0) === 'bad');
 ok('no score has no band', api.grBand(null) === '');
 
 console.log('\n-- the popup --');

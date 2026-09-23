@@ -78,6 +78,8 @@ jobs:
         run: node tools/test_goldensnap.mjs
       - name: Present harness (the one-pager played — one renderer, the number rule)
         run: node tools/test_present.mjs
+      - name: Audit colour bands harness (one legend on /golden, /feedlab, the dossier, the Playbook rail)
+        run: node tools/test_bands.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
       - name: Hero KPI harness (project plans are the source; one date rule with Workflow)

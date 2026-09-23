@@ -200,8 +200,8 @@ window.addEventListener('load',restore);
   .at-nm i{font-style:normal;color:var(--muted);font-weight:700}
   .at-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
   .at-bar i{display:block;height:100%;border-radius:100px;background:var(--orange)}
-  .at-bar i.full{background:var(--good)}
-  .at-bar i.low{background:var(--risk)}
+  .at-bar i.b-green{background:var(--good)}.at-bar i.b-yellow{background:#F5A623}
+  .at-bar i.b-orange{background:#ED6F0B}.at-bar i.b-red{background:var(--risk)}
   .at-cov{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .at-delta{text-align:right;font-weight:900;font-size:11px;font-variant-numeric:tabular-nums}
   .up{color:var(--good)}.down{color:var(--risk)}
@@ -414,8 +414,7 @@ window.addEventListener('load',restore);
   .qz-n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .qz-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
   .qz-bar i{display:block;height:100%;background:var(--good)}
-  .qz-bar i.mid{background:var(--orange)}
-  .qz-bar i.poor{background:var(--risk)}
+  .qz-bar i.b-yellow{background:#F5A623}.qz-bar i.b-orange{background:#ED6F0B}.qz-bar i.b-red{background:var(--risk)}
   .qz-worst{font-size:11px;color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .qz-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
   .qz-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1px 7px;margin-left:5px}
@@ -1015,9 +1014,16 @@ window.addEventListener('load',restore);
     });
   }
   function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  // ONE colour legend for every completeness / coverage / content-quality number on the FCC
+  // (Ray, 23 Sep 2026: "<70 red, 70-85 orange, 85-95 yellow, 95-100 green — apply across all
+  // audit"). The same function with the same thresholds sits on /golden, /feedlab, the dossier
+  // and the Playbook rail; tools/test_bands.mjs lifts every copy and runs one table through them.
+  // AI-readiness keeps its own ladder colours (40/60/80 = its tiers) — a different scale.
+  function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
+  var BAND_COL = { green: 'var(--good)', yellow: '#F5A623', orange: '#ED6F0B', red: 'var(--risk)' };
   function scoreCol(s) {
-    if (s == null) return 'var(--muted)';
-    return s >= 95 ? 'var(--good)' : (s >= 85 ? '#F5A623' : (s >= 70 ? '#ED6F0B' : 'var(--risk)'));
+    if (s == null || isNaN(s)) return 'var(--muted)';
+    return BAND_COL[auditBand(s)];
   }
 
   function $(id) { return document.getElementById(id); }
@@ -1466,7 +1472,7 @@ window.addEventListener('load',restore);
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc('No ' + gs + ' products in this feed — not scored. ' + x.n) + '">no ' + esc(gs) + ' products — not scored</span>';
         } else if (a.present) {
-          var cls = a.cov >= 99.5 ? ' class="full"' : (a.cov < 50 ? ' class="low"' : '');
+          var cls = ' class="b-' + auditBand(a.cov) + '"';
           var delta = '';
           if (refA && refA.present && !refA.na && !!refA.scope !== !!a.scope) delta = '<span class="muted" title="The reference was measured across the whole catalogue — this reading is over the products the attribute applies to, so the two are not compared">·</span>';
           else if (refA && refA.present && !refA.na) {
@@ -2125,7 +2131,7 @@ window.addEventListener('load',restore);
         });
     });
   }
-  function qualBand(s) { return s >= 90 ? 'good' : (s >= 75 ? 'mid' : 'poor'); }
+  function qualBand(s) { return 'b-' + auditBand(s); }
 
   function qualitySection(k, s) {
     var q = (LGQ && QUAL[k]) ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
