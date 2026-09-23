@@ -56,5 +56,9 @@ id = "d93b5ac576c74f0d8a315c5b92dc8e16"
 # whatever originally created the Store DO), so a "v1" delete is treated as already-applied
 # and skipped. "v2" makes wrangler actually send the delete.
 [[migrations]]
+tag = "v1"
+new_classes = ["Store"]
+
+[[migrations]]
 tag = "v2"
 deleted_classes = ["Store"]
