@@ -694,6 +694,70 @@ prep for client demo").
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 
+### 9.9 GPC category scope — an attribute scores only where Google asks for it (23 Sep 2026)
+
+Ray, on Hobbycraft's scorecard (material 47.9%, pattern 43.9%): *"for standard GPC material,
+that attribute is not required. So by that logic, it should not be cumulated or counted toward
+the score."* Until then every attribute was scored over **every product in the feed**, so a craft
+catalogue was marked down for yarn without a gender and a golf retailer for clubs without a size.
+
+**What Google actually conditions on category.** The premise that each of the ~5,600 GPCs has
+its own attribute list is not how the Merchant Center spec works — it has no per-category list
+for general categories. Six attributes carry a category condition, each read off its own help
+page on 23 Sep 2026:
+
+| Attribute | Asked of | Source |
+|---|---|---|
+| `color` | Clothing & Accessories (ID 166) | answer 6324487 |
+| `gender` | 166, except 16 named sub-categories (pinback buttons, watch bands, keychains…) | answer 6324479 |
+| `age_group` | the same, plus cufflinks (193) | answer 6324463 |
+| `size` | Clothing (1604) and Shoes (187) | answer 6324492 |
+| `material`, `pattern` | 166 — Google's clothing best practice names them (answer 7348545); anywhere else only "for products that vary by material/pattern" (6324410 / 6324483) | |
+
+**The rule.** Each of these is scored over the products in its category: `attrs[k].cov` is the
+coverage of those products, `.all` keeps the whole-catalogue reading, `.scope {n, f, u, t}` says
+how many products it applies to, how many carry it, how many of those have no readable category,
+and how many are in the feed. Three consequences:
+
+- **None in scope → not applicable** (`.na`): out of the score even when the profile ★ stars it,
+  never listed missing, never alerted on, and the row says "no clothing & accessories products —
+  not scored" with no ask/brief buttons.
+- **Weighted by share**: a scoped attribute's weight is multiplied by `n / t`, so 2 clothing
+  products in 24,000 cannot move the score the way the whole catalogue does. An all-apparel feed
+  has a share of ~1 and scores exactly as before.
+- **A known requirement is a gap**: a `cond` attribute ABSENT on products Google requires it for
+  now counts at 0, whether or not the industry profile expected it.
+
+A product with **no readable category** (blank, or a top level no locale's taxonomy knows) stays
+IN scope — the scope only narrows the score where the feed itself says so.
+
+**Reading the category.** The estate ships Google's taxonomy in seven languages (en-GB "Clothing
+& Accessories", en-US "Apparel & Accessories", de-DE, fr-FR, nl-NL, da-DK, es-ES), so the engine
+carries every locale's path for the IDs above (`GPC_ROOT` / `GPC_TAILS`), their numeric subtrees
+(`GPC_IDS`) and every locale's top-level names (`GPC_ROOTS`), all generated from Google's own
+`taxonomy-with-ids.<locale>.txt` by `python3 tools/build_gpc_scope.py` (26 locales; re-run it and
+copy `labelguard.js` to `docs/labelguard_engine.js` if Google ships a new taxonomy).
+
+**Where it is measured.** Per product, so only the full-read lanes carry it: the 4×-daily XML
+agent and the in-browser ↻ rescan (`xmlCollector` → `gpcScopeCounter` → `applyGpcScope`). The
+gviz sweep counts columns, not products, so a sheet-backed feed (House of Bruar) keeps the
+whole-catalogue reading until its FeedHero XML is wired. The estate index keeps the scoped
+coverage plus `sc` (the in-scope counts) through `goldenCovIndex`, so the page's re-score and the
+Playbook read the same basis; `diffCoverage` never compares a scoped reading with a
+whole-catalogue baseline, so the first scan after this shipped raises no drop alerts.
+
+**Live effect (23 Sep 2026, before → after).** Hobbycraft GB 82.7 → 90.9 on its own profile (2
+clothing products in 24,413; size not applicable); American Golf GB 78.7 → 80.4 (golf clubs no
+longer counted for size / age group); Accessorize GB 90.6 → 90.1 (size now asked of its 1,269
+clothing and shoe products, not its bags and jewellery); YuMOVE 87.6 → 89.4; Monsoon, Reiss,
+Schuh and Superdry move by 0.2 or less.
+
+Pinned in `tools/test_labelguard.mjs`: the classifier on every language and form the estate
+ships (including the stray `{` on eight Reiss markets and numeric IDs), Google's exemptions, the
+collector on a real XML stream, the not-applicable / share / known-gap rules, the alert guard, and
+the /golden page's twin scoring every case exactly as the engine does — directly and through the
+estate index round trip.
+
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 
 Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the

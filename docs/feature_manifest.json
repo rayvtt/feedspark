@@ -5329,7 +5329,7 @@
     {
       "name": "Golden Record: ★ on a REC attribute lifts it to best-practice weight ×2 — profiling sale_price must move the number (Ray 16 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "w: bp ? 2 : 1",
+      "pattern": "w: (bp ? 2 : 1) * sh",
       "min": 1
     },
     {
@@ -9444,6 +9444,78 @@
       "name": "KWCal client-PDF design-scale assertions (grid, type scale, two weights, page margin, no typography in the overrides, and the fit constraint actually holding)",
       "file": "tools/test_kwcal_pdf.mjs",
       "pattern": "the design scale holds",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: GPC category scope — colour/gender/age_group/size/material/pattern scored only over the products Google asks them of (Ray 23 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const GPC_SCOPE = {",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: the scope table is generated from Google's taxonomy-with-ids files (every locale the estate ships)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "// GPC-SCOPE:DATA-START",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: xmlCollector counts the category scope per product",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "applyGpcScope(attrsFromCounts(attrCols, attrPos, countsRow, snap.rows), gsc.counts(), snap.rows)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: an attribute no product calls for is not scored",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "    if (a.na) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: a scoped attribute weighs by the share of the catalogue it applies to",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "const sh = scopeShare(a);",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: alerts never read a change of basis as a drop",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (b.na || !!b.scope !== !!c.scope) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Worker: both goldenidx writers store the scoped coverage + in-scope counts",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "goldenCovIndex(grSnap.attrs)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: twin score honours the scope (na, share, known gap)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function scopeShare(a) { var c = a && a.scope;",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: estate re-score rebuilds the scope from the index",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function attrsFromCov(cov, sc, rows)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: a not-applicable row says so and offers no actions",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "products — not scored",
+      "pr": 0
+    },
+    {
+      "name": "GPC scope table generator",
+      "file": "tools/build_gpc_scope.py",
+      "pattern": "taxonomy-with-ids",
+      "pr": 0
+    },
+    {
+      "name": "GPC scope harness in the Label Guard suite (classifier, collector, score rules, page/engine parity)",
+      "file": "tools/test_labelguard.mjs",
+      "pattern": "GPC category scope: an attribute scores only where Google asks for it",
       "pr": 0
     }
   ]

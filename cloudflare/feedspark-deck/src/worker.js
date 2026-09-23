@@ -55,7 +55,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -3417,13 +3417,14 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
     // compute estate-wide industry benchmarks (avg / best) from the one estate call
     const gProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
     const gs = goldenScore(grSnap.attrs, gProf);
-    const covMap = {};
-    ATTR_SPEC.forEach((sp) => { const a = grSnap.attrs[sp.key]; covMap[sp.key] = a && a.present ? a.cov : null; });
+    // coverage per attribute over the products it applies to + the in-scope counts (GPC
+    // scope) — an attribute no product calls for reads null, so the Playbook never lists it
+    const { cov: covMap, sc: scMap } = goldenCovIndex(grSnap.attrs);
     const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
     // rebuilt from the scan, but the content-quality / AI-readiness headlines ride along
     // (keepQual) — the scan never measures them and used to wipe them on every pass
     gidx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap, sc: Object.keys(scMap).length ? scMap : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length },
@@ -4160,11 +4161,10 @@ async function goldenRoutes(env, request, url) {
     await env.EDITS.put('goldenbase:' + client + ':' + mkt, JSON.stringify(snap));
     const ackProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
     const gs = goldenScore(snap.attrs, ackProf);
-    const ackCov = {};
-    ATTR_SPEC.forEach((sp) => { const a = snap.attrs[sp.key]; ackCov[sp.key] = a && a.present ? a.cov : null; });
+    const { cov: ackCov, sc: ackSc } = goldenCovIndex(snap.attrs);
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     idx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov, sc: Object.keys(ackSc).length ? ackSc : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score
     await env.EDITS.put('goldenidx', JSON.stringify(idx));

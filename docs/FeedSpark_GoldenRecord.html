@@ -872,8 +872,15 @@ window.addEventListener('load',restore);
     { k: 'variant_option', t: 'ai', n: 'name–value pairs defining variant differences' },
     { k: 'popularity_rank', t: 'ai', n: '0–100 rank — powers "bestseller" answers' }
   ];
+  // the category each scoped attribute is asked of — mirrors GPC_SCOPE[k].what in the engine
+  var GPC_WHAT = { color: 'clothing & accessories', gender: 'clothing & accessories', age_group: 'clothing & accessories',
+    size: 'clothing & shoes', material: 'clothing & accessories', pattern: 'clothing & accessories' };
   // mirrors the engine's goldenScore: required ×3 (missing = 0), gtin+mpn merge into one
-  // identifier component ×2 (best of the two), other cond ×2 only when present, rec ×1
+  // identifier component ×2 (best of the two), other cond ×2 only when present, rec ×1.
+  // GPC SCOPE (Ray, 23 Sep 2026): colour / gender / age_group / size / material / pattern are
+  // scored over the products whose Google category calls for them (a.cov is that coverage),
+  // weighted by the share of the catalogue they cover, and not at all when none does (a.na)
+  function scopeShare(a) { var c = a && a.scope; return c && c.t ? Math.min(1, c.n / c.t) : 1; }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
     var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
@@ -881,15 +888,16 @@ window.addEventListener('load',restore);
     SPEC.forEach(function (s) {
       var a = attrs[s.k] || { present: false };
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
+      if (a.na) return;
       if (s.t !== 'req' && wav.indexOf(s.k) >= 0) return;
-      var bp = exp.indexOf(s.k) >= 0;
+      var bp = exp.indexOf(s.k) >= 0, sh = scopeShare(a);
       if (s.t === 'ai') { if (bp) { ws += 1; sum += 1 * (a.present ? a.cov : 0); } return; }
       if (s.t === 'req') { ws += 3; sum += 3 * (a.present ? a.cov : 0); }
       else if (s.t === 'cond') {
-        if (a.present) { ws += 2; sum += 2 * a.cov; }
-        else if (bp) { ws += 2; }
+        if (a.present) { ws += 2 * sh; sum += 2 * sh * a.cov; }
+        else if (bp || (a.scope && a.scope.n > 0)) { ws += 2 * sh; }
       }
-      else { var w = bp ? 2 : 1; ws += w; sum += w * (a.present ? a.cov : 0); }   // ★ rec = best-practice weight
+      else { var w = (bp ? 2 : 1) * sh; ws += w; sum += w * (a.present ? a.cov : 0); }   // ★ rec = best-practice weight
     });
     ws += 2; sum += 2 * (idBest == null ? 0 : idBest);
     return ws ? Math.round((sum / ws) * 10) / 10 : 0;
@@ -984,16 +992,25 @@ window.addEventListener('load',restore);
   // No rescan: cov stores null for absent vs fill % (0 included) for present, which is
   // exactly the attrs shape goldenScore needs. Feeds indexed before the cov map existed
   // keep their scan-time score until their next scan.
-  function attrsFromCov(cov) {
+  // `sc` = the in-scope product count per category-scoped attribute (goldenidx.sc): 0 = no
+  // product in the feed calls for it, which is what makes a null coverage 'not applicable'
+  // rather than 'absent'
+  function attrsFromCov(cov, sc, rows) {
     var at = {};
-    SPEC.forEach(function (s) { var c = cov ? cov[s.k] : null; if (c != null) at[s.k] = { present: true, cov: c }; });
+    SPEC.forEach(function (s) {
+      var c = cov ? cov[s.k] : null, n = sc ? sc[s.k] : null;
+      var scope = n != null ? { n: n, t: Math.max(n, rows || 0) } : null;
+      if (scope && !n) at[s.k] = { present: false, na: true, scope: scope };
+      else if (c != null) at[s.k] = scope ? { present: true, cov: c, scope: scope } : { present: true, cov: c };
+      else if (scope) at[s.k] = { present: false, scope: scope };
+    });
     return at;
   }
   function rescoreEstate() {
     if (!PROF.ready) return;   // first paint keeps the scan-time (already profiled) scores
     feedList().forEach(function (f) {
       if (!f.cov) return;
-      var sc = goldenScore(attrsFromCov(f.cov), profileForC(f.client));
+      var sc = goldenScore(attrsFromCov(f.cov, f.sc, f.rows), profileForC(f.client));
       if (sc != null) f.score = sc;
     });
   }
@@ -1397,7 +1414,7 @@ window.addEventListener('load',restore);
     var score = goldenScore(s.attrs, prof);
     var bench = indBench(prof.industry);
     var reqMiss = SPEC.filter(function (x) { return x.t === 'req' && !(s.attrs[x.k] || {}).present; });
-    var condMiss = SPEC.filter(function (x) { return x.t === 'cond' && !(s.attrs[x.k] || {}).present; });
+    var condMiss = SPEC.filter(function (x) { var a = s.attrs[x.k] || {}; return x.t === 'cond' && !a.present && !a.na; });
     var apMiss = condMiss.filter(function (x) { return x.a; });
     h += '<div class="gr-top">' + dial(score) +
       '<div class="gr-info">' +
@@ -1424,7 +1441,7 @@ window.addEventListener('load',restore);
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
-      var present = list.filter(function (x) { return (s.attrs[x.k] || {}).present; });
+      var present = list.filter(function (x) { var a = s.attrs[x.k] || {}; return a.present && !a.na; });
       var avg = present.length ? Math.round(present.reduce(function (a, x) { return a + s.attrs[x.k].cov; }, 0) / present.length * 10) / 10 : null;
       h += '<div class="tier"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
         '<span class="tavg">' + (T.t === 'ai' ? present.length + ' of ' + list.length + ' live'
@@ -1434,32 +1451,44 @@ window.addEventListener('load',restore);
         var a = s.attrs[x.k] || { present: false };
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
-        var row = '<div class="at-row' + (a.present ? '' : ' missing') + (isWav ? ' waived' : '') + '">' +
+        var gs = GPC_WHAT[x.k], na = !!a.na;
+        var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
           '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) +
-          (isExp ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
+          (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
           (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
-        if (a.present) {
+        // what the coverage is a share OF — the products Google asks this attribute of
+        var basis = a.scope && gs ? 'of the ' + fmt(a.scope.n) + ' ' + gs + ' product' + (a.scope.n === 1 ? '' : 's') : '';
+        var basisTip = a.scope && gs ? ' · scored over the ' + fmt(a.scope.n) + ' of ' + fmt(a.scope.t || s.rows) + ' products in ' + gs +
+          (a.scope.u ? ' (' + fmt(a.scope.u) + ' of them carry no readable category and are counted in)' : '') +
+          (a.all != null ? ' · ' + a.all + '% across the whole catalogue' : '') : '';
+        if (na) {
+          row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
+            '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
+            '<span class="at-note" title="' + esc('No ' + gs + ' products in this feed — not scored. ' + x.n) + '">no ' + esc(gs) + ' products — not scored</span>';
+        } else if (a.present) {
           var cls = a.cov >= 99.5 ? ' class="full"' : (a.cov < 50 ? ' class="low"' : '');
           var delta = '';
-          if (refA && refA.present) {
+          if (refA && refA.present && !refA.na && !!refA.scope !== !!a.scope) delta = '<span class="muted" title="The reference was measured across the whole catalogue — this reading is over the products the attribute applies to, so the two are not compared">·</span>';
+          else if (refA && refA.present && !refA.na) {
             var dn = Math.round((a.cov - refA.cov) * 10) / 10;
             delta = dn === 0 ? '<span class="muted">=</span>'
               : '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '▲ +' + dn : '▼ ' + (-dn)) + 'pp</span>';
           } else if (refA) delta = '<span class="up">new</span>';
           var ib = indBestCov(prof.industry, x.k);
-          row += '<span class="at-bar" title="' + a.cov + '% of ' + fmt(s.rows) + ' rows filled' + (ib != null ? ' · industry best ' + ib + '%' : '') + '">' +
+          row += '<span class="at-bar" title="' + a.cov + '% ' + (basis || 'of ' + fmt(s.rows) + ' rows') + ' filled' + esc(basisTip) + (ib != null ? ' · industry best ' + ib + '%' : '') + '">' +
             '<i' + cls + ' style="width:' + Math.max(1.5, Math.min(100, a.cov)) + '%"></i>' +
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip) + '">' + esc(basis ? basis + ' — ' + x.n : x.n) + '</span>';
         } else {
-          var hard = x.t === 'req' || isExp;
+          var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
           row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
-            '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
+        if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
         row += '<span class="at-act">' +
           '<button class="abtn' + (stamp ? ' asked' : '') + '" data-ask="' + esc(x.k) + '" title="' +
           (stamp ? 'Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + ' — click to compose again'
@@ -3066,14 +3095,16 @@ window.addEventListener('load',restore);
   function exportCsv(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var s = d.snapshot, rf = refFor(d), ref = rf.ref;
-    var out = ['attribute,tier,filled,coverage_pct,' + (rf.isDaily ? 'yesterday_pct' : 'known_good_pct') + ',delta_pp,spec_note'];
+    var out = ['attribute,tier,filled,coverage_pct,scored_over_products,' + (rf.isDaily ? 'yesterday_pct' : 'known_good_pct') + ',delta_pp,spec_note'];
     SPEC.forEach(function (x) {
       var a = s.attrs[x.k] || { present: false };
       var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
-      var was = refA && refA.present ? refA.cov : '';
+      var same = refA && !!refA.scope === !!a.scope;   // never difference two bases
+      var was = refA && refA.present && same ? refA.cov : '';
       out.push(['g:' + x.k, x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended'),
-        a.present ? a.filled : '', a.present ? a.cov : 'not_in_feed', was,
-        (a.present && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
+        a.present ? a.filled : '', a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed'),
+        a.scope ? a.scope.n : s.rows, was,
+        (a.present && !a.na && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
         '"' + String(x.n).replace(/"/g, '""') + '"'].join(','));
     });
     var blob = new Blob([out.join('\n')], { type: 'text/csv' });
