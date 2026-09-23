@@ -9517,6 +9517,12 @@
       "file": "tools/test_labelguard.mjs",
       "pattern": "GPC category scope: an attribute scores only where Google asks for it",
       "pr": 0
+    },
+    {
+      "name": "AI Quote bundle price folds behind ⓘ, tick under the arrivals chart",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-BUNDLE-FOLD",
+      "pr": 0
     }
   ]
 }
