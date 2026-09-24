@@ -319,8 +319,10 @@ together, different fields AND. **A space means AND, a comma means OR.**
 | `min:` `max:` | total hours on the row |
 | `-call`, `-client:Schuh` | exclude |
 
-`/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this view** keeps a
-query per device, and clicking a breakdown row toggles that filter in.
+`/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this search** keeps a
+query per device, and clicking a breakdown row toggles that filter in. (The chart's own shape is
+saved separately, by **★ Save view** — see *Saved views* below. Two buttons called "save this view"
+on one page would have been two names for two different things.)
 
 ### A comma is OR, a space is AND
 
@@ -429,9 +431,12 @@ card saying "Urgent" is the same inconsistency in words that the rank palette wa
 keeps its true size, because shrinking the part nobody has judged would be the dishonest kind of
 hiding.
 
-**Legend on chart** (toggle, default on, remembered per device) draws the key *inside* the SVG, so
-the eye never travels to the rail — and so the **⬇ PNG carries it**, which it never did before: a
-downloaded pie used to be a set of unnamed wedges. One list feeds both legends, so the rail and the
+**Name the marks on the chart** (toggle, default on, remembered per device; it lives in
+**⚙ Display** and was called *Legend on chart* until it learned to draw a second thing) names them
+*inside* the SVG, so the eye never travels to the rail — and so the **⬇ PNG carries the naming**,
+which it never did before: a downloaded pie used to be a set of unnamed wedges. On a **pie or
+donut** that naming is a leader per slice (see *Naming the marks on the chart* above); on every
+other form it is the key across the top. One list feeds both legends, so the rail and the
 chart can never name the same colour differently; with the legend on the chart, the end-of-line
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
@@ -599,6 +604,170 @@ Three rules keep it from becoming a number that quietly went missing:
    so, with the way back.
 3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
    that card exists to answer; this toggle governs the chart below it and nothing else.
+
+### One row, three menus
+
+> Ray, 23 Sep 2026, counting the controls on the chart card: *"you see how many button there are
+> here ? - reorganise them to make it easy to see please, or add pop up menu/ on left and right to
+> be less cluttered."*
+
+He was right: twenty controls over three rows. They are now **six on one line**, left to right —
+
+`ACCOUNT` · `SPLIT BY` · **⊞ Break down ▾** · `SHOW AS` · **⚙ Display ▾** · **★ Views ▾**
+
+The three that decide *what is on screen* stay as plain selects. The rest fold into three menus:
+**Break down** holds the two `then` splits, **Display** holds Include / Labels / the on-chart
+naming / Hide Not yet tagged / the table, and **Views** holds the saved-view list, Save and Delete.
+
+**Folding is allowed to cost a click. It is not allowed to hide what the chart is doing.** So:
+
+- every closed button states its own off-default state — the nesting path in words (*"Owner › Type
+  of work"*), an orange dot on **Display**, the open view's name on **Views**;
+- the subtitle beside the card title names every choice a fold could bury, including the two it
+  never used to mention (*not yet tagged hidden*, *table below*);
+- `ctlChips()` re-reads all of that on every render, so a restored view or a deep link puts the row
+  back in step with the chart without anybody clicking.
+
+One panel at a time (two over one row is the clutter again), Esc closes the open one before
+anything underneath it, the panel's side is **measured** against the card rather than guessed (the
+row wraps, so which button is last moves with the window), and under 760px a panel becomes a sheet
+the width of the card.
+
+**The nodes moved; they were not rebuilt.** Every id — `cdim2`, `cmeas`, `clab`, `cleg`, `cuntag`,
+`ctab`, `cview`, `vsave`, `vnm` — is the same one the saved-view restore and the harnesses already
+reach for.
+
+**The trap this hit, and a pre-existing one it exposed.** A flex row *ignores* `hidden`: the UA's
+`[hidden]{display:none}` loses to any class that sets `display`, so all three panels painted open
+on load. The same rule was already costing the page two live bugs — `#vdel` (a `.btn`) and
+`#cuntag-l` (a `.tog`) had *never* been hidden, so "Hide Not yet tagged" was showing on every
+dimension since it shipped. One rule states it for all of them. `tools/check_tmviews.js` asserts
+what is **painted**, not what the property says — reading the property is exactly what let the same
+bug ship open on the AI Quote card.
+
+### Naming the marks on the chart, not in a block beside it
+
+> Ray, 23 Sep 2026, drawing two curved arrows onto a donut: *"actually checkbox 'legend on chart' -
+> the label can appear with an arrow and light italic directly on chart like this."*
+
+A swatch row asks the eye to carry a colour across the card and back. A leader puts the name where
+the wedge is. So on the **pie and the donut** the toggle — now **"Name the marks on the chart"**,
+because it does two different things — draws each slice's own name beside it: a curve out of the
+arc in the slice's own colour, a dot where it leaves the ring, then the name in **light italic**
+with its hours in **bold**. Every other form keeps the key across the top, which is right for them
+(bars and columns already carry their names on the axis; a line chart genuinely needs a key).
+
+Four rules keep a leader layout from becoming the mess a bad one is:
+
+1. **The reason to refuse a label is NO ROOM, not a small number.** A 2% wedge is perfectly
+   nameable when its column is half empty; twenty labels are unreadable however big their slices
+   are. The cap is the column's own height in labels, filled **biggest-first**, with only a
+   hairline floor under it (`LEAD_MIN`, ≈0.8% — below that there is no arc to put a dot on). This
+   shipped wrong once with an angle-only 2.5% floor, which refused to name eight perfectly ordinary
+   12%-of-the-ring slices; `check_tmviews` fails on exactly that.
+2. **Nothing crosses.** Labels are laid out per side in the order their slices sit round the ring,
+   pushed apart to `LEAD_GAP`, and a column that runs past the box is shifted **whole** —
+   clamping each label would land two of them on one line.
+3. **The name takes the truncation, never the figure.** A truncated figure is a wrong figure.
+4. **Whatever is not labelled keeps a swatch**, so no wedge is ever identified by its colour alone.
+
+The real Lato italic is loaded (`ital,wght@…;1,400`) — a synthesised oblique at weight 400 is a
+smear, and these labels are the chart's only naming of a slice.
+
+### Saved views — the shape, never the account
+
+> Ray, 23 Sep 2026: *"in this chart dissection > allow option to save a view and that same view can
+> be applied across different client."*
+
+A **view** is the *shape* of a reading: what it splits by, how deep it nests, which form draws it,
+which series it counts, what the value labels say, and the rest of the query. The **account** is not
+part of that shape — it is the thing the shape gets pointed at.
+
+So the two live in their own controls, on one row under the split block:
+
+| Control | What it is |
+|---|---|
+| **Account** | the one thing a reading is pointed at. Picking another rewrites *only* the `client:` clause — the split, the nesting, the form, the series, the labels and every other search term stay exactly as they were. |
+| **Saved view** | a named shape, kept per device, that restores all of the above **and runs against whichever account is picked beside it**. |
+
+That is the whole feature: build the reading once on Superdry, save it, pick Reiss.
+
+**The client term is lifted out when a view is saved and put back when it is applied** — rather than
+riding inside the view and quietly answering about Superdry on a screen headed Reiss. The lift is
+`liftClient()` / `withClient()` in `src/taskbook.js`, twinned into the page and run against one
+assertion table by `tools/test_reporttasks.mjs`.
+
+Five judgement calls, each of which could have gone wrong quietly:
+
+1. **A negated account is lifted too.** Leaving `-client:Superdry` in a saved view and then applying
+   it *to* Superdry returns nothing and reads as a view that is broken rather than one that was
+   re-pointed. The clause comes out whole, and what it was travels with the view as `was` — named on
+   the card ("saved from Superdry, account left out") and in the save confirmation, so nothing is
+   dropped silently.
+2. **A name with a space or a comma is quoted back in.** `client:House of Bruar` reads as three
+   terms and `client:Monsoon, Accessorize` reads as a *list* of accounts — either way the view lands
+   on the wrong rows.
+3. **The picker follows the query, wherever the query came from** — a typed `client:`, a preset chip,
+   a breakdown-row click, a deep link. It is never a second source of truth about which account is
+   on screen.
+4. **Three states, because two would lie.** One account reads as that account; none reads as *every
+   account*; and a query naming two (`client:Reiss client:Schuh`) or excluding one reads as neither —
+   it says so in its own option, because a picker reading "every account" over that would be the
+   control lying about what is drawn. A **typed prefix** (`client:rei`) is its own case again: it
+   really does filter to Reiss, but it is not the roster's spelling, so it is offered verbatim as
+   *"rei — as typed"* rather than snapped to a name nobody typed.
+5. **Per device, like every other reading preference here** (`fcc-tm-meas` / `-lab` / `-cleg` /
+   `-untag`). A view describes how one screen wants to read the book, not a fact about the work, so
+   it never reaches `/api/state`. Handing one to a colleague is what **🔗 Link** is for — it already
+   carries the whole state, account included. Store: `fcc-tm-chartviews`, bounded at twelve, junk
+   and duplicate names dropped on read.
+
+**QA.** `tools/test_reporttasks.mjs` pins the lift, the put-back, the round trip, the three picker
+states and the shelf, against both copies. The other half — whether the controls exist and whether a
+restored view really lands on the account *on screen* — cannot be reached by reading source, so
+`tools/check_tmviews.js` (presync) drives the real page in Chromium: it builds a reading on Superdry,
+saves it, reads the stored record back to prove it carries no account, points it at Reiss and at
+House of Bruar and checks the chart is drawn from *those* rows, changes the shape, restores the view
+and asserts it comes back onto Reiss with no trace of Superdry. Three of its assertions fail the
+moment `packView` stops lifting; four more fail if the picker stops following the query.
+
+### The import preview has to be on screen
+
+Ray, 22 Sep 2026: *"import edits dont do anything anymore."*
+
+It wasn't the reader. `⇧ Import edits` read the file, matched every row on its `Task id`, built the
+whole before → after diff and the Apply button — at `x: 1449` in a 1440px window. Nothing about the
+import had changed; **its host had.** The preview was written into `#tgbd`, which PR #436 turned
+from a centred modal into the right-hand **tags rail**: a `.bd-box` parked at `translateX(102%)`
+until something adds `.on`, with the old `.bd-dim` backdrop rule deleted in the same rewrite. The
+preview still emitted the pre-#436 markup, nothing added `.on`, and so a correct dialog was painted
+just past the edge of the screen. Clicking the button and picking a file did, visibly, nothing.
+
+Sharing that host cost a second thing nobody had noticed: `host.innerHTML = …` wiped the rail. Open
+**Tags & rules**, import a sheet, and the panel you were working in was gone — and `rulesOpen()`
+reuses an existing `.bd-box` rather than rebuilding the shell, so it could find the *import's* box,
+skip building `#tg-body`, and throw on the next line.
+
+So the preview now has **its own host, `#impbd`**, and its own form. It is a **modal**, deliberately,
+where the rail is a landmark: the rail is something you work beside while you tag, this is a
+decision — read the diff, apply or cancel, gone. A scrim with the card nested inside it (so a click
+on the backdrop is unambiguously a click outside the dialog), `Esc` closes it *before* anything
+underneath, focus lands on the button you are being asked to press, and under 760px it is a full
+sheet rather than a card cropped by the gutter — the phone convention every other overlay on the
+FCC follows. Nothing about the matching, the diff or the apply changed.
+
+**The tripwire renders it** (`tools/check_tmimport.js`, in presync). A source-level assertion could
+not have caught this bug: the markup was in one file, the rule that hid it in another, shipped by a
+different PR months apart, and every string involved still looked right. So the check drives the
+real page through Chromium — imports a real CSV, asserts **every edge of the dialog is inside the
+viewport**, that the card is inside its scrim, that the tags rail is still whole underneath it,
+that Apply actually writes the judgements onto the rows, that `Esc` closes it, and that it fits a
+390px screen. On the pre-fix page six of those fail, the first with Playwright's own words:
+*element is outside of the viewport*.
+
+One trap the harness itself had to learn: the real `/api/state` PUT echoes the **merged** map back
+and the page adopts what it returns, so a stub answering `{}` wipes every tag the instant it is
+saved — and the test would have reported the product broken when it was the fixture.
 
 ### Account type
 

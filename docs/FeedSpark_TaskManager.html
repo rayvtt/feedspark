@@ -23,7 +23,7 @@ window.addEventListener('load',restore);
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FeedSpark · FS Task Manager</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap');
   :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
     --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
     --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
@@ -89,6 +89,51 @@ window.addEventListener('load',restore);
   /* a label and its select wrap together or not at all — the row wraps, and "INCLUDE" left
      stranded at the end of one line with its control on the next names nothing */
   .cw-ctl .cwp{display:inline-flex;align-items:center;gap:8px}
+  /* THE THREE FOLDED MENUS. A menu button is a control like any other, so it wears the page's own
+     pill height; the panel is anchored to it rather than pushed into the row, which is the whole
+     point — the row stays ONE line at every width the card is read at. */
+  .cmenu{position:relative;display:inline-flex}
+  .cw-ctl .cmb{gap:5px}
+  .cw-ctl .cmb .cmk{opacity:.55;font-size:10px}
+  /* a folded control that is off its default SAYS SO on the closed button — folding is allowed to
+     cost a click, never to hide what the chart is currently doing */
+  .cw-ctl .cmb.on{border-color:var(--orange);color:var(--orange-deep,var(--orange));font-weight:800}
+  .cw-ctl .cmb[aria-expanded="true"]{border-color:var(--orange);background:var(--wash)}
+  .cw-ctl .cmb[disabled]{opacity:.45;cursor:default}
+  .cw-ctl .cmb .cdot{width:6px;height:6px;border-radius:50%;background:var(--orange);flex:0 0 6px}
+  /* A FLEX ROW IGNORES `hidden`: the UA's [hidden]{display:none} loses to any class that sets
+     display, so every one of these would paint open on load (the same trap the AI Quote card hit
+     with .aim-r). Stated once, for the panel, the name form, the Delete button and the tag-split
+     toggle — the last of which had been showing on every dimension since it shipped. */
+  .cpop[hidden],.cpop .vname[hidden],.cpop .btn[hidden],.cpop .tog[hidden]{display:none}
+  /* inside a menu, under its own heading, a column of SHOUTING CAPS is noise — the uppercase
+     label style belongs to the fields beside a control, not to a list of choices */
+  .cpop .tog{text-transform:none;font-size:12.5px;letter-spacing:0}
+  .cpop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:250px;
+    display:flex;flex-direction:column;gap:9px;padding:12px 13px 13px;
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 14px 34px rgba(16,24,40,.16)}
+  .cpop.wide{min-width:300px}
+  /* a panel opened by the last control in the row would run off the right edge, so those hang
+     from their own right edge instead */
+  .cmenu.rt .cpop{left:auto;right:0}
+  .cpop h5{margin:0;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .cpop .cwp{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .cpop .cwp select{flex:1 1 auto;min-width:0;max-width:200px}
+  .cpop .cpn{margin:0;font-size:11.5px;font-weight:600;color:var(--muted);line-height:1.45}
+  .cpop .vrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .cpop .vname{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .cpop .vname input{flex:1 1 150px;min-width:0;padding:0 10px}
+  .vnote{font-size:11.5px;font-weight:600;color:var(--muted);line-height:1.45}
+  .vnote b{color:var(--ink-2,var(--ink))}
+  /* on a phone a panel anchored to a 36px button is a panel half off the screen: it becomes a
+     sheet the width of the card, still under its own button so it is obvious what opened it */
+  @media (max-width:760px){
+    .cmenu{position:static}
+    .cpop,.cmenu.rt .cpop{left:12px;right:12px;min-width:0;width:auto;position:fixed;top:auto;bottom:12px;
+      max-height:70vh;overflow:auto}
+    .cpop .cwp select{max-width:none}
+  }
   /* SIDE BY SIDE, EXPANDED (Ray, 18 Sep 2026: "clicking on any chart will expand it as the main
      chart on the screen and showcase the different split legend in animation pls").
      The reveal is driven by a CLASS ON THE WRAPPER, and every animated element also carries its
@@ -105,8 +150,8 @@ window.addEventListener('load',restore);
   .tm-exp .lgi{animation:tmlgi .4s ease backwards}
   .tm-exp .ctr{animation:tmfade .45s .2s ease backwards}
   @media(prefers-reduced-motion:reduce){.tm-exp .arc,.tm-exp .lgi,.tm-exp .ctr{animation:none}}
-  .cw-ctl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  .cw-ctl select{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .cw-ctl label,.cpop label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cw-ctl select,.cpop select,.cpop input{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
   .cstage{flex:1 1 460px;min-width:0}
@@ -169,7 +214,7 @@ window.addEventListener('load',restore);
   :root{--h-field:34px;--h-pill:30px}
   .btn{height:var(--h-field);padding:0 12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:6px}
   .btn.sm,.chip,.pq-x{height:var(--h-pill);padding:0 12px;border-radius:100px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:5px}
-  .cw-ctl select,.pq-bar input{height:var(--h-field);padding:0 10px;border-radius:9px;font-size:13px;line-height:1}
+  .cw-ctl select,.cpop select,.cpop input,.pq-bar input{height:var(--h-field);padding:0 10px;border-radius:9px;font-size:13px;line-height:1}
   .pq-x:hover{color:var(--orange-deep);border-color:var(--orange)}
   /* the totals row stays put while the list scrolls — the whole point is that you can read what
      the rows add up to without arriving at the end of them */
@@ -288,7 +333,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
 [data-theme=dark] a{color:var(--orange-ink)}
 [data-theme=dark] .kpi,[data-theme=dark] .card,[data-theme=dark] .src,[data-theme=dark] .drawer,[data-theme=dark] .bd .bx,[data-theme=dark] table.st th{background:var(--paper);border-color:var(--line);color:var(--ink)}
-[data-theme=dark] .btn,[data-theme=dark] .chip,[data-theme=dark] .cw-ctl select,[data-theme=dark] .dr-h .x{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn,[data-theme=dark] .chip,[data-theme=dark] .cw-ctl select,[data-theme=dark] .cpop select,[data-theme=dark] .cpop input,[data-theme=dark] .dr-h .x{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
 [data-theme=dark] .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
 [data-theme=dark] #q{background:#181B22;border-color:var(--line);color:var(--ink)}
@@ -308,7 +353,7 @@ window.addEventListener('load',restore);
     <a class="nav-toggle" href="/" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-flame" d="M12 19.2c1.1 1.3 1.7 2.5 1.7 3.3 0 .9-.8 1.5-1.7 1.5s-1.7-.6-1.7-1.5c0-.8.6-2 1.7-3.3Z"/><path class="rk-body" d="M12 .9c3 2.4 4.8 6.2 4.8 10.4 0 2.6-.7 5-1.9 7.1H9.1A14.6 14.6 0 0 1 7.2 11.3C7.2 7.1 9 3.3 12 .9Z"/><circle class="rk-win" cx="12" cy="9.4" r="2"/><path class="rk-fin" d="M7.2 12.2 4.4 15v3.4l2.8-1.7v-4.5ZM16.8 12.2l2.8 2.8v3.4l-2.8-1.7v-4.5Z"/></g></svg></a>
     <div class="brand">Feed<span>Spark</span></div>
     <div class="tb-tag">FS Task Manager</div>
-    <nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm on" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+    <nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm on" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
     <button class="nav-collapse" id="nav-collapse" type="button" title="Hide / show the module menu" aria-label="Hide or show the module menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </header>
@@ -382,40 +427,92 @@ window.addEventListener('load',restore);
         <button class="btn sm" id="xlink" type="button" title="Copy a link that reopens this exact view">🔗 Link</button>
       </div>
     </div>
+    <!-- ONE ROW, NOT THREE (Ray, 23 Sep 2026, counting the controls: "you see how many button
+         there are here ? - reorganise them to make it easy to see please, or add pop up menu/ on
+         left and right to be less cluttered"). Twenty controls over three rows became SIX on one:
+         the three that decide WHAT IS ON SCREEN stay as plain selects, and the rest fold into three
+         menus — ACCOUNT · SPLIT BY · ⊞ Break down · SHOW AS · ⚙ Display · ★ Views, left to right.
+         NOTHING IS HIDDEN, only folded: every menu button states its own off-default state (the
+         nesting path, a dot, the view's name) and the subtitle beside the title names every choice
+         a fold could otherwise bury, so the card can never quietly be reading something else. -->
     <div class="cw-ctl">
-      <label for="cdim">Split by</label>
-      <select id="cdim"></select>
+      <span class="cwp"><label for="cacct">Account</label>
+        <select id="cacct" title="Point this whole reading at another account — the split, the form, the series and the rest of the search all stay exactly as they are"></select></span>
+      <span class="cwp"><label for="cdim">Split by</label>
+        <select id="cdim"></select></span>
+
       <!-- the second and third splits NEST the rows (AdWords' Campaign > Ad group > Keyword), they
            never become the series: colour already means billable vs non-billable here -->
-      <label for="cdim2" class="thn">then</label>
-      <select id="cdim2"></select>
-      <label for="cdim3" class="thn">then</label>
-      <select id="cdim3"></select>
-      <label for="cform">Show as</label>
-      <select id="cform">
-        <option value="donut">Donut</option>
-        <option value="stack">Stacked columns</option>
-        <option value="pct">100% stacked</option>
-        <option value="bars">Horizontal bars</option>
-      </select>
-      <!-- WHICH SERIES the chart is about. Hiding one re-ranks the rows on the one that is left,
-           so the bars can never be ordered by a number the chart no longer draws -->
-      <span class="cwp"><label for="cmeas">Include</label>
-        <select id="cmeas">
-          <option value="hours">Billable + non-billable</option>
-          <option value="bill">Billable only</option>
-          <option value="nonbill">Non-billable only</option>
+      <span class="cmenu" id="m-nest">
+        <button class="btn sm cmb" id="mb-nest" type="button" aria-expanded="false" aria-haspopup="true"
+          title="Break each row down by a second and a third dimension">&#8862; <span class="cml">Break down</span> <span class="cmk">&#9662;</span></button>
+        <div class="cpop" id="p-nest" hidden role="group" aria-label="Break down">
+          <h5>Break each row down further</h5>
+          <span class="cwp"><label for="cdim2">Then</label><select id="cdim2"></select></span>
+          <span class="cwp"><label for="cdim3">Then</label><select id="cdim3"></select></span>
+          <p class="cpn">The extra splits nest the rows — colour still means billable vs non-billable at every depth.</p>
+        </div>
+      </span>
+
+      <span class="cwp"><label for="cform">Show as</label>
+        <select id="cform">
+          <option value="donut">Donut</option>
+          <option value="stack">Stacked columns</option>
+          <option value="pct">100% stacked</option>
+          <option value="bars">Horizontal bars</option>
         </select></span>
-      <!-- and what a value label SAYS: hours, or a share — of its parent, or of the whole chart -->
-      <span class="cwp"><label for="clab">Labels</label>
-        <select id="clab"></select></span>
-      <!-- the legend ON the chart, so the eye never has to travel to the rail — and so the PNG
-           export carries it, which it never did before -->
-      <label class="tog" title="Draw the key on the chart itself — it rides the PNG export too"><input type="checkbox" id="cleg" checked> Legend on chart</label>
-      <!-- only ever shown when a tag split is on screen: on every other dimension there is no
-           untagged bucket to leave out, and a control that does nothing is a control that lies -->
-      <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
-      <label class="tog"><input type="checkbox" id="ctab"> Table</label>
+
+      <span class="cmenu" id="m-disp">
+        <button class="btn sm cmb" id="mb-disp" type="button" aria-expanded="false" aria-haspopup="true"
+          title="Which series the chart draws, what the value labels say, and the legend / table toggles">&#9881; <span class="cml">Display</span><i class="cdot" hidden aria-hidden="true"></i> <span class="cmk">&#9662;</span></button>
+        <div class="cpop" id="p-disp" hidden role="group" aria-label="Display">
+          <h5>How this is drawn</h5>
+          <!-- WHICH SERIES the chart is about. Hiding one re-ranks the rows on the one that is left,
+               so the bars can never be ordered by a number the chart no longer draws -->
+          <span class="cwp"><label for="cmeas">Include</label>
+            <select id="cmeas">
+              <option value="hours">Billable + non-billable</option>
+              <option value="bill">Billable only</option>
+              <option value="nonbill">Non-billable only</option>
+            </select></span>
+          <!-- and what a value label SAYS: hours, or a share — of its parent, or of the whole chart -->
+          <span class="cwp"><label for="clab">Labels</label>
+            <select id="clab"></select></span>
+          <!-- the marks NAMED on the chart, so the eye never has to travel to the rail — and so the
+               PNG export carries the naming, which it never did before. Two drawings, one toggle:
+               a pie or donut names each slice beside itself with a leader (Ray, 23 Sep 2026), every
+               other form gets the key across the top. -->
+          <label class="tog" title="A pie or donut names each slice beside itself with a leader line; every other form gets the key across the top. Either way it rides the ⬇ PNG."><input type="checkbox" id="cleg" checked> Name the marks on the chart</label>
+          <!-- only ever shown when a tag split is on screen: on every other dimension there is no
+               untagged bucket to leave out, and a control that does nothing is a control that lies -->
+          <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
+          <label class="tog"><input type="checkbox" id="ctab"> Table under the chart</label>
+        </div>
+      </span>
+
+      <!-- THE SHAPE, AND WHAT IT IS POINTED AT (Ray, 23 Sep 2026: "in this chart dissection > allow
+           option to save a view and that same view can be applied across different client"). The
+           account is NOT part of a view: it is the thing a view gets pointed at, which is why it
+           sits at the far LEFT of this row and a saved view never carries one. -->
+      <span class="cmenu" id="m-view">
+        <button class="btn sm cmb" id="mb-view" type="button" aria-expanded="false" aria-haspopup="true"
+          title="Save this reading — the split, the form, the series, the labels and the rest of the search — and run it against any account">&#9733; <span class="cml">Views</span> <span class="cmk">&#9662;</span></button>
+        <div class="cpop wide" id="p-view" hidden role="group" aria-label="Saved views">
+          <h5>Saved views</h5>
+          <span class="cwp"><label for="cview">Open</label>
+            <select id="cview" title="A saved view restores the split, the form, the series, the labels and the rest of the search — and runs against whichever account is picked beside it"></select></span>
+          <div class="vrow">
+            <button class="btn sm" id="vsave" type="button" title="Keep this reading on this device, without its account">&#9733; Save this view</button>
+            <button class="btn sm" id="vdel" type="button" hidden title="Remove this saved view from this device">&#10005; Delete</button>
+          </div>
+          <span class="vname" id="vname" hidden>
+            <input id="vnm" type="text" maxlength="40" placeholder="Name this view" aria-label="Name this view">
+            <button class="btn sm" id="vok" type="button">Save</button>
+            <button class="btn sm" id="vno" type="button">Cancel</button>
+          </span>
+          <span class="vnote" id="vnote"></span>
+        </div>
+      </span>
     </div>
     <div class="cbody">
       <div class="cstage" id="cstage"></div>
@@ -524,6 +621,35 @@ window.addEventListener('load',restore);
   #tgbd .tgd-add .tgd-w{flex:1 1 100%}
   #tgbd .tgd-src{flex:1 1 100%;width:100%;text-overflow:ellipsis}
   #tgbd .tgd-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
+
+  /* THE IMPORT PREVIEW IS ITS OWN MODAL, ON ITS OWN HOST (#impbd), never #tgbd's.
+     It used to share the tags host, and when that host became a right-hand RAIL (#436) the
+     preview kept emitting the old centred-modal markup — a .bd-dim whose CSS went with the
+     rewrite, and a .bd-box that the rail parks at translateX(102%) until something adds .on.
+     Nothing did, so the dialog was built, correctly, 9px past the right edge of a 1440px
+     window: the file read, the diff computed, Apply waiting, and not one pixel on screen.
+     A shared host also meant rulesOpen() could find the import's .bd-box, skip building
+     #tg-body and throw on the line after.
+     It is a MODAL rather than a rail on purpose: the rail is a landmark you work beside while
+     you tag, this is a decision — read the diff, apply or cancel, gone. */
+  #impbd:empty{display:none}
+  #impbd .im-scrim{position:fixed;inset:0;z-index:100;background:rgba(16,24,40,.32);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    opacity:0;transition:opacity .16s ease}
+  #impbd .im-scrim.on{opacity:1}
+  #impbd .im-card{display:flex;flex-direction:column;width:min(620px,100%);max-height:min(82vh,720px);
+    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
+    box-shadow:0 18px 48px rgba(16,24,40,.24);overflow:hidden;
+    transform:translateY(8px) scale(.985);transition:transform .16s ease}
+  #impbd .im-scrim.on .im-card{transform:none}
+  #impbd .im-h{display:flex;align-items:center;gap:8px;padding:12px 14px;flex:none;
+    border-bottom:1px solid var(--line,#E6E6E6)}
+  #impbd .im-b{padding:14px;overflow:auto;overscroll-behavior:contain;flex:1}
+  @media (prefers-reduced-motion:reduce){#impbd .im-scrim,#impbd .im-card{transition:none}}
+  @media (max-width:760px){
+    #impbd .im-scrim{padding:0;align-items:stretch}
+    #impbd .im-card{width:100%;max-height:none;border-radius:0;border:none}
+  }
   .mut{color:var(--muted)}
   #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
     background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
@@ -584,6 +710,8 @@ window.addEventListener('load',restore);
     <div id="tagwarn" hidden></div>
     <!-- its OWN host: #bd is the breakdown panel, which apply() re-renders on every keystroke -->
     <div id="tgbd"></div>
+    <!-- the import preview: its own host, so the tags rail can never park it off-screen -->
+    <div id="impbd"></div>
     <div class="tscroll" id="pbody"></div>
   </section>
 
@@ -1261,6 +1389,95 @@ window.addEventListener('load',restore);
     if (allowance > 0 && balance > allowance * 2) return 'banked';
     return 'ok';
   }
+
+  /* SAVED CHART VIEWS — THE SHAPE, NEVER THE ACCOUNT (Ray, 23 Sep 2026: "in this chart dissection
+     > allow option to save a view and that same view can be applied across different client").
+     A view is what the chart splits by, how deep, which form, which series, what the labels say
+     and the rest of the query. The ACCOUNT is not part of that shape — it is the thing the shape
+     gets pointed at — so the client term is LIFTED OUT when a view is saved and put back when it
+     is applied, rather than riding inside it and quietly answering about Superdry on a screen
+     headed Reiss. A NEGATED client term is lifted too: leaving `-client:Superdry` in place and
+     then applying the view TO Superdry returns nothing and reads as a broken view, so the clause
+     comes out whole and what it was travels with the view as `was`.
+     Twin of src/taskbook.js — tools/test_reporttasks.mjs runs one table against both. */
+  var CLIENT_FIELDS = ['client', 'brand'];
+  var CLIENT_TOK = /^(-?)(?:client|brand):(.+)$/i;
+  var VIEW_MAX = 12;
+  // parseQuery's tokeniser throws the quotes away, which is right for matching and wrong for
+  // re-emitting — this one keeps each token's own text so the survivors re-join as a real query
+  function rawToks(src) {
+    var out = [], cur = '', quote = false, i, c;
+    for (i = 0; i < src.length; i++) {
+      c = src[i];
+      if (c === '"') { quote = !quote; cur += c; continue; }
+      if (!quote && /\s/.test(c)) { if (cur) out.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function liftClient(q) {
+    var keep = [], was = [], toks = rawToks(String(q || '')), i, m;
+    for (i = 0; i < toks.length; i++) {
+      m = toks[i].match(CLIENT_TOK);
+      if (m) { was.push((m[1] ? '-' : '') + m[2].split('"').join('')); continue; }
+      keep.push(toks[i]);
+    }
+    return { rest: keep.join(' ').trim(), was: was };
+  }
+  function withClient(rest, client) {
+    var r = String(rest || '').trim();
+    var c = String(client || '').split('"').join('').trim();
+    if (!c) return r;
+    // a name carrying a space reads as two terms and one carrying a comma reads as a LIST of
+    // accounts, so either has to be quoted or the view lands on the wrong rows
+    var v = /[\s,]/.test(c) ? '"' + c + '"' : c;
+    return 'client:' + v + (r ? ' ' + r : '');
+  }
+  // `multi` is the honest third answer: a query naming two accounts, or excluding one, has no
+  // single account to show, and a picker reading "every account" over it would be lying
+  function accountPick(q) {
+    var was = liftClient(q).was;
+    var pos = was.filter(function (w) { return w.charAt(0) !== '-'; });
+    if (was.length === 1 && pos.length === 1) return { v: pos[0], multi: false, was: was };
+    return { v: '', multi: was.length > 0, was: was };
+  }
+  function packView(name, st) {
+    var s = st || {}, lc = liftClient(s.q);
+    return {
+      name: String(name || '').trim().slice(0, 40) || 'Untitled view',
+      q: lc.rest,
+      was: lc.was,
+      dim: String(s.dim || 'total'),
+      dim2: String(s.dim2 || ''),
+      dim3: String(s.dim3 || ''),
+      form: String(s.form || 'donut'),
+      meas: String(s.meas || 'hours'),
+      lab: String(s.lab || 'hours'),
+      leg: s.leg !== false,
+      untag: s.untag !== false,
+      table: !!s.table,
+      at: Number(s.at) || Date.now()
+    };
+  }
+  function viewQuery(view, client) { return withClient(view && view.q, client); }
+  // `was` survives the round trip deliberately: packView would recompute it from an already
+  // lifted query and report that the view had never carried an account
+  function sanitizeViews(raw) {
+    var l = Array.isArray(raw) ? raw : [], out = [], seen = {}, i, v, p, k;
+    for (i = 0; i < l.length; i++) {
+      v = l[i];
+      if (!v || typeof v !== 'object' || !String(v.name || '').trim()) continue;
+      p = packView(v.name, v);
+      if (Array.isArray(v.was)) p.was = v.was.map(String).slice(0, 6);
+      k = p.name.toLowerCase();
+      if (seen[k]) continue;
+      seen[k] = 1;
+      out.push(p);
+      if (out.length >= VIEW_MAX) break;
+    }
+    return out;
+  }
   /* ENGINE:END */
 
   window.FSTM = { parseQuery: parseQuery, matchTask: matchTask, matchTicket: matchTicket,
@@ -1916,6 +2133,8 @@ window.addEventListener('load',restore);
      is SHOWN — added, changed, cleared, unknown ids and unknown tag names — and nothing is saved
      until it is confirmed. Rows the file does not mention are never touched, so importing a
      filtered sheet cannot wipe the rest of the book. */
+  // set while the preview is up, so Esc closes it and nothing else has to know it exists
+  var IMPCLOSE = null;
   function tagImport(file) {
     if (!window.FeedXlsx || window.__xlsxFail) { toast('The spreadsheet engine did not load — reload the page'); return; }
     FeedXlsx.readFile(file).then(function (rows) {
@@ -1957,11 +2176,11 @@ window.addEventListener('load',restore);
         plan.push({ task: task, tags: hasTags ? mapped : null, was: task.tags || [],
           cat: catSame ? null : wantCat, wasCat: task.cat });
       });
-      var host = $('tgbd');
+      var host = $('impbd');
       var unknownList = Object.keys(unknownTag);
-      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Import tags">'
-        + '<div class="bd-h"><b>Import tags</b><span class="grow"></span><button class="btn sm" id="im-x" type="button">✕</button></div>'
-        + '<div class="bd-b">'
+      host.innerHTML = '<div class="im-scrim"><div class="im-card" role="dialog" aria-modal="true" aria-label="Import edits">'
+        + '<div class="im-h"><b>Import edits</b><span class="grow"></span><button class="btn sm" id="im-x" type="button" title="Close (Esc)">✕</button></div>'
+        + '<div class="im-b">'
         + '<p style="margin:0 0 10px"><b>' + num(plan.length) + '</b> row' + (plan.length === 1 ? '' : 's')
         + ' would change. Nothing is saved until you confirm.</p>'
         + '<div class="mut" style="font-size:12.5px;line-height:1.7;margin-bottom:10px">'
@@ -1987,19 +2206,25 @@ window.addEventListener('load',restore);
         + '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
         + '<button class="btn sm" id="im-no" type="button">Cancel</button>'
         + (plan.length ? '<button class="btn sm" id="im-yes" type="button" style="background:var(--accent,#F5A623);border-color:var(--accent,#F5A623);color:#fff">Apply ' + num(plan.length) + ' change' + (plan.length === 1 ? '' : 's') + '</button>' : '')
-        + '</div></div>';
-      var close = function () { host.innerHTML = ''; };
-      host.addEventListener('click', function (e) {
-        if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target.className === 'bd-dim') return close();
+        + '</div></div></div>';
+      var scrim = host.querySelector('.im-scrim');
+      // one frame, so the card animates in rather than appearing mid-transition
+      requestAnimationFrame(function () { if (scrim) scrim.classList.add('on'); });
+      var btn = $('im-yes') || $('im-no'); if (btn) btn.focus();
+      IMPCLOSE = function () { IMPCLOSE = null; host.innerHTML = ''; };
+      host.onclick = function (e) {
+        // the scrim IS the backdrop, so a click that lands on it (never on the card inside it)
+        // is a click outside the dialog
+        if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target === scrim) return IMPCLOSE && IMPCLOSE();
         if (e.target.id === 'im-yes') {
           plan.forEach(function (x) {
             if (x.tags) setTags(x.task, x.tags);
             if (x.cat) setType(x.task, x.cat);
           });
-          tagSave(); close();
+          tagSave(); IMPCLOSE && IMPCLOSE();
           toast('Imported edits on ' + num(plan.length) + ' row' + (plan.length === 1 ? '' : 's'));
         }
-      });
+      };
     }).catch(function (e) { toast('Could not read that file — ' + ((e && e.message) || e)); });
   }
 
@@ -2080,8 +2305,8 @@ window.addEventListener('load',restore);
       };
     });
     var add = document.createElement('button');
-    add.className = 'chip'; add.type = 'button'; add.textContent = '＋ Save this view';
-    add.title = 'Keep this query on this device. Alt-click a saved chip to remove it.';
+    add.className = 'chip'; add.type = 'button'; add.textContent = '＋ Save this search';
+    add.title = 'Keep this QUERY on this device — the chart\'s own shape is saved separately, by ★ Save view. Alt-click a saved chip to remove it.';
     add.onclick = saveView;
     $('qchips').appendChild(add);
   }
@@ -2131,7 +2356,7 @@ window.addEventListener('load',restore);
       if (live) u.searchParams.set('q', live); else u.searchParams.delete('q');
       history.replaceState(null, '', u.toString());
     } catch (e) {}
-    kpis(); chart(); breakdown(); pane(); chips();
+    kpis(); chart(); breakdown(); pane(); chips(); accts();
   }
 
   /* ---- chart ----------------------------------------------------------------------------- */
@@ -2399,9 +2624,245 @@ window.addEventListener('load',restore);
     el.value = CLAB;
   }
 
+  /* ---- saved views, and the account a view is pointed at ---------------------------------- */
+  /* The engine (above, twinned into src/taskbook.js) lifts the account clause out of a query and
+     puts it back. Everything here is the surface: a roster to point a reading at, a per-device
+     shelf of named shapes, and one sentence saying which of the two a view carries.
+
+     PER DEVICE, like every other reading preference on this page (fcc-tm-meas / -lab / -cleg /
+     -untag): a view describes how one screen wants to read the book, not a fact about the work.
+     Handing one to a colleague is what 🔗 Link is for — it already carries the whole state. */
+  /* TMVIEW-SHELF — the per-device shelf of named shapes */
+  var VKEY = 'fcc-tm-chartviews';
+  // which saved view is on screen, if any — an index into the list, never a copy of it
+  var VSEL = null;
+  function viewsList() {
+    try { return sanitizeViews(JSON.parse(localStorage.getItem(VKEY) || '[]')); } catch (e) { return []; }
+  }
+  function viewsSave(l) {
+    try { localStorage.setItem(VKEY, JSON.stringify(sanitizeViews(l))); } catch (e) {}
+  }
+  /* The roster is the CLIENT MASTER plus anything the book itself carries — a market read into
+     the task rows before its account row arrived would otherwise be unreachable from the picker
+     while its hours sat on the chart. A scoped signin is served only its own clients, so the
+     list narrows itself with nothing here to do. */
+  function clientRoster() {
+    var seen = {}, out = [], i, c;
+    for (i = 0; i < ACCOUNTS.length; i++) {
+      c = String(ACCOUNTS[i].client || '').trim();
+      if (c && !seen[c.toLowerCase()]) { seen[c.toLowerCase()] = 1; out.push(c); }
+    }
+    for (i = 0; i < TASKS.length; i++) {
+      c = String(TASKS[i].client || '').trim();
+      if (c && !seen[c.toLowerCase()]) { seen[c.toLowerCase()] = 1; out.push(c); }
+    }
+    return out.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+  }
+  /* The picker FOLLOWS the query, wherever the query came from — a breakdown row click, a preset
+     chip, a typed `client:`, a deep link. Three states, and the third is why this is not a plain
+     select: a query naming two accounts (or excluding one) has no single account to show, and a
+     picker reading "every account" over `client:Reiss client:Schuh` would be the control lying
+     about what is on screen, so it says so in its own option instead.
+     A TYPED PREFIX is its own case: `client:rei` really does filter to Reiss, but it is not the
+     roster's spelling, so it is offered verbatim rather than snapped to a name nobody typed. */
+  /* TMVIEW-PICKER-FOLLOWS */
+  function accts() {
+    var el = $('cacct'); if (!el) return;
+    var pick = accountPick(Q.raw), roster = clientRoster(), opts = [], extra = '';
+    if (pick.multi) opts.push('<option value="\u0001multi" selected>' + esc(pick.was.join(' · ')) + '</option>');
+    opts.push('<option value=""' + (!pick.v && !pick.multi ? ' selected' : '') + '>— every account —</option>');
+    if (pick.v && !roster.some(function (c) { return c.toLowerCase() === pick.v.toLowerCase(); })) {
+      extra = '<option value="' + esc(pick.v) + '" selected>' + esc(pick.v) + ' — as typed</option>';
+    }
+    el.innerHTML = opts.join('') + extra + roster.map(function (c) {
+      return '<option value="' + esc(c) + '"' + (pick.v && c.toLowerCase() === pick.v.toLowerCase() ? ' selected' : '') + '>' + esc(c) + '</option>';
+    }).join('');
+  }
+  /* The same reading, pointed somewhere else: the query's account clause is replaced and NOTHING
+     else is touched — not the split, not the form, not the series, not the rest of the search. */
+  function acctGo(v) {
+    if (v === '\u0001multi') { accts(); return; }               // the honest state is not a destination
+    $('q').value = withClient(liftClient($('q').value).rest, v);
+    apply();
+  }
+
+  var FORM_WORD = {}, LAB_WORD = {};
+  function viewWords() {
+    FORMS.forEach(function (f) { FORM_WORD[f.v] = f.label; });
+    LABS.forEach(function (o) { LAB_WORD[o.v] = o.label; });
+  }
+  var MEAS_WORD = { hours: 'billable + non-billable', bill: 'billable only', nonbill: 'non-billable only' };
+  // read off the page's own FORMS / LABS / DIMS, so a view can never describe itself with a word
+  // the controls above it no longer use
+  function viewSummary(v) {
+    if (!v) return '';
+    var path = [v.dim].concat(v.dim2 ? [v.dim2] : [], v.dim3 ? [v.dim3] : []).map(function (k) {
+      var d = DIMS.filter(function (x) { return x.k === k; })[0];
+      return d ? d.label : k;
+    }).join(' › ');
+    return path + ' · ' + (FORM_WORD[v.form] || v.form) + ' · ' + (MEAS_WORD[v.meas] || v.meas)
+      + ' · labels: ' + (LAB_WORD[v.lab] || v.lab) + (v.q ? ' · ' + v.q : '');
+  }
+  function views() {
+    var el = $('cview'); if (!el) return;
+    var l = viewsList();
+    el.innerHTML = '<option value="">' + (l.length ? '— saved views —' : '— none saved yet —') + '</option>'
+      + l.map(function (v, i) { return '<option value="' + i + '" title="' + esc(viewSummary(v)) + '">' + esc(v.name) + '</option>'; }).join('');
+    el.value = VSEL == null ? '' : String(VSEL);
+    if (el.value !== (VSEL == null ? '' : String(VSEL))) { VSEL = null; el.value = ''; }
+    $('vdel').hidden = VSEL == null;
+    vnote();
+  }
+  function vnote() {
+    var el = $('vnote'); if (!el) return;
+    var v = VSEL == null ? null : viewsList()[VSEL];
+    if (v) {
+      el.innerHTML = '<b>' + esc(v.name) + '</b> — ' + esc(viewSummary(v))
+        + (v.was && v.was.length ? ' <span style="opacity:.75">(saved from ' + esc(v.was.join(' · ')) + ', account left out)</span>' : '');
+    } else {
+      el.textContent = 'A saved view keeps the shape, never the account — pick an account beside it and the same reading follows.';
+    }
+  }
+  function applyViewRec(v) {
+    if (!v) return;
+    expReset();
+    CDIM = v.dim; CDIM2 = v.dim2; CDIM3 = v.dim3;
+    CFORM = v.form; CMEAS = v.meas; CLAB = v.lab;
+    $('cdim').value = CDIM;
+    if ($('cdim').value !== CDIM) { CDIM = 'total'; $('cdim').value = 'total'; }   // a dim the book no longer offers
+    $('cleg').checked = v.leg; $('cuntag').checked = v.untag; $('ctab').checked = v.table;
+    // the view's own reading preferences become this device's, exactly as picking the control does
+    try {
+      localStorage.setItem('fcc-tm-meas', CMEAS); localStorage.setItem('fcc-tm-lab', CLAB);
+      localStorage.setItem('fcc-tm-cleg', v.leg ? '1' : '0'); localStorage.setItem('fcc-tm-untag', v.untag ? '1' : '0');
+    } catch (e) {}
+    // TMVIEW-ACCOUNT-ON-SCREEN
+    // THE ACCOUNT ON SCREEN WINS, which is the whole point: the view supplies the shape and the
+    // picker supplies what it is pointed at
+    $('q').value = viewQuery(v, accountPick($('q').value).v);
+    fillSubDims();
+    $('cmeas').value = CMEAS;
+    apply();
+  }
+
+  /* ---- the three folded menus ------------------------------------------------------------- */
+  /* Ray, 23 Sep 2026, counting the controls on this card: "you see how many button there are here?
+     - reorganise them to make it easy to see please, or add pop up menu/ on left and right to be
+     less cluttered". Twenty controls over three rows are now six on one — Account · Split by ·
+     ⊞ Break down · Show as · ⚙ Display · ★ Views.
+
+     FOLDING IS ALLOWED TO COST A CLICK, NEVER TO HIDE WHAT THE CHART IS DOING. Every closed menu
+     button states its own off-default state (the nesting path in words, an orange dot, the open
+     view's name), and the subtitle beside the title names every choice a fold could bury. */
+  var MENUS = ['nest', 'disp', 'view'], MOPEN = null;
+  function menuClose() {
+    if (!MOPEN) return;
+    var m = MOPEN; MOPEN = null;
+    var pop = $('p-' + m), btn = $('mb-' + m);
+    if (pop) pop.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    $('m-' + m).classList.remove('rt');
+  }
+  function menuOpen(m) {
+    if (MOPEN === m) { menuClose(); return; }
+    menuClose();                                    // one at a time: two panels over one row is the clutter again
+    MOPEN = m;
+    var pop = $('p-' + m), btn = $('mb-' + m), host = $('m-' + m);
+    pop.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    // the last controls in the row would hang their panel off the right edge of the card, so the
+    // side is MEASURED rather than guessed — the row wraps, so which button is last moves with the
+    // window width
+    var card = $('chartcard').getBoundingClientRect(), r = pop.getBoundingClientRect();
+    if (r.right > card.right - 4) host.classList.add('rt');
+    var f = pop.querySelector('select,input,button');
+    if (f) f.focus();
+  }
+  function menuWire() {
+    MENUS.forEach(function (m) {
+      $('mb-' + m).onclick = function (e) { e.stopPropagation(); menuOpen(m); };
+      $('p-' + m).onclick = function (e) { e.stopPropagation(); };
+    });
+    document.addEventListener('click', menuClose);
+  }
+  /* What each closed button says. Read off the live state on every render, so a view restored or a
+     deep link opened puts the row back in step with the chart without anybody clicking. */
+  function ctlChips() {
+    var nb = $('mb-nest'); if (!nb) return;
+    var path = [CDIM2, CDIM3].filter(Boolean).map(dimName);
+    nb.querySelector('.cml').textContent = path.length ? path.join(' › ') : 'Break down';
+    nb.classList.toggle('on', path.length > 0);
+    nb.disabled = CDIM === 'total';                 // one bucket splits into nothing
+    if (nb.disabled && MOPEN === 'nest') menuClose();
+
+    // the dot is the honest half of folding: Include, Labels, the legend and the table all change
+    // what is drawn, and all four now live behind one button
+    var off = CMEAS !== 'hours' || CLAB !== 'hours' || !$('cleg').checked || $('ctab').checked
+      || (tagDim() && !$('cuntag').checked);
+    var db = $('mb-disp');
+    db.querySelector('.cdot').hidden = !off;
+    db.classList.toggle('on', off);
+
+    var vb = $('mb-view'), v = VSEL == null ? null : viewsList()[VSEL];
+    vb.querySelector('.cml').textContent = v ? v.name : 'Views';
+    vb.classList.toggle('on', !!v);
+  }
+
+  function vwire() {
+    viewWords();
+    $('cacct').onchange = function () { acctGo($('cacct').value); };
+    $('cview').onchange = function () {
+      var i = $('cview').value;
+      VSEL = i === '' ? null : Number(i);
+      $('vdel').hidden = VSEL == null;
+      if (VSEL != null) applyViewRec(viewsList()[VSEL]);
+      vnote();
+    };
+    $('vsave').onclick = function () {
+      $('vname').hidden = false; $('vsave').hidden = true;
+      var v = VSEL == null ? null : viewsList()[VSEL];
+      $('vnm').value = v ? v.name : '';
+      $('vnm').focus(); $('vnm').select();
+    };
+    $('vno').onclick = vcancel;
+    $('vnm').onkeydown = function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); vcommit(); }
+      if (e.key === 'Escape') { e.stopPropagation(); vcancel(); }
+    };
+    $('vok').onclick = vcommit;
+    $('vdel').onclick = function () {
+      var l = viewsList(); if (VSEL == null || !l[VSEL]) return;
+      var gone = l[VSEL].name;
+      l.splice(VSEL, 1); viewsSave(l); VSEL = null; views();
+      toast('Removed "' + gone + '"');
+    };
+  }
+  function vcancel() { $('vname').hidden = true; $('vsave').hidden = false; $('vnm').value = ''; }
+  function vcommit() {
+    var name = $('vnm').value.trim();
+    if (!name) { $('vnm').focus(); return; }
+    var v = packView(name, {
+      q: $('q').value, dim: CDIM, dim2: CDIM2, dim3: CDIM3, form: CFORM, meas: CMEAS, lab: CLAB,
+      leg: $('cleg').checked, untag: $('cuntag').checked, table: $('ctab').checked
+    });
+    var l = viewsList(), at = -1, i;
+    for (i = 0; i < l.length; i++) if (l[i].name.toLowerCase() === v.name.toLowerCase()) { at = i; break; }
+    if (at >= 0) l[at] = v; else l.unshift(v);
+    if (l.length > VIEW_MAX) l = l.slice(0, VIEW_MAX);
+    viewsSave(l);
+    for (i = 0; i < l.length; i++) if (l[i].name === v.name) { VSEL = i; break; }
+    vcancel(); views();
+    // what was left out is SAID, because dropping the account silently is the one thing that
+    // could make a saved view answer a question nobody asked
+    toast(v.was.length
+      ? 'Saved "' + v.name + '" without its account (' + v.was.join(' · ') + ') — point it at any client'
+      : 'Saved "' + v.name + '" — it runs against whichever account you pick');
+  }
+
   function chart() {
     // the control only exists where it means something, and is never left ticked-but-inert
     var cul = $('cuntag-l'); if (cul) cul.hidden = !tagDim();
+    ctlChips();
     var POP = chartPop(), left = untagLeft();
     var s = summarise(POP), stage = $('cstage');
     var tree = nested() ? nestTree() : null;
@@ -2416,6 +2877,10 @@ window.addEventListener('load',restore);
     if (CFORM === 'small' && CEXP != null) basis.push('one group expanded');
     if (CMEAS !== 'hours') basis.push(measWord() + ' hours only');
     if (labBasis()) basis.push(labBasis());
+    // these two now live behind ⚙ Display, so the line beside the title is where a reader finds
+    // them — a fold may cost a click, it may not cost the truth
+    if (tagDim() && $('cuntag').checked) basis.push('not yet tagged hidden');
+    if ($('ctab').checked) basis.push('table below');
     $('cwsub').textContent = (nested()
       ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
         + (tree.length === 1 ? 'group' : 'groups')
@@ -2633,18 +3098,100 @@ window.addEventListener('load',restore);
      A slice's tooltip keeps its billable split in words — the share is what the shape says, the
      split is what this module is about, and losing the second to draw the first would be the one
      thing the encoding must not do. */
+  /* DIRECT LABELS WITH A LEADER, NOT A BLOCK OF SWATCHES (Ray, 23 Sep 2026, drawing two curved
+     arrows onto a donut: "actually checkbox 'legend on chart' - the label can appear with an arrow
+     and light italic directly on chart like this").
+
+     A swatch row asks the eye to carry a colour across the card and back; a leader puts the name
+     where the wedge is. So on the pie and the donut "Legend on chart" now draws the name ITSELF
+     beside its slice — a curve out of the arc in the slice's own colour, ending at the name in
+     light italic with its hours in bold beside it.
+
+     THREE rules keep it from becoming the mess a bad leader layout is:
+
+       1. SELECTIVE, AND ON THE RIGHT GROUNDS. The reason to refuse a label is NO ROOM, not a
+          small number: a 2% wedge is perfectly nameable when its column is half empty, and
+          twenty labels are unreadable however big their slices are. So the cap is the column's
+          own height in labels, filled BIGGEST FIRST, with only a hairline floor under it (a wedge
+          thinner than LEAD_MIN has no arc to put a dot on). Whatever is left falls through to a
+          compact swatch row underneath — identity is never left to colour alone.
+       2. NOTHING CROSSES. Labels are laid out per side, sorted by where their slice actually is,
+          then pushed apart to LEAD_GAP and the whole column shifted back inside the box —
+          spacing preserved, so the vertical order still matches the order round the ring.
+       3. THE VALUE IS NOT ITALIC. The name is the soft part (Ray's "light italic"); the number is
+          what gets read off the chart, so it keeps the weight every other figure here has. */
+  var LEAD_MIN = 0.05;                    // ≈0.8% of the ring — under this there is no arc to dot
+  var LEAD_GAP = 15;                      // the closest two 11px labels sit and still read apart
+  function leaderLabels(marks, cx, cy, r0, W, H) {
+    var cols = { l: [], r: [] }, rest = [], i, j;
+    // how many labels the two columns can actually hold, and which slices get them
+    var cap = Math.max(2, Math.floor((H - 22) / LEAD_GAP)) * 2, keep = {}, kept = 0;
+    marks.slice().sort(function (a, b) { return b.sweep - a.sweep; }).forEach(function (m) {
+      if (m.sweep >= LEAD_MIN && kept < cap) { keep[marks.indexOf(m)] = 1; kept++; }
+    });
+    for (i = 0; i < marks.length; i++) {
+      var m = marks[i];
+      if (!keep[i]) { rest.push(m); continue; }
+      var right = Math.cos(m.mid) >= 0;
+      cols[right ? 'r' : 'l'].push({
+        m: m, right: right,
+        ax: cx + Math.cos(m.mid) * r0, ay: cy + Math.sin(m.mid) * r0,
+        ex: cx + Math.cos(m.mid) * (r0 + 13), ey: cy + Math.sin(m.mid) * (r0 + 13),
+        y: cy + Math.sin(m.mid) * (r0 + 13)
+      });
+    }
+    ['l', 'r'].forEach(function (k) {
+      var a = cols[k].sort(function (p, q) { return p.y - q.y; });
+      if (!a.length) return;
+      for (j = 1; j < a.length; j++) if (a[j].y - a[j - 1].y < LEAD_GAP) a[j].y = a[j - 1].y + LEAD_GAP;
+      // shift the WHOLE column rather than clamping each label, or two would land on one line
+      var over = a[a.length - 1].y - (H - 9);
+      if (over > 0) for (j = 0; j < a.length; j++) a[j].y -= over;
+      if (a[0].y < 11) { var up = 11 - a[0].y; for (j = 0; j < a.length; j++) a[j].y += up; }
+    });
+    var out = '';
+    ['l', 'r'].forEach(function (k) {
+      cols[k].forEach(function (p) {
+        var tx = p.right ? cx + r0 + 27 : cx - r0 - 27;
+        var hx = p.right ? tx - 6 : tx + 6;
+        var avail = p.right ? (W - 5 - tx) : (tx - 5);
+        var val = hrs(p.m.hours) + ' h';
+        // the name gets whatever the number leaves — a truncated figure would be a wrong figure
+        var room = Math.max(4, Math.floor((avail - (val.length * 6.2 + 6)) / 5.6));
+        var nm = String(p.m.label);
+        if (nm.length > room) nm = nm.slice(0, Math.max(3, room - 1)) + '…';
+        out += '<g opacity="' + (p.m.untag ? '.7' : '1') + '">'
+          + '<path d="M' + p.ax.toFixed(1) + ' ' + p.ay.toFixed(1)
+          + 'Q' + p.ex.toFixed(1) + ' ' + p.ey.toFixed(1) + ' ' + hx.toFixed(1) + ' ' + p.y.toFixed(1) + '"'
+          + ' fill="none" stroke="' + esc(p.m.c) + '" stroke-width="1.4" stroke-linecap="round" opacity=".62"/>'
+          + '<circle cx="' + p.ax.toFixed(1) + '" cy="' + p.ay.toFixed(1) + '" r="2.6" fill="' + esc(p.m.c) + '"/>'
+          + '<text x="' + tx.toFixed(1) + '" y="' + (p.y + 3.6).toFixed(1) + '" text-anchor="' + (p.right ? 'start' : 'end')
+          + '" font-size="11">'
+          + (p.right
+            ? '<tspan font-style="italic" font-weight="400" fill="' + cvar('--ink-2') + '">' + esc(nm) + '</tspan>'
+              + '<tspan dx="5" font-weight="800" fill="' + cvar('--ink') + '">' + esc(val) + '</tspan>'
+            : '<tspan font-style="italic" font-weight="400" fill="' + cvar('--ink-2') + '">' + esc(nm) + '</tspan>'
+              + '<tspan dx="5" font-weight="800" fill="' + cvar('--ink') + '">' + esc(val) + '</tspan>')
+          + '</text></g>';
+      });
+    });
+    return { svg: out, rest: rest, n: cols.l.length + cols.r.length };
+  }
+
   function pieChart(g, hole) {
     var S = 250, R = S / 2, r0 = R - 6, ri = hole ? R * hole : 0, cx = R, cy = R;
     var tot = 0, i;
     for (i = 0; i < g.length; i++) tot += mv(g[i]);
     if (!tot) return '<div class="empty">These rows carry no ' + (CMEAS === 'hours' ? '' : measWord() + ' ') + 'hours at all.</div>';
-    var a = -Math.PI / 2, out = '', showLab = labOn();
+    var a = -Math.PI / 2, out = '', showLab = labOn(), marks = [];
     function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
     for (i = 0; i < g.length; i++) {
       var x = g[i], sweep = (mv(x) / tot) * Math.PI * 2, a2 = a + sweep;
       var big = sweep > Math.PI ? 1 : 0, col = fillFor(CDIM, x.k, i, x.fold);
       var dim = CDIM === 'tag' && isUntag(x.k);
       var pct = Math.round((mv(x) / tot) * 1000) / 10;
+      marks.push({ label: dimLabel(x.k), c: col, mid: a + sweep / 2, sweep: sweep,
+        hours: mv(x), pct: pct, untag: dim });
       var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(mv(x)) + ' h ' + (CMEAS === 'hours' ? '' : measWord() + ' ') + '(' + pct + '% of the view), '
         + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's');
       if (g.length === 1) {
@@ -2682,16 +3229,28 @@ window.addEventListener('load',restore);
       out += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">'
         + (CMEAS === 'hours' ? 'HOURS' : measWord().toUpperCase() + ' H') + '</text>';
     }
-    var LW = 560, lg = legendOn() ? legendRows(chartKeys(null) || [], LW - 8) : { svg: '', h: 0 };
-    if (!lg.h) {
+    if (!legendOn() || g.length < 2) {
       return '<svg viewBox="0 0 ' + S + ' ' + S + '" style="max-width:300px;margin:0 auto" role="img" aria-label="Share of hours by '
         + esc(dimName(CDIM)) + '">' + untagDefs() + out + '</svg>';
     }
-    // with the legend on the chart the ring is centred under it, so the two read as one figure
-    return '<svg viewBox="0 0 ' + LW + ' ' + (S + lg.h) + '" style="max-width:' + (LW > 420 ? 520 : LW)
-      + 'px;margin:0 auto" role="img" aria-label="Share of hours by ' + esc(dimName(CDIM)) + '">'
-      + untagDefs() + lg.svg + '<g transform="translate(' + ((LW - S) / 2).toFixed(1) + ',' + lg.h + ')">'
-      + out + '</g></svg>';
+    // THE LABEL SITS BESIDE ITS OWN SLICE. The ring keeps its size and moves to the middle of a
+    // wider box; the leaders are laid out in that box's coordinates, which is why the ring's own
+    // centre has to land exactly on it.
+    var LW = 600, dx = (LW - S) / 2;
+    var lead = leaderLabels(marks, LW / 2, S / 2, r0, LW, S);
+    // whatever was too small to label keeps a swatch, so no wedge is ever identified by its
+    // colour alone — the one thing the leaders must not cost
+    var lg = lead.rest.length
+      ? legendRows(lead.rest.map(function (m) {
+          return { label: m.label, c: m.c, untag: m.untag };
+        }), LW - 8)
+      : { svg: '', h: 0 };
+    return '<svg viewBox="0 0 ' + LW + ' ' + (S + lg.h) + '" style="max-width:600px;margin:0 auto" role="img" aria-label="Share of hours by '
+      + esc(dimName(CDIM)) + '">' + untagDefs()
+      + '<g transform="translate(' + dx.toFixed(1) + ',0)">' + out + '</g>'
+      + lead.svg
+      + (lg.h ? '<g transform="translate(0,' + S + ')">' + lg.svg + '</g>' : '')
+      + '</svg>';
   }
 
   /* THE LINE FORM — every series on ONE set of axes, which is what "merge the lines together"
@@ -3912,6 +4471,7 @@ window.addEventListener('load',restore);
       try { localStorage.setItem('fcc-tm-untag', $('cuntag').checked ? '1' : '0'); } catch (e) {}
       chart();
     };
+    vwire(); menuWire(); accts(); views(); ctlChips();
     $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
     $('xtsv').onclick = function () { copy(tsv(), 'Chart table copied'); };
@@ -3935,6 +4495,11 @@ window.addEventListener('load',restore);
     });
     $('dr-x').onclick = closeDrawer; $('dim').onclick = closeDrawer;
     document.addEventListener('keydown', function (e) {
+      // the import preview is the topmost thing on screen, so it takes Esc before anything under it
+      if (e.key === 'Escape' && IMPCLOSE) { IMPCLOSE(); return; }
+      // a folded menu is the topmost thing after the import preview, and Esc must close IT rather
+      // than the drawer underneath it
+      if (e.key === 'Escape' && MOPEN) { var mb = $('mb-' + MOPEN); menuClose(); if (mb) mb.focus(); return; }
       if (e.key === 'Escape' && CEXP != null && CFORM === 'small') { CEXP = null; chart(); return; }
       if (e.key === 'Escape') closeDrawer();
       if (e.key === '/' && document.activeElement !== $('q') && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('q').focus(); $('q').select(); }

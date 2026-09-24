@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 STRICT=0; [ "${1:-}" = "--strict" ] && STRICT=1
-HOT='cloudflare/feedspark-deck/src/worker.js|wrangler.toml|CLAUDE.md|docs/FeedSpark_Command_Center.html|docs/FeedSpark_Workflow.html|docs/atrt_data.json'
+HOT='cloudflare/feedspark-deck/src/worker.js|wrangler.toml|CLAUDE.md|docs/FeedSpark_Command_Center.html|docs/FeedSpark_Workflow.html'
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git fetch origin main --quiet

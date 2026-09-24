@@ -157,6 +157,13 @@ else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: one audit colour legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)"
+if node tools/test_bands.mjs >/dev/null 2>&1; then
+  echo "   ✓ /golden, /feedlab, the dossier and the Playbook rail band every audit number the same way"
+else
+  echo "   ✗ audit-bands harness FAILED — see node tools/test_bands.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
 if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
   echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"
@@ -169,6 +176,13 @@ if node tools/test_feedlab.mjs >/dev/null 2>&1; then
   echo "   ✓ conversational attributes lead the score; custom labels never move it"
 else
   echo "   ✗ Feed Lab model harness FAILED — see node tools/test_feedlab.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3d9/7: hero KPIs from the project plans (Workflow's source — tracker disconnected)"
+if node tools/test_hero.mjs >/dev/null 2>&1; then
+  echo "   ✓ one date rule on both pages; overdue is the board's rule; a baked plan offers no due dates"
+else
+  echo "   ✗ hero KPI harness FAILED — see node tools/test_hero.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3d8/7: 🎬 Present (the one-pager played — one renderer, two presentations)"
@@ -185,11 +199,30 @@ else
   echo "   ✗ overlay harness FAILED — see node tools/test_overlays.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e2/7: image library engine (shot tokens off the URL + feed collector)"
+if node tools/test_images.mjs >/dev/null 2>&1; then
+  echo "   ✓ shot codes differenced per product; unpatterned feeds refused, not fudged"
+else
+  echo "   ✗ image harness FAILED — see node tools/test_images.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3f/7: KWCal event ⇄ ticket tie + result-window join"
 if node tools/test_kwcal_tie.mjs >/dev/null 2>&1; then
   echo "   ✓ stamped-id precedence, the name-collision guard and the half-month join hold"
 else
   echo "   ✗ KWCal tie harness FAILED — see node tools/test_kwcal_tie.mjs"; FAIL=1
+fi
+
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs >/dev/null 2>&1; then
+  echo "   ✓ every Workflow stage collapses to a client word on the PDF"
+else
+  echo "   ✗ KWCal stage-map harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_stages.mjs"; FAIL=1
+fi
+
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs >/dev/null 2>&1; then
+  echo "   ✓ the client PDF downloads in one click and carries its reported results"
+else
+  echo "   ✗ KWCal client-PDF harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_pdf.mjs"; FAIL=1
 fi
 
 if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
@@ -246,11 +279,24 @@ else
   echo "   ✗ Task Manager sync harness FAILED — see node tools/test_tmmcp.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6/7: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)"
+if node tools/test_roas.mjs >/dev/null 2>&1; then
+  echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+else
+  echo "   ✗ ROAS harness FAILED — see node tools/test_roas.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
 else
   echo "   ✗ phone-layer harness FAILED — see node tools/test_mobile.mjs"; FAIL=1
+fi
+
+if node tools/test_buildsuggest.mjs >/dev/null 2>&1; then
+  echo "   ✓ Build Log suggestion engine"
+else
+  echo "   ✗ Build Log suggestion harness FAILED — see node tools/test_buildsuggest.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3i/7: Scheduled Work (the content team's sheet → skip cadence per brand)"
@@ -275,6 +321,13 @@ if node tools/test_labelguard.mjs >/dev/null 2>&1; then
   echo "   ✓ population profiles, content-quality rules, the print hide list + the worker split hold"
 else
   echo "   ✗ Label Guard harness FAILED — see node tools/test_labelguard.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3z/7: text modules (every served engine bundles as a string)"
+if node tools/check_textmodules.js >/dev/null 2>&1; then
+  echo "   ✓ no worker-served engine can bundle as code and serve an empty body"
+else
+  echo "   ✗ a served docs/*.js is NOT a Text module — see node tools/check_textmodules.js"; FAIL=1
 fi
 
 echo "── qa-gate 4/7: shipped-feature markers"

@@ -149,7 +149,7 @@ console.log('\n-- section 1 is coverage only; anything granular moved to optimis
 ok('search-term coverage is NOT in section 1',
    A.text.indexOf('Search-term coverage') > A.text.indexOf('Optimisation in detail'),
    { cov: A.text.indexOf('Search-term coverage'), opt: A.text.indexOf('Optimisation in detail') });
-ok('markets and feed quality sit together', /Markets live[\s\S]{0,120}Feed quality score/.test(A.text));
+ok('markets and AI readiness sit together', /Markets live[\s\S]{0,120}AI Readiness score/.test(A.text));
 ok('a per-market table lists each market', /MARKET[\s\S]{0,200}\bGB\b[\s\S]{0,120}\bUS\b/i.test(A.text));
 
 console.log('\n-- the area mix carries percentages --');
@@ -221,7 +221,7 @@ ok('no page errors on the empty path', B.errs.length === 0, B.errs.slice(0, 2));
 ok('tests stat is a dash, not 0', /—[\s\S]{0,40}Tests run/.test(B.text), B.text.match(/[\s\S]{0,50}Tests run/));
 ok('markets stat is 0-with-explanation, not a bare 0',
    B.text.includes('no feed wired yet'), B.text.match(/[\s\S]{0,60}Markets live/));
-ok('feed quality is a dash', /—[\s\S]{0,40}Feed quality/.test(B.text));
+ok('AI readiness is a dash', /—[\s\S]{0,40}AI Readiness/.test(B.text));
 ok('hours dash out when the schedule does not cover the brand', !/Hours delivered[\s\S]{0,120}\b0\b/.test(B.text));
 ok('no stray "NaN" or "undefined" anywhere', !/NaN|undefined/.test(B.text), B.text.match(/.{0,40}(NaN|undefined).{0,40}/));
 

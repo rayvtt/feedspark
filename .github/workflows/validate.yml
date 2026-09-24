@@ -31,10 +31,18 @@ jobs:
         run: node tools/test_feedlab.mjs
       - name: Overlays engine unit tests (URL-string classification + collector)
         run: node tools/test_overlays.mjs
+      - name: Text-module tripwire (a served engine must bundle as a string)
+        run: node tools/check_textmodules.js
+      - name: Image library engine unit tests (shot tokens off the URL + collector)
+        run: node tools/test_images.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
         run: node tools/test_kwcal_tie.mjs
       - name: KWCal KPI band + market list
         run: node tools/test_kwcal_kpis.mjs
+      - name: KWCal client PDF (one-click download + the reported results on it)
+        run: NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs
+      - name: KWCal stage map (every Workflow stage has a client word)
+        run: NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs
       - name: Product-volume churn harness (running close-to-close baseline)
         run: node tools/test_volume.mjs
       - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)
@@ -55,8 +63,13 @@ jobs:
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
         run: node tools/test_tmmcp.mjs
+      - name: ROAS harness (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)
+        run: node tools/test_roas.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
+
+      - name: Build Log suggestion engine (evidence-led, unread is never a zero)
+        run: node tools/test_buildsuggest.mjs
       - name: Scheduled Work harness (the content team's sheet → skip cadence per brand)
         run: node tools/test_schedule.mjs
       - name: Work-volumes harness (every workstream bucketed by month)
@@ -71,8 +84,12 @@ jobs:
         run: node tools/test_goldensnap.mjs
       - name: Present harness (the one-pager played — one renderer, the number rule)
         run: node tools/test_present.mjs
+      - name: Audit colour bands harness (one legend on /golden, /feedlab, the dossier, the Playbook rail)
+        run: node tools/test_bands.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
+      - name: Hero KPI harness (project plans are the source; one date rule with Workflow)
+        run: node tools/test_hero.mjs
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)

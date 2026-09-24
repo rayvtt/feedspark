@@ -27,6 +27,10 @@ const FA = require('../docs/feedlab_engine.js');
 // FeedSpark-served overlay images (dashboard./lia. feedspark.com) and classifies the
 // overlay type off the URL string — pushed as `ovl` beside the guard snapshot
 const OV = require('../docs/overlay_engine.js');
+// /images module (Ray, 15 Sep 2026): the SAME stream also reads every image_link +
+// additional_image_link 1..10, and derives each image's SHOT TOKEN from the URL — the
+// fragment that varies across one product's images. Pushed as `img` beside the rest.
+const IM = require('../docs/image_engine.js');
 
 const HOST = process.env.FCC_HOST || 'feedspark.ray-vtt.workers.dev';
 const KEY = process.env.FCC_PUSH_KEY || '';
@@ -58,7 +62,8 @@ function wiredXmlFeeds() {
 async function snapshotFeed(feed) {
   const col = xmlCollector({ client: feed.client, market: feed.mkt });
   const ovc = OV.overlayCollector({ client: feed.client, market: feed.mkt });
-  const parser = FA.createXmlParser((r, h) => { col.onRow(r, h); ovc.onRow(r, h); });
+  const imc = IM.imageCollector({ client: feed.client, market: feed.mkt });
+  const parser = FA.createXmlParser((r, h) => { col.onRow(r, h); ovc.onRow(r, h); imc.onRow(r, h); });
   const res = await fetch(feed.url);
   if (!res.ok || !res.body) throw new Error('fetch-fail: HTTP ' + res.status);
   const dec = new TextDecoder();
@@ -66,6 +71,7 @@ async function snapshotFeed(feed) {
   parser.push(dec.decode()); parser.end();
   const out = col.finish();
   try { out.ovl = ovc.finish(); } catch (e) { out.ovl = null; }   // overlay capture never blocks the guard snapshot
+  try { out.img = imc.finish(); } catch (e) { out.img = null; }   // nor does the image-library capture
   return out;
 }
 
@@ -90,11 +96,13 @@ const workers = Array.from({ length: 3 }, async () => {
   while (i < feeds.length) {
     const f = feeds[i++];
     try {
-      const { snap, vol, ovl } = await snapshotFeed(f);
-      entries.push({ client: f.client, mkt: f.mkt, snap, vol, ovl });
+      const { snap, vol, ovl, img } = await snapshotFeed(f);
+      entries.push({ client: f.client, mkt: f.mkt, snap, vol, ovl, img });
       console.log('✓ ' + f.client + ' ' + f.mkt + ' — ' + snap.rows + ' rows · '
         + (vol.ids ? vol.ids.split('\n').length : 0) + ' ids' + (vol.trunc ? ' (truncated)' : '')
-        + (ovl && ovl.ovl ? ' · ' + ovl.ovl + ' overlays (' + ovl.types.map((t) => t.label).join(', ') + ')' : ''));
+        + (ovl && ovl.ovl ? ' · ' + ovl.ovl + ' overlays (' + ovl.types.map((t) => t.label).join(', ') + ')' : '')
+        + (img && img.imgs ? ' · ' + img.imgs + ' images, ' + img.tokens.length + ' shot codes'
+            + (img.learnable ? '' : ' (unpatterned)') : ''));
     } catch (e) {
       entries.push({ client: f.client, mkt: f.mkt, err: String((e && e.message) || e).slice(0, 140) });
       console.log('✗ ' + f.client + ' ' + f.mkt + ' — ' + String((e && e.message) || e).slice(0, 100));
@@ -120,7 +128,7 @@ if (held.length) {
   for (const h of held) {
     const f = feeds.find((x) => x.client === h.client && x.mkt === h.mkt);
     if (!f) continue;
-    try { const { snap, vol, ovl } = await snapshotFeed(f); confirm.push({ client: f.client, mkt: f.mkt, snap, vol, ovl }); }
+    try { const { snap, vol, ovl, img } = await snapshotFeed(f); confirm.push({ client: f.client, mkt: f.mkt, snap, vol, ovl, img }); }
     catch (e) { confirm.push({ client: f.client, mkt: f.mkt, err: String((e && e.message) || e).slice(0, 140) }); }
   }
   for (let b = 0; b < confirm.length; b += 8) { const rs = await post(confirm.slice(b, b + 8)); rs.forEach(explain); all.push(...rs); }

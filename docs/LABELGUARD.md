@@ -572,18 +572,30 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 
-### 8a. product_type population — values carried per SKU, and cards that fold (18 Sep 2026)
+### 8a. product_type depth card, and cards that fold (18 Sep 2026; card swapped 22 Sep 2026)
 
-The same ask as §5a, on the product-type page. The depth card says how DEEP the primary path
-goes; the population card beside it says how MANY product_type values a SKU carries — the
-category tree (bare `g:product_type` or slot 1) plus every keyword slot 2–10, FeedSpark's
-keyword injection — one row per bucket (1 … 5, 6+ values), the footer *avg N values per SKU ·
-N profiled · N carry none*, and the verdict line *1 value = the category tree only · 2+ =
-keyword slots live on the SKU — x% of profiled SKUs are keyworded (max N values on one SKU)*.
-`xmlCollector` resolves every product_type column through `slotCols()` (the read
-`findMultiCols` now shares) and counts the filled ones per SKU → `snap.ptPop`; Google feeds only
-(the collector never profiles product types on a Meta feed), XML lanes only (a sheet-backed feed
-gets the honest note). The estate cards fold exactly as on `/labels` — header row, ⊖/⊕ all,
+The same fold-behaviour ask as §5a, on the product-type page — but not the same card. It
+shipped 18 Sep 2026 as a population card (how MANY product_type values a SKU carries: the
+category tree plus every keyword slot 2–10, one row per bucket 1…5/6+, `snap.ptPop`), the same
+shape as Label Guard's own §5a card. Ray, 22 Sep 2026, screenshotting it: *"PT guard does not
+need this breakdown. It doesn't make sense anyway. Instead, replace it with the PT depth
+granularity chart."* Keyword-slot population is a keyword-saturation question (KWCal already
+owns it), not a product-type-tree question — so the full-width card in that slot was retired
+and replaced with `ptDepthCard(dp)`: the SAME `depthProfile()` SKU-weighted read already driving
+the compact header bar/chips (§ above), rendered full-width in the shared `popCard()` row
+format — one row per chevron-depth bucket (1…5, 6+ levels), buckets 3/4/5 highlighted (the
+depths the compact chips already call out), footer stating the 5-level share against the
+30–40% industry standard and the 1–2-level shallow share. No *carry none* line: a present
+`product_type` column always resolves to a depth of at least 1, unlike a population count.
+
+Because `depthProfile()` reads the value/count PIVOT every scan already carries (`L.values`)
+rather than a separately-pushed per-SKU field, a sheet-backed (gviz) feed now gets the FULL
+depth card too — no "wire the FeedHero XML" fallback, unlike Label Guard's population card
+which stays XML-only (`labelPop` is never captured off a gviz read). `ptPopCard()` and its
+call site are gone from the page; the underlying capture — `xmlCollector` resolving every
+product_type column through `slotCols()` into `snap.ptPop`, and the worker's `splitRaw` filing
+it onto the `ptype:` store — is UNTOUCHED, since Ray's ask named the card, not the data
+pipeline. The estate cards still fold exactly as on `/labels` — header row, ⊖/⊕ all,
 `localStorage pt-collapse`, the deep link opens a folded card — and the folded summary carries
 the brand's average tree depth beside its markets and flags.
 
@@ -681,6 +693,97 @@ prep for client demo").
   content figure); a market never scanned at all shows neither.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
+
+### 9.9 GPC category scope — an attribute scores only where Google asks for it (23 Sep 2026)
+
+Ray, on Hobbycraft's scorecard (material 47.9%, pattern 43.9%): *"for standard GPC material,
+that attribute is not required. So by that logic, it should not be cumulated or counted toward
+the score."* Until then every attribute was scored over **every product in the feed**, so a craft
+catalogue was marked down for yarn without a gender and a golf retailer for clubs without a size.
+
+**What Google actually conditions on category.** The premise that each of the ~5,600 GPCs has
+its own attribute list is not how the Merchant Center spec works — it has no per-category list
+for general categories. Six attributes carry a category condition, each read off its own help
+page on 23 Sep 2026:
+
+| Attribute | Asked of | Source |
+|---|---|---|
+| `color` | Clothing & Accessories (ID 166) | answer 6324487 |
+| `gender` | 166, except 16 named sub-categories (pinback buttons, watch bands, keychains…) | answer 6324479 |
+| `age_group` | the same, plus cufflinks (193) | answer 6324463 |
+| `size` | Clothing (1604) and Shoes (187) | answer 6324492 |
+| `material`, `pattern` | 166 — Google's clothing best practice names them (answer 7348545); anywhere else only "for products that vary by material/pattern" (6324410 / 6324483) | |
+
+**The rule.** Each of these is scored over the products in its category: `attrs[k].cov` is the
+coverage of those products, `.all` keeps the whole-catalogue reading, `.scope {n, f, u, t}` says
+how many products it applies to, how many carry it, how many of those have no readable category,
+and how many are in the feed. Three consequences:
+
+- **None in scope → not applicable** (`.na`): out of the score even when the profile ★ stars it,
+  never listed missing, never alerted on, and the row says "no clothing & accessories products —
+  not scored" with no ask/brief buttons.
+- **Weighted by share**: a scoped attribute's weight is multiplied by `n / t`, so 2 clothing
+  products in 24,000 cannot move the score the way the whole catalogue does. An all-apparel feed
+  has a share of ~1 and scores exactly as before.
+- **A known requirement is a gap**: a `cond` attribute ABSENT on products Google requires it for
+  now counts at 0, whether or not the industry profile expected it.
+
+A product with **no readable category** (blank, or a top level no locale's taxonomy knows) stays
+IN scope — the scope only narrows the score where the feed itself says so.
+
+**Reading the category.** The estate ships Google's taxonomy in seven languages (en-GB "Clothing
+& Accessories", en-US "Apparel & Accessories", de-DE, fr-FR, nl-NL, da-DK, es-ES), so the engine
+carries every locale's path for the IDs above (`GPC_ROOT` / `GPC_TAILS`), their numeric subtrees
+(`GPC_IDS`) and every locale's top-level names (`GPC_ROOTS`), all generated from Google's own
+`taxonomy-with-ids.<locale>.txt` by `python3 tools/build_gpc_scope.py` (26 locales; re-run it and
+copy `labelguard.js` to `docs/labelguard_engine.js` if Google ships a new taxonomy).
+
+**Where it is measured.** Per product, so only the full-read lanes carry it: the 4×-daily XML
+agent and the in-browser ↻ rescan (`xmlCollector` → `gpcScopeCounter` → `applyGpcScope`). The
+gviz sweep counts columns, not products, so a sheet-backed feed (House of Bruar) keeps the
+whole-catalogue reading until its FeedHero XML is wired. The estate index keeps the scoped
+coverage plus `sc` (the in-scope counts) through `goldenCovIndex`, so the page's re-score and the
+Playbook read the same basis; `diffCoverage` never compares a scoped reading with a
+whole-catalogue baseline, so the first scan after this shipped raises no drop alerts.
+
+**Live effect (23 Sep 2026, before → after).** Hobbycraft GB 82.7 → 90.9 on its own profile (2
+clothing products in 24,413; size not applicable); American Golf GB 78.7 → 80.4 (golf clubs no
+longer counted for size / age group); Accessorize GB 90.6 → 90.1 (size now asked of its 1,269
+clothing and shoe products, not its bags and jewellery); YuMOVE 87.6 → 89.4; Monsoon, Reiss,
+Schuh and Superdry move by 0.2 or less.
+
+Pinned in `tools/test_labelguard.mjs`: the classifier on every language and form the estate
+ships (including the stray `{` on eight Reiss markets and numeric IDs), Google's exemptions, the
+collector on a real XML stream, the not-applicable / share / known-gap rules, the alert guard, and
+the /golden page's twin scoring every case exactly as the engine does — directly and through the
+estate index round trip.
+
+### 9.10 One audit colour legend (23 Sep 2026)
+
+Ray, on the Playbook rail painting 76.7% completeness red: *"golden record and bar color should be
+a bit more forgiving (< 70 red, 70-85 orange, 85 - 95 yellow, 95-100 green) - apply across all
+audit."* Every completeness, coverage and content-quality number on the FCC now uses one function,
+`auditBand(v)`:
+
+| Band | Range |
+|---|---|
+| green | 95 and above |
+| yellow | 85 to under 95 |
+| orange | 70 to under 85 |
+| red | under 70 |
+
+It sits on `/golden` (the dial, estate cards, attribute fill bars, content-quality score and bars),
+`/feedlab` (attribute coverage), the dossier's Golden Record card and the Playbook rail inside
+Workflow. Pages cannot import each other, so `tools/test_bands.mjs` lifts every copy and runs one
+boundary table through them.
+
+AI-readiness keeps its own ladder on purpose. Its colours are its tiers (40 / 60 / 80), and a feed
+without the conversational six tops out at 79.3, so the 95-green legend would turn the whole estate
+red. The harness pins that scale unchanged.
+
+The same Playbook panel read coverage as a fraction (floors 0.99 / 0.9 / 0.6) while the index stores
+percentages. Every real reading cleared the floors, so "Weakest first" only ever listed an attribute
+under 1%, printed ×100. The floors, the bars and the "worst N%" figure now read percentages.
 
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 

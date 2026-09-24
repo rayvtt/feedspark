@@ -53,7 +53,8 @@ function liftPage() {
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
-    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf'];
+    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf',
+    'liftClient', 'withClient', 'accountPick', 'packView', 'viewQuery', 'sanitizeViews', 'VIEW_MAX'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
@@ -229,6 +230,119 @@ function grammar(E, tag) {
   eq(ts.stale, 1, tag + ': only a LIVE thread idle 30 days is stale — a closed one is finished');
   eq(ts.hours, 3, tag + ': hours booked through tickets add up');
 }
+
+// ---------------------------------------------------------------------------------------------
+// SAVED CHART VIEWS — the shape, never the account
+// (Ray, 23 Sep 2026: "in this chart dissection > allow option to save a view and that same view
+//  can be applied across different client")
+// ---------------------------------------------------------------------------------------------
+function views(E, tag) {
+  const L = (q) => E.liftClient(q);
+
+  // --- the account clause comes out WHOLE ------------------------------------------------------
+  eq(L('client:Superdry cat:opt min:4'), { rest: 'cat:opt min:4', was: ['Superdry'] },
+    tag + ': the client term is lifted out and the rest of the query survives it');
+  eq(L('cat:opt client:Superdry'), { rest: 'cat:opt', was: ['Superdry'] },
+    tag + ': lifted wherever in the query it sits');
+  eq(L('brand:Reiss keyword'), { rest: 'keyword', was: ['Reiss'] },
+    tag + ': brand: is the same field and is lifted too');
+  eq(L('BRAND:Reiss'), { rest: '', was: ['Reiss'] }, tag + ': the field name is case-blind');
+  eq(L('client:"House of Bruar" keyword'), { rest: 'keyword', was: ['House of Bruar'] },
+    tag + ': a quoted multi-word account is lifted as one name');
+  eq(L('keyword "client call"'), { rest: 'keyword "client call"', was: [] },
+    tag + ': a quoted phrase that merely CONTAINS the word client is text, not an account');
+  eq(L('client:Reiss client:Schuh'), { rest: '', was: ['Reiss', 'Schuh'] },
+    tag + ': every account named is lifted, not just the first');
+  // a NEGATED account goes too: left in place, applying the view TO Superdry would return
+  // nothing and read as a view that is broken rather than one that was re-pointed
+  eq(L('-client:Superdry cat:opt'), { rest: 'cat:opt', was: ['-Superdry'] },
+    tag + ': a negated account is lifted as well, and says it was negated');
+  eq(L(''), { rest: '', was: [] }, tag + ': an empty query lifts nothing');
+  eq(L('  cat:opt   bill:no '), { rest: 'cat:opt bill:no', was: [] },
+    tag + ': nothing to lift leaves the query tidied but intact');
+  // `client:` with no value is not a filter at all — parseQuery ignores it, so lifting it would
+  // silently delete something the reader can still see in the box
+  eq(L('client: cat:opt'), { rest: 'client: cat:opt', was: [] },
+    tag + ': a bare client: names no account and is left where it is');
+
+  // --- and goes back in ------------------------------------------------------------------------
+  eq(E.withClient('cat:opt', 'Reiss'), 'client:Reiss cat:opt', tag + ': the account leads the query');
+  eq(E.withClient('', 'Reiss'), 'client:Reiss', tag + ': an account on its own');
+  eq(E.withClient('cat:opt', ''), 'cat:opt', tag + ': no account means no term — every account');
+  eq(E.withClient('cat:opt', 'House of Bruar'), 'client:"House of Bruar" cat:opt',
+    tag + ': a name with a space is quoted, or the grammar reads it as three terms');
+  eq(E.withClient('', 'Monsoon, Accessorize'), 'client:"Monsoon, Accessorize"',
+    tag + ': a name with a comma is quoted, or the grammar reads it as a LIST of accounts');
+
+  // --- a round trip is lossless, which is what makes a view portable ---------------------------
+  for (const [q, c] of [['client:Superdry cat:opt', 'Reiss'], ['bill:no min:2', 'Schuh'],
+    ['client:"House of Bruar" keyword', 'House of Bruar'], ['cat:tech', '']]) {
+    const back = E.withClient(L(q).rest, c);
+    eq(E.accountPick(back).v, c, tag + `: "${q}" re-pointed at "${c}" reads back as that account`);
+    eq(L(back).rest, L(q).rest, tag + `: "${q}" re-pointed keeps every other term`);
+  }
+
+  // --- what the picker reads -------------------------------------------------------------------
+  eq(E.accountPick('client:Reiss cat:opt'), { v: 'Reiss', multi: false, was: ['Reiss'] },
+    tag + ': one account reads as that account');
+  eq(E.accountPick('cat:opt'), { v: '', multi: false, was: [] },
+    tag + ': no account reads as every account');
+  // the honest third state: "every account" over a query naming two would be the control lying
+  eq(E.accountPick('client:Reiss client:Schuh').multi, true,
+    tag + ': two accounts is neither one account nor every account');
+  eq(E.accountPick('client:Reiss client:Schuh').v, '',
+    tag + ': and it names none of them as THE account');
+  eq(E.accountPick('-client:Superdry').multi, true,
+    tag + ': excluding an account is not "every account" either');
+  eq(E.accountPick('client:Reiss -client:Schuh').multi, true,
+    tag + ': one account and one exclusion is still not a single pick');
+
+  // --- packing a view --------------------------------------------------------------------------
+  const st = { q: 'client:Superdry bill:no', dim: 'owner', dim2: 'cat', dim3: '', form: 'bars',
+    meas: 'bill', lab: 'pview', leg: false, untag: false, table: true };
+  const v = E.packView('  Billable by owner  ', st);
+  eq(v.name, 'Billable by owner', tag + ': the name is trimmed');
+  eq(v.q, 'bill:no', tag + ': a packed view carries the query WITHOUT its account');
+  eq(v.was, ['Superdry'], tag + ': and records the account it was saved from');
+  eq([v.dim, v.dim2, v.dim3, v.form, v.meas, v.lab], ['owner', 'cat', '', 'bars', 'bill', 'pview'],
+    tag + ': the whole shape is carried');
+  eq([v.leg, v.untag, v.table], [false, false, true], tag + ': and the three toggles, false included');
+  eq(E.packView('', {}).name, 'Untitled view', tag + ': a nameless view is never stored nameless');
+  eq(E.packView('x'.repeat(80), {}).name.length, 40, tag + ': the name is bounded');
+  eq(E.packView('d', {}).dim, 'total', tag + ': an empty state packs as the default reading');
+
+  // --- and running it --------------------------------------------------------------------------
+  eq(E.viewQuery(v, 'Reiss'), 'client:Reiss bill:no',
+    tag + ': THE POINT — a view saved on Superdry runs against Reiss');
+  eq(E.viewQuery(v, ''), 'bill:no', tag + ': or against every account');
+  eq(E.viewQuery(v, 'Superdry'), 'client:Superdry bill:no',
+    tag + ': including the one it came from');
+  eq(E.viewQuery({ q: '' }, 'Reiss'), 'client:Reiss', tag + ': a view with no other terms is just the account');
+  ok(E.viewQuery(v, 'Reiss').indexOf('Superdry') < 0,
+    tag + ': and the account it was saved from is nowhere in it');
+
+  // --- reading the shelf back off the device ---------------------------------------------------
+  const kept = E.sanitizeViews([
+    { name: 'A', q: 'bill:no', was: ['Superdry'], dim: 'owner', at: 5 },
+    { name: 'a', q: 'other' },          // the same name once, whatever its case
+    null, 'nope', { q: 'nameless' }, { name: '   ' },
+    { name: 'B', q: 'cat:opt' },
+  ]);
+  eq(kept.map((x) => x.name), ['A', 'B'], tag + ': junk, duplicates and nameless entries are dropped');
+  eq(kept[0].was, ['Superdry'],
+    tag + ': `was` survives the round trip — repacking would report the view never had an account');
+  eq(kept[0].at, 5, tag + ': and so does when it was saved');
+  eq(E.sanitizeViews(null), [], tag + ': a corrupted store reads as no views, never a throw');
+  eq(E.sanitizeViews('[]'), [], tag + ': and so does a store holding the wrong type');
+  const many = [];
+  for (let i = 0; i < 40; i++) many.push({ name: 'v' + i, q: '' });
+  eq(E.sanitizeViews(many).length, E.VIEW_MAX, tag + ': the shelf is bounded');
+}
+
+console.log('── saved chart views: the shape, never the account');
+views(M, 'engine');
+console.log('── the same table against the page\'s own copy');
+views(P, 'page');
 
 console.log('── query grammar + aggregation (tools/reporttasks.mjs)');
 grammar(M, 'engine');
@@ -1445,8 +1559,10 @@ ok(/keeps its true size/.test(PAGE_SRC),
   'but it keeps its true SIZE — shrinking the part nobody has judged would be the dishonest kind '
   + 'of hiding');
 
-console.log('\n── the legend, on the chart');
-ok(/id="cleg" checked> Legend on chart/.test(PAGE_SRC), 'a toggle, default on');
+console.log('\n── naming the marks, on the chart');
+ok(/id="cleg" checked> Name the marks on the chart/.test(PAGE_SRC),
+  'one toggle, default on — and its wording names what it does on BOTH forms (a leader per slice '
+  + 'on a pie or donut, a key across the top on everything else), not just the one it started as');
 ok(/function legendRows\(items, W\)/.test(PAGE_SRC) && /function legendOn\(\)/.test(PAGE_SRC),
   'drawn INSIDE the svg');
 ok(/the ⬇ PNG\n     carries it/.test(PAGE_SRC) || /it rides the PNG export too/.test(PAGE_SRC),
@@ -1714,14 +1830,80 @@ ok(/l: 'Everything else here'/.test(PAGE_SRC),
   'and the cell\'s out-of-key remainder is no longer a second row reading "Other" beside the '
   + 'engine\'s own "Other (N more)" fold — invisible in a 40px ring, unanswerable once expanded');
 
+console.log('\n── one control row, three menus (Ray, 23 Sep 2026: "you see how many button there are here ? - reorganise them")');
+// the menus MOVED the nodes, they did not rebuild them — every id the page, the harness and the
+// saved-view restore already reach for has to still be there
+for (const id of ['cacct', 'cdim', 'cdim2', 'cdim3', 'cform', 'cmeas', 'clab', 'cleg', 'cuntag',
+  'cuntag-l', 'ctab', 'cview', 'vsave', 'vdel', 'vnm', 'vok', 'vno', 'vnote']) {
+  ok(new RegExp('id="' + id + '"').test(PAGE_SRC), `#${id} survives the reorganisation`);
+}
+ok(/<div class="cw-ctl">/.test(PAGE_SRC) && !/cw-views/.test(PAGE_SRC),
+  'and there is ONE control block, not a second row under it');
+for (const m of ['nest', 'disp', 'view']) {
+  ok(new RegExp('id="mb-' + m + '"[^>]*aria-expanded="false"[^>]*aria-haspopup').test(PAGE_SRC.replace(/\n\s*/g, ' ')),
+    `the ${m} menu button announces itself as a menu, shut`);
+  ok(new RegExp('id="p-' + m + '" hidden').test(PAGE_SRC), `and its panel ships hidden`);
+}
+// A FLEX ROW IGNORES `hidden`. This bit the AI Quote card (.aim-r) and would have painted all
+// three panels open on load, so the rule is asserted by SHAPE rather than trusted to a comment.
+ok(/\.cpop\[hidden\],\.cpop \.vname\[hidden\],\.cpop \.btn\[hidden\],\.cpop \.tog\[hidden\]\{display:none\}/.test(PAGE_SRC),
+  'every element in a menu that sets its own display also states [hidden] — a flex row ignores it');
+ok(/\.cw-ctl \.cmb\.on\{/.test(PAGE_SRC) && /\.cw-ctl \.cmb \.cdot\{/.test(PAGE_SRC),
+  'a folded control that is off its default says so on the closed button');
+ok(/function ctlChips\(\)/.test(PAGE_SRC) && /var cul = \$\('cuntag-l'\); if \(cul\) cul\.hidden = !tagDim\(\);\s*\n\s*ctlChips\(\);/.test(PAGE_SRC),
+  'and the buttons are re-read on every render, so a restored view puts the row back in step');
+ok(/if \(e\.key === 'Escape' && MOPEN\)/.test(PAGE_SRC),
+  'Esc closes the open menu before anything underneath it');
+ok(/if \(MOPEN === m\) \{ menuClose\(\); return; \}\s*\n\s*menuClose\(\);/.test(PAGE_SRC),
+  'and only one panel is ever open — two over one row is the clutter again');
+
+console.log('\n── direct labels with a leader (Ray, 23 Sep 2026: "the label can appear with an arrow and light italic directly on chart like this")');
+const LEAD = liftPageSrc('leaderLabels');
+ok(/font-style="italic" font-weight="400"/.test(LEAD),
+  'the NAME is the light italic half');
+ok(/font-weight="800"/.test(LEAD) && !/font-style="italic"[^>]*font-weight="800"/.test(LEAD),
+  'and the FIGURE is never italic — it is what gets read off the chart');
+ok((LEAD.match(/esc\(p\.m\.c\)/g) || []).length >= 2
+  && /<path d=[\s\S]*?stroke="' \+ esc\(p\.m\.c\)/.test(LEAD) && /<circle[\s\S]*?fill="' \+ esc\(p\.m\.c\)/.test(LEAD),
+  'the leader and its dot are drawn in the slice\'s OWN colour, which is what ties them together');
+// the refusal has to be about ROOM. An angle-only floor refused 2.2% wedges with a half-empty
+// column, which is how this shipped wrong the first time.
+ok(/var cap = Math\.max\(2, Math\.floor\(\(H - 22\) \/ LEAD_GAP\)\) \* 2/.test(LEAD),
+  'how many labels fit is read off the box, not guessed');
+ok(/sort\(function \(a, b\) \{ return b\.sweep - a\.sweep; \}\)/.test(LEAD),
+  'and the cap is filled biggest-first, so what it drops is what a reader was least looking for');
+ok(/if \(!keep\[i\]\) \{ rest\.push\(m\); continue; \}/.test(LEAD),
+  'whatever is not labelled falls through to `rest` rather than vanishing');
+ok(/lead\.rest\.length[\s\S]{0,220}legendRows\(/.test(PAGE_SRC),
+  'and `rest` is drawn as swatches — no wedge is ever identified by its colour alone');
+ok(/var over = a\[a\.length - 1\]\.y - \(H - 9\);\s*\n\s*if \(over > 0\) for \(j = 0; j < a\.length; j\+\+\) a\[j\]\.y -= over;/.test(LEAD),
+  'a column that runs past the box is SHIFTED whole, keeping its spacing — clamping each label '
+  + 'would land two of them on one line');
+ok(/if \(a\[j\]\.y - a\[j - 1\]\.y < LEAD_GAP\) a\[j\]\.y = a\[j - 1\]\.y \+ LEAD_GAP/.test(LEAD),
+  'and labels are pushed apart in the order their slices sit round the ring, so no two leaders cross');
+ok(/nm\.length > room/.test(LEAD) && !/val = val\.slice/.test(LEAD),
+  'the NAME takes the truncation, never the figure — a truncated figure is a wrong figure');
+ok(/family=Lato:ital,wght@0,400;0,700;0,900;1,400/.test(PAGE_SRC),
+  'the real italic is loaded — a synthesised oblique at 400 is a smear, and these labels are the '
+  + 'chart\'s only naming of a slice');
+ok(/if \(!legendOn\(\) \|\| g\.length < 2\)/.test(PAGE_SRC),
+  'a single-slice ring keeps its centre figure and gets no leader to itself');
+
 console.log('\n── one control scale (Ray, 18 Sep 2026: "the box and button in the task manager are not equal size, so it looks messy")');
 ok(/:root\{--h-field:34px;--h-pill:30px\}/.test(PAGE_SRC),
   'two roles, two sizes: a FIELD you open or type in, a PILL you press');
 ok(/\.btn\.sm,\.chip,\.pq-x\{height:var\(--h-pill\)/.test(PAGE_SRC),
   'the three pill styles that differed only by a pixel of padding (.btn.sm 4⁄9, .chip 5⁄10, '
   + '.pq-x 4⁄10) are now one');
-ok(/\.cw-ctl select,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+ok(/\.cw-ctl select,[^{]*\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
   'and the select and the text input stop being 33px and 37.5px');
+// a control added later is a control that drifts off the scale unless it joins the rule — the
+// views row is two selects, a text input and three buttons directly under the control block
+ok(/\.cw-ctl select,\.cpop select,\.cpop input,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+  'a control inside a menu rides the same field height rather than opening a sixth size');
+ok(/\.cw-ctl label,\.cpop label\{font-size:11px/.test(PAGE_SRC)
+  && /\.cw-ctl select,\.cpop select,\.cpop input\{font:inherit/.test(PAGE_SRC),
+  'and the same label type and field chrome, so folding a control never restyles it');
 ok(/HEIGHT IS SET EXPLICITLY, not left to padding/.test(PAGE_SRC),
   'height is set outright: padding + line-height + font-size lands somewhere different for every '
   + 'font size, which is exactly how one page reached ten heights');

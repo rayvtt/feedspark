@@ -52,6 +52,10 @@ echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
 
+echo "── validating: image library engine (shot tokens + collector)"
+node tools/test_images.mjs >/dev/null
+echo "   ✓ shot codes read off the image URLs; unpatterned feeds refused"
+
 echo "── validating: KWCal KPI band partition + market list"
 node tools/test_kwcal_kpis.mjs >/dev/null
 echo "   ✓ every stage lands in a bucket, the tiles sum, and -fb never reaches the chips"
@@ -88,8 +92,13 @@ echo "── validating: Task Manager AUTOMATIC sync (MCP transport + rotation +
 node tools/test_tmmcp.mjs >/dev/null
 echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
 
+echo "── validating: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster)"
+node tools/test_roas.mjs >/dev/null
+echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
+node tools/test_buildsuggest.mjs >/dev/null
 echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + wiring hold"
 
 echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
@@ -124,9 +133,10 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
-echo "── validating: one modal at a time (no overlay can be added that stacks on another)"
-node tools/test_modalsolo.mjs >/dev/null
+echo "── validating: one modal at a time, and none of them lands on an open rail"
+NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
+echo "   ✓ and a ticket modal measured against the open Playbook rail clears it at 1100–1500px"
 
 echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null
@@ -148,9 +158,17 @@ echo "── validating: Golden Record snapshot in the dossier"
 node tools/test_goldensnap.mjs >/dev/null
 echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
 
+echo "── validating: one audit colour legend across every page"
+node tools/test_bands.mjs >/dev/null
+echo "   ✓ <70 red · 70–85 orange · 85–95 yellow · 95+ green on /golden, /feedlab, the dossier, the Playbook rail"
+
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
 echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"
+
+echo "── validating: hero KPIs from the project plans"
+node tools/test_hero.mjs >/dev/null
+echo "   ✓ tracker gone; wfDate IS parseUKDate; overdue = the board's rule with the team's overlays"
 
 echo "── validating: 🎬 Present — the one-pager played"
 node tools/test_present.mjs >/dev/null
@@ -191,6 +209,18 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }
+  echo "── validating: KWCal client PDF — every Workflow stage collapses to a client word"
+  NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs || {
+    echo "✗ KWCal stage-map tripwire failed — a pipeline stage has no client word, so the PDF paints live work as Scheduled"; exit 1; }
+  echo "── validating: KWCal client PDF — one click (no dialog), and the reported results are on it"
+  NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs || {
+    echo "✗ KWCal client-PDF tripwire failed — the print dialog came back, or a result went missing from the file"; exit 1; }
+  echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
+  NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
+    echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
+  echo "── validating: Task Manager chart card — one control row, three menus, leader labels, saved views"
+  NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
+    echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }
@@ -206,6 +236,14 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
 else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
+
+echo "── validating: the /images page loads its engines through its own script tags"
+node tools/check_images.js >/dev/null
+echo "   ✓ real script-tag path exercised (skips without IMG_FIXTURES)"
+
+echo "── validating: text modules (every served engine bundles as a string)"
+node tools/check_textmodules.js >/dev/null
+echo "   ✓ no served engine can bundle as code and serve an empty body"
 
 echo "── validating: shipped-feature markers (overwrite tripwire)"
 node tools/check_markers.js >/dev/null
@@ -259,7 +297,10 @@ if [ -n "$DECKS_CHANGED" ]; then
     python3 tools/deck_audit.py "$d" --shape > "${TMPDIR:-/tmp}/presync-new.shape" 2>/dev/null || continue
     if ! diff -q "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" >/dev/null; then
       echo "   ⚠ $d — editable-element shape CHANGED vs main:"
-      diff "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" | sed 's/^/       /' | head -20
+      # informational: diff exits 1 when the files differ, which under `set -e -o pipefail`
+      # aborted the whole presync at this WARNING — the overlap check and the final verdict
+      # never ran. First tripped the day a tracked deck gained a chapter.
+      diff "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" | sed 's/^/       /' | head -20 || true
       echo "       Saved live edits in these chapters shift position. The editor recovers them by"
       echo "       content and reports the rest — but tell Ray before pushing if he is mid-edit."
     fi

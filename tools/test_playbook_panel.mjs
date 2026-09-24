@@ -105,8 +105,10 @@ const rec = {
   reqMissing: ['image_link'],
   condMissing: ['gtin'],
   recMissing: ['product_highlight'],
-  cov: { id: 1, title: 1, description: 0.97, price: 1, brand: 1, color: 0.72, product_type: 0.55, material: 0.9,
-    question_and_answer: 0.02, image_link: null },
+  // PERCENTAGES, the unit goldenidx actually stores (the fixture used fractions, which is how a
+  // floor written as 0.6 passed here while every real reading cleared it — 23 Sep 2026)
+  cov: { id: 100, title: 100, description: 97, price: 100, brand: 100, color: 72, product_type: 55, material: 90,
+    question_and_answer: 2, image_link: null },
 };
 const W = pbWeak(rec);
 const keys = W.map((w) => w.k);
@@ -130,9 +132,9 @@ console.log('\n\u2500\u2500 the bottom line: top 3 actions');
 {
   const G = (mkt, req, cond, cov) => ({ mkt, score: 70, reqMissing: req || [], condMissing: cond || [], cov: cov || {} });
   const gold = [
-    G('gb', ['mpn'], [], { gtin: 0.42, item_group_id: 0.71 }),
-    G('de', ['mpn'], [], { gtin: 0.55, item_group_id: 0.80 }),
-    G('fr', [], [], { gtin: 0.60, item_group_id: 0.88 }),
+    G('gb', ['mpn'], [], { gtin: 42, item_group_id: 71 }),
+    G('de', ['mpn'], [], { gtin: 55, item_group_id: 80 }),
+    G('fr', [], [], { gtin: 60, item_group_id: 88 }),
   ];
   const raises = [{ mkt: 'us', n: 7049, age: 78, since: true, rows: 23409, pct: 30 }];
   const practice = { gap: [{ k: 'golden', peers: 5 }], slip: [{ k: 'test', open: 3, rate: 0.4 }] };
@@ -160,7 +162,7 @@ console.log('\n\u2500\u2500 the bottom line: top 3 actions');
   ok(mpn.mkts.join(',') === 'gb,de', 'and they are the ones actually missing it: ' + mpn.mkts.join(','));
 
   console.log('\n\u2500\u2500 absent and thin are different problems');
-  const thin = pbActions([G('gb', [], [], { gtin: 0.42 }), G('de', [], [], { gtin: 0.7 })], [], {}, 'X', {});
+  const thin = pbActions([G('gb', [], [], { gtin: 42 }), G('de', [], [], { gtin: 70 })], [], {}, 'X', {});
   ok(/below spec, worst 42%/.test(thin[0].ev), 'a thin attribute reports its worst coverage: ' + thin[0].ev);
   ok(!/missing/.test(thin[0].ev), 'and is never described as missing');
   eq(thin[0].mkts.length, 2, 'both thin markets are named');

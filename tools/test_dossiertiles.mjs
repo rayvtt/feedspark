@@ -195,7 +195,7 @@ const GRC = {
   },
 };
 const G = new Function('GRC', 'esc', 'fmtN', `
-  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'auditBand')} ${lift(CC, 'grBand')}
   ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
   ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
   ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
@@ -253,7 +253,7 @@ console.log('\n-- golden record: two LABELLED scores per market (Ray, 17 Sep 202
   const codes = ['gb','us','ie','de','nl','au','ca','eu','fr','uae','at','be','ch','cz','dk','es','fi','gr','hk','it','kw','pl','pt','ro','sa','se','sg','sk'];
   codes.forEach(function (m, i) { MANY.feeds['Big|' + m] = { client: 'Big', mkt: m, score: 80 + (i % 10), q: 70 + (i % 10), air: 60, reqMissing: [], status: 'ok' }; });
   const G2 = new Function('GRC', 'esc', 'fmtN', `
-    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'auditBand')} ${lift(CC, 'grBand')}
     ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
     ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
     ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}

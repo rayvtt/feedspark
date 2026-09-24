@@ -521,6 +521,15 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   @media (min-width:880px){ .upd-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)} }
   .upd-box{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;background:var(--wash);min-width:0}
   .upd-box.ucm{background:var(--paper)}
+  .upd-grid:not(.bopen) .upd-box.ucm{display:none}
+  .upd-grid:not(.bopen),.upd-grid.upd-in-aim{grid-template-columns:1fr}
+  #upd-card.upd-moved{display:none}
+  .aim-bh{display:flex;align-items:center;gap:6px;margin:0 0 7px} .aim-bh h4{margin:0}
+  #aim-upd:empty{display:none} #aim-upd{margin:2px 0 10px}
+  .upd-binfo{margin-left:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:12px;cursor:pointer;vertical-align:middle;padding:0}
+  .upd-binfo.on{border-color:var(--orange,#F5A623);color:var(--ink)}
+  .upd-box .upd-on{margin:10px 0 0;align-items:flex-start} .upd-box .upd-on .cbx{margin-top:2px}
+  .upd-box.upd-tickonly{border:0;background:transparent;padding:0} .upd-box.upd-tickonly .upd-on{margin:0}
   .upd-box .upd-fc{margin:0;border:0;background:transparent;padding:0} .upd-box .upd-tiers{margin:11px 0 8px}
   .upd-kpis{display:flex;flex-wrap:wrap;gap:4px 20px;margin:7px 0 4px}
   .upd-kpi b{display:block;font-size:17px;font-weight:900;line-height:1.2;color:var(--vin);font-variant-numeric:tabular-nums}
@@ -665,6 +674,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   @media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px);margin-right:calc(50% - 50vw + 30px)} }
   [data-theme=dark] .tk td{border-top-color:#181B22}
   .tk tbody tr:hover td{background:rgba(245,166,35,.05)}
+  /* the block separator is a 1px DOTTED rule, not a band (Ray, 22 Sep 2026: "looks weird and uneven … replace it
+     with dotted lines instead and make it just subtle") — a band of page background read as a thick, uneven strip
+     against the white card; the rule is drawn by the cell's ::before so the row itself stays transparent */
+  .tk tr.t-gap td,.tk tbody tr.t-gap:hover td{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0}
+  .tk tr.t-gap td::before{content:'';display:block;border-top:1px dotted rgba(51,51,51,.28)}
+  [data-theme=dark] .tk tr.t-gap td::before{border-top-color:rgba(255,255,255,.2)}
+  .tk tr.t-gap+tr td{border-top:0}
   .tk .t-ref{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .tk .t-cl{font-weight:800}
   .tk .t-mk{font-size:10px;font-weight:900;color:var(--orange-ink);letter-spacing:.04em}
@@ -752,7 +768,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">AI Quote</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm on" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm on" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -822,14 +838,14 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   </div>
 
   <div class="card" id="upd-card" data-tp="ai aim">
-    <h3>Monthly update — new products</h3>
+    <h3>Monthly update — new products <button type="button" class="upd-binfo" aria-expanded="false" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">ⓘ</button></h3>
     <div class="ch"><b>Key message:</b> every new product is updated the month it lands — no waiting for a quarterly catch-up. Priced as a monthly bundle by expected new SKUs per month (minimum £100 a month), sized from the feed's own arrivals history so the forecast pulls straight into the quote.</div>
     <div id="upd-body"></div>
   </div>
 
   <div class="card" id="aim-card" data-tp="aim">
     <h3>Spark AI &mdash; priced by data source</h3>
-    <div class="ch">Google&rsquo;s six <b>conversational attributes</b> plus product highlights, priced the way they are actually delivered: pick <b>where each field&rsquo;s data comes from</b> and the cost follows the route. A field <b>added to the master feed</b> is configuration hours and nothing monthly. A <b>scraped</b> field is configuration hours plus <b>one</b> scrape run a month that covers <b>every</b> scraped field &mdash; charged once, not per field. A field generated by <b>Tachyon AI</b> is a per-field set-up plus &pound; per product across the range once, then &pound; per product on the new ones each month, with a monthly minimum. A <b>FeedHero rule</b> is the hours to build it. Volumes come from the product scope above, and new products a month from the <b>Monthly update</b> card &mdash; one arrivals figure on this quote, not two.</div>
+    <div class="ch">Google&rsquo;s six <b>conversational attributes</b> plus product highlights, priced the way they are actually delivered: pick <b>where each field&rsquo;s data comes from</b> and the cost follows the route. A field <b>added to the master feed</b> is configuration hours and nothing monthly. A <b>scraped</b> field is configuration hours plus <b>one</b> scrape run a month that covers <b>every</b> scraped field &mdash; charged once, not per field. A field generated by <b>Tachyon AI</b> is a per-field set-up plus &pound; per product across the range once, then &pound; per product on the new ones each month, with a monthly minimum. A <b>FeedHero rule</b> is the hours to build it. Volumes come from the product scope above, and new products a month from the arrivals chart below &mdash; one arrivals figure on this quote, not two.</div>
     <div id="aim-body"></div>
     <!-- THE CARD'S PROSE LIVES HERE, NOT IN renderAim() (Ray, 18 Sep 2026: "also allows all text
          can be edited please"). The editor keys every editable element ONCE at load and re-applies
@@ -839,8 +855,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
          into the ids below - which is the split aimRefresh() already worked to. -->
     <div class="aim-note">The scrape charge covers <b>every</b> scraped field &mdash; one full pass over the catalogue, then the new products after that. We do not re-scrape every product every day, so a second scraped field adds configuration time and nothing monthly.</div>
     <div class="aim-foot">
-      <div class="aim-box"><h4>New products a month</h4>
+      <div class="aim-box"><div class="aim-bh"><h4>New products a month</h4><button type="button" class="upd-binfo" aria-expanded="false" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">ⓘ</button></div>
         <div id="aim-chart"></div>
+        <div id="aim-upd"></div>
         <div class="aim-r"><span class="aim-lbl">Catalogue in scope</span><b id="aim-u">&mdash;</b></div>
         <div class="aim-r" id="aim-e-w" hidden><span class="aim-lbl" id="aim-e-l">Arrivals run-rate &middot; whole market</span><b id="aim-e">&mdash;</b></div>
         <div class="aim-r" id="aim-pct-w" hidden><span class="aim-lbl">Newness a year</span><b><input class="aim-pct" data-aimpct="1" inputmode="decimal" value=""> %</b></div>
@@ -1374,14 +1391,35 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     return hd+'<div class="upd-foot" style="margin-top:4px">'+((v&&v.pending)?'Reading the feed\u2019s arrivals history\u2026'
       :'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' \u2014 a sheet-backed feed is not on the daily XML scan':'')+'. Type an estimate on the right and the bundle prices from that.')+'</div>';
   }
-  function renderUpd(){ var el=$('#upd-body'); if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
-    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart in this card is where this comes from</span>')
+  function updBundleOpen(){ try{ return localStorage.getItem('fcc-upd-bundle')==='1'; }catch(e){ return false; } }
+  function renderUpd(){
+    /* UPD-IN-SPARK (Ray, 23 Sep 2026, an arrow from the card's two controls down to Spark AI's
+       arrivals chart: "why dont you just move those 2 buttons down to the new arrival chart and
+       delete above section?"): with Spark AI on, the Monthly update card is gone and its tick +
+       bundle panel render INSIDE Spark AI's "New products a month" box, under the chart they are
+       priced off; the ⓘ sits on that box's heading. With Spark AI off (the legacy AI type) the
+       card is the only place the chart is drawn, so it stays whole. */
+    var inAim=aimOnType(), el=inAim?$('#aim-upd'):$('#upd-body'), away=inAim?$('#upd-body'):$('#aim-upd');
+    if(away)away.innerHTML=''; var uc=$('#upd-card'); if(uc)uc.classList.toggle('upd-moved',inAim);
+    if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
+    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart '+(aimOnType()?'above':'in this card')+' is where this comes from</span>')
       :('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
         +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':'')))
       :((v&&v.pending)?'Reading the feed’s arrivals history…':'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' — a sheet-backed feed is not on the daily XML scan':'')+' — type an estimate');
-    el.innerHTML='<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label>'
-      +'<div class="upd-grid">'
-      +'<div class="upd-box">'+updEvidence()+'</div>'
+    /* UPD-BUNDLE-FOLD (Ray, 23 Sep 2026: "this section is doubled, move the checkbox to below the
+       new arrival chart and hide the bundle price in an [i] icon for AM to adjust and hide when doing
+       the quote live with client"): the tick sits under the chart it is justified by, and the priced
+       half folds behind the heading's ⓘ, closed by default, per device (fcc-upd-bundle). */
+    var bOpen=updBundleOpen();
+    document.querySelectorAll('.upd-binfo').forEach(function(bb){ bb.setAttribute('aria-expanded',bOpen?'true':'false'); bb.classList.toggle('on',bOpen); });
+    /* UPD-NO-DUP-CHART (Ray, 23 Sep 2026, crossing the chart out: "just remove this block - it's
+       duplicated"): the Spark AI card below draws the SAME arrivals chart off the same series, so
+       while Spark AI is on this card carries only the tick. With Spark AI off (the legacy AI type)
+       nothing else draws the chart, so it stays. */
+    var dupChart=inAim;
+    el.innerHTML='<div class="upd-grid'+(bOpen?' bopen':'')+(inAim?' upd-in-aim':'')+'">'
+      +'<div class="upd-box'+(dupChart?' upd-tickonly':'')+'">'+(dupChart?'':updEvidence())
+      +'<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <span><b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</span></label></div>'
       +'<div class="upd-box ucm">'
       +'<div class="upd-fc"><div class="upd-fl">The bundle · what we charge</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
       +'<div class="upd-est">Estimate / override <input type="text" id="upd-est" inputmode="numeric" placeholder="'+(f?fmt(f.monthly):'SKUs / month')+'" value="'+((u.est!=null&&u.est!=='')?esc(String(u.est)):'')+'"> new SKUs / month'
@@ -1727,11 +1765,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      screen is a figure nobody can check before it goes to a client */
   function aimSrcLine(nn){
     if(nn.src==='saved')return 'As <b>saved on this quote</b> — the catalogue in scope and the new products a month it was priced on. Pull the live feed to re-size it from today\u2019s catalogue.';
-    if(nn.src==='arrivals')return 'Read off the <b>Monthly update — new products</b> card above, which sizes it from the feed’s own <code>fs:date_of_birth</code> arrivals. Change it there and every AI line here follows.';
-    if(nn.src==='estimate')return 'Your typed estimate on the <b>Monthly update — new products</b> card above. Clear it there to go back to the feed’s own arrivals run-rate.';
+    if(nn.src==='arrivals')return 'Read off the <b>arrivals run-rate</b> charted above, from the feed’s own <code>fs:date_of_birth</code>. Type an estimate in the bundle panel behind ⓘ and every AI line here follows.';
+    if(nn.src==='estimate')return 'Your typed estimate in the <b>bundle panel</b> behind ⓘ above. Clear it there to go back to the feed’s own arrivals run-rate.';
     if(nn.src==='feed'&&nn.auto)return 'From this feed’s own <code>'+esc(nn.auto.col)+'</code>: <b>'+fmt(nn.auto.recent)+'</b> of <b>'+fmt(nn.auto.dated)+'</b> dated '+esc(aimUnitWord())+' in scope were first seen in the last twelve months'+(nn.auto.total>nn.auto.dated?(' ('+fmt(nn.auto.total-nn.auto.dated)+' carry no usable date and are left out of both sides)'):'')+'. The <b>Monthly update</b> card has no figure yet — give it one and it wins.';
-    if(nn.src==='typed')return 'Your figure, and it beats every read. Clear it to go back to '+(nn.auto?'this feed’s own first-seen dates':'the Monthly update card, or FeedSpark’s '+AIM_NEWNESS_DEFAULT+'% working estimate')+'.';
-    return 'This feed carries no first-seen dates and the Monthly update card has no figure, so the share of the catalogue that turns over in a year is the input here. FeedSpark’s working estimate is <b>'+AIM_NEWNESS_DEFAULT+'%</b>.'; }
+    if(nn.src==='typed')return 'Your figure, and it beats every read. Clear it to go back to '+(nn.auto?'this feed’s own first-seen dates':'the arrivals run-rate charted above, or FeedSpark’s '+AIM_NEWNESS_DEFAULT+'% working estimate')+'.';
+    return 'This feed carries no first-seen dates and no estimate is typed in the bundle panel, so the share of the catalogue that turns over in a year is the input here. FeedSpark’s working estimate is <b>'+AIM_NEWNESS_DEFAULT+'%</b>.'; }
   /* THE ARRIVALS CHART, HERE TOO (Ray, 18 Sep 2026: "why don't you bring the new product volume
      arrival bar chart that looks really beautiful over to this section too?"). Same updBars, same
      series builder, same validated blue and same translucent running month as the Monthly update
@@ -2405,7 +2443,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var x=t.closest&&t.closest('.xf-x'); if(x){ var i=+x.getAttribute('data-i'); feedsRec().splice(i,1); var r=rec(); if(r.dflags){ var nd={}; Object.keys(r.dflags).forEach(function(k){ var mm=/^feed:(\d+)$/.exec(k); if(!mm){nd[k]=r.dflags[k];return;} var j=+mm[1]; if(j<i)nd[k]=r.dflags[k]; else if(j>i)nd['feed:'+(j-1)]=r.dflags[k]; }); r.dflags=nd; } renderX(); foot(); saveSoon(); } });
   })();
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
-  $('#upd-card').addEventListener('change',function(e){ if(e.target.id==='upd-on'){ updRec().on=e.target.checked; updRefresh(); foot(); saveSoon(); }
+  document.addEventListener('click',function(e){ if(!(e.target.closest&&e.target.closest('.upd-binfo')))return;
+    var o=!updBundleOpen(); try{ localStorage.setItem('fcc-upd-bundle',o?'1':'0'); }catch(x){} renderUpd(); });
+  /* the bundle has two homes (the legacy card, or Spark AI's new-products box), so every handler
+     it owns is bound to both; only one is ever filled, and neither sits inside the other */
+  var UPD_HOMES=[$('#upd-card'),$('#aim-upd')].filter(Boolean);
+  function onUpd(ev,fn,cap){ UPD_HOMES.forEach(function(h){ h.addEventListener(ev,fn,!!cap); }); }
+  onUpd('change',function(e){ if(e.target.id==='upd-on'){ updRec().on=e.target.checked; updRefresh(); foot(); saveSoon(); }
     else if(e.target.id==='upd-disc'){ updRec().disc=e.target.checked; foot(); saveSoon(); }
     /* on blur the box snaps to the price that was actually stored — the £100 floor clamps on the way
        in, so a box reading "15" beside a line reading £100 is the page disagreeing with itself.
@@ -2425,17 +2469,17 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      The mouseup that COMPLETES the focusing click is swallowed; a second click in an already-focused
      box places the caret normally, because by then you are editing, not replacing. */
   var _selFx=null;
-  $('#upd-card').addEventListener('focusin',function(e){ var t=e.target;
+  onUpd('focusin',function(e){ var t=e.target;
     if(t&&t.classList&&(t.classList.contains('tgbp')||t.id==='upd-est')){ _selFx=t; try{ t.select(); }catch(x){} } });
-  $('#upd-card').addEventListener('focusout',function(){ _selFx=null; });
-  $('#upd-card').addEventListener('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault(); try{ _selFx.select(); }catch(x){} _selFx=null; } },true);
-  $('#upd-card').addEventListener('input',function(e){ var t=e.target;
+  onUpd('focusout',function(){ _selFx=null; });
+  onUpd('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault(); try{ _selFx.select(); }catch(x){} _selFx=null; } },true);
+  onUpd('input',function(e){ var t=e.target;
     if(t.id==='upd-est'){ var v=String(t.value).replace(/[^0-9]/g,''); updRec().est=v===''?null:+v; updThaw(); updRefresh(); foot(); saveSoon(); }
     else if(t.classList.contains('tgbp')){ var g=String(t.value).replace(/[^0-9.]/g,''); setBandGBP(+t.getAttribute('data-tier'),g===''?UPD_MIN:+g);
       /* the chips carry "was £X" and the off-scale ring, so they are redrawn as the price is typed —
          re-render only the chip row, never the whole card, or the caret leaves the box mid-number */
       paintTiers(); updRefresh(); foot(); saveSoon(); } });
-  $('#upd-card').addEventListener('click',function(e){ var t=e.target;
+  onUpd('click',function(e){ var t=e.target;
     if(t.id==='upd-auto'){ updRec().tier=null; updThaw(); updRefresh(); foot(); saveSoon(); return; }
     /* ↺ — hand the FeedSpark band price back. Sits on the chip and inside the off-scale warning,
        and must be read BEFORE the .tier branch below or it would pin the band instead. */
@@ -3861,12 +3905,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     /* OPTIONS OF ONE PROPOSAL SIT TOGETHER, in their own order, and the group takes the position
        of its most recent activity - scattering three options down a date-sorted list is exactly
        the comparison the feature exists to make easy */
-    var grpT={}; ids.forEach(function(k){ var p=qProp(SAVED[k]); if(!p)return;
-      grpT[p.id]=Math.max(grpT[p.id]||0,+SAVED[k].t||0); });
-    ids.sort(function(a,b){ var pa=qProp(SAVED[a]), pb=qProp(SAVED[b]);
-      var ta=pa?grpT[pa.id]:(+SAVED[a].t||0), tb=pb?grpT[pb.id]:(+SAVED[b].t||0);
+    /* TRACKER:GROUPS — ONE BLOCK PER UNIQUE QUOTE (Ray, 22 Sep 2026: "add rows between unique quote
+       so its easy for me to recognise — also, 2 options within 1 quote is considered unique"): a
+       proposal's options (and every version of them) are ONE quote, a standalone quote and its ✎ Edit
+       versions are ONE quote, so each such block sits together, takes the position of its most recent
+       activity, and a spacer row separates it from the next. tkGid names the block: the proposal id,
+       else the root of the version chain (q.prev walked back to the earliest ref still on the rail),
+       else the quote itself. */
+    var byRef={}; ids.forEach(function(k){ if(SAVED[k].ref)byRef[SAVED[k].ref]=k; });
+    var GID={}; function tkGid(k){ if(GID[k])return GID[k]; var q=SAVED[k], p=qProp(q), g;
+      if(p)g='p:'+p.id; else { var r=k, seen={}, n=0; while(n++<50){ var pq=SAVED[r]; if(!pq||!pq.prev||!byRef[pq.prev]||seen[pq.prev])break; seen[pq.prev]=1; r=byRef[pq.prev]; } g='q:'+r; }
+      GID[k]=g; return g; }
+    var grpT={}; ids.forEach(function(k){ var g=tkGid(k); grpT[g]=Math.max(grpT[g]||0,+SAVED[k].t||0); });
+    ids.sort(function(a,b){ var ga=tkGid(a), gb=tkGid(b), ta=grpT[ga], tb=grpT[gb];
       if(tb!==ta)return tb-ta;
-      if(pa&&pb&&pa.id===pb.id)return (+pa.n||0)-(+pb.n||0);
+      if(ga!==gb)return ga<gb?-1:1;
+      var pa=qProp(SAVED[a]), pb=qProp(SAVED[b]);
+      if(pa&&pb&&(+pa.n||0)!==(+pb.n||0))return (+pa.n||0)-(+pb.n||0);
       return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
     $('#tk-n').textContent=ids.length?'· '+ids.length+' saved':'';
     /* every money figure counts a proposal ONCE - see AIQUOTE-OPTIONS */
@@ -3905,8 +3960,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +(SHOWP&&pDone?(' · chosen <b>'+money(wonV)+'</b> against <b>'+money(offV)+'</b> at the top option of each'):'')
       +' <span style="color:var(--muted)">— every figure above counts a proposal once, at its chosen option (or the lowest until the client picks)</span>'):'';
     if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="10"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
-    $('#tk-body').innerHTML=ids.map(function(k){
+    $('#tk-body').innerHTML=ids.map(function(k,i){
       var q=SAVED[k], si=STAGES.indexOf(q.stage);
+      /* a spacer row between one unique quote and the next — never inside a block */
+      var gap=(i&&tkGid(k)!==tkGid(ids[i-1]))?'<tr class="t-gap" aria-hidden="true"><td colspan="10"></td></tr>':'';
       /* THE RAIL IS A STEPPER (Ray, 21 Sep 2026: "the saved quotes getting super cluttered …
          buttons should be presented cleaner - maybe in a different format to save space"): seven
          word-pills wrapped onto two lines in every row. Every stage is still there and still one
@@ -3976,7 +4033,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
           +(q.valid?('<br><span style="color:var(--muted)">Quote valid '+q.valid+' days from the save date</span>'):'')+'</div>'
           +'</td></tr>';
       }
-      return row;
+      return gap+row;
     }).join('');
   }
   $('#tk-body').addEventListener('click',function(e){

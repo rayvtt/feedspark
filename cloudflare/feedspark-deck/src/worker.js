@@ -41,6 +41,9 @@ import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } fr
 import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
+import * as ROAS from "./roas.js";
+// Build Log suggestions — the candidate plays ranked against the FCC's own live signals
+import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
 // module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
 // and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
@@ -53,7 +56,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -66,6 +69,7 @@ import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
+import CASE_BRIEF from "../../../docs/FCC_Business_Case_Brief.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
@@ -92,6 +96,7 @@ import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
+import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -122,6 +127,11 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /images module (Ray, 15 Sep 2026): the client's whole media estate — image_link +
+// additional_image_link 1..10 — grouped by the SHOT TOKEN read off each URL, so one tag
+// lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
+import IMAGES_PAGE from "../../../docs/FeedSpark_Images.html";
+import IMAGE_ENGINE_SRC from "../../../docs/image_engine.js";
 // /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
 // year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
 import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
@@ -216,13 +226,24 @@ const PAGES = {
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
+  '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
+  '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
+  '/case':        { html: CASE_BRIEF,  slug: 'case' },
 };
+
+// DOCUMENTS, NOT APP PAGES. /case is the FCC business case — a narrative that is read
+// straight through and presented from, not a module worked in. It gets the live editor
+// (Ray rewords copy before a meeting) and nothing else: no module switcher or presence
+// avatars over somebody's shoulder in a meeting room, no Feed Chat bubble sitting on the
+// page's own section rail, and no skim view folding a scroll built to be scrolled. Exactly
+// the boundary /deck/ already draws — this is the same kind of thing at a different path.
+const DOC_PATHS = new Set(['/case']);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -453,6 +474,7 @@ export default {
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
+        '/api/images/scanpush': 'image-scan-live', '/api/images/tags': 'image-tags-save',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -835,7 +857,7 @@ export default {
           const snap = e.snap;
           if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') { results.push({ client, mkt, error: 'bad snapshot' }); continue; }
           try {
-            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol, e.ovl);
+            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol, e.ovl, e.img);
             results.push(r.skipped ? { client, mkt, skipped: true, retry: r.retry }
               : { client, mkt, ok: true, alerts: r.alerts, overlays: r.overlays });
           } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
@@ -992,11 +1014,18 @@ export default {
       const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
       const briefs = envelopeToClient(envx, {});
       const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
-      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
-      // …and the brief EMAIL is the backup copy of the ticket (Ray, 16 Sep 2026): an original
-      // [FS Brief] whose ibfref the store has never heard of rebuilds it. Create-only, so a
-      // ticket that has since moved on is never reset by its own original email.
+      // REBUILD FIRST, THEN MATCH (Ray, 23 Sep 2026: a brief Steven sent through the module,
+      // with Ray copied, was not in the Brief Ledger). The brief EMAIL is the backup copy of
+      // the ticket (16 Sep 2026): an original [FS Brief] whose ibfref the store has never
+      // heard of rebuilds it, create-only, so a ticket that has since moved on is never reset
+      // by its own original email. It used to run AFTER the matcher — and a batch carrying a
+      // brief AND its replies (which is what a live thread pushes) matched those replies
+      // against a store that did not yet hold the ticket, so they were dropped; the ticket
+      // was then created at `briefed` with no comms and no read-out, and because message ids
+      // are deduped server-side the replies never came back. Recovering first means the
+      // ticket exists by the time its own thread is read, so it lands carrying its real stage.
       const made = recoverBriefsFromEmail(briefs, messages, { now });
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
       if (res.matched || made.length || (res.repaired && res.repaired.length)) {
         mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
         await env.EDITS.put('briefs', JSON.stringify(envx));
@@ -1010,7 +1039,7 @@ export default {
         runlog.push({ t: now, n: messages.length, m: res.matched, s: res.skipped, moved: res.moved.slice(0, 12) });
         await env.EDITS.put('gmailpushlog', JSON.stringify(runlog.slice(-60)));
       } catch (e) {}
-      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
+      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo, rebuilt: made });   // `rebuilt` is what the backfill sweep reports per page
     }
 
     // ---- due-today task reminders: preview + manual fire (owner-only) ----
@@ -1256,6 +1285,9 @@ export default {
     }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/images/engine.js' && request.method === 'GET') {
+      return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -1505,6 +1537,39 @@ export default {
       return json({ ...data, live: { sha: env.GIT_SHA || '' } });
     }
 
+    // ---- Build Log SUGGESTIONS (Ray, 22 Sep 2026: "within Build Log also start suggesting the
+    // top five new features to build for FCC to improve revenue, churn, client retention, AM
+    // efficiency, increase billable hours, or reduce the time taken for each account work").
+    // Every candidate play is scored against a number read off the live stores here and handed to
+    // the pure engine; a store that has never synced comes back as UNREAD, never as a zero. Owner
+    // only, like the rest of the Build Log — these figures are the whole book at once.
+    if (path === '/api/buildsuggest' && request.method === 'GET') {
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
+      const now = Date.now();
+      const [tm, skip, golden, arrivals] = await Promise.all([
+        env.EDITS.get('tmidx', 'json'), env.EDITS.get('schedskip', 'json'),
+        env.EDITS.get('goldenidx', 'json'), env.EDITS.get('voldobidx', 'json'),
+      ]);
+      const briefs = liftEnvelope(await env.EDITS.get('briefs', 'json'), now).data || {};
+      const quotes = liftEnvelope(await env.EDITS.get('aiquotesaved', 'json'), now).data || {};
+      // wired Google Shopping feeds vs the ones the Golden Record index has ever scored
+      const roster = await feedRoster(env);
+      const wiredKeys = roster.filter((f) => f.src && (f.src.id || f.src.xml) && !/-fb$/.test(String(f.mkt || '')))
+        .map((f) => lgKey(f.client, f.mkt));
+      const gi = golden || {};
+      const feeds = { wired: wiredKeys.length, scanned: wiredKeys.filter((k) => gi[k] && gi[k].t).length };
+      // the roster the quiet-account rule measures against: brands carrying a wired feed or a plan
+      const clients = Array.from(new Set(roster.map((f) => f.client).filter(Boolean)));
+      // what is already somebody's job: the queue, the open PRs and everything merged
+      const queue = liftEnvelope(await env.EDITS.get('buildqueue', 'json'), now).data || {};
+      const bl = (await env.EDITS.get('buildlog:gh', 'json')) || (await env.EDITS.get('buildlog:gh:stale', 'json')) || {};
+      const done = Object.keys(queue).filter((k) => queue[k] && queue[k].status !== 'dropped')
+        .map((k) => ({ title: queue[k].title || '', where: 'queue' }))
+        .concat(((bl.pulls) || []).map((p) => ({ title: p.t || '', where: p.m ? 'shipped' : 'in build' })));
+      const out = BSG.suggest({ tm, skip, quotes, briefs, golden: gi, arrivals, feeds, clients, now }, done);
+      return json(out);
+    }
+
     // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
     if (path === '/api/tests') {
       if (request.method === 'GET') return json((await env.EDITS.get('tests', 'json')) || []);
@@ -1711,6 +1776,65 @@ export default {
       const q = (url.searchParams.get('client') || '').trim().toLowerCase();
       const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
       return json({ ok: true, results: results.slice(0, 200), total: results.length });
+    }
+
+    // ---- /images module reads: the estate board (full feed roster ∪ the scanned index, so
+    // a never-scanned feed shows as "not scanned yet", never silently absent) or one feed's
+    // full capture + its history + the brand's tag store
+    if (path === '/api/images' && request.method === 'GET') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (client) {
+        const mkt = mktOf(url.searchParams.get('market'));
+        const src = await feedSourceFor(env, client, mkt);
+        const snap = await env.EDITS.get('image:' + client + ':' + mkt, 'json');
+        const hist = (await env.EDITS.get('imagehist:' + client + ':' + mkt, 'json')) || [];
+        const tags = (await env.EDITS.get('imgtags:' + client, 'json')) || null;
+        return json({ ok: true, client, market: mkt, kind: src && src.xml ? 'xml' : (src && src.id ? 'sheet' : null),
+          snap: snap || null, hist, tags });
+      }
+      const roster = await feedRoster(env);
+      const idx = (await env.EDITS.get('imageidx', 'json')) || {};
+      const feeds = roster.map((f) => Object.assign({ client: f.client, mkt: f.mkt, kind: f.src && f.src.xml ? 'xml' : 'sheet' },
+        idx[f.client + '|' + f.mkt] ? { scan: idx[f.client + '|' + f.mkt] } : {}));
+      return json({ ok: true, feeds });
+    }
+    // the tag store: the brand's shot taxonomy + one rule per shot token (+ per-image
+    // overrides). Merged per key so two AMs tagging different tokens never clobber each
+    // other, exactly like /api/briefs.
+    if (path === '/api/images/tags' && (request.method === 'GET' || request.method === 'PUT')) {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const K = 'imgtags:' + client;
+      if (request.method === 'GET') return json({ ok: true, client, tags: (await env.EDITS.get(K, 'json')) || null });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const incoming = sanitizeImageTags(body && body.tags);
+      if (!incoming) return json({ ok: false, error: 'bad tags' }, 400);
+      const cur = (await env.EDITS.get(K, 'json')) || { v: 1, tok: {}, img: {} };
+      const merged = { v: 1, t: Date.now(),
+        tok: Object.assign({}, cur.tok || {}, incoming.tok),
+        img: Object.assign({}, cur.img || {}, incoming.img) };
+      if (incoming.tax) merged.tax = incoming.tax; else if (cur.tax) merged.tax = cur.tax;
+      // an explicit null clears one rule — the page sends it when a tag is removed
+      Object.entries((body && body.clear) || {}).forEach(([scope, keys]) => {
+        if ((scope === 'tok' || scope === 'img') && Array.isArray(keys)) keys.slice(0, 400).forEach((k) => { delete merged[scope][String(k)]; });
+      });
+      await env.EDITS.put(K, JSON.stringify(merged));
+      return json({ ok: true, client, tags: merged });
+    }
+    // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab
+    // parser + the image collector (the agent's exact code, served at /images/engine.js)
+    // and posts the computed capture. Identity forced server-side; the feed must resolve.
+    if (path === '/api/images/scanpush' && request.method === 'POST') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const r = await imageTrack(env, client, mkt, body && body.img);
+      if (!r) return json({ ok: false, error: 'bad capture' }, 400);
+      return json(Object.assign({ ok: true, client, market: mkt }, r));
     }
 
     // ---- /overlays module reads: the estate board (full feed roster ∪ the scanned index, so
@@ -2096,6 +2220,40 @@ export default {
       return json({ ok: true, clients: out, tracked: Object.keys(out).length, updated: updated || null, source: src, status });
     }
 
+    // ROAS (working name) — FeedHero_reports MCP's roas_dashboard, FeedSpark's own roster only
+    // (Ray, 23 Sep 2026 — see src/roas.js's header for the scope call). Scoped like /api/tm:
+    // owner sees the whole roster, a client-scoped signin only their clients. Bare GET = the
+    // per-brand rollup (money kept apart by currency — never summed across symbols) + book KPIs
+    // + `status`; ?client=<brand> = that brand's per-market Total row + top categories; ?pull=1
+    // = OWNER-ONLY sync-now, the same rotation the cron runs.
+    if (path === '/api/roas' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
+      if (url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await roasPull(env, { pulls: Math.min(20, Math.max(0, +url.searchParams.get('pulls') || ROAS.ROAS_PULLS)) });
+        logActivity(ctx, env, request, 'roas-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('roasstatus', 'json'));
+      const one = url.searchParams.get('client');
+      if (one) {
+        if (!(acc.owner || clientMatch(acc.clients, one))) return json({ ok: false, error: 'out of scope' }, 403);
+        const markets = ROAS.rosterOf(one);
+        if (!markets.length) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+        const recs = {};
+        for (const m of markets) { const r = await env.EDITS.get('roas:' + m.cmpid, 'json'); if (r) recs[m.market] = r; }
+        return json({ ok: true, client: one, roster: markets.length, read: Object.keys(recs).length, markets: recs, status });
+      }
+      const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client));
+      const brands = ROAS.brandRollup(rows);
+      const book = ROAS.bookKpis(brands);
+      const rosterN = ROAS.rosterList().filter((m) => inScope(m.client)).length;
+      return json({ ok: true, brands, book, tracked: rows.length, roster: rosterN, status });
+    }
+
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
@@ -2232,8 +2390,8 @@ export default {
         const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
         const briefs = envelopeToClient(envx, {});
         const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const made = recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers — BEFORE the matcher, or this scan's own replies find no ticket
         const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });
-        const made = recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers
         if (res.matched || made.length || (res.repaired && res.repaired.length)) {
           mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts
           await env.EDITS.put('briefs', JSON.stringify(envx));
@@ -2583,7 +2741,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) {
+      if (!path.startsWith('/deck/') && !DOC_PATHS.has(path)) {
         // MODULE ACCESS (Ray Sep 2026): a non-owner whose directory row restricts modules can't
         // open a module page outside their grant — bounced to the always-open landing. Leadership
         // & Activity are already owner-gated above; the landing (/) is never blocked. The same
@@ -2636,6 +2794,14 @@ export default {
       // and the /tasks module's own book — its own rotation (even coverage of twelve months,
       // stalest market first) on the same firing, so the estate turns over ~twice a day.
       await tmBookPull(env);
+      return;
+    }
+    // ROAS sync — its OWN firing (a different MCP server, FeedHero's own) so it never competes
+    // with the TM pull's subrequest budget. 6 clients off the 57-market roster, stalest first —
+    // the whole roster turns over roughly every 5 hours, well inside the ~daily refresh the
+    // source data itself carries.
+    if (event && event.cron === '10,40 * * * *') {
+      await roasPull(env);
       return;
     }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
@@ -2917,6 +3083,90 @@ async function tmBookPull(env, opts) {
   }
 }
 
+// ---- ROAS: the worker pulls the FeedHero_reports MCP itself (same shape as tmMcp/tmPull, a
+// DIFFERENT server — FeedHero's own Google Ads reporting, not the reports-database Task Manager
+// MCP). ROAS_MCP_TOKEN secret — `Authorization: Bearer` unless ROAS_MCP_AUTH names the header
+// the server reads; ROAS_MCP_URL overrides the endpoint (the default in src/roas.js is a
+// best guess pending confirmation against the live server). roasStore = the one writer of
+// roas:<cmpid> + roasidx; roasPull = one firing: a rotation of ROAS_PULLS clients off
+// ROAS_ROSTER (src/roas.js — FeedSpark's own roster only, stalest cmpid first), each read via
+// roas_dashboard(company=<cmpid>) and split into its Total row + top categories by spend.
+function roasMcp(env, fetchFn) {
+  const url = String(env.ROAS_MCP_URL || ROAS.ROAS_MCP_URL);
+  const auth = TMM.authHeader(env.ROAS_MCP_TOKEN, env.ROAS_MCP_AUTH);
+  let sid = null, n = 0;
+  const post = async (body) => {
+    const h = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
+    if (auth) h[auth.name] = auth.value;
+    if (sid) h['Mcp-Session-Id'] = sid;
+    const init = { method: 'POST', headers: h, body: JSON.stringify(body) };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(25000);
+    const r = await fetchFn(url, init);
+    const s = r.headers.get('Mcp-Session-Id') || r.headers.get('mcp-session-id'); if (s) sid = s;
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) { const e = new Error('unauthorized (HTTP ' + r.status + ')'); e.code = 'unauthorized'; throw e; }
+    if (r.status === 202 || !text) return null;
+    if (!r.ok) { const e = new Error('HTTP ' + r.status + (/json/i.test(r.headers.get('content-type') || '') ? '' : ' (non-JSON — Access login page? wrong URL?)')); e.code = r.status >= 500 ? 'unreachable' : 'http'; throw e; }
+    return TMM.parseRpc(text, r.headers.get('content-type') || '');
+  };
+  return {
+    async init() {
+      const m = await post(TMM.rpc(++n, 'initialize', { protocolVersion: ROAS.ROAS_PROTOCOL, capabilities: {}, clientInfo: { name: 'feedspark-command-center', version: '1' } }));
+      if (m && m.error) { const e = new Error('initialize: ' + String(m.error.message || m.error.code)); e.code = 'init'; throw e; }
+      try { await post({ jsonrpc: '2.0', method: 'notifications/initialized' }); } catch (e) {}
+      return m;
+    },
+    async call(name, args) { return TMM.toolPayload(await post(TMM.rpc(++n, 'tools/call', { name, arguments: args || {} }))); },
+    auth: auth ? auth.name : null,
+    host: url.replace(/^https?:\/\//, '').split('/')[0],
+  };
+}
+
+async function roasStore(env, cmpid, client, market, normalized) {
+  const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+  const rec = Object.assign({ client, market, cmpid, updated: Date.now() }, normalized.total || {});
+  const sig = ROAS.sigOf(Object.assign({}, rec, { updated: 0 }));
+  if (idx[cmpid] && idx[cmpid].sig === sig) return { changed: false };
+  try { await env.EDITS.put('roas:' + cmpid, JSON.stringify({ client, market, cmpid, total: normalized.total, categories: normalized.categories, updated: rec.updated })); }
+  catch (e) { return { changed: false, error: 'kv put failed' }; }
+  idx[cmpid] = Object.assign({}, rec, { sig });
+  try { await env.EDITS.put('roasidx', JSON.stringify(idx)); } catch (e) {}
+  return { changed: true };
+}
+
+async function roasPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('roasstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null, pulled: [] };
+  const save = async (s) => { try { await env.EDITS.put('roasstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.ROAS_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' }));
+  const mcp = opts.mcp || roasMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    const roster = ROAS.rosterList();
+    const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? ROAS.ROAS_PULLS : opts.pulls, now);
+    let changed = 0;
+    for (const m of plan) {
+      const payload = await mcp.call('roas_dashboard', { company: m.cmpid, page_size: 200, sort: 'spend', order: 'desc' });
+      const rows = TMM.rowsOf(payload);
+      const split = ROAS.splitClientRows(rows);
+      const r = await roasStore(env, m.cmpid, m.client, m.market, split);
+      if (r.changed) changed++;
+      st.rot[m.cmpid] = now; st.pulled.push(m.client + ' ' + m.market + (split.total ? '' : ' (no Total row)'));
+    }
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: Object.keys(st.rot).length, total: roster.length, changed }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
 function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
 // the "you are previewing" strip appended to owner-only 403 pages while view-as is active
 function viewAsExitHtml(env, request) {
@@ -3152,7 +3402,7 @@ async function volTrack(env, client, mkt, rows, vol) {
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
 // catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
 // confirming re-read). Identity fields are always forced server-side.
-async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
+async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img) {
   const wantPT = !/-fb$/.test(mkt);
   snap.client = client; snap.market = mkt; snap.v = 1;
   if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
@@ -3165,7 +3415,76 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
   // would otherwise fake an overlay drop-off
   let overlays = null;
   if (ovl) { try { overlays = await overlayTrack(env, client, mkt, ovl); } catch (e) {} }
-  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays };
+  // the image-library capture rides the same confirmed scan, for the same reason
+  let images = null;
+  if (img) { try { images = await imageTrack(env, client, mkt, img); } catch (e) {} }
+  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays, images };
+}
+
+// ---- /images module store (Ray, 15 Sep 2026: "manage the client's images from all the
+// media assets across image_link, additional_image_link 1,2,3,4… up to 10, and find a way
+// to tag / categorise it — the brand can't define which images are flat-lay and which are
+// on-model / upper-body; we can use this module to AI tag or manual tag it") ------------
+// One capture per feed scan: how deep the media estate runs (per-slot fill, images per
+// product, hosts, formats) and the SHOT TOKENS the engine read off the URLs, each with a
+// sample strip. Stored whole at image:<c>:<m>, appended (counts only) to imagehist:<c>:<m>
+// and rolled into the ONE estate index imageidx. The TAGS live apart, at imgtags:<client>,
+// because a tag is Ray's judgement and must survive every rescan that rewrites the capture.
+const IMG_HIST_CAP = 120, IMG_TOKENS_CAP = 60, IMG_SAMPLES_CAP = 24;
+function sanitizeImageCapture(client, mkt, raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.rows !== 'number' || !Array.isArray(raw.tokens)) return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const num = (v) => Math.max(0, Math.round(+v || 0));
+  const isHttp = (u) => /^https?:\/\//i.test(String(u || ''));
+  const cnt = (o, cap) => Object.fromEntries(Object.entries(o || {}).slice(0, cap).map(([k, v]) => [str(k, 12), num(v)]));
+  const tokens = raw.tokens.slice(0, IMG_TOKENS_CAP).map((t) => ({
+    tok: str(t.tok, 60), n: num(t.n), weak: !!t.weak, slots: cnt(t.slots, 12),
+    samples: (Array.isArray(t.samples) ? t.samples : []).slice(0, IMG_SAMPLES_CAP).filter((x) => x && isHttp(x.url)).map((x) => ({
+      id: str(x.id, 80), ti: str(x.ti, 140), pt: str(x.pt, 160),
+      link: isHttp(x.link) ? str(x.link, 500) : '', url: str(x.url, 900), slot: num(x.slot) })),
+  })).filter((t) => t.tok);
+  return { v: 1, t: Date.now(), client, market: mkt,
+    rows: num(raw.rows), withImg: num(raw.withImg), imgs: num(raw.imgs), dupRows: num(raw.dupRows),
+    slots: (Array.isArray(raw.slots) ? raw.slots : []).slice(0, 11).map(num),
+    depth: cnt(raw.depth, 12), hasImage: raw.hasImage !== false, addlSlots: num(raw.addlSlots),
+    hosts: (Array.isArray(raw.hosts) ? raw.hosts : []).slice(0, 5).map((h) => [str(h && h[0], 120), num(h && h[1])]),
+    exts: (Array.isArray(raw.exts) ? raw.exts : []).slice(0, 5).map((e) => [str(e && e[0], 12), num(e && e[1])]),
+    grouping: str(raw.grouping, 8), learnable: !!raw.learnable, overflow: !!raw.overflow,
+    tokCover: Math.max(0, Math.min(1, +raw.tokCover || 0)), tokKept: num(raw.tokKept), tokens };
+}
+async function imageTrack(env, client, mkt, raw) {
+  const cap = sanitizeImageCapture(client, mkt, raw);
+  if (!cap) return null;
+  const K = 'image:' + client + ':' + mkt, HK = 'imagehist:' + client + ':' + mkt;
+  const hist = (await env.EDITS.get(HK, 'json')) || [];
+  hist.push({ t: cap.t, rows: cap.rows, imgs: cap.imgs, withImg: cap.withImg, toks: cap.tokens.length });
+  await env.EDITS.put(K, JSON.stringify(cap));
+  await env.EDITS.put(HK, JSON.stringify(hist.slice(-IMG_HIST_CAP)));
+  const idx = (await env.EDITS.get('imageidx', 'json')) || {};
+  idx[client + '|' + mkt] = { client, mkt, t: cap.t, rows: cap.rows, withImg: cap.withImg, imgs: cap.imgs,
+    slots: cap.slots, learnable: cap.learnable, toks: cap.tokens.length, tokCover: cap.tokCover,
+    tops: cap.tokens.slice(0, 12).map((t) => ({ tok: t.tok, n: t.n })) };
+  await env.EDITS.put('imageidx', JSON.stringify(idx));
+  return { imgs: cap.imgs, tokens: cap.tokens.length, learnable: cap.learnable };
+}
+// A tag store is per CLIENT, not per market: the same studio convention runs across a
+// brand's markets, so tagging Reiss GB's shot codes answers Reiss DE too.
+function sanitizeImageTags(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const rule = (r) => (r && typeof r === 'object' && r.tag
+    ? { tag: str(r.tag, 40), by: str(r.by, 12) || 'manual', t: Math.max(0, Math.round(+r.t || 0)) || Date.now(),
+        note: str(r.note, 300), conf: Math.max(0, Math.min(1, +r.conf || 0)) || undefined }
+    : null);
+  const map = (o, cap, keyLen) => {
+    const out = {};
+    Object.entries(o || {}).slice(0, cap).forEach(([k, v]) => { const r = rule(v); if (r) out[str(k, keyLen)] = r; });
+    return out;
+  };
+  const tax = Array.isArray(raw.tax) ? raw.tax.slice(0, 40).map((t) => ({
+    id: str(t && t.id, 40), label: str(t && t.label, 60), hint: str(t && t.hint, 160) })).filter((t) => t.id && t.label) : null;
+  return Object.assign({ v: 1, t: Date.now(), tok: map(raw.tok, 400, 60), img: map(raw.img, 2000, 100) },
+    tax ? { tax } : {});
 }
 
 // ---- /overlays module store (Ray, 10 Sep 2026: "render the type of overlay that is
@@ -3382,13 +3701,14 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
     // compute estate-wide industry benchmarks (avg / best) from the one estate call
     const gProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
     const gs = goldenScore(grSnap.attrs, gProf);
-    const covMap = {};
-    ATTR_SPEC.forEach((sp) => { const a = grSnap.attrs[sp.key]; covMap[sp.key] = a && a.present ? a.cov : null; });
+    // coverage per attribute over the products it applies to + the in-scope counts (GPC
+    // scope) — an attribute no product calls for reads null, so the Playbook never lists it
+    const { cov: covMap, sc: scMap } = goldenCovIndex(grSnap.attrs);
     const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
     // rebuilt from the scan, but the content-quality / AI-readiness headlines ride along
     // (keepQual) — the scan never measures them and used to wipe them on every pass
     gidx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap, sc: Object.keys(scMap).length ? scMap : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length },
@@ -4125,11 +4445,10 @@ async function goldenRoutes(env, request, url) {
     await env.EDITS.put('goldenbase:' + client + ':' + mkt, JSON.stringify(snap));
     const ackProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
     const gs = goldenScore(snap.attrs, ackProf);
-    const ackCov = {};
-    ATTR_SPEC.forEach((sp) => { const a = snap.attrs[sp.key]; ackCov[sp.key] = a && a.present ? a.cov : null; });
+    const { cov: ackCov, sc: ackSc } = goldenCovIndex(snap.attrs);
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     idx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov, sc: Object.keys(ackSc).length ? ackSc : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score
     await env.EDITS.put('goldenidx', JSON.stringify(idx));

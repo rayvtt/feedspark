@@ -725,3 +725,24 @@ hands the sizing back to the live read.
 
 Harness: `tools/test_aimode.mjs` (309) and a browser round trip — build with the feed pulled, save,
 reopen in a fresh session, export: the workbook equals the saved quote to the penny.
+
+## One block per unique quote
+
+Ray, 22 Sep 2026: *"can you add rows between unique quote so its easy for me to recognise — also, 2
+options within 1 quote is considered unique."*
+
+The tracker reads as **blocks**, one per unique quote, with a spacer row between them. A proposal's
+options — and every version of them — are one quote; a standalone quote and its ✎ Edit versions are one
+quote. `tkGid` names the block: the proposal id when there is one, else the root of the version chain
+(`q.prev` walked back to the earliest ref still on the rail, cycle-safe), else the quote itself. A block
+takes the position of its most recent activity (the sort the options already used, widened to versions),
+its rows sit together — options in option order, versions newest first — and the spacer (`tr.t-gap`, a
+subtle 1px dotted rule on a transparent row — Ray, 22 Sep 2026: *"replace it with dotted lines instead and
+make it just subtle"* — no hover wash, its own dark-mode tone, hidden from readers) is written only where the
+block changes, so it is never inside a block and never the first row. An expanded ⌄ detail row stays inside
+its block; the gap follows it.
+
+## Monthly update card — bundle price folds away (23 Sep 2026)
+Ray: "this section is doubled, move the checkbox to below the new arrival chart and hide the bundle price in an [i] icon for AM to adjust and hide when doing the quote live with client". The "Include monthly new-product updates" tick now sits under the arrivals chart. The priced half (estimate/override, band prices, bundle summary) folds behind the ⓘ beside the card heading. It is closed by default and remembered per device (localStorage `fcc-upd-bundle`). Pricing is unchanged whether it is open or closed. Marker `UPD-BUNDLE-FOLD`.
+Later the same day Ray crossed out the card's arrivals chart: "just remove this block - it's duplicated". The Spark AI card below draws the same chart off the same series. So while Spark AI is on, the Monthly update card shows only its tick. With Spark AI off (the legacy AI type), nothing else draws the chart, so it stays. Marker `UPD-NO-DUP-CHART`.
+Ray then drew an arrow from the card's two controls down to Spark AI's arrivals chart: "why dont you just move those 2 buttons down to the new arrival chart and delete above section?" With Spark AI on, the Monthly update card is now hidden. Its tick and its ⓘ bundle panel render inside Spark AI's "New products a month" box. The ⓘ sits beside that box's heading, and the tick and bundle sit under the chart, above the scoped rows. The bundle's handlers are bound to both homes, so the tick, the estimate, the band boxes and ↺ behave the same in either place. With Spark AI off (the legacy AI type), the card comes back whole with its own chart. Marker `UPD-IN-SPARK`.

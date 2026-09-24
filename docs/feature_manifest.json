@@ -459,9 +459,9 @@
       "pr": 109
     },
     {
-      "name": "wrangler: feedlab engine bundled as Text module",
+      "name": "wrangler: feedlab engine bundled as Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "feedlab_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 109
     },
     {
@@ -637,9 +637,9 @@
       "pr": 141
     },
     {
-      "name": "wrangler: pricer engine bundled as Text",
+      "name": "wrangler: pricer engine bundled as Text (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "pricer_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 141
     },
     {
@@ -3119,9 +3119,9 @@
       "pr": 317
     },
     {
-      "name": "wrangler: overlay_engine.js bundled as a Text module",
+      "name": "wrangler: overlay_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "overlay_engine.js",
+      "pattern": "**/*_engine.js",
       "min": 1,
       "pr": 317
     },
@@ -4203,9 +4203,9 @@
       "min": 1
     },
     {
-      "name": "wrangler: pdp_engine.js bundled as a Text module",
+      "name": "wrangler: pdp_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "pdp_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 361,
       "min": 1
     },
@@ -4318,13 +4318,6 @@
       "name": "Dark view: homepage score tags carry a CLASS (sc-good/mid/low), never an inline light background",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function scol(v){return v>=66?'sc-good':v>=40?'sc-mid':'sc-low';}",
-      "pr": 364,
-      "min": 1
-    },
-    {
-      "name": "Dark view: the ATRT splice emits score-tag classes, not inline backgrounds",
-      "file": "tools/sync_atrt.py",
-      "pattern": "\"sc-good\" if s[\"total\"]>=66",
       "pr": 364,
       "min": 1
     },
@@ -4483,9 +4476,9 @@
       "pr": 369
     },
     {
-      "name": "wrangler: arrivals_engine.js imported as a Text module",
+      "name": "wrangler: arrivals_engine.js imported as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "arrivals_engine.js",
+      "pattern": "**/*_engine.js",
       "min": 1,
       "pr": 369
     },
@@ -5336,7 +5329,7 @@
     {
       "name": "Golden Record: ★ on a REC attribute lifts it to best-practice weight ×2 — profiling sale_price must move the number (Ray 16 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "w: bp ? 2 : 1",
+      "pattern": "w: (bp ? 2 : 1) * sh",
       "min": 1
     },
     {
@@ -5512,6 +5505,62 @@
       "pattern": "recoverBriefsFromEmail(briefs, messages, { now })",
       "pr": 390,
       "min": 2
+    },
+    {
+      "name": "Workflow/Gmail: a ticket is REBUILT BEFORE its thread's replies are matched — the live push lane (Ray 23 Sep 2026: a brief Steven sent through the module was not in the Brief Ledger; matching first meant the reply hit a store with no ticket in it and message-id dedupe never gave it back)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const made = recoverBriefsFromEmail(briefs, messages, { now });\n      const res = matchGmailToBriefs",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Workflow/Gmail: the same order on the rescan lane",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers — BEFORE the matcher",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Workflow/Gmail: the live push reports which tickets it rebuilt, so the backfill sweep can log them per page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tickets: res.loggedTo, rebuilt: made",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Gmail push: a [FS Brief] ORIGINAL is not aged out while its thread is live — the one message that can rebuild a ticket was being discarded after 7 days",
+      "file": "tools/gmail_push.gs",
+      "pattern": "isBriefOriginal(subj) ? BRIEF_MAX_AGE_MS : MAX_AGE_MS",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Gmail push: the original/reply gate mirrors briefmatch.js briefFromEmail",
+      "file": "tools/gmail_push.gs",
+      "pattern": "function isBriefOriginal(subject)",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Gmail push: backfillBriefs() — the resumable sweep that reaches the briefs stranded before the save-durability fix",
+      "file": "tools/gmail_push.gs",
+      "pattern": "function backfillBriefs()",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Gmail push: the brief backfill saves its cursor every page, so a timeout never restarts the year",
+      "file": "tools/gmail_push.gs",
+      "pattern": "props.setProperty(BRIEF_BACKFILL_PROP, String(offset))",
+      "min": 1,
+      "pr": 512
+    },
+    {
+      "name": "Harness: the 8 Sep Superdry brief — a 15-day-old original plus today's reply, recovered then matched",
+      "file": "tools/test_briefrecover.mjs",
+      "pattern": "SUPE-20260908-01",
+      "min": 1,
+      "pr": 512
     },
     {
       "name": "gmail_push.gs: the pushed snippet carries the whole brief body (1200 chars cut off the DoD and assets)",
@@ -6842,6 +6891,41 @@
       "min": 1
     },
     {
+      "name": "Workflow: a modal never lands on an open rail — the scrim mirrors the body's rail padding so the card centres in the column the rails leave (Ray 18 Sep 2026: 'workflow still have this issue when clickign on brief ticket' — one modal, centred on the viewport, slicing the Playbook rail's left edge under ~1400px)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "body.ck-r-on .scrim{padding-right:calc(var(--ck-w) + 16px)}",
+      "min": 1,
+      "pr": 483
+    },
+    {
+      "name": "Workflow: the same rule for the left rail (the docked retainer read-out)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "body.ck-l-on .scrim{padding-left:calc(var(--ck-w) + 16px)}",
+      "min": 1,
+      "pr": 483
+    },
+    {
+      "name": "Workflow: the rail-aware centring stands down at 900px, where a rail stops being a dock the page is padded for",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "@media(min-width:901px){",
+      "min": 1,
+      "pr": 483
+    },
+    {
+      "name": "Workflow: the composer measures its scrim's column, never the viewport — a vw width would step straight back out of the space reserved for the rails",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".modal.bg-modal{width:min(1460px,100%)}",
+      "min": 1,
+      "pr": 483
+    },
+    {
+      "name": "Workflow: the rail-clearance geometry is measured, not assumed — the tripwire opens a ticket beside the rail at 1100-1500px",
+      "file": "tools/test_modalsolo.mjs",
+      "pattern": "IT LANDS ON THE RAIL",
+      "min": 1,
+      "pr": 483
+    },
+    {
       "name": "Task Manager: a second and third NESTED split — AdWords nests rows, so the extra dims never become the series",
       "file": "cloudflare/feedspark-deck/src/taskbook.js",
       "pattern": "export function groupNested",
@@ -7091,7 +7175,7 @@
     {
       "name": "AI Quote — THE PRODUCT VOLUME BAR CHART IN THE NEW-PRODUCTS CARD (Ray, 17 Sep 2026: 'within AI quote the new products — pull in the product volume bar chart pls to make it easier to convince for client — make sure its organised'): the card is two named halves, EVIDENCE (what the feed has actually done) and COMMERCIAL (forecast, override, bands, bundle)",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "class=\"upd-grid\"",
+      "pattern": "class=\"upd-grid'",
       "min": 1,
       "pr": 438
     },
@@ -7341,12 +7425,6 @@
       "min": 1
     },
     {
-      "name": "Feed Lab engine: Structured detail = highlights + product_detail + description length; product_type depth lives in Taxonomy only",
-      "file": "docs/feedlab_engine.js",
-      "pattern": "var sAi = 0.4 * hlPart + 0.3 * details.pct + 0.3 * depthD;",
-      "min": 1
-    },
-    {
       "name": "Feed Lab engine: description length credit against Google's stated 160–500, not a house 300",
       "file": "docs/feedlab_engine.js",
       "pattern": "function descCredit(len)",
@@ -7437,12 +7515,6 @@
       "min": 1
     },
     {
-      "name": "Label Guard engine: the highlight distribution is the POPULATION keys (exact 1..5, 6+), never coarse bands",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "export const HL_BUCKETS = POP_KEYS;",
-      "min": 1
-    },
-    {
       "name": "Worker: splitRaw files labelPop on the labels store and ptPop on the ptype store, each cleaned",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const lp = cleanPop(raw.labelPop), pp = cleanPop(raw.ptPop);",
@@ -7467,10 +7539,17 @@
       "min": 1
     },
     {
-      "name": "PT Guard page: the product_type population card (values per SKU — tree + keyword slots)",
+      "name": "PT Guard page: the product_type depth card (category-path levels, full-width popCard) — replaced the per-SKU population card, Ray 22 Sep 2026",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function ptDepthCard(dp)",
+      "min": 1
+    },
+    {
+      "name": "PT Guard page: the retired per-SKU population card RETIRED (must stay gone — depth replaced it, Ray 22 Sep 2026)",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "function ptPopCard(s)",
-      "min": 1
+      "forbidden": true,
+      "pr": 492
     },
     {
       "name": "PT Guard page: brand cards fold individually and all at once (pt-collapse)",
@@ -7485,9 +7564,9 @@
       "min": 1
     },
     {
-      "name": "Guard-cards tripwire: population tables + sheet-backed note + collapse on /labels, /ptypes and /golden's highlight row",
+      "name": "Guard-cards tripwire: population/depth tables + sheet-backed note + collapse on /labels, /ptypes and /golden's highlight row",
       "file": "tools/test_guardcards.mjs",
-      "pattern": "the population card draws one row per bucket",
+      "pattern": "card draws one row per bucket",
       "min": 1
     },
     {
@@ -7513,6 +7592,38 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "FCC-NEWS",
       "min": 2
+    },
+    {
+      "name": "CmdCenter: hero KPIs computed from the project plans (Workflow's source), never spliced",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "FCC-HERO-KPI",
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: the hero date rule IS Workflow's parseUKDate (ported verbatim)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function wfDate(s)",
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: ATRT tracker global RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "window.ATRT",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: ATRT splice markers RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "ATRT:KPI",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: hero KPI harness",
+      "file": "tools/test_hero.mjs",
+      "pattern": "wfDate",
+      "pr": 0
     },
     {
       "name": "CmdCenter: hero banner — live month, aurora + travelling edge, count-up KPIs",
@@ -8467,7 +8578,7 @@
     {
       "name": "AI Quote: band boxes select on focus and swallow the click's mouseup (the £15,100 prepend trap)",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "addEventListener('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault();",
+      "pattern": "onUpd('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault();",
       "pr": 465
     },
     {
@@ -9123,6 +9234,562 @@
       "file": "tools/check_inline_scripts.js",
       "pattern": "a \"</body>\" that is not the document's closing tag",
       "pr": 481
+    },
+    {
+      "name": "AI Quote tracker: one block per unique quote — tkGid names the block (proposal, version chain, or the quote)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var GID={}; function tkGid(k){ if(GID[k])return GID[k]; var q=SAVED[k], p=qProp(q), g;",
+      "pr": 484
+    },
+    {
+      "name": "AI Quote tracker: a spacer row between blocks (Ray, 22 Sep 2026: 'add rows between unique quote')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var gap=(i&&tkGid(k)!==tkGid(ids[i-1]))?'<tr class=\"t-gap\" aria-hidden=\"true\"><td colspan=\"10\"></td></tr>':'';",
+      "pr": 484
+    },
+    {
+      "name": "KWCal: Schuh seeded from the brand's own Customer Marketing Calendar FY27 (Ray 22 Sep 2026, \"import anyhting from Aug/26 onwards\") — 40 moments off a day-column grid",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Schuh:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a Schuh moment that opened before the Aug-2026 import window is KEPT and says so, rather than dropped for starting in July",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Opened before this import window",
+      "min": 5,
+      "pr": 0
+    },
+    {
+      "name": "KWCal: where a calendar cell names its own launch date it wins over the merged grid block, which is a content window drawn to fit the row",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "that date wins over the grid",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the Schuh search-peak lane is the calendar's own weekly demand FORECAST, not a commitment — and it is out of phase with the launches",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Predicted search peak",
+      "min": 7,
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Schuh FY27 is a UK & ROI calendar — no moment pins a market, and nothing in it is German",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "do NOT brief Schuh DE off this calendar",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a brand names its own four lanes for DISPLAY only (LANE_NAMES) — the keys, colours, stored events and tie-matching never move",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var LANE_NAMES=",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Schuh seed + lane-name assertions in the tie harness",
+      "file": "tools/test_kwcal_tie.mjs",
+      "pattern": "the Schuh FY27 ingest",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: ⬇ Client PDF downloads in ONE CLICK (Ray 22 Sep 2026 \"downloaded clietn PDF is not print pls, download directly\") — html2canvas + jsPDF .save(), the print dialog only as the CDN fallback",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function loadPdfLibs()",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF re-pulls the pipeline and the results archive BEFORE it builds, so the file is never a stale read",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "wfReset(); renderPdfDoc();",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF prints the REPORTED RESULTS, not just a verdict pip (Ray 22 Sep 2026 \"add results in where test has recorded\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function pdfResults(",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: an own-ticket read-out is named by its moment; a shared fortnightly round prints ONCE with a Covers: line, never per moment",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": ">Covers: ",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a result and its Covers line are ONE grid item — a column break between them reads as another round's coverage",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "pd-rg",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF harness (one click, no dialog; results on the file; CDN fallback)",
+      "file": "tools/test_kwcal_pdf.mjs",
+      "pattern": "one click, no dialog",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_pdf",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF's stage map covers EVERY Workflow pipeline stage — `running` (Test running) reads Live, not Scheduled (Ray 22 Sep 2026: \"isn't cashmere/merino and leather & suede also 'Live'\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "running:'Live'",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: an unknown pipeline stage on the client PDF reads In progress, never Scheduled — a ticket existing is proof work began",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function cstOf(e)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal stage-map tripwire — lifts STAGES from the Workflow page and CST from KWCal so the two files cannot drift",
+      "file": "tools/test_kwcal_stages.mjs",
+      "pattern": "the two files agree on the vocabulary",
+      "pr": 0
+    },
+    {
+      "name": "KWCal stage-map tripwire in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_stages",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: its OWN host, so the tags rail can never park it off-screen",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "<div id=\"impbd\"></div>",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: a centred modal with its own scrim, not the rail's slide-in box",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "#impbd .im-scrim",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: Esc closes the topmost thing on screen first",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "IMPCLOSE",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import tripwire — renders the real dialog and fails it off-screen",
+      "file": "tools/check_tmimport.js",
+      "pattern": "every edge of the dialog is inside the viewport",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "check_tmimport",
+      "pr": 0
+    },
+    {
+      "name": "Build suggestions: an unread signal is listed as unread, never scored as a zero",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "unread: 'the Task Manager has not synced a balance yet'",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: the ranking formula is one shared object, printed in the panel",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "score = lever weight × evidence size × effort factor",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: Ray's six levers, and only those",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export const LEVERS",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: a play already queued, in build or shipped is never suggested again",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export function alreadyOn(rule, done)",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: arrivals read the last COMPLETE month, never the running one",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export function lastCompleteMonth(now)",
+      "pr": 494
+    },
+    {
+      "name": "worker: the suggestion route is owner-only like the rest of the Build Log",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/buildsuggest'",
+      "pr": 494
+    },
+    {
+      "name": "worker: suggestions read the live stores, never a committed snapshot",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "BSG.suggest({ tm, skip, quotes, briefs, golden: gi, arrivals, feeds, clients, now }, done)",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: the suggestions panel sits above the queue it feeds",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "id=\"sg-panel\"",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: ＋ Queue it writes the play into the same buildqueue store",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "function sgQueue(id)",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: the panel names what it did NOT rank (clear / unread / already taken)",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "function sgFoot(d)",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into the gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "BUILDSUGGEST.md documents the engine",
+      "file": "docs/BUILDSUGGEST.md",
+      "pattern": "## The three rules that make it trustworthy",
+      "pr": 494
+    },
+    {
+      "name": "KWCal client PDF: a 4pt spacing grid + a six-step modular type scale + tracking, as TOKENS (Ray 22 Sep 2026: \"more margin and look more premium … Use an Apple design scale\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--u:4px;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: the document carries its OWN page margin — the download rasterises #pdf-doc, so @page never reached it and it printed edge to edge",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--pad:calc(var(--u) * 7)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: TWO Lato weights only (400/700) — the page loads 400/700/900, so a 500 or 600 would be synthesised and html2canvas rasterises those unpredictably",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--t-display:20px;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: fitPdf and exportPdf override position and width ONLY — restating line-height made the fit measure a document that no longer existed and the print fallback paginate",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "ONLY what measuring requires",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF design-scale assertions (grid, type scale, two weights, page margin, no typography in the overrides, and the fit constraint actually holding)",
+      "file": "tools/test_kwcal_pdf.mjs",
+      "pattern": "the design scale holds",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: GPC category scope — colour/gender/age_group/size/material/pattern scored only over the products Google asks them of (Ray 23 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const GPC_SCOPE = {",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: the scope table is generated from Google's taxonomy-with-ids files (every locale the estate ships)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "// GPC-SCOPE:DATA-START",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: xmlCollector counts the category scope per product",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "applyGpcScope(attrsFromCounts(attrCols, attrPos, countsRow, snap.rows), gsc.counts(), snap.rows)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: an attribute no product calls for is not scored",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "    if (a.na) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: a scoped attribute weighs by the share of the catalogue it applies to",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "const sh = scopeShare(a);",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record engine: alerts never read a change of basis as a drop",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (b.na || !!b.scope !== !!c.scope) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Worker: both goldenidx writers store the scoped coverage + in-scope counts",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "goldenCovIndex(grSnap.attrs)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: twin score honours the scope (na, share, known gap)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function scopeShare(a) { var c = a && a.scope;",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: estate re-score rebuilds the scope from the index",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function attrsFromCov(cov, sc, rows)",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record page: a not-applicable row says so and offers no actions",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "products — not scored",
+      "pr": 0
+    },
+    {
+      "name": "GPC scope table generator",
+      "file": "tools/build_gpc_scope.py",
+      "pattern": "taxonomy-with-ids",
+      "pr": 0
+    },
+    {
+      "name": "GPC scope harness in the Label Guard suite (classifier, collector, score rules, page/engine parity)",
+      "file": "tools/test_labelguard.mjs",
+      "pattern": "GPC category scope: an attribute scores only where Google asks for it",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote bundle price folds behind ⓘ, tick under the arrivals chart",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-BUNDLE-FOLD",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote Monthly update card drops its arrivals chart while Spark AI draws the same one",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-NO-DUP-CHART",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: with Spark AI on, the new-product bundle tick + ⓘ live under the Spark AI arrivals chart and the Monthly update card is gone",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-IN-SPARK",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the account clause is lifted out of a query and put back (saved views travel between clients)",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "TMVIEW-LIFT",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a saved chart view is kept per device, never shared state",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-SHELF",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the account picker follows the query wherever the query came from",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-PICKER-FOLLOWS",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a restored view runs against the account on screen, not the one it was saved from",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-ACCOUNT-ON-SCREEN",
+      "pr": 0
+    },
+    {
+      "name": "Audit colour legend on /golden (dial, estate, fill + content-quality bars)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return BAND_COL[auditBand(s)];",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on /golden attribute fill bars",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var cls = ' class=\"b-' + auditBand(a.cov) + '\"';",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on /feedlab attribute coverage",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "class=\"arow b-'+auditBand(pct)+'\"",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on the dossier Golden Record card",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grBand(n){ return ({green:'good',yellow:'mid',orange:'warn',red:'bad'})[auditBand(n)]||''; }",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on the Playbook rail",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "+bar(avg,pbBand(avg))",
+      "pr": 507
+    },
+    {
+      "name": "Playbook reads Golden Record coverage as the percentage goldenidx stores",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PB_FLOOR={req:99,cond:90,rec:60};",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour bands harness",
+      "file": "tools/test_bands.mjs",
+      "pattern": "76.7% completeness is ORANGE, not red",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour bands harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "node tools/test_bands.mjs",
+      "pr": 507
+    },
+    {
+      "name": "Playbook: the Golden Record floors were fractions against a percentage store — RETIRED",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PB_FLOOR={req:0.99,cond:0.9,rec:0.6};",
+      "forbidden": true,
+      "pr": 507
+    },
+    {
+      "name": "Task Manager: the chart card's controls are one row behind three menus",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "cw-ctl .cmb",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a folded menu element that sets its own display also states [hidden] (a flex row ignores it)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": ".cpop[hidden],.cpop .vname[hidden]",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a closed menu button states its own off-default state",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function ctlChips",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a pie/donut names each slice beside itself with a leader, not a swatch block",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function leaderLabels",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the leader cap is the column's own height in labels, filled biggest-first",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "LEAD_GAP)) * 2",
+      "pr": 0
+    },
+    {
+      "name": "Image library: the shot code is the fragment of the URL that varies within one product",
+      "file": "docs/image_engine.js",
+      "pattern": "function shotTokens",
+      "pr": 0
+    },
+    {
+      "name": "Image library: a vocabulary no one could tag is not called learnable",
+      "file": "docs/image_engine.js",
+      "pattern": "LEARN_MAX_CODES",
+      "pr": 0
+    },
+    {
+      "name": "Image library: overflow is tracked per grouping, so a clean head vocabulary survives",
+      "file": "docs/image_engine.js",
+      "pattern": "var over = { full: false, head: false }",
+      "pr": 0
+    },
+    {
+      "name": "Image library: one tag on a shot code names every image that carries it",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "data-tagsel=",
+      "pr": 0
+    },
+    {
+      "name": "Image library: AI tagging looks at the actual images, and says what decided it",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "function aiTag(",
+      "pr": 0
+    },
+    {
+      "name": "Image library: tags are stored per client, so every market inherits them",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'imgtags:' + client",
+      "pr": 0
+    },
+    {
+      "name": "Image library: the capture rides the same confirmed scan as the guards",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function imageTrack",
+      "pr": 0
+    },
+    {
+      "name": "Image library: a shot keeps its code however deep the product's gallery is",
+      "file": "docs/image_engine.js",
+      "pattern": "function snapStem",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: worker pulls the FeedHero_reports MCP itself (its own secret, its own cron firing)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ROAS_MCP_TOKEN not set",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: roasidx is the one KV index the /api/roas rollup reads",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "env.EDITS.put('roasidx'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: GET /api/roas is scoped per signin like every other Workflow-adjacent route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/roas' && request.method === 'GET'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: the roster is FeedSpark's own seven brands, never the whole FeedHero book",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export const ROAS_ROSTER",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: money is never summed across currency symbols in the brand rollup",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "function blendedRoas",
+      "pr": 0
+    },
+    {
+      "name": "Text modules: a served engine is matched by pattern, never by a list of filenames",
+      "file": "wrangler.toml",
+      "pattern": "**/*_engine.js",
+      "pr": 0
+    },
+    {
+      "name": "Tripwire: a worker-served docs/*.js that is not a Text module fails the build",
+      "file": "tools/check_textmodules.js",
+      "pattern": "will bundle as an ES module",
+      "pr": 0
     }
   ]
 }

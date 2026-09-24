@@ -131,7 +131,9 @@ ok(/ABSENT, not zero/.test(PAGE), 'and it says how much of the book had been rea
 const WK = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
 ok(/path === '\/xlsx\/engine\.js'/.test(WK), 'the worker serves the engine');
 ok(/import XLSX_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/xlsx_engine\.js"/.test(WK), 'and bundles it');
-ok(/\*\*\/xlsx_engine\.js/.test(fs.readFileSync(path.join(ROOT, 'wrangler.toml'), 'utf8')),
+// asked of the shared checker, not of a filename glob written out here: the rule is a
+// PATTERN now, and a test pinning one name is how image_engine.js slipped the net
+ok(require('./check_textmodules.js').covered('docs/xlsx_engine.js'),
   'wrangler treats it as a Text module like its sibling engines');
 
 // ---------------------------------------------------------------------------------------------

@@ -467,9 +467,9 @@ ok(/function setBandGBP\(j,v\)/.test(src) && (src.match(/setBandGBP\(/g)||[]).le
 ok(!/rc\.upd\.tiers\[\+t\.getAttribute\('data-tier'\)\]\.gbp=/.test(src),
   '…so the input handler no longer writes the tier itself');
 /* the prepend trap */
-ok(/addEventListener\('focusin'/.test(src) && /_selFx=t; try\{ t\.select\(\); \}/.test(src),
+ok(/onUpd\('focusin'/.test(src) && /_selFx=t; try\{ t\.select\(\); \}/.test(src),
   'the band box selects its value on focus, so the first keystroke REPLACES');
-ok(/addEventListener\('mouseup',function\(e\)\{ if\(e\.target===_selFx\)\{ e\.preventDefault\(\);/.test(src),
+ok(/onUpd\('mouseup',function\(e\)\{ if\(e\.target===_selFx\)\{ e\.preventDefault\(\);/.test(src),
   '…and the mouseup that completes the click is swallowed, or it collapses the selection back to a caret');
 ok(/input\.tgbp\{width:78px/.test(src), 'the box is wide enough to read five digits');
 /* off-scale */
@@ -682,6 +682,31 @@ ok(/function aimFz\(\)\{ if\(idx\(\)\)return null; var fz=aimRec\(\)\.fz; return
 ok(/if\(!ix\)\{ var fz=aimFz\(\); return fz\?fz\.units:0; \}/.test(src), 'aimScopeUnits stands the saved units in');
 ok(/var fz=unsized\?aimFz\(\):null;\n\s+if\(fz\)return \{raw:fz\.perMonth\/buf,perMonth:fz\.perMonth,src:'saved',buffer:aimRate\('buffer'\),unsized:false,saved:true\};/.test(src), 'aimPerMonth stands the saved new-a-month in, named as such');
 ok(/if\(nn\.src==='saved'\)return 'As <b>saved on this quote<\/b>/.test(src) && /if\(ew\)ew\.hidden=!known\|\|saved; if\(pw\)pw\.hidden=known\|\|saved;/.test(src), 'the card says the figure is the saved one and offers the feed pull to re-size');
+
+/* ---------- ONE BLOCK PER UNIQUE QUOTE (Ray, 22 Sep 2026: "add rows between unique quote so its easy
+   for me to recognise — also, 2 options within 1 quote is considered unique") ---------- */
+console.log('\nthe tracker: one block per unique quote, a spacer row between blocks');
+const rt = (src.match(/function renderTracker\(\)\{[\s\S]*?\$\('#tk-kpis'\)\.innerHTML=/) || [''])[0];
+ok(/function tkGid\(k\)\{ if\(GID\[k\]\)return GID\[k\]; var q=SAVED\[k\], p=qProp\(q\), g;/.test(rt) && /if\(p\)g='p:'\+p\.id;/.test(rt), 'a block is named by its proposal when it has one');
+ok(/while\(n\+\+<50\)\{ var pq=SAVED\[r\]; if\(!pq\|\|!pq\.prev\|\|!byRef\[pq\.prev\]\|\|seen\[pq\.prev\]\)break; seen\[pq\.prev\]=1; r=byRef\[pq\.prev\]; \} g='q:'\+r;/.test(rt),
+  '…else by the root of its version chain (q.prev walked back, cycle-safe), else itself');
+ok(/var grpT=\{\}; ids\.forEach\(function\(k\)\{ var g=tkGid\(k\); grpT\[g\]=Math\.max\(grpT\[g\]\|\|0,\+SAVED\[k\]\.t\|\|0\); \}\);/.test(rt), 'a block takes the position of its most recent activity');
+ok(/if\(ga!==gb\)return ga<gb\?-1:1;/.test(rt) && /if\(pa&&pb&&\(\+pa\.n\|\|0\)!==\(\+pb\.n\|\|0\)\)return \(\+pa\.n\|\|0\)-\(\+pb\.n\|\|0\);/.test(rt), '…its rows sit together, options in option order, versions newest first');
+ok(/var gap=\(i&&tkGid\(k\)!==tkGid\(ids\[i-1\]\)\)\?'<tr class="t-gap" aria-hidden="true"><td colspan="10"><\/td><\/tr>':'';/.test(src) && /return gap\+row;\n\s+\}\)\.join\(''\);/.test(src),
+  'a spacer row is written where the block changes — never inside one, never first');
+ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0\}/.test(src)
+  && /\.tk tr\.t-gap td::before\{content:'';display:block;border-top:1px dotted rgba\(51,51,51,\.28\)\}/.test(src) && /\[data-theme=dark\] \.tk tr\.t-gap td::before\{border-top-color:rgba\(255,255,255,\.2\)\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
+  'the spacer is a subtle 1px dotted rule on a transparent row, no hover wash, its own dark-mode tone (Ray, 22 Sep 2026: "replace it with dotted lines instead and make it just subtle")');
+ok(/UPD-BUNDLE-FOLD/.test(src) && /\.upd-grid:not\(\.bopen\) \.upd-box\.ucm\{display:none\}/.test(src)
+  && /updEvidence\(\)\)\s*\+'<label class="qopt upd-on">/.test(src) && /fcc-upd-bundle/.test(src) && /closest\('\.upd-binfo'\)/.test(src),
+  'the bundle price folds behind an ⓘ (closed by default) and the tick sits under the arrivals chart');
+ok(/UPD-NO-DUP-CHART/.test(src) && /var dupChart=inAim;/.test(src) && /\(dupChart\?'':updEvidence\(\)\)/.test(src),
+  'with Spark AI on, the bundle carries no second arrivals chart');
+ok(/UPD-IN-SPARK/.test(src) && /inAim\?\$\('#aim-upd'\):\$\('#upd-body'\)/.test(src) && /#upd-card\.upd-moved\{display:none\}/.test(src)
+  && /<div id="aim-chart"><\/div>\s*<div id="aim-upd"><\/div>/.test(src) && /class="aim-bh"><h4>New products a month<\/h4><button type="button" class="upd-binfo"/.test(src),
+  'with Spark AI on, the Monthly update card is gone and its tick + ⓘ bundle live under Spark AI\'s arrivals chart');
+ok((src.match(/\$\('#upd-card'\)\.addEventListener\(/g) || []).length === 0 && /var UPD_HOMES=\[\$\('#upd-card'\),\$\('#aim-upd'\)\]/.test(src),
+  'every bundle handler is bound to both homes, so the controls work wherever they are drawn');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
