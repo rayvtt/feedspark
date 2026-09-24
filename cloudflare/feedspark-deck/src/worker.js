@@ -27,8 +27,10 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
-import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
-const AB_SHAPE = 2;   // bump when parseAbTests grows a field the page reads (2 = winner/title)
+import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
+const AB_SHAPE = 3;   // bump when parseAbTests grows a field the page reads, or the served order
+                       // changes (2 = winner/title, 3 = newest-first — a stale cached payload
+                       // served for the next six hours would keep showing the old sheet order)
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
@@ -2172,7 +2174,12 @@ export default {
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
         const p = parseAbTests(r.values || []);
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
-        const payload = { ok: true, v: AB_SHAPE, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };
+        // Served and cached NEWEST-FIRST (abSortTests) — parseAbTests itself keeps the sheet's
+        // own chronological-ascending order, which every consumer would otherwise have to
+        // re-sort (or, as shipped, silently not) — sorting once here is the one place the
+        // dossier card, the one-pager's capped slice and any future reader can never disagree.
+        const sorted = abSortTests(p.tests);
+        const payload = { ok: true, v: AB_SHAPE, client, tab, at: Date.now(), tests: sorted, summary: abSummary(sorted) };
         await env.EDITS.put(ck, JSON.stringify(payload));
         return json(payload);
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e), client, tests: [] }); }

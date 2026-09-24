@@ -7704,6 +7704,18 @@
    "pr": 0
   },
   {
+   "name": "abtests: NEWEST-FIRST — parseAbTests reads the sheet chronologically ascending, abSortTests reorders for display (Ray, 23 Sep 2026: Schuh's dossier still read Jan-Jul 2025 with Aug 2026 batches on the sheet — 'always show the latest six-month test first')",
+   "file": "cloudflare/feedspark-deck/src/abtests.js",
+   "pattern": "export function abSortTests",
+   "pr": 0
+  },
+  {
+   "name": "Worker: /api/abtests serves and caches the sorted (not raw-parsed) test list",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "const sorted = abSortTests(p.tests)",
+   "pr": 0
+  },
+  {
    "name": "CmdCenter: one abResult for the dossier pill AND the one-pager column — control win is navy, test win green",
    "file": "docs/FeedSpark_Command_Center.html",
    "pattern": "function abResult(t)",
