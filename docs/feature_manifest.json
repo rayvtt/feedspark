@@ -10189,6 +10189,12 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "<span class=\"cmk\">",
       "pr": 530
+    },
+    {
+      "name": "Business case: the ask covers Ray's own compensation, not just infra reimbursement",
+      "file": "docs/FCC_Business_Case_Brief.html",
+      "pattern": "formally product owner for the period",
+      "min": 1
     }
   ]
 }
