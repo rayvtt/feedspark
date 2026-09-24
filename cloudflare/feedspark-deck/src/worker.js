@@ -3286,7 +3286,12 @@ function roasMcp(env, fetchFn) {
 
 async function roasStore(env, cmpid, client, market, normalized) {
   const idx = (await env.EDITS.get('roasidx', 'json')) || {};
-  const rec = Object.assign({ client, market, cmpid, updated: Date.now() }, normalized.total || {});
+  // A market with no Google Ads activity in FeedHero's window returns no Total row at all
+  // (split.total is null) — never store a record missing spend/revenue/band: normRow({}) gives
+  // the same safe, fully-shaped zero-reading every other market's record carries, distinguishable
+  // from a real zero-spend reading only by band staying null (no reading, never "Losing").
+  const totalRec = normalized.total || ROAS.normRow({ cmpid, category: 'Total' });
+  const rec = Object.assign({ client, market, cmpid, updated: Date.now() }, totalRec);
   const sig = ROAS.sigOf(Object.assign({}, rec, { updated: 0 }));
   if (idx[cmpid] && idx[cmpid].sig === sig) return { changed: false };
   try { await env.EDITS.put('roas:' + cmpid, JSON.stringify({ client, market, cmpid, total: normalized.total, categories: normalized.categories, updated: rec.updated })); }
