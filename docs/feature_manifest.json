@@ -7047,77 +7047,77 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function wrapDue(groups)",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: calls grouped by their own notes-email id, newest first, this brand only",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function wrapCalls(calls, brand, wrapped, now, days)",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: the wrap-up email is composed from the rows the AM LEFT TICKED, never from the raw parse",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function wrapEmail(group, rows, opts)",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: a shared mailbox is never greeted by first name",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function wrapGreet(to)",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: the call actions cross the script-block boundary by a NAMED bridge",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCCalls=function()",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: the wrap-up workbench is a .scrim, so it rides soloModal + the rail-aware centring",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "<div class=\"scrim\" id=\"cw-scrim\">",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: it opens through the FCCSolo bridge — the rail is in another script block",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCSolo('cw-scrim')",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: drafting rides the shared askdraft rails — a Gmail DRAFT, never a send",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "keys:['callwrap|'+g.mid]",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Workflow/Playbook: the prompt leads the Review tab",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "secWrap(BRAND)+secPractice(BRAND)",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Shared state: callwrap is a TEAM namespace — one AM's wrap-up stops everyone being asked",
       "file": "cloudflare/feedspark-deck/src/sharedstate.js",
       "pattern": "callwrap:    'field'",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Harness: the real Hobbycraft call, truncations and all — the tidy-up is what keeps an internal note off a client email",
       "file": "tools/test_callwrap.mjs",
       "pattern": "Consult Alex J: Ask Alex J about the availability of",
       "min": 1,
-      "pr": 0
+      "pr": 527
     },
     {
       "name": "Playbook New products: the series is walked from the CALENDAR, so a month absent from the histogram keeps its slot instead of closing the gap",
