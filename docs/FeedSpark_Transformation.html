@@ -212,23 +212,107 @@ window.addEventListener('load',restore);
 </div></div>
 
 <style>
-[data-theme=dark] .pill.frz,[data-theme=dark] .st.doing{color:#9DBDF3;background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.45)}
-[data-theme=dark] .st.todo{background:#20242E}
-[data-theme=dark] .role,[data-theme=dark] .zone,[data-theme=dark] table.t th{background:#181B22}
-[data-theme=dark] .it:hover,[data-theme=dark] table.t tr.ed:hover td{background:#20242E}
-[data-theme=dark] .it .nt{background:#181B22}
-[data-theme=dark] .modal select,[data-theme=dark] .modal input,[data-theme=dark] .modal textarea{background:#20242E}
-[data-theme=dark] .scrim{background:rgba(0,0,0,.6)}
-[data-theme=dark] .toast{background:#0B0D12}
+  /* ---- Miro-style board ---- */
+  :root{--stk-mig:#DBEAFE;--stk-sec:#EDE9FE;--stk-am:#FFEDD5;--stk-ext:#D1FAE5;--stk-gov:#ECEEF1;--canvas-dot:rgba(15,23,42,.14);--frame:#fff}
+  .bd-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+  .seg button{font:inherit;font-size:12.5px;font-weight:900;padding:7px 12px;border:0;background:transparent;color:var(--ink-2);cursor:pointer}
+  .seg button.on{background:var(--navy);color:#fff}
+  .bd-tools input[type=search]{font:inherit;font-size:13px;font-weight:700;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);min-width:180px}
+  .zoom{display:inline-flex;align-items:center;gap:4px;margin-left:auto}
+  .zoom button{font:inherit;font-size:13px;font-weight:900;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .zoom button.fit{width:auto;padding:0 10px;font-size:12px}
+  .zoom span{font-size:12px;font-weight:900;color:var(--muted);min-width:40px;text-align:center}
+  .canvas{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;max-height:78vh;
+    background-color:var(--wash);background-image:radial-gradient(circle,var(--canvas-dot) 1px,transparent 1.2px);background-size:18px 18px}
+  .canvas-in{display:flex;align-items:flex-start;gap:16px;padding:18px;width:max-content}
+  .col{width:272px;flex:none;background:var(--frame);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .col.now{border:2px solid var(--orange)}
+  .col.past{opacity:.85}
+  .col-h{padding:11px 12px 9px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:12px 12px 0 0}
+  .col-h:hover{background:var(--wash)}
+  .col-h .mo-t b{font-size:14.5px}
+  .col-b{padding:10px;display:flex;flex-direction:column;gap:9px;min-height:60px;border-radius:0 0 12px 12px}
+  .col-b.over{background:rgba(245,166,35,.12);outline:2px dashed var(--orange);outline-offset:-4px}
+  .stk{border-radius:4px;padding:9px 10px 8px;box-shadow:0 1px 1px rgba(0,0,0,.06),0 3px 8px rgba(0,0,0,.10);cursor:grab;color:#1f2937;position:relative;min-width:0}
+  .stk:active{cursor:grabbing}.stk.dragging{opacity:.4}
+  .stk:hover{box-shadow:0 2px 3px rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.14)}
+  .stk.ws-mig{background:var(--stk-mig)}.stk.ws-sec{background:var(--stk-sec)}.stk.ws-am{background:var(--stk-am)}.stk.ws-ext{background:var(--stk-ext)}.stk.ws-gov{background:var(--stk-gov)}
+  .stk-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;opacity:.72}
+  .stk-t{font-size:13px;font-weight:800;line-height:1.3;margin:4px 0 7px;overflow-wrap:anywhere}
+  .stk.is-done .stk-t{text-decoration:line-through;opacity:.62}
+  .stk.late{box-shadow:0 0 0 2px var(--risk),0 3px 8px rgba(0,0,0,.10)}
+  .stk-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:800}
+  .av{width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.14);color:inherit;display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:900;flex:none}
+  .chkp{opacity:.78}
+  .stk .st{margin-left:auto;min-width:0}
+  .addcard{font:inherit;font-size:12.5px;font-weight:800;color:var(--muted);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:7px;cursor:pointer;width:calc(100% - 20px);margin:0 10px 10px}
+  .addcard:hover{color:var(--orange-deep);border-color:var(--orange)}
+  .addcol{flex:none;align-self:stretch;min-height:120px;width:150px;font:inherit;font-size:13px;font-weight:900;color:var(--muted);background:transparent;border:2px dashed var(--line);border-radius:12px;cursor:pointer}
+  .addcol:hover{color:var(--orange-deep);border-color:var(--orange)}
+  /* checklist view */
+  .cl-m{margin:4px 0 16px}
+  .cl-mh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:15px;font-weight:900;margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  .cl-mh span{font-size:12px;color:var(--muted);font-weight:800}
+  .cl-it{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--paper)}
+  .cl-it.ws-mig{border-left-color:var(--ws-mig)}.cl-it.ws-sec{border-left-color:var(--ws-sec)}.cl-it.ws-am{border-left-color:var(--ws-am)}.cl-it.ws-ext{border-left-color:var(--ws-ext)}.cl-it.ws-gov{border-left-color:var(--ws-gov)}
+  .cl-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cl-row b{font-size:13.5px;flex:1;min-width:180px}
+  .cl-row select{font:inherit;font-size:12px;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  ul.cl-l{list-style:none;margin:8px 0 0;padding:0}
+  ul.cl-l li{display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:13px}
+  ul.cl-l li label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1;min-width:0}
+  ul.cl-l li input[type=checkbox]{width:17px;height:17px;margin:1px 0 0;flex:none;accent-color:var(--good)}
+  ul.cl-l li.done label span{text-decoration:line-through;color:var(--muted)}
+  ul.cl-l input.cl-add{font:inherit;font-size:13px;width:100%;padding:6px 9px;border:1px dashed var(--line);border-radius:8px;background:transparent;color:var(--ink)}
+  /* modules */
+  .mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .mod{border:1px solid var(--line);border-left:5px solid #9AA3AE;border-radius:10px;padding:10px 12px;background:var(--paper);cursor:pointer;min-width:0}
+  .mod:hover{border-color:var(--orange)}
+  .mod.owned{border-left-color:#2563EB}.mod.migrating{border-left-color:#F5A623}.mod.migrated{border-left-color:#15803D}
+  .mod-h{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+  .mod-h b{font-size:13.5px;min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .mst{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:100px;white-space:nowrap;border:1px solid var(--line);color:var(--ink-2)}
+  .mst.owned{color:#1D4ED8;border-color:rgba(37,99,235,.4)}.mst.migrating{color:#B1550A;border-color:rgba(245,166,35,.6)}.mst.migrated{color:#fff;background:#15803D;border-color:#15803D}
+  .mleg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;font-weight:800;color:var(--ink-2);margin:0 0 10px}
+  .mleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .addrow{margin-top:10px}
+  /* editor extras */
+  .modal .chk-ed{list-style:none;margin:6px 0 0;padding:0}
+  .modal .chk-ed li{display:flex;gap:6px;align-items:center;margin:5px 0}
+  .modal .chk-ed li input[type=text]{flex:1;min-width:0}
+  .modal .chk-ed li input[type=checkbox]{width:18px;height:18px;flex:none;accent-color:var(--good)}
+  .modal .chk-ed li button{flex:none;width:30px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--muted);cursor:pointer;font-weight:900}
+  .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modal .cbx{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink)}
+  .modal .cbx input{width:18px;height:18px}
+  .modal .acts .del{margin-right:auto;color:var(--risk);border-color:rgba(192,57,43,.35)}
+  table.t td .rowdel{display:none}
+  @media(max-width:560px){.modal .row2{grid-template-columns:1fr}.zoom{margin-left:0}}
+  /* dark */
+  [data-theme=dark]{--stk-mig:#1E3350;--stk-sec:#2E2750;--stk-am:#4A3219;--stk-ext:#15392F;--stk-gov:#2A2F38;--canvas-dot:rgba(255,255,255,.09);--frame:#1C1F27}
+  [data-theme=dark] .stk{color:#E7E9ED}
+  [data-theme=dark] .av{background:rgba(255,255,255,.16)}
+  [data-theme=dark] .pill.frz,[data-theme=dark] .st.doing{color:#9DBDF3;background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.45)}
+  [data-theme=dark] .st.todo{background:#20242E}
+  [data-theme=dark] .role,[data-theme=dark] .zone,[data-theme=dark] table.t th{background:#181B22}
+  [data-theme=dark] .col-h:hover,[data-theme=dark] table.t tr.ed:hover td{background:#20242E}
+  [data-theme=dark] .modal select,[data-theme=dark] .modal input,[data-theme=dark] .modal textarea,[data-theme=dark] .cl-row select,[data-theme=dark] .bd-tools input[type=search],[data-theme=dark] .seg,[data-theme=dark] .zoom button,[data-theme=dark] .modal .chk-ed li button{background:#20242E;color:var(--ink)}
+  [data-theme=dark] .seg button.on{background:var(--navy);color:#fff}
+  [data-theme=dark] .mst.owned{color:#9DBDF3}[data-theme=dark] .mst.migrating{color:#F0A44E}
+  [data-theme=dark] .scrim{background:rgba(0,0,0,.6)}
+  [data-theme=dark] .toast{background:#0B0D12}
 </style>
+<script>/* the live editor edits only the static prose here — everything the page renders is edited in its own forms */
+window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Management</div>
   <h1>AI transformation roadmap</h1>
-  <p class="sub">Moving the FCC off personal GitHub and Cloudflare accounts onto <b>FeedSpark-owned infrastructure</b>, and making it the working tool for every account manager. Everyone granted this page sees the same live status, and every change is stamped with who made it and when.</p>
+  <p class="sub">Moving the FCC off personal GitHub and Cloudflare accounts onto <b>FeedSpark-owned infrastructure</b>, module by module, and making it the working tool for every account manager. Everything below is editable by anyone granted this page, and every change is stamped with who made it and when.</p>
   <div class="src" id="src"><span class="dot"></span><span class="grow">Reading the live status…</span>
     <button class="btn" type="button" id="copy-upd" title="A plain-text status update for the management email: this month, what is late, decisions waiting, red risks">⧉ Copy status update</button>
-    <button class="btn" type="button" id="dl-csv" title="Every milestone with its status, owner and note">⬇ CSV</button>
+    <button class="btn" type="button" id="dl-csv" title="Every card with its status, owner, checklist progress and note">⬇ CSV</button>
   </div>
   <div class="kpis" id="kpis"></div>
 </div></header>
@@ -236,18 +320,33 @@ window.addEventListener('load',restore);
 <main class="wrap">
 
   <section class="blk" id="team">
-    <div class="blk-h"><div class="grow"><h2>Programme team</h2><p>Who holds each role. Click a role to name the person.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Programme team</h2><p>Who holds each role. Click a role to name the person.</p></div>
+      <button class="btn" type="button" data-add="roles">＋ Role</button></div>
     <div class="team" id="team-roles"></div>
   </section>
 
   <section class="blk" id="board">
-    <div class="blk-h"><div class="grow"><h2>Month by month</h2><p>Click any milestone to set its status, owner or a note. <b>Gate</b> marks the milestone that must be done before the next month starts.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Roadmap board</h2><p>Drag a card to another month, click it to edit it and its checklist, click a month to rename it.</p></div></div>
+    <div class="bd-tools">
+      <div class="seg" role="tablist" aria-label="View"><button type="button" data-view="board" class="on">▦ Board</button><button type="button" data-view="list">☑ Checklist</button></div>
+      <input type="search" id="q" placeholder="Search cards…" aria-label="Search cards">
+      <label class="tog"><input type="checkbox" id="only-open"> Only open</label>
+      <div class="zoom" id="zoom"><button type="button" data-z="-" aria-label="Zoom out">−</button><span id="zv">100%</span><button type="button" data-z="+" aria-label="Zoom in">+</button><button type="button" class="fit" data-z="fit">Fit</button></div>
+    </div>
     <div class="ctl" id="ws-chips"></div>
-    <div class="road" id="road"></div>
+    <div id="board-body"></div>
+  </section>
+
+  <section class="blk" id="modules">
+    <div class="blk-h"><div class="grow"><h2>Module migration</h2><p>Every AM sees each module's state as a dot on its icon and a pill on its page. Click a module to move it along and tick its checklist.</p></div>
+      <label class="tog"><input type="checkbox" id="mig-on"> Show badges to every AM</label></div>
+    <div class="mleg" id="mleg"></div>
+    <div class="mods" id="mods"></div>
   </section>
 
   <section class="blk" id="decisions">
-    <div class="blk-h"><div class="grow"><h2>Decisions for leadership</h2><p>What management needs to sign off, and by when. Click a row to record the decision.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Decisions for leadership</h2><p>What management needs to sign off, and by when. Click a row to record the decision or reword it.</p></div>
+      <button class="btn" type="button" data-add="decisions">＋ Decision</button></div>
     <div class="tw"><table class="t" id="dec-t"></table></div>
   </section>
 
@@ -255,26 +354,31 @@ window.addEventListener('load',restore);
     <div class="blk-h"><div class="grow"><h2>AM operating model: 70% fixed, 30% your own</h2><p>What every AM gets unchanged, what they can configure, and where their own modules live.</p></div></div>
     <div class="stack" id="model-stack" aria-hidden="true"></div>
     <div class="split" id="model-zones"></div>
-    <ol class="rules" id="model-rules"></ol>
+    <div class="blk-h" style="margin:16px 0 4px"><div class="grow"><h2 style="font-size:15px">Rules</h2></div><button class="btn" type="button" data-add="rules">＋ Rule</button></div>
+    <div class="tw"><table class="t" id="rule-t"></table></div>
   </section>
 
   <section class="blk" id="sources">
-    <div class="blk-h"><div class="grow"><h2>Data sources for AM-built modules</h2><p>An AM's own module can only read from sources connected here.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Data sources for AM-built modules</h2><p>An AM's own module can only read from sources connected here.</p></div>
+      <button class="btn" type="button" data-add="sources">＋ Source</button></div>
     <div class="tw"><table class="t" id="src-t"></table></div>
   </section>
 
   <section class="blk" id="ams">
-    <div class="blk-h"><div class="grow"><h2>AM onboarding</h2><p>The five account managers joining, by wave. Click a row to name them and move them along.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>AM onboarding</h2><p>The account managers joining, by wave. Click a row to name them and move them along.</p></div>
+      <button class="btn" type="button" data-add="ams">＋ AM</button></div>
     <div class="tw"><table class="t" id="am-t"></table></div>
   </section>
 
   <section class="blk" id="kpi-sec">
-    <div class="blk-h"><div class="grow"><h2>Migration and adoption KPIs</h2><p>Each figure is typed in by whoever measured it, with their name and the date beside it.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Migration and adoption KPIs</h2><p>Each figure is typed in by whoever measured it, with their name and the date beside it.</p></div>
+      <button class="btn" type="button" data-add="kpis">＋ KPI</button></div>
     <div class="tw"><table class="t" id="kpi-t"></table></div>
   </section>
 
   <section class="blk" id="risks">
-    <div class="blk-h"><div class="grow"><h2>Risks</h2><p>Click a row to change its rating or add a note.</p></div></div>
+    <div class="blk-h"><div class="grow"><h2>Risks</h2><p>Click a row to change its rating, reword it or add a note.</p></div>
+      <button class="btn" type="button" data-add="risks">＋ Risk</button></div>
     <div class="tw"><table class="t" id="risk-t"></table></div>
   </section>
 
@@ -291,7 +395,7 @@ window.addEventListener('load',restore);
     <p class="ctx" id="ed-ctx"></p>
     <div id="ed-fields"></div>
     <div class="stamp" id="ed-stamp"></div>
-    <div class="acts"><button class="btn" type="button" id="ed-cancel">Cancel</button><button class="btn pri" type="button" id="ed-save">Save</button></div>
+    <div class="acts"><button class="btn del" type="button" id="ed-del" hidden>Delete</button><button class="btn" type="button" id="ed-cancel">Cancel</button><button class="btn pri" type="button" id="ed-save">Save</button></div>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -300,17 +404,22 @@ window.addEventListener('load',restore);
 
 <script>
 /* ============================================================================================
-   AI TRANSFORMATION ROADMAP (Ray, 24 Sep 2026: "a month-by-month migration roadmap until
-   completion … a roadmap for a live dashboard migration so I can keep track with my management
-   and senior team … an internal roadmap to get all account managers to use the dashboard …
-   70% of our FCC will be a fixed module … 20–30% customization").
+   AI TRANSFORMATION ROADMAP (Ray, 24 Sep 2026: "a month-by-month migration roadmap until completion …
+   a roadmap for a live dashboard migration so I can keep track with my management and senior team";
+   then "make the roadmap completely editable and maybe in a [Miro] format so it's easier to view …
+   my management team to actually work on this and keep an eye on the checklist, item by item. We'll
+   ship module by module … each module needs to be highlighted if it has been migrated or not").
 
-   The ROADMAP is git (RM below). Only what people SAY about it is live — status, owner, note,
-   decisions, measured KPIs, risk ratings, AM names — in KV `transform` via /api/transform
-   (kvmerge per key, X-Sync-Base), so Ray, the CTOs and the CFO editing different rows at once all
-   survive. Keys: i:<item> · d:<decision> · k:<kpi> · r:<risk> · a:<am slot> · p:<role>.
-   Sources for the content: the three audits in docs/TRANSFORMATION.md (dependency inventory,
-   module classification, target architecture), read off the code on 24 Sep 2026.
+   RM below is the SEED — what the roadmap said the day it shipped. Everything people change lives in
+   KV `transform` via /api/transform (kvmerge per key, X-Sync-Base), and TX.view() lays the changes
+   over the seed, so nothing is ever edited in git to move a card:
+     c:<coll>:<id>   content — a seed row's changed fields, {del:1} to remove it, {add:1,…} a new row
+                     (coll = items · months · decisions · risks · kpis · sources · rules · roles · ams)
+     i:<item> d:<dec> k:<kpi> r:<risk> a:<am> p:<role>   status / measured values, stamped by+at
+     chk:<owner>|<line>   one checklist line {t,done,ord,del,add} — owner i.<item> or m.<module path>
+     mod:<path>      a module's migration state {st,m,note} — the ONLY part every AM can read, through
+                     GET /api/migration/status (src/migration.js), painted by docs/migration_widget.html
+     cfg:badges      {on} — whether AMs see the badges at all
    ============================================================================================ */
 /* RM:START */
 var RM={
@@ -318,9 +427,9 @@ var RM={
     {k:'2026-10',name:'October 2026',theme:'Discover and decide',plain:'Know everything that has to move; leadership signs off the decisions; AMs get scoped access before anyone new signs in.'},
     {k:'2026-11',name:'November 2026',theme:'Ownership transfer, wave 2 AMs',plain:'The FCC moves into FeedSpark-owned GitHub and Cloudflare accounts in the fortnight before the peak freeze.',freeze:'Freeze from 13 Nov'},
     {k:'2026-12',name:'December 2026',theme:'Build with no behaviour change',plain:'The storage adapter and the FeedSpark database are built and rehearsed on staging while production stays frozen.',freeze:'Peak freeze'},
-    {k:'2027-01',name:'January 2027',theme:'Parallel run',plain:'Every dataset is written to both stores from 11 Jan and checked nightly; the first AM-built modules go live.'},
-    {k:'2027-02',name:'February 2027',theme:'Cut-over waves 1–3',plain:'Caches, feed-scan state and config move onto FeedSpark storage; email stops running through one personal mailbox.'},
-    {k:'2027-03',name:'March 2027',theme:'Commercial data and decommission',plain:'Briefs, hours, quotes and client data move last; every personal account is retired.'},
+    {k:'2027-01',name:'January 2027',theme:'Parallel run + pilot module',plain:'Every dataset is written to both stores from 11 Jan and checked nightly; Feed Chat is the first module to move.'},
+    {k:'2027-02',name:'February 2027',theme:'Module waves 1–2',plain:'The feed modules move onto FeedSpark storage one by one; email stops running through one personal mailbox.'},
+    {k:'2027-03',name:'March 2027',theme:'Module waves 3–4, decommission',plain:'The commercial modules move last — Workflow and the Command center at the end; every personal account is retired.'},
     {k:'2027-04',name:'April 2027',theme:'Hypercare and the compute decision',plain:'Stabilise, hand over runbooks, and decide whether the application itself also moves onto FeedSpark servers.'}
   ],
   ws:{
@@ -341,43 +450,54 @@ var RM={
   items:[
     /* ---- October ---- */
     {id:'o-track',m:'2026-10',ws:'gov',t:'Live transformation tracker (this page)',o:'po',d:'Management can follow status without asking. Opt-in module: only the owner and people granted it can open it.',st0:'done'},
-    {id:'o-reg',m:'2026-10',ws:'mig',t:'Dependency register signed off',o:'po',d:'17 secrets, 5 worker crons + 6 GitHub Actions workflows, the Apps Script trigger, 11 files hard-coding the personal host, the Google service account project, the Anthropic account. Draft in docs/TRANSFORMATION.md.',st0:'doing'},
+    {id:'o-reg',m:'2026-10',ws:'mig',t:'Dependency register signed off',o:'po',d:'17 secrets, 5 worker crons + 6 GitHub Actions workflows, the Apps Script trigger, 11 files hard-coding the personal host, the Google service account project, the Anthropic account. Draft in docs/TRANSFORMATION.md.',st0:'doing',
+      chk:['Secrets listed (17)','Scheduled jobs listed (8)','Personal-account dependencies listed (7)','Reviewed by the CTO sponsor']},
     {id:'o-census',m:'2026-10',ws:'mig',t:'Data census of the live store',o:'po',d:'Keys, bytes and expiry per data family (~100 families in one Cloudflare KV namespace, ~40 holding client-commercial or personal data).'},
-    {id:'o-infra',m:'2026-10',ws:'mig',t:'FeedSpark infrastructure questionnaire answered',o:'cto',d:'Hosting (own servers or cloud), OS / Node / PHP, database engine and HA, SSO provider, secrets vault, backups, and whether feedspark.com DNS is on Cloudflare.'},
+    {id:'o-infra',m:'2026-10',ws:'mig',t:'FeedSpark infrastructure questionnaire answered',o:'cto',d:'The answers decide where the data lands.',
+      chk:['Hosting: own servers or cloud','Database engine, version, HA','SSO provider','Secrets vault','Backups and restore targets','Is feedspark.com DNS on Cloudflare?']},
     {id:'o-accts',m:'2026-10',ws:'mig',t:'FeedSpark GitHub organisation + Cloudflare account created',o:'it',d:'Cloudflare on the paid Workers plan: removes the 50-call-per-run limit the scans are built around, and is a precondition for dual-writing later.'},
     {id:'o-cfg',m:'2026-10',ws:'mig',t:'No personal host or repo in the code',o:'po',d:'The workers.dev host and the personal repo name become configuration, so the move is a setting change, not a code hunt.'},
     {id:'o-jwt',m:'2026-10',ws:'sec',t:'Verify the sign-in token on every request',o:'po',d:'Today the worker trusts the Cloudflare Access email header without verifying its signed token. Fine behind Cloudflare, unsafe on any other host.'},
     {id:'o-dpia',m:'2026-10',ws:'sec',t:'Data classification + DPIA started',o:'dpo',d:'Retainer hours, pricing and quotes, client contacts and emails, ROAS, and client decks committed to git history.'},
-    {id:'o-dec',m:'2026-10',ws:'gov',t:'Decision memo signed (D1–D13)',o:'cto',d:'See Decisions for leadership below. The November transfer needs D1–D5 at minimum.',gate:1},
+    {id:'o-dec',m:'2026-10',ws:'gov',t:'Decision memo signed',o:'cto',d:'See Decisions for leadership below. The November transfer needs D1–D5 at minimum.',gate:1,
+      chk:['D1 End state','D2 Database','D3 Sign-in','D4 Where the code lives','D5 Domain']},
     {id:'o-budget',m:'2026-10',ws:'gov',t:'Budget line + contract owners named',o:'cfo',d:'Cloudflare paid plan, Anthropic organisation account, Google Cloud project, one Claude Code seat per builder, database hosting.'},
-    {id:'o-scope',m:'2026-10',ws:'am',t:'Access profile for every new AM before they sign in',o:'po',d:'Today anyone without a directory row sees every client. Each AM gets their clients and modules set in 👥 Access first.'},
-    {id:'o-core',m:'2026-10',ws:'am',t:'Fixed-core list published + change control on core files',o:'cto',d:'The 70%: the modules below marked Fixed. Core code needs a reviewed PR (Ray + CTO) instead of self-merge.'},
+    {id:'o-scope',m:'2026-10',ws:'am',t:'Access profile for every new AM before they sign in',o:'po',d:'Today anyone without a directory row sees every client. Each AM gets their clients and modules set in 👥 Access first.',
+      chk:['Directory row per AM','Clients set','Modules set','Checked with 👁 view-as']},
+    {id:'o-core',m:'2026-10',ws:'am',t:'Fixed-core list published + change control on core files',o:'cto',d:'The 70%: the modules marked Fixed. Core code needs a reviewed PR (Ray + CTO) instead of self-merge.'},
     {id:'o-deray',m:'2026-10',ws:'am',t:'Remove Ray-only assumptions from Workflow',o:'po',d:'The AM list, default AM, email sign-off, keyword-calendar people and the due-date reminder list are hard-coded to Ray and Steven. They should read from the access directory.'},
-    {id:'o-kit',m:'2026-10',ws:'am',t:'Onboarding kit + baseline one-week diary',o:'po',d:'One-hour walkthrough, dossier tour, first-brief checklist. The diary is the "before" figure the 11 h/week estimate is tested against.'},
-    {id:'o-w1',m:'2026-10',ws:'am',t:'Wave 1: two AMs onboarded',o:'po',d:'Their clients’ plan sheets wired, access scoped, first brief sent from Workflow.'},
+    {id:'o-kit',m:'2026-10',ws:'am',t:'Onboarding kit + baseline one-week diary',o:'po',d:'The diary is the "before" figure the 11 h/week estimate is tested against.',
+      chk:['One-hour walkthrough script','Dossier tour','First-brief checklist','Diary template sent']},
+    {id:'o-w1',m:'2026-10',ws:'am',t:'Wave 1: two AMs onboarded',o:'po',d:'Their clients’ plan sheets wired, access scoped, first brief sent from Workflow.',
+      chk:['AM 1 access set','AM 1 walkthrough','AM 1 first brief','AM 2 access set','AM 2 walkthrough','AM 2 first brief']},
     /* ---- November ---- */
     {id:'n-stage',m:'2026-11',ws:'mig',t:'Staging environment',o:'it',d:'A second worker with its own store and sign-in. Every later cut-over is rehearsed there first. Today every merge goes straight to production.'},
     {id:'n-repo',m:'2026-11',ws:'mig',t:'Repository transferred to the FeedSpark GitHub organisation',o:'it',d:'Old links redirect. Every Actions secret re-created and rotated.'},
-    {id:'n-cut',m:'2026-11',ws:'mig',t:'Cut-over to the FeedSpark Cloudflare account on fcc.feedspark.com',o:'po',d:'~30-minute write freeze: copy the store (with metadata and expiry), repoint the Gmail script and scan agents, switch DNS. The old address redirects and stays warm for 30 days. If this slips past 12 Nov it waits for 11 Jan.',gate:1},
-    {id:'n-verify',m:'2026-11',ws:'mig',t:'Every scheduled job verified on the new account',o:'po',d:'Build number matches, all five crons fire once, the feed-scan push lands, and the Gmail bridge completes a round trip.'},
+    {id:'n-cut',m:'2026-11',ws:'mig',t:'Cut-over to the FeedSpark Cloudflare account on fcc.feedspark.com',o:'po',d:'~30-minute write freeze. If this slips past 12 Nov it waits for 11 Jan. Every module then reads "On FeedSpark’s account".',gate:1,
+      chk:['Rehearsed on staging','Write freeze announced to AMs','Store copied with metadata and expiry','Gmail script and scan agents repointed','DNS switched to fcc.feedspark.com','Old address redirects; its crons disabled','Build number matches on the new host','Every module set to "On FeedSpark’s account"']},
+    {id:'n-verify',m:'2026-11',ws:'mig',t:'Every scheduled job verified on the new account',o:'po',d:'All five crons fire once, the feed-scan push lands, and the Gmail bridge completes a round trip.'},
     {id:'n-freeze',m:'2026-11',ws:'gov',t:'Change freeze 13 Nov – 8 Jan',o:'cto',d:'Black Friday is 27 Nov. Clients depend on the feed guards most in peak, so no cut-overs until January.'},
-    {id:'n-w2',m:'2026-11',ws:'am',t:'Wave 2: remaining three AMs onboarded',o:'po',d:'Same kit as wave 1. Needs no infrastructure change, so it can run during the freeze.'},
+    {id:'n-w2',m:'2026-11',ws:'am',t:'Wave 2: remaining three AMs onboarded',o:'po',d:'Same kit as wave 1. Needs no infrastructure change, so it can run during the freeze.',
+      chk:['AM 3 onboarded','AM 4 onboarded','AM 5 onboarded']},
     {id:'n-mail',m:'2026-11',ws:'am',t:'Each AM’s client email reaches Intake',o:'it',d:'Today only Ray’s mailbox feeds Intake, brief replies and call notes. Without this, a new AM’s client emails never reach the FCC.'},
     {id:'n-plans',m:'2026-11',ws:'am',t:'Project plans as settings, not code',o:'po',d:'The 15 plan-sheet IDs are hard-coded in two files. Adding a new AM’s client should be a setting in the dossier, with no code change or deploy.'},
     {id:'n-wish',m:'2026-11',ws:'ext',t:'Each AM’s wishlist collected',o:'po',d:'One wishlist per AM into the build queue, each item with who asked for it, the data it needs and the decision it serves.'},
     /* ---- December ---- */
-    {id:'d-adapter',m:'2026-12',ws:'mig',t:'Storage adapter shipped (no behaviour change)',o:'po',d:'One layer between the app and its data. Installed at the two entry points, so the ~390 call sites stay unchanged. A parity test suite proves identical behaviour.'},
+    {id:'d-adapter',m:'2026-12',ws:'mig',t:'Storage adapter shipped (no behaviour change)',o:'po',d:'One layer between the app and its data, installed at the two entry points so the ~390 call sites stay unchanged.',
+      chk:['store.js with the KV backend','Installed at fetch() and scheduled()','Parity test suite green','7 days in production with no behaviour change']},
     {id:'d-db',m:'2026-12',ws:'mig',t:'FeedSpark database provisioned',o:'it',d:'UK/EU region, backups, secure link from the app (tunnel or data API), object storage for decks and uploads.'},
     {id:'d-dry',m:'2026-12',ws:'mig',t:'Schema + backfill rehearsed on staging',o:'po',d:'Copy every family into the database on staging; expiry handled by a clean-up job, keeping the 90-day activity-log retention.'},
     {id:'d-gate',m:'2026-12',ws:'mig',t:'Staging parity at or above 99.9% for 7 days',o:'po',d:'Both stores written, compared nightly. Nothing moves in production until this holds.',gate:1},
     {id:'d-dpia',m:'2026-12',ws:'sec',t:'DPIA signed + backup-restore drill passed',o:'dpo',d:'Includes a decision on client decks and pricing already in git history.'},
     {id:'d-vault',m:'2026-12',ws:'sec',t:'Secrets vault and named custodians',o:'cto',d:'Two named people can reach every secret; rotation schedule agreed.'},
-    {id:'d-spec',m:'2026-12',ws:'ext',t:'Custom-module spec v1',o:'po',d:'An AM module is a checked JSON definition (cards, tables, charts, filters) over approved data sources, served at /x/<name>. AMs never ship scripts into the core.'},
+    {id:'d-spec',m:'2026-12',ws:'ext',t:'Custom-module spec v1',o:'po',d:'An AM module is a checked definition (cards, tables, charts, filters) over approved data sources, served at /x/<name>. AMs never ship scripts into the core.'},
     {id:'d-scope',m:'2026-12',ws:'ext',t:'Data sources an AM module may read are client-scoped',o:'po',d:'Several read routes (dossier, keyword calendar, feed guards, quotes) return every client today. Each must respect the AM’s scope before a custom module can use it.'},
-    {id:'d-prefs',m:'2026-12',ws:'am',t:'Per-AM settings stored server-side',o:'po',d:'Default scope, saved views, alert recipients and email sign-off follow the person across devices. Today they sit in one browser or apply house-wide.'},
+    {id:'d-prefs',m:'2026-12',ws:'am',t:'Per-AM settings stored server-side',o:'po',d:'Default scope, saved views, alert recipients and email sign-off follow the person across devices.'},
     {id:'d-30',m:'2026-12',ws:'am',t:'Day-30 check: every AM’s briefs go through Workflow',o:'po',d:'Rollout days 0–30: onboarded, scoped, first brief sent.'},
     /* ---- January ---- */
     {id:'j-dual',m:'2027-01',ws:'mig',t:'Dual-write every data family in production (from 11 Jan)',o:'po',d:'Every write goes to both stores. The backfill copies history; a nightly job compares and repairs.'},
+    {id:'j-pilot',m:'2027-01',ws:'mig',t:'Pilot module migrated: Feed Chat',o:'po',d:'The smallest module goes first, end to end, so the module checklist is proven before the waves.',
+      chk:['Feed Chat data on FeedSpark storage','14 days parity','AM smoke test','Module marked Migrated']},
     {id:'j-parity',m:'2027-01',ws:'mig',t:'14 days at or above 99.9% parity for every family',o:'po',d:'With no rise in feed-scan failures or error rate.',gate:1},
     {id:'j-gcp',m:'2027-01',ws:'mig',t:'Google service account moved to a FeedSpark Cloud project',o:'it',d:'The account that reads and writes the project plans.'},
     {id:'j-ai',m:'2027-01',ws:'mig',t:'Anthropic key moved to a FeedSpark organisation account',o:'cfo',d:'Tachyon, Feed Chat, image tagging and the Vietnamese UI all call it.'},
@@ -387,19 +507,22 @@ var RM={
     {id:'j-60',m:'2027-01',ws:'am',t:'Day-60 check: quotes and decks generated in the FCC',o:'po',d:'Rollout days 30–60. The Monday call runs off Leadership.'},
     {id:'j-lead',m:'2027-01',ws:'am',t:'Team-lead role',o:'po',d:'Somebody other than Ray can manage access and configuration. Today only one owner exists.'},
     /* ---- February ---- */
-    {id:'f-w1',m:'2027-02',ws:'mig',t:'Wave 1: caches on FeedSpark storage',o:'po',d:'Plan cache, GitHub cache, presence: they rebuild themselves, so they carry the least risk.'},
-    {id:'f-w2',m:'2027-02',ws:'mig',t:'Wave 2: feed-scan state',o:'po',d:'Label Guard, PT Guard, Golden Record, volume, overlays and images. The same alerts must fire on both stores before the switch.'},
-    {id:'f-w3',m:'2027-02',ws:'mig',t:'Wave 3: settings and outboxes',o:'po',d:'Watch rules, alert destinations, email outboxes.'},
-    {id:'f-mail',m:'2027-02',ws:'mig',t:'Email off Ray’s personal mailbox',o:'it',d:'Inbox capture, brief-reply sync, alert emails, drafts and TechAM forwards move to a service mailbox (e.g. fcc@feedspark.com) or domain delegation.',gate:1},
+    {id:'f-w1',m:'2027-02',ws:'mig',t:'Module wave 1: Volume, Overlays, Images, Feed Lab, Deck generator',o:'po',d:'Feed-derived modules whose data rebuilds itself: the least risk. Each module is ticked off on the Module migration board.'},
+    {id:'f-w2',m:'2027-02',ws:'mig',t:'Module wave 2: Label Guard, PT Guard, Golden Record, Scheduled work, ROAS',o:'po',d:'The same alerts must fire on both stores before a guard switches.',gate:1},
+    {id:'f-w3',m:'2027-02',ws:'mig',t:'Shared settings and email outboxes',o:'po',d:'Watch rules, alert destinations, email outboxes — used by several modules, moved once.'},
+    {id:'f-mail',m:'2027-02',ws:'mig',t:'Email off Ray’s personal mailbox',o:'it',d:'Inbox capture, brief-reply sync, alert emails, drafts and TechAM forwards move to a service mailbox or domain delegation.',gate:1,
+      chk:['Service mailbox created (e.g. fcc@feedspark.com)','Apps Script moved to it','Alert and report emails send from it','Brief-reply sync verified','TechAM forwards verified','Script removed from Ray’s mailbox']},
     {id:'f-agents',m:'2027-02',ws:'mig',t:'Feed-scan agents re-homed',o:'it',d:'The 4x-daily XML scan and the 09:00 Golden Record run move to FeedSpark-owned runners.'},
     {id:'f-rot2',m:'2027-02',ws:'sec',t:'Secret rotation, batch 2',o:'it',d:'MCP tokens, Google and Anthropic keys.'},
     {id:'f-desk',m:'2027-02',ws:'ext',t:'Desk Manager connector live (if approved)',o:'po',d:'Ticket data available to AM modules, scoped per AM.'},
     {id:'f-promo',m:'2027-02',ws:'ext',t:'Promotion path from AM module to core',o:'cto',d:'Draft → shared → candidate → core. A module earns core status with a test harness, usage evidence and a reviewed PR.'},
     {id:'f-90',m:'2027-02',ws:'am',t:'Day-90: diary re-run and adoption report',o:'po',d:'The "after" figure. Hours saved measured against the 11 h/week per AM in the business case.'},
     /* ---- March ---- */
-    {id:'m-w45',m:'2027-03',ws:'mig',t:'Waves 4–5: activity log and commercial data',o:'po',d:'Briefs, dossier, shared state, retainer hours, ROAS, quotes, materials (to object storage), access directory. Merges become transactional.'},
-    {id:'m-sql',m:'2027-03',ws:'mig',t:'Old store retired as the source of truth',o:'po',d:'Families on the database for 14 days move to database-only; the old store stays read-only as the rollback copy.'},
-    {id:'m-decom',m:'2027-03',ws:'mig',t:'Personal accounts decommissioned',o:'cto',d:'Old worker, store (archived, encrypted, 90 days), sign-in apps and tokens on the personal account; Apps Script removed from Ray’s mailbox; personal tokens retired; personal repo redirected or deleted.',gate:1},
+    {id:'m-w3',m:'2027-03',ws:'mig',t:'Module wave 3: Keyword calendar, AI Quote, Pricer, Task Manager, Leadership, Activity',o:'po',d:'Commercial data: quotes, pricing, retainer hours.'},
+    {id:'m-w4',m:'2027-03',ws:'mig',t:'Module wave 4: Workflow, Command center, Transformation',o:'po',d:'Briefs, shared state, the dossier and materials move last, with transactional merges.'},
+    {id:'m-sql',m:'2027-03',ws:'mig',t:'Old store retired as the source of truth',o:'po',d:'Modules migrated for 14 days read the database only; the old store stays read-only as the rollback copy.'},
+    {id:'m-decom',m:'2027-03',ws:'mig',t:'Personal accounts decommissioned',o:'cto',d:'Every module reads Migrated before this card closes.',gate:1,
+      chk:['Every module marked Migrated','Old worker deleted','Old store archived (encrypted, 90 days)','Sign-in apps and tokens on the personal account removed','Apps Script removed from Ray’s mailbox','Personal tokens retired','Personal repo redirected or deleted']},
     {id:'m-sec',m:'2027-03',ws:'sec',t:'Security review',o:'cto',d:'Key-gated bypass paths, least-privilege database user, every secret rotated, git history reviewed for commercial data.'},
     {id:'m-promo',m:'2027-03',ws:'ext',t:'First AM module promoted to core (or declined with reasons)',o:'cto',d:'Proves the 30% can feed the 70% without weakening it.'},
     {id:'m-report',m:'2027-03',ws:'gov',t:'Programme report to management',o:'po',d:'Migration KPIs, adoption, hours saved, incidents, cost.'},
@@ -429,32 +552,33 @@ var RM={
       {cls:'fix',name:'Fixed core',share:68,unit:'% of the code',what:'Same for every AM. Changed only through a reviewed PR.',list:['Feed Lab, Label Guard, PT Guard, Golden Record','Product volume, Overlays, Image library','Keyword calendar, Scheduled work','AI Quote, Pricer, Deck generator, Feed Chat','Leadership and Activity (lead tier)','Platform: hours badge, phone layer, presence, sign-in']},
       {cls:'cfg',name:'Configurable core',share:31,unit:'% of the code',what:'Same code, but each AM sets their own clients, views and defaults.',list:['Command center and brand dossier','Workflow and the Playbook','FS Task Manager: saved views and tags','Menu layout']},
       {cls:'ext',name:'AM modules',share:1,unit:'% today, the growth zone',what:'Each AM builds what their book needs, from approved data. Nothing here can change the core.',list:['/x/<name>: cards, tables and charts from a checked definition','ROAS is the reference shape: one read-only view over one data source','Wishlist → built → shared → promoted to core']}
-    ],
-    rules:[
-      'The fixed core changes only through a reviewed pull request (Ray + CTO). What works stays as it is.',
-      'An AM module is configuration, not code: a checked definition over approved data sources. No AM-written scripts run inside the FCC.',
-      'An AM module reads only data sources that respect that AM’s client scope, and in v1 it writes nothing.',
-      'Every AM module shows who built it and what it reads, and the activity log records how often it is used.',
-      'A module that proves itself (a test harness, usage, a reviewed PR) is promoted into the core, so the 70% grows from what AMs actually use.'
     ]
   },
-  sources:[
-    {n:'FeedSpark reports MCP',what:'Retainer hours, booked tasks, client tickets',st:'Live',note:'Synced every 30 min. Ticket detail is not read yet.'},
-    {n:'FeedHero reports MCP',what:'Google Ads spend, revenue and ROAS',st:'Live',note:'Six clients per run. The client list is fixed in code; it should come from each AM’s book.'},
-    {n:'Desk Manager',what:'Desk tickets',st:'Not connected',note:'Nothing in the FCC reads it yet. Scoped in January.'},
-    {n:'Project plans + AM wishlists',what:'Tasks, owners, due dates; each AM’s wishlist plan',st:'Partly',note:'Ray’s 15 plan sheets are wired. New AMs’ sheets need the November settings change.'},
-    {n:'FeedHero product feeds',what:'Every Google Shopping and Meta feed',st:'Live',note:'Scanned four times a day.'}
+  rules:[
+    {id:'r1',t:'The fixed core changes only through a reviewed pull request (Ray + CTO). What works stays as it is.'},
+    {id:'r2',t:'An AM module is configuration, not code: a checked definition over approved data sources. No AM-written scripts run inside the FCC.'},
+    {id:'r3',t:'An AM module reads only data sources that respect that AM’s client scope, and in v1 it writes nothing.'},
+    {id:'r4',t:'Every AM module shows who built it and what it reads, and the activity log records how often it is used.'},
+    {id:'r5',t:'A module that proves itself (a test harness, usage, a reviewed PR) is promoted into the core, so the 70% grows from what AMs actually use.'},
+    {id:'r6',t:'Modules migrate one at a time, each with its own checklist; an AM always sees on the module itself whether it has moved.'}
   ],
-  ams:[{slot:1,wave:1},{slot:2,wave:1},{slot:3,wave:2},{slot:4,wave:2},{slot:5,wave:2}],
+  sources:[
+    {id:'s-rep',n:'FeedSpark reports MCP',what:'Retainer hours, booked tasks, client tickets',st:'Live',note:'Synced every 30 min. Ticket detail is not read yet.'},
+    {id:'s-fh',n:'FeedHero reports MCP',what:'Google Ads spend, revenue and ROAS',st:'Live',note:'Six clients per run. The client list is fixed in code; it should come from each AM’s book.'},
+    {id:'s-desk',n:'Desk Manager',what:'Desk tickets',st:'Not connected',note:'Nothing in the FCC reads it yet. Scoped in January.'},
+    {id:'s-plan',n:'Project plans + AM wishlists',what:'Tasks, owners, due dates; each AM’s wishlist plan',st:'Partly',note:'Ray’s 15 plan sheets are wired. New AMs’ sheets need the November settings change.'},
+    {id:'s-feed',n:'FeedHero product feeds',what:'Every Google Shopping and Meta feed',st:'Live',note:'Scanned four times a day.'}
+  ],
+  ams:[{id:'1',wave:1},{id:'2',wave:1},{id:'3',wave:2},{id:'4',wave:2},{id:'5',wave:2}],
   amst:{invited:'Invited',scoped:'Access set',onboarded:'Onboarded',active:'Active weekly'},
   kpis:[
-    {id:'pers',t:'Personal-account dependencies',base:'7',target:'0',unit:'',why:'Personal repo, personal Cloudflare account, workers.dev host, Apps Script in Ray’s mailbox, Gmail sent as Ray, Google service account project, Anthropic key'},
-    {id:'fam',t:'Data families on FeedSpark storage',base:'0 of ~100',target:'100%',why:'From the nightly comparison once the adapter ships'},
+    {id:'pers',t:'Personal-account dependencies',base:'7',target:'0',why:'Personal repo, personal Cloudflare account, workers.dev host, Apps Script in Ray’s mailbox, Gmail sent as Ray, Google service account project, Anthropic key'},
+    {id:'mods',t:'Modules migrated',base:'0 of 20',target:'20 of 20',why:'Counted live from the Module migration board',auto:'mods'},
     {id:'parity',t:'Parity between old and new store',base:'n/a',target:'≥ 99.9%',why:'Per family, for 14 days before any switch'},
     {id:'jobs',t:'Scheduled jobs re-homed',base:'0 of 8',target:'8 of 8',why:'5 worker crons, 2 scheduled Actions, 1 Apps Script trigger'},
     {id:'secrets',t:'Secrets in FeedSpark custody',base:'0 of 17',target:'17 of 17',why:'Rotated, held in the vault by named custodians'},
     {id:'hosts',t:'Files hard-coding the personal host',base:'11',target:'0',why:'Code, scan agents, the Gmail script, docs'},
-    {id:'amsk',t:'AMs onboarded and scoped',base:'0 of 5',target:'5 of 5',why:'Counted live from the onboarding table below',auto:'ams'},
+    {id:'amsk',t:'AMs onboarded and scoped',base:'0 of 5',target:'5 of 5',why:'Counted live from the onboarding table',auto:'ams'},
     {id:'wau',t:'AMs active weekly',base:'1',target:'6',why:'From the activity log'},
     {id:'briefs',t:'Briefs raised through Workflow',base:'—',target:'100%',why:'Against briefs sent by email outside the FCC'},
     {id:'hours',t:'Hours saved per AM per week',base:'11 (estimate)',target:'Measured',why:'Diary before (October) and after (February)'},
@@ -476,50 +600,112 @@ var RM={
   options:[
     {id:'A',name:'Transfer ownership, code unchanged',rec:0,eff:'3–4 person-weeks',risk:'Low',p:'Repo to a FeedSpark GitHub organisation, a FeedSpark Cloudflare account, sign-in on FeedSpark’s Google Workspace, fcc.feedspark.com. Data still sits on Cloudflare.'},
     {id:'B',name:'Re-host everything on FeedSpark servers',rec:0,eff:'16–24 person-weeks + IT build',risk:'High',p:'Node on FeedSpark Linux, a FeedSpark database, server cron, FeedSpark SSO, all in one move with one developer and no staging today.'},
-    {id:'C',name:'Staged: ownership first, then the data, then decide on compute',rec:1,eff:'A + 10–12 person-weeks',risk:'Medium-low',p:'A in November, then every dataset moves onto a FeedSpark database one family at a time, each reversible. Moving the application itself is a separate decision in April.'}
-  ]
+    {id:'C',name:'Staged: ownership first, then module by module, then decide on compute',rec:1,eff:'A + 10–12 person-weeks',risk:'Medium-low',p:'A in November, then each module’s data moves onto a FeedSpark database with its own checklist, each reversible. Moving the application itself is a separate decision in April.'}
+  ],
+  /* the module list — twin of MIG_SEED in cloudflare/feedspark-deck/src/migration.js (the harness holds them equal) */
+  modules:[
+    {p:'/feedchat',n:'Feed Chat',w:0,m:'2027-01',data:'feedchat question bank'},
+    {p:'/volume',n:'Product volume',w:1,m:'2027-02',data:'volids · volhist · volbase · voldob'},
+    {p:'/overlays',n:'Overlays',w:1,m:'2027-02',data:'overlay · overlayhist · overlayidx'},
+    {p:'/images',n:'Image library',w:1,m:'2027-02',data:'image · imagehist · imgtags · imageidx'},
+    {p:'/feedlab',n:'Feed Lab',w:1,m:'2027-02',data:'feedaudit · feedmkt'},
+    {p:'/deck-builder',n:'Deck generator',w:1,m:'2027-02',data:'page edits; reads volumes'},
+    {p:'/labels',n:'Label Guard',w:2,m:'2027-02',data:'labels · labelbase · labelday · labelhist · watches · alerts'},
+    {p:'/ptypes',n:'PT Guard',w:2,m:'2027-02',data:'ptype · ptypebase · ptypeday · alerts'},
+    {p:'/golden',n:'Golden Record',w:2,m:'2027-02',data:'golden · goldenbase · goldenhist · goldenqual · goldenpdp · profiles'},
+    {p:'/schedule',n:'Scheduled work',w:2,m:'2027-02',data:'schedwork · schedskip'},
+    {p:'/roas',n:'ROAS',w:2,m:'2027-02',data:'roas · roasidx · roasstatus'},
+    {p:'/kwcal',n:'Keyword calendar',w:3,m:'2027-03',data:'kwcal · kwresults'},
+    {p:'/aiquote',n:'AI Quote',w:3,m:'2027-03',data:'aiquote · aiquotesaved (pricing)'},
+    {p:'/pricer',n:'Pricer',w:3,m:'2027-03',data:'tachyonrates · tachyonquotes · tachyontrack'},
+    {p:'/tasks',n:'FS Task Manager',w:3,m:'2027-03',data:'tm · tmtasks · tmbook · tmtick · tmhours · tags'},
+    {p:'/leadership',n:'Leadership',w:3,m:'2027-03',data:'reads hours + golden; page edits'},
+    {p:'/activity',n:'Activity & Build Log',w:3,m:'2027-03',data:'act (activity log) · buildqueue · buildlog'},
+    {p:'/workflow',n:'Workflow & Playbook',w:4,m:'2027-03',data:'briefs · shared state · gmail · callactions · outboxes'},
+    {p:'/',n:'Command center',w:4,m:'2027-03',data:'clients · materials · tests · abtests · plan cache'},
+    {p:'/transformation',n:'Transformation',w:4,m:'2027-03',data:'transform'}
+  ],
+  mst:{legacy:'Not migrated yet',owned:'On FeedSpark’s account',migrating:'Migrating now',migrated:'Migrated'},
+  modtpl:['Data families confirmed for this module','Reads and writes go through the storage adapter','Dual-write running','Parity at or above 99.9% for 14 days','Switched to FeedSpark storage','Scheduled jobs and pushes re-homed (if any)','Smoke-tested by an AM on the live page','Old store retired for this module']
 };
 /* RM:END */
 
-/* ---- pure helpers (lifted by tools/test_transform.mjs) ---- */
+/* ---- pure engine (lifted by tools/test_transform.mjs) ---- */
 /* TX:ENGINE:START */
 var TX={
   ST:{todo:'Not started',doing:'In progress',done:'Done',blocked:'Blocked',na:'Dropped'},
+  MS:['legacy','owned','migrating','migrated'],
+  MN:['January','February','March','April','May','June','July','August','September','October','November','December'],
   monthKey:function(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); },
+  monthName:function(k){ var p=String(k).split('-'); return TX.MN[+p[1]-1]+' '+p[0]; },
+  nextMonth:function(k){ var p=String(k).split('-'), y=+p[0], m=+p[1]+1; if(m>12){ m=1; y++; } return y+'-'+String(m).padStart(2,'0'); },
+  CLEAN:{by:1,at:1,add:1,del:1},
+  // the seed list with every change laid over it: edited fields win, {del} removes, {add} appends
+  eff:function(coll,seed,S,idk){ idk=idk||'id'; S=S||{}; var pre='c:'+coll+':', out=[], seen={};
+    (seed||[]).forEach(function(x,i){ var id=String(x[idk]); seen[id]=1; var o=S[pre+id]; if(o&&o.del)return;
+      var r={}; Object.keys(x).forEach(function(k){ r[k]=x[k]; }); r._o=i*10; r._seed=1;
+      if(o)Object.keys(o).forEach(function(k){ if(!TX.CLEAN[k])r[k]=o[k]; }); out.push(r); });
+    Object.keys(S).forEach(function(k){ if(k.indexOf(pre)!==0)return; var id=k.slice(pre.length), o=S[k]; if(seen[id]||!o||!o.add||o.del)return;
+      var r={}; Object.keys(o).forEach(function(f){ if(!TX.CLEAN[f])r[f]=o[f]; }); r[idk]=id; r._o=1e6+(+o.at||0); out.push(r); });
+    return out.sort(function(a,b){ var x=(a.ord!=null?+a.ord:a._o), y=(b.ord!=null?+b.ord:b._o); return x-y; });
+  },
+  months:function(rm,S,items){ var ms=TX.eff('months',rm.months,S,'k'), have={};
+    ms.forEach(function(m){ have[m.k]=1; });
+    (items||TX.eff('items',rm.items,S)).forEach(function(it){ if(it.m&&!have[it.m]){ have[it.m]=1; ms.push({k:it.m}); } });
+    ms.forEach(function(m){ if(!m.name)m.name=TX.monthName(m.k); });
+    return ms.sort(function(a,b){ return a.k<b.k?-1:a.k>b.k?1:0; });
+  },
+  view:function(rm,S){ var items=TX.eff('items',rm.items,S);
+    return {items:items,months:TX.months(rm,S,items),decisions:TX.eff('decisions',rm.decisions,S),risks:TX.eff('risks',rm.risks,S),
+      kpis:TX.eff('kpis',rm.kpis,S),sources:TX.eff('sources',rm.sources,S),rules:TX.eff('rules',rm.rules,S),
+      roles:TX.eff('roles',rm.roles,S),ams:TX.eff('ams',rm.ams,S),modules:rm.modules}; },
+  // one card's checklist: the seed lines, their recorded state, then lines people added
+  checklist:function(owner,seed,S){ S=S||{}; var pre='chk:'+owner+'|', out=[], seen={};
+    (seed||[]).forEach(function(t,i){ var id='s'+i; seen[id]=1; var r=S[pre+id]||{}; if(r.del)return;
+      out.push({id:id,t:r.t||t,done:!!r.done,ord:r.ord!=null?+r.ord:i*10,by:r.by,at:r.at}); });
+    Object.keys(S).forEach(function(k){ if(k.indexOf(pre)!==0)return; var id=k.slice(pre.length), r=S[k]; if(seen[id]||!r||r.del||!r.add)return;
+      out.push({id:id,t:r.t||'',done:!!r.done,ord:r.ord!=null?+r.ord:1e6+(+r.at||0),by:r.by,at:r.at}); });
+    return out.sort(function(a,b){ return a.ord-b.ord; });
+  },
+  prog:function(lines){ var d=lines.filter(function(l){ return l.done; }).length; return {done:d,n:lines.length}; },
   statusOf:function(it,S){ var r=S&&S['i:'+it.id]; return (r&&r.st)||it.st0||'todo'; },
   closed:function(st){ return st==='done'||st==='na'; },
   isLate:function(it,S,now){ return it.m<now && !TX.closed(TX.statusOf(it,S)); },
-  summary:function(rm,S,now){
-    var live=rm.items.filter(function(it){ return TX.statusOf(it,S)!=='na'; });
+  modState:function(mod,S){ var r=S&&S['mod:'+mod.p]; return (r&&TX.MS.indexOf(r.st)>=0)?r.st:'legacy'; },
+  modMonth:function(mod,S){ var r=S&&S['mod:'+mod.p]; return (r&&/^\d{4}-\d{2}$/.test(r.m||''))?r.m:mod.m; },
+  summary:function(rm,S,now){ var v=TX.view(rm,S);
+    var live=v.items.filter(function(it){ return TX.statusOf(it,S)!=='na'; });
     var done=live.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length;
-    var first=rm.months[0].k, cur=now<first?first:now;
+    var first=v.months.length?v.months[0].k:now, cur=now<first?first:now;
     var thisM=live.filter(function(it){ return it.m===cur; });
-    var late=rm.items.filter(function(it){ return TX.isLate(it,S,now); });
-    var gate=null; rm.items.forEach(function(it){ if(!gate&&it.gate&&!TX.closed(TX.statusOf(it,S)))gate=it; });
-    var dec=rm.decisions.filter(function(d){ var r=S&&S['d:'+d.id]; return r&&r.st==='decided'; }).length;
-    var blocked=rm.items.filter(function(it){ return TX.statusOf(it,S)==='blocked'; });
+    var late=v.items.filter(function(it){ return TX.isLate(it,S,now); });
+    var gate=null; v.items.slice().sort(function(a,b){ return a.m<b.m?-1:a.m>b.m?1:0; }).forEach(function(it){ if(!gate&&it.gate&&!TX.closed(TX.statusOf(it,S)))gate=it; });
+    var dec=v.decisions.filter(function(d){ var r=S&&S['d:'+d.id]; return r&&r.st==='decided'; }).length;
+    var blocked=v.items.filter(function(it){ return TX.statusOf(it,S)==='blocked'; });
+    var mods={legacy:0,owned:0,migrating:0,migrated:0}; rm.modules.forEach(function(m){ mods[TX.modState(m,S)]++; });
     return {total:live.length,done:done,pct:live.length?Math.round(done*100/live.length):0,cur:cur,started:now>=first,
       thisN:thisM.length,thisDone:thisM.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length,
-      late:late,gate:gate,decided:dec,decTotal:rm.decisions.length,blocked:blocked};
+      late:late,gate:gate,decided:dec,decTotal:v.decisions.length,blocked:blocked,mods:mods,modN:rm.modules.length,view:v};
   },
-  amsActive:function(rm,S){ var n=0; rm.ams.forEach(function(a){ var r=S&&S['a:'+a.slot]; if(r&&(r.st==='onboarded'||r.st==='active'))n++; }); return n; },
-  update:function(rm,S,now,ppl){
-    var s=TX.summary(rm,S,now), L=[], mo={}; rm.months.forEach(function(m){ mo[m.k]=m; });
-    var who=function(o){ var r=S&&S['p:'+o]; var def=(rm.roles.filter(function(x){return x.id===o;})[0]||{}); return (r&&r.name)||def.def||def.label||o; };
-    L.push('FCC AI transformation — status update ('+(ppl||'')+')'.replace(' ()',''));
+  amsActive:function(rm,S){ var n=0; TX.eff('ams',rm.ams,S).forEach(function(a){ var r=S&&S['a:'+a.id]; if(r&&(r.st==='onboarded'||r.st==='active'))n++; }); return n; },
+  roleName:function(rm,S,o){ var r=S&&S['p:'+o], d=TX.eff('roles',rm.roles,S).filter(function(x){ return x.id===o; })[0]||{}; return (r&&r.name)||d.def||d.label||o; },
+  update:function(rm,S,now,when){
+    var s=TX.summary(rm,S,now), v=s.view, L=[], mo={}; v.months.forEach(function(m){ mo[m.k]=m; });
+    L.push('FCC AI transformation — status update'+(when?' ('+when+')':''));
     L.push('');
     L.push('Overall: '+s.done+' of '+s.total+' milestones done ('+s.pct+'%). Decisions signed: '+s.decided+' of '+s.decTotal+'.');
-    L.push((s.started?'This month':'Starting')+' — '+mo[s.cur].name+' · '+mo[s.cur].theme+': '+s.thisDone+' of '+s.thisN+' done.');
-    rm.items.filter(function(it){ return it.m===s.cur; }).forEach(function(it){
-      var st=TX.statusOf(it,S), r=S&&S['i:'+it.id];
-      L.push('  ['+TX.ST[st]+'] '+it.t+' — '+who((r&&r.own)||it.o)+(r&&r.note?' · '+String(r.note).replace(/\s+/g,' ').slice(0,160):''));
+    L.push('Modules: '+s.mods.migrated+' of '+s.modN+' migrated, '+s.mods.migrating+' migrating now, '+s.mods.owned+' on FeedSpark’s account.');
+    L.push((s.started?'This month':'Starting')+' — '+(mo[s.cur]?mo[s.cur].name+' · '+(mo[s.cur].theme||''):s.cur)+': '+s.thisDone+' of '+s.thisN+' done.');
+    v.items.filter(function(it){ return it.m===s.cur; }).forEach(function(it){
+      var st=TX.statusOf(it,S), r=S&&S['i:'+it.id], p=TX.prog(TX.checklist('i.'+it.id,it.chk,S));
+      L.push('  ['+TX.ST[st]+'] '+it.t+' — '+((r&&r.own)||TX.roleName(rm,S,it.o))+(p.n?' · checklist '+p.done+'/'+p.n:'')+(r&&r.note?' · '+String(r.note).replace(/\s+/g,' ').slice(0,160):''));
     });
-    if(s.gate)L.push('Next gate: '+mo[s.gate.m].name+' — '+s.gate.t+'.');
-    if(s.late.length){ L.push(''); L.push('Late ('+s.late.length+'):'); s.late.forEach(function(it){ L.push('  '+mo[it.m].name+' — '+it.t+' ['+TX.ST[TX.statusOf(it,S)]+']'); }); }
+    if(s.gate)L.push('Next gate: '+(mo[s.gate.m]?mo[s.gate.m].name:s.gate.m)+' — '+s.gate.t+'.');
+    if(s.late.length){ L.push(''); L.push('Late ('+s.late.length+'):'); s.late.forEach(function(it){ L.push('  '+(mo[it.m]?mo[it.m].name:it.m)+' — '+it.t+' ['+TX.ST[TX.statusOf(it,S)]+']'); }); }
     if(s.blocked.length){ L.push(''); L.push('Blocked:'); s.blocked.forEach(function(it){ var r=S['i:'+it.id]; L.push('  '+it.t+(r&&r.note?' — '+String(r.note).replace(/\s+/g,' ').slice(0,160):'')); }); }
-    var open=rm.decisions.filter(function(d){ var r=S&&S['d:'+d.id]; return !(r&&r.st==='decided') && d.due<=s.cur; });
-    if(open.length){ L.push(''); L.push('Decisions needed now:'); open.forEach(function(d){ L.push('  '+d.id+' '+d.t+' — recommended: '+d.rec); }); }
-    var red=rm.risks.filter(function(k){ var r=S&&S['r:'+k.id]; return ((r&&r.rag)||k.rag)==='r'; });
+    var open=v.decisions.filter(function(d){ var r=S&&S['d:'+d.id]; return !(r&&r.st==='decided') && d.due<=s.cur; });
+    if(open.length){ L.push(''); L.push('Decisions needed now:'); open.forEach(function(d){ L.push('  '+(d.code||d.id)+' '+d.t+' — recommended: '+d.rec); }); }
+    var red=v.risks.filter(function(k){ var r=S&&S['r:'+k.id]; return ((r&&r.rag)||k.rag)==='r'; });
     if(red.length){ L.push(''); L.push('Red risks:'); red.forEach(function(k){ L.push('  '+k.t+' — '+k.m); }); }
     return L.join('\n');
   }
@@ -527,13 +713,17 @@ var TX={
 /* TX:ENGINE:END */
 
 (function(){
-  var S={}, BASE=0, ME='', DIRTY=false, NOW=TX.monthKey(), WS='*', OPEN=false, ED=null, retryT=0, LIVE='loading';
+  var S={}, BASE=0, ME='', DIRTY=false, NOW=TX.monthKey(), WS='*', VIEW='board', Q='', ONLY=false, OPEN=false, ED=null, retryT=0, LIVE='loading', DRAG=null, ZOOM=1;
+  try{ VIEW=localStorage.getItem('fcc-tx-view')==='list'?'list':'board'; ZOOM=+localStorage.getItem('fcc-tx-zoom')||1; }catch(e){}
   var $=function(id){ return document.getElementById(id); };
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove('on'); },2400); }
-  var MO={}; RM.months.forEach(function(m){ MO[m.k]=m; });
-  function role(id){ var r=S['p:'+id], d=RM.roles.filter(function(x){return x.id===id;})[0]||{label:id}; return {label:d.label,name:(r&&r.name)||d.def||''}; }
-  function ownerName(it){ var r=S['i:'+it.id]; if(r&&r.own)return r.own; var ro=role(it.o); return ro.name||ro.label; }
+  function uid(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function V(){ return TX.view(RM,S); }
+  function MO(){ var o={}; V().months.forEach(function(m){ o[m.k]=m; }); return o; }
+  function roleName(o){ return TX.roleName(RM,S,o); }
+  function ownerName(it){ var r=S['i:'+it.id]; return (r&&r.own)||roleName(it.o); }
+  function initials(n){ var p=String(n||'').replace(/[^A-Za-z ]/g,' ').trim().split(/\s+/); return ((p[0]||'?')[0]+((p[1]||'')[0]||'')).toUpperCase(); }
   function stamp(r){ if(!r||!r.at)return ''; var d=new Date(r.at); return (r.by?esc(r.by)+' · ':'')+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 
   /* ---- store ---- */
@@ -541,7 +731,7 @@ var TX={
     dot.className='dot'+(LIVE==='live'&&!DIRTY?' live':LIVE==='denied'||LIVE==='error'?' bad':' warn');
     var last=0, lastBy=''; Object.keys(S).forEach(function(k){ var r=S[k]; if(r&&r.at>last){ last=r.at; lastBy=r.by||''; } });
     g.textContent = LIVE==='denied' ? 'This signin is not granted the transformation roadmap. Ask Ray to tick it in 👥 Access.'
-      : LIVE==='error' ? 'Could not reach the live status — showing the roadmap with its starting statuses.'
+      : LIVE==='error' ? 'Could not reach the live status — showing the roadmap as first written.'
       : DIRTY ? 'Saving your change…'
       : 'Live · shared with everyone granted this page'+(last?' · last change '+new Date(last).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+(lastBy?' by '+lastBy:''):' · no changes recorded yet');
   }
@@ -557,162 +747,320 @@ var TX={
     DIRTY=true; setSrc();
     fetch('/api/transform',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(S)})
       .then(function(r){ if(!r.ok)throw new Error(r.status); BASE=+r.headers.get('X-Sync-Base')||BASE; return r.json(); })
-      .then(function(d){ DIRTY=false; retryT=0; if(d&&typeof d==='object')S=d; LIVE='live'; render(); toast('Saved — everyone granted this page sees it'); })
+      .then(function(d){ DIRTY=false; retryT=0; if(d&&typeof d==='object')S=d; LIVE='live'; render(); toast('Saved — everyone granted this page sees it');
+        try{ window.dispatchEvent(new CustomEvent('fcc-migration')); }catch(e){} })
       .catch(function(){ retryT=Math.min(60000,(retryT||2000)*2); setSrc();
         $('src').querySelector('.grow').textContent='⚠ Not saved yet — retrying in '+Math.round(retryT/1000)+'s (kept on this screen)';
         setTimeout(function(){ if(DIRTY)push(); },retryT); });
   }
-  function put(key,val){ val.by=ME||'someone'; val.at=Date.now(); S[key]=val; push(); }
+  // write several keys as one change: each value is stamped with who and when
+  function putMany(o){ var now=Date.now(); Object.keys(o).forEach(function(k){ var v=o[k]; v.by=ME||'someone'; v.at=now; S[k]=v; }); render(); push(); }
+  function merged(key,patch){ var cur=S[key]||{}, o={}; Object.keys(cur).forEach(function(k){ if(k!=='by'&&k!=='at')o[k]=cur[k]; }); Object.keys(patch).forEach(function(k){ o[k]=patch[k]; }); return o; }
 
-  /* ---- editor ---- */
-  function field(lbl,html){ return '<label>'+esc(lbl)+'</label>'+html; }
-  function sel(id,opts,cur){ return '<select id="'+id+'">'+Object.keys(opts).map(function(k){ return '<option value="'+esc(k)+'"'+(k===cur?' selected':'')+'>'+esc(opts[k])+'</option>'; }).join('')+'</select>'; }
-  function openEd(spec){ ED=spec; OPEN=true; $('ed-title').textContent=spec.title; $('ed-ctx').textContent=spec.ctx||'';
-    $('ed-fields').innerHTML=spec.fields; $('ed-stamp').innerHTML=spec.stamp?'Last change: '+spec.stamp:'';
-    $('ed-scrim').classList.add('on'); var f=$('ed-fields').querySelector('select,input,textarea'); if(f)f.focus(); }
+  /* ---- generic editor ---- */
+  var gv=function(id){ var e=$(id); return e?(e.type==='checkbox'?e.checked:String(e.value||'').trim()):''; };
+  function monthOpts(){ var o={}; V().months.forEach(function(m){ o[m.k]=m.name; }); return o; }
+  function roleOpts(){ var o={}; V().roles.forEach(function(r){ o[r.id]=r.label; }); return o; }
+  function wsOpts(){ var o={}; Object.keys(RM.ws).forEach(function(k){ o[k]=RM.ws[k].label; }); return o; }
+  function fHtml(f){ var id='f-'+f.k, lbl='<label for="'+id+'">'+esc(f.l)+'</label>';
+    if(f.type==='check')return '<label class="cbx"><input type="checkbox" id="'+id+'"'+(f.v?' checked':'')+'> '+esc(f.l)+'</label>';
+    if(f.type==='select')return lbl+'<select id="'+id+'">'+Object.keys(f.o).map(function(k){ return '<option value="'+esc(k)+'"'+(String(k)===String(f.v)?' selected':'')+'>'+esc(f.o[k])+'</option>'; }).join('')+'</select>';
+    if(f.type==='area')return lbl+'<textarea id="'+id+'" maxlength="1500" placeholder="'+esc(f.ph||'')+'">'+esc(f.v||'')+'</textarea>';
+    return lbl+'<input id="'+id+'" type="text" maxlength="'+(f.max||200)+'" placeholder="'+esc(f.ph||'')+'" value="'+esc(f.v||'')+'">';
+  }
+  function chkRow(l){ return '<li data-line="'+esc(l.id)+'"><input type="checkbox"'+(l.done?' checked':'')+' aria-label="Done"><input type="text" maxlength="200" value="'+esc(l.t)+'" aria-label="Checklist item"><button type="button" data-rm="1" title="Remove this item" aria-label="Remove">✕</button></li>'; }
+  function openForm(o){ ED=o; OPEN=true; $('ed-title').textContent=o.title; $('ed-ctx').textContent=o.ctx||'';
+    var h=''; (o.fields||[]).forEach(function(f){ if(f.pair){ h+='<div class="row2"><div>'+fHtml(f.pair[0])+'</div><div>'+fHtml(f.pair[1])+'</div></div>'; } else h+=fHtml(f); });
+    if(o.chk){ var lines=TX.checklist(o.chk.owner,o.chk.seed,S); o.chk.lines=lines;
+      h+='<label>Checklist</label><ul class="chk-ed" id="chk-ed">'+lines.map(chkRow).join('')+'</ul><button class="btn" type="button" id="chk-add" style="margin-top:6px">＋ Add checklist item</button>'; }
+    $('ed-fields').innerHTML=h; $('ed-stamp').innerHTML=o.stamp?'Last change: '+o.stamp:'';
+    $('ed-del').hidden=!o.del; $('ed-scrim').classList.add('on');
+    var f=$('ed-fields').querySelector('input[type=text],select,textarea'); if(f)f.focus(); }
   function closeEd(){ OPEN=false; ED=null; $('ed-scrim').classList.remove('on'); }
   $('ed-cancel').onclick=closeEd;
-  $('ed-scrim').addEventListener('click',function(e){ if(e.target===$('ed-scrim'))closeEd(); });
+  $('ed-scrim').addEventListener('click',function(e){ if(e.target===$('ed-scrim'))closeEd(); var rm=e.target.closest&&e.target.closest('[data-rm]'); if(rm)rm.closest('li').remove();
+    if(e.target.id==='chk-add'){ var ul=$('chk-ed'); ul.insertAdjacentHTML('beforeend',chkRow({id:'+'+Date.now().toString(36),t:'',done:false})); ul.lastElementChild.querySelector('input[type=text]').focus(); } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&OPEN){ e.stopPropagation(); closeEd(); } },true);
-  $('ed-save').onclick=function(){ if(!ED)return; var key=ED.key, v=ED.read(); closeEd(); put(key,v); };
-  var gv=function(id){ var e=$(id); return e?String(e.value||'').trim():''; };
+  // the checklist editor's rows → chk:<owner>|<line> writes (only what changed)
+  function chkWrites(c,out){ var ul=$('chk-ed'); if(!ul)return; var keep={};
+    Array.prototype.forEach.call(ul.children,function(li,i){ var id=li.getAttribute('data-line'), t=li.querySelector('input[type=text]').value.trim(), dn=li.querySelector('input[type=checkbox]').checked;
+      if(!t)return; var isNew=id.charAt(0)==='+', key='chk:'+c.owner+'|'+(isNew?uid('l'):id);
+      var old=c.lines.filter(function(l){ return l.id===id; })[0]; keep[id]=1;
+      if(isNew){ out[key]={t:t,done:dn,ord:i*10,add:1}; return; }
+      if(!old||old.t!==t||old.done!==dn||old.ord!==i*10){ var p={t:t,done:dn,ord:i*10}; if(id.charAt(0)!=='s')p.add=1; out[key]=merged(key,p); } });
+    c.lines.forEach(function(l){ if(!keep[l.id]){ var key='chk:'+c.owner+'|'+l.id; out[key]=merged(key,{del:1}); } });
+  }
+  $('ed-save').onclick=function(){ if(!ED)return; var o=ED, out={}; o.save(out); if(o.chk)chkWrites(o.chk,out); closeEd(); if(Object.keys(out).length)putMany(out); };
+  $('ed-del').onclick=function(){ if(!ED||!ED.del)return; if(!window.confirm('Delete this for everyone granted the page?'))return; var out={}; ED.del(out); closeEd(); putMany(out); };
+  // content write for a seed-or-added row: only the fields that differ from the seed, or the whole row when added
+  // content write for a seed-or-added row: a field equal to the seed drops out of the override (so a
+  // later change to the seed shows through), anything else is kept; nothing is written if nothing moved
+  function contentWrite(coll,row,vals,out){ var idk=coll==='months'?'k':'id', id=row[idk], key='c:'+coll+':'+id, seed=find(RM[coll]||[],id,idk);
+    var cur=S[key]||{}, o={}; Object.keys(cur).forEach(function(k){ if(k!=='by'&&k!=='at')o[k]=cur[k]; });
+    Object.keys(vals).forEach(function(k){ var v=vals[k], sv=seed?seed[k]:undefined;
+      if(seed&&String(sv==null?'':sv)===String(v==null?'':v))delete o[k]; else if(v===undefined)delete o[k]; else o[k]=v; });
+    if(!seed)o.add=1;
+    var a={}, b={}; Object.keys(cur).forEach(function(k){ if(k!=='by'&&k!=='at')a[k]=cur[k]; }); Object.keys(o).sort().forEach(function(k){ b[k]=o[k]; });
+    var sa={}; Object.keys(a).sort().forEach(function(k){ sa[k]=a[k]; });
+    if(JSON.stringify(sa)!==JSON.stringify(b))out[key]=o;
+  }
 
-  function editItem(it){ var r=S['i:'+it.id]||{};
-    openEd({key:'i:'+it.id,title:it.t,ctx:MO[it.m].name+' · '+RM.ws[it.ws].label+(it.gate?' · gate':'')+(it.d?' — '+it.d:''),stamp:stamp(r),
-      fields:field('Status',sel('f-st',TX.ST,TX.statusOf(it,S)))+field('Owner',(function(){ return '<input id="f-own" type="text" maxlength="60" placeholder="'+esc(ownerName(it))+'" value="'+esc(r.own||'')+'">'; })())
-        +field('Note (what happened, what is next, what is blocking)','<textarea id="f-note" maxlength="1200">'+esc(r.note||'')+'</textarea>'),
-      read:function(){ return {st:gv('f-st'),own:gv('f-own'),note:gv('f-note')}; }});
+  /* ---- editors per collection ---- */
+  function editItem(it,newMonth){ var isNew=!it, r=isNew?{}:(S['i:'+it.id]||{});
+    it=it||{id:uid('u'),m:newMonth||V().months[0].k,ws:'mig',t:'',d:'',o:'po'};
+    openForm({title:isNew?'New card':it.t,ctx:isNew?'Add a milestone to the roadmap.':(RM.ws[it.ws]?RM.ws[it.ws].label:'')+(it.gate?' · gate':''),stamp:stamp(r),
+      fields:[{k:'t',l:'Card',v:it.t,max:160},{k:'d',l:'Description',type:'area',v:it.d},
+        {pair:[{k:'m',l:'Month',type:'select',o:monthOpts(),v:it.m},{k:'ws',l:'Workstream',type:'select',o:wsOpts(),v:it.ws}]},
+        {pair:[{k:'st',l:'Status',type:'select',o:TX.ST,v:TX.statusOf(it,S)},{k:'o',l:'Owner role',type:'select',o:roleOpts(),v:it.o}]},
+        {k:'own',l:'Owner (a name, if not the role holder)',v:r.own,ph:roleName(it.o),max:60},
+        {k:'gate',l:'Gate — must close before the next month starts',type:'check',v:!!it.gate},
+        {k:'note',l:'Note (what happened, what is next, what is blocking)',type:'area',v:r.note}],
+      chk:{owner:'i.'+it.id,seed:it.chk},
+      del:function(out){ out['c:items:'+it.id]=merged('c:items:'+it.id,{del:1}); },
+      save:function(out){ var t=gv('f-t'); if(!t){ toast('A card needs a name'); return; }
+        var sg=(find(RM.items,it.id)||{}).gate;
+        var vals={t:t,d:gv('f-d'),m:gv('f-m'),ws:gv('f-ws'),o:gv('f-o'),gate:gv('f-gate')?1:(sg?0:undefined)};
+        if(isNew){ if(vals.gate===undefined)delete vals.gate; out['c:items:'+it.id]=Object.assign(vals,{add:1}); } else contentWrite('items',it,vals,out);
+        var sr={st:gv('f-st'),own:gv('f-own'),note:gv('f-note')}, cur=S['i:'+it.id]||{};
+        if(isNew||sr.st!==TX.statusOf(it,S)||sr.own!==(cur.own||'')||sr.note!==(cur.note||''))out['i:'+it.id]=sr; }});
   }
-  function editDec(d){ var r=S['d:'+d.id]||{};
-    openEd({key:'d:'+d.id,title:d.id+' · '+d.t,ctx:'Options: '+d.opt+'. Recommended: '+d.rec+'.',stamp:stamp(r),
-      fields:field('Status',sel('f-st',{open:'Open',proposed:'Proposed',decided:'Decided'},r.st||'open'))
-        +field('Decision as recorded','<textarea id="f-ch" maxlength="800" placeholder="What was decided, and by whom">'+esc(r.choice||'')+'</textarea>'),
-      read:function(){ return {st:gv('f-st'),choice:gv('f-ch')}; }});
+  function editMonth(m){ var its=V().items.filter(function(it){ return it.m===m.k; });
+    openForm({title:m.name,ctx:its.length+' card'+(its.length===1?'':'s')+' this month.',
+      fields:[{k:'name',l:'Name',v:m.name,max:60},{k:'theme',l:'Theme',v:m.theme,max:120},{k:'plain',l:'In one line',type:'area',v:m.plain},{k:'freeze',l:'Freeze or warning label (optional)',v:m.freeze,max:40}],
+      del:its.length?null:function(out){ out['c:months:'+m.k]=merged('c:months:'+m.k,{del:1}); },
+      save:function(out){ contentWrite('months',m,{name:gv('f-name'),theme:gv('f-theme'),plain:gv('f-plain'),freeze:gv('f-freeze')},out); }});
   }
-  function editKpi(k){ var r=S['k:'+k.id]||{};
-    openEd({key:'k:'+k.id,title:k.t,ctx:k.why+' · Target '+k.target+'.',stamp:stamp(r),
-      fields:field('Current value','<input id="f-v" type="text" maxlength="40" placeholder="'+esc(k.base)+'" value="'+esc(r.v||'')+'">')
-        +field('Note','<textarea id="f-note" maxlength="600">'+esc(r.note||'')+'</textarea>'),
-      read:function(){ return {v:gv('f-v'),note:gv('f-note')}; }});
+  function addMonth(){ var ms=V().months, k=TX.nextMonth(ms.length?ms[ms.length-1].k:NOW); var out={}; out['c:months:'+k]={name:TX.monthName(k),theme:'',add:1}; putMany(out); toast(TX.monthName(k)+' added'); }
+  function editDec(d){ var isNew=!d, r=isNew?{}:(S['d:'+d.id]||{});
+    if(isNew){ var mx=0; V().decisions.forEach(function(x){ var n=+(String(x.code||x.id).replace(/\D/g,''))||0; if(n>mx)mx=n; }); d={id:uid('u'),code:'D'+(mx+1),t:'',opt:'',rec:'',due:V().months[0].k,o:'cto'}; }
+    openForm({title:isNew?'New decision':(d.code||d.id)+' · '+d.t,ctx:isNew?'':'Options: '+d.opt,stamp:stamp(r),
+      fields:[{k:'t',l:'Decision',v:d.t,max:160},{k:'opt',l:'Options',type:'area',v:d.opt},{k:'rec',l:'Recommended',type:'area',v:d.rec},
+        {pair:[{k:'due',l:'Due',type:'select',o:monthOpts(),v:d.due},{k:'o',l:'Owner role',type:'select',o:roleOpts(),v:d.o}]},
+        {k:'st',l:'Status',type:'select',o:{open:'Open',proposed:'Proposed',decided:'Decided'},v:r.st||'open'},
+        {k:'choice',l:'Decision as recorded',type:'area',v:r.choice,ph:'What was decided, and by whom'}],
+      del:isNew?null:function(out){ out['c:decisions:'+d.id]=merged('c:decisions:'+d.id,{del:1}); },
+      save:function(out){ var t=gv('f-t'); if(!t)return; var vals={t:t,opt:gv('f-opt'),rec:gv('f-rec'),due:gv('f-due'),o:gv('f-o')};
+        if(isNew)out['c:decisions:'+d.id]=Object.assign(vals,{code:d.code,add:1}); else contentWrite('decisions',d,vals,out);
+        var sr={st:gv('f-st'),choice:gv('f-choice')}; if(isNew||sr.st!==(r.st||'open')||sr.choice!==(r.choice||''))out['d:'+d.id]=sr; }});
   }
-  function editRisk(k){ var r=S['r:'+k.id]||{};
-    openEd({key:'r:'+k.id,title:k.t,ctx:'Mitigation: '+k.m,stamp:stamp(r),
-      fields:field('Rating',sel('f-rag',{r:'Red',a:'Amber',g:'Green',c:'Closed'},r.rag||k.rag))+field('Note','<textarea id="f-note" maxlength="600">'+esc(r.note||'')+'</textarea>'),
-      read:function(){ return {rag:gv('f-rag'),note:gv('f-note')}; }});
+  function editKpi(k){ var isNew=!k, r=isNew?{}:(S['k:'+k.id]||{}); k=k||{id:uid('u'),t:'',base:'',target:'',why:''};
+    openForm({title:isNew?'New KPI':k.t,ctx:k.auto?'This figure is counted live on the page; edit its wording here.':'',stamp:stamp(r),
+      fields:[{k:'t',l:'Measure',v:k.t,max:120},{k:'why',l:'How it is measured',type:'area',v:k.why},
+        {pair:[{k:'base',l:'Baseline',v:k.base,max:40},{k:'target',l:'Target',v:k.target,max:40}]}].concat(k.auto?[]:[{k:'v',l:'Current value',v:r.v,max:40},{k:'note',l:'Note',type:'area',v:r.note}]),
+      del:isNew?null:function(out){ out['c:kpis:'+k.id]=merged('c:kpis:'+k.id,{del:1}); },
+      save:function(out){ var t=gv('f-t'); if(!t)return; var vals={t:t,why:gv('f-why'),base:gv('f-base'),target:gv('f-target')};
+        if(isNew)out['c:kpis:'+k.id]=Object.assign(vals,{add:1}); else contentWrite('kpis',k,vals,out);
+        if(!k.auto){ var sr={v:gv('f-v'),note:gv('f-note')}; if(isNew||sr.v!==(r.v||'')||sr.note!==(r.note||''))out['k:'+k.id]=sr; } }});
   }
-  function editAm(a){ var r=S['a:'+a.slot]||{};
-    openEd({key:'a:'+a.slot,title:'AM '+a.slot+' · wave '+a.wave,ctx:'Onboarding: access profile first, then the one-hour walkthrough, then their first brief from Workflow.',stamp:stamp(r),
-      fields:field('Name','<input id="f-nm" type="text" maxlength="60" value="'+esc(r.name||'')+'">')+field('Email','<input id="f-em" type="email" maxlength="120" value="'+esc(r.email||'')+'">')
-        +field('Stage',sel('f-st',Object.assign({'':'Not started'},RM.amst),r.st||''))+field('Note','<textarea id="f-note" maxlength="600">'+esc(r.note||'')+'</textarea>'),
-      read:function(){ return {name:gv('f-nm'),email:gv('f-em'),st:gv('f-st'),note:gv('f-note')}; }});
+  function editRisk(k){ var isNew=!k, r=isNew?{}:(S['r:'+k.id]||{}); k=k||{id:uid('u'),t:'',m:'',rag:'a'};
+    openForm({title:isNew?'New risk':k.t,stamp:stamp(r),
+      fields:[{k:'t',l:'Risk',v:k.t,max:200},{k:'m',l:'Mitigation',type:'area',v:k.m},{k:'rag',l:'Rating',type:'select',o:{r:'Red',a:'Amber',g:'Green',c:'Closed'},v:r.rag||k.rag},{k:'note',l:'Note',type:'area',v:r.note}],
+      del:isNew?null:function(out){ out['c:risks:'+k.id]=merged('c:risks:'+k.id,{del:1}); },
+      save:function(out){ var t=gv('f-t'); if(!t)return; var vals={t:t,m:gv('f-m')};
+        if(isNew)out['c:risks:'+k.id]=Object.assign(vals,{rag:gv('f-rag'),add:1}); else contentWrite('risks',k,vals,out);
+        var sr={rag:gv('f-rag'),note:gv('f-note')}; if(isNew||sr.rag!==(r.rag||k.rag)||sr.note!==(r.note||''))out['r:'+k.id]=sr; }});
   }
-  function editRole(ro){ var r=S['p:'+ro.id]||{};
-    openEd({key:'p:'+ro.id,title:ro.label,ctx:'Named on every milestone this role owns, and in the status update.',stamp:stamp(r),
-      fields:field('Name','<input id="f-nm" type="text" maxlength="60" placeholder="'+esc(ro.def||'Not named yet')+'" value="'+esc(r.name||'')+'">'),
-      read:function(){ return {name:gv('f-nm')}; }});
+  function editSimple(coll,row,title,fields){ var isNew=!row; row=row||{id:uid('u')};
+    openForm({title:isNew?'New '+title:title,
+      fields:fields.map(function(f){ return Object.assign({},f,{v:row[f.k]}); }),
+      del:isNew?null:function(out){ out['c:'+coll+':'+row.id]=merged('c:'+coll+':'+row.id,{del:1}); },
+      save:function(out){ var vals={}; fields.forEach(function(f){ vals[f.k]=gv('f-'+f.k); }); if(!vals[fields[0].k])return;
+        if(isNew)out['c:'+coll+':'+row.id]=Object.assign(vals,{add:1}); else contentWrite(coll,row,vals,out); }});
+  }
+  function editSource(s){ editSimple('sources',s,s?s.n:'data source',[{k:'n',l:'Source',max:80},{k:'what',l:'What it gives an AM module',max:160},{k:'st',l:'Status',type:'select',o:{'Live':'Live','Partly':'Partly','Not connected':'Not connected'}},{k:'note',l:'Note',type:'area'}]); }
+  function editRule(r){ editSimple('rules',r,r?'Rule':'rule',[{k:'t',l:'Rule',type:'area'}]); }
+  function editRole(ro){ var isNew=!ro, r=isNew?{}:(S['p:'+ro.id]||{}); ro=ro||{id:uid('u'),label:'',def:''};
+    openForm({title:isNew?'New role':ro.label,ctx:'Named on every card this role owns, and in the status update.',stamp:stamp(r),
+      fields:[{k:'label',l:'Role',v:ro.label,max:60},{k:'name',l:'Person',v:r.name,ph:ro.def||'Not named yet',max:60}],
+      del:(isNew||ro.id==='po')?null:function(out){ out['c:roles:'+ro.id]=merged('c:roles:'+ro.id,{del:1}); },
+      save:function(out){ var lb=gv('f-label'); if(!lb)return; if(isNew)out['c:roles:'+ro.id]={label:lb,add:1}; else contentWrite('roles',ro,{label:lb},out);
+        var nm=gv('f-name'); if(isNew||nm!==(r.name||''))out['p:'+ro.id]={name:nm}; }});
+  }
+  function editAm(a){ var isNew=!a, r=isNew?{}:(S['a:'+a.id]||{}); a=a||{id:uid('u'),wave:2};
+    openForm({title:isNew?'New AM':(r.name||'AM'),ctx:'Onboarding: access profile first, then the one-hour walkthrough, then their first brief from Workflow.',stamp:stamp(r),
+      fields:[{pair:[{k:'name',l:'Name',v:r.name,max:60},{k:'email',l:'Email',v:r.email,max:120}]},
+        {pair:[{k:'wave',l:'Wave',type:'select',o:{'1':'Wave 1','2':'Wave 2','3':'Wave 3'},v:String(a.wave)},{k:'st',l:'Stage',type:'select',o:Object.assign({'':'Not started'},RM.amst),v:r.st||''}]},
+        {k:'note',l:'Note',type:'area',v:r.note}],
+      del:isNew?null:function(out){ out['c:ams:'+a.id]=merged('c:ams:'+a.id,{del:1}); },
+      save:function(out){ var w=+gv('f-wave')||1; if(isNew)out['c:ams:'+a.id]={wave:w,add:1}; else if(w!==+a.wave)contentWrite('ams',a,{wave:w},out);
+        out['a:'+a.id]={name:gv('f-name'),email:gv('f-email'),st:gv('f-st'),note:gv('f-note')}; }});
+  }
+  function editMod(m){ var r=S['mod:'+m.p]||{};
+    openForm({title:m.n,ctx:'Wave '+m.w+' · data: '+m.data+'. Every AM sees this state on the module’s icon and page.',stamp:stamp(r),
+      fields:[{pair:[{k:'st',l:'State',type:'select',o:RM.mst,v:TX.modState(m,S)},{k:'m',l:'Planned month',type:'select',o:monthOpts(),v:TX.modMonth(m,S)}]},{k:'note',l:'Note (management only)',type:'area',v:r.note}],
+      chk:{owner:'m.'+m.p,seed:RM.modtpl},
+      save:function(out){ out['mod:'+m.p]={st:gv('f-st'),m:gv('f-m'),note:gv('f-note')}; }});
   }
 
   /* ---- render ---- */
-  function kpis(){ var s=TX.summary(RM,S,NOW), am=TX.amsActive(RM,S), mo=MO[s.cur];
-    var gateTxt=s.gate?MO[s.gate.m].name.replace(/ \d{4}$/,'')+': '+s.gate.t:'All gates passed';
-    var html=''
+  function kpis(){ var s=TX.summary(RM,S,NOW), am=TX.amsActive(RM,S), mo=MO(), cm=mo[s.cur]||{name:s.cur,theme:''};
+    var gateTxt=s.gate?((mo[s.gate.m]||{name:s.gate.m}).name.replace(/ \d{4}$/,'')+': '+s.gate.t):'All gates passed';
+    $('kpis').innerHTML=''
       +'<div class="kpi"><div class="n">'+s.pct+'%<small> · '+s.done+'/'+s.total+'</small></div><div class="l">Programme complete</div><div class="pbar"><i style="width:'+s.pct+'%;background:var(--good)"></i></div></div>'
-      +'<div class="kpi"><div class="n">'+s.thisDone+'<small> of '+s.thisN+'</small></div><div class="l">'+(s.started?'This month':'First month')+'</div><div class="d">'+esc(mo.name+' · '+mo.theme)+'</div></div>'
-      +'<div class="kpi '+(s.late.length?'risk':'good')+'"><div class="n">'+s.late.length+'</div><div class="l">Late milestones</div><div class="d">'+(s.late.length?esc(s.late[0].t):'Nothing behind plan')+'</div></div>'
-      +'<div class="kpi"><div class="n" style="font-size:17px;white-space:normal">'+esc(gateTxt)+'</div><div class="l">Next gate</div></div>'
+      +'<div class="kpi"><div class="n">'+s.mods.migrated+'<small> of '+s.modN+'</small></div><div class="l">Modules migrated</div><div class="d">'+s.mods.migrating+' migrating · '+s.mods.owned+' on FeedSpark’s account</div></div>'
+      +'<div class="kpi"><div class="n">'+s.thisDone+'<small> of '+s.thisN+'</small></div><div class="l">'+(s.started?'This month':'First month')+'</div><div class="d">'+esc(cm.name+(cm.theme?' · '+cm.theme:''))+'</div></div>'
+      +'<div class="kpi '+(s.late.length?'risk':'good')+'"><div class="n">'+s.late.length+'</div><div class="l">Late cards</div><div class="d">'+(s.late.length?esc(s.late[0].t):'Nothing behind plan')+'</div></div>'
+      +'<div class="kpi"><div class="n" style="font-size:16px;white-space:normal">'+esc(gateTxt)+'</div><div class="l">Next gate</div></div>'
       +'<div class="kpi '+(s.decided<s.decTotal?'warn':'good')+'"><div class="n">'+s.decided+'<small> of '+s.decTotal+'</small></div><div class="l">Decisions signed</div></div>'
-      +'<div class="kpi"><div class="n">'+am+'<small> of '+RM.ams.length+'</small></div><div class="l">New AMs onboarded</div></div>';
-    $('kpis').innerHTML=html;
+      +'<div class="kpi"><div class="n">'+am+'<small> of '+V().ams.length+'</small></div><div class="l">New AMs onboarded</div></div>';
   }
-  function team(){ $('team-roles').innerHTML=RM.roles.map(function(ro){ var p=role(ro.id);
-      return '<button class="role" type="button" data-role="'+ro.id+'"><span class="rl">'+esc(ro.label)+'</span><span class="rn'+(p.name?'':' unset')+'">'+esc(p.name||'Not named yet')+'</span></button>'; }).join('');
-  }
+  function team(){ $('team-roles').innerHTML=V().roles.map(function(ro){ var nm=roleName(ro.id), set=!!((S['p:'+ro.id]||{}).name||ro.def);
+      return '<button class="role" type="button" data-role="'+esc(ro.id)+'"><span class="rl">'+esc(ro.label)+'</span><span class="rn'+(set?'':' unset')+'">'+esc(set?nm:'Not named yet')+'</span></button>'; }).join(''); }
   function chips(){ var h='<button class="chip'+(WS==='*'?' on':'')+'" data-ws="*" type="button">All workstreams</button>';
     Object.keys(RM.ws).forEach(function(k){ h+='<button class="chip'+(WS===k?' on':'')+'" data-ws="'+k+'" type="button"><span class="sw" style="background:'+RM.ws[k].col+'"></span>'+esc(RM.ws[k].label)+'</button>'; });
     $('ws-chips').innerHTML=h;
+    document.querySelectorAll('[data-view]').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-view')===VIEW); });
+    $('zoom').style.display=VIEW==='board'?'':'none'; }
+  function shown(it){ if(WS!=='*'&&it.ws!==WS)return false; if(ONLY&&TX.closed(TX.statusOf(it,S)))return false;
+    if(Q){ var r=S['i:'+it.id]||{}, h=(it.t+' '+(it.d||'')+' '+(r.note||'')+' '+ownerName(it)).toLowerCase(); if(h.indexOf(Q)<0)return false; } return true; }
+  function sticky(it){ var st=TX.statusOf(it,S), p=TX.prog(TX.checklist('i.'+it.id,it.chk,S)), on=ownerName(it), late=TX.isLate(it,S,NOW), ord=(it.ord!=null?+it.ord:it._o);
+    return '<div class="stk ws-'+esc(it.ws)+(st==='done'?' is-done':'')+(late?' late':'')+'" draggable="true" data-it="'+esc(it.id)+'" data-ord="'+ord+'" role="button" tabindex="0" title="'+esc(it.d||'')+'">'
+      +'<div class="stk-top"><span>'+esc((RM.ws[it.ws]||{label:it.ws}).label)+'</span>'+(it.gate?'<span class="gate">Gate</span>':'')+(late?'<span style="color:var(--risk)">Late</span>':'')+'</div>'
+      +'<div class="stk-t">'+esc(it.t)+'</div>'
+      +'<div class="stk-f"><span class="av" title="'+esc(on)+'">'+esc(initials(on))+'</span>'+(p.n?'<span class="chkp">☑ '+p.done+'/'+p.n+'</span>':'')+'<span class="st '+st+'">'+esc(TX.ST[st])+'</span></div></div>';
   }
-  function road(){ var h='';
-    RM.months.forEach(function(m){
-      var its=RM.items.filter(function(it){ return it.m===m.k && (WS==='*'||it.ws===WS); });
-      var all=RM.items.filter(function(it){ return it.m===m.k && TX.statusOf(it,S)!=='na'; });
+  function board(){ var v=V(), h='<div class="canvas" id="canvas"><div class="canvas-in" id="canvas-in" style="zoom:'+ZOOM+'">';
+    v.months.forEach(function(m){ var all=v.items.filter(function(it){ return it.m===m.k && TX.statusOf(it,S)!=='na'; }), its=v.items.filter(function(it){ return it.m===m.k && shown(it); });
       var dn=all.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length;
-      var cls='mo'+(m.k===NOW?' now':'')+(m.k<NOW?' past':'');
-      h+='<div class="'+cls+'" id="mo-'+m.k+'"><div class="mo-h"><div class="mo-t"><b>'+esc(m.name)+'</b>'+(m.k===NOW?'<span class="pill now">Now</span>':'')+(m.freeze?'<span class="pill frz">'+esc(m.freeze)+'</span>':'')+'</div>'
-        +'<div class="mo-th">'+esc(m.theme)+'</div><div class="mo-p">'+dn+' of '+all.length+' done</div>'
-        +'<div class="pbar" style="margin-top:6px"><i style="width:'+(all.length?Math.round(dn*100/all.length):0)+'%;background:var(--good)"></i></div></div>';
-      if(!its.length)h+='<div class="empty">Nothing in this workstream this month.</div>';
-      its.forEach(function(it){ var st=TX.statusOf(it,S), r=S['i:'+it.id], late=TX.isLate(it,S,NOW);
-        h+='<div class="it ws-'+it.ws+(st==='done'?' is-done':'')+(late?' late':'')+'" data-it="'+it.id+'" role="button" tabindex="0" title="'+esc(it.d)+'">'
-          +'<div class="body"><div class="ti">'+esc(it.t)+'</div><div class="mt">'+(it.gate?'<span class="gate">Gate</span>':'')+'<span>'+esc(ownerName(it))+' · '+esc(RM.ws[it.ws].label)+'</span></div>'+(r&&r.at?'<div class="who">Updated '+stamp(r)+'</div>':'')
-          +(r&&r.note?'<div class="nt">'+esc(r.note)+'</div>':'')+'</div><span class="st '+st+'">'+esc(TX.ST[st])+'</span></div>';
-      });
-      h+='</div>';
-    });
-    $('road').innerHTML=h;
+      h+='<div class="col'+(m.k===NOW?' now':'')+(m.k<NOW?' past':'')+'"><div class="col-h" data-month="'+esc(m.k)+'" role="button" tabindex="0" title="'+esc(m.plain||'Rename this month')+'"><div class="mo-t"><b>'+esc(m.name)+'</b>'+(m.k===NOW?'<span class="pill now">Now</span>':'')+(m.freeze?'<span class="pill frz">'+esc(m.freeze)+'</span>':'')+'</div>'
+        +(m.theme?'<div class="mo-th">'+esc(m.theme)+'</div>':'')+'<div class="mo-p">'+dn+' of '+all.length+' done</div><div class="pbar" style="margin-top:6px"><i style="width:'+(all.length?Math.round(dn*100/all.length):0)+'%;background:var(--good)"></i></div></div>'
+        +'<div class="col-b" data-drop="'+esc(m.k)+'">'+its.map(sticky).join('')+'</div><button class="addcard" type="button" data-addcard="'+esc(m.k)+'">＋ Add card</button></div>'; });
+    h+='<button class="addcol" type="button" id="addcol">＋ Add month</button></div></div>';
+    $('board-body').innerHTML=h; $('zv').textContent=Math.round(ZOOM*100)+'%';
   }
-  function decs(){ var h='<thead><tr><th>#</th><th>Decision</th><th>Recommended</th><th>Due</th><th>Owner</th><th>Status</th></tr></thead><tbody>';
-    RM.decisions.forEach(function(d){ var r=S['d:'+d.id]||{}, st=r.st||'open', over=st!=='decided'&&d.due<NOW;
-      h+='<tr class="ed" data-dec="'+d.id+'"><td><b>'+d.id+'</b></td><td><b>'+esc(d.t)+'</b><div class="sm muted">'+esc(d.opt)+'</div>'+(r.choice?'<div class="sm" style="margin-top:4px">✓ '+esc(r.choice)+'</div>':'')+'</td>'
-        +'<td class="sm">'+esc(d.rec)+'</td><td class="sm" style="white-space:nowrap">'+esc(MO[d.due]?MO[d.due].name:d.due)+'</td><td class="sm">'+esc(role(d.o).name||role(d.o).label)+'</td>'
+  function list(){ var v=V(), h='';
+    v.months.forEach(function(m){ var its=v.items.filter(function(it){ return it.m===m.k && shown(it); }); if(!its.length)return;
+      var dn=its.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length;
+      h+='<div class="cl-m"><div class="cl-mh">'+esc(m.name)+(m.theme?' · '+esc(m.theme):'')+'<span>'+dn+' of '+its.length+' done</span></div>';
+      its.forEach(function(it){ var st=TX.statusOf(it,S), lines=TX.checklist('i.'+it.id,it.chk,S), p=TX.prog(lines), r=S['i:'+it.id]||{};
+        h+='<div class="cl-it ws-'+esc(it.ws)+'"><div class="cl-row"><select data-st="'+esc(it.id)+'" aria-label="Status">'+Object.keys(TX.ST).map(function(k){ return '<option value="'+k+'"'+(k===st?' selected':'')+'>'+TX.ST[k]+'</option>'; }).join('')+'</select>'
+          +'<b>'+(it.gate?'<span class="gate">Gate</span> ':'')+esc(it.t)+'</b><span class="sm muted">'+esc(ownerName(it))+(p.n?' · ☑ '+p.done+'/'+p.n:'')+'</span><button class="btn sm" type="button" data-it="'+esc(it.id)+'">Edit</button></div>'
+          +(r.note?'<div class="sm" style="margin-top:6px;color:var(--ink-2)">'+esc(r.note)+'</div>':'')
+          +'<ul class="cl-l">'+lines.map(function(l){ return '<li class="'+(l.done?'done':'')+'"><label><input type="checkbox" data-chk="'+esc('i.'+it.id+'|'+l.id)+'"'+(l.done?' checked':'')+'><span>'+esc(l.t)+'</span></label>'+(l.done&&l.at?'<span class="who">'+stamp(l)+'</span>':'')+'</li>'; }).join('')
+          +'<li><input class="cl-add" data-owner="'+esc('i.'+it.id)+'" placeholder="＋ Add a checklist item and press Enter" aria-label="Add a checklist item"></li></ul></div>'; });
+      h+='</div>'; });
+    $('board-body').innerHTML=h||'<div class="empty">No cards match.</div>';
+  }
+  function mods(){ var on=!((S['cfg:badges']||{}).on===false); $('mig-on').checked=on;
+    var col={legacy:'#9AA3AE',owned:'#2563EB',migrating:'#F5A623',migrated:'#15803D'}, mo=MO();
+    $('mleg').innerHTML=TX.MS.map(function(k){ return '<span><i style="background:'+col[k]+'"></i>'+esc(RM.mst[k])+'</span>'; }).join('')+(on?'':'<span style="color:var(--orange-deep)">Badges hidden from AMs</span>');
+    $('mods').innerHTML=RM.modules.map(function(m){ var st=TX.modState(m,S), mm=TX.modMonth(m,S), p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
+      return '<div class="mod '+st+'" data-mod="'+esc(m.p)+'" role="button" tabindex="0"><div class="mod-h"><b>'+esc(m.n)+'</b><span class="mst '+st+'">'+esc(RM.mst[st])+'</span></div>'
+        +'<div class="sm muted">Wave '+m.w+(m.w===0?' (pilot)':'')+' · '+(st==='migrated'?'done':'planned '+esc((mo[mm]||{name:TX.monthName(mm)}).name))+'</div>'
+        +'<div class="pbar"><i style="width:'+(p.n?Math.round(p.done*100/p.n):0)+'%;background:'+col[st==='legacy'?'owned':st]+'"></i></div><div class="sm" style="margin-top:4px">☑ '+p.done+'/'+p.n+'</div></div>'; }).join('');
+  }
+  function decs(){ var mo=MO(), h='<thead><tr><th>#</th><th>Decision</th><th>Recommended</th><th>Due</th><th>Owner</th><th>Status</th></tr></thead><tbody>';
+    V().decisions.forEach(function(d){ var r=S['d:'+d.id]||{}, st=r.st||'open', over=st!=='decided'&&d.due<NOW;
+      h+='<tr class="ed" data-dec="'+esc(d.id)+'"><td><b>'+esc(d.code||d.id)+'</b></td><td><b>'+esc(d.t)+'</b><div class="sm muted">'+esc(d.opt)+'</div>'+(r.choice?'<div class="sm" style="margin-top:4px">✓ '+esc(r.choice)+'</div>':'')+'</td>'
+        +'<td class="sm">'+esc(d.rec)+'</td><td class="sm" style="white-space:nowrap">'+esc(mo[d.due]?mo[d.due].name:d.due)+'</td><td class="sm">'+esc(roleName(d.o))+'</td>'
         +'<td><span class="rag '+(st==='decided'?'g':over?'r':st==='proposed'?'a':'c')+'">'+(st==='decided'?'Decided':st==='proposed'?'Proposed':over?'Overdue':'Open')+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td></tr>'; });
     $('dec-t').innerHTML=h+'</tbody>';
   }
   function model(){ var z=RM.model.zones, cols={fix:'var(--navy)',cfg:'var(--orange)',ext:'var(--ws-ext)'};
     $('model-stack').innerHTML=z.map(function(x){ return '<i style="width:'+Math.max(x.share,2)+'%;background:'+cols[x.cls]+'"></i>'; }).join('');
     $('model-zones').innerHTML=z.map(function(x){ return '<div class="zone '+x.cls+'"><h3>'+esc(x.name)+'</h3><div class="share">'+x.share+'<small>'+esc(x.unit)+'</small></div><div class="sm">'+esc(x.what)+'</div><ul>'+x.list.map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul></div>'; }).join('');
-    $('model-rules').innerHTML=RM.model.rules.map(function(r){ return '<li>'+esc(r)+'</li>'; }).join('');
+    $('rule-t').innerHTML='<tbody>'+V().rules.map(function(r,i){ return '<tr class="ed" data-rule="'+esc(r.id)+'"><td style="width:36px"><b>'+(i+1)+'</b></td><td>'+esc(r.t)+'</td></tr>'; }).join('')+'</tbody>';
   }
   function sources(){ var cls={'Live':'g','Partly':'a','Not connected':'r'};
     $('src-t').innerHTML='<thead><tr><th>Source</th><th>What it gives an AM module</th><th>Status</th><th>Note</th></tr></thead><tbody>'
-      +RM.sources.map(function(s){ return '<tr><td><b>'+esc(s.n)+'</b></td><td class="sm">'+esc(s.what)+'</td><td><span class="rag '+cls[s.st]+'">'+esc(s.st)+'</span></td><td class="sm">'+esc(s.note)+'</td></tr>'; }).join('')+'</tbody>';
+      +V().sources.map(function(s){ return '<tr class="ed" data-src="'+esc(s.id)+'"><td><b>'+esc(s.n)+'</b></td><td class="sm">'+esc(s.what)+'</td><td><span class="rag '+(cls[s.st]||'c')+'">'+esc(s.st)+'</span></td><td class="sm">'+esc(s.note)+'</td></tr>'; }).join('')+'</tbody>';
   }
-  function ams(){ var h='<thead><tr><th>Slot</th><th>Wave</th><th>Name</th><th>Stage</th><th>Note</th></tr></thead><tbody>';
-    RM.ams.forEach(function(a){ var r=S['a:'+a.slot]||{};
-      h+='<tr class="ed" data-am="'+a.slot+'"><td><b>AM '+a.slot+'</b></td><td class="sm">Wave '+a.wave+' · '+(a.wave===1?'October':'November')+'</td>'
+  function ams(){ var h='<thead><tr><th>Wave</th><th>Name</th><th>Stage</th><th>Note</th></tr></thead><tbody>';
+    V().ams.forEach(function(a){ var r=S['a:'+a.id]||{};
+      h+='<tr class="ed" data-am="'+esc(a.id)+'"><td class="sm" style="white-space:nowrap"><b>Wave '+esc(a.wave)+'</b></td>'
         +'<td>'+(r.name?'<b>'+esc(r.name)+'</b>'+(r.email?'<div class="sm muted">'+esc(r.email)+'</div>':''):'<span class="muted">Not named yet</span>')+'</td>'
-        +'<td><span class="rag '+(r.st==='active'?'g':r.st==='onboarded'?'g':r.st?'a':'c')+'">'+esc(RM.amst[r.st]||'Not started')+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td><td class="sm">'+esc(r.note||'')+'</td></tr>'; });
+        +'<td><span class="rag '+(r.st==='active'||r.st==='onboarded'?'g':r.st?'a':'c')+'">'+esc(RM.amst[r.st]||'Not started')+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td><td class="sm">'+esc(r.note||'')+'</td></tr>'; });
     $('am-t').innerHTML=h+'</tbody>';
   }
-  function kpiT(){ var h='<thead><tr><th>Measure</th><th>Baseline</th><th>Now</th><th>Target</th><th>Updated</th></tr></thead><tbody>';
-    RM.kpis.forEach(function(k){ var r=S['k:'+k.id]||{}, v=r.v;
-      if(k.auto==='ams')v=TX.amsActive(RM,S)+' of '+RM.ams.length;
-      h+='<tr class="'+(k.auto?'':'ed')+'" data-kpi="'+k.id+'"><td><b>'+esc(k.t)+'</b><div class="sm muted">'+esc(k.why)+'</div>'+(r.note?'<div class="sm">'+esc(r.note)+'</div>':'')+'</td>'
+  function kpiT(){ var s=TX.summary(RM,S,NOW), h='<thead><tr><th>Measure</th><th>Baseline</th><th>Now</th><th>Target</th><th>Updated</th></tr></thead><tbody>';
+    V().kpis.forEach(function(k){ var r=S['k:'+k.id]||{}, v=r.v;
+      if(k.auto==='ams')v=TX.amsActive(RM,S)+' of '+V().ams.length;
+      if(k.auto==='mods')v=s.mods.migrated+' of '+s.modN;
+      h+='<tr class="ed" data-kpi="'+esc(k.id)+'"><td><b>'+esc(k.t)+'</b><div class="sm muted">'+esc(k.why)+'</div>'+(r.note?'<div class="sm">'+esc(r.note)+'</div>':'')+'</td>'
         +'<td class="num muted">'+esc(k.base)+'</td><td class="num">'+esc(v||'—')+'</td><td class="num">'+esc(k.target)+'</td><td class="sm">'+(k.auto?'<span class="muted">live</span>':(r.at?stamp(r):'<span class="muted">not measured yet</span>'))+'</td></tr>'; });
     $('kpi-t').innerHTML=h+'</tbody>';
   }
   function risks(){ var L={r:'Red',a:'Amber',g:'Green',c:'Closed'}, ord={r:0,a:1,g:2,c:3};
-    var list=RM.risks.slice().sort(function(x,y){ var a=(S['r:'+x.id]||{}).rag||x.rag, b=(S['r:'+y.id]||{}).rag||y.rag; return ord[a]-ord[b]; });
-    $('risk-t').innerHTML='<thead><tr><th>Rating</th><th>Risk</th><th>Mitigation</th><th>Note</th></tr></thead><tbody>'+list.map(function(k){ var r=S['r:'+k.id]||{}, g=r.rag||k.rag;
-      return '<tr class="ed" data-risk="'+k.id+'"><td><span class="rag '+g+'">'+L[g]+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td><td><b>'+esc(k.t)+'</b></td><td class="sm">'+esc(k.m)+'</td><td class="sm">'+esc(r.note||'')+'</td></tr>'; }).join('')+'</tbody>';
+    var list=V().risks.slice().sort(function(x,y){ var a=(S['r:'+x.id]||{}).rag||x.rag, b=(S['r:'+y.id]||{}).rag||y.rag; return ord[a]-ord[b]; });
+    $('risk-t').innerHTML='<thead><tr><th>Rating</th><th>Risk</th><th>Mitigation</th><th>Note</th></tr></thead><tbody>'+list.map(function(k){ var r=S['r:'+k.id]||{}, g=r.rag||k.rag||'a';
+      return '<tr class="ed" data-risk="'+esc(k.id)+'"><td><span class="rag '+g+'">'+L[g]+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td><td><b>'+esc(k.t)+'</b></td><td class="sm">'+esc(k.m)+'</td><td class="sm">'+esc(r.note||'')+'</td></tr>'; }).join('')+'</tbody>';
   }
   function opts(){ $('opts').innerHTML=RM.options.map(function(o){ return '<div class="opt'+(o.rec?' rec':'')+'">'+(o.rec?'<div class="tag">Recommended</div>':'')+'<h3>'+o.id+' · '+esc(o.name)+'</h3><p>'+esc(o.p)+'</p><p><b>Effort</b> '+esc(o.eff)+' · <b>Risk</b> '+esc(o.risk)+'</p></div>'; }).join(''); }
-  function render(){ kpis(); team(); chips(); road(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc(); }
+  function body(){ if(VIEW==='board')board(); else list(); }
+  function render(){ var sc=$('canvas'), sl=sc?sc.scrollLeft:0, stp=sc?sc.scrollTop:0;
+    kpis(); team(); chips(); body(); mods(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc();
+    var nc=$('canvas'); if(nc){ nc.scrollLeft=sl; nc.scrollTop=stp; } }
 
   /* ---- events (delegated, so re-renders never lose a handler) ---- */
-  document.addEventListener('click',function(e){ var t=e.target.closest?e.target:null; if(!t)return;
-    var c=t.closest('[data-ws]'); if(c){ WS=c.getAttribute('data-ws'); chips(); road(); return; }
-    var it=t.closest('[data-it]'); if(it){ var x=RM.items.filter(function(i){ return i.id===it.getAttribute('data-it'); })[0]; if(x)editItem(x); return; }
-    var d=t.closest('[data-dec]'); if(d){ editDec(RM.decisions.filter(function(i){ return i.id===d.getAttribute('data-dec'); })[0]); return; }
-    var k=t.closest('tr.ed[data-kpi]'); if(k){ editKpi(RM.kpis.filter(function(i){ return i.id===k.getAttribute('data-kpi'); })[0]); return; }
-    var r=t.closest('[data-risk]'); if(r){ editRisk(RM.risks.filter(function(i){ return i.id===r.getAttribute('data-risk'); })[0]); return; }
-    var a=t.closest('[data-am]'); if(a){ editAm(RM.ams.filter(function(i){ return String(i.slot)===a.getAttribute('data-am'); })[0]); return; }
-    var p=t.closest('[data-role]'); if(p){ editRole(RM.roles.filter(function(i){ return i.id===p.getAttribute('data-role'); })[0]); return; }
-  });
-  document.addEventListener('keydown',function(e){ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.it[data-it]')){ e.preventDefault(); e.target.click(); } });
+  function find(list,id,k){ k=k||'id'; return list.filter(function(x){ return String(x[k])===String(id); })[0]; }
+  function onActivate(t){
+    var c=t.closest('[data-ws]'); if(c){ WS=c.getAttribute('data-ws'); chips(); body(); return true; }
+    var vw=t.closest('[data-view]'); if(vw){ VIEW=vw.getAttribute('data-view'); try{ localStorage.setItem('fcc-tx-view',VIEW); }catch(e){} chips(); body(); return true; }
+    var z=t.closest('[data-z]'); if(z){ var a=z.getAttribute('data-z'), inn=$('canvas-in'), cv=$('canvas');
+      if(a==='+')ZOOM=Math.min(1.4,Math.round((ZOOM+.1)*10)/10); else if(a==='-')ZOOM=Math.max(.4,Math.round((ZOOM-.1)*10)/10);
+      else if(inn&&cv){ var w=V().months.length*288+150+36; ZOOM=Math.max(.4,Math.min(1,Math.floor((cv.clientWidth-4)/w*100)/100)); }
+      try{ localStorage.setItem('fcc-tx-zoom',String(ZOOM)); }catch(e){} if(inn)inn.style.zoom=ZOOM; $('zv').textContent=Math.round(ZOOM*100)+'%'; return true; }
+    var ac=t.closest('[data-addcard]'); if(ac){ editItem(null,ac.getAttribute('data-addcard')); return true; }
+    if(t.closest('#addcol')){ addMonth(); return true; }
+    var ad=t.closest('[data-add]'); if(ad){ var w=ad.getAttribute('data-add');
+      ({roles:function(){ editRole(null); },decisions:function(){ editDec(null); },kpis:function(){ editKpi(null); },risks:function(){ editRisk(null); },sources:function(){ editSource(null); },rules:function(){ editRule(null); },ams:function(){ editAm(null); }})[w](); return true; }
+    var mh=t.closest('[data-month]'); if(mh){ editMonth(find(V().months,mh.getAttribute('data-month'),'k')); return true; }
+    var it=t.closest('[data-it]'); if(it){ var x=find(V().items,it.getAttribute('data-it')); if(x)editItem(x); return true; }
+    var md=t.closest('[data-mod]'); if(md){ editMod(find(RM.modules,md.getAttribute('data-mod'),'p')); return true; }
+    var d=t.closest('[data-dec]'); if(d){ editDec(find(V().decisions,d.getAttribute('data-dec'))); return true; }
+    var k=t.closest('[data-kpi]'); if(k){ editKpi(find(V().kpis,k.getAttribute('data-kpi'))); return true; }
+    var r=t.closest('[data-risk]'); if(r){ editRisk(find(V().risks,r.getAttribute('data-risk'))); return true; }
+    var sr=t.closest('[data-src]'); if(sr){ editSource(find(V().sources,sr.getAttribute('data-src'))); return true; }
+    var ru=t.closest('[data-rule]'); if(ru){ editRule(find(V().rules,ru.getAttribute('data-rule'))); return true; }
+    var am=t.closest('[data-am]'); if(am){ editAm(find(V().ams,am.getAttribute('data-am'))); return true; }
+    var p=t.closest('[data-role]'); if(p){ editRole(find(V().roles,p.getAttribute('data-role'))); return true; }
+    return false;
+  }
+  document.addEventListener('click',function(e){ var t=e.target; if(!t||!t.closest||OPEN)return;
+    if(t.closest('input,select,textarea,label'))return; onActivate(t); });
+  document.addEventListener('keydown',function(e){ if(OPEN||(e.key!=='Enter'&&e.key!==' '))return; var t=e.target;
+    if(t&&t.matches&&t.matches('.stk,.col-h,.mod')){ e.preventDefault(); onActivate(t); } });
+  document.addEventListener('change',function(e){ var t=e.target; if(OPEN||!t||!t.getAttribute)return;
+    var c=t.getAttribute('data-chk'); if(c){ var key='chk:'+c, o={}; var owner=c.split('|')[0], id=c.split('|')[1];
+      var p=merged(key,{done:t.checked}); if(id.charAt(0)!=='s')p.add=1; if(!p.t){ var it=find(V().items,owner.slice(2)); var l=TX.checklist(owner,it&&it.chk,S).filter(function(x){ return x.id===id; })[0]; if(l)p.t=l.t; }
+      o[key]=p; putMany(o); return; }
+    var st=t.getAttribute('data-st'); if(st){ var o2={}; o2['i:'+st]=merged('i:'+st,{st:t.value}); putMany(o2); return; }
+    if(t.id==='mig-on'){ putMany({'cfg:badges':{on:t.checked}}); return; }
+    if(t.id==='only-open'){ ONLY=t.checked; body(); } });
+  document.addEventListener('keydown',function(e){ var t=e.target; if(e.key!=='Enter'||!t||!t.classList||!t.classList.contains('cl-add'))return;
+    var v=t.value.trim(); if(!v)return; e.preventDefault(); var o={}; o['chk:'+t.getAttribute('data-owner')+'|'+uid('l')]={t:v,done:false,add:1}; putMany(o); });
+  $('q').addEventListener('input',function(){ Q=this.value.trim().toLowerCase(); body(); });
+  /* drag a sticky to another month (or another place in the same month) */
+  document.addEventListener('dragstart',function(e){ var s=e.target.closest&&e.target.closest('.stk'); if(!s)return; DRAG=s.getAttribute('data-it'); s.classList.add('dragging'); try{ e.dataTransfer.setData('text/plain',DRAG); e.dataTransfer.effectAllowed='move'; }catch(x){} });
+  document.addEventListener('dragend',function(){ DRAG=null; document.querySelectorAll('.dragging,.over').forEach(function(x){ x.classList.remove('dragging','over'); }); });
+  document.addEventListener('dragover',function(e){ if(!DRAG)return; var b=e.target.closest&&e.target.closest('.col-b'); if(!b)return; e.preventDefault();
+    document.querySelectorAll('.col-b.over').forEach(function(x){ if(x!==b)x.classList.remove('over'); }); b.classList.add('over'); });
+  document.addEventListener('drop',function(e){ if(!DRAG)return; var b=e.target.closest&&e.target.closest('.col-b'); if(!b)return; e.preventDefault();
+    var k=b.getAttribute('data-drop'), y=e.clientY, sibs=Array.prototype.filter.call(b.querySelectorAll('.stk'),function(s){ return s.getAttribute('data-it')!==DRAG; });
+    var after=null, before=null; sibs.forEach(function(s){ var r=s.getBoundingClientRect(); if(r.top+r.height/2<y)before=s; else if(!after)after=s; });
+    var bo=before?+before.getAttribute('data-ord'):null, ao=after?+after.getAttribute('data-ord'):null;
+    var ord=(bo!=null&&ao!=null)?(bo+ao)/2:(bo!=null?bo+10:(ao!=null?ao-10:0));
+    var id=DRAG, it=find(V().items,id); DRAG=null; if(!it)return;
+    var key='c:items:'+id, o={}; o[key]=merged(key,{m:k,ord:ord}); if(!it._seed)o[key].add=1; putMany(o);
+    toast('Moved to '+((MO()[k]||{}).name||k)); });
+
   $('copy-upd').onclick=function(){ var txt=TX.update(RM,S,NOW,new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}));
     var done=function(){ toast('Status update copied — paste it into the management email'); };
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,function(){ window.prompt('Copy the update:',txt); });
     else window.prompt('Copy the update:',txt); };
-  $('dl-csv').onclick=function(){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-    var rows=[['Month','Workstream','Milestone','Gate','Status','Owner','Note','Updated by','Updated at']];
-    RM.items.forEach(function(it){ var r=S['i:'+it.id]||{}; rows.push([MO[it.m].name,RM.ws[it.ws].label,it.t,it.gate?'yes':'',TX.ST[TX.statusOf(it,S)],ownerName(it),r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
+  $('dl-csv').onclick=function(){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }, mo=MO();
+    var rows=[['Month','Workstream','Card','Gate','Status','Owner','Checklist','Note','Updated by','Updated at']];
+    V().items.forEach(function(it){ var r=S['i:'+it.id]||{}, p=TX.prog(TX.checklist('i.'+it.id,it.chk,S));
+      rows.push([(mo[it.m]||{name:it.m}).name,(RM.ws[it.ws]||{label:it.ws}).label,it.t,it.gate?'yes':'',TX.ST[TX.statusOf(it,S)],ownerName(it),p.n?p.done+'/'+p.n:'',r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
+    RM.modules.forEach(function(m){ var r=S['mod:'+m.p]||{}, p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
+      rows.push([(mo[TX.modMonth(m,S)]||{name:TX.modMonth(m,S)}).name,'Module migration',m.n,'',RM.mst[TX.modState(m,S)],'',p.done+'/'+p.n,r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
     var blob=new Blob([rows.map(function(r){ return r.map(q).join(','); }).join('\r\n')],{type:'text/csv'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='FCC_transformation_roadmap_'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); };
 
   fetch('/api/access?me=1',{credentials:'same-origin'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d)ME=(d.name||d.email||''); }).catch(function(){});
   render(); load();
-  /* live: a colleague's change arrives within a minute, never over an open editor or an unsaved change */
-  setInterval(function(){ if(document.visibilityState==='visible'&&!OPEN&&!DIRTY)load(); },60000);
+  /* live: a colleague's change arrives within a minute, never over an open editor, a drag or an unsaved change */
+  setInterval(function(){ if(document.visibilityState==='visible'&&!OPEN&&!DIRTY&&!DRAG&&!(document.activeElement&&document.activeElement.classList&&document.activeElement.classList.contains('cl-add')))load(); },60000);
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&!OPEN&&!DIRTY)load(); });
 })();
 </script>
