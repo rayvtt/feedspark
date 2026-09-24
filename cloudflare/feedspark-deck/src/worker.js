@@ -61,7 +61,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -4440,6 +4440,55 @@ async function goldenRoutes(env, request, url) {
     // the 09:00 UK daily run's own record, so the page can say when the tracker last filled
     const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
     return json({ feeds, alerts, daily });
+  }
+
+  /* THE PORTFOLIO VIEW (Ray, 24 Sep 2026: "should there be an additional interface for AM only to
+     view these charts across their portfolio at once?" — "can you build on leadership"). Every
+     Google Shopping feed's three scores day by day, in ONE request: the record of each feed
+     (goldenhist) run through the engine's histSeries under the brand's CURRENT profile, closed by
+     the estate index's own reading — so Leadership draws what the Score history card and the
+     estate scorecard say, never a second reading of them. The AM is the Task Manager's (tmidx,
+     the same name the hours badge shows), matched on the folded client name; a brand the Task
+     Manager has not reached is named as having no AM on record, never guessed. Scoped per signin
+     like every route that lists clients (scoping only narrows). */
+  if (path === '/api/golden/portfolio' && request.method === 'GET') {
+    const want = parseInt(url.searchParams.get('days'), 10);
+    const days = [30, 90, 365].indexOf(want) >= 0 ? want : 90;
+    const acc = await accessOf(env, request);
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const tm = (await env.EDITS.get('tmidx', 'json')) || {};
+    const tmBy = {};
+    Object.keys(tm).forEach((n) => { if (tm[n] && tm[n].am) tmBy[clientSlug(n)] = String(tm[n].am); });
+    const amOf = (client) => {
+      const s = clientSlug(client);
+      if (tmBy[s]) return tmBy[s];
+      const k = Object.keys(tmBy).filter((x) => x.length >= 4 && s.length >= 4 && (x.indexOf(s) === 0 || s.indexOf(x) === 0));
+      return k.length === 1 ? tmBy[k[0]] : null;   // one unambiguous prefix match, or nobody
+    };
+    const keys = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      keys[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      if (!keys[k] && !/-fb$/.test(k.split('|')[1] || '')) keys[k] = { client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true };
+    });
+    const list = Object.keys(keys).map((k) => keys[k]).filter((f) => !acc.clients || clientMatch(acc.clients, f.client));
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const profs = {};
+    const today = histDay(Date.now());
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profs[f.client] || (profs[f.client] = profileFor(f.client, overrides));
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ client: f.client, mkt: f.mkt, am: amOf(f.client), ind: pf.industry,
+        status: x ? (x.status || null) : 'never', detached: f.detached || undefined },
+      histSeries(hists[i], pf, { days, today, live }));
+    });
+    const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
+    return json({ ok: true, at: Date.now(), today, days, scoped: !!acc.clients, feeds, daily });
   }
 
   // email-on-warning settings (recipient + on/off) — mirrors ptypealertcfg's shape

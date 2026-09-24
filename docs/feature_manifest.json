@@ -10225,6 +10225,90 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "atts:(b64&&!big)?[{name:'call-actions.png'",
       "pr": 534
+    },
+    {
+      "name": "Business case: the ask covers Ray's own compensation, not just infra reimbursement",
+      "file": "docs/FCC_Business_Case_Brief.html",
+      "pattern": "formally product owner for the period",
+      "min": 1
+    },
+    {
+      "name": "Leadership portfolio: the engine builds each feed's day-by-day series",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histSeries(hist, profile, opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the engine scores a stored reading exactly as the page does",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function attrsFromCov(cov, sc, rows) {",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: one route serves every feed's series",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/golden/portfolio' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the route runs each record through histSeries under the brand's profile",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "histSeries(hists[i], pf, { days, today, live })",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the AM is the Task Manager's, never guessed",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "return k.length === 1 ? tmBy[k[0]] : null;",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the section on Leadership",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "<section id=\"golden-pf\" class=\"gp\">",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the page reads the route and scores nothing itself",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "fetch('/api/golden/portfolio?days='+r)",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: movers first — drops, gains, flat, one reading, none",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "if(s.dir==='down') return [0,s.delta];",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the strip prints a dash until two days are measured",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "needs two days measured",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: a tile opens its card on the same score and window",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "localStorage.setItem('gr-hist-met',st.met); localStorage.setItem('gr-hist-rng',st.rng);",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the Access login page is a failed read, not an empty book",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "Couldn’t read the portfolio",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the Playwright tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_leadgp.js",
+      "pr": 0
+    },
+    {
+      "name": "Leadership portfolio: the band harness reads Leadership's legend",
+      "file": "tools/test_bands.mjs",
+      "pattern": "leadership: read('FeedSpark_Leadership.html'),",
+      "pr": 0
     }
   ]
 }

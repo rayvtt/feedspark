@@ -1554,6 +1554,106 @@ export function histIdx(h) {
   return { hp, ht: r[r.length - 1].t };
 }
 
+/* ---- THE PORTFOLIO VIEW (Ray, 24 Sep 2026: "should there be an additional interface for AM only
+   to view these charts across their portfolio at once?" — then "can you build on leadership").
+   Leadership draws every feed's record side by side, so the daily values are computed HERE, off
+   the same goldenScore the estate and the Score history card use, instead of in a third copy of
+   the scoring engine on a third page. A day reads exactly as it does on the card:
+     · the Golden Score is the day's reading — a hand-run one first (histDayPick) — or, on a day
+       the feed was scanned and did not move, the last reading carried; a day nobody scanned is a
+       GAP, never a copy;
+     · content quality and AI-readiness are the day's analysis, or a gap;
+     · every reading is re-scored against the brand's CURRENT profile, and a reading measured on
+       another basis than the latest (before GPC category scope) is left out rather than drawn as
+       a jump nobody made. */
+// a stored reading's coverage map back into the attribute shape goldenScore reads — the page's
+// attrsFromCov, held here so the server scores a reading exactly as the page does
+export function attrsFromCov(cov, sc, rows) {
+  const at = {};
+  for (const s of ATTR_SPEC) {
+    const c = cov ? cov[s.key] : null, n = sc ? sc[s.key] : null;
+    const scope = n != null ? { n, t: Math.max(n, rows || 0) } : null;
+    if (scope && !n) at[s.key] = { present: false, na: true, scope };
+    else if (c != null) at[s.key] = scope ? { present: true, cov: c, scope } : { present: true, cov: c };
+    else if (scope) at[s.key] = { present: false, scope };
+  }
+  return at;
+}
+export function histScore(r, profile) {
+  if (!r || !r.cov) return null;
+  const g = goldenScore(attrsFromCov(r.cov, r.sc, r.rows), profile);
+  return g ? g.score : null;
+}
+function histPlusDays(d, n) { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+export const PORTFOLIO_FLAT = 0.5;     // a window move smaller than this reads as flat
+// one feed's record → its three metrics day by day over the last `days` days, plus a summary per
+// metric. opts: { days, today (YYYY-MM-DD, UTC), live: the estate index's current reading
+// {t, rows, cov, sc} — it closes the line where the estate's own score is, as on the card }.
+// Leading days on which none of the three has a value are trimmed off (`start` moves up), so a
+// young record costs a few numbers, not a year of nulls.
+export function histSeries(hist, profile, opts) {
+  const o = opts || {};
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(String(o.today || '')) ? o.today : histDay(Date.now());
+  const span = Math.max(1, Math.min(HIST_DAYS_MAX, parseInt(o.days, 10) || 90));
+  const reads = ((hist && hist.r) || []).filter((x) => x && x.cov && x.t).slice().sort((a, b) => a.t - b.t);
+  const live = o.live && o.live.cov && o.live.t ? { t: +o.live.t, rows: o.live.rows, cov: o.live.cov, sc: o.live.sc } : null;
+  if (live && (!reads.length || live.t > reads[reads.length - 1].t)) reads.push(live);
+  const scanned = {};
+  ((hist && hist.s) || []).forEach((d) => { scanned[d] = 1; });
+  if (live) scanned[histDay(live.t)] = 1;
+  const basis = reads.length ? !!reads[reads.length - 1].sc : null;
+  const qa = ((hist && hist.q) || []).filter((x) => x && x.t).slice().sort((a, b) => a.t - b.t);
+  const lists = { q: qa.filter((x) => x.q != null), air: qa.filter((x) => x.air != null) };
+  const days = [], gs = [], q = [], air = [];
+  let ri = -1;
+  const qi = { q: -1, air: -1 };
+  const memo = new Map();
+  // the day's pick among list[from..to] (a hand-run entry first, else the last) — histDayPick's
+  // rule, walked with a cursor so a year of days over a year of readings stays linear
+  const pickIn = (list, from, to, d) => {
+    let p = -1, pm = -1;
+    for (let j = from; j <= to; j++) if (histDay(list[j].t) === d) { p = j; if (list[j].m) pm = j; }
+    return pm >= 0 ? pm : p;
+  };
+  for (let d = histPlusDays(today, -(span - 1)); d <= today; d = histPlusDays(d, 1)) {
+    const r0 = ri + 1;
+    while (ri + 1 < reads.length && histDay(reads[ri + 1].t) <= d) ri++;
+    const pick = pickIn(reads, r0, ri, d);
+    const close = pick >= 0 ? reads[pick] : (ri >= 0 ? reads[ri] : null);
+    const ok = scanned[d] && close && !!close.sc === basis;
+    days.push(d);
+    // a reading carried across quiet days is scored once, not once a day
+    if (ok && !memo.has(close)) memo.set(close, histScore(close, profile));
+    gs.push(ok ? memo.get(close) : null);
+    for (const f of ['q', 'air']) {
+      const L = lists[f], f0 = qi[f] + 1;
+      while (qi[f] + 1 < L.length && histDay(L[qi[f] + 1].t) <= d) qi[f]++;
+      const p = pickIn(L, f0, qi[f], d);
+      (f === 'q' ? q : air).push(p >= 0 ? L[p][f] : null);
+    }
+  }
+  let lead = 0;
+  while (lead < days.length - 1 && gs[lead] == null && q[lead] == null && air[lead] == null) lead++;
+  const cut = (a) => a.slice(lead);
+  const out = { start: days[lead], today, days: span, gs: cut(gs), q: cut(q), air: cut(air), sum: {} };
+  if (gs.every((v) => v == null) && q.every((v) => v == null) && air.every((v) => v == null)) out.start = null;
+  for (const [k, a] of [['gs', out.gs], ['q', out.q], ['air', out.air]]) {
+    let first = -1, last = -1, n = 0;
+    a.forEach((v, i) => { if (v != null) { n++; if (first < 0) first = i; last = i; } });
+    const s = { now: last >= 0 ? a[last] : null, nowD: last >= 0 ? histPlusDays(out.start, last) : null, n,
+      from: null, fromD: null, delta: null, dir: null };
+    if (first >= 0 && last > first) {
+      s.from = a[first]; s.fromD = histPlusDays(out.start, first);
+      s.delta = Math.round((s.now - s.from) * 10) / 10;
+      s.dir = Math.abs(s.delta) < PORTFOLIO_FLAT ? 'flat' : (s.delta > 0 ? 'up' : 'down');
+    }
+    out.sum[k] = s;
+  }
+  const lastQa = qa.filter((x) => x.tier != null).pop();
+  out.tier = lastQa ? lastQa.tier : null;
+  return out;
+}
+
 // The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,
 // not an alarm. cov = current fill % when the column exists, null when it's not in the feed.
 export function attrAskEmail(client, mkt, spec, cov) {
