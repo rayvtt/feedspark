@@ -173,6 +173,21 @@ share the specific tab as its own link/export — that sidesteps the tool limita
    yet visible in another market's live audit) is itself a real, deck-worthy finding, not
    a discrepancy to quietly resolve by picking the source you like better.
 
+**"No evidence of X exists" is a claim about the account, and it has to be read across every
+source — not the one you happened to open.** On the first Schuh Strategy Review build the deck
+said *"no quantified uplift figure exists anywhere in Schuh's plan or task log"* and carried an
+internal note to that effect. That was true of the project plan and wrong about the account: the
+FCC's **A/B Test Archive** held eleven quantified tests for Schuh, which became the deck's
+strongest chapter once read. Before writing any sentence of the form "there is no…", "nothing
+records…", "we have never measured…", check ALL of: `plan_tasks.json`, the raw
+`plan_exports/<client>_projectplan.csv`, the FCC A/B Test Archive (the brand dossier surfaces it
+per brand — it is a live source, not only an attached export), `/api/kwresults` (Dino's scheduled
+optimisation read-outs), and CLAUDE.md's own account notes. A "nothing here" statement is the
+single highest-risk sentence in a client deck: it is unflattering to FeedSpark, it is what a
+client will push back on, and it is the one class of claim that is wrong the moment any one
+source disagrees. This is the second deck where such a sentence was the defect rather than the
+finding.
+
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
 numbers, test results, or client facts that aren't sourced from somewhere above.
@@ -513,6 +528,17 @@ Rules when extending it:
   `pdftoppm` are absent in Code, and `preview_tmpl.py` cannot see layout-inherited chrome, so it
   will render these slides as near-empty. That is a limitation of the previewer, not a bug in
   the export; trust `--audit`, not the PNGs.
+
+- **Three space-saving behaviours are already automatic — don't rebuild them per deck** (all
+  added for Schuh, Sep 2026, after Ray asked for three recap slides to be merged):
+  · `kpi_line()` folds a `.stats` KPI row into the **following** table's or bar block's subtitle
+    when that block has no subtitle of its own (≥3 cards, headings ≤12 chars, single-line bodies
+    ≤34 chars) — so four headline numbers no longer cost a slide of their own.
+  · Table capacity is **subtitle-aware** (`TB_T_NOSUB = 1.52` vs `TB_T = 2.02`): a table with no
+    subtitle fits **10** rows, one with a subtitle fits **8**. If a table is one row over, dropping
+    a redundant subtitle is the cheap fix before splitting it.
+  · A block-level `.note` rides the **last** continuation chunk only. Before this, a table or card
+    grid that split across slides repeated its note on every slide.
 
 Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../../../tools/README.md).
 

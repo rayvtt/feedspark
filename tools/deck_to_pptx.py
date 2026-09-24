@@ -390,9 +390,19 @@ MAXCARDS = 6
 
 # Table body geometry, mirroring the reference deck.
 TB_L, TB_W, TB_T = 0.67, 12.00, 2.02
+# A table on a slide with NO subtitle starts where the subtitle would have been.
+# The Table layout's Subtitle sits at 1.24-1.71 and the Title ends at 1.21, so an
+# empty subtitle leaves half an inch of dead canvas above the table -- and that
+# half inch is two more rows, which is the difference between an 11-test archive
+# on one page and the same archive split across two.
+TB_T_NOSUB = 1.52
 TB_BOT   = 6.17           # must clear the Key Message strip at 6.34
 HDR_H    = 0.42
 ROW_MIN  = 0.42
+
+def rows_per_slide(has_sub):
+    top = TB_T if has_sub else TB_T_NOSUB
+    return max(1, int((TB_BOT - top - HDR_H) / ROW_MIN))
 
 def ph_style(layout, name):
     """(width_in, height_in, pt, bold) of a layout placeholder, read from its
@@ -625,9 +635,33 @@ def grid_slide(em, title, sub, cards, key=None):
 def emit_cards(em, base_title, t, sub, cards, key):
     """Emit a card list across as many slides as readability needs."""
     n = pick_grid(em, cards)
-    for part in balanced(cards, n):
-        grid_slide(em, t, sub, part, key)
+    parts = list(balanced(cards, n))
+    for ci, part in enumerate(parts):
+        # The note closing a block is its takeaway, so it belongs on the last
+        # slide of that block -- handing it to every part printed the same
+        # sentence verbatim on each continuation slide.
+        grid_slide(em, t, sub, part, key if ci == len(parts) - 1 else None)
         t, sub = (base_title + " (cont.)") if base_title else "", ""
+
+def kpi_line(cards):
+    """One line from a card grid that is really a row of KPIs, else None.
+
+    A .grid-4 of big-number cards ("61 / Closed to date") is a KPI row, not four
+    cards of argument -- and giving it a whole slide spends a sixteen-by-nine canvas
+    on four numbers. Recognised here so emit_blocks can fold it into the following
+    table's subtitle instead. Deliberately strict: a real card (multi-line body, a
+    prose body, a worded heading) must never be flattened into a strip.
+    """
+    out = []
+    for h, b in cards:
+        h = (h or "").strip(); b = (b or "").strip()
+        if not h or len(h) > 12:      # a number or a percentage, never a heading
+            return None
+        if not b or "\n" in b or len(b) > 34:
+            return None               # a body with an argument in it is a card
+        out.append(("%s %s" % (h, b)).strip())
+    return "  ·  ".join(out) if len(out) >= 3 else None
+
 
 def emit_blocks(em, head, blocks, fallback=""):
     """Flow one parsed <section> onto as many slides as its content needs."""
@@ -638,6 +672,7 @@ def emit_blocks(em, head, blocks, fallback=""):
     sub = head.get("sub") or ""
     first_done = False
     pending_sub = None           # a ("subhead") becomes the next slide's title
+    pending_kpi = None           # a KPI row folded onto the next table's subtitle
     i = 0
     while i < len(blocks):
         kind, payload = blocks[i]
@@ -646,6 +681,17 @@ def emit_blocks(em, head, blocks, fallback=""):
         key = None
         if i < len(blocks) and blocks[i][0] == "note":
             key = blocks[i][1]; i += 1
+
+        # A KPI row immediately before a table rides that table's subtitle rather
+        # than taking a slide of its own -- four numbers do not earn a canvas.
+        # Only when the section has no subtitle to displace, and when the row
+        # carries no note of its own (a note makes it a statement, not a strip).
+        if kind in ("cards", "stats") and key is None and not sub:
+            _cards = (payload["cards"] if kind == "cards" else payload)
+            _line = kpi_line([((h or ""), (b_ or "")) for h, b_ in _cards])
+            if _line and i < len(blocks) and blocks[i][0] in ("table", "bars"):
+                pending_kpi = _line
+                continue
 
         cont = (title + " (cont.)") if title else ""
         t = pending_sub or (title if not first_done else cont)
@@ -734,20 +780,31 @@ def emit_blocks(em, head, blocks, fallback=""):
         if kind == "bars":
             heads = ["", ""]
             rws = [[lab, val] for lab, val, _w, _g, _y in payload]
-            for part in chunks(rws, 8):
+            parts = list(chunks(rws, 8))
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            for ci, part in enumerate(parts):
                 s = em.slide("Table")
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-                em.table(s, heads, part); em.finish(s, key)
+                em.table(s, heads, part); em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
             first_done = True; continue
 
         if kind == "table":
             heads, rws = payload["heads"], payload["rows"]
-            per = max(1, int((TB_BOT - TB_T - HDR_H) / ROW_MIN))
-            for part in chunks(rws, per):
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            per = rows_per_slide(bool(s_))
+            parts = list(chunks(rws, per))
+            for ci, part in enumerate(parts):
                 s = em.slide("Table")
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-                em.table(s, heads, part); em.finish(s, key)
+                # The note is a conclusion drawn from the whole table, so it belongs
+                # on the last slide of it -- passing it to every chunk repeated the
+                # same sentence verbatim on each continuation slide.
+                em.table(s, heads, part); em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
             first_done = True; continue
 
