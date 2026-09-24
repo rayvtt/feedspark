@@ -223,6 +223,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record score history (daily close + day-on-day bars, gaps, re-basing, client files)"
   NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
     echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
+  echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
+  NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
+    echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }

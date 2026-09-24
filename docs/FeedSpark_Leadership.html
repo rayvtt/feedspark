@@ -155,6 +155,52 @@ window.addEventListener('load',restore);
   .sent-seg.on{color:#fff;border-color:transparent}
   .sent-seg.on.s-pos{background:var(--good)}.sent-seg.on.s-neu{background:var(--muted)}
   .sent-seg.on.s-wat{background:var(--orange)}.sent-seg.on.s-rsk{background:var(--risk)}
+  /* ---- Golden Record — portfolio trend (Ray, 24 Sep 2026) ---- */
+  .gp{--gup:#2563EB;--gdn:#ED6F0B}
+  [data-theme=dark] .gp{--gup:#4C82E0;--gdn:#C67B28}
+  .gp-src{font-size:11.5px;font-weight:700;color:var(--muted);margin:-8px 0 12px}
+  .gp-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 14px}
+  .gp-grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .gp-lbl{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:3px}
+  .gp-chip{font:inherit;font-size:12px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:32px}
+  .gp-chip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .gp-chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+  .gp-chip i{font-style:normal;font-weight:700;opacity:.7;margin-left:4px}
+  .gp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .gp-grp-h{grid-column:1/-1;font-size:13px;font-weight:900;margin:8px 0 -2px;color:var(--ink)}
+  .gp-grp-h:first-child{margin-top:0}
+  .gp-grp-h span{font-weight:700;color:var(--muted);font-size:11.5px;margin-left:6px}
+  a.gp-tile{display:block;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:11px 12px 9px;text-decoration:none;color:var(--ink);transition:border-color .15s,transform .15s}
+  a.gp-tile:hover{border-color:var(--orange);transform:translateY(-2px)}
+  a.gp-tile.gp-off{opacity:.62}
+  [data-theme=dark] a.gp-tile{color:var(--ink)}   /* the page's dark rule paints every link orange */
+  .gp-hd{display:flex;align-items:baseline;gap:6px;min-width:0}
+  .gp-hd b{font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gp-mk{font-size:10.5px;font-weight:900;letter-spacing:.04em;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+  .gp-am{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .gp-val{display:flex;align-items:baseline;gap:8px;margin-top:5px}
+  .gp-n{font-size:22px;font-weight:900;line-height:1.1}
+  .gp-n.na{font-size:15px;color:var(--muted)}
+  .gp-d{font-size:12px;font-weight:900;white-space:nowrap}
+  .gp-d.up{color:var(--gup)}.gp-d.dn{color:var(--gdn)}.gp-d.fl{color:var(--muted)}
+  .gp-sp{display:block;width:100%;height:44px;margin:6px 0 4px;overflow:visible;cursor:crosshair}
+  .gp-sp .ln{fill:none;stroke:var(--muted);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .gp-sp .pt{stroke:var(--muted);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .gp-sp .now{stroke:var(--orange-deep);stroke-width:7;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .gp-sp .now-r{stroke:var(--paper);stroke-width:11;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .gp-sp .base{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+  .gp-sp .gx{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 2;vector-effect:non-scaling-stroke;visibility:hidden}
+  .gp-ft{font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #gp-tip{position:fixed;z-index:90;pointer-events:none;background:#1A365D;color:#fff;font-size:11.5px;font-weight:800;padding:5px 9px;border-radius:7px;white-space:nowrap;display:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  [data-theme=dark] #gp-tip{background:#0B0D12}
+  .gp-tw{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  table.gp-t{width:100%;border-collapse:collapse;font-size:12.5px;min-width:620px}
+  .gp-t th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line)}
+  .gp-t td{padding:7px 12px;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink-2)}
+  .gp-t tr:last-child td{border-bottom:none}
+  .gp-t .num{text-align:right;font-variant-numeric:tabular-nums}
+  .gp-t td b{color:var(--ink)}
+  .gp-empty{font-size:13px;color:var(--muted);font-weight:700;padding:14px 0}
 </style>
 <style>/* FCC-THEME */
 #theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
@@ -243,6 +289,15 @@ window.addEventListener('load',restore);
   <h2>Accounts — attention first</h2>
   <p class="sub">Sorted by open load and lowest score. Flagged rows are below the book average or carrying the heaviest backlog.</p>
   <div class="acct" id="acct"></div>
+
+  <section id="golden-pf" class="gp">
+    <h2>Golden Record — portfolio trend</h2>
+    <p class="sub">Every Google Shopping feed's score day by day, biggest drops first — open a feed for its full history.</p>
+    <div class="gp-src" id="gp-src"></div>
+    <div class="gp-bar" id="gp-bar"></div>
+    <div class="cm-roll" id="gp-roll"></div>
+    <div id="gp-body"><p class="gp-empty">Reading every feed's record…</p></div>
+  </section>
 
   <section id="commercial">
     <h2>Hours &amp; commercial</h2>
@@ -488,5 +543,233 @@ window.addEventListener('load',restore);
     document.body.appendChild(t); setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},1800); }
 
   renderCM(); renderRadar(); loadTM();
+})();
+</script>
+<script>
+/* GOLDEN RECORD — PORTFOLIO TREND (Ray, 24 Sep 2026: "should there be an additional interface for AM
+   only to view these charts across their portfolio at once?" — then "can you build on leadership").
+   Every Google Shopping feed as one small chart, filtered by the account's AM (the Task Manager's
+   name, as the hours badge shows it), for any of the three scores the Score history card tracks.
+   NOTHING IS SCORED HERE: /api/golden/portfolio runs each feed's record through the engine's
+   histSeries under the brand's current profile, so a tile can never read differently from the card
+   it opens. The tiles share ONE calendar (the window, today on the right) so a line starting halfway
+   across means the record starts there; a day nobody measured is a gap, never a flat copy. Each
+   tile's y-range is its own, at least four points tall, so the headline figure is the change
+   printed beside it — not the slope. */
+(function(){
+  var host=document.getElementById('golden-pf'); if(!host) return;
+  var SK='fcc-lead-gp';
+  var MET=[['gs','Golden Score'],['q','Content quality'],['air','AI-readiness']];
+  var RNG=[['30','30 days'],['90','90 days'],['365','1 year']];
+  var ORD=[['move','Movers first'],['acct','By account']];
+  var st={am:'*',met:'gs',rng:'30',ord:'move',tbl:false};   // 30 days: a tile is ~200px, so a day stays ~6px wide
+  try{ var sv=JSON.parse(localStorage.getItem(SK)||'null');
+    if(sv&&typeof sv==='object'){
+      if(typeof sv.am==='string') st.am=sv.am;
+      if(/^(gs|q|air)$/.test(sv.met||'')) st.met=sv.met;
+      if(/^(30|90|365)$/.test(sv.rng||'')) st.rng=sv.rng;
+      if(/^(move|acct)$/.test(sv.ord||'')) st.ord=sv.ord;
+      st.tbl=!!sv.tbl; } }catch(e){}
+  function save(){ try{localStorage.setItem(SK,JSON.stringify(st));}catch(e){} }
+  var DATA={}, BUSY={}, ERR={};
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var FLAT=0.5;   // the engine's PORTFOLIO_FLAT — a window move smaller than this reads as flat
+  function $(id){ return document.getElementById(id); }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  // ONE colour legend for every completeness / content-quality number (Ray, 23 Sep 2026) — the same
+  // function tools/test_bands.mjs lifts from every surface; AI-readiness keeps its tier ladder
+  function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
+  var BAND_COL = { green: 'var(--good)', yellow: '#F5A623', orange: '#ED6F0B', red: 'var(--risk)' };
+  function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
+  function valCol(v){ if(v==null||isNaN(v)) return 'var(--muted)'; return st.met==='air'?airCol(v):BAND_COL[auditBand(v)]; }
+  function dayLbl(d){ var x=new Date(d+'T00:00:00Z'); return x.getUTCDate()+' '+MON[x.getUTCMonth()]; }
+  function plus(d,n){ var x=new Date(d+'T00:00:00Z'); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); }
+  function gap(a,b){ return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/864e5); }
+  function r1(n){ return Math.round(n*10)/10; }
+  function signed(n){ var v=r1(n); return v>0?'+'+v:(v<0?'−'+(-v):'±0'); }
+  function metName(){ return MET.filter(function(m){return m[0]===st.met;})[0][1]; }
+  function unmeasured(f){ return st.met==='gs' ? (f.status==='never'?'never scanned':'not scanned in this window') : 'not analysed in this window'; }
+
+  function load(){
+    var r=st.rng;
+    if(DATA[r]){ render(); return; }
+    if(BUSY[r]) return;
+    BUSY[r]=1; ERR[r]=null; render();
+    fetch('/api/golden/portfolio?days='+r).then(function(x){ if(!x.ok) throw new Error('HTTP '+x.status); return x.json(); })
+      .then(function(d){ if(!d||!d.ok||!Array.isArray(d.feeds)) throw new Error('unexpected answer'); DATA[r]=d; })
+      .catch(function(e){ ERR[r]=e&&e.message||'failed'; })
+      .then(function(){ BUSY[r]=0; if(st.rng===r) render(); });
+  }
+  // the AMs on the book, busiest first; a remembered AM with no feed left falls back to All
+  // rather than opening on an empty grid
+  function ams(d){
+    var c={}, none=0;
+    d.feeds.forEach(function(f){ if(f.am) c[f.am]=(c[f.am]||0)+1; else none++; });
+    var names=Object.keys(c).sort(function(a,b){ return c[b]-c[a]||(a<b?-1:1); });
+    if(st.am!=='*' && !(st.am==='-'?none:c[st.am])) st.am='*';
+    var out=[['*','All',d.feeds.length]];
+    names.forEach(function(n){ out.push([n,n,c[n]]); });
+    if(none) out.push(['-','No AM on record',none]);
+    return out;
+  }
+  function inView(d){ return d.feeds.filter(function(f){ return st.am==='*' || (st.am==='-' ? !f.am : f.am===st.am); }); }
+  function mktKey(m){ m=String(m||''); return (m==='gb'||m==='uk'?'0':'1')+m; }
+  // movers first: the drops (biggest first), then the gains, then flat, then feeds with one reading,
+  // then feeds with none — the lowest score leads each quiet group, since that is where to look
+  function rank(f){
+    var s=f.sum&&f.sum[st.met];
+    if(!s||s.now==null) return [4,0];
+    if(s.delta==null) return [3,s.now];
+    if(s.dir==='down') return [0,s.delta];
+    if(s.dir==='up') return [1,-s.delta];
+    return [2,s.now];
+  }
+  function order(list){
+    return list.slice().sort(function(a,b){
+      if(st.ord==='acct') return a.client<b.client?-1:(a.client>b.client?1:(mktKey(a.mkt)<mktKey(b.mkt)?-1:1));
+      var x=rank(a), y=rank(b);
+      return x[0]-y[0] || x[1]-y[1] || (a.client<b.client?-1:(a.client>b.client?1:(mktKey(a.mkt)<mktKey(b.mkt)?-1:1)));
+    });
+  }
+  function seg(key, opts){
+    return opts.map(function(o){ return '<button type="button" class="gp-chip'+(String(st[key])===o[0]?' on':'')+'" data-gk="'+key+'" data-gv="'+esc(o[0])+'">'+esc(o[1])+(o[2]!=null?'<i>'+o[2]+'</i>':'')+'</button>'; }).join('');
+  }
+  function bar(d){
+    var a=d?ams(d):[['*','All',null]];
+    $('gp-bar').innerHTML=
+      '<div class="gp-grp"><span class="gp-lbl">AM</span>'+seg('am',a)+'</div>'
+      +'<div class="gp-grp"><span class="gp-lbl">Score</span>'+seg('met',MET)+'</div>'
+      +'<div class="gp-grp"><span class="gp-lbl">Window</span>'+seg('rng',RNG)+'</div>'
+      +'<div class="gp-grp">'+seg('ord',ORD)+'<button type="button" class="gp-chip'+(st.tbl?' on':'')+'" data-gt="1" aria-pressed="'+st.tbl+'">⊞ Table</button></div>';
+  }
+  function srcLine(d){
+    var y=d.daily, bits=[];
+    if(y&&y.day){ var t=y.t?new Date(y.t):null;
+      bits.push('⏱ Scored daily at 09:00 UK · last run '+dayLbl(y.day)+(t?' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2):'')
+        +' · '+(y.quality|0)+' analysed'+(y.failed?' · '+y.failed+' failed':'')); }
+    var first=null; d.feeds.forEach(function(f){ if(f.start&&(!first||f.start<first)) first=f.start; });
+    if(first){ var young=gap(first,d.today)<14;
+      bits.push((young?'record began ':'earliest reading in this window ')+dayLbl(first)+(young?' — the lines fill in each morning':'')); }
+    return bits.join(' · ');
+  }
+  function kpis(list){
+    var now=[], dl=[], up=0, dn=0, fl=0, none=0;
+    list.forEach(function(f){ var s=f.sum&&f.sum[st.met];
+      if(!s||s.now==null){ none++; return; }
+      now.push(s.now);
+      if(s.delta!=null){ dl.push(s.delta); if(s.dir==='up') up++; else if(s.dir==='down') dn++; else fl++; } });
+    var avg=now.length?r1(now.reduce(function(a,b){return a+b;},0)/now.length):null;
+    var md=dl.length?dl.reduce(function(a,b){return a+b;},0)/dl.length:null;
+    var two=dl.length>0;
+    // with one reading per feed there is nothing to call up or down yet — say so, don't print zeros
+    return [
+      ['',avg==null?'—':avg,metName()+' · average',md==null?'one reading per feed so far':(md>0?'▲ ':md<0?'▼ ':'')+signed(md)+' on average across '+dl.length+' feed'+(dl.length===1?'':'s')],
+      [two&&up?'good':'',two?up:'—','Improved',two?'up '+FLAT+' or more':'needs two days measured'],
+      [two&&dn?'risk':'',two?dn:'—','Declined',two?'down '+FLAT+' or more':'needs two days measured'],
+      ['',two?fl:'—','Flat',two?'within ±'+FLAT:'needs two days measured'],
+      [none?'warn':'',none,'No reading',st.met==='gs'?'not scanned in this window':'not analysed in this window']
+    ].map(function(k){ return '<div class="kpi '+k[0]+'"><div class="n">'+k[1]+'</div><div class="l">'+esc(k[2])+'</div><div class="sub2">'+esc(k[3])+'</div></div>'; }).join('');
+  }
+  // one small chart on the window's calendar: x = the whole window, today at the right edge
+  function spark(f,d,idx){
+    var a=(f[st.met]||[]), W=200, H=44, P=5, n=d.days;
+    var w0=plus(d.today,-(n-1)), off=f.start?gap(w0,f.start):0;
+    var vals=a.filter(function(v){return v!=null;});
+    var base='<line class="base" x1="'+P+'" x2="'+(W-P)+'" y1="'+(H-1)+'" y2="'+(H-1)+'"/>';
+    var svg='<svg class="gp-sp" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-i="'+idx+'" aria-hidden="true">';
+    if(!vals.length) return svg+base+'</svg>';
+    var lo=Math.floor(Math.min.apply(null,vals)-1), hi=Math.ceil(Math.max.apply(null,vals)+1);
+    if(hi-lo<4){ var mid=(hi+lo)/2; lo=Math.floor(mid-2); hi=Math.ceil(mid+2); }
+    var X=function(i){ return r1(P+(off+i)/Math.max(1,n-1)*(W-2*P)); };
+    var Y=function(v){ return r1(H-P-(v-lo)/(hi-lo)*(H-2*P)); };
+    var paths=[], cur='', run=0, dots='', last=-1;
+    a.forEach(function(v,i){
+      if(v==null){ if(run>1) paths.push(cur); else if(run===1) dots+='<path class="pt" d="'+cur+'h0"/>'; cur=''; run=0; return; }
+      cur+=(run?'L':'M')+X(i)+' '+Y(v); run++; last=i;
+    });
+    if(run>1) paths.push(cur); else if(run===1 && last!==a.length-1) dots+='<path class="pt" d="'+cur+'h0"/>';
+    var ln=paths.map(function(p){ return '<path class="ln" d="'+p+'"/>'; }).join('');
+    var endP=last>=0?'M'+X(last)+' '+Y(a[last])+'h0':'';
+    return svg+base+ln+dots+(endP?'<path class="now-r" d="'+endP+'"/><path class="now" d="'+endP+'"/>':'')
+      +'<line class="gx" x1="0" x2="0" y1="0" y2="'+H+'"/></svg>';
+  }
+  function tile(f,d,idx){
+    var s=(f.sum&&f.sum[st.met])||{}, has=s.now!=null;
+    var dl='';
+    if(s.delta!=null) dl='<span class="gp-d '+(s.dir==='up'?'up':s.dir==='down'?'dn':'fl')+'">'+(s.dir==='up'?'▲ ':s.dir==='down'?'▼ ':'≈ ')+signed(s.delta)+'</span>';
+    var ft=s.delta!=null ? 'since '+dayLbl(s.fromD)+' · '+s.n+' days measured'
+      : (has ? 'one reading so far · '+dayLbl(s.nowD) : unmeasured(f));
+    if(st.met==='air'&&has&&f.tier) ft='Tier '+f.tier+' · '+ft;
+    var lbl=f.client+' '+String(f.mkt).toUpperCase()+' — '+metName()+' '+(has?s.now:'not measured')+(s.delta!=null?', '+signed(s.delta)+' since '+dayLbl(s.fromD):'');
+    return '<a class="gp-tile'+(has?'':' gp-off')+'" href="/golden#'+encodeURIComponent(f.client+'|'+f.mkt)+'" data-gi="'+idx+'" aria-label="'+esc(lbl)+'">'
+      +'<div class="gp-hd"><b>'+esc(f.client)+'</b><span class="gp-mk">'+esc(String(f.mkt).toUpperCase())+'</span>'+(st.am==='*'&&f.am?'<span class="gp-am">'+esc(f.am)+'</span>':'')+'</div>'
+      +'<div class="gp-val">'+(has?'<span class="gp-n" style="color:'+valCol(s.now)+'">'+s.now+'</span>':'<span class="gp-n na">—</span>')+dl+'</div>'
+      +spark(f,d,idx)
+      +'<div class="gp-ft">'+esc(ft)+'</div></a>';
+  }
+  function table(list){
+    return '<div class="gp-tw"><table class="gp-t"><thead><tr><th>Account</th><th>Market</th><th>AM</th><th class="num">'+esc(metName())+'</th><th class="num">Change</th><th>Since</th><th class="num">Days measured</th></tr></thead><tbody>'
+      +list.map(function(f){ var s=(f.sum&&f.sum[st.met])||{};
+        return '<tr><td><b>'+esc(f.client)+'</b></td><td>'+esc(String(f.mkt).toUpperCase())+'</td><td>'+esc(f.am||'—')+'</td>'
+          +'<td class="num"><b>'+(s.now!=null?s.now:'—')+'</b></td><td class="num">'+(s.delta!=null?signed(s.delta):'—')+'</td>'
+          +'<td>'+(s.fromD?dayLbl(s.fromD):(s.now!=null?'one reading':esc(unmeasured(f))))+'</td><td class="num">'+(s.n||0)+'</td></tr>'; }).join('')
+      +'</tbody></table></div>';
+  }
+  var VIEW=[];   // the feeds on screen, in order — the tooltip reads them by index
+  function render(){
+    var r=st.rng, d=DATA[r];
+    bar(d);
+    if(!d){
+      $('gp-roll').innerHTML='';
+      $('gp-src').textContent='';
+      $('gp-body').innerHTML='<p class="gp-empty">'+(ERR[r]?'Couldn’t read the portfolio ('+esc(ERR[r])+').':'Reading every feed’s record…')+'</p>';
+      return;
+    }
+    $('gp-src').textContent=srcLine(d);
+    var list=order(inView(d));
+    VIEW=list;
+    $('gp-roll').innerHTML=kpis(list);
+    if(!list.length){ $('gp-body').innerHTML='<p class="gp-empty">No Google Shopping feed on this view.</p>'; return; }
+    if(st.tbl){ $('gp-body').innerHTML=table(list); return; }
+    var h='', prev=null;
+    list.forEach(function(f,i){
+      if(st.ord==='acct' && f.client!==prev){
+        var n=list.filter(function(x){return x.client===f.client;}).length;
+        h+='<div class="gp-grp-h">'+esc(f.client)+'<span>'+n+' market'+(n===1?'':'s')+(f.am?' · '+esc(f.am):'')+'</span></div>';
+        prev=f.client;
+      }
+      h+=tile(f,d,i);
+    });
+    $('gp-body').innerHTML='<div class="gp-grid">'+h+'</div>';
+  }
+  host.addEventListener('click',function(e){
+    var b=e.target.closest('[data-gk]');
+    if(b){ var k=b.getAttribute('data-gk'), v=b.getAttribute('data-gv');
+      if(String(st[k])===v) return;
+      st[k]=v; save(); if(k==='rng') load(); else render(); return; }
+    if(e.target.closest('[data-gt]')){ st.tbl=!st.tbl; save(); render(); return; }
+    // opening a feed opens its Score history card on the score and window being read here
+    var t=e.target.closest('a.gp-tile');
+    if(t){ try{ localStorage.setItem('gr-hist-met',st.met); localStorage.setItem('gr-hist-rng',st.rng); }catch(x){} }
+  });
+  // hover: a crosshair on the tile's own chart + the day's value, on the window's calendar
+  var tip=document.createElement('div'); tip.id='gp-tip'; document.body.appendChild(tip);
+  function hide(){ tip.style.display='none'; var x=host.querySelectorAll('.gp-sp .gx'); for(var i=0;i<x.length;i++) x[i].style.visibility='hidden'; }
+  host.addEventListener('mousemove',function(e){
+    var sv=e.target.closest&&e.target.closest('svg.gp-sp'); if(!sv){ hide(); return; }
+    var d=DATA[st.rng], f=VIEW[+sv.getAttribute('data-i')]; if(!d||!f){ hide(); return; }
+    var rc=sv.getBoundingClientRect(), W=200, P=5, n=d.days;
+    var px=(e.clientX-rc.left)/Math.max(1,rc.width)*W;
+    var di=Math.max(0,Math.min(n-1,Math.round((px-P)/(W-2*P)*(n-1))));
+    var day=plus(d.today,-(n-1)+di), a=f[st.met]||[], i=f.start?gap(f.start,day):-1;
+    var v=(i>=0&&i<a.length)?a[i]:null;
+    var txt=dayLbl(day)+' · '+(v!=null?metName()+' '+v:(!f.start||day<f.start?'before the record':(st.met==='gs'?'not scanned':'no analysis')));
+    var gx=sv.querySelector('.gx'); if(gx){ var xx=r1(P+di/Math.max(1,n-1)*(W-2*P)); gx.setAttribute('x1',xx); gx.setAttribute('x2',xx); gx.style.visibility='visible'; }
+    tip.textContent=txt; tip.style.display='block';
+    var tw=tip.offsetWidth, left=Math.min(window.innerWidth-tw-8,Math.max(8,e.clientX-tw/2));
+    tip.style.left=left+'px'; tip.style.top=Math.max(8,rc.top-34)+'px';
+  });
+  host.addEventListener('mouseleave',hide);
+  load();
 })();
 </script>

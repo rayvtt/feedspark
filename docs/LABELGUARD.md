@@ -933,6 +933,67 @@ monitoring, not the daily tracker.
 `tools/check_grhist.js` renders a hand-run day followed by an automatic one, and the content
 quality view.
 
+### 9.13 The portfolio trend on Leadership (24 Sep 2026)
+
+Ray: *"Should there be an additional interface for AM only to view these charts across their
+portfolio at once?"*, then *"can you build on leadership"*.
+
+The Score history card shows one feed. **Leadership › Golden Record — portfolio trend** puts every
+Google Shopping feed's line on one screen, filtered by the account's AM.
+
+**Nothing is scored on Leadership.** `GET /api/golden/portfolio?days=30|90|365` runs each feed's
+record (`goldenhist`) through the engine's `histSeries` under the brand's current profile. The
+engine now holds `attrsFromCov` (the page's twin) and `histScore`, so the server scores a stored
+reading exactly as the page does. The estate index's own reading closes each line, so a tile ends
+at the score the estate scorecard shows. A day reads exactly as it does on the card:
+
+- **Golden Score:** the day's reading (a hand-run one first). On a day the feed was scanned
+  without moving, the last reading carries. A day nobody scanned is a gap.
+- **Content quality and AI-readiness:** the day's analysis, or a gap.
+- **Basis:** a reading measured on another basis than the latest (before GPC category scope) is
+  left out, so no tile draws a jump nobody made.
+
+Leading days with no value are trimmed off, so a young record costs a few numbers, not a year of
+nulls. Each series carries a summary per metric: now, first value in the window, the change and
+its direction. A move under `PORTFOLIO_FLAT` (0.5) reads as flat.
+
+**The AM** is the Task Manager's (`tmidx`, the same name the hours badge shows), matched on the
+folded client name. A brand the Task Manager has not reached is listed under "No AM on record",
+never guessed. The route is scoped per signin like every client list (scoping only narrows).
+
+**The page.**
+
+- One row of filters: AM (with counts), score (Golden Score · Content quality · AI-readiness),
+  window (30 days by default · 90 days · 1 year), Movers first / By account, ⊞ Table. All
+  remembered per device (`fcc-lead-gp`). A remembered AM who no longer has a feed falls back to
+  All rather than an empty grid.
+- A strip: the average, then Improved / Declined / Flat / No reading. Until a feed has two
+  measured days there is nothing to compare, so those three print a dash, not a zero.
+- One tile per feed: account · market · AM, today's value in the audit colour legend
+  (AI-readiness on its tier ladder), the change since the first measured day in the window in the
+  Score history card's own blue / orange pair, and a small line.
+- **One calendar for every tile.** The x-axis is the whole window with today on the right, so a
+  record that began last week starts near the right edge. Each tile's y-range is its own, at least
+  four points tall, so the printed change is the headline, not the slope.
+- Movers first: drops (biggest first), gains, flat, one reading, then none. Within the quiet
+  groups the lowest score leads.
+- Hover gives a crosshair and the day's value. Clicking a tile opens `/golden#<client>|<mkt>` with
+  its Score history card on the same score and window.
+- An unauthenticated read (the Access login page, HTML with a 200) reads as a failed read, never
+  as an empty book.
+
+**Harnesses.** `tools/test_goldenhist.mjs` covers:
+
+- the series rules;
+- the page's own `histModel`, lifted from /golden and run on the same record: every day of all
+  three scores must match;
+- the route and the page wiring.
+
+`tools/check_leadgp.js` (Playwright, presync) builds the payload with the real engine and uses
+the real Leadership page: order, gaps, the shared calendar, the AM filter, the score and window
+switches, the table, hover, the click-through, the empty and error states, dark mode and 390px.
+`tools/test_bands.mjs` lifts Leadership's copy of the colour legend.
+
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 
 Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the
