@@ -302,7 +302,7 @@ window.addEventListener('load',restore);
   .comm .cw .cwd{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
   .comm .cw .cwt{font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
   .comm .cb{font-size:12.5px;color:var(--ink-2)}
-  .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
+  .comm .cmk{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
   .scan-hit{background:#EBF7EF;border:1px solid #CDE9D8;color:var(--good);font-size:12px;font-weight:700;border-radius:8px;padding:8px 10px;margin-top:9px;display:none}
@@ -566,9 +566,24 @@ window.addEventListener('load',restore);
   .it-scroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
   .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #itbl{table-layout:fixed}
-  #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
-  #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:166px}   /* four controls now — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
+  /* ic- = intake column. NOT cw-, which is the call-wrap composer's component namespace: its
+     .cw-task{flex:1 1 auto} and .cw-act{display:flex} matched these <col> elements and took them
+     out of the table-column model, so Brief's fixed width was ignored and it ate 103px of Task. */
+  /* TASK FIRST, THE REST DEPRIORITISED BUT NOT FROZEN (Ray, 24 Sep 2026: "the most important
+     column that should fit content is TASK, the rest can be deprioritised width but still show as
+     much as they could when user adjusting the browser tab width"). Two kinds of column, and the
+     difference decides the unit:
+       - FIXED PX where the content is a fixed-size control: the checkbox, the status select, the
+         source pill, the four action buttons. More width there is whitespace, so they take none.
+       - PERCENT where the content is text that can always be longer: client, feed, owner, a date.
+         They widen with the window, just slowly.
+       - AUTO for Task alone, so it takes everything the other two leave — about two thirds of any
+         widening, which is what "the most important column" means in pixels.
+     They were ALL percentages before, which spent a wide screen widening columns beside names that
+     had stopped growing; pinning them outright was the opposite mistake, and this is the middle. */
+  #itbl col.ic-cb{width:30px}#itbl col.ic-client{width:11.3%}#itbl col.ic-feed{width:8.9%}
+  #itbl col.ic-task{width:auto}#itbl col.ic-owner{width:8.3%}#itbl col.ic-due{width:5.2%}
+  #itbl col.ic-status{width:104px}#itbl col.ic-source{width:68px}#itbl col.ic-act{width:162px}   /* four controls — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -577,7 +592,19 @@ window.addEventListener('load',restore);
   .itbl tbody tr:last-child td{border-bottom:0}
   .itbl tbody tr:hover{background:var(--wash)}
   .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
-  .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
+  .itbl .c-task{color:var(--ink);line-height:1.35;white-space:normal;word-break:break-word}
+  /* EVERY ROW THE SAME HEIGHT (Ray, 24 Sep 2026: "make sure the row are evenly spread pls").
+     A task ran 1 to 5 lines, so the table stepped 43 / 50 / 66 / 82 / 98px down the page and read
+     as broken rhythm rather than a grid. The text box is EXACTLY two lines tall — clamped so a long
+     task can never push a row taller, min-height so a short one can never let it collapse shorter —
+     and two lines, not one, because the ask was to expand the cell: at this width one line shows
+     ~55 characters and two show ~110, which is nearly every task in the book whole.
+     What the clamp does hide is not lost: tkClip() measures each box after render and puts the FULL
+     task in its tooltip when, and only when, it is actually cut off (measured, never guessed from a
+     character count — the cut-off point moves with the window), and the ticket carries it in full. */
+  .itbl .c-task .tk-w{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+    overflow:hidden;min-height:calc(2 * 1.35em)}
+  .itbl .c-task .tk-in{-webkit-line-clamp:none}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
   /* an owner name shown because the ticket predates the `by` field — dotted, so it reads as
      the inference it is rather than as something the ticket actually recorded */
@@ -589,7 +616,11 @@ window.addEventListener('load',restore);
   .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
   .itbl .tk-open{cursor:pointer}
   .itbl .tk-open:hover{color:var(--orange-ink)}
-  .itbl .tk-ed{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
+  /* ✎ leaves the text flow: inside the clamped box it was the first thing a two-line-plus task
+     pushed out of sight, so the rows that most need renaming were the ones that lost the handle.
+     It only paints on row hover, where the row's own wash is behind it. */
+  .itbl td.c-task{position:relative}
+  .itbl .tk-ed{position:absolute;right:3px;top:50%;transform:translateY(-50%);border:0;background:var(--wash);color:var(--muted);font:inherit;font-size:11px;font-weight:700;line-height:1;padding:2px 4px;border-radius:5px;cursor:pointer;opacity:0}
   .itbl tbody tr:hover .tk-ed{opacity:.55}
   .itbl .tk-ed:hover{opacity:1;color:var(--orange-ink);background:rgba(245,166,35,.14)}
   .itbl .tk-in{font:inherit;font-size:12px;width:100%;min-width:150px;box-sizing:border-box;padding:3px 6px;border:1px solid var(--orange);border-radius:6px;background:var(--paper);color:var(--ink);outline:none}
@@ -597,7 +628,8 @@ window.addEventListener('load',restore);
   .itbl td.g-active{outline:2px solid var(--orange);outline-offset:-2px;background:rgba(245,166,35,.2)}
   [data-theme=dark] .itbl td.g-sel{background:rgba(245,166,35,.16)}
   [data-theme=dark] .itbl td.g-active{background:rgba(245,166,35,.24)}
-  .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap;
+    display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}   /* a chip clipped mid-character reads as a broken chip; an ellipsis reads as a long name — the full one is in the title */
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
@@ -881,7 +913,7 @@ window.addEventListener('load',restore);
   .lu{flex-direction:column}
   .it-ctl>input{flex:1 1 100%;min-width:0}
   /* pan, don't crush: the tracker + tests tables keep desktop widths inside their scroll pane */
-  #itbl{min-width:880px}
+  #itbl{min-width:960px}   /* pan, don't crush — 960 keeps Task ~260px once the fixed columns are paid for */
   .itbl.tstbl{min-width:740px}
   .it-scroll{max-height:70vh}
   /* pipeline board: near-full-width lanes, swipe between them */
@@ -941,10 +973,17 @@ body.ck-r-on{padding-right:var(--ck-w)}
   body.ck-l-on .scrim{padding-left:calc(var(--ck-w) + 16px)}
   body.ck-r-on .scrim{padding-right:calc(var(--ck-w) + 16px)}
 }
-.ck{position:fixed;top:0;bottom:0;width:var(--ck-w);z-index:70;display:flex;flex-direction:column;
+/* aside.ck, NEVER a bare .ck — a rail is an <aside>, and this rule is position:fixed, full height,
+   var(--ck-w) wide and opaque. Unscoped it also matched the ASPL-tracking comms chip
+   <span class="ck">↗ picked up</span> (whose own rule, .comm .ck, only sets type and colour and so
+   lost every one of these declarations), painting a 336px white column down the whole viewport over
+   an open ticket. Ray, 24 Sep 2026: "there's still issue with this white rectangular space when
+   opening brief ticket on workflow". The chip is renamed .cmk as well — belt and braces, since the
+   element selector only stops the next collision for things that are not an <aside>. */
+aside.ck{position:fixed;top:0;bottom:0;width:var(--ck-w);z-index:70;display:flex;flex-direction:column;
   background:var(--paper,#fff);border-left:1px solid var(--line,#E6E6E6);border-right:1px solid var(--line,#E6E6E6);
   box-shadow:0 0 34px rgba(16,24,40,.10)}
-.ck[hidden]{display:none}
+aside.ck[hidden]{display:none}
 .ck-l{left:0;border-left:none}
 .ck-r{right:0;border-right:none}
 .ck-head{display:flex;align-items:center;gap:8px;padding:11px 13px 10px;border-bottom:1px solid var(--line,#E6E6E6);flex:none}
@@ -1112,7 +1151,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-brief{flex:none;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--muted,#8a94a0);border-radius:7px;
   font:inherit;font-size:10px;font-weight:800;padding:2px 6px;cursor:pointer;text-decoration:none}
 .ck-brief:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
-[data-theme=dark] .ck{background:var(--paper,#1C1F27);box-shadow:0 0 34px rgba(0,0,0,.5)}
+[data-theme=dark] aside.ck{background:var(--paper,#1C1F27);box-shadow:0 0 34px rgba(0,0,0,.5)}
 [data-theme=dark] .ck-tab{background:var(--paper,#1C1F27)}
 [data-theme=dark] .ck-bar i{background:#4C82E0}
 [data-theme=dark] .ck-bar.good i{background:#48D07E}
@@ -1125,11 +1164,11 @@ body.ck-r-on{padding-right:var(--ck-w)}
 /* One rail at a time once the page can no longer spare two — the script enforces it; these rules
    just make the single open rail behave. */
 @media(max-width:900px){
-  .ck{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
+  aside.ck{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
   body.ck-l-on,body.ck-r-on{padding-left:0;padding-right:0}
 }
 @media(max-width:760px){
-  .ck{width:100vw;left:0;right:0;top:0;bottom:0;border:none}
+  aside.ck{width:100vw;left:0;right:0;top:0;bottom:0;border:none}
   /* the handles stay on the phone — they are how a rail is opened here, and Ray's standing rule
      is that the phone mirrors the desktop's controls rather than hiding them. Nudged above the
      module bar's reach and off the Feed Chat bubble. */
@@ -1185,7 +1224,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     <button class="btn sm ghost" id="bulk-clear">Clear</button>
   </div>
   <div class="it-scroll"><table class="itbl" id="itbl">
-    <colgroup><col class="cw-cb"><col class="cw-client"><col class="cw-feed"><col class="cw-task"><col class="cw-owner"><col class="cw-due"><col class="cw-status"><col class="cw-source"><col class="cw-act"></colgroup>
+    <colgroup><col class="ic-cb"><col class="ic-client"><col class="ic-feed"><col class="ic-task"><col class="ic-owner"><col class="ic-due"><col class="ic-status"><col class="ic-source"><col class="ic-act"></colgroup>
     <thead><tr>
       <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select all shown"></th>
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
@@ -2612,6 +2651,26 @@ body.ck-r-on{padding-right:var(--ck-w)}
   // ---- inline task-name editor (replaces the old prompt()) — commits through the SAME
   // setTaskText pipeline (rename overlay + key migration + sheet write), it only swaps the UX ----
   function taskTdFor(t){ var td=null,k=rowKey(t); if(gridBody)gridBody.querySelectorAll('td.c-task-ed').forEach(function(x){ var r=gridRows[+x.getAttribute('data-i')]; if(!td&&r&&rowKey(r)===k)td=x; }); return td; }
+  // THE TOOLTIP ONLY PROMISES WHAT THE CELL IS ACTUALLY HIDING. The task box is clamped to two
+  // lines, so on a narrow window a long task is cut and on a wide one the same task is whole —
+  // where that flips depends on the rendered width, never on a character count. So it is MEASURED:
+  // a box whose content is taller than the box it is in carries the full task in its title, and one
+  // that shows everything carries none, leaving the cell's own "double-click to edit" hint to show.
+  function tkClip(){ var b=document.getElementById('it-body'); if(!b)return;
+    b.querySelectorAll('.tk-w').forEach(function(w){
+      if(w.scrollHeight>w.clientHeight+1){ if(!w.title)w.title=(w.innerText||'').trim(); }
+      else if(w.title)w.removeAttribute('title'); });
+    // The same rule sideways. Owner is free text — "Ray/ Michelle / Assembly" is one cell's worth
+    // of people, and no column width fixes that — so a cut one names them in full. The cell's own
+    // edit hint rides along rather than being replaced: both matter and only one tooltip can show.
+    b.querySelectorAll('.c-client,.c-owner').forEach(function(td){
+      var hint=td.getAttribute('data-hint');
+      if(hint==null){ hint=td.getAttribute('title')||''; td.setAttribute('data-hint',hint); }
+      var full=td.getAttribute('data-hrs')||(td.innerText||'').trim();
+      if(td.scrollWidth>td.clientWidth+1)td.title=full+(hint?(' — '+hint):'');
+      else if(hint)td.title=hint; else td.removeAttribute('title'); }); }
+  // the cut-off point moves with the window, so the reading is retaken when the window changes
+  (function(){ var t=null; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(tkClip,160); }); })();
   function startTaskEdit(td,t){ if(!td||!t)return; if(td.querySelector('.tk-in'))return;
     var open=gridBody&&gridBody.querySelector('.tk-in');
     if(open&&open.__cancel){ open.__cancel(); td=taskTdFor(t); if(!td)return; }   // one editor at a time — cancelling re-renders, so re-find our cell
@@ -2727,7 +2786,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
-      var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
+      var feedL=t.cat?(CAT_LBL[t.cat]||t.cat):'';
+      var feed=t.cat?('<span class="feed-tag" title="'+esc(feedL)+'">'+esc(feedL)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'.'+(t.client==='—'?' No client detected — double-click the client cell to file it into a plan':'')+'">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
@@ -2741,8 +2801,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client" data-hrs="'+esc(t.client)+'" data-hrs-flag>'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
-        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
-             :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan"><div class="tk-w">'+tkTxt+bfChip+'</div><button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task"><div class="tk-w">'+tkTxt+bfChip+'</div></td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt'||t.source==='call')
@@ -2782,6 +2842,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
       sel.onchange=function(){ if(sel.value&&sel.value!==t.client)setTaskClient(t,sel.value); else renderIntake(); };
       sel.onblur=function(){ setTimeout(renderIntake,120); };
     }; });
+    tkClip();
     body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
     body.querySelectorAll('.cl-rm').forEach(function(x){ x.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
       x.onclick=function(e){ e.stopPropagation(); var c=x.getAttribute('data-c');
@@ -3628,8 +3689,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
   // a reply's chip states what it actually was: a completion, or a pickup that is not one
   function commChip(c){
     var v=classifyReply((c&&c.note)||'');
-    if(v==='done')return ' <span class="ck">✓ done signal</span>';
-    if(v==='ack')return ' <span class="ck" style="color:var(--navy)" title="Picked up — the work is not finished until they confirm it is">↗ picked up</span>';
+    if(v==='done')return ' <span class="cmk">✓ done signal</span>';
+    if(v==='ack')return ' <span class="cmk" style="color:var(--navy)" title="Picked up — the work is not finished until they confirm it is">↗ picked up</span>';
     return '';
   }
   // ---- RE-LABEL THE LEDGER (Ray, 11 Sep 2026: "please re-browse the entire brief ledger and

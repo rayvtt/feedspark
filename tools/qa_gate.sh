@@ -128,6 +128,12 @@ else
   echo "   ✗ modal-solo harness FAILED — see node tools/test_modalsolo.mjs"; FAIL=1
 fi
 
+if node tools/test_wfintake.mjs >/dev/null 2>&1; then
+  echo "   ✓ intake table: Task takes the slack, every row one height"
+else
+  echo "   ✗ intake-table harness FAILED — see node tools/test_wfintake.mjs"; FAIL=1
+fi
+
 if node tools/test_playbook_panel.mjs >/dev/null 2>&1; then
   echo "   ✓ landing vs stalling vs not-doing hold, 10–20% highlights, the retired module stays retired"
 else

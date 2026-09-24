@@ -146,6 +146,11 @@ NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
 echo "   ✓ and a ticket modal measured against the open Playbook rail clears it at 1100–1500px"
 
+echo "── validating: the intake table (Task takes the slack, rows are one height)"
+NODE_PATH=$(npm root -g) node tools/test_wfintake.mjs >/dev/null
+echo "   ✓ every <col> is still a table column, Brief renders the width it declares"
+echo "   ✓ and a cut cell names what it hides — measured at 1131px and 1500px"
+
 echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null
 echo "   ✓ the AM's name resolves to a real address or none — never a guessed one"
