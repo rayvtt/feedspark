@@ -62,6 +62,23 @@ const book = ROAS.bookKpis(brands);
 t('book KPIs sum per currency across brands, never across currencies', book.spendByCur['£'] === 41794.42 && book.spendByCur['€'] === 53253.13 && book.marketsRead === 3);
 t('a brand with zero markets read is not silently counted as "read"', book.brandsRead === 2);
 
+console.log('· a market with NO Total row (live bug, 23 Sep 2026 — Ray: "ROAS data is unavailable")');
+// A market with zero Google Ads activity in FeedHero's window returns no Total row at all, so a
+// record built from it (before the roasStore fix) carried client/market/cmpid/updated and NOTHING
+// else — no .spend, no .revenue. brandRollup's market sort read c.spend.n straight off that record
+// and threw, which the worker never caught: GET /api/roas 500'd, the page's fetch failed to parse
+// JSON, and the table showed "ROAS data is unavailable" for every brand although the sync itself
+// (roasPull writing roasidx) had succeeded for all 57 markets — a write-side success masking a
+// read-side crash. A record missing .spend must never reach here in practice (roasStore's fix),
+// but brandRollup stays defensive regardless — a shape it cannot control must never crash the read.
+const noTotalRow = { client: 'Reiss', market: 'IL', cmpid: 'reiss_il', updated: 500 };
+let threw = false;
+let brokenBrands = [];
+try { brokenBrands = ROAS.brandRollup([noTotalRow, Object.assign({ client: 'Reiss', market: 'GB', updated: 600 }, ROAS.normRow(superdryGbTotal))]); }
+catch (e) { threw = true; }
+t('a market record with no .spend/.revenue never crashes brandRollup\'s sort', !threw);
+t('that market still appears in the rollup (read, just with no ad data)', !threw && brokenBrands[0] && brokenBrands[0].markets.some((m) => m.market === 'IL'));
+
 console.log('· worker wiring');
 t('roasMcp is authenticated with its OWN secret, not TM_MCP_TOKEN', /env\.ROAS_MCP_TOKEN/.test(WK) && /env\.ROAS_MCP_URL \|\| ROAS\.ROAS_MCP_URL/.test(WK));
 t('roasPull degrades honestly before the secret is set (no_token), like tmPull', /ROAS_MCP_TOKEN not set/.test(WK) && /state: 'no_token'/.test(WK));

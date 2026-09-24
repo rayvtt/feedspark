@@ -170,7 +170,7 @@ export function brandRollup(rows) {
   });
   return Object.keys(by).sort().map((client) => {
     const b = by[client];
-    b.markets.sort((a, c) => (c.spend.n || 0) - (a.spend.n || 0));
+    b.markets.sort((a, c) => ((c.spend && c.spend.n) || 0) - ((a.spend && a.spend.n) || 0));
     b.marketsRead = b.markets.length;
     b.roasPct = blendedRoas(b.spendByCur, b.revenueByCur);
     b.avgZombiePct = b.zombieSkus ? r2(b.zombieWeighted / b.zombieSkus) : null;

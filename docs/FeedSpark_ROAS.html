@@ -193,7 +193,7 @@ window.addEventListener('load',restore);
   function bandMini(counts){ var order=['Strong','Steady','Weak','Losing'];
     return '<span class="band-mini">'+order.filter(function(b){return counts&&counts[b]}).map(function(b){ return '<i class="'+bandCls(b)+'" title="'+esc(b)+' ×'+(counts[b]||0)+'"></i>'; }).join('')+'</span>'
       + (counts?order.filter(function(b){return counts[b]}).map(function(b){return ' <span class="mstate">'+counts[b]+' '+esc(b)+'</span>'}).join('·'):''); }
-  function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'not scanned')+'</span>'; }
+  function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'no ad activity')+'</span>'; }
   function since(t){ if(!t)return '—'; var d=Math.round((Date.now()-t)/3600000); return d<1?'<1h ago':(d+'h ago'); }
 
   function loadStatus(s){
