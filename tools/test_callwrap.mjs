@@ -91,7 +91,26 @@ ok(e.text.indexOf('Confirm with your support team') > 0, 'the EDITED wording is 
 ok(e.text.indexOf('Verify if the customer support') < 0, '…and the truncated parse does not');
 ok(/^Hi Jeremy,/.test(e.text), 'it greets the contact');
 ok(e.text.indexOf('Ray') > 0, 'and signs off as whoever is drafting');
-ok(e.subject.indexOf('Hobbycraft') === 0 && /wrap-up/.test(e.subject), 'subject names the account and what it is: ' + e.subject);
+/* Ray's own wrap-up subject is "Hobbycraft x FeedSpark - SEO & AI convo - Sept24": the meeting's
+   own name plus the day. The brand is prefixed only when the title does not already carry it. */
+ok(e.subject.indexOf('Hobbycraft x FeedSpark') === 0, 'subject leads with the meeting: ' + e.subject);
+ok(/ - [A-Z][a-z]+\d{1,2}$/.test(e.subject), '…and ends on the day of the call');
+ok(e.subject.indexOf('Hobbycraft') === e.subject.lastIndexOf('Hobbycraft'),
+  'the brand is never printed twice — the meeting title already said it');
+const eBare = wrapEmail({ ...g[0], call: 'Weekly catch-up' }, rows,
+  { tone: 'consult', me: 'ray@feedspark.com', name: 'Jeremy' });
+ok(eBare.subject.indexOf('Hobbycraft x FeedSpark - Weekly catch-up') === 0,
+  'a meeting titled without the brand gets it prefixed: ' + eBare.subject);
+const eTeam = wrapEmail(g[0], rows, { tone: 'consult', me: 'ray@feedspark.com', name: '' });
+ok(/^Hi team,/.test(eTeam.text), 'a shared mailbox is greeted as the group it is, not with a bare "Hi,"');
+ok(eTeam.text.indexOf('It was great speaking to everyone on the call') > 0,
+  'and the opening is the one Ray writes');
+ok(eTeam.text.indexOf('attached as a table') < 0, 'no table promised when none is attached');
+const eTab = wrapEmail(g[0], rows, { tone: 'consult', me: 'ray@feedspark.com', table: true });
+ok(eTab.text.indexOf('attached as a table') > 0, 'and promised when one is');
+ok(eTab.text.indexOf('Confirm with your support team') > 0,
+  'the numbered list stays in the text either way — an attachment is not always shown, never '
+  + 'searchable, and never readable in a phone preview');
 ok(/1\. .*\n2\. /.test(e.text), 'the actions are numbered in the order the AM left them');
 ok(e.text.indexOf('(Matt Rogers)') > 0, 'each carries its owner');
 
@@ -130,6 +149,63 @@ ok(/document\.addEventListener\('fcc-calls'/.test(WF),
   'the rail re-renders when call notes land, rather than waiting for the next poll');
 ok(/'<option value="'\+esc\(b\)\+'"/.test(WF),
   'the picker marks brands with a call waiting, and keeps the bare brand as the option VALUE');
+
+
+console.log('\n── the action table (Ray, 24 Sep 2026: "including the screenshot")');
+/* wpWrap is pure given a measuring context, so it is lifted by name and run against a stub whose
+   every character is 7px wide: it pins the wrapping CONTRACT — at most the lines the row is built
+   for, none of them wider than what it was given, and a cut one says so.
+   It would NOT have caught the bug that shipped here, which is worth saying plainly: wpWrap did
+   exactly what it was told, and what it was told was 530px for a column 442px wide, so the action
+   text ran straight through the owner's name. Only a rendered look found it. What stops it coming
+   back is the assertion below — that the width is DERIVED from the gap to the next column and
+   never typed a second time. */
+let WP = null;
+const wS = WF.indexOf('function wpWrap(');
+if (wS > 0) {
+  const wE = WF.indexOf('\n  function wrapPng(', wS);
+  try { WP = new Function(WF.slice(wS, wE) + '\n;return wpWrap;')(); } catch (e) { WP = null; }
+}
+ok(!!WP, 'wpWrap lifts out of the page by name');
+if (WP) {
+  const ctx = { measureText: (t) => ({ width: String(t).length * 7 }) };   // 7px a character
+  const long = 'Confirm with your support team whether product videos can be supplied for the top '
+    + '500 SKUs, and if so in what format and at what cadence, before the Christmas peak';
+  const l2 = WP(ctx, long, 210, 2);
+  ok(l2.length <= 2, 'a long action is held to the two lines the row is built for');
+  ok(l2.every((x) => ctx.measureText(x).width <= 210),
+    'and NO line is wider than the column: ' + l2.map((x) => ctx.measureText(x).width).join(' / '));
+  ok(/\u2026$/.test(l2[l2.length - 1]), 'the last line says it was cut');
+  eq(WP(ctx, 'Short one', 210, 2), ['Short one'], 'a short action is one line, never ellipsised');
+  ok(WP(ctx, 'A medium length action that runs past one line here', 210, 2).length === 2,
+    'a medium one takes the second line rather than being cut');
+}
+ok(/WD\.task=X\.own-GAP-X\.task/.test(WF),
+  "the action column's width is DERIVED from the gap to the owner column");
+ok(!/WD=\{ *task:\d/.test(WF), 'no hand-written width for it — that is how the two came to disagree');
+
+console.log('\n── the table reaches the client, and the board it is read from');
+ok(/window\.FCCPlanRow=function\(client,task\)/.test(WF),
+  'the rail reads the plan row through a named bridge — the board is another script block');
+ok(/normTask\(r\.task\)===want/.test(WF),
+  "matched on EXACT wording: a call's actions share a prefix, and a fuzzy match would put one "
+  + "action's due date beside another's text in a client email");
+ok(/orig:r\.getAttribute\('data-orig'\)/.test(WF),
+  'the row keeps the parsed wording apart from the wording the AM is typing, so rewriting a '
+  + 'sentence never costs the row its category, due date or status');
+ok(/atts:\(b64&&!big\)\?\[\{name:'call-actions\.png'/.test(WF),
+  'the FCC draft carries the table as an attachment on the existing askdraft rails');
+ok(/big=b64\.length>1200000/.test(WF) && /too large to attach/.test(WF),
+  'and a table too big for the rails is dropped and SAID to be dropped, rather than the whole '
+  + 'draft being refused for the sake of the picture');
+ok(/id="cw-dl"/.test(WF) && /a\.download=/.test(WF),
+  'and ⬇ Table PNG saves it for the Gmail path, where a compose link carries text and nothing else');
+ok(/localStorage\.setItem\('fcc-cw-table'/.test(WF),
+  'whether to attach it is a device preference, not shared state');
+const PNGSRC = WF.slice(WF.indexOf('function wrapPng('), WF.indexOf('  function wrapPrev('));
+ok(/Private/.test(PNGSRC), 'the image carries the house footer');
+ok(!/Source|Brief this|stat-sel|it-cb/.test(PNGSRC),
+  "and none of the board's internal chrome — no checkbox, Source or Brief column in the drawing");
 
 console.log('\n' + (pass + fail) + ' assertions — ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

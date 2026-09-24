@@ -1098,6 +1098,10 @@ aside.ck[hidden]{display:none}
   max-height:30vh;overflow:auto}
 .cw-subj{font-size:12px;font-weight:900;margin-bottom:6px}
 .cw-body{margin:0;font:inherit;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink,#333)}
+.cw-tab{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--muted,#8a94a0);cursor:pointer}
+.cw-shot{margin-top:10px;border:1px solid var(--line,#E6E6E6);border-radius:10px;overflow:auto;max-height:26vh;background:#fff}
+.cw-shot img{display:block;width:100%;height:auto}
 .cw-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .cw-stat{font-size:11px;font-weight:800;color:var(--muted,#8a94a0)}
 @media(max-width:760px){.cw-own{width:80px}.cw-rows{max-height:40vh}}
@@ -4909,6 +4913,24 @@ aside.ck[hidden]{display:none}
         try{ document.dispatchEvent(new CustomEvent('fcc-calls')); }catch(e){} }
     }).catch(function(){}); })();
   window.FCCCalls=function(){ return CALLS.slice(); };
+  /* THE WRAP-UP TABLE READS THE PLAN, NOT THE PARSE (Ray, 24 Sep 2026, sending the wrap-up he had
+     written by hand: "this is the type of wrap-up pre-written by FCC that i was looking for
+     (including the screenshot)"). The screenshot in it is THIS BOARD: the actions with the feed
+     category, owner, due date and status they now carry, not the bare lines a transcript produced.
+     Those live on the intake row the action was adopted into, which is in this script block and not
+     the rail's, so it is handed over by name like FCCCalls / FCCBrief / FCCSolo.
+     EXACT wording only — sameTask is fuzzy and one call's actions routinely share a prefix
+     ("Contact Support Department: …", "Consult Alex J: …"), so a fuzzy match would put one action's
+     due date beside another's text in an email going to the client. */
+  window.FCCPlanRow=function(client,task){
+    var want=normTask(task||''); if(!want)return null;
+    var hit=null;
+    allIntake().forEach(function(r){ if(hit||r.client!==client)return;
+      if(normTask(r.task)===want)hit=r; });
+    if(!hit)return null;
+    return { catLbl:hit.cat?(CAT_LBL[hit.cat]||hit.cat):'', owner:hit.owner||'',
+             due:dueDisplay(hit), status:String(hit.s||(hit.b==='done'?'Done':'Open')),
+             bucket:hit.b||bucketOf(hit.s||'') }; };
 
   // ---- individual access bootstrap: learn my scope, mirror the server's gate in the chrome ----
   // (the data itself is already filtered per signin by the worker — this locks the roster,
@@ -5623,24 +5645,41 @@ aside.ck[hidden]{display:none}
     var when = group && group.when ? new Date(group.when) : null;
     var dateW = when ? when.toLocaleDateString('en-GB',{day:'numeric',month:'long'}) : '';
     var title = (group && group.call) || 'our call';
-    var subject = (group && group.client ? group.client + ' · ' : '') + 'call wrap-up'
-      + (dateW ? ' — ' + dateW : '');
-    var hi = opts.name ? 'Hi ' + opts.name + ',' : 'Hi,';   // wrapGreet decides when there IS a name
+    /* THE SUBJECT IS THE MEETING'S OWN NAME plus the day, which is how Ray writes one:
+       "Hobbycraft x FeedSpark - SEO & AI convo - Sept24". A Gemini notes email is already titled
+       with the meeting, and that title usually carries both names, so the brand is prefixed ONLY
+       when the title does not already say it - a subject reading "Hobbycraft x FeedSpark -
+       Hobbycraft x FeedSpark - ..." is the kind of thing that makes an automated mail look
+       automated. The month is the locale's own short form, not a hand-written list: in a subject
+       line there is no column to overflow, so "Sept" is simply how en-GB writes September. */
+    var stamp = when ? (when.toLocaleDateString('en-GB',{month:'short'}) + when.getDate()) : '';
+    var cl = String((group && group.client) || '');
+    var named = cl && wrapKey(title).indexOf(wrapKey(cl)) >= 0;
+    var subject = ((named || !cl) ? title : (cl + ' x FeedSpark - ' + title))
+      + (stamp ? ' - ' + stamp : '');
+    /* "Hi team," where wrapGreet found no person. A shared mailbox is a group, and a bare "Hi,"
+       reads as a mail nobody addressed - which is exactly what it would be. */
+    var hi = opts.name ? 'Hi ' + opts.name + ',' : 'Hi team,';
     var lines = keep.map(function(r, i){
       var o = String(r.owner || '').trim();
       return (i + 1) + '. ' + String(r.task).trim() + (o ? '  (' + o + ')' : '');
     });
+    /* The table rides along as an image (opts.table), the way Ray pasted one by hand. The list
+       stays in the text REGARDLESS: an attachment is not always shown, never searchable, and
+       never readable on a phone's preview - the image is the nice version of the same facts,
+       never the only copy of them. */
+    var att = opts.table ? '\nThe same actions are attached as a table.' : '';
     var body;
     if (opts.tone === 'direct') {
       body = [hi, '',
-        'Wrap-up from ' + title + (dateW ? ' on ' + dateW : '') + '. Actions below.', '',
+        'Wrap-up from ' + title + (dateW ? ' on ' + dateW : '') + '. Actions below.' + att, '',
         lines.join('\n'), '',
         'Anything wrong or missing, reply and I will correct it.', '',
         who ? who : ''].join('\n');
     } else {
       body = [hi, '',
-        'Thanks for your time on ' + title + (dateW ? ' (' + dateW + ')' : '')
-          + '. Here is what we captured, so we are both working from the same list.', '',
+        'It was great speaking to everyone on the call' + (dateW ? ' on ' + dateW : '')
+          + '. Please find below the actions that were agreed and discussed.' + att, '',
         'WHAT WE AGREED', lines.join('\n'), '',
         'We will come back to you on these. If we have mis-heard anything or missed something you '
           + 'expected to see, just reply and I will put it right.', '',
@@ -6087,7 +6126,10 @@ aside.ck[hidden]{display:none}
      to send it, and obviously draft directly on FCC or on Gmail."  The tidying is the point —
      a parsed action is an internal instruction and several are notes to ourselves, so every row
      is editable and droppable and the email is built from what SURVIVES, never from the parse. */
-  var CWMID='',CWTONE='consult',CWTO='';
+  var CWMID='',CWTONE='consult',CWTO='',CWPNG=null;
+  /* whether to attach the table is a preference about one screen, so it lives on the device like
+     every other one here — not in shared state, which is for the work itself */
+  var CWTAB=true; try{ CWTAB=localStorage.getItem('fcc-cw-table')!=='0'; }catch(e){}
   function wrapOpen(mid){
     var g=null; WRAPG.forEach(function(x){ if(x.mid===mid)g=x; });
     if(!g)return;
@@ -6103,7 +6145,7 @@ aside.ck[hidden]{display:none}
        +'decide whether to send.</p>'
       +'<div class="cw-rows" id="cw-rows">'
       +g.actions.map(function(a,i){
-          return '<div class="cw-row" data-i="'+i+'">'
+          return '<div class="cw-row" data-i="'+i+'" data-orig="'+esc(a.task)+'">'
             +'<label class="cw-on"><input type="checkbox" checked aria-label="Include this action"></label>'
             +'<input class="cw-task" value="'+esc(a.task)+'" aria-label="Action '+(i+1)+'">'
             +'<input class="cw-own" value="'+esc(a.owner)+'" placeholder="owner" aria-label="Owner for action '+(i+1)+'">'
@@ -6114,12 +6156,16 @@ aside.ck[hidden]{display:none}
        +'<span class="cw-tones">Tone '
          +'<button type="button" class="cw-tone'+(CWTONE==='consult'?' on':'')+'" data-tone="consult">Collaborative</button>'
          +'<button type="button" class="cw-tone'+(CWTONE==='direct'?' on':'')+'" data-tone="direct">Direct</button>'
-       +'</span></div>'
+       +'</span>'
+       +'<label class="cw-tab"><input type="checkbox" id="cw-tab"'+(CWTAB?' checked':'')+'> Attach the action table</label>'
+       +'</div>'
       +'<div class="cw-prev"><div class="cw-subj" id="cw-subj"></div><pre class="cw-body" id="cw-body"></pre></div>'
+      +'<div class="cw-shot" id="cw-shot" hidden><img id="cw-img" alt="The actions from this call, as a table"></div>'
       +'<div class="cw-act">'
        +'<button type="button" class="btn orange" id="cw-draft">✉ Create Gmail draft</button>'
        +'<button type="button" class="btn" id="cw-gmail">↗ Open in Gmail</button>'
        +'<button type="button" class="btn" id="cw-copy">⧉ Copy</button>'
+       +'<button type="button" class="btn" id="cw-dl" title="Save the table — paste it into the mail yourself, the way you did by hand">⬇ Table PNG</button>'
        +'<span class="cw-stat" id="cw-stat"></span></div>';
     if(window.FCCSolo)window.FCCSolo('cw-scrim');
     $('#cw-scrim').classList.add('on');
@@ -6131,11 +6177,121 @@ aside.ck[hidden]{display:none}
     return Array.prototype.map.call(document.querySelectorAll('#cw-rows .cw-row'),function(r){
       return { on:r.querySelector('.cw-on input').checked,
                task:r.querySelector('.cw-task').value,
-               owner:r.querySelector('.cw-own').value };
+               owner:r.querySelector('.cw-own').value,
+               /* the wording the transcript produced, kept apart from the wording the AM is
+                  typing: the plan row is found by the ORIGINAL, so rewriting the sentence for
+                  the client never costs the row its category, due date or status */
+               orig:r.getAttribute('data-orig')||'' };
     });
   }
+  /* ---- THE ACTION TABLE, AS AN IMAGE ------------------------------------------------------
+     Ray, 24 Sep 2026, sending the wrap-up he had written by hand: "this is the type of wrap-up
+     pre-written by FCC that i was looking for ( including the screenshot )". The screenshot in it
+     was the Intake board, pasted in. So the draft carries one — DRAWN rather than screenshotted,
+     which matters three ways: it is the same on every screen and theme, it cannot capture a
+     colleague's rows that happen to be on screen, and it carries none of the board's internal
+     chrome. No checkbox, no Source or Brief column, no status dropdown a client cannot use — and
+     no Client column, because the subject line already says whose call this was and every row
+     would repeat it. The house canvas style is Label Guard's (2x, white, orange rule, Lato). */
+  var WPCOL = { done:'#15803D', progress:'#C96A12', briefed:'#7A5AA8', client:'#1A365D',
+                hold:'#8a94a0', open:'#8a94a0' };
+  function wrapPlan(g,r){
+    if(!r||!window.FCCPlanRow)return null;
+    try{ return window.FCCPlanRow(g.client, r.orig||r.task); }catch(e){ return null; }
+  }
+  /* wrap a sentence to the column, measured — never a character count, since the same 60
+     characters are a different width in Lato depending on what they are */
+  function wpWrap(ctx,t,w,max){
+    var words=String(t||'').split(/\s+/), out=[], line='';
+    for(var i=0;i<words.length;i++){
+      var test=line?(line+' '+words[i]):words[i];
+      if(ctx.measureText(test).width<=w||!line){ line=test; continue; }
+      out.push(line); line=words[i];
+      if(out.length===max-1)break;
+    }
+    if(out.length<max){
+      if(out.length===max-1&&line){
+        var rest=words.slice(words.indexOf(line.split(' ')[0])).join(' ');
+        line=(ctx.measureText(rest).width<=w)?rest:line;
+      }
+      if(line)out.push(line);
+    }
+    if(out.length===max){
+      var last=out[max-1];
+      if(ctx.measureText(String(t)).width>w*max){
+        while(last.length>1&&ctx.measureText(last+'…').width>w)last=last.slice(0,-1);
+        out[max-1]=last+'…';
+      }
+    }
+    return out;
+  }
+  function wrapPng(g,rows){
+    var keep=(rows||[]).filter(function(r){ return r&&r.on!==false&&String(r.task||'').trim(); });
+    if(!keep.length)return null;
+    var W=980, PADX=28, c0=document.createElement('canvas'), gx0=c0.getContext('2d');
+    if(!gx0)return null;
+    /* the columns are laid out right to left from the page edge, and every width is DERIVED from
+       the gap to its neighbour — a hand-written width is how the action text came to be wrapped at
+       530px inside a 442px column and ran straight through the owner's name */
+    var GAP=14, R=W-PADX;
+    var X={}, WD={};
+    WD.stat=130; X.stat=R-WD.stat;
+    WD.due=70;   X.due=X.stat-GAP-WD.due;
+    WD.own=124;  X.own=X.due-GAP-WD.own;
+    X.feed=PADX; WD.feed=118;
+    X.task=X.feed+WD.feed+GAP; WD.task=X.own-GAP-X.task;
+    gx0.font='400 13.5px Lato, Arial, sans-serif';
+    var lines=keep.map(function(r){ return wpWrap(gx0,String(r.task).trim(),WD.task,2); });
+    var top=104, rh=lines.map(function(l){ return l.length>1?52:34; });
+    var H=top+12+rh.reduce(function(a,b){return a+b;},0)+46;
+    var c=document.createElement('canvas'); c.width=W*2; c.height=H*2;
+    var x=c.getContext('2d'); x.scale(2,2);
+    x.fillStyle='#fff'; x.fillRect(0,0,W,H);
+    x.fillStyle='#ED6F0B'; x.fillRect(0,0,W,5);
+    x.textAlign='left';
+    x.fillStyle='#333'; x.font='800 17px Lato, Arial, sans-serif';
+    x.fillText(String(g.call||'Client call'),PADX,40);
+    x.font='400 12.5px Lato, Arial, sans-serif'; x.fillStyle='#8a94a0';
+    var dW=g.when?new Date(g.when).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}):'';
+    x.fillText(String(g.client||'')+(dW?(' · '+dW):'')+' · '+keep.length+' action'+(keep.length===1?'':'s'),PADX,60);
+    x.font='800 10.5px Lato, Arial, sans-serif'; x.fillStyle='#8a94a0';
+    x.fillText('AREA',X.feed,top); x.fillText('ACTION',X.task,top);
+    x.fillText('OWNER',X.own,top); x.fillText('DUE',X.due,top); x.fillText('STATUS',X.stat,top);
+    x.strokeStyle='#E6E6E6'; x.beginPath(); x.moveTo(PADX,top+8); x.lineTo(W-PADX,top+8); x.stroke();
+    var y=top+8;
+    keep.forEach(function(r,i){
+      var pl=wrapPlan(g,r), base=y+22;
+      // the AM's own edits always win over the plan row: the workbench is where they tidy
+      var own=String(r.owner||'').trim()||(pl&&pl.owner)||'—';
+      var due=(pl&&pl.due)||'—', st=(pl&&pl.status)||'', bk=(pl&&pl.bucket)||'open';
+      var area=(pl&&pl.catLbl)||'';
+      if(area){ x.font='800 9.5px Lato, Arial, sans-serif';
+        var aw=Math.min(x.measureText(area.toUpperCase()).width+14,WD.feed);
+        x.fillStyle='rgba(245,166,35,.12)'; x.strokeStyle='rgba(245,166,35,.30)';
+        x.beginPath(); x.rect(X.feed,base-11,aw,17); x.fill(); x.stroke();
+        x.fillStyle='#B1550A'; x.save(); x.beginPath(); x.rect(X.feed,base-12,aw,19); x.clip();
+        x.fillText(area.toUpperCase(),X.feed+7,base+1); x.restore(); }
+      x.fillStyle='#333'; x.font='400 13.5px Lato, Arial, sans-serif';
+      lines[i].forEach(function(ln,li){ x.fillText(ln,X.task,base+li*18); });
+      x.fillStyle='#8a94a0'; x.font='700 12px Lato, Arial, sans-serif';
+      var o2=own; while(o2.length>1&&x.measureText(o2).width>WD.own)o2=o2.slice(0,-1);
+      x.fillText(o2+(o2===own?'':'…'),X.own,base);
+      x.fillStyle='#4a4a4a'; x.fillText(due,X.due,base);
+      if(st){ x.font='800 10px Lato, Arial, sans-serif'; x.fillStyle=WPCOL[bk]||'#8a94a0';
+        x.fillText(st.toUpperCase(),X.stat,base); }
+      y+=rh[i];
+      x.strokeStyle='#F0F0EE'; x.beginPath(); x.moveTo(PADX,y+8); x.lineTo(W-PADX,y+8); x.stroke();
+    });
+    x.fillStyle='#8a94a0'; x.font='400 11px Lato, Arial, sans-serif';
+    x.fillText('FeedSpark · Private \u0026 Confidential',PADX,H-16);
+    return c.toDataURL('image/png');
+  }
   function wrapPrev(g){
-    var e=wrapEmail(g,wrapRows(),{tone:CWTONE,me:ME_NAME,name:wrapGreet(CWTO)});
+    var rows=wrapRows();
+    CWPNG=CWTAB?wrapPng(g,rows):null;
+    var sh=$('#cw-shot'), im=$('#cw-img');
+    if(sh){ sh.hidden=!CWPNG; if(im&&CWPNG)im.src=CWPNG; }
+    var e=wrapEmail(g,rows,{tone:CWTONE,me:ME_NAME,name:wrapGreet(CWTO),table:!!CWPNG});
     var sj=$('#cw-subj'),bd=$('#cw-body');
     if(sj)sj.textContent=e.subject;
     if(bd)bd.textContent=e.text;
@@ -6156,6 +6312,18 @@ aside.ck[hidden]{display:none}
         wrapPrev(g); };
     });
     $('#cw-to').addEventListener('input',function(){ CWTO=this.value.trim(); });
+    $('#cw-tab').onchange=function(){ CWTAB=this.checked;
+      try{ localStorage.setItem('fcc-cw-table',CWTAB?'1':'0'); }catch(x){}
+      wrapPrev(g); };
+    /* the same image, saved — for the ↗ Gmail path, where a compose deep link can carry text and
+       nothing else, so the AM pastes it in exactly as Ray did by hand */
+    $('#cw-dl').onclick=function(){
+      var d=CWPNG||wrapPng(g,wrapRows());
+      if(!d){ wrapStat('Nothing ticked to put in the table.'); return; }
+      var a=document.createElement('a'); a.href=d;
+      a.download=(String(g.client||'call').replace(/[^\w-]+/g,'-')+'-actions.png');
+      document.body.appendChild(a); a.click(); a.remove();
+      wrapStat('Saved — paste it under the greeting.'); };
     $('#cw-copy').onclick=function(){ var e=wrapPrev(g);
       try{navigator.clipboard.writeText(e.subject+'\n\n'+e.text);}catch(x){}
       wrapStat('Copied — paste it wherever you send from.'); };
@@ -6164,9 +6332,14 @@ aside.ck[hidden]{display:none}
     $('#cw-draft').onclick=function(){
       var e=wrapPrev(g), to=(CWTO||'').trim();
       if(to.indexOf('@')<1){ wrapStat('Add the client’s address first.'); $('#cw-to').focus(); return; }
-      wrapStat('Queueing the draft…');
+      /* the rails cap attachments at ~1.5MB of base64, which a call with dozens of actions can
+         reach. Rather than letting the whole draft be refused for the sake of the picture, the
+         table is dropped and SAID to be dropped — the actions themselves are in the text. */
+      var b64=CWPNG?CWPNG.split(',')[1]:'', big=b64.length>1200000;
+      wrapStat(big?'The table is too large to attach — drafting without it, use ⬇ Table PNG.':'Queueing the draft…');
       fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
-        body:JSON.stringify({to:to,subject:e.subject,text:e.text,client:g.client,keys:['callwrap|'+g.mid]})})
+        body:JSON.stringify({to:to,subject:e.subject,text:e.text,client:g.client,keys:['callwrap|'+g.mid],
+          atts:(b64&&!big)?[{name:'call-actions.png',b64:b64}]:[]})})
         .then(function(r){return r.json();}).then(function(d){
           if(d&&d.error){ wrapStat('Could not queue it: '+d.error); return; }
           wrapMark(g,to,e.n,'It is in your Gmail drafts — nothing was sent.');
