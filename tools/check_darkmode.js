@@ -41,9 +41,11 @@ const TMDATA = (() => {
     health: { read: 1, total: 2, partial: 0, oldest: Date.now(), newest: Date.now(), complete: false, staleHours: 0 },
     scoped: false, queuesTotal: 2 });
 })();
+const ROAS_STUB = require('./roas_stub.js').stubLines();   // /roas renders its book off KV — synthetic payload so the dark pass meets its charts and table
 const STUB = `try{localStorage.setItem('fcc-theme','dark');}catch(e){}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
+${ROAS_STUB}
  if(url.indexOf('/api/presence')>=0)return j({ok:true,me:'ray@feedspark.com',owner:true,now:Date.now(),users:[],roster:[]});
  if(url.indexOf('/api/access')>=0)return j({ok:true,email:'ray@feedspark.com',owner:true,clients:null,modules:null});
  if(url.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:0,warn:0,pt:{crit:0,warn:0},gr:{crit:0,warn:0},clients:{}});

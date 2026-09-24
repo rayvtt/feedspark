@@ -25,6 +25,10 @@ const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
+// /roas reads its book from /api/roas (KV, nothing committed) — the synthetic stub in
+// tools/roas_stub.js lets the scorecards, trend, movers and drill table render so the overflow
+// and parity rules actually meet them
+const ROAS_STUB = require('./roas_stub.js').stubLines();
 const PAGES = fs.readdirSync(D).filter((f) => /^FeedSpark_.*\.html$/.test(f) && !/Strategy_Review|Deck/.test(f))
   .filter((f) => fs.readFileSync(path.join(D, f), 'utf8').indexOf('tb-modules') >= 0 || f === 'FeedSpark_Command_Center.html');
 // FS Task Manager reads its book from /api/taskmanager (the worker pulls it out of the reports
@@ -54,6 +58,7 @@ const TMDATA = (() => {
 })();
 const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
+${ROAS_STUB}
  if(url.indexOf('/api/presence')>=0)return j({ok:true,me:'ray@feedspark.com',owner:true,now:Date.now(),users:[{e:'ray@feedspark.com',n:'Ray',p:'/workflow',t:Date.now()},{e:'steven@feedspark.com',n:'Steven',p:'/',t:Date.now()}],roster:[]});
  if(url.indexOf('/api/access')>=0)return j({ok:true,email:'ray@feedspark.com',owner:true,clients:null,modules:null});
  if(url.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:1,warn:2,pt:{crit:0,warn:1},gr:{crit:0,warn:0},clients:{}});
