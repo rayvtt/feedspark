@@ -2346,27 +2346,102 @@ async function route(request, env, ctx) {
       const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
       if (url.searchParams.get('pull')) {
         if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
-        const s = await roasPull(env, { pulls: Math.min(20, Math.max(0, +url.searchParams.get('pulls') || ROAS.ROAS_PULLS)) });
+        // capped at 6: each market is three MCP calls + four KV ops and a request has ~50
+        // subrequests — the page loops this call until the roster is read rather than asking
+        // for more per call
+        const s = await roasPull(env, { pulls: Math.min(6, Math.max(0, +url.searchParams.get('pulls') || ROAS.ROAS_PULLS)) });
         logActivity(ctx, env, request, 'roas-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
         return json({ ok: s.state === 'ok', status: pubStatus(s) });
       }
       const status = pubStatus(await env.EDITS.get('roasstatus', 'json'));
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const winKeys = ROAS.ROAS_WINDOWS.map((w) => w.k);
+      const winOf = (v) => (winKeys.indexOf(v) >= 0 ? v : ROAS.ROAS_DEFAULT_WIN);
       const one = url.searchParams.get('client');
       if (one) {
-        if (!(acc.owner || clientMatch(acc.clients, one))) return json({ ok: false, error: 'out of scope' }, 403);
+        // ?client=&market=&win= → ONE market's category tree for that window (the table's
+        // drill-down fetches a market as it is opened — a 30-market brand is never sent whole);
+        // ?client= alone → every market's record trimmed to its Totals + history (v1 shape kept
+        // for the dossier: markets[<MKT>] = record)
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
         const markets = ROAS.rosterOf(one);
         if (!markets.length) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+        const mkt = url.searchParams.get('market');
+        const win = winOf(url.searchParams.get('win'));
+        if (mkt) {
+          const m = markets.find((x) => x.market === mkt);
+          if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+          const r = await env.EDITS.get('roas:' + m.cmpid, 'json');
+          if (!r) return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, win, read: false, total: null, tree: [], n: 0, updated: null, status });
+          // v1 record: {total, categories} flat = the 30-day read
+          const w = r[win] || (win === ROAS.ROAS_DEFAULT_WIN && r.categories ? { total: r.total, categories: r.categories } : null);
+          const cats = (w && w.categories) || [];
+          return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, win, read: !!w, total: (w && w.total) || null, tree: ROAS.catTree(cats), n: cats.length, updated: r.updated || null, hist: (r.hist || []).slice(-ROAS.ROAS_SPARK_DAYS), status });
+        }
         const recs = {};
-        for (const m of markets) { const r = await env.EDITS.get('roas:' + m.cmpid, 'json'); if (r) recs[m.market] = r; }
+        for (const m of markets) {
+          const r = await env.EDITS.get('roas:' + m.cmpid, 'json');
+          if (!r) continue;
+          const o = { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, hist: (r.hist || []).slice(-ROAS.ROAS_SPARK_DAYS) };
+          ROAS.ROAS_WINDOWS.forEach((w) => { o[w.k] = r[w.k] ? { total: r[w.k].total, n: (r[w.k].categories || []).length } : (w.k === ROAS.ROAS_DEFAULT_WIN && r.total ? { total: r.total, n: (r.categories || []).length } : null); });
+          // the v1 fields the dossier read
+          o.total = (o[ROAS.ROAS_DEFAULT_WIN] && o[ROAS.ROAS_DEFAULT_WIN].total) || null;
+          recs[m.market] = o;
+        }
         return json({ ok: true, client: one, roster: markets.length, read: Object.keys(recs).length, markets: recs, status });
       }
+      // the book — ONE KV get. ?brand= narrows every figure to that brand (&market= to one
+      // market) so the page's scope switch is a refetch of the same shape, never a second
+      // rollup written in the page; every window's rollup, the per-currency daily series and
+      // the movers are computed here by the engine the harness tests.
       const idx = (await env.EDITS.get('roasidx', 'json')) || {};
-      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
-      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client));
-      const brands = ROAS.brandRollup(rows);
-      const book = ROAS.bookKpis(brands);
-      const rosterN = ROAS.rosterList().filter((m) => inScope(m.client)).length;
-      return json({ ok: true, brands, book, tracked: rows.length, roster: rosterN, status });
+      const brandQ = url.searchParams.get('brand'), mktQ = url.searchParams.get('market');
+      if (brandQ && !inScope(brandQ)) return json({ ok: false, error: 'out of scope' }, 403);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client) && (!brandQ || r.client === brandQ) && (!mktQ || r.market === mktQ));
+      const brands = {}, book = {}, series = {}, moversBy = {};
+      const curs = Array.from(new Set(rows.map((r) => r.cur || ROAS.rowCur(ROAS.windowTotal(r, ROAS.ROAS_DEFAULT_WIN))).filter(Boolean)));
+      winKeys.forEach((k) => {
+        brands[k] = ROAS.brandRollup(rows, k);
+        book[k] = ROAS.bookKpis(brands[k]);
+        series[k] = { '*': ROAS.seriesFor(rows, k, null) };
+        curs.forEach((c) => { series[k][c] = ROAS.seriesFor(rows, k, c); });
+        moversBy[k] = ROAS.movers(rows, k, ROAS.ROAS_DELTA_BACK);
+      });
+      const rosterN = ROAS.rosterList().filter((m) => inScope(m.client) && (!brandQ || m.client === brandQ) && (!mktQ || m.market === mktQ)).length;
+      const rosterBrands = Object.keys(ROAS.ROAS_ROSTER).filter(inScope).map((c) => ({ client: c, markets: ROAS.ROAS_ROSTER[c].map((m) => m.market) }));
+      return json({ ok: true, wins: ROAS.ROAS_WINDOWS, defaultWin: ROAS.ROAS_DEFAULT_WIN, back: ROAS.ROAS_DELTA_BACK, brands, book, markets: rows.map(ROAS.marketView), series, movers: moversBy, curs, tracked: rows.length, roster: rosterN, rosterBrands, scope: { brand: brandQ || null, market: mktQ || null }, status });
+    }
+
+    // Google Ads' "segment" — FeedHero can cut one market's read by Brand / Gender / Price
+    // group as well as Category, but only as a live query (the pull stores Category alone,
+    // three windows already cost three calls). One MCP call per (market, aggregation, period),
+    // KV-cached six hours, scoped like the read above, the roster the only companies it will
+    // ever ask for.
+    if (path === '/api/roas/live' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const cmpid = String(url.searchParams.get('cmpid') || '');
+      const who2 = ROAS.cmpidBrand(cmpid);
+      if (!who2) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+      if (!(acc.owner || clientMatch(acc.clients, who2.client))) return json({ ok: false, error: 'out of scope' }, 403);
+      const AGGS = ['Brand', 'Gender', 'Price_group', 'Category'];
+      const agg = AGGS.indexOf(url.searchParams.get('agg')) >= 0 ? url.searchParams.get('agg') : 'Brand';
+      const win = ROAS.ROAS_WINDOWS.find((w) => w.k === url.searchParams.get('win')) || ROAS.ROAS_WINDOWS.find((w) => w.k === ROAS.ROAS_DEFAULT_WIN);
+      const key = 'roaslive:' + cmpid + ':' + agg + ':' + win.k;
+      const cached = await env.EDITS.get(key, 'json');
+      if (cached && cached.at && Date.now() - cached.at < 6 * 3600000 && !url.searchParams.get('fresh')) return json(Object.assign({ ok: true, cached: true }, cached));
+      if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+      try {
+        const mcp = roasMcp(env, fetch);
+        try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+        const payload = await mcp.call('roas_dashboard', { company: cmpid, period: win.period, aggregation: agg, page_size: 120, sort: 'spend', order: 'desc' });
+        const split = ROAS.splitClientRows(TMM.rowsOf(payload), 120);
+        const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length };
+        try { await env.EDITS.put(key, JSON.stringify(out), { expirationTtl: 86400 }); } catch (e) {}
+        logActivity(ctx, env, request, 'roas-live-segment', cmpid + ' ' + agg + ' ' + win.k);
+        return json(Object.assign({ ok: true, cached: false }, out));
+      } catch (e) {
+        return json({ ok: false, error: String((e && e.message) || e).slice(0, 160) }, 502);
+      }
     }
 
     if (path === '/api/gmail/intake' && request.method === 'GET') {
@@ -3300,19 +3375,29 @@ function roasMcp(env, fetchFn) {
   };
 }
 
-async function roasStore(env, cmpid, client, market, normalized) {
-  const idx = (await env.EDITS.get('roasidx', 'json')) || {};
-  // A market with no Google Ads activity in FeedHero's window returns no Total row at all
-  // (split.total is null) — never store a record missing spend/revenue/band: normRow({}) gives
-  // the same safe, fully-shaped zero-reading every other market's record carries, distinguishable
-  // from a real zero-spend reading only by band staying null (no reading, never "Losing").
-  const totalRec = normalized.total || ROAS.normRow({ cmpid, category: 'Total' });
-  const rec = Object.assign({ client, market, cmpid, updated: Date.now() }, totalRec);
-  const sig = ROAS.sigOf(Object.assign({}, rec, { updated: 0 }));
-  if (idx[cmpid] && idx[cmpid].sig === sig) return { changed: false };
-  try { await env.EDITS.put('roas:' + cmpid, JSON.stringify({ client, market, cmpid, total: normalized.total, categories: normalized.categories, updated: rec.updated })); }
+// wins = { w7: {total, categories}, w30: …, w90: … } as splitClientRows returns them per window.
+// A market with no Google Ads activity in FeedHero's window returns no Total row at all
+// (split.total is null) — never store a record missing spend/revenue/band: normRow({}) gives
+// the same safe, fully-shaped zero-reading every other market's record carries, distinguishable
+// from a real zero-spend reading only by band staying null (no reading, never "Losing").
+// HISTORY rides on the record (roas:<cmpid>.hist, ROAS_HIST_DAYS) and the last ROAS_SPARK_DAYS
+// on the index entry — the trailing figure AS READ EACH DAY, one point a day (same-day replace),
+// which is what the page's trend, sparklines, deltas and movers read. idx is passed in (read
+// ONCE per pull) and written after every market so a firing cut short keeps what it read.
+async function roasStore(env, m, wins, now, idx) {
+  const cmpid = m.cmpid;
+  const totals = {};
+  ROAS.ROAS_WINDOWS.forEach((w) => { totals[w.k] = (wins[w.k] && wins[w.k].total) || ROAS.normRow({ cmpid, category: 'Total' }); });
+  let prev = null;
+  try { prev = await env.EDITS.get('roas:' + cmpid, 'json'); } catch (e) { prev = null; }
+  const hist = ROAS.histAdd((prev && prev.hist) || [], ROAS.dayKey(now), totals, ROAS.ROAS_HIST_DAYS);
+  const entry = ROAS.idxEntry({ client: m.client, market: m.market, cmpid, updated: now }, totals, hist);
+  if (idx[cmpid] && idx[cmpid].sig === entry.sig && idx[cmpid].day === entry.day) return { changed: false };
+  const rec = { client: m.client, market: m.market, cmpid, updated: now, hist };
+  ROAS.ROAS_WINDOWS.forEach((w) => { rec[w.k] = { total: (wins[w.k] && wins[w.k].total) || null, categories: (wins[w.k] && wins[w.k].categories) || [] }; });
+  try { await env.EDITS.put('roas:' + cmpid, JSON.stringify(rec)); }
   catch (e) { return { changed: false, error: 'kv put failed' }; }
-  idx[cmpid] = Object.assign({}, rec, { sig });
+  idx[cmpid] = entry;
   try { await env.EDITS.put('roasidx', JSON.stringify(idx)); } catch (e) {}
   return { changed: true };
 }
@@ -3330,14 +3415,21 @@ async function roasPull(env, opts) {
     if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
     const roster = ROAS.rosterList();
     const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? ROAS.ROAS_PULLS : opts.pulls, now);
+    const idx = (await env.EDITS.get('roasidx', 'json')) || {};
     let changed = 0;
     for (const m of plan) {
-      const payload = await mcp.call('roas_dashboard', { company: m.cmpid, page_size: 200, sort: 'spend', order: 'desc' });
-      const rows = TMM.rowsOf(payload);
-      const split = ROAS.splitClientRows(rows);
-      const r = await roasStore(env, m.cmpid, m.client, m.market, split);
+      // three reads per market — one per window the page switches between (7 / 30 / 90 days);
+      // FeedHero reports trailing windows only, so a period switch is a different read, not a
+      // re-cut of the same rows
+      const wins = {};
+      for (const w of ROAS.ROAS_WINDOWS) {
+        const payload = await mcp.call('roas_dashboard', { company: m.cmpid, period: w.period, page_size: 200, sort: 'spend', order: 'desc' });
+        wins[w.k] = ROAS.splitClientRows(TMM.rowsOf(payload), w.k === ROAS.ROAS_DEFAULT_WIN ? ROAS.ROAS_KEEP_CATS : ROAS.ROAS_KEEP_CATS_ALT);
+      }
+      const r = await roasStore(env, m, wins, now, idx);
       if (r.changed) changed++;
-      st.rot[m.cmpid] = now; st.pulled.push(m.client + ' ' + m.market + (split.total ? '' : ' (no Total row)'));
+      const t30 = wins[ROAS.ROAS_DEFAULT_WIN] && wins[ROAS.ROAS_DEFAULT_WIN].total;
+      st.rot[m.cmpid] = now; st.pulled.push(m.client + ' ' + m.market + (t30 ? '' : ' (no Total row)'));
     }
     return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: Object.keys(st.rot).length, total: roster.length, changed }));
   } catch (e) {
