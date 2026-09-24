@@ -671,7 +671,7 @@ class Emitter:
                 shape._element.getparent().remove(shape._element)
 
     # ------------------------------------------------------------ native table
-    def table(self, slide, heads, rows):
+    def table(self, slide, heads, rows, has_sub=True):
         rows = rows[:]
         ncol = max(len(heads), max((len(r) for r in rows), default=0))
         heads = (list(heads) + [""] * ncol)[:ncol]
@@ -681,11 +681,22 @@ class Emitter:
         # headerless table is built instead.
         hdr = any((h or "").strip() for h in heads)
 
-        avail = TB_BOT - TB_T - (HDR_H if hdr else 0)
+        # rows_per_slide() already decides how many rows fit by measuring from
+        # TB_T_NOSUB when the slide carries no subtitle -- but the table was drawn
+        # from TB_T regardless, so on those slides the splitter filled the taller
+        # box and the emitter drew it in the shorter one. Ten body rows then ran
+        # 0.47in past TB_BOT and straight through the Key Message strip, with the
+        # audit reporting nothing (it measures text fit, not table geometry).
+        # One top, read the same way by both.
+        top = TB_T if has_sub else TB_T_NOSUB
+        avail = TB_BOT - top - (HDR_H if hdr else 0)
         body_h = min(0.75, max(ROW_MIN, avail / max(1, len(rows))))
+        # A last-resort clamp: if a caller ever hands over more rows than fit, a
+        # tight table is recoverable and one drawn over the footer is not.
+        body_h = min(body_h, avail / max(1, len(rows))) if avail > 0 else body_h
         h = (HDR_H if hdr else 0) + body_h * len(rows)
         gf = slide.shapes.add_table(len(rows) + (1 if hdr else 0), ncol,
-                                    Inches(TB_L), Inches(TB_T), Inches(TB_W), Inches(h))
+                                    Inches(TB_L), Inches(top), Inches(TB_W), Inches(h))
         tbl = gf.table
         pr = tbl._tbl.find(A + "tblPr")
         pr.set("firstRow", "1" if hdr else "0"); pr.set("bandRow", "1")
@@ -725,7 +736,8 @@ class Emitter:
         return gf
 
     # ------------------------------------------------------------ native chart
-    def chart(self, slide, cats, series, kind="col", pct=False, labels=True):
+    def chart(self, slide, cats, series, kind="col", pct=False, labels=True,
+              has_sub=True):
         """A real PowerPoint chart object, built from the deck's own numbers.
 
         This is NOT the "never add a shape" rule being broken. That rule forbids
@@ -760,9 +772,10 @@ class Emitter:
 
         # Same column the native tables occupy, so a chart slide and a table
         # slide read as the same document rather than two different templates.
-        h = TB_BOT - TB_T
+        top = TB_T if has_sub else TB_T_NOSUB
+        h = TB_BOT - top
         gf = slide.shapes.add_chart(TYPES.get(kind, TYPES["col"]),
-                                    Inches(TB_L), Inches(TB_T),
+                                    Inches(TB_L), Inches(top),
                                     Inches(TB_W), Inches(h), cd)
         ch = gf.chart
         ch.font.size = Pt(11)
@@ -1151,7 +1164,8 @@ def emit_blocks(em, head, blocks, fallback=""):
             for ci, part in enumerate(parts):
                 s = em.slide("Table")
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-                em.table(s, heads, part); em.finish(s, key if ci == len(parts) - 1 else None)
+                em.table(s, heads, part, has_sub=bool(s_))
+                em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
             first_done = True; continue
 
@@ -1162,7 +1176,7 @@ def emit_blocks(em, head, blocks, fallback=""):
             sl = em.slide("Table")          # the chart column layout: title, subtitle, body
             em.put(sl, "Title", t); em.put(sl, "Subtitle", s_)
             em.chart(sl, payload["cats"], payload["series"],
-                     kind=payload["kind"], pct=payload["pct"])
+                     kind=payload["kind"], pct=payload["pct"], has_sub=bool(s_))
             # A chart has no text frame, so finish()'s empty-placeholder sweep
             # would otherwise leave the body placeholder on the slide as a
             # "Click to add text" prompt sitting under the plot.
@@ -1183,7 +1197,8 @@ def emit_blocks(em, head, blocks, fallback=""):
                 # The note is a conclusion drawn from the whole table, so it belongs
                 # on the last slide of it -- passing it to every chunk repeated the
                 # same sentence verbatim on each continuation slide.
-                em.table(s, heads, part); em.finish(s, key if ci == len(parts) - 1 else None)
+                em.table(s, heads, part, has_sub=bool(s_))
+                em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
             first_done = True; continue
 
