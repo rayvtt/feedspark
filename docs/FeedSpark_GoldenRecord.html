@@ -3330,19 +3330,27 @@ window.addEventListener('load',restore);
   var PDF_LIBS = null;
   function loadPdfLibs() {
     if (PDF_LIBS) return PDF_LIBS;
-    function loadScript(src, already) {
+    function loadScript(src, already, sri) {
       return new Promise(function (res, rej) {
         if (already()) return res();
         var el = document.createElement('script');
         el.src = src;
+        /* SUBRESOURCE INTEGRITY (security checklist, 24 Sep 2026, item 20): these two run with
+           full access to the page that is about to render a client's scorecard, so the browser
+           checks the bytes against a hash before executing. crossOrigin is required for SRI to
+           be enforced at all on a cross-origin script. Hashes verified against cdnjs's own
+           published SRI, not just computed from a download. A bumped version needs a new hash —
+           tools/test_escaping.mjs' sibling check in tools/check_csp.js will not catch that, but
+           the library simply refuses to load, which is the safe direction to fail. */
+        if (sri) { el.integrity = sri; el.crossOrigin = 'anonymous'; }
         el.onload = function () { res(); };
         el.onerror = function () { rej(new Error('failed to load ' + src)); };
         document.head.appendChild(el);
       });
     }
     PDF_LIBS = Promise.all([
-      loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function () { return !!window.html2canvas; }),
-      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function () { return !!(window.jspdf && window.jspdf.jsPDF); }),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function () { return !!window.html2canvas; }, 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function () { return !!(window.jspdf && window.jspdf.jsPDF); }, 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA=='),
     ]).catch(function (e) { PDF_LIBS = null; throw e; });   // a transient CDN miss is retried next click, not remembered forever
     return PDF_LIBS;
   }

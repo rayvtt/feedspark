@@ -219,7 +219,7 @@ window.addEventListener('load',restore);
   var KEY="fcc-readiness";
   var S={}; try{ S=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ S={}; }
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
   /* ---------- AI-Ready ---------- */
   var CRIT=[["titles","Titles &amp; MASK"],["data","Structured data / Golden Record"],["conv","Conversational attributes"],
@@ -305,7 +305,7 @@ window.addEventListener('load',restore);
 <script>
 (function(){
   var PT=window.PLANTASKS||{}, brands=Object.keys(PT); if(!brands.length) brands=["Reiss","Schuh","Monsoon","Accessorize","Superdry","YuMOVE","Hobbycraft"];
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
   /* Social & DPA creative matrix */
   var SK="fcc-social", SS={}; try{ SS=JSON.parse(localStorage.getItem(SK)||"{}"); }catch(e){}

@@ -84,6 +84,9 @@ jobs:
         run: node tools/test_goldensnap.mjs
       - name: Present harness (the one-pager played — one renderer, the number rule)
         run: node tools/test_present.mjs
+      - name: Output escaping (every esc() neutralises a quote — XSS)
+        run: node tools/test_escaping.mjs
+
       - name: Audit colour bands harness (one legend on /golden, /feedlab, the dossier, the Playbook rail)
         run: node tools/test_bands.mjs
       - name: Golden Record score history harness (one reading per real move, re-scored to today's profile)

@@ -2396,7 +2396,7 @@ window.addEventListener('load',restore);
         +'<span class="vbar-n">'+x.d+'/'+tot+'</span></div>'; }).join('');
     return '<div class="dz-vol"><h4>Task volume <small>'+(p.volkind==='month'?'by month':'by lane')+' · done vs outstanding</small></h4>'
       +'<div class="vbars">'+bars+'</div></div>'; }
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function stag(s){var c=s==='on hold'?'hold':s==='with client'?'client':s==='in progress'?'progress':s==='test running'?'test':'open';
     return '<span class="tag tag-'+c+'">'+esc(s)+'</span>';}
   function rows(arr){ if(!arr.length) return '<p class="dz-empty">None active.</p>';
@@ -2896,7 +2896,7 @@ window.addEventListener('load',restore);
   var PT=window.PLANTASKS||{};
   var FEEDS=[['tech','Feed & technical'],['opt','Optimisation'],['test','Testing'],['creative','Creative / PPC'],['channel','Channels'],['account','Account & strategy']];
   var MAP={technical:'tech',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt',test:'test',image:'creative',custom_label:'creative',channel:'channel',account:'account'};
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function feedAgg(b){var o={};FEEDS.forEach(function(f){o[f[0]]={t:0,d:0};});var c=(PT[b]&&PT[b].cats)||{};
     Object.keys(c).forEach(function(k){var f=MAP[k]||'opt';o[f].t+=c[k].total||0;o[f].d+=c[k].done||0;});return o;}
 
@@ -2974,7 +2974,7 @@ window.addEventListener('load',restore);
   var PT=window.PLANTASKS||{};
   var L=document.getElementById('mc-launch'),P=document.getElementById('mc-panel'),B=document.getElementById('mc-body'),X=document.getElementById('mc-x'),WK=document.getElementById('mc-wk');
   if(!L||!P||!Object.keys(PT).length) return;
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   var now=new Date();
   function lon(o){return new Intl.DateTimeFormat('en-GB',Object.assign({timeZone:'Europe/London'},o)).format(now);}
   WK.textContent='Week of '+lon({weekday:'short',day:'numeric',month:'short'})+' · London 9:00';
@@ -3045,7 +3045,7 @@ window.addEventListener('load',restore);
   if(!modal) return;
   var body=document.getElementById('nw-body'), ttl=document.getElementById('nw-title'),
       sub=document.getElementById('nw-sub'), cur=null;
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function safe(u){return /^https:\/\//i.test(u||'')?esc(u):'';}
   var btn=document.createElement('button');
   btn.id='nw-btn'; btn.type='button'; btn.title='Industry news'; btn.setAttribute('aria-label','Industry news');

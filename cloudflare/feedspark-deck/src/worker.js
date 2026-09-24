@@ -461,7 +461,21 @@ async function feedRoster(env) {
 }
 
 export default {
+  // SECURITY HEADERS (security checklist, 24 Sep 2026, item 18): the worker returns responses from
+  // ~200 places, so rather than stamp each one the router is a plain function and every answer
+  // leaves through secHeaders() below. Nothing about routing changes.
   async fetch(request, env, ctx) {
+    const res = await route(request, env, ctx);
+    return secHeaders(res, new URL(request.url).pathname);
+  },
+
+  // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
+  // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
+  // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
+  async scheduled(event, env, ctx) { return scheduledRun(event, env, ctx); },
+};
+
+async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -2800,12 +2814,9 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
-  },
+}
 
-  // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
-  // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
-  // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
-  async scheduled(event, env, ctx) {
+async function scheduledRun(event, env, ctx) {
     // Task Manager sync (Ray, 16 Sep 2026: "that sync must be automatic") — :15 and :45, its
     // own firing so its MCP + KV subrequests never compete with the guard sweeps' budget.
     if (event && event.cron === '15,45 * * * *') {
@@ -2872,8 +2883,65 @@ export default {
       const hour = new Date(event && event.scheduledTime ? event.scheduledTime : Date.now()).getUTCHours();
       if (hour === 12) await queueDueReminders(env, { tasksById: warmed });
     } catch (e) {}
-  },
-};
+}
+
+/* SECURITY HEADERS — one exit for every response (security checklist item 18).
+ *
+ * What each one buys here, and what it deliberately does not:
+ *   frame-ancestors 'self' / X-Frame-Options SAMEORIGIN — the FCC may not be framed by another
+ *     site (clickjacking). NOT 'none': the Feed Chat bubble iframes /feedchat?embed=1 on every
+ *     app page, so same-origin framing has to stay.
+ *   object-src 'none' + base-uri 'self' — kill <object>/<embed> and <base>-tag hijacking, both
+ *     classic ways to turn one injected tag into full page control.
+ *   script-src 'self' 'unsafe-inline' 'unsafe-eval' + cdnjs — the pages are built from inline
+ *     <script> blocks and four modules (Golden Record, Label Guard, PT Guard, the VI toggle)
+ *     fetch their engine same-origin and run it through new Function(), so BOTH keywords are
+ *     required today. Be honest about the consequence: with 'unsafe-inline' a CSP does not stop
+ *     an injected event handler — escaping does, which is why item 15 was the real fix. What this
+ *     DOES stop is a script pulled from a host we never named, which is how an injected tag
+ *     exfiltrates. Dropping the two keywords means serving the engines as real <script src> and
+ *     moving inline blocks out; worth doing, not worth rushing.
+ *   img-src https: data: blob: — the Overlays module renders live overlay images straight off
+ *     client CDNs we cannot enumerate, so this stays open by necessity.
+ *   connect-src 'self' — verified: no page fetches a cross-origin URL; feeds are streamed through
+ *     /api/feed/proxy, which is same-origin and host-allowlisted on the worker side.
+ *   Referrer-Policy — client names and market codes ride in query strings (?client=&market=), so
+ *     same-origin keeps them out of the Referer header sent to any third party.
+ *
+ * Client decks are served under /deck/ to people outside the company and get the same treatment;
+ * /api/ answers get the non-CSP headers (a JSON body has no document to police).
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self'",
+  "frame-src 'self'",
+  "frame-ancestors 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
+function secHeaders(res, path) {
+  try {
+    const h = new Headers(res.headers);
+    h.set('X-Content-Type-Options', 'nosniff');
+    h.set('X-Frame-Options', 'SAMEORIGIN');
+    h.set('Referrer-Policy', 'same-origin');
+    h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    // Cloudflare terminates TLS in front of the worker; HSTS tells the browser never to try
+    // plain HTTP again. No preload flag — that is a one-way submission for the whole domain.
+    h.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    const type = String(h.get('Content-Type') || '');
+    if (type.includes('text/html')) h.set('Content-Security-Policy', CSP);
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+  } catch (e) {
+    return res;   // a header pass can never be the reason a page fails to serve
+  }
+}
 
 function json(data, status = 200, extraHeaders) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });

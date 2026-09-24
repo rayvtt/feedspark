@@ -1654,7 +1654,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
   function hashStr(s){ s=s||''; var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
 
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function slug(s){return (s||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');}
   function pad(n){return (n<10?'0':'')+n;}
   function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
