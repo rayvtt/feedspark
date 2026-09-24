@@ -474,7 +474,15 @@ ok('abSortKey is the numeric form abSortTests sorts on (a live date, in ms)',
   ok('the served/cached payload is built from the sorted array, not the raw parse',
      /const sorted = abSortTests\(p\.tests\)/.test(wsrc2) && /tests: sorted, summary: abSummary\(sorted\)/.test(wsrc2));
   ok('AB_SHAPE was bumped so a payload cached before this fix cannot serve the old sheet order for its remaining TTL',
-     /const AB_SHAPE = 3/.test(wsrc2));
+     /const AB_SHAPE = 4/.test(wsrc2));
+  // Sorting cannot recover a test that was never READ — a fixed A1:Z400 window covers roughly
+  // an archive's first 30 tests (~13 rows each) and nothing below that line, so a brand tested
+  // since early 2025 (Schuh: rows running past 850) had its Aug 2026 batches truncated OUT of
+  // the fetch entirely; abSortTests had nothing to sort them into (Ray, 24 Sep 2026, after the
+  // sort shipped: "still not seeing 2026 tests for Schuh dossier").
+  ok('the archive fetch is no longer capped at 400 rows', !/encodeURIComponent\(tab \+ '!A1:Z400'\)/.test(wsrc2));
+  ok('…it reads the whole tab, matching every other whole-tab read in this file',
+     /encodeURIComponent\(tab \+ '!A1:ZZ5000'\)/.test(wsrc2));
 }
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');

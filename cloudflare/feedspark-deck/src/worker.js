@@ -28,9 +28,12 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
-const AB_SHAPE = 3;   // bump when parseAbTests grows a field the page reads, or the served order
-                       // changes (2 = winner/title, 3 = newest-first — a stale cached payload
-                       // served for the next six hours would keep showing the old sheet order)
+const AB_SHAPE = 4;   // bump when parseAbTests grows a field the page reads, the served order
+                       // changes, or the FETCH ITSELF reads more of the sheet (2 = winner/title,
+                       // 3 = newest-first, 4 = A1:Z400 -> A1:ZZ5000 — a payload cached under the
+                       // old range is missing rows, not just mis-ordered, and no re-sort of it
+                       // can recover a test that was never fetched; six more hours of that is
+                       // still wrong)
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
@@ -2169,8 +2172,17 @@ export default {
         // of thirty with no hint of the cut read as the whole workbook, and sent us looking for
         // a tab that was sitting just past the truncation.
         if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tabCount: titles.length, tests: [] });
+        // A1:Z400 was a silent CAP, not a generous one: a test spans ~13 sheet rows (its graph's
+        // height), so 400 rows covers roughly the archive's first 30 tests and NOTHING BELOW
+        // THAT LINE — on a brand tested since early 2025 that is exactly its oldest work, and
+        // abSortTests (added to put the newest tests first) has nothing to sort if the newest
+        // rows were never fetched at all (Ray, 24 Sep 2026, after the sort shipped: "still not
+        // seeing 2026 tests for Schuh dossier" — Schuh's archive runs to row 850+, its Aug 2026
+        // batches sitting ~450 rows past this cutoff). A1:ZZ5000 matches every other whole-tab
+        // read in this file (the plan-tab and project-plan reads below all use it) rather than
+        // inventing a second, narrower convention for one handler.
         const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
-          + encodeURIComponent(tab + '!A1:Z400'), { headers: { Authorization: 'Bearer ' + token } })).json();
+          + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } })).json();
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
         const p = parseAbTests(r.values || []);
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
