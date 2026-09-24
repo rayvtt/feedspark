@@ -23,68 +23,169 @@ window.addEventListener('load',restore);
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FeedSpark · ROAS</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap');
   :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
     --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
     --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
-    --vin:#2563EB;--vout:#ED6F0B;--grid:#ECECEA}
+    --vin:#2563EB;--vout:#ED6F0B;--grid:#ECECEA;--tip:rgba(22,24,32,.94)}
   *{box-sizing:border-box}
   body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
-  .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
+  .wrap{max-width:1360px;margin:0 auto;padding:0 22px}
   .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .topbar-in{max-width:1280px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .topbar-in{max-width:1360px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
   .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
   .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
-  .hero{padding:32px 0 18px}
-  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
-  h1{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em}
-  .hero p.sub{color:var(--ink-2);font-size:14.5px;max-width:880px;margin:0 0 14px}
+  /* ---- hero: aurora wash, a travelling edge, one stagger down the banner (the Command Center's own banner language) ---- */
+  .hero{position:relative;overflow:hidden;isolation:isolate;padding:30px 0 20px}
+  .hero::before{content:'';position:absolute;inset:-40% -20% auto -20%;height:180%;z-index:-1;pointer-events:none;
+    background:radial-gradient(38% 46% at 18% 22%,rgba(245,166,35,.20),transparent 70%),radial-gradient(34% 42% at 82% 8%,rgba(37,99,235,.12),transparent 72%),radial-gradient(30% 38% at 62% 88%,rgba(26,54,93,.07),transparent 70%);
+    animation:heroAurora 26s ease-in-out infinite alternate}
+  @keyframes heroAurora{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}100%{transform:translate3d(2%,-1%,0) scale(1.04)}}
+  .hero::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;z-index:1;pointer-events:none;
+    background:linear-gradient(90deg,transparent 0 18%,var(--orange) 34%,var(--orange-deep) 50%,var(--orange) 66%,transparent 82% 100%);background-size:220% 100%;opacity:.85;animation:heroEdge 7.5s linear infinite}
+  @keyframes heroEdge{from{background-position:120% 0}to{background-position:-120% 0}}
+  .hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{animation:heroRise .62s cubic-bezier(.22,.68,.32,1) both}
+  .hero h1{animation-delay:.07s}.hero .sub{animation-delay:.13s}.hero .ctl{animation-delay:.19s}.hero .status{animation-delay:.25s}
+  @keyframes heroRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:40px;font-weight:900;margin:8px 0 6px;letter-spacing:-.025em}
+  h1 small{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:0;vertical-align:middle;margin-left:8px}
+  .hero p.sub{color:var(--ink-2);font-size:14px;max-width:880px;margin:0 0 14px}
+  /* ---- controls: ONE field height, ONE pill height ---- */
   .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .btn{font:inherit;font-size:13px;font-weight:800;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .fld{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  select.fld{padding-right:28px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+  .btn{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
   .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
-  .mstate{font-size:12.5px;font-weight:700;color:var(--muted)}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin:18px 0 4px}
-  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
-  .kpi .n{font-size:24px;font-weight:900;line-height:1}
-  .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:5px}
-  .kpi.vin .n{color:var(--vin)}.kpi.vout .n{color:var(--vout)}
-  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin:14px 0}
-  .card h3{margin:0 0 2px;font-size:16.5px;font-weight:900}
-  .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:12px}
-  .chart-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .chart-head .spacer{flex:1}
+  .btn:disabled{opacity:.55;cursor:default}
+  .seg{display:inline-flex;height:36px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+  .seg button{font:inherit;font-size:12.5px;font-weight:800;border:none;background:transparent;color:var(--muted);padding:0 12px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button.on{background:var(--paper);color:var(--orange-deep);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{font:inherit;font-size:12px;font-weight:800;height:28px;padding:0 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .chip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .chip.on{background:rgba(245,166,35,.16);border-color:var(--orange);color:var(--orange-ink)}
+  .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
+  .status{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status .pip{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);animation:heroPulse 2.4s ease-out infinite}
+  .status .pip.off{background:var(--muted);animation:none}.status .pip.warn{background:var(--orange-deep)}.status .pip.bad{background:var(--risk)}
+  @keyframes heroPulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+  .status .ml{margin-left:auto}
+  /* ---- cards: glass edge (a gradient border in the brand pair), lift on hover ---- */
+  .card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(135deg,rgba(245,166,35,.55),rgba(37,99,235,.28) 55%,rgba(230,230,230,.6)) border-box;border:1px solid transparent;border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin:14px 0;position:relative}
+  .card h3{margin:0 0 2px;font-size:16px;font-weight:900;letter-spacing:-.01em}
+  .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .chead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .chead .sp{flex:1}
+  .chead .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .empty{padding:26px 10px;text-align:center;color:var(--muted);font-size:13.5px;font-weight:700}
-  table.vt{width:100%;border-collapse:collapse;font-size:13px}
-  table.vt th{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
-  table.vt td{padding:7px 8px;border-bottom:1px solid var(--line);font-weight:700;vertical-align:top}
-  table.vt td.num,table.vt th.num{text-align:right;font-variant-numeric:tabular-nums}
-  table.vt tr:last-child td{border-bottom:none}
-  tr.brand-row{cursor:pointer}
-  tr.brand-row:hover td{background:var(--wash)}
-  tr.brand-row td.bn{font-weight:900}
-  tr.brand-row .chev{display:inline-block;width:11px;color:var(--muted);transition:transform .15s}
-  tr.brand-row.open .chev{transform:rotate(90deg)}
-  tr.cat-sub td{background:var(--wash);padding:0}
-  tr.cat-sub .cat-wrap{padding:4px 8px 10px}
-  .cur-chip{display:inline-block;margin:0 6px 2px 0;white-space:nowrap}
-  .cur-chip .dim{color:var(--muted);font-weight:700}
-  .band-mini{display:inline-flex;gap:3px;vertical-align:middle}
-  .band-mini i{display:inline-block;width:7px;height:7px;border-radius:2px}
-  .b-strong{background:#15803D}.b-steady{background:#2563EB}.b-weak{background:#ED6F0B}.b-losing{background:#C0392B}
-  .band-pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:100px;border:1px solid var(--line)}
-  .band-pill.b-strong{color:#15803D;border-color:#bfe3cc}
-  .band-pill.b-steady{color:#2563EB;border-color:#c6d8fb}
-  .band-pill.b-weak{color:#ED6F0B;border-color:#f7d9b8}
-  .band-pill.b-losing{color:#C0392B;border-color:#f2c6c1}
-  .band-pill.b-none{color:var(--muted)}
+  .empty b{color:var(--ink-2)}
+  /* ---- scorecards: Google Ads' metric cards — value, delta chip, sparkline; click to plot ---- */
+  .sc-row{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;scrollbar-width:thin}
+  .sc{flex:0 0 196px;scroll-snap-align:start;text-align:left;font:inherit;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px 10px;cursor:pointer;position:relative;overflow:hidden;transition:transform .18s cubic-bezier(.22,.68,.32,1),border-color .18s,box-shadow .18s;color:var(--ink)}
+  .sc:hover{transform:translateY(-2px);border-color:var(--orange);box-shadow:0 10px 26px rgba(237,111,11,.14)}
+  .sc::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--sc-c,transparent);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+  .sc.on::before{transform:scaleX(1)}
+  .sc.on{border-color:var(--sc-c)}
+  .sc .l{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .sc .l i{width:8px;height:8px;border-radius:50%;background:var(--sc-c,transparent);display:none}
+  .sc.on .l i{display:inline-block}
+  .sc .n{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:4px;letter-spacing:-.01em;line-height:1.1}
+  .sc .d{font-size:11.5px;font-weight:800;margin-top:4px;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .sc .d.up{color:var(--good)}.sc .d.dn{color:var(--risk)}
+  .sc svg{display:block;width:100%;height:34px;margin-top:6px;overflow:visible}
+  .sc svg path.ln{fill:none;stroke:var(--sc-c,#2563EB);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw 1.1s cubic-bezier(.22,.68,.32,1) forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .sc svg circle{fill:var(--sc-c,#2563EB);stroke:var(--paper);stroke-width:2}
+  .sc .nt{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:6px}
+  .sc-foot{font-size:12px;color:var(--muted);font-weight:700;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  /* ---- trend: one axis per panel, never two — two metrics = two stacked panels on one calendar ---- */
+  .tr-panel{position:relative;margin-top:6px}
+  .tr-panel .ttl{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;margin:6px 0 2px}
+  .tr-panel .ttl i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .tr-panel svg{display:block;width:100%;height:auto;overflow:visible}
+  .tr-panel svg .g{stroke:var(--grid);stroke-width:1}
+  .tr-panel svg .ax{font-size:11px;fill:var(--muted);font-weight:700}
+  .tr-panel svg .ln{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tr-panel svg .cross{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;opacity:0;pointer-events:none}
+  .tr-panel svg .hot{opacity:0;pointer-events:none;stroke:var(--paper);stroke-width:2}
+  .tr-panel svg .hit{fill:transparent}
+  .tip{position:absolute;pointer-events:none;background:var(--tip);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5;line-height:1.45}
+  .tip b{font-weight:900}.tip .m{color:#B9BEC7;font-weight:700}
+  .tr-note{font-size:12px;color:var(--muted);font-weight:700;margin-top:8px}
+  /* ---- movers ---- */
+  .mv{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .mv h4{margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .mv .row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+  .mv .row:last-child{border-bottom:none}
+  .mv .row .nm b{font-weight:900}.mv .row .nm small{color:var(--muted);font-weight:700;margin-left:6px}
+  .mv .row .dl{font-variant-numeric:tabular-nums;font-weight:900}
+  .mv .row .dl.up{color:var(--good)}.mv .row .dl.dn{color:var(--risk)}
+  .mv .bar{height:4px;border-radius:2px;background:var(--line);position:relative;margin-top:4px;overflow:hidden}
+  .mv .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--vin)}
+  .mv .row.dn .bar i{background:var(--vout)}
+  /* ---- the table: Google Ads' reporting grid — sticky header + name column, drill rows, inline bars ---- */
+  .tbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .tbar .q{min-width:220px;flex:1}
+  .tscroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+  table.pt{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:920px}
+  table.pt th{position:sticky;top:0;background:var(--paper);z-index:2;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;cursor:pointer;user-select:none}
+  table.pt th:hover{color:var(--orange-deep)}
+  table.pt th.s{color:var(--orange-deep)}
+  table.pt th.s::after{content:' ▾';font-size:10px}table.pt th.s.asc::after{content:' ▴'}
+  table.pt th:first-child,table.pt td:first-child{text-align:left;position:sticky;left:0;background:var(--paper);z-index:1}
+  table.pt th:first-child{z-index:3}
+  table.pt td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  table.pt tr:last-child td{border-bottom:none}
+  table.pt tr.r{animation:rowIn .22s both}
+  @keyframes rowIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  table.pt tr.r:hover td{background:rgba(245,166,35,.06)}
+  table.pt tr.d0 td{font-weight:900}
+  table.pt tr.d0 td:first-child{background:linear-gradient(90deg,rgba(245,166,35,.10),var(--paper) 70%)}
+  table.pt tr.tot td{background:var(--wash);font-weight:900;color:var(--ink)}
+  table.pt tr.tot td:first-child{background:var(--wash)}
+  table.pt td.nm{white-space:nowrap}
+  .nm .in{display:inline-flex;align-items:center;gap:6px;padding-left:calc(var(--dp,0)*18px)}
+  .nm .chv{width:20px;height:20px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;padding:0;font:inherit;transition:transform .15s,color .15s}
+  .nm .chv:hover{color:var(--orange-deep);background:rgba(245,166,35,.14)}
+  .nm .chv.open{transform:rotate(90deg)}
+  .nm .dot{width:20px;display:inline-block;text-align:center;color:var(--line)}
+  .nm .cur{font-size:10.5px;font-weight:900;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:2px}
+  .nm .pth{color:var(--muted);font-weight:700}
+  .cb{position:relative;display:inline-block;min-width:78px}
+  .cb i{position:absolute;right:0;bottom:-4px;height:3px;border-radius:2px;background:var(--vout);opacity:.55}
+  .cb.rv i{background:var(--vin)}
+  .cc{display:inline-block;margin-left:6px;white-space:nowrap}
+  .band-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;border:1px solid var(--line);letter-spacing:.02em}
+  .band-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+  .b-strong{color:#15803D;border-color:#bfe3cc}.b-steady{color:#2563EB;border-color:#c6d8fb}.b-weak{color:#ED6F0B;border-color:#f7d9b8}.b-losing{color:#C0392B;border-color:#f2c6c1}.b-none{color:var(--muted)}
+  .band-mini{display:inline-flex;gap:2px;align-items:center;vertical-align:middle}
+  .band-mini i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-left:5px}
+  .band-mini i:first-child{margin-left:0}
+  .band-mini span{font-size:11.5px}
+  .band-mini .b-strong{background:#15803D}.band-mini .b-steady{background:#2563EB}.band-mini .b-weak{background:#ED6F0B}.band-mini .b-losing{background:#C0392B}
+  .dim{color:var(--muted);font-weight:700}
+  .more{font:inherit;font-size:12px;font-weight:800;color:var(--orange-deep);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;margin:2px 0 2px calc(var(--dp,0)*18px + 26px)}
+  .tfoot{font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:flex;gap:12px;flex-wrap:wrap}
+  /* ---- popovers (columns, views) ---- */
+  .pop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:10px 12px;min-width:220px;max-height:60vh;overflow:auto}
+  .pop[hidden]{display:none}
+  .pop label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;padding:4px 2px;cursor:pointer}
+  .pop .hd{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 6px}
+  .pop .vw{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+  .pop .vw:last-of-type{border-bottom:none}
+  .pop .vw button.ap{flex:1;text-align:left;font:inherit;font-size:12.5px;font-weight:800;background:transparent;border:none;color:var(--ink);cursor:pointer;padding:3px 2px}
+  .pop .vw button.ap:hover{color:var(--orange-deep)}
+  .pop .vw button.x{font:inherit;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px}
+  .pop .vw button.x:hover{color:var(--risk)}
+  .rel{position:relative}
   .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
-  .meth li{margin:7px 0}
-  .meth b{color:var(--ink)}
-  .note{font-size:12px;color:var(--muted);font-weight:700;margin-top:10px}
+  .meth li{margin:7px 0}.meth b{color:var(--ink)}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
   .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-  @media(max-width:820px){.tb-tag{display:none}h1{font-size:24px}.ctl{gap:8px}}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:28px}.ctl{gap:8px}.hero{padding:24px 0 18px}.sc{flex-basis:170px}}
+  @media(prefers-reduced-motion:reduce){.hero::before,.hero::after,.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status,.status .pip,.sc svg path.ln,table.pt tr.r{animation:none!important}.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{opacity:1;transform:none}.sc svg path.ln{stroke-dashoffset:0}.sc,.sc::before{transition:none}}
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
   .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
@@ -127,6 +228,20 @@ window.addEventListener('load',restore);
 [data-theme=dark] tr.cat-sub td{background:#181B22}
 [data-theme=dark] tr.brand-row:hover td{background:#181B22}
 </style>
+<style>/* ROAS dark steps — the chart pair's validated dark steps, the tooltip surface, the glass edge */
+:root[data-theme=dark]{--tip:rgba(8,10,14,.96)}
+[data-theme=dark] .card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(135deg,rgba(245,166,35,.42),rgba(76,130,224,.30) 55%,rgba(44,48,57,.9)) border-box}
+[data-theme=dark] .sc,[data-theme=dark] .fld,[data-theme=dark] .chip,[data-theme=dark] .pop,[data-theme=dark] .tscroll{background:var(--paper);border-color:var(--line);color:var(--ink)}
+[data-theme=dark] .seg{background:#181B22}[data-theme=dark] .seg button.on{background:#262A34;color:var(--orange-ink)}
+[data-theme=dark] .chip.on{background:rgba(245,166,35,.18)}
+[data-theme=dark] table.pt th,[data-theme=dark] table.pt td:first-child,[data-theme=dark] table.pt th:first-child{background:var(--paper)}
+[data-theme=dark] table.pt tr.d0 td:first-child{background:linear-gradient(90deg,rgba(245,166,35,.12),var(--paper) 70%)}
+[data-theme=dark] table.pt tr.tot td,[data-theme=dark] table.pt tr.tot td:first-child{background:#181B22}
+[data-theme=dark] table.pt tr.r:hover td{background:#181B22}
+[data-theme=dark] .b-strong{border-color:#2f5d3f}[data-theme=dark] .b-steady{border-color:#3a4f7d}[data-theme=dark] .b-weak{border-color:#6b4a2b}[data-theme=dark] .b-losing{border-color:#6b3a37}
+[data-theme=dark] .b-strong{color:#48D07E}[data-theme=dark] .b-steady{color:#7BA4F0}[data-theme=dark] .b-weak{color:#F0A44E}[data-theme=dark] .b-losing{color:#F1707A}
+[data-theme=dark] .cb i{background:#C67B28}[data-theme=dark] .cb.rv i{background:#4C82E0}
+</style>
 
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
@@ -137,42 +252,65 @@ window.addEventListener('load',restore);
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Commercial performance</div>
-  <h1>ROAS <span style="font-size:14px;font-weight:800;color:var(--muted);vertical-align:middle">· working name, not final</span></h1>
-  <p class="sub">Google Ads return on ad spend, read straight from FeedHero's own reporting (the <b>FeedHero_reports</b> MCP — a different server from the Task Manager's hours) — spend, revenue and FeedHero's own Strong/Steady/Weak/Losing band, per client × category. Scoped to FeedSpark's own roster only: <b>Superdry, Reiss, Schuh, Monsoon, Accessorize, YuMOVE, Hobbycraft</b> — FeedHero serves 112 clients in total, and nothing outside this list is pulled, stored or shown here. Money is never summed across currencies — each market's own symbol is kept apart.</p>
+  <h1>ROAS<small>working name, not final</small></h1>
+  <p class="sub" data-instr>Google Ads return on ad spend, read straight from FeedHero's own reporting — the <b>FeedHero_reports</b> MCP, a different server from the Task Manager's hours. Scoped to FeedSpark's own roster only (Superdry, Reiss, Schuh, Monsoon, Accessorize, YuMOVE, Hobbycraft): FeedHero serves 112 clients and nothing outside that list is pulled, stored or shown. Money is never summed across currencies — each market's own symbol is kept apart, and every figure on this page runs on one currency at a time.</p>
   <div class="ctl">
-    <button class="btn" id="sync-now" type="button" title="Owner-only — runs the same rotation the cron does">⚡ Sync now</button>
-    <span class="mstate" id="mstate"></span>
+    <select class="fld" id="brand" aria-label="Brand"><option value="">All brands</option></select>
+    <div class="seg" id="win" role="group" aria-label="Period"></div>
+    <select class="fld" id="cur" aria-label="Currency" title="Every scorecard, chart and total on this page runs on ONE currency's markets"></select>
+    <button class="btn" id="sync-now" type="button" title="Owner-only — reads the roster market by market, the same rotation the cron runs">⚡ Sync now</button>
+    <button class="btn" id="csv" type="button" title="Download the table as shown — every visible row, the chosen columns">⬇ CSV</button>
+    <span class="rel"><button class="btn" id="views-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Saved views — the whole screen as you have it: brand, market, period, currency, metrics, columns, sort, filters">★ Views</button><div class="pop" id="views-pop" hidden></div></span>
   </div>
-  <div class="kpis" id="kpis"></div>
+  <div class="chips" id="mkts" style="margin-top:10px"></div>
+  <div class="status"><span class="pip off" id="pip"></span><span id="mstate">Loading…</span><span class="ml" id="scopeline"></span></div>
 </div></header>
 
 <main class="wrap">
-  <div class="card">
-    <div class="chart-head">
-      <div><h3>Per-brand performance</h3><div class="ch">Last 30 days, FeedHero's own window. Click a row to see its top categories by spend.</div></div>
-      <span class="spacer"></span>
-      <span class="mstate" id="tbl-state"></span>
-    </div>
-    <div style="overflow-x:auto"><table class="vt" id="brandtbl">
-      <thead><tr><th>Brand</th><th>Markets read</th><th>Spend</th><th>Revenue</th><th>Blended ROAS</th><th>Band split</th><th class="num">Avg zombie %</th><th>Updated</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-    <div class="empty" id="tbl-empty" hidden></div>
-  </div>
+  <section class="card" id="sc-card">
+    <div class="chead"><div><h3>Scorecards</h3><div class="ch">Click a card to plot it — up to two at once, each on its own axis. Deltas read against the reading nearest to 7 days before the latest one.</div></div><span class="sp"></span><div class="sc-foot" id="sc-foot"></div></div>
+    <div class="sc-row" id="sc-row"></div>
+  </section>
 
-  <div class="card meth" id="meth">
+  <section class="card" id="tr-card">
+    <div class="chead"><div><h3>Trend</h3><div class="ch" id="tr-ch">The selected metrics day by day.</div></div><span class="sp"></span><div class="tools"><span class="dim" id="tr-range"></span></div></div>
+    <div id="tr-panels"></div>
+    <div class="tr-note" data-instr id="tr-note">FeedHero reports trailing windows, never a day's own figure, so each point is the selected window's total <b>as read that day</b> — the 7-day line moves fastest, the 90-day line smooths. History accrues from the first sync; a day the sync did not run is a gap, never a copy.</div>
+  </section>
+
+  <section class="card" id="mv-card">
+    <div class="chead"><div><h3>Movers</h3><div class="ch" id="mv-ch">Markets whose revenue moved most against the reading 7 days earlier.</div></div></div>
+    <div class="mv" id="mv"></div>
+  </section>
+
+  <section class="card" id="pt-card">
+    <div class="chead"><div><h3>Performance</h3><div class="ch">Brand → market → category, every level FeedHero's own aggregate. Sort any column, filter by name or band, choose the columns, segment a market by brand, gender or price group.</div></div></div>
+    <div class="tbar">
+      <input class="fld q" id="q" type="search" placeholder="Filter brand, market or category…" aria-label="Filter rows">
+      <div class="chips" id="bands"></div>
+      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — Category is stored by the sync; Brand / Gender / Price group are read live from FeedHero when a market is opened"><option value="Category">Segment · Category</option><option value="Brand">Segment · Brand</option><option value="Gender">Segment · Gender</option><option value="Price_group">Segment · Price group</option></select>
+      <span class="rel"><button class="btn" id="cols-btn" type="button" aria-haspopup="true" aria-expanded="false">⊞ Columns</button><div class="pop" id="cols-pop" hidden></div></span>
+      <button class="btn" id="expand-all" type="button" title="Open every brand to its markets">⊕ Open all</button>
+    </div>
+    <div class="tscroll"><table class="pt" id="pt"><thead></thead><tbody></tbody></table></div>
+    <div class="empty" id="pt-empty" hidden></div>
+    <div class="tfoot" id="pt-foot"></div>
+  </section>
+
+  <section class="card meth" id="meth">
     <h3>How this reads</h3>
-    <div class="ch" data-instr>The quick breakdown behind every number on this page.</div>
+    <div class="ch" data-instr>The breakdown behind every number on this page.</div>
     <ol data-instr>
-      <li><b>Source.</b> FeedHero's own ROAS dashboard (Google Ads), read via the <code>FeedHero_reports</code> MCP's <code>roas_dashboard</code> tool — the same figures a login at mcp.feedhero.net/reports/roas-dashboard would show. Impressions, clicks, conversions, revenue and spend come straight from Google Ads; SKUs, zombie% and the category split come from the product feed FeedHero has on file.</li>
-      <li><b>Scope, deliberately narrow.</b> FeedHero's client list carries 112 clients — most of them are not FeedSpark accounts. This page is hard-limited to the seven brands Ray named (Superdry, Reiss, Schuh, Monsoon, Accessorize, YuMOVE, Hobbycraft) across every market FeedHero has on file for them. A client outside that list is never pulled, never stored, never shown.</li>
-      <li><b>Sync cadence.</b> The worker pulls FeedHero itself, twice an hour (:10 and :40), 6 clients per firing, stalest-first — the ~57-market roster turns over roughly every 5 hours. FeedHero's own figures only move about once a day, so this is comfortably ahead of the source.</li>
-      <li><b>Money is never summed across currencies.</b> A brand's markets can report in different currencies (Superdry alone spans GBP, EUR and USD) — every spend/revenue figure here is kept apart by its own symbol, and a "blended ROAS%" is only shown where a brand's read markets share exactly one currency.</li>
-      <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — not a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
-      <li><b>Zombie%</b> is FeedHero's own read of SKUs carrying zero impressions or clicks in the window — catalogue sitting in the feed with no Shopping visibility at all.</li>
-      <li><b>This is v1.</b> A working surface for the raw numbers — the next step is reading a category's ROAS band alongside its Golden Record / content-quality score on the same brand, so a Losing category and a weak feed can be shown as one finding rather than two separate pages.</li>
+      <li><b>Source.</b> FeedHero's own ROAS dashboard (Google Ads), read via the <code>FeedHero_reports</code> MCP's <code>roas_dashboard</code> tool — the same figures a login at mcp.feedhero.net/reports/roas-dashboard shows. Impressions, clicks, conversions, revenue and spend come from Google Ads; SKUs, zombie% and the category split come from the product feed FeedHero has on file.</li>
+      <li><b>Scope, deliberately narrow.</b> FeedHero's client list carries 112 clients — most are not FeedSpark accounts. This page is hard-limited to the seven brands Ray named across every market FeedHero has on file for them. A client outside that list is never pulled, stored or shown.</li>
+      <li><b>Three periods, three reads.</b> FeedHero reports a trailing window (7, 30 or 90 days) and nothing finer, so the sync reads each market once per window. Switching the period switches the read — it does not re-cut the same rows.</li>
+      <li><b>History is the window as read each day.</b> One point per market per day (a re-read the same day replaces it). A delta "vs 7 days ago" compares the latest trailing figure with the one read a week earlier — the same comparison Google Ads' own previous-period chip makes — and reads "no history yet" until the record is old enough, never a guess.</li>
+      <li><b>Sync cadence.</b> The worker pulls FeedHero itself twice an hour (:10 and :40), 5 markets × 3 windows per firing, stalest first — the 57-market roster turns over roughly every 6 hours, well ahead of the source's own ~daily refresh. ⚡ Sync now walks the whole roster in one go (owner only).</li>
+      <li><b>Money never crosses a currency.</b> A brand's markets report in different currencies (Superdry alone spans GBP, EUR and USD), so every scorecard, chart, total and blended ROAS on this page runs on the selected currency's markets only; the currency selector names how many markets each one covers.</li>
+      <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — never a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
+      <li><b>Segments.</b> Category is stored by the sync (the top 200 rows by spend on the 30-day window, 80 on the others). Brand, Gender and Price group are FeedHero's other cuts of the same market, read live when a market is opened and cached for six hours.</li>
     </ol>
-  </div>
+  </section>
 </main>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate"></span></div></div>
@@ -182,104 +320,375 @@ window.addEventListener('load',restore);
   'use strict';
   var $=function(s){return document.querySelector(s)};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-  var fmt=function(n){return (n==null||isNaN(n))?'—':Number(n).toLocaleString('en-GB')};
-  var BOOK=null, EXPANDED=null, CATCACHE={};
+  var REDUCE=false; try{REDUCE=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);}catch(e){}
+  var LS=function(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null}};
+  var DARK=function(){return document.documentElement.getAttribute('data-theme')==='dark'};
+  var PAIR=function(){return DARK()?['#4C82E0','#C67B28']:['#2563EB','#ED6F0B']};   // the FCC's validated chart pair, light + dark steps
 
-  function money(o){ if(!o||o.n==null)return '—'; return (o.cur||'')+Number(o.n).toLocaleString('en-GB',{maximumFractionDigits:0}); }
-  function moneyChips(byCur){ var ks=Object.keys(byCur||{}); if(!ks.length)return '<span class="mstate">—</span>';
-    ks.sort(function(a,b){return byCur[b]-byCur[a]});
-    return ks.map(function(c){ return '<span class="cur-chip"><b>'+esc(c)+Number(byCur[c]).toLocaleString('en-GB',{maximumFractionDigits:0})+'</b></span>'; }).join(' '); }
-  function bandCls(b){ if(!b)return 'b-none'; return 'b-'+String(b).toLowerCase(); }
-  function bandMini(counts){ var order=['Strong','Steady','Weak','Losing'];
-    return '<span class="band-mini">'+order.filter(function(b){return counts&&counts[b]}).map(function(b){ return '<i class="'+bandCls(b)+'" title="'+esc(b)+' ×'+(counts[b]||0)+'"></i>'; }).join('')+'</span>'
-      + (counts?order.filter(function(b){return counts[b]}).map(function(b){return ' <span class="mstate">'+counts[b]+' '+esc(b)+'</span>'}).join('·'):''); }
-  function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'no ad activity')+'</span>'; }
-  function since(t){ if(!t)return '—'; var d=Math.round((Date.now()-t)/3600000); return d<1?'<1h ago':(d+'h ago'); }
+  /* ================= metrics (Google Ads' scorecard vocabulary, on FeedHero's fields) ================= */
+  var METRICS=[
+    {k:'sp',l:'Spend',kind:'money',good:0},
+    {k:'rv',l:'Revenue',kind:'money',good:1},
+    {k:'roas',l:'ROAS',kind:'pct',good:1},
+    {k:'cv',l:'Conversions',kind:'num',good:1},
+    {k:'ck',l:'Clicks',kind:'num',good:1},
+    {k:'im',l:'Impressions',kind:'num',good:1},
+    {k:'ctr',l:'CTR',kind:'pct2',good:1},
+    {k:'cpc',l:'Avg. CPC',kind:'money2',good:-1},
+    {k:'cpa',l:'Cost / conv.',kind:'money2',good:-1},
+    {k:'cr',l:'Conv. rate',kind:'pct2',good:1},
+    {k:'aov',l:'AOV',kind:'money2',good:1},
+    {k:'zb',l:'Zombie SKUs',kind:'pct2',good:-1,noTrend:1}
+  ];
+  var MBY={}; METRICS.forEach(function(m){MBY[m.k]=m});
+  // a metric off a summed point {sp,rv,cv,ck,im,sk,zb}
+  function mval(p,k){ if(!p)return null;
+    switch(k){ case 'sp':return p.sp; case 'rv':return p.rv; case 'cv':return p.cv; case 'ck':return p.ck; case 'im':return p.im; case 'zb':return p.zb==null?null:p.zb;
+      case 'roas':return p.sp>0?(p.rv/p.sp)*100:null; case 'ctr':return p.im>0?(p.ck/p.im)*100:null; case 'cpc':return p.ck>0?p.sp/p.ck:null;
+      case 'cpa':return p.cv>0?p.sp/p.cv:null; case 'cr':return p.ck>0?(p.cv/p.ck)*100:null; case 'aov':return p.cv>0?p.rv/p.cv:null; } return null; }
+  function fmtN(n,d){ if(n==null||isNaN(n))return '—'; return Number(n).toLocaleString('en-GB',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}); }
+  function fmtM(cur,n,dec){ if(n==null||isNaN(n))return '—'; var d=dec!=null?dec:(Math.abs(n)<100?2:0); return (cur||'')+fmtN(n,d); }
+  function fmtP(n,dec){ if(n==null||isNaN(n))return '—'; return fmtN(n,dec!=null?dec:(Math.abs(n)>=100?0:2))+'%'; }
+  function fmtV(m,v,cur){ if(v==null||isNaN(v))return '—'; if(m.kind==='money')return fmtM(cur,v,Math.abs(v)<100?2:0); if(m.kind==='money2')return fmtM(cur,v,2); if(m.kind==='pct')return fmtP(v); if(m.kind==='pct2')return fmtP(v,2); return fmtN(v,m.k==='cv'?(Math.abs(v)<100?2:0):0); }
+  function since(t){ if(!t)return '—'; var h=Math.round((Date.now()-t)/3600000); if(h<1)return '<1h ago'; if(h<48)return h+'h ago'; return Math.round(h/24)+'d ago'; }
+  function dLbl(d){ if(!d)return ''; var p=d.split('-'); var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return (+p[2])+' '+M[(+p[1])-1]; }
 
-  function loadStatus(s){
-    if(!s||!s.state){ $('#mstate').textContent='Waiting for the first sync.'; return; }
-    if(s.state==='no_token'){ $('#mstate').textContent='ROAS_MCP_TOKEN not set — ask Ray to run wrangler secret put ROAS_MCP_TOKEN.'; return; }
-    if(s.state==='unauthorized'){ $('#mstate').textContent='Unauthorized — check ROAS_MCP_TOKEN / ROAS_MCP_AUTH.'; return; }
-    if(s.state==='unreachable'){ $('#mstate').textContent='Unreachable — '+esc(s.error||'')+' (check ROAS_MCP_URL).'; return; }
-    if(s.state==='error'){ $('#mstate').textContent='Sync error — '+esc(s.error||''); return; }
-    $('#mstate').textContent='Synced '+since(s.ok_at)+' · '+fmt(s.read)+' of '+fmt(s.total)+' markets read';
+  /* ================= state ================= */
+  var COLS=[
+    {k:'sp',l:'Spend',def:1},{k:'rv',l:'Revenue',def:1},{k:'roas',l:'ROAS',def:1},{k:'band',l:'Band',def:1},
+    {k:'cv',l:'Conv.',def:1},{k:'ck',l:'Clicks',def:1},{k:'im',l:'Impr.',def:1},{k:'ctr',l:'CTR'},{k:'cpc',l:'Avg. CPC'},
+    {k:'cpa',l:'Cost / conv.'},{k:'cr',l:'Conv. rate'},{k:'aov',l:'AOV'},{k:'avgp',l:'Avg. price'},{k:'up',l:'Uplift'},{k:'mm',l:'Min margin'},
+    {k:'sk',l:'SKUs',def:1},{k:'zb',l:'Zombie %',def:1},{k:'upd',l:'Updated'}
+  ];
+  var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{}};
+  try{ var c0=JSON.parse(LS('fcc-roas-cols')||'null'); if(Array.isArray(c0)&&c0.length)S.cols=c0; }catch(e){}
+  if(!S.cols)S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k});
+  var DATA=null, CACHE={}, TREES={}, LIVE={}, WINS=[], BACK=7, OWNER=null, SYNCING=false;
+
+  function scopeKey(){ return (S.brand||'*')+'|'+(S.market||'*'); }
+  function readUrl(){ var u=new URLSearchParams(location.search);
+    if(u.get('brand'))S.brand=u.get('brand'); if(u.get('market'))S.market=u.get('market'); if(u.get('win'))S.win=u.get('win');
+    if(u.get('cur'))S.cur=u.get('cur'); if(u.get('m'))S.metrics=u.get('m').split(',').filter(function(k){return MBY[k]}).slice(0,2);
+    if(u.get('seg'))S.seg=u.get('seg'); if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
+  function linkOf(){ var u=new URLSearchParams(); if(S.brand)u.set('brand',S.brand); if(S.market)u.set('market',S.market); u.set('win',S.win); if(S.cur)u.set('cur',S.cur); u.set('m',S.metrics.join(',')); if(S.seg!=='Category')u.set('seg',S.seg); if(S.q)u.set('q',S.q); return location.pathname+'?'+u.toString(); }
+
+  /* ================= load ================= */
+  function load(force){
+    var key=scopeKey();
+    if(!force&&CACHE[key]){ DATA=CACHE[key]; renderAll(); return; }
+    $('#mstate').textContent='Loading…';
+    var url='/api/roas'+(S.brand?'?brand='+encodeURIComponent(S.brand)+(S.market?'&market='+encodeURIComponent(S.market):''):'');
+    fetch(url).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+      if(!d||!d.ok){ DATA=null; renderAll(); return; }
+      CACHE[key]=d; DATA=d; WINS=d.wins||WINS; BACK=d.back||7; renderAll();
+    });
+  }
+  function status(s){
+    var pip=$('#pip'), el=$('#mstate');
+    if(!s||!s.state){ pip.className='pip off'; el.textContent='Waiting for the first sync.'; return; }
+    if(s.state==='no_token'){ pip.className='pip bad'; el.textContent='ROAS_MCP_TOKEN not set — set the secret on the feedspark worker.'; return; }
+    if(s.state==='unauthorized'){ pip.className='pip bad'; el.textContent='Unauthorized — check ROAS_MCP_TOKEN / ROAS_MCP_AUTH.'; return; }
+    if(s.state==='unreachable'){ pip.className='pip warn'; el.textContent='Unreachable — '+(s.error||'')+' (check ROAS_MCP_URL).'; return; }
+    if(s.state==='error'){ pip.className='pip warn'; el.textContent='Sync error — '+(s.error||''); return; }
+    pip.className='pip'; el.textContent='Synced '+since(s.ok_at)+' · '+fmtN(s.read)+' of '+fmtN(s.total)+' markets read · every 30 min';
   }
 
-  function render(d){
-    if(!d||!d.ok){ $('#tbl-empty').hidden=false; $('#tbl-empty').textContent='ROAS data is unavailable — this needs the live worker.'; $('#kpis').innerHTML=''; return; }
-    BOOK=d; loadStatus(d.status);
-    var book=d.book||{};
-    $('#kpis').innerHTML=
-      '<div class="kpi"><div class="n">'+fmt(book.brandsRead)+' / '+fmt(book.brands)+'</div><div class="l">Brands read</div></div>'+
-      '<div class="kpi"><div class="n">'+fmt(book.marketsRead)+' / '+fmt(book.marketsTotal)+'</div><div class="l">Markets read · of the roster</div></div>'+
-      Object.keys(book.spendByCur||{}).sort(function(a,b){return book.spendByCur[b]-book.spendByCur[a]}).slice(0,3).map(function(c){
-        return '<div class="kpi vout"><div class="n">'+esc(c)+Number(book.spendByCur[c]).toLocaleString('en-GB',{maximumFractionDigits:0})+'</div><div class="l">Spend · '+esc(c)+' markets, 30d</div></div>'; }).join('')+
-      Object.keys(book.revenueByCur||{}).sort(function(a,b){return book.revenueByCur[b]-book.revenueByCur[a]}).slice(0,3).map(function(c){
-        return '<div class="kpi vin"><div class="n">'+esc(c)+Number(book.revenueByCur[c]).toLocaleString('en-GB',{maximumFractionDigits:0})+'</div><div class="l">Revenue · '+esc(c)+' markets, 30d</div></div>'; }).join('')+
-      '<div class="kpi"><div class="n" style="font-size:15px">'+bandMini(book.bandCounts)+'</div><div class="l">Market bands, across the roster</div></div>';
+  /* ================= header controls ================= */
+  function renderBrands(){
+    var sel=$('#brand'), list=(DATA&&DATA.rosterBrands)||[];
+    var cur=sel.value; var html='<option value="">All brands</option>'+list.map(function(b){return '<option value="'+esc(b.client)+'">'+esc(b.client)+'</option>'}).join('');
+    if(sel.innerHTML!==html)sel.innerHTML=html; sel.value=S.brand||''; if(sel.value!==(S.brand||''))sel.value='';
+    var mk=$('#mkts'); if(!S.brand){ mk.innerHTML=''; return; }
+    var b=list.filter(function(x){return x.client===S.brand})[0]; if(!b){ mk.innerHTML=''; return; }
+    var read={}; ((DATA&&DATA.markets)||[]).forEach(function(m){read[m.market]=m});
+    mk.innerHTML='<button class="chip'+(S.market?'':' on')+'" data-mkt="" type="button">All markets <span class="k">'+b.markets.length+'</span></button>'+b.markets.map(function(m){
+      var r=read[m]; var t=r&&r[S.win]; return '<button class="chip'+(S.market===m?' on':'')+'" data-mkt="'+esc(m)+'" type="button" title="'+(r?(t&&t.band?esc(t.band)+' · ':'')+'read '+since(r.updated):'not read yet')+'">'+esc(m)+(r?(t&&t.band?' <span class="k">'+esc(t.band.slice(0,1))+'</span>':''):' <span class="k">—</span>')+'</button>'; }).join('');
+  }
+  function renderWin(){ $('#win').innerHTML=(WINS.length?WINS:[{k:'w7',label:'7 days'},{k:'w30',label:'30 days'},{k:'w90',label:'90 days'}]).map(function(w){return '<button type="button" data-win="'+w.k+'" class="'+(S.win===w.k?'on':'')+'" aria-pressed="'+(S.win===w.k)+'">'+esc(w.label)+'</button>'}).join(''); }
+  function agg(){ var b=DATA&&DATA.book&&DATA.book[S.win]; return (b&&b.byCur)||{}; }
+  function pickCur(){ var by=agg(); var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); if(!ks.length){S.cur=null;return;} if(!S.cur||!by[S.cur])S.cur=ks[0]; }
+  function renderCur(){ var by=agg(); var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); var sel=$('#cur');
+    sel.innerHTML=ks.length?ks.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+' markets · '+by[c].n+'</option>'}).join(''):'<option value="">No currency read yet</option>';
+    sel.value=S.cur||''; sel.disabled=ks.length<2; sel.title=ks.length<2?'Every market in scope reports in '+(ks[0]||'one currency'):'Every scorecard, chart and total on this page runs on ONE currency\'s markets — pick which'; }
+  function scopeLine(){ var by=agg(); var a=S.cur&&by[S.cur]; var n=(DATA&&DATA.tracked)||0, tot=(DATA&&DATA.roster)||0;
+    $('#scopeline').textContent=(S.brand?S.brand+(S.market?' · '+S.market:' · all markets'):'All brands')+' · '+n+' of '+tot+' markets read'+(a?' · '+S.cur+' markets: '+a.n:''); }
 
-    var tb=$('#brandtbl tbody'); $('#tbl-empty').hidden=!!(d.brands&&d.brands.length);
-    if(!d.brands||!d.brands.length){ tb.innerHTML=''; $('#tbl-empty').textContent='No brands synced yet — ⚡ Sync now, or wait for the next cron firing.'; return; }
-    tb.innerHTML=d.brands.map(function(b){
-      return '<tr class="brand-row" data-b="'+esc(b.client)+'"><td class="bn"><span class="chev">▸</span> '+esc(b.client)+'</td>'
-        +'<td>'+fmt(b.marketsRead)+' / '+fmt(b.roster)+'</td>'
-        +'<td>'+moneyChips(b.spendByCur)+'</td>'
-        +'<td>'+moneyChips(b.revenueByCur)+'</td>'
-        +'<td>'+(b.roasPct!=null?b.roasPct.toLocaleString('en-GB')+'%':'<span class="mstate">mixed currency</span>')+'</td>'
-        +'<td>'+bandMini(b.bandCounts)+'</td>'
-        +'<td class="num">'+(b.avgZombiePct!=null?b.avgZombiePct+'%':'—')+'</td>'
-        +'<td class="mstate">'+since(b.updated)+'</td></tr>'
-        +'<tr class="cat-sub" data-b="'+esc(b.client)+'" hidden><td colspan="8"><div class="cat-wrap"></div></td></tr>';
+  /* ================= series helpers ================= */
+  function series(){ var s=DATA&&DATA.series&&DATA.series[S.win]; if(!s)return []; return (S.cur&&s[S.cur])||[]; }
+  function seriesAll(){ var s=DATA&&DATA.series&&DATA.series[S.win]; return (s&&s['*'])||[]; }
+  function dayN(d){ return Math.round(Date.parse(d)/86400000); }
+  function backPt(ser){ if(ser.length<2)return null; var last=ser[ser.length-1]; var tgt=dayN(last.d)-BACK; var hit=null; for(var i=0;i<ser.length;i++){ if(dayN(ser[i].d)<=tgt)hit=ser[i]; else break; } return hit; }
+  function dpct(now,prev){ if(now==null||prev==null||!isFinite(now)||!isFinite(prev)||prev===0)return null; return ((now-prev)/Math.abs(prev))*100; }
+
+  /* ================= scorecards ================= */
+  function countUp(el,target,fmt){ if(REDUCE||!isFinite(target)){ el.textContent=fmt(target); return; } var t0=null, ms=700;
+    function step(ts){ if(t0===null)t0=ts; var k=Math.min(1,(ts-t0)/ms); el.textContent=fmt(target*(1-Math.pow(1-k,3))); if(k<1)requestAnimationFrame(step); else el.textContent=fmt(target); } requestAnimationFrame(step); }
+  function spark(vals,color){ var v=vals.filter(function(x){return x!=null}); if(v.length<2)return '<div class="nt">history starts with the first sync</div>';
+    var W=170,H=30,mn=Math.min.apply(null,v),mx=Math.max.apply(null,v); var rng=(mx-mn)||1; var pts=vals.map(function(x,i){ return x==null?null:[(i/(vals.length-1))*W, H-((x-mn)/rng)*(H-4)-2]; }).filter(Boolean);
+    var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(''); var last=pts[pts.length-1];
+    // the area is filled with the card's OWN colour inline — a shared <defs> gradient resolves
+    // its stop-color against the defs' ancestor, not the card, so every area came out blue
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true" style="--sc-c:'+color+'"><path class="ar" d="'+d+'L'+W+' '+H+'L0 '+H+'Z" fill="'+color+'" fill-opacity=".16"/><path class="ln" d="'+d+'"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.6"/></svg>'; }
+  function renderScorecards(){
+    var by=agg(), a=S.cur&&by[S.cur], row=$('#sc-row'), pair=PAIR();
+    if(!a){ row.innerHTML='<div class="empty" style="flex:1"><b>Nothing read for this scope yet.</b> ⚡ Sync now, or wait for the next firing.</div>'; $('#sc-foot').textContent=''; return; }
+    var ser=series(), last=ser[ser.length-1], prev=backPt(ser);
+    row.innerHTML=METRICS.map(function(m){
+      var v=mval(a,m.k); var on=S.metrics.indexOf(m.k); var color=on<0?'':pair[on];
+      var dn=null, dtxt='no history yet', cls='';
+      if(!m.noTrend&&last&&prev){ dn=dpct(mval(last,m.k),mval(prev,m.k)); if(dn!=null){ var good=m.good; var sign=dn>0?1:dn<0?-1:0; cls=sign===0||good===0?'':(sign===good?'up':'dn'); dtxt=(sign>0?'▲ ':sign<0?'▼ ':'— ')+fmtN(Math.abs(dn),1)+'% vs '+BACK+'d ago'; } else dtxt='— vs '+BACK+'d ago'; }
+      if(m.noTrend)dtxt='SKU-weighted across '+S.cur+' markets';
+      var vals=m.noTrend?[]:ser.slice(-30).map(function(p){return mval(p,m.k)});
+      return '<button type="button" class="sc'+(on>=0?' on':'')+'" data-m="'+m.k+'" style="--sc-c:'+(color||'transparent')+'" aria-pressed="'+(on>=0)+'" title="'+(on>=0?'Remove from the trend':'Plot in the trend')+'">'
+        +'<div class="l"><i></i>'+esc(m.l)+'</div><div class="n" data-v="'+(v==null?'':v)+'">'+esc(fmtV(m,v,S.cur))+'</div><div class="d '+cls+'">'+esc(dtxt)+'</div>'+(m.noTrend?'':spark(vals,color||'#94A0AE'))+'</button>'; }).join('');
+    Array.prototype.forEach.call(row.querySelectorAll('.sc .n'),function(el){ var m=MBY[el.parentNode.getAttribute('data-m')]; var v=parseFloat(el.getAttribute('data-v')); if(!isNaN(v))countUp(el,v,function(x){return fmtV(m,x,S.cur)}); });
+    $('#sc-foot').innerHTML='<span>'+esc(S.cur)+' markets · '+a.n+' read · '+esc((WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win)+'</span>'+(last?'<span>latest reading '+esc(dLbl(last.d))+(prev?' · vs '+esc(dLbl(prev.d)):'')+'</span>':'');
+  }
+
+  /* ================= trend ================= */
+  function renderTrend(){
+    var host=$('#tr-panels'), ser=series(), pair=PAIR(), wl=(WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win;
+    $('#tr-ch').textContent=S.metrics.map(function(k){return MBY[k].l}).join(' and ')+' — the trailing '+wl+' figure as read each day, '+(S.cur||'')+' markets.';
+    var pts=ser.filter(function(p){return p.d});
+    if(pts.length<2){ host.innerHTML='<div class="empty"><b>History starts with the first sync.</b> One point per day accrues from here — the trend draws from the second day.'+(pts.length?' First reading: '+esc(dLbl(pts[0].d))+'.':'')+'</div>'; $('#tr-range').textContent=''; return; }
+    $('#tr-range').textContent=dLbl(pts[0].d)+' → '+dLbl(pts[pts.length-1].d)+' · '+pts.length+' readings';
+    var W=1000,H=200,L=64,R=16,T=14,B=28;
+    host.innerHTML=S.metrics.map(function(k,idx){
+      var m=MBY[k], color=pair[idx]; var vals=pts.map(function(p){return mval(p,k)}); var v=vals.filter(function(x){return x!=null});
+      if(!v.length)return '<div class="tr-panel"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+'</div><div class="empty">No '+esc(m.l.toLowerCase())+' reading in this window.</div></div>';
+      var mn=Math.min.apply(null,v), mx=Math.max.apply(null,v); if(mn>0)mn=0; var rng=(mx-mn)||1;
+      var x=function(i){return L+(i/(pts.length-1))*(W-L-R)}, y=function(val){return T+(H-T-B)-((val-mn)/rng)*(H-T-B)};
+      var d='', started=false; vals.forEach(function(val,i){ if(val==null){started=false;return;} d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(val).toFixed(1); started=true; });
+      var axf=function(val){ if(m.kind==='money'||m.kind==='money2')return fmtM(S.cur,val,mx<100?2:0); if(m.kind==='pct'||m.kind==='pct2')return fmtP(val,mx>=100?0:1); return fmtN(val,0); };
+      var grid=[0,.5,1].map(function(f){ var val=mn+rng*f; return '<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(val).toFixed(1)+'" y2="'+y(val).toFixed(1)+'"/><text class="ax" x="'+(L-8)+'" y="'+(y(val)+4).toFixed(1)+'" text-anchor="end">'+esc(axf(val))+'</text>'; }).join('');
+      var step=Math.max(1,Math.ceil(pts.length/8)); var xl=pts.map(function(p,i){ if(i%step&&i!==pts.length-1)return ''; return '<text class="ax" x="'+x(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(dLbl(p.d))+'</text>'; }).join('');
+      var lastI=vals.length-1; while(lastI>0&&vals[lastI]==null)lastI--;
+      return '<div class="tr-panel" data-k="'+k+'"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+' <span class="dim" style="text-transform:none;letter-spacing:0">· '+esc(fmtV(m,vals[lastI],S.cur))+' latest</span></div>'
+        +'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.l)+' trend">'+grid+xl
+        +'<path class="ln" d="'+d+'" stroke="'+color+'"/><line class="cross" x1="0" x2="0" y1="'+T+'" y2="'+(H-B)+'"/><circle class="hot" r="4.5" fill="'+color+'"/>'
+        +'<rect class="hit" x="'+L+'" y="0" width="'+(W-L-R)+'" height="'+H+'"/></svg><div class="tip"></div></div>';
     }).join('');
-  }
-
-  function toggleBrand(client, row){
-    var sub=document.querySelector('tr.cat-sub[data-b="'+CSS.escape(client)+'"]');
-    if(!sub)return;
-    if(EXPANDED===client){ sub.hidden=true; row.classList.remove('open'); EXPANDED=null; return; }
-    if(EXPANDED){ var pr=document.querySelector('tr.brand-row[data-b="'+CSS.escape(EXPANDED)+'"]'); var ps=document.querySelector('tr.cat-sub[data-b="'+CSS.escape(EXPANDED)+'"]'); if(pr)pr.classList.remove('open'); if(ps)ps.hidden=true; }
-    EXPANDED=client; row.classList.add('open'); sub.hidden=false;
-    var wrap=sub.querySelector('.cat-wrap');
-    if(CATCACHE[client]){ wrap.innerHTML=CATCACHE[client]; return; }
-    wrap.innerHTML='<div class="mstate">Loading categories…</div>';
-    fetch('/api/roas?client='+encodeURIComponent(client)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
-      if(!d||!d.ok){ wrap.innerHTML='<div class="mstate">Could not load this brand’s categories.</div>'; return; }
-      var rows=[];
-      Object.keys(d.markets||{}).forEach(function(mkt){
-        var rec=d.markets[mkt]; (rec.categories||[]).forEach(function(c){ rows.push(Object.assign({market:mkt},c)); });
+    // one crosshair across every panel — hover anywhere and every panel marks that day; the
+    // tooltip (naming every plotted metric for the day) follows the panel under the pointer only
+    Array.prototype.forEach.call(host.querySelectorAll('.tr-panel'),function(pn){
+      var svg=pn.querySelector('svg'); if(!svg)return;
+      svg.addEventListener('mousemove',function(e){ var r=svg.getBoundingClientRect(); var fx=(e.clientX-r.left)/r.width*W; var i=Math.round((fx-L)/(W-L-R)*(pts.length-1)); i=Math.max(0,Math.min(pts.length-1,i)); hover(i,pn); });
+      svg.addEventListener('mouseleave',function(){ hover(-1); });
+    });
+    function hover(i,at){
+      Array.prototype.forEach.call(host.querySelectorAll('.tr-panel'),function(pn){
+        var k=pn.getAttribute('data-k'), m=MBY[k], svg=pn.querySelector('svg'), tip=pn.querySelector('.tip'), cr=svg&&svg.querySelector('.cross'), hot=svg&&svg.querySelector('.hot');
+        if(!svg||!cr)return;
+        if(i<0||pn!==at){ if(i<0){ cr.style.opacity=0; hot.style.opacity=0; } tip.style.opacity=0; if(i<0)return; }
+        var vals=pts.map(function(p){return mval(p,k)}); var v=vals.filter(function(x){return x!=null}); var mn=Math.min.apply(null,v); if(mn>0)mn=0; var mx=Math.max.apply(null,v); var rng=(mx-mn)||1;
+        var xx=L+(i/(pts.length-1))*(W-L-R), val=vals[i]; var yy=val==null?null:T+(H-T-B)-((val-mn)/rng)*(H-T-B);
+        cr.setAttribute('x1',xx); cr.setAttribute('x2',xx); cr.style.opacity=1;
+        if(yy!=null){ hot.setAttribute('cx',xx); hot.setAttribute('cy',yy); hot.style.opacity=1; } else hot.style.opacity=0;
+        tip.innerHTML='<b>'+esc(dLbl(pts[i].d))+'</b> <span class="m">· '+pts[i].n+' market'+(pts[i].n===1?'':'s')+'</span><br>'+S.metrics.map(function(kk,j){ return '<span style="color:'+PAIR()[j]+'">●</span> '+esc(MBY[kk].l)+' <b>'+esc(fmtV(MBY[kk],mval(pts[i],kk),S.cur))+'</b>'; }).join('<br>');
+        var r=svg.getBoundingClientRect(); var px=(xx/W)*r.width; tip.style.left=Math.min(r.width-190,Math.max(0,px+12))+'px'; tip.style.top='26px'; tip.style.opacity=1;
       });
-      rows.sort(function(a,b){ return (b.spend.n||0)-(a.spend.n||0); });
-      rows=rows.slice(0,25);
-      if(!rows.length){ wrap.innerHTML='<div class="mstate">No category rows synced yet for this brand.</div>'; return; }
-      var html='<table class="vt"><thead><tr><th>Category</th><th>Market</th><th>Spend</th><th>Revenue</th><th>ROAS</th><th>Band</th><th class="num">SKUs</th></tr></thead><tbody>'
-        + rows.map(function(c){ return '<tr><td>'+esc(c.category)+'</td><td>'+esc(c.market)+'</td><td>'+money(c.spend)+'</td><td>'+money(c.revenue)+'</td>'
-          +'<td>'+(c.roasPct!=null?c.roasPct.toLocaleString('en-GB')+'%':'—')+'</td><td>'+bandPill(c.band)+'</td><td class="num">'+fmt(c.skus)+'</td></tr>'; }).join('')
-        +'</tbody></table><div class="note">'+fmt(d.read)+' of '+fmt(d.roster)+' markets synced for '+esc(client)+' · top '+rows.length+' categories by spend, across those markets.</div>';
-      CATCACHE[client]=html; wrap.innerHTML=html;
-    });
+    }
   }
 
-  document.addEventListener('click', function(e){
-    var row=e.target.closest&&e.target.closest('tr.brand-row');
-    if(row){ toggleBrand(row.getAttribute('data-b'), row); return; }
-  });
-
-  $('#sync-now').addEventListener('click', function(){
-    var btn=this; btn.disabled=true; $('#mstate').textContent='Syncing…';
-    fetch('/api/roas?pull=1&pulls=20').then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
-      btn.disabled=false;
-      if(!d){ $('#mstate').textContent='Sync failed — this needs the live worker.'; return; }
-      if(!d.ok && d.status===undefined){ $('#mstate').textContent='Owner only — ask Ray to sync.'; return; }
-      loadStatus(d.status); load();
-    });
-  });
-
-  function load(){
-    $('#tbl-state').textContent='Loading…';
-    fetch('/api/roas').then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
-      $('#tbl-state').textContent=''; render(d);
-    });
+  /* ================= movers ================= */
+  function renderMovers(){
+    var host=$('#mv'), mv=(DATA&&DATA.movers&&DATA.movers[S.win])||[];
+    var rows=mv.filter(function(r){return (!S.cur||r.cur===S.cur)&&r.dRv!=null});
+    $('#mv-ch').textContent='Markets whose revenue moved most against the reading '+BACK+' days earlier — '+(S.cur||'')+' markets, '+((WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win)+'.';
+    if(S.market){ host.innerHTML='<div class="empty">Movers compare markets — widen the scope to the brand or the whole book.</div>'; return; }
+    if(!rows.length){ host.innerHTML='<div class="empty"><b>No movers yet.</b> A market moves once it has a reading at least '+BACK+' days older than its latest — history starts with the first sync.</div>'; return; }
+    var up=rows.filter(function(r){return r.dRv>0}).sort(function(a,b){return b.dRv-a.dRv}).slice(0,6), dn=rows.filter(function(r){return r.dRv<0}).sort(function(a,b){return a.dRv-b.dRv}).slice(0,6);
+    var mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.dRv)}))||1;
+    var col=function(list,ttl,cls){ return '<div><h4>'+ttl+'</h4>'+(list.length?list.map(function(r){ return '<div class="row '+cls+'"><div class="nm"><b>'+esc(r.client)+'</b> '+esc(r.market)+'<small>'+esc(fmtM(r.cur,r.rv,0))+' revenue · ROAS '+esc(fmtP(r.roas))+'</small><div class="bar"><i style="width:'+Math.round(Math.abs(r.dRv)/mx*100)+'%"></i></div></div><span class="dl '+cls+'">'+(r.dRv>0?'▲':'▼')+' '+fmtN(Math.abs(r.dRv),1)+'%</span>'+bandPill(r.band)+'</div>'; }).join(''):'<div class="dim">none</div>')+'</div>'; };
+    host.innerHTML=col(up,'Rising · revenue','up')+col(dn,'Falling · revenue','dn');
   }
-  load();
+
+  /* ================= the table ================= */
+  function bandCls(b){ return b?'b-'+String(b).toLowerCase():'b-none'; }
+  function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'no ad activity')+'</span>'; }
+  // a coloured square + its count per band, each named in full on hover ("St" would read as
+  // Strong and Steady alike)
+  function bandMini(counts){ var order=['Strong','Steady','Weak','Losing']; var ks=order.filter(function(b){return counts&&counts[b]}); if(!ks.length)return '<span class="dim">—</span>';
+    return '<span class="band-mini" title="'+esc(ks.map(function(b){return counts[b]+' '+b}).join(' · '))+'">'+ks.map(function(b){return '<i class="'+bandCls(b)+'"></i><span>'+counts[b]+'</span>'}).join('')+'</span>'; }
+  function visCols(){ return COLS.filter(function(c){return S.cols.indexOf(c.k)>=0}); }
+  function bar(cls,n,ref){ if(n==null||!ref||ref<=0)return ''; var w=Math.max(2,Math.min(100,Math.round(n/ref*100))); return '<i style="width:'+w+'%"></i>'; }
+  // one cell: {n (sort), html}
+  function cellOf(row,k){
+    var t=row.t||{}, cur=row.cur;
+    if(row.type==='brand'){
+      var b=row.b, by=b.byCur||{}, curs=Object.keys(by).sort(function(a,c){return by[c].sp-by[a].sp}); var pc=(S.cur&&by[S.cur])?S.cur:curs[0]; var a=pc?by[pc]:null; var multi=curs.length>1;
+      var chips=function(f){ return curs.map(function(c){return '<span class="cc'+(c===pc?'':' dim')+'">'+esc(fmtM(c,by[c][f],0))+'</span>'}).join(''); };
+      switch(k){
+        case 'sp': return {n:a?a.sp:0,html:multi?chips('sp'):'<span class="cb">'+esc(fmtM(pc,a?a.sp:null,0))+(row.ref?bar('',a&&a.sp,row.ref.sp):'')+'</span>'};
+        case 'rv': return {n:a?a.rv:0,html:multi?chips('rv'):'<span class="cb rv">'+esc(fmtM(pc,a?a.rv:null,0))+(row.ref?bar('',a&&a.rv,row.ref.rv):'')+'</span>'};
+        case 'roas': return {n:a?a.roas:null,html:a&&a.roas!=null?esc(fmtP(a.roas))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'band': return {n:(b.bandCounts&&b.bandCounts.Strong)||0,html:bandMini(b.bandCounts)};
+        case 'cv': return {n:b.conv,html:fmtN(b.conv,0)}; case 'ck': return {n:b.clicks,html:fmtN(b.clicks)}; case 'im': return {n:b.impr,html:fmtN(b.impr)};
+        case 'ctr': return {n:b.impr>0?b.clicks/b.impr*100:null,html:fmtP(b.impr>0?b.clicks/b.impr*100:null,2)};
+        case 'cr': return {n:b.clicks>0?b.conv/b.clicks*100:null,html:fmtP(b.clicks>0?b.conv/b.clicks*100:null,2)};
+        case 'cpc': return {n:a&&a.ck>0?a.sp/a.ck:null,html:a&&a.ck>0?esc(fmtM(pc,a.sp/a.ck,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'cpa': return {n:a&&a.cv>0?a.sp/a.cv:null,html:a&&a.cv>0?esc(fmtM(pc,a.sp/a.cv,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'aov': return {n:a&&a.cv>0?a.rv/a.cv:null,html:a&&a.cv>0?esc(fmtM(pc,a.rv/a.cv,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'avgp': case 'up': case 'mm': return {n:null,html:'<span class="dim">per market</span>'};
+        case 'sk': return {n:b.skus,html:fmtN(b.skus)}; case 'zb': return {n:b.avgZombiePct,html:fmtP(b.avgZombiePct,1)};
+        case 'upd': return {n:b.updated,html:'<span class="dim">'+esc(since(b.updated))+'</span>'};
+      }
+    }
+    if(!row.has)return {n:null,html:'<span class="dim">'+(k==='band'?'not read for this period':'—')+'</span>'};
+    var m=function(o){return o&&o.n!=null?o.n:null};
+    switch(k){
+      case 'sp': return {n:m(t.spend),html:'<span class="cb">'+esc(fmtM(cur,m(t.spend),0))+bar('',m(t.spend),row.ref&&row.ref.sp)+'</span>'};
+      case 'rv': return {n:m(t.revenue),html:'<span class="cb rv">'+esc(fmtM(cur,m(t.revenue),0))+bar('',m(t.revenue),row.ref&&row.ref.rv)+'</span>'};
+      case 'roas': return {n:t.roasPct,html:fmtP(t.roasPct)}; case 'band': return {n:['Losing','Weak','Steady','Strong'].indexOf(t.band),html:bandPill(t.band)};
+      case 'cv': return {n:t.conv,html:fmtN(t.conv,Math.abs(t.conv||0)<100?2:0)}; case 'ck': return {n:t.clicks,html:fmtN(t.clicks)}; case 'im': return {n:t.impr,html:fmtN(t.impr)};
+      case 'ctr': return {n:t.ctrPct,html:fmtP(t.ctrPct,2)}; case 'cpc': return {n:m(t.cpc),html:fmtM(cur,m(t.cpc),2)}; case 'cpa': return {n:m(t.cpa),html:fmtM(cur,m(t.cpa),2)};
+      case 'cr': return {n:t.crPct,html:fmtP(t.crPct,2)}; case 'aov': return {n:m(t.aov),html:fmtM(cur,m(t.aov),2)}; case 'avgp': return {n:m(t.avgPrice),html:fmtM(cur,m(t.avgPrice),2)};
+      case 'up': return {n:t.upliftPct,html:fmtP(t.upliftPct,1)}; case 'mm': return {n:t.minMarginPct,html:fmtP(t.minMarginPct,1)};
+      case 'sk': return {n:t.skus,html:fmtN(t.skus)}; case 'zb': return {n:t.zombiePct,html:fmtP(t.zombiePct,1)};
+      case 'upd': return {n:row.updated,html:'<span class="dim">'+esc(since(row.updated))+'</span>'};
+    }
+    return {n:null,html:''};
+  }
+  function sortRows(list){ var k=S.sort.k, dir=S.sort.dir; list.sort(function(a,b){ var x=k==='name'?a.name:cellOf(a,k).n, y=k==='name'?b.name:cellOf(b,k).n; if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; if(typeof x==='string')return x.localeCompare(y)*dir; return (x-y)*dir; }); return list; }
+  function matchQ(row){ var q=S.q.trim().toLowerCase(); if(!q)return true; return (row.path||row.name||'').toLowerCase().indexOf(q)>=0||(row.client||'').toLowerCase().indexOf(q)>=0||(row.market||'').toLowerCase().indexOf(q)>=0; }
+  function matchBand(row){ var ks=Object.keys(S.bands).filter(function(k){return S.bands[k]}); if(!ks.length||row.type==='brand')return true; var b=row.has?(row.t&&row.t.band)||'none':'none'; return ks.indexOf(b)>=0; }
+  // brand → market → category rows for the current scope; categories/segments from their caches
+  function buildRows(){
+    var out=[], brands=(DATA&&DATA.brands&&DATA.brands[S.win])||[], mkts=(DATA&&DATA.markets)||[];
+    brands.forEach(function(b){
+      // a brand picked in the header opens on its markets; a market picked opens on its rows
+      var bk='b|'+b.client; var brow={type:'brand',key:bk,depth:0,name:b.client,client:b.client,b:b,updated:b.updated,open:S.open[bk]==null?!!S.brand:!!S.open[bk]};
+      var kids=[]; var byCurRef=b.byCur||{};
+      mkts.filter(function(m){return m.client===b.client}).forEach(function(m){
+        var t=m[S.win]; var mk='m|'+m.cmpid; var ref=m.cur&&byCurRef[m.cur]?{sp:byCurRef[m.cur].sp,rv:byCurRef[m.cur].rv}:null;
+        var mrow={type:'market',key:mk,depth:1,name:m.market,client:m.client,market:m.market,cmpid:m.cmpid,cur:m.cur,t:t,has:!!t,updated:m.updated,ref:ref,open:S.open[mk]==null?!!S.market:!!S.open[mk],expandable:!!t,parent:bk};
+        var kk=[];
+        if(mrow.open&&t){
+          openMarket(m.cmpid);   // idempotent — a no-op once the rows are cached or in flight
+          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(tr.tree.length===0)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
+          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.rows){ kk=lv.rows.map(function(c,i){ return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,parent:mk}; }); if(!kk.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+S.seg.replace('_',' ').toLowerCase()+' rows for this market.',parent:mk}]; }
+            else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+S.seg.replace('_',' ').toLowerCase()+' rows live from FeedHero…',parent:mk}]; }
+        }
+        mrow.kids=kk; kids.push(mrow);
+      });
+      brow.kids=sortRows(kids); out.push(brow);
+    });
+    return sortRows(out);
+  }
+  function catRows(tree,mrow,depth,pk){ var t=mrow.t; var list=tree.map(function(n,i){ var key=pk+'|'+n.path; var r={type:'cat',key:key,depth:depth,name:n.name,path:n.path,client:mrow.client,market:mrow.market,cur:mrow.cur,t:n.row,has:true,updated:mrow.updated,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,expandable:n.kids.length>0,open:!!S.open[key],parent:pk}; r.kids=r.open?catRows(n.kids,mrow,depth+1,key):[]; return r; }); return sortRows(list); }
+  function flat(rows,out,vis){ out=out||[]; rows.forEach(function(r){ var show=matchQ(r)&&matchBand(r); var kidsOut=[]; if(r.kids&&r.open)flat(r.kids,kidsOut,true); var anyKid=kidsOut.length>0; if(r.type==='note'){ out.push(r); return; } if(show||anyKid){ out.push(r); if(r.open){ var cap=S.more[r.key]?Infinity:(r.type==='market'?30:Infinity); var shown=kidsOut.slice(0,cap); shown.forEach(function(k){out.push(k)}); if(kidsOut.length>cap)out.push({type:'more',key:r.key+'|more',depth:r.depth+1,n:kidsOut.length-cap,parent:r.key}); } } }); return out; }
+  function renderTable(){
+    var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody');
+    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(S.seg==='Category'?'category':S.seg.replace('_',' ').toLowerCase())+'</th>'+cols.map(function(c){return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+'">'+esc(c.l)+'</th>'}).join('')+'</tr>';
+    if(!DATA||!DATA.brands||!(DATA.brands[S.win]||[]).length){ body.innerHTML=''; $('#pt-empty').hidden=false; $('#pt-empty').innerHTML=DATA?'<b>No markets synced for this scope yet.</b> ⚡ Sync now, or wait for the next firing.':'<b>ROAS data is unavailable</b> — this needs the live worker.'; $('#pt-foot').textContent=''; return; }
+    $('#pt-empty').hidden=true;
+    var rows=flat(buildRows());
+    // Google Ads' Total row — one per currency in scope, the same population the scorecards run on
+    var by=agg(); var tot=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}).map(function(c){ var a=by[c]; var tr={type:'tot',cur:c,has:true,b:{byCur:{},conv:a.cv,clicks:a.ck,impr:a.im,skus:a.sk,avgZombiePct:a.zb,bandCounts:a.bands||{},updated:0}}; tr.b.byCur[c]=a;
+      return '<tr class="tot"><td class="nm"><span class="in">Total · '+esc(c)+' markets <span class="dim">'+a.n+'</span></span></td>'+cols.map(function(col){ var cell=cellOf({type:'brand',b:tr.b,cur:c},col.k); return '<td>'+cell.html+'</td>'; }).join('')+'</tr>'; }).join('');
+    body.innerHTML=tot+rows.map(function(r){
+      if(r.type==='note')return '<tr class="r"><td class="nm" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td><td colspan="'+cols.length+'"></td></tr>';
+      if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
+      var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
+        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+'</span>';
+      return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ return '<td>'+cellOf(r,c.k).html+'</td>'; }).join('')+'</tr>';
+    }).join('');
+    var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
+    $('#pt-foot').innerHTML='<span>'+nB+' brand'+(nB===1?'':'s')+' · '+nM+' market'+(nM===1?'':'s')+(nC?' · '+nC+' '+(S.seg==='Category'?'categories':S.seg.replace('_',' ').toLowerCase()+' rows'):'')+' shown</span>'+(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>';
+    $('#expand-all').textContent=(DATA.brands[S.win]||[]).every(function(b){return S.open['b|'+b.client]||S.brand})?'⊖ Close all':'⊕ Open all';
+  }
+  function renderBands(){ var ks=[['Strong','Strong'],['Steady','Steady'],['Weak','Weak'],['Losing','Losing'],['none','No activity']]; $('#bands').innerHTML=ks.map(function(p){return '<button class="chip'+(S.bands[p[0]]?' on':'')+'" type="button" data-band="'+p[0]+'" aria-pressed="'+!!S.bands[p[0]]+'">'+p[1]+'</button>'}).join(''); }
+  function renderCols(){ $('#cols-pop').innerHTML='<div class="hd">Columns</div>'+COLS.map(function(c){return '<label><input type="checkbox" data-col="'+c.k+'"'+(S.cols.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')+'<div class="hd" style="margin-top:8px">Reset</div><label><button class="chip" type="button" id="cols-reset">Default columns</button></label>'; }
+
+  /* ================= fetching a market's rows ================= */
+  function openMarket(cmpid){
+    if(S.seg==='Category'){ var k=cmpid+'|'+S.win; if(TREES[k])return; TREES[k]={}; var m=(DATA.markets||[]).filter(function(x){return x.cmpid===cmpid})[0]; if(!m)return;
+      fetch('/api/roas?client='+encodeURIComponent(m.client)+'&market='+encodeURIComponent(m.market)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ TREES[k]=d&&d.ok?{tree:d.tree||[],n:d.n}:{err:1}; renderTable(); }); return; }
+    var lk=cmpid+'|'+S.seg+'|'+S.win; if(LIVE[lk])return; LIVE[lk]={};
+    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at}:{err:(d&&d.error)||'no answer'}; renderTable(); });
+  }
+
+  /* ================= CSV ================= */
+  function csv(){
+    var cols=visCols(), rows=flat(buildRows()).filter(function(r){return r.type!=='note'&&r.type!=='more'});
+    var strip=function(h){ var d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+    var q=function(s){ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    var lines=[['Level','Brand','Market','Name','Path','Currency'].concat(cols.map(function(c){return c.l})).map(q).join(',')];
+    rows.forEach(function(r){ lines.push([r.type,r.client||r.name,r.market||'',r.name,r.path||'',r.cur||''].concat(cols.map(function(c){return strip(cellOf(r,c.k).html)})).map(q).join(',')); });
+    var blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='roas_'+(S.brand||'all')+(S.market?'_'+S.market:'')+'_'+S.win+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  /* ================= views ================= */
+  function views(){ try{ var v=JSON.parse(LS('fcc-roas-views')||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+  function saveViews(v){ LS('fcc-roas-views',JSON.stringify(v.slice(0,20))); }
+  function renderViews(){ var v=views(); $('#views-pop').innerHTML='<div class="hd">Saved views · this device</div>'+(v.length?v.map(function(x,i){return '<div class="vw"><button class="ap" type="button" data-view="'+i+'" title="'+esc(x.brand||'All brands')+(x.market?' '+esc(x.market):'')+' · '+esc(x.win)+' · '+esc((x.metrics||[]).join(', '))+'">'+esc(x.name)+'</button><button class="x" type="button" data-viewx="'+i+'" aria-label="Delete view '+esc(x.name)+'">✕</button></div>'}).join(''):'<div class="dim" style="padding:4px 0">None yet.</div>')
+    +'<div class="hd" style="margin-top:10px">Save this screen</div><div style="display:flex;gap:6px"><input class="fld" id="view-name" type="text" placeholder="Name…" style="flex:1;min-width:0" aria-label="View name"><button class="btn" id="view-save" type="button">Save</button></div><div class="hd" style="margin-top:10px">Share</div><button class="chip" id="view-link" type="button">🔗 Copy link to this screen</button>'; }
+  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=x.seg||'Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
+
+  /* ================= render all ================= */
+  function renderAll(){
+    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; renderTable(); return; }
+    status(DATA.status); pickCur(); renderBrands(); renderWin(); renderCur(); scopeLine(); renderScorecards(); renderTrend(); renderMovers(); renderBands(); renderCols(); renderTable(); renderViews();
+    try{ history.replaceState(null,'',linkOf()); }catch(e){}
+  }
+
+  /* ================= events ================= */
+  $('#brand').addEventListener('change',function(){ S.brand=this.value; S.market=''; S.open={}; load(); });
+  $('#mkts').addEventListener('click',function(e){ var b=e.target.closest('[data-mkt]'); if(!b)return; S.market=b.getAttribute('data-mkt'); load(); });
+  $('#win').addEventListener('click',function(e){ var b=e.target.closest('[data-win]'); if(!b)return; S.win=b.getAttribute('data-win'); renderAll(); });
+  $('#cur').addEventListener('change',function(){ S.cur=this.value||null; renderAll(); });
+  $('#sc-row').addEventListener('click',function(e){ var b=e.target.closest('.sc'); if(!b)return; var k=b.getAttribute('data-m'); var i=S.metrics.indexOf(k); if(i>=0){ if(S.metrics.length>1)S.metrics.splice(i,1); } else { S.metrics.push(k); if(S.metrics.length>2)S.metrics.shift(); } renderScorecards(); renderTrend(); try{ history.replaceState(null,'',linkOf()); }catch(e2){} });
+  $('#q').addEventListener('input',function(){ S.q=this.value; renderTable(); });
+  $('#bands').addEventListener('click',function(e){ var b=e.target.closest('[data-band]'); if(!b)return; var k=b.getAttribute('data-band'); S.bands[k]=!S.bands[k]; renderBands(); renderTable(); });
+  $('#seg').addEventListener('change',function(){ S.seg=this.value; Object.keys(S.open).forEach(function(k){ if(k.indexOf('m|')===0&&S.open[k]){ openMarket(k.slice(2)); } }); renderTable(); });
+  $('#pt thead').addEventListener('click',function(e){ var th=e.target.closest('th'); if(!th)return; var k=th.getAttribute('data-k'); if(S.sort.k===k)S.sort.dir=-S.sort.dir; else S.sort={k:k,dir:k==='name'?1:-1}; renderTable(); });
+  $('#pt tbody').addEventListener('click',function(e){
+    var more=e.target.closest('[data-more]'); if(more){ S.more[more.getAttribute('data-more')]=1; renderTable(); return; }
+    // the chevron toggles; so does a click anywhere on a row that HAS one (Google Ads' rows open on the name)
+    var tg=e.target.closest('[data-tg]'), key=null;
+    if(tg)key=tg.getAttribute('data-tg'); else { var tr=e.target.closest('tr.r'); if(tr&&tr.querySelector('[data-tg]'))key=tr.getAttribute('data-key'); }
+    if(!key)return;
+    S.open[key]=!S.open[key]; if(key.indexOf('m|')===0&&S.open[key])openMarket(key.slice(2)); renderTable();
+  });
+  $('#expand-all').addEventListener('click',function(){ var all=(DATA&&DATA.brands&&DATA.brands[S.win])||[]; var allOpen=all.every(function(b){return S.open['b|'+b.client]}); all.forEach(function(b){ S.open['b|'+b.client]=!allOpen; }); renderTable(); });
+  $('#csv').addEventListener('click',csv);
+  function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); }
+  $('#cols-btn').addEventListener('click',function(){ pop(this,$('#cols-pop')); });
+  $('#views-btn').addEventListener('click',function(){ renderViews(); pop(this,$('#views-pop')); });
+  $('#cols-pop').addEventListener('change',function(e){ var cb=e.target.closest('[data-col]'); if(!cb)return; var k=cb.getAttribute('data-col'); if(cb.checked){ if(S.cols.indexOf(k)<0)S.cols.push(k); } else S.cols=S.cols.filter(function(x){return x!==k}); S.cols=COLS.map(function(c){return c.k}).filter(function(k){return S.cols.indexOf(k)>=0}); if(!S.cols.length)S.cols=['sp']; LS('fcc-roas-cols',JSON.stringify(S.cols)); renderTable(); });
+  $('#cols-pop').addEventListener('click',function(e){ if(e.target.id==='cols-reset'){ S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k}); LS('fcc-roas-cols',null); renderCols(); renderTable(); } });
+  $('#views-pop').addEventListener('click',function(e){
+    if(e.target.id==='view-save'){ var nm=($('#view-name').value||'').trim(); if(!nm)return; var v=views().filter(function(x){return x.name!==nm}); v.unshift({name:nm,brand:S.brand,market:S.market,win:S.win,cur:S.cur,metrics:S.metrics.slice(),cols:S.cols.slice(),sort:S.sort,seg:S.seg,q:S.q,bands:S.bands}); saveViews(v); renderViews(); return; }
+    if(e.target.id==='view-link'){ var url=location.origin+linkOf(); (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(function(){ e.target.textContent='✓ Link copied'; },function(){ prompt('Copy this link',url); }); return; }
+    var ap=e.target.closest('[data-view]'); if(ap){ var x=views()[+ap.getAttribute('data-view')]; if(x){ applyView(x); pop($('#views-btn'),$('#views-pop')); } return; }
+    var dx=e.target.closest('[data-viewx]'); if(dx){ var v2=views(); v2.splice(+dx.getAttribute('data-viewx'),1); saveViews(v2); renderViews(); }
+  });
+  document.addEventListener('click',function(e){ if(e.target.closest('.rel'))return; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); } if(e.key==='/'&&document.activeElement!==$('#q')&&!/input|select|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); $('#q').focus(); } });
+  try{ new MutationObserver(function(){ if(DATA){ renderScorecards(); renderTrend(); } }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+
+  // ⚡ Sync now walks the WHOLE roster — each call is one firing's budget (5 markets x 3
+  // windows, stalest first), so it loops ceil(roster / per-call) times: `read` on the status is
+  // every market read EVER, which is the whole roster after the first day, so it cannot be the
+  // stop condition. Bounded at 16 calls so a failing market can never loop forever.
+  $('#sync-now').addEventListener('click',function(){
+    if(SYNCING)return; var btn=this; SYNCING=true; btn.disabled=true; var n=0, need=null;
+    (function step(){
+      $('#mstate').textContent='Syncing… '+(need?'call '+(n+1)+' of '+need:'');
+      fetch('/api/roas?pull=1').then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+        n++;
+        if(!d){ done('Sync failed — this needs the live worker.'); return; }
+        if(!d.ok&&d.status===undefined){ done('Owner only — ask Ray to sync.'); return; }
+        var s=d.status||{}; if(s.state!=='ok'){ CACHE={}; TREES={}; status(s); SYNCING=false; btn.disabled=false; return; }
+        var per=(s.pulled&&s.pulled.length)||5; if(need==null)need=Math.min(16,Math.ceil((s.total||per)/per));
+        $('#mstate').textContent='Syncing… call '+n+' of '+need+' · '+(s.pulled||[]).join(', ');
+        if(n<need){ setTimeout(step,250); return; }
+        done(null);
+      });
+    })();
+    function done(msg){ SYNCING=false; btn.disabled=false; CACHE={}; TREES={}; if(msg){ $('#mstate').textContent=msg; return; } load(true); }
+  });
+
+  readUrl(); $('#q').value=S.q; $('#seg').value=S.seg; renderWin(); renderBands(); renderCols(); load();
 })();
 </script>

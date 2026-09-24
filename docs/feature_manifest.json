@@ -9881,6 +9881,60 @@
       "pr": 0
     },
     {
+      "name": "ROAS v2: three FeedHero windows (7 / 30 / 90 days), each its own read per market",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export const ROAS_WINDOWS",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: history is the trailing figure as read each day — one point a day, same-day replace",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export function histAdd",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: the category tree hangs FeedHero's own per-level aggregates, never sums them",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export function catTree",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: per-currency daily series + movers computed in the engine, not the page",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export function seriesFor",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: the worker reads every market once per window with FeedHero's period token",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "period: w.period",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: live segment route — Brand / Gender / Price group on demand, roster-only, cached",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/roas/live' && request.method === 'GET'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: the page's Google Ads scorecards (value + delta + sparkline, click to plot)",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "id=\"sc-row\"",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: the drill table's segment select (Category stored, the rest live)",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "Segment · Price group",
+      "pr": 0
+    },
+    {
+      "name": "ROAS v2: the browser tripwires render /roas off the synthetic stub",
+      "file": "tools/roas_stub.js",
+      "pattern": "function stubLines",
+      "pr": 0
+    },
+    {
       "name": "Text modules: a served engine is matched by pattern, never by a list of filenames",
       "file": "wrangler.toml",
       "pattern": "**/*_engine.js",
