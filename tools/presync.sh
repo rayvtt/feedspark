@@ -137,6 +137,10 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
+echo "── validating: the call wrap-up (red prompt, tidy-up, draft on FCC or Gmail)"
+node tools/test_callwrap.mjs >/dev/null
+echo "   ✓ the email is built from what the AM left ticked, never from the raw parse"
+
 echo "── validating: one modal at a time, and none of them lands on an open rail"
 NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"

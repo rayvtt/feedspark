@@ -1014,6 +1014,54 @@ body.ck-r-on{padding-right:var(--ck-w)}
 
 
 
+/* CALL WRAP-UP (Ray, 24 Sep 2026). Red is earned here and nowhere else in this rail: ONE recent
+   call, unwrapped, on this account. The moment it is routine (an old call that will never be
+   wrapped) it drops to .ck-stale muted copy — a permanent red banner is how a colour stops
+   meaning anything, which is what Ray objected to on the New-products rows. */
+.ck-alert{margin:0 0 10px}
+.ck-alert-go{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid #F1707A;
+  border-left:3px solid #D93B47;background:rgba(217,59,71,.07);border-radius:10px;padding:9px 11px;font:inherit}
+.ck-alert-go:hover{background:rgba(217,59,71,.13);border-color:#D93B47}
+.ck-alert-t{display:block;font-size:12px;font-weight:900;color:#B4232F;letter-spacing:-.01em}
+.ck-alert-s{display:block;margin-top:3px;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
+.ck-lnk{border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--orange-deep,#ED6F0B);
+  cursor:pointer;text-decoration:underline}
+.ck-stale{opacity:.85}
+[data-theme=dark] .ck-alert-go{border-color:#8E2B34;border-left-color:#F1707A;background:rgba(241,112,122,.10)}
+[data-theme=dark] .ck-alert-t{color:#F1707A}
+.cw-modal{width:min(760px,100%)}
+.cw-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.cw-head h3{margin:0;font-size:16px;font-weight:900;letter-spacing:-.01em}
+.cw-sub{margin:3px 0 0;font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0)}
+.cw-head .ck-x{margin-left:auto}
+.cw-note{margin:0 0 12px;font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);line-height:1.45}
+.cw-rows{max-height:34vh;overflow:auto;border:1px solid var(--line,#E6E6E6);border-radius:10px;padding:6px}
+.cw-row{display:flex;align-items:center;gap:7px;padding:3px 2px}
+.cw-row+.cw-row{border-top:1px solid var(--line,#E6E6E6)}
+.cw-on{flex:none;display:flex;align-items:center}
+.cw-task{flex:1 1 auto;min-width:0;font:inherit;font-size:12px;border:1px solid transparent;background:none;
+  color:var(--ink,#333);border-radius:6px;padding:5px 6px}
+.cw-own{flex:none;width:104px;font:inherit;font-size:11px;font-weight:700;border:1px solid transparent;
+  background:none;color:var(--muted,#8a94a0);border-radius:6px;padding:5px 6px}
+.cw-task:focus,.cw-own:focus{border-color:var(--orange,#F5A623);background:var(--paper,#fff);outline:none}
+.cw-row:has(.cw-on input:not(:checked)) .cw-task{text-decoration:line-through;opacity:.45}
+.cw-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:12px 0 10px}
+.cw-to{flex:1 1 260px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#8a94a0)}
+.cw-to input{flex:1;font:inherit;font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;
+  color:var(--ink,#333);border:1px solid var(--line,#E6E6E6);border-radius:8px;padding:6px 8px;background:var(--paper,#fff)}
+.cw-tones{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--muted,#8a94a0)}
+.cw-tone{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);
+  color:var(--muted,#8a94a0);border-radius:100px;padding:5px 11px;cursor:pointer;text-transform:none;letter-spacing:0}
+.cw-tone.on{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);background:rgba(245,166,35,.10)}
+.cw-prev{border:1px solid var(--line,#E6E6E6);border-radius:10px;padding:10px 12px;background:var(--wash,#F7F7F5);
+  max-height:30vh;overflow:auto}
+.cw-subj{font-size:12px;font-weight:900;margin-bottom:6px}
+.cw-body{margin:0;font:inherit;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink,#333)}
+.cw-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cw-stat{font-size:11px;font-weight:800;color:var(--muted,#8a94a0)}
+@media(max-width:760px){.cw-own{width:80px}.cw-rows{max-height:40vh}}
 .ck-s{margin:0 0 16px}
 .ck-s>h4{margin:0 0 2px;font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:6px}
 .ck-s>h4 .n{margin-left:auto;font-size:10px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
@@ -1300,6 +1348,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
   <div class="acl-note">👁 on a row previews the FCC as that signin — the server treats you as them until you Exit (pill at the top of every page; auto-expires in 2h). Scoping only ever <b>narrows</b> a view — it can't grant anything. A person's scope applies the moment they next load Workflow; they keep working their client's pipeline with you (shared board, same tickets), they just don't see the rest of the book.</div>
 </div></div>
 <div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
+<!-- CALL WRAP-UP workbench (Ray, 24 Sep 2026). A .scrim like every other overlay, so it rides
+     soloModal (one modal at a time) and the rail-aware centring for free. -->
+<div class="scrim" id="cw-scrim"><div class="modal cw-modal" id="cw-modal" role="dialog" aria-modal="true" aria-label="Wrap up the call"></div></div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Workflow control center · live from the project plans</div></div>
 
@@ -4790,8 +4841,13 @@ body.ck-r-on{padding-right:var(--ck-w)}
         updateGmailState(); renderEmailPanel(); }
       // call actions ride the same response even when the triage queue is empty — file them,
       // then write the client-attributed ones through to their plan sheets (Ray's rule)
-      if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll(); }
+      if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll();
+        // the Playbook rail lives in its own script block and cannot see CALLS — the same
+        // closure boundary that broke the cockpit tuner's soloModal call. A named bridge, like
+        // window.FCCSolo / FCCBrief / FCCFilterClient, is how this page crosses it.
+        try{ document.dispatchEvent(new CustomEvent('fcc-calls')); }catch(e){} }
     }).catch(function(){}); })();
+  window.FCCCalls=function(){ return CALLS.slice(); };
 
   // ---- individual access bootstrap: learn my scope, mirror the server's gate in the chrome ----
   // (the data itself is already filtered per signin by the worker — this locks the roster,
@@ -5427,6 +5483,110 @@ body.ck-r-on{padding-right:var(--ck-w)}
     cand.sort(function(a,b){ return a.p-b.p || b.rank-a.rank || a.key.localeCompare(b.key); });
     return cand.slice(0,3);
   }
+
+  /* ---- CALL WRAP-UP (Ray, 24 Sep 2026) ---------------------------------------------------
+     "when actions are parsed from Gemini transcript and added inside the task … within the
+      playbook for [the client] there should be a red message: Wrap up latest call actions for
+      client's email … pre-write the emails. Add a table of actions from the call after AM has
+      tidying up, then ask AM if they want to send it, and draft directly on FCC or on Gmail."
+
+     The actions already reach the PROJECT PLAN (callactions → adoptIntoPlan). What never
+     happened is the other half of the same five minutes: the note back to the client saying
+     what was agreed. These functions decide when to ask for it and what it should say. */
+  var WRAP_DAYS = 7;          // a wrap-up is same-week work; see wrapCalls for why it is bounded
+  /* the engine is LIFTED WHOLE by tools/test_callwrap.mjs, so it reaches for nothing outside this
+     block — a helper two lines below PBENGINE:END is a helper the harness does not get */
+  function wrapKey(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+
+  /* Group one brand's call actions by the CALL they came from (every action carries the notes
+     email's own message id), newest first. A call is the unit a wrap-up is written about. */
+  function wrapCalls(calls, brand, wrapped, now, days){
+    var byMid = {}, out = [];
+    (calls || []).forEach(function(a){
+      if (!a || !a.mid) return;
+      if (wrapKey(a.client) !== wrapKey(brand)) return;
+      var g = byMid[a.mid];
+      if (!g) { g = byMid[a.mid] = { mid:a.mid, call:a.call || 'Client call', when:a.when || 0,
+                                     client:a.client, actions:[] }; out.push(g); }
+      if (a.when && a.when > g.when) g.when = a.when;
+      g.actions.push({ id:a.id, owner:a.owner || '', task:a.task || '' });
+    });
+    var w = wrapped || {}, cut = (now || Date.now()) - (days == null ? WRAP_DAYS : days) * 86400000;
+    out.forEach(function(g){
+      var rec = w[g.mid];
+      g.wrapped = rec || null;
+      g.recent  = g.when >= cut;
+      g.ageDays = Math.floor(((now || Date.now()) - g.when) / 86400000);
+    });
+    out.sort(function(a,b){ return (b.when||0) - (a.when||0); });
+    return out;
+  }
+
+  /* What the rail should say about them. A wrap-up is time-sensitive — it goes out the same day
+     or it stops being a wrap-up — so only a RECENT unwrapped call earns the red prompt. An older
+     one is not silently dropped (the gap is real and an AM may still want the record) but it is
+     stated as a quiet count: a permanent red alarm about a call from three weeks ago is the
+     kind of highlight that teaches people to ignore the colour, which is exactly what Ray
+     objected to on the New-products rows. */
+  function wrapDue(groups){
+    var due = [], stale = [], done = 0;
+    (groups || []).forEach(function(g){
+      if (g.wrapped) { done++; return; }
+      (g.recent ? due : stale).push(g);
+    });
+    return { due:due, stale:stale, done:done, top:due[0] || null };
+  }
+
+  /* The email itself, composed from the rows the AM LEFT TICKED — never from the raw parse.
+     A parsed action is an internal instruction, often truncated mid-sentence ("Contact Support
+     Department: Verify if the customer support"), and several are notes to ourselves that no
+     client should ever read. So the text that goes out is whatever the AM edited, and this only
+     arranges it. Nothing here is generated by a model: the actions are the client's own words
+     from their own call, and a wrap-up that invented one would be worse than no wrap-up.
+     TWO TONES, the house rule for any client email. */
+  /* A first name off the address, but ONLY when the address plainly belongs to a person. A
+     shared mailbox greeted as "Hi Info," is worse than no name at all, so anything on the
+     role list, anything with a digit, and anything under three letters stays anonymous. */
+  var WRAP_ROLE = ['info','hello','hi','support','team','sales','marketing','accounts','admin',
+                   'contact','enquiries','enquiry','help','office','noreply','no-reply','ecommerce','digital'];
+  function wrapGreet(to){
+    var l = String(to || '').split('@')[0].split(/[._-]/)[0].toLowerCase();
+    if (!l || l.length < 3 || /\d/.test(l) || WRAP_ROLE.indexOf(l) >= 0) return '';
+    return l.charAt(0).toUpperCase() + l.slice(1);
+  }
+  function wrapEmail(group, rows, opts){
+    opts = opts || {};
+    var who = (opts.me || '').split(/[\s.@]/)[0] || '';
+    who = who ? who.charAt(0).toUpperCase() + who.slice(1) : '';
+    var keep = (rows || []).filter(function(r){ return r && r.on !== false && String(r.task || '').trim(); });
+    var when = group && group.when ? new Date(group.when) : null;
+    var dateW = when ? when.toLocaleDateString('en-GB',{day:'numeric',month:'long'}) : '';
+    var title = (group && group.call) || 'our call';
+    var subject = (group && group.client ? group.client + ' · ' : '') + 'call wrap-up'
+      + (dateW ? ' — ' + dateW : '');
+    var hi = opts.name ? 'Hi ' + opts.name + ',' : 'Hi,';   // wrapGreet decides when there IS a name
+    var lines = keep.map(function(r, i){
+      var o = String(r.owner || '').trim();
+      return (i + 1) + '. ' + String(r.task).trim() + (o ? '  (' + o + ')' : '');
+    });
+    var body;
+    if (opts.tone === 'direct') {
+      body = [hi, '',
+        'Wrap-up from ' + title + (dateW ? ' on ' + dateW : '') + '. Actions below.', '',
+        lines.join('\n'), '',
+        'Anything wrong or missing, reply and I will correct it.', '',
+        who ? who : ''].join('\n');
+    } else {
+      body = [hi, '',
+        'Thanks for your time on ' + title + (dateW ? ' (' + dateW + ')' : '')
+          + '. Here is what we captured, so we are both working from the same list.', '',
+        'WHAT WE AGREED', lines.join('\n'), '',
+        'We will come back to you on these. If we have mis-heard anything or missed something you '
+          + 'expected to see, just reply and I will put it right.', '',
+        'Best,', who ? who : ''].join('\n');
+    }
+    return { subject:subject, text:body.replace(/\n{3,}/g,'\n\n').trim(), n:keep.length };
+  }
 /* PBENGINE:END */
 
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -5799,6 +5959,184 @@ body.ck-r-on{padding-right:var(--ck-w)}
      structure lines, so that should be kept as a theme across the whole playbook") — a pill, a
      name, a number — and hangs the evidence, the client line and the buttons beneath it, the way
      the New products rows already hang their raise line. */
+  /* ---- the red prompt (Ray, 24 Sep 2026) ---------------------------------------------- */
+  var WRAP={};        // mid -> {client,at,by,to,n} — the TEAM's record, /api/state ns callwrap
+  var WRAPG=[];       // this render's groups, so the workbench opens on the one that was clicked
+  /* the client's address is the one the ask-rails already remember per brand (Label Guard and
+     Golden Record write the same store), and the signature is whoever is signed in — asked once
+     across the whole FCC rather than once per module */
+  var ASKCFG={to:{}}, ME_NAME='';
+  function wrapWho(){
+    fetch('/api/labels/askdraft').then(function(r){return r.json();}).then(function(d){
+      if(d&&d.cfg&&d.cfg.to)ASKCFG=d.cfg;
+    }).catch(function(){});
+    fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){
+      if(d)ME_NAME=d.name||d.ownerName||'';
+    }).catch(function(){});
+  }
+  function wrapLoad(){
+    fetch('/api/state?ns=callwrap').then(function(r){return r.json();}).then(function(m){
+      if(!m||m.error||typeof m!=='object')return;
+      WRAP=m.callwrap||{}; fillBrands(); render();
+    }).catch(function(){});
+  }
+  function wrapSave(mid,rec){
+    WRAP[mid]=rec;
+    var one={}; one[mid]=rec;
+    return fetch('/api/state',{method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify({callwrap:one})}).catch(function(){});
+  }
+  function secWrap(brand){
+    WRAPG=wrapCalls(window.FCCCalls?window.FCCCalls():[],brand,WRAP,Date.now());
+    var d=wrapDue(WRAPG);
+    if(!d.due.length&&!d.stale.length&&!d.done)return '';
+    var h='<section class="ck-s ck-wrap">';
+    if(d.due.length){
+      var g=d.top,n=g.actions.length;
+      h+='<div class="ck-alert" role="status">'
+        +'<button type="button" class="ck-alert-go" data-wrap="'+esc(g.mid)+'">'
+        +'<span class="ck-alert-t">📞 Wrap up latest call actions for '+esc(brand)+'’s email</span>'
+        +'<span class="ck-alert-s">'+esc(g.call)+' · '+wrapAgo(g)+' · '+n+' action'+(n===1?'':'s')+' captured</span>'
+        +'</button></div>';
+      if(d.due.length>1)
+        h+='<p class="ck-h">'+(d.due.length-1)+' more call'+(d.due.length===2?'':'s')
+          +' this week still to wrap: '+d.due.slice(1).map(function(x){
+              return '<button type="button" class="ck-lnk" data-wrap="'+esc(x.mid)+'">'+esc(x.call)+'</button>';
+            }).join(', ')+'.</p>';
+    }
+    if(d.stale.length)
+      h+='<p class="ck-h ck-stale">'+d.stale.length+' older call'+(d.stale.length===1?'':'s')
+        +' never wrapped — past the week, so not flagged: '
+        +d.stale.slice(0,3).map(function(x){
+            return '<button type="button" class="ck-lnk" data-wrap="'+esc(x.mid)+'">'+esc(x.call)+'</button>';
+          }).join(', ')+(d.stale.length>3?' +'+(d.stale.length-3):'')+'.</p>';
+    if(!d.due.length&&d.done)
+      h+='<p class="ck-h">✓ Every call on this account is wrapped.</p>';
+    return h+'</section>';
+  }
+  function wrapAgo(g){
+    var h=Math.floor((Date.now()-(g.when||0))/3600000);
+    if(h<1)return 'just now';
+    if(h<24)return h+'h ago';
+    return (g.ageDays||Math.floor(h/24))+'d ago';
+  }
+
+  /* ---- the workbench: tidy the actions, then decide whether to send --------------------
+     Ray: "Add a table of actions from the call after AM has tidying up, then ask AM if they want
+     to send it, and obviously draft directly on FCC or on Gmail."  The tidying is the point —
+     a parsed action is an internal instruction and several are notes to ourselves, so every row
+     is editable and droppable and the email is built from what SURVIVES, never from the parse. */
+  var CWMID='',CWTONE='consult',CWTO='';
+  function wrapOpen(mid){
+    var g=null; WRAPG.forEach(function(x){ if(x.mid===mid)g=x; });
+    if(!g)return;
+    CWMID=mid;
+    if(!CWTO)CWTO=(ASKCFG.to||{})[g.client]||'';
+    var box=$('#cw-modal'); if(!box)return;
+    box.innerHTML=
+      '<div class="cw-head"><div><h3>Wrap up the call</h3>'
+       +'<p class="cw-sub">'+esc(g.call)+' · '+esc(g.client)+' · '+wrapAgo(g)+'</p></div>'
+       +'<button type="button" class="ck-x" id="cw-x" aria-label="Close">✕</button></div>'
+      +'<p class="cw-note">These came off the call notes and are already in the project plan. '
+       +'They are written for us, not for the client — reword them, drop the internal ones, then '
+       +'decide whether to send.</p>'
+      +'<div class="cw-rows" id="cw-rows">'
+      +g.actions.map(function(a,i){
+          return '<div class="cw-row" data-i="'+i+'">'
+            +'<label class="cw-on"><input type="checkbox" checked aria-label="Include this action"></label>'
+            +'<input class="cw-task" value="'+esc(a.task)+'" aria-label="Action '+(i+1)+'">'
+            +'<input class="cw-own" value="'+esc(a.owner)+'" placeholder="owner" aria-label="Owner for action '+(i+1)+'">'
+            +'</div>'; }).join('')
+      +'</div>'
+      +'<div class="cw-bar">'
+       +'<label class="cw-to">To <input id="cw-to" type="email" value="'+esc(CWTO)+'" placeholder="name@client.com"></label>'
+       +'<span class="cw-tones">Tone '
+         +'<button type="button" class="cw-tone'+(CWTONE==='consult'?' on':'')+'" data-tone="consult">Collaborative</button>'
+         +'<button type="button" class="cw-tone'+(CWTONE==='direct'?' on':'')+'" data-tone="direct">Direct</button>'
+       +'</span></div>'
+      +'<div class="cw-prev"><div class="cw-subj" id="cw-subj"></div><pre class="cw-body" id="cw-body"></pre></div>'
+      +'<div class="cw-act">'
+       +'<button type="button" class="btn orange" id="cw-draft">✉ Create Gmail draft</button>'
+       +'<button type="button" class="btn" id="cw-gmail">↗ Open in Gmail</button>'
+       +'<button type="button" class="btn" id="cw-copy">⧉ Copy</button>'
+       +'<span class="cw-stat" id="cw-stat"></span></div>';
+    if(window.FCCSolo)window.FCCSolo('cw-scrim');
+    $('#cw-scrim').classList.add('on');
+    wrapBind(g);
+    wrapPrev(g);
+  }
+  function wrapClose(){ var sc=$('#cw-scrim'); if(sc)sc.classList.remove('on'); }
+  function wrapRows(){
+    return Array.prototype.map.call(document.querySelectorAll('#cw-rows .cw-row'),function(r){
+      return { on:r.querySelector('.cw-on input').checked,
+               task:r.querySelector('.cw-task').value,
+               owner:r.querySelector('.cw-own').value };
+    });
+  }
+  function wrapPrev(g){
+    var e=wrapEmail(g,wrapRows(),{tone:CWTONE,me:ME_NAME,name:wrapGreet(CWTO)});
+    var sj=$('#cw-subj'),bd=$('#cw-body');
+    if(sj)sj.textContent=e.subject;
+    if(bd)bd.textContent=e.text;
+    var d=$('#cw-draft');
+    if(d){ d.disabled=!e.n; d.textContent=e.n?('✉ Create Gmail draft — '+e.n+' action'+(e.n===1?'':'s')):'✉ Nothing ticked'; }
+    return e;
+  }
+  function wrapBind(g){
+    $('#cw-x').onclick=wrapClose;
+    var sc=$('#cw-scrim');
+    sc.onclick=function(ev){ if(ev.target===sc)wrapClose(); };
+    var rows=$('#cw-rows');
+    rows.addEventListener('input',function(){ wrapPrev(g); });
+    rows.addEventListener('change',function(){ wrapPrev(g); });
+    Array.prototype.forEach.call(document.querySelectorAll('.cw-tone'),function(b){
+      b.onclick=function(){ CWTONE=b.getAttribute('data-tone');
+        Array.prototype.forEach.call(document.querySelectorAll('.cw-tone'),function(o){o.classList.toggle('on',o===b);});
+        wrapPrev(g); };
+    });
+    $('#cw-to').addEventListener('input',function(){ CWTO=this.value.trim(); });
+    $('#cw-copy').onclick=function(){ var e=wrapPrev(g);
+      try{navigator.clipboard.writeText(e.subject+'\n\n'+e.text);}catch(x){}
+      wrapStat('Copied — paste it wherever you send from.'); };
+    /* DRAFT ON FCC: the same askdraft rails Label Guard and Golden Record use — it queues a
+       GMAIL DRAFT in Ray's own mailbox and never sends anything. */
+    $('#cw-draft').onclick=function(){
+      var e=wrapPrev(g), to=(CWTO||'').trim();
+      if(to.indexOf('@')<1){ wrapStat('Add the client’s address first.'); $('#cw-to').focus(); return; }
+      wrapStat('Queueing the draft…');
+      fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({to:to,subject:e.subject,text:e.text,client:g.client,keys:['callwrap|'+g.mid]})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d&&d.error){ wrapStat('Could not queue it: '+d.error); return; }
+          wrapMark(g,to,e.n,'It is in your Gmail drafts — nothing was sent.');
+        }).catch(function(){ wrapStat('Could not reach the server — try ↗ Open in Gmail.'); });
+    };
+    /* DRAFT ON GMAIL: compose in Gmail itself. markOnly records the contact + the stamp without
+       queueing anything for the bridge, so the two paths agree about what happened. */
+    $('#cw-gmail').onclick=function(){
+      var e=wrapPrev(g), to=(CWTO||'').trim();
+      var u='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)
+        +'&su='+encodeURIComponent(e.subject)+'&body='+encodeURIComponent(e.text);
+      window.open(u,'_blank','noopener');
+      if(to.indexOf('@')>0)
+        fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({to:to,client:g.client,keys:['callwrap|'+g.mid],markOnly:true})}).catch(function(){});
+      wrapMark(g,to,e.n,'Opened in Gmail — send it from there.');
+    };
+  }
+  function wrapStat(t){ var el=$('#cw-stat'); if(el)el.textContent=t; }
+  function wrapMark(g,to,n,msg){
+    wrapSave(g.mid,{client:g.client,at:Date.now(),by:ME_NAME||'',to:to,n:n});
+    wrapStat(msg);
+    fillBrands(); render();
+    setTimeout(wrapClose,1400);
+  }
+  function wireWrap(){
+    Array.prototype.forEach.call(document.querySelectorAll('#ck-r-body [data-wrap]'),function(b){
+      b.onclick=function(){ wrapOpen(b.getAttribute('data-wrap')); };
+    });
+  }
+
   function secActions(brand){
     var gold=goldOf(brand).filter(function(f){return f.score!=null;});
     var tasks=(MODEL[brand]||{}).tasks||[];
@@ -5852,8 +6190,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
     if(!BRAND){ body.innerHTML='<p class="ck-empty">Pick an account above.</p>'; if(sub)sub.textContent=''; return; }
     // the volume panel is the SAME data the review section carries, given the whole rail — every
     // scanned market's breakdown open, nothing to scroll past to reach it
-    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true):(secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
-    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND);
+    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true)
+      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
+    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap();
     if(RTAB==='volume')openAllMix(BRAND);
     subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);
@@ -5880,12 +6219,25 @@ body.ck-r-on{padding-right:var(--ck-w)}
     subLine();
   }
 
+  /* The rail follows ONE account (Ray's rule), and it opens on whichever brand sorts first — so
+     a call that landed on Hobbycraft while the rail sat on Accessorize would show nothing at all,
+     and a wrap-up is the one thing here with a same-day clock on it. The picker therefore MARKS
+     the accounts with a call waiting. The option's value stays the bare brand name, because
+     fillBrands round-trips BRAND through it and a decorated value would stop matching the roster. */
+  function wrapPending(brand){
+    var g=wrapCalls(window.FCCCalls?window.FCCCalls():[],brand,WRAP,Date.now());
+    return wrapDue(g).due.length;
+  }
   function fillBrands(){
     var sel=$('#ck-brand'); if(!sel)return;
     var rs=roster();
     if(!rs.length)return;
     if(!BRAND||rs.indexOf(BRAND)<0)BRAND=rs[0];
-    sel.innerHTML=rs.map(function(b){return '<option'+(b===BRAND?' selected':'')+'>'+esc(b)+'</option>';}).join('');
+    sel.innerHTML=rs.map(function(b){
+      var n=wrapPending(b);
+      return '<option value="'+esc(b)+'"'+(b===BRAND?' selected':'')+'>'+esc(b)
+        +(n?' · 📞 '+n:'')+'</option>';
+    }).join('');
   }
 
   /* ---- ⚙ tune ----------------------------------------------------------------------------- */
@@ -5953,6 +6305,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     fetch('/api/playbook').then(function(r){return r.json();}).then(function(d){ingestLive(d);}).catch(function(){}).then(fin);
     fetch('/api/golden/estate').then(function(r){return r.json();}).then(function(d){if(d&&d.feeds)GOLD=d;}).catch(function(){}).then(fin);
     fetch('/api/volume/arrivals').then(function(r){return r.json();}).then(function(d){if(d&&d.feeds)ARR=d;}).catch(function(){}).then(fin);
+    wrapLoad(); wrapWho();   // its own lane: the call actions arrive on the board's fetch, not this one
   }
 
   /* ---- boot ------------------------------------------------------------------------------- */
@@ -5966,6 +6319,10 @@ body.ck-r-on{padding-right:var(--ck-w)}
       var on=b.getAttribute('data-tab')===RTAB;
       b.classList.toggle('on',on); b.setAttribute('aria-selected',on?'true':'false');
     });
+    // the call actions arrive on the BOARD's fetch, which may land after this rail has rendered —
+    // without this the red prompt only appears on the next poll, i.e. up to two minutes after the
+    // call notes reached the FCC, which is exactly the window a wrap-up is written in
+    document.addEventListener('fcc-calls',function(){ fillBrands(); render(); });
     var tOpen=$('#ck-tune-open'); if(tOpen)tOpen.onclick=function(){tuneOpen(true);};
     var tX=$('#ck-tune-x'); if(tX)tX.onclick=function(){tuneOpen(false);};
     var tScrim=$('#ck-tune-scrim');

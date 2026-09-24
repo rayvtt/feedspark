@@ -117,6 +117,11 @@ else
   echo "   ✗ AM-CC harness FAILED — see node tools/test_amcc.mjs"; FAIL=1
 fi
 
+if node tools/test_callwrap.mjs >/dev/null 2>&1; then
+  echo "   ✓ call wrap-up: the red prompt, the tidy-up and the two draft exits hold"
+else
+  echo "   ✗ call-wrap harness FAILED — see node tools/test_callwrap.mjs"; FAIL=1
+fi
 if node tools/test_modalsolo.mjs >/dev/null 2>&1; then
   echo "   ✓ one-modal-at-a-time guard intact"
 else

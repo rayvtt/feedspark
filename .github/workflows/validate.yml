@@ -103,6 +103,8 @@ jobs:
         run: node tools/test_hoursbadge.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
         run: node tools/test_playbook_panel.mjs
+      - name: Call wrap-up (red prompt, the tidy-up, draft on FCC or Gmail)
+        run: node tools/test_callwrap.mjs
       - name: One-modal-at-a-time guard (every overlay opener routes through soloModal)
         run: node tools/test_modalsolo.mjs
       - name: AM CC harness (name→address resolution, dedupe, never yourself, never guessed)
