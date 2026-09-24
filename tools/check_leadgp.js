@@ -239,6 +239,8 @@ const days = (from, to, skip) => { const o = []; for (let d = from; d >= to; d--
     ok('dark mode puts the tiles on the dark surface', bg !== 'rgb(255, 255, 255)', bg);
     const nm = await page.$eval('#gp-body a.gp-tile .gp-hd b', (e) => getComputedStyle(e).color);
     ok('…and the account name stays ink, not the page\'s orange link colour', nm === 'rgb(231, 233, 237)', nm);
+    const chip = await page.$eval('#gp-bar .gp-chip.on', (e) => getComputedStyle(e).backgroundColor);
+    ok('…and the active filter is a tint on the dark surface, never a light island', !/rgb\(2[0-5]\d, 2[0-5]\d, 2[0-5]\d\)/.test(chip), chip);
     if (SHOT) await (await page.$('#golden-pf')).screenshot({ path: path.join(SHOT, 'leadgp_dark.png') });
     await page.close();
     const ph = await open({ vp: { width: 390, height: 844 } });

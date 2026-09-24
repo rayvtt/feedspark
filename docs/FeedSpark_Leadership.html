@@ -165,6 +165,7 @@ window.addEventListener('load',restore);
   .gp-chip{font:inherit;font-size:12px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:32px}
   .gp-chip:hover{border-color:var(--orange);color:var(--orange-deep)}
   .gp-chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+  [data-theme=dark] .gp-chip.on{background:rgba(245,166,35,.16);border-color:rgba(245,166,35,.45);color:#F0A44E}   /* the module nav's own on-state, not a light island */
   .gp-chip i{font-style:normal;font-weight:700;opacity:.7;margin-left:4px}
   .gp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
   .gp-grp-h{grid-column:1/-1;font-size:13px;font-weight:900;margin:8px 0 -2px;color:var(--ink)}
