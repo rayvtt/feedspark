@@ -57,10 +57,22 @@ classification and a target-architecture design. Line numbers drift, so use the 
 - The paid Workers plan also lifts the 50-subrequest cap the scans are built around, and dual-write
   needs that headroom.
 
-**Timing.** Black Friday is 27 Nov 2026 and FeedSpark's clients are retailers. From
-**13 Nov to 8 Jan** there are no cut-overs, because the feed guards matter most in peak. That makes
-completion end of March 2027, with April for hypercare. If the April compute decision is "move to
-FeedSpark servers", add April–June 2027.
+**Timing (rebased 24 Sep 2026 — Ray: "most migration will be finished by December 2026 … that's
+when the AM will start working together on the first live iteration … In January and February, new
+iterations and individual AM-focused customizations").**
+
+| Month | Theme |
+|---|---|
+| Oct 2026 | Discover, decide, build the foundations: accounts, staging, the storage adapter |
+| Nov 2026 | Ownership transfer in the first fortnight, dual-write from 16 Nov, Feed Chat pilot; peak-week freeze 20 Nov – 2 Dec |
+| Dec 2026 | **Migration complete**: module waves 1–4 from 3 Dec, email off Ray's mailbox, personal accounts retired by 18 Dec; holiday freeze from 21 Dec; AM access and kit ready |
+| Jan 2027 | **First live iteration**: every AM working together on the migrated FCC; wishlists become the backlog |
+| Feb 2027 | Iterations + AM customisation: iteration 2 from feedback, the custom-module builder and the first AM modules |
+| Mar 2027 | Measure (diary re-run), promote the best AM modules into the core, the compute decision |
+
+The December deadline is tight for one builder, so a second engineer is named in October (D11), and if anything
+slips it is waves 3–4 (the commercial modules and Workflow) into early January, which does not hold up the AMs:
+they use the same FCC whichever store is behind it.
 
 ---
 

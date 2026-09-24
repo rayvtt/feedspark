@@ -36,7 +36,10 @@ const { RM, TX } = ctx;
 
 console.log('Roadmap shape');
 const months = RM.months.map((m) => m.k);
-ok(months.join(',') === '2026-10,2026-11,2026-12,2027-01,2027-02,2027-03,2027-04', 'seven months, October 2026 to April 2027, in order');
+ok(months.join(',') === '2026-10,2026-11,2026-12,2027-01,2027-02,2027-03', 'six months, October 2026 to March 2027, in order');
+ok(RM.items.filter((i) => i.ws === 'mig' && /^Module wave|Personal accounts decommissioned/.test(i.t)).every((i) => i.m <= '2026-12'), 'every module wave and the decommission land by December (migration done by year end)');
+ok(RM.items.some((i) => i.id === 'j-live' && i.m === '2027-01' && i.gate), 'January opens on the first live iteration with every AM, as a gate');
+ok(RM.modules.every((m) => m.m <= '2026-12'), 'every module is planned to migrate by December');
 const ids = RM.items.map((i) => i.id);
 ok(new Set(ids).size === ids.length, 'every milestone id is unique (' + ids.length + ')');
 ok(RM.items.every((i) => months.includes(i.m)), 'every milestone sits in a roadmap month');
@@ -47,7 +50,7 @@ ok(RM.decisions.every((d) => roleIds.includes(d.o) && months.includes(d.due)), '
 ok(months.every((k) => RM.items.some((i) => i.m === k && i.gate)), 'every month carries a gate');
 ok(Object.keys(RM.ws).every((w) => RM.items.some((i) => i.ws === w)), 'every workstream has work in it');
 ok(RM.items.some((i) => i.id === 'n-cut' && i.gate) && RM.months[1].freeze, 'the November cut-over is a gate and the month shows the peak freeze');
-ok(RM.items.some((i) => i.id === 'o-scope' && i.m === '2026-10'), 'access profiles for new AMs land in October, before wave 1 signs in');
+ok(RM.items.some((i) => i.id === 'o-scope' && i.m === '2026-12'), 'access profiles land in December, before the AMs start in January');
 ok(RM.items.some((i) => i.id === 'm-decom' && i.gate), 'personal-account decommission is the March gate');
 ok(new Set(RM.decisions.map((d) => d.id)).size === RM.decisions.length && RM.decisions.length === 13, 'thirteen decisions, ids unique');
 ok(RM.model.zones.reduce((a, z) => a + z.share, 0) === 100, 'the operating-model shares add up to 100');
@@ -122,10 +125,10 @@ ok(new Set(MIG_SEED.map((m) => m.p)).size === MIG_SEED.length, 'every module pat
 const NAV = [...WF.match(/<nav class="tb-nav tb-modules"[^>]*>([\s\S]*?)<\/nav>/)[1].matchAll(/href="([^"?]+)/g)].map((m) => m[1]);
 ok(NAV.every((h) => MIG_SEED.some((m) => m.p === h)), 'every module in the nav has a migration state');
 const mv0 = migrationView({});
-ok(mv0.on === true && Object.values(mv0.modules).every((m) => m.st === 'legacy') && mv0.modules['/workflow'].m === '2027-03', 'with nothing recorded every module reads Not migrated, with its planned month');
+ok(mv0.on === true && Object.values(mv0.modules).every((m) => m.st === 'legacy') && mv0.modules['/workflow'].m === '2026-12', 'with nothing recorded every module reads Not migrated, with its planned month');
 const mv1 = migrationView({ 'mod:/golden': { st: 'migrated', m: '2027-02', note: 'secret note', by: 'Andy', at: 9 }, 'mod:/labels': { st: 'weird', m: 'soon' }, 'cfg:badges': { on: false } });
 ok(mv1.modules['/golden'].st === 'migrated' && !('note' in mv1.modules['/golden']) && !('by' in mv1.modules['/golden']), 'the public view carries the state, never the note or who wrote it');
-ok(mv1.modules['/labels'].st === 'legacy' && mv1.modules['/labels'].m === '2027-02', 'a bad state or month falls back rather than leaking through');
+ok(mv1.modules['/labels'].st === 'legacy' && mv1.modules['/labels'].m === '2026-12', 'a bad state or month falls back rather than leaking through');
 ok(mv1.on === false, 'management can hide the badges from AMs');
 ok(MIG_STATES.join() === TX.MS.join(), 'the page and the worker agree on the four states');
 ok(migrationPathOf('/leadership/roadmap') === '/leadership' && migrationPathOf('/') === '/' && migrationPathOf('/workflow') === '/workflow' && migrationPathOf('/nope') === null, 'sub-pages ride their module; unknown paths have none');
@@ -135,6 +138,11 @@ ok(WORKER.indexOf("'/api/migration/status'") < WORKER.indexOf("if (path === '/ap
 ok(/import MIGW from "..\/..\/..\/docs\/migration_widget.html"/.test(WORKER) && /TOUCHW \+ '\\n' \+ MIGW/.test(WORKER), 'the migration badge widget is injected on every app page');
 ok(/\/api\/migration\/status/.test(WIDGET) && /if\(!DATA\|\|!DATA\.on\|\|!DATA\.modules\)\{ clear\(\); return; \}/.test(WIDGET), 'the widget reads the public route and draws nothing when badges are off or the read failed');
 ok(/@media\(max-width:760px\)\{\.fcc-mig-pill\{display:none\}/.test(WIDGET), 'the page pill stands down on the phone (the dot on the bottom bar carries it)');
+
+console.log('Full-screen board');
+ok(/id="fs-btn"/.test(PAGE) && /section\.blk\.fs\{position:fixed;inset:0;z-index:150/.test(PAGE), 'the board can take the whole window (a fixed layer under the editor\'s z-index 200)');
+ok(/if\(e\.key==='Escape'&&!OPEN&&\$\('board'\)\.classList\.contains\('fs'\)\)/.test(PAGE), 'Esc leaves full screen, but never while the editor is open over it');
+ok(/section\.blk\.fs \.canvas\{flex:1;max-height:none/.test(PAGE), 'in full screen the canvas grows to fill the window instead of its 78vh cap');
 
 console.log('Access and wiring');
 ok(/slug: 'transformation'[^}]*optIn: true/.test(ACCESS), 'transformation is an opt-in module in access.js');
