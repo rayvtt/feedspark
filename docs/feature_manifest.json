@@ -10154,41 +10154,41 @@
       "pr": 0
     },
     {
-      "name": "Workflow intake: Task is the only auto column, the rest are fixed",
+      "name": "Workflow intake: Task is the only auto column; controls px, text percent",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "#itbl col.ic-task{width:auto}",
-      "pr": 0
+      "pr": 530
     },
     {
       "name": "Workflow intake: a column can never be claimed by a component namespace",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "<col class=\"cw-",
       "forbidden": true,
-      "pr": 0
+      "pr": 530
     },
     {
       "name": "Workflow intake: every row is one height — the task box is two lines, clamped and floored",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "min-height:calc(2 * 1.35em)",
-      "pr": 0
+      "pr": 530
     },
     {
       "name": "Workflow intake: a clipped cell names what it hides, measured not guessed",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function tkClip(){",
-      "pr": 0
+      "pr": 530
     },
     {
       "name": "Workflow: the cockpit rail owns <aside>, not the bare .ck the comms chip wore",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "aside.ck{position:fixed",
-      "pr": 0
+      "pr": 530
     },
     {
       "name": "Workflow: the ASPL pickup chip is .cmk",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "<span class=\"cmk\">",
-      "pr": 0
+      "pr": 530
     }
   ]
 }
