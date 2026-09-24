@@ -10309,6 +10309,24 @@
       "file": "tools/test_bands.mjs",
       "pattern": "leadership: read('FeedSpark_Leadership.html'),",
       "pr": 0
+    },
+    {
+      "name": "CSP: script-src allows blob: — the labelguard engine is an ES module imported from a blob URL",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "\"script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com\",",
+      "pr": 0
+    },
+    {
+      "name": "CSP tripwire: serves the worker's engine routes, lifted from worker.js",
+      "file": "tools/check_csp.js",
+      "pattern": "const NOBLOB = CSP.replace(",
+      "pr": 0
+    },
+    {
+      "name": "CSP tripwire: runs every page's engine loader under the policy, with a no-blob control",
+      "file": "tools/check_csp.js",
+      "pattern": "control: without blob: in script-src, ",
+      "pr": 0
     }
   ]
 }

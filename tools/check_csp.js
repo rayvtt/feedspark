@@ -37,9 +37,33 @@ const CSP = m[1].split('\n').map((l) => l.trim()).filter((l) => l.startsWith('"'
   try { ({ chromium } = require('playwright')); }
   catch (e) { console.log('  (playwright unavailable — skipping the rendered CSP check)'); process.exit(0); }
 
+  /* THE ENGINES THE WORKER SERVES, served here too (Ray, 24 Sep 2026: "Failed to fetch dynamically
+     imported module: blob:…" on /golden the day the policy shipped). This server used to answer
+     every engine route with a 404, so each page's loader failed on the FETCH, swallowed it, and
+     never reached the import() the policy was refusing — the sweep passed while the rule library,
+     the Analyse button and two guards' live rescan were dead in production. The route table is
+     LIFTED from worker.js (path → the imported identifier → its docs/ file), so a new engine route
+     is served here the day it ships. */
+  const IMPORTS = {};
+  for (const x of wsrc.matchAll(/^import (\w+) from "\.\.\/\.\.\/\.\.\/(docs\/[^"]+)";/gm)) IMPORTS[x[1]] = x[2];
+  const ENGINES = {};
+  for (const x of wsrc.matchAll(/if \(path === '(\/[\w\/.-]+\.(?:js|json))' && request\.method === 'GET'\) \{\s*return new Response\((?:JSON\.stringify\()?(\w+)/g)) {
+    if (IMPORTS[x[2]]) ENGINES[x[1]] = path.join(ROOT, IMPORTS[x[2]]);
+  }
+  const NOBLOB = CSP.replace(/(script-src[^;]*?) blob:/, '$1');   // the policy as it shipped on 24 Sep
+
   const srv = http.createServer((req, res) => {
     const p = decodeURIComponent(req.url.split('?')[0]);
     const f = path.join(DOCS, p);
+    if (ENGINES[p]) {
+      res.writeHead(200, { 'Content-Type': (p.endsWith('.json') ? 'application/json' : 'application/javascript') + '; charset=utf-8' });
+      return res.end(fs.readFileSync(ENGINES[p]));
+    }
+    if (p.startsWith('/__noblob/')) {
+      const g = path.join(DOCS, p.slice('/__noblob'.length));
+      res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8', 'Content-Security-Policy': NOBLOB });
+      return res.end(fs.readFileSync(g));
+    }
     if (p === '/__probe') {
       res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8', 'Content-Security-Policy': CSP });
       // the negative control: a script from a host the policy never names
@@ -72,6 +96,44 @@ const CSP = m[1].split('\n').map((l) => l.trim()).filter((l) => l.startsWith('"'
     await pg.close();
   }
   ok('the sweep actually read pages', pages.length >= 15, String(pages.length));
+
+  /* EVERY ENGINE LOADER, RUN UNDER THE POLICY. /labels and /ptypes only load labelguard.js on
+     demand (the live rescan, the brand ⬇ HTML), so no page-load sweep can reach their import().
+     Each page's own loader functions — any `function loadX()` that fetches an engine — are lifted
+     from the page source and CALLED in that page, under the shipped header, and must resolve to
+     the engine. Then the same loaders run under the policy WITHOUT blob:, and every blob loader
+     must be refused there: without that control this block would pass against a policy that
+     never exercised the directive at all. */
+  console.log('\nEvery engine loader runs under the shipped policy');
+  ok('the engine routes were lifted from worker.js', Object.keys(ENGINES).length >= 8 && !!ENGINES['/labels/engine.js'], Object.keys(ENGINES).join(' '));
+  const loaders = [];
+  for (const f of pages) {
+    const src = fs.readFileSync(path.join(DOCS, f), 'utf8');
+    for (const x of src.matchAll(/\n  function (load\w+)\(\) \{\n[\s\S]*?\n  \}(?=\n)/g)) {
+      if (/fetch\('\/[\w\/.-]+engine\.js'\)/.test(x[0])) loaders.push({ f, name: x[1], body: x[0], blob: /import\(URL\.createObjectURL/.test(x[0]) });
+    }
+  }
+  ok('the pages that import an engine from a blob: URL were found', ['FeedSpark_GoldenRecord.html', 'FeedSpark_LabelGuard.html', 'FeedSpark_ProductTypeGuard.html']
+    .every((f) => loaders.some((l) => l.f === f && l.blob)), loaders.filter((l) => l.blob).map((l) => l.f).join(' '));
+  const run = async (base, l) => {
+    const pg = await b.newPage(); const viol = [];
+    watch(pg, viol);
+    await pg.goto('http://127.0.0.1:' + port + base + l.f, { waitUntil: 'load' }).catch(() => {});
+    const r = await pg.evaluate(({ body, name }) => { try { delete window.__LG; } catch (e) {}
+      return (new Function(body + '; return ' + name + '();'))()
+        .then((m) => (m && (typeof m === 'object' || typeof m === 'function') && Object.keys(m).length ? 'ok' : 'empty'), (e) => 'ERR ' + (e && e.message));
+    }, l).catch((e) => 'ERR ' + e.message);
+    await pg.close();
+    return { r, viol };
+  };
+  for (const l of loaders) {
+    const { r, viol } = await run('/', l);
+    ok(l.f + ' › ' + l.name + '() loads its engine', r === 'ok' && !viol.length, r + (viol[0] ? ' · ' + viol[0] : ''));
+  }
+  for (const l of loaders.filter((x) => x.blob)) {
+    const { r } = await run('/__noblob/', l);
+    ok('control: without blob: in script-src, ' + l.f + ' › ' + l.name + '() is refused', r !== 'ok', r);
+  }
 
   console.log('\nNegative control — the policy refuses what it should');
   const pg = await b.newPage(); const viol = [];
