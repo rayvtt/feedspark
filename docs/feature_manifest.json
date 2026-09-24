@@ -10194,37 +10194,37 @@
       "name": "Call wrap-up: the subject is the meeting's own name plus the day",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "var named = cl && wrapKey(title).indexOf(wrapKey(cl)) >= 0;",
-      "pr": 0
+      "pr": 534
     },
     {
       "name": "Call wrap-up: a shared mailbox is greeted as the group it is",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "'Hi ' + opts.name + ',' : 'Hi team,'",
-      "pr": 0
+      "pr": 534
     },
     {
       "name": "Call wrap-up: the actions ride along as a drawn table",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function wrapPng(g,rows){",
-      "pr": 0
+      "pr": 534
     },
     {
       "name": "Call wrap-up: the table's column widths are derived, never typed twice",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "WD.task=X.own-GAP-X.task",
-      "pr": 0
+      "pr": 534
     },
     {
       "name": "Call wrap-up: the table reads the plan row through a named bridge",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCPlanRow=function(client,task){",
-      "pr": 0
+      "pr": 534
     },
     {
       "name": "Call wrap-up: the draft attaches the table on the askdraft rails",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "atts:(b64&&!big)?[{name:'call-actions.png'",
-      "pr": 0
+      "pr": 534
     }
   ]
 }
