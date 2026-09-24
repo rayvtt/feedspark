@@ -2952,10 +2952,19 @@ async function scheduledRun(event, env, ctx) {
  *     app page, so same-origin framing has to stay.
  *   object-src 'none' + base-uri 'self' — kill <object>/<embed> and <base>-tag hijacking, both
  *     classic ways to turn one injected tag into full page control.
- *   script-src 'self' 'unsafe-inline' 'unsafe-eval' + cdnjs — the pages are built from inline
+ *   script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: + cdnjs — the pages are built from inline
  *     <script> blocks and four modules (Golden Record, Label Guard, PT Guard, the VI toggle)
  *     fetch their engine same-origin and run it through new Function(), so BOTH keywords are
- *     required today. Be honest about the consequence: with 'unsafe-inline' a CSP does not stop
+ *     required today. AND blob: (Ray, 24 Sep 2026, the day this policy shipped: "Failed to fetch
+ *     dynamically imported module: blob:…" under Content quality on /golden, stuck on "Loading
+ *     the rule library…"): /golden, /labels and /ptypes load labelguard.js — an ES MODULE, so
+ *     new Function() cannot run it — by fetching /labels/engine.js and import()ing it from a
+ *     blob: URL. Without blob: here that import is refused, which killed the content-quality
+ *     rule library, the Analyse button, Label Guard's and PT Guard's manual live rescan and the
+ *     brand ⬇ HTML export all at once. It grants nothing new: a blob: URL can only be minted by
+ *     script ALREADY running on the page, which 'unsafe-inline' + 'unsafe-eval' already allow;
+ *     it names no network host. tools/check_csp.js now serves the engine routes and runs each
+ *     page's own loader under this policy, so the next directive change fails there first. Be honest about the consequence: with 'unsafe-inline' a CSP does not stop
  *     an injected event handler — escaping does, which is why item 15 was the real fix. What this
  *     DOES stop is a script pulled from a host we never named, which is how an injected tag
  *     exfiltrates. Dropping the two keywords means serving the engines as real <script src> and
@@ -2972,7 +2981,7 @@ async function scheduledRun(event, env, ctx) {
  */
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
