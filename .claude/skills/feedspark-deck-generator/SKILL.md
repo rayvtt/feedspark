@@ -540,6 +540,37 @@ Rules when extending it:
   · A block-level `.note` rides the **last** continuation chunk only. Before this, a table or card
     grid that split across slides repeated its note on every slide.
 
+- **A chart is a chart, not a table of the same numbers** (added Sep 2026, after Ray asked twice for
+  the Volume module's bar chart and the A/B archive and got tables both times). The exporter had no
+  chart component at all: every `.bars` block and every hand-built chart panel was read for its
+  numbers and emitted through `em.table`. `Emitter.chart()` now writes a **native PowerPoint chart**
+  — `add_chart`, its own embedded worksheet, clickable and editable and restylable, in the same
+  column the native tables occupy. This does not break "never add a shape": that rule forbids faking
+  a layout out of rectangles and textboxes, and a chart is data, not a text frame — there is no
+  placeholder that can hold one.
+  Opt in **on the table**, so the chart and the table can never carry different numbers:
+  ```html
+  <table data-chart="col"          <!-- col | bar (horizontal) | line -->
+         data-chart-series="1,2,3" <!-- column indices to plot; default = every all-numeric column -->
+         data-chart-cats="0"       <!-- column holding the category label (default 0) -->
+         data-chart-pct="1"        <!-- values are percentages (label format) -->
+         data-chart-table="1">     <!-- also emit the table, for detail the chart can't carry -->
+    <tr data-chart-cat="Sep (part)">…</tr>   <!-- shorter label for the axis -->
+    <tr data-chart-skip="1">…</tr>           <!-- a total or run-rate row: in the table, out of the plot -->
+  ```
+  Judgement the attributes exist to let you exercise: **never plot a total beside its own parts**
+  (a run-rate row derived from the months above it draws the same products twice at two scales —
+  `data-chart-skip`), **never mix two interventions on one axis** (Schuh's title tests are not
+  keyword tests, so they stay in the table and carry their own card), and put the full name in the
+  table with a short label on the axis. Series colours are `SERIES_INK` — the same validated slots
+  `/volume`, `/tasks` and the chart workbench use, so a chart lifted from a module and one drawn in a
+  deck cannot come out different colours. A horizontal `bar` chart has its data reversed on the way
+  in, because PowerPoint draws the first category at the bottom otherwise.
+- **A section-level `<h3>`/`<h4>` now names the block below it.** It used to be dropped silently by
+  the walker (it matched neither `classify` nor the descend-into test), so a chart or table inherited
+  the chapter title with "(cont.)" after it. It yields to a component's own lead label, and on a
+  section's first slide it becomes the subtitle rather than displacing the section title.
+
 Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../../../tools/README.md).
 
 ## Step 7 — Handling a feedback-loop prompt
