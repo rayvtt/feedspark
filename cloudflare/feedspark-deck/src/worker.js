@@ -201,7 +201,7 @@ const SEED_MATERIALS = [
     cat: 'marketing', occasion: 'Strategy Review Sep-26',
     file: 'Schuh_Strategy_Review_Sep26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    at: '2026-09-22', body: MAT_SCHUH_SR_SEP26 },
+    at: '2026-09-24', body: MAT_SCHUH_SR_SEP26 },
 ];
 
 const PAGES = {
