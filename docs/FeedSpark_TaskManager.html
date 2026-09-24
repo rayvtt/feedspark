@@ -1513,7 +1513,7 @@ window.addEventListener('load',restore);
      page
      ------------------------------------------------------------------------------------------ */
   var $ = function (id) { return document.getElementById(id); };
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function hrs(n) { return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
   // a column of hours has to line up on the decimal point, not just the right edge — "1" and
   // "0.5" both right-align fine on their OWN, but stacked in one column the bare "1" sits two

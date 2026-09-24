@@ -444,7 +444,7 @@ window.addEventListener('load',restore);
   // seed the outline from the current type's preset on a fresh visit so Generate works immediately
   if(!cfg.out||!cfg.out.length){ var _pre=TYPES.filter(function(x){return x[0]===cfg.type;})[0]; if(_pre)cfg.out=_pre[2].slice(); }
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(cfg)); }catch(e){} }
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function txt(h){var d=document.createElement('div');d.innerHTML=h;return d.textContent;}
 
   // client dropdown

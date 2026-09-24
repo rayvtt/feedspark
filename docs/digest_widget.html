@@ -197,7 +197,7 @@
     if (s.innerHTML !== html) s.innerHTML = html;
     if (d.heading.lastElementChild !== s) d.heading.appendChild(s);
   }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function sweep() { try { if (window.__fccMobileSweep) window.__fccMobileSweep(); } catch (e) {} }
   // a long table in an open section shows its first rows; "Show all" lifts the cap for good
   function capTables(d) {

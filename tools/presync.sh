@@ -137,6 +137,10 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
+echo "── validating: the call wrap-up (red prompt, tidy-up, draft on FCC or Gmail)"
+node tools/test_callwrap.mjs >/dev/null
+echo "   ✓ the email is built from what the AM left ticked, never from the raw parse"
+
 echo "── validating: one modal at a time, and none of them lands on an open rail"
 NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
@@ -162,6 +166,8 @@ echo "── validating: Golden Record snapshot in the dossier"
 node tools/test_goldensnap.mjs >/dev/null
 echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
 
+echo "── validating: output escaping — every esc() neutralises a quote (XSS)"
+node tools/test_escaping.mjs >/dev/null
 echo "── validating: one audit colour legend across every page"
 node tools/test_bands.mjs >/dev/null
 echo "   ✓ <70 red · 70–85 orange · 85–95 yellow · 95+ green on /golden, /feedlab, the dossier, the Playbook rail"
@@ -229,7 +235,12 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
   NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
     echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
+  echo "── validating: security headers render + SRI is enforced"
+  NODE_PATH=$(npm root -g) node tools/check_csp.js || {
+    echo "   ✗ security-headers / SRI tripwire FAILED — see node tools/check_csp.js"; exit 1; }
+
   echo "── validating: Task Manager chart card — one control row, three menus, leader labels, saved views"
+
   NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
     echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"

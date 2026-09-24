@@ -117,6 +117,11 @@ else
   echo "   ✗ AM-CC harness FAILED — see node tools/test_amcc.mjs"; FAIL=1
 fi
 
+if node tools/test_callwrap.mjs >/dev/null 2>&1; then
+  echo "   ✓ call wrap-up: the red prompt, the tidy-up and the two draft exits hold"
+else
+  echo "   ✗ call-wrap harness FAILED — see node tools/test_callwrap.mjs"; FAIL=1
+fi
 if node tools/test_modalsolo.mjs >/dev/null 2>&1; then
   echo "   ✓ one-modal-at-a-time guard intact"
 else
@@ -155,6 +160,13 @@ if node tools/test_goldensnap.mjs >/dev/null 2>&1; then
   echo "   ✓ per-market report, averages exclude unscanned, popup + ?client= deep link"
 else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
+fi
+
+echo "── qa-gate: output escaping (every esc() neutralises a quote — XSS)"
+if node tools/test_escaping.mjs >/dev/null 2>&1; then
+  echo "   ✓ escaping harness"
+else
+  echo "   ✗ escaping harness FAILED — see node tools/test_escaping.mjs"; FAIL=1
 fi
 
 echo "── qa-gate: one audit colour legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)"
