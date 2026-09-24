@@ -12,7 +12,7 @@
  * Run: node tools/test_abtests.mjs
  */
 import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey,
-  abWinner, abGroups, isTitleTest }
+  abWinner, abGroups, isTitleTest, abDate, abSortKey, abSortTests }
   from '../cloudflare/feedspark-deck/src/abtests.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -320,8 +320,8 @@ console.log('\n-- the page says the same thing on both surfaces --');
   ok('the dossier pill and the one-pager column both go through it',
      /function abPill\(t\)\{\s*var r=abResult\(t\)/.test(CC) && /var mt = t\.metrics \|\| \{\}, rs = abResult\(t\)/.test(CC));
   const WK = fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
-  ok('the worker versions the archive cache so the old pills do not outlive the deploy',
-     /hit\.v === AB_SHAPE/.test(WK) && /v: AB_SHAPE/.test(WK) && /const AB_SHAPE = 2/.test(WK));
+  ok('the worker versions the archive cache so a stale shape does not outlive the deploy',
+     /hit\.v === AB_SHAPE/.test(WK) && /v: AB_SHAPE/.test(WK) && /const AB_SHAPE = \d+/.test(WK));
 }
 
 console.log('\n-- content probe: the archive found by its header, whatever the tab is called --');
@@ -412,6 +412,70 @@ ok('no service account configured = no address, no throw',
    abReadError({ code: 403, status: 'PERMISSION_DENIED', message: 'm' }, {}).sa === '');
 ok('malformed GOOGLE_SA_JSON degrades instead of throwing',
    abReadError({ code: 403, status: 'PERMISSION_DENIED', message: 'm' }, { GOOGLE_SA_JSON: '{oops' }).sa === '');
+
+// ---- NEWEST-FIRST DISPLAY ORDER (Ray, 23 Sep 2026, on Schuh's dossier card reading Jan-Jul 2025
+// while the sheet already carried Aug 2026 batches): "Why Schuh dossier not be documented until
+// September 2026? It should always show the latest six-month test first in the brand dossier."
+// parseAbTests reads the sheet top to bottom — chronological ASCENDING, since the team appends
+// each new batch below the last — and nothing reordered it before the dossier's capped card or
+// the one-pager's slice(0,14) rendered it, so a year of history buried this month's tests below
+// the fold on every long-running account. abSortTests is the one place that reorders for display.
+console.log('\n-- newest-first display order --');
+ok('abDate reads UK D/M/YYYY, with or without leading zeros',
+   abDate('06/08/2026').getTime() === new Date(2026, 7, 6).getTime()
+   && abDate('8/1/2025').getTime() === new Date(2025, 0, 8).getTime());
+ok('a two-digit year is read as 20XX', abDate('06/08/26').getFullYear() === 2026);
+ok('"NA" and blank are undated, not a bogus date', abDate('NA') === null && abDate('') === null && abDate(undefined) === null);
+ok('an unparsable string is undated rather than guessed', abDate('August 2026') === null);
+
+const T = (batch, live, reportDate) => ({ batch, live, reportDate });
+{
+  // the exact shape of the bug: a brand tested since Jan 2025, still running in Sep 2026
+  const rows = [
+    T('Jan I - Keyword Optimisation', '16/01/2025'),
+    T('Jan II - Keyword Optimisation', '27/01/2025'),
+    T('Aug I - Keyword Optimisation', '10/08/2026'),
+    T('Back to School - Keyword Optimisation', '06/08/2026'),
+  ];
+  const s = abSortTests(rows);
+  ok('the most recent test leads (Aug I, 10/08, ahead of Back to School, 06/08)',
+     s[0].batch === 'Aug I - Keyword Optimisation', s.map((t) => t.batch));
+  ok('…then the next most recent', s[1].batch === 'Back to School - Keyword Optimisation', s[1].batch);
+  ok('the oldest test sinks to the bottom', s[s.length - 1].batch === 'Jan I - Keyword Optimisation', s[s.length - 1].batch);
+  ok('nothing is dropped or duplicated', s.length === rows.length);
+}
+{
+  // On ONE test, Live Date wins over Report Date — when the test ran matters more than when the
+  // write-up was filed (often weeks later); Report Date only stands in when there is no Live Date
+  const row = T('x', '01/06/2025', '01/06/2026');
+  ok('the live date is the one the key is built from, not the (later) report date',
+     abSortKey(row) === new Date(2025, 5, 1).getTime(), abSortKey(row));
+  ok('…and a test with no live date falls back to its report date',
+     abSortKey(T('y', 'NA', '01/06/2026')) === new Date(2026, 5, 1).getTime());
+}
+{
+  // undated rows (many single-group runs record "NA" on both columns) sink below every dated
+  // test rather than sorting arbitrarily by array position among the dated ones — and among
+  // THEMSELVES they keep the sheet's own order, never reshuffled for no reason
+  const rows = [T('dated', '01/01/2026'), T('undated A'), T('undated B'), T('also dated', '01/06/2026')];
+  const s = abSortTests(rows);
+  ok('every undated row sinks below every dated one',
+     s[0].batch === 'also dated' && s[1].batch === 'dated' && s[2].batch === 'undated A' && s[3].batch === 'undated B',
+     s.map((t) => t.batch));
+}
+ok('abSortTests on an empty or missing list never throws', JSON.stringify(abSortTests([])) === '[]' && JSON.stringify(abSortTests(null)) === '[]');
+ok('abSortKey is the numeric form abSortTests sorts on (a live date, in ms)',
+   abSortKey(T('x', '01/01/2026')) === new Date(2026, 0, 1).getTime() && abSortKey(T('x')) === null);
+
+// ---- the worker serves and caches the SORTED order, so no consumer has to re-sort ----------
+{
+  const wsrc2 = fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+  ok('the worker imports abSortTests', /import \{[^}]*abSortTests[^}]*\} from "\.\/abtests\.js"/.test(wsrc2));
+  ok('the served/cached payload is built from the sorted array, not the raw parse',
+     /const sorted = abSortTests\(p\.tests\)/.test(wsrc2) && /tests: sorted, summary: abSummary\(sorted\)/.test(wsrc2));
+  ok('AB_SHAPE was bumped so a payload cached before this fix cannot serve the old sheet order for its remaining TTL',
+     /const AB_SHAPE = 3/.test(wsrc2));
+}
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
 process.exit(fail ? 1 : 0);
