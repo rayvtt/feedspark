@@ -6061,12 +6061,6 @@
       "min": 1
     },
     {
-      "name": "Golden Record: one stream, two readings — FA.audit runs over a bounded sample with rowTotalEstimate so a 125MB feed costs a slice of memory, never the whole feed",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "rowTotalEstimate: nRows",
-      "min": 1
-    },
-    {
       "name": "Golden Record: title anatomy (MASK spectrum + length histogram) nests under the g:title content-quality row",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function titleAnatomy",
@@ -6568,12 +6562,6 @@
       "name": "Content quality: length on a repeatable attribute is measured PER VALUE, not across the values glued together",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "length is PER VALUE for a repeatable attribute",
-      "min": 1
-    },
-    {
-      "name": "Content quality: the scan hands the collector the header, which is how the slot columns are found at all",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "qualityCollector(cols, { header: header })",
       "min": 1
     },
     {
@@ -7529,12 +7517,6 @@
       "name": "Golden Record: every content-quality row's ⓘ opens its scoring pop-up — every rule, severity, hit rate, cost, weight and Google's page",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function qualityPop(k, attr)",
-      "min": 1
-    },
-    {
-      "name": "Golden Record: packAudit stores each pillar's live reads with the analysis",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "reads: (p.reads || []).slice(0, 8)",
       "min": 1
     },
     {
@@ -9911,12 +9893,6 @@
       "pr": 0
     },
     {
-      "name": "Golden score history: a reading per real move (engine)",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "export function histAdd(hist, r) {",
-      "pr": 0
-    },
-    {
       "name": "Golden score history: seeded only from readings on today's basis",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": ".filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)",
@@ -9926,12 +9902,6 @@
       "name": "Golden score history: every scan offers its reading, writes only when new",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "if (r.wrote) await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));",
-      "pr": 0
-    },
-    {
-      "name": "Golden score history: seeded from the known-good before the scan rolls it",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "gHist = histSeed([gBaseWas, gPrev], cur);",
       "pr": 0
     },
     {
@@ -10079,6 +10049,108 @@
       "name": "KWCal: SRI pinned on the PDF libraries",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "el.integrity=sri",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: one stream, two readings — FA.audit runs over a bounded sample with rowTotalEstimate so a 125MB feed costs a slice of memory, never the whole feed",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "rowTotalEstimate: nRows,",
+      "min": 1
+    },
+    {
+      "name": "Content quality: the scan hands the collector the header, which is how the slot columns are found at all",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "col = qualityCollector(cols, { header });",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: packAudit stores each pillar's live reads with the analysis",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "reads: (p.reads || []).slice(0, 8).map((x) => String(x || '').slice(0, 140))",
+      "min": 1
+    },
+    {
+      "name": "Golden score history: a reading per real move (engine)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histAdd(hist, r, opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: seeded from the known-good before the scan rolls it",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "gHist = histSeed([gBaseWas, gPrev], cur, { manual: !!(opts && opts.manual) });",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the 09:00 UK agent",
+      "file": "tools/golden_daily.mjs",
+      "pattern": "export function shouldRun(clock, done, force) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the workflow fires 08/09/10 UTC and the script decides",
+      "file": ".github/workflows/golden-daily.yml",
+      "pattern": "cron: '0 8,9,10 * * *'",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: one content-quality stream for the page and the agent",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function qualityStream(opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the page's Analyse runs the shared stream",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var qs = LG.qualityStream({ FA: FA, client: p.client, market: p.mkt, audCap: AUD_CAP,",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: a hand-run reading sets its day (engine)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histDayPick(list, day) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: a hand-run scan pins its day in the record",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "const pinned = man && last && last.m && histDay(last.t) === day;",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: one writer for a quality reading, either lane",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function storeGoldenQuality(env, client, mkt, b, opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: an automatic reading never replaces a hand-run one the same day",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (cur && cur.qSrc === 'm' && cur.qT && histDay(cur.qT) === histDay(Date.now())) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the run's ledger + profiles for the agent",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (body.goldendaily && typeof body.goldendaily === 'object') {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: every scan button a person presses is hand-run",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const r = await runLabelScan(env, client, mkt, { manual: true });   // one pass writes labels, ptype AND golden stores",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the card tracks content quality and AI-readiness day by day",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var HMETS = [['gs', 'Golden Score'], ['q', 'Content quality'], ['air', 'AI-readiness']];",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the card names the 09:00 UK run",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function histDailyChip() {",
       "pr": 0
     }
   ]

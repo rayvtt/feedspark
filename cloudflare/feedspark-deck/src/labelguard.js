@@ -1408,37 +1408,63 @@ export function histChanged(a, b, pp) {
   return histMoved(a, b).some((m) => typeof m[1] !== 'number' || typeof m[2] !== 'number' || Math.abs(m[2] - m[1]) >= lim);
 }
 export function histEmpty() { return { v: 1, r: [], s: [], q: [] }; }
+// A DAY'S VALUE (Ray, 24 Sep 2026: "If there's a manual scan on any day, that new score can
+// override that day"): the last MANUAL reading of the day when there is one, else the day's last
+// reading. The same rule for the analyses. One function, so the store and the page can never
+// pick a different reading for the same day.
+export function histDayPick(list, day) {
+  let last = -1, lastM = -1;
+  for (let i = 0; i < list.length; i++) {
+    if (histDay(list[i].t) !== day) continue;
+    last = i;
+    if (list[i].m) lastM = i;
+  }
+  return lastM >= 0 ? lastM : last;
+}
+function histThin(list, cut) {
+  // older than the recent window, a day keeps only the reading that IS its value
+  const keep = {};
+  list.forEach((x) => { if (x.t < cut) { const d = histDay(x.t); if (!(d in keep)) keep[d] = histDayPick(list, d); } });
+  return list.filter((x, i) => x.t >= cut || i === list.length - 1 || keep[histDay(x.t)] === i);
+}
 function histKeep(h, now) {
   const cut = now - HIST_RECENT_DAYS * 864e5;
-  // older than the recent window, a day keeps only its CLOSE (its last reading)
-  h.r = h.r.filter((x, i) => x.t >= cut || i === h.r.length - 1 || histDay(h.r[i + 1].t) !== histDay(x.t));
+  h.r = histThin(h.r, cut);
+  h.q = histThin(h.q, cut);
   if (h.r.length > HIST_MAX) h.r.splice(0, h.r.length - HIST_MAX);
   if (h.s.length > HIST_DAYS_MAX) h.s.splice(0, h.s.length - HIST_DAYS_MAX);
   if (h.q.length > HIST_QA_MAX) h.q.splice(0, h.q.length - HIST_QA_MAX);
   return h;
 }
 // record one scan's reading → { hist, wrote } — wrote=false means nothing new (same day, no
-// move), so the caller skips the KV write
-export function histAdd(hist, r) {
+// move), so the caller skips the KV write. opts.manual = a scan somebody ran by hand: it is
+// recorded (and marked m) even when nothing moved, once per day, because it SETS its day
+// (histDayPick) and a later automatic reading must not quietly replace it
+export function histAdd(hist, r, opts) {
   const h = hist && hist.v === 1 ? { v: 1, r: (hist.r || []).slice(), s: (hist.s || []).slice(), q: (hist.q || []).slice() } : histEmpty();
   if (!r || !r.cov) return { hist: h, wrote: false };
   const last = h.r[h.r.length - 1];
   if (last && r.t <= last.t) return { hist: h, wrote: false };   // out of order — never rewrite the past
+  const man = !!(opts && opts.manual);
   let wrote = false;
   const day = histDay(r.t);
   if (h.s[h.s.length - 1] !== day) { h.s.push(day); wrote = true; }
-  if (histChanged(last, r)) { h.r.push(r); wrote = true; }
+  const pinned = man && last && last.m && histDay(last.t) === day;
+  if (histChanged(last, r) || (man && !pinned)) {
+    const x = man ? Object.assign({}, r, { m: 1 }) : r;
+    h.r.push(x); wrote = true;
+  }
   return { hist: wrote ? histKeep(h, r.t) : h, wrote };
 }
 // a fresh record: the stored past readings that were measured the way today's is, oldest first,
 // then today's — the known-good and the previous scan are real readings, not estimates
-export function histSeed(past, cur) {
+export function histSeed(past, cur, opts) {
   let h = histEmpty();
   (past || []).map(histReading)
     .filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)
     .sort((a, b) => a.t - b.t)
     .forEach((x) => { h = histAdd(h, x).hist; });
-  return histAdd(h, cur).hist;
+  return histAdd(h, cur, opts).hist;
 }
 // one content-quality / AI-readiness analysis → recorded when either figure moved
 export function histQa(hist, p) {
@@ -1448,15 +1474,77 @@ export function histQa(hist, p) {
   if (p.q != null && isFinite(p.q)) pt.q = Math.round(p.q * 10) / 10;
   if (p.air != null && isFinite(p.air)) pt.air = Math.round(p.air * 10) / 10;
   if (p.tier != null) pt.tier = Math.max(1, Math.min(4, parseInt(p.tier, 10) || 1));
+  if (p.m) pt.m = 1;                     // run by hand — it sets its day (histDayPick)
   const last = h.q[h.q.length - 1];
   if (last && pt.t <= last.t) return { hist: h, wrote: false };
   const same = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) < 0.1);
-  if (last && same(last.q, pt.q) && same(last.air, pt.air)) return { hist: h, wrote: false };
+  const pinned = pt.m && last && last.m && histDay(last.t) === histDay(pt.t);
+  if (last && same(last.q, pt.q) && same(last.air, pt.air) && (!pt.m || pinned)) return { hist: h, wrote: false };
   h.q.push(pt);
   return { hist: histKeep(h, pt.t), wrote: true };
 }
 // what the estate index carries so a row can say "▲ +1.8 since 21 Sep" without reading the
 // record: the reading BEFORE the last change (hp) and when that change happened (ht)
+/* ---- THE CONTENT-QUALITY STREAM, ONE IMPLEMENTATION (Ray, 24 Sep 2026: "Golden Record and
+   content quality should automatically scan on a daily basis … at 9 a.m. UK time"). Until now
+   the analysis lived only in /golden's qualityRun, so it happened when somebody clicked. The
+   daily agent (tools/golden_daily.mjs) and the page now both feed the SAME object: the first
+   row is the header, a column an XML feed grows mid-stream is named 'late' rather than scored
+   partially, rows are sampled to audCap for the AI-Readiness audit, and the audit is packed to
+   the shape the worker stores. FA is the Feed Lab engine (FeedAudit), handed in so this module
+   never imports a browser file. */
+export function packAudit(a) {
+  if (!a || !a.score) return null;
+  const s = a.score, t = a.titles || {}, mk = t.mask || {};
+  return {
+    total: Math.round(+s.total || 0), tier: +s.tier || 1, tierLabel: String(s.tierLabel || ''),
+    sampled: +a.sampled || 0, rows: +a.rowCount || 0,
+    pillars: (s.pillars || []).slice(0, 8).map((p) => ({ key: String(p.key || ''), label: String(p.label || ''),
+      score: Math.round(+p.score || 0), weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160),
+      reads: (p.reads || []).slice(0, 8).map((x) => String(x || '').slice(0, 140)) })),
+    titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
+      buckets: (t.buckets || []).slice(0, 6).map((b) => ({ b: String(b.b || ''), n: +b.n || 0 })),
+      mask: { brand: Math.round(+mk.brand || 0), material: Math.round(+mk.material || 0), fit: Math.round(+mk.fit || 0),
+        colour: Math.round(+mk.colour || 0), use: Math.round(+mk.use || 0) } },
+  };
+}
+export function qualityStream(opts) {
+  const o = opts || {};
+  const cap = o.audCap || 30000;
+  let col = null, cols = null, header = null, nRows = 0;
+  const late = [], sample = [];
+  return {
+    onRow(r, liveHeader) {
+      // the header goes in too: a repeatable attribute (product highlights) lives in several
+      // columns, and the collector needs them all or it reads one value out of four
+      if (!col) { header = r.slice(); cols = findAttrCols(header); col = qualityCollector(cols, { header }); return; }
+      nRows++;
+      if (sample.length < cap) sample.push(r);
+      // an XML feed can GROW its header mid-stream when a sparse tag debuts late: every column
+      // already resolved stays valid, but a free-text attribute that debuts after the first item
+      // was never in the collector — record it and say so rather than scoring a partial column
+      if (liveHeader && liveHeader.length !== header.length) {
+        header = liveHeader.slice();
+        const grown = findAttrCols(header);
+        QSPEC.forEach((q) => { if (grown[q.key] >= 0 && !(cols[q.key] >= 0) && late.indexOf(q.key) < 0) late.push(q.key); });
+      }
+      col.onRow(r);
+    },
+    rows() { return nRows; },
+    finish() {
+      if (!col) throw new Error('the feed produced no rows');
+      const snap = col.finish({ client: o.client, market: o.market, late: late.length ? late : undefined });
+      if (!snap.rows) throw new Error('the feed produced no rows');
+      // the SAME read, scored on the AI-Readiness ladder — one stream, two readings — under the
+      // brand's industry profile, exactly as goldenScore reads it
+      try {
+        snap.ai = o.FA ? packAudit(o.FA.audit(header, sample, { client: o.client, rowTotalEstimate: nRows,
+          channel: 'google', expected: o.expected || [], waived: o.waived || [] })) : null;
+      } catch (e) { snap.ai = null; }
+      return snap;
+    },
+  };
+}
 export function histIdx(h) {
   const r = (h && h.r) || [];
   if (r.length < 2) return {};

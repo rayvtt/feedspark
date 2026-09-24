@@ -183,18 +183,112 @@ console.log('── the worker writes it');
 {
   const wk = read('cloudflare/feedspark-deck/src/worker.js');
   const scan = wk.slice(wk.indexOf('// ---- Golden Record stores (Google feeds only)'), wk.indexOf('return { snapshot: snap, alerts, baseT: base.t, pt, gr };'));
-  ok('every scan offers its reading to the history', /const cur = histReading\(grSnap\);/.test(scan) && /const r = histAdd\(had, cur\);/.test(scan));
+  ok('every scan offers its reading to the history', /const cur = histReading\(grSnap\);/.test(scan) && /const r = histAdd\(had, cur, \{ manual: !!\(opts && opts\.manual\) \}\);/.test(scan));
   ok('…and writes only when something is new', /if \(r\.wrote\) await env\.EDITS\.put\('goldenhist' \+ GK, JSON\.stringify\(gHist\)\);/.test(scan));
   ok('a record holding only an analysis still seeds on the first scan, and keeps its analyses',
     /if \(had && had\.r && had\.r\.length\) \{/.test(scan) && /if \(had && Array\.isArray\(had\.q\)\) gHist\.q = had\.q;/.test(scan));
   ok('a first record is seeded from the known-good AS IT WAS before this scan rolled it, and the previous scan',
-    /const gBaseWas = gBase;/.test(scan) && /histSeed\(\[gBaseWas, gPrev\], cur\)/.test(scan) && scan.indexOf('const gBaseWas') < scan.indexOf('gBase = grSnap; await env.EDITS.put'));
+    /const gBaseWas = gBase;/.test(scan) && /histSeed\(\[gBaseWas, gPrev\], cur, \{ manual: !!\(opts && opts\.manual\) \}\)/.test(scan) && scan.indexOf('const gBaseWas') < scan.indexOf('gBase = grSnap; await env.EDITS.put'));
   ok('the index carries the last move — rebuilt on a scan, carried by the ack',
     /keepQual\(gidx\[lgKey\(client, mkt\)\]\), gHist \? histIdx\(gHist\) : keepHist\(gidx\[lgKey\(client, mkt\)\]\)\);/.test(wk) &&
     /keepQual\(idx\[lgKey\(client, mkt\)\]\), keepHist\(idx\[lgKey\(client, mkt\)\]\)\);/.test(wk));
   ok('an analysis joins the history as measured', /const hq = histQa\(await env\.EDITS\.get\(hk, 'json'\), \{ t: rec\.t, q: qs \? qs\.score : null, air: ai \? ai\.total : null/.test(wk));
   ok('the page reads it from one route', /path === '\/api\/golden\/history' && request\.method === 'GET'/.test(wk) && /env\.EDITS\.get\('goldenhist:' \+ client \+ ':' \+ mkt, 'json'\)/.test(wk));
   ok('the browser engine copy is the worker\'s engine', read('docs/labelguard_engine.js') === read('cloudflare/feedspark-deck/src/labelguard.js'));
+}
+
+console.log('── a scan run by hand sets its day (Ray, 24 Sep 2026)');
+{
+  const R = (t, patch) => LG.histReading(snap(t, Object.assign({}, COV, patch || {})));
+  let h = LG.histAdd(null, R(T0)).hist;
+  let x = LG.histAdd(h, R(T0 + DAY + 3600e3), { manual: true });
+  ok('a hand-run scan is recorded even when nothing moved — it pins its day', x.wrote && x.hist.r.length === 2 && x.hist.r[1].m === 1, x.hist.r.map((r) => r.m || 0));
+  h = x.hist;
+  ok('a second hand-run scan the same day with nothing new writes nothing', !LG.histAdd(h, R(T0 + DAY + 2 * 3600e3), { manual: true }).wrote);
+  x = LG.histAdd(h, R(T0 + DAY + 5 * 3600e3, { material: 60 }));
+  ok('an automatic scan later that day that DID move is still recorded — the record keeps the truth', x.wrote && x.hist.r.length === 3 && !x.hist.r[2].m);
+  h = x.hist;
+  ok('…but the day\'s VALUE is the hand-run reading', LG.histDayPick(h.r, LG.histDay(T0 + DAY)) === 1);
+  ok('a day with no hand-run reading takes its last', LG.histDayPick([{ t: T0 }, { t: T0 + 3600e3 }], LG.histDay(T0)) === 1);
+  ok('a day with nothing on it has no pick', LG.histDayPick(h.r, LG.histDay(T0 + 9 * DAY)) === -1);
+  // thinning a day older than the recent window keeps the reading that IS its value
+  let old = LG.histEmpty();
+  old.r = [{ t: T0, cov: { a: 1 }, m: 1 }, { t: T0 + 3600e3, cov: { a: 9 } }];
+  old = LG.histAdd(old, { t: T0 + 60 * DAY, rows: 1, cov: { a: 50 } }).hist;
+  ok('thinning an old day keeps its hand-run reading, not its last', old.r.length === 2 && old.r[0].m === 1 && old.r[0].cov.a === 1, old.r);
+  const qa = LG.histQa(LG.histQa(null, { t: T0, q: 70 }).hist, { t: T0 + 3600e3, q: 70, m: true });
+  ok('a hand-run analysis identical to the automatic one is still recorded, marked', qa.wrote && qa.hist.q.length === 2 && qa.hist.q[1].m === 1);
+  ok('the store and the page pick a day the same way', /function histDayPick\(list, day\) \{[\s\S]{0,300}if \(list\[i\]\.m\) lastM = i;[\s\S]{0,80}return lastM >= 0 \? lastM : last;/.test(read('docs/FeedSpark_GoldenRecord.html')));
+}
+
+console.log('── one content-quality stream, two lanes');
+{
+  const FA = (await import('node:module')).createRequire(import.meta.url)('../docs/feedlab_engine.js');
+  const H = ['id', 'title', 'description', 'link', 'image_link', 'price', 'availability', 'brand', 'product_highlight', 'product_highlight(2)', 'google_product_category'];
+  const ROWS = [];
+  for (let i = 0; i < 40; i++) ROWS.push(['p' + i, 'Linen Shirt ' + (i % 5 ? 'Blue' : 'BLUE SALE'), 'A breathable linen shirt for warm days, cut for an easy fit and finished with mother-of-pearl buttons.',
+    'https://x/p' + i, 'https://x/i' + i + '.jpg', '40 GBP', 'in_stock', 'Acme', 'Breathable linen', i % 3 ? 'Relaxed fit' : '', 'Apparel & Accessories > Clothing > Shirts & Tops']);
+  // the lane the page used to run inline, written out by hand — the stream must equal it
+  const cols = LG.findAttrCols(H), col = LG.qualityCollector(cols, { header: H });
+  ROWS.forEach((r) => col.onRow(r));
+  const byHand = col.finish({ client: 'Acme', market: 'gb' });
+  const qs = LG.qualityStream({ FA, client: 'Acme', market: 'gb', expected: [], waived: [] });
+  qs.onRow(H); ROWS.forEach((r) => qs.onRow(r));
+  const viaStream = qs.finish();
+  const strip = (o) => JSON.stringify(Object.assign({}, o, { ai: undefined, t: undefined }));
+  ok('qualityStream reads a feed exactly as the collector does', strip(viaStream) === strip(byHand));
+  ok('…and scores the same rows on the AI-readiness ladder, packed to the stored shape',
+    viaStream.ai && viaStream.ai.total > 0 && viaStream.ai.pillars.length === 8 && viaStream.ai.titles && 'mask' in viaStream.ai.titles, viaStream.ai && viaStream.ai.total);
+  ok('it counts rows as it goes (the page\'s progress bar reads this)', qs.rows() === ROWS.length);
+  const g = LG.qualityStream({ FA, client: 'Acme', market: 'gb' });
+  g.onRow(H.slice(0, 8)); g.onRow(ROWS[0].slice(0, 8)); g.onRow(ROWS[1].slice(0, 8), H);
+  ok('a column an XML feed grows mid-stream is named late, never scored on part of the feed', (g.finish().late || []).includes('product_highlight'));
+  let threw = false; try { LG.qualityStream({}).finish(); } catch (e) { threw = /no rows/.test(e.message); }
+  ok('an empty feed is refused, not stored as a zero', threw);
+  const page = read('docs/FeedSpark_GoldenRecord.html');
+  ok('the page\'s Analyse button runs the SAME stream', /var qs = LG\.qualityStream\(\{ FA: FA, client: p\.client, market: p\.mkt, audCap: AUD_CAP,/.test(page) && /var snap = qs\.finish\(\);/.test(page) && !/function packAudit\(a\) \{/.test(page));
+  ok('…and so does the daily agent', /qualityStream\(\{ FA, client: feed\.client, market: feed\.mkt, audCap: AUD_CAP,/.test(read('tools/golden_daily.mjs')));
+}
+
+console.log('── the worker: one writer, and an automatic reading never overrides a hand-run day');
+{
+  const wk = read('cloudflare/feedspark-deck/src/worker.js');
+  const fn = wk.slice(wk.indexOf('async function storeGoldenQuality('), wk.indexOf('async function goldenRoutes('));
+  ok('the page\'s PUT and the agent\'s push share ONE writer', /const r = await storeGoldenQuality\(env, client, mkt, b, \{ auto: false \}\);/.test(wk) && /await storeGoldenQuality\(env, client, mkt, e\.snap, \{ auto: true \}\);/.test(wk));
+  ok('an automatic reading is not stored over a hand-run one from the same day',
+    /if \(cur && cur\.qSrc === 'm' && cur\.qT && histDay\(cur\.qT\) === histDay\(Date\.now\(\)\)\) \{/.test(fn) && fn.indexOf("cur.qSrc === 'm'") < fn.indexOf("EDITS.put('goldenqual:'"));
+  ok('the index says who took the reading, and a scan carries it forward', /idx\[key\]\.qSrc = auto \? 'a' : 'm';/.test(fn) && /const QUAL_KEEP = \['q', 'qFails', 'qT', 'qSrc',/.test(wk));
+  ok('the analysis lands in the history marked by who ran it', /m: !auto \}\);/.test(fn));
+  ok('every scan button a person presses is a hand-run scan',
+    (wk.match(/runLabelScan\(env, client, mkt, \{ manual: true \}\)/g) || []).length === 3 &&
+    /applyPushedSnapshot\(env, client, mkt, snap, body\.vol, undefined, undefined, \{ manual: true \}\)/.test(wk));
+  ok('…the cron sweep and the agents are not', /try \{ await runLabelScan\(env, f\.client, f\.mkt\); \} catch \(e\) \{\}/.test(wk) && /const r = await runLabelScan\(env, client, mkt\);\n/.test(wk));
+  ok('the flag reaches the history', /histAdd\(had, cur, \{ manual: !!\(opts && opts\.manual\) \}\)/.test(wk) && /runLabelScan\(env, client, mkt, opts\)/.test(wk) && /processScanSnapshot\(env, client, mkt, snap, \{ wantPT, rescan: null, manual: !!\(opts && opts\.manual\) \}\)/.test(wk));
+  ok('the daily run has a ledger, and hands the agent every brand\'s scoring profile', /if \(body\.goldendaily && typeof body\.goldendaily === 'object'\) \{/.test(wk) && /return json\(\{ ok: true, day, done: !!\(cur && cur\.day === day\), last: cur, profiles \}\);/.test(wk));
+  ok('the estate route carries the ledger so the card can say when it last ran', /return json\(\{ feeds, alerts, daily \}\);/.test(wk));
+  ok('sheet-backed Google feeds get their score from the worker\'s own gviz scan', /if \(Array\.isArray\(body\.goldenscan\)\) \{/.test(wk));
+  ok('a Meta feed is never taken as a Golden Record feed', (wk.match(/\/-fb\$\/\.test\(mkt\)\) \{ results\.push\(\{ client, mkt, error: 'bad client\/market' \}\)/g) || []).length === 2);
+}
+
+console.log('── the agent runs once a day, from 09:00 London');
+{
+  const A = await import('./golden_daily.mjs');
+  const at = (iso) => A.londonClock(new Date(iso));
+  ok('in summer 08:00 UTC is 09:00 London', at('2026-07-01T08:00:00Z').hour === 9 && at('2026-07-01T08:00:00Z').day === '2026-07-01');
+  ok('in winter 09:00 UTC is 09:00 London', at('2026-12-01T09:00:00Z').hour === 9 && at('2026-12-01T08:00:00Z').hour === 8);
+  ok('the London date is the day the run files under — 23:30 UTC in summer is already tomorrow', at('2026-07-01T23:30:00Z').day === '2026-07-02');
+  ok('before 09:00 London it waits', !A.shouldRun(at('2026-12-01T08:00:00Z'), false, false));
+  ok('from 09:00 it runs', A.shouldRun(at('2026-07-01T08:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T09:00:00Z'), false, false));
+  ok('a late firing is the catch-up for a missed or failed run', A.shouldRun(at('2026-07-01T09:00:00Z'), false, false));
+  ok('once today is on the ledger every later firing does nothing', !A.shouldRun(at('2026-07-01T09:00:00Z'), true, false));
+  ok('a forced dispatch runs regardless', A.shouldRun(at('2026-12-01T06:00:00Z'), true, true));
+  const feeds = A.googleFeeds(read('cloudflare/feedspark-deck/src/worker.js'));
+  ok('every wired Google Shopping feed, never a Meta one', feeds.length >= 40 && !feeds.some((f) => /-fb$/.test(f.mkt)), feeds.length);
+  ok('sheet-backed ones read Google\'s public CSV export, as the feed proxy does', feeds.filter((f) => f.kind === 'sheet').every((f) => /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[^/]+\/export\?format=csv&gid=/.test(f.url)) && feeds.some((f) => f.kind === 'sheet'));
+  ok('a client name with a space is read whole', feeds.some((f) => f.client === 'House of Bruar'));
+  const wf = read('.github/workflows/golden-daily.yml');
+  ok('the workflow fires at 08:00, 09:00 and 10:00 UTC and lets the script decide', /cron: '0 8,9,10 \* \* \*'/.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
+  ok('a one-feed dispatch never marks the day done', /if \(!ONLY\) await post\(\{ goldendaily: \{ day: clock\.day, finish: true,/.test(read('tools/golden_daily.mjs')));
 }
 
 console.log(`\ngolden score history: ${pass} passed, ${fail} failed`);

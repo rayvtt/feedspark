@@ -61,7 +61,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -883,6 +883,65 @@ async function route(request, env, ctx) {
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
           + results.filter((r) => r.retry).length + ' held · ' + results.filter((r) => r.error || r.unreachable).length + ' failed', 'xml-scan');
+        return json({ ok: true, results });
+      }
+
+      // ---- THE 09:00 UK DAILY GOLDEN RECORD RUN (Ray, 24 Sep 2026: "Golden Record and content
+      // quality should automatically scan on a daily basis, then at 9 a.m. UK time, so every day
+      // there's a tracker. If there's a manual scan on any day, that new score can override that
+      // day. So let's do that for all clients"). tools/golden_daily.mjs (.github/workflows/
+      // golden-daily.yml) streams every wired Google Shopping feed once, pushes the XML ones'
+      // snapshots down the {xmlscan} lane above (the feed score), asks for a gviz scan of the
+      // sheet-backed ones ({goldenscan}) and posts the content-quality + AI-readiness reading it
+      // computed with labelguard's qualityStream ({goldenqual}) — all AUTOMATIC, so none of it
+      // displaces a hand-run reading of the same day. {goldendaily} is the run's own ledger: the
+      // agent asks whether today's run is done (and for every brand's scoring profile, which the
+      // AI-readiness audit needs) and records the run when it finishes.
+      if (body.goldendaily && typeof body.goldendaily === 'object') {
+        const g = body.goldendaily;
+        const day = /^\d{4}-\d{2}-\d{2}$/.test(String(g.day || '')) ? String(g.day) : null;
+        if (!day) return json({ ok: false, error: 'day (YYYY-MM-DD, London) required' }, 400);
+        const cur = (await env.EDITS.get('goldendaily', 'json')) || null;
+        if (g.finish) {
+          const rec = { day, t: Date.now(), feeds: Math.max(0, parseInt(g.feeds, 10) || 0),
+            quality: Math.max(0, parseInt(g.quality, 10) || 0), kept: Math.max(0, parseInt(g.kept, 10) || 0),
+            failed: Math.max(0, parseInt(g.failed, 10) || 0), by: String(g.by || 'schedule').slice(0, 20) };
+          await env.EDITS.put('goldendaily', JSON.stringify(rec));
+          logActivity(ctx, env, request, 'golden-daily', rec.quality + ' analysed · ' + rec.kept + ' kept a hand-run reading · ' + rec.failed + ' failed', 'golden-daily');
+          return json({ ok: true, daily: rec });
+        }
+        const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+        const profiles = {};
+        (await feedRoster(env)).forEach((f) => {
+          if (!f || !f.client || profiles[f.client]) return;
+          const pf = profileFor(f.client, overrides);
+          profiles[f.client] = { expected: pf.expected || [], waived: pf.waived || [] };
+        });
+        return json({ ok: true, day, done: !!(cur && cur.day === day), last: cur, profiles });
+      }
+      if (Array.isArray(body.goldenqual)) {
+        const results = [];
+        for (const e of body.goldenqual.slice(0, 4)) {   // one or two per post — a reading can run to ~200KB
+          const client = String((e && e.client) || '').slice(0, 60), mkt = mktOf(e && e.mkt);
+          if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0 || /-fb$/.test(mkt)) { results.push({ client, mkt, error: 'bad client/market' }); continue; }
+          if (!(await feedSourceFor(env, client, mkt))) { results.push({ client, mkt, error: 'not a wired feed' }); continue; }
+          try {
+            const r = await storeGoldenQuality(env, client, mkt, e.snap, { auto: true });
+            results.push(Object.assign({ client, mkt }, r.status === 200 ? r.body : { error: r.body.error }));
+          } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
+        }
+        return json({ ok: true, results });
+      }
+      if (Array.isArray(body.goldenscan)) {
+        const results = [];
+        for (const e of body.goldenscan.slice(0, 4)) {   // sheet-backed Google feeds: the gviz scan, automatic
+          const client = String((e && e.client) || '').slice(0, 60), mkt = mktOf(e && e.mkt);
+          if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0 || /-fb$/.test(mkt)) { results.push({ client, mkt, error: 'bad client/market' }); continue; }
+          try {
+            const r = await runLabelScan(env, client, mkt);
+            results.push(r.error ? { client, mkt, error: r.error } : (r.skipped ? { client, mkt, skipped: true } : { client, mkt, ok: true }));
+          } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
+        }
         return json({ ok: true, results });
       }
 
@@ -3338,7 +3397,9 @@ async function mapStoreRoute(env, request, kvKey, opts) {
 
 const lgKey = (c, m) => c + '|' + m;
 
-async function runLabelScan(env, client, mkt) {
+// opts.manual = a person pressed a scan button (Ray, 24 Sep 2026: "If there's a manual scan on any day,
+// that new score can override that day") — the score history marks the reading so it SETS its day
+async function runLabelScan(env, client, mkt, opts) {
   const src = await feedSourceFor(env, client, mkt);
   if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
   if (src.xml) return { error: 'XML feed - live scans are sheets-only (gviz cannot query XML); XML feeds are scanned by the 4x-daily xml-scan push instead', status: 400 };
@@ -3358,7 +3419,7 @@ async function runLabelScan(env, client, mkt) {
     await markScanUnreachable(env, client, mkt, msg, wantPT);
     return { error: msg, status: 502 };
   }
-  return processScanSnapshot(env, client, mkt, snap, { wantPT,
+  return processScanSnapshot(env, client, mkt, snap, { wantPT, manual: !!(opts && opts.manual),
     rescan: async () => { try { return await scanFeed(fetch, src, { client, market: mkt }, keys, scanOpts); } catch (e) { return null; } } });
 }
 
@@ -3369,7 +3430,7 @@ async function runLabelScan(env, client, mkt) {
 // dossier scorecard reading FEED only for Schuh's three markets an hour after the agent's pass
 // — "why content quality score isn't saved?". The reading stays what it was until the next
 // analysis; qT dates it. Shared by the scan lane (processScanSnapshot) and the ack.
-const QUAL_KEEP = ['q', 'qFails', 'qT', 'air', 'airTier', 'airP'];
+const QUAL_KEEP = ['q', 'qFails', 'qT', 'qSrc', 'air', 'airTier', 'airP'];
 function keepQual(prev) {
   const out = {};
   if (prev) QUAL_KEEP.forEach((k) => { if (prev[k] !== undefined && prev[k] !== null) out[k] = prev[k]; });
@@ -3497,11 +3558,11 @@ async function volTrack(env, client, mkt, rows, vol) {
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
 // catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
 // confirming re-read). Identity fields are always forced server-side.
-async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img) {
+async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img, opts) {
   const wantPT = !/-fb$/.test(mkt);
   snap.client = client; snap.market = mkt; snap.v = 1;
   if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
-  const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
+  const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null, manual: !!(opts && opts.manual) });
   if (r && r.skipped) return { skipped: true, retry: !!r.retry };
   // volume tracking rides only CONFIRMED scans — a held catastrophic reading's id set
   // would fake a churn crater, so it lands with the confirming re-push
@@ -3802,13 +3863,13 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
       const cur = histReading(grSnap);
       const had = await env.EDITS.get('goldenhist' + GK, 'json');
       if (had && had.r && had.r.length) {
-        const r = histAdd(had, cur);
+        const r = histAdd(had, cur, { manual: !!(opts && opts.manual) });
         gHist = r.hist;
         if (r.wrote) await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
       } else if (cur) {
         // no readings yet — a record holding only an analysis (the quality PUT got here first)
         // still seeds, and keeps the analyses it already had
-        gHist = histSeed([gBaseWas, gPrev], cur);
+        gHist = histSeed([gBaseWas, gPrev], cur, { manual: !!(opts && opts.manual) });
         if (had && Array.isArray(had.q)) gHist.q = had.q;
         await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
       }
@@ -3924,7 +3985,7 @@ async function labelGuardRoutes(env, request, url) {
 
   if (path === '/api/labels/scan' && request.method === 'POST') {
     if (badClient) return json({ error: 'bad client' }, 400);
-    const r = await runLabelScan(env, client, mkt);
+    const r = await runLabelScan(env, client, mkt, { manual: true });
     if (r.error) return json({ error: r.error }, r.status || 502);
     return json(r);
   }
@@ -3944,7 +4005,7 @@ async function labelGuardRoutes(env, request, url) {
     const snap = body && body.snap;
     if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') return json({ error: 'bad snapshot' }, 400);
     try {
-      const r = await applyPushedSnapshot(env, client, mkt, snap, body.vol);
+      const r = await applyPushedSnapshot(env, client, mkt, snap, body.vol, undefined, undefined, { manual: true });
       if (r.skipped) return json({ skipped: true, retry: r.retry }, 202);
       // the full processScanSnapshot result, so each guard page can read its own slice
       // (labels pages use .snapshot/.alerts, /ptypes uses .pt, /golden uses .gr)
@@ -4159,7 +4220,7 @@ async function productTypeRoutes(env, request, url) {
 
   if (path === '/api/ptypes/scan' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
-    const r = await runLabelScan(env, client, mkt);   // one pass writes labels AND ptype stores
+    const r = await runLabelScan(env, client, mkt, { manual: true });   // one pass writes labels AND ptype stores
     if (r.error) return json({ error: r.error }, r.status || 502);
     if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.pt) return json({ error: 'scan succeeded but captured no product_type view' }, 502);
@@ -4226,6 +4287,134 @@ async function productTypeRoutes(env, request, url) {
    data specification — required vs required-in-cases vs recommended — captured by
    runLabelScan on every Google-feed scan (zero extra subrequests: the roster rides the
    same multi-count query). These routes read/ack the golden* stores. */
+// ONE WRITER for a content-quality reading, whichever lane brought it (Ray, 24 Sep 2026: "Golden
+// Record and content quality should automatically scan on a daily basis … at 9 a.m. UK time … If
+// there's a manual scan on any day, that new score can override that day"): the /golden PUT is a
+// person pressing Analyse (manual); the {goldenqual} push is the 09:00 UK daily agent (auto). An
+// automatic reading NEVER replaces a hand-run analysis taken earlier the same day — that reading is
+// the day's, and the automatic one is simply not stored. Returns { status, body }.
+async function storeGoldenQuality(env, client, mkt, b, opts) {
+  const auto = !!(opts && opts.auto);
+  if (auto) {
+    const cur = ((await env.EDITS.get('goldenidx', 'json')) || {})[lgKey(client, mkt)];
+    if (cur && cur.qSrc === 'm' && cur.qT && histDay(cur.qT) === histDay(Date.now())) {
+      return { status: 200, body: { ok: true, skipped: 'analysed by hand today — that reading holds the day' } };
+    }
+  }
+  if (!b || typeof b !== 'object' || !b.attrs || typeof b.attrs !== 'object') return { status: 400, body: { error: 'attrs required' } };
+  const rows = Math.max(0, parseInt(b.rows, 10) || 0);
+  if (!rows) return { status: 400, body: { error: 'a run over zero rows is not a reading' } };
+  // keep only attributes the spec knows, and only the shape the page renders — a client
+  // cannot widen what is stored by inventing keys
+  const attrs = {};
+  for (const q of QSPEC) {
+    const a = b.attrs[q.key];
+    if (!a || typeof a !== 'object') continue;
+    const rules = {};
+    for (const rule of q.rules) {
+      const hit = (a.rules || {})[rule.id];
+      if (!hit) continue;
+      rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
+        pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
+        eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
+      // a duplicate rule carries its groups — the repeated value, how many products share
+      // it and which ones — so the finding can be verified on the page rather than taken
+      // on trust. Same discipline as everything else here: only the shape we render.
+      if (Array.isArray(hit.groups) && hit.groups.length) {
+        rules[rule.id].groups = hit.groups.slice(0, 4).map((g) => ({
+          v: String((g && g.v) || '').slice(0, 160),
+          n: Math.max(0, parseInt(g && g.n, 10) || 0),
+          ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
+          x: g && g.x ? 1 : 0,        // shared with a DIFFERENT product, not just a variant
+        })).filter((g) => g.v && g.n > 1);
+        rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
+        // what the rule deliberately did NOT count, so the number is never a mystery
+        if (hit.within) {
+          rules[rule.id].within = Math.max(0, parseInt(hit.within, 10) || 0);
+          rules[rule.id].withinVals = Math.max(0, parseInt(hit.withinVals, 10) || 0);
+        }
+      }
+    }
+    attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
+      cov: Math.round((Number(a.cov) || 0) * 10) / 10,
+      avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
+      minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
+      maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
+      rules, dupeCapped: a.dupeCapped === true || undefined,
+      // how many columns a repeatable attribute was read across, and values per product —
+      // the evidence behind a count-based finding like "fewer than 2 highlights"
+      cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
+      perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
+      // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
+      avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined,
+      // highlight-count distribution (product_highlight only) — fixed bucket keys, each
+      // independently clamped so a client cannot widen the shape of the store
+      hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {
+        o[b] = Math.max(0, Math.min(100, Math.round((Number(a.hlDist[b]) || 0) * 10) / 10)); return o;
+      }, {}) : undefined };
+  }
+  if (!Object.keys(attrs).length) return { status: 400, body: { error: 'no known free-text attribute in this feed' } };
+  // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
+  // kept to the shape the card renders, so the store can't be widened from the browser
+  const num = (x, max) => Math.min(max, Math.max(0, Math.round(Number(x) || 0)));
+  let ai = null;
+  if (b.ai && typeof b.ai === 'object' && Number(b.ai.total) > 0) {
+    const t = b.ai.titles && typeof b.ai.titles === 'object' ? b.ai.titles : {};
+    const mask = t.mask && typeof t.mask === 'object' ? t.mask : {};
+    ai = {
+      total: num(b.ai.total, 100), tier: Math.min(4, Math.max(1, parseInt(b.ai.tier, 10) || 1)),
+      tierLabel: String(b.ai.tierLabel || '').slice(0, 40),
+      sampled: num(b.ai.sampled, 1e9), rows: num(b.ai.rows, 1e9),
+      pillars: Array.isArray(b.ai.pillars) ? b.ai.pillars.slice(0, 8).map((p) => ({
+        key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
+        score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
+        summary: String(p.summary || '').slice(0, 160),
+        // the live components behind the number, for the scoring pop-up (Ray, 17 Sep
+        // 2026) — a bounded list of short strings, never HTML
+        reads: Array.isArray(p.reads) ? p.reads.slice(0, 8).map((x) => String(x || '').slice(0, 140)) : [],
+      })) : [],
+      titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
+        dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
+        buckets: Array.isArray(t.buckets) ? t.buckets.slice(0, 6).map((x) => ({ b: String(x.b || '').slice(0, 20), n: num(x.n, 1e9) })) : [],
+        mask: { brand: num(mask.brand, 100), material: num(mask.material, 100), fit: num(mask.fit, 100),
+          colour: num(mask.colour, 100), use: num(mask.use, 100) } },
+    };
+  }
+  const rec = { t: Date.now(), client, market: mkt, rows, attrs, ai, kind: String(b.kind || '').slice(0, 8) };
+  const packed = JSON.stringify(rec);
+  if (packed.length > 250000) return { status: 413, body: { error: 'quality reading too large' } };
+  await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
+  // surface the headline on the estate index (never invents a row — only annotates one).
+  // Scored against the brand's CURRENT profile — attribute waivers and the rules set aside
+  // for the brand — so the stored figure is the one the page computes (before 21 Sep 2026
+  // the index carried the unprofiled score while /golden showed the profiled one)
+  const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));
+  const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+  const key = lgKey(client, mkt);
+  if (idx[key] && (qs || ai)) {
+    if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
+    if (ai) {
+      idx[key].air = ai.total; idx[key].airTier = ai.tier;
+      // per-pillar scores too, so the estate can draw the markets × pillars heatmap
+      // without re-reading every feed's stored block (8 numbers per feed)
+      const pm = {};
+      ai.pillars.forEach((p) => { if (p.key) pm[p.key] = p.score; });
+      idx[key].airP = pm;
+    }
+    idx[key].qT = rec.t;
+    idx[key].qSrc = auto ? 'a' : 'm';   // who took the reading — a hand-run one holds its day
+    await env.EDITS.put('goldenidx', JSON.stringify(idx));
+  }
+  // …and the analysis joins the feed's history as measured (content quality + AI-readiness),
+  // a hand-run one marked so it sets its day (histDayPick)
+  if (qs || ai) try {
+    const hk = 'goldenhist:' + client + ':' + mkt;
+    const hq = histQa(await env.EDITS.get(hk, 'json'), { t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null, m: !auto });
+    if (hq.wrote) await env.EDITS.put(hk, JSON.stringify(hq.hist));
+  } catch (e) {}
+  return { status: 200, body: { ok: true, t: rec.t, score: qs ? qs.score : null, src: auto ? 'auto' : 'manual' } };
+}
+
 async function goldenRoutes(env, request, url) {
   const path = url.pathname;
   const client = (url.searchParams.get('client') || '').slice(0, 60);
@@ -4248,7 +4437,9 @@ async function goldenRoutes(env, request, url) {
         feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
       }
     });
-    return json({ feeds, alerts });
+    // the 09:00 UK daily run's own record, so the page can say when the tracker last filled
+    const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
+    return json({ feeds, alerts, daily });
   }
 
   // email-on-warning settings (recipient + on/off) — mirrors ptypealertcfg's shape
@@ -4285,7 +4476,7 @@ async function goldenRoutes(env, request, url) {
 
   if (path === '/api/golden/scan' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
-    const r = await runLabelScan(env, client, mkt);   // one pass writes labels, ptype AND golden stores
+    const r = await runLabelScan(env, client, mkt, { manual: true });   // one pass writes labels, ptype AND golden stores
     if (r.error) return json({ error: r.error }, r.status || 502);
     if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.gr) return json({ error: 'scan succeeded but captured no attribute-coverage view' }, 502);
@@ -4456,116 +4647,9 @@ async function goldenRoutes(env, request, url) {
   if (path === '/api/golden/quality' && request.method === 'PUT') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
-    if (!b || typeof b !== 'object' || !b.attrs || typeof b.attrs !== 'object') return json({ error: 'attrs required' }, 400);
-    const rows = Math.max(0, parseInt(b.rows, 10) || 0);
-    if (!rows) return json({ error: 'a run over zero rows is not a reading' }, 400);
-    // keep only attributes the spec knows, and only the shape the page renders — a client
-    // cannot widen what is stored by inventing keys
-    const attrs = {};
-    for (const q of QSPEC) {
-      const a = b.attrs[q.key];
-      if (!a || typeof a !== 'object') continue;
-      const rules = {};
-      for (const rule of q.rules) {
-        const hit = (a.rules || {})[rule.id];
-        if (!hit) continue;
-        rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
-          pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
-          eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
-        // a duplicate rule carries its groups — the repeated value, how many products share
-        // it and which ones — so the finding can be verified on the page rather than taken
-        // on trust. Same discipline as everything else here: only the shape we render.
-        if (Array.isArray(hit.groups) && hit.groups.length) {
-          rules[rule.id].groups = hit.groups.slice(0, 4).map((g) => ({
-            v: String((g && g.v) || '').slice(0, 160),
-            n: Math.max(0, parseInt(g && g.n, 10) || 0),
-            ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
-            x: g && g.x ? 1 : 0,        // shared with a DIFFERENT product, not just a variant
-          })).filter((g) => g.v && g.n > 1);
-          rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
-          // what the rule deliberately did NOT count, so the number is never a mystery
-          if (hit.within) {
-            rules[rule.id].within = Math.max(0, parseInt(hit.within, 10) || 0);
-            rules[rule.id].withinVals = Math.max(0, parseInt(hit.withinVals, 10) || 0);
-          }
-        }
-      }
-      attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
-        cov: Math.round((Number(a.cov) || 0) * 10) / 10,
-        avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
-        minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
-        maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
-        rules, dupeCapped: a.dupeCapped === true || undefined,
-        // how many columns a repeatable attribute was read across, and values per product —
-        // the evidence behind a count-based finding like "fewer than 2 highlights"
-        cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
-        perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
-        // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
-        avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined,
-        // highlight-count distribution (product_highlight only) — fixed bucket keys, each
-        // independently clamped so a client cannot widen the shape of the store
-        hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {
-          o[b] = Math.max(0, Math.min(100, Math.round((Number(a.hlDist[b]) || 0) * 10) / 10)); return o;
-        }, {}) : undefined };
-    }
-    if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
-    // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
-    // kept to the shape the card renders, so the store can't be widened from the browser
-    const num = (x, max) => Math.min(max, Math.max(0, Math.round(Number(x) || 0)));
-    let ai = null;
-    if (b.ai && typeof b.ai === 'object' && Number(b.ai.total) > 0) {
-      const t = b.ai.titles && typeof b.ai.titles === 'object' ? b.ai.titles : {};
-      const mask = t.mask && typeof t.mask === 'object' ? t.mask : {};
-      ai = {
-        total: num(b.ai.total, 100), tier: Math.min(4, Math.max(1, parseInt(b.ai.tier, 10) || 1)),
-        tierLabel: String(b.ai.tierLabel || '').slice(0, 40),
-        sampled: num(b.ai.sampled, 1e9), rows: num(b.ai.rows, 1e9),
-        pillars: Array.isArray(b.ai.pillars) ? b.ai.pillars.slice(0, 8).map((p) => ({
-          key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
-          score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
-          summary: String(p.summary || '').slice(0, 160),
-          // the live components behind the number, for the scoring pop-up (Ray, 17 Sep
-          // 2026) — a bounded list of short strings, never HTML
-          reads: Array.isArray(p.reads) ? p.reads.slice(0, 8).map((x) => String(x || '').slice(0, 140)) : [],
-        })) : [],
-        titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
-          dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
-          buckets: Array.isArray(t.buckets) ? t.buckets.slice(0, 6).map((x) => ({ b: String(x.b || '').slice(0, 20), n: num(x.n, 1e9) })) : [],
-          mask: { brand: num(mask.brand, 100), material: num(mask.material, 100), fit: num(mask.fit, 100),
-            colour: num(mask.colour, 100), use: num(mask.use, 100) } },
-      };
-    }
-    const rec = { t: Date.now(), client, market: mkt, rows, attrs, ai, kind: String(b.kind || '').slice(0, 8) };
-    const packed = JSON.stringify(rec);
-    if (packed.length > 250000) return json({ error: 'quality reading too large' }, 413);
-    await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
-    // surface the headline on the estate index (never invents a row — only annotates one).
-    // Scored against the brand's CURRENT profile — attribute waivers and the rules set aside
-    // for the brand — so the stored figure is the one the page computes (before 21 Sep 2026
-    // the index carried the unprofiled score while /golden showed the profiled one)
-    const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));
-    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    const key = lgKey(client, mkt);
-    if (idx[key] && (qs || ai)) {
-      if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
-      if (ai) {
-        idx[key].air = ai.total; idx[key].airTier = ai.tier;
-        // per-pillar scores too, so the estate can draw the markets × pillars heatmap
-        // without re-reading every feed's stored block (8 numbers per feed)
-        const pm = {};
-        ai.pillars.forEach((p) => { if (p.key) pm[p.key] = p.score; });
-        idx[key].airP = pm;
-      }
-      idx[key].qT = rec.t;
-      await env.EDITS.put('goldenidx', JSON.stringify(idx));
-    }
-    // …and the analysis joins the feed's history as measured (content quality + AI-readiness)
-    if (qs || ai) try {
-      const hk = 'goldenhist:' + client + ':' + mkt;
-      const hq = histQa(await env.EDITS.get(hk, 'json'), { t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null });
-      if (hq.wrote) await env.EDITS.put(hk, JSON.stringify(hq.hist));
-    } catch (e) {}
-    return json({ ok: true, t: rec.t, score: qs ? qs.score : null });
+    // a person pressed Analyse — the reading holds its day (storeGoldenQuality)
+    const r = await storeGoldenQuality(env, client, mkt, b, { auto: false });
+    return json(r.body, r.status);
   }
 
   // "expected change" — adopt the current coverage snapshot as the new known-good

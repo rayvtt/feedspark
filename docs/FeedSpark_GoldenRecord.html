@@ -216,6 +216,11 @@ window.addEventListener('load',restore);
   .hs-rng button,.hs-rng span{border:0;background:#fff;font:inherit;font-size:11px;font-weight:800;color:var(--muted);padding:4px 10px;cursor:pointer}
   .hs-rng button+button{border-left:1px solid var(--line)}
   .hs-rng .on{background:var(--navy);color:#fff}
+  .hs-rng.hs-met{margin-left:auto}.hs-met+.hs-rng{margin-left:6px}
+  .hs-auto{font-size:11px;font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:2px 9px;background:var(--wash);cursor:default}
+  .hs-man{display:inline-block;font-size:10px;font-weight:900;color:var(--navy);background:#EEF2F7;border-radius:100px;padding:1px 7px;margin-left:4px}
+  .hs-svg .pt.man{stroke:var(--ink);stroke-width:2}
+  .hs-leg i.hsm{width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid var(--ink);box-sizing:border-box}
   .hs-since{font-size:11.5px;font-weight:800;color:var(--muted)}
   .hs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0 8px}
   .hs-k{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--wash);min-width:0}
@@ -807,6 +812,9 @@ window.addEventListener('load',restore);
 [data-theme=dark] .hs-rng button,[data-theme=dark] .hs-rng span{background:#20242E;color:var(--muted)}
 [data-theme=dark] .hs-rng .on{background:var(--navy);color:#fff}
 [data-theme=dark] .hs-k{background:#181B22}
+[data-theme=dark] .hs-auto{background:#181B22}
+[data-theme=dark] .hs-man{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .hs-leg i.hsm{background:var(--paper)}
 [data-theme=dark] .hs-svg .axis{stroke:#3A3F4A}
 [data-theme=dark] .hs-svg .pt{stroke:var(--paper)}
 [data-theme=dark] .hs-svg .hit:hover{fill:rgba(255,255,255,.04)}
@@ -1542,32 +1550,63 @@ window.addEventListener('load',restore);
     return { t: k + ' removed (was ' + a + '%)', c: 'down', tip: k + ' left the feed — it was ' + a + '% filled' };
   }
   // everything the card draws, from the stored record + the live snapshot, under one profile
-  function histModel(h, s, prof, rng, today) {
+  // THE THREE THINGS THE CARD CAN TRACK (Ray, 24 Sep 2026: "Golden Record and content quality should
+  // automatically scan on a daily basis … so every day there's a tracker"): the Golden Score from
+  // the readings, content quality and AI-readiness from the analyses — each drawn day by day
+  var HMETS = [['gs', 'Golden Score'], ['q', 'Content quality'], ['air', 'AI-readiness']];
+  var HMET = (function () { try { var v = localStorage.getItem('gr-hist-met'); return /^(gs|q|air)$/.test(v || '') ? v : 'gs'; } catch (e) { return 'gs'; } })();
+  function hMetName(met) { return HMETS.filter(function (x) { return x[0] === met; })[0][1]; }
+  // mirrors labelguard.js histDayPick — a day's value is its last HAND-RUN reading when there is
+  // one ("If there's a manual scan on any day, that new score can override that day"), else its
+  // last reading; the store keeps the same reading when it thins old days
+  function histDayPick(list, day) {
+    var last = -1, lastM = -1;
+    for (var i = 0; i < list.length; i++) {
+      if (hDay(list[i].t) !== day) continue;
+      last = i;
+      if (list[i].m) lastM = i;
+    }
+    return lastM >= 0 ? lastM : last;
+  }
+  function histModel(h, s, prof, rng, today, met) {
     today = today || hDay(Date.now());
+    met = met || 'gs';
     var reads = ((h && h.r) || []).slice().sort(function (a, b) { return a.t - b.t; });
     var rec = reads.length;                 // the RECORDED readings (the change log reads these)
     var live = hReadingOf(s);
     // the live snapshot closes today's line even when it moved less than the recording threshold,
-    // so the chart ends where the dial is
+    // so the chart ends where the dial is — unless a scan run by hand already set today
     if (live && (!rec || live.t > reads[rec - 1].t)) { live.live = true; reads.push(live); }
     var sset = {};
     ((h && h.s) || []).forEach(function (d) { sset[d] = 1; });
     if (live) sset[hDay(live.t)] = 1;
-    var first = reads.length ? hDay(reads[0].t) : today;
+    var qa = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var qf = met === 'gs' ? null : met;       // the analysis field this metric reads
+    var pts = qf ? qa.filter(function (x) { return x[qf] != null; }) : null;
+    var firstT = qf ? (pts.length ? pts[0].t : null) : (reads.length ? reads[0].t : null);
+    var first = firstT ? hDay(firstT) : today;
     var span = rng === 'all' ? null : parseInt(rng, 10);
     var start = span ? hAddDays(today, -(span - 1)) : first;
     if (start < first) start = first;
     if (start > hAddDays(today, -13)) start = hAddDays(today, -13);   // a fortnight at least, so a young record is not two giant bars
-    var days = [], ri = -1, prev = null;
+    var val = function (x) { return qf ? x[qf] : hScore(x, prof); };
+    var days = [], prev = null, list = qf ? pts : reads, ri = -1;
     for (var d = start; d <= today; d = hAddDays(d, 1)) {
-      while (ri + 1 < reads.length && hDay(reads[ri + 1].t) <= d) ri++;
-      var close = ri >= 0 ? reads[ri] : null;
-      var e = { d: d, scanned: !!sset[d] && !!close, r: null, score: null, delta: null, moved: [], basis: true };
+      var j0 = ri + 1;
+      while (ri + 1 < list.length && hDay(list[ri + 1].t) <= d) ri++;
+      // a reading taken ON this day sets it (a hand-run one first); a score day with none carries
+      // the feed as last read, an analysis day with none is a gap — nobody measured it
+      var pick = -1, pickM = -1;
+      for (var j = j0; j <= ri; j++) if (hDay(list[j].t) === d) { pick = j; if (list[j].m) pickM = j; }
+      if (pickM >= 0) pick = pickM;
+      var close = pick >= 0 ? list[pick] : (!qf && ri >= 0 ? list[ri] : null);
+      var e = { d: d, scanned: qf ? pick >= 0 : (!!sset[d] && !!close), r: null, score: null, delta: null, moved: [], basis: true,
+        man: pick >= 0 && !!list[pick].m };
       if (e.scanned) {
-        e.r = close; e.score = hScore(close, prof);
+        e.r = close; e.score = val(close);
         if (prev) {
-          e.basis = hBasis(prev.r, close);
-          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = histMoved(prev.r, close); e.vs = prev.d; }
+          e.basis = qf ? true : hBasis(prev.r, close);
+          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = qf ? [] : histMoved(prev.r, close); e.vs = prev.d; }
         }
         prev = e;
       }
@@ -1577,51 +1616,55 @@ window.addEventListener('load',restore);
     var inWin = days.filter(function (x) { return x.scanned; });
     if (inWin.length && inWin[0].delta == null) {
       var before = null;
-      reads.forEach(function (x) { if (hDay(x.t) < inWin[0].d) before = x; });
-      if (before && hBasis(before, inWin[0].r)) {
-        inWin[0].delta = hDelta(inWin[0].score - hScore(before, prof));
-        inWin[0].moved = histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
+      list.forEach(function (x) { if (hDay(x.t) < inWin[0].d) before = x; });
+      if (before && (qf || hBasis(before, inWin[0].r))) {
+        inWin[0].delta = hDelta(inWin[0].score - val(before));
+        inWin[0].moved = qf ? [] : histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
       }
     }
-    // the change log: every recorded move inside the window, plus the analyses
+    // the change log follows the metric: the score's recorded moves, or the analyses
     var log = [];
-    for (var i = 0; i < rec; i++) {
-      var x = reads[i];
-      if (hDay(x.t) < start) continue;
-      if (i === 0) { log.push({ t: x.t, kind: 'first', to: hScore(x, prof), rows: x.rows }); continue; }
-      var a = reads[i - 1];
-      if (!hBasis(a, x)) { log.push({ t: x.t, kind: 'basis', to: hScore(x, prof), rows: x.rows }); continue; }
-      log.push({ t: x.t, kind: 'feed', from: hScore(a, prof), to: hScore(x, prof), moved: histMoved(a, x), rows0: a.rows, rows: x.rows });
+    if (!qf) {
+      for (var i = 0; i < rec; i++) {
+        var x = reads[i];
+        if (hDay(x.t) < start) continue;
+        if (i === 0) { log.push({ t: x.t, kind: 'first', to: hScore(x, prof), rows: x.rows, m: !!x.m }); continue; }
+        var a = reads[i - 1];
+        if (!hBasis(a, x)) { log.push({ t: x.t, kind: 'basis', to: hScore(x, prof), rows: x.rows, m: !!x.m }); continue; }
+        log.push({ t: x.t, kind: 'feed', from: hScore(a, prof), to: hScore(x, prof), moved: histMoved(a, x), rows0: a.rows, rows: x.rows, m: !!x.m });
+      }
+    } else {
+      qa.forEach(function (x, j) {
+        if (hDay(x.t) < start) return;
+        log.push({ t: x.t, kind: 'qa', prev: j ? qa[j - 1] : null, cur: x, m: !!x.m });
+      });
     }
-    var qa = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
-    qa.forEach(function (x, j) {
-      if (hDay(x.t) < start) return;
-      log.push({ t: x.t, kind: 'qa', prev: j ? qa[j - 1] : null, cur: x });
-    });
     log.sort(function (a, b) { return b.t - a.t; });
-    // headline figures
+    // headline figures — the Golden Score's, whatever the chart is showing
     var now = live ? hScore(live, prof) : (rec ? hScore(reads[rec - 1], prof) : null);
     var last = null;
     if (rec >= 2 && hBasis(reads[rec - 2], reads[rec - 1])) {
       last = { t: reads[rec - 1].t, from: hScore(reads[rec - 2], prof), to: hScore(reads[rec - 1], prof), since: reads[rec - 2].t };
     }
     var over = null;
-    if (inWin.length && now != null) {
-      var o0 = inWin[0];
+    var gsDays = qf ? null : inWin;
+    if (gsDays && gsDays.length && now != null) {
+      var o0 = gsDays[0];
       if (hBasis(o0.r, live || reads[reads.length - 1]) && o0.d < today) over = { from: o0.score, d: o0.d, delta: hDelta(now - o0.score), all: o0.d === first };
     }
     var qIn = qa.filter(function (x) { return hDay(x.t) >= start; });
     var qBefore = qa.filter(function (x) { return hDay(x.t) < start; }).pop() || null;
     function track(f) {
-      var pts = qIn.filter(function (x) { return x[f] != null; });
-      var lastP = pts[pts.length - 1];
-      if (!lastP) return null;
-      var base = qBefore && qBefore[f] != null ? qBefore : (pts.length > 1 ? pts[0] : null);
+      var ps = qIn.filter(function (x) { return x[f] != null; });
+      if (!ps.length) return null;
+      // the latest DAY's value — a hand-run analysis holds its day over a later automatic one
+      var lastP = ps[histDayPick(ps, hDay(ps[ps.length - 1].t))];
+      var base = qBefore && qBefore[f] != null ? qBefore : (ps.length > 1 ? ps[0] : null);
       return { now: lastP[f], t: lastP.t, from: base ? base[f] : null, fromT: base ? base.t : null };
     }
-    return { days: days, log: log, now: now, last: last, over: over, first: rec ? reads[0].t : null,
-      changes: log.filter(function (x) { return x.kind === 'feed'; }).length,
-      q: track('q'), air: track('air'), scannedDays: inWin.length, start: start, today: today, recorded: rec };
+    return { met: met, days: days, log: log, now: now, last: last, over: over, first: rec ? reads[0].t : null,
+      firstMet: firstT, changes: log.filter(function (x) { return x.kind === (qf ? 'qa' : 'feed'); }).length,
+      q: track('q'), air: track('air'), scannedDays: inWin.length, start: start, today: today, recorded: rec, analyses: qa.length };
   }
   function histChart(m) {
     var W = 1000, L = 46, R = 14, T0 = 30, T1 = 140, MID = 224, AMP = 40, H = 292;
@@ -1637,7 +1680,8 @@ window.addEventListener('load',restore);
     days.forEach(function (x) { if (x.delta != null) peak = Math.max(peak, Math.abs(x.delta)); });
     peak = [0.5, 1, 2, 5, 10, 20, 50, 100].filter(function (x) { return x >= peak; })[0] || peak;
     var cx = function (i) { return L + slot * i + slot / 2; };
-    var sv = '<text class="pl" x="' + L + '" y="14">GOLDEN SCORE · DAILY CLOSE</text>';
+    var col = m.met === 'air' ? airCol : scoreCol;    // AI-readiness keeps its own tier ladder
+    var sv = '<text class="pl" x="' + L + '" y="14">' + esc(hMetName(m.met).toUpperCase()) + ' · DAY BY DAY</text>';
     for (var g = Math.ceil(lo / step) * step; g <= hi; g += step) {
       sv += '<line class="grid" x1="' + L + '" y1="' + yS(g) + '" x2="' + (W - R) + '" y2="' + yS(g) + '"/>' +
         '<text x="' + (L - 7) + '" y="' + (yS(g) + 4) + '" text-anchor="end">' + g + '</text>';
@@ -1654,8 +1698,12 @@ window.addEventListener('load',restore);
     days.forEach(function (x, i) { if (x.score != null) lastI = i; });
     days.forEach(function (x, i) {
       if (x.score == null) return;
-      var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis;
-      if (mark) sv += '<circle class="pt" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="4.5" style="fill:' + scoreCol(x.score) + '"/>';
+      var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
+      // a reading with no scanned neighbour is a line of one point — draw the point, or it vanishes
+      var lone = !((i > 0 && days[i - 1].score != null && x.basis) || (i < days.length - 1 && days[i + 1].score != null && days[i + 1].basis));
+      if (!mark && lone) sv += '<circle class="pt" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="3" style="fill:' + col(x.score) + '"/>';
+      // a day set by a scan run by hand wears a ring, so it can be told apart from the automatic ones
+      if (mark) sv += '<circle class="pt' + (x.man ? ' man' : '') + '" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="' + (x.man ? 5.5 : 4.5) + '" style="fill:' + col(x.score) + '"/>';
     });
     if (lastI >= 0) {
       var lx = cx(lastI), ly = yS(days[lastI].score);
@@ -1687,7 +1735,7 @@ window.addEventListener('load',restore);
     days.forEach(function (x, i) {
       sv += '<rect class="hit" data-hd="' + i + '" x="' + (L + slot * i).toFixed(1) + '" y="' + T0 + '" width="' + slot.toFixed(1) + '" height="' + (MID + AMP - T0) + '" rx="4"/>';
     });
-    return '<svg class="hs-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Golden Score daily close and day-on-day change">' + sv + '</svg>';
+    return '<svg class="hs-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(hMetName(m.met)) + ' day by day, and the day-on-day change">' + sv + '</svg>';
   }
   // a bar with a rounded DATA end, square at the baseline (the Product Volume chart's own mark)
   function barPath(x, w, y0, h, up) {
@@ -1716,7 +1764,7 @@ window.addEventListener('load',restore);
     var all = !!HSHOW[k], rows = all ? m.log : m.log.slice(0, HLOG_N);
     var h = '<div class="hs-log"><table><thead><tr><th>When</th><th>Measure</th><th style="text-align:right">Score</th><th style="text-align:right">Change</th><th>What moved</th></tr></thead><tbody>';
     rows.forEach(function (x) {
-      h += '<tr><td class="w">' + esc(hWhen(x.t)) + '</td>';
+      h += '<tr><td class="w">' + esc(hWhen(x.t)) + (x.m ? ' <span class="hs-man" title="Run by hand — a hand-run reading sets its day, whatever the automatic scans read">✋ by hand</span>' : '') + '</td>';
       if (x.kind === 'first') {
         h += '<td>Golden Score</td><td class="n">' + x.to + '</td><td class="n muted">—</td><td class="ms">first reading recorded · ' + fmt(x.rows) + ' products</td>';
       } else if (x.kind === 'basis') {
@@ -1749,16 +1797,20 @@ window.addEventListener('load',restore);
   function histSection(k, s) {
     var p = parts(k), h0 = HIST[k];
     var head = '<div class="tier-h"><span class="tbadge hsb">Progress</span><h4>Score history</h4>';
-    var rngHtml = '<span class="hs-rng" role="group" aria-label="History range">' + HRNGS.map(function (r) {
+    var rngHtml = '<span class="hs-rng hs-met" role="group" aria-label="What the chart tracks">' + HMETS.map(function (r) {
+      return '<button data-hmet="' + r[0] + '"' + (HMET === r[0] ? ' class="on"' : '') + '>' + r[1] + '</button>';
+    }).join('') + '</span>' +
+      '<span class="hs-rng" role="group" aria-label="History range">' + HRNGS.map(function (r) {
       return '<button data-hrng="' + r[0] + '"' + (HRNG === r[0] ? ' class="on"' : '') + '>' + r[1] + '</button>';
     }).join('') + '</span>';
     if (h0 === undefined) {
       return '<div class="tier hs hs-empty" id="hs-tier">' + head + '</div><p class="hs-empty-note"><span class="spin"></span>Loading the score history…</p></div>';
     }
-    var m = histModel(h0, s, profileForC(p.client), HRNG);
+    var m = histModel(h0, s, profileForC(p.client), HRNG, null, HMET);
     var thin = !h0 || m.recorded < 2 && !(h0.q || []).length;
     var out = '<div class="tier hs' + (thin ? ' hs-empty' : '') + '" id="hs-tier">' + head +
-      (m.first ? '<span class="hs-since">tracking since ' + esc(hDayLbl(hDay(m.first))) + ' · ' + m.changes + ' change' + (m.changes === 1 ? '' : 's') + ' in view</span>' : '') +
+      (m.first ? '<span class="hs-since">tracking since ' + esc(hDayLbl(hDay(m.first))) + ' · ' + m.changes + ' ' + (HMET === 'gs' ? 'change' : 'analys') + (HMET === 'gs' ? (m.changes === 1 ? '' : 's') : (m.changes === 1 ? 'is' : 'es')) + ' in view</span>' : '') +
+      histDailyChip() +
       rngHtml + '</div>';
     if (!h0) {
       return out + '<p class="hs-empty-note">History starts with this feed’s next scan — from then every move is recorded here with the attributes behind it.</p></div>';
@@ -1772,26 +1824,39 @@ window.addEventListener('load',restore);
       (m.over ? histKpi(m.over.all ? 'Since tracking began' : 'Over ' + HRNGS.filter(function (r) { return r[0] === HRNG; })[0][1],
         hSigned(m.over.delta), hCls(m.over.delta), 'from ' + m.over.from + ' on ' + esc(hDayLbl(m.over.d))) : '') +
       histTrackKpi('Content quality', m.q) + histTrackKpi('AI-readiness', m.air) + '</div>';
-    if (m.recorded < 2) {
+    if (HMET !== 'gs' && !m.firstMet) {
+      out += '<p class="hs-empty-note">No ' + esc(hMetName(HMET).toLowerCase()) + ' reading on record for this feed yet — the 09:00 UK daily run records one every morning.</p>';
+    } else if (HMET === 'gs' && m.recorded < 2) {
       out += '<p class="hs-empty-note">' + (m.first ? 'First reading recorded ' + esc(hDayLbl(hDay(m.first))) + ' — the chart fills in from the next scan that moves a number.'
         : 'Score readings start with this feed’s next scan — the analyses above are already on record.') + '</p>';
     }
     out += '<div class="hs-leg"><span><i style="background:var(--hup)"></i>▲ Improvement on the day</span>' +
       '<span><i style="background:var(--hdn)"></i>▼ Deduction on the day</span>' +
-      '<span><i class="dot"></i>scanned, no change</span><span class="muted">a gap = not scanned that day</span></div>' +
+      '<span><i class="dot"></i>' + (HMET === 'gs' ? 'scanned' : 'analysed') + ', no change</span>' +
+      '<span><i class="hsm"></i>set by a scan run by hand</span>' +
+      '<span class="muted">a gap = not ' + (HMET === 'gs' ? 'scanned' : 'analysed') + ' that day</span></div>' +
       '<div class="hs-zone">' + histChart(m) + '<div class="hs-tip" id="hs-tip"></div></div>' +
       histLog(k, m) + '</div>';
     HMODEL = m;
     return out;
   }
   var HMODEL = null;      // the model the hover layer reads
+  function HMETS_CUR() { return HMODEL ? HMODEL.met : HMET; }
+  // the 09:00 UK daily run's own ledger (/api/golden/estate → daily): when the tracker last filled
+  function histDailyChip() {
+    var dl = ESTATE && ESTATE.daily;
+    var tip = 'Every Google Shopping feed is read automatically at 09:00 UK each day — the Golden Score, content quality and AI-readiness. A scan or analysis run by hand sets its own day.';
+    if (!dl || !dl.t) return '<span class="hs-auto" title="' + esc(tip) + '">⏱ auto 09:00 UK daily</span>';
+    return '<span class="hs-auto" title="' + esc(tip + ' Last run: ' + hWhen(dl.t) + ' · ' + (dl.quality || 0) + ' feeds analysed' +
+      (dl.kept ? ' · ' + dl.kept + ' kept a hand-run reading' : '') + (dl.failed ? ' · ' + dl.failed + ' failed' : '')) + '">⏱ auto 09:00 UK · last ' + esc(hWhen(dl.t)) + '</span>';
+  }
   function histTip(ev, i) {
     var tip = $('hs-tip'), zone = tip && tip.parentNode; if (!tip || !HMODEL) return;
     var x = HMODEL.days[i]; if (!x) return;
     var h = '<b>' + esc(hDayLbl(x.d)) + '</b><br>';
-    if (!x.scanned) h += '<span class="m">not scanned this day</span>';
+    if (!x.scanned) h += '<span class="m">not ' + (HMETS_CUR() === 'gs' ? 'scanned' : 'analysed') + ' this day</span>';
     else {
-      h += 'Golden Score <b>' + x.score + '</b><br>';
+      h += esc(hMetName(HMETS_CUR())) + ' <b>' + x.score + '</b>' + (x.man ? ' <span class="m">· set by a scan run by hand</span>' : '') + '<br>';
       if (!x.basis) h += '<span class="m">measured on a new basis — not compared</span>';
       else if (x.delta == null) h += '<span class="m">first reading</span>';
       else if (x.delta === 0 && !x.moved.length) h += '<span class="m">no change vs ' + esc(hDayLbl(x.vs)) + '</span>';
@@ -1812,6 +1877,13 @@ window.addEventListener('load',restore);
       b.onclick = function () {
         HRNG = b.getAttribute('data-hrng');
         try { localStorage.setItem('gr-hist-rng', HRNG); } catch (e) {}
+        histRedraw(k);
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hmet]'), function (b) {
+      b.onclick = function () {
+        HMET = b.getAttribute('data-hmet');
+        try { localStorage.setItem('gr-hist-met', HMET); } catch (e) {}
         histRedraw(k);
       };
     });
@@ -2506,28 +2578,14 @@ window.addEventListener('load',restore);
     };
     tell('connect', 0, 0, 0);
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
-      var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
-      var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
-      function onRow(r, liveHeader) {
-        // the header goes in too: a repeatable attribute (product highlights) lives in several
-        // columns, and the collector needs them all or it reads one value out of four
-        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols, { header: header }); return; }
-        nRows++;
-        if (sample.length < AUD_CAP) sample.push(r);
-        // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
-        // Monsoon custom_label_1 lesson). Growth only ever APPENDS, so every column we
-        // already resolved stays valid — but a free-text attribute that debuts after the
-        // first item was never in the collector, and back-filling it would mean re-reading
-        // the feed. Record it and say so rather than quietly scoring a partial column.
-        if (liveHeader && liveHeader.length !== header.length) {
-          header = liveHeader.slice();
-          var grown = LG.findAttrCols(header);
-          LG.QSPEC.forEach(function (q) {
-            if (grown[q.key] >= 0 && !(cols[q.key] >= 0) && late.indexOf(q.key) < 0) late.push(q.key);
-          });
-        }
-        col.onRow(r);
-      }
+      var FA = a[0], LG = a[1];
+      // the analysis itself is labelguard's qualityStream — the ONE implementation the 09:00 UK
+      // daily agent runs too (tools/golden_daily.mjs), so a hand-run analysis and the automatic
+      // one can never read the same feed two ways (Ray, 24 Sep 2026)
+      var wProf = profileForC(p.client);
+      var qs = LG.qualityStream({ FA: FA, client: p.client, market: p.mkt, audCap: AUD_CAP,
+        expected: wProf.expected, waived: wProf.waived });     // same industry profile as goldenScore
+      var onRow = qs.onRow;
       var parser = null, got = 0, total = 0, last = 0;
       return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (res) {
@@ -2543,7 +2601,7 @@ window.addEventListener('load',restore);
               if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow);
               got += x.value.length;
               var now = Date.now();
-              if (now - last > 180) { last = now; tell('read', got, total, nRows); }
+              if (now - last > 180) { last = now; tell('read', got, total, qs.rows()); }
               parser.push(chunk);
               return pump();
             });
@@ -2551,17 +2609,9 @@ window.addEventListener('load',restore);
           return pump();
         })
         .then(function () {
-          tell('score', got, total || got, nRows);
-          if (!col) throw new Error('the feed produced no rows');
-          var snap = col.finish({ client: p.client, market: p.mkt, late: late.length ? late : undefined });
-          if (!snap.rows) throw new Error('the feed produced no rows');
-          // the SAME read, scored on the AI-Readiness ladder — one stream, two readings
-          try {
-            var wProf = profileForC(p.client);
-            snap.ai = packAudit(FA.audit(header, sample, { client: p.client,
-              rowTotalEstimate: nRows, channel: 'google',       // /golden is Google-channel only
-              expected: wProf.expected, waived: wProf.waived })); // same industry profile as goldenScore
-          } catch (e) { snap.ai = null; }
+          tell('score', got, total || got, qs.rows());
+          // content quality AND the AI-Readiness ladder, off the one stream (qualityStream.finish)
+          var snap = qs.finish();
           tell('save', got, total || got, snap.rows);
           return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
             { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snap) })
@@ -2898,25 +2948,7 @@ window.addEventListener('load',restore);
   function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
   // keep only what the card renders — the full audit carries issues, recs and dissection the
   // Feed Lab page owns, and none of it belongs in this store
-  function packAudit(a) {
-    if (!a || !a.score) return null;
-    var s = a.score, t = a.titles || {};
-    return {
-      total: Math.round(+s.total || 0), tier: +s.tier || 1, tierLabel: String(s.tierLabel || ''),
-      sampled: +a.sampled || 0, rows: +a.rowCount || 0,
-      pillars: (s.pillars || []).slice(0, 8).map(function (p) {
-        return { key: String(p.key || ''), label: String(p.label || ''), score: Math.round(+p.score || 0),
-          weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160),
-          // the live components behind the number, for the scoring pop-up
-          reads: (p.reads || []).slice(0, 8).map(function (x) { return String(x || '').slice(0, 140); }) };
-      }),
-      titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
-        buckets: (t.buckets || []).slice(0, 6).map(function (b) { return { b: String(b.b || ''), n: +b.n || 0 }; }),
-        mask: { brand: Math.round(+(t.mask || {}).brand || 0), material: Math.round(+(t.mask || {}).material || 0),
-          fit: Math.round(+(t.mask || {}).fit || 0), colour: Math.round(+(t.mask || {}).colour || 0),
-          use: Math.round(+(t.mask || {}).use || 0) } },
-    };
-  }
+  // packAudit lives in the engine now (labelguard.js) beside qualityStream, which calls it
 
   // ---- pillar heatmap: this brand's markets × the eight pillars (Ray: "the pillar heatmap
   // is great too"). Feed Lab draws this per brand too; here it reads off the estate index,
