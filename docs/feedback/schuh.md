@@ -112,3 +112,52 @@ nothing lost. Schuh: 45 slides, `still over capacity: 0`, `deck_audit.py` 0 hard
 **Yes — done.** The chart component, its attributes, the three judgement rules it exists to let you
 exercise (never plot a total beside its own parts, never mix two interventions on one axis, full name
 in the table and a short label on the axis) and the heading rule are all in SKILL.md Step 6b.
+
+## 2026-09-24 — round 3 ("regenerate Agenda slide again? nicely")
+
+### The agenda
+- It was eleven identical run-together lines — `01  Review & project recap — 61 of 96 initiatives
+  closed · 13 in the last six months` — poured into two body placeholders at one size. That defeats
+  the only job a contents page has: being scanned. Nobody reads an agenda; they look for chapter
+  seven.
+- `Emitter.agenda()` now lays each entry out as the HTML deck does: the number in the **theme
+  accent** (`accent1` = `F7941E`, so a re-theme re-colours it), the chapter name bold at 13.5pt
+  beside it, the description under them at 10.5pt muted, hanging off the **name** rather than the
+  number (a description starting under the number reads as a third column). Filled down the first
+  column then the second — reading order — and **both columns sized at one scale**, since an odd
+  count leaves the left column one entry longer and sizing each to its own content would render the
+  two halves of one list a size apart.
+
+### What the agenda exposed — 1,242 words missing from the decks
+Looking at why the agenda subtitle read `Eleven chapters, two sources.` and nothing else: the
+one-line strips (`Key Message`, `Subtitle`, …) hold ~121 / ~100 characters, and a paragraph poured
+into one kept its **lead sentence and dropped the rest in silence**. On this deck that was twelve
+slides, including the sentence stating which of two sources wins when they disagree — the whole
+method of the review — plus *"the plan has not been dated past June"*, *"only 0.8% of UK SKUs carry a
+third, readable keyword value"* and a market-by-market AI-readiness read.
+
+Three fixes, in order of how general they are:
+1. **`--audit` reports it** (`COPY CUT`, naming the slide and the lost sentence). Nothing should
+   vanish from a client deck without the build saying so.
+2. **A long `.note` is no longer cut.** `key_fits()` takes a trailing note as the Key Message only
+   when the *whole* note fits; otherwise it stays in the block list and becomes its own statement
+   slide, which holds a paragraph at full size. No rewriting, no loss.
+3. **Four section subtitles shortened** — a section subtitle genuinely *is* a one-line strip, so
+   that one is editorial. Each keeps one sentence and its point moved into a `.note`.
+
+Measured across every deck in the repo, comparing exported text before and after: **zero tokens
+lost, every deck gains copy** — Monsoon 3,718 → 4,053 words, YuMOVE 4,011 → 4,044, Superdry
+4,203 → 4,524, Reiss FY25/26 4,567 → 4,952, Reiss Intro 2,345 → 2,513.
+
+**And it caught a stale sentence of mine.** A chapter-7 note still read *"the two tests completed in
+the current cycle are separate and neither carries a percentage"* — the pre-rework story, contradicting
+the eleven quantified tests now in chapter 4. It had survived the round-1 sweep because it was being
+truncated away before the em dash, so it never appeared in the exported deck to be read.
+
+Schuh: 55 slides, `still over capacity: 0`, **`COPY CUT`: nothing**, `deck_audit.py` 0 hard failures.
+
+### Did the skill need updating?
+**Yes — done.** SKILL.md Step 6b now states the strips' real character budgets, the rule that a
+`.note` should be written for what it says rather than to a budget, that a subtitle is the one case
+that stays editorial, and that `--audit` must show `COPY CUT: nothing` as well as
+`still over capacity: 0` before a deck ships.
