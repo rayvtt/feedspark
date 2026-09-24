@@ -250,6 +250,19 @@ window.addEventListener('load',restore);
   .addcard:hover{color:var(--orange-deep);border-color:var(--orange)}
   .addcol{flex:none;align-self:stretch;min-height:120px;width:150px;font:inherit;font-size:13px;font-weight:900;color:var(--muted);background:transparent;border:2px dashed var(--line);border-radius:12px;cursor:pointer}
   .addcol:hover{color:var(--orange-deep);border-color:var(--orange)}
+  /* FULL SCREEN (Ray, 24 Sep 2026: "allow roadmap board to extend full screen"): the board section
+     becomes a fixed layer over the whole window — the canvas takes every pixel below the toolbar,
+     the editor (z 200) still opens above it, Esc or the same button brings it back */
+  section.blk.fs{position:fixed;inset:0;z-index:150;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;overflow:hidden;padding:14px 18px}
+  section.blk.fs .blk-h p{display:none}
+  section.blk.fs #board-body{flex:1;min-height:0;display:flex;flex-direction:column}
+  section.blk.fs .canvas{flex:1;max-height:none;min-height:0}
+  section.blk.fs #board-body>.cl-m:first-child{margin-top:0}
+  section.blk.fs #board-body:not(:has(.canvas)){overflow:auto}
+  body.tx-fs{overflow:hidden}
+  .fsbtn{font:inherit;font-size:12px;font-weight:900;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;margin-left:6px}
+  .fsbtn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  section.blk.fs .fsbtn{background:var(--navy);border-color:var(--navy);color:#fff}
   /* checklist view */
   .cl-m{margin:4px 0 16px}
   .cl-mh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:15px;font-weight:900;margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--line)}
@@ -299,6 +312,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] .col-h:hover,[data-theme=dark] table.t tr.ed:hover td{background:#20242E}
   [data-theme=dark] .modal select,[data-theme=dark] .modal input,[data-theme=dark] .modal textarea,[data-theme=dark] .cl-row select,[data-theme=dark] .bd-tools input[type=search],[data-theme=dark] .seg,[data-theme=dark] .zoom button,[data-theme=dark] .modal .chk-ed li button{background:#20242E;color:var(--ink)}
   [data-theme=dark] .seg button.on{background:var(--navy);color:#fff}
+  [data-theme=dark] .fsbtn{background:#20242E;color:var(--ink)}
+  [data-theme=dark] section.blk.fs{background:var(--paper)}
   [data-theme=dark] .mst.owned{color:#9DBDF3}[data-theme=dark] .mst.migrating{color:#F0A44E}
   [data-theme=dark] .scrim{background:rgba(0,0,0,.6)}
   [data-theme=dark] .toast{background:#0B0D12}
@@ -332,6 +347,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
       <input type="search" id="q" placeholder="Search cards…" aria-label="Search cards">
       <label class="tog"><input type="checkbox" id="only-open"> Only open</label>
       <div class="zoom" id="zoom"><button type="button" data-z="-" aria-label="Zoom out">−</button><span id="zv">100%</span><button type="button" data-z="+" aria-label="Zoom in">+</button><button type="button" class="fit" data-z="fit">Fit</button></div>
+      <button type="button" class="fsbtn" id="fs-btn" aria-pressed="false" title="Give the board the whole window (Esc to exit)">⛶ Full screen</button>
     </div>
     <div class="ctl" id="ws-chips"></div>
     <div id="board-body"></div>
@@ -1030,6 +1046,11 @@ var TX={
   document.addEventListener('keydown',function(e){ var t=e.target; if(e.key!=='Enter'||!t||!t.classList||!t.classList.contains('cl-add'))return;
     var v=t.value.trim(); if(!v)return; e.preventDefault(); var o={}; o['chk:'+t.getAttribute('data-owner')+'|'+uid('l')]={t:v,done:false,add:1}; putMany(o); });
   $('q').addEventListener('input',function(){ Q=this.value.trim().toLowerCase(); body(); });
+  function setFs(on){ var sec=$('board'), b=$('fs-btn'); sec.classList.toggle('fs',on); document.body.classList.toggle('tx-fs',on);
+    b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'✕ Exit full screen':'⛶ Full screen'; }
+  $('fs-btn').addEventListener('click',function(){ setFs(!$('board').classList.contains('fs')); });
+  // Esc leaves full screen — but never while the editor is open over it (its own Esc closes it first)
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!OPEN&&$('board').classList.contains('fs')){ e.preventDefault(); setFs(false); } });
   /* drag a sticky to another month (or another place in the same month) */
   document.addEventListener('dragstart',function(e){ var s=e.target.closest&&e.target.closest('.stk'); if(!s)return; DRAG=s.getAttribute('data-it'); s.classList.add('dragging'); try{ e.dataTransfer.setData('text/plain',DRAG); e.dataTransfer.effectAllowed='move'; }catch(x){} });
   document.addEventListener('dragend',function(){ DRAG=null; document.querySelectorAll('.dragging,.over').forEach(function(x){ x.classList.remove('dragging','over'); }); });

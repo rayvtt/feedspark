@@ -136,6 +136,11 @@ ok(/import MIGW from "..\/..\/..\/docs\/migration_widget.html"/.test(WORKER) && 
 ok(/\/api\/migration\/status/.test(WIDGET) && /if\(!DATA\|\|!DATA\.on\|\|!DATA\.modules\)\{ clear\(\); return; \}/.test(WIDGET), 'the widget reads the public route and draws nothing when badges are off or the read failed');
 ok(/@media\(max-width:760px\)\{\.fcc-mig-pill\{display:none\}/.test(WIDGET), 'the page pill stands down on the phone (the dot on the bottom bar carries it)');
 
+console.log('Full-screen board');
+ok(/id="fs-btn"/.test(PAGE) && /section\.blk\.fs\{position:fixed;inset:0;z-index:150/.test(PAGE), 'the board can take the whole window (a fixed layer under the editor\'s z-index 200)');
+ok(/if\(e\.key==='Escape'&&!OPEN&&\$\('board'\)\.classList\.contains\('fs'\)\)/.test(PAGE), 'Esc leaves full screen, but never while the editor is open over it');
+ok(/section\.blk\.fs \.canvas\{flex:1;max-height:none/.test(PAGE), 'in full screen the canvas grows to fill the window instead of its 78vh cap');
+
 console.log('Access and wiring');
 ok(/slug: 'transformation'[^}]*optIn: true/.test(ACCESS), 'transformation is an opt-in module in access.js');
 ok(/import TRANSFORM_PAGE from "..\/..\/..\/docs\/FeedSpark_Transformation.html"/.test(WORKER), 'the worker imports the page');
