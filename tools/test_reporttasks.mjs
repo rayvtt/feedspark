@@ -1830,6 +1830,72 @@ ok(/l: 'Everything else here'/.test(PAGE_SRC),
   'and the cell\'s out-of-key remainder is no longer a second row reading "Other" beside the '
   + 'engine\'s own "Other (N more)" fold — invisible in a 40px ring, unanswerable once expanded');
 
+// ---------------------------------------------------------------------------------------------
+// WHAT IS INSIDE THE FOLD (Ray, 24 Sep 2026, ringing "Other (213 more)": "When hovering over the
+// grouped Task, for example, it should display a pop-up of 10 tasks names that sit under Other")
+// ---------------------------------------------------------------------------------------------
+function folds(E, tag) {
+  const many = [];
+  for (let i = 0; i < 40; i++) {
+    many.push(T({ title: 'Task ' + i, id: 100 + i,
+      // hours descend, billable ASCENDS — so a list ranked by the wrong measure is visibly wrong
+      hours: 40 - i, bill: i, nonbill: 40 - i - i > 0 ? 40 - 2 * i : 0 }));
+  }
+  const g = E.groupBy(many, 'task', 8, 'hours');
+  const f = g[g.length - 1];
+  ok(f.fold === 33, tag + ': the tail folds into one group');
+  ok(Array.isArray(f.members) && f.members.length === 33,
+    tag + ': and it KEEPS its members — the fold used to carry a total and nothing else, so the '
+    + 'biggest mark on the chart was the one nobody could ask a question about');
+  eq(f.members.length, f.fold, tag + ': as many members as the name claims');
+  ok(f.members.every((m, i, a) => i === 0 || E.mOf(a[i - 1], 'hours') >= E.mOf(m, 'hours')),
+    tag + ': already ranked, so the first ten ARE the biggest ten');
+  eq(Math.round(f.members.reduce((a, m) => a + m.hours, 0) * 100) / 100, f.hours,
+    tag + ': and they add up to the fold — nothing is lost on the way in');
+  eq(Math.round(f.members.reduce((a, m) => a + m.n, 0)), f.n, tag + ': tasks likewise');
+  // the rank follows the MEASURE the chart is drawing: a billable-only donut whose pop-up ranked
+  // by total hours would list the names in an order the ring contradicts
+  const gb = E.groupBy(many, 'task', 8, 'bill');
+  const fb = gb[gb.length - 1];
+  ok(fb.members.every((m, i, a) => i === 0 || E.mOf(a[i - 1], 'bill') >= E.mOf(m, 'bill')),
+    tag + ': ranked by the measure asked for, not always by total hours');
+  ok(fb.members[0].k !== f.members[0].k,
+    tag + ': which is a different order here, so the rule is actually doing something');
+  // no cap, no fold, nothing to carry
+  ok(E.groupBy(many, 'task', 0, 'hours').every((x) => x.members === undefined),
+    tag + ': a group that is not a fold carries no members');
+  ok(E.groupBy(many.slice(0, 3), 'task', 8, 'hours').every((x) => x.members === undefined),
+    tag + ': and neither does a split that fits inside the cap');
+}
+
+console.log('── what is inside the fold');
+folds(M, 'engine');
+console.log('── the same table against the page\'s own copy');
+folds(P, 'page');
+
+console.log('\n── the fold pop-up (Ray, 24 Sep 2026: "a pop-up of 10 tasks names that sit under Other")');
+ok(/var FOLD_SHOW = 10;/.test(PAGE_SRC), 'ten names, as asked');
+const FT = liftPageSrc('foldTip');
+ok(/hrs\(mv\(top\[i\]\)\)/.test(FT),
+  'each name carries its hours IN THE MEASURE THE CHART DRAWS, never the raw total');
+ok(/x\.members\.length - top\.length/.test(FT) && /' more<\/span>/.test(FT.replace(/"/g, "'")),
+  'and what is left over is counted, not dropped — a list that stops at ten without saying so is '
+  + 'a fold inside a fold');
+// data-t is a DOUBLE-quoted attribute that is read back and parsed as HTML. A double quote inside
+// it closes the attribute and spills the rest of the mark's own markup into the page — which is
+// exactly what it did on the first run: every donut path broke apart and its `d=` string printed
+// as body text. Single-quoted attributes inside are safe and parse identically.
+ok(FT.indexOf('class="') < 0, 'the pop-up\'s own markup uses single-quoted attributes, because it '
+  + 'is built INTO a double-quoted data-t attribute');
+ok(/data-t="' \+ ttl \+ '"/.test(PAGE_SRC) || /foldTip\(x\)/.test(PAGE_SRC),
+  'and the marks append it to their own tooltip rather than growing a second mechanism');
+ok((PAGE_SRC.match(/\+ foldTip\(x\)/g) || []).length >= 3,
+  'every form whose fold is one mark opens it — the donut and both bar forms');
+ok(/\$\('clegend'\)\.querySelectorAll\('\[data-t\]'\)/.test(PAGE_SRC),
+  'and so does the legend row, which is what a reader points at when the mark is a sliver');
+ok(/if \(y \+ tip\.offsetHeight > window\.innerHeight - 8\)/.test(PAGE_SRC),
+  'a ten-row list is allowed to sit ABOVE the cursor rather than run off the bottom of the window');
+
 console.log('\n── one control row, three menus (Ray, 23 Sep 2026: "you see how many button there are here ? - reorganise them")');
 // the menus MOVED the nodes, they did not rebuild them — every id the page, the harness and the
 // saved-view restore already reach for has to still be there

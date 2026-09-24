@@ -292,6 +292,19 @@ window.addEventListener('load',restore);
   .tip{position:fixed;z-index:95;background:#1A365D;color:#fff;font-size:12px;font-weight:800;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;max-width:280px}
   .tip.on{opacity:1}
   .tip .ti{color:#8FB4F0}.tip .to{color:#E8B778}
+  /* the fold's own list — a name and its hours per line, so ten of them read as a table rather
+     than as a sentence that happens to contain commas */
+  .tip .ft{margin-top:6px;border-top:1px solid rgba(255,255,255,.22);padding-top:5px}
+  .tip .ft-h{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    color:#9FC0F5;margin-bottom:4px}
+  .tip .ft-r{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    font-weight:700;line-height:1.5}
+  .tip .ft-r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .tip .ft-r b{flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .tip .ft-more{color:#9FC0F5;font-weight:600}
+  .tip.wide{max-width:340px}
+  /* a legend row that opens something says so — the rest of the rail is not clickable */
+  #clegend .lg-row[data-t]{cursor:help}
   @media(max-width:820px){.tb-tag{display:none}h1{font-size:24px}.clegend{flex:1 1 100%}}
   /* rocket + icon nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
@@ -1355,8 +1368,16 @@ window.addEventListener('load',restore);
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
       var f = { n: 0, bill: 0, nonbill: 0, hours: 0 };
       rest.forEach(function (x) { f.n += x.n; f.bill += x.bill; f.nonbill += x.nonbill; f.hours += x.hours; });
+      /* WHAT IS ACTUALLY INSIDE THE FOLD (Ray, 24 Sep 2026, ringing "Other (213 more)": "When
+         hovering over the grouped Task, for example, it should display a pop-up of 10 tasks names
+         that sit under Other"). The fold used to keep only a total, so the biggest single mark on
+         a chart of 213 task names was the one thing nobody could ask a question about.
+         `rest` is ALREADY RANKED — out is sorted before the cut — so a surface takes the first N
+         and has the biggest N, with no second sort that could rank them differently from the
+         chart they came off. */
       keep.push({ k: 'Other (' + rest.length + ' more)', n: f.n, bill: r2(f.bill), nonbill: r2(f.nonbill),
-        hours: r2(f.hours), billPct: f.hours ? Math.round((f.bill / f.hours) * 1000) / 10 : 0, fold: rest.length });
+        hours: r2(f.hours), billPct: f.hours ? Math.round((f.bill / f.hours) * 1000) / 10 : 0,
+        fold: rest.length, members: rest });
       out = keep;
     }
     return out;
@@ -3076,18 +3097,18 @@ window.addEventListener('load',restore);
       return sm.series.map(function (x, i) {
         return { k: x.k, label: LINEMODE === 'bill' ? x.k : dimLabel(x.k),
           c: LINEMODE === 'bill' ? (x.k === 'Billable' ? cvar('--bil') : cvar('--nbil')) : keyColour(CDIM, x.k, i, x.fold),
-          untag: LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(x.k), hours: mv(x), pct: x.billPct };
+          untag: LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(x.k), hours: mv(x) };
       });
     }
     if (CFORM === 'small' && nested()) {
       return smallCells().keys.map(function (k) {
-        return { k: k.k, label: k.label, c: k.c, untag: k.untag, hours: k.hours, pct: null };
+        return { k: k.k, label: k.label, c: k.c, untag: k.untag, hours: k.hours };
       });
     }
     if (byIdentity()) {
       return pieSlices().map(function (x, i) {
         return { k: x.k, label: dimLabel(x.k), c: keyColour(CDIM, x.k, i, x.fold),
-          untag: CDIM === 'tag' && isUntag(x.k), hours: mv(x), pct: x.billPct };
+          untag: CDIM === 'tag' && isUntag(x.k), hours: mv(x), fold: x.fold, members: x.members };
       });
     }
     return null;
@@ -3193,7 +3214,8 @@ window.addEventListener('load',restore);
       marks.push({ label: dimLabel(x.k), c: col, mid: a + sweep / 2, sweep: sweep,
         hours: mv(x), pct: pct, untag: dim });
       var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(mv(x)) + ' h ' + (CMEAS === 'hours' ? '' : measWord() + ' ') + '(' + pct + '% of the view), '
-        + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's');
+        + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's')
+        + foldTip(x);
       if (g.length === 1) {
         out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="'
           + (ri ? (r0 + ri) / 2 : r0) + '" fill="' + (ri ? 'none' : col) + '"'
@@ -3615,7 +3637,7 @@ window.addEventListener('load',restore);
       var hb = showBill() ? (pct ? (x.bill / (x.hours || 1)) * 100 : x.bill) / (pct ? 100 : max) * ih : 0;
       var hn = showNon() ? (pct ? (x.nonbill / (x.hours || 1)) * 100 : x.nonbill) / (pct ? 100 : max) * ih : 0;
       var yb = T + ih - hb, yn = yb - hn;
-      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)' + foldTip(x);
       s += '<g class="cg" data-t="' + ttl + '">';
       var gap = (hb > 0 && hn > 3) ? 2 : 0;
       if (hb > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hb.toFixed(1) + '" fill="' + cvar('--bil') + '" rx="2"/>';
@@ -3638,7 +3660,7 @@ window.addEventListener('load',restore);
       var y = T + i * rowH, h = 15;
       var wb = showBill() ? (x.bill / max) * iw : 0, wn = showNon() ? (x.nonbill / max) * iw : 0;
       var full = dimLabel(x.k), lab = full.length > 22 ? full.slice(0, 21) + '…' : full;
-      var ttl = esc(full) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      var ttl = esc(full) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)' + foldTip(x);
       s += '<text x="' + (L - 9) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11.5" font-weight="600" fill="' + cvar('--ink-2') + '">' + esc(lab) + '</text>';
       s += '<g class="cg" data-t="' + ttl + '">';
       var gap = (wb > 0 && wn > 3) ? 2 : 0;
@@ -3670,6 +3692,36 @@ window.addEventListener('load',restore);
      marks are billable vs non-billable the two head rows wear the swatches; when the marks carry
      IDENTITY (pie, line, a nested comparison) the swatches move to the categories and the two
      figures stay as plain rows — the split is never dropped, it just stops being the colour. */
+  /* WHAT IS UNDER "OTHER" (Ray, 24 Sep 2026, ringing the fold on a 12-group Schuh donut: "When
+     hovering over the grouped Task, for example, it should display a pop-up of 10 tasks names that
+     sit under Other").
+
+     The fold is the one mark on the chart whose name is a COUNT rather than a thing — 201.5 h and
+     35% of the ring, labelled "Other (213 more)" — so it is the mark a reader most needs to open,
+     and it was the only one with nothing behind it.
+
+     Ten names, biggest first, IN THE MEASURE THE CHART IS DRAWING (mv, not raw hours — on a
+     billable-only donut a list ranked by total hours would put names in an order the ring
+     contradicts), and whatever is left is COUNTED with its hours rather than dropped, because a
+     list that stops at ten without saying so is a fold inside a fold. */
+  var FOLD_SHOW = 10;
+  function foldTip(x) {
+    if (!x || !x.fold || !x.members || !x.members.length) return '';
+    var top = x.members.slice(0, FOLD_SHOW), out = '', i;
+    for (i = 0; i < top.length; i++) {
+      out += "<div class='ft-r'><span>" + esc(keyLabel(CDIM, top[i].k)) + "</span><b>"
+        + hrs(mv(top[i])) + " h</b></div>";
+    }
+    var left = x.members.length - top.length, lh = 0;
+    if (left) {
+      for (i = top.length; i < x.members.length; i++) lh += mv(x.members[i]);
+      out += "<div class='ft-r ft-more'><span>+ " + num(left) + " more</span><b>"
+        + hrs(Math.round(lh * 100) / 100) + " h</b></div>";
+    }
+    return "<div class='ft'><div class='ft-h'>Inside this group \u2014 " + num(x.members.length)
+      + " \u00b7 " + hrs(mv(x)) + " h</div>" + out + "</div>";
+  }
+
   function legend(g, s, sm) {
     var ident = byIdentity(), sw = function (c) { return '<i style="background:' + c + '"></i>'; };
     /* The series put away KEEPS ITS ROW — dimmed, with its hours, marked "hidden". Dropping it
@@ -3683,28 +3735,70 @@ window.addEventListener('load',restore);
     };
     var h = hd('Billable', showBill(), cvar('--bil'), s.bill, s.billPct)
       + hd('Non-billable', showNon(), cvar('--nbil'), s.nonbill, Math.round((100 - s.billPct) * 10) / 10);
-    var rows = null, cap = '';
+    var rows = null, cap = '', multi = false;
     if (ident) {
       // ONE list feeds both legends — the rail and the chart can never name the same colour
       // differently, which is the whole of Ray's "urgent in green versus urgent in red"
       rows = chartKeys(sm) || [];
       cap = 'Colour \u00b7 ' + (CFORM === 'line' && LINEMODE === 'bill' ? 'the two lines'
         : (CFORM === 'small' && nested()) ? dimName(CDIM2) : dimName(CDIM));
+      // a task can carry several tags, so a tag split counts some hours in more than one row
+      multi = (CFORM === 'small' && nested()) ? CDIM2 === 'tag' : CDIM === 'tag';
     } else if (CDIM !== 'total') {
       cap = nested() ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' › ') : dimName(CDIM);
+      multi = !!g.multi;
       rows = g.slice(0, 12).map(function (x) {
-        return { c: null, label: dimLabel(x.k), hours: mv(x), pct: x.billPct };
+        return { c: null, label: dimLabel(x.k), hours: mv(x), fold: x.fold, members: x.members };
       });
     }
     if (rows) {
-      h += '<div class="lg-cap"><span>' + esc(cap) + '</span><span class="u">'
-        + (rows.length && rows[0].pct == null ? 'hours' : '% billable') + '</span></div>';
+      /* THESE PERCENTAGES ADD UP TO 100 (Ray, 23 Sep 2026, ringing this column: "This percentage
+         number here should always accumulate to 100%, if that makes sense. It makes more sense to
+         show that. Don't mention the percentage billable. The top two rows, billable and
+         non-billable, are good enough.").
+
+         It used to print each row's OWN billable share — twelve unrelated ratios in a column,
+         none of which could be added to anything, and a second answer to the question the two
+         head rows above already answer. It is now the row's share of what the chart draws, which
+         is what a legend beside a chart is actually asked.
+
+         THE BASE IS THE SUM OF THESE ROWS, not the view's total hours, because that is the only
+         figure they are guaranteed to add to: the tail is already folded into "Other (N more)"
+         carrying its hours, the series put away is already out of mv(), and hidden untagged rows
+         are already out of the population. Every one of those would otherwise leave a column that
+         stops short of 100 with nothing on screen saying why. */
+      var ptot = 0, pi;
+      for (pi = 0; pi < rows.length; pi++) ptot += rows[pi].hours || 0;
+      for (pi = 0; pi < rows.length; pi++) {
+        rows[pi].pct = ptot ? Math.round((rows[pi].hours / ptot) * 1000) / 10 : null;
+      }
+      // on a tag split the rows count some hours twice, so they add to 100 of THEMSELVES rather
+      // than of the book — the column says which base it is on rather than quietly meaning two
+      // different things on two dimensions
+      var unit = !ptot ? 'hours'
+        : multi ? '% of tagged'
+        : CMEAS === 'hours' ? '% of hours' : '% of ' + measWord();
+      var utitle = !ptot ? 'No hours in these rows.'
+        : multi
+          ? 'Share of the tagged hours below. A task can carry several tags, so these rows count '
+            + 'some hours more than once — they add to 100% of themselves, not of the book.'
+          : 'Share of the ' + (CMEAS === 'hours' ? 'hours' : measWord() + ' hours')
+            + ' this chart draws, so these rows add up to 100% \u2014 give or take a decimal, '
+            + 'since each row is rounded to its own true share rather than nudged to make the '
+            + 'column total exactly 100 (that would put the legend a decimal away from the '
+            + 'percentage the chart itself draws).';
+      h += '<div class="lg-cap"><span>' + esc(cap) + '</span><span class="u" title="' + esc(utitle) + '">'
+        + unit + '</span></div>';
       h += rows.map(function (r) {
         // untagged reads as the gap it is: a dotted swatch and a dimmed row, never a hue
         var swatch = r.untag
           ? '<i style="background:transparent;border:1px dotted ' + cvar('--muted') + '"></i>'
           : (r.c ? sw(r.c) : '');
-        return '<div class="lg-row" style="border:none;padding:3px 0' + (r.untag ? ';opacity:.62' : '') + '">'
+        // the fold's row opens the same list its mark does — one builder, so the rail and the
+        // chart can never name a different ten
+        var ft = foldTip(r);
+        return '<div class="lg-row" style="border:none;padding:3px 0' + (r.untag ? ';opacity:.62' : '') + '"'
+          + (ft ? ' data-t="' + esc(r.label) + ' \u2014 ' + hrs(r.hours) + ' h' + ft + '"' : '') + '>'
           + swatch + '<span class="nm">' + esc(r.label) + '</span><span class="v">' + hrs(r.hours) + ' h</span>'
           + '<span class="p">' + (r.pct == null ? '' : r.pct + '%') + '</span></div>';
       }).join('');
@@ -4379,13 +4473,25 @@ window.addEventListener('load',restore);
 
   function wireTips() {
     var tip = $('tip');
-    Array.prototype.forEach.call($('cstage').querySelectorAll('.cg'), function (g) {
-      g.style.cursor = 'default';
+    // the chart's marks AND the legend's fold row — the row is what a reader points at when the
+    // mark is a sliver, and both carry their content in the same data-t
+    var hosts = [].concat(
+      Array.prototype.slice.call($('cstage').querySelectorAll('.cg')),
+      Array.prototype.slice.call($('clegend').querySelectorAll('[data-t]')));
+    hosts.forEach(function (g) {
+      if (g.classList.contains('cg')) g.style.cursor = 'default';
       g.onmousemove = function (e) {
         tip.innerHTML = g.getAttribute('data-t');
+        // a ten-row list needs more room than a one-line reading, and the narrow box wraps every
+        // task name onto three lines
+        tip.classList.toggle('wide', tip.querySelector('.ft') != null);
         tip.classList.add('on');
         var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
-        tip.style.left = x + 'px'; tip.style.top = (e.clientY + 16) + 'px';
+        // a ten-row list is ~220px tall, so it has to be allowed to sit ABOVE the cursor rather
+        // than run off the bottom of the window with the smallest names unreadable
+        var y = e.clientY + 16;
+        if (y + tip.offsetHeight > window.innerHeight - 8) y = Math.max(8, e.clientY - tip.offsetHeight - 12);
+        tip.style.left = Math.max(8, x) + 'px'; tip.style.top = y + 'px';
       };
       g.onmouseleave = function () { tip.classList.remove('on'); };
     });
