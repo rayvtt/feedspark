@@ -44,14 +44,18 @@ const step = (from, patch) => { const c = Object.assign({}, from); Object.keys(p
 const R0 = BASE;
 const R1 = step(R0, { material: 55 });                    // 30 days ago: +15pp material
 const R2 = step(R1, { product_highlight: 60 });           // 21 days ago: highlights arrive
-const R3 = step(R2, { color: 80 });                       // 14 days ago: colour slips — a deduction
+const R3 = step(R2, { color: 80 });                       // 14 days ago: colour slips — a deduction, read BY HAND
+const R3b = step(R3, { color: 90 });                      // …and an automatic scan six hours later reads it back up
 const R4 = step(R3, { material: 70 });                    // 7 days ago
-const R5 = step(R4, { description: 99 });                 // 2 days ago
-const READS = [[40, R0, 1000], [30, R1, 1000], [21, R2, 1010], [14, R3, 1010], [7, R4, 1040], [2, R5, 1040]]
-  .map(([d, cov, rows]) => ({ t: T(d), rows, cov }));
+const R5 = step(step(R4, { color: 90 }), { description: 99 });   // 2 days ago (the colour back at 90)
+const R4x = step(R3b, { material: 70 });
+const READS = [[40, R0, 1000], [30, R1, 1000], [21, R2, 1010], [14, R3, 1010, 1], [13.75, R3b, 1010], [7, R4x, 1040], [2, step(R4x, { description: 99 }), 1040]]
+  .map(([d, cov, rows, m]) => Object.assign({ t: T(d), rows, cov }, m ? { m: 1 } : {}));
 const SCANNED = [];
 for (let d = 40; d >= 0; d--) if (d < 8 || d > 10) SCANNED.push(iso(T(d)));   // 8–10 days ago: not scanned
-const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tier: 2 }, { t: T(3), q: 80.5, air: 58, tier: 2 }] };
+const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tier: 2 }, { t: T(3), q: 80.5, air: 58, tier: 2, m: 1 },
+  { t: T(3) + 4 * 3600e3, q: 61, air: 50, tier: 2 }] };
+const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, kept: 1, failed: 1, by: 'schedule' };
 
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
@@ -59,7 +63,7 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
   const open = async (opts) => {
     const page = await browser.newPage({ viewport: opts.vp || { width: 1360, height: 950 } });
     page.on('pageerror', (e) => errs.push(e.message));
-    await page.addInitScript(({ HIST, R5, R4, NOW, T2, waive, dark, noHist, rng }) => {
+    await page.addInitScript(({ HIST, R5, R4, NOW, T2, waive, dark, noHist, rng, DAILY }) => {
       try {
         localStorage.clear();
         if (dark) localStorage.setItem('fcc-theme', 'dark');
@@ -74,14 +78,14 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
         const u = String(url);
         const j = (x) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(x) });
         if (/engine\.js/.test(u)) return real(url, o);
-        if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feed }, alerts: {} });
+        if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feed }, alerts: {}, daily: DAILY });
         if (u.includes('/api/golden/history')) return j({ hist: noHist ? null : HIST });
         if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1040, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
         if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: waive ? { clients: { Reiss: { expected: [], waived: waive } } } : {}, industryMap: {} });
         if (u.includes('/api/golden/alertcfg')) return j({ on: false, to: '' });
         return j({});
       };
-    }, Object.assign({ HIST, R5, R4, NOW: Date.now(), T2: T(2) }, opts));
+    }, Object.assign({ HIST, R5, R4, NOW: Date.now(), T2: T(2), DAILY }, opts));
     await page.goto(PAGE);
     await page.waitForSelector('#hs-tier .hs-svg, #hs-tier .hs-empty-note', { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(500);
@@ -103,7 +107,8 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
     const est = document.querySelector('.est-mkt .est-su span i');
     return { has: !!tier, empty: !!(tier && tier.classList.contains('hs-empty')), bars: barInfo, mid, hits, dots, segs, kpis, logRows,
       more: more ? more.textContent : null, est: est ? { t: est.textContent, c: est.className } : null,
-      rng: (tier && tier.querySelector('.hs-rng .on') || {}).textContent || null };
+      rng: (tier && tier.querySelector('.hs-rng:not(.hs-met) .on') || {}).textContent || null,
+      met: (tier && tier.querySelector('.hs-met .on') || {}).textContent || null };
   });
 
   console.log('── the card, against a forty-day record');
@@ -116,6 +121,11 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
   const ups = a.bars.filter((b) => b.up), dns = a.bars.filter((b) => !b.up);
   ok('the improvements draw ABOVE the zero line', ups.length >= 4 && ups.every((b) => b.bot <= a.mid + 0.5), ups);
   ok('the colour slip draws BELOW it — a deduction is a bar under the line', dns.length === 1 && dns[0].top >= a.mid - 0.5, dns);
+  // Ray, 24 Sep 2026: "If there's a manual scan on any day, that new score can override that day" —
+  // the colour slip was read BY HAND and an automatic scan six hours later read it back; the day
+  // stays the hand-run reading, so the recovery lands on the NEXT day instead of erasing the slip
+  ok('a day with a scan run by hand is set by that scan, even when an automatic one came after it', dns.length === 1 && ups.length >= 5, { ups: ups.length, dns: dns.length });
+  ok('…and wears a ring on the line', await page.$$eval('#hs-tier circle.pt.man', (e) => e.length) === 1);
   // 41 days − 3 not scanned − 6 moves (5 recorded + the live day is the same as the last one) → dots
   ok('a scanned day with no change is a dot on the line, not a bar', a.dots >= 25, a.dots);
   ok('the three days nobody scanned are a GAP in the line, never a flat copy', a.segs === 2, a.segs);
@@ -125,8 +135,9 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
   ok('content quality and AI-readiness ride along as analysed',
     a.kpis.some((x) => /Content quality 80\.5 ▲ \+8\.1/i.test(x)) && a.kpis.some((x) => /AI-readiness 58 ▲ \+3/i.test(x)), a.kpis);
   ok('the change log lists the latest six, newest first', a.logRows.length === 6 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]), a.logRows.slice(0, 2));
-  ok('…with the deduction named by the attribute that moved', a.logRows.some((x) => /g:color ▼ −10pp/.test(x)), a.logRows);
-  ok('…and the rest one click away', /Show all 8 changes/.test(a.more || ''), a.more);
+  ok('…with the deduction named by the attribute that moved — and marked as run by hand', a.logRows.some((x) => /by hand/.test(x) && /g:color ▼ −10pp/.test(x)), a.logRows);
+  ok('…and the rest one click away', /Show all 7 changes/.test(a.more || ''), a.more);
+  ok('the card says the tracker fills itself at 09:00 UK, and when it last ran', await page.$eval('#hs-tier .hs-auto', (e) => /auto 09:00 UK · last/.test(e.textContent) && /47 feeds analysed/.test(e.title)));
   ok('the estate row names the last move under the feed score', a.est && /^▲[\d.]+$/.test(a.est.t) && a.est.c === 'up', a.est);
 
   // hover a deduction day — the tooltip names what moved
@@ -164,9 +175,24 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
   const w = await open({ waive: ['material', 'color'] });
   const b = await read(w);
   ok('waive the attributes that moved and their days stop reading as moves — the line is re-based, not rewritten',
-    b.bars.length === base90.bars.length - 3 && !b.bars.some((x) => !x.up), { before: base90.bars.length, after: b.bars.length });
+    b.bars.length === base90.bars.length - 4 && !b.bars.some((x) => !x.up), { before: base90.bars.length, after: b.bars.length });
   ok('…and the log says so: the colour change costs the score nothing now', b.logRows.some((x) => /±0/.test(x) && /g:color/.test(x)), b.logRows);
   await w.close();
+
+  console.log('── content quality, day by day');
+  await page.click('[data-hmet="q"]');
+  await page.waitForTimeout(200);
+  const cq = await read(page);
+  ok('the chart switches to content quality', await page.$eval('#hs-tier .hs-svg text.pl', (t) => /CONTENT QUALITY · DAY BY DAY/.test(t.textContent)));
+  // two analyses seventeen days apart: the first is a dot (nothing before it to compare), the days
+  // between draw nothing at all, and the line is two points — never a flat run across the gap
+  ok('a day with no analysis is a gap — nothing drawn, not a flat copy', cq.dots === 1 && cq.hits >= 21 && cq.met === 'Content quality', { dots: cq.dots, met: cq.met });
+  ok('the hand-run analysis holds its day over the automatic one four hours later',
+    cq.bars.length === 1 && cq.bars[0].up && cq.kpis.some((x) => /Content quality 80\.5/i.test(x)), { bars: cq.bars.length, kpis: cq.kpis });
+  ok('the log lists the analyses, the hand-run one marked', cq.logRows.length === 3 && cq.logRows.some((x) => /by hand/.test(x) && /80\.5/.test(x)), cq.logRows);
+  ok('…and the choice is remembered on this device', await page.evaluate(() => localStorage.getItem('gr-hist-met')) === 'q');
+  await page.click('[data-hmet="gs"]');
+  await page.waitForTimeout(150);
 
   console.log('── the client PDF (body.pdf is the layout both client documents share)');
   const pdf = await page.evaluate(() => {
@@ -200,12 +226,13 @@ const HIST = { v: 1, r: READS, s: SCANNED, q: [{ t: T(20), q: 72.4, air: 55, tie
   const x = await out.evaluate(() => {
     const t = document.getElementById('hs-tier');
     return { has: !!t, bars: t ? t.querySelectorAll('.hs-svg path[style]').length : 0,
-      buttons: t ? t.querySelectorAll('button').length : -1, rng: t && t.querySelector('.hs-rng .on') ? t.querySelector('.hs-rng .on').tagName + ':' + t.querySelector('.hs-rng .on').textContent : null,
+      buttons: t ? t.querySelectorAll('button').length : -1,
+      rng: Array.from(t ? t.querySelectorAll('.hs-rng .on') : []).map((e) => e.tagName + ':' + e.textContent).join(' + '),
       hits: t ? t.querySelectorAll('.hit').length : -1, tip: !!document.getElementById('hs-tip'),
       log: t ? t.querySelectorAll('.hs-log tbody tr').length : 0 };
   });
   ok('the download carries the history — chart and change log', x.has && x.bars > 0 && x.log === 6, x);
-  ok('…the range as a plain chip, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:90 days', x);
+  ok('…the metric and the range as plain chips, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:Golden Score + SPAN:90 days', x);
   ok('…and none of the hover furniture', x.hits === 0 && !x.tip, x);
   fs.unlinkSync(tmp);
   await out.close();

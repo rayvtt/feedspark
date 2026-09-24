@@ -860,6 +860,79 @@ renders a forty-day record and asserts:
 - the download keeps the chart and drops the furniture;
 - the card works in dark mode and at 390px.
 
+### 9.12 Daily at 09:00 UK, and a hand-run scan sets its day (24 Sep 2026)
+
+Ray: *"Golden Record and content quality should automatically scan on a daily basis, then at 9
+a.m. UK time, so every day there's a tracker. If there's a manual scan on any day, that new score
+can override that day. So let's do that for all clients."*
+
+The feed score already had an automatic lane, the 4x-daily xml-scan. Content quality and
+AI-readiness had none: they ran only when somebody pressed **Analyse**. So the history only moved
+on days a person remembered to run them.
+
+**The daily run.** `.github/workflows/golden-daily.yml` fires at 08:00, 09:00 and 10:00 UTC, and
+`tools/golden_daily.mjs` decides whether to run. Cron speaks UTC and the UK moves between GMT and
+BST, so the script runs once the London clock has reached 09:00 and today's London date is not
+yet on the worker's ledger. In summer the 08:00 UTC firing is 09:00 London; in winter the 09:00
+UTC firing is. The other firings are catch-up for a late or failed run, and do nothing once the
+day is done. A manual dispatch can force a run. A single-feed dispatch (`only`) never marks the
+day done.
+
+The script reads every wired Google Shopping feed once: 49 today, never a `-fb` Meta feed. XML
+feeds stream from FeedHero. House of Bruar's three sheet feeds come through Google's public CSV
+export, the same source the feed proxy reads. Off that one stream it pushes:
+
+| Push | What it carries | Where it lands |
+|---|---|---|
+| `{xmlscan}` | the snapshot (XML feeds) | the Golden Score, exactly as the 4x-daily agent sends it |
+| `{goldenscan}` | a scan request (sheet feeds) | the worker's own gviz scan |
+| `{goldenqual}` | content quality + AI-readiness | `storeGoldenQuality` |
+| `{goldendaily}` | the day, then the run's totals | the ledger `goldendaily`; the first call returns every brand's scoring profile |
+
+The quality reading is computed with `labelguard.js` **`qualityStream`** (plus `packAudit`). That
+is the one implementation /golden's Analyse button now runs too: `qualityRun` was moved onto it,
+so a hand-run analysis and the automatic one can never read a feed two ways.
+
+**A hand-run scan sets its day.** Every write records who took the reading:
+
+- **Analyses.** `storeGoldenQuality` is the one writer for both the page's PUT (manual) and the
+  agent's push (auto). It refuses to store an automatic reading over a hand-run one taken the
+  same day. `goldenidx` carries `qSrc` (`'m'` or `'a'`), and `QUAL_KEEP` keeps it across scans.
+- **Scans.** Every scan button a person presses passes `manual` through `runLabelScan` /
+  `applyPushedSnapshot` → `processScanSnapshot` → `histAdd`. That covers `/api/golden/scan`,
+  `/api/labels/scan`, `/api/ptypes/scan` and `/api/labels/scanpush`.
+- **In the record.** A hand-run reading is recorded, marked `m`, even when nothing moved (once
+  a day).
+- **Picking the day.** `histDayPick` (engine, with a page twin) makes a day's value its last
+  hand-run reading when there is one, and otherwise its last reading.
+
+The record still keeps every later truthful reading; only the day's value follows the person's
+scan. Old days thin down to that same reading.
+
+The estate dial and the feed score on `goldenidx` still show the latest scan. They are
+monitoring, not the daily tracker.
+
+**The card.**
+
+- A metric switch (Golden Score · Content quality · AI-readiness, remembered per device as
+  `gr-hist-met`) draws each one day by day.
+- A day with no analysis is a gap in the chart.
+- AI-readiness keeps its tier colours.
+- A day set by hand wears a ring on the line, and its change-log row reads "✋ by hand".
+- The header chip reads "⏱ auto 09:00 UK · last …", from the ledger the estate route now
+  returns.
+- A single reading with no scanned neighbour is drawn as a point. Before, it vanished.
+
+**Harnesses.** `tools/test_goldenhist.mjs` covers:
+
+- the day rule and the hand-run pin;
+- `qualityStream` against the collector written out by hand;
+- the one-writer rule and the manual flags;
+- the agent's London clock (summer and winter), its gate, its roster and its workflow.
+
+`tools/check_grhist.js` renders a hand-run day followed by an automatic one, and the content
+quality view.
+
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 
 Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the
