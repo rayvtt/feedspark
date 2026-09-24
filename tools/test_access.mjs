@@ -7,7 +7,7 @@
  */
 import { ACCESS_SEED, clientSlug, aliasClient, resolveAccess, clientMatch,
   scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail,
-  MODULES, MODULE_PATHS, moduleAllowed } from '../cloudflare/feedspark-deck/src/access.js';
+  MODULES, MODULE_PATHS, moduleAllowed, OPT_IN_MODULES } from '../cloudflare/feedspark-deck/src/access.js';
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from '../cloudflare/feedspark-deck/src/kvmerge.js';
 
 let passed = 0, failed = 0;
@@ -115,7 +115,14 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/kwcal'] === 'kwcal', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 15 && MODULES.every((m) => m.slug && m.label && m.path), 'fifteen grantable modules, each {slug,label,path}');
+ok(MODULES.length === 16 && MODULES.every((m) => m.slug && m.label && m.path), 'sixteen grantable modules, each {slug,label,path}');
+// the AI transformation roadmap is a MANAGEMENT page: opt-in, never inherited by an unrestricted signin
+ok(OPT_IN_MODULES.length === 1 && OPT_IN_MODULES[0] === 'transformation', 'transformation is the one opt-in module');
+ok(MODULE_PATHS['/transformation'] === 'transformation', '/transformation is a grantable module');
+ok(moduleAllowed(null, 'transformation') === false && moduleAllowed(undefined, 'transformation') === false, 'an unrestricted signin (modules null) does NOT get the transformation roadmap');
+ok(moduleAllowed(['transformation'], 'transformation') === true && moduleAllowed(['workflow'], 'transformation') === false, 'only a row that names transformation opens it');
+ok(moduleAllowed(null, 'workflow') === true, 'opt-in does not narrow the ordinary modules for an unrestricted signin');
+ok(sanitizeDir({ 'andy@x.com': { name: 'Andy', modules: ['transformation', 'leadership'] } })['andy@x.com'].modules.join(',') === 'transformation', 'sanitizer keeps a transformation grant (and still drops unknown slugs)');
 ok(MODULE_PATHS['/images'] === 'images', 'the Image Library is a grantable module of its own');
 // the Playbook stopped being a module of its own on 16 Sep 2026 — it is Workflow's right-hand
 // rail, so it is reachable exactly when `workflow` is. A leftover slug would grant a page that

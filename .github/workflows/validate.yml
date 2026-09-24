@@ -59,6 +59,8 @@ jobs:
         run: node tools/test_pdpharvest.mjs
       - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)
         run: node tools/test_i18n.mjs
+      - name: AI transformation roadmap harness (roadmap shape, progress maths, opt-in gate, no commercial figures)
+        run: node tools/test_transform.mjs
       - name: Task Manager harness (parser, agent, worker store + scoped read, Leadership overlay)
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)

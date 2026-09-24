@@ -290,6 +290,13 @@ else
   echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h3b/7: AI transformation roadmap (roadmap shape, progress maths, opt-in gate, no £ on the page)"
+if node tools/test_transform.mjs >/dev/null 2>&1; then
+  echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
+else
+  echo "   ✗ transformation harness FAILED — see node tools/test_transform.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then
   echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
