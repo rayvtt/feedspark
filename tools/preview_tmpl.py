@@ -21,6 +21,21 @@ def rgb(c):
     h = str(c)
     return (int(h[0:2],16), int(h[2:4],16), int(h[4:6],16))
 
+def safe_rgb(cf):
+    """The RGB behind a run's ColorFormat, or None.
+
+    A theme colour (MSO_THEME_COLOR, e.g. the agenda number's ACCENT_1) reports a
+    `.type` but raises on `.rgb` -- so the obvious `type is not None` guard is not
+    enough and crashed the whole render on the first theme-coloured run. Resolving
+    a scheme colour properly means reading the theme part; the preview only needs
+    to know it cannot, and fall back to the inherited colour."""
+    if cf is None: return None
+    try:
+        if cf.type is None: return None
+        return rgb(cf.rgb)
+    except Exception:
+        return None
+
 _fc = {}
 def font(name, size_px, bold):
     size_px = max(size_px, 6)
@@ -110,7 +125,7 @@ def para_runs(p, fallback_runs=None, defrpr=None):
     for i, r in enumerate(p.runs):
         sz = r.font.size.pt if r.font.size else None
         b  = r.font.bold
-        col= rgb(r.font.color.rgb) if (r.font.color and r.font.color.type is not None) else None
+        col= safe_rgb(r.font.color)
         if i < len(fb):
             fsz, fb_, fcol, fname = fb[i]
             if sz is None: sz = fsz
@@ -133,7 +148,7 @@ def collect_fallback(p):
     for r in p.runs:
         sz = r.font.size.pt if r.font.size else 12
         b = bool(r.font.bold)
-        col = rgb(r.font.color.rgb) if (r.font.color and r.font.color.type is not None) else None
+        col = safe_rgb(r.font.color)
         out.append((sz, b, col, r.font.name))
     return out
 

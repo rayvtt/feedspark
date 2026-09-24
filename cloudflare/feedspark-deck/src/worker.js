@@ -168,6 +168,7 @@ import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Stra
 import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Aug26.pptx";
 import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introduction_Aug26.pptx";
 import MAT_SCHUH_SR_SEP26 from "../../../docs/materials/Schuh_Strategy_Review_Sep26.pptx";
+import MAT_HOBBY_SR_SEP26 from "../../../docs/materials/Hobbycraft_Strategy_Review_Sep26.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -207,6 +208,12 @@ const SEED_MATERIALS = [
     file: 'Schuh_Strategy_Review_Sep26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-09-24', body: MAT_SCHUH_SR_SEP26 },
+  { id: 'hobbycraft-sr-sep26', client: 'Hobbycraft',
+    title: 'Hobbycraft \u00d7 FeedSpark \u2014 Strategy Review, Sep 2026',
+    cat: 'marketing', occasion: 'Strategy Review Sep-26',
+    file: 'Hobbycraft_Strategy_Review_Sep26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-24', body: MAT_HOBBY_SR_SEP26 },
 ];
 
 const PAGES = {
