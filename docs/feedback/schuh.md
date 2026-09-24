@@ -161,3 +161,72 @@ Schuh: 55 slides, `still over capacity: 0`, **`COPY CUT`: nothing**, `deck_audit
 `.note` should be written for what it says rather than to a budget, that a subtitle is the one case
 that stays editorial, and that `--audit` must show `COPY CUT: nothing` as well as
 `still over capacity: 0` before a deck ships.
+
+## 2026-09-24 — round 4 (Ray's own edit becomes the Strategy Review template)
+
+Ray sent back `Schuh_Strategy_Review_Sep26_rayreviewed.pptx` — the deck edited end to end, **55
+slides down to 31** — and asked for it as the template, plus a review and an agenda that matches
+the deck.
+
+### Saved as the reference
+- `reference-files/deck-templates/StrategyReview_Reference.pptx` — the deck-type reference every
+  future Strategy Review reads before the core template.
+- `docs/materials/Schuh_Strategy_Review_Sep26.pptx` replaced, so the dossier serves **his** deck.
+- Listed in the Deck Generator's TEMPLATES panel and written up in the template README: what it
+  teaches beyond the core template (eight chapters of a marker plus two to four slides; the FCC's
+  own modules carrying the evidence; a live dissection as a named chapter; hours allocation as
+  client-facing; cut hard).
+- **Note the source of truth moved.** Ray's edits exist only in the `.pptx`, so
+  `docs/Schuh_Strategy_Review_Sep26.html` is now the pre-review intermediate, not the deck.
+
+### What the review found
+
+**The chapter spine was broken.** Deleting two chapters (Look-back period, Value delivered) left
+the markers reading one, two, **four**, five, six, seven, eight — a client counts a missing
+chapter three — and Spark AI, which the agenda promised, had no marker at all. Resequenced to a
+clean one-to-eight, a Section Marker added for Chapter eight, and the **six cross-references in
+body copy repointed** (they still named the old numbers, so "read in full in chapter 04" pointed
+at the wrong chapter).
+
+**The agenda described a different deck.** It said "Eleven chapters", listed ten, including
+`03 Look-back period` (deleted) and `09 Google conversational attributes` (a slide inside AI
+readiness, not a chapter), and mentioned none of Ray's new material. Rebuilt as eight rows
+matching the markers exactly, each description naming what the chapter now actually contains —
+scheduled work and hours allocation under 01, the A/B archive under 03, the live dissection under
+04. A harness assertion would not have caught this: the agenda and the markers were both
+internally valid and simply described different decks.
+
+**Copy hidden under a screenshot — three slides.** On 17, 18 and 19 the picture spans 6.5″–13.3″
+while the Two-Card Grid's card 2 starts at 7.11″, so card 2 was in the file and invisible. On 18
+and 19 it was a leftover heading over an empty body (removed). On **17 it was the real Germany
+finding** — DE on a different title engine, IE inheriting UK titles on 99.2% — so that moved into
+card 1 where it can be read. Now written into the template README as a rule.
+
+**The A/B story contradicted itself.** Slides 13, 14 and 25 still told the pre-rework "two tests
+completed, neither carries a percentage" story while slide 15 — Ray's own new archive screenshot —
+says keyword optimisation consistently wins. Corrected to the archive's real read: eleven
+quantified tests, keyword optimisation winning seven in nine, **both** title-placement tests
+losing to control (−56.79% / −44.62%), which is also why the roadmap changes title *length* rather
+than composition.
+
+**Numbers and copy:** `43,492 Live SKUs` on slide 12 against `42,221` on slides 1 and 11 (the
+breakdown 21,055 + 10,606 + 10,560 confirms 42,221); slide 19's headline read `53.2% completeness`
+copied from slide 18 while its own key message said the content score is 91.6 / 100; `3 marktts`;
+a truncated `Germa` column header; `optimisaton`; `roughy`; a stray leading full stop; spacing.
+
+**One unfinished cell:** roadmap W5 read `Carry them on acros` — cut off mid-word. Completed as
+"Carry the UK's 3–4-level depth across to DE and IE", consistent with W2 and W7, and flagged for
+Ray to confirm or replace.
+
+### Two traps in my own edit, both caught before shipping
+1. A substring test (`'acros' in cell.text`) matched **"across"** in W3's workstream name and
+   overwrote it. Restored, and every cell rewrite now matches the cell's whole text exactly.
+2. Two typos were **split across text runs** (`['3 ', 'marktts']`, `['Germ', 'a']`) so a run-level
+   replace changed nothing — and my helper logged "ok" on *finding the cell* rather than on
+   changing it, so it reported a fix that had not happened. Fixed at cell level and re-verified by
+   reading the saved file back.
+
+### Left alone, deliberately — Ray's voice, not errors
+"(let's dissect real-time!)" in the Chapter four title, "we're aiming to hit at least >85 before
+Peak/26", "Explore SparkAI", and the `!` emphasis. These are presenter framing he chose; the
+first is an in-meeting cue a client can reasonably see.
