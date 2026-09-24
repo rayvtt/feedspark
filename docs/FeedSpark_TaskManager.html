@@ -2377,6 +2377,9 @@ window.addEventListener('load',restore);
       if (live) u.searchParams.set('q', live); else u.searchParams.delete('q');
       history.replaceState(null, '', u.toString());
     } catch (e) {}
+    // the raw box text, per device — independent of the URL, so it survives a bare reload/reopen
+    // that carries no ?q= at all, not just a same-tab refresh (Ray, 24 Sep 2026)
+    try { localStorage.setItem('fcc-tm-q', $('q').value); } catch (e) {}
     kpis(); chart(); breakdown(); pane(); chips(); accts();
   }
 
@@ -4508,18 +4511,38 @@ window.addEventListener('load',restore);
     srcLine();
     try {
       var qp = new URL(location.href).searchParams;
-      if (qp.get('q')) $('q').value = qp.get('q');
-      if (qp.get('dim')) { CDIM = qp.get('dim'); $('cdim').value = CDIM; }
-      if (qp.get('dim2')) CDIM2 = qp.get('dim2');
-      if (qp.get('dim3')) CDIM3 = qp.get('dim3');
-      if (qp.get('form')) { CFORM = qp.get('form'); $('cform').value = CFORM; }
       // the device's own reading preference, unless the link names one — an explicit link beats a
-      // remembered pick, or a shared view would open as something else on every screen
+      // remembered pick, or a shared view would open as something else on every screen (Ray, 24 Sep
+      // 2026: "if anything written in the task manager uses the text bar, it should stay there
+      // unless changed … a preselected option on a certain module should also remain after refresh,
+      // not result in a completely blank page"). Every control below follows the SAME rule the
+      // meas/lab pair already used: ?param= wins when a link names one, else the last thing this
+      // device had picked, else the page's own default — never a blank screen on a bare reload.
+      var qvv = qp.get('q'); if (qvv == null) qvv = localStorage.getItem('fcc-tm-q');
+      if (qvv) $('q').value = qvv;
+      var dvv = qp.get('dim') || localStorage.getItem('fcc-tm-dim');
+      if (dvv && DIMS.some(function (x) { return x.k === dvv; })) { CDIM = dvv; $('cdim').value = CDIM; }
+      var d2vv = qp.get('dim2'); if (d2vv == null) d2vv = localStorage.getItem('fcc-tm-dim2');
+      if (d2vv) CDIM2 = d2vv;
+      var d3vv = qp.get('dim3'); if (d3vv == null) d3vv = localStorage.getItem('fcc-tm-dim3');
+      if (d3vv) CDIM3 = d3vv;
+      var fvv = qp.get('form') || localStorage.getItem('fcc-tm-form');
+      if (fvv && FORMS.some(function (o) { return o.v === fvv; })) { CFORM = fvv; $('cform').value = CFORM; }
       var mvv = qp.get('meas') || localStorage.getItem('fcc-tm-meas');
       if (mvv && MEASURES.indexOf(mvv) >= 0) CMEAS = mvv;
       var lvv = qp.get('lab') || localStorage.getItem('fcc-tm-lab');
       if (lvv && LABS.some(function (o) { return o.v === lvv; })) CLAB = lvv;
       $('cmeas').value = CMEAS;
+      // which of Tasks / Client tickets / Accounts was open, and whether the table was showing
+      // under the chart — both painted controls, not just chart state, so both get the same rule
+      var tvv = qp.get('tab') || localStorage.getItem('fcc-tm-tab');
+      if (tvv && ['tasks', 'tickets', 'accounts'].indexOf(tvv) >= 0) {
+        TAB = tvv;
+        Array.prototype.forEach.call($('tabs').querySelectorAll('.tab'), function (b) {
+          b.classList.toggle('on', b.getAttribute('data-t') === TAB);
+        });
+      }
+      var tabv = localStorage.getItem('fcc-tm-table'); if (tabv !== null) $('ctab').checked = tabv === '1';
     } catch (e) {}
     fillSubDims();
     var t = null;
@@ -4541,16 +4564,25 @@ window.addEventListener('load',restore);
       // fillSubDims rebuilds the form list for the new split and keeps the current form if it
       // still reads honestly, so no form has to be coerced behind the reader's back
       fillSubDims(); chart();
+      try { localStorage.setItem('fcc-tm-dim', CDIM); localStorage.setItem('fcc-tm-dim2', CDIM2); localStorage.setItem('fcc-tm-dim3', CDIM3); } catch (e) {}
     };
     $('cdim2').onchange = function () {
       expReset();
       CDIM2 = $('cdim2').value;
       if (!CDIM2) CDIM3 = '';                                     // no second split, no third
       fillSubDims(); chart();
+      try { localStorage.setItem('fcc-tm-dim2', CDIM2); localStorage.setItem('fcc-tm-dim3', CDIM3); } catch (e) {}
     };
-    $('cdim3').onchange = function () { expReset(); CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
-    $('cform').onchange = function () { expReset(); CFORM = $('cform').value; chart(); };
-    $('ctab').onchange = chart;
+    $('cdim3').onchange = function () {
+      expReset(); CDIM3 = $('cdim3').value; fillSubDims(); chart();
+      try { localStorage.setItem('fcc-tm-dim3', CDIM3); } catch (e) {}
+    };
+    $('cform').onchange = function () { expReset(); CFORM = $('cform').value; chart();
+      try { localStorage.setItem('fcc-tm-form', CFORM); } catch (e) {} };
+    $('ctab').onchange = function () {
+      try { localStorage.setItem('fcc-tm-table', $('ctab').checked ? '1' : '0'); } catch (e) {}
+      chart();
+    };
     // both describe one screen's reading of the same data, so both are per DEVICE like the theme
     $('cmeas').onchange = function () {
       expReset();
@@ -4597,6 +4629,7 @@ window.addEventListener('load',restore);
       b.onclick = function () {
         Array.prototype.forEach.call($('tabs').querySelectorAll('.tab'), function (x) { x.classList.remove('on'); });
         b.classList.add('on'); TAB = b.getAttribute('data-t'); SHOW = 200; pane();
+        try { localStorage.setItem('fcc-tm-tab', TAB); } catch (e) {}
       };
     });
     $('dr-x').onclick = closeDrawer; $('dim').onclick = closeDrawer;

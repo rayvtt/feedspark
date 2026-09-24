@@ -1316,7 +1316,7 @@ function scanAll(){
 }
 
 /* ============================ data flow ============================ */
-function syncUrl(){try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT)+(MARKET!=='gb'?'&market='+encodeURIComponent(MARKET):''))}catch(e){}}
+function syncUrl(){try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT)+(MARKET!=='gb'?'&market='+encodeURIComponent(MARKET):''));localStorage.setItem('fcc-fl-client',CLIENT)}catch(e){}}
 function load(client,mkt){
   CLIENT=client;$('#brand').value=client;hideErr();
   var my=++SCANID;
@@ -1356,9 +1356,13 @@ function boot(){
     var cs=(j&&j.clients)||{};
     Object.keys(cs).forEach(function(k){ if(!META[k])META[k]={id:'',gid:'0'}; });
     if(pre&&!META[pre])META[pre]={id:'',gid:'0'}; // trust deep-links — the worker may resolve via DEFAULT_FEEDS
+    // no ?client= (a bare nav-bar link, a bookmark, a fresh tab) — fall back to the brand this
+    // device had open last, rather than always landing on Reiss (Ray, 24 Sep 2026: "a preselected
+    // option on a certain module should also remain after refresh, not result in a … blank page")
+    var remembered='';try{remembered=localStorage.getItem('fcc-fl-client')||''}catch(e){}
     var names=Object.keys(META).sort();
     $('#brand').innerHTML=names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
-    load(META[pre]?pre:'Reiss',preM||undefined);
+    load(META[pre]?pre:(META[remembered]?remembered:'Reiss'),preM||undefined);
   });
 }
 $('#brand').addEventListener('change',function(){load(this.value)});

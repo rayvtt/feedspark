@@ -1008,7 +1008,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var cs=Object.keys((d&&d.clients)||{}).sort();
     var sel=$('#brand'); sel.innerHTML=cs.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
     fetch('/api/aiquote').then(function(r){BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}}).then(function(m){
-      STORE=(m&&typeof m==='object')?m:{}; CLIENT=cs[0]||''; if(CLIENT){sel.value=CLIENT;} pickClient();
+      STORE=(m&&typeof m==='object')?m:{};
+      // this device's last pick beats always landing on whichever brand sorts first (Ray, 24 Sep
+      // 2026: "a preselected option on a certain module should also remain after refresh, not
+      // result in a … blank page")
+      var remembered=''; try{ remembered=localStorage.getItem('fcc-aiq-client')||''; }catch(e){}
+      var rememberedHit=remembered&&cs.indexOf(remembered)>=0&&remembered;
+      CLIENT=rememberedHit||cs[0]||''; if(CLIENT){sel.value=CLIENT;try{localStorage.setItem('fcc-aiq-client',CLIENT)}catch(e){}} pickClient();
     });
   }).catch(function(){ err('Could not load the client list — this needs the live worker.'); });
 
@@ -1023,7 +1029,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     .then(function(a){ ME=(a&&(a.email||a.name))||''; });
 
   function pickClient(){ if(!CLIENT)return; rec(); loadMkts(); render(); }
-  $('#brand').addEventListener('change',function(){ CLIENT=this.value; rec(); IDX={}; EDITING=null; loadMkts(); render(); });
+  $('#brand').addEventListener('change',function(){ CLIENT=this.value; rec(); IDX={}; EDITING=null; loadMkts(); render();
+    try{localStorage.setItem('fcc-aiq-client',CLIENT)}catch(e){} });
   $('#edit-stop').addEventListener('click',function(){ EDITING=null; render(); });
 
   function loadMkts(){ MKT='gb'; MKTLIST=['gb'];

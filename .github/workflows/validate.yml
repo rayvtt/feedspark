@@ -94,6 +94,8 @@ jobs:
         run: node tools/test_hero.mjs
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
+      - name: UI-state persistence harness (a bare reload does not blank the page)
+        run: node tools/test_uistate.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
