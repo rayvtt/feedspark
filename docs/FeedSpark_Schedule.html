@@ -289,6 +289,13 @@ window.addEventListener('load',restore);
   var $=function(s){return document.querySelector(s)};
   var KL={kw:'Keywords',titles:'Titles',pt:'Product Type',tagging:'Data tagging',social:'Social titles',short:'Short titles',other:'Other'};
   var KORD=['kw','titles','pt','social','short','tagging','other'];
+  // MARKET ORDER (Ray, 24 Sep 2026) — identical to the Workflow band's (tools/test_schedule.mjs
+  // holds the two copies byte-equal): home market first, then alphabetical; paused tasks lead
+  // inside a market, longest pause first, then the schedule's task order.
+  function mktRank(m){ m=String(m||'').toLowerCase(); return (m==='gb'||m==='uk')?'0':'1'+m; }
+  function schedOrder(a,b){ var ra=mktRank(a.mkt),rb=mktRank(b.mkt); if(ra!==rb)return ra<rb?-1:1;
+    var pa=a.streak>0?1:0,pb=b.streak>0?1:0; if(pa!==pb)return pb-pa; if(a.streak!==b.streak)return b.streak-a.streak;
+    var ka=KORD.indexOf(a.kind),kb=KORD.indexOf(b.kind); if(ka<0)ka=99; if(kb<0)kb=99; return (ka-kb)||String(a.kind).localeCompare(String(b.kind)); }
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var DATA=null, F={brand:'*',kinds:{},mkt:'*',min:0,q:'',all:false,stale:false}, SORT={k:'streak',dir:-1}, SEL=null;
   var qs=new URLSearchParams(location.search);
@@ -369,6 +376,8 @@ window.addEventListener('load',restore);
   }
   function sortRows(list){
     var k=SORT.k, d=SORT.dir;
+    // one brand on screen + the default sort = its markets in order, paused first inside each
+    if(k==='streak'&&d===-1&&F.brand!=='*') return list.slice().sort(schedOrder);
     var v=function(c){ switch(k){ case 'client':return c.client; case 'mkt':return c.mkt; case 'kind':return KORD.indexOf(c.kind); case 'since':return c.since||''; case 'lastGo':return c.lastGo||''; case 'latest':return c.latest&&c.latest.w||''; case 'reason':return c.latest&&c.latest.rc||''; case 'cad':return c.streak; default:return c[k]==null?-1:c[k]; } };
     return list.slice().sort(function(a,b){ var x=v(a),y=v(b); if(x<y)return -d; if(x>y)return d; return (b.streak-a.streak)||a.client.localeCompare(b.client)||a.mkt.localeCompare(b.mkt); });
   }
@@ -414,7 +423,7 @@ window.addEventListener('load',restore);
     // table
     var list=sortRows(rows);
     $('#nshown').textContent=list.length+' task'+(list.length===1?'':'s')+' shown';
-    $('#tsub').textContent='latest month '+mlbl(lm)+' · sorted by '+$('#st th[data-k="'+SORT.k+'"]').textContent.toLowerCase();
+    $('#tsub').textContent='latest month '+mlbl(lm)+' · sorted by '+((SORT.k==='streak'&&SORT.dir===-1&&F.brand!=='*')?'market, paused first':$('#st th[data-k="'+SORT.k+'"]').textContent.toLowerCase());
     document.querySelectorAll('#st th').forEach(function(th){ th.classList.toggle('s',th.getAttribute('data-k')===SORT.k); });
     $('#tb').innerHTML=list.map(function(c){
       var st=isStale(c);

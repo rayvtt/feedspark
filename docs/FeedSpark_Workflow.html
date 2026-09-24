@@ -83,6 +83,9 @@ window.addEventListener('load',restore);
   .sw-who{font-size:14px;font-weight:900;color:var(--ink)}
   .sw-cvs{font-size:12px;font-weight:700;color:var(--muted)}
   .sw-rows{display:flex;flex-direction:column;gap:5px}
+  .sw-mkt{display:flex;align-items:baseline;gap:8px;margin:5px 0 -1px;padding:0 3px;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--navy)}
+  .sw-mkt:first-child{margin-top:0}
+  .sw-mkt span:last-child{font-weight:800;color:var(--muted);text-transform:none;letter-spacing:0}
   .sw-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--wash)}
   .sw-row .k{font-size:12.5px;font-weight:900;color:var(--ink);min-width:150px}
   .sw-row .k em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
@@ -4878,6 +4881,16 @@ body.ck-r-on{padding-right:var(--ck-w)}
    payload per signin, so a scoped AM only sees their clients here. Deep-links into /schedule. */
 (function(){
   var KL={kw:'Keywords',titles:'Titles',pt:'Product Type',tagging:'Data tagging',social:'Social titles',short:'Short titles'};
+  // MARKET ORDER (Ray, 24 Sep 2026: "sorted into each market, but just sort them correctly"):
+  // the rows group by market — the home market (GB) first, the rest alphabetical — and inside a
+  // market the paused tasks lead, longest pause first, then the running ones in the schedule's
+  // own task order (Keywords, Titles, Product Type, Social, Short, Data tagging). The /schedule
+  // page carries the SAME two functions (tools/test_schedule.mjs holds them identical).
+  var KORD=['kw','titles','pt','social','short','tagging'];
+  function mktRank(m){ m=String(m||'').toLowerCase(); return (m==='gb'||m==='uk')?'0':'1'+m; }
+  function schedOrder(a,b){ var ra=mktRank(a.mkt),rb=mktRank(b.mkt); if(ra!==rb)return ra<rb?-1:1;
+    var pa=a.streak>0?1:0,pb=b.streak>0?1:0; if(pa!==pb)return pb-pa; if(a.streak!==b.streak)return b.streak-a.streak;
+    var ka=KORD.indexOf(a.kind),kb=KORD.indexOf(b.kind); if(ka<0)ka=99; if(kb<0)kb=99; return (ka-kb)||String(a.kind).localeCompare(String(b.kind)); }
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function mlbl(m){ if(!m)return ''; var p=m.split('-'); return MON[+p[1]-1]+' '+p[0].slice(2); }
@@ -4912,14 +4925,18 @@ body.ck-r-on{padding-right:var(--ck-w)}
     // from being on screen. The brand is named, and changing it is the Intake client filter above
     // (or leaving client view) — both of which are Ray's controls, not a shared-screen surface.
     document.getElementById('sw-brand').textContent=brand;
-    var mine=(d.cadence||[]).filter(function(c){ return c.inRoster&&c.client===brand; })
-      .sort(function(a,b){ return (b.streak-a.streak)||a.kind.localeCompare(b.kind)||a.mkt.localeCompare(b.mkt); });
+    var mine=(d.cadence||[]).filter(function(c){ return c.inRoster&&c.client===brand; }).sort(schedOrder);
     var paused=mine.filter(function(c){return c.streak>0}).length;
     document.getElementById('sw-cvs').innerHTML=esc(mine.length
       ? (mine.length+' scheduled task'+(mine.length===1?'':'s')+' · '+(paused?paused+' paused':'all running'))
       : 'No scheduled optimisation on this account yet.')
       +(PINNED?'':' <span style="opacity:.75">— filter Intake to a client to point this at them</span>');
+    // one group per market, in schedOrder's market order, each headed by its own count
+    var lastMkt=null;
     document.getElementById('sw-rows').innerHTML=mine.map(function(c){
+      var head='';
+      if(c.mkt!==lastMkt){ lastMkt=c.mkt; var grp=mine.filter(function(x){return x.mkt===c.mkt}), gp=grp.filter(function(x){return x.streak>0}).length;
+        head='<div class="sw-mkt"><span>'+esc((c.mkt||'').toUpperCase()||'—')+'</span><span>'+grp.length+' task'+(grp.length===1?'':'s')+(gp?' · '+gp+' paused':' · all running')+'</span></div>'; }
       var strip=(c.months||[]).slice(-12).map(function(m){
         return '<i class="'+esc(m.v)+'" title="'+esc(mlbl(m.m)+' — '+(m.v==='go'?'went ahead':m.v==='skip'?'skipped':'not scheduled'))+'"></i>'; }).join('');
       var ago=monthsAgo(c.lastGo), st;
@@ -4927,7 +4944,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
         +(c.lastGo?' · last one '+mlbl(c.lastGo):' · none on record');
       else if(c.lastGo) st='<b>Running</b> · last optimisation '+mlbl(c.lastGo)+(ago!=null&&ago>0?' ('+ago+' mo ago)':'');
       else st='<b>Scheduled</b> · nothing run yet';
-      return '<div class="sw-row'+(c.streak>0?'':' ok')+'"><span class="k">'+esc(KL[c.kind]||c.kind)
+      return head+'<div class="sw-row'+(c.streak>0?'':' ok')+'"><span class="k">'+esc(KL[c.kind]||c.kind)
         +'<em>'+esc((c.mkt||'').toUpperCase())+'</em></span>'
         +'<span class="sw-strip">'+strip+'</span>'
         +'<span class="st">'+st+'</span></div>';
