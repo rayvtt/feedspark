@@ -785,6 +785,81 @@ The same Playbook panel read coverage as a fraction (floors 0.99 / 0.9 / 0.6) wh
 percentages. Every real reading cleared the floors, so "Weakest first" only ever listed an attribute
 under 1%, printed ×100. The floors, the bars and the "worst N%" figure now read percentages.
 
+### 9.11 Score history — improvement and deduction, day by day (24 Sep 2026)
+
+Ray: *"Can the Golden Score module record historic changes in terms of improvement or deduction
+from the previous scan? That would be good to show clients on improvement progress. At the same
+time, maybe also track it on a day-to-day basis, similar to [product] volumes."*
+
+Before this the module kept no past at all, only three snapshots: the latest, yesterday's and
+the last known-good. Now each feed has a record over time.
+
+**The store.** `goldenhist:<client>:<mkt>` (engine: `labelguard.js` `histAdd` / `histSeed` /
+`histQa` / `histIdx`) holds three lists:
+
+| Key | What it holds | When it is written |
+|---|---|---|
+| `r` readings | `{t, rows, cov, sc?}`: the coverage the score is computed **from**, never the score itself | When the feed moved since the last recorded reading: an attribute appeared, vanished or changed scope, or its coverage moved 0.5pp (`HIST_MOVE_PP`) |
+| `s` scan days | the UTC days the feed was read at all | The first scan of each day |
+| `q` analyses | `{t, q, air, tier}`: content quality and AI-readiness, as analysed | When either figure moved (written by the `/api/golden/quality` PUT) |
+
+Four identical scans a day write nothing after the first. Drift below the threshold builds up
+against the last *recorded* reading, so a slow slide is still caught. The last 30 days
+(`HIST_RECENT_DAYS`) keep every move, scan by scan. Older days keep only their close, the last
+reading of the day. The record is capped at 500 readings, 400 scan days and 200 analyses. A busy
+feed's full year is under 400KB.
+
+**Every reading is re-scored.** The page scores each reading against the brand's **current**
+profile, using the same `goldenScore` + `attrsFromCov` the estate uses. An industry-profile edit
+or a waived attribute therefore re-bases the whole line. It never reads as the feed improving or
+slipping. A reading measured on another basis is never compared across. (That means a snapshot
+from before GPC category scope, where `!!sc` differs.) The line breaks there and the log says
+"measured on a new basis".
+
+**No invented past.** A new record is seeded from the known-good snapshot as it stood before
+this scan rolled it, and from the previous scan. Both are real readings, used only when they
+were measured on today's basis. A day nobody scanned is a **gap** in the chart, never a copy of
+the day before, because a feed that stopped being read must not look flat.
+
+**The card** sits under the scorecard header. Range chips 30 days / 90 days / 1 year / All sit
+top-right; the choice is remembered per device (`gr-hist-rng`). The card has four parts:
+
+- **KPIs:** Golden Score now (as the dial), the last change and its date, and the move over the
+  window. When the record is shorter than the window, that last tile reads "Since tracking
+  began", never "90 days". Content quality and AI-readiness appear with their move since the
+  analysis before the window.
+- **Chart, top plot:** the daily close as a line. It is zoomed to the data, since a line needs
+  no zero baseline.
+- **Chart, bottom plot:** the day's move against the previous scanned day. Improvement is drawn
+  above the zero line and deduction below it, in the Product Volume module's validated pair
+  (light `#2563EB` / `#ED6F0B`, dark `#4C82E0` / `#C67B28`). A scanned day with no change is a
+  dot on the line. The two plots share the calendar but never a y-axis.
+- **Hover and change log:** hovering a day names what moved that day. The change log lists
+  every recorded move in the window, newest first: the score from → to, the Δ, and the
+  attributes that moved (`g:color ▼ −10pp`, `g:product_highlight added (60%)`), with the
+  analyses interleaved. It shows six rows, with "Show all N" behind a button.
+
+**The estate row** shows the last move under the feed score (`FEED ▲1.8`). `goldenidx` carries
+the reading before the last change (`hp`) and when it changed (`ht`). A scan rebuilds both from
+the record, the ack carries them unchanged (`keepHist`), and both ends are re-scored to today's
+profile.
+
+**Client documents.** The card prints in the PDF and the ⬇ HTML. It keeps the active range as a
+plain chip. The other range chips, the Show-all button, the tooltip and the hover targets are
+removed. A card with nothing to show yet (fewer than two readings and no analyses) is dropped
+from both client documents.
+
+Route: `GET /api/golden/history?client=&market=` → `{hist}`. Harnesses:
+`tools/test_goldenhist.mjs` (engine, worker wiring, the page's `histMoved` twin;
+qa_gate/presync/validate) and `tools/check_grhist.js` (Playwright, presync). The Playwright check
+renders a forty-day record and asserts:
+
+- deductions draw below the line;
+- gaps are gaps;
+- waiving the attributes that moved re-bases the history;
+- the download keeps the chart and drops the furniture;
+- the card works in dark mode and at 390px.
+
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 
 Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the

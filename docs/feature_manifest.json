@@ -9201,13 +9201,13 @@
     {
       "name": "Golden Record: the scan lane carries q/qFails/qT/air/airTier/airP forward",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "keepQual(gidx[lgKey(client, mkt)]));",
+      "pattern": "keepQual(gidx[lgKey(client, mkt)]), gHist ? histIdx(gHist)",
       "pr": 480
     },
     {
       "name": "Golden Record: accepting a coverage change never forgets the content score",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "keepQual(idx[lgKey(client, mkt)]));",
+      "pattern": "keepQual(idx[lgKey(client, mkt)]), keepHist(idx[lgKey(client, mkt)])",
       "pr": 480
     },
     {
@@ -9789,6 +9789,102 @@
       "name": "Tripwire: a worker-served docs/*.js that is not a Text module fails the build",
       "file": "tools/check_textmodules.js",
       "pattern": "will bundle as an ES module",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a reading per real move (engine)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histAdd(hist, r) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: seeded only from readings on today's basis",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": ".filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: every scan offers its reading, writes only when new",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (r.wrote) await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: seeded from the known-good before the scan rolls it",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "gHist = histSeed([gBaseWas, gPrev], cur);",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: the ack carries the last move",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "keepQual(idx[lgKey(client, mkt)]), keepHist(idx[lgKey(client, mkt)]));",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: analyses join the record",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const hq = histQa(await env.EDITS.get(hk, 'json'),",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: GET route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/golden/history' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history card on the scorecard",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "h += histSection(k, s);   // the score over time",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: every reading re-scored to today's profile",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function hScore(r, prof) { return r ? goldenScore(attrsFromCov(r.cov, r.sc, r.rows), prof) : null; }",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a window longer than the record says so",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "(m.over ? histKpi(m.over.all ? 'Since tracking began'",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: day-on-day bars in the Product Volume pair",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".hs{--hup:#2563EB;--hdn:#ED6F0B}",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: estate row shows the last move",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function estMove(f) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: client files drop the hover furniture",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history harness",
+      "file": "tools/test_goldenhist.mjs",
+      "pattern": "three more identical scans that day write NOTHING",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "node tools/test_goldenhist.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history render tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grhist.js",
       "pr": 0
     }
   ]

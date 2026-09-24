@@ -56,7 +56,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -3288,6 +3288,14 @@ function keepQual(prev) {
   if (prev) QUAL_KEEP.forEach((k) => { if (prev[k] !== undefined && prev[k] !== null) out[k] = prev[k]; });
   return out;
 }
+// the score history's pointer on the index (hp = the reading before the last change, ht = when
+// it changed) — rebuilt from goldenhist on every scan, carried unchanged by the ack, which moves
+// the alert reference and nothing about the feed's past
+function keepHist(prev) {
+  const out = {};
+  if (prev && prev.hp) { out.hp = prev.hp; if (prev.ht) out.ht = prev.ht; }
+  return out;
+}
 
 // a feed that could not be read: index it unreachable + raise the fetch-fail warn — shared
 // by the gviz path above and the xml-scan push (whose agent reports its own fetch failures)
@@ -3682,13 +3690,15 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
   let gr = null;
   if (grSnap) try {
     const GK = ':' + client + ':' + mkt;
+    let gPrev = null;
     try {
-      const gPrev = await env.EDITS.get('golden' + GK, 'json');
+      gPrev = await env.EDITS.get('golden' + GK, 'json');
       if (gPrev && gPrev.t && new Date(gPrev.t).toISOString().slice(0, 10) !== new Date(grSnap.t).toISOString().slice(0, 10)) {
         await env.EDITS.put('goldenday' + GK, JSON.stringify(gPrev));
       }
     } catch (e) {}
     let gBase = await env.EDITS.get('goldenbase' + GK, 'json');
+    const gBaseWas = gBase;   // before it rolls forward below — a past reading the history can seed from
     if (!gBase) { gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap)); }
     const gAlerts = diffCoverage(gBase, grSnap);
     const gActive = gAlerts.filter((a) => a.sev !== 'info');
@@ -3696,6 +3706,26 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
       gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap));
     }
     await env.EDITS.put('golden' + GK, JSON.stringify(grSnap));
+    // SCORE HISTORY (Ray, 24 Sep 2026): the feed's record over time, one reading per real move
+    // (labelguard.js histAdd). A scan that moved nothing on a day already recorded writes nothing.
+    // A first record is seeded from the known-good and the previous scan — both real readings —
+    // when they were measured on today's basis.
+    let gHist = null;
+    try {
+      const cur = histReading(grSnap);
+      const had = await env.EDITS.get('goldenhist' + GK, 'json');
+      if (had && had.r && had.r.length) {
+        const r = histAdd(had, cur);
+        gHist = r.hist;
+        if (r.wrote) await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
+      } else if (cur) {
+        // no readings yet — a record holding only an analysis (the quality PUT got here first)
+        // still seeds, and keeps the analyses it already had
+        gHist = histSeed([gBaseWas, gPrev], cur);
+        if (had && Array.isArray(had.q)) gHist.q = had.q;
+        await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
+      }
+    } catch (e) {}
     // score to the brand's industry best-practice profile (KV goldenprofiles overrides);
     // the index also carries per-attribute coverage + the industry, so the page can
     // compute estate-wide industry benchmarks (avg / best) from the one estate call
@@ -3712,7 +3742,7 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length },
-      keepQual(gidx[lgKey(client, mkt)]));
+      keepQual(gidx[lgKey(client, mkt)]), gHist ? histIdx(gHist) : keepHist(gidx[lgKey(client, mkt)]));
     await env.EDITS.put('goldenidx', JSON.stringify(gidx));
     const gMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     const gPlan = estateMailPlan(gMap[lgKey(client, mkt)], gActive);
@@ -4158,6 +4188,14 @@ async function goldenRoutes(env, request, url) {
     return json({ snapshot: snap || null, baseline: base || null, daily: daily || null });
   }
 
+  // the feed's score history (Ray, 24 Sep 2026) — readings, scan days, analyses; the page
+  // re-scores every reading against the brand's current profile
+  if (path === '/api/golden/history' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const hist = await env.EDITS.get('goldenhist:' + client + ':' + mkt, 'json');
+    return json({ hist: hist || null });
+  }
+
   if (path === '/api/golden/scan' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     const r = await runLabelScan(env, client, mkt);   // one pass writes labels, ptype AND golden stores
@@ -4434,6 +4472,12 @@ async function goldenRoutes(env, request, url) {
       idx[key].qT = rec.t;
       await env.EDITS.put('goldenidx', JSON.stringify(idx));
     }
+    // …and the analysis joins the feed's history as measured (content quality + AI-readiness)
+    if (qs || ai) try {
+      const hk = 'goldenhist:' + client + ':' + mkt;
+      const hq = histQa(await env.EDITS.get(hk, 'json'), { t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null });
+      if (hq.wrote) await env.EDITS.put(hk, JSON.stringify(hq.hist));
+    } catch (e) {}
     return json({ ok: true, t: rec.t, score: qs ? qs.score : null });
   }
 
@@ -4450,7 +4494,7 @@ async function goldenRoutes(env, request, url) {
     idx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
       score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov, sc: Object.keys(ackSc).length ? ackSc : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
-      status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score
+      status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]), keepHist(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score — or the last move
     await env.EDITS.put('goldenidx', JSON.stringify(idx));
     const alertsMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     delete alertsMap[lgKey(client, mkt)];

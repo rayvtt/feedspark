@@ -164,6 +164,13 @@ else
   echo "   ✗ audit-bands harness FAILED — see node tools/test_bands.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: Golden Record score history (one reading per real move, re-scored to today's profile)"
+if node tools/test_goldenhist.mjs >/dev/null 2>&1; then
+  echo "   ✓ identical scans write nothing, drift is caught, gaps stay gaps, the page reads moves as the engine records them"
+else
+  echo "   ✗ score-history harness FAILED — see node tools/test_goldenhist.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
 if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
   echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"

@@ -1317,12 +1317,13 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   // quality handler onto goldenidx) — this only wires up a read the page already had access to.
   console.log('\n— estate scorecard: two labelled scores per market —');
   const page2 = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
-  ok('the feed score is captioned, not a bare number', /<span>feed<\/span>/.test(page2));
+  // (the caption also carries the last recorded move since the score history, 24 Sep 2026)
+  ok('the feed score is captioned, not a bare number', /'<span>feed' \+ \(mv \?/.test(page2) && /\+ '<\/span><\/span>';/.test(page2));
   ok('the content-quality score is captioned as a different thing entirely', /<span>content<\/span>/.test(page2));
   ok('each score names itself in full on hover, so the short caption is never the only explanation',
     /Feed scorecard — weighted attribute completeness/.test(page2) && /Content quality score — what is actually IN the free-text fields/.test(page2));
   ok('the two scores read the SAME estate payload — f.score and f.q side by side, never a second fetch',
-    /f\.score != null \? '<span class="est-su"/.test(page2) && /f\.q != null \? '<span class="est-su"/.test(page2));
+    /f\.score != null \? \(function \(\) \{[\s\S]{0,500}?'<span class="est-su"/.test(page2) && /f\.q != null \? '<span class="est-su"/.test(page2));
   ok('a market not yet analysed for quality shows only the feed score, never a fabricated content figure',
     /'<span class="est-su" title="Content quality score/.test(page2));
   ok('both scores use the SAME colour bands (scoreCol) — a reader learns one legend, not two',
@@ -1450,8 +1451,8 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('a null headline is not carried (the PUT writes null for an analysis that scored nothing)', Object.keys(keepQual({ q: null, qT: 5 })).join(',') === 'qT');
   const rebuilt = Object.assign({ client: 'Schuh', mkt: 'gb', t: 9, rows: 20390, score: 79.3, status: 'ok', nWarn: 0 }, keepQual(prev));
   ok('the rebuilt entry reads the fresh scan AND the last analysis — score moved, q and qT untouched', rebuilt.score === 79.3 && rebuilt.t === 9 && rebuilt.q === 71.4 && rebuilt.qT === 2 && rebuilt.status === 'ok');
-  ok('worker: the scan lane rebuilds the goldenidx entry WITH keepQual', /gidx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: grSnap\.t,[\s\S]*?keepQual\(gidx\[lgKey\(client, mkt\)\]\)\);/.test(wk4));
-  ok('worker: the ack rebuilds it WITH keepQual too', /idx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: snap\.t,[\s\S]*?keepQual\(idx\[lgKey\(client, mkt\)\]\)\);/.test(wk4));
+  ok('worker: the scan lane rebuilds the goldenidx entry WITH keepQual', /gidx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: grSnap\.t,[\s\S]*?keepQual\(gidx\[lgKey\(client, mkt\)\]\)[,)]/.test(wk4));
+  ok('worker: the ack rebuilds it WITH keepQual too', /idx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: snap\.t,[\s\S]*?keepQual\(idx\[lgKey\(client, mkt\)\]\)[,)]/.test(wk4));
   ok('worker: no goldenidx writer is left that replaces the entry bare', !/gidx\[lgKey\(client, mkt\)\] = \{ client, mkt, t: grSnap\.t/.test(wk4) && !/idx\[lgKey\(client, mkt\)\] = \{ client, mkt, t: snap\.t/.test(wk4));
 }
 

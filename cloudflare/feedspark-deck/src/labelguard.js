@@ -1343,6 +1343,129 @@ export function goldenRecoveryEmail(feedName, link) {
   return '✅ Golden Record — ' + feedName + ' recovered\nEvery flagged attribute-coverage alert has cleared vs last known-good.' + (link ? '\n' + link : '');
 }
 
+/* ---- GOLDEN SCORE HISTORY (Ray, 24 Sep 2026: "Can the Golden Score module record historic
+   changes in terms of improvement or deduction from the previous scan … good to show clients on
+   improvement progress. At the same time, maybe also track it on a day-to-day basis, similar to
+   [product] volumes").
+
+   Before this the module kept three snapshots and no past at all: the latest, yesterday's and the
+   last known-good. KV goldenhist:<client>:<mkt> is the feed's record over time:
+     r  READINGS — what the score is computed FROM, never the score itself ({t, rows, cov, sc?},
+        the goldenidx shape). The page re-scores every reading against the brand's CURRENT
+        profile, so a change in what FeedSpark counts (an industry profile edit, a rule set aside)
+        re-bases the whole line instead of reading as the feed getting better or worse.
+        A reading is only recorded when the feed MOVED since the last recorded one — an attribute
+        appearing / vanishing / going out of scope, or its coverage moving HIST_MOVE_PP — so four
+        identical scans a day cost nothing and the log is a list of real changes. Drift below the
+        threshold accumulates against the last RECORDED reading, so a slow slide is still caught.
+        The last HIST_RECENT_DAYS keep every change scan by scan; older days keep their close.
+     s  SCAN DAYS — the UTC days the feed was read at all. A day with no scan is a GAP on the
+        chart, never a copy of the day before: a feed that stopped being read must not look flat.
+     q  CONTENT QUALITY + AI-READINESS as ANALYSED ({t, q, air, tier}) — measured by the page's
+        in-browser analysis, not the scan, recorded when either moves.
+   No backfill beyond what the stores already hold: a fresh record is seeded from the known-good
+   and the previous scan when they were measured on the same basis as today's reading (a
+   snapshot from before GPC category scope is a different measurement, not a past score). */
+export const HIST_MOVE_PP = 0.5;       // an attribute moving this far (pp) makes a new reading
+export const HIST_RECENT_DAYS = 30;    // readings inside this window are kept scan by scan
+export const HIST_MAX = 500;           // stored readings (≈ a year of daily closes + a month of scans)
+export const HIST_DAYS_MAX = 400;      // scan-day calendar
+export const HIST_QA_MAX = 200;        // content-quality / AI-readiness analyses
+export function histDay(t) { return new Date(+t).toISOString().slice(0, 10); }
+export function histReading(snap) {
+  if (!snap || !snap.attrs) return null;
+  const { cov, sc } = goldenCovIndex(snap.attrs);
+  const c = {};
+  for (const k of Object.keys(cov)) if (cov[k] != null && isFinite(cov[k])) c[k] = Math.round(cov[k] * 10) / 10;
+  const r = { t: +snap.t || Date.now(), rows: Math.max(0, Math.round(+snap.rows || 0)), cov: c };
+  if (Object.keys(sc).length) r.sc = sc;
+  return r;
+}
+// what moved between two readings, biggest first: [key, from, to] — null = not in the feed,
+// 'na' = in the feed's categories nobody asks for it. An attribute that appeared or vanished
+// outranks any coverage move.
+export function histMoved(a, b) {
+  const out = [];
+  if (!a || !b) return out;
+  const st = (x, k) => (x.sc && x.sc[k] === 0 ? 'na' : (x.cov && x.cov[k] != null ? x.cov[k] : null));
+  const keys = {};
+  [a, b].forEach((x) => { Object.keys(x.cov || {}).forEach((k) => { keys[k] = 1; }); Object.keys(x.sc || {}).forEach((k) => { keys[k] = 1; }); });
+  for (const k of Object.keys(keys)) {
+    const x = st(a, k), y = st(b, k);
+    if (x === y) continue;
+    if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) continue;
+    out.push([k, x, y]);
+  }
+  const mag = (m) => (typeof m[1] === 'number' && typeof m[2] === 'number' ? Math.abs(m[2] - m[1]) : 1000);
+  return out.sort((m, n) => mag(n) - mag(m) || (m[0] < n[0] ? -1 : 1));
+}
+// did the feed MOVE: a presence / scope flip, a coverage move of HIST_MOVE_PP, or a change of
+// measuring basis (with vs without GPC scope — recorded so the page can refuse to compare it)
+export function histChanged(a, b, pp) {
+  if (!a) return true;
+  if (!!a.sc !== !!b.sc) return true;
+  const lim = pp == null ? HIST_MOVE_PP : pp;
+  return histMoved(a, b).some((m) => typeof m[1] !== 'number' || typeof m[2] !== 'number' || Math.abs(m[2] - m[1]) >= lim);
+}
+export function histEmpty() { return { v: 1, r: [], s: [], q: [] }; }
+function histKeep(h, now) {
+  const cut = now - HIST_RECENT_DAYS * 864e5;
+  // older than the recent window, a day keeps only its CLOSE (its last reading)
+  h.r = h.r.filter((x, i) => x.t >= cut || i === h.r.length - 1 || histDay(h.r[i + 1].t) !== histDay(x.t));
+  if (h.r.length > HIST_MAX) h.r.splice(0, h.r.length - HIST_MAX);
+  if (h.s.length > HIST_DAYS_MAX) h.s.splice(0, h.s.length - HIST_DAYS_MAX);
+  if (h.q.length > HIST_QA_MAX) h.q.splice(0, h.q.length - HIST_QA_MAX);
+  return h;
+}
+// record one scan's reading → { hist, wrote } — wrote=false means nothing new (same day, no
+// move), so the caller skips the KV write
+export function histAdd(hist, r) {
+  const h = hist && hist.v === 1 ? { v: 1, r: (hist.r || []).slice(), s: (hist.s || []).slice(), q: (hist.q || []).slice() } : histEmpty();
+  if (!r || !r.cov) return { hist: h, wrote: false };
+  const last = h.r[h.r.length - 1];
+  if (last && r.t <= last.t) return { hist: h, wrote: false };   // out of order — never rewrite the past
+  let wrote = false;
+  const day = histDay(r.t);
+  if (h.s[h.s.length - 1] !== day) { h.s.push(day); wrote = true; }
+  if (histChanged(last, r)) { h.r.push(r); wrote = true; }
+  return { hist: wrote ? histKeep(h, r.t) : h, wrote };
+}
+// a fresh record: the stored past readings that were measured the way today's is, oldest first,
+// then today's — the known-good and the previous scan are real readings, not estimates
+export function histSeed(past, cur) {
+  let h = histEmpty();
+  (past || []).map(histReading)
+    .filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)
+    .sort((a, b) => a.t - b.t)
+    .forEach((x) => { h = histAdd(h, x).hist; });
+  return histAdd(h, cur).hist;
+}
+// one content-quality / AI-readiness analysis → recorded when either figure moved
+export function histQa(hist, p) {
+  const h = hist && hist.v === 1 ? { v: 1, r: (hist.r || []).slice(), s: (hist.s || []).slice(), q: (hist.q || []).slice() } : histEmpty();
+  if (!p || (p.q == null && p.air == null)) return { hist: h, wrote: false };
+  const pt = { t: +p.t || Date.now() };
+  if (p.q != null && isFinite(p.q)) pt.q = Math.round(p.q * 10) / 10;
+  if (p.air != null && isFinite(p.air)) pt.air = Math.round(p.air * 10) / 10;
+  if (p.tier != null) pt.tier = Math.max(1, Math.min(4, parseInt(p.tier, 10) || 1));
+  const last = h.q[h.q.length - 1];
+  if (last && pt.t <= last.t) return { hist: h, wrote: false };
+  const same = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) < 0.1);
+  if (last && same(last.q, pt.q) && same(last.air, pt.air)) return { hist: h, wrote: false };
+  h.q.push(pt);
+  return { hist: histKeep(h, pt.t), wrote: true };
+}
+// what the estate index carries so a row can say "▲ +1.8 since 21 Sep" without reading the
+// record: the reading BEFORE the last change (hp) and when that change happened (ht)
+export function histIdx(h) {
+  const r = (h && h.r) || [];
+  if (r.length < 2) return {};
+  const p = r[r.length - 2];
+  const hp = { t: p.t, rows: p.rows, cov: p.cov };
+  if (p.sc) hp.sc = p.sc;
+  return { hp, ht: r[r.length - 1].t };
+}
+
 // The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,
 // not an alarm. cov = current fill % when the column exists, null when it's not in the feed.
 export function attrAskEmail(client, mkt, spec, cov) {
