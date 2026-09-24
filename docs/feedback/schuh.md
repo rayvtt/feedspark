@@ -64,3 +64,51 @@ The fourth lesson is a **source rule**, added to the generator skill: *a claim t
 exists must be read across every source the FCC holds for that account — the project plan, the
 task log AND the A/B Test Archive — never generalised from one.* This is the second time a
 "nothing here" statement has been the defect rather than the finding.
+
+## 2026-09-24 — round 2 ("i still dont see screenshots nicely done from FCC in the deck?")
+
+- **Correct, and the cause was structural, not an oversight in this deck.** `deck_to_pptx.py` had
+  **no chart component at all**: every `.bars` block and every hand-built chart panel was read for
+  its numbers and emitted through `em.table`. So both round-1 asks — the Volume module chart and the
+  A/B archive — could only ever come out as tables of the same numbers, in this deck and in every
+  deck before it. I should have said so at the time instead of shipping tables against a request for
+  charts.
+- Built `Emitter.chart()`: a **native PowerPoint chart** (`add_chart`, own embedded worksheet,
+  clickable / editable / restylable), placed in the same column the native tables occupy. Not a
+  breach of "never add a shape" — that rule forbids faking a layout out of rectangles and textboxes;
+  a chart is data, not a text frame, and no placeholder can hold one.
+- Opt-in lives **on the table** (`data-chart`, `-series`, `-cats`, `-pct`, `-table`, plus
+  `data-chart-skip` / `data-chart-cat` per row), so the chart is built from the table's own cells and
+  the two can never disagree.
+- Schuh now carries two real charts:
+  · **ch3** — clustered columns, six months × UK / Germany / Ireland, KPI strip as the subtitle, the
+    running month labelled "Sep (part month)" the way `/volume` flags it. Run-rate and live-catalogue
+    rows stay in the table and out of the plot: they are derived from the months above them, so
+    plotting them alongside would draw the same products twice at two scales.
+  · **ch4** — horizontal bars, the nine keyword tests by impressions uplift, direct value labels.
+    The two title tests are `data-chart-skip` — a different intervention on a different field, so
+    they are not plotted on an axis labelled "keyword optimisation"; they stay in the table and keep
+    their own card.
+
+### Three bugs this surfaced, each fixed and each older than this round
+1. **The real minus sign.** The decks write U+2212, not a hyphen, so a naive `startswith("-")` would
+   have plotted every loss as a win. Normalised before parsing.
+2. **A section-level `<h3>`/`<h4>` was silently dropped** by the parser — it matched neither
+   `classify` nor the descend-into test — which is why a chart could not be named and inherited the
+   chapter title with "(cont.)" after it. Now emitted as a `heading` block, deliberately a different
+   kind from `subhead`: a component's own lead label (a bars chart's caption) has always titled its
+   slide and is the better title, so a heading never displaces it, and on a section's first slide the
+   heading becomes the subtitle rather than taking the title that appears in the agenda and the nav.
+3. **A `subhead` swallowed the note after it.** The trailing-note-becomes-Key-Message rule ran before
+   the kind was known, and a subhead emits no slide — so the note was consumed and then dropped. A
+   YuMOVE spec note disappeared exactly this way, found by diffing every existing deck's export
+   before and after the change.
+
+Regression check: Monsoon, Superdry and Reiss (×2) export **byte-identical** slide text; YuMOVE and
+Reiss FY25/26 each gain one subtitle that was previously being thrown away. Nothing displaced,
+nothing lost. Schuh: 45 slides, `still over capacity: 0`, `deck_audit.py` 0 hard failures.
+
+### Did the skill need updating?
+**Yes — done.** The chart component, its attributes, the three judgement rules it exists to let you
+exercise (never plot a total beside its own parts, never mix two interventions on one axis, full name
+in the table and a short label on the axis) and the heading rule are all in SKILL.md Step 6b.

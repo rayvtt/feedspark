@@ -35,6 +35,8 @@ from lxml import html as LH
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_LABEL_POSITION, XL_TICK_MARK
 from PIL import ImageFont
 
 # ------------------------------------------------------------------ status ink
@@ -44,6 +46,17 @@ MUTED      = RGBColor(0x76, 0x76, 0x76)
 ORANGE_DP  = RGBColor(0xED, 0x6F, 0x0B)
 GREEN      = RGBColor(0x2E, 0x7D, 0x32)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
+RED        = RGBColor(0xC0, 0x39, 0x2B)
+
+# Chart series ink. These are the SAME six slots the FCC's dataviz palette uses on
+# /volume, /tasks and the Deck Generator chart workbench -- so a chart lifted out of
+# a module and a chart drawn in a deck cannot come out two different colours.
+SERIES_INK = [RGBColor(0x25, 0x63, 0xEB),   # blue      (slot 1, /volume "in")
+              RGBColor(0xED, 0x6F, 0x0B),   # deep orange (slot 2, /volume "out")
+              RGBColor(0x2E, 0x7D, 0x32),   # green
+              RGBColor(0x0F, 0x17, 0x2A),   # slate
+              RGBColor(0x4C, 0x82, 0xE0),   # light blue
+              RGBColor(0xC6, 0x7B, 0x28)]   # light orange
 
 # Pillow metrics mirror preview_tmpl.py (Liberation Sans ~ Arial metrics), so
 # heights measured here match what the QA previewer will measure.
@@ -206,6 +219,21 @@ def parse_section(sec, sc):
                 head["title"] = sc(el); continue
             if el.tag == "p" and "sec-sub" in k and not head["sub"]:
                 head["sub"] = sc(el); continue
+            # A bare h3/h4 sitting at section level (not inside a card, which
+            # classify() handles on the parent div) names the block that follows
+            # it -- typically a table or a chart. Without this it fell through
+            # classify (which only maps div/table) AND the descend-into test, so
+            # the heading was silently dropped and the block inherited the
+            # chapter title with "(cont.)" after it.
+            if el.tag in ("h3", "h4") and "sec-title" not in k:
+                _h = sc(el)
+                # "heading", NOT "subhead": a component's own lead label (the
+                # bars chart's axis caption) is a subhead and has always titled
+                # its slide, and it is the better title because it names the
+                # data. This is a heading standing above a block, so it must
+                # never displace either of those.
+                if _h: blocks.append(("heading", _h))
+                continue
             bs = classify(el, sc)
             if bs:
                 blocks.extend(bs)
@@ -236,6 +264,76 @@ def bars_of(el):
             rows.append((lab, val, w, "green" in fk, "grey" in fk))
     return rows
 
+_NUMRE = re.compile(r"-?[\d][\d,\u00a0 ]*\.?\d*")
+
+def chart_num(txt):
+    """The number inside a table cell, or None. Reads the deck's own formatting:
+    thousands separators, a trailing %, a leading ~/\u2248, a signed uplift.
+
+    The sign matters more than anything else here and is the easy thing to get
+    wrong: the decks write a real MINUS SIGN (U+2212), not a hyphen, because that
+    is what reads correctly in Lato/Inter -- so a naive startswith("-") plots
+    every loss as a win. Normalised first, before any parsing."""
+    t = (txt or "").replace("\u2248", "").replace("~", "")
+    t = t.replace("\u2212", "-").replace("\u2013", "-").replace("\u2010", "-").strip()
+    if not t or t in ("-", "\u2014", "n/a", "N/A"): return None
+    neg = t.startswith("-")
+    m = _NUMRE.search(t.lstrip("+-"))
+    if not m: return None
+    raw = m.group(0).replace(",", "").replace("\u00a0", "").replace(" ", "").strip()
+    if not raw or raw in ("-", "."): return None
+    try: v = float(raw.lstrip("-"))
+    except ValueError: return None
+    return -v if neg else v
+
+def chart_spec(t, heads, trs, rows):
+    """A chart to draw from this table, or None.
+
+    Opt-in by attribute, deliberately: a chart is a claim about shape, and most
+    tables in a deck are not making one (a roadmap, a contact list, a status
+    grid). `data-chart` on the <table> asks for one; `data-chart-skip` on a <tr>
+    keeps a summary or total row out of the plot while leaving it in the table,
+    which is what a "\u2248 per year" row needs.
+
+      data-chart="col|bar|line"   column (default) / horizontal bar / line
+      data-chart-cats="0"         column index holding the category label
+      data-chart-series="1,2,3"   column indices to plot (default: every column
+                                  whose cells all read as numbers)
+      data-chart-pct="1"          values are percentages (label format)
+      data-chart-table="1"        also emit the table
+    """
+    kind = (t.get("data-chart") or "").strip().lower()
+    if not kind: return None
+    ci = int(t.get("data-chart-cats") or 0)
+
+    keep = [i for i, tr in enumerate(trs)
+            if (tr.get("data-chart-skip") or "").strip() in ("", "0")]
+    body = [rows[i] for i in keep if ci < len(rows[i])]
+    if not body: return None
+
+    want = (t.get("data-chart-series") or "").strip()
+    if want:
+        cols = [int(x) for x in re.split(r"[,\s]+", want) if x.strip().isdigit()]
+    else:
+        ncol = max(len(r) for r in body)
+        cols = [c for c in range(ncol)
+                if c != ci and all(chart_num(r[c] if c < len(r) else "") is not None
+                                   for r in body)]
+    if not cols: return None
+
+    # A category label is read on an axis, not in a table cell, so a row may
+    # carry a shorter one: data-chart-cat="Sep (part)".
+    kept_trs = [trs[i] for i in keep if ci < len(rows[i])]
+    cats = [(kept_trs[r].get("data-chart-cat") or body[r][ci])
+            for r in range(len(body))]
+    series = []
+    for c in cols:
+        name = heads[c] if c < len(heads) else ""
+        vals = [chart_num(r[c] if c < len(r) else "") for r in body]
+        series.append((name or ("Series %d" % (c + 1)), [0.0 if v is None else v for v in vals]))
+    return dict(cats=cats, series=series, kind=kind,
+                pct=(t.get("data-chart-pct") or "").strip() not in ("", "0"))
+
 def card_body(c, sc):
     paras = [sc(p) for p in c.xpath(".//p")]
     lis = [sc(li) for li in c.xpath(".//li")]
@@ -265,8 +363,21 @@ def classify(el, sc):
         t = el if el.tag == "table" else first(el, ".//table")
         if t is None: return None
         heads = [sc(th) for th in t.xpath(".//thead//th")]
-        rows = [[sc(td) for td in tr.xpath("./td")] for tr in t.xpath(".//tbody/tr")]
-        return [("table", dict(heads=heads, rows=rows))] if rows else None
+        trs = t.xpath(".//tbody/tr")
+        rows = [[sc(td) for td in tr.xpath("./td")] for tr in trs]
+        if not rows: return None
+        out = []
+        spec = chart_spec(t, heads, trs, rows)
+        if spec:
+            out.append(("chart", spec))
+            # The chart is the slide unless the table carries detail the chart
+            # cannot (a market column, a metric name) -- then both are emitted,
+            # chart first, because the shape is the point and the numbers are
+            # the evidence for it.
+            if (t.get("data-chart-table") or "").strip() not in ("", "0"):
+                out.append(("table", dict(heads=heads, rows=rows)))
+            return out
+        return [("table", dict(heads=heads, rows=rows))]
 
     if "sc-grid" in k:
         cells = []
@@ -598,6 +709,99 @@ class Emitter:
                             r_.font.bold = True; r_.font.color.rgb = col
         return gf
 
+    # ------------------------------------------------------------ native chart
+    def chart(self, slide, cats, series, kind="col", pct=False, labels=True):
+        """A real PowerPoint chart object, built from the deck's own numbers.
+
+        This is NOT the "never add a shape" rule being broken. That rule forbids
+        faking a layout out of add_shape rectangles and absolutely-positioned
+        textboxes -- a picture of a deck. A chart is the opposite: add_chart
+        writes a native c:chart part with its own embedded worksheet, so the
+        client can click it, edit the numbers, restyle it or change the chart
+        type, exactly as with the native tables above. There is no layout
+        placeholder that can hold one, and inventing a "Chart" layout would not
+        help -- a chart is data, not a text frame.
+
+        cats:   category labels (x axis, or the bar labels on a horizontal bar)
+        series: [(name, [values])] -- one entry draws no legend
+        kind:   col | bar | line   (bar = horizontal, for long category names)
+        """
+        TYPES = {"col": XL_CHART_TYPE.COLUMN_CLUSTERED,
+                 "bar": XL_CHART_TYPE.BAR_CLUSTERED,
+                 "line": XL_CHART_TYPE.LINE_MARKERS}
+        # Excel/PowerPoint draw a horizontal bar chart's first category at the
+        # BOTTOM, so a chronological or ranked list reads bottom-to-top -- Jan
+        # under Feb under Mar. Reversing the data (rather than flipping the axis
+        # orientation, which also throws the value axis to the top of the plot)
+        # puts the first row at the top where a reader looks for it.
+        if kind == "bar":
+            cats = list(cats)[::-1]
+            series = [(n, list(v)[::-1]) for n, v in series]
+
+        cd = CategoryChartData()
+        cd.categories = cats
+        for name, vals in series:
+            cd.add_series(name, vals)
+
+        # Same column the native tables occupy, so a chart slide and a table
+        # slide read as the same document rather than two different templates.
+        h = TB_BOT - TB_T
+        gf = slide.shapes.add_chart(TYPES.get(kind, TYPES["col"]),
+                                    Inches(TB_L), Inches(TB_T),
+                                    Inches(TB_W), Inches(h), cd)
+        ch = gf.chart
+        ch.font.size = Pt(11)
+        ch.font.name = "Inter"
+
+        # A legend for one series is a label repeated beside itself.
+        multi = len(series) > 1
+        ch.has_legend = multi
+        if multi:
+            ch.legend.position = XL_LEGEND_POSITION.TOP
+            ch.legend.include_in_layout = False
+            ch.legend.font.size = Pt(11)
+
+        plot = ch.plots[0]
+        plot.gap_width = 60 if multi else 110
+        if multi:
+            plot.overlap = -10
+        for i, ser in enumerate(plot.series):
+            ink = SERIES_INK[i % len(SERIES_INK)]
+            if kind == "line":
+                ser.format.line.color.rgb = ink
+                ser.format.line.width = Pt(2.25)
+            else:
+                ser.format.fill.solid()
+                ser.format.fill.fore_color.rgb = ink
+
+        # Direct value labels, so the chart is readable without the reader
+        # tracing a bar back to a gridline -- and readable in print.
+        plot.has_data_labels = bool(labels)
+        if labels:
+            dl = plot.data_labels
+            dl.font.size = Pt(10)
+            dl.number_format = '0.0"%"' if pct else "#,##0"
+            dl.number_format_is_linked = False
+            try:
+                dl.position = (XL_LABEL_POSITION.OUTSIDE_END if kind != "line"
+                               else XL_LABEL_POSITION.ABOVE)
+            except Exception:
+                pass   # a stacked/line variant that refuses the position
+
+        # With direct labels on every point the value axis is redundant chrome.
+        try:
+            va = ch.value_axis
+            va.has_major_gridlines = False
+            va.visible = False
+            ca = ch.category_axis
+            ca.has_major_gridlines = False
+            ca.major_tick_mark = XL_TICK_MARK.NONE
+            ca.format.line.color.rgb = MUTED
+            ca.tick_labels.font.size = Pt(11)
+        except Exception:
+            pass
+        return gf
+
 # ---------------------------------------------------------------- block -> slide
 def chunks(seq, n):
     for i in range(0, len(seq), n):
@@ -678,8 +882,12 @@ def emit_blocks(em, head, blocks, fallback=""):
         kind, payload = blocks[i]
         i += 1
         # A trailing note is the slide's Key Message, not a slide of its own.
+        # NOT after a subhead: a subhead emits no slide -- it only names the next
+        # one -- so taking the note here consumed it and then dropped it on the
+        # floor, losing the note entirely. (Latent until section-level headings
+        # started parsing; a YuMOVE spec note disappeared this way.)
         key = None
-        if i < len(blocks) and blocks[i][0] == "note":
+        if kind not in ("subhead", "heading") and i < len(blocks) and blocks[i][0] == "note":
             key = blocks[i][1]; i += 1
 
         # A KPI row immediately before a table rides that table's subtitle rather
@@ -689,7 +897,13 @@ def emit_blocks(em, head, blocks, fallback=""):
         if kind in ("cards", "stats") and key is None and not sub:
             _cards = (payload["cards"] if kind == "cards" else payload)
             _line = kpi_line([((h or ""), (b_ or "")) for h, b_ in _cards])
-            if _line and i < len(blocks) and blocks[i][0] in ("table", "bars"):
+            # Look PAST a subhead: a heading naming the table/chart sits between
+            # the KPI row and the block it belongs to, and stopping at it put the
+            # four numbers back on a slide of their own.
+            _j = i
+            while _j < len(blocks) and blocks[_j][0] in ("subhead", "heading"):
+                _j += 1
+            if _line and _j < len(blocks) and blocks[_j][0] in ("table", "bars", "chart"):
                 pending_kpi = _line
                 continue
 
@@ -700,6 +914,19 @@ def emit_blocks(em, head, blocks, fallback=""):
 
         if kind == "subhead":
             pending_sub = payload
+            continue
+
+        if kind == "heading":
+            # A heading standing above a block. On the section's FIRST slide the
+            # section title is the one in the agenda and the nav, so the heading
+            # names the block as the subtitle instead (only when the section has
+            # no subtitle of its own); from the second slide on it becomes the
+            # title, where the alternative is a bare "<Section> (cont.)". Either
+            # way it yields to a component's own lead label, which follows it.
+            if not first_done and title:
+                if not sub: sub = payload
+            elif not pending_sub:
+                pending_sub = payload
             continue
 
         if kind == "note":
@@ -789,6 +1016,21 @@ def emit_blocks(em, head, blocks, fallback=""):
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
                 em.table(s, heads, part); em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
+            first_done = True; continue
+
+        if kind == "chart":
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            sl = em.slide("Table")          # the chart column layout: title, subtitle, body
+            em.put(sl, "Title", t); em.put(sl, "Subtitle", s_)
+            em.chart(sl, payload["cats"], payload["series"],
+                     kind=payload["kind"], pct=payload["pct"])
+            # A chart has no text frame, so finish()'s empty-placeholder sweep
+            # would otherwise leave the body placeholder on the slide as a
+            # "Click to add text" prompt sitting under the plot.
+            em.finish(sl, key)
+            t, s_ = cont, ""
             first_done = True; continue
 
         if kind == "table":
