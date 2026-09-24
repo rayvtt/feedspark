@@ -165,6 +165,10 @@ import HOURSW from "../../../docs/hours_widget.html";
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
 import SHIPPEDW from "../../../docs/shipped_widget.html";
 import TOUCHW from "../../../docs/touch_widget.html";
+// module-by-module migration badge: a status dot on every nav icon + a pill on the current page,
+// read from the public projection GET /api/migration/status (src/migration.js)
+import MIGW from "../../../docs/migration_widget.html";
+import { migrationView } from "./migration.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -1582,6 +1586,15 @@ async function route(request, env, ctx) {
     // updating different rows at once all survive). The roadmap ITSELF is git (the page); only what
     // people say about it lives here. Same opt-in gate as the page: the owner, or a directory row
     // that names 'transformation' — an unrestricted AM can neither read nor write it.
+    // ---- the MIGRATION STATUS every AM sees (Ray, 24 Sep 2026: "when other AMs start using the
+    // dashboard, each module needs to be highlighted if it has been migrated or not"). A public
+    // projection of the management store — each module's state + planned month, never the notes,
+    // names or checklists — so any signin may read it while /api/transform stays opt-in.
+    if (path === '/api/migration/status' && request.method === 'GET') {
+      const lifted = liftEnvelope(await env.EDITS.get('transform', 'json'), Date.now());
+      return json(migrationView(lifted.data), 200, { 'Cache-Control': 'private, max-age=60' });
+    }
+
     if (path === '/api/transform') {
       const acc = await accessOf(env, request);
       if (!acc.owner && !moduleAllowed(acc.modules, 'transformation')) return json({ error: 'the transformation roadmap is not granted to this signin' }, 403);
@@ -2946,7 +2959,7 @@ async function route(request, env, ctx) {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
-          + '\n' + HOURSW + '\n' + TOUCHW
+          + '\n' + HOURSW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)

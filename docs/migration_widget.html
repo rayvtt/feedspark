@@ -1,0 +1,76 @@
+<!-- FCC-MIGRATION: module-by-module migration badges (Ray, 24 Sep 2026: "We'll ship module by module.
+     Therefore, when other AMs start using the dashboard, each module needs to be highlighted if it has
+     been migrated or not"). Injected on every app page. Reads the public projection
+     GET /api/migration/status ({on, modules:{path:{n,st,m}}}) that management sets on /transformation,
+     and paints (1) a small dot on every module icon in the nav — wherever the nav lives: the topbar, the
+     phone's bottom bar, the ▦ apps bundle — and (2) one pill on the current page's topbar naming its
+     state. Nothing is drawn when management switches the badges off, or when the read fails: a missing
+     badge must never be mistaken for "not migrated". Cached 5 min per tab (sessionStorage). -->
+<style>
+  #tb-modules a.tbm,#fcc-apps-menu a{position:relative}
+  .fcc-mig-dot{position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 2px var(--paper,#fff)}
+  .fcc-mig-dot.legacy{background:var(--paper,#fff);box-shadow:inset 0 0 0 1.6px #9AA3AE,0 0 0 2px var(--paper,#fff)}
+  .fcc-mig-dot.owned{background:#2563EB}
+  .fcc-mig-dot.migrating{background:#F5A623}
+  .fcc-mig-dot.migrated{background:#15803D}
+  .fcc-mig-pill{flex:none;display:inline-flex;align-items:center;gap:6px;font:800 11.5px/1 Lato,system-ui,sans-serif;padding:6px 10px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);white-space:nowrap;cursor:help;margin-left:8px}
+  .fcc-mig-pill i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+  .fcc-mig-pill.legacy i{box-shadow:inset 0 0 0 1.6px #9AA3AE}
+  .fcc-mig-pill.owned i{background:#2563EB}.fcc-mig-pill.owned{color:#1D4ED8;border-color:rgba(37,99,235,.35)}
+  .fcc-mig-pill.migrating i{background:#F5A623}.fcc-mig-pill.migrating{color:#B1550A;border-color:rgba(245,166,35,.55)}
+  .fcc-mig-pill.migrated i{background:#15803D}.fcc-mig-pill.migrated{color:#15803D;border-color:rgba(21,128,61,.4)}
+  [data-theme=dark] .fcc-mig-dot{box-shadow:0 0 0 2px #1C1F27}
+  [data-theme=dark] .fcc-mig-dot.legacy{background:#1C1F27;box-shadow:inset 0 0 0 1.6px #828D9C,0 0 0 2px #1C1F27}
+  [data-theme=dark] .fcc-mig-pill{background:#20242E;border-color:#2C3039;color:#B9BEC7}
+  [data-theme=dark] .fcc-mig-pill.owned{color:#9DBDF3}[data-theme=dark] .fcc-mig-pill.migrating{color:#F0A44E}[data-theme=dark] .fcc-mig-pill.migrated{color:#48D07E}
+  @media(max-width:760px){.fcc-mig-pill{display:none}#tb-modules a.tbm .fcc-mig-dot{right:auto;left:calc(50% + 7px);top:5px}}
+</style>
+<script>
+(function(){
+  if(window.__fccMig)return; window.__fccMig=1;
+  var L={legacy:'Not migrated yet',owned:'On FeedSpark’s account',migrating:'Migrating now',migrated:'Migrated'};
+  var WHY={legacy:'still runs on the original hosting',owned:'runs on FeedSpark’s own account; its data has not moved yet',
+    migrating:'its data is being moved onto FeedSpark servers now',migrated:'runs on FeedSpark servers'};
+  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function mon(k){ var p=String(k||'').split('-'); return p.length===2?MN[+p[1]-1]+' '+p[0]:''; }
+  function pathOf(href){ try{ var u=new URL(href,location.origin); if(u.origin!==location.origin)return null; return u.pathname.replace(/\/+$/,'')||'/'; }catch(e){ return null; } }
+  function modOf(p,mods){ if(!p)return null; if(mods[p])return p; var best=null;
+    Object.keys(mods).forEach(function(k){ if(k!=='/'&&p.indexOf(k+'/')===0&&(!best||k.length>best.length))best=k; }); return best; }
+  var DATA=null;
+  function tip(r){ return r.n+' '+WHY[r.st]+(r.st!=='migrated'&&r.m?' · planned '+mon(r.m):''); }
+  function clear(){ document.querySelectorAll('.fcc-mig-dot,.fcc-mig-pill').forEach(function(e){ e.remove(); }); }
+  function paint(){
+    if(!DATA||!DATA.on||!DATA.modules){ clear(); return; }
+    var mods=DATA.modules;
+    document.querySelectorAll('a.tbm[href],#fcc-apps-menu a[href]').forEach(function(a){
+      var k=modOf(pathOf(a.getAttribute('href')),mods), d=a.querySelector('.fcc-mig-dot');
+      if(!k){ if(d)d.remove(); return; }
+      var r=mods[k]; if(!d){ d=document.createElement('span'); d.setAttribute('aria-hidden','true'); a.appendChild(d); }
+      var c='fcc-mig-dot '+r.st; if(d.className!==c)d.className=c;
+      if(!a.hasAttribute('data-mig-t'))a.setAttribute('data-mig-t',a.getAttribute('title')||'');
+      var t=a.getAttribute('data-mig-t')+(a.getAttribute('data-mig-t')?' · ':'')+L[r.st];
+      if(a.getAttribute('title')!==t)a.setAttribute('title',t);
+    });
+    var k=modOf(pathOf(location.pathname),mods), bar=document.querySelector('.topbar-in'), pill=document.querySelector('.fcc-mig-pill');
+    if(!k||!bar){ if(pill)pill.remove(); return; }
+    var r=mods[k];
+    if(!pill){ pill=document.createElement('span'); pill.setAttribute('role','note');
+      var th=document.getElementById('theme-tgl'); if(th&&th.parentNode===bar)bar.insertBefore(pill,th); else bar.appendChild(pill); }
+    var txt=L[r.st]+(r.st!=='migrated'&&r.st!=='migrating'&&r.m?' · '+mon(r.m):'');
+    pill.className='fcc-mig-pill '+r.st; pill.title='Migration to FeedSpark servers: this module '+tip(r).replace(r.n+' ','')+'.';
+    if(pill.textContent!==txt){ pill.innerHTML='<i></i>'; pill.appendChild(document.createTextNode(txt)); }
+  }
+  function load(){
+    try{ var c=JSON.parse(sessionStorage.getItem('fcc-mig')||'null'); if(c&&Date.now()-c.t<300000){ DATA=c.d; paint(); return; } }catch(e){}
+    fetch('/api/migration/status',{credentials:'same-origin'}).then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){ if(!d||typeof d!=='object'||!d.modules)return; DATA=d; try{ sessionStorage.setItem('fcc-mig',JSON.stringify({t:Date.now(),d:d})); }catch(e){} paint(); })
+      .catch(function(){});
+  }
+  // the phone layer and the ▦ bundle move the nav's anchors after boot — repaint when they do
+  var pend=0; function soon(){ if(pend)return; pend=1; setTimeout(function(){ pend=0; paint(); },120); }
+  function boot(){ load(); try{ new MutationObserver(function(ms){ for(var i=0;i<ms.length;i++){ if(ms[i].addedNodes&&ms[i].addedNodes.length){ soon(); return; } } }).observe(document.body,{childList:true,subtree:true}); }catch(e){} }
+  // /transformation writes a module's status and wants the badges to follow at once
+  window.addEventListener('fcc-migration',function(e){ try{ sessionStorage.removeItem('fcc-mig'); }catch(x){} if(e&&e.detail&&e.detail.modules){ DATA=e.detail; paint(); } else load(); });
+  if(document.readyState!=='loading')boot(); else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>

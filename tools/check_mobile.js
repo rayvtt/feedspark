@@ -23,7 +23,7 @@ const SHOTS = process.argv.indexOf('--shots') >= 0 ? process.argv[process.argv.i
 // pages whose control scale has been set — add a page here in the PR that tidies it
 const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 // /roas reads its book from /api/roas (KV, nothing committed) — the synthetic stub in
 // tools/roas_stub.js lets the scorecards, trend, movers and drill table render so the overflow

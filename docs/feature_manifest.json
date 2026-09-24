@@ -10423,6 +10423,54 @@
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "id=\"copy-upd\"",
       "pr": 0
+    },
+    {
+      "name": "transformation: public migration status route before the opt-in gate",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/migration/status' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "transformation: migration badge widget injected on every app page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TOUCHW + '\\n' + MIGW",
+      "pr": 0
+    },
+    {
+      "name": "transformation: migration seed + public projection",
+      "file": "cloudflare/feedspark-deck/src/migration.js",
+      "pattern": "export function migrationView(data)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: badge widget draws nothing when off or unread",
+      "file": "docs/migration_widget.html",
+      "pattern": "if(!DATA||!DATA.on||!DATA.modules){ clear(); return; }",
+      "pr": 0
+    },
+    {
+      "name": "transformation: editable roadmap \u2014 overrides laid over the seed",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "eff:function(coll,seed,S,idk)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: per-card checklists",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "checklist:function(owner,seed,S)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: drag a card between months",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "document.addEventListener('drop',function(e){ if(!DRAG)return;",
+      "pr": 0
+    },
+    {
+      "name": "transformation: module migration board",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "id=\"mods\"",
+      "pr": 0
     }
   ]
 }
