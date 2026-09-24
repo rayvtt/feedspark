@@ -605,6 +605,70 @@ Three rules keep it from becoming a number that quietly went missing:
 3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
    that card exists to answer; this toggle governs the chart below it and nothing else.
 
+### The legend's percentages add up to 100
+
+> Ray, 23 Sep 2026, ringing the right-hand column: *"This percentage number here should always
+> accumulate to 100%, if that makes sense. It makes more sense to show that. Don't mention the
+> percentage billable. The top two rows, billable and non-billable, are good enough."*
+
+That column used to be each row's **own billable ratio** — twelve unrelated numbers under a
+`% billable` head, none of which could be added to anything, answering a question the two head
+rows directly above it already answer. It is now **the row's share of what the chart draws**, which
+is what a legend beside a chart is actually asked.
+
+**The base is the sum of these rows**, not the view's total hours, because that is the only figure
+they are guaranteed to add to: the tail is already folded into *Other (N more)* carrying its hours,
+a series put away is already out of `mv()`, and hidden untagged rows are already out of the
+population. Any of those would otherwise leave a column stopping short of 100 with nothing on
+screen saying why.
+
+The head says which base it is on — `% of hours`, or `% of billable` / `% of non-billable` when a
+series is put away. On a **tag split** it reads `% of tagged`, because a task can carry several
+tags: those rows count some hours twice, so they add to 100% of *themselves*, not of the book, and
+the column's tooltip says so rather than quietly meaning two different things on two dimensions.
+
+Each row is rounded to **its own true share**, so twelve of them can read 99.8 rather than a flat
+100. That is deliberate: nudging a row to force an exact total would put the legend a decimal away
+from the percentage the donut itself draws, and a visible disagreement between two numbers for one
+slice is worse than a column reading 99.8. (`check_tmviews` allows N×0.05 of drift and asserts the
+legend and the ring print the *same* share for every slice.)
+
+### What is inside "Other"
+
+> Ray, 24 Sep 2026, ringing the fold on a twelve-group Schuh donut: *"When hovering over the
+> grouped Task, for example, it should display a pop-up of 10 tasks names that sit under Other."*
+
+The fold is the one mark on the chart whose name is a **count rather than a thing** — 201.5 h and
+35% of the ring, labelled *Other (213 more)*. It is therefore the mark a reader most needs to open,
+and it was the only one with nothing behind it: `groupBy` summed the tail and threw the tail away.
+
+It now keeps the tail's own sub-groups as `members`. Hovering the fold — its **legend row** or its
+**mark** — opens ten names, biggest first, each with its hours, and a `+ N more` line carrying
+whatever is left.
+
+Four things worth knowing:
+
+- **Ranked by the measure the chart is drawing**, not by raw hours. On a billable-only donut a list
+  ranked by total hours would put the names in an order the ring contradicts.
+- **`rest` is already sorted** when the cut is made, so the first ten *are* the biggest ten — no
+  second sort that could rank them differently from the chart they came off.
+- **The remainder is counted, not dropped.** A list that stops at ten without saying so is a fold
+  inside a fold.
+- **Sub-groups, not rows.** A surface wants the names and their hours; holding the raw rows of a
+  20,000-task tail to print ten names would be paying for the whole book to answer a tooltip.
+
+One builder feeds the legend row and the mark, so the rail and the ring can never name a different
+ten. The pop-up may sit **above** the cursor when a ten-row list would otherwise run off the bottom
+of the window.
+
+**The trap this shipped with, and why only a rendered test caught it.** `data-t` is a
+double-quoted attribute that the tooltip reads back with `getAttribute` and parses as HTML — so one
+double quote in the pop-up's own markup closes the attribute and spills the rest of the mark into
+the page. It did exactly that: every donut path broke apart and its `d="M215.99 48.31A119…"`
+printed as body text, while every string in the source still read correctly. The pop-up's markup
+uses single-quoted attributes, and `check_tmviews` asserts the donut still has its paths and that
+no raw SVG source is printing as page text.
+
 ### One row, three menus
 
 > Ray, 23 Sep 2026, counting the controls on the chart card: *"you see how many button there are

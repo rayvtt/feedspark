@@ -9949,6 +9949,30 @@
    "pattern": "return list.slice().sort(schedOrder)",
    "pr": 520,
    "min": 1
+  },
+  {
+   "name": "Task Manager: the chart legend's percentages are shares of one whole, not per-row billable ratios",
+   "file": "docs/FeedSpark_TaskManager.html",
+   "pattern": "% of tagged",
+   "pr": 0
+  },
+  {
+   "name": "Task Manager: the fold keeps its members so a surface can say what \"Other\" is made of",
+   "file": "cloudflare/feedspark-deck/src/taskbook.js",
+   "pattern": "members: rest,",
+   "pr": 0
+  },
+  {
+   "name": "Task Manager: hovering the fold opens ten names and counts the rest",
+   "file": "docs/FeedSpark_TaskManager.html",
+   "pattern": "FOLD_SHOW",
+   "pr": 0
+  },
+  {
+   "name": "Task Manager: the fold pop-up's markup is single-quoted, because it is built into a double-quoted data-t",
+   "file": "docs/FeedSpark_TaskManager.html",
+   "pattern": "<div class='ft'>",
+   "pr": 0
   }
  ]
 }

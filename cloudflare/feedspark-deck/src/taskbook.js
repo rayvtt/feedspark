@@ -992,6 +992,16 @@ export function groupBy(rows, dim, cap, measure) {
       k: 'Other (' + rest.length + ' more)', n: fold0.n, bill: r2(fold0.bill),
       nonbill: r2(fold0.nonbill), hours: r2(fold0.hours),
       billPct: fold0.hours ? Math.round((fold0.bill / fold0.hours) * 1000) / 10 : 0, fold: rest.length,
+      /* WHAT IS ACTUALLY INSIDE THE FOLD (Ray, 24 Sep 2026, ringing "Other (213 more)": "When
+         hovering over the grouped Task, for example, it should display a pop-up of 10 tasks names
+         that sit under Other"). The fold used to keep only a total, so the biggest single mark on
+         a chart of 213 task names was the one thing nobody could ask a question about.
+         `rest` is ALREADY RANKED — out is sorted before the cut — so a surface takes the first N
+         and has the biggest N, with no second sort that could rank them differently from the
+         chart they came off. Kept as the sub-GROUPS, not their rows: a surface wants the names
+         and their hours, and holding the raw rows of a 20,000-task tail to print ten names would
+         be paying for the whole book to answer a tooltip. */
+      members: rest,
     });
     out = keep;
   }
