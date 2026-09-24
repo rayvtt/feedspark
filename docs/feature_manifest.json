@@ -9714,6 +9714,36 @@
    "pr": 0
   },
   {
+   "name": "Task Manager: a bare reload restores the search text, split, form and tab — the same URL-param-or-remembered-pick rule as meas/lab (Ray, 24 Sep 2026: \"the text bar … should stay there unless changed … a preselected option on a certain module should also remain after refresh, not result in a completely blank page\")",
+   "file": "docs/FeedSpark_TaskManager.html",
+   "pattern": "fcc-tm-q",
+   "pr": 0
+  },
+  {
+   "name": "Feed Lab / Volume / KWCal / AI Quote: the brand picker remembers this device's last pick across a bare reload",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "fcc-fl-client",
+   "pr": 0
+  },
+  {
+   "name": "Volume: the brand picker remembers this device's last pick across a bare reload",
+   "file": "docs/FeedSpark_Volume.html",
+   "pattern": "fcc-vol-client",
+   "pr": 0
+  },
+  {
+   "name": "KWCal: the brand picker remembers this device's last pick across a bare reload",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "fcc-kw-client",
+   "pr": 0
+  },
+  {
+   "name": "AI Quote: the brand picker remembers this device's last pick across a bare reload",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "fcc-aiq-client",
+   "pr": 0
+  },
+  {
    "name": "Image library: the shot code is the fragment of the URL that varies within one product",
    "file": "docs/image_engine.js",
    "pattern": "function shotTokens",

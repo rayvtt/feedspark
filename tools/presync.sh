@@ -113,6 +113,10 @@ echo "── validating: FS Task Manager (query grammar, billable split, page/en
 node tools/test_reporttasks.mjs >/dev/null
 echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
 
+echo "── validating: a bare reload does not blank the page (Task Manager controls, four brand pickers)"
+node tools/test_uistate.mjs >/dev/null
+echo "   ✓ URL param wins, else the device's last pick, else the page's own default — never blank"
+
 echo "── validating: the shipped panel (build log slide-over)"
 node tools/test_shipped.mjs >/dev/null
 echo "   ✓ silent on first run, announces only new merges, prompts to close the tab"

@@ -337,6 +337,13 @@ else
   echo "   ✗ a served docs/*.js is NOT a Text module — see node tools/check_textmodules.js"; FAIL=1
 fi
 
+echo "── qa-gate 3z2/7: a bare reload does not blank the page (Task Manager controls, four brand pickers)"
+if node tools/test_uistate.mjs >/dev/null 2>&1; then
+  echo "   ✓ URL param wins, else the device's last pick, else the page's own default — never blank"
+else
+  echo "   ✗ UI-state persistence harness FAILED — see node tools/test_uistate.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
