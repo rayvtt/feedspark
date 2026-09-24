@@ -237,5 +237,28 @@ console.log('\n\u00b7 the badge renders it');
   ok('and links through to the full cadence for that brand', /\/schedule\?b=/.test(W));
 }
 
+console.log('\n-- market order (Ray, 24 Sep 2026): grouped by market, sorted correctly --');
+{
+  const lift = (src, name) => { const m = src.match(new RegExp('function ' + name + '\\([^)]*\\)\\{[\\s\\S]*?\\n(?=  (?:function|var|//))')); return m ? m[0] : ''; };
+  const WF = readFileSync(new URL('../docs/FeedSpark_Workflow.html', import.meta.url), 'utf8');
+  const SP = readFileSync(new URL('../docs/FeedSpark_Schedule.html', import.meta.url), 'utf8');
+  const wfRank = lift(WF, 'mktRank'), wfOrder = lift(WF, 'schedOrder'), spRank = lift(SP, 'mktRank'), spOrder = lift(SP, 'schedOrder');
+  ok('both pages carry mktRank + schedOrder', wfRank && wfOrder && spRank && spOrder);
+  ok('the two copies are byte-identical (the band and the page can never disagree)', wfRank === spRank && wfOrder === spOrder);
+  const KORD = ['kw', 'titles', 'pt', 'social', 'short', 'tagging'];
+  const fns = new Function('KORD', wfRank + '\n' + wfOrder + '\nreturn { mktRank, schedOrder };')(KORD);
+  const rows = [
+    { kind: 'social', mkt: 'gb', streak: 10 }, { kind: 'pt', mkt: 'gb', streak: 4 }, { kind: 'kw', mkt: 'gb', streak: 0 }, { kind: 'kw', mkt: 'ie', streak: 0 },
+    { kind: 'pt', mkt: 'ie', streak: 0 }, { kind: 'short', mkt: 'de', streak: 0 }, { kind: 'social', mkt: 'ie', streak: 0 }, { kind: 'titles', mkt: 'de', streak: 0 }, { kind: 'titles', mkt: 'gb', streak: 0 },
+  ].sort(fns.schedOrder).map((r) => r.mkt + ':' + r.kind + (r.streak ? '!' + r.streak : ''));
+  ok('Schuh (the screenshot): GB first, then DE, then IE — never interleaved', rows.map((x) => x.split(':')[0]).join(',') === 'gb,gb,gb,gb,de,de,ie,ie,ie', rows);
+  ok('inside GB the paused tasks lead, longest pause first, then running in task order (kw → titles)', rows.slice(0, 4).join(' ') === 'gb:social!10 gb:pt!4 gb:kw gb:titles', rows);
+  ok('inside DE: titles before short (the schedule\'s own order, not alphabetical)', rows.slice(4, 6).join(' ') === 'de:titles de:short', rows);
+  ok('inside IE: kw, pt, social', rows.slice(6).join(' ') === 'ie:kw ie:pt ie:social', rows);
+  ok('UK is the home market too; EU sorts among the others alphabetically', fns.mktRank('UK') === '0' && fns.mktRank('eu') > fns.mktRank('de') && fns.mktRank('eu') < fns.mktRank('us'));
+  ok('the band renders one header per market with its own count', /class="sw-mkt"/.test(WF) && /' paused':' · all running'/.test(WF));
+  ok('the page falls back to this order when one brand is on screen with the default sort', /F\.brand!=='\*'\) return list\.slice\(\)\.sort\(schedOrder\)/.test(SP));
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
