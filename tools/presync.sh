@@ -84,6 +84,10 @@ echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
 node tools/test_i18n.mjs >/dev/null
 echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 
+echo "── validating: AI transformation roadmap (shape + progress maths + opt-in gate + no £ on the page)"
+node tools/test_transform.mjs >/dev/null
+echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
+
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
 node tools/test_tm.mjs >/dev/null
 echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
