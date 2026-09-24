@@ -10050,6 +10050,36 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "<div class='ft'>",
       "pr": 0
+    },
+    {
+      "name": "worker: security headers on every response (CSP/XFO/nosniff/HSTS)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function secHeaders(",
+      "pr": 0
+    },
+    {
+      "name": "worker: the router is a function so every response passes one exit",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function route(request, env, ctx)",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the email-triage escaper neutralises a quote (XSS fix)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "&#39;",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: SRI pinned on the PDF libraries",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "el.integrity = sri",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: SRI pinned on the PDF libraries",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "el.integrity=sri",
+      "pr": 0
     }
   ]
 }

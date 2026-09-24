@@ -230,7 +230,7 @@ This is the base taxonomy: incoming tasks map to a type here, so briefs, hours a
   if(!brands.length){ document.getElementById('live').style.display='none'; return; }
   var FEEDS=[['tech','Feed & technical'],['opt','Optimisation'],['test','Testing'],['creative','Creative / PPC'],['channel','Channels'],['account','Account & strategy']];
   var MAP={technical:'tech',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt',test:'test',image:'creative',custom_label:'creative',channel:'channel',account:'account'};
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   // look-back: use the per-window aggregates baked by the builder; brands with no dated
   // tasks only carry "all", so a window selection transparently falls back to all-time.
   function windowable(b,win){ var cw=(PT[b]||{}).catsw||{}; return win==='all' || !!cw[win]; }

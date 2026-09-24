@@ -162,6 +162,13 @@ else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: output escaping (every esc() neutralises a quote — XSS)"
+if node tools/test_escaping.mjs >/dev/null 2>&1; then
+  echo "   ✓ escaping harness"
+else
+  echo "   ✗ escaping harness FAILED — see node tools/test_escaping.mjs"; FAIL=1
+fi
+
 echo "── qa-gate: one audit colour legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)"
 if node tools/test_bands.mjs >/dev/null 2>&1; then
   echo "   ✓ /golden, /feedlab, the dossier and the Playbook rail band every audit number the same way"
