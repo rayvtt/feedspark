@@ -52,14 +52,23 @@ export const MODULES = [
   { slug: 'schedule', label: 'Scheduled work', path: '/schedule' },
   { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
   { slug: 'pricer', label: 'Pricer', path: '/pricer' },
+  // AI TRANSFORMATION ROADMAP (Ray, 24 Sep 2026: "develop a roadmap for a live dashboard migration so
+  // I can keep track with my management and senior team … manage it together with my other two CTOs
+  // and CFO"). A MANAGEMENT page, not an AM tool, so it is OPT-IN: an unrestricted signin (modules
+  // null — today every AM who was never dialled down) does NOT get it; only the owner and a directory
+  // row that names 'transformation' explicitly. Without this the five AMs joining would open the
+  // board where the migration and the fixed-core decision are negotiated, on day one.
+  { slug: 'transformation', label: 'Transformation', path: '/transformation', optIn: true },
 ];
+// slugs an unrestricted signin (modules null) does NOT receive — they must be granted by name
+export const OPT_IN_MODULES = MODULES.filter((m) => m.optIn).map((m) => m.slug);
 export const MODULE_PATHS = MODULES.reduce((m, x) => { m[x.path] = x.slug; return m; }, {});
 const MODULE_SLUGS = MODULES.map((x) => x.slug);
 
 // is this module allowed for the resolved scope? modules null/undefined = all (owner or an
 // unconfigured signin); an array = membership, so [] locks every module. Unknown slug = no.
 export function moduleAllowed(modules, slug) {
-  if (!Array.isArray(modules)) return true;
+  if (!Array.isArray(modules)) return OPT_IN_MODULES.indexOf(slug) < 0;
   return modules.indexOf(slug) >= 0;
 }
 

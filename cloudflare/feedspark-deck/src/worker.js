@@ -111,6 +111,9 @@ import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 // /playbook 301s to /workflow?pb=1 so every old link and bookmark still lands on it.
 import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
 import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
+// the AI transformation roadmap — migration off personal GitHub/Cloudflare onto FeedSpark-owned
+// servers + the AM adoption plan, tracked live with management (opt-in module, see access.js)
+import TRANSFORM_PAGE from "../../../docs/FeedSpark_Transformation.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -243,6 +246,7 @@ const PAGES = {
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
+  '/transformation': { html: TRANSFORM_PAGE, slug: 'transformation' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -496,7 +500,7 @@ async function route(request, env, ctx) {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/materials': 'material-save',
-        '/api/briefs': 'briefs-save', '/api/state': 'state-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
+        '/api/briefs': 'briefs-save', '/api/state': 'state-save', '/api/buildqueue': 'queue-save', '/api/transform': 'transform-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
@@ -1570,6 +1574,18 @@ async function route(request, env, ctx) {
     // multi-count query — these routes just read/ack the golden* stores.
     if (path.startsWith('/api/golden/')) {
       const r = await goldenRoutes(env, request, url);
+      if (r) return r;
+    }
+
+    // ---- AI transformation roadmap: the LIVE status of every milestone, decision, KPI and risk on
+    // /transformation (KV `transform`, kvmerge per key like the build queue, so Ray, Andy and Matt
+    // updating different rows at once all survive). The roadmap ITSELF is git (the page); only what
+    // people say about it lives here. Same opt-in gate as the page: the owner, or a directory row
+    // that names 'transformation' — an unrestricted AM can neither read nor write it.
+    if (path === '/api/transform') {
+      const acc = await accessOf(env, request);
+      if (!acc.owner && !moduleAllowed(acc.modules, 'transformation')) return json({ error: 'the transformation roadmap is not granted to this signin' }, 403);
+      const r = await mapStoreRoute(env, request, 'transform', {});
       if (r) return r;
     }
 

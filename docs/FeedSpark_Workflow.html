@@ -4962,12 +4962,17 @@ aside.ck[hidden]{display:none}
       if(msel)row.modules.forEach(function(s){msel[s]=1;});
       md.innerHTML='<span class="acl-mlbl">Modules</span>';
       var mall=document.createElement('button'); mall.type='button'; mall.className='acl-mall'; md.appendChild(mall);
-      function syncAll(){ var on=md.querySelectorAll('.acl-mchip.on').length; mall.textContent=(on===ACL_MODULES.length&&on>0)?'None':'All'; }
+      // OPT-IN modules (m.optIn — the management-only Transformation roadmap) are never implied by an
+      // unrestricted row and never swept in by All/None: each is granted by its own chip, on purpose
+      var STD=ACL_MODULES.filter(function(m){return !m.optIn;});
+      function syncAll(){ var on=md.querySelectorAll('.acl-mchip.on:not(.opt)').length; mall.textContent=(on===STD.length&&on>0)?'None':'All'; }
       ACL_MODULES.forEach(function(m){ var ch=document.createElement('button'); ch.type='button';
-        ch.className='acl-chip acl-mchip'+((!msel||msel[m.slug])?' on':''); ch.setAttribute('data-mod',m.slug); ch.textContent=m.label;
+        var has=m.optIn?!!(msel&&msel[m.slug]):(!msel||msel[m.slug]);
+        ch.className='acl-chip acl-mchip'+(m.optIn?' opt':'')+(has?' on':''); ch.setAttribute('data-mod',m.slug); ch.textContent=(m.optIn?'🔒 ':'')+m.label;
+        if(m.optIn)ch.title='Management only — never included by All; grant it to this person on purpose';
         ch.onclick=function(){ ch.classList.toggle('on'); syncAll(); }; md.appendChild(ch); });
-      mall.onclick=function(){ var on=md.querySelectorAll('.acl-mchip.on').length, want=on<ACL_MODULES.length;
-        md.querySelectorAll('.acl-mchip').forEach(function(ch){ ch.classList.toggle('on',want); }); syncAll(); };
+      mall.onclick=function(){ var on=md.querySelectorAll('.acl-mchip.on:not(.opt)').length, want=on<STD.length;
+        md.querySelectorAll('.acl-mchip:not(.opt)').forEach(function(ch){ ch.classList.toggle('on',want); }); syncAll(); };
       if(!ACL_MODULES.length)md.style.display='none';
       syncAll(); d.appendChild(md);
       return d; }

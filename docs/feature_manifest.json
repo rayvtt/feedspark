@@ -10327,6 +10327,48 @@
       "file": "tools/check_csp.js",
       "pattern": "control: without blob: in script-src, ",
       "pr": 0
+    },
+    {
+      "name": "transformation: opt-in management module in the access registry",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "optIn: true",
+      "pr": 0
+    },
+    {
+      "name": "transformation: moduleAllowed withholds opt-in modules from an unrestricted signin",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "return OPT_IN_MODULES.indexOf(slug) < 0;",
+      "pr": 0
+    },
+    {
+      "name": "transformation: /api/transform gated on the module grant",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "moduleAllowed(acc.modules, 'transformation')",
+      "pr": 0
+    },
+    {
+      "name": "transformation: page served at /transformation",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/transformation': { html: TRANSFORM_PAGE",
+      "pr": 0
+    },
+    {
+      "name": "transformation: Access panel keeps opt-in chips out of All",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "acl-mchip:not(.opt)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: roadmap data + engine markers",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "/* TX:ENGINE:START */",
+      "pr": 0
+    },
+    {
+      "name": "transformation: copy-status-update for the management email",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "id=\"copy-upd\"",
+      "pr": 0
     }
   ]
 }
