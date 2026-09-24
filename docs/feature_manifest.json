@@ -10191,6 +10191,12 @@
       "pr": 530
     },
     {
+      "name": "Business case: the ask covers Ray's own compensation, not just infra reimbursement",
+      "file": "docs/FCC_Business_Case_Brief.html",
+      "pattern": "formally product owner for the period",
+      "min": 1
+    },
+    {
       "name": "Leadership portfolio: the engine builds each feed's day-by-day series",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "export function histSeries(hist, profile, opts) {",
