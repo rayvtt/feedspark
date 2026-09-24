@@ -291,5 +291,87 @@ console.log('── the agent runs once a day, from 09:00 London');
   ok('a one-feed dispatch never marks the day done', /if \(!ONLY\) await post\(\{ goldendaily: \{ day: clock\.day, finish: true,/.test(read('tools/golden_daily.mjs')));
 }
 
+console.log('── the portfolio view: every feed day by day, off the same engine (Ray, 24 Sep 2026)');
+{
+  const R = (t, patch, m) => Object.assign(LG.histReading(snap(t, Object.assign({}, COV, patch || {}))), m ? { m: 1 } : {});
+  const prof = LG.profileFor('Reiss', {});
+  const iso = (t) => LG.histDay(t);
+  const today = iso(T0 + 9 * DAY);
+  // 1–10 Sep: scanned every day but the 5th; material moves on the 3rd; on the 7th an automatic
+  // scan reads 90, then a hand-run one reads 20 — the day is the hand-run one
+  const h = { v: 1, r: [R(T0), R(T0 + 2 * DAY, { material: 70 }), R(T0 + 6 * DAY, { material: 90 }), R(T0 + 6 * DAY + 3600e3, { material: 20 }, true)],
+    s: [0, 1, 2, 3, 5, 6, 7, 8, 9].map((d) => iso(T0 + d * DAY)),
+    q: [{ t: T0, q: 70, air: 55, tier: 2 }, { t: T0 + 4 * DAY, q: 75 }, { t: T0 + 4 * DAY + 60e3, q: 60, air: 57 }, { t: T0 + 4 * DAY + 120e3, q: 72, m: 1 }] };
+  const s = LG.histSeries(h, prof, { days: 30, today });
+  const sc = (r) => LG.goldenScore(LG.attrsFromCov(r.cov, r.sc, r.rows), prof).score;
+  ok('the series starts at the first measured day, not thirty days of nothing', s.start === iso(T0) && s.gs.length === 10, [s.start, s.gs.length]);
+  ok('a day is the score of that day\'s reading, re-scored under the brand\'s profile', s.gs[0] === sc(h.r[0]) && s.gs[2] === sc(h.r[1]));
+  ok('a scanned day with no move carries the last reading', s.gs[1] === s.gs[0] && s.gs[3] === s.gs[2]);
+  ok('a day nobody scanned is a gap, never a copy', s.gs[4] === null, s.gs);
+  ok('a hand-run reading sets its day over an automatic one', s.gs[6] === sc(h.r[3]) && s.gs[6] !== sc(h.r[2]), [s.gs[6], sc(h.r[2]), sc(h.r[3])]);
+  ok('content quality is the day\'s analysis — hand-run first — and a gap on a day with none', s.q[0] === 70 && s.q[4] === 72 && s.q[1] === null, s.q);
+  ok('AI-readiness reads the analyses that carry it', s.air[0] === 55 && s.air[4] === 57, s.air);
+  ok('the summary is first → last measured day in the window', s.sum.gs.from === s.gs[0] && s.sum.gs.now === s.gs[9] && s.sum.gs.fromD === iso(T0) && s.sum.gs.nowD === today && s.sum.gs.n === 9, s.sum.gs);
+  ok('…its direction ignores a move under half a point', LG.PORTFOLIO_FLAT === 0.5 && s.sum.q.dir === 'up' && s.sum.q.delta === 2, s.sum.q);
+  ok('the latest AI tier rides along', s.tier === 2);
+  // the estate's own reading closes the line where the estate's score is
+  const live = { t: T0 + 9 * DAY + 3600e3, rows: 1000, cov: Object.assign({}, COV, { material: 20.3 }) };
+  const sl = LG.histSeries(h, prof, { days: 30, today, live });
+  ok('the index\'s current reading closes today at the estate\'s own score', sl.gs[9] === sc(live), [sl.gs[9], sc(live)]);
+  // a basis change: the line keeps only what was measured the way today's reading is
+  const hb = { v: 1, r: [R(T0), Object.assign(R(T0 + 3 * DAY), { sc: { color: 20 } })], s: [0, 1, 2, 3].map((d) => iso(T0 + d * DAY)), q: [] };
+  const sb = LG.histSeries(hb, prof, { days: 30, today: iso(T0 + 3 * DAY) });
+  ok('a reading on another basis is left out, not drawn as a jump nobody made — the line starts where today\'s measurement does',
+    sb.start === iso(T0 + 3 * DAY) && sb.gs.length === 1 && sb.gs[0] != null && sb.sum.gs.delta === null, [sb.start, sb.gs]);
+  const empty = LG.histSeries(null, prof, { days: 30, today });
+  ok('no record is no series — nothing invented', empty.start === null && empty.sum.gs.now === null && empty.sum.q.now === null);
+  const big = { v: 1, r: [], s: [], q: [] };
+  for (let d = 0; d < 365; d++) { big.r.push(R(T0 + d * DAY, { material: 40 + (d % 7) })); big.s.push(iso(T0 + d * DAY)); }
+  const t0 = Date.now(); const sy = LG.histSeries(big, prof, { days: 365, today: iso(T0 + 364 * DAY) }); const ms = Date.now() - t0;
+  ok('a year of daily readings is 365 values and cheap to build (49 feeds in one request)', sy.gs.length === 365 && ms < 200, ms);
+  ok('the window is bounded', LG.histSeries(big, prof, { days: 99999, today: iso(T0 + 364 * DAY) }).days === LG.HIST_DAYS_MAX);
+
+  // THE PAGE'S OWN HISTORY MODEL READS THE SAME DAYS — lifted by name from /golden, run on the same
+  // record: a tile on Leadership can never disagree with the Score history card it opens
+  const page = read('docs/FeedSpark_GoldenRecord.html');
+  const cut = (a, b) => { const i = page.indexOf(a), j = page.indexOf(b, i); if (i < 0 || j < 0) throw new Error('page block not found: ' + a); return page.slice(i, j); };
+  const twin = new Function(cut('  var SPEC = [', '  // the category each scoped') + cut('  function scopeShare(a)', '  // industry benchmark from the estate index') +
+    cut('  function attrsFromCov(cov, sc, rows)', '  function rescoreEstate()') + cut('  function hDay(t)', '  function histChart(m)') +
+    '; return { goldenScore: goldenScore, attrsFromCov: attrsFromCov, histModel: histModel };')();
+  const profs = [prof, LG.profileFor('YuMOVE', {}), { expected: ['material', 'pattern'], waived: ['size_type'] }];
+  ok('the engine\'s attrsFromCov is the page\'s, reading for reading, under every profile',
+    h.r.concat([live, Object.assign(R(T0), { sc: { color: 0, size: 12 } })]).every((r) => profs.every((p) => LG.histScore(r, p) === twin.goldenScore(twin.attrsFromCov(r.cov, r.sc, r.rows), p))));
+  const diffs = [];
+  for (const met of ['gs', 'q', 'air']) {
+    const m = twin.histModel(h, null, prof, '30', today, met), eng = LG.histSeries(h, prof, { days: 30, today });
+    m.days.forEach((d) => {
+      const i = Math.round((Date.parse(d.d) - Date.parse(eng.start)) / DAY);
+      const e = i >= 0 && i < eng[met].length ? eng[met][i] : null;
+      const p = d.scanned ? d.score : null;
+      if (e !== p) diffs.push([met, d.d, e, p]);
+    });
+  }
+  ok('Leadership\'s series and the Score history card read every day identically (all three scores)', diffs.length === 0, diffs.slice(0, 5));
+
+  const wk = read('cloudflare/feedspark-deck/src/worker.js');
+  const route = wk.slice(wk.indexOf("if (path === '/api/golden/portfolio'"), wk.indexOf("if (path === '/api/golden/alertcfg')"));
+  ok('one route serves the whole book, through the engine, under each brand\'s current profile',
+    route.length > 0 && /histSeries\(hists\[i\], pf, \{ days, today, live \}\)/.test(route) && /profileFor\(f\.client, overrides\)/.test(route));
+  ok('…closed by the estate index\'s own reading', /const live = x && x\.cov && x\.t \? \{ t: x\.t, rows: x\.rows, cov: x\.cov, sc: x\.sc \} : null;/.test(route));
+  ok('…only the windows the page offers', /\[30, 90, 365\]\.indexOf\(want\) >= 0 \? want : 90/.test(route));
+  ok('…Google Shopping feeds only', (route.match(/-fb\$\//g) || []).length >= 2);
+  ok('…scoped per signin, which only ever narrows', /!acc\.clients \|\| clientMatch\(acc\.clients, f\.client\)/.test(route));
+  ok('…the AM is the Task Manager\'s, and a brand it has not reached has none — never guessed',
+    /env\.EDITS\.get\('tmidx', 'json'\)/.test(route) && /return k\.length === 1 \? tmBy\[k\[0\]\] : null;/.test(route));
+
+  const ld = read('docs/FeedSpark_Leadership.html');
+  ok('Leadership reads the route and scores nothing itself', /fetch\('\/api\/golden\/portfolio\?days='\+r\)/.test(ld) && !/function goldenScore/.test(ld));
+  ok('the section sits on Leadership with its filters, strip and grid', /<section id="golden-pf" class="gp">/.test(ld) && /id="gp-bar"/.test(ld) && /id="gp-roll"/.test(ld) && /id="gp-body"/.test(ld));
+  ok('improvement and deduction wear the Score history card\'s own pair, light and dark',
+    /\.gp\{--gup:#2563EB;--gdn:#ED6F0B\}/.test(ld) && /\[data-theme=dark\] \.gp\{--gup:#4C82E0;--gdn:#C67B28\}/.test(ld));
+  ok('a tile opens the feed\'s card on the score and window being read', /localStorage\.setItem\('gr-hist-met',st\.met\); localStorage\.setItem\('gr-hist-rng',st\.rng\);/.test(ld) && /href="\/golden#'\+encodeURIComponent\(f\.client\+'\|'\+f\.mkt\)/.test(ld));
+  ok('the page\'s flat threshold is the engine\'s', new RegExp('var FLAT=' + LG.PORTFOLIO_FLAT + ';').test(ld));
+}
+
 console.log(`\ngolden score history: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
