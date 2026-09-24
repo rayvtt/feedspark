@@ -9891,21 +9891,21 @@
    "name": "schedule: market order — the band groups by market, home market first, paused first (Ray 24 Sep 2026)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function schedOrder(a,b)",
-   "pr": 0,
+   "pr": 520,
    "min": 1
   },
   {
    "name": "…the band heads each market group with its count",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "class=\"sw-mkt\"",
-   "pr": 0,
+   "pr": 520,
    "min": 1
   },
   {
    "name": "…and the /schedule page carries the same order for a single brand",
    "file": "docs/FeedSpark_Schedule.html",
    "pattern": "return list.slice().sort(schedOrder)",
-   "pr": 0,
+   "pr": 520,
    "min": 1
   }
  ]
