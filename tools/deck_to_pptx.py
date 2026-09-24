@@ -37,6 +37,7 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.chart.data import CategoryChartData
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_LABEL_POSITION, XL_TICK_MARK
+from pptx.enum.dml import MSO_THEME_COLOR
 from PIL import ImageFont
 
 # ------------------------------------------------------------------ status ink
@@ -604,6 +605,10 @@ class Emitter:
         self.idx = {n: {p.name: p.placeholder_format.idx for p in l.placeholders}
                     for n, l in self.lay.items()}
         self.audit = []
+        # Copy a one-liner strip lost because a paragraph was poured into it.
+        # Kept APART from `audit`, whose entries are unpacked five-wide by the
+        # reporter -- a sixth field here would break every other row.
+        self.trunc = []
 
     def slide(self, layout):
         return self.prs.slides.add_slide(self.lay[layout])
@@ -624,7 +629,17 @@ class Emitter:
         src = "\n".join(lines)
         scale, dropped, body = fit(src, geom)
         if scale < MIN_OK and name in ONE_LINERS:
-            scale, dropped, body = fit(first_sentence(src), geom)
+            lead = first_sentence(src)
+            scale, dropped, body = fit(lead, geom)
+            # A one-liner strip carrying the lead sentence is the right call,
+            # but the rest of the paragraph is GONE from the deck and nothing
+            # said so -- an agenda lost the sentence stating which of two
+            # sources wins when they disagree, which is the whole method. The
+            # audit now names it so a build can be told to move the copy
+            # somewhere that fits (a .note becomes the Key Message strip).
+            if norm(lead) != norm(src):
+                self.trunc.append((len(self.prs.slides._sldIdLst), lname, name,
+                                   norm(src)[len(norm(lead)):].strip()))
         lines = [l for l in body.split("\n") if l.strip()]
         if dropped or scale < 1.0:
             self.audit.append((len(self.prs.slides._sldIdLst), lname, name, scale, dropped))
@@ -802,6 +817,130 @@ class Emitter:
             pass
         return gf
 
+    def key_fits(self, text):
+        """Can this note ride the Key Message strip WHOLE?
+
+        The strip is one line, by design -- it is the slide's takeaway, not a
+        paragraph. A note poured into it kept its lead sentence and lost the
+        rest SILENTLY, which on one deck cost eleven sentences of real analysis
+        (a live-feed confirmation, a market-by-market readiness read, the
+        reason two keyword figures disagree). So a note that does not fit is
+        not cut: it is left in the block list and becomes its own statement
+        slide, which holds a paragraph at full size. Every layout carrying the
+        strip defines it identically, so one geometry answers for all of them.
+        """
+        geom = None
+        for lname in self.lay:
+            geom = ph_style(self.lay[lname], "Key Message")
+            if geom: break
+        if not geom or not text: return True
+        scale, dropped, _b = fit(text, geom)
+        return scale >= MIN_OK and not dropped
+
+    # ----------------------------------------------------------- agenda column
+    # An agenda is a contents page, so its job is to be SCANNED: the eye should
+    # find chapter seven without reading chapters one to six. Poured into a
+    # placeholder as "07  Case studies / test wins - Proof from comparable
+    # accounts" it is eleven identical lines of run-together text at one size,
+    # which is the opposite -- nothing is findable because nothing is
+    # distinguished. So each entry is laid out as the HTML deck lays it out:
+    # the number in the theme accent, the chapter name bold beside it, and the
+    # one-line description under them in muted type, indented to hang off the
+    # name rather than the number.
+    AG_TSZ, AG_DSZ = 13.5, 10.5   # chapter name / description
+    AG_GAP, AG_TGAP = 11.0, 2.0   # between entries / name to description
+    AG_IND = 0.31                 # description indent, ~ the width of "01  "
+
+    def agenda(self, slide, items, names=("Left Content", "Right Content")):
+        """items: [(number, title, description)] laid across the named columns.
+
+        BOTH columns are sized together at ONE scale. Sizing each to its own
+        content is the obvious mistake and it looks broken: the left column
+        carries one more entry than the right on an odd count, so it would
+        render a size smaller and the two halves of one list would disagree.
+        """
+        lname = slide.slide_layout.name
+        geoms = [ph_style(self.lay[lname], n) for n in names]
+        cols = self._ag_split(items, len(names))
+        scale = 1.0
+        for sc_ in SCALES:
+            if all(self._ag_h(c, sc_, g) <= (g[1] if g else 99) 
+                   for c, g in zip(cols, geoms) if c):
+                scale = sc_; break
+        else:
+            scale = SCALES[-1]
+        if scale < 1.0:
+            self.audit.append((len(self.prs.slides._sldIdLst), lname, "Agenda", scale, 0))
+        for name, col, geom in zip(names, cols, geoms):
+            self._ag_fill(slide, name, col, scale)
+        return scale
+
+    @staticmethod
+    def _ag_split(items, n):
+        """Down the first column, then the next -- reading order. A row-major
+        fill would put chapter 2 at the top of the right column."""
+        per = -(-len(items) // n)
+        return [items[i * per:(i + 1) * per] for i in range(n)]
+
+    def _ag_h(self, col, sc_, geom):
+        """Laid-out height of one column, in inches."""
+        if not geom: return 0.0
+        w = geom[0] * SAFETY
+        tsz, dsz = self.AG_TSZ * sc_, self.AG_DSZ * sc_
+        h = 0.0
+        for i, (num, ti, de) in enumerate(col):
+            if i: h += self.AG_GAP * sc_ / 72.0
+            h += len(wrap_lines(("%s  %s" % (num, ti)).strip(), tsz, w, True)) * tsz * 1.28 / 72.0
+            if de:
+                h += self.AG_TGAP * sc_ / 72.0
+                h += len(wrap_lines(de, dsz, w - self.AG_IND, False)) * dsz * 1.22 / 72.0
+        return h
+
+    def _ag_fill(self, slide, name, col, sc_):
+        i = self.idx[slide.slide_layout.name].get(name)
+        if i is None: return
+        try: shape = slide.placeholders[i]
+        except KeyError: return
+        if not col:
+            shape._element.getparent().remove(shape._element)
+            return
+        tf = shape.text_frame
+        tf.word_wrap = True
+        tf.clear()
+        first = True
+        for num, ti, de in col:
+            p_ = tf.paragraphs[0] if first else tf.add_paragraph()
+            first = False
+            if not p_.runs and p_.text:
+                p_.text = ""
+            # The number is the only coloured ink on the slide and it is an
+            # ACCENT, not a literal: theme colour, so re-theming the deck or
+            # dropping the slide on another master re-colours it like every
+            # other accent. The name's own colour stays inherited from the
+            # layout for the same reason.
+            r = p_.add_run(); r.text = "%s  " % num
+            r.font.size = Pt(round(self.AG_TSZ * sc_, 1)); r.font.bold = True
+            r.font.color.theme_color = MSO_THEME_COLOR.ACCENT_1
+            r = p_.add_run(); r.text = ti
+            r.font.size = Pt(round(self.AG_TSZ * sc_, 1)); r.font.bold = True
+            p_.space_before = Pt(round(self.AG_GAP * sc_, 1))
+            p_.space_after = Pt(0)
+            if not de: continue
+            d = tf.add_paragraph()
+            r = d.add_run(); r.text = de
+            r.font.size = Pt(round(self.AG_DSZ * sc_, 1))
+            r.font.color.rgb = MUTED
+            d.space_before = Pt(round(self.AG_TGAP * sc_, 1))
+            d.space_after = Pt(0)
+            # Hang the description off the chapter NAME, not the number -- the
+            # number is a label in the margin, and a description starting under
+            # it reads as a third column.
+            d._pPr.set("marL", str(Emu(int(Inches(self.AG_IND)))))
+            d._pPr.set("indent", "0")
+        # A first paragraph with space_before pushes the whole column off its
+        # own top edge, so the gap belongs BETWEEN entries only.
+        tf.paragraphs[0].space_before = Pt(0)
+
 # ---------------------------------------------------------------- block -> slide
 def chunks(seq, n):
     for i in range(0, len(seq), n):
@@ -887,7 +1026,8 @@ def emit_blocks(em, head, blocks, fallback=""):
         # floor, losing the note entirely. (Latent until section-level headings
         # started parsing; a YuMOVE spec note disappeared this way.)
         key = None
-        if kind not in ("subhead", "heading") and i < len(blocks) and blocks[i][0] == "note":
+        if (kind not in ("subhead", "heading") and i < len(blocks)
+                and blocks[i][0] == "note" and em.key_fits(blocks[i][1])):
             key = blocks[i][1]; i += 1
 
         # A KPI row immediately before a table rides that table's subtitle rather
@@ -996,12 +1136,9 @@ def emit_blocks(em, head, blocks, fallback=""):
             first_done = True; continue
 
         if kind == "agenda":
-            rows = ["%s  %s — %s" % (n_, ti, de) for n_, ti, de in payload]
-            half = (len(rows) + 1) // 2
             s = em.slide("Two Content")
             em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-            em.put(s, "Left Content", "\n".join(rows[:half]))
-            em.put(s, "Right Content", "\n".join(rows[half:]))
+            em.agenda(s, payload)
             em.finish(s, key); first_done = True; continue
 
         if kind == "bars":
@@ -1124,6 +1261,14 @@ def main():
         print("\nshrunk to fit: %d   |   still over capacity: %d" % (len(shrunk), len(cut)))
         for sn, lay, name, scale, dropped in cut:
             print("  DROPPED slide %-3d %-20s %-22s -%d line(s)" % (sn, lay, name, dropped))
+        if em.trunc:
+            print("\n  COPY CUT to the lead sentence (a one-line strip "
+                  "cannot hold a paragraph):")
+            for sn, lay, name, rest in em.trunc:
+                print("    slide %-3d %-20s %-16s lost: %s" % (
+                    sn, lay, name, (rest[:88] + "...") if len(rest) > 88 else rest))
+            print("    -> move it into a .note (which becomes the slide's Key "
+                  "Message) or shorten the source.")
         tight = sorted(shrunk, key=lambda a: a[3])[:8]
         if tight:
             print("\n  tightest fits:")

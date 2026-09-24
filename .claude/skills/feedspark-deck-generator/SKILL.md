@@ -571,6 +571,25 @@ Rules when extending it:
   the chapter title with "(cont.)" after it. It yields to a component's own lead label, and on a
   section's first slide it becomes the subtitle rather than displacing the section title.
 
+- **The one-line strips are one line, and the exporter no longer cuts copy to make that true**
+  (Sep 2026). `Key Message`, `Subtitle`, `Section Subtitle`, `Attribution` hold ~121 / ~100 characters
+  at full size. A paragraph poured into one used to keep its lead sentence and drop the rest in
+  silence: across the five decks in the repo that was **1,242 words** of real analysis missing from
+  the .pptx. Two changes:
+  · A trailing `.note` becomes the slide's Key Message **only when the whole note fits** (`key_fits`);
+    otherwise it stays in the block list and renders as its own statement slide, which holds a
+    paragraph at full size. So write a `.note` for what it says, not for a character budget.
+  · A subtitle that still has to be trimmed is **reported** by `--audit` under `COPY CUT`, naming the
+    slide and the sentence lost. A section subtitle genuinely is a one-line strip, so that one is
+    editorial: shorten it, and move the point into a `.note` (which now survives either way).
+  `--audit` must show **`COPY CUT`: nothing** as well as `still over capacity: 0` before shipping.
+- **The agenda is laid out, not listed.** `Emitter.agenda()` renders each entry as the HTML deck does
+  — number in the theme accent, chapter name bold beside it, description under them in muted type,
+  hanging off the NAME not the number — across both columns of `Two Content`, filled down the first
+  column then the second (reading order), **both columns sized at one scale** so the halves of one
+  list can never render a size apart. It was previously eleven identical run-together lines at one
+  size, which defeats the only job a contents page has: being scanned.
+
 Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../../../tools/README.md).
 
 ## Step 7 — Handling a feedback-loop prompt
