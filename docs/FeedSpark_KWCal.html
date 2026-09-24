@@ -2755,15 +2755,20 @@ function boot(){
     Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')roster[k]=1; });
     var names=Object.keys(roster).sort();
     $('#brand').innerHTML='<option value="*">\u25a6 All brands</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
-    CLIENT=(pre==='*')?'*':(pre&&roster[pre])?pre:(roster.Reiss?'Reiss':names[0]||'Reiss');
+    // no ?client= named \u2014 this device's last pick beats always landing on Reiss (Ray, 24 Sep 2026:
+    // "a preselected option on a certain module should also remain after refresh, not result in a
+    // \u2026 blank page")
+    var remembered=''; try{ remembered=localStorage.getItem('fcc-kw-client')||''; }catch(e){}
+    CLIENT=(pre==='*')?'*':(pre&&roster[pre])?pre:((remembered==='*'||roster[remembered])?remembered:(roster.Reiss?'Reiss':names[0]||'Reiss'));
     $('#brand').value=CLIENT;
+    try{ localStorage.setItem('fcc-kw-client',CLIENT); }catch(e){}
     var qm=/[?&]market=([^&]+)/.exec(location.search); if(qm)MKT=decodeURIComponent(qm[1]).toLowerCase();
     syncNote(); if(CLIENT!=='*')loadMkts(); render();
     liveTick(); startLive();   // results + any stage that moved since the boot fetch, then every 90s
   });
 }
 $('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; if(CLIENT!=='*')loadMkts(); render(); liveTick();
-  try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT))}catch(e){} });
+  try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT));localStorage.setItem('fcc-kw-client',CLIENT)}catch(e){} });
 boot();
 })();
 </script>

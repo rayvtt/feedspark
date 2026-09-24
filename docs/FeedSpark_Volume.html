@@ -277,15 +277,23 @@ window.addEventListener('load',restore);
     var cs=Object.keys((d&&d.clients)||{}).sort();
     var sel=$('#brand'); sel.innerHTML=cs.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
     var hit=WANTC&&cs.filter(function(c){ return c.toLowerCase()===WANTC.toLowerCase(); })[0];
-    CLIENT=hit||cs[0]||''; if(CLIENT)sel.value=CLIENT;
+    // no ?client=/?b= named — this device's last pick beats always landing on whichever brand
+    // sorts first (Ray, 24 Sep 2026: "a preselected option on a certain module should also
+    // remain after refresh, not result in a … blank page")
+    var remembered=''; try{ remembered=localStorage.getItem('fcc-vol-client')||''; }catch(e){}
+    var rememberedHit=!hit&&remembered&&cs.filter(function(c){ return c===remembered; })[0];
+    CLIENT=hit||rememberedHit||cs[0]||''; if(CLIENT)sel.value=CLIENT;
+    if(CLIENT)try{ localStorage.setItem('fcc-vol-client',CLIENT); }catch(e){}
     loadMkts(WANTM||undefined); loadEstate();
   }).catch(function(){ $('#mstate').textContent='Could not load the client list — this needs the live worker.'; });
   $('#arr-scan').addEventListener('click',scanNow);
   document.addEventListener('click',function(e){ var tr=e.target.closest&&e.target.closest('#esttbl tr[data-c]'); if(!tr)return;
     var c=tr.getAttribute('data-c'), m=tr.getAttribute('data-m'); if(!c)return; CLIENT=c; $('#brand').value=c; SELDAY=null; loadMkts(m);
+    try{ localStorage.setItem('fcc-vol-client',CLIENT); }catch(e2){}
     try{ $('#arr-card').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e2){} });
 
-  $('#brand').addEventListener('change',function(){ CLIENT=this.value; SELDAY=null; loadMkts(); });
+  $('#brand').addEventListener('change',function(){ CLIENT=this.value; SELDAY=null; loadMkts();
+    try{ localStorage.setItem('fcc-vol-client',CLIENT); }catch(e){} });
   document.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('[data-mkc]');
     if(b){ MKT=b.getAttribute('data-mkc'); SELDAY=null; renderMkts(); load(); return; }
