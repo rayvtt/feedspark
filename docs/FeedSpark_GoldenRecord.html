@@ -205,6 +205,54 @@ window.addEventListener('load',restore);
   .at-cov{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .at-delta{text-align:right;font-weight:900;font-size:11px;font-variant-numeric:tabular-nums}
   .up{color:var(--good)}.down{color:var(--risk)}
+  /* SCORE HISTORY (Ray, 24 Sep 2026) — the feed's Golden Score over time: the daily close as a
+     line, the day's move against the previous scanned day as mirrored bars (improvement above,
+     deduction below — the Product Volume module's validated pair, light + dark), and a change
+     log. One axis per plot: the score level and the daily move are different scales, so they are
+     two plots sharing the calendar, never a dual-axis chart. */
+  .hs{--hup:#2563EB;--hdn:#ED6F0B}
+  .tbadge.hsb{background:#EAF1FD;color:#1D4ED8}
+  .hs-rng{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-left:auto}
+  .hs-rng button,.hs-rng span{border:0;background:#fff;font:inherit;font-size:11px;font-weight:800;color:var(--muted);padding:4px 10px;cursor:pointer}
+  .hs-rng button+button{border-left:1px solid var(--line)}
+  .hs-rng .on{background:var(--navy);color:#fff}
+  .hs-since{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .hs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0 8px}
+  .hs-k{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--wash);min-width:0}
+  .hs-k .l{display:block;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .hs-k b{display:block;font-size:20px;font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums}
+  .hs-k small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hs-leg{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--ink-2);margin:4px 0 2px}
+  .hs-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+  .hs-leg i.ln{height:2px;width:14px;border-radius:2px;background:var(--ink-2);vertical-align:3px}
+  .hs-leg i.dot{width:5px;height:5px;border-radius:50%;background:var(--muted);vertical-align:1px}
+  .hs-zone{position:relative}
+  .hs-svg{width:100%;height:auto;display:block}
+  .hs-svg text{font-size:11px;fill:var(--muted);font-weight:700;font-family:Lato,system-ui,sans-serif}
+  .hs-svg text.v{fill:var(--ink);font-weight:900;font-size:12px}
+  .hs-svg text.pl{fill:var(--ink-2);font-weight:900;font-size:10px;letter-spacing:.05em}
+  .hs-svg .grid{stroke:var(--line);stroke-width:1}
+  .hs-svg .axis{stroke:#C9CDD3;stroke-width:1}
+  .hs-svg .ln{fill:none;stroke:var(--ink-2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .hs-svg .pt{stroke:#fff;stroke-width:2}
+  .hs-svg .z{fill:var(--muted)}
+  .hs-svg .hit{fill:transparent;cursor:crosshair}
+  .hs-svg .hit:hover{fill:rgba(26,54,93,.05)}
+  .hs-tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;line-height:1.55;opacity:0;transition:opacity .12s;z-index:20;max-width:320px;box-shadow:0 6px 20px rgba(16,24,40,.25)}
+  .hs-tip b{font-weight:900}.hs-tip .u{color:#9DBDF3}.hs-tip .d{color:#F5C08A}.hs-tip .m{color:#C9D3E0;font-size:11px}
+  .hs-empty-note{font-size:12.5px;color:var(--muted);margin:6px 0 4px}
+  .hs-log{margin-top:10px;overflow-x:auto}
+  .hs-log table{width:100%;border-collapse:collapse;font-size:12px;min-width:620px}
+  .hs-log th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--line)}
+  .hs-log td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .hs-log td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .hs-log td.w{white-space:nowrap;color:var(--ink-2);font-weight:700}
+  .hs-log .mv{display:inline-block;margin:0 10px 2px 0;white-space:nowrap;font-weight:700;color:var(--ink-2)}
+  .hs-log .mv i{font-style:normal;color:var(--muted)}
+  .hs-log .ms{color:var(--muted);font-size:11px;font-weight:700}
+  .hs-more{margin-top:6px}
+  /* the estate row names the last move under the feed score */
+  .est-su span i{font-style:normal}
   .at-note{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .at-miss{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:2px 9px;justify-self:start}
   .at-miss.hard{color:var(--risk);border-color:var(--risk)}
@@ -566,6 +614,9 @@ window.addEventListener('load',restore);
   body.pdf button[data-qinfo],body.pdf button[data-scpop],body.pdf .qz-na{display:none!important}
   /* the live editor's saved-edits note card (a toolbar affordance, never client content) */
   body.pdf .de-stalepanel{display:none!important}
+  /* the score history on paper: the active range as the chip it is on screen, none of the hover
+     furniture, and no card at all while there is nothing yet to show a client */
+  body.pdf .hs-rng button:not(.on),body.pdf .hs-more,body.pdf .hs-tip,body.pdf .hs.hs-empty{display:none!important}
   /* THE CLIENT DOCUMENT IS SIMPLER THAN THE AM'S SCREEN (Ray, 18 Sep 2026, sending the ⬇ HTML
      to clients: "Let's remove a few things so it's not too complicated for the client to read.
      Keep the content quality score description, but remove the weight. The 1.4 × 1.6 factor
@@ -751,6 +802,15 @@ window.addEventListener('load',restore);
 [data-theme=dark] .pdp-chip.ai{border-color:rgba(154,120,255,.6);color:#B9A3F5}
 [data-theme=dark] .pdp-sku .st.bad{color:#F3868F}
 [data-theme=dark] .pdp-note,[data-theme=dark] .pdp-sub{color:var(--muted)}
+[data-theme=dark] .hs{--hup:#4C82E0;--hdn:#C67B28}
+[data-theme=dark] .tbadge.hsb{background:rgba(76,130,224,.18);color:#93B4E0}
+[data-theme=dark] .hs-rng button,[data-theme=dark] .hs-rng span{background:#20242E;color:var(--muted)}
+[data-theme=dark] .hs-rng .on{background:var(--navy);color:#fff}
+[data-theme=dark] .hs-k{background:#181B22}
+[data-theme=dark] .hs-svg .axis{stroke:#3A3F4A}
+[data-theme=dark] .hs-svg .pt{stroke:var(--paper)}
+[data-theme=dark] .hs-svg .hit:hover{fill:rgba(255,255,255,.04)}
+[data-theme=dark] .hs-tip{background:#0B0D12}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
@@ -1005,6 +1065,17 @@ window.addEventListener('load',restore);
     });
     return at;
   }
+  // the estate row's last move: the index carries the reading before the feed's last recorded
+  // change (hp) and when it changed (ht); both ends are scored against the CURRENT profile, and a
+  // reading measured on another basis (before GPC category scope) is never compared
+  function estMove(f) {
+    if (!PROF.ready || !f || !f.hp || !f.hp.cov || !f.cov || f.score == null) return null;
+    if (!!f.hp.sc !== !!f.sc) return null;
+    var was = goldenScore(attrsFromCov(f.hp.cov, f.hp.sc, f.hp.rows), profileForC(f.client));
+    if (was == null) return null;
+    var d = Math.round((f.score - was) * 10) / 10;
+    return d === 0 ? null : { d: d, was: was, at: f.ht };
+  }
   function rescoreEstate() {
     if (!PROF.ready) return;   // first paint keeps the scan-time (already profiled) scores
     feedList().forEach(function (f) {
@@ -1150,7 +1221,13 @@ window.addEventListener('load',restore);
             '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
             '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
             '<span class="est-scores">' +
-            (f.score != null ? '<span class="est-su" title="Feed scorecard — weighted attribute completeness against Google’s product data spec, out of 100"><b style="color:' + scoreCol(f.score) + '">' + f.score + '</b><span>feed</span></span>' : '') +
+            (f.score != null ? (function () {
+              // the last move, re-scored to today's profile (Ray, 24 Sep 2026 — score history)
+              var mv = estMove(f);
+              return '<span class="est-su" title="Feed scorecard — weighted attribute completeness against Google’s product data spec, out of 100' +
+                (mv ? ' · last move ' + mv.was + ' → ' + f.score + ' on ' + esc(hDayLbl(hDay(mv.at || f.t))) : '') + '"><b style="color:' + scoreCol(f.score) + '">' + f.score + '</b>' +
+                '<span>feed' + (mv ? ' <i class="' + hCls(mv.d) + '">' + (mv.d > 0 ? '▲' : '▼') + Math.abs(mv.d) + '</i>' : '') + '</span></span>';
+            })() : '') +
             (f.q != null ? '<span class="est-su" title="Content quality score — what is actually IN the free-text fields (title, description, highlights…), out of 100"><b style="color:' + scoreCol(f.q) + '">' + f.q + '</b><span>content</span></span>' : '') +
             '</span>' +
             (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
@@ -1276,6 +1353,8 @@ window.addEventListener('load',restore);
         else renderDetail(k);
         // the stored content-quality reading (non-blocking; the section fills in when it lands)
         if (QUAL[k] === undefined) loadQuality(k).then(function () { if (SEL === k) renderDetail(k); });
+        // the score history (non-blocking; the card fills in place when it lands)
+        if (HIST[k] === undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -1344,7 +1423,12 @@ window.addEventListener('load',restore);
       if (!d || d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(maskText((d && d.error) || 'no response')) + '</span>'; return refreshEstate(); }
       return fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (r) { return r.json(); })
-        .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        .then(function (full) {
+          CACHE[k] = full;
+          // a scan can add a reading to the history — re-read it when this feed's card is in play
+          var hl = (HIST[k] !== undefined || SEL === k) ? loadHistory(k) : Promise.resolve();
+          return hl.then(function () { if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        });
     };
     return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
@@ -1381,6 +1465,370 @@ window.addEventListener('load',restore);
       '<circle class="dial-fg" cx="60" cy="60" r="52" style="stroke:' + scoreCol(score) + ';stroke-dasharray:' + Math.round(C * v) / 100 + ' ' + C + '"/>' +
       '<text class="dial-n" x="60" y="63" text-anchor="middle">' + (score == null ? '—' : score) + '</text>' +
       '<text class="dial-s" x="60" y="80" text-anchor="middle">GOLDEN SCORE</text></svg>';
+  }
+
+  /* ---- SCORE HISTORY (Ray, 24 Sep 2026: "Can the Golden Score module record historic changes in
+     terms of improvement or deduction from the previous scan … good to show clients on improvement
+     progress. At the same time, maybe also track it on a day-to-day basis, similar to [product]
+     volumes"). The worker keeps goldenhist:<client>:<mkt> (labelguard.js histAdd): READINGS — the
+     coverage each score is computed FROM, recorded only when the feed moved — the SCAN DAYS, and
+     the content-quality / AI-readiness ANALYSES. Every reading is RE-SCORED here against the
+     brand's CURRENT profile with the same goldenScore + attrsFromCov the estate uses, so editing
+     what counts re-bases the whole line instead of reading as the feed improving. A day nobody
+     scanned is a GAP, never a copy of the day before. The daily bars are the day's move against
+     the previous scanned day's close, drawn in the Product Volume module's validated pair. */
+  var HIST = {};          // key -> {v,r,s,q} | null (asked the API, nothing stored yet)
+  var HSHOW = {};         // key -> the change log lists every row, not the latest few
+  var HRNGS = [['30', '30 days'], ['90', '90 days'], ['365', '1 year'], ['all', 'All']];
+  var HRNG = (function () { try { var v = localStorage.getItem('gr-hist-rng'); return /^(30|90|365|all)$/.test(v || '') ? v : '90'; } catch (e) { return '90'; } })();
+  var HLOG_N = 6;         // change-log rows shown before "Show all"
+  function loadHistory(k) {
+    var p = parts(k);
+    return fetch(API + '/api/golden/history?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { HIST[k] = (d && d.hist && d.hist.r) ? d.hist : null; })
+      .catch(function () { HIST[k] = null; });
+  }
+  function hDay(t) { return new Date(+t).toISOString().slice(0, 10); }
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function hDayLbl(d) { var x = new Date(d + 'T00:00:00Z'); return x.getUTCDate() + ' ' + MON[x.getUTCMonth()]; }
+  function hWhen(t) { var x = new Date(+t); return x.getDate() + ' ' + MON[x.getMonth()] + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); }
+  function hAddDays(d, n) { var x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+  // the page's twin of labelguard.js goldenCovIndex + histReading: a snapshot as a reading
+  function hReadingOf(s) {
+    if (!s || !s.attrs) return null;
+    var cov = {}, sc = {}, any = false;
+    SPEC.forEach(function (x) {
+      var a = s.attrs[x.k];
+      if (a && a.present && !a.na && a.cov != null && isFinite(a.cov)) cov[x.k] = Math.round(a.cov * 10) / 10;
+      if (a && a.scope) { sc[x.k] = a.scope.n; any = true; }
+    });
+    var r = { t: +s.t || Date.now(), rows: Math.max(0, Math.round(+s.rows || 0)), cov: cov };
+    if (any) r.sc = sc;
+    return r;
+  }
+  // mirrors labelguard.js histMoved — what moved between two readings, biggest first:
+  // [key, from, to], null = not in the feed, 'na' = no product in the feed is asked for it
+  function histMoved(a, b) {
+    var out = [];
+    if (!a || !b) return out;
+    var st = function (x, k) { return x.sc && x.sc[k] === 0 ? 'na' : (x.cov && x.cov[k] != null ? x.cov[k] : null); };
+    var keys = {};
+    [a, b].forEach(function (x) { Object.keys(x.cov || {}).forEach(function (k) { keys[k] = 1; }); Object.keys(x.sc || {}).forEach(function (k) { keys[k] = 1; }); });
+    Object.keys(keys).forEach(function (k) {
+      var x = st(a, k), y = st(b, k);
+      if (x === y) return;
+      if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) return;
+      out.push([k, x, y]);
+    });
+    var mag = function (m) { return typeof m[1] === 'number' && typeof m[2] === 'number' ? Math.abs(m[2] - m[1]) : 1000; };
+    return out.sort(function (m, n) { return mag(n) - mag(m) || (m[0] < n[0] ? -1 : 1); });
+  }
+  function hScore(r, prof) { return r ? goldenScore(attrsFromCov(r.cov, r.sc, r.rows), prof) : null; }
+  function hBasis(a, b) { return !!(a && a.sc) === !!(b && b.sc); }   // measured the same way?
+  function hDelta(n) { return Math.round(n * 10) / 10; }
+  function hSigned(n, unit) {
+    var v = hDelta(n);
+    if (v === 0) return '±0' + (unit || '');
+    return (v > 0 ? '▲ +' + v : '▼ −' + (-v)) + (unit || '');
+  }
+  function hCls(n) { var v = hDelta(n); return v > 0 ? 'up' : (v < 0 ? 'down' : 'muted'); }
+  function hMoveTxt(m) {
+    var k = 'g:' + m[0], a = m[1], b = m[2];
+    if (typeof a === 'number' && typeof b === 'number') return { t: k + ' ' + hSigned(b - a, 'pp'), c: hCls(b - a), tip: k + ' ' + a + '% → ' + b + '%' };
+    if (b === 'na') return { t: k + ' no longer applies', c: 'muted', tip: k + ': no product in the feed is asked for it any more' };
+    if (a === 'na') return { t: k + ' now applies', c: 'muted', tip: k + ': products Google asks it of are now in the feed' };
+    if (a == null) return { t: k + ' added (' + b + '%)', c: 'up', tip: k + ' appeared in the feed at ' + b + '%' };
+    return { t: k + ' removed (was ' + a + '%)', c: 'down', tip: k + ' left the feed — it was ' + a + '% filled' };
+  }
+  // everything the card draws, from the stored record + the live snapshot, under one profile
+  function histModel(h, s, prof, rng, today) {
+    today = today || hDay(Date.now());
+    var reads = ((h && h.r) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var rec = reads.length;                 // the RECORDED readings (the change log reads these)
+    var live = hReadingOf(s);
+    // the live snapshot closes today's line even when it moved less than the recording threshold,
+    // so the chart ends where the dial is
+    if (live && (!rec || live.t > reads[rec - 1].t)) { live.live = true; reads.push(live); }
+    var sset = {};
+    ((h && h.s) || []).forEach(function (d) { sset[d] = 1; });
+    if (live) sset[hDay(live.t)] = 1;
+    var first = reads.length ? hDay(reads[0].t) : today;
+    var span = rng === 'all' ? null : parseInt(rng, 10);
+    var start = span ? hAddDays(today, -(span - 1)) : first;
+    if (start < first) start = first;
+    if (start > hAddDays(today, -13)) start = hAddDays(today, -13);   // a fortnight at least, so a young record is not two giant bars
+    var days = [], ri = -1, prev = null;
+    for (var d = start; d <= today; d = hAddDays(d, 1)) {
+      while (ri + 1 < reads.length && hDay(reads[ri + 1].t) <= d) ri++;
+      var close = ri >= 0 ? reads[ri] : null;
+      var e = { d: d, scanned: !!sset[d] && !!close, r: null, score: null, delta: null, moved: [], basis: true };
+      if (e.scanned) {
+        e.r = close; e.score = hScore(close, prof);
+        if (prev) {
+          e.basis = hBasis(prev.r, close);
+          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = histMoved(prev.r, close); e.vs = prev.d; }
+        }
+        prev = e;
+      }
+      days.push(e);
+    }
+    // the readings BEFORE the window still anchor its first day's move
+    var inWin = days.filter(function (x) { return x.scanned; });
+    if (inWin.length && inWin[0].delta == null) {
+      var before = null;
+      reads.forEach(function (x) { if (hDay(x.t) < inWin[0].d) before = x; });
+      if (before && hBasis(before, inWin[0].r)) {
+        inWin[0].delta = hDelta(inWin[0].score - hScore(before, prof));
+        inWin[0].moved = histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
+      }
+    }
+    // the change log: every recorded move inside the window, plus the analyses
+    var log = [];
+    for (var i = 0; i < rec; i++) {
+      var x = reads[i];
+      if (hDay(x.t) < start) continue;
+      if (i === 0) { log.push({ t: x.t, kind: 'first', to: hScore(x, prof), rows: x.rows }); continue; }
+      var a = reads[i - 1];
+      if (!hBasis(a, x)) { log.push({ t: x.t, kind: 'basis', to: hScore(x, prof), rows: x.rows }); continue; }
+      log.push({ t: x.t, kind: 'feed', from: hScore(a, prof), to: hScore(x, prof), moved: histMoved(a, x), rows0: a.rows, rows: x.rows });
+    }
+    var qa = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    qa.forEach(function (x, j) {
+      if (hDay(x.t) < start) return;
+      log.push({ t: x.t, kind: 'qa', prev: j ? qa[j - 1] : null, cur: x });
+    });
+    log.sort(function (a, b) { return b.t - a.t; });
+    // headline figures
+    var now = live ? hScore(live, prof) : (rec ? hScore(reads[rec - 1], prof) : null);
+    var last = null;
+    if (rec >= 2 && hBasis(reads[rec - 2], reads[rec - 1])) {
+      last = { t: reads[rec - 1].t, from: hScore(reads[rec - 2], prof), to: hScore(reads[rec - 1], prof), since: reads[rec - 2].t };
+    }
+    var over = null;
+    if (inWin.length && now != null) {
+      var o0 = inWin[0];
+      if (hBasis(o0.r, live || reads[reads.length - 1]) && o0.d < today) over = { from: o0.score, d: o0.d, delta: hDelta(now - o0.score), all: o0.d === first };
+    }
+    var qIn = qa.filter(function (x) { return hDay(x.t) >= start; });
+    var qBefore = qa.filter(function (x) { return hDay(x.t) < start; }).pop() || null;
+    function track(f) {
+      var pts = qIn.filter(function (x) { return x[f] != null; });
+      var lastP = pts[pts.length - 1];
+      if (!lastP) return null;
+      var base = qBefore && qBefore[f] != null ? qBefore : (pts.length > 1 ? pts[0] : null);
+      return { now: lastP[f], t: lastP.t, from: base ? base[f] : null, fromT: base ? base.t : null };
+    }
+    return { days: days, log: log, now: now, last: last, over: over, first: rec ? reads[0].t : null,
+      changes: log.filter(function (x) { return x.kind === 'feed'; }).length,
+      q: track('q'), air: track('air'), scannedDays: inWin.length, start: start, today: today, recorded: rec };
+  }
+  function histChart(m) {
+    var W = 1000, L = 46, R = 14, T0 = 30, T1 = 140, MID = 224, AMP = 40, H = 292;
+    var days = m.days, n = days.length, slot = (W - L - R) / Math.max(1, n);
+    var vals = days.filter(function (x) { return x.score != null; }).map(function (x) { return x.score; });
+    if (!vals.length) return '';
+    var lo = Math.floor(Math.min.apply(null, vals) - 1), hi = Math.ceil(Math.max.apply(null, vals) + 1);
+    if (hi - lo < 4) { var mid = (hi + lo) / 2; lo = Math.floor(mid - 2); hi = Math.ceil(mid + 2); }
+    lo = Math.max(0, lo); hi = Math.min(100, hi); if (hi - lo < 4) lo = Math.max(0, hi - 4);
+    var step = [1, 2, 5, 10, 20].filter(function (x) { return (hi - lo) / x <= 4; })[0] || 25;
+    var yS = function (v) { return T1 - (v - lo) / (hi - lo) * (T1 - T0); };
+    var peak = 0.5;
+    days.forEach(function (x) { if (x.delta != null) peak = Math.max(peak, Math.abs(x.delta)); });
+    peak = [0.5, 1, 2, 5, 10, 20, 50, 100].filter(function (x) { return x >= peak; })[0] || peak;
+    var cx = function (i) { return L + slot * i + slot / 2; };
+    var sv = '<text class="pl" x="' + L + '" y="14">GOLDEN SCORE · DAILY CLOSE</text>';
+    for (var g = Math.ceil(lo / step) * step; g <= hi; g += step) {
+      sv += '<line class="grid" x1="' + L + '" y1="' + yS(g) + '" x2="' + (W - R) + '" y2="' + yS(g) + '"/>' +
+        '<text x="' + (L - 7) + '" y="' + (yS(g) + 4) + '" text-anchor="end">' + g + '</text>';
+    }
+    // the line: broken wherever a day was not scanned or the measuring basis changed
+    var path = '', open = false;
+    days.forEach(function (x, i) {
+      if (x.score == null || !x.basis) { open = false; if (x.score == null) return; }
+      path += (open ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yS(x.score).toFixed(1);
+      open = true;
+    });
+    sv += '<path class="ln" d="' + path + '"/>';
+    var lastI = -1;
+    days.forEach(function (x, i) { if (x.score != null) lastI = i; });
+    days.forEach(function (x, i) {
+      if (x.score == null) return;
+      var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis;
+      if (mark) sv += '<circle class="pt" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="4.5" style="fill:' + scoreCol(x.score) + '"/>';
+    });
+    if (lastI >= 0) {
+      var lx = cx(lastI), ly = yS(days[lastI].score);
+      sv += '<text class="v" x="' + (lx - 8) + '" y="' + (ly - 10) + '" text-anchor="end">' + days[lastI].score + '</text>';
+    }
+    // the daily move — improvement above the line, deduction below
+    sv += '<text class="pl" x="' + L + '" y="' + (MID - AMP - 10) + '">DAY-ON-DAY CHANGE</text>' +
+      '<line class="grid" x1="' + L + '" y1="' + (MID - AMP) + '" x2="' + (W - R) + '" y2="' + (MID - AMP) + '"/>' +
+      '<line class="grid" x1="' + L + '" y1="' + (MID + AMP) + '" x2="' + (W - R) + '" y2="' + (MID + AMP) + '"/>' +
+      '<text x="' + (L - 7) + '" y="' + (MID - AMP + 4) + '" text-anchor="end">+' + peak + '</text>' +
+      '<text x="' + (L - 7) + '" y="' + (MID + 4) + '" text-anchor="end">0</text>' +
+      '<text x="' + (L - 7) + '" y="' + (MID + AMP + 4) + '" text-anchor="end">−' + peak + '</text>' +
+      '<line class="axis" x1="' + L + '" y1="' + MID + '" x2="' + (W - R) + '" y2="' + MID + '"/>';
+    var bw = Math.max(2, Math.min(28, slot - 2));    // 2px surface gap between neighbours
+    days.forEach(function (x, i) {
+      if (!x.scanned) return;
+      var bx = cx(i) - bw / 2;
+      if (x.delta == null || x.delta === 0) { sv += '<circle class="z" cx="' + cx(i).toFixed(1) + '" cy="' + MID + '" r="1.8"/>'; return; }
+      var hgt = Math.max(2, Math.abs(x.delta) / peak * AMP), up = x.delta > 0;
+      sv += '<path style="fill:var(' + (up ? '--hup' : '--hdn') + ')" d="' + barPath(bx, bw, up ? MID - 1 : MID + 1, hgt, up) + '"/>';
+    });
+    var every = Math.max(1, Math.ceil(n / 9));
+    days.forEach(function (x, i) {
+      if (i % every === 0 || i === n - 1) {
+        if (i !== n - 1 && n - 1 - i < every * 0.6) return;   // keep the last label clear of its neighbour
+        sv += '<text x="' + cx(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + hDayLbl(x.d) + '</text>';
+      }
+    });
+    days.forEach(function (x, i) {
+      sv += '<rect class="hit" data-hd="' + i + '" x="' + (L + slot * i).toFixed(1) + '" y="' + T0 + '" width="' + slot.toFixed(1) + '" height="' + (MID + AMP - T0) + '" rx="4"/>';
+    });
+    return '<svg class="hs-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Golden Score daily close and day-on-day change">' + sv + '</svg>';
+  }
+  // a bar with a rounded DATA end, square at the baseline (the Product Volume chart's own mark)
+  function barPath(x, w, y0, h, up) {
+    var r = Math.min(2, w / 2, h);
+    if (h <= 0) return '';
+    if (up) {
+      var yt = y0 - h;
+      return 'M' + x + ' ' + y0 + 'V' + (yt + r) + 'Q' + x + ' ' + yt + ' ' + (x + r) + ' ' + yt + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + yt + ' ' + (x + w) + ' ' + (yt + r) + 'V' + y0 + 'Z';
+    }
+    var yb = y0 + h;
+    return 'M' + x + ' ' + y0 + 'V' + (yb - r) + 'Q' + x + ' ' + yb + ' ' + (x + r) + ' ' + yb + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + yb + ' ' + (x + w) + ' ' + (yb - r) + 'V' + y0 + 'Z';
+  }
+  function histKpi(label, big, cls, small, tip) {
+    return '<div class="hs-k"' + (tip ? ' title="' + esc(tip) + '"' : '') + '><span class="l">' + label + '</span>' +
+      '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + big + '</b>' + (small ? '<small>' + small + '</small>' : '') + '</div>';
+  }
+  function histTrackKpi(label, tr) {
+    if (!tr) return '';
+    var d = tr.from != null ? tr.now - tr.from : null;
+    return histKpi(label, String(tr.now), '', d == null ? 'as analysed ' + hDayLbl(hDay(tr.t))
+      : '<span class="' + hCls(d) + '">' + hSigned(d) + '</span> since ' + hDayLbl(hDay(tr.fromT)),
+      label + ' is recorded as analysed — each reading is the analysis that day, not re-scored');
+  }
+  function histLog(k, m) {
+    if (!m.log.length) return '';
+    var all = !!HSHOW[k], rows = all ? m.log : m.log.slice(0, HLOG_N);
+    var h = '<div class="hs-log"><table><thead><tr><th>When</th><th>Measure</th><th style="text-align:right">Score</th><th style="text-align:right">Change</th><th>What moved</th></tr></thead><tbody>';
+    rows.forEach(function (x) {
+      h += '<tr><td class="w">' + esc(hWhen(x.t)) + '</td>';
+      if (x.kind === 'first') {
+        h += '<td>Golden Score</td><td class="n">' + x.to + '</td><td class="n muted">—</td><td class="ms">first reading recorded · ' + fmt(x.rows) + ' products</td>';
+      } else if (x.kind === 'basis') {
+        h += '<td>Golden Score</td><td class="n">' + x.to + '</td><td class="n muted">—</td><td class="ms">measured on a new basis (category scope) — not compared with the reading before</td>';
+      } else if (x.kind === 'feed') {
+        var d = x.to - x.from, mv = x.moved.slice(0, 4).map(hMoveTxt);
+        h += '<td>Golden Score</td><td class="n">' + x.from + ' → ' + x.to + '</td>' +
+          '<td class="n ' + hCls(d) + '">' + hSigned(d) + '</td><td>' +
+          mv.map(function (t) { return '<span class="mv" title="' + esc(t.tip) + '"><span class="' + t.c + '">' + esc(t.t) + '</span></span>'; }).join('') +
+          (x.moved.length > 4 ? '<span class="ms">+' + (x.moved.length - 4) + ' more</span>' : '') +
+          (x.rows0 !== x.rows ? '<span class="ms"> · ' + fmt(x.rows0) + ' → ' + fmt(x.rows) + ' products</span>' : '') + '</td>';
+      } else {
+        var parts2 = [];
+        [['q', 'Content quality'], ['air', 'AI-readiness']].forEach(function (f) {
+          if (x.cur[f[0]] == null) return;
+          var was = x.prev ? x.prev[f[0]] : null;
+          parts2.push({ lbl: f[1], txt: (was != null ? was + ' → ' : '') + x.cur[f[0]], d: was != null ? x.cur[f[0]] - was : null });
+        });
+        h += '<td>' + parts2.map(function (p2) { return p2.lbl; }).join(' · ') + '</td>' +
+          '<td class="n">' + parts2.map(function (p2) { return p2.txt; }).join(' · ') + '</td>' +
+          '<td class="n">' + parts2.map(function (p2) { return p2.d == null ? '<span class="muted">—</span>' : '<span class="' + hCls(p2.d) + '">' + hSigned(p2.d) + '</span>'; }).join(' · ') + '</td>' +
+          '<td class="ms">' + (x.prev ? 'analysed — compared with the analysis of ' + hDayLbl(hDay(x.prev.t)) : 'first analysis recorded') + '</td>';
+      }
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    if (m.log.length > HLOG_N) h += '<button class="btn hs-more" data-hmore="1">' + (all ? 'Show the latest ' + HLOG_N : 'Show all ' + m.log.length + ' changes') + '</button>';
+    return h + '</div>';
+  }
+  function histSection(k, s) {
+    var p = parts(k), h0 = HIST[k];
+    var head = '<div class="tier-h"><span class="tbadge hsb">Progress</span><h4>Score history</h4>';
+    var rngHtml = '<span class="hs-rng" role="group" aria-label="History range">' + HRNGS.map(function (r) {
+      return '<button data-hrng="' + r[0] + '"' + (HRNG === r[0] ? ' class="on"' : '') + '>' + r[1] + '</button>';
+    }).join('') + '</span>';
+    if (h0 === undefined) {
+      return '<div class="tier hs hs-empty" id="hs-tier">' + head + '</div><p class="hs-empty-note"><span class="spin"></span>Loading the score history…</p></div>';
+    }
+    var m = histModel(h0, s, profileForC(p.client), HRNG);
+    var thin = !h0 || m.recorded < 2 && !(h0.q || []).length;
+    var out = '<div class="tier hs' + (thin ? ' hs-empty' : '') + '" id="hs-tier">' + head +
+      (m.first ? '<span class="hs-since">tracking since ' + esc(hDayLbl(hDay(m.first))) + ' · ' + m.changes + ' change' + (m.changes === 1 ? '' : 's') + ' in view</span>' : '') +
+      rngHtml + '</div>';
+    if (!h0) {
+      return out + '<p class="hs-empty-note">History starts with this feed’s next scan — from then every move is recorded here with the attributes behind it.</p></div>';
+    }
+    out += '<div class="hs-kpis">' +
+      histKpi('Golden Score now', m.now == null ? '—' : String(m.now), '', 'as the dial above', 'Every reading in this history is scored against the brand’s current profile, so the line compares like with like') +
+      (m.last ? histKpi('Last change', hSigned(m.last.to - m.last.from), hCls(m.last.to - m.last.from),
+        esc(hDayLbl(hDay(m.last.t))) + ' · was ' + m.last.from, 'The last scan that moved the feed: ' + m.last.from + ' → ' + m.last.to)
+        : histKpi('Last change', '—', 'muted', 'none recorded yet')) +
+      // a window longer than the record says so rather than claiming 90 days it never saw
+      (m.over ? histKpi(m.over.all ? 'Since tracking began' : 'Over ' + HRNGS.filter(function (r) { return r[0] === HRNG; })[0][1],
+        hSigned(m.over.delta), hCls(m.over.delta), 'from ' + m.over.from + ' on ' + esc(hDayLbl(m.over.d))) : '') +
+      histTrackKpi('Content quality', m.q) + histTrackKpi('AI-readiness', m.air) + '</div>';
+    if (m.recorded < 2) {
+      out += '<p class="hs-empty-note">' + (m.first ? 'First reading recorded ' + esc(hDayLbl(hDay(m.first))) + ' — the chart fills in from the next scan that moves a number.'
+        : 'Score readings start with this feed’s next scan — the analyses above are already on record.') + '</p>';
+    }
+    out += '<div class="hs-leg"><span><i style="background:var(--hup)"></i>▲ Improvement on the day</span>' +
+      '<span><i style="background:var(--hdn)"></i>▼ Deduction on the day</span>' +
+      '<span><i class="dot"></i>scanned, no change</span><span class="muted">a gap = not scanned that day</span></div>' +
+      '<div class="hs-zone">' + histChart(m) + '<div class="hs-tip" id="hs-tip"></div></div>' +
+      histLog(k, m) + '</div>';
+    HMODEL = m;
+    return out;
+  }
+  var HMODEL = null;      // the model the hover layer reads
+  function histTip(ev, i) {
+    var tip = $('hs-tip'), zone = tip && tip.parentNode; if (!tip || !HMODEL) return;
+    var x = HMODEL.days[i]; if (!x) return;
+    var h = '<b>' + esc(hDayLbl(x.d)) + '</b><br>';
+    if (!x.scanned) h += '<span class="m">not scanned this day</span>';
+    else {
+      h += 'Golden Score <b>' + x.score + '</b><br>';
+      if (!x.basis) h += '<span class="m">measured on a new basis — not compared</span>';
+      else if (x.delta == null) h += '<span class="m">first reading</span>';
+      else if (x.delta === 0 && !x.moved.length) h += '<span class="m">no change vs ' + esc(hDayLbl(x.vs)) + '</span>';
+      else {
+        h += '<span class="' + (x.delta > 0 ? 'u' : (x.delta < 0 ? 'd' : 'm')) + '">' + hSigned(x.delta) + '</span> vs ' + esc(hDayLbl(x.vs));
+        x.moved.slice(0, 3).forEach(function (mm) { h += '<br><span class="m">' + esc(hMoveTxt(mm).t) + '</span>'; });
+        if (x.moved.length > 3) h += '<br><span class="m">+' + (x.moved.length - 3) + ' more</span>';
+      }
+    }
+    tip.innerHTML = h; tip.style.opacity = 1;
+    var zr = zone.getBoundingClientRect();
+    var px = ev.clientX - zr.left + 14, py = ev.clientY - zr.top - 14;
+    if (px + tip.offsetWidth > zr.width - 8) px = ev.clientX - zr.left - tip.offsetWidth - 14;
+    tip.style.left = px + 'px'; tip.style.top = Math.max(0, py) + 'px';
+  }
+  function histWire(k) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hrng]'), function (b) {
+      b.onclick = function () {
+        HRNG = b.getAttribute('data-hrng');
+        try { localStorage.setItem('gr-hist-rng', HRNG); } catch (e) {}
+        histRedraw(k);
+      };
+    });
+    var more = document.querySelector('[data-hmore]');
+    if (more) more.onclick = function () { HSHOW[k] = !HSHOW[k]; histRedraw(k); };
+    Array.prototype.forEach.call(document.querySelectorAll('.hs-svg .hit'), function (r) {
+      r.addEventListener('mousemove', function (ev) { histTip(ev, +r.getAttribute('data-hd')); });
+      r.addEventListener('mouseleave', function () { var t = $('hs-tip'); if (t) t.style.opacity = 0; });
+    });
+  }
+  // redraw the card in place — a range change must not rebuild (and re-scroll) the whole scorecard
+  function histRedraw(k) {
+    var el = $('hs-tier'), d = CACHE[k];
+    if (!el || !d || !d.snapshot) return;
+    var w = document.createElement('div'); w.innerHTML = histSection(k, d.snapshot);
+    el.parentNode.replaceChild(w.firstChild, el);
+    histWire(k);
   }
 
   var TIERS = [
@@ -1444,6 +1892,7 @@ window.addEventListener('load',restore);
       (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' estate feeds): avg <b>' + bench.avg + '</b> · best <b>' + bench.best.score + '</b> (' + esc(dispClient(bench.best.client)) + ').' : '') + '</p>' +
       '</div></div></div>';    // …gr-info · gr-top · gr-sticky
     h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
+    h += histSection(k, s);   // the score over time — improvement and deduction, day by day
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
@@ -1512,6 +1961,7 @@ window.addEventListener('load',restore);
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
+    histWire(k);
   }
 
   /* ---- per-attribute actions: the client ask (shared askdraft rails) + the brief ---- */
@@ -2119,6 +2569,8 @@ window.addEventListener('load',restore);
             .then(function (d) {
               if (d && d.error) throw new Error(d.error);
               QUAL[k] = snap;
+              // the analysis is now a point in the feed's history — refresh the card in place
+              if (HIST[k] !== undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
               // mirror onto the estate row exactly what the worker just wrote to goldenidx,
               // so this market joins the pillar heatmap now rather than after a reload
               var row = ESTATE.feeds[k];
@@ -3040,11 +3492,20 @@ window.addEventListener('load',restore);
       var s = document.createElement('span'); s.className = 'on'; s.textContent = b.textContent;
       b.parentNode.replaceChild(s, b);
     });
+    // 3c. the score history's range reads as the chip it is on screen (the others are toggles no
+    //     script can flip), and a card with nothing to show a client yet leaves the file
+    Array.prototype.forEach.call(doc.querySelectorAll('.hs-rng button'), function (b) {
+      if (!b.parentNode) return;
+      if (!b.classList.contains('on')) { b.parentNode.removeChild(b); return; }
+      var s2 = document.createElement('span'); s2.className = 'on'; s2.textContent = b.textContent;
+      b.parentNode.replaceChild(s2, b);
+    });
     // 4. nothing that needs JavaScript survives in a file that has none
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
      '.at-act', '.det-actions', '#pdp-last', '#prof-edit',
+     '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the
         live editor's ✎ handle, its "Send an element to Claude Code" panel and 💬 Feedback

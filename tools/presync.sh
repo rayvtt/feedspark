@@ -162,6 +162,10 @@ echo "── validating: one audit colour legend across every page"
 node tools/test_bands.mjs >/dev/null
 echo "   ✓ <70 red · 70–85 orange · 85–95 yellow · 95+ green on /golden, /feedlab, the dossier, the Playbook rail"
 
+echo "── validating: Golden Record score history (engine, worker wiring, the page's twin)"
+node tools/test_goldenhist.mjs >/dev/null
+echo "   ✓ one reading per real move, gaps stay gaps, re-scored to today's profile"
+
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
 echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"
@@ -206,6 +210,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record per-rule waiver (one click sets a rule aside, the score re-analyses, undo restores)"
   NODE_PATH=$(npm root -g) node tools/check_grwaive.js || {
     echo "✗ Golden Record waiver tripwire failed — the 'Doesn't apply to <Brand>' button, the re-analysis, the undo or the client file regressed"; exit 1; }
+  echo "── validating: Golden Record score history (daily close + day-on-day bars, gaps, re-basing, client files)"
+  NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
+    echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }
