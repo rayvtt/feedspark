@@ -227,7 +227,26 @@ GET  /api/tm  (+POST /api/gmail/push {tmpush}) → TASK MANAGER hours (Ray, 16 S
 GET  /i18n/engine.js · /i18n/vi.json → UI LANGUAGE (Ray, 15 Sep 2026: "build completely a VI (Vietnamese) toggle for my view only"): the DOM-translation engine (docs/i18n_engine.js, UMD, node-tested) + the hand-written seed dictionary (docs/i18n/vi.json — ~1,800 entries covering every app page's chrome, numbers templated as {n} so one entry answers every count; protected tokens = brand/client/platform/product names + SKU/AM-style acronyms, never translated, plural-canon SKUs≡SKU). The widget (docs/lang_widget.html, `#lang-tgl` EN/VI pill in the topbar) translates every text node + title/placeholder/aria-label/alt in place, MutationObserver keeps re-rendered content translated, exact originals restored on the way back; never touches inputs' values, textareas, contenteditable, the dossier's data-ed fields, code, the Templates copy bodies (the Copy button reads them) or the wordmark. Widget injected ONLY for the real owner identity (realOwner — never another signin, never under view-as)
 GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed cannot answer: GET = the learned map (ONE KV key i18n:vi — no per-string KV traffic); POST {lang,strings≤80} = translate the misses via Tachyon (Claude, glossary system prompt, whole-word protected tokens enforced server-side by i18nKeeps), cache into the same key, return the map; no ANTHROPIC_API_KEY → error:'no_key' and the widget degrades to seed-only (title says so, zero further POSTs). Harness tools/test_i18n.mjs (engine rules, seed integrity, worker parity + gating) in qa_gate/presync/validate; docs/I18N.md
 ```
-- **Injected on app pages** (not client decks): the **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
+- **Injected on app pages** (not client decks): the **MODULE ROW** (`docs/navrow_widget.html` —
+  Ray, 25 Sep 2026, over a screenshot of the Command Center topbar with the right-hand widget
+  cluster crossed out: "tidy up this menu pleease , or allow the core modules dropdown ai the below
+  row": nineteen unlabelled glyphs shared ONE row with the wordmark, the page tag, the viewer's name
+  and six injected widgets, and wrapped onto a second line inside the bar. They get the row
+  underneath, with their NAMES on them, and whatever does not fit folds into one **More ▾** — so the
+  chips on screen are the core modules in the viewer's own order, the ▦ customiser's order, not a
+  second preference to keep in step with it. The nav NODE is neither moved nor rewritten (check_nav
+  compares that markup byte for byte across 24 pages, the ▦ customiser re-appends anchors into it,
+  MODGATE hides the ones a signin may not open, and the phone layer moves the same node into the
+  bottom bar under 760px) — layout plus an overflow menu, standing down entirely under 760px. Three
+  rules: a module MODGATE denied is never measured onto the row NOR cloned into More (it hides with
+  an inline style, ours is a class, so the two can never be confused); the page you are ON is always
+  on the row even when its module sits 16th; and a MutationObserver re-measures after the customiser
+  or MODGATE move things, with our own writes fenced off. The ☰ collapse toggle needed an explicit
+  rule — the page's own `.nav-collapsed .tb-modules` is two classes and the row's selector carries an
+  id, which beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the real served
+  pages at five widths and carries a NEGATIVE CONTROL — the same page built without the widget, which
+  must still wrap — so the one-row assertion can never pass on a bar nobody is laying out), the
+  **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
   Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
   platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph
   under a heading or directly inside a card/section — is judged by SENTENCE COUNT, not by a class

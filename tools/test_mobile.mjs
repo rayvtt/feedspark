@@ -34,7 +34,8 @@ console.log('· wiring');
 t('the worker injects the layer on app pages for EVERY signin (not owner-gated)',
   /^\s*html = inject\(html, MOBILEW\);$/m.test(WK) && !/realOwner\([^)]*\)\)[^\n]*MOBILEW/.test(WK));
 t('the worker imports the widget as a Text module', /import MOBILEW from "\.\.\/\.\.\/\.\.\/docs\/mobile_widget\.html";/.test(WK));
-t('the dark tripwire renders pages WITH the phone layer', /'apps_widget\.html', 'mobile_widget\.html'/.test(DARK));
+t('the dark tripwire renders pages WITH the phone layer',
+  /'apps_widget\.html'/.test(DARK) && /'mobile_widget\.html'/.test(DARK));
 t('the phone tripwire renders every app page at 390px and fails on overflow / tall header / lost bar / hidden desktop controls', /devices\['iPhone 13'\]/.test(MOB) && /horizontal overflow/.test(MOB) && /topbar ' \+ m\.tbH \+ 'px tall/.test(MOB) && /hidden on the phone but visible on desktop/.test(MOB));
 t('presync runs the phone tripwire after the dark one', /check_darkmode\.js[\s\S]*check_mobile\.js/.test(PRE));
 console.log('· skim view — every section one tap row, folded by default (Ray, 18 Sep 2026, the Meta Ads Manager example)');

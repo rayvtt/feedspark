@@ -24,7 +24,7 @@ try { ({ chromium, devices } = require(path.join(process.env.NODE_PATH || '/usr/
 const ROOT = path.resolve(__dirname, '..'), D = path.join(ROOT, 'docs');
 const W = 390;
 // the same injected chrome check_mobile.js renders with — the phone layer lives in mobile_widget.html
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const SRC = fs.readFileSync(path.join(D, 'FeedSpark_GoldenRecord.html'), 'utf8');
 const TMP = path.join(os.tmpdir(), '_grmobcheck_FeedSpark_GoldenRecord.html');

@@ -115,6 +115,7 @@ import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
 // servers + the AM adoption plan, tracked live with management (opt-in module, see access.js)
 import TRANSFORM_PAGE from "../../../docs/FeedSpark_Transformation.html";
 import APPSW from "../../../docs/apps_widget.html";
+import NAVROWW from "../../../docs/navrow_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -2997,7 +2998,7 @@ async function route(request, env, ctx) {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
-          + '\n' + HOURSW + '\n' + TOUCHW + '\n' + MIGW
+          + '\n' + NAVROWW + '\n' + HOURSW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)

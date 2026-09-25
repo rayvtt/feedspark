@@ -214,6 +214,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
+  echo "── validating: the module row (one row below the bar, nothing lost, nothing denied on it)"
+  NODE_PATH=$(npm root -g) node tools/check_navrow.js || {
+    echo "✗ module-row tripwire failed — the menu wrapped, lost a module into neither the row nor More, or put one this signin may not open on screen"; exit 1; }
   echo "── validating: phone layout (every app page at 390px — one-row header, module bar, no overflow, desktop parity)"
   NODE_PATH=$(npm root -g) node tools/check_mobile.js || {
     echo "✗ phone tripwire failed — a page overflows sideways, hides a desktop control or lost its module bar"; exit 1; }

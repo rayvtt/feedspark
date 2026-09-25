@@ -10479,6 +10479,36 @@
       "pr": 0
     },
     {
+      "name": "navrow: the module menu has the row below",
+      "file": "docs/navrow_widget.html",
+      "pattern": "body.fcc-navrow .topbar-in > #tb-modules",
+      "pr": 0
+    },
+    {
+      "name": "navrow: a MODGATE-denied module is never measured or cloned",
+      "file": "docs/navrow_widget.html",
+      "pattern": "function allowed(a) { return a.style.display !== 'none'; }",
+      "pr": 0
+    },
+    {
+      "name": "navrow: the observer never chases the row's own writes",
+      "file": "docs/navrow_widget.html",
+      "pattern": "function settle() { try { if (obs) obs.takeRecords(); } catch (e) {} quiet = false; }",
+      "pr": 0
+    },
+    {
+      "name": "navrow: the collapse toggle still hides the menu",
+      "file": "docs/navrow_widget.html",
+      "pattern": "body.fcc-navrow.nav-collapsed .topbar-in > #tb-modules",
+      "pr": 0
+    },
+    {
+      "name": "navrow: injected on every app page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "NAVROWW",
+      "pr": 0
+    },
+    {
       "name": "hero: the sync line writes its own whole phrase and state",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function setSynced(txt,state)",
