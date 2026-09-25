@@ -10477,6 +10477,30 @@
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "id=\"fs-btn\"",
       "pr": 0
+    },
+    {
+      "name": "hero: the sync line writes its own whole phrase and state",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function setSynced(txt,state)",
+      "pr": 0
+    },
+    {
+      "name": "hero: every dossier brand is asked for, blank id and all",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "sheets[k]=planSheetId((B[k]||{}).plan)||''",
+      "pr": 0
+    },
+    {
+      "name": "plan roster: PLAN_SHEETS with the dossier's links as overrides",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function planSheetMap(env)",
+      "pr": 0
+    },
+    {
+      "name": "plan/live: a named brand resolves from the wired map, scoped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (id && clientMatch(acc.clients, brand)) { sheets[brand] = id; wired[brand] = 1; }",
+      "pr": 0
     }
   ]
 }

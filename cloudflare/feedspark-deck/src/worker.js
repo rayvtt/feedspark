@@ -298,6 +298,24 @@ const PLAN_SHEETS = {
   'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
 
+// THE PLAN ROSTER IS THIS MAP — the one Workflow itself reads — with the dossier's pasted links
+// layered on top as per-brand OVERRIDES (KV `plansheets`, written by /api/plan/live below).
+//
+// It is a helper because three things used to read that KV record ALONE, and therefore did
+// nothing whatever until somebody opened the Command Center with a plan URL pasted into a
+// dossier card (Ray, 25 Sep 2026, screenshotting his own hero: "Project plans synced no plan
+// links yet"): the hourly warm that fills planlive:<id>, the Playbook rail — which reads only
+// those warmed caches — and the 12:00 GMT due-task reminder emails to Ray and Steven. The
+// sheets were wired the whole time and Workflow was reading them, so the roster belongs to git
+// and KV can only ever ADD to it.
+async function planSheetMap(env) {
+  let over = {};
+  try { over = (await env.EDITS.get('plansheets', 'json')) || {}; } catch (e) {}
+  const out = Object.assign({}, PLAN_SHEETS);
+  Object.keys(over).forEach((b) => { if (over[b]) out[b] = over[b]; });
+  return out;
+}
+
 // Classify a Sheets API error into something a person can act on. PERMISSION_DENIED / 403 means
 // the workbook simply isn't shared with the worker's service account — the commonest cause by
 // far, since these plans are shared with US by name and the SA is a separate identity from
@@ -2681,8 +2699,28 @@ async function route(request, env, ctx) {
     if (path === '/api/plan/live' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ connected: false, error: 'no_sa', brands: {} });
       let body; try { body = await request.json(); } catch (e) { return json({ connected: false, error: 'bad_json' }, 400); }
-      const sheets = body.sheets || {}, tab = body.tab || 'Project Plan', force = !!body.force;
-      try { await env.EDITS.put('plansheets', JSON.stringify(sheets)); } catch (e) {}
+      const asked = body.sheets || {}, tab = body.tab || 'Project Plan', force = !!body.force;
+      // A brand the caller NAMES but cannot supply an id for is resolved from the wired map: the
+      // dossier's pasted link is an override, never the only way in. Resolved brands are SCOPED
+      // (a client-scoped signin naming "Reiss" must not be handed Reiss's plan); an id the caller
+      // supplied itself is passed through exactly as before. No brands named at all = the roster.
+      const acc = await accessOf(env, request);
+      const names = Object.keys(asked).length ? Object.keys(asked) : Object.keys(PLAN_SHEETS);
+      const sheets = {}, wired = {};
+      names.forEach((brand) => {
+        if (asked[brand]) { sheets[brand] = asked[brand]; return; }
+        const id = PLAN_SHEETS[brand];
+        if (id && clientMatch(acc.clients, brand)) { sheets[brand] = id; wired[brand] = 1; }
+      });
+      // KV keeps the OVERRIDES, merged in. The roster lives in git, and one screen only ever
+      // shows part of the house (a scoped signin, or a dossier still being filled in), so a save
+      // from it can add an override and can never drop somebody else's.
+      try {
+        const prev = (await env.EDITS.get('plansheets', 'json')) || {};
+        const next = Object.assign({}, prev);
+        Object.keys(asked).forEach((b) => { if (asked[b]) next[b] = asked[b]; });
+        if (JSON.stringify(next) !== JSON.stringify(prev)) await env.EDITS.put('plansheets', JSON.stringify(next));
+      } catch (e) {}
       const out = {};
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
@@ -2700,7 +2738,7 @@ async function route(request, env, ctx) {
           }
           out[brand] = cached; seen[id] = cached;
         }
-        return json({ connected: true, brands: out });
+        return json({ connected: true, brands: out, wired });
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }
     }
 
@@ -3033,7 +3071,7 @@ async function scheduledRun(event, env, ctx) {
     if (!env.GOOGLE_SA_JSON) return;
     const warmed = {};   // sheet id → freshly parsed tasks (feeds the 12:00 reminder for free)
     try {
-      const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+      const sheets = await planSheetMap(env);
       const ids = Array.from(new Set(Object.keys(sheets).map(b => sheets[b]).filter(Boolean)));
       if (!ids.length) return;
       const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
@@ -5143,7 +5181,7 @@ async function queueDueReminders(env, opts) {
     const done = await env.EDITS.get('taskremday');
     if (done === day) return { ok: true, skipped: 'already ran today' };
   }
-  const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+  const sheets = await planSheetMap(env);
   const byId = {};   // brands sharing a sheet share its rows — group per sheet so nothing mails twice
   Object.keys(sheets).forEach((b) => { const id = sheets[b]; if (id) (byId[id] = byId[id] || []).push(b); });
   const groups = [];
