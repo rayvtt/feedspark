@@ -59,7 +59,8 @@ ok('nothing on the page reads A.overdue / A.active / A.brands / A.scores / A.pla
 ok('the tracker export is deleted', !fs.existsSync(path.join(ROOT, 'docs', 'atrt_data.json')));
 ok('the splice tool is deleted', !fs.existsSync(path.join(ROOT, 'tools', 'sync_atrt.py')));
 ok('the hero strip ships EMPTY — nothing baked into the source', /<div class="statstrip" id="kpi"><!--[^]*?--><\/div>/.test(CC) && !/id="kpi">[^]*?<div class="s">[^]*?<\/div>\s*<div class="synced">/.test(CC.slice(CC.indexOf('id="kpi"'), CC.indexOf('id="kpi"') + 600)));
-ok('the synced line names the project plans, not a tracker', /Project plans synced <span id="synced">/.test(CC) && !/ATRT Tracker synced/.test(CC));
+ok('the synced line names the project plans, not a tracker',
+  /<span id="synced">[^]*?every client's own plan, the same source as Workflow/.test(CC) && !/ATRT Tracker synced/.test(CC));
 ok('the count-up that read the splice is gone (renderHero owns the animation)', !/Count the figures up/.test(CC) && /function heroCount\(/.test(CC));
 ok('renderHero is what fills the strip', /function renderHero\(/.test(CC) && /window\.__fccHero=\{model:heroModel,render:renderHero\}/.test(CC));
 ok('the plans modal renders from the dossier store (renderPlans), not a splice', /function renderPlans\(/.test(CC) && /id="plans-list"/.test(CC));
@@ -152,7 +153,7 @@ ok('before the dossier store lands, Accounts falls back to the git-bundled brand
 console.log('\nwiring');
 ok('liveSync stores the raw rows and rebuilds through the brand overlay', /LIVE_RAW\[k\]=\{tasks:b\.tasks,stamp:stamp\}; PT\[k\]=ptFromLive\(b\.tasks,stamp,brandOverlay\(k\)\)/.test(CC));
 ok('liveSync re-renders the hero after every pull', /renderHero\(\);\n\s+if\(ok\)\{ if\(cur\)render\(cur\);/.test(CC));
-ok('the synced line says how many plans are in', /' of '\+n\+' plan'/.test(CC));
+ok('the synced line says how many plans are in, over what it could reach', /' of '\+tried\+' plan'/.test(CC));
 ok('the shared overlays are read in one call and rebuild the live plans', /\/api\/state\?ns=taskstatus,taskdue,deleted,hidden/.test(CC) && /rebuildLive\(\); renderHero\(\);/.test(CC));
 ok('buildList re-renders the hero and the plans modal', /renderHero\(\); renderPlans\(\);\n\s+\}/.test(CC));
 ok('the dossier list sorts by plan activity, flags plan overdue', /var n=act\(name\), od=\(PT\[name\]&&PT\[name\]\.over\)\|\|0/.test(CC));
@@ -162,6 +163,80 @@ ok('the health model docks for plan overdue', /var p=PT\[name\]\|\|null, od=\(p&
 const claudeMd = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
 ok('CLAUDE.md never instructs running the splice tool', !/python tools\/sync_atrt\.py/.test(claudeMd));
 ok('no other repo tool or doc still points at the splice tool', !fs.readFileSync(path.join(ROOT, 'docs', 'WAYS_OF_WORKING.md'), 'utf8').includes('sync_atrt') && !fs.readFileSync(path.join(ROOT, 'tools', 'overlap.sh'), 'utf8').includes('atrt'));
+
+/* =========================================== THE LINE NEVER CLAIMS A SYNC IT DID NOT DO ====
+ * Ray, 25 Sep 2026, screenshotting his own hero: the strip read "—" for Overdue and for Due
+ * next 7 days under the line
+ *
+ *     ● Project plans synced no plan links yet · link each brand's plan in its dossier
+ *
+ * — a green dot, the word "synced", and the admission that nothing had synced, in one sentence.
+ * The cause was that "Project plans synced " was HARD-CODED in the markup and only the tail was
+ * filled in, so every failure state read as a success. The whole phrase is written by setSynced
+ * now, with its own state on the dot.
+ */
+console.log('\nthe line never claims a sync it did not do');
+const heroLine = (CC.match(/<div class="synced"[^]*?<\/div>/) || [''])[0];
+const beforeSpan = (heroLine.match(/^<div class="synced"[^>]*>([^]*?)<span id="synced">/) || ['', 'MISSING'])[1];
+ok('the markup asserts nothing before the state span',
+  beforeSpan.trim() === '' && /data-state="off"/.test(heroLine), beforeSpan);
+ok('setSynced writes the phrase AND the state', /function setSynced\(txt,state\)\{[^]*?sy\.textContent=txt;[^]*?setAttribute\('data-state',state\|\|'off'\)/.test(CC));
+ok('nothing else writes the line', (CC.match(/getElementById\('synced'\)/g) || []).length === 1);
+const syncCalls = [...CC.matchAll(/setSynced\(([^]*?)\);/g)].map((m) => m[1].replace(/\s+/g, ' '));
+ok('every state the line can be in is written by a setSynced call', syncCalls.length >= 5, syncCalls.length);
+ok('no failure state is dressed as a sync',
+  syncCalls.filter((c) => /'ok'/.test(c)).length === 1
+  && syncCalls.filter((c) => /not connected|offline|no plan reachable|no accounts/.test(c)).every((c) => /'warn'|'off'/.test(c)), syncCalls);
+ok('a pull that reached nothing says so rather than going quiet', /\('no plan reachable \u00b7 showing the last build'\)/.test(CC) || /'no plan reachable \u00b7 showing the last build'/.test(CC));
+ok('an unreachable plan turns the dot amber', /ok\?\(fail\?'warn':'ok'\):'warn'/.test(CC));
+// A dossier brand with no plan wired anywhere is a prospect, not a fault — it is named in the
+// line for the denominator's sake and must NOT colour the dot, or amber means nothing.
+ok('a brand with no plan anywhere is named but never colours the dot',
+  /nosheet\?' \u00b7 '\+nosheet\+' with no plan wired':''/.test(CC) && !/nosheet\?'warn'/.test(CC));
+ok('the dot follows the state', /\.synced\[data-state=warn\]::before\{background:var\(--orange-deep/.test(CC) && /\.synced\[data-state=off\]::before\{background:var\(--muted/.test(CC));
+
+/* ================================================ THE ROSTER IS THE MAP WORKFLOW READS ====
+ * The same screenshot's real defect: the page synced only sheets somebody had PASTED into a
+ * dossier card, so with none pasted it asked for nothing, the two dated KPIs could never fill,
+ * and — because /api/plan/live is the only writer of the KV `plansheets` record — the hourly
+ * warm, the Playbook rail that reads only those warmed caches, and the 12:00 GMT due-task
+ * reminder emails all quietly did nothing too. PLAN_SHEETS held every sheet the whole time.
+ */
+console.log('\nthe roster is the map Workflow reads');
+const W = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+ok('the page asks for every dossier brand, blank id and all',
+  /sheets\[k\]=planSheetId\(\(B\[k\]\|\|\{\}\)\.plan\)\|\|''/.test(CC));
+const ccCode = CC.replace(/^\s*\/\/.*$/gm, '');
+ok('a brand with no pasted link is no longer a dead end', !/no plan links yet/.test(ccCode));
+ok('the worker fills a blank from the wired map', /const id = PLAN_SHEETS\[brand\];\s*\n\s*if \(id && clientMatch\(acc\.clients, brand\)\) \{ sheets\[brand\] = id; wired\[brand\] = 1; \}/.test(W));
+ok('a resolved brand is scoped — naming one is not a way past access', /if \(id && clientMatch\(acc\.clients, brand\)\)/.test(W));
+ok('an id the caller supplied is passed through untouched', /if \(asked\[brand\]\) \{ sheets\[brand\] = asked\[brand\]; return; \}/.test(W));
+ok('naming no brands at all means the whole roster', /Object\.keys\(asked\)\.length \? Object\.keys\(asked\) : Object\.keys\(PLAN_SHEETS\)/.test(W));
+ok('the KV record MERGES — one partial screen can never drop another brand',
+  /const next = Object\.assign\(\{\}, prev\);[^]*?Object\.keys\(asked\)\.forEach\(\(b\) => \{ if \(asked\[b\]\) next\[b\] = asked\[b\]; \}\);/.test(W)
+  && !/EDITS\.put\('plansheets', JSON\.stringify\(sheets\)\)/.test(W));
+ok('the page is told which brands it never had to link', /brands: out, wired \}/.test(W) && /LIVE_WIRED=d\.wired\|\|\{\}/.test(CC));
+ok('the plans modal stops calling a wired plan unlinked', /LIVE_WIRED\[n\]\?'<span class="tag" title="Wired in the worker/.test(CC));
+ok('the hourly warm reads the roster, not one screen\'s leftovers', /const sheets = await planSheetMap\(env\);\n\s*const ids = Array\.from/.test(W));
+ok('the 12:00 reminder reads the roster too', /const sheets = await planSheetMap\(env\);\n\s*const byId = \{\};/.test(W));
+ok('nothing reads the KV record alone any more', !/EDITS\.get\('plansheets', 'json'\)\) \|\| \{\};\n\s*const (ids|byId)/.test(W));
+
+// planSheetMap itself, lifted out of the worker and run against a stub KV.
+const PS = (W.match(/const PLAN_SHEETS = \{[^]*?\n\};/) || [''])[0];
+const psCtx = vm.createContext({});
+vm.runInContext(PS + '\nasync ' + lift(W, 'planSheetMap') + '\nthis.PLAN_SHEETS=PLAN_SHEETS; this.planSheetMap=planSheetMap;', psCtx);
+const kvStub = (rec) => ({ EDITS: { get: async () => rec } });
+const wiredCount = Object.keys(psCtx.PLAN_SHEETS).length;
+const noKv = await psCtx.planSheetMap(kvStub(null));
+ok('with an empty KV the roster is still every wired plan', Object.keys(noKv).length === wiredCount && !!noKv.Reiss, Object.keys(noKv).length);
+const over = await psCtx.planSheetMap(kvStub({ Reiss: 'PASTED_ID' }));
+ok('a pasted link overrides the wired sheet for that brand', over.Reiss === 'PASTED_ID' && over.Schuh === psCtx.PLAN_SHEETS.Schuh);
+const add = await psCtx.planSheetMap(kvStub({ 'Some New Brand': 'NEW_ID' }));
+ok('a brand only the dossier knows is added, never dropped', add['Some New Brand'] === 'NEW_ID' && Object.keys(add).length === wiredCount + 1);
+const blank = await psCtx.planSheetMap(kvStub({ Reiss: '' }));
+ok('an empty override never blanks a wired sheet', blank.Reiss === psCtx.PLAN_SHEETS.Reiss);
+const threw = await psCtx.planSheetMap({ EDITS: { get: async () => { throw new Error('kv down'); } } });
+ok('a KV read that throws still returns the wired roster', Object.keys(threw).length === wiredCount);
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

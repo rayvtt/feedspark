@@ -852,7 +852,7 @@ window.addEventListener('load',restore);
       time we spend. Built to run lean now and grow into an automated command center: client comms,
       interaction logging, and hours that report themselves.</p>
     <div class="statstrip" id="kpi"><!-- FCC-KPI: filled by renderHero() from every client's project plan — the same rows the Workflow board reads --></div>
-    <div class="synced">Project plans synced <span id="synced">syncing…</span> · every client's own plan, the same source as Workflow</div>
+    <div class="synced" id="syncline" data-state="off"><span id="synced">syncing the project plans…</span> · every client's own plan, the same source as Workflow</div>
   </div>
 </header>
 
@@ -1017,7 +1017,7 @@ window.addEventListener('load',restore);
     if(d2.getFullYear()<2015 && !/\d{4}/.test(s)) d2.setFullYear(new Date().getFullYear());
     return d2; }
   function wfToday(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-  var SHDUE={},SHDEL={},SHHID={},LIVE_RAW={};
+  var SHDUE={},SHDEL={},SHHID={},LIVE_RAW={},LIVE_WIRED={};
   // the team's shared Workflow overlays, keyed "<client>|<task>", narrowed to one brand's tasks
   function brandOverlay(name){ var o={s:{},d:{},del:{},hid:{}}, pre=name+'|';
     function pick(src,dst){ Object.keys(src||{}).forEach(function(k){ if(k.indexOf(pre)===0)dst[k.slice(pre.length)]=src[k]; }); }
@@ -2805,12 +2805,15 @@ window.addEventListener('load',restore);
   }
   // the Project plans modal: every dossier brand and its linked plan sheet, live from the dossier store
   function renderPlans(){ var box=document.getElementById('plans-list'), sub=document.getElementById('plans-sub'); if(!box)return;
-    var names=Object.keys(B).sort(function(a,b){return a.localeCompare(b);}), linked=0;
-    box.innerHTML=names.map(function(n){ var b=B[n]||{}; if(b.plan)linked++;
+    var names=Object.keys(B).sort(function(a,b){return a.localeCompare(b);}), linked=0, wired=0;
+    box.innerHTML=names.map(function(n){ var b=B[n]||{}; if(b.plan)linked++; else if(LIVE_WIRED[n])wired++;
       return '<div class="planrow"><span class="nm">'+esc(n)+(b.cat?'<span style="color:var(--muted);font-weight:700"> · '+esc(b.cat)+'</span>':'')+'</span>'
-        +(b.plan?'<a class="tag" href="'+esc(b.plan)+'" target="_blank" rel="noopener">'+esc(b.pn||'Project plan')+' ↗</a>':'<span class="tag" style="color:var(--muted)">no plan linked</span>')+'</div>'; }).join('')
+        +(b.plan?'<a class="tag" href="'+esc(b.plan)+'" target="_blank" rel="noopener">'+esc(b.pn||'Project plan')+' ↗</a>'
+          :(LIVE_WIRED[n]?'<span class="tag" title="Wired in the worker\u2019s plan map \u2014 read live, the same sheet the Workflow board reads. Link it here to open it in a click.">wired · read live</span>'
+            :'<span class="tag" style="color:var(--muted)">no plan linked</span>'))+'</div>'; }).join('')
       ||'<p class="dz-empty">No accounts in the dossier yet.</p>';
-    if(sub)sub.textContent=names.length+' account'+(names.length===1?'':'s')+' · '+linked+' with a linked plan · ✎ Edit dossier to link one'; }
+    if(sub)sub.textContent=names.length+' account'+(names.length===1?'':'s')+' · '+linked+' linked here'
+      +(wired?' · '+wired+' read from the wired map':'')+' · ✎ Edit dossier to link one'; }
   // ---- live plan-sync: pull every dossier's linked Google Sheet through /api/plan/live and
   // rebuild PLANTASKS client-side, so scoring/tests/dossier reflect the sheets RIGHT NOW (not the
   // last baked deploy). A brand only needs a plan URL in its dossier (e.g. Ryobi) to join.
@@ -2842,17 +2845,25 @@ window.addEventListener('load',restore);
     p.score=Math.round(0.7*comp+0.3*breadth);
     return p; }
   var liveSyncing=false;
+  // The status line writes its OWN whole phrase, state and all. It used to be "Project plans
+  // synced " in the markup with only the tail filled in, so every failure read as a success:
+  // Ray's own hero said "Project plans synced no plan links yet" under a green dot (25 Sep 2026).
+  function setSynced(txt,state){ var sy=document.getElementById('synced'), ln=document.getElementById('syncline');
+    if(sy)sy.textContent=txt; if(ln)ln.setAttribute('data-state',state||'off'); }
+  // We ASK for every dossier brand — its pasted plan URL if it has one, an empty string if it
+  // doesn't — and the worker fills the blanks from PLAN_SHEETS, the wired map the Workflow board
+  // reads. A brand nobody has pasted a link for still syncs, which is what the line under the
+  // strip has always claimed: the same source as Workflow.
   function liveSync(force,btn){
     if(liveSyncing)return;
-    var sheets={}; Object.keys(B).forEach(function(k){ var id=planSheetId((B[k]||{}).plan); if(id)sheets[k]=id; });
+    var sheets={}; Object.keys(B).forEach(function(k){ sheets[k]=planSheetId((B[k]||{}).plan)||''; });
     var n=Object.keys(sheets).length;
-    var sy=document.getElementById('synced');
-    if(!n){ if(btn)btn.textContent='⟳ Sync — no plan links'; if(sy)sy.textContent='no plan links yet · link each brand\u2019s plan in its dossier'; return; }
+    if(!n){ if(btn)btn.textContent='⟳ Sync — no accounts'; setSynced('no accounts in the dossier yet','off'); return; }
     liveSyncing=true; if(btn)btn.textContent='⟳ syncing '+n+' plans…';
     fetch(API+'/api/plan/live',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sheets:sheets,force:!!force})})
       .then(function(r){return r.json();})
       .then(function(d){ liveSyncing=false;
-        if(!d||!d.connected){ if(btn)btn.textContent='⟳ Sync — SA not connected'; if(sy)sy.textContent='service account not connected · showing the last build'; return; }
+        if(!d||!d.connected){ if(btn)btn.textContent='⟳ Sync — SA not connected'; setSynced('service account not connected · showing the last build','warn'); return; }
         var ok=0,fail=0,failed=[],now=new Date();
         var stamp='live '+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
         Object.keys(d.brands||{}).forEach(function(k){ var b=d.brands[k];
@@ -2860,10 +2871,14 @@ window.addEventListener('load',restore);
           else if(b&&b.error){ fail++; failed.push(k); } });
         if(btn){ btn.textContent='⟳ Sync ✓ '+ok+(fail?' · '+fail+' unreachable':'');
           btn.title=fail?('Unreachable (share the sheet with the service account): '+failed.join(', ')):('Pulled '+ok+' plans live'); }
-        if(sy)sy.textContent=ok?(stamp+' · '+ok+' of '+n+' plan'+(n===1?'':'s')+' live'+(fail?' · '+fail+' unreachable':'')):('no plan reachable · showing the last build');
+        var tried=Object.keys(d.brands||{}).length, nosheet=Math.max(0,n-tried);
+        LIVE_WIRED=d.wired||{}; renderPlans();
+        setSynced(ok?(stamp+' · '+ok+' of '+tried+' plan'+(tried===1?'':'s')+' live'
+            +(fail?' · '+fail+' unreachable':'')+(nosheet?' · '+nosheet+' with no plan wired':''))
+          :('no plan reachable · showing the last build'), ok?(fail?'warn':'ok'):'warn');
         renderHero();
         if(ok){ if(cur)render(cur); if(window.__renderPTSections)window.__renderPTSections(); } })
-      .catch(function(){ liveSyncing=false; if(btn)btn.textContent='⟳ Sync — offline'; if(sy)sy.textContent='offline · showing the last build'; }); }
+      .catch(function(){ liveSyncing=false; if(btn)btn.textContent='⟳ Sync — offline'; setSynced('offline · showing the last build','warn'); }); }
   var host=document.querySelector('#accounts .sec-head');
   if(host){
     var ctl=document.createElement('div'); ctl.className='dz-controls';
@@ -3127,6 +3142,8 @@ window.addEventListener('load',restore);
    running past the last card. Hand the surface to the children. */
 [data-theme=dark] .statstrip{background:transparent;border-color:transparent}
 /* the sync line earns a live pip — it is the one genuinely live thing on the banner */
+.hero .synced[data-state=warn]::before{background:var(--orange-deep,#ED6F0B)!important}
+.hero .synced[data-state=off]::before{background:var(--muted,#8a94a0)!important;animation:none!important}
 .hero .synced::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);
   margin-right:8px;vertical-align:1px;animation:heroPulse 2.4s ease-out infinite}
 @keyframes heroPulse{
