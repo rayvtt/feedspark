@@ -1,0 +1,240 @@
+<!-- FCC-NAVROW — the module menu gets the row below ------------------------------------------
+     Ray, 25 Sep 2026, over a screenshot of the Command Center topbar with the right-hand widget
+     cluster crossed out: "tidy up this menu pleease , or allow the core modules dropdown ai the
+     below row".
+
+     Nineteen unlabelled glyphs were sharing ONE row with the wordmark, the page tag, the
+     viewer's name and six injected widgets — and at any ordinary window they wrapped onto a
+     second line INSIDE the bar: two ragged rows of icons with no names on them, which is the
+     clutter. They now have the row to themselves, underneath, and they carry their names;
+     whatever does not fit folds into one "More ▾" instead of wrapping. So the chips on screen
+     are the CORE modules, in the viewer's OWN order — the ▦ customiser already reorders the menu
+     and moves any module into the ▦ bundle, so this invents no second preference to keep in step
+     with that one.
+
+     THE NAV NODE IS NEITHER MOVED NOR REWRITTEN. tools/check_nav.js compares that markup byte
+     for byte across 24 pages; the ▦ customiser re-appends anchors into it; MODGATE hides the
+     ones a signin may not open; and the phone layer moves the very same node into the bottom
+     bar under 760px. This is layout plus an overflow menu, and it stands down entirely under
+     760px, where the phone layer owns the node.
+
+     Three rules it keeps:
+       · A MODULE THIS SIGNIN MAY NOT OPEN IS NEVER IN THE MENU. MODGATE hides a denied anchor
+         with an inline style.display='none', so an anchor already carrying one is skipped —
+         never measured, never cloned into the dropdown. Our own hiding is a CLASS, so the two
+         can never be confused and clearing ours can never reveal theirs.
+       · THE PAGE YOU ARE ON IS ALWAYS ON THE ROW. The active chip is kept visible even when it
+         sits 16th in the order, or the bar would stop saying where you are.
+       · THE ROW FOLLOWS THE MENU. The customiser re-appends anchors and MODGATE runs after us,
+         so a MutationObserver re-measures — with our own writes fenced off, or it would chase
+         its own tail.
+-->
+<style>
+/* the row is desktop only: under 760px docs/mobile_widget.html moves this same node into the
+   fixed bottom bar, and two owners for one node is how a phone layout breaks. */
+@media (min-width: 761px) {
+  body.fcc-navrow .topbar-in { flex-wrap: wrap; row-gap: 0; }
+  body.fcc-navrow .topbar-in > #tb-modules {
+    order: 90; flex: 1 0 100%; width: 100%;
+    margin: 10px 0 0 !important; padding: 8px 0 1px;
+    border-top: 1px solid var(--line, #E6E6E6);
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 2px; overflow: hidden;
+  }
+  body.fcc-navrow #tb-modules a.tbm {
+    width: auto; height: 34px; flex: none; padding: 0 10px; gap: 7px;
+    font-size: 12.5px; font-weight: 800; letter-spacing: .01em;
+  }
+  body.fcc-navrow #tb-modules a.tbm .nvl { white-space: nowrap }
+  /* the hover tooltip was the workaround for an unlabelled icon — the chip says it now */
+  body.fcc-navrow #tb-modules a.tbm::after { display: none !important }
+  body.fcc-navrow #tb-modules a.tbm.nv-of { display: none }
+  .nav-collapsed body.fcc-navrow .topbar-in > #tb-modules,
+  body.fcc-navrow.nav-collapsed .topbar-in > #tb-modules { display: none }
+  body.fcc-navrow #tb-modules .nv-more {
+    flex: none; margin-left: auto; height: 34px; padding: 0 11px; border-radius: 10px;
+    border: 1px solid var(--line, #E6E6E6); background: transparent; cursor: pointer;
+    font: inherit; font-size: 12.5px; font-weight: 800; color: var(--ink-2, #4a4a4a);
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  body.fcc-navrow #tb-modules .nv-more:hover,
+  body.fcc-navrow #tb-modules .nv-more[aria-expanded="true"] {
+    border-color: var(--orange, #F5A623); color: var(--orange-deep, #ED6F0B);
+  }
+  body.fcc-navrow #tb-modules .nv-more .nv-cv { transition: transform .15s }
+  body.fcc-navrow #tb-modules .nv-more[aria-expanded="true"] .nv-cv { transform: rotate(180deg) }
+}
+#fcc-navmenu {
+  position: fixed; z-index: 90; background: #fff; border: 1px solid var(--line, #E6E6E6);
+  border-radius: 12px; box-shadow: 0 14px 40px rgba(16, 24, 40, .18); padding: 7px;
+  min-width: 212px; max-height: 70vh; overflow: auto; display: none;
+}
+#fcc-navmenu.on { display: block }
+#fcc-navmenu a {
+  display: flex; align-items: center; gap: 10px; padding: 8px 9px; border-radius: 9px;
+  text-decoration: none; font-size: 13px; font-weight: 800; color: var(--ink-2, #4a4a4a);
+}
+#fcc-navmenu a svg { flex: none; width: 19px; height: 19px }
+#fcc-navmenu a:hover { background: var(--wash, #F7F7F5); color: var(--orange-deep, #ED6F0B) }
+#fcc-navmenu a.on { color: var(--orange-deep, #ED6F0B) }
+[data-theme=dark] #fcc-navmenu { background: #1C1F27; border-color: #2C3039 }
+[data-theme=dark] #fcc-navmenu a:hover { background: #20242E }
+[data-theme=dark] body.fcc-navrow #tb-modules .nv-more { border-color: #2C3039; color: #C7CBD4 }
+@media print { body.fcc-navrow .topbar-in > #tb-modules { display: none !important } }
+</style>
+<script>
+(function () {
+  if (window.__fccNavRow) return; window.__fccNavRow = 1;
+  var CHEV = '<svg class="nv-cv" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg>';
+  var btn = null, menu = null, quiet = false, raf = 0, obs = null, runs = 0;
+
+  // OUR OWN WRITES MUST NOT WAKE THE OBSERVER — and the fix for that must not deafen it to
+  // ANYBODY ELSE'S. classList.remove() rewrites the class attribute even when the token was not
+  // there, so a steady-state re-measure still looked like a change, and since an observer
+  // callback is a MICROTASK — delivered after layout() has already cleared its guard — the row
+  // re-measured itself about sixty times a second for as long as the tab was open (5,400
+  // mutations in three idle seconds). Emptying the queue with takeRecords() stopped that and
+  // took the PHONE LAYER's records with it when the two ran in one task, so the bottom bar came
+  // up a link short. So the writes are simply IDEMPOTENT instead: a layout that changes nothing
+  // touches nothing, the observer is left whole, and a layout that does change something costs
+  // exactly one more pass, which changes nothing and ends.
+  function cls(el, name, on) { if (el.classList.contains(name) !== on) el.classList.toggle(name, on); }
+  function css(el, prop, val) { if (el.style[prop] !== val) el.style[prop] = val; }
+  function settle() { quiet = false; }
+
+  function wide() { try { return matchMedia('(min-width:761px)').matches; } catch (e) { return true; } }
+  function nav() { return document.getElementById('tb-modules'); }
+  // MODGATE hides a module this signin may not open with an INLINE style. Ours is a class, so
+  // this test can never confuse the two, and we never touch an anchor it has hidden.
+  function allowed(a) { return a.style.display !== 'none'; }
+  function chipsOf(n) { return [].slice.call(n.querySelectorAll('a.tbm')).filter(allowed); }
+
+  function label(a) {
+    if (a.querySelector('.nvl')) return;
+    var t = a.getAttribute('data-lbl') || '';
+    if (!t) return;
+    var s = document.createElement('span'); s.className = 'nvl'; s.textContent = t; a.appendChild(s);
+  }
+  // an anchor the ▦ customiser has bundled out of the menu wears that widget's own .nl label —
+  // ours would sit beside it and read the module's name twice.
+  function unlabel(a) { var s = a.querySelector('.nvl'); if (s) s.remove(); }
+
+  function closeMenu() { if (menu) menu.classList.remove('on'); if (btn) btn.setAttribute('aria-expanded', 'false'); }
+  function openMenu() {
+    if (!menu || !btn) return;
+    menu.classList.add('on'); btn.setAttribute('aria-expanded', 'true');
+    var r = btn.getBoundingClientRect();
+    menu.style.top = Math.round(r.bottom + 7) + 'px';
+    menu.style.left = 'auto'; menu.style.right = Math.round(window.innerWidth - r.right) + 'px';
+    if (menu.getBoundingClientRect().left < 8) { menu.style.right = 'auto'; menu.style.left = '8px'; }
+  }
+
+  function fill(hidden) {
+    var sig = hidden.map(function (a) { return a.getAttribute('href'); }).join('|');
+    if (menu.__sig === sig) return;
+    menu.__sig = sig;
+    menu.innerHTML = '';
+    hidden.forEach(function (a) {
+      var c = a.cloneNode(true);
+      c.classList.remove('nv-of', 'tbm');
+      c.removeAttribute('data-lbl');
+      if (!c.querySelector('.nvl')) { var s = document.createElement('span'); s.className = 'nvl'; s.textContent = a.getAttribute('data-lbl') || ''; c.appendChild(s); }
+      menu.appendChild(c);
+    });
+  }
+
+  // Each chip's natural width is CACHED, so a re-measure reads the cache and writes only where
+  // the answer changed. Measuring the old way — clear every .nv-of, look, put them back — was
+  // itself a mutation on every pass, which is what kept the observer awake.
+  function measure(chips) {
+    chips.forEach(function (a) {
+      if (a.classList.contains('nv-of')) return;          // hidden: keep what we last knew
+      var w = a.getBoundingClientRect().width;
+      if (w > 0) a.__w = w;
+    });
+    if (btn.style.display !== 'none') { var bw = btn.getBoundingClientRect().width; if (bw > 0) btn.__w = bw; }
+  }
+  // a font landing or a zoom changes every chip — the cache is dropped and one pass with
+  // everything on screen re-measures it, which is a write nobody sees and does not repeat
+  function invalidate() {
+    var n = nav(); if (!n) return;
+    quiet = true;
+    chipsOf(n).forEach(function (a) { a.__w = null; cls(a, 'nv-of', false); });
+    btn.__w = null; quiet = false;
+    schedule();
+  }
+
+  function layout() {
+    var n = nav(); if (!n) return;
+    // the node is in the phone bar (or the row is off) — leave every trace of ours behind
+    if (!wide() || !document.body.classList.contains('fcc-navrow')) {
+      quiet = true;
+      chipsOf(n).forEach(function (a) { cls(a, 'nv-of', false); unlabel(a); });
+      if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
+      closeMenu(); settle(); return;
+    }
+    quiet = true; runs++;
+    var chips = chipsOf(n);
+    chips.forEach(label);
+    // a module the viewer has bundled into ▦ is no longer ours to label
+    [].slice.call(document.querySelectorAll('a.tbm .nvl')).forEach(function (s) {
+      var a = s.closest('a.tbm'); if (a && a.parentNode !== n) s.remove();
+    });
+    if (btn.parentNode !== n || n.lastElementChild !== btn) n.appendChild(btn);
+    measure(chips);
+
+    var box = n.getBoundingClientRect();
+    var gap = parseFloat(getComputedStyle(n).columnGap) || 2;
+    var span = function (list) { var t = 0; list.forEach(function (a) { t += (a.__w || 0) + gap; }); return t ? t - gap : 0; };
+
+    var keep = chips.slice();
+    if (span(keep) > box.width + 0.5) {
+      var avail = box.width - (btn.__w || 78) - gap;
+      var act = chips.filter(function (a) { return a.classList.contains('on'); })[0];
+      // drop from the end until the row fits, but never the page you are actually on
+      while (keep.length > 1 && span(keep) > avail) {
+        var i = keep.length - 1;
+        while (i > 0 && keep[i] === act) i--;
+        if (keep[i] === act) break;
+        keep.splice(i, 1);
+      }
+    }
+    var kept = [];
+    keep.forEach(function (a) { kept.push(a); });
+    var hidden = chips.filter(function (a) { return kept.indexOf(a) < 0; });
+    chips.forEach(function (a) { cls(a, 'nv-of', hidden.indexOf(a) >= 0); });
+    if (hidden.length) { fill(hidden); css(btn, 'display', ''); }
+    else { css(btn, 'display', 'none'); closeMenu(); }
+    settle();
+  }
+
+  function schedule() { if (quiet) return; cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }
+
+  function mount() {
+    var n = nav(); if (!n) return;
+    document.body.classList.add('fcc-navrow');
+    btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'nv-more'; btn.id = 'fcc-navmore';
+    btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = 'More' + CHEV;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (menu.classList.contains('on')) closeMenu(); else openMenu();
+    });
+    menu = document.createElement('div'); menu.id = 'fcc-navmenu'; menu.setAttribute('role', 'menu');
+    document.body.appendChild(menu);
+    document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && menu.classList.contains('on')) { e.stopPropagation(); closeMenu(); } }, true);
+    addEventListener('resize', function () { closeMenu(); schedule(); });
+    try { matchMedia('(resolution:1dppx)').addEventListener('change', invalidate); } catch (e) {}
+    // the ▦ customiser re-appends anchors and MODGATE hides some of them AFTER we mount
+    try { obs = new MutationObserver(schedule); obs.observe(n, { childList: true, attributes: true, subtree: true, attributeFilter: ['style', 'class'] }); } catch (e) {}
+    layout();
+    // fonts land after first paint and every chip's width moves with them
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(invalidate); } catch (e) {}
+    setTimeout(schedule, 400);
+  }
+
+  if (document.readyState !== 'loading') mount(); else document.addEventListener('DOMContentLoaded', mount);
+  window.FCCNavRow = { layout: layout, close: closeMenu, runs: function () { return runs; } };
+})();
+</script>

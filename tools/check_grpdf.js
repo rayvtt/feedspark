@@ -35,7 +35,7 @@ const D = path.resolve(__dirname, '..', 'docs');
 // export clones the live DOM, so what those layers leave behind is exactly what a client
 // receives; a check that renders the bare file never sees it (Ray, 18 Sep 2026: "remove the
 // element that sends code or feedback to Claude. I'm sending this to my clients").
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html',
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html',
   'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'tachyon_widget.html']
   .filter((f) => fs.existsSync(path.join(D, f)))
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
