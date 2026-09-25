@@ -131,7 +131,7 @@ const COLLECT = `(() => {
     // injected-widget chrome (the collapse toggle, the per-section instruction/notes toggles)
     // is added at DOMContentLoaded and appears identically on both viewports — a count skew is
     // injection timing on a heavy page, not a page control hidden on mobile, so it's excluded
-    const CHROME = /^button:(nav-collapse|Toggle instructions|Toggle the notes for this section)$/;
+    const CHROME = /^button:(nav-collapse|fcc-navmore|Toggle instructions|Toggle the notes for this section)$/;
     const hidden = Object.keys(d.counts).filter((k) => (m.counts[k] || 0) < d.counts[k]).filter((k) => !CHROME.test(k));
     const bad = [];
     if (m.sw > m.W + 1) bad.push('horizontal overflow ' + (m.sw - m.W) + 'px' + (m.over.length ? ' (' + m.over.join(' | ') + ')' : ''));

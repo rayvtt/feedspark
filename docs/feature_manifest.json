@@ -10493,7 +10493,7 @@
     {
       "name": "navrow: the observer never chases the row's own writes",
       "file": "docs/navrow_widget.html",
-      "pattern": "function settle() { try { if (obs) obs.takeRecords(); } catch (e) {} quiet = false; }",
+      "pattern": "function cls(el, name, on) { if (el.classList.contains(name) !== on) el.classList.toggle(name, on); }",
       "pr": 0
     },
     {

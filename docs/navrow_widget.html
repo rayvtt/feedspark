@@ -87,13 +87,19 @@
   var CHEV = '<svg class="nv-cv" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg>';
   var btn = null, menu = null, quiet = false, raf = 0, obs = null, runs = 0;
 
-  // OUR OWN WRITES MUST NOT WAKE THE OBSERVER. classList.remove() rewrites the class attribute
-  // even when the token was not there, and appending a label is a childList change — both inside
-  // the node we watch. MutationObserver callbacks are MICROTASKS, so they are delivered after
-  // layout() has already finished and cleared `quiet`, and the row would re-measure itself about
-  // sixty times a second for as long as the tab was open (measured: 5,400 mutations in 3 idle
-  // seconds). takeRecords() empties the queue we filled, so the callback is never invoked for it.
-  function settle() { try { if (obs) obs.takeRecords(); } catch (e) {} quiet = false; }
+  // OUR OWN WRITES MUST NOT WAKE THE OBSERVER — and the fix for that must not deafen it to
+  // ANYBODY ELSE'S. classList.remove() rewrites the class attribute even when the token was not
+  // there, so a steady-state re-measure still looked like a change, and since an observer
+  // callback is a MICROTASK — delivered after layout() has already cleared its guard — the row
+  // re-measured itself about sixty times a second for as long as the tab was open (5,400
+  // mutations in three idle seconds). Emptying the queue with takeRecords() stopped that and
+  // took the PHONE LAYER's records with it when the two ran in one task, so the bottom bar came
+  // up a link short. So the writes are simply IDEMPOTENT instead: a layout that changes nothing
+  // touches nothing, the observer is left whole, and a layout that does change something costs
+  // exactly one more pass, which changes nothing and ends.
+  function cls(el, name, on) { if (el.classList.contains(name) !== on) el.classList.toggle(name, on); }
+  function css(el, prop, val) { if (el.style[prop] !== val) el.style[prop] = val; }
+  function settle() { quiet = false; }
 
   function wide() { try { return matchMedia('(min-width:761px)').matches; } catch (e) { return true; } }
   function nav() { return document.getElementById('tb-modules'); }
@@ -123,6 +129,9 @@
   }
 
   function fill(hidden) {
+    var sig = hidden.map(function (a) { return a.getAttribute('href'); }).join('|');
+    if (menu.__sig === sig) return;
+    menu.__sig = sig;
     menu.innerHTML = '';
     hidden.forEach(function (a) {
       var c = a.cloneNode(true);
@@ -133,46 +142,68 @@
     });
   }
 
+  // Each chip's natural width is CACHED, so a re-measure reads the cache and writes only where
+  // the answer changed. Measuring the old way — clear every .nv-of, look, put them back — was
+  // itself a mutation on every pass, which is what kept the observer awake.
+  function measure(chips) {
+    chips.forEach(function (a) {
+      if (a.classList.contains('nv-of')) return;          // hidden: keep what we last knew
+      var w = a.getBoundingClientRect().width;
+      if (w > 0) a.__w = w;
+    });
+    if (btn.style.display !== 'none') { var bw = btn.getBoundingClientRect().width; if (bw > 0) btn.__w = bw; }
+  }
+  // a font landing or a zoom changes every chip — the cache is dropped and one pass with
+  // everything on screen re-measures it, which is a write nobody sees and does not repeat
+  function invalidate() {
+    var n = nav(); if (!n) return;
+    quiet = true;
+    chipsOf(n).forEach(function (a) { a.__w = null; cls(a, 'nv-of', false); });
+    btn.__w = null; quiet = false;
+    schedule();
+  }
+
   function layout() {
     var n = nav(); if (!n) return;
     // the node is in the phone bar (or the row is off) — leave every trace of ours behind
     if (!wide() || !document.body.classList.contains('fcc-navrow')) {
       quiet = true;
-      chipsOf(n).forEach(function (a) { a.classList.remove('nv-of'); unlabel(a); });
+      chipsOf(n).forEach(function (a) { cls(a, 'nv-of', false); unlabel(a); });
       if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
       closeMenu(); settle(); return;
     }
     quiet = true; runs++;
     var chips = chipsOf(n);
-    chips.forEach(function (a) { a.classList.remove('nv-of'); label(a); });
+    chips.forEach(label);
     // a module the viewer has bundled into ▦ is no longer ours to label
     [].slice.call(document.querySelectorAll('a.tbm .nvl')).forEach(function (s) {
       var a = s.closest('a.tbm'); if (a && a.parentNode !== n) s.remove();
     });
     if (btn.parentNode !== n || n.lastElementChild !== btn) n.appendChild(btn);
+    measure(chips);
 
     var box = n.getBoundingClientRect();
-    var right = function (el) { return el.getBoundingClientRect().right - box.left; };
+    var gap = parseFloat(getComputedStyle(n).columnGap) || 2;
+    var span = function (list) { var t = 0; list.forEach(function (a) { t += (a.__w || 0) + gap; }); return t ? t - gap : 0; };
 
-    btn.style.display = 'none';
-    var all = chips.length ? right(chips[chips.length - 1]) <= box.width + 0.5 : true;
-    if (!all) {
-      btn.style.display = '';
-      var avail = box.width - btn.getBoundingClientRect().width - 6;
+    var keep = chips.slice();
+    if (span(keep) > box.width + 0.5) {
+      var avail = box.width - (btn.__w || 78) - gap;
       var act = chips.filter(function (a) { return a.classList.contains('on'); })[0];
-      var vis = chips.slice();
       // drop from the end until the row fits, but never the page you are actually on
-      while (vis.length > 1) {
-        var last = vis[vis.length - 1];
-        if (right(last) <= avail) break;
-        var i = vis.length - 1;
-        while (i > 0 && vis[i] === act) i--;
-        if (vis[i] === act) break;
-        vis.splice(i, 1)[0].classList.add('nv-of');
+      while (keep.length > 1 && span(keep) > avail) {
+        var i = keep.length - 1;
+        while (i > 0 && keep[i] === act) i--;
+        if (keep[i] === act) break;
+        keep.splice(i, 1);
       }
-      fill(chips.filter(function (a) { return a.classList.contains('nv-of'); }));
-      if (!menu.children.length) btn.style.display = 'none';
-    } else { closeMenu(); }
+    }
+    var kept = [];
+    keep.forEach(function (a) { kept.push(a); });
+    var hidden = chips.filter(function (a) { return kept.indexOf(a) < 0; });
+    chips.forEach(function (a) { cls(a, 'nv-of', hidden.indexOf(a) >= 0); });
+    if (hidden.length) { fill(hidden); css(btn, 'display', ''); }
+    else { css(btn, 'display', 'none'); closeMenu(); }
     settle();
   }
 
@@ -194,11 +225,12 @@
     document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && menu.classList.contains('on')) { e.stopPropagation(); closeMenu(); } }, true);
     addEventListener('resize', function () { closeMenu(); schedule(); });
+    try { matchMedia('(resolution:1dppx)').addEventListener('change', invalidate); } catch (e) {}
     // the ▦ customiser re-appends anchors and MODGATE hides some of them AFTER we mount
     try { obs = new MutationObserver(schedule); obs.observe(n, { childList: true, attributes: true, subtree: true, attributeFilter: ['style', 'class'] }); } catch (e) {}
     layout();
     // fonts land after first paint and every chip's width moves with them
-    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule); } catch (e) {}
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(invalidate); } catch (e) {}
     setTimeout(schedule, 400);
   }
 
