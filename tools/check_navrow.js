@@ -159,21 +159,36 @@ const CANON = [...fs.readFileSync(path.join(DOCS, 'FeedSpark_Workflow.html'), 'u
     const r = await read(p);
     ok('the row carries every module of the canonical nav, each once',
       r.onRow.length === CANON.length && CANON.every((h) => r.onRow.includes(h)) && new Set(r.onRow).size === r.onRow.length, { row: r.onRow.length, canon: CANON.length });
-    ok('the Pricer the ▦ bundle used to hold is on the row', r.onRow.includes('/pricer'));
-    ok('…at its canonical slot, not tacked on the end', r.onRow.indexOf('/pricer') === CANON.indexOf('/pricer'), { row: r.onRow.indexOf('/pricer'), canon: CANON.indexOf('/pricer') });
+    ok('the Pricer the ▦ bundle used to hold by default is on the row', r.onRow.includes('/pricer'));
     ok('the row is in the canonical order', r.onRow.join() === CANON.join(), r.onRow);
-    ok('nothing is left in the ▦ bundle', r.inBundle.length === 0, r.inBundle);
+    ok('nothing is in the ▦ bundle on a fresh device', r.inBundle.length === 0, r.inBundle);
+    ok('nothing had to be re-homed to get there — the default bundle is gone', await p.evaluate(() => !document.querySelector('#tb-modules a.tbm[data-nv-home]')));
     ok('the ▦ bundle button is not painted on the desktop', r.appsShown === false);
     ok('no "More" button exists', await p.evaluate(() => !document.getElementById('fcc-navmore') && !document.getElementById('fcc-navmenu')));
 
-    /* 5 — the ☰ toggle still hides the menu */
-    await p.click('#nav-collapse');
-    await p.waitForTimeout(250);
-    ok('the ☰ toggle still hides the whole menu', !(await read(p)).navVisible);
-    await p.click('#nav-collapse');
-    await p.waitForTimeout(250);
-    ok('and brings it back', (await read(p)).navVisible);
     await p.close();
+    // a viewer who bundled the Pricer on their phone: the desktop has no bundle to reach it from,
+    // so it comes back onto the row — at its own slot, not tacked on the end
+    const q = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await q.addInitScript(() => { try { localStorage.setItem('fcc-nav-layout', JSON.stringify({ v: 1, place: { '/pricer': 'apps' }, order: null })); } catch (e) {} });
+    await q.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+    await q.goto(base + CC, { waitUntil: 'domcontentloaded' });
+    await q.waitForTimeout(1500);
+    const rr = await read(q);
+    ok('a viewer-bundled Pricer is re-homed onto the desktop row', rr.onRow.includes('/pricer') && rr.inBundle.length === 0 && (await q.evaluate(() => !!document.querySelector('#tb-modules a.tbm[data-nv-home="apps"][href="/pricer"]'))), { row: rr.onRow, bundle: rr.inBundle });
+    ok('…at its canonical slot, not tacked on the end', rr.onRow.indexOf('/pricer') === CANON.indexOf('/pricer') && rr.onRow.join() === CANON.join(), rr.onRow);
+    ok('…as an icon, not the bundle\'s labelled row', (await q.evaluate(() => { const a = document.querySelector('#tb-modules a.tbm[href="/pricer"]'); return !a.classList.contains('napps') && !a.querySelector('.nl') && a.textContent.trim() === ''; })));
+    await q.close();
+    const p2 = await open(CC, 1280);
+
+    /* 5 — the ☰ toggle still hides the menu */
+    await p2.click('#nav-collapse');
+    await p2.waitForTimeout(250);
+    ok('the ☰ toggle still hides the whole menu', !(await read(p2)).navVisible);
+    await p2.click('#nav-collapse');
+    await p2.waitForTimeout(250);
+    ok('and brings it back', (await read(p2)).navVisible);
+    await p2.close();
   }
 
   /* 3 — a module this signin may not open is not on the row */
@@ -210,12 +225,17 @@ const CANON = [...fs.readFileSync(path.join(DOCS, 'FeedSpark_Workflow.html'), 'u
     });
     ok('on a phone load nothing is re-homed', r.moved === 0, r.moved);
     ok('the ▦ bundle button is back', r.appsShown === true);
-    ok('bar + bundle still carry every module', r.nav + r.bundle === CANON.length, { nav: r.nav, bundle: r.bundle, canon: CANON.length });
+    ok('on a fresh device the bar carries every module — it mirrors the desktop row', r.nav === CANON.length && r.bundle === 0, { nav: r.nav, bundle: r.bundle, canon: CANON.length });
     ok('the header stays inside the phone tripwire\'s 64px', r.header <= 64, r.header);
     await p.close();
 
-    // a desktop window dragged down to phone width: the re-homed Pricer goes back to the bundle
-    const q = await open(CC, 1280, 800);
+    // a viewer who bundled the Pricer, on a desktop window dragged down to phone width: the
+    // re-homed Pricer goes back to the bundle in the bundle's own dress
+    const q = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await q.addInitScript(() => { try { localStorage.setItem('fcc-nav-layout', JSON.stringify({ v: 1, place: { '/pricer': 'apps' }, order: null })); } catch (e) {} });
+    await q.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+    await q.goto(base + CC, { waitUntil: 'domcontentloaded' });
+    await q.waitForTimeout(1500);
     ok('at desktop width the Pricer was re-homed onto the row', await q.evaluate(() => !!document.querySelector('#tb-modules a.tbm[data-nv-home]')));
     await q.setViewportSize({ width: 390, height: 844 });
     await q.waitForTimeout(900);

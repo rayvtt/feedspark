@@ -62,7 +62,11 @@
 (function(){
   if(document.getElementById('fcc-apps'))return;
   var LKEY='fcc-nav-layout';
-  var DEFAULT_APPS={'/pricer':1};   // out of the box, the hourly Pricer sits in the ▦ bundle
+  // Nothing is bundled out of the box (the Pricer used to be). Ray, 27 Sep 2026: "keep all the
+  // icons of the menu … one place" — the desktop row shows every module (docs/navrow_widget.html
+  // hides this button there) and the phone bar scrolls, so a default bundle only ever hid one
+  // module on the phone that the desktop showed. Bundling is the viewer's own choice, made here.
+  var DEFAULT_APPS={};
   var HOME='/';                      // Command center stays pinned to the menu (the home anchor)
   var LO=load();
   function load(){ try{var o=JSON.parse(localStorage.getItem(LKEY)); if(o&&o.place)return o;}catch(e){} return {v:1,place:null,order:null}; }

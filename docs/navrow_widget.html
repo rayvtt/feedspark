@@ -9,10 +9,13 @@
 
      So: row one is the wordmark, the page tag, the viewer's name and the widgets; row two is
      EVERY module as the icon it always was, right-aligned under them — nothing folded, nothing
-     bundled, one place. The hover tooltip the icons always carried (data-lbl) names them. On the
-     desktop the ▦ bundle button is hidden and whatever it had bundled (the Pricer, by default) is
-     put back on the row at its canonical slot; under 760px the phone layer owns the node and the
-     ▦ bundle keeps its purpose there, since a bottom bar has no room to spare.
+     bundled, one place. The hover tooltip the icons always carried (data-lbl) names them. Nothing
+     is bundled out of the box any more (docs/apps_widget.html DEFAULT_APPS is empty — the Pricer
+     used to be), so on a fresh device the row simply IS the nav; on the desktop the ▦ bundle
+     button is hidden and anything a viewer's own saved layout had bundled is put back on the row
+     at its canonical slot, since the bundle does not exist there to reach it from. Under 760px
+     the phone layer owns the node and the ▦ customiser keeps its purpose there — a viewer's
+     bundling is honoured on the phone, and a desktop→phone resize hands a re-homed anchor back.
 
      THE NAV NODE IS NEITHER MOVED NOR REWRITTEN. tools/check_nav.js compares that markup byte
      for byte across 24 pages, MODGATE hides the anchors a signin may not open (an inline style

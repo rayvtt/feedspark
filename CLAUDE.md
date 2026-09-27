@@ -238,12 +238,16 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   right-hand side, below the text on the first row, for visual clarity and cadence." SO: row one is
   the wordmark, the page tag, the viewer's name and the widgets; row two is EVERY module as the
   icon it always was, RIGHT-ALIGNED under them — nothing folded, nothing bundled, one place; the
-  hover tooltip the icons always carried (data-lbl) names them. On the desktop the ▦ bundle button
-  is HIDDEN and whatever it had bundled (the Pricer, by default) is put back on the row at its
-  canonical slot (the canonical order is read at parse time, before the ▦ customiser has moved
-  anything); under 760px the phone layer owns the node and the ▦ bundle keeps its purpose there (a
-  bottom bar has no room to spare) — on a phone load nothing is moved, and a desktop→phone resize
-  hands the re-homed anchor back in the bundle's own dress. The nav NODE is neither moved nor
+  hover tooltip the icons always carried (data-lbl) names them. NOTHING IS BUNDLED OUT OF THE BOX
+  any more (`docs/apps_widget.html` DEFAULT_APPS is empty — the Pricer used to be): the phone bar
+  scrolls sideways, so a default bundle only ever hid on the phone one module the desktop showed,
+  which is exactly the desktop/phone parity the phone tripwire fails on. On the desktop the ▦
+  bundle button is HIDDEN and anything a viewer's own saved layout had bundled is put back on the
+  row at its canonical slot (the canonical order is read at parse time, before the ▦ customiser
+  has moved anything), since the bundle does not exist there to reach it from; under 760px the
+  phone layer owns the node and the ▦ customiser keeps its purpose there — a viewer's bundling is
+  honoured on the phone, nothing is moved on a phone load, and a desktop→phone resize hands a
+  re-homed anchor back in the bundle's own dress. The nav NODE is neither moved nor
   rewritten (check_nav compares that markup byte for byte across 24 pages; MODGATE's inline
   display:none travels with an anchor wherever it sits, so a denied module is never shown here
   either). Every write is idempotent — an anchor already on the row is left alone — so an idle page
