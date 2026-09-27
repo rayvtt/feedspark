@@ -10485,15 +10485,15 @@
       "pr": 0
     },
     {
-      "name": "navrow: a MODGATE-denied module is never measured or cloned",
+      "name": "navrow: every module is on the row — the bundle's re-homed at its canonical slot",
       "file": "docs/navrow_widget.html",
-      "pattern": "function allowed(a) { return a.style.display !== 'none'; }",
+      "pattern": "function rehome(a, n) {",
       "pr": 0
     },
     {
-      "name": "navrow: the observer never chases the row's own writes",
+      "name": "navrow: the ▦ bundle button is hidden on the desktop — one place for every module",
       "file": "docs/navrow_widget.html",
-      "pattern": "function cls(el, name, on) { if (el.classList.contains(name) !== on) el.classList.toggle(name, on); }",
+      "pattern": "body.fcc-navrow #fcc-apps { display: none !important }",
       "pr": 0
     },
     {

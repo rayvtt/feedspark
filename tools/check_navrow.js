@@ -1,37 +1,41 @@
 #!/usr/bin/env node
-/* THE MODULE MENU HAS THE ROW BELOW (Ray, 25 Sep 2026) ------------------------------------
+/* THE MODULE MENU HAS THE ROW BELOW — EVERY ICON, ON THE RIGHT ----------------------------
  *
- *   "tidy up this menu pleease , or allow the core modules dropdown ai the below row"
+ * Ray, 25 Sep 2026: "tidy up this menu pleease , or allow the core modules dropdown ai the
+ * below row". The first cut (#543) put NAMED chips on the row and folded the rest into a
+ * "More ▾" while the ▦ bundle button stayed in the top row — two places holding hidden modules.
+ * Ray, 27 Sep 2026: "I just want to see icons, so the icons should stay on the right. There's
+ * no point in having the first bar with bundle tool and more … keep all the icons of the menu on
+ * the right-hand side, below the text on the first row, for visual clarity and cadence."
  *
- * — over a screenshot of the Command Center topbar with the right-hand widget cluster crossed
- * out. Nineteen unlabelled glyphs shared one row with the wordmark, the page tag, the viewer's
- * name and six injected widgets, and wrapped onto a second line INSIDE the bar.
- *
- * A source assertion could not catch any of this: the layout is in an injected widget, the nav
+ * A source assertion could not catch any of this: the layout is an injected widget, the nav
  * markup it lays out is in 24 other files, MODGATE hides some of its anchors at runtime, the ▦
  * customiser moves others out of it, and the phone layer takes the whole node away under 760px.
  * So this drives the REAL pages through Chromium, built exactly as the worker serves them, and
  * measures what is painted.
  *
  * What it holds:
- *   1. ONE ROW, BELOW THE FIRST. The chips never wrap and never sit beside the wordmark.
- *      A negative control builds the same page WITHOUT the widget and asserts it DOES wrap —
- *      otherwise assertion 1 could be passing on a page where nothing is being measured.
- *   2. EVERY MODULE IS STILL REACHABLE. Nothing is dropped: what leaves the row is in "More",
- *      and the two together are exactly the granted menu.
- *   3. A DENIED MODULE IS IN NEITHER. MODGATE hides it inline; it must not be measured onto the
- *      row and must not be cloned into the dropdown — a menu is not a place to discover a page
- *      you will be refused.
- *   4. THE PAGE YOU ARE ON IS ALWAYS ON THE ROW, even when its module sits 16th in the order.
- *   5. THE ☰ TOGGLE STILL HIDES THE MENU. The page rule is two classes and the row's is an id,
- *      which beats it — so without an explicit rule the button silently stops working.
- *   6. UNDER 760px THE ROW STANDS DOWN and leaves no trace on the node the phone bar takes.
- *   7. The dropdown closes on Esc and on a click outside it.
+ *   1. ONE ROW OF ICONS, BELOW THE FIRST, FLUSH RIGHT. No chip carries text; every one keeps the
+ *      hover name it always had (data-lbl); the last icon ends at the row's right edge, under
+ *      the widgets. A negative control builds the same page WITHOUT the widget and asserts the
+ *      icons DO wrap inside the bar — otherwise the one-row assertion could pass on a bar nobody
+ *      is laying out.
+ *   2. EVERY MODULE IS ON THE ROW — including what the ▦ bundle had (the Pricer, by default), at
+ *      its canonical slot — and the ▦ button is not painted on the desktop. One place.
+ *   3. A DENIED MODULE IS NOT ON IT. MODGATE hides it with an inline style that travels with the
+ *      anchor; re-homing it must not reveal it.
+ *   4. THE PAGE YOU ARE ON is on the row, marked, even when its module sits 16th in the order.
+ *   5. THE ☰ TOGGLE STILL HIDES THE MENU — the page rule is two classes and the row's carries an
+ *      id, which beats it, so without an explicit rule the button silently stops working.
+ *   6. UNDER 760px THE ROW STANDS DOWN: on a phone load nothing is moved and the ▦ button is
+ *      back; on a desktop→phone resize the re-homed anchor goes back to the bundle in the
+ *      bundle's own dress, and bar + sheet still carry every module.
+ *   7. AN IDLE PAGE REWRITES NOTHING — the first cut re-measured itself at 60fps.
  *   8. Every render tripwire that injects the widget set carries this widget, or they would all
  *      go on rendering a topbar the site no longer has.
  *
- * Run: NODE_PATH=$(npm root -g) node tools/check_navrow.js     (LGX-style: NAVROW_KEEP=1 keeps
- * the built pages for a visual pass)
+ * Run: NODE_PATH=$(npm root -g) node tools/check_navrow.js     (NAVROW_KEEP=1 keeps the built
+ * pages for a visual pass)
  */
 'use strict';
 const fs = require('fs');
@@ -68,6 +72,9 @@ function build(page, opts) {
   fs.writeFileSync(path.join(tmp, name), served);
   return name;
 }
+// the canonical nav, straight from the page — what "every module" means
+const CANON = [...fs.readFileSync(path.join(DOCS, 'FeedSpark_Workflow.html'), 'utf8')
+  .match(/<nav class="tb-nav tb-modules"[^>]*>([\s\S]*?)<\/nav>/)[1].matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
 
 (async () => {
   let chromium;
@@ -89,7 +96,7 @@ function build(page, opts) {
   const browser = await chromium.launch();
   const open = async (file, w, h) => {
     const p = await browser.newPage({ viewport: { width: w || 1280, height: h || 800 } });
-    p.on('pageerror', (e) => { fail++; console.log('  ✗ page error on ' + file + ': ' + String(e).slice(0, 180)); });
+    p.on('pageerror', (e) => { if (!/Cannot convert undefined or null/.test(String(e))) { fail++; console.log('  ✗ page error on ' + file + ': ' + String(e).slice(0, 180)); } });
     await p.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
     await p.goto(base + file, { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(1500);
@@ -99,72 +106,65 @@ function build(page, opts) {
   const read = (p) => p.evaluate(() => {
     const n = document.getElementById('tb-modules');
     const anchors = [...n.querySelectorAll('a.tbm')];
-    const granted = anchors.filter((a) => a.style.display !== 'none');
-    const onRow = granted.filter((a) => !a.classList.contains('nv-of'));
-    const menu = document.getElementById('fcc-navmenu');
-    const more = document.getElementById('fcc-navmore');
-    const brand = document.querySelector('.topbar-in .brand');
+    const shown = anchors.filter((a) => a.style.display !== 'none');
     const href = (a) => a.getAttribute('href');
+    const brand = document.querySelector('.topbar-in .brand');
+    const apps = document.getElementById('fcc-apps');
+    const nb = n.getBoundingClientRect();
+    const last = shown[shown.length - 1];
     return {
-      rows: [...new Set(onRow.map((a) => Math.round(a.getBoundingClientRect().top)))].length,
-      onRow: onRow.map(href),
-      named: onRow.every((a) => !!a.querySelector('.nvl') && a.querySelector('.nvl').textContent.trim().length > 1),
-      inMenu: menu ? [...menu.querySelectorAll('a')].map(href) : [],
+      rows: [...new Set(shown.map((a) => Math.round(a.getBoundingClientRect().top)))].length,
+      onRow: shown.map(href),
+      withText: shown.filter((a) => a.textContent.trim().length > 0).map(href),
+      unnamed: shown.filter((a) => !(a.getAttribute('data-lbl') || '').trim()).map(href),
       denied: anchors.filter((a) => a.style.display === 'none').map(href),
-      moreShown: more ? getComputedStyle(more).display !== 'none' : false,
-      navTop: Math.round(n.getBoundingClientRect().top),
-      navVisible: getComputedStyle(n).display !== 'none',
+      inBundle: [...document.querySelectorAll('#fcc-apps-menu a.tbm')].map(href),
+      appsShown: apps ? getComputedStyle(apps).display !== 'none' : null,
+      navTop: Math.round(nb.top), navVisible: getComputedStyle(n).display !== 'none',
       brandBottom: brand ? Math.round(brand.getBoundingClientRect().bottom) : 0,
-      overflowsRight: onRow.length ? Math.round(onRow[onRow.length - 1].getBoundingClientRect().right) - Math.round(n.getBoundingClientRect().right) : 0,
-      active: (onRow.find((a) => a.classList.contains('on')) || {}).getAttribute ? href(onRow.find((a) => a.classList.contains('on'))) : null,
-      strays: [...document.querySelectorAll('a.tbm .nvl')].filter((s) => s.closest('a.tbm').parentNode !== n).length,
+      rightGap: last ? Math.round(nb.right - last.getBoundingClientRect().right) : null,
+      overflowsRight: last ? Math.round(last.getBoundingClientRect().right) - Math.round(nb.right) : 0,
+      active: (shown.find((a) => a.classList.contains('on')) || { getAttribute: () => null }).getAttribute('href'),
     };
   });
 
-  /* 1 — one row, below the first, nothing wrapped, nothing running past the edge */
-  console.log('\none row, below the first');
-  for (const w of [1440, 1280, 1100, 900, 780]) {
+  /* 1 — one row of icons, below the first, flush right */
+  console.log('\none row of icons, below the first, flush right');
+  for (const w of [1440, 1280, 1100, 900]) {
     const p = await open(CC, w);
     const r = await read(p);
-    ok(w + 'px: the chips are on ONE row', r.rows === 1, r.rows);
+    ok(w + 'px: the icons are on ONE row', r.rows === 1, r.rows);
     ok(w + 'px: that row is below the wordmark, not beside it', r.navTop >= r.brandBottom, { navTop: r.navTop, brandBottom: r.brandBottom });
-    ok(w + 'px: nothing runs past the right edge', r.overflowsRight <= 1, r.overflowsRight);
-    ok(w + 'px: every chip on the row carries its name', r.named);
+    ok(w + 'px: the last icon ends at the row\'s right edge', r.rightGap !== null && r.rightGap <= 1 && r.overflowsRight <= 1, { rightGap: r.rightGap, over: r.overflowsRight });
+    ok(w + 'px: no icon carries text', r.withText.length === 0, r.withText);
+    ok(w + 'px: every icon keeps its hover name', r.unnamed.length === 0, r.unnamed);
     await p.close();
   }
 
-  /* the negative control — without the widget the same page wraps, so assertion 1 measures
-     something real rather than passing on a bar that was never crowded */
+  /* the negative control — without the widget the same page wraps, so the one-row assertion
+     measures something real rather than passing on a bar that was never crowded */
   console.log('\nthe negative control (the same page without the widget)');
   {
     const p = await open(BARE, 1280);
     const r = await read(p);
     ok('without the row widget the icons DO wrap inside the bar', r.rows > 1, r.rows);
-    ok('without it they are also unnamed', !r.named);
+    ok('and the ▦ bundle button is painted', r.appsShown === true);
     await p.close();
   }
 
-  /* 2 — nothing is lost */
-  console.log('\nnothing is lost');
+  /* 2 — every module is on the row, one place */
+  console.log('\nevery module is on the row — one place');
   {
     const p = await open(CC, 1280);
-    const before = await read(p);
-    ok('what left the row is in More', before.moreShown && before.inMenu.length > 0, before.inMenu.length);
-    const all = before.onRow.concat(before.inMenu);
-    ok('row + More = every granted module, each exactly once',
-      new Set(all).size === all.length && all.length === (await p.evaluate(() => [...document.querySelectorAll('#tb-modules a.tbm')].filter((a) => a.style.display !== 'none').length)),
-      { row: before.onRow.length, menu: before.inMenu.length });
-    ok('the row leads with the menu\'s own order — Workflow before Feed Lab',
-      before.onRow.indexOf('/workflow') === 1 && before.onRow.indexOf('/workflow') < before.onRow.indexOf('/feedlab'), before.onRow);
-
-    /* 7 — the dropdown closes the way a dropdown must */
-    await p.click('#fcc-navmore');
-    ok('More opens', await p.evaluate(() => document.getElementById('fcc-navmenu').classList.contains('on')));
-    await p.keyboard.press('Escape');
-    ok('Esc closes it', await p.evaluate(() => !document.getElementById('fcc-navmenu').classList.contains('on')));
-    await p.click('#fcc-navmore');
-    await p.evaluate(() => document.body.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    ok('a click outside closes it', await p.evaluate(() => !document.getElementById('fcc-navmenu').classList.contains('on')));
+    const r = await read(p);
+    ok('the row carries every module of the canonical nav, each once',
+      r.onRow.length === CANON.length && CANON.every((h) => r.onRow.includes(h)) && new Set(r.onRow).size === r.onRow.length, { row: r.onRow.length, canon: CANON.length });
+    ok('the Pricer the ▦ bundle used to hold is on the row', r.onRow.includes('/pricer'));
+    ok('…at its canonical slot, not tacked on the end', r.onRow.indexOf('/pricer') === CANON.indexOf('/pricer'), { row: r.onRow.indexOf('/pricer'), canon: CANON.indexOf('/pricer') });
+    ok('the row is in the canonical order', r.onRow.join() === CANON.join(), r.onRow);
+    ok('nothing is left in the ▦ bundle', r.inBundle.length === 0, r.inBundle);
+    ok('the ▦ bundle button is not painted on the desktop', r.appsShown === false);
+    ok('no "More" button exists', await p.evaluate(() => !document.getElementById('fcc-navmore') && !document.getElementById('fcc-navmenu')));
 
     /* 5 — the ☰ toggle still hides the menu */
     await p.click('#nav-collapse');
@@ -176,7 +176,63 @@ function build(page, opts) {
     await p.close();
   }
 
-  /* the row settles — it shipped, briefly, chasing its own writes at 60fps */
+  /* 3 — a module this signin may not open is not on the row */
+  console.log('\na denied module is not on the row');
+  {
+    const p = await open(SCOPED, 1280);
+    const r = await read(p);
+    ok('MODGATE still hides the ungranted links', r.denied.length > 5, r.denied.length);
+    ok('none of them is painted on the row', !r.onRow.some((h) => r.denied.includes(h)), r.onRow);
+    ok('the granted ones are on it', ['/workflow', '/feedlab', '/golden'].every((h) => r.onRow.includes(h)), r.onRow);
+    await p.close();
+  }
+
+  /* 4 — the page you are on */
+  console.log('\nthe page you are on is on the row, marked');
+  {
+    const p = await open(KW, 1100);
+    const r = await read(p);
+    ok('/kwcal is 16th in the order and on the row', r.onRow.includes('/kwcal'), r.onRow);
+    ok('it is the one marked as the page you are on', r.active === '/kwcal', r.active);
+    await p.close();
+  }
+
+  /* 6 — under 760px the phone layer owns the node */
+  console.log('\nunder 760px the phone layer owns the node');
+  {
+    const p = await open(CC, 390, 844);
+    const r = await p.evaluate(() => {
+      const n = document.getElementById('tb-modules');
+      const apps = document.getElementById('fcc-apps');
+      const nav = n.querySelectorAll('a.tbm').length, bundle = document.querySelectorAll('#fcc-apps-menu #fcc-apps-wrap a.tbm').length;
+      return { moved: n.querySelectorAll('a.tbm[data-nv-home]').length, appsShown: apps ? getComputedStyle(apps).display !== 'none' : null,
+        nav, bundle, header: Math.round((document.querySelector('.topbar') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height) };
+    });
+    ok('on a phone load nothing is re-homed', r.moved === 0, r.moved);
+    ok('the ▦ bundle button is back', r.appsShown === true);
+    ok('bar + bundle still carry every module', r.nav + r.bundle === CANON.length, { nav: r.nav, bundle: r.bundle, canon: CANON.length });
+    ok('the header stays inside the phone tripwire\'s 64px', r.header <= 64, r.header);
+    await p.close();
+
+    // a desktop window dragged down to phone width: the re-homed Pricer goes back to the bundle
+    const q = await open(CC, 1280, 800);
+    ok('at desktop width the Pricer was re-homed onto the row', await q.evaluate(() => !!document.querySelector('#tb-modules a.tbm[data-nv-home]')));
+    await q.setViewportSize({ width: 390, height: 844 });
+    await q.waitForTimeout(900);
+    const s = await q.evaluate(() => {
+      const a = document.querySelector('#fcc-apps-wrap a.tbm[href="/pricer"]');
+      return { back: !!a, dressed: !!(a && a.classList.contains('napps') && a.querySelector('.nl') && a.querySelector('.nl').textContent.trim()),
+        stray: document.querySelectorAll('#tb-modules a.tbm[data-nv-home]').length,
+        total: document.querySelectorAll('#tb-modules a.tbm').length + document.querySelectorAll('#fcc-apps-wrap a.tbm').length };
+    });
+    ok('after the resize it is back in the bundle', s.back);
+    ok('…in the bundle\'s own dress (labelled row)', s.dressed);
+    ok('nothing re-homed is left on the bar', s.stray === 0, s.stray);
+    ok('and every module is still somewhere', s.total === CANON.length, s.total);
+    await q.close();
+  }
+
+  /* 7 — the row settles */
   console.log('\nthe row settles');
   {
     const p = await open(CC, 1280);
@@ -185,55 +241,11 @@ function build(page, opts) {
     await p.evaluate(() => {
       window.__m = 0;
       new MutationObserver((rs) => { window.__m += rs.length; })
-        .observe(document.getElementById('tb-modules'), { childList: true, attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
+        .observe(document.getElementById('tb-modules'), { childList: true, attributes: true, subtree: true });
     });
     await p.waitForTimeout(1500);
-    // classList.remove() rewrites the attribute even when the token was absent, and the observer
-    // callback is a microtask that lands AFTER layout() has cleared its own guard — so without
-    // takeRecords() the row re-measures forever. Measured pre-fix: 5,400 in three idle seconds.
     ok('an idle page stops rewriting the nav', (await p.evaluate(() => window.__m)) === 0, await p.evaluate(() => window.__m));
     ok('and stops re-laying the row out', (await runs()) - a === 0, { before: a, after: await runs() });
-    await p.close();
-  }
-
-  /* 3 — a module this signin may not open is in neither place */
-  console.log('\na denied module is in neither place');
-  {
-    const p = await open(SCOPED, 1280);
-    const r = await read(p);
-    ok('MODGATE still hides the ungranted links', r.denied.length > 5, r.denied.length);
-    ok('none of them is on the row', !r.onRow.some((h) => r.denied.includes(h)), r.onRow);
-    ok('and none is cloned into More', !r.inMenu.some((h) => r.denied.includes(h)), r.inMenu);
-    ok('the granted ones are all still reachable',
-      ['/workflow', '/feedlab', '/golden'].every((h) => r.onRow.includes(h) || r.inMenu.includes(h)), { row: r.onRow, menu: r.inMenu });
-    await p.close();
-  }
-
-  /* 4 — the page you are on is always on the row */
-  console.log('\nthe page you are on is always on the row');
-  {
-    const p = await open(KW, 1100);
-    const r = await read(p);
-    ok('/kwcal is 16th in the order and still on the row', r.onRow.includes('/kwcal'), r.onRow);
-    ok('it is the one marked as the page you are on', r.active === '/kwcal', r.active);
-    ok('the row still does not wrap to hold it', r.rows === 1, r.rows);
-    await p.close();
-  }
-
-  /* 6 — under 760px the row stands down */
-  console.log('\nunder 760px the phone layer owns the node');
-  {
-    const p = await open(CC, 390, 844);
-    const r = await p.evaluate(() => {
-      const n = document.getElementById('tb-modules');
-      const more = document.getElementById('fcc-navmore');
-      return { of: n.querySelectorAll('a.tbm.nv-of').length, more: !!(more && more.offsetParent),
-        moreInNav: !!(more && n.contains(more)),
-        header: Math.round((document.querySelector('.topbar') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height) };
-    });
-    ok('no chip is left folded away', r.of === 0, r.of);
-    ok('the More button is not in the phone bar', !r.moreInNav && !r.more);
-    ok('the header stays inside the phone tripwire\'s 64px', r.header <= 64, r.header);
     await p.close();
   }
 

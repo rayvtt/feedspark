@@ -228,24 +228,34 @@ GET  /i18n/engine.js · /i18n/vi.json → UI LANGUAGE (Ray, 15 Sep 2026: "build 
 GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed cannot answer: GET = the learned map (ONE KV key i18n:vi — no per-string KV traffic); POST {lang,strings≤80} = translate the misses via Tachyon (Claude, glossary system prompt, whole-word protected tokens enforced server-side by i18nKeeps), cache into the same key, return the map; no ANTHROPIC_API_KEY → error:'no_key' and the widget degrades to seed-only (title says so, zero further POSTs). Harness tools/test_i18n.mjs (engine rules, seed integrity, worker parity + gating) in qa_gate/presync/validate; docs/I18N.md
 ```
 - **Injected on app pages** (not client decks): the **MODULE ROW** (`docs/navrow_widget.html` —
-  Ray, 25 Sep 2026, over a screenshot of the Command Center topbar with the right-hand widget
-  cluster crossed out: "tidy up this menu pleease , or allow the core modules dropdown ai the below
-  row": nineteen unlabelled glyphs shared ONE row with the wordmark, the page tag, the viewer's name
-  and six injected widgets, and wrapped onto a second line inside the bar. They get the row
-  underneath, with their NAMES on them, and whatever does not fit folds into one **More ▾** — so the
-  chips on screen are the core modules in the viewer's own order, the ▦ customiser's order, not a
-  second preference to keep in step with it. The nav NODE is neither moved nor rewritten (check_nav
-  compares that markup byte for byte across 24 pages, the ▦ customiser re-appends anchors into it,
-  MODGATE hides the ones a signin may not open, and the phone layer moves the same node into the
-  bottom bar under 760px) — layout plus an overflow menu, standing down entirely under 760px. Three
-  rules: a module MODGATE denied is never measured onto the row NOR cloned into More (it hides with
-  an inline style, ours is a class, so the two can never be confused); the page you are ON is always
-  on the row even when its module sits 16th; and a MutationObserver re-measures after the customiser
-  or MODGATE move things, with our own writes fenced off. The ☰ collapse toggle needed an explicit
-  rule — the page's own `.nav-collapsed .tb-modules` is two classes and the row's selector carries an
-  id, which beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the real served
-  pages at five widths and carries a NEGATIVE CONTROL — the same page built without the widget, which
-  must still wrap — so the one-row assertion can never pass on a bar nobody is laying out), the
+  Ray, 25 Sep 2026, over a screenshot of the Command Center topbar: "tidy up this menu pleease , or
+  allow the core modules dropdown ai the below row". Nineteen unlabelled glyphs shared ONE row with
+  the wordmark, the page tag, the viewer's name and six injected widgets, and wrapped onto a second
+  line inside the bar. The FIRST CUT (#543) put NAMED chips on the row and folded the rest into a
+  "More ▾" while the ▦ bundle button stayed in the top row — two places holding hidden modules.
+  Ray, 27 Sep 2026: "I just want to see icons, so the icons should stay on the right. There's no
+  point in having the first bar with bundle tool and more … keep all the icons of the menu on the
+  right-hand side, below the text on the first row, for visual clarity and cadence." SO: row one is
+  the wordmark, the page tag, the viewer's name and the widgets; row two is EVERY module as the
+  icon it always was, RIGHT-ALIGNED under them — nothing folded, nothing bundled, one place; the
+  hover tooltip the icons always carried (data-lbl) names them. On the desktop the ▦ bundle button
+  is HIDDEN and whatever it had bundled (the Pricer, by default) is put back on the row at its
+  canonical slot (the canonical order is read at parse time, before the ▦ customiser has moved
+  anything); under 760px the phone layer owns the node and the ▦ bundle keeps its purpose there (a
+  bottom bar has no room to spare) — on a phone load nothing is moved, and a desktop→phone resize
+  hands the re-homed anchor back in the bundle's own dress. The nav NODE is neither moved nor
+  rewritten (check_nav compares that markup byte for byte across 24 pages; MODGATE's inline
+  display:none travels with an anchor wherever it sits, so a denied module is never shown here
+  either). Every write is idempotent — an anchor already on the row is left alone — so an idle page
+  rewrites nothing; the first cut shipped re-measuring itself at 60fps (5,400 mutations in three
+  idle seconds), which only measuring found. The ☰ collapse toggle needed an explicit rule — the
+  page's own `.nav-collapsed .tb-modules` is two classes and the row's selector carries an id, which
+  beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the real served pages at
+  four widths — one row, flush right, no text, every canonical module once in canonical order, the
+  ▦ button unpainted, no More, a scoped signin's denied modules absent, the ☰ toggle, the phone load
+  + the resize hand-back, zero idle mutations — and carries a NEGATIVE CONTROL (the same page built
+  without the widget, which must still wrap) so the one-row assertion can never pass on a bar nobody
+  is laying out), the
   **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
   Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
   platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph
