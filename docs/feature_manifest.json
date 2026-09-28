@@ -10531,6 +10531,13 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "if (id && clientMatch(acc.clients, brand)) { sheets[brand] = id; wired[brand] = 1; }",
       "pr": 0
-    }
+    },
+    {"name": "news: the landing lane fires on the Routine's branch", "file": ".github/workflows/news-digest.yml", "pattern": "branches: ['claude/news-digest', 'claude/news-digest-*']", "pr": 0},
+    {"name": "news: the lane lands the digest alone", "file": ".github/workflows/news-digest.yml", "pattern": "this lane lands docs/news_digest.json alone", "pr": 0},
+    {"name": "news: the lane dispatches the deploy by name", "file": ".github/workflows/news-digest.yml", "pattern": "gh workflow run deploy.yml --ref main", "pr": 0},
+    {"name": "news: one gate — the 90-day rule in whole days", "file": "tools/check_news.js", "pattern": "if (dm < genDay - WINDOW_DAYS * DAY)", "pr": 0},
+    {"name": "news: the gate refuses main's own id", "file": "tools/check_news.js", "pattern": "is main\\'s id", "pr": 0},
+    {"name": "news: the skill pushes the branch, never main", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push --force -u origin claude/news-digest", "pr": 0},
+    {"name": "news: the skill never pushes to main (retired)", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push -u origin main", "forbidden": true, "pr": 0}
   ]
 }

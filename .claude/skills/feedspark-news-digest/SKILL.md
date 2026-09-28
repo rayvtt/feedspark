@@ -43,9 +43,15 @@ things, then follow through to the primary source for the link where one exists.
 13. PYMNTS — https://www.pymnts.com (payments + agentic commerce)
 14. Search Engine Journal ecommerce — https://www.searchenginejournal.com
 
-Cover these beats every run: **Google Shopping / Merchant Center · Meta catalog & DPA ·
-Amazon Ads (AMS) & Seller Central · agentic commerce protocols (UCP / ACP / MCP) · payments
-(Stripe, Visa, Mastercard, BNPL) · ChatGPT and Claude commerce moves**.
+Cover these beats every run: **Google Shopping / Merchant Center · Meta catalog & DPA — and
+Muse, Meta's shopping agent · Amazon Ads (AMS) & Seller Central · agentic commerce protocols
+(UCP / ACP / MCP) · payments (Stripe, Visa, Mastercard, BNPL) · ChatGPT and Claude commerce moves**.
+
+**A platform's shopping AGENT is always a feed story** (Ray, 28 Sep 2026, on Meta's Muse: "It's
+huge, and what to do with it from a feed perspective as well"). When Google, Meta, OpenAI, Amazon
+or Anthropic ship or extend an agent that finds and buys products, the item is not "an agent
+launched" — it is what the agent READS (which catalogue, which fields), how a retailer gets in
+front of it, and which of our clients can act on that this week.
 
 ## Step 2 — Filter
 
@@ -104,29 +110,49 @@ Rules that matter:
 
 ## Step 4 — Ship it
 
-```bash
-bash tools/presync.sh          # merges latest main, dry-run build, inline-script + marker checks
-```
-
-`news_digest.json` is bundled into the worker as a Text module, so **malformed JSON breaks the
-build** — presync's dry-run is what catches that. Do not skip it, and do not push on a red run.
-
-Then commit and push straight to `main` (`docs/news_digest.json` is touched by nothing else, so
-there is no clobber risk and no PR is needed for a content-only refresh):
+The Routine runs as a **cloud session**, and a cloud session pushes freely only to `claude/`-prefixed
+branches — a push to `main` is checked and can be refused. For ten days in September 2026 that is
+exactly what happened: every run researched, wrote and reported, and the digest never left the
+container. So the file travels on its own branch and a workflow lands it. **Never push to `main`
+from here.**
 
 ```bash
+git fetch origin main
+git checkout -B claude/news-digest origin/main        # today's branch = latest main + this one file
+# … write docs/news_digest.json …
+git show origin/main:docs/news_digest.json > /tmp/main_digest.json
+node tools/check_news.js docs/news_digest.json --against /tmp/main_digest.json --fresh --offline
+node tools/check_markers.js
 git add docs/news_digest.json
 git commit -m "[News] Digest YYYY-MM-DD"
-git push -u origin main
+git push --force -u origin claude/news-digest
 ```
 
-Push to `main` triggers the Deploy Action. Then verify it actually went live per CLAUDE.md's
-rule — a green Deploy run plus the worker's Cloudflare `modified_on` advancing. Do not report
-the digest as shipped on the strength of a push alone.
+`tools/check_news.js` is the **same gate the landing workflow runs** (valid JSON, ≤ 8 items, every
+`url` https, every `date` inside the 90-day window, `impact` vocabulary, a changed `id`, `generated`
+newer than main's) — run it first so a refusal is seen here, not in a log nobody opens. `--offline`
+skips the link check because the sandbox may block a site the workflow can reach; the workflow
+checks every link for real, and a dead link refuses the digest.
 
-If `main` has moved under you, rebase and re-run presync rather than force-anything.
+The push starts `.github/workflows/news-digest.yml`, which refuses anything but that one file,
+re-runs the gate against main's digest, dry-run-builds the worker, commits the file onto `main` as
+`[News] Digest <id>`, dispatches the Deploy workflow and deletes the branch. **The ship signal is
+the landing, not the push** — confirm it:
+
+```bash
+ID=$(node -p "require('./docs/news_digest.json').id")
+for i in $(seq 1 12); do
+  sleep 30; git fetch -q origin main
+  git log -1 --format=%s origin/main -- docs/news_digest.json | grep -q "\[News\] Digest $ID" && { echo "landed"; break; }
+done
+```
+
+If it has not landed after six minutes, say so in the report with the `id` and the gate's own output —
+do not retry blindly, and do not push to `main` yourself. `bash tools/presync.sh` is not the gate
+here: it runs the whole platform's harnesses, and a content-only refresh needs none of them.
 
 ## Step 5 — Report
 
-One short paragraph: how many items, the lead story, and anything you deliberately left out and
+One short paragraph: whether it **landed** (the `[News] Digest <id>` commit on `origin/main`, or
+not — with the reason), how many items, the lead story, and anything you deliberately left out and
 why. If the day was genuinely quiet, say so plainly — that is a useful signal, not a failure.
