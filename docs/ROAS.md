@@ -32,6 +32,12 @@ FeedHero reports **trailing windows only** — never a day's own figure. So:
   UTC day (a re-read the same day replaces it); `ROAS_HIST_DAYS` (400) on the record,
   `ROAS_SPARK_DAYS` (60) on the index entry as `spark`. A point is
   `{d, cur, w7:[sp,rv,cv,ck,im,sk,zb], w30:[…], w90:[…]}` (`HIST_COLS`).
+- **The tree is a 30-day fact.** Confirmed 28 Sep 2026 on Superdry GB, Reiss GB and Monsoon UK:
+  FeedHero breaks the category tree down for the 30-day window ONLY — a 7- or 90-day read carries
+  the Total and an "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed it
+  holds; real spend, `isUnlisted`, tagged *not in feed* on the page) and nothing else. The live
+  Brand / Gender / Price group cuts work on every period. The page says so on a 7/90-day market
+  instead of showing an empty tree; `ROAS_TREE_WIN` names the window.
 - **Delta "vs 7 days ago"** (`backPoint` / `deltaPct`, `ROAS_DELTA_BACK`) compares the latest
   trailing figure with the one read ≥7 days earlier — the same comparison Google Ads' own
   previous-period chip makes. Null (the page prints "no history yet") until the record is old

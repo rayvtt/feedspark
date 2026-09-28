@@ -9929,6 +9929,12 @@
       "pr": 0
     },
     {
+      "name": "ROAS: the category tree is a 30-day fact — the unlisted-in-feed row is FeedHero's own, never a product type",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export function isUnlisted",
+      "pr": 0
+    },
+    {
       "name": "ROAS v2: the browser tripwires render /roas off the synthetic stub",
       "file": "tools/roas_stub.js",
       "pattern": "function stubLines",
