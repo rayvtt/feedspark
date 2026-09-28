@@ -96,6 +96,8 @@ const CANON = [...fs.readFileSync(path.join(DOCS, 'FeedSpark_Workflow.html'), 'u
   const browser = await chromium.launch();
   const open = async (file, w, h) => {
     const p = await browser.newPage({ viewport: { width: w || 1280, height: h || 800 } });
+    // on a MONDAY the Command Center opens its Monday catch-up panel over the page (by design) — mark today's seen
+    await p.addInitScript(() => { try { localStorage.setItem('mc-' + new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()), '1'); } catch (e) {} });
     p.on('pageerror', (e) => { if (!/Cannot convert undefined or null/.test(String(e))) { fail++; console.log('  ✗ page error on ' + file + ': ' + String(e).slice(0, 180)); } });
     await p.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
     await p.goto(base + file, { waitUntil: 'domcontentloaded' });
