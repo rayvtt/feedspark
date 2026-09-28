@@ -1338,7 +1338,7 @@ window.addEventListener('load',restore);
     var g = S.gen;
     seg(agg).then(function (j) {
       if (g !== S.gen || S.agg !== agg) return;
-      if (!j) { body.innerHTML = '<div class="empty2">FeedHero has no ' + esc(name) + ' cut for this market.</div>'; return; }
+      if (!j || j.missing) { body.innerHTML = '<div class="empty2">FeedHero has no ' + esc(name) + ' cut for this market.</div>'; return; }
       drawRoas(j.rows || [], agg);
       if (S.insp && !S.insp.gone) renderInspRoas();
     });
@@ -1829,7 +1829,7 @@ window.addEventListener('load',restore);
       var got = R.segs[a];
       if (!got || !got.__done) { pending++; return; }
       var j = got.__val; if (!j) return;
-      if (E.unsortedOnly(j.rows)) { off.push(aggName(a)); return; }
+      if (j.missing || E.unsortedOnly(j.rows)) { off.push(aggName(a)); return; }
       var k = E.segKey(v, a), row = E.mergeSegRows(j.rows, a).filter(function (r) { return !isUnlisted(r.category) && E.segKey(r.category, a) === k; })[0];
       if (row) rows.push({ agg: aggName(a), v: v, row: row, rule: a === 'Product_age' ? 'first seen ' + (birth != null ? fmtDay(birth) : '— undated') + (birth != null && x.dob != null && birth < x.dob ? ' (its style’s first variant)' : '') : '' });
     });
