@@ -763,7 +763,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       $('#svp-ti').textContent = r.n;
       $('#svp-mk').textContent = m.client + ' ' + m.market + ' · ' + ((MK[r.sk] || {}).label || r.sk) + ' · #' + (r.i + 1) + ' in run order';
       var acts = '<div class="acts">' + fhA(m.cmpid, r.n, r.t, 'Open in FeedHero') + '<a class="btn" href="/roas?brand=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.market) + '" title="This market\u2019s Google Ads read">ROAS · ' + esc(m.client + ' ' + m.market) + '</a></div>';
-      var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl></div>' : '';
+      var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Products in the output feed</dt><dd>' + n0(B.skus) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl><div class="hint" style="margin-top:6px">Feed scanned ' + (B.feedAt ? since(B.feedAt) : 'recently') + ' \u00b7 Google Ads read ' + (B.updated ? since(B.updated) : 'recently') + '.</div></div>' : '';
       if (h && h.kind === 'blocked' && B) {
         var amt = svCalc(h.n, B, SV.pct, svDays()), ceil = svCalc(h.n, B, 100, svDays());
         bd.innerHTML = '<div class="big" id="svp-big"></div><div class="cap">' + esc(scnName(SV.pct)) + ' ' + SV.pct + '% — ' + svPer() + ', if ' + SV.pct + '% of the ' + n0(h.n) + ' products this rule holds back had drawn ' + esc(m.client + ' ' + m.market) + '\u2019s average Google Ads traffic</div>'
@@ -772,19 +772,19 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
           + '<dt>Products held back (last run)</dt><dd>' + n0(h.n) + (r.of ? ' of ' + n0(r.of) : '') + '</dd>'
           + '<dt>Google Ads spend, 30 days</dt><dd>' + money(B.cur, B.spend, 0) + '</dd>'
           + '<dt>Clicks, 30 days</dt><dd>' + n0(B.clicks) + '</dd>'
-          + '<dt>Products in Google Ads</dt><dd>' + n0(B.skus) + '</dd>'
+          + '<dt>Products in the output feed</dt><dd>' + n0(B.skus) + '</dd>'
           + '<dt>Cost per click</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd>'
           + '<dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd>'
           + '<dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd>'
           + '<dt>Share drawing that traffic</dt><dd>' + SV.pct + '%</dd>'
           + '</dl><div class="fx">' + n0(h.n) + ' × ' + money(B.cur, B.spendDay, 3) + ' × ' + SV.pct + '% × ' + svDays() + ' day' + (svDays() === 1 ? '' : 's') + ' = <b>' + money(B.cur, amt) + '</b></div>'
           + '<div class="hint" style="margin-top:8px">Every held-back product at the market\u2019s average: ' + money(B.cur, ceil, 0) + ' ' + svPer() + ' — the ceiling, not the forecast.</div></div>'
-          + '<div class="ft">Spend per product per day = the market\u2019s 30-day Google Ads spend ÷ the products in Google Ads ÷ 30 (the same as clicks per product per day × CPC). Held back = the products FeedHero says this rule changed on its last run, which can include products already out of stock (one more reason the share is kept low). A forecast of spend avoided on products that could not convert, not a measured saving' + (B.updated ? ' · Google Ads read ' + since(B.updated) : '') + '.</div>' + acts;
+          + '<div class="ft">Spend per product per day = the market\u2019s 30-day Google Ads spend ÷ the products in its live output feed ÷ 30 (the same as clicks per product per day × CPC) — never FeedHero\u2019s own Ads-traffic SKU figure, which can disagree with the feed by a wide margin. Held back = the products FeedHero says this rule changed on its last run, which can include products already out of stock (one more reason the share is kept low). A forecast of spend avoided on products that could not convert, not a measured saving' + (B.updated ? ' · Google Ads read ' + since(B.updated) : '') + (B.feedAt ? ' · feed scanned ' + since(B.feedAt) : '') + '.</div>' + acts;
         bigCur = B.cur; bigV = amt;
       } else {
         var kind = !h ? 'other' : h.kind === 'blocked' ? 'noads' : h.kind;
         var why = !h ? 'This is a ' + esc(((MK[r.sk] || {}).label || r.sk).toLowerCase()) + ' rule. The forecast covers the stock thresholds and range-completion rules that hold products back for low stock.'
-          : h.kind === 'blocked' ? 'It holds ' + n0(h.n) + ' products back, but FeedHero has no Google Ads read for ' + esc(m.client + ' ' + m.market) + ' yet, so there is no price for its traffic. It is sized once ROAS syncs this market.'
+          : h.kind === 'blocked' ? 'It holds ' + n0(h.n) + ' products back, but there is no full read for ' + esc(m.client + ' ' + m.market) + ' yet — it needs a Google Ads read AND the live output feed’s own product count. It is sized once both have synced.'
           : esc(h.why || '');
         bd.innerHTML = '<span class="kd">' + esc(kind === 'other' ? 'Not sized' : SVKIND[kind] || kind) + '</span><p class="why">' + why + '</p>' + (h && (h.kind === 'none' || h.kind === 'all') && B ? '<p class="hint">When it holds products back, each one keeps about ' + money(B.cur, B.spendDay, 3) + ' a day of spend off the market at its average — ' + money(B.cur, B.spendDay * SV.pct / 100, 4) + ' at ' + SV.pct + '%.</p>' : '') + ref + acts;
         SVSHOWN = null;

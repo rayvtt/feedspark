@@ -272,12 +272,27 @@ console.log('· ad spend kept off low-stock products — the forecast behind the
   t('titles, lifecycle labels and local inventory are not thresholds or range completion', k('Title: append colour', 'product_name') === null && k('New In by date', 'gb_cl0') === null && k('LIA: next day', 'pickup_sla') === null);
   t('"IG ID" is an item-group id, not Instagram', R.channel({ d: 'ig_id_colour_stock', n: 'IG ID Colour - Count unique' }) === 'all' && R.channel({ d: 'ig_availability', n: 'x' }) === 'meta');
 
-  const E2 = { w30: { spend: { cur: '£', n: 72000 }, clicks: 240000, skus: 20000, impr: 30000000, zombiePct: 30 }, updated: NOW };
-  const B = R.adsBasis(E2);
-  t('the basis: CPC = spend ÷ clicks, spend per product per day = spend ÷ products ÷ 30', B && B.cur === '£' && B.cpc === 0.3 && Math.abs(B.spendDay - 0.12) < 1e-12 && Math.abs(B.clicksDay - 0.4) < 1e-12);
+  // the SKU denominator (Ray, 28 Sep 2026, on Reiss GB's forecast panel): "spend per product per day
+  // should be base on the volume of output feeds (the feed URLs rather than the products impacted
+  // number in the rule) — Reiss GB Shopping should have 22,657 SKUs instead of 60,235". FeedHero's
+  // own roas_dashboard 'skus' field is Ads TRAFFIC (docs/ROAS.md: a market can carry "Unlisted SKUs
+  // in Ads traffic" — real spend on SKUs the feed does not hold), never the catalogue — so E2.skus
+  // below is set to something absurd on purpose and must never leak into the basis.
+  const E2 = { w30: { spend: { cur: '£', n: 72000 }, clicks: 240000, skus: 999999, impr: 30000000, zombiePct: 30 }, updated: NOW };
+  const B = R.adsBasis(E2, { n: 20000, t: NOW - 3600000 });
+  t('the basis: CPC = spend ÷ clicks, spend per product per day = spend ÷ FEED products ÷ 30 — never FeedHero\'s Ads-traffic skus', B && B.cur === '£' && B.cpc === 0.3 && Math.abs(B.spendDay - 0.12) < 1e-12 && Math.abs(B.clicksDay - 0.4) < 1e-12 && B.skus === 20000 && B.skus !== E2.w30.skus);
   t('…and the two ways of stating it agree (clicks per product per day × CPC)', Math.abs(B.clicksDay * B.cpc - B.spendDay) < 1e-12);
-  t('a v1 flat ROAS entry reads the same', JSON.stringify(R.adsBasis(Object.assign({}, E2.w30, { updated: NOW }))) === JSON.stringify(B));
-  t('no spend, no products or no clicks = no basis (never a zero price)', R.adsBasis(null) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 0 }, clicks: 5, skus: 5 } }) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 0, skus: 5 } }) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 5, skus: 0 } }) === null);
+  t('the real Reiss GB numbers: FeedHero read 60,235 Ads-traffic skus, the live feed holds 22,657 — the basis reads the feed', (() => {
+    const r = R.adsBasis({ w30: { spend: { cur: '£', n: 10000 }, clicks: 50000, skus: 60235 } }, { n: 22657, t: NOW });
+    return r.skus === 22657;
+  })());
+  t('a v1 flat ROAS entry reads the same', JSON.stringify(R.adsBasis(Object.assign({}, E2.w30, { updated: NOW }), { n: 20000, t: NOW - 3600000 })) === JSON.stringify(B));
+  t('no spend, no clicks, or no feed-row read = no basis (never a zero price, never FeedHero\'s own skus as a fallback)',
+    R.adsBasis(null, { n: 20000 }) === null
+    && R.adsBasis({ w30: { spend: { cur: '£', n: 0 }, clicks: 5, skus: 5 } }, { n: 20000 }) === null
+    && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 0, skus: 5 } }, { n: 20000 }) === null
+    && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 5, skus: 500000 } }, null) === null
+    && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 5, skus: 500000 } }, { n: 0 }) === null);
   t('Ray\'s two scenarios: Conservative 5 %, Aggressive 10 %, over the 30-day window', JSON.stringify(R.SV_SCENARIOS.map((x) => [x.label, x.pct])) === JSON.stringify([['Conservative', 5], ['Aggressive', 10]]) && R.SV_WINDOW_DAYS === 30);
   t('saved = held back × spend per product per day × share × days', Math.abs(R.savingFor(800, B, 5, 30) - 144) < 1e-9 && Math.abs(R.savingFor(800, B, 5, 1) - 4.8) < 1e-9);
   t('aggressive is exactly twice conservative; per month is 30 × per day', Math.abs(R.savingFor(800, B, 10, 30) - 2 * R.savingFor(800, B, 5, 30)) < 1e-9 && Math.abs(R.savingFor(800, B, 5, 30) - 30 * R.savingFor(800, B, 5, 1)) < 1e-9);
@@ -290,15 +305,16 @@ console.log('· ad spend kept off low-stock products — the forecast behind the
   const f1 = R.svFloor(st1);
   t('a market counts ONCE, at its largest blocking rule — two rules can hold back the same product', f1 && f1.n === 800 && f1.rule === 'Stock < 11 -> OOS');
   t('a release never becomes the floor, however large', R.svFloor([st1[2]]) === null);
-  const eur = R.adsBasis({ w30: { spend: { cur: '€', n: 9000 }, clicks: 30000, skus: 10000 } });
+  const eur = R.adsBasis({ w30: { spend: { cur: '€', n: 9000 }, clicks: 30000, skus: 999 } }, { n: 10000, t: NOW });
   const mk = [{ cmpid: 'a', stock: st1, ads: B }, { cmpid: 'b', stock: st1, ads: eur }, { cmpid: 'c', stock: st1, ads: null }, { cmpid: 'd', stock: [st1[2]], ads: B }];
   const bk = R.svBook(mk, 5, 30);
   t('the book adds MARKETS per currency and never across one', bk.byCur.length === 2 && bk.byCur[0].cur === '£' && Math.abs(bk.byCur[0].amt - 144) < 1e-9 && bk.byCur[1].cur === '€' && Math.abs(bk.byCur[1].amt - 800 * 0.03 * 0.05 * 30) < 1e-9);
   t('a market with a blocking rule but no Google Ads read is counted as unpriced, not as zero', bk.unpriced === 1 && bk.sized === 2);
 
-  const v = R.stockView({ client: 'Monsoon', market: 'UK', cmpid: 'monsoon_uk', updated: NOW, n: 3, items: 2000, stock: st1.map((r) => { const o = Object.assign({}, r); delete o.hb; return o; }) }, E2);
+  const v = R.stockView({ client: 'Monsoon', market: 'UK', cmpid: 'monsoon_uk', updated: NOW, n: 3, items: 2000, stock: st1.map((r) => { const o = Object.assign({}, r); delete o.hb; return o; }) }, E2, { rows: 20000, t: NOW - 3600000 });
   t('stockView: every stock row carries hb, the market carries its basis and sentence', v.stock.every((r) => 'hb' in r) && v.stock[0].hb.kind === 'blocked' && JSON.stringify(v.ads) === JSON.stringify(B) && typeof v.sentence === 'string');
-  t('stockView: no ROAS entry = ads null', R.stockView({ client: 'x', market: 'y', cmpid: 'z', stock: [] }, undefined).ads === null);
+  t('stockView: no ROAS entry = ads null even with a feed-row read', R.stockView({ client: 'x', market: 'y', cmpid: 'z', stock: [] }, undefined, { rows: 20000, t: NOW }).ads === null);
+  t('stockView: no feed-row read = ads null even with a full ROAS read', R.stockView({ client: 'x', market: 'y', cmpid: 'z', stock: [] }, E2, undefined).ads === null);
 
   // the page's twins, LIFTED by name and run against the engine on the same table
   const liftIn = (h, name) => {
@@ -313,8 +329,9 @@ console.log('· ad spend kept off low-stock products — the forecast behind the
   t('page svFloor === engine svFloor', JSON.stringify(tw.svFloor(st1)) === JSON.stringify(R.svFloor(st1)) && tw.svFloor([]) === null);
   t('page svBook === engine svBook, at both scenarios and both periods', [[5, 30], [10, 30], [5, 1], [10, 1]].every(([p, d]) => JSON.stringify(tw.svBook(mk, p, d)) === JSON.stringify(R.svBook(mk, p, d))));
 
-  t('worker: the stock route reads the ROAS index ONCE and serves every market through stockView', /const ridx = \(await env\.EDITS\.get\('roasidx', 'json'\)\) \|\| \{\};/.test(WK) && /markets: rows\.map\(\(r\) => RULES\.stockView\(r, ridx\[r\.cmpid\]\)\)/.test(WK) && /sv: \{ scenarios: RULES\.SV_SCENARIOS, days: RULES\.SV_WINDOW_DAYS \}/.test(WK));
-  t('the tripwire stub builds the stock book through the SAME stockView', /E\.stockView\(r, ROAS\[r\.cmpid\]\)/.test(read('tools/rules_stub.js')));
+  t('worker: the stock route reads the ROAS index ONCE and serves every market through stockView', /const ridx = \(await env\.EDITS\.get\('roasidx', 'json'\)\) \|\| \{\};/.test(WK) && /markets: rows\.map\(\(r\) => RULES\.stockView\(r, ridx\[r\.cmpid\], vdidx\[r\.client \+ '\|' \+ r\.market\]\)\)/.test(WK) && /sv: \{ scenarios: RULES\.SV_SCENARIOS, days: RULES\.SV_WINDOW_DAYS \}/.test(WK));
+  t('worker: the SKU denominator reads the SAME voldobidx the Product Volume module keeps — one more KV get, keyed client|market, never FeedHero\'s Ads-traffic skus', /const vdidx = \(await env\.EDITS\.get\('voldobidx', 'json'\)\) \|\| \{\};/.test(WK));
+  t('the tripwire stub builds the stock book through the SAME stockView, with its own feed-row map (never FeedHero\'s skus)', /E\.stockView\(r, ROAS\[r\.cmpid\], VOLIDX\[r\.client \+ '\|' \+ r\.market\]\)/.test(read('tools/rules_stub.js')));
   t('page: the panel, and the rules that open it (the card, the setup tables, the cut-offs, the KPI)', /<aside class="svp" id="svp"/.test(SP) && /'<tr data-sv="' \+ esc\(m\.cmpid \+ '\|' \+ r\.i\) \+ '"><td class="num">'/.test(SP) && /'<tr data-sv="' \+ esc\(c\.cmpid \+ '\|' \+ c\.i\)/.test(SP) && /'<tr data-sv="' \+ esc\(m\.cmpid \+ '\|' \+ r\.i\) \+ '" tabindex="0">/.test(SP) && /class="kpi sv-k link" data-sv="book"/.test(SP));
   t('page: opened by REAL pointer movement (a push or scroll under a still cursor never re-targets it)', /document\.addEventListener\('mousemove', function \(e\) \{\s*if \(e\.clientX === PT\.x && e\.clientY === PT\.y\) return;/.test(SP) && !/addEventListener\('mouseover'/.test(SP));
   t('page: it STAYS — only ✕, Esc or a vanished rule close it', (SP.match(/svClose\(\)/g) || []).length === 3 && /\$\('#svp-x'\)\.addEventListener\('click', svClose\)/.test(SP) && !/mouseleave|mouseout/.test(SP));

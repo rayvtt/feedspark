@@ -544,10 +544,21 @@ export function brandsOf(rows) {
 // THE MODEL, and why it is this one. A stock rule that holds a product back (sets it out of stock,
 // excludes it, empties the label a campaign bids on) keeps that product from buying clicks it could
 // not convert — sizes missing, a unit or two left. What those clicks would have cost is the market's
-// OWN price for traffic, read from FeedHero's Google Ads report for the same market over 30 days:
+// OWN price for traffic: CPC, 30-day spend and clicks read from FeedHero's Google Ads report, divided
+// by the market's REAL catalogue — READ OFF THE LIVE OUTPUT FEED ITSELF (Ray, 28 Sep 2026, on Reiss
+// GB's forecast panel: "spend per product per day should be base on the volume of output feeds (the
+// feed URLs rather than the products impacted number in the rule) — Reiss GB Shopping should have
+// 22,657 SKUs instead of 60,235"). FeedHero's OWN 'skus' figure on the roas_dashboard report is Ads
+// TRAFFIC, not the catalogue — the ROAS module's own docs note a market can carry "Unlisted SKUs in
+// Ads traffic" (real spend on SKUs the feed does not currently hold, docs/ROAS.md §2), which is
+// exactly how a Total row reads more SKUs than the feed serves. So the denominator here is the SAME
+// row count the Product Volume module already keeps per feed (voldobidx — the 4x-daily xml-scan
+// agent's own read of the feed URL, Shopping feeds only, one more KV get on the stock route), never
+// FeedHero's Ads-traffic count and never a rule's own impacted/of figure — a market whose feed has
+// not been scanned yet is unpriced, the same honest gap as no Google Ads read:
 //
-//   spend per product per day  =  30-day spend ÷ SKUs in Google Ads ÷ 30
-//                              =  (clicks ÷ SKUs ÷ 30)  ×  CPC          — the same number, shown both ways
+//   spend per product per day  =  30-day Google Ads spend ÷ products in the LIVE OUTPUT FEED ÷ 30
+//                              =  (clicks ÷ feed products ÷ 30)  ×  CPC   — the same number, shown both ways
 //   saved per day              =  products held back × spend per product per day × scenario %
 //
 // The scenario is the share of the held-back products assumed to have drawn the market's average
@@ -567,7 +578,8 @@ export function brandsOf(rows) {
 //     count of 0 onto products already marked unavailable — they were not advertised either way);
 //   · a rule that holds products back on ANOTHER channel (Meta, affiliates…) — FeedHero's ad-spend
 //     read is Google Ads, and Google's price for a click is not Meta's;
-//   · a market FeedHero has no Google Ads read for.
+//   · a market missing either read it needs — FeedHero's Google Ads spend/clicks, or the live
+//     output feed's own row count (never FeedHero's Ads-traffic SKU figure — see above).
 export const SV_SCENARIOS = [
   { k: 'cons', label: 'Conservative', pct: 5 },
   { k: 'aggr', label: 'Aggressive', pct: 10 },
@@ -607,16 +619,20 @@ export function heldBack(r) {
   if (!r.imp) return { kind: 'none', n: 0, why: 'It is holding nothing back on its last run.' };
   return { kind: 'blocked', n: r.imp, why: null };
 }
-// a market's price for traffic, off its ROAS index entry (the 30-day Total) — null when unread
-export function adsBasis(e) {
+// a market's price for traffic: CPC/spend/clicks off its ROAS index entry (the 30-day Total), the
+// SKU denominator off `feed` — {n: row count, t: when scanned}, the market's voldobidx entry (the
+// live output feed's own row count, NEVER FeedHero's Ads-traffic 'skus' figure — see above) — null
+// when either the Google Ads read or the feed-row read is missing
+export function adsBasis(e, feed) {
   const t = e && (e.w30 || (e.spend ? e : null));
-  if (!t || !t.spend || !(t.spend.n > 0) || !(t.skus > 0) || !(t.clicks > 0)) return null;
-  const days = SV_WINDOW_DAYS, sp = t.spend.n, ck = t.clicks, sk = t.skus;
+  const sk = feed && feed.n > 0 ? feed.n : null;
+  if (!t || !t.spend || !(t.spend.n > 0) || !(t.clicks > 0) || !sk) return null;
+  const days = SV_WINDOW_DAYS, sp = t.spend.n, ck = t.clicks;
   return {
     cur: t.spend.cur || (e && e.cur) || '', days, spend: sp, clicks: ck, impr: t.impr || 0, skus: sk,
     cpc: sp / ck, clicksDay: ck / sk / days, spendDay: sp / sk / days,   // unrounded — the page rounds for display only
     zombie: t.zombiePct == null ? null : t.zombiePct, crPct: t.crPct == null ? null : t.crPct,
-    updated: (e && e.updated) || null,
+    updated: (e && e.updated) || null, feedAt: (feed && feed.t) || null,
   };
 }
 // the saving — the ONE formula the page's twin (svCalc) is held to
@@ -650,8 +666,11 @@ export function svBook(markets, pct, days) {
 }
 // one market as GET /api/rules/stock serves it — the worker and tools/rules_stub.js both call this, so
 // the tripwires' synthetic book can never drift from the real shape. `hb` rides on every stock row and
-// `ads` is the market's price for traffic off its ROAS index entry (null when FeedHero has no read).
-export function stockView(r, roasEntry) {
+// `ads` is the market's price for traffic: its ROAS index entry for spend/clicks/CPC, its voldobidx
+// entry (`feedIdx`, {rows,t} — the live output feed's own row count) for the SKU denominator, null
+// when either is unread.
+export function stockView(r, roasEntry, feedIdx) {
   return { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items,
-    stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock), ads: adsBasis(roasEntry) };
+    stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock),
+    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }) };
 }

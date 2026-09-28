@@ -104,15 +104,30 @@ and display the number dynamically."*
 
 **The model.** A stock rule that holds a product back (sets it out of stock, excludes it, empties
 the label a campaign bids on) stops that product buying clicks it could not convert: sizes missing,
-a unit or two left. What those clicks would have cost is **the market's own price for traffic**,
-read from FeedHero's Google Ads report for the same market over 30 days (the ROAS index, `roasidx`;
-one more KV get on the stock route, never a second MCP call):
+a unit or two left. What those clicks would have cost is **the market's own price for traffic** —
+CPC, 30-day spend and clicks read from FeedHero's Google Ads report (the ROAS index, `roasidx`; one
+more KV get on the stock route, never a second MCP call), divided by the market's **real catalogue
+size, read off the live output feed itself**:
 
 ```
-spend per product per day = 30-day spend ÷ products in Google Ads ÷ 30
+spend per product per day = 30-day spend ÷ products in the LIVE OUTPUT FEED ÷ 30
                           = clicks per product per day × CPC          (the same number, both shown)
 kept off                  = products held back × spend per product per day × share × days
 ```
+
+**THE SKU DENOMINATOR IS THE OUTPUT FEED, NEVER FEEDHERO'S ADS-TRAFFIC FIGURE** (Ray, 28 Sep 2026,
+on Reiss GB's forecast panel: *"spend per product per day should be base on the volume of output
+feeds (the feed URLs rather than the products impacted number in the rule) — Reiss GB Shopping
+should have 22,657 SKUs instead of 60,235"*): the original build read `skus` straight off FeedHero's
+`roas_dashboard` Total row — but that figure is **Ads traffic**, not the catalogue (§2's "Unlisted
+SKUs in Ads traffic" row is the same phenomenon: real spend on SKUs the feed does not currently
+hold), and it disagreed with Reiss GB's live feed by more than double. The denominator is now the
+**same row count the Product Volume module already keeps per feed** — `voldobidx` (the 4x-daily
+xml-scan agent's own read of the feed URL, Shopping feeds only), one more KV get on the stock route,
+keyed `client|market`, never a second scan. `adsBasis(roasEntry, feed)` takes the feed's `{n, t}`
+as a second argument and returns `null` — no basis at all — when either read is missing; `stockView`
+threads it through as `feedIdx` (the `voldobidx` entry). A rule's own `impacted`/`of` figures were
+never the source (they say what a RULE touched, not the feed's real size) and still aren't.
 
 - **Share.** The share of held-back products assumed to have drawn the market's average traffic had
   they stayed live: **Conservative 5 %**, **Aggressive 10 %** (Ray's two), plus a custom slider from 1
@@ -135,7 +150,7 @@ guessed number:
 | Restates a state | "Not available to Zero" writes 0 stock onto products already unavailable, which were not advertised either way |
 | Another channel | a Meta / affiliate / TikTok rule; Google Ads' price for a click is not that channel's |
 | Holding nothing back | a blocking rule that touched nothing on its last run |
-| No Google Ads read | FeedHero has no 30-day read for the market yet; it is sized once ROAS syncs it |
+| No Google Ads read, or no feed-row read | FeedHero has no 30-day read for the market yet, or its live output feed has not been scanned yet (`voldobidx`); it is sized once both have synced |
 
 **A market counts once.** Two stock rules can hold back the same product (a threshold AND a
 range-completion exclusion often do), and the report says how many each changed, not which. So a
@@ -213,7 +228,7 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic off `roasidx`, null when unread). |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread). |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness

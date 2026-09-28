@@ -2570,12 +2570,19 @@ async function route(request, env, ctx) {
       const base = { ok: true, tracked: rows.length, roster: roster.length, unread, rosterBrands, scope: { brand: brandQ || null }, status, at: now };
       if (path === '/api/rules/stock') {
         // AD SPEND KEPT OFF (Ray, 28 Sep 2026): each market's price for traffic comes off the SAME ROAS
-        // index /roas reads — one more KV get, keyed by the market's cmpid, never a second MCP call
+        // index /roas reads — one more KV get, keyed by the market's cmpid, never a second MCP call.
+        // THE SKU DENOMINATOR IS THE LIVE OUTPUT FEED, NOT FEEDHERO'S ADS-TRAFFIC COUNT (Ray, 28 Sep
+        // 2026: "spend per product per day should be base on the volume of output feeds … rather than
+        // the products impacted number in the rule — Reiss GB Shopping should have 22,657 SKUs instead
+        // of 60,235" — see the model note on RULES.adsBasis): voldobidx already carries each Shopping
+        // feed's own row count from the SAME 4x-daily xml-scan agent the Product Volume module reads —
+        // one more KV get, keyed client|market, never a second scan.
         const ridx = (await env.EDITS.get('roasidx', 'json')) || {};
+        const vdidx = (await env.EDITS.get('voldobidx', 'json')) || {};
         return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
           matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), heroRuns: RULES.heroRuns(rows), findings: RULES.stockFindings(rows, now),
           sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
-          markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid])) }));
+          markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid], vdidx[r.client + '|' + r.market])) }));
       }
       const findings = [];
       rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));

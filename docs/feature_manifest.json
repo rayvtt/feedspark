@@ -10792,9 +10792,9 @@
       "pr": 0
     },
     {
-      "name": "Stock: the route prices each market off the ROAS index",
+      "name": "Stock: the route prices each market off the ROAS index and its own feed-row read",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid]))",
+      "pattern": "markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid], vdidx[r.client + '|' + r.market]))",
       "pr": 0
     },
     {
