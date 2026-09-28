@@ -210,6 +210,13 @@ else
   echo "   ✗ hero KPI harness FAILED — see node tools/test_hero.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e0/7: the news digest's road to main (branch → gate → landed → deployed)"
+if node tools/test_news.mjs >/dev/null 2>&1 && node tools/check_news.js docs/news_digest.json --offline >/dev/null 2>&1; then
+  echo "   ✓ one gate for the Routine and the lane; the committed digest passes it; nothing pushes to main"
+else
+  echo "   ✗ news digest harness FAILED — see node tools/test_news.mjs / node tools/check_news.js docs/news_digest.json --offline"; FAIL=1
+fi
+
 echo "── qa-gate 3d8/7: 🎬 Present (the one-pager played — one renderer, two presentations)"
 if node tools/test_present.mjs >/dev/null 2>&1; then
   echo "   ✓ built from opHtml; a counted number ends on the one-pager's own string"
