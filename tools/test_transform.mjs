@@ -144,10 +144,21 @@ ok(/id="fs-btn"/.test(PAGE) && /section\.blk\.fs\{position:fixed;inset:0;z-index
 ok(/if\(e\.key==='Escape'&&!OPEN&&\$\('board'\)\.classList\.contains\('fs'\)\)/.test(PAGE), 'Esc leaves full screen, but never while the editor is open over it');
 ok(/section\.blk\.fs \.canvas\{flex:1;max-height:none/.test(PAGE), 'in full screen the canvas grows to fill the window instead of its 78vh cap');
 
+console.log('Renamed route keeps what was recorded');
+ok(migrationView({ 'mod:/transformation': { st: 'owned', m: '2026-11' } }).modules['/migration'].st === 'owned', 'a status recorded under the old /transformation key still reads');
+ok(migrationView({ 'mod:/transformation': { st: 'owned' }, 'mod:/migration': { st: 'migrated' } }).modules['/migration'].st === 'migrated', 'a status written under the new key wins');
+const trm = RM.modules.filter((m) => m.p === '/migration')[0];
+ok(trm && TX.modState(trm, { 'mod:/transformation': { st: 'migrating' } }) === 'migrating', 'the page reads the old key too');
+ok(TX.checklist('m./migration', ['a', 'b'], { 'chk:m./transformation|s0': { done: true } })[0].done === true, 'a ticked checklist line under the old key stays ticked');
+ok(migrationPathOf('/migration') === '/migration', 'the pill finds the page at /migration');
+
 console.log('Access and wiring');
 ok(/slug: 'transformation'[^}]*optIn: true/.test(ACCESS), 'transformation is an opt-in module in access.js');
 ok(/import TRANSFORM_PAGE from "..\/..\/..\/docs\/FeedSpark_Transformation.html"/.test(WORKER), 'the worker imports the page');
-ok(/'\/transformation':\s*\{ html: TRANSFORM_PAGE, slug: 'transformation' \}/.test(WORKER), '/transformation is served from PAGES');
+ok(/'\/migration':\s*\{ html: TRANSFORM_PAGE, slug: 'transformation' \}/.test(WORKER), '/migration is served from PAGES');
+ok(/path === '\/transformation'\) \{\s*return new Response\(null, \{ status: 301, headers: \{ Location: '\/migration'/.test(WORKER), 'the old /transformation link 301s to /migration');
+ok(!/'\/transformation':\s*\{ html:/.test(WORKER) && /path: '\/migration', optIn: true/.test(ACCESS), 'the page and its grant both live at /migration now');
+ok(/href="\/migration"/.test(fs.readFileSync(path.join(ROOT, 'docs/FeedSpark_Leadership.html'), 'utf8')), 'the Leadership hub links /migration');
 const api = between(WORKER, "if (path === '/api/transform') {", "// ---- Build Log queue");
 ok(/moduleAllowed\(acc\.modules, 'transformation'\)/.test(api) && api.indexOf('403') < api.indexOf('mapStoreRoute'), '/api/transform refuses a signin not granted the module, before touching the store');
 ok(/mapStoreRoute\(env, request, 'transform'/.test(api), '/api/transform is a kvmerge store (concurrent edits merge)');

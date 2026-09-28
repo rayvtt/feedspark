@@ -3,7 +3,7 @@
  * other AMs start using the dashboard, each module needs to be highlighted if it has been migrated or
  * not").
  *
- * The management tracker (/transformation) keeps each module's migration status in the SAME KV store
+ * The management tracker (/migration) keeps each module's migration status in the SAME KV store
  * as the rest of the roadmap (`transform`, key `mod:<path>`), which only granted signins can read.
  * Every AM needs to SEE the status on the modules they use, so GET /api/migration/status serves a
  * tiny public projection of it — the state and the planned month per module, nothing else (no notes,
@@ -39,8 +39,12 @@ export const MIG_SEED = [
   { p: '/activity', n: 'Activity & Build Log', w: 3, m: '2026-12' },
   { p: '/workflow', n: 'Workflow & Playbook', w: 4, m: '2026-12' },
   { p: '/', n: 'Command center', w: 4, m: '2026-12' },
-  { p: '/transformation', n: 'Transformation', w: 4, m: '2026-12' },
+  { p: '/migration', n: 'Migration roadmap', w: 4, m: '2026-12' },
 ];
+
+// the tracker's own route was /transformation until 28 Sep 2026 — a status set under the old key still reads
+export const MIG_LEGACY = { '/migration': '/transformation' };
+export function migRecord(d, p) { return (d && (d['mod:' + p] || (MIG_LEGACY[p] && d['mod:' + MIG_LEGACY[p]]))) || null; }
 
 // the public projection every signin may read: {on, modules:{path:{n, st, m, at}}}
 // `on` = management's switch (cfg:badges) for showing the badges to AMs at all
@@ -49,7 +53,7 @@ export function migrationView(data) {
   const cfg = d['cfg:badges'];
   const out = { on: !(cfg && cfg.on === false), modules: {} };
   for (const s of MIG_SEED) {
-    const r = d['mod:' + s.p] || {};
+    const r = migRecord(d, s.p) || {};
     const st = MIG_STATES.indexOf(r.st) >= 0 ? r.st : 'legacy';
     const m = /^\d{4}-\d{2}$/.test(String(r.m || '')) ? r.m : s.m;
     out.modules[s.p] = { n: s.n, st, m, at: Number(r.at) || 0 };

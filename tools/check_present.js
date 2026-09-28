@@ -91,6 +91,8 @@ const ok = (n, c, got) => {
     await p.evaluate(() => { const el = [...document.querySelectorAll('.dz-list *')]
       .find((e) => e.textContent.trim() === 'Reiss'); if (el) el.click(); });
     await p.waitForTimeout(1600);
+    // on a MONDAY the page opens its Monday catch-up panel over the dossier (by design) — close it, as the AM would
+    await p.evaluate(() => { const m = document.getElementById('mc-panel'); if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); } });
     await p.locator('.dz-showb').first().click();
     await p.waitForTimeout(3200);
     return { p, errs };
