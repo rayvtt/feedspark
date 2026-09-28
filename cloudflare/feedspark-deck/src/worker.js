@@ -114,6 +114,12 @@ import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
 // the AI transformation roadmap — migration off personal GitHub/Cloudflare onto FeedSpark-owned
 // servers + the AM adoption plan, tracked live with management (opt-in module, see access.js)
 import TRANSFORM_PAGE from "../../../docs/FeedSpark_Transformation.html";
+// FeedSpark design guidelines (Ray, 28 Sep 2026: "if I start designing their own module it will automatically follow
+// Feedspark brand guidelines … where is that on the dashboard, or add it"): the page renders the brand FROM the
+// stylesheet between its FCC-DESIGN markers, and /design/fcc.css serves that same slice to any module that loads it
+import DESIGN_PAGE from "../../../docs/FeedSpark_Design.html";
+const DESIGN_CSS = (() => { const a = DESIGN_PAGE.indexOf("/* FCC-DESIGN:START */"), b = DESIGN_PAGE.indexOf("/* FCC-DESIGN:END */");
+  return a >= 0 && b > a ? DESIGN_PAGE.slice(a, b + "/* FCC-DESIGN:END */".length) + "\n" : ""; })();
 import APPSW from "../../../docs/apps_widget.html";
 import NAVROWW from "../../../docs/navrow_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
@@ -253,6 +259,7 @@ const PAGES = {
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/migration': { html: TRANSFORM_PAGE, slug: 'transformation' },
+  '/design':    { html: DESIGN_PAGE, slug: 'design' },   // every signin: the guidelines are for everyone who builds
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -1410,6 +1417,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/design/fcc.css' && request.method === 'GET') {
+      return new Response(DESIGN_CSS, { headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/volume/engine.js' && request.method === 'GET') {
       return new Response(ARRIVALS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });

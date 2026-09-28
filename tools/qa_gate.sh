@@ -303,6 +303,12 @@ if node tools/test_transform.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ transformation harness FAILED — see node tools/test_transform.mjs"; FAIL=1
 fi
+echo "── qa-gate 3h3c/7: FeedSpark design guidelines (/design + the shared /design/fcc.css)"
+if node tools/test_design.mjs >/dev/null 2>&1; then
+  echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
+else
+  echo "   ✗ design harness FAILED — see node tools/test_design.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then

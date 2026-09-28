@@ -392,6 +392,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
   <div class="src" id="src"><span class="dot"></span><span class="grow">Reading the live status…</span>
     <button class="btn" type="button" id="copy-upd" title="A plain-text status update for the management email: this month, what is late, decisions waiting, red risks">⧉ Copy status update</button>
     <button class="btn" type="button" id="dl-csv" title="Every card with its status, owner, checklist progress and note">⬇ CSV</button>
+    <a class="btn" href="/design" title="The FeedSpark design guidelines every module follows — core and AM-built">🎨 Design guidelines</a>
     <button class="btn" type="button" data-hist-open title="Every add, edit, move, tick and delete by anyone on this page — and the archive of what was deleted">🕘 History</button>
   </div>
   <div class="kpis" id="kpis"></div>
@@ -560,6 +561,8 @@ var RM={
     {id:'o-jwt',m:'2026-10',ws:'sec',t:'Verify the sign-in token on every request',o:'po',d:'Today the worker trusts the Cloudflare Access email header without verifying its signed token. Fine behind Cloudflare, unsafe on any other host.'},
     {id:'o-dpia',m:'2026-10',ws:'sec',t:'Data classification + DPIA started',o:'dpo',d:'Retainer hours, pricing and quotes, client contacts and emails, ROAS, and client decks committed to git history.'},
     {id:'o-core',m:'2026-10',ws:'am',t:'Fixed-core list published + change control on core files',o:'cto',d:'The 70%: the modules marked Fixed. Core code needs a reviewed PR (Ray + CTO) instead of self-merge.'},
+    {id:'o-design',m:'2026-10',ws:'ext',t:'FeedSpark design guidelines published (/design)',o:'po',d:'Brand, colour, type, components, charts, voice and UX rules on one page, rendered from the stylesheet every module loads (/design/fcc.css), so an AM module inherits the FeedSpark look automatically.',st0:'done',
+      chk:['Brand tokens (light + dark) from the Reiss–Dentsu source','Components rendered live','Voice and UX rules','Starter for an AM module','Linked from the roadmap and Leadership']},
     /* ---- November: ownership transfer + pilot ---- */
     {id:'n-repo',m:'2026-11',ws:'mig',t:'Repository transferred to the FeedSpark GitHub organisation',o:'it',d:'Old links redirect. Every Actions secret re-created and rotated; the ~40 harnesses that pin each module run green on the new organisation before anything deploys from it.',
       chk:['Repo in the FeedSpark organisation','Secrets re-created (Cloudflare token + account, push key, Access service token)','Every harness green on the new organisation','Deploy runs from the new organisation','Build Log reads the new repository']},
@@ -610,7 +613,8 @@ var RM={
     {id:'n-w2',m:'2027-01',ws:'am',t:'AMs 3–5 onboarded (second week)',o:'po',d:'Same kit as the first week.',
       chk:['AM 3 onboarded','AM 4 onboarded','AM 5 onboarded']},
     {id:'n-wish',m:'2027-01',ws:'ext',t:'Each AM’s wishlist collected',o:'po',d:'One wishlist per AM into the build queue, each item with who asked for it, the data it needs and the decision it serves. This is the iteration backlog.'},
-    {id:'d-spec',m:'2027-01',ws:'ext',t:'Custom-module spec v1',o:'po',d:'An AM module is a checked definition (cards, tables, charts, filters) over approved data sources, served at /x/<name>. AMs never ship scripts into the core.'},
+    {id:'d-spec',m:'2027-01',ws:'ext',t:'Custom-module spec v1',o:'po',d:'An AM module is a checked definition (cards, tables, charts, filters) over approved data sources, served at /x/<name>, drawn with the FeedSpark design guidelines. AMs never ship scripts into the core.',
+      chk:['Definition format agreed','Every module loads /design/fcc.css (tokens, never hex)','Only the guideline components (cards, KPI tiles, chips, tables, source line)','Passes the module-row, phone, dark-mode and security checks']},
     {id:'d-scope',m:'2027-01',ws:'ext',t:'Data sources an AM module may read are client-scoped',o:'po',d:'Several read routes (dossier, keyword calendar, feed guards, quotes) return every client today. Each must respect the AM’s scope before a custom module can use it.'},
     {id:'j-desk',m:'2027-01',ws:'ext',t:'Desk Manager integration scoped',o:'cto',d:'Not connected today. Needs an API or MCP, the fields AMs need, and who owns access.'},
     {id:'j-lead',m:'2027-01',ws:'am',t:'Team-lead role',o:'po',d:'Somebody other than Ray can manage access and configuration. Today only one owner exists.'},
@@ -651,7 +655,7 @@ var RM={
     zones:[
       {cls:'fix',name:'Fixed core',share:68,unit:'% of the code',what:'Same for every AM. Changed only through a reviewed PR.',list:['Feed Lab, Label Guard, PT Guard, Golden Record','Product volume, Overlays, Image library','Keyword calendar, Scheduled work','AI Quote, Pricer, Deck generator, Feed Chat','Leadership and Activity (lead tier)','Platform: hours badge, phone layer, presence, sign-in']},
       {cls:'cfg',name:'Configurable core',share:31,unit:'% of the code',what:'Same code, but each AM sets their own clients, views and defaults.',list:['Command center and brand dossier','Workflow and the Playbook','FS Task Manager: saved views and tags','Menu layout']},
-      {cls:'ext',name:'AM modules',share:1,unit:'% today, the growth zone',what:'Each AM builds what their book needs, from approved data. Nothing here can change the core.',list:['/x/<name>: cards, tables and charts from a checked definition','ROAS is the reference shape: one read-only view over one data source','Wishlist → built → shared → promoted to core']}
+      {cls:'ext',name:'AM modules',share:1,unit:'% today, the growth zone',what:'Each AM builds what their book needs, from approved data. Nothing here can change the core.',list:['/x/<name>: cards, tables and charts from a checked definition','Built on the FeedSpark design guidelines (/design): one stylesheet, the brand inherited','ROAS is the reference shape: one read-only view over one data source','Wishlist → built → shared → promoted to core']}
     ]
   },
   rules:[
@@ -660,7 +664,8 @@ var RM={
     {id:'r3',t:'An AM module reads only data sources that respect that AM’s client scope, and in v1 it writes nothing.'},
     {id:'r4',t:'Every AM module shows who built it and what it reads, and the activity log records how often it is used.'},
     {id:'r5',t:'A module that proves itself (a test harness, usage, a reviewed PR) is promoted into the core, so the 70% grows from what AMs actually use.'},
-    {id:'r6',t:'Modules migrate one at a time, each with its own checklist; an AM always sees on the module itself whether it has moved.'}
+    {id:'r6',t:'Modules migrate one at a time, each with its own checklist; an AM always sees on the module itself whether it has moved.'},
+    {id:'r7',t:'Every module — core or AM-built — follows the FeedSpark design guidelines (/design): it loads /design/fcc.css and uses its tokens and components, so the brand, dark mode and the phone layout are inherited, never re-typed.'}
   ],
   sources:[
     {id:'s-rep',n:'FeedSpark reports MCP',what:'Retainer hours, booked tasks, client tickets',st:'Live',note:'Synced every 30 min. Ticket detail is not read yet.'},
