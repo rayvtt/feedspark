@@ -308,7 +308,7 @@ window.addEventListener('load',restore);
       <li><b>Sync cadence.</b> The worker pulls FeedHero itself twice an hour (:10 and :40), 5 markets × 3 windows per firing, stalest first — the 57-market roster turns over roughly every 6 hours, well ahead of the source's own ~daily refresh. ⚡ Sync now walks the whole roster in one go (owner only).</li>
       <li><b>Money never crosses a currency.</b> A brand's markets report in different currencies (Superdry alone spans GBP, EUR and USD), so every scorecard, chart, total and blended ROAS on this page runs on the selected currency's markets only; the currency selector names how many markets each one covers.</li>
       <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — never a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
-      <li><b>Segments.</b> Category is stored by the sync (the top 200 rows by spend on the 30-day window, 80 on the others). Brand, Gender and Price group are FeedHero's other cuts of the same market, read live when a market is opened and cached for six hours.</li>
+      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Brand, Gender and Price group are FeedHero's other cuts of the same market, read live for any period when a market is opened and cached for six hours.</li>
     </ol>
   </section>
 </main>
@@ -505,6 +505,8 @@ window.addEventListener('load',restore);
 
   /* ================= the table ================= */
   function bandCls(b){ return b?'b-'+String(b).toLowerCase():'b-none'; }
+  // FeedHero's own row on every window — Ads traffic on SKUs not in the feed it holds; real spend, not a product type
+  function isUnlisted(s){ return /^unlisted skus in ads traffic$/i.test(String(s||'').trim()); }
   function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'no ad activity')+'</span>'; }
   // a coloured square + its count per band, each named in full on hover ("St" would read as
   // Strong and Steady alike)
@@ -565,7 +567,7 @@ window.addEventListener('load',restore);
         var kk=[];
         if(mrow.open&&t){
           openMarket(m.cmpid);   // idempotent — a no-op once the rows are cached or in flight
-          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(tr.tree.length===0)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
+          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(!tr.tree.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; else if(S.win!=='w30'&&tr.tree.every(function(n){return isUnlisted(n.name)}))kk.push({type:'note',key:mk+'|n30',depth:2,html:'FeedHero breaks categories down on the <b>30-day</b> window only — switch to 30 days for the tree, or pick a Segment (brand · gender · price group), which FeedHero cuts live for any period.',parent:mk}); } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
           else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.rows){ kk=lv.rows.map(function(c,i){ return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,parent:mk}; }); if(!kk.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+S.seg.replace('_',' ').toLowerCase()+' rows for this market.',parent:mk}]; }
             else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+S.seg.replace('_',' ').toLowerCase()+' rows live from FeedHero…',parent:mk}]; }
         }
@@ -590,7 +592,7 @@ window.addEventListener('load',restore);
       if(r.type==='note')return '<tr class="r"><td class="nm" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td><td colspan="'+cols.length+'"></td></tr>';
       if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
       var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
-        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+'</span>';
+        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+'</span>';
       return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ return '<td>'+cellOf(r,c.k).html+'</td>'; }).join('')+'</tr>';
     }).join('');
     var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
