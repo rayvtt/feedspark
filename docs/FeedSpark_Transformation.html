@@ -213,7 +213,7 @@ window.addEventListener('load',restore);
 
 <style>
   /* ---- Miro-style board ---- */
-  :root{--stk-mig:#DBEAFE;--stk-sec:#EDE9FE;--stk-am:#FFEDD5;--stk-ext:#D1FAE5;--stk-gov:#ECEEF1;--canvas-dot:rgba(15,23,42,.14);--frame:#fff}
+  :root{--stk-mig:#DBEAFE;--stk-sec:#EDE9FE;--stk-am:#FFEDD5;--stk-ext:#D1FAE5;--stk-gov:#ECEEF1;--canvas-dot:rgba(15,23,42,.14);--frame:#fff;--road:#CBD2DA;--ring:#E6E9ED}
   .bd-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
   .seg button{font:inherit;font-size:12.5px;font-weight:900;padding:7px 12px;border:0;background:transparent;color:var(--ink-2);cursor:pointer}
@@ -225,18 +225,42 @@ window.addEventListener('load',restore);
   .zoom span{font-size:12px;font-weight:900;color:var(--muted);min-width:40px;text-align:center}
   .canvas{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;max-height:78vh;
     background-color:var(--wash);background-image:radial-gradient(circle,var(--canvas-dot) 1px,transparent 1.2px);background-size:18px 18px}
-  .canvas-in{display:flex;align-items:flex-start;gap:16px;padding:18px;width:max-content}
-  .col{width:272px;flex:none;background:var(--frame);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  /* SPACED OUT, WITH A JOURNEY (Ray, 28 Sep 2026: "space them out a little bit so it looks less intense.
+     Use some graphics actually make it more enjoyable to play around"): the months sit further apart on a
+     dashed road, each hung from a node — its icon inside a ring that fills as its cards are done */
+  .canvas-in{display:flex;align-items:flex-start;gap:48px;padding:78px 40px 36px;width:max-content;position:relative}
+  .canvas-in::before{content:'';position:absolute;left:40px;right:40px;top:38px;height:4px;border-radius:4px;
+    background:repeating-linear-gradient(90deg,var(--road) 0 14px,transparent 14px 24px)}
+  .col{width:292px;flex:none;background:var(--frame);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);position:relative}
+  .col::before{content:'';position:absolute;left:50%;top:-18px;width:2px;height:18px;margin-left:-1px;background:var(--road)}
+  .node{position:absolute;left:50%;top:-62px;width:48px;height:48px;margin-left:-24px;border-radius:50%;padding:4px;z-index:1;
+    background:conic-gradient(var(--good) calc(var(--p,0)*1%),var(--ring) 0);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .node span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:var(--frame);font-size:20px;line-height:1}
+  .node.full span{background:#E9F7EE}
+  .node.full::after{content:'✓';position:absolute;right:-4px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--good);color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--frame)}
+  .col.now .node{box-shadow:0 0 0 4px rgba(245,166,35,.28),0 2px 8px rgba(0,0,0,.12);animation:txpulse 2.4s ease-in-out infinite}
+  @keyframes txpulse{50%{box-shadow:0 0 0 9px rgba(245,166,35,.08),0 2px 8px rgba(0,0,0,.12)}}
+  .col.frozen .col-h{background-image:repeating-linear-gradient(135deg,rgba(96,165,250,.13) 0 8px,transparent 8px 16px)}
+  .col-empty{font-size:12px;font-weight:800;color:var(--muted);text-align:center;padding:18px 8px;border:1.5px dashed var(--line);border-radius:10px}
   .col.now{border:2px solid var(--orange)}
   .col.past{opacity:.85}
-  .col-h{padding:11px 12px 9px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:12px 12px 0 0}
+  .col-h{padding:14px 15px 12px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:16px 16px 0 0}
   .col-h:hover{background:var(--wash)}
   .col-h .mo-t b{font-size:14.5px}
-  .col-b{padding:10px;display:flex;flex-direction:column;gap:9px;min-height:60px;border-radius:0 0 12px 12px}
+  .col-b{padding:16px 14px;display:flex;flex-direction:column;gap:16px;min-height:70px;border-radius:0 0 16px 16px}
   .col-b.over{background:rgba(245,166,35,.12);outline:2px dashed var(--orange);outline-offset:-4px}
-  .stk{border-radius:4px;padding:9px 10px 8px;box-shadow:0 1px 1px rgba(0,0,0,.06),0 3px 8px rgba(0,0,0,.10);cursor:grab;color:#1f2937;position:relative;min-width:0}
+  .stk{border-radius:4px;padding:11px 12px 10px;box-shadow:0 1px 1px rgba(0,0,0,.06),0 3px 8px rgba(0,0,0,.10);cursor:grab;color:#1f2937;position:relative;min-width:0;
+    transform:rotate(-.7deg);transition:transform .18s ease,box-shadow .18s ease}
+  .stk:nth-child(even){transform:rotate(.6deg)}
+  .stk:nth-child(3n){transform:rotate(-.25deg)}
   .stk:active{cursor:grabbing}.stk.dragging{opacity:.4}
-  .stk:hover{box-shadow:0 2px 3px rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.14)}
+  .stk:hover,.stk:focus-visible{transform:rotate(0) translateY(-3px) scale(1.015);box-shadow:0 3px 4px rgba(0,0,0,.08),0 12px 24px rgba(0,0,0,.16)}
+  .stk::before{content:'';position:absolute;top:-7px;left:50%;width:46px;height:14px;margin-left:-23px;background:rgba(255,255,255,.55);border:1px solid rgba(0,0,0,.05);transform:rotate(-2deg)}
+  .stk.is-gate::after{content:'🏁';position:absolute;right:-9px;top:-11px;font-size:18px;transform:rotate(12deg)}
+  .stk.is-done::after{content:'✓';position:absolute;right:-8px;top:-9px;width:24px;height:24px;border-radius:50%;background:var(--good);color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--frame);transform:rotate(-8deg)}
+  .burst{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:400;animation:txburst .9s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes txburst{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+  @media (prefers-reduced-motion:reduce){.stk,.stk:nth-child(even),.stk:nth-child(3n),.stk:hover{transform:none;transition:none}.col.now .node{animation:none}.burst{display:none}}
   .stk.ws-mig{background:var(--stk-mig)}.stk.ws-sec{background:var(--stk-sec)}.stk.ws-am{background:var(--stk-am)}.stk.ws-ext{background:var(--stk-ext)}.stk.ws-gov{background:var(--stk-gov)}
   .stk-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;opacity:.72}
   .stk-t{font-size:13px;font-weight:800;line-height:1.3;margin:4px 0 7px;overflow-wrap:anywhere}
@@ -260,6 +284,44 @@ window.addEventListener('load',restore);
   section.blk.fs #board-body>.cl-m:first-child{margin-top:0}
   section.blk.fs #board-body:not(:has(.canvas)){overflow:auto}
   body.tx-fs{overflow:hidden}
+  /* HISTORY & ARCHIVE PANEL (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic or
+     archive actions — delete, remove, edit — of everything"): a slide-over above the full-screen board
+     (150) and below the card editor (200), so it works in both */
+  .hist{position:fixed;top:0;right:0;bottom:0;width:430px;max-width:100vw;z-index:170;background:var(--paper);border-left:1px solid var(--line);
+    box-shadow:-14px 0 40px rgba(16,24,40,.16);display:flex;flex-direction:column;transform:translateX(102%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s}
+  .hist.on{transform:none;visibility:visible;transition:transform .22s ease}
+  .hist-h{display:flex;align-items:flex-start;gap:10px;padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+  .hist-h b{font-size:16px;font-weight:900}
+  .hist-sub{font-size:12px;font-weight:700;color:var(--muted);margin-top:3px}
+  .hist-x{font:inherit;font-size:16px;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;flex:none}
+  .hist-bar{display:flex;flex-direction:column;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  .hist-bar .seg{align-self:flex-start}
+  .hist-fil{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .hist-fil[hidden]{display:none}
+  .hist-fil select{font:inherit;font-size:12.5px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .hchip{font:inherit;font-size:12px;font-weight:800;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .hchip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .hist-body{flex:1;overflow:auto;padding:6px 16px 20px}
+  .hday{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  .hent{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .hent:last-child{border-bottom:0}
+  .hav{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff}
+  .htx{flex:1;min-width:0;font-size:13px;line-height:1.4}
+  .htx b{font-weight:900}
+  .htx q{font-weight:800;quotes:'“' '”'}
+  .hwhere{color:var(--muted);font-weight:700}
+  .hmeta{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:2px}
+  .hkind{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:100px;margin-right:6px;vertical-align:1px}
+  .hkind.del{background:#FDE2E1;color:#B42318}.hkind.edit{background:#E0EAFF;color:#1D4ED8}.hkind.move{background:#FFEFD6;color:#B1550A}.hkind.chk{background:#DCF3E5;color:#15803D}
+  .hdiff{margin:5px 0 0;padding:6px 8px;border-radius:8px;background:var(--wash);font-size:12px;font-weight:700;color:var(--ink-2)}
+  .hdiff div{overflow-wrap:anywhere}
+  .hdiff s{color:var(--muted)}
+  .hact{font:inherit;font-size:12px;font-weight:900;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;flex:none;align-self:flex-start}
+  .hact:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .hempty{font-size:13px;font-weight:700;color:var(--muted);padding:26px 4px;text-align:center}
+  [data-theme=dark] .hkind.del{background:#4A1F1F;color:#F8A7A0}[data-theme=dark] .hkind.edit{background:#1E2E4F;color:#9DBDF3}
+  [data-theme=dark] .hkind.move{background:#46301A;color:#F0A44E}[data-theme=dark] .hkind.chk{background:#173826;color:#6EE7A0}
+  @media(max-width:760px){.hist{width:100vw}}
   .fsbtn{font:inherit;font-size:12px;font-weight:900;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;margin-left:6px}
   .fsbtn:hover{border-color:var(--orange);color:var(--orange-deep)}
   section.blk.fs .fsbtn{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -303,7 +365,9 @@ window.addEventListener('load',restore);
   table.t td .rowdel{display:none}
   @media(max-width:560px){.modal .row2{grid-template-columns:1fr}.zoom{margin-left:0}}
   /* dark */
-  [data-theme=dark]{--stk-mig:#1E3350;--stk-sec:#2E2750;--stk-am:#4A3219;--stk-ext:#15392F;--stk-gov:#2A2F38;--canvas-dot:rgba(255,255,255,.09);--frame:#1C1F27}
+  [data-theme=dark]{--stk-mig:#1E3350;--stk-sec:#2E2750;--stk-am:#4A3219;--stk-ext:#15392F;--stk-gov:#2A2F38;--canvas-dot:rgba(255,255,255,.09);--frame:#1C1F27;--road:#3A404B;--ring:#2C3039}
+  [data-theme=dark] .node.full span{background:#173826}
+  [data-theme=dark] .stk::before{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.06)}
   [data-theme=dark] .stk{color:#E7E9ED}
   [data-theme=dark] .av{background:rgba(255,255,255,.16)}
   [data-theme=dark] .pill.frz,[data-theme=dark] .st.doing{color:#9DBDF3;background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.45)}
@@ -328,6 +392,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
   <div class="src" id="src"><span class="dot"></span><span class="grow">Reading the live status…</span>
     <button class="btn" type="button" id="copy-upd" title="A plain-text status update for the management email: this month, what is late, decisions waiting, red risks">⧉ Copy status update</button>
     <button class="btn" type="button" id="dl-csv" title="Every card with its status, owner, checklist progress and note">⬇ CSV</button>
+    <button class="btn" type="button" data-hist-open title="Every add, edit, move, tick and delete by anyone on this page — and the archive of what was deleted">🕘 History</button>
   </div>
   <div class="kpis" id="kpis"></div>
 </div></header>
@@ -347,6 +412,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
       <input type="search" id="q" placeholder="Search cards…" aria-label="Search cards">
       <label class="tog"><input type="checkbox" id="only-open"> Only open</label>
       <div class="zoom" id="zoom"><button type="button" data-z="-" aria-label="Zoom out">−</button><span id="zv">100%</span><button type="button" data-z="+" aria-label="Zoom in">+</button><button type="button" class="fit" data-z="fit">Fit</button></div>
+      <button type="button" class="fsbtn" data-hist-open title="Every add, edit, move, tick and delete by anyone on this page — and the archive of what was deleted">🕘 History</button>
       <button type="button" class="fsbtn" id="fs-btn" aria-pressed="false" title="Give the board the whole window (Esc to exit)">⛶ Full screen</button>
     </div>
     <div class="ctl" id="ws-chips"></div>
@@ -414,6 +480,16 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
     <div class="acts"><button class="btn del" type="button" id="ed-del" hidden>Delete</button><button class="btn" type="button" id="ed-cancel">Cancel</button><button class="btn pri" type="button" id="ed-save">Save</button></div>
   </div>
 </div>
+<aside class="hist" id="hist" aria-hidden="true" aria-labelledby="hist-t">
+  <div class="hist-h"><div class="grow"><b id="hist-t">🕘 History &amp; archive</b><div class="hist-sub">Every change anyone makes on this page: who, what and when. Any change can be undone.</div></div>
+    <button type="button" class="hist-x" id="hist-x" aria-label="Close history">✕</button></div>
+  <div class="hist-bar">
+    <div class="seg" role="tablist" aria-label="History view"><button type="button" data-htab="log" class="on">Activity</button><button type="button" data-htab="arc">Archive <span id="arc-n"></span></button></div>
+    <div class="hist-fil" id="hist-fil"><select id="hist-who" aria-label="Who"><option value="">Everyone</option></select>
+      <button type="button" class="hchip on" data-hk="">All</button><button type="button" class="hchip" data-hk="edit">Edits</button><button type="button" class="hchip" data-hk="del">Deletes</button><button type="button" class="hchip" data-hk="move">Moves</button><button type="button" class="hchip" data-hk="chk">Checklists</button></div>
+  </div>
+  <div class="hist-body" id="hist-body"><div class="hempty">Reading the history…</div></div>
+</aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate">Transformation roadmap</span></div></div>
@@ -440,12 +516,12 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
 /* RM:START */
 var RM={
   months:[
-    {k:'2026-10',name:'October 2026',theme:'Discover, decide, build the foundations',plain:'Leadership signs off the decisions; the FeedSpark accounts, staging and the storage adapter are built.'},
-    {k:'2026-11',name:'November 2026',theme:'Ownership transfer + pilot module',plain:'The FCC moves into FeedSpark-owned accounts in the first fortnight, every write goes to both stores, and Feed Chat migrates first.',freeze:'Peak week 20 Nov – 2 Dec'},
-    {k:'2026-12',name:'December 2026',theme:'Migration complete',plain:'Every module moves onto FeedSpark storage once peak week is past; email leaves Ray’s mailbox; personal accounts are retired before the holidays; the AMs’ access and kit are ready.',freeze:'Holiday freeze from 21 Dec'},
-    {k:'2027-01',name:'January 2027',theme:'First live iteration — every AM on the FCC',plain:'All the AMs start working together on the migrated dashboard, and their wishlists become the backlog for the next iterations.'},
-    {k:'2027-02',name:'February 2027',theme:'Iterations + AM customisation',plain:'New iterations ship module by module from AM feedback, and each AM builds their own modules on approved data.'},
-    {k:'2027-03',name:'March 2027',theme:'Measure, promote, decide',plain:'The diary re-run measures the hours saved, the best AM modules are promoted into the core, and leadership decides whether the application also moves onto FeedSpark servers.'}
+    {k:'2026-10',ic:'🧭',name:'October 2026',theme:'Discover, decide, build the foundations',plain:'Leadership signs off the decisions; the FeedSpark accounts, staging and the storage adapter are built.'},
+    {k:'2026-11',ic:'🔑',name:'November 2026',theme:'Ownership transfer + pilot module',plain:'The FCC moves into FeedSpark-owned accounts in the first fortnight, every write goes to both stores, and Feed Chat migrates first.',freeze:'Peak week 20 Nov – 2 Dec'},
+    {k:'2026-12',ic:'🚚',name:'December 2026',theme:'Migration complete',plain:'Every module moves onto FeedSpark storage once peak week is past; email leaves Ray’s mailbox; personal accounts are retired before the holidays; the AMs’ access and kit are ready.',freeze:'Holiday freeze from 21 Dec'},
+    {k:'2027-01',ic:'🚀',name:'January 2027',theme:'First live iteration — every AM on the FCC',plain:'All the AMs start working together on the migrated dashboard, and their wishlists become the backlog for the next iterations.'},
+    {k:'2027-02',ic:'🛠️',name:'February 2027',theme:'Iterations + AM customisation',plain:'New iterations ship module by module from AM feedback, and each AM builds their own modules on approved data.'},
+    {k:'2027-03',ic:'📈',name:'March 2027',theme:'Measure, promote, decide',plain:'The diary re-run measures the hours saved, the best AM modules are promoted into the core, and leadership decides whether the application also moves onto FeedSpark servers.'}
   ],
   ws:{
     mig:{label:'Migration',col:'var(--ws-mig)'},
@@ -710,6 +786,59 @@ var TX={
       late:late,gate:gate,decided:dec,decTotal:v.decisions.length,blocked:blocked,mods:mods,modN:rm.modules.length,view:v};
   },
   amsActive:function(rm,S){ var n=0; TX.eff('ams',rm.ams,S).forEach(function(a){ var r=S&&S['a:'+a.id]; if(r&&(r.st==='onboarded'||r.st==='active'))n++; }); return n; },
+  /* ---- HISTORY (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic or archive actions —
+     delete, remove, edit — of everything"): the worker logs every key that moved (src/txhistory.js); these turn
+     a logged key back into words, since the card titles live here in the seed */
+  COLL:{items:'card',months:'month',decisions:'decision',risks:'risk',kpis:'KPI',sources:'data source',rules:'rule',roles:'role',ams:'AM slot'},
+  FL:{t:'Title',label:'Title',n:'Name',name:'Name',d:'Description',m:'Month',ws:'Workstream',o:'Owner',own:'Owner',st:'Status',note:'Note',done:'Done',
+    gate:'Gate',due:'Due',rec:'Recommendation',opt:'Options',choice:'Choice',rag:'RAG',target:'Target',base:'Baseline',why:'Why',theme:'Theme',freeze:'Freeze',
+    plain:'In one line',ic:'Icon',email:'Email',def:'Person',what:'What',on:'Shown',wave:'Wave',ord:'Position',cur:'Current'},
+  histName:function(o){ return o&&typeof o==='object'?(o.t||o.label||o.name||o.n||''):''; },
+  histSubject:function(rm,S,k,e){ e=e||{}; S=S||{}; k=String(k);
+    var nm=TX.histName, find=function(coll,id,idk){ idk=idk||'id'; return (rm[coll]||[]).filter(function(x){ return String(x[idk])===String(id); })[0]; };
+    var over=function(coll,id){ return S['c:'+coll+':'+id]; };
+    if(k.indexOf('c:')===0){ var p=k.split(':'), coll=p[1], id=p.slice(2).join(':'), sd=find(coll,id,coll==='months'?'k':'id');
+      return {what:TX.COLL[coll]||coll,name:nm(e.a)||nm(e.b)||nm(over(coll,id))||nm(sd)||(coll==='months'&&/^\d{4}-\d{2}$/.test(id)?TX.monthName(id):id)}; }
+    if(k.indexOf('chk:')===0){ var rest=k.slice(4), bar=rest.lastIndexOf('|'), owner=rest.slice(0,bar), line=rest.slice(bar+1), where='', lines=null;
+      if(owner.indexOf('m.')===0){ var mp=owner.slice(2)==='/transformation'?'/migration':owner.slice(2), md=(rm.modules||[]).filter(function(x){ return x.p===mp; })[0];
+        where=(md?md.n:mp)+' module'; lines=rm.modtpl; }
+      else if(owner.indexOf('i.')===0){ var iid=owner.slice(2), it=find('items',iid); where=nm(over('items',iid))||nm(it)||iid; lines=it&&it.chk; }
+      var lt=nm(e.a)||nm(e.b); if(!lt&&lines&&/^s\d+$/.test(line))lt=lines[+line.slice(1)]||'';
+      return {what:'checklist line',name:lt||'(a line)',where:where}; }
+    if(k.indexOf('mod:')===0){ var pp=k.slice(4)==='/transformation'?'/migration':k.slice(4), m=(rm.modules||[]).filter(function(x){ return x.p===pp; })[0]; return {what:'module',name:m?m.n:pp}; }
+    if(k.indexOf('cfg:')===0)return {what:'setting',name:k==='cfg:badges'?'Show badges to every AM':k.slice(4)};
+    var pre={'i:':'items','d:':'decisions','k:':'kpis','r:':'risks','a:':'ams','p:':'roles'}[k.slice(0,2)];
+    if(pre){ var id2=k.slice(2), sd2=find(pre,id2); return {what:TX.COLL[pre],name:nm(over(pre,id2))||nm(sd2)||(pre==='ams'?'AM '+id2:id2),status:1}; }
+    return {what:'entry',name:k};
+  },
+  histVal:function(rm,f,v,k){ if(v===undefined||v===null||v==='')return '—';
+    if(f==='m'&&/^\d{4}-\d{2}$/.test(String(v)))return TX.monthName(v);
+    if(f==='st'){ if(String(k).indexOf('mod:')===0)return (rm.mst&&rm.mst[v])||v; return TX.ST[v]||v; }
+    if(f==='ws')return (rm.ws&&rm.ws[v]&&rm.ws[v].label)||v;
+    if(typeof v==='boolean'||v===1||v===0)return v?'yes':'no';
+    v=String(v); return v.length>70?v.slice(0,70)+'…':v; },
+  // the planned (seed) row behind a content key — an override that only just appeared was the seed before it
+  histSeed:function(rm,k){ k=String(k); if(k.indexOf('c:')!==0)return {}; var p=k.split(':'), coll=p[1], id=p.slice(2).join(':'), idk=coll==='months'?'k':'id';
+    return (rm[coll]||[]).filter(function(x){ return String(x[idk])===id; })[0]||{}; },
+  histDiffs:function(rm,e){ var f=(e.f||[]).filter(function(x){ return x!=='add'&&x!=='del'&&x!=='ord'; }), sd=TX.histSeed(rm,e.k),
+      pick=function(o,x){ return o&&o[x]!==undefined?o[x]:sd[x]; };
+    return f.map(function(x){ return {l:TX.FL[x]||x,from:TX.histVal(rm,x,pick(e.b,x),e.k),to:TX.histVal(rm,x,pick(e.a,x),e.k)}; })
+      .filter(function(d){ return d.from!==d.to; }).slice(0,4); },
+  // the sentence around the subject: [pre] card “X” [post]
+  histVerb:function(rm,e){ var a=e.a||{}, b=e.b||{};
+    switch(e.kind){
+      case 'added': return ['added','']; case 'deleted': return ['deleted','']; case 'restored': return ['restored',''];
+      case 'reset': return ['reset','back to the plan']; case 'ticked': return ['ticked','']; case 'unticked': return ['unticked',''];
+      case 'moved': return a.m&&a.m!==b.m?['moved','to '+TX.monthName(a.m)]:['reordered',''];
+      case 'status': return ['set','to '+TX.histVal(rm,'st',a.st,e.k)];
+      case 'setting': return [a.on===false?'switched off':'switched on',''];
+      default: return ['edited','']; } },
+  // the filter chips the panel offers, and which entries each one holds
+  histGroup:function(e){ if(String(e.k).indexOf('chk:')===0)return 'chk'; if(e.kind==='deleted'||e.kind==='restored'||e.kind==='reset')return 'del'; if(e.kind==='moved')return 'move'; return 'edit'; },
+  // what is deleted right now — the archive, each restorable
+  archive:function(rm,S){ var out=[]; Object.keys(S||{}).forEach(function(k){ var v=S[k]; if(!v||!v.del)return; if(k.indexOf('c:')!==0&&k.indexOf('chk:')!==0)return;
+      out.push({k:k,by:v.by||'',at:+v.at||0,sub:TX.histSubject(rm,S,k,{b:v})}); });
+    return out.sort(function(a,b){ return b.at-a.at; }); },
   roleName:function(rm,S,o){ var r=S&&S['p:'+o], d=TX.eff('roles',rm.roles,S).filter(function(x){ return x.id===o; })[0]||{}; return (r&&r.name)||d.def||d.label||o; },
   update:function(rm,S,now,when){
     var s=TX.summary(rm,S,now), v=s.view, L=[], mo={}; v.months.forEach(function(m){ mo[m.k]=m; });
@@ -769,14 +898,27 @@ var TX={
     DIRTY=true; setSrc();
     fetch('/api/transform',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(S)})
       .then(function(r){ if(!r.ok)throw new Error(r.status); BASE=+r.headers.get('X-Sync-Base')||BASE; return r.json(); })
-      .then(function(d){ DIRTY=false; retryT=0; if(d&&typeof d==='object')S=d; LIVE='live'; render(); toast('Saved — everyone granted this page sees it');
+      .then(function(d){ DIRTY=false; retryT=0; if(d&&typeof d==='object')S=d; LIVE='live'; render(); toast('Saved — everyone granted this page sees it'); if(HOPEN)loadHist();
         try{ window.dispatchEvent(new CustomEvent('fcc-migration')); }catch(e){} })
       .catch(function(){ retryT=Math.min(60000,(retryT||2000)*2); setSrc();
         $('src').querySelector('.grow').textContent='⚠ Not saved yet — retrying in '+Math.round(retryT/1000)+'s (kept on this screen)';
         setTimeout(function(){ if(DIRTY)push(); },retryT); });
   }
   // write several keys as one change: each value is stamped with who and when
-  function putMany(o){ var now=Date.now(); Object.keys(o).forEach(function(k){ var v=o[k]; v.by=ME||'someone'; v.at=now; S[k]=v; }); render(); push(); }
+  function putMany(o){ var now=Date.now(), win=[];
+    Object.keys(o).forEach(function(k){ var v=o[k], was=S[k]||{};
+      if((k.indexOf('i:')===0&&v.st==='done'&&was.st!=='done')||(k.indexOf('mod:')===0&&v.st==='migrated'&&was.st!=='migrated'))win.push(k);
+      v.by=ME||'someone'; v.at=now; S[k]=v; });
+    render(); push(); if(win.length)celebrate(win[0]); }
+  // a small burst of the workstream colours when something is finished — the board should be fun to move along
+  function celebrate(k){ try{ if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return; }catch(e){}
+    var el=k.indexOf('i:')===0?document.querySelector('.stk[data-it="'+k.slice(2).replace(/"/g,'')+'"]'):document.querySelector('.mod[data-mod="'+k.slice(4).replace(/"/g,'')+'"]');
+    var r=el&&el.getBoundingClientRect(), x=r&&r.width?r.left+r.width/2:innerWidth/2, y=r&&r.height?r.top+r.height/3:innerHeight/2;
+    var cs=['#F5A623','#ED6F0B','#2563EB','#15803D','#8B5CF6','#F59E0B'];
+    for(var i=0;i<26;i++){ var b=document.createElement('i'), a=Math.random()*Math.PI*2, d=60+Math.random()*90;
+      b.className='burst'; b.style.left=x+'px'; b.style.top=y+'px'; b.style.background=cs[i%cs.length];
+      b.style.setProperty('--dx',Math.round(Math.cos(a)*d)+'px'); b.style.setProperty('--dy',Math.round(Math.sin(a)*d-40)+'px'); b.style.setProperty('--r',Math.round(Math.random()*540)+'deg');
+      document.body.appendChild(b); setTimeout(function(n){ return function(){ n.remove(); }; }(b),1000); } }
   function merged(key,patch){ var cur=S[key]||{}, o={}; Object.keys(cur).forEach(function(k){ if(k!=='by'&&k!=='at')o[k]=cur[k]; }); Object.keys(patch).forEach(function(k){ o[k]=patch[k]; }); return o; }
 
   /* ---- generic editor ---- */
@@ -848,9 +990,9 @@ var TX={
   }
   function editMonth(m){ var its=V().items.filter(function(it){ return it.m===m.k; });
     openForm({title:m.name,ctx:its.length+' card'+(its.length===1?'':'s')+' this month.',
-      fields:[{k:'name',l:'Name',v:m.name,max:60},{k:'theme',l:'Theme',v:m.theme,max:120},{k:'plain',l:'In one line',type:'area',v:m.plain},{k:'freeze',l:'Freeze or warning label (optional)',v:m.freeze,max:40}],
+      fields:[{pair:[{k:'name',l:'Name',v:m.name,max:60},{k:'ic',l:'Icon (one emoji)',v:m.ic||'',max:4}]},{k:'theme',l:'Theme',v:m.theme,max:120},{k:'plain',l:'In one line',type:'area',v:m.plain},{k:'freeze',l:'Freeze or warning label (optional)',v:m.freeze,max:40}],
       del:its.length?null:function(out){ out['c:months:'+m.k]=merged('c:months:'+m.k,{del:1}); },
-      save:function(out){ contentWrite('months',m,{name:gv('f-name'),theme:gv('f-theme'),plain:gv('f-plain'),freeze:gv('f-freeze')},out); }});
+      save:function(out){ contentWrite('months',m,{name:gv('f-name'),ic:gv('f-ic'),theme:gv('f-theme'),plain:gv('f-plain'),freeze:gv('f-freeze')},out); }});
   }
   function addMonth(){ var ms=V().months, k=TX.nextMonth(ms.length?ms[ms.length-1].k:NOW); var out={}; out['c:months:'+k]={name:TX.monthName(k),theme:'',add:1}; putMany(out); toast(TX.monthName(k)+' added'); }
   function editDec(d){ var isNew=!d, r=isNew?{}:(S['d:'+d.id]||{});
@@ -936,7 +1078,7 @@ var TX={
   function shown(it){ if(WS!=='*'&&it.ws!==WS)return false; if(ONLY&&TX.closed(TX.statusOf(it,S)))return false;
     if(Q){ var r=S['i:'+it.id]||{}, h=(it.t+' '+(it.d||'')+' '+(r.note||'')+' '+ownerName(it)).toLowerCase(); if(h.indexOf(Q)<0)return false; } return true; }
   function sticky(it){ var st=TX.statusOf(it,S), p=TX.prog(TX.checklist('i.'+it.id,it.chk,S)), on=ownerName(it), late=TX.isLate(it,S,NOW), ord=(it.ord!=null?+it.ord:it._o);
-    return '<div class="stk ws-'+esc(it.ws)+(st==='done'?' is-done':'')+(late?' late':'')+'" draggable="true" data-it="'+esc(it.id)+'" data-ord="'+ord+'" role="button" tabindex="0" title="'+esc(it.d||'')+'">'
+    return '<div class="stk ws-'+esc(it.ws)+(st==='done'?' is-done':'')+(it.gate?' is-gate':'')+(late?' late':'')+'" draggable="true" data-it="'+esc(it.id)+'" data-ord="'+ord+'" role="button" tabindex="0" title="'+esc(it.d||'')+'">'
       +'<div class="stk-top"><span>'+esc((RM.ws[it.ws]||{label:it.ws}).label)+'</span>'+(it.gate?'<span class="gate">Gate</span>':'')+(late?'<span style="color:var(--risk)">Late</span>':'')+'</div>'
       +'<div class="stk-t">'+esc(it.t)+'</div>'
       +'<div class="stk-f"><span class="av" title="'+esc(on)+'">'+esc(initials(on))+'</span>'+(p.n?'<span class="chkp">☑ '+p.done+'/'+p.n+'</span>':'')+'<span class="st '+st+'">'+esc(TX.ST[st])+'</span></div></div>';
@@ -944,9 +1086,10 @@ var TX={
   function board(){ var v=V(), h='<div class="canvas" id="canvas"><div class="canvas-in" id="canvas-in" style="zoom:'+ZOOM+'">';
     v.months.forEach(function(m){ var all=v.items.filter(function(it){ return it.m===m.k && TX.statusOf(it,S)!=='na'; }), its=v.items.filter(function(it){ return it.m===m.k && shown(it); });
       var dn=all.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length;
-      h+='<div class="col'+(m.k===NOW?' now':'')+(m.k<NOW?' past':'')+'"><div class="col-h" data-month="'+esc(m.k)+'" role="button" tabindex="0" title="'+esc(m.plain||'Rename this month')+'"><div class="mo-t"><b>'+esc(m.name)+'</b>'+(m.k===NOW?'<span class="pill now">Now</span>':'')+(m.freeze?'<span class="pill frz">'+esc(m.freeze)+'</span>':'')+'</div>'
+      var pc=all.length?Math.round(dn*100/all.length):0;
+      h+='<div class="col'+(m.k===NOW?' now':'')+(m.k<NOW?' past':'')+(m.freeze?' frozen':'')+'"><div class="node'+(all.length&&dn===all.length?' full':'')+'" style="--p:'+pc+'" title="'+esc(m.name+' · '+dn+' of '+all.length+' done')+'" aria-hidden="true"><span>'+esc(m.ic||'✦')+'</span></div><div class="col-h" data-month="'+esc(m.k)+'" role="button" tabindex="0" title="'+esc(m.plain||'Rename this month')+'"><div class="mo-t"><b>'+esc(m.name)+'</b>'+(m.k===NOW?'<span class="pill now">Now</span>':'')+(m.freeze?'<span class="pill frz">❄ '+esc(m.freeze)+'</span>':'')+'</div>'
         +(m.theme?'<div class="mo-th">'+esc(m.theme)+'</div>':'')+'<div class="mo-p">'+dn+' of '+all.length+' done</div><div class="pbar" style="margin-top:6px"><i style="width:'+(all.length?Math.round(dn*100/all.length):0)+'%;background:var(--good)"></i></div></div>'
-        +'<div class="col-b" data-drop="'+esc(m.k)+'">'+its.map(sticky).join('')+'</div><button class="addcard" type="button" data-addcard="'+esc(m.k)+'">＋ Add card</button></div>'; });
+        +'<div class="col-b" data-drop="'+esc(m.k)+'">'+(its.length?its.map(sticky).join(''):'<div class="col-empty">Drop a card here</div>')+'</div><button class="addcard" type="button" data-addcard="'+esc(m.k)+'">＋ Add card</button></div>'; });
     h+='<button class="addcol" type="button" id="addcol">＋ Add month</button></div></div>';
     $('board-body').innerHTML=h; $('zv').textContent=Math.round(ZOOM*100)+'%';
   }
@@ -1010,7 +1153,7 @@ var TX={
   function opts(){ $('opts').innerHTML=RM.options.map(function(o){ return '<div class="opt'+(o.rec?' rec':'')+'">'+(o.rec?'<div class="tag">Recommended</div>':'')+'<h3>'+o.id+' · '+esc(o.name)+'</h3><p>'+esc(o.p)+'</p><p><b>Effort</b> '+esc(o.eff)+' · <b>Risk</b> '+esc(o.risk)+'</p></div>'; }).join(''); }
   function body(){ if(VIEW==='board')board(); else list(); }
   function render(){ var sc=$('canvas'), sl=sc?sc.scrollLeft:0, stp=sc?sc.scrollTop:0;
-    kpis(); team(); chips(); body(); mods(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc();
+    kpis(); team(); chips(); body(); mods(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc(); if(HOPEN)renderHist();
     var nc=$('canvas'); if(nc){ nc.scrollLeft=sl; nc.scrollTop=stp; } }
 
   /* ---- events (delegated, so re-renders never lose a handler) ---- */
@@ -1052,6 +1195,65 @@ var TX={
   document.addEventListener('keydown',function(e){ var t=e.target; if(e.key!=='Enter'||!t||!t.classList||!t.classList.contains('cl-add'))return;
     var v=t.value.trim(); if(!v)return; e.preventDefault(); var o={}; o['chk:'+t.getAttribute('data-owner')+'|'+uid('l')]={t:v,done:false,add:1}; putMany(o); });
   $('q').addEventListener('input',function(){ Q=this.value.trim().toLowerCase(); body(); });
+  /* ---- history & archive panel ---- */
+  var HOPEN=false, HLOG=null, HTAB='log', HWHO='', HK='', HERR='';
+  function hColor(n){ var h=0; String(n||'').split('').forEach(function(c){ h=(h*31+c.charCodeAt(0))%360; }); return 'hsl('+h+',55%,42%)'; }
+  function hDay(t){ var d=new Date(t), today=new Date(), y=new Date(Date.now()-864e5);
+    if(d.toDateString()===today.toDateString())return 'Today'; if(d.toDateString()===y.toDateString())return 'Yesterday';
+    return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+  function hTime(t){ return new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+  function loadHist(){ return fetch('/api/transform?history=1',{credentials:'same-origin'}).then(function(r){ if(!r.ok)throw new Error(r.status); return r.json(); })
+      .then(function(d){ HLOG=(d&&Array.isArray(d.entries))?d.entries:[]; HERR=''; renderHist(); })
+      .catch(function(){ HERR='Could not read the history just now — it will retry.'; renderHist(); }); }
+  function openHist(){ HOPEN=true; var h=$('hist'); h.classList.add('on'); h.setAttribute('aria-hidden','false'); renderHist(); loadHist(); setTimeout(function(){ $('hist-x').focus(); },50); }
+  function closeHist(){ HOPEN=false; var h=$('hist'); h.classList.remove('on'); h.setAttribute('aria-hidden','true'); }
+  function subjHtml(sub){ return esc(sub.what)+' <q>'+esc(sub.name)+'</q>'+(sub.where?' <span class="hwhere">on '+esc(sub.where)+'</span>':''); }
+  function renderHist(){ if(!HOPEN)return; var body=$('hist-body'), arc=TX.archive(RM,S);
+    $('arc-n').textContent=arc.length?'('+arc.length+')':'';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-htab]'),function(b){ b.classList.toggle('on',b.getAttribute('data-htab')===HTAB); });
+    $('hist-fil').hidden=HTAB!=='log';
+    if(HTAB==='arc'){
+      body.innerHTML=arc.length?'<div class="hday">Deleted and restorable</div>'+arc.map(function(a){
+        return '<div class="hent"><span class="hav" style="background:'+hColor(a.by)+'">'+esc(initials(a.by||'?'))+'</span><div class="htx">'+subjHtml(a.sub)
+          +'<div class="hmeta">Deleted'+(a.by?' by '+esc(a.by):'')+(a.at?' · '+esc(hDay(a.at))+' '+esc(hTime(a.at)):'')+'</div></div>'
+          +'<button type="button" class="hact" data-restore="'+esc(a.k)+'">↺ Restore</button></div>'; }).join('')
+        :'<div class="hempty">Nothing is deleted. Anything removed from the board, a table or a checklist lands here and can be put back.</div>';
+      return; }
+    if(HLOG===null){ body.innerHTML='<div class="hempty">'+(HERR?esc(HERR):'Reading the history…')+'</div>'; return; }
+    var who={}; HLOG.forEach(function(e){ if(e.who)who[e.who]=1; });
+    var sel=$('hist-who'), opts='<option value="">Everyone</option>'+Object.keys(who).sort().map(function(w){ return '<option'+(w===HWHO?' selected':'')+'>'+esc(w)+'</option>'; }).join('');
+    if(sel.innerHTML!==opts)sel.innerHTML=opts;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hk]'),function(b){ b.classList.toggle('on',b.getAttribute('data-hk')===HK); });
+    var list=HLOG.filter(function(e){ return (!HWHO||e.who===HWHO)&&(!HK||TX.histGroup(e)===HK); });
+    if(!list.length){ body.innerHTML='<div class="hempty">'+(HERR?esc(HERR)+'<br>':'')+(HLOG.length?'Nothing matches this filter.':'No changes recorded yet. From now on every add, edit, move, tick and delete shows here.')+'</div>'; return; }
+    var h='', day=''; list.slice(0,300).forEach(function(e,i){ var d=hDay(e.at); if(d!==day){ day=d; h+='<div class="hday">'+esc(d)+'</div>'; }
+      var sub=TX.histSubject(RM,S,e.k,e), g=TX.histGroup(e), vb=TX.histVerb(RM,e), dif=(e.kind==='edited'||e.kind==='status'||e.kind==='moved')?TX.histDiffs(RM,e).filter(function(d){ return !(e.kind==='status'&&d.l==='Status')&&!(e.kind==='moved'&&d.l==='Month'); }):[];
+      var label={edit:'Edit',del:e.kind==='restored'?'Restore':e.kind==='reset'?'Reset':'Delete',move:'Move',chk:e.kind==='ticked'?'Ticked':e.kind==='unticked'?'Unticked':'Checklist'}[g];
+      h+='<div class="hent"><span class="hav" style="background:'+hColor(e.who)+'" title="'+esc(e.email||e.who)+'">'+esc(initials(e.who))+'</span><div class="htx">'
+        +'<span class="hkind '+g+'">'+esc(label)+'</span><b>'+esc(e.who||'someone')+'</b> '+esc(vb[0])+' '+subjHtml(sub)+(vb[1]?' '+esc(vb[1]):'')
+        +(dif.length?'<div class="hdiff">'+dif.map(function(x){ return '<div>'+esc(x.l)+': <s>'+esc(x.from)+'</s> → '+esc(x.to)+'</div>'; }).join('')+'</div>':'')
+        +'<div class="hmeta">'+esc(hTime(e.at))+'</div></div>'
+        +'<button type="button" class="hact" data-undo="'+HLOG.indexOf(e)+'" title="Put this back the way it was before this change">↩ Undo</button></div>'; });
+    if(list.length>300)h+='<div class="hempty">Showing the latest 300 of '+list.length+'.</div>';
+    body.innerHTML=h;
+  }
+  function core(v){ var o={}; Object.keys(v||{}).sort().forEach(function(k){ if(k!=='by'&&k!=='at')o[k]=v[k]; }); return JSON.stringify(o); }
+  function putBack(k,val){ if(val==null){ delete S[k]; render(); push(); } else { var o={}; o[k]=JSON.parse(JSON.stringify(val)); putMany(o); } }
+  function undoEntry(e){ var cur=S[e.k];
+    if(cur!==undefined&&e.a&&core(cur)!==core(e.a)&&!window.confirm('This has changed again since'+(cur&&cur.by?' ('+cur.by+')':'')+'. Undo anyway and put back the version from before this change?'))return;
+    putBack(e.k,e.b); toast('Undone — put back as it was before '+(e.who||'that')+'’s change'); setTimeout(loadHist,1200); }
+  function restoreKey(k){ var cur=S[k]; if(!cur)return; var o={}; Object.keys(cur).forEach(function(f){ if(f!=='del'&&f!=='by'&&f!=='at')o[f]=cur[f]; });
+    putBack(k,Object.keys(o).length?o:null); toast('Restored'); setTimeout(loadHist,1200); }
+  document.addEventListener('click',function(e){ var t=e.target;
+    if(t.closest('[data-hist-open]')){ HOPEN?closeHist():openHist(); return; }
+    if(t.closest('#hist-x')){ closeHist(); return; }
+    var tb=t.closest('[data-htab]'); if(tb){ HTAB=tb.getAttribute('data-htab'); renderHist(); return; }
+    var hk=t.closest('[data-hk]'); if(hk){ HK=hk.getAttribute('data-hk'); renderHist(); return; }
+    var u=t.closest('[data-undo]'); if(u&&HLOG){ var en=HLOG[+u.getAttribute('data-undo')]; if(en)undoEntry(en); return; }
+    var rs=t.closest('[data-restore]'); if(rs){ restoreKey(rs.getAttribute('data-restore')); return; } });
+  $('hist-who').addEventListener('change',function(){ HWHO=this.value; renderHist(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&HOPEN&&!OPEN){ e.preventDefault(); e.stopImmediatePropagation(); closeHist(); } },true);
+  setInterval(function(){ if(HOPEN&&document.visibilityState==='visible')loadHist(); },30000);
   function setFs(on){ var sec=$('board'), b=$('fs-btn'); sec.classList.toggle('fs',on); document.body.classList.toggle('tx-fs',on);
     b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'✕ Exit full screen':'⛶ Full screen'; }
   $('fs-btn').addEventListener('click',function(){ setFs(!$('board').classList.contains('fs')); });

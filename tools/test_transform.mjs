@@ -24,6 +24,7 @@ const WF = fs.readFileSync(path.join(ROOT, 'docs/FeedSpark_Workflow.html'), 'utf
 const ACCESS = fs.readFileSync(path.join(ROOT, 'cloudflare/feedspark-deck/src/access.js'), 'utf8');
 const WIDGET = fs.readFileSync(path.join(ROOT, 'docs/migration_widget.html'), 'utf8');
 const { MIG_SEED, MIG_STATES, migrationView, migrationPathOf } = await import('../cloudflare/feedspark-deck/src/migration.js');
+const { txDiff, txKind, txLogAppend, TX_LOG_CAP } = await import('../cloudflare/feedspark-deck/src/txhistory.js');
 
 let passed = 0, failed = 0;
 const ok = (c, m) => { if (c) { passed++; console.log('  ✓ ' + m); } else { failed++; console.log('  ✗ ' + m); } };
@@ -138,6 +139,49 @@ ok(WORKER.indexOf("'/api/migration/status'") < WORKER.indexOf("if (path === '/ap
 ok(/import MIGW from "..\/..\/..\/docs\/migration_widget.html"/.test(WORKER) && /TOUCHW \+ '\\n' \+ MIGW/.test(WORKER), 'the migration badge widget is injected on every app page');
 ok(/\/api\/migration\/status/.test(WIDGET) && /if\(!DATA\|\|!DATA\.on\|\|!DATA\.modules\)\{ clear\(\); return; \}/.test(WIDGET), 'the widget reads the public route and draws nothing when badges are off or the read failed');
 ok(/@media\(max-width:760px\)\{\.fcc-mig-pill\{display:none\}/.test(WIDGET), 'the page pill stands down on the phone (the dot on the bottom bar carries it)');
+
+console.log('History & archive (who changed what, and undo)');
+{
+  const prev = { 'c:items:o-dec': { t: 'Decision memo signed', by: 'Ray', at: 1 }, 'i:o-scope': { st: 'todo', by: 'Ray', at: 1 }, 'chk:i.o-dec|s0': { done: false, by: 'Ray', at: 1 }, 'c:items:x1': { t: 'Gone soon', add: 1, by: 'Ray', at: 1 } };
+  const next = { 'c:items:o-dec': { t: 'Decision memo signed by the board', by: 'Andy', at: 2 }, 'i:o-scope': { st: 'done', by: 'Andy', at: 2 }, 'chk:i.o-dec|s0': { done: true, by: 'Andy', at: 2 },
+    'c:items:x1': { t: 'Gone soon', add: 1, del: 1, by: 'Andy', at: 2 }, 'c:items:n1': { t: 'New card', m: '2026-12', add: 1, by: 'Andy', at: 2 }, 'c:items:mv': { m: '2027-01', by: 'Andy', at: 2 } };
+  const ents = txDiff(prev, next, 'Andy', 'andrew@aroxo.com', 99);
+  const kind = (k) => (ents.filter((e) => e.k === k)[0] || {}).kind;
+  ok(kind('c:items:o-dec') === 'edited' && kind('i:o-scope') === 'status' && kind('chk:i.o-dec|s0') === 'ticked', 'an edit, a status change and a tick are each named for what they were');
+  ok(kind('c:items:x1') === 'deleted' && kind('c:items:n1') === 'added' && kind('c:items:mv') === 'moved', 'a delete, an add and a move to another month too');
+  ok(ents.every((e) => e.who === 'Andy' && e.email === 'andrew@aroxo.com' && e.at === 99), 'every entry carries the Access identity and the time, not what the page wrote');
+  ok(ents.filter((e) => e.k === 'c:items:o-dec')[0].b.t === 'Decision memo signed' && !('by' in ents.filter((e) => e.k === 'c:items:o-dec')[0].b), 'the before value is kept (so it can be put back), minus who/when');
+  ok(txDiff({ a: { t: 'x', by: 'Ray', at: 1 } }, { a: { t: 'x', by: 'Andy', at: 5 } }, 'Andy', '', 5).length === 0, 'a re-save that only re-stamps who/when is not a change');
+  ok(txKind('c:items:x1', { del: 1 }, undefined) === 'restored' && txKind('c:items:o-dec', { t: 'x' }, undefined) === 'reset', 'removing a delete restores; removing an edit resets to the plan');
+  ok(txKind('cfg:badges', {}, { on: false }) === 'setting', 'the badges switch is a setting');
+  let log = []; for (let i = 0; i < 3; i++) log = txLogAppend(log, [{ at: i, k: 'k' + i }]);
+  ok(log[0].at === 2 && log.length === 3, 'newest first');
+  ok(txLogAppend(new Array(TX_LOG_CAP).fill({ at: 0 }), [{ at: 1 }]).length === TX_LOG_CAP, 'the log is capped');
+  const put = between(WORKER, "if (path === '/api/transform') {", "// ---- Build Log queue");
+  ok(put.indexOf("moduleAllowed(acc.modules, 'transformation')") < put.indexOf("searchParams.get('history')"), 'the history is behind the same opt-in gate as the roadmap');
+  ok(/txDiff\(prev, envx\.data, acc\.name \|\| displayName\(acc\.email\), acc\.email, now\)/.test(put) && /JSON\.parse\(JSON\.stringify\(cur\.data/.test(put), 'the worker diffs the map before and after the merge, stamped with the Access identity');
+  ok(/'transformlog'/.test(put), 'the log lives in its own KV key');
+  // the page's words
+  const e1 = ents.filter((e) => e.k === 'c:items:o-dec')[0];
+  ok(TX.histSubject(RM, {}, 'c:items:o-dec', e1).name === 'Decision memo signed by the board' && TX.histSubject(RM, {}, 'c:items:o-dec', e1).what === 'card', 'a logged key reads back as "card “title”"');
+  ok(TX.histSubject(RM, {}, 'chk:i.o-dec|s0', { a: { done: true } }).name === RM.items.filter((i) => i.id === 'o-dec')[0].chk[0], 'a ticked seed checklist line is named by its own words');
+  ok(TX.histSubject(RM, {}, 'chk:m./golden|s1', {}).where === 'Golden Record module', 'a module checklist line names its module');
+  ok(TX.histDiffs(RM, { k: 'c:items:o-dec', f: ['t'], b: null, a: { t: 'New' } })[0].from === RM.items.filter((i) => i.id === 'o-dec')[0].t, 'an edit to a planned card diffs against the plan’s own wording');
+  ok(TX.histDiffs(RM, { k: 'i:x', f: ['note', 'st'], b: { note: '' }, a: { note: '', st: 'done' } }).length === 1, 'a field that reads the same before and after is not listed as a change');
+  ok(TX.histVerb(RM, { kind: 'moved', a: { m: '2026-12' }, b: {} }).join(' ') === 'moved to December 2026', 'a move says where to');
+  ok(TX.archive(RM, { 'c:items:o-dec': { del: 1, by: 'Matt', at: 5 }, 'i:o-dec': { st: 'done' } }).length === 1, 'the archive lists what is deleted right now');
+  ok(/id="hist"/.test(PAGE) && /data-hist-open/.test(PAGE) && /\.hist\{position:fixed;top:0;right:0/.test(PAGE) && /z-index:170/.test(PAGE), 'the panel slides in from the right, above the full-screen board and below the card editor');
+  ok(/\.hist-fil\[hidden\]\{display:none\}/.test(PAGE), 'the filter row really hides on the Archive tab (a flex row ignores hidden)');
+  ok(/function undoEntry/.test(PAGE) && /has changed again since/.test(PAGE), 'undo puts the before value back, and asks first if someone changed it again since');
+  ok(/if\(e\.key==='Escape'&&HOPEN&&!OPEN\)/.test(PAGE), 'Esc closes the panel before it leaves full screen');
+}
+
+console.log('Board graphics');
+ok(RM.months.every((m) => m.ic), 'every planned month has an icon on the road');
+ok(/\.canvas-in\{display:flex;align-items:flex-start;gap:48px/.test(PAGE), 'the months are spaced out (48px apart)');
+ok(/class="node'/.test(PAGE) && /conic-gradient\(var\(--good\) calc\(var\(--p,0\)\*1%\)/.test(PAGE), 'each month hangs from a node whose ring fills as its cards are done');
+ok(/function celebrate/.test(PAGE) && /prefers-reduced-motion/.test(PAGE), 'finishing a card or migrating a module gets a small burst, never with reduced motion');
+ok(!/\.stk\.gate/.test(PAGE), 'the gate sticky class does not collide with the Gate pill (.gate uppercases)');
 
 console.log('Full-screen board');
 ok(/id="fs-btn"/.test(PAGE) && /section\.blk\.fs\{position:fixed;inset:0;z-index:150/.test(PAGE), 'the board can take the whole window (a fixed layer under the editor\'s z-index 200)');

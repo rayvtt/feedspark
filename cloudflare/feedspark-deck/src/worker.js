@@ -170,6 +170,7 @@ import TOUCHW from "../../../docs/touch_widget.html";
 // read from the public projection GET /api/migration/status (src/migration.js)
 import MIGW from "../../../docs/migration_widget.html";
 import { migrationView } from "./migration.js";
+import { txDiff, txLogAppend } from "./txhistory.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -1623,6 +1624,28 @@ async function route(request, env, ctx) {
     if (path === '/api/transform') {
       const acc = await accessOf(env, request);
       if (!acc.owner && !moduleAllowed(acc.modules, 'transformation')) return json({ error: 'the transformation roadmap is not granted to this signin' }, 403);
+      // HISTORY (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic or archive
+      // actions — delete, remove, edit — of everything, because it will be co-worked by Matt and Andy
+      // and me"): the page PUTs the whole map, so the worker diffs the map before and after the merge
+      // and logs each key that moved to KV `transformlog`, stamped with the ACCESS identity
+      // (src/txhistory.js). GET ?history=1 serves the log to the same opt-in signins.
+      if (request.method === 'GET' && url.searchParams.get('history')) {
+        return json({ entries: (await env.EDITS.get('transformlog', 'json')) || [] }, 200, { 'Cache-Control': 'no-store' });
+      }
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const now = Date.now();
+        const cur = liftEnvelope(await env.EDITS.get('transform', 'json'), now);
+        const prev = JSON.parse(JSON.stringify(cur.data || {}));
+        const envx = mergeIntoEnvelope(cur, body, base, now, {});
+        await env.EDITS.put('transform', JSON.stringify(envx));
+        const ents = txDiff(prev, envx.data, acc.name || displayName(acc.email), acc.email, now);
+        if (ents.length) {
+          try { await env.EDITS.put('transformlog', JSON.stringify(txLogAppend(await env.EDITS.get('transformlog', 'json'), ents))); } catch (e) {}
+        }
+        return json(envelopeToClient(envx, {}), 200, { 'X-Sync-Base': String(Date.now()) });
+      }
       const r = await mapStoreRoute(env, request, 'transform', {});
       if (r) return r;
     }
