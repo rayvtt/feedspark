@@ -92,6 +92,70 @@ CSVs carry the same link per row.
 - **Straight into the editor** — if FeedHero's Rule Manager has a stable per-rule address (the rule
   id is `rule_id` in the report), send it and the button can go there instead.
 
+## 3b. Ad spend kept off low-stock products (`/stock`)
+
+Ray, 28 Sep 2026: *"Stock management … is going to be a key feature to actually sell to clients …
+focus on stock threshold and range completion … pull AdWords data based on impressions, clicks, CPC …
+calculate, when I hover over each of these stock features, how much that would save clients in ad
+spend … Use a forecast method — 5 %, 10 %, conservative or aggressive — probably based on CPC, per
+day or per month … Let that panel appear on the right-hand side when hovered; it should stay there
+and display the number dynamically."*
+
+**The model.** A stock rule that holds a product back (sets it out of stock, excludes it, empties
+the label a campaign bids on) stops that product buying clicks it could not convert: sizes missing,
+a unit or two left. What those clicks would have cost is **the market's own price for traffic**,
+read from FeedHero's Google Ads report for the same market over 30 days (the ROAS index, `roasidx`;
+one more KV get on the stock route, never a second MCP call):
+
+```
+spend per product per day = 30-day spend ÷ products in Google Ads ÷ 30
+                          = clicks per product per day × CPC          (the same number, both shown)
+kept off                  = products held back × spend per product per day × share × days
+```
+
+- **Share.** The share of held-back products assumed to have drawn the market's average traffic had
+  they stayed live: **Conservative 5 %**, **Aggressive 10 %** (Ray's two), plus a custom slider from 1
+  to 50 %. It is a share and not a multiplier, because a low-stock product would not out-earn an
+  average one. The ceiling (100 %) is printed as the ceiling, never as the forecast.
+- **Period.** Per day, or per month (30 days, the window the figures are read over).
+- **Held back** = the products FeedHero says the rule changed on its last run (`impacted N of M`).
+  That count can include products that were already out of stock, which is one more reason the share
+  is kept low and the figure is called a forecast.
+
+**Which rules are sized** (`heldBack` in `src/rules.js`): stock thresholds, range completion and the
+stock exclusions driven by either. Everything else is listed with its reason and is **never** given a
+guessed number:
+
+| Kind | Why it is not sized |
+|---|---|
+| Lets products back in | an inclusion or exception ("Include Hero size low RC", "[inclusion]") keeps products live, so it is not a saving |
+| Writes every product | impacted N of N: it sets each product in or out, and the count is what it wrote, not what it held back |
+| Works out a value | RC %, hero-size flags and stock counts; the rule that acts on the value is the one holding products back |
+| Restates a state | "Not available to Zero" writes 0 stock onto products already unavailable, which were not advertised either way |
+| Another channel | a Meta / affiliate / TikTok rule; Google Ads' price for a click is not that channel's |
+| Holding nothing back | a blocking rule that touched nothing on its last run |
+| No Google Ads read | FeedHero has no 30-day read for the market yet; it is sized once ROAS syncs it |
+
+**A market counts once.** Two stock rules can hold back the same product (a threshold AND a
+range-completion exclusion often do), and the report says how many each changed, not which. So a
+market's figure is its **largest** blocking rule, and the book (`svBook`) adds markets, never rules.
+It reads "at least". **Money never crosses a currency:** each currency is its own figure.
+
+**The panel.** It docks on the right. Hovering any stock rule opens it: the card's rows, each
+market's setup table, the cut-offs table, and the KPI tile (the book). It **stays** until ✕ or Esc,
+and hovering another rule redraws it, with the headline counting up. It shows the scenario ladder,
+the working line by line, this rule's own formula, and links to the rule in FeedHero and to the
+market's ROAS page. It follows **real pointer movement only**: opening it pushes the page (≥1100px),
+and a push or a scroll slides a different row under a cursor that has not moved, which would
+otherwise re-target it. On a phone, a tap opens it as a bottom sheet. The scenario and period are
+kept on the device (`fcc-stock-sv`).
+
+**Harness.** `tools/test_rules.mjs` covers the classifier on the real rule-name shapes (with
+invented counts), the arithmetic, the floor, the per-currency book, `stockView`, the page twins
+(`svCalc` / `svFloor` / `svBook`, lifted by name and run on the same table as the engine), the
+worker wiring and the panel's behaviour rules. No client figure is committed: the real Monsoon read
+the model was checked against stays in KV.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -113,7 +177,7 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `findings`, `markets[]` with `stock` rows and the plain-words `sentence`. |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic off `roasidx`, null when unread). |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness

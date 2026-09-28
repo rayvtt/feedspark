@@ -2569,9 +2569,13 @@ async function route(request, env, ctx) {
       const rosterBrands = Object.keys(ROAS.ROAS_ROSTER).filter(inScope).map((c) => ({ client: c, markets: ROAS.ROAS_ROSTER[c].map((x) => x.market) }));
       const base = { ok: true, tracked: rows.length, roster: roster.length, unread, rosterBrands, scope: { brand: brandQ || null }, status, at: now };
       if (path === '/api/rules/stock') {
+        // AD SPEND KEPT OFF (Ray, 28 Sep 2026): each market's price for traffic comes off the SAME ROAS
+        // index /roas reads — one more KV get, keyed by the market's cmpid, never a second MCP call
+        const ridx = (await env.EDITS.get('roasidx', 'json')) || {};
         return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
           matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), findings: RULES.stockFindings(rows, now),
-          markets: rows.map((r) => ({ client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items, stock: r.stock || [], sentence: RULES.stockSentence(r.stock) })) }));
+          sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
+          markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid])) }));
       }
       const findings = [];
       rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));

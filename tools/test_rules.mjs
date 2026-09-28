@@ -225,6 +225,79 @@ t('Stock: a button on every stock rule — the setup tables, the cut-offs table,
   t('a brand-level cut-off finding names each rule\'s own market id, so its pop-out lands on the right market', cf && cf.rules.every((r) => r.cmpid && r.t && r.market));
 }
 
+console.log('· ad spend kept off low-stock products — the forecast behind the /stock panel');
+{
+  // real rule NAME + FIELD shapes from the 28 Sep 2026 rule report; every count here is invented
+  const K = (name, db, imp) => R.heldBack(one(name, db, imp ? { impacted_items: imp } : {}));
+  const k = (name, db, imp) => (K(name, db, imp) || { kind: null }).kind;
+  t('a stock threshold that holds products back is sized on its impacted count', JSON.stringify(K('Stock < 11 -> OOS', 'stock_quantity', '800 of 2,000')) === JSON.stringify({ kind: 'blocked', n: 800, why: null }));
+  t('a range-completion exclusion is sized', k('Range Completion Exclusion', 'rc_exclusion', '140 of 2,000') === 'blocked');
+  t('an availability rule driven by range completion is sized', k('Range Completion by Availability', 'stock_status', '370 of 3,000') === 'blocked');
+  t('"quantity with 3 or less" into the exclusion field is sized', k('Removing products with quantity with 3 or less', 'excluded_destination', '120 of 1,500') === 'blocked');
+  t('an inclusion / exception RELEASES products — never a saving', k('Include Hero size low RC', 'rc_exclusion', '340 of 2,000') === 'releases' && k('ADhoc [inclusion] for Hero Size - review weekly please', 'stock_status', '50 of 3,000') === 'releases');
+  t('a rule holding back on Meta is not priced with Google Ads\' CPC', k('Social: RC > 65% -> Out of stocj', 'social_availability', '900 of 2,000') === 'channel' && k('Stock Exclusion except Jan Launch', 'meta_exclusion', '120 of 1,500') === 'channel');
+  t('a rule writing EVERY product sets each one in or out — its count is not what it held back', k('Empty < 0.26 RC Products', 'gb_cl2', '2,000 of 2,000') === 'all');
+  t('"Not available to Zero" restates a state the products are already in — not sized', k('Not available to Zero', 'product_stock', '2,900 of 3,000') === 'mirror');
+  t('a rule that WORKS OUT a value (RC %, stock counts, hero sizes) is not the one holding products back', k('Range completion percentage calculation', 'rc_percent', '2,000 of 2,000') === 'calc' && k('Calculate stock count details', 'stock_num', '10 of 20') === 'calc' && k('Set Hero size values', 'is_hero_size', '10 of 20') === 'calc');
+  t('a blocking rule touching nothing on its last run holds nothing back', JSON.stringify(K('Stock < 11 -> OOS', 'stock_quantity', '0 of 2,000')) === JSON.stringify({ kind: 'none', n: 0, why: K('Stock < 11 -> OOS', 'stock_quantity', '0 of 2,000').why }));
+  t('an unreadable impacted count is never guessed', k('Stock < 11 -> OOS', 'stock_quantity', '-') === 'all');
+  t('titles, lifecycle labels and local inventory are not thresholds or range completion', k('Title: append colour', 'product_name') === null && k('New In by date', 'gb_cl0') === null && k('LIA: next day', 'pickup_sla') === null);
+  t('"IG ID" is an item-group id, not Instagram', R.channel({ d: 'ig_id_colour_stock', n: 'IG ID Colour - Count unique' }) === 'all' && R.channel({ d: 'ig_availability', n: 'x' }) === 'meta');
+
+  const E2 = { w30: { spend: { cur: '£', n: 72000 }, clicks: 240000, skus: 20000, impr: 30000000, zombiePct: 30 }, updated: NOW };
+  const B = R.adsBasis(E2);
+  t('the basis: CPC = spend ÷ clicks, spend per product per day = spend ÷ products ÷ 30', B && B.cur === '£' && B.cpc === 0.3 && Math.abs(B.spendDay - 0.12) < 1e-12 && Math.abs(B.clicksDay - 0.4) < 1e-12);
+  t('…and the two ways of stating it agree (clicks per product per day × CPC)', Math.abs(B.clicksDay * B.cpc - B.spendDay) < 1e-12);
+  t('a v1 flat ROAS entry reads the same', JSON.stringify(R.adsBasis(Object.assign({}, E2.w30, { updated: NOW }))) === JSON.stringify(B));
+  t('no spend, no products or no clicks = no basis (never a zero price)', R.adsBasis(null) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 0 }, clicks: 5, skus: 5 } }) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 0, skus: 5 } }) === null && R.adsBasis({ w30: { spend: { cur: '£', n: 9 }, clicks: 5, skus: 0 } }) === null);
+  t('Ray\'s two scenarios: Conservative 5 %, Aggressive 10 %, over the 30-day window', JSON.stringify(R.SV_SCENARIOS.map((x) => [x.label, x.pct])) === JSON.stringify([['Conservative', 5], ['Aggressive', 10]]) && R.SV_WINDOW_DAYS === 30);
+  t('saved = held back × spend per product per day × share × days', Math.abs(R.savingFor(800, B, 5, 30) - 144) < 1e-9 && Math.abs(R.savingFor(800, B, 5, 1) - 4.8) < 1e-9);
+  t('aggressive is exactly twice conservative; per month is 30 × per day', Math.abs(R.savingFor(800, B, 10, 30) - 2 * R.savingFor(800, B, 5, 30)) < 1e-9 && Math.abs(R.savingFor(800, B, 5, 30) - 30 * R.savingFor(800, B, 5, 1)) < 1e-9);
+  t('nothing held back, or no basis, saves nothing', R.savingFor(0, B, 5, 30) === 0 && R.savingFor(800, null, 5, 30) === 0);
+  // the real Monsoon UK basis read on 28 Sep 2026 is NOT committed (client figures stay in KV) — the
+  // arithmetic above is the same one, on round invented numbers
+
+  const hb = (name, db, imp) => Object.assign(one(name, db, { impacted_items: imp }), {});
+  const st1 = [hb('Stock < 11 -> OOS', 'stock_quantity', '800 of 2,000'), hb('Range Completion Exclusion', 'rc_exclusion', '140 of 2,000'), hb('Include Hero size low RC', 'rc_exclusion', '900 of 2,000')].map((r, i) => Object.assign(r, { i, hb: R.heldBack(r) }));
+  const f1 = R.svFloor(st1);
+  t('a market counts ONCE, at its largest blocking rule — two rules can hold back the same product', f1 && f1.n === 800 && f1.rule === 'Stock < 11 -> OOS');
+  t('a release never becomes the floor, however large', R.svFloor([st1[2]]) === null);
+  const eur = R.adsBasis({ w30: { spend: { cur: '€', n: 9000 }, clicks: 30000, skus: 10000 } });
+  const mk = [{ cmpid: 'a', stock: st1, ads: B }, { cmpid: 'b', stock: st1, ads: eur }, { cmpid: 'c', stock: st1, ads: null }, { cmpid: 'd', stock: [st1[2]], ads: B }];
+  const bk = R.svBook(mk, 5, 30);
+  t('the book adds MARKETS per currency and never across one', bk.byCur.length === 2 && bk.byCur[0].cur === '£' && Math.abs(bk.byCur[0].amt - 144) < 1e-9 && bk.byCur[1].cur === '€' && Math.abs(bk.byCur[1].amt - 800 * 0.03 * 0.05 * 30) < 1e-9);
+  t('a market with a blocking rule but no Google Ads read is counted as unpriced, not as zero', bk.unpriced === 1 && bk.sized === 2);
+
+  const v = R.stockView({ client: 'Monsoon', market: 'UK', cmpid: 'monsoon_uk', updated: NOW, n: 3, items: 2000, stock: st1.map((r) => { const o = Object.assign({}, r); delete o.hb; return o; }) }, E2);
+  t('stockView: every stock row carries hb, the market carries its basis and sentence', v.stock.every((r) => 'hb' in r) && v.stock[0].hb.kind === 'blocked' && JSON.stringify(v.ads) === JSON.stringify(B) && typeof v.sentence === 'string');
+  t('stockView: no ROAS entry = ads null', R.stockView({ client: 'x', market: 'y', cmpid: 'z', stock: [] }, undefined).ads === null);
+
+  // the page's twins, LIFTED by name and run against the engine on the same table
+  const liftIn = (h, name) => {
+    const a = h.indexOf('function ' + name + '('); if (a < 0) throw new Error('cannot lift ' + name);
+    const eol = h.indexOf('\n', a), line = h.slice(a, eol);
+    if (/\}\s*$/.test(line) && (line.match(/\{/g) || []).length === (line.match(/\}/g) || []).length) return line;
+    const b = h.indexOf('\n  }\n', a); if (b < 0) throw new Error('cannot lift ' + name); return h.slice(a, b + 4);
+  };
+  const tw = new Function(liftIn(SP, 'svCalc') + '\n' + liftIn(SP, 'svFloor') + '\n' + liftIn(SP, 'svBook') + '\nreturn { svCalc, svFloor, svBook };')();
+  const CASES = [[800, B, 5, 30], [800, B, 10, 1], [1, eur, 37, 30], [0, B, 5, 30], [5, null, 5, 30], [123456, B, 50, 30]];
+  t('page svCalc === engine savingFor on every case', CASES.every((c) => tw.svCalc.apply(null, c) === R.savingFor.apply(null, c)));
+  t('page svFloor === engine svFloor', JSON.stringify(tw.svFloor(st1)) === JSON.stringify(R.svFloor(st1)) && tw.svFloor([]) === null);
+  t('page svBook === engine svBook, at both scenarios and both periods', [[5, 30], [10, 30], [5, 1], [10, 1]].every(([p, d]) => JSON.stringify(tw.svBook(mk, p, d)) === JSON.stringify(R.svBook(mk, p, d))));
+
+  t('worker: the stock route reads the ROAS index ONCE and serves every market through stockView', /const ridx = \(await env\.EDITS\.get\('roasidx', 'json'\)\) \|\| \{\};/.test(WK) && /markets: rows\.map\(\(r\) => RULES\.stockView\(r, ridx\[r\.cmpid\]\)\)/.test(WK) && /sv: \{ scenarios: RULES\.SV_SCENARIOS, days: RULES\.SV_WINDOW_DAYS \}/.test(WK));
+  t('the tripwire stub builds the stock book through the SAME stockView', /E\.stockView\(r, ROAS\[r\.cmpid\]\)/.test(read('tools/rules_stub.js')));
+  t('page: the panel, and the rules that open it (the card, the setup tables, the cut-offs, the KPI)', /<aside class="svp" id="svp"/.test(SP) && /'<tr data-sv="' \+ esc\(m\.cmpid \+ '\|' \+ r\.i\) \+ '"><td class="num">'/.test(SP) && /'<tr data-sv="' \+ esc\(c\.cmpid \+ '\|' \+ c\.i\)/.test(SP) && /'<tr data-sv="' \+ esc\(m\.cmpid \+ '\|' \+ r\.i\) \+ '" tabindex="0">/.test(SP) && /class="kpi sv-k link" data-sv="book"/.test(SP));
+  t('page: opened by REAL pointer movement (a push or scroll under a still cursor never re-targets it)', /document\.addEventListener\('mousemove', function \(e\) \{\s*if \(e\.clientX === PT\.x && e\.clientY === PT\.y\) return;/.test(SP) && !/addEventListener\('mouseover'/.test(SP));
+  t('page: it STAYS — only ✕, Esc or a vanished rule close it', (SP.match(/svClose\(\)/g) || []).length === 3 && /\$\('#svp-x'\)\.addEventListener\('click', svClose\)/.test(SP) && !/mouseleave|mouseout/.test(SP));
+  t('page: a tap opens it too, never when the tap is on a link or a button', /e\.target\.closest\('a,button,summary,input'\)\) return; svOpen/.test(SP));
+  t('page: Conservative / Aggressive / a custom share, per day or per month, remembered on the device', /data-per="day"/.test(SP) && /id="svp-pct" min="1" max="50"/.test(SP) && /remember\('fcc-stock-sv'/.test(SP) && /recall\('fcc-stock-sv'\)/.test(SP));
+  t('page: the working is printed — the formula with this rule\'s own numbers, and the ceiling named as not the forecast', /' × ' \+ money\(B\.cur, B\.spendDay, 3\) \+ ' × ' \+ SV\.pct \+ '% × '/.test(SP) && /the ceiling, not the forecast/.test(SP));
+  t('page: the count-up stands down under reduced motion', /prefers-reduced-motion: reduce/.test(SP));
+  t('page: every figure wears its market\'s own currency; the card groups by currency', /money\(m\.ads\.cur, x\.amt\)/.test(SP) && /money never crosses one/.test(SP));
+  t('page: the panel pushes the page on a wide screen rather than covering it', /@media\(min-width:1100px\)\{body\.sv-on\{padding-right:var\(--svw\)\}\}/.test(SP));
+}
+
 console.log('· the tripwire stub + nothing in git');
 const stub = require('./rules_stub.js').build();
 t('stub: the book shape the page reads (markets without stock rows, with sn)', stub.book.markets.length === 3 && stub.book.markets.every((m) => m.sn > 0 && !m.stock && !m.find) && stub.book.findings.length > 0);

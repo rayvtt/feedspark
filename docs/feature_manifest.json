@@ -10772,6 +10772,48 @@
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "fhA(c.cmpid, c.rule, c.t)",
       "pr": 0
+    },
+    {
+      "name": "Stock: which rules hold products back (heldBack)",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function heldBack(r) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the ad-spend book adds markets per currency, never rules",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function svBook(markets, pct, days) {",
+      "pr": 0
+    },
+    {
+      "name": "Rules: an ig_id field is an item group, not Instagram",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "ig[_ ]?id(?![a-z])",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the route prices each market off the ROAS index",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid]))",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the ad-spend forecast panel",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<aside class=\"svp\" id=\"svp\"",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the page twin of savingFor",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function svCalc(n, basis, pct, days)",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the panel follows real pointer movement only",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (e.clientX === PT.x && e.clientY === PT.y) return;",
+      "pr": 0
     }
   ]
 }

@@ -33,6 +33,7 @@ function rows(cmpid, company, of, seed) {
   add('Stock < ' + (8 + seed) + ' -> OOS', 'Stock quantity', 'stock_quantity', 'User', Math.round(of * 0.3), '10/10/2024 at 02:00 PM');
   add('Range completion percentage', 'Range completion', 'rc_percent', 'User', of, '10/10/2024 at 02:10 PM');
   add('Set hero sizes', 'Hero size', 'is_hero_size', 'User', of, '10/10/2024 at 02:20 PM');
+  add('Range completion exclusion', 'Exclusion', 'rc_exclusion', 'User', Math.round(of * 0.06), '10/10/2024 at 02:30 PM');
   add('Social: RC > 6' + seed + '% -> out of stock', 'Social availability', 'social_availability', 'User', Math.round(of * 0.2), '12/12/2024 at 03:00 PM');
   add('Ad hoc hero size inclusion - review weekly', 'Availability', 'stock_status', 'User', Math.round(of * 0.02), '01/02/2026 at 10:00 AM', '01/02/2026 at 10:00 AM', 'Analyst B');
   add('CL2: empty < 0.26 RC', 'Custom label 2', 'gb_cl2', 'User', of, '12/12/2024 at 03:10 PM');
@@ -68,8 +69,15 @@ function build() {
   const findings = []; list.forEach((r) => (r.find || []).forEach((f) => findings.push(f))); findings.sort((a, b) => b.sev - a.sev || b.n - a.n);
   const book = Object.assign({}, base, { families: E.FAMILIES, mechanisms: E.MECHANISMS, channels: E.CHANNELS, sev: E.SEV, estate: E.estate(list), brands: E.brandsOf(list), findings,
     markets: list.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) });
+  // a synthetic 30-day Google Ads Total per market (the ROAS index entry's shape) — invented figures, so
+  // the ad-spend forecast card and panel render under the tripwires; Reiss GB is left unread on purpose
+  const ROAS = {
+    superdry_gb: { w30: { spend: { cur: '£', n: 42000 }, clicks: 160000, skus: 21000, impr: 9800000, zombiePct: 31.5 }, updated: now - 7200000 },
+    superdry_de: { w30: { spend: { cur: '€', n: 18500 }, clicks: 70500, skus: 15200, impr: 4100000, zombiePct: 38.2 }, updated: now - 7200000 },
+  };
   const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), findings: E.stockFindings(list, now),
-    markets: list.map((r) => ({ client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items, stock: r.stock || [], sentence: E.stockSentence(r.stock) })) });
+    sv: { scenarios: E.SV_SCENARIOS, days: E.SV_WINDOW_DAYS },
+    markets: list.map((r) => E.stockView(r, ROAS[r.cmpid])) });
   const rules = recs.superdry_gb, where = { client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', rules };
   const market = { ok: true, client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', read: true, updated: now, total: rules.length + 40, capped: true, rules,
     chains: E.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })), findings: E.rulesFindings([where], now),

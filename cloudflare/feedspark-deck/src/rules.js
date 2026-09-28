@@ -157,7 +157,8 @@ export const CHANNELS = [
   { k: 'aff', label: 'Affiliates' }, { k: 'tiktok', label: 'TikTok' }, { k: 'pin', label: 'Pinterest' },
 ];
 export function channel(r) {
-  const s = s0(r.d) + ' ' + s0(r.n).toLowerCase();
+  // "ig_id…" is an ITEM GROUP id (ig_id_colour_stock), not Instagram — folded out before the channel read
+  const s = (s0(r.d) + ' ' + s0(r.n).toLowerCase()).replace(/(^|[_ ])ig[_ ]?id(?![a-z])/g, '$1itemgroupid');
   if (/(^|[_ ])(fb|meta|social|facebook|instagram|ig)([_ ]|$)|meta_|_meta|fb_|facebook/.test(s)) return 'meta';
   if (/awin|partnerize|olapic|linkshare|rakuten|affiliate/.test(s)) return 'aff';
   if (/tik_?tok/.test(s)) return 'tiktok';
@@ -510,4 +511,124 @@ export function brandsOf(rows) {
     (m.find || []).forEach((f) => { b.find++; if (f.sev === 3) b.act++; });
   });
   return Object.keys(by).sort().map((k) => by[k]);
+}
+
+// ---- AD SPEND KEPT OFF LOW-STOCK PRODUCTS (Ray, 28 Sep 2026: "stock management … is going to be a
+// key feature to actually sell to clients … focus on stock threshold and range completion … pull
+// AdWords data based on impressions, clicks, CPC … calculate, when I hover over each of these stock
+// features, how much that would save clients in ad spend … Use a forecast method — 5 %, 10 %,
+// conservative or aggressive — probably based on CPC, per day or per month") -----------------------
+//
+// THE MODEL, and why it is this one. A stock rule that holds a product back (sets it out of stock,
+// excludes it, empties the label a campaign bids on) keeps that product from buying clicks it could
+// not convert — sizes missing, a unit or two left. What those clicks would have cost is the market's
+// OWN price for traffic, read from FeedHero's Google Ads report for the same market over 30 days:
+//
+//   spend per product per day  =  30-day spend ÷ SKUs in Google Ads ÷ 30
+//                              =  (clicks ÷ SKUs ÷ 30)  ×  CPC          — the same number, shown both ways
+//   saved per day              =  products held back × spend per product per day × scenario %
+//
+// The scenario is the share of the held-back products assumed to have drawn the market's average
+// traffic had they been live: Conservative 5 %, Aggressive 10 % (Ray's two), adjustable. A share, not
+// a multiplier on spend, because a low-stock product would not out-earn an average one — Google ranks
+// on performance — so assuming all of them would draw average traffic overstates it, and a figure a
+// client can take apart is worth more than a large one. Per day, or per month (30 days = the window).
+//
+// WHAT IS NEVER SIZED — said on screen, never a guessed number:
+//   · a rule that RELEASES products ("Include hero size low RC", an "[inclusion]" list) — the
+//     exception that keeps products live is not a saving;
+//   · a rule that writes EVERY product (impacted N of N) — it sets each one in or out, and the report
+//     says how many it wrote, not how many it held back;
+//   · a rule that COMPUTES a value other rules act on (range-completion %, hero-size flags, stock
+//     counts) — the blocking happens in the rule that reads it;
+//   · a rule that only MIRRORS a state products are already in ("Not available to Zero" writes a stock
+//     count of 0 onto products already marked unavailable — they were not advertised either way);
+//   · a rule that holds products back on ANOTHER channel (Meta, affiliates…) — FeedHero's ad-spend
+//     read is Google Ads, and Google's price for a click is not Meta's;
+//   · a market FeedHero has no Google Ads read for.
+export const SV_SCENARIOS = [
+  { k: 'cons', label: 'Conservative', pct: 5 },
+  { k: 'aggr', label: 'Aggressive', pct: 10 },
+];
+export const SV_WINDOW_DAYS = 30;          // FeedHero's 30-day window — the month the figures are read over
+const RELEASE = /\binclu(de|ded|des|sion)\b|\bre-?add|\bre-?instate|\ballow(ed)?\b|\bwhitelist/i;
+const BLOCKWORD = /\boos\b|out of stoc|->\s*0\b|to zero|not available|unavailable|\bexclu|\bremov|\bhide|\bblock|\bempty\b|\bpause/i;
+const AVAILFIELD = /stock_status|availability|(^|_)avail$|_avail$/;
+const QTYFIELD = /stock|quantity|(^|_)qty/;
+const MIRROR = /^\s*(not available|unavailable|out of stock|oos|sold out)\b.*(\bto\b|->)\s*(zero|0)\b/i;
+export const SV_CHANNELS = ['google', 'all'];   // the channels Google Ads' price for a click applies to
+// what a stock rule does to products, and how many it holds back — {kind, n, why}
+//   kind: 'blocked' (n held back) · 'none' (a blocking rule holding nothing back today) · 'releases' ·
+//         'all' (writes every product — count not reported) · 'calc' (computes a value) · 'mirror'
+//         (restates a state products are already in) · 'channel' (holds back on a channel Google Ads
+//         does not price) · null (not a threshold / range-completion rule at all)
+export function heldBack(r) {
+  if (!r || !r.sk) return null;
+  const d = s0(r.d), n = s0(r.n), dr = r.dr || [], cut = r.cut || [];
+  const rcOrQty = dr.indexOf('rc') >= 0 || dr.indexOf('qty') >= 0 || dr.indexOf('hero') >= 0 || cut.length > 0;
+  // Ray: "all the stock-related exclusions — stock threshold, range completion, etc. — focus on stock
+  // threshold and range completion": thresholds, range completion, and any stock rule driven by either
+  // (a stock exclusion is already a rule the classifier placed for stock reasons)
+  if (!(r.sk === 'threshold' || r.sk === 'range' || r.sk === 'excl' || rcOrQty)) return null;
+  if (RELEASE.test(n)) return { kind: 'releases', n: r.imp, why: 'Its name says it lets products back in — the exception that keeps them live, not a saving.' };
+  const isExcl = /exclu|(^|_)exclude|excl_|destination|eligible/.test(d);
+  const blocks = isExcl
+    || (AVAILFIELD.test(d) && (rcOrQty || BLOCKWORD.test(n)))
+    || (QTYFIELD.test(d) && (BLOCKWORD.test(n) || cut.length > 0))
+    || (r.sk === 'label' && BLOCKWORD.test(n));
+  if (!blocks) return { kind: 'calc', n: null, why: 'It works out a value (range completion, hero sizes, stock counts) that other rules act on — the saving sits in the rule that holds products back.' };
+  if (SV_CHANNELS.indexOf(r.ch || 'all') < 0) return { kind: 'channel', n: r.imp, why: 'It holds products back on ' + (r.ch === 'meta' ? 'Meta' : r.ch === 'aff' ? 'affiliate feeds' : r.ch === 'tiktok' ? 'TikTok' : r.ch === 'pin' ? 'Pinterest' : 'another channel') + '. FeedHero\u2019s ad-spend read is Google Ads, and a Google click is not priced like one there.' };
+  if (MIRROR.test(n)) return { kind: 'mirror', n: r.imp, why: 'Its name says it restates a state the products are already in (unavailable \u2192 zero stock) \u2014 they were not being advertised either way.' };
+  if (r.imp == null) return { kind: 'all', n: null, why: 'FeedHero did not report how many products it changed.' };
+  if (r.of && r.imp >= r.of) return { kind: 'all', n: null, why: 'It writes every product (' + r.imp.toLocaleString('en-GB') + ' of ' + r.of.toLocaleString('en-GB') + '), setting each one in or out — the report counts what it wrote, not what it held back.' };
+  if (!r.imp) return { kind: 'none', n: 0, why: 'It is holding nothing back on its last run.' };
+  return { kind: 'blocked', n: r.imp, why: null };
+}
+// a market's price for traffic, off its ROAS index entry (the 30-day Total) — null when unread
+export function adsBasis(e) {
+  const t = e && (e.w30 || (e.spend ? e : null));
+  if (!t || !t.spend || !(t.spend.n > 0) || !(t.skus > 0) || !(t.clicks > 0)) return null;
+  const days = SV_WINDOW_DAYS, sp = t.spend.n, ck = t.clicks, sk = t.skus;
+  return {
+    cur: t.spend.cur || (e && e.cur) || '', days, spend: sp, clicks: ck, impr: t.impr || 0, skus: sk,
+    cpc: sp / ck, clicksDay: ck / sk / days, spendDay: sp / sk / days,   // unrounded — the page rounds for display only
+    zombie: t.zombiePct == null ? null : t.zombiePct, crPct: t.crPct == null ? null : t.crPct,
+    updated: (e && e.updated) || null,
+  };
+}
+// the saving — the ONE formula the page's twin (svCalc) is held to
+export function savingFor(n, basis, pct, days) {
+  if (!basis || !(n > 0)) return 0;
+  return n * basis.spendDay * (pct / 100) * (days || 1);
+}
+// A market's figure is its LARGEST blocking rule, never the sum of them: two stock rules can hold back
+// the same product (a threshold AND a range-completion exclusion), and the report does not say which
+// products each one holds. So the market reads "at least", and the book adds markets, never rules.
+export function svFloor(stock) {
+  let best = null;
+  (stock || []).forEach((r) => {
+    const h = r && (r.hb || heldBack(r));
+    if (h && h.kind === 'blocked' && h.n > 0 && (!best || h.n > best.n)) best = { n: h.n, i: r.i, rule: r.n };
+  });
+  return best;
+}
+// the book's headline: per CURRENCY (money never crosses one), each market's floor at pct over days
+export function svBook(markets, pct, days) {
+  const byCur = {}; let sized = 0, unpriced = 0;
+  (markets || []).forEach((m) => {
+    const f = svFloor(m.stock);
+    if (!f) return;
+    if (!m.ads) { unpriced++; return; }
+    const c = m.ads.cur || '';
+    const b = byCur[c] || (byCur[c] = { cur: c, amt: 0, markets: 0, n: 0 });
+    b.amt += savingFor(f.n, m.ads, pct, days); b.markets++; b.n += f.n; sized++;
+  });
+  return { byCur: Object.keys(byCur).map((k) => byCur[k]).sort((a, b) => b.amt - a.amt), sized, unpriced };
+}
+// one market as GET /api/rules/stock serves it — the worker and tools/rules_stub.js both call this, so
+// the tripwires' synthetic book can never drift from the real shape. `hb` rides on every stock row and
+// `ads` is the market's price for traffic off its ROAS index entry (null when FeedHero has no read).
+export function stockView(r, roasEntry) {
+  return { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items,
+    stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock), ads: adsBasis(roasEntry) };
 }
