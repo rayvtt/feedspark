@@ -87,6 +87,9 @@ echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only ro
 echo "── validating: AI transformation roadmap (shape + progress maths + opt-in gate + no £ on the page)"
 node tools/test_transform.mjs >/dev/null
 echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
+echo "── validating: FeedSpark design guidelines (/design + /design/fcc.css)"
+node tools/test_design.mjs >/dev/null
+echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
 
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
 node tools/test_tm.mjs >/dev/null

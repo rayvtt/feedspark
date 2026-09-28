@@ -10586,6 +10586,42 @@
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "function celebrate",
       "pr": 0
+    },
+    {
+      "name": "design: guidelines page served at /design",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/design':    { html: DESIGN_PAGE",
+      "pr": 0
+    },
+    {
+      "name": "design: /design/fcc.css is the page's own FCC-DESIGN slice",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/design/fcc.css'",
+      "pr": 0
+    },
+    {
+      "name": "design: the shared stylesheet block",
+      "file": "docs/FeedSpark_Design.html",
+      "pattern": "/* FCC-DESIGN:START */",
+      "pr": 0
+    },
+    {
+      "name": "design: swatches read from the stylesheet itself",
+      "file": "docs/FeedSpark_Design.html",
+      "pattern": "var CSS=($('fcc-design')||{}).textContent",
+      "pr": 0
+    },
+    {
+      "name": "design: roadmap card + AM-module rule",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "id:'o-design'",
+      "pr": 0
+    },
+    {
+      "name": "design: Leadership hub card",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "<a class=\"hub-card\" href=\"/design\">",
+      "pr": 0
     }
   ]
 }

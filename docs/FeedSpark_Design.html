@@ -1,0 +1,415 @@
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Design guidelines</title>
+<style id="fcc-design">
+/* FCC-DESIGN:START */
+/* FeedSpark design system — the ONE stylesheet every FCC module can load (served at /design/fcc.css,
+   sliced from this block of docs/FeedSpark_Design.html so the guideline page and the stylesheet can
+   never disagree). Source of the brand: the Reiss–Dentsu introduction (Mar 2026) — orange #F5A623,
+   deep orange #ED6F0B, charcoal #333, white, light greys, Lato, white cards with #E6E6E6 borders. */
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+:root{
+  /* brand */
+  --orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;
+  --ink:#333333;--ink-2:#4a4a4a;--muted:#8a94a0;
+  --paper:#FFFFFF;--wash:#F7F7F5;--grey:#F5F5F5;--line:#E6E6E6;
+  /* interface */
+  --navy:#1A365D;--good:#15803D;--risk:#C0392B;--info:#2563EB;
+  /* audit legend (one scale across every audit: <70 red · 70–85 orange · 85–95 yellow · 95+ green) */
+  --band-red:#C0392B;--band-orange:#ED6F0B;--band-yellow:#F5A623;--band-green:#15803D;
+  /* charts — the validated pair; never a dual axis */
+  --chart-1:#2563EB;--chart-2:#ED6F0B;--grid:#EEF0F2;
+  /* shape */
+  --radius:14px;--radius-s:9px;--gutter:22px;--wrap:1320px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);
+  --font:Lato,system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;--grey:#20242E;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;--info:#4C82E0;
+  --band-red:#F1707A;--band-orange:#ED6F0B;--band-yellow:#F5A623;--band-green:#48D07E;
+  --chart-1:#4C82E0;--chart-2:#C67B28;--grid:#242830;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42)}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--wash);line-height:1.5;font-size:14px}
+a{color:var(--orange-ink)}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter)}
+/* type — Lato 400 / 700 / 900 only (a 500 or 600 would be synthesised) */
+h1{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em;line-height:1.15}
+h2{font-size:19px;font-weight:900;margin:0 0 4px;letter-spacing:-.005em}
+h3{font-size:15px;font-weight:900;margin:0 0 4px}
+.eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+.sub{color:var(--ink-2);font-size:14px;max-width:940px;margin:0 0 12px}
+.label{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+/* surfaces */
+.card,section.blk{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin:16px 0;min-width:0}
+.blk-h{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.blk-h .grow{flex:1;min-width:220px}
+.blk-h p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+/* the source line: where a figure came from and when */
+.src{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 13px;box-shadow:var(--shadow)}
+.src .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.src .dot.live{background:var(--good)}.src .dot.warn{background:var(--orange)}.src .dot.bad{background:var(--risk)}
+.src .grow{flex:1;min-width:180px}
+/* buttons */
+.btn{font:inherit;font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:var(--radius-s);border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+.btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.pri:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+.btn:disabled,.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+[data-theme=dark] .btn{background:var(--grey)}
+[data-theme=dark] .btn.pri{background:var(--orange);color:#14161C}
+/* chips (filters) and pills (states) */
+.chip{font:inherit;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip:hover{border-color:var(--orange)}
+.pill{font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:100px;background:var(--wash);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap;display:inline-block}
+.pill.good{background:var(--good);border-color:var(--good);color:#fff}
+.pill.warn{background:var(--orange);border-color:var(--orange);color:#fff}
+.pill.risk{background:var(--risk);border-color:var(--risk);color:#fff}
+.pill.info{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.35);color:var(--info)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.seg button{font:inherit;font-size:12.5px;font-weight:900;padding:7px 12px;border:0;background:transparent;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--navy);color:#fff}
+.tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-2);cursor:pointer}
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;margin:14px 0 4px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;min-width:0}
+.kpi .n{font-size:26px;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.kpi .n small{font-size:13px;color:var(--muted);font-weight:800}
+.kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
+.kpi .d{font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px}
+.kpi.warn .n{color:var(--orange-deep)}.kpi.risk .n{color:var(--risk)}.kpi.good .n{color:var(--good)}
+/* bars */
+.pbar{height:6px;border-radius:6px;background:var(--wash);overflow:hidden;display:flex}
+.pbar i{display:block;height:100%;background:var(--good)}
+.b-red{background:var(--band-red)}.b-orange{background:var(--band-orange)}.b-yellow{background:var(--band-yellow)}.b-green{background:var(--band-green)}
+/* tables: numbers right-aligned, tabular, same decimals down a column */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th{text-align:left;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--wash);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* forms */
+.field label{display:block;font-size:11.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.field input,.field select,.field textarea,input.in,select.in{font:inherit;font-size:14px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-s);background:var(--paper);color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
+/* empty, toast, footer */
+.empty{padding:14px;font-size:12.5px;color:var(--muted);font-weight:700;text-align:center}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;font-weight:800;font-size:13px;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:300}
+.toast.on{opacity:1}
+.footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+.footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+/* a flex or grid row IGNORES the hidden attribute unless this is said once */
+[hidden]{display:none!important}
+@media (max-width:760px){:root{--gutter:16px}h1{font-size:24px}.field input,.field select,.field textarea{font-size:16px}.btn{min-height:36px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* FCC-DESIGN:END */
+</style>
+<style>
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1320px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  [data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+  .hero{padding:30px 0 8px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--wash);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+  .toc{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 2px}
+  .toc .chip{text-decoration:none}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .pr{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--wash);min-width:0}
+  .pr b{display:block;font-size:14px;font-weight:900;margin-bottom:3px}
+  .pr span{font-size:13px;color:var(--ink-2)}
+  h3{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:4px 0 8px}
+  .sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .sw{display:flex;gap:10px;align-items:center;min-width:0}
+  .sw svg{width:64px;height:40px;flex:none}
+  .sw-t{min-width:0;display:flex;flex-direction:column;font-size:12.5px;line-height:1.3}
+  .sw-t b{font-weight:900}.sw-t span{color:var(--ink-2)}
+  .sw-t code{font-size:11px;margin-top:3px;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bands{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .bands div{display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+  .bands i{display:block;height:10px;border-radius:5px}
+  .bands b{font-weight:900}.bands span{color:var(--muted);font-weight:700}
+  .note{font-size:12.5px;color:var(--ink-2);margin:12px 0 0}
+  .type-rows{display:flex;flex-direction:column}
+  .tr{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+  .tr:last-child{border-bottom:0}
+  .tk{font-size:11px;font-weight:800;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .dx{border:1px dashed var(--line);border-radius:12px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:8px}
+  .dx.wide{grid-column:1/-1}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chart-demo{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:center}
+  .chart-demo svg{width:100%;height:auto}
+  ul.rules,ol.steps,ul.never{margin:0;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+  ul.rules li,ol.steps li,ul.never li{margin:5px 0}
+  ul.rules b{color:var(--ink)}
+  ul.never li::marker{content:'✕  ';color:var(--risk);font-weight:900}
+  .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .dd{border-radius:12px;padding:12px 14px;border:1px solid var(--line)}
+  .dd b{font-weight:900;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .dd ul{margin:6px 0 0;padding-left:18px;font-size:13px}
+  .dd.do{border-left:4px solid var(--good)}.dd.do b{color:var(--good)}
+  .dd.dont{border-left:4px solid var(--risk)}.dd.dont b{color:var(--risk)}
+  .code{margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .code pre{margin:0;width:100%;overflow:auto;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12px;line-height:1.5;color:var(--ink)}
+  @media(max-width:760px){.tr{grid-template-columns:1fr;gap:2px}.chart-demo,.do-dont{grid-template-columns:1fr}.bands{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:24px}section.blk{padding:14px}}
+  /* rocket + icon nav (shared) */
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+</style>
+<style>/* FCC-THEME */
+#theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
+.nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
+.tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.tb-modules a.tbm{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;color:var(--ink-2,#4a4a4a);text-decoration:none;transition:background .15s,color .15s}
+.tb-modules a.tbm:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm.on{background:rgba(245,166,35,.14);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm::after{content:attr(data-lbl);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1A365D;color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;padding:4px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:70}
+.tb-modules a.tbm:hover::after{opacity:1}
+.nav-collapsed .tb-modules{display:none}
+[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
+[data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
+[data-theme=dark] .tb-modules a.tbm::after{background:#0B0D12}
+[data-theme=dark] .nav-collapse:hover{color:var(--orange-ink)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42);
+  /* dark-surface chart steps — separately validated against #1C1F27, not a flip of the light pair */
+  --vin:#4C82E0;--vout:#C67B28;--grid:#242830}
+[data-theme=dark] body{background:var(--wash);color:var(--ink)}
+[data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+[data-theme=dark] a{color:var(--orange-ink)}
+[data-theme=dark] .kpi,[data-theme=dark] .card{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] select#brand,[data-theme=dark] .btn,[data-theme=dark] .mkc{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn.on,[data-theme=dark] .mkc.on{background:var(--orange);border-color:var(--orange);color:#14161C}
+[data-theme=dark] .tip{background:#0B0D12}
+[data-theme=dark] .tip .ti{color:#8FB4F0}
+[data-theme=dark] .tip .to{color:#E8B778}
+</style>
+<div class="topbar"><div class="topbar-in">
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">Design guidelines</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+</div></div>
+
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">FeedSpark · Design guidelines</div>
+  <h1>FeedSpark design guidelines</h1>
+  <p class="sub">How every FCC module looks, reads and behaves — the core and anything an AM builds. The colours, type and components below are drawn from the same stylesheet a module loads, so this page cannot drift from it.</p>
+  <div class="src"><span class="dot live"></span><span class="grow">Every module loads <code>/design/fcc.css</code> — the brand is inherited, not re-typed.</span>
+    <button class="btn" type="button" id="cp-link" title="Copy the one line that gives a module the FeedSpark look">⧉ Copy the link tag</button>
+    <a class="btn" href="/design/fcc.css" download="fcc.css">⬇ fcc.css</a>
+  </div>
+  <nav class="toc" aria-label="On this page">
+    <a class="chip" href="#principles">Principles</a><a class="chip" href="#colour">Colour</a><a class="chip" href="#type">Type</a>
+    <a class="chip" href="#components">Components</a><a class="chip" href="#charts">Charts</a><a class="chip" href="#layout">Layout</a>
+    <a class="chip" href="#voice">Voice</a><a class="chip" href="#ux">UX rules</a><a class="chip" href="#never">Never</a><a class="chip" href="#build">Build an AM module</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<section class="blk" id="principles">
+  <div class="blk-h"><div class="grow"><h2>Principles</h2><p>Six rules every screen is judged against.</p></div></div>
+  <div class="grid3">
+    <div class="pr"><b>Clean white, orange with purpose</b><span>White surfaces, charcoal text, orange only where it means something: the primary action, the current thing, a warning.</span></div>
+    <div class="pr"><b>Data first, honestly</b><span>Say where a figure came from and when. Never read as zero: show "not scanned" or "not read yet" instead.</span></div>
+    <div class="pr"><b>One idea per surface</b><span>A card answers one question. One modal at a time. If it needs a paragraph, it needs a pop-up.</span></div>
+    <div class="pr"><b>Same on the phone</b><span>Everything the desktop shows is reachable at 390px. Wide things pan inside their frame; nothing is hidden.</span></div>
+    <div class="pr"><b>Dark mode is a first-class theme</b><span>Every colour is a token with a dark value. No light islands.</span></div>
+    <div class="pr"><b>Plain English</b><span>Short sentences an AM can read aloud to a client. A second sentence collapses behind ⓘ.</span></div>
+  </div>
+</section>
+
+<section class="blk" id="colour">
+  <div class="blk-h"><div class="grow"><h2>Colour</h2><p>Read live from <code>fcc.css</code>: light value, then dark.</p></div></div>
+  <h3>Brand</h3>
+  <div class="sw-grid" data-sw="--orange:Orange · primary action, current|--orange-deep:Deep orange · hover, accent text|--ink:Charcoal · body text|--paper:White · surfaces|--wash:Light grey · page, card backgrounds|--grey:Light grey · fills|--line:Border · #E6E6E6 cards"></div>
+  <h3 style="margin-top:16px">Interface</h3>
+  <div class="sw-grid" data-sw="--navy:Navy · selected chips, tooltips|--good:Green · done, healthy|--risk:Red · failing, blocked|--info:Blue · in progress, information|--muted:Muted · labels, meta|--ink-2:Secondary text"></div>
+  <h3 style="margin-top:16px">Audit legend — one scale on every audit</h3>
+  <div class="bands">
+    <div><i class="b-red"></i><b>&lt; 70</b><span>red</span></div>
+    <div><i class="b-orange"></i><b>70–85</b><span>orange</span></div>
+    <div><i class="b-yellow"></i><b>85–95</b><span>yellow</span></div>
+    <div><i class="b-green"></i><b>95–100</b><span>green</span></div>
+  </div>
+  <p class="note">AI-readiness keeps its own four tiers (40 / 60 / 80): its colours ARE its tiers.</p>
+</section>
+
+<section class="blk" id="type">
+  <div class="blk-h"><div class="grow"><h2>Type</h2><p>Lato only, at 400, 700 and 900.</p></div></div>
+  <div class="type-rows">
+    <div class="tr"><span class="tk">h1 · 30 / 900</span><div style="font-size:30px;font-weight:900;letter-spacing:-.01em">Golden Record — Reiss GB</div></div>
+    <div class="tr"><span class="tk">h2 · 19 / 900</span><div style="font-size:19px;font-weight:900">Where the hours went</div></div>
+    <div class="tr"><span class="tk">KPI · 26 / 900</span><div class="num" style="font-size:26px;font-weight:900">88.6%</div></div>
+    <div class="tr"><span class="tk">eyebrow · 12 / 900 · +.1em</span><div class="eyebrow">Private &amp; Confidential</div></div>
+    <div class="tr"><span class="tk">body · 14 / 400 · 1.5</span><div>Every product scored against Google’s own wording for the attribute.</div></div>
+    <div class="tr"><span class="tk">label · 11.5 / 800 caps</span><div class="label">Products in scope</div></div>
+  </div>
+  <p class="note">Numbers are tabular and right-aligned, with the same decimals down a column (1.00, 0.50) so the points line up. No 500 or 600 weights: the browser would synthesise them.</p>
+</section>
+
+<section class="blk" id="components">
+  <div class="blk-h"><div class="grow"><h2>Components</h2><p>Live, from the stylesheet. Use the class; never restyle it.</p></div></div>
+  <div class="demo">
+    <div class="dx"><span class="tk">.btn · .btn.pri</span><div class="row"><button class="btn" type="button">⬇ CSV</button><button class="btn pri" type="button">Save</button><button class="btn" type="button" disabled>Disabled</button></div></div>
+    <div class="dx"><span class="tk">.chip (filter) · .chip.on</span><div class="row"><button class="chip on" type="button">All markets</button><button class="chip" type="button">GB</button><button class="chip" type="button">DE</button></div></div>
+    <div class="dx"><span class="tk">.pill (state)</span><div class="row"><span class="pill">Not started</span><span class="pill info">In progress</span><span class="pill good">Done</span><span class="pill warn">Now</span><span class="pill risk">Blocked</span></div></div>
+    <div class="dx"><span class="tk">.seg · .tog</span><div class="row"><span class="seg" role="tablist" aria-label="Example"><button type="button" class="on">30 days</button><button type="button">90 days</button></span><label class="tog"><input type="checkbox" checked> Only open</label></div></div>
+    <div class="dx wide"><span class="tk">.kpis › .kpi</span>
+      <div class="kpis" style="margin:0"><div class="kpi"><div class="n">88.6<small>%</small></div><div class="l">Golden Score</div><div class="d">Reiss GB · 09:00 today</div></div>
+        <div class="kpi warn"><div class="n">12</div><div class="l">Attributes thin</div><div class="d">below 90% cover</div></div>
+        <div class="kpi good"><div class="n">4 of 6</div><div class="l">AI attributes live</div><div class="d">conversational six</div></div></div></div>
+    <div class="dx wide"><span class="tk">.src — where a figure came from, and when</span><div class="src"><span class="dot live"></span><span class="grow">Live · synced 4 min ago · 39 of 41 markets read</span><button class="btn" type="button">⟳ Sync now</button></div></div>
+    <div class="dx wide"><span class="tk">table.t · td.num</span><div class="tw"><table class="t"><thead><tr><th>Market</th><th class="num">Products</th><th class="num">Hours</th><th>State</th></tr></thead>
+      <tbody><tr><td>GB</td><td class="num">24,413</td><td class="num">12.50</td><td><span class="pill good">Done</span></td></tr><tr><td>DE</td><td class="num">9,664</td><td class="num">1.00</td><td><span class="pill info">In progress</span></td></tr><tr><td>IE</td><td class="num">—</td><td class="num">—</td><td><span class="muted">not scanned</span></td></tr></tbody></table></div></div>
+    <div class="dx"><span class="tk">.field</span><div class="field"><label for="dx-f">Client contact</label><input id="dx-f" type="text" placeholder="name@client.com"></div></div>
+    <div class="dx"><span class="tk">.pbar · audit bands</span><div class="pbar" style="height:8px"><i class="b-green" style="width:96%"></i></div><div class="pbar" style="height:8px;margin-top:8px"><i class="b-yellow" style="width:88%"></i></div><div class="pbar" style="height:8px;margin-top:8px"><i class="b-red" style="width:52%"></i></div></div>
+    <div class="dx"><span class="tk">.empty — say why, never 0</span><div class="empty">Not scanned yet — ⚡ Scan now reads the live feed.</div></div>
+  </div>
+</section>
+
+<section class="blk" id="charts">
+  <div class="blk-h"><div class="grow"><h2>Charts</h2><p>Two series colours, one axis per chart.</p></div></div>
+  <div class="chart-demo">
+    <svg viewBox="0 0 360 150" role="img" aria-label="Example: arrivals per month, the running month drawn translucent">
+      <line x1="10" y1="130" x2="350" y2="130" stroke="var(--line)"/>
+      <g fill="var(--chart-1)"><rect x="20" y="70" width="30" height="60" rx="3"/><rect x="70" y="50" width="30" height="80" rx="3"/><rect x="120" y="126" width="30" height="4" rx="2"/><rect x="170" y="40" width="30" height="90" rx="3"/><rect x="220" y="60" width="30" height="70" rx="3"/><rect x="270" y="80" width="30" height="50" rx="3" opacity=".45"/></g>
+      <g font-size="10" fill="var(--muted)" font-family="Lato" font-weight="700" text-anchor="middle"><text x="35" y="144">May</text><text x="85" y="144">Jun</text><text x="135" y="144">Jul</text><text x="185" y="144">Aug</text><text x="235" y="144">Sep</text><text x="285" y="144">Oct*</text></g>
+    </svg>
+    <ul class="rules">
+      <li><b>Palette:</b> blue <code>--chart-1</code> and orange <code>--chart-2</code> — validated in both themes.</li>
+      <li><b>Never a dual axis.</b> Two measures = two panels on one calendar.</li>
+      <li><b>Walk the calendar.</b> A month with nothing is a zero in its own slot, never a gap that closes up.</li>
+      <li><b>The running month is partial:</b> drawn at .45 and labelled, never plotted as finished.</li>
+      <li><b>Say what the bars are</b> under the chart, and offer a ⊞ table view.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="blk" id="layout">
+  <div class="blk-h"><div class="grow"><h2>Layout &amp; chrome</h2><p>What every page shares, and what it must not rebuild.</p></div></div>
+  <ul class="rules">
+    <li><b>Topbar:</b> the wordmark, the page tag, then the module row — every module as an icon, right-aligned, identical on every page.</li>
+    <li><b>Column:</b> 1320px max, 22px gutter (16px on the phone); cards 14px radius, #E6E6E6 border, soft shadow.</li>
+    <li><b>Footer:</b> “FeedSpark · Private &amp; Confidential” left, page or version right.</li>
+    <li><b>Injected for you — never rebuilt:</b> the live editor, presence avatars, the hours dot, Feed Chat, the phone bottom bar, migration badges, the ⓘ collapse.</li>
+    <li><b>Client documents</b> (decks, exported PDF/HTML) follow the core deck template, not the app chrome, and never carry internal tools or wording.</li>
+  </ul>
+</section>
+
+<section class="blk" id="voice">
+  <div class="blk-h"><div class="grow"><h2>Voice &amp; copy</h2><p>Write the way an AM talks to a client.</p></div></div>
+  <div class="do-dont">
+    <div class="dd do"><b>Do</b><ul><li>“39 of 41 markets read · oldest 3 h ago”</li><li>“Not scanned” · “No AM on record”</li><li>“Ask the client to allowlist the scanner”</li><li>24 Sep 2026 · £1,818.14 ex VAT</li></ul></div>
+    <div class="dd dont"><b>Don’t</b><ul><li>“0 markets” when nothing was read</li><li>“Error: 403 upstream fetch failed”</li><li>A paragraph under every heading</li><li>09/24/26 · £1.8k (on a quote)</li></ul></div>
+  </div>
+  <p class="note">UK English. One sentence visible; more collapses behind ⓘ. Name the source and the time of any figure. Money shows pence.</p>
+</section>
+
+<section class="blk" id="ux">
+  <div class="blk-h"><div class="grow"><h2>UX rules</h2><p>Each one learnt from a real bug on the FCC.</p></div></div>
+  <div class="grid3">
+    <div class="pr"><b>One modal at a time</b><span>Opening one closes the others. A modal centres in the space the page leaves, never under a rail.</span></div>
+    <div class="pr"><b>A flex row ignores <code>hidden</code></b><span>Say <code>[hidden]{display:none}</code> once (fcc.css does), and test what is painted, not the property.</span></div>
+    <div class="pr"><b>Nothing silent</b><span>A failed save stays on screen and retries. A missing reading says so. A skipped row is counted, never dropped.</span></div>
+    <div class="pr"><b>Undo, don’t just confirm</b><span>Deletes are confirmed and can be put back; shared records keep who and when.</span></div>
+    <div class="pr"><b>Shared work, personal screen</b><span>The work is shared by the team; a filter, a fold or a theme stays on the device.</span></div>
+    <div class="pr"><b>Drafts, never sends</b><span>Client email lands as a Gmail draft for a person to send.</span></div>
+    <div class="pr"><b>Esc closes the top thing</b><span>Pop-up before panel before full screen.</span></div>
+    <div class="pr"><b>Reduced motion respected</b><span>Delight is optional; the information never is.</span></div>
+    <div class="pr"><b>Deep links</b><span>A view worth sharing has a URL: <code>?client=&amp;market=</code>.</span></div>
+  </div>
+</section>
+
+<section class="blk" id="never">
+  <div class="blk-h"><div class="grow"><h2>Never</h2><p>From the brand source and the design review.</p></div></div>
+  <ul class="never">
+    <li>No FeedSpark logo inside content, no page-number circles.</li>
+    <li>No decorative lines or orange used as decoration.</li>
+    <li>No colour or font outside the tokens; no hex typed into a module.</li>
+    <li>No 500 / 600 weights; no second typeface.</li>
+    <li>No internal tools, weights or jargon on anything a client receives.</li>
+    <li>No figure without its source and time.</li>
+  </ul>
+</section>
+
+<section class="blk" id="build">
+  <div class="blk-h"><div class="grow"><h2>Build an AM module</h2><p>The 30%: an AM’s own module on the FeedSpark look, automatically.</p></div></div>
+  <ol class="steps">
+    <li>Load the stylesheet — the brand, dark mode and components come with it.</li>
+    <li>Use the tokens (<code>var(--orange)</code>), never a hex.</li>
+    <li>Build from the components above: cards, KPI tiles, chips, tables, the source line.</li>
+    <li>Read only approved, client-scoped data sources.</li>
+    <li>Pass the checks every core page passes: module row, 390px phone, dark mode, security headers.</li>
+    <li>Promotion to core is a reviewed pull request.</li>
+  </ol>
+  <div class="code"><button class="btn" type="button" id="cp-starter">⧉ Copy starter</button><pre id="starter"></pre></div>
+</section>
+
+</main>
+<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>Design guidelines · source: Reiss–Dentsu introduction, Mar 2026</span></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var $=function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove('on'); },2200); }
+  // the tokens are read OUT OF the design stylesheet itself, so a swatch can never disagree with fcc.css
+  var CSS=($('fcc-design')||{}).textContent||'';
+  function block(sel){ var i=CSS.indexOf(sel+'{'); if(i<0)return {}; var j=CSS.indexOf('}',i), o={};
+    CSS.slice(i+sel.length+1,j).replace(/(--[\w-]+)\s*:\s*([^;]+);?/g,function(_,k,v){ o[k]=v.trim(); }); return o; }
+  var LIGHT=block(':root'), DARK=block(':root[data-theme=dark]');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sw]'),function(g){
+    g.innerHTML=g.getAttribute('data-sw').split('|').map(function(p){ var k=p.split(':')[0], lbl=p.slice(k.length+1), l=LIGHT[k]||'', d=DARK[k]||l;
+      return '<div class="sw"><svg viewBox="0 0 64 40" aria-hidden="true"><rect x="0.5" y="0.5" width="31" height="39" rx="6" fill="'+esc(l)+'" stroke="#E6E6E6"/><rect x="32.5" y="0.5" width="31" height="39" rx="6" fill="'+esc(d)+'" stroke="#2C3039"/></svg>'
+        +'<div class="sw-t"><b>'+esc(lbl.split(' · ')[0])+'</b><span>'+esc(lbl.split(' · ').slice(1).join(' · '))+'</span><code title="'+esc(k)+' · light '+esc(l)+' · dark '+esc(d)+'">'+esc(k)+' · '+esc(l)+(d!==l?' / '+esc(d):'')+'</code></div></div>'; }).join(''); });
+  var TAG='<link rel="stylesheet" href="/design/fcc.css">';
+  $('starter').textContent='<!doctype html>\n<html lang="en-GB">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>FeedSpark · My module</title>\n'+TAG+'\n</head>\n<body>\n<main class="wrap">\n  <div class="eyebrow">AM module</div>\n  <h1>My module</h1>\n  <div class="src"><span class="dot live"></span><span class="grow">Live · read 09:00 today</span></div>\n  <div class="kpis">\n    <div class="kpi"><div class="n">42</div><div class="l">Briefs this month</div></div>\n  </div>\n  <section class="blk"><h2>Section</h2><p class="sub">One sentence.</p></section>\n</main>\n<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>My module</span></div></div>\n<\/body>\n<\/html>';
+  function copy(txt,ok){ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){ toast(ok); },function(){ window.prompt('Copy:',txt); }); else window.prompt('Copy:',txt); }
+  $('cp-link').onclick=function(){ copy(TAG,'Link tag copied'); };
+  $('cp-starter').onclick=function(){ copy($('starter').textContent,'Starter copied'); };
+})();
+</script>
