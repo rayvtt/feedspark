@@ -6,13 +6,13 @@ completion … develop a roadmap for a live dashboard migration so I can keep tr
 and senior team … an internal roadmap to get all account managers to use the dashboard … 70% of our
 FCC will be a fixed module … 20–30% customization."*
 
-**The live tracker is `/transformation`.** This document holds the evidence behind it. It was
+**The live tracker is `/migration`** (it was `/transformation` until 28 Sep 2026; the old link 301s). This document holds the evidence behind it. It was
 produced by three read-only audits of the code on 24 Sep 2026: a dependency inventory, a module
 classification and a target-architecture design. Line numbers drift, so use the named functions.
 
 ---
 
-## 1. The tracker (`/transformation`)
+## 1. The tracker (`/migration`)
 
 - **Content lives in git.** The months, milestones, decisions, KPIs, risks, the 70/30 model and
   the options are defined in the page itself, between `/* RM:START */` and `/* RM:END */`. Change

@@ -1,7 +1,7 @@
 <!-- FCC-MIGRATION: module-by-module migration badges (Ray, 24 Sep 2026: "We'll ship module by module.
      Therefore, when other AMs start using the dashboard, each module needs to be highlighted if it has
      been migrated or not"). Injected on every app page. Reads the public projection
-     GET /api/migration/status ({on, modules:{path:{n,st,m}}}) that management sets on /transformation,
+     GET /api/migration/status ({on, modules:{path:{n,st,m}}}) that management sets on /migration,
      and paints (1) a small dot on every module icon in the nav — wherever the nav lives: the topbar, the
      phone's bottom bar, the ▦ apps bundle — and (2) one pill on the current page's topbar naming its
      state. Nothing is drawn when management switches the badges off, or when the read fails: a missing
@@ -69,7 +69,7 @@
   // the phone layer and the ▦ bundle move the nav's anchors after boot — repaint when they do
   var pend=0; function soon(){ if(pend)return; pend=1; setTimeout(function(){ pend=0; paint(); },120); }
   function boot(){ load(); try{ new MutationObserver(function(ms){ for(var i=0;i<ms.length;i++){ if(ms[i].addedNodes&&ms[i].addedNodes.length){ soon(); return; } } }).observe(document.body,{childList:true,subtree:true}); }catch(e){} }
-  // /transformation writes a module's status and wants the badges to follow at once
+  // /migration writes a module's status and wants the badges to follow at once
   window.addEventListener('fcc-migration',function(e){ try{ sessionStorage.removeItem('fcc-mig'); }catch(x){} if(e&&e.detail&&e.detail.modules){ DATA=e.detail; paint(); } else load(); });
   if(document.readyState!=='loading')boot(); else document.addEventListener('DOMContentLoaded',boot);
 })();
