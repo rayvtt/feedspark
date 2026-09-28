@@ -103,6 +103,10 @@ echo "── validating: ROAS (FeedHero_reports MCP — currency-safe rollup, Fe
 node tools/test_roas.mjs >/dev/null
 echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
 
+echo "── validating: Rules + Stock management (FeedHero rule_report — classifier, findings, lifted rulesPull)"
+node tools/test_rules.mjs >/dev/null
+echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null

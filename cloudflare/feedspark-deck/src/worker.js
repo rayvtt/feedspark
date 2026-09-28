@@ -47,6 +47,8 @@ import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js"
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
 import * as ROAS from "./roas.js";
+// Rules + Stock management (Ray, 28 Sep 2026) — FeedHero's rule_report off the SAME MCP + token as ROAS
+import * as RULES from "./rules.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -102,6 +104,8 @@ import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
+import RULES_MOD_PAGE from "../../../docs/FeedSpark_Rules.html";
+import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -254,6 +258,8 @@ const PAGES = {
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
+  '/rules':       { html: RULES_MOD_PAGE, slug: 'rules' },
+  '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
@@ -2520,6 +2526,61 @@ async function route(request, env, ctx) {
       }
     }
 
+    // RULES + STOCK MANAGEMENT (Ray, 28 Sep 2026: "bring other data points from FeedHero reports
+    // MCPs as well … 'Rules' … I'm most interested in stock management related rules … The new
+    // module can be called rules and another is stock management"). FeedHero's rule_report, read
+    // by rulesPull off the SAME server + token as ROAS and the SAME roster (nothing outside it is
+    // pulled, stored or shown), classified by src/rules.js. Scoped like /api/roas.
+    //   GET /api/rules                    → the book: every market's summary + its findings (rulesidx, one KV get)
+    //   GET /api/rules?client=&market=    → ONE market's full rule list in run order + its chains + findings
+    //   GET /api/rules?pull=1             → OWNER-ONLY sync-now (≤6 markets a call; the page loops it)
+    //   GET /api/rules/stock              → the stock view: coverage matrix, cut-offs, stock findings, every stock rule
+    if ((path === '/api/rules' || path === '/api/rules/stock') && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
+      if (path === '/api/rules' && url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await rulesPull(env, { pulls: Math.min(6, Math.max(0, +url.searchParams.get('pulls') || 6)) });
+        logActivity(ctx, env, request, 'rules-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('rulesstatus', 'json'));
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const now = Date.now();
+      const one = url.searchParams.get('client'), mkt = url.searchParams.get('market');
+      if (path === '/api/rules' && one && mkt) {
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
+        const m = ROAS.rosterOf(one).find((x) => x.market === mkt);
+        if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+        const r = await env.EDITS.get('rules:' + m.cmpid, 'json');
+        if (!r) return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, read: false, rules: [], chains: [], findings: [], status });
+        const rules = r.rules || [];
+        const where = { client: one, market: mkt, cmpid: m.cmpid, rules };
+        return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, read: true, updated: r.updated || null, total: r.total == null ? rules.length : r.total, capped: !!r.capped,
+          rules, chains: RULES.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })),
+          findings: RULES.rulesFindings([where], now), stockFindings: RULES.stockFindings([Object.assign({ stock: rules.filter((x) => x.sk) }, where)], now), status });
+      }
+      const idx = (await env.EDITS.get('rulesidx', 'json')) || {};
+      const brandQ = url.searchParams.get('brand');
+      if (brandQ && !inScope(brandQ)) return json({ ok: false, error: 'out of scope' }, 403);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client) && (!brandQ || r.client === brandQ) && ROAS.cmpidBrand(r.cmpid));
+      const roster = ROAS.rosterList().filter((m) => inScope(m.client) && (!brandQ || m.client === brandQ));
+      const unread = roster.filter((m) => !idx[m.cmpid]).map((m) => ({ client: m.client, market: m.market, cmpid: m.cmpid }));
+      const rosterBrands = Object.keys(ROAS.ROAS_ROSTER).filter(inScope).map((c) => ({ client: c, markets: ROAS.ROAS_ROSTER[c].map((x) => x.market) }));
+      const base = { ok: true, tracked: rows.length, roster: roster.length, unread, rosterBrands, scope: { brand: brandQ || null }, status, at: now };
+      if (path === '/api/rules/stock') {
+        return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
+          matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), findings: RULES.stockFindings(rows, now),
+          markets: rows.map((r) => ({ client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items, stock: r.stock || [], sentence: RULES.stockSentence(r.stock) })) }));
+      }
+      const findings = [];
+      rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));
+      findings.sort((a, b) => b.sev - a.sev || b.n - a.n);
+      return json(Object.assign(base, { families: RULES.FAMILIES, mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, sev: RULES.SEV,
+        estate: RULES.estate(rows), brands: RULES.brandsOf(rows), findings,
+        markets: rows.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) }));
+    }
+
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
@@ -3083,7 +3144,13 @@ async function scheduledRun(event, env, ctx) {
     // with the TM pull's subrequest budget. 6 clients off the 57-market roster, stalest first —
     // the whole roster turns over roughly every 5 hours, well inside the ~daily refresh the
     // source data itself carries.
+    // RULES take the :40 half of this firing while any roster market's rules are older than a day
+    // (RULES_STALE_MS) — same MCP, same token, its own budget; once every market is fresh the :40
+    // half goes back to ROAS, and a failed rules firing backs off 3 hours (rulesDue) so an error
+    // can never starve ROAS of its slot.
     if (event && event.cron === '10,40 * * * *') {
+      const mi = new Date((event && event.scheduledTime) || Date.now()).getUTCMinutes();
+      if (mi >= 30 && RULES.rulesDue(await env.EDITS.get('rulesstatus', 'json'), ROAS.rosterList(), Date.now())) { await rulesPull(env); return; }
       await roasPull(env);
       return;
     }
@@ -3541,6 +3608,67 @@ async function roasPull(env, opts) {
     const msg = String((e && e.message) || e).slice(0, 160);
     const code = e && e.code;
     return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
+// ---- RULES: the worker pulls FeedHero's rule_report through roasMcp (same server, same token).
+// rulesStore = the one writer of rules:<cmpid> (the full normalised list, in run order) and the
+// rulesidx entry (RULES.idxEntry: summary + stock rows + findings). rulesPull = one firing: a
+// rotation of RULES_PULLS roster markets, stalest first, each read page by page (FeedHero's page
+// ceiling is 200; RULES_MAX_PAGES caps a market at 600 and a capped market says so). Only rows
+// whose cmpid IS the market are kept — the company filter matches by id OR name, and a name match
+// must never let a client outside the roster in.
+async function rulesStore(env, m, rows, meta, now, idx) {
+  const rules = RULES.normRules(rows);
+  const entry = RULES.idxEntry(m, rules, meta, now);
+  const rec = { client: m.client, market: m.market, cmpid: m.cmpid, updated: now, total: entry.total, capped: entry.capped, rules };
+  try { await env.EDITS.put('rules:' + m.cmpid, JSON.stringify(rec)); }
+  catch (e) { return { changed: false, error: 'kv put failed' }; }
+  idx[m.cmpid] = entry;
+  try { await env.EDITS.put('rulesidx', JSON.stringify(idx)); } catch (e) {}
+  return { changed: true, n: rules.length };
+}
+
+async function rulesPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('rulesstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null, pulled: [] };
+  const save = async (s) => { try { await env.EDITS.put('rulesstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.ROAS_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — the rules read uses the same FeedHero reports token as ROAS' }));
+  const mcp = opts.mcp || roasMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    const roster = ROAS.rosterList();
+    const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? RULES.RULES_PULLS : opts.pulls, now);
+    const idx = (await env.EDITS.get('rulesidx', 'json')) || {};
+    let changed = 0;
+    for (const m of plan) {
+      const rows = []; let total = null, pages = 1;
+      for (let p = 1; p <= Math.min(pages, RULES.RULES_MAX_PAGES); p++) {
+        const payload = await mcp.call('rule_report', { company: m.cmpid, page: p, page_size: RULES.RULES_PAGE });
+        const got = TMM.rowsOf(payload);
+        got.forEach((r) => { if (r && r.cmpid === m.cmpid) rows.push(r); });
+        if (payload && payload.pages != null) pages = Math.max(1, +payload.pages || 1);
+        if (payload && payload.total_rows != null) total = +payload.total_rows;
+        if (!got.length) break;
+      }
+      const r = await rulesStore(env, m, rows, { total }, now, idx);
+      if (r.changed) changed++;
+      st.rot[m.cmpid] = now;
+      st.pulled.push(m.client + ' ' + m.market + ' (' + rows.length + (total != null && total > rows.length ? ' of ' + total : '') + ')');
+    }
+    const onRoster = Object.keys(st.rot).filter((k) => roster.some((x) => x.cmpid === k)).length;
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: onRoster, total: roster.length, changed }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      fails: (st.fails | 0) + 1,
       state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
       error: msg,
     }));

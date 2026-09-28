@@ -117,7 +117,7 @@ ok(/Late \(\d+\):/.test(upd) && /October 2026 — Data census of the live store/
 ok(/Blocked:\n  Data census of the live store — waiting on IT/.test(upd), 'lists what is blocked, note flattened to one line');
 ok(/Decisions needed now:/.test(upd) && /D1 End state/.test(upd), 'lists the decisions due by now');
 ok(/Red risks:/.test(upd), 'lists the red risks');
-ok(/Modules: 0 of 20 migrated/.test(upd), 'says how many modules have migrated');
+ok(new RegExp('Modules: 0 of ' + RM.modules.length + ' migrated').test(upd), 'says how many modules have migrated');
 ok(/checklist \d+\/\d+/.test(upd), 'carries each card\'s checklist progress');
 
 console.log('Module migration — what every AM sees');

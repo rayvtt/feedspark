@@ -331,6 +331,13 @@ else
   echo "   ✗ ROAS harness FAILED — see node tools/test_roas.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6b/7: Rules + Stock management (FeedHero rule_report — classifier, findings, lifted rulesPull vs a stub MCP)"
+if node tools/test_rules.mjs >/dev/null 2>&1; then
+  echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
+else
+  echo "   ✗ Rules harness FAILED — see node tools/test_rules.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
