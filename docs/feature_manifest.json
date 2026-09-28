@@ -10814,6 +10814,36 @@
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "if (e.clientX === PT.x && e.clientY === PT.y) return;",
       "pr": 0
+    },
+    {
+      "name": "ROAS: a segment FeedHero has not set up is an answer, not an error",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export function segMissing(err)",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: the live segment route caches a not-set-up answer",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (ROAS.segMissing(e)) {",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: picking a segment opens the markets in view",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "function segOpen(){",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: the band filter names the markets it hid",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "hidden by the band filter (",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: a chevron toggles off what is on screen",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "var was=chv&&chv.getAttribute('aria-expanded')==='true';",
+      "pr": 0
     }
   ]
 }
