@@ -43,6 +43,12 @@
   /* the ▦ bundle is the phone's tool; on the desktop every module is on the row */
   body.fcc-navrow #fcc-apps { display: none !important }
 }
+/* a narrow desktop (761–1040px) holds 21+ icons on ONE row only if each gives up a little room:
+   38px targets + 3px gaps are 861px at 21 modules, past the 856px a 900px window leaves */
+@media (min-width: 761px) and (max-width: 1040px) {
+  body.fcc-navrow .topbar-in > #tb-modules { gap: 1px; }
+  body.fcc-navrow .topbar-in > #tb-modules a.tbm { width: 34px; }
+}
 @media print { body.fcc-navrow .topbar-in > #tb-modules { display: none !important } }
 </style>
 <script>

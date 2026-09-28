@@ -10622,6 +10622,84 @@
       "file": "docs/FeedSpark_Leadership.html",
       "pattern": "<a class=\"hub-card\" href=\"/design\">",
       "pr": 0
+    },
+    {
+      "name": "Rules: the engine classifies by the field a rule writes, then its name",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function stockKind(r)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: cut-offs are only ever read out of a rule's own name",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function cutoffs(name)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: a failed rules firing backs off so ROAS keeps its slot",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export const RULES_BACKOFF_MS",
+      "pr": 0
+    },
+    {
+      "name": "Rules: the pull keeps only rows whose cmpid IS the market",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (r && r.cmpid === m.cmpid) rows.push(r)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: /api/rules + /api/rules/stock routes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/rules' || path === '/api/rules/stock'",
+      "pr": 0
+    },
+    {
+      "name": "Rules: the :40 half of the ROAS firing reads rules while they are due",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "mi >= 30 && RULES.rulesDue(",
+      "pr": 0
+    },
+    {
+      "name": "Rules: /rules and /stock pages served",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/rules':       { html: RULES_MOD_PAGE, slug: 'rules' }",
+      "pr": 0
+    },
+    {
+      "name": "Rules: grantable modules",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "{ slug: 'stock', label: 'Stock management', path: '/stock' }",
+      "pr": 0
+    },
+    {
+      "name": "Rules page: one market's rule list in run order",
+      "file": "docs/FeedSpark_Rules.html",
+      "pattern": "api('/api/rules?client=' + encodeURIComponent(client) + '&market='",
+      "pr": 0
+    },
+    {
+      "name": "Stock page: coverage matrix market x stock control",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "id=\"cov\"",
+      "pr": 0
+    },
+    {
+      "name": "Stock page: cut-offs shown as what the name states",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "Cut-offs the rule names state",
+      "pr": 0
+    },
+    {
+      "name": "Rules: browser tripwires render /rules + /stock off the synthetic stub",
+      "file": "tools/check_mobile.js",
+      "pattern": "const RULES_STUB = require('./rules_stub.js').stubLines();",
+      "pr": 0
+    },
+    {
+      "name": "Rules: tripwires inline /design/fcc.css for pages that load it",
+      "file": "tools/check_darkmode.js",
+      "pattern": "const withFccCss = (h) =>",
+      "pr": 0
     }
   ]
 }
