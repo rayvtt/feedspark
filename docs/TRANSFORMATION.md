@@ -14,9 +14,10 @@ classification and a target-architecture design. Line numbers drift, so use the 
 
 ## 1. The tracker (`/migration`)
 
-- **Content lives in git.** The months, milestones, decisions, KPIs, risks, the 70/30 model and
-  the options are defined in the page itself, between `/* RM:START */` and `/* RM:END */`. Change
-  the plan through a PR.
+- **The seed lives in git; the board is editable.** The months, milestones, decisions, KPIs, risks,
+  the 70/30 model and the options are seeded in the page between `/* RM:START */` and
+  `/* RM:END */`. Anyone granted the page adds, rewords, moves or deletes any of it in place
+  (overrides `c:<coll>:<id>` in the store), so git never changes to move a card.
 - **Status lives in KV `transform`.** This covers status, owner, notes, decisions as recorded,
   measured KPIs, risk ratings, AM names and role holders. It is served by `GET|PUT /api/transform`,
   which uses kvmerge per key with `X-Sync-Base`, the same concurrency rule as the build queue. Two
@@ -29,6 +30,36 @@ classification and a target-architecture design. Line numbers drift, so use the 
   - To grant Andy or Matt: open 👥 Access in Workflow, find their row (or add it), tick
     **🔒 Transformation**, then Save.
   - The All/None button never ticks this chip.
+- **History & archive** (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic
+  or archive actions — delete, remove, edit — of everything, because it will be co-worked by Matt and
+  Andy and me"). The page PUTs the whole map, so it cannot be trusted to say what it changed. The
+  worker diffs the map before and after each merge and appends one entry per key that moved to KV
+  `transformlog`, capped at 1,000 and stamped with the **Access identity**, not the name the page
+  wrote. The diff code is in `src/txhistory.js`, and the log is served by
+  `GET /api/transform?history=1` behind the same opt-in gate. The 🕘 History panel slides in from
+  the right, including in full screen. It:
+  - lists every add, edit, move, tick and delete in words, with the field diffs;
+  - filters by person and by kind;
+  - undoes any change by putting back its before value, and asks first if someone has changed it
+    again since.
+  The **Archive** tab lists what is deleted right now, and each item can be restored.
+- **The board**: months sit 48px apart on a dashed road. Each month hangs from a node that shows
+  its icon inside a ring, which fills as the month's cards are done. Other touches:
+  - taped stickies at a slight tilt;
+  - a flag on gate cards and a tick on done cards;
+  - icy stripes on freeze months;
+  - a small burst when a card is finished or a module is migrated (never with reduced motion).
+- **Modules move in four waves.** The plan was reviewed on 28 Sep 2026 against each module as it
+  stands, and the tracker gives each module the eight common steps plus its own lines.
+  - **Wave 1** is the modules with small stores of their own and no scan lane: Feed Lab, Deck
+    generator, Pricer, Scheduled work.
+  - **Wave 2** is the whole feed-scan family: Label Guard, PT Guard, Golden Record, Volume,
+    Overlays, Images. One scan lane feeds all six, so they switch together. Score history,
+    first-seen dates and image tags cannot be rebuilt, so they are copied and checked, not
+    re-scanned.
+  - **Wave 3** is the commercial modules: Task Manager, ROAS, AI Quote, Keyword calendar,
+    Leadership, Activity.
+  - **Wave 4** is Workflow, the Command center and this tracker.
 - **⧉ Copy status update** produces a plain-text update for the management email: overall
   progress, this month, late, blocked, decisions due, red risks. **⬇ CSV** exports every milestone.
 - **No money on the page.** The page is read by the people the programme rate will be
@@ -114,14 +145,15 @@ they use the same FCC whichever store is behind it.
 | Apps Script | every 5–15 min | `syncFCC()` in Ray's mailbox |
 
 Also: `deploy.yml` (push to main), `validate.yml` (PRs), and the manual `estate-rescan.yml` and
-`plan-ingest.yml`. The news-digest Routine pushes straight to main.
+`plan-ingest.yml`. The news-digest Routine (on Ray's own Claude account) pushes to a
+`claude/news-digest*` branch and `news-digest.yml` lands it on main and dispatches the deploy.
 
 ### 3.4 The live store
 - There is one KV namespace (`EDITS`), with **no wrapper**: 393 direct calls, all in `worker.js`
   (242 get, 133 put, 15 delete, 3 list). The pure `src/*.js` modules never touch KV.
 - It holds about 100 key families. Grouped:
   - **Commercial / personal (sensitive):**
-    - `briefs`, `clients` (contacts), `accessdir`, `state:<ns>` (22 namespaces incl. `hourspost`)
+    - `briefs`, `clients` (contacts), `accessdir`, `state:<ns>` (20 namespaces incl. `hourspost`)
     - `tm:*` / `tmtasks:*` / `tmbook:*` / `tmtick:*` / `tmhours` / `tmtrail` (retainer hours)
     - `roas:*`
     - `aiquote*`, `tachyon*` (pricing)

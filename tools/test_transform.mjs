@@ -176,6 +176,21 @@ console.log('History & archive (who changed what, and undo)');
   ok(/if\(e\.key==='Escape'&&HOPEN&&!OPEN\)/.test(PAGE), 'Esc closes the panel before it leaves full screen');
 }
 
+console.log('Plan reviewed against each module as it stands (28 Sep 2026)');
+{
+  const w2 = RM.modules.filter((m) => m.w === 2).map((m) => m.p).sort().join(',');
+  ok(w2 === '/golden,/images,/labels,/overlays,/ptypes,/volume', 'wave 2 is the whole feed-scan family — one scan lane feeds all six, so they switch together');
+  ok(RM.modules.every((m) => Array.isArray(m.chk) && m.chk.length >= 2), 'every module carries its own checklist lines');
+  const g = RM.modules.filter((m) => m.p === '/golden')[0];
+  ok(TX.modLines(RM, g).slice(0, RM.modtpl.length).join('|') === RM.modtpl.join('|') && TX.modLines(RM, g).length === RM.modtpl.length + g.chk.length, 'a module’s own lines come AFTER the common steps (ticks already made keep their place)');
+  ok(/score history/i.test(g.chk.join(' ')) && /image tags/i.test(RM.modules.filter((m) => m.p === '/images')[0].chk.join(' ')), 'the data no scan can rebuild is copied, never re-scanned');
+  const ids = RM.items.map((i) => i.id);
+  ok(['o-browser', 'o-roster', 'f-news'].every((i) => ids.indexOf(i) >= 0), 'new cards: browser-only data, scan agents reading the feed map, the news lane');
+  ok(/call notes/i.test(RM.items.filter((i) => i.id === 'f-mail')[0].chk.join(' ')) && /Keyword result/i.test(RM.items.filter((i) => i.id === 'f-mail')[0].chk.join(' ')), 'moving the mailbox covers call notes and keyword results, not just the inbox');
+  ok(/Bypass/.test(RM.items.filter((i) => i.id === 'n-cut')[0].chk.join(' ')) && /never Restricted/.test(RM.items.filter((i) => i.id === 'n-cut')[0].chk.join(' ')), 'the cut-over recreates both Access apps and keeps the Workers layer Public');
+  ok(RM.kpis.filter((k) => k.id === 'pers')[0].base === '8', 'eight personal-account dependencies (the news routine counted)');
+}
+
 console.log('Board graphics');
 ok(RM.months.every((m) => m.ic), 'every planned month has an icon on the road');
 ok(/\.canvas-in\{display:flex;align-items:flex-start;gap:48px/.test(PAGE), 'the months are spaced out (48px apart)');

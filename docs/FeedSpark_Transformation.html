@@ -541,9 +541,9 @@ var RM={
   items:[
     /* ---- October: discover, decide, build the foundations ---- */
     {id:'o-track',m:'2026-10',ws:'gov',t:'Live transformation tracker (this page)',o:'po',d:'Management can follow status without asking. Opt-in module: only the owner and people granted it can open it.',st0:'done'},
-    {id:'o-reg',m:'2026-10',ws:'mig',t:'Dependency register signed off',o:'po',d:'17 secrets, 5 worker crons + 6 GitHub Actions workflows, the Apps Script trigger, 11 files hard-coding the personal host, the Google service account project, the Anthropic account. Draft in docs/TRANSFORMATION.md.',st0:'doing',
-      chk:['Secrets listed (17)','Scheduled jobs listed (8)','Personal-account dependencies listed (7)','Reviewed by the CTO sponsor']},
-    {id:'o-census',m:'2026-10',ws:'mig',t:'Data census of the live store',o:'po',d:'Keys, bytes and expiry per data family (~100 families in one Cloudflare KV namespace, ~40 holding client-commercial or personal data).'},
+    {id:'o-reg',m:'2026-10',ws:'mig',t:'Dependency register signed off',o:'po',d:'13 worker secrets + 5 GitHub secrets, 5 worker crons, 2 scheduled Actions (4x-daily XML scan, 09:00 UK Golden Record), the news-digest lane, the Apps Script trigger in Ray’s mailbox, the hard-coded host and repo, the Google service account, the Anthropic account. Draft in docs/TRANSFORMATION.md.',st0:'doing',
+      chk:['Secrets listed (13 worker + 5 GitHub)','Scheduled jobs listed (5 crons, 2 scheduled Actions, news lane, Apps Script)','Personal-account dependencies listed (8)','Reviewed by the CTO sponsor']},
+    {id:'o-census',m:'2026-10',ws:'mig',t:'Data census of the live store',o:'po',d:'Keys, bytes and expiry per data family (~100 families in one Cloudflare KV namespace, ~40 holding client-commercial or personal data). Flags the families no scan can rebuild: score history, first-seen dates, image tags, briefs, shared state, quotes, Task Manager tags.'},
     {id:'o-infra',m:'2026-10',ws:'mig',t:'FeedSpark infrastructure questionnaire answered',o:'cto',d:'The answers decide where the data lands. Needed early: the database has to exist in November.',
       chk:['Hosting: own servers or cloud','Database engine, version, HA','SSO provider','Secrets vault','Backups and restore targets','Is feedspark.com DNS on Cloudflare?']},
     {id:'o-dec',m:'2026-10',ws:'gov',t:'Decision memo signed',o:'cto',d:'See Decisions for leadership below. The November transfer needs D1–D5 at minimum.',gate:1,
@@ -551,48 +551,55 @@ var RM={
     {id:'o-budget',m:'2026-10',ws:'gov',t:'Budget line + contract owners named',o:'cfo',d:'Cloudflare paid plan, Anthropic organisation account, Google Cloud project, one Claude Code seat per builder, database hosting, a second engineer.'},
     {id:'o-accts',m:'2026-10',ws:'mig',t:'FeedSpark GitHub organisation + Cloudflare account created',o:'it',d:'Cloudflare on the paid Workers plan: removes the 50-call-per-run limit the scans are built around, and is a precondition for dual-writing.'},
     {id:'n-stage',m:'2026-10',ws:'mig',t:'Staging environment',o:'it',d:'A second worker with its own store and sign-in. Every cut-over is rehearsed there first. Today every merge goes straight to production.'},
-    {id:'o-cfg',m:'2026-10',ws:'mig',t:'No personal host or repo in the code',o:'po',d:'The workers.dev host and the personal repo name become configuration, so the move is a setting change, not a code hunt.'},
+    {id:'o-cfg',m:'2026-10',ws:'mig',t:'No personal host, repo or person in the code',o:'po',d:'The workers.dev host (tools, the Apps Script, email links, reminders), the personal repo name (Build Log) and the staff emails in the access seed and reminder list become configuration, so the move is a setting change, not a code hunt.'},
+    {id:'o-browser',m:'2026-10',ws:'mig',t:'Data that lives only in a browser moved into the store',o:'po',d:'Leadership’s commercial burn-down and retention radar exist only in Ray’s browser; briefs raised before 16 Sep may exist only in the browser that raised them; Deck generator’s pinned charts are per device. Anything not in the store does not migrate.',
+      chk:['Commercial burn-down into the store','Retention radar into the store','Every AM opens Workflow once (stranded briefs publish themselves)','Pinned deck charts noted or re-pinned']},
+    {id:'o-roster',m:'2026-10',ws:'mig',t:'Scan agents read the feed map from the app',o:'po',d:'The XML scan and the 09:00 Golden Record run read the feed map by scraping the worker’s source, so a feed attached in the dossier is never scanned. They should read it from the app instead, before either moves.'},
     {id:'d-adapter',m:'2026-10',ws:'mig',t:'Storage adapter shipped (no behaviour change)',o:'po',d:'One layer between the app and its data, installed at the two entry points so the ~390 call sites stay unchanged.',
       chk:['store.js with the KV backend','Installed at fetch() and scheduled()','Parity test suite green','7 days in production with no behaviour change']},
     {id:'o-jwt',m:'2026-10',ws:'sec',t:'Verify the sign-in token on every request',o:'po',d:'Today the worker trusts the Cloudflare Access email header without verifying its signed token. Fine behind Cloudflare, unsafe on any other host.'},
     {id:'o-dpia',m:'2026-10',ws:'sec',t:'Data classification + DPIA started',o:'dpo',d:'Retainer hours, pricing and quotes, client contacts and emails, ROAS, and client decks committed to git history.'},
     {id:'o-core',m:'2026-10',ws:'am',t:'Fixed-core list published + change control on core files',o:'cto',d:'The 70%: the modules marked Fixed. Core code needs a reviewed PR (Ray + CTO) instead of self-merge.'},
     /* ---- November: ownership transfer + pilot ---- */
-    {id:'n-repo',m:'2026-11',ws:'mig',t:'Repository transferred to the FeedSpark GitHub organisation',o:'it',d:'Old links redirect. Every Actions secret re-created and rotated.'},
+    {id:'n-repo',m:'2026-11',ws:'mig',t:'Repository transferred to the FeedSpark GitHub organisation',o:'it',d:'Old links redirect. Every Actions secret re-created and rotated; the ~40 harnesses that pin each module run green on the new organisation before anything deploys from it.',
+      chk:['Repo in the FeedSpark organisation','Secrets re-created (Cloudflare token + account, push key, Access service token)','Every harness green on the new organisation','Deploy runs from the new organisation','Build Log reads the new repository']},
     {id:'n-cut',m:'2026-11',ws:'mig',t:'Cut-over to the FeedSpark Cloudflare account on fcc.feedspark.com',o:'po',d:'~30-minute write freeze in the first fortnight. If it slips past 12 Nov it moves to 3 Dec, after peak week. Every module then reads "On FeedSpark’s account".',gate:1,
-      chk:['Rehearsed on staging','Write freeze announced to AMs','Store copied with metadata and expiry','Gmail script and scan agents repointed','DNS switched to fcc.feedspark.com','Old address redirects; its crons disabled','Build number matches on the new host','Every module set to "On FeedSpark’s account"']},
-    {id:'n-verify',m:'2026-11',ws:'mig',t:'Every scheduled job verified on the new account',o:'po',d:'All five crons fire once, the feed-scan push lands, and the Gmail bridge completes a round trip.'},
+      chk:['Rehearsed on staging','Write freeze announced to AMs','Store copied with metadata and expiry','Access apps recreated: site-wide Allow (with the Actions service token) + the Gmail-push Bypass','Workers layer left Public (never Restricted)','Gmail script, scan agents and news lane repointed in the same window (no gap, no double readings)','DNS switched to fcc.feedspark.com','Old address redirects; its crons disabled','Build number matches on the new host','Every module set to "On FeedSpark’s account"']},
+    {id:'n-verify',m:'2026-11',ws:'mig',t:'Every scheduled job verified on the new account',o:'po',d:'All five crons fire once; the 4x-daily XML scan and the 09:00 UK Golden Record run each land once; the Apps Script completes a round trip (briefs, inbox, call notes, outbox); the Task Manager and ROAS pulls report ok.'},
     {id:'d-db',m:'2026-11',ws:'mig',t:'FeedSpark database provisioned',o:'it',d:'UK/EU region, backups, secure link from the app (tunnel or data API), object storage for decks and uploads.'},
-    {id:'d-dry',m:'2026-11',ws:'mig',t:'Schema + backfill rehearsed on staging',o:'po',d:'Copy every family into the database on staging; expiry handled by a clean-up job, keeping the 90-day activity-log retention.'},
+    {id:'d-dry',m:'2026-11',ws:'mig',t:'Schema + backfill rehearsed on staging',o:'po',d:'Copy every family into the database on staging. Merge-stamped stores (briefs, the 20 shared-state namespaces, this roadmap) keep their stamps; the activity log lives in list metadata today and needs its own table; expiry becomes a clean-up job, keeping the 90-day activity-log retention.'},
     {id:'j-dual',m:'2026-11',ws:'mig',t:'Dual-write every data family in production (from 16 Nov)',o:'po',d:'Every write goes to both stores. The backfill copies history; a nightly job compares and repairs.'},
     {id:'j-pilot',m:'2026-11',ws:'mig',t:'Pilot module migrated: Feed Chat',o:'po',d:'The smallest module goes first, end to end, so the module checklist is proven before the December waves.',
       chk:['Feed Chat data on FeedSpark storage','Parity holds','AM smoke test','Module marked Migrated']},
     {id:'j-parity',m:'2026-11',ws:'mig',t:'14 days at or above 99.9% parity for every family (by 30 Nov)',o:'po',d:'With no rise in feed-scan failures or error rate. Nothing switches in December until this holds.',gate:1},
     {id:'n-freeze',m:'2026-11',ws:'gov',t:'Peak-week freeze 20 Nov – 2 Dec',o:'cto',d:'Black Friday is 27 Nov. No cut-overs while clients depend on the feed guards most; dual-write keeps running underneath.'},
-    {id:'j-gcp',m:'2026-11',ws:'mig',t:'Google service account moved to a FeedSpark Cloud project',o:'it',d:'The account that reads and writes the project plans.'},
+    {id:'j-gcp',m:'2026-11',ws:'mig',t:'Google service account moved to a FeedSpark Cloud project',o:'it',d:'The account that reads and writes the project plans, the content-team schedule and the A/B test sheets. Every one of those sheets is re-shared with the new account, or its module silently falls back to a snapshot.',
+      chk:['Project and key created','Project plans re-shared','Content-team schedule re-shared','A/B test sheets re-shared','Plan live-sync reads on the new key']},
     {id:'d-vault',m:'2026-11',ws:'sec',t:'Secrets vault and named custodians',o:'cto',d:'Two named people can reach every secret; rotation schedule agreed.'},
     {id:'j-rot1',m:'2026-11',ws:'sec',t:'Secret rotation, batch 1',o:'it',d:'Deploy token, push keys, service tokens.'},
     {id:'d-dpia',m:'2026-11',ws:'sec',t:'DPIA signed + backup-restore drill passed',o:'dpo',d:'Includes a decision on client decks and pricing already in git history.'},
-    {id:'o-deray',m:'2026-11',ws:'am',t:'Remove Ray-only assumptions from Workflow',o:'po',d:'The AM list, default AM, email sign-off, keyword-calendar people and the due-date reminder list are hard-coded to Ray and Steven. They should read from the access directory.'},
+    {id:'o-deray',m:'2026-11',ws:'am',t:'Remove Ray-only assumptions',o:'po',d:'The AM list, default AM, email sign-off, keyword-calendar people and the due-date reminder list are hard-coded to Ray and Steven, and Leadership and Activity open for one email only. They should read from the access directory and a role.'},
     /* ---- December: migration complete ---- */
-    {id:'f-w1',m:'2026-12',ws:'mig',t:'Module wave 1: Volume, Overlays, Images, Feed Lab, Deck generator',o:'po',d:'From 3 Dec. Feed-derived modules whose data rebuilds itself: the least risk.'},
-    {id:'f-w2',m:'2026-12',ws:'mig',t:'Module wave 2: Label Guard, PT Guard, Golden Record, Scheduled work, ROAS',o:'po',d:'The same alerts must fire on both stores before a guard switches.',gate:1},
+    {id:'f-w1',m:'2026-12',ws:'mig',t:'Module wave 1: Feed Lab, Deck generator, Pricer, Scheduled work',o:'po',d:'From 3 Dec. Modules with their own small stores and no scan lane. Pricer has no test harness, so one is written before it switches.'},
+    {id:'f-w2',m:'2026-12',ws:'mig',t:'Module wave 2 — the feed-scan family: Label Guard, PT Guard, Golden Record, Volume, Overlays, Images',o:'po',d:'One scan feeds all six (the 4x-daily XML push, the 09:00 UK Golden Record run, the hourly sheet sweep), so they switch together. The same alerts must fire on both stores first. Score history, first-seen dates and image tags cannot be rebuilt: they are copied and checked, never re-scanned.',gate:1,
+      chk:['Scan lane dual-writes','Same alerts on both stores for a week','Score history copied and checked','First-seen dates copied and checked','Image tags copied and checked','No gap in the daily readings']},
     {id:'f-w3',m:'2026-12',ws:'mig',t:'Shared settings and email outboxes',o:'po',d:'Watch rules, alert destinations, email outboxes — used by several modules, moved once.'},
-    {id:'m-w3',m:'2026-12',ws:'mig',t:'Module wave 3: Keyword calendar, AI Quote, Pricer, Task Manager, Leadership, Activity',o:'po',d:'Commercial data: quotes, pricing, retainer hours.'},
-    {id:'m-w4',m:'2026-12',ws:'mig',t:'Module wave 4: Workflow, Command center, Transformation',o:'po',d:'Briefs, shared state, the dossier and materials move last, with transactional merges. If anything slips it is these into early January — the AMs use the same FCC either way.'},
-    {id:'f-mail',m:'2026-12',ws:'mig',t:'Email off Ray’s personal mailbox',o:'it',d:'Inbox capture, brief-reply sync, alert emails, drafts and TechAM forwards move to a service mailbox or domain delegation.',gate:1,
-      chk:['Service mailbox created (e.g. fcc@feedspark.com)','Apps Script moved to it','Alert and report emails send from it','Brief-reply sync verified','TechAM forwards verified','Script removed from Ray’s mailbox']},
-    {id:'f-agents',m:'2026-12',ws:'mig',t:'Feed-scan agents re-homed',o:'it',d:'The 4x-daily XML scan and the 09:00 Golden Record run move to FeedSpark-owned runners.'},
-    {id:'j-ai',m:'2026-12',ws:'mig',t:'Anthropic key moved to a FeedSpark organisation account',o:'cfo',d:'Tachyon, Feed Chat, image tagging and the Vietnamese UI all call it.'},
+    {id:'m-w3',m:'2026-12',ws:'mig',t:'Module wave 3: Task Manager, ROAS, AI Quote, Keyword calendar, Leadership, Activity',o:'po',d:'Commercial data: retainer hours, ad spend, quotes and pricing. Both report tokens (FeedSpark reports, FeedHero reports) move into FeedSpark custody; the ROAS roster stays the only scope over FeedHero’s whole client book.'},
+    {id:'m-w4',m:'2026-12',ws:'mig',t:'Module wave 4: Workflow, Command center, Migration roadmap',o:'po',d:'Briefs, the shared board state, call wrap-ups, the dossier and materials move last, with transactional merges. If anything slips it is these into early January — the AMs use the same FCC either way.'},
+    {id:'f-mail',m:'2026-12',ws:'mig',t:'Email off Ray’s personal mailbox',o:'it',d:'Inbox capture, brief replies and brief recovery, Gemini call notes, Dino’s keyword results, alert and report emails, Gmail drafts and TechAM forwards all run through the Apps Script in Ray’s mailbox and his delegated Gmail identity today.',gate:1,
+      chk:['Service mailbox created (e.g. fcc@feedspark.com)','Apps Script moved to it (backfill cursors carried over)','Gmail read access delegated to the service identity','Brief replies + brief recovery verified','Call notes verified','Keyword result emails verified','Alert, report and draft emails send from it','TechAM forwards verified','Script removed from Ray’s mailbox']},
+    {id:'f-agents',m:'2026-12',ws:'mig',t:'Feed-scan agents re-homed',o:'it',d:'The 4x-daily XML scan, the 09:00 UK Golden Record run, the estate rescan and the plan ingest move to FeedSpark-owned runners with a FeedSpark push key and Access service token.'},
+    {id:'f-news',m:'2026-12',ws:'mig',t:'Industry news digest off Ray’s Claude account',o:'it',d:'The weekday digest AMs see on the Command center is written by a routine on Ray’s own Claude account and landed by a branch Action. It moves to a FeedSpark account.'},
+    {id:'j-ai',m:'2026-12',ws:'mig',t:'Anthropic key moved to a FeedSpark organisation account',o:'cfo',d:'Feed Chat, image tagging, the PDP recovery pass, translation and the copilot all call it.'},
     {id:'f-rot2',m:'2026-12',ws:'sec',t:'Secret rotation, batch 2',o:'it',d:'MCP tokens, Google and Anthropic keys.'},
     {id:'m-decom',m:'2026-12',ws:'mig',t:'Personal accounts decommissioned (by 18 Dec)',o:'cto',d:'The migration is done when every module reads Migrated and nothing runs on a personal account.',gate:1,
-      chk:['Every module marked Migrated','Old personal worker deleted','Old personal store archived (encrypted, 90 days)','Sign-in apps and tokens on the personal account removed','Apps Script removed from Ray’s mailbox','Personal tokens retired','Personal repo redirected or deleted']},
+      chk:['Every module marked Migrated','Old personal worker deleted','Old personal store archived (encrypted, 90 days)','Sign-in apps and tokens on the personal account removed','Apps Script removed from Ray’s mailbox','News routine off Ray’s Claude account','Personal tokens retired','Personal repo redirected or deleted']},
     {id:'n-freeze2',m:'2026-12',ws:'gov',t:'Holiday freeze 21 Dec – 4 Jan',o:'cto',d:'Nothing moves over the holidays; the first live iteration starts on a quiet, stable FCC.'},
     {id:'o-scope',m:'2026-12',ws:'am',t:'Access profile for every AM before they sign in',o:'po',d:'Today anyone without a directory row sees every client. Each AM gets their clients and modules set in 👥 Access first.',
       chk:['Directory row per AM','Clients set','Modules set','Checked with 👁 view-as']},
     {id:'n-mail',m:'2026-12',ws:'am',t:'Each AM’s client email reaches Intake',o:'it',d:'Today only Ray’s mailbox feeds Intake, brief replies and call notes. Without this, a new AM’s client emails never reach the FCC.'},
-    {id:'n-plans',m:'2026-12',ws:'am',t:'Project plans as settings, not code',o:'po',d:'The 15 plan-sheet IDs are hard-coded in two files. Adding an AM’s client should be a setting in the dossier, with no code change or deploy.'},
-    {id:'d-prefs',m:'2026-12',ws:'am',t:'Per-AM settings stored server-side',o:'po',d:'Default scope, saved views, alert recipients and email sign-off follow the person across devices.'},
+    {id:'n-plans',m:'2026-12',ws:'am',t:'Project plans as settings, not code',o:'po',d:'The 15 plan-sheet IDs are hard-coded twice (the worker and Workflow). Adding an AM’s client should be a setting in the dossier, with no code change or deploy.'},
+    {id:'d-prefs',m:'2026-12',ws:'am',t:'Per-AM settings follow the person',o:'po',d:'The email sign-off, default scope and alert recipients follow the AM across devices. Screen preferences (theme, folds, saved views) stay per device by design.'},
     {id:'o-kit',m:'2026-12',ws:'am',t:'Onboarding kit + one-week diary ready',o:'po',d:'The diary is the "before" figure the 11 h/week estimate is tested against; it runs in the first week of January.',
       chk:['One-hour walkthrough script','Dossier tour','First-brief checklist','Diary template']},
     /* ---- January: first live iteration ---- */
@@ -665,7 +672,7 @@ var RM={
   ams:[{id:'1',wave:1},{id:'2',wave:1},{id:'3',wave:2},{id:'4',wave:2},{id:'5',wave:2}],
   amst:{invited:'Invited',scoped:'Access set',onboarded:'Onboarded',active:'Active weekly'},
   kpis:[
-    {id:'pers',t:'Personal-account dependencies',base:'7',target:'0',why:'Personal repo, personal Cloudflare account, workers.dev host, Apps Script in Ray’s mailbox, Gmail sent as Ray, Google service account project, Anthropic key'},
+    {id:'pers',t:'Personal-account dependencies',base:'8',target:'0',why:'Personal repo, personal Cloudflare account, workers.dev host, Apps Script in Ray’s mailbox, Gmail sent as Ray, Google service account project, Anthropic key, the news routine on Ray’s Claude account'},
     {id:'mods',t:'Modules migrated',base:'0 of 20',target:'20 of 20 by December',why:'Counted live from the Module migration board',auto:'mods'},
     {id:'parity',t:'Parity between old and new store',base:'n/a',target:'≥ 99.9%',why:'Per family, for 14 days before any switch'},
     {id:'jobs',t:'Scheduled jobs re-homed',base:'0 of 8',target:'8 of 8',why:'5 worker crons, 2 scheduled Actions, 1 Apps Script trigger'},
@@ -698,28 +705,29 @@ var RM={
   ],
   /* the module list — twin of MIG_SEED in cloudflare/feedspark-deck/src/migration.js (the harness holds them equal) */
   modules:[
-    {p:'/feedchat',n:'Feed Chat',w:0,m:'2026-11',data:'feedchat question bank'},
-    {p:'/volume',n:'Product volume',w:1,m:'2026-12',data:'volids · volhist · volbase · voldob'},
-    {p:'/overlays',n:'Overlays',w:1,m:'2026-12',data:'overlay · overlayhist · overlayidx'},
-    {p:'/images',n:'Image library',w:1,m:'2026-12',data:'image · imagehist · imgtags · imageidx'},
-    {p:'/feedlab',n:'Feed Lab',w:1,m:'2026-12',data:'feedaudit · feedmkt'},
-    {p:'/deck-builder',n:'Deck generator',w:1,m:'2026-12',data:'page edits; reads volumes'},
-    {p:'/labels',n:'Label Guard',w:2,m:'2026-12',data:'labels · labelbase · labelday · labelhist · watches · alerts'},
-    {p:'/ptypes',n:'PT Guard',w:2,m:'2026-12',data:'ptype · ptypebase · ptypeday · alerts'},
-    {p:'/golden',n:'Golden Record',w:2,m:'2026-12',data:'golden · goldenbase · goldenhist · goldenqual · goldenpdp · profiles'},
-    {p:'/schedule',n:'Scheduled work',w:2,m:'2026-12',data:'schedwork · schedskip'},
-    {p:'/roas',n:'ROAS',w:2,m:'2026-12',data:'roas · roasidx · roasstatus'},
-    {p:'/kwcal',n:'Keyword calendar',w:3,m:'2026-12',data:'kwcal · kwresults'},
-    {p:'/aiquote',n:'AI Quote',w:3,m:'2026-12',data:'aiquote · aiquotesaved (pricing)'},
-    {p:'/pricer',n:'Pricer',w:3,m:'2026-12',data:'tachyonrates · tachyonquotes · tachyontrack'},
-    {p:'/tasks',n:'FS Task Manager',w:3,m:'2026-12',data:'tm · tmtasks · tmbook · tmtick · tmhours · tags'},
-    {p:'/leadership',n:'Leadership',w:3,m:'2026-12',data:'reads hours + golden; page edits'},
-    {p:'/activity',n:'Activity & Build Log',w:3,m:'2026-12',data:'act (activity log) · buildqueue · buildlog'},
-    {p:'/workflow',n:'Workflow & Playbook',w:4,m:'2026-12',data:'briefs · shared state · gmail · callactions · outboxes'},
-    {p:'/',n:'Command center',w:4,m:'2026-12',data:'clients · materials · tests · abtests · plan cache'},
-    {p:'/migration',n:'Migration roadmap',w:4,m:'2026-12',data:'transform'}
+    {p:'/feedchat',n:'Feed Chat',w:0,m:'2026-11',data:'feedchat question bank',chk:['Question bank copied','Chat bubble and page served from the new origin together','Answers on the FeedSpark Anthropic key']},
+    {p:'/feedlab',n:'Feed Lab',w:1,m:'2026-12',data:'feedaudit · feedmkt · feed map',chk:['Feed map + dossier-attached feeds carried over','Feed proxy works on the new host (FeedHero XML, shared sheets)','Stored audits and history copied']},
+    {p:'/deck-builder',n:'Deck generator',w:1,m:'2026-12',data:'page edits; reads every work stream',chk:['Chart workbench reads every stream on the new store','Pinned charts re-pinned (they are per device)','Deck skill + core template run from the FeedSpark repo']},
+    {p:'/pricer',n:'Pricer',w:1,m:'2026-12',data:'tachyonrates · tachyonquotes · tachyontrack',chk:['Test harness written (there is none today)','Rate card copied and checked by hand','Saved quotes and tracker copied']},
+    {p:'/schedule',n:'Scheduled work',w:1,m:'2026-12',data:'schedwork · schedskip',chk:['Schedule sheet shared with the new service account','Skip summary feeds the hours pop-up','Fallback snapshot refreshed']},
+    {p:'/labels',n:'Label Guard',w:2,m:'2026-12',data:'labels · labelbase · labelday · labelhist · watches · alerts · outbox',chk:['Baselines, day references and held readings copied','Watches, webhooks and report settings copied','Alert emails and drafts leave through the service mailbox','Same alerts on both stores for a week']},
+    {p:'/ptypes',n:'PT Guard',w:2,m:'2026-12',data:'ptype · ptypebase · ptypeday · ptypeidx · alerts',chk:['Moves with Label Guard (same scan pass)','Depth index and alert settings copied','Depth plan-task lands in the Project Plan']},
+    {p:'/golden',n:'Golden Record',w:2,m:'2026-12',data:'golden · goldenbase · goldenhist · goldenqual · goldenpdp · profiles · daily ledger',chk:['Score history copied (it cannot be rebuilt)','Content quality, AI-readiness and PDP samples copied','Scoring profiles and waived rules copied','09:00 UK run lands once, on one host','A hand-run scan still sets its day']},
+    {p:'/volume',n:'Product volume',w:2,m:'2026-12',data:'volids · volhist · volbase · voldob',chk:['First-seen dates and daily churn copied','No scan gap on cut-over day (it cannot be back-filled)']},
+    {p:'/overlays',n:'Overlays',w:2,m:'2026-12',data:'overlay · overlayhist · overlayidx',chk:['Captures and history copied','Engine shipped to the page and the scan agent together']},
+    {p:'/images',n:'Image library',w:2,m:'2026-12',data:'image · imagehist · imageidx · imgtags',chk:['Image tags copied (hand and AI tagging cannot be rebuilt)','AI tagging on the FeedSpark Anthropic key']},
+    {p:'/tasks',n:'FS Task Manager',w:3,m:'2026-12',data:'tm · tmtasks · tmbook · tmtick · tmtrail · tmhours · tags · type overrides',chk:['Reports token in FeedSpark custody','Book, tickets, trail and ticket hours copied','Tags, tag rules and Type overrides copied','Hours badge reads the new store on every page']},
+    {p:'/roas',n:'ROAS',w:3,m:'2026-12',data:'roas · roasidx · roasstatus · roaslive',chk:['FeedHero reports token in FeedSpark custody','Roster stays the only scope control','Daily window history copied (no gap)']},
+    {p:'/aiquote',n:'AI Quote',w:3,m:'2026-12',data:'aiquote · aiquotesaved (pricing)',chk:['Saved quotes, options and chosen flags copied (the finance record)','Rate card and bands checked by hand','Plan-task write lands in the Project Plan']},
+    {p:'/kwcal',n:'Keyword calendar',w:3,m:'2026-12',data:'kwcal · kwresults',chk:['Calendars, seeds and client calendar images copied','Keyword result emails still captured after the mailbox move','Briefs still tie back to their moments']},
+    {p:'/leadership',n:'Leadership',w:3,m:'2026-12',data:'reads hours + golden history; page edits',chk:['Commercial burn-down + retention radar read from the store','Opens for a role, not one email','Portfolio trend reads the migrated score history']},
+    {p:'/activity',n:'Activity & Build Log',w:3,m:'2026-12',data:'act (activity log) · buildqueue · buildlog',chk:['Activity log moved to a table (list metadata today)','Build Log reads the FeedSpark repository','Build queue copied']},
+    {p:'/workflow',n:'Workflow & Playbook',w:4,m:'2026-12',data:'briefs · 20 shared-state namespaces · gmail · callactions · outboxes',chk:['Briefs and shared state copied with their merge stamps','Stranded browser briefs published first','Inbox, brief replies, call notes and TechAM on the service mailbox','Plan sheets shared with the new service account','Due-date reminders and call wrap-up drafts verified']},
+    {p:'/',n:'Command center',w:4,m:'2026-12',data:'clients · materials · tests · abtests · plan cache',chk:['Dossier, materials and A/B test cache copied','News digest off Ray’s Claude account','Hero figures match Workflow after the move']},
+    {p:'/migration',n:'Migration roadmap',w:4,m:'2026-12',data:'transform · transformlog',chk:['Roadmap status and history log copied','Public module status reachable until the last module moves']}
   ],
   mst:{legacy:'Not migrated yet',owned:'On FeedSpark’s account',migrating:'Migrating now',migrated:'Migrated'},
+  // a module's checklist = the eight common steps, then its own lines (appended, so ticks on the common steps keep their place)
   modtpl:['Data families confirmed for this module','Reads and writes go through the storage adapter','Dual-write running','Parity at or above 99.9% for 14 days','Switched to FeedSpark storage','Scheduled jobs and pushes re-homed (if any)','Smoke-tested by an AM on the live page','Old store retired for this module']
 };
 /* RM:END */
@@ -763,6 +771,7 @@ var TX={
       out.push({id:id,t:r.t||'',done:!!r.done,ord:r.ord!=null?+r.ord:1e6+(+r.at||0),by:r.by,at:r.at}); });
     return out.sort(function(a,b){ return a.ord-b.ord; });
   },
+  modLines:function(rm,m){ return (rm.modtpl||[]).concat((m&&m.chk)||[]); },
   prog:function(lines){ var d=lines.filter(function(l){ return l.done; }).length; return {done:d,n:lines.length}; },
   statusOf:function(it,S){ var r=S&&S['i:'+it.id]; return (r&&r.st)||it.st0||'todo'; },
   closed:function(st){ return st==='done'||st==='na'; },
@@ -801,7 +810,7 @@ var TX={
       return {what:TX.COLL[coll]||coll,name:nm(e.a)||nm(e.b)||nm(over(coll,id))||nm(sd)||(coll==='months'&&/^\d{4}-\d{2}$/.test(id)?TX.monthName(id):id)}; }
     if(k.indexOf('chk:')===0){ var rest=k.slice(4), bar=rest.lastIndexOf('|'), owner=rest.slice(0,bar), line=rest.slice(bar+1), where='', lines=null;
       if(owner.indexOf('m.')===0){ var mp=owner.slice(2)==='/transformation'?'/migration':owner.slice(2), md=(rm.modules||[]).filter(function(x){ return x.p===mp; })[0];
-        where=(md?md.n:mp)+' module'; lines=rm.modtpl; }
+        where=(md?md.n:mp)+' module'; lines=TX.modLines(rm,md); }
       else if(owner.indexOf('i.')===0){ var iid=owner.slice(2), it=find('items',iid); where=nm(over('items',iid))||nm(it)||iid; lines=it&&it.chk; }
       var lt=nm(e.a)||nm(e.b); if(!lt&&lines&&/^s\d+$/.test(line))lt=lines[+line.slice(1)]||'';
       return {what:'checklist line',name:lt||'(a line)',where:where}; }
@@ -1052,7 +1061,7 @@ var TX={
   function editMod(m){ var r=TX.modRec(m,S)||{};
     openForm({title:m.n,ctx:'Wave '+m.w+' · data: '+m.data+'. Every AM sees this state on the module’s icon and page.',stamp:stamp(r),
       fields:[{pair:[{k:'st',l:'State',type:'select',o:RM.mst,v:TX.modState(m,S)},{k:'m',l:'Planned month',type:'select',o:monthOpts(),v:TX.modMonth(m,S)}]},{k:'note',l:'Note (management only)',type:'area',v:r.note}],
-      chk:{owner:'m.'+m.p,seed:RM.modtpl},
+      chk:{owner:'m.'+m.p,seed:TX.modLines(RM,m)},
       save:function(out){ out['mod:'+m.p]={st:gv('f-st'),m:gv('f-m'),note:gv('f-note')}; }});
   }
 
@@ -1109,7 +1118,7 @@ var TX={
   function mods(){ var on=!((S['cfg:badges']||{}).on===false); $('mig-on').checked=on;
     var col={legacy:'#9AA3AE',owned:'#2563EB',migrating:'#F5A623',migrated:'#15803D'}, mo=MO();
     $('mleg').innerHTML=TX.MS.map(function(k){ return '<span><i style="background:'+col[k]+'"></i>'+esc(RM.mst[k])+'</span>'; }).join('')+(on?'':'<span style="color:var(--orange-deep)">Badges hidden from AMs</span>');
-    $('mods').innerHTML=RM.modules.map(function(m){ var st=TX.modState(m,S), mm=TX.modMonth(m,S), p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
+    $('mods').innerHTML=RM.modules.map(function(m){ var st=TX.modState(m,S), mm=TX.modMonth(m,S), p=TX.prog(TX.checklist('m.'+m.p,TX.modLines(RM,m),S));
       return '<div class="mod '+st+'" data-mod="'+esc(m.p)+'" role="button" tabindex="0"><div class="mod-h"><b>'+esc(m.n)+'</b><span class="mst '+st+'">'+esc(RM.mst[st])+'</span></div>'
         +'<div class="sm muted">Wave '+m.w+(m.w===0?' (pilot)':'')+' · '+(st==='migrated'?'done':'planned '+esc((mo[mm]||{name:TX.monthName(mm)}).name))+'</div>'
         +'<div class="pbar"><i style="width:'+(p.n?Math.round(p.done*100/p.n):0)+'%;background:'+col[st==='legacy'?'owned':st]+'"></i></div><div class="sm" style="margin-top:4px">☑ '+p.done+'/'+p.n+'</div></div>'; }).join('');
@@ -1281,7 +1290,7 @@ var TX={
     var rows=[['Month','Workstream','Card','Gate','Status','Owner','Checklist','Note','Updated by','Updated at']];
     V().items.forEach(function(it){ var r=S['i:'+it.id]||{}, p=TX.prog(TX.checklist('i.'+it.id,it.chk,S));
       rows.push([(mo[it.m]||{name:it.m}).name,(RM.ws[it.ws]||{label:it.ws}).label,it.t,it.gate?'yes':'',TX.ST[TX.statusOf(it,S)],ownerName(it),p.n?p.done+'/'+p.n:'',r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
-    RM.modules.forEach(function(m){ var r=TX.modRec(m,S)||{}, p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
+    RM.modules.forEach(function(m){ var r=TX.modRec(m,S)||{}, p=TX.prog(TX.checklist('m.'+m.p,TX.modLines(RM,m),S));
       rows.push([(mo[TX.modMonth(m,S)]||{name:TX.modMonth(m,S)}).name,'Module migration',m.n,'',RM.mst[TX.modState(m,S)],'',p.done+'/'+p.n,r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
     var blob=new Blob([rows.map(function(r){ return r.map(q).join(','); }).join('\r\n')],{type:'text/csv'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='FCC_transformation_roadmap_'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); };
