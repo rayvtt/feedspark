@@ -238,30 +238,36 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   Ray, 27 Sep 2026: "I just want to see icons, so the icons should stay on the right. There's no
   point in having the first bar with bundle tool and more … keep all the icons of the menu on the
   right-hand side, below the text on the first row, for visual clarity and cadence." SO: row one is
-  the wordmark, the page tag, the viewer's name and the widgets; row two is EVERY module as the
-  icon it always was, RIGHT-ALIGNED under them — nothing folded, nothing bundled, one place; the
-  hover tooltip the icons always carried (data-lbl) names them. NOTHING IS BUNDLED OUT OF THE BOX
-  any more (`docs/apps_widget.html` DEFAULT_APPS is empty — the Pricer used to be): the phone bar
-  scrolls sideways, so a default bundle only ever hid on the phone one module the desktop showed,
-  which is exactly the desktop/phone parity the phone tripwire fails on. On the desktop the ▦
-  bundle button is HIDDEN and anything a viewer's own saved layout had bundled is put back on the
-  row at its canonical slot (the canonical order is read at parse time, before the ▦ customiser
-  has moved anything), since the bundle does not exist there to reach it from; under 760px the
-  phone layer owns the node and the ▦ customiser keeps its purpose there — a viewer's bundling is
-  honoured on the phone, nothing is moved on a phone load, and a desktop→phone resize hands a
-  re-homed anchor back in the bundle's own dress. The nav NODE is neither moved nor
-  rewritten (check_nav compares that markup byte for byte across 24 pages; MODGATE's inline
-  display:none travels with an anchor wherever it sits, so a denied module is never shown here
-  either). Every write is idempotent — an anchor already on the row is left alone — so an idle page
-  rewrites nothing; the first cut shipped re-measuring itself at 60fps (5,400 mutations in three
-  idle seconds), which only measuring found. The ☰ collapse toggle needed an explicit rule — the
-  page's own `.nav-collapsed .tb-modules` is two classes and the row's selector carries an id, which
-  beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the real served pages at
-  four widths — one row, flush right, no text, every canonical module once in canonical order, the
-  ▦ button unpainted, no More, a scoped signin's denied modules absent, the ☰ toggle, the phone load
-  + the resize hand-back, zero idle mutations — and carries a NEGATIVE CONTROL (the same page built
-  without the widget, which must still wrap) so the one-row assertion can never pass on a bar nobody
-  is laying out), the
+  the wordmark, the page tag, the viewer's name and the widgets; row two is the module menu — every
+  module the viewer keeps in it, as the icon it always was, RIGHT-ALIGNED under them; the hover
+  tooltip the icons always carried (data-lbl) names them. THE ▦ BUNDLE IS AT THE ROW'S END (Ray,
+  28 Sep 2026, after the second cut #544 had hidden it on the desktop and put whatever a viewer had
+  bundled back on the row: "Can you bring back the bundle, menu bundle feature, on the module menu
+  bar please?"): the ▦ sits behind a hairline at the right of the icons, dressed as one more tile,
+  and the customiser (`docs/apps_widget.html`, Customize menu… → Menu / ▦ Bundle per module +
+  reorder) works on the desktop again — a module a viewer bundles leaves the row and lives in the
+  ▦ menu on EVERY viewport, in the viewer's own order, saved on the device (fcc-nav-layout); the
+  phone bar shows the same choice, so the desktop/phone parity the phone tripwire fails on holds
+  either way. NOTHING IS BUNDLED OUT OF THE BOX (DEFAULT_APPS is empty — the Pricer used to be):
+  bundling is the viewer's choice. NO NODE IS MOVED BY THIS WIDGET: the second cut lifted bundled
+  anchors out of the ▦ and handed them back on a resize — two writers to one node, and the reason
+  the bundle had to go — so the row is now CSS: `.topbar-in::before` is a full-width, zero-height
+  flex item that carries the hairline and forces the line break, the nav takes the row and
+  right-aligns its icons, the ▦ host follows it by `order`, and the only script marks the body so a
+  page without the widget keeps its own layout. The ▦ customiser, MODGATE (whose inline
+  display:none travels with an anchor, so a denied module shows in neither place) and the phone
+  layer see exactly the DOM they always did; check_nav still compares the nav markup byte for byte
+  across 24 pages. The ☰ collapse toggle needed an explicit rule for the whole row (hairline, icons,
+  bundle) — the page's own `.nav-collapsed .tb-modules` is two classes and the row's selector
+  carries an id, which beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the
+  real served pages at four widths — one row, flush right, the ▦ on it at the bar's edge, no text,
+  every canonical module once in canonical order on a fresh device with an empty bundle, a viewer's
+  bundled Pricer off the row and in the ▦ (dot, labelled row), the customiser moving a module out
+  and back at its own slot and the choice surviving a reload, a scoped signin's denied modules in
+  neither place, the ☰ toggle hiding all three, the phone load + a bundled module staying bundled
+  through a desktop→phone resize, zero idle mutations and a widget with no observer of its own —
+  and carries a NEGATIVE CONTROL (the same page built without the widget, which must still wrap)
+  so the one-row assertion can never pass on a bar nobody is laying out), the
   **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
   Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
   platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph
