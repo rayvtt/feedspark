@@ -106,6 +106,11 @@ import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
 import RULES_MOD_PAGE from "../../../docs/FeedSpark_Rules.html";
 import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
+// /catalog (Ray, 28 Sep 2026): the product catalogue GMC / Shopify style — every product as it
+// is SENT, and hovering one shows it as the client's MASTER feed had it, field by field. The
+// engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
+import CATALOG_PAGE from "../../../docs/FeedSpark_Catalog.html";
+import CATALOG_ENGINE_SRC from "../../../docs/catalog_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -260,6 +265,7 @@ const PAGES = {
   '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
   '/rules':       { html: RULES_MOD_PAGE, slug: 'rules' },
   '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
+  '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
@@ -1421,6 +1427,9 @@ async function route(request, env, ctx) {
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/catalog/engine.js' && request.method === 'GET') {
+      return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2505,7 +2514,12 @@ async function route(request, env, ctx) {
       const who2 = ROAS.cmpidBrand(cmpid);
       if (!who2) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
       if (!(acc.owner || clientMatch(acc.clients, who2.client))) return json({ ok: false, error: 'out of scope' }, 403);
-      const AGGS = ['Brand', 'Gender', 'Price_group', 'Category'];
+      // the /catalog inspector places ONE product in every cut it can be matched to exactly —
+      // product age, price type, FeedSpark's own optimisation statuses, custom labels, colour —
+      // so those cuts are allowed here too (same one call, same six-hour cache)
+      const AGGS = ['Brand', 'Gender', 'Price_group', 'Category', 'Product_age', 'Price_type', 'Colour', 'Age_group',
+        'Title_optimisation_status', 'Keyword_optimisation_status', 'Data_field_optimisation_status', 'Google_product_category',
+        'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4'];
       const agg = AGGS.indexOf(url.searchParams.get('agg')) >= 0 ? url.searchParams.get('agg') : 'Brand';
       const win = ROAS.ROAS_WINDOWS.find((w) => w.k === url.searchParams.get('win')) || ROAS.ROAS_WINDOWS.find((w) => w.k === ROAS.ROAS_DEFAULT_WIN);
       const key = 'roaslive:' + cmpid + ':' + agg + ':' + win.k;
@@ -2524,6 +2538,93 @@ async function route(request, env, ctx) {
       } catch (e) {
         return json({ ok: false, error: String((e && e.message) || e).slice(0, 160) }, 502);
       }
+    }
+
+    // THE CATALOGUE (Ray, 28 Sep 2026: "a module to browse / view / track / deep dive product
+    // catalogs … when you hover over an image or product, you should have access to what we call
+    // a master feed source in FeedHero report MCP … the product data before FeedSpark
+    // optimization"). The OUTPUT feed streams through /api/feed/proxy as it does for every feed
+    // module; what these add is the MASTER — see catMasterInfo for where its company id comes from
+    // (the wired output feed's own URL, never the query). Scoped like /api/roas.
+    //   GET /api/catalog/roster                        → every client × market this signin may browse
+    //   GET /api/catalog/master?client=&market=        → the master's info: file, headings, rows, last import (one MCP call, KV 20 min)
+    //   GET /api/catalog/master/file?client=&market=   → the master's own source file, streamed untouched (zip / XML / CSV / TSV)
+    //   GET /api/catalog/master/row?client=&market=&q= → master rows containing q, by the MCP's own search (the inspector's fallback)
+    if (path.startsWith('/api/catalog/') && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
+      if (path === '/api/catalog/roster') {
+        const out = {};
+        (await feedRoster(env)).filter((r) => inScope(r.client)).forEach((r) => {
+          const cmpid = catCmpid(r.src), meta = /-fb$/.test(r.mkt);
+          // Google Ads ROAS is a Google market's; the ROAS roster names it its own way (GB, BE-FR)
+          const rb = cmpid && !meta ? ROAS.cmpidBrand(cmpid) : null;
+          (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, channel: meta ? 'meta' : 'google', kind: r.src && r.src.xml ? 'xml' : 'sheet',
+            cmpid, roas: rb ? { client: rb.client, market: rb.market } : null });
+        });
+        return json({ ok: true, clients: out });
+      }
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
+      const src = await feedSourceFor(env, client, url.searchParams.get('market'));
+      if (!src) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      const cmpid = catCmpid(src);
+      if (!cmpid) return json({ ok: false, state: 'no_master', error: 'this feed is read from a Google Sheet — FeedHero holds no master for it' }, 404);
+      try {
+        if (path === '/api/catalog/master') {
+          const rec = await catMasterInfo(env, cmpid, !!url.searchParams.get('fresh'));
+          if (rec.state !== 'ok') return json(Object.assign({ ok: false }, rec), rec.state === 'preparing' ? 202 : 503);
+          if (!rec.cached) logActivity(ctx, env, request, 'catalog-master', cmpid);
+          const pub = Object.assign({ ok: true, hasFile: !!rec.src, hasWorkbook: !!rec.wb }, rec);
+          delete pub.src; delete pub.wb;   // FeedHero's backup URLs stay on the server
+          return json(pub);
+        }
+        if (path === '/api/catalog/master/file') {
+          const wantWb = url.searchParams.get('kind') === 'wb';
+          let rec = await catMasterInfo(env, cmpid, false);
+          if (rec.state !== 'ok') return json(Object.assign({ ok: false }, rec), rec.state === 'preparing' ? 202 : 503);
+          let target = wantWb ? rec.wb : rec.src;
+          if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
+          let up = await fetch(target);
+          if ((up.status === 404 || up.status === 403) && rec.cached) {
+            // FeedHero re-imported since the cached read and the timestamped file moved on
+            rec = await catMasterInfo(env, cmpid, true);
+            target = rec.state === 'ok' ? (wantWb ? rec.wb : rec.src) : '';
+            if (target) up = await fetch(target);
+          }
+          if (!up.ok || !up.body) return json({ ok: false, error: 'master file fetch failed (' + up.status + ')' }, 502);
+          // the client's own file on OUR origin: never with FeedHero's content-type (a text/html answer
+          // would render here) — bytes, nosniff, a download if anyone opens the URL itself
+          const fname = String((wantWb ? rec.wbFile : rec.file) || 'master').replace(/[^\w.\-]/g, '_').slice(0, 120);
+          const h = { 'content-type': 'application/octet-stream', 'x-content-type-options': 'nosniff', 'cache-control': 'no-store',
+            'content-disposition': 'attachment; filename="' + fname + '"', 'x-master-file': fname };
+          // the page's progress bar reads the size up front — informational, never content-length
+          // (the feed proxy records why: a decoded stream would be truncated to the encoded size)
+          const len = up.headers.get('content-length') || '';
+          if (!up.headers.get('content-encoding') && /^\d+$/.test(len)) h['x-feed-bytes'] = len;
+          return new Response(up.body, { headers: h });
+        }
+        if (path === '/api/catalog/master/row') {
+          const q = String(url.searchParams.get('q') || '').trim().slice(0, 80);
+          if (!q) return json({ ok: false, error: 'q required' }, 400);
+          if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+          const mcp = roasMcp(env, fetch);
+          try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+          const payload = await mcp.call('master_feed', { company: cmpid, search: q, page_size: 10 });
+          const keys = catColKeys(payload && payload.columns);
+          const rows = TMM.rowsOf(payload).map((r) => keys.map((k) => (r[k] == null ? '' : String(r[k]))));
+          logActivity(ctx, env, request, 'catalog-master-row', cmpid + ' ' + q);
+          return json({ ok: true, cmpid, q, headers: keys.map((k) => String(payload.columns[k])), rows, total: +(payload && payload.total_rows) || rows.length });
+        }
+      } catch (e) {
+        const msg = String((e && e.message) || e).slice(0, 160);
+        // FeedHero's FIRST read of a big master downloads the whole import and can outlast the MCP
+        // client's 25-second timeout — that is "still preparing" (the next call hits its cache), not a failure
+        if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+        return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
+      }
+      return json({ ok: false, error: 'not found' }, 404);
     }
 
     // RULES + STOCK MANAGEMENT (Ray, 28 Sep 2026: "bring other data points from FeedHero reports
@@ -3549,6 +3650,57 @@ function roasMcp(env, fetchFn) {
     auth: auth ? auth.name : null,
     host: url.replace(/^https?:\/\//, '').split('/')[0],
   };
+}
+
+// ---- THE CATALOGUE's master: FeedHero's master_feed tool, through roasMcp (same server + token).
+// WHICH company is never taken from a query: it is READ OFF the wired output feed's own URL —
+// every FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file>, Meta (-fb) feeds under
+// the same cmpid as their Google market — so the only masters this can reach are the ones behind
+// feeds FeedSpark actually runs, and a sheet-backed feed honestly has none.
+function catCmpid(src) {
+  const m = src && src.xml ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
+  return m ? m[1].toLowerCase() : null;
+}
+// a FeedHero IMPORT file of THIS company and nothing else: https, *.feedhero.net, /import_feeds/<cmpid>/
+function catFileOk(u, cmpid) {
+  try {
+    const x = new URL(String(u || ''));
+    return x.protocol === 'https:' && /(^|\.)feedhero\.net$/i.test(x.hostname) && x.pathname.indexOf('/import_feeds/' + cmpid + '/') === 0;
+  } catch (e) { return false; }
+}
+// the MCP's {c0: heading, c1: …} → its keys in column order (c10 after c9, not after c1)
+function catColKeys(cols) {
+  return Object.keys(cols || {}).filter((k) => /^c\d+$/.test(k)).sort((a, b) => +a.slice(1) - +b.slice(1));
+}
+// ONE MCP call (page_size 1) → where the latest import's source file lives + its headings, row
+// count and import time; KV 20 minutes (FeedHero re-imports on its own schedule and every file
+// name carries its timestamp, so a stale read is caught by the file route's 404 retry).
+async function catMasterInfo(env, cmpid, fresh) {
+  const key = 'catmaster:' + cmpid;
+  if (!fresh) {
+    const c = await env.EDITS.get(key, 'json');
+    if (c && c.at && Date.now() - c.at < 20 * 60000) return Object.assign({ cached: true }, c);
+  }
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' };
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const payload = await mcp.call('master_feed', { company: cmpid, page_size: 1 });
+  const info = (payload && payload.info) || {};
+  // the first read of a big feed makes FeedHero download it — "still being prepared, call again"
+  if (!info.source_url && !info.master_feed_url) {
+    return { state: 'preparing', note: String((payload && (payload.message || payload.note || payload.status)) || 'FeedHero is still reading this master feed').slice(0, 160) };
+  }
+  const file = (u) => String(u || '').split('?')[0].split('/').pop();
+  const keys = catColKeys(payload.columns);
+  const rec = { state: 'ok', at: Date.now(), cmpid, name: String(info.client_name || ''),
+    rows: +info.total_rows || +payload.total_rows || null, lastImport: String(info.last_import || ''),
+    importStatus: String(info.import_status || ''), readFrom: String(info.read_from || ''),
+    file: file(info.source_url), wbFile: file(info.master_feed_url),
+    headers: keys.map((k) => String(payload.columns[k])), web: String(payload.web_url || ''),
+    src: catFileOk(info.source_url, cmpid) ? String(info.source_url) : '',
+    wb: catFileOk(info.master_feed_url, cmpid) ? String(info.master_feed_url) : '' };
+  try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 86400 }); } catch (e) {}
+  return rec;
 }
 
 // wins = { w7: {total, categories}, w30: …, w90: … } as splitClientRows returns them per window.

@@ -115,7 +115,8 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/kwcal'] === 'kwcal', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 18 && MODULES.every((m) => m.slug && m.label && m.path), 'eighteen grantable modules, each {slug,label,path}');
+ok(MODULES.length === 19 && MODULES.every((m) => m.slug && m.label && m.path), 'nineteen grantable modules, each {slug,label,path}');
+ok(MODULES.some((m) => m.slug === 'catalog' && m.path === '/catalog'), 'the Catalogue is a grantable module, its slug the path (MODGATE reads the slug off the link)');
 // the AI transformation roadmap is a MANAGEMENT page: opt-in, never inherited by an unrestricted signin
 ok(OPT_IN_MODULES.length === 1 && OPT_IN_MODULES[0] === 'transformation', 'transformation is the one opt-in module');
 ok(MODULE_PATHS['/migration'] === 'transformation', '/migration is a grantable module (slug stays transformation so existing grants hold)');

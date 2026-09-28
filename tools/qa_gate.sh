@@ -338,6 +338,13 @@ else
   echo "   ✗ Rules harness FAILED — see node tools/test_rules.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6c/7: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+if node tools/test_catalog.mjs >/dev/null 2>&1; then
+  echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+else
+  echo "   ✗ Catalogue harness FAILED — see node tools/test_catalog.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
