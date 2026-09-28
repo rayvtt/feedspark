@@ -251,7 +251,7 @@ const PAGES = {
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
-  '/transformation': { html: TRANSFORM_PAGE, slug: 'transformation' },
+  '/migration': { html: TRANSFORM_PAGE, slug: 'transformation' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -561,6 +561,12 @@ async function route(request, env, ctx) {
     // the Build Log merged into /activity's 🔨 tab — keep the old URL working
     if (path === '/buildlog') {
       return new Response(null, { status: 301, headers: { Location: '/activity#build', ...CORS } });
+    }
+
+    // the transformation roadmap moved to /migration (Ray, 28 Sep 2026: "makes more sense") — the
+    // first links sent to management still land on it
+    if (path === '/transformation') {
+      return new Response(null, { status: 301, headers: { Location: '/migration', ...CORS } });
     }
 
     // the Playbook is now Workflow's right-hand rail, not a module of its own — old links land on it
@@ -1601,7 +1607,7 @@ async function route(request, env, ctx) {
     }
 
     // ---- AI transformation roadmap: the LIVE status of every milestone, decision, KPI and risk on
-    // /transformation (KV `transform`, kvmerge per key like the build queue, so Ray, Andy and Matt
+    // /migration (KV `transform`, kvmerge per key like the build queue, so Ray, Andy and Matt
     // updating different rows at once all survive). The roadmap ITSELF is git (the page); only what
     // people say about it lives here. Same opt-in gate as the page: the owner, or a directory row
     // that names 'transformation' — an unrestricted AM can neither read nor write it.

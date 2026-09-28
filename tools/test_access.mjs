@@ -118,7 +118,7 @@ ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === un
 ok(MODULES.length === 16 && MODULES.every((m) => m.slug && m.label && m.path), 'sixteen grantable modules, each {slug,label,path}');
 // the AI transformation roadmap is a MANAGEMENT page: opt-in, never inherited by an unrestricted signin
 ok(OPT_IN_MODULES.length === 1 && OPT_IN_MODULES[0] === 'transformation', 'transformation is the one opt-in module');
-ok(MODULE_PATHS['/transformation'] === 'transformation', '/transformation is a grantable module');
+ok(MODULE_PATHS['/migration'] === 'transformation', '/migration is a grantable module (slug stays transformation so existing grants hold)');
 ok(moduleAllowed(null, 'transformation') === false && moduleAllowed(undefined, 'transformation') === false, 'an unrestricted signin (modules null) does NOT get the transformation roadmap');
 ok(moduleAllowed(['transformation'], 'transformation') === true && moduleAllowed(['workflow'], 'transformation') === false, 'only a row that names transformation opens it');
 ok(moduleAllowed(null, 'workflow') === true, 'opt-in does not narrow the ordinary modules for an unrestricted signin');

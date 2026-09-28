@@ -58,7 +58,7 @@ export const MODULES = [
   // null — today every AM who was never dialled down) does NOT get it; only the owner and a directory
   // row that names 'transformation' explicitly. Without this the five AMs joining would open the
   // board where the migration and the fixed-core decision are negotiated, on day one.
-  { slug: 'transformation', label: 'Transformation', path: '/transformation', optIn: true },
+  { slug: 'transformation', label: 'Migration', path: '/migration', optIn: true },
 ];
 // slugs an unrestricted signin (modules null) does NOT receive — they must be granted by name
 export const OPT_IN_MODULES = MODULES.filter((m) => m.optIn).map((m) => m.slug);

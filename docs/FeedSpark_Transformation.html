@@ -641,7 +641,7 @@ var RM={
     {p:'/activity',n:'Activity & Build Log',w:3,m:'2026-12',data:'act (activity log) · buildqueue · buildlog'},
     {p:'/workflow',n:'Workflow & Playbook',w:4,m:'2026-12',data:'briefs · shared state · gmail · callactions · outboxes'},
     {p:'/',n:'Command center',w:4,m:'2026-12',data:'clients · materials · tests · abtests · plan cache'},
-    {p:'/transformation',n:'Transformation',w:4,m:'2026-12',data:'transform'}
+    {p:'/migration',n:'Migration roadmap',w:4,m:'2026-12',data:'transform'}
   ],
   mst:{legacy:'Not migrated yet',owned:'On FeedSpark’s account',migrating:'Migrating now',migrated:'Migrated'},
   modtpl:['Data families confirmed for this module','Reads and writes go through the storage adapter','Dual-write running','Parity at or above 99.9% for 14 days','Switched to FeedSpark storage','Scheduled jobs and pushes re-homed (if any)','Smoke-tested by an AM on the live page','Old store retired for this module']
@@ -679,6 +679,8 @@ var TX={
       roles:TX.eff('roles',rm.roles,S),ams:TX.eff('ams',rm.ams,S),modules:rm.modules}; },
   // one card's checklist: the seed lines, their recorded state, then lines people added
   checklist:function(owner,seed,S){ S=S||{}; var pre='chk:'+owner+'|', out=[], seen={};
+    if(owner==='m./migration'){ var alt='chk:m./transformation|', S2={}; Object.keys(S).forEach(function(k){ S2[k]=S[k]; });
+      Object.keys(S).forEach(function(k){ if(k.indexOf(alt)===0&&!((pre+k.slice(alt.length)) in S2))S2[pre+k.slice(alt.length)]=S[k]; }); S=S2; }
     (seed||[]).forEach(function(t,i){ var id='s'+i; seen[id]=1; var r=S[pre+id]||{}; if(r.del)return;
       out.push({id:id,t:r.t||t,done:!!r.done,ord:r.ord!=null?+r.ord:i*10,by:r.by,at:r.at}); });
     Object.keys(S).forEach(function(k){ if(k.indexOf(pre)!==0)return; var id=k.slice(pre.length), r=S[k]; if(seen[id]||!r||r.del||!r.add)return;
@@ -689,8 +691,10 @@ var TX={
   statusOf:function(it,S){ var r=S&&S['i:'+it.id]; return (r&&r.st)||it.st0||'todo'; },
   closed:function(st){ return st==='done'||st==='na'; },
   isLate:function(it,S,now){ return it.m<now && !TX.closed(TX.statusOf(it,S)); },
-  modState:function(mod,S){ var r=S&&S['mod:'+mod.p]; return (r&&TX.MS.indexOf(r.st)>=0)?r.st:'legacy'; },
-  modMonth:function(mod,S){ var r=S&&S['mod:'+mod.p]; return (r&&/^\d{4}-\d{2}$/.test(r.m||''))?r.m:mod.m; },
+  // the tracker's own route was /transformation until 28 Sep 2026 — a status set under the old key still reads
+  modRec:function(mod,S){ return S&&(S['mod:'+mod.p]||(mod.p==='/migration'&&S['mod:/transformation']))||null; },
+  modState:function(mod,S){ var r=TX.modRec(mod,S); return (r&&TX.MS.indexOf(r.st)>=0)?r.st:'legacy'; },
+  modMonth:function(mod,S){ var r=TX.modRec(mod,S); return (r&&/^\d{4}-\d{2}$/.test(r.m||''))?r.m:mod.m; },
   summary:function(rm,S,now){ var v=TX.view(rm,S);
     var live=v.items.filter(function(it){ return TX.statusOf(it,S)!=='na'; });
     var done=live.filter(function(it){ return TX.statusOf(it,S)==='done'; }).length;
@@ -903,7 +907,7 @@ var TX={
       save:function(out){ var w=+gv('f-wave')||1; if(isNew)out['c:ams:'+a.id]={wave:w,add:1}; else if(w!==+a.wave)contentWrite('ams',a,{wave:w},out);
         out['a:'+a.id]={name:gv('f-name'),email:gv('f-email'),st:gv('f-st'),note:gv('f-note')}; }});
   }
-  function editMod(m){ var r=S['mod:'+m.p]||{};
+  function editMod(m){ var r=TX.modRec(m,S)||{};
     openForm({title:m.n,ctx:'Wave '+m.w+' · data: '+m.data+'. Every AM sees this state on the module’s icon and page.',stamp:stamp(r),
       fields:[{pair:[{k:'st',l:'State',type:'select',o:RM.mst,v:TX.modState(m,S)},{k:'m',l:'Planned month',type:'select',o:monthOpts(),v:TX.modMonth(m,S)}]},{k:'note',l:'Note (management only)',type:'area',v:r.note}],
       chk:{owner:'m.'+m.p,seed:RM.modtpl},
@@ -1075,7 +1079,7 @@ var TX={
     var rows=[['Month','Workstream','Card','Gate','Status','Owner','Checklist','Note','Updated by','Updated at']];
     V().items.forEach(function(it){ var r=S['i:'+it.id]||{}, p=TX.prog(TX.checklist('i.'+it.id,it.chk,S));
       rows.push([(mo[it.m]||{name:it.m}).name,(RM.ws[it.ws]||{label:it.ws}).label,it.t,it.gate?'yes':'',TX.ST[TX.statusOf(it,S)],ownerName(it),p.n?p.done+'/'+p.n:'',r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
-    RM.modules.forEach(function(m){ var r=S['mod:'+m.p]||{}, p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
+    RM.modules.forEach(function(m){ var r=TX.modRec(m,S)||{}, p=TX.prog(TX.checklist('m.'+m.p,RM.modtpl,S));
       rows.push([(mo[TX.modMonth(m,S)]||{name:TX.modMonth(m,S)}).name,'Module migration',m.n,'',RM.mst[TX.modState(m,S)],'',p.done+'/'+p.n,r.note||'',r.by||'',r.at?new Date(r.at).toISOString():'']); });
     var blob=new Blob([rows.map(function(r){ return r.map(q).join(','); }).join('\r\n')],{type:'text/csv'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='FCC_transformation_roadmap_'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); };

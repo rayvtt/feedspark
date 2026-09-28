@@ -10407,9 +10407,9 @@
       "pr": 0
     },
     {
-      "name": "transformation: page served at /transformation",
+      "name": "transformation: page served at /migration (old /transformation 301s)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/transformation': { html: TRANSFORM_PAGE",
+      "pattern": "'/migration': { html: TRANSFORM_PAGE",
       "pr": 0
     },
     {
