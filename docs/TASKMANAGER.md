@@ -988,6 +988,65 @@ under 8% as flat.
 Client decks and the embedded Feed Chat frame are skipped — the first because this is internal
 commercial data, the second because a popover inside a small iframe would be clipped.
 
+## Show the calculation (28 Sep 2026)
+
+> Ray, circling the **used** figure on a brand dossier: *"actually i dont understand how [it] was
+> calculated"* → *"maybe show calculation when hover that number on brand dossier"*
+
+He is right to distrust it. A brand's **used**, **block** and **balance** are three *independent*
+sums across its markets, each stated by the Task Manager — **not one derived from another**. So two
+things can be true at once and look like an error:
+
+* a brand reads **more hours used than its block allows**, because some of those hours sit on a
+  market carrying **no block at all** — the used total and the block are not measuring the same
+  set of markets;
+* **block − used does not give the balance**, because the balance already counts the hours carried
+  in from the previous cycle.
+
+`hoursSplit(rec)` (`src/taskbook.js`, twinned in `docs/hours_widget.html`, exported as
+`window.FCCHours.split`) adds the markets up in front of the reader:
+
+| | |
+|---|---|
+| `rows` | one per market — used, block, balance — **biggest user first**, so the sum reads in the order that matters |
+| `used` / `allowance` / `balance` | what the **rows** come to |
+| `stated` | what the record's own headline says |
+| `agrees` | whether the two match, per figure |
+| `noBlock` | the markets carrying no allowance, and the hours sitting on them |
+
+Three rules, each one a way the breakdown could have quietly lied:
+
+1. **The rows are the sum.** When the record's headline is something the rows cannot reproduce — a
+   market the index has not re-read since — `agrees` says so and the card prints the row total with
+   a note, rather than restating a figure nobody on screen can check.
+2. **No rows, no breakdown.** A record the Task Manager index has not re-read since this shipped
+   keeps its plain caption. A fabricated breakdown would be worse than none.
+3. **The balance is never presented as block − used**, because it is not that subtraction.
+
+### Getting the rows to the page
+
+`tm:<client>` always held the per-market rows; `tmidx` held only the summary. `/api/hours` serves
+**every** brand from that one index key, so fetching `tm:<client>` per brand to answer a hover would
+turn one KV get into forty. The rows therefore ride the index itself (`mk`) — the whole estate is
+~70 markets at a few dozen bytes each. `tmStore`'s quiet-firing shortcut gained one extra condition:
+an entry is rewritten when it has **no** `mk` even though its signature has not moved, or a brand
+whose figures never change would never gain its breakdown.
+
+### On the dossier
+
+The two caption figures under the retainer meter **are** the trigger. Hover opens it, focus opens it
+for the keyboard, and a click **pins** it — a phone has no hover. Closing it lets the trigger's focus
+go as well: `:focus-within` holds the card open on its own, so dropping the class alone left it on
+screen and made Esc read as doing nothing. Esc is taken in **capture** and stopped, so dismissing the
+tooltip never closes the dossier underneath it.
+
+`tools/check_hrssplit.js` (Playwright, presync) renders the real card at 1440px and 390px and
+asserts what a source read cannot see: it is **not painted** at rest — read off the computed paint,
+never the `hidden` property, which is the mistake that shipped three menus open on the Task Manager
+chart card; every edge is inside the viewport; it owns its own pixels rather than the card beneath
+showing through; the rows and the footer total; pin, outside-click and Esc; and the plain caption on
+a record with no rows.
+
 ## No client hours in git
 
 Unchanged from the lanes above. `hours_widget.html` bakes no figures and names no clients; its only
@@ -997,7 +1056,7 @@ asserts both.
 ## QA
 
 `tools/test_hoursbadge.mjs` (qa_gate, presync, `validate.yml`) pins the trail maths, the posture
-states, the trend's refusals, the wiring, and — because the widget cannot import the module — lifts
+states, the trend's refusals, the breakdown arithmetic, the wiring, and — because the widget cannot import the module — lifts
 its hand-written engine twin out by name at `/* FCC-HOURS:ENGINE-END */` and runs it against the
 **same assertion table** as `src/taskbook.js`. `tools/check_mobile.js` renders the widget with every
 other injected layer at 390px.

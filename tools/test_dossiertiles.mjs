@@ -80,8 +80,8 @@ function hoursState(r) {
 }
 const H = new Function('FCCHours', 'esc', 'fmtN', `
   var window={FCCHours:FCCHours};
-  ${liftVar(CC, 'HRS_ST')} ${lift(CC, 'hrsMeter')} ${lift(CC, 'hrsN')} ${lift(CC, 'portHours')}
-  return { hrsMeter:hrsMeter, hrsN:hrsN, portHours:portHours, HRS_ST:HRS_ST };
+  ${liftVar(CC, 'HRS_ST')} ${lift(CC, 'hrsSplitCard')} ${lift(CC, 'hrsMeter')} ${lift(CC, 'hrsN')} ${lift(CC, 'portHours')}
+  return { hrsMeter:hrsMeter, hrsSplitCard:hrsSplitCard, hrsN:hrsN, portHours:portHours, HRS_ST:HRS_ST };
 `)({
   rec: (n) => (REC[n] ? { name: n, rec: REC[n] } : null),
   state: hoursState,

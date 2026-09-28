@@ -10700,6 +10700,42 @@
       "file": "tools/check_darkmode.js",
       "pattern": "const withFccCss = (h) =>",
       "pr": 0
+    },
+    {
+      "name": "hours breakdown: the engine that adds the markets up",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function hoursSplit",
+      "pr": 0
+    },
+    {
+      "name": "hours breakdown: the per-market rows ride the one-read index",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "mk: rec.markets",
+      "pr": 0
+    },
+    {
+      "name": "hours breakdown: /api/hours serves the rows, null when it has none",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "mk: r && Array.isArray(r.mk) ? r.mk : null",
+      "pr": 0
+    },
+    {
+      "name": "hours breakdown: the dossier card the figure opens",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function hrsSplitCard",
+      "pr": 0
+    },
+    {
+      "name": "hours breakdown: closing it lets the trigger's focus go too",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "a.classList.contains('dzp-mx')&&a.blur",
+      "pr": 0
+    },
+    {
+      "name": "hours breakdown: the widget's engine twin",
+      "file": "docs/hours_widget.html",
+      "pattern": "function hoursSplit(rec)",
+      "pr": 0
     }
   ]
 }

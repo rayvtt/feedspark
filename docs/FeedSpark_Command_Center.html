@@ -433,6 +433,32 @@ window.addEventListener('load',restore);
   .dzp-meter u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.55;text-decoration:none}
   .dzp-mcap{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:10px;
     font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+  /* SHOW THE CALCULATION (Ray, 28 Sep 2026, circling the USED figure on a brand dossier: "actually
+     i dont understand how [it] was calculated" → "maybe show calculation when hover that number
+     on brand dossier"). The two caption figures are SUMS ACROSS THE BRAND'S MARKETS, so the hover
+     names the rows they were added from. Hover opens it, focus opens it for the keyboard, and a
+     click PINS it — a phone has no hover, and the fold is absolute rather than inline so an
+     accidental hover never jumps the card's own layout. */
+  .dzp-meter{position:relative}
+  .dzp-mx{font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;background:none;
+    border:0;padding:0;cursor:help;border-bottom:1px dotted currentColor}
+  .dzp-split{display:none;position:absolute;left:0;right:0;top:100%;margin-top:7px;z-index:9;
+    text-align:left;text-transform:none;letter-spacing:normal;background:var(--paper,#fff);
+    border:1px solid var(--line);border-radius:11px;padding:11px 13px 9px;
+    box-shadow:0 12px 30px rgba(15,23,42,.16)}
+  .dzp-mcap:hover + .dzp-split,.dzp-mcap:focus-within + .dzp-split,.dzp-split:hover,.dzp-split.on{display:block}
+  .dzp-sph{font-size:9.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .dzp-spt{width:100%;border-collapse:collapse;font-size:11.5px}
+  .dzp-spt th,.dzp-spt td{padding:3px 0;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .dzp-spt thead th{font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+  .dzp-spt th:first-child,.dzp-spt thead th:first-child{text-align:left}
+  .dzp-spt tbody th{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--ink)}
+  .dzp-spt td.nb{color:var(--muted);font-weight:700;font-style:italic}
+  .dzp-spt tfoot th,.dzp-spt tfoot td{border-top:1px solid var(--line);padding-top:5px;font-weight:900}
+  .dzp-spt tfoot th{font-size:10px;text-transform:uppercase;color:var(--muted)}
+  .dzp-spn{margin:7px 0 0;font-size:11px;line-height:1.5;font-weight:600;color:var(--ink-2)}
+  .dzp-spn.warn{color:var(--orange-ink,#8a5200);font-weight:800}
+  [data-theme=dark] .dzp-split{background:#20242D}
   .dzp-band.served{background:#2F6FB0}
   .dzp-why{margin-top:6px;font-size:11px;font-weight:700;color:var(--ink-2);font-style:italic}
   .dzp-al{font-size:10.5px;font-weight:900;border-radius:6px;padding:1px 6px;background:#FDF6F4;color:var(--risk);border:1px solid #EFC7BF}
@@ -1716,18 +1742,83 @@ window.addEventListener('load',restore);
   var HRS_ST={ok:{b:'good',l:'Healthy',c:'#15803D'},tight:{b:'watch',l:'Running tight',c:'#ED6F0B'},
     over:{b:'risk',l:'Negative',c:'#C0392B'},served:{b:'served',l:'Being served',c:'#2F6FB0'},
     held:{b:'risk',l:'New work on hold',c:'#C0392B'}};
-  function hrsMeter(used,allow,col){
+  /* HOW THE TWO CAPTION FIGURES WERE CALCULATED (Ray, 28 Sep 2026: "maybe show calculation when
+     hover that number on brand dossier"). A brand can read more hours used than its block allows,
+     which looks like an error and is not: the two figures are summed across the brand's markets
+     and some of those markets carry no block at all. So the hover prints the rows the sums came
+     from, names the hours sitting against no block, and says outright that the balance is NOT
+     block minus used.
+     Nothing is drawn without the rows: a record the Task Manager index has not re-read since the
+     breakdown shipped keeps the plain caption rather than getting a fabricated one. */
+  function hrsSplitCard(sp,r){
+    if(!sp||!sp.ok) return '';
+    var rows=sp.rows.map(function(m){
+      return '<tr><th scope="row">'+esc(m.market)+'</th><td>'+hrsN(m.used)+'h</td>'
+        +'<td'+(m.noBlock?' class="nb"':'')+'>'+(m.noBlock?'no block':hrsN(m.allowance)+'h')+'</td></tr>';
+    }).join('');
+    var notes='';
+    if(!sp.agrees.used||!sp.agrees.allowance)
+      notes+='<p class="dzp-spn warn">These markets come to '+hrsN(sp.used)+'h used against '
+        +hrsN(sp.allowance)+'h of block, which is not what the card above shows — the Task Manager '
+        +'has a market this index has not re-read yet.</p>';
+    if(sp.noBlock.n)
+      notes+='<p class="dzp-spn">'+hrsN(sp.noBlock.used)+'h of the used total sits on '
+        +esc(sp.noBlock.markets.join(', '))+', which carr'+(sp.noBlock.n===1?'ies':'y')+' no block of '
+        +(sp.noBlock.n===1?'its':'their')+' own — so the hours and the block above are not measuring '
+        +'the same set of markets.</p>';
+    notes+='<p class="dzp-spn">The '+hrsN(r&&r.balance)+'h balance is not block minus used. It is the '
+      +'Task Manager\'s own balance for each market, added up, and that already counts the hours '
+      +'carried in from the last cycle.</p>';
+    return '<div class="dzp-split"><div class="dzp-sph">How these figures are calculated</div>'
+      +'<table class="dzp-spt"><thead><tr><th>Market</th><th>Used</th><th>Block</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody><tfoot><tr><th scope="row">'+sp.n+' market'+(sp.n===1?'':'s')
+      +'</th><td>'+hrsN(sp.used)+'h</td><td>'+hrsN(sp.allowance)+'h</td></tr></tfoot></table>'
+      +notes+'</div>';
+  }
+  function hrsMeter(used,allow,col,sp,r){
     used=Math.max(0,Number(used)||0); allow=Math.max(0,Number(allow)||0);
     var scale=Math.max(used,allow);
     if(!scale) return '';
     var fill=Math.round(used/scale*1000)/10, capAt=Math.round(allow/scale*1000)/10;
     var over=used>allow+1e-9;
+    var card=hrsSplitCard(sp,r), cap=function(t){
+      return card?('<button type="button" class="dzp-mx" aria-expanded="false" title="How this is calculated">'+t+'</button>'):('<span>'+t+'</span>');
+    };
     return '<div class="dzp-meter"><div class="dzp-bar" role="img" aria-label="'
       +hrsN(used)+' hours used of a '+hrsN(allow)+' hour block">'
       +'<i style="width:'+fill+'%;background:'+col+'"></i>'
       +(over?'<u style="left:'+capAt+'%" title="Block: '+hrsN(allow)+'h"></u>':'')+'</div>'
-      +'<div class="dzp-mcap"><span>'+hrsN(used)+'h used</span><span>'+hrsN(allow)+'h block</span></div></div>';
+      +'<div class="dzp-mcap">'+cap(hrsN(used)+'h used')+cap(hrsN(allow)+'h block')+'</div>'
+      +card+'</div>';
   }
+  /* A click PINS the breakdown, because a phone has no hover; a click anywhere else, or Esc, puts
+     it away. Esc is taken in CAPTURE and stopped, so the dossier underneath never closes while the
+     reader was only dismissing a tooltip. */
+  function hrsSplitShut(){
+    var open=document.querySelectorAll('.dzp-split.on'), i, j, b, a=document.activeElement;
+    for(i=0;i<open.length;i++){ open[i].classList.remove('on');
+      b=open[i].parentNode.querySelectorAll('.dzp-mx');
+      for(j=0;j<b.length;j++) b[j].setAttribute('aria-expanded','false'); }
+    /* THE TRIGGER KEEPS FOCUS after the click that pinned it, and :focus-within holds the card
+       open on its own — so dropping the .on class alone leaves it on screen and Esc reads as
+       doing nothing at all. Let the focus go with it. */
+    if(open.length&&a&&a.classList&&a.classList.contains('dzp-mx')&&a.blur) a.blur();
+    return open.length;
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target, btn=t&&t.closest?t.closest('.dzp-mx'):null;
+    if(btn){ var meter=btn.closest('.dzp-meter'), sp=meter&&meter.querySelector('.dzp-split');
+      if(sp){ var on=!sp.classList.contains('on'); hrsSplitShut(); sp.classList.toggle('on',on);
+        var b=meter.querySelectorAll('.dzp-mx');
+        for(var i=0;i<b.length;i++) b[i].setAttribute('aria-expanded',on?'true':'false');
+        e.preventDefault(); }
+      return; }
+    if(t&&t.closest&&t.closest('.dzp-split')) return;
+    hrsSplitShut();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&hrsSplitShut()) e.stopPropagation();
+  },true);
   function hrsN(v){ return (v==null||v!==v)?'—':String(Math.round(Number(v)*100)/100); }
   function portHours(name){
     var W=window.FCCHours, hit=W&&W.rec?W.rec(name):null;
@@ -1740,7 +1831,7 @@ window.addEventListener('load',restore);
     return '<div class="dzp-card"><h5>Hours — retainer</h5>'
       +'<div class="dzp-health"><span class="dzp-hn" style="color:'+S.c+'">'+hrsN(bal)+'h</span>'
       +'<span class="dzp-band '+S.b+'">'+esc(S.l)+'</span></div>'
-      +hrsMeter(r.used,r.allowance,S.c)
+      +hrsMeter(r.used,r.allowance,S.c,W.split?W.split(r):null,r)
       +((r.markets||r.am)?('<div class="dzp-foot">'
         +(r.markets?'<span><em>'+fmtN(r.markets)+'</em><span class="lb">market'+(r.markets===1?'':'s')+' synced</span></span>':'')
         +(r.am?'<span><em style="font-size:11.5px">'+esc(r.am)+'</em><span class="lb">AM</span></span>':'')
