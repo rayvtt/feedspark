@@ -197,6 +197,34 @@ t('Rules: family bars, findings by severity, the markets table, the 30-day log',
 t('Stock: coverage matrix, findings, cut-offs, each market\'s setup', /id="cov"/.test(SP) && /id="finds"/.test(SP) && /id="cuts"/.test(SP) && /id="setups"/.test(SP) && /api\('\/api\/rules\/stock'/.test(SP));
 t('Stock: a cut-off is shown as what the NAME states', /name states/.test(SP) && /read from the name/i.test(SP));
 
+console.log('· the rule inside FeedHero — every rule pops out to its own row on FeedHero\'s site');
+// the two links FeedHero's OWN MCP handed back on 28 Sep 2026 for a filtered rule_report (its web_url)
+const FH_REAL_1 = 'https://mcp.feedhero.net/reports/rule-report?company=monsoon_uk&f%5Brule_name%5D=Stock+%3C+11';
+const FH_REAL_2 = 'https://mcp.feedhero.net/reports/rule-report?company=monsoon_uk&f%5Brule_name%5D=LIA%3A+%22Next+Day%22&f%5Btarget_field%5D=Pickup+SLA';
+t('the engine builds FeedHero\'s own link byte for byte (name only)', R.feedheroUrl('monsoon_uk', 'Stock < 11') === FH_REAL_1);
+t('…and with the target field (quotes, colon, spaces encoded as FeedHero encodes them)', R.feedheroUrl('monsoon_uk', 'LIA: "Next Day"', 'Pickup SLA') === FH_REAL_2);
+t('a field alone opens every rule writing it; nothing opens the market\'s whole report', R.feedheroUrl('reiss_gb', null, 'Product name') === 'https://mcp.feedhero.net/reports/rule-report?company=reiss_gb&f%5Btarget_field%5D=Product+name' && R.feedheroUrl('reiss_gb') === 'https://mcp.feedhero.net/reports/rule-report?company=reiss_gb');
+const liftFn = (h, name) => { const a = h.indexOf('function ' + name + '('); const b = h.indexOf('\n}\n', a); if (a < 0 || b < 0) throw new Error('cannot lift ' + name); return h.slice(a, b + 2); };
+const liftVar = (h, name) => { const m = new RegExp('var ' + name + " = '[^']*';").exec(h); if (!m) throw new Error('cannot lift ' + name); return m[0]; };
+const FH_IN = [['monsoon_uk', 'Stock < 11'], ['monsoon_uk', 'LIA: "Next Day"', 'Pickup SLA'], ['reiss_gb', null, 'Product name'], ['reiss_gb'], ['superdry_gb', 'ADhoc [inclusion] for Hero Size - review weekly please', 'Availability'], ['schuh_uk_1', 'Title & Material — A/B test (Rule 1)', 'New Product Name with Size Rules'], ['accessorize_uk', 'Removing products with quantity with 3 or less', 'Excluded destination']];
+[['Rules', RP], ['Stock', SP]].forEach(([n, h]) => {
+  const fhUrl = new Function(liftVar(h, 'FEEDHERO_REPORT') + '\n' + liftFn(h, 'fhUrl') + '\nreturn fhUrl;')();
+  t(n + ': the page twin fhUrl builds the SAME link as the engine on every input (incl. the two real ones)', FH_IN.every((a) => fhUrl.apply(null, a) === R.feedheroUrl.apply(null, a)) && fhUrl('monsoon_uk', 'Stock < 11') === FH_REAL_1);
+  t(n + ': the pop-out is a new tab, never a navigation away from the FCC', /class="fh' \+ \(label \? ' lbl' : ''\) \+ '" href="' \+ esc\(fhUrl\(cmpid, name, field\)\) \+ '" target="_blank" rel="noopener"/.test(h));
+  t(n + ': every CSV carries the FeedHero link beside the rule', /'FeedHero link'/.test(h) && /fhUrl\(/.test(h.slice(h.indexOf('csvDownload('))));
+});
+t('Rules: a button on every rule surface — the market\'s rule list, its chains (each rule + the whole chain), findings (each rule + each chained field), the 30-day log, the markets table, the market header',
+  /<b>' \+ esc\(r\.n\) \+ '<\/b> ' \+ fhA\(d\.cmpid, r\.n, r\.t\)/.test(RP) && /fhA\(d\.cmpid, r\.n, r\.t\) \+ '<\/li>'/.test(RP) && /fhA\(d\.cmpid, null, c\.t, 'All '/.test(RP)
+  && /fhA\(r\.cmpid \|\| f\.cmpid, r\.n, r\.t\)/.test(RP) && /fhA\(f\.cmpid, null, x\.t\)/.test(RP) && /fhA\(x\.m\.cmpid, x\.r\.n, x\.r\.t\)/.test(RP) && /fhA\(m\.cmpid\)/.test(RP) && /\$\('#d-fhw'\)\.innerHTML = fhA\(d\.cmpid, null, null,/.test(RP));
+t('Rules: a click on the pop-out is the browser\'s — the clickable row under it never also opens', /if \(e\.target\.closest\('a\.fh'\)\) return;[^\n]*\n\s*var o = e\.target\.closest\('\[data-open\]'\);/.test(RP));
+t('Stock: a button on every stock rule — the setup tables, the cut-offs table, the findings, and each market\'s whole list',
+  /<b>' \+ esc\(r\.n\) \+ '<\/b> ' \+ fhA\(m\.cmpid, r\.n, r\.t\)/.test(SP) && /esc\(c\.rule\) \+ ' ' \+ fhA\(c\.cmpid, c\.rule, c\.t\)/.test(SP) && /fhA\(r\.cmpid \|\| f\.cmpid, r\.n, r\.t\)/.test(SP) && /fhA\(m\.cmpid, null, null, 'All '/.test(SP));
+{
+  const cuts = R.stockCutoffs(brand), cf = R.stockFindings(brand, NOW).filter((f) => f.k === 'cutoff')[0];
+  t('a cut-off row carries the target field its link narrows on', cuts.every((c) => c.t && c.cmpid));
+  t('a brand-level cut-off finding names each rule\'s own market id, so its pop-out lands on the right market', cf && cf.rules.every((r) => r.cmpid && r.t && r.market));
+}
+
 console.log('· the tripwire stub + nothing in git');
 const stub = require('./rules_stub.js').build();
 t('stub: the book shape the page reads (markets without stock rows, with sn)', stub.book.markets.length === 3 && stub.book.markets.every((m) => m.sn > 0 && !m.stock && !m.find) && stub.book.findings.length > 0);

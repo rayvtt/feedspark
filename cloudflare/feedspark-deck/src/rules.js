@@ -34,6 +34,24 @@ export const RULES_PULLS = 8;           // markets per firing: 8 x (≤3 MCP pag
 export const RULES_STALE_MS = 20 * 3600000;   // a market's rules are re-read once a day; the :40 firing goes back to ROAS once none is older
 export const RULES_MINUTE = 40;         // the half of the 10,40 firing rules may take (the :10 half is always ROAS)
 
+// ---- the rule inside FeedHero (Ray, 28 Sep 2026: "for all rules-related info, can you also add a
+// button to pop out to see the actual rule inside FeedHero") ----------------------------------------
+// The report hands back no link to the Rule Manager's own editor, and guessing one would send people to
+// a page that may not exist. What FeedHero DOES publish is the report's own web view, and the MCP's
+// `web_url` states its shape exactly: company=<cmpid> plus f[<column>]=<text> per column filter (every
+// filter "contains", form-encoded). So a rule opens as its own row on FeedHero's site — narrowed by
+// name AND target field, since a name alone can match a longer sibling — behind FeedHero's own login,
+// which sends the reader back to this exact view once signed in. A field alone opens every rule that
+// writes it (a chain, in run order); neither opens the market's whole report.
+export const FEEDHERO_REPORT = 'https://mcp.feedhero.net/reports/rule-report';
+export function feedheroUrl(cmpid, name, field) {
+  const q = new URLSearchParams();
+  q.set('company', s0(cmpid));
+  if (name) q.set('f[rule_name]', s0(name));
+  if (field) q.set('f[target_field]', s0(field));   // a field alone = every rule writing it, in run order
+  return FEEDHERO_REPORT + '?' + q.toString();
+}
+
 // ---- parsing (FeedHero formats everything for display) ------------------------------------------
 // "7,849 of 16,979" -> {n, of}; anything else -> nulls (never a guessed zero)
 export function parseImpact(v) {
@@ -369,7 +387,7 @@ export function stockMatrix(markets) {
 }
 export function stockCutoffs(markets) {
   const out = [];
-  (markets || []).forEach((m) => (m.stock || []).forEach((r) => (r.cut || []).forEach((c) => out.push({ client: m.client, market: m.market, cmpid: m.cmpid, sk: r.sk, ch: r.ch, rule: r.n, i: r.i, m: c.m, op: c.op, v: c.v, imp: r.imp, of: r.of }))));
+  (markets || []).forEach((m) => (m.stock || []).forEach((r) => (r.cut || []).forEach((c) => out.push({ client: m.client, market: m.market, cmpid: m.cmpid, sk: r.sk, ch: r.ch, rule: r.n, t: r.t, i: r.i, m: c.m, op: c.op, v: c.v, imp: r.imp, of: r.of }))));
   return out.sort((a, b) => a.client.localeCompare(b.client) || a.market.localeCompare(b.market) || a.i - b.i);
 }
 export function stockFindings(markets, now) {
@@ -421,7 +439,7 @@ export function stockFindings(markets, now) {
     const mkts = Array.from(new Set(list.map((c) => c.market)));
     if (vals.length < 2 || mkts.length < 2) return;
     const c0 = list[0];
-    out.push({ k: 'cutoff', sev: 1, client: c0.client, market: mkts.join(' · '), cmpid: null, n: vals.length, rules: list.map((c) => ({ i: c.i, n: c.rule, market: c.market })),
+    out.push({ k: 'cutoff', sev: 1, client: c0.client, market: mkts.join(' · '), cmpid: null, n: vals.length, rules: list.map((c) => ({ i: c.i, n: c.rule, t: c.t, market: c.market, cmpid: c.cmpid })),
       t: c0.client + ': ' + (c0.m === 'rc' ? 'range-completion' : 'stock') + ' cut-off set differently across markets (' + vals.sort((a, b) => a - b).map((v) => c0.op + ' ' + v + (c0.m === 'rc' ? '%' : '')).join(', ') + ')',
       why: 'Could be deliberate (market range depth differs). If it is not, one market is hiding or showing stock the others would not.' });
   });

@@ -10736,6 +10736,42 @@
       "file": "docs/hours_widget.html",
       "pattern": "function hoursSplit(rec)",
       "pr": 0
+    },
+    {
+      "name": "Rules: every rule opens in FeedHero — the engine's link builder",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function feedheroUrl(cmpid, name, field)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: the page twin of the FeedHero link",
+      "file": "docs/FeedSpark_Rules.html",
+      "pattern": "function fhUrl(cmpid, name, field)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: the pop-out in the market's rule list",
+      "file": "docs/FeedSpark_Rules.html",
+      "pattern": "fhA(d.cmpid, r.n, r.t)",
+      "pr": 0
+    },
+    {
+      "name": "Rules: a pop-out click never also opens the row",
+      "file": "docs/FeedSpark_Rules.html",
+      "pattern": "if (e.target.closest('a.fh')) return;",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the pop-out on every stock rule",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "fhA(m.cmpid, r.n, r.t)",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the pop-out on the cut-offs table",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "fhA(c.cmpid, c.rule, c.t)",
+      "pr": 0
     }
   ]
 }

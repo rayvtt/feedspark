@@ -66,6 +66,32 @@ The report does **not** carry a rule's conditions. So each rule is placed by:
 "Empty < 0.26 RC" → *RC < 26%*, "…quantity with 3 or less" → *stock ≤ 3* — and always shown beside
 the name they came from, never as the rule's logic.
 
+## 3a. The rule inside FeedHero (↗)
+
+Ray, 28 Sep 2026: *"For all rules-related info, can you also add a button to pop out to see the
+actual rule inside FeedHero, please?"*
+
+Every rule the two pages show carries a **↗** button that opens it on FeedHero's own site in a new
+tab: the market's rule list, chains (each rule, plus the whole chain in run order), findings (each
+rule, and each field a chain finding names), the 30-day log, the markets table, the stock setup
+tables, the cut-offs table, and a whole-market link on the market header and each stock setup. The
+CSVs carry the same link per row.
+
+- **Where it lands** — the report carries no link to the Rule Manager's own editor, and a guessed
+  editor URL could send people to a page that does not exist. What FeedHero does publish is its
+  report's web view, and the MCP's own `web_url` states the shape exactly:
+  `https://mcp.feedhero.net/reports/rule-report?company=<cmpid>&f[rule_name]=<name>&f[target_field]=<field>`
+  (every filter "contains", form-encoded). A rule opens as its own row there, narrowed by name AND
+  field since a name alone can match a longer sibling; a field alone opens every rule writing it;
+  neither opens the market's whole report.
+- **Login** — the site is FeedHero-login gated and returns the reader to the exact view after
+  sign-in, so the link works for anyone with a FeedHero account.
+- **One builder, twice** — `feedheroUrl` in `src/rules.js` and the page twin `fhUrl` are held equal by
+  `tools/test_rules.mjs`, and both equal, byte for byte, the two `web_url`s FeedHero's MCP returned on
+  28 Sep 2026. A click on the ↗ inside a clickable row opens only the tab, never the row.
+- **Straight into the editor** — if FeedHero's Rule Manager has a stable per-rule address (the rule
+  id is `rule_id` in the report), send it and the button can go there instead.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
