@@ -116,6 +116,13 @@ export const ROAS_TREE_WIN = ROAS_DEFAULT_WIN;
 // FeedHero's own pseudo-category on every window: Google Ads traffic on SKUs that are not in the
 // feed it holds — a real row (real spend), never a product-type path
 export function isUnlisted(cat) { return /^unlisted skus in ads traffic$/i.test(s0(cat).trim()); }
+// A SEGMENT FeedHero has not set up for a client is an ANSWER, not a failure (checked 28 Sep 2026:
+// every roster brand — Schuh, Superdry, Reiss, Monsoon, Accessorize, YuMOVE, Hobbycraft — answers
+// "Reports not found for Price group", while Brand and Gender cut every market on every period).
+// The page says the cut is not set up for that market, and the worker caches the answer like a
+// read, rather than printing a red error and asking FeedHero the same question on every open.
+export const ROAS_SEG_MISSING_TTL = 24 * 3600000;
+export function segMissing(err) { return /reports?\s+not\s+found/i.test(s0(err && err.message != null ? err.message : err)); }
 export const HIST_COLS = ['sp', 'rv', 'cv', 'ck', 'im', 'sk', 'zb'];   // a compact daily point per window, in this order
 
 // flat roster -> the rotation planner works over one list, not seven nested arrays

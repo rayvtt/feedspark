@@ -66,6 +66,8 @@ window.addEventListener('load',restore);
   .chip{font:inherit;font-size:12px;font-weight:800;height:28px;padding:0 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
   .chip:hover{border-color:var(--orange);color:var(--orange-deep)}
   .chip.on{background:rgba(245,166,35,.16);border-color:var(--orange);color:var(--orange-ink)}
+  table.pt tr.note td.nm{white-space:normal}
+  .lnk{font:inherit;font-weight:900;color:var(--orange-deep);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
   .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
   .status{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .status .pip{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);animation:heroPulse 2.4s ease-out infinite}
@@ -288,7 +290,7 @@ window.addEventListener('load',restore);
     <div class="tbar">
       <input class="fld q" id="q" type="search" placeholder="Filter brand, market or category…" aria-label="Filter rows">
       <div class="chips" id="bands"></div>
-      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — Category is stored by the sync; Brand / Gender / Price group are read live from FeedHero when a market is opened"><option value="Category">Segment · Category</option><option value="Brand">Segment · Brand</option><option value="Gender">Segment · Gender</option><option value="Price_group">Segment · Price group</option></select>
+      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — picking one opens the markets in view (up to 8, busiest first). Category is stored by the sync; Brand / Gender / Price group are read live from FeedHero"><option value="Category">Segment · Category</option><option value="Brand">Segment · Brand</option><option value="Gender">Segment · Gender</option><option value="Price_group">Segment · Price group</option></select>
       <span class="rel"><button class="btn" id="cols-btn" type="button" aria-haspopup="true" aria-expanded="false">⊞ Columns</button><div class="pop" id="cols-pop" hidden></div></span>
       <button class="btn" id="expand-all" type="button" title="Open every brand to its markets">⊕ Open all</button>
     </div>
@@ -308,7 +310,7 @@ window.addEventListener('load',restore);
       <li><b>Sync cadence.</b> The worker pulls FeedHero itself twice an hour (:10 and :40), 5 markets × 3 windows per firing, stalest first — the 57-market roster turns over roughly every 6 hours, well ahead of the source's own ~daily refresh. ⚡ Sync now walks the whole roster in one go (owner only).</li>
       <li><b>Money never crosses a currency.</b> A brand's markets report in different currencies (Superdry alone spans GBP, EUR and USD), so every scorecard, chart, total and blended ROAS on this page runs on the selected currency's markets only; the currency selector names how many markets each one covers.</li>
       <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — never a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
-      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Brand, Gender and Price group are FeedHero's other cuts of the same market, read live for any period when a market is opened and cached for six hours.</li>
+      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Brand, Gender and Price group are FeedHero's other cuts of the same market, read live for any period and cached for six hours; picking one opens the markets in view (up to eight, busiest by clicks first). <b>Price group is not set up in FeedHero</b> for any of the seven brands yet (checked 28 Sep 2026) — a market says so rather than showing an error.</li>
     </ol>
   </section>
 </main>
@@ -360,7 +362,7 @@ window.addEventListener('load',restore);
     {k:'cpa',l:'Cost / conv.'},{k:'cr',l:'Conv. rate'},{k:'aov',l:'AOV'},{k:'avgp',l:'Avg. price'},{k:'up',l:'Uplift'},{k:'mm',l:'Min margin'},
     {k:'sk',l:'SKUs',def:1},{k:'zb',l:'Zombie %',def:1},{k:'upd',l:'Updated'}
   ];
-  var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{}};
+  var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{},segNote:'',segPending:false};
   try{ var c0=JSON.parse(LS('fcc-roas-cols')||'null'); if(Array.isArray(c0)&&c0.length)S.cols=c0; }catch(e){}
   if(!S.cols)S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k});
   var DATA=null, CACHE={}, TREES={}, LIVE={}, WINS=[], BACK=7, OWNER=null, SYNCING=false;
@@ -369,7 +371,7 @@ window.addEventListener('load',restore);
   function readUrl(){ var u=new URLSearchParams(location.search);
     if(u.get('brand'))S.brand=u.get('brand'); if(u.get('market'))S.market=u.get('market'); if(u.get('win'))S.win=u.get('win');
     if(u.get('cur'))S.cur=u.get('cur'); if(u.get('m'))S.metrics=u.get('m').split(',').filter(function(k){return MBY[k]}).slice(0,2);
-    if(u.get('seg'))S.seg=u.get('seg'); if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
+    if(u.get('seg')){ S.seg=u.get('seg'); S.segPending=S.seg!=='Category'; } if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
   function linkOf(){ var u=new URLSearchParams(); if(S.brand)u.set('brand',S.brand); if(S.market)u.set('market',S.market); u.set('win',S.win); if(S.cur)u.set('cur',S.cur); u.set('m',S.metrics.join(',')); if(S.seg!=='Category')u.set('seg',S.seg); if(S.q)u.set('q',S.q); return location.pathname+'?'+u.toString(); }
 
   /* ================= load ================= */
@@ -559,7 +561,8 @@ window.addEventListener('load',restore);
     var out=[], brands=(DATA&&DATA.brands&&DATA.brands[S.win])||[], mkts=(DATA&&DATA.markets)||[];
     brands.forEach(function(b){
       // a brand picked in the header opens on its markets; a market picked opens on its rows
-      var bk='b|'+b.client; var brow={type:'brand',key:bk,depth:0,name:b.client,client:b.client,b:b,updated:b.updated,open:S.open[bk]==null?!!S.brand:!!S.open[bk]};
+      // a brand the search NAMES opens too (typing "schuh" means Schuh's markets); a chevron the reader closed stays closed
+      var bk='b|'+b.client; var qb=S.q.trim().toLowerCase(); var brow={type:'brand',key:bk,depth:0,name:b.client,client:b.client,b:b,updated:b.updated,open:S.open[bk]==null?(!!S.brand||(!!qb&&b.client.toLowerCase().indexOf(qb)>=0)):!!S.open[bk]};
       var kids=[]; var byCurRef=b.byCur||{};
       mkts.filter(function(m){return m.client===b.client}).forEach(function(m){
         var t=m[S.win]; var mk='m|'+m.cmpid; var ref=m.cur&&byCurRef[m.cur]?{sp:byCurRef[m.cur].sp,rv:byCurRef[m.cur].rv}:null;
@@ -568,7 +571,7 @@ window.addEventListener('load',restore);
         if(mrow.open&&t){
           openMarket(m.cmpid);   // idempotent — a no-op once the rows are cached or in flight
           if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(!tr.tree.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; else if(S.win!=='w30'&&tr.tree.every(function(n){return isUnlisted(n.name)}))kk.push({type:'note',key:mk+'|n30',depth:2,html:'FeedHero breaks categories down on the <b>30-day</b> window only — switch to 30 days for the tree, or pick a Segment (brand · gender · price group), which FeedHero cuts live for any period.',parent:mk}); } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
-          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.rows){ kk=lv.rows.map(function(c,i){ return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,parent:mk}; }); if(!kk.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+S.seg.replace('_',' ').toLowerCase()+' rows for this market.',parent:mk}]; }
+          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.missing){ kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' report set up for this market — the cut is configured per client in FeedHero. Brand and Gender are available.',parent:mk}]; } else if(lv&&lv.rows){ kk=lv.rows.map(function(c,i){ return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,parent:mk}; }); if(!kk.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+S.seg.replace('_',' ').toLowerCase()+' rows for this market.',parent:mk}]; }
             else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+S.seg.replace('_',' ').toLowerCase()+' rows live from FeedHero…',parent:mk}]; }
         }
         mrow.kids=kk; kids.push(mrow);
@@ -578,7 +581,13 @@ window.addEventListener('load',restore);
     return sortRows(out);
   }
   function catRows(tree,mrow,depth,pk){ var t=mrow.t; var list=tree.map(function(n,i){ var key=pk+'|'+n.path; var r={type:'cat',key:key,depth:depth,name:n.name,path:n.path,client:mrow.client,market:mrow.market,cur:mrow.cur,t:n.row,has:true,updated:mrow.updated,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,expandable:n.kids.length>0,open:!!S.open[key],parent:pk}; r.kids=r.open?catRows(n.kids,mrow,depth+1,key):[]; return r; }); return sortRows(list); }
-  function flat(rows,out,vis){ out=out||[]; rows.forEach(function(r){ var show=matchQ(r)&&matchBand(r); var kidsOut=[]; if(r.kids&&r.open)flat(r.kids,kidsOut,true); var anyKid=kidsOut.length>0; if(r.type==='note'){ out.push(r); return; } if(show||anyKid){ out.push(r); if(r.open){ var cap=S.more[r.key]?Infinity:(r.type==='market'?30:Infinity); var shown=kidsOut.slice(0,cap); shown.forEach(function(k){out.push(k)}); if(kidsOut.length>cap)out.push({type:'more',key:r.key+'|more',depth:r.depth+1,n:kidsOut.length-cap,parent:r.key}); } } }); return out; }
+  // the band filter hides markets by THEIR OWN band — so an open brand whose markets all have spend reads
+  // empty under "No activity". Never silently: the brand carries a line naming how many it hid, one click to show them.
+  function bandWords(){ var L={Strong:'Strong',Steady:'Steady',Weak:'Weak',Losing:'Losing',none:'No activity'}; return Object.keys(S.bands).filter(function(k){return S.bands[k]}).map(function(k){return L[k]||k}).join(', '); }
+  function flat(rows,out,vis){ out=out||[]; rows.forEach(function(r){ var show=matchQ(r)&&matchBand(r); var kidsOut=[]; if(r.kids&&r.open)flat(r.kids,kidsOut,true); var anyKid=kidsOut.length>0; if(r.type==='note'){ out.push(r); return; }
+      var hid=0; if(r.type==='brand'&&r.open&&r.kids){ var got={}; kidsOut.forEach(function(k){got[k.key]=1}); hid=r.kids.filter(function(m){return m.type==='market'&&matchQ(m)&&!matchBand(m)&&!got[m.key]}).length; }
+      if(show||anyKid||hid){ out.push(r); if(r.open){ var cap=S.more[r.key]?Infinity:(r.type==='market'?30:Infinity); var shown=kidsOut.slice(0,cap); shown.forEach(function(k){out.push(k)}); if(kidsOut.length>cap)out.push({type:'more',key:r.key+'|more',depth:r.depth+1,n:kidsOut.length-cap,parent:r.key});
+        if(hid)out.push({type:'note',band:1,key:r.key+'|bandhid',depth:1,html:hid+' market'+(hid===1?'':'s')+' hidden by the band filter ('+esc(bandWords())+') · <button class="lnk" type="button" data-clear-bands>Show them</button>',parent:r.key}); } } }); return out; }
   function renderTable(){
     var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody');
     head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(S.seg==='Category'?'category':S.seg.replace('_',' ').toLowerCase())+'</th>'+cols.map(function(c){return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+'">'+esc(c.l)+'</th>'}).join('')+'</tr>';
@@ -589,15 +598,22 @@ window.addEventListener('load',restore);
     var by=agg(); var tot=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}).map(function(c){ var a=by[c]; var tr={type:'tot',cur:c,has:true,b:{byCur:{},conv:a.cv,clicks:a.ck,impr:a.im,skus:a.sk,avgZombiePct:a.zb,bandCounts:a.bands||{},updated:0}}; tr.b.byCur[c]=a;
       return '<tr class="tot"><td class="nm"><span class="in">Total · '+esc(c)+' markets <span class="dim">'+a.n+'</span></span></td>'+cols.map(function(col){ var cell=cellOf({type:'brand',b:tr.b,cur:c},col.k); return '<td>'+cell.html+'</td>'; }).join('')+'</tr>'; }).join('');
     body.innerHTML=tot+rows.map(function(r){
-      if(r.type==='note')return '<tr class="r"><td class="nm" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td><td colspan="'+cols.length+'"></td></tr>';
+      // a note spans the table — a long sentence in the name column widened it and pushed the figures off screen
+      if(r.type==='note')return '<tr class="r note" data-key="'+esc(r.key)+'"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td></tr>';
       if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
       var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
         +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+'</span>';
       return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ return '<td>'+cellOf(r,c.k).html+'</td>'; }).join('')+'</tr>';
     }).join('');
     var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
-    $('#pt-foot').innerHTML='<span>'+nB+' brand'+(nB===1?'':'s')+' · '+nM+' market'+(nM===1?'':'s')+(nC?' · '+nC+' '+(S.seg==='Category'?'categories':S.seg.replace('_',' ').toLowerCase()+' rows'):'')+' shown</span>'+(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>';
-    $('#expand-all').textContent=(DATA.brands[S.win]||[]).every(function(b){return S.open['b|'+b.client]||S.brand})?'⊖ Close all':'⊕ Open all';
+    var nHid=rows.filter(function(r){return r.band}).reduce(function(a,r){return a+(parseInt(r.html,10)||0)},0);
+    $('#pt-foot').innerHTML='<span>'+nB+' brand'+(nB===1?'':'s')+' · '+nM+' market'+(nM===1?'':'s')+(nC?' · '+nC+' '+(S.seg==='Category'?'categories':segWord()+' rows'):'')+' shown</span>'
+      +(nHid?'<span>'+nHid+' market'+(nHid===1?'':'s')+' hidden by the band filter · <button class="lnk" type="button" data-clear-bands>clear it</button></span>':'')
+      +(S.segNote?'<span>'+esc(S.segNote)+'</span>':'')
+      +(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>';
+    var brRows=rows.filter(function(r){return r.type==='brand'});
+    $('#expand-all').textContent=brRows.length&&brRows.every(function(r){return r.open})?'⊖ Close all':'⊕ Open all';
+    if(S.segPending){ S.segPending=false; if(segOpen())renderTable(); }
   }
   function renderBands(){ var ks=[['Strong','Strong'],['Steady','Steady'],['Weak','Weak'],['Losing','Losing'],['none','No activity']]; $('#bands').innerHTML=ks.map(function(p){return '<button class="chip'+(S.bands[p[0]]?' on':'')+'" type="button" data-band="'+p[0]+'" aria-pressed="'+!!S.bands[p[0]]+'">'+p[1]+'</button>'}).join(''); }
   function renderCols(){ $('#cols-pop').innerHTML='<div class="hd">Columns</div>'+COLS.map(function(c){return '<label><input type="checkbox" data-col="'+c.k+'"'+(S.cols.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')+'<div class="hd" style="margin-top:8px">Reset</div><label><button class="chip" type="button" id="cols-reset">Default columns</button></label>'; }
@@ -607,7 +623,23 @@ window.addEventListener('load',restore);
     if(S.seg==='Category'){ var k=cmpid+'|'+S.win; if(TREES[k])return; TREES[k]={}; var m=(DATA.markets||[]).filter(function(x){return x.cmpid===cmpid})[0]; if(!m)return;
       fetch('/api/roas?client='+encodeURIComponent(m.client)+'&market='+encodeURIComponent(m.market)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ TREES[k]=d&&d.ok?{tree:d.tree||[],n:d.n}:{err:1}; renderTable(); }); return; }
     var lk=cmpid+'|'+S.seg+'|'+S.win; if(LIVE[lk])return; LIVE[lk]={};
-    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at}:{err:(d&&d.error)||'no answer'}; renderTable(); });
+    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at,missing:!!d.missing}:{err:(d&&d.error)||'no answer'}; renderTable(); });
+  }
+  function segWord(){ return S.seg==='Category'?'category':S.seg.replace('_',' ').toLowerCase(); }
+  // PICKING A SEGMENT SHOWS IT (Ray, 28 Sep 2026: "in Roas module - segment doesnt populate properly"): a cut is
+  // read per MARKET, so choosing one used to change nothing until a market was opened by hand. It now opens the
+  // markets a reader can see — under an open brand, passing the search — busiest first by clicks (a count, so no
+  // currency is compared), capped at SEG_AUTO so one choice can never fire a live FeedHero read per roster market.
+  var SEG_AUTO=8;
+  function segOpen(){
+    S.segNote=''; if(!DATA||!DATA.brands)return false;
+    var vis=[], anyBrand=false;
+    buildRows().forEach(function(b){ if(!b.open)return; anyBrand=true; (b.kids||[]).forEach(function(m){ if(m.type==='market'&&m.has&&matchQ(m))vis.push(m); }); });
+    if(!vis.length){ S.segNote=anyBrand?'No market in view to cut by '+segWord()+'.':'Open a brand (or pick one above) to cut its markets by '+segWord()+'.'; return false; }
+    vis.sort(function(a,b){ return ((b.t&&b.t.clicks)||0)-((a.t&&a.t.clicks)||0); });
+    vis.slice(0,SEG_AUTO).forEach(function(m){ S.open[m.key]=true; openMarket(m.cmpid); });
+    if(vis.length>SEG_AUTO)S.segNote='Opened the '+SEG_AUTO+' busiest of '+vis.length+' markets (by clicks) — open any other to read its '+segWord()+' cut.';
+    return true;
   }
 
   /* ================= CSV ================= */
@@ -625,7 +657,7 @@ window.addEventListener('load',restore);
   function saveViews(v){ LS('fcc-roas-views',JSON.stringify(v.slice(0,20))); }
   function renderViews(){ var v=views(); $('#views-pop').innerHTML='<div class="hd">Saved views · this device</div>'+(v.length?v.map(function(x,i){return '<div class="vw"><button class="ap" type="button" data-view="'+i+'" title="'+esc(x.brand||'All brands')+(x.market?' '+esc(x.market):'')+' · '+esc(x.win)+' · '+esc((x.metrics||[]).join(', '))+'">'+esc(x.name)+'</button><button class="x" type="button" data-viewx="'+i+'" aria-label="Delete view '+esc(x.name)+'">✕</button></div>'}).join(''):'<div class="dim" style="padding:4px 0">None yet.</div>')
     +'<div class="hd" style="margin-top:10px">Save this screen</div><div style="display:flex;gap:6px"><input class="fld" id="view-name" type="text" placeholder="Name…" style="flex:1;min-width:0" aria-label="View name"><button class="btn" id="view-save" type="button">Save</button></div><div class="hd" style="margin-top:10px">Share</div><button class="chip" id="view-link" type="button">🔗 Copy link to this screen</button>'; }
-  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=x.seg||'Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
+  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=x.seg||'Category'; S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
 
   /* ================= render all ================= */
   function renderAll(){
@@ -642,17 +674,20 @@ window.addEventListener('load',restore);
   $('#sc-row').addEventListener('click',function(e){ var b=e.target.closest('.sc'); if(!b)return; var k=b.getAttribute('data-m'); var i=S.metrics.indexOf(k); if(i>=0){ if(S.metrics.length>1)S.metrics.splice(i,1); } else { S.metrics.push(k); if(S.metrics.length>2)S.metrics.shift(); } renderScorecards(); renderTrend(); try{ history.replaceState(null,'',linkOf()); }catch(e2){} });
   $('#q').addEventListener('input',function(){ S.q=this.value; renderTable(); });
   $('#bands').addEventListener('click',function(e){ var b=e.target.closest('[data-band]'); if(!b)return; var k=b.getAttribute('data-band'); S.bands[k]=!S.bands[k]; renderBands(); renderTable(); });
-  $('#seg').addEventListener('change',function(){ S.seg=this.value; Object.keys(S.open).forEach(function(k){ if(k.indexOf('m|')===0&&S.open[k]){ openMarket(k.slice(2)); } }); renderTable(); });
+  $('#seg').addEventListener('change',function(){ S.seg=this.value; Object.keys(S.open).forEach(function(k){ if(k.indexOf('m|')===0&&S.open[k]){ openMarket(k.slice(2)); } }); segOpen(); renderTable(); try{ history.replaceState(null,'',linkOf()); }catch(e2){} });
+  $('#pt-foot').addEventListener('click',function(e){ if(e.target.closest('[data-clear-bands]')){ S.bands={}; renderBands(); renderTable(); } });
   $('#pt thead').addEventListener('click',function(e){ var th=e.target.closest('th'); if(!th)return; var k=th.getAttribute('data-k'); if(S.sort.k===k)S.sort.dir=-S.sort.dir; else S.sort={k:k,dir:k==='name'?1:-1}; renderTable(); });
   $('#pt tbody').addEventListener('click',function(e){
     var more=e.target.closest('[data-more]'); if(more){ S.more[more.getAttribute('data-more')]=1; renderTable(); return; }
+    if(e.target.closest('[data-clear-bands]')){ S.bands={}; renderBands(); renderTable(); return; }
     // the chevron toggles; so does a click anywhere on a row that HAS one (Google Ads' rows open on the name)
     var tg=e.target.closest('[data-tg]'), key=null;
     if(tg)key=tg.getAttribute('data-tg'); else { var tr=e.target.closest('tr.r'); if(tr&&tr.querySelector('[data-tg]'))key=tr.getAttribute('data-key'); }
     if(!key)return;
-    S.open[key]=!S.open[key]; if(key.indexOf('m|')===0&&S.open[key])openMarket(key.slice(2)); renderTable();
+    var chv=tg||e.target.closest('tr.r').querySelector('[data-tg]'); var was=chv&&chv.getAttribute('aria-expanded')==='true';
+    S.open[key]=!was; if(key.indexOf('m|')===0&&S.open[key])openMarket(key.slice(2)); renderTable();
   });
-  $('#expand-all').addEventListener('click',function(){ var all=(DATA&&DATA.brands&&DATA.brands[S.win])||[]; var allOpen=all.every(function(b){return S.open['b|'+b.client]}); all.forEach(function(b){ S.open['b|'+b.client]=!allOpen; }); renderTable(); });
+  $('#expand-all').addEventListener('click',function(){ var all=(DATA&&DATA.brands&&DATA.brands[S.win])||[]; var allOpen=buildRows().every(function(r){return r.open}); all.forEach(function(b){ S.open['b|'+b.client]=!allOpen; }); renderTable(); });
   $('#csv').addEventListener('click',csv);
   function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); }
   $('#cols-btn').addEventListener('click',function(){ pop(this,$('#cols-pop')); });
