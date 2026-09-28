@@ -75,7 +75,7 @@ function build() {
     superdry_gb: { w30: { spend: { cur: '£', n: 42000 }, clicks: 160000, skus: 21000, impr: 9800000, zombiePct: 31.5 }, updated: now - 7200000 },
     superdry_de: { w30: { spend: { cur: '€', n: 18500 }, clicks: 70500, skus: 15200, impr: 4100000, zombiePct: 38.2 }, updated: now - 7200000 },
   };
-  const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), findings: E.stockFindings(list, now),
+  const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), heroRuns: E.heroRuns(list), findings: E.stockFindings(list, now),
     sv: { scenarios: E.SV_SCENARIOS, days: E.SV_WINDOW_DAYS },
     markets: list.map((r) => E.stockView(r, ROAS[r.cmpid])) });
   const rules = recs.superdry_gb, where = { client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', rules };

@@ -56,7 +56,8 @@ The report does **not** carry a rule's conditions. So each rule is placed by:
 |---|---|
 | Availability | writes `stock_status` / `availability` / a channel's `*_availability` |
 | Stock thresholds | writes `stock_quantity` / `product_stock` / `stock_num` |
-| Range completion | writes range completion, RC %, hero size, colour depth, quantity rank |
+| Range completion | writes range completion, RC %, colour depth, quantity rank |
+| **Hero sizes** | writes a `hero_size` field, or the name says "hero size" — split from range completion (§3c) |
 | Stock labels | a custom label whose field or NAME says stock / quantity / availability / RC |
 | Stock exclusions | an exclusion field whose field or NAME says stock / quantity / RC |
 | Local inventory | pickup method / SLA, store-coded links, LIA |
@@ -156,6 +157,41 @@ invented counts), the arithmetic, the floor, the per-currency book, `stockView`,
 worker wiring and the panel's behaviour rules. No client figure is committed: the real Monsoon read
 the model was checked against stays in KV.
 
+## 3c. Hero sizes — split from range completion, and the runs table (`/stock`)
+
+Ray, 28 Sep 2026: *"At least add hero sizes in the stock control for each market and runs table as
+well, because it's different from range completion … add icons that relate to stock heroes now and
+then to make things more interesting."*
+
+Hero sizes used to be folded into `range` ("size-curve completeness, hero sizes and colour depth"),
+so a coverage cell or a market's plain-English setup sentence could not tell a rule protecting hero
+sizes apart from one measuring range completion. `hero` is now its own entry in `MECHANISMS`, read
+the same way every mechanism here is: the **field** first (`is_hero_size` / any `hero_size` field),
+then the **name** ("hero size") as a fallback. Because the coverage matrix, the mechanism filter
+chips, "How a rule is placed" and `stockSentence` all already iterate `MECHANISMS` generically
+rather than naming mechanisms by hand, the split reaches every one of those surfaces for free.
+`heldBack` gates on `r.sk === 'hero'` too — a rule that only *writes* the hero-size flag still
+resolves `calc` (the blocking happens in the rule that *reads* the flag, exactly like a
+range-completion-percentage rule), and the brand-level "gap" and cut-off findings treat `hero` as an
+ordinary mechanism.
+
+**The runs table.** "Runs" is FeedHero's own word for a rule's position — every table on these two
+pages already prints "#N in run order". `heroRuns(markets)` (same shape and sort as `stockCutoffs`:
+client, then market, then run order) flattens every hero-mechanism rule across the roster; served on
+`/api/rules/stock` and rendered as its own card on `/stock`, **"Hero sizes — the rules that run, per
+market"**, directly under the coverage matrix — one row per rule with its run order, target field,
+channel, batch, impacted count and last change. It is never mixed into Cut-offs (which lists a
+*cut-off value* a name states, on any mechanism) or the full per-market rule list. A KPI tile
+("Markets with hero sizes") gives the per-market coverage headline without opening the table.
+
+**The icon.** A small crown (`heroIcon()` — one inline SVG in the nav's own stroke language) shows
+**only** next to the Hero sizes mechanism itself, never on every row: a shared `mechTag(sk)` helper
+decorates the mechanism tag identically wherever it renders (Cut-offs, the ad-spend sized table,
+each market's rule list), plus the coverage-matrix column header, the mechanism filter chip and the
+"How a rule is placed" row. The badge keeps its plain colour — orange already means temporary / A/B
+/ campaign on this page — so the icon alone is the accent, read as identification rather than
+another flag.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -177,7 +213,7 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic off `roasidx`, null when unread). |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic off `roasidx`, null when unread). |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness

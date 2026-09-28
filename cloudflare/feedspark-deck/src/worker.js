@@ -2573,7 +2573,7 @@ async function route(request, env, ctx) {
         // index /roas reads — one more KV get, keyed by the market's cmpid, never a second MCP call
         const ridx = (await env.EDITS.get('roasidx', 'json')) || {};
         return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
-          matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), findings: RULES.stockFindings(rows, now),
+          matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), heroRuns: RULES.heroRuns(rows), findings: RULES.stockFindings(rows, now),
           sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
           markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid])) }));
       }

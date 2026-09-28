@@ -55,7 +55,14 @@ t('a store-code link = local inventory', one('Product URL with store code', 'url
 t('an "older than 3 months" exclusion = lifecycle', one('exclusion', 'older_than_3_months').sk === 'life');
 t('a pre-2024 exclusion = lifecycle', one('Pre 2024 Products Exclusion', 'pre_2024_exclusion').sk === 'life');
 t('Olapic / Awin availability = availability, affiliates channel', one('Set Olapic Availability', 'olapic_avail').ch === 'aff' && one('Awin availability setup', 'awin_availability').sk === 'avail');
-t('range completion / hero size fields = range completion', one('Range completion percentage calculation', 'rc_percent').sk === 'range' && one('Set hero sizes', 'is_hero_size').sk === 'range' && one('Ordering the Quantity', 'product_quantity_rank').sk === 'range');
+t('range completion fields (RC %, colour depth, quantity rank) = range completion', one('Range completion percentage calculation', 'rc_percent').sk === 'range' && one('Ordering the Quantity', 'product_quantity_rank').sk === 'range' && one('Set colour stock', 'colour_stock').sk === 'range');
+// HERO SIZES (Ray, 28 Sep 2026: "add hero sizes in the stock control for each market … because
+// it's different from range completion") — split into its own mechanism, read from the field first
+r = one('Set hero sizes', 'is_hero_size');
+t('a hero-size field is its OWN mechanism, not range completion', r.sk === 'hero' && r.fam === 'stock' && r.sk !== 'range');
+t('the name alone can also say hero sizes, on a field with no "hero_size" in it', one('Flag the Hero Sizes for AW26', 'new_size_flag_v2').sk === 'hero');
+t('a field that only reads hero sizes as a DRIVER (writes availability) stays availability — the mechanism is what a rule WRITES, the driver is what its name says it READS', one('ADhoc [inclusion] for Hero Size - review weekly please', 'stock_status').sk === 'avail');
+t('MECHANISMS lists Hero sizes as its own entry, split from Range completion, and every mechanism the classifier can return is on it', R.MECHANISMS.some((m) => m.k === 'hero' && m.label === 'Hero sizes') && !/hero/i.test((R.MECHANISMS.find((m) => m.k === 'range') || {}).q) && ['avail', 'threshold', 'range', 'hero', 'label', 'excl', 'local', 'life'].every((k) => R.MECHANISMS.some((m) => m.k === k)));
 t('a custom label is a stock label only when its NAME says stock', one('Stock Status', 'custom_label_3').sk === 'label' && one('Bestsellers', 'custom_label_3').sk === null);
 t('a label named New In is lifecycle, not a stock label', one('CL3 -> New In', 'custom_label_3').sk === 'life');
 t('an exclusion with no stock or age word is not a stock rule', one('Remove gift cards', 'excluded_destination').sk === null && one('Stock Exclusion except Jan Launch', 'meta_exclusion').sk === 'excl');
@@ -123,6 +130,20 @@ t('the matrix counts markets per mechanism per brand', R.stockMatrix(brand)[0].m
 t('cut-offs are listed with the rule they came from', R.stockCutoffs(brand).length === 2 && R.stockCutoffs(brand).every((c) => /Stock </.test(c.rule)));
 t('a market with no stock rules reads so, in words', /No stock rules/.test(R.stockSentence([])) && /Stock thresholds \(1 · stock < 11\)/.test(R.stockSentence(brand[0].stock)));
 
+console.log('· hero sizes — split from range completion, and the runs table (heroRuns)');
+const heroBrand = [
+  idx('Monsoon', 'GB', [['Set hero sizes', 'is_hero_size'], ['Stock < 11 -> OOS', 'stock_quantity'], ['Range completion percentage calculation', 'rc_percent']]),
+  idx('Monsoon', 'DE', [['Hero Size flag for AW26', 'new_size_flag_v2', { impacted_items: '50 of 500' }], ['Setup availability', 'stock_status']]),
+  idx('Monsoon', 'FR', [['Setup availability', 'stock_status']]),
+];
+const HR = R.heroRuns(heroBrand);
+t('heroRuns lists only the hero-mechanism rules, one row per rule', HR.length === 2);
+t('…sorted by client, then market, then FeedHero\'s own run order', HR[0].market === 'DE' && HR[1].market === 'GB');
+t('a heroRuns row carries what a runs table needs', ['client', 'market', 'cmpid', 'i', 'n', 't', 'd', 'ch', 'b', 'imp', 'of', 'mo', 'mb', 'iss', 'cut'].every((k) => k in HR[0]));
+t('range completion itself never shows up as a hero run', !HR.some((x) => /Range completion/.test(x.n)));
+t('a brand with no hero-size rule anywhere reads an empty list, never a guess', R.heroRuns(brand).length === 0);
+t('the brand-level "gap" finding treats hero sizes as an ordinary mechanism', R.stockFindings(heroBrand, NOW).some((f) => f.k === 'gap' && f.mk === 'hero' && f.market === 'FR'));
+
 console.log('· the index entry, the brand table, the rotation');
 const many = mk(Array.from({ length: 20 }, (_, i) => ['Guard ' + i, 'custom_label_3', { rule_issues: ['Not impacting any items'] }]));
 const e = R.idxEntry({ client: 'Reiss', market: 'GB', cmpid: 'reiss_gb' }, many, { total: 311 }, NOW);
@@ -177,6 +198,7 @@ t('the :40 half of the ROAS firing goes to rules while they are due — the ROAS
 t('the same token as ROAS — no second FeedHero credential', /if \(!env\.ROAS_MCP_TOKEN\) return save\(Object\.assign\(st, \{ state: 'no_token', error: 'ROAS_MCP_TOKEN not set — the rules read/.test(WK) && !/RULES_MCP_TOKEN/.test(WK));
 t('both modules are grantable in the 👥 Access panel', MODULES.some((m) => m.slug === 'rules' && m.path === '/rules') && MODULES.some((m) => m.slug === 'stock' && m.path === '/stock'));
 t('both have a migration state (twin of the /migration board)', MIG_SEED.some((m) => m.p === '/rules') && MIG_SEED.some((m) => m.p === '/stock'));
+t('the stock route also serves heroRuns — the runs table', /matrix: RULES\.stockMatrix\(rows\), cutoffs: RULES\.stockCutoffs\(rows\), heroRuns: RULES\.heroRuns\(rows\), findings: RULES\.stockFindings\(rows, now\),/.test(WK));
 
 console.log('· the pages');
 const navOf = (h) => (h.match(/<nav class="tb-nav tb-modules"[\s\S]*?<\/nav>/) || [''])[0];
@@ -196,6 +218,12 @@ t('Rules: the market drill reads ONE market off /api/rules?client=&market=', /ap
 t('Rules: family bars, findings by severity, the markets table, the 30-day log', /id="fams"/.test(RP) && /id="sevs"/.test(RP) && /id="mk-table"/.test(RP) && /id="recent"/.test(RP));
 t('Stock: coverage matrix, findings, cut-offs, each market\'s setup', /id="cov"/.test(SP) && /id="finds"/.test(SP) && /id="cuts"/.test(SP) && /id="setups"/.test(SP) && /api\('\/api\/rules\/stock'/.test(SP));
 t('Stock: a cut-off is shown as what the NAME states', /name states/.test(SP) && /read from the name/i.test(SP));
+t('Stock: hero sizes get their own runs table, reading heroRuns and filtering like the cut-offs table', /id="heroes"/.test(SP) && /function renderHeroes\(\) \{/.test(SP) && /S\.d && S\.d\.heroRuns/.test(SP) && /renderCov\(\); renderHeroes\(\); renderFinds\(\)/.test(SP));
+t('Stock: a "Markets with hero sizes" KPI, split from local inventory\'s own tile', /kpi\(n0\(hero\), 'Markets with hero sizes',/.test(SP) && /st\.some\(function \(r\) \{ return r\.sk === 'hero'; \}\)/.test(SP));
+t('Stock: the hero-size glyph is ONE function, shown only where the mechanism itself shows up — a tag, a column header, a filter chip, the runs table (never a wall of icons on every row)', (() => {
+  const uses = (SP.match(/heroIcon\(\)/g) || []).length;
+  return /function heroIcon\(\)/.test(SP) && /function mechTag\(sk\) \{ return '<span class="tg">' \+ \(sk === 'hero' \? heroIcon\(\) : ''\)/.test(SP) && uses >= 5;
+})());
 
 console.log('· the rule inside FeedHero — every rule pops out to its own row on FeedHero\'s site');
 // the two links FeedHero's OWN MCP handed back on 28 Sep 2026 for a filtered rule_report (its web_url)
@@ -302,6 +330,7 @@ console.log('· the tripwire stub + nothing in git');
 const stub = require('./rules_stub.js').build();
 t('stub: the book shape the page reads (markets without stock rows, with sn)', stub.book.markets.length === 3 && stub.book.markets.every((m) => m.sn > 0 && !m.stock && !m.find) && stub.book.findings.length > 0);
 t('stub: the stock shape (sentence per market, matrix, cut-offs)', stub.stock.markets.every((m) => m.sentence && m.stock.length) && stub.stock.cutoffs.length > 0 && stub.stock.matrix.length === 2);
+t('stub: carries heroRuns too, so the mobile/dark-mode tripwires actually render the runs table, not an empty one', stub.stock.heroRuns.length > 0 && stub.stock.mechanisms.some((m) => m.k === 'hero'));
 t('both browser tripwires feed the stub and inline /design/fcc.css', ['tools/check_mobile.js', 'tools/check_darkmode.js'].every((p) => { const s = read(p); return /rules_stub\.js/.test(s) && /\$\{RULES_STUB\}/.test(s) && /withFccCss\(/.test(s); }));
 const tracked = execSync('git ls-files', { cwd: new URL('..', import.meta.url) }).toString().split('\n').filter((f) => /\.(json|txt|csv|md|html|js|mjs)$/.test(f));
 const leaks = tracked.filter((f) => { try { return /"impacted_items"\s*:|"rule_issues"\s*:/.test(fs.readFileSync(new URL('../' + f, import.meta.url), 'utf8')); } catch (e2) { return false; } });

@@ -173,7 +173,8 @@ export function channel(r) {
 export const MECHANISMS = [
   { k: 'avail', label: 'Availability', q: 'What each channel is told is in or out of stock' },
   { k: 'threshold', label: 'Stock thresholds', q: 'Stock quantity maths and low-stock cut-offs' },
-  { k: 'range', label: 'Range completion', q: 'Size-curve completeness, hero sizes and colour depth' },
+  { k: 'range', label: 'Range completion', q: 'Size-curve completeness and colour depth' },
+  { k: 'hero', label: 'Hero sizes', q: 'The core, best-selling sizes a market is told to protect — split out from range completion' },
   { k: 'label', label: 'Stock labels', q: 'Custom labels that bid by stock depth or range completion' },
   { k: 'excl', label: 'Stock exclusions', q: 'Products pulled from a channel for stock reasons' },
   { k: 'local', label: 'Local inventory', q: 'Store pickup, pickup SLA and store-coded links (LIA)' },
@@ -198,7 +199,12 @@ export function stockKind(r) {
   }
   if (/older_than|(^|_)pre_\d{4}|new_?in|arrival|season|clearance/.test(d)) return 'life';
   if (/stock_status|availability|(^|_)avail$|_avail$/.test(d)) return 'avail';
-  if (/range|(^|_)rc(_|$)|rc_percent|avail_percent|hero_size|colour_stock|quantity_rank/.test(d)) return 'range';
+  // HERO SIZES (Ray, 28 Sep 2026: "add hero sizes in the stock control for each market … because
+  // it's different from range completion"): a rule that WRITES the hero-size flag itself (field, or
+  // the name says so) is its own mechanism, not folded into range completion's size-curve reading —
+  // read from the field first, same as every other mechanism here.
+  if (/hero_size/.test(d) || /hero size/i.test(n)) return 'hero';
+  if (/range|(^|_)rc(_|$)|rc_percent|avail_percent|colour_stock|quantity_rank/.test(d)) return 'range';
   if (/stock|quantity|(^|_)qty/.test(d)) return 'threshold';
   return null;
 }
@@ -391,6 +397,22 @@ export function stockCutoffs(markets) {
   (markets || []).forEach((m) => (m.stock || []).forEach((r) => (r.cut || []).forEach((c) => out.push({ client: m.client, market: m.market, cmpid: m.cmpid, sk: r.sk, ch: r.ch, rule: r.n, t: r.t, i: r.i, m: c.m, op: c.op, v: c.v, imp: r.imp, of: r.of }))));
   return out.sort((a, b) => a.client.localeCompare(b.client) || a.market.localeCompare(b.market) || a.i - b.i);
 }
+// HERO SIZES — THE RUNS TABLE (Ray, 28 Sep 2026: "add hero sizes in the stock control for each
+// market and runs table as well, because it's different from range completion"): every rule on the
+// 'hero' mechanism, market by market, in FeedHero's own RUN ORDER — the thing the coverage count
+// and the mechanism chip cannot show on their own: which rule, in what position, is deciding a
+// market's hero sizes. Same shape as stockCutoffs so the page can render it the same way.
+export function heroRuns(markets) {
+  const out = [];
+  (markets || []).forEach((m) => {
+    if (!m || !m.client) return;
+    (m.stock || []).filter((r) => r.sk === 'hero').forEach((r) => out.push({
+      client: m.client, market: m.market, cmpid: m.cmpid, i: r.i, n: r.n, t: r.t, d: r.d,
+      ch: r.ch, b: r.b, imp: r.imp, of: r.of, mo: r.mo, mb: r.mb, iss: r.iss, cut: r.cut,
+    }));
+  });
+  return out.sort((a, b) => a.client.localeCompare(b.client) || a.market.localeCompare(b.market) || a.i - b.i);
+}
 export function stockFindings(markets, now) {
   now = now || Date.now();
   const out = [];
@@ -567,9 +589,10 @@ export function heldBack(r) {
   const d = s0(r.d), n = s0(r.n), dr = r.dr || [], cut = r.cut || [];
   const rcOrQty = dr.indexOf('rc') >= 0 || dr.indexOf('qty') >= 0 || dr.indexOf('hero') >= 0 || cut.length > 0;
   // Ray: "all the stock-related exclusions — stock threshold, range completion, etc. — focus on stock
-  // threshold and range completion": thresholds, range completion, and any stock rule driven by either
-  // (a stock exclusion is already a rule the classifier placed for stock reasons)
-  if (!(r.sk === 'threshold' || r.sk === 'range' || r.sk === 'excl' || rcOrQty)) return null;
+  // threshold and range completion": thresholds, range completion, hero sizes (split from range
+  // completion but the same "holds products back on low stock" question), and any stock rule driven
+  // by either (a stock exclusion is already a rule the classifier placed for stock reasons)
+  if (!(r.sk === 'threshold' || r.sk === 'range' || r.sk === 'hero' || r.sk === 'excl' || rcOrQty)) return null;
   if (RELEASE.test(n)) return { kind: 'releases', n: r.imp, why: 'Its name says it lets products back in — the exception that keeps them live, not a saving.' };
   const isExcl = /exclu|(^|_)exclude|excl_|destination|eligible/.test(d);
   const blocks = isExcl
