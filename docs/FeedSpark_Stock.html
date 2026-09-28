@@ -153,6 +153,12 @@ window.addEventListener('load',restore);
   .imp .bar{width:64px;height:6px;border-radius:0 3px 3px 0;background:var(--wash);overflow:hidden;flex:none}
   .imp .bar i{display:block;height:100%;background:var(--chart-1)}
   .imp.zero{color:var(--muted)}
+  /* the pop-out into FeedHero: a small bordered button, never a bare glyph a thumb can miss */
+  a.fh{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:26px;height:26px;padding:0 7px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font-size:12.5px;font-weight:900;line-height:1;text-decoration:none;white-space:nowrap;vertical-align:middle;flex:none}
+  a.fh:hover,a.fh:focus-visible{border-color:var(--orange);color:var(--orange-deep)}
+  a.fh.lbl{font-size:12px;height:30px;padding:0 10px}
+  table.t td.nm a.fh{margin-left:2px}
+  .fd .rl li a.fh{margin-left:auto}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted)}
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
   .toolbar .sp{flex:1}
@@ -177,7 +183,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] table.t th{background:#181B22}
   [data-theme=dark] table.t tr.cl:hover td,[data-theme=dark] table.t tr.sel td{background:#181B22}
   @media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
-  @media(max-width:760px){.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
+  [data-theme=dark] a.fh{background:#20242E}
+  @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
   @media(prefers-reduced-motion:reduce){.hb .b i{animation:none}}
 
 </style>
@@ -367,6 +374,24 @@ function syncNow(btn, roster, done) {
     });
   })();
 }
+// THE RULE INSIDE FEEDHERO — the page twin of src/rules.js feedheroUrl (tools/test_rules.mjs holds the
+// two equal, and both equal to the web_url FeedHero's own MCP hands back). The report carries no link
+// to the Rule Manager's editor, so a rule opens as its own row on FeedHero's report site, narrowed by
+// name and target field; a field alone opens every rule writing it; neither opens the market's report.
+var FEEDHERO_REPORT = 'https://mcp.feedhero.net/reports/rule-report';
+function fhUrl(cmpid, name, field) {
+  var q = new URLSearchParams();
+  q.set('company', String(cmpid == null ? '' : cmpid));
+  if (name) q.set('f[rule_name]', String(name));
+  if (field) q.set('f[target_field]', String(field));
+  return FEEDHERO_REPORT + '?' + q.toString();
+}
+// the pop-out button — an anchor, so it is a new tab and never a click the row underneath handles
+function fhA(cmpid, name, field, label) {
+  if (!cmpid) return '';
+  var what = name ? 'Open \u201c' + name + '\u201d in FeedHero' : field ? 'Open every rule writing ' + field + ' in FeedHero' : 'Open this market\u2019s rules in FeedHero';
+  return '<a class="fh' + (label ? ' lbl' : '') + '" href="' + esc(fhUrl(cmpid, name, field)) + '" target="_blank" rel="noopener" title="' + esc(what + ' (FeedHero login)') + '" aria-label="' + esc(what) + '">' + (label ? esc(label) + ' ' : '') + '\u2197</a>';
+}
 function remember(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
 function recall(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function setQuery(o) {
@@ -467,7 +492,7 @@ function impCell(r) {
     $('#sevs').innerHTML = [0, 3, 2, 1].map(function (k) { return '<button type="button" data-s="' + k + '" class="' + (S.sev === k ? 'on' : '') + '">' + (k ? esc(SEVL[k]) : 'All') + ' ' + cnt[k] + '</button>'; }).join('');
     var list = findList(false), cap = S.all ? list.length : 7;
     $('#finds').innerHTML = list.length ? list.slice(0, cap).map(function (f) {
-      var rules = (f.rules || []).map(function (r) { return '<li><b>' + esc(r.n) + '</b>' + (r.market ? '<span class="m">' + esc(r.market) + '</span>' : '') + (r.t ? '<span class="m">→ ' + esc(r.t) + '</span>' : '') + (r.mo ? '<span class="m">changed ' + ago(r.mo) + (r.mb ? ' by ' + esc(r.mb) : '') + '</span>' : '') + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + '</li>'; }).join('');
+      var rules = (f.rules || []).map(function (r) { return '<li><b>' + esc(r.n) + '</b>' + (r.market ? '<span class="m">' + esc(r.market) + '</span>' : '') + (r.t ? '<span class="m">→ ' + esc(r.t) + '</span>' : '') + (r.mo ? '<span class="m">changed ' + ago(r.mo) + (r.mb ? ' by ' + esc(r.mb) : '') + '</span>' : '') + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + fhA(r.cmpid || f.cmpid, r.n, r.t) + '</li>'; }).join('');
       return '<details class="fd"><summary><span class="sev s' + f.sev + '">' + esc(SEVL[f.sev] || '') + '</span><span class="tt"><span class="chev">▶</span>' + esc(f.t) + '</span><span class="wh">' + esc(f.k === 'gap' || f.k === 'cutoff' ? f.client : f.client + ' · ' + f.market) + '</span><span></span><span class="why">' + esc(f.why) + '</span></summary>' + (rules ? '<ul class="rl">' + rules + '</ul>' : '') + '</details>';
     }).join('') : '<div class="empty">' + (all.length ? 'Nothing at this severity.' : (S.d && S.d.tracked ? 'No stock findings — the stock rules read clean.' : 'No rules read yet.')) + '</div>';
     var mb = $('#find-more'); mb.hidden = list.length <= 7; mb.textContent = S.all ? 'Show fewer' : 'Show all ' + list.length;
@@ -475,7 +500,7 @@ function impCell(r) {
   function renderCuts() {
     var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
     $('#cuts tbody').innerHTML = list.map(function (c) {
-      return '<tr><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td><span class="tg">' + esc((MK[c.sk] || {}).label || c.sk) + '</span></td>'
+      return '<tr><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td><span class="tg">' + esc((MK[c.sk] || {}).label || c.sk) + '</span></td>'
         + '<td class="num"><b>' + (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : '') + '</b></td><td class="num">' + (c.imp == null ? '—' : n0(c.imp) + (c.of ? '<span class="sub2">of ' + n0(c.of) + '</span>' : '')) + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="5">No rule name in view states a cut-off.</td></tr>';
   }
@@ -490,7 +515,7 @@ function impCell(r) {
     r.iss.forEach(function (c) { fl.push(c === 'none' ? '<span class="tg" data-tip="' + esc('FeedHero: <b>not impacting any items</b> on the last run') + '">idle</span>' : '<span class="tg rd">' + (c === 'target' ? 'target column missing' : c === 'dep' ? 'dependent column missing' : 'issue') + '</span>'); });
     r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
     (r.dr || []).forEach(function (k) { fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
-    return '<tr><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b>' + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
+    return '<tr><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
       + '<td><span class="tg">' + esc((MK[r.sk] || {}).label || r.sk) + '</span></td>'
       + '<td>' + esc(r.t) + '<span class="sub2 mono">' + esc(r.d) + '</span></td>'
       + '<td>' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + '</td>'
@@ -510,6 +535,7 @@ function impCell(r) {
       if ((S.mech || q) && !st.length) return '';
       var open = ms.length <= 3 || !!S.market || !!q || !!S.mech;
       return '<details class="fd"' + (open ? ' open' : '') + ' id="set-' + esc(m.cmpid) + '"><summary><span class="sev s1">' + (m.stock || []).length + '</span><span class="tt"><span class="chev">▶</span>' + esc(m.client + ' ' + m.market) + '</span><span class="wh">' + (m.updated ? 'read ' + since(m.updated) : '') + '</span><span></span><span class="why">' + esc(m.sentence) + '</span></summary>'
+        + '<div class="toolbar" style="margin:8px 0 0">' + fhA(m.cmpid, null, null, 'All ' + m.client + ' ' + m.market + ' rules in FeedHero') + '</div>'
         + (st.length ? '<div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th class="num">#</th><th>Rule</th><th>Does</th><th>Writes</th><th>Channel</th><th>Batch</th><th class="num">Impacted</th><th>Last change</th><th>Flags</th></tr></thead><tbody>' + st.map(function (r) { return ruleRow(r, m); }).join('') + '</tbody></table></div>' : '<div class="empty">No stock rules — every channel is told whatever the source feed says.</div>')
         + '</details>';
     }).join('');
@@ -541,9 +567,9 @@ function impCell(r) {
   $('#csv').addEventListener('click', function () {
     var rows = [];
     mkts().forEach(function (m) { (m.stock || []).forEach(function (r) {
-      rows.push([m.client, m.market, r.i + 1, r.n, (MK[r.sk] || {}).label || r.sk, r.t, r.d, CH[r.ch] || r.ch, r.b || 'All products', (r.cut || []).map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join('; '), (r.dr || []).map(function (k) { return DR[k] || k; }).join('; '), r.imp, r.of, dstr(r.mo), r.mb, r.iss.join(' '), r.tag.join(' ')]);
+      rows.push([m.client, m.market, r.i + 1, r.n, (MK[r.sk] || {}).label || r.sk, r.t, r.d, CH[r.ch] || r.ch, r.b || 'All products', (r.cut || []).map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join('; '), (r.dr || []).map(function (k) { return DR[k] || k; }).join('; '), r.imp, r.of, dstr(r.mo), r.mb, r.iss.join(' '), r.tag.join(' '), fhUrl(m.cmpid, r.n, r.t)]);
     }); });
-    csvDownload('stock_rules' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'run order', 'rule', 'stock control', 'target field', 'target db', 'channel', 'batch', 'cut-off (from the name)', 'name says it reads', 'impacted', 'of', 'last change', 'changed by', 'issues', 'tags'], rows);
+    csvDownload('stock_rules' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'run order', 'rule', 'stock control', 'target field', 'target db', 'channel', 'batch', 'cut-off (from the name)', 'name says it reads', 'impacted', 'of', 'last change', 'changed by', 'issues', 'tags', 'FeedHero link'], rows);
   });
   load();
 })();

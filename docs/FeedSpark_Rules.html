@@ -153,6 +153,12 @@ window.addEventListener('load',restore);
   .imp .bar{width:64px;height:6px;border-radius:0 3px 3px 0;background:var(--wash);overflow:hidden;flex:none}
   .imp .bar i{display:block;height:100%;background:var(--chart-1)}
   .imp.zero{color:var(--muted)}
+  /* the pop-out into FeedHero: a small bordered button, never a bare glyph a thumb can miss */
+  a.fh{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:26px;height:26px;padding:0 7px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font-size:12.5px;font-weight:900;line-height:1;text-decoration:none;white-space:nowrap;vertical-align:middle;flex:none}
+  a.fh:hover,a.fh:focus-visible{border-color:var(--orange);color:var(--orange-deep)}
+  a.fh.lbl{font-size:12px;height:30px;padding:0 10px}
+  table.t td.nm a.fh{margin-left:2px}
+  .fd .rl li a.fh{margin-left:auto}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted)}
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
   .toolbar .sp{flex:1}
@@ -177,7 +183,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] table.t th{background:#181B22}
   [data-theme=dark] table.t tr.cl:hover td,[data-theme=dark] table.t tr.sel td{background:#181B22}
   @media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
-  @media(max-width:760px){.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
+  [data-theme=dark] a.fh{background:#20242E}
+  @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
   @media(prefers-reduced-motion:reduce){.hb .b i{animation:none}}
 
 </style>
@@ -254,7 +261,7 @@ window.addEventListener('load',restore);
 
   <section class="card" id="drill" hidden>
     <div class="chead"><div class="sp"><h3 id="d-title">Market</h3><p class="ch" id="d-sub"></p></div>
-      <div class="tools"><button class="btn" id="d-close" type="button" title="Back to every market">✕ Close</button></div></div>
+      <div class="tools"><span id="d-fhw"></span><button class="btn" id="d-close" type="button" title="Back to every market">✕ Close</button></div></div>
     <div class="toolbar">
       <div class="chips" id="d-fams"></div>
     </div>
@@ -378,6 +385,24 @@ function syncNow(btn, roster, done) {
     });
   })();
 }
+// THE RULE INSIDE FEEDHERO — the page twin of src/rules.js feedheroUrl (tools/test_rules.mjs holds the
+// two equal, and both equal to the web_url FeedHero's own MCP hands back). The report carries no link
+// to the Rule Manager's editor, so a rule opens as its own row on FeedHero's report site, narrowed by
+// name and target field; a field alone opens every rule writing it; neither opens the market's report.
+var FEEDHERO_REPORT = 'https://mcp.feedhero.net/reports/rule-report';
+function fhUrl(cmpid, name, field) {
+  var q = new URLSearchParams();
+  q.set('company', String(cmpid == null ? '' : cmpid));
+  if (name) q.set('f[rule_name]', String(name));
+  if (field) q.set('f[target_field]', String(field));
+  return FEEDHERO_REPORT + '?' + q.toString();
+}
+// the pop-out button — an anchor, so it is a new tab and never a click the row underneath handles
+function fhA(cmpid, name, field, label) {
+  if (!cmpid) return '';
+  var what = name ? 'Open \u201c' + name + '\u201d in FeedHero' : field ? 'Open every rule writing ' + field + ' in FeedHero' : 'Open this market\u2019s rules in FeedHero';
+  return '<a class="fh' + (label ? ' lbl' : '') + '" href="' + esc(fhUrl(cmpid, name, field)) + '" target="_blank" rel="noopener" title="' + esc(what + ' (FeedHero login)') + '" aria-label="' + esc(what) + '">' + (label ? esc(label) + ' ' : '') + '\u2197</a>';
+}
 function remember(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
 function recall(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function setQuery(o) {
@@ -469,8 +494,8 @@ function impCell(r) {
     var rules = (f.rules || []).map(function (r) {
       return '<li><b>' + esc(r.n) + '</b>' + (r.t ? '<span class="m">→ ' + esc(r.t) + '</span>' : '') + (r.market ? '<span class="m">' + esc(r.market) + '</span>' : '')
         + (r.mo ? '<span class="m">changed ' + ago(r.mo) + (r.mb ? ' by ' + esc(r.mb) : '') + '</span>' : '')
-        + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + '</li>';
-    }).join('') + (f.fields || []).map(function (x) { return '<li><b>' + esc(x.t) + '</b><span class="m">' + x.n + ' rules write it</span></li>'; }).join('')
+        + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + fhA(r.cmpid || f.cmpid, r.n, r.t) + '</li>';
+    }).join('') + (f.fields || []).map(function (x) { return '<li><b>' + esc(x.t) + '</b><span class="m">' + x.n + ' rules write it</span>' + fhA(f.cmpid, null, x.t) + '</li>'; }).join('')
       + (f.more ? '<li><span class="m">+ ' + f.more + ' more — open the market for the full list</span></li>' : '');
     var where = withWhere ? '<span class="wh">' + esc(f.client) + ' · ' + esc(f.market) + '</span>' : '<span></span>';
     return '<details class="fd"><summary><span class="sev s' + f.sev + '">' + esc(SEVL[f.sev] || '') + '</span><span class="tt"><span class="chev">▶</span>' + esc(f.t) + '</span>' + where
@@ -510,7 +535,7 @@ function impCell(r) {
     $('#mk-table tbody').innerHTML = rows.map(function (m) {
       var idle = (m.iss && m.iss.none) || 0, br = ((m.iss && m.iss.target) || 0) + ((m.iss && m.iss.dep) || 0), fc = mval(MCOLS[MCOLS.length - 1], m);
       return '<tr class="cl' + (S.det && S.det.cmpid === m.cmpid ? ' sel' : '') + '" data-open="' + esc(m.client) + '|' + esc(m.market) + '">'
-        + '<td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">' + (m.items ? n0(m.items) + ' products' : '') + (m.capped ? ' · first ' + n0(m.n) + ' of ' + n0(m.total) + ' rules listed' : '') + '</span></td>'
+        + '<td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + ' ' + fhA(m.cmpid) + '<span class="sub2">' + (m.items ? n0(m.items) + ' products' : '') + (m.capped ? ' · first ' + n0(m.n) + ' of ' + n0(m.total) + ' rules listed' : '') + '</span></td>'
         + '<td class="num">' + n0(m.n) + '</td><td class="num">' + n0(m.user) + '</td>'
         + '<td class="num">' + (idle ? n0(idle) : '<span class="muted">0</span>') + '</td>'
         + '<td class="num">' + (br ? '<span class="tg rd">' + br + '</span>' : '<span class="muted">0</span>') + '</td>'
@@ -532,7 +557,7 @@ function impCell(r) {
     var tb = $('#recent tbody');
     tb.innerHTML = list.slice(0, 25).map(function (x) {
       return '<tr class="cl" data-open="' + esc(x.m.client) + '|' + esc(x.m.market) + '"><td>' + dstr(x.r.mo) + '<span class="sub2">' + ago(x.r.mo) + '</span></td><td><b>' + esc(x.m.client) + '</b> ' + esc(x.m.market) + '</td>'
-        + '<td class="nm"><b>' + esc(x.r.n) + '</b>' + (x.r.new ? ' <span class="tg gr">new</span>' : '') + '<span class="sub2">→ ' + esc(x.r.t) + '</span></td><td><span class="tg">' + esc((FAM[x.r.fam] || {}).label || x.r.fam) + '</span></td><td>' + esc(x.r.mb || '—') + '</td></tr>';
+        + '<td class="nm"><b>' + esc(x.r.n) + '</b>' + (x.r.new ? ' <span class="tg gr">new</span>' : '') + ' ' + fhA(x.m.cmpid, x.r.n, x.r.t) + '<span class="sub2">→ ' + esc(x.r.t) + '</span></td><td><span class="tg">' + esc((FAM[x.r.fam] || {}).label || x.r.fam) + '</span></td><td>' + esc(x.r.mb || '—') + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="5">No rule changed in the last 30 days in view.</td></tr>';
   }
 
@@ -555,6 +580,7 @@ function impCell(r) {
   function renderDrill() {
     var d = S.det; if (!d) return;
     if (!d.ok || !d.read) { $('#d-sub').textContent = d.ok ? 'Not read yet — the rotation reaches it within a day.' : (d.error || 'Could not read this market'); $('#d-table tbody').innerHTML = ''; $('#d-fams').innerHTML = ''; return; }
+    $('#d-fhw').innerHTML = fhA(d.cmpid, null, null, 'All ' + d.client + ' ' + d.market + ' rules in FeedHero');
     var rules = d.rules || [], fam = {};
     rules.forEach(function (r) { fam[r.fam] = (fam[r.fam] || 0) + 1; });
     $('#d-sub').innerHTML = n0(rules.length) + ' active rules in the order FeedHero runs them' + (d.capped ? ' — <b>the first ' + n0(rules.length) + ' of ' + n0(d.total) + '</b> (the report is read to ' + n0(rules.length) + ')' : '') + ' · read ' + since(d.updated);
@@ -570,14 +596,14 @@ function impCell(r) {
       return true;
     });
     $('#d-count').textContent = list.length === rules.length ? '' : list.length + ' of ' + rules.length + ' shown';
-    $('#d-table thead').innerHTML = '<tr>' + DCOLS.map(function (c, i) { return '<th' + (i === 0 || i === 7 || i === 8 ? ' class="num"' : '') + '>' + c + '</th>'; }).join('') + '</tr>';
+    $('#d-table thead').innerHTML = '<tr>' + DCOLS.map(function (c, i) { return '<th' + (i === 0 || i === 7 || i === 8 ? ' class="num"'  : '') + '>' + c + '</th>'; }).join('') + '</tr>';
     $('#d-table tbody').innerHTML = list.map(function (r) {
       var fl = [];
       r.iss.forEach(function (c) { fl.push(c === 'none' ? '<span class="tg" data-tip="' + esc('FeedHero: <b>not impacting any items</b> on the last run') + '">idle</span>' : c === 'target' ? '<span class="tg rd">target column missing</span>' : c === 'dep' ? '<span class="tg rd">dependent column missing</span>' : '<span class="tg rd">issue</span>'); });
       r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
       if (r.sk) fl.push('<a class="tg bl" href="/stock?brand=' + encodeURIComponent(d.client) + '&market=' + encodeURIComponent(d.market) + '" title="Stock management">stock</a>');
       if (chainOf[r.i]) fl.push('<span class="tg" data-tip="' + esc(chainOf[r.i] + ' rules write <b>' + esc(r.t) + '</b> — the last one to run wins') + '">1 of ' + chainOf[r.i] + '</span>');
-      return '<tr><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b>' + (r.cut && r.cut.length ? '<span class="sub2">name states ' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</span>' : '') + '</td>'
+      return '<tr><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(d.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states ' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</span>' : '') + '</td>'
         + '<td>' + esc(r.t) + '<span class="sub2 mono">' + esc(r.d) + '</span></td>'
         + '<td><span class="tg">' + esc((FAM[r.fam] || {}).label || r.fam) + '</span></td>'
         + '<td>' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + '</td>'
@@ -591,7 +617,8 @@ function impCell(r) {
     var byI = {}; rules.forEach(function (r) { byI[r.i] = r; });
     $('#d-chains').innerHTML = (d.chains || []).slice(0, 12).map(function (c) {
       return '<details class="fd"><summary><span class="sev s1">' + c.rules.length + '</span><span class="tt"><span class="chev">▶</span>' + esc(c.t) + '</span><span class="wh mono">' + esc(c.d) + '</span></summary><ul class="rl">'
-        + c.rules.map(function (i, k) { var r = byI[i] || {}; return '<li><span class="m">#' + (i + 1) + '</span><b>' + esc(r.n) + '</b>' + (k === c.rules.length - 1 ? '<span class="tg or">runs last — wins</span>' : '') + (r.iss && r.iss.indexOf('none') >= 0 ? '<span class="tg">idle</span>' : '') + '</li>'; }).join('') + '</ul></details>';
+        + c.rules.map(function (i, k) { var r = byI[i] || {}; return '<li><span class="m">#' + (i + 1) + '</span><b>' + esc(r.n) + '</b>' + (k === c.rules.length - 1 ? '<span class="tg or">runs last — wins</span>' : '') + (r.iss && r.iss.indexOf('none') >= 0 ? '<span class="tg">idle</span>' : '') + fhA(d.cmpid, r.n, r.t) + '</li>'; }).join('')
+        + '<li>' + fhA(d.cmpid, null, c.t, 'All ' + c.rules.length + ' in FeedHero, in run order') + '</li></ul></details>';
     }).join('') || '<div class="empty">Every field is written by one rule.</div>';
     $('#d-finds').innerHTML = (d.findings || []).map(function (f) { return findHtml(f, false); }).join('') || '<div class="empty">No findings for this market.</div>';
   }
@@ -600,6 +627,7 @@ function impCell(r) {
   $('#brand').addEventListener('change', function () { S.brand = this.value; S.market = ''; S.det = null; $('#drill').hidden = true; remember('fcc-rules-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); });
   $('#mkts').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (!b) return; var m = b.getAttribute('data-m'); if (!m) closeMarket(); else openMarket(S.brand, m); });
   document.addEventListener('click', function (e) {
+    if (e.target.closest('a.fh')) return;   // the FeedHero pop-out opens its own tab; the row under it must not also open
     var o = e.target.closest('[data-open]');
     if (o) { e.preventDefault(); var p = o.getAttribute('data-open').split('|'); if (S.brand !== p[0]) { S.brand = p[0]; S.market = p[1]; remember('fcc-rules-brand', S.brand); setQuery({ brand: S.brand, market: S.market }); load(); } else openMarket(p[0], p[1]); return; }
     if (e.target.id === 'fam-clear') { e.preventDefault(); S.fam = ''; S.dfam = ''; setQuery({ fam: '' }); renderFams(); renderMarkets(); renderDrill(); }
@@ -622,11 +650,11 @@ function impCell(r) {
   $('#sync-now').addEventListener('click', function () { syncNow(this, (S.book && S.book.roster) || 57, load); });
   $('#csv').addEventListener('click', function () {
     if (S.det && S.det.rules) {
-      csvDownload('rules_' + (S.det.cmpid || 'market') + '.csv', ['run order', 'rule', 'target field', 'target db', 'for', 'channel', 'type', 'batch', 'impacted', 'of', 'runtime s', 'created', 'created by', 'last change', 'changed by', 'issues', 'tags', 'stock mechanism'],
-        S.det.rules.map(function (r) { return [r.i + 1, r.n, r.t, r.d, (FAM[r.fam] || {}).label || r.fam, CH[r.ch] || r.ch, r.ty === 'S' ? 'System' : 'User', r.b || 'All products', r.imp, r.of, r.rt, dstr(r.co), r.cb, dstr(r.mo), r.mb, r.iss.join(' '), r.tag.join(' '), r.sk || '']; }));
+      csvDownload('rules_' + (S.det.cmpid || 'market') + '.csv', ['run order', 'rule', 'target field', 'target db', 'for', 'channel', 'type', 'batch', 'impacted', 'of', 'runtime s', 'created', 'created by', 'last change', 'changed by', 'issues', 'tags', 'stock mechanism', 'FeedHero link'],
+        S.det.rules.map(function (r) { return [r.i + 1, r.n, r.t, r.d, (FAM[r.fam] || {}).label || r.fam, CH[r.ch] || r.ch, r.ty === 'S' ? 'System' : 'User', r.b || 'All products', r.imp, r.of, r.rt, dstr(r.co), r.cb, dstr(r.mo), r.mb, r.iss.join(' '), r.tag.join(' '), r.sk || '', fhUrl(S.det.cmpid, r.n, r.t)]; }));
     } else {
-      csvDownload('rules_markets.csv', ['brand', 'market', 'rules', 'team rules', 'system rules', 'idle', 'broken', 'stock rules', 'changed 30d', 'last change', 'by'],
-        rowsInView().map(function (m) { return [m.client, m.market, m.n, m.user, m.sys, (m.iss && m.iss.none) || 0, ((m.iss && m.iss.target) || 0) + ((m.iss && m.iss.dep) || 0), m.sn, m.changed30, dstr(m.last), m.lastBy]; }));
+      csvDownload('rules_markets.csv', ['brand', 'market', 'rules', 'team rules', 'system rules', 'idle', 'broken', 'stock rules', 'changed 30d', 'last change', 'by', 'FeedHero link'],
+        rowsInView().map(function (m) { return [m.client, m.market, m.n, m.user, m.sys, (m.iss && m.iss.none) || 0, ((m.iss && m.iss.target) || 0) + ((m.iss && m.iss.dep) || 0), m.sn, m.changed30, dstr(m.last), m.lastBy, fhUrl(m.cmpid)]; }));
     }
   });
   load();
