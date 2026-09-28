@@ -193,6 +193,11 @@ echo "── validating: hero KPIs from the project plans"
 node tools/test_hero.mjs >/dev/null
 echo "   ✓ tracker gone; wfDate IS parseUKDate; overdue = the board's rule with the team's overlays"
 
+echo "── validating: the news digest's road to main"
+node tools/test_news.mjs >/dev/null
+node tools/check_news.js docs/news_digest.json --offline >/dev/null
+echo "   ✓ one gate for the Routine and the landing lane; the committed digest passes it; nothing pushes to main"
+
 echo "── validating: 🎬 Present — the one-pager played"
 node tools/test_present.mjs >/dev/null
 echo "   ✓ one renderer, two presentations; the last frame is the sheet's own string"

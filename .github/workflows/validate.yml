@@ -97,6 +97,10 @@ jobs:
         run: node tools/test_dossiertiles.mjs
       - name: Hero KPI harness (project plans are the source; one date rule with Workflow)
         run: node tools/test_hero.mjs
+      - name: News digest harness (the gate's rules, the landing lane's shape, the skill never pushes to main)
+        run: node tools/test_news.mjs
+      - name: News digest gate on the committed file (schema, ≤8 items, https, the 90-day rule)
+        run: node tools/check_news.js docs/news_digest.json --offline
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
       - name: UI-state persistence harness (a bare reload does not blank the page)
