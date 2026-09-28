@@ -2510,7 +2510,7 @@ async function route(request, env, ctx) {
       const win = ROAS.ROAS_WINDOWS.find((w) => w.k === url.searchParams.get('win')) || ROAS.ROAS_WINDOWS.find((w) => w.k === ROAS.ROAS_DEFAULT_WIN);
       const key = 'roaslive:' + cmpid + ':' + agg + ':' + win.k;
       const cached = await env.EDITS.get(key, 'json');
-      if (cached && cached.at && Date.now() - cached.at < 6 * 3600000 && !url.searchParams.get('fresh')) return json(Object.assign({ ok: true, cached: true }, cached));
+      if (cached && cached.at && Date.now() - cached.at < (cached.missing ? ROAS.ROAS_SEG_MISSING_TTL : 6 * 3600000) && !url.searchParams.get('fresh')) return json(Object.assign({ ok: true, cached: true }, cached));
       if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
       try {
         const mcp = roasMcp(env, fetch);
@@ -2522,6 +2522,13 @@ async function route(request, env, ctx) {
         logActivity(ctx, env, request, 'roas-live-segment', cmpid + ' ' + agg + ' ' + win.k);
         return json(Object.assign({ ok: true, cached: false }, out));
       } catch (e) {
+        // a cut FeedHero has not set up for this client (Price group, on every roster brand today) is
+        // an answer — cached like a read, so the page says so instead of a red error on every open
+        if (ROAS.segMissing(e)) {
+          const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: null, rows: [], n: 0, missing: true };
+          try { await env.EDITS.put(key, JSON.stringify(out), { expirationTtl: 86400 }); } catch (e2) {}
+          return json(Object.assign({ ok: true, cached: false }, out));
+        }
         return json({ ok: false, error: String((e && e.message) || e).slice(0, 160) }, 502);
       }
     }

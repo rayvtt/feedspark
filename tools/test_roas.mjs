@@ -178,6 +178,12 @@ t('that row still hangs at the root of the tree with its real spend — hidden i
 t('ROAS_TREE_WIN names the one window the tree exists on — the default window', ROAS.ROAS_TREE_WIN === 'w30' && ROAS.ROAS_TREE_WIN === ROAS.ROAS_DEFAULT_WIN);
 t('the page says WHY a 7/90-day market has no tree and points at the segments FeedHero cuts live for any period; the unlisted row is tagged', /breaks categories down on the <b>30-day<\/b> window only/.test(PAGE) && /function isUnlisted\(/.test(PAGE) && /isUnlisted\(r\.name\)/.test(PAGE) && /not in feed/.test(PAGE) && /30-day window only<\/b>/.test(PAGE));
 
+console.log('· a segment is shown when picked, and one FeedHero has not set up says so — Ray, 28 Sep 2026: "segment doesnt populate properly"');
+t('FeedHero\'s "Reports not found" is read as NOT SET UP (Price group answers that on every roster brand) — any other failure stays a failure', ROAS.segMissing(new Error('tool error: The report could not be read: Reports not found for Price group')) && ROAS.segMissing('Report not found') && !ROAS.segMissing(new Error('HTTP 500')) && !ROAS.segMissing(null) && !ROAS.segMissing(''));
+t('the worker answers it as ok + missing, caches it like a read (a day), and still 502s a real failure', /if \(ROAS\.segMissing\(e\)\) \{/.test(WK) && /missing: true \};/.test(WK) && /cached\.missing \? ROAS\.ROAS_SEG_MISSING_TTL : 6 \* 3600000/.test(WK) && ROAS.ROAS_SEG_MISSING_TTL === 86400000 && /return json\(\{ ok: false, error: String\(\(e && e\.message\) \|\| e\)\.slice\(0, 160\) \}, 502\);/.test(WK));
+t('the page: picking a segment opens the markets in view (capped), the band filter names what it hid, "not set up" is said plainly', /var SEG_AUTO=8;/.test(PAGE) && /function segOpen\(\)/.test(PAGE) && /segOpen\(\); renderTable\(\);/.test(PAGE) && /hidden by the band filter/.test(PAGE) && /data-clear-bands/.test(PAGE) && /lv&&lv\.missing/.test(PAGE) && /report set up for this market/.test(PAGE));
+t('the rendered half is driven in a browser by tools/check_roasseg.js, in presync', /check_roasseg\.js/.test(read('tools/presync.sh')) && fs.existsSync(new URL('./check_roasseg.js', import.meta.url)));
+
 console.log('· deploy config');
 t('wrangler.toml carries the new cron firing and no others were dropped', WRANGLER.indexOf('10,40 * * * *') > 0 && WRANGLER.indexOf('15,45 * * * *') > 0 && WRANGLER.indexOf('0 7,17 * * *') > 0);
 
