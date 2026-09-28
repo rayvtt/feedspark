@@ -48,6 +48,7 @@ export const MODULES = [
   { slug: 'roas', label: 'ROAS', path: '/roas' },
   { slug: 'rules', label: 'Rules', path: '/rules' },
   { slug: 'stock', label: 'Stock management', path: '/stock' },
+  { slug: 'catalog', label: 'Catalogue', path: '/catalog' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
   { slug: 'images', label: 'Image library', path: '/images' },
   { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },

@@ -71,6 +71,8 @@ jobs:
         run: node tools/test_roas.mjs
       - name: Rules + Stock management harness (FeedHero rule_report — classifier, findings, lifted rulesPull vs a stub MCP)
         run: node tools/test_rules.mjs
+      - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
+        run: node tools/test_catalog.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
 

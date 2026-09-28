@@ -107,6 +107,10 @@ echo "── validating: Rules + Stock management (FeedHero rule_report — clas
 node tools/test_rules.mjs >/dev/null
 echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
 
+echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+node tools/test_catalog.mjs >/dev/null
+echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null
@@ -273,6 +277,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: ROAS segment (picking one populates the markets in view; the band filter names what it hid)"
   NODE_PATH=$(npm root -g) node tools/check_roasseg.js || {
     echo "✗ ROAS segment tripwire failed — a picked segment left the table empty, the band filter hid markets silently, or a cut FeedHero has not set up read as an error"; exit 1; }
+  echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
+  NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
+    echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }
