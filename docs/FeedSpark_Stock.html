@@ -187,6 +187,74 @@ window.addEventListener('load',restore);
   @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
   @media(prefers-reduced-motion:reduce){.hb .b i{animation:none}}
 
+  /* ---- /stock only: the ad-spend forecast (the card + the right-hand panel) ---- */
+  :root{--svw:372px;--svtop:0px}
+  .sv-money{font-variant-numeric:tabular-nums;font-weight:900;white-space:nowrap}
+  table.t tr[data-sv]{cursor:default}
+  table.t tr[data-sv]:hover td{background:rgba(37,99,235,.05)}
+  table.t tr.sv-cur td{background:rgba(37,99,235,.09)!important}
+  table.t tr.sv-cur td:first-child{box-shadow:inset 3px 0 0 var(--chart-1)}
+  .sv-sum{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+  .sv-sum .it{border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--wash);min-width:170px}
+  .sv-sum .it b{display:block;font-size:20px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .sv-sum .it span{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .sv-kind{font-size:10.5px;font-weight:900;letter-spacing:.03em;padding:1px 7px;border-radius:100px;border:1px dashed var(--line);color:var(--muted);white-space:nowrap}
+  .sv-rest{margin-top:10px}
+  .sv-rest summary{cursor:pointer;font-size:12.5px;font-weight:900;color:var(--ink-2);list-style:none}
+  .sv-rest summary::-webkit-details-marker{display:none}
+  .sv-rest[open] summary{margin-bottom:8px}
+  .kpi.sv-k{border-color:rgba(37,99,235,.35)}
+  /* the panel: docked on the right, opened by hovering a stock rule, kept until ✕ */
+  .svp{position:fixed;right:0;top:var(--svtop);bottom:0;width:var(--svw);max-width:100vw;z-index:180;background:var(--paper);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(15,23,42,.10);display:flex;flex-direction:column;transform:translateX(102%);transition:transform .22s cubic-bezier(.22,.68,.32,1);visibility:hidden}
+  .svp.on{transform:none;visibility:visible}
+  .svp .hd{display:flex;align-items:flex-start;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,rgba(245,166,35,.10),rgba(37,99,235,.08))}
+  .svp .hd .ey{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-ink)}
+  .svp .hd .ti{font-size:14px;font-weight:900;line-height:1.3;margin-top:2px;word-break:break-word}
+  .svp .hd .mk{font-size:12px;font-weight:800;color:var(--muted);margin-top:2px}
+  .svp .hd .x{margin-left:auto;flex:none;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:16px;font-weight:900;cursor:pointer}
+  .svp .hd .x:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .svp .bd{padding:14px 16px 18px;overflow:auto;flex:1}
+  .svp .big{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .svp .big small{font-size:14px;font-weight:800;color:var(--muted);letter-spacing:0;margin-left:4px}
+  .svp .cap{font-size:12px;font-weight:700;color:var(--ink-2);margin:4px 0 12px}
+  .svp .ctl2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .svp .seg button{padding:6px 10px;font-size:12px}
+  .svp .cust{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--ink-2);margin:0 0 12px}
+  .svp .cust input[type=range]{flex:1;accent-color:var(--chart-1)}
+  .svp .cust b{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+  /* the scenario ladder: one hue, the chosen scenario in the orange accent */
+  .svl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px;align-items:center;margin:4px 0 14px}
+  .svl .l{font-size:12px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+  .svl .b{height:12px;border-radius:0 4px 4px 0;background:var(--wash);overflow:hidden}
+  .svl .b i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--chart-1);transition:width .35s cubic-bezier(.22,.68,.32,1)}
+  .svl .on .b i,.svl .b.on i{background:var(--orange)}
+  .svl .v{font-size:12px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .svw{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+  .svw h4{margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .svw dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;margin:0}
+  .svw dt{font-size:12px;font-weight:700;color:var(--ink-2)}
+  .svw dd{margin:0;font-size:12px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
+  .svw .fx{margin-top:8px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--wash);border-radius:8px;padding:7px 9px;font-variant-numeric:tabular-nums}
+  .svp .why{font-size:13px;font-weight:700;color:var(--ink-2);line-height:1.5;margin:6px 0 12px}
+  .svp .kd{display:inline-block;font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--wash);color:var(--ink-2)}
+  .svp .ft{font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:12px}
+  .svp .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .svp .hint{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5}
+  .svp .bk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;margin:8px 0}
+  .svp .bk span{font-size:12px;font-weight:800;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .svp .bk b{font-size:12px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
+  @media(min-width:1100px){body.sv-on{padding-right:var(--svw)}}
+  [data-theme=dark] .svp{box-shadow:-12px 0 32px rgba(0,0,0,.45)}
+  [data-theme=dark] .svp .hd{background:linear-gradient(135deg,rgba(245,166,35,.10),rgba(76,130,224,.10))}
+  [data-theme=dark] .svw .fx,[data-theme=dark] .sv-sum .it{background:#181B22}
+  [data-theme=dark] table.t tr.sv-cur td{background:rgba(76,130,224,.14)!important}
+  @media(max-width:760px){
+    .svp{top:auto;left:0;width:auto;max-height:78vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(102%)}
+    .svp.on{transform:none}
+    .svp .big{font-size:28px}
+  }
+  @media(prefers-reduced-motion:reduce){.svp,.svl .b i{transition:none}}
+
 </style>
 <style>/* FCC-THEME */
 #theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
@@ -245,6 +313,14 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="kpis" id="kpis"></div>
 
+  <section class="card" id="sv-card">
+    <div class="chead"><div class="sp"><h3>Ad spend kept off low-stock products</h3><p class="ch" id="sv-sub">A forecast for the stock thresholds and range-completion rules holding products back. Hover a rule for its working.</p></div>
+      <div class="tools"><span class="seg" id="sv-scn" role="group" aria-label="Forecast scenario"></span><span class="seg" id="sv-per" role="group" aria-label="Period"></span></div></div>
+    <div class="sv-sum" id="sv-sum"></div>
+    <div class="tw tall"><table class="t" id="sv-t"><thead><tr><th>Market</th><th>Rule</th><th>Does</th><th class="num">Held back</th><th class="num">Spend / product / day</th><th class="num" id="sv-th">Kept off</th></tr></thead><tbody></tbody></table></div>
+    <details class="sv-rest" id="sv-rest"><summary></summary><div class="tw"><table class="t"><thead><tr><th>Market</th><th>Rule</th><th>Why it is not sized</th></tr></thead><tbody></tbody></table></div></details>
+  </section>
+
   <section class="card" id="cov-card">
     <div class="chead"><div class="sp"><h3>Which stock controls each market runs</h3><p class="ch">Rules per market by what they do. Click a cell to list those rules.</p></div>
       <div class="tools"><label class="tog"><input type="checkbox" id="chan"> Split by channel</label></div></div>
@@ -278,6 +354,7 @@ window.addEventListener('load',restore);
   </section>
 </main>
 
+<aside class="svp" id="svp" aria-label="Ad spend forecast" aria-hidden="true"><div class="hd"><div><div class="ey">Ad spend kept off · forecast</div><div class="ti" id="svp-ti"></div><div class="mk" id="svp-mk"></div></div><button class="x" id="svp-x" type="button" title="Close (Esc)" aria-label="Close the forecast">✕</button></div><div class="bd" id="svp-bd"></div></aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>Source: FeedHero rule report · active rules only</span></div></div>
 
@@ -411,6 +488,40 @@ function impCell(r) {
   tipInit();
   $('#q').value = S.q; $('#chan').checked = S.chan;
 
+  // ---- AD SPEND KEPT OFF — the forecast (engine: src/rules.js heldBack / adsBasis / savingFor) ----
+  // the scenario and period are one screen's reading preference, kept on the device
+  var SV = (function () { var o = {}; try { o = JSON.parse(recall('fcc-stock-sv') || '{}') || {}; } catch (e) { o = {}; } return { pct: +o.pct >= 1 && +o.pct <= 50 ? Math.round(+o.pct) : 5, per: o.per === 'day' ? 'day' : 'mo', key: '' }; })();
+  var SCN = [{ k: 'cons', label: 'Conservative', pct: 5 }, { k: 'aggr', label: 'Aggressive', pct: 10 }], SVDAYS = 30;
+  var SVKIND = { releases: 'Lets products back in', all: 'Writes every product', calc: 'Works out a value', mirror: 'Restates a state', channel: 'Another channel', none: 'Holding nothing back', noads: 'No Google Ads read' };
+  function svSave() { remember('fcc-stock-sv', JSON.stringify({ pct: SV.pct, per: SV.per })); }
+  function svDays() { return SV.per === 'day' ? 1 : SVDAYS; }
+  function svPer() { return SV.per === 'day' ? 'a day' : 'a month'; }
+  // THE TWINS of src/rules.js savingFor / svFloor / svBook — tools/test_rules.mjs holds them equal
+  function svCalc(n, basis, pct, days) { if (!basis || !(n > 0)) return 0; return n * basis.spendDay * (pct / 100) * (days || 1); }
+  function svFloor(stock) {
+    var best = null;
+    (stock || []).forEach(function (r) { var h = r && r.hb; if (h && h.kind === 'blocked' && h.n > 0 && (!best || h.n > best.n)) best = { n: h.n, i: r.i, rule: r.n }; });
+    return best;
+  }
+  function svBook(markets, pct, days) {
+    var byCur = {}, sized = 0, unpriced = 0;
+    (markets || []).forEach(function (m) {
+      var f = svFloor(m.stock);
+      if (!f) return;
+      if (!m.ads) { unpriced++; return; }
+      var c = m.ads.cur || '';
+      var b = byCur[c] || (byCur[c] = { cur: c, amt: 0, markets: 0, n: 0 });
+      b.amt += svCalc(f.n, m.ads, pct, days); b.markets++; b.n += f.n; sized++;
+    });
+    return { byCur: Object.keys(byCur).map(function (k) { return byCur[k]; }).sort(function (a, b) { return b.amt - a.amt; }), sized: sized, unpriced: unpriced };
+  }
+  function money(cur, v, dp) {
+    v = +v || 0; if (dp == null) dp = v < 100 ? 2 : 0;
+    return (cur ? (/[A-Za-z]$/.test(cur) ? cur + ' ' : cur) : '') + v.toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+  function scnName(pct) { var s = SCN.filter(function (x) { return x.pct === pct; })[0]; return s ? s.label : 'Custom'; }
+  function mById(cmpid) { return ((S.d && S.d.markets) || []).filter(function (m) { return m.cmpid === cmpid; })[0] || null; }
+
   function load() {
     $('#mstate').textContent = 'Loading…';
     api('/api/rules/stock' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) : '')).then(function (d) {
@@ -420,6 +531,7 @@ function impCell(r) {
       (d.channels || []).forEach(function (c) { CH[c.k] = c.label; });
       DR = d.drivers || {};
       if (d.sev) SEVL = d.sev;
+      if (d.sv && d.sv.scenarios && d.sv.scenarios.length) { SCN = d.sv.scenarios; SVDAYS = d.sv.days || SVDAYS; }
       render();
     });
   }
@@ -430,7 +542,8 @@ function impCell(r) {
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderKpis(); renderCov(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderKpis(); renderSv(); renderCov(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    if (SV.key) svPanel(false);
   }
   function renderChips() {
     var d = S.d || {}, el = $('#mkts');
@@ -451,7 +564,11 @@ function impCell(r) {
       st.forEach(function (r) { if (r.sk === 'avail') avail++; if (r.iss.indexOf('none') >= 0) idle++; if (r.iss.indexOf('target') >= 0 || r.iss.indexOf('dep') >= 0) broken++; cuts += (r.cut || []).length; });
     });
     var act = findList(true).filter(function (f) { return f.sev === 3; }).length;
-    $('#kpis').innerHTML = !ms.length ? '' :
+    var bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
+    var svTile = '<div class="kpi sv-k link" data-sv="book" tabindex="0" title="Hover for the working"><div class="n num" id="svk-n">' + (top ? money(top.cur, top.amt, 0) : '—') + '</div><div class="l">Ad spend kept off ' + svPer() + '</div><div class="d">'
+      + (top ? 'at least · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '% · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + (bk.byCur.length > 1 ? ' · + ' + bk.byCur.slice(1).map(function (b) { return money(b.cur, b.amt, 0); }).join(', ') : '')
+        : bk.unpriced ? 'no Google Ads read for these markets yet' : 'no stock rule holding products back') + '</div></div>';
+    $('#kpis').innerHTML = !ms.length ? '' : svTile +
       kpi(n0(n), 'Stock rules', 'across ' + withStock + ' of ' + ms.length + ' market' + (ms.length === 1 ? '' : 's'))
       + kpi(n0(avail), 'Availability rules', 'what each channel is told is in or out of stock')
       + kpi(n0(cuts), 'Cut-offs stated', 'in the rule names — read, never inferred')
@@ -500,9 +617,157 @@ function impCell(r) {
   function renderCuts() {
     var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
     $('#cuts tbody').innerHTML = list.map(function (c) {
-      return '<tr><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td><span class="tg">' + esc((MK[c.sk] || {}).label || c.sk) + '</span></td>'
+      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td><span class="tg">' + esc((MK[c.sk] || {}).label || c.sk) + '</span></td>'
         + '<td class="num"><b>' + (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : '') + '</b></td><td class="num">' + (c.imp == null ? '—' : n0(c.imp) + (c.of ? '<span class="sub2">of ' + n0(c.of) + '</span>' : '')) + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="5">No rule name in view states a cut-off.</td></tr>';
+  }
+  // ---- the card: every sized rule, per currency; the rest listed with the reason ----
+  function svRows() {
+    var sized = [], rest = [];
+    mkts().forEach(function (m) {
+      (m.stock || []).forEach(function (r) {
+        var h = r.hb; if (!h) return;
+        if (h.kind === 'blocked' && m.ads) sized.push({ m: m, r: r, n: h.n, amt: svCalc(h.n, m.ads, SV.pct, svDays()) });
+        else rest.push({ m: m, r: r, kind: h.kind === 'blocked' ? 'noads' : h.kind });
+      });
+    });
+    return { sized: sized, rest: rest };
+  }
+  function renderSv() {
+    $('#sv-scn').innerHTML = SCN.map(function (x) { return '<button type="button" data-pct="' + x.pct + '" class="' + (SV.pct === x.pct ? 'on' : '') + '">' + esc(x.label) + ' ' + x.pct + '%</button>'; }).join('')
+      + (SCN.some(function (x) { return x.pct === SV.pct; }) ? '' : '<button type="button" class="on" data-pct="' + SV.pct + '">Custom ' + SV.pct + '%</button>');
+    $('#sv-per').innerHTML = '<button type="button" data-per="day" class="' + (SV.per === 'day' ? 'on' : '') + '">Per day</button><button type="button" data-per="mo" class="' + (SV.per === 'mo' ? 'on' : '') + '">Per month</button>';
+    $('#sv-th').textContent = 'Kept off ' + svPer();
+    var R = svRows(), bk = svBook(mkts(), SV.pct, svDays());
+    // per currency: money never crosses one — each currency is its own figure
+    var order = {}; bk.byCur.forEach(function (b, i) { order[b.cur] = i; });
+    R.sized.sort(function (a, b) { return (order[a.m.ads.cur] || 0) - (order[b.m.ads.cur] || 0) || b.amt - a.amt; });
+    $('#sv-sum').innerHTML = bk.byCur.map(function (b) {
+      return '<div class="it" data-sv="book" title="Hover for the working"><b class="sv-money">' + money(b.cur, b.amt, 0) + '</b><span>at least, ' + svPer() + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + ' · the largest rule in each</span></div>';
+    }).join('') + (R.sized.length || R.rest.length ? '<div class="it"><b>' + n0(R.sized.length) + '</b><span>rule' + (R.sized.length === 1 ? '' : 's') + ' sized · ' + n0(R.rest.length) + ' not, with the reason</span></div>' : '');
+    $('#sv-t tbody').innerHTML = R.sized.map(function (x) {
+      var m = x.m, r = x.r;
+      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '" tabindex="0"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '<span class="sub2">#' + (r.i + 1) + ' in run order · writes ' + esc(r.t) + '</span></td>'
+        + '<td><span class="tg">' + esc((MK[r.sk] || {}).label || r.sk) + '</span></td>'
+        + '<td class="num">' + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + '</td>'
+        + '<td class="num">' + money(m.ads.cur, m.ads.spendDay, 3) + '<span class="sub2">CPC ' + money(m.ads.cur, m.ads.cpc, 2) + '</span></td>'
+        + '<td class="num"><span class="sv-money">' + money(m.ads.cur, x.amt) + '</span></td></tr>';
+    }).join('') || '<tr><td class="empty" colspan="6">' + (S.d && S.d.tracked ? (R.rest.length ? 'No rule in view holds a counted number of products back where FeedHero has a Google Ads read — see below for why each is not sized.' : 'No stock threshold or range-completion rule in view.') : 'No rules read yet.') + '</td></tr>';
+    var rest = $('#sv-rest');
+    rest.hidden = !R.rest.length;
+    rest.querySelector('summary').textContent = '▸ ' + R.rest.length + ' more threshold and range-completion rule' + (R.rest.length === 1 ? '' : 's') + ' not sized — hover one for why';
+    rest.querySelector('tbody').innerHTML = R.rest.map(function (x) {
+      var m = x.m, r = x.r;
+      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '</td><td><span class="sv-kind">' + esc(SVKIND[x.kind] || x.kind) + '</span></td></tr>';
+    }).join('');
+  }
+  // ---- the panel: opened by hovering a stock rule, kept until ✕, re-drawn live ----
+  var SVSHOWN = null;   // the figure on screen, for the count-up
+  function countUp(el, cur, to) {
+    var from = SVSHOWN != null && SVSHOWN.cur === cur ? SVSHOWN.v : 0; SVSHOWN = { cur: cur, v: to };
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || from === to) { el.textContent = money(cur, to); return; }
+    var t0 = performance.now(), dur = 480;
+    (function f(t) {
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      if (!el.isConnected) return;
+      el.textContent = money(cur, from + (to - from) * e, to < 100 ? 2 : 0);
+      if (p < 1) requestAnimationFrame(f); else el.textContent = money(cur, to);
+    })(t0);
+  }
+  function svTop() {
+    var tb = document.querySelector('.topbar'), h = 0;
+    if (tb && innerWidth > 760) h = Math.max(0, tb.getBoundingClientRect().bottom);
+    document.documentElement.style.setProperty('--svtop', h + 'px');
+  }
+  function svControls() {
+    return '<div class="ctl2"><span class="seg" role="group" aria-label="Forecast scenario">' + SCN.map(function (x) { return '<button type="button" data-pct="' + x.pct + '" class="' + (SV.pct === x.pct ? 'on' : '') + '">' + esc(x.label) + ' ' + x.pct + '%</button>'; }).join('') + '</span>'
+      + '<span class="seg" role="group" aria-label="Period"><button type="button" data-per="day" class="' + (SV.per === 'day' ? 'on' : '') + '">Per day</button><button type="button" data-per="mo" class="' + (SV.per === 'mo' ? 'on' : '') + '">Per month</button></span></div>'
+      + '<label class="cust">Custom <input type="range" id="svp-pct" min="1" max="50" step="1" value="' + SV.pct + '" aria-label="Forecast share, per cent"><b id="svp-pv">' + SV.pct + '%</b></label>';
+  }
+  function svLadder(cur, n, basis) {
+    var list = SCN.map(function (x) { return { l: x.label + ' ' + x.pct + '%', pct: x.pct }; });
+    if (!SCN.some(function (x) { return x.pct === SV.pct; })) list.push({ l: 'Custom ' + SV.pct + '%', pct: SV.pct });
+    var vals = list.map(function (x) { return svCalc(n, basis, x.pct, svDays()); }), mx = Math.max.apply(null, vals.concat([1e-9]));
+    return '<div class="svl" role="img" aria-label="' + esc(list.map(function (x, i) { return x.l + ' ' + money(cur, vals[i]); }).join(', ')) + '">' + list.map(function (x, i) {
+      var on = x.pct === SV.pct;
+      return '<span class="l">' + esc(x.l) + '</span><span class="b' + (on ? ' on' : '') + '"><i style="width:' + Math.max(2, (vals[i] / mx) * 100).toFixed(1) + '%"></i></span><span class="v">' + money(cur, vals[i]) + '</span>';
+    }).join('') + '</div>';
+  }
+  function svOpen(key, row) {
+    if (!key) return;
+    SV.key = key;
+    $$('tr.sv-cur').forEach(function (x) { x.classList.remove('sv-cur'); });
+    if (row && row.tagName === 'TR') row.classList.add('sv-cur');
+    svPanel(true);
+  }
+  function svClose() {
+    SV.key = ''; SVSHOWN = null;
+    var p = $('#svp'); p.classList.remove('on'); p.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('sv-on');
+    $$('tr.sv-cur').forEach(function (x) { x.classList.remove('sv-cur'); });
+  }
+  function svPanel(animate) {
+    var p = $('#svp'), bd = $('#svp-bd'), key = SV.key;
+    if (!key) return;
+    svTop();
+    var bigCur = null, bigV = null;
+    if (key === 'book') {
+      var ms = mkts(), bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
+      $('#svp-ti').textContent = 'Every market in view';
+      $('#svp-mk').textContent = (S.brand || 'All brands') + (S.market ? ' · ' + S.market : '') + ' · ' + scnName(SV.pct) + ' ' + SV.pct + '%';
+      var per = []; ms.forEach(function (m) { var f = svFloor(m.stock); if (f && m.ads) per.push({ m: m, f: f, amt: svCalc(f.n, m.ads, SV.pct, svDays()) }); });
+      per.sort(function (a, b) { return a.m.ads.cur === b.m.ads.cur ? b.amt - a.amt : (a.m.ads.cur === (top && top.cur) ? -1 : 1); });
+      bd.innerHTML = top ? '<div class="big" id="svp-big"></div><div class="cap">at least, ' + svPer() + ' · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + ' in ' + esc(top.cur || 'this currency') + ', each counted once at its largest blocking rule · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '%</div>'
+          + (bk.byCur.length > 1 ? '<div class="bk">' + bk.byCur.slice(1).map(function (b) { return '<span>' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + ' in ' + esc(b.cur) + '</span><b>' + money(b.cur, b.amt, 0) + '</b>'; }).join('') + '</div>' : '')
+          + svControls()
+          + '<div class="svw"><h4>Market by market</h4><div class="bk">' + per.slice(0, 14).map(function (x) { return '<span title="' + esc(x.f.rule) + '">' + esc(x.m.client + ' ' + x.m.market) + ' · ' + esc(x.f.rule) + '</span><b>' + money(x.m.ads.cur, x.amt) + '</b>'; }).join('') + '</div>'
+          + (per.length > 14 ? '<div class="hint">+' + (per.length - 14) + ' more markets — listed in the card.</div>' : '') + '</div>'
+          + '<div class="ft">Why the largest rule and not the sum: two stock rules can hold back the same product — a threshold and a range-completion exclusion often do — and FeedHero reports how many each changed, not which. So each market counts once, at its largest rule, and the figure is a floor.' + (bk.unpriced ? ' ' + bk.unpriced + ' market' + (bk.unpriced === 1 ? ' has' : 's have') + ' a blocking rule but no Google Ads read yet.' : '') + '</div>'
+        : '<div class="hint">No market in view has a stock rule holding a counted number of products back' + (bk.unpriced ? ' with a Google Ads read — ' + bk.unpriced + ' wait for ROAS to sync.' : '.') + '</div>' + svControls();
+      if (top) { bigCur = top.cur; bigV = top.amt; }
+    } else {
+      var k = key.split('|'), m = mById(k[0]), r = m && (m.stock || []).filter(function (x) { return String(x.i) === k[1]; })[0];
+      if (!m || !r) { svClose(); return; }
+      var h = r.hb, B = m.ads;
+      $('#svp-ti').textContent = r.n;
+      $('#svp-mk').textContent = m.client + ' ' + m.market + ' · ' + ((MK[r.sk] || {}).label || r.sk) + ' · #' + (r.i + 1) + ' in run order';
+      var acts = '<div class="acts">' + fhA(m.cmpid, r.n, r.t, 'Open in FeedHero') + '<a class="btn" href="/roas?brand=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.market) + '" title="This market\u2019s Google Ads read">ROAS · ' + esc(m.client + ' ' + m.market) + '</a></div>';
+      var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl></div>' : '';
+      if (h && h.kind === 'blocked' && B) {
+        var amt = svCalc(h.n, B, SV.pct, svDays()), ceil = svCalc(h.n, B, 100, svDays());
+        bd.innerHTML = '<div class="big" id="svp-big"></div><div class="cap">' + esc(scnName(SV.pct)) + ' ' + SV.pct + '% — ' + svPer() + ', if ' + SV.pct + '% of the ' + n0(h.n) + ' products this rule holds back had drawn ' + esc(m.client + ' ' + m.market) + '\u2019s average Google Ads traffic</div>'
+          + svControls() + svLadder(B.cur, h.n, B)
+          + '<div class="svw"><h4>The working</h4><dl>'
+          + '<dt>Products held back (last run)</dt><dd>' + n0(h.n) + (r.of ? ' of ' + n0(r.of) : '') + '</dd>'
+          + '<dt>Google Ads spend, 30 days</dt><dd>' + money(B.cur, B.spend, 0) + '</dd>'
+          + '<dt>Clicks, 30 days</dt><dd>' + n0(B.clicks) + '</dd>'
+          + '<dt>Products in Google Ads</dt><dd>' + n0(B.skus) + '</dd>'
+          + '<dt>Cost per click</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd>'
+          + '<dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd>'
+          + '<dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd>'
+          + '<dt>Share drawing that traffic</dt><dd>' + SV.pct + '%</dd>'
+          + '</dl><div class="fx">' + n0(h.n) + ' × ' + money(B.cur, B.spendDay, 3) + ' × ' + SV.pct + '% × ' + svDays() + ' day' + (svDays() === 1 ? '' : 's') + ' = <b>' + money(B.cur, amt) + '</b></div>'
+          + '<div class="hint" style="margin-top:8px">Every held-back product at the market\u2019s average: ' + money(B.cur, ceil, 0) + ' ' + svPer() + ' — the ceiling, not the forecast.</div></div>'
+          + '<div class="ft">Spend per product per day = the market\u2019s 30-day Google Ads spend ÷ the products in Google Ads ÷ 30 (the same as clicks per product per day × CPC). Held back = the products FeedHero says this rule changed on its last run, which can include products already out of stock (one more reason the share is kept low). A forecast of spend avoided on products that could not convert, not a measured saving' + (B.updated ? ' · Google Ads read ' + since(B.updated) : '') + '.</div>' + acts;
+        bigCur = B.cur; bigV = amt;
+      } else {
+        var kind = !h ? 'other' : h.kind === 'blocked' ? 'noads' : h.kind;
+        var why = !h ? 'This is a ' + esc(((MK[r.sk] || {}).label || r.sk).toLowerCase()) + ' rule. The forecast covers the stock thresholds and range-completion rules that hold products back for low stock.'
+          : h.kind === 'blocked' ? 'It holds ' + n0(h.n) + ' products back, but FeedHero has no Google Ads read for ' + esc(m.client + ' ' + m.market) + ' yet, so there is no price for its traffic. It is sized once ROAS syncs this market.'
+          : esc(h.why || '');
+        bd.innerHTML = '<span class="kd">' + esc(kind === 'other' ? 'Not sized' : SVKIND[kind] || kind) + '</span><p class="why">' + why + '</p>' + (h && (h.kind === 'none' || h.kind === 'all') && B ? '<p class="hint">When it holds products back, each one keeps about ' + money(B.cur, B.spendDay, 3) + ' a day of spend off the market at its average — ' + money(B.cur, B.spendDay * SV.pct / 100, 4) + ' at ' + SV.pct + '%.</p>' : '') + ref + acts;
+        SVSHOWN = null;
+      }
+    }
+    if (bigV != null) countUp($('#svp-big'), bigCur, bigV);
+    if (!p.classList.contains('on')) { p.classList.add('on'); p.setAttribute('aria-hidden', 'false'); document.body.classList.add('sv-on'); }
+  }
+  function svSet(o) {
+    if (o.pct != null) SV.pct = Math.max(1, Math.min(50, Math.round(+o.pct) || 5));
+    if (o.per) SV.per = o.per === 'day' ? 'day' : 'mo';
+    svSave(); renderKpis(); renderSv();
+    if (SV.key) { var cur = SV.key; $$('tr[data-sv]').forEach(function (x) { if (x.getAttribute('data-sv') === cur) x.classList.add('sv-cur'); }); svPanel(false); }
   }
   function renderMechChips() {
     var cnt = {}; mkts().forEach(function (m) { (m.stock || []).forEach(function (r) { cnt[r.sk] = (cnt[r.sk] || 0) + 1; }); });
@@ -515,7 +780,7 @@ function impCell(r) {
     r.iss.forEach(function (c) { fl.push(c === 'none' ? '<span class="tg" data-tip="' + esc('FeedHero: <b>not impacting any items</b> on the last run') + '">idle</span>' : '<span class="tg rd">' + (c === 'target' ? 'target column missing' : c === 'dep' ? 'dependent column missing' : 'issue') + '</span>'); });
     r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
     (r.dr || []).forEach(function (k) { fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
-    return '<tr><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
+    return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
       + '<td><span class="tg">' + esc((MK[r.sk] || {}).label || r.sk) + '</span></td>'
       + '<td>' + esc(r.t) + '<span class="sub2 mono">' + esc(r.d) + '</span></td>'
       + '<td>' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + '</td>'
@@ -571,6 +836,33 @@ function impCell(r) {
     }); });
     csvDownload('stock_rules' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'run order', 'rule', 'stock control', 'target field', 'target db', 'channel', 'batch', 'cut-off (from the name)', 'name says it reads', 'impacted', 'of', 'last change', 'changed by', 'issues', 'tags', 'FeedHero link'], rows);
   });
+  // the forecast: hover opens it and it stays; hovering another rule re-draws it; ✕ or Esc closes it.
+  // Driven by REAL pointer movement, never by mouseover: opening the panel pushes the page (body.sv-on),
+  // and a push — or a scroll — slides a different row under a cursor that has not moved; the browser
+  // reports that as a new mouseover, and the panel would chase whatever landed under the pointer.
+  var svT = null, PT = { x: -1, y: -1 };
+  document.addEventListener('mousemove', function (e) {
+    if (e.clientX === PT.x && e.clientY === PT.y) return;
+    PT = { x: e.clientX, y: e.clientY };
+    var el = e.target && e.target.closest ? e.target.closest('[data-sv]') : null;
+    if (!el) { clearTimeout(svT); return; }
+    var k = el.getAttribute('data-sv');
+    if (k === SV.key && $('#svp').classList.contains('on')) { clearTimeout(svT); return; }
+    clearTimeout(svT); svT = setTimeout(function () { svOpen(k, el); }, 90);
+  }, { passive: true });
+  document.addEventListener('focusin', function (e) { var el = e.target && e.target.closest ? e.target.closest('[data-sv]') : null; if (el && !e.target.closest('a,button')) svOpen(el.getAttribute('data-sv'), el); });
+  // a tap (no hover on a phone) opens it too — never when the tap is on a link or a button inside the row
+  document.addEventListener('click', function (e) { var el = e.target.closest('[data-sv]'); if (!el || e.target.closest('a,button,summary,input')) return; svOpen(el.getAttribute('data-sv'), el); });
+  $('#svp-x').addEventListener('click', svClose);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && SV.key) { svClose(); } });
+  function svCtl(e) {
+    var b = e.target.closest('[data-pct],[data-per]'); if (!b) return;
+    if (b.hasAttribute('data-pct')) svSet({ pct: +b.getAttribute('data-pct') }); else svSet({ per: b.getAttribute('data-per') });
+  }
+  $('#sv-scn').addEventListener('click', svCtl); $('#sv-per').addEventListener('click', svCtl); $('#svp-bd').addEventListener('click', svCtl);
+  $('#svp-bd').addEventListener('input', function (e) { if (e.target.id !== 'svp-pct') return; var v = +e.target.value; $('#svp-pv').textContent = v + '%'; clearTimeout(svT); svT = setTimeout(function () { svSet({ pct: v }); var s = $('#svp-pct'); if (s) s.focus(); }, 60); });
+  addEventListener('scroll', function () { if (SV.key) svTop(); }, { passive: true });
+  addEventListener('resize', function () { if (SV.key) svTop(); });
   load();
 })();
 </script>
