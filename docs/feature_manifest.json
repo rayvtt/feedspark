@@ -10544,6 +10544,48 @@
     {"name": "news: one gate — the 90-day rule in whole days", "file": "tools/check_news.js", "pattern": "if (dm < genDay - WINDOW_DAYS * DAY)", "pr": 0},
     {"name": "news: the gate refuses main's own id", "file": "tools/check_news.js", "pattern": "is main\\'s id", "pr": 0},
     {"name": "news: the skill pushes the branch, never main", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push --force -u origin claude/news-digest", "pr": 0},
-    {"name": "news: the skill never pushes to main (retired)", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push -u origin main", "forbidden": true, "pr": 0}
+    {"name": "news: the skill never pushes to main (retired)", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push -u origin main", "forbidden": true, "pr": 0},
+    {
+      "name": "transformation: history log diffs the roadmap map on every save",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "txDiff(prev, envx.data, acc.name || displayName(acc.email), acc.email, now)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: history engine (txDiff/txKind/txLogAppend)",
+      "file": "cloudflare/feedspark-deck/src/txhistory.js",
+      "pattern": "export function txDiff(",
+      "pr": 0
+    },
+    {
+      "name": "transformation: history & archive right-hand panel",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "id=\"hist\"",
+      "pr": 0
+    },
+    {
+      "name": "transformation: undo any logged change",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "function undoEntry",
+      "pr": 0
+    },
+    {
+      "name": "transformation: archive of deleted items, restorable",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "archive:function(rm,S)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: board journey nodes + spacing",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "conic-gradient(var(--good) calc(var(--p,0)*1%)",
+      "pr": 0
+    },
+    {
+      "name": "transformation: celebrate a finished card or module",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "function celebrate",
+      "pr": 0
+    }
   ]
 }
