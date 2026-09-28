@@ -25,16 +25,22 @@ let pass = 0, fail = 0;
 function ok(c, m) { if (c) pass++; else { fail++; console.error('  ✗ ' + m); } }
 const has = (arr, re) => arr.some((e) => re.test(e));
 
-const src = read('docs/news_digest.json');
+// the COMMITTED digest changes every weekday (the Routine rewrites it), so it is validated as it
+// stands in §1 only; every mutation below runs on a PINNED specimen (the 18 Sep digest), whose dates
+// the assertions are written against — reading the live file made this harness go red the first
+// morning a new digest landed
+const live = read('docs/news_digest.json');
+const src = read('tools/fixtures/news_digest_2026-09-18.json');
 const base = JSON.parse(src);
 const clone = () => JSON.parse(JSON.stringify(base));
 const errs = (d, o) => N.validateDigest(d, o).errors;
 
 // ── 1 · the committed digest passes the schema as it stands (no --fresh: the repo's own file may age)
 {
-  const r = N.validateText(src);
+  const r = N.validateText(live);
   ok(r.errors.length === 0, 'committed digest has errors: ' + r.errors.join(' | '));
-  ok(r.digest && r.digest.id === base.id, 'validateText hands back the parsed digest');
+  ok(r.digest && r.digest.id === JSON.parse(live).id, 'validateText hands back the parsed digest');
+  ok(N.validateText(src).errors.length === 0, 'the pinned 18 Sep specimen still passes the schema');
   ok(base.items.length >= 2 && base.items.length <= N.MAX_ITEMS, 'committed digest carries 2–8 items');
 }
 
