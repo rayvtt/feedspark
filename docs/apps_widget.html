@@ -68,6 +68,11 @@
   // module on the phone that the desktop showed. Bundling is the viewer's own choice, made here.
   var DEFAULT_APPS={};
   var HOME='/';                      // Command center stays pinned to the menu (the home anchor)
+  // the menu's own order, read NOW — this runs at parse time, before anything has moved an anchor.
+  // The order a layout falls back to is this one, not the live DOM's: reading the DOM put every
+  // bundled module LAST, so "Menu" tacked a module onto the end instead of returning it to its slot
+  // (Ray, 28 Sep 2026, bringing the bundle back onto the row).
+  var CANON=[].slice.call(document.querySelectorAll('#tb-modules a.tbm')).map(function(a){return a.getAttribute('href')});
   var LO=load();
   function load(){ try{var o=JSON.parse(localStorage.getItem(LKEY)); if(o&&o.place)return o;}catch(e){} return {v:1,place:null,order:null}; }
   function save(){ try{localStorage.setItem(LKEY,JSON.stringify(LO));}catch(e){} }
@@ -80,7 +85,8 @@
   function anchors(){ var nav=document.getElementById('tb-modules'); var menu=document.getElementById('fcc-apps-menu');
     var a=[]; if(nav)a=a.concat([].slice.call(nav.querySelectorAll('a.tbm')));
     if(menu)a=a.concat([].slice.call(menu.querySelectorAll('a.tbm'))); return a; }
-  function domOrder(){ return anchors().map(function(a){return a.getAttribute('href')}); }
+  function domOrder(){ var have={}; anchors().forEach(function(a){have[a.getAttribute('href')]=1});
+    var out=CANON.filter(function(h){return have[h]}); anchors().forEach(function(a){var h=a.getAttribute('href'); if(out.indexOf(h)<0)out.push(h)}); return out; }
   function effOrder(){ var have=domOrder(), seen={}, out=[];
     (LO.order||[]).forEach(function(h){ if(have.indexOf(h)>=0&&!seen[h]){seen[h]=1;out.push(h)} });
     have.forEach(function(h){ if(!seen[h]){seen[h]=1;out.push(h)} }); return out; }

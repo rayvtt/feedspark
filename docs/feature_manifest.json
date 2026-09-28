@@ -10491,15 +10491,15 @@
       "pr": 0
     },
     {
-      "name": "navrow: every module is on the row — the bundle's re-homed at its canonical slot",
+      "name": "navrow: the break before the row is a CSS pseudo-item — no node is moved",
       "file": "docs/navrow_widget.html",
-      "pattern": "function rehome(a, n) {",
+      "pattern": "body.fcc-navrow .topbar-in::before {",
       "pr": 0
     },
     {
-      "name": "navrow: the ▦ bundle button is hidden on the desktop — one place for every module",
+      "name": "navrow: the ▦ bundle sits at the end of the icon row (Ray, 28 Sep 2026)",
       "file": "docs/navrow_widget.html",
-      "pattern": "body.fcc-navrow #fcc-apps { display: none !important }",
+      "pattern": "order: 91; flex: none; margin: 0 0 0 6px !important;",
       "pr": 0
     },
     {
