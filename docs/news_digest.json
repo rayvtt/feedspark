@@ -1,79 +1,117 @@
 {
   "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once. Every item must be dated within the last 3 months (Ray's rule, 18 Sep 2026).",
-  "id": "2026-09-18-2",
-  "generated": "2026-09-18T09:10:00Z",
-  "headline": "Content API for Shopping is now erroring — migrations are overdue",
-  "intro": "First edition, re-cut to the last three months only.",
+  "id": "2026-09-28",
+  "generated": "2026-09-28T05:25:09Z",
+  "headline": "Meta's Muse agent shops from the Shopify catalogue — not from the Meta feed we optimise",
+  "intro": "Catch-up edition: the daily run had not shipped since 18 Sep (fixed today), so this covers 18–28 Sep with Muse as the lead.",
   "items": [
     {
-      "title": "Content API for Shopping now returns progressive errors",
-      "source": "Google for Developers",
-      "url": "https://developers.google.com/merchant/api/latest-updates",
-      "date": "2026-09-01",
+      "title": "Meta's Muse agent now shops for US consumers — Walmart, Gap, Sephora, Wayfair and the whole Shopify catalogue",
+      "source": "Meta Newsroom",
+      "url": "https://about.fb.com/news/2026/09/the-biggest-news-from-connect-2026/",
+      "date": "2026-09-24",
       "impact": "high",
-      "tags": ["Google", "Feed pipeline"],
-      "what": "As of 1 September, requests to the legacy Content API for Shopping started failing progressively. The replacement is the Merchant API.",
-      "sowhat": "Any client still integrated on the legacy API has a feed pipeline that is degrading right now, not at some future cut-off. Worth an integration audit across the book this week — this is the one item on this list with a live blast radius."
+      "tags": [
+        "Meta",
+        "Agentic commerce"
+      ],
+      "what": "Muse (launched 8 Sep, US-only, free tier plus paid plans) browses, fills forms and buys on the user's behalf, paying through Stripe Link, with Shop Pay and PayPal added at Connect on 23 Sep. Meta says it launched 'with access to the entire Shopify catalogue' and is adding Walmart, Best Buy, American Eagle, DICK'S, Fanatics, Gap, Michael Kors, Sephora, Ulta and Wayfair as shopping connectors; Zuckerberg says Meta will earn 'a small fee from transactions', not ads.",
+      "sowhat": "A new shopping surface whose product data does not come from Commerce Manager. Meta has published no ranking logic, so nobody can promise a client placement — but every US-market call this week should cover what the agent reads (next item) and that UK shoppers cannot use it yet. A retailer not on Shopify reaches Muse only through a bespoke connector on muse.ai/platform or by being browsed."
     },
     {
-      "title": "Merchant Center Next rollout completes — 'Feeds' are now 'Data sources'",
-      "source": "Google Merchant Center Help",
-      "url": "https://support.google.com/merchants/answer/15285007?hl=en-GB",
-      "date": "2026-09-01",
-      "impact": "med",
-      "tags": ["Google", "Terminology"],
-      "what": "All retailers are now upgraded to Merchant Center Next. 'Destinations' are renamed 'Marketing methods' and 'Feeds' are renamed 'Data sources'.",
-      "sowhat": "Every onboarding deck, audit template and screenshot we use says 'Feeds'. Client-facing language needs a pass or we look a version behind in the next QBR."
-    },
-    {
-      "title": "Anthropic open-sources Claude Commerce Agents — with no catalogue layer",
-      "source": "PYMNTS",
-      "url": "https://www.pymnts.com/news/artificial-intelligence/2026/anthropic-built-the-shopping-brain-and-skipped-the-wallet/",
-      "date": "2026-09-02",
+      "title": "What Muse actually reads: the Shopify product record, shared with Meta by default",
+      "source": "Shopify changelog",
+      "url": "https://changelog.shopify.com/posts/meta-is-now-an-ai-channel-in-your-admin",
+      "date": "2026-09-08",
       "impact": "high",
-      "tags": ["Claude", "Agentic"],
-      "what": "Apache-2.0 blueprints for a shopper agent and a merchant agent, deployable on Claude API, Bedrock, Microsoft Foundry and Vertex AI. The release explicitly excludes payments, catalogue and advertising.",
-      "sowhat": "'No catalogue' is the tell. The blueprint assumes somebody else supplies clean, structured product data for the agent to reason over — that is precisely our lane, and it is a strong hook for the AI-Ready Feeds pitch."
+      "tags": [
+        "Meta",
+        "Shopify",
+        "Feed pipeline"
+      ],
+      "what": "Meta now sits with the other AI channels under Sales channels › Agentic in the Shopify admin, and products are shared with Meta by default through Shopify Catalog for stores selling to the US, Canada or Mexico. Shopify Catalog syndicates title, description, options, images, price and availability from the product record (custom data via metafield mapping); direct checkout is on by default and excludes subscriptions, bundles and customisable products.",
+      "sowhat": "The attributes we engineer into the Meta catalogue feed — colour, material, size, fit — do not reach Muse unless they also live in Shopify options or metafields, so for any client with a US-facing Shopify store the ask is a Shopify data pass, not a feed rule. Check each client's platform before asserting anything; subscription ranges of the YuMOVE kind are excluded from direct checkout by rule."
     },
     {
-      "title": "Google Ads opens Product Value Optimization beta",
-      "source": "Search Engine Land",
-      "url": "https://searchengineland.com/library/platforms/google/google-ads/google-shopping",
-      "date": "2026-09-01",
+      "title": "Google has removed free product listings from Search across the EEA",
+      "source": "Search Engine Roundtable",
+      "url": "https://www.seroundtable.com/google-drops-free-product-listings-eea-42113.html",
+      "date": "2026-09-18",
+      "impact": "high",
+      "tags": [
+        "Google",
+        "Shopping",
+        "EEA"
+      ],
+      "what": "Over 17–18 Sep the unpaid product listings and 'popular products' carousels disappeared from Google Search in EEA countries, which Google's Ads Liaison confirmed follows the July Digital Markets Act decision (a €460m fine over self-preferencing in Search results). Paid Shopping ads are unaffected; trackers cited by Search Engine Roundtable report near-total drops in Germany, France, the Netherlands, Belgium and Sweden.",
+      "sowhat": "Reiss's EU markets, Superdry's DE/FR/NL/ES/DK/BE/IE feeds and Schuh DE/IE lose the organic half of Shopping; the UK and Reiss CH sit outside the EEA. Expect 'where did the free clicks go' questions — the answer is a paid-coverage and comparison-shopping-service conversation, not a feed fix."
+    },
+    {
+      "title": "Google switched on native checkout in AI Mode and Gemini for eligible US Shopify stores — opt-out, not opt-in",
+      "source": "Search Engine Roundtable",
+      "url": "https://www.seroundtable.com/google-native-checkout-emails-42140.html",
+      "date": "2026-09-22",
+      "impact": "high",
+      "tags": [
+        "Google",
+        "Agentic commerce",
+        "Shopify"
+      ],
+      "what": "Merchant Center emails on 22 Sep told merchants their Shopify store had been matched to their Merchant Center account, 'enabling native checkout on Google AI Mode and Gemini', with eligible products included automatically. Shopify's help page confirms direct checkout is active by default for US stores selling to US customers, carries no fees beyond payment processing, excludes subscriptions and bundles, and is turned off under Sales channels › Agentic.",
+      "sowhat": "The Buy button reads Merchant Center price and availability, so a mismatch becomes a failed order rather than a disapproval — feed freshness is now a checkout issue. US stores on Shopify only: check Reiss US, Superdry US and House of Bruar US before saying anything either way."
+    },
+    {
+      "title": "Merchant API now takes product reviews data sources",
+      "source": "Google Merchant Center Help (reported by Search Engine Roundtable, 18 Sep)",
+      "url": "https://support.google.com/merchants/answer/14620732",
+      "date": "2026-09-18",
       "impact": "med",
-      "tags": ["Google", "Bidding"],
-      "what": "A new beta letting advertisers apply value adjustments so automated bidding optimises toward the products that matter commercially, not just the ones that convert most.",
-      "sowhat": "A real margin lever rather than a volume one. Good candidate to trial on a retainer account where product-level profitability varies a lot — Reiss or Schuh would show the effect fastest."
+      "tags": [
+        "Google",
+        "Merchant API",
+        "Ratings"
+      ],
+      "what": "Google's help page now offers 'Add product reviews using API': product reviews data sources can be uploaded and managed through the Merchant API alongside URL fetch, SFTP and file upload. Product Ratings still needs the interest form, at least 50 reviews and a monthly full data source, and the endpoint is the v1alpha reviews surface, not GA.",
+      "sowhat": "Review-rich clients such as Schuh, Superdry and Reiss can have their product-ratings feed automated off the review platform rather than dropped by file — worth scoping as a one-off setup, with the alpha status stated."
     },
     {
-      "title": "Amazon extends Price History from 90 days to 365",
-      "source": "Amazon seller news roundup",
-      "url": "https://stackinfluence.com/blog/september-2026-ecommerce-news-and-updates-for-sellers",
-      "date": "2026-09-01",
+      "title": "Meta Graph API v20.0 was removed on 24 Sep; Marketing API v24.0 has until 6 Oct",
+      "source": "Meta for Developers changelog",
+      "url": "https://developers.facebook.com/docs/graph-api/changelog",
+      "date": "2026-09-24",
       "impact": "med",
-      "tags": ["Amazon", "Pricing"],
-      "what": "Temporary discounts and pre-event markups now sit next to a full year of everyday-price history rather than 90 days.",
-      "sowhat": "Pre-Black-Friday markup tactics are now visible for a whole year. Anyone planning Q4 promo pricing on Amazon needs to know the reference window changed before they set it."
+      "tags": [
+        "Meta",
+        "Catalog API"
+      ],
+      "what": "Meta's version table lists Graph API v20.0 as available until 24 September 2026 and Marketing API v24.0 as available until 6 October 2026.",
+      "sowhat": "Any catalogue, product-set or feed-upload automation pinned to v20 stopped being supported this week, and anything on Marketing API v24 has eight days — a one-line check with the FeedHero and tech teams on which versions the integrations call."
     },
     {
-      "title": "Stripe extends Shared Payment Tokens to Visa and Mastercard agent rails",
-      "source": "Stripe",
-      "url": "https://stripe.com/blog/supporting-additional-payment-methods-for-agentic-commerce",
-      "date": "2026-09-01",
+      "title": "Amazon has blocked Muse from shopping on Amazon.com",
+      "source": "GeekWire",
+      "url": "https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/",
+      "date": "2026-09-20",
       "impact": "watch",
-      "tags": ["Payments", "Agentic"],
-      "what": "Shared Payment Tokens now reach Mastercard Agent Pay and Visa Intelligent Commerce, plus BNPL methods including Affirm and Klarna.",
-      "sowhat": "The payment rails for agentic checkout are consolidating faster than the discovery layer is. Context for any client asking when they need to be ready — the plumbing will be there before the demand is."
+      "tags": [
+        "Amazon",
+        "Agentic commerce"
+      ],
+      "what": "Muse users reaching Amazon.com see a notice that 'continued access by an unauthorized AI agent violates Amazon's Conditions of Use'; Amazon says Meta did not notify it and that the agent does not identify itself. Meta has said Muse has no visibility into people's passwords or payment methods.",
+      "sowhat": "Agent-led demand can be refused by the retailer, so 'can Muse buy from us' is answered by a client's platform and terms, not by the feed. For clients also selling on Amazon, the marketplace listing stays outside Muse for now."
     },
     {
-      "title": "AI Overviews appear in 24% of shopping queries — and have started softening",
-      "source": "Search Engine Land",
-      "url": "https://searchengineland.com/library/seo/ecommerce",
-      "date": "2026-09-03",
+      "title": "Google's September Demand Gen Drop puts a Business Agent on video ads that carry product feeds",
+      "source": "Google Ads & Commerce blog",
+      "url": "https://blog.google/products/ads-commerce/demand-gen-drop-september-2026/",
+      "date": "2026-09-24",
       "impact": "watch",
-      "tags": ["Google", "AI search"],
-      "what": "AI Overviews were measured on 24% of shopping queries, with presence declining slightly over recent weeks as Google appears to pull back on some product queries.",
-      "sowhat": "A good QBR stat, with the honest caveat attached: this is not a straight line up. Worth quoting with the softening included — it reads as credible rather than hype."
+      "tags": [
+        "Google",
+        "Demand Gen"
+      ],
+      "what": "Google's monthly Demand Gen update adds a conversational Business Agent to YouTube video ads that carry product feeds (beta sign-up), one-tap image ads on Shorts and Gmail, and affiliate location extensions in Maps.",
+      "sowhat": "Demand Gen product-feed campaigns run off the same Merchant Center data we maintain, so the feed quality work carries straight over; a peak-season test candidate for accounts already running Google and Meta side by side, such as YuMOVE."
     }
   ]
 }
