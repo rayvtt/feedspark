@@ -10988,6 +10988,12 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "run: node tools/test_catalog.mjs",
       "pr": 0
+    },
+    {
+      "name": "Nav row: a third compaction step under 960px keeps 23 tiles + the ▦ on one row",
+      "file": "docs/navrow_widget.html",
+      "pattern": "@media (max-width: 960px) {",
+      "pr": 0
     }
   ]
 }
