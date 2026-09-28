@@ -106,6 +106,16 @@ export const ROAS_WINDOWS = [
   { k: 'w90', period: '90_days', days: 90, label: '90 days' },
 ];
 export const ROAS_DEFAULT_WIN = 'w30';
+// FeedHero breaks the CATEGORY tree down for the 30-day window ONLY — confirmed 28 Sep 2026 on
+// Superdry GB, Reiss GB and Monsoon UK: a 7- or 90-day read carries the Total and the "Unlisted
+// SKUs in Ads traffic" row and nothing else, while the live Brand / Gender / Price group cuts work
+// on every period. The other windows are still read for their totals (the scorecards, trend and
+// movers switch with the period); ROAS_KEEP_CATS_ALT is what would keep a tree if FeedHero ever
+// added one. The page names the fact on a 7/90-day market rather than showing an empty tree.
+export const ROAS_TREE_WIN = ROAS_DEFAULT_WIN;
+// FeedHero's own pseudo-category on every window: Google Ads traffic on SKUs that are not in the
+// feed it holds — a real row (real spend), never a product-type path
+export function isUnlisted(cat) { return /^unlisted skus in ads traffic$/i.test(s0(cat).trim()); }
 export const HIST_COLS = ['sp', 'rv', 'cv', 'ck', 'im', 'sk', 'zb'];   // a compact daily point per window, in this order
 
 // flat roster -> the rotation planner works over one list, not seven nested arrays

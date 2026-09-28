@@ -169,6 +169,15 @@ t('the dark steps are the FCC\'s validated chart pair; the scorecard row scrolls
 t('the multi-sentence explainers collapse behind ⓘ (data-instr); no control hides under a max-width rule', /<p class="sub" data-instr>/.test(PAGE) && !/@media\(max-width:[^)]*\)[^}]*display:none/.test(PAGE.replace(/\.tb-tag\{display:none\}/, '')));
 t('the browser tripwires feed /roas the synthetic stub so the charts and table render under their rules', /roas_stub\.js/.test(read('tools/check_mobile.js')) && /roas_stub\.js/.test(read('tools/check_darkmode.js')) && /ROAS_STUB/.test(read('tools/check_mobile.js')));
 
+console.log('· the tree is a 30-day fact — FeedHero, confirmed 28 Sep 2026: 7- and 90-day reads carry Total + Unlisted only');
+const sevenDay = [{ cmpid: 'superdry_gb', cmpname: 'Superdry GB', category: 'Total', skus: '60,203', zombie: '47.03%', impressions: '7,900,278', clicks: '109,801', conversions: '2,344.60', revenue: '£174,520.40', spend: '£26,042.33', roas: '670.14%', band: 'Strong', updated: '28/09/2026 at 12:39 AM' },
+  { cmpid: 'superdry_gb', cmpname: 'Superdry GB', category: 'Unlisted SKUs in Ads traffic', skus: '1,166', zombie: '0.00%', impressions: '125,985', clicks: '2,279', conversions: '43.04', revenue: '£2,435.66', spend: '£489.29', roas: '497.80%', band: 'Strong', updated: '28/09/2026 at 12:39 AM' }];
+const s7 = ROAS.splitClientRows(sevenDay, ROAS.ROAS_KEEP_CATS_ALT);
+t('a 7-day read (the real specimen) splits into the Total and ONE category row — the unlisted-in-feed traffic, FeedHero\'s own row, never a product type', s7.total.spend.n === 26042.33 && s7.categories.length === 1 && ROAS.isUnlisted(s7.categories[0].category) && !ROAS.isUnlisted('Women > Clothing') && !ROAS.isUnlisted(''));
+t('that row still hangs at the root of the tree with its real spend — hidden it would understate the market', ROAS.catTree(s7.categories).length === 1 && ROAS.catTree(s7.categories)[0].row.spend.n === 489.29);
+t('ROAS_TREE_WIN names the one window the tree exists on — the default window', ROAS.ROAS_TREE_WIN === 'w30' && ROAS.ROAS_TREE_WIN === ROAS.ROAS_DEFAULT_WIN);
+t('the page says WHY a 7/90-day market has no tree and points at the segments FeedHero cuts live for any period; the unlisted row is tagged', /breaks categories down on the <b>30-day<\/b> window only/.test(PAGE) && /function isUnlisted\(/.test(PAGE) && /isUnlisted\(r\.name\)/.test(PAGE) && /not in feed/.test(PAGE) && /30-day window only<\/b>/.test(PAGE));
+
 console.log('· deploy config');
 t('wrangler.toml carries the new cron firing and no others were dropped', WRANGLER.indexOf('10,40 * * * *') > 0 && WRANGLER.indexOf('15,45 * * * *') > 0 && WRANGLER.indexOf('0 7,17 * * *') > 0);
 
