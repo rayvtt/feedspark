@@ -2214,7 +2214,12 @@ async function route(request, env, ctx) {
           tracked: !!r,
           allowance: r ? r.allowance : null, used: r ? r.used : null,
           balance: r ? r.balance : null, health: r ? r.health : null,
-          markets: r ? r.marketCount : null, am: r ? r.am : null, amEmail: r ? amAddr(r.am) : null, updated: r ? r.updated : null,
+          markets: r ? r.marketCount : null,
+          // the rows the brand figures above were summed FROM — absent (never null-padded) on a
+          // record the index has not re-read since they shipped, so a surface can say so rather
+          // than draw a breakdown it does not have
+          mk: r && Array.isArray(r.mk) ? r.mk : null,
+          am: r ? r.am : null, amEmail: r ? amAddr(r.am) : null, updated: r ? r.updated : null,
           trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
             at: t.at, windowHours: t.windowHours } : null,
           posture: p && p.state ? p : null,
@@ -3281,9 +3286,18 @@ async function tmStore(env, brands, opts) {
     const markets = Array.isArray(c.markets) ? c.markets.slice(0, 60).map((m) => ({ market: String(m.market || '').slice(0, 24), allowance: nn(m.allowance), used: nn(m.used), balance: nn(m.balance), health: String(m.health || '').slice(0, 16) || null })) : [];
     const rec = { client, group: String(c.group || '').slice(0, 60), am: String(c.am || '').slice(0, 40), allowance: nn(c.allowance), used: nn(c.used), balance: nn(c.balance), current: nn(c.current), carried: nn(c.carried), health: String(c.health || '').slice(0, 16) || null, marketCount: markets.length, markets, updated: Date.now(), src: String(opts.source || 'push') };
     const sig = TMM.sigOf(rec, ['updated', 'src']);
-    if (opts.onlyChanged && idx[client] && idx[client].sig === sig) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
+    // `mk` in the guard is deliberate: an entry stored before the per-market rows shipped has the
+    // same sig forever, so without it a brand whose figures never move would never gain its
+    // breakdown. One rewrite each, then the quiet-firing shortcut holds again.
+    if (opts.onlyChanged && idx[client] && idx[client].sig === sig && Array.isArray(idx[client].mk)) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
     try { await env.EDITS.put('tm:' + client, JSON.stringify(rec)); } catch (e) { results.push({ client, error: 'kv put failed' }); continue; }
-    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, am: rec.am, updated: rec.updated, sig, src: rec.src };
+    /* THE MARKETS RIDE THE INDEX (Ray, 28 Sep 2026: "maybe show calculation when hover that
+       number on brand dossier"). A brand's used / block / balance are sums across its markets,
+       so the only way a reader can check one is to see the rows it was added from — and
+       /api/hours serves every brand from this ONE key, so fetching tm:<client> per brand to
+       answer a hover would turn one KV get into forty. The whole estate is ~70 markets at a
+       few dozen bytes each; it belongs here. */
+    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, mk: rec.markets, am: rec.am, updated: rec.updated, sig, src: rec.src };
     changed++;
     results.push({ client, ok: true, allowance: rec.allowance, used: rec.used });
   }
