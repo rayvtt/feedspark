@@ -1379,3 +1379,54 @@ export function trailTrend(rows) {
   const pct = a ? Math.round(((b - a) / a) * 100) : 100;
   return { dir: pct > 8 ? 'up' : pct < -8 ? 'down' : 'flat', pct, enough: true };
 }
+
+/**
+ * WHERE A BRAND'S HOURS FIGURE COMES FROM (Ray, 28 Sep 2026, circling the USED figure on a brand
+ * dossier: "actually i dont understand how [it] was calculated" → "maybe show calculation when
+ * hover that number on brand dossier").
+ *
+ * A brand's headline figures are SUMS ACROSS ITS MARKETS, and the three of them are three
+ * INDEPENDENT sums the Task Manager states — not one derived from another. That is exactly what
+ * makes them unreadable side by side: a brand can read more hours used than its block allows and
+ * still not be that far negative, and block − used will not give you the balance. Nothing is
+ * wrong; two different things are true at once — some of those hours sit on a market carrying NO
+ * block at all, and the balance already counts hours carried in from the previous cycle.
+ *
+ * So the breakdown names each market and adds them up in front of the reader. Three rules:
+ *   · the ROWS are the sum — `agrees` reports when the record's own headline disagrees (a market
+ *     the index has not re-read, a rounding drift) rather than printing a total nobody can
+ *     reproduce from what is on screen;
+ *   · a market with NO allowance is named, because hours booked against no block are the usual
+ *     reason a brand total looks wrong beside its block;
+ *   · the balance is NEVER presented as block − used, because it is not that subtraction.
+ */
+export function hoursSplit(rec) {
+  const r = rec || {};
+  const n2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+  const rows = (Array.isArray(r.mk) ? r.mk : [])
+    .map((m) => {
+      const allowance = n2(m && m.allowance);
+      return {
+        market: String((m && m.market) || '').trim() || '—',
+        used: n2(m && m.used), allowance, balance: n2(m && m.balance),
+        health: (m && m.health) || null, noBlock: !(allowance > 0),
+      };
+    })
+    .sort((a, b) => (b.used - a.used) || (a.market < b.market ? -1 : a.market > b.market ? 1 : 0));
+  const sum = (k) => n2(rows.reduce((t, x) => t + x[k], 0));
+  const used = sum('used'), allowance = sum('allowance'), balance = sum('balance');
+  const stated = {
+    used: r.used == null ? null : n2(r.used),
+    allowance: r.allowance == null ? null : n2(r.allowance),
+    balance: r.balance == null ? null : n2(r.balance),
+  };
+  const same = (a, b) => a == null || Math.abs(a - b) <= 0.011;
+  const blockless = rows.filter((x) => x.noBlock && x.used > 0);
+  return {
+    ok: rows.length > 0,
+    n: rows.length,
+    rows, used, allowance, balance, stated,
+    agrees: { used: same(stated.used, used), allowance: same(stated.allowance, allowance), balance: same(stated.balance, balance) },
+    noBlock: { n: blockless.length, used: n2(blockless.reduce((t, x) => t + x.used, 0)), markets: blockless.map((x) => x.market) },
+  };
+}
