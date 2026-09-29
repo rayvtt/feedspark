@@ -11044,22 +11044,10 @@
       "pr": 558
     },
     {
-      "name": "Catalogue: master stock read before any rule (availability word, else a stock count)",
-      "file": "docs/catalog_engine.js",
-      "pattern": "function masterStock(cells, p)",
-      "pr": 559
-    },
-    {
-      "name": "Catalogue: stock control splits turned-out from already-out",
+      "name": "Catalogue: stock controls = /stock's coverage matrix for this market",
       "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "if (ms === 'out') return fs === 'out' ? 'already' : 'back';",
-      "pr": 559
-    },
-    {
-      "name": "Catalogue: excluded-from-feed split by the master's own stock word",
-      "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "ms: E.masterStock(row, plan)",
-      "pr": 559
+      "pattern": "function covShade(n, mx)",
+      "pr": 0
     }
   ]
 }
