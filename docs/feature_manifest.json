@@ -10237,14 +10237,14 @@
       "name": "Workflow intake: every row is one height — the task box is clamped to two lines and the floor sits on the ROW, so vertical-align:middle centres a one-line task (Ray, 29 Sep 2026)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "#itbl tbody tr{height:calc(2 * 1.35em + 17px)}",
-      "pr": 0
+      "pr": 566
     },
     {
       "name": "Workflow intake: the task box carries NO min-height — a floor on the box lays a one-line task at its TOP, 9.4px above the row's centre",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "min-height:calc(2 * 1.35em)",
       "forbidden": true,
-      "pr": 0
+      "pr": 566
     },
     {
       "name": "Workflow intake: a clipped cell names what it hides, measured not guessed",
