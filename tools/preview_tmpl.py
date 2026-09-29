@@ -173,6 +173,13 @@ def wrap(draw, runs, box_w, first_extra=0.0):
     lines=[[]]; cur=0.0; avail=box_w+first_extra
     for (wd,name,sz,b,col) in tokens:
         f=font(name,int(sz*SC/72),b)
+        # A whitespace token carrying a newline IS a line break, and Pillow refuses
+        # to measure multiline text at all -- so measuring it threw ValueError and
+        # killed the whole render (reproducible on the Schuh deck). Break the line
+        # here instead of asking for a width that has no meaning.
+        if '\n' in wd:
+            if lines[-1]: lines.append([]); cur=0.0; avail=box_w
+            continue
         wdt=draw.textlength(wd,font=f)
         isspace = wd.strip()==''
         if not isspace and cur+wdt>avail and lines[-1]:
@@ -237,12 +244,18 @@ def draw_textframe(draw, shape, warn, layout_shape=None):
             cy+=lh
         cy+=sa*SC/72
 
+TBL_OVER = []
+
 def draw_table(d, shape):
     tbl = shape.table
     x0 = px(shape.left); y0 = px(shape.top)
     col_w = [px(c.width) for c in tbl.columns]
     row_h = [px(r.height) for r in tbl.rows]
     from pptx.enum.text import PP_ALIGN as _A
+    # firstRow banding is painted by the table style, which is not readable back
+    # through cell.fill -- without this the white header text renders on white.
+    pr = tbl._tbl.find("{http://schemas.openxmlformats.org/drawingml/2006/main}tblPr")
+    hdr_band = pr is not None and pr.get("firstRow") == "1"
     y = y0
     for ri, row in enumerate(tbl.rows):
         x = x0
@@ -252,6 +265,7 @@ def draw_table(d, shape):
             try:
                 if cell.fill.type == 1: fillc = rgb(cell.fill.fore_color.rgb)
             except Exception: pass
+            if fillc is None and hdr_band and ri == 0: fillc = (15, 23, 42)
             if fillc: d.rectangle([x, y, x+cw, y+rh], fill=fillc)
             d.rectangle([x, y, x+cw, y+rh], outline=(226,232,240), width=1)
             para = cell.text_frame.paragraphs[0]
@@ -261,12 +275,28 @@ def draw_table(d, shape):
                 _, name, sz, b, col = runs[0]
                 f = font(name, int(sz*SC/72), b)
                 pad = int(0.06*SC)
-                tw = d.textlength(txt, font=f)
-                if para.alignment == _A.CENTER: tx = x + (cw-tw)/2
-                elif para.alignment == _A.RIGHT: tx = x + cw - tw - pad
-                else: tx = x + pad
-                ty = y + (rh - sz*SC/72)/2
-                d.text((tx, ty), txt, font=f, fill=col or (20,29,43))
+                # PowerPoint WRAPS table cell text; drawing it as one long line
+                # made every prose table look like a bug (columns overlapping,
+                # the last column running off the slide) while the real .pptx was
+                # fine -- so table QA was reading a defect the deck did not have,
+                # and could not see the one it did. Wrap the same way
+                # draw_textframe() does, and report a cell whose wrapped text is
+                # taller than its own row, which IS a real overflow.
+                lines = wrap(d, runs, max(4.0, cw - 2*pad))
+                lh = int(sz*SC/72 * 1.2)
+                th = lh * len(lines)
+                ty = y + max(pad, (rh - th)/2)
+                for ln in lines:
+                    tw = sum(t[3] for t in ln)
+                    if para.alignment == _A.CENTER: tx = x + (cw-tw)/2
+                    elif para.alignment == _A.RIGHT: tx = x + cw - tw - pad
+                    else: tx = x + pad
+                    for wd, wf, wcol, wdt, _sz in ln:
+                        d.text((tx, ty), wd, font=wf, fill=wcol or col or (20,29,43))
+                        tx += wdt
+                    ty += lh
+                if th > rh - pad:
+                    TBL_OVER.append((ri, ci, txt[:48], len(lines)))
             x += cw
         y += row_h[ri]
 
@@ -324,7 +354,7 @@ def draw_shape(d, shape, warn, layout_shape=None):
 def render(path, outbase):
     prs=Presentation(path)
     W=px(prs.slide_width); Hh=px(prs.slide_height)
-    warns_all=[]
+    warns_all=[]; tbl_over_all=[]
     n = len(prs.slides._sldIdLst)
     for i,slide in enumerate(prs.slides):
         layout = slide.slide_layout
@@ -332,6 +362,7 @@ def render(path, outbase):
         d=ImageDraw.Draw(img)
         d._image = img
         warn=[]
+        del TBL_OVER[:]
 
         slide_ph_idx = set()
         for sh in slide.placeholders:
@@ -354,6 +385,8 @@ def render(path, outbase):
             draw_shape(d, sh, warn, layout_shape=lsh)
 
         img.save(f"{outbase}_{i+1}.png")
+        for (ri, ci, txt, nl) in TBL_OVER:
+            tbl_over_all.append((i+1, "r%d c%d" % (ri, ci), txt, nl))
         for (sh,t,hh) in warn:
             label = sh.text_frame.text[:48] if sh.has_text_frame else sh.name
             warns_all.append((i+1, label, round(t), hh))
@@ -361,7 +394,10 @@ def render(path, outbase):
     if warns_all:
         print("OVERFLOW WARNINGS (slide, text, text_h_px, box_h_px):")
         for wv in warns_all: print("  ", wv)
-    else:
+    if tbl_over_all:
+        print("TABLE CELLS TALLER THAN THEIR ROW (slide, cell, text, lines):")
+        for tv in tbl_over_all: print("  ", tv)
+    if not warns_all and not tbl_over_all:
         print("no overflow warnings")
 
 if __name__=="__main__":
