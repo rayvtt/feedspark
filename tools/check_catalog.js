@@ -106,6 +106,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.waitForTimeout(600);
     const still = await pg.evaluate(() => window.__FCCCatalogue.state().insp.i);
     ok('scrolling a different row under a still cursor does NOT move the inspector (the /stock lesson)', still === 0, still);
+    // the row is brought on screen FIRST (the dashboard above can push it below the fold) — the move that follows is the real one
+    await pg.locator('#vr .tr.row').nth(3).scrollIntoViewIfNeeded(); await pg.waitForTimeout(250);
     const r3 = await pg.locator('#vr .tr.row').nth(3).boundingBox();
     const i3 = await pg.locator('#vr .tr.row').nth(3).getAttribute('data-i');
     await pg.mouse.move(r3.x + 380, r3.y + r3.height / 2); await pg.mouse.move(r3.x + 392, r3.y + r3.height / 2 + 1);
@@ -193,7 +195,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const wantSale = prods.filter((p, i) => fx[i].onSale).length;
     ok('the matrix: "Sale price · structured" lists every sale the master stated under another column', seg === wantSale && await view() === wantSale, { seg, page: await view(), want: wantSale });
 
-    console.log('· the dashboard — twelve modules of one size, evenly spaced, each one a filter');
+    console.log('· the dashboard — eighteen modules of one size, evenly spaced, each one a filter');
     await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
     await pg.waitForTimeout(250);
     const grid = await pg.evaluate(() => {
@@ -202,8 +204,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
       const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
       return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(ms.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size };
     });
-    ok('twelve modules, every one the same height and width', grid.n === 12 && grid.hs === 1 && grid.ws === 1, grid);
-    ok('three to a row at 1440px — four even rows', grid.rows.length === 4 && grid.rows.every((r) => r === 3), grid.rows);
+    ok('eighteen modules, every one the same height and width', grid.n === 18 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('three to a row at 1440px — six even rows', grid.rows.length === 6 && grid.rows.every((r) => r === 3), grid.rows);
     ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
     const pb = await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); const S = window.__FCCCatalogue.state(); return { lo: S.facet && S.facet.lo, hi: S.facet && S.facet.hi, k: S.facet && S.facet.k }; });
     await pg.waitForTimeout(300);
@@ -241,10 +243,49 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
     await pg.waitForTimeout(200);
     const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
-    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /11 of 12/.test(hid.note), hid);
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /17 of 18/.test(hid.note), hid);
     await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
     await pg.waitForTimeout(200);
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
+
+    console.log('· the commercial view — six modules a buyer reads, each against an independent count');
+    // 👔 Procurement view: nine modules, the commercial six first, the operational ones put away — and off again restores all
+    await pg.click('#proc-b'); await pg.waitForTimeout(300);
+    const pv = await pg.evaluate(() => ({ shown: Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden && getComputedStyle(m).display !== 'none').sort((a, b) => (+a.style.order) - (+b.style.order)).map((m) => m.dataset.mod), on: document.getElementById('proc-b').getAttribute('aria-pressed'), note: document.getElementById('mods-s').textContent }));
+    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 18/.test(pv.note), pv);
+    // optimised vs not: FeedHero's own cut of Google Ads, re-added in node
+    const lr = DATA.live.Title_optimisation_status.rows.filter((r) => !/unlisted/i.test(r.category));
+    const side = (r) => (/non/i.test(r.category) ? 'n' : 'o'), acc = { o: { s: 0, r: 0, sp: 0 }, n: { s: 0, r: 0, sp: 0 } };
+    lr.forEach((r) => { const t = acc[side(r)]; t.s += r.skus; t.r += r.revenue.n; t.sp += r.spend.n; });
+    const gbp = (v) => '£' + v.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    await pg.waitForFunction(() => document.querySelector('#lift-body .vs'), null, { timeout: 8000 });
+    const lift = await pg.evaluate(() => Array.from(document.querySelectorAll('#lift-body .vs tbody tr')).map((tr) => Array.from(tr.children).map((c) => c.textContent.trim())));
+    const rowOf = (lab) => lift.find((r) => r[0] === lab) || [];
+    ok('Optimised vs not: revenue per product and ROAS equal an independent count of the same cut', rowOf('Revenue per product')[1] === gbp(acc.o.r / acc.o.s) && rowOf('Revenue per product')[2] === gbp(acc.n.r / acc.n.s) && rowOf('ROAS')[1] === Math.round(acc.o.r / acc.o.sp * 100) + '%', { page: [rowOf('Revenue per product'), rowOf('ROAS')], want: [gbp(acc.o.r / acc.o.s), gbp(acc.n.r / acc.n.s), Math.round(acc.o.r / acc.o.sp * 100)] });
+    ok('…and says it is a comparison, not a controlled test', await pg.evaluate(() => /not a controlled test/.test(document.getElementById('lift-body').textContent)));
+    // before and after: the page's headline is the traced catalogue's own average, both ways
+    const fx2 = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(), b = document.querySelectorAll('#fix-body .bna b'); return { page: [b[0] && b[0].textContent, b[1] && b[1].textContent], want: S.sum ? [Math.round(S.sum.cb / S.sum.n), Math.round(S.sum.ca / S.sum.n)] : null }; });
+    ok('Before and after FeedSpark: master → feed completeness is the traced average both ways', fx2.want && +fx2.page[0] === fx2.want[0] && +fx2.page[1] === fx2.want[1], fx2);
+    // where the budget goes: the three buckets add up to every category's spend, each bucket by the category's own ROAS
+    const roots = (DATA.market.tree || []).map((n) => n.row).filter((r) => r && r.category !== 'Total' && !/unlisted/i.test(r.category) && r.spend && r.spend.n > 0);
+    const mk = DATA.market.total.roasPct, W = { lo: 0, mid: 0, hi: 0 }; let T = 0;
+    roots.forEach((r) => { const ro = r.revenue.n / r.spend.n * 100, k = ro < 100 ? 'lo' : (ro < mk ? 'mid' : 'hi'); W[k] += r.spend.n; T += r.spend.n; });
+    const wb = await pg.evaluate(() => Array.from(document.querySelectorAll('#waste-body .mlist .v')).map((v) => v.firstChild.textContent.trim()));
+    ok('Where the ad budget goes: losing / below market / at or above add up to the category spend', wb.join('|') === [gbp(W.lo), gbp(W.mid), gbp(W.hi)].join('|'), { page: wb, want: [W.lo, W.mid, W.hi], total: T });
+    // what the service does: titles rewritten = FeedSpark's own stamp, counted in node
+    const tN = prods.filter((p) => p.opti && p.opti.T).length;
+    const vd = await pg.evaluate(() => { const ks = Array.from(document.querySelectorAll('#vendor-body .evl .k')), vs = document.querySelectorAll('#vendor-body .evl .v'); const i = ks.findIndex((k) => k.textContent === 'Titles rewritten'); return i >= 0 ? vs[i].textContent : null; });
+    ok('What the service does: "Titles rewritten" is FeedSpark’s own stamp over every product', vd === Math.round(tN / prods.length * 100) + '% of products', { page: vd, want: tN + '/' + prods.length });
+    ok('…a capability the page cannot read says so rather than scoring a zero', await pg.evaluate(() => /not readable here/.test(document.getElementById('vendor-body').textContent)));
+    // fee check: empty until typed, then the buyer's own figure over the catalogue and the Ads revenue — kept on the device only
+    ok('Fee check is empty until a fee is typed', await pg.evaluate(() => { localStorage.removeItem('fcc-cat-fee'); document.getElementById('fee-a').value = ''; document.getElementById('fee-a').dispatchEvent(new Event('input')); return !document.querySelector('#fee-out .kvl'); }));
+    await pg.fill('#fee-a', '2500'); await pg.fill('#fee-b', '1800'); await pg.waitForTimeout(200);
+    const fee = await pg.evaluate(() => { const o = {}; const ks = document.querySelectorAll('#fee-out .kvl .k'), vs = document.querySelectorAll('#fee-out .kvl .v'); ks.forEach((k, i) => { o[k.textContent] = vs[i].firstChild.textContent.trim(); }); return { o, saved: localStorage.getItem('fcc-cat-fee') }; });
+    const rev = DATA.market.total.revenue.n, fpc = (v) => { const x = v * 100; return (x >= 10 ? Math.round(x) : Math.round(x * 10) / 10) + '%'; };
+    ok('Fee check: per product and against Ads revenue are the typed fee over this catalogue and this market', fee.o['Per product, a month'] === gbp(2500 / prods.length) && fee.o['vs Google Ads revenue'] === fpc(2500 / rev) && fee.o['Costs more by'] === gbp(700 * 12), fee);
+    ok('…and the fees stay on this device (fcc-cat-fee), never a request', JSON.parse(fee.saved || '{}').a === 2500);
+    await pg.click('#proc-b'); await pg.waitForTimeout(250);
+    ok('turning the view off brings all eighteen back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 18 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
 

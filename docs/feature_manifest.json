@@ -11155,6 +11155,12 @@
     {"name": "Deck export: stacked + donut native charts", "file": "tools/deck_to_pptx.py", "pattern": "\"donut\": XL_CHART_TYPE.DOUGHNUT", "pr": 568},
     {"name": "Deck export: chart left, next table right (data-chart-side)", "file": "tools/deck_to_pptx.py", "pattern": "side = blocks[i][1]; i += 1", "pr": 568},
     {"name": "Deck export: a doughnut never gets c:dLblPos (PowerPoint repair prompt)", "file": "tools/deck_to_pptx.py", "pattern": "A doughnut takes NO label position", "pr": 568},
-    {"name": "Materials: Reiss FY26/27 deck filed in the dossier", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "id: 'reiss-fy2627'", "pr": 568}
+    {"name": "Materials: Reiss FY26/27 deck filed in the dossier", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "id: 'reiss-fy2627'", "pr": 568},
+    {"name": "Catalogue: the commercial view — six buyer modules registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];", "pr": 569},
+    {"name": "Catalogue: 👔 Procurement view is a preset of the module state", "file": "docs/FeedSpark_Catalog.html", "pattern": "var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];", "pr": 569},
+    {"name": "Catalogue: optimised vs not reads FeedHero's own optimisation cut", "file": "docs/FeedSpark_Catalog.html", "pattern": "var LIFTF = [['Title_optimisation_status', 'Titles'], ['Keyword_optimisation_status', 'Keywords']];", "pr": 569},
+    {"name": "Catalogue: optimised vs not is labelled a comparison, not a test", "file": "docs/FeedSpark_Catalog.html", "pattern": "side by side, not a controlled test", "pr": 569},
+    {"name": "Catalogue: the fee check stays on the device", "file": "docs/FeedSpark_Catalog.html", "pattern": "function feeSet() { lsSet('fcc-cat-fee',", "pr": 569},
+    {"name": "Catalogue: the comparison table is .vs, never the completeness bar's .cmp", "file": "docs/FeedSpark_Catalog.html", "pattern": "h += '<table class=\"vs\"><thead>", "pr": 569}
   ]
 }

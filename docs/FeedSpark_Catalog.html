@@ -197,6 +197,49 @@ window.addEventListener('load',restore);
   .hbars .sel .l{color:var(--orange-deep)}
   .agg{height:30px;font-size:12px}
   .empty2{padding:26px 10px;text-align:center;font-size:12.5px;font-weight:800;color:var(--muted)}
+  /* ---- THE COMMERCIAL VIEW: a comparison table, before → after, evidence rows, the service in tiles, the fee check ---- */
+  .hl{font-size:12.5px;font-weight:800;color:var(--ink-2);margin:0 0 8px;line-height:1.35}
+  .hl b{font-size:17px;font-weight:900;color:var(--ink)}
+  .vs{width:100%;border-collapse:collapse;font-size:12px}
+  .vs th,.vs td{padding:4px 6px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;border-bottom:1px solid var(--line)}
+  .vs tr:last-child td{border-bottom:0}
+  .vs th:first-child,.vs td:first-child{text-align:left;font-weight:800;color:var(--ink-2);padding-left:0}
+  .vs thead th{font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .vs td b{font-weight:900}
+  .vs .up{color:var(--good)}
+  .kvl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;font-size:12px;align-items:baseline}
+  .kvl .k{font-weight:800;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kvl .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .kvl .v small{font-weight:700;color:var(--muted);margin-left:4px}
+  .bna{display:flex;align-items:flex-end;gap:12px;margin:2px 0 12px}
+  .bna .n{display:flex;flex-direction:column;gap:2px}
+  .bna .n small{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .bna .n b{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .bna .ar{font-size:18px;color:var(--muted);padding-bottom:3px}
+  .bna .d{margin-left:auto;font-size:12.5px;font-weight:900;color:var(--good);padding-bottom:3px}
+  .bna .d.dn{color:var(--risk)}
+  .evl{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:5px 8px;font-size:12px;align-items:center}
+  .evl .ic{font-weight:900;text-align:center}
+  .evl .ic.y{color:var(--good)}
+  .evl .ic.n{color:var(--muted)}
+  .evl .k{font-weight:800;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .evl .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .evl .v.mute{font-weight:700;color:var(--muted)}
+  .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .tiles .t{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--wash);min-width:0}
+  .tiles .t b{display:block;font-size:22px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tiles .t span{display:block;font-size:11px;font-weight:800;color:var(--ink-2);margin-top:3px;line-height:1.25}
+  .tiles .t small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fee-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
+  .fee-in label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);min-width:0}
+  .fee-in .inp{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--paper);height:36px;padding:0 9px;gap:4px}
+  .fee-in .inp:focus-within{border-color:var(--orange)}
+  .fee-in .inp span{font-weight:900;color:var(--muted);font-size:13px;text-transform:none;letter-spacing:0}
+  .fee-in input{border:0;background:transparent;font:inherit;font-size:14px;font-weight:800;color:var(--ink);width:100%;min-width:0;outline:none;text-transform:none;letter-spacing:0;padding:0}
+  .btn.proc.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  #m-waste .mlist{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) auto}
+  #m-waste .mlist .l,#m-waste .mlist .b{cursor:default}
+  @container cat (max-width:520px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.fee-in{grid-template-columns:minmax(0,1fr)}}
   /* the lineage legend + the four stage tiles */
   .lg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:11.5px;font-weight:800;color:var(--ink-2)}
   .lg span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -546,6 +589,7 @@ window.addEventListener('load',restore);
   <div class="kpis" id="kpis" data-no-collapse></div>
 
   <div class="modbar"><span class="mb-t">Dashboard</span><span class="mb-s" id="mods-s"></span>
+    <button class="btn proc" id="proc-b" type="button" aria-pressed="false" title="The commercial read — what the work returns, before and after, where the budget goes, what the service does, a fee check">👔 Procurement view</button>
     <span class="pop"><button class="btn" id="mods-b" type="button" aria-expanded="false" title="Show, hide and reorder the modules">⊞ Modules</button><div class="popb" id="mods-p" hidden></div></span></div>
   <div class="ins mods" id="ins">
     <section class="card mod" id="arr-card" data-mod="arr">
@@ -599,6 +643,37 @@ window.addEventListener('load',restore);
     <section class="card mod" id="m-kept" data-mod="kept">
       <div class="chead"><div class="sp"><h3>Ad spend kept off</h3><p class="ch" id="kept-sub">Spend the stock rules keep off products the shopper cannot buy.</p></div></div>
       <div class="mbody" id="kept-body"><div class="empty2">Reading the stock rules…</div></div>
+    </section>
+    <section class="card mod" id="m-lift" data-mod="lift">
+      <div class="chead"><div class="sp"><h3>Optimised vs not</h3><p class="ch" id="lift-sub">Google Ads, last 30 days — what FeedSpark optimised against the rest.</p></div>
+        <select class="fld agg" id="lift-f" aria-label="Which optimisation"></select></div>
+      <div class="mbody" id="lift-body"><div class="empty2">Waiting for the Google Ads read…</div></div>
+    </section>
+    <section class="card mod" id="m-fix" data-mod="fix">
+      <div class="chead"><div class="sp"><h3>Before and after FeedSpark</h3><p class="ch" id="fix-sub">The brand’s own data against what is sent to Google.</p></div></div>
+      <div class="mbody" id="fix-body"><div class="empty2">Needs the master feed traced.</div></div>
+    </section>
+    <section class="card mod" id="m-waste" data-mod="waste">
+      <div class="chead"><div class="sp"><h3>Where the ad budget goes</h3><p class="ch" id="waste-sub">Google Ads spend by what each category returns, last 30 days.</p></div></div>
+      <div class="mbody" id="waste-body"><div class="empty2">Waiting for the Google Ads read…</div></div>
+    </section>
+    <section class="card mod" id="m-vendor" data-mod="vendor">
+      <div class="chead"><div class="sp"><h3>What the service does</h3><p class="ch" id="vendor-sub">Read off this feed — ask any other vendor to show the same.</p></div></div>
+      <div class="mbody" id="vendor-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-scope" data-mod="scope">
+      <div class="chead"><div class="sp"><h3>The service in numbers</h3><p class="ch" id="scope-sub">What is being run for this brand.</p></div></div>
+      <div class="mbody" id="scope-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-fee" data-mod="fee">
+      <div class="chead"><div class="sp"><h3>Fee check</h3><p class="ch" id="fee-sub">Type a monthly fee for this market — kept on this device only.</p></div></div>
+      <div class="mbody" id="fee-body">
+        <div class="fee-in">
+          <label>Monthly fee<span class="inp"><span class="fee-cur">£</span><input id="fee-a" type="number" min="0" step="50" inputmode="decimal" placeholder="this vendor" aria-label="Monthly fee"></span></label>
+          <label>Compare with<span class="inp"><span class="fee-cur">£</span><input id="fee-b" type="number" min="0" step="50" inputmode="decimal" placeholder="another vendor" aria-label="Another vendor's monthly fee"></span></label>
+        </div>
+        <div id="fee-out"></div>
+      </div>
     </section>
   </div>
 
@@ -782,6 +857,8 @@ window.addEventListener('load',restore);
 
   // ---- roster: every client × market this signin may browse ----------------------------------------------------
   function boot() {
+    // ?view=procurement opens the commercial read — a link an AM can send a buyer's team
+    if (/^proc/i.test(qp('view') || '') && !procOn()) { var pv = {}; MODS.forEach(function (x) { if (PROC.indexOf(x[0]) < 0) pv[x[0]] = 1; }); lsSet('fcc-cat-mods', { v: 'proc', order: PROC.concat(MODS.map(function (x) { return x[0]; }).filter(function (k) { return PROC.indexOf(k) < 0; })), off: pv }); }
     applyMods(); renderTabs(); renderQuick(); paintSegs(); layout(); gwMsg('⏳', 'Loading the catalogue engines…');
     loadEngines().then(function (x) {
       FA = x.FA; E = x.E; AR = x.AR; OV = x.OV;
@@ -1093,7 +1170,7 @@ window.addEventListener('load',restore);
       S.linAt = i; statusSoon();
       if (i < N) { setTimeout(step, 0); return; }
       S.linDone = true; S.sum = sum; S.ver++;
-      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }, renderGain, renderSpec].forEach(safe);
+      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }, renderGain, renderSpec, renderProc].forEach(safe);
       if (S.insp && !S.insp.gone) inspect(S.insp.i, 'refresh');
     })();
   }
@@ -1178,20 +1255,20 @@ window.addEventListener('load',restore);
     var r = S.entry && S.entry.roas;
     if (!r) {
       S.roas = { st: 'none', segs: {}, why: S.chan === 'meta' ? 'ROAS is read for the Google feed — switch the channel to Google.' : 'This feed is not on the ROAS roster.' };
-      renderStatus(); renderRoasChart(); return;
+      renderStatus(); renderRoasChart(); renderProc(); return;
     }
     S.roas = { st: 'loading', segs: {}, r: r }; renderStatus();
     fetch('/api/roas?client=' + encodeURIComponent(r.client) + '&market=' + encodeURIComponent(r.market) + '&win=w30', sig())
       .then(function (res) { return res.json(); })
       .then(function (j) {
         if (g !== S.gen) return;
-        if (!j || !j.ok) { S.roas.st = 'error'; S.roas.err = (j && j.error) || 'unavailable'; renderStatus(); renderRoasChart(); return; }
+        if (!j || !j.ok) { S.roas.st = 'error'; S.roas.err = (j && j.error) || 'unavailable'; renderStatus(); renderRoasChart(); renderProc(); return; }
         var R = S.roas; R.total = j.total || null; R.tree = j.tree || []; R.updated = j.updated || null; R.paths = new Map(); R.max = 0;
         (function walk(ns) { (ns || []).forEach(function (nd) { if (nd && nd.row) { R.paths.set(E.pathKey(nd.path), nd.row); if (nd.row.roasPct > R.max && nd.row.skus >= 20) R.max = nd.row.roasPct; } walk(nd.kids); }); })(R.tree);
         R.cur = (R.total && R.total.spend && R.total.spend.cur) || '';
         R.st = j.read ? 'ok' : 'unread';
         detectRoasField(); S.ver++;
-        renderStatus(); renderKpis(); renderRoasChart(); refresh(false);
+        renderStatus(); renderKpis(); renderRoasChart(); refresh(false); renderProc();
       })
       .catch(function (e) { if (g === S.gen && !(e && e.name === 'AbortError')) { S.roas.st = 'error'; S.roas.err = String((e && e.message) || e); renderStatus(); renderRoasChart(); } });
   }
@@ -1636,12 +1713,15 @@ window.addEventListener('load',restore);
   // viewer can hide or move (per device, fcc-cat-mods), and every bar in every one of them lists its products below.
   var MODS = [['arr', 'New arrivals'], ['roas', 'ROAS by segment'], ['did', 'What FeedSpark did'], ['gain', 'Data FeedSpark added'],
     ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'],
-    ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off']];
+    ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off'],
+    ['lift', 'Optimised vs not'], ['fix', 'Before and after FeedSpark'], ['waste', 'Where the ad budget goes'],
+    ['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];
   function modState() { var m = lsGet('fcc-cat-mods', null) || {}; var ord = (m.order || []).filter(function (k) { return MODS.some(function (x) { return x[0] === k; }); }); MODS.forEach(function (x) { if (ord.indexOf(x[0]) < 0) ord.push(x[0]); }); return { order: ord, off: m.off || {} }; }
   function applyMods() {
     var st = modState(), shown = 0;
     st.order.forEach(function (k, i) { var el = document.querySelector('.mod[data-mod="' + k + '"]'); if (!el) return; el.style.order = i; el.hidden = !!st.off[k]; if (!st.off[k]) shown++; });
-    $('mods-s').textContent = shown === MODS.length ? '' : shown + ' of ' + MODS.length + ' modules shown';
+    $('mods-s').textContent = procOn() ? 'Procurement view · ' + shown + ' of ' + MODS.length + ' modules' : (shown === MODS.length ? '' : shown + ' of ' + MODS.length + ' modules shown');
+    procBtn();
   }
   function renderModsPop() {
     var st = modState(), L = st.order.length;
@@ -1662,7 +1742,7 @@ window.addEventListener('load',restore);
   $('mods-p').addEventListener('change', function (e) { var k = e.target.getAttribute('data-mod-on'); if (!k) return; var st = modState(); if (e.target.checked) delete st.off[k]; else st.off[k] = 1; saveMods(st); });
   document.addEventListener('click', function (e) { if (!e.target.closest('.pop')) { $('mods-p').hidden = true; $('mods-b').setAttribute('aria-expanded', 'false'); } });
 
-  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth, renderAvail, renderStock, renderKept].forEach(safe); }
+  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth, renderAvail, renderStock, renderKept].forEach(safe); renderProc(); }
   function facetId() { return S.facet ? S.facet.id || '' : ''; }
   function toggleFacet(f) { setFacet(S.facet && S.facet.id && S.facet.id === f.id ? null : f); }
   function modEmpty(id, msg) { $(id).innerHTML = '<div class="empty2">' + esc(msg) + '</div>'; }
@@ -1827,7 +1907,7 @@ window.addEventListener('load',restore);
         var scn = (j.sv && j.sv.scenarios) || [{ k: 'cons', label: 'Conservative', pct: 5 }, { k: 'aggr', label: 'Aggressive', pct: 10 }];
         S.stk = m ? { st: 'ok', m: m, mech: mech, mechs: j.mechanisms || [], chn: chn, scn: scn, days: (j.sv && j.sv.days) || 30 } : { st: 'none', why: 'Stock management has not read this market’s rules yet.' };
       }
-      $('stock-to').href = stockHref(''); renderStock(); renderKept();
+      $('stock-to').href = stockHref(''); renderStock(); renderKept(); renderProc();
     }).catch(function (er) { if (g !== S.gen || (er && er.name === 'AbortError')) return; S.stk = { st: 'error', why: 'unreachable' }; renderStock(); renderKept(); });
   }
   // 7 · AVAILABILITY — the feed's own word per product; every bar lists its products
@@ -1890,6 +1970,216 @@ window.addEventListener('load',restore);
       return { id: 'kept:' + r.k, lab: r.l, tip: r.l + ': ' + money(r.v, a.cur) + ' a month · ' + money(r.v / D, a.cur) + ' a day', bars: [{ w: r.v / ceil * 100, c: r.k === 'ceil' ? 'var(--lk)' : 'var(--chart-1)' }], v: money(r.v, a.cur), sub: 'a month' };
     }), { foot: '<span>at least — <b>' + n0(best.n) + '</b> products held back by “' + esc(best.rule) + '” × ' + money(a.spendDay, a.cur) + ' per product a day (CPC ' + money(a.cpc, a.cur) + ')</span>' });
   }
+  // ---- THE COMMERCIAL VIEW (Ray, 29 Sep 2026: "create more modules for Catalog Dashboard - that can be viewed for let's say a
+  // brand procurement head not too close with FeedSpark day-to-day but understanding thing from a commercial perspective,
+  // choosing between different feed vendor"). Six modules that answer a buyer's questions in money and in evidence read off
+  // THIS feed, never a claim: what the work returns (optimised against not, in Google Ads), the brand's own data before and
+  // after, where the ad budget goes, what the service demonstrably does, the size of the service, and a fee check the buyer
+  // types. 👔 Procurement view shows exactly these (plus Ad spend kept off, Data FeedSpark added and ROAS) and hides the
+  // operational ones; it is a preset of the same per-device module state, so ⊞ Modules still tunes it.
+  var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];
+  function procOn() { var m = lsGet('fcc-cat-mods', null); return !!(m && m.v === 'proc'); }
+  function procBtn() { var b = $('proc-b'); if (!b) return; var on = procOn(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '👔 Procurement view · on' : '👔 Procurement view'; }
+  function setProc(on) {
+    if (on) {
+      var off = {}; MODS.forEach(function (x) { if (PROC.indexOf(x[0]) < 0) off[x[0]] = 1; });
+      lsSet('fcc-cat-mods', { v: 'proc', order: PROC.concat(MODS.map(function (x) { return x[0]; }).filter(function (k) { return PROC.indexOf(k) < 0; })), off: off });
+    } else lsSet('fcc-cat-mods', null);
+    applyMods(); renderModsPop(); renderMods();
+  }
+  $('proc-b').addEventListener('click', function () { setProc(!procOn()); });
+  function renderProc() { [renderLift, renderFix, renderWaste, renderVendor, renderScope, renderFee].forEach(safe); }
+  function curCode() { var c = S.roas && S.roas.cur; for (var i = 0; !c && i < S.fx.length; i++) c = S.fx[i].cur; return c || 'GBP'; }
+  function pct1(n, d) { if (!d) return '—'; var v = n / d * 100; return (v >= 10 || v === 0 ? Math.round(v) : Math.round(v * 10) / 10) + '%'; }
+  function ratioTxt(a, b) { if (!a || !b) return '—'; var r = a / b; return (r >= 10 ? Math.round(r) : Math.round(r * 10) / 10) + '×'; }
+  function kvl(rows) { return '<div class="kvl">' + rows.map(function (r) { return '<span class="k" title="' + esc(r.tip || r.k) + '">' + esc(r.k) + '</span><span class="v">' + r.v + (r.s ? '<small>' + esc(r.s) + '</small>' : '') + '</span>'; }).join('') + '</div>'; }
+  function roasNeed(id) {
+    var R = S.roas;
+    if (R.st === 'ok') return false;
+    modEmpty(id, R.st === 'none' || R.st === 'error' || R.st === 'unread' ? (R.why || R.err || 'FeedHero has not read this market’s Google Ads yet.') : 'Waiting for the Google Ads read…');
+    return true;
+  }
+  // 10 · OPTIMISED VS NOT — FeedHero's own cut of Google Ads by FeedSpark's optimisation stamp. The question a buyer asks
+  // first ("does the work pay?") answered with revenue per product, ROAS, click-through and conversion side by side. It is
+  // a comparison, never a controlled test (which products are optimised first is a choice), and the card says so.
+  var LIFTF = [['Title_optimisation_status', 'Titles'], ['Keyword_optimisation_status', 'Keywords']];
+  function liftSide(c) {
+    c = String(c || '').toLowerCase().trim();
+    if (/\bnon\b|non[- ]?optimi|not[- ]optimi|un-?optimi|^no$|^false$/.test(c)) return 'n';
+    if (/optimi[sz]ed|^yes$|^true$/.test(c)) return 'o';
+    return null;
+  }
+  function liftSplit(rows) {
+    var T = { o: null, n: null };
+    (rows || []).forEach(function (r) {
+      if (!r || r.category === 'Total' || isUnlisted(r.category)) return;
+      var k = liftSide(r.category); if (!k) return;
+      var t = T[k] || (T[k] = { skus: 0, impr: 0, clicks: 0, spend: 0, rev: 0, cw: 0, cc: 0 });
+      t.skus += r.skus || 0; t.impr += r.impr || 0; t.clicks += r.clicks || 0;
+      t.spend += (r.spend && r.spend.n) || 0; t.rev += (r.revenue && r.revenue.n) || 0;
+      if (r.crPct != null && r.clicks) { t.cw += r.crPct * r.clicks; t.cc += r.clicks; }
+    });
+    return T.o && T.n ? T : null;
+  }
+  function renderLift() {
+    var sel = $('lift-f');
+    if (!sel.options.length) { sel.innerHTML = LIFTF.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + '</option>'; }).join(''); sel.value = lsGet('fcc-cat-lift', LIFTF[0][0]); if (!sel.value) sel.value = LIFTF[0][0]; }
+    if (S.chan === 'meta') { modEmpty('lift-body', 'Google Ads is read for the Google feed — switch the channel to Google.'); return; }
+    if (roasNeed('lift-body')) return;
+    var agg = sel.value, nm = (LIFTF.filter(function (x) { return x[0] === agg; })[0] || [0, 'Titles'])[1].toLowerCase(), g = S.gen;
+    var body = $('lift-body'); if (!body.querySelector('.vs')) body.innerHTML = '<div class="empty2">Asking FeedHero for Google Ads by ' + esc(nm) + ' optimisation…</div>';
+    seg(agg).then(function (j) {
+      if (g !== S.gen || sel.value !== agg) return;
+      if (!j || j.missing) { modEmpty('lift-body', j ? 'FeedHero has no ' + nm + '-optimisation report for this market yet.' : 'FeedHero did not answer — try again in a minute.'); return; }
+      var T = liftSplit(j.rows);
+      if (!T) { modEmpty('lift-body', 'Google Ads shows no split between optimised and not optimised ' + nm + ' in this market.'); return; }
+      var o = T.o, n = T.n, cur = curCode(), sk = o.skus + n.skus, rv = o.rev + n.rev;
+      var rpo = o.skus ? o.rev / o.skus : 0, rpn = n.skus ? n.rev / n.skus : 0;
+      var ro = o.spend ? o.rev / o.spend * 100 : null, rn = n.spend ? n.rev / n.spend * 100 : null;
+      var line = function (lab, a, b, fa, better) { var up = better === 'hi' ? a > b : better === 'lo' ? a < b : false; return '<tr><td>' + lab + '</td><td class="' + (up ? 'up' : '') + '"><b>' + fa(a) + '</b></td><td>' + fa(b) + '</td></tr>'; };
+      var m = function (v) { return money(v, cur); }, pp = function (v) { return v == null || !isFinite(v) ? '—' : (Math.round(v * 10) / 10) + '%'; };
+      var h = '<p class="hl">' + (rpo > 0 && rpn > 0 ? 'Optimised products earn <b>' + ratioTxt(rpo, rpn) + '</b> the revenue per product of the rest.' : 'Optimised products carry <b>' + pct1(o.rev, rv) + '</b> of the revenue from ' + pct1(o.skus, sk) + ' of the products.') + '</p>';
+      h += '<table class="vs"><thead><tr><th></th><th>Optimised</th><th>Not optimised</th></tr></thead><tbody>'
+        + line('Share of products', o.skus / sk * 100, n.skus / sk * 100, pp)
+        + line('Share of revenue', rv ? o.rev / rv * 100 : 0, rv ? n.rev / rv * 100 : 0, pp)
+        + line('Revenue per product', rpo, rpn, m, 'hi')
+        + line('ROAS', ro, rn, roasTxt, 'hi')
+        + line('Click-through rate', o.impr ? o.clicks / o.impr * 100 : null, n.impr ? n.clicks / n.impr * 100 : null, pp, 'hi')
+        + (o.cc && n.cc ? line('Conversion rate', o.cw / o.cc, n.cw / n.cc, pp, 'hi') : '')
+        + '</tbody></table>';
+      h += '<div class="cfoot"><span>' + esc(nm.charAt(0).toUpperCase() + nm.slice(1)) + ' · 30 days · side by side, not a controlled test</span></div>';
+      body.innerHTML = h;
+    });
+  }
+  $('lift-f').addEventListener('change', function () { lsSet('fcc-cat-lift', this.value); $('lift-body').innerHTML = ''; renderLift(); });
+  // 11 · BEFORE AND AFTER — the brand's master against the feed FeedSpark sends: the completeness score both ways (the same
+  // weighting as the Golden Record), products given a Google-required field their master lacked, values filled and rewritten,
+  // the AI-shopping fields carried, and what is still missing — told apart, because a buyer needs to see both.
+  function renderFix() {
+    if (!S.linDone || !S.sum || !S.sum.n) { modEmpty('fix-body', S.m.st === 'none' || S.m.st === 'error' || S.m.st === 'nojoin' ? 'Needs the master feed — none joined for this market.' : 'Tracing the master feed…'); return; }
+    var s = S.sum, before = s.cb / s.n, after = s.ca / s.n, dl = after - before;
+    var req = [], ai = [];
+    E.ATTRS.forEach(function (a, i) { if (a.k === 'id' || a.k === 'identifier_exists') return; if (a.tier === 'req') req.push(i); if (a.tier === 'ai') ai.push(i); });
+    var fixed = 0, still = 0, aiB = {}, aiA = {};
+    for (var i = 0; i < S.codes.length; i++) {
+      var c = S.codes[i]; if (!c || !S.comp[i] || S.comp[i][0] < 0) continue;
+      var f = false, m = false;
+      for (var j = 0; j < req.length; j++) { var ch = c.charAt(req[j]); if ('lpe'.indexOf(ch) >= 0) f = true; else if (ch === 'm' || ch === 'd') m = true; }
+      if (f) fixed++; if (m) still++;
+      for (var q = 0; q < ai.length; q++) { var x = c.charAt(ai[q]); if ('ksodg'.indexOf(x) >= 0) aiB[q] = 1; if ('klpsoeg'.indexOf(x) >= 0) aiA[q] = 1; }
+    }
+    var col = function (v) { var b = auditBand(v); return b ? 'color:var(--band-' + b + ')' : ''; };
+    var h = '<div class="bna"><div class="n"><small>Master</small><b style="' + col(before) + '">' + Math.round(before) + '</b></div><span class="ar">→</span>'
+      + '<div class="n"><small>Sent to Google</small><b style="' + col(after) + '">' + Math.round(after) + '</b></div>'
+      + '<span class="d' + (dl < 0 ? ' dn' : '') + '">' + (dl >= 0 ? '+' : '') + (Math.round(dl * 10) / 10) + ' points</span></div>';
+    h += kvl([
+      { k: 'Required fields filled', v: n0(fixed), s: pct1(fixed, s.n), tip: 'Google-required fields (title, description, link, image, availability, price) missing in the master and present in the feed' },
+      { k: 'Values added', v: n0(s.pop + s.enr), tip: 'Attribute values the master did not carry, populated or enriched by FeedSpark' },
+      { k: 'Values rewritten', v: n0(s.opt), tip: 'Values the master carried, rewritten or put into Google’s format' },
+      { k: 'AI-shopping fields carried', v: Object.keys(aiA).length + ' of ' + ai.length, s: 'master ' + Object.keys(aiB).length, tip: 'Google’s conversational attributes — question & answer, document link, related product, item group title, variant option, popularity rank' },
+      { k: 'Still missing a required field', v: n0(still), s: pct1(still, s.n), tip: 'Still to fix — a required field neither the master nor the feed carries' }
+    ]);
+    h += '<div class="cfoot"><span>Completeness out of 100, weighted as the Golden Record · <b>' + n0(s.n) + '</b> products traced</span></div>';
+    $('fix-body').innerHTML = h;
+  }
+  // 12 · WHERE THE AD BUDGET GOES — the last 30 days of Google Ads spend split by what each top-level category returned:
+  // less than it cost (ROAS under 100%), below the market's own ROAS, or at and above it. Category level, never a product's.
+  function renderWaste() {
+    if (S.chan === 'meta') { modEmpty('waste-body', 'Google Ads is read for the Google feed — switch the channel to Google.'); return; }
+    if (roasNeed('waste-body')) return;
+    var R = S.roas, cur = curCode(), mk = R.total && R.total.roasPct;
+    var rows = (R.tree || []).map(function (nd) { return nd && nd.row; }).filter(function (r) { return r && r.category !== 'Total' && !isUnlisted(r.category) && r.spend && r.spend.n > 0; });
+    if (!rows.length) { modEmpty('waste-body', 'No category spend in the last 30 days.'); return; }
+    var B = { lo: { s: 0, n: 0, r: 0 }, mid: { s: 0, n: 0, r: 0 }, hi: { s: 0, n: 0, r: 0 } }, tot = 0, worst = null;
+    rows.forEach(function (r) {
+      var sp = r.spend.n, rv = (r.revenue && r.revenue.n) || 0, ro = sp ? rv / sp * 100 : r.roasPct, k = ro != null && ro < 100 ? 'lo' : (mk != null && ro != null && ro < mk ? 'mid' : 'hi');
+      B[k].s += sp; B[k].n++; B[k].r += rv; tot += sp;
+      if (k === 'lo' && (!worst || sp > worst.spend.n)) worst = r;
+    });
+    var L = [['lo', 'Losing money', 'var(--risk)', 'ROAS under 100% — every £1 of spend brings back less than £1'],
+      ['mid', 'Below market ROAS', 'var(--band-yellow)', 'Profitable, but below this market’s overall ROAS (' + roasTxt(mk) + ')'],
+      ['hi', 'At or above market', 'var(--chart-1)', 'At or above this market’s overall ROAS (' + roasTxt(mk) + ')']];
+    var h = B.lo.s > 0 ? '<p class="hl"><b>' + pct1(B.lo.s, tot) + '</b> of ' + esc(money(tot, cur)) + ' spent in the last 30 days went to categories returning less than they cost.</p>'
+      : '<p class="hl">None of the <b>' + esc(money(tot, cur)) + '</b> spent in the last 30 days went to a category losing money.</p>';
+    h += modList(L.map(function (x) { var b = B[x[0]]; return { id: 'waste:' + x[0], lab: x[1], tip: x[3] + ' · ' + b.n + ' categor' + (b.n === 1 ? 'y' : 'ies') + ' · ' + money(b.s, cur) + ' spend · ' + money(b.r, cur) + ' revenue', bars: [{ w: tot ? b.s / tot * 100 : 0, c: x[2] }], v: money(b.s, cur), sub: pct1(b.s, tot) }; }),
+      { foot: worst ? '<span>Biggest: <b>' + esc(worst.category) + '</b> — ' + esc(money(worst.spend.n, cur)) + ' at ROAS ' + roasTxt(worst.revenue && worst.spend.n ? worst.revenue.n / worst.spend.n * 100 : worst.roasPct) + '</span>' : '<span>No category is returning less than it costs</span>' });
+    $('waste-body').innerHTML = h;
+  }
+  // 13 · WHAT THE SERVICE DOES — the capabilities a buyer compares vendors on, each with its EVIDENCE in this feed: FeedSpark's
+  // own stamps per product, the lineage, the stock rules, the Google Ads read. A capability the feed shows no sign of reads —,
+  // and one the page could not read (no stamps, no master) says so rather than scoring a zero.
+  function renderVendor() {
+    if (!S.prods.length) { modEmpty('vendor-body', 'Reading the feed…'); return; }
+    var N = S.prods.length, st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }, stamped = 0;
+    S.prods.forEach(function (p) { var o = p.opti; if (!o) return; stamped++; Object.keys(st).forEach(function (k) { if (o[k]) st[k]++; }); });
+    var filled = 0, traced = 0, aiIx = [], aiA = {};
+    E.ATTRS.forEach(function (a, i) { if (a.tier === 'ai') aiIx.push(i); });
+    if (S.linDone) for (var i = 0; i < S.codes.length; i++) { var c = S.codes[i]; if (!c) continue; if (S.comp[i] && S.comp[i][0] >= 0) { traced++; if (/[lpe]/.test(c)) filled++; } for (var q = 0; q < aiIx.length; q++) if ('klpsoeg'.indexOf(c.charAt(aiIx[q])) >= 0) aiA[q] = 1; }
+    var stk = S.stk && S.stk.st === 'ok' ? S.stk.m : null, mechN = 0;
+    if (stk) { var seen = {}; (stk.stock || []).forEach(function (r) { if (!seen[r.sk]) { seen[r.sk] = 1; mechN++; } }); }
+    var row = function (k, have, v, tip) { return { k: k, have: have, v: v, tip: tip }; };
+    var sv = function (k) { return !stamped ? null : st[k]; };
+    var rows = [
+      row('Titles rewritten', sv('T'), stamped ? pct1(st.T, N) + ' of products' : 'no stamps in this feed', 'FeedSpark’s own title stamp (c:fs_data_opti) per product'),
+      row('Keyword optimisation', sv('Keywords'), stamped ? pct1(st.Keywords, N) + ' of products' : 'no stamps in this feed', 'Products carrying FeedSpark’s keyword stamp'),
+      row('Category mapping', sv('Cat'), stamped ? pct1(st.Cat, N) + ' of products' : 'no stamps in this feed', 'Products whose category FeedSpark mapped'),
+      row('Image overlays', sv('IMG'), stamped ? pct1(st.IMG, N) + ' of products' : 'no stamps in this feed', 'Products carrying a FeedSpark image'),
+      row('Missing data filled', S.linDone && traced ? filled : null, S.linDone && traced ? pct1(filled, traced) + ' of products' : (S.m.st === 'none' || S.m.st === 'nojoin' ? 'no master to compare' : 'tracing…'), 'Products given at least one value their master did not carry'),
+      row('AI-shopping fields', S.linDone ? Object.keys(aiA).length : null, S.linDone ? Object.keys(aiA).length + ' of ' + aiIx.length + ' carried' : 'tracing…', 'Google’s conversational attributes, read by AI Mode and shopping agents'),
+      row('Stock controls', stk ? mechN : null, stk ? mechN + ' kinds · ' + n0((stk.stock || []).length) + ' rules' : (S.stk && S.stk.st === 'loading' ? 'reading…' : 'not read'), 'Rules that stop ads showing on products the shopper cannot buy'),
+      row('Rules maintained', stk ? stk.n : null, stk ? n0(stk.n) + ' in FeedHero' : (S.stk && S.stk.st === 'loading' ? 'reading…' : 'not read'), 'Active FeedHero rules running on this market’s feed'),
+      row('Ad reporting per product', S.roas.st === 'ok' ? 1 : (S.roas.st === 'loading' ? null : 0), S.roas.st === 'ok' ? 'Google Ads · 30 days' : (S.roas.st === 'loading' ? 'reading…' : 'not on the roster'), 'Google Ads revenue and ROAS read back onto the catalogue')
+    ];
+    $('vendor-body').innerHTML = '<div class="evl">' + rows.map(function (r) {
+      var ic = r.have == null ? '<span class="ic n" aria-label="not read">·</span>' : (r.have > 0 ? '<span class="ic y" aria-label="yes">✓</span>' : '<span class="ic n" aria-label="no">—</span>');
+      return ic + '<span class="k" title="' + esc(r.tip) + '">' + esc(r.k) + '</span><span class="v' + (r.have > 0 ? '' : ' mute') + '">' + esc(r.v) + '</span>';
+    }).join('') + '</div><div class="cfoot"><span>✓ shown in this feed · — not seen · · not readable here</span></div>';
+  }
+  // 14 · THE SERVICE IN NUMBERS — how big the job is, in six figures a buyer can compare vendors' proposals against
+  function renderScope() {
+    if (!S.prods.length) { modEmpty('scope-body', 'Reading the feed…'); return; }
+    var N = S.prods.length, mk = S.roster[S.client] || [], g = mk.filter(function (x) { return x.channel === 'google'; }).length, mt = mk.length - g;
+    var nw = 0; S.fx.forEach(function (x) { if (x.age != null && x.age <= 30) nw++; });
+    var stk = S.stk && S.stk.st === 'ok' ? S.stk.m : null, s = S.sum;
+    var T = [
+      { b: n0(N), l: 'Products managed', sm: S.client + ' ' + mktLabel(S.mkt) },
+      { b: n0(mk.length), l: 'Feeds run for ' + S.client, sm: g + ' Google · ' + mt + ' Meta' },
+      { b: s && s.n ? (Math.round(s.touched / s.n * 10) / 10) : '—', l: 'Values set per product', sm: s && s.n ? 'by FeedSpark' : 'needs the master' },
+      { b: stk ? n0(stk.n) : '—', l: 'FeedHero rules running', sm: stk ? 'this market' : 'not read' },
+      { b: n0(nw), l: 'New products taken in', sm: 'last 30 days' },
+      { b: s ? n0(s.touched) : '—', l: 'Values maintained', sm: s ? 'across the catalogue' : 'needs the master' }
+    ];
+    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.sm) + '">' + esc(t.sm) + '</small></div>'; }).join('') + '</div>'
+      + '<div class="cfoot"><span>Read live from the feed, the master and FeedHero</span></div>';
+  }
+  function mktLabel(m) { return String(m || '').toUpperCase(); }
+  // 15 · FEE CHECK — the buyer types a monthly fee (and, to compare, another vendor's); the card turns it into the units
+  // procurement prices a service in: per product managed, per value maintained, against Google Ads revenue and spend. Nothing
+  // is assumed or stored off the device — the figures are the buyer's (fcc-cat-fee), and the card is empty until one is typed.
+  function feeGet() { var f = lsGet('fcc-cat-fee', null) || {}; return { a: +f.a || 0, b: +f.b || 0 }; }
+  function renderFee() {
+    var f = feeGet(), cur = curCode(), sym = money(0, cur).replace(/[\d.,\s]/g, '') || '£';
+    Array.prototype.forEach.call(document.querySelectorAll('.fee-cur'), function (el) { el.textContent = sym; });
+    var ia = $('fee-a'), ib = $('fee-b');
+    if (document.activeElement !== ia) ia.value = f.a || ''; if (document.activeElement !== ib) ib.value = f.b || '';
+    var out = $('fee-out');
+    if (!f.a) { out.innerHTML = '<div class="empty2" style="padding:18px 6px">Type a monthly fee to see what it costs per product, and against the revenue it supports.</div>'; return; }
+    var N = S.prods.length, s = S.sum, R = S.roas, t = R && R.st === 'ok' && R.total, rev = t && t.revenue && t.revenue.n, sp = t && t.spend && t.spend.n;
+    var rows = [
+      { k: 'Per product, a month', v: N ? esc(money(f.a / N, cur)) : '—', s: N ? n0(N) + ' products' : '' },
+      { k: 'Per value kept, a month', v: s && s.touched ? esc(money(f.a / s.touched, cur)) : '—', s: s && s.touched ? n0(s.touched) + ' values' : 'needs the master' },
+      { k: 'vs Google Ads revenue', v: rev ? pct1(f.a, rev) : '—', s: rev ? 'of ' + money(rev, cur) + ' · 30 days' : 'no Ads read', tip: 'The monthly fee as a share of this market’s Google Ads revenue over the last 30 days' },
+      { k: 'vs Google Ads spend', v: sp ? pct1(f.a, sp) : '—', s: sp ? 'of ' + money(sp, cur) + ' · 30 days' : 'no Ads read', tip: 'The monthly fee as a share of this market’s Google Ads spend over the last 30 days' }
+    ];
+    if (f.b) {
+      var d = f.a - f.b;
+      rows.push({ k: 'Other vendor, per product', v: N ? esc(money(f.b / N, cur)) : '—', s: 'a month' });
+      rows.push({ k: d >= 0 ? 'Costs more by' : 'Costs less by', v: esc(money(Math.abs(d) * 12, cur)), s: 'a year · ' + money(Math.abs(d), cur) + ' a month' });
+    }
+    out.innerHTML = kvl(rows) + (rev ? '<div class="cfoot"><span>Pays for itself if the feed work adds <b>' + pct1(f.a, rev) + '</b> to Google Ads revenue</span></div>' : '');
+  }
+  function feeSet() { lsSet('fcc-cat-fee', { a: Math.max(0, +$('fee-a').value || 0), b: Math.max(0, +$('fee-b').value || 0) }); renderFee(); }
+  $('fee-a').addEventListener('input', feeSet); $('fee-b').addEventListener('input', feeSet);
   // one click handler for every module: the element's facet id names what to list
   function facetFor(id) {
     var p = id.split(':'), k = p[0];
