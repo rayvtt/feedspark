@@ -54,6 +54,7 @@ function liftPage() {
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
     'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf',
+    'quarterOf', 'weekOf', 'isTimeDim', 'TIME_DIMS',
     'liftClient', 'withClient', 'accountPick', 'packView', 'viewQuery', 'sanitizeViews', 'VIEW_MAX'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
@@ -199,6 +200,27 @@ function grammar(E, tag) {
   eq(g[0].hours, 5, tag + ': group hours add up');
   const gm = E.groupBy(rows, 'month', 0);
   eq(gm.map((x) => x.k), ['(undated)', '2026-04', '2026-05'], tag + ': months read in time order, undated named');
+  /* THE CUTS A BOARD ASKS FOR (Ray, 28 Sep 2026: charts "for procurement heads/ senior
+     executives"). Quarter and week join month as TIME dims: they read in TIME order, not
+     biggest-first, and they never fold a tail into "Other" — a missing quarter in the middle of a
+     year is a hole in the argument, not a tidy-up. */
+  const gq = E.groupBy(rows, 'quarter', 0);
+  eq(gq.map((x) => x.k), ['(undated)', '2026-Q2'], tag + ': quarters read in time order too');
+  eq(E.quarterOf('2026-01-01'), '2026-Q1', tag + ': January is Q1');
+  eq(E.quarterOf('2026-12-31'), '2026-Q4', tag + ': and December is Q4');
+  eq(E.quarterOf('not a date'), '', tag + ': a non-date is refused rather than bucketed');
+  // ISO-8601: a date's week is the one holding its THURSDAY, so the turn of the year is the case
+  // that matters — the naive (dayOfYear/7) form files 1 Jan under the wrong year
+  eq(E.weekOf('2026-01-01'), '2026-W01', tag + ': 1 January 2026 is week 1 of 2026');
+  eq(E.weekOf('2025-12-29'), '2026-W01', tag + ': and the Monday before it is the SAME week, in 2026');
+  eq(E.weekOf('2025-12-28'), '2025-W52', tag + ': while the Sunday before that still closes 2025');
+  eq(E.weekOf(''), '', tag + ': an undated row gets no week');
+  // a capped TIME split keeps every bucket — the cap exists to stop a hundred clients, not to
+  // hide a quarter
+  const manyQ = [];
+  for (let i = 1; i <= 8; i++) manyQ.push(T({ d: '2024-0' + (i % 9 || 1) + '-05', hours: i, bill: i, nonbill: 0 }));
+  ok(E.groupBy(manyQ, 'quarter', 3).every((x) => !x.fold),
+    tag + ': a time split never folds a bucket into "Other"');
   // THE FOLD TRAP: a capped chart that drops its tail overstates every bar left standing.
   const many = [];
   for (let i = 0; i < 10; i++) many.push(T({ client: 'C' + i, owner: 'O' + i, bill: 10 - i, nonbill: i, hours: 10 }));

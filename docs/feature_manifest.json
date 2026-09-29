@@ -11169,6 +11169,12 @@
     {"name": "what moved: it needs a calendar to share", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function outCal()", "pr": 0},
     {"name": "what moved: a gap breaks the line, never joined through", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (p.v == null) flush();", "pr": 0},
     {"name": "what moved: both panels share one column, so the calendars line up", "file": "docs/FeedSpark_TaskManager.html", "pattern": ".cmain{flex:1 1 460px", "pr": 0},
-    {"name": "what moved: the PNG stacks both panels for the deck slide", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function pngSvgs()", "pr": 0}
+    {"name": "what moved: the PNG stacks both panels for the deck slide", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function pngSvgs()", "pr": 0},
+    {"name": "cuts a board asks for: quarter and week join the time dims", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "export const TIME_DIMS", "pr": 0},
+    {"name": "cuts a board asks for: ISO week reads off the Thursday", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "export function weekOf", "pr": 0},
+    {"name": "cuts a board asks for: a time split never folds a bucket into Other", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "if (cap && out.length > cap && !isTimeDim(dim)) {", "pr": 0},
+    {"name": "the denominator: the catalogue the hours maintained", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "scale.scanned++; scale.rows +=", "pr": 0},
+    {"name": "the denominator: the scale line under the verdict", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function scaleLine()", "pr": 0},
+    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0}
   ]
 }

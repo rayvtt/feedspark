@@ -67,10 +67,12 @@ const OUT = {
       air: {},
     },
     measured: { gs: 4, q: 1, air: 0 }, results: {}, feeds: 3,
+    scale: { markets: 28, scanned: 3, rows: 47013, at: Date.now() },
     sources: [{ k: 'feeds', ok: true, n: 3, markets: ['GB', 'DE', 'US'] },
       { k: 'air', ok: false, why: 'no ai-readiness reading falls in this window' }] },
   Superdry: { ok: true, client: 'Superdry', months: ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'],
     metrics: { gs: {}, q: {}, air: {} }, measured: { gs: 0, q: 0, air: 0 }, results: {}, feeds: 0,
+    scale: { markets: 4, scanned: 0, rows: 0, at: 0 },
     sources: [{ k: 'feeds', ok: false, why: 'no market of this brand has a scan history yet' }] },
 };
 
@@ -85,6 +87,8 @@ const panel = () => {
     dots: svg ? svg.querySelectorAll('circle').length : 0,
     empty: (box && box.querySelector('.cout-empty') ? box.querySelector('.cout-empty').textContent : '').trim(),
     cap: (document.getElementById('cout-cap') || {}).textContent || '',
+    scale: (() => { const b = document.getElementById('cscale');
+      return b && getComputedStyle(b).display !== 'none' ? b.textContent.replace(/\s+/g, ' ').trim() : ''; })(),
     note: (document.getElementById('cout-n') || {}).textContent || '',
     sub: (document.getElementById('cwsub') || {}).textContent || '',
     left: b ? Math.round(b.left) : null, right: b ? Math.round(b.right) : null, vw: innerWidth,
@@ -191,6 +195,34 @@ const panel = () => {
     v = await p.evaluate(panel);
     ok('a metric nobody has analysed names the metric, not the brand',
       /AI-readiness/.test(v.empty) && /no ai-readiness reading/i.test(v.empty), v.empty);
+
+    /* ---- THE DENOMINATOR (Ray: "886 hours maintained 47k SKUs across 28 markets") -----------
+       Hours with nothing beside them cannot be argued with by somebody pricing a service per unit.
+       Every figure here is COUNTED from what is on screen, and the catalogue states how many of the
+       brand's markets it covers rather than implying all of them. */
+    v = await p.evaluate(panel);
+    ok('the scale line states the hours and the pieces of work behind them',
+      /delivered/.test(v.scale) && /pieces of work/.test(v.scale), v.scale);
+    ok('\u2026the markets and the people carrying them', /market/.test(v.scale) && /people|person/.test(v.scale), v.scale);
+    ok('\u2026and the catalogue those hours maintained', /47,013/.test(v.scale) && /products in the feed/.test(v.scale), v.scale);
+    ok('the catalogue names how many markets it covers rather than implying all of them',
+      /3 of 28 markets scanned/.test(await p.getAttribute('#cscale i:last-child', 'title') || ''),
+      await p.getAttribute('#cscale i:last-child', 'title'));
+
+    // ---- the cuts a board asks for ----------------------------------------------------------
+    const dims = await p.evaluate(() => [...document.getElementById('cdim').options].map(o => o.value));
+    ok('Quarter and Week are offered as splits', dims.includes('quarter') && dims.includes('week'), dims);
+    await p.selectOption('#cdim', 'quarter');
+    await p.selectOption('#cform', 'bars');
+    await p.waitForTimeout(400);
+    const qs = await p.evaluate(() => [...document.querySelectorAll('#cstage svg text')]
+      .map(t => t.textContent).filter(t => /^\d{4}-Q\d$/.test(t)));
+    ok('a quarter split draws quarters', qs.length >= 2, qs);
+    ok('\u2026in TIME order, not biggest-first \u2014 a board reads a year forwards',
+      qs.join(',') === [...qs].sort().join(','), qs);
+    await p.selectOption('#cform', 'line');
+    await p.selectOption('#cdim', 'month');
+    await p.waitForTimeout(400);
 
     // ---- the export carries BOTH panels (these go straight into a deck) ---------------------
     await setOut('gs');

@@ -5250,8 +5250,20 @@ async function goldenRoutes(env, request, url) {
     const all = (await env.EDITS.get('kwresults', 'json')) || [];
     const q = clientSlug(who);
     const results = all.filter((k) => k && clientSlug(String(k.client || '')) === q);
+    /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+       Procurement prices a service per unit, not per hour, so a row of hours with no scale beside
+       it cannot be argued with. `rows` is the catalogue each market was last SCANNED at — stated as
+       that rather than as "the catalogue", since a market nobody has scanned contributes nothing
+       and the count of scanned markets travels with the figure. */
+    const scale = { markets: list.length, scanned: 0, rows: 0, at: 0 };
+    list.forEach((f) => {
+      const x = idx[lgKey(f.client, f.mkt)];
+      if (!x || !x.rows) return;
+      scale.scanned++; scale.rows += +x.rows || 0;
+      if (x.t && x.t > scale.at) scale.at = x.t;
+    });
     const out = OUT.brandOutcomes(feeds, months, { results });
-    return json(Object.assign({ ok: true, at: Date.now(), client: who }, out));
+    return json(Object.assign({ ok: true, at: Date.now(), client: who, scale }, out));
   }
 
   if (path === '/api/golden/portfolio' && request.method === 'GET') {

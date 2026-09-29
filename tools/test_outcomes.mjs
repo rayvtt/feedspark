@@ -158,6 +158,18 @@ ok(/localStorage\.setItem\('fcc-tm-out'/.test(PG),
 ok(/u\.searchParams\.set\('out', COUT\)/.test(PG), 'and 🔗 Link is how it travels to a colleague');
 ok(/\|\| outOn\(\);/.test(PG), 'the ⚙ Display dot counts it, so a fold never buries what is on screen');
 
+// the denominator (Ray: "886 hours maintained 47k SKUs across 28 markets")
+ok(/scale\.scanned\+\+; scale\.rows \+=/.test(WK),
+  'the route sums the catalogue each market was last SCANNED at, and counts how many that is');
+ok(/function scaleLine\(\)/.test(PG), 'the page draws the scale line');
+ok(/if \(acct\) outFetch\(acct\);[\s\S]{0,160}scaleLine\(\);/.test(PG),
+  'and it follows the ACCOUNT, not the What-moved toggle \u2014 a hidden dependency would be worse than a second fetch');
+ok(/sc\.scanned \+ ' of '/.test(PG),
+  'the catalogue names how many of the brand\u2019s markets it covers rather than implying all of them');
+ok(/id="cscale" data-no-collapse/.test(PG),
+  'the scale line is never folded behind the \u24d8 \u2014 it is the scale of the number above it, not an explanation');
+ok(/'quarter'/.test(PG) && /'week'/.test(PG), 'and the board\u2019s own cuts are offered')
+
 for (const f of ['qa_gate.sh', 'presync.sh']) {
   ok(rd('tools', f).indexOf('test_outcomes.mjs') >= 0, 'test_outcomes runs in ' + f);
 }
