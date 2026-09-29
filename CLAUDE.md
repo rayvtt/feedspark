@@ -271,6 +271,12 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   through a desktop→phone resize, zero idle mutations and a widget with no observer of its own —
   and carries a NEGATIVE CONTROL (the same page built without the widget, which must still wrap)
   so the one-row assertion can never pass on a bar nobody is laying out), the
+  **NO DECORATIVE ART ON MODULE PAGES** (spot illustrations — sixteen GMC-style two-tone pictures
+  placed on the hero and cards of the ten newest modules, PR #563 — were built and REVERTED the
+  same day: Ray, 29 Sep 2026, "the icon you created doesn't look good, undo this pls". So a module
+  card carries no decorative picture; a `forbidden` marker in docs/feature_manifest.json keeps the
+  widget out of the worker's injection list, and nothing of the kind is re-added without a new ask
+  from Ray), the
   **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
   Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
   platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph

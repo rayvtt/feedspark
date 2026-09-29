@@ -88,6 +88,13 @@
       "pr": 53
     },
     {
+      "name": "Chrome: spot illustrations REVERTED (Ray, 29 Sep 2026: the icons did not look good) — no decorative-art widget is injected (must stay gone)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "spots_widget.html",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
       "name": "DeckBuilder: RYOBI plan sheet wired",
       "file": "docs/FeedSpark_DeckBuilder.html",
       "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
