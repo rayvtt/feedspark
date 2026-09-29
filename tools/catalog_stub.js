@@ -92,7 +92,15 @@ function build() {
   const info = { ok: true, state: 'ok', cmpid: CMPID, name: 'Northwind GB (synthetic)', rows: 30, lastImport: '2026-09-28 08:00:00', importStatus: 'Completed', file: 'northwind_gb_master.csv',
     web: 'https://mcp.feedhero.net/master-feed?company=' + CMPID, headers: [], hasFile: true };
   const row = { ok: true, rows: [{ id: 'M-NW100-M', title: 'Midi Dresse NAVY', price: '£28.00', colour: 'Navy (NAV)' }] };
-  return { xml, csv, roster, info, row, market: r.market, live: r.live };
+  // Stock management's read of the same market (GET /api/rules/stock?brand=), pushed through the REAL rules engine
+  // off rules_stub's synthetic rule list, with the market's Google Ads price for a click off the ROAS total above
+  const RS = require('./rules_stub.js'), RE = RS.engine(), now = Date.UTC(2026, 8, 28, 9);
+  const mk = { client: CLIENT, market: 'GB', cmpid: CMPID, of: 30, seed: 1 };
+  const idx = RE.idxEntry(mk, RE.normRules(RS.rows(CMPID, 'Northwind GB', 30, 1)), {}, now);
+  const stock = { ok: true, tracked: 1, roster: 1, unread: [], mechanisms: RE.MECHANISMS, channels: RE.CHANNELS, sev: RE.SEV,
+    sv: { scenarios: RE.SV_SCENARIOS, days: RE.SV_WINDOW_DAYS },
+    markets: [RE.stockView(idx, { w30: { spend: { cur: 'GBP', n: 1200 }, clicks: 4800, skus: 30, impr: 260000 }, updated: now })] };
+  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs); every line
 // sits behind the Catalogue guard so no other page is served an engine or a feed it never asked for
@@ -111,6 +119,7 @@ function stubLines() {
     + "  if(url.indexOf('/api/catalog/master/row')>=0)return j(" + JSON.stringify(d.row) + ");\n"
     + "  if(url.indexOf('/api/catalog/master')>=0)return j(" + JSON.stringify(d.info) + ");\n"
     + "  if(url.indexOf('/api/roas/live')>=0){var ag=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L=" + JSON.stringify(d.live) + ";return j(L[decodeURIComponent(ag||'')]||{ok:false,error:'stub'});}\n"
+    + "  if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
     + "  if(url.indexOf('/api/roas?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " }\n";
 }

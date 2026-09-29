@@ -127,7 +127,7 @@ case-insensitively; an empty column is "Unsorted".
   (feed · master · Google Ads) with live progress.
 - **KPI band** — products (matched to the master · not in feed), in stock, on sale, new in 30 days,
   titles optimised, completeness master → feed, ROAS.
-- **The dashboard — nine modules of one size** (Ray, 29 Sep 2026: *"make it modularised / evenly spaced also, and
+- **The dashboard — twelve modules of one size** (Ray, 29 Sep 2026: *"make it modularised / evenly spaced also, and
   generate 4-5 more interesting views"*): every card the same height on a 3-column grid that follows the page's own
   width (a container query, so the inspector pushing the page re-flows it to 2 and then 1), the KPI band one row of
   equal tiles each carrying its own mini bar, and ⊞ Modules to hide / reorder them per device (`fcc-cat-mods`).
@@ -180,3 +180,16 @@ case-insensitively; an empty column is "Unsorted".
   assertions fail on a page with the guard removed and an ancestor fallback put back.
 - `tools/catalog_stub.js` also feeds `check_mobile` / `check_darkmode`, behind a guard on the page's
   file name so no other page is served an engine it never asked for.
+
+## Stock control (29 Sep 2026)
+
+Ray: *"add stock control in the catalog modules as well, pull from stock management module"*. Three modules
+read ONE `GET /api/rules/stock?brand=` — the route and engine output `/stock` draws — and pick the market whose
+FeedHero company id is the wired feed's own:
+
+- **Availability** — the feed's own availability word; every bar filters the table.
+- **Stock controls** — the market's stock rules, the ones holding products back first (the engine's `hb`), the
+  cut-off beside each; a click opens that rule in Stock management.
+- **Ad spend kept off** — `/stock`'s forecast: the market's largest blocking rule (counted once — "at least") ×
+  spend per product per day × 5% / 10% / the 100% ceiling, over 30 days. No Google Ads read, or nothing held back,
+  is said in words — never a guessed figure.

@@ -92,4 +92,4 @@ function stubLines() {
     + " if(url.indexOf('/api/rules?pull')>=0)return j({ok:true,status:" + JSON.stringify(d.book.status) + "});\n"
     + " if(url.indexOf('/api/rules')>=0)return j(" + JSON.stringify(d.book) + ");\n";
 }
-module.exports = { build, stubLines, engine };
+module.exports = { build, stubLines, engine, rows };

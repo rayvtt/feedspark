@@ -180,7 +180,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const wantSale = prods.filter((p, i) => fx[i].onSale).length;
     ok('the matrix: "Sale price · structured" lists every sale the master stated under another column', seg === wantSale && await view() === wantSale, { seg, page: await view(), want: wantSale });
 
-    console.log('· the dashboard — nine modules of one size, evenly spaced, each one a filter');
+    console.log('· the dashboard — twelve modules of one size, evenly spaced, each one a filter');
     await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
     await pg.waitForTimeout(250);
     const grid = await pg.evaluate(() => {
@@ -189,8 +189,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
       const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
       return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(ms.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size };
     });
-    ok('nine modules, every one the same height and width', grid.n === 9 && grid.hs === 1 && grid.ws === 1, grid);
-    ok('three to a row at 1440px — three even rows', grid.rows.length === 3 && grid.rows.every((r) => r === 3), grid.rows);
+    ok('twelve modules, every one the same height and width', grid.n === 12 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('three to a row at 1440px — four even rows', grid.rows.length === 4 && grid.rows.every((r) => r === 3), grid.rows);
     ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
     const pb = await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); const S = window.__FCCCatalogue.state(); return { lo: S.facet && S.facet.lo, hi: S.facet && S.facet.hi, k: S.facet && S.facet.k }; });
     await pg.waitForTimeout(300);
@@ -204,12 +204,22 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const grp = {}; fx.forEach((x) => { if (!x.grp) return; const c = grp[x.grp] || (grp[x.grp] = [0, 0]); c[0]++; if (x.av === 'in_stock') c[1]++; });
     const wantRun = fx.filter((x) => x.grp && grp[x.grp][0] >= 2 && grp[x.grp][1] === grp[x.grp][0]).length;
     ok('size-run health lists the products whose whole run is in stock', run != null && await view() === wantRun, { page: await view(), want: wantRun });
+    console.log('· stock control — off Stock management\'s own read of this market');
+    const oosEl = await pg.evaluate(() => { const el = document.querySelector('#avail-body [data-f="avail:out_of_stock"]'); if (!el) return false; el.click(); return true; });
+    await pg.waitForTimeout(250);
+    const wantOos = fx.filter((x) => x.av === 'out_of_stock').length;
+    ok('Availability: "Out of stock" lists exactly the products the feed calls out of stock', oosEl && await view() === wantOos && wantOos > 0, { page: await view(), want: wantOos });
+    await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
+    const stk = await pg.evaluate(() => ({ first: (document.querySelector('#stock-body .mlist .l') || {}).textContent, rows: document.querySelectorAll('#stock-body .mlist .l').length, href: document.getElementById('stock-to').getAttribute('href'), kept: document.getElementById('kept-body').textContent }));
+    ok('Stock controls: the market\'s stock rules, the largest one holding products back first, linked to /stock for this market', stk.rows >= 5 && /Stock < 9/.test(stk.first || '') && stk.href === '/stock?brand=Northwind&market=GB', stk);
+    // 9 held back × (£1,200 ÷ 30 SKUs ÷ 30 days) × 5% × 30 days = £18.00; the ceiling (100%) = £360.00
+    ok('Ad spend kept off: the largest blocking rule × spend per product a day × the scenario — £18.00 at 5%, £360.00 ceiling', /£18\.00/.test(stk.kept) && /£36\.00/.test(stk.kept) && /£360\.00/.test(stk.kept) && /at least/.test(stk.kept), stk.kept);
     await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
     await pg.click('#mods-b'); await pg.waitForTimeout(150);
     await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
     await pg.waitForTimeout(200);
     const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
-    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /8 of 9/.test(hid.note), hid);
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /11 of 12/.test(hid.note), hid);
     await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
     await pg.waitForTimeout(200);
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
