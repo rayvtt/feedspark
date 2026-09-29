@@ -210,8 +210,21 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const wantOos = fx.filter((x) => x.av === 'out_of_stock').length;
     ok('Availability: "Out of stock" lists exactly the products the feed calls out of stock', oosEl && await view() === wantOos && wantOos > 0, { page: await view(), want: wantOos });
     await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
-    const stk = await pg.evaluate(() => ({ first: (document.querySelector('#stock-body .mlist .l') || {}).textContent, rows: document.querySelectorAll('#stock-body .mlist .l').length, href: document.getElementById('stock-to').getAttribute('href'), kept: document.getElementById('kept-body').textContent }));
-    ok('Stock controls: the market\'s stock rules, the largest one holding products back first, linked to /stock for this market', stk.rows >= 5 && /Stock < 9/.test(stk.first || '') && stk.href === '/stock?brand=Northwind&market=GB', stk);
+    // the master is the stock BEFORE any rule: turned = in stock there and sent out of stock; already = out in both
+    const mst = await pg.evaluate(() => window.__FCCCatalogue.state().mst);
+    const wantTurned = fx.filter((x, i) => mst[i] && mst[i] !== 'out' && x.av === 'out_of_stock').length;
+    const wantAlready = fx.filter((x, i) => mst[i] === 'out' && x.av === 'out_of_stock').length;
+    const stk = await pg.evaluate(() => { const r = {}; document.querySelectorAll('#stock-body .mlist .l').forEach((l) => { r[l.getAttribute('data-f')] = l.nextElementSibling.nextElementSibling.firstChild.textContent; }); return { r, href: document.getElementById('stock-to').getAttribute('href'), kept: document.getElementById('kept-body').textContent }; });
+    ok('Stock control: range completion for the feed AND the master, read over the same variants', /%/.test(stk.r['stkrc:feed'] || '') && /%/.test(stk.r['stkrc:master'] || ''), stk.r);
+    ok('Stock control: "In stock → out of stock" counts only what the master held in stock (' + wantTurned + '), never what was already out (' + wantAlready + ')', wantTurned === 4 && wantAlready === 3 && parseInt(stk.r['stk:turned'], 10) === wantTurned && parseInt(stk.r['stk:already'], 10) === wantAlready, stk.r);
+    ok('Stock control: excluded from the feed split by the master\'s own word — 2 in stock, 2 already out', parseInt(stk.r['gone:in'], 10) === 2 && parseInt(stk.r['gone:out'], 10) === 2 && stk.href === '/stock?brand=Northwind&market=GB', stk);
+    await pg.evaluate(() => document.querySelector('#stock-body [data-f="stk:turned"]').click()); await pg.waitForTimeout(250);
+    ok('clicking "In stock → out of stock" lists exactly those products', await view() === wantTurned);
+    await pg.evaluate(() => document.querySelector('#stock-body [data-f="gone:in"]').click()); await pg.waitForTimeout(300);
+    const gi = await pg.evaluate(() => ({ tab: window.__FCCCatalogue.state().tab, txt: document.getElementById('vr').textContent }));
+    ok('clicking "Excluded while in stock" opens Not in feed on the two the master still held in stock', gi.tab === 'gone' && await view() === 2 && /M-OLD-0/.test(gi.txt) && /M-OLD-1/.test(gi.txt) && !/M-OLD-2/.test(gi.txt), gi.tab);
+    await pg.evaluate(() => document.querySelector('#tabs [data-tab="all"]').click()); await pg.waitForTimeout(250);
+    ok('leaving Not in feed drops its filter', await pg.evaluate(() => !window.__FCCCatalogue.state().facet));
     // 9 held back × (£1,200 ÷ 30 SKUs ÷ 30 days) × 5% × 30 days = £18.00; the ceiling (100%) = £360.00
     ok('Ad spend kept off: the largest blocking rule × spend per product a day × the scenario — £18.00 at 5%, £360.00 ceiling', /£18\.00/.test(stk.kept) && /£36\.00/.test(stk.kept) && /£360\.00/.test(stk.kept) && /at least/.test(stk.kept), stk.kept);
     await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);

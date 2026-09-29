@@ -188,8 +188,16 @@ read ONE `GET /api/rules/stock?brand=` — the route and engine output `/stock` 
 FeedHero company id is the wired feed's own:
 
 - **Availability** — the feed's own availability word; every bar filters the table.
-- **Stock controls** — the market's stock rules, the ones holding products back first (the engine's `hb`), the
-  cut-off beside each; a click opens that rule in Stock management.
+- **Stock control** — master → feed (Ray: *"show a percentage of range completion in the inventory set, and how many
+  products might have been excluded from FEED … these products might already have been out of stock before"*). The
+  master is the client's stock before any FeedHero rule, so `masterStock(cells, plan)` reads each product's own word
+  (availability column, else a plain stock count > 0; neither = unknown, never assumed in stock):
+  - range completion over the inventory set (item groups of 2+ variants, by variant) — feed and master, same variants;
+  - **In stock → out of stock** (the rules turned it) kept apart from **Already out of stock** (not the rules' doing);
+  - products the feed never sends, split the same way — **Excluded · in stock** vs **Excluded · already out** (a click
+    opens Not in feed filtered to them).
+  The master is FeedHero's newest import, so a product whose stock moved between the import and the output build can
+  land in the wrong bucket — the card reads the two files as they are.
 - **Ad spend kept off** — `/stock`'s forecast: the market's largest blocking rule (counted once — "at least") ×
   spend per product per day × 5% / 10% / the 100% ceiling, over 30 days. No Google Ads read, or nothing held back,
   is said in words — never a guessed figure.
