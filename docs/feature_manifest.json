@@ -11047,7 +11047,7 @@
       "name": "Catalogue: stock controls = /stock's coverage matrix for this market",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "function covShade(n, mx)",
-      "pr": 0
+      "pr": 560
     }
   ]
 }
