@@ -179,6 +179,40 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.waitForTimeout(300);
     const wantSale = prods.filter((p, i) => fx[i].onSale).length;
     ok('the matrix: "Sale price · structured" lists every sale the master stated under another column', seg === wantSale && await view() === wantSale, { seg, page: await view(), want: wantSale });
+
+    console.log('· the dashboard — nine modules of one size, evenly spaced, each one a filter');
+    await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
+    await pg.waitForTimeout(250);
+    const grid = await pg.evaluate(() => {
+      const ms = Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).map((m) => { const r = m.getBoundingClientRect(); return { id: m.dataset.mod, t: Math.round(r.top), h: Math.round(r.height), l: Math.round(r.left), w: Math.round(r.width) }; });
+      const rows = {}; ms.forEach((m) => { (rows[m.t] = rows[m.t] || []).push(m); });
+      const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
+      return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(ms.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size };
+    });
+    ok('nine modules, every one the same height and width', grid.n === 9 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('three to a row at 1440px — three even rows', grid.rows.length === 3 && grid.rows.every((r) => r === 3), grid.rows);
+    ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
+    const pb = await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); const S = window.__FCCCatalogue.state(); return { lo: S.facet && S.facet.lo, hi: S.facet && S.facet.hi, k: S.facet && S.facet.k }; });
+    await pg.waitForTimeout(300);
+    const wantPb = prods.filter((p, i) => { const v = fx[i].onSale ? fx[i].sale : fx[i].price; return v != null && v >= pb.lo && (pb.hi == null || v < pb.hi); }).length;
+    ok('a price band lists exactly the products priced in it (what the shopper pays)', pb.k === 'price' && await view() === wantPb && wantPb > 0, { pb, page: await view(), want: wantPb });
+    await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    await pg.waitForTimeout(250);
+    ok('clicking the same band again clears it', await pg.evaluate(() => !window.__FCCCatalogue.state().facet));
+    const run = await pg.evaluate(() => { const el = document.querySelector('#run-body [data-f="run:all"]'); if (!el) return null; el.click(); return document.getElementById('run-body').textContent; });
+    await pg.waitForTimeout(250);
+    const grp = {}; fx.forEach((x) => { if (!x.grp) return; const c = grp[x.grp] || (grp[x.grp] = [0, 0]); c[0]++; if (x.av === 'in_stock') c[1]++; });
+    const wantRun = fx.filter((x) => x.grp && grp[x.grp][0] >= 2 && grp[x.grp][1] === grp[x.grp][0]).length;
+    ok('size-run health lists the products whose whole run is in stock', run != null && await view() === wantRun, { page: await view(), want: wantRun });
+    await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
+    await pg.click('#mods-b'); await pg.waitForTimeout(150);
+    await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
+    await pg.waitForTimeout(200);
+    const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /8 of 9/.test(hid.note), hid);
+    await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
+    await pg.waitForTimeout(200);
+    ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
 

@@ -127,6 +127,25 @@ case-insensitively; an empty column is "Unsorted".
   (feed · master · Google Ads) with live progress.
 - **KPI band** — products (matched to the master · not in feed), in stock, on sale, new in 30 days,
   titles optimised, completeness master → feed, ROAS.
+- **The dashboard — nine modules of one size** (Ray, 29 Sep 2026: *"make it modularised / evenly spaced also, and
+  generate 4-5 more interesting views"*): every card the same height on a 3-column grid that follows the page's own
+  width (a container query, so the inspector pushing the page re-flows it to 2 and then 1), the KPI band one row of
+  equal tiles each carrying its own mini bar, and ⊞ Modules to hide / reorder them per device (`fcc-cat-mods`).
+  Every bar in every module is a filter on the table below. The six new views:
+  - **Data FeedSpark added** — per attribute, the share of products carrying it in the master → the feed (a
+    dumbbell), biggest additions first; custom labels and identifier_exists left out as plumbing.
+  - **Google format issues** — per attribute, the products sending a value not in Google's format (recorded per
+    product while tracing).
+  - **Price bands** — what the shopper pays, full price and on sale stacked, bands chosen from the catalogue's own
+    5th–95th percentile on a round-number ladder.
+  - **Size-run health** — item groups with 2+ variants by the share of their variants in stock (all · 75%+ ·
+    50–75% · under half · none): a broken run is spend on a page the shopper cannot finish on.
+  - **Catalogue mix** — the biggest groups by brand / top or sub-category / colour / gender / age group / custom
+    label, each with its on-sale share (brand by default on a multi-brand feed).
+  - **Content depth** — images, highlights, title length, description length or keyword slots per product,
+    bucketed against Google's own ranges.
+  *What FeedSpark did* also names the three attributes each stage worked on most, each a link to its products; a
+  path cut in *ROAS by* (GPC, category) names its leaf rather than a truncated root.
 - **Three cards** — *New arrivals* (the Volume module's own bars, off `fs:date_of_birth`), *ROAS by*
   any cut (blue — `var(--chart-1)` is ROAS's alone; click a bar to list its products), *What
   FeedSpark did* (fields per product by the stage that set them).

@@ -10994,6 +10994,36 @@
       "file": "docs/navrow_widget.html",
       "pattern": "@media (max-width: 960px) {",
       "pr": 556
+    },
+    {
+      "name": "Catalogue: nine dashboard modules of one size",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": ".mod{display:flex;flex-direction:column;height:340px",
+      "pr": 557
+    },
+    {
+      "name": "Catalogue: the module grid follows the page's own width (container query)",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "main.wrap{container-type:inline-size;container-name:cat}",
+      "pr": 557
+    },
+    {
+      "name": "Catalogue: every module bar filters the table",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "return passModFacet(F, i, x);",
+      "pr": 557
+    },
+    {
+      "name": "Catalogue: modules hidden/reordered per device",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "lsSet('fcc-cat-mods', st)",
+      "pr": 557
+    },
+    {
+      "name": "Catalogue: per-product Google format warnings recorded while tracing",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "S.spw[i] = wv;",
+      "pr": 557
     }
   ]
 }
