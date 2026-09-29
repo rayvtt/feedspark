@@ -914,10 +914,64 @@
     return m;
   }
   function birthOf(x, gm) { var g = x && x.grp && gm ? gm[x.grp.toLowerCase()] : null; return g != null && (x.dob == null || g < x.dob) ? g : (x ? x.dob : null); }
-  // the value a product carries for one cut, or null where no product-level field decides it
-  function segValue(agg, p, x, at, birth) {
+  // PRICE BAND — FeedHero's "Price group" cut (Ray, 29 Sep 2026: "add price band to this Roas option list").
+  // A row is placeable only when its LABEL is a price range — "£0 - £25", "25-50", "Under £20", "£100+",
+  // "Over £100", "100 and above" — read off the label, never assumed: a band FeedHero names in words
+  // ("Budget", "Premium") leaves the cut as segment totals only. Checked 29 Sep 2026: no roster brand has
+  // price groups set up yet (every one answers "Reports not found for Price group"), so the label shape
+  // is unseen and the parser refuses anything it cannot read rather than guessing at it.
+  var PG_NUM = '(\\d[\\d,]*(?:\\.\\d+)?)(k?)';
+  function pgNum(s, k) { var n = parseFloat(String(s).replace(/,/g, '')); return k ? n * 1000 : n; }
+  function priceGroupRange(label) {
+    var t = plain(label).toLowerCase().replace(/[£$€¥₹]|\b(?:gbp|eur|usd|aud|cad|chf|sek|dkk|nok|pln|czk|hkd|sgd|aed|sar|kwd)\b/g, ' ').replace(/\s+/g, ' ').trim(), m;
+    if ((m = new RegExp('^' + PG_NUM + ' ?(?:-|–|—|to) ?' + PG_NUM + '$').exec(t))) { var a = pgNum(m[1], m[2]), b = pgNum(m[3], m[4]); return a < b ? { lo: a, hi: b } : null; }
+    if ((m = new RegExp('^(?:under|below|less than|up to|<=?) ?' + PG_NUM + '$').exec(t))) return { lo: 0, hi: pgNum(m[1], m[2]) };
+    if ((m = new RegExp('^(?:over|above|more than|from|>=?) ?' + PG_NUM + '$').exec(t))) return { lo: pgNum(m[1], m[2]), hi: Infinity };
+    if ((m = new RegExp('^' + PG_NUM + ' ?(?:\\+|and (?:above|over|up)|or (?:more|above)|plus)$').exec(t))) return { lo: pgNum(m[1], m[2]), hi: Infinity };
+    return null;
+  }
+  // the cut's bands in price order, or null when any real row is not a price range ("Unsorted", the
+  // Total and the unlisted row are not bands and never block the rest)
+  function priceGroupBands(rows) {
+    var out = [];
+    for (var i = 0; i < (rows || []).length; i++) {
+      var r = rows[i], c = r && r.category; if (c == null) continue;
+      var k = segKey(c); if (!k || k === 'total' || k === 'unsorted' || segUnlisted(c)) continue;
+      var g = priceGroupRange(c); if (!g) return null;
+      out.push({ v: plain(c), lo: g.lo, hi: g.hi, skus: +r.skus || 0 });
+    }
+    if (!out.length) return null;
+    out.sort(function (a, b) { return a.lo - b.lo || a.hi - b.hi; });
+    return out;
+  }
+  // the band a price sits in: [lo, hi) — the top of a band holds its own ceiling only when no band starts there
+  function priceGroupOf(bands, v) {
+    if (!bands || v == null || !isFinite(v)) return null;
+    for (var i = 0; i < bands.length; i++) if (v >= bands[i].lo && v < bands[i].hi) return bands[i].v;
+    for (var j = bands.length - 1; j >= 0; j--) if (v === bands[j].hi) return bands[j].v;
+    return null;
+  }
+  function pgPrice(x, basis) { return !x ? null : basis === 'price' ? x.price : (x.onSale ? x.sale : x.price); }
+  // WHICH price FeedHero groups on is not stated anywhere, so it is read off the data: the basis whose
+  // product counts per band sit closest to FeedHero's own SKU counts (the L1 distance between the two
+  // shares) wins; a tie — or a feed with nothing on sale — keeps what the shopper pays, the Price bands
+  // module's own basis
+  function priceGroupBasis(bands, fx) {
+    var S = (bands || []).reduce(function (s, b) { return s + b.skus; }, 0);
+    function dist(basis) {
+      var c = {}, n = 0; bands.forEach(function (b) { c[b.v] = 0; });
+      (fx || []).forEach(function (x) { var k = priceGroupOf(bands, pgPrice(x, basis)); if (k != null) { c[k]++; n++; } });
+      return !n || !S ? Infinity : bands.reduce(function (s, b) { return s + Math.abs(c[b.v] / n - b.skus / S); }, 0);
+    }
+    if (!bands || !bands.length) return 'pays';
+    return dist('price') < dist('pays') - 1e-9 ? 'price' : 'pays';
+  }
+  // the value a product carries for one cut, or null where no product-level field decides it; `pg` is the
+  // price-band read ({bands, basis}) — without it no product is placed in a price band
+  function segValue(agg, p, x, at, birth, pg) {
     switch (agg) {
       case 'Price_type': return x && x.onSale ? 'Products on Sale' : 'Products at Full Price';
+      case 'Price_group': return pg && pg.bands ? priceGroupOf(pg.bands, pgPrice(x, pg.basis)) : null;
       case 'Title_optimisation_status': return p.opti ? (p.opti.T ? 'Optimized' : 'Non Optimized') : null;
       case 'Keyword_optimisation_status': return p.opti ? (p.opti.Keywords ? 'Optimized' : 'Non Optimized') : null;
       case 'Product_age': return ageBucket(birth, at);
@@ -939,6 +993,7 @@
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
-    unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue
+    unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
+    priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis
   };
 });

@@ -102,6 +102,7 @@ case-insensitively; an empty column is "Unsorted".
 | Category | `g:product_type` slot 1, on its **FULL path only** |
 | Brand · Colour · Gender · Age group · GPC | the raw `g:` value (GPC compared as a path; duplicate display names merged) |
 | Price type | a rule — sale price below price |
+| Price band | FeedHero's **Price group** cut, placed on a price RANGE read off each band's label ("£0 - £25", "Under £20", "£100+"); which price it bands on — the list price or what the shopper pays — is read off the data (the basis whose counts per band sit closest to FeedHero's own SKU counts), and a cut whose bands are named in words stays segment totals |
 | Title / keyword optimisation | FeedSpark's own `fs_data_opti` T / Keywords flags |
 | Product age | a rule on the item **GROUP's** first-seen date |
 | Custom labels | only where FeedHero's report reads the column (not every row "Unsorted") |
@@ -118,7 +119,13 @@ case-insensitively; an empty column is "Unsorted".
   this way, 97.34% on the variant's own date). Re-test after a quarter rolls.
 - **"Unlisted SKUs in Ads traffic"** belongs to no feed product. **ROAS SKU counts are master SKUs**
   — the feed is a subset, so a segment's product list is ≤ its `skus`.
-- Accessorize has no ROAS report; `Price_group` has none for any client.
+- Accessorize has no ROAS report. **Price band** (Ray, 29 Sep 2026: *"add price band to this Roas option list"*) is on the
+  list, but FeedHero's `Price_group` report is not set up for any roster brand yet (checked 29 Sep 2026 on Schuh UK,
+  Superdry GB, Monsoon UK, Reiss GB, YuMOVE and Hobbycraft — each answers "Reports not found for Price group"). The
+  card says so in one line, the inspector lists it under *Not set up in FeedHero for this market* (apart from a column
+  FeedHero reads as empty), and it fills in on its own the day FeedHero has price groups for the client — the worker
+  re-asks a not-set-up cut after a day. The label shape is unseen, so the parser refuses anything that is not a price
+  range rather than guessing.
 - Every figure is the SEGMENT's ROAS — the products this one sits with — and the page says so.
 
 ## 5. The page
