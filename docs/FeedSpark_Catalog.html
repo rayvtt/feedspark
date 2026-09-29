@@ -751,12 +751,12 @@ window.addEventListener('load',restore);
   var CODE_NAME = { k: 'Kept', l: 'Structured · lifted from master', p: 'Populated', s: 'Structured · re-formatted', o: 'Optimised', g: 'Enriched · added to', e: 'Enriched', d: 'Dropped', m: 'Missing', u: 'No master row' };
   var TABS = [['all', 'All'], ['stock', 'In stock'], ['sale', 'On sale'], ['new', 'New · 30 d'], ['changed', 'Changed by FeedSpark'], ['attn', 'Needs attention'], ['gone', 'Not in feed']];
   var QUICK = [['T', 'Title optimised'], ['KW', 'Keyword-optimised'], ['OV', 'Image overlay'], ['POP', 'Populated'], ['OPT', 'Optimised'], ['ENR', 'Enriched'], ['DROP', 'Dropped']];
-  var AGGS = [['Product_age', 'product age'], ['Category', 'category'], ['Price_type', 'price type'], ['Title_optimisation_status', 'title optimisation'],
+  var AGGS = [['Product_age', 'product age'], ['Category', 'category'], ['Price_type', 'price type'], ['Price_group', 'price band'], ['Title_optimisation_status', 'title optimisation'],
     ['Keyword_optimisation_status', 'keyword optimisation'], ['Data_field_optimisation_status', 'data-field review'], ['Brand', 'brand'], ['Colour', 'colour'],
     ['Gender', 'gender'], ['Age_group', 'age group'], ['Google_product_category', 'Google product category'],
     ['Custom_label_0', 'custom label 0'], ['Custom_label_1', 'custom label 1'], ['Custom_label_2', 'custom label 2'], ['Custom_label_3', 'custom label 3'], ['Custom_label_4', 'custom label 4']];
   // the cuts the inspector places ONE product in (data-field review and batch are FeedHero workflow states no feed carries)
-  var INSP_AGGS = ['Product_age', 'Brand', 'Colour', 'Gender', 'Age_group', 'Price_type', 'Title_optimisation_status', 'Keyword_optimisation_status',
+  var INSP_AGGS = ['Product_age', 'Brand', 'Colour', 'Gender', 'Age_group', 'Price_type', 'Price_group', 'Title_optimisation_status', 'Keyword_optimisation_status',
     'Google_product_category', 'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4'];
   function aggName(a) { return (AGGS.filter(function (x) { return x[0] === a; })[0] || [0, a])[1]; }
   var AGE_ORDER = ['brand new', 'new', 'this season', 'last season', 'this year', 'perennial'];
@@ -1224,7 +1224,7 @@ window.addEventListener('load',restore);
       if (F.agg === 'Price_type') return /sale/i.test(F.v) ? x.onSale : !x.onSale;
       if (F.agg === 'Title_optimisation_status') return /non/i.test(F.v) ? !(p.opti && p.opti.T) : !!(p.opti && p.opti.T);
       if (F.agg === 'Keyword_optimisation_status') return /non/i.test(F.v) ? !(p.opti && p.opti.Keywords) : !!(p.opti && p.opti.Keywords);
-      var sv = E.segValue(F.agg, p, x, roasAt(), E.birthOf(x, S.gm));
+      var sv = E.segValue(F.agg, p, x, roasAt(), E.birthOf(x, S.gm), S.roas.pg);
       return sv != null && E.segKey(sv, F.agg) === E.segKey(F.v, F.agg);
     }
     return true;
@@ -1436,12 +1436,24 @@ window.addEventListener('load',restore);
     if (agg === 'Category') return S.roas.field ? '' : 'no category field of the feed matches FeedHero’s tree';
     if (agg === 'Data_field_optimisation_status') return 'a FeedHero review state — no feed carries it';
     if (rows && E.unsortedOnly(rows)) return 'FeedHero reads this column as empty';
+    if (agg === 'Price_group' && rows && !E.priceGroupBands(rows)) return 'FeedHero names these bands in words, not prices — no product can be placed';
     return '';
+  }
+  // the price-band read off FeedHero's own rows: its bands in price order and WHICH price it groups on (read off
+  // the data — E.priceGroupBasis), or null when the bands are named in words; cached on the answer once the
+  // whole feed is in, since the basis is measured against every product
+  function pgOf(j) {
+    if (!j || j.missing) return null;
+    if (j.__pg !== undefined) return j.__pg;
+    var b = E.priceGroupBands(j.rows), pg = b ? { bands: b, basis: E.priceGroupBasis(b, S.fx) } : null;
+    if (S.out.st === 'done') j.__pg = pg;
+    return pg;
   }
   function renderRoasChart() {
     fillAggs();
     var R = S.roas, body = $('roas-body'), agg = S.agg, name = (AGGS.filter(function (a) { return a[0] === agg; })[0] || [0, agg])[1];
     $('roas-lbl').textContent = name;
+    $('roas-sub').textContent = 'Google Ads, last 30 days.';   // drawRoas says more for product age; a cut with no rows must not keep the last one's words
     if (R.st === 'none' || R.st === 'error' || R.st === 'unread') { body.innerHTML = '<div class="empty2">' + esc(R.why || R.err || 'FeedHero has not read this market’s Google Ads yet.') + '</div>'; return; }
     if (R.st !== 'ok') { body.innerHTML = '<div class="empty2">Reading Google Ads…</div>'; return; }
     if (agg === 'Category') { drawRoas((R.tree || []).map(function (n) { return n.row; }), agg); return; }
@@ -1449,7 +1461,9 @@ window.addEventListener('load',restore);
     var g = S.gen;
     seg(agg).then(function (j) {
       if (g !== S.gen || S.agg !== agg) return;
-      if (!j || j.missing) { body.innerHTML = '<div class="empty2">FeedHero has no ' + esc(name) + ' cut for this market.</div>'; return; }
+      // a cut FeedHero has not set up is an answer, not a failure — Price group on every roster brand (29 Sep 2026)
+      if (!j || j.missing) { body.innerHTML = '<div class="empty2">' + (j ? 'FeedHero has no ' + esc(name) + ' report set up for this market yet — this fills in on its own once it is.' : 'FeedHero did not answer for ' + esc(name) + ' — try again shortly.') + '</div>'; return; }
+      if (agg === 'Price_group') S.roas.pg = pgOf(j);
       drawRoas(j.rows || [], agg);
       if (S.insp && !S.insp.gone) renderInspRoas();
     });
@@ -1458,7 +1472,11 @@ window.addEventListener('load',restore);
     var R = S.roas, body = $('roas-body'), unl = rows.filter(function (r) { return r && isUnlisted(r.category); })[0];
     var why = unplaceable(agg, rows), can = !why; S.roasCan = can;
     rows = E.mergeSegRows(rows.filter(function (r) { return r && !isUnlisted(r.category) && r.roasPct != null && r.category !== 'Total'; }), agg);
+    var pg = agg === 'Price_group' && can ? S.roas.pg : null, bandLo = {};
+    if (pg) pg.bands.forEach(function (b) { bandLo[E.segKey(b.v, agg)] = b.lo; });
+    var loOf = function (r) { var v = bandLo[E.segKey(r.category, agg)]; return v == null ? 1e15 : v; };
     if (agg === 'Product_age') rows.sort(function (a, b) { var x = AGE_ORDER.indexOf(a.category.toLowerCase()), y = AGE_ORDER.indexOf(b.category.toLowerCase()); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
+    else if (pg) rows.sort(function (a, b) { return loOf(a) - loOf(b); });
     else rows.sort(function (a, b) { return ((b.spend && b.spend.n) || 0) - ((a.spend && a.spend.n) || 0); });
     var more = rows.length > 10 ? rows.length - 10 : 0; rows = rows.slice(0, 10);
     if (!rows.length) { body.innerHTML = '<div class="empty2">No ROAS rows in this cut.</div>'; return; }
@@ -1479,7 +1497,8 @@ window.addEventListener('load',restore);
         return '<span class="l' + (sel === r.category ? ' sel' : '') + '" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '">' + esc(shortLab(r.category)) + '</span><span class="b" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '"><i style="width:' + (r.roasPct / mx * 100).toFixed(1) + '%' + (sel && sel !== r.category ? ';opacity:.35' : '') + '"></i>' + (tot ? '<em style="left:' + (tot / mx * 100).toFixed(1) + '%" title="Market ' + roasTxt(tot) + '"></em>' : '') + '</span><span class="v">' + roasTxt(r.roasPct) + '</span>';
       }).join('') + '</div>';
     }
-    h += '<div class="cfoot"><span>Market <b>' + roasTxt(tot) + '</b></span>' + (more ? '<span>top 10 of ' + (rows.length + more) + ' by spend</span>' : '') + (unl ? '<span title="Google Ads traffic on SKUs that are not in the feed">+ ' + n0(unl.skus) + ' unlisted SKUs</span>' : '') + (!can ? '<span title="' + esc(why) + '">· ' + esc(why) + '</span>' : '') + (agg === 'Category' && R.miss ? '<span title="Re-typed since Google Ads was last read — FeedHero still counts them under their old path">' + n0(R.miss) + ' not in the tree yet</span>' : '') + '</div>';
+    h += '<div class="cfoot"><span>Market <b>' + roasTxt(tot) + '</b></span>' + (more ? '<span>top 10 of ' + (rows.length + more) + ' by spend</span>' : '') + (unl ? '<span title="Google Ads traffic on SKUs that are not in the feed">+ ' + n0(unl.skus) + ' unlisted SKUs</span>' : '') + (!can ? '<span title="' + esc(why) + '">· ' + esc(why) + '</span>' : '') + (agg === 'Category' && R.miss ? '<span title="Re-typed since Google Ads was last read — FeedHero still counts them under their old path">' + n0(R.miss) + ' not in the tree yet</span>' : '') +
+      (pg ? '<span title="FeedHero does not say which price it bands on, so the page reads it off the data: the basis whose product counts per band sit closest to FeedHero’s own SKU counts">placed on ' + (pg.basis === 'price' ? 'the list price' : 'the price the shopper pays') + '</span>' : '') + '</div>';
     body.innerHTML = h;
     $('roas-sub').textContent = agg === 'Product_age' ? 'Google Ads, last 30 days — FeedHero’s age buckets, read off each style’s first-seen date.' : 'Google Ads, last 30 days.';
   }
@@ -2232,15 +2251,18 @@ window.addEventListener('load',restore);
     var I = S.insp, el = $('i-roas'); if (!I || !el || I.gone) return;
     var R = S.roas, p = S.prods[I.i], x = S.fx[I.i];
     if (R.st !== 'ok') { el.innerHTML = '<div class="rnote">' + esc(R.why || R.err || (R.st === 'unread' ? 'FeedHero has not read this market’s Google Ads yet.' : 'Reading Google Ads…')) + '</div>'; return; }
-    var rows = [], tot = R.total && R.total.roasPct, at = roasAt(), birth = E.birthOf(x, S.gm), pending = 0, off = [];
+    var rows = [], tot = R.total && R.total.roasPct, at = roasAt(), birth = E.birthOf(x, S.gm), pending = 0, off = [], unset = [];
     var hit = roasFor(I.i);
     if (hit && !hit.miss) for (var d = 1; d <= hit.depth; d++) { var row = R.paths.get(E.pathKey(hit.parts.slice(0, d).join(' > '))); if (row) rows.push({ agg: 'Category · level ' + d, v: hit.parts[d - 1], row: row }); }
     inspAggs(p).forEach(function (a) {
-      var v = E.segValue(a, p, x, at, birth); if (v == null) return;
+      // a price band is placed off FeedHero's own rows, so it waits for them rather than deciding up front
+      var isPg = a === 'Price_group', v = isPg ? '' : E.segValue(a, p, x, at, birth); if (v == null) return;
       var got = R.segs[a];
       if (!got || !got.__done) { pending++; return; }
       var j = got.__val; if (!j) return;
-      if (j.missing || E.unsortedOnly(j.rows)) { off.push(aggName(a)); return; }
+      if (j.missing) { unset.push(aggName(a)); return; }
+      if (E.unsortedOnly(j.rows)) { off.push(aggName(a)); return; }
+      if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j)); if (v == null) return; }
       var k = E.segKey(v, a), row = E.mergeSegRows(j.rows, a).filter(function (r) { return !isUnlisted(r.category) && E.segKey(r.category, a) === k; })[0];
       if (row) rows.push({ agg: aggName(a), v: v, row: row, rule: a === 'Product_age' ? 'first seen ' + (birth != null ? fmtDay(birth) : '— undated') + (birth != null && x.dob != null && birth < x.dob ? ' (its style’s first variant)' : '') : '' });
     });
@@ -2252,6 +2274,7 @@ window.addEventListener('load',restore);
     }).join('') + '</div>' : '<div class="rnote">No segment of FeedHero’s matches this product exactly.</div>') +
       (hit && hit.miss ? '<div class="rnote miss" title="FeedHero still counts it under the category it had when Google Ads was last read">▢ ' + esc(hit.parts.join(' › ')) + ' — not in the ROAS tree yet</div>' : '') +
       (off.length ? '<div class="rnote" title="FeedHero’s report reads these columns as empty for this market">Not read by FeedHero’s ROAS here: ' + esc(off.join(', ')) + '</div>' : '') +
+      (unset.length ? '<div class="rnote" title="FeedHero answers “Reports not found” for these cuts on this market — they fill in once they are set up in FeedHero">Not set up in FeedHero for this market: ' + esc(unset.join(', ')) + '</div>' : '') +
       '<div class="rnote">' + (pending ? 'Reading ' + pending + ' more cut' + (pending === 1 ? '' : 's') + ' from FeedHero… · ' : '') + 'Segment ROAS — the products this one sits with, never this product’s own.</div>';
   }
   // the cuts worth asking about for THIS product: a custom label or a colour it does not carry places

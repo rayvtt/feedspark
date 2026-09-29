@@ -11131,6 +11131,11 @@
     {"name": "spots: a dark set — never a light island", "file": "docs/spots_widget.html", "pattern": "[data-theme=dark] .spot{--sp-paper:#1C1F27", "pr": 0},
     {"name": "spots: a card's spot is prepended to its header row, left of the title", "file": "docs/spots_widget.html", "pattern": "row.insertBefore(make(name, 'spot-card'), row.firstChild)", "pr": 0},
     {"name": "spots: injected on every app page after the module row", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "NAVROWW + '\\n' + SPOTSW + '\\n' + HOURSW", "pr": 0},
-    {"name": "design: the Spot illustrations section", "file": "docs/FeedSpark_Design.html", "pattern": "<section class=\"blk\" id=\"spots\" data-spot=\"images\">", "pr": 0}
+    {"name": "design: the Spot illustrations section", "file": "docs/FeedSpark_Design.html", "pattern": "<section class=\"blk\" id=\"spots\" data-spot=\"images\">", "pr": 0},
+    {"name": "Catalogue: price band on the ROAS-by list", "file": "docs/FeedSpark_Catalog.html", "pattern": "['Price_group', 'price band']", "pr": 0},
+    {"name": "Catalogue: a product sits in a price band off FeedHero's own rows", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));", "pr": 0},
+    {"name": "Catalogue: a cut FeedHero has not set up is said, never a red error", "file": "docs/FeedSpark_Catalog.html", "pattern": "Not set up in FeedHero for this market: ", "pr": 0},
+    {"name": "Catalogue engine: a price band is a range read off its label, never guessed", "file": "docs/catalog_engine.js", "pattern": "function priceGroupRange(label)", "pr": 0},
+    {"name": "Catalogue engine: the price FeedHero bands on is read off the data", "file": "docs/catalog_engine.js", "pattern": "function priceGroupBasis(bands, fx)", "pr": 0}
   ]
 }

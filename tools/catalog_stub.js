@@ -80,6 +80,9 @@ function roasRead() {
     Data_field_optimisation_status: ['Not reviewed', 'QC Passed'], Brand: ['Northwind'], Colour: COLOURS, Gender: ['female', 'male'], Age_group: ['adult'],
     Google_product_category: ['Apparel & Accessories > Clothing', 'apparel & accessories > clothing', 'Home & Garden > Decor'],
     Custom_label_0: ['New In', 'Core'], Custom_label_1: ['Unsorted'], Custom_label_2: ['Unsorted'], Custom_label_3: ['Unsorted'], Custom_label_4: ['Unsorted'],
+    // price bands as a price range each, listed out of price order on purpose (the card draws them in price order);
+    // last in the list so every cut above keeps the random draws it always had
+    Price_group: ['£50 - £75', '£0 - £25', '£75+', '£25 - £50'],
   };
   const live = {};
   Object.keys(cuts).forEach((agg) => { live[agg] = { ok: true, cached: true, cmpid: CMPID, agg, win: 'w30', total, rows: cuts[agg].map((c) => row(c, 6 + Math.round(rnd() * 20))).concat([row('Unlisted SKUs in Ads traffic', 9)]) }; });

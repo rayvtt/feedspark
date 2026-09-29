@@ -168,6 +168,19 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.selectOption('#roas-agg', 'Custom_label_1'); await pg.waitForTimeout(400);
     const cl1 = await pg.evaluate(() => document.getElementById('roas-body').textContent);
     ok('a cut FeedHero reads as empty says so on the chart', cl1.indexOf('FeedHero reads this column as empty') >= 0, cl1.slice(0, 200));
+
+    console.log('· price band — FeedHero\'s Price group, in price order, placed on the price the data says');
+    await pg.selectOption('#roas-agg', 'Price_group'); await pg.waitForTimeout(450);
+    const pbc = await pg.evaluate(() => { const seen = []; document.querySelectorAll('#roas-body [data-k]').forEach((e) => { const k = e.getAttribute('data-k'); if (seen.indexOf(k) < 0) seen.push(k); }); const S = window.__FCCCatalogue.state(); return { labs: seen, lbl: document.getElementById('roas-lbl').textContent, basis: S.roas.pg && S.roas.pg.basis, foot: (document.querySelector('#roas-body .cfoot') || {}).textContent || '' }; });
+    const PBN = E.priceGroupBands(DATA.live.Price_group.rows), basisN = E.priceGroupBasis(PBN, fx);
+    ok('"price band" is on the list and draws FeedHero\'s bands in PRICE order', pbc.lbl === 'price band' && pbc.labs.join('|') === '£0 - £25|£25 - £50|£50 - £75|£75+', pbc);
+    ok('the price it bands on is the one an independent read of the data picks (' + basisN + '), and the card says which', pbc.basis === basisN && /placed on the (list price|price the shopper pays)/.test(pbc.foot), pbc);
+    const band = '£25 - £50';
+    await pg.evaluate((k) => { const el = Array.from(document.querySelectorAll('#roas-body [data-k]')).find((e) => e.getAttribute('data-k') === k); el && el.dispatchEvent(new MouseEvent('click', { bubbles: true })); }, band);
+    await pg.waitForTimeout(300);
+    const wantBand = prods.filter((p, i) => E.priceGroupOf(PBN, basisN === 'price' ? fx[i].price : (fx[i].onSale ? fx[i].sale : fx[i].price)) === band).length;
+    ok('ROAS by price band → "' + band + '" lists exactly the products priced in it', await view() === wantBand && wantBand > 0, { page: await view(), want: wantBand });
+    await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
     await pg.fill('#q', 'colour:navy,black -avail:out'); await pg.waitForTimeout(450);
     const wantQ = prods.filter((p, i) => /navy|black/i.test(p.f.color || '') && fx[i].av !== 'out_of_stock').length;
     ok('search grammar: a comma list OR-s, a minus excludes', await view() === wantQ && wantQ > 0, { page: await view(), want: wantQ });
@@ -234,6 +247,27 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
+
+    // ---------------------------------------------------------------- a cut FeedHero has not set up
+    // the real state on 29 Sep 2026: every roster brand answers "Reports not found for Price group", which the
+    // worker hands the page as {ok, rows:[], missing:true} — an answer, never a red error
+    console.log('· price band not set up in FeedHero — said, on the chart and in the inspector');
+    const nc = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+    const np = await nc.newPage(); const nerrs = [];
+    np.on('pageerror', (e) => nerrs.push(e.message));
+    await np.addInitScript(STUB);
+    await np.addInitScript(`(function(){var f=window.fetch;window.fetch=function(u,o){if(String(u).indexOf('/api/roas/live')>=0&&String(u).indexOf('agg=Price_group')>=0)return Promise.resolve(new Response(JSON.stringify({ok:true,cached:false,agg:'Price_group',rows:[],n:0,missing:true}),{status:200,headers:{'content-type':'application/json'}}));return f(u,o);};})();`);
+    await np.goto('file://' + tmp);
+    await np.waitForFunction(() => window.__FCCCatalogue && window.__FCCCatalogue.state().linDone, null, { timeout: 30000 });
+    await np.selectOption('#roas-agg', 'Price_group'); await np.waitForTimeout(450);
+    const nsTxt = await np.evaluate(() => document.getElementById('roas-body').textContent);
+    ok('the card says FeedHero has no price band report set up for this market yet', /FeedHero has no price band report set up for this market yet/.test(nsTxt) && !/Could not|error/i.test(nsTxt), nsTxt.slice(0, 200));
+    await np.click('#vr .tr.row'); await np.waitForTimeout(400);
+    await np.waitForFunction(() => { const el = document.getElementById('i-roas'); return el && el.textContent.indexOf('Reading') < 0; }, null, { timeout: 10000 }).catch(() => {});
+    const niTxt = await np.evaluate(() => (document.getElementById('i-roas') || {}).textContent || '');
+    ok('the inspector names it as not set up, apart from a column FeedHero reads as empty', /Not set up in FeedHero for this market: price band/.test(niTxt) && !/Not read by FeedHero’s ROAS here: [^·]*price band/.test(niTxt), niTxt.slice(0, 300));
+    ok('no page errors', nerrs.length === 0, nerrs.slice(0, 5));
+    await nc.close();
 
     // ---------------------------------------------------------------- phone
     console.log('· 390px — the inspector is a bottom sheet inside the screen');
