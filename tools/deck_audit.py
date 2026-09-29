@@ -161,7 +161,13 @@ def check_crossrefs(chapters, full_text):
 
 
 def check_anchors(soup, chapters):
+    # A nav anchor is dead when nothing in the document carries its id -- which is
+    # not the same question as "is there a chapter with that id". A short deck
+    # (the Superdry Service Review is six sections and no chapter dividers, because
+    # a divider costs a whole slide) hangs #c1..#c6 on the <section> elements
+    # themselves, and reading only the chapter list called every one of them dead.
     ids = {c['id'] for c in chapters}
+    ids |= {el['id'] for el in soup.find_all(id=True)}
     dead = []
     for a in soup.find_all('a', href=re.compile(r'^#c\d+$')):
         target = a['href'][1:]

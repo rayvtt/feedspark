@@ -1,73 +1,105 @@
-# Superdry Service Review (defence deck) — build log
+# Superdry — Service Review, Sep 2026
 
 Deck: `docs/Superdry_Service_Review_Sep26.html` → `docs/materials/Superdry_Service_Review_Sep26.pptx`
-(Service / Defence Review, Sep 2026; 11 chapters; 19 markets; hours window Oct 2024 – Sep 2026.)
 
-Ray, 29 Sep 2026: *"redo a new service defender deck for Superdry … defend FeedSpark services and the
-work we have put in so far, trying to pull in any sign of uplift in performance or data transformation,
-and covering the market. hours reports (back dated 2 years since 2025) - on the overview level as well"*
+## What Ray asked for
 
-## The brief already existed, in Superdry's own plan workbook
+> "the deck needs to be more succinct and more honorable at the Q&A head level. Imagine this is
+> more on the marketing side … condensed into seven or eight slides only, to really demonstrate
+> value for money"
 
-The `Vendor Review` tab of the project plan is Ray's own sketch of this deck — and it names the client's
-position: **"the marketing team is smaller, spend is also [reduced]"**. Superdry is reviewing vendors.
-His slide plan (challenges → value of feed management → success stories → our values → account overview
-YoY → technical complexity → value vs cost) and his key messages ("SD online presence continuously rely
-on feed", "SD current time spent should be at least 80% optimisation") shaped chapters 02, 04 and 09.
-Reading that tab before writing was worth more than any other single step.
+…then five numbered points: (1) confirm the validity of the existing service, pushing how much
+hands-on work is needed to offset assumed AI savings from Matt R, how happy they are, and what
+they would take over internally; (2) what we proposed to cut and whether they agreed, and the
+impact of losing it; (3) new services — budget, cost to deploy, upside against the savings;
+(4) what we are measured on with Matt Roper, whether the DM team have issued KPIs, what the
+numbers show and where they can push back; (5) the overall cost/benefit and net impact.
 
-## The centrepiece: the before/after is inside the feed
+## What shipped
 
-Every FeedSpark output feed carries `c:fs_data_original_title` — the title the retailer supplies — beside
-the `title` it ships. So the transformation is directly measurable on the same products, same file, same
-moment, with no sampling:
+**Eight slides.** Title, six content slides, close. No chapter dividers — a divider costs a whole
+slide, and at this length that is a quarter of the deck spent on signposting.
 
-| market | SKUs | supplied | in MASK 80–120 | shipped | in MASK | rewritten | highlights | keywords |
-|---|---|---|---|---|---|---|---|---|
-| GB | 25,699 | 29.1 | 0.0% | 83.1 | **62.7%** | 100% | 29.4% | 41.0% |
-| IE | 23,510 | 29.1 | 0.0% | 83.2 | **63.0%** | 100% | 29.5% | 41.2% |
-| US | 14,647 | 28.9 | 0.0% | 83.2 | **62.5%** | 100% | 25.2% | 46.3% |
-| DE | 25,818 | 35.8 | 0.0% | 71.4 | 24.3% | 100% | **0%** | **0%** |
-| FR | 25,762 | 34.6 | 0.0% | 68.4 | 14.2% | 100% | **0%** | **0%** |
-| NL | 24,360 | 33.3 | 0.0% | 51.4 | 0.4% | 100% | **0%** | **0%** |
+| # | Slide | Ray's point |
+|---|---|---|
+| 1 | Title | — |
+| 2 | The work behind the retainer | 1 — the hands-on argument |
+| 3 | What comes out, and what you take on | 1c + 2 — the cut list |
+| 4 | What we would add, and what it is worth | 3 — new services |
+| 5 | The number we should be judged on | 4 — measurement |
+| 6 | The six hardest questions, asked for you | 4b — where they push back |
+| 7 | The net position | 5 — cost / benefit |
+| 8 | Questions | — |
 
-**Not one supplied title, in any market, reaches the band. Nearly two thirds of the English ones do.**
-GB adds +54.0 characters per product on all 25,699. The English/European split is the roadmap in one table.
+Export is clean: `still over capacity: 0`, nothing shrunk, no copy cut, no overflow in the
+rendered QA pass, `tools/deck_audit.py` green.
 
-## Judgement calls worth remembering
+## The three arguments the deck rests on
 
-- **Never annualise Superdry's last-30-days.** September is the low month for an outerwear business: the
-  year is ~2.3× the annualised 30-day figure in *both* spend and revenue, so the ratio is sound and the
-  year is the honest number. (Opposite shape to Hobbycraft, where the *year* was the suspect figure.)
-- **Three single-group tests are on batches of 7, 21 and 45 products** and return +14,047%, +165% and
-  +1,566%. Arithmetically true, statistically meaningless — excluded from every figure, and flagged
-  internally in case Superdry has seen them quoted before.
-- **Brand-in-title is a per-category setting, not a rule.** The same test run the same day won on
-  T-shirts (+10.2% impr / +27.8% clicks) and lost on Dresses (−7.5% / −8.0%).
-- **The biggest change to this feed has never been measured.** Five title-optimisation tests and three
-  image-tagging tests all closed "no performance data detected". Chapter 03 proves the change; chapter 06
-  says plainly that we cannot yet put an uplift number on it. That honesty is the point of a defence deck.
-- **"80% optimisation" is not what the log says.** Ray's own target note says it should be ≥80%; the
-  four-year read is **54%** (2,056.75 of 3,793 hours), account management 22%. The deck leads with 54%
-  and explains it — the nineteen-market support load — rather than quoting the friendlier target.
-- **FeedHero's audit says "Product name missing, 22,368 (39%)"** while the live output feed has a title on
-  100%. That is the inbound master feed before the rules run, not the shipped feed. Flagged internally,
-  not used as a client-facing number.
+1. **Hands-on work, against the AI-savings assumption.** The eight largest lanes — 2,225 of the
+   3,793 hours since June 2022 — each stated with what the task actually is and where a model
+   helps versus where it cannot. Category mapping is taxonomy matching, not generation. Data
+   field population has no source values to generate from. Rule engineering is engineering
+   against a live revenue channel. The one lane named as genuinely reducible is account
+   management, which is also the largest cut on the next slide — conceding it is what makes the
+   rest of the column credible.
+2. **Value for money, stated as a ratio.** 42 hours a month are sold; 84.9 hours a month have
+   been delivered for two years (2,036.75 h against 1,008 h contracted, 648 of them never
+   charged). It is the subtitle of the net-position slide because it is the strongest number in
+   the deck.
+3. **Conceding the revenue argument on purpose.** The 966% ROAS is Google Ads' own last-click
+   figure and it credits the channel, not the feed — so the deck stops claiming it and proposes
+   being measured on controlled A/B (median +9.42% impressions over 13 tests, with a control
+   group), catalogue activation and search-term coverage instead. That is the "honorable at
+   Q&A-head level" register Ray asked for, and it is the argument Matt Roper's team can
+   otherwise win.
 
-## Sources read
+## What only Ray can fill in — flagged in `.int-note` panels, stripped from the .pptx
 
-| Source | What only it gave |
-| --- | --- |
-| FS reports MCP, 19 `get_task_list_for_client` pulls | 2,846 tasks and **3,793 hours** back to Jul 2022, per market, per month |
-| `get_client_list` | 42 h/month contracted across 7 markets; **12 markets with no retainer**; GB at −97.75 h |
-| FeedHero `client_list` | 19 instances, **53 live feeds**, **1,774 active rules** (+675 paused) |
-| FeedHero `rule_report` | What the rules actually rewrite, field by field, 58,838 products each; 7 of 210 GB rules dormant (all seasonal) |
-| FeedHero `roas_dashboard` | GB £16.18m on £1.68m (965.6% ROAS); 920.8M impressions and 334,866 conversions across four markets |
-| FeedHero `audit_issues` | Yesterday's scan: highlights, pattern, size-type, trash products, **no custom alerts configured** |
-| FeedHero `search_terms` | **58% of the top 1,000 terms are not in any title; 31% match nothing at all** |
-| Plan workbook `AB Test Archive` | 40 tests, Jan 2025 → Sep 2026, with figures |
-| Plan workbook `Vendor Review` | Ray's own brief for this deck, and the client's position |
-| Six live output feeds | The before/after table above |
+Four of the five points turn on commercial facts no source here holds. Nothing was invented.
 
-`ops/` holds no Superdry hours or client figures — per CLAUDE.md, none of this is committed; the deck
-carries what belongs in a client document and this log carries the method.
+- **Slide 3** — how happy Superdry actually is with delivery, what they said they would give up,
+  and whether any of the six proposals has already been put to them and answered. No
+  satisfaction read or cut proposal exists in the plan, the task log, the reports database or
+  the test archive, so the slide is written as *our* proposal, not an agreed position.
+- **Slide 4** — no prices and no deploy hours. Nothing reachable holds a Superdry ratecard, a fee
+  for any of the five new services, or an answer on budget (CLAUDE.md: defer to Ray on
+  commercial variables).
+- **Slide 5** — the DM team's KPIs, whether they signed anything, and the exact objection to the
+  revenue calculation. The objection is written as the standard attribution one; the panel says
+  so and asks Ray to confirm before it goes out. It also flags that offering a holdout test will
+  produce a smaller number than 966%, and that cannot be taken back.
+- **Slide 7** — the four To scope / To quote cells and their subtotals are the whole commercial
+  ask, deliberately empty. The panel also asks Ray to sanity-check the two figures that are
+  mine: the **12.5 hours a month** (built from 51-month averages — 388.25 unfunded hours, 443.0
+  account-management hours, 74.75 disapproval hours — and assuming reporting cadence halves; if
+  it does not, the honest number is nearer 8.5), and the **84.9 hours a month**, which is the
+  number most likely to be challenged.
+
+## Sources, all read 29 Sep 2026
+
+Six live output feeds (the before/after is inside the feed: `c:fs_data_original_title` against
+`title` — same products, same moment, 29.1 → 83.1 characters on 100% of the UK catalogue),
+the FeedSpark reports database over 19 markets (2,846 tasks, 3,793.00 h, lifetime and windowed
+client-side because the source ignores its own `from_date`), FeedHero's ROAS dashboard, rule
+report, audit and search-term list, the plan workbook's A/B Test Archive (40 tests) and Image
+Cycler tab, and `docs/plan_tasks.json`.
+
+## Tooling fixed on the way past
+
+- `tools/preview_tmpl.py` drew every table cell as one unwrapped line, so prose tables rendered
+  as overlapping columns running off the slide while the real .pptx was fine — table QA was
+  reading a defect that did not exist and could not see one that did. Cells now wrap the way
+  `draw_textframe` does, the header band is painted (its fill comes from the table style, which
+  python-pptx cannot read back, so white header text was rendering on white), and a cell whose
+  wrapped text is taller than its own row is now reported.
+- `wrap()` threw `ValueError: can't measure length of multiline text` on any run containing a
+  newline, which killed the whole render — reproducible on the shipped Schuh deck. A whitespace
+  token carrying a newline is now treated as the line break it is.
+- `tools/deck_audit.py` resolved nav anchors against the chapter list only, so a deck with no
+  chapter dividers had every one of its anchors reported dead. It now resolves against any
+  element id.
+
+**Found by the fixed previewer, not fixed here** (pre-existing, other decks): table cells taller
+than their rows in `Hobbycraft_Strategy_Review_Sep26.pptx` and `FCC_Business_Case_Sep26.pptx`,
+and three Key Message strips overflowing in `Schuh_Strategy_Review_Sep26.pptx`.
