@@ -154,9 +154,16 @@ window.addEventListener('load',restore);
   .cw-ctl select,.cpop select,.cpop input{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
-  .cstage{flex:1 1 460px;min-width:0}
+  .cmain{flex:1 1 460px;min-width:0;display:flex;flex-direction:column}
+  .cstage{min-width:0}
   .cstage svg{display:block;width:100%;height:auto;overflow:visible}
   .clegend{flex:0 0 250px;min-width:0}
+  /* the outcome panel: its own plot under the hours, on the same calendar — sized and coloured as
+     its own reading so nobody mistakes a score for an hour count */
+  .coutbox{margin-top:4px;border-top:1px solid var(--line);padding-top:10px}
+  .coutbox svg{display:block;width:100%;height:auto;overflow:visible}
+  .cout-cap{margin:6px 2px 0;font-size:11.5px;line-height:1.55;font-weight:600;color:var(--ink-2,#555)}
+  .cout-empty{font-size:12px;font-weight:700;color:var(--muted);padding:14px 2px}
   .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 0;border-bottom:1px solid var(--line)}
   .lg-row.hd{font-weight:800}
   .lg-row .nm{color:var(--ink-2)}
@@ -500,6 +507,19 @@ window.addEventListener('load',restore);
                untagged bucket to leave out, and a control that does nothing is a control that lies -->
           <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
           <label class="tog"><input type="checkbox" id="ctab"> Table under the chart</label>
+          <!-- WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior
+               executives to defend feedspark services"). Hours alone cannot answer "what did the
+               spend produce?", so this hangs the brand's OUTCOME under the hours on the SAME
+               calendar — two plots, each on its own axis, never a dual one. It needs a calendar
+               and one account, and says so rather than drawing something it cannot line up. -->
+          <span class="cwp"><label for="cout">What moved</label>
+            <select id="cout" title="Draw the brand's outcome under the hours, on the same months — the chart that answers what the work produced">
+              <option value="">Nothing — hours only</option>
+              <option value="gs">Golden Record score</option>
+              <option value="q">Content quality</option>
+              <option value="air">AI-readiness</option>
+            </select></span>
+          <p class="cpn" id="cout-n"></p>
         </div>
       </span>
 
@@ -528,7 +548,19 @@ window.addEventListener('load',restore);
       </span>
     </div>
     <div class="cbody">
-      <div class="cstage" id="cstage"></div>
+      <!-- the hours and the outcome share ONE column so they share ONE calendar: the legend rail
+           beside them is ~250px, so a full-width outcome panel would sit on a different x-scale and
+           the month it points at would not be the month above it -->
+      <div class="cmain" id="cmain">
+        <div class="cstage" id="cstage"></div>
+        <!-- the outcome panel is its OWN svg under the hours, never a second axis inside them: a
+             reader comparing two units on one axis is being invited to read a relationship the
+             chart cannot support. The ⬇ PNG stacks the two so the deck slide carries both. -->
+        <div class="coutbox" id="coutbox" hidden>
+          <div class="cout-st" id="cout-st"></div>
+          <p class="cout-cap" id="cout-cap"></p>
+        </div>
+      </div>
       <div class="clegend" id="clegend"></div>
     </div>
     <div class="verdict" id="cverdict" data-instr></div>
@@ -2822,7 +2854,7 @@ window.addEventListener('load',restore);
     // the dot is the honest half of folding: Include, Labels, the legend and the table all change
     // what is drawn, and all four now live behind one button
     var off = CMEAS !== 'hours' || CLAB !== 'hours' || !$('cleg').checked || $('ctab').checked
-      || (tagDim() && !$('cuntag').checked);
+      || (tagDim() && !$('cuntag').checked) || outOn();
     var db = $('mb-disp');
     db.querySelector('.cdot').hidden = !off;
     db.classList.toggle('on', off);
@@ -2883,6 +2915,155 @@ window.addEventListener('load',restore);
       : 'Saved "' + v.name + '" — it runs against whichever account you pick');
   }
 
+  /* ===== WHAT THE HOURS MOVED ==============================================================
+   * Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to defend feedspark
+   * services". A procurement head does not buy hours — the first thing they ask of a row of hours
+   * is what it produced, and no re-cut of hours can answer it. So the brand's OUTCOME is drawn
+   * UNDER the hours, on the same months, each plot on its own axis.
+   *
+   * THREE THINGS IT REFUSES TO DO, because this is the chart most likely to be shown to a buyer:
+   *   · it never draws without a CALENDAR to share (the hours chart must itself be over time),
+   *   · it never draws without ONE account (a score averaged over two brands means nothing), and
+   *   · a month nobody measured is a GAP, never a zero — the scan history only began in Sep 2026
+   *     and a missed scan would otherwise read to a client as a collapse.
+   * Each refusal says which it is; a blank panel that could mean "no movement" or "never scanned"
+   * would be worse than no panel.
+   */
+  var COUT = '', OUTC = { key: '', data: null, loading: false };
+  var OUT_COL = function () { return isDark() ? '#4C82E0' : '#2563EB'; };
+  function outOn() { return !!COUT; }
+  /* The hours chart is on a calendar when it is drawn over time, or split by month — the two forms
+     whose x-axis IS the months. Anywhere else there is no shared axis to hang this under. */
+  function outCal() { return CFORM === 'line' || (CDIM === 'month' && !nested()); }
+  function outAcct() { var p = accountPick(Q.raw); return (p && !p.multi && p.v) ? p.v : ''; }
+  function outMonths() { return seriesByMonth(chartPop(), 'total', 1, CMEAS).months; }
+  function outSpec(k) {
+    var L = { gs: ['Golden Record score', 'how completely the feed carries the attributes Google’s product data spec asks for', 'the feed scan, re-scored against this brand’s current scoring profile'],
+      q: ['Content quality', 'what is actually in the free-text fields, against each attribute’s own Google spec page', 'the content-quality analysis'],
+      air: ['AI-readiness', 'how ready the feed is for agentic surfaces — the conversational attributes weigh heaviest', 'the Feed Lab audit'] };
+    return L[k] || null;
+  }
+  /* The note under the control always states the CURRENT case, so the reason a panel is absent is
+     readable from the control itself rather than only from the empty space where it would be. */
+  function outNote() {
+    var n = $('cout-n'); if (!n) return;
+    if (!outOn()) { n.textContent = 'Hangs the brand’s outcome under the hours on the same months — needs a view over time (or split by month) and one account.'; return; }
+    if (!outCal()) { n.textContent = 'Not drawn: this view has no calendar to share. Switch Show as to “Over time”, or split by Month.'; return; }
+    if (!outAcct()) { n.textContent = 'Not drawn: pick ONE account beside Split by — a score averaged across brands is not a number.'; return; }
+    n.textContent = 'Drawn under the hours on the same months, on its own axis.';
+  }
+  function outFetch(client) {
+    var end = new Date().toISOString().slice(0, 7);
+    var key = client + '|' + end;
+    if (OUTC.key === key || OUTC.loading) return;
+    OUTC.loading = true;
+    fetch('/api/outcomes?client=' + encodeURIComponent(client) + '&months=24&end=' + end)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { OUTC = { key: key, data: (d && d.ok) ? d : null, loading: false }; chart(); })
+      .catch(function () { OUTC = { key: key, data: null, loading: false }; chart(); });
+  }
+  /** The monthly line for one metric, over the months the HOURS chart drew — one source of months,
+      so the two plots can never sit on different calendars. */
+  function outSeries(ms, key) {
+    var d = OUTC.data, out = [];
+    var map = (d && d.metrics && d.metrics[key]) || {};
+    for (var i = 0; i < ms.length; i++) {
+      var e = map[ms[i]];
+      out.push(e ? { m: ms[i], v: e.v, n: e.n } : { m: ms[i], v: null, n: 0 });
+    }
+    return out;
+  }
+  function outCaption(pts, key) {
+    var sp = outSpec(key); if (!sp) return '';
+    var got = pts.filter(function (p) { return p.v != null; });
+    if (!got.length) return '';
+    var lo = Infinity, hi = 0;
+    got.forEach(function (p) { if (p.n < lo) lo = p.n; if (p.n > hi) hi = p.n; });
+    var cov = lo === hi ? lo + ' market' + (lo === 1 ? '' : 's') : lo + '–' + hi + ' markets';
+    var mv2 = Math.round((got[got.length - 1].v - got[0].v) * 10) / 10;
+    var dir = got.length < 2 ? 'one month measured, so there is no movement to report yet'
+      : (Math.abs(mv2) < 0.1 ? 'level across the window'
+        : (mv2 > 0 ? '▲ up ' : '▼ down ') + Math.abs(mv2) + ' points across the window');
+    return sp[0] + ' — ' + sp[1] + '. Each month is its LAST reading, averaged across the ' + cov
+      + ' measured that month; ' + dir + '. A month nobody scanned is left as a gap, never a zero. Source: ' + sp[2] + '.';
+  }
+  /* Drawn in the hours chart's own geometry (same width, same left gutter, same month ticks) so the
+     two panels line up column for column — the whole point of one calendar. */
+  function outChart(pts, key) {
+    var sp = outSpec(key);
+    var W = 720, H = 150, L = 50, Rp = 16, T = 18, B = 26;
+    var iw = W - L - Rp, ih = H - T - B;
+    var got = pts.filter(function (p) { return p.v != null; });
+    var lo = Infinity, hi = -Infinity;
+    got.forEach(function (p) { if (p.v < lo) lo = p.v; if (p.v > hi) hi = p.v; });
+    // a score line is read for its MOVEMENT, so the band is zoomed to the readings and labelled —
+    // never anchored at 0, which flattens a ten-point gain into nothing
+    if (!isFinite(lo)) { lo = 0; hi = 100; }
+    var pad = Math.max(1, (hi - lo) * 0.25);
+    var y0 = Math.max(0, Math.floor(lo - pad)), y1 = Math.min(100, Math.ceil(hi + pad));
+    if (y1 - y0 < 2) { y1 = Math.min(100, y0 + 2); }
+    var stepX = pts.length > 1 ? iw / (pts.length - 1) : 0;
+    var xAt = function (i) { return pts.length > 1 ? L + stepX * i : L + iw / 2; };
+    var yAt = function (v) { return T + ih - ((v - y0) / (y1 - y0)) * ih; };
+    var col = OUT_COL(), h = '';
+    h += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="none"/>';
+    h += '<text x="' + L + '" y="12" font-size="10.5" font-weight="900" fill="' + esc(cvar('--muted') || '#8a94a0')
+      + '" letter-spacing=".05em">' + esc((sp ? sp[0] : '').toUpperCase()) + '</text>';
+    [y0, y1].forEach(function (v) {
+      h += '<line x1="' + L + '" y1="' + yAt(v) + '" x2="' + (W - Rp) + '" y2="' + yAt(v) + '" stroke="' + esc(cvar('--line') || '#E6E6E6') + '" stroke-width="1"/>';
+      h += '<text x="' + (L - 7) + '" y="' + (yAt(v) + 4) + '" text-anchor="end" font-size="10" font-weight="700" fill="' + esc(cvar('--muted') || '#8a94a0') + '">' + v + '</text>';
+    });
+    // EVERY RUN OF MEASURED MONTHS IS ITS OWN PATH — joining across a gap would draw a line through
+    // months nobody measured, which is exactly the invented reading this panel exists to avoid
+    var run = [];
+    var flush = function () {
+      if (run.length > 1) h += '<path d="' + run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.i) + ' ' + yAt(p.v); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      run = [];
+    };
+    pts.forEach(function (p, i) { if (p.v == null) flush(); else run.push({ i: i, v: p.v }); });
+    flush();
+    pts.forEach(function (p, i) {
+      if (p.v == null) return;
+      h += '<circle cx="' + xAt(i) + '" cy="' + yAt(p.v) + '" r="4" fill="' + col + '" stroke="' + esc(cvar('--paper') || '#fff') + '" stroke-width="2">'
+        + '<title>' + esc(monthLabel(p.m) + ' · ' + p.v + ' · ' + p.n + ' market' + (p.n === 1 ? '' : 's') + ' measured') + '</title></circle>';
+    });
+    // the month ticks are the HOURS chart's own, so the columns line up
+    pts.forEach(function (p, i) {
+      if (pts.length > 12 && i % 2) return;
+      h += '<text x="' + xAt(i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' + esc(cvar('--muted') || '#8a94a0') + '">' + esc(monthLabel(p.m)) + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc((sp ? sp[0] : '') + ' by month') + '">' + h + '</svg>';
+  }
+  /** Called at the end of every chart() render — the panel follows the chart, never the reverse. */
+  function outDraw() {
+    outNote();
+    var box = $('coutbox'), st = $('cout-st'), cap = $('cout-cap');
+    if (!box) return;
+    if (!outOn() || !outCal()) { box.hidden = true; st.innerHTML = ''; cap.textContent = ''; return; }
+    var client = outAcct();
+    if (!client) {
+      box.hidden = false;
+      st.innerHTML = '<div class="cout-empty">Pick one account to see what the hours moved — a score averaged across brands is not a number.</div>';
+      cap.textContent = ''; return;
+    }
+    outFetch(client);
+    box.hidden = false;
+    if (!OUTC.data || OUTC.key.split('|')[0] !== client) {
+      st.innerHTML = '<div class="cout-empty">Reading ' + esc(client) + '’s audit history…</div>'; cap.textContent = ''; return;
+    }
+    var ms = outMonths();
+    if (!ms.length) { st.innerHTML = '<div class="cout-empty">No task in view carries a date, so there is no calendar to hang this on.</div>'; cap.textContent = ''; return; }
+    var pts = outSeries(ms, COUT);
+    if (!pts.filter(function (p) { return p.v != null; }).length) {
+      var why = ((OUTC.data.sources || []).filter(function (x) { return x.k === COUT || (x.k === 'feeds' && !x.ok); })[0] || {}).why;
+      st.innerHTML = '<div class="cout-empty">' + esc((outSpec(COUT) || ['this metric'])[0]) + ' — nothing to plot for '
+        + esc(client) + ': ' + esc(why || 'no reading falls in these months') + '.</div>';
+      cap.textContent = ''; return;
+    }
+    st.innerHTML = outChart(pts, COUT);
+    cap.textContent = outCaption(pts, COUT);
+  }
+
   function chart() {
     // the control only exists where it means something, and is never left ticked-but-inert
     var cul = $('cuntag-l'); if (cul) cul.hidden = !tagDim();
@@ -2905,6 +3086,7 @@ window.addEventListener('load',restore);
     // them — a fold may cost a click, it may not cost the truth
     if (tagDim() && $('cuntag').checked) basis.push('not yet tagged hidden');
     if ($('ctab').checked) basis.push('table below');
+    if (outOn()) basis.push((outSpec(COUT) || ['what moved'])[0].toLowerCase() + (outCal() && outAcct() ? ' below' : ' \u2014 not drawn'));
     $('cwsub').textContent = (nested()
       ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
         + (tree.length === 1 ? 'group' : 'groups')
@@ -2917,7 +3099,7 @@ window.addEventListener('load',restore);
         : FT.length
           ? 'Every row in this search is still untagged, and untagged rows are hidden on a tag split \u2014 untick \u201cHide Not yet tagged\u201d to see them.'
           : 'No task matches this search, so there is nothing to chart.') + '</div>';
-      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); return;
+      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); outDraw(); return;
     }
     var sm = null, sc = null;
     if (CFORM === 'line') { sm = lineData(); stage.innerHTML = lineChart(sm); }
@@ -2952,6 +3134,7 @@ window.addEventListener('load',restore);
     ctable(g, tree, sm);
     wireTips();
     wireSmall();
+    outDraw();
   }
 
   /* What the nesting did to the numbers, said out loud. A capped level and a multi-valued level
@@ -3879,20 +4062,40 @@ window.addEventListener('load',restore);
   /* SVG → PNG. Serialised with the computed colours already inlined (the chart draws with
      resolved values, never CSS variables), so the download looks like what is on screen in
      either theme. */
+  /* ONE IMAGE, BOTH PANELS (Ray, 28 Sep 2026 — these charts go "straight into a client deck"):
+     the outcome panel is its own svg, so the export has to stack them. It is rasterised at the same
+     2000px width and the same scale, under the hours, so the months line up in the slide exactly as
+     they do on screen — a deck slide where the two calendars disagreed would be worse than one
+     panel. An absent or empty panel simply does not contribute a strip. */
+  function pngSvgs() {
+    var out = [], a = $('cstage').querySelector('svg');
+    if (a) out.push(a);
+    var box = $('coutbox'), b = box && !box.hidden ? box.querySelector('svg') : null;
+    if (b) out.push(b);
+    return out;
+  }
   function png() {
-    var svg = $('cstage').querySelector('svg'); if (!svg) return;
-    var vb = (svg.getAttribute('viewBox') || '0 0 720 330').split(/\s+/).map(Number);
-    var W = 2000, H = Math.round(W * (vb[3] / vb[2])) + 96;
-    var clone = svg.cloneNode(true);
-    clone.setAttribute('width', vb[2]); clone.setAttribute('height', vb[3]);
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    var blob = new Blob(['<?xml version="1.0"?>' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
-    var url = URL.createObjectURL(blob), img = new Image();
-    img.onload = function () {
+    var svgs = pngSvgs(); if (!svgs.length) return;
+    var boxes = svgs.map(function (v) {
+      var vb = (v.getAttribute('viewBox') || '0 0 720 330').split(/\s+/).map(Number);
+      return { svg: v, w: vb[2] || 720, h: vb[3] || 330 };
+    });
+    var W = 2000, sc = W / boxes[0].w;
+    var strips = boxes.map(function (b) { return Math.round(b.h * sc); });
+    var H = strips.reduce(function (t, x) { return t + x; }, 0) + 96;
+    var urls = boxes.map(function (b) {
+      var clone = b.svg.cloneNode(true);
+      clone.setAttribute('width', b.w); clone.setAttribute('height', b.h);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      return URL.createObjectURL(new Blob(['<?xml version="1.0"?>' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+    });
+    var imgs = [], done = 0;
+    var draw = function () {
       var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
       var cx = cv.getContext('2d');
       cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
-      cx.drawImage(img, 0, 0, W, H - 96);
+      var y = 0;
+      imgs.forEach(function (im, i) { cx.drawImage(im, 0, y, W, strips[i]); y += strips[i]; });
       cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
       cx.fillText((CFORM === 'small' && CEXP != null ? String(CEXP) + ' · ' : '')
         + (CMEAS === 'hours' ? 'Billable vs non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours') + ' · ' + (nested()
@@ -3903,15 +4106,25 @@ window.addEventListener('load',restore);
         + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : '')
         + (CMEAS !== 'hours' ? ' · ' + measWord() + ' hours only' : '')
         + (labBasis() ? ' · ' + labBasis() : '')
-        + (hideUntag() ? ' · untagged rows not shown' : ''), 40, H - 22);
-      URL.revokeObjectURL(url);
+        + (hideUntag() ? ' · untagged rows not shown' : '')
+        + (imgs.length > 1 ? ' · under: ' + (outSpec(COUT) || ['what moved'])[0] + ' for ' + outAcct() : ''), 40, H - 22);
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
       var a = document.createElement('a');
       a.href = cv.toDataURL('image/png');
-      a.download = 'feedspark-billable-' + [CDIM, CDIM2, CDIM3].filter(Boolean).join('-') + '-' + D.at + '.png';
+      a.download = 'feedspark-billable-' + [CDIM, CDIM2, CDIM3].filter(Boolean).join('-')
+        + (outOn() && imgs.length > 1 ? '-' + COUT : '') + '-' + D.at + '.png';
       a.click();
     };
-    img.onerror = function () { URL.revokeObjectURL(url); toast('Could not render the PNG — use ⎘ Copy table instead'); };
-    img.src = url;
+    var fail = function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      toast('Could not render the PNG \u2014 use \u238b Copy table instead');
+    };
+    urls.forEach(function (u, i) {
+      var im = new Image();
+      im.onload = function () { imgs[i] = im; if (++done === urls.length) draw(); };
+      im.onerror = fail;
+      im.src = u;
+    });
   }
 
   function csv() {
@@ -4532,6 +4745,9 @@ window.addEventListener('load',restore);
       if (mvv && MEASURES.indexOf(mvv) >= 0) CMEAS = mvv;
       var lvv = qp.get('lab') || localStorage.getItem('fcc-tm-lab');
       if (lvv && LABS.some(function (o) { return o.v === lvv; })) CLAB = lvv;
+      var ovv = qp.get('out'); if (ovv == null) ovv = localStorage.getItem('fcc-tm-out');
+      if (ovv && ['gs', 'q', 'air'].indexOf(ovv) >= 0) COUT = ovv;
+      if ($('cout')) $('cout').value = COUT;
       $('cmeas').value = CMEAS;
       // which of Tasks / Client tickets / Accounts was open, and whether the table was showing
       // under the chart — both painted controls, not just chart state, so both get the same rule
@@ -4595,6 +4811,13 @@ window.addEventListener('load',restore);
       try { localStorage.setItem('fcc-tm-lab', CLAB); } catch (e) {}
       chart();
     };
+    /* per device like every other reading preference here — which second plot one screen wants
+       under its hours is not a team fact, and 🔗 Link is how it travels to a colleague */
+    $('cout').onchange = function () {
+      COUT = $('cout').value;
+      try { localStorage.setItem('fcc-tm-out', COUT); } catch (e) {}
+      chart();
+    };
 
     // a per-DEVICE preference, like the theme and the density toggles — it describes one screen
     try { var lgv = localStorage.getItem('fcc-tm-cleg'); if (lgv !== null) $('cleg').checked = lgv === '1'; } catch (e) {}
@@ -4621,6 +4844,7 @@ window.addEventListener('load',restore);
       if (CLAB !== 'hours') u.searchParams.set('lab', CLAB); else u.searchParams.delete('lab');
       if (CDIM2) u.searchParams.set('dim2', CDIM2); else u.searchParams.delete('dim2');
       if (CDIM3) u.searchParams.set('dim3', CDIM3); else u.searchParams.delete('dim3');
+      if (COUT) u.searchParams.set('out', COUT); else u.searchParams.delete('out');
       if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
       copy(u.toString(), 'Link copied — it reopens this exact view');
     };

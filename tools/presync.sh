@@ -149,6 +149,7 @@ node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"
 
 echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine parity)"
+node tools/test_outcomes.mjs >/dev/null
 node tools/test_hoursbadge.mjs >/dev/null
 echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
 
@@ -287,6 +288,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
   NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
     echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
+  NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
+    echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }

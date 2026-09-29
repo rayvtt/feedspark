@@ -11161,6 +11161,14 @@
     {"name": "Catalogue: optimised vs not reads FeedHero's own optimisation cut", "file": "docs/FeedSpark_Catalog.html", "pattern": "var LIFTF = [['Title_optimisation_status', 'Titles'], ['Keyword_optimisation_status', 'Keywords']];", "pr": 569},
     {"name": "Catalogue: optimised vs not is labelled a comparison, not a test", "file": "docs/FeedSpark_Catalog.html", "pattern": "side by side, not a controlled test", "pr": 569},
     {"name": "Catalogue: the fee check stays on the device", "file": "docs/FeedSpark_Catalog.html", "pattern": "function feeSet() { lsSet('fcc-cat-fee',", "pr": 569},
-    {"name": "Catalogue: the comparison table is .vs, never the completeness bar's .cmp", "file": "docs/FeedSpark_Catalog.html", "pattern": "h += '<table class=\"vs\"><thead>", "pr": 569}
+    {"name": "Catalogue: the comparison table is .vs, never the completeness bar's .cmp", "file": "docs/FeedSpark_Catalog.html", "pattern": "h += '<table class=\"vs\"><thead>", "pr": 569},
+    {"name": "what moved: the reducer that turns days into months", "file": "cloudflare/feedspark-deck/src/outcomes.js", "pattern": "export function monthlyClose", "pr": 0},
+    {"name": "what moved: a brand figure carries its market coverage", "file": "cloudflare/feedspark-deck/src/outcomes.js", "pattern": "export function brandMonthly", "pr": 0},
+    {"name": "what moved: the route, scored by labelguard's own histSeries", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "path === '/api/outcomes'", "pr": 0},
+    {"name": "what moved: the panel under the hours chart", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function outDraw()", "pr": 0},
+    {"name": "what moved: it needs a calendar to share", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function outCal()", "pr": 0},
+    {"name": "what moved: a gap breaks the line, never joined through", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (p.v == null) flush();", "pr": 0},
+    {"name": "what moved: both panels share one column, so the calendars line up", "file": "docs/FeedSpark_TaskManager.html", "pattern": ".cmain{flex:1 1 460px", "pr": 0},
+    {"name": "what moved: the PNG stacks both panels for the deck slide", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function pngSvgs()", "pr": 0}
   ]
 }
