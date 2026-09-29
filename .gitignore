@@ -16,3 +16,4 @@ __pycache__/
 # cron). No client hours, task titles or contact addresses are committed — they live in KV only.
 # Anything a session pulls from the MCP while working on the module stays local.
 ops/reports/
+superdry-slides/
