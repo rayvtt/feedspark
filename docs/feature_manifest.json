@@ -11126,6 +11126,11 @@
       "file": "docs/FeedSpark_AIVisibility.html",
       "pattern": "// a question cut off by ⏹ Stop is not a failed answer — it stays unasked and the run drops it",
       "pr": 561
-    }
+    },
+    {"name": "Catalogue: price band on the ROAS-by list", "file": "docs/FeedSpark_Catalog.html", "pattern": "['Price_group', 'price band']", "pr": 0},
+    {"name": "Catalogue: a product sits in a price band off FeedHero's own rows", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));", "pr": 0},
+    {"name": "Catalogue: a cut FeedHero has not set up is said, never a red error", "file": "docs/FeedSpark_Catalog.html", "pattern": "Not set up in FeedHero for this market: ", "pr": 0},
+    {"name": "Catalogue engine: a price band is a range read off its label, never guessed", "file": "docs/catalog_engine.js", "pattern": "function priceGroupRange(label)", "pr": 0},
+    {"name": "Catalogue engine: the price FeedHero bands on is read off the data", "file": "docs/catalog_engine.js", "pattern": "function priceGroupBasis(bands, fx)", "pr": 0}
   ]
 }
