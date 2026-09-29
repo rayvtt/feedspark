@@ -11048,6 +11048,84 @@
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "function covShade(n, mx)",
       "pr": 560
+    },
+    {
+      "name": "AI visibility: the five surfaces, each switched on by its own secret",
+      "file": "cloudflare/feedspark-deck/src/aivis.js",
+      "pattern": "{ k: 'aimode', n: 'Google AI Mode', by: 'Google · read through SerpApi', key: 'SERPAPI_KEY' }",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: Claude asked with web search called directly, located in the market",
+      "file": "cloudflare/feedspark-deck/src/aivis.js",
+      "pattern": "const tool = { type: 'web_search_20260209', name: 'web_search', max_uses: 4, allowed_callers: ['direct'] };",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: a paused Claude turn is sent back unchanged",
+      "file": "cloudflare/feedspark-deck/src/aivis.js",
+      "pattern": "history = history.concat([{ role: 'assistant', content: acc.content() }]);",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: ChatGPT always gets the market's location (it falls back to the US)",
+      "file": "cloudflare/feedspark-deck/src/aivis.js",
+      "pattern": "// the tool's location falls back to the UNITED STATES when none is sent — always send the market's",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: Perplexity through the Agent API (Sonar chat completions ended)",
+      "file": "cloudflare/feedspark-deck/src/aivis.js",
+      "pattern": "'https://api.perplexity.ai/v1/agent'",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: the route streams NDJSON with a heartbeat",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const hb = setInterval(() => { send({ t: 'ping' }); }, 10000);",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: asking and saving need the aivis grant",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const granted = !!(acc.owner || moduleAllowed(acc.modules, 'aivis'));",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: a run's headline rides the KV key's metadata",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "await env.EDITS.put('aivisrun:' + client + ':' + run.id, JSON.stringify(run), { metadata: meta",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: a branded question never counts toward visibility",
+      "file": "docs/aivis_engine.js",
+      "pattern": "// a question that names the brand is BRANDED — asked for what the engine says, never counted as visibility",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: a surface that showed no answer is not 'not named'",
+      "file": "docs/aivis_engine.js",
+      "pattern": "if (a.none) { o.none++; return; }",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: live cells updated in place so a click lands mid-stream",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "// the button is UPDATED in place, never replaced: a cell repainted on every streamed word must still take a click",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: mid-run saves throttled + serialized",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "function saveRun(final) { saveQ = saveQ.then(function () { return saveNow(final); }); return saveQ; }",
+      "pr": 561
+    },
+    {
+      "name": "AI visibility: a stopped question is dropped, never saved as a failure",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "// a question cut off by ⏹ Stop is not a failed answer — it stays unasked and the run drops it",
+      "pr": 561
     }
   ]
 }

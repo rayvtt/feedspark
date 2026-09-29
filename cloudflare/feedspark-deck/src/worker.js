@@ -49,6 +49,7 @@ import * as TMM from "./tmmcp.js";
 import * as ROAS from "./roas.js";
 // Rules + Stock management (Ray, 28 Sep 2026) — FeedHero's rule_report off the SAME MCP + token as ROAS
 import * as RULES from "./rules.js";
+import * as AIVIS from "./aivis.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -111,6 +112,11 @@ import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
 // engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
 import CATALOG_PAGE from "../../../docs/FeedSpark_Catalog.html";
 import CATALOG_ENGINE_SRC from "../../../docs/catalog_engine.js";
+// /aivis (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time"): does a brand, its
+// site and its products turn up when a shopper asks ChatGPT, Google AI Mode / AI Overviews, Perplexity or
+// Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
+import AIVIS_PAGE from "../../../docs/FeedSpark_AIVisibility.html";
+import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -266,6 +272,7 @@ const PAGES = {
   '/rules':       { html: RULES_MOD_PAGE, slug: 'rules' },
   '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
   '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
+  '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
@@ -1429,6 +1436,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/catalog/engine.js' && request.method === 'GET') {
       return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/aivis/engine.js' && request.method === 'GET') {
+      return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -2691,6 +2701,129 @@ async function route(request, env, ctx) {
       return json(Object.assign(base, { families: RULES.FAMILIES, mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, sev: RULES.SEV,
         estate: RULES.estate(rows), brands: RULES.brandsOf(rows), findings,
         markets: rows.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) }));
+    }
+
+    // ---- AI VISIBILITY (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time") ----
+    // One shopper question → one AI answer engine with its live web search on (src/aivis.js), streamed back as
+    // NDJSON while it happens; the page reads the answer (docs/aivis_engine.js) and saves the run. KV only —
+    // aiviscfg:<client> (questions, competitors, domains) and aivisrun:<client>:<id> (every answer, with the
+    // run's headline in the key's METADATA so the history lists without reading a value). Scoped per signin;
+    // asking and saving need the `aivis` grant, because asking spends money on the connected surfaces.
+    //   GET  /api/aivis                    → surfaces (which secrets are set — names, never values), markets, every brand + its last run
+    //   GET  /api/aivis?client=[&market=]  → the brand's setup + its run history + the latest run in full
+    //   GET  /api/aivis?client=&run=       → one stored run in full
+    //   PUT  /api/aivis?client=            → save the setup
+    //   PUT  /api/aivis/run?client=        → save a run (the page saves as answers land, then once more when done)
+    //   DELETE /api/aivis/run?client=&run= → drop a run (the person who ran it, or the owner)
+    //   POST /api/aivis/ask                → ask ONE question on ONE surface — streamed NDJSON, heartbeat every 10s
+    if (path === '/api/aivis' || path.startsWith('/api/aivis/')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const granted = !!(acc.owner || moduleAllowed(acc.modules, 'aivis'));
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (client && (client.indexOf(':') >= 0 || client.indexOf('|') >= 0)) return json({ ok: false, error: 'bad client' }, 400);
+      if (client && !inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
+      const RUN_ID = /^r\d{13}[a-z0-9]{0,6}$/;
+      const listAll = async (prefix, max) => {
+        const keys = []; let cursor;
+        for (let i = 0; i < 5; i++) {
+          const l = await env.EDITS.list({ prefix, cursor, limit: 1000 });
+          keys.push(...l.keys);
+          if (l.list_complete || !l.cursor || keys.length >= max) break;
+          cursor = l.cursor;
+        }
+        return keys;
+      };
+      const runOf = (k) => {
+        const m = k.metadata || {}, parts = k.name.split(':');
+        return { id: parts[parts.length - 1], client: parts[1], at: m.at || 0, by: m.by || '', mkt: m.mkt || '', sv: m.sv || [], n: m.n || 0, final: !!m.f, sum: m.sum || null };
+      };
+      if (path === '/api/aivis' && request.method === 'GET' && !client) {
+        const brands = {};
+        (await feedRoster(env)).filter((r) => AIVIS.aivisMarket(r.mkt) && inScope(r.client)).forEach((r) => {
+          (brands[r.client] = brands[r.client] || { client: r.client, markets: [], runs: 0, last: null }).markets.push(r.mkt);
+        });
+        (await listAll('aivisrun:', 5000)).map(runOf).forEach((r) => {
+          const b = brands[r.client]; if (!b) return;
+          b.runs++; if (!b.last || r.at > b.last.at) b.last = r;
+        });
+        return json({ ok: true, surfaces: AIVIS.surfaceStatus(env), markets: AIVIS.MARKETS, brands: Object.keys(brands).sort().map((k) => brands[k]), granted, owner: !!acc.owner });
+      }
+      if (path === '/api/aivis' && request.method === 'GET') {
+        const runId = url.searchParams.get('run') || '';
+        if (runId) {
+          if (!RUN_ID.test(runId)) return json({ ok: false, error: 'bad run id' }, 400);
+          const r = await env.EDITS.get('aivisrun:' + client + ':' + runId, 'json');
+          return r ? json({ ok: true, run: r }) : json({ ok: false, error: 'no such run' }, 404);
+        }
+        const cfg = await env.EDITS.get('aiviscfg:' + client, 'json');
+        const runs = (await listAll('aivisrun:' + client + ':', 2000)).map(runOf).sort((a, b) => b.at - a.at);
+        const want = String(url.searchParams.get('market') || '').toLowerCase();
+        const pick = runs.find((r) => !want || r.mkt === want);
+        const last = pick ? await env.EDITS.get('aivisrun:' + client + ':' + pick.id, 'json') : null;
+        return json({ ok: true, client, cfg: cfg || null, runs: runs.slice(0, 150), last, surfaces: AIVIS.surfaceStatus(env), granted });
+      }
+      if (!granted && request.method !== 'GET') return json({ ok: false, error: 'AI visibility is not granted to this signin' }, 403);
+      if (path === '/api/aivis' && request.method === 'PUT') {
+        if (!client) return json({ ok: false, error: 'client required' }, 400);
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const cfg = Object.assign(AIVIS.sanitizeCfg(b && b.cfg), { at: Date.now(), by: who(request) });
+        await env.EDITS.put('aiviscfg:' + client, JSON.stringify(cfg));
+        logActivity(ctx, env, request, 'aivis-setup', client);
+        return json({ ok: true, cfg });
+      }
+      if (path === '/api/aivis/run' && request.method === 'PUT') {
+        if (!client) return json({ ok: false, error: 'client required' }, 400);
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const run = AIVIS.sanitizeRun(b && b.run);
+        if (!run) return json({ ok: false, error: 'bad run' }, 400);
+        run.client = client; run.by = who(request);
+        let meta = { at: run.at, by: run.by.slice(0, 60), mkt: run.mkt, sv: run.sv, n: run.cells.length, f: run.final ? 1 : 0, sum: AIVIS.sanitizeSum(b.sum) };
+        if (JSON.stringify(meta).length > 1000) meta = Object.assign(meta, { sum: { all: meta.sum.all, by: {} } });   // KV metadata is capped at 1 KB
+        await env.EDITS.put('aivisrun:' + client + ':' + run.id, JSON.stringify(run), { metadata: meta, expirationTtl: 60 * 60 * 24 * 400 });
+        if (run.final) logActivity(ctx, env, request, 'aivis-run', client + ' ' + run.mkt.toUpperCase() + ' · ' + run.cells.length + ' answers');
+        return json({ ok: true, id: run.id });
+      }
+      if (path === '/api/aivis/run' && request.method === 'DELETE') {
+        const id = url.searchParams.get('run') || '';
+        if (!client || !RUN_ID.test(id)) return json({ ok: false, error: 'client and run required' }, 400);
+        const key = 'aivisrun:' + client + ':' + id;
+        const k = ((await env.EDITS.list({ prefix: key, limit: 5 })).keys || []).find((x) => x.name === key);
+        if (!k) return json({ ok: false, error: 'no such run' }, 404);
+        if (!acc.owner && (k.metadata || {}).by !== who(request)) return json({ ok: false, error: 'only the person who ran it, or the owner, can remove a run' }, 403);
+        await env.EDITS.delete(key);
+        logActivity(ctx, env, request, 'aivis-run-delete', client + ' ' + id);
+        return json({ ok: true });
+      }
+      if (path === '/api/aivis/ask' && request.method === 'POST') {
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const c2 = String((b && b.client) || '').slice(0, 60), mkt = String((b && b.market) || '').toLowerCase();
+        if (!c2 || c2.indexOf(':') >= 0 || !inScope(c2)) return json({ ok: false, error: 'out of scope' }, 403);
+        if (!AIVIS.aivisMarket(mkt)) return json({ ok: false, error: 'not a Google Shopping market this tracker asks about' }, 400);
+        const s = String((b && b.s) || ''), q = String((b && b.q) || '').slice(0, 400);
+        const { readable, writable } = new TransformStream();
+        const w = writable.getWriter(), enc = new TextEncoder();
+        let open = true;
+        const send = (o) => (open ? w.write(enc.encode(JSON.stringify(o) + '\n')).catch(() => { open = false; }) : Promise.resolve());
+        const work = (async () => {
+          // a heartbeat keeps the connection alive while a surface that answers whole (ChatGPT, SerpApi) thinks
+          const hb = setInterval(() => { send({ t: 'ping' }); }, 10000);
+          try {
+            await send({ t: 'start', s, model: AIVIS.modelOf(env, s) });
+            const r = await AIVIS.ask(fetch, env, { s, q, mkt, now: Date.now() }, (ev) => { send(ev); });
+            await send({ t: 'done', r });
+          } catch (e) {
+            await send({ t: 'done', r: { ok: false, err: String((e && e.message) || e).slice(0, 200) } });
+          } finally {
+            clearInterval(hb);
+            open = false;
+            try { await w.close(); } catch (e) {}
+          }
+        })();
+        if (ctx && ctx.waitUntil) ctx.waitUntil(work);
+        return new Response(readable, { headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store', ...CORS } });
+      }
+      return json({ ok: false, error: 'not found' }, 404);
     }
 
     if (path === '/api/gmail/intake' && request.method === 'GET') {

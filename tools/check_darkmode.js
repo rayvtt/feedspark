@@ -49,6 +49,9 @@ const RULES_STUB = require('./rules_stub.js').stubLines();
 // fetch — tools/catalog_stub.js hands over a SYNTHETIC set (behind a guard on the page's file name,
 // so no other page is served an engine it never asked for) so the table, charts and matrix render
 const CATALOG_STUB = require('./catalog_stub.js').stubLines();
+// /aivis reads stored AI answers from KV — tools/aivis_stub.js hands over a SYNTHETIC book (behind a guard on the
+// page's file name) pushed through the real reading engine, so the grid, charts and history render
+const AIVIS_STUB = require('./aivis_stub.js').stubLines();
 // a page that loads the shared stylesheet (/design/fcc.css) is opened from file:// here, where
 // that URL resolves to nothing — inline the SAME slice the worker serves so the page is
 // checked as it looks live
@@ -58,6 +61,7 @@ const STUB = `try{localStorage.setItem('fcc-theme','dark');}catch(e){}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
 ${CATALOG_STUB}
+${AIVIS_STUB}
 ${ROAS_STUB}
 ${RULES_STUB}
  if(url.indexOf('/api/presence')>=0)return j({ok:true,me:'ray@feedspark.com',owner:true,now:Date.now(),users:[],roster:[]});
