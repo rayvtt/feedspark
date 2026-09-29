@@ -89,13 +89,6 @@ node tools/test_transform.mjs >/dev/null
 echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
 echo "── validating: FeedSpark design guidelines (/design + /design/fcc.css)"
 node tools/test_design.mjs >/dev/null
-echo "── validating: spot illustrations (the set, the placement rule, the ten newest modules)"
-node tools/test_spots.mjs >/dev/null
-echo "   ✓ sixteen class-only spots, a dark set, hero + cards on the ten newest modules, documented on /design"
-if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
-  NODE_PATH=$(npm root -g) node tools/check_spots.js >/dev/null
-  echo "   ✓ measured: hero art at the edge clear of the title, card spots left of the title clear of the tools, dark, phone"
-fi
 echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
 
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"

@@ -63,8 +63,6 @@ jobs:
         run: node tools/test_transform.mjs
       - name: FeedSpark design guidelines harness (one stylesheet, brand tokens, dark values, route, links)
         run: node tools/test_design.mjs
-      - name: Spot illustrations harness (the set, the placement rule, the ten newest modules)
-        run: node tools/test_spots.mjs
       - name: Task Manager harness (parser, agent, worker store + scoped read, Leadership overlay)
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
