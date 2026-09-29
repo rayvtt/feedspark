@@ -146,6 +146,7 @@ window.addEventListener('load',restore);
   .mrow button:disabled{opacity:.3;cursor:default}
   /* rows shared by the list modules: a label, a bar, a figure */
   .mlist{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) auto;gap:6px 10px;align-items:center;font-size:12px}
+  #m-kept .mlist .l,#m-kept .mlist .b{cursor:default}
   .mlist .l{font-weight:800;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
   .mlist .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   .mlist .v small{font-weight:700;color:var(--muted);margin-left:4px}
@@ -569,6 +570,19 @@ window.addEventListener('load',restore);
         <select class="fld agg" id="depth-f" aria-label="Measure"></select></div>
       <div class="mbody" id="depth-body"><div class="empty2">Reading the feed…</div></div>
     </section>
+    <section class="card mod" id="m-avail" data-mod="avail">
+      <div class="chead"><div class="sp"><h3>Availability</h3><p class="ch" id="avail-sub">What the feed tells Google about stock, product by product.</p></div></div>
+      <div class="mbody" id="avail-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-stock" data-mod="stock">
+      <div class="chead"><div class="sp"><h3>Stock controls</h3><p class="ch" id="stock-sub">The market’s stock rules in FeedHero, from Stock management.</p></div>
+        <a class="btn" id="stock-to" href="/stock" title="Open this market in Stock management">Stock ↗</a></div>
+      <div class="mbody" id="stock-body"><div class="empty2">Reading the stock rules…</div></div>
+    </section>
+    <section class="card mod" id="m-kept" data-mod="kept">
+      <div class="chead"><div class="sp"><h3>Ad spend kept off</h3><p class="ch" id="kept-sub">Spend the stock rules keep off products the shopper cannot buy.</p></div></div>
+      <div class="mbody" id="kept-body"><div class="empty2">Reading the stock rules…</div></div>
+    </section>
   </div>
 
   <section class="card" id="cat" data-m-digest="products">
@@ -628,7 +642,7 @@ window.addEventListener('load',restore);
   function money(a, cur) {
     if (a == null || !isFinite(a)) return '—';
     var v = a.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), s = SYM[cur];
-    return s != null ? s + v : (cur ? v + ' ' + cur : v);
+    return s != null ? s + v : cur && !/^[A-Z]{3}$/.test(cur) ? cur + v : (cur ? v + ' ' + cur : v);
   }
   function roasTxt(v) { return v == null || !isFinite(v) ? '—' : Math.round(v).toLocaleString('en-GB') + '%'; }
   function ago(d) { if (d == null) return '—'; if (d < 1) return 'today'; if (d < 14) return d + ' d'; if (d < 60) return Math.round(d / 7) + ' wk'; if (d < 730) return Math.round(d / 30.44) + ' mo'; return (Math.round(d / 36.5) / 10) + ' y'; }
@@ -665,7 +679,7 @@ window.addEventListener('load',restore);
   var S = {
     gen: 0, ctl: null, roster: {}, client: '', mkt: '', chan: 'google', entry: null,
     prods: [], fx: [], ixO: new Map(), ixI: new Map(), grp: null, rr: null,
-    out: { st: 'idle' }, m: { st: 'idle' }, roas: { st: 'idle', segs: {} },
+    out: { st: 'idle' }, m: { st: 'idle' }, roas: { st: 'idle', segs: {} }, stk: { st: 'idle' },
     codes: [], comp: [], att: null, linAt: 0, linDone: false, mx: null, mxw: null, mxN: 0, sum: null,
     view: [], sort: { k: '', d: 1 }, q: '', tab: 'all', quick: {}, facet: null, counts: null,
     cols: lsGet('fcc-cat-cols', null), dens: lsGet('fcc-cat-dens', 'm'), mode: lsGet('fcc-cat-mode', 'table'),
@@ -821,7 +835,7 @@ window.addEventListener('load',restore);
     $('ls-body').innerHTML = '<div class="empty2">Joining the master feed…</div>';
     $('lm-body').innerHTML = '<div class="empty2">The matrix fills in once the master feed is joined.</div>';
     layout(); refresh(true);
-    loadOutput(g); loadMaster(g, 0); loadRoas(g);
+    loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g);
   }
   function loadOutput(g) {
     fetch('/api/feed/proxy' + mq(), sig()).then(function (res) {
@@ -1194,7 +1208,7 @@ window.addEventListener('load',restore);
     var p = S.prods[i], x = S.fx[i];
     if (F.k === 'dob') return x.dob != null && new Date(x.dob).toISOString().slice(0, 7) === F.v;
     if (F.k === 'lin') { var c = S.codes[i]; return !!c && F.codes.indexOf(c.charAt(F.a)) >= 0; }
-    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth') return passModFacet(F, i, x);
+    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth' || F.k === 'avail') return passModFacet(F, i, x);
     if (F.k === 'roas') {
       if (F.agg === 'Category') { var h = roasFor(i); return !!h && !h.miss && (E.pathKey(h.parts.join(' > ')) + ' >').indexOf(E.pathKey(F.v) + ' >') === 0; }
       if (F.agg === 'Price_type') return /sale/i.test(F.v) ? x.onSale : !x.onSale;
@@ -1499,7 +1513,8 @@ window.addEventListener('load',restore);
   // spaced also, and generate 4-5 more interesting views"). Nine cards of ONE size on a 3-column grid; each is a module the
   // viewer can hide or move (per device, fcc-cat-mods), and every bar in every one of them lists its products below.
   var MODS = [['arr', 'New arrivals'], ['roas', 'ROAS by segment'], ['did', 'What FeedSpark did'], ['gain', 'Data FeedSpark added'],
-    ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth']];
+    ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'],
+    ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off']];
   function modState() { var m = lsGet('fcc-cat-mods', null) || {}; var ord = (m.order || []).filter(function (k) { return MODS.some(function (x) { return x[0] === k; }); }); MODS.forEach(function (x) { if (ord.indexOf(x[0]) < 0) ord.push(x[0]); }); return { order: ord, off: m.off || {} }; }
   function applyMods() {
     var st = modState(), shown = 0;
@@ -1525,7 +1540,7 @@ window.addEventListener('load',restore);
   $('mods-p').addEventListener('change', function (e) { var k = e.target.getAttribute('data-mod-on'); if (!k) return; var st = modState(); if (e.target.checked) delete st.off[k]; else st.off[k] = 1; saveMods(st); });
   document.addEventListener('click', function (e) { if (!e.target.closest('.pop')) { $('mods-p').hidden = true; $('mods-b').setAttribute('aria-expanded', 'false'); } });
 
-  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth].forEach(safe); }
+  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth, renderAvail, renderStock, renderKept].forEach(safe); }
   function facetId() { return S.facet ? S.facet.id || '' : ''; }
   function toggleFacet(f) { setFacet(S.facet && S.facet.id && S.facet.id === f.id ? null : f); }
   function modEmpty(id, msg) { $(id).innerHTML = '<div class="empty2">' + esc(msg) + '</div>'; }
@@ -1663,6 +1678,78 @@ window.addEventListener('load',restore);
   }
   $('depth-f').addEventListener('change', function () { lsSet('fcc-cat-depth', this.value); if (S.facet && S.facet.k === 'depth') setFacet(null); else renderDepth(); });
 
+
+  // ---- STOCK CONTROL (Ray, 29 Sep 2026: "add stock control in the catalog modules as well, pull from stock management
+  // module"). Three modules off ONE read of GET /api/rules/stock — the SAME route, the SAME engine output (heldBack on every
+  // row, the market's Google Ads price for a click) /stock draws, so the two pages can never tell a market two ways.
+  // The market is matched on the wired feed's own FeedHero company id, never guessed from a name.
+  var AVB = [['in_stock', 'In stock', 'var(--band-green)'], ['preorder', 'Pre-order', 'var(--chart-1)'], ['backorder', 'Backorder', 'var(--band-yellow)'], ['out_of_stock', 'Out of stock', 'var(--band-red)'], ['none', 'Not set', 'var(--lk)']];
+  function avWord(v) { return (AVB.filter(function (b) { return b[0] === v; })[0] || [0, v])[1]; }
+  function stockHref(q) {
+    var m = S.stk.m, u = '/stock?brand=' + encodeURIComponent(m ? m.client : S.client);
+    if (m) u += '&market=' + encodeURIComponent(m.market);
+    return q ? u + '&q=' + encodeURIComponent(q) : u;
+  }
+  function loadStock(g) {
+    var e = S.entry;
+    S.stk = { st: 'loading' }; renderStock(); renderKept();
+    if (!e || !e.cmpid) { S.stk = { st: 'none', why: 'This feed has no FeedHero company on the roster, so its stock rules cannot be read.' }; renderStock(); renderKept(); return; }
+    var brand = (e.roas && e.roas.client) || S.client;
+    fetch('/api/rules/stock?brand=' + encodeURIComponent(brand), sig()).then(function (res) { return res.json(); }).then(function (j) {
+      if (g !== S.gen) return;
+      if (!j || !j.ok) { S.stk = { st: 'error', why: (j && j.error) || 'unavailable' }; }
+      else {
+        var m = (j.markets || []).filter(function (x) { return String(x.cmpid) === String(e.cmpid); })[0] || null;
+        var mech = {}; (j.mechanisms || []).forEach(function (x) { mech[x.k] = x.label; });
+        var scn = (j.sv && j.sv.scenarios) || [{ k: 'cons', label: 'Conservative', pct: 5 }, { k: 'aggr', label: 'Aggressive', pct: 10 }];
+        S.stk = m ? { st: 'ok', m: m, mech: mech, scn: scn, days: (j.sv && j.sv.days) || 30 } : { st: 'none', why: 'Stock management has not read this market’s rules yet.' };
+      }
+      $('stock-to').href = stockHref(''); renderStock(); renderKept();
+    }).catch(function (er) { if (g !== S.gen || (er && er.name === 'AbortError')) return; S.stk = { st: 'error', why: 'unreachable' }; renderStock(); renderKept(); });
+  }
+  // 7 · AVAILABILITY — the feed's own word per product; every bar lists its products
+  function renderAvail() {
+    if (!S.prods.length) { modEmpty('avail-body', 'Reading the feed…'); return; }
+    var N = S.prods.length, c = {};
+    S.fx.forEach(function (x) { var v = AV_ORD[x.av] != null ? x.av : 'none'; c[v] = (c[v] || 0) + 1; });
+    var rows = AVB.filter(function (b) { return c[b[0]] || b[0] === 'in_stock' || b[0] === 'out_of_stock'; });
+    var oos = c.out_of_stock || 0;
+    $('avail-body').innerHTML = modList(rows.map(function (b) {
+      var n = c[b[0]] || 0;
+      return { id: 'avail:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(n) + ' products (' + pc(n, N) + ') · click to list them', bars: [{ w: n / N * 100, c: b[2] }], v: n0(n), sub: pc(n, N) };
+    }), { foot: '<span><b>' + n0(oos) + '</b> out of stock product' + (oos === 1 ? '' : 's') + ' still in the feed' + (S.chan === 'meta' ? '' : ' — Google will not serve them') + '</span>' });
+  }
+  // 8 · STOCK CONTROLS — the market's stock rules, the ones holding products back first
+  function stkEmpty(id) { var k = S.stk; modEmpty(id, k.st === 'loading' || k.st === 'idle' ? 'Reading the stock rules…' : k.st === 'error' ? 'Stock rules unavailable — ' + k.why + '.' : k.why); }
+  function renderStock() {
+    if (S.stk.st !== 'ok') { stkEmpty('stock-body'); return; }
+    var m = S.stk.m, all = (m.stock || []).slice();
+    if (!all.length) { $('stock-body').innerHTML = '<div class="empty2">No stock rules run on this market.</div><div class="cfoot"><span>' + esc(m.sentence || '') + '</span></div>'; return; }
+    function held(r) { return r.hb && r.hb.kind === 'blocked' ? r.hb.n || 0 : -1; }
+    all.sort(function (a, b) { return held(b) - held(a) || (b.imp || 0) - (a.imp || 0); });
+    var more = Math.max(0, all.length - 7), rows = all.slice(0, 7), blk = all.filter(function (r) { return held(r) > 0; }).length;
+    $('stock-body').innerHTML = modList(rows.map(function (r) {
+      var h = held(r), n = h >= 0 ? h : (r.imp || 0), of = r.of || m.items || 0, mech = S.stk.mech[r.sk] || r.sk || 'Stock';
+      var cut = (r.cut || []).map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ');
+      return { id: 'stockr:' + r.n, lab: r.n, tip: r.n + ' · ' + mech + (cut ? ' · cut-off ' + cut : '') + ' · ' + (h >= 0 ? 'holds back ' + n0(h) : 'changed ' + n0(r.imp)) + (of ? ' of ' + n0(of) : '') + ' products' + (r.hb && r.hb.why ? ' · ' + r.hb.why : '') + ' · click to open it in Stock management',
+        bars: [{ w: of ? n / of * 100 : 0, c: h >= 0 ? 'var(--band-orange)' : 'var(--chart-1)' }], v: n0(n), sub: cut || mech };
+    }), { foot: '<span class="mkey"><span><i style="background:var(--band-orange)"></i>Holds back</span><span><i style="background:var(--chart-1)"></i>Changes</span></span>' + (more ? '<span>+ ' + more + ' more</span>' : '') + '<span style="margin-left:auto">' + n0(all.length) + ' stock rules · ' + n0(blk) + ' holding products back</span>' });
+  }
+  // 9 · AD SPEND KEPT OFF — /stock's forecast for this market: its LARGEST blocking rule (two rules can hold back the same
+  // product, so the market reads "at least") × spend per product per day × the scenario share × 30 days
+  function renderKept() {
+    if (S.stk.st !== 'ok') { stkEmpty('kept-body'); return; }
+    var m = S.stk.m, a = m.ads, best = null;
+    (m.stock || []).forEach(function (r) { var h = r.hb; if (h && h.kind === 'blocked' && h.n > 0 && (!best || h.n > best.n)) best = { n: h.n, rule: r.n }; });
+    if (!best) { modEmpty('kept-body', 'No stock rule is holding products back in this market today.'); return; }
+    if (!a) { modEmpty('kept-body', n0(best.n) + ' products held back — no Google Ads read for this market yet, so the spend cannot be sized.'); return; }
+    var D = S.stk.days, ceil = best.n * a.spendDay * D;
+    var rows = S.stk.scn.map(function (s) { return { k: s.k, l: s.label + ' · ' + s.pct + '%', v: ceil * s.pct / 100 }; });
+    rows.push({ k: 'ceil', l: 'Ceiling · 100%', v: ceil });
+    $('kept-body').innerHTML = modList(rows.map(function (r) {
+      return { id: 'kept:' + r.k, lab: r.l, tip: r.l + ': ' + money(r.v, a.cur) + ' a month · ' + money(r.v / D, a.cur) + ' a day', bars: [{ w: r.v / ceil * 100, c: r.k === 'ceil' ? 'var(--lk)' : 'var(--chart-1)' }], v: money(r.v, a.cur), sub: 'a month' };
+    }), { foot: '<span>at least — <b>' + n0(best.n) + '</b> products held back by “' + esc(best.rule) + '” × ' + money(a.spendDay, a.cur) + ' per product a day (CPC ' + money(a.cpc, a.cur) + ')</span>' });
+  }
   // one click handler for every module: the element's facet id names what to list
   function facetFor(id) {
     var p = id.split(':'), k = p[0];
@@ -1672,10 +1759,13 @@ window.addEventListener('load',restore);
     if (k === 'run') return { id: id, k: 'run', b: p[1], label: 'Size run · ' + (RUNB.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] };
     if (k === 'mix') { var v = p.slice(2).join(':'); return { id: id, k: 'mix', f: p[1], v: v, label: (MIXF.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] + ' · ' + (v === '—' ? 'Not set' : v) }; }
     if (k === 'depth') return { id: id, k: 'depth', m: p[1], b: p.slice(2).join(':'), label: DEPTH[p[1]].l + ' · ' + p.slice(2).join(':') };
+    if (k === 'avail') return { id: id, k: 'avail', v: p[1], label: 'Availability · ' + avWord(p[1]) };
     return null;
   }
   $('ins').addEventListener('click', function (e) {
-    var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-mix,#m-depth')) return;
+    var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-mix,#m-depth,#m-avail,#m-stock')) return;
+    var fid = el.getAttribute('data-f') || '';
+    if (fid.indexOf('stockr:') === 0) { window.open(stockHref(fid.slice(7)), '_blank', 'noopener'); return; }
     var f = facetFor(el.getAttribute('data-f') || el.getAttribute('data-k')); if (!f) return;
     toggleFacet(f); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   });
@@ -1685,6 +1775,7 @@ window.addEventListener('load',restore);
     if (F.k === 'run') return runB(i) === F.b;
     if (F.k === 'mix') return (low(mixVal(F.f, i)) || '—') === F.v;
     if (F.k === 'depth') return DEPTH[F.m].of(i) === F.b;
+    if (F.k === 'avail') return (x.av || 'none') === F.v;
     return true;
   }
   function renderMatrixLegend() {

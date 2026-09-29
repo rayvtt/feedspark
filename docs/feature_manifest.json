@@ -11024,6 +11024,24 @@
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "S.spw[i] = wv;",
       "pr": 557
+    },
+    {
+      "name": "Catalogue: stock control read off Stock management's own route",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "fetch('/api/rules/stock?brand='",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: ad spend kept off = the market's largest blocking rule",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "best.n * a.spendDay * D",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: availability bars filter the table",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (F.k === 'avail') return (x.av || 'none') === F.v;",
+      "pr": 0
     }
   ]
 }
