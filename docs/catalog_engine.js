@@ -914,6 +914,30 @@
     return m;
   }
   function birthOf(x, gm) { var g = x && x.grp && gm ? gm[x.grp.toLowerCase()] : null; return g != null && (x.dob == null || g < x.dob) ? g : (x ? x.dob : null); }
+  // GOOGLE ADS, THIS PRODUCT'S OWN (Ray, 29 Sep 2026: "catalog module - bring in adwords data 7days in these columns
+  // option too … (you can then match by product ID)"): the worker's catAdsRead hands back FeedHero's Ads Traffic report
+  // as {key: [impressions, clicks, cost, conversions, conversion value]} keyed on the client's own Product ID. The
+  // join is that id, case-blind — Google lower-cases the Ads item id that stands in when no product matched. The
+  // report lists only products with an impression in the range, so once a read is WHOLE a feed product missing from
+  // it had none; every rate is worked out from the product's own sums and is null — not 0% — where its denominator is 0.
+  function adsKey(id) { return String(id == null ? '' : id).trim().toLowerCase(); }
+  function adsIndex(rows) {
+    var m = new Map();
+    Object.keys(rows || {}).forEach(function (k) { var v = rows[k]; if (Array.isArray(v) && v.length >= 5) m.set(adsKey(k), v); });
+    return m;
+  }
+  function adsRates(v) {
+    if (!v) return null;
+    var im = +v[0] || 0, ck = +v[1] || 0, co = +v[2] || 0, cv = +v[3] || 0, va = +v[4] || 0;
+    return { impr: im, clicks: ck, cost: co, conv: cv, value: va, ctr: im ? ck / im * 100 : null, cpc: ck ? co / ck : null,
+      cr: ck ? cv / ck * 100 : null, cpa: cv ? co / cv : null, roas: co ? va / co * 100 : null };
+  }
+  // the report's rows no feed product carries (a product Google Ads still served that has since left the feed)
+  function adsUnmatched(map, ids) {
+    var have = new Set(), n = 0; (ids || []).forEach(function (id) { have.add(adsKey(id)); });
+    if (map) map.forEach(function (v, k) { if (!have.has(k)) n++; });
+    return n;
+  }
   // PRICE BAND — FeedHero's "Price group" cut (Ray, 29 Sep 2026: "add price band to this Roas option list").
   // A row is placeable only when its LABEL is a price range — "£0 - £25", "25-50", "Under £20", "£100+",
   // "Over £100", "100 and above" — read off the label, never assumed: a band FeedHero names in words
@@ -994,6 +1018,7 @@
     delimParser: delimParser, matrixAdd: matrixAdd,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
-    priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis
+    priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,
+    adsKey: adsKey, adsIndex: adsIndex, adsRates: adsRates, adsUnmatched: adsUnmatched
   };
 });

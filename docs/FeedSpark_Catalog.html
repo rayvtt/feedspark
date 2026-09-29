@@ -247,6 +247,13 @@ window.addEventListener('load',restore);
   .popb{position:absolute;right:0;top:calc(100% + 6px);z-index:40;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;width:250px;max-height:60vh;overflow:auto}
   .popb label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--ink-2);padding:4px 0;cursor:pointer}
   .popb .ft{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .popb .grp{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px;padding-top:8px;border-top:1px solid var(--line)}
+  .popb .grp small{display:block;font-size:11px;font-weight:700;letter-spacing:0;text-transform:none;margin-top:2px}
+  .lnk{border:0;background:none;padding:0;font:inherit;font-weight:900;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .ia7{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;margin:0 0 10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--wash)}
+  .ia7 .h{grid-column:1/-1;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .ia7 span{display:flex;flex-direction:column;font-size:11px;font-weight:700;color:var(--muted)}
+  .ia7 b{font-size:14px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
   /* ---- the virtual table: header sticky, ID + image + title pinned, only the rows in view exist ---- */
   .gw{position:relative;overflow:auto;height:clamp(440px,calc(100vh - 190px),1500px);border:1px solid var(--line);border-radius:12px;background:var(--paper);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .gw:focus{outline:2px solid var(--orange);outline-offset:1px}
@@ -689,7 +696,7 @@ window.addEventListener('load',restore);
   var S = {
     gen: 0, ctl: null, roster: {}, client: '', mkt: '', chan: 'google', entry: null,
     prods: [], fx: [], ixO: new Map(), ixI: new Map(), grp: null, rr: null,
-    out: { st: 'idle' }, m: { st: 'idle' }, roas: { st: 'idle', segs: {} }, stk: { st: 'idle' },
+    out: { st: 'idle' }, m: { st: 'idle' }, roas: { st: 'idle', segs: {} }, stk: { st: 'idle' }, ads: { st: 'idle' },
     codes: [], comp: [], att: null, linAt: 0, linDone: false, mx: null, mxw: null, mxN: 0, sum: null,
     view: [], sort: { k: '', d: 1 }, q: '', tab: 'all', quick: {}, facet: null, counts: null,
     cols: lsGet('fcc-cat-cols', null), dens: lsGet('fcc-cat-dens', 'm'), mode: lsGet('fcc-cat-mode', 'table'),
@@ -709,6 +716,18 @@ window.addEventListener('load',restore);
     { k: 'comp', l: 'Completeness', w: 136, num: 1, s: 'comp', tip: 'What Google asks of this product that is filled — the bar is the feed, the tick is the master' },
     { k: 'opti', l: 'FeedSpark', w: 120, s: 'opti', tip: 'FeedSpark’s own stamps on the product: Title · Category · Keywords · Description · Image · Identifiers' },
     { k: 'roas', l: 'ROAS · category', w: 142, num: 1, s: 'roas', tip: 'Google Ads ROAS of this product’s own category, matched on its full path (30 days) — the segment’s, not the product’s. A dashed box = re-typed since the read, not in the tree yet' },
+    // Google Ads, THIS product's own, last 7 days — FeedHero's Ads Traffic report matched on the product id (off by default:
+    // turning one on reads the market's report, a chunk at a time)
+    { k: 'a7imp', l: 'Impr. · 7 d', w: 104, num: 1, off: 1, ads: 1, s: 'a7imp' },
+    { k: 'a7clk', l: 'Clicks · 7 d', w: 100, num: 1, off: 1, ads: 1, s: 'a7clk' },
+    { k: 'a7ctr', l: 'CTR · 7 d', w: 92, num: 1, off: 1, ads: 1, s: 'a7ctr' },
+    { k: 'a7cost', l: 'Cost · 7 d', w: 106, num: 1, off: 1, ads: 1, s: 'a7cost' },
+    { k: 'a7cpc', l: 'Avg. CPC · 7 d', w: 112, num: 1, off: 1, ads: 1, s: 'a7cpc' },
+    { k: 'a7conv', l: 'Conv. · 7 d', w: 96, num: 1, off: 1, ads: 1, s: 'a7conv' },
+    { k: 'a7val', l: 'Conv. value · 7 d', w: 130, num: 1, off: 1, ads: 1, s: 'a7val' },
+    { k: 'a7roas', l: 'ROAS · 7 d', w: 100, num: 1, off: 1, ads: 1, s: 'a7roas' },
+    { k: 'a7cr', l: 'Conv. rate · 7 d', w: 120, num: 1, off: 1, ads: 1, s: 'a7cr' },
+    { k: 'a7cpa', l: 'Cost / conv. · 7 d', w: 126, num: 1, off: 1, ads: 1, s: 'a7cpa' },
     { k: 'brand', l: 'Brand', w: 124, s: 'brand' },
     { k: 'type', l: 'Product type', w: 220, s: 'type' },
     { k: 'var', l: 'Variants', w: 96, num: 1, s: 'var', tip: 'Products in the same item group in stock / in the feed' },
@@ -837,7 +856,7 @@ window.addEventListener('load',restore);
     S.ctl = window.AbortController ? new AbortController() : null;
     S.prods = []; S.fx = []; S.ixO = new Map(); S.ixI = new Map(); S.grp = null; S.gm = {}; S.rr = null; S.live = {};
     S.codes = []; S.comp = []; S.att = null; S.linAt = 0; S.linDone = false; S.spw = null; S.pb = null; S.dl = null; S.mx = null; S.mxw = null; S.mxN = 0; S.sum = null; S.counts = null;
-    S.out = { st: 'loading', bytes: 0, total: 0, t0: Date.now() }; S.m = { st: 'idle' }; S.roas = { st: 'idle', segs: {} };
+    S.out = { st: 'loading', bytes: 0, total: 0, t0: Date.now() }; S.m = { st: 'idle' }; S.roas = { st: 'idle', segs: {} }; S.ads = { st: 'idle' };
     S.view = []; S.facet = null; S.sel = -1; closeInsp(true); S.ver++;
     if (S.tab === 'gone') S.tab = 'all';
     renderFacet(); renderTabs(); renderQuick(); renderKpis(); renderStatus();
@@ -846,6 +865,7 @@ window.addEventListener('load',restore);
     $('lm-body').innerHTML = '<div class="empty2">The matrix fills in once the master feed is joined.</div>';
     layout(); refresh(true);
     loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g);
+    if (adsWanted()) loadAds(g);
   }
   function loadOutput(g) {
     fetch('/api/feed/proxy' + mq(), sig()).then(function (res) {
@@ -1087,6 +1107,72 @@ window.addEventListener('load',restore);
     return false;
   }
 
+  // ---- Google Ads, per PRODUCT, last 7 days: FeedHero's Ads Traffic report, read by the worker a chunk a call ------------
+  // (a big account is 100+ pages) — the page calls again until the read is WHOLE, since only a whole read can say a
+  // product had no impressions; the first read of a market makes FeedHero download it from Google Ads ("preparing")
+  var ADS_M = { a7imp: 'impr', a7clk: 'clicks', a7ctr: 'ctr', a7cost: 'cost', a7cpc: 'cpc', a7conv: 'conv', a7val: 'value', a7roas: 'roas', a7cr: 'cr', a7cpa: 'cpa' };
+  function adsWanted() { return COLS.some(function (c) { return c.ads && colOn(c); }); }
+  // "22–28 Sep" inside one month, "29 Sep–5 Oct" across two
+  function adsRange(a, b) {
+    var p = function (x) { var t = Date.parse(x + 'T00:00:00Z'); return isFinite(t) ? new Date(t) : null; }, A = p(a), B = p(b);
+    if (!A || !B) return 'last 7 days';
+    return A.getUTCMonth() === B.getUTCMonth() ? A.getUTCDate() + '–' + B.getUTCDate() + ' ' + MON[B.getUTCMonth()] : A.getUTCDate() + ' ' + MON[A.getUTCMonth()] + '–' + B.getUTCDate() + ' ' + MON[B.getUTCMonth()];
+  }
+  function loadAds(g, force) {
+    if (S.chan === 'meta') { S.ads = { st: 'none', why: 'Google Ads is read for the Google feed — switch the channel to Google.' }; renderStatus(); renderRows(true); return; }
+    if (!S.entry || !S.entry.cmpid) { S.ads = { st: 'none', why: 'This feed is read from a Google Sheet — FeedHero holds no Ads Traffic report for it.' }; renderStatus(); renderRows(true); return; }
+    if (!force && S.ads && (S.ads.st === 'loading' || S.ads.st === 'preparing' || S.ads.st === 'ready')) return;
+    S.ads = { st: 'loading', got: 0, total: 0, tries: 0 }; renderStatus(); renderRows(true);
+    var step = function () {
+      if (g !== S.gen) return;
+      fetch('/api/catalog/ads' + mq() + (force && !S.ads.stepped ? '&fresh=1' : ''), sig())
+        .then(function (res) { return res.json().then(function (j) { return { s: res.status, j: j }; }, function () { return { s: res.status, j: {} }; }); })
+        .then(function (o) {
+          if (g !== S.gen) return;
+          var j = o.j || {}, A = S.ads; A.stepped = true;
+          if (o.s === 202 || j.state === 'preparing') {
+            A.st = 'preparing'; A.note = j.note || '';
+            if (++A.tries > 30) { A.st = 'error'; A.err = 'FeedHero is still downloading this report from Google Ads — try again in a few minutes'; renderStatus(); renderRows(true); renderInspAds(); return; }
+            renderStatus(); setTimeout(step, 8000); return;
+          }
+          if (!j.ok) { A.st = 'error'; A.err = j.error || ('HTTP ' + o.s); renderStatus(); renderRows(true); renderInspAds(); return; }
+          if (j.missing) { S.ads = { st: 'none', why: 'Google Ads returns no product traffic for this account — FeedHero’s Ads Traffic report is empty.' }; renderStatus(); renderRows(true); renderInspAds(); return; }
+          A.got = j.got || 0; A.total = j.total || 0; A.from = j.from; A.to = j.to;
+          if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }
+          A.st = 'ready'; A.map = E.adsIndex(j.rows); A.cur = j.cur || ''; A.curMix = !!j.curMix; A.rng = adsRange(j.from, j.to); A.at = j.at;
+          S.ver++; renderStatus();
+          if (S.sort.k && /^a7/.test(S.sort.k)) refresh(false); else renderRows(true);
+          renderInspAds();
+        })
+        .catch(function (e) { if (g === S.gen && !(e && e.name === 'AbortError')) { S.ads.st = 'error'; S.ads.err = String((e && e.message) || e); renderStatus(); renderRows(true); } });
+    };
+    step();
+  }
+  function adsOf(i) { var A = S.ads; if (!A || A.st !== 'ready') return undefined; var v = A.map.get(E.adsKey(S.prods[i].id)); return v ? E.adsRates(v) : null; }
+  function adsWhy() {
+    var A = S.ads || {};
+    return A.st === 'none' ? A.why : A.st === 'error' ? 'Could not read Google Ads: ' + (A.err || '') : A.st === 'preparing' ? 'FeedHero is downloading this market’s report from Google Ads…'
+      : A.st === 'loading' ? 'Reading Google Ads · ' + n0(A.got) + (A.total ? ' of ' + n0(A.total) : '') + ' products…' : '';
+  }
+  function adsNum(m, v) {
+    if (v == null) return '—';
+    if (m === 'impr' || m === 'clicks') return n0(v);
+    if (m === 'conv') return (Math.round(v * 100) / 100).toLocaleString('en-GB', { maximumFractionDigits: 2 });
+    if (m === 'ctr' || m === 'cr') return v.toFixed(2) + '%';
+    if (m === 'roas') return roasTxt(v);
+    return money(v, S.ads.cur);
+  }
+  function adsCell(k, i) {
+    var A = S.ads || {};
+    if (A.st !== 'ready') return '<span class="mute" title="' + esc(adsWhy()) + '">' + (A.st === 'loading' || A.st === 'preparing' ? '…' : '') + '</span>';
+    var r = adsOf(i);
+    if (!r) return '<span class="mute" title="' + esc('No Google Ads impressions ' + A.rng + ' — Google Ads lists only products it served') + '">—</span>';
+    var m = ADS_M[k], v = r[m];
+    if (v == null) return '<span class="mute" title="' + esc(m === 'roas' || m === 'cpa' ? (m === 'roas' ? 'No spend' : 'No conversions') + ' ' + A.rng : 'No clicks ' + A.rng) + '">—</span>';
+    return '<span title="' + esc('Google Ads · this product · ' + A.rng + ' — ' + n0(r.impr) + ' impr · ' + n0(r.clicks) + ' clicks · ' + money(r.cost, A.cur) + ' cost · ' + adsNum('conv', r.conv) + ' conv · ' + money(r.value, A.cur) + ' value') + '">' + esc(adsNum(m, v)) + '</span>';
+  }
+  $('insp') && $('insp').addEventListener('click', function (e) { if (e.target.closest('[data-ads-load]')) { e.stopPropagation(); loadAds(S.gen, true); renderInspAds(); } });
+
   // ---- ROAS: FeedHero's Google Ads read for this market ---------------------------------------------------------------
   function loadRoas(g) {
     var r = S.entry && S.entry.roas;
@@ -1259,6 +1345,8 @@ window.addEventListener('load',restore);
       case 'comp': return S.comp[i] ? S.comp[i][1] : null;
       case 'opti': var o = p.opti || {}, m = 0; Object.keys(o).forEach(function (q) { if (o[q]) m++; }); return m;
       case 'roas': var r = roasFor(i); return r && !r.miss ? r.row.roasPct : null;
+      case 'a7imp': case 'a7clk': case 'a7ctr': case 'a7cost': case 'a7cpc': case 'a7conv': case 'a7val': case 'a7roas': case 'a7cr': case 'a7cpa':
+        var ar = adsOf(i); return ar ? ar[ADS_M[k]] : (ar === null && (k === 'a7imp' || k === 'a7clk' || k === 'a7cost' || k === 'a7conv' || k === 'a7val') ? 0 : null);
       case 'type': return low(x.pt);
       case 'var': var gr = x.grp && S.grp ? S.grp.get(x.grp) : null; return gr ? gr[0] : null;
       case 'dob': return x.dob;
@@ -1330,6 +1418,11 @@ window.addEventListener('load',restore);
     else if (R.st === 'unread') setSrc('roas', '', 'Google Ads', 'FeedHero has not read this market yet — /roas syncs it', 0);
     else if (R.st === 'ok') setSrc('roas', 'live', 'Google Ads · ROAS ' + roasTxt(t && t.roasPct), '30 days · ' + (t && t.band ? t.band + ' · ' : '') + money(t && t.spend && t.spend.n, R.cur) + ' spend' + (R.field ? ' · categories on ' + R.field.replace(/^x:/, '') : ''), 100);
     else setSrc('roas', '', 'Google Ads', '—', 0);
+    var A = S.ads || {}, un = A.st === 'ready' && S.out.st === 'done' ? E.adsUnmatched(A.map, S.prods.map(function (p) { return p.id; })) : null;
+    var at = A.st === 'ready' ? 'per product ' + A.rng + ' · ' + (un == null ? n0(A.map.size) + ' served' : n0(A.map.size - un) + ' of ' + n0(S.prods.length) + ' products served' + (un ? ' · ' + n0(un) + ' not in this feed' : ''))
+      : A.st === 'loading' ? 'per product: reading ' + n0(A.got) + (A.total ? ' of ' + n0(A.total) : '') : A.st === 'preparing' ? 'per product: FeedHero is downloading the report…' : A.st === 'error' ? 'per product: ' + (A.err || 'unavailable') : '';
+    var el = $('src-roas'), t2 = el && el.querySelector('.t2');
+    if (at && t2) { t2.textContent = (t2.textContent && t2.textContent !== '—' ? t2.textContent + ' · ' : '') + at; t2.title = t2.textContent; }
   }
 
   // ---- KPI band ------------------------------------------------------------------------------------------------------
@@ -1890,7 +1983,12 @@ window.addEventListener('load',restore);
   $('dens').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b) return; S.dens = b.getAttribute('data-d'); lsSet('fcc-cat-dens', S.dens); paintSegs(); layout(); renderRows(true); });
   function colOn(c) { return c.fix || (S.cols ? S.cols.indexOf(c.k) >= 0 : !c.off); }
   function renderColsPop() {
-    $('cols-p').innerHTML = COLS.filter(function (c) { return !c.fix; }).map(function (c) { return '<label><input type="checkbox" data-col="' + c.k + '"' + (colOn(c) ? ' checked' : '') + '> ' + esc(c.l) + '</label>'; }).join('') +
+    var seen = false;
+    $('cols-p').innerHTML = COLS.filter(function (c) { return !c.fix; }).map(function (c) {
+      var h = c.ads && !seen ? '<div class="grp">Google Ads · this product · 7 days<small>FeedHero’s Ads Traffic report, matched on the product ID</small></div>' : '';
+      if (c.ads) seen = true;
+      return h + '<label><input type="checkbox" data-col="' + c.k + '"' + (colOn(c) ? ' checked' : '') + '> ' + esc(c.l) + '</label>';
+    }).join('') +
       '<div class="ft"><button class="btn" type="button" data-reset="1" style="height:30px">Reset</button><button class="btn" type="button" data-close="1" style="height:30px">Done</button></div>';
   }
   $('cols-b').addEventListener('click', function (e) { e.stopPropagation(); var p = $('cols-p'), open = p.hidden; if (open) renderColsPop(); p.hidden = !open; this.setAttribute('aria-expanded', String(open)); });
@@ -1899,6 +1997,7 @@ window.addEventListener('load',restore);
     var cb = e.target.closest('[data-col]'); if (!cb) return;
     S.cols = COLS.filter(function (c) { return !c.fix && (c.k === cb.getAttribute('data-col') ? cb.checked : colOn(c)); }).map(function (c) { return c.k; });
     lsSet('fcc-cat-cols', S.cols); layout(); renderRows(true);
+    if (adsWanted() && S.ads && (S.ads.st === 'idle' || S.ads.st === 'error')) loadAds(S.gen, S.ads.st === 'error');
   });
   document.addEventListener('click', function (e) { if (!e.target.closest('.pop')) { $('cols-p').hidden = true; $('cols-b').setAttribute('aria-expanded', 'false'); } });
 
@@ -1920,7 +2019,7 @@ window.addEventListener('load',restore);
   }
   $('gh').addEventListener('click', function (e) {
     var el = e.target.closest('[data-s]'); if (!el) return; var k = el.getAttribute('data-s'); if (!k) return;
-    if (S.sort.k === k) { if (S.sort.d > 0) S.sort.d = -1; else S.sort = { k: '', d: 1 }; } else S.sort = { k: k, d: (k === 'dob' || k === 'comp' || k === 'roas' || k === 'chg' || k === 'sale' || k === 'var') ? -1 : 1 };
+    if (S.sort.k === k) { if (S.sort.d > 0) S.sort.d = -1; else S.sort = { k: '', d: 1 }; } else S.sort = { k: k, d: (k === 'dob' || k === 'comp' || k === 'roas' || k === 'chg' || k === 'sale' || k === 'var' || /^a7/.test(k)) ? -1 : 1 };
     layout(); refresh(false);
   });
   function gwMsg(icon, text) { var el = $('gwm'); if (!text) { el.hidden = true; return; } el.hidden = false; el.innerHTML = '<div><span class="big">' + icon + '</span>' + esc(text) + '</div>'; }
@@ -1994,6 +2093,7 @@ window.addEventListener('load',restore);
       case 'comp': return compHtml(i);
       case 'opti': return optiHtml(p);
       case 'roas': return roasHtml(i);
+      case 'a7imp': case 'a7clk': case 'a7ctr': case 'a7cost': case 'a7cpc': case 'a7conv': case 'a7val': case 'a7roas': case 'a7cr': case 'a7cpa': return adsCell(k, i);
       case 'type': var d = x.depth; return '<span class="pips" title="' + d + ' level' + (d === 1 ? '' : 's') + ' deep">' + [1, 2, 3, 4, 5].map(function (z) { return '<i class="' + (z <= d ? 'on' : '') + '"></i>'; }).join('') + '</span><span class="tt" title="' + esc(x.pt) + '">' + esc(x.leaf || '—') + '</span>';
       case 'var': var gr = x.grp && S.grp ? S.grp.get(x.grp) : null; return gr && gr[0] > 1 ? '<span title="' + esc(n0(gr[1]) + ' of ' + n0(gr[0]) + ' in item group ' + x.grp + ' in stock') + '">' + n0(gr[1]) + '/' + n0(gr[0]) + '</span>' : '<span class="mute">—</span>';
       case 'dob': return x.dob != null ? '<span title="First seen ' + new Date(x.dob).toISOString().slice(0, 10) + '">' + ago(x.age) + '</span>' : '<span class="mute">—</span>';
@@ -2247,10 +2347,27 @@ window.addEventListener('load',restore);
     I.prev = next;
     $('i-stage').innerHTML = h;
   }
+  // the product's OWN Google Ads line (FeedHero's Ads Traffic, last 7 days) above the segments it sits in
+  function renderInspAds() { if (S.insp && !S.insp.gone) renderInspRoas(); }
+  function inspAdsHtml(i) {
+    var A = S.ads || {};
+    if (S.chan === 'meta') return '';
+    if (A.st === 'ready') {
+      var r = adsOf(i);
+      if (!r) return '<div class="rnote">This product · Google Ads · ' + esc(A.rng) + ': no impressions — Google Ads lists only products it served.</div>';
+      var cells = [['Impr.', adsNum('impr', r.impr)], ['Clicks', adsNum('clicks', r.clicks)], ['CTR', adsNum('ctr', r.ctr)], ['Cost', adsNum('cost', r.cost)], ['Avg. CPC', adsNum('cpc', r.cpc)],
+        ['Conv.', adsNum('conv', r.conv)], ['Conv. value', adsNum('value', r.value)], ['ROAS', adsNum('roas', r.roas)], ['Cost / conv.', adsNum('cpa', r.cpa)]];
+      return '<div class="ia7" title="FeedHero’s Ads Traffic report, matched on this product’s ID — this product’s own figures"><div class="h">This product · Google Ads · ' + esc(A.rng) + '</div>' +
+        cells.map(function (c) { return '<span>' + esc(c[0]) + '<b>' + esc(c[1]) + '</b></span>'; }).join('') + '</div>';
+    }
+    if (A.st === 'loading' || A.st === 'preparing') return '<div class="rnote">' + esc(adsWhy()) + '</div>';
+    if (A.st === 'none') return '<div class="rnote">' + esc(A.why) + '</div>';
+    return '<div class="rnote">' + (A.st === 'error' ? esc(adsWhy()) + ' · ' : '') + '<button type="button" class="lnk" data-ads-load>Read this product’s own Google Ads · last 7 days</button></div>';
+  }
   function renderInspRoas() {
     var I = S.insp, el = $('i-roas'); if (!I || !el || I.gone) return;
-    var R = S.roas, p = S.prods[I.i], x = S.fx[I.i];
-    if (R.st !== 'ok') { el.innerHTML = '<div class="rnote">' + esc(R.why || R.err || (R.st === 'unread' ? 'FeedHero has not read this market’s Google Ads yet.' : 'Reading Google Ads…')) + '</div>'; return; }
+    var R = S.roas, p = S.prods[I.i], x = S.fx[I.i], own = inspAdsHtml(I.i);
+    if (R.st !== 'ok') { el.innerHTML = own + '<div class="rnote">' + esc(R.why || R.err || (R.st === 'unread' ? 'FeedHero has not read this market’s Google Ads yet.' : 'Reading Google Ads…')) + '</div>'; return; }
     var rows = [], tot = R.total && R.total.roasPct, at = roasAt(), birth = E.birthOf(x, S.gm), pending = 0, off = [], unset = [];
     var hit = roasFor(I.i);
     if (hit && !hit.miss) for (var d = 1; d <= hit.depth; d++) { var row = R.paths.get(E.pathKey(hit.parts.slice(0, d).join(' > '))); if (row) rows.push({ agg: 'Category · level ' + d, v: hit.parts[d - 1], row: row }); }
@@ -2268,7 +2385,7 @@ window.addEventListener('load',restore);
     });
     var mx = Math.max.apply(null, rows.map(function (r) { return r.row.roasPct || 0; }).concat([tot || 0, 1]));
     $('i-roas-h').textContent = '30 days · market ' + roasTxt(tot);
-    el.innerHTML = (rows.length ? '<div class="rs">' + rows.map(function (r) {
+    el.innerHTML = own + (rows.length ? '<div class="rs">' + rows.map(function (r) {
       var v = r.row.roasPct;
       return '<span class="l" title="' + esc(r.agg + ': ' + r.v + (r.rule ? ' · ' + r.rule : '') + ' · ' + n0(r.row.skus) + ' SKUs in FeedHero’s master') + '"><small>' + esc(r.agg) + '</small><span>' + esc(r.v) + '</span></span><span class="b"><i style="width:' + (v / mx * 100).toFixed(1) + '%"></i>' + (tot ? '<em style="left:' + (tot / mx * 100).toFixed(1) + '%" title="Market ' + roasTxt(tot) + '"></em>' : '') + '</span><span class="v">' + roasTxt(v) + '<small>' + esc(money(r.row.spend && r.row.spend.n, R.cur)) + ' spend</small></span>';
     }).join('') + '</div>' : '<div class="rnote">No segment of FeedHero’s matches this product exactly.</div>') +
@@ -2406,6 +2523,16 @@ window.addEventListener('load',restore);
         return [p.id, E.plain(f.title), x.price, x.sale, x.cur, x.av, f.brand, f.product_type, f.google_product_category, f.color, f.size, f.gender, f.age_group,
           f.material, f.gtin, f.mpn, f.item_group_id, p.dob, c && c[0] >= 0 ? c[0] : '', c ? c[1] : '', p.opti ? (p.opti.T ? 'yes' : 'no') : '', r ? (r.miss ? 'not in ROAS tree' : Math.round(r.row.roasPct)) : '', S.codes[i] || '', f.link];
       });
+      // the Google Ads columns that are on, as numbers — a product the WHOLE read did not list had no impressions (0),
+      // and a rate with nothing under it is blank, never 0
+      var ac = COLS.filter(function (c) { return c.ads && colOn(c); });
+      if (ac.length && S.ads && S.ads.st === 'ready') {
+        head = head.concat(ac.map(function (c) { return 'google ads ' + S.ads.rng + ' · ' + c.l.replace(/ · 7 d$/, '').toLowerCase() + (/cost|cpc|value|conv\. value/i.test(c.l) && !/rate/.test(c.l) ? ' (' + (S.ads.cur || '') + ')' : ''); }));
+        rows = rows.map(function (row, n) {
+          var ar = adsOf(S.view[n]);
+          return row.concat(ac.map(function (c) { var m = ADS_M[c.k], v = ar ? ar[m] : (/^(impr|clicks|cost|conv|value)$/.test(m) ? 0 : null); return v == null ? '' : (m === 'impr' || m === 'clicks') ? v : Math.round(v * 100) / 100; }));
+        });
+      }
     }
     var txt = [head].concat(rows).map(function (r) { return r.map(csvCell).join(','); }).join('\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + txt], { type: 'text/csv;charset=utf-8' }));

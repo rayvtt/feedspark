@@ -202,3 +202,37 @@ FeedHero company id is the wired feed's own:
 - **Ad spend kept off** — `/stock`'s forecast: the market's largest blocking rule (counted once — "at least") ×
   spend per product per day × 5% / 10% / the 100% ceiling, over 30 days. No Google Ads read, or nothing held back,
   is said in words — never a guessed figure.
+
+## Google Ads, this product's own — last 7 days (29 Sep 2026)
+
+Ray: *"catalog module - bring in adwords data 7days in these columns option too"*, then *"isn't it in Ads Traffic
+from feedhero reports? (you can then match by product ID)"*. FeedHero's reports server now carries **`ads_traffic`**
+(added 29 Sep 2026): one row per advertised product as Google Ads returns it — Product ID (the client's own id; blank
+when no product matches, when the lower-cased Ads item id stands in), impressions, clicks, cost, conversions,
+conversion value, currency.
+
+- **⊞ Columns → "Google Ads · this product · 7 days"**: Impr., Clicks, CTR, Cost, Avg. CPC, Conv., Conv. value, ROAS,
+  Conv. rate, Cost / conv. — all off by default; turning one on reads the market's report. Every rate is worked out
+  from the product's own sums and is blank — never 0% — where there is nothing under it (a product with impressions
+  and no clicks has no CPC). Sortable, and in ⬇ CSV (a served product's counts; one the whole read did not list reads 0).
+- **The join is the product ID, case-blind.** Checked 29 Sep 2026: 6 of the first 10 Schuh UK rows are in its live
+  feed (the other 4 were served this week and have since left it), and Superdry GB's ids match exactly.
+- **Only products with an impression are listed** (sorted by impressions the smallest is 1), so once a read is WHOLE a
+  feed product missing from it had none — the cell reads "—" with that tooltip. The Google Ads pill says how many feed
+  products were served and how many served products are no longer in the feed.
+- **The inspector** opens on the product's own 7-day line (a 3 × 3 block) above the segments it sits in — a button reads
+  the report when no column has.
+- **The read** (`GET /api/catalog/ads?client=&market=`, worker `catAdsRead`): a big account is 100+ pages of 200 (Schuh UK
+  22,283 rows, Superdry GB 26,673, Reiss GB 24,541), so the worker reads **24 pages a call, 4 at a time**, keeps where it
+  got to in KV `catads:<cmpid>:7_days`, and the page calls again until the read is whole; only the whole read carries
+  the rows (`{id: [impr, clicks, cost, conv, value]}`). Sorted by the Ads item id so pages hold their order across
+  calls; FeedHero keeps a report an hour and then re-downloads it, so a read that meets a different window or row
+  count **starts again** rather than splicing two reports. A whole read is kept 12 h. The first read of a market makes
+  FeedHero download from Google Ads ("still being prepared" → 202, the page retries every 8 s). An account Google Ads
+  returns nothing for (Accessorize UK: "No Ads Traffic data found") is an answer, kept a day. A Meta market is refused.
+  The company is read off the wired feed, like the master. Nothing in git.
+- **Harness**: `tools/test_catalog.mjs` (the engine's join and rates; `catAdsRow` + `catAdsRead` LIFTED against a stub MCP —
+  the chunk, carrying on, the KV hit, fresh, the restart, preparing, missing, no token; the route and page wiring) and
+  `tools/check_catalog.js` (the picker group, nothing read until a column is on, a two-call read, a served product's
+  cells, the case-blind join, a blank CPC, "—" for an unserved product, sort, the pill, the inspector).
+
