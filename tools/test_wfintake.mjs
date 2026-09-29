@@ -10,9 +10,16 @@
  *    column, and Brief quietly ate 103px of Task. The columns are `ic-` now, so a component can
  *    never claim one again; a rendered assertion catches it if one does.
  * 2. A task ran one to five lines, so rows stepped 43 / 50 / 66 / 82 / 98px down the page. The
- *    text box is exactly two lines tall — clamped and floored — so every row is one height.
+ *    CLAMP caps the task box at two lines so no task can push its row taller.
  *
- * The widths are measured, not read: this is a layout bug and the source was right both times.
+ * Ray, 29 Sep 2026: "task row (especially 1 row) is not centered in Intake". The floor that made
+ * every row equal was a min-height on the TEXT BOX, which held a one-line task in a two-line box —
+ * and a -webkit-box lays its single line at the TOP, so the text sat 9.4px above the row's centre
+ * while the status select beside it was middle-aligned. The floor moved onto the row itself, where
+ * `vertical-align:middle` can centre a one-line box and a two-line box alike.
+ *
+ * The widths and the centring are MEASURED, not read: these are layout bugs and the source read
+ * correctly every time.
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -34,9 +41,15 @@ ok(/#itbl col\.ic-(?:client|feed|owner|due)\{width:[\d.]+%\}/.test(html),
 ok(/#itbl col\.ic-(?:status|source|act)\{width:\d+px\}/.test(html),
   'while the fixed-size controls are px — more width there is only whitespace');
 
-console.log('\n── every row is one height');
-ok(/-webkit-line-clamp:2/.test(html) && /\.tk-w\{[^}]*min-height:calc\(2 \* 1\.35em\)/.test(html),
-  'the task box is clamped to two lines AND floored at two, so neither a long nor a short task moves the row');
+console.log('\n── every row is one height, and the floor is on the row');
+const tkw = (html.match(/\.itbl \.c-task \.tk-w\{([\s\S]*?)\}/) || [])[1] || '';
+ok(/-webkit-line-clamp:2/.test(tkw), 'the task box is clamped to two lines, so a long task cannot push its row taller');
+ok(!/min-height/.test(tkw),
+  'and carries NO min-height — a floor on the box holds a one-line task at the top of a two-line box');
+ok(/#itbl tbody tr\{height:calc\(2 \* 1\.35em \+ 17px\)\}/.test(html),
+  'the floor is on the ROW instead: the same two lines as the clamp, plus the cell padding and its rule');
+ok(!/^\s*\.itbl tbody tr\{height:/m.test(html),
+  'scoped to #itbl — the Brief ledger and the tests table share the .itbl class and Ray asked for the Intake');
 ok(/function tkClip\(\)/.test(html), 'tkClip() exists');
 ok(/scrollHeight>w\.clientHeight/.test(html),
   'and it decides by MEASURING the box, never by a character count — where a task is cut moves with the window');
@@ -75,7 +88,41 @@ if (chromium) {
           return { n: c.length, named: c.filter((o) => (o.title || '').indexOf(o.innerText.trim()) === 0).length,
             hint: c.filter((o) => /double-click/i.test(o.title || '')).length };
         })(),
-        tags: [...document.querySelectorAll('#it-body .feed-tag')].filter((t) => !t.title).length };
+        tags: [...document.querySelectorAll('#it-body .feed-tag')].filter((t) => !t.title).length,
+        /* A one-line task and a two-line task must sit the same way in their row: the box's own
+           centre on the row's centre. The pre-fix page reads -9.4px on every one-line row. */
+        mid: (function () {
+          const one = [], many = [];
+          [...document.querySelectorAll('#it-body tr')].forEach((r) => {
+            const w = r.querySelector('.tk-w'); if (!w) return;
+            /* Bucket by the TEXT's own line count, not the box's height — the box is what the bug
+               changes, so bucketing on it would move every row into the same bucket and let the
+               offset assertions pass on a page that has none of the rows they are about. The clamp
+               hides lines 3+ but they are still laid out, so only the first two count. */
+            const rng = document.createRange(); rng.selectNodeContents(w);
+            const rects = [...rng.getClientRects()].filter((x) => x.height > 0); if (!rects.length) return;
+            const lines = new Set(rects.map((x) => Math.round(x.top))).size;
+            /* The LINE BOX, never the glyph rect: a rect is the font's content height (14.4px here)
+               while the line it sits in is line-height (16.9px), and halving the wrong one puts
+               every reading 1.2px out. */
+            const lh = parseFloat(getComputedStyle(w).lineHeight);
+            const wb = w.getBoundingClientRect(), rb = r.getBoundingClientRect();
+            const d = (wb.top + Math.min(lines, 2) * lh / 2) - (rb.top + rb.height / 2);
+            (lines === 1 ? one : many).push(Math.round(d * 100) / 100);
+          });
+          const sel = [...document.querySelectorAll('#it-body tr')].map((r) => {
+            const w = r.querySelector('.tk-w'), s = r.querySelector('select');
+            if (!w || !s) return null;
+            const rng = document.createRange(); rng.selectNodeContents(w);
+            const rects = [...rng.getClientRects()].filter((x) => x.height > 0); if (!rects.length) return null;
+            const lines = new Set(rects.map((x) => Math.round(x.top))).size;
+            const lh = parseFloat(getComputedStyle(w).lineHeight);
+            const wb = w.getBoundingClientRect(), sb = s.getBoundingClientRect();
+            return Math.round(((wb.top + Math.min(lines, 2) * lh / 2) - (sb.top + sb.height / 2)) * 100) / 100;
+          }).filter((x) => x !== null);
+          const sp = (a) => (a.length ? Math.max(...a.map(Math.abs)) : 0);
+          return { one: one.length, many: many.length, oneOff: sp(one), manyOff: sp(many), selOff: sp(sel) };
+        })() };
     });
     await ctx.close();
     return g;
@@ -100,6 +147,15 @@ if (chromium) {
   ok(a.ow.hint === a.ow.n, 'and keeps the cell\'s own edit hint, since only one tooltip can show');
   ok(a.tags === 0, 'every feed chip carries its full label — an ellipsis reads as a long name, a clip reads as broken');
 
+  console.log('\n── and the task sits in the middle of its row, whatever its length');
+  ok(a.mid.one > 5 && a.mid.many > 5,
+    'the board carries both kinds of row — ' + a.mid.one + ' one-line tasks and ' + a.mid.many + ' that wrap');
+  ok(a.mid.oneOff <= 1, 'a ONE-LINE task is centred in its row — off by ' + a.mid.oneOff + 'px (it was 9.4)');
+  ok(a.mid.manyOff <= 1, 'a wrapped task is too — off by ' + a.mid.manyOff + 'px');
+  ok(a.mid.selOff <= 1,
+    'so the task reads level with the status select beside it, which was middle-aligned all along — off by '
+    + a.mid.selOff + 'px');
+
   console.log('\n── Task takes the majority of any widening; the rest still grow');
   /* The page's own column caps how wide the table gets, so these are shares of what the TABLE
      gained, which is the part these rules decide. */
@@ -112,6 +168,8 @@ if (chromium) {
     'while Status and Brief hold at ' + a.th[6] + ' / ' + a.th[8]
     + 'px — a select and four buttons cannot use a wider window');
   ok(b.hi - b.lo <= 1, 'rows are still one height at 1500px — ' + b.lo + 'px');
+  ok(b.mid.oneOff <= 1 && b.mid.manyOff <= 1,
+    'and the task is still centred there — ' + b.mid.oneOff + ' / ' + b.mid.manyOff + 'px');
   await B.close();
 }
 

@@ -595,15 +595,32 @@ window.addEventListener('load',restore);
   .itbl .c-task{color:var(--ink);line-height:1.35;white-space:normal;word-break:break-word}
   /* EVERY ROW THE SAME HEIGHT (Ray, 24 Sep 2026: "make sure the row are evenly spread pls").
      A task ran 1 to 5 lines, so the table stepped 43 / 50 / 66 / 82 / 98px down the page and read
-     as broken rhythm rather than a grid. The text box is EXACTLY two lines tall — clamped so a long
-     task can never push a row taller, min-height so a short one can never let it collapse shorter —
-     and two lines, not one, because the ask was to expand the cell: at this width one line shows
-     ~55 characters and two show ~110, which is nearly every task in the book whole.
+     as broken rhythm rather than a grid. The CLAMP is what makes the rows even — it caps the box at
+     two lines, so no task can push its row taller — and two lines, not one, because the ask was to
+     expand the cell: at this width one line shows ~55 characters and two show ~110, which is nearly
+     every task in the book whole.
+     THE FLOOR IS THE ROW, NOT THE BOX (Ray, 29 Sep 2026: "task row (especially 1 row) is not
+     centered in Intake"). This rule also carried a min-height of two lines, which held a ONE-LINE
+     task in a two-line box — and a -webkit-box lays its single line at the TOP of that box, so the
+     text sat 9.4px above the row's centre while the status select and every other cell in the same
+     row were genuinely middle-aligned by .itbl tbody td{vertical-align:middle}. The box is now
+     exactly as tall as the lines it shows, and the cell centres it.
      What the clamp does hide is not lost: tkClip() measures each box after render and puts the FULL
      task in its tooltip when, and only when, it is actually cut off (measured, never guessed from a
      character count — the cut-off point moves with the window), and the ticket carries it in full. */
   .itbl .c-task .tk-w{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
-    overflow:hidden;min-height:calc(2 * 1.35em)}
+    overflow:hidden}
+  /* ...and the floor it was also doing, put where it belongs. A row with a one-line task is only
+     43px tall (the ✕/Brief buttons at 26px + the cell's padding), so dropping the box's min-height
+     alone left the table stepping 43 / 51 again. `height` on a <tr> is a MINIMUM, so stating the
+     two-line task cell here — the same 2 x 1.35em as the clamp above, plus the 8px+8px the cell
+     pads with — floors every row at the height the tallest kind of row reaches naturally, and a row
+     that somehow needs more still gets it. #itbl, not .itbl: the Brief ledger and the tests table
+     share the class and Ray asked for the Intake alone.
+     The 17px is 8px + 8px of cell padding plus the 1px rule the row draws under itself: `height` on
+     a collapsed-border row is read as the BORDER box, so stating only the padding leaves every
+     floored row exactly one pixel short of the rows that reach the floor by their own content. */
+  #itbl tbody tr{height:calc(2 * 1.35em + 17px)}
   .itbl .c-task .tk-in{-webkit-line-clamp:none}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
   /* an owner name shown because the ticket predates the `by` field — dotted, so it reads as
