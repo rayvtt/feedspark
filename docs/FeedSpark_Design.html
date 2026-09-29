@@ -224,6 +224,11 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 [data-theme=dark] .tip{background:#0B0D12}
 [data-theme=dark] .tip .ti{color:#8FB4F0}
 [data-theme=dark] .tip .to{color:#E8B778}
+.spots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:6px 0 14px}
+.sp-tile{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);min-width:0}
+.sp-tile .spot{width:52px;height:52px}
+.sp-tile b{display:block;font-size:13px;font-weight:900}.sp-tile span{display:block;font-size:12px;color:var(--muted);line-height:1.35}
+.sp-note{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
 </style>
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
@@ -233,7 +238,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 </div></div>
 
 
-<header class="hero"><div class="wrap">
+<header class="hero"><div class="wrap" data-spot="design">
   <div class="eyebrow">FeedSpark · Design guidelines</div>
   <h1>FeedSpark design guidelines</h1>
   <p class="sub">How every FCC module looks, reads and behaves — the core and anything an AM builds. The colours, type and components below are drawn from the same stylesheet a module loads, so this page cannot drift from it.</p>
@@ -243,14 +248,14 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   </div>
   <nav class="toc" aria-label="On this page">
     <a class="chip" href="#principles">Principles</a><a class="chip" href="#colour">Colour</a><a class="chip" href="#type">Type</a>
-    <a class="chip" href="#components">Components</a><a class="chip" href="#charts">Charts</a><a class="chip" href="#layout">Layout</a>
+    <a class="chip" href="#components">Components</a><a class="chip" href="#charts">Charts</a><a class="chip" href="#spots">Spots</a><a class="chip" href="#layout">Layout</a>
     <a class="chip" href="#voice">Voice</a><a class="chip" href="#ux">UX rules</a><a class="chip" href="#never">Never</a><a class="chip" href="#build">Build an AM module</a>
   </nav>
 </div></header>
 
 <main class="wrap">
 
-<section class="blk" id="principles">
+<section class="blk" id="principles" data-spot="check">
   <div class="blk-h"><div class="grow"><h2>Principles</h2><p>Six rules every screen is judged against.</p></div></div>
   <div class="grid3">
     <div class="pr"><b>Clean white, orange with purpose</b><span>White surfaces, charcoal text, orange only where it means something: the primary action, the current thing, a warning.</span></div>
@@ -291,7 +296,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   <p class="note">Numbers are tabular and right-aligned, with the same decimals down a column (1.00, 0.50) so the points line up. No 500 or 600 weights: the browser would synthesise them.</p>
 </section>
 
-<section class="blk" id="components">
+<section class="blk" id="components" data-spot="rules">
   <div class="blk-h"><div class="grow"><h2>Components</h2><p>Live, from the stylesheet. Use the class; never restyle it.</p></div></div>
   <div class="demo">
     <div class="dx"><span class="tk">.btn · .btn.pri</span><div class="row"><button class="btn" type="button">⬇ CSV</button><button class="btn pri" type="button">Save</button><button class="btn" type="button" disabled>Disabled</button></div></div>
@@ -311,7 +316,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   </div>
 </section>
 
-<section class="blk" id="charts">
+<section class="blk" id="charts" data-spot="chart">
   <div class="blk-h"><div class="grow"><h2>Charts</h2><p>Two series colours, one axis per chart.</p></div></div>
   <div class="chart-demo">
     <svg viewBox="0 0 360 150" role="img" aria-label="Example: arrivals per month, the running month drawn translucent">
@@ -327,6 +332,17 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
       <li><b>Say what the bars are</b> under the chart, and offer a ⊞ table view.</li>
     </ul>
   </div>
+</section>
+
+<section class="blk" id="spots" data-spot="images">
+  <div class="blk-h"><div class="grow"><h2>Spot illustrations</h2><p>One small picture per card, so the eye has somewhere to land before it reads. Sixteen spots, one drawing language, placed by one attribute.</p></div></div>
+  <div class="spots-grid" id="spots-grid"><div class="sp-note">The spots render when this page is served by the FCC — the set lives in <code>docs/spots_widget.html</code>.</div></div>
+  <ul class="rules">
+    <li><b>How.</b> Put <code>data-spot="name"</code> on a card (<code>.card</code>, <code>.blk</code>) or on the hero's <code>.wrap</code>; the spot draws itself — at the left of the card's header row, clear of the tools at its right, or at the hero's top-right.</li>
+    <li><b>One per card, never two.</b> The title says what the card is; the spot only makes it faster to find. It carries no meaning of its own (<code>aria-hidden</code>), so nothing is lost where it is not drawn — a phone hero, print.</li>
+    <li><b>Pick by what the card does</b>, not by the module it sits in: figures → <code>chart</code> · a list or table → <code>feed</code> · a method or finding → <code>insight</code> · a search or drill-down → <code>search</code> · a change or mover → <code>alert</code> · a rule or set-up → <code>rules</code> · a date or cadence → <code>schedule</code> · a pass or coverage → <code>check</code>.</li>
+    <li><b>Never restyle one.</b> The palette lives in the widget, light and dark; a spot drawn in a page's own colours is the drift this set exists to prevent.</li>
+  </ul>
 </section>
 
 <section class="blk" id="layout">
@@ -376,7 +392,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   </ul>
 </section>
 
-<section class="blk" id="build">
+<section class="blk" id="build" data-spot="migration">
   <div class="blk-h"><div class="grow"><h2>Build an AM module</h2><p>The 30%: an AM’s own module on the FeedSpark look, automatically.</p></div></div>
   <ol class="steps">
     <li>Load the stylesheet — the brand, dark mode and components come with it.</li>
@@ -407,6 +423,13 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
       return '<div class="sw"><svg viewBox="0 0 64 40" aria-hidden="true"><rect x="0.5" y="0.5" width="31" height="39" rx="6" fill="'+esc(l)+'" stroke="#E6E6E6"/><rect x="32.5" y="0.5" width="31" height="39" rx="6" fill="'+esc(d)+'" stroke="#2C3039"/></svg>'
         +'<div class="sw-t"><b>'+esc(lbl.split(' · ')[0])+'</b><span>'+esc(lbl.split(' · ').slice(1).join(' · '))+'</span><code title="'+esc(k)+' · light '+esc(l)+' · dark '+esc(d)+'">'+esc(k)+' · '+esc(l)+(d!==l?' / '+esc(d):'')+'</code></div></div>'; }).join(''); });
   var TAG='<link rel="stylesheet" href="/design/fcc.css">';
+  (function spots(){
+    var USE={feed:'a list, a table, a document of rows',chart:'figures, a trend, a scorecard',alert:'movers, changes, what needs a look',insight:'how it is measured, the method',search:'a search, a drill-down, a live read',check:'coverage, a pass, a standard met',ai:'AI answers, an assistant',stock:'stock, availability, the shelf',rules:'rules, settings, set-up',catalog:'the catalogue, a product, a listing',migration:'a roadmap, a plan, a migration',roas:'return on spend, revenue, money',tasks:'tasks, a plan, the book of hours',images:'images, media, the shot library',schedule:'a schedule, a cadence, a date',design:'design, the brand, a template'};
+    function draw(){ var S=window.FCCSpots, g=$('spots-grid'); if(!S||!g) return;
+      g.innerHTML=S.names.map(function(n){ return '<div class="sp-tile"><span class="spot" aria-hidden="true">'+S.svg(n)+'</span><div><b><code>'+n+'</code></b><span>'+(USE[n]||'')+'</span></div></div>'; }).join(''); }
+    // the set lives in the widget the worker injects AFTER this page's own script, so the gallery draws once the document has parsed
+    if(window.FCCSpots) draw(); else document.addEventListener('DOMContentLoaded', draw);
+  })();
   $('starter').textContent='<!doctype html>\n<html lang="en-GB">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>FeedSpark · My module</title>\n'+TAG+'\n</head>\n<body>\n<main class="wrap">\n  <div class="eyebrow">AM module</div>\n  <h1>My module</h1>\n  <div class="src"><span class="dot live"></span><span class="grow">Live · read 09:00 today</span></div>\n  <div class="kpis">\n    <div class="kpi"><div class="n">42</div><div class="l">Briefs this month</div></div>\n  </div>\n  <section class="blk"><h2>Section</h2><p class="sub">One sentence.</p></section>\n</main>\n<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>My module</span></div></div>\n<\/body>\n<\/html>';
   function copy(txt,ok){ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){ toast(ok); },function(){ window.prompt('Copy:',txt); }); else window.prompt('Copy:',txt); }
   $('cp-link').onclick=function(){ copy(TAG,'Link tag copied'); };

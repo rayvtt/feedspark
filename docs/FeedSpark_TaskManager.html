@@ -372,7 +372,7 @@ window.addEventListener('load',restore);
 </header>
 
 <main class="wrap">
-  <section class="hero">
+  <section class="hero" data-spot="tasks">
     <div class="eyebrow">Reports database</div>
     <h1>FS Task Manager</h1>
     <p class="sub">Every task our team booked against the book, every ticket the client queue raised, and every market's
@@ -426,7 +426,7 @@ window.addEventListener('load',restore);
     <div class="dp-cov" id="dpcov" data-instr></div>
   </section>
 
-  <section class="card" id="chartcard">
+  <section class="card" id="chartcard" data-spot="chart">
     <div class="cw-head">
       <h3 id="cwh">Billable vs non-billable</h3>
       <span class="sub" id="cwsub" style="font-size:12px;color:var(--muted);font-weight:600"></span>
@@ -728,7 +728,7 @@ window.addEventListener('load',restore);
     <div class="tscroll" id="pbody"></div>
   </section>
 
-  <section class="card meth">
+  <section class="card meth" data-spot="insight">
     <h3 style="margin:0 0 4px;font-size:16px;font-weight:900">Where these numbers come from</h3>
     <ol>
       <li><b>The worker reads the FeedSpark reports database itself.</b> Its :15 and :45 cron speaks the

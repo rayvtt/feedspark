@@ -271,6 +271,37 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   through a desktop→phone resize, zero idle mutations and a widget with no observer of its own —
   and carries a NEGATIVE CONTROL (the same page built without the widget, which must still wrap)
   so the one-row assertion can never pass on a bar nobody is laying out), the
+  **SPOT ILLUSTRATIONS** (`docs/spots_widget.html` — Ray, 29 Sep 2026, over Google Merchant
+  Center's "What to do next" cards, each with a small two-tone picture at its side: "do a quick
+  review of latest 10 modules just build on FCC to generate / add in icons like (similar) to GMC
+  like this to ease on eye strain". ONE set of sixteen spots in one drawing language — a soft disc,
+  a paper sheet, grey line work, one orange accent (feed · chart · alert · insight · search · check ·
+  ai · stock · rules · catalog · migration · roas · tasks · images · schedule · design) — placed by ONE
+  attribute: `data-spot="<name>"` on a card gets the spot PREPENDED to its header row (.chead /
+  .blk-h / .cw-head / .thead), 44px, LEFT of the title block so it never lands on the tools at the
+  row's right (GMC's art sits at the right of a card that carries no controls; ours do); a card with
+  no header row gets the top-right corner with the heading padded clear; a host inside .hero gets the
+  art at the hero's CONTENT corner, 72px = eyebrow + title, so it ends above the status row whose
+  buttons sit at the right (the ⓘ collapse hides every multi-sentence lede on the live page, so that
+  row sits directly under the title — a 104px art landed on /migration's 🕘 History and /design's
+  ⬇ fcc.css), offsets READ off the host's own padding (the padded .wrap on most pages, the padded
+  .hero section on /tasks — assumed, the art sat 22px short and 28px above the eyebrow), the eyebrow
+  / title / lede kept clear, not drawn on a phone (decorative, aria-hidden — never the only carrier
+  of a meaning); the title block beside a card spot is capped at the row less the spot, because a
+  WRAPPING header row otherwise drops a long title block under the spot (/roas Performance) — the
+  tools still wrap exactly as the page laid them out; a folded phone card hides its spot with its
+  content (the tap row is the digest widget's) and draws it at 36px once opened. Colours are
+  the widget's OWN tokens with a dark set, and no fill or stroke is written into any drawing
+  (classes only), so the set re-colours from one place and can never read as a light island. The
+  ten newest modules carry a hero spot + two to four card spots (AI visibility, Stock, Rules,
+  Catalogue, Migration, ROAS, Task Manager, Images, Scheduled work, Design); pick by what the CARD
+  DOES, not the module. /design § Spot illustrations draws the whole set from the widget's own names
+  with the rule. Harness tools/test_spots.mjs (qa_gate/presync/validate) + tools/check_spots.js
+  (Playwright, presync, the pages built as the worker serves them: hero art at the content corner,
+  level with the eyebrow, clear of the title's text and of every control, card spots first on the
+  row and clear of every control, corners inside, dark fills dark, phone hides the hero art and
+  draws a card's spot only once the fold is opened, an idle page places nothing twice, the gallery
+  draws all sixteen)), the
   **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
   Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
   platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph
