@@ -59,7 +59,7 @@ const ok = (n, c, got) => {
 
 // the worker's own app-page injection, in its order — with the widget under test in it
 const ORDER = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html',
-  'apps_widget.html', 'navrow_widget.html', 'hours_widget.html', 'touch_widget.html', 'migration_widget.html'];
+  'apps_widget.html', 'navrow_widget.html', 'spots_widget.html', 'hours_widget.html', 'touch_widget.html', 'migration_widget.html'];
 const MODGATE = eval((W.match(/const MODGATE = ([^]*?);\n/) || [])[1]);   // the real gate, lifted
 const readW = (f) => fs.readFileSync(path.join(DOCS, f), 'utf8');
 
