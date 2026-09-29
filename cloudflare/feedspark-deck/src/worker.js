@@ -199,6 +199,7 @@ import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Au
 import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introduction_Aug26.pptx";
 import MAT_SCHUH_SR_SEP26 from "../../../docs/materials/Schuh_Strategy_Review_Sep26.pptx";
 import MAT_HOBBY_SR_SEP26 from "../../../docs/materials/Hobbycraft_Strategy_Review_Sep26.pptx";
+import MAT_SUPERDRY_SVC_SEP26 from "../../../docs/materials/Superdry_Service_Review_Sep26.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -244,6 +245,12 @@ const SEED_MATERIALS = [
     file: 'Hobbycraft_Strategy_Review_Sep26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-09-24', body: MAT_HOBBY_SR_SEP26 },
+  { id: 'superdry-svc-sep26', client: 'Superdry',
+    title: 'Superdry \u00d7 FeedSpark \u2014 Service Review, Sep 2026',
+    cat: 'marketing', occasion: 'Service Review Sep-26',
+    file: 'Superdry_Service_Review_Sep26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-29', body: MAT_SUPERDRY_SVC_SEP26 },
 ];
 
 const PAGES = {

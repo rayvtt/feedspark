@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superdry × FeedSpark — Service Review, September 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
+  --paper:#FFFFFF;--paper-2:#F7F7F5;--paper-warm:#FEF9F2;
+  --orange:#F5A623;--orange-deep:#ED6F0B;--dark:#1C1C1C;
+  --green:#2E7D32;--red:#C62828;--blue:#1565C0;--purple:#6A1B9A;
+  --shadow:0 2px 10px rgba(0,0,0,.06);--shadow-lift:0 8px 24px rgba(0,0,0,.10);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink-2);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.55}
+h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:var(--orange-deep)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 40px}
+section{padding:104px 0}
+.band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band-warm{background:var(--paper-warm);border-top:1px solid #EDE3D3;border-bottom:1px solid #EDE3D3}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:14px}
+.eyebrow.on-dark{color:var(--orange)}
+.sec-title{font-size:34px;margin-bottom:6px}
+.sec-sub{font-size:15.5px;color:var(--muted);margin-bottom:44px;max-width:760px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:translateY(0)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
+.tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.tb-brand span{color:var(--orange-deep)}
+.tb-nav{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.tb-nav a{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
+
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column. Every section name is always visible (not hover-gated) — it's a live table of
+   contents, not a collapsed icon rail — with the currently-active section picked out by a
+   filled background + orange rail rather than dimming or hiding the rest. Hidden below
+   1300px, same cutoff logic as .tb-nav's own mobile hide, since there's no side margin
+   left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;width:196px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:7px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
+@media(min-width:1300px){.side-nav{display:flex}}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
+.hero:after{content:"";position:absolute;top:9px;left:0;right:0;height:1px;background:rgba(255,255,255,.16)}
+.hero h1{color:#fff;font-size:64px;font-weight:900;letter-spacing:-.025em;margin:18px 0 22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lede{font-size:19px;color:rgba(255,255,255,.72);max-width:620px;font-weight:300}
+.hero-rule{width:64px;height:3px;background:var(--orange);margin:34px 0 26px}
+.hero-meta{display:flex;gap:36px;flex-wrap:wrap;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+.hero-meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;margin-top:5px}
+.scrollcue{margin-top:56px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:flex;align-items:center;gap:10px}
+.scrollcue i{display:block;width:26px;height:1px;background:var(--orange);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.7)}}
+
+/* chapter divider */
+.chapter{background:var(--dark);color:#fff;padding:88px 0;position:relative;overflow:hidden}
+.chapter-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.ch-num{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:190px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,166,35,.42);letter-spacing:-.04em;user-select:none;z-index:1}
+.chapter h2{color:#fff;font-size:42px;font-weight:900;letter-spacing:-.025em;margin-bottom:12px}
+.chapter p{color:rgba(255,255,255,.6);font-size:15.5px;max-width:640px}
+.ch-rule{width:48px;height:3px;background:var(--orange);margin-bottom:24px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
+.ag-t{font-size:16.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:13.5px;color:var(--muted)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
+.stat{background:var(--paper);padding:26px 22px}
+.stat .n{font-size:40px;font-weight:900;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.stat .n small{font-size:19px;font-weight:700;color:var(--muted)}
+.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:9px}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card h4{font-size:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:#fff;text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--paper-2)}
+.tbl-wrap{border:1px solid var(--line);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto}
+
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.p-done{background:rgba(46,125,50,.10);color:var(--green)}
+.p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+.p-open{background:#EEE;color:var(--muted)}
+.p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px}
+.bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-row .bl span{color:var(--muted);font-weight:400}
+.track{height:7px;background:var(--paper-2);border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--orange);transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.green{background:var(--green)}
+.fill.grey{background:#C9C9C9}
+.fill.red{background:var(--red)}
+
+/* protocol cards */
+.proto{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden}
+.proto:before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
+.proto.g:before{background:var(--green)}
+.proto.b:before{background:var(--blue)}
+.proto.p:before{background:var(--purple)}
+.proto .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.proto.g .tag{color:var(--green)}
+.proto.b .tag{color:var(--blue)}
+.proto.p .tag{color:var(--purple)}
+.proto h4{font-size:17px;margin-bottom:4px}
+.proto .desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px}
+.proto ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.proto li{padding-left:14px;position:relative;margin-bottom:8px}
+.proto li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%}
+.proto.g li:before{background:var(--green)}
+.proto.b li:before{background:var(--blue)}
+.proto.p li:before{background:var(--purple)}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pipe-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative}
+.pipe-card h4{font-size:16px;margin-bottom:4px}
+.pipe-card .sub{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.pipe-card ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.pipe-card li{padding-left:14px;position:relative;margin-bottom:8px}
+.pipe-card li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+
+/* tachyon flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
+.flow-step{background:var(--paper);padding:24px 20px;position:relative}
+.flow-step:not(:last-child):after{content:"→";position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--orange);font-weight:900;z-index:2}
+.fs-num{font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--orange);margin-bottom:10px}
+.flow-step h4{font-size:14px;margin-bottom:6px}
+.flow-step p{font-size:12.5px;color:var(--muted)}
+
+/* description enrichment */
+.enrich{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.en-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px;border-left:3px solid var(--orange)}
+.en-card h4{font-size:14px;margin-bottom:8px}
+.en-card .before{background:#FFF3F3;border:1px solid #FFCDD2;padding:12px 14px;font-size:12.5px;color:var(--red);margin-bottom:10px;font-family:ui-monospace,monospace;line-height:1.6}
+.en-card .after{background:#E8F5E9;border:1px solid #C8E6C9;padding:12px 14px;font-size:12.5px;color:var(--green);font-family:ui-monospace,monospace;line-height:1.6}
+
+/* maturity tiers */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tier{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 20px;position:relative}
+.tier.here{border-color:var(--orange);border-width:2px;box-shadow:var(--shadow-lift)}
+.tier .flag{position:absolute;top:-11px;left:20px;background:var(--orange);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px}
+.tier .tn{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--orange-deep);margin-bottom:8px}
+.tier h4{font-size:17px;margin-bottom:3px}
+.tier .ts{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.tier ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.tier li{padding-left:14px;position:relative;margin-bottom:9px}
+.tier li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+.tier.done h4:after{content:" ✓";color:var(--green)}
+
+/* interactive panel */
+.agent{display:grid;grid-template-columns:1fr 1.15fr;gap:0;border:1px solid var(--line);box-shadow:var(--shadow-lift);background:var(--paper)}
+.agent-l{padding:32px;border-right:1px solid var(--line);background:var(--paper-2)}
+.agent-l h4{font-size:14px;margin-bottom:6px}
+.agent-l>p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.qs{display:flex;flex-direction:column;gap:9px}
+.q{text-align:left;font-family:inherit;font-size:13.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:.18s;line-height:1.4}
+.q:hover{border-color:var(--orange);transform:translateX(3px)}
+.q.active{border-color:var(--orange);border-left:3px solid var(--orange);background:#fff;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+.q:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+.agent-r{padding:32px;min-height:340px}
+.ar-head{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px}
+.attr-name{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px}
+.attr-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep);margin-bottom:18px}
+.attr-why{font-size:14px;color:var(--ink-2);margin-bottom:20px}
+.feedrow{background:var(--dark);padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#E8E8E8;line-height:1.65;overflow-x:auto}
+.feedrow .k{color:var(--orange)}
+.feedrow .c{color:#7A7A7A}
+.attr-note{font-size:12.5px;color:var(--muted);margin-top:16px;padding-left:12px;border-left:2px solid var(--orange)}
+.fade-swap{animation:sw .34s ease}
+@keyframes sw{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* scorecard */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.sc-cell{background:var(--paper);padding:22px}
+.sc-cell .sc-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sc-cell .sc-pct{font-size:32px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.sc-cell .sc-label{font-size:14px;font-weight:700;color:var(--ink)}
+.sc-cell .sc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sc-cell .sc-tgt{font-size:11.5px;color:var(--green);margin-top:4px;font-weight:700}
+.sc-cell .sc-warn{font-size:11.5px;color:var(--red);margin-top:4px;font-weight:700}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mo{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column}
+.mo.peak{border-color:var(--orange);border-width:2px}
+.mo-m{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--ink);margin-bottom:12px}
+.mo-s{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;align-self:flex-start;margin-bottom:14px}
+.s-close{background:rgba(46,125,50,.10);color:var(--green)}
+.s-build{background:rgba(245,166,35,.18);color:var(--orange-deep)}
+.s-next{background:#EEE;color:var(--muted)}
+.s-peak{background:var(--orange);color:#fff}
+.mo h4{font-size:14px;margin-bottom:8px}
+.mo ul{list-style:none;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.mo li{padding-left:13px;position:relative;margin-bottom:9px;line-height:1.45}
+.mo li:before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--orange);border-radius:50%}
+.mo li b{color:var(--ink)}
+
+/* asks */
+.ask{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ask-i{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--orange);display:flex;align-items:center;justify-content:center;color:var(--orange-deep);font-weight:900;font-size:13px}
+
+/* callout + note */
+.callout{background:var(--orange);color:#fff;padding:24px 28px;margin-top:32px}
+.callout h4{color:#fff;font-size:15px;margin-bottom:6px}
+.callout p{font-size:14px;color:rgba(255,255,255,.95)}
+.note{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--orange);padding:18px 22px;font-size:13.5px;color:var(--ink-2);margin-top:28px}
+.note b{color:var(--ink)}
+
+.chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
+body.hide-checks .chk{display:none}
+/* ---- INTERNAL-ONLY note -------------------------------------------------------------
+   A deck is written to the CLIENT. Anything written to FeedSpark — a figure Ray still has
+   to confirm, where a number came from, why a source is weak, what this deck could not
+   reach — belongs in one of these, never in body copy. Ray flagged exactly this on the
+   Monsoon intro deck: "it sounds like it's being presented to me rather than to the
+   client... if you need to make a note, make it more apparent so I can delete it properly."
+   Deliberately loud, so it can never be mistaken for deck copy, and stripped automatically
+   from every client-bound output: tools/deck_to_pptx.py skips it, and the Download-HTML
+   builder in worker.js removes it. The topbar's "Data checks" toggle hides it for
+   presenting. */
+.int-note{border:2px dashed var(--red);background:#FFF5F3;padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.55;color:var(--ink)}
+.int-note::before{content:"\26A0  INTERNAL \2014 NOT FOR CLIENT";display:block;font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:9px}
+.int-note b{color:var(--red)}
+body.hide-checks .int-note{display:none}
+.flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
+.flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
+
+/* close */
+.close{background:var(--dark);color:#fff;padding:96px 0}
+.close h2{color:#fff;font-size:44px;font-weight:900;margin-bottom:10px}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.ct{border-top:2px solid var(--orange);padding-top:16px}
+.ct b{display:block;color:#fff;font-size:16px;font-weight:700}
+.ct span{display:block;font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
+.footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda,.enrich{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+
+<body class="">
+
+
+<div class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="tb-brand">Feed<span>Spark</span> × Superdry</div>
+    <nav class="tb-nav">
+      <a href="#c1" class="">01 The account</a>
+      <a href="#c2" class="">02 What it carries</a>
+      <a href="#c3" class="">03 Transformation</a>
+      <a href="#c4" class="">04 Two years</a>
+      <a href="#c5" class="">05 Markets</a>
+      <a href="#c6" class="">06 Results</a>
+      <a href="#c7" class="">07 Feed score</a>
+      <a href="#c8" class="">08 AI readiness</a>
+      <a href="#c9" class="">09 Cost vs return</a>
+      <a href="#c10" class="">10 Roadmap</a>
+      <a href="#c11" class="">11 Ways of working</a>
+    </nav>
+    <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
+    <div class="progress" id="progress" style="width: 0%;"></div>
+  </div>
+</div>
+<nav class="side-nav">
+  <a href="#c1"><span class="num">01</span><span class="lbl">The account</span></a>
+  <a href="#c2"><span class="num">02</span><span class="lbl">What it carries</span></a>
+  <a href="#c3"><span class="num">03</span><span class="lbl">Transformation</span></a>
+  <a href="#c4"><span class="num">04</span><span class="lbl">Two years</span></a>
+  <a href="#c5"><span class="num">05</span><span class="lbl">Markets</span></a>
+  <a href="#c6"><span class="num">06</span><span class="lbl">Results</span></a>
+  <a href="#c7"><span class="num">07</span><span class="lbl">Feed score</span></a>
+  <a href="#c8"><span class="num">08</span><span class="lbl">AI readiness</span></a>
+  <a href="#c9"><span class="num">09</span><span class="lbl">Cost vs return</span></a>
+  <a href="#c10"><span class="num">10</span><span class="lbl">Roadmap</span></a>
+  <a href="#c11"><span class="num">11</span><span class="lbl">Ways of working</span></a>
+</nav>
+<div class="footmark">FeedSpark · Private &amp; Confidential</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Service Review · September 2026</div>
+    <h1>Superdry&nbsp;<br></h1>
+    <div class="hero-rule"></div>
+    <p class="lede">"The feed becomes transaction infrastructure - In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
+cart logic, displayed total, legal notice and ability to complete checkout. Accuracy, identifiers and
+policy data become commercial controls"<br>Google&nbsp;</p>
+    <div class="hero-meta" style="margin-top:40px">
+      <div>Markets<b>19 live · 53 feeds</b></div>
+      <div>Since<b>June 2022 · four years</b></div>
+      <div>Cycle<b>Two years: Oct 2024 – Sep 2026</b></div>
+    </div>
+    <div class="scrollcue"><i></i> Scroll</div>
+  </div>
+</header>
+
+<!-- ================= AGENDA ================= -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Agenda</div>
+    <h2 class="sec-title rv in">What we'll cover</h2>
+    <p class="sec-sub rv in">Eleven chapters, every number read live this morning.</p>
+    <div class="agenda rv in">
+      <div>
+        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Where the account stands</div><div class="ag-d">19 markets, 53 feeds, 1,774 live rules, four years</div></div></div>
+        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">What the feed carries</div><div class="ag-d">920.8 million impressions and 334,866 conversions in a year</div></div></div>
+        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">The transformation, measured</div><div class="ag-d">29 characters in, 83 characters out &mdash; on the same products</div></div></div>
+        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Two years of delivery</div><div class="ag-d">2,037 hours against 42 hours a month sold</div></div></div>
+        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Market coverage</div><div class="ag-d">What each of the nineteen has, and what it does not</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">06</div><div><div class="ag-t">Results</div><div class="ag-d">Forty tests in the archive, read honestly</div></div></div>
+      </div>
+      <div>
+        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">70/100 &mdash; eleven lanes against the live feed</div></div></div>
+        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Where the next two years of search are going</div></div></div>
+        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">What it costs against what it returns</div><div class="ag-d">The whole argument on one slide</div></div></div>
+        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Roadmap</div><div class="ag-d">Six pieces of work, sequenced and costed in hours</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">11</div><div><div class="ag-t">Ways of working</div><div class="ag-d">Who does what, and what we need from Superdry</div></div></div>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:28px"><b>Nothing in this deck is estimated.</b> Every figure comes from a live source read this morning &mdash; the Google Ads record, the time log, the rule engine, the test archive, and the six output feeds themselves. Where a figure could be read two ways, both readings are shown and the stricter one leads.</div>
+  </div>
+</section>
+
+<!-- ================= CH 01 ================= -->
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Where the account stands</h2><p>Nineteen markets, fifty-three live feeds and 1,774 rules that run every day &mdash; built over four years and two months.</p></div></div>
+<section>
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">19</div><div class="l">Live markets</div></div>
+      <div class="stat"><div class="n">53</div><div class="l">Feeds maintained</div></div>
+      <div class="stat"><div class="n">1,774</div><div class="l">Active rules</div></div>
+      <div class="stat"><div class="n">2,846</div><div class="l">Tasks delivered</div></div>
+      <div class="stat"><div class="n">46</div><div class="l">People who have worked on it</div></div>
+    </div>
+    <h3>The nineteen markets</h3>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:26%">Market</th><th style="width:15%">Live since</th><th style="width:15%">Feeds</th><th style="width:16%">Active rules</th><th>Retainer</th></tr></thead>
+      <tbody>
+        <tr><td><b>United Kingdom</b></td><td>Jun 2022</td><td>7</td><td>221</td><td>16 hrs / month</td></tr>
+        <tr><td><b>Germany</b></td><td>Jun 2022</td><td>6</td><td>113</td><td>8 hrs / month</td></tr>
+        <tr><td><b>France</b></td><td>Jun 2022</td><td>5</td><td>110</td><td>8 hrs / month</td></tr>
+        <tr><td><b>Netherlands</b></td><td>Jun 2022</td><td>5</td><td>103</td><td>2 hrs / month</td></tr>
+        <tr><td><b>Ireland</b></td><td>Jun 2022</td><td>3</td><td>118</td><td>4 hrs / month</td></tr>
+        <tr><td><b>United States</b></td><td>Jun 2022</td><td>3</td><td>91</td><td>2 hrs / month</td></tr>
+        <tr><td><b>Poland</b></td><td>Jun 2022</td><td>2</td><td>69</td><td>2 hrs / month</td></tr>
+        <tr><td>Belgium ×2, Canada ×2, Switzerland ×2</td><td>Jun 2022 – Jan 2025</td><td>12</td><td>475</td><td><span class="pill p-open">No retainer</span></td></tr>
+        <tr><td>Denmark, Spain, Italy, Norway, Sweden</td><td>Jun 2022</td><td>9</td><td>396</td><td><span class="pill p-open">No retainer</span></td></tr>
+        <tr data-chart-skip="1"><td>Finland</td><td>Oct 2023</td><td>1</td><td>78</td><td><span class="pill p-open">No retainer</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Seven markets carry a retainer. Twelve do not.</b> Forty-two hours a month are contracted, all of it against the seven. The other twelve &mdash; both Belgian markets, both Canadian, both Swiss, Denmark, Spain, Finland, Italy, Norway and Sweden &mdash; are maintained, monitored and rule-managed at no charge, because a Superdry catalogue that works in one market and breaks in another is not a service anybody wants to sell.</div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>One catalogue, nineteen localisations</h4>
+        <p>Each market runs its own instance of the same ~58,800-product range with its own language, currency, shipping, category tree and label architecture. The UK alone carries <b>221 active rules</b>; the estate carries <b>1,774</b>, plus 675 held in reserve for seasonal work.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Every one of those rules runs on every import, every day, without anyone touching it. That is what a product arriving tomorrow inherits automatically.</p>
+      </div>
+      <div class="card">
+        <h4>What the rules actually do</h4>
+        <p>They are not cosmetic. On the UK feed alone, rules build or rewrite the <b>title</b>, brand, category tree, colour, MPN, availability, shipping country, price and service, the sale and gender custom labels, range-completion stock logic, hero sizes, the Meta category, the Facebook and overlay image URLs, the Google product URL, UTM tagging, the display-ads fields, the Wunderkind title and class, and &mdash; since April &mdash; the two Local Inventory Ads pickup fields.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">203 of the UK's 210 rules are impacting products today. The seven that are not are seasonal: Black Friday messaging and sale-phrase appends, dormant until November.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 02 ================= -->
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>What the feed carries</h2><p>920.8 million impressions, 10.9 million clicks and 334,866 conversions in the last twelve months &mdash; every one of them served from a feed FeedSpark builds.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Google Ads performance for the four reporting markets, last twelve months, collected this morning.</p>
+    <h3>Twelve months of Shopping performance</h3>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:12%">Market</th><th style="width:16%">Spend</th><th style="width:18%">Revenue</th><th style="width:12%">ROAS</th><th style="width:17%">Impressions</th><th>Conversions</th></tr></thead>
+      <tbody>
+        <tr><td><b>UK</b></td><td>£1,675,855</td><td><b>£16,181,338</b></td><td><b>965.6%</b></td><td>591,622,173</td><td>226,145</td></tr>
+        <tr><td><b>Germany</b></td><td>€694,149</td><td><b>€7,234,584</b></td><td><b>1,042.2%</b></td><td>134,880,504</td><td>51,524</td></tr>
+        <tr><td><b>France</b></td><td>€402,048</td><td><b>€3,891,212</b></td><td><b>967.9%</b></td><td>141,258,175</td><td>39,737</td></tr>
+        <tr><td><b>Netherlands</b></td><td>€222,630</td><td><b>€1,817,590</b></td><td><b>816.4%</b></td><td>53,031,039</td><td>17,460</td></tr>
+        <tr data-chart-skip="1"><td><b>Four markets</b></td><td>—</td><td>—</td><td>—</td><td><b>920,791,891</b></td><td><b>334,866</b></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Revenue is never added across currencies here.</b> Impressions and conversions are, because they are counts. Every market returned between <b>8× and 10× on ad spend</b> over the year, and Germany &mdash; on an eight-hour retainer &mdash; returned the most.</div>
+    <div class="grid-3 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Outerwear is the engine</h4>
+        <p>In the UK over the last thirty days, <b>Women's Jackets and Coats</b> &mdash; 5,006 SKUs &mdash; returned <b>£274,554</b> on £24,279 of spend. That is a ROAS of <b>1,130%</b> from 8% of the catalogue.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Bomber jackets alone read 1,945%. This is where feed quality pays fastest, and it is where the keyword work has been aimed.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Womenswear outperforms</h4>
+        <p>UK women's ROAS is <b>1,002%</b> against men's <b>805%</b>, on a similar SKU count &mdash; 28,896 against 26,204. Germany shows the same shape.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The gap is not budget. It is that the women's range carries deeper category detail and more of the keyword work has landed there.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>And the half that earns nothing</h4>
+        <p>Between <b>47% and 58%</b> of each market's catalogue took under 100 impressions in thirty days &mdash; 47.1% UK, 51.2% Germany, 48.8% France, 57.6% Netherlands.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">That is the single largest opportunity in this account, and the work to address it is already written and waiting &mdash; chapter 10.</p>
+      </div>
+    </div>
+    <div class="int-note rv in">September is the low month for an outerwear business. The last thirty days annualise to roughly 40% of the year's actual figures in BOTH spend and revenue, which is seasonality rather than decline &mdash; so the year is quoted throughout and the 30-day figures are only used where they are labelled as such. Never annualise the 30-day numbers in front of the client.</div>
+  </div>
+</section>
+
+<!-- ================= CH 03 ================= -->
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>The transformation, measured</h2><p>Superdry supplies a 29-character title. The feed ships an 83-character one. Both numbers are in the same file, on the same products, this morning.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Every feed carries the supplied title beside the optimised one.</p>
+    <div class="note rv in" style="margin-top:22px">That makes the before and the after directly comparable &mdash; same products, same file, same moment, no sampling and no estimate.</div>
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--muted)">
+        <h4>What Superdry supplies</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">A real UK product, read from today's feed</p>
+        <p style="font-size:15px"><i>"Knitted Rugby Henley Jumper"</i></p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)"><b>27 characters.</b> No brand, no gender, no colour, no size, no fit. Across the UK catalogue the source title averages <b>29.1 characters</b> and <b>54.3%</b> of them are under thirty.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>What FeedSpark ships</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">The same product, the same file, the same moment</p>
+        <p style="font-size:15px"><i>"Superdry &amp; Co Women's Knitted Rugby Henley Jumper Navy / Cable Navy - Size: 10"</i></p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)"><b>77 characters.</b> Brand, sub-brand, gender, product, colour, colourway and size. The UK average is <b>83.1 characters</b> &mdash; <b>+54 characters per product</b>, on all 25,699 of them.</p>
+      </div>
+    </div>
+    <h3>Title length before and after, by market</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="col" data-chart-series="1,2"><thead><tr><th style="width:24%">Market</th><th>What Superdry supplies</th><th>What FeedSpark ships</th></tr></thead>
+      <tbody>
+        <tr><td>UK</td><td>29.1</td><td>83.1</td></tr>
+        <tr><td>Ireland</td><td>29.1</td><td>83.2</td></tr>
+        <tr><td>United States</td><td>28.9</td><td>83.2</td></tr>
+        <tr><td>Germany</td><td>35.8</td><td>71.4</td></tr>
+        <tr><td>France</td><td>34.6</td><td>68.4</td></tr>
+        <tr><td>Netherlands</td><td>33.3</td><td>51.4</td></tr>
+      </tbody></table>
+    </div>
+    <h3>Titles in the 80–120 character band Google rewards</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="col" data-chart-series="1,2" data-chart-pct="1"><thead><tr><th style="width:24%">Market</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>UK</td><td>0.0%</td><td>62.7%</td></tr>
+        <tr><td>Ireland</td><td>0.0%</td><td>63.0%</td></tr>
+        <tr><td>United States</td><td>0.0%</td><td>62.5%</td></tr>
+        <tr><td>Germany</td><td>0.0%</td><td>24.3%</td></tr>
+        <tr><td>France</td><td>0.0%</td><td>14.2%</td></tr>
+        <tr><td>Netherlands</td><td>0.0%</td><td>0.4%</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Not one title Superdry supplies, in any market, reaches the band.</b> Nearly two thirds of the English-market titles do. That gap is the service, stated as plainly as it can be stated: <b>100% of titles are rewritten in all six markets</b>, and every rewritten title is longer than the one it replaced.</div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>And it is not only the title</h4>
+        <p>On the same UK feed, read this morning: the category tree is mapped on <b>100%</b> of products and runs <b>four levels deep on 93.1%</b> of them, against 305 distinct paths. Google's own category is on 100%. Every product carries exactly two images. Sale and full-price labelling is on 100%, gender labelling on 100%, category labelling on 99.8%.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Out-of-stock products never reach the feed at all &mdash; the availability rule removes them, which is why every live SKU reads in stock.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>What the same read shows is still open</h4>
+        <p>Product highlights reach <b>29.4%</b> of UK products; 18,143 carry none. Keyword enrichment has reached <b>41.0%</b>. Descriptions average 550 characters and have never been enriched &mdash; the flag reads <b>D:N</b> on every product in every market.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">These are not oversights. They are the parts of the build that were scoped and never funded, and they are what chapter 10 asks for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 04 ================= -->
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Two years of delivery</h2><p>2,037 hours delivered across nineteen markets in twenty-four months, against forty-two hours a month contracted.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">2,037</div><div class="l">Hours delivered, Oct 2024 – Sep 2026</div></div>
+      <div class="stat"><div class="n">1,561</div><div class="l">Tasks completed in the window</div></div>
+      <div class="stat"><div class="n">1,389</div><div class="l">Hours charged</div></div>
+      <div class="stat"><div class="n">648</div><div class="l">Hours absorbed, not charged</div></div>
+      <div class="stat"><div class="n">3,793</div><div class="l">Hours since June 2022</div></div>
+    </div>
+    <h3>Hours delivered per month, all markets</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="col"><thead><tr><th style="width:30%">Month</th><th>Hours delivered</th></tr></thead>
+      <tbody>
+        <tr><td>Oct 2024</td><td>125.75</td></tr>
+        <tr><td>Nov 2024</td><td>123.50</td></tr>
+        <tr><td>Dec 2024</td><td>55.50</td></tr>
+        <tr><td>Jan 2025</td><td>47.50</td></tr>
+        <tr><td>Feb 2025</td><td>101.50</td></tr>
+        <tr><td>Mar 2025</td><td>93.25</td></tr>
+        <tr><td>Apr 2025</td><td>66.00</td></tr>
+        <tr><td>May 2025</td><td>97.00</td></tr>
+        <tr><td>Jun 2025</td><td>153.50</td></tr>
+        <tr><td>Jul 2025</td><td>84.75</td></tr>
+        <tr><td>Aug 2025</td><td>107.75</td></tr>
+        <tr><td>Sep 2025</td><td>56.50</td></tr>
+        <tr><td>Oct 2025</td><td>89.50</td></tr>
+        <tr><td>Nov 2025</td><td>77.50</td></tr>
+        <tr><td>Dec 2025</td><td>79.50</td></tr>
+        <tr><td>Jan 2026</td><td>113.25</td></tr>
+        <tr><td>Feb 2026</td><td>65.25</td></tr>
+        <tr><td>Mar 2026</td><td>77.00</td></tr>
+        <tr><td>Apr 2026</td><td>22.00</td></tr>
+        <tr><td>May 2026</td><td>35.25</td></tr>
+        <tr><td>Jun 2026</td><td>83.25</td></tr>
+        <tr><td>Jul 2026</td><td>55.00</td></tr>
+        <tr><td>Aug 2026</td><td>104.50</td></tr>
+        <tr><td>Sep 2026</td><td>72.00</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>The contracted allowance is 42 hours a month. The average delivered was 84.9.</b> Over twenty-four months that is <b>1,008 hours sold and 2,037 delivered</b>. The busiest month, June 2025, ran to 153.5 hours &mdash; three and a half times the allowance &mdash; on the SFCC migration and the summer keyword programme.</div>
+    <h3>Where the hours went, whole account since 2022</h3>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:44%">Work</th><th style="width:16%">Hours</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td>Keyword optimisation</td><td><b>598.5</b></td><td>The single largest lane, and the one with a measured result — chapter 06</td></tr>
+        <tr><td>General account management</td><td><b>443.0</b></td><td>Calls, reporting, planning and the inbound queue across nineteen markets</td></tr>
+        <tr><td>Data field update</td><td><b>410.3</b></td><td>The attribute layer — sizes, colours, materials, identifiers, availability</td></tr>
+        <tr><td>Title optimisation</td><td><b>259.5</b></td><td>What chapter 03 measures: 29 characters in, 83 out</td></tr>
+        <tr><td>Category mapping</td><td><b>217.8</b></td><td>The four-level tree on 93% of products, in nineteen languages</td></tr>
+        <tr><td>Development work</td><td><b>133.5</b></td><td>Feed builds, migrations and the Wunderkind and Rakuten integrations</td></tr>
+        <tr><td>Data field and title optimisation</td><td><b>121.5</b></td><td>Combined passes where both moved together</td></tr>
+        <tr><td>Custom label update</td><td><b>88.0</b></td><td>The label architecture PPC bids and structures against</td></tr>
+        <tr><td>Disapprovals</td><td><b>74.8</b></td><td>Keeping products approved. Never produces an uplift figure</td></tr>
+        <tr data-chart-skip="1"><td><b>Optimisation as a share of everything</b></td><td><b>54%</b></td><td>2,056.75 of 3,793 hours, against 22% account management and 5% technical</td></tr>
+      </tbody></table>
+    </div>
+    <div class="int-note rv in">Ray's own note in the Vendor Review tab says Superdry's time "should be at least 80% optimisation". The honest read is <b>54%</b> across the full four years, with account management at 22%. That is the figure to lead with rather than the friendlier one — and the reason it is not higher is the nineteen-market support load, which is itself the argument in chapter 09.</div>
+  </div>
+</section>
+
+<!-- ================= CH 05 ================= -->
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Market coverage</h2><p>The three English-language markets carry the full build. The three European-language markets carry the title rewrite and the category tree, and nothing beyond it.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Read from each market's own live output feed this morning.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:15%">Market</th><th style="width:11%">Live SKUs</th><th style="width:13%">Titles rewritten</th><th style="width:13%">In the AI band</th><th style="width:13%">Category mapped</th><th style="width:13%">Highlights</th><th>Keyword enrichment</th></tr></thead>
+      <tbody>
+        <tr><td><b>UK</b></td><td>25,699</td><td><span class="pill p-done">100%</span></td><td><b>62.7%</b></td><td><span class="pill p-done">100%</span></td><td>29.4%</td><td>41.0%</td></tr>
+        <tr><td><b>Ireland</b></td><td>23,510</td><td><span class="pill p-done">100%</span></td><td><b>63.0%</b></td><td><span class="pill p-done">100%</span></td><td>29.5%</td><td>41.2%</td></tr>
+        <tr><td><b>United States</b></td><td>14,647</td><td><span class="pill p-done">100%</span></td><td><b>62.5%</b></td><td><span class="pill p-done">100%</span></td><td>25.2%</td><td>46.3%</td></tr>
+        <tr><td><b>Germany</b></td><td>25,818</td><td><span class="pill p-done">100%</span></td><td>24.3%</td><td><span class="pill p-done">100%</span></td><td><span class="pill p-block">None</span></td><td><span class="pill p-block">None</span></td></tr>
+        <tr><td><b>France</b></td><td>25,762</td><td><span class="pill p-done">100%</span></td><td>14.2%</td><td><span class="pill p-done">100%</span></td><td><span class="pill p-block">None</span></td><td><span class="pill p-block">None</span></td></tr>
+        <tr><td><b>Netherlands</b></td><td>24,360</td><td><span class="pill p-done">100%</span></td><td>0.4%</td><td><span class="pill p-done">100%</span></td><td><span class="pill p-block">None</span></td><td><span class="pill p-block">None</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>The split is language, not effort.</b> Germany, France and the Netherlands each get a rewritten title &mdash; 71.4, 68.4 and 51.4 characters against a supplied 35.8, 34.6 and 33.3 &mdash; but the enrichment that takes an English title from 29 to 83 characters has never been built in German, French or Dutch. Neither has the keyword layer, and neither have product highlights.</div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Germany is the clearest case</h4>
+        <p>Germany returns the highest ROAS on the account &mdash; <b>1,042%</b> over the last year on €694,149 of spend &mdash; from a feed with <b>no product highlights and no keyword enrichment at all</b>, on an eight-hour monthly retainer.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">It is the market where the same build that runs in the UK would have the most room to work, and the market with the least time allocated to do it.</p>
+      </div>
+      <div class="card">
+        <h4>The twelve unfunded markets</h4>
+        <p>Belgium (×2), Canada (×2), Switzerland (×2), Denmark, Spain, Finland, Italy, Norway and Sweden all run live Google Shopping feeds with between 71 and 88 active rules each, and carry no retainer.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">They have taken <b>388 hours</b> since 2022 &mdash; imports monitored, disapprovals cleared, rules maintained, migrations carried through. None of it has ever been billed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 06 ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Results</h2><p>Forty tests in the archive since January 2025. Nine of the thirteen controlled tests won, and the three largest batches ever run all won clearly.</p></div></div>
+<section class="band-warm">
+  <div class="wrap">
+    <h3>Impressions uplift per controlled A/B test · test group vs control</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="bar" data-chart-series="2" data-chart-pct="1" data-chart-table="1"><thead><tr><th style="width:36%">Test</th><th style="width:13%">Batch</th><th style="width:17%">Impressions</th><th>Clicks</th></tr></thead>
+      <tbody>
+        <tr data-chart-cat="Feb I 25"><td>Feb I — keyword optimisation</td><td>500</td><td>−14.11%</td><td>−20.74%</td></tr>
+        <tr data-chart-cat="Mar I 25"><td>Mar I — keyword optimisation</td><td>500</td><td>+10.16%</td><td>+13.76%</td></tr>
+        <tr data-chart-cat="May I 25"><td>May I — keyword optimisation</td><td>500</td><td>+9.42%</td><td>+8.54%</td></tr>
+        <tr data-chart-cat="May II 25"><td>May II — keyword optimisation</td><td>500</td><td>−10.04%</td><td>−18.90%</td></tr>
+        <tr data-chart-cat="Jun I 25"><td>Jun I — keyword optimisation</td><td>500</td><td>−11.99%</td><td>−13.55%</td></tr>
+        <tr data-chart-cat="Jun II 25"><td>Jun II — keyword optimisation</td><td>500</td><td>+18.72%</td><td>+20.06%</td></tr>
+        <tr data-chart-cat="Jul I 25"><td>July I — keyword optimisation</td><td>500</td><td>+15.61%</td><td>+18.46%</td></tr>
+        <tr data-chart-cat="Jul II 25"><td>July II — keyword optimisation</td><td>500</td><td>+2.14%</td><td>+11.83%</td></tr>
+        <tr data-chart-cat="Aug I 25"><td>Aug I — keyword optimisation</td><td>500</td><td>+12.07%</td><td>+12.92%</td></tr>
+        <tr data-chart-cat="T-shirts, brand"><td><b>T-shirts — brand in title</b></td><td>500</td><td><b>+10.20%</b></td><td><b>+27.82%</b></td></tr>
+        <tr data-chart-cat="Dresses, brand"><td><b>Dresses — brand in title</b></td><td>500</td><td><b>−7.50%</b></td><td><b>−8.02%</b></td></tr>
+        <tr data-chart-cat="Dresses, keyword"><td>Dresses — keyword optimisation</td><td>—</td><td><b>+41.82%</b></td><td>+6.14%</td></tr>
+        <tr data-chart-cat="Brand incl. Aug 26"><td>Brand inclusion — Aug 2026</td><td>100</td><td>+9.25%</td><td>−4.87%</td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-3 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The number to plan against</h4>
+        <p>Nine of thirteen controlled tests won on impressions. The <b>median is +9.42% impressions and +8.54% clicks</b> &mdash; not the headline figures, the middle of the distribution.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">That is the return on a keyword pass over 500 products, repeated monthly. It is modest, it is real, and it is the only number in this deck with a control group behind it.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>At scale it is larger</h4>
+        <p>The three biggest batches ever run &mdash; Black Friday I and II at <b>10,000 products each</b> and the Summer/Seasonal pass at <b>9,653</b> &mdash; returned <b>+48.5%</b>, <b>+39.4%</b> and <b>+55.3%</b> impressions.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">These are single-group reads with no control, so seasonality is inside them. But three batches of that size all moving the same way is not noise.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Brand in the title depends on the category</h4>
+        <p>Run on the same day in January, the same test <b>won on T-shirts</b> (+10.2% impressions, +27.8% clicks) and <b>lost on dresses</b> (−7.5%, −8.0%).</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">So it is not a rule, it is a setting per category — which is exactly the kind of finding a testing programme exists to produce, and it cannot be bought any other way.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>Eight of the forty tests returned nothing at all.</b> Five title-optimisation tests and three image-tagging tests each closed with "no performance data detected". The title work this deck opens with &mdash; the change from 29 characters to 83 &mdash; has therefore <b>never been measured against a control</b>. On the evidence of chapter 03 it is the largest single change made to this feed, and it is the one we cannot yet put a number on.</div>
+    <div class="int-note rv in">Three single-group results are in the archive on batches of 7, 21 and 45 products, returning +14,047%, +165% and +1,566% impressions. They are arithmetically true and statistically meaningless; they are deliberately excluded from every figure in this chapter. If Superdry has seen them quoted before, that is worth getting ahead of.</div>
+  </div>
+</section>
+
+<!-- ================= CH 07 ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Feed optimisation score</h2><p>70 out of 100. The structural layer is close to finished; the content layer has barely started.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Eleven workstreams, weighted by completion, with every percentage read from the live feed rather than from a closed task.</p>
+    <div class="sc-grid rv in" style="margin-bottom:32px">
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Titles rewritten</div><div class="sc-note">Every product in all six audited markets carries a FeedSpark title, not the supplied one. 62.7% of UK titles land in the 80–120 band against 0% before.</div><div class="sc-tgt">The strongest single result on the account</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Category mapping</div><div class="sc-note">Mapped on every product in every market, four levels deep on 93.1% of the UK catalogue, across 305 distinct paths.</div><div class="sc-tgt">Deeper than most retailers of this size manage</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">99.9%</div></div><div class="sc-label">Label architecture</div><div class="sc-note">custom_label_0 (sale/full) 100%, custom_label_3 (gender) 100%, custom_label_2 (category) 99.8%. The gender label went live six days ago.</div><div class="sc-tgt">This is what PMax bids and structures against</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">41.0%</div></div><div class="sc-label">Keyword enrichment</div><div class="sc-note">10,543 of 25,699 UK products carry optimised keyword terms. Ireland 41.2%, the US 46.3%. Germany, France and the Netherlands: none.</div><div class="sc-warn">The lane with the only measured uplift, on two fifths of one market</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">29.4%</div></div><div class="sc-label">Product highlights</div><div class="sc-note">18,143 UK products carry none. Where they exist they are good — 1,855 products carry six. Outside the English markets there are none at all.</div><div class="sc-warn">Highlights are the sentences AI assistants quote back</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Description enrichment</div><div class="sc-note">Descriptions average 550 characters and are the retailer's own. The enrichment flag reads D:N on every product in every market — it has never run.</div><div class="sc-warn">Never scoped, never funded, never started</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Where the plan and the feed agree</h4>
+        <p>The project plan records <b>169 of 260 initiatives closed</b>. The lanes it shows as nearly finished are the ones the live feed confirms: custom labels 16 of 18, keywords 20 of 29, imagery 20 of 30, channels 18 of 26.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The lanes it shows as barely started are also confirmed: data fields <b>1 of 5</b>, product type <b>1 of 3</b>. Those two are the content layer, and they are where the score is lost.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>What the audit adds that the plan cannot</h4>
+        <p>FeedHero's own scan, refreshed yesterday, flags <b>19,791 UK products (34%) with three highlights or fewer</b>, <b>21,647 (37%) with no pattern</b>, and <b>12,007 (21%) whose size type is in the title but not in the size field</b>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">It also flags that <b>no custom alerts are configured</b> on this account. Nineteen markets and no monitoring rules — that is a gap on our side, and it is first on the roadmap.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>What the search-term data says is missing.</b> Of the top thousand terms Superdry ranks against, <b>578 (58%) do not appear in any product title</b> and <b>313 (31%) return no match anywhere in the feed</b>. "Jackets for men" draws 14,800 searches a month and misses every title. "Jacket in yellow" draws 8,100 and matches nothing in the catalogue at all. This is the measurable size of the keyword and title gap, in Superdry's own demand.</div>
+  </div>
+</section>
+
+<!-- ================= CH 08 ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>AI readiness</h2><p>Google has added six attributes built for AI assistants. Superdry submits none of them, in any market.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <div class="tiers rv in" style="margin-bottom:32px">
+      <div class="tier done">
+        <div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">Where this started</div>
+        <ul><li>Supplied titles passed through</li><li>29 characters, no attributes</li><li>Invisible to AI surfaces</li></ul>
+      </div>
+      <div class="tier here">
+        <div class="flag">◆ Superdry is here</div>
+        <div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation, done</div>
+        <ul><li>Titles rewritten on 100%</li><li>Category four levels deep on 93%</li><li>Colour, size, gender, identifiers complete</li><li>Two images on every product</li></ul>
+      </div>
+      <div class="tier">
+        <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">Not started</div>
+        <ul><li>Description enrichment: 0%</li><li>Product highlights: 29% in English markets, 0% elsewhere</li><li>None of the six conversational attributes</li><li>5,725 variant families ready to carry them</li></ul>
+      </div>
+      <div class="tier">
+        <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
+        <ul><li>Vision models read product imagery</li><li>Two images on every SKU already</li><li>Image cycler tests already name a winning shot type per category</li></ul>
+      </div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The foundation is genuinely done</h4>
+        <p>Tier 1 is not a claim, it is a measurement: <b>100%</b> of titles rewritten, <b>100%</b> category coverage at 3–4 levels, colour, size, gender, age group, GTIN, MPN and item group all complete, two images on 99.98% of products.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Local Inventory Ads fields are already in the UK feed — pickup method and next-day SLA went live in April. The plumbing for the next tier is in place.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>And the ceiling is real</h4>
+        <p><b>question_and_answer</b>, <b>document_link</b>, <b>related_product</b>, <b>item_group_title</b>, <b>variant_option</b> and <b>popularity_rank</b> are the only fields in Google's spec whose stated purpose is AI comprehension. Superdry carries <b>zero of six</b>, confirmed from the schema of every market's feed.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Two of the six — item_group_title and variant_option — need no new content at all. They restructure the 5,725 variant families and the colour and size data already in the feed.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>Why this matters for an outerwear retailer specifically.</b> A shopper asking an assistant for "a warm waterproof parka under £150 that runs true to size" is asking about fill, rating, fit and cut. Superdry's descriptions contain those answers today — 550 characters of them per product. What is missing is the structure that lets an assistant quote them instead of guessing, and the 58% of demand terms that never reach a title.</div>
+  </div>
+</section>
+
+<!-- ================= CH 09 ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>What it costs against what it returns</h2><p>Forty-two hours a month are contracted. Eighty-five were delivered. The feeds those hours maintain returned £16.2m in the UK alone.</p></div></div>
+<section>
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">42</div><div class="l">Hours a month contracted</div></div>
+      <div class="stat"><div class="n">84.9</div><div class="l">Hours a month delivered, 24-month average</div></div>
+      <div class="stat"><div class="n">648</div><div class="l">Hours absorbed in two years</div></div>
+      <div class="stat"><div class="n">12</div><div class="l">Markets served with no retainer</div></div>
+      <div class="stat"><div class="n">16</div><div class="l">Of 19 markets now in hours deficit</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The proportion, stated plainly</h4>
+        <p>Over the last twelve months the UK feed served <b>591.6 million impressions</b> and returned <b>£16.18m</b> on £1.68m of media. The UK retainer over the same period was <b>192 hours</b>.</p>
+        <p style="margin-top:12px;font-size:13px">Across all four reporting markets: <b>920.8 million impressions</b>, <b>10.9 million clicks</b> and <b>334,866 conversions</b> — from 42 contracted hours a month across nineteen markets.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Feed management is the least expensive line in a Shopping programme and the one every other line depends on. When a title is wrong, the bid does not matter.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Where the account actually sits</h4>
+        <p>The UK carries a <b>−97.75 hour balance</b>: 45.25 hours used against a 16-hour block this cycle, on top of 68.5 carried forward. Sixteen of nineteen markets are in deficit.</p>
+        <p style="margin-top:12px;font-size:13px">That has been a deliberate choice, taken to keep nineteen markets whole through an SFCC migration, a platform move and four peaks. It is not sustainable as a permanent arrangement and this review is the moment to say so.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The honest position: the work delivered is roughly double the work contracted, and the parts that were never funded — descriptions, highlights outside English, the European keyword layer — are exactly the parts the next two years of search will reward.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>What the unpaid markets have cost.</b> Twelve markets with no retainer have taken <b>388 hours</b> since 2022 — imports monitored, 1,000 rules maintained, disapprovals cleared, two migrations carried through. Whatever shape a renewal takes, those twelve either need an allowance or need to come off the service. Keeping them unfunded is the only part of this arrangement nobody has ever agreed to.</div>
+    <div class="int-note rv in">Ray's Vendor Review note frames Superdry's own position: "the marketing team is smaller, spend is also [reduced]". So this chapter must argue value-per-hour rather than ask for more hours outright. The strongest version of the argument is the ratio — 42 contracted hours a month against 920.8 million impressions — and the second strongest is that the 648 absorbed hours are the reason nineteen markets are still whole. Do not open with the deficit; open with the return.</div>
+  </div>
+</section>
+
+<!-- ================= CH 10 ================= -->
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Roadmap</h2><p>Six pieces of work. Two need nothing from Superdry, three need a decision, one needs data.</p></div></div>
+<section class="band-warm">
+  <div class="wrap">
+    <div class="road rv in" style="grid-template-columns:repeat(3,1fr)">
+      <div class="mo">
+        <div class="mo-m">Oct 2026</div><div class="mo-s s-close">Before Peak</div>
+        <h4>Protect what is running</h4>
+        <ul>
+          <li><b>Custom alerts</b> — nineteen markets, none configured</li>
+          <li><b>Range-completion exclusion</b> — open since spring</li>
+          <li><b>Stock-unit exclusion</b> under 5 units</li>
+          <li><b>Peak keyword batch</b> — the 10,000-product pass that returned +48%</li>
+        </ul>
+      </div>
+      <div class="mo mo peak">
+        <div class="mo-m">Nov – Dec 2026</div><div class="mo-s s-peak">Peak — hold</div>
+        <h4>No architecture changes</h4>
+        <ul>
+          <li><b>Black Friday batches</b> repeated at scale</li>
+          <li><b>Disapproval sweeps</b> across 53 feeds</li>
+          <li><b>Overlay and cycler</b> on the winning shot types</li>
+          <li><b>Nothing structural</b> moves until January</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Jan – Mar 2027</div><div class="mo-s s-build">Build</div>
+        <h4>Close the content layer</h4>
+        <ul>
+          <li><b>Highlights</b> to the 18,143 UK products with none</li>
+          <li><b>German and French</b> keyword layer</li>
+          <li><b>Two conversational attributes</b> — no new content needed</li>
+          <li><b>Title test</b> with a control, at last</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tbl-wrap rv in" style="margin:32px 0">
+      <table><thead><tr><th style="width:6%">#</th><th style="width:25%">Workstream</th><th>What it needs</th><th style="width:12%">Needs</th><th style="width:11%">Priority</th></tr></thead>
+      <tbody>
+        <tr><td><b>W1</b></td><td>Custom alerts across all markets</td><td>Nothing external. Nineteen markets run with no monitoring rules configured — a drop in one market currently surfaces only when somebody looks</td><td>FeedSpark</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W2</b></td><td>Product highlights, English markets</td><td>Nothing external. 18,143 UK products carry none; where highlights exist they already run to six per product</td><td>FeedSpark</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W3</b></td><td>Keyword layer for Germany and France</td><td>Hours. Both markets have zero keyword coverage and Germany returns the highest ROAS on the account</td><td>Decision</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W4</b></td><td>Range-completion and stock exclusions</td><td>Sign-off on the thresholds. Between 47% and 58% of each catalogue takes under 100 impressions a month</td><td>Superdry</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W5</b></td><td>A measured title test</td><td>One batch and a control group. Five title tests have closed with no reading; the largest change ever made to this feed is still unquantified</td><td>Decision</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W6</b></td><td>First two conversational attributes</td><td>Configuration only — item_group_title and variant_option restructure data already in the feed across 5,725 variant families</td><td>FeedSpark</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W7</b></td><td>The twelve unfunded markets</td><td>A commercial decision: an allowance, or a reduced scope. 388 hours delivered against no retainer since 2022</td><td>Superdry</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W8</b></td><td>Margin and return-rate data</td><td>Superdry to supply both, plus Analytics access. Margin unlocks profit-weighted bidding; return rate unlocks exclusion of the lines that cost money to win</td><td>Superdry</td><td><span class="pill p-open">Low</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Three things we need from Superdry</h4>
+        <p style="margin-top:4px;font-size:13px"><b>1. Sign-off on the exclusion thresholds.</b> Range completion and minimum stock units. Both have been scoped since spring and both address the half of the catalogue earning nothing.<br>
+        <b>2. Margin and return-rate data, and Analytics access.</b> Three asks that have sat open across several cycles. Each one turns a structural feed into a commercial one.<br>
+        <b>3. A decision on the twelve unfunded markets.</b> Either an allowance or a reduced scope — not a continuation of the current arrangement.</p>
+      </div>
+      <div class="card">
+        <h4>Sequencing logic</h4>
+        <p>W1 and W2 come first because neither is blocked on anybody, and both protect Peak rather than change it. W4 needs one conversation. Everything structural lands before November.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">W3, W5 and W6 sit in January deliberately. The German and French keyword layer is the largest unexploited return on this account, and it should be built and measured in a quiet quarter, not in Peak.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 11 ================= -->
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Ways of working</h2><p>Forty-six people have worked on this account. Four carry it day to day.</p></div></div>
+<section>
+  <div class="wrap">
+    <div class="flow rv in" style="margin-bottom:32px">
+      <div class="flow-step"><div class="fs-num">01</div><h4>Brief</h4><p>Work is raised against a market and a category, with a scope, a due date and a definition of done.</p></div>
+      <div class="flow-step"><div class="fs-num">02</div><h4>Build</h4><p>The optimisation team applies it as a rule, not an edit — so it keeps applying to every product that arrives after it.</p></div>
+      <div class="flow-step"><div class="fs-num">03</div><h4>Measure</h4><p>Batches go live with a read-out date. Where a control group is possible, one is used.</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Report</h4><p>Results return to the archive this deck is built from — forty tests and counting.</p></div>
+    </div>
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The work that never appears as a win</h4>
+        <p>A large share of any feed retainer goes on keeping things from breaking, and none of it produces an uplift number:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>53 feeds</b> kept in sync</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>1,774 rules</b> maintained</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>19 markets</b> of disapprovals</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>Two migrations</b> carried through</div>
+        </div>
+        <p style="margin-top:12px;font-size:12px;color:var(--muted)">443 hours of account management and 75 hours of disapproval clearance since 2022 — the cost of nineteen markets not going down.</p>
+      </div>
+      <div class="card">
+        <h4>Who carries it</h4>
+        <p><b>Ray</b> leads the account and has personally logged 469.5 hours on it. <b>Steven Opuni</b> is the executive AM. Day to day the optimisation work runs through a named team — Vitus, Gary, Lara, Febin, Matt and Murugan account for another 1,627 hours between them.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Forty-six people have touched this account across four years. That continuity is why a rule written in June 2022 still runs correctly today.</p>
+      </div>
+    </div>
+    <div class="callout rv in"><h4>The through-line</h4><p>Everything in this deck is one pattern: <b>a 29-character title became an 83-character one, and it stayed that way without anybody touching it again</b>. Nineteen markets, 1,774 rules, 920.8 million impressions. The parts that are not finished are not failures of delivery — they are the parts that were never funded, and they are the ones the next two years of search will reward most.</p></div>
+  </div>
+</section>
+
+<footer class="close">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Thank you</div>
+    <h2>Questions?</h2>
+    <div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
+    <div class="contacts">
+      <div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+      <div class="ct"><b>Steven Opuni</b><span>Executive Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+      <div class="ct"><b>Superdry team</b><span>FeedSpark</span><a href="mailto:superdry@feedspark.com">superdry@feedspark.com</a></div>
+    </div>
+    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential&nbsp;</p>
+  </div>
+</footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ======== reveal ======== */
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ======== bars ======== */
+  var fills = document.querySelectorAll('.fill');
+  if('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.width=e.target.getAttribute('data-w')+'%';io3.unobserve(e.target)}})},{threshold:.4});
+    fills.forEach(function(el){io3.observe(el)});
+  } else fills.forEach(function(el){el.style.width=el.getAttribute('data-w')+'%'});
+
+  /* ======== topbar + progress ======== */
+  var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    tb.classList.toggle('show',y>420);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pg.style.width=(h>0?(y/h)*100:0)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
+    links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  /* ======== data-check toggle ======== */
+  document.getElementById('flagbtn').addEventListener('click',function(){
+    var on=this.getAttribute('aria-pressed')==='true';
+    this.setAttribute('aria-pressed',String(!on));
+    document.body.classList.toggle('hide-checks',on);
+  });
+
+  /* ======== agent panel ======== */
+
+})();
+</script>
+
+
+</body></html>
