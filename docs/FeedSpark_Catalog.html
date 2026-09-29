@@ -106,16 +106,62 @@ window.addEventListener('load',restore);
   .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin:2px 0 0}
   .chead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
   .chead .sp{flex:1;min-width:200px}
-  .kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-  .kpi{position:relative;overflow:hidden}
+  .kpis{grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:1fr}
+  .kpi{position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:118px}
+  .kpi .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .kpi .mini{margin-top:auto!important}
+  .kpi .d+.mini,.kpi .l+.mini{margin-top:auto!important}
   .kpi .n{font-size:24px}
-  .kpi .mini{height:4px;border-radius:4px;background:var(--wash);margin-top:8px;overflow:hidden;display:flex}
+  .kpi .mini{height:4px;border-radius:4px;background:var(--wash);margin-top:10px;overflow:hidden;display:flex;flex:none}
   .kpi .mini i{display:block;height:100%}
   .kpi.link{cursor:pointer;transition:border-color .15s,transform .15s}
   .kpi.link:hover{border-color:var(--orange);transform:translateY(-1px)}
   .kpi .arrow{color:var(--muted);font-weight:800;font-size:15px;margin:0 3px}
-  .ins{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.86fr);gap:16px;align-items:stretch}
+  .ins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
   .ins>.card{margin:0}
+  /* THE DASHBOARD IS MODULES: one size, one rhythm — every card the same height, its body filling what the header leaves */
+  .mod{display:flex;flex-direction:column;height:340px;overflow:hidden}
+  .mod>.chead{flex:none;min-height:46px;flex-wrap:nowrap}
+  .mod>.chead .sp{min-width:0}
+  .mod>.chead .agg{flex:none;max-width:48%}
+  .mod>.chead .ch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mod>div:last-child{flex:1;min-height:0;display:flex;flex-direction:column}
+  .mod>div:last-child>.cfoot{margin-top:auto;padding-top:6px}
+  .mod .stack{margin-top:6px}
+  .lead3{display:grid;gap:7px;margin-top:14px;font-size:12px}
+  .lead3>div{display:grid;grid-template-columns:10px 76px minmax(0,1fr);gap:6px;align-items:baseline}
+  .lead3 i{width:9px;height:9px;border-radius:3px;align-self:center}
+  .lead3 b{font-weight:900;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .lead3 span{font-weight:800;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lead3 a{cursor:pointer;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+  .lead3 a:hover{color:var(--orange-deep)}
+  .mod[hidden]{display:none}
+  .modbar{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
+  .modbar .mb-t{font-size:11.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .modbar .mb-s{flex:1;font-size:12px;font-weight:700;color:var(--muted)}
+  .modbar .popb{width:280px}
+  .mrow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12.5px;font-weight:800;color:var(--ink-2)}
+  .mrow label{flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;padding:0}
+  .mrow button{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:7px;width:24px;height:24px;cursor:pointer;font:inherit;font-size:11px;padding:0}
+  .mrow button:disabled{opacity:.3;cursor:default}
+  /* rows shared by the list modules: a label, a bar, a figure */
+  .mlist{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) auto;gap:6px 10px;align-items:center;font-size:12px}
+  .mlist .l{font-weight:800;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .mlist .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .mlist .v small{font-weight:700;color:var(--muted);margin-left:4px}
+  .mlist .b{position:relative;height:12px;cursor:pointer}
+  .mlist .b i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+  .mlist .b i.s2{background:var(--chart-2)}
+  .mlist .sel{color:var(--orange-deep)}
+  .mlist .dim{opacity:.35}
+  .db{position:relative;height:14px;cursor:pointer}
+  .db::before{content:'';position:absolute;left:0;right:0;top:6px;height:2px;background:var(--wash);border-radius:2px}
+  .db .ln{position:absolute;top:6px;height:2px;background:var(--lp);opacity:.45}
+  .db .dt{position:absolute;top:2px;width:10px;height:10px;border-radius:50%;margin-left:-5px;box-shadow:0 0 0 2px var(--paper)}
+  .mkey{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;color:var(--muted)}
+  .mkey i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .cht .bar2{fill:var(--chart-2);cursor:pointer}
+  .cht .bar2.dim{opacity:.35}
   .cht{display:block;width:100%;height:auto}
   .cht text{font-family:Lato,system-ui,sans-serif;fill:var(--muted);font-size:11px;font-weight:700}
   .cht .grid{stroke:var(--grid);stroke-width:1}
@@ -398,8 +444,13 @@ window.addEventListener('load',restore);
   .prov b{color:var(--ink-2)}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;font-weight:800;font-size:13px;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:300}
   .toast.on{opacity:1}
-  @media(max-width:1180px){.ins{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ins>.card:last-child{grid-column:1/-1}}
-  @media(max-width:900px){.srcs{grid-template-columns:minmax(0,1fr)}.ins{grid-template-columns:minmax(0,1fr)}.lmx{grid-template-columns:minmax(96px,130px) minmax(0,1fr) 78px 44px;gap:4px 8px}}
+  /* columns follow the space the page actually has (the inspector pushes it), not the window */
+  main.wrap{container-type:inline-size;container-name:cat}
+  @container cat (max-width:1150px){.ins{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kpi .n{font-size:21px}}
+  @container cat (max-width:880px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  @container cat (max-width:700px){.ins{grid-template-columns:minmax(0,1fr)}.mod{height:auto;min-height:300px}.mod>.chead{flex-wrap:wrap}.mod>.chead .agg{max-width:100%}}
+  @container cat (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:900px){.srcs{grid-template-columns:minmax(0,1fr)}.lmx{grid-template-columns:minmax(96px,130px) minmax(0,1fr) 78px 44px;gap:4px 8px}}
   @media(max-width:820px){.tb-tag{display:none}h1{font-size:28px}.hero{padding:22px 0 16px}}
   @media(max-width:760px){
     :root{--insw:100vw}
@@ -476,19 +527,47 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="kpis" id="kpis" data-no-collapse></div>
 
-  <div class="ins" id="ins">
-    <section class="card" id="arr-card">
+  <div class="modbar"><span class="mb-t">Dashboard</span><span class="mb-s" id="mods-s"></span>
+    <span class="pop"><button class="btn" id="mods-b" type="button" aria-expanded="false" title="Show, hide and reorder the modules">⊞ Modules</button><div class="popb" id="mods-p" hidden></div></span></div>
+  <div class="ins mods" id="ins">
+    <section class="card mod" id="arr-card" data-mod="arr">
       <div class="chead"><div class="sp"><h3>New arrivals</h3><p class="ch" id="arr-sub">Products still live, by the month FeedHero first saw them.</p></div></div>
       <div id="arr-body"><div class="empty2">Reading the feed…</div></div>
     </section>
-    <section class="card" id="roas-card">
+    <section class="card mod" id="roas-card" data-mod="roas">
       <div class="chead"><div class="sp"><h3>ROAS by <span id="roas-lbl">product age</span></h3><p class="ch" id="roas-sub">Google Ads, last 30 days.</p></div>
         <select class="fld agg" id="roas-agg" aria-label="Split ROAS by"></select></div>
       <div id="roas-body"><div class="empty2">Waiting for the Google Ads read…</div></div>
     </section>
-    <section class="card" id="lin-sum">
+    <section class="card mod" id="lin-sum" data-mod="did">
       <div class="chead"><div class="sp"><h3>What FeedSpark did</h3><p class="ch" id="ls-sub">Fields per product, by the stage that set them.</p></div></div>
       <div id="ls-body"><div class="empty2">Joining the master feed…</div></div>
+    </section>
+    <section class="card mod" id="m-gain" data-mod="gain">
+      <div class="chead"><div class="sp"><h3>Data FeedSpark added</h3><p class="ch" id="gain-sub">Share of products carrying each attribute — master → feed.</p></div></div>
+      <div class="mbody" id="gain-body"><div class="empty2">Needs the master feed traced.</div></div>
+    </section>
+    <section class="card mod" id="m-spec" data-mod="spec">
+      <div class="chead"><div class="sp"><h3>Google format issues</h3><p class="ch" id="spec-sub">Values sent that are not in the form Google specifies.</p></div></div>
+      <div class="mbody" id="spec-body"><div class="empty2">Needs the master feed traced.</div></div>
+    </section>
+    <section class="card mod" id="m-price" data-mod="price">
+      <div class="chead"><div class="sp"><h3>Price bands</h3><p class="ch" id="price-sub">Products per price band — full price and on sale.</p></div></div>
+      <div class="mbody" id="price-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-run" data-mod="run">
+      <div class="chead"><div class="sp"><h3>Size-run health</h3><p class="ch" id="run-sub">Item groups by the share of their variants in stock.</p></div></div>
+      <div class="mbody" id="run-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-mix" data-mod="mix">
+      <div class="chead"><div class="sp"><h3>Catalogue mix</h3><p class="ch" id="mix-sub">The biggest groups in the feed, with their share on sale.</p></div>
+        <select class="fld agg" id="mix-f" aria-label="Group the catalogue by"></select></div>
+      <div class="mbody" id="mix-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
+    <section class="card mod" id="m-depth" data-mod="depth">
+      <div class="chead"><div class="sp"><h3>Content depth</h3><p class="ch" id="depth-sub">How much each product carries.</p></div>
+        <select class="fld agg" id="depth-f" aria-label="Measure"></select></div>
+      <div class="mbody" id="depth-body"><div class="empty2">Reading the feed…</div></div>
     </section>
   </div>
 
@@ -558,7 +637,7 @@ window.addEventListener('load',restore);
   function monLbl(k) { return MON[+k.slice(5, 7) - 1] + ' ' + k.slice(2, 4); }
   function fmtDay(t) { var d = new Date(t); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   var TT = null;
   function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(TT); TT = setTimeout(function () { el.classList.remove('on'); }, 2600); }
   function imgUrl(u) { return String(u || '').trim().replace(/^http:\/\//i, 'https://'); }
@@ -660,7 +739,7 @@ window.addEventListener('load',restore);
 
   // ---- roster: every client × market this signin may browse ----------------------------------------------------
   function boot() {
-    renderTabs(); renderQuick(); paintSegs(); layout(); gwMsg('⏳', 'Loading the catalogue engines…');
+    applyMods(); renderTabs(); renderQuick(); paintSegs(); layout(); gwMsg('⏳', 'Loading the catalogue engines…');
     loadEngines().then(function (x) {
       FA = x.FA; E = x.E; AR = x.AR; OV = x.OV;
       E.ATTRS.forEach(function (a, i) { ATTR_IDX[a.k] = i; });
@@ -733,7 +812,7 @@ window.addEventListener('load',restore);
     var g = ++S.gen;
     S.ctl = window.AbortController ? new AbortController() : null;
     S.prods = []; S.fx = []; S.ixO = new Map(); S.ixI = new Map(); S.grp = null; S.gm = {}; S.rr = null; S.live = {};
-    S.codes = []; S.comp = []; S.att = null; S.linAt = 0; S.linDone = false; S.mx = null; S.mxw = null; S.mxN = 0; S.sum = null; S.counts = null;
+    S.codes = []; S.comp = []; S.att = null; S.linAt = 0; S.linDone = false; S.spw = null; S.pb = null; S.dl = null; S.mx = null; S.mxw = null; S.mxN = 0; S.sum = null; S.counts = null;
     S.out = { st: 'loading', bytes: 0, total: 0, t0: Date.now() }; S.m = { st: 'idle' }; S.roas = { st: 'idle', segs: {} };
     S.view = []; S.facet = null; S.sel = -1; closeInsp(true); S.ver++;
     if (S.tab === 'gone') S.tab = 'all';
@@ -798,7 +877,7 @@ window.addEventListener('load',restore);
     S.grp = grp; S.gm = E.groupBirth(S.fx);
     S.ver++;
     // each surface on its own: one chart failing must never stop the master join behind it
-    [counts, detectRoasField, renderStatus, renderKpis, renderTabs, function () { refresh(false); }, renderArrivals, renderRoasChart].forEach(safe);
+    [counts, detectRoasField, renderStatus, renderKpis, renderTabs, function () { refresh(false); }, renderArrivals, renderRoasChart, renderMods].forEach(safe);
     maybeJoin(g);
   }
   function safe(fn) { try { fn(); } catch (e) { if (window.console) console.error('catalogue:', e); } }
@@ -936,7 +1015,7 @@ window.addEventListener('load',restore);
   // ---- the lineage pass: every product against its master row, in slices so the page never stalls -------------
   function startLineage(g) {
     var N = S.prods.length, i = 0, plan = S.m.plan, by = S.m.by, A = E.ATTRS.length;
-    S.codes = new Array(N); S.comp = new Array(N); S.att = new Uint8Array(N);
+    S.codes = new Array(N); S.comp = new Array(N); S.att = new Uint8Array(N); S.spw = new Array(N);
     S.mx = E.ATTRS.map(function () { return {}; }); S.mxw = new Uint32Array(A); S.mxN = 0;
     var sum = { n: 0, ex: 0, pop: 0, opt: 0, enr: 0, kept: 0, drop: 0, cb: 0, ca: 0, vals: 0, touched: 0 };
     (function step() {
@@ -950,6 +1029,7 @@ window.addEventListener('load',restore);
         var cm = E.completeness(lin, p);
         S.comp[i] = [cells ? cm.before : -1, cm.after];
         S.att[i] = attention(lin, cm) ? 1 : 0;
+        var wv = null; for (var q = 0; q < lin.length; q++) if (lin[q].spec === 'warn') (wv = wv || []).push(q); S.spw[i] = wv;
         if (!cells) continue;
         S.mxN++; sum.n++; sum.cb += cm.before; sum.ca += cm.after;
         for (var a = 0; a < A; a++) {
@@ -969,7 +1049,7 @@ window.addEventListener('load',restore);
       S.linAt = i; statusSoon();
       if (i < N) { setTimeout(step, 0); return; }
       S.linDone = true; S.sum = sum; S.ver++;
-      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }].forEach(safe);
+      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }, renderGain, renderSpec].forEach(safe);
       if (S.insp && !S.insp.gone) inspect(S.insp.i, 'refresh');
     })();
   }
@@ -1114,6 +1194,7 @@ window.addEventListener('load',restore);
     var p = S.prods[i], x = S.fx[i];
     if (F.k === 'dob') return x.dob != null && new Date(x.dob).toISOString().slice(0, 7) === F.v;
     if (F.k === 'lin') { var c = S.codes[i]; return !!c && F.codes.indexOf(c.charAt(F.a)) >= 0; }
+    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth') return passModFacet(F, i, x);
     if (F.k === 'roas') {
       if (F.agg === 'Category') { var h = roasFor(i); return !!h && !h.miss && (E.pathKey(h.parts.join(' > ')) + ' >').indexOf(E.pathKey(F.v) + ' >') === 0; }
       if (F.agg === 'Price_type') return /sale/i.test(F.v) ? x.onSale : !x.onSale;
@@ -1228,24 +1309,24 @@ window.addEventListener('load',restore);
   }
 
   // ---- KPI band ------------------------------------------------------------------------------------------------------
-  function kpi(n, l, d, cls, extra) { return '<div class="kpi' + (cls ? ' ' + cls : '') + '"' + (extra || '') + '><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (d ? '<div class="d">' + d + '</div>' : '') + '</div>'; }
+  function kpi(n, l, d, cls, extra, mini) { return '<div class="kpi' + (cls ? ' ' + cls : '') + '"' + (extra || '') + '><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (d ? '<div class="d">' + d + '</div>' : '') + '<div class="mini">' + (mini != null ? '<i style="width:' + Math.max(0, Math.min(100, mini * 100)).toFixed(1) + '%;background:' + (cls === 'warn' ? 'var(--band-orange)' : 'var(--ink-2)') + ';opacity:.55"></i>' : '') + '</div></div>'; }
   function renderKpis() {
     var N = S.prods.length, c = S.counts, h = '';
     if (!N) { $('kpis').innerHTML = kpi('—', 'Products', S.out.st === 'loading' ? 'streaming…' : '') ; return; }
     var inS = 0, sale = 0, disc = 0, nw = 0, t = 0, stamped = 0;
     S.fx.forEach(function (x, i) { if (x.av === 'in_stock') inS++; if (x.onSale) { sale++; disc += x.disc; } if (x.age != null && x.age <= 30) nw++; var o = S.prods[i].opti; if (o) { stamped++; if (o.T) t++; } });
     var m = S.m, gone = m.st === 'ready' ? m.light.length : null;
-    h += kpi(n0(N), 'Products', m.st === 'ready' ? n0(m.by.size) + ' matched in the master' + (gone ? ' · ' + n0(gone) + ' not in feed' : '') : (S.out.st === 'loading' ? 'streaming…' : 'in the feed'), '', gone ? ' data-go="gone" title="Products in the master that the feed leaves out"' : '');
-    h += kpi(pc(inS, N), 'In stock', n0(inS) + ' products', inS / N < .6 ? 'warn' : '', ' data-go="stock"');
-    h += kpi(pc(sale, N), 'On sale', sale ? 'avg −' + Math.round(disc / sale) + '%' : 'no sale prices', '', ' data-go="sale"');
-    h += kpi(n0(nw), 'New · 30 days', 'by first-seen date', '', ' data-go="new"');
-    h += kpi(stamped ? pc(t, stamped) : '—', 'Titles optimised', stamped ? 'FeedSpark’s own stamp' : 'no FeedSpark stamps', '', stamped ? ' data-quick="T"' : '');
+    h += kpi(n0(N), 'Products', m.st === 'ready' ? n0(m.by.size) + ' matched in the master' + (gone ? ' · ' + n0(gone) + ' not in feed' : '') : (S.out.st === 'loading' ? 'streaming…' : 'in the feed'), '', gone ? ' data-go="gone" title="Products in the master that the feed leaves out"' : '', m.st === 'ready' && (m.by.size + (gone || 0)) ? m.by.size / (m.by.size + (gone || 0)) : null);
+    h += kpi(pc(inS, N), 'In stock', n0(inS) + ' products', inS / N < .6 ? 'warn' : '', ' data-go="stock"', inS / N);
+    h += kpi(pc(sale, N), 'On sale', sale ? 'avg −' + Math.round(disc / sale) + '%' : 'no sale prices', '', ' data-go="sale"', sale / N);
+    h += kpi(n0(nw), 'New · 30 days', pc(nw, N) + ' of the feed, by first-seen date', '', ' data-go="new"', nw / N);
+    h += kpi(stamped ? pc(t, stamped) : '—', 'Titles optimised', stamped ? 'FeedSpark’s own stamp' : 'no FeedSpark stamps', '', stamped ? ' data-quick="T"' : '', stamped ? t / stamped : null);
     if (S.sum && S.sum.n) {
       var b = S.sum.cb / S.sum.n, a = S.sum.ca / S.sum.n;
-      h += '<div class="kpi" title="Average completeness of what Google asks of each product — the client’s master against the feed"><div class="n">' + Math.round(b) + '<span class="arrow">→</span>' + Math.round(a) + '</div><div class="l">Completeness</div><div class="mini"><i class="b-' + auditBand(a) + '" style="width:' + a + '%"></i></div></div>';
+      h += '<div class="kpi" title="Average completeness of what Google asks of each product — the client’s master against the feed"><div class="n">' + Math.round(b) + '<span class="arrow">→</span>' + Math.round(a) + '</div><div class="l">Completeness</div><div class="d">master → feed, of what Google asks</div><div class="mini"><i class="b-' + auditBand(a) + '" style="width:' + a + '%"></i></div></div>';
     } else h += kpi('…', 'Completeness', m.st === 'none' || m.st === 'nojoin' || m.st === 'error' ? 'needs the master feed' : 'tracing the master');
     var R = S.roas;
-    if (R.st === 'ok' && R.total) h += kpi(roasTxt(R.total.roasPct), 'ROAS · 30 days', (R.total.band || '') + ' · ' + money(R.total.revenue && R.total.revenue.n, R.cur) + ' revenue', '', ' style="border-color:rgba(37,99,235,.35)"');
+    if (R.st === 'ok' && R.total) h += kpi(roasTxt(R.total.roasPct), 'ROAS · 30 days', (R.total.band || '') + ' · ' + money(R.total.revenue && R.total.revenue.n, R.cur) + ' revenue', '', ' style="border-color:rgba(37,99,235,.35)"', R.total.roasPct != null ? Math.min(1, R.total.roasPct / 2000) : null);
     else h += kpi('—', 'ROAS · 30 days', R.st === 'loading' ? 'reading…' : (R.why || R.err || 'no Google Ads read'));
     $('kpis').innerHTML = h;
     Array.prototype.forEach.call($('kpis').querySelectorAll('[data-go],[data-quick]'), function (el) { el.classList.add('link'); });
@@ -1285,6 +1366,12 @@ window.addEventListener('load',restore);
       }
       if (x.n == null) return;
       var h = Math.max(x.n ? 2 : 1, x.n / peak * (B - T));
+      if (x.n2 > 0 && x.n2 < x.n) {
+        // stacked: the first series on the axis, the second on top of it, a 2px surface gap between
+        var h2 = x.n2 / peak * (B - T), h1 = Math.max(1, h - h2 - 2), dm = o.sel && o.sel !== x.k ? ' dim' : '';
+        s += '<rect class="bar' + dm + '" x="' + cx.toFixed(1) + '" y="' + (B - h1).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h1.toFixed(1) + '"><title>' + esc(x.tip || '') + '</title></rect>';
+        s += '<path class="bar2' + dm + '" d="' + barPath(+cx.toFixed(1), +bw.toFixed(1), +(B - h1 - 2).toFixed(1), +Math.max(1, h2).toFixed(1)) + '"><title>' + esc(x.tip || '') + '</title></path>';
+      } else
       s += '<path class="bar' + (x.part ? ' part' : '') + (o.sel && o.sel !== x.k ? ' dim' : '') + (x.nop ? ' nop' : '') + '" d="' + barPath(+cx.toFixed(1), +bw.toFixed(1), B, +h.toFixed(1)) + '"><title>' + esc(x.tip || (x.lab + ': ' + x.n)) + '</title></path>';
       if (x.n && (rows.length <= 16 || i % (o.every || 3) === 0 || i === rows.length - 1)) s += '<text class="val" x="' + (cx + bw / 2).toFixed(1) + '" y="' + (B - h - 5).toFixed(1) + '" text-anchor="middle">' + esc(o.fmt ? o.fmt(x.n) : n0(x.n)) + '</text>';
       s += '<rect class="hit" data-k="' + esc(x.k) + '" x="' + (L + slot * i).toFixed(1) + '" y="' + T + '" width="' + slot.toFixed(1) + '" height="' + (B - T) + '"><title>' + esc(x.tip || '') + '</title></rect>';
@@ -1359,8 +1446,13 @@ window.addEventListener('load',restore);
       h = colsSvg(rows.map(function (r) { return { k: r.category, lab: r.category, n: r.roasPct, tip: tip(r), nop: !can }; }), { W: body.clientWidth, h: 196, ref: tot, refLbl: 'market ' + roasTxt(tot), sel: sel, fmt: roasTxt, aria: 'ROAS by ' + agg, maxw: 64 });
     } else {
       var mx = Math.max.apply(null, rows.map(function (r) { return r.roasPct; }).concat([tot || 0, 1]));
+      // a path cut (GPC, category) names its LEAF — "Clothing & Accessories > Clot…" ten times over tells nobody
+      // anything; a leaf shared by two rows keeps its parent, and the tooltip carries the whole path
+      var isPath = agg === 'Google_product_category' || agg === 'Category', segs = function (c) { return String(c).split(/\s*(?:>|›)\s*/).filter(Boolean); };
+      var leafN = {}; if (isPath) rows.forEach(function (r) { var q = segs(r.category), lf = q[q.length - 1] || r.category; leafN[lf] = (leafN[lf] || 0) + 1; });
+      var shortLab = function (c) { if (!isPath) return c; var q = segs(c), lf = q[q.length - 1] || c; return leafN[lf] > 1 && q.length > 1 ? q[q.length - 2] + ' › ' + lf : lf; };
       h = '<div class="hbars">' + rows.map(function (r) {
-        return '<span class="l' + (sel === r.category ? ' sel' : '') + '" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '">' + esc(r.category) + '</span><span class="b" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '"><i style="width:' + (r.roasPct / mx * 100).toFixed(1) + '%' + (sel && sel !== r.category ? ';opacity:.35' : '') + '"></i>' + (tot ? '<em style="left:' + (tot / mx * 100).toFixed(1) + '%" title="Market ' + roasTxt(tot) + '"></em>' : '') + '</span><span class="v">' + roasTxt(r.roasPct) + '</span>';
+        return '<span class="l' + (sel === r.category ? ' sel' : '') + '" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '">' + esc(shortLab(r.category)) + '</span><span class="b" data-k="' + esc(r.category) + '" title="' + esc(tip(r)) + '"><i style="width:' + (r.roasPct / mx * 100).toFixed(1) + '%' + (sel && sel !== r.category ? ';opacity:.35' : '') + '"></i>' + (tot ? '<em style="left:' + (tot / mx * 100).toFixed(1) + '%" title="Market ' + roasTxt(tot) + '"></em>' : '') + '</span><span class="v">' + roasTxt(r.roasPct) + '</span>';
       }).join('') + '</div>';
     }
     h += '<div class="cfoot"><span>Market <b>' + roasTxt(tot) + '</b></span>' + (more ? '<span>top 10 of ' + (rows.length + more) + ' by spend</span>' : '') + (unl ? '<span title="Google Ads traffic on SKUs that are not in the feed">+ ' + n0(unl.skus) + ' unlisted SKUs</span>' : '') + (!can ? '<span title="' + esc(why) + '">· ' + esc(why) + '</span>' : '') + (agg === 'Category' && R.miss ? '<span title="Re-typed since Google Ads was last read — FeedHero still counts them under their old path">' + n0(R.miss) + ' not in the tree yet</span>' : '') + '</div>';
@@ -1384,15 +1476,217 @@ window.addEventListener('load',restore);
     }).join('') + '</div>';
     var tot = s.vals || 1, parts = [['c-k', s.kept, 'Kept'], ['c-p', s.pop, 'Populated'], ['c-o', s.opt, 'Optimised'], ['c-e', s.enr, 'Enriched']];
     h += '<div class="stack" role="img" aria-label="Share of the feed’s field values by stage">' + parts.map(function (p) { return p[1] ? '<i class="' + p[0] + '" style="width:' + (p[1] / tot * 100).toFixed(2) + '%" title="' + esc(p[2] + ' · ' + Math.round(p[1] / tot * 100) + '% of every field value sent') + '"></i>' : ''; }).join('') + '</div>';
+    // which attributes each stage worked on most — the stage's own words, each a link to those products
+    if (S.mx && S.mxN) {
+      h += '<div class="lead3">' + [['lp', 'Populated', 'var(--lp)'], ['so', 'Optimised', 'var(--lo)'], ['eg', 'Enriched', 'var(--le)']].map(function (st) {
+        var top = E.ATTRS.map(function (a, i) { var c = S.mx[i], n = 0; for (var j = 0; j < st[0].length; j++) n += c[st[0].charAt(j)] || 0; return { a: a, i: i, n: n }; })
+          .filter(function (r) { return r.n && r.a.k !== 'id' && r.a.tier !== 'camp' && r.a.k !== 'identifier_exists'; }).sort(function (x, y) { return y.n - x.n; }).slice(0, 3);
+        return '<div><i style="background:' + st[2] + '"></i><b>' + st[1] + '</b><span>' + (top.length ? top.map(function (r) { return '<a role="button" tabindex="0" data-lin="' + r.i + ':' + st[0] + '" title="' + esc(r.a.l + ' · ' + st[1].toLowerCase() + ' on ' + n0(r.n) + ' products · click to list them') + '">' + esc(r.a.l) + '</a>'; }).join(', ') : '—') + '</span></div>';
+      }).join('') + '</div>';
+    }
     h += '<div class="cfoot"><span><b>' + Math.round(s.touched / tot * 100) + '%</b> of every value sent was set or changed by FeedSpark</span></div>';
     body.innerHTML = h;
     $('ls-sub').textContent = 'Fields per product, by the stage that set them · ' + n0(n) + ' products traced.';
   }
   $('ls-body').addEventListener('click', function (e) {
+    var ln = e.target.closest('[data-lin]');
+    if (ln) { var pr = ln.getAttribute('data-lin').split(':'), a = +pr[0]; setFacet({ id: 'lin:' + a + ':' + pr[1], k: 'lin', a: a, codes: pr[1], label: E.ATTRS[a].l + ' · ' + ln.closest('div').querySelector('b').textContent.toLowerCase() }); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); return; }
     var el = e.target.closest('[data-quick],[data-go]'); if (!el) return;
     S.quick = {}; if (el.hasAttribute('data-quick')) S.quick[el.getAttribute('data-quick')] = 1;
     renderQuick(); refresh(true); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   });
+  // ---- THE DASHBOARD MODULES (Ray, 29 Sep 2026: "i like the mini dashboard above the catalog, make it modularised / evenly
+  // spaced also, and generate 4-5 more interesting views"). Nine cards of ONE size on a 3-column grid; each is a module the
+  // viewer can hide or move (per device, fcc-cat-mods), and every bar in every one of them lists its products below.
+  var MODS = [['arr', 'New arrivals'], ['roas', 'ROAS by segment'], ['did', 'What FeedSpark did'], ['gain', 'Data FeedSpark added'],
+    ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth']];
+  function modState() { var m = lsGet('fcc-cat-mods', null) || {}; var ord = (m.order || []).filter(function (k) { return MODS.some(function (x) { return x[0] === k; }); }); MODS.forEach(function (x) { if (ord.indexOf(x[0]) < 0) ord.push(x[0]); }); return { order: ord, off: m.off || {} }; }
+  function applyMods() {
+    var st = modState(), shown = 0;
+    st.order.forEach(function (k, i) { var el = document.querySelector('.mod[data-mod="' + k + '"]'); if (!el) return; el.style.order = i; el.hidden = !!st.off[k]; if (!st.off[k]) shown++; });
+    $('mods-s').textContent = shown === MODS.length ? '' : shown + ' of ' + MODS.length + ' modules shown';
+  }
+  function renderModsPop() {
+    var st = modState(), L = st.order.length;
+    $('mods-p').innerHTML = st.order.map(function (k, i) {
+      var nm = (MODS.filter(function (x) { return x[0] === k; })[0] || [0, k])[1];
+      return '<div class="mrow"><label><input type="checkbox" data-mod-on="' + k + '"' + (st.off[k] ? '' : ' checked') + '> ' + esc(nm) + '</label><button type="button" data-mv="' + k + '" data-d="-1"' + (i ? '' : ' disabled') + ' aria-label="Move ' + esc(nm) + ' earlier">↑</button><button type="button" data-mv="' + k + '" data-d="1"' + (i < L - 1 ? '' : ' disabled') + ' aria-label="Move ' + esc(nm) + ' later">↓</button></div>';
+    }).join('') + '<div class="ft"><button class="btn" type="button" data-reset="1" style="height:30px">Reset</button><button class="btn" type="button" data-close="1" style="height:30px">Done</button></div>';
+  }
+  function saveMods(st) { lsSet('fcc-cat-mods', st); applyMods(); renderModsPop(); renderMods(); }
+  $('mods-b').addEventListener('click', function (e) { e.stopPropagation(); var p = $('mods-p'), open = p.hidden; if (open) renderModsPop(); p.hidden = !open; this.setAttribute('aria-expanded', String(open)); });
+  $('mods-p').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var mv = e.target.closest('[data-mv]');
+    if (mv) { var st = modState(), k = mv.getAttribute('data-mv'), i = st.order.indexOf(k), j = i + (+mv.getAttribute('data-d')); if (j >= 0 && j < st.order.length) { st.order[i] = st.order[j]; st.order[j] = k; saveMods(st); } return; }
+    if (e.target.closest('[data-reset]')) { lsSet('fcc-cat-mods', null); applyMods(); renderModsPop(); renderMods(); return; }
+    if (e.target.closest('[data-close]')) { $('mods-p').hidden = true; $('mods-b').setAttribute('aria-expanded', 'false'); }
+  });
+  $('mods-p').addEventListener('change', function (e) { var k = e.target.getAttribute('data-mod-on'); if (!k) return; var st = modState(); if (e.target.checked) delete st.off[k]; else st.off[k] = 1; saveMods(st); });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.pop')) { $('mods-p').hidden = true; $('mods-b').setAttribute('aria-expanded', 'false'); } });
+
+  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth].forEach(safe); }
+  function facetId() { return S.facet ? S.facet.id || '' : ''; }
+  function toggleFacet(f) { setFacet(S.facet && S.facet.id && S.facet.id === f.id ? null : f); }
+  function modEmpty(id, msg) { $(id).innerHTML = '<div class="empty2">' + esc(msg) + '</div>'; }
+  function curSym() { var c = ''; for (var i = 0; i < S.fx.length && !c; i++) c = S.fx[i].cur; return (money(0, c).replace(/[\d.,\s]/g, '') || ''); }
+  function modList(rows, o) {
+    // rows: {id, lab, tip, v, sub, bars:[{w, c, cls}], dim}
+    return '<div class="mlist">' + rows.map(function (r) {
+      var sel = facetId() === r.id, dim = facetId() && !sel && facetId().split(':')[0] === r.id.split(':')[0];
+      return '<span class="l' + (sel ? ' sel' : '') + (dim ? ' dim' : '') + '" data-f="' + esc(r.id) + '" title="' + esc(r.tip) + '">' + esc(r.lab) + '</span>' +
+        '<span class="' + (r.db ? 'db' : 'b') + (dim ? ' dim' : '') + '" data-f="' + esc(r.id) + '" title="' + esc(r.tip) + '">' + (r.db || r.bars.map(function (b) { return '<i class="' + (b.cls || '') + '" style="left:' + (b.x || 0).toFixed(2) + '%;width:' + Math.max(b.w ? .6 : 0, b.w).toFixed(2) + '%' + (b.c ? ';background:' + b.c : '') + '"></i>'; }).join('')) + '</span>' +
+        '<span class="v' + (dim ? ' dim' : '') + '">' + r.v + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span>';
+    }).join('') + '</div>' + (o && o.foot ? '<div class="cfoot">' + o.foot + '</div>' : '');
+  }
+
+  // 1 · DATA FEEDSPARK ADDED — per attribute, the share of products that carry it in the master against the feed
+  function renderGain() {
+    if (!S.linDone || !S.mx || !S.mxN) { modEmpty('gain-body', S.m.st === 'none' || S.m.st === 'error' || S.m.st === 'nojoin' ? 'Needs the master feed — none joined for this market.' : 'Tracing the master feed…'); return; }
+    var N = S.mxN, rows = [];
+    E.ATTRS.forEach(function (a, i) {
+      if (a.k === 'id' || a.tier === 'camp' || a.k === 'identifier_exists') return;
+      var c = S.mx[i], m = (c.k || 0) + (c.s || 0) + (c.o || 0) + (c.d || 0) + (c.g || 0), f = (c.k || 0) + (c.l || 0) + (c.p || 0) + (c.s || 0) + (c.o || 0) + (c.e || 0) + (c.g || 0), add = (c.l || 0) + (c.p || 0) + (c.e || 0);
+      if (add > 0) rows.push({ i: i, a: a, m: m / N * 100, f: f / N * 100, add: add });
+    });
+    rows.sort(function (x, y) { return y.add - x.add || y.f - x.f; });
+    var more = Math.max(0, rows.length - 8); rows = rows.slice(0, 8);
+    if (!rows.length) { modEmpty('gain-body', 'FeedSpark added no attribute the master was missing.'); return; }
+    $('gain-body').innerHTML = modList(rows.map(function (r) {
+      var lo = Math.min(r.m, r.f), hi = Math.max(r.m, r.f);
+      return { id: 'gain:' + r.i, lab: r.a.l, tip: r.a.l + ' · master ' + Math.round(r.m) + '% → feed ' + Math.round(r.f) + '% · FeedSpark added it to ' + n0(r.add) + ' products · click to list them',
+        db: '<span class="ln" style="left:' + lo.toFixed(1) + '%;width:' + (hi - lo).toFixed(1) + '%"></span><span class="dt" style="left:' + r.m.toFixed(1) + '%;background:var(--lk)"></span><span class="dt" style="left:' + r.f.toFixed(1) + '%;background:var(--lp)"></span>',
+        v: Math.round(r.m) + '→' + Math.round(r.f) + '%', sub: '+' + n0(r.add) };
+    }), { foot: '<span class="mkey"><span><i style="background:var(--lk)"></i>Master</span><span><i style="background:var(--lp)"></i>Feed</span></span>' + (more ? '<span>+ ' + more + ' more attributes</span>' : '') + '<span style="margin-left:auto">' + n0(N) + ' products traced</span>' });
+  }
+  // 2 · GOOGLE FORMAT ISSUES — the values sent that are not in the form Google's spec asks for
+  function renderSpec() {
+    if (!S.linDone || !S.spw) { modEmpty('spec-body', S.m.st === 'none' || S.m.st === 'error' || S.m.st === 'nojoin' ? 'Needs the master feed — none joined for this market.' : 'Tracing the master feed…'); return; }
+    var N = S.prods.length, cnt = {}, any = 0;
+    S.spw.forEach(function (w) { if (!w) return; any++; w.forEach(function (a) { cnt[a] = (cnt[a] || 0) + 1; }); });
+    var rows = Object.keys(cnt).map(function (a) { return { a: +a, n: cnt[a] }; }).sort(function (x, y) { return y.n - x.n; });
+    if (!rows.length) { $('spec-body').innerHTML = '<div class="empty2">✓ Every value sent is in Google’s format.</div>'; return; }
+    var more = Math.max(0, rows.length - 8); rows = rows.slice(0, 8);
+    var mx = Math.max(rows[0].n, N * .05);   // a handful of products never draws a full-width bar
+    $('spec-body').innerHTML = modList(rows.map(function (r) {
+      var a = E.ATTRS[r.a];
+      return { id: 'spec:' + r.a, lab: a.l, tip: a.l + ' · ' + n0(r.n) + ' products (' + pc(r.n, N) + ') send a value not in Google’s format · click to list them',
+        bars: [{ w: r.n / mx * 100, c: 'var(--band-orange)' }], v: n0(r.n), sub: pc(r.n, N) };
+    }), { foot: '<span><b>' + n0(any) + '</b> product' + (any === 1 ? '' : 's') + ' (' + pc(any, N) + ') carry at least one</span>' + (more ? '<span>+ ' + more + ' more</span>' : '') });
+  }
+  // 3 · PRICE BANDS — what the shopper pays, full price and on sale stacked
+  var LADDER = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000, 20000];
+  function priceOf(x) { return x.onSale ? x.sale : x.price; }
+  function priceBands() {
+    if (S.pb && S.pb.v === S.ver) return S.pb.b;
+    var ps = []; S.fx.forEach(function (x) { var v = priceOf(x); if (v != null && isFinite(v)) ps.push(v); });
+    if (!ps.length) return null;
+    ps.sort(function (a, b) { return a - b; });
+    var p5 = ps[Math.floor(ps.length * .05)], p95 = ps[Math.min(ps.length - 1, Math.floor(ps.length * .95))];
+    var edges = LADDER.filter(function (e) { return e > p5 && e <= p95; });
+    while (edges.length > 7) edges = edges.filter(function (e, i) { return i % 2 === 1; });
+    if (!edges.length) edges = [LADDER.filter(function (e) { return e > p5; })[0] || 100];
+    var b = [{ lo: 0, hi: edges[0] }]; for (var i = 1; i < edges.length; i++) b.push({ lo: edges[i - 1], hi: edges[i] }); b.push({ lo: edges[edges.length - 1], hi: null });
+    S.pb = { v: S.ver, b: b }; return b;
+  }
+  function renderPrice() {
+    var B = priceBands(); if (!B) { modEmpty('price-body', S.out.st === 'done' ? 'No prices in this feed.' : 'Reading the feed…'); return; }
+    var sym = curSym(), rows = B.map(function (b) { return { k: 'price:' + b.lo + '-' + (b.hi == null ? '' : b.hi), b: b, n: 0, s: 0 }; });
+    S.fx.forEach(function (x) { var v = priceOf(x); if (v == null) return; for (var i = 0; i < B.length; i++) if (v >= B[i].lo && (B[i].hi == null || v < B[i].hi)) { rows[i].n++; if (x.onSale) rows[i].s++; break; } });
+    var body = $('price-body'), sel = facetId().indexOf('price:') === 0 ? facetId() : null;
+    body.innerHTML = colsSvg(rows.map(function (r) {
+      var lab = r.b.hi == null ? sym + r.b.lo + '+' : (r.b.lo ? sym + r.b.lo + '–' + r.b.hi : '<' + sym + r.b.hi);
+      return { k: r.k, lab: lab, n: r.n, n2: r.s, tip: lab + ': ' + n0(r.n) + ' products · ' + n0(r.s) + ' on sale (' + pc(r.s, r.n) + ') · click to list them' };
+    }), { W: body.clientWidth, h: 212, sel: sel, aria: 'Products per price band', maxw: 46 }) +
+      '<div class="cfoot"><span class="mkey"><span><i style="background:var(--chart-1)"></i>Full price</span><span><i style="background:var(--chart-2)"></i>On sale</span></span><span style="margin-left:auto">the price the shopper pays</span></div>';
+  }
+  // 4 · SIZE-RUN HEALTH — item groups (2+ variants) by the share of their variants in stock: a broken run is spend on a
+  // product page the shopper cannot finish on
+  var RUNB = [['all', 'All in stock', 'var(--band-green)'], ['most', '75%+ in stock', 'var(--band-yellow)'], ['half', '50–75% in stock', 'var(--band-orange)'], ['few', 'Under half', 'var(--band-red)'], ['none', 'None in stock', 'var(--lk)']];
+  function runB(i) { var x = S.fx[i]; if (!x.grp || !S.grp) return null; var c = S.grp.get(x.grp); if (!c || c[0] < 2) return null; var s = c[1] / c[0]; return s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; }
+  function renderRun() {
+    if (!S.grp) { modEmpty('run-body', 'Reading the feed…'); return; }
+    var g = {}, p = {}, tot = 0;
+    S.grp.forEach(function (c) { if (c[0] < 2) return; tot++; var s = c[1] / c[0], b = s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; g[b] = (g[b] || 0) + 1; p[b] = (p[b] || 0) + c[0]; });
+    if (!tot) { modEmpty('run-body', 'No item groups with two or more variants in this feed.'); return; }
+    var broken = (g.most || 0) + (g.half || 0) + (g.few || 0);
+    $('run-body').innerHTML = modList(RUNB.map(function (b) {
+      return { id: 'run:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(g[b[0]] || 0) + ' item groups, ' + n0(p[b[0]] || 0) + ' products · click to list them', bars: [{ w: (g[b[0]] || 0) / tot * 100, c: b[2] }], v: pc(g[b[0]] || 0, tot), sub: n0(g[b[0]] || 0) + ' groups' };
+    }), { foot: '<span><b>' + pc(broken, tot) + '</b> of ' + n0(tot) + ' size runs are broken — some variants out</span>' });
+  }
+  // 5 · CATALOGUE MIX — the biggest groups by any field, with their share on sale
+  var MIXF = [['brand', 'Brand'], ['cat', 'Top category'], ['sub', 'Sub-category'], ['color', 'Colour'], ['gender', 'Gender'], ['age_group', 'Age group'], ['custom_label_0', 'Custom label 0'], ['custom_label_1', 'Custom label 1'], ['custom_label_2', 'Custom label 2'], ['custom_label_3', 'Custom label 3'], ['custom_label_4', 'Custom label 4']];
+  function mixVal(f, i) {
+    var p = S.prods[i];
+    if (f === 'cat' || f === 'sub') { var parts = E.plain(p.f.product_type).split(/\s*(?:>|›|»)\s*/).filter(Boolean); return parts.slice(0, f === 'cat' ? 1 : 2).join(' › '); }
+    var v = p.f[f]; return E.plain(Array.isArray(v) ? v[0] : v);
+  }
+  function mixField() {
+    var f = lsGet('fcc-cat-mix', null); if (f && MIXF.some(function (x) { return x[0] === f; })) return f;
+    var br = {}, n = 0; for (var i = 0; i < S.prods.length && n < 2; i++) { var b = low(S.prods[i].f.brand); if (b && !br[b]) { br[b] = 1; n++; } }
+    return n > 1 ? 'brand' : 'cat';
+  }
+  function renderMix() {
+    if (!S.prods.length) { modEmpty('mix-body', 'Reading the feed…'); return; }
+    var sEl = $('mix-f'), f = mixField();
+    sEl.innerHTML = MIXF.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + '</option>'; }).join(''); sEl.value = f;
+    var m = new Map(), N = S.prods.length;
+    for (var i = 0; i < N; i++) { var v = mixVal(f, i), k = low(v) || '—'; var c = m.get(k); if (!c) m.set(k, c = { lab: v || 'Not set', n: 0, s: 0 }); c.n++; if (S.fx[i].onSale) c.s++; }
+    var rows = Array.from(m.entries()).map(function (e) { return { k: e[0], c: e[1] }; }).sort(function (a, b) { return b.c.n - a.c.n; });
+    var more = Math.max(0, rows.length - 8), mx = rows.length ? rows[0].c.n : 1; rows = rows.slice(0, 8);
+    var nm = (MIXF.filter(function (x) { return x[0] === f; })[0] || [0, f])[1];
+    $('mix-body').innerHTML = modList(rows.map(function (r) {
+      var fp = (r.c.n - r.c.s) / mx * 100, sp = r.c.s / mx * 100;
+      return { id: 'mix:' + f + ':' + r.k, lab: r.c.lab, tip: nm + ' · ' + r.c.lab + ' · ' + n0(r.c.n) + ' products (' + pc(r.c.n, N) + ') · ' + pc(r.c.s, r.c.n) + ' on sale · click to list them',
+        bars: [{ w: fp, c: 'var(--chart-1)' }, { x: fp, w: sp, cls: 's2' }], v: n0(r.c.n), sub: r.c.s ? pc(r.c.s, r.c.n) + ' sale' : '' };
+    }), { foot: '<span class="mkey"><span><i style="background:var(--chart-1)"></i>Full price</span><span><i style="background:var(--chart-2)"></i>On sale</span></span>' + (more ? '<span>+ ' + n0(more) + ' more</span>' : '') + '<span style="margin-left:auto">' + n0(m.size) + ' ' + esc(nm.toLowerCase()) + ' values</span>' });
+  }
+  $('mix-f').addEventListener('change', function () { lsSet('fcc-cat-mix', this.value); if (S.facet && S.facet.k === 'mix') setFacet(null); else renderMix(); });
+  // 6 · CONTENT DEPTH — how much each product carries, against the ranges Google gives
+  var DEPTH = {
+    imgs: { l: 'Images per product', b: ['1', '2', '3', '4', '5', '6+'], of: function (i) { var n = S.fx[i].imgs || 0; return n >= 6 ? '6+' : String(Math.max(1, n)); }, note: 'main image + additional images' },
+    hl: { l: 'Highlights per product', b: ['0', '1', '2', '3', '4', '5', '6+'], of: function (i) { var v = S.prods[i].f.product_highlight, n = Array.isArray(v) ? v.length : (E.plain(v) ? 1 : 0); return n >= 6 ? '6+' : String(n); }, note: 'Google: 2 minimum, 4–6 recommended' },
+    tlen: { l: 'Title length', b: ['<30', '30–69', '70–99', '100–149', '150+'], of: function (i) { var n = S.fx[i].tlen || 0; return n < 30 ? '<30' : n < 70 ? '30–69' : n < 100 ? '70–99' : n < 150 ? '100–149' : '150+'; }, note: 'Google: first 70 shown, 150 maximum' },
+    dlen: { l: 'Description length', b: ['<160', '160–499', '500–999', '1000+'], of: function (i) { if (!S.dl) S.dl = new Int32Array(S.prods.length).fill(-1); if (S.dl[i] < 0) S.dl[i] = E.plain(S.prods[i].f.description).length; var n = S.dl[i]; return n < 160 ? '<160' : n < 500 ? '160–499' : n < 1000 ? '500–999' : '1000+'; }, note: 'Google: 160–500 characters recommended' },
+    kw: { l: 'Keyword slots', b: ['0', '1', '2', '3', '4', '5+'], of: function (i) { var v = S.prods[i].f.keywords, n = Array.isArray(v) ? v.length : 0; return n >= 5 ? '5+' : String(n); }, note: 'FeedSpark keyword product_type slots' }
+  };
+  function depthField() { var f = lsGet('fcc-cat-depth', 'imgs'); return DEPTH[f] ? f : 'imgs'; }
+  function renderDepth() {
+    if (!S.prods.length) { modEmpty('depth-body', 'Reading the feed…'); return; }
+    var sEl = $('depth-f'), m = depthField(), D = DEPTH[m];
+    sEl.innerHTML = Object.keys(DEPTH).map(function (k) { return '<option value="' + k + '">' + DEPTH[k].l + '</option>'; }).join(''); sEl.value = m;
+    var cnt = {}, N = S.prods.length; D.b.forEach(function (b) { cnt[b] = 0; });
+    for (var i = 0; i < N; i++) { var b = D.of(i); cnt[b] = (cnt[b] || 0) + 1; }
+    var body = $('depth-body'), sel = facetId().indexOf('depth:' + m + ':') === 0 ? facetId() : null;
+    body.innerHTML = colsSvg(D.b.map(function (b) { return { k: 'depth:' + m + ':' + b, lab: b, n: cnt[b], tip: D.l + ' ' + b + ': ' + n0(cnt[b]) + ' products (' + pc(cnt[b], N) + ') · click to list them' }; }),
+      { W: body.clientWidth, h: 212, sel: sel, aria: D.l, maxw: 46 }) + '<div class="cfoot"><span>' + esc(D.note) + '</span></div>';
+  }
+  $('depth-f').addEventListener('change', function () { lsSet('fcc-cat-depth', this.value); if (S.facet && S.facet.k === 'depth') setFacet(null); else renderDepth(); });
+
+  // one click handler for every module: the element's facet id names what to list
+  function facetFor(id) {
+    var p = id.split(':'), k = p[0];
+    if (k === 'gain') return { id: id, k: 'lin', a: +p[1], codes: 'lpe', label: E.ATTRS[+p[1]].l + ' · added by FeedSpark' };
+    if (k === 'spec') return { id: id, k: 'spec', a: +p[1], label: E.ATTRS[+p[1]].l + ' · not in Google’s format' };
+    if (k === 'price') { var r = p[1].split('-'), sym = curSym(); return { id: id, k: 'price', lo: +r[0], hi: r[1] === '' ? null : +r[1], label: 'Price · ' + (r[1] === '' ? sym + r[0] + '+' : sym + r[0] + '–' + sym + r[1]) }; }
+    if (k === 'run') return { id: id, k: 'run', b: p[1], label: 'Size run · ' + (RUNB.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] };
+    if (k === 'mix') { var v = p.slice(2).join(':'); return { id: id, k: 'mix', f: p[1], v: v, label: (MIXF.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] + ' · ' + (v === '—' ? 'Not set' : v) }; }
+    if (k === 'depth') return { id: id, k: 'depth', m: p[1], b: p.slice(2).join(':'), label: DEPTH[p[1]].l + ' · ' + p.slice(2).join(':') };
+    return null;
+  }
+  $('ins').addEventListener('click', function (e) {
+    var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-mix,#m-depth')) return;
+    var f = facetFor(el.getAttribute('data-f') || el.getAttribute('data-k')); if (!f) return;
+    toggleFacet(f); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  });
+  function passModFacet(F, i, x) {
+    if (F.k === 'spec') { var w = S.spw && S.spw[i]; return !!w && w.indexOf(F.a) >= 0; }
+    if (F.k === 'price') { var v = priceOf(x); return v != null && v >= F.lo && (F.hi == null || v < F.hi); }
+    if (F.k === 'run') return runB(i) === F.b;
+    if (F.k === 'mix') return (low(mixVal(F.f, i)) || '—') === F.v;
+    if (F.k === 'depth') return DEPTH[F.m].of(i) === F.b;
+    return true;
+  }
   function renderMatrixLegend() {
     $('lm-lg').innerHTML = [['c-k', 'Kept'], ['c-p', 'Populated'], ['c-l', 'Structured · from master text'], ['c-o', 'Optimised'], ['c-s', 'Structured · to spec'], ['c-e', 'Enriched'], ['c-d', 'Dropped'], ['c-m', 'Missing']]
       .map(function (x) { return '<span><i class="' + x[0] + '"></i>' + esc(x[1]) + '</span>'; }).join('');
@@ -1445,7 +1739,7 @@ window.addEventListener('load',restore);
     }).join('');
   }
   $('quick').addEventListener('click', function (e) { var b = e.target.closest('[data-q]'); if (!b || b.disabled) return; var k = b.getAttribute('data-q'); if (S.quick[k]) delete S.quick[k]; else S.quick[k] = 1; renderQuick(); refresh(true); });
-  function setFacet(f) { S.facet = f; renderFacet(); refresh(true); renderArrivals(); if (S.roas.st === 'ok') renderRoasChart(); }
+  function setFacet(f) { S.facet = f; renderFacet(); refresh(true); renderArrivals(); if (S.roas.st === 'ok') renderRoasChart(); renderMods(); }
   function renderFacet() {
     $('facet').innerHTML = S.facet ? '<span class="facet">' + esc(S.facet.label) + '<button type="button" title="Clear" aria-label="Clear this filter">✕</button></span>' : '';
   }
@@ -1620,7 +1914,7 @@ window.addEventListener('load',restore);
   var RZ = 0, lastW = 0;
   if (window.ResizeObserver) new ResizeObserver(function () {
     var w = $('ins').clientWidth; if (Math.abs(w - lastW) < 8) return; lastW = w;
-    clearTimeout(RZ); RZ = setTimeout(function () { if (S.out.st === 'done') { safe(renderArrivals); safe(renderRoasChart); } }, 160);
+    clearTimeout(RZ); RZ = setTimeout(function () { if (S.out.st === 'done') { safe(renderArrivals); safe(renderRoasChart); renderMods(); } }, 160);
   }).observe($('ins'));
 
   // ---- the inspector ----------------------------------------------------------------------------------------------------

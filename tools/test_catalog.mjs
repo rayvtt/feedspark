@@ -329,7 +329,11 @@ t('the engines load the way /golden loads them (fetch + run), so a stub can hand
 t('the inspector follows REAL pointer movement only (the /stock lesson)', PG.indexOf('if (e.clientX === PT.x && e.clientY === PT.y) return;') >= 0);
 t('a hover must MEAN it: a dwell to open, a shorter one to follow', /\}, open \? 150 : 380\);/.test(PG));
 t('the arrivals engine is handed a Date (a timestamp broke the whole stream once)', /AR\.stats\(dob, new Date\(\), S\.prods\.length\)/.test(PG));
-t('one chart failing never stops the master join', /\[counts, detectRoasField, renderStatus, renderKpis, renderTabs, function \(\) \{ refresh\(false\); \}, renderArrivals, renderRoasChart\]\.forEach\(safe\);\n\s+maybeJoin\(g\);/.test(PG));
+t('one chart failing never stops the master join', /\[counts, detectRoasField, renderStatus, renderKpis, renderTabs, function \(\) \{ refresh\(false\); \}, renderArrivals, renderRoasChart, renderMods\]\.forEach\(safe\);\n\s+maybeJoin\(g\);/.test(PG));
+t('the dashboard is NINE modules of one size on an even grid that follows the page\'s own width', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 9 && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
+t('every module bar is a filter the table obeys (spec · price · size run · mix · depth)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth'\) return passModFacet\(F, i, x\);/.test(PG));
+t('modules are the viewer\'s to hide and reorder, per device, never shared', /lsSet\('fcc-cat-mods', st\)/.test(PG) && PG.indexOf("/api/state?ns=catmods") < 0);
+t('a path cut names its leaf, not a truncated root repeated ten times', /var shortLab = function \(c\)/.test(PG));
 t('blue is ROAS\'s alone: bars paint var(--chart-1), the lineage has its own four tokens in both themes', /\.cht \.bar\{fill:var\(--chart-1\)/.test(PG) && /--lk:#9aa3ae;--lp:#15a070;--lo:#ED6F0B;--le:#5b47c7;--ld:#d23c3c/.test(PG) && /--lk:#6b7482;--lp:#199e70;--lo:#C67B28;--le:#9085e9;--ld:#e66767/.test(PG) && !/#2563EB/i.test(PG));
 t('image tiles paint var(--paper), never white (the dark-mode tripwire)', /--tile:var\(--paper\)/.test(PG));
 t('segment ROAS is labelled as the segment\'s, never the product\'s', PG.indexOf('Segment ROAS — the products this one sits with, never this product’s own.') >= 0);
