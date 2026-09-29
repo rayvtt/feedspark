@@ -146,7 +146,8 @@ window.addEventListener('load',restore);
   .mrow button:disabled{opacity:.3;cursor:default}
   /* rows shared by the list modules: a label, a bar, a figure */
   .mlist{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) auto;gap:6px 10px;align-items:center;font-size:12px}
-  #m-kept .mlist .l,#m-kept .mlist .b{cursor:default}
+  #m-stock .mlist{grid-template-columns:minmax(0,1.9fr) minmax(0,1fr) auto}
+  #m-kept .mlist .l,#m-kept .mlist .b,#m-stock [data-f^="stkrc:"]{cursor:default}
   .mlist .l{font-weight:800;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
   .mlist .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   .mlist .v small{font-weight:700;color:var(--muted);margin-left:4px}
@@ -575,7 +576,7 @@ window.addEventListener('load',restore);
       <div class="mbody" id="avail-body"><div class="empty2">Reading the feed…</div></div>
     </section>
     <section class="card mod" id="m-stock" data-mod="stock">
-      <div class="chead"><div class="sp"><h3>Stock controls</h3><p class="ch" id="stock-sub">The market’s stock rules in FeedHero, from Stock management.</p></div>
+      <div class="chead"><div class="sp"><h3>Stock control</h3><p class="ch" id="stock-sub">Range completion, and what the stock rules took out — master → feed.</p></div>
         <a class="btn" id="stock-to" href="/stock" title="Open this market in Stock management">Stock ↗</a></div>
       <div class="mbody" id="stock-body"><div class="empty2">Reading the stock rules…</div></div>
     </section>
@@ -1023,13 +1024,13 @@ window.addEventListener('load',restore);
     function first(k) { var c = E.cands(k, row, plan); if (!c.length) return ''; var v = c[0].v; return Array.isArray(v) ? v[0] : v; }
     return { k: key, id: String(row[plan.join] || '').trim(), t: E.plain(first('title')).slice(0, 220), pr: E.plain(first('price')).slice(0, 40),
       av: E.plain(first('availability')).slice(0, 40), img: first('image_link'), pt: E.plain(first('product_type')).slice(0, 180), br: E.plain(first('brand')).slice(0, 60),
-      a: E.money(first('price')) };
+      a: E.money(first('price')), ms: E.masterStock(row, plan) };
   }
 
   // ---- the lineage pass: every product against its master row, in slices so the page never stalls -------------
   function startLineage(g) {
     var N = S.prods.length, i = 0, plan = S.m.plan, by = S.m.by, A = E.ATTRS.length;
-    S.codes = new Array(N); S.comp = new Array(N); S.att = new Uint8Array(N); S.spw = new Array(N);
+    S.codes = new Array(N); S.comp = new Array(N); S.att = new Uint8Array(N); S.spw = new Array(N); S.mst = new Array(N);
     S.mx = E.ATTRS.map(function () { return {}; }); S.mxw = new Uint32Array(A); S.mxN = 0;
     var sum = { n: 0, ex: 0, pop: 0, opt: 0, enr: 0, kept: 0, drop: 0, cb: 0, ca: 0, vals: 0, touched: 0 };
     (function step() {
@@ -1037,6 +1038,7 @@ window.addEventListener('load',restore);
       var end = Math.min(N, i + 700);
       for (; i < end; i++) {
         var p = S.prods[i], cells = by.get(i) || null, lin, code;
+        S.mst[i] = cells ? E.masterStock(cells, plan) : null;   // what the master said about stock, before any rule
         try { lin = E.lineage(p, cells, plan); code = E.codes(lin); }
         catch (err) { S.codes[i] = ''; S.comp[i] = null; continue; }   // one malformed product never halts the pass
         S.codes[i] = code;
@@ -1063,7 +1065,7 @@ window.addEventListener('load',restore);
       S.linAt = i; statusSoon();
       if (i < N) { setTimeout(step, 0); return; }
       S.linDone = true; S.sum = sum; S.ver++;
-      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }, renderGain, renderSpec].forEach(safe);
+      [counts, renderStatus, renderKpis, renderLinSum, renderMatrix, renderTabs, renderQuick, function () { refresh(false); }, renderGain, renderSpec, renderStock].forEach(safe);
       if (S.insp && !S.insp.gone) inspect(S.insp.i, 'refresh');
     })();
   }
@@ -1208,7 +1210,7 @@ window.addEventListener('load',restore);
     var p = S.prods[i], x = S.fx[i];
     if (F.k === 'dob') return x.dob != null && new Date(x.dob).toISOString().slice(0, 7) === F.v;
     if (F.k === 'lin') { var c = S.codes[i]; return !!c && F.codes.indexOf(c.charAt(F.a)) >= 0; }
-    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth' || F.k === 'avail') return passModFacet(F, i, x);
+    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth' || F.k === 'avail' || F.k === 'stk') return passModFacet(F, i, x);
     if (F.k === 'roas') {
       if (F.agg === 'Category') { var h = roasFor(i); return !!h && !h.miss && (E.pathKey(h.parts.join(' > ')) + ' >').indexOf(E.pathKey(F.v) + ' >') === 0; }
       if (F.agg === 'Price_type') return /sale/i.test(F.v) ? x.onSale : !x.onSale;
@@ -1223,7 +1225,8 @@ window.addEventListener('load',restore);
     var out = [], q = parseQ(S.q);
     if (S.tab === 'gone') {
       var L = (S.m && S.m.light) || [];
-      for (var j = 0; j < L.length; j++) { var ok = true; for (var t = 0; t < q.length && ok; t++) { var h = lightHit(L[j], q[t]); if (q[t].neg ? h : !h) ok = false; } if (ok) out.push(j); }
+      var GF = S.facet && S.facet.k === 'gone' ? S.facet.v : null;
+      for (var j = 0; j < L.length; j++) { if (GF && (L[j].ms || 'unk') !== GF) continue; var ok = true; for (var t = 0; t < q.length && ok; t++) { var h = lightHit(L[j], q[t]); if (q[t].neg ? h : !h) ok = false; } if (ok) out.push(j); }
     } else {
       for (var i = 0; i < S.prods.length; i++) {
         if (!passTab(i, S.tab) || !passQuick(i) || !passFacet(i)) continue;
@@ -1514,7 +1517,7 @@ window.addEventListener('load',restore);
   // viewer can hide or move (per device, fcc-cat-mods), and every bar in every one of them lists its products below.
   var MODS = [['arr', 'New arrivals'], ['roas', 'ROAS by segment'], ['did', 'What FeedSpark did'], ['gain', 'Data FeedSpark added'],
     ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'],
-    ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off']];
+    ['avail', 'Availability'], ['stock', 'Stock control'], ['kept', 'Ad spend kept off']];
   function modState() { var m = lsGet('fcc-cat-mods', null) || {}; var ord = (m.order || []).filter(function (k) { return MODS.some(function (x) { return x[0] === k; }); }); MODS.forEach(function (x) { if (ord.indexOf(x[0]) < 0) ord.push(x[0]); }); return { order: ord, off: m.off || {} }; }
   function applyMods() {
     var st = modState(), shown = 0;
@@ -1719,24 +1722,70 @@ window.addEventListener('load',restore);
       return { id: 'avail:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(n) + ' products (' + pc(n, N) + ') · click to list them', bars: [{ w: n / N * 100, c: b[2] }], v: n0(n), sub: pc(n, N) };
     }), { foot: '<span><b>' + n0(oos) + '</b> out of stock product' + (oos === 1 ? '' : 's') + ' still in the feed' + (S.chan === 'meta' ? '' : ' — Google will not serve them') + '</span>' });
   }
-  // 8 · STOCK CONTROLS — the market's stock rules, the ones holding products back first
-  function stkEmpty(id) { var k = S.stk; modEmpty(id, k.st === 'loading' || k.st === 'idle' ? 'Reading the stock rules…' : k.st === 'error' ? 'Stock rules unavailable — ' + k.why + '.' : k.why); }
+  // 8 · STOCK CONTROL — master → feed (Ray, 29 Sep 2026: "show a percentage of range completion in the inventory set,
+  // and how many products might have been excluded from FEED. But be careful, as these products might already have been
+  // out of stock before, so showcase the actual amount of products that were in stock and then turned to out of stock").
+  // The master is the client's stock BEFORE any FeedHero rule; the feed is after. So a product the master holds in stock
+  // and the feed sends out of stock was TURNED by the rules (thresholds, range completion), and one the master already
+  // held out of stock was not — the two are never added together. The same split for products the feed does not send.
+  var STKB = { turned: ['In stock → out of stock', 'var(--band-orange)', 'In stock in the master, sent out of stock — the stock rules turned it'],
+    already: ['Already out of stock', 'var(--lk)', 'Out of stock in the master too — not the rules’ doing'],
+    back: ['Out of stock → in stock', 'var(--chart-1)', 'Out of stock in the master, sent in stock (pre-order, back-order or a rule letting it back in)'],
+    held: ['In stock, kept in stock', 'var(--band-green)', 'In stock in the master and in the feed'] };
+  var GONEB = { in: ['Excluded · in stock', 'var(--band-red)', 'In stock in the master, not sent in this feed — an exclusion (stock or any other) kept it out'],
+    out: ['Excluded · already out', 'var(--lk)', 'Out of stock in the master and not sent — it was out before any rule'],
+    pre: ['Excluded · pre-order', 'var(--chart-1)', 'Pre-order or back-order in the master, not sent'],
+    unk: ['Excluded · not stated', 'var(--line)', 'Not sent; the master states no availability or stock count for it'] };
+  function stkBucket(i) {
+    var ms = S.mst && S.mst[i]; if (!ms) return '';
+    var fs = E.feedStock(S.fx[i].av);
+    if (ms === 'out') return fs === 'out' ? 'already' : 'back';
+    return fs === 'out' ? 'turned' : 'held';   // a pre-order in the master was sellable: the feed turning it out is a turn too
+  }
+  // range completion over the INVENTORY SET — item groups with two or more variants, weighted by variant: the share of
+  // every size the catalogue lists that is in stock. The master's figure reads the SAME products off the master's word.
+  function rangeCompletion() {
+    if (!S.grp) return null;
+    var fi = 0, fn = 0, mi = 0, mn = 0, groups = 0;
+    S.grp.forEach(function (c) { if (c[0] >= 2) { groups++; fn += c[0]; fi += c[1]; } });
+    if (!fn) return null;
+    if (S.mst) for (var i = 0; i < S.fx.length; i++) {
+      var g = S.fx[i].grp, c = g && S.grp.get(g); if (!c || c[0] < 2) continue;
+      var ms = S.mst[i]; if (!ms) continue; mn++; if (ms !== 'out') mi++;
+    }
+    return { feed: fi / fn * 100, fi: fi, fn: fn, groups: groups, master: mn ? mi / mn * 100 : null, mi: mi, mn: mn };
+  }
   function renderStock() {
-    if (S.stk.st !== 'ok') { stkEmpty('stock-body'); return; }
-    var m = S.stk.m, all = (m.stock || []).slice();
-    if (!all.length) { $('stock-body').innerHTML = '<div class="empty2">No stock rules run on this market.</div><div class="cfoot"><span>' + esc(m.sentence || '') + '</span></div>'; return; }
-    function held(r) { return r.hb && r.hb.kind === 'blocked' ? r.hb.n || 0 : -1; }
-    all.sort(function (a, b) { return held(b) - held(a) || (b.imp || 0) - (a.imp || 0); });
-    var more = Math.max(0, all.length - 7), rows = all.slice(0, 7), blk = all.filter(function (r) { return held(r) > 0; }).length;
-    $('stock-body').innerHTML = modList(rows.map(function (r) {
-      var h = held(r), n = h >= 0 ? h : (r.imp || 0), of = r.of || m.items || 0, mech = S.stk.mech[r.sk] || r.sk || 'Stock';
-      var cut = (r.cut || []).map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + c.op + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ');
-      return { id: 'stockr:' + r.n, lab: r.n, tip: r.n + ' · ' + mech + (cut ? ' · cut-off ' + cut : '') + ' · ' + (h >= 0 ? 'holds back ' + n0(h) : 'changed ' + n0(r.imp)) + (of ? ' of ' + n0(of) : '') + ' products' + (r.hb && r.hb.why ? ' · ' + r.hb.why : '') + ' · click to open it in Stock management',
-        bars: [{ w: of ? n / of * 100 : 0, c: h >= 0 ? 'var(--band-orange)' : 'var(--chart-1)' }], v: n0(n), sub: cut || mech };
-    }), { foot: '<span class="mkey"><span><i style="background:var(--band-orange)"></i>Holds back</span><span><i style="background:var(--chart-1)"></i>Changes</span></span>' + (more ? '<span>+ ' + more + ' more</span>' : '') + '<span style="margin-left:auto">' + n0(all.length) + ' stock rules · ' + n0(blk) + ' holding products back</span>' });
+    if (!S.prods.length) { modEmpty('stock-body', 'Reading the feed…'); return; }
+    var rc = rangeCompletion(), rows = [], foot = '';
+    if (rc) {
+      rows.push({ id: 'stkrc:feed', lab: 'Range completion · feed', tip: 'Feed · ' + n0(rc.fi) + ' of ' + n0(rc.fn) + ' variants in stock across ' + n0(rc.groups) + ' item groups of 2+ variants', bars: [{ w: rc.feed, c: 'var(--chart-1)' }], v: n1(rc.feed) + '%', sub: 'of sizes' });
+      if (rc.master != null) rows.push({ id: 'stkrc:master', lab: 'Range completion · master', tip: 'Master · ' + n0(rc.mi) + ' of ' + n0(rc.mn) + ' of the same variants in stock before any FeedHero rule', bars: [{ w: rc.master, c: 'var(--lk)' }], v: n1(rc.master) + '%', sub: 'before rules' });
+    }
+    var st = S.m.st;
+    if (!S.linDone || !S.mst) {
+      foot = st === 'none' || st === 'error' || st === 'nojoin' ? 'No master feed joined — what the stock rules changed cannot be read.' : 'Tracing the master feed…';
+    } else {
+      var c = { turned: 0, already: 0, back: 0, held: 0 }, known = 0, joined = 0;
+      for (var i = 0; i < S.mst.length; i++) { if (S.mst[i] == null) continue; joined++; var b = stkBucket(i); if (b) { c[b]++; known++; } }
+      var L = S.m.light || [], g = { in: 0, out: 0, pre: 0, unk: 0 };
+      L.forEach(function (l) { g[l.ms || 'unk']++; });
+      var M = joined + L.length;   // every master product we read
+      if (!known && !(g.in + g.out + g.pre)) foot = 'The master states no availability or stock count, so what the rules turned out of stock cannot be told apart from what was already out.';
+      else {
+        ['turned', 'already', 'back'].forEach(function (k) { if (k !== 'back' || c[k]) rows.push({ id: 'stk:' + k, lab: STKB[k][0], tip: STKB[k][2] + ' · ' + n0(c[k]) + ' products · click to list them', bars: [{ w: c[k] / M * 100, c: STKB[k][1] }], v: n0(c[k]), sub: pc(c[k], M) }); });
+        ['in', 'out', 'pre', 'unk'].forEach(function (k) { if (g[k] || k === 'in') rows.push({ id: 'gone:' + k, lab: GONEB[k][0], tip: GONEB[k][2] + ' · ' + n0(g[k]) + ' products · click to list them on Not in feed', bars: [{ w: g[k] / M * 100, c: GONEB[k][1] }], v: n0(g[k]), sub: pc(g[k], M) }); });
+        foot = '<span>of ' + n0(M) + ' master products' + (L.length >= LIGHT_CAP ? ' (Not in feed capped at ' + n0(LIGHT_CAP) + ')' : '') + (known < joined ? ' · ' + n0(joined - known) + ' with no stock stated' : '') + '</span>';
+      }
+    }
+    var nr = S.stk.st === 'ok' ? (S.stk.m.stock || []).length : null;
+    foot = (foot.charAt(0) === '<' ? foot : '<span>' + esc(foot) + '</span>') + (nr != null ? '<span style="margin-left:auto">' + n0(nr) + ' stock rules in FeedHero</span>' : '');
+    if (!rows.length) { $('stock-body').innerHTML = '<div class="empty2">Reading the feed…</div><div class="cfoot">' + foot + '</div>'; return; }
+    $('stock-body').innerHTML = modList(rows, { foot: foot });
   }
   // 9 · AD SPEND KEPT OFF — /stock's forecast for this market: its LARGEST blocking rule (two rules can hold back the same
   // product, so the market reads "at least") × spend per product per day × the scenario share × 30 days
+  function stkEmpty(id) { var k = S.stk; modEmpty(id, k.st === 'loading' || k.st === 'idle' ? 'Reading the stock rules…' : k.st === 'error' ? 'Stock rules unavailable — ' + k.why + '.' : k.why); }
   function renderKept() {
     if (S.stk.st !== 'ok') { stkEmpty('kept-body'); return; }
     var m = S.stk.m, a = m.ads, best = null;
@@ -1760,13 +1809,16 @@ window.addEventListener('load',restore);
     if (k === 'mix') { var v = p.slice(2).join(':'); return { id: id, k: 'mix', f: p[1], v: v, label: (MIXF.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] + ' · ' + (v === '—' ? 'Not set' : v) }; }
     if (k === 'depth') return { id: id, k: 'depth', m: p[1], b: p.slice(2).join(':'), label: DEPTH[p[1]].l + ' · ' + p.slice(2).join(':') };
     if (k === 'avail') return { id: id, k: 'avail', v: p[1], label: 'Availability · ' + avWord(p[1]) };
+    if (k === 'stk' && STKB[p[1]]) return { id: id, k: 'stk', v: p[1], label: 'Stock · ' + STKB[p[1]][0] };
+    if (k === 'gone' && GONEB[p[1]]) return { id: id, k: 'gone', v: p[1], label: 'Not in feed · ' + GONEB[p[1]][0] };
     return null;
   }
   $('ins').addEventListener('click', function (e) {
     var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-mix,#m-depth,#m-avail,#m-stock')) return;
-    var fid = el.getAttribute('data-f') || '';
-    if (fid.indexOf('stockr:') === 0) { window.open(stockHref(fid.slice(7)), '_blank', 'noopener'); return; }
     var f = facetFor(el.getAttribute('data-f') || el.getAttribute('data-k')); if (!f) return;
+    // a product the feed never sends lives on the Not-in-feed tab — its facet only means anything there
+    if (f.k === 'gone' && S.tab !== 'gone') { setTab('gone'); S.facet = null; }
+    else if (f.k !== 'gone' && S.tab === 'gone') setTab('all');
     toggleFacet(f); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   });
   function passModFacet(F, i, x) {
@@ -1776,6 +1828,7 @@ window.addEventListener('load',restore);
     if (F.k === 'mix') return (low(mixVal(F.f, i)) || '—') === F.v;
     if (F.k === 'depth') return DEPTH[F.m].of(i) === F.b;
     if (F.k === 'avail') return (x.av || 'none') === F.v;
+    if (F.k === 'stk') return stkBucket(i) === F.v;
     return true;
   }
   function renderMatrixLegend() {
@@ -1818,7 +1871,9 @@ window.addEventListener('load',restore);
   }
   function setTab(t) {
     if (t === 'gone' && !(S.m && S.m.st === 'ready')) return;
-    S.tab = t; closeInsp(true); layout(); renderTabs(); refresh(true);
+    if (t !== 'gone' && S.facet && S.facet.k === 'gone') S.facet = null;
+    if (t === 'gone' && S.facet && S.facet.k !== 'gone') S.facet = null;
+    S.tab = t; renderFacet(); closeInsp(true); layout(); renderTabs(); refresh(true);
     try { var u = new URL(location.href); if (t === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', t); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
   }
   $('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (b && !b.disabled) setTab(b.getAttribute('data-tab')); });

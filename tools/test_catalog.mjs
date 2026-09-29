@@ -177,6 +177,13 @@ t('description only lost its HTML → structured, to spec', is('description', 's
 t('price £95 came from was_price → structured, remapped', is('price', 'structured', 'remap') && R.price.src === 'was_price');
 t('sale price £76 = the master price under a higher was_price → structured, remapped', is('sale_price', 'structured', 'remap') && R.sale_price.src === 'price');
 t('IN_STOCK → in stock is structured, not optimised', is('availability', 'structured', 'format'));
+{
+  const pA = E.plan(['id', 'availability', 'qty']), pQ = E.plan(['id', 'Stock Level']), pN = E.plan(['id', 'title']);
+  t('master stock: the availability word wins over a count', E.masterStock(['1', 'OUT_OF_STOCK', '40'], pA) === 'out' && E.masterStock(['1', 'In stock', '0'], pA) === 'in' && E.masterStock(['1', 'preorder', ''], pA) === 'pre');
+  t('master stock: no word → the stock count (> 0 = in, 0 or less = out); a count that is not a number is not read', E.masterStock(['1', '', '3'], pA) === 'in' && E.masterStock(['1', '12'], pQ) === 'in' && E.masterStock(['1', '0'], pQ) === 'out' && E.masterStock(['1', '10+'], pQ) === '');
+  t('master stock: a master stating neither reads "" — never assumed in stock', E.masterStock(['1', 'Shirt'], pN) === '' && E.masterStock(null, pN) === '');
+  t('feed stock on the same three-way scale', E.feedStock('in_stock') === 'in' && E.feedStock('out_of_stock') === 'out' && E.feedStock('backorder') === 'pre' && E.feedStock('') === '');
+}
 t('brand from vendor, unchanged → kept, the column named', is('brand', 'kept') && R.brand.src === 'vendor');
 t('GTIN from barcode → kept', is('gtin', 'kept') && R.gtin.src === 'barcode');
 t('"Navy (NAVY)" → "Navy" is structured (the code stripped, same colour)', is('color', 'structured', 'format'));
@@ -332,8 +339,9 @@ t('the arrivals engine is handed a Date (a timestamp broke the whole stream once
 t('one chart failing never stops the master join', /\[counts, detectRoasField, renderStatus, renderKpis, renderTabs, function \(\) \{ refresh\(false\); \}, renderArrivals, renderRoasChart, renderMods\]\.forEach\(safe\);\n\s+maybeJoin\(g\);/.test(PG));
 t('the dashboard is TWELVE modules of one size on an even grid that follows the page\'s own width', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 12 && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
 t('stock control reads Stock management\'s OWN route and matches the market on the feed\'s FeedHero company id, never a name', /fetch\('\/api\/rules\/stock\?brand=/.test(PG) && /String\(x\.cmpid\) === String\(e\.cmpid\)/.test(PG) && /loadRoas\(g\); loadStock\(g\);/.test(PG));
+t('stock control splits TURNED (in stock in the master, out in the feed) from ALREADY out, and excluded products by the master\'s own word', /if \(ms === 'out'\) return fs === 'out' \? 'already' : 'back';/.test(PG) && /L\.forEach\(function \(l\) \{ g\[l\.ms \|\| 'unk'\]\+\+; \}\)/.test(PG) && /ms: E\.masterStock\(row, plan\)/.test(PG));
 t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /best\.n \* a\.spendDay \* D/.test(PG));
-t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail'\) return passModFacet\(F, i, x\);/.test(PG));
+t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability · stock)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail' \|\| F\.k === 'stk'\) return passModFacet\(F, i, x\);/.test(PG));
 t('modules are the viewer\'s to hide and reorder, per device, never shared', /lsSet\('fcc-cat-mods', st\)/.test(PG) && PG.indexOf("/api/state?ns=catmods") < 0);
 t('a path cut names its leaf, not a truncated root repeated ten times', /var shortLab = function \(c\)/.test(PG));
 t('blue is ROAS\'s alone: bars paint var(--chart-1), the lineage has its own four tokens in both themes', /\.cht \.bar\{fill:var\(--chart-1\)/.test(PG) && /--lk:#9aa3ae;--lp:#15a070;--lo:#ED6F0B;--le:#5b47c7;--ld:#d23c3c/.test(PG) && /--lk:#6b7482;--lp:#199e70;--lo:#C67B28;--le:#9085e9;--ld:#e66767/.test(PG) && !/#2563EB/i.test(PG));
