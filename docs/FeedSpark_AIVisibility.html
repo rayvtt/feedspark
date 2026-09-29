@@ -365,7 +365,7 @@ window.addEventListener('load',restore);
 </div></div>
 
 
-<header class="hero"><div class="wrap" data-spot="ai">
+<header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · AI search</div>
   <h1>AI visibility<small>live · the answers shoppers get</small></h1>
   <p class="sub" data-instr>Asks ChatGPT, Google AI Mode, Google's AI Overviews, Perplexity and Claude the questions a client's catalogue answers — each with its own live web search on — and reads every answer as it arrives: is the brand named, how early, is its own site cited, and who else is. Questions that name the brand are asked for what the engine says about it, and never count toward visibility.</p>
@@ -384,7 +384,7 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="kpis" id="kpis"></div>
 
-  <section class="card" id="live-card" data-spot="search">
+  <section class="card" id="live-card">
     <div class="chead"><div class="sp"><h3 id="live-h">Live answers</h3><p class="ch" id="live-sub">One row per question, one column per surface. Click a cell to read the answer.</p></div>
       <div class="tools"><span class="legend" style="margin:0"><span><i style="background:var(--good)"></i>named</span><span><i style="background:var(--risk)"></i>not named</span><span><i style="background:var(--muted)"></i>no AI answer</span></span></div></div>
     <div class="prog" id="prog" hidden><i></i></div>
@@ -393,7 +393,7 @@ window.addEventListener('load',restore);
   </section>
 
   <div class="grid2 row-gap">
-    <section class="card" id="sov-card" data-spot="chart">
+    <section class="card" id="sov-card">
       <div class="chead"><div class="sp"><h3>Share of voice</h3><p class="ch">Brands named in unbranded answers, each counted once per answer.</p></div></div>
       <div class="hb" id="sov"></div>
       <p class="note" id="sov-note"></p>
@@ -429,7 +429,7 @@ window.addEventListener('load',restore);
     <div class="tw" style="margin-top:12px"><table class="t" id="runs"><thead><tr><th>Run</th><th>By</th><th class="num">Answers</th><th class="num">Visibility</th><th class="num">Share of voice</th><th class="num">Site cited</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
-  <section class="card" id="setup-card" data-spot="rules">
+  <section class="card" id="setup-card">
     <div class="chead"><div class="sp"><h3>Setup</h3><p class="ch">The questions asked in this market, the competitors to count, and the brand's own sites. Shared with the team.</p></div>
       <div class="tools"><span class="dirty" id="dirty" hidden>Unsaved changes</span><button class="btn" id="save" type="button">Save setup</button></div></div>
     <div class="setup-cols">
@@ -451,7 +451,7 @@ window.addEventListener('load',restore);
     </div>
   </section>
 
-  <section class="card" id="how-card" data-spot="insight">
+  <section class="card" id="how-card">
     <div class="chead"><div class="sp"><h3>How it is measured</h3><p class="ch">Each surface is asked through its own API with its web search on.</p></div></div>
     <div class="tw"><table class="t" id="how"><thead><tr><th>Surface</th><th>Read through</th><th>Model</th><th>Switched on by</th><th>State</th></tr></thead><tbody></tbody></table></div>
     <p class="note" data-instr>Answers through an API are close to, not identical with, what a signed-in shopper sees in each app: the apps add their own instructions, memory and personalisation. Google AI Mode and AI Overviews are read from Google's own results page, so they are the closest to what a shopper sees. Every surface is asked as a shopper in the market's country, with the date. Visibility counts only unbranded questions; share of voice counts each tracked brand once per answer; position is the order the brand is first named among the tracked brands. A surface that showed no AI answer, or failed, is left out of every rate and counted on its own.</p>

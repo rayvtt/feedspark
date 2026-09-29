@@ -88,6 +88,13 @@
       "pr": 53
     },
     {
+      "name": "Chrome: spot illustrations REVERTED (Ray, 29 Sep 2026: the icons did not look good) — no decorative-art widget is injected (must stay gone)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "spots_widget.html",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
       "name": "DeckBuilder: RYOBI plan sheet wired",
       "file": "docs/FeedSpark_DeckBuilder.html",
       "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
@@ -11127,11 +11134,6 @@
       "pattern": "// a question cut off by ⏹ Stop is not a failed answer — it stays unasked and the run drops it",
       "pr": 561
     },
-    {"name": "spots: the set is exposed from the widget", "file": "docs/spots_widget.html", "pattern": "window.FCCSpots = { names: Object.keys(SP)", "pr": 0},
-    {"name": "spots: a dark set — never a light island", "file": "docs/spots_widget.html", "pattern": "[data-theme=dark] .spot{--sp-paper:#1C1F27", "pr": 0},
-    {"name": "spots: a card's spot is prepended to its header row, left of the title", "file": "docs/spots_widget.html", "pattern": "row.insertBefore(make(name, 'spot-card'), row.firstChild)", "pr": 0},
-    {"name": "spots: injected on every app page after the module row", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "NAVROWW + '\\n' + SPOTSW + '\\n' + HOURSW", "pr": 0},
-    {"name": "design: the Spot illustrations section", "file": "docs/FeedSpark_Design.html", "pattern": "<section class=\"blk\" id=\"spots\" data-spot=\"images\">", "pr": 0},
     {"name": "Catalogue: price band on the ROAS-by list", "file": "docs/FeedSpark_Catalog.html", "pattern": "['Price_group', 'price band']", "pr": 0},
     {"name": "Catalogue: a product sits in a price band off FeedHero's own rows", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));", "pr": 0},
     {"name": "Catalogue: a cut FeedHero has not set up is said, never a red error", "file": "docs/FeedSpark_Catalog.html", "pattern": "Not set up in FeedHero for this market: ", "pr": 0},

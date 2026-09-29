@@ -385,7 +385,7 @@ window.addEventListener('load',restore);
 <script>/* the live editor edits only the static prose here — everything the page renders is edited in its own forms */
 window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
 
-<header class="hero"><div class="wrap" data-spot="migration">
+<header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Management</div>
   <h1>AI transformation roadmap</h1>
   <p class="sub">Moving the FCC off personal GitHub and Cloudflare accounts onto <b>FeedSpark-owned infrastructure</b>, module by module, and making it the working tool for every account manager. Everything below is editable by anyone granted this page, and every change is stamped with who made it and when.</p>
@@ -406,7 +406,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
     <div class="team" id="team-roles"></div>
   </section>
 
-  <section class="blk" id="board" data-spot="schedule">
+  <section class="blk" id="board">
     <div class="blk-h"><div class="grow"><h2>Roadmap board</h2><p>Drag a card to another month, click it to edit it and its checklist, click a month to rename it.</p></div></div>
     <div class="bd-tools">
       <div class="seg" role="tablist" aria-label="View"><button type="button" data-view="board" class="on">▦ Board</button><button type="button" data-view="list">☑ Checklist</button></div>
@@ -420,14 +420,14 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
     <div id="board-body"></div>
   </section>
 
-  <section class="blk" id="modules" data-spot="feed">
+  <section class="blk" id="modules">
     <div class="blk-h"><div class="grow"><h2>Module migration</h2><p>Every AM sees each module's state as a dot on its icon and a pill on its page. Click a module to move it along and tick its checklist.</p></div>
       <label class="tog"><input type="checkbox" id="mig-on"> Show badges to every AM</label></div>
     <div class="mleg" id="mleg"></div>
     <div class="mods" id="mods"></div>
   </section>
 
-  <section class="blk" id="decisions" data-spot="alert">
+  <section class="blk" id="decisions">
     <div class="blk-h"><div class="grow"><h2>Decisions for leadership</h2><p>What management needs to sign off, and by when. Click a row to record the decision or reword it.</p></div>
       <button class="btn" type="button" data-add="decisions">＋ Decision</button></div>
     <div class="tw"><table class="t" id="dec-t"></table></div>
@@ -441,7 +441,7 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
     <div class="tw"><table class="t" id="rule-t"></table></div>
   </section>
 
-  <section class="blk" id="sources" data-spot="rules">
+  <section class="blk" id="sources">
     <div class="blk-h"><div class="grow"><h2>Data sources for AM-built modules</h2><p>An AM's own module can only read from sources connected here.</p></div>
       <button class="btn" type="button" data-add="sources">＋ Source</button></div>
     <div class="tw"><table class="t" id="src-t"></table></div>

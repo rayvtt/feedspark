@@ -310,13 +310,6 @@ else
   echo "   ✗ design harness FAILED — see node tools/test_design.mjs"; FAIL=1
 fi
 
-echo "── qa-gate 3g2/7: spot illustrations (one set, one placement rule, the ten newest modules)"
-if node tools/test_spots.mjs >/dev/null 2>&1; then
-  echo "   ✓ sixteen class-only spots, a dark set, hero + cards on the ten newest modules, documented on /design"
-else
-  echo "   ✗ spots harness FAILED — see node tools/test_spots.mjs"; FAIL=1
-fi
-
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then
   echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
