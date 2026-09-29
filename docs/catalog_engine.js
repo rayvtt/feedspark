@@ -177,10 +177,6 @@
     // promotion FeedSpark runs would read as a "reprice" of the client's price
     sale_price: ['saleprice', 'specialprice', 'promoprice', 'offerprice'],
     availability: ['availability', 'stockstatus', 'instock', 'availabilitystatus'],
-    // NOT an output attribute — the master's own stock COUNT, read only by masterStock() when the master
-    // states no availability word (many client masters carry a quantity and let the feed say in/out)
-    stock_qty: ['quantity', 'qty', 'stock', 'stocklevel', 'stockquantity', 'stockqty', 'inventory', 'inventoryquantity',
-      'quantityavailable', 'availablequantity', 'availableqty', 'onhand', 'stockonhand', 'freestock', 'units'],
     shipping: ['shipping', 'shippingprice', 'shippingcost', 'deliverycost'],
     google_product_category: ['googleproductcategory', 'gpc', 'googlecategory', 'googlecategoryid'],
     product_type: ['producttype', 'category', 'categories', 'collcategory', 'categorypath', 'type', 'itemtype', 'productcategory', 'categoryid', 'department'],
@@ -619,29 +615,6 @@
   // lineage(product, masterCells|null, plan) → one record per attribute, ATTRS order.
   // No master row: st 'unknown' everywhere except the title, whose "before" FeedHero stamps on
   // the output item itself (c:fs_data_original_title).
-  // WHAT THE MASTER SAYS ABOUT STOCK, before any FeedHero rule touched it: the master's availability word
-  // first, else its stock count (> 0 = in stock). 'in' | 'out' | 'pre' | '' (the master states neither).
-  // A count is read only when it is a plain number — '10+' or 'yes' is not a quantity anyone can compare.
-  function masterStock(cells, p) {
-    if (!cells || !p) return '';
-    var av = (p.attr.availability || []);
-    for (var i = 0; i < av.length; i++) {
-      var w = plain(cells[av[i]]); if (!w) continue;
-      var v = VOCAB.availability(low(w));
-      if (v === 'in_stock') return 'in';
-      if (v === 'out_of_stock') return 'out';
-      if (v === 'preorder' || v === 'backorder') return 'pre';
-    }
-    var q = (p.attr.stock_qty || []);
-    for (var j = 0; j < q.length; j++) {
-      var t = plain(cells[q[j]]).replace(/,/g, '');
-      if (!/^-?\d+(\.\d+)?$/.test(t)) continue;
-      return +t > 0 ? 'in' : 'out';
-    }
-    return '';
-  }
-  // the feed's own word, on the same three-way scale
-  function feedStock(av) { return av === 'in_stock' ? 'in' : av === 'out_of_stock' ? 'out' : (av === 'preorder' || av === 'backorder') ? 'pre' : ''; }
   function lineage(pr, cells, p) {
     var omain = {}, om = pr.f.image_link;
     if (has(om)) { omain[imgKey(om)] = 1; var os0 = isOverlay(om) && overlaySource(om); if (os0) omain[imgKey(os0)] = 1; }
@@ -962,7 +935,7 @@
     facts: facts, completeness: completeness, aiCount: aiCount, AI_SIX: AI_SIX, depthOf: depthOf, leafOf: leafOf, money: money, norm: norm, urls: urls,
     code: code, codes: codes, pathKey: pathKey,
     isOverlay: isOverlay, overlaySource: overlaySource, plan: plan, idKey: idKey, detectJoin: detectJoin, masterCells: masterCells,
-    cands: cands, masterStock: masterStock, feedStock: feedStock, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
+    cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,

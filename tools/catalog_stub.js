@@ -29,7 +29,7 @@ function products() {
     out.push({
       id: grp + '-' + (i % 2 ? 'L' : 'M'), oid: 'M-' + grp + '-' + (i % 2 ? 'L' : 'M'), grp, pt, col, price, sale,
       title: 'Northwind ' + col + ' ' + leaf + (i % 3 ? ', Size ' + (i % 2 ? 'L' : 'M') : ''), otitle: leaf + ' ' + col.toUpperCase(),
-      dob: iso(NOW - (3 + i * 23) * 86400000), stock: i % 9 === 4 || i % 7 === 3 ? 'out of stock' : 'in stock', mstock: i % 9 === 4 ? 'OUT_OF_STOCK' : 'IN_STOCK',   // i % 7 === 3: in stock in the master, turned out by the stock rules
+      dob: iso(NOW - (3 + i * 23) * 86400000), stock: i % 9 === 4 ? 'out of stock' : 'in stock',
       img: 'https://img.northwind.invalid/' + grp + '.jpg', kw: i % 4 === 0, overlay: i % 6 === 1,
     });
   }
@@ -59,8 +59,8 @@ function masterCsv() {
   const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
   const rows = [['id', 'product_id', 'title', 'price', 'was_price', 'description', 'vendor', 'colour', 'product_type', 'image_link', 'availability', 'composition']];
   products().forEach((p, i) => rows.push([p.oid, p.grp, p.otitle, '£' + (p.sale || p.price).toFixed(2), p.sale ? '£' + p.price.toFixed(2) : '', '<p>A ' + p.col.toLowerCase() + ' piece.</p>', 'Northwind',
-    p.col + ' (' + p.col.slice(0, 3).toUpperCase() + ')', p.pt.split(' > ').pop(), p.img, p.mstock, i % 2 ? 'Cotton 100%' : '']));
-  ['Linen Shirt', 'Wool Beanie', 'Canvas Belt', 'Silk Scarf'].forEach((t, i) => rows.push(['M-OLD-' + i, 'OLD' + i, t, '£' + (15 + i * 5) + '.00', '', '', 'Northwind', '', 'Archive', 'https://img.northwind.invalid/old' + i + '.jpg', i < 2 ? 'IN_STOCK' : 'OUT_OF_STOCK', '']));
+    p.col + ' (' + p.col.slice(0, 3).toUpperCase() + ')', p.pt.split(' > ').pop(), p.img, i % 9 === 4 ? 'OUT_OF_STOCK' : 'IN_STOCK', i % 2 ? 'Cotton 100%' : '']));
+  ['Linen Shirt', 'Wool Beanie', 'Canvas Belt', 'Silk Scarf'].forEach((t, i) => rows.push(['M-OLD-' + i, 'OLD' + i, t, '£' + (15 + i * 5) + '.00', '', '', 'Northwind', '', 'Archive', 'https://img.northwind.invalid/old' + i + '.jpg', 'OUT_OF_STOCK', '']));
   return rows.map((r) => r.map(q).join(',')).join('\r\n');
 }
 // FeedHero's category tree for the market: a row per level, ONE path left out on purpose so the "not in
