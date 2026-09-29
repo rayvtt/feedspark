@@ -297,11 +297,26 @@ def chart_spec(t, heads, trs, rows):
     which is what a "\u2248 per year" row needs.
 
       data-chart="col|bar|line"   column (default) / horizontal bar / line
+                 "|barstack|colstack|donut"
+                                  stacked horizontal / stacked column (the
+                                  parts of one whole per category) / a donut
+                                  of ONE series (the parts of one total)
       data-chart-cats="0"         column index holding the category label
       data-chart-series="1,2,3"   column indices to plot (default: every column
                                   whose cells all read as numbers)
       data-chart-pct="1"          values are percentages (label format)
       data-chart-table="1"        also emit the table
+      data-chart-ink="#9AA3AE,…"  one colour per series (a donut: per slice),
+                                  when the series already HAVE a colour in the
+                                  FCC module the chart is lifted from -- the
+                                  Catalogue's four lineage stages, say -- so the
+                                  deck cannot repaint a meaning the client has
+                                  already learned. Default: SERIES_INK.
+      data-chart-fmt='0.0'        data-label number format (Excel syntax, so a
+                                  condition can hide a label too small to read:
+                                  '[<2]"";0.0')
+      data-chart-side="1"         draw the chart in the LEFT half and the next
+                                  table in the right half of the same slide
     """
     kind = (t.get("data-chart") or "").strip().lower()
     if not kind: return None
@@ -332,8 +347,15 @@ def chart_spec(t, heads, trs, rows):
         name = heads[c] if c < len(heads) else ""
         vals = [chart_num(r[c] if c < len(r) else "") for r in body]
         series.append((name or ("Series %d" % (c + 1)), [0.0 if v is None else v for v in vals]))
+    ink = []
+    for x in re.split(r"[,\s]+", (t.get("data-chart-ink") or "").strip()):
+        x = x.lstrip("#")
+        if re.fullmatch(r"[0-9A-Fa-f]{6}", x):
+            ink.append(RGBColor.from_string(x.upper()))
     return dict(cats=cats, series=series, kind=kind,
-                pct=(t.get("data-chart-pct") or "").strip() not in ("", "0"))
+                pct=(t.get("data-chart-pct") or "").strip() not in ("", "0"),
+                ink=ink or None, fmt=(t.get("data-chart-fmt") or "").strip() or None,
+                side=(t.get("data-chart-side") or "").strip() not in ("", "0"))
 
 def card_body(c, sc):
     paras = [sc(p) for p in c.xpath(".//p")]
@@ -671,7 +693,10 @@ class Emitter:
                 shape._element.getparent().remove(shape._element)
 
     # ------------------------------------------------------------ native table
-    def table(self, slide, heads, rows, has_sub=True):
+    def table(self, slide, heads, rows, has_sub=True, left=None, width=None):
+        # left/width: a table sharing its slide with a chart (data-chart-side)
+        # takes the right-hand column instead of the full body width.
+        TB_L_, TB_W_ = (TB_L if left is None else left), (TB_W if width is None else width)
         rows = rows[:]
         ncol = max(len(heads), max((len(r) for r in rows), default=0))
         heads = (list(heads) + [""] * ncol)[:ncol]
@@ -696,7 +721,7 @@ class Emitter:
         body_h = min(body_h, avail / max(1, len(rows))) if avail > 0 else body_h
         h = (HDR_H if hdr else 0) + body_h * len(rows)
         gf = slide.shapes.add_table(len(rows) + (1 if hdr else 0), ncol,
-                                    Inches(TB_L), Inches(top), Inches(TB_W), Inches(h))
+                                    Inches(TB_L_), Inches(top), Inches(TB_W_), Inches(h))
         tbl = gf.table
         pr = tbl._tbl.find(A + "tblPr")
         pr.set("firstRow", "1" if hdr else "0"); pr.set("bandRow", "1")
@@ -711,8 +736,8 @@ class Emitter:
             longest = max([len(heads[c])] + [len(r[c]) for r in rows] or [1])
             want.append(max(6, min(longest, 90)))
         tot = float(sum(want))
-        widths = [max(0.9, TB_W * w / tot) for w in want]
-        scale = TB_W / sum(widths)
+        widths = [max(0.9, TB_W_ * w / tot) for w in want]
+        scale = TB_W_ / sum(widths)
         for c, w in enumerate(widths):
             tbl.columns[c].width = Emu(int(Inches(w * scale)))
 
@@ -737,7 +762,7 @@ class Emitter:
 
     # ------------------------------------------------------------ native chart
     def chart(self, slide, cats, series, kind="col", pct=False, labels=True,
-              has_sub=True):
+              has_sub=True, ink=None, fmt=None, left=None, width=None):
         """A real PowerPoint chart object, built from the deck's own numbers.
 
         This is NOT the "never add a shape" rule being broken. That rule forbids
@@ -752,18 +777,31 @@ class Emitter:
         cats:   category labels (x axis, or the bar labels on a horizontal bar)
         series: [(name, [values])] -- one entry draws no legend
         kind:   col | bar | line   (bar = horizontal, for long category names)
+                barstack | colstack  the parts of one whole per category
+                donut                the parts of ONE total (first series only)
+        ink:    [RGBColor] per series (per slice on a donut); default SERIES_INK
+        fmt:    data-label number format, Excel syntax
+        left/width: a chart sharing its slide with a table (data-chart-side)
         """
         TYPES = {"col": XL_CHART_TYPE.COLUMN_CLUSTERED,
                  "bar": XL_CHART_TYPE.BAR_CLUSTERED,
-                 "line": XL_CHART_TYPE.LINE_MARKERS}
+                 "line": XL_CHART_TYPE.LINE_MARKERS,
+                 "barstack": XL_CHART_TYPE.BAR_STACKED,
+                 "colstack": XL_CHART_TYPE.COLUMN_STACKED,
+                 "donut": XL_CHART_TYPE.DOUGHNUT}
+        stacked = kind in ("barstack", "colstack")
+        donut = kind == "donut"
+        if donut:
+            series = series[:1]           # a donut is one total cut into parts
         # Excel/PowerPoint draw a horizontal bar chart's first category at the
         # BOTTOM, so a chronological or ranked list reads bottom-to-top -- Jan
         # under Feb under Mar. Reversing the data (rather than flipping the axis
         # orientation, which also throws the value axis to the top of the plot)
         # puts the first row at the top where a reader looks for it.
-        if kind == "bar":
+        if kind in ("bar", "barstack"):
             cats = list(cats)[::-1]
             series = [(n, list(v)[::-1]) for n, v in series]
+        pal = ink or SERIES_INK
 
         cd = CategoryChartData()
         cd.categories = cats
@@ -774,48 +812,88 @@ class Emitter:
         # slide read as the same document rather than two different templates.
         top = TB_T if has_sub else TB_T_NOSUB
         h = TB_BOT - top
+        x = TB_L if left is None else left
+        w = TB_W if width is None else width
         gf = slide.shapes.add_chart(TYPES.get(kind, TYPES["col"]),
-                                    Inches(TB_L), Inches(top),
-                                    Inches(TB_W), Inches(h), cd)
+                                    Inches(x), Inches(top),
+                                    Inches(w), Inches(h), cd)
         ch = gf.chart
         ch.font.size = Pt(11)
         ch.font.name = "Inter"
 
-        # A legend for one series is a label repeated beside itself.
+        # A legend for one series is a label repeated beside itself -- except on
+        # a donut, where the legend IS the category key (one series, many parts).
         multi = len(series) > 1
-        ch.has_legend = multi
-        if multi:
-            ch.legend.position = XL_LEGEND_POSITION.TOP
+        ch.has_legend = multi or donut
+        if ch.has_legend:
+            ch.legend.position = XL_LEGEND_POSITION.RIGHT if donut else XL_LEGEND_POSITION.TOP
             ch.legend.include_in_layout = False
             ch.legend.font.size = Pt(11)
 
         plot = ch.plots[0]
-        plot.gap_width = 60 if multi else 110
-        if multi:
-            plot.overlap = -10
-        for i, ser in enumerate(plot.series):
-            ink = SERIES_INK[i % len(SERIES_INK)]
-            if kind == "line":
-                ser.format.line.color.rgb = ink
-                ser.format.line.width = Pt(2.25)
+        if donut:
+            plot.vary_by_categories = True
+            try:   # hole size is not wrapped by python-pptx; 58% reads as a ring, not a pie
+                dn = plot._element
+                hs = dn.find("{http://schemas.openxmlformats.org/drawingml/2006/chart}holeSize")
+                if hs is None:
+                    hs = dn.makeelement("{http://schemas.openxmlformats.org/drawingml/2006/chart}holeSize", {})
+                    dn.append(hs)
+                hs.set("val", "58")
+            except Exception:
+                pass
+            ser = plot.series[0]
+            for pi in range(len(cats)):
+                pt_ = ser.points[pi]
+                pt_.format.fill.solid()
+                pt_.format.fill.fore_color.rgb = pal[pi % len(pal)]
+                pt_.format.line.color.rgb = WHITE     # a hairline gap between slices
+        else:
+            if stacked:
+                plot.gap_width = 35
+                plot.overlap = 100                     # the parts sit end to end
             else:
-                ser.format.fill.solid()
-                ser.format.fill.fore_color.rgb = ink
+                plot.gap_width = 60 if multi else 110
+                if multi:
+                    plot.overlap = -10
+            for i, ser in enumerate(plot.series):
+                ink_ = pal[i % len(pal)]
+                if kind == "line":
+                    ser.format.line.color.rgb = ink_
+                    ser.format.line.width = Pt(2.25)
+                else:
+                    ser.format.fill.solid()
+                    ser.format.fill.fore_color.rgb = ink_
 
         # Direct value labels, so the chart is readable without the reader
         # tracing a bar back to a gridline -- and readable in print.
         plot.has_data_labels = bool(labels)
         if labels:
             dl = plot.data_labels
-            dl.font.size = Pt(10)
-            dl.number_format = '0.0"%"' if pct else "#,##0"
+            # a stacked bar carries many labels in a thin band, a donut labels its
+            # ring: both smaller than the standalone value label
+            dl.font.size = Pt(8) if stacked else Pt(10)
+            dl.number_format = fmt or ('0.0"%"' if pct else ("0%" if donut else "#,##0"))
             dl.number_format_is_linked = False
-            try:
-                dl.position = (XL_LABEL_POSITION.OUTSIDE_END if kind != "line"
-                               else XL_LABEL_POSITION.ABOVE)
-            except Exception:
-                pass   # a stacked/line variant that refuses the position
+            if donut:
+                dl.show_percentage = True; dl.show_value = False
+                dl.show_category_name = False
+                dl.font.bold = True; dl.font.color.rgb = WHITE
+            elif stacked:
+                dl.font.color.rgb = WHITE
+            # A doughnut takes NO label position: c:dLblPos is not valid there,
+            # and PowerPoint answers one with a "repair this file" prompt. Its
+            # labels sit on the ring by default, which is where they belong.
+            if not donut:
+                try:
+                    dl.position = (XL_LABEL_POSITION.CENTER if stacked else
+                                   XL_LABEL_POSITION.OUTSIDE_END if kind != "line"
+                                   else XL_LABEL_POSITION.ABOVE)
+                except Exception:
+                    pass   # a variant that refuses the position
 
+        if donut:
+            return gf
         # With direct labels on every point the value axis is redundant chrome.
         try:
             va = ch.value_axis
@@ -825,7 +903,18 @@ class Emitter:
             ca.has_major_gridlines = False
             ca.major_tick_mark = XL_TICK_MARK.NONE
             ca.format.line.color.rgb = MUTED
-            ca.tick_labels.font.size = Pt(11)
+            # thirty bars on one axis need a smaller label than eight -- and
+            # PowerPoint's automatic label skip would then silently drop every
+            # other market name, so every label is asked for explicitly
+            ca.tick_labels.font.size = Pt(9) if len(cats) > 16 else Pt(11)
+            if len(cats) > 16:
+                C = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
+                ax = ca._element
+                if ax.find(C + "tickLblSkip") is None:
+                    sk = ax.makeelement(C + "tickLblSkip", {"val": "1"})
+                    anchor = ax.find(C + "noMultiLvlLbl")
+                    if anchor is not None: anchor.addprevious(sk)
+                    else: ax.append(sk)
         except Exception:
             pass
         return gf
@@ -1175,8 +1264,24 @@ def emit_blocks(em, head, blocks, fallback=""):
             pending_kpi = None
             sl = em.slide("Table")          # the chart column layout: title, subtitle, body
             em.put(sl, "Title", t); em.put(sl, "Subtitle", s_)
+            # data-chart-side: the chart takes the left half and the NEXT table
+            # the right half of the same slide -- a donut beside the team that
+            # did the work, say. Only when that table fits one slide; a longer
+            # one keeps its own slides rather than being cut.
+            side = None
+            if (payload.get("side") and i < len(blocks) and blocks[i][0] == "table"
+                    and len(blocks[i][1]["rows"]) <= rows_per_slide(bool(s_))):
+                side = blocks[i][1]; i += 1
+                if key is None and i < len(blocks) and blocks[i][0] == "note" and em.key_fits(blocks[i][1]):
+                    key = blocks[i][1]; i += 1
+            CW = TB_W * 0.44 if side else None
             em.chart(sl, payload["cats"], payload["series"],
-                     kind=payload["kind"], pct=payload["pct"], has_sub=bool(s_))
+                     kind=payload["kind"], pct=payload["pct"], has_sub=bool(s_),
+                     ink=payload.get("ink"), fmt=payload.get("fmt"),
+                     width=CW)
+            if side:
+                em.table(sl, side["heads"], side["rows"], has_sub=bool(s_),
+                         left=TB_L + TB_W * 0.47, width=TB_W * 0.53)
             # A chart has no text frame, so finish()'s empty-placeholder sweep
             # would otherwise leave the body placeholder on the slide as a
             # "Click to add text" prompt sitting under the plot.
