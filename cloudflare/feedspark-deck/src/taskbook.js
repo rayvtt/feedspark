@@ -733,6 +733,9 @@ export const DIMS = [
   { k: 'owner', label: 'Who did it' },
   { k: 'cat', label: 'Type of work' },
   { k: 'month', label: 'Month' },
+  // a board reads a book by quarter, and a delivery conversation reads it by week
+  { k: 'quarter', label: 'Quarter' },
+  { k: 'week', label: 'Week' },
   { k: 'market', label: 'Market' },
   { k: 'am', label: 'Account manager' },
   { k: 'bucket', label: 'Status' },
@@ -740,9 +743,44 @@ export const DIMS = [
   { k: 'tag', label: 'Tag' },
 ];
 
+/* CUTS AN EXECUTIVE ASKS FOR (Ray, 28 Sep 2026, on charts "for procurement heads/ senior
+   executives"): a board reads a book by QUARTER, and a delivery conversation reads it by WEEK, and
+   neither could be asked for. All three time dims read in TIME order rather than biggest-first,
+   and none of them folds a tail into "Other" — a missing quarter in the middle of a year is a
+   hole in the argument, not a tidy-up. */
+export const TIME_DIMS = ['month', 'quarter', 'week'];
+export const isTimeDim = (d) => TIME_DIMS.indexOf(d) >= 0;
+
+/** '2026-07-14' → '2026-Q3'. Lexicographic order IS chronological order, which is why the key
+    carries the year rather than being a bare 'Q3'. */
+export function quarterOf(v) {
+  const m = monthOf(v);
+  return m ? m.slice(0, 4) + '-Q' + (Math.floor((+m.slice(5, 7) - 1) / 3) + 1) : '';
+}
+
+/** ISO-8601 week: '2026-W39'. The week a date belongs to is the one holding its Thursday, which is
+    the whole reason this is not (dayOfYear / 7) — the naive form puts 1 January in week 1 of a year
+    it does not belong to, and a delivery week that lands in the wrong year is a wrong column. */
+export function weekOf(v) {
+  const iso = isoOf(v);
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return '';
+  const day = (d.getUTCDay() + 6) % 7;                  // Monday = 0
+  d.setUTCDate(d.getUTCDate() - day + 3);               // the Thursday of this week
+  const y = d.getUTCFullYear();
+  const jan4 = new Date(Date.UTC(y, 0, 4));
+  const jd = (jan4.getUTCDay() + 6) % 7;
+  jan4.setUTCDate(jan4.getUTCDate() - jd + 3);          // the Thursday of week 1
+  const wk = 1 + Math.round((d - jan4) / (7 * 24 * 3600 * 1000));
+  return y + '-W' + (wk < 10 ? '0' : '') + wk;
+}
+
 function dimKey(t, dim) {
   if (dim === 'total') return 'All work';
   if (dim === 'month') return monthOf(t.d) || '(undated)';
+  if (dim === 'quarter') return quarterOf(t.d) || '(undated)';
+  if (dim === 'week') return weekOf(t.d) || '(undated)';
   if (dim === 'cat') return t.cat;
   if (dim === 'market') return (t.client && t.market) ? t.client + ' ' + t.market : (t.market || '(none)');
   if (dim === 'task') return t.title || '(untitled)';
@@ -833,9 +871,9 @@ function nodesAt(rows, dim, cap, measure) {
     }
   }
   let out = [...m.values()].map((b) => Object.assign(tally(b.rows), { k: b.k, rows: b.rows }));
-  if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
+  if (isTimeDim(dim)) out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
   else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
-  if (cap && out.length > cap && dim !== 'month') {
+  if (cap && out.length > cap && !isTimeDim(dim)) {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     // the fold keeps the folded rows, so its own children stay real rather than a dead end
     const rws = [];
@@ -976,14 +1014,14 @@ export function groupBy(rows, dim, cap, measure) {
     k: g.k, n: g.n, bill: r2(g.bill), nonbill: r2(g.nonbill), hours: r2(g.hours),
     billPct: g.hours ? Math.round((g.bill / g.hours) * 1000) / 10 : 0,
   }));
-  // months read in time order; everything else reads biggest-first
-  if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
+  // time reads in time order; everything else reads biggest-first
+  if (isTimeDim(dim)) out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
   else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
   // a tag dimension can place one task in several buckets, so the bucket hours legitimately sum
   // to more than the book. Say so rather than letting a chart imply otherwise.
   out.multi = placements > rows.length;
   out.placements = placements;
-  if (cap && out.length > cap && dim !== 'month') {
+  if (cap && out.length > cap && !isTimeDim(dim)) {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     const fold0 = rest.reduce((s, x) => ({
       n: s.n + x.n, bill: s.bill + x.bill, nonbill: s.nonbill + x.nonbill, hours: s.hours + x.hours,

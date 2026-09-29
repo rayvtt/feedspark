@@ -1094,6 +1094,30 @@ same column, with the footer naming the second reading and the account. Both pan
 column on screen (`.cmain`) for the same reason — a full-width outcome strip beside a 250px legend
 would sit on a different x-scale, and the month under a point would not be the month above it.
 
+### The cuts a board asks for, and the denominator
+
+**Split by → Quarter** and **Week** join Month. All three are **time dims**: they read in **time
+order**, not biggest-first, and they **never fold a tail into "Other"** — a missing quarter in the
+middle of a year is a hole in the argument, not a tidy-up. The week is **ISO-8601** (a date's week
+is the one holding its Thursday), because the naive `dayOfYear / 7` form files 1 January under a
+year it does not belong to, and a delivery week in the wrong year is a wrong column.
+
+Under the verdict, the **scale line** answers the thing a bare hour count cannot — Ray's own
+example, *"886 hours maintained 47k SKUs across 28 markets"*. Procurement prices a service per
+unit, so the hours travel with their denominators:
+
+| | |
+|---|---|
+| hours delivered, pieces of work | counted from the chart's own population |
+| markets, people | the distinct client×market pairs and owners carrying work in this view |
+| **products in the feed** | the catalogue each market was last **scanned** at, riding the same `/api/outcomes` record — and it states **how many of the brand's markets that covers**, because a total over three of twenty-eight is a different claim |
+
+The catalogue appears for **one account** (the only scope where "products in the feed" means
+anything) and the fetch follows the **account**, not the What-moved toggle — a scale line that only
+appeared when a second, unrelated control was on would be a hidden dependency. A brand nobody has
+scanned simply has no products figure; it never reads as zero. The line is `data-no-collapse`: it is
+the **scale of** the number above it, not an explanation of it.
+
 ### QA
 
 `tools/test_outcomes.mjs` (qa_gate, presync, `validate.yml`) pins the month walk across a year end

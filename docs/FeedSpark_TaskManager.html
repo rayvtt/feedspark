@@ -164,6 +164,10 @@ window.addEventListener('load',restore);
   .coutbox svg{display:block;width:100%;height:auto;overflow:visible}
   .cout-cap{margin:6px 2px 0;font-size:11.5px;line-height:1.55;font-weight:600;color:var(--ink-2,#555)}
   .cout-empty{font-size:12px;font-weight:700;color:var(--muted);padding:14px 2px}
+  .cscale{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;padding-top:9px;border-top:1px solid var(--line)}
+  .cscale i{font-style:normal;display:flex;align-items:baseline;gap:6px}
+  .cscale b{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .cscale span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 0;border-bottom:1px solid var(--line)}
   .lg-row.hd{font-weight:800}
   .lg-row .nm{color:var(--ink-2)}
@@ -564,6 +568,11 @@ window.addEventListener('load',restore);
       <div class="clegend" id="clegend"></div>
     </div>
     <div class="verdict" id="cverdict" data-instr></div>
+    <!-- THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+         Procurement prices a service per unit, not per hour, so a row of hours with nothing beside
+         it cannot be argued with. Never collapsed behind the ⓘ: it is the scale of the number
+         above it, not an explanation of it. -->
+    <div class="cscale" id="cscale" data-no-collapse hidden></div>
     <div class="ctab" id="ctabbox" hidden></div>
   </section>
 
@@ -1199,15 +1208,44 @@ window.addEventListener('load',restore);
     { k: 'owner', label: 'Who did it' },
     { k: 'cat', label: 'Type of work' },
     { k: 'month', label: 'Month' },
+    // a board reads a book by quarter, a delivery conversation by week (Ray, 28 Sep 2026)
+    { k: 'quarter', label: 'Quarter' },
+    { k: 'week', label: 'Week' },
     { k: 'market', label: 'Market' },
     { k: 'am', label: 'Account manager' },
     { k: 'bucket', label: 'Status' },
     { k: 'task', label: 'Task' },
     { k: 'tag', label: 'Tag' }
   ];
+  /* TIME DIMS read in TIME order and never fold a tail into "Other" — a missing quarter in the
+     middle of a year is a hole in the argument, not a tidy-up. Identical to src/taskbook.js. */
+  var TIME_DIMS = ['month', 'quarter', 'week'];
+  function isTimeDim(d) { return TIME_DIMS.indexOf(d) >= 0; }
+  function quarterOf(v) {
+    var m = monthOf(v);
+    return m ? m.slice(0, 4) + '-Q' + (Math.floor((+m.slice(5, 7) - 1) / 3) + 1) : '';
+  }
+  /* ISO-8601: a date's week is the one holding its THURSDAY. The naive (dayOfYear/7) form puts
+     1 January in week 1 of a year it does not belong to, and a delivery week in the wrong year is
+     a wrong column. */
+  function weekOf(v) {
+    var iso = isoOf(v);
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00Z');
+    if (isNaN(d.getTime())) return '';
+    var day = (d.getUTCDay() + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - day + 3);
+    var y = d.getUTCFullYear(), jan4 = new Date(Date.UTC(y, 0, 4));
+    var jd = (jan4.getUTCDay() + 6) % 7;
+    jan4.setUTCDate(jan4.getUTCDate() - jd + 3);
+    var wk = 1 + Math.round((d - jan4) / (7 * 24 * 3600 * 1000));
+    return y + '-W' + (wk < 10 ? '0' : '') + wk;
+  }
   function dimKey(t, dim) {
     if (dim === 'total') return 'All work';
     if (dim === 'month') return monthOf(t.d) || '(undated)';
+    if (dim === 'quarter') return quarterOf(t.d) || '(undated)';
+    if (dim === 'week') return weekOf(t.d) || '(undated)';
     if (dim === 'cat') return t.cat;
     if (dim === 'market') return (t.client && t.market) ? t.client + ' ' + t.market : (t.market || '(none)');
     if (dim === 'task') return t.title || '(untitled)';
@@ -1262,9 +1300,9 @@ window.addEventListener('load',restore);
     var out = keys.map(function (k) {
       var t = tally(m[k]); t.k = k; t.rows = m[k]; return t;
     });
-    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    if (isTimeDim(dim)) out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
     else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
-    if (cap && out.length > cap && dim !== 'month') {
+    if (cap && out.length > cap && !isTimeDim(dim)) {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1), rws = [], j, y;
       for (j = 0; j < rest.length; j++) for (y = 0; y < rest[j].rows.length; y++) rws.push(rest[j].rows[y]);
       var f = tally(rws); f.k = 'Other (' + rest.length + ' more)'; f.rows = rws; f.fold = rest.length;
@@ -1394,9 +1432,9 @@ window.addEventListener('load',restore);
     // to more than the book. Say so rather than letting a chart imply otherwise.
     out.multi = placements > rows.length;
     out.placements = placements;
-    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    if (isTimeDim(dim)) out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
     else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
-    if (cap && out.length > cap && dim !== 'month') {
+    if (cap && out.length > cap && !isTimeDim(dim)) {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
       var f = { n: 0, bill: 0, nonbill: 0, hours: 0 };
       rest.forEach(function (x) { f.n += x.n; f.bill += x.bill; f.nonbill += x.nonbill; f.hours += x.hours; });
@@ -3034,9 +3072,55 @@ window.addEventListener('load',restore);
     });
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc((sp ? sp[0] : '') + ' by month') + '">' + h + '</svg>';
   }
+  /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+     A procurement head prices a service per unit, so hours with no scale beside them cannot be
+     argued with. Four figures, and every one of them is COUNTED from what is on screen rather than
+     asserted: the hours and the tasks are the chart's own population, the markets are the distinct
+     markets in it, and the catalogue is the size each market was last SCANNED at — which is why it
+     says how many markets that covers. A brand nobody has scanned simply has no products figure;
+     it never reads as zero. */
+  function scaleLine() {
+    var box = $('cscale'); if (!box) return;
+    var POP = chartPop();
+    if (!POP.length) { box.hidden = true; box.innerHTML = ''; return; }
+    var hoursN = 0, mk = {}, ppl = {};
+    POP.forEach(function (t) {
+      hoursN += mv(t);
+      if (t.client && t.market) mk[t.client + ' ' + t.market] = 1;
+      if (t.owner) ppl[t.owner] = 1;
+    });
+    var cell = function (v, l, tip) {
+      return '<i title="' + esc(tip) + '"><b>' + v + '</b><span>' + esc(l) + '</span></i>';
+    };
+    var h = cell(hrs(hoursN) + ' h', CMEAS === 'hours' ? 'delivered' : measWord() + ' only',
+      'Every hour in the population this chart is drawn from');
+    h += cell(num(POP.length), POP.length === 1 ? 'piece of work' : 'pieces of work',
+      'One per booked task \u2014 the count behind the hours');
+    var nm = Object.keys(mk).length;
+    if (nm) h += cell(num(nm), nm === 1 ? 'market' : 'markets', 'Distinct client \u00d7 market pairs carrying work in this view');
+    var np = Object.keys(ppl).length;
+    if (np) h += cell(num(np), np === 1 ? 'person' : 'people', 'Distinct owners who booked time in this view');
+    /* The catalogue rides the outcome fetch, so it appears for ONE account — the only scope where
+       "products in the feed" means anything. It states how many of the brand's markets have been
+       scanned, because a total over three of twenty-eight markets is a different claim. */
+    var sc = (OUTC.data && OUTC.key.split('|')[0] === outAcct()) ? OUTC.data.scale : null;
+    if (sc && sc.rows) {
+      h += cell(num(sc.rows), 'products in the feed',
+        'The catalogue each scanned market was last measured at \u2014 ' + sc.scanned + ' of '
+        + sc.markets + ' market' + (sc.markets === 1 ? '' : 's') + ' scanned');
+    }
+    box.innerHTML = h;
+    box.hidden = false;
+  }
+
   /** Called at the end of every chart() render — the panel follows the chart, never the reverse. */
   function outDraw() {
     outNote();
+    // the denominator rides this same record, so one account is fetched whether or not the panel
+    // is on — a scale line that only appeared with "What moved" would be a hidden dependency
+    var acct = outAcct();
+    if (acct) outFetch(acct);
+    scaleLine();
     var box = $('coutbox'), st = $('cout-st'), cap = $('cout-cap');
     if (!box) return;
     if (!outOn() || !outCal()) { box.hidden = true; st.innerHTML = ''; cap.textContent = ''; return; }
