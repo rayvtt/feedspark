@@ -200,6 +200,7 @@ import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introductio
 import MAT_SCHUH_SR_SEP26 from "../../../docs/materials/Schuh_Strategy_Review_Sep26.pptx";
 import MAT_HOBBY_SR_SEP26 from "../../../docs/materials/Hobbycraft_Strategy_Review_Sep26.pptx";
 import MAT_SUPERDRY_SVC_SEP26 from "../../../docs/materials/Superdry_Service_Review_Sep26.pptx";
+import MAT_REISS_FY2627 from "../../../docs/materials/Reiss_NewFiscal_FY2627.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -251,6 +252,12 @@ const SEED_MATERIALS = [
     file: 'Superdry_Service_Review_Sep26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-09-29', body: MAT_SUPERDRY_SVC_SEP26 },
+  { id: 'reiss-fy2627', client: 'Reiss',
+    title: 'Reiss \u00d7 FeedSpark \u2014 New fiscal FY26/27',
+    cat: 'marketing', occasion: 'New fiscal FY26/27',
+    file: 'Reiss_NewFiscal_FY2627.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-29', body: MAT_REISS_FY2627 },
 ];
 
 const PAGES = {

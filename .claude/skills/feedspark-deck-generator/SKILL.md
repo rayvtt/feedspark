@@ -558,6 +558,12 @@ Rules when extending it:
     <tr data-chart-cat="Sep (part)">…</tr>   <!-- shorter label for the axis -->
     <tr data-chart-skip="1">…</tr>           <!-- a total or run-rate row: in the table, out of the plot -->
   ```
+  Four more attributes (Sep 2026, for the Reiss FY26/27 deck): `data-chart="barstack|colstack|donut"`
+  — stacked parts per category (30 markets on one slide is a `barstack`, which a clustered bar or a
+  table cannot hold), or one total in parts; `data-chart-ink` — the series colours, when the data
+  already has colours in the FCC module it came from; `data-chart-fmt` — the label format, Excel
+  syntax, so `[<2]"";0.0` hides a label its segment is too thin to carry; `data-chart-side="1"` —
+  chart left, the next table right, one slide (a donut beside the team that did the work).
   Judgement the attributes exist to let you exercise: **never plot a total beside its own parts**
   (a run-rate row derived from the months above it draws the same products twice at two scales —
   `data-chart-skip`), **never mix two interventions on one axis** (Schuh's title tests are not

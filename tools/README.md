@@ -76,6 +76,15 @@ slides), Reiss (66), YuMOVE (49) and the template (46), 0 drops each.
   being shrunk into a one-line strip.
 - **Sections without their own `.sec-title`** inherit the chapter title, so continuation slides
   never render as a bare " (cont.)".
+- **Native charts, opted in on the table** (`data-chart` on a `<table>`): `col` / `bar` / `line`,
+  plus `barstack` / `colstack` (the parts of one whole per category — the Catalogue's four lineage
+  stages per market, say) and `donut` (one series cut into parts; its legend is the category key).
+  `data-chart-ink="#9AA3AE,#15A070,…"` keeps a colour a client already learned in an FCC module,
+  `data-chart-fmt='[<2]"";0.0'` is an Excel number format (a condition hides a label too small to
+  read), and `data-chart-side="1"` draws the chart in the left half and the NEXT table in the right
+  half of the same slide. A doughnut never gets a label position — `c:dLblPos` there makes
+  PowerPoint offer to repair the file. Native charts don't render in `preview_tmpl.py`; the pptx
+  skill's `office/validate.py` does check them against the schema.
 - **`--keep-checks`** retains the `?` data-check badges. Dropped by default: the web deck has a
   toggle to hide them, a `.pptx` does not.
 
