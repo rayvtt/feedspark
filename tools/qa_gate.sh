@@ -345,6 +345,13 @@ else
   echo "   ✗ Catalogue harness FAILED — see node tools/test_catalog.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6d/7: AI visibility (reading engine, surface adapters vs stub answers, the lifted /api/aivis route)"
+if node tools/test_aivis.mjs >/dev/null 2>&1; then
+  echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, adapters, scope + grant, NDJSON hold"
+else
+  echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
