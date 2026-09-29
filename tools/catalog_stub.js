@@ -103,7 +103,20 @@ function build() {
   const stock = { ok: true, tracked: 1, roster: 1, unread: [], mechanisms: RE.MECHANISMS, channels: RE.CHANNELS, sev: RE.SEV,
     sv: { scenarios: RE.SV_SCENARIOS, days: RE.SV_WINDOW_DAYS },
     markets: [RE.stockView(idx, { w30: { spend: { cur: 'GBP', n: 1200 }, clicks: 4800, skus: 30, impr: 260000 }, updated: now })] };
-  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock };
+  // Google Ads per product, last 7 days (the worker's /api/catalog/ads shape): every third product served, one keyed
+  // in LOWER case (Google lower-cases the Ads item id that stands in for a blank pid), one with impressions but no
+  // clicks (its rates are blank, never 0%), and one product the feed no longer carries — all synthetic
+  const adsRows = {};
+  products().forEach((pr, i) => {
+    if (i % 3) return;
+    const impr = 120 + i * 37, clicks = i === 3 ? 0 : 2 + (i % 7), cost = Math.round(clicks * (0.18 + (i % 4) * 0.07) * 100) / 100;
+    const conv = i % 2 ? 0 : Math.round(clicks * 0.3 * 100) / 100, value = Math.round(conv * pr.price * 100) / 100;
+    adsRows[i === 6 ? pr.id.toLowerCase() : pr.id] = [impr, clicks, cost, conv, value];
+  });
+  adsRows['NW-GONE-1'] = [900, 30, 9.5, 2, 120];
+  const ads = { ok: true, done: true, cmpid: CMPID, period: '7_days', from: '2026-09-22', to: '2026-09-28', range: 'Last 7 Days (22/09/2026 - 28/09/2026)',
+    total: Object.keys(adsRows).length, pages: 2, next: 3, got: Object.keys(adsRows).length, cur: 'GBP', curMix: false, at: now, rows: adsRows };
+  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs); every line
 // sits behind the Catalogue guard so no other page is served an engine or a feed it never asked for
@@ -123,6 +136,8 @@ function stubLines() {
     + "  if(url.indexOf('/api/catalog/master')>=0)return j(" + JSON.stringify(d.info) + ");\n"
     + "  if(url.indexOf('/api/roas/live')>=0){var ag=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L=" + JSON.stringify(d.live) + ";return j(L[decodeURIComponent(ag||'')]||{ok:false,error:'stub'});}\n"
     + "  if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
+    // the read arrives in two calls — the first a chunk (done:false), the page calls again for the rest
+    + "  if(url.indexOf('/api/catalog/ads')>=0){window.__adsCalls=(window.__adsCalls||0)+1;if(window.__adsCalls===1)return j({ok:true,done:false,cmpid:" + JSON.stringify(d.ads.cmpid) + ",got:3,total:" + d.ads.total + ",pages:2,next:2});return j(" + JSON.stringify(d.ads) + ");}\n"
     + "  if(url.indexOf('/api/roas?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " }\n";
 }

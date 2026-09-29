@@ -11138,6 +11138,12 @@
     {"name": "Catalogue: a product sits in a price band off FeedHero's own rows", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));", "pr": 0},
     {"name": "Catalogue: a cut FeedHero has not set up is said, never a red error", "file": "docs/FeedSpark_Catalog.html", "pattern": "Not set up in FeedHero for this market: ", "pr": 0},
     {"name": "Catalogue engine: a price band is a range read off its label, never guessed", "file": "docs/catalog_engine.js", "pattern": "function priceGroupRange(label)", "pr": 0},
-    {"name": "Catalogue engine: the price FeedHero bands on is read off the data", "file": "docs/catalog_engine.js", "pattern": "function priceGroupBasis(bands, fx)", "pr": 0}
+    {"name": "Catalogue engine: the price FeedHero bands on is read off the data", "file": "docs/catalog_engine.js", "pattern": "function priceGroupBasis(bands, fx)", "pr": 0},
+    {"name": "Catalogue: Google Ads per product — ten 7-day columns, off by default", "file": "docs/FeedSpark_Catalog.html", "pattern": "{ k: 'a7roas', l: 'ROAS · 7 d', w: 100, num: 1, off: 1, ads: 1, s: 'a7roas' },", "pr": 0},
+    {"name": "Catalogue: the 7-day read is called again until whole", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }", "pr": 0},
+    {"name": "Catalogue: the inspector's own Google Ads line", "file": "docs/FeedSpark_Catalog.html", "pattern": "function inspAdsHtml(i) {", "pr": 0},
+    {"name": "Catalogue engine: Ads join is the product id, case-blind; rates from the sums", "file": "docs/catalog_engine.js", "pattern": "function adsRates(v) {", "pr": 0},
+    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh) {", "pr": 0},
+    {"name": "Worker: /api/catalog/ads", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/ads') {", "pr": 0}
   ]
 }
