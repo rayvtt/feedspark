@@ -2622,6 +2622,20 @@ async function route(request, env, ctx) {
           if (!up.headers.get('content-encoding') && /^\d+$/.test(len)) h['x-feed-bytes'] = len;
           return new Response(up.body, { headers: h });
         }
+        // Google Ads per product, last 7 days (catAdsRead): a chunk a call — the page calls again until done, and
+        // only the finished read carries the rows. Google Ads is the GOOGLE feed's; a Meta market is refused.
+        if (path === '/api/catalog/ads') {
+          if (/-fb$/i.test(String(url.searchParams.get('market') || ''))) return json({ ok: false, error: 'Google Ads is read for the Google feed' }, 400);
+          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'));
+          if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
+          if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
+          if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
+          const head = { ok: true, cmpid, period: rec.period, from: rec.from, to: rec.to, range: rec.range, total: rec.total, pages: rec.pages, next: rec.next,
+            got: Object.keys(rec.rows || {}).length, cur: rec.cur, curMix: !!rec.curMix, restarted: !!rec.restarted, cached: !!rec.cached };
+          if (rec.state !== 'ok') return json(Object.assign(head, { done: false }));
+          if (!rec.cached) logActivity(ctx, env, request, 'catalog-ads', cmpid + ' ' + rec.period + ' ' + head.got);
+          return json(Object.assign(head, { done: true, at: rec.at, rows: rec.rows }));
+        }
         if (path === '/api/catalog/master/row') {
           const q = String(url.searchParams.get('q') || '').trim().slice(0, 80);
           if (!q) return json({ ok: false, error: 'q required' }, 400);
@@ -3841,6 +3855,75 @@ async function catMasterInfo(env, cmpid, fresh) {
     wb: catFileOk(info.master_feed_url, cmpid) ? String(info.master_feed_url) : '' };
   try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 86400 }); } catch (e) {}
   return rec;
+}
+
+// ---- THE CATALOGUE's Google Ads, per PRODUCT (Ray, 29 Sep 2026: "catalog module - bring in adwords data 7days
+// in these columns option too", then "isn't it in Ads Traffic from feedhero reports? (you can then match by
+// product ID)"): FeedHero's `ads_traffic` tool — one row per advertised product as Google Ads returns it, keyed
+// on the client's OWN Product ID (pid; blank when no product matches, when the Ads item id stands in, lower-cased
+// by Google). Only products with an impression in the range are listed (sorted by impressions the smallest is
+// 1), so a feed product missing from a WHOLE read had none. A big account is 100+ pages of 200 (Schuh UK 22,283
+// rows, Superdry GB 26,673, Reiss GB 24,541 on 29 Sep 2026), so it is read a CHUNK a call and the record keeps
+// where it got to — the page calls again until done. FeedHero keeps a report an hour and then re-downloads it,
+// so a read that meets a different window or row count than the one it started from STARTS AGAIN rather than
+// splicing two reports. Sorted by the Ads item id so the page order holds across calls. Nothing in git: KV only.
+const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS_CONC = 4;
+const CAT_ADS_TTL = 12 * 3600000, CAT_ADS_PART_TTL = 50 * 60000, CAT_ADS_MISSING_TTL = 24 * 3600000;
+// one report row -> [key, [impr, clicks, cost, conversions, conversion value], currency] — Google Ads' own
+// figures; every rate (CTR, CPC, ROAS, CR, cost / conv.) is worked out from these sums on the page, never read
+function catAdsRow(r) {
+  if (!r) return null;
+  const n = (v) => { const x = parseFloat(String(v == null ? '' : v).replace(/[,%\s£€$]/g, '')); return isFinite(x) ? x : 0; };
+  const k = String(r.pid || '').trim() || String(r.c0 || '').trim();
+  if (!k) return null;
+  return [k.slice(0, 120), [Math.round(n(r.c1)), Math.round(n(r.c2)), Math.round(n(r.c3) * 100) / 100, Math.round(n(r.c5) * 100) / 100, Math.round(n(r.c4) * 100) / 100], String(r.cur || '').trim().slice(0, 3)];
+}
+async function catAdsRead(env, cmpid, fresh) {
+  const key = 'catads:' + cmpid + ':' + CAT_ADS_PERIOD, now = Date.now();
+  let rec = null;
+  try { rec = await env.EDITS.get(key, 'json'); } catch (e) { rec = null; }
+  if (rec && !fresh) {
+    if (rec.missing && now - rec.at < CAT_ADS_MISSING_TTL) return Object.assign({ state: 'missing', cached: true }, rec);
+    if (rec.done && now - rec.at < CAT_ADS_TTL) return Object.assign({ state: 'ok', cached: true }, rec);
+  }
+  if (!rec || rec.done || rec.missing || fresh || now - (rec.at0 || 0) > CAT_ADS_PART_TTL) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' };
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const call = (page) => mcp.call('ads_traffic', { company: cmpid, period: CAT_ADS_PERIOD, page, page_size: CAT_ADS_SIZE, sort: 'c0', order: 'asc' });
+  let restarted = false;
+  const take = (p) => {
+    const info = (p && p.info) || {};
+    const sig = [info.from, info.to, info.report_rows != null ? info.report_rows : p.total_rows].join('|');
+    if (rec.sig && rec.sig !== sig) { restarted = true; return false; }
+    rec.sig = sig; rec.from = String(info.from || ''); rec.to = String(info.to || ''); rec.range = String(info.range || '');
+    rec.total = +(p.total_rows != null ? p.total_rows : info.report_rows) || 0; rec.pages = +p.pages || 0;
+    TMM.rowsOf(p).forEach((r) => { const a = catAdsRow(r); if (!a) return; rec.rows[a[0]] = a[1]; if (a[2]) rec.curs[a[2]] = (rec.curs[a[2]] || 0) + 1; });
+    return true;
+  };
+  let first;
+  try { first = await call(rec.next); }
+  catch (e) {
+    const msg = String((e && e.message) || e);
+    // an account Google Ads returns nothing for (Accessorize UK, 29 Sep 2026) is an ANSWER — kept a day
+    if (/no ads traffic data/i.test(msg)) { const m = { v: 1, cmpid, period: CAT_ADS_PERIOD, missing: true, at: now, note: msg.slice(0, 200) }; try { await env.EDITS.put(key, JSON.stringify(m), { expirationTtl: 86400 }); } catch (e2) {} return Object.assign({ state: 'missing' }, m); }
+    throw e;
+  }
+  // the FIRST request for a client makes FeedHero download the report from Google Ads — "still being prepared"
+  if (!first || (first.total_rows == null && !Array.isArray(first.rows))) return { state: 'preparing', note: String((first && (first.message || first.note || first.status)) || 'FeedHero is still downloading this report from Google Ads').slice(0, 200) };
+  if (!take(first)) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+  else {
+    const want = []; for (let pg = rec.next + 1; pg <= Math.min(rec.pages, rec.next + CAT_ADS_CHUNK - 1); pg++) want.push(pg);
+    let i = 0;
+    const worker = async () => { while (i < want.length && !restarted) { const pg = want[i++]; take(await call(pg)); } };
+    await Promise.all(Array.from({ length: Math.min(CAT_ADS_CONC, want.length) }, worker));
+    if (restarted) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+    else { rec.next = want.length ? want[want.length - 1] + 1 : rec.next + 1; if (rec.next > rec.pages) { rec.done = true; rec.at = Date.now(); } }
+  }
+  const cs = Object.keys(rec.curs || {}).sort((a, b) => rec.curs[b] - rec.curs[a]);
+  rec.cur = cs[0] || ''; rec.curMix = cs.length > 1;
+  try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 2 * 86400 }); } catch (e) {}
+  return Object.assign({ state: rec.done ? 'ok' : 'reading', restarted }, rec);
 }
 
 // wins = { w7: {total, categories}, w30: …, w90: … } as splitClientRows returns them per window.

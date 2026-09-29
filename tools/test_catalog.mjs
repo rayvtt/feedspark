@@ -318,7 +318,61 @@ t('the MCP\'s c0…c10 keys sort as columns, not strings', JSON.stringify(W.catC
   t('"still being prepared" is a state, never an error or an empty master', r3.state === 'preparing' && /prepared/.test(r3.note));
   t('no token = says so', (await M({ EDITS: env.EDITS }, 'northwind_uk', true)).state === 'no_token');
 }
+console.log('· Google Ads per product — FeedHero\'s Ads Traffic, matched on the product ID');
+{
+  // the engine: a case-blind join, every rate off the product's own sums, null (never 0%) with nothing under it
+  const ix = E.adsIndex({ 'NW100-M': [120, 2, 0.36, 0.6, 12], 'nw103-m': [342, 0, 0, 0, 0], bad: [1, 2] });
+  t('the join is the product id, case-blind (Google lower-cases the Ads item id that stands in)', ix.get(E.adsKey('NW100-M')) && ix.get(E.adsKey('NW103-M')) && ix.get(E.adsKey(' nw100-m ')) && !ix.has('bad'));
+  const rr = E.adsRates([120, 2, 0.36, 0.6, 12]);
+  t('rates from the sums: CTR = clicks ÷ impr, CPC = cost ÷ clicks, CR = conv ÷ clicks, cost/conv, ROAS = value ÷ cost', Math.abs(rr.ctr - 2 / 120 * 100) < 1e-9 && Math.abs(rr.cpc - 0.18) < 1e-9 && Math.abs(rr.cr - 30) < 1e-9 && Math.abs(rr.cpa - 0.6) < 1e-9 && Math.abs(rr.roas - 12 / 0.36 * 100) < 1e-9);
+  const r0 = E.adsRates([342, 0, 0, 0, 0]);
+  t('impressions but no clicks: CPC, CR, cost/conv and ROAS are null — no rate, never a 0% rate', r0.ctr === 0 && r0.cpc === null && r0.cr === null && r0.cpa === null && r0.roas === null && E.adsRates(null) === null);
+  t('served products the feed no longer carries are counted apart', E.adsUnmatched(ix, ['NW100-M', 'NW103-M', 'NW200-L']) === 0 && E.adsUnmatched(E.adsIndex({ A: [1, 0, 0, 0, 0], B: [1, 0, 0, 0, 0] }), ['a']) === 1);
+
+  // the worker: one row → [key, sums, currency], then the chunked read against a stub MCP
+  const R = new Function(liftF('catAdsRow') + 'return catAdsRow;')();
+  const a1 = R({ pid: '10410090002221E0001', c0: '10410090002221e0001', c1: '1,244', c2: '12', c3: '2.3', c4: '4,353.50549049', c5: '109.99', cur: 'GBP' });
+  t('a report row keeps the client\'s own Product ID and Google Ads\' own sums (commas read)', a1[0] === '10410090002221E0001' && a1[1].join('|') === '1244|12|2.3|109.99|4353.51' && a1[2] === 'GBP');
+  t('no Product ID → the Ads item id stands in; neither → the row is dropped', R({ pid: '', c0: 'v0958547', c1: '1' })[0] === 'v0958547' && R({ pid: '', c0: '' }) === null);
+  const consts = (WK.match(/^const CAT_ADS_[\s\S]*?;$/gm) || []).join('\n');
+  const TMM = { rowsOf: (p) => (p && Array.isArray(p.rows) ? p.rows : []) };
+  const kv = new Map(); const log = [];
+  const env = { ROAS_MCP_TOKEN: 'x', EDITS: { get: async (k, ty) => (kv.has(k) ? JSON.parse(kv.get(k)) : null), put: async (k, v) => { kv.set(k, v); } } };
+  let total = 60, info = { from: '2026-09-22', to: '2026-09-28', report_rows: 60 }, mode = 'ok';
+  const pageOf = (page, size) => ({ report: 'Ads Traffic', total_rows: total, page, pages: Math.ceil(total / size), page_size: size, info,
+    rows: Array.from({ length: Math.max(0, Math.min(size, total - (page - 1) * size)) }, (_, j) => { const n = (page - 1) * size + j; return { pid: 'P' + n, c0: 'p' + n, c1: String(10 + n), c2: String(n % 3), c3: '0.5', c4: '2', c5: '0.1', cur: 'GBP' }; }) });
+  const roasMcp = () => ({ init: async () => ({}), call: async (tool, a) => {
+    log.push(a.page);
+    if (tool !== 'ads_traffic' || a.company !== 'northwind_uk' || a.period !== '7_days' || a.sort !== 'c0' || a.order !== 'asc') throw new Error('bad call ' + JSON.stringify(a));
+    if (mode === 'missing') throw new Error('No Ads Traffic data found for the selected criteria. Attempt 1 (country 2826): …');
+    if (mode === 'preparing') return { message: 'The report is still being prepared — call again shortly' };
+    return pageOf(a.page, 20);   // a small page size so a chunk and the next call can be seen
+  } });
+  const src = consts.replace('CAT_ADS_SIZE = 200', 'CAT_ADS_SIZE = 20').replace('CAT_ADS_CHUNK = 24', 'CAT_ADS_CHUNK = 2') + liftF('catAdsRow') + liftA('catAdsRead') + 'return catAdsRead;';
+  const A = new Function('roasMcp', 'fetch', 'TMM', src)(roasMcp, () => null, TMM);
+  const s1 = await A(env, 'northwind_uk', false);
+  t('a big report is read a CHUNK a call: the first call reads 2 of 3 pages and says so', s1.state === 'reading' && log.join(',') === '1,2' && s1.next === 3 && s1.pages === 3 && Object.keys(s1.rows).length === 40);
+  const s2 = await A(env, 'northwind_uk', false);
+  t('the next call carries on where the record stopped, and the read is whole', s2.state === 'ok' && s2.done && log.join(',') === '1,2,3' && Object.keys(s2.rows).length === 60 && s2.cur === 'GBP' && s2.from === '2026-09-22');
+  const s3 = await A(env, 'northwind_uk', false);
+  t('a whole read is served from KV (12 hours), no MCP call', s3.cached && s3.state === 'ok' && log.length === 3);
+  const s4 = await A(env, 'northwind_uk', true);
+  t('?fresh starts again from page 1', s4.state === 'reading' && log.slice(3).join(',') === '1,2');
+  total = 70; info = { from: '2026-09-23', to: '2026-09-29', report_rows: 70 };
+  const s5 = await A(env, 'northwind_uk', false);
+  t('a report re-downloaded mid-read (a new window or row count) STARTS AGAIN — two reports are never spliced', s5.state === 'reading' && s5.restarted === true && s5.next === 1 && Object.keys(s5.rows).length === 0);
+  mode = 'preparing'; kv.clear();
+  t('"still being prepared" (the first read downloads from Google Ads) is a state, never an error', (await A(env, 'northwind_uk', false)).state === 'preparing');
+  mode = 'missing'; kv.clear();
+  const s7 = await A(env, 'northwind_uk', false), n7 = log.length;
+  const s8 = await A(env, 'northwind_uk', false);
+  t('an account Google Ads returns nothing for is an ANSWER, kept a day (Accessorize UK)', s7.state === 'missing' && s8.state === 'missing' && s8.cached && log.length === n7);
+  t('no token = says so', (await A({ EDITS: env.EDITS }, 'other_uk', false)).state === 'no_token');
+}
 const route = WK.slice(WK.indexOf("if (path.startsWith('/api/catalog/')"), WK.indexOf('// RULES + STOCK MANAGEMENT (Ray, 28 Sep 2026'));
+t('/api/catalog/ads: scoped like the master (the company off the wired feed), a Meta market refused, rows only on a whole read', route.indexOf("if (path === '/api/catalog/ads')") >= 0 && /Google Ads is read for the Google feed' \}, 400\);/.test(route) && /if \(rec\.state !== 'ok'\) return json\(Object\.assign\(head, \{ done: false \}\)\);/.test(route) && /json\(\{ ok: true, missing: true, done: true/.test(route));
+t('the page reads nothing until a 7-day column is on, and calls again until the read is whole', /if \(adsWanted\(\)\) loadAds\(g\);/.test(PG) && /if \(!j\.done\) \{ A\.st = 'loading'; renderStatus\(\); setTimeout\(step, 60\); return; \}/.test(PG) && /COLS\.some\(function \(c\) \{ return c\.ads && colOn\(c\); \}\)/.test(PG));
+t('ten 7-day columns, off by default, grouped in the picker; the inspector shows the product\'s own line', ['a7imp', 'a7clk', 'a7ctr', 'a7cost', 'a7cpc', 'a7conv', 'a7val', 'a7roas', 'a7cr', 'a7cpa'].every((k) => new RegExp("\\{ k: '" + k + "', [^}]*off: 1, ads: 1").test(PG)) && PG.indexOf('Google Ads · this product · 7 days') >= 0 && /function inspAdsHtml\(i\) \{/.test(PG));
 t('four routes: roster, master, master/file, master/row', ['/api/catalog/roster', "'/api/catalog/master'", '/api/catalog/master/file', '/api/catalog/master/row'].every((p) => route.indexOf(p) >= 0));
 t('scoped like /api/roas — owner or a clientMatch, 403 otherwise', /const inScope = \(c\) => acc\.owner \|\| clientMatch\(acc\.clients, c\);/.test(route) && /if \(!inScope\(client\)\) return json\(\{ ok: false, error: 'out of scope' \}, 403\);/.test(route) && /\.filter\(\(r\) => inScope\(r\.client\)\)/.test(route));
 t('the company comes from the wired feed, never the query', /const cmpid = catCmpid\(src\);/.test(route) && !/searchParams\.get\('cmpid'\)/.test(route));

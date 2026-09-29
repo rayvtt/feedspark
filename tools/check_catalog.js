@@ -269,6 +269,57 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('no page errors', nerrs.length === 0, nerrs.slice(0, 5));
     await nc.close();
 
+    // ---------------------------------------------------------------- Google Ads per product, last 7 days
+    console.log('· Google Ads per product — FeedHero\'s Ads Traffic, matched on the product ID');
+    const ac = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+    const ap = await ac.newPage(); const aerrs = [];
+    ap.on('pageerror', (e) => aerrs.push(e.message));
+    await ap.addInitScript(STUB);
+    await ap.goto('file://' + tmp);
+    await ap.waitForFunction(() => window.__FCCCatalogue && window.__FCCCatalogue.state().linDone, null, { timeout: 30000 });
+    ok('nothing is read until a 7-day column is on', await ap.evaluate(() => !window.__adsCalls && window.__FCCCatalogue.state().ads.st === 'idle'));
+    await ap.click('#cols-b'); await ap.waitForTimeout(150);
+    const grpTxt = await ap.evaluate(() => (document.querySelector('#cols-p .grp') || {}).textContent || '');
+    ok('the picker groups them under "Google Ads · this product · 7 days"', /Google Ads · this product · 7 days/.test(grpTxt), grpTxt);
+    for (const k of ['a7clk', 'a7cost', 'a7roas', 'a7cpc']) { await ap.check('#cols-p [data-col="' + k + '"]'); await ap.waitForTimeout(60); }
+    await ap.waitForFunction(() => window.__FCCCatalogue.state().ads.st === 'ready', null, { timeout: 10000 }).catch(() => {});
+    const ad = DATA.ads.rows, akey = (id) => String(id).trim().toLowerCase();
+    const want7 = new Map(Object.keys(ad).map((k) => [akey(k), ad[k]]));
+    ok('the read is taken a chunk at a time until whole (two calls)', await ap.evaluate(() => window.__adsCalls === 2 && window.__FCCCatalogue.state().ads.st === 'ready'));
+    await ap.click('body', { position: { x: 5, y: 5 } }); await ap.waitForTimeout(100);
+    const cellOf = (id, k) => ap.evaluate(([id, k]) => {
+      const S = window.__FCCCatalogue.state(), i = S.prods.findIndex((p) => p.id === id), r = S.view.indexOf(i);
+      const cols = S.vc.map((c) => c.k), j = cols.indexOf(k); if (r < 0 || j < 0) return null;
+      document.getElementById('gw').scrollTop = r * S.rh; return null;
+    }, [id, k]).then(() => ap.waitForTimeout(120)).then(() => ap.evaluate(([id, k]) => {
+      const S = window.__FCCCatalogue.state(), i = S.prods.findIndex((p) => p.id === id);
+      const row = document.querySelector('#vr .tr.row[data-i="' + i + '"]'); if (!row) return null;
+      const j = S.vc.map((c) => c.k).indexOf(k); return row.children[j] ? row.children[j].textContent.trim() : null;
+    }, [id, k]));
+    const served = prods.find((p) => want7.has(akey(p.id)) && p.id === Object.keys(ad)[0]);
+    const v0 = ad[served.id];
+    ok('a served product shows its own clicks, cost and ROAS (value ÷ cost)', await cellOf(served.id, 'a7clk') === String(v0[1]) && await cellOf(served.id, 'a7cost') === '£' + v0[2].toFixed(2) && await cellOf(served.id, 'a7roas') === Math.round(v0[4] / v0[2] * 100).toLocaleString('en-GB') + '%', { clk: await cellOf(served.id, 'a7clk'), cost: await cellOf(served.id, 'a7cost'), roas: await cellOf(served.id, 'a7roas') });
+    const lowId = Object.keys(ad).find((k) => k !== k.toUpperCase() && k !== 'NW-GONE-1');
+    const lowProd = prods.find((p) => akey(p.id) === lowId);
+    ok('the join is case-blind (Google lower-cases the Ads item id): ' + lowProd.id + ' matches "' + lowId + '"', await cellOf(lowProd.id, 'a7clk') === String(ad[lowId][1]));
+    const noClicks = Object.keys(ad).find((k) => ad[k][1] === 0);
+    ok('impressions but no clicks: CPC is blank, never £0.00', await cellOf(prods.find((p) => akey(p.id) === akey(noClicks)).id, 'a7cpc') === '—');
+    const unserved = prods.find((p) => !want7.has(akey(p.id)));
+    ok('a product Google Ads did not serve reads "—" (the whole read did not list it)', await cellOf(unserved.id, 'a7clk') === '—');
+    await ap.click('#gh [data-s="a7cost"]'); await ap.waitForTimeout(250);
+    const top7 = await ap.evaluate(() => { const S = window.__FCCCatalogue.state(); return S.prods[S.view[0]].id; });
+    const maxCost = prods.filter((p) => want7.has(akey(p.id))).sort((x, y) => want7.get(akey(y.id))[2] - want7.get(akey(x.id))[2])[0];
+    ok('sorting by Cost · 7 d puts the biggest spender first', top7 === maxCost.id, { top7, want: maxCost.id });
+    const pill = await ap.evaluate(() => document.querySelector('#src-roas .t2').textContent);
+    ok('the Google Ads source says it read per product, and how many served products left the feed', /per product 22–28 Sep/.test(pill) && /1 not in this feed/.test(pill), pill);
+    await ap.evaluate((id) => { const S = window.__FCCCatalogue.state(); const r = S.view.indexOf(S.prods.findIndex((p) => p.id === id)); document.getElementById('gw').scrollTop = r * S.rh; }, served.id);
+    await ap.waitForTimeout(150);
+    await ap.click('#vr .tr.row[data-i="' + prods.findIndex((p) => p.id === served.id) + '"]'); await ap.waitForTimeout(450);
+    const insp7 = await ap.evaluate(() => (document.querySelector('#i-roas .ia7') || {}).textContent || '');
+    ok('the inspector opens on this product\'s own Google Ads · 22–28 Sep, above the segments', /This product · Google Ads · 22–28 Sep/.test(insp7) && insp7.indexOf('£' + v0[2].toFixed(2)) >= 0, insp7.slice(0, 200));
+    ok('no page errors', aerrs.length === 0, aerrs.slice(0, 5));
+    await ac.close();
+
     // ---------------------------------------------------------------- phone
     console.log('· 390px — the inspector is a bottom sheet inside the screen');
     const mc = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
