@@ -405,7 +405,7 @@ t('the inspector follows REAL pointer movement only (the /stock lesson)', PG.ind
 t('a hover must MEAN it: a dwell to open, a shorter one to follow', /\}, open \? 150 : 380\);/.test(PG));
 t('the arrivals engine is handed a Date (a timestamp broke the whole stream once)', /AR\.stats\(dob, new Date\(\), S\.prods\.length\)/.test(PG));
 t('one chart failing never stops the master join', /\[counts, detectRoasField, renderStatus, renderKpis, renderTabs, function \(\) \{ refresh\(false\); \}, renderArrivals, renderRoasChart, renderMods\]\.forEach\(safe\);\n\s+maybeJoin\(g\);/.test(PG));
-t('the dashboard is TWELVE modules of one size on an even grid that follows the page\'s own width', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 12 && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
+t('the dashboard is EIGHTEEN modules of one size on an even grid that follows the page\'s own width', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 18 && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
 t('stock control reads Stock management\'s OWN route and matches the market on the feed\'s FeedHero company id, never a name', /fetch\('\/api\/rules\/stock\?brand=/.test(PG) && /String\(x\.cmpid\) === String\(e\.cmpid\)/.test(PG) && /loadRoas\(g\); loadStock\(g\);/.test(PG));
 t('stock control is /stock\'s coverage matrix for this market — one hue, the count in the cell, — where none', /function covShade\(n, mx\)/.test(PG) && /<table class="covt/.test(PG) && /none: the market has no rule doing this/.test(PG) && /fcc-cat-stkch/.test(PG));
 t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /best\.n \* a\.spendDay \* D/.test(PG));
@@ -423,6 +423,21 @@ t('one audit legend (the same auditBand /golden carries)', /function auditBand\(
   const q = parseQ('brand:northwind colour:navy, black -avail:out "midi dress"');
   t('search grammar: field:value, a comma list (even with a space), a negation, a quoted phrase', q.length === 4 && q[0].f === 'brand' && q[1].f === 'color' && q[1].alts.join('|') === 'navy|black' && q[2].neg && q[2].f === '@av' && q[3].f === '*' && q[3].alts[0] === 'midi dress');
   t('an unknown field is read as plain text, never dropped', parseQ('foo:bar')[0].f === '*' && parseQ('foo:bar')[0].alts[0] === 'foo:bar');
+}
+
+console.log('· the commercial view (a buyer choosing between feed vendors)');
+{
+  const lift = (name) => { const i = PG.indexOf('function ' + name + '('); let d = 0, j = PG.indexOf('{', i); for (; j < PG.length; j++) { if (PG[j] === '{') d++; else if (PG[j] === '}' && !--d) break; } return PG.slice(i, j + 1); };
+  const liftSide = new Function(lift('liftSide') + '; return liftSide;')();
+  t('optimised vs not reads FeedHero’s words both ways (Optimized / Non Optimized, optimised / not optimised)', liftSide('Optimized') === 'o' && liftSide('Non Optimized') === 'n' && liftSide('Optimised') === 'o' && liftSide('Not optimised') === 'n' && liftSide('Non-optimised') === 'n' && liftSide('Unsorted') === null);
+  const mods = (PG.match(/var MODS = \[([\s\S]*?)\]\];/) || [])[1] || '';
+  t('eighteen modules on the dashboard, the six commercial ones registered', (mods.match(/\['[a-z]+', /g) || []).length === 18 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
+  t('👔 Procurement view is a preset of the same per-device module state, and ?view=procurement opens it', /var PROC = \['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'\]/.test(PG) && /v: 'proc'/.test(PG) && /qp\('view'\)/.test(PG));
+  t('the fee a buyer types never leaves the device — no request in the fee check', !/fetch\(|api\(/.test(lift('renderFee') + lift('feeSet')) && /lsSet\('fcc-cat-fee'/.test(PG));
+  t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('renderLift')));
+  t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('renderVendor')) && /have == null/.test(lift('renderVendor')));
+  t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('renderWaste')) && /rv \/ sp \* 100/.test(lift('renderWaste')));
+  t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('renderLift')) && !/class="cmp"/.test(lift('renderLift')));
 }
 
 console.log('· no client data in git');

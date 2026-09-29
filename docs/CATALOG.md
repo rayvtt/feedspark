@@ -236,3 +236,49 @@ conversion value, currency.
   `tools/check_catalog.js` (the picker group, nothing read until a column is on, a two-call read, a served product's
   cells, the case-blind join, a blank CPC, "—" for an unserved product, sort, the pill, the inspector).
 
+
+## The commercial view — for a buyer choosing between feed vendors (29 Sep 2026)
+
+Ray, 29 Sep 2026: *"create more modules for Catalog Dashboard - that can be viewed for let's say a
+brand procurement head not too close with FeedSpark day-to-day but understanding thing from a
+commercial perspective, choosing between different feed vendor"*.
+
+Six modules, read off THIS feed and never a claim. The dashboard is now eighteen modules in six even
+rows.
+
+| Module | The buyer's question | Read from |
+|---|---|---|
+| **Optimised vs not** | Does the work pay? | FeedHero's own Google Ads cut by FeedSpark's title (or keyword) optimisation stamp: share of products, share of revenue, **revenue per product**, ROAS, click-through, conversion |
+| **Before and after FeedSpark** | What was our data worth without them? | Master → feed completeness (Golden Record weighting); products given a Google-required field their master lacked; values added and rewritten; the AI-shopping six carried; what is **still** missing |
+| **Where the ad budget goes** | Is our spend earning? | 30 days of Google Ads spend by top-level category, bucketed by each category's own return: losing money (ROAS < 100%), below the market's ROAS, at or above it |
+| **What the service does** | What would another vendor have to match? | Capabilities with their evidence in this feed: titles, keywords, categories and images (FeedSpark's stamps), missing data filled, AI-shopping fields, stock controls, rules maintained, per-product ad reporting |
+| **The service in numbers** | How big is the job? | Products managed, feeds run for the brand (Google / Meta), values set per product, FeedHero rules running, new products taken in, values maintained |
+| **Fee check** | What does it cost in the units we buy in? | The buyer types a monthly fee (and another vendor's to compare): per product, per value maintained, against Google Ads revenue and spend, the revenue lift that pays for it, the difference a year |
+
+**Three rules keep it honest.**
+1. **Optimised vs not is a comparison, not a controlled test.** Which products get optimised first is
+   a choice, so the card says so in its footer. Controlled results live in the brand's A/B test
+   archive.
+2. **A capability the page cannot read is not a zero.** If the feed has no FeedSpark stamps, no master
+   is joined, or the stock rules have not been read, the row says so (`·`); `—` means the feed shows
+   no sign of it.
+3. **No figure is invented.** The fee check is empty until a fee is typed. The figures are the
+   buyer's own, kept on the device (`fcc-cat-fee`) and never sent. Revenue and spend are the market's
+   last 30 days of Google Ads, as FeedHero read them.
+
+**👔 Procurement view** is a one-click preset of the same per-device module state (`fcc-cat-mods`,
+`v:'proc'`). It shows the six commercial modules first, then Ad spend kept off, Data FeedSpark added
+and ROAS; the operational modules are put away. ⊞ Modules still tunes it, and a second click restores
+all eighteen. The link `/catalog?view=procurement` opens it directly, for an AM to send to a buyer's
+team.
+
+A trap caught in the render: the page already had a `.cmp` class (the completeness bar, a flex row),
+so the comparison table is `.vs`. The harness pins that.
+
+Harness:
+- `tools/check_catalog.js` (Playwright) drives the preset and checks each new card against an
+  independent count from the stub's own data: revenue per product and ROAS, the budget buckets adding
+  up to the category spend, the stamp share, completeness before and after, and the fee arithmetic.
+- `tools/test_catalog.mjs` covers the optimised/not word matching (FeedHero writes "Optimized" /
+  "Non Optimized"), the registry, the preset and deep link, the fee never leaving the device, and the
+  class collision.
