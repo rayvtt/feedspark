@@ -11047,19 +11047,19 @@
       "name": "Catalogue: master stock read before any rule (availability word, else a stock count)",
       "file": "docs/catalog_engine.js",
       "pattern": "function masterStock(cells, p)",
-      "pr": 0
+      "pr": 559
     },
     {
       "name": "Catalogue: stock control splits turned-out from already-out",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "if (ms === 'out') return fs === 'out' ? 'already' : 'back';",
-      "pr": 0
+      "pr": 559
     },
     {
       "name": "Catalogue: excluded-from-feed split by the master's own stock word",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "ms: E.masterStock(row, plan)",
-      "pr": 0
+      "pr": 559
     }
   ]
 }
