@@ -1047,6 +1047,62 @@ chart card; every edge is inside the viewport; it owns its own pixels rather tha
 showing through; the rows and the footer total; pin, outside-click and Esc; and the plain caption on
 a record with no rows.
 
+## What the hours moved (28 Sep 2026)
+
+> Ray, on the chart card: *"find more way even making data dissectment even more useful —
+> especially if im trying to get charts for procurement heads/ senior executives to defend
+> feedspark services."*
+
+The card answered an **internal** question — where our hours went, billable against
+non-billable — on a screen being used for an **external** argument. A procurement head does not
+buy hours; the first thing they ask of a row of hours is what it produced, and no amount of
+re-cutting hours can answer that.
+
+So ⚙ **Display → What moved** hangs the brand's **outcome** under the hours, on the same
+months: **Golden Record score**, **Content quality** or **AI-readiness**. Two plots, one calendar,
+each on its own axis — never a dual axis.
+
+### What it refuses to do
+
+| | |
+|---|---|
+| **No calendar** | It draws only where the hours chart itself is over time (Show as → Over time, or Split by → Month). On a donut there is no shared axis to hang it under, and the control says so. |
+| **More than one account** | A score averaged across two brands is not a number. One account, or it says to pick one. |
+| **An unmeasured month** | A gap, never a zero and never carried flat. The scan history only began in Sep 2026, so most windows have holes; joining across one would show a client a trend through months nobody measured. Each run of measured months is its own path. |
+| **A blank panel** | "No movement" and "nobody has scanned this brand" are opposite findings, so the empty state names which — and tells a metric nobody has analysed apart from a brand with no history at all. |
+
+### Where the numbers come from
+
+`GET /api/outcomes?client=&months=&end=` reads each of the brand's Google Shopping markets through
+**labelguard's own `histSeries`**, re-scored against the brand's **current** scoring profile — the
+same call `/golden` and Leadership's portfolio trend make, so the figure a buyer is shown is the
+figure the audit page shows. `src/outcomes.js` then only reduces:
+
+* **a month's value is its CLOSE** — the last reading in it, not a mean of its days. A mean smears
+  the step a piece of work produced across the month it happened in, which is the movement being
+  credited;
+* **a brand is the mean of the markets MEASURED that month**, and `n` travels with every value —
+  "88.4 across 3 markets" and "88.4" are different claims, so the caption always states coverage.
+
+Meta (`-fb`) feeds are excluded: they carry none of these readings. The route is scoped per signin
+like every other client-data route.
+
+### Into the deck
+
+These go straight into a client deck, so **⬇ PNG stacks both panels** at the same width, in the
+same column, with the footer naming the second reading and the account. Both panels share one
+column on screen (`.cmain`) for the same reason — a full-width outcome strip beside a 250px legend
+would sit on a different x-scale, and the month under a point would not be the month above it.
+
+### QA
+
+`tools/test_outcomes.mjs` (qa_gate, presync, `validate.yml`) pins the month walk across a year end
+and a 28-day February, the close-not-mean rule, the absent-not-zero rule, brand coverage, and the
+route/page wiring. `tools/check_outcomes.js` (Playwright, presync) renders the real page at 1440px
+and 390px: not painted until asked for — read off the **paint**, never the `hidden` property —
+both refusals stated, the gap left unjoined, the two panels in one column, and the export proved by
+**pressing the button and measuring the PNG**, which is taller with the panel on.
+
 ## No client hours in git
 
 Unchanged from the lanes above. `hours_widget.html` bakes no figures and names no clients; its only

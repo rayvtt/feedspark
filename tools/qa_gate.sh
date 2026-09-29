@@ -103,6 +103,12 @@ else
   echo "   ✗ xlsx harness FAILED — see node tools/test_xlsx.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2c/7: what the hours moved (month closes, brand coverage, honest gaps)"
+if node tools/test_outcomes.mjs >/dev/null 2>&1; then
+  echo "   ✓ a month is its close, an unmeasured one stays a gap, a brand names its markets"
+else
+  echo "   ✗ outcomes harness FAILED — see node tools/test_outcomes.mjs"; FAIL=1
+fi
 echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
 if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
   echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"

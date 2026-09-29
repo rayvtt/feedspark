@@ -56,6 +56,7 @@ import * as BSG from "./buildsuggest.js";
 // module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
 // and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
 import * as TB from "./taskbook.js";
+import * as OUT from "./outcomes.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
 // New batch = commit the JSON + add it to INGEST_BATCHES.
@@ -5206,6 +5207,53 @@ async function goldenRoutes(env, request, url) {
      the same name the hours badge shows), matched on the folded client name; a brand the Task
      Manager has not reached is named as having no AM on record, never guessed. Scoped per signin
      like every route that lists clients (scoping only narrows). */
+  /* WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to
+     defend feedspark services"). ONE BRAND's outcome month by month, to hang under the Task
+     Manager's hours chart on the SAME calendar — two plots, each on its own axis, never a dual one.
+     Nothing is scored here: labelguard's histSeries produces each market's daily line, re-scored
+     against the brand's CURRENT profile exactly as /golden and Leadership's portfolio trend do, and
+     src/outcomes.js only reduces days to months and markets to a brand. So the figure a buyer is
+     shown is the figure the audit page shows, and a month nobody measured stays a GAP. */
+  if (path === '/api/outcomes' && request.method === 'GET') {
+    const who = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who || who.indexOf(':') >= 0 || who.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who)) return json({ ok: false, error: 'out of scope' }, 403);
+    const months = OUT.monthsBack(String(url.searchParams.get('end') || '').slice(0, 7)
+      || new Date().toISOString().slice(0, 7), url.searchParams.get('months'));
+    // the brand's Google Shopping markets — the roster it is wired for, plus any the index has
+    // reached; -fb is a Meta catalogue and carries none of these readings
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const want = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      if (clientSlug(f.client) === clientSlug(who)) want[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      const c = k.split('|')[0], m = k.split('|')[1] || 'gb';
+      if (!want[k] && !/-fb$/.test(m) && clientSlug(c) === clientSlug(who)) want[k] = { client: c, mkt: m };
+    });
+    const list = Object.keys(want).map((k) => want[k]);
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const today = histDay(Date.now());
+    // a window is measured in MONTHS; histSeries reads days, so ask it for the whole span + this
+    // month, and let the reducer keep only the months asked for
+    const span = Math.min(365, Math.max(30, months.length * 31 + 31));
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profileFor(f.client, overrides);
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ mkt: f.mkt }, histSeries(hists[i], pf, { days: span, today, live }));
+    }).filter((f) => f.start);
+    const all = (await env.EDITS.get('kwresults', 'json')) || [];
+    const q = clientSlug(who);
+    const results = all.filter((k) => k && clientSlug(String(k.client || '')) === q);
+    const out = OUT.brandOutcomes(feeds, months, { results });
+    return json(Object.assign({ ok: true, at: Date.now(), client: who }, out));
+  }
+
   if (path === '/api/golden/portfolio' && request.method === 'GET') {
     const want = parseInt(url.searchParams.get('days'), 10);
     const days = [30, 90, 365].indexOf(want) >= 0 ? want : 90;

@@ -115,6 +115,8 @@ jobs:
         run: node tools/test_uistate.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
+      - name: What the hours moved (month closes, brand coverage, honest gaps)
+        run: node tools/test_outcomes.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
         run: node tools/test_playbook_panel.mjs
       - name: Call wrap-up (red prompt, the tidy-up, draft on FCC or Gmail)
