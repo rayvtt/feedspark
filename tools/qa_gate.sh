@@ -263,6 +263,12 @@ else
   echo "   ✗ KWCal client-PDF harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_pdf.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs >/dev/null 2>&1; then
+  echo "   ✓ the Superdry focus themes render, and a scope that is set is never reported as absent"
+else
+  echo "   ✗ KWCal Superdry harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_superdry.mjs"; FAIL=1
+fi
+
 if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
   echo "   ✓ KWCal KPI band partitions every stage; -fb markets never reach the chips"
 else
