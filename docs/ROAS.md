@@ -143,11 +143,60 @@ offers all of them, grouped by what the cut answers:
 - Price group is still not set up in FeedHero for any roster brand; that answer is unchanged
   (§4, "not set up").
 
+## 4b. The dashboard, modular — and every piece of it exportable (30 Sep 2026)
+
+Ray: *"make roas dashboard modularised also pls, allow exports"*. The Catalogue's own pattern, on the
+same book the page already reads — **no second fetch, no figure the table does not already hold**.
+
+**Eight modules, one card size.** A 3-column grid driven by a *container* query on `main` (so it
+re-flows 3 → 2 → 1 with the column it sits in, never the window width), every card the same height,
+Trend two columns wide:
+
+| Module | What it reads (the chosen currency's markets, the chosen period) |
+|---|---|
+| Trend | the two metrics picked on the scorecards, day by day — now drawn at the card's own pixel width, so both panels fit the card |
+| Movers | markets rising / falling by revenue vs 7 days earlier (top 5 each) |
+| ROAS bands | markets and spend under each of FeedHero's bands — click a band to filter the table |
+| Spend vs revenue share | each brand's (or, with a brand picked, each market's) share of the spend against its share of the revenue, ▲/▼ the gap in points — click a brand to open it |
+| ROAS by market | every market ranked, a dashed line at the blended ROAS of those markets |
+| Cost per conversion | spend ÷ conversions, most expensive first, CPC beside it, the blended figure as a line; a market with no conversions says so, never 0 |
+| Zombie SKUs | SKUs × FeedHero's zombie share per market, biggest first, the SKU-weighted total in the foot |
+| Data freshness | every roster market in scope by how long since it was read (under 12 h … over 3 days, never read) — the one module that is not money, so it covers every currency and says so |
+
+**⊞ Modules** shows, hides and reorders them, remembered **on this device** (`fcc-roas-mods`) — how one
+screen reads the book, never shared state. A hidden module is `display:none` (a `[hidden]` attribute
+alone loses to the card's own `display:flex`, the trap the tripwire reads off the paint).
+
+**Exports.** Each module has ONE model that feeds its card, its CSV and its Excel tab, so the three can
+never disagree:
+
+- **⬇ on a card → PNG** — the card as drawn at its natural height (a scrolled card would clip the
+  rows under its fold), captioned *ROAS · module · scope · date · FeedSpark · Private & Confidential*,
+  for a deck. **→ CSV** — every row behind the card, not only those that fit it.
+- **⬇ Export → Excel workbook** — About (scope, source, status, the currency rule), Scorecards, every
+  module *shown* in its order, and the table as on screen, a tab each, through the FCC's own typed
+  xlsx writer (`/xlsx/engine.js`, loaded on first use): figures are numbers, percentages are
+  percentages, and money sits beside a **Currency** column rather than text with a symbol glued on.
+- **⬇ Export → PDF of the dashboard** — the screen as one continuous A4-landscape-wide page, headed
+  with its scope. **→ Table as CSV** — unchanged.
+
+PNG and PDF rasterise with html2canvas + jsPDF from cdnjs under the same SRI hashes `/golden` and
+`/kwcal` pin; an unreachable CDN falls back to the print dialog for the PDF and says so for a PNG,
+never remembered as a permanent failure. Nothing leaves the browser: every file is built on the page.
+
 ## 5. Harness
 
 - `tools/test_roas.mjs` — engine (parsing on real specimens, roster, rotation + budget, windows,
   history, idxEntry, catTree, rollups per currency, series, movers, the no-Total-row regression),
   worker wiring, page feature set, no-data-in-git. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+- `tools/check_roasmods.js` — Playwright, in presync: the eight cards even (one height, three rows,
+  Trend two wide, both trend panels inside their card), every card's figure against a count made in
+  the test, the currency switch, a band / brand click leading somewhere, ⊞ Modules hide / reorder /
+  reload / reset read off the paint, and the exports — a module CSV (every row, currency in its own
+  column), a module PNG (that card, captioned, full height, the ⬇ left out, put back after), the
+  Excel workbook opened and its tabs read (a hidden module left out), the PDF, the table CSV; then
+  390px. Two negative controls were run at build: without the `[hidden]` rule a hidden card still
+  paints, without the capture rule a long card is clipped — both fail it.
 - `tools/check_roasseg.js` — Playwright, in presync. It drives the real page on the synthetic
   stub:
   - the search opens a brand;
