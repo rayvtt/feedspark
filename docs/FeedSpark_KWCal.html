@@ -190,6 +190,7 @@ window.addEventListener('load',restore);
     cursor:pointer;color:var(--ink-2);border-bottom:1px dotted var(--line)}
   .scope:hover{color:var(--orange-deep);border-bottom-color:var(--orange)}
   .scope.unset{color:var(--orange-deep);font-weight:900;border-bottom:1px dashed rgba(237,111,11,.6)}
+  .scope.pend{color:var(--muted);font-weight:700;border-bottom:1px dotted var(--line)}
   .scope.wide{color:var(--navy)}
   .themes{font-size:10.5px;font-weight:800;color:var(--muted);background:none;border:none;padding:0;
     cursor:pointer;border-bottom:1px dotted var(--line)}
@@ -370,6 +371,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .scope{color:var(--ink-2);border-bottom-color:#3A3F4A}
   [data-theme=dark] .scope.wide{color:#93B4E0}
   [data-theme=dark] .scope.unset{color:var(--orange-ink);border-bottom-color:rgba(245,166,35,.5)}
+  [data-theme=dark] .scope.pend{color:var(--muted);border-bottom-color:var(--line)}
   [data-theme=dark] .themes{color:var(--muted);border-bottom-color:#3A3F4A}
   /* ============ kw-overview — every brand on one view ============ */
   .ov-row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
@@ -966,6 +968,111 @@ Schuh:{events:[
   {id:'sch_pk0927', name:'Predicted search peak — Dr. Martens', lane:'location', date:'2026-09-27', wc:1,
    note:'Demand forecast, and the last week the calendar fills these rows. Dr. Martens Buzz closed 22 Sep, five days earlier.',
    terms:['dr martens','dr. martens','boots']}
+]},
+
+/* ---- Superdry seed — FeedSpark's OWN focus themes, not a client marketing calendar
+   (Ray, 30 Sep 2026: "look at superdry product types and create 4 focus themes for each month
+   from now till january"). Every other brand on this board was seeded from a calendar the CLIENT
+   supplied; these sixteen are derived here, from two live sources read on 30 Sep 2026, and each
+   one names its own evidence:
+     · the wired Superdry GB Google Shopping feed (FeedHero XML, 25,695 live SKUs across 5,726
+       products) — the primary g:product_type tree, and c:fs_data_opti, which states per product
+       what has already been optimised: T:Y Cat:Y IMG:Y on effectively everything, and
+       KEYWORDS:N ON 3,481 OF 5,726 (60.8%). The keyword slots agree — 57.5% of products carry no
+       extra g:product_type value at all. That gap is what these themes exist to close.
+     · the FeedHero Search Terms report (3,105 terms, 4.25M traffic): 313 terms return ZERO hits,
+       578 are absent from the titles, 729 have no exact match.
+   THE FINDING that shapes most of them: the demand is not for products Superdry lacks, it is in
+   words Superdry does not write. "sweater" appears in ZERO of 5,726 titles; so do "zipper",
+   "zipped", "longline", "overcoat", "letterman", "christmas", "festive" and "fair isle" — every
+   one of them with real traffic behind it, and several returning no hits whatsoever against
+   product types that plainly match.
+   SCOPE IS SEEDED, AND IT IS GB ONLY: each theme carries the exact primary g:product_type paths
+   read out of the live GB feed, so a theme arrives measurable instead of empty — but the analysis
+   was GB, so no other market is scoped and switching the board to DE or FR shows no scope rather
+   than a borrowed one. Paths carrying fewer than 3 products are left out of a scope; the tail is
+   named in the ingest record. The scope reads "sync to measure" until someone runs
+   ⟳ Sync product types on Superdry GB — the counts below are this file's reading, the board's are
+   the feed's own, and they should agree.
+   DATES: `date` is the LIVE-BY date, and this board buckets a moment by its BRIEF-BY date
+   (live minus LEAD_DAYS) because it is a work schedule — it answers "what do we raise this
+   month". So the four-a-month Ray asked for is four per WORK month: Oct 2026 → Jan 2027, the
+   earliest briefing on 1 Oct and nothing born overdue. Dated on live-by alone, three October
+   themes fell into the September column with their brief-by already past. The four season-locked
+   themes still go live in their own season and simply brief a month ahead, which is correct:
+   Christmas jumpers live 5 Nov, Black Friday language 20 Nov (the day itself is Fri 27 Nov),
+   gifting 30 Nov, the end-of-season sale on Boxing Day.
+   LANES are renamed for this brand (LANE_NAMES): these are not marketing moments, so the lane
+   says what KIND of work it is — Seasonal focus / Vocabulary gap / Catalogue sweep / Promotion.
+   NOT SEEDED, deliberately: the product_type data-quality splits this read turned up
+   ("Half Zip Sweats" vs "Half zip Sweats", "Trousers" vs "Trouser", "Graphic T-Shirt" vs
+   "Graphic T-Shirts", "Sweatshirt" vs "Sweatshirts"). PMAX listing groups key on the exact value,
+   so those are a Product Type Guard job, not a keyword theme. Full record + every figure:
+   ops/calendars/Superdry_focus_themes_ingest.md ---- */
+Superdry:{events:[
+  /* ---------- October 2026 — the season turns; outerwear demand is at its peak ---------- */
+  {id:'sd_winterintent', name:'Winter outerwear intent', lane:'campaign', date:'2026-10-22',
+   note:'The account’s biggest demand cluster, and the word is almost absent from the feed: "mens winter jackets" 15,000/mo, "winter coat" 14,800, "winter jacket" 9,900, "jackets in winter" 3,600 at 100% title miss — yet "winter" is in 35 of 5,726 GB titles (0.6%), "warm" in 4, "waterproof" in 6, and "thermal" and "windproof" in none. 984 products in the category; this scope is the 40 product-type paths that carry 3+ products — 956 products, 366 of them still unkeyworded. The first work on the board: briefs 1 Oct, live 22 Oct, while the season is still climbing.',
+   terms:['winter jacket','winter coat','warm','waterproof','thermal'],
+   pts:['Men > Clothing > Jackets and Coats > Bomber Jacket','Men > Clothing > Jackets and Coats > Casual Jacket','Men > Clothing > Jackets and Coats > Fleece & Borg','Men > Clothing > Jackets and Coats > Gilet','Men > Clothing > Jackets and Coats > Harrington Jacket','Men > Clothing > Jackets and Coats > Hooded Jacket','Men > Clothing > Jackets and Coats > Hybrid Jacket','Men > Clothing > Jackets and Coats > Longline Coat','Men > Clothing > Jackets and Coats > Military Jacket','Men > Clothing > Jackets and Coats > Overshirt','Men > Clothing > Jackets and Coats > Padded Jacket','Men > Clothing > Jackets and Coats > Parka Jacket','Men > Clothing > Jackets and Coats > Puffer Jacket','Men > Clothing > Jackets and Coats > Ski Jacket','Men > Clothing > Jackets and Coats > Varsity Jacket','Men > Clothing > Jackets and Coats > Windbreaker Jacket','Men > Clothing > Jackets and Coats > Windcheater','Men > Clothing > Jackets and Coats > Wool Coat','Men > Clothing > Jackets and Coats > Workwear Jacket','Women > Clothing > Jackets and Coats > Bomber Jacket','Women > Clothing > Jackets and Coats > Casual Jacket','Women > Clothing > Jackets and Coats > Faux Fur Afghan','Women > Clothing > Jackets and Coats > Fleece & Borg','Women > Clothing > Jackets and Coats > Gilet','Women > Clothing > Jackets and Coats > Liner Jacket','Women > Clothing > Jackets and Coats > Longline Coat','Women > Clothing > Jackets and Coats > Military Jacket','Women > Clothing > Jackets and Coats > Overshirt','Women > Clothing > Jackets and Coats > Padded Jacket','Women > Clothing > Jackets and Coats > Parka Jacket','Women > Clothing > Jackets and Coats > Puffer Jacket','Women > Clothing > Jackets and Coats > Ski Jacket','Women > Clothing > Jackets and Coats > Sports Jacket','Women > Clothing > Jackets and Coats > Varsity Jacket','Women > Clothing > Jackets and Coats > Waistcoat','Women > Clothing > Jackets and Coats > Windbreaker Jacket','Women > Clothing > Jackets and Coats > Windcheater','Women > Clothing > Jackets and Coats > Winter Coat','Women > Clothing > Jackets and Coats > Wool Coat','Women > Clothing > Jackets and Coats > Workwear Jacket']},
+  {id:'sd_longline', name:'Longline, puffer & padded length', lane:'studio', date:'2026-12-07',
+   note:'"longline" is in ZERO titles though 36 products carry it in their product_type, and "overcoat" is in no title either. "longline puffer coat" draws 6,120/mo at 100% title miss; "long line puffer coat" (1,600), "long overcoat womens" (3,600), "long puffer coat for ladies" (2,900), "long puffa coat" (1,440) and "long padded coat mens" (1,270) return NO hits at all. 325 products across 8 paths, 103 unkeyworded. Length is the attribute this customer searches on and the one the titles never state.',
+   terms:['longline','long puffer coat','longline puffer','long padded coat','overcoat'],
+   pts:['Men > Clothing > Jackets and Coats > Longline Coat','Men > Clothing > Jackets and Coats > Padded Jacket','Men > Clothing > Jackets and Coats > Parka Jacket','Men > Clothing > Jackets and Coats > Puffer Jacket','Women > Clothing > Jackets and Coats > Longline Coat','Women > Clothing > Jackets and Coats > Padded Jacket','Women > Clothing > Jackets and Coats > Parka Jacket','Women > Clothing > Jackets and Coats > Puffer Jacket']},
+  {id:'sd_sweater', name:'Knitwear — the "sweater" gap', lane:'studio', date:'2026-11-23',
+   note:'"sweater" appears in ZERO of 5,726 GB titles — the whole catalogue says "Jumper". "cable knit sweater" (3,780/mo), "knit sweater cable" (1,900) and "mens cable knit sweater" (1,300) return NO hits against 57 real Cable Knit Jumper products; "knitted jumper" 8,100 sits at 52% title miss, "jumpers for men" 4,540 at 100%, and "jumpers for guys" (2,900) draws a blank. 504 products in the category; this scope is 15 paths covering 500 of them, and 443 carry no keyword (89%) — the second-worst-covered category in the feed.',
+   terms:['sweater','cable knit sweater','knitted jumper','half zip jumper','crew neck'],
+   pts:['Men > Clothing > Jumpers > Cable Knit Jumper','Men > Clothing > Jumpers > Crew Neck Jumper','Men > Clothing > Jumpers > Half Zip Jumper','Men > Clothing > Jumpers > Half Zip Sweats','Men > Clothing > Jumpers > Half zip Sweats','Men > Clothing > Jumpers > Henley Jumper','Women > Clothing > Jumpers > Cable Knit Jumper','Women > Clothing > Jumpers > Cardigan','Women > Clothing > Jumpers > Crew Neck Jumper','Women > Clothing > Jumpers > Fairisle Jumper','Women > Clothing > Jumpers > Half Zip Jumper','Women > Clothing > Jumpers > Patterned Jumper','Women > Clothing > Jumpers > Plain Jumper','Women > Clothing > Jumpers > Sweatshirt','Women > Clothing > Jumpers > V-neck Jumper']},
+  {id:'sd_forwhom', name:'"Jackets for men" — phrasing sweep', lane:'location', date:'2026-10-29', brandwide:1,
+   note:'The largest traffic pool in the account, and it is a phrasing problem rather than a product one: "jackets for men" 14,800/mo, "jumpers for men" 4,540, "mens jackets uk" 4,400, "mens coats uk" 4,400, "mens casual jackets" 4,400, "winter jackets for women" 2,900, "trousers casual mens" 2,900 — every one of them at 100% title miss. The informal forms return nothing at all: "guys long coats" (3,600), "jumpers for guys" (2,900), "long male jacket" (2,400), "female winter jackets uk" (1,900), "male hoodies uk" (1,300). Catalogue-wide by nature, so brand-wide here.',
+   terms:['for men','for women','mens','womens','ladies','guys']},
+  /* ---------- November 2026 — festive knitwear, Black Friday, the cold snap ---------- */
+  {id:'sd_festive', name:'Festive knitwear — Christmas jumpers', lane:'campaign', date:'2026-11-05',
+   note:'"christmas", "festive" and "fair isle" are in ZERO titles — while the taxonomy already has a "Fairisle Jumper" product type, so the language exists in the tree and not in the copy. "mens christmas jumpers" (1,900/mo) returns no hits. 301 products across 9 paths, 252 unkeyworded (84%). Live 5 Nov deliberately — briefed in October: Christmas-jumper demand is spent by mid-December, so a theme briefed in December misses its own season entirely.',
+   terms:['christmas jumper','fair isle','festive','novelty knit','xmas'],
+   pts:['Men > Clothing > Jumpers > Cable Knit Jumper','Men > Clothing > Jumpers > Crew Neck Jumper','Women > Clothing > Jumpers > Cable Knit Jumper','Women > Clothing > Jumpers > Cardigan','Women > Clothing > Jumpers > Crew Neck Jumper','Women > Clothing > Jumpers > Fairisle Jumper','Women > Clothing > Jumpers > Patterned Jumper','Women > Clothing > Jumpers > Plain Jumper','Women > Clothing > Jumpers > V-neck Jumper']},
+  {id:'sd_fleece', name:'Fleece, borg & sherpa warmth', lane:'campaign', date:'2027-01-04',
+   note:'80 products across three Fleece & Borg types, 56 unkeyworded, and the most discounted corner of the outerwear range — 69% already on sale. "borg" is in 33 titles and "sherpa" in 17, so the warm-lining vocabulary is only half stated. Note the type itself is split across branches: Men > Clothing > Fleece and Men/Women > Clothing > Jackets and Coats > Fleece & Borg.',
+   terms:['fleece','borg','sherpa','teddy fleece','fleece lined'],
+   pts:['Men > Clothing > Fleece > Fleece & Borg','Men > Clothing > Jackets and Coats > Fleece & Borg','Women > Clothing > Jackets and Coats > Fleece & Borg']},
+  {id:'sd_blackfri', name:'Black Friday — sale discoverability', lane:'sale', date:'2026-11-20', brandwide:1,
+   note:'Black Friday 2026 is Fri 27 Nov; the feed carries the language a week early. 2,716 of 5,726 GB products are already SALE-flagged (47.4%) and 1,314 of those carry no keyword. Sale intent is heavily searched and badly matched: "mens jackets sale" 6,600/mo, "men jackets on sale" 5,400, "men jackets sale" 5,300, "mens coat sale" 3,600, "mens jacket sale" 3,600 — and "hoodie for women sale" (1,300) returns no hits.',
+   terms:['sale','black friday','deals','discount','offers']},
+  {id:'sd_wintacc', name:'Winter accessories — beanies, gloves, scarves', lane:'campaign', date:'2026-12-14',
+   note:'198 products in the category; this scope is 9 paths covering 196 of them, 140 unkeyworded (71%), and the most heavily discounted part of the catalogue — 75% of scarves and 69% of gloves are on sale. One size, so the whole scope is only 205 SKUs: a single short pass. Women’s Beanies alone is 83 products.',
+   terms:['beanie','gloves','scarf','snood','winter hat'],
+   pts:['Men > Accessories > Beanies','Men > Accessories > Gloves','Men > Accessories > Scarves','Unisex > Accessories > Gloves','Women > Accessories > Beanies','Women > Accessories > Gloves','Women > Accessories > Hats','Women > Accessories > Scarves','Women > Accessories > Snoods']},
+  /* ---------- December 2026 — gifting, then the sale ---------- */
+  {id:'sd_gifting', name:'Gifting & stocking fillers', lane:'campaign', date:'2026-11-30',
+   note:'421 gift-sized products — accessories, underwear and bags — of which this scope covers 417 across 20 paths with 319 unkeyworded (76%), and not one of them carries gifting language: "gift" is not a word in this feed. Low variant depth (697 SKUs across 417 products) so the scope is one pass, and it is the range a customer buys for someone else rather than themselves.',
+   terms:['gift','gifts for him','gifts for her','stocking filler','gift set'],
+   pts:['Men > Accessories > Beanies','Men > Accessories > Belt','Men > Accessories > Gloves','Men > Accessories > Scarves','Men > Underwear > Boxers','Men > Underwear > Trunks','Unisex > Accessories > Gloves','Women > Accessories > Baseball Cap','Women > Accessories > Beanies','Women > Accessories > Belt','Women > Accessories > Gloves','Women > Accessories > Gym Bag','Women > Accessories > Hats','Women > Accessories > Holdall','Women > Accessories > Rucksack','Women > Accessories > Scarves','Women > Accessories > Shoulder Bag','Women > Accessories > Snoods','Women > Accessories > Sunglasses','Women > Accessories > Tote Bag']},
+  {id:'sd_hoodzip', name:'Hoodie vocabulary — zipper, zipped, oversized', lane:'studio', date:'2026-12-22',
+   note:'"zipper" and "zipped" are in ZERO titles, and every search that uses them returns no hits: "hoodies zipper for men" 3,600/mo, "hoodie zipper womens" 1,600, "ladies zipped hoodie" 1,300, "female oversized hoodie" 1,600, "pink hoodie for guys" 1,600. "zip hoodie" itself draws 4,400 at 39% title miss and "mens hoodies with zip" 2,400 at 100%. THE BIGGEST GAP IN THE FEED: 774 products in the category, and this scope’s 15 paths cover 766 of them with 693 unkeyworded (90%) across 3,714 SKUs — Superdry’s signature category, almost entirely un-keyworded.',
+   terms:['zip hoodie','zipper hoodie','zipped hoodie','oversized hoodie','pullover'],
+   pts:['Men > Clothing > Hoodies and Sweatshirts > Half Zip Sweats','Men > Clothing > Hoodies and Sweatshirts > Half Zip Sweatshirt','Men > Clothing > Hoodies and Sweatshirts > Half zip Sweats','Men > Clothing > Hoodies and Sweatshirts > Hoodie','Men > Clothing > Hoodies and Sweatshirts > Overhead Hoodie','Men > Clothing > Hoodies and Sweatshirts > Sweatshirt','Men > Clothing > Hoodies and Sweatshirts > Track Top','Men > Clothing > Hoodies and Sweatshirts > Zip Hoodie','Women > Clothing > Hoodies and Sweatshirts > Half Zip Sweats','Women > Clothing > Hoodies and Sweatshirts > Half zip Sweats','Women > Clothing > Hoodies and Sweatshirts > Overhead Hoodie','Women > Clothing > Hoodies and Sweatshirts > Sports Hoodie','Women > Clothing > Hoodies and Sweatshirts > Sweatshirt','Women > Clothing > Hoodies and Sweatshirts > Track Top','Women > Clothing > Hoodies and Sweatshirts > Zip Hoodie']},
+  {id:'sd_lounge', name:'Loungewear & joggers', lane:'studio', date:'2027-01-11',
+   note:'"fleece joggers mens" (1,600/mo) and "mens fleece joggers" (1,300) both return no hits, and "trousers casual mens" (2,900) is at 100% title miss. 352 products in the category; this scope is 31 paths covering 339 of them, 173 unkeyworded (51%). Note the taxonomy splits "Trousers" (196 products) from "Trouser" (7) and files Classic Joggers under both Joggers and Trousers — select from the paths, not the category name.',
+   terms:['joggers','fleece joggers','loungewear','tracksuit bottoms','sweatpants'],
+   pts:['Men > Clothing > Jeans > Skinny Jeans','Men > Clothing > Jeans > Slim Jeans','Men > Clothing > Jeans > Straight Jeans','Men > Clothing > Joggers > Classic Joggers','Men > Clothing > Joggers > Cuffed Joggers','Men > Clothing > Trousers > Cargo Trousers','Men > Clothing > Trousers > Casual Trousers','Men > Clothing > Trousers > Chinos','Men > Clothing > Trousers > Classic Joggers','Men > Clothing > Trousers > Ski Trousers','Women > Clothing > Jeans > High Waist Jeans','Women > Clothing > Jeans > Skinny Jeans','Women > Clothing > Jeans > Slim Jeans','Women > Clothing > Jeans > Straight Jeans','Women > Clothing > Jeans > Wide Jeans','Women > Clothing > Jeans > Wide Leg Jeans','Women > Clothing > Joggers > Classic Joggers','Women > Clothing > Joggers > Cuffed Joggers','Women > Clothing > Joggers > Wide Leg Joggers','Women > Clothing > Trouser > Ski Trousers','Women > Clothing > Trouser > Track Pants','Women > Clothing > Trousers > Baggy Pants','Women > Clothing > Trousers > Cargo Trousers','Women > Clothing > Trousers > Casual Trousers','Women > Clothing > Trousers > Chinos','Women > Clothing > Trousers > Classic Joggers','Women > Clothing > Trousers > Cuffed Joggers','Women > Clothing > Trousers > Lounge Pants','Women > Clothing > Trousers > Ski Trousers','Women > Clothing > Trousers > Suit Trousers','Women > Clothing > Trousers > Wide Leg Joggers']},
+  {id:'sd_eoss', name:'End-of-season sale', lane:'sale', date:'2026-12-26', brandwide:1,
+   note:'The year’s deepest discount window opens on Boxing Day. The same catalogue-wide sale vocabulary as Black Friday, re-pointed at clearance language — check first that the Black Friday wording has come back OUT of the feed, or the two overlap in the same titles.',
+   terms:['sale','end of season','clearance','boxing day']},
+  /* ---------- January 2027 — new season, and the backlog ---------- */
+  {id:'sd_newin', name:'New-in backlog — everything since July', lane:'location', date:'2027-01-25',
+   note:'970 GB products arrived since July 2026 and 899 of them — 93% — carry no keyword at all; over six months it is 1,246 of 1,473 (85%). New product is the one cohort that is guaranteed to be unkeyworded, because nothing has been run over it yet. KWCal scopes on product types, not arrival dates, so set this one from the Playbook’s New products panel (→ Keywords), which reads the same fs:date_of_birth cohort this figure came from.',
+   terms:['new in','new season','new arrivals','ss27']},
+  {id:'sd_layer', name:'Layering — long sleeve, checked & overshirts', lane:'location', date:'2027-02-01',
+   note:'461 products in the category; this scope is 18 paths covering 457 of them, 368 unkeyworded (81%). Long Sleeve Shirt is 122 men’s products with 102 unkeyworded, and Rugby Shirt 57 products with 54 — a category Superdry owns outright and does not keyword. Includes the Overshirt products filed under Jackets and Coats as well as those under Shirts, since the customer searching "overshirt" does not know the difference.',
+   terms:['long sleeve','checked shirt','overshirt','flannel','layering'],
+   pts:['Men > Clothing > Jackets and Coats > Overshirt','Men > Clothing > Shirts > Checked Shirt','Men > Clothing > Shirts > Denim Shirt','Men > Clothing > Shirts > Long Sleeve Shirt','Men > Clothing > Shirts > Overshirt','Men > Clothing > Tops > Half Zip Top','Men > Clothing > Tops > Long Sleeve Polo Shirt','Men > Clothing > Tops > Long Sleeve Shirt','Men > Clothing > Tops > Long Sleeve Top','Men > Clothing > Tops > Rugby Shirt','Women > Clothing > Jackets and Coats > Overshirt','Women > Clothing > Shirts > Checked Shirt','Women > Clothing > Shirts > Long Sleeve Shirt','Women > Clothing > Tops > Checked Shirt','Women > Clothing > Tops > Long Sleeve Shirt','Women > Clothing > Tops > Long Sleeve Top','Women > Clothing > Tops > Overshirt','Women > Clothing > Tops > Rugby Shirt']},
+  {id:'sd_varsity', name:'Varsity, letterman & baseball', lane:'studio', date:'2027-02-08',
+   note:'"letterman" is in ZERO titles, and "letterman jacket ladies" (1,600/mo), "female baseball jacket" (1,300) and "mens baseball jacket" (1,210) all return no hits, while "mens varsity letterman jacket" and "mens leather varsity jackets" (3,600 each) sit at 100% title miss. 147 products across 7 paths — Varsity, Bomber, Military and Harrington. "varsity" IS in 58 titles — so the gap is the American synonym and the sport, not the product.',
+   terms:['varsity jacket','letterman','baseball jacket','bomber jacket','harrington'],
+   pts:['Men > Clothing > Jackets and Coats > Bomber Jacket','Men > Clothing > Jackets and Coats > Harrington Jacket','Men > Clothing > Jackets and Coats > Military Jacket','Men > Clothing > Jackets and Coats > Varsity Jacket','Women > Clothing > Jackets and Coats > Bomber Jacket','Women > Clothing > Jackets and Coats > Military Jacket','Women > Clothing > Jackets and Coats > Varsity Jacket']},
+  {id:'sd_fit', name:'Fit vocabulary — oversized, relaxed, baggy', lane:'studio', date:'2027-02-15',
+   note:'"relaxed" is in 302 titles and "oversized" in 108, but NEITHER appears in any product_type — fit is described in the copy and is invisible to the listing-group structure, so it cannot be bid on. "female oversized hoodie" (1,600/mo) and "baggy jeans female" (1,900) return no hits. Set this one with the picker’s TEXT filters rather than product types: fit cuts across every category, so a product-type scope would either miss most of it or swallow the catalogue.',
+   terms:['oversized','relaxed fit','baggy','boxy','cropped']}
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
@@ -997,7 +1104,8 @@ function kpis(){
     if(wf)briefed++; else if(misfiledFor(CLIENT,e))misf++; else if(isGhost(e,wf))ghosts++;
     if(resFor(CLIENT,e))resIn++;
     var v=volOf(CLIENT,e);
-    if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
+    if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++}
+    else if(!e.brandwide&&(!v||v.unset)&&!hasScope(e,evMkt(CLIENT,e)))unset++; });
   // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
   // board always shows how much of the feed already carries them (each event lifts it toward 100%)
   // SATURATION, WITH ITS EVIDENCE (Ray, 21 Sep 2026: "Why the 100% keyword saturation?").
@@ -1589,6 +1697,12 @@ function volOf(brand,e){ // exact PT counts per market (+ text-filter union), br
   if(tx)o.tx=tx.qs.length; if(ps.length)o.npts=ps.length; if(cnd)o.cnd=cnd.conds.length;
   return o;
 }
+/* A SCOPE CAN BE SET AND NOT YET MEASURABLE. volOf needs the market's product-type index, which
+ * only exists once somebody has run ⟳ Sync product types, and it returns null without one — so a
+ * scope that IS set (a seeded one, or any scope on a brand nobody has synced) read "No product
+ * scope yet" on the card and counted in the "Scopes to set" KPI. Those are the one thing it is
+ * not. ONE reader for both surfaces so they can never disagree; an unread index is never a zero. */
+function hasScope(e,mkt){ return !!(ptsOf(e,mkt).length || txOf(e,mkt) || cndOf(e,mkt)); }
 function scopeBtn(brand,e){
   var v=volOf(brand,e), pmkt=evMkt(brand,e), psb=ptsOf(e,pmkt), txb=txOf(e,pmkt), cnb=cndOf(e,pmkt), idxT=ptidxFor(brand,pmkt);
   if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — the whole '
@@ -1600,6 +1714,17 @@ function scopeBtn(brand,e){
       .concat((cnb?cnb.conds:[]).map(function(c){return (KW_ATTR_LBL[c.attr]||c.attr)+': '+(c.vals||[]).join('/')})).join(' · ');
     return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip||'in scope')
       +' — '+v.pct+'% of the live feed · click to edit">'+fmt(v.vol)+' products</button>';
+  }
+  if(!v&&e.brandwide)      // the decision IS made (the whole catalogue); only the total is missing
+    return '<button type="button" class="scope pend" data-scope="'+esc(e.id)+'" title="Sale window — the whole '
+      +esc(pmkt.toUpperCase())+' catalogue is in scope; run ⟳ Sync product types to count it">whole catalogue · sync to measure</button>';
+  if(!v&&hasScope(e,pmkt)){   // scoped, but this market's product types have never been synced
+    var n=psb.length, w=[]; if(n)w.push(n+' product type'+(n===1?'':'s'));
+    if(txb)w.push(txb.qs.length+' text filter'+(txb.qs.length===1?'':'s'));
+    if(cnb)w.push(cnb.conds.length+' condition'+(cnb.conds.length===1?'':'s'));
+    return '<button type="button" class="scope pend" data-scope="'+esc(e.id)+'" title="'
+      +esc(psb.join(' · ')||'scope set')+' — no product count yet: run ⟳ Sync product types for '
+      +esc(pmkt.toUpperCase())+' to measure it">'+w.join(' + ')+' · sync to measure</button>';
   }
   return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'" title="No product scope yet — click to set one">⚙ Set scope</button>';
 }
@@ -2168,7 +2293,10 @@ var LANE_LGND={campaign:['lc','Campaign'],location:['ll','Location'],studio:['ls
 // not a “studio moment” and a predicted search week is not a “location”. LANE_NAMES lets a brand
 // name its own four lanes for DISPLAY only — the keys, the colours, the tie-matching and every
 // stored event are untouched, so nothing downstream can tell the difference.
-var LANE_NAMES={Schuh:{campaign:'Schuh campaign',studio:'Brand launch',location:'Search peak',sale:'Promotion'}};
+var LANE_NAMES={Schuh:{campaign:'Schuh campaign',studio:'Brand launch',location:'Search peak',sale:'Promotion'},
+  // Superdry's board is FeedSpark's own optimisation plan, not a client marketing calendar, so the
+  // lane says what KIND of work a theme is rather than which marketing stream it came from.
+  Superdry:{campaign:'Seasonal focus',studio:'Vocabulary gap',location:'Catalogue sweep',sale:'Promotion'}};
 function laneName(k){ var m=LANE_NAMES[CLIENT]; return (m&&m[k])||(LANE_LGND[k]?LANE_LGND[k][1]:''); }
 function renderLegend(E){   // one line, instead of a lane word repeated on every card
   var el=$('#lgnd'); if(!el)return;

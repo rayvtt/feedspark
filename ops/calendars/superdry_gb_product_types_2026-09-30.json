@@ -1,0 +1,1546 @@
+{
+ "source": "FeedHero XML — Superdry GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-09-30",
+ "feed_generated": "2026-09-30 09:48:03",
+ "note": "Primary g:product_type only — the FIRST value on each item. The repeated g:product_type values that follow it are the numbered keyword slots and are counted separately (keyword_saturation below), never as category paths.",
+ "totals": {
+  "products": 5726,
+  "skus": 25695,
+  "unkeyworded_products": 3291,
+  "unkeyworded_skus": 14738,
+  "distinct_primary_paths": 305
+ },
+ "keyword_saturation": {
+  "carrying_at_least_one_slot": 2435,
+  "carrying_none": 3291,
+  "fs_data_opti_keywords_N": 3481,
+  "fs_data_opti_keywords_Y": 2245
+ },
+ "product_types": {
+  "Gift Cards > Gift Card": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Men > Accessories > Beanies": {
+   "products": 18,
+   "skus": 18,
+   "unkeyworded": 14
+  },
+  "Men > Accessories > Belt": {
+   "products": 14,
+   "skus": 34,
+   "unkeyworded": 9
+  },
+  "Men > Accessories > Flat cap": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Men > Accessories > Gloves": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 7
+  },
+  "Men > Accessories > Hats > Baseball Cap": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Men > Accessories > Scarves": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Men > Accessories > Ski Goggles": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Men > Accessories > Snow Tube": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Men > Accessories > Sport Flip Flops": {
+   "products": 1,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Men > Accessories > Square Frame Sunglasses": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Men > Accessories > Sunglasses": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Men > Accessories > Travel Bag": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Men > Accessories > Wallet": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Fleece > Casual Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Fleece > Fleece & Borg": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Half Zip Sweats": {
+   "products": 4,
+   "skus": 20,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Half Zip Sweatshirt": {
+   "products": 12,
+   "skus": 63,
+   "unkeyworded": 12
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Half zip Sweats": {
+   "products": 4,
+   "skus": 20,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Hoodie": {
+   "products": 4,
+   "skus": 18,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Overhead Hoodie": {
+   "products": 133,
+   "skus": 609,
+   "unkeyworded": 125
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Sports Hoodie": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Sweatshirt": {
+   "products": 145,
+   "skus": 717,
+   "unkeyworded": 134
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Sweatshirts > Track Top": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Track Top": {
+   "products": 12,
+   "skus": 57,
+   "unkeyworded": 9
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Zip Hoodie": {
+   "products": 50,
+   "skus": 240,
+   "unkeyworded": 44
+  },
+  "Men > Clothing > Hoodies and Sweatshirts > Zip Up Hoodies > Track Top": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jackets and Coats > Aviator Jacket": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Bomber Jacket": {
+   "products": 38,
+   "skus": 172,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Jackets and Coats > Casual Jacket": {
+   "products": 57,
+   "skus": 280,
+   "unkeyworded": 18
+  },
+  "Men > Clothing > Jackets and Coats > Denim Jacket": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Faux Leather Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jackets and Coats > Fleece & Borg": {
+   "products": 21,
+   "skus": 101,
+   "unkeyworded": 16
+  },
+  "Men > Clothing > Jackets and Coats > Gilet": {
+   "products": 23,
+   "skus": 103,
+   "unkeyworded": 5
+  },
+  "Men > Clothing > Jackets and Coats > Harrington Jacket": {
+   "products": 11,
+   "skus": 48,
+   "unkeyworded": 8
+  },
+  "Men > Clothing > Jackets and Coats > Hooded Jacket": {
+   "products": 15,
+   "skus": 72,
+   "unkeyworded": 8
+  },
+  "Men > Clothing > Jackets and Coats > Hybrid Jacket": {
+   "products": 6,
+   "skus": 31,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jackets and Coats > Leather Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jackets and Coats > Lightweight Jacket": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Longline Coat": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Military Jacket": {
+   "products": 16,
+   "skus": 82,
+   "unkeyworded": 10
+  },
+  "Men > Clothing > Jackets and Coats > Non-hooded Gilet": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Overshirt": {
+   "products": 12,
+   "skus": 57,
+   "unkeyworded": 8
+  },
+  "Men > Clothing > Jackets and Coats > Padded Jacket": {
+   "products": 21,
+   "skus": 102,
+   "unkeyworded": 10
+  },
+  "Men > Clothing > Jackets and Coats > Parka Coat": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Jackets and Coats > Parka Jacket": {
+   "products": 23,
+   "skus": 95,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Jackets and Coats > Pea Coat": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jackets and Coats > Puffer Jacket": {
+   "products": 89,
+   "skus": 459,
+   "unkeyworded": 22
+  },
+  "Men > Clothing > Jackets and Coats > Ski Jacket": {
+   "products": 24,
+   "skus": 119,
+   "unkeyworded": 9
+  },
+  "Men > Clothing > Jackets and Coats > Sports Jacket": {
+   "products": 2,
+   "skus": 11,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jackets and Coats > Track Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jackets and Coats > Varsity Jacket": {
+   "products": 4,
+   "skus": 19,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jackets and Coats > Windbreaker Jacket": {
+   "products": 32,
+   "skus": 136,
+   "unkeyworded": 17
+  },
+  "Men > Clothing > Jackets and Coats > Windcheater": {
+   "products": 6,
+   "skus": 28,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jackets and Coats > Winter Coat": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jackets and Coats > Wool Coat": {
+   "products": 9,
+   "skus": 43,
+   "unkeyworded": 6
+  },
+  "Men > Clothing > Jackets and Coats > Workwear Jacket": {
+   "products": 14,
+   "skus": 70,
+   "unkeyworded": 11
+  },
+  "Men > Clothing > Jeans > Skinny Jeans": {
+   "products": 7,
+   "skus": 53,
+   "unkeyworded": 5
+  },
+  "Men > Clothing > Jeans > Slim Jeans": {
+   "products": 4,
+   "skus": 36,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Jeans > Straight Jeans": {
+   "products": 3,
+   "skus": 24,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Jeans > Wide Leg Jeans": {
+   "products": 1,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Joggers > Classic Joggers": {
+   "products": 6,
+   "skus": 24,
+   "unkeyworded": 5
+  },
+  "Men > Clothing > Joggers > Cuffed Joggers": {
+   "products": 19,
+   "skus": 77,
+   "unkeyworded": 6
+  },
+  "Men > Clothing > Joggers > Wide Leg Joggers": {
+   "products": 2,
+   "skus": 9,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Jumpers > Cable Knit Jumper": {
+   "products": 12,
+   "skus": 60,
+   "unkeyworded": 12
+  },
+  "Men > Clothing > Jumpers > Crew Neck Jumper": {
+   "products": 101,
+   "skus": 491,
+   "unkeyworded": 92
+  },
+  "Men > Clothing > Jumpers > Half Zip Jumper": {
+   "products": 98,
+   "skus": 489,
+   "unkeyworded": 96
+  },
+  "Men > Clothing > Jumpers > Half Zip Sweats": {
+   "products": 4,
+   "skus": 17,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Jumpers > Half Zip/button Jumper": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Jumpers > Half zip Sweats": {
+   "products": 5,
+   "skus": 21,
+   "unkeyworded": 5
+  },
+  "Men > Clothing > Jumpers > Henley Jumper": {
+   "products": 27,
+   "skus": 129,
+   "unkeyworded": 24
+  },
+  "Men > Clothing > Shirts > Checked Shirt": {
+   "products": 41,
+   "skus": 208,
+   "unkeyworded": 31
+  },
+  "Men > Clothing > Shirts > Denim Shirt": {
+   "products": 3,
+   "skus": 13,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Shirts > Long Sleeve Shirt": {
+   "products": 122,
+   "skus": 585,
+   "unkeyworded": 102
+  },
+  "Men > Clothing > Shirts > Overshirt": {
+   "products": 23,
+   "skus": 103,
+   "unkeyworded": 13
+  },
+  "Men > Clothing > Shirts > Plain Shirt": {
+   "products": 21,
+   "skus": 97,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Shirts > Printed Shirt": {
+   "products": 30,
+   "skus": 143,
+   "unkeyworded": 15
+  },
+  "Men > Clothing > Shirts > Short Sleeve Polo Shirt": {
+   "products": 7,
+   "skus": 35,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Shirts > Short Sleeve Shirt": {
+   "products": 63,
+   "skus": 294,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Shorts > Cargo Shorts": {
+   "products": 18,
+   "skus": 81,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Shorts > Casual Shorts": {
+   "products": 16,
+   "skus": 74,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Shorts > Chino Shorts": {
+   "products": 16,
+   "skus": 76,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Shorts > Denim Shorts": {
+   "products": 4,
+   "skus": 21,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Shorts > Jogger Shorts": {
+   "products": 18,
+   "skus": 76,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > T-Shirts > Embroidered T-Shirt": {
+   "products": 7,
+   "skus": 38,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > T-Shirts > Graphic T-Shirt": {
+   "products": 249,
+   "skus": 1171,
+   "unkeyworded": 29
+  },
+  "Men > Clothing > T-Shirts > Graphic T-Shirts": {
+   "products": 3,
+   "skus": 14,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > T-Shirts > Loose T-Shirt": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > T-Shirts > Plain T-Shirt": {
+   "products": 226,
+   "skus": 1093,
+   "unkeyworded": 58
+  },
+  "Men > Clothing > T-Shirts > Printed T-Shirt": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > T-Shirts > Short Sleeve Top": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > T-Shirts > Striped T-Shirt": {
+   "products": 16,
+   "skus": 75,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Tops > Baseball Top": {
+   "products": 7,
+   "skus": 31,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Tops > Embroidered Polo Shirt": {
+   "products": 3,
+   "skus": 12,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Tops > Half Zip Top": {
+   "products": 8,
+   "skus": 38,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Tops > Long Sleeve Polo Shirt": {
+   "products": 6,
+   "skus": 26,
+   "unkeyworded": 6
+  },
+  "Men > Clothing > Tops > Long Sleeve Shirt": {
+   "products": 8,
+   "skus": 40,
+   "unkeyworded": 8
+  },
+  "Men > Clothing > Tops > Long Sleeve Top": {
+   "products": 38,
+   "skus": 188,
+   "unkeyworded": 25
+  },
+  "Men > Clothing > Tops > Plain Polo Shirt": {
+   "products": 18,
+   "skus": 79,
+   "unkeyworded": 18
+  },
+  "Men > Clothing > Tops > Polo Shirt": {
+   "products": 6,
+   "skus": 22,
+   "unkeyworded": 0
+  },
+  "Men > Clothing > Tops > Rugby Shirt": {
+   "products": 29,
+   "skus": 127,
+   "unkeyworded": 26
+  },
+  "Men > Clothing > Tops > Short Sleeve Polo Shirt": {
+   "products": 44,
+   "skus": 197,
+   "unkeyworded": 42
+  },
+  "Men > Clothing > Tops > Short Sleeve Top": {
+   "products": 9,
+   "skus": 45,
+   "unkeyworded": 2
+  },
+  "Men > Clothing > Tops > Sweatshirt": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 3
+  },
+  "Men > Clothing > Tops > Vest Top": {
+   "products": 7,
+   "skus": 22,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Trousers > Base Layer Legging": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Trousers > Cargo Trousers": {
+   "products": 4,
+   "skus": 35,
+   "unkeyworded": 4
+  },
+  "Men > Clothing > Trousers > Casual Trousers": {
+   "products": 5,
+   "skus": 18,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Trousers > Chinos": {
+   "products": 5,
+   "skus": 46,
+   "unkeyworded": 1
+  },
+  "Men > Clothing > Trousers > Classic Joggers": {
+   "products": 14,
+   "skus": 64,
+   "unkeyworded": 7
+  },
+  "Men > Clothing > Trousers > Ski Trousers": {
+   "products": 12,
+   "skus": 58,
+   "unkeyworded": 12
+  },
+  "Men > Clothing > Trousers > Wide Leg Joggers": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Men > Footwear > Flip Flops": {
+   "products": 22,
+   "skus": 57,
+   "unkeyworded": 19
+  },
+  "Men > Footwear > Sliders": {
+   "products": 25,
+   "skus": 79,
+   "unkeyworded": 25
+  },
+  "Men > Footwear > Slippers": {
+   "products": 2,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Men > Swimwear > Board Shorts": {
+   "products": 12,
+   "skus": 44,
+   "unkeyworded": 0
+  },
+  "Men > Swimwear > Swim Shorts": {
+   "products": 56,
+   "skus": 234,
+   "unkeyworded": 4
+  },
+  "Men > Underwear > Boxers": {
+   "products": 35,
+   "skus": 165,
+   "unkeyworded": 27
+  },
+  "Men > Underwear > Trunks": {
+   "products": 29,
+   "skus": 144,
+   "unkeyworded": 27
+  },
+  "Unisex > Accessories > Gloves": {
+   "products": 3,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Unisex > Accessories > Snoods": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Women > Accessories > Baseball Cap": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 7
+  },
+  "Women > Accessories > Beanies": {
+   "products": 83,
+   "skus": 83,
+   "unkeyworded": 54
+  },
+  "Women > Accessories > Belt": {
+   "products": 4,
+   "skus": 10,
+   "unkeyworded": 4
+  },
+  "Women > Accessories > Bum bag": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Women > Accessories > Caps": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Women > Accessories > Cat Eye Sunglasses": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Women > Accessories > Cross Body Bag": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Women > Accessories > Gloves": {
+   "products": 26,
+   "skus": 32,
+   "unkeyworded": 19
+  },
+  "Women > Accessories > Gym Bag": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Women > Accessories > Hats": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 15
+  },
+  "Women > Accessories > Holdall": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Women > Accessories > Round Frame Sunglasses": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Women > Accessories > Rucksack": {
+   "products": 61,
+   "skus": 61,
+   "unkeyworded": 42
+  },
+  "Women > Accessories > Scarves": {
+   "products": 32,
+   "skus": 32,
+   "unkeyworded": 22
+  },
+  "Women > Accessories > Shoulder Bag": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 6
+  },
+  "Women > Accessories > Snoods": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Women > Accessories > Sport Flip Flops": {
+   "products": 4,
+   "skus": 11,
+   "unkeyworded": 4
+  },
+  "Women > Accessories > Sunglasses": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 22
+  },
+  "Women > Accessories > Tote Bag": {
+   "products": 28,
+   "skus": 28,
+   "unkeyworded": 23
+  },
+  "Women > Accessories > Wallet": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > > Mini Skirt": {
+   "products": 2,
+   "skus": 12,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Accessories > Bum bag": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Dresses > Bodycon Dress": {
+   "products": 10,
+   "skus": 48,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Dresses > Cami Dress": {
+   "products": 22,
+   "skus": 100,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Day Dress": {
+   "products": 53,
+   "skus": 238,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Jersey Dress": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Jumper Dress": {
+   "products": 8,
+   "skus": 28,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Jumpsuit": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Lace Dress": {
+   "products": 2,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Maxi Dress": {
+   "products": 27,
+   "skus": 126,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Dresses > Midi Dress": {
+   "products": 64,
+   "skus": 298,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Mini Dress": {
+   "products": 1,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Party Dress": {
+   "products": 25,
+   "skus": 113,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Shirt Dress": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Strapless Dress": {
+   "products": 4,
+   "skus": 18,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Summer Dresses": {
+   "products": 32,
+   "skus": 155,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Dresses > Sweatshirt Dress": {
+   "products": 5,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Hoodies > Overhead Hoodie": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Hoodies > Sweatshirt": {
+   "products": 2,
+   "skus": 6,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Half Zip Sweats": {
+   "products": 14,
+   "skus": 64,
+   "unkeyworded": 12
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Half zip Sweats": {
+   "products": 10,
+   "skus": 52,
+   "unkeyworded": 10
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Overhead Hoodie": {
+   "products": 133,
+   "skus": 648,
+   "unkeyworded": 121
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Sports Hoodie": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Sweatshirt": {
+   "products": 111,
+   "skus": 514,
+   "unkeyworded": 99
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Sweatshirts > Sweatshirt": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Sweatshirts > Track Top": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Track Top": {
+   "products": 31,
+   "skus": 180,
+   "unkeyworded": 21
+  },
+  "Women > Clothing > Hoodies and Sweatshirts > Zip Hoodie": {
+   "products": 100,
+   "skus": 497,
+   "unkeyworded": 92
+  },
+  "Women > Clothing > Jackets and Coats > Blazer": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jackets and Coats > Bomber Jacket": {
+   "products": 50,
+   "skus": 238,
+   "unkeyworded": 15
+  },
+  "Women > Clothing > Jackets and Coats > Casual Jacket": {
+   "products": 53,
+   "skus": 264,
+   "unkeyworded": 19
+  },
+  "Women > Clothing > Jackets and Coats > Faux Fur Afghan": {
+   "products": 8,
+   "skus": 44,
+   "unkeyworded": 4
+  },
+  "Women > Clothing > Jackets and Coats > Faux Leather Jacket": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Fleece & Borg": {
+   "products": 56,
+   "skus": 255,
+   "unkeyworded": 37
+  },
+  "Women > Clothing > Jackets and Coats > Gilet": {
+   "products": 22,
+   "skus": 101,
+   "unkeyworded": 4
+  },
+  "Women > Clothing > Jackets and Coats > Harrington Jacket": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Hooded Gilet": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Hooded Jacket": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jackets and Coats > Hybrid Jacket": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jackets and Coats > Leather Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Liner Jacket": {
+   "products": 3,
+   "skus": 19,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Longline Coat": {
+   "products": 33,
+   "skus": 169,
+   "unkeyworded": 16
+  },
+  "Women > Clothing > Jackets and Coats > Military Jacket": {
+   "products": 25,
+   "skus": 114,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jackets and Coats > Overshirt": {
+   "products": 20,
+   "skus": 96,
+   "unkeyworded": 4
+  },
+  "Women > Clothing > Jackets and Coats > Padded Jacket": {
+   "products": 46,
+   "skus": 266,
+   "unkeyworded": 20
+  },
+  "Women > Clothing > Jackets and Coats > Parka Jacket": {
+   "products": 24,
+   "skus": 99,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jackets and Coats > Puffer Jacket": {
+   "products": 86,
+   "skus": 447,
+   "unkeyworded": 29
+  },
+  "Women > Clothing > Jackets and Coats > Ski Jacket": {
+   "products": 23,
+   "skus": 102,
+   "unkeyworded": 12
+  },
+  "Women > Clothing > Jackets and Coats > Ski Suit": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Jackets and Coats > Sports Hoodie": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Sports Jacket": {
+   "products": 6,
+   "skus": 33,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Jackets and Coats > Varsity Jacket": {
+   "products": 3,
+   "skus": 16,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jackets and Coats > Waistcoat": {
+   "products": 3,
+   "skus": 11,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Jackets and Coats > Windbreaker Jacket": {
+   "products": 36,
+   "skus": 148,
+   "unkeyworded": 13
+  },
+  "Women > Clothing > Jackets and Coats > Windcheater": {
+   "products": 18,
+   "skus": 88,
+   "unkeyworded": 11
+  },
+  "Women > Clothing > Jackets and Coats > Winter Coat": {
+   "products": 4,
+   "skus": 14,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jackets and Coats > Wool Coat": {
+   "products": 7,
+   "skus": 31,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Jackets and Coats > Workwear Jacket": {
+   "products": 6,
+   "skus": 28,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jeans > Carpenter Jeans": {
+   "products": 1,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jeans > Casual Trousers": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jeans > High Waist Jeans": {
+   "products": 5,
+   "skus": 36,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jeans > Skinny Jeans": {
+   "products": 9,
+   "skus": 61,
+   "unkeyworded": 8
+  },
+  "Women > Clothing > Jeans > Slim Jeans": {
+   "products": 11,
+   "skus": 80,
+   "unkeyworded": 8
+  },
+  "Women > Clothing > Jeans > Straight Jeans": {
+   "products": 7,
+   "skus": 58,
+   "unkeyworded": 6
+  },
+  "Women > Clothing > Jeans > Wide Jeans": {
+   "products": 5,
+   "skus": 34,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jeans > Wide Leg Jeans": {
+   "products": 10,
+   "skus": 70,
+   "unkeyworded": 8
+  },
+  "Women > Clothing > Jeans Baggy Jeans": {
+   "products": 5,
+   "skus": 34,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Joggers > Classic Joggers": {
+   "products": 24,
+   "skus": 103,
+   "unkeyworded": 14
+  },
+  "Women > Clothing > Joggers > Cuffed Joggers": {
+   "products": 17,
+   "skus": 82,
+   "unkeyworded": 10
+  },
+  "Women > Clothing > Joggers > Wide Leg Joggers": {
+   "products": 17,
+   "skus": 75,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Jumpers > Cable Knit Jumper": {
+   "products": 45,
+   "skus": 222,
+   "unkeyworded": 33
+  },
+  "Women > Clothing > Jumpers > Cardigan": {
+   "products": 11,
+   "skus": 59,
+   "unkeyworded": 9
+  },
+  "Women > Clothing > Jumpers > Crew Neck Jumper": {
+   "products": 5,
+   "skus": 25,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Jumpers > Fairisle Jumper": {
+   "products": 3,
+   "skus": 13,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Jumpers > Half Zip Jumper": {
+   "products": 60,
+   "skus": 310,
+   "unkeyworded": 57
+  },
+  "Women > Clothing > Jumpers > Patterned Jumper": {
+   "products": 13,
+   "skus": 68,
+   "unkeyworded": 9
+  },
+  "Women > Clothing > Jumpers > Plain Jumper": {
+   "products": 92,
+   "skus": 466,
+   "unkeyworded": 75
+  },
+  "Women > Clothing > Jumpers > Sweatshirt": {
+   "products": 5,
+   "skus": 24,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Jumpers > V-neck Jumper": {
+   "products": 19,
+   "skus": 101,
+   "unkeyworded": 19
+  },
+  "Women > Clothing > Jumpers > Vest Top": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Long-coats > Puffer Jacket": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Playsuits and Jumpsuits > Jumpsuit": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Playsuits and Jumpsuits > Playsuit": {
+   "products": 6,
+   "skus": 26,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Shirts > Checked Shirt": {
+   "products": 15,
+   "skus": 74,
+   "unkeyworded": 15
+  },
+  "Women > Clothing > Shirts > Long Sleeve Shirt": {
+   "products": 25,
+   "skus": 129,
+   "unkeyworded": 23
+  },
+  "Women > Clothing > Shirts > Overshirt": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Shirts > Plain Shirt": {
+   "products": 2,
+   "skus": 11,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Shirts > Rugby Shirt": {
+   "products": 2,
+   "skus": 12,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Shirts > Short Sleeve Shirt": {
+   "products": 16,
+   "skus": 73,
+   "unkeyworded": 8
+  },
+  "Women > Clothing > Shorts > Cargo Shorts": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Shorts > Casual Shorts": {
+   "products": 66,
+   "skus": 309,
+   "unkeyworded": 19
+  },
+  "Women > Clothing > Shorts > Chino Shorts": {
+   "products": 8,
+   "skus": 28,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Shorts > Cycling Shorts": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Shorts > Denim Shorts": {
+   "products": 14,
+   "skus": 62,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Shorts > Jogger Shorts": {
+   "products": 31,
+   "skus": 152,
+   "unkeyworded": 6
+  },
+  "Women > Clothing > Shorts > Racer Shorts": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Skirts > Maxi Skirt": {
+   "products": 13,
+   "skus": 61,
+   "unkeyworded": 11
+  },
+  "Women > Clothing > Skirts > Midi Skirt": {
+   "products": 3,
+   "skus": 12,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Skirts > Mini Skirt": {
+   "products": 64,
+   "skus": 295,
+   "unkeyworded": 52
+  },
+  "Women > Clothing > T-Shirts > Band T-Shirt": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > T-Shirts > Cropped T-Shirt": {
+   "products": 5,
+   "skus": 21,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > T-Shirts > Embroidered T-Shirt": {
+   "products": 19,
+   "skus": 92,
+   "unkeyworded": 7
+  },
+  "Women > Clothing > T-Shirts > Graphic T-Shirt": {
+   "products": 125,
+   "skus": 584,
+   "unkeyworded": 17
+  },
+  "Women > Clothing > T-Shirts > Graphic T-Shirts": {
+   "products": 2,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > T-Shirts > Plain T-Shirt": {
+   "products": 76,
+   "skus": 360,
+   "unkeyworded": 14
+  },
+  "Women > Clothing > T-Shirts > Printed Shirt": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > T-Shirts > Printed T-Shirt": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > T-Shirts > Short Sleeve Top": {
+   "products": 3,
+   "skus": 18,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > T-Shirts > Sports T-Shirt": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Tops > 3/4 Sleeve Top": {
+   "products": 3,
+   "skus": 14,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Tops > Bardot Top": {
+   "products": 46,
+   "skus": 239,
+   "unkeyworded": 46
+  },
+  "Women > Clothing > Tops > Base Layer top": {
+   "products": 3,
+   "skus": 6,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Tops > Baseball Top": {
+   "products": 3,
+   "skus": 11,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Tops > Blouse": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Tops > Bralette": {
+   "products": 3,
+   "skus": 13,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Tops > Cami Top": {
+   "products": 106,
+   "skus": 417,
+   "unkeyworded": 87
+  },
+  "Women > Clothing > Tops > Cardigan": {
+   "products": 10,
+   "skus": 49,
+   "unkeyworded": 9
+  },
+  "Women > Clothing > Tops > Checked Shirt": {
+   "products": 6,
+   "skus": 28,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Tops > Cold Shoulder Top": {
+   "products": 3,
+   "skus": 18,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Tops > Corset Top": {
+   "products": 5,
+   "skus": 20,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Tops > Cropped Top": {
+   "products": 44,
+   "skus": 187,
+   "unkeyworded": 27
+  },
+  "Women > Clothing > Tops > Half Zip Top": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Tops > Long Sleeve Shirt": {
+   "products": 5,
+   "skus": 23,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Tops > Long Sleeve Top": {
+   "products": 65,
+   "skus": 296,
+   "unkeyworded": 58
+  },
+  "Women > Clothing > Tops > Overshirt": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Tops > Party top": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Tops > Polo Shirt": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Tops > Printed Shirt": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Tops > Rugby Shirt": {
+   "products": 28,
+   "skus": 136,
+   "unkeyworded": 28
+  },
+  "Women > Clothing > Tops > Short Sleeve Polo Shirt": {
+   "products": 6,
+   "skus": 30,
+   "unkeyworded": 6
+  },
+  "Women > Clothing > Tops > Short Sleeve Shirt": {
+   "products": 5,
+   "skus": 26,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Tops > Short Sleeve Top": {
+   "products": 45,
+   "skus": 217,
+   "unkeyworded": 24
+  },
+  "Women > Clothing > Tops > Sports Bra": {
+   "products": 6,
+   "skus": 29,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Tops > Sports Top": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Tops > Strapless Top": {
+   "products": 3,
+   "skus": 14,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Tops > Vest Top": {
+   "products": 123,
+   "skus": 566,
+   "unkeyworded": 104
+  },
+  "Women > Clothing > Trouser > Ski Trousers": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 3
+  },
+  "Women > Clothing > Trouser > Track Pants": {
+   "products": 4,
+   "skus": 20,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Trousers > Baggy Pants": {
+   "products": 4,
+   "skus": 26,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Trousers > Base Layer Legging": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Trousers > Cargo Trousers": {
+   "products": 22,
+   "skus": 99,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Trousers > Casual Trousers": {
+   "products": 29,
+   "skus": 162,
+   "unkeyworded": 18
+  },
+  "Women > Clothing > Trousers > Chinos": {
+   "products": 5,
+   "skus": 39,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Trousers > Classic Joggers": {
+   "products": 30,
+   "skus": 147,
+   "unkeyworded": 5
+  },
+  "Women > Clothing > Trousers > Cuffed Joggers": {
+   "products": 7,
+   "skus": 35,
+   "unkeyworded": 1
+  },
+  "Women > Clothing > Trousers > Leggings": {
+   "products": 2,
+   "skus": 11,
+   "unkeyworded": 0
+  },
+  "Women > Clothing > Trousers > Lounge Pants": {
+   "products": 8,
+   "skus": 42,
+   "unkeyworded": 4
+  },
+  "Women > Clothing > Trousers > Ski Trousers": {
+   "products": 9,
+   "skus": 45,
+   "unkeyworded": 8
+  },
+  "Women > Clothing > Trousers > Sports Leggings": {
+   "products": 2,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Women > Clothing > Trousers > Suit Trousers": {
+   "products": 4,
+   "skus": 22,
+   "unkeyworded": 4
+  },
+  "Women > Clothing > Trousers > Wide Leg Joggers": {
+   "products": 30,
+   "skus": 137,
+   "unkeyworded": 12
+  },
+  "Women > Clothing > Vests > Vest Top": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 2
+  },
+  "Women > Footwear > Espadrilles": {
+   "products": 5,
+   "skus": 18,
+   "unkeyworded": 3
+  },
+  "Women > Footwear > Flat Boots": {
+   "products": 5,
+   "skus": 13,
+   "unkeyworded": 2
+  },
+  "Women > Footwear > Flip Flops": {
+   "products": 35,
+   "skus": 88,
+   "unkeyworded": 32
+  },
+  "Women > Footwear > Hi Top Trainers": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Women > Footwear > Outdoor Boots": {
+   "products": 8,
+   "skus": 22,
+   "unkeyworded": 7
+  },
+  "Women > Footwear > Sliders": {
+   "products": 35,
+   "skus": 103,
+   "unkeyworded": 32
+  },
+  "Women > Footwear > Slippers": {
+   "products": 3,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Women > Swimwear > Bikini": {
+   "products": 27,
+   "skus": 123,
+   "unkeyworded": 9
+  },
+  "Women > Swimwear > Bikini Briefs": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Women > Swimwear > Bikini Top": {
+   "products": 28,
+   "skus": 133,
+   "unkeyworded": 12
+  },
+  "Women > Swimwear > Swimsuit": {
+   "products": 4,
+   "skus": 20,
+   "unkeyworded": 3
+  },
+  "Women > Underwear > Briefs": {
+   "products": 3,
+   "skus": 13,
+   "unkeyworded": 3
+  }
+ }
+}
