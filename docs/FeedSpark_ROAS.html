@@ -286,11 +286,11 @@ window.addEventListener('load',restore);
   </section>
 
   <section class="card" id="pt-card">
-    <div class="chead"><div><h3>Performance</h3><div class="ch">Brand → market → category, every level FeedHero's own aggregate. Sort any column, filter by name or band, choose the columns, segment a market by brand, gender or price group.</div></div></div>
+    <div class="chead"><div><h3>Performance</h3><div class="ch">Brand → market → category, every level FeedHero's own aggregate. Sort any column, filter by name or band, choose the columns, segment a market by any of FeedHero's eighteen cuts — brand, colour, product age, price type, FeedSpark's optimisation status, custom labels and more.</div></div></div>
     <div class="tbar">
       <input class="fld q" id="q" type="search" placeholder="Filter brand, market or category…" aria-label="Filter rows">
       <div class="chips" id="bands"></div>
-      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — picking one opens the markets in view (up to 8, busiest first). Category is stored by the sync; Brand / Gender / Price group are read live from FeedHero"><option value="Category">Segment · Category</option><option value="Brand">Segment · Brand</option><option value="Gender">Segment · Gender</option><option value="Price_group">Segment · Price group</option></select>
+      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — picking one opens the markets in view (up to 8, busiest first). Category is stored by the sync; every other cut is read live from FeedHero"><option value="Category">Segment · Category</option></select>
       <span class="rel"><button class="btn" id="cols-btn" type="button" aria-haspopup="true" aria-expanded="false">⊞ Columns</button><div class="pop" id="cols-pop" hidden></div></span>
       <button class="btn" id="expand-all" type="button" title="Open every brand to its markets">⊕ Open all</button>
     </div>
@@ -362,6 +362,22 @@ window.addEventListener('load',restore);
     {k:'cpa',l:'Cost / conv.'},{k:'cr',l:'Conv. rate'},{k:'aov',l:'AOV'},{k:'avgp',l:'Avg. price'},{k:'up',l:'Uplift'},{k:'mm',l:'Min margin'},
     {k:'sk',l:'SKUs',def:1},{k:'zb',l:'Zombie %',def:1},{k:'upd',l:'Updated'}
   ];
+  // EVERY CUT FEEDHERO OFFERS (Ray, 30 Sep 2026: "add more segment type inside ROAS dashboard module") — the
+  // MCP's own list of aggregations, asked of it with a cut it does not know: eighteen, where this select offered
+  // four. Grouped by what the cut answers; the value is FeedHero's own key (the worker allow-lists the same
+  // eighteen), the label the words a reader uses. ONE list — the select, the column head, the footer and every
+  // sentence about a cut read it, so a cut can never be named two ways.
+  var SEGS=[
+    ['Product',[['Category','Category'],['Brand','Brand'],['Colour','Colour'],['Gender','Gender'],['Age_group','Age group'],['Google_product_category','Google product category']]],
+    ['Price',[['Price_type','Price type'],['Price_group','Price group']]],
+    ['Lifecycle',[['Product_age','Product age']]],
+    ['FeedSpark work',[['Title_optimisation_status','Title optimisation'],['Keyword_optimisation_status','Keyword optimisation'],['Data_field_optimisation_status','Data-field review'],['Batch_id','Batch']]],
+    ['Custom labels',[['Custom_label_0','Custom label 0'],['Custom_label_1','Custom label 1'],['Custom_label_2','Custom label 2'],['Custom_label_3','Custom label 3'],['Custom_label_4','Custom label 4']]]
+  ];
+  var SEGL={}; SEGS.forEach(function(g){ g[1].forEach(function(x){ SEGL[x[0]]=x[1]; }); });
+  function segOk(v){ return SEGL[v]?v:'Category'; }
+  // Product age is a LADDER, not a list — sorted by name it reads newest to oldest, never alphabetically
+  var AGE_ORDER=['brand new','new','this season','last season','this year','perennial'];
   var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{},segNote:'',segPending:false};
   try{ var c0=JSON.parse(LS('fcc-roas-cols')||'null'); if(Array.isArray(c0)&&c0.length)S.cols=c0; }catch(e){}
   if(!S.cols)S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k});
@@ -371,7 +387,7 @@ window.addEventListener('load',restore);
   function readUrl(){ var u=new URLSearchParams(location.search);
     if(u.get('brand'))S.brand=u.get('brand'); if(u.get('market'))S.market=u.get('market'); if(u.get('win'))S.win=u.get('win');
     if(u.get('cur'))S.cur=u.get('cur'); if(u.get('m'))S.metrics=u.get('m').split(',').filter(function(k){return MBY[k]}).slice(0,2);
-    if(u.get('seg')){ S.seg=u.get('seg'); S.segPending=S.seg!=='Category'; } if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
+    if(u.get('seg')){ S.seg=segOk(u.get('seg')); S.segPending=S.seg!=='Category'; } if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
   function linkOf(){ var u=new URLSearchParams(); if(S.brand)u.set('brand',S.brand); if(S.market)u.set('market',S.market); u.set('win',S.win); if(S.cur)u.set('cur',S.cur); u.set('m',S.metrics.join(',')); if(S.seg!=='Category')u.set('seg',S.seg); if(S.q)u.set('q',S.q); return location.pathname+'?'+u.toString(); }
 
   /* ================= load ================= */
@@ -553,7 +569,7 @@ window.addEventListener('load',restore);
     }
     return {n:null,html:''};
   }
-  function sortRows(list){ var k=S.sort.k, dir=S.sort.dir; list.sort(function(a,b){ var x=k==='name'?a.name:cellOf(a,k).n, y=k==='name'?b.name:cellOf(b,k).n; if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; if(typeof x==='string')return x.localeCompare(y)*dir; return (x-y)*dir; }); return list; }
+  function sortRows(list){ var k=S.sort.k, dir=S.sort.dir; list.sort(function(a,b){ var x=k==='name'?(a.ord!=null?a.ord:a.name):cellOf(a,k).n, y=k==='name'?(b.ord!=null?b.ord:b.name):cellOf(b,k).n; if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; if(typeof x==='string')return x.localeCompare(y)*dir; return (x-y)*dir; }); return list; }
   function matchQ(row){ var q=S.q.trim().toLowerCase(); if(!q)return true; return (row.path||row.name||'').toLowerCase().indexOf(q)>=0||(row.client||'').toLowerCase().indexOf(q)>=0||(row.market||'').toLowerCase().indexOf(q)>=0; }
   function matchBand(row){ var ks=Object.keys(S.bands).filter(function(k){return S.bands[k]}); if(!ks.length||row.type==='brand')return true; var b=row.has?(row.t&&row.t.band)||'none':'none'; return ks.indexOf(b)>=0; }
   // brand → market → category rows for the current scope; categories/segments from their caches
@@ -570,15 +586,31 @@ window.addEventListener('load',restore);
         var kk=[];
         if(mrow.open&&t){
           openMarket(m.cmpid);   // idempotent — a no-op once the rows are cached or in flight
-          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(!tr.tree.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; else if(S.win!=='w30'&&tr.tree.every(function(n){return isUnlisted(n.name)}))kk.push({type:'note',key:mk+'|n30',depth:2,html:'FeedHero breaks categories down on the <b>30-day</b> window only — switch to 30 days for the tree, or pick a Segment (brand · gender · price group), which FeedHero cuts live for any period.',parent:mk}); } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
-          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.missing){ kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' report set up for this market — the cut is configured per client in FeedHero. Brand and Gender are available.',parent:mk}]; } else if(lv&&lv.rows){ kk=lv.rows.map(function(c,i){ return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,parent:mk}; }); if(!kk.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+S.seg.replace('_',' ').toLowerCase()+' rows for this market.',parent:mk}]; }
-            else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+S.seg.replace('_',' ').toLowerCase()+' rows live from FeedHero…',parent:mk}]; }
+          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(!tr.tree.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; else if(S.win!=='w30'&&tr.tree.every(function(n){return isUnlisted(n.name)}))kk.push({type:'note',key:mk+'|n30',depth:2,html:'FeedHero breaks categories down on the <b>30-day</b> window only — switch to 30 days for the tree, or pick a Segment (brand, colour, product age and fifteen more), which FeedHero cuts live for any period.',parent:mk}); } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
+          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.missing){ kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' report set up for this market — the cut is configured per client in FeedHero. Brand and Gender are available.',parent:mk}]; } else if(lv&&lv.rows){ kk=segRows(lv,m,t,mk); }
+            else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+esc(segWord())+' rows live from FeedHero…',parent:mk}]; }
         }
         mrow.kids=kk; kids.push(mrow);
       });
       brow.kids=sortRows(kids); out.push(brow);
     });
     return sortRows(out);
+  }
+  // one market's live cut. Two things a bare list would hide: a cut whose every product sits in FeedHero's
+  // "Unsorted" bucket has NO values for this market (Superdry GB's Batch id, Monsoon's custom labels) — said,
+  // never passed off as one big segment; and a cut longer than FeedHero's page carries its biggest spenders
+  // only — "top N of M", never a page passed off as the whole list.
+  function isUnsorted(s){ return /^unsorted$/i.test(String(s||'').trim()); }
+  function segRows(lv,m,t,mk){
+    var ref=t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null, age=S.seg==='Product_age';
+    var kk=lv.rows.map(function(c,i){ var o=age?AGE_ORDER.indexOf(String(c.category||'').trim().toLowerCase()):-1;
+      return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:ref,parent:mk,ord:age?(o<0?99:o):null}; });
+    if(!kk.length)return [{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' rows for this market.',parent:mk}];
+    var real=lv.rows.filter(function(c){ return !isUnlisted(c.category); });
+    if(real.length&&real.every(function(c){ return isUnsorted(c.category); }))kk.push({type:'note',key:mk+'|nu',depth:2,html:'Every product in this market sits in <b>Unsorted</b> — the '+esc(segWord())+' field is empty in the feed FeedHero reads, so there is nothing to cut by.',parent:mk});
+    if(lv.of>lv.rows.length)kk.push({type:'note',key:mk+'|nof',depth:2,html:'The '+lv.rows.length+' biggest-spending of '+lv.of.toLocaleString('en-GB')+' '+esc(segWord())+' values — FeedHero reads one page per cut.',parent:mk});
+    // the notes lead: a market shows 30 rows before "Show all", and a note under row 200 is a note nobody reads
+    return kk.filter(function(r){return r.type==='note'}).concat(sortRows(kk.filter(function(r){return r.type==='cat'})));
   }
   function catRows(tree,mrow,depth,pk){ var t=mrow.t; var list=tree.map(function(n,i){ var key=pk+'|'+n.path; var r={type:'cat',key:key,depth:depth,name:n.name,path:n.path,client:mrow.client,market:mrow.market,cur:mrow.cur,t:n.row,has:true,updated:mrow.updated,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,expandable:n.kids.length>0,open:!!S.open[key],parent:pk}; r.kids=r.open?catRows(n.kids,mrow,depth+1,key):[]; return r; }); return sortRows(list); }
   // the band filter hides markets by THEIR OWN band — so an open brand whose markets all have spend reads
@@ -590,7 +622,7 @@ window.addEventListener('load',restore);
         if(hid)out.push({type:'note',band:1,key:r.key+'|bandhid',depth:1,html:hid+' market'+(hid===1?'':'s')+' hidden by the band filter ('+esc(bandWords())+') · <button class="lnk" type="button" data-clear-bands>Show them</button>',parent:r.key}); } } }); return out; }
   function renderTable(){
     var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody');
-    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(S.seg==='Category'?'category':S.seg.replace('_',' ').toLowerCase())+'</th>'+cols.map(function(c){return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+'">'+esc(c.l)+'</th>'}).join('')+'</tr>';
+    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+'">'+esc(c.l)+'</th>'}).join('')+'</tr>';
     if(!DATA||!DATA.brands||!(DATA.brands[S.win]||[]).length){ body.innerHTML=''; $('#pt-empty').hidden=false; $('#pt-empty').innerHTML=DATA?'<b>No markets synced for this scope yet.</b> ⚡ Sync now, or wait for the next firing.':'<b>ROAS data is unavailable</b> — this needs the live worker.'; $('#pt-foot').textContent=''; return; }
     $('#pt-empty').hidden=true;
     var rows=flat(buildRows());
@@ -602,7 +634,7 @@ window.addEventListener('load',restore);
       if(r.type==='note')return '<tr class="r note" data-key="'+esc(r.key)+'"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td></tr>';
       if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
       var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
-        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+'</span>';
+        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+(r.type==='cat'&&S.seg!=='Category'&&isUnsorted(r.name)?' <span class="cur" title="Products whose '+esc(segWord())+' field is empty in the feed FeedHero reads">no value</span>':'')+'</span>';
       return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ return '<td>'+cellOf(r,c.k).html+'</td>'; }).join('')+'</tr>';
     }).join('');
     var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
@@ -623,9 +655,9 @@ window.addEventListener('load',restore);
     if(S.seg==='Category'){ var k=cmpid+'|'+S.win; if(TREES[k])return; TREES[k]={}; var m=(DATA.markets||[]).filter(function(x){return x.cmpid===cmpid})[0]; if(!m)return;
       fetch('/api/roas?client='+encodeURIComponent(m.client)+'&market='+encodeURIComponent(m.market)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ TREES[k]=d&&d.ok?{tree:d.tree||[],n:d.n}:{err:1}; renderTable(); }); return; }
     var lk=cmpid+'|'+S.seg+'|'+S.win; if(LIVE[lk])return; LIVE[lk]={};
-    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at,missing:!!d.missing}:{err:(d&&d.error)||'no answer'}; renderTable(); });
+    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at,missing:!!d.missing,of:+d.of||0}:{err:(d&&d.error)||'no answer'}; renderTable(); });
   }
-  function segWord(){ return S.seg==='Category'?'category':S.seg.replace('_',' ').toLowerCase(); }
+  function segWord(){ var l=SEGL[S.seg]||S.seg; return l.replace(/^[A-Z]/,function(c){return c.toLowerCase()}).replace(/^google /,'Google '); }
   // PICKING A SEGMENT SHOWS IT (Ray, 28 Sep 2026: "in Roas module - segment doesnt populate properly"): a cut is
   // read per MARKET, so choosing one used to change nothing until a market was opened by hand. It now opens the
   // markets a reader can see — under an open brand, passing the search — busiest first by clicks (a count, so no
@@ -657,7 +689,7 @@ window.addEventListener('load',restore);
   function saveViews(v){ LS('fcc-roas-views',JSON.stringify(v.slice(0,20))); }
   function renderViews(){ var v=views(); $('#views-pop').innerHTML='<div class="hd">Saved views · this device</div>'+(v.length?v.map(function(x,i){return '<div class="vw"><button class="ap" type="button" data-view="'+i+'" title="'+esc(x.brand||'All brands')+(x.market?' '+esc(x.market):'')+' · '+esc(x.win)+' · '+esc((x.metrics||[]).join(', '))+'">'+esc(x.name)+'</button><button class="x" type="button" data-viewx="'+i+'" aria-label="Delete view '+esc(x.name)+'">✕</button></div>'}).join(''):'<div class="dim" style="padding:4px 0">None yet.</div>')
     +'<div class="hd" style="margin-top:10px">Save this screen</div><div style="display:flex;gap:6px"><input class="fld" id="view-name" type="text" placeholder="Name…" style="flex:1;min-width:0" aria-label="View name"><button class="btn" id="view-save" type="button">Save</button></div><div class="hd" style="margin-top:10px">Share</div><button class="chip" id="view-link" type="button">🔗 Copy link to this screen</button>'; }
-  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=x.seg||'Category'; S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
+  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=segOk(x.seg); S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
 
   /* ================= render all ================= */
   function renderAll(){
@@ -726,6 +758,7 @@ window.addEventListener('load',restore);
     function done(msg){ SYNCING=false; btn.disabled=false; CACHE={}; TREES={}; if(msg){ $('#mstate').textContent=msg; return; } load(true); }
   });
 
+  $('#seg').innerHTML=SEGS.map(function(g){ return '<optgroup label="'+esc(g[0])+'">'+g[1].map(function(x){ return '<option value="'+x[0]+'">Segment · '+esc(x[1])+'</option>'; }).join('')+'</optgroup>'; }).join('');
   readUrl(); $('#q').value=S.q; $('#seg').value=S.seg; renderWin(); renderBands(); renderCols(); load();
 })();
 </script>
