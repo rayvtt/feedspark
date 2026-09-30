@@ -103,6 +103,12 @@ else
   echo "   ✗ xlsx harness FAILED — see node tools/test_xlsx.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2c/7: what the hours moved (month closes, brand coverage, honest gaps)"
+if node tools/test_outcomes.mjs >/dev/null 2>&1; then
+  echo "   ✓ a month is its close, an unmeasured one stays a gap, a brand names its markets"
+else
+  echo "   ✗ outcomes harness FAILED — see node tools/test_outcomes.mjs"; FAIL=1
+fi
 echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
 if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
   echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"
@@ -309,6 +315,12 @@ if node tools/test_design.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ design harness FAILED — see node tools/test_design.mjs"; FAIL=1
 fi
+echo "── qa-gate 3h3d/7: feedspark.com redesign mockup (/website — document route, nothing private, review notes)"
+if node tools/test_website.mjs >/dev/null 2>&1; then
+  echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
+else
+  echo "   ✗ website mockup harness FAILED — see node tools/test_website.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then
@@ -336,6 +348,20 @@ if node tools/test_rules.mjs >/dev/null 2>&1; then
   echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
 else
   echo "   ✗ Rules harness FAILED — see node tools/test_rules.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6c/7: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+if node tools/test_catalog.mjs >/dev/null 2>&1; then
+  echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+else
+  echo "   ✗ Catalogue harness FAILED — see node tools/test_catalog.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6d/7: AI visibility (reading engine, surface adapters vs stub answers, the lifted /api/aivis route)"
+if node tools/test_aivis.mjs >/dev/null 2>&1; then
+  echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, adapters, scope + grant, NDJSON hold"
+else
+  echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"

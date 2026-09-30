@@ -90,6 +90,9 @@ echo "   ✓ every month gated, late = earlier month unclosed, /api/transform op
 echo "── validating: FeedSpark design guidelines (/design + /design/fcc.css)"
 node tools/test_design.mjs >/dev/null
 echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
+echo "── validating: feedspark.com redesign mockup (/website)"
+node tools/test_website.mjs >/dev/null
+echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
 
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
 node tools/test_tm.mjs >/dev/null
@@ -106,6 +109,14 @@ echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis
 echo "── validating: Rules + Stock management (FeedHero rule_report — classifier, findings, lifted rulesPull)"
 node tools/test_rules.mjs >/dev/null
 echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
+
+echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+node tools/test_catalog.mjs >/dev/null
+echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+
+echo "── validating: AI visibility (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)"
+node tools/test_aivis.mjs >/dev/null
+echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
@@ -141,6 +152,7 @@ node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"
 
 echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine parity)"
+node tools/test_outcomes.mjs >/dev/null
 node tools/test_hoursbadge.mjs >/dev/null
 echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
 
@@ -270,6 +282,18 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
 
   NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
     echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
+  echo "── validating: ROAS segment (picking one populates the markets in view; the band filter names what it hid)"
+  NODE_PATH=$(npm root -g) node tools/check_roasseg.js || {
+    echo "✗ ROAS segment tripwire failed — a picked segment left the table empty, the band filter hid markets silently, or a cut FeedHero has not set up read as an error"; exit 1; }
+  echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
+  NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
+    echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }
+  echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
+  NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
+    echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
+  NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
+    echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }

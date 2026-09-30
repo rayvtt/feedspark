@@ -58,6 +58,14 @@
     body.fcc-navrow .topbar-in > #tb-modules a.tbm svg, body.fcc-navrow #fcc-apps-btn svg { width: 17px; height: 17px; }
     body.fcc-navrow .topbar-in > #fcc-apps { margin-left: 4px !important; padding-left: 6px; }
   }
+  /* …and once more under 960px: twenty-three tiles (the Catalogue made it 23) outgrow a 900px window
+     even at 34px, so they step down to 32px with a 1px gap — still one row, the ▦ still at its end */
+  @media (max-width: 960px) {
+    body.fcc-navrow .topbar-in > #tb-modules { gap: 1px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm, body.fcc-navrow #fcc-apps-btn { width: 32px; height: 32px; border-radius: 8px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm svg, body.fcc-navrow #fcc-apps-btn svg { width: 16px; height: 16px; }
+    body.fcc-navrow .topbar-in > #fcc-apps { margin-left: 3px !important; padding-left: 5px; }
+  }
   body.fcc-navrow #fcc-apps-btn:hover, body.fcc-navrow #fcc-apps.open #fcc-apps-btn { background: var(--wash, #F7F7F5); }
   [data-theme=dark] body.fcc-navrow #fcc-apps-btn:hover, [data-theme=dark] body.fcc-navrow #fcc-apps.open #fcc-apps-btn { background: #20242E; }
   /* the ☰ toggle hides the menu with `.nav-collapsed .tb-modules{display:none}` — two classes,

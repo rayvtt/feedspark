@@ -83,6 +83,30 @@ hero + travelling edge + count-up figures; glass-edged cards; the validated char
   header + name column, sortable columns, text filter (`/` focuses), band chips, ⊞ Columns
   chooser (`fcc-roas-cols`), per-currency Total rows, inline share-of-parent bars, "Show all" past
   30 categories, **Segment** select (Category from the store; Brand / Gender / Price group live).
+- **Picking a segment shows it** (Ray, 28 Sep 2026: *"in Roas module - segment doesnt populate
+  properly"*). A cut is read per market, so choosing one used to change nothing until a market was
+  opened by hand. Now:
+  - **Picking a segment opens the markets in view** (under an open brand, passing the search),
+    busiest first by clicks. A click count is currency-free, so no £ and € are compared. The cap is
+    `SEG_AUTO` = 8, so one choice can never fire a live FeedHero read for every market on the
+    roster. Past the cap, the footer names how many it opened.
+  - **With no brand open**, it says to open one, and reads nothing.
+  - **A deep link or saved view carrying a segment** lands populated.
+  - **Typing a brand's name opens that brand.**
+  - **Chevrons toggle on the first click.** A chevron opened by default or by the search closes on
+    the first click (the old toggle took two).
+- **The band filter never hides markets silently.** It hides a market by the market's own band, so
+  "No activity" left a brand whose markets all have spend standing over nothing. The open brand now
+  carries a line naming how many markets the filter hid, with a **Show them** link, and the footer
+  says the same. This is what Ray's screenshot showed: `1 brand · 0 markets shown` under Schuh.
+- **Price group is not set up in FeedHero** for any of the seven roster brands (checked live on
+  28 Sep 2026: *"Reports not found for Price group"* on every one; Brand and Gender cut every market
+  on every period).
+  - `ROAS.segMissing` reads that answer as **not set up**. The worker returns
+    `{ok:true, rows:[], missing:true}` and caches it like a read (`ROAS_SEG_MISSING_TTL`, a day).
+  - The market says *"FeedHero has no price group report set up for this market"* instead of a red
+    error on every open.
+  - Any other failure still 502s.
 - **Phone** — the scorecard row scrolls sideways, the table pans inside its frame, nothing hides
   under a max-width rule (`tools/check_mobile.js`); multi-sentence explainers fold behind ⓘ.
 
@@ -91,6 +115,16 @@ hero + travelling edge + count-up figures; glass-edged cards; the validated char
 - `tools/test_roas.mjs` — engine (parsing on real specimens, roster, rotation + budget, windows,
   history, idxEntry, catTree, rollups per currency, series, movers, the no-Total-row regression),
   worker wiring, page feature set, no-data-in-git. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+- `tools/check_roasseg.js` — Playwright, in presync. It drives the real page on the synthetic
+  stub:
+  - the search opens a brand;
+  - a picked segment populates its market, with one live read and nothing beyond the search;
+  - the band-filter line, and **Show them** clearing it;
+  - Price group reading as "not set up";
+  - a first-click close;
+  - nothing open → a hint and no read;
+  - every brand open → one read per market;
+  - a `?seg=` deep link landing populated.
 - `tools/roas_stub.js` — a SYNTHETIC `/api/roas` payload the browser tripwires
   (`check_mobile.js`, `check_darkmode.js`) feed the page so its charts and table render under
   their rules.

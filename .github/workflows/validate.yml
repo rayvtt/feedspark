@@ -63,6 +63,8 @@ jobs:
         run: node tools/test_transform.mjs
       - name: FeedSpark design guidelines harness (one stylesheet, brand tokens, dark values, route, links)
         run: node tools/test_design.mjs
+      - name: feedspark.com redesign mockup harness (document route, nothing private on a public layout, review notes)
+        run: node tools/test_website.mjs
       - name: Task Manager harness (parser, agent, worker store + scoped read, Leadership overlay)
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
@@ -71,6 +73,10 @@ jobs:
         run: node tools/test_roas.mjs
       - name: Rules + Stock management harness (FeedHero rule_report — classifier, findings, lifted rulesPull vs a stub MCP)
         run: node tools/test_rules.mjs
+      - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
+        run: node tools/test_catalog.mjs
+      - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)
+        run: node tools/test_aivis.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
 
@@ -111,6 +117,8 @@ jobs:
         run: node tools/test_uistate.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
+      - name: What the hours moved (month closes, brand coverage, honest gaps)
+        run: node tools/test_outcomes.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
         run: node tools/test_playbook_panel.mjs
       - name: Call wrap-up (red prompt, the tidy-up, draft on FCC or Gmail)

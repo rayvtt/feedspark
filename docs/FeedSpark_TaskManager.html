@@ -154,9 +154,20 @@ window.addEventListener('load',restore);
   .cw-ctl select,.cpop select,.cpop input{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
-  .cstage{flex:1 1 460px;min-width:0}
+  .cmain{flex:1 1 460px;min-width:0;display:flex;flex-direction:column}
+  .cstage{min-width:0}
   .cstage svg{display:block;width:100%;height:auto;overflow:visible}
   .clegend{flex:0 0 250px;min-width:0}
+  /* the outcome panel: its own plot under the hours, on the same calendar — sized and coloured as
+     its own reading so nobody mistakes a score for an hour count */
+  .coutbox{margin-top:4px;border-top:1px solid var(--line);padding-top:10px}
+  .coutbox svg{display:block;width:100%;height:auto;overflow:visible}
+  .cout-cap{margin:6px 2px 0;font-size:11.5px;line-height:1.55;font-weight:600;color:var(--ink-2,#555)}
+  .cout-empty{font-size:12px;font-weight:700;color:var(--muted);padding:14px 2px}
+  .cscale{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;padding-top:9px;border-top:1px solid var(--line)}
+  .cscale i{font-style:normal;display:flex;align-items:baseline;gap:6px}
+  .cscale b{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .cscale span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 0;border-bottom:1px solid var(--line)}
   .lg-row.hd{font-weight:800}
   .lg-row .nm{color:var(--ink-2)}
@@ -366,7 +377,7 @@ window.addEventListener('load',restore);
     <a class="nav-toggle" href="/" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-flame" d="M12 19.2c1.1 1.3 1.7 2.5 1.7 3.3 0 .9-.8 1.5-1.7 1.5s-1.7-.6-1.7-1.5c0-.8.6-2 1.7-3.3Z"/><path class="rk-body" d="M12 .9c3 2.4 4.8 6.2 4.8 10.4 0 2.6-.7 5-1.9 7.1H9.1A14.6 14.6 0 0 1 7.2 11.3C7.2 7.1 9 3.3 12 .9Z"/><circle class="rk-win" cx="12" cy="9.4" r="2"/><path class="rk-fin" d="M7.2 12.2 4.4 15v3.4l2.8-1.7v-4.5ZM16.8 12.2l2.8 2.8v3.4l-2.8-1.7v-4.5Z"/></g></svg></a>
     <div class="brand">Feed<span>Spark</span></div>
     <div class="tb-tag">FS Task Manager</div>
-    <nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm on" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+    <nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm on" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
     <button class="nav-collapse" id="nav-collapse" type="button" title="Hide / show the module menu" aria-label="Hide or show the module menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </header>
@@ -500,6 +511,19 @@ window.addEventListener('load',restore);
                untagged bucket to leave out, and a control that does nothing is a control that lies -->
           <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
           <label class="tog"><input type="checkbox" id="ctab"> Table under the chart</label>
+          <!-- WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior
+               executives to defend feedspark services"). Hours alone cannot answer "what did the
+               spend produce?", so this hangs the brand's OUTCOME under the hours on the SAME
+               calendar — two plots, each on its own axis, never a dual one. It needs a calendar
+               and one account, and says so rather than drawing something it cannot line up. -->
+          <span class="cwp"><label for="cout">What moved</label>
+            <select id="cout" title="Draw the brand's outcome under the hours, on the same months — the chart that answers what the work produced">
+              <option value="">Nothing — hours only</option>
+              <option value="gs">Golden Record score</option>
+              <option value="q">Content quality</option>
+              <option value="air">AI-readiness</option>
+            </select></span>
+          <p class="cpn" id="cout-n"></p>
         </div>
       </span>
 
@@ -528,10 +552,27 @@ window.addEventListener('load',restore);
       </span>
     </div>
     <div class="cbody">
-      <div class="cstage" id="cstage"></div>
+      <!-- the hours and the outcome share ONE column so they share ONE calendar: the legend rail
+           beside them is ~250px, so a full-width outcome panel would sit on a different x-scale and
+           the month it points at would not be the month above it -->
+      <div class="cmain" id="cmain">
+        <div class="cstage" id="cstage"></div>
+        <!-- the outcome panel is its OWN svg under the hours, never a second axis inside them: a
+             reader comparing two units on one axis is being invited to read a relationship the
+             chart cannot support. The ⬇ PNG stacks the two so the deck slide carries both. -->
+        <div class="coutbox" id="coutbox" hidden>
+          <div class="cout-st" id="cout-st"></div>
+          <p class="cout-cap" id="cout-cap"></p>
+        </div>
+      </div>
       <div class="clegend" id="clegend"></div>
     </div>
     <div class="verdict" id="cverdict" data-instr></div>
+    <!-- THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+         Procurement prices a service per unit, not per hour, so a row of hours with nothing beside
+         it cannot be argued with. Never collapsed behind the ⓘ: it is the scale of the number
+         above it, not an explanation of it. -->
+    <div class="cscale" id="cscale" data-no-collapse hidden></div>
     <div class="ctab" id="ctabbox" hidden></div>
   </section>
 
@@ -1167,15 +1208,44 @@ window.addEventListener('load',restore);
     { k: 'owner', label: 'Who did it' },
     { k: 'cat', label: 'Type of work' },
     { k: 'month', label: 'Month' },
+    // a board reads a book by quarter, a delivery conversation by week (Ray, 28 Sep 2026)
+    { k: 'quarter', label: 'Quarter' },
+    { k: 'week', label: 'Week' },
     { k: 'market', label: 'Market' },
     { k: 'am', label: 'Account manager' },
     { k: 'bucket', label: 'Status' },
     { k: 'task', label: 'Task' },
     { k: 'tag', label: 'Tag' }
   ];
+  /* TIME DIMS read in TIME order and never fold a tail into "Other" — a missing quarter in the
+     middle of a year is a hole in the argument, not a tidy-up. Identical to src/taskbook.js. */
+  var TIME_DIMS = ['month', 'quarter', 'week'];
+  function isTimeDim(d) { return TIME_DIMS.indexOf(d) >= 0; }
+  function quarterOf(v) {
+    var m = monthOf(v);
+    return m ? m.slice(0, 4) + '-Q' + (Math.floor((+m.slice(5, 7) - 1) / 3) + 1) : '';
+  }
+  /* ISO-8601: a date's week is the one holding its THURSDAY. The naive (dayOfYear/7) form puts
+     1 January in week 1 of a year it does not belong to, and a delivery week in the wrong year is
+     a wrong column. */
+  function weekOf(v) {
+    var iso = isoOf(v);
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00Z');
+    if (isNaN(d.getTime())) return '';
+    var day = (d.getUTCDay() + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - day + 3);
+    var y = d.getUTCFullYear(), jan4 = new Date(Date.UTC(y, 0, 4));
+    var jd = (jan4.getUTCDay() + 6) % 7;
+    jan4.setUTCDate(jan4.getUTCDate() - jd + 3);
+    var wk = 1 + Math.round((d - jan4) / (7 * 24 * 3600 * 1000));
+    return y + '-W' + (wk < 10 ? '0' : '') + wk;
+  }
   function dimKey(t, dim) {
     if (dim === 'total') return 'All work';
     if (dim === 'month') return monthOf(t.d) || '(undated)';
+    if (dim === 'quarter') return quarterOf(t.d) || '(undated)';
+    if (dim === 'week') return weekOf(t.d) || '(undated)';
     if (dim === 'cat') return t.cat;
     if (dim === 'market') return (t.client && t.market) ? t.client + ' ' + t.market : (t.market || '(none)');
     if (dim === 'task') return t.title || '(untitled)';
@@ -1230,9 +1300,9 @@ window.addEventListener('load',restore);
     var out = keys.map(function (k) {
       var t = tally(m[k]); t.k = k; t.rows = m[k]; return t;
     });
-    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    if (isTimeDim(dim)) out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
     else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
-    if (cap && out.length > cap && dim !== 'month') {
+    if (cap && out.length > cap && !isTimeDim(dim)) {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1), rws = [], j, y;
       for (j = 0; j < rest.length; j++) for (y = 0; y < rest[j].rows.length; y++) rws.push(rest[j].rows[y]);
       var f = tally(rws); f.k = 'Other (' + rest.length + ' more)'; f.rows = rws; f.fold = rest.length;
@@ -1362,9 +1432,9 @@ window.addEventListener('load',restore);
     // to more than the book. Say so rather than letting a chart imply otherwise.
     out.multi = placements > rows.length;
     out.placements = placements;
-    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    if (isTimeDim(dim)) out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
     else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
-    if (cap && out.length > cap && dim !== 'month') {
+    if (cap && out.length > cap && !isTimeDim(dim)) {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
       var f = { n: 0, bill: 0, nonbill: 0, hours: 0 };
       rest.forEach(function (x) { f.n += x.n; f.bill += x.bill; f.nonbill += x.nonbill; f.hours += x.hours; });
@@ -2822,7 +2892,7 @@ window.addEventListener('load',restore);
     // the dot is the honest half of folding: Include, Labels, the legend and the table all change
     // what is drawn, and all four now live behind one button
     var off = CMEAS !== 'hours' || CLAB !== 'hours' || !$('cleg').checked || $('ctab').checked
-      || (tagDim() && !$('cuntag').checked);
+      || (tagDim() && !$('cuntag').checked) || outOn();
     var db = $('mb-disp');
     db.querySelector('.cdot').hidden = !off;
     db.classList.toggle('on', off);
@@ -2883,6 +2953,201 @@ window.addEventListener('load',restore);
       : 'Saved "' + v.name + '" — it runs against whichever account you pick');
   }
 
+  /* ===== WHAT THE HOURS MOVED ==============================================================
+   * Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to defend feedspark
+   * services". A procurement head does not buy hours — the first thing they ask of a row of hours
+   * is what it produced, and no re-cut of hours can answer it. So the brand's OUTCOME is drawn
+   * UNDER the hours, on the same months, each plot on its own axis.
+   *
+   * THREE THINGS IT REFUSES TO DO, because this is the chart most likely to be shown to a buyer:
+   *   · it never draws without a CALENDAR to share (the hours chart must itself be over time),
+   *   · it never draws without ONE account (a score averaged over two brands means nothing), and
+   *   · a month nobody measured is a GAP, never a zero — the scan history only began in Sep 2026
+   *     and a missed scan would otherwise read to a client as a collapse.
+   * Each refusal says which it is; a blank panel that could mean "no movement" or "never scanned"
+   * would be worse than no panel.
+   */
+  var COUT = '', OUTC = { key: '', data: null, loading: false };
+  var OUT_COL = function () { return isDark() ? '#4C82E0' : '#2563EB'; };
+  function outOn() { return !!COUT; }
+  /* The hours chart is on a calendar when it is drawn over time, or split by month — the two forms
+     whose x-axis IS the months. Anywhere else there is no shared axis to hang this under. */
+  function outCal() { return CFORM === 'line' || (CDIM === 'month' && !nested()); }
+  function outAcct() { var p = accountPick(Q.raw); return (p && !p.multi && p.v) ? p.v : ''; }
+  function outMonths() { return seriesByMonth(chartPop(), 'total', 1, CMEAS).months; }
+  function outSpec(k) {
+    var L = { gs: ['Golden Record score', 'how completely the feed carries the attributes Google’s product data spec asks for', 'the feed scan, re-scored against this brand’s current scoring profile'],
+      q: ['Content quality', 'what is actually in the free-text fields, against each attribute’s own Google spec page', 'the content-quality analysis'],
+      air: ['AI-readiness', 'how ready the feed is for agentic surfaces — the conversational attributes weigh heaviest', 'the Feed Lab audit'] };
+    return L[k] || null;
+  }
+  /* The note under the control always states the CURRENT case, so the reason a panel is absent is
+     readable from the control itself rather than only from the empty space where it would be. */
+  function outNote() {
+    var n = $('cout-n'); if (!n) return;
+    if (!outOn()) { n.textContent = 'Hangs the brand’s outcome under the hours on the same months — needs a view over time (or split by month) and one account.'; return; }
+    if (!outCal()) { n.textContent = 'Not drawn: this view has no calendar to share. Switch Show as to “Over time”, or split by Month.'; return; }
+    if (!outAcct()) { n.textContent = 'Not drawn: pick ONE account beside Split by — a score averaged across brands is not a number.'; return; }
+    n.textContent = 'Drawn under the hours on the same months, on its own axis.';
+  }
+  function outFetch(client) {
+    var end = new Date().toISOString().slice(0, 7);
+    var key = client + '|' + end;
+    if (OUTC.key === key || OUTC.loading) return;
+    OUTC.loading = true;
+    fetch('/api/outcomes?client=' + encodeURIComponent(client) + '&months=24&end=' + end)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { OUTC = { key: key, data: (d && d.ok) ? d : null, loading: false }; chart(); })
+      .catch(function () { OUTC = { key: key, data: null, loading: false }; chart(); });
+  }
+  /** The monthly line for one metric, over the months the HOURS chart drew — one source of months,
+      so the two plots can never sit on different calendars. */
+  function outSeries(ms, key) {
+    var d = OUTC.data, out = [];
+    var map = (d && d.metrics && d.metrics[key]) || {};
+    for (var i = 0; i < ms.length; i++) {
+      var e = map[ms[i]];
+      out.push(e ? { m: ms[i], v: e.v, n: e.n } : { m: ms[i], v: null, n: 0 });
+    }
+    return out;
+  }
+  function outCaption(pts, key) {
+    var sp = outSpec(key); if (!sp) return '';
+    var got = pts.filter(function (p) { return p.v != null; });
+    if (!got.length) return '';
+    var lo = Infinity, hi = 0;
+    got.forEach(function (p) { if (p.n < lo) lo = p.n; if (p.n > hi) hi = p.n; });
+    var cov = lo === hi ? lo + ' market' + (lo === 1 ? '' : 's') : lo + '–' + hi + ' markets';
+    var mv2 = Math.round((got[got.length - 1].v - got[0].v) * 10) / 10;
+    var dir = got.length < 2 ? 'one month measured, so there is no movement to report yet'
+      : (Math.abs(mv2) < 0.1 ? 'level across the window'
+        : (mv2 > 0 ? '▲ up ' : '▼ down ') + Math.abs(mv2) + ' points across the window');
+    return sp[0] + ' — ' + sp[1] + '. Each month is its LAST reading, averaged across the ' + cov
+      + ' measured that month; ' + dir + '. A month nobody scanned is left as a gap, never a zero. Source: ' + sp[2] + '.';
+  }
+  /* Drawn in the hours chart's own geometry (same width, same left gutter, same month ticks) so the
+     two panels line up column for column — the whole point of one calendar. */
+  function outChart(pts, key) {
+    var sp = outSpec(key);
+    var W = 720, H = 150, L = 50, Rp = 16, T = 18, B = 26;
+    var iw = W - L - Rp, ih = H - T - B;
+    var got = pts.filter(function (p) { return p.v != null; });
+    var lo = Infinity, hi = -Infinity;
+    got.forEach(function (p) { if (p.v < lo) lo = p.v; if (p.v > hi) hi = p.v; });
+    // a score line is read for its MOVEMENT, so the band is zoomed to the readings and labelled —
+    // never anchored at 0, which flattens a ten-point gain into nothing
+    if (!isFinite(lo)) { lo = 0; hi = 100; }
+    var pad = Math.max(1, (hi - lo) * 0.25);
+    var y0 = Math.max(0, Math.floor(lo - pad)), y1 = Math.min(100, Math.ceil(hi + pad));
+    if (y1 - y0 < 2) { y1 = Math.min(100, y0 + 2); }
+    var stepX = pts.length > 1 ? iw / (pts.length - 1) : 0;
+    var xAt = function (i) { return pts.length > 1 ? L + stepX * i : L + iw / 2; };
+    var yAt = function (v) { return T + ih - ((v - y0) / (y1 - y0)) * ih; };
+    var col = OUT_COL(), h = '';
+    h += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="none"/>';
+    h += '<text x="' + L + '" y="12" font-size="10.5" font-weight="900" fill="' + esc(cvar('--muted') || '#8a94a0')
+      + '" letter-spacing=".05em">' + esc((sp ? sp[0] : '').toUpperCase()) + '</text>';
+    [y0, y1].forEach(function (v) {
+      h += '<line x1="' + L + '" y1="' + yAt(v) + '" x2="' + (W - Rp) + '" y2="' + yAt(v) + '" stroke="' + esc(cvar('--line') || '#E6E6E6') + '" stroke-width="1"/>';
+      h += '<text x="' + (L - 7) + '" y="' + (yAt(v) + 4) + '" text-anchor="end" font-size="10" font-weight="700" fill="' + esc(cvar('--muted') || '#8a94a0') + '">' + v + '</text>';
+    });
+    // EVERY RUN OF MEASURED MONTHS IS ITS OWN PATH — joining across a gap would draw a line through
+    // months nobody measured, which is exactly the invented reading this panel exists to avoid
+    var run = [];
+    var flush = function () {
+      if (run.length > 1) h += '<path d="' + run.map(function (p, i) { return (i ? 'L' : 'M') + xAt(p.i) + ' ' + yAt(p.v); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      run = [];
+    };
+    pts.forEach(function (p, i) { if (p.v == null) flush(); else run.push({ i: i, v: p.v }); });
+    flush();
+    pts.forEach(function (p, i) {
+      if (p.v == null) return;
+      h += '<circle cx="' + xAt(i) + '" cy="' + yAt(p.v) + '" r="4" fill="' + col + '" stroke="' + esc(cvar('--paper') || '#fff') + '" stroke-width="2">'
+        + '<title>' + esc(monthLabel(p.m) + ' · ' + p.v + ' · ' + p.n + ' market' + (p.n === 1 ? '' : 's') + ' measured') + '</title></circle>';
+    });
+    // the month ticks are the HOURS chart's own, so the columns line up
+    pts.forEach(function (p, i) {
+      if (pts.length > 12 && i % 2) return;
+      h += '<text x="' + xAt(i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' + esc(cvar('--muted') || '#8a94a0') + '">' + esc(monthLabel(p.m)) + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc((sp ? sp[0] : '') + ' by month') + '">' + h + '</svg>';
+  }
+  /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+     A procurement head prices a service per unit, so hours with no scale beside them cannot be
+     argued with. Four figures, and every one of them is COUNTED from what is on screen rather than
+     asserted: the hours and the tasks are the chart's own population, the markets are the distinct
+     markets in it, and the catalogue is the size each market was last SCANNED at — which is why it
+     says how many markets that covers. A brand nobody has scanned simply has no products figure;
+     it never reads as zero. */
+  function scaleLine() {
+    var box = $('cscale'); if (!box) return;
+    var POP = chartPop();
+    if (!POP.length) { box.hidden = true; box.innerHTML = ''; return; }
+    var hoursN = 0, mk = {}, ppl = {};
+    POP.forEach(function (t) {
+      hoursN += mv(t);
+      if (t.client && t.market) mk[t.client + ' ' + t.market] = 1;
+      if (t.owner) ppl[t.owner] = 1;
+    });
+    var cell = function (v, l, tip) {
+      return '<i title="' + esc(tip) + '"><b>' + v + '</b><span>' + esc(l) + '</span></i>';
+    };
+    var h = cell(hrs(hoursN) + ' h', CMEAS === 'hours' ? 'delivered' : measWord() + ' only',
+      'Every hour in the population this chart is drawn from');
+    h += cell(num(POP.length), POP.length === 1 ? 'piece of work' : 'pieces of work',
+      'One per booked task \u2014 the count behind the hours');
+    var nm = Object.keys(mk).length;
+    if (nm) h += cell(num(nm), nm === 1 ? 'market' : 'markets', 'Distinct client \u00d7 market pairs carrying work in this view');
+    var np = Object.keys(ppl).length;
+    if (np) h += cell(num(np), np === 1 ? 'person' : 'people', 'Distinct owners who booked time in this view');
+    /* The catalogue rides the outcome fetch, so it appears for ONE account — the only scope where
+       "products in the feed" means anything. It states how many of the brand's markets have been
+       scanned, because a total over three of twenty-eight markets is a different claim. */
+    var sc = (OUTC.data && OUTC.key.split('|')[0] === outAcct()) ? OUTC.data.scale : null;
+    if (sc && sc.rows) {
+      h += cell(num(sc.rows), 'products in the feed',
+        'The catalogue each scanned market was last measured at \u2014 ' + sc.scanned + ' of '
+        + sc.markets + ' market' + (sc.markets === 1 ? '' : 's') + ' scanned');
+    }
+    box.innerHTML = h;
+    box.hidden = false;
+  }
+
+  /** Called at the end of every chart() render — the panel follows the chart, never the reverse. */
+  function outDraw() {
+    outNote();
+    // the denominator rides this same record, so one account is fetched whether or not the panel
+    // is on — a scale line that only appeared with "What moved" would be a hidden dependency
+    var acct = outAcct();
+    if (acct) outFetch(acct);
+    scaleLine();
+    var box = $('coutbox'), st = $('cout-st'), cap = $('cout-cap');
+    if (!box) return;
+    if (!outOn() || !outCal()) { box.hidden = true; st.innerHTML = ''; cap.textContent = ''; return; }
+    var client = outAcct();
+    if (!client) {
+      box.hidden = false;
+      st.innerHTML = '<div class="cout-empty">Pick one account to see what the hours moved — a score averaged across brands is not a number.</div>';
+      cap.textContent = ''; return;
+    }
+    outFetch(client);
+    box.hidden = false;
+    if (!OUTC.data || OUTC.key.split('|')[0] !== client) {
+      st.innerHTML = '<div class="cout-empty">Reading ' + esc(client) + '’s audit history…</div>'; cap.textContent = ''; return;
+    }
+    var ms = outMonths();
+    if (!ms.length) { st.innerHTML = '<div class="cout-empty">No task in view carries a date, so there is no calendar to hang this on.</div>'; cap.textContent = ''; return; }
+    var pts = outSeries(ms, COUT);
+    if (!pts.filter(function (p) { return p.v != null; }).length) {
+      var why = ((OUTC.data.sources || []).filter(function (x) { return x.k === COUT || (x.k === 'feeds' && !x.ok); })[0] || {}).why;
+      st.innerHTML = '<div class="cout-empty">' + esc((outSpec(COUT) || ['this metric'])[0]) + ' — nothing to plot for '
+        + esc(client) + ': ' + esc(why || 'no reading falls in these months') + '.</div>';
+      cap.textContent = ''; return;
+    }
+    st.innerHTML = outChart(pts, COUT);
+    cap.textContent = outCaption(pts, COUT);
+  }
+
   function chart() {
     // the control only exists where it means something, and is never left ticked-but-inert
     var cul = $('cuntag-l'); if (cul) cul.hidden = !tagDim();
@@ -2905,6 +3170,7 @@ window.addEventListener('load',restore);
     // them — a fold may cost a click, it may not cost the truth
     if (tagDim() && $('cuntag').checked) basis.push('not yet tagged hidden');
     if ($('ctab').checked) basis.push('table below');
+    if (outOn()) basis.push((outSpec(COUT) || ['what moved'])[0].toLowerCase() + (outCal() && outAcct() ? ' below' : ' \u2014 not drawn'));
     $('cwsub').textContent = (nested()
       ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
         + (tree.length === 1 ? 'group' : 'groups')
@@ -2917,7 +3183,7 @@ window.addEventListener('load',restore);
         : FT.length
           ? 'Every row in this search is still untagged, and untagged rows are hidden on a tag split \u2014 untick \u201cHide Not yet tagged\u201d to see them.'
           : 'No task matches this search, so there is nothing to chart.') + '</div>';
-      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); return;
+      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); outDraw(); return;
     }
     var sm = null, sc = null;
     if (CFORM === 'line') { sm = lineData(); stage.innerHTML = lineChart(sm); }
@@ -2952,6 +3218,7 @@ window.addEventListener('load',restore);
     ctable(g, tree, sm);
     wireTips();
     wireSmall();
+    outDraw();
   }
 
   /* What the nesting did to the numbers, said out loud. A capped level and a multi-valued level
@@ -3879,20 +4146,40 @@ window.addEventListener('load',restore);
   /* SVG → PNG. Serialised with the computed colours already inlined (the chart draws with
      resolved values, never CSS variables), so the download looks like what is on screen in
      either theme. */
+  /* ONE IMAGE, BOTH PANELS (Ray, 28 Sep 2026 — these charts go "straight into a client deck"):
+     the outcome panel is its own svg, so the export has to stack them. It is rasterised at the same
+     2000px width and the same scale, under the hours, so the months line up in the slide exactly as
+     they do on screen — a deck slide where the two calendars disagreed would be worse than one
+     panel. An absent or empty panel simply does not contribute a strip. */
+  function pngSvgs() {
+    var out = [], a = $('cstage').querySelector('svg');
+    if (a) out.push(a);
+    var box = $('coutbox'), b = box && !box.hidden ? box.querySelector('svg') : null;
+    if (b) out.push(b);
+    return out;
+  }
   function png() {
-    var svg = $('cstage').querySelector('svg'); if (!svg) return;
-    var vb = (svg.getAttribute('viewBox') || '0 0 720 330').split(/\s+/).map(Number);
-    var W = 2000, H = Math.round(W * (vb[3] / vb[2])) + 96;
-    var clone = svg.cloneNode(true);
-    clone.setAttribute('width', vb[2]); clone.setAttribute('height', vb[3]);
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    var blob = new Blob(['<?xml version="1.0"?>' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
-    var url = URL.createObjectURL(blob), img = new Image();
-    img.onload = function () {
+    var svgs = pngSvgs(); if (!svgs.length) return;
+    var boxes = svgs.map(function (v) {
+      var vb = (v.getAttribute('viewBox') || '0 0 720 330').split(/\s+/).map(Number);
+      return { svg: v, w: vb[2] || 720, h: vb[3] || 330 };
+    });
+    var W = 2000, sc = W / boxes[0].w;
+    var strips = boxes.map(function (b) { return Math.round(b.h * sc); });
+    var H = strips.reduce(function (t, x) { return t + x; }, 0) + 96;
+    var urls = boxes.map(function (b) {
+      var clone = b.svg.cloneNode(true);
+      clone.setAttribute('width', b.w); clone.setAttribute('height', b.h);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      return URL.createObjectURL(new Blob(['<?xml version="1.0"?>' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+    });
+    var imgs = [], done = 0;
+    var draw = function () {
       var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
       var cx = cv.getContext('2d');
       cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
-      cx.drawImage(img, 0, 0, W, H - 96);
+      var y = 0;
+      imgs.forEach(function (im, i) { cx.drawImage(im, 0, y, W, strips[i]); y += strips[i]; });
       cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
       cx.fillText((CFORM === 'small' && CEXP != null ? String(CEXP) + ' · ' : '')
         + (CMEAS === 'hours' ? 'Billable vs non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours') + ' · ' + (nested()
@@ -3903,15 +4190,25 @@ window.addEventListener('load',restore);
         + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : '')
         + (CMEAS !== 'hours' ? ' · ' + measWord() + ' hours only' : '')
         + (labBasis() ? ' · ' + labBasis() : '')
-        + (hideUntag() ? ' · untagged rows not shown' : ''), 40, H - 22);
-      URL.revokeObjectURL(url);
+        + (hideUntag() ? ' · untagged rows not shown' : '')
+        + (imgs.length > 1 ? ' · under: ' + (outSpec(COUT) || ['what moved'])[0] + ' for ' + outAcct() : ''), 40, H - 22);
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
       var a = document.createElement('a');
       a.href = cv.toDataURL('image/png');
-      a.download = 'feedspark-billable-' + [CDIM, CDIM2, CDIM3].filter(Boolean).join('-') + '-' + D.at + '.png';
+      a.download = 'feedspark-billable-' + [CDIM, CDIM2, CDIM3].filter(Boolean).join('-')
+        + (outOn() && imgs.length > 1 ? '-' + COUT : '') + '-' + D.at + '.png';
       a.click();
     };
-    img.onerror = function () { URL.revokeObjectURL(url); toast('Could not render the PNG — use ⎘ Copy table instead'); };
-    img.src = url;
+    var fail = function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      toast('Could not render the PNG \u2014 use \u238b Copy table instead');
+    };
+    urls.forEach(function (u, i) {
+      var im = new Image();
+      im.onload = function () { imgs[i] = im; if (++done === urls.length) draw(); };
+      im.onerror = fail;
+      im.src = u;
+    });
   }
 
   function csv() {
@@ -4532,6 +4829,9 @@ window.addEventListener('load',restore);
       if (mvv && MEASURES.indexOf(mvv) >= 0) CMEAS = mvv;
       var lvv = qp.get('lab') || localStorage.getItem('fcc-tm-lab');
       if (lvv && LABS.some(function (o) { return o.v === lvv; })) CLAB = lvv;
+      var ovv = qp.get('out'); if (ovv == null) ovv = localStorage.getItem('fcc-tm-out');
+      if (ovv && ['gs', 'q', 'air'].indexOf(ovv) >= 0) COUT = ovv;
+      if ($('cout')) $('cout').value = COUT;
       $('cmeas').value = CMEAS;
       // which of Tasks / Client tickets / Accounts was open, and whether the table was showing
       // under the chart — both painted controls, not just chart state, so both get the same rule
@@ -4595,6 +4895,13 @@ window.addEventListener('load',restore);
       try { localStorage.setItem('fcc-tm-lab', CLAB); } catch (e) {}
       chart();
     };
+    /* per device like every other reading preference here — which second plot one screen wants
+       under its hours is not a team fact, and 🔗 Link is how it travels to a colleague */
+    $('cout').onchange = function () {
+      COUT = $('cout').value;
+      try { localStorage.setItem('fcc-tm-out', COUT); } catch (e) {}
+      chart();
+    };
 
     // a per-DEVICE preference, like the theme and the density toggles — it describes one screen
     try { var lgv = localStorage.getItem('fcc-tm-cleg'); if (lgv !== null) $('cleg').checked = lgv === '1'; } catch (e) {}
@@ -4621,6 +4928,7 @@ window.addEventListener('load',restore);
       if (CLAB !== 'hours') u.searchParams.set('lab', CLAB); else u.searchParams.delete('lab');
       if (CDIM2) u.searchParams.set('dim2', CDIM2); else u.searchParams.delete('dim2');
       if (CDIM3) u.searchParams.set('dim3', CDIM3); else u.searchParams.delete('dim3');
+      if (COUT) u.searchParams.set('out', COUT); else u.searchParams.delete('out');
       if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
       copy(u.toString(), 'Link copied — it reopens this exact view');
     };
