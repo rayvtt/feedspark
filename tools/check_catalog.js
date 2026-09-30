@@ -227,6 +227,40 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
       await pg.evaluate((H) => { const S = window.__FCCCatalogue.state(); return H.every((g) => S.run && S.run.get(g) && S.run.get(g)[1] < S.run.get(g)[0]); }, STUBS.HELD) && heldGrps > 0);
     ok('the card says the run is read off the master and names the sizes left out of the feed',
       /from the master/.test(await pg.evaluate(() => document.getElementById('run-sub').textContent)) && new RegExp(STUBS.HELD.length + '\\s*out-of-stock sizes left out of the feed').test(run), run);
+    console.log('· column filters — a ▾ on a header lists the column\'s values (Ray, 30 Sep 2026)');
+    await pg.evaluate(() => { const b = document.querySelector('#facet [data-fx]'); b && b.click(); }); await pg.waitForTimeout(250);
+    const sortBefore = await pg.evaluate(() => JSON.stringify(window.__FCCCatalogue.state().sort));
+    await pg.click('#gh [data-cf="avail"]'); await pg.waitForTimeout(150);
+    const avList = await pg.evaluate(() => { const p = document.getElementById('cfp'); return p.hidden ? null : [...p.querySelectorAll('.cfl label')].map((l) => [l.querySelector('span').textContent, +l.querySelector('small').textContent.replace(/,/g, '')]); });
+    const AVL = { in_stock: 'In stock', out_of_stock: 'Out of stock' }, wantAv = {}; fx.forEach((x) => { const l = AVL[x.av]; wantAv[l] = (wantAv[l] || 0) + 1; });
+    ok('▾ on Availability opens the list of its values, each with how many products carry it', avList && avList.length === Object.keys(wantAv).length && avList.every(([v, n]) => wantAv[v] === n), { avList, wantAv });
+    ok('clicking ▾ does not sort the column', await pg.evaluate(() => JSON.stringify(window.__FCCCatalogue.state().sort)) === sortBefore);
+    await pg.evaluate(() => { const c = [...document.querySelectorAll('#cfp .cfl input')].find((i) => i.getAttribute('data-cfv') === 'In stock'); c.click(); document.querySelector('#cfp [data-cfa="apply"]').click(); });
+    await pg.waitForTimeout(300);
+    const wantOut = fx.filter((x) => x.av === 'out_of_stock').length;
+    ok('unticking "In stock" leaves exactly the out-of-stock products', await view() === wantOut && wantOut > 0, { page: await view(), want: wantOut });
+    ok('the filter shows as a chip and the header ▾ is lit', await pg.evaluate(() => /Availability: Out of stock/.test(document.getElementById('facet').textContent) && document.querySelector('#gh [data-cf="avail"]').classList.contains('on')));
+    // another column's list is counted from what the Availability filter leaves (the spreadsheet rule)
+    await pg.click('#gh [data-cf="type"]'); await pg.waitForTimeout(150);
+    const ptList = await pg.evaluate(() => [...document.querySelectorAll('#cfp .cfl label')].reduce((a, l) => a + +l.querySelector('small').textContent.replace(/,/g, ''), 0));
+    ok('another column\'s value counts are read from the products the other filters leave', ptList === wantOut, { ptList, wantOut });
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
+    ok('Esc closes the pop-up', await pg.evaluate(() => document.getElementById('cfp').hidden));
+    await pg.evaluate(() => document.querySelector('#facet [data-cfx="avail"]').click()); await pg.waitForTimeout(250);
+    ok('the chip\'s ✕ clears it', await view() === prods.length && await pg.evaluate(() => !Object.keys(window.__FCCCatalogue.state().cf).length), await view());
+    // a number range
+    await pg.click('#gh [data-cf="price"]'); await pg.waitForTimeout(150);
+    await pg.fill('#cf-lo', '50'); await pg.fill('#cf-hi', '80'); await pg.press('#cf-hi', 'Enter'); await pg.waitForTimeout(300);
+    const wantPr = fx.filter((x) => x.price != null && x.price >= 50 && x.price <= 80).length;
+    ok('Price 50–80 keeps exactly the products priced in it', await view() === wantPr && wantPr > 0, { page: await view(), want: wantPr });
+    // text, combined with the range
+    await pg.click('#gh [data-cf="title"]'); await pg.waitForTimeout(150);
+    await pg.fill('#cf-t', 'navy'); await pg.press('#cf-t', 'Enter'); await pg.waitForTimeout(300);
+    const wantTx = prods.filter((p, i) => fx[i].price != null && fx[i].price >= 50 && fx[i].price <= 80 && /navy/i.test(E.plain(p.f.title))).length;
+    ok('Title contains "navy" combines with the price range', await view() === wantTx, { page: await view(), want: wantTx });
+    ok('two column filters offer "Clear column filters"', await pg.evaluate(() => !!document.querySelector('#facet [data-cfx="*"]')));
+    await pg.evaluate(() => document.querySelector('#facet [data-cfx="*"]').click()); await pg.waitForTimeout(250);
+    ok('"Clear column filters" clears them all', await view() === prods.length, await view());
     console.log('· stock control — off Stock management\'s own read of this market');
     const oosEl = await pg.evaluate(() => { const el = document.querySelector('#avail-body [data-f="avail:out_of_stock"]'); if (!el) return false; el.click(); return true; });
     await pg.waitForTimeout(250);

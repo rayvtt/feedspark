@@ -11176,9 +11176,9 @@
     {"name": "the denominator: the catalogue the hours maintained", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "scale.scanned++; scale.rows +=", "pr": 0},
     {"name": "the denominator: the scale line under the verdict", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function scaleLine()", "pr": 0},
     {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0},
-    {"name": "Catalogue: size runs are read off the master (the feed drops out-of-stock sizes)", "file": "docs/FeedSpark_Catalog.html", "pattern": "E.runAdd(run, gc[0].v, E.stockOf(", "pr": 0},
-    {"name": "Catalogue: one size-run count for the card, filter and Variants column", "file": "docs/FeedSpark_Catalog.html", "pattern": "function grpC(g) { return (S.run && S.run.get(g))", "pr": 0},
-    {"name": "Catalogue engine: NOT_AVAILABLE is out of stock, quantity decides when there is no word", "file": "docs/catalog_engine.js", "pattern": "function stockOf(av, qty) {", "pr": 0},
+    {"name": "Catalogue: size runs are read off the master (the feed drops out-of-stock sizes)", "file": "docs/FeedSpark_Catalog.html", "pattern": "E.runAdd(run, gc[0].v, E.stockOf(", "pr": 572},
+    {"name": "Catalogue: one size-run count for the card, filter and Variants column", "file": "docs/FeedSpark_Catalog.html", "pattern": "function grpC(g) { return (S.run && S.run.get(g))", "pr": 572},
+    {"name": "Catalogue engine: NOT_AVAILABLE is out of stock, quantity decides when there is no word", "file": "docs/catalog_engine.js", "pattern": "function stockOf(av, qty) {", "pr": 572},
     {"name": "Website mockup: /website is bundled and routed", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/website':     { html: WEBSITE_PAGE, slug: 'website' }", "pr": 0},
     {"name": "Website mockup: /website is a document (editor only, no FCC chrome)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const DOC_PATHS = new Set(['/case', '/website']);", "pr": 0},
     {"name": "Website mockup: the same-jacket-two-feeds demo", "file": "docs/FeedSpark_Website.html", "pattern": "<h3>Same jacket. Two feeds.</h3>", "pr": 0},
@@ -11186,6 +11186,9 @@
     {"name": "Website mockup: the specialist-vs-platform comparison", "file": "docs/FeedSpark_Website.html", "pattern": "For most platforms, feeds are a feature.", "pr": 0},
     {"name": "Website mockup: the review-notes layer", "file": "docs/FeedSpark_Website.html", "pattern": "id=\"mk-notes\"", "pr": 0},
     {"name": "Website mockup: the AI layer is SparkAI, never Tachyon", "file": "docs/FeedSpark_Website.html", "pattern": "Tachyon", "forbidden": true, "pr": 0},
-    {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0}
+    {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0},
+    {"name": "Catalogue: column filters — every view passes them", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passFacet(i) || !passCF(i)) continue;", "pr": 0},
+    {"name": "Catalogue: a column's value list is counted without its own filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passCF(i, skip)", "pr": 0},
+    {"name": "Catalogue: the column-filter pop-up follows its ▾ on scroll", "file": "docs/FeedSpark_Catalog.html", "pattern": "$('gw').addEventListener('scroll', cfPlace", "pr": 0}
   ]
 }
