@@ -9932,7 +9932,7 @@
     {
       "name": "ROAS v2: the drill table's segment select (Category stored, the rest live)",
       "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "Segment · Price group",
+      "pattern": "['Price_group','Price group']",
       "pr": 558
     },
     {
@@ -11209,6 +11209,36 @@
     {"name": "Stock availability: the master agent reads a zipped / 1252 / XML master", "file": "tools/master_stock.mjs", "pattern": "export function tallyMaster(u8) {", "pr": 0},
     {"name": "Stock availability: the master agent's schedule", "file": ".github/workflows/master-stock.yml", "pattern": "run: node tools/master_stock.mjs", "pr": 0},
     {"name": "Stock availability: the card on /stock", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"av-card\">", "pr": 0},
-    {"name": "Stock availability: the page twin of availBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function avBook(markets, ch) {", "pr": 0}
+    {"name": "Stock availability: the page twin of availBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function avBook(markets, ch) {", "pr": 0},
+    {
+      "name": "ROAS: every FeedHero cut in the Segment select — the one list (Ray 30 Sep 2026)",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "['Title_optimisation_status','Title optimisation']",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: a live cut says when it is all Unsorted or one page of a longer list",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "function segRows(lv,m,t,mk){",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: an unknown linked cut falls back to Category",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "function segOk(v){ return SEGL[v]?v:'Category'; }",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: the worker allow-lists FeedHero's eighteen cuts (Batch id)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4', 'Batch_id'];",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: a live cut is one 200-row FeedHero page with its own count",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "rows: split.categories, n: split.categories.length, of };",
+      "pr": 0
+    }
   ]
 }

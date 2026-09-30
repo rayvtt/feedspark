@@ -58,7 +58,7 @@ FeedHero reports **trailing windows only** — never a day's own figure. So:
 |---|---|
 | `GET /api/roas` | The book off ONE KV get: `wins`, `brands{w7,w30,w90}`, `book{…}`, `markets[]` (`marketView`: totals per window + spark), `series{win}{cur | '*'}` (per-currency daily sums; `'*'` = every market, money nulled), `movers{win}`, `curs`, `rosterBrands`, `status`. `?brand=&market=` narrows the SAME shape (scope-checked). Scoped per signin. |
 | `GET /api/roas?client=&market=&win=` | One market's category **tree** (`catTree`) for that window + its Total + last 60 history points. `?client=` alone = every market's totals + history (the dossier's v1 shape). |
-| `GET /api/roas/live?cmpid=&agg=Brand\|Gender\|Price_group&win=` | Google Ads' *segment*: FeedHero's other cuts of one market, read live (one MCP call), KV-cached 6 h, roster-only, scoped. `&fresh=1` bypasses the cache. |
+| `GET /api/roas/live?cmpid=&agg=<cut>&win=` | Google Ads' *segment*: any of FeedHero's eighteen cuts of one market (§4a), read live (one MCP call, one FeedHero page of up to 200 rows, the biggest spenders; `of` = FeedHero's own row count), KV-cached 6 h, roster-only, scoped. `&fresh=1` bypasses the cache. |
 | `GET /api/roas?pull=1` | Owner-only sync-now: one firing's rotation (capped at 6 markets). The page's ⚡ Sync now loops it `ceil(roster / per-call)` times — `status.read` is every market EVER read, so it can never be the stop condition. |
 
 ## 4. The page (`docs/FeedSpark_ROAS.html`)
@@ -82,7 +82,7 @@ hero + travelling edge + count-up figures; glass-edged cards; the validated char
 - **Performance table** — Brand → Market → Category (each level FeedHero's own aggregate), sticky
   header + name column, sortable columns, text filter (`/` focuses), band chips, ⊞ Columns
   chooser (`fcc-roas-cols`), per-currency Total rows, inline share-of-parent bars, "Show all" past
-  30 categories, **Segment** select (Category from the store; Brand / Gender / Price group live).
+  30 categories, **Segment** select (Category from the store; every other cut live — §4a).
 - **Picking a segment shows it** (Ray, 28 Sep 2026: *"in Roas module - segment doesnt populate
   properly"*). A cut is read per market, so choosing one used to change nothing until a market was
   opened by hand. Now:
@@ -107,8 +107,41 @@ hero + travelling edge + count-up figures; glass-edged cards; the validated char
   - The market says *"FeedHero has no price group report set up for this market"* instead of a red
     error on every open.
   - Any other failure still 502s.
+- **Every cut FeedHero offers** — see §4a.
 - **Phone** — the scorecard row scrolls sideways, the table pans inside its frame, nothing hides
   under a max-width rule (`tools/check_mobile.js`); multi-sentence explainers fold behind ⓘ.
+
+## 4a. Every segment FeedHero offers (30 Sep 2026)
+
+Ray: *"add more segment type inside ROAS dashboard module"*. The select offered four of FeedHero's
+cuts. Asked for a cut it does not know, the MCP lists its own **eighteen**, and the select now
+offers all of them, grouped by what the cut answers:
+
+| Group | Cuts (FeedHero key) |
+|---|---|
+| Product | Category · Brand · Colour · Gender · Age group (`Age_group`) · Google product category (`Google_product_category`) |
+| Price | Price type (`Price_type`) · Price group (`Price_group`) |
+| Lifecycle | Product age (`Product_age`) |
+| FeedSpark work | Title optimisation · Keyword optimisation · Data-field review (the three `*_optimisation_status`) · Batch (`Batch_id`) |
+| Custom labels | Custom label 0–4 |
+
+- **One list** (`SEGS` in the page) feeds the select, the column head, the footer and every
+  sentence about a cut, so a cut is never named two ways — the old sentences built the name off the
+  key and read "title optimisation_status". The worker's allow-list is the same eighteen, and
+  `tools/test_roas.mjs` holds the two lists equal to FeedHero's own.
+- **A cut with no values says so.** When every product in a market sits in FeedHero's
+  **Unsorted** bucket (checked live 30 Sep 2026: Batch id on Superdry GB; Monsoon's custom labels),
+  the market reads *"Every product in this market sits in Unsorted — the … field is empty in the feed
+  FeedHero reads"* rather than showing one big segment. An Unsorted row in a populated cut carries a
+  **no value** tag, beside the unlisted row's **not in feed**.
+- **A long cut says it is a page.** A read is one FeedHero page of up to 200 rows (its ceiling),
+  biggest spenders first; Colour on Monsoon UK runs to 144. When FeedHero reports more than the page
+  holds, a note leads the market's rows: *"The 200 biggest-spending of N … values"*.
+- **Product age is a ladder.** Sorted by name it reads Brand new → New → This season → Last season
+  → This year → Perennial, never alphabetically.
+- **An unknown cut in a link or saved view** lands on Category and reads nothing live.
+- Price group is still not set up in FeedHero for any roster brand; that answer is unchanged
+  (§4, "not set up").
 
 ## 5. Harness
 
@@ -121,6 +154,9 @@ hero + travelling edge + count-up figures; glass-edged cards; the validated char
   - a picked segment populates its market, with one live read and nothing beyond the search;
   - the band-filter line, and **Show them** clearing it;
   - Price group reading as "not set up";
+  - all eighteen cuts offered once each in five groups; a FeedSpark-work cut naming itself in the
+    head and footer; an all-Unsorted cut and a longer-than-a-page cut each saying so, the note first;
+    product age sorting as a ladder; an unknown linked cut falling back to Category;
   - a first-click close;
   - nothing open → a hint and no read;
   - every brand open → one read per market;

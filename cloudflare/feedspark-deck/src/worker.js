@@ -2589,8 +2589,10 @@ async function route(request, env, ctx) {
       return json({ ok: true, wins: ROAS.ROAS_WINDOWS, defaultWin: ROAS.ROAS_DEFAULT_WIN, back: ROAS.ROAS_DELTA_BACK, brands, book, markets: rows.map(ROAS.marketView), series, movers: moversBy, curs, tracked: rows.length, roster: rosterN, rosterBrands, scope: { brand: brandQ || null, market: mktQ || null }, status });
     }
 
-    // Google Ads' "segment" — FeedHero can cut one market's read by Brand / Gender / Price
-    // group as well as Category, but only as a live query (the pull stores Category alone,
+    // Google Ads' "segment" — FeedHero can cut one market's read eighteen ways (its own list,
+    // asked of the MCP 30 Sep 2026: Category, Brand, Colour, Gender, Age group, Google product
+    // category, Price type, Price group, Product age, the three FeedSpark optimisation statuses,
+    // Batch id and custom labels 0–4), but only as a live query (the pull stores Category alone,
     // three windows already cost three calls). One MCP call per (market, aggregation, period),
     // KV-cached six hours, scoped like the read above, the roster the only companies it will
     // ever ask for.
@@ -2605,7 +2607,7 @@ async function route(request, env, ctx) {
       // so those cuts are allowed here too (same one call, same six-hour cache)
       const AGGS = ['Brand', 'Gender', 'Price_group', 'Category', 'Product_age', 'Price_type', 'Colour', 'Age_group',
         'Title_optimisation_status', 'Keyword_optimisation_status', 'Data_field_optimisation_status', 'Google_product_category',
-        'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4'];
+        'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4', 'Batch_id'];
       const agg = AGGS.indexOf(url.searchParams.get('agg')) >= 0 ? url.searchParams.get('agg') : 'Brand';
       const win = ROAS.ROAS_WINDOWS.find((w) => w.k === url.searchParams.get('win')) || ROAS.ROAS_WINDOWS.find((w) => w.k === ROAS.ROAS_DEFAULT_WIN);
       const key = 'roaslive:' + cmpid + ':' + agg + ':' + win.k;
@@ -2615,9 +2617,14 @@ async function route(request, env, ctx) {
       try {
         const mcp = roasMcp(env, fetch);
         try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
-        const payload = await mcp.call('roas_dashboard', { company: cmpid, period: win.period, aggregation: agg, page_size: 120, sort: 'spend', order: 'desc' });
-        const split = ROAS.splitClientRows(TMM.rowsOf(payload), 120);
-        const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length };
+        // 200 = the MCP's own page ceiling: a Colour cut runs to ~150 rows (Monsoon UK, 144), and the
+        // rows kept are the biggest spenders; `of` carries FeedHero's own count so a cut longer than
+        // one page says "top 200 of N" rather than passing a page off as the whole list
+        const payload = await mcp.call('roas_dashboard', { company: cmpid, period: win.period, aggregation: agg, page_size: 200, sort: 'spend', order: 'desc' });
+        const split = ROAS.splitClientRows(TMM.rowsOf(payload), 200);
+        const tr = Number(payload && payload.total_rows);
+        const of = isFinite(tr) && tr > 0 ? Math.max(split.categories.length, tr - (split.total ? 1 : 0)) : split.categories.length;
+        const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length, of };
         try { await env.EDITS.put(key, JSON.stringify(out), { expirationTtl: 86400 }); } catch (e) {}
         logActivity(ctx, env, request, 'roas-live-segment', cmpid + ' ' + agg + ' ' + win.k);
         return json(Object.assign({ ok: true, cached: false }, out));
