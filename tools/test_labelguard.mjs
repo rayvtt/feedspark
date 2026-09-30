@@ -624,6 +624,11 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('attrs: gtin 70%', s.attrs.gtin.cov, 70);
   ok('attrs: absent columns -> present:false', !s.attrs.mpn.present && !s.attrs.gender.present && !s.attrs.product_highlight.present);
   ok('no attrs without opts', !('attrs' in snap));
+  // keywords (30 Sep 2026): a sheet with no keyword slots is measured ABSENT on the gviz lane.
+  // The weighting maths below is pinned on the Google-spec attributes, so the fixture drops the
+  // reading here — keywords get their own block further down
+  ok('gviz lane: no keyword slots in the sheet -> keywords measured absent', s.attrs.keywords && s.attrs.keywords.present === false);
+  delete s.attrs.keywords;
 
   const gs = LG.goldenScore(s.attrs);
   eq('goldenScore: weighted completeness', gs.score, 75.5);
@@ -721,6 +726,7 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ];
   const s = await LG.scanFeed(gvizMock(routes2), { id: 'X', gid: '0' },
     { client: 'Reiss', market: 'gb' }, LG.LABEL_KEYS.concat(LG.PT_KEYS), { attrs: true });
+  delete s.attrs.keywords;   // the profile maths is pinned on the spec attributes (keywords: own block)
   const apparel = LG.profileFor('Reiss', null);
   const gs = LG.goldenScore(s.attrs, apparel);
   eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 68.8);
@@ -1551,6 +1557,84 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('worker: both goldenidx writers store the scoped coverage and the in-scope counts',
     /const \{ cov: covMap, sc: scMap \} = goldenCovIndex\(grSnap\.attrs\);/.test(wk5) && /const \{ cov: ackCov, sc: ackSc \} = goldenCovIndex\(snap\.attrs\);/.test(wk5) &&
     /cov: covMap, sc: Object\.keys\(scMap\)\.length \? scMap : undefined,/.test(wk5) && /cov: ackCov, sc: Object\.keys\(ackSc\)\.length \? ackSc : undefined,/.test(wk5));
+}
+
+console.log('\n── keywords in the Golden Score (Ray, 30 Sep 2026)');
+{
+  const FA = (await import('node:module')).createRequire(import.meta.url)('../docs/feedlab_engine.js');
+  // what counts as a keyword — the live estate's own shapes (sampled 30 Sep 2026)
+  const TABLE = [['', 'empty'], ['   ', 'empty'], ['monsoon midi dress > red midi dress > cutwork lace', 'kw'], ['golf iron', 'kw'],
+    ['1130793d3a9281165e054ed7b967bc76', 'hash'], ['562D3D08FC725AABD186AC5668805AC8', 'hash'], ['#N/A', 'ph'], ['N/A', 'ph'], ['n/a', 'ph'],
+    ['null', 'ph'], ['-', 'ph'], ['0', 'ph'], ['#REF!', 'ph'], ['abc123', 'kw'], ['accessorize fresh arrivals', 'kw']];
+  const bad = TABLE.filter(([v, k]) => LG.kwValueKind(v) !== k);
+  ok('a phrase is a keyword; a 32-character id, a placeholder or an empty slot is not', bad.length === 0, bad.map(([v]) => [v, LG.kwValueKind(v)]));
+  const H = ['id', 'g:product_type', 'g:product_type(1)', 'g:product_type(2)', 'product_type3', 'product_type_4', 'g:product_type(11)', 'c:SA_product_type'];
+  eq('the keyword slots are product_type 2–10 in every header spelling — never the tree, never slot 11 or a custom field', LG.kwSlotCols(H), [3, 4, 5]);
+
+  // a real XML stream: an id in slot 2 with phrases after it (Reiss/Schuh), phrases from slot 2
+  // (Monsoon), a placeholder (YuMOVE) and a product with nothing
+  const it = (id, pts) => '<item><g:id>' + id + '</g:id><g:title>T</g:title>' + pts.map((p) => '<g:product_type>' + p + '</g:product_type>').join('') + '</item>';
+  const xml = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' +
+    it('a', ['Womens > Dresses', '1130793d3a9281165e054ed7b967bc76', 'red midi dress > lace midi dress']) +
+    it('b', ['Womens > Dresses', 'monsoon midi dress', 'orange midi dress', 'v neck midi dress']) +
+    it('c', ['Pet Health > Supplements', '#N/A']) +
+    it('d', ['Kids > Shoes']) + '</channel></rss>';
+  const col = LG.xmlCollector({ client: 'Reiss', market: 'gb' });
+  const px = FA.createXmlParser(col.onRow); px.push(xml); px.end();
+  const kw = col.finish().snap.attrs.keywords;
+  ok('the XML scan reads keywords per product: 2 of 4 carry a phrase', kw && kw.present && kw.filled === 2 && kw.cov === 50, kw);
+  ok('…how deep they go (4 phrases across the 2 keyworded products), read across the parser\'s 9 keyword slots', kw && kw.per === 2 && kw.slots === 9, kw);
+  ok('…and how many carry an id instead (named, not counted)', kw && kw.hash === 1, kw);
+  const colFb = LG.xmlCollector({ client: 'Reiss', market: 'gb-fb' });
+  const pf = FA.createXmlParser(colFb.onRow); pf.push(xml); pf.end();
+  ok('a Meta feed carries no Golden Record read at all', !colFb.finish().snap.attrs);
+
+  // three states through the index, the history and the score
+  const base = { title: { present: true, cov: 100 }, product_type: { present: true, cov: 100 } };
+  const withKw = Object.assign({}, base, { keywords: { present: true, cov: 22.3 } });
+  const noSlots = Object.assign({}, base, { keywords: { present: false } });
+  const iNm = LG.goldenCovIndex(base), iKw = LG.goldenCovIndex(withKw), iNo = LG.goldenCovIndex(noSlots);
+  ok('the index leaves an UNMEASURED keywords key out, and keeps measured-absent as null', !('keywords' in iNm.cov) && iKw.cov.keywords === 22.3 && iNo.cov.keywords === null);
+  const rNo = LG.histReading({ t: 1, rows: 10, attrs: noSlots }), rNm = LG.histReading({ t: 1, rows: 10, attrs: base });
+  ok('a reading keeps "measured, no slots" (null) apart from "not measured" (no key)', rNo.cov.keywords === null && !('keywords' in rNm.cov));
+  ok('the index round-trips all three states', !('keywords' in LG.attrsFromCov(iNm.cov)) && LG.attrsFromCov(iKw.cov).keywords.cov === 22.3 && LG.attrsFromCov(iNo.cov).keywords.present === false);
+  const p = LG.profileFor('Reiss', {});
+  ok('not measured is left out of the score — never counted as missing', LG.goldenScore(base, p).score > LG.goldenScore(noSlots, p).score && !LG.goldenScore(base, p).recMissing.includes('keywords'));
+  ok('a feed with no keyword slots counts it at 0, listed missing like any recommended attribute', LG.goldenScore(noSlots, p).recMissing.includes('keywords'));
+  ok('keywords is scored as a recommended attribute (×1, ×2 when a profile stars it)',
+    LG.goldenScore(withKw, p).parts.some((x) => x.key === 'keywords' && x.w === 1) &&
+    LG.goldenScore(withKw, { expected: ['keywords'], waived: [] }).parts.some((x) => x.key === 'keywords' && x.w === 2) &&
+    !LG.goldenScore(withKw, { expected: [], waived: ['keywords'] }).parts.some((x) => x.key === 'keywords'));
+  ok('…and a profile may star or waive it (it is not a required attribute)', LG.profileFor('X', { clients: { X: { expected: ['keywords'] } } }).expected.includes('keywords'));
+
+  // history: the day keywords started being measured is a change of MEASUREMENT, not a move
+  ok('a reading from before 30 Sep and one after are on different bases', LG.histBasis(rNm) !== LG.histBasis(rNo) && LG.histBasis(rNo) === LG.histBasis({ cov: { keywords: 40 } }));
+  ok('…so the first measured scan is recorded, never dropped as "nothing moved"', LG.histChanged(rNm, Object.assign({}, rNm, { t: 2, cov: Object.assign({}, rNm.cov, { keywords: null }) })));
+  const h = { v: 1, r: [Object.assign({}, rNm, { t: Date.UTC(2026, 8, 28, 9) }), Object.assign({}, rNo, { t: Date.UTC(2026, 8, 30, 9) })], s: ['2026-09-28', '2026-09-29', '2026-09-30'], q: [] };
+  const ser = LG.histSeries(h, p, { days: 30, today: '2026-09-30' });
+  ok('Leadership\'s series starts the line where keywords started being measured — no jump drawn', ser.start === '2026-09-30' && ser.gs.length === 1 && ser.sum.gs.delta === null, ser);
+
+  // alerts: a baseline from before keywords existed is not a "keywords appeared" event
+  const nb = LG.diffCoverage({ attrs: base }, { attrs: withKw });
+  ok('no "keywords appeared" alert against a baseline that never measured it', !nb.some((a) => a.label === 'keywords'), nb);
+  const dr = LG.diffCoverage({ attrs: Object.assign({}, base, { keywords: { present: true, cov: 60 } }) }, { attrs: withKw });
+  ok('a real keyword drop on the same basis still warns (recommended — never crit)', dr.some((a) => a.label === 'keywords' && a.sev === 'warn'), dr);
+
+  // the sheet (gviz) lane: absent only when the sheet has no keyword slots
+  const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  const eng = readFileSync(new URL('../cloudflare/feedspark-deck/src/labelguard.js', import.meta.url), 'utf8');
+  ok('the gviz lane only ever says ABSENT — with slots it leaves keywords unmeasured', /if \(attrCols && !kwSlotCols\(head\[0\]\)\.length\) snap\.attrs\.keywords = \{ present: false \};/.test(eng));
+  ok('→ Brief files keywords in the keyword task family', /attr === 'keywords' \? 'Keywords Optimisation - Catalogue coverage - '/.test(wk));
+
+  // ONE rule: the Keyword Calendar's saturation reads a value exactly as the engine does
+  const kc = readFileSync(new URL('../docs/FeedSpark_KWCal.html', import.meta.url), 'utf8');
+  const m = kc.match(/function kwKind\(v\)\{[\s\S]*?return 'kw'; \}/);
+  const twin = m ? new Function(m[0] + '; return kwKind;')() : null;
+  const tb = twin ? TABLE.filter(([v]) => twin(v) !== LG.kwValueKind(v)) : TABLE;
+  ok('the Keyword Calendar counts a keyword exactly as the Golden Score does', !!twin && tb.length === 0, tb);
+  ok('…in BOTH of its stream loops, and stamps the reading so an old one says so',
+    (kc.match(/var kk=kwKind\(r\[kwc\[ki\]\]\); if\(kk==='kw'\)sflag=1; else if\(kk==='hash'\)sid=1;/g) || []).length === 2 &&
+    (kc.match(/sat[=:]\{n:satN,cols:kwc\.length,v:SAT_V,id:satId\}/g) || []).length === 2 && /var old=\(idxS\.sat\.v\|\|1\)<SAT_V;/.test(kc));
 }
 
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);

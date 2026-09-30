@@ -178,6 +178,7 @@ window.addEventListener('load',restore);
   .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
   /* industry best-practice layer: ★ scored attrs, waived rows, bar ticks, profile editor */
   .bpstar{color:var(--orange-deep);font-size:10px;cursor:default}
+  .fs-std{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--orange-deep);border:1px solid rgba(237,111,11,.35);border-radius:100px;padding:1px 6px;margin-left:5px;cursor:default}
   .at-row.waived{opacity:.5}
   .wv{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:1px 6px;margin-left:4px}
   .at-bar{position:relative}
@@ -924,6 +925,9 @@ window.addEventListener('load',restore);
     { k: 'age_group', t: 'cond', a: 1, n: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
     { k: 'google_product_category', t: 'rec', n: 'Google auto-assigns; submit to override' },
     { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+    // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
+    // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
+    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword phrases in g:product_type 2–10 — a hash or placeholder is not a keyword' },
     { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
     { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
@@ -948,11 +952,23 @@ window.addEventListener('load',restore);
   // scored over the products whose Google category calls for them (a.cov is that coverage),
   // weighted by the share of the catalogue they cover, and not at all when none does (a.na)
   function scopeShare(a) { var c = a && a.scope; return c && c.t ? Math.min(1, c.n / c.t) : 1; }
+  // the keywords row, in words: how deep the keyworded products go, and the ids that are not keywords
+  function kwNote(a) {
+    if (!a || !a.present) return 'no keyword slots in this feed';
+    return (a.per ? a.per + ' phrase' + (a.per === 1 ? '' : 's') + ' per keyworded product' : 'no keyword phrases yet') +
+      (a.hash ? ' · ' + fmt(a.hash) + ' carry an id, not a keyword' : '');
+  }
+  function kwWhy(a) {
+    if (!a || !a.present) return '';
+    return ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword phrase' +
+      (a.hash ? '; ' + fmt(a.hash) + ' products hold a 32-character id in a keyword slot — an id is not a keyword, so it is not counted' : '');
+  }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
     var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
+      if (s.d && !attrs[s.k]) return;   // not measured on this read — never scored as missing
       var a = attrs[s.k] || { present: false };
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
       if (a.na) return;
@@ -1065,6 +1081,10 @@ window.addEventListener('load',restore);
   function attrsFromCov(cov, sc, rows) {
     var at = {};
     SPEC.forEach(function (s) {
+      if (s.d) {   // measured only when its key is in the map (null = measured, absent)
+        if (cov && s.k in cov) at[s.k] = cov[s.k] != null ? { present: true, cov: cov[s.k] } : { present: false };
+        return;
+      }
       var c = cov ? cov[s.k] : null, n = sc ? sc[s.k] : null;
       var scope = n != null ? { n: n, t: Math.max(n, rows || 0) } : null;
       if (scope && !n) at[s.k] = { present: false, na: true, scope: scope };
@@ -1078,7 +1098,7 @@ window.addEventListener('load',restore);
   // reading measured on another basis (before GPC category scope) is never compared
   function estMove(f) {
     if (!PROF.ready || !f || !f.hp || !f.hp.cov || !f.cov || f.score == null) return null;
-    if (!!f.hp.sc !== !!f.sc) return null;
+    if (!hBasis(f.hp, f)) return null;   // never a move across a change of measurement
     var was = goldenScore(attrsFromCov(f.hp.cov, f.hp.sc, f.hp.rows), profileForC(f.client));
     if (was == null) return null;
     var d = Math.round((f.score - was) * 10) / 10;
@@ -1509,6 +1529,7 @@ window.addEventListener('load',restore);
     SPEC.forEach(function (x) {
       var a = s.attrs[x.k];
       if (a && a.present && !a.na && a.cov != null && isFinite(a.cov)) cov[x.k] = Math.round(a.cov * 10) / 10;
+      else if (x.d && a) cov[x.k] = null;   // measured and absent — kept, so "measured" survives (histReading)
       if (a && a.scope) { sc[x.k] = a.scope.n; any = true; }
     });
     var r = { t: +s.t || Date.now(), rows: Math.max(0, Math.round(+s.rows || 0)), cov: cov };
@@ -1533,7 +1554,13 @@ window.addEventListener('load',restore);
     return out.sort(function (m, n) { return mag(n) - mag(m) || (m[0] < n[0] ? -1 : 1); });
   }
   function hScore(r, prof) { return r ? goldenScore(attrsFromCov(r.cov, r.sc, r.rows), prof) : null; }
-  function hBasis(a, b) { return !!(a && a.sc) === !!(b && b.sc); }   // measured the same way?
+  // mirrors labelguard.js histBasis — HOW a reading was measured: with or without GPC category scope,
+  // and which derived attributes it read (keywords from 30 Sep 2026). Different bases are never compared
+  function hBase(r) {
+    if (!r) return '';
+    return (r.sc ? 's' : '-') + SPEC.filter(function (x) { return x.d; }).map(function (x) { return r.cov && x.k in r.cov ? 'k' : '-'; }).join('');
+  }
+  function hBasis(a, b) { return hBase(a) === hBase(b); }   // measured the same way?
   function hDelta(n) { return Math.round(n * 10) / 10; }
   function hSigned(n, unit) {
     var v = hDelta(n);
@@ -1975,12 +2002,17 @@ window.addEventListener('load',restore);
           : (avg == null ? 'none in feed' : 'avg fill ' + avg + '%')) + '</span></div>' +
         '<p class="tier-sub">' + T.sub + '</p>';
       list.forEach(function (x) {
+        // KEYWORDS (Ray, 30 Sep 2026) — read per product on the XML scan; a sheet-read feed or a scan
+        // from before 30 Sep never measured it, which is NOT the same as a feed without keywords
+        var nm = !!x.d && !s.attrs[x.k];
         var a = s.attrs[x.k] || { present: false };
-        var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+        var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
         var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
-          '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) +
+          (x.h ? '<span class="at-nm" title="Keyword phrases in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
+            '<span class="fs-std" title="A FeedSpark standard, not a Google specification requirement — scored like a recommended attribute">FeedSpark</span>'
+            : '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k)) +
           (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
           (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
         // what the coverage is a share OF — the products Google asks this attribute of
@@ -1988,7 +2020,12 @@ window.addEventListener('load',restore);
         var basisTip = a.scope && gs ? ' · scored over the ' + fmt(a.scope.n) + ' of ' + fmt(a.scope.t || s.rows) + ' products in ' + gs +
           (a.scope.u ? ' (' + fmt(a.scope.u) + ' of them carry no readable category and are counted in)' : '') +
           (a.all != null ? ' · ' + a.all + '% across the whole catalogue' : '') : '';
-        if (na) {
+        if (nm) {
+          row += '<span class="at-miss" title="Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored">not measured</span>' +
+            '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
+            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 09:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
+          h += row + '<span class="at-act"></span></div>'; return;
+        } else if (na) {
           row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc('No ' + gs + ' products in this feed — not scored. ' + x.n) + '">no ' + esc(gs) + ' products — not scored</span>';
@@ -2007,15 +2044,19 @@ window.addEventListener('load',restore);
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip) + '">' + esc(basis ? basis + ' — ' + x.n : x.n) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.d ? 'no keyword slots' : 'not in feed') + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
+        if (x.h) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
+          h += row + '<span class="at-act"><button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button></span></div>';
+          return;
+        }
         row += '<span class="at-act">' +
           '<button class="abtn' + (stamp ? ' asked' : '') + '" data-ask="' + esc(x.k) + '" title="' +
           (stamp ? 'Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + ' — click to compose again'
@@ -2179,6 +2220,22 @@ window.addEventListener('load',restore);
     var x = SPEC.filter(function (sp) { return sp.k === attr; })[0]; if (!x) return;
     var a = s.attrs[attr] || { present: false };
     var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    if (x.h) {   // keywords — a keyword brief (cat keyword), in the keyword task family
+      var todo = a.present ? Math.max(0, s.rows - a.filled) : s.rows;
+      var kl = [
+        'Keywords: phrases in g:product_type 2–10 (FeedSpark keyword injection)',
+        'Current: ' + (a.present ? fmt(a.filled) + ' of ' + fmt(s.rows) + ' products keyworded (' + a.cov + '%)' + (a.per ? ', ' + a.per + ' phrases each on average' : '') : 'no keyword slots in the feed'),
+        a.present && a.hash ? 'Note: ' + fmt(a.hash) + ' products carry a 32-character id in a keyword slot — an id is not a keyword and is not counted' : '',
+        'Target: keyword the remaining ' + fmt(todo) + ' products',
+        'Source: Golden Record scorecard (/golden)',
+      ].filter(Boolean);
+      try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+        '&attr=keywords', { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+      location.href = '/workflow?brief=' + b64url({ client: p.client,
+        task: 'Keywords Optimisation - Catalogue coverage - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+        cat: 'keyword', scope: kl.join('\n') });
+      return;
+    }
     var tierName = x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required in specific cases' : (x.t === 'ai' ? 'conversational AI' : 'recommended'));
     var lines = [
       'Attribute: g:' + attr + ' (' + tierName + ' — ' + x.n + ')',
@@ -2450,7 +2507,7 @@ window.addEventListener('load',restore);
     var d = CACHE[k]; if (!d || !d.snapshot || !R.matrix) return null;
     var s = d.snapshot, prof = profileForC(parts(k).client), base = goldenScore(s.attrs, prof);
     var attrs2 = {};
-    SPEC.forEach(function (x) { var a = s.attrs[x.k] || { present: false }; attrs2[x.k] = { present: !!a.present, cov: a.cov || 0 }; });
+    SPEC.forEach(function (x) { if (x.d && !s.attrs[x.k]) return; var a = s.attrs[x.k] || { present: false }; attrs2[x.k] = { present: !!a.present, cov: a.cov || 0 }; });
     Object.keys(R.matrix.attrs).forEach(function (kk) {
       var mx = R.matrix.attrs[kk]; if (!mx.blank || !mx.found || !attrs2[kk]) return;
       var cov = attrs2[kk].present ? attrs2[kk].cov : 0;
@@ -3604,12 +3661,13 @@ window.addEventListener('load',restore);
     var s = d.snapshot, rf = refFor(d), ref = rf.ref;
     var out = ['attribute,tier,filled,coverage_pct,scored_over_products,' + (rf.isDaily ? 'yesterday_pct' : 'known_good_pct') + ',delta_pp,spec_note'];
     SPEC.forEach(function (x) {
+      var nm = !!x.d && !s.attrs[x.k];
       var a = s.attrs[x.k] || { present: false };
-      var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+      var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
       var same = refA && !!refA.scope === !!a.scope;   // never difference two bases
       var was = refA && refA.present && same ? refA.cov : '';
-      out.push(['g:' + x.k, x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended'),
-        a.present ? a.filled : '', a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed'),
+      out.push([(x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
+        a.present ? a.filled : '', nm ? 'not_measured' : (a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed')),
         a.scope ? a.scope.n : s.rows, was,
         (a.present && !a.na && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
         '"' + String(x.n).replace(/"/g, '""') + '"'].join(','));

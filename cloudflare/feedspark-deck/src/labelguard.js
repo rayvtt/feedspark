@@ -240,6 +240,9 @@ export async function scanFeed(fetchFn, src, meta, keys, opts) {
 
   const snap = snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys);
   if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
+  // keywords: a column count cannot tell a phrase from an id, so this lane only ever says ABSENT
+  // (no keyword slots in the sheet at all) — with slots present it leaves the attribute unmeasured
+  if (attrCols && !kwSlotCols(head[0]).length) snap.attrs.keywords = { present: false };
   return snap;
 }
 
@@ -811,6 +814,12 @@ export const ATTR_SPEC = [
   { key: 'age_group',     req: 'cond', apparel: true, note: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
   { key: 'google_product_category', req: 'rec', note: 'Google auto-assigns; submit to override' },
   { key: 'product_type',  req: 'rec', note: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+  // KEYWORDS (Ray, 30 Sep 2026: "add keywords fields (product_type2,3,4,5,6,7,8,9) to the golden score
+  // mix also"): not a Google spec field — FeedSpark's keyword injection into the numbered
+  // g:product_type slots — so it is `house` (the page badges it as a FeedSpark standard, never as
+  // Google's) and `derived` (no column is called "keywords"; it is READ per product across the
+  // slots, see kwValueKind). Scored like any recommended attribute.
+  { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword phrases in g:product_type 2–10 — a hash or placeholder is not a keyword' },
   { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
   { key: 'additional_image_link', req: 'rec', note: 'up to 10 — fuels image cycling' },
   { key: 'product_highlight', req: 'rec', note: '2–100 highlights — AI-surfaces read these' },
@@ -845,6 +854,7 @@ export function findAttrCols(headerRow) {
   const norm = (headerRow || []).map(normHeader);
   const out = {};
   for (const s of ATTR_SPEC) {
+    if (s.derived) { out[s.key] = -1; continue; }   // read per product, never a column
     let i = norm.indexOf(s.key);
     if (i < 0 && ATTR_ALIASES[s.key]) {
       for (const a of ATTR_ALIASES[s.key]) { i = norm.indexOf(a); if (i >= 0) break; }
@@ -859,12 +869,55 @@ export function findAttrCols(headerRow) {
 export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
   const attrs = {};
   for (const s of ATTR_SPEC) {
+    if (s.derived) continue;   // measured per product by the lane that can (keywordAttr) — or not at all
     const c = attrCols[s.key];
     if (c == null || c < 0) { attrs[s.key] = { present: false }; continue; }
     const filled = Math.max(0, Math.round(parseFloat(countsRow && countsRow[attrPos[s.key]]) || 0));
     attrs[s.key] = { present: true, filled, cov: rows ? Math.min(100, Math.round((filled / rows) * 1000) / 10) : 0 };
   }
   return attrs;
+}
+
+/* ---- KEYWORDS, READ PER PRODUCT (Ray, 30 Sep 2026: "add keywords fields (product_type2,3,4,5,6,7,8,9)
+   to the golden score mix also?"). FeedSpark's keyword injection writes phrases into the numbered
+   g:product_type slots — slot 1 (or the bare column) is the category tree, 2..10 the keywords.
+   Counting a FILLED slot as a keyword would be wrong on the live estate (sampled 30 Sep 2026): on
+   Schuh, Reiss and Hobbycraft slot 2 holds a 32-character hex id on ~100% of products and the real
+   phrases start at slot 3, and YuMOVE carries #N/A on 65% — "any slot filled" reads those feeds
+   100% / 100% / 99.7% / 75% keyworded against a real 37% / 22% / 50% / 11%. So a value only counts
+   when it is a PHRASE: not a long hex id, not a spreadsheet placeholder. The coverage is the share
+   of products carrying at least one keyword phrase; `per` is how many phrases a keyworded product
+   carries, `hash` how many products hold an id in a keyword slot (named on the row, so the reading
+   explains itself). The Keyword Calendar's saturation reads the SAME rule (its twin is pinned).
+   Only a per-product read can do this, so only the XML lanes measure it: the gviz sheet lane counts
+   columns, so it reports the attribute ABSENT when the sheet has no keyword slots at all and leaves
+   it UNMEASURED otherwise — never a column count that would call an id a keyword. */
+export const KW_SLOT_MIN = 2, KW_SLOT_MAX = 10;
+const KW_HASH = /^[0-9a-f]{24,}$/i;
+const KW_PLACEHOLDER = /^(#?n\/?a|#ref!|#value!|#name\?|#div\/0!|null|none|nil|undefined|tbc|tbd|-+|\.+|0)$/i;
+export function kwValueKind(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return 'empty';
+  if (KW_HASH.test(s)) return 'hash';
+  if (KW_PLACEHOLDER.test(s)) return 'ph';
+  return 'kw';
+}
+// the keyword slots in a header: product_type(2..10), product_type2 or product_type_2 — never the tree
+export function kwSlotCols(headerRow) {
+  const hits = [];
+  (headerRow || []).map(normHeader).forEach((k, i) => {
+    const m = /^product_type(?:\((\d+)\)|_?(\d+))$/.exec(k);
+    const n = m ? +(m[1] || m[2]) : 0;
+    if (n >= KW_SLOT_MIN && n <= KW_SLOT_MAX) hits.push(i);
+  });
+  return hits;
+}
+// the keywords attribute from a per-product tally {filled, phr, hash} over `rows` products
+export function keywordAttr(slotCount, k, rows) {
+  if (!slotCount) return { present: false };
+  const t = k || {};
+  return { present: true, filled: t.filled || 0, cov: rows ? Math.min(100, Math.round(((t.filled || 0) / rows) * 1000) / 10) : 0,
+    slots: slotCount, per: t.filled ? Math.round((t.phr / t.filled) * 10) / 10 : 0, hash: t.hash || 0 };
 }
 
 /* ---- GPC CATEGORY SCOPE (Ray, 23 Sep 2026, on Hobbycraft's material 47.9% / pattern 43.9%:
@@ -1035,6 +1088,7 @@ export function goldenCovIndex(attrs) {
   const cov = {}, sc = {};
   for (const s of ATTR_SPEC) {
     const a = (attrs || {})[s.key];
+    if (s.derived && !a) continue;   // not measured — the KEY is absent, so a re-score leaves it out
     cov[s.key] = a && a.present && !a.na ? a.cov : null;
     if (a && a.scope) sc[s.key] = a.scope.n;
   }
@@ -1085,11 +1139,14 @@ export function xmlCollector(meta) {
   // product_type VALUES (the tree + every keyword slot) — histograms of count -> SKUs
   let ptSlots = [];
   const lblHist = {}, ptHist = {};
+  let kwCols = [];                       // keyword slots (product_type 2..10), read per product
+  const kwT = { filled: 0, phr: 0, hash: 0 };
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
     ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
     ptSlots = wantPT ? slotCols(header, 'product_type') : [];
+    kwCols = wantPT ? kwSlotCols(header) : [];
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
     { const ac = findAttrCols(header).availability; avCol = ac == null ? -1 : ac; }
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
@@ -1124,6 +1181,11 @@ export function xmlCollector(meta) {
         let pn = 0;
         for (const ci of ptSlots) if (String(r[ci] == null ? '' : r[ci]).trim() !== '') pn++;
         ptHist[pn] = (ptHist[pn] || 0) + 1;
+        // keywords: a product counts when a slot holds a PHRASE (an id or a placeholder is not one)
+        let kn = 0, kh = 0;
+        for (const ci of kwCols) { const kind = kwValueKind(r[ci]); if (kind === 'kw') kn++; else if (kind === 'hash') kh = 1; }
+        if (kn) { kwT.filled++; kwT.phr += kn; }
+        if (kh) kwT.hash++;
       }
       if (attrFilled) gsc.add(r);
       {
@@ -1182,6 +1244,7 @@ export function xmlCollector(meta) {
     }
     const snap = snapshotFromParts({ client: meta.client, market: meta.market, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
     if (attrCols) snap.attrs = applyGpcScope(attrsFromCounts(attrCols, attrPos, countsRow, snap.rows), gsc.counts(), snap.rows);
+    if (attrCols) snap.attrs.keywords = keywordAttr(kwCols.length, kwT, snap.rows);
     // per-SKU population — only a full read can say it, so only this lane carries it (the
     // gviz lane counts columns, never rows; a sheet-backed feed's card says so)
     snap.labelPop = popProfile(lblHist);
@@ -1269,6 +1332,7 @@ export function goldenScore(attrs, profile) {
   const parts = [];
   let idBest = null;
   for (const s of ATTR_SPEC) {
+    if (s.derived && !attrs[s.key]) continue;   // not measured on this read (keywords on a sheet lane, a pre-30-Sep reading)
     const a = attrs[s.key] || { present: false };
     if (s.key === 'gtin' || s.key === 'mpn') {
       if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
@@ -1301,7 +1365,7 @@ export function goldenScore(attrs, profile) {
   for (const p of parts) { ws += p.w; sum += p.w * p.cov; }
   const score = ws ? Math.round((sum / ws) * 10) / 10 : 0;
   const reqMissing = ATTR_SPEC.filter((s) => s.req === 'required' && !(attrs[s.key] || {}).present).map((s) => s.key);
-  const gone = (s) => !(attrs[s.key] || {}).present && !(attrs[s.key] || {}).na;
+  const gone = (s) => !(s.derived && !attrs[s.key]) && !(attrs[s.key] || {}).present && !(attrs[s.key] || {}).na;
   const condMissing = ATTR_SPEC.filter((s) => s.req === 'cond' && gone(s)).map((s) => s.key);
   const recMissing = ATTR_SPEC.filter((s) => s.req === 'rec' && gone(s)).map((s) => s.key);
   const aiSpec = ATTR_SPEC.filter((s) => s.req === 'ai');
@@ -1320,6 +1384,9 @@ export function diffCoverage(base, cur, th) {
   const A = [];
   if (!base || !cur || !base.attrs || !cur.attrs) return A;
   for (const s of ATTR_SPEC) {
+    // a derived attribute one side never measured (a baseline from before 30 Sep, a sheet-lane
+    // read) is not an attribute that appeared or vanished
+    if (s.derived && (!base.attrs[s.key] || !cur.attrs[s.key])) continue;
     const b = base.attrs[s.key] || { present: false };
     const c = cur.attrs[s.key] || { present: false };
     const disp = s.key;
@@ -1396,11 +1463,22 @@ export const HIST_MAX = 500;           // stored readings (≈ a year of daily c
 export const HIST_DAYS_MAX = 400;      // scan-day calendar
 export const HIST_QA_MAX = 200;        // content-quality / AI-readiness analyses
 export function histDay(t) { return new Date(+t).toISOString().slice(0, 10); }
+const HIST_DERIVED = ATTR_SPEC.filter((s) => s.derived).map((s) => s.key);
+// HOW a reading was measured: with or without GPC category scope, and which derived attributes it
+// read (keywords from 30 Sep 2026). Two readings on different bases are two different measurements
+// — never compared, never drawn as a move (the page's hBasis is the same function)
+export function histBasis(r) {
+  if (!r) return '';
+  return (r.sc ? 's' : '-') + HIST_DERIVED.map((k) => (r.cov && k in r.cov ? 'k' : '-')).join('');
+}
 export function histReading(snap) {
   if (!snap || !snap.attrs) return null;
   const { cov, sc } = goldenCovIndex(snap.attrs);
   const c = {};
-  for (const k of Object.keys(cov)) if (cov[k] != null && isFinite(cov[k])) c[k] = Math.round(cov[k] * 10) / 10;
+  for (const k of Object.keys(cov)) {
+    if (cov[k] != null && isFinite(cov[k])) c[k] = Math.round(cov[k] * 10) / 10;
+    else if (HIST_DERIVED.indexOf(k) >= 0) c[k] = null;   // measured and absent — kept, so "measured" survives
+  }
   const r = { t: +snap.t || Date.now(), rows: Math.max(0, Math.round(+snap.rows || 0)), cov: c };
   if (Object.keys(sc).length) r.sc = sc;
   return r;
@@ -1427,7 +1505,7 @@ export function histMoved(a, b) {
 // measuring basis (with vs without GPC scope — recorded so the page can refuse to compare it)
 export function histChanged(a, b, pp) {
   if (!a) return true;
-  if (!!a.sc !== !!b.sc) return true;
+  if (histBasis(a) !== histBasis(b)) return true;
   const lim = pp == null ? HIST_MOVE_PP : pp;
   return histMoved(a, b).some((m) => typeof m[1] !== 'number' || typeof m[2] !== 'number' || Math.abs(m[2] - m[1]) >= lim);
 }
@@ -1485,7 +1563,7 @@ export function histAdd(hist, r, opts) {
 export function histSeed(past, cur, opts) {
   let h = histEmpty();
   (past || []).map(histReading)
-    .filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)
+    .filter((x) => x && cur && x.t < cur.t && histBasis(x) === histBasis(cur))
     .sort((a, b) => a.t - b.t)
     .forEach((x) => { h = histAdd(h, x).hist; });
   return histAdd(h, cur, opts).hist;
@@ -1595,6 +1673,10 @@ export function histIdx(h) {
 export function attrsFromCov(cov, sc, rows) {
   const at = {};
   for (const s of ATTR_SPEC) {
+    if (s.derived) {   // measured only when its key is in the map (null = measured, absent)
+      if (cov && s.key in cov) at[s.key] = cov[s.key] != null ? { present: true, cov: cov[s.key] } : { present: false };
+      continue;
+    }
     const c = cov ? cov[s.key] : null, n = sc ? sc[s.key] : null;
     const scope = n != null ? { n, t: Math.max(n, rows || 0) } : null;
     if (scope && !n) at[s.key] = { present: false, na: true, scope };
@@ -1625,7 +1707,7 @@ export function histSeries(hist, profile, opts) {
   const scanned = {};
   ((hist && hist.s) || []).forEach((d) => { scanned[d] = 1; });
   if (live) scanned[histDay(live.t)] = 1;
-  const basis = reads.length ? !!reads[reads.length - 1].sc : null;
+  const basis = reads.length ? histBasis(reads[reads.length - 1]) : null;
   const qa = ((hist && hist.q) || []).filter((x) => x && x.t).slice().sort((a, b) => a.t - b.t);
   const lists = { q: qa.filter((x) => x.q != null), air: qa.filter((x) => x.air != null) };
   const days = [], gs = [], q = [], air = [];
@@ -1644,7 +1726,7 @@ export function histSeries(hist, profile, opts) {
     while (ri + 1 < reads.length && histDay(reads[ri + 1].t) <= d) ri++;
     const pick = pickIn(reads, r0, ri, d);
     const close = pick >= 0 ? reads[pick] : (ri >= 0 ? reads[ri] : null);
-    const ok = scanned[d] && close && !!close.sc === basis;
+    const ok = scanned[d] && close && histBasis(close) === basis;
     days.push(d);
     // a reading carried across quiet days is scored once, not once a day
     if (ok && !memo.has(close)) memo.set(close, histScore(close, profile));

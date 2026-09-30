@@ -1015,16 +1015,19 @@ function kpis(){
     var cols=idxS.sat.cols||0, age=idxS.t?Math.floor((Date.now()-idxS.t)/86400000):null;
     var thin=(sp>=99&&cols<=1);                                  // every SKU, one slot — check the feed
     var stale=(age!=null&&age>14);
+    var old=(idxS.sat.v||1)<SAT_V;                                // measured when an id still counted as a keyword
     var sub=fmt(idxS.sat.n)+' of '+fmt(idxS.__total);
     var tip=fmt(idxS.sat.n)+' of '+fmt(idxS.__total)+' live '+MKT.toUpperCase()+' SKUs carry a value in the numbered g:product_type slots (2–10), read across '+cols+' keyword column'+(cols===1?'':'s')
       +(age!=null?' · measured '+(age===0?'today':age+' day'+(age===1?'':'s')+' ago'):'')
       +(!cols?' — no keyword fields found in this feed yet':'')
       +(thin?' — CHECK: every SKU carries exactly one extra product_type value. Keyword injection varies per SKU, so this is more likely a second category path than keyword coverage. Open the feed before reporting it as optimised.':'')
-      +(stale?' — this reading is '+age+' days old; ⟳ Sync product types to refresh it':'');
-    satK='<div class="kpi '+(thin||stale?'warn':(sp>=85?'good':(sp<60?'warn':'')))+'" title="'+esc(tip)+'">'
-      +'<div class="n">'+sp+'%'+(thin?' <span class="kq" title="Check the feed — see the tooltip">?</span>':'')+'</div>'
+      +(stale?' — this reading is '+age+' days old; ⟳ Sync product types to refresh it':'')
+      +(old?' — READ BEFORE 30 SEP 2026, when a 32-character id in a keyword slot still counted as a keyword; ⟳ Sync product types to re-read it':'')
+      +(idxS.sat.id?' — '+fmt(idxS.sat.id)+' SKUs carry an id (not a keyword) in a keyword slot; those are not counted':'');
+    satK='<div class="kpi '+(thin||stale||old?'warn':(sp>=85?'good':(sp<60?'warn':'')))+'" title="'+esc(tip)+'">'
+      +'<div class="n">'+sp+'%'+(thin||old?' <span class="kq" title="'+(old?'Measured before ids were excluded — ⟳ Sync product types to re-read':'Check the feed — see the tooltip')+'">?</span>':'')+'</div>'
       +'<div class="l">Keyword saturation · '+MKT.toUpperCase()+'</div>'
-      +'<div class="kq2">'+esc(sub)+(stale?' · '+age+'d old':'')+'</div></div>'; }
+      +'<div class="kq2">'+esc(sub)+(old?' · re-sync':(stale?' · '+age+'d old':''))+'</div></div>'; }
   // WHOSE DESK IS IT ON — AND IT ADDS UP (Ray, 21 Sep 2026: "the numbers also don't make
   // sense"). The band showed 14 scheduled over 1 briefed + 1 live/done + 9 not briefed = 11,
   // and the missing three were real: the tiles covered intake/briefed/progress and
@@ -1522,11 +1525,22 @@ function attrIndex(rows,attr,pts,qs,conds){ // value→count for one attribute, 
     if(!hit)continue;
     var v=(row[3]||[])[ai]||''; if(!v)continue; m[v]=(m[v]||0)+1; }
   return m; }
+/* WHAT COUNTS AS A KEYWORD (Ray, 30 Sep 2026, bringing keywords into the Golden Score): a FILLED slot
+   is not a keyword. On Schuh, Reiss and Hobbycraft g:product_type(2) carries a 32-character hex id on
+   ~100% of products and the phrases start at slot 3; YuMOVE carries #N/A — so "any slot filled" read
+   those boards ~100% saturated against a real 37% / 22% / 50% (the 21 Sep "why 100%?" was this id).
+   The twin of labelguard.js kwValueKind — tools/test_labelguard.mjs holds the two to one table, so the
+   calendar's saturation and the Golden Score's keywords row can never read the same feed two ways. */
+function kwKind(v){ var s=String(v==null?'':v).trim(); if(!s)return 'empty';
+  if(/^[0-9a-f]{24,}$/i.test(s))return 'hash';
+  if(/^(#?n\/?a|#ref!|#value!|#name\?|#div\/0!|null|none|nil|undefined|tbc|tbd|-+|\.+|0)$/i.test(s))return 'ph';
+  return 'kw'; }
+var SAT_V=2;   // a stored reading without v:2 counted ids as keywords — the tile says so until a re-sync
 function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU cache (text counts need per-SKU text)
   if(skuCache(brand,mkt))return cb(true);
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser)return cb(false);
   var key=brand+'|'+mkt; if(CACHING[key]){CACHING[key].push(cb);return;} CACHING[key]=[cb];
-  var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0,aCols={};
+  var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0,satId=0,aCols={};
   // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
   var parser=null;
   function onRow(r){
@@ -1538,8 +1552,8 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
         else if(KW_ATTRS.indexOf(k)>=0&&aCols[k]==null)aCols[k]=i;
         if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
       return; }
-    var sflag=0; for(var ki=0;ki<kwc.length;ki++){ if(String(r[kwc[ki]]||'').trim()){sflag=1;break;} }
-    satN+=sflag;
+    var sflag=0, sid=0; for(var ki=0;ki<kwc.length;ki++){ var kk=kwKind(r[kwc[ki]]); if(kk==='kw')sflag=1; else if(kk==='hash')sid=1; }
+    satN+=sflag; satId+=sid;
     buf.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
       ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag,
       KW_ATTRS.map(function(a){return aCols[a]!=null?String(r[aCols[a]]||'').trim().toLowerCase():''})]);
@@ -1553,7 +1567,7 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
         var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[0][j])n++; }); if(n>best){best=n;wci=j} });
         SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1],b[2],b[3]]})};
         // keep the always-shown saturation KPI live: refresh the stored audit off this stream
-        var rr=STORE[brand]; if(rr&&rr.ptidx&&rr.ptidx[mkt]){ rr.ptidx[mkt].sat={n:satN,cols:kwc.length}; rr.ptidx[mkt].__total=buf.length; save(); }
+        var rr=STORE[brand]; if(rr&&rr.ptidx&&rr.ptidx[mkt]){ rr.ptidx[mkt].sat={n:satN,cols:kwc.length,v:SAT_V,id:satId}; rr.ptidx[mkt].__total=buf.length; save(); }
         (CACHING[key]||[]).forEach(function(f){f(true)}); delete CACHING[key]; return; }
       var chunk=dec.decode(x.value,{stream:true});
       if(!parser){ if(!chunk.trim())return step(); parser=mkParser(chunk); }
@@ -2549,7 +2563,7 @@ function syncPT(){
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0, aCols={};
+    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0, satId=0, aCols={};
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
     // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
     var parser=null;
@@ -2571,8 +2585,8 @@ function syncPT(){
         cmaps=cands.map(function(){return {}});
         return; }
       rows++;
-      var sflag=0; for(var ki=0;ki<kwc.length;ki++){ if(String(r[kwc[ki]]||'').trim()){sflag=1;break;} }
-      satN+=sflag;
+      var sflag=0, sid=0; for(var ki=0;ki<kwc.length;ki++){ var kk=kwKind(r[kwc[ki]]); if(kk==='kw')sflag=1; else if(kk==='hash')sid=1; }
+      satN+=sflag; satId+=sid;
       // per-SKU cache (in-memory only): candidate PT values + searchable text + keyworded flag —
       // free-text scope filters and saturation lifts count against this without another stream
       cache.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
@@ -2602,7 +2616,7 @@ function syncPT(){
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
           SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2],c[3]]})};
-          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length}};
+          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length,v:SAT_V,id:satId}};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
             err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
