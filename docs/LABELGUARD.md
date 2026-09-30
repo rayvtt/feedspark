@@ -957,13 +957,41 @@ how many products carry an id, so the reading explains itself.
 **Three states, never blurred:**
 
 - **Measured** — the XML scan reads every product (`xmlCollector` → `keywordAttr`: coverage,
-  phrases per keyworded product, products carrying an id). Every XML lane measures it: the 4×-daily
-  agent, the 09:00 UK run and the page's live scan.
+  keyword strings in total and per SKU, products carrying an id). Every XML lane measures it: the
+  4×-daily agent, the 09:00 UK run and the page's live scan.
 - **Absent** — the feed has no keyword slots at all. Scored at 0, like any recommended attribute
   the feed does not carry. The sheet (gviz) lane can say this much from the header.
 - **Not measured** — the sheet lane when keyword slots exist (a column count cannot tell a phrase
   from an id), and every snapshot or reading from before 30 Sep. Left OUT of the score, never
   counted as missing. In the index this is the key being absent from `cov`; measured-absent is `null`.
+
+**Keyword strings per SKU, not slots.** Ray, same day, on the first version's *"3.5 phrases per
+keyworded product"*: *"keywords look like multiple phrases separated by chevrons … some products
+don't have keywords at all. You could say, on average, how many keyword strings there are per SKU."*
+Each slot is a chain, e.g. `superdry hoodie > purple hoodie > mens hoodie > …`, so the first version
+was counting filled slots (about 3 on Superdry GB) where the keyworded products carry about 23
+strings each. `kwStrings` counts the strings between chevrons (an id or a placeholder inside a chain
+is not counted either), and `keywordAttr` reports `strings` (the catalogue's total) and `perSku`,
+which is the total divided by EVERY SKU. Products with no keywords count as none, because an average
+over only the keyworded products describes a catalogue that does not exist. The row reads *"8.2
+keyword strings per SKU"* and the tooltip shows the sum. A snapshot scanned before the string count
+carries the old slot figure (`per`), which the page never shows as strings; it reads *"strings per
+SKU counted on the next XML scan"* until the next scan. Coverage and the score are unchanged by this.
+
+Live on 30 Sep 2026 (full feeds, the collector as shipped):
+
+| Feed | SKUs | Keyworded | Keyword strings | Per SKU | (per keyworded SKU) |
+|---|---|---|---|---|---|
+| Superdry GB | 25,695 | 10,658 (41.5%) | 275,576 | **10.7** | 25.9 |
+| Schuh GB | 21,972 | 8,071 (36.7%) | 180,170 | **8.2** | 22.3 |
+| Reiss GB | 24,048 | 5,342 (22.2%) | 186,236 | **7.7** | 34.9 |
+| Hobbycraft GB | 24,648 | 12,283 (49.8%) | 178,491 | **7.2** | 14.5 |
+| Accessorize GB | 4,254 | 1,153 (27.1%) | 29,699 | **7.0** | 25.8 |
+| American Golf GB | 7,783 | 1,228 (15.8%) | 13,168 | **1.7** | 10.7 |
+| Monsoon GB | 10,627 | 550 (5.2%) | 11,179 | **1.1** | 20.3 |
+| YuMOVE GB | 85 | 9 (10.6%) | 63 | **0.7** | 7.0 |
+
+The last column is shown here only to explain the gap. The page prints the per-SKU figure.
 
 **Scoring.** `rec` tier, ×1; ★ in the profile editor lifts it to ×2, and it can be waived per brand
 or industry. It is `house: true`: the page badges it **FeedSpark**, never as a Google specification

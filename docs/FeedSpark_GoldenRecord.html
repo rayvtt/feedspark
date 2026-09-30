@@ -927,7 +927,7 @@ window.addEventListener('load',restore);
     { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
     // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
     // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
-    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword phrases in g:product_type 2–10 — a hash or placeholder is not a keyword' },
+    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
     { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
     { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
@@ -952,15 +952,20 @@ window.addEventListener('load',restore);
   // scored over the products whose Google category calls for them (a.cov is that coverage),
   // weighted by the share of the catalogue they cover, and not at all when none does (a.na)
   function scopeShare(a) { var c = a && a.scope; return c && c.t ? Math.min(1, c.n / c.t) : 1; }
-  // the keywords row, in words: how deep the keyworded products go, and the ids that are not keywords
+  // the keywords row, in words: keyword STRINGS per SKU — each chevron-separated phrase in each slot
+  // counted, averaged over EVERY product (the ones with none count as none — Ray, 30 Sep 2026: an
+  // average over only the keyworded products describes a catalogue that does not exist), and the
+  // ids that are not keywords. A scan from before the string count carries no perSku and says so.
   function kwNote(a) {
     if (!a || !a.present) return 'no keyword slots in this feed';
-    return (a.per ? a.per + ' phrase' + (a.per === 1 ? '' : 's') + ' per keyworded product' : 'no keyword phrases yet') +
+    return (a.perSku != null ? a.perSku + ' keyword string' + (a.perSku === 1 ? '' : 's') + ' per SKU' : 'strings per SKU counted on the next XML scan') +
       (a.hash ? ' · ' + fmt(a.hash) + ' carry an id, not a keyword' : '');
   }
-  function kwWhy(a) {
+  function kwWhy(a, rows) {
     if (!a || !a.present) return '';
-    return ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword phrase' +
+    return ' · a keyword string is one phrase between chevrons (>)' +
+      (a.perSku != null ? '; ' + fmt(a.strings) + ' strings across all ' + fmt(rows) + ' SKUs = ' + a.perSku + ' per SKU, the ' + fmt(Math.max(0, rows - a.filled)) + ' with no keywords counted as none' : '') +
+      ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword string' +
       (a.hash ? '; ' + fmt(a.hash) + ' products hold a 32-character id in a keyword slot — an id is not a keyword, so it is not counted' : '');
   }
   function goldenScore(attrs, prof) {
@@ -2010,7 +2015,7 @@ window.addEventListener('load',restore);
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
         var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
-          (x.h ? '<span class="at-nm" title="Keyword phrases in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
+          (x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
             '<span class="fs-std" title="A FeedSpark standard, not a Google specification requirement — scored like a recommended attribute">FeedSpark</span>'
             : '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k)) +
           (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
@@ -2044,7 +2049,7 @@ window.addEventListener('load',restore);
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a, s.rows) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
           row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.d ? 'no keyword slots' : 'not in feed') + '</span>' +
@@ -2223,8 +2228,8 @@ window.addEventListener('load',restore);
     if (x.h) {   // keywords — a keyword brief (cat keyword), in the keyword task family
       var todo = a.present ? Math.max(0, s.rows - a.filled) : s.rows;
       var kl = [
-        'Keywords: phrases in g:product_type 2–10 (FeedSpark keyword injection)',
-        'Current: ' + (a.present ? fmt(a.filled) + ' of ' + fmt(s.rows) + ' products keyworded (' + a.cov + '%)' + (a.per ? ', ' + a.per + ' phrases each on average' : '') : 'no keyword slots in the feed'),
+        'Keywords: keyword strings (chevron-separated) in g:product_type 2–10 (FeedSpark keyword injection)',
+        'Current: ' + (a.present ? fmt(a.filled) + ' of ' + fmt(s.rows) + ' products keyworded (' + a.cov + '%)' + (a.perSku != null ? ', ' + a.perSku + ' keyword strings per SKU on average' : '') : 'no keyword slots in the feed'),
         a.present && a.hash ? 'Note: ' + fmt(a.hash) + ' products carry a 32-character id in a keyword slot — an id is not a keyword and is not counted' : '',
         'Target: keyword the remaining ' + fmt(todo) + ' products',
         'Source: Golden Record scorecard (/golden)',

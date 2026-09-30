@@ -29,7 +29,7 @@ const COV = { id: 100, title: 100, description: 95, link: 100, image_link: 100, 
   brand: 100, gtin: 98, condition: 100, item_group_id: 100, color: 90, size: 96, gender: 100, age_group: 100,
   google_product_category: 100, product_type: 100, sale_price: 30, additional_image_link: 80, material: 40, pattern: 20 };
 const ROWS = 23449;
-const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, per: 4.9, hash: 23449 };   // Reiss GB, 30 Sep 2026
+const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, strings: 181970, perSku: 7.8, hash: 23449 };   // Reiss GB shape, 30 Sep 2026
 
 (async () => {
   const LG = await import('../cloudflare/feedspark-deck/src/labelguard.js');
@@ -87,8 +87,11 @@ const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, per: 4.9, hash: 2
     ok('the keywords row sits in the recommended tier', r && /Recommended/i.test(r.tier), r && r.tier);
     ok('…badged as a FeedSpark standard, never as a Google attribute', r && r.badge && !/^g:/.test(r.nm), r && r.nm);
     ok('it reads the per-product coverage', r && r.cov === '22.3%', r && r.cov);
-    ok('the note says how deep the keyworded products go and names the ids that are not keywords', r && /4\.9 phrases per keyworded product/.test(r.note) && /23,449 carry an id, not a keyword/.test(r.note), r && r.note);
-    ok('the tooltip explains the rule', r && /an id is not a keyword/.test(r.tip) && /read across 9 keyword slots/.test(r.tip), r && r.tip);
+    ok('the note reads keyword STRINGS per SKU (every SKU, not only the keyworded) and names the ids that are not keywords',
+      r && /^7\.8 keyword strings per SKU/.test(r.note) && !/keyworded product/.test(r.note) && /23,449 carry an id, not a keyword/.test(r.note), r && r.note);
+    ok('the tooltip explains the unit and the average: one phrase between chevrons, over all SKUs, the ones with none counted as none',
+      r && /a keyword string is one phrase between chevrons/.test(r.tip) && /181,970 strings across all 23,449 SKUs = 7\.8 per SKU, the 18,220 with no keywords counted as none/.test(r.tip) &&
+      /an id is not a keyword/.test(r.tip) && /read across 9 keyword slots/.test(r.tip), r && r.tip);
     ok('our own work: no client ask, no PDP scan — one keyword brief', r && !r.ask && !r.pdp && r.brief);
     const d = await dial(page), e = LG.goldenScore(attrs, prof).score;
     ok('the dial is the engine\'s score, keywords included', d === e, [d, e]);
@@ -102,8 +105,17 @@ const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, per: 4.9, hash: 2
     try { const x = /brief=([^&]+)/.exec(url)[1].replace(/-/g, '+').replace(/_/g, '/'); b = JSON.parse(Buffer.from(x, 'base64').toString('utf8')); } catch (e) {}
     ok('→ Brief opens a KEYWORD brief (cat keyword) in the keyword task family',
       b && b.cat === 'keyword' && /^Keywords Optimisation - Catalogue coverage - Reiss GB - \d{4}$/.test(b.task), b);
-    ok('…scoped with the coverage, the ids and the products still to keyword',
-      b && /5,229 of 23,449 products keyworded \(22\.3%\)/.test(b.scope) && /carry a 32-character id/.test(b.scope) && /keyword the remaining 18,220 products/.test(b.scope), b && b.scope);
+    ok('…scoped with the coverage, strings per SKU, the ids and the products still to keyword',
+      b && /5,229 of 23,449 products keyworded \(22\.3%\), 7\.8 keyword strings per SKU on average/.test(b.scope) && /carry a 32-character id/.test(b.scope) && /keyword the remaining 18,220 products/.test(b.scope), b && b.scope);
+    await page.close();
+  }
+
+  console.log('── measured before the string count (a scan from the morning of 30 Sep)');
+  {
+    const page = await open(attrsWith({ present: true, filled: 5229, cov: 22.3, slots: 9, per: 4.9, hash: 23449 }));
+    const r = await kwRow(page);
+    ok('an old reading never shows its slot count as strings — it says the next scan counts them',
+      r && /strings per SKU counted on the next XML scan/.test(r.note) && !/4\.9/.test(r.note + r.tip), r);
     await page.close();
   }
 

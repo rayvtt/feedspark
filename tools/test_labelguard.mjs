@@ -1568,6 +1568,14 @@ console.log('\n── keywords in the Golden Score (Ray, 30 Sep 2026)');
     ['null', 'ph'], ['-', 'ph'], ['0', 'ph'], ['#REF!', 'ph'], ['abc123', 'kw'], ['accessorize fresh arrivals', 'kw']];
   const bad = TABLE.filter(([v, k]) => LG.kwValueKind(v) !== k);
   ok('a phrase is a keyword; a 32-character id, a placeholder or an empty slot is not', bad.length === 0, bad.map(([v]) => [v, LG.kwValueKind(v)]));
+  // the unit is the STRING between chevrons, not the slot (Ray, 30 Sep 2026) — the live shape is
+  // "superdry hoodie > purple hoodie > mens hoodie", and an id or a placeholder inside a chain is
+  // no more a keyword than one filling a slot
+  const STR = [['', 0], ['1130793d3a9281165e054ed7b967bc76', 0], ['#N/A', 0], ['golf iron', 1],
+    ['superdry hoodie > purple hoodie > mens hoodie > cotton hoodie', 4], ['a >  > b', 2], [' > ', 0],
+    ['red dress > #N/A > lace dress', 2], ['navy t shirt > 1130793d3a9281165e054ed7b967bc76', 1]];
+  const sb = STR.filter(([v, n]) => LG.kwStrings(v) !== n);
+  ok('a slot holds a chain of keyword strings — each one between chevrons is counted, an id or a placeholder in the chain is not', sb.length === 0, sb.map(([v]) => [v, LG.kwStrings(v)]));
   const H = ['id', 'g:product_type', 'g:product_type(1)', 'g:product_type(2)', 'product_type3', 'product_type_4', 'g:product_type(11)', 'c:SA_product_type'];
   eq('the keyword slots are product_type 2–10 in every header spelling — never the tree, never slot 11 or a custom field', LG.kwSlotCols(H), [3, 4, 5]);
 
@@ -1576,14 +1584,15 @@ console.log('\n── keywords in the Golden Score (Ray, 30 Sep 2026)');
   const it = (id, pts) => '<item><g:id>' + id + '</g:id><g:title>T</g:title>' + pts.map((p) => '<g:product_type>' + p + '</g:product_type>').join('') + '</item>';
   const xml = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' +
     it('a', ['Womens > Dresses', '1130793d3a9281165e054ed7b967bc76', 'red midi dress > lace midi dress']) +
-    it('b', ['Womens > Dresses', 'monsoon midi dress', 'orange midi dress', 'v neck midi dress']) +
+    it('b', ['Womens > Dresses', 'monsoon midi dress', 'orange midi dress > v neck dress', 'v neck midi dress']) +
     it('c', ['Pet Health > Supplements', '#N/A']) +
     it('d', ['Kids > Shoes']) + '</channel></rss>';
   const col = LG.xmlCollector({ client: 'Reiss', market: 'gb' });
   const px = FA.createXmlParser(col.onRow); px.push(xml); px.end();
   const kw = col.finish().snap.attrs.keywords;
   ok('the XML scan reads keywords per product: 2 of 4 carry a phrase', kw && kw.present && kw.filled === 2 && kw.cov === 50, kw);
-  ok('…how deep they go (4 phrases across the 2 keyworded products), read across the parser\'s 9 keyword slots', kw && kw.per === 2 && kw.slots === 9, kw);
+  ok('…counts every keyword STRING (2 in a\'s chain + 4 across b\'s slots = 6), read across the parser\'s 9 keyword slots', kw && kw.strings === 6 && kw.slots === 9, kw);
+  ok('…and averages them over EVERY SKU — the two with none count as none (6 / 4 = 1.5), never over the keyworded ones only', kw && kw.perSku === 1.5 && !('per' in kw), kw);
   ok('…and how many carry an id instead (named, not counted)', kw && kw.hash === 1, kw);
   const colFb = LG.xmlCollector({ client: 'Reiss', market: 'gb-fb' });
   const pf = FA.createXmlParser(colFb.onRow); pf.push(xml); pf.end();
