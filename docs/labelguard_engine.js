@@ -1111,12 +1111,27 @@ export const VOLCAP = 40000;   // id-set cap — beyond it the capture is TRUNCA
 // dobMonth (tools/test_arrivals.mjs pins the two agree). Shopping feeds only (Ray: "just use
 // Shopping feed") — a -fb market captures nothing.
 export const DOB_KEY = 'fs_date_of_birth';
+// ---- AVAILABILITY as an output feed STATES it, per product (Ray, 30 Sep 2026: "In the stock management module,
+// bring in the availability ratio between master feed and output feeds as well (instock & outofstock)"). Five
+// buckets — in · out · pre (pre-order, backorder, available for order) · none (nothing stated) · other (a word
+// nobody knows) — read with the SAME word table docs/catalog_engine.js reads a master with (its availBucket);
+// tools/test_rules.mjs runs one table through both, so a master and its feed can never bucket a word apart.
+export function availBucket(v) {
+  const s = String(v == null ? '' : v).toLowerCase().replace(/^https?:\/\/schema\.org\//, '').replace(/[\s_\-]+/g, '');
+  if (!s) return 'none';
+  if (/^(instock|available|yes|true|1|limitedstock|lowstock|limitedavailability)$/.test(s)) return 'in';
+  if (/^(outofstock|soldout|unavailable|notavailable|notinstock|oos|no|false|0|discontinued)$/.test(s)) return 'out';
+  if (/^(preorder|backorder|availablefororder)/.test(s)) return 'pre';
+  return 'other';
+}
 export function xmlCollector(meta) {
   const wantPT = !/-fb$/.test(String((meta && meta.market) || ''));
   const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
   let header = null, cols = null, attrCols = null, ptCol = -1, rows = 0;
   const vids = []; let volTrunc = false;
   let dobCol = -1; const dob = { n: 0, bad: 0, m: {}, min: null, max: null };
+  // availability, counted per product on BOTH channels (Google and Meta) — /stock's master → feed ratio
+  let avCol = -1; const av = { in: 0, out: 0, pre: 0, none: 0, other: 0 }; const avOw = {}; let avOwN = 0;
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
   const gsc = gpcScopeCounter(() => attrCols);   // the category scope, counted per product
@@ -1133,6 +1148,7 @@ export function xmlCollector(meta) {
     ptSlots = wantPT ? slotCols(header, 'product_type') : [];
     kwCols = wantPT ? kwSlotCols(header) : [];
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
+    { const ac = findAttrCols(header).availability; avCol = ac == null ? -1 : ac; }
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
     if (wantPT) {
       attrCols = findAttrCols(header);
@@ -1172,6 +1188,12 @@ export function xmlCollector(meta) {
         if (kh) kwT.hash++;
       }
       if (attrFilled) gsc.add(r);
+      {
+        const w = avCol >= 0 ? String(r[avCol] == null ? '' : r[avCol]).trim() : '', b = availBucket(w);
+        av[b]++;
+        // only a WORD is recorded, never a spilled fragment of text (the master counter's rule)
+        if (b === 'other' && /^[\w .\/-]{1,24}$/.test(w)) { if (avOw[w] != null || avOwN < 40) { if (avOw[w] == null) avOwN++; avOw[w] = (avOw[w] || 0) + 1; } }
+      }
       if (vids.length < VOLCAP) {
         const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
         vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
@@ -1227,7 +1249,9 @@ export function xmlCollector(meta) {
     // gviz lane counts columns, never rows; a sheet-backed feed's card says so)
     snap.labelPop = popProfile(lblHist);
     if (wantPT) snap.ptPop = popProfile(ptHist);
-    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null } };
+    const ow = Object.keys(avOw).map((k) => [k, avOw[k]]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null,
+      av: Object.assign({ n: rows, col: avCol >= 0 ? String(header[avCol] || '').slice(0, 60) : '' }, av, { ow }) } };
   };
   return { onRow, finish };
 }

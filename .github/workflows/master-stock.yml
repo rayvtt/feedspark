@@ -1,0 +1,44 @@
+# Master stock — each roster market's MASTER feed counted by availability, for /stock's master → feed
+# ratio (Ray, 30 Sep 2026: "In the stock management module, bring in the availability ratio between
+# master feed and output feeds as well. (instock & outofstock)"). The output feeds are counted on the
+# 4x-daily xml-scan stream; this is the other half. tools/master_stock.mjs asks the worker for each
+# master (the existing /api/gmail/push bypass + key), counts it, and files the counts in KV
+# `masteravail`. A master whose import has not moved since the last reading is skipped by the worker,
+# so the later firings cost one small request per market.
+#
+# Secret: FCC_PUSH_KEY (the worker's GMAIL_PUSH_KEY) — the same one the XML scan uses.
+name: Master stock
+on:
+  schedule:
+    - cron: '40 7,13,19 * * *'   # after the morning imports (FeedHero re-imports masters daily or every few hours)
+  workflow_dispatch:
+    inputs:
+      only:
+        description: One company only (its FeedHero id, e.g. "reiss_gb")
+        required: false
+        default: ''
+      force:
+        description: Re-read even a master whose import has not changed
+        type: boolean
+        default: false
+
+concurrency:
+  group: master-stock
+  cancel-in-progress: false
+
+jobs:
+  masters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Count every roster master feed by availability
+        env:
+          FCC_PUSH_KEY: ${{ secrets.FCC_PUSH_KEY }}
+          ONLY: ${{ inputs.only }}
+          FORCE: ${{ inputs.force && '1' || '' }}
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: node tools/master_stock.mjs

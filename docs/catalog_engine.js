@@ -790,6 +790,53 @@
   }
   function runBucket(c) { if (!c || c[0] < 2) return null; var s = c[1] / c[0]; return s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; }
 
+  // ---- AVAILABILITY, COUNTED (Ray, 30 Sep 2026: "In the stock management module, bring in the availability ratio
+  // between master feed and output feeds as well (instock & outofstock)"). One pass over a MASTER, every row counted
+  // by the stock it states — the size runs' reading (the availability word first, the quantity only where a row has
+  // no word; neither = no reading, never a guess) kept in FIVE buckets, because a pre-order is neither in stock nor
+  // out of it. The output feeds are counted by labelguard.js's availBucket on the xml-scan stream: the two read ONE
+  // word table (tools/test_rules.mjs runs it through both), so a master and its feed can never bucket a word apart.
+  //   in · out · pre (pre-order, backorder, available for order) · none (nothing stated) · other (a word nobody knows)
+  function availBucket(v) {
+    var s = String(v == null ? '' : v).toLowerCase().replace(/^https?:\/\/schema\.org\//, '').replace(/[\s_\-]+/g, '');
+    if (!s) return 'none';
+    if (/^(instock|available|yes|true|1|limitedstock|lowstock|limitedavailability)$/.test(s)) return 'in';
+    if (/^(outofstock|soldout|unavailable|notavailable|notinstock|oos|no|false|0|discontinued)$/.test(s)) return 'out';
+    if (/^(preorder|backorder|availablefororder)/.test(s)) return 'pre';
+    return 'other';
+  }
+  // stockTally().onRow(row, header?) — the first call is the header (the XML parser's shape; wrap delimParser, whose
+  // second argument is a row index); finish() -> {n, in, out, pre, none, other, via, col, qcol, ow}
+  function stockTally() {
+    var hdr = null, pl = null, qi = -1, n = 0, c = { in: 0, out: 0, pre: 0, none: 0, other: 0 }, byW = 0, byQ = 0, ow = {}, owN = 0;
+    function head(h) { hdr = h.slice(); pl = plan(hdr); qi = qtyCol(hdr); }
+    function onRow(row, h) {
+      if (!hdr) { head(Array.isArray(h) ? h : row); return; }
+      if (Array.isArray(h) && h.length !== hdr.length) head(h);
+      if (!row || !row.some(function (x) { return has(x); })) return;   // a blank line is not a product
+      n++;
+      var ac = cands('availability', row, pl), w = ac.length ? plain(Array.isArray(ac[0].v) ? ac[0].v[0] : ac[0].v) : '';
+      var b = availBucket(w);
+      if (b !== 'none') {
+        byW++; c[b]++;
+        // only a WORD is recorded — a malformed row can spill description text into the column (Schuh's master has 16)
+        if (b === 'other' && /^[\w .\/-]{1,24}$/.test(w)) { if (ow[w] != null || owN < 40) { if (ow[w] == null) owN++; ow[w] = (ow[w] || 0) + 1; } }
+        return;
+      }
+      var q = qi >= 0 ? parseFloat(String(row[qi] == null ? '' : row[qi]).replace(/,/g, '')) : NaN;
+      if (isFinite(q)) { byQ++; c[q > 0 ? 'in' : 'out']++; return; }
+      c.none++;
+    }
+    function finish() {
+      var ai = pl && pl.attr.availability && pl.attr.availability.length ? pl.attr.availability[0] : -1;
+      return { n: n, in: c.in, out: c.out, pre: c.pre, none: c.none, other: c.other,
+        via: byW && byQ ? 'mixed' : byW ? 'availability' : byQ ? 'quantity' : 'none',
+        col: ai >= 0 ? s0(hdr[ai]).slice(0, 60) : '', qcol: qi >= 0 ? s0(hdr[qi]).slice(0, 60) : '',
+        ow: Object.keys(ow).map(function (k) { return [k, ow[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 5) };
+    }
+    return { onRow: onRow, finish: finish };
+  }
+
   // ---- what the table shows about one product, worked out once when it arrives -------------------------------------
   var DAY = 86400000;
   function depthOf(v) { var s = plain(v); if (!s) return 0; return s.split(/\s*(?:>|›|»)\s*/).filter(Boolean).length || 1; }
@@ -1039,6 +1086,7 @@
     cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
+    availBucket: availBucket, stockTally: stockTally,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,

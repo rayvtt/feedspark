@@ -2176,7 +2176,7 @@ window.addEventListener('load',restore);
     var m = S.stk.m, a = m.ads, best = null;
     (m.stock || []).forEach(function (r) { var h = r.hb; if (h && h.kind === 'blocked' && h.n > 0 && (!best || h.n > best.n)) best = { n: h.n, rule: r.n }; });
     if (!best) { modEmpty('kept-body', 'No stock rule is holding products back in this market today.'); return; }
-    if (!a) { modEmpty('kept-body', n0(best.n) + ' products held back — no Google Ads read for this market yet, so the spend cannot be sized.'); return; }
+    if (!a) { modEmpty('kept-body', n0(best.n) + ' products held back — no Google Ads read or no scan of the output feed for this market yet, so the spend cannot be sized.'); return; }
     var D = S.stk.days, ceil = best.n * a.spendDay * D;
     var rows = S.stk.scn.map(function (s) { return { k: s.k, l: s.label + ' · ' + s.pct + '%', v: ceil * s.pct / 100 }; });
     rows.push({ k: 'ceil', l: 'Ceiling · 100%', v: ceil });
