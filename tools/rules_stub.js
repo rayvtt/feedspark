@@ -75,9 +75,41 @@ function build() {
     superdry_gb: { w30: { spend: { cur: '£', n: 42000 }, clicks: 160000, skus: 21000, impr: 9800000, zombiePct: 31.5 }, updated: now - 7200000 },
     superdry_de: { w30: { spend: { cur: '€', n: 18500 }, clicks: 70500, skus: 15200, impr: 4100000, zombiePct: 38.2 }, updated: now - 7200000 },
   };
-  const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), findings: E.stockFindings(list, now),
+  // the wired feeds, joined to a roster market on the FeedHero company id (feedKeys) exactly as the worker
+  // joins them — synthetic URLs in the real /output_feeds/<cc>/<cmpid>/<hash>/<file> shape, scan-index keys
+  // in the real WIRED shape ('Superdry|gb', never the roster's 'GB'); only Reiss GB has a Meta feed
+  const WIRED = [
+    { client: 'Superdry', mkt: 'gb', url: 'https://s2.feedhero.net/output_feeds/gb/superdry_gb/0000/latest.xml' },
+    { client: 'Superdry', mkt: 'de', url: 'https://s2.feedhero.net/output_feeds/gb/superdry_de/0000/latest.xml' },
+    { client: 'Reiss', mkt: 'gb', url: 'https://s2.feedhero.net/output_feeds/gb/reiss_gb/0000/latest.xml' },
+    { client: 'Reiss', mkt: 'gb-fb', url: 'https://s2.feedhero.net/output_feeds/fb/reiss_gb/0000/latest.xml' },
+  ];
+  const FK = E.feedKeys(WIRED);
+  // the SKU denominator is the live output feed's own row count (voldobidx), not FeedHero's Ads-traffic
+  // 'skus' — deliberately a DIFFERENT number from ROAS.skus above so the stub can never pass by
+  // coincidence; Reiss GB carries no ROAS read so its feed row count alone must not price it
+  const VOLIDX = {
+    'Superdry|gb': { rows: 45210, t: now - 5400000 },
+    'Superdry|de': { rows: 31840, t: now - 5400000 },
+    'Reiss|gb': { rows: 22657, t: now - 5400000 },
+  };
+  // availability, master → feed (invented counts): Superdry DE's master is left uncounted on purpose, so the
+  // card draws its "not counted yet" state beside a scanned feed
+  const FEEDAV = {
+    'Superdry|gb': { n: 45210, in: 45210, out: 0, pre: 0, none: 0, other: 0, t: now - 5400000 },
+    'Superdry|de': { n: 31840, in: 30120, out: 1720, pre: 0, none: 0, other: 0, t: now - 5400000 },
+    'Reiss|gb': { n: 22657, in: 22400, out: 0, pre: 257, none: 0, other: 0, t: now - 5400000 },
+    'Reiss|gb-fb': { n: 9400, in: 6120, out: 3280, pre: 0, none: 0, other: 0, t: now - 5400000 },
+  };
+  const MASTERAV = {
+    superdry_gb: { n: 58000, in: 29100, out: 28900, pre: 0, none: 0, other: 0, via: 'availability', col: 'availability', imp: '2026-09-28 05:27:48', t: now - 7200000 },
+    reiss_gb: { n: 60000, in: 24900, out: 34790, pre: 300, none: 0, other: 10, via: 'availability', col: 'availability', imp: '2026-09-28 07:00:11', t: now - 7200000 },
+  };
+  const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), heroRuns: E.heroRuns(list), findings: E.stockFindings(list, now),
     sv: { scenarios: E.SV_SCENARIOS, days: E.SV_WINDOW_DAYS },
-    markets: list.map((r) => E.stockView(r, ROAS[r.cmpid])) });
+    markets: list.map((r) => { const k = FK[r.cmpid] || {};
+      return E.stockView(r, ROAS[r.cmpid], k.g ? VOLIDX[k.g] : null,
+        { master: MASTERAV[r.cmpid], g: k.g ? FEEDAV[k.g] : null, fb: k.fb ? FEEDAV[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }); }) });
   const rules = recs.superdry_gb, where = { client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', rules };
   const market = { ok: true, client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', read: true, updated: now, total: rules.length + 40, capped: true, rules,
     chains: E.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })), findings: E.rulesFindings([where], now),

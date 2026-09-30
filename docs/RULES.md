@@ -56,7 +56,8 @@ The report does **not** carry a rule's conditions. So each rule is placed by:
 |---|---|
 | Availability | writes `stock_status` / `availability` / a channel's `*_availability` |
 | Stock thresholds | writes `stock_quantity` / `product_stock` / `stock_num` |
-| Range completion | writes range completion, RC %, hero size, colour depth, quantity rank |
+| Range completion | writes range completion, RC %, colour depth, quantity rank |
+| **Hero sizes** | writes a `hero_size` field, or the name says "hero size" — split from range completion (§3c) |
 | Stock labels | a custom label whose field or NAME says stock / quantity / availability / RC |
 | Stock exclusions | an exclusion field whose field or NAME says stock / quantity / RC |
 | Local inventory | pickup method / SLA, store-coded links, LIA |
@@ -103,15 +104,36 @@ and display the number dynamically."*
 
 **The model.** A stock rule that holds a product back (sets it out of stock, excludes it, empties
 the label a campaign bids on) stops that product buying clicks it could not convert: sizes missing,
-a unit or two left. What those clicks would have cost is **the market's own price for traffic**,
-read from FeedHero's Google Ads report for the same market over 30 days (the ROAS index, `roasidx`;
-one more KV get on the stock route, never a second MCP call):
+a unit or two left. What those clicks would have cost is **the market's own price for traffic** —
+CPC, 30-day spend and clicks read from FeedHero's Google Ads report (the ROAS index, `roasidx`; one
+more KV get on the stock route, never a second MCP call), divided by the market's **real catalogue
+size, read off the live output feed itself**:
 
 ```
-spend per product per day = 30-day spend ÷ products in Google Ads ÷ 30
+spend per product per day = 30-day spend ÷ products in the LIVE OUTPUT FEED ÷ 30
                           = clicks per product per day × CPC          (the same number, both shown)
 kept off                  = products held back × spend per product per day × share × days
 ```
+
+**THE SKU DENOMINATOR IS THE OUTPUT FEED, NEVER FEEDHERO'S ADS-TRAFFIC FIGURE** (Ray, 28 Sep 2026,
+on Reiss GB's forecast panel: *"spend per product per day should be base on the volume of output
+feeds (the feed URLs rather than the products impacted number in the rule) — Reiss GB Shopping
+should have 22,657 SKUs instead of 60,235"*): the original build read `skus` straight off FeedHero's
+`roas_dashboard` Total row — but that figure is **Ads traffic**, not the catalogue (§2's "Unlisted
+SKUs in Ads traffic" row is the same phenomenon: real spend on SKUs the feed does not currently
+hold), and it disagreed with Reiss GB's live feed by more than double. The denominator is now the
+**same row count the Product Volume module already keeps per feed** — `voldobidx` (the 4x-daily
+xml-scan agent's own read of the feed URL, Shopping feeds only), one more KV get on the stock route,
+never a second scan. **It is found by the FeedHero company id, never by the market's label**
+(`feedKeys` in `src/rules.js`): the scan indexes key a feed as it is WIRED — `Reiss|gb`,
+`Superdry|befr`, `Reiss|gb-fb` — while the roster names the market `GB` / `BE-FR`, and the first cut
+of this route looked up `Reiss|GB` and found nothing on any market. Every FeedHero output lives at
+`/output_feeds/<cc>/<cmpid>/<hash>/<file>` (the Catalogue's `catCmpid` reads the same), and a Meta feed
+sits under its Google market's cmpid, so one id names both; 45 of the 57 roster markets have a wired
+Google feed, 16 a Meta one, and the rest say "no feed wired" rather than borrow another market's. `adsBasis(roasEntry, feed)` takes the feed's `{n, t}`
+as a second argument and returns `null` — no basis at all — when either read is missing; `stockView`
+threads it through as `feedIdx` (the `voldobidx` entry). A rule's own `impacted`/`of` figures were
+never the source (they say what a RULE touched, not the feed's real size) and still aren't.
 
 - **Share.** The share of held-back products assumed to have drawn the market's average traffic had
   they stayed live: **Conservative 5 %**, **Aggressive 10 %** (Ray's two), plus a custom slider from 1
@@ -134,7 +156,7 @@ guessed number:
 | Restates a state | "Not available to Zero" writes 0 stock onto products already unavailable, which were not advertised either way |
 | Another channel | a Meta / affiliate / TikTok rule; Google Ads' price for a click is not that channel's |
 | Holding nothing back | a blocking rule that touched nothing on its last run |
-| No Google Ads read | FeedHero has no 30-day read for the market yet; it is sized once ROAS syncs it |
+| No Google Ads read, or no feed-row read | FeedHero has no 30-day read for the market yet, or its live output feed has not been scanned yet (`voldobidx`); it is sized once both have synced |
 
 **A market counts once.** Two stock rules can hold back the same product (a threshold AND a
 range-completion exclusion often do), and the report says how many each changed, not which. So a
@@ -155,6 +177,86 @@ invented counts), the arithmetic, the floor, the per-currency book, `stockView`,
 (`svCalc` / `svFloor` / `svBook`, lifted by name and run on the same table as the engine), the
 worker wiring and the panel's behaviour rules. No client figure is committed: the real Monsoon read
 the model was checked against stays in KV.
+
+## 3c. Hero sizes — split from range completion, and the runs table (`/stock`)
+
+Ray, 28 Sep 2026: *"At least add hero sizes in the stock control for each market and runs table as
+well, because it's different from range completion … add icons that relate to stock heroes now and
+then to make things more interesting."*
+
+Hero sizes used to be folded into `range` ("size-curve completeness, hero sizes and colour depth"),
+so a coverage cell or a market's plain-English setup sentence could not tell a rule protecting hero
+sizes apart from one measuring range completion. `hero` is now its own entry in `MECHANISMS`, read
+the same way every mechanism here is: the **field** first (`is_hero_size` / any `hero_size` field),
+then the **name** ("hero size") as a fallback. Because the coverage matrix, the mechanism filter
+chips, "How a rule is placed" and `stockSentence` all already iterate `MECHANISMS` generically
+rather than naming mechanisms by hand, the split reaches every one of those surfaces for free.
+`heldBack` gates on `r.sk === 'hero'` too — a rule that only *writes* the hero-size flag still
+resolves `calc` (the blocking happens in the rule that *reads* the flag, exactly like a
+range-completion-percentage rule), and the brand-level "gap" and cut-off findings treat `hero` as an
+ordinary mechanism.
+
+**The runs table.** "Runs" is FeedHero's own word for a rule's position — every table on these two
+pages already prints "#N in run order". `heroRuns(markets)` (same shape and sort as `stockCutoffs`:
+client, then market, then run order) flattens every hero-mechanism rule across the roster; served on
+`/api/rules/stock` and rendered as its own card on `/stock`, **"Hero sizes — the rules that run, per
+market"**, directly under the coverage matrix — one row per rule with its run order, target field,
+channel, batch, impacted count and last change. It is never mixed into Cut-offs (which lists a
+*cut-off value* a name states, on any mechanism) or the full per-market rule list. A KPI tile
+("Markets with hero sizes") gives the per-market coverage headline without opening the table.
+
+**The icon.** A small crown (`heroIcon()` — one inline SVG in the nav's own stroke language) shows
+**only** next to the Hero sizes mechanism itself, never on every row: a shared `mechTag(sk)` helper
+decorates the mechanism tag identically wherever it renders (Cut-offs, the ad-spend sized table,
+each market's rule list), plus the coverage-matrix column header, the mechanism filter chip and the
+"How a rule is placed" row. The badge keeps its plain colour — orange already means temporary / A/B
+/ campaign on this page — so the icon alone is the accent, read as identification rather than
+another flag.
+
+## 3d. In stock — master feed → output feeds (`/stock`)
+
+Ray, 30 Sep 2026: *"In the stock management module, bring in the availability ratio between master
+feed and output feeds as well. (instock & outofstock)"*. The rules say what a market's stock setup
+IS; this is what it DOES — the client sends a catalogue that is, say, half in stock, and the feed
+Google receives is all in stock. Three counts per market, each a count of products by the stock it
+states, kept whole and never joined or inferred (two counts cannot say WHICH products moved, so the
+page never calls a product "excluded" on their strength):
+
+| Side | Counted by | Stored |
+|---|---|---|
+| **Master feed** — FeedHero's latest import, as the client sent it | `tools/master_stock.mjs` (`.github/workflows/master-stock.yml`, 07:40 / 13:40 / 19:40 UTC) with `docs/catalog_engine.js › stockTally` | KV `masteravail` (cmpid → counts) |
+| **Google Shopping** output feed | the 4x-daily xml-scan stream (and every live rescan), `labelguard.js › xmlCollector` → `vol.av` | KV `feedavail` (`client\|mkt` → counts) |
+| **Meta** output feed (`-fb`) | the same stream | the same index |
+
+**Five buckets, one word table.** `in` (in stock) · `pre` (pre-order, backorder, "available for
+order" — sellable, not on the shelf) · `out` (out of stock, sold out, discontinued, not available) ·
+`none` (nothing stated) · `other` (a word nobody recognises — counted, never guessed into a bucket).
+The master's counter and the feed's counter each carry an `availBucket`, and `tools/test_rules.mjs`
+runs one word table through both, so a master and its feed can never bucket a word apart
+(`IN_STOCK`, `in_stock`, `https://schema.org/InStock` are all `in`). **A master row's stock** is its
+availability word first and its quantity only where it states no word (Superdry's `NOT_AVAILABLE`
+with stock on hand is out); neither is `none`. Only a *word* is ever recorded as unread — a malformed
+row that spills description text into the column (Schuh's master has 16) is counted as `other` and
+the text is dropped. A tally whose buckets do not add up to its product count is refused by the
+worker (`sanitizeAvail`).
+
+**The master read.** The agent asks the worker for each ROSTER company's master (`{masterfile:
+cmpid}` on `/api/gmail/push`, the xml-scan key and bypass). The worker resolves it with the
+Catalogue's `catMasterInfo` and streams the file back untouched — FeedHero's backup URL never leaves
+the server — or answers `unchanged` when the stored reading is already of this import, which makes
+the later firings one small request per market. The agent unzips it, decodes it (UTF-8, falling back
+to Windows-1252 for Schuh), sniffs XML / TSV / CSV and parses it with the Catalogue's own readers;
+only counts go back (`{masterstock}`), nothing of a row. Checked on the live masters on 30 Sep 2026:
+Superdry GB, Monsoon UK, Schuh UK and Reiss GB all parsed to exactly FeedHero's own row count.
+
+**The card** (first under the KPIs): one row per market — master · Google Shopping · Meta — each a
+bar in stock / pre-order / out / not stated with the in-stock and out-of-stock shares, the product
+count under it and the exact counts in the hover. An unread side says why — *not counted yet*,
+*no feed wired*, *no Meta feed*, *not scanned yet* — never an empty bar. **A book figure pairs like
+with like** (`availBook`, the page twin `avBook` held equal to it): a market counts only where its
+master AND that channel's feed are both counted, so the summary tile per channel never compares one
+set of markets' masters with another set's feeds. The KPI band leads with what Google receives
+("In stock in the Google feed", the master beside it). ⬇ CSV on the card exports the counts.
 
 ## 4. Findings
 
@@ -177,7 +279,9 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, and `ads` (the market's price for traffic off `roasidx`, null when unread). |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread), and `av` (master / Google / Meta stock counts off `masteravail` + `feedavail`, with which feeds the market has wired — §3d). Feeds are found by the cmpid (`feedKeys`), never the roster label. |
+| `POST /api/gmail/push {masterfile: cmpid}` | Key-gated (the xml-scan key). A roster company's master, streamed as bytes, or `{unchanged}` when the stored reading is of this import. §3d. |
+| `POST /api/gmail/push {masterstock: […]}` | Key-gated. The master agent's counts → `masteravail`, one write per post; a tally that does not add up is refused. |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness
@@ -186,5 +290,9 @@ first); a **cut-off** set to different values across a brand's markets.
   findings, `rulesStore` + `rulesPull` lifted from `worker.js` and run against a stub MCP
   (pagination, the cmpid guard, rotation, no_token / unauthorized / unreachable), the wiring, both
   pages, and that no `rule_report` payload is committed. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+  Availability (§3d): the cmpid join on every wired feed (and that no roster label is a scan-index
+  key), the engine, one word table through both counters, `stockTally`, the agent's reader on a zipped
+  CSV / Windows-1252 TSV / XML built in-process, the collector on a synthetic Google and Meta feed,
+  `sanitizeAvail` lifted from the worker, both push lanes, the route, and the page twin `avBook`.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

@@ -100,13 +100,15 @@ function build() {
     web: 'https://mcp.feedhero.net/master-feed?company=' + CMPID, headers: [], hasFile: true };
   const row = { ok: true, rows: [{ id: 'M-NW100-M', title: 'Midi Dresse NAVY', price: '£28.00', colour: 'Navy (NAV)' }] };
   // Stock management's read of the same market (GET /api/rules/stock?brand=), pushed through the REAL rules engine
-  // off rules_stub's synthetic rule list, with the market's Google Ads price for a click off the ROAS total above
+  // off rules_stub's synthetic rule list, with the market's Google Ads price for a click off the ROAS total above and
+  // the SKU denominator off the output feed's own row count (voldobidx's shape — /stock never divides by FeedHero's
+  // Ads-traffic skus), here the synthetic feed's 30 products
   const RS = require('./rules_stub.js'), RE = RS.engine(), now = Date.UTC(2026, 8, 28, 9);
   const mk = { client: CLIENT, market: 'GB', cmpid: CMPID, of: 30, seed: 1 };
   const idx = RE.idxEntry(mk, RE.normRules(RS.rows(CMPID, 'Northwind GB', 30, 1)), {}, now);
   const stock = { ok: true, tracked: 1, roster: 1, unread: [], mechanisms: RE.MECHANISMS, channels: RE.CHANNELS, sev: RE.SEV,
     sv: { scenarios: RE.SV_SCENARIOS, days: RE.SV_WINDOW_DAYS },
-    markets: [RE.stockView(idx, { w30: { spend: { cur: 'GBP', n: 1200 }, clicks: 4800, skus: 30, impr: 260000 }, updated: now })] };
+    markets: [RE.stockView(idx, { w30: { spend: { cur: 'GBP', n: 1200 }, clicks: 4800, skus: 30, impr: 260000 }, updated: now }, { rows: 30, t: now })] };
   // Google Ads per product, last 7 days (the worker's /api/catalog/ads shape): every third product served, one keyed
   // in LOWER case (Google lower-cases the Ads item id that stands in for a blank pid), one with impressions but no
   // clicks (its rates are blank, never 0%), and one product the feed no longer carries — all synthetic

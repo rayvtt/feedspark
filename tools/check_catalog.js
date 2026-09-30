@@ -278,7 +278,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const sp = await pg.evaluate(() => ({ cols: document.querySelectorAll('#stock-body .covt thead th').length, txt: document.querySelector('#stock-body .covt tbody td.ch') && document.querySelector('#stock-body .covt').textContent, saved: localStorage.getItem('fcc-cat-stkch') }));
     ok('Split by channel adds the channel column and is remembered on the device', sp.cols === 3 && /every|Google|Meta/.test(sp.txt || '') && sp.saved === 'true', sp);
     await pg.evaluate(() => { const c = document.getElementById('stock-ch'); c.checked = false; c.dispatchEvent(new Event('change', { bubbles: true })); });
-    // 9 held back × (£1,200 ÷ 30 SKUs ÷ 30 days) × 5% × 30 days = £18.00; the ceiling (100%) = £360.00
+    // 9 held back × (£1,200 ÷ 30 products in the output feed ÷ 30 days) × 5% × 30 days = £18.00; the ceiling (100%) = £360.00
     ok('Ad spend kept off: the largest blocking rule × spend per product a day × the scenario — £18.00 at 5%, £360.00 ceiling', /£18\.00/.test(stk.kept) && /£36\.00/.test(stk.kept) && /£360\.00/.test(stk.kept) && /at least/.test(stk.kept), stk.kept);
     await pg.evaluate(() => { const b = document.querySelector('#facet button'); b && b.click(); }); await pg.waitForTimeout(200);
     await pg.click('#mods-b'); await pg.waitForTimeout(150);

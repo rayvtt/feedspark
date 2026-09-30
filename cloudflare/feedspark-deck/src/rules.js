@@ -173,7 +173,8 @@ export function channel(r) {
 export const MECHANISMS = [
   { k: 'avail', label: 'Availability', q: 'What each channel is told is in or out of stock' },
   { k: 'threshold', label: 'Stock thresholds', q: 'Stock quantity maths and low-stock cut-offs' },
-  { k: 'range', label: 'Range completion', q: 'Size-curve completeness, hero sizes and colour depth' },
+  { k: 'range', label: 'Range completion', q: 'Size-curve completeness and colour depth' },
+  { k: 'hero', label: 'Hero sizes', q: 'The core, best-selling sizes a market is told to protect — split out from range completion' },
   { k: 'label', label: 'Stock labels', q: 'Custom labels that bid by stock depth or range completion' },
   { k: 'excl', label: 'Stock exclusions', q: 'Products pulled from a channel for stock reasons' },
   { k: 'local', label: 'Local inventory', q: 'Store pickup, pickup SLA and store-coded links (LIA)' },
@@ -198,7 +199,12 @@ export function stockKind(r) {
   }
   if (/older_than|(^|_)pre_\d{4}|new_?in|arrival|season|clearance/.test(d)) return 'life';
   if (/stock_status|availability|(^|_)avail$|_avail$/.test(d)) return 'avail';
-  if (/range|(^|_)rc(_|$)|rc_percent|avail_percent|hero_size|colour_stock|quantity_rank/.test(d)) return 'range';
+  // HERO SIZES (Ray, 28 Sep 2026: "add hero sizes in the stock control for each market … because
+  // it's different from range completion"): a rule that WRITES the hero-size flag itself (field, or
+  // the name says so) is its own mechanism, not folded into range completion's size-curve reading —
+  // read from the field first, same as every other mechanism here.
+  if (/hero_size/.test(d) || /hero size/i.test(n)) return 'hero';
+  if (/range|(^|_)rc(_|$)|rc_percent|avail_percent|colour_stock|quantity_rank/.test(d)) return 'range';
   if (/stock|quantity|(^|_)qty/.test(d)) return 'threshold';
   return null;
 }
@@ -391,6 +397,22 @@ export function stockCutoffs(markets) {
   (markets || []).forEach((m) => (m.stock || []).forEach((r) => (r.cut || []).forEach((c) => out.push({ client: m.client, market: m.market, cmpid: m.cmpid, sk: r.sk, ch: r.ch, rule: r.n, t: r.t, i: r.i, m: c.m, op: c.op, v: c.v, imp: r.imp, of: r.of }))));
   return out.sort((a, b) => a.client.localeCompare(b.client) || a.market.localeCompare(b.market) || a.i - b.i);
 }
+// HERO SIZES — THE RUNS TABLE (Ray, 28 Sep 2026: "add hero sizes in the stock control for each
+// market and runs table as well, because it's different from range completion"): every rule on the
+// 'hero' mechanism, market by market, in FeedHero's own RUN ORDER — the thing the coverage count
+// and the mechanism chip cannot show on their own: which rule, in what position, is deciding a
+// market's hero sizes. Same shape as stockCutoffs so the page can render it the same way.
+export function heroRuns(markets) {
+  const out = [];
+  (markets || []).forEach((m) => {
+    if (!m || !m.client) return;
+    (m.stock || []).filter((r) => r.sk === 'hero').forEach((r) => out.push({
+      client: m.client, market: m.market, cmpid: m.cmpid, i: r.i, n: r.n, t: r.t, d: r.d,
+      ch: r.ch, b: r.b, imp: r.imp, of: r.of, mo: r.mo, mb: r.mb, iss: r.iss, cut: r.cut,
+    }));
+  });
+  return out.sort((a, b) => a.client.localeCompare(b.client) || a.market.localeCompare(b.market) || a.i - b.i);
+}
 export function stockFindings(markets, now) {
   now = now || Date.now();
   const out = [];
@@ -522,10 +544,21 @@ export function brandsOf(rows) {
 // THE MODEL, and why it is this one. A stock rule that holds a product back (sets it out of stock,
 // excludes it, empties the label a campaign bids on) keeps that product from buying clicks it could
 // not convert — sizes missing, a unit or two left. What those clicks would have cost is the market's
-// OWN price for traffic, read from FeedHero's Google Ads report for the same market over 30 days:
+// OWN price for traffic: CPC, 30-day spend and clicks read from FeedHero's Google Ads report, divided
+// by the market's REAL catalogue — READ OFF THE LIVE OUTPUT FEED ITSELF (Ray, 28 Sep 2026, on Reiss
+// GB's forecast panel: "spend per product per day should be base on the volume of output feeds (the
+// feed URLs rather than the products impacted number in the rule) — Reiss GB Shopping should have
+// 22,657 SKUs instead of 60,235"). FeedHero's OWN 'skus' figure on the roas_dashboard report is Ads
+// TRAFFIC, not the catalogue — the ROAS module's own docs note a market can carry "Unlisted SKUs in
+// Ads traffic" (real spend on SKUs the feed does not currently hold, docs/ROAS.md §2), which is
+// exactly how a Total row reads more SKUs than the feed serves. So the denominator here is the SAME
+// row count the Product Volume module already keeps per feed (voldobidx — the 4x-daily xml-scan
+// agent's own read of the feed URL, Shopping feeds only, one more KV get on the stock route), never
+// FeedHero's Ads-traffic count and never a rule's own impacted/of figure — a market whose feed has
+// not been scanned yet is unpriced, the same honest gap as no Google Ads read:
 //
-//   spend per product per day  =  30-day spend ÷ SKUs in Google Ads ÷ 30
-//                              =  (clicks ÷ SKUs ÷ 30)  ×  CPC          — the same number, shown both ways
+//   spend per product per day  =  30-day Google Ads spend ÷ products in the LIVE OUTPUT FEED ÷ 30
+//                              =  (clicks ÷ feed products ÷ 30)  ×  CPC   — the same number, shown both ways
 //   saved per day              =  products held back × spend per product per day × scenario %
 //
 // The scenario is the share of the held-back products assumed to have drawn the market's average
@@ -545,7 +578,8 @@ export function brandsOf(rows) {
 //     count of 0 onto products already marked unavailable — they were not advertised either way);
 //   · a rule that holds products back on ANOTHER channel (Meta, affiliates…) — FeedHero's ad-spend
 //     read is Google Ads, and Google's price for a click is not Meta's;
-//   · a market FeedHero has no Google Ads read for.
+//   · a market missing either read it needs — FeedHero's Google Ads spend/clicks, or the live
+//     output feed's own row count (never FeedHero's Ads-traffic SKU figure — see above).
 export const SV_SCENARIOS = [
   { k: 'cons', label: 'Conservative', pct: 5 },
   { k: 'aggr', label: 'Aggressive', pct: 10 },
@@ -567,9 +601,10 @@ export function heldBack(r) {
   const d = s0(r.d), n = s0(r.n), dr = r.dr || [], cut = r.cut || [];
   const rcOrQty = dr.indexOf('rc') >= 0 || dr.indexOf('qty') >= 0 || dr.indexOf('hero') >= 0 || cut.length > 0;
   // Ray: "all the stock-related exclusions — stock threshold, range completion, etc. — focus on stock
-  // threshold and range completion": thresholds, range completion, and any stock rule driven by either
-  // (a stock exclusion is already a rule the classifier placed for stock reasons)
-  if (!(r.sk === 'threshold' || r.sk === 'range' || r.sk === 'excl' || rcOrQty)) return null;
+  // threshold and range completion": thresholds, range completion, hero sizes (split from range
+  // completion but the same "holds products back on low stock" question), and any stock rule driven
+  // by either (a stock exclusion is already a rule the classifier placed for stock reasons)
+  if (!(r.sk === 'threshold' || r.sk === 'range' || r.sk === 'hero' || r.sk === 'excl' || rcOrQty)) return null;
   if (RELEASE.test(n)) return { kind: 'releases', n: r.imp, why: 'Its name says it lets products back in — the exception that keeps them live, not a saving.' };
   const isExcl = /exclu|(^|_)exclude|excl_|destination|eligible/.test(d);
   const blocks = isExcl
@@ -584,16 +619,20 @@ export function heldBack(r) {
   if (!r.imp) return { kind: 'none', n: 0, why: 'It is holding nothing back on its last run.' };
   return { kind: 'blocked', n: r.imp, why: null };
 }
-// a market's price for traffic, off its ROAS index entry (the 30-day Total) — null when unread
-export function adsBasis(e) {
+// a market's price for traffic: CPC/spend/clicks off its ROAS index entry (the 30-day Total), the
+// SKU denominator off `feed` — {n: row count, t: when scanned}, the market's voldobidx entry (the
+// live output feed's own row count, NEVER FeedHero's Ads-traffic 'skus' figure — see above) — null
+// when either the Google Ads read or the feed-row read is missing
+export function adsBasis(e, feed) {
   const t = e && (e.w30 || (e.spend ? e : null));
-  if (!t || !t.spend || !(t.spend.n > 0) || !(t.skus > 0) || !(t.clicks > 0)) return null;
-  const days = SV_WINDOW_DAYS, sp = t.spend.n, ck = t.clicks, sk = t.skus;
+  const sk = feed && feed.n > 0 ? feed.n : null;
+  if (!t || !t.spend || !(t.spend.n > 0) || !(t.clicks > 0) || !sk) return null;
+  const days = SV_WINDOW_DAYS, sp = t.spend.n, ck = t.clicks;
   return {
     cur: t.spend.cur || (e && e.cur) || '', days, spend: sp, clicks: ck, impr: t.impr || 0, skus: sk,
     cpc: sp / ck, clicksDay: ck / sk / days, spendDay: sp / sk / days,   // unrounded — the page rounds for display only
     zombie: t.zombiePct == null ? null : t.zombiePct, crPct: t.crPct == null ? null : t.crPct,
-    updated: (e && e.updated) || null,
+    updated: (e && e.updated) || null, feedAt: (feed && feed.t) || null,
   };
 }
 // the saving — the ONE formula the page's twin (svCalc) is held to
@@ -627,8 +666,71 @@ export function svBook(markets, pct, days) {
 }
 // one market as GET /api/rules/stock serves it — the worker and tools/rules_stub.js both call this, so
 // the tripwires' synthetic book can never drift from the real shape. `hb` rides on every stock row and
-// `ads` is the market's price for traffic off its ROAS index entry (null when FeedHero has no read).
-export function stockView(r, roasEntry) {
+// `ads` is the market's price for traffic: its ROAS index entry for spend/clicks/CPC, its voldobidx
+// entry (`feedIdx`, {rows,t} — the live output feed's own row count) for the SKU denominator, null
+// when either is unread.
+export function stockView(r, roasEntry, feedIdx, avail) {
   return { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items,
-    stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock), ads: adsBasis(roasEntry) };
+    stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock),
+    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }), av: availView(avail) };
+}
+
+// ---- WHICH SCANNED FEED IS WHICH MARKET — joined on the FeedHero company id --------------------------
+// The scan indexes (voldobidx, feedavail) key a feed as it is WIRED — 'Reiss|gb', 'Superdry|befr',
+// 'Reiss|gb-fb' — while the roster names a market its own way ('GB', 'BE-FR'), so a label is never
+// matched to a label (the first cut of the SKU denominator did, and 'Reiss|GB' found nothing). Every
+// FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file> — the same read as the Catalogue's
+// catCmpid — and a Meta (-fb) feed sits under its Google market's cmpid, so one company id names both.
+// list = [{client, mkt, url}] (the wired XML feeds) -> { cmpid: { g: 'Client|mkt', fb: 'Client|mkt-fb' } }
+export function feedKeys(list) {
+  const out = {};
+  (list || []).forEach((f) => {
+    const m = f && f.url ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(f.url)) : null;
+    if (!m || !f.client || !f.mkt) return;
+    const cmpid = m[1].toLowerCase(), ch = /-fb$/i.test(String(f.mkt)) ? 'fb' : 'g';
+    const e = out[cmpid] || (out[cmpid] = {});
+    if (!e[ch]) e[ch] = f.client + '|' + f.mkt;
+  });
+  return out;
+}
+
+// ---- AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "In the stock management module, bring in the
+// availability ratio between master feed and output feeds as well (instock & outofstock)"). Three readings
+// of one market, each a COUNT of products by the stock it states: the MASTER as the client sent it
+// (FeedHero's own import, read by tools/master_stock.mjs — the availability word, or the quantity where a
+// row has no word) and each OUTPUT feed FeedSpark sends from it (Google, Meta — counted on the 4x-daily
+// xml-scan stream). The distance between them is what the stock rules did, so each is kept whole and
+// nothing is joined or inferred: a product the master has out of stock and the feed does not carry is
+// not called "excluded" here, because two counts cannot say which products they are.
+//   in    in stock                       pre   pre-order, backorder, available for order — sellable, not on the shelf
+//   out   out of stock, sold out, discontinued, not available
+//   none  no reading (no word, no quantity) other a word nobody recognised — kept, never guessed into a bucket
+export const AV_KEYS = ['in', 'out', 'pre', 'none', 'other'];
+export function availSide(x) {
+  const n = x ? Math.max(0, Math.round(+x.n || 0)) : 0;
+  if (!(n > 0)) return null;
+  const o = { n, t: +x.t || null };
+  AV_KEYS.forEach((k) => { o[k] = Math.min(n, Math.max(0, Math.round(+x[k] || 0))); });
+  o.inPct = (o.in / n) * 100; o.outPct = (o.out / n) * 100;
+  return o;
+}
+// a = { master, g, fb, wired: {g, fb} } — the two indexes' entries (masteravail[cmpid], feedavail[client|mkt])
+// and whether the market HAS a Google / Meta feed wired, so "no Meta feed" is never read as "not scanned yet"
+export function availView(a) {
+  if (!a) return null;
+  const master = availSide(a.master), g = availSide(a.g), fb = availSide(a.fb), m = master ? a.master : null, w = a.wired || {};
+  return { master, g, fb, wired: { g: !!w.g, fb: !!w.fb },
+    via: (m && m.via) || null, imp: (m && m.imp) || null, col: (m && m.col) || '', qcol: (m && m.qcol) || '' };
+}
+// the book for one channel ('g' | 'fb'): markets whose master AND that feed are both read, their counts
+// summed (a count carries no currency, so it can cross markets); a market read on one side only is
+// counted apart (`one`), never half-added into a ratio it would skew
+export function availBook(markets, ch) {
+  const c = ch === 'fb' ? 'fb' : 'g', b = { markets: 0, one: 0, master: { n: 0, in: 0, out: 0 }, feed: { n: 0, in: 0, out: 0 } };
+  (markets || []).forEach((mk) => {
+    const av = mk && mk.av, ms = av && av.master, fd = av && av[c];
+    if (ms && fd) { b.markets++; ['n', 'in', 'out'].forEach((k) => { b.master[k] += ms[k]; b.feed[k] += fd[k]; }); }
+    else if (ms || fd) b.one++;
+  });
+  return b;
 }

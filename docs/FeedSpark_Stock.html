@@ -149,6 +149,10 @@ window.addEventListener('load',restore);
   .tg.bl{border-color:rgba(37,99,235,.35);color:var(--info);background:rgba(37,99,235,.08)}
   .tg.rd{border-color:var(--risk);color:var(--risk);background:transparent}
   .tg.gr{border-color:var(--good);color:var(--good);background:transparent}
+  /* the hero-size glyph — a small, purposeful orange accent wherever a "hero sizes" rule or column shows up (never a colour change on the badge itself, so it never reads as another flag) */
+  .hi{display:inline-block;vertical-align:-1.5px;color:var(--orange-deep);flex:none}
+  .tg .hi,.chip .hi,th .hi{margin-right:4px}
+  td.nm .hi{margin-right:5px;vertical-align:-2px}
   .imp{display:flex;align-items:center;gap:8px;justify-content:flex-end}
   .imp .bar{width:64px;height:6px;border-radius:0 3px 3px 0;background:var(--wash);overflow:hidden;flex:none}
   .imp .bar i{display:block;height:100%;background:var(--chart-1)}
@@ -254,6 +258,27 @@ window.addEventListener('load',restore);
     .svp .big{font-size:28px}
   }
   @media(prefers-reduced-motion:reduce){.svp,.svl .b i{transition:none}}
+  /* ---- /stock: in stock, master feed → output feeds — one bar per feed (in stock · pre-order · out · not stated) ---- */
+  :root{--av-in:var(--good);--av-pre:var(--navy);--av-out:var(--chart-2);--av-na:#CBD2D9}
+  [data-theme=dark]{--av-na:#3A404C}
+  .avc{display:flex;flex-direction:column;gap:4px;min-width:150px;max-width:260px}
+  .avt{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .avt b{font-size:15px;font-weight:900;color:var(--ink);margin-right:2px}
+  .avb{display:flex;height:10px;border-radius:0 4px 4px 0;overflow:hidden;background:var(--wash)}
+  .avb i{display:block;height:100%;flex:none;transform-origin:left;animation:grow .7s cubic-bezier(.22,.68,.32,1) both}
+  .avb i+i{box-shadow:inset 2px 0 0 var(--paper)}
+  .avb .in,.legend i.in{background:var(--av-in)}.avb .pre,.legend i.pre{background:var(--av-pre)}
+  .avb .out,.legend i.out{background:var(--av-out)}.avb .na,.legend i.na{background:var(--av-na)}
+  .avc .sub2{font-size:11.5px;color:var(--muted);font-weight:700}
+  .av-none{display:inline-block;font-size:11.5px;font-weight:800;color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:3px 8px;white-space:nowrap}
+  #av-t td,#av-t th{vertical-align:middle}
+  .sv-sum .it b .ar{display:inline;font-size:15px;color:var(--muted);font-weight:800;margin:0 5px;vertical-align:1px}
+  .sv-sum .it.av2{min-width:240px}
+  .sv-sum .it.av2 .h{display:block;font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .sv-sum .it.av2 .r{display:flex;align-items:baseline;gap:8px}
+  .sv-sum .it.av2 .r b{display:inline;font-size:18px}
+  .sv-sum .it.av2 .r span{font-size:12px}
+  @media(prefers-reduced-motion:reduce){.avb i{animation:none}}
 
 </style>
 <style>/* FCC-THEME */
@@ -313,6 +338,14 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="kpis" id="kpis"></div>
 
+  <section class="card" id="av-card">
+    <div class="chead"><div class="sp"><h3>In stock — master feed → output feeds</h3><p class="ch">What the client sends against what each channel receives, counted product by product.</p></div>
+      <div class="tools"><button class="btn" id="av-csv" type="button" title="These availability counts">⬇ CSV</button></div></div>
+    <div class="sv-sum" id="av-sum"></div>
+    <div class="tw"><table class="t" id="av-t"><thead><tr><th>Market</th><th>Master feed</th><th>Google Shopping</th><th>Meta</th></tr></thead><tbody></tbody></table></div>
+    <div class="legend"><span><i class="in"></i>In stock</span><span><i class="pre"></i>Pre-order / backorder</span><span><i class="out"></i>Out of stock</span><span><i class="na"></i>Not stated</span></div>
+  </section>
+
   <section class="card" id="sv-card">
     <div class="chead"><div class="sp"><h3>Ad spend kept off low-stock products</h3><p class="ch" id="sv-sub">A forecast for the stock thresholds and range-completion rules holding products back. Hover a rule for its working.</p></div>
       <div class="tools"><span class="seg" id="sv-scn" role="group" aria-label="Forecast scenario"></span><span class="seg" id="sv-per" role="group" aria-label="Period"></span></div></div>
@@ -326,6 +359,11 @@ window.addEventListener('load',restore);
       <div class="tools"><label class="tog"><input type="checkbox" id="chan"> Split by channel</label></div></div>
     <div class="tw"><table class="t" id="cov"><thead></thead><tbody></tbody></table></div>
     <div class="legend" id="cov-legend"></div>
+  </section>
+
+  <section class="card" id="hero-card">
+    <div class="chead"><div class="sp"><h3>Hero sizes — the rules that run, per market</h3><p class="ch">The rules that decide a market's hero sizes — its core, best-selling sizes. Split out from range completion, every one shown in FeedHero's own run order.</p></div></div>
+    <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th class="num">#</th><th>Rule</th><th>Channel</th><th>Batch</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <div class="grid2 row-gap">
@@ -481,6 +519,12 @@ function impCell(r) {
   var pc = r.of ? Math.round((r.imp / r.of) * 100) : 0;
   return '<span class="imp' + (r.imp ? '' : ' zero') + '" data-tip="' + esc('<b>' + n0(r.imp) + ' of ' + n0(r.of) + '</b> products this rule changed on its last run' + (r.imp ? ' <span class="m">(' + pc + '%)</span>' : ' — <span class="m">it ran and touched nothing</span>')) + '"><span class="num">' + n0(r.imp) + '</span><span class="bar"><i style="width:' + Math.max(r.imp ? 2 : 0, pc) + '%"></i></span></span>';
 }
+// the hero-size glyph — a small crown, the one purposeful icon this page adds "in the table" (Ray,
+// 28 Sep 2026): it only ever shows next to the Hero sizes mechanism itself, so it stays occasional
+// rather than a wall of icons — a tag, a column header, a chip, a table row, wherever that one
+// mechanism actually shows up.
+function heroIcon() { return '<svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>'; }
+function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() : '') + esc((MK[sk] || {}).label || sk) + '</span>'; }
 
   var Q = new URLSearchParams(location.search);
   var S = { brand: Q.get('brand') || recall('fcc-stock-brand'), market: Q.get('market') || '', mech: Q.get('mech') || '', q: Q.get('q') || '', sev: 0, all: false, chan: recall('fcc-stock-chan') === '1', d: null };
@@ -542,7 +586,7 @@ function impCell(r) {
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderKpis(); renderSv(); renderCov(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderKpis(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
   }
   function renderChips() {
@@ -557,10 +601,11 @@ function impCell(r) {
   }
   function kpi(n, l, dd, cls) { return '<div class="kpi' + (cls ? ' ' + cls : '') + '"><div class="n num">' + n + '</div><div class="l">' + l + '</div>' + (dd ? '<div class="d">' + dd + '</div>' : '') + '</div>'; }
   function renderKpis() {
-    var ms = mkts(), n = 0, withStock = 0, avail = 0, local = 0, idle = 0, broken = 0, cuts = 0;
+    var ms = mkts(), n = 0, withStock = 0, avail = 0, local = 0, hero = 0, idle = 0, broken = 0, cuts = 0;
     ms.forEach(function (m) {
       var st = m.stock || []; n += st.length; if (st.length) withStock++;
       if (st.some(function (r) { return r.sk === 'local'; })) local++;
+      if (st.some(function (r) { return r.sk === 'hero'; })) hero++;
       st.forEach(function (r) { if (r.sk === 'avail') avail++; if (r.iss.indexOf('none') >= 0) idle++; if (r.iss.indexOf('target') >= 0 || r.iss.indexOf('dep') >= 0) broken++; cuts += (r.cut || []).length; });
     });
     var act = findList(true).filter(function (f) { return f.sev === 3; }).length;
@@ -568,13 +613,71 @@ function impCell(r) {
     var svTile = '<div class="kpi sv-k link" data-sv="book" tabindex="0" title="Hover for the working"><div class="n num" id="svk-n">' + (top ? money(top.cur, top.amt, 0) : '—') + '</div><div class="l">Ad spend kept off ' + svPer() + '</div><div class="d">'
       + (top ? 'at least · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '% · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + (bk.byCur.length > 1 ? ' · + ' + bk.byCur.slice(1).map(function (b) { return money(b.cur, b.amt, 0); }).join(', ') : '')
         : bk.unpriced ? 'no Google Ads read for these markets yet' : 'no stock rule holding products back') + '</div></div>';
-    $('#kpis').innerHTML = !ms.length ? '' : svTile +
+    var ab = avBook(ms, 'g');
+    var avTile = '<div class="kpi link" data-go="av-card" tabindex="0" title="The Google Shopping feed against its master, on the markets where both are counted"><div class="n num">'
+      + (ab.markets ? pctS(ab.feed.in / ab.feed.n * 100) : '—') + '</div><div class="l">In stock in the Google feed</div><div class="d">'
+      + (ab.markets ? 'master ' + pctS(ab.master.in / ab.master.n * 100) + ' in stock · ' + ab.markets + ' market' + (ab.markets === 1 ? '' : 's') : 'master feeds not counted yet') + '</div></div>';
+    $('#kpis').innerHTML = !ms.length ? '' : svTile + avTile +
       kpi(n0(n), 'Stock rules', 'across ' + withStock + ' of ' + ms.length + ' market' + (ms.length === 1 ? '' : 's'))
       + kpi(n0(avail), 'Availability rules', 'what each channel is told is in or out of stock')
+      + kpi(n0(hero), 'Markets with hero sizes', hero ? 'core sizes explicitly protected' : 'no market defines them yet')
       + kpi(n0(cuts), 'Cut-offs stated', 'in the rule names — read, never inferred')
       + kpi(n0(local), 'Markets with local inventory', 'store pickup / LIA rules')
       + kpi(n0(idle), 'Idle stock rules', idle ? 'not impacting any items' : 'every stock rule touched products', idle ? 'warn' : '')
       + kpi(n0(broken + act), 'Act now', broken ? broken + ' writing a missing column' : act ? 'overdue reviews' : 'nothing urgent', broken + act ? 'risk' : 'good');
+  }
+  // ---- IN STOCK, MASTER FEED → OUTPUT FEEDS (Ray, 30 Sep 2026: "In the stock management module, bring in the availability
+  // ratio between master feed and output feeds as well (instock & outofstock)"). Counts only, straight off the route
+  // (RULES.availView): the master as FeedHero last imported it, each output feed as last scanned. A book figure pairs like
+  // with like — a market counts only where BOTH sides are read (avBook, the twin of RULES.availBook) — so it never
+  // compares one set of markets' masters with another set's feeds.
+  var AVL = { master: 'Master feed', g: 'Google Shopping', fb: 'Meta' };
+  function avBook(markets, ch) {
+    var c = ch === 'fb' ? 'fb' : 'g', b = { markets: 0, one: 0, master: { n: 0, in: 0, out: 0 }, feed: { n: 0, in: 0, out: 0 } };
+    (markets || []).forEach(function (mk) {
+      var av = mk && mk.av, ms = av && av.master, fd = av && av[c];
+      if (ms && fd) { b.markets++; ['n', 'in', 'out'].forEach(function (k) { b.master[k] += ms[k]; b.feed[k] += fd[k]; }); }
+      else if (ms || fd) b.one++;
+    });
+    return b;
+  }
+  // a share as a person reads it: whole at the ends (100%, 0%), one decimal between
+  function pctS(v) { if (v == null || !isFinite(v)) return '—'; return (v >= 99.95 ? '100' : v <= 0.05 ? (v > 0 ? '<0.1' : '0') : v.toFixed(1)) + '%'; }
+  function avSegs(s) {
+    return '<div class="avb" aria-hidden="true">' + [['in', s.in], ['pre', s.pre], ['out', s.out], ['na', s.none + s.other]].filter(function (x) { return x[1] > 0; })
+      .map(function (x) { return '<i class="' + x[0] + '" style="width:' + (x[1] / s.n * 100).toFixed(2) + '%"></i>'; }).join('') + '</div>';
+  }
+  function avCell(m, k) {
+    var av = m.av || {}, s = av[k], w = av.wired || {};
+    if (!s) {
+      var why = k === 'master' ? 'not counted yet' : !w[k] ? (k === 'fb' ? 'no Meta feed' : 'no feed wired') : 'not scanned yet';
+      return '<td><span class="av-none">' + why + '</span></td>';
+    }
+    var tip = '<b>' + esc(m.client + ' ' + m.market) + ' · ' + AVL[k] + '</b><br>' + n0(s.in) + ' in stock · ' + n0(s.out) + ' out of stock'
+      + (s.pre ? '<br>' + n0(s.pre) + ' pre-order / backorder' : '') + (s.none ? '<br>' + n0(s.none) + ' state no stock' : '') + (s.other ? '<br>' + n0(s.other) + ' unreadable' : '');
+    if (k === 'master') tip += '<br><span class="m">FeedHero import ' + esc(av.imp || '—') + ' · counted ' + since(s.t)
+      + (av.via === 'quantity' ? ' · from the ' + esc(av.qcol || 'quantity') + ' column' : av.via === 'mixed' ? ' · the ' + esc(av.col || 'availability') + ' word, else the quantity' : '') + '</span>';
+    else {
+      tip += '<br><span class="m">scanned ' + since(s.t) + '</span>';
+      if (av.master) tip += '<br><span class="m">master: ' + n0(av.master.in) + ' in stock · ' + n0(av.master.out) + ' out of ' + n0(av.master.n) + '</span>';
+    }
+    return '<td><div class="avc" data-tip="' + esc(tip) + '"><div class="avt"><b>' + pctS(s.inPct) + '</b> in stock · ' + pctS(s.outPct) + ' out</div>' + avSegs(s)
+      + '<span class="sub2">' + n0(s.n) + ' products</span></div></td>';
+  }
+  function renderAv() {
+    var ms = mkts();
+    $('#av-t tbody').innerHTML = ms.map(function (m) {
+      return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td>' + avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + '</tr>';
+    }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No market in view.' : 'No rules read yet.') + '</td></tr>';
+    // one tile per channel: master → that feed, in stock over out of stock, on the markets where both are counted
+    var pair = function (b, lbl) {
+      if (!b.markets) return '';
+      var row = function (k, w) { return '<div class="r"><b>' + pctS(b.master[k] / b.master.n * 100) + '<span class="ar">→</span>' + pctS(b.feed[k] / b.feed.n * 100) + '</b><span>' + w + '</span></div>'; };
+      return '<div class="it av2"><span class="h">Master → ' + lbl + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + '</span>' + row('in', 'in stock') + row('out', 'out of stock') + '</div>';
+    };
+    var any = ms.some(function (m) { return m.av && (m.av.master || m.av.g || m.av.fb); });
+    $('#av-sum').innerHTML = pair(avBook(ms, 'g'), 'Google') + pair(avBook(ms, 'fb'), 'Meta')
+      || '<p class="note">' + (any ? 'No market in view has its master and a feed both counted yet.' : 'Nothing counted yet — master feeds are read after FeedHero\u2019s morning imports, output feeds on every scan.') + '</p>';
   }
   // ---- coverage: market x mechanism — one hue, darker = more rules (a count, never a colour-only identity: the number is in the cell)
   function shade(n, mx) { if (!n) return ''; var a = 0.12 + 0.5 * (n / Math.max(1, mx)); return 'background:rgba(37,99,235,' + a.toFixed(2) + ')'; }
@@ -582,7 +685,7 @@ function impCell(r) {
     var ms = mkts(), M = mechs(), mx = 1;
     var cell = {};
     ms.forEach(function (m) { (m.stock || []).forEach(function (r) { var k = m.cmpid + '|' + r.sk; (cell[k] = cell[k] || []).push(r); mx = Math.max(mx, cell[k].length); }); });
-    $('#cov thead').innerHTML = '<tr><th>Market</th>' + M.map(function (x) { return '<th class="num" title="' + esc(x.q) + '">' + esc(x.label) + '</th>'; }).join('') + '<th class="num">Total</th></tr>';
+    $('#cov thead').innerHTML = '<tr><th>Market</th>' + M.map(function (x) { return '<th class="num" title="' + esc(x.q) + '">' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</th>'; }).join('') + '<th class="num">Total</th></tr>';
     var unread = ((S.d && S.d.unread) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && (!S.market || m.market === S.market); });
     $('#cov tbody').innerHTML = ms.map(function (m) {
       return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">' + (m.items ? n0(m.items) + ' products' : '') + '</span></td>' + M.map(function (x) {
@@ -596,6 +699,19 @@ function impCell(r) {
     }).join('') + unread.map(function (m) { return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">not read yet</span></td><td colspan="' + (M.length + 1) + '" class="muted">Waiting for its first read.</td></tr>'; }).join('')
       || '<tr><td class="empty" colspan="' + (M.length + 2) + '">No stock rules read yet.</td></tr>';
     $('#cov-legend').innerHTML = '<span><i style="background:rgba(37,99,235,.14)"></i>1 rule</span><span><i style="background:rgba(37,99,235,.62)"></i>' + mx + ' rules</span><span>— none: the market has no rule doing this</span>';
+  }
+  // ---- Hero sizes: the runs table (engine: src/rules.js heroRuns) — every rule on the 'hero'
+  // mechanism, market by market, in FeedHero's own run order; same shape and filtering as Cut-offs.
+  function renderHeroes() {
+    var list = ((S.d && S.d.heroRuns) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
+    $('#heroes tbody').innerHTML = list.map(function (c) {
+      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '" tabindex="0"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="num">' + (c.i + 1) + '</td>'
+        + '<td class="nm">' + heroIcon() + '<b>' + esc(c.n) + '</b> ' + fhA(c.cmpid, c.n, c.t) + (c.cut && c.cut.length ? '<span class="sub2">name states <b>' + c.cut.map(function (x) { return (x.m === 'rc' ? 'RC ' : 'stock ') + esc(x.op) + ' ' + x.v + (x.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
+        + '<td>' + (c.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[c.ch] || c.ch)) + '</td>'
+        + '<td>' + (c.b ? esc(c.b) : '<span class="muted" title="All products">all</span>') + '</td>'
+        + '<td class="num">' + impCell(c) + '</td>'
+        + '<td>' + (c.mo ? dstr(c.mo) + '<span class="sub2">' + esc(c.mb || '') + ' · ' + ago(c.mo) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
+    }).join('') || '<tr><td class="empty" colspan="7">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
   }
   function findList(ignoreSev) {
     return ((S.d && S.d.findings) || []).filter(function (f) {
@@ -617,7 +733,7 @@ function impCell(r) {
   function renderCuts() {
     var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
     $('#cuts tbody').innerHTML = list.map(function (c) {
-      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td><span class="tg">' + esc((MK[c.sk] || {}).label || c.sk) + '</span></td>'
+      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td>' + mechTag(c.sk) + '</td>'
         + '<td class="num"><b>' + (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : '') + '</b></td><td class="num">' + (c.imp == null ? '—' : n0(c.imp) + (c.of ? '<span class="sub2">of ' + n0(c.of) + '</span>' : '')) + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="5">No rule name in view states a cut-off.</td></tr>';
   }
@@ -648,7 +764,7 @@ function impCell(r) {
     $('#sv-t tbody').innerHTML = R.sized.map(function (x) {
       var m = x.m, r = x.r;
       return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '" tabindex="0"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '<span class="sub2">#' + (r.i + 1) + ' in run order · writes ' + esc(r.t) + '</span></td>'
-        + '<td><span class="tg">' + esc((MK[r.sk] || {}).label || r.sk) + '</span></td>'
+        + '<td>' + mechTag(r.sk) + '</td>'
         + '<td class="num">' + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + '</td>'
         + '<td class="num">' + money(m.ads.cur, m.ads.spendDay, 3) + '<span class="sub2">CPC ' + money(m.ads.cur, m.ads.cpc, 2) + '</span></td>'
         + '<td class="num"><span class="sv-money">' + money(m.ads.cur, x.amt) + '</span></td></tr>';
@@ -733,7 +849,7 @@ function impCell(r) {
       $('#svp-ti').textContent = r.n;
       $('#svp-mk').textContent = m.client + ' ' + m.market + ' · ' + ((MK[r.sk] || {}).label || r.sk) + ' · #' + (r.i + 1) + ' in run order';
       var acts = '<div class="acts">' + fhA(m.cmpid, r.n, r.t, 'Open in FeedHero') + '<a class="btn" href="/roas?brand=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.market) + '" title="This market\u2019s Google Ads read">ROAS · ' + esc(m.client + ' ' + m.market) + '</a></div>';
-      var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl></div>' : '';
+      var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Products in the output feed</dt><dd>' + n0(B.skus) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl><div class="hint" style="margin-top:6px">Feed scanned ' + (B.feedAt ? since(B.feedAt) : 'recently') + ' \u00b7 Google Ads read ' + (B.updated ? since(B.updated) : 'recently') + '.</div></div>' : '';
       if (h && h.kind === 'blocked' && B) {
         var amt = svCalc(h.n, B, SV.pct, svDays()), ceil = svCalc(h.n, B, 100, svDays());
         bd.innerHTML = '<div class="big" id="svp-big"></div><div class="cap">' + esc(scnName(SV.pct)) + ' ' + SV.pct + '% — ' + svPer() + ', if ' + SV.pct + '% of the ' + n0(h.n) + ' products this rule holds back had drawn ' + esc(m.client + ' ' + m.market) + '\u2019s average Google Ads traffic</div>'
@@ -742,19 +858,19 @@ function impCell(r) {
           + '<dt>Products held back (last run)</dt><dd>' + n0(h.n) + (r.of ? ' of ' + n0(r.of) : '') + '</dd>'
           + '<dt>Google Ads spend, 30 days</dt><dd>' + money(B.cur, B.spend, 0) + '</dd>'
           + '<dt>Clicks, 30 days</dt><dd>' + n0(B.clicks) + '</dd>'
-          + '<dt>Products in Google Ads</dt><dd>' + n0(B.skus) + '</dd>'
+          + '<dt>Products in the output feed</dt><dd>' + n0(B.skus) + '</dd>'
           + '<dt>Cost per click</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd>'
           + '<dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd>'
           + '<dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd>'
           + '<dt>Share drawing that traffic</dt><dd>' + SV.pct + '%</dd>'
           + '</dl><div class="fx">' + n0(h.n) + ' × ' + money(B.cur, B.spendDay, 3) + ' × ' + SV.pct + '% × ' + svDays() + ' day' + (svDays() === 1 ? '' : 's') + ' = <b>' + money(B.cur, amt) + '</b></div>'
           + '<div class="hint" style="margin-top:8px">Every held-back product at the market\u2019s average: ' + money(B.cur, ceil, 0) + ' ' + svPer() + ' — the ceiling, not the forecast.</div></div>'
-          + '<div class="ft">Spend per product per day = the market\u2019s 30-day Google Ads spend ÷ the products in Google Ads ÷ 30 (the same as clicks per product per day × CPC). Held back = the products FeedHero says this rule changed on its last run, which can include products already out of stock (one more reason the share is kept low). A forecast of spend avoided on products that could not convert, not a measured saving' + (B.updated ? ' · Google Ads read ' + since(B.updated) : '') + '.</div>' + acts;
+          + '<div class="ft">Spend per product per day = the market\u2019s 30-day Google Ads spend ÷ the products in its live output feed ÷ 30 (the same as clicks per product per day × CPC) — never FeedHero\u2019s own Ads-traffic SKU figure, which can disagree with the feed by a wide margin. Held back = the products FeedHero says this rule changed on its last run, which can include products already out of stock (one more reason the share is kept low). A forecast of spend avoided on products that could not convert, not a measured saving' + (B.updated ? ' · Google Ads read ' + since(B.updated) : '') + (B.feedAt ? ' · feed scanned ' + since(B.feedAt) : '') + '.</div>' + acts;
         bigCur = B.cur; bigV = amt;
       } else {
         var kind = !h ? 'other' : h.kind === 'blocked' ? 'noads' : h.kind;
         var why = !h ? 'This is a ' + esc(((MK[r.sk] || {}).label || r.sk).toLowerCase()) + ' rule. The forecast covers the stock thresholds and range-completion rules that hold products back for low stock.'
-          : h.kind === 'blocked' ? 'It holds ' + n0(h.n) + ' products back, but FeedHero has no Google Ads read for ' + esc(m.client + ' ' + m.market) + ' yet, so there is no price for its traffic. It is sized once ROAS syncs this market.'
+          : h.kind === 'blocked' ? 'It holds ' + n0(h.n) + ' products back, but there is no full read for ' + esc(m.client + ' ' + m.market) + ' yet — it needs a Google Ads read AND the live output feed’s own product count. It is sized once both have synced.'
           : esc(h.why || '');
         bd.innerHTML = '<span class="kd">' + esc(kind === 'other' ? 'Not sized' : SVKIND[kind] || kind) + '</span><p class="why">' + why + '</p>' + (h && (h.kind === 'none' || h.kind === 'all') && B ? '<p class="hint">When it holds products back, each one keeps about ' + money(B.cur, B.spendDay, 3) + ' a day of spend off the market at its average — ' + money(B.cur, B.spendDay * SV.pct / 100, 4) + ' at ' + SV.pct + '%.</p>' : '') + ref + acts;
         SVSHOWN = null;
@@ -772,7 +888,7 @@ function impCell(r) {
   function renderMechChips() {
     var cnt = {}; mkts().forEach(function (m) { (m.stock || []).forEach(function (r) { cnt[r.sk] = (cnt[r.sk] || 0) + 1; }); });
     $('#mechs').innerHTML = '<button class="chip' + (!S.mech ? ' on' : '') + '" data-mk="">Every control</button>' + mechs().filter(function (x) { return cnt[x.k]; }).map(function (x) {
-      return '<button class="chip' + (S.mech === x.k ? ' on' : '') + '" data-mk="' + x.k + '" title="' + esc(x.q) + '">' + esc(x.label) + ' <span class="k">' + cnt[x.k] + '</span></button>';
+      return '<button class="chip' + (S.mech === x.k ? ' on' : '') + '" data-mk="' + x.k + '" title="' + esc(x.q) + '">' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + ' <span class="k">' + cnt[x.k] + '</span></button>';
     }).join('');
   }
   function ruleRow(r, m) {
@@ -781,7 +897,7 @@ function impCell(r) {
     r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
     (r.dr || []).forEach(function (k) { fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
     return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
-      + '<td><span class="tg">' + esc((MK[r.sk] || {}).label || r.sk) + '</span></td>'
+      + '<td>' + mechTag(r.sk) + '</td>'
       + '<td>' + esc(r.t) + '<span class="sub2 mono">' + esc(r.d) + '</span></td>'
       + '<td>' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + '</td>'
       + '<td>' + (r.b ? esc(r.b) : '<span class="muted" title="All products">all</span>') + '</td>'
@@ -809,7 +925,7 @@ function impCell(r) {
   }
   function renderHow() {
     var cnt = {}; mkts().forEach(function (m) { (m.stock || []).forEach(function (r) { cnt[r.sk] = (cnt[r.sk] || 0) + 1; }); });
-    $('#how tbody').innerHTML = mechs().map(function (x) { return '<tr><td><b>' + esc(x.label) + '</b></td><td>' + esc(x.q) + '</td><td class="num">' + n0(cnt[x.k] || 0) + '</td></tr>'; }).join('');
+    $('#how tbody').innerHTML = mechs().map(function (x) { return '<tr><td><b>' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</b></td><td>' + esc(x.q) + '</td><td class="num">' + n0(cnt[x.k] || 0) + '</td></tr>'; }).join('');
   }
 
   // ---- wiring ----
@@ -821,6 +937,16 @@ function impCell(r) {
     S.brand = p[0]; S.market = p[1]; S.mech = p[2]; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: S.market, mech: S.mech });
     if (S.d && S.d.scope && S.d.scope.brand !== S.brand && S.d.scope.brand) { load(); return; }
     render(); var el = document.getElementById('set-' + ((mkts()[0] || {}).cmpid || '')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('#kpis').addEventListener('click', function (e) { var g = e.target.closest('[data-go]'); if (!g) return; var el = document.getElementById(g.getAttribute('data-go')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  $('#kpis').addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; var g = e.target.closest('[data-go]'); if (g) g.click(); });
+  $('#av-csv').addEventListener('click', function () {
+    var rows = [];
+    mkts().forEach(function (m) { ['master', 'g', 'fb'].forEach(function (k) {
+      var s = m.av && m.av[k]; if (!s) return;
+      rows.push([m.client, m.market, AVL[k], s.n, s.in, s.out, s.pre, s.none, s.other, (s.inPct).toFixed(1), (s.outPct).toFixed(1), s.t ? new Date(s.t).toISOString() : '', k === 'master' ? (m.av.imp || '') : '']);
+    }); });
+    csvDownload('stock_availability' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'feed', 'products', 'in stock', 'out of stock', 'pre-order / backorder', 'not stated', 'unreadable', 'in stock %', 'out of stock %', 'counted at', 'FeedHero import'], rows);
   });
   $('#chan').addEventListener('change', function () { S.chan = this.checked; remember('fcc-stock-chan', S.chan ? '1' : ''); renderCov(); });
   $('#sevs').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.sev = +b.getAttribute('data-s'); renderFinds(); });
