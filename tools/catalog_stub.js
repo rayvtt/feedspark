@@ -55,12 +55,16 @@ function outputXml() {
   });
   return '<?xml version="1.0" encoding="UTF-8"?>\n<rss xmlns:g="http://base.google.com/ns/1.0" xmlns:c="http://base.google.com/cns/1.0" version="2.0"><channel><title>Northwind (synthetic)</title>\n' + items.join('\n') + '\n</channel></rss>';
 }
+const HELD = ['NW100', 'NW101', 'NW102', 'NW103'];
 function masterCsv() {
   const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
-  const rows = [['id', 'product_id', 'title', 'price', 'was_price', 'description', 'vendor', 'colour', 'product_type', 'image_link', 'availability', 'composition']];
+  const rows = [['id', 'product_id', 'title', 'price', 'was_price', 'description', 'vendor', 'colour', 'product_type', 'image_link', 'availability', 'composition', 'item_group_id']];
   products().forEach((p, i) => rows.push([p.oid, p.grp, p.otitle, '£' + (p.sale || p.price).toFixed(2), p.sale ? '£' + p.price.toFixed(2) : '', '<p>A ' + p.col.toLowerCase() + ' piece.</p>', 'Northwind',
-    p.col + ' (' + p.col.slice(0, 3).toUpperCase() + ')', p.pt.split(' > ').pop(), p.img, i % 9 === 4 ? 'OUT_OF_STOCK' : 'IN_STOCK', i % 2 ? 'Cotton 100%' : '']));
-  ['Linen Shirt', 'Wool Beanie', 'Canvas Belt', 'Silk Scarf'].forEach((t, i) => rows.push(['M-OLD-' + i, 'OLD' + i, t, '£' + (15 + i * 5) + '.00', '', '', 'Northwind', '', 'Archive', 'https://img.northwind.invalid/old' + i + '.jpg', 'OUT_OF_STOCK', '']));
+    p.col + ' (' + p.col.slice(0, 3).toUpperCase() + ')', p.pt.split(' > ').pop(), p.img, i % 9 === 4 ? 'OUT_OF_STOCK' : 'IN_STOCK', i % 2 ? 'Cotton 100%' : '', p.grp]));
+  // sizes the FEED leaves out because they are out of stock (as Superdry GB's does) — the master still carries them,
+  // so a group's full size run is only readable off the master
+  HELD.forEach((g) => { const p = products().filter((x) => x.grp === g)[0]; rows.push(['M-' + g + '-S', g, p.otitle, '£' + p.price.toFixed(2), '', '', 'Northwind', '', p.pt.split(' > ').pop(), p.img, 'NOT_AVAILABLE', '', g]); });
+  ['Linen Shirt', 'Wool Beanie', 'Canvas Belt', 'Silk Scarf'].forEach((t, i) => rows.push(['M-OLD-' + i, 'OLD' + i, t, '£' + (15 + i * 5) + '.00', '', '', 'Northwind', '', 'Archive', 'https://img.northwind.invalid/old' + i + '.jpg', 'OUT_OF_STOCK', '', 'OLD' + i]));
   return rows.map((r) => r.map(q).join(',')).join('\r\n');
 }
 // FeedHero's category tree for the market: a row per level, ONE path left out on purpose so the "not in
@@ -141,4 +145,4 @@ function stubLines() {
     + "  if(url.indexOf('/api/roas?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " }\n";
 }
-module.exports = { build, stubLines, CLIENT, MKT, CMPID, DROPPED };
+module.exports = { build, stubLines, CLIENT, MKT, CMPID, DROPPED, HELD };

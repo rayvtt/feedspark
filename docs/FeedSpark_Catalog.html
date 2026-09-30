@@ -931,7 +931,7 @@ window.addEventListener('load',restore);
     if (S.ctl) { try { S.ctl.abort(); } catch (e) {} }
     var g = ++S.gen;
     S.ctl = window.AbortController ? new AbortController() : null;
-    S.prods = []; S.fx = []; S.ixO = new Map(); S.ixI = new Map(); S.grp = null; S.gm = {}; S.rr = null; S.live = {};
+    S.prods = []; S.fx = []; S.ixO = new Map(); S.ixI = new Map(); S.grp = null; S.run = null; S.gm = {}; S.rr = null; S.live = {};
     S.codes = []; S.comp = []; S.att = null; S.linAt = 0; S.linDone = false; S.spw = null; S.pb = null; S.dl = null; S.mx = null; S.mxw = null; S.mxN = 0; S.sum = null; S.counts = null;
     S.out = { st: 'loading', bytes: 0, total: 0, t0: Date.now() }; S.m = { st: 'idle' }; S.roas = { st: 'idle', segs: {} }; S.ads = { st: 'idle' };
     S.view = []; S.facet = null; S.sel = -1; closeInsp(true); S.ver++;
@@ -1068,19 +1068,22 @@ window.addEventListener('load',restore);
     // Schuh's master is Windows-1252, not UTF-8: decode strictly, and at the first byte that is not
     // UTF-8 switch the decoder for the rest of the file (everything before it was ASCII-compatible)
     var rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null, hdr = null, sample = [], plan = null, map = null;
-    var by = new Map(), light = [], dup = 0, n = 0, stopped = '';
+    var by = new Map(), light = [], dup = 0, n = 0, stopped = '', run = new Map(), qi = -1;
     function decide() {
       plan = E.plan(hdr);
       var jA = E.detectJoin(plan, sample, new Set(S.ixO.keys())), jB = E.detectJoin(plan, sample, new Set(S.ixI.keys()));
       var useB = jB.hit > jA.hit * 1.2, j = useB ? jB : jA;
       if (j.col < 0) return false;
-      map = useB ? S.ixI : S.ixO; plan.join = j.col; plan.joinH = j.h;
+      map = useB ? S.ixI : S.ixO; plan.join = j.col; plan.joinH = j.h; qi = E.qtyCol(hdr);
       m.join = { h: j.h, on: useB ? 'g:id' : 'fs_data_original_id', rate: j.rate };
       var s = sample; sample = null; s.forEach(take);
       return true;
     }
     function take(row) {
       n++;
+      // every master row joins its item group's size run, in the feed or not — the feed drops out-of-stock sizes
+      var gc = E.cands('item_group_id', row, plan), ac = E.cands('availability', row, plan);
+      if (gc.length) E.runAdd(run, gc[0].v, E.stockOf(ac.length ? ac[0].v : '', qi >= 0 ? row[qi] : null));
       var key = E.idKey(row[plan.join]); if (!key) return;
       var i = map.get(key);
       // a repeated id: the LAST row is the one the output was built from (checked on real feeds, 14 of 14)
@@ -1102,7 +1105,7 @@ window.addEventListener('load',restore);
         renderStatus(); renderLinSum(); return;
       }
       var fin = E.plan(hdr); fin.join = plan.join; fin.joinH = plan.joinH;
-      m.plan = fin; m.hdr = hdr; m.by = by; m.light = light; m.dup = dup; m.rows = n; m.bytes = null;
+      m.plan = fin; m.hdr = hdr; m.by = by; m.light = light; m.dup = dup; m.rows = n; m.bytes = null; runFrom(run);
       m.st = 'ready'; counts(); renderStatus(); renderTabs();
       startLineage(g);
     }
@@ -1425,7 +1428,7 @@ window.addEventListener('load',restore);
       case 'a7imp': case 'a7clk': case 'a7ctr': case 'a7cost': case 'a7cpc': case 'a7conv': case 'a7val': case 'a7roas': case 'a7cr': case 'a7cpa':
         var ar = adsOf(i); return ar ? ar[ADS_M[k]] : (ar === null && (k === 'a7imp' || k === 'a7clk' || k === 'a7cost' || k === 'a7conv' || k === 'a7val') ? 0 : null);
       case 'type': return low(x.pt);
-      case 'var': var gr = x.grp && S.grp ? S.grp.get(x.grp) : null; return gr ? gr[0] : null;
+      case 'var': var gr = x.grp ? grpC(x.grp) : null; return gr ? gr[0] : null;
       case 'dob': return x.dob;
       case 'kw': return f.keywords ? f.keywords.length : 0;
       case 'imgs': return x.imgs;
@@ -1820,16 +1823,43 @@ window.addEventListener('load',restore);
   // 4 · SIZE-RUN HEALTH — item groups (2+ variants) by the share of their variants in stock: a broken run is spend on a
   // product page the shopper cannot finish on
   var RUNB = [['all', 'All in stock', 'var(--band-green)'], ['most', '75%+ in stock', 'var(--band-yellow)'], ['half', '50–75% in stock', 'var(--band-orange)'], ['few', 'Under half', 'var(--band-red)'], ['none', 'None in stock', 'var(--lk)']];
-  function runB(i) { var x = S.fx[i]; if (!x.grp || !S.grp) return null; var c = S.grp.get(x.grp); if (!c || c[0] < 2) return null; var s = c[1] / c[0]; return s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; }
+  function runB(i) { var x = S.fx[i]; return x.grp ? E.runBucket(grpC(x.grp)) : null; }
+  // Size runs come from the MASTER once it is read: a feed that drops out-of-stock sizes (Superdry GB) carries only the
+  // sizes in stock, so read off the feed every group is "all in stock" by construction. The master's run is used only
+  // when its item groups are the feed's own (half the feed's groups found there) — otherwise the feed, and it says so.
+  function runFrom(run) {
+    S.run = null; if (!S.grp || !run.size) return;
+    var seen = 0, tot = 0;
+    S.grp.forEach(function (c, g) { if (c[0] < 1) return; tot++; if (run.has(g)) seen++; });
+    if (tot && seen / tot >= .5) S.run = run;
+    renderRun();
+  }
+  function grpC(g) { return (S.run && S.run.get(g)) || (S.grp && S.grp.get(g)) || null; }
   function renderRun() {
     if (!S.grp) { modEmpty('run-body', 'Reading the feed…'); return; }
-    var g = {}, p = {}, tot = 0;
-    S.grp.forEach(function (c) { if (c[0] < 2) return; tot++; var s = c[1] / c[0], b = s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; g[b] = (g[b] || 0) + 1; p[b] = (p[b] || 0) + c[0]; });
-    if (!tot) { modEmpty('run-body', 'No item groups with two or more variants in this feed.'); return; }
+    var g = {}, p = {}, tot = 0, held = 0, feedIn = 0, feedN = 0, M = !!S.run;
+    S.grp.forEach(function (f, k) {
+      feedN += f[0]; feedIn += f[1];
+      var c = M ? (S.run.get(k) || f) : f, b = E.runBucket(c); if (!b) return;
+      tot++; g[b] = (g[b] || 0) + 1; p[b] = (p[b] || 0) + c[0];
+      if (M && S.run.has(k)) held += Math.max(0, (c[0] - c[1]) - (f[0] - f[1]));
+    });
+    var mst = S.m && S.m.st, waiting = !M && mst && !/^(none|error|nojoin|ready|done)$/.test(mst);
+    var sub = M ? 'Each group’s full size run, read from the master.'
+      : waiting ? 'Reading the master for each group’s full size run…'
+      : 'From the feed only — sizes it leaves out aren’t counted.';
+    $('run-sub').textContent = sub;
+    if (!tot) { modEmpty('run-body', 'No item groups with two or more sizes in this feed.'); return; }
+    // every size the feed sends is in stock and there is no master to read: the card would say 100% by construction
+    if (!M && feedN && feedIn === feedN) {
+      modEmpty('run-body', waiting ? 'Reading the master — every size in the feed is in stock, so the full run has to come from the master.'
+        : 'Every size in this feed is in stock, so the feed alone cannot show a broken size run: out-of-stock sizes are left out of it, and there is no master to read them from.');
+      return;
+    }
     var broken = (g.most || 0) + (g.half || 0) + (g.few || 0);
     $('run-body').innerHTML = modList(RUNB.map(function (b) {
-      return { id: 'run:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(g[b[0]] || 0) + ' item groups, ' + n0(p[b[0]] || 0) + ' products · click to list them', bars: [{ w: (g[b[0]] || 0) / tot * 100, c: b[2] }], v: pc(g[b[0]] || 0, tot), sub: n0(g[b[0]] || 0) + ' groups' };
-    }), { foot: '<span><b>' + pc(broken, tot) + '</b> of ' + n0(tot) + ' size runs are broken — some variants out</span>' });
+      return { id: 'run:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(g[b[0]] || 0) + ' item groups, ' + n0(p[b[0]] || 0) + (M ? ' sizes in the master' : ' products') + ' · click to list the ones in the feed', bars: [{ w: (g[b[0]] || 0) / tot * 100, c: b[2] }], v: pc(g[b[0]] || 0, tot), sub: n0(g[b[0]] || 0) + ' groups' };
+    }), { foot: '<span><b>' + pc(broken, tot) + '</b> of ' + n0(tot) + ' size runs are broken — some sizes out' + (M && held ? ' · <b>' + n0(held) + '</b> out-of-stock sizes left out of the feed' : '') + '</span>' });
   }
   // 5 · CATALOGUE MIX — the biggest groups by any field, with their share on sale
   var MIXF = [['brand', 'Brand'], ['cat', 'Top category'], ['sub', 'Sub-category'], ['color', 'Colour'], ['gender', 'Gender'], ['age_group', 'Age group'], ['custom_label_0', 'Custom label 0'], ['custom_label_1', 'Custom label 1'], ['custom_label_2', 'Custom label 2'], ['custom_label_3', 'Custom label 3'], ['custom_label_4', 'Custom label 4']];
@@ -2385,7 +2415,7 @@ window.addEventListener('load',restore);
       case 'roas': return roasHtml(i);
       case 'a7imp': case 'a7clk': case 'a7ctr': case 'a7cost': case 'a7cpc': case 'a7conv': case 'a7val': case 'a7roas': case 'a7cr': case 'a7cpa': return adsCell(k, i);
       case 'type': var d = x.depth; return '<span class="pips" title="' + d + ' level' + (d === 1 ? '' : 's') + ' deep">' + [1, 2, 3, 4, 5].map(function (z) { return '<i class="' + (z <= d ? 'on' : '') + '"></i>'; }).join('') + '</span><span class="tt" title="' + esc(x.pt) + '">' + esc(x.leaf || '—') + '</span>';
-      case 'var': var gr = x.grp && S.grp ? S.grp.get(x.grp) : null; return gr && gr[0] > 1 ? '<span title="' + esc(n0(gr[1]) + ' of ' + n0(gr[0]) + ' in item group ' + x.grp + ' in stock') + '">' + n0(gr[1]) + '/' + n0(gr[0]) + '</span>' : '<span class="mute">—</span>';
+      case 'var': var gr = x.grp ? grpC(x.grp) : null; return gr && gr[0] > 1 ? '<span title="' + esc(n0(gr[1]) + ' of ' + n0(gr[0]) + (S.run ? ' sizes' : '') + ' in item group ' + x.grp + ' in stock' + (S.run ? ' (master)' : '')) + '">' + n0(gr[1]) + '/' + n0(gr[0]) + '</span>' : '<span class="mute">—</span>';
       case 'dob': return x.dob != null ? '<span title="First seen ' + new Date(x.dob).toISOString().slice(0, 10) + '">' + ago(x.age) + '</span>' : '<span class="mute">—</span>';
       case 'kw': return f.keywords ? n0(f.keywords.length) : '<span class="mute">0</span>';
       case 'imgs': return n0(x.imgs);
