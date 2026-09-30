@@ -184,6 +184,40 @@ PNG and PDF rasterise with html2canvas + jsPDF from cdnjs under the same SRI has
 `/kwcal` pin; an unreachable CDN falls back to the print dialog for the PDF and says so for a PNG,
 never remembered as a permanent failure. Nothing leaves the browser: every file is built on the page.
 
+## 4c. ◐ Heat — a colour scale per column, trough to peak (30 Sep 2026)
+
+Ray: *"can you allow option to highlight column cells color in gradiant to find peak and trough too,
+selected columns individually"*. Excel's colour scale on the Performance table, switched on **column by
+column** from **◐ Heat** beside ⊞ Columns (it lists the columns on screen; Band and Updated have no
+peak and are never offered; All / Clear; the button counts the columns on).
+
+Three rules, each because the obvious version would mislead:
+
+1. **One level at a time.** Brands are scaled against brands, markets against markets, categories (or
+   a segment's rows) against the others at the same depth. A brand's total beside one of its own
+   categories is not a comparison. With every brand open, the markets are ranked across the whole view.
+2. **Money within one currency.** Spend, revenue, CPC, cost/conv., AOV and avg. price are scaled only
+   against rows in the same currency (a brand row by the currency its cell shows). A lone € market has
+   no scale to sit on and stays plain. Ratios and counts (ROAS, CTR, conv. rate, zombie %, clicks,
+   impressions, conversions, SKUs) compare across currencies.
+3. **The midpoint is the median, not the middle of the range.** Spend is skewed: on a midrange scale
+   one big market paints every other market orange. Around the median, orange means below the
+   typical row and blue means above it. Both deepen toward the trough ▼ and the peak ▲, and the
+   median row is left untinted.
+
+The tint is the chart pair's own steps (light `#ED6F0B` / `#2563EB`, dark `#C67B28` / `#4C82E0`),
+under ink text, so every figure keeps its contrast. The colour means **high or low, not good or bad**:
+a peak CPC is a peak too, and the menu says so. Each tinted cell's tooltip names the peak, the trough
+or its rank (*"2nd highest ROAS of the 3 markets shown"*). The header carries a trough → peak bar, and
+the footer names the columns on. The Total rows are never on the scale.
+
+The chosen columns are saved **on this device** (`fcc-roas-heat`) and inside a ★ saved view. The
+setting describes how one screen reads the table, so it is never shared state.
+
+**A phone fix found on the way.** Every menu on the page hangs off its button's right edge, so at 390px
+⊞ Columns, ★ Views and ⬇ Export opened half off the left of the screen. The new menu did the same.
+`fitPop` now nudges any menu back inside the screen (8px from either edge), and CSS caps its width.
+
 ## 5. Harness
 
 - `tools/test_roas.mjs` — engine (parsing on real specimens, roster, rotation + budget, windows,
@@ -197,6 +231,14 @@ never remembered as a permanent failure. Nothing leaves the browser: every file 
   Excel workbook opened and its tabs read (a hidden module left out), the PDF, the table CSV; then
   390px. Two negative controls were run at build: without the `[hidden]` rule a hidden card still
   paints, without the capture rule a long card is clipped — both fail it.
+  ◐ Heat block: nothing tinted until a column is picked; the menu lists exactly the columns shown bar
+  Band/Updated and stays open across ticks; the peak / trough brand (counted in the test) blue ▲ /
+  orange ▼; only the picked column coloured, header + footer naming it, Total rows never; with every
+  brand open, markets ranked against markets across currencies for a ratio, the median market
+  untinted with its rank in the tooltip, the lone € market off the £ spend scale; reload keeps it,
+  Clear clears it, a saved view restores it; on a dozen £ markets the tint deepens monotonically away
+  from the median, one hue each side, one ▲ and one ▼; dark mode in the dark pair; every menu inside
+  a 390px screen. Negative control at build: dropping the per-currency grouping fails four of them.
 - `tools/check_roasseg.js` — Playwright, in presync. It drives the real page on the synthetic
   stub:
   - the search opens a brand;

@@ -215,6 +215,95 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     await ctx.close();
   }
 
+  console.log('· ◐ Heat — a colour scale per column, trough to peak, columns picked one by one');
+  {
+    // counted HERE: a brand's ROAS in the currency its row shows (£ — the book's own), every market's ROAS, £ spend per market
+    const brandRoas = {}; gbp.forEach((m) => { const b = brandRoas[m.client] || (brandRoas[m.client] = { sp: 0, rv: 0 }); b.sp += sp(m); b.rv += rv(m); });
+    const brOrder = Object.keys(brandRoas).sort((a, c) => brandRoas[c].rv / brandRoas[c].sp - brandRoas[a].rv / brandRoas[a].sp);
+    const mkAll = D.book.markets.filter((m) => m[W]).map((m) => ({ k: 'm|' + m.cmpid, r: m[W].roasPct, cur: m.cur, sp: sp(m) })).sort((a, c) => c.r - a.r);
+    const cell = (p, key, col) => p.evaluate(([key, col]) => {
+      const tr = document.querySelector('#pt tbody tr[data-key="' + key + '"]'); if (!tr) return null;
+      const i = Array.from(document.querySelectorAll('#pt thead th')).findIndex((th) => th.getAttribute('data-k') === col); const td = tr.children[i]; if (!td) return null;
+      return { cls: td.className, bg: getComputedStyle(td).backgroundColor, title: td.title, mark: (td.querySelector('.hk') || {}).textContent || '' };
+    }, [key, col]);
+    const rgb = (bg) => (bg.match(/[\d.]+/g) || []).map(Number);
+    const { ctx, p, errs } = await open(browser);
+    ok('no cell is tinted until a column is picked', (await p.evaluate(() => document.querySelectorAll('#pt td.hx').length)) === 0);
+    await p.click('#heat-btn'); await p.waitForTimeout(100);
+    const listed = await p.evaluate(() => Array.from(document.querySelectorAll('#heat-pop [data-heat]')).map((c) => c.getAttribute('data-heat')));
+    const shownCols = await p.evaluate(() => Array.from(document.querySelectorAll('#pt thead th')).map((th) => th.getAttribute('data-k')).filter((k) => k !== 'name'));
+    ok('◐ Heat lists every column on screen one by one — but not Band or Updated, which have no peak', JSON.stringify(listed) === JSON.stringify(shownCols.filter((k) => k !== 'band' && k !== 'upd')), [listed, shownCols]);
+    await p.check('#heat-pop [data-heat="roas"]'); await p.waitForTimeout(150);
+    ok('ticking a column keeps the menu open (pick several in one go)', await p.evaluate(() => !document.getElementById('heat-pop').hidden));
+    ok('…the button counts the columns on', /◐ Heat\s*1/.test(await p.evaluate(() => document.getElementById('heat-btn').textContent)));
+    let a = await cell(p, 'b|' + brOrder[0], 'roas'), z = await cell(p, 'b|' + brOrder[brOrder.length - 1], 'roas');
+    ok('the brand with the highest ROAS (counted here) is the PEAK — ▲, blue', a && /\bpk\b/.test(a.cls) && a.mark === '▲' && rgb(a.bg).slice(0, 3).join() === '37,99,235' && /^Peak/.test(a.title), a);
+    ok('…the lowest is the TROUGH — ▼, orange', z && /\btr\b/.test(z.cls) && z.mark === '▼' && rgb(z.bg).slice(0, 3).join() === '237,111,11' && /^Trough/.test(z.title), z);
+    ok('…only the column picked is coloured', (await p.evaluate(() => Array.from(document.querySelectorAll('#pt td.hx')).every((td) => { var i = Array.prototype.indexOf.call(td.parentElement.children, td); return document.querySelectorAll('#pt thead th')[i].getAttribute('data-k') === 'roas'; }))));
+    ok('…its header carries the scale, and the footer names it', await p.evaluate(() => document.querySelector('#pt thead th[data-k="roas"]').classList.contains('hx') && !document.querySelector('#pt thead th[data-k="sp"]').classList.contains('hx') && /◐ ROAS: orange ▼ trough → blue ▲ peak, within each level/.test(document.getElementById('pt-foot').textContent)));
+    ok('the Total rows are never on the scale', (await p.evaluate(() => document.querySelectorAll('#pt tr.tot td.hx').length)) === 0);
+
+    await p.check('#heat-pop [data-heat="sp"]'); await p.keyboard.press('Escape');
+    await p.click('#expand-all'); await p.waitForTimeout(250);
+    a = await cell(p, mkAll[0].k, 'roas'); z = await cell(p, mkAll[mkAll.length - 1].k, 'roas');
+    ok('open every brand: markets are compared with MARKETS, not with brands — a ratio across every currency', a && /\bpk\b/.test(a.cls) && /of the 3 markets shown$/.test(a.title) && z && /\btr\b/.test(z.cls), [a, z]);
+    const mid = await cell(p, mkAll[1].k, 'roas');
+    ok('…the median market sits at the neutral midpoint: untinted, its rank in the tooltip', mid && !/\bhx\b/.test(mid.cls) && /^2nd highest ROAS of the 3 markets shown/.test(mid.title), mid);
+    const eurMk = D.book.markets.filter((m) => m.cur === '€');
+    const e1 = await cell(p, 'm|' + eurMk[0].cmpid, 'sp');
+    ok('money never crosses a currency: the lone € market has no spend scale to sit on', eurMk.length === 1 && e1 && !/\bhx\b/.test(e1.cls) && !e1.mark, e1);
+    const g = gbp.slice().sort((x, y) => sp(y) - sp(x));
+    const g0 = await cell(p, 'm|' + g[0].cmpid, 'sp'), g1 = await cell(p, 'm|' + g[g.length - 1].cmpid, 'sp');
+    ok('…while the £ markets are scaled against each other (peak and trough in £)', /\bpk\b/.test(g0.cls) && / in £$/.test(g0.title) && /\btr\b/.test(g1.cls) && / in £$/.test(g1.title), [g0, g1]);
+
+    await p.reload(); await p.waitForSelector('#pt tbody tr'); await p.waitForTimeout(250);
+    ok('the picked columns survive a reload (this device)', await p.evaluate(() => document.querySelector('#pt thead th[data-k="roas"]').classList.contains('hx') && document.querySelector('#pt thead th[data-k="sp"]').classList.contains('hx') && document.querySelectorAll('#pt td.hx').length > 0));
+    await p.click('#views-btn'); await p.fill('#view-name', 'heat view'); await p.click('#view-save'); await p.keyboard.press('Escape');
+    await p.click('#heat-btn'); await p.click('#heat-pop [data-heat-none]'); await p.waitForTimeout(150);
+    ok('Clear takes every colour off, and the button count with it', (await p.evaluate(() => document.querySelectorAll('#pt td.hx, #pt th.hx').length)) === 0 && !/\d/.test(await p.evaluate(() => document.getElementById('heat-btn').textContent)));
+    ok('…and the menu stays open with every box unticked', await p.evaluate(() => !document.getElementById('heat-pop').hidden && Array.from(document.querySelectorAll('#heat-pop [data-heat]')).every((c) => !c.checked)));
+    await p.keyboard.press('Escape');
+    await p.click('#views-btn'); await p.click('#views-pop [data-view="0"]'); await p.waitForTimeout(250);
+    ok('a saved view carries its colour scale', await p.evaluate(() => document.querySelector('#pt thead th[data-k="roas"]').classList.contains('hx') && document.querySelector('#pt thead th[data-k="sp"]').classList.contains('hx')));
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    // a longer £ book: the gradient is a GRADIENT — deeper the further a market sits from the median, one hue each side
+    const { ctx, p, errs } = await open(browser, { book: BIG, init: "localStorage.setItem('fcc-roas-heat','[\"sp\"]');" });
+    await p.click('#expand-all'); await p.waitForTimeout(250);
+    const list = await p.evaluate(() => { var i = Array.from(document.querySelectorAll('#pt thead th')).findIndex((th) => th.getAttribute('data-k') === 'sp');
+      return Array.from(document.querySelectorAll('#pt tbody tr.r[data-key^="m|"]')).map((tr) => { var td = tr.children[i]; return { k: tr.getAttribute('data-key'), cls: td.className, bg: getComputedStyle(td).backgroundColor, v: +td.textContent.replace(/[^\d.]/g, ''), cur: (tr.querySelector('.cur') || {}).textContent }; }).filter((x) => x.cur === '£'); });
+    const vs = list.map((x) => x.v).sort((x, y) => x - y), h = vs.length / 2, med = vs.length % 2 ? vs[Math.floor(h)] : (vs[h - 1] + vs[h]) / 2;
+    const al = (x) => { const c = (x.bg.match(/[\d.]+/g) || []).map(Number); return c.length > 3 ? c[3] : (c.length ? 1 : 0); };
+    const hue = (x) => (x.bg.match(/[\d.]+/g) || []).slice(0, 3).join();
+    const above = list.filter((x) => x.v > med).sort((x, y) => x.v - y.v), below = list.filter((x) => x.v < med).sort((x, y) => y.v - x.v);
+    ok('(the longer book has a dozen £ markets to scale)', list.length >= 12, list.length);
+    ok('above the median: blue, deepening toward the peak', above.every((x) => hue(x) === '37,99,235') && above.every((x, i) => !i || al(x) >= al(above[i - 1])), above.map((x) => [x.v, x.bg]));
+    ok('below the median: orange, deepening toward the trough', below.every((x) => hue(x) === '237,111,11') && below.every((x, i) => !i || al(x) >= al(below[i - 1])), below.map((x) => [x.v, x.bg]));
+    ok('exactly one ▲ peak and one ▼ trough among the £ markets', list.filter((x) => /\bpk\b/.test(x.cls)).length === 1 && list.filter((x) => /\btr\b/.test(x.cls)).length === 1 && list.find((x) => /\bpk\b/.test(x.cls)).v === vs[vs.length - 1] && list.find((x) => /\btr\b/.test(x.cls)).v === vs[0]);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    const { ctx, p, errs } = await open(browser, { init: "localStorage.setItem('fcc-theme','dark');localStorage.setItem('fcc-roas-heat','[\"roas\"]');" });
+    const bgs = await p.evaluate(() => Array.from(document.querySelectorAll('#pt td.hx')).map((td) => getComputedStyle(td).backgroundColor.match(/[\d.]+/g).slice(0, 3).join()));
+    ok('dark mode draws the scale in the chart pair\'s own dark steps', bgs.length && bgs.every((c) => c === '76,130,224' || c === '198,123,40'), bgs);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    const { ctx, p, errs } = await open(browser, { w: 390, h: 844 });
+    // file:// has no phone layer, so the page's own topbar wraps its module icons over the table — press each button directly.
+    // Every menu hangs off its button's right edge; before fitPop, ⊞ Columns, ★ Views and ⬇ Export ran off the left of a phone too.
+    const r = await p.evaluate(() => [['heat-btn', 'heat-pop'], ['cols-btn', 'cols-pop'], ['views-btn', 'views-pop'], ['exp-btn', 'exp-pop']].map(([b, m]) => {
+      var btn = document.getElementById(b); btn.scrollIntoView({ block: 'center' }); btn.click(); var e = document.getElementById(m), q = e.getBoundingClientRect();
+      var o = { m: m, l: Math.round(q.left), r: Math.round(q.right), vw: document.documentElement.clientWidth, open: !e.hidden }; document.body.click(); return o; }));
+    ok('on the phone the ◐ Heat menu — and every other menu on the page — opens inside the screen', r.every((x) => x.open && x.l >= 0 && x.r <= x.vw), r);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+
   console.log('· the phone: one column, nothing wider than the screen');
   {
     const { ctx, p, errs } = await open(browser, { w: 390, h: 844 });
