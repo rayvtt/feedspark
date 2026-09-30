@@ -11359,6 +11359,12 @@
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "head.push('total_skus', 'spread_pp', 'in_markets');",
       "pr": 0
-    }
+    },
+    {"name": "KWCal: Superdry focus themes seeded (16, Oct 2026 → Jan 2027)", "file": "docs/FeedSpark_KWCal.html", "pattern": "Superdry:{events:[", "pr": 0},
+    {"name": "KWCal: Superdry lanes renamed for the KIND of work", "file": "docs/FeedSpark_KWCal.html", "pattern": "Superdry:{campaign:'Seasonal focus'", "pr": 0},
+    {"name": "KWCal: a scope that is SET but unmeasured is never reported as absent", "file": "docs/FeedSpark_KWCal.html", "pattern": "function hasScope(e,mkt)", "pr": 0},
+    {"name": "KWCal: the pending-scope card names what it scopes", "file": "docs/FeedSpark_KWCal.html", "pattern": "sync to measure", "pr": 0},
+    {"name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope", "file": "docs/FeedSpark_KWCal.html", "pattern": "!hasScope(e,evMkt(CLIENT,e))", "pr": 0},
+    {"name": "KWCal: Superdry GB product-type census (independent check on every seeded path)", "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json", "pattern": "distinct_primary_paths", "pr": 0}
   ]
 }

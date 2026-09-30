@@ -274,6 +274,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: KWCal client PDF — one click (no dialog), and the reported results are on it"
   NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs || {
     echo "✗ KWCal client-PDF tripwire failed — the print dialog came back, or a result went missing from the file"; exit 1; }
+  echo "── validating: KWCal Superdry board — sixteen focus themes, and a seeded scope that reports itself honestly"
+  NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs || {
+    echo "✗ KWCal Superdry tripwire failed — a seeded path is not in the live feed, a note quotes a count its scope cannot support, or a set scope reads as absent"; exit 1; }
   echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
   NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
     echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
