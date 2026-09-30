@@ -22,6 +22,12 @@
  * default (or by the search) closes on the FIRST click — the toggle used to flip a flag that was
  * never set, so it took two.
  *
+ * EVERY CUT FEEDHERO OFFERS (Ray, 30 Sep 2026: "add more segment type inside ROAS dashboard module"):
+ * the select offered four of FeedHero's eighteen aggregations. All eighteen now, grouped, named in
+ * words; a cut whose every product is Unsorted says the field is empty; a cut longer than FeedHero's
+ * one page says it carries the biggest spenders; product age sorts as a ladder; an unknown linked
+ * cut falls back to Category.
+ *
  * The page and the synthetic book are the shipped ones (tools/roas_stub.js — no real figure).
  * Run: node tools/check_roasseg.js      (PW_CHROMIUM overrides the browser path)
  */
@@ -51,6 +57,12 @@ const STUB = `
     if (url.indexOf('/api/roas/live') >= 0) {
       var q = new URL(url, location.href).searchParams; window.__live.push(q.get('cmpid') + '|' + q.get('agg'));
       if (q.get('agg') === 'Price_group') return j({ ok: true, cmpid: q.get('cmpid'), agg: 'Price_group', rows: [], n: 0, missing: true, at: Date.now() });
+      // the shapes FeedHero really answers with (30 Sep 2026): Batch id on Superdry GB = every product
+      // Unsorted + the unlisted row; Product age = the ladder; Colour on Monsoon UK = 144 rows, one page kept
+      var row = function (name, i) { return Object.assign({}, ${JSON.stringify(LIVE_ROWS)}[i % ${LIVE_ROWS.length}], { category: name }); };
+      if (q.get('agg') === 'Batch_id') return j({ ok: true, cmpid: q.get('cmpid'), agg: 'Batch_id', at: Date.now(), rows: [row('Unsorted', 0), row('Unlisted SKUs in Ads traffic', 1)], n: 2, of: 2 });
+      if (q.get('agg') === 'Product_age') return j({ ok: true, cmpid: q.get('cmpid'), agg: 'Product_age', at: Date.now(), rows: ['Perennial', 'New', 'Brand new', 'This season'].map(row), n: 4, of: 4 });
+      if (q.get('agg') === 'Colour') return j({ ok: true, cmpid: q.get('cmpid'), agg: 'Colour', at: Date.now(), rows: ['Blue', 'Pink', 'Black'].map(row), n: 3, of: 143 });
       return j({ ok: true, cmpid: q.get('cmpid'), agg: q.get('agg'), at: Date.now(), rows: ${JSON.stringify(LIVE_ROWS)}, n: ${LIVE_ROWS.length} });
     }
     if (url.indexOf('/api/roas?client=') >= 0) return j(${JSON.stringify(D.market)});
@@ -145,6 +157,49 @@ const pickSeg = (p, v) => p.selectOption('#seg', v).then(() => p.waitForTimeout(
     const r = await rows(p);
     ok('?seg=Gender opens the markets in scope on load', r.some((x) => x.key.indexOf('m|schuh_uk_1|s') === 0), r.map((x) => x.key));
     ok('the select shows the linked segment', (await p.inputValue('#seg')) === 'Gender');
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+
+  console.log('· every cut FeedHero offers — Ray, 30 Sep 2026: "add more segment type inside ROAS dashboard module"');
+  {
+    const { ctx, p, errs } = await open(browser, '?brand=Schuh');
+    const opts = await p.evaluate(() => Array.from(document.querySelectorAll('#seg optgroup')).map((g) => ({ g: g.label, o: Array.from(g.querySelectorAll('option')).map((o) => o.value + '=' + o.textContent) })));
+    const all = opts.reduce((a, g) => a.concat(g.o), []);
+    ok('the Segment select offers all eighteen of FeedHero\'s cuts, once each', all.length === 18 && new Set(all).size === 18, all);
+    ok('…grouped: Product · Price · Lifecycle · FeedSpark work · Custom labels', opts.map((g) => g.g).join('|') === 'Product|Price|Lifecycle|FeedSpark work|Custom labels', opts.map((g) => g.g));
+    ok('…in words a reader uses ("Title optimisation", never the key)', all.indexOf('Title_optimisation_status=Segment · Title optimisation') >= 0 && all.indexOf('Batch_id=Segment · Batch') >= 0, all);
+    await pickSeg(p, 'Title_optimisation_status');
+    let r = await rows(p);
+    const head = await p.evaluate(() => document.querySelector('#pt thead th').textContent);
+    ok('a FeedSpark-work cut reads live and names itself in the column head', r.some((x) => x.key.indexOf('m|schuh_uk_1|s') === 0) && /title optimisation$/.test(head), head);
+    ok('…and in the footer', /\d+ title optimisation rows shown/.test(await foot(p)), await foot(p));
+
+    await pickSeg(p, 'Batch_id');
+    r = await rows(p);
+    const nu = r.find((x) => x.key === 'm|schuh_uk_1|nu');
+    ok('a cut whose every product is Unsorted says the field is empty — never one big segment', nu && /Every product in this market sits in Unsorted/.test(nu.text) && /batch field is empty/.test(nu.text), nu);
+    ok('…the Unsorted row is tagged "no value", the unlisted row stays "not in feed"', r.some((x) => /Unsorted no value/.test(x.text)) && r.some((x) => /Unlisted SKUs in Ads traffic not in feed/.test(x.text)), r.map((x) => x.text.slice(0, 50)));
+
+    await pickSeg(p, 'Colour');
+    r = await rows(p);
+    const nof = r.find((x) => x.key === 'm|schuh_uk_1|nof');
+    ok('a cut longer than FeedHero\'s page says it is the biggest spenders, with FeedHero\'s own count', nof && /The 3 biggest-spending of 143 colour values/.test(nof.text), nof);
+    const ix = r.findIndex((x) => x.key === 'm|schuh_uk_1|nof'), first = r.findIndex((x) => x.key.indexOf('m|schuh_uk_1|s') === 0);
+    ok('…and the note leads the rows (a note under row 200 is a note nobody reads)', ix >= 0 && ix < first, [ix, first]);
+
+    await pickSeg(p, 'Product_age');
+    await p.click('#pt thead th[data-k="name"]'); await p.waitForTimeout(150);
+    r = await rows(p);
+    const ages = r.filter((x) => x.key.indexOf('m|schuh_uk_1|s') === 0).map((x) => (x.text.match(/^·?\s*(.+?)\s*[£€$]/) || [0, x.text])[1]);
+    ok('product age sorted by name reads as the ladder — newest first, never alphabetical', JSON.stringify(ages) === JSON.stringify(['Brand new', 'New', 'This season', 'Perennial']), ages);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    const { ctx, p, errs } = await open(browser, '?brand=Schuh&seg=Not_a_cut');
+    await p.waitForTimeout(200);
+    ok('a link naming a cut the page does not know lands on Category, and reads nothing live', (await p.inputValue('#seg')) === 'Category' && (await p.evaluate(() => window.__live.length)) === 0);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
   }
