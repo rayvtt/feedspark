@@ -9192,7 +9192,7 @@
     {
       "name": "Label Guard export: values across markets keyed by POSITION — GB and GB-FB share a code",
       "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "byV[r.v].tot += r.n; byV[r.v].per[si] = r.n;",
+      "pattern": "byV[r.v].tot += r.n; byV[r.v].per[c.mi] = r.n;",
       "pr": 479
     },
     {
@@ -11334,6 +11334,30 @@
       "name": "Golden keywords: the row reads keyword strings per SKU; an old slot count is never shown as strings",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "'strings per SKU counted on the next XML scan'",
+      "pr": 0
+    },
+    {
+      "name": "Label Guard HTML export: the reader builds the side-by-side comparison — label, markets, show, rows (Ray 30 Sep 2026)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "sel: scanned.map(function (m) { return D.markets.indexOf(m); }), show: 'both', rows: 'all', csort: { col: 'tot', dir: -1 } };",
+      "pr": 0
+    },
+    {
+      "name": "Label Guard HTML export: 'in every market' is judged over the picked markets that carry the label",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "if (S.rows === 'every') return o.inN === M.carry.length;",
+      "pr": 0
+    },
+    {
+      "name": "Label Guard HTML export: the comparison lives in the file's address so a reload lands on it",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "history.replaceState(null, '', '#l=' + S.cmp + '&m=' + S.sel.join(',')",
+      "pr": 0
+    },
+    {
+      "name": "Label Guard HTML export: CSV of exactly the comparison on screen",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "head.push('total_skus', 'spread_pp', 'in_markets');",
       "pr": 0
     }
   ]

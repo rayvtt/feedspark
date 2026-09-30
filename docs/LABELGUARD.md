@@ -245,9 +245,31 @@ draws, and `lgxHtml()` writes **one self-contained file**:
   `custom_label_n`; the FeedSpark · Private & Confidential footer;
 - **Across markets** — one row per market: SKUs, coverage per label side by side (green ≥95 /
   amber ≥60 / red), labels per SKU, scanned date, flags; a row click opens that market;
-- **Values across markets** — pick a label, see every value as a column per market (SKUs and
-  share of that market, a dash where a market lacks the value) with a total; biggest first, 25
-  then show-all. Per-market counts are keyed by the market's POSITION, never its code — GB and
+- **Compare markets side by side** — a comparison the reader BUILDS (Ray, 30 Sep 2026: *"allow
+  customization of side-by-side comparison. For example, selected market. If I want to see a
+  custom label 2 only across different 5 markets side by side, I'm allowed to do that as well"*):
+  - **Label** — one of CL0–CL4 (only labels some scanned market carries are offered);
+  - **Markets** — a chip per market, ticked = a column; quick picks All · Google · Meta · Clear;
+    a never-scanned market is listed but cannot be picked. Columns always sit in the estate's own
+    order whatever order they were ticked in, so two readers building the same view see the same
+    table. Clear says "pick at least one market" rather than drawing an empty table;
+  - **Show** — SKUs · Share (of that market's catalogue) · Both; **Rows** — every value · in every
+    market · missing somewhere. "In every market" is judged over the picked markets that CARRY
+    the label — a market without CL3 would otherwise make every CL3 value "missing";
+  - each column header states how filled the label is in that market, and a market without the
+    label keeps its column and says "no CL3" (or "CL3 vanished") with dashes, never zeros;
+  - **Spread** = the widest gap in share between the picked markets that carry the label (a
+    market lacking the value counts 0%) — sort by it and the values the markets use most
+    differently come first. Every header sorts (value A→Z, any market, total, spread); default
+    is total, biggest first; 25 rows then show-all;
+  - a summary line names the label, the exact markets and how many values are shared / missing;
+  - **⤓ CSV · this comparison** — exactly the rows on screen: `value` then `<MKT>_skus`,
+    `<MKT>_share_pct` per picked market (`GB-FB` for the catalogue), `total_skus`, `spread_pp`,
+    `in_markets`; the file name carries the label and the markets;
+  - the view lives in the address (`#l=2&m=0,3,5&show=pct&rows=gap&sort=spread~-1`), so a reload
+    or a bookmark of the file comes back on it; the controls are hidden in print, the summary is not.
+
+  Per-market counts are keyed by the market's POSITION in the file, never its code — GB and
   GB-FB share "GB";
 - **market tabs** in the estate's own order (Google A→Z, then Facebook) with a flag dot, the
   never-scanned market present but disabled; each market = the dissection as on the page: the
