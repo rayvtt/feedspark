@@ -258,6 +258,99 @@ master AND that channel's feed are both counted, so the summary tile per channel
 set of markets' masters with another set's feeds. The KPI band leads with what Google receives
 ("In stock in the Google feed", the master beside it). ⬇ CSV on the card exports the counts.
 
+## 3e. Hero sizes by product type (`/stock`)
+
+Ray, 30 Sep 2026: *"bring in hero size mapping per brand as well and later allow cross industry
+"guildlines" - (this is a document per brand or they can follow examples) - sit within stock
+management - breakdown by their product type"*.
+
+**Why the FCC holds the map.** FeedHero's rules decide which sizes are hero — "Set Hero size values"
+on ten Superdry markets, "Set hero sizes" on Accessorize, "Include Hero size low RC" on Monsoon — but
+the rule report never carries a rule's conditions and no output feed exports the flag (checked on the
+Google, generic CSV and Wunderkind outputs). So each brand's list lives here, per product type,
+where a person can see and change it.
+
+**The size census.** The master-stock agent (§3d) reads every roster master once a day; on the SAME
+pass as its availability count it now builds a SIZE CENSUS with `docs/herosize_engine.js › census`
+(reading rows with the Catalogue's own column plan and stock reading): per product type, every size
+the type is made in with its rows, in stock and out, and each style's size run as a PATTERN — one
+character per size: `0` not made in it · `1` out of stock · `2` in stock · `3` stock not stated (a size
+a style carries in two colours is in stock when either is). Posted per market as `{mastersize}` into
+KV `mastersize:<cmpid>`; the tally that follows carries `szv` only when its census was stored, and the
+worker answers `unchanged` only when both the counts and the census are of this import and this
+census shape (`CENSUS_V`, held equal in the engine and `src/herosizes.js`). Caps, each counted rather
+than dropped: the 80 biggest product types per market (`tx` counts the rest), 30 sizes per type,
+400 run patterns per type (`patx` counts the styles in rarer ones).
+
+**Product types and sizes.** A type is the brand's own path to two levels (a generic "Clothing"
+middle level stepped over), prefixed with the department from the gender / age columns only when
+the path names none — Superdry's bare "T-Shirts" + `mens` → "Men > T-Shirts", Reiss's "Womenswear >
+Dresses" as it is. A category id, a bare department word ("Womens") or a merchandising bucket ("View
+All", "Campaign 3") is not a type; the next product-type column is read. A size is keyed lightly so
+two spellings of one size meet: a conversion in brackets goes ("UK 7 (EU 40½)" → "UK 7"), so does a
+fit / leg letter ("14R" → "14"), a waist/leg pair ("30/32" → "30"), a leading zero, a written-out alpha
+("Medium" → "M", "2XL" → "XXL"), one-size words in six languages, ages to "n YRS" / "n MTHS". A run of
+half sizes is FOOTWEAR even when the type's words never say so (Schuh's categories); a type with no
+gender and a run of ages is KIDS (Monsoon).
+
+**Where a type's hero sizes come from, strongest first** (`heroFor`):
+1. the brand's OWN entry — ticked by hand on the card, or imported from the brand's document (a
+   sheet of product types and hero sizes; ⬇ Sheet exports the current map as the template);
+2. the BRAND it follows (another roster brand's own entry for the same type);
+3. the EXAMPLE it follows — FeedSpark's cross-industry starting points (Fashion · UK & IE sizing,
+   Fashion · EU sizing, Footwear, Core of each run) or one the team saved from a brand's guide.
+   An example row fits by department, by footwear (a shoe type NEVER takes a clothing row, a clothing
+   type never a footwear one) and by words (denim, toddler / junior / youth); only the sizes the type
+   is actually made in count. Examples are labelled on every surface as starting points to adapt,
+   not a published standard.
+
+A type nothing reaches reads **not mapped** — never a guessed list. A person can also record that a
+type has **no hero sizes** (a decision, counted as mapped).
+
+**The measure** (`measure`), per type and summed for the market: **hero sizes in stock** = the
+hero-size variants' rows in stock of rows; **styles with every hero size in stock** = styles carrying
+at least one hero size whose every hero size they carry is in stock (a style never made in a hero
+size is a range decision, not a stock gap, and is not counted against it; stock not stated is its
+own state, never read as out).
+
+**The store.** KV `heroguide`, ONE shared map in the kvmerge envelope with a key per decision so two
+people editing different types never collide: `g:<Brand>` (the document link, the example or brand
+it follows), `m:<Brand>|<type>` (one type's list, its source, who and when — stamped by the worker),
+`x:<id>` (an example saved from a brand's guide; FeedSpark's own `fs-*` are read-only, saving one
+needs the `stock` grant, and its words must pass a fragment check before any browser compiles them).
+Deletions only through `_deleted` (explicit tombstones), so a partial view never deletes. Scoped per
+signin: a scoped signin reads and writes its own brands' guides; the examples are shared.
+
+**The card** (after the hero-size runs table): a brand row while the page is on All brands (the
+first brand with a census is shown), the guide row (📄 the brand's document — link + ⇪ Import — and
+⧉ what it follows), four tiles (types mapped · hero sizes in stock · styles with every hero size in
+stock · which master and when), then one row per product type: its run as size chips (hero = orange
+with the crown; a thin line under each size = its products in stock; the tooltip gives the counts),
+the two measures, and where the list came from. ✎ Edit makes the chips toggles and adds ✦ core of the
+run · ↺ back to the guide · ∅ no hero sizes; an edit stays on screen until the server confirms it.
+
+## 3f. Held-back products — the list behind the count (`/stock`)
+
+Ray, 30 Sep 2026: *"download list of Range Completion > held back product IDs and Titles and Sizes and
+availablity (basically they should be products that are in stock in masterfeed but not appear in
+output feeds due to range completion held back rule)"*.
+
+The forecast (§3b) sizes a hold from FeedHero's impacted count; **⬇ List** under a market's held-back
+number (once per market) and in the forecast panel NAMES the products. On a click the page reads the
+market's Google feed (`/api/feed/proxy`) and its master (`/api/catalog/master/file` — the Catalogue's
+own path: the file is streamed through the worker, FeedHero's URL never reaches the browser), joins
+them by product id in the engine (`docs/catalog_engine.js › feedIndex` + `heldBack`: the master column
+carrying the feed's `fs_data_original_id` or `g:id`, found on the first 4,000 rows as the Catalogue
+finds it) and downloads a CSV of every product **the master states in stock that the feed does not
+carry live** — absent, or sent out of stock (pre-order counts as live). Each row: product id, title,
+size, the master's own availability word and quantity, the style (item group), the style's sizes in
+stock of sizes made and its **range completion %** — the column that tells a range-completion hold
+from any other exclusion, since the report never says which rule held a product. Lowest range
+completion first. Nothing is stored; a master whose columns carry none of the feed's ids is refused,
+never joined on a guess. Checked on the live Superdry GB feeds in-session (nothing committed): 3,754
+held back against the "Range Completion by Availability" rule's own 3,735, 3,734 of them from a style
+under 75% range completion.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -279,9 +372,13 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView`: `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread), and `av` (master / Google / Meta stock counts off `masteravail` + `feedavail`, with which feeds the market has wired — §3d). Feeds are found by the cmpid (`feedKeys`), never the roster label. |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView` (each with `wk`, its wired Google / Meta market keys, for the held-back download — §3f): `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread), and `av` (master / Google / Meta stock counts off `masteravail` + `feedavail`, with which feeds the market has wired — §3d). Feeds are found by the cmpid (`feedKeys`), never the roster label. |
 | `POST /api/gmail/push {masterfile: cmpid}` | Key-gated (the xml-scan key). A roster company's master, streamed as bytes, or `{unchanged}` when the stored reading is of this import. §3d. |
-| `POST /api/gmail/push {masterstock: […]}` | Key-gated. The master agent's counts → `masteravail`, one write per post; a tally that does not add up is refused. |
+| `POST /api/gmail/push {masterstock: […]}` | Key-gated. The master agent's counts → `masteravail`, one write per post; a tally that does not add up is refused. `szv` + `sz` mark a stored census (§3e). |
+| `POST /api/gmail/push {mastersize: […]}` | Key-gated. One market's size census → `mastersize:<cmpid>`, validated whole by `HERO.sanitizeCensus` (§3e). |
+| `GET /api/rules/hero[?brand=&market=]` | The guide store (every example + the in-scope brands' guides), each brand's guide status, and — for one brand (the first with a census when none is asked) — its roster markets and one market's census. §3e. |
+| `PUT /api/rules/hero` | A partial map of `g:` / `m:` / `x:` keys (+ `_deleted`), every key checked (`sanitizeHeroPut`), merged with a read-stamp (`X-Sync-Base`), stamped by / at here. §3e. |
+| `GET /stock/engine.js` | `docs/herosize_engine.js`, verbatim. |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness
@@ -294,5 +391,11 @@ first); a **cut-off** set to different values across a brand's markets.
   key), the engine, one word table through both counters, `stockTally`, the agent's reader on a zipped
   CSV / Windows-1252 TSV / XML built in-process, the collector on a synthetic Google and Meta feed,
   `sanitizeAvail` lifted from the worker, both push lanes, the route, and the page twin `avBook`.
+- `tools/test_herosize.mjs` — the hero-size engine (size keys, departments, product types, the census on
+  synthetic CSV / XML masters, the measure, core, every example rule, the guide resolution, the document
+  import + export), the worker's half (`src/herosizes.js`: the census it stores, the edits a signin may
+  make), the held-back join (`feedIndex` + `heldBack`), the agent's census on an in-process zip, the
+  route, the page, the stub, and that no census or guide is committed. In `qa_gate.sh`, `presync.sh`,
+  `validate.yml`.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

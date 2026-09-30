@@ -202,6 +202,11 @@ window.addEventListener('load',restore);
   .sv-sum .it{border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--wash);min-width:170px}
   .sv-sum .it b{display:block;font-size:20px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   .sv-sum .it span{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .hb-dl{display:inline-flex;align-items:center;margin-top:4px;font:inherit;font-size:11px;font-weight:900;height:24px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .hb-dl:hover,.hb-dl:focus-visible{border-color:var(--orange);color:var(--orange-deep);outline:none}
+  .hb-dl:disabled{cursor:progress;color:var(--muted);font-variant-numeric:tabular-nums}
+  [data-theme=dark] .hb-dl{background:#20242E}
+  @media(max-width:760px){.hb-dl{height:34px}}
   .sv-kind{font-size:10.5px;font-weight:900;letter-spacing:.03em;padding:1px 7px;border-radius:100px;border:1px dashed var(--line);color:var(--muted);white-space:nowrap}
   .sv-rest{margin-top:10px}
   .sv-rest summary{cursor:pointer;font-size:12.5px;font-weight:900;color:var(--ink-2);list-style:none}
@@ -279,6 +284,47 @@ window.addEventListener('load',restore);
   .sv-sum .it.av2 .r b{display:inline;font-size:18px}
   .sv-sum .it.av2 .r span{font-size:12px}
   @media(prefers-reduced-motion:reduce){.avb i{animation:none}}
+  /* ---- /stock: hero sizes by product type — size chips (hero = orange + crown), a stock line under each size ---- */
+  #hmap-card h3 .hi-h{margin-right:6px;vertical-align:-2px}
+  .hm-brands{margin:0 0 10px}
+  .hm-brands .chip .gl{font-size:11px}
+  .hm-guide{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--wash)}
+  .hm-guide .it{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--ink-2);min-width:0}
+  .hm-guide .lb{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .hm-guide .nm{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hm-guide select.fld{height:32px;font-size:12.5px;max-width:280px}
+  .hm-guide .btn{height:32px;font-size:12.5px;padding:0 10px}
+  .hm-guide .sep{width:1px;align-self:stretch;background:var(--line)}
+  .hm-guide .wide{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .hm-guide .wide input{font:inherit;font-size:12.5px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--paper);color:var(--ink);min-width:150px;flex:1}
+  .hm-guide .ex-note{flex-basis:100%;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .hm-warn{margin:0 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--risk);color:var(--risk);font-size:12.5px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hm-empty{font-size:13px;font-weight:700;color:var(--muted);padding:10px 2px}
+  #hm-sum .it{flex:1 1 200px}
+  .sz{position:relative;display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 7px 2px;margin:2px 3px 2px 0;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;vertical-align:middle}
+  .sz i{position:absolute;left:0;bottom:0;height:3px;background:var(--av-in);border-radius:0 2px 0 0}
+  .sz.hero{border-color:var(--orange);background:rgba(245,166,35,.13);color:var(--orange-ink)}
+  .sz .hi{margin:0}
+  button.sz{cursor:pointer}
+  button.sz:hover,button.sz:focus-visible{border-color:var(--orange-deep);outline:none}
+  button.sz:not(.hero){border-style:dashed}
+  .hm-pct{display:flex;align-items:center;gap:8px;justify-content:flex-end;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .hm-pct .bar{width:60px;height:6px;border-radius:0 3px 3px 0;background:var(--wash);overflow:hidden;flex:none}
+  .hm-pct .bar i{display:block;height:100%;background:var(--av-in)}
+  .hm-pct.low .bar i{background:var(--av-out)}
+  #hm-t td{vertical-align:middle}
+  #hm-t td.szs{min-width:280px}
+  #hm-t td.num .sub2{text-align:right}
+  .hm-acts{display:flex;gap:4px;margin-top:5px;flex-wrap:nowrap}
+  .hm-acts button{font:inherit;font-size:13px;font-weight:900;height:26px;min-width:28px;padding:0 6px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .hm-acts button:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tg.dash{border-style:dashed;color:var(--muted);background:transparent}
+  #hmap-card.editing .tw{box-shadow:inset 0 0 0 2px rgba(245,166,35,.35);border-radius:10px}
+  [data-theme=dark] .hm-guide{background:#181B22}
+  [data-theme=dark] .sz{background:#20242E}
+  [data-theme=dark] .sz.hero{background:rgba(245,166,35,.16)}
+  [data-theme=dark] .hm-acts button{background:#20242E}
+  @media(max-width:760px){#hm-sum .it{min-width:0;flex:1 1 140px}#hm-sum .it b{font-size:18px}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
 
 </style>
 <style>/* FCC-THEME */
@@ -364,6 +410,25 @@ window.addEventListener('load',restore);
   <section class="card" id="hero-card">
     <div class="chead"><div class="sp"><h3>Hero sizes — the rules that run, per market</h3><p class="ch">The rules that decide a market's hero sizes — its core, best-selling sizes. Split out from range completion, every one shown in FeedHero's own run order.</p></div></div>
     <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th class="num">#</th><th>Rule</th><th>Channel</th><th>Batch</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card" id="hmap-card">
+    <div class="chead"><div class="sp"><h3><svg class="hi hi-h" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>Hero sizes by product type</h3><p class="ch" id="hm-sub">Each brand's hero sizes, type by type, against the stock in its master feed.</p></div>
+      <div class="tools">
+        <select class="fld" id="hm-mkt" aria-label="Market the sizes are read from" hidden></select>
+        <button class="btn" id="hm-edit" type="button" aria-pressed="false" title="Tick and untick hero sizes, type by type">✎ Edit</button>
+        <button class="btn" id="hm-xlsx" type="button" title="This brand's hero sizes as a sheet — also the template a brand fills in and imports">⬇ Sheet</button>
+      </div></div>
+    <div class="chips hm-brands" id="hm-brands" hidden></div>
+    <div class="hm-guide" id="hm-guide" hidden></div>
+    <div class="hm-warn" id="hm-warn" hidden></div>
+    <div class="sv-sum" id="hm-sum"></div>
+    <div class="toolbar" id="hm-bar" hidden><input class="q" id="hm-q" type="search" placeholder="Filter product types…" aria-label="Filter product types" autocomplete="off"><div class="chips" id="hm-f"></div></div>
+    <div class="tw tall" id="hm-tw" hidden><table class="t" id="hm-t"><thead><tr><th>Product type</th><th>Sizes it is made in</th><th class="num">Hero sizes in stock</th><th class="num">Styles with every hero size in stock</th><th>From</th></tr></thead><tbody></tbody></table></div>
+    <div class="empty hm-empty" id="hm-empty">Loading…</div>
+    <p class="note" id="hm-foot"></p>
+    <div class="legend" id="hm-legend"><span><span class="sz hero"><svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>M<i style="width:70%"></i></span> hero size</span><span><span class="sz">XL<i style="width:40%"></i></span> made in, not hero</span><span>the line under a size = its products in stock</span></div>
+    <input type="file" id="hm-file" accept=".csv,.xlsx,.tsv,.txt" hidden>
   </section>
 
   <div class="grid2 row-gap">
@@ -578,6 +643,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       if (d.sv && d.sv.scenarios && d.sv.scenarios.length) { SCN = d.sv.scenarios; SVDAYS = d.sv.days || SVDAYS; }
       render();
     });
+    HM.mk = ''; hmLoad();
   }
   function mkts() { return ((S.d && S.d.markets) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && (!S.market || m.market === S.market); }); }
   function mechs() { return (S.d && S.d.mechanisms) || []; }
@@ -586,7 +652,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderKpis(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderKpis(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderHmap(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
   }
   function renderChips() {
@@ -761,11 +827,12 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     $('#sv-sum').innerHTML = bk.byCur.map(function (b) {
       return '<div class="it" data-sv="book" title="Hover for the working"><b class="sv-money">' + money(b.cur, b.amt, 0) + '</b><span>at least, ' + svPer() + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + ' · the largest rule in each</span></div>';
     }).join('') + (R.sized.length || R.rest.length ? '<div class="it"><b>' + n0(R.sized.length) + '</b><span>rule' + (R.sized.length === 1 ? '' : 's') + ' sized · ' + n0(R.rest.length) + ' not, with the reason</span></div>' : '');
+    var hbSeen = {};   // the held-back list is the market's, not the rule's — offered once, on its first row
     $('#sv-t tbody').innerHTML = R.sized.map(function (x) {
-      var m = x.m, r = x.r;
+      var m = x.m, r = x.r, hbOnce = !hbSeen[m.cmpid]; hbSeen[m.cmpid] = 1;
       return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '" tabindex="0"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '<span class="sub2">#' + (r.i + 1) + ' in run order · writes ' + esc(r.t) + '</span></td>'
         + '<td>' + mechTag(r.sk) + '</td>'
-        + '<td class="num">' + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + '</td>'
+        + '<td class="num">' + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + (hbOnce ? hbBtn(m, 'hb-dl') : '') + '</td>'
         + '<td class="num">' + money(m.ads.cur, m.ads.spendDay, 3) + '<span class="sub2">CPC ' + money(m.ads.cur, m.ads.cpc, 2) + '</span></td>'
         + '<td class="num"><span class="sv-money">' + money(m.ads.cur, x.amt) + '</span></td></tr>';
     }).join('') || '<tr><td class="empty" colspan="6">' + (S.d && S.d.tracked ? (R.rest.length ? 'No rule in view holds a counted number of products back where FeedHero has a Google Ads read — see below for why each is not sized.' : 'No stock threshold or range-completion rule in view.') : 'No rules read yet.') + '</td></tr>';
@@ -848,7 +915,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var h = r.hb, B = m.ads;
       $('#svp-ti').textContent = r.n;
       $('#svp-mk').textContent = m.client + ' ' + m.market + ' · ' + ((MK[r.sk] || {}).label || r.sk) + ' · #' + (r.i + 1) + ' in run order';
-      var acts = '<div class="acts">' + fhA(m.cmpid, r.n, r.t, 'Open in FeedHero') + '<a class="btn" href="/roas?brand=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.market) + '" title="This market\u2019s Google Ads read">ROAS · ' + esc(m.client + ' ' + m.market) + '</a></div>';
+      var acts = '<div class="acts">' + fhA(m.cmpid, r.n, r.t, 'Open in FeedHero') + '<a class="btn" href="/roas?brand=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.market) + '" title="This market\u2019s Google Ads read">ROAS · ' + esc(m.client + ' ' + m.market) + '</a>' + hbBtn(m, 'btn') + '</div>';
       var ref = B ? '<div class="svw"><h4>' + esc(m.client + ' ' + m.market) + '\u2019s price for traffic</h4><dl><dt>Cost per click, 30 days</dt><dd>' + money(B.cur, B.cpc, 2) + '</dd><dt>Products in the output feed</dt><dd>' + n0(B.skus) + '</dd><dt>Clicks per product per day</dt><dd>' + B.clicksDay.toFixed(2) + '</dd><dt>Spend per product per day</dt><dd>' + money(B.cur, B.spendDay, 3) + '</dd></dl><div class="hint" style="margin-top:6px">Feed scanned ' + (B.feedAt ? since(B.feedAt) : 'recently') + ' \u00b7 Google Ads read ' + (B.updated ? since(B.updated) : 'recently') + '.</div></div>' : '';
       if (h && h.kind === 'blocked' && B) {
         var amt = svCalc(h.n, B, SV.pct, svDays()), ceil = svCalc(h.n, B, 100, svDays());
@@ -928,9 +995,363 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     $('#how tbody').innerHTML = mechs().map(function (x) { return '<tr><td><b>' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</b></td><td>' + esc(x.q) + '</td><td class="num">' + n0(cnt[x.k] || 0) + '</td></tr>'; }).join('');
   }
 
+  // ---- HELD-BACK PRODUCTS (Ray, 30 Sep 2026: "download list of Range Completion > held back product IDs and Titles
+  // and Sizes and availablity (basically they should be products that are in stock in masterfeed but not appear in
+  // output feeds due to range completion held back rule)"). The forecast sizes a hold from FeedHero's impacted count;
+  // this NAMES the products. On a click the page reads the market's Google feed (/api/feed/proxy) and its master
+  // (/api/catalog/master/file — the Catalogue's own path, the file streamed through the worker so FeedHero's URL never
+  // reaches the browser), joins them by product id (FeedCatalog.feedIndex + heldBack) and downloads every product the
+  // master states in stock that the feed does not carry live, with its size, its availability and its style's range
+  // completion — the column that tells a range-completion hold from any other exclusion. Nothing is stored anywhere.
+  var HBD = {}, HBLBL = '⬇ List';
+  function hbBtn(m, cls) {
+    if (!m || !m.wk || !m.wk.g) return '';
+    return '<button class="' + cls + '" type="button" data-hbdl="' + esc(m.cmpid) + '"' + (HBD[m.cmpid] ? ' disabled' : '') + ' title="' + esc('Download ' + m.client + ' ' + m.market + '’s held-back products — in stock in the master, not live in the Google feed: ID, title, size, availability and the style’s range completion (CSV)') + '">' + esc(HBD[m.cmpid] || HBLBL) + '</button>';
+  }
+  function engLoad(url, name) {
+    if (window[name]) return Promise.resolve(window[name]);
+    return fetch(url, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(url + ' unavailable'); return r.text(); })
+      .then(function (s) { if (!s) throw new Error(url + ' is empty'); (new Function(s))(); if (!window[name]) throw new Error(name + ' not ready'); return window[name]; });
+  }
+  function hbFail(res, what) {
+    return res.text().then(function (t) { var m = ''; try { m = JSON.parse(t).error; } catch (e) {} throw new Error(what + ' could not be read — ' + (m || 'HTTP ' + res.status)); });
+  }
+  function hbPump(res, each, prog) {
+    var rd = res.body.getReader(), got = 0, tot = +(res.headers.get('x-feed-bytes') || 0);
+    return (function pump() { return rd.read().then(function (x) { if (x.done) return got; got += x.value.length; prog(got, tot); each(x.value); return pump(); }); })();
+  }
+  function hbPct(g, t) { return t ? Math.min(99, Math.round((g / t) * 100)) + '%' : Math.round(g / 1048576) + ' MB'; }
+  function hbFeed(q, say, E, FA) {
+    return fetch('/api/feed/proxy' + q, { credentials: 'same-origin' }).then(function (res) {
+      if (!res.ok || !res.body) return hbFail(res, 'The Google feed');
+      var fi = E.feedIndex(), dec = new TextDecoder('utf-8'), parser = null;
+      return hbPump(res, function (u8) {
+        var t = dec.decode(u8, { stream: true });
+        if (!parser) { var t0 = t.replace(/^﻿/, ''); if (!t0.trim()) return; parser = /^\s*</.test(t0) ? FA.createXmlParser(fi.onRow) : FA.createParser(fi.onRow); }
+        parser.push(t);
+      }, function (g, t) { say('Feed ' + hbPct(g, t)); }).then(function () { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } return fi.finish(); });
+    });
+  }
+  // FeedHero's first read of a big master outlasts a request: the info route answers 202 until it is ready
+  function hbInfo(q, tries, say) {
+    return fetch('/api/catalog/master' + q, { credentials: 'same-origin' })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (x) {
+        if (x.s === 202 || (x.j && x.j.state === 'preparing')) {
+          if (tries >= 12) throw new Error('FeedHero is still reading this master — try again in a few minutes');
+          say('Master…');
+          return new Promise(function (r) { setTimeout(r, 7000); }).then(function () { return hbInfo(q, tries + 1, say); });
+        }
+        if (!x.j || !x.j.ok) throw new Error('the master could not be read — ' + ((x.j && x.j.error) || 'HTTP ' + x.s));
+        return x.j;
+      });
+  }
+  function hbMaster(q, feed, say, E, FA) {
+    return fetch('/api/catalog/master/file' + q, { credentials: 'same-origin' }).then(function (res) {
+      if (!res.ok || !res.body) return hbFail(res, 'The master');
+      var parts = [], got = 0;
+      return hbPump(res, function (u8) { parts.push(u8); got += u8.length; }, function (g, t) { say('Master ' + hbPct(g, t)); }).then(function () {
+        var u8 = new Uint8Array(got), o = 0; parts.forEach(function (p) { u8.set(p, o); o += p.length; });
+        var stream;
+        if (E.isZip(u8)) {
+          var ent = E.zipMain(E.zipEntries(u8) || []); if (!ent) throw new Error('the master zip is empty');
+          var data = E.zipData(u8, ent); if (!data) throw new Error('an unreadable zip entry');
+          stream = new Blob([data]).stream();
+          if (ent.method === 8) { if (typeof DecompressionStream === 'undefined') throw new Error('this browser cannot unzip the master'); stream = stream.pipeThrough(new DecompressionStream('deflate-raw')); }
+          else if (ent.method !== 0) throw new Error('zip method ' + ent.method + ' is not supported');
+        } else stream = new Blob([u8]).stream();
+        say('Joining…');
+        // Schuh's master is Windows-1252: at the first byte that is not UTF-8, switch for the rest of the file
+        var hb = E.heldBack(feed), rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null;
+        return (function pump() {
+          return rd.read().then(function (x) {
+            if (x.done) { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } return hb.finish(); }
+            var t; try { t = dec.decode(x.value, { stream: true }); } catch (e) { dec = new TextDecoder('windows-1252'); t = dec.decode(x.value, { stream: true }); }
+            if (!parser) {
+              var t0 = t.replace(/^﻿/, ''); if (!t0.trim()) return pump();
+              var sn = E.sniff(t0.slice(0, 20000));
+              parser = sn.fmt === 'xml' ? FA.createXmlParser(hb.onRow) : E.delimParser(sn.delim, function (r) { hb.onRow(r); }, sn);
+            }
+            parser.push(t); return pump();
+          });
+        })();
+      });
+    });
+  }
+  function hbDownload(cmpid) {
+    var m = mById(cmpid);
+    if (!m || HBD[cmpid]) return;
+    if (!m.wk || !m.wk.g) { toast('No Google feed is wired for ' + m.client + ' ' + m.market + ' — nothing to compare its master with'); return; }
+    var q = '?client=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.wk.g);
+    var say = function (txt) { HBD[cmpid] = txt; $$('[data-hbdl="' + cmpid + '"]').forEach(function (b) { b.disabled = true; b.textContent = txt; }); };
+    var done = function () { delete HBD[cmpid]; $$('[data-hbdl="' + cmpid + '"]').forEach(function (b) { b.disabled = false; b.textContent = HBLBL; }); };
+    say('Reading…');
+    Promise.all([engLoad('/catalog/engine.js', 'FeedCatalog'), engLoad('/feedlab/engine.js', 'FeedAudit')]).then(function (en) {
+      var E = en[0], FA = en[1];
+      return hbFeed(q, say, E, FA).then(function (feed) {
+        if (!feed.n) throw new Error('the Google feed carries no products');
+        return hbInfo(q, 0, say).then(function () { return hbMaster(q, feed, say, E, FA); });
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('none of the master’s columns carries the IDs the Google feed was built from');
+      if (!r.stated) throw new Error('the master states no stock (no availability, no quantity), so nothing reads as held back');
+      // within a style, the sizes in size order (the hero-size engine's ladder), not alphabetically
+      if (HS) r.held.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc) || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || HS.cmpSize(HS.sizeKey(a.s), HS.sizeKey(b.s)); });
+      csvDownload((m.client + '_' + m.market).toLowerCase().replace(/\W+/g, '_') + '_held_back_products.csv',
+        ['product id', 'title', 'size', 'master availability', 'master quantity', 'style (item group)', 'style sizes in stock', 'style sizes made', 'style range completion %', 'google feed'],
+        r.held.map(function (h) { return [h.id, h.t, h.s, h.av, h.q, h.g, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.why === 'absent' ? 'not in the feed' : 'sent out of stock']; }));
+      var low = r.held.filter(function (h) { return h.rc != null && h.rc < 75; }).length;
+      toast(n0(r.held.length) + ' held back — in stock in the master, not live in the Google feed' + (r.held.length ? ' · ' + n0(low) + ' from a style under 75% range completion' : ''));
+      done();
+    }).catch(function (e) { toast('Held-back list failed — ' + String((e && e.message) || e)); done(); });
+  }
+
+  // ---- HERO SIZES BY PRODUCT TYPE (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow
+  // cross industry "guildlines" - (this is a document per brand or they can follow examples) - sit within stock
+  // management - breakdown by their product type"). The engine is docs/herosize_engine.js (served at /stock/engine.js
+  // — the SAME file the master-stock agent built the census with); the store is /api/rules/hero (KV heroguide: one key
+  // per decision, so two people ticking different types never collide). A brand's list comes, strongest first, from
+  // its own entries (ticked by hand, or imported from its document), then the brand it follows, then the example it
+  // follows — and a type nothing reaches reads "not mapped", never a guessed list.
+  var HM = { d: null, store: {}, base: 0, edit: false, q: '', f: '', mk: '', key: '', pend: {}, t: null, busy: false, err: '', warn: '', link: false, imp: null };
+  var HS = null;
+  function hsLoad() {
+    if (window.HeroSizes) return Promise.resolve(HS = window.HeroSizes);
+    return fetch('/stock/engine.js', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('hero-size engine unavailable (HTTP ' + r.status + ')'); return r.text(); })
+      .then(function (s) { if (!s) throw new Error('hero-size engine is empty'); (new Function(s))(); HS = window.HeroSizes || null; if (!HS) throw new Error('hero-size engine not ready'); return HS; });
+  }
+  function xlLoad() {
+    if (window.FeedXlsx) return Promise.resolve(window.FeedXlsx);
+    return fetch('/xlsx/engine.js', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('sheet engine unavailable'); return r.text(); })
+      .then(function (s) { (new Function(s))(); if (!window.FeedXlsx) throw new Error('sheet engine not ready'); return window.FeedXlsx; });
+  }
+  function hmBrand() { return (HM.d && HM.d.brand) || ''; }
+  function hmCensus() { return (HM.d && HM.d.census) || null; }
+  function hmLoad() {
+    var mk = HM.mk || S.market || '';
+    var u = '/api/rules/hero' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) + (mk ? '&market=' + encodeURIComponent(mk) : '') : '');
+    var key = HM.key = u;
+    Promise.all([hsLoad(), fetch(u, { credentials: 'same-origin' }).then(function (r) {
+      var b = +(r.headers.get('X-Sync-Base') || 0); if (b) HM.base = b;
+      return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status + ' — not JSON (signed out?)' }; });
+    })]).then(function (a) {
+      if (HM.key !== key) return;
+      var d = a[1] || {};
+      HM.d = d.ok ? d : null; HM.err = d.ok ? '' : (d.error || 'could not read the hero sizes');
+      if (d.ok) { HM.store = d.store || {}; hmReapply(); }
+      renderHmap();
+    }).catch(function (e) { if (HM.key !== key) return; HM.err = String((e && e.message) || e); renderHmap(); });
+  }
+  // a change not yet confirmed by the server stays on screen even when a read lands in between
+  function hmReapply() { Object.keys(HM.pend).forEach(function (k) { if (HM.pend[k] === null) delete HM.store[k]; else HM.store[k] = HM.pend[k]; }); }
+  function hmPut(delta) {
+    Object.keys(delta).forEach(function (k) { HM.pend[k] = delta[k]; });
+    hmReapply(); renderHmap();
+    clearTimeout(HM.t); HM.t = setTimeout(hmFlush, 450);
+  }
+  function hmFlush(tries) {
+    var keys = Object.keys(HM.pend); if (!keys.length || HM.busy) return;
+    var body = {}, del = [], sent = {};
+    keys.forEach(function (k) { sent[k] = HM.pend[k]; if (HM.pend[k] === null) del.push(k); else body[k] = HM.pend[k]; });
+    if (del.length) body._deleted = del;
+    HM.busy = true;
+    fetch('/api/rules/hero', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(HM.base || 0) }, body: JSON.stringify(body) })
+      .then(function (r) { var b = +(r.headers.get('X-Sync-Base') || 0); return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status }; }).then(function (j) { return { j: j, b: b }; }); })
+      .then(function (x) {
+        HM.busy = false;
+        if (!x.j || !x.j.ok) {
+          // a refusal (scope, a bad value) will not fix itself — say so and put the store back; nothing is retried
+          keys.forEach(function (k) { if (HM.pend[k] === sent[k]) delete HM.pend[k]; });
+          HM.warn = 'Not saved — ' + ((x.j && x.j.error) || 'the server refused it') + '.';
+          hmLoad(); return;
+        }
+        if (x.b) HM.base = x.b;
+        keys.forEach(function (k) { if (HM.pend[k] === sent[k]) delete HM.pend[k]; });
+        HM.store = x.j.store || HM.store; hmReapply(); HM.warn = '';
+        renderHmap(); toast(x.j.saved === 1 ? 'Saved' : 'Saved · ' + x.j.saved + ' changes');
+        if (Object.keys(HM.pend).length) hmFlush();
+      })
+      .catch(function (e) {
+        HM.busy = false;
+        // the network, not a refusal: keep the change and try again (three times), then say so and offer a retry
+        tries = (tries || 0) + 1;
+        if (tries <= 3) { setTimeout(function () { hmFlush(tries); }, 1500 * tries); return; }
+        HM.warn = 'Not saved yet — ' + String((e && e.message) || e) + '. Your changes are kept on this page.';
+        renderHmap();
+      });
+  }
+  function hmType(t) { return 'm:' + hmBrand() + '|' + HS.typeKey(t.k); }
+  function hmPretty(label) { return esc(String(label || '')).replace(/ &gt; /g, ' › '); }
+  function hmPc(a, b) { return b ? Math.round((a / b) * 1000) / 10 : null; }
+  function hmPcCell(a, b, what, lowAt) {
+    if (!b) return '<span class="muted">—</span>';
+    var p = hmPc(a, b);
+    return '<div class="hm-pct' + (p < lowAt ? ' low' : '') + '" data-tip="' + esc('<b>' + n0(a) + ' of ' + n0(b) + '</b> ' + what) + '"><span class="bar"><i style="width:' + Math.max(2, p) + '%"></i></span>' + p + '%</div>';
+  }
+  function hmSrcTag(h) {
+    if (!h || !h.src) return '<span class="tg dash">Not mapped</span>';
+    if (h.own && !h.s.length && !(h.all || []).length) return '<span class="tg" title="' + esc('Set by ' + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">No hero sizes</span>';
+    if (h.src === 'doc') return '<span class="tg gr" title="' + esc('From the brand’s own document' + (h.at ? ' · imported ' + dstr(h.at) : '')) + '">📄 Brand document</span>';
+    if (h.src === 'set' || h.src === 'core') return '<span class="tg or" title="' + esc((h.src === 'core' ? 'Core of the run, applied by ' : 'Set by ') + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">✎ ' + esc(h.by || 'Set by hand') + '</span>';
+    if (h.src === 'brand') return '<span class="tg bl" title="' + esc('Follows ' + h.from + '’s guide for the same product type') + '">⧉ ' + esc(h.from) + '</span>';
+    if (h.src === 'ex') return '<span class="tg bl" title="' + esc('Example — ' + (h.exName || h.ex) + '. A FeedSpark starting point to adapt, not a published standard.') + '">⧉ ' + esc(h.exName || h.ex) + '</span>';
+    return '<span class="tg">' + esc(h.src) + '</span>';
+  }
+  // the brand-picker row, only while the page is on "All brands" — the page's own brand select does the rest
+  function hmBrandsRow() {
+    var el = $('#hm-brands'), d = HM.d || {};
+    if (S.brand || !(d.brands || []).length) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<span class="lb" style="font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:2px">Brand</span>' + d.brands.map(function (b) {
+      var glyph = b.doc ? '📄' : b.from || b.ex ? '⧉' : '';
+      var why = (b.census ? '' : 'No size census yet. ') + (b.doc ? 'Has its own document. ' : '') + (b.from ? 'Follows ' + b.from + '. ' : b.ex ? 'Follows an example. ' : '') + (b.own ? b.own + ' product types set for this brand.' : '');
+      return '<button class="chip' + (b.client === hmBrand() ? ' on' : '') + (b.census ? '' : ' none') + '" type="button" data-hb="' + esc(b.client) + '" title="' + esc(why.trim() || 'No guide yet') + '">' + esc(b.client) + (glyph ? ' <span class="gl" aria-hidden="true">' + glyph + '</span>' : '') + (b.own ? ' <span class="k">' + b.own + '</span>' : '') + '</button>';
+    }).join('');
+  }
+  // the brand's guide: its own document (a link, and the sheet it imports), and the example or brand it follows
+  function hmGuideRow() {
+    var el = $('#hm-guide'), b = hmBrand();
+    if (!b || !HS) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    var g = HS.guideOf(HM.store, b) || {}, doc = g.doc || null;
+    var others = ((HM.d && HM.d.brands) || []).filter(function (x) { return x.client !== b && x.own; });
+    var exs = HS.examplesOf(HM.store), cur = g.from ? 'brand:' + g.from : g.ex ? 'ex:' + g.ex : '';
+    var opt = function (v, l) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    var sel = '<select class="fld" id="hm-ex" aria-label="Where a type the document does not cover takes its hero sizes from">' + opt('', 'Nothing — leave it unmapped')
+      + '<optgroup label="FeedSpark examples">' + exs.filter(function (x) { return !x.saved; }).map(function (x) { return opt('ex:' + x.id, x.name); }).join('') + '</optgroup>'
+      + (exs.some(function (x) { return x.saved; }) ? '<optgroup label="Saved by the team">' + exs.filter(function (x) { return x.saved; }).map(function (x) { return opt('ex:' + x.id, x.name); }).join('') + '</optgroup>' : '')
+      + (others.length ? '<optgroup label="Another brand’s guide">' + others.map(function (x) { return opt('brand:' + x.client, x.client); }).join('') + '</optgroup>' : '')
+      + (g.from && !others.some(function (x) { return x.client === g.from; }) ? opt('brand:' + g.from, g.from) : '')
+      + '</select>';
+    var ex = g.ex ? HS.exampleById(HM.store, g.ex) : null;
+    var docBits = doc ? (doc.url ? '<a class="nm" href="' + esc(doc.url) + '" target="_blank" rel="noopener" title="' + esc('Open ' + (doc.name || 'the brand’s document')) + '">' + esc(doc.name || 'The brand’s document') + ' ↗</a>' : '<span class="nm" title="' + esc(doc.name) + '">' + esc(doc.name) + '</span>')
+      : '<span class="muted">none yet</span>';
+    var h = '<div class="it"><span class="lb">📄 Document</span>' + docBits
+      + '<button class="btn" type="button" data-g="link">' + (doc && doc.url ? '✎ Link' : '＋ Link') + '</button>'
+      + '<button class="btn" type="button" data-g="import" title="A sheet of product types and their hero sizes (.xlsx or .csv) — ⬇ Sheet gives the template">⇪ Import</button></div>'
+      + '<span class="sep" aria-hidden="true"></span>'
+      + '<div class="it"><span class="lb">⧉ Else follow</span>' + sel + (HM.edit ? '<button class="btn" type="button" data-g="saveex" title="Save this brand’s own hero sizes as an example other brands can follow">⧉ Save as example</button>' : '') + '</div>';
+    if (ex && ex.note) h += '<div class="ex-note">' + esc(ex.name) + ': ' + esc(ex.note) + '</div>';
+    if (HM.link) h += '<div class="wide"><input id="hm-dn" type="text" placeholder="Name (e.g. ' + esc(b) + ' hero sizes 2026)" value="' + esc((doc && doc.name) || '') + '" aria-label="Document name"><input id="hm-du" type="url" placeholder="https://… (Drive, SharePoint)" value="' + esc((doc && doc.url) || '') + '" aria-label="Document link"><button class="btn on" type="button" data-g="savelink">Save</button><button class="btn" type="button" data-g="nolink">Cancel</button></div>';
+    if (HM.imp) {
+      var im = HM.imp;
+      h += '<div class="wide"><span>Import <b>' + im.rows.length + '</b> product type' + (im.rows.length === 1 ? '' : 's') + ' from <b>' + esc(im.name) + '</b> — ' + im.matched + ' match ' + esc(HM.d.market || 'this market') + '’s types' + (im.kept ? ', ' + im.kept + ' kept for other markets' : '') + '.</span><button class="btn on" type="button" data-g="impok">Import</button><button class="btn" type="button" data-g="impno">Cancel</button></div>';
+    }
+    el.innerHTML = h;
+  }
+  function renderHmap() {
+    var card = $('#hmap-card'); if (!card) return;
+    card.classList.toggle('editing', HM.edit);
+    $('#hm-edit').classList.toggle('on', HM.edit); $('#hm-edit').setAttribute('aria-pressed', HM.edit ? 'true' : 'false');
+    var warn = $('#hm-warn'); warn.hidden = !HM.warn; warn.innerHTML = HM.warn ? esc(HM.warn) + (Object.keys(HM.pend).length ? ' <button class="btn" type="button" id="hm-retry">Retry</button>' : '') : '';
+    var d = HM.d, empty = $('#hm-empty'), tw = $('#hm-tw'), bar = $('#hm-bar');
+    hmBrandsRow(); hmGuideRow();
+    var b = hmBrand(), cen = hmCensus();
+    // the market select: every roster market of the brand, the ones with no census marked
+    var ms = $('#hm-mkt'), mk = (d && d.markets) || [];
+    ms.hidden = mk.length < 2;
+    ms.innerHTML = mk.map(function (m) { return '<option value="' + esc(m.market) + '"' + (d && m.market === d.market ? ' selected' : '') + '>' + esc(m.market) + (m.census ? ' · ' + m.census.types + ' types' : ' · not read yet') + '</option>'; }).join('');
+    $('#hm-sub').textContent = b ? b + (d && d.market ? ' ' + d.market : '') + ' · each product type’s hero sizes against the stock in its master feed' + (d && d.auto ? ' · pick a brand to switch' : '') : 'Each brand’s hero sizes, type by type, against the stock in its master feed.';
+    if (!HS || !d) { empty.hidden = false; empty.textContent = HM.err ? 'Could not read the hero sizes — ' + HM.err : 'Loading…'; tw.hidden = true; bar.hidden = true; $('#hm-sum').innerHTML = ''; $('#hm-foot').textContent = ''; return; }
+    if (!b) { empty.hidden = false; empty.textContent = 'No brand has a size census yet — it fills on the next Master stock run (07:40, 13:40 and 19:40 UTC).'; tw.hidden = true; bar.hidden = true; $('#hm-sum').innerHTML = ''; $('#hm-foot').textContent = ''; return; }
+    if (!cen) {
+      empty.hidden = false; tw.hidden = true; bar.hidden = true; $('#hm-sum').innerHTML = ''; $('#hm-foot').textContent = '';
+      empty.textContent = (d.market ? b + ' ' + d.market + ': the master’s sizes are not counted yet' : 'No size census for ' + b + ' yet') + ' — they fill on the next Master stock run. The guide above can be set up now.';
+      return;
+    }
+    var mp = HS.map(HM.store, b, cen), sm = mp.sum;
+    var rows = mp.types.filter(function (x) { return x.t.sz.length; });
+    var low = rows.filter(function (x) { return x.m.rows && hmPc(x.m.in, x.m.rows) < 70; }).length, unm = rows.filter(function (x) { return !x.h.s.length && !x.h.own; }).length;
+    $('#hm-sum').innerHTML = [
+      '<div class="it"><b>' + n0(sm.mapped) + ' <small style="font-size:13px;color:var(--muted)">of ' + n0(sm.sized) + '</small></b><span>product types mapped · ' + (hmPc(sm.mappedRows, sm.sizedRows) || 0) + '% of sized products</span></div>',
+      '<div class="it"><b>' + (sm.rows ? hmPc(sm.in, sm.rows) + '%' : '—') + '</b><span>hero-size products in stock' + (sm.rows ? ' · ' + n0(sm.in) + ' of ' + n0(sm.rows) : '') + '</span></div>',
+      '<div class="it"><b>' + (sm.st ? hmPc(sm.full, sm.st) + '%' : '—') + '</b><span>styles with every hero size in stock' + (sm.st ? ' · ' + n0(sm.full) + ' of ' + n0(sm.st) : '') + '</span></div>',
+      '<div class="it"><b>' + esc(d.market || '') + ' master</b><span>sizes counted ' + since(cen.t) + ' · ' + n0(cen.groups) + ' styles</span></div>'
+    ].join('');
+    bar.hidden = false; empty.hidden = true; tw.hidden = false;
+    var F = [['', 'All', rows.length], ['none', 'Not mapped', unm], ['low', 'Hero stock under 70%', low]];
+    $('#hm-f').innerHTML = F.map(function (f) { return '<button class="chip' + (HM.f === f[0] ? ' on' : '') + '" type="button" data-hf="' + f[0] + '">' + esc(f[1]) + ' <span class="k">' + f[2] + '</span></button>'; }).join('');
+    var q = HM.q.toLowerCase();
+    var shown = rows.filter(function (x) {
+      if (q && x.t.k.toLowerCase().indexOf(q) < 0) return false;
+      if (HM.f === 'none') return !x.h.s.length && !x.h.own;
+      if (HM.f === 'low') return x.m.rows && hmPc(x.m.in, x.m.rows) < 70;
+      return true;
+    });
+    $('#hm-t tbody').innerHTML = shown.length ? shown.map(function (x, i) {
+      var t = x.t, h = x.h, m = x.m, hero = {}, carry = t.sz.map(function () { return 0; }), st = 0;
+      h.s.forEach(function (s) { hero[s] = 1; });
+      (t.pat || []).forEach(function (p) { st += p[1]; for (var j = 0; j < t.sz.length; j++) if (p[0].charAt(j) !== '0') carry[j] += p[1]; });
+      var chips = t.sz.map(function (z, j) {
+        var on = !!hero[z[0]], ip = z[1] ? Math.round((z[2] / z[1]) * 100) : 0;
+        var tip = '<b>' + esc(z[0]) + '</b>' + (on ? ' · hero size' : '') + '<br>' + ip + '% in stock · ' + n0(z[2]) + ' of ' + n0(z[1]) + ' products' + (st ? '<br><span class="m">made in ' + n0(carry[j]) + ' of ' + n0(st) + ' styles</span>' : '');
+        var inner = (on ? heroIcon() : '') + esc(z[0]) + '<i style="width:' + ip + '%"></i>';
+        return HM.edit ? '<button type="button" class="sz' + (on ? ' hero' : '') + '" data-ht="' + i + '" data-hs="' + esc(z[0]) + '" aria-pressed="' + on + '" data-tip="' + esc(tip) + '">' + inner + '</button>'
+          : '<span class="sz' + (on ? ' hero' : '') + '" data-tip="' + esc(tip) + '">' + inner + '</span>';
+      }).join('') + (t.more ? '<span class="sub2" style="display:inline">+' + t.more + ' rarer</span>' : '');
+      var acts = HM.edit ? '<div class="hm-acts"><button type="button" data-ha="core" data-ht="' + i + '" title="Core of the run — tick the sizes nearly as many of its styles are made in as its most-made size" aria-label="Tick the core of the run">✦</button>'
+        + (h.own ? '<button type="button" data-ha="guide" data-ht="' + i + '" title="Back to the guide — drop this type’s own list" aria-label="Back to the guide">↺</button>' : '')
+        + '<button type="button" data-ha="none" data-ht="' + i + '" title="No hero sizes — record that this type has none" aria-label="No hero sizes">∅</button></div>' : '';
+      return '<tr data-hi="' + i + '"><td class="nm"><b>' + hmPretty(t.k) + '</b><span class="sub2">' + (st ? n0(st) + ' styles · ' : '') + n0(t.n) + ' products' + (t.fw ? ' · footwear' : '') + '</span></td>'
+        + '<td class="szs">' + chips + '</td>'
+        + '<td class="num">' + (h.s.length ? hmPcCell(m.in, m.rows, 'hero-size products in stock', 70) : '<span class="muted">—</span>') + '</td>'
+        + '<td class="num">' + (h.s.length ? (m.pats ? hmPcCell(m.full, m.st, 'styles with every hero size they are made in, in stock' + (m.untracked ? ' <span class="m">(' + n0(m.untracked) + ' styles in rarer runs not counted)</span>' : ''), 60) : '<span class="muted" title="This master names no style (item group)">—</span>') : '<span class="muted">—</span>') + '</td>'
+        + '<td>' + hmSrcTag(h) + acts + '</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="empty">' + (rows.length ? 'No product type matches.' : 'No sized product types in this master.') + '</td></tr>';
+    HM.rows = shown;
+    var foot = [];
+    var oneOnly = mp.types.filter(function (x) { return !x.t.sz.length; }).length;
+    if (cen.tx && cen.tx.k) foot.push(n0(cen.tx.k) + ' smaller product types (' + n0(cen.tx.n) + ' products) are not listed — the census keeps each market’s 80 biggest.');
+    if (oneOnly) foot.push(oneOnly + ' product type' + (oneOnly === 1 ? '' : 's') + ' sold in one size only.');
+    if (sm.bySrc.ex) foot.push('Examples are FeedSpark starting points to adapt, not a published standard.');
+    $('#hm-foot').textContent = foot.join(' ');
+  }
+  // ---- edits ----
+  function hmRow(i) { return HM.rows && HM.rows[+i]; }
+  function hmSetType(x, sizes, src) {
+    var k = hmType(x.t);
+    hmPut((function () { var o = {}; o[k] = { k: x.t.k, s: HS.sortSizes(sizes), src: src || 'set', fw: x.t.fw ? 1 : 0, by: 'you', at: Date.now() }; return o; })());
+  }
+  function hmGuideSet(patch) {
+    var b = hmBrand(), g = Object.assign({ doc: null, ex: '', from: '', note: '' }, HS.guideOf(HM.store, b) || {}, patch);
+    var o = {}; o['g:' + b] = { doc: g.doc, ex: g.ex || '', from: g.from || '', note: g.note || '' };
+    hmPut(o);
+  }
+  function hmImport(file) {
+    var name = file.name || 'sheet';
+    var rowsP = /\.(tsv|txt)$/i.test(name) ? file.text().then(function (t) { return t.replace(/^﻿/, '').split(/\r?\n/).map(function (l) { return l.split('\t'); }); })
+      : xlLoad().then(function (X) { return X.readFile(file); });
+    rowsP.then(function (rows) {
+      var doc = HS.parseDoc(rows);
+      if (!doc.rows.length) { toast('No product types found in ' + name + ' — a "Product type" column and a "Hero sizes" column'); return; }
+      var cen = hmCensus(), tmap = {};
+      ((cen && cen.types) || []).forEach(function (t) { tmap[HS.typeKey(t.k)] = { k: t.k, fw: t.fw }; });
+      var put = {}, matched = 0, kept = 0, b = hmBrand();
+      doc.rows.forEach(function (r) {
+        var hit = HS.entryFor(tmap, { k: r.k, d: HS.deptOf(r.k) });
+        var key = hit ? hit.key : HS.typeKey(r.k), lab = hit ? hit.e.k : r.k;
+        if (hit) matched++; else kept++;
+        put['m:' + b + '|' + key] = { k: lab, s: r.s, src: 'doc', fw: hit && hit.e.fw ? 1 : 0 };
+      });
+      HM.imp = { name: name, rows: doc.rows, matched: matched, kept: kept, put: put };
+      renderHmap();
+    }).catch(function (e) { toast('Could not read ' + name + ' — ' + String((e && e.message) || e)); });
+  }
+  function hmExport() {
+    var b = hmBrand(); if (!b || !HS) return;
+    var rows = HS.docRows(HM.store, b, hmCensus()).slice(1);
+    if (!rows.length) rows = Object.keys(HS.entriesOf(HM.store, b)).map(function (k) { var e = HS.entriesOf(HM.store, b)[k]; return [e.k || k, (e.s || []).join(', '), HS.srcWord({ src: e.src }), '']; });
+    xlLoad().then(function (X) {
+      X.download([{ name: 'Hero sizes', cols: [{ k: 'a', l: 'Product type', w: 44 }, { k: 'b', l: 'Hero sizes', w: 34 }, { k: 'c', l: 'Source', w: 26 }, { k: 'd', l: 'Sizes made in', w: 70 }],
+        rows: rows.map(function (r) { return { a: r[0], b: r[1], c: r[2], d: r[3] }; }),
+        note: b + (HM.d && HM.d.market ? ' ' + HM.d.market : '') + ' hero sizes — fill "Hero sizes" (comma-separated) and import it back with ⇪ Import on /stock.' }],
+        b.toLowerCase().replace(/\W+/g, '_') + '_hero_sizes' + (HM.d && HM.d.market ? '_' + HM.d.market.toLowerCase() : '') + '.xlsx');
+    }).catch(function (e) { toast('Could not build the sheet — ' + String((e && e.message) || e)); });
+  }
+
   // ---- wiring ----
   $('#brand').addEventListener('change', function () { S.brand = this.value; S.market = ''; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); });
-  $('#mkts').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (!b) return; S.market = b.getAttribute('data-m'); setQuery({ market: S.market }); render(); });
+  $('#mkts').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (!b) return; S.market = b.getAttribute('data-m'); setQuery({ market: S.market }); render(); HM.mk = ''; hmLoad(); });
   $('#cov').addEventListener('click', function (e) {
     var c = e.target.closest('[data-cell]'); if (!c) return;
     var p = c.getAttribute('data-cell').split('|');
@@ -948,6 +1369,62 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     }); });
     csvDownload('stock_availability' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'feed', 'products', 'in stock', 'out of stock', 'pre-order / backorder', 'not stated', 'unreadable', 'in stock %', 'out of stock %', 'counted at', 'FeedHero import'], rows);
   });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-hbdl]'); if (b) hbDownload(b.getAttribute('data-hbdl')); });
+  // hero sizes by product type
+  $('#hm-edit').addEventListener('click', function () { HM.edit = !HM.edit; renderHmap(); });
+  $('#hm-xlsx').addEventListener('click', hmExport);
+  $('#hm-mkt').addEventListener('change', function () { HM.mk = this.value; hmLoad(); });
+  $('#hm-brands').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-hb]'); if (!c) return;
+    var sel = $('#brand'); sel.value = c.getAttribute('data-hb'); sel.dispatchEvent(new Event('change'));
+  });
+  var hqt; $('#hm-q').addEventListener('input', function () { var v = this.value; clearTimeout(hqt); hqt = setTimeout(function () { HM.q = v.trim(); renderHmap(); }, 120); });
+  $('#hm-f').addEventListener('click', function (e) { var c = e.target.closest('[data-hf]'); if (!c) return; HM.f = c.getAttribute('data-hf'); renderHmap(); });
+  $('#hm-warn').addEventListener('click', function (e) { if (e.target.id === 'hm-retry') { HM.warn = ''; hmFlush(); renderHmap(); } });
+  $('#hm-t').addEventListener('click', function (e) {
+    if (!HM.edit) return;
+    var c = e.target.closest('button.sz,[data-ha]'); if (!c) return;
+    var x = hmRow(c.getAttribute('data-ht')); if (!x) return;
+    var act = c.getAttribute('data-ha');
+    if (act === 'core') { var co = HS.core(x.t); if (!co.length) { toast('No core run to read for ' + x.t.k); return; } hmSetType(x, co, 'core'); return; }
+    if (act === 'none') { hmSetType(x, [], 'set'); return; }
+    if (act === 'guide') { var o = {}; o[hmType(x.t)] = null; hmPut(o); return; }
+    var s = c.getAttribute('data-hs'), cur = x.h.s.slice(), at = cur.indexOf(s);
+    if (at >= 0) cur.splice(at, 1); else cur.push(s);
+    // ticking a size on a type that followed a guide makes the list its own — starting from what it followed
+    hmSetType(x, cur, 'set');
+  });
+  $('#hm-guide').addEventListener('change', function (e) {
+    if (e.target.id !== 'hm-ex') return;
+    var v = e.target.value;
+    hmGuideSet(v.indexOf('brand:') === 0 ? { from: v.slice(6), ex: '' } : v.indexOf('ex:') === 0 ? { ex: v.slice(3), from: '' } : { ex: '', from: '' });
+  });
+  $('#hm-guide').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-g]'); if (!c) return;
+    var g = c.getAttribute('data-g');
+    if (g === 'link') { HM.link = true; renderHmap(); var i = $('#hm-du'); if (i) i.focus(); return; }
+    if (g === 'nolink') { HM.link = false; renderHmap(); return; }
+    if (g === 'savelink') {
+      var nm = ($('#hm-dn').value || '').trim(), u = ($('#hm-du').value || '').trim();
+      if (u && !/^https:\/\//i.test(u)) { toast('The link must start https://'); return; }
+      HM.link = false; hmGuideSet({ doc: nm || u ? { name: nm, url: u } : null }); return;
+    }
+    if (g === 'import') { $('#hm-file').click(); return; }
+    if (g === 'impno') { HM.imp = null; renderHmap(); return; }
+    if (g === 'impok') {
+      var im = HM.imp; HM.imp = null; if (!im) return;
+      var gd = HS.guideOf(HM.store, hmBrand()) || {};
+      if (!gd.doc || !gd.doc.name) { var o2 = {}; o2['g:' + hmBrand()] = { doc: { name: im.name, url: (gd.doc && gd.doc.url) || '' }, ex: gd.ex || '', from: gd.from || '', note: gd.note || '' }; Object.assign(im.put, o2); }
+      hmPut(im.put); return;
+    }
+    if (g === 'saveex') {
+      var b = hmBrand(), x = HS.exampleFromBrand(HM.store, b, b + ' guide');
+      if (!x.rows.length) { toast('Set some of ' + b + '’s own hero sizes first'); return; }
+      var id = b.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) + '-guide', o3 = {};
+      o3['x:' + id] = x; hmPut(o3); toast('Saved as the example “' + x.name + '”'); return;
+    }
+  });
+  $('#hm-file').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (f) hmImport(f); });
   $('#chan').addEventListener('change', function () { S.chan = this.checked; remember('fcc-stock-chan', S.chan ? '1' : ''); renderCov(); });
   $('#sevs').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.sev = +b.getAttribute('data-s'); renderFinds(); });
   $('#find-more').addEventListener('click', function () { S.all = !S.all; renderFinds(); });

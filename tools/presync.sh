@@ -110,6 +110,10 @@ echo "── validating: Rules + Stock management (FeedHero rule_report — clas
 node tools/test_rules.mjs >/dev/null
 echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
 
+echo "── validating: Hero sizes + held-back products (size census, guides, examples, worker sanitisers, the master → feed join)"
+node tools/test_herosize.mjs >/dev/null
+echo "   ✓ size keys, product types, census, measure, examples, guide resolution, document import, sanitisers, held-back join, wiring hold"
+
 echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
 node tools/test_catalog.mjs >/dev/null
 echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
