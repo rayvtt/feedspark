@@ -49,6 +49,8 @@ import * as TMM from "./tmmcp.js";
 import * as ROAS from "./roas.js";
 // Rules + Stock management (Ray, 28 Sep 2026) — FeedHero's rule_report off the SAME MCP + token as ROAS
 import * as RULES from "./rules.js";
+// Hero sizes on /stock (Ray, 30 Sep 2026) — the census shape a push may store and the guide edits a signin may make
+import * as HERO from "./herosizes.js";
 import * as AIVIS from "./aivis.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
@@ -110,6 +112,9 @@ import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
 import RULES_MOD_PAGE from "../../../docs/FeedSpark_Rules.html";
 import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
+// the hero-size engine (docs/herosize_engine.js): the master-stock agent builds each market's size census with it,
+// /stock maps and measures hero sizes with it — served verbatim at /stock/engine.js
+import HEROSIZE_ENGINE_SRC from "../../../docs/herosize_engine.js";
 // /catalog (Ray, 28 Sep 2026): the product catalogue GMC / Shopify style — every product as it
 // is SENT, and hovering one shows it as the client's MASTER feed had it, field by field. The
 // engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
@@ -987,8 +992,9 @@ async function route(request, env, ctx) {
           let rec = await catMasterInfo(env, cmpid, false);
           if (rec.state !== 'ok') return json({ ok: false, state: rec.state, note: rec.note || '', error: rec.error || '' }, rec.state === 'preparing' ? 202 : 503);
           if (!body.force) {
+            // unchanged = the stored counts AND the stored size census are both of this import (and of this census shape)
             const have = ((await env.EDITS.get('masteravail', 'json')) || {})[cmpid];
-            if (have && have.imp && have.imp === rec.lastImport) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
+            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
           }
           let target = rec.src;
           if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
@@ -1009,6 +1015,23 @@ async function route(request, env, ctx) {
           return json({ ok: false, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error', error: msg }, 502);
         }
       }
+      // HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand … breakdown by their product type"): the
+      // master-stock agent's SIZE CENSUS of one market — per product type, every size it is made in with rows + in
+      // stock, and each style's run as a pattern — so /stock can measure any hero list without reading the feed.
+      // Validated whole by HERO.sanitizeCensus (off-shape = refused, never half-stored); one key per market.
+      if (Array.isArray(body.mastersize)) {
+        const results = [];
+        for (const e of body.mastersize.slice(0, 4)) {
+          const cmpid = String((e && e.cmpid) || '').slice(0, 60).trim().toLowerCase(), who = ROAS.cmpidBrand(cmpid);
+          if (!who) { results.push({ cmpid, error: 'not a roster company' }); continue; }
+          const c = HERO.sanitizeCensus(e && e.census);
+          if (!c) { results.push({ cmpid, error: 'bad census — refused whole' }); continue; }
+          await env.EDITS.put('mastersize:' + cmpid, JSON.stringify(Object.assign({ client: who.client, market: who.market, cmpid, t: Date.now(), imp: String((e && e.imp) || '').slice(0, 40) }, c)));
+          results.push({ cmpid, ok: true, types: c.types.length });
+        }
+        logActivity(ctx, env, request, 'master-sizes', results.filter((r) => r.ok).map((r) => r.cmpid).join(', ').slice(0, 60) || 'refused', 'master-stock');
+        return json({ ok: true, results });
+      }
       if (Array.isArray(body.masterstock)) {
         const idx = (await env.EDITS.get('masteravail', 'json')) || {};
         const results = [];
@@ -1022,6 +1045,12 @@ async function route(request, env, ctx) {
             via: ['availability', 'quantity', 'mixed', 'none'].indexOf(e.via) >= 0 ? e.via : 'none',
             qcol: str(e.qcol, 60), fmt: str(e.fmt, 12), enc: str(e.enc, 16), imp: str(e.imp, 40),
             rows: Math.max(0, Math.round(+e.rows || 0)) || null });
+          // the size census rode its own {mastersize} post first; the tally says whether it was stored
+          if (e.szv === HERO.CENSUS_V && e.sz && typeof e.sz === 'object') {
+            const n = (v) => Math.max(0, Math.min(1e8, Math.round(+v || 0)));
+            idx[cmpid].szv = HERO.CENSUS_V;
+            idx[cmpid].sz = { types: n(e.sz.types), sized: n(e.sz.sized), groups: n(e.sz.groups) };
+          }
           results.push({ cmpid, ok: true });
         }
         if (results.some((r) => r.ok)) await env.EDITS.put('masteravail', JSON.stringify(idx));
@@ -1509,6 +1538,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/stock/engine.js' && request.method === 'GET') {
+      return new Response(HEROSIZE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/catalog/engine.js' && request.method === 'GET') {
       return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -2808,8 +2840,11 @@ async function route(request, env, ctx) {
           matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), heroRuns: RULES.heroRuns(rows), findings: RULES.stockFindings(rows, now),
           sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
           markets: rows.map((r) => { const k = fkeys[r.cmpid] || {};
-            return RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,
-              { master: mavail[r.cmpid], g: k.g ? favail[k.g] : null, fb: k.fb ? favail[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }); }) }));
+            // wk = the wired market keys ('gb', 'gb-fb') the feed routes take — the held-back download reads the Google feed
+            // and the master through /api/feed/proxy + /api/catalog/master/file with them (scoped there as everywhere)
+            return Object.assign(RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,
+              { master: mavail[r.cmpid], g: k.g ? favail[k.g] : null, fb: k.fb ? favail[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }),
+              { wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }); }) }));
       }
       const findings = [];
       rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));
@@ -2817,6 +2852,61 @@ async function route(request, env, ctx) {
       return json(Object.assign(base, { families: RULES.FAMILIES, mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, sev: RULES.SEV,
         estate: RULES.estate(rows), brands: RULES.brandsOf(rows), findings,
         markets: rows.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) }));
+    }
+
+    // ---- HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow cross industry
+    // "guildlines" - (this is a document per brand or they can follow examples) - sit within stock management -
+    // breakdown by their product type"). FeedHero's own hero-size rules never expose their conditions, so each brand's
+    // map lives here: ONE shared store (KV heroguide — the kvmerge envelope, a key per decision, deletions only through
+    // `_deleted`) plus each market's SIZE CENSUS (KV mastersize:<cmpid>, written by the master-stock agent) that the
+    // page measures any hero list against. Scoped per signin: a scoped signin reads and writes its own brands'
+    // guides; the examples the team saves are shared. Nothing here is committed — KV only.
+    //   GET /api/rules/hero                    → every in-scope brand's guide status + the store (examples included)
+    //   GET /api/rules/hero?brand=[&market=]   → + that brand's roster markets (census or not) and one market's census
+    //   PUT /api/rules/hero                    → a partial map of g: / m: / x: keys (+ _deleted); by / at stamped here
+    if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const brands = Object.keys(ROAS.ROAS_ROSTER);
+      const now = Date.now();
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const hctx = { brands, inScope, canEx: !!(acc.owner || moduleAllowed(acc.modules, 'stock')), now,
+          by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone' };
+        const r = HERO.sanitizeHeroPut(body, hctx);
+        if (r.errors.length) return json({ ok: false, error: r.errors.slice(0, 3).join(' · ') }, 400);
+        const keys = Object.keys(r.data).concat(r.deleted);
+        if (!keys.length) return json({ ok: false, error: 'nothing to save' }, 400);
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const incoming = Object.assign({}, r.data);
+        if (r.deleted.length) incoming._deleted = r.deleted;
+        const envx = mergeIntoEnvelope(liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now), incoming, base, now, { explicitTombstones: true });
+        await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(envx));
+        logActivity(ctx, env, request, 'hero-guide', keys.length + ' change(s) · ' + keys.slice(0, 3).join(', '));
+        return json({ ok: true, saved: keys.length, store: HERO.heroView(envelopeToClient(envx, {}), inScope) }, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      const store = HERO.heroView(envelopeToClient(liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now), {}), inScope);
+      const mavail = (await env.EDITS.get('masteravail', 'json')) || {};
+      const hasCensus = (b) => ROAS.rosterOf(b).some((m) => (mavail[m.cmpid] || {}).szv === HERO.CENSUS_V);
+      const mine = brands.filter(inScope);
+      const out = { ok: true, v: HERO.CENSUS_V, store, brands: HERO.guideBrands(store, mine).map((b) => Object.assign(b, { census: hasCensus(b.client) })), at: now };
+      // no brand asked for (the page is on "All brands") = the first brand in scope with a census, flagged auto
+      let brand = url.searchParams.get('brand');
+      if (!brand) { brand = mine.find(hasCensus) || ''; out.auto = !!brand; }
+      if (brand) {
+        if (brands.indexOf(brand) < 0) return json({ ok: false, error: 'not a roster brand' }, 404);
+        if (!inScope(brand)) return json({ ok: false, error: 'out of scope' }, 403);
+        const mk = ROAS.rosterOf(brand).map((m) => {
+          const a = mavail[m.cmpid] || {};
+          return { market: m.market, cmpid: m.cmpid, census: a.szv === HERO.CENSUS_V ? Object.assign({ t: a.t || null }, a.sz || {}) : null };
+        });
+        // the market asked for (even one with no census yet — the page says so), else the first with a census
+        const want = url.searchParams.get('market');
+        const pick = mk.find((m) => m.market === want) || mk.find((m) => m.census) || null;
+        const census = pick && pick.census ? await env.EDITS.get('mastersize:' + pick.cmpid, 'json') : null;
+        Object.assign(out, { brand, markets: mk, market: pick ? pick.market : null, cmpid: pick ? pick.cmpid : null, census });
+      }
+      return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
     }
 
     // ---- AI VISIBILITY (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time") ----

@@ -837,6 +837,80 @@
     return { onRow: onRow, finish: finish };
   }
 
+  // ---- HELD BACK — the master's in-stock products the feed does not carry live (Ray, 30 Sep 2026: "download list of
+  // Range Completion > held back product IDs and Titles and Sizes and availablity (basically they should be products
+  // that are in stock in masterfeed but not appear in output feeds due to range completion held back rule)").
+  // Two counts can never say WHICH products a rule kept out; a join by product id can. feedIndex() reads the OUTPUT
+  // feed (the Catalogue's own outPlan/outRow) into two maps — by g:id and by c:fs_data_original_id — each id to its
+  // availability bucket; heldBack(index) then reads the MASTER, finds the column carrying those ids (detectJoin on the
+  // first 4,000 rows, as the Catalogue does), and keeps every row the master states IN STOCK whose product the feed
+  // either never sends ('absent') or sends as out of stock ('out'). Every master row also joins its style's size run,
+  // so each held product carries its style's range completion (sizes in stock of sizes made) — which is how a list
+  // read off two feeds tells a range-completion hold from any other exclusion without being told the rule's logic.
+  function feedIndex() {
+    var hdr = null, pl = null, plN = 0, n = 0, o = new Map(), i = new Map(), live = 0;
+    function onRow(row, h) {
+      if (!hdr) { hdr = (h || row).slice(); pl = outPlan(hdr); plN = hdr.length; return; }
+      if (h && h.length !== plN) { pl = outPlan(h); plN = h.length; }
+      var p = outRow(pl, row); if (!p.id) return;
+      n++;
+      var b = availBucket(Array.isArray(p.f.availability) ? p.f.availability[0] : p.f.availability);
+      if (b === 'in' || b === 'pre') live++;
+      var a = idKey(p.oid), c = idKey(p.id);
+      if (a && !o.has(a)) o.set(a, b);
+      if (c && !i.has(c)) i.set(c, b);
+    }
+    function finish() { return { n: n, live: live, o: o, i: i }; }
+    return { onRow: onRow, finish: finish };
+  }
+  function heldBack(feed) {
+    var hdr = null, pl = null, qi = -1, sample = [], join = -1, map = null, on = '', joinH = '', rate = 0;
+    var n = 0, inStock = 0, stated = 0, held = [], run = new Map(), absent = 0, sentOut = 0;
+    function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
+    function decide() {
+      var s = sample; sample = null;
+      var jA = detectJoin(pl, s, new Set(feed.o.keys())), jB = detectJoin(pl, s, new Set(feed.i.keys()));
+      var useB = jB.hit > jA.hit * 1.2, j = useB ? jB : jA;
+      if (j.col < 0) { join = -2; return; }
+      join = j.col; joinH = j.h; rate = j.rate; map = useB ? feed.i : feed.o; on = useB ? 'g:id' : 'fs_data_original_id';
+      s.forEach(take);
+    }
+    function take(row) {
+      n++;
+      var ac = cands('availability', row, pl), word = ac.length ? plain(Array.isArray(ac[0].v) ? ac[0].v[0] : ac[0].v) : '';
+      var qty = qi >= 0 ? s0(row[qi]).trim() : '';
+      var st = stockOf(word, qty);
+      if (st) stated++;
+      var grp = first('item_group_id', row);
+      if (grp) runAdd(run, grp, st);
+      if (st !== 'in') return;
+      inStock++;
+      var key = idKey(row[join]); if (!key) return;
+      var b = map.get(key);
+      if (b === 'in' || b === 'pre') return;               // live in the feed
+      var why = b == null ? 'absent' : 'out';
+      if (why === 'absent') absent++; else sentOut++;
+      held.push({ id: s0(row[join]).trim().slice(0, 120), t: first('title', row).slice(0, 200), s: first('size', row).slice(0, 40), av: word.slice(0, 40), q: qty.slice(0, 12), g: grp.slice(0, 80), why: why });
+    }
+    function onRow(row, h) {
+      if (!hdr) { hdr = (Array.isArray(h) ? h : row).slice(); pl = plan(hdr); qi = qtyCol(hdr); return; }
+      if (Array.isArray(h) && h.length !== hdr.length) { hdr = h.slice(); var j0 = pl && pl.join; pl = plan(hdr); pl.join = j0; }
+      if (!row || !row.some(function (x) { return has(x); })) return;
+      if (join === -2) return;
+      if (sample) { sample.push(row); if (sample.length >= 4000) decide(); return; }
+      take(row);
+    }
+    function finish() {
+      if (sample && hdr) decide();
+      if (join < 0) return { ok: false, why: 'nojoin', n: n + (sample ? sample.length : 0) };
+      held.forEach(function (x) { var c = x.g ? run.get(x.g) : null; x.rcN = c ? c[0] : 0; x.rcIn = c ? c[1] : 0; x.rc = c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null; });
+      // the lowest range completion first, then the style, so a broken run reads as one block
+      held.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc) || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
+      return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '' };
+    }
+    return { onRow: onRow, finish: finish };
+  }
+
   // ---- what the table shows about one product, worked out once when it arrives -------------------------------------
   var DAY = 86400000;
   function depthOf(v) { var s = plain(v); if (!s) return 0; return s.split(/\s*(?:>|›|»)\s*/).filter(Boolean).length || 1; }
@@ -1086,7 +1160,7 @@
     cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
-    availBucket: availBucket, stockTally: stockTally,
+    availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,

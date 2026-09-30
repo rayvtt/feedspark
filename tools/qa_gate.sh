@@ -356,6 +356,13 @@ else
   echo "   ✗ Rules harness FAILED — see node tools/test_rules.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6b2/7: Hero sizes + held-back products (size census, guides, examples, worker sanitisers, the master → feed join)"
+if node tools/test_herosize.mjs >/dev/null 2>&1; then
+  echo "   ✓ size keys, product types, census, measure, examples, guide resolution, document import, sanitisers, held-back join, wiring hold"
+else
+  echo "   ✗ Hero-size harness FAILED — see node tools/test_herosize.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h6c/7: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
 if node tools/test_catalog.mjs >/dev/null 2>&1; then
   echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"

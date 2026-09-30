@@ -108,18 +108,56 @@ function build() {
   const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), heroRuns: E.heroRuns(list), findings: E.stockFindings(list, now),
     sv: { scenarios: E.SV_SCENARIOS, days: E.SV_WINDOW_DAYS },
     markets: list.map((r) => { const k = FK[r.cmpid] || {};
-      return E.stockView(r, ROAS[r.cmpid], k.g ? VOLIDX[k.g] : null,
-        { master: MASTERAV[r.cmpid], g: k.g ? FEEDAV[k.g] : null, fb: k.fb ? FEEDAV[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }); }) });
+      return Object.assign(E.stockView(r, ROAS[r.cmpid], k.g ? VOLIDX[k.g] : null,
+        { master: MASTERAV[r.cmpid], g: k.g ? FEEDAV[k.g] : null, fb: k.fb ? FEEDAV[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }),
+        { wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }); }) });
   const rules = recs.superdry_gb, where = { client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', rules };
   const market = { ok: true, client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', read: true, updated: now, total: rules.length + 40, capped: true, rules,
     chains: E.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })), findings: E.rulesFindings([where], now),
     stockFindings: E.stockFindings([Object.assign({ stock: rules.filter((x) => x.sk) }, where)], now), status };
-  return { book, stock, market };
+  return { book, stock, market, hero: heroBuild(now) };
+}
+// HERO SIZES (/api/rules/hero): a synthetic master pushed through the REAL census (docs/herosize_engine.js, reading rows
+// with the Catalogue's own engine) — so the card meets size chips, hero crowns, both measures, a document-sourced type,
+// a hand-set type, an example-sourced type and an unmapped one. Invented product types, sizes and stock.
+function heroBuild(now) {
+  const E = require(path.join(__dirname, '..', 'docs', 'catalog_engine.js'));
+  const H = require(path.join(__dirname, '..', 'docs', 'herosize_engine.js'));
+  const c = H.census(E);
+  c.onRow(null, ['id', 'item_group_id', 'title', 'gender', 'product_type', 'size', 'availability']);
+  let id = 0;
+  const style = (pt, g, sizes, n, seed) => {
+    for (let s = 0; s < n; s++) sizes.forEach((z, j) => {
+      const inStock = ((s * 7 + j * 3 + seed) % 10) < 7 - (j === 0 || j === sizes.length - 1 ? 2 : 0);
+      c.onRow(['P' + (++id), pt.slice(0, 3).toUpperCase() + seed + '-' + s, pt + ' ' + s, g, pt, z, inStock ? 'in stock' : 'out of stock']);
+    });
+  };
+  style('Dresses', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 42, 1);
+  style('T-Shirts', 'mens', ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 36, 2);
+  style('Jackets', 'womens', ['6', '8', '10', '12', '14', '16'], 24, 3);
+  style('Trainers', 'womens', ['UK 3', 'UK 3.5', 'UK 4', 'UK 4.5', 'UK 5', 'UK 5.5', 'UK 6', 'UK 7'], 18, 4);
+  style('Coats', 'kids', ['3-4 years', '5-6 years', '7-8 years', '9-10 years'], 14, 5);
+  style('Jumpers', 'mens', ['S', 'M', 'L', 'XL'], 12, 6);
+  for (let s = 0; s < 20; s++) c.onRow(['P' + (++id), 'BAG-' + s, 'Bag ' + s, 'womens', 'Bags', 'One Size', 'in stock']);
+  const census = Object.assign({ client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', t: now - 5400000, imp: '2026-09-28 05:27:48' }, c.finish());
+  const store = {
+    'g:Superdry': { doc: { name: 'Superdry hero sizes 2026', url: 'https://example.com/superdry-hero-sizes' }, ex: 'fs-fashion-uk', from: '', note: '', by: 'Analyst A', at: now - 86400000 },
+    'm:Superdry|women > dresses': { k: 'Women > Dresses', s: ['10', '12', '14'], src: 'doc', fw: 0, by: 'Analyst A', at: now - 86400000 },
+    'm:Superdry|men > jumpers': { k: 'Men > Jumpers', s: ['M', 'L'], src: 'set', fw: 0, by: 'Analyst B', at: now - 3600000 },
+  };
+  const sum = { t: census.t, types: census.types.length, sized: census.sized, rows: census.rows, groups: census.groups, v: census.v };
+  return { ok: true, v: H.CENSUS_V, store, at: now, auto: true,
+    brands: [{ client: 'Reiss', doc: false, ex: '', from: '', own: 0, fromDoc: 0, census: false }, { client: 'Superdry', doc: true, ex: 'fs-fashion-uk', from: '', own: 2, fromDoc: 1, census: true }],
+    brand: 'Superdry', market: 'GB', cmpid: 'superdry_gb', census,
+    markets: [{ market: 'GB', cmpid: 'superdry_gb', census: sum }, { market: 'DE', cmpid: 'superdry_de', census: null }, { market: 'FR', cmpid: 'superdry_fr', census: null }] };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs)
 function stubLines() {
   const d = build();
-  return " if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
+  const engine = JSON.stringify(fs.readFileSync(path.join(__dirname, '..', 'docs', 'herosize_engine.js'), 'utf8'));
+  return " if(url.indexOf('/stock/engine.js')>=0)return Promise.resolve(new Response(" + engine + ",{status:200,headers:{'content-type':'application/javascript'}}));\n"
+    + " if(url.indexOf('/api/rules/hero')>=0)return j(" + JSON.stringify(d.hero) + ");\n"
+    + " if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
     + " if(url.indexOf('/api/rules?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " if(url.indexOf('/api/rules?pull')>=0)return j({ok:true,status:" + JSON.stringify(d.book.status) + "});\n"
     + " if(url.indexOf('/api/rules')>=0)return j(" + JSON.stringify(d.book) + ");\n";

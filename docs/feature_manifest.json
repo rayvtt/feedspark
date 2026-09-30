@@ -10808,7 +10808,7 @@
     {
       "name": "Stock: the route prices each market off the ROAS index and its own feed-row read, found by the cmpid",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "return RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,",
+      "pattern": "RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,",
       "pr": 0
     },
     {
@@ -11360,6 +11360,27 @@
       "pattern": "head.push('total_skus', 'spread_pp', 'in_markets');",
       "pr": 0
     },
+    {"name": "Hero sizes: the size census engine (per product type, runs + style patterns)", "file": "docs/herosize_engine.js", "pattern": "function census(E) {", "pr": 0},
+    {"name": "Hero sizes: a brand's list resolves own entry → the brand it follows → the example it follows", "file": "docs/herosize_engine.js", "pattern": "function heroFor(store, brand, t) {", "pr": 0},
+    {"name": "Hero sizes: a shoe type never takes a clothing row (and a clothing type never a footwear one)", "file": "docs/herosize_engine.js", "pattern": "if (!!r.fw !== fw) return false;", "pr": 0},
+    {"name": "Hero sizes: the cross-industry examples, labelled as starting points", "file": "docs/herosize_engine.js", "pattern": "not a standard anyone published", "pr": 0},
+    {"name": "Hero sizes: the brand's document import (Product type + Hero sizes)", "file": "docs/herosize_engine.js", "pattern": "function parseDoc(rows) {", "pr": 0},
+    {"name": "Hero sizes: the worker's census sanitiser (refused whole when off-shape)", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export function sanitizeCensus(c) {", "pr": 0},
+    {"name": "Hero sizes: guide edits scoped per brand, examples need the stock grant", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export function sanitizeHeroKey(key, val, ctx) {", "pr": 0},
+    {"name": "Hero sizes: the /api/rules/hero route (GET + PUT, kvmerge with explicit tombstones)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {", "pr": 0},
+    {"name": "Hero sizes: the {mastersize} push lane, one key per market", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (Array.isArray(body.mastersize)) {", "pr": 0},
+    {"name": "Hero sizes: 'unchanged' only when the census is of this import and this shape", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "have.imp === rec.lastImport && have.szv === HERO.CENSUS_V", "pr": 0},
+    {"name": "Hero sizes: the engine served at /stock/engine.js", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/stock/engine.js' && request.method === 'GET') {", "pr": 0},
+    {"name": "Hero sizes: the agent posts each market's census before the counts", "file": "tools/master_stock.mjs", "pattern": "const r = await post({ mastersize: [{ cmpid: m.cmpid, imp: got.imp, census: t.census }] });", "pr": 0},
+    {"name": "Hero sizes: the card on /stock", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"hmap-card\">", "pr": 0},
+    {"name": "Hero sizes: the card measures every type through the engine's map", "file": "docs/FeedSpark_Stock.html", "pattern": "var mp = HS.map(HM.store, b, cen), sm = mp.sum;", "pr": 0},
+    {"name": "Hero sizes: an edit stays on screen until the server confirms it", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmReapply() {", "pr": 0},
+    {"name": "Held back: the output feed indexed by g:id and fs_data_original_id", "file": "docs/catalog_engine.js", "pattern": "function feedIndex() {", "pr": 0},
+    {"name": "Held back: in stock in the master, not live in the feed, with the style's range completion", "file": "docs/catalog_engine.js", "pattern": "function heldBack(feed) {", "pr": 0},
+    {"name": "Held back: the download on /stock (feed + master joined in the browser)", "file": "docs/FeedSpark_Stock.html", "pattern": "function hbDownload(cmpid) {", "pr": 0},
+    {"name": "Held back: offered once per market on the forecast card", "file": "docs/FeedSpark_Stock.html", "pattern": "hbOnce ? hbBtn(m, 'hb-dl') : ''", "pr": 0},
+    {"name": "Held back: each stock market carries its wired feed keys", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "{ wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }", "pr": 0},
+    {"name": "Hero sizes + held back: the harness runs in the QA gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_herosize.mjs", "pr": 0},
     {
       "name": "ROAS modular: the eight modules in one list",
       "file": "docs/FeedSpark_ROAS.html",

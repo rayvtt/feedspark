@@ -20,6 +20,13 @@
  * guess. The counts go back as {masterstock:[…]} into ONE index, `masteravail` (cmpid → counts). Only
  * counts leave this process: no row, id or URL is pushed, printed or kept.
  *
+ * HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand … breakdown by their product type"): the
+ * SAME pass builds each master's SIZE CENSUS (docs/herosize_engine.js › census) — per product type, every size it
+ * is made in with rows + in stock, and each style's size run as a pattern of in / out / not made — posted per
+ * market as {mastersize:[…]} into KV mastersize:<cmpid>. Counts and size names only, like the tally. The stock
+ * counts never wait on it: a census the worker refuses is logged and the next run builds it again (the tally
+ * carries `szv` only when its census was stored, and the worker answers `unchanged` only when both are current).
+ *
  * Runs from .github/workflows/master-stock.yml. Auth: FCC_PUSH_KEY (= the worker's GMAIL_PUSH_KEY, the
  * xml-scan secret). Every response is checked for JSON / octet-stream — the Access login page is an HTTP
  * 200 text/html. Run: node tools/master_stock.mjs
@@ -34,6 +41,7 @@ import { rosterList } from '../cloudflare/feedspark-deck/src/roas.js';
 const require = createRequire(import.meta.url);
 const FA = require('../docs/feedlab_engine.js');
 const E = require('../docs/catalog_engine.js');
+const H = require('../docs/herosize_engine.js');
 
 const HOST = process.env.FCC_HOST || 'feedspark.ray-vtt.workers.dev';
 const KEY = process.env.FCC_PUSH_KEY || '';
@@ -54,10 +62,12 @@ export function masterBytes(u8) {
   return { name: ent.name, bytes: new Uint8Array(inflateRawSync(data)) };
 }
 
-// bytes -> the master's stock tally ({n, in, out, pre, none, other, via, col, qcol, ow} + fmt, enc)
+// bytes -> the master's stock tally ({n, in, out, pre, none, other, via, col, qcol, ow} + fmt, enc) and, off the SAME
+// rows, its size census (census — docs/herosize_engine.js)
 export function tallyMaster(u8) {
   const { bytes } = masterBytes(u8);
-  const t = E.stockTally();
+  const t = E.stockTally(), c = H.census(E);
+  const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); };
   let dec = new TextDecoder('utf-8', { fatal: true }), enc = 'UTF-8', parser = null, fmt = '';
   for (let o = 0; o < bytes.length; o += CHUNK) {
     const part = bytes.subarray(o, Math.min(bytes.length, o + CHUNK));
@@ -71,7 +81,7 @@ export function tallyMaster(u8) {
       const sn = E.sniff(s.slice(0, 20000));
       fmt = sn.fmt === 'xml' ? 'XML' : ({ '\t': 'TSV', ',': 'CSV', '|': 'pipe', ';': 'semicolon' }[sn.delim] || 'text');
       // delimParser's second argument is a row INDEX, not a header — stockTally reads the first row as the header
-      parser = sn.fmt === 'xml' ? FA.createXmlParser((r, h) => t.onRow(r, h)) : E.delimParser(sn.delim, (r) => t.onRow(r), sn);
+      parser = sn.fmt === 'xml' ? FA.createXmlParser((r, h) => both(r, h)) : E.delimParser(sn.delim, (r) => both(r), sn);
     }
     parser.push(s);
   }
@@ -79,7 +89,14 @@ export function tallyMaster(u8) {
   const tail = dec.decode();
   if (tail) parser.push(tail);
   parser.end();
-  return Object.assign(t.finish(), { fmt, enc });
+  return Object.assign(t.finish(), { fmt, enc, census: c.finish() });
+}
+// the census in one line — product types, sized rows, styles, and the biggest type's run
+export function sizeLine(cs) {
+  if (!cs || !cs.types) return 'no size census';
+  const top = cs.types.filter((x) => x.sz.length)[0];
+  return cs.types.length + ' product types · ' + cs.sized.toLocaleString('en-GB') + ' sized rows · ' + cs.groups.toLocaleString('en-GB') + ' styles'
+    + (top ? ' · biggest: ' + top.k + ' (' + top.sz.map((z) => z[0]).join(' ') + ')' : '');
 }
 
 async function post(body) {
@@ -122,13 +139,14 @@ async function main() {
   if (process.env.MASTER_FILE) {
     const t = tallyMaster(new Uint8Array(readFileSync(process.env.MASTER_FILE)));
     console.log(line(process.env.MASTER_FILE.split('/').pop(), t));
+    console.log('  sizes — ' + sizeLine(t.census));
     return 0;
   }
   if (!KEY) { console.error('✗ FCC_PUSH_KEY not set — store the GMAIL_PUSH_KEY value as a GitHub secret named FCC_PUSH_KEY.'); return 2; }
   let list = rosterList();
   if (ONLY) list = list.filter((m) => m.cmpid === ONLY);
   console.log('· ' + list.length + ' roster market(s) — reading each master feed' + (FORCE ? ' (forced)' : ''));
-  const done = [], tally = { read: 0, same: 0, prep: 0, failed: 0 }, later = [];
+  const done = [], tally = { read: 0, same: 0, prep: 0, failed: 0, sized: 0 }, later = [];
   const readOne = async (m, last) => {
     const tag = m.client + ' ' + m.market;
     try {
@@ -141,10 +159,20 @@ async function main() {
       }
       const t = tallyMaster(got.bytes);
       if (!t.n) throw new Error('no rows read');
+      // the size census goes first and on its own (one market per post — a census runs to tens of KB); a refusal is
+      // logged and never costs the stock counts
+      let sz = null;
+      try {
+        const r = await post({ mastersize: [{ cmpid: m.cmpid, imp: got.imp, census: t.census }] });
+        const one = (r.results || [])[0] || {};
+        if (one.ok) { sz = { types: t.census.types.length, sized: t.census.sized, groups: t.census.groups }; tally.sized++; }
+        else console.log('✗ size census refused  ' + tag + ' — ' + (one.error || 'no reason given'));
+      } catch (e) { console.log('✗ size census not stored  ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140)); }
       done.push({ cmpid: m.cmpid, n: t.n, in: t.in, out: t.out, pre: t.pre, none: t.none, other: t.other,
-        via: t.via, col: t.col, qcol: t.qcol, ow: t.ow, fmt: t.fmt, enc: t.enc, imp: got.imp, rows: got.rows });
+        via: t.via, col: t.col, qcol: t.qcol, ow: t.ow, fmt: t.fmt, enc: t.enc, imp: got.imp, rows: got.rows,
+        szv: sz ? H.CENSUS_V : 0, sz });
       tally.read++;
-      console.log('✓ ' + line(tag, t));
+      console.log('✓ ' + line(tag, t) + '\n    sizes — ' + sizeLine(t.census));
     } catch (e) {
       tally.failed++;
       console.log('✗ ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140));
@@ -163,7 +191,7 @@ async function main() {
     const d = await post({ masterstock: done.slice(b, b + BATCH) });
     (d.results || []).forEach((r) => { if (r.ok) stored++; else console.log('✗ rejected  ' + r.cmpid + ' — ' + r.error); });
   }
-  console.log('\n✓ master stock — ' + stored + ' stored · ' + tally.same + ' unchanged · ' + tally.prep + ' still preparing · ' + tally.failed + ' failed');
+  console.log('\n✓ master stock — ' + stored + ' stored · ' + tally.sized + ' size censuses · ' + tally.same + ' unchanged · ' + tally.prep + ' still preparing · ' + tally.failed + ' failed');
   return tally.failed && !stored && !tally.same ? 1 : 0;
 }
 
