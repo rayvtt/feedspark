@@ -9962,7 +9962,7 @@
     {
       "name": "Golden score history: seeded only from readings on today's basis",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": ".filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)",
+      "pattern": ".filter((x) => x && cur && x.t < cur.t && histBasis(x) === histBasis(cur))",
       "pr": 558
     },
     {
