@@ -11435,6 +11435,13 @@
     {"name": "KWCal: the pending-scope card names what it scopes", "file": "docs/FeedSpark_KWCal.html", "pattern": "sync to measure", "pr": 0},
     {"name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope", "file": "docs/FeedSpark_KWCal.html", "pattern": "!hasScope(e,evMkt(CLIENT,e))", "pr": 0},
     {"name": "KWCal: Superdry GB product-type census (independent check on every seeded path)", "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json", "pattern": "distinct_primary_paths", "pr": 0},
+    {"name": "ROAS: ◐ Heat — the button + menu beside ⊞ Columns", "file": "docs/FeedSpark_ROAS.html", "pattern": "id=\"heat-btn\"", "pr": 0},
+    {"name": "ROAS: ◐ Heat — a scale per LEVEL, money per currency", "file": "docs/FeedSpark_ROAS.html", "pattern": "var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');", "pr": 0},
+    {"name": "ROAS: ◐ Heat — the midpoint is the MEDIAN", "file": "docs/FeedSpark_ROAS.html", "pattern": "med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2", "pr": 0},
+    {"name": "ROAS: ◐ Heat — the chart pair's dark steps", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:76,130,224;--heat-lo:198,123,40", "pr": 0},
+    {"name": "ROAS: ◐ Heat — per device + carried by a saved view", "file": "docs/FeedSpark_ROAS.html", "pattern": "heat:S.heat.slice()", "pr": 0},
+    {"name": "ROAS: every menu nudged back inside the screen (fitPop)", "file": "docs/FeedSpark_ROAS.html", "pattern": "if(open)fitPop(pop);", "pr": 0},
+    {"name": "ROAS: ◐ Heat rendered in the tripwire", "file": "tools/check_roasmods.js", "pattern": "◐ Heat — a colour scale per column", "pr": 0},
     {"name": "Hero sizes: departments read in every roster language (Superdry DE's Damen / Herren keep types apart)", "file": "docs/herosize_engine.js", "pattern": "function genderWord(gender) {", "pr": 0},
     {"name": "Hero sizes: a child's age group wins over the gender word", "file": "docs/herosize_engine.js", "pattern": "var kidAge = deptFromCols('', age) === 'kids';", "pr": 0},
     {"name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';", "pr": 0}

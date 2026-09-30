@@ -211,6 +211,17 @@ t('PNG + PDF capture with html2canvas / jsPDF from cdnjs under the SAME SRI hash
 t('a captured card is drawn at its natural height (nothing clipped) and captioned with its scope + Private & Confidential', /\.mod\.xshot,body\.xshotall \.mod\{height:auto\}/.test(PAGE) && /FeedSpark · Private & Confidential';/.test(PAGE));
 t('the rendered half is driven in a browser by tools/check_roasmods.js, in presync', /check_roasmods\.js/.test(read('tools/presync.sh')) && fs.existsSync(new URL('./check_roasmods.js', import.meta.url)));
 
+console.log('· ◐ Heat — Ray, 30 Sep 2026: "highlight column cells color in gradiant to find peak and trough too, selected columns individually"');
+t('◐ Heat sits beside ⊞ Columns and lists the columns on screen one by one — Band and Updated have no peak and are never offered', /id="heat-btn"[^>]*aria-haspopup="true"/.test(PAGE) && /id="heat-pop" hidden/.test(PAGE) && /var HEAT_NO=\{band:1,upd:1\}/.test(PAGE) && /function heatable\(\)\{ return visCols\(\)\.filter/.test(PAGE) && /data-heat="'\+c\.k\+'"/.test(PAGE));
+t('a scale runs within ONE level (brands, markets, categories at one depth) and a MONEY column within one currency', /var g=r\.type\+\(r\.type==='cat'\?'\|'\+r\.depth:''\)\+\(cur\?'\|'\+cur:''\);/.test(PAGE) && /MONEY_K=\{sp:1,rv:1,cpc:1,cpa:1,aov:1,avgp:1\}/.test(PAGE));
+t('the midpoint is the group\'s MEDIAN, not the middle of the range — spend is skewed', /med=vs\.length%2\?vs\[Math\.floor\(h\)\]:\(vs\[h-1\]\+vs\[h\]\)\/2/.test(PAGE));
+t('one row, or every row the same, draws no scale', /if\(!\(mx>mn\)\)return;/.test(PAGE));
+t('the scale is the chart pair\'s own steps, light and dark, tinted UNDER ink text; the peak and trough carry ▲ / ▼ and a sentence', /--heat-hi:37,99,235;--heat-lo:237,111,11/.test(PAGE) && /--heat-hi:76,130,224;--heat-lo:198,123,40/.test(PAGE) && /Peak — the highest /.test(PAGE) && /Trough — the lowest /.test(PAGE));
+t('the Total rows are never on the scale', /if\(r\.type!=='brand'&&r\.type!=='market'&&r\.type!=='cat'\)return;/.test(PAGE));
+t('picked per device (fcc-roas-heat) and carried by a saved view — never shared state', /LS\('fcc-roas-heat'/.test(PAGE) && /heat:S\.heat\.slice\(\)/.test(PAGE) && /if\(Array\.isArray\(x\.heat\)\)S\.heat=x\.heat\.slice\(\)/.test(PAGE) && !/fcc-roas-heat[\s\S]{0,80}\/api\/state/.test(PAGE));
+t('a tick updates the menu in place — a re-drawn menu would detach the clicked node and the outside-click rule would close it', /\$\('#heat-pop'\)\.querySelectorAll\('\[data-heat\]'\)\.forEach\(function\(cb\)\{ cb\.checked=/.test(PAGE));
+t('every menu is nudged back inside the screen (a phone put ⊞ Columns, ★ Views and ⬇ Export half off its left edge)', /function fitPop\(el\)/.test(PAGE) && /if\(open\)fitPop\(pop\);/.test(PAGE) && /\.pop\{position:absolute;top:calc\(100% \+ 6px\);right:0;z-index:30;max-width:calc\(100vw - 16px\);/.test(PAGE));
+
 console.log('· deploy config');
 t('wrangler.toml carries the new cron firing and no others were dropped', WRANGLER.indexOf('10,40 * * * *') > 0 && WRANGLER.indexOf('15,45 * * * *') > 0 && WRANGLER.indexOf('0 7,17 * * *') > 0);
 
