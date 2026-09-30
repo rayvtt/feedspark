@@ -67,7 +67,7 @@ export function sanitizeCensus(c) {
   ['pt', 'size', 'gender', 'age', 'grp', 'av', 'qty'].forEach((k) => { cols[k] = str(c.cols && c.cols[k], 60); });
   // where the types came from: the feed's tree (and how each master row found its place on it), or the master's own words
   const tr = c.tree && typeof c.tree === 'object' ? c.tree : null;
-  const tree = tr ? { feed: int(tr.feed), typed: int(tr.typed), id: int(tr.id), grp: int(tr.grp), learn: int(tr.learn), word: int(tr.word), own: int(tr.own),
+  const tree = tr ? { feed: int(tr.feed), typed: int(tr.typed), fold: int(tr.fold), id: int(tr.id), grp: int(tr.grp), learn: int(tr.learn), word: int(tr.word), own: int(tr.own),
     join: str(tr.join, 60), on: tr.on === 'g:id' ? 'g:id' : tr.on === 'fs_data_original_id' ? 'fs_data_original_id' : '' } : null;
   return { v: CENSUS_V, rows: int(c.rows), sized: int(c.sized), one: int(c.one), nos: int(c.nos), groups: int(c.groups), capped: !!c.capped,
     cols, src: c.src === 'feed' && tree ? 'feed' : 'master', tree, types, tx: { n: int(c.tx && c.tx.n), k: int(c.tx && c.tx.k, 1e5) } };

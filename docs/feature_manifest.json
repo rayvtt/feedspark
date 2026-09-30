@@ -11476,6 +11476,8 @@
     {"name": "Hero tiers: a master-only type and a type that goes no finer are named", "file": "docs/FeedSpark_Stock.html", "pattern": ">no finer type</span>", "pr": 0},
     {"name": "Hero tiers: the note says where the types came from", "file": "docs/FeedSpark_Stock.html", "pattern": "Product types are the Google Shopping feed’s own product_type tree: ", "pr": 0},
     {"name": "Hero tiers: the stub's census rides a synthetic Google feed tree", "file": "tools/rules_stub.js", "pattern": "const c = H.census(E, ti.finish());", "pr": 0},
-    {"name": "Hero tiers: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_herotier.js", "pr": 0}
+    {"name": "Hero tiers: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_herotier.js", "pr": 0},
+    {"name": "Hero tiers: one spelling per type — case and accents read as one (Superdry FR)", "file": "docs/herosize_engine.js", "pattern": "function foldKey(v) { var t = s0(v).toLowerCase(); try { t = t.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} return t; }", "pr": 0},
+    {"name": "Hero tiers: the card says how many feed spellings were read as one", "file": "docs/FeedSpark_Stock.html", "pattern": " the feed spells two ways (case or accents) read as one.", "pr": 0}
   ]
 }

@@ -1397,7 +1397,8 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var oneOnly = mp.types.filter(function (x) { return !x.t.sz.length; }).length;
     var tr = cen.tree, placed = tr ? tr.id + tr.grp + tr.learn + (tr.word || 0) + tr.own : 0, pcs = function (a) { var v = placed ? Math.round((a / placed) * 100) : 0; return a && !v ? '<1' : String(v); };
     if (cen.src === 'feed' && tr) foot.push('Product types are the Google Shopping feed’s own product_type tree: ' + pcs(tr.id + tr.grp) + '% of the master’s products matched to a feed product by id or style, '
-      + pcs(tr.learn + (tr.word || 0)) + '% placed by their master type' + (tr.own ? ', ' + pcs(tr.own) + '% marked master type (the feed has no type for them)' : '') + '.');
+      + pcs(tr.learn + (tr.word || 0)) + '% placed by their master type' + (tr.own ? ', ' + pcs(tr.own) + '% marked master type (the feed has no type for them)' : '') + '.'
+      + (tr.fold ? ' ' + n0(tr.fold) + ' product type' + (tr.fold === 1 ? '' : 's') + ' the feed spells two ways (case or accents) read as one.' : ''));
     else foot.push('Product types are the master’s own — no Google Shopping feed was read for this market’s tree.');
     if (cen.tx && cen.tx.k) foot.push(n0(cen.tx.k) + ' smaller product types (' + n0(cen.tx.n) + ' products) are not listed — the census keeps each market’s ' + n0(HS.TYPE_CAP) + ' biggest.');
     if (oneOnly) foot.push(oneOnly + ' product type' + (oneOnly === 1 ? '' : 's') + ' sold in one size only.');
