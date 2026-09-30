@@ -66,7 +66,8 @@ t('the columns when the path says nothing: female / mens / unisex, and a child a
 t('Superdry’s shape: a bare category + a gender column → "Men > T-Shirts"', H.typeLabel('T-Shirts', 'mens', '') === 'Men > T-Shirts');
 t('Reiss’s shape: the path already names it, no prefix', H.typeLabel('Womenswear > Dresses', 'female', 'adult') === 'Womenswear > Dresses');
 t('every roster language: Superdry DE\u2019s "Damen" / "Herren" keep the types apart, in the brand\u2019s own words', H.typeLabel('Jacken', 'Damen', '') === 'Damen > Jacken' && H.typeLabel('Jacken', 'Herren', '') === 'Herren > Jacken'
-  && H.deptOf('Damen > Jacken') === 'women' && H.deptOf('Herren > Jacken') === 'men' && H.deptOf('Femme > Vestes') === 'women' && H.deptOf('Miehet > Takit') === 'men' && H.deptOf('Kobiety > Kurtki') === 'women');
+  && H.deptOf('Damen > Jacken') === 'women' && H.deptOf('Herren > Jacken') === 'men' && H.deptOf('Femme > Vestes') === 'women' && H.deptOf('Miehet > Takit') === 'men' && H.deptOf('Kobiety > Kurtki') === 'women'
+  && H.deptOf('Killar > T-Shirts') === 'men' && H.deptOf('Tjejer > Klänningar') === 'women' && H.deptOf('Dział męski > T-Shirty') === 'men' && H.deptOf('Dział damski > Kurtki') === 'women');
 t('a gender word nobody placed still separates the types; a placeholder does not', H.typeLabel('Jacken', 'Zorblax', '') === 'Zorblax > Jacken' && H.typeLabel('Jacken', 'N/A', '') === 'Jacken' && H.genderWord('123') === '');
 t('a child\u2019s age group wins over the gender word (a girls\u2019 dress is not a women\u2019s dress)', H.typeLabel('Kleider', 'Damen', 'Kinder') === 'Kids > Kleider' && H.typeLabel('Dresses', 'female', 'children') === 'Kids > Dresses');
 t('merchandising buckets in the other languages are not types either', !H.usableType('Alles Anzeigen') && !H.usableType('Kampagne 3') && !H.usableType('Voir tout') && !H.usableType('Näytä kaikki') && H.usableType('Jacken'));
