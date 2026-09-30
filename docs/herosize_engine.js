@@ -131,8 +131,8 @@
   // cannot pick an example's department row.
   var DEPT_RE = [
     ['kids', /\b(kids?|kidswear|child(?:ren)?'?s?|childrenswear|girls?|girlswear|boys?|boyswear|junior|juniors|baby|babies|babywear|toddlers?|infants?|kinder|kinderen|enfants?|fille|filles|gar[çc]ons?|m[äa]dchen|jungen|meisjes|jongens|ni[ñn][oa]s|beb[ée]s?|bambin[io]|ragazz[io]|b[øo]rn|barn|pige|drenge|flickor|pojkar|jenter|gutter|lapset|tyt[öo]t|pojat|dzieci|dziewcz[ęe]ta|ch[łl]opcy|crian[çc]as|youth|teens?|newborn|children)\b/i],
-    ['women', /\b(wom[ae]n'?s?|womenswear|ladies|lady|female|damen|dames|femmes?|mujer(?:es)?|donna|donne|kvinder|kvinner|kvinnor|dam|dame|naiset|naisten|kobiety|damskie|damska|mulher(?:es)?)\b/i],
-    ['men', /\b(m[ae]n'?s?|menswear|male|herren|heren|hommes?|hombres?|uomo|uomini|herre|herr|m[æa]nd|menn|m[äa]n|miehet|miesten|m[ęe][żz]czy[źz]ni|m[ęe]skie|m[ęe]ska|hom[ae]ns?)\b/i],
+    ['women', /\b(wom[ae]n'?s?|womenswear|ladies|lady|female|damen|dames|femmes?|mujer(?:es)?|donna|donne|kvinder|kvinner|kvinnor|dam|dame|naiset|naisten|kobiety|damskie|damska|damski|tjejer|mulher(?:es)?)\b/i],
+    ['men', /\b(m[ae]n'?s?|menswear|male|herren|heren|hommes?|hombres?|uomo|uomini|herre|herr|m[æa]nd|menn|m[äa]n|miehet|miesten|m[ęe][żz]czy[źz]ni|m[ęe]skie|m[ęe]ska|m[ęe]ski|killar|hom[ae]ns?)\b/i],
     ['unisex', /\b(unisex)\b/i]
   ];
   var DEPT_LABEL = { kids: 'Kids', women: 'Women', men: 'Men', unisex: 'Unisex' };
