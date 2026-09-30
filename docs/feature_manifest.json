@@ -11444,6 +11444,17 @@
     {"name": "ROAS: ◐ Heat rendered in the tripwire", "file": "tools/check_roasmods.js", "pattern": "◐ Heat — a colour scale per column", "pr": 0},
     {"name": "Hero sizes: departments read in every roster language (Superdry DE's Damen / Herren keep types apart)", "file": "docs/herosize_engine.js", "pattern": "function genderWord(gender) {", "pr": 0},
     {"name": "Hero sizes: a child's age group wins over the gender word", "file": "docs/herosize_engine.js", "pattern": "var kidAge = deptFromCols('', age) === 'kids';", "pr": 0},
-    {"name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';", "pr": 0}
+    {"name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';", "pr": 0},
+    {"name": "Stock even: a six-tile KPI band on a count that divides it (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "#kpis{grid-template-columns:repeat(6,minmax(0,1fr))}", "pr": 0},
+    {"name": "Stock even: summary tiles fill their card as equal tiles", "file": "docs/FeedSpark_Stock.html", "pattern": ".sv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0 0 12px}", "pr": 0},
+    {"name": "Stock even: a table grouped by market names the market once", "file": "docs/FeedSpark_Stock.html", "pattern": "function grp(list, keyOf) {", "pr": 0},
+    {"name": "Stock even: the held-back list sits beside its number (rows one height)", "file": "docs/FeedSpark_Stock.html", "pattern": "(hbOnce ? hbBtn(m, 'hb-dl') : '') + n0(x.n)", "pr": 0},
+    {"name": "Stock even: every stock control one column width in the coverage matrix", "file": "docs/FeedSpark_Stock.html", "pattern": "#cov{table-layout:fixed;min-width:860px}", "pr": 0},
+    {"name": "Stock even: one width for every short size chip", "file": "docs/FeedSpark_Stock.html", "pattern": "justify-content:center;gap:3px;min-width:48px;height:24px;", "pr": 0},
+    {"name": "Stock even: a finding is one line until opened", "file": "docs/FeedSpark_Stock.html", "pattern": "'</span></summary><div class=\"fb\"><div class=\"why\">'", "pr": 0},
+    {"name": "Stock even: a market's setup summary is one line", "file": "docs/FeedSpark_Stock.html", "pattern": "'<div class=\"toolbar set-top\"><span class=\"why\">' + esc(m.sentence) + '</span>'", "pr": 0},
+    {"name": "Stock even: the phone search field on a row of its own", "file": "docs/FeedSpark_Stock.html", "pattern": ".ctl .q{flex:1 1 100%}", "pr": 0},
+    {"name": "Rules: the phone search field on a row of its own", "file": "docs/FeedSpark_Rules.html", "pattern": ".ctl .q{flex:1 1 100%}", "pr": 0},
+    {"name": "Stock even: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_stockeven.js", "pr": 0}
   ]
 }

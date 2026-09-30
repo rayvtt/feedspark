@@ -89,13 +89,23 @@ window.addEventListener('load',restore);
   .chead .sp{flex:1;min-width:220px}
   .chead .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .kpis{margin:6px 0 4px}
+  /* EVEN, NOT RAGGED (Ray, 30 Sep 2026: "not too cluttered and is evenly spaced, so it is not troublesome to use with clients
+     live"): the shared auto-fit grid put nine tiles on this band as 7 + 2. Six tiles on a fixed count that divides them —
+     6 across, 3 × 2 under 1180px or beside the open forecast panel (and on a phone, where the digest layer sets 3) — and
+     every label gets the same two-line slot, so each number, label and line below it sit at one height across the row. */
+  #kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+  @media(max-width:1180px){#kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(min-width:1100px) and (max-width:1720px){body.sv-on #kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:760px){#kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  #kpis .kpi .l{min-height:2.5em;line-height:1.25}
+  #kpis .kpi .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .kpi{cursor:default}
   .kpi.link{cursor:pointer;transition:border-color .15s,transform .15s}
   .kpi.link:hover{border-color:var(--orange);transform:translateY(-1px)}
   .kpi .d a{font-weight:800}
   .q{font:inherit;font-size:13px;font-weight:700;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:200px;flex:1}
   .q:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
-  .grid2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}
+  .grid2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:stretch}
   .grid2>.card{margin:0}
   .row-gap{margin-top:16px}
   /* one-series horizontal bars (a count per category) — one hue, the picked bar in the second */
@@ -118,7 +128,14 @@ window.addEventListener('load',restore);
   .fd summary::-webkit-details-marker{display:none}
   .fd .tt{font-weight:900;font-size:13.5px}
   .fd .wh{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap}
-  .fd .why{grid-column:2/4;font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  .fd .why{font-size:12.5px;color:var(--ink-2)}
+  .fd .fb{padding:6px 0 2px}
+  .set-top{margin:8px 0}
+  .set-top .why{flex:1;min-width:220px;font-size:12.5px;color:var(--ink-2)}
+  #finds .fd summary{grid-template-columns:118px minmax(0,1fr) auto;align-items:center}
+  #finds .fd .sev{justify-self:start}
+  #finds .fd .fb{padding-left:128px}
+  @media(max-width:760px){#finds .fd summary{grid-template-columns:auto minmax(0,1fr)}#finds .fd .wh{grid-column:2;white-space:normal}#finds .fd .fb{padding-left:0}}
   .fd .rl{margin:8px 0 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
   .fd .rl li{font-size:12.5px;display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:4px 8px;border-radius:8px;background:var(--wash)}
   .fd .rl li b{font-weight:900}
@@ -143,6 +160,11 @@ window.addEventListener('load',restore);
   table.t tr.sel td{background:rgba(245,166,35,.1)}
   table.t td .sub2{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
   table.t td.nm{min-width:220px}
+  table.t tr.gi td{border-bottom-style:dashed}
+  #cuts td:first-child,#sv-t td:first-child,#heroes td:first-child,#sv-rest td:first-child,.set-w{white-space:nowrap}
+  #heroes{table-layout:fixed;min-width:640px}
+  #heroes th:nth-child(1){width:20%}#heroes th:nth-child(2){width:40%}#heroes th:nth-child(3){width:18%}
+  table.t td .sub2.nw{white-space:nowrap}
   table.t td.nm b{font-weight:900}
   .tg{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.03em;padding:1px 7px;border-radius:100px;border:1px solid var(--line);color:var(--ink-2);background:var(--wash);white-space:nowrap;margin:1px 2px 1px 0}
   .tg.or{border-color:var(--orange);color:var(--orange-ink);background:rgba(245,166,35,.12)}
@@ -188,7 +210,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] table.t tr.cl:hover td,[data-theme=dark] table.t tr.sel td{background:#181B22}
   @media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
   [data-theme=dark] a.fh{background:#20242E}
-  @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}}
+  @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}.ctl .q{flex:1 1 100%}}
   @media(prefers-reduced-motion:reduce){.hb .b i{animation:none}}
 
   /* ---- /stock only: the ad-spend forecast (the card + the right-hand panel) ---- */
@@ -198,11 +220,13 @@ window.addEventListener('load',restore);
   table.t tr[data-sv]:hover td{background:rgba(37,99,235,.05)}
   table.t tr.sv-cur td{background:rgba(37,99,235,.09)!important}
   table.t tr.sv-cur td:first-child{box-shadow:inset 3px 0 0 var(--chart-1)}
-  .sv-sum{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
-  .sv-sum .it{border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--wash);min-width:170px}
+  .sv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0 0 12px}
+  .sv-sum:empty{display:none}
+  .sv-sum .it{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--wash);min-width:0}
+  @media(max-width:760px){.sv-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.sv-sum>.it:last-child:nth-child(odd){grid-column:1/-1}#av-sum{grid-template-columns:minmax(0,1fr)}}
   .sv-sum .it b{display:block;font-size:20px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   .sv-sum .it span{font-size:11.5px;font-weight:800;color:var(--muted)}
-  .hb-dl{display:inline-flex;align-items:center;margin-top:4px;font:inherit;font-size:11px;font-weight:900;height:24px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .hb-dl{display:inline-flex;align-items:center;margin:0 8px 0 0;vertical-align:1px;font:inherit;font-size:11px;font-weight:900;height:22px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .hb-dl:hover,.hb-dl:focus-visible{border-color:var(--orange);color:var(--orange-deep);outline:none}
   .hb-dl:disabled{cursor:progress;color:var(--muted);font-variant-numeric:tabular-nums}
   [data-theme=dark] .hb-dl{background:#20242E}
@@ -263,6 +287,12 @@ window.addEventListener('load',restore);
     .svp .big{font-size:28px}
   }
   @media(prefers-reduced-motion:reduce){.svp,.svl .b i{transition:none}}
+  /* ---- /stock: the coverage matrix — equal columns, a centred count ---- */
+  #cov{table-layout:fixed;min-width:860px}
+  #cov th{white-space:normal;text-align:center;vertical-align:bottom;line-height:1.3}
+  #cov th:first-child{width:190px;text-align:left}
+  #cov th:last-child{width:64px}
+  #cov td.num{text-align:center}
   /* ---- /stock: in stock, master feed → output feeds — one bar per feed (in stock · pre-order · out · not stated) ---- */
   :root{--av-in:var(--good);--av-pre:var(--navy);--av-out:var(--chart-2);--av-na:#CBD2D9}
   [data-theme=dark]{--av-na:#3A404C}
@@ -277,8 +307,12 @@ window.addEventListener('load',restore);
   .avc .sub2{font-size:11.5px;color:var(--muted);font-weight:700}
   .av-none{display:inline-block;font-size:11.5px;font-weight:800;color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:3px 8px;white-space:nowrap}
   #av-t td,#av-t th{vertical-align:middle}
+  /* four columns in proportion: the market, then three feeds of one width each */
+  #av-t{table-layout:fixed;min-width:640px}
+  #av-t th:first-child{width:22%}
   .sv-sum .it b .ar{display:inline;font-size:15px;color:var(--muted);font-weight:800;margin:0 5px;vertical-align:1px}
-  .sv-sum .it.av2{min-width:240px}
+  .sv-sum .it.av2{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:28px;row-gap:2px}
+  .sv-sum .it.av2 .h{flex-basis:100%}
   .sv-sum .it.av2 .h{display:block;font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   .sv-sum .it.av2 .r{display:flex;align-items:baseline;gap:8px}
   .sv-sum .it.av2 .r b{display:inline;font-size:18px}
@@ -297,13 +331,11 @@ window.addEventListener('load',restore);
   .hm-guide .sep{width:1px;align-self:stretch;background:var(--line)}
   .hm-guide .wide{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-2)}
   .hm-guide .wide input{font:inherit;font-size:12.5px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--paper);color:var(--ink);min-width:150px;flex:1}
-  .hm-guide .ex-note{flex-basis:100%;font-size:11.5px;font-weight:700;color:var(--muted)}
   .hm-warn{margin:0 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--risk);color:var(--risk);font-size:12.5px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .hm-empty{font-size:13px;font-weight:700;color:var(--muted);padding:10px 2px}
-  #hm-sum .it{flex:1 1 200px}
   .szr{display:flex;flex-wrap:wrap;align-items:center}
   .szr+.szr{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
-  .sz{position:relative;display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 7px 2px;margin:2px 3px 2px 0;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;vertical-align:middle}
+  .sz{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:48px;height:24px;padding:0 7px 2px;margin:2px 3px 2px 0;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;vertical-align:middle}
   .sz i{position:absolute;left:0;bottom:0;height:3px;background:var(--av-in);border-radius:0 2px 0 0}
   .sz.hero{border-color:var(--orange);background:rgba(245,166,35,.13);color:var(--orange-ink)}
   .sz .hi{margin:0}
@@ -316,6 +348,11 @@ window.addEventListener('load',restore);
   .hm-pct.low .bar i{background:var(--av-out)}
   #hm-t td{vertical-align:middle}
   #hm-t td.szs{min-width:280px}
+  #hm-t th.hsrc,#hm-t td.hsrc{width:132px}
+  #hm-t td.hsrc .tg{max-width:120px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+  .hm-legend{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .hm-legend .legend{margin-top:0}
+  .hm-legend .note{margin:0 0 0 auto}
   #hm-t td.num .sub2{text-align:right}
   .hm-acts{display:flex;gap:4px;margin-top:5px;flex-wrap:nowrap}
   .hm-acts button{font:inherit;font-size:13px;font-weight:900;height:26px;min-width:28px;padding:0 6px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
@@ -326,7 +363,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .sz{background:#20242E}
   [data-theme=dark] .sz.hero{background:rgba(245,166,35,.16)}
   [data-theme=dark] .hm-acts button{background:#20242E}
-  @media(max-width:760px){#hm-sum .it{min-width:0;flex:1 1 140px}#hm-sum .it b{font-size:18px}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
+  @media(max-width:760px){#hm-sum .it b{font-size:18px}.hm-legend .note{margin-left:0}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
 
 </style>
 <style>/* FCC-THEME */
@@ -411,7 +448,7 @@ window.addEventListener('load',restore);
 
   <section class="card" id="hero-card">
     <div class="chead"><div class="sp"><h3>Hero sizes — the rules that run, per market</h3><p class="ch">The rules that decide a market's hero sizes — its core, best-selling sizes. Split out from range completion, every one shown in FeedHero's own run order.</p></div></div>
-    <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th class="num">#</th><th>Rule</th><th>Channel</th><th>Batch</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
+    <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th>Rule</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section class="card" id="hmap-card">
@@ -426,10 +463,9 @@ window.addEventListener('load',restore);
     <div class="hm-warn" id="hm-warn" hidden></div>
     <div class="sv-sum" id="hm-sum"></div>
     <div class="toolbar" id="hm-bar" hidden><input class="q" id="hm-q" type="search" placeholder="Filter product types…" aria-label="Filter product types" autocomplete="off"><div class="chips" id="hm-f"></div></div>
-    <div class="tw tall" id="hm-tw" hidden><table class="t" id="hm-t"><thead><tr><th>Product type</th><th>Sizes it is made in</th><th class="num">Hero sizes in stock</th><th class="num">Styles with every hero size in stock</th><th>From</th></tr></thead><tbody></tbody></table></div>
+    <div class="tw tall" id="hm-tw" hidden><table class="t" id="hm-t"><thead><tr><th>Product type</th><th title="Every size this product type is made in — the crown marks a hero size, the line under a size is its products in stock">Sizes</th><th class="num" title="Hero-size products in stock, of every hero-size product">Hero in stock</th><th class="num" title="Styles with every hero size they are made in, in stock">Full hero runs</th><th class="hsrc" title="Where this type's hero sizes come from">Source</th></tr></thead><tbody></tbody></table></div>
     <div class="empty hm-empty" id="hm-empty">Loading…</div>
-    <p class="note" id="hm-foot"></p>
-    <div class="legend" id="hm-legend"><span><span class="sz hero"><svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>M<i style="width:70%"></i></span> hero size</span><span><span class="sz">XL<i style="width:40%"></i></span> made in, not hero</span><span>the line under a size = its products in stock</span></div>
+    <div class="hm-legend"><div class="legend" id="hm-legend"><span><span class="sz hero"><svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>M<i style="width:70%"></i></span> hero size</span><span><span class="sz">XL<i style="width:40%"></i></span> made in, not hero</span><span>the line under a size = its products in stock</span></div><p class="note" id="hm-foot"></p></div>
     <input type="file" id="hm-file" accept=".csv,.xlsx,.tsv,.txt" hidden>
   </section>
 
@@ -591,6 +627,13 @@ function impCell(r) {
 // rather than a wall of icons — a tag, a column header, a chip, a table row, wherever that one
 // mechanism actually shows up.
 function heroIcon() { return '<svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>'; }
+// a table grouped by market names the market ONCE: the first row of a run carries the name, the rows that continue the
+// run (class gi) are divided by a quieter line — a client reads one market and its rules, not the same name four times
+function grp(list, keyOf) {
+  return list.map(function (x, i) { var k = keyOf(x); return { x: x, first: !i || keyOf(list[i - 1]) !== k, inner: i < list.length - 1 && keyOf(list[i + 1]) === k }; });
+}
+function gcls(g) { return g.inner ? ' class="gi"' : ''; }
+function mkCell(g, client, market) { return '<td>' + (g.first ? '<b>' + esc(client) + '</b> ' + esc(market) : '') + '</td>'; }
 function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() : '') + esc((MK[sk] || {}).label || sk) + '</span>'; }
 
   var Q = new URLSearchParams(location.search);
@@ -667,32 +710,31 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       return '<button class="chip' + (m ? '' : ' none') + (S.market === mk ? ' on' : '') + '" data-m="' + esc(mk) + '"' + (m ? '' : ' title="Not read yet"') + '>' + esc(mk) + ' <span class="k">' + (m ? (m.stock || []).length : '—') + '</span></button>';
     }).join('');
   }
-  function kpi(n, l, dd, cls) { return '<div class="kpi' + (cls ? ' ' + cls : '') + '"><div class="n num">' + n + '</div><div class="l">' + l + '</div>' + (dd ? '<div class="d">' + dd + '</div>' : '') + '</div>'; }
+  // a tile that names a card jumps to it — the band is the page's table of contents on a live screen
+  function kpi(n, l, dd, cls, go) { return '<div class="kpi' + (cls ? ' ' + cls : '') + (go ? ' link" data-go="' + go + '" tabindex="0' : '') + '"><div class="n num">' + n + '</div><div class="l">' + l + '</div>' + (dd ? '<div class="d">' + dd + '</div>' : '') + '</div>'; }
+  // SIX tiles, not nine (Ray, 30 Sep 2026: "not too cluttered and is evenly spaced"): availability rules ride the stock-rules
+  // line, idle rules the act-now line, and local inventory is the coverage matrix's own column
   function renderKpis() {
-    var ms = mkts(), n = 0, withStock = 0, avail = 0, local = 0, hero = 0, idle = 0, broken = 0, cuts = 0;
+    var ms = mkts(), n = 0, withStock = 0, avail = 0, hero = 0, idle = 0, broken = 0, cuts = 0;
     ms.forEach(function (m) {
       var st = m.stock || []; n += st.length; if (st.length) withStock++;
-      if (st.some(function (r) { return r.sk === 'local'; })) local++;
       if (st.some(function (r) { return r.sk === 'hero'; })) hero++;
       st.forEach(function (r) { if (r.sk === 'avail') avail++; if (r.iss.indexOf('none') >= 0) idle++; if (r.iss.indexOf('target') >= 0 || r.iss.indexOf('dep') >= 0) broken++; cuts += (r.cut || []).length; });
     });
     var act = findList(true).filter(function (f) { return f.sev === 3; }).length;
     var bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
     var svTile = '<div class="kpi sv-k link" data-sv="book" tabindex="0" title="Hover for the working"><div class="n num" id="svk-n">' + (top ? money(top.cur, top.amt, 0) : '—') + '</div><div class="l">Ad spend kept off ' + svPer() + '</div><div class="d">'
-      + (top ? 'at least · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '% · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + (bk.byCur.length > 1 ? ' · + ' + bk.byCur.slice(1).map(function (b) { return money(b.cur, b.amt, 0); }).join(', ') : '')
+      + (top ? 'at least · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '%' + (bk.byCur.length > 1 ? ' · + ' + bk.byCur.slice(1).map(function (b) { return money(b.cur, b.amt, 0); }).join(', ') : '')
         : bk.unpriced ? 'no Google Ads read for these markets yet' : 'no stock rule holding products back') + '</div></div>';
     var ab = avBook(ms, 'g');
     var avTile = '<div class="kpi link" data-go="av-card" tabindex="0" title="The Google Shopping feed against its master, on the markets where both are counted"><div class="n num">'
       + (ab.markets ? pctS(ab.feed.in / ab.feed.n * 100) : '—') + '</div><div class="l">In stock in the Google feed</div><div class="d">'
-      + (ab.markets ? 'master ' + pctS(ab.master.in / ab.master.n * 100) + ' in stock · ' + ab.markets + ' market' + (ab.markets === 1 ? '' : 's') : 'master feeds not counted yet') + '</div></div>';
+      + (ab.markets ? 'master ' + pctS(ab.master.in / ab.master.n * 100) + ' · ' + ab.markets + ' market' + (ab.markets === 1 ? '' : 's') : 'master feeds not counted yet') + '</div></div>';
     $('#kpis').innerHTML = !ms.length ? '' : svTile + avTile +
-      kpi(n0(n), 'Stock rules', 'across ' + withStock + ' of ' + ms.length + ' market' + (ms.length === 1 ? '' : 's'))
-      + kpi(n0(avail), 'Availability rules', 'what each channel is told is in or out of stock')
-      + kpi(n0(hero), 'Markets with hero sizes', hero ? 'core sizes explicitly protected' : 'no market defines them yet')
-      + kpi(n0(cuts), 'Cut-offs stated', 'in the rule names — read, never inferred')
-      + kpi(n0(local), 'Markets with local inventory', 'store pickup / LIA rules')
-      + kpi(n0(idle), 'Idle stock rules', idle ? 'not impacting any items' : 'every stock rule touched products', idle ? 'warn' : '')
-      + kpi(n0(broken + act), 'Act now', broken ? broken + ' writing a missing column' : act ? 'overdue reviews' : 'nothing urgent', broken + act ? 'risk' : 'good');
+      kpi(n0(n), 'Stock rules', withStock + ' of ' + ms.length + ' market' + (ms.length === 1 ? '' : 's') + ' · ' + n0(avail) + ' on availability', '', 'cov-card')
+      + kpi(n0(hero), 'Markets with hero sizes', hero ? 'core sizes protected' : 'none defined yet', '', 'hmap-card')
+      + kpi(n0(cuts), 'Cut-offs stated', 'read from the rule names', '', 'cut-card')
+      + kpi(n0(broken + act), 'Act now', (broken ? broken + ' writing a missing column' : act ? 'overdue reviews' : 'nothing urgent') + (idle ? ' · ' + idle + ' idle' : ''), broken + act ? 'risk' : idle ? 'warn' : 'good', 'find-card');
   }
   // ---- IN STOCK, MASTER FEED → OUTPUT FEEDS (Ray, 30 Sep 2026: "In the stock management module, bring in the availability
   // ratio between master feed and output feeds as well (instock & outofstock)"). Counts only, straight off the route
@@ -772,14 +814,14 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // mechanism, market by market, in FeedHero's own run order; same shape and filtering as Cut-offs.
   function renderHeroes() {
     var list = ((S.d && S.d.heroRuns) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
-    $('#heroes tbody').innerHTML = list.map(function (c) {
-      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '" tabindex="0"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="num">' + (c.i + 1) + '</td>'
-        + '<td class="nm">' + heroIcon() + '<b>' + esc(c.n) + '</b> ' + fhA(c.cmpid, c.n, c.t) + (c.cut && c.cut.length ? '<span class="sub2">name states <b>' + c.cut.map(function (x) { return (x.m === 'rc' ? 'RC ' : 'stock ') + esc(x.op) + ' ' + x.v + (x.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
-        + '<td>' + (c.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[c.ch] || c.ch)) + '</td>'
-        + '<td>' + (c.b ? esc(c.b) : '<span class="muted" title="All products">all</span>') + '</td>'
+    $('#heroes tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
+      var c = g.x;
+      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '" tabindex="0"' + gcls(g) + '>' + mkCell(g, c.client, c.market)
+        + '<td class="nm">' + heroIcon() + '<b>' + esc(c.n) + '</b> ' + fhA(c.cmpid, c.n, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + (c.b ? ' · batch ' + esc(c.b) : '')
+        + (c.cut && c.cut.length ? ' · name states <b>' + c.cut.map(function (x) { return (x.m === 'rc' ? 'RC ' : 'stock ') + esc(x.op) + ' ' + x.v + (x.m === 'rc' ? '%' : ''); }).join(', ') + '</b>' : '') + '</span></td>'
         + '<td class="num">' + impCell(c) + '</td>'
-        + '<td>' + (c.mo ? dstr(c.mo) + '<span class="sub2">' + esc(c.mb || '') + ' · ' + ago(c.mo) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
-    }).join('') || '<tr><td class="empty" colspan="7">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
+        + '<td>' + (c.mo ? dstr(c.mo) + '<span class="sub2 nw">' + esc(c.mb || '') + ' · ' + ago(c.mo) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
+    }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
   }
   function findList(ignoreSev) {
     return ((S.d && S.d.findings) || []).filter(function (f) {
@@ -794,14 +836,15 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var list = findList(false), cap = S.all ? list.length : 7;
     $('#finds').innerHTML = list.length ? list.slice(0, cap).map(function (f) {
       var rules = (f.rules || []).map(function (r) { return '<li><b>' + esc(r.n) + '</b>' + (r.market ? '<span class="m">' + esc(r.market) + '</span>' : '') + (r.t ? '<span class="m">→ ' + esc(r.t) + '</span>' : '') + (r.mo ? '<span class="m">changed ' + ago(r.mo) + (r.mb ? ' by ' + esc(r.mb) : '') + '</span>' : '') + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + fhA(r.cmpid || f.cmpid, r.n, r.t) + '</li>'; }).join('');
-      return '<details class="fd"><summary><span class="sev s' + f.sev + '">' + esc(SEVL[f.sev] || '') + '</span><span class="tt"><span class="chev">▶</span>' + esc(f.t) + '</span><span class="wh">' + esc(f.k === 'gap' || f.k === 'cutoff' ? f.client : f.client + ' · ' + f.market) + '</span><span></span><span class="why">' + esc(f.why) + '</span></summary>' + (rules ? '<ul class="rl">' + rules + '</ul>' : '') + '</details>';
+      return '<details class="fd"><summary><span class="sev s' + f.sev + '">' + esc(SEVL[f.sev] || '') + '</span><span class="tt"><span class="chev">▶</span>' + esc(f.t) + '</span><span class="wh">' + esc(f.k === 'gap' || f.k === 'cutoff' ? f.client : f.client + ' · ' + f.market) + '</span></summary><div class="fb"><div class="why">' + esc(f.why) + '</div>' + (rules ? '<ul class="rl">' + rules + '</ul>' : '') + '</div></details>';
     }).join('') : '<div class="empty">' + (all.length ? 'Nothing at this severity.' : (S.d && S.d.tracked ? 'No stock findings — the stock rules read clean.' : 'No rules read yet.')) + '</div>';
     var mb = $('#find-more'); mb.hidden = list.length <= 7; mb.textContent = S.all ? 'Show fewer' : 'Show all ' + list.length;
   }
   function renderCuts() {
     var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
-    $('#cuts tbody').innerHTML = list.map(function (c) {
-      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"><td><b>' + esc(c.client) + '</b> ' + esc(c.market) + '</td><td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td>' + mechTag(c.sk) + '</td>'
+    $('#cuts tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
+      var c = g.x;
+      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"' + gcls(g) + '>' + mkCell(g, c.client, c.market) + '<td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td>' + mechTag(c.sk) + '</td>'
         + '<td class="num"><b>' + (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : '') + '</b></td><td class="num">' + (c.imp == null ? '—' : n0(c.imp) + (c.of ? '<span class="sub2">of ' + n0(c.of) + '</span>' : '')) + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="5">No rule name in view states a cut-off.</td></tr>';
   }
@@ -825,25 +868,27 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var R = svRows(), bk = svBook(mkts(), SV.pct, svDays());
     // per currency: money never crosses one — each currency is its own figure
     var order = {}; bk.byCur.forEach(function (b, i) { order[b.cur] = i; });
-    R.sized.sort(function (a, b) { return (order[a.m.ads.cur] || 0) - (order[b.m.ads.cur] || 0) || b.amt - a.amt; });
+    // one market's rules sit together (its largest first), the markets in the order of their largest rule, each currency apart
+    var mmax = {}; R.sized.forEach(function (x) { var k = x.m.cmpid; if (!(k in mmax) || x.amt > mmax[k]) mmax[k] = x.amt; });
+    R.sized.sort(function (a, b) { return (order[a.m.ads.cur] || 0) - (order[b.m.ads.cur] || 0) || mmax[b.m.cmpid] - mmax[a.m.cmpid] || (a.m.cmpid < b.m.cmpid ? -1 : a.m.cmpid > b.m.cmpid ? 1 : 0) || b.amt - a.amt; });
     $('#sv-sum').innerHTML = bk.byCur.map(function (b) {
-      return '<div class="it" data-sv="book" title="Hover for the working"><b class="sv-money">' + money(b.cur, b.amt, 0) + '</b><span>at least, ' + svPer() + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + ' · the largest rule in each</span></div>';
-    }).join('') + (R.sized.length || R.rest.length ? '<div class="it"><b>' + n0(R.sized.length) + '</b><span>rule' + (R.sized.length === 1 ? '' : 's') + ' sized · ' + n0(R.rest.length) + ' not, with the reason</span></div>' : '');
+      return '<div class="it" data-sv="book" title="At least: each market counts once, at its largest rule — hover for the working"><b class="sv-money">' + money(b.cur, b.amt, 0) + '</b><span>at least, ' + svPer() + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + '</span></div>';
+    }).join('') + (R.sized.length || R.rest.length ? '<div class="it"><b>' + n0(R.sized.length) + '</b><span>rule' + (R.sized.length === 1 ? '' : 's') + ' sized · ' + n0(R.rest.length) + ' not sized</span></div>' : '');
     var hbSeen = {};   // the held-back list is the market's, not the rule's — offered once, on its first row
-    $('#sv-t tbody').innerHTML = R.sized.map(function (x) {
-      var m = x.m, r = x.r, hbOnce = !hbSeen[m.cmpid]; hbSeen[m.cmpid] = 1;
-      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '" tabindex="0"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '<span class="sub2">#' + (r.i + 1) + ' in run order · writes ' + esc(r.t) + '</span></td>'
+    $('#sv-t tbody').innerHTML = grp(R.sized, function (x) { return x.m.cmpid; }).map(function (g) {
+      var x = g.x, m = x.m, r = x.r, hbOnce = !hbSeen[m.cmpid]; hbSeen[m.cmpid] = 1;
+      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '" tabindex="0"' + gcls(g) + '>' + mkCell(g, m.client, m.market) + '<td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '<span class="sub2">#' + (r.i + 1) + ' in run order · writes ' + esc(r.t) + '</span></td>'
         + '<td>' + mechTag(r.sk) + '</td>'
-        + '<td class="num">' + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + (hbOnce ? hbBtn(m, 'hb-dl') : '') + '</td>'
+        + '<td class="num">' + (hbOnce ? hbBtn(m, 'hb-dl') : '') + n0(x.n) + (r.of ? '<span class="sub2">of ' + n0(r.of) + '</span>' : '') + '</td>'
         + '<td class="num">' + money(m.ads.cur, m.ads.spendDay, 3) + '<span class="sub2">CPC ' + money(m.ads.cur, m.ads.cpc, 2) + '</span></td>'
         + '<td class="num"><span class="sv-money">' + money(m.ads.cur, x.amt) + '</span></td></tr>';
     }).join('') || '<tr><td class="empty" colspan="6">' + (S.d && S.d.tracked ? (R.rest.length ? 'No rule in view holds a counted number of products back where FeedHero has a Google Ads read — see below for why each is not sized.' : 'No stock threshold or range-completion rule in view.') : 'No rules read yet.') + '</td></tr>';
     var rest = $('#sv-rest');
     rest.hidden = !R.rest.length;
     rest.querySelector('summary').textContent = '▸ ' + R.rest.length + ' more threshold and range-completion rule' + (R.rest.length === 1 ? '' : 's') + ' not sized — hover one for why';
-    rest.querySelector('tbody').innerHTML = R.rest.map(function (x) {
-      var m = x.m, r = x.r;
-      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '</td><td><span class="sv-kind">' + esc(SVKIND[x.kind] || x.kind) + '</span></td></tr>';
+    rest.querySelector('tbody').innerHTML = grp(R.rest, function (x) { return x.m.cmpid; }).map(function (g) {
+      var m = g.x.m, r = g.x.r;
+      return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"' + gcls(g) + '>' + mkCell(g, m.client, m.market) + '<td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + '</td><td><span class="sv-kind">' + esc(SVKIND[g.x.kind] || g.x.kind) + '</span></td></tr>';
     }).join('');
   }
   // ---- the panel: opened by hovering a stock rule, kept until ✕, re-drawn live ----
@@ -964,14 +1009,15 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var fl = [];
     r.iss.forEach(function (c) { fl.push(c === 'none' ? '<span class="tg" data-tip="' + esc('FeedHero: <b>not impacting any items</b> on the last run') + '">idle</span>' : '<span class="tg rd">' + (c === 'target' ? 'target column missing' : c === 'dep' ? 'dependent column missing' : 'issue') + '</span>'); });
     r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
-    (r.dr || []).forEach(function (k) { fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
+    // a driver that only repeats the rule's own stock control ("range completion" on a range-completion rule) says nothing new
+    var own = String((MK[r.sk] || {}).label || '').toLowerCase();
+    (r.dr || []).forEach(function (k) { if (String(DR[k] || k).toLowerCase() === own) return; fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
     return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
       + '<td>' + mechTag(r.sk) + '</td>'
-      + '<td>' + esc(r.t) + '<span class="sub2 mono">' + esc(r.d) + '</span></td>'
-      + '<td>' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + '</td>'
-      + '<td>' + (r.b ? esc(r.b) : '<span class="muted" title="All products">all</span>') + '</td>'
+      + '<td><span class="set-w" data-tip="' + esc('Writes the field <b>' + esc(r.d) + '</b>') + '">' + esc(r.t) + '</span></td>'
+      + '<td class="set-w">' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + (r.b ? '<span class="sub2">batch ' + esc(r.b) + '</span>' : '') + '</td>'
       + '<td class="num">' + impCell(r) + '</td>'
-      + '<td>' + (r.mo ? dstr(r.mo) + '<span class="sub2">' + esc(r.mb || '') + ' · ' + ago(r.mo) + '</span>' : '<span class="muted">—</span>') + '</td>'
+      + '<td>' + (r.mo ? dstr(r.mo) + '<span class="sub2 nw">' + esc(r.mb || '') + ' · ' + ago(r.mo) + '</span>' : '<span class="muted">—</span>') + '</td>'
       + '<td>' + fl.join('') + '</td></tr>';
   }
   function renderSetups() {
@@ -984,9 +1030,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       });
       if ((S.mech || q) && !st.length) return '';
       var open = ms.length <= 3 || !!S.market || !!q || !!S.mech;
-      return '<details class="fd"' + (open ? ' open' : '') + ' id="set-' + esc(m.cmpid) + '"><summary><span class="sev s1">' + (m.stock || []).length + '</span><span class="tt"><span class="chev">▶</span>' + esc(m.client + ' ' + m.market) + '</span><span class="wh">' + (m.updated ? 'read ' + since(m.updated) : '') + '</span><span></span><span class="why">' + esc(m.sentence) + '</span></summary>'
-        + '<div class="toolbar" style="margin:8px 0 0">' + fhA(m.cmpid, null, null, 'All ' + m.client + ' ' + m.market + ' rules in FeedHero') + '</div>'
-        + (st.length ? '<div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th class="num">#</th><th>Rule</th><th>Does</th><th>Writes</th><th>Channel</th><th>Batch</th><th class="num">Impacted</th><th>Last change</th><th>Flags</th></tr></thead><tbody>' + st.map(function (r) { return ruleRow(r, m); }).join('') + '</tbody></table></div>' : '<div class="empty">No stock rules — every channel is told whatever the source feed says.</div>')
+      // the summary is ONE line (count · market · when read); the plain-words setup and the FeedHero link open with the rules
+      return '<details class="fd"' + (open ? ' open' : '') + ' id="set-' + esc(m.cmpid) + '"><summary><span class="sev s1">' + (m.stock || []).length + '</span><span class="tt"><span class="chev">▶</span>' + esc(m.client + ' ' + m.market) + '</span><span class="wh">' + (m.updated ? 'read ' + since(m.updated) : '') + '</span></summary>'
+        + '<div class="toolbar set-top"><span class="why">' + esc(m.sentence) + '</span>' + fhA(m.cmpid, null, null, 'All rules in FeedHero') + '</div>'
+        + (st.length ? '<div class="tw"><table class="t"><thead><tr><th class="num">#</th><th>Rule</th><th>Does</th><th>Writes</th><th>Channel</th><th class="num">Impacted</th><th>Last change</th><th>Flags</th></tr></thead><tbody>' + st.map(function (r) { return ruleRow(r, m); }).join('') + '</tbody></table></div>' : '<div class="empty">No stock rules — every channel is told whatever the source feed says.</div>')
         + '</details>';
     }).join('');
     $('#setups').innerHTML = html || '<div class="empty">' + (S.d && S.d.tracked ? 'No stock rule matches.' : 'No rules read yet.') + '</div>';
@@ -1193,10 +1240,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function hmSrcTag(h) {
     if (!h || !h.src) return '<span class="tg dash">Not mapped</span>';
     if (h.own && !h.s.length && !(h.all || []).length) return '<span class="tg" title="' + esc('Set by ' + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">No hero sizes</span>';
-    if (h.src === 'doc') return '<span class="tg gr" title="' + esc('From the brand’s own document' + (h.at ? ' · imported ' + dstr(h.at) : '')) + '">📄 Brand document</span>';
+    if (h.src === 'doc') return '<span class="tg gr" title="' + esc('From the brand’s own document' + (h.at ? ' · imported ' + dstr(h.at) : '')) + '">📄 Document</span>';
     if (h.src === 'set' || h.src === 'core') return '<span class="tg or" title="' + esc((h.src === 'core' ? 'Core of the run, applied by ' : 'Set by ') + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">✎ ' + esc(h.by || 'Set by hand') + '</span>';
     if (h.src === 'brand') return '<span class="tg bl" title="' + esc('Follows ' + h.from + '’s guide for the same product type') + '">⧉ ' + esc(h.from) + '</span>';
-    if (h.src === 'ex') return '<span class="tg bl" title="' + esc('Example — ' + (h.exName || h.ex) + '. A FeedSpark starting point to adapt, not a published standard.') + '">⧉ ' + esc(h.exName || h.ex) + '</span>';
+    if (h.src === 'ex') return '<span class="tg bl" title="' + esc('Example — ' + (h.exName || h.ex) + '. A FeedSpark starting point to adapt, not a published standard.') + '">⧉ Example</span>';
     return '<span class="tg">' + esc(h.src) + '</span>';
   }
   // the brand-picker row, only while the page is on "All brands" — the page's own brand select does the rest
@@ -1219,13 +1266,13 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var others = ((HM.d && HM.d.brands) || []).filter(function (x) { return x.client !== b && x.own; });
     var exs = HS.examplesOf(HM.store), cur = g.from ? 'brand:' + g.from : g.ex ? 'ex:' + g.ex : '';
     var opt = function (v, l) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; };
-    var sel = '<select class="fld" id="hm-ex" aria-label="Where a type the document does not cover takes its hero sizes from">' + opt('', 'Nothing — leave it unmapped')
+    var ex = g.ex ? HS.exampleById(HM.store, g.ex) : null;
+    var sel = '<select class="fld" id="hm-ex" aria-label="Where a type the document does not cover takes its hero sizes from" title="' + esc(ex && ex.note ? ex.name + ': ' + ex.note : 'Where a type the brand’s own list does not cover takes its hero sizes from') + '">' + opt('', 'Nothing — leave it unmapped')
       + '<optgroup label="FeedSpark examples">' + exs.filter(function (x) { return !x.saved; }).map(function (x) { return opt('ex:' + x.id, x.name); }).join('') + '</optgroup>'
       + (exs.some(function (x) { return x.saved; }) ? '<optgroup label="Saved by the team">' + exs.filter(function (x) { return x.saved; }).map(function (x) { return opt('ex:' + x.id, x.name); }).join('') + '</optgroup>' : '')
       + (others.length ? '<optgroup label="Another brand’s guide">' + others.map(function (x) { return opt('brand:' + x.client, x.client); }).join('') + '</optgroup>' : '')
       + (g.from && !others.some(function (x) { return x.client === g.from; }) ? opt('brand:' + g.from, g.from) : '')
       + '</select>';
-    var ex = g.ex ? HS.exampleById(HM.store, g.ex) : null;
     var docBits = doc ? (doc.url ? '<a class="nm" href="' + esc(doc.url) + '" target="_blank" rel="noopener" title="' + esc('Open ' + (doc.name || 'the brand’s document')) + '">' + esc(doc.name || 'The brand’s document') + ' ↗</a>' : '<span class="nm" title="' + esc(doc.name) + '">' + esc(doc.name) + '</span>')
       : '<span class="muted">none yet</span>';
     var h = '<div class="it"><span class="lb">📄 Document</span>' + docBits
@@ -1233,7 +1280,6 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + '<button class="btn" type="button" data-g="import" title="A sheet of product types and their hero sizes (.xlsx or .csv) — ⬇ Sheet gives the template">⇪ Import</button></div>'
       + '<span class="sep" aria-hidden="true"></span>'
       + '<div class="it"><span class="lb">⧉ Else follow</span>' + sel + (HM.edit ? '<button class="btn" type="button" data-g="saveex" title="Save this brand’s own hero sizes as an example other brands can follow">⧉ Save as example</button>' : '') + '</div>';
-    if (ex && ex.note) h += '<div class="ex-note">' + esc(ex.name) + ': ' + esc(ex.note) + '</div>';
     if (HM.link) h += '<div class="wide"><input id="hm-dn" type="text" placeholder="Name (e.g. ' + esc(b) + ' hero sizes 2026)" value="' + esc((doc && doc.name) || '') + '" aria-label="Document name"><input id="hm-du" type="url" placeholder="https://… (Drive, SharePoint)" value="' + esc((doc && doc.url) || '') + '" aria-label="Document link"><button class="btn on" type="button" data-g="savelink">Save</button><button class="btn" type="button" data-g="nolink">Cancel</button></div>';
     if (HM.imp) {
       var im = HM.imp;
@@ -1265,10 +1311,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var rows = mp.types.filter(function (x) { return x.t.sz.length; });
     var low = rows.filter(function (x) { return x.m.rows && hmPc(x.m.in, x.m.rows) < 70; }).length, unm = rows.filter(function (x) { return !x.h.s.length && !x.h.own; }).length;
     $('#hm-sum').innerHTML = [
-      '<div class="it"><b>' + n0(sm.mapped) + ' <small style="font-size:13px;color:var(--muted)">of ' + n0(sm.sized) + '</small></b><span>product types mapped · ' + (hmPc(sm.mappedRows, sm.sizedRows) || 0) + '% of sized products</span></div>',
-      '<div class="it"><b>' + (sm.rows ? hmPc(sm.in, sm.rows) + '%' : '—') + '</b><span>hero-size products in stock' + (sm.rows ? ' · ' + n0(sm.in) + ' of ' + n0(sm.rows) : '') + '</span></div>',
-      '<div class="it"><b>' + (sm.st ? hmPc(sm.full, sm.st) + '%' : '—') + '</b><span>styles with every hero size in stock' + (sm.st ? ' · ' + n0(sm.full) + ' of ' + n0(sm.st) : '') + '</span></div>',
-      '<div class="it"><b>' + esc(d.market || '') + ' master</b><span>sizes counted ' + since(cen.t) + ' · ' + n0(cen.groups) + ' styles</span></div>'
+      '<div class="it" title="' + esc((hmPc(sm.mappedRows, sm.sizedRows) || 0) + '% of the sized products sit in a mapped type') + '"><b>' + n0(sm.mapped) + ' <small style="font-size:13px;color:var(--muted)">of ' + n0(sm.sized) + '</small></b><span>product types mapped</span></div>',
+      '<div class="it" title="Hero-size products in stock, of every hero-size product"><b>' + (sm.rows ? hmPc(sm.in, sm.rows) + '%' : '—') + '</b><span>hero in stock' + (sm.rows ? ' · ' + n0(sm.in) + ' of ' + n0(sm.rows) : '') + '</span></div>',
+      '<div class="it" title="Styles with every hero size they are made in, in stock"><b>' + (sm.st ? hmPc(sm.full, sm.st) + '%' : '—') + '</b><span>full hero runs' + (sm.st ? ' · ' + n0(sm.full) + ' of ' + n0(sm.st) : '') + '</span></div>',
+      '<div class="it" title="' + esc('The ' + (d.market || '') + ' master as FeedHero last imported it · ' + n0(cen.groups) + ' styles') + '"><b>' + esc(d.market || '') + ' master</b><span>read ' + since(cen.t) + '</span></div>'
     ].join('');
     bar.hidden = false; empty.hidden = true; tw.hidden = false;
     var F = [['', 'All', rows.length], ['none', 'Not mapped', unm], ['low', 'Hero stock under 70%', low]];
@@ -1304,7 +1350,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         + '<td class="szs">' + chips + '</td>'
         + '<td class="num">' + (h.s.length ? hmPcCell(m.in, m.rows, 'hero-size products in stock', 70) : '<span class="muted">—</span>') + '</td>'
         + '<td class="num">' + (h.s.length ? (m.pats ? hmPcCell(m.full, m.st, 'styles with every hero size they are made in, in stock' + (m.untracked ? ' <span class="m">(' + n0(m.untracked) + ' styles in rarer runs not counted)</span>' : ''), 60) : '<span class="muted" title="This master names no style (item group)">—</span>') : '<span class="muted">—</span>') + '</td>'
-        + '<td>' + hmSrcTag(h) + acts + '</td></tr>';
+        + '<td class="hsrc">' + hmSrcTag(h) + acts + '</td></tr>';
     }).join('') : '<tr><td colspan="5" class="empty">' + (rows.length ? 'No product type matches.' : 'No sized product types in this master.') + '</td></tr>';
     HM.rows = shown;
     var foot = [];

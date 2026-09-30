@@ -200,8 +200,9 @@ ordinary mechanism.
 pages already prints "#N in run order". `heroRuns(markets)` (same shape and sort as `stockCutoffs`:
 client, then market, then run order) flattens every hero-mechanism rule across the roster; served on
 `/api/rules/stock` and rendered as its own card on `/stock`, **"Hero sizes — the rules that run, per
-market"**, directly under the coverage matrix — one row per rule with its run order, target field,
-channel, batch, impacted count and last change. It is never mixed into Cut-offs (which lists a
+market"**, directly under the coverage matrix — one row per rule: the market (named once per run of
+rows, §3g), the rule with its run order, channel and batch under it, the impacted count and the last
+change. It is never mixed into Cut-offs (which lists a
 *cut-off value* a name states, on any mechanism) or the full per-market rule list. A KPI tile
 ("Markets with hero sizes") gives the per-market coverage headline without opening the table.
 
@@ -358,6 +359,50 @@ never joined on a guess. Checked on the live Superdry GB feeds in-session (nothi
 held back against the "Range Completion by Availability" rule's own 3,735, 3,734 of them from a style
 under 75% range completion.
 
+## 3g. Laid out for a client screen (`/stock`)
+
+Ray, 30 Sep 2026: *"Please ensure the presentation of the data is not too cluttered and is evenly
+spaced, so it is not troublesome to use with clients live."* Nothing here changes a figure; every
+change is to where it sits, and each was measured on the rendered page, not eyeballed.
+
+- **The KPI band is six tiles, not nine.** The shared `.kpis` grid (auto-fit, 170px) put nine tiles
+  7 + 2 at 1440px. Availability rules now ride the Stock rules line ("3 of 3 markets · 9 on
+  availability"), idle rules the Act now line, and local inventory is the coverage matrix's own
+  column. The six sit on a count that divides them — 6 across, 3 × 2 under 1180px, beside the docked
+  forecast panel and on a phone — and every label has the same two-line slot, so each number, label
+  and line under it sit at one height. A tile that summarises a card jumps to it.
+- **Every row of summary tiles fills its card** (in stock, ad spend, hero sizes) as equal tiles; on a
+  phone they pair, and an odd one out spans the row rather than leaving a gap. The in-stock tiles lay
+  their in / out lines side by side across the wider tile.
+- **One row height.** ⬇ List sits beside the held-back number rather than under it, so a row carrying
+  it is no taller than one without.
+- **A market is named once** on a table grouped by market (ad spend, the rules not sized, cut-offs,
+  hero-size runs): the first row of a run carries the name, the rows continuing it are divided by a
+  dashed line (`grp` / `gcls` / `mkCell`). The ad-spend rows are ordered so a market's rules sit
+  together — the markets by their largest rule, each currency apart.
+- **The coverage matrix gives every stock control one column width** and centres its count.
+- **Hero sizes by product type:** one chip width for every short size (48px — a crown and two
+  characters in any font), so a size run lines up row under row; heads cut to *Sizes · Hero in stock ·
+  Full hero runs · Source*, the full question in each head's tooltip; the Source column names the kind
+  (📄 Document · ⧉ Example · ⧉ a brand · ✎ a person), the example's name in its tooltip rather than on
+  every row; the example's note moved from a line of prose into the follow select's tooltip; the
+  legend and the footnote share one row.
+- **A finding is one line until opened** — badge · title · where, the badge column one width so every
+  title starts at one x; the reason opens with the rules. The findings and cut-offs cards stand one
+  height side by side.
+- **A market's setup summary is one line** (count · market · when read); its plain-words sentence and
+  the FeedHero link open with its rules. The field code (`stock_status`) moved from under the field
+  label into its tooltip, the batch rides under the channel (the Batch column read *all* down every
+  row), the last change stays on two lines, and a driver tag that only repeats the rule's own stock
+  control ("range completion" on a range-completion rule) is not printed.
+- **On a phone the search field has a row of its own** — in the flex row it shrank to its first two
+  letters ("Se"); the same fix on `/rules`, which shares the component.
+
+Tripwire: `tools/check_stockeven.js` (Playwright, presync) measures all of it on the synthetic rule
+list, and carries a negative control — the shared auto-fit grid forced back onto the band wraps the
+six tiles 5 + 1 at 1100px, and the even-row measure must fail on it. Against the page as it was
+before this change, 26 of its 38 checks fail.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -390,6 +435,10 @@ first); a **cut-off** set to different values across a brand's markets.
 
 ## 6. Harness
 
+- `tools/check_stockeven.js` — `/stock` rendered and measured (§3g): the six-tile band at 1440 /
+  1100 / 390px and beside the forecast panel, tile rows that fill their card, one ad-spend row height,
+  a market named once, equal matrix columns, one chip width, one-line findings and setup summaries,
+  the phone search row; with a negative control. Presync.
 - `tools/test_rules.mjs` — the classifier on real rule-name shapes (counts and dates invented), the
   findings, `rulesStore` + `rulesPull` lifted from `worker.js` and run against a stub MCP
   (pagination, the cmpid guard, rotation, no_token / unauthorized / unreachable), the wiring, both
