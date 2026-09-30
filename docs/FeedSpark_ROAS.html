@@ -127,6 +127,60 @@ window.addEventListener('load',restore);
   .mv .bar{height:4px;border-radius:2px;background:var(--line);position:relative;margin-top:4px;overflow:hidden}
   .mv .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--vin)}
   .mv .row.dn .bar i{background:var(--vout)}
+  /* ---- THE DASHBOARD MODULES (Ray, 30 Sep 2026: "make roas dashboard modularised also pls, allow exports") — the
+     Catalogue's own pattern: one card size on a 3-column grid driven by a CONTAINER query on main, so it re-flows
+     3→2→1 with the column it sits in, never the window width ---- */
+  main.wrap{container-type:inline-size;container-name:roas}
+  .modbar{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
+  .modbar .mb-t{font-size:11.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .modbar .mb-s{flex:1;font-size:12px;font-weight:700;color:var(--muted)}
+  .modbar .pop{width:280px}
+  .modbar .mrow{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--line)}
+  .modbar .mrow label{flex:1;padding:2px}
+  .modbar .mrow button{font:inherit;font-size:12px;font-weight:900;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .modbar .mrow button:disabled{opacity:.35;cursor:default}
+  .modbar .ft{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+  .ins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+  .ins>.card{margin:0}
+  .mod{display:flex;flex-direction:column;height:372px;overflow:hidden}
+  .mod[hidden]{display:none!important}
+  .mod.wide{grid-column:span 2}
+  .mod>.chead{flex:none;flex-wrap:nowrap;margin-bottom:6px}
+  .mod>.chead>div:first-child{min-width:0}
+  .mod>.chead .ch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+  .mod .mbody{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+  .mod .mfoot{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;padding-top:7px;margin-top:6px;border-top:1px dashed var(--line);display:flex;gap:10px;flex-wrap:wrap}
+  .btn.xs{height:28px;padding:0 9px;font-size:12.5px;border-radius:8px}
+  .pop .xi{display:flex;flex-direction:column;align-items:flex-start;width:100%;gap:1px;font:inherit;font-size:12.5px;font-weight:800;text-align:left;background:transparent;border:none;color:var(--ink);cursor:pointer;padding:6px 6px;border-radius:7px}
+  .pop .xi:hover{background:var(--wash);color:var(--orange-deep)}
+  .pop .xi small{display:block;font-size:11px;font-weight:700;color:var(--muted)}
+  .xpop{min-width:250px}
+  /* a module row: name · bar · figure — one line, the figure never pushed off by a long name */
+  .hb{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700}
+  .hb:last-child{border-bottom:none}
+  .hb.go{cursor:pointer;border-radius:8px}.hb.go:hover{background:var(--wash)}
+  .hb .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hb .nm b{font-weight:900}.hb .nm small{color:var(--muted);font-weight:700;margin-left:5px}
+  .hb .v{font-variant-numeric:tabular-nums;font-weight:900;text-align:right;white-space:nowrap}
+  .hb .v small{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+  .trk{position:relative;height:8px;border-radius:4px;background:var(--wash)}
+  .trk i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--vin)}
+  .trk.sp i{background:var(--vout)}
+  .trk .ref{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ink-2);opacity:.55}
+  .trk2{display:flex;flex-direction:column;gap:3px}
+  .trk2 .trk{height:6px}
+  .mleg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;color:var(--muted);margin:0 0 4px}
+  .mleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .mleg .rl{display:inline-block;width:0;height:11px;border-left:2px dashed var(--ink-2);opacity:.6;margin-right:5px;vertical-align:-2px}
+  .gap{font-size:11px;font-weight:900;margin-left:6px}.gap.up{color:var(--good)}.gap.dn{color:var(--risk)}
+  .xcap{font-size:11px;font-weight:800;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px solid var(--line)}
+  .xhead{padding:6px 2px 10px}.xhead b{font-size:18px;font-weight:900}.xhead span{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--tip);color:#fff;font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+  #toast.on{opacity:1}
+  .mod.xshot,body.xshotall .mod{height:auto}.mod.xshot .mbody,body.xshotall .mod .mbody{overflow:visible}
+  body.xshotall .tscroll{max-height:none}
+  @container roas (max-width:1100px){.ins{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @container roas (max-width:700px){.ins{grid-template-columns:minmax(0,1fr)}.mod.wide{grid-column:auto}.mod{height:auto;min-height:260px}.mod .mbody{overflow:visible}}
   /* ---- the table: Google Ads' reporting grid — sticky header + name column, drill rows, inline bars ---- */
   .tbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
   .tbar .q{min-width:220px;flex:1}
@@ -261,7 +315,12 @@ window.addEventListener('load',restore);
     <div class="seg" id="win" role="group" aria-label="Period"></div>
     <select class="fld" id="cur" aria-label="Currency" title="Every scorecard, chart and total on this page runs on ONE currency's markets"></select>
     <button class="btn" id="sync-now" type="button" title="Owner-only — reads the roster market by market, the same rotation the cron runs">⚡ Sync now</button>
-    <button class="btn" id="csv" type="button" title="Download the table as shown — every visible row, the chosen columns">⬇ CSV</button>
+    <span class="rel"><button class="btn" id="exp-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Export this screen — the table, every module, or the whole dashboard">⬇ Export ▾</button><div class="pop xpop" id="exp-pop" hidden>
+      <div class="hd">Export</div>
+      <button class="xi" id="xlsx" type="button">📗 Excel workbook<small>scorecards, every module shown and the table — a tab each</small></button>
+      <button class="xi" id="pdf" type="button">📄 PDF of the dashboard<small>this screen on one page, ready to attach</small></button>
+      <button class="xi" id="csv" type="button">⬇ Table as CSV<small>every visible row, the chosen columns</small></button>
+    </div></span>
     <span class="rel"><button class="btn" id="views-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Saved views — the whole screen as you have it: brand, market, period, currency, metrics, columns, sort, filters">★ Views</button><div class="pop" id="views-pop" hidden></div></span>
   </div>
   <div class="chips" id="mkts" style="margin-top:10px"></div>
@@ -274,16 +333,56 @@ window.addEventListener('load',restore);
     <div class="sc-row" id="sc-row"></div>
   </section>
 
-  <section class="card" id="tr-card">
-    <div class="chead"><div><h3>Trend</h3><div class="ch" id="tr-ch">The selected metrics day by day.</div></div><span class="sp"></span><div class="tools"><span class="dim" id="tr-range"></span></div></div>
-    <div id="tr-panels"></div>
-    <div class="tr-note" data-instr id="tr-note">FeedHero reports trailing windows, never a day's own figure, so each point is the selected window's total <b>as read that day</b> — the 7-day line moves fastest, the 90-day line smooths. History accrues from the first sync; a day the sync did not run is a gap, never a copy.</div>
+  <div class="modbar"><span class="mb-t">Dashboard</span><span class="mb-s" id="mods-s"></span>
+    <span class="rel"><button class="btn xs" id="mods-b" type="button" aria-haspopup="true" aria-expanded="false" title="Show, hide and reorder the modules — remembered on this device">⊞ Modules</button><div class="pop" id="mods-p" hidden></div></span></div>
+  <div class="ins" id="ins">
+  <section class="card mod wide" id="tr-card" data-mod="trend">
+    <div class="chead"><div><h3>Trend</h3><div class="ch" id="tr-ch">The selected metrics day by day.</div></div><span class="sp"></span><span class="dim" id="tr-range" style="font-size:12px;font-weight:700;white-space:nowrap"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="trend" aria-haspopup="true" aria-expanded="false" aria-label="Export Trend" title="Export Trend — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody"><div id="tr-panels"></div>
+    <div class="tr-note" data-instr id="tr-note">FeedHero reports trailing windows, never a day's own figure, so each point is the selected window's total <b>as read that day</b> — the 7-day line moves fastest, the 90-day line smooths. History accrues from the first sync; a day the sync did not run is a gap, never a copy.</div></div>
   </section>
 
-  <section class="card" id="mv-card">
-    <div class="chead"><div><h3>Movers</h3><div class="ch" id="mv-ch">Markets whose revenue moved most against the reading 7 days earlier.</div></div></div>
-    <div class="mv" id="mv"></div>
+  <section class="card mod" id="mv-card" data-mod="movers">
+    <div class="chead"><div><h3>Movers</h3><div class="ch" id="mv-ch">Markets whose revenue moved most against the reading 7 days earlier.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="movers" aria-haspopup="true" aria-expanded="false" aria-label="Export Movers" title="Export Movers — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody"><div class="mv" id="mv"></div></div>
   </section>
+
+  <section class="card mod" id="m-bands" data-mod="bands">
+    <div class="chead"><div><h3>ROAS bands</h3><div class="ch" id="m-bands-ch">Where the spend sits by FeedHero’s own verdict.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="bands" aria-haspopup="true" aria-expanded="false" aria-label="Export ROAS bands" title="Export ROAS bands — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-bands-b"></div>
+    <div class="mfoot" id="m-bands-f"></div>
+  </section>
+
+  <section class="card mod" id="m-split" data-mod="split">
+    <div class="chead"><div><h3>Spend vs revenue share</h3><div class="ch" id="m-split-ch">Each one’s share of the spend against its share of the revenue.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="split" aria-haspopup="true" aria-expanded="false" aria-label="Export Spend vs revenue share" title="Export Spend vs revenue share — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-split-b"></div>
+    <div class="mfoot" id="m-split-f"></div>
+  </section>
+
+  <section class="card mod" id="m-ladder" data-mod="ladder">
+    <div class="chead"><div><h3>ROAS by market</h3><div class="ch" id="m-ladder-ch">Every market ranked, against the blended ROAS.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="ladder" aria-haspopup="true" aria-expanded="false" aria-label="Export ROAS by market" title="Export ROAS by market — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-ladder-b"></div>
+    <div class="mfoot" id="m-ladder-f"></div>
+  </section>
+
+  <section class="card mod" id="m-cost" data-mod="cost">
+    <div class="chead"><div><h3>Cost per conversion</h3><div class="ch" id="m-cost-ch">What a conversion costs in each market, against the blended figure.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="cost" aria-haspopup="true" aria-expanded="false" aria-label="Export Cost per conversion" title="Export Cost per conversion — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-cost-b"></div>
+    <div class="mfoot" id="m-cost-f"></div>
+  </section>
+
+  <section class="card mod" id="m-zombie" data-mod="zombie">
+    <div class="chead"><div><h3>Zombie SKUs</h3><div class="ch" id="m-zombie-ch">Products FeedHero counts with no ad traffic, per market.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="zombie" aria-haspopup="true" aria-expanded="false" aria-label="Export Zombie SKUs" title="Export Zombie SKUs — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-zombie-b"></div>
+    <div class="mfoot" id="m-zombie-f"></div>
+  </section>
+
+  <section class="card mod" id="m-fresh" data-mod="fresh">
+    <div class="chead"><div><h3>Data freshness</h3><div class="ch" id="m-fresh-ch">How recently each market on the roster was read.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="fresh" aria-haspopup="true" aria-expanded="false" aria-label="Export Data freshness" title="Export Data freshness — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-fresh-b"></div>
+    <div class="mfoot" id="m-fresh-f"></div>
+  </section>
+  </div>
 
   <section class="card" id="pt-card">
     <div class="chead"><div><h3>Performance</h3><div class="ch">Brand → market → category, every level FeedHero's own aggregate. Sort any column, filter by name or band, choose the columns, segment a market by any of FeedHero's eighteen cuts — brand, colour, product age, price type, FeedSpark's optimisation status, custom labels and more.</div></div></div>
@@ -310,11 +409,13 @@ window.addEventListener('load',restore);
       <li><b>Sync cadence.</b> The worker pulls FeedHero itself twice an hour (:10 and :40), 5 markets × 3 windows per firing, stalest first — the 57-market roster turns over roughly every 6 hours, well ahead of the source's own ~daily refresh. ⚡ Sync now walks the whole roster in one go (owner only).</li>
       <li><b>Money never crosses a currency.</b> A brand's markets report in different currencies (Superdry alone spans GBP, EUR and USD), so every scorecard, chart, total and blended ROAS on this page runs on the selected currency's markets only; the currency selector names how many markets each one covers.</li>
       <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — never a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
-      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Brand, Gender and Price group are FeedHero's other cuts of the same market, read live for any period and cached for six hours; picking one opens the markets in view (up to eight, busiest by clicks first). <b>Price group is not set up in FeedHero</b> for any of the seven brands yet (checked 28 Sep 2026) — a market says so rather than showing an error.</li>
+      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Every other cut — eighteen in all, brand, colour, product age, price type, FeedSpark's optimisation status, custom labels — is read live for any period and cached for six hours; picking one opens the markets in view (up to eight, busiest by clicks first). <b>Price group is not set up in FeedHero</b> for any of the seven brands yet (checked 28 Sep 2026) — a market says so rather than showing an error.</li>
+      <li><b>The dashboard modules.</b> Eight cards, each reading the same book as the table — no second fetch. Every money module runs on the selected currency's markets; Data freshness is not money, so it covers every roster market in scope. <b>⊞ Modules</b> shows, hides and reorders them on this device. Each card's <b>⬇</b> saves it as a PNG (captioned with its scope, for a deck) or a CSV (every row behind it, not only those that fit); <b>⬇ Export</b> saves the whole screen as an Excel workbook (scorecards, each module shown, the table — a tab each, money as numbers beside a Currency column) or a one-page PDF.</li>
     </ol>
   </section>
 </main>
 
+<div id="toast" role="status" aria-live="polite"></div>
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate"></span></div></div>
 
 <script>
@@ -470,7 +571,9 @@ window.addEventListener('load',restore);
     var pts=ser.filter(function(p){return p.d});
     if(pts.length<2){ host.innerHTML='<div class="empty"><b>History starts with the first sync.</b> One point per day accrues from here — the trend draws from the second day.'+(pts.length?' First reading: '+esc(dLbl(pts[0].d))+'.':'')+'</div>'; $('#tr-range').textContent=''; return; }
     $('#tr-range').textContent=dLbl(pts[0].d)+' → '+dLbl(pts[pts.length-1].d)+' · '+pts.length+' readings';
-    var W=1000,H=200,L=64,R=16,T=14,B=28;
+    // drawn at the module's OWN pixel width, one panel tall enough for two to share the card (a viewBox scaled to
+    // the width made each panel as tall as a fifth of the card's width, and two ran off the bottom)
+    var W=Math.max(320,Math.round(host.clientWidth||1000)),H=S.metrics.length>1?118:236,L=64,R=16,T=14,B=28;
     host.innerHTML=S.metrics.map(function(k,idx){
       var m=MBY[k], color=pair[idx]; var vals=pts.map(function(p){return mval(p,k)}); var v=vals.filter(function(x){return x!=null});
       if(!v.length)return '<div class="tr-panel"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+'</div><div class="empty">No '+esc(m.l.toLowerCase())+' reading in this window.</div></div>';
@@ -479,7 +582,7 @@ window.addEventListener('load',restore);
       var d='', started=false; vals.forEach(function(val,i){ if(val==null){started=false;return;} d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(val).toFixed(1); started=true; });
       var axf=function(val){ if(m.kind==='money'||m.kind==='money2')return fmtM(S.cur,val,mx<100?2:0); if(m.kind==='pct'||m.kind==='pct2')return fmtP(val,mx>=100?0:1); return fmtN(val,0); };
       var grid=[0,.5,1].map(function(f){ var val=mn+rng*f; return '<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(val).toFixed(1)+'" y2="'+y(val).toFixed(1)+'"/><text class="ax" x="'+(L-8)+'" y="'+(y(val)+4).toFixed(1)+'" text-anchor="end">'+esc(axf(val))+'</text>'; }).join('');
-      var step=Math.max(1,Math.ceil(pts.length/8)); var xl=pts.map(function(p,i){ if(i%step&&i!==pts.length-1)return ''; return '<text class="ax" x="'+x(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(dLbl(p.d))+'</text>'; }).join('');
+      var step=Math.max(1,Math.ceil(pts.length/8)); var xl=pts.map(function(p,i){ if(i%step&&i!==pts.length-1)return ''; return '<text class="ax" x="'+x(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+(i===pts.length-1?'end':i===0?'start':'middle')+'">'+esc(dLbl(p.d))+'</text>'; }).join('');
       var lastI=vals.length-1; while(lastI>0&&vals[lastI]==null)lastI--;
       return '<div class="tr-panel" data-k="'+k+'"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+' <span class="dim" style="text-transform:none;letter-spacing:0">· '+esc(fmtV(m,vals[lastI],S.cur))+' latest</span></div>'
         +'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.l)+' trend">'+grid+xl
@@ -515,7 +618,7 @@ window.addEventListener('load',restore);
     $('#mv-ch').textContent='Markets whose revenue moved most against the reading '+BACK+' days earlier — '+(S.cur||'')+' markets, '+((WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win)+'.';
     if(S.market){ host.innerHTML='<div class="empty">Movers compare markets — widen the scope to the brand or the whole book.</div>'; return; }
     if(!rows.length){ host.innerHTML='<div class="empty"><b>No movers yet.</b> A market moves once it has a reading at least '+BACK+' days older than its latest — history starts with the first sync.</div>'; return; }
-    var up=rows.filter(function(r){return r.dRv>0}).sort(function(a,b){return b.dRv-a.dRv}).slice(0,6), dn=rows.filter(function(r){return r.dRv<0}).sort(function(a,b){return a.dRv-b.dRv}).slice(0,6);
+    var up=rows.filter(function(r){return r.dRv>0}).sort(function(a,b){return b.dRv-a.dRv}).slice(0,5), dn=rows.filter(function(r){return r.dRv<0}).sort(function(a,b){return a.dRv-b.dRv}).slice(0,5);
     var mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.dRv)}))||1;
     var col=function(list,ttl,cls){ return '<div><h4>'+ttl+'</h4>'+(list.length?list.map(function(r){ return '<div class="row '+cls+'"><div class="nm"><b>'+esc(r.client)+'</b> '+esc(r.market)+'<small>'+esc(fmtM(r.cur,r.rv,0))+' revenue · ROAS '+esc(fmtP(r.roas))+'</small><div class="bar"><i style="width:'+Math.round(Math.abs(r.dRv)/mx*100)+'%"></i></div></div><span class="dl '+cls+'">'+(r.dRv>0?'▲':'▼')+' '+fmtN(Math.abs(r.dRv),1)+'%</span>'+bandPill(r.band)+'</div>'; }).join(''):'<div class="dim">none</div>')+'</div>'; };
     host.innerHTML=col(up,'Rising · revenue','up')+col(dn,'Falling · revenue','dn');
@@ -674,6 +777,241 @@ window.addEventListener('load',restore);
     return true;
   }
 
+  /* ================= THE DASHBOARD MODULES =================
+     Ray, 30 Sep 2026: "make roas dashboard modularised also pls, allow exports". The Catalogue's own pattern — one card
+     size on a 3-column grid, ⊞ Modules hides and reorders them PER DEVICE (fcc-roas-mods: how one screen reads the book,
+     never shared state) — and every module can leave the page as a PNG (for a deck) or a CSV (for a spreadsheet).
+     Every module reads the book /api/roas already served: no second fetch, no figure the table does not already hold.
+     THE CURRENCY RULE HOLDS: every money module runs on the selected currency's markets only, like the scorecards;
+     Data freshness is the one module that is not money, so it covers the whole roster in scope and says so. */
+  var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness']];
+  var MODN={}; MODS.forEach(function(x){ MODN[x[0]]=x[1]; });
+  function modState(){ var m=null; try{ m=JSON.parse(LS('fcc-roas-mods')||'null'); }catch(e){} m=m||{};
+    var ord=(m.order||[]).filter(function(k){ return MODN[k]; }); MODS.forEach(function(x){ if(ord.indexOf(x[0])<0)ord.push(x[0]); }); return {order:ord,off:m.off||{}}; }
+  function applyMods(){
+    var st=modState(), shown=0;
+    st.order.forEach(function(k,i){ var el=document.querySelector('.mod[data-mod="'+k+'"]'); if(!el)return; el.style.order=i; el.hidden=!!st.off[k]; if(!st.off[k])shown++; });
+    $('#mods-s').textContent=shown===MODS.length?'':shown+' of '+MODS.length+' modules shown';
+    Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; });
+  }
+  function renderModsPop(){
+    var st=modState(), L=st.order.length;
+    $('#mods-p').innerHTML='<div class="hd">Modules · this device</div>'+st.order.map(function(k,i){ var nm=MODN[k];
+      return '<div class="mrow"><label><input type="checkbox" data-mod-on="'+k+'"'+(st.off[k]?'':' checked')+'> '+esc(nm)+'</label><button type="button" data-mv="'+k+'" data-d="-1"'+(i?'':' disabled')+' aria-label="Move '+esc(nm)+' earlier">↑</button><button type="button" data-mv="'+k+'" data-d="1"'+(i<L-1?'':' disabled')+' aria-label="Move '+esc(nm)+' later">↓</button></div>'; }).join('')
+      +'<div class="ft"><button class="btn xs" type="button" data-mreset="1">Reset</button><button class="btn xs" type="button" data-mclose="1">Done</button></div>';
+  }
+  function saveMods(st){ LS('fcc-roas-mods',st?JSON.stringify(st):null); applyMods(); renderModsPop(); }
+
+  function winLbl(){ return (WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win; }
+  function nOf(o){ return o==null?null:(typeof o==='number'?o:(o.n!=null?o.n:null)); }
+  // the markets every money module reads: in scope, read for this window, in the chosen currency
+  function curMkts(){ return ((DATA&&DATA.markets)||[]).filter(function(m){ return m[S.win]&&m.cur===S.cur; }); }
+  function mName(m){ return S.brand?m.market:m.client+' '+m.market; }
+  function goMarket(client,cmpid){ S.open['b|'+client]=true; if(cmpid){ S.open['m|'+cmpid]=true; openMarket(cmpid); } renderTable(); var el=document.querySelector('#pt tbody tr[data-key="m|'+cmpid+'"]')||$('#pt-card'); try{ el.scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'center'}); }catch(e){} }
+  function trk(pct,cls,ref){ var w=pct==null?0:Math.max(pct>0?1.5:0,Math.min(100,pct)); return '<div class="trk'+(cls?' '+cls:'')+'"><i style="width:'+w.toFixed(1)+'%"></i>'+(ref!=null?'<span class="ref" style="left:'+Math.max(0,Math.min(100,ref)).toFixed(1)+'%"></span>':'')+'</div>'; }
+  function none(id,msg){ $('#m-'+id+'-b').innerHTML='<div class="empty">'+msg+'</div>'; $('#m-'+id+'-f').innerHTML=''; }
+  function curNote(){ return esc(S.cur||'')+' markets · '+esc(winLbl()); }
+
+  /* ---- the models: each is WHAT the module draws AND what its CSV / Excel tab carries — one source, three exits ---- */
+  var BAND_ORD=['Strong','Steady','Weak','Losing',null];
+  function mBands(){
+    var ms=curMkts(), T=0, by={};
+    ms.forEach(function(m){ var t=m[S.win], k=t.band||'none', sp=nOf(t.spend)||0; var o=by[k]||(by[k]={band:t.band||null,n:0,sp:0,rv:0,names:[]}); o.n++; o.sp+=sp; o.rv+=nOf(t.revenue)||0; o.names.push(mName(m)); T+=sp; });
+    var rows=BAND_ORD.map(function(b){ var o=by[b||'none']; if(!o)return null; return {band:b||'No ad activity',key:b||'none',n:o.n,sp:o.sp,share:T>0?o.sp/T*100:null,rv:o.rv,roas:o.sp>0?o.rv/o.sp*100:null,markets:o.names.join(', ')}; }).filter(Boolean);
+    return {money:1,rows:rows,T:T,nm:ms.length,cols:[{k:'band',l:'Band'},{k:'n',l:'Markets',t:'int'},{k:'sp',l:'Spend',t:'num'},{k:'share',l:'Share of spend',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'roas',l:'ROAS',t:'pct'},{k:'markets',l:'Markets in band',w:60}]};
+  }
+  function mSplit(){
+    var ms=curMkts(), by={}, TS=0, TR=0, lvl=S.brand?'market':'brand';
+    ms.forEach(function(m){ var t=m[S.win], k=lvl==='brand'?m.client:m.market, sp=nOf(t.spend)||0, rv=nOf(t.revenue)||0;
+      var o=by[k]||(by[k]={name:k,client:m.client,cmpid:lvl==='market'?m.cmpid:'',sp:0,rv:0,n:0}); o.sp+=sp; o.rv+=rv; o.n++; TS+=sp; TR+=rv; });
+    var rows=Object.keys(by).map(function(k){ var o=by[k]; o.ssp=TS>0?o.sp/TS*100:null; o.srv=TR>0?o.rv/TR*100:null; o.gap=(o.ssp!=null&&o.srv!=null)?o.srv-o.ssp:null; o.roas=o.sp>0?o.rv/o.sp*100:null; return o; })
+      .sort(function(a,b){ return b.sp-a.sp; });
+    return {money:1,lvl:lvl,rows:rows,TS:TS,TR:TR,cols:[{k:'name',l:lvl==='brand'?'Brand':'Market'},{k:'sp',l:'Spend',t:'num'},{k:'ssp',l:'Share of spend',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'srv',l:'Share of revenue',t:'pct'},{k:'gap',l:'Revenue share minus spend share (points)',t:'num'},{k:'roas',l:'ROAS',t:'pct'}]};
+  }
+  function mLadder(){
+    var ms=curMkts(), TS=0, TR=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sp=nOf(t.spend)||0, rv=nOf(t.revenue)||0; TS+=sp; TR+=rv; return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,band:t.band||'',sp:sp,rv:rv,roas:sp>0?rv/sp*100:null}; });
+    var ref=TS>0?TR/TS*100:null;
+    rows.forEach(function(r){ r.vs=(r.roas!=null&&ref!=null)?r.roas-ref:null; });
+    rows.sort(function(a,b){ return (b.roas==null?-Infinity:b.roas)-(a.roas==null?-Infinity:a.roas); });
+    return {money:1,ref:ref,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'roas',l:'ROAS',t:'pct'},{k:'vs',l:'Against the blended ROAS (points)',t:'num'},{k:'band',l:'Band'},{k:'sp',l:'Spend',t:'num'},{k:'rv',l:'Revenue',t:'num'}]};
+  }
+  function mCost(){
+    var ms=curMkts(), TS=0, TC=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sp=nOf(t.spend)||0, cv=t.conv||0, ck=t.clicks||0; TS+=sp; TC+=cv; return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,sp:sp,cv:cv,ck:ck,cpa:cv>0?sp/cv:null,cpc:ck>0?sp/ck:null}; });
+    var ref=TC>0?TS/TC:null;
+    // most expensive first; a market with NO conversions has no cost per conversion — listed last, never as zero
+    rows.sort(function(a,b){ return (b.cpa==null?-Infinity:b.cpa)-(a.cpa==null?-Infinity:a.cpa); });
+    return {money:1,ref:ref,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'cpa',l:'Cost per conversion',t:'num'},{k:'cpc',l:'Avg. CPC',t:'num'},{k:'cv',l:'Conversions',t:'num'},{k:'ck',l:'Clicks',t:'int'},{k:'sp',l:'Spend',t:'num'}]};
+  }
+  function mZombie(){
+    var ms=curMkts(), SK=0, ZN=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sk=t.skus||0, zp=t.zombiePct, zn=zp==null?null:Math.round(sk*zp/100); if(zn!=null){ SK+=sk; ZN+=zn; } return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,sk:sk,zp:zp,zn:zn}; });
+    rows.sort(function(a,b){ return (b.zn==null?-1:b.zn)-(a.zn==null?-1:a.zn); });
+    return {rows:rows,SK:SK,ZN:ZN,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'zn',l:'Zombie SKUs',t:'int'},{k:'sk',l:'SKUs',t:'int'},{k:'zp',l:'Zombie share',t:'pct'}]};
+  }
+  var FRESH=['Under 12 hours','12–24 hours','1–3 days','Over 3 days','Never read'];
+  function mFresh(){
+    var rb=(DATA&&DATA.rosterBrands)||[], read={}, now=Date.now(), rows=[];
+    ((DATA&&DATA.markets)||[]).forEach(function(m){ read[m.client+'|'+m.market]=m; });
+    rb.filter(function(b){ return !S.brand||b.client===S.brand; }).forEach(function(b){ (b.markets||[]).filter(function(mk){ return !S.market||mk===S.market; }).forEach(function(mk){
+      var m=read[b.client+'|'+mk], t=m&&m.updated||null, h=t?(now-t)/3600000:null;
+      rows.push({name:b.client+' '+mk,client:b.client,market:mk,cmpid:m?m.cmpid:'',updated:t,age:h==null?null:Math.round(h*10)/10,bucket:h==null?FRESH[4]:h<12?FRESH[0]:h<24?FRESH[1]:h<72?FRESH[2]:FRESH[3]}); }); });
+    rows.sort(function(a,b){ return (b.age==null?Infinity:b.age)-(a.age==null?Infinity:a.age); });
+    var buckets=FRESH.map(function(b){ var rs=rows.filter(function(r){ return r.bucket===b; }); return {b:b,n:rs.length,names:rs.map(function(r){return r.name}).join(', ')}; });
+    return {rows:rows,buckets:buckets,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'bucket',l:'Freshness'},{k:'updated',l:'Last read',t:'date'},{k:'age',l:'Hours since read',t:'num'}]};
+  }
+  function mTrend(){
+    var pts=series().filter(function(p){return p.d});
+    var ks=['sp','rv','roas','cv','ck','im','ctr','cpc','cpa','cr','aov'];
+    return {money:1,rows:pts.map(function(p){ var r={d:p.d,n:p.n}; ks.forEach(function(k){ r[k]=mval(p,k); }); return r; }),
+      cols:[{k:'d',l:'Day read',t:'date'},{k:'n',l:'Markets',t:'int'}].concat(ks.map(function(k){ var m=MBY[k]; return {k:k,l:m.l+' (trailing '+winLbl()+')',t:m.kind==='pct'||m.kind==='pct2'?'pct':'num'}; }))};
+  }
+  function mMovers(){
+    var mv=(DATA&&DATA.movers&&DATA.movers[S.win])||[];
+    var rows=mv.filter(function(r){ return (!S.cur||r.cur===S.cur)&&r.dRv!=null; }).slice().sort(function(a,b){ return b.dRv-a.dRv; })
+      .map(function(r){ return {client:r.client,market:r.market,dir:r.dRv>0?'Rising':r.dRv<0?'Falling':'Flat',dRv:r.dRv,rv:r.rv,sp:r.sp,roas:r.roas,band:r.band||''}; });
+    return {money:1,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'dir',l:'Direction'},{k:'dRv',l:'Revenue vs '+BACK+' days earlier',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'sp',l:'Spend',t:'num'},{k:'roas',l:'ROAS',t:'pct'},{k:'band',l:'Band'}]};
+  }
+  var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh};
+
+  /* ---- the draws ---- */
+  function dBands(){
+    var x=mBands(); if(!x.rows.length)return none('bands','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    $('#m-bands-b').innerHTML=x.rows.map(function(r){ return '<div class="hb go" data-band-go="'+esc(r.key)+'" title="Show only '+esc(r.band)+' markets in the table">'
+      +'<div class="nm">'+bandPill(r.key==='none'?null:r.band)+'</div>'+trk(r.share,'sp')
+      +'<div class="v">'+esc(fmtP(r.share,1))+' of spend<small>'+r.n+' market'+(r.n===1?'':'s')+' · '+esc(fmtM(S.cur,r.sp,0))+(r.roas!=null?' · ROAS '+esc(fmtP(r.roas)):'')+'</small></div></div>'; }).join('');
+    $('#m-bands-f').innerHTML='<span>'+x.nm+' '+curNote()+'</span><span>'+esc(fmtM(S.cur,x.T,0))+' spend · click a band to filter the table</span>';
+  }
+  function dSplit(){
+    var x=mSplit(), pair=PAIR(); if(!x.rows.length)return none('split','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return Math.max(r.ssp||0,r.srv||0); }))||1;
+    $('#m-split-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[1]+'"></i>Share of spend</span><span><i style="background:'+pair[0]+'"></i>Share of revenue</span></div>'
+      +x.rows.map(function(r){ var g=r.gap, gc=g==null||Math.abs(g)<0.5?'':(g>0?'up':'dn');
+        return '<div class="hb go" data-split-go="'+esc(r.name)+'" data-client="'+esc(r.client)+'" data-cmpid="'+esc(r.cmpid)+'" title="'+esc(r.name)+': '+esc(fmtP(r.ssp,1))+' of the spend, '+esc(fmtP(r.srv,1))+' of the revenue'+(x.lvl==='brand'?' — click to open the brand':' — click to find it in the table')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b></div><div class="trk2">'+trk(r.ssp/mx*100,'sp')+trk(r.srv/mx*100,'')+'</div>'
+        +'<div class="v">'+esc(fmtP(r.ssp,1))+' · '+esc(fmtP(r.srv,1))+(g==null?'':'<span class="gap '+gc+'">'+(g>0?'▲':g<0?'▼':'')+fmtN(Math.abs(g),1)+' pts</span>')+'</div></div>'; }).join('');
+    $('#m-split-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+'</span><span>▲ = more of the revenue than of the spend</span>';
+  }
+  function dLadder(){
+    var x=mLadder(); if(!x.rows.length)return none('ladder','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return r.roas||0; }).concat([x.ref||0]))||1, rp=x.ref!=null?x.ref/mx*100:null;
+    $('#m-ladder-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[0]+'"></i>ROAS</span>'+(x.ref!=null?'<span><span class="rl"></span>blended '+esc(fmtP(x.ref))+'</span>':'')+'</div>'
+      +x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+(r.vs!=null?' — '+(r.vs>=0?'+':'−')+fmtN(Math.abs(r.vs),0)+' points against the blended ROAS':'')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b>'+(r.band?'<small>'+esc(r.band)+'</small>':'')+'</div>'+trk(r.roas==null?null:r.roas/mx*100,'',rp)
+        +'<div class="v">'+(r.roas==null?'<span class="dim">no spend</span>':esc(fmtP(r.roas)))+'</div></div>'; }).join('');
+    $('#m-ladder-f').innerHTML='<span>'+x.rows.length+' '+curNote()+'</span><span>dashed line = the blended ROAS of these markets</span>';
+  }
+  function dCost(){
+    var x=mCost(); if(!x.rows.length)return none('cost','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return r.cpa||0; }).concat([x.ref||0]))||1, rp=x.ref!=null?x.ref/mx*100:null;
+    $('#m-cost-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[1]+'"></i>Cost per conversion</span>'+(x.ref!=null?'<span><span class="rl"></span>blended '+esc(fmtM(S.cur,x.ref,2))+'</span>':'')+'</div>'
+      +x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+' — '+(r.cpa==null?'no conversions this period':esc(fmtM(S.cur,r.cpa,2))+' a conversion, '+esc(fmtM(S.cur,r.cpc,2))+' a click')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.cpa==null?null:r.cpa/mx*100,'sp',rp)
+        +'<div class="v">'+(r.cpa==null?'<span class="dim">no conversions</span>':esc(fmtM(S.cur,r.cpa,2))+'<small>CPC '+esc(fmtM(S.cur,r.cpc,2))+'</small>')+'</div></div>'; }).join('');
+    $('#m-cost-f').innerHTML='<span>'+x.rows.length+' '+curNote()+' · most expensive first</span>';
+  }
+  function dZombie(){
+    var x=mZombie(); if(!x.rows.length)return none('zombie','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    $('#m-zombie-b').innerHTML=x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+(r.zn==null?' — FeedHero reports no zombie share':' — '+fmtN(r.zn)+' of '+fmtN(r.sk)+' SKUs had no ad traffic')+'">'
+      +'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.zp,'')
+      +'<div class="v">'+(r.zn==null?'<span class="dim">—</span>':fmtN(r.zn)+'<small>'+esc(fmtP(r.zp,1))+' of '+fmtN(r.sk)+'</small>')+'</div></div>'; }).join('');
+    $('#m-zombie-f').innerHTML='<span>'+(x.SK?fmtN(x.ZN)+' of '+fmtN(x.SK)+' SKUs ('+esc(fmtP(x.ZN/x.SK*100,1))+')':'no SKU count')+' · '+curNote()+'</span><span>FeedHero’s zombie share, SKU-weighted</span>';
+  }
+  function dFresh(){
+    var x=mFresh(); if(!x.rows.length)return none('fresh','<b>No roster market in scope.</b>');
+    var T=x.rows.length, pair=PAIR(), stale=x.rows.filter(function(r){ return r.bucket===FRESH[3]||r.bucket===FRESH[4]; });
+    $('#m-fresh-b').innerHTML=x.buckets.map(function(b,i){ var warn=i>=3&&b.n>0;
+      return '<div class="hb" title="'+esc(b.names||'none')+'"><div class="nm">'+(warn?'⚠ ':'')+'<b>'+esc(b.b)+'</b></div>'+trk(b.n/T*100,i>=3?'sp':'')+'<div class="v">'+b.n+'<small>of '+T+'</small></div></div>'; }).join('')
+      +(stale.length?'<div class="hb" style="grid-template-columns:1fr"><div class="nm" style="white-space:normal"><small style="margin:0">Stale or never read: '+esc(stale.slice(0,12).map(function(r){return r.name}).join(', '))+(stale.length>12?' +'+(stale.length-12)+' more':'')+'</small></div></div>':'');
+    $('#m-fresh-f').innerHTML='<span>'+T+' roster market'+(T===1?'':'s')+' · every currency (not money)</span><span>the sync turns the roster over ~every 6 h</span>';
+  }
+  function renderMods(){ [dBands,dSplit,dLadder,dCost,dZombie,dFresh].forEach(function(f){ try{ f(); }catch(e){ if(window.console)console.error(e); } }); Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; }); }
+
+  /* ================= EXPORTS =================
+     A module leaves as a PNG (the card as drawn, captioned with its scope, for a deck) or a CSV (its model — every row,
+     not only the ones that fit the card). The dashboard leaves as an Excel workbook (scorecards, every module shown, the
+     table — typed cells, a tab each) or a PDF (the screen on one page). Money is written as a NUMBER beside a Currency
+     column, never as text with a symbol glued on, so the spreadsheet sums it — and never across two currencies. */
+  function toast(msg){ var t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('on'); },3200); }
+  function fileTag(){ return ((S.brand||'all')+(S.market?'_'+S.market:'')+'_'+S.win+(S.cur?'_'+S.cur:'')).replace(/[£€$¥]/g,function(c){return {'£':'GBP','€':'EUR','$':'USD','¥':'JPY'}[c]}).replace(/[^\w-]+/g,'-'); }
+  function scopeWords(){ return (S.brand?S.brand+(S.market?' · '+S.market:' · all markets'):'All brands')+' · '+winLbl()+(S.cur?' · '+S.cur+' markets':''); }
+  function dlBlob(blob,name){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+  function withCur(x){ return x.money?[{k:'__cur',l:'Currency'}].concat(x.cols):x.cols; }
+  function csvOf(x){
+    var cols=withCur(x), q=function(s){ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    var val=function(r,c){ if(c.k==='__cur')return S.cur||''; var v=r[c.k]; if(v==null||v==='')return ''; if(c.t==='pct')return (+v).toFixed(2)+'%'; if(c.t==='date')return typeof v==='number'?new Date(v).toISOString().slice(0,16).replace('T',' '):v; if(c.t==='num')return Math.round(v*100)/100; return v; };
+    return '﻿'+[cols.map(function(c){return q(c.l)}).join(',')].concat(x.rows.map(function(r){ return cols.map(function(c){ return q(val(r,c)); }).join(','); })).join('\n');
+  }
+  function modCsv(k){ var x=MODEL[k](); dlBlob(new Blob([csvOf(x)],{type:'text/csv;charset=utf-8'}),'roas_'+k+'_'+fileTag()+'.csv'); }
+  // html2canvas + jsPDF from cdnjs, loaded on first use with the same SRI hashes /golden and /kwcal pin
+  var LIBS={};
+  function loadScript(src,already,sri){ if(LIBS[src])return LIBS[src]; LIBS[src]=new Promise(function(res,rej){ if(already())return res(); var el=document.createElement('script'); el.src=src; if(sri){ el.integrity=sri; el.crossOrigin='anonymous'; } el.onload=function(){res()}; el.onerror=function(){ LIBS[src]=null; rej(new Error('failed to load '+src)); }; document.head.appendChild(el); }); return LIBS[src]; }
+  function h2c(){ return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',function(){return !!window.html2canvas},'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='); }
+  function jspdf(){ return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF)},'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA=='); }
+  function fontsReady(){ if(!document.fonts)return Promise.resolve(); return Promise.all(['400','700','900'].map(function(w){ return document.fonts.load(w+' 16px Lato'); })).then(function(){ return document.fonts.ready; }).catch(function(){}); }
+  var SKIP=function(el){ return !!(el.classList&&(el.classList.contains('xb')||el.classList.contains('pop')||el.id==='mods-b'||el.id==='toast')); };
+  function bg(){ return getComputedStyle(document.body).backgroundColor||'#fff'; }
+  function modPng(k){
+    var el=document.querySelector('.mod[data-mod="'+k+'"]'); if(!el)return;
+    var cap=document.createElement('div'); cap.className='xcap'; cap.textContent='ROAS · '+MODN[k]+' · '+scopeWords()+' · '+new Date().toISOString().slice(0,10)+' · FeedSpark · Private & Confidential';
+    toast('Preparing the '+MODN[k]+' image…');
+    h2c().then(fontsReady).then(function(){
+      // the card is drawn at its natural height for the capture — a scrolled body would clip the rows below the fold
+      el.classList.add('xshot'); el.appendChild(cap);
+      return window.html2canvas(el,{scale:2,backgroundColor:getComputedStyle(el).backgroundColor||bg(),useCORS:true,ignoreElements:SKIP});
+    }).then(function(cv){ el.classList.remove('xshot'); cap.remove(); cv.toBlob(function(b){ dlBlob(b,'roas_'+k+'_'+fileTag()+'.png'); toast(MODN[k]+' saved as PNG'); },'image/png'); })
+      .catch(function(){ el.classList.remove('xshot'); if(cap.parentNode)cap.remove(); toast('The image library could not load — try again, or take the CSV'); });
+  }
+  function dashPdf(){
+    var main=document.querySelector('main'); var head=document.createElement('div'); head.className='xhead';
+    head.innerHTML='<b>ROAS · '+esc(scopeWords())+'</b><span>'+esc($('#mstate').textContent)+' · exported '+esc(new Date().toISOString().slice(0,16).replace('T',' '))+' UTC · FeedSpark · Private &amp; Confidential</span>';
+    toast('Preparing the PDF…');
+    Promise.all([h2c(),jspdf()]).then(fontsReady).then(function(){ main.insertBefore(head,main.firstChild); document.body.classList.add('xshotall');
+      return window.html2canvas(main,{scale:1.6,backgroundColor:bg(),useCORS:true,ignoreElements:SKIP}); })
+      .then(function(cv){ head.remove(); document.body.classList.remove('xshotall');
+        var wMM=297, hMM=Math.round((wMM*cv.height/cv.width)*10)/10, pdf=new window.jspdf.jsPDF({unit:'mm',format:[wMM,hMM],orientation:hMM>wMM?'portrait':'landscape'});
+        pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,wMM,hMM); pdf.save('roas_dashboard_'+fileTag()+'.pdf'); toast('Dashboard saved as PDF'); })
+      .catch(function(){ if(head.parentNode)head.remove(); document.body.classList.remove('xshotall'); toast('The PDF library could not load — opening the print dialog instead'); setTimeout(function(){ window.print(); },300); });
+  }
+  // the table as the Excel tab: the SAME rows the CSV and the screen carry, typed — a figure is a number, its currency beside it
+  var PCT_COLS={roas:1,ctr:1,cr:1,zb:1,up:1,mm:1}, INT_COLS={ck:1,im:1,sk:1};
+  function tableSheet(){
+    var cols=visCols(), rows=flat(buildRows()).filter(function(r){ return r.type!=='note'&&r.type!=='more'; });
+    var strip=function(h){ var d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+    var sc=[{k:'lvl',l:'Level',w:9},{k:'brand',l:'Brand',w:14},{k:'market',l:'Market',w:9},{k:'name',l:'Name',w:30},{k:'path',l:'Path',w:30},{k:'cur',l:'Currency',w:9}]
+      .concat(cols.map(function(c){ return {k:c.k,l:c.l,t:c.k==='band'?'text':c.k==='upd'?'date':PCT_COLS[c.k]?'pct':INT_COLS[c.k]?'int':'num'}; }));
+    var out=rows.map(function(r){ var cur=r.cur||''; if(r.type==='brand'){ var by=(r.b&&r.b.byCur)||{}; var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); cur=(S.cur&&by[S.cur])?S.cur:(ks[0]||''); }
+      var o={lvl:r.type,brand:r.client||r.name,market:r.market||'',name:r.name,path:r.path||'',cur:cur};
+      cols.forEach(function(c){ var cell=cellOf(r,c.k); if(c.k==='band'){ o[c.k]=strip(cell.html); return; } var n=cell.n; o[c.k]=(n==null||!isFinite(n))?null:(PCT_COLS[c.k]?n/100:n); }); return o; });
+    return {name:'Performance',cols:sc,rows:out};
+  }
+  function scoreSheet(){
+    var by=agg(), a=S.cur&&by[S.cur], ser=series(), last=ser[ser.length-1], prev=backPt(ser);
+    return {name:'Scorecards',cols:[{k:'m',l:'Metric',w:16},{k:'cur',l:'Currency',w:9},{k:'v',l:'Value (trailing '+winLbl()+')',t:'num',w:22},{k:'d',l:'vs '+BACK+' days earlier',t:'pct',w:18}],
+      rows:METRICS.map(function(m){ var v=a?mval(a,m.k):null, d=(!m.noTrend&&last&&prev)?dpct(mval(last,m.k),mval(prev,m.k)):null; var pct=m.kind==='pct'||m.kind==='pct2';
+        return {m:m.l,cur:(m.kind==='money'||m.kind==='money2')?S.cur:'',v:v==null?null:(pct?v/100:v),d:d==null?null:d/100}; })};
+  }
+  function sheetOf(k){ var x=MODEL[k](); var cols=withCur(x).map(function(c){ return {k:c.k,l:c.l,t:c.t==='date'?'date':c.t==='pct'?'pct':c.t==='int'?'int':c.t==='num'?'num':'text',w:c.w||Math.min(40,Math.max(10,c.l.length+2))}; });
+    return {name:MODN[k],cols:cols,rows:x.rows.map(function(r){ var o={}; cols.forEach(function(c){ var v=c.k==='__cur'?S.cur:r[c.k]; if(c.t==='pct'&&v!=null)v=v/100; o[c.k]=v; }); return o; })}; }
+  function workbook(){
+    var st=modState(), sheets=[{name:'About',cols:[{k:'a',l:'ROAS export',w:34},{k:'b',l:'',w:90}],rows:[{a:'Scope',b:scopeWords()},{a:'Source',b:'FeedHero’s own ROAS dashboard (Google Ads), via the FeedHero_reports MCP'},{a:'Status',b:$('#mstate').textContent},{a:'Exported',b:new Date().toISOString().slice(0,16).replace('T',' ')+' UTC'},{a:'Currency rule',b:'Every money figure runs on ONE currency’s markets ('+(S.cur||'—')+'); nothing is summed across currencies.'},{a:'Confidentiality',b:'FeedSpark · Private & Confidential'}]},scoreSheet()];
+    st.order.forEach(function(k){ if(!st.off[k])sheets.push(sheetOf(k)); });
+    sheets.push(tableSheet());
+    return sheets;
+  }
+  function xlsx(){
+    loadScript('/xlsx/engine.js',function(){ return !!window.FeedXlsx; }).then(function(){ var n=window.FeedXlsx.download(workbook(),'roas_'+fileTag()+'.xlsx'); toast('Excel workbook saved · '+Math.round(n/1024)+' KB'); })
+      .catch(function(){ toast('The Excel writer could not load — this needs the live worker'); });
+  }
+  function openX(btn){ var k=btn.getAttribute('data-x'), rel=btn.parentNode, p=$('#x-pop');
+    if(!p){ p=document.createElement('div'); p.className='pop xpop'; p.id='x-pop'; }
+    var was=!p.hidden&&p.parentNode===rel; document.querySelectorAll('.pop').forEach(function(q){ q.hidden=true; }); document.querySelectorAll('[aria-haspopup]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
+    if(was)return;
+    p.innerHTML='<div class="hd">'+esc(MODN[k])+'</div><button class="xi" type="button" data-xk="png" data-xm="'+k+'">🖼 PNG image<small>the card as drawn, captioned with its scope</small></button><button class="xi" type="button" data-xk="csv" data-xm="'+k+'">⬇ CSV data<small>every row behind it, not only those shown</small></button>';
+    rel.appendChild(p); p.hidden=false; btn.setAttribute('aria-expanded','true');
+  }
+
   /* ================= CSV ================= */
   function csv(){
     var cols=visCols(), rows=flat(buildRows()).filter(function(r){return r.type!=='note'&&r.type!=='more'});
@@ -693,8 +1031,8 @@ window.addEventListener('load',restore);
 
   /* ================= render all ================= */
   function renderAll(){
-    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; renderTable(); return; }
-    status(DATA.status); pickCur(); renderBrands(); renderWin(); renderCur(); scopeLine(); renderScorecards(); renderTrend(); renderMovers(); renderBands(); renderCols(); renderTable(); renderViews();
+    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; ['bands','split','ladder','cost','zombie','fresh'].forEach(function(k){ none(k,'<b>ROAS data is unavailable</b> — this needs the live worker.'); }); renderTable(); return; }
+    status(DATA.status); pickCur(); renderBrands(); renderWin(); renderCur(); scopeLine(); renderScorecards(); renderTrend(); renderMovers(); renderMods(); renderBands(); renderCols(); renderTable(); renderViews();
     try{ history.replaceState(null,'',linkOf()); }catch(e){}
   }
 
@@ -720,7 +1058,25 @@ window.addEventListener('load',restore);
     S.open[key]=!was; if(key.indexOf('m|')===0&&S.open[key])openMarket(key.slice(2)); renderTable();
   });
   $('#expand-all').addEventListener('click',function(){ var all=(DATA&&DATA.brands&&DATA.brands[S.win])||[]; var allOpen=buildRows().every(function(r){return r.open}); all.forEach(function(b){ S.open['b|'+b.client]=!allOpen; }); renderTable(); });
-  $('#csv').addEventListener('click',csv);
+  $('#csv').addEventListener('click',function(){ csv(); $('#exp-pop').hidden=true; });
+  $('#exp-btn').addEventListener('click',function(){ pop(this,$('#exp-pop')); });
+  $('#xlsx').addEventListener('click',function(){ $('#exp-pop').hidden=true; xlsx(); });
+  $('#pdf').addEventListener('click',function(){ $('#exp-pop').hidden=true; dashPdf(); });
+  $('#mods-b').addEventListener('click',function(){ renderModsPop(); pop(this,$('#mods-p')); });
+  $('#mods-p').addEventListener('click',function(e){
+    var mv=e.target.closest('[data-mv]'); if(mv){ var st=modState(), k=mv.getAttribute('data-mv'), i=st.order.indexOf(k), j=i+(+mv.getAttribute('data-d')); if(j>=0&&j<st.order.length){ st.order[i]=st.order[j]; st.order[j]=k; saveMods(st); } return; }
+    if(e.target.closest('[data-mreset]')){ saveMods(null); renderTrend(); return; }
+    if(e.target.closest('[data-mclose]')){ $('#mods-p').hidden=true; $('#mods-b').setAttribute('aria-expanded','false'); }
+  });
+  $('#mods-p').addEventListener('change',function(e){ var k=e.target.getAttribute('data-mod-on'); if(!k)return; var st=modState(); if(e.target.checked)delete st.off[k]; else st.off[k]=1; saveMods(st); if(k==='trend'&&e.target.checked)renderTrend(); });
+  $('#ins').addEventListener('click',function(e){
+    var xb=e.target.closest('[data-x]'); if(xb){ openX(xb); return; }
+    var xi=e.target.closest('[data-xk]'); if(xi){ var k=xi.getAttribute('data-xm'); $('#x-pop').hidden=true; if(xi.getAttribute('data-xk')==='png')modPng(k); else modCsv(k); return; }
+    var bg2=e.target.closest('[data-band-go]'); if(bg2){ S.bands={}; S.bands[bg2.getAttribute('data-band-go')]=true; renderBands(); renderTable(); try{ $('#pt-card').scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'start'}); }catch(e2){} return; }
+    var sg=e.target.closest('[data-split-go]'); if(sg){ if(!S.brand){ S.brand=sg.getAttribute('data-split-go'); S.market=''; S.open={}; load(); } else goMarket(sg.getAttribute('data-client'),sg.getAttribute('data-cmpid')); return; }
+    var mg=e.target.closest('[data-mk-go]'); if(mg&&mg.getAttribute('data-mk-go')){ goMarket(mg.getAttribute('data-client'),mg.getAttribute('data-mk-go')); }
+  });
+  var _rz; window.addEventListener('resize',function(){ clearTimeout(_rz); _rz=setTimeout(function(){ if(DATA)renderTrend(); },150); });
   function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); }
   $('#cols-btn').addEventListener('click',function(){ pop(this,$('#cols-pop')); });
   $('#views-btn').addEventListener('click',function(){ renderViews(); pop(this,$('#views-pop')); });
@@ -734,7 +1090,7 @@ window.addEventListener('load',restore);
   });
   document.addEventListener('click',function(e){ if(e.target.closest('.rel'))return; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); } if(e.key==='/'&&document.activeElement!==$('#q')&&!/input|select|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); $('#q').focus(); } });
-  try{ new MutationObserver(function(){ if(DATA){ renderScorecards(); renderTrend(); } }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+  try{ new MutationObserver(function(){ if(DATA){ renderScorecards(); renderTrend(); renderMods(); } }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
 
   // ⚡ Sync now walks the WHOLE roster — each call is one firing's budget (5 markets x 3
   // windows, stalest first), so it loops ceil(roster / per-call) times: `read` on the status is
@@ -759,6 +1115,6 @@ window.addEventListener('load',restore);
   });
 
   $('#seg').innerHTML=SEGS.map(function(g){ return '<optgroup label="'+esc(g[0])+'">'+g[1].map(function(x){ return '<option value="'+x[0]+'">Segment · '+esc(x[1])+'</option>'; }).join('')+'</optgroup>'; }).join('');
-  readUrl(); $('#q').value=S.q; $('#seg').value=S.seg; renderWin(); renderBands(); renderCols(); load();
+  readUrl(); $('#q').value=S.q; $('#seg').value=S.seg; applyMods(); renderWin(); renderBands(); renderCols(); load();
 })();
 </script>

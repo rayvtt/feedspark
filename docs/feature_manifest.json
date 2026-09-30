@@ -11359,6 +11359,54 @@
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "head.push('total_skus', 'spread_pp', 'in_markets');",
       "pr": 0
+    },
+    {
+      "name": "ROAS modular: the eight modules in one list",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness']];",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: one card size on a container-query grid",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "main.wrap{container-type:inline-size;container-name:roas}",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: a hidden module is not painted",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": ".mod[hidden]{display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: one model feeds card, CSV and Excel tab",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh};",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: money leaves beside a Currency column",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "function withCur(x){ return x.money?[{k:'__cur',l:'Currency'}]",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: ⬇ Export → Excel workbook",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "loadScript('/xlsx/engine.js'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: a captured card at its natural height",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": ".mod.xshot,body.xshotall .mod{height:auto}",
+      "pr": 0
+    },
+    {
+      "name": "ROAS modular: the rendered tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_roasmods.js",
+      "pr": 0
     }
   ]
 }
