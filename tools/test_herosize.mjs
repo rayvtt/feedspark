@@ -27,9 +27,10 @@ let pass = 0, fail = 0;
 const t = (n, ok, why) => { if (ok) { pass++; console.log('  ✓ ' + n); } else { fail++; console.log('  ✗ ' + n + (why ? ' — ' + why : '')); } };
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-// a master as the agent reads it: a header, then rows, through the Catalogue's own delimited parser
-function csvCensus(text) {
-  const c = H.census(E), sn = E.sniff(text.slice(0, 20000));
+// a master as the agent reads it: a header, then rows, through the Catalogue's own delimited parser (placed on a feed's
+// product_type tree when one is given)
+function csvCensus(text, tree) {
+  const c = H.census(E, tree), sn = E.sniff(text.slice(0, 20000));
   const p = E.delimParser(sn.delim, (r) => c.onRow(r), sn);
   p.push(text); p.end();
   return c.finish();
@@ -128,6 +129,108 @@ const C4 = csvCensus(csv(M4));
 t('a German master: one type per department, "Alles Anzeigen" falls through to the next column', eq(C4.types.map((x) => x.k).sort(), ['Damen > Bomberjacke', 'Damen > Jacken', 'Herren > Jacken']) && C4.types.find((x) => x.k === 'Damen > Jacken').d === 'women', C4.types.map((x) => x.k).join(' | '));
 t('an XML master reads the same way (g:product_type, g:size, g:availability)', CX.types.length === 1 && CX.types[0].k === 'Tea Dresses' && eq(CX.types[0].pat, [['212', 1]]));
 
+console.log('· product-type tiers — every master row placed on the Google feed’s own product_type tree');
+// Ray, 30 Sep 2026: "can you allow tier 2, tier 3 of PT to be chosen too ? sometimes no need too much granulartiy"
+const gt = (v) => String(v).replace(/>/g, '&gt;');
+const FT = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>'
+  + [['a1', 'GA', 'Women > Clothing > Dresses > Midi Dresses'], ['a2', 'GA', 'Women > Clothing > Dresses > Midi Dresses'], ['a3', 'GA', 'Women > Clothing > Dresses > Midi Dresses'],
+     ['b1', 'GB', 'Women > Clothing > Dresses > Maxi Dresses'], ['b2', 'GB', 'Women > Clothing > Dresses > Maxi Dresses'],
+     ['c1', 'GC', 'Men > Clothing > T-Shirts > Graphic T-Shirt'], ['c2', 'GC', 'Men > Clothing > T-Shirts > Graphic T-Shirt'],
+     ['k1', 'GK', 'Kids > Clothing > Dresses'], ['k2', 'GK', 'Kids > Clothing > Dresses'], ['n1', 'GN', '1234']]
+    .map(([id, g, pt]) => '<item><g:id>' + id + '</g:id><g:item_group_id>' + g + '</g:item_group_id><g:product_type>' + gt(pt) + '</g:product_type><g:availability>in stock</g:availability></item>').join('')
+  + '</channel></rss>';
+const ti = H.treeIndex(E), tp = FA.createXmlParser((r, h) => ti.onRow(r, h)); tp.push(FT); tp.end();
+const TR = ti.finish();
+t('the feed’s tree: g:product_type slot 1 per product, by g:id / original id / style — a category id is not a path', TR.n === 10 && TR.typed === 9 && TR.paths === 4 && TR.i.get('a1') === 'Women > Clothing > Dresses > Midi Dresses'
+  && TR.o.get('c2') === 'Men > Clothing > T-Shirts > Graphic T-Shirt' && TR.g.get('gb') === 'Women > Clothing > Dresses > Maxi Dresses' && !TR.i.has('n1'), JSON.stringify({ n: TR.n, typed: TR.typed, paths: TR.paths }));
+t('one string per path, however many products carry it', TR.i.get('a1') === TR.i.get('a2'));
+const MT3 = [['product_id', 'item_group_id', 'gender', 'category', 'type', 'size', 'availability']];
+const put3 = (id, g, gen, cat, typ, z, av) => MT3.push([id, g, gen, cat, typ, z, av || 'in stock']);
+// by id (a1-a3, b1-b2, c1-c2, k1-k2) and by style (a4, b3: the size the feed does not send, out of stock)
+[['a1', '8'], ['a2', '10'], ['a3', '12']].forEach(([id, z]) => put3(id, 'GA', 'womens', 'Dresses', 'Midi', z)); put3('a4', 'GA', 'womens', 'Dresses', 'Midi', '14', 'out of stock');
+[['b1', '8'], ['b2', '10']].forEach(([id, z]) => put3(id, 'GB', 'womens', 'Dresses', 'Maxi', z)); put3('b3', 'GB', 'womens', 'Dresses', 'Maxi', '12', 'out of stock');
+[['c1', 'M'], ['c2', 'L']].forEach(([id, z]) => put3(id, 'GC', 'mens', 'T-Shirts', 'Tee', z));
+[['k1', '3-4 years'], ['k2', '5-6 years']].forEach(([id, z]) => put3(id, 'GK', '', 'Dresses', 'Kids dress', z));
+// a style the feed never sends: its master type's sent products all sit under "Women > Clothing > Dresses", split below it
+[['x1', '8'], ['x2', '10'], ['x3', '12']].forEach(([id, z]) => put3(id, 'GX', 'womens', 'Dresses', 'Gown', z, 'out of stock'));
+// no sent product of its type — the master's own word, where the tree has exactly one type of that name
+put3('w1', 'GW', '', 'Graphic T-Shirt', '', 'L', 'out of stock');
+// a word both the kids' and the women's branch use, no gender column: the run decides (ages → kids, 10 → women)
+put3('y1', 'GY', '', 'Dresses', '', '7-8 years', 'out of stock'); put3('y2', 'GY2', '', 'Dresses', '', '10', 'out of stock');
+// the feed has no type for it: under the feed's word for its department, else "Master only" — marked as the master's word
+put3('z1', 'GZ', 'womens', 'Bralettes', '', 'S', 'in stock'); put3('z2', 'GZ2', '', 'Keyrings', '', 'M', 'in stock');
+const CT = csvCensus(csv(MT3), TR);
+const ck = (k) => CT.types.find((x) => x.k === k);
+t('the census reads its types off the feed (src feed) and says how every row found its place', CT.src === 'feed' && CT.tree.id === 9 && CT.tree.grp === 2 && CT.tree.learn === 3 && CT.tree.word === 3 && CT.tree.own === 2
+  && CT.tree.join === 'product_id' && CT.tree.on === 'fs_data_original_id', JSON.stringify(CT.tree));
+t('every row counted exactly once, on one type', CT.types.reduce((a, x) => a + x.n, 0) === MT3.length - 1 && CT.rows === MT3.length - 1);
+t('by id and by style: the feed’s own leaf, the out-of-stock size included (the master’s run, not the feed’s)', eq(ck('Women > Clothing > Dresses > Midi Dresses').sz.map((z) => z[0]), ['8', '10', '12', '14']) && ck('Women > Clothing > Dresses > Midi Dresses').t === 4);
+t('a style the feed never sends goes no deeper than its type’s sent products agree on (80%+): tier 3', !!ck('Women > Clothing > Dresses') && ck('Women > Clothing > Dresses').t === 3 && ck('Women > Clothing > Dresses').n === 4, CT.types.map((x) => x.k + ':' + x.n).join(' | '));
+t('a master word the tree names once is placed there; a shared word goes by the run (ages → kids, 10 → women)', ck('Men > Clothing > T-Shirts > Graphic T-Shirt').n === 3 && ck('Kids > Clothing > Dresses').n === 3);
+t('a type the feed has no word for: under the feed’s department, else "Master only" — and marked the master’s own (m)', ck('Women > Bralettes') && ck('Women > Bralettes').m === 1 && ck(H.MASTER_ONLY + ' > Keyrings') && ck(H.MASTER_ONLY + ' > Keyrings').m === 1
+  && !ck('Women > Clothing > Dresses').m && !ck('Kids > Clothing > Dresses').m);
+t('commonPath: the deepest level 80% of the sent products share, never on fewer than five', H.commonPath(new Map([['A > B > C', 4], ['A > B > D', 1]])) === 'A > B > C' && H.commonPath(new Map([['A > B > C', 3], ['A > B > D', 2]])) === 'A > B'
+  && H.commonPath(new Map([['A > B', 4]])) === '' && H.commonPath(null) === '');
+const CN = csvCensus(csv(MT3));
+t('no tree: the master’s own types, as before (src master, no tree)', CN.src === 'master' && CN.tree === null && CN.types.some((x) => x.k === 'Women > Dresses') && !CN.types.some((x) => x.m));
+const CJ = csvCensus(csv([['sku', 'size', 'category'], ['Q1', 'M', 'Tops'], ['Q2', 'L', 'Tops']]), TR);
+t('a master none of whose ids or styles the feed carries falls back to its own types, never a guess', CJ.src === 'master' && CJ.types.length === 1 && CJ.types[0].k === 'Tops' && !CJ.types[0].m);
+// tiers: a path cut to L levels, a shorter path its own type past its depth
+const TS3 = H.tiers(CT);
+t('tiers offered: every level of the tree, numbered as the tree numbers them (tier 1 = its first level)', eq(TS3.map((x) => x.t), [1, 2, 3, 4]) && eq(TS3.map((x) => x.types), [4, 5, 5, 7]) && TS3[2].ex === 'Women > Clothing > Dresses', JSON.stringify(TS3));
+t('a tier only a sliver of the products reach (<1%) is not offered — they roll up into the tier above', (() => {
+  const c = { types: [{ k: 'A > B', t: 2, n: 1000, sz: [['M', 1000, 1, 0]], pat: [] }, { k: 'A > B > C', t: 3, n: 5, sz: [['M', 5, 1, 0]], pat: [] }] };
+  return eq(H.tiers(c).map((x) => x.t), [1, 2]);
+})());
+t('the tier the card opens on: the finest at which 90% of the sized products sit in at most 40 types', H.defaultTier(CT) === 4 && H.defaultTier({ types: Array.from({ length: 60 }, (_, i) => ({ k: 'Root > T' + i, t: 2, n: 10, sz: [['M', 10, 5, 5]], pat: [] })) }) === 1);
+const T3 = H.tierTypes(CT, 3), DRS = T3.find((x) => x.k === 'Women > Clothing > Dresses');
+t('tier 3 rolls its tier-4 types up: counts added, one ladder in size order, every stored type named', DRS && DRS.n === 4 + 3 + 4 && eq(DRS.sz.map((z) => z[0]), ['8', '10', '12', '14']) && DRS.nodes.length === 3 && DRS.t === 3
+  && eq(DRS.sz.find((z) => z[0] === '10'), ['10', 4, 2, 2]), JSON.stringify(DRS && DRS.sz));
+t('each style’s run re-read onto the rolled-up ladder (a style is still one style)', DRS.st === 4 && DRS.pat.reduce((a, p) => a + p[1], 0) === 4 && eq(DRS.pat.map((p) => p[0]).sort(), ['0100', '1110', '2210', '2221']), JSON.stringify(DRS.pat));
+t('a rolled-up type measures exactly as its types added up', (() => {
+  const hero = ['8', '10'], up = H.measure(DRS, hero), parts = DRS.nodes.map((i) => H.measure(CT.types[i], hero));
+  return ['rows', 'in', 'out', 'st', 'full', 'some', 'none', 'unk'].every((k) => up[k] === parts.reduce((a, m) => a + m[k], 0));
+})());
+t('tier 1: the whole master in each department, nothing lost', H.tierTypes(CT, 1).reduce((a, x) => a + x.n, 0) === CT.rows && eq(H.tierTypes(CT, 1).map((x) => x.k).sort(), ['Kids', 'Master only', 'Men', 'Women']));
+t('the finest types past the cap fold into their parent — never dropped (products stay counted at every coarser tier)', (() => {
+  const M = [['id', 'item_group_id', 'product_type', 'size', 'availability']], F = [];
+  for (let k = 0; k < H.TYPE_CAP + 20; k++) { M.push(['F' + k, 'FG' + k, 'Tops', 'M', 'in stock']); F.push('<item><g:id>F' + k + '</g:id><g:product_type>' + gt('Root > Branch' + (k % 3) + ' > Leaf ' + k) + '</g:product_type></item>'); }
+  const ti2 = H.treeIndex(E), p2 = FA.createXmlParser((r, h) => ti2.onRow(r, h)); p2.push('<rss><channel>' + F.join('') + '</channel></rss>'); p2.end();
+  const c = csvCensus(csv(M), ti2.finish());
+  return c.types.length <= H.TYPE_CAP && c.types.reduce((a, x) => a + x.n, 0) === H.TYPE_CAP + 20 && c.tx.k === 0 && c.types.some((x) => /^Root > Branch\d$/.test(x.k));
+})());
+
+console.log('· a list set for a coarser tier reaches every finer type that sets none of its own');
+const ST3 = {
+  'g:Acme': { ex: 'fs-fashion-uk' },
+  'm:Acme|women > clothing > dresses': { k: 'Women > Clothing > Dresses', s: ['10', '12'], src: 'set', by: 'A', at: 1 },
+  'm:Acme|women > clothing > dresses > maxi dresses': { k: 'Women > Clothing > Dresses > Maxi Dresses', s: ['8'], src: 'set' },
+  'm:Acme|men > clothing': { k: 'Men > Clothing', s: ['XL'], src: 'set' },
+  'm:Acme|kids': { k: 'Kids', s: [], src: 'set' },
+  'm:Acme|bralettes': { k: 'Bralettes', s: ['S'], src: 'doc' },
+};
+const CX3 = H.ctxOf(ST3, 'Acme', CT);
+const hf = (k) => H.heroFor(ST3, 'Acme', CT.types.find((x) => x.k === k) || H.tierTypes(CT, 3).find((x) => x.k === k), CX3);
+t('the type’s own list first', (() => { const h = hf('Women > Clothing > Dresses > Maxi Dresses'); return h.own && eq(h.s, ['8']) && !h.up; })());
+t('then the nearest coarser tier that set one — named, with where it came from', (() => { const h = hf('Women > Clothing > Dresses > Midi Dresses'); return !h.own && h.dec && h.up === 'Women > Clothing > Dresses' && eq(h.s, ['10', '12']) && /\(from Women > Clothing > Dresses\)/.test(H.srcWord(h)); })());
+t('a coarser list naming none of this type’s sizes does not reach it — the next source does (the example)', (() => { const h = hf('Men > Clothing > T-Shirts > Graphic T-Shirt'); return h.src === 'ex' && eq(h.s, ['M', 'L']); })());
+t('"no hero sizes" recorded for a whole branch reaches every type in it, as a decision', (() => { const h = hf('Kids > Clothing > Dresses'); return h.dec && h.s.length === 0 && h.up === 'Kids'; })());
+t('a list in the brand’s own words (not a path of this tree) still meets its type by the leaf', (() => { const h = hf('Women > Bralettes'); return h.own && h.how === 'leaf' && eq(h.s, ['S']); })());
+t('a list set on the tree is placed EXACTLY — never leaf-matched onto another branch’s type of the same name', (() => {
+  const h = H.heroFor(ST3, 'Acme', { k: 'Women > Occasion > Dresses', d: 'women', sz: [['10', 4, 2, 2], ['12', 4, 2, 2]], pat: [] }, CX3);
+  return h.src === 'ex' && !h.up;
+})());
+const MP3 = H.map(ST3, 'Acme', CT, 3), row3 = MP3.types.find((x) => x.t.k === 'Women > Clothing > Dresses');
+t('map at a tier: one row per tier-3 type, its own list, and how many types under it read a different one', MP3.types.length === T3.length && eq(row3.h.s, ['10', '12']) && row3.finer === 1, JSON.stringify({ finer: row3.finer, s: row3.h.s }));
+t('a row’s figures are its types added up, each on the list that reaches IT (the maxi dresses on their own 8)', (() => {
+  const want = row3.t.nodes.reduce((a, i) => { const n = CT.types[i]; return a + H.measure(n, H.heroFor(ST3, 'Acme', n, CX3).s).rows; }, 0);
+  return row3.m.rows === want && row3.m.rows !== H.measure(row3.t, ['10', '12']).rows;
+})());
+t('the hero-stock headline is the brand’s, whatever tier is on screen', [1, 2, 3, 4, 0].every((L) => { const m = H.map(ST3, 'Acme', CT, L || undefined).sum; return m.rows === MP3.sum.rows && m.in === MP3.sum.in && m.full === MP3.sum.full; }));
+t('"mapped" counts the tier on screen; an inherited list is counted as its own source (up)', MP3.sum.types === T3.length && MP3.sum.bySrc.set >= 1 && H.map(ST3, 'Acme', CT, 4).sum.bySrc.up >= 2, JSON.stringify(H.map(ST3, 'Acme', CT, 4).sum.bySrc));
+t('the sheet exports the tier on screen', H.docRows(ST3, 'Acme', CT, 3).slice(1).some((r) => r[0] === 'Women > Clothing > Dresses' && r[1] === '10, 12') && !H.docRows(ST3, 'Acme', CT, 3).slice(1).some((r) => r[0] === 'Women > Clothing > Dresses > Midi Dresses'));
+t('treeKeys: every path of the census at every tier (so a list on the tree is never loose)', (() => { const k = H.treeKeys(CT); return k['women'] && k['women > clothing'] && k['women > clothing > dresses > midi dresses'] && !k['bralettes']; })());
+
 console.log('· the measure — a hero list against one type');
 const MT = { k: 'Women > Dresses', sz: [['8', 10, 8, 2], ['10', 10, 6, 4], ['12', 10, 9, 1], ['14', 10, 5, 5]],
   pat: [['2222', 4], ['2122', 3], ['1111', 2], ['0330', 1], ['2000', 5]], patx: 7 };
@@ -198,7 +301,11 @@ console.log('· the worker’s half (src/herosizes.js)');
 t('ONE census shape: the engine and the worker hold the same CENSUS_V', HW.CENSUS_V === H.CENSUS_V);
 const SC = HW.sanitizeCensus(C1);
 t('the engine’s own census is stored as read (types, runs, patterns)', SC && SC.types.length === C1.types.length && eq(SC.types[0].sz, C1.types[0].sz) && eq(SC.types[0].pat, C1.types[0].pat) && SC.cols.pt === 'category');
-t('a census of another shape is refused whole', HW.sanitizeCensus(Object.assign({}, C1, { v: 99 })) === null && HW.sanitizeCensus({ v: 1 }) === null && HW.sanitizeCensus(null) === null);
+t('a census of another shape is refused whole', HW.sanitizeCensus(Object.assign({}, C1, { v: 99 })) === null && HW.sanitizeCensus({ v: 1 }) === null && HW.sanitizeCensus(null) === null && HW.sanitizeCensus(Object.assign({}, C1, { v: 2 })) === null);
+const SCT = HW.sanitizeCensus(CT);
+t('a census on the feed’s tree is stored whole: where its types came from, each type’s depth, the master-only mark', SCT && SCT.src === 'feed' && eq(SCT.tree, CT.tree) && SCT.types.every((x, i) => x.t === CT.types[i].t && !!x.m === !!CT.types[i].m) && SCT.types.length === CT.types.length);
+t('…and a census with no tree says so (src master, tree null) — a "feed" source with no tree is not believed', HW.sanitizeCensus(CN).src === 'master' && HW.sanitizeCensus(CN).tree === null && HW.sanitizeCensus(Object.assign({}, CN, { src: 'feed' })).src === 'master');
+t('the census keeps up to the engine’s TYPE_CAP finest types', (() => { const c = JSON.parse(JSON.stringify(CT)); while (c.types.length < H.TYPE_CAP + 3) c.types.push(Object.assign({}, c.types[0], { k: 'Pad ' + c.types.length })); return HW.sanitizeCensus(c).types.length === H.TYPE_CAP; })());
 const bad = (f) => { const c = JSON.parse(JSON.stringify(C1)); f(c); return HW.sanitizeCensus(c); };
 t('a pattern that does not fit its run, in + out above rows, or a size nobody writes → refused', bad((c) => { c.types[0].pat[0][0] += '2'; }) === null && bad((c) => { c.types[0].sz[0][2] = 999; }) === null
   && bad((c) => { c.types[0].sz[0][0] = '<script>'; }) === null && bad((c) => { c.types[0].pat[0][0] = c.types[0].pat[0][0].replace(/./, '9'); }) === null);
@@ -253,16 +360,30 @@ const zip1 = (name, data) => {
 };
 const TM = MS.tallyMaster(zip1('m.csv', Buffer.from(csv(M1))));
 t('the agent builds the census on the SAME pass as the stock tally (zipped CSV)', TM.n === M1.length - 1 && TM.census && TM.census.types.length === C1.types.length && eq(TM.census.types[0].sz, C1.types[0].sz));
-t('its one-line log names the types, sized rows, styles and the biggest run', /product types · .* sized rows · .* styles · biggest: /.test(MS.sizeLine(TM.census)));
+t('its one-line log names where the types came from, the tiers, sized rows, styles and the biggest run', /the master’s own product types · tiers 1:\d+ .* sized rows · .* styles · biggest: /.test(MS.sizeLine(TM.census)));
+const TMT = MS.tallyMaster(zip1('m.csv', Buffer.from(csv(MT3))), MS.treeFromText(FT));
+t('the agent places the census on the Google feed’s tree when it has one (the SAME census the engine builds)', TMT.census.src === 'feed' && eq(TMT.census.tree, CT.tree) && /the Google feed’s product types \(by id 9 · style 2 · master type 6 · master only 2\) · tiers 1:4 2:5 3:5 4:7/.test(MS.sizeLine(TMT.census)), MS.sizeLine(TMT.census));
+const GF = MS.googleFeeds();
+t('the agent finds each roster market’s Google Shopping feed by company id (45 of 57 today), never a Meta feed', ROAS.rosterList().filter((m) => GF[m.cmpid]).length >= 40 && Object.keys(GF).every((c) => !/-fb$/.test(GF[c].mkt) && /^https:\/\/[a-z0-9.-]*feedhero\.net\//.test(GF[c].url)));
+t('the agent reads the feed before its master, streamed, and a feed it cannot read never costs the master', /tree = await readTree\(feeds\[m\.cmpid\]\.url\)/.test(AG) && /catch \(e\) \{ console\.log\('~ ' \+ tag \+ ' — Google feed not read/.test(AG) && /tallyMaster\(got\.bytes, tree\)/.test(AG)
+  && /for await \(const chunk of r\.body\)/.test(AG) && AG.indexOf('readTree(feeds[m.cmpid].url)') < AG.indexOf('tallyMaster(got.bytes, tree)'));
 t('the census posts on its own ({mastersize}), one market a post, BEFORE the counts; szv only when stored', /post\(\{ mastersize: \[\{ cmpid: m\.cmpid, imp: got\.imp, census: t\.census \}\] \}\)/.test(AG) && /szv: sz \? H\.CENSUS_V : 0, sz \}/.test(AG) && AG.indexOf('mastersize') < AG.indexOf('post({ masterstock'));
 t('worker: the {mastersize} lane checks the roster, validates whole, one key per market', /Array\.isArray\(body\.mastersize\)/.test(WK) && /HERO\.sanitizeCensus\(e && e\.census\)/.test(WK) && /env\.EDITS\.put\('mastersize:' \+ cmpid/.test(WK) && /ROAS\.cmpidBrand\(cmpid\)/.test(WK));
-t('worker: "unchanged" only when the counts AND the census are of this import and this shape', /have\.imp === rec\.lastImport && have\.szv === HERO\.CENSUS_V/.test(WK) && /idx\[cmpid\]\.szv = HERO\.CENSUS_V/.test(WK));
+t('worker: "unchanged" only when the counts AND the census are of this import and this shape, and read within the day (the feed’s tree moves on its own)', /have\.imp === rec\.lastImport && have\.szv === HERO\.CENSUS_V && Date\.now\(\) - \(have\.t \|\| 0\) < HERO\.CENSUS_FRESH_MS/.test(WK) && /idx\[cmpid\]\.szv = HERO\.CENSUS_V/.test(WK) && HW.CENSUS_FRESH_MS === 20 * 3600 * 1000);
 t('worker: GET/PUT /api/rules/hero — scoped, the kvmerge envelope with explicit tombstones, logged', /path === '\/api\/rules\/hero'/.test(WK) && /HERO\.sanitizeHeroPut\(body, hctx\)/.test(WK) && /explicitTombstones: true/.test(WK)
   && /HERO\.heroView\(/.test(WK) && /logActivity\(ctx, env, request, 'hero-guide'/.test(WK) && /'X-Sync-Base': String\(Date\.now\(\)\)/.test(WK));
 t('worker: no brand asked for = the first in scope with a census, flagged auto', /brand = mine\.find\(hasCensus\) \|\| ''; out\.auto = !!brand;/.test(WK));
 t('worker: the engine is served verbatim at /stock/engine.js (a Text module by the *_engine.js rule)', /path === '\/stock\/engine\.js'/.test(WK) && /import HEROSIZE_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/herosize_engine\.js"/.test(WK));
 t('worker: each stock market carries its wired keys (wk) for the held-back download', /wk: \{ g: k\.g \? k\.g\.split\('\|'\)\[1\] : null/.test(WK));
-t('page: the hero card, its engine, the guide store with a read-stamp, edits kept until the server confirms', /id="hmap-card"/.test(SP) && /fetch\('\/stock\/engine\.js'/.test(SP) && /'X-Sync-Base': String\(HM\.base \|\| 0\)/.test(SP) && /function hmReapply\(\)/.test(SP) && /HS\.map\(HM\.store, b, cen\)/.test(SP));
+t('page: the hero card, its engine, the guide store with a read-stamp, edits kept until the server confirms', /id="hmap-card"/.test(SP) && /fetch\('\/stock\/engine\.js'/.test(SP) && /'X-Sync-Base': String\(HM\.base \|\| 0\)/.test(SP) && /function hmReapply\(\)/.test(SP) && /HS\.map\(HM\.store, b, cen, tier\)/.test(SP));
+t('page: a PT tier control — every tier the census offers, the count of types on each, the card’s own default until one is picked', /id="hm-tiers" role="group"/.test(SP) && /HS\.tiers\(cen\), tier = hmTier\(cen\)/.test(SP) && /HS\.defaultTier\(cen\)/.test(SP)
+  && /'">Tier ' \+ x\.t \+ ' <span class="k">' \+ n0\(x\.types\) \+ '<\/span><\/button>'/.test(SP) && /\$\('#hm-tw2'\)\.hidden = ts\.length < 2;/.test(SP));
+t('page: the tier is remembered per brand on this device (never shared — a list set at a tier is what the team shares)', /recall\('fcc-stock-hmtier'\)/.test(SP) && /remember\('fcc-stock-hmtier', JSON\.stringify\(m\)\)/.test(SP) && /m\[hmBrand\(\)\] = t;/.test(SP));
+t('page: an inherited list says so (⤴ Tier N, where it came from in its tooltip); a row whose types read different lists says how many', /'">⤴ Tier ' \+ h\.up\.split\(' > '\)\.length \+ '<\/span>'/.test(SP) && /' types under it set their own'/.test(SP) && /function hmUp\(h\)/.test(SP));
+t('page: the type’s own level in bold, its tiers above on the line under; a master-only type and a type that goes no finer are named', /var parts = t\.k\.split\(' > '\), leaf = parts\.pop\(\);/.test(SP) && />master type<\/span>/.test(SP) && />no finer type<\/span>/.test(SP) && /parts\[0\] === HS\.MASTER_ONLY/.test(SP));
+t('page: figures whenever a list reaches any of the row’s types (not only its own)', /'<td class="num">' \+ \(m\.rows \? hmPcCell\(m\.in, m\.rows/.test(SP));
+t('page: the import matches every tier’s types; the sheet exports the tier on screen', /HS\.tiers\(cen\)\.forEach\(function \(x\) \{ HS\.tierTypes\(cen, x\.t\)/.test(SP) && /HS\.docRows\(HM\.store, b, hmCensus\(\), hmTier\(hmCensus\(\)\)\)/.test(SP));
+t('page: the note says where the types came from — the feed’s tree, and how the master was placed on it', /Product types are the Google Shopping feed’s own product_type tree: /.test(SP) && /Product types are the master’s own — no Google Shopping feed was read/.test(SP));
 t('page: import through the document parser, export through the sheet writer', /HS\.parseDoc\(rows\)/.test(SP) && /X\.download\(\[\{ name: 'Hero sizes'/.test(SP) && /accept="\.csv,\.xlsx,\.tsv,\.txt"/.test(SP));
 t('page: the held-back list reads the Google feed and the master through the worker and joins them in the engine', /fetch\('\/api\/feed\/proxy' \+ q/.test(SP) && /fetch\('\/api\/catalog\/master\/file' \+ q/.test(SP) && /E\.feedIndex\(\)/.test(SP) && /E\.heldBack\(feed\)/.test(SP));
 t('page: once per market on the forecast card, and in the panel; the CSV says what each row is', /hbOnce \? hbBtn\(m, 'hb-dl'\) : ''/.test(SP) && /hbBtn\(m, 'btn'\)/.test(SP) && /'style range completion %', 'google feed'\]/.test(SP) && /_held_back_products\.csv/.test(SP));
@@ -272,6 +393,8 @@ console.log('· the tripwire stub, the wiring, nothing committed');
 const RS = require('./rules_stub.js'), RB = RS.build();
 t('the stub builds its census with the REAL engine and serves the engine to the page', RB.hero && RB.hero.census.v === H.CENSUS_V && RB.hero.census.types.some((x) => x.fw) && /\/stock\/engine\.js/.test(RS.stubLines()) && /\/api\/rules\/hero/.test(RS.stubLines()));
 t('the stub’s markets carry their wired keys', RB.stock.markets.every((m) => m.wk && 'g' in m.wk));
+t('the stub’s census rides a synthetic Google feed tree: four tiers, a list set for a tier-2 branch, a master-only type', RB.hero.census.src === 'feed' && H.tiers(RB.hero.census).length >= 4 && RB.hero.census.types.some((x) => x.m)
+  && H.map(RB.hero.store, 'Superdry', RB.hero.census, 3).types.some((x) => x.h.up === 'Men > Clothing'));
 t('harness wired into qa_gate, presync and validate', /test_herosize\.mjs/.test(read('tools/qa_gate.sh')) && /test_herosize\.mjs/.test(read('tools/presync.sh')) && /test_herosize\.mjs/.test(read('.github/workflows/validate.yml')));
 let tracked = '';
 try { tracked = execSync('git ls-files', { cwd: new URL('..', import.meta.url).pathname }).toString(); } catch (e) { tracked = ''; }
