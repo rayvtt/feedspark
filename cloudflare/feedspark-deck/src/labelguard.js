@@ -819,7 +819,7 @@ export const ATTR_SPEC = [
   // g:product_type slots — so it is `house` (the page badges it as a FeedSpark standard, never as
   // Google's) and `derived` (no column is called "keywords"; it is READ per product across the
   // slots, see kwValueKind). Scored like any recommended attribute.
-  { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword phrases in g:product_type 2–10 — a hash or placeholder is not a keyword' },
+  { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
   { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
   { key: 'additional_image_link', req: 'rec', note: 'up to 10 — fuels image cycling' },
   { key: 'product_highlight', req: 'rec', note: '2–100 highlights — AI-surfaces read these' },
@@ -886,9 +886,17 @@ export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
    phrases start at slot 3, and YuMOVE carries #N/A on 65% — "any slot filled" reads those feeds
    100% / 100% / 99.7% / 75% keyworded against a real 37% / 22% / 50% / 11%. So a value only counts
    when it is a PHRASE: not a long hex id, not a spreadsheet placeholder. The coverage is the share
-   of products carrying at least one keyword phrase; `per` is how many phrases a keyworded product
-   carries, `hash` how many products hold an id in a keyword slot (named on the row, so the reading
-   explains itself). The Keyword Calendar's saturation reads the SAME rule (its twin is pinned).
+   of products carrying at least one keyword string; `hash` is how many products hold an id in a
+   keyword slot (named on the row, so the reading explains itself). The Keyword Calendar's
+   saturation reads the SAME rule (its twin is pinned).
+   THE UNIT IS THE STRING, NOT THE SLOT (Ray, 30 Sep 2026, on "3.5 phrases per keyworded product":
+   "keywords look like multiple phrases separated by chevrons … you could say, on average, how many
+   keyword strings there are per SKU"): FeedSpark writes each slot as a CHAIN — "superdry hoodie >
+   purple hoodie > mens hoodie > …" — so counting filled slots read Superdry GB as 3 when its
+   keyworded products carry 23 strings each. kwStrings counts the chevron-separated strings in a
+   slot; `strings` is the catalogue's total and `perSku` the average over EVERY product — the ones
+   with no keywords count as none, because an average over only the keyworded ones describes a
+   catalogue that does not exist.
    Only a per-product read can do this, so only the XML lanes measure it: the gviz sheet lane counts
    columns, so it reports the attribute ABSENT when the sheet has no keyword slots at all and leaves
    it UNMEASURED otherwise — never a column count that would call an id a keyword. */
@@ -902,6 +910,14 @@ export function kwValueKind(v) {
   if (KW_PLACEHOLDER.test(s)) return 'ph';
   return 'kw';
 }
+// how many keyword STRINGS a slot holds — the chevron-separated phrases, each one tested the same way
+// (an id or a placeholder between chevrons is not a keyword either)
+export function kwStrings(v) {
+  if (kwValueKind(v) !== 'kw') return 0;
+  let n = 0;
+  for (const part of String(v).split('>')) if (kwValueKind(part) === 'kw') n++;
+  return n;
+}
 // the keyword slots in a header: product_type(2..10), product_type2 or product_type_2 — never the tree
 export function kwSlotCols(headerRow) {
   const hits = [];
@@ -912,12 +928,12 @@ export function kwSlotCols(headerRow) {
   });
   return hits;
 }
-// the keywords attribute from a per-product tally {filled, phr, hash} over `rows` products
+// the keywords attribute from a per-product tally {filled, str, hash} over `rows` products
 export function keywordAttr(slotCount, k, rows) {
   if (!slotCount) return { present: false };
   const t = k || {};
   return { present: true, filled: t.filled || 0, cov: rows ? Math.min(100, Math.round(((t.filled || 0) / rows) * 1000) / 10) : 0,
-    slots: slotCount, per: t.filled ? Math.round((t.phr / t.filled) * 10) / 10 : 0, hash: t.hash || 0 };
+    slots: slotCount, strings: t.str || 0, perSku: rows ? Math.round(((t.str || 0) / rows) * 10) / 10 : 0, hash: t.hash || 0 };
 }
 
 /* ---- GPC CATEGORY SCOPE (Ray, 23 Sep 2026, on Hobbycraft's material 47.9% / pattern 43.9%:
@@ -1140,7 +1156,7 @@ export function xmlCollector(meta) {
   let ptSlots = [];
   const lblHist = {}, ptHist = {};
   let kwCols = [];                       // keyword slots (product_type 2..10), read per product
-  const kwT = { filled: 0, phr: 0, hash: 0 };
+  const kwT = { filled: 0, str: 0, hash: 0 };
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
@@ -1181,10 +1197,11 @@ export function xmlCollector(meta) {
         let pn = 0;
         for (const ci of ptSlots) if (String(r[ci] == null ? '' : r[ci]).trim() !== '') pn++;
         ptHist[pn] = (ptHist[pn] || 0) + 1;
-        // keywords: a product counts when a slot holds a PHRASE (an id or a placeholder is not one)
+        // keywords: a product counts when a slot holds a keyword STRING (an id or a placeholder is not
+        // one), and every chevron-separated string in every slot is counted
         let kn = 0, kh = 0;
-        for (const ci of kwCols) { const kind = kwValueKind(r[ci]); if (kind === 'kw') kn++; else if (kind === 'hash') kh = 1; }
-        if (kn) { kwT.filled++; kwT.phr += kn; }
+        for (const ci of kwCols) { const kind = kwValueKind(r[ci]); if (kind === 'kw') kn += kwStrings(r[ci]); else if (kind === 'hash') kh = 1; }
+        if (kn) { kwT.filled++; kwT.str += kn; }
         if (kh) kwT.hash++;
       }
       if (attrFilled) gsc.add(r);

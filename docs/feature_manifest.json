@@ -11317,6 +11317,24 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grkw.js",
       "pr": 0
+    },
+    {
+      "name": "Golden keywords: a slot is a chain — each chevron-separated keyword string is counted (Ray 30 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "for (const part of String(v).split('>')) if (kwValueKind(part) === 'kw') n++;",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: strings averaged over EVERY SKU, the unkeyworded counted as none",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "perSku: rows ? Math.round(((t.str || 0) / rows) * 10) / 10 : 0",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the row reads keyword strings per SKU; an old slot count is never shown as strings",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'strings per SKU counted on the next XML scan'",
+      "pr": 0
     }
   ]
 }
