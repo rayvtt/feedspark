@@ -171,8 +171,14 @@ console.log('── the page reads a move exactly as the engine records it');
   ok('same table, same answer, same order', twin && diff.length === 0, diff);
   ok('the page re-scores every reading with the SAME goldenScore + attrsFromCov the estate uses',
     /function hScore\(r, prof\) \{ return r \? goldenScore\(attrsFromCov\(r\.cov, r\.sc, r\.rows\), prof\) : null; \}/.test(page));
-  ok('a reading on another basis is never compared', /function hBasis\(a, b\) \{ return !!\(a && a\.sc\) === !!\(b && b\.sc\); \}/.test(page));
-  ok('the estate row\'s last move follows the same two rules', /function estMove\(f\)[\s\S]{0,400}!!f\.hp\.sc !== !!f\.sc[\s\S]{0,200}goldenScore\(attrsFromCov\(f\.hp\.cov, f\.hp\.sc, f\.hp\.rows\), profileForC\(f\.client\)\)/.test(page));
+  // the page's basis is the engine's: lifted by name and run over the same readings (scope on/off ×
+  // keywords measured or not — a reading from before 30 Sep 2026 never read keywords)
+  const spec = page.slice(page.indexOf('  var SPEC = ['), page.indexOf('  // the category each scoped'));
+  const hb = new Function(spec + page.match(/  function hBase\(r\) \{[\s\S]*?\n  \}\n/)[0] + '; return hBase;')();
+  const BASES = [{ cov: {} }, { cov: {}, sc: { color: 3 } }, { cov: { keywords: null } }, { cov: { keywords: 22.3 }, sc: { size: 0 } }, null];
+  ok('a reading on another basis is never compared — the page reads a basis exactly as the engine does',
+    BASES.every((r) => hb(r) === LG.histBasis(r)) && /function hBasis\(a, b\) \{ return hBase\(a\) === hBase\(b\); \}/.test(page), BASES.map((r) => [hb(r), LG.histBasis(r)]));
+  ok('the estate row\'s last move follows the same two rules', /function estMove\(f\)[\s\S]{0,400}if \(!hBasis\(f\.hp, f\)\) return null;[\s\S]{0,200}goldenScore\(attrsFromCov\(f\.hp\.cov, f\.hp\.sc, f\.hp\.rows\), profileForC\(f\.client\)\)/.test(page));
   ok('the card sits in the scorecard and is wired after every render', /h \+= histSection\(k, s\);/.test(page) && /wire\(k, s\);\n    histWire\(k\);/.test(page));
   ok('the client download keeps the chart and drops the hover furniture', /'\.hs\.hs-empty', '\.hs-tip', '\.hs-more', '\.hs-svg \.hit',/.test(page) && /\.hs-rng button'\), function \(b\)/.test(page));
   ok('the PDF hides the same furniture', /body\.pdf \.hs-rng button:not\(\.on\),body\.pdf \.hs-more,body\.pdf \.hs-tip,body\.pdf \.hs\.hs-empty\{display:none!important\}/.test(page));

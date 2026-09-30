@@ -933,6 +933,63 @@ monitoring, not the daily tracker.
 `tools/check_grhist.js` renders a hand-run day followed by an automatic one, and the content
 quality view.
 
+### 9.14 Keywords in the Golden Score (30 Sep 2026)
+
+Ray: *"add keywords fields (product_type2,3,4,5,6,7,8,9) to the golden score mix also?"*
+
+FeedSpark's keyword injection writes phrases into the numbered `g:product_type` slots. Slot 1 (or
+the bare column) is the category tree and slots 2–10 hold the keywords. The Golden Score now carries
+one attribute for them, **keywords**: the share of products carrying at least one keyword phrase.
+
+**A filled slot is not a keyword.** Sampled on the live estate before building:
+
+| Feed | Real keyword coverage | "Any slot filled" | Why they differ |
+|---|---|---|---|
+| Schuh GB | 36.7% | 100% | a 32-character hex id in slot 2 on every product |
+| Reiss GB | 22.3% | 100% | the same id in slot 2 |
+| Hobbycraft GB | 49.8% | 99.7% | the same id in slot 2 |
+| YuMOVE GB | 10.6% | 75.3% | `#N/A` in slot 2 on 65% |
+
+So a value only counts when it is a phrase. `kwValueKind` (labelguard.js) rejects a hex id of 24+
+characters and spreadsheet placeholders (`#N/A`, `N/A`, `null`, `-`, `0`, `#REF!` …). The row names
+how many products carry an id, so the reading explains itself.
+
+**Three states, never blurred:**
+
+- **Measured** — the XML scan reads every product (`xmlCollector` → `keywordAttr`: coverage,
+  phrases per keyworded product, products carrying an id). Every XML lane measures it: the 4×-daily
+  agent, the 09:00 UK run and the page's live scan.
+- **Absent** — the feed has no keyword slots at all. Scored at 0, like any recommended attribute
+  the feed does not carry. The sheet (gviz) lane can say this much from the header.
+- **Not measured** — the sheet lane when keyword slots exist (a column count cannot tell a phrase
+  from an id), and every snapshot or reading from before 30 Sep. Left OUT of the score, never
+  counted as missing. In the index this is the key being absent from `cov`; measured-absent is `null`.
+
+**Scoring.** `rec` tier, ×1; ★ in the profile editor lifts it to ×2, and it can be waived per brand
+or industry. It is `house: true`: the page badges it **FeedSpark**, never as a Google specification
+attribute. Its row has one action, **→ Brief**, which opens a keyword brief (`cat keyword`, task
+*Keywords Optimisation - Catalogue coverage - <Brand> <MKT> - …*). There is no client ask and no PDP
+scan, because keywords are FeedSpark's own work.
+
+**History.** Readings from before 30 Sep never read keywords, so `histBasis` (engine) and `hBase`
+(page twin) include "which derived attributes were read". The first measured scan is a change of
+measurement: recorded, never drawn as a move. The estate's last-move chip, the Score history card and
+Leadership's portfolio all start the comparison there. `diffCoverage` raises nothing against a
+baseline that never measured keywords.
+
+**Live impact on 30 Sep 2026** (default profiles): Golden Scores move 1 to 2.2 points (Schuh GB
+86.6 → 85.6, Reiss GB 91.7 → 90.2, YuMOVE GB 89.9 → 87.7, Monsoon GB 93.8 → 92.0).
+
+**The Keyword Calendar reads the same rule.** Its saturation counted any filled slot, which is why
+Reiss read "100% keyword saturation" on 21 Sep. Both of its stream loops now use `kwKind` (a twin of
+`kwValueKind`, held to one table by tools/test_labelguard.mjs). A stored reading without `v:2` says
+it was measured before ids were excluded until it is re-synced.
+
+**Harnesses.** tools/test_labelguard.mjs (the value table, slot resolution, the collector on a real
+XML stream, the three states through index/history/score, basis, alerts, the KWCal twin) and
+tools/check_grkw.js (Playwright, presync: the row in each state, the dial against the engine's
+score, → Brief opening a keyword brief).
+
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 
 Ray: *"Should there be an additional interface for AM only to view these charts across their
