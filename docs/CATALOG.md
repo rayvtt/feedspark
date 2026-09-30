@@ -290,3 +290,30 @@ Harness:
 - `tools/test_catalog.mjs` covers the optimised/not word matching (FeedHero writes "Optimized" /
   "Non Optimized"), the registry, the preset and deep link, the fee never leaving the device, and the
   class collision.
+
+## Column filters (30 Sep 2026)
+
+Ray: *"in catalog - allow filtering by column values as well"*.
+
+Every filterable column header carries a **▾** that opens a filter, as in a spreadsheet:
+
+- **Values.** Brand, availability, product type, colour, size, gender, custom labels, FeedSpark stamps, first-seen
+  month and so on list their values, each with how many products carry it. Untick to hide, **find** narrows the
+  list, and **Select all** / **Clear** act on what the find box shows.
+- **A number range** for price, sale price, completeness, ROAS, variants, image count, title length and the Google
+  Ads columns. Once a bound is set, a product with no value is left out.
+- **Text** (contains, doesn't contain, has a value, is blank) for ID, title, GTIN, MPN and item group, where nearly
+  every value is unique.
+
+A column's list is counted from what the **other** filters leave, never its own. Ticking Navy under Colour never
+hides Colour's other values from the list, which is how Excel behaves.
+
+Filters combine with the tab, the quick chips, a module facet and the search. Each one is a chip beside the search
+with its own ✕, and **Clear column filters** appears when there are two or more. The CSV, the ID copy and → Brief
+take the filtered view, and their description line names every filter. Filters reset when the market changes.
+
+The pop-up is fixed to the window and follows its ▾ when the table scrolls. A click that scrolls a column into view
+must not close it. Each filterable column is 18px wider so the ▾ never pushes its label into an ellipsis.
+
+Harness: the column-filter block in `tools/check_catalog.js`. The value counts are checked against an independent
+count, a filter against the rows it leaves, and a range combined with text.

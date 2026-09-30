@@ -440,6 +440,13 @@ console.log('· size runs read off the master (a feed that drops out-of-stock si
   t('every master row joins its group\'s run, in the feed or not', /E\.runAdd\(run, gc\[0\]\.v, E\.stockOf\(/.test(PG));
   t('an all-in-stock feed with no master says it cannot show a broken run, rather than 100%', /the feed alone cannot show a broken size run/.test(PG));
 }
+console.log('· column filters (a ▾ on a header filters by that column\'s values)');
+t('the view passes every column filter', /!passFacet\(i\) \|\| !passCF\(i\)\) continue;/.test(PG));
+t('a column\'s value list is counted without its OWN filter (the spreadsheet rule)', /!passCF\(i, skip\)/.test(PG) && /base = cfBase\(k\)/.test(PG));
+t('three kinds: values, a number range, text for near-unique columns', /var CF_TXT = \{ id: 1, title: 1, gtin: 1, mpn: 1, group: 1 \}/.test(PG) && /\? 'txt' : \(c\.num && c\.k !== 'dob'\) \? 'rng' : 'set'/.test(PG));
+t('every column filter is a chip with its own ✕, and the export/brief line names it', /data-cfx="' \+ k \+ '"/.test(PG) && /Object\.keys\(S\.cf \|\| \{\}\)\.forEach\(function \(k\) \{ parts\.push\(cfLabel\(k\)\); \}\);/.test(PG));
+t('the pop-up follows its ▾ on scroll rather than closing', /\$\('gw'\)\.addEventListener\('scroll', cfPlace/.test(PG));
+t('column filters reset with the market', /S\.facet = null; S\.cf = \{\};/.test(PG));
 console.log('· the commercial view (a buyer choosing between feed vendors)');
 {
   const lift = (name) => { const i = PG.indexOf('function ' + name + '('); let d = 0, j = PG.indexOf('{', i); for (; j < PG.length; j++) { if (PG[j] === '{') d++; else if (PG[j] === '}' && !--d) break; } return PG.slice(i, j + 1); };

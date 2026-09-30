@@ -312,6 +312,34 @@ window.addEventListener('load',restore);
   .tr.th .td:hover{color:var(--ink)}
   .tr.th .td.srt{color:var(--orange-deep)}
   .tr.th .td.pin{z-index:4}
+  /* column filters — a ▾ on every filterable header opens its values (Ray, 30 Sep 2026: "allow filtering by column values as well") */
+  .tr.th .td .cfb{margin-left:auto;flex:none;width:20px;height:20px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;font-size:11px;cursor:pointer;opacity:.55;padding:0}
+  .tr.th .td:hover .cfb,.tr.th .td .cfb:focus-visible{opacity:1}
+  .tr.th .td .cfb:hover{background:var(--line);color:var(--ink)}
+  .tr.th .td .cfb.on{opacity:1;background:var(--orange-deep);color:#fff}
+  .tr.th .td.cfon{color:var(--orange-deep)}
+  .tr.th .td .thl{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .tr.th .td.num .thl{margin-left:auto}
+  .tr.th .td.num .cfb{margin-left:0}
+  .cfp{position:fixed;z-index:60;width:min(300px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink)}
+  .cfp h4{margin:0 0 8px;font-size:12px;font-weight:900}
+  .cfp input[type=search],.cfp input[type=number],.cfp input[type=text],.cfp select{width:100%;box-sizing:border-box;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font:inherit;font-size:13px;background:var(--paper);color:var(--ink)}
+  .cfp .cfl{max-height:240px;overflow:auto;margin:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 0}
+  .cfp .cfl label{display:flex;align-items:center;gap:8px;padding:3px 2px;cursor:pointer;min-width:0}
+  .cfp .cfl label span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cfp .cfl label small{color:var(--muted);font-variant-numeric:tabular-nums}
+  .cfp .cfa{display:flex;gap:12px;font-size:12px}
+  .cfp .cfa button{border:0;background:none;color:var(--orange-deep);font:inherit;font-weight:700;cursor:pointer;padding:0}
+  .cfp .cfr{display:flex;gap:8px;margin:8px 0}
+  .cfp .cff{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+  .cfp .cfn{color:var(--muted);font-size:12px;margin:4px 0}
+  .cfp .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .cfp .btn[disabled]{opacity:.45;cursor:default}
+  .cfchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;height:28px;padding:0 6px 0 10px;border-radius:100px;background:var(--wash);border:1px solid var(--line);color:var(--ink);max-width:260px}
+  .cfchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cfchip button,.cfclr{border:0;background:none;cursor:pointer;color:var(--muted);font:inherit;padding:0 2px}
+  .cfclr{font-size:12px;font-weight:700;color:var(--orange-deep)}
+  #facet{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
   .tr.row:hover{background:var(--hov)}
   .tr.row.cur{background:var(--cur)}
   .tr.row.cur .td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
@@ -682,6 +710,7 @@ window.addEventListener('load',restore);
     <div class="tbx">
       <input class="q" id="q" type="search" placeholder="Search ID, title, GTIN…  brand:reiss  colour:navy,black  -avail:out   ( / )" aria-label="Search products" autocomplete="off" spellcheck="false">
       <span id="facet"></span>
+      <div class="cfp" id="cfp" role="dialog" aria-label="Filter this column" hidden></div>
       <span class="seg" id="mode" role="group" aria-label="View"><button type="button" data-m="table" class="on" title="Table">☰ Table</button><button type="button" data-m="grid" title="Grid">▦ Grid</button></span>
       <span class="seg" id="dens" role="group" aria-label="Row height"><button type="button" data-d="s" title="Compact">S</button><button type="button" data-d="m" class="on" title="Regular">M</button><button type="button" data-d="l" title="Comfortable">L</button></span>
       <span class="pop"><button class="btn" id="cols-b" type="button" aria-expanded="false">⊞ Columns</button><div class="popb" id="cols-p" hidden></div></span>
@@ -770,7 +799,7 @@ window.addEventListener('load',restore);
   // ---- state -------------------------------------------------------------------------------------------------
   var S = {
     gen: 0, ctl: null, roster: {}, client: '', mkt: '', chan: 'google', entry: null,
-    prods: [], fx: [], ixO: new Map(), ixI: new Map(), grp: null, rr: null,
+    prods: [], fx: [], ixO: new Map(), ixI: new Map(), grp: null, rr: null, cf: {},
     out: { st: 'idle' }, m: { st: 'idle' }, roas: { st: 'idle', segs: {} }, stk: { st: 'idle' }, ads: { st: 'idle' },
     codes: [], comp: [], att: null, linAt: 0, linDone: false, mx: null, mxw: null, mxN: 0, sum: null,
     view: [], sort: { k: '', d: 1 }, q: '', tab: 'all', quick: {}, facet: null, counts: null,
@@ -934,7 +963,7 @@ window.addEventListener('load',restore);
     S.prods = []; S.fx = []; S.ixO = new Map(); S.ixI = new Map(); S.grp = null; S.run = null; S.gm = {}; S.rr = null; S.live = {};
     S.codes = []; S.comp = []; S.att = null; S.linAt = 0; S.linDone = false; S.spw = null; S.pb = null; S.dl = null; S.mx = null; S.mxw = null; S.mxN = 0; S.sum = null; S.counts = null;
     S.out = { st: 'loading', bytes: 0, total: 0, t0: Date.now() }; S.m = { st: 'idle' }; S.roas = { st: 'idle', segs: {} }; S.ads = { st: 'idle' };
-    S.view = []; S.facet = null; S.sel = -1; closeInsp(true); S.ver++;
+    S.view = []; S.facet = null; S.cf = {}; S.sel = -1; closeInsp(true); S.ver++;
     if (S.tab === 'gone') S.tab = 'all';
     renderFacet(); renderTabs(); renderQuick(); renderKpis(); renderStatus();
     $('arr-body').innerHTML = '<div class="empty2">Reading the feed…</div>';
@@ -1395,6 +1424,161 @@ window.addEventListener('load',restore);
     }
     return true;
   }
+
+  // ---- COLUMN FILTERS (Ray, 30 Sep 2026: "in catalog - allow filtering by column values as well") ------------------------
+  // The spreadsheet habit: a ▾ on a column's header lists the values in that column, with how many products carry each,
+  // tick the ones to keep. Three kinds, picked by what the column holds: a list of values (brand, colour, availability,
+  // custom labels…), a number range (price, completeness, ROAS…) and, for columns where nearly every value is unique
+  // (ID, title, GTIN), a text test. The value counts are read from the products the OTHER filters leave — ticking
+  // "Navy" under Colour never hides Colour's own other values from the list, which is how Excel does it. Filters combine
+  // with the tab, the quick chips, a module facet and the search; every one is a chip beside the search with its own ✕.
+  var CF_TXT = { id: 1, title: 1, gtin: 1, mpn: 1, group: 1 };
+  var CF_NO = { img: 1, lin: 1, link: 1 };
+  var AV_LBL = { in_stock: 'In stock', out_of_stock: 'Out of stock', preorder: 'Preorder', backorder: 'Backorder' };
+  var CF_BLANK = '(blank)';
+  function cfCol(k) { return COLS.filter(function (c) { return c.k === k; })[0] || { k: k, l: k }; }
+  function cfKind(c) { return CF_NO[c.k] ? null : CF_TXT[c.k] ? 'txt' : (c.num && c.k !== 'dob') ? 'rng' : 'set'; }
+  function cfBtn(c) {
+    if (S.tab === 'gone' || !cfKind(c)) return '';
+    var on = !!(S.cf && S.cf[c.k]);
+    return '<button type="button" class="cfb' + (on ? ' on' : '') + '" data-cf="' + c.k + '" title="' + (on ? 'Filtered — change or clear' : 'Filter by value') + '" aria-label="Filter ' + esc(c.l) + '">▾</button>';
+  }
+  function cfPlain(v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); }
+  // the values one product shows in a column (a list: a product can carry several stamps)
+  function cfVals(k, i) {
+    var p = S.prods[i], x = S.fx[i], f = p.f, v;
+    switch (k) {
+      case 'avail': return [AV_LBL[x.av] || cfPlain(x.av) || CF_BLANK];
+      case 'type': return [cfPlain(E.plain(x.pt)) || CF_BLANK];
+      case 'opti': var o = p.opti || {}, on = E.OPTI_KEYS.filter(function (q) { return o[q.k]; }).map(function (q) { return q.l; }); return on.length ? on : ['(none)'];
+      case 'dob': return [x.dob != null ? new Date(x.dob).toISOString().slice(0, 7) : CF_BLANK];
+      case 'chg': return [String(sv('chg', i) == null ? CF_BLANK : sv('chg', i))];
+      default:
+        if (!FIELD[k]) { v = sv(k, i); return [v == null || v === '' ? CF_BLANK : String(v)]; }
+        v = f[FIELD[k]]; var a = (Array.isArray(v) ? v : [v]).map(function (y) { return cfPlain(E.plain(y)); }).filter(Boolean);
+        return a.length ? a : [CF_BLANK];
+    }
+  }
+  function cfText(k, i) { var p = S.prods[i], f = p.f; return (k === 'id' ? String(p.id) : k === 'title' ? E.plain(f.title) : cfPlain(E.plain(f[FIELD[k]]))).toLowerCase(); }
+  function cfHit(k, F, i) {
+    if (F.t === 'set') { var vs = cfVals(k, i); for (var j = 0; j < vs.length; j++) if (F.v.has(vs[j])) return true; return false; }
+    if (F.t === 'rng') { var n = sv(k, i); if (n == null || n === '' || !isFinite(n)) return false; return (F.lo == null || n >= F.lo) && (F.hi == null || n <= F.hi); }
+    var t = cfText(k, i);
+    if (F.op === 'blank') return !t; if (F.op === 'any') return !!t;
+    var h = !!F.q && t.indexOf(F.q.toLowerCase()) >= 0; return F.op === 'not' ? !h : h;
+  }
+  function passCF(i, skip) {
+    var cf = S.cf; if (!cf) return true;
+    for (var k in cf) if (k !== skip && !cfHit(k, cf[k], i)) return false;
+    return true;
+  }
+  function cfLabel(k) {
+    var F = S.cf[k], l = cfCol(k).l || k; if (!F) return l;
+    if (F.t === 'set') { var a = Array.from(F.v); return l + ': ' + a.slice(0, 2).join(', ') + (a.length > 2 ? ' +' + (a.length - 2) : ''); }
+    if (F.t === 'rng') return l + ': ' + (F.lo != null && F.hi != null ? F.lo + '–' + F.hi : F.lo != null ? '≥ ' + F.lo : '≤ ' + F.hi);
+    return l + ': ' + (F.op === 'blank' ? 'is blank' : F.op === 'any' ? 'has a value' : (F.op === 'not' ? 'doesn’t contain ' : 'contains ') + '“' + F.q + '”');
+  }
+  function cfApplied() { $('cfp').hidden = true; renderFacet(); layout(); refresh(true); }
+  // the population a column's list is counted from: everything the view would hold without THIS column's own filter
+  function cfBase(skip) {
+    var out = [], q = parseQ(S.q);
+    for (var i = 0; i < S.prods.length; i++) {
+      if (!passTab(i, S.tab) || !passQuick(i) || !passFacet(i) || !passCF(i, skip)) continue;
+      var ok = true; for (var u = 0; u < q.length && ok; u++) { var hit = termHit(i, q[u]); if (q[u].neg ? hit : !hit) ok = false; }
+      if (ok) out.push(i);
+    }
+    return out;
+  }
+  var CFW = null;   // the open pop-up's working state
+  function cfOpen(k, btn) {
+    var c = cfCol(k), kind = cfKind(c), pop = $('cfp'), F = S.cf[k], base = cfBase(k), h = '<h4>' + esc(c.l) + '</h4>';
+    CFW = { k: k, kind: kind };
+    if (kind === 'set') {
+      var cnt = new Map(); base.forEach(function (i) { cfVals(k, i).forEach(function (v) { cnt.set(v, (cnt.get(v) || 0) + 1); }); });
+      var vals = Array.from(cnt.keys()).sort(function (a, b) { return k === 'dob' ? (a < b ? 1 : -1) : (cnt.get(b) - cnt.get(a)) || (a < b ? -1 : 1); });
+      if (F) F.v.forEach(function (v) { if (!cnt.has(v)) { cnt.set(v, 0); vals.push(v); } });   // a kept value the others now hide stays listed at 0
+      CFW.vals = vals; CFW.cnt = cnt; CFW.sel = new Set(F ? Array.from(F.v) : vals); CFW.find = '';
+      h += '<input type="search" id="cf-q" placeholder="Find a value…" aria-label="Find a value" autocomplete="off">' +
+        '<div class="cfa" style="margin-top:8px"><button type="button" data-cfa="all">Select all</button><button type="button" data-cfa="none">Clear</button><span class="cfn" id="cf-n" style="margin:0 0 0 auto"></span></div>' +
+        '<div class="cfl" id="cf-l"></div>';
+    } else if (kind === 'rng') {
+      var lo = Infinity, hi = -Infinity; base.forEach(function (i) { var n = sv(k, i); if (n != null && n !== '' && isFinite(n)) { if (n < lo) lo = n; if (n > hi) hi = n; } });
+      var ph = function (n) { return isFinite(n) ? String(Math.round(n * 100) / 100) : ''; };
+      h += '<div class="cfr"><input type="number" id="cf-lo" step="any" placeholder="Min ' + ph(lo) + '" aria-label="Minimum" value="' + (F && F.lo != null ? F.lo : '') + '"><input type="number" id="cf-hi" step="any" placeholder="Max ' + ph(hi) + '" aria-label="Maximum" value="' + (F && F.hi != null ? F.hi : '') + '"></div>' +
+        '<div class="cfn">' + (isFinite(lo) ? 'This view runs ' + ph(lo) + ' to ' + ph(hi) + '. A product with no value is left out once a bound is set.' : 'No product in this view has a value here.') + '</div>';
+    } else {
+      var op = F ? F.op : 'has';
+      h += '<div class="cfr"><select id="cf-op" aria-label="Condition" style="flex:none;width:auto">' + [['has', 'Contains'], ['not', 'Doesn’t contain'], ['any', 'Has a value'], ['blank', 'Is blank']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === op ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
+        '<input type="text" id="cf-t" placeholder="Text…" aria-label="Text" value="' + esc(F && F.q || '') + '"' + (op === 'any' || op === 'blank' ? ' disabled' : '') + '></div>';
+    }
+    h += '<div class="cff"><button type="button" class="btn" data-cfa="reset"' + (F ? '' : ' disabled') + '>Clear filter</button><button type="button" class="btn pri" data-cfa="apply">Apply</button></div>';
+    pop.innerHTML = h; pop.hidden = false;
+    if (kind === 'set') cfList();
+    CFW.btn = btn; cfPlace();
+    var first = pop.querySelector('#cf-q,#cf-lo,#cf-t,#cf-op'); if (first) first.focus();
+  }
+  // placed under the ▾, kept inside the window; the header scrolls inside the table, so the pop-up is fixed to the
+  // viewport and FOLLOWS its ▾ when the table or page scrolls (a click that scrolls the column into view must not close it)
+  function cfPlace() {
+    var pop = $('cfp'); if (pop.hidden || !CFW) return;
+    var b = document.querySelector('#gh [data-cf="' + CFW.k + '"]') || CFW.btn; if (!b) { pop.hidden = true; return; }
+    var r = b.getBoundingClientRect(), w = pop.offsetWidth, hh = pop.offsetHeight;
+    var left = Math.max(12, Math.min(r.right - w, window.innerWidth - w - 12)), top = r.bottom + 6;
+    if (top + hh > window.innerHeight - 8) top = Math.max(8, r.top - hh - 6);
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  }
+  function cfList() {
+    var W = CFW, f = W.find.toLowerCase(), shown = W.vals.filter(function (v) { return !f || v.toLowerCase().indexOf(f) >= 0; }), CAP = 400;
+    $('cf-l').innerHTML = shown.slice(0, CAP).map(function (v) {
+      return '<label><input type="checkbox" data-cfv="' + esc(v) + '"' + (W.sel.has(v) ? ' checked' : '') + '><span title="' + esc(v) + '">' + esc(v) + '</span><small>' + n0(W.cnt.get(v) || 0) + '</small></label>';
+    }).join('') + (shown.length > CAP ? '<div class="cfn">' + n0(shown.length - CAP) + ' more — find a value to narrow the list</div>' : '') + (!shown.length ? '<div class="cfn">No value matches.</div>' : '');
+    $('cf-n').textContent = n0(W.sel.size) + ' of ' + n0(W.vals.length);
+    W.shown = shown;
+  }
+  $('cfp').addEventListener('input', function (e) {
+    if (e.target.id === 'cf-q') { CFW.find = e.target.value; cfList(); }
+    if (e.target.id === 'cf-op') { var t = $('cf-t'); t.disabled = /^(any|blank)$/.test(e.target.value); }
+  });
+  $('cfp').addEventListener('change', function (e) {
+    var v = e.target.getAttribute && e.target.getAttribute('data-cfv'); if (v == null) return;
+    if (e.target.checked) CFW.sel.add(v); else CFW.sel.delete(v);
+    $('cf-n').textContent = n0(CFW.sel.size) + ' of ' + n0(CFW.vals.length);
+  });
+  $('cfp').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.stopPropagation(); $('cfp').hidden = true; return; }
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') { e.preventDefault(); cfCommit(); }
+  });
+  $('cfp').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cfa]'); if (!b) return; var a = b.getAttribute('data-cfa'), W = CFW;
+    // "Select all" / "Clear" act on the values the find box is showing, as a spreadsheet's do
+    if (a === 'all') { (W.shown || W.vals).forEach(function (v) { W.sel.add(v); }); cfList(); }
+    else if (a === 'none') { (W.shown || W.vals).forEach(function (v) { W.sel.delete(v); }); cfList(); }
+    else if (a === 'reset') { delete S.cf[W.k]; cfApplied(); }
+    else if (a === 'apply') cfCommit();
+  });
+  function cfCommit() {
+    var W = CFW, k = W.k, F = null;
+    if (W.kind === 'set') {
+      // a find box narrowing the list keeps only the ticked values it shows — what the reader was looking at
+      var keep = W.find ? W.shown.filter(function (v) { return W.sel.has(v); }) : Array.from(W.sel);
+      F = keep.length === W.vals.length && !W.find ? null : { t: 'set', v: new Set(keep) };
+    } else if (W.kind === 'rng') {
+      var lo = $('cf-lo').value, hi = $('cf-hi').value;
+      lo = lo === '' ? null : +lo; hi = hi === '' ? null : +hi;
+      if (lo != null && hi != null && lo > hi) { var t = lo; lo = hi; hi = t; }
+      F = lo == null && hi == null ? null : { t: 'rng', lo: lo, hi: hi };
+    } else {
+      var op = $('cf-op').value, q = $('cf-t').value.trim();
+      F = (op === 'has' || op === 'not') && !q ? null : { t: 'txt', op: op, q: q };
+    }
+    if (F) S.cf[k] = F; else delete S.cf[k];
+    cfApplied();
+  }
+  document.addEventListener('mousedown', function (e) { var p = $('cfp'); if (!p.hidden && !p.contains(e.target) && !e.target.closest('[data-cf]')) p.hidden = true; });
+  $('gw').addEventListener('scroll', cfPlace, { passive: true });
+  window.addEventListener('scroll', cfPlace, { passive: true });
+  window.addEventListener('resize', cfPlace);
+
   function compute() {
     var out = [], q = parseQ(S.q);
     if (S.tab === 'gone') {
@@ -1402,7 +1586,7 @@ window.addEventListener('load',restore);
       for (var j = 0; j < L.length; j++) { var ok = true; for (var t = 0; t < q.length && ok; t++) { var h = lightHit(L[j], q[t]); if (q[t].neg ? h : !h) ok = false; } if (ok) out.push(j); }
     } else {
       for (var i = 0; i < S.prods.length; i++) {
-        if (!passTab(i, S.tab) || !passQuick(i) || !passFacet(i)) continue;
+        if (!passTab(i, S.tab) || !passQuick(i) || !passFacet(i) || !passCF(i)) continue;
         var ok2 = true;
         for (var u = 0; u < q.length && ok2; u++) { var hit = termHit(i, q[u]); if (q[u].neg ? hit : !hit) ok2 = false; }
         if (ok2) out.push(i);
@@ -2290,9 +2474,15 @@ window.addEventListener('load',restore);
   $('quick').addEventListener('click', function (e) { var b = e.target.closest('[data-q]'); if (!b || b.disabled) return; var k = b.getAttribute('data-q'); if (S.quick[k]) delete S.quick[k]; else S.quick[k] = 1; renderQuick(); refresh(true); });
   function setFacet(f) { S.facet = f; renderFacet(); refresh(true); renderArrivals(); if (S.roas.st === 'ok') renderRoasChart(); renderMods(); }
   function renderFacet() {
-    $('facet').innerHTML = S.facet ? '<span class="facet">' + esc(S.facet.label) + '<button type="button" title="Clear" aria-label="Clear this filter">✕</button></span>' : '';
+    var ks = Object.keys(S.cf || {});
+    $('facet').innerHTML = (S.facet ? '<span class="facet">' + esc(S.facet.label) + '<button type="button" data-fx="1" title="Clear" aria-label="Clear this filter">✕</button></span>' : '') +
+      ks.map(function (k) { var l = cfLabel(k); return '<span class="cfchip" title="' + esc(l) + '"><span>' + esc(l) + '</span><button type="button" data-cfx="' + k + '" aria-label="Clear the ' + esc(cfCol(k).l) + ' filter">✕</button></span>'; }).join('') +
+      (ks.length > 1 ? '<button type="button" class="cfclr" data-cfx="*">Clear column filters</button>' : '');
   }
-  $('facet').addEventListener('click', function (e) { if (e.target.closest('button')) setFacet(null); });
+  $('facet').addEventListener('click', function (e) {
+    var x = e.target.closest('[data-cfx]'); if (x) { var k = x.getAttribute('data-cfx'); if (k === '*') S.cf = {}; else delete S.cf[k]; cfApplied(); return; }
+    if (e.target.closest('[data-fx]')) setFacet(null);
+  });
   var QT = 0;
   $('q').addEventListener('input', function () { var v = this.value; clearTimeout(QT); QT = setTimeout(function () { S.q = v; refresh(true); }, 140); });
   function paintSegs() {
@@ -2328,16 +2518,18 @@ window.addEventListener('load',restore);
     var cols = S.tab === 'gone' ? GONE_COLS : COLS.filter(colOn), left = 0, last = null;
     cols.forEach(function (c) { if (c.pin) { c._l = left; left += c.w; last = c; } });
     S.vc = cols; S.lastPin = last;
-    gw.style.setProperty('--cols', cols.map(function (c) { return c.w + 'px'; }).join(' '));
+    // a filterable column is 18px wider than its label needs, so the ▾ never pushes the label into an ellipsis
+    gw.style.setProperty('--cols', cols.map(function (c) { return (c.w + (!c.pin && S.tab !== 'gone' && cfKind(c) ? 18 : 0)) + 'px'; }).join(' '));
     var grid = S.mode === 'grid' && S.tab !== 'gone';
     $('gh').hidden = grid;
     $('gh').innerHTML = cols.map(function (c) {
       var srt = c.s && S.sort.k === c.s;
-      return '<div class="td' + (c.num ? ' num' : '') + (c.pin ? ' pin' : '') + (c === last ? ' last' : '') + (c.s ? '' : ' nos') + (srt ? ' srt' : '') + '" data-s="' + (c.s || '') + '"' + (c.pin ? ' style="left:' + c._l + 'px"' : '') + ' title="' + esc(c.tip || (c.s ? 'Sort by ' + c.l : c.l)) + '">' + esc(c.l) + (srt ? (S.sort.d > 0 ? ' ▲' : ' ▼') : '') + '</div>';
+      return '<div class="td' + (c.num ? ' num' : '') + (c.pin ? ' pin' : '') + (c === last ? ' last' : '') + (c.s ? '' : ' nos') + (srt ? ' srt' : '') + (S.cf && S.cf[c.k] ? ' cfon' : '') + '" data-s="' + (c.s || '') + '"' + (c.pin ? ' style="left:' + c._l + 'px"' : '') + ' title="' + esc(c.tip || (c.s ? 'Sort by ' + c.l : c.l)) + '"><span class="thl">' + esc(c.l) + (srt ? (S.sort.d > 0 ? ' ▲' : ' ▼') : '') + '</span>' + cfBtn(c) + '</div>';
     }).join('');
     S.ra = S.rb = -1;
   }
   $('gh').addEventListener('click', function (e) {
+    var fb = e.target.closest('[data-cf]'); if (fb) { e.stopPropagation(); cfOpen(fb.getAttribute('data-cf'), fb); return; }
     var el = e.target.closest('[data-s]'); if (!el) return; var k = el.getAttribute('data-s'); if (!k) return;
     if (S.sort.k === k) { if (S.sort.d > 0) S.sort.d = -1; else S.sort = { k: '', d: 1 }; } else S.sort = { k: k, d: (k === 'dob' || k === 'comp' || k === 'roas' || k === 'chg' || k === 'sale' || k === 'var' || /^a7/.test(k)) ? -1 : 1 };
     layout(); refresh(false);
@@ -2826,6 +3018,7 @@ window.addEventListener('load',restore);
     var parts = [(TABS.filter(function (t) { return t[0] === S.tab; })[0] || [0, 'All'])[1]];
     Object.keys(S.quick).forEach(function (k) { parts.push((QUICK.filter(function (q) { return q[0] === k; })[0] || [0, k])[1]); });
     if (S.facet) parts.push(S.facet.label);
+    Object.keys(S.cf || {}).forEach(function (k) { parts.push(cfLabel(k)); });
     if (S.q) parts.push('“' + S.q + '”');
     return parts.join(' · ');
   }
