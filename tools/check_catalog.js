@@ -81,7 +81,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const st = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); return { n: S.prods.length, by: S.m.by.size, light: S.m.light.length, join: S.m.join, field: S.roas.field, miss: S.roas.miss, rows: document.querySelectorAll('#vr .tr.row').length }; });
     ok('the feed streamed every product', st.n === want.n, st.n);
     ok('the master joined on the column the data says: g:id ↔ fs_data_original_id → master `id`, not the parent product_id', st.by === want.n && st.join && st.join.h === 'id' && st.join.on === 'fs_data_original_id', st.join);
-    ok('master-only products are counted for "Not in feed"', st.light === 4, st.light);
+    ok('master-only products are counted for "Not in feed" (incl. the out-of-stock sizes the feed leaves out)', st.light === 4 + STUBS.HELD.length, st.light);
     ok('the table draws rows', st.rows > 0 && st.rows <= want.n, st.rows);
     const reTyped = prods.filter((p) => p.f.product_type && !want.treeHas(p.f.product_type)).length;
     ok('categories read on product_type; a re-typed product is counted as NOT in the ROAS tree (no ancestor stands in)', st.field === 'product_type' && st.miss === reTyped && reTyped > 0, { field: st.field, miss: st.miss, reTyped });
@@ -188,7 +188,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('search grammar: a comma list OR-s, a minus excludes', await view() === wantQ && wantQ > 0, { page: await view(), want: wantQ });
     await pg.fill('#q', ''); await pg.waitForTimeout(300);
     await pg.click('#tabs [data-tab="gone"]'); await pg.waitForTimeout(300);
-    ok('"Not in feed" lists the master-only products', await view() === 4 && (await pg.evaluate(() => document.querySelector('#vr .tr.row') && document.querySelector('#vr .tr.row').textContent)).indexOf('M-OLD-') >= 0);
+    ok('"Not in feed" lists the master-only products', await view() === 4 + STUBS.HELD.length && (await pg.evaluate(() => [...document.querySelectorAll('#vr .tr.row')].map((r) => r.textContent).join('|'))).indexOf('M-OLD-') >= 0
+      && (await pg.evaluate(() => [...document.querySelectorAll('#vr .tr.row')].map((r) => r.textContent).join('|'))).indexOf('M-NW100-S') >= 0);
     await pg.click('#tabs [data-tab="all"]'); await pg.waitForTimeout(300);
     const seg = await pg.evaluate(() => { const i = window.__FCCCatalogue.state(); const el = document.querySelector('#lm-body i[data-c="s"][title^="Sale price"]'); if (!el) return null; const n = +(/· ([\d,]+) products/.exec(el.getAttribute('title')) || [0, '0'])[1].replace(/,/g, ''); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); return n; });
     await pg.waitForTimeout(300);
@@ -216,9 +217,16 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('clicking the same band again clears it', await pg.evaluate(() => !window.__FCCCatalogue.state().facet));
     const run = await pg.evaluate(() => { const el = document.querySelector('#run-body [data-f="run:all"]'); if (!el) return null; el.click(); return document.getElementById('run-body').textContent; });
     await pg.waitForTimeout(250);
+    // the run is the MASTER's: the feed's sizes plus the out-of-stock sizes it leaves out (counted here, not by the page)
     const grp = {}; fx.forEach((x) => { if (!x.grp) return; const c = grp[x.grp] || (grp[x.grp] = [0, 0]); c[0]++; if (x.av === 'in_stock') c[1]++; });
+    STUBS.HELD.forEach((g) => { grp[g][0]++; });
     const wantRun = fx.filter((x) => x.grp && grp[x.grp][0] >= 2 && grp[x.grp][1] === grp[x.grp][0]).length;
     ok('size-run health lists the products whose whole run is in stock', run != null && await view() === wantRun, { page: await view(), want: wantRun });
+    const heldGrps = STUBS.HELD.filter((g) => grp[g][1] === grp[g][0] - 1).length;
+    ok('a group whose missing size the feed left out is NOT "all in stock" (read off the master, not the feed)',
+      await pg.evaluate((H) => { const S = window.__FCCCatalogue.state(); return H.every((g) => S.run && S.run.get(g) && S.run.get(g)[1] < S.run.get(g)[0]); }, STUBS.HELD) && heldGrps > 0);
+    ok('the card says the run is read off the master and names the sizes left out of the feed',
+      /from the master/.test(await pg.evaluate(() => document.getElementById('run-sub').textContent)) && new RegExp(STUBS.HELD.length + '\\s*out-of-stock sizes left out of the feed').test(run), run);
     console.log('· stock control — off Stock management\'s own read of this market');
     const oosEl = await pg.evaluate(() => { const el = document.querySelector('#avail-body [data-f="avail:out_of_stock"]'); if (!el) return false; el.click(); return true; });
     await pg.waitForTimeout(250);

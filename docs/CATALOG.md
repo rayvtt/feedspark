@@ -146,7 +146,15 @@ case-insensitively; an empty column is "Unsorted".
   - **Price bands** — what the shopper pays, full price and on sale stacked, bands chosen from the catalogue's own
     5th–95th percentile on a round-number ladder.
   - **Size-run health** — item groups with 2+ variants by the share of their variants in stock (all · 75%+ ·
-    50–75% · under half · none): a broken run is spend on a page the shopper cannot finish on.
+    50–75% · under half · none): a broken run is spend on a page the shopper cannot finish on. **The run is read
+    off the MASTER** (Ray, 30 Sep 2026: "i think this size-run health module is not accurate"): a feed whose stock
+    rules drop out-of-stock sizes carries only the sizes in stock, so read off the feed every group was "all in
+    stock" by construction — Superdry GB sends 25,695 products, every one in stock, and group 278158 reads 3 of 3
+    where the master holds 7 sizes with 3 in stock. Every master row joins its item group's run (`E.runAdd`, stock
+    from the availability word — `NOT_AVAILABLE` is out — or, with none, the quantity; neither = no guess), used
+    only when half the feed's groups are found there; the card, its filter and the Variants column read ONE count
+    (`grpC`), the footer names the out-of-stock sizes left out of the feed, and an all-in-stock feed with no master
+    says it cannot show a broken run rather than printing 100%.
   - **Catalogue mix** — the biggest groups by brand / top or sub-category / colour / gender / age group / custom
     label, each with its on-sale share (brand by default on a multi-brand feed).
   - **Content depth** — images, highlights, title length, description length or keyword slots per product,

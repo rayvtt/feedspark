@@ -305,7 +305,7 @@
     availability: function (s) {
       s = s.replace(/[\s_\-]+/g, '');
       if (/^(instock|available|yes|true|1|limitedstock|lowstock|limitedavailability)$/.test(s)) return 'in_stock';
-      if (/^(outofstock|soldout|unavailable|no|false|0|discontinued)$/.test(s)) return 'out_of_stock';
+      if (/^(outofstock|soldout|unavailable|notavailable|notinstock|oos|no|false|0|discontinued)$/.test(s)) return 'out_of_stock';
       if (/^preorder/.test(s)) return 'preorder';
       if (/^backorder/.test(s)) return 'backorder';
       return s;
@@ -767,6 +767,29 @@
     return { push: push, end: function () { st = 0; if (cell !== '' || row.length) endRow(); }, count: function () { return n; } };
   }
 
+  // ---- SIZE RUNS read off the MASTER (Ray, 30 Sep 2026: "i think this size-run health module is not accurate").
+  // A feed whose stock rules drop out-of-stock sizes carries only the sizes in stock, so every item group read off
+  // the FEED is "all in stock" by construction (Superdry GB: 25,695 of 25,695 in stock, group 278158 = 3 of the
+  // master's 7 sizes). The run is the master's: every row of the group, in stock or not. stockOf reads a row's
+  // availability word, and only when it has none its quantity; neither = null, never guessed either way.
+  function qtyCol(headers) {
+    for (var i = 0; i < (headers || []).length; i++) if (/^(quantity|qty|stockqty|stocklevel|stockquantity|inventory|inventorylevel|onhand)$/.test(s0(headers[i]).replace(/^[a-z]{1,4}:/i, '').toLowerCase().replace(/[^a-z0-9]+/g, ''))) return i;
+    return -1;
+  }
+  function stockOf(av, qty) {
+    var a = VOCAB.availability(low(plain(Array.isArray(av) ? av[0] : av)));
+    if (a === 'in_stock' || a === 'preorder' || a === 'backorder') return 'in';
+    if (a === 'out_of_stock') return 'out';
+    var q = parseFloat(String(qty == null ? '' : qty).replace(/,/g, ''));
+    if (isFinite(q)) return q > 0 ? 'in' : 'out';
+    return null;
+  }
+  function runAdd(map, grp, st) {
+    grp = String(grp == null ? '' : plain(Array.isArray(grp) ? grp[0] : grp)).trim(); if (!grp || !st) return;
+    var c = map.get(grp); if (!c) map.set(grp, c = [0, 0]); c[0]++; if (st === 'in') c[1]++;
+  }
+  function runBucket(c) { if (!c || c[0] < 2) return null; var s = c[1] / c[0]; return s >= 1 ? 'all' : s >= .75 ? 'most' : s >= .5 ? 'half' : s > 0 ? 'few' : 'none'; }
+
   // ---- what the table shows about one product, worked out once when it arrives -------------------------------------
   var DAY = 86400000;
   function depthOf(v) { var s = plain(v); if (!s) return 0; return s.split(/\s*(?:>|›|»)\s*/).filter(Boolean).length || 1; }
@@ -1015,7 +1038,7 @@
     isOverlay: isOverlay, overlaySource: overlaySource, plan: plan, idKey: idKey, detectJoin: detectJoin, masterCells: masterCells,
     cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
-    delimParser: delimParser, matrixAdd: matrixAdd,
+    delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,

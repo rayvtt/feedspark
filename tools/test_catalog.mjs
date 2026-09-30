@@ -425,6 +425,21 @@ t('one audit legend (the same auditBand /golden carries)', /function auditBand\(
   t('an unknown field is read as plain text, never dropped', parseQ('foo:bar')[0].f === '*' && parseQ('foo:bar')[0].alts[0] === 'foo:bar');
 }
 
+console.log('· size runs read off the master (a feed that drops out-of-stock sizes cannot show a broken run)');
+{
+  // Superdry GB's group 278158 as FeedHero's master holds it: seven sizes, three in stock — the feed sends only the three
+  const m = new Map();
+  [['NOT_AVAILABLE', 'n/a'], ['NOT_AVAILABLE', 'n/a'], ['NOT_AVAILABLE', 'n/a'], ['IN_STOCK', '22'], ['IN_STOCK', '25'], ['IN_STOCK', '23'], ['NOT_AVAILABLE', 'n/a']]
+    .forEach(([a, q]) => E.runAdd(m, '278158', E.stockOf(a, q)));
+  t('NOT_AVAILABLE reads as out of stock', E.stockOf('NOT_AVAILABLE', 'n/a') === 'out');
+  t('the master run of 278158 is 3 of 7 in stock — under half, not "all in stock"', m.get('278158')[0] === 7 && m.get('278158')[1] === 3 && E.runBucket(m.get('278158')) === 'few');
+  t('no availability word: the quantity decides; neither: no guess', E.stockOf('', '0') === 'out' && E.stockOf('', '4') === 'in' && E.stockOf('', '') === null);
+  t('a row with no readable stock never joins a run', (() => { const x = new Map(); E.runAdd(x, 'G', null); return !x.has('G'); })());
+  t('the quantity column is found by name', E.qtyCol(['product_id', 'availability', 'quantity']) === 2 && E.qtyCol(['id', 'g:quantity']) === 1 && E.qtyCol(['id', 'title']) === -1);
+  t('the card, its filter and the Variants column all read one count (grpC) — the master run when it matches the feed', /function grpC\(g\) \{ return \(S\.run && S\.run\.get\(g\)\)/.test(PG) && /case 'var': var gr = x\.grp \? grpC\(x\.grp\)/.test(PG) && /function runB\(i\) \{[^}]*grpC\(/.test(PG));
+  t('every master row joins its group\'s run, in the feed or not', /E\.runAdd\(run, gc\[0\]\.v, E\.stockOf\(/.test(PG));
+  t('an all-in-stock feed with no master says it cannot show a broken run, rather than 100%', /the feed alone cannot show a broken size run/.test(PG));
+}
 console.log('· the commercial view (a buyer choosing between feed vendors)');
 {
   const lift = (name) => { const i = PG.indexOf('function ' + name + '('); let d = 0, j = PG.indexOf('{', i); for (; j < PG.length; j++) { if (PG[j] === '{') d++; else if (PG[j] === '}' && !--d) break; } return PG.slice(i, j + 1); };

@@ -11175,6 +11175,9 @@
     {"name": "cuts a board asks for: a time split never folds a bucket into Other", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "if (cap && out.length > cap && !isTimeDim(dim)) {", "pr": 0},
     {"name": "the denominator: the catalogue the hours maintained", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "scale.scanned++; scale.rows +=", "pr": 0},
     {"name": "the denominator: the scale line under the verdict", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function scaleLine()", "pr": 0},
-    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0}
+    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0},
+    {"name": "Catalogue: size runs are read off the master (the feed drops out-of-stock sizes)", "file": "docs/FeedSpark_Catalog.html", "pattern": "E.runAdd(run, gc[0].v, E.stockOf(", "pr": 0},
+    {"name": "Catalogue: one size-run count for the card, filter and Variants column", "file": "docs/FeedSpark_Catalog.html", "pattern": "function grpC(g) { return (S.run && S.run.get(g))", "pr": 0},
+    {"name": "Catalogue engine: NOT_AVAILABLE is out of stock, quantity decides when there is no word", "file": "docs/catalog_engine.js", "pattern": "function stockOf(av, qty) {", "pr": 0}
   ]
 }
