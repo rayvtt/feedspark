@@ -11434,6 +11434,9 @@
     {"name": "KWCal: a scope that is SET but unmeasured is never reported as absent", "file": "docs/FeedSpark_KWCal.html", "pattern": "function hasScope(e,mkt)", "pr": 0},
     {"name": "KWCal: the pending-scope card names what it scopes", "file": "docs/FeedSpark_KWCal.html", "pattern": "sync to measure", "pr": 0},
     {"name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope", "file": "docs/FeedSpark_KWCal.html", "pattern": "!hasScope(e,evMkt(CLIENT,e))", "pr": 0},
-    {"name": "KWCal: Superdry GB product-type census (independent check on every seeded path)", "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json", "pattern": "distinct_primary_paths", "pr": 0}
+    {"name": "KWCal: Superdry GB product-type census (independent check on every seeded path)", "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json", "pattern": "distinct_primary_paths", "pr": 0},
+    {"name": "Hero sizes: departments read in every roster language (Superdry DE's Damen / Herren keep types apart)", "file": "docs/herosize_engine.js", "pattern": "function genderWord(gender) {", "pr": 0},
+    {"name": "Hero sizes: a child's age group wins over the gender word", "file": "docs/herosize_engine.js", "pattern": "var kidAge = deptFromCols('', age) === 'kids';", "pr": 0},
+    {"name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';", "pr": 0}
   ]
 }
