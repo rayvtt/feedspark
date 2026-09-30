@@ -138,6 +138,9 @@ function heroBuild(now) {
   style('Trainers', 'womens', ['UK 3', 'UK 3.5', 'UK 4', 'UK 4.5', 'UK 5', 'UK 5.5', 'UK 6', 'UK 7'], 18, 4);
   style('Coats', 'kids', ['3-4 years', '5-6 years', '7-8 years', '9-10 years'], 14, 5);
   style('Jumpers', 'mens', ['S', 'M', 'L', 'XL'], 12, 6);
+  // one type made in BOTH alpha and numeric runs (by different styles) — the card keeps each kind on its own line
+  style('Tops', 'womens', ['XS', 'S', 'M', 'L', 'XL'], 10, 7);
+  style('Tops', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 12, 8);
   for (let s = 0; s < 20; s++) c.onRow(['P' + (++id), 'BAG-' + s, 'Bag ' + s, 'womens', 'Bags', 'One Size', 'in stock']);
   const census = Object.assign({ client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', t: now - 5400000, imp: '2026-09-28 05:27:48' }, c.finish());
   const store = {

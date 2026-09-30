@@ -301,6 +301,8 @@ window.addEventListener('load',restore);
   .hm-warn{margin:0 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--risk);color:var(--risk);font-size:12.5px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .hm-empty{font-size:13px;font-weight:700;color:var(--muted);padding:10px 2px}
   #hm-sum .it{flex:1 1 200px}
+  .szr{display:flex;flex-wrap:wrap;align-items:center}
+  .szr+.szr{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
   .sz{position:relative;display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 7px 2px;margin:2px 3px 2px 0;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;vertical-align:middle}
   .sz i{position:absolute;left:0;bottom:0;height:3px;background:var(--av-in);border-radius:0 2px 0 0}
   .sz.hero{border-color:var(--orange);background:rgba(245,166,35,.13);color:var(--orange-ink)}
@@ -1282,13 +1284,19 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var t = x.t, h = x.h, m = x.m, hero = {}, carry = t.sz.map(function () { return 0; }), st = 0;
       h.s.forEach(function (s) { hero[s] = 1; });
       (t.pat || []).forEach(function (p) { st += p[1]; for (var j = 0; j < t.sz.length; j++) if (p[0].charAt(j) !== '0') carry[j] += p[1]; });
-      var chips = t.sz.map(function (z, j) {
-        var on = !!hero[z[0]], ip = z[1] ? Math.round((z[2] / z[1]) * 100) : 0;
+      // one line per KIND of size — alpha, numeric, ages — never wrapped together (Ray, 30 Sep 2026: "numeric and
+      // alphabet sizes stay on separate rows"); the ladder is already in size order, so each line keeps it
+      var lines = {}, order = [];
+      t.sz.forEach(function (z, j) {
+        var on = !!hero[z[0]], ip = z[1] ? Math.round((z[2] / z[1]) * 100) : 0, c = HS.sizeClass(z[0]);
         var tip = '<b>' + esc(z[0]) + '</b>' + (on ? ' · hero size' : '') + '<br>' + ip + '% in stock · ' + n0(z[2]) + ' of ' + n0(z[1]) + ' products' + (st ? '<br><span class="m">made in ' + n0(carry[j]) + ' of ' + n0(st) + ' styles</span>' : '');
         var inner = (on ? heroIcon() : '') + esc(z[0]) + '<i style="width:' + ip + '%"></i>';
-        return HM.edit ? '<button type="button" class="sz' + (on ? ' hero' : '') + '" data-ht="' + i + '" data-hs="' + esc(z[0]) + '" aria-pressed="' + on + '" data-tip="' + esc(tip) + '">' + inner + '</button>'
-          : '<span class="sz' + (on ? ' hero' : '') + '" data-tip="' + esc(tip) + '">' + inner + '</span>';
-      }).join('') + (t.more ? '<span class="sub2" style="display:inline">+' + t.more + ' rarer</span>' : '');
+        if (!lines[c]) { lines[c] = []; order.push(c); }
+        lines[c].push(HM.edit ? '<button type="button" class="sz' + (on ? ' hero' : '') + '" data-ht="' + i + '" data-hs="' + esc(z[0]) + '" aria-pressed="' + on + '" data-tip="' + esc(tip) + '">' + inner + '</button>'
+          : '<span class="sz' + (on ? ' hero' : '') + '" data-tip="' + esc(tip) + '">' + inner + '</span>');
+      });
+      var chips = order.map(function (c) { return '<div class="szr" data-sc="' + c + '">' + lines[c].join('') + '</div>'; }).join('')
+        + (t.more ? '<span class="sub2">+' + t.more + ' rarer</span>' : '');
       var acts = HM.edit ? '<div class="hm-acts"><button type="button" data-ha="core" data-ht="' + i + '" title="Core of the run — tick the sizes nearly as many of its styles are made in as its most-made size" aria-label="Tick the core of the run">✦</button>'
         + (h.own ? '<button type="button" data-ha="guide" data-ht="' + i + '" title="Back to the guide — drop this type’s own list" aria-label="Back to the guide">↺</button>' : '')
         + '<button type="button" data-ha="none" data-ht="' + i + '" title="No hero sizes — record that this type has none" aria-label="No hero sizes">∅</button></div>' : '';

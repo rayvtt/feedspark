@@ -52,6 +52,9 @@ t('alpha sizes sort on the run, dual sizes between their halves', eq(H.sortSizes
 t('shoe sizes sort as numbers, halves in place', eq(H.sortSizes(['UK 10', 'UK 2', 'UK 2.5', 'UK 13', 'UK 1']), ['UK 1', 'UK 2', 'UK 2.5', 'UK 10', 'UK 13']));
 t('months before years, each by age', eq(H.sortSizes(['12-18 MTHS', '3 YRS', '0-3 MTHS', '11-12 YRS', '2-3 YRS']), ['0-3 MTHS', '12-18 MTHS', '2-3 YRS', '3 YRS', '11-12 YRS']));
 t('ONE SIZE sorts last; an unknown word after the numbers', eq(H.sortSizes(['ONE SIZE', 'LLO', '10', 'M']), ['M', '10', 'ONE SIZE', 'LLO']));
+t('sizeClass: alpha, numeric (any system), ages, one size — the card\u2019s one line per kind', H.sizeClass('XS/S') === 'alpha' && H.sizeClass('XXL') === 'alpha' && H.sizeClass('10-12') === 'num' && H.sizeClass('UK 5') === 'num'
+  && H.sizeClass('14.5') === 'num' && H.sizeClass('3-4 YRS') === 'age' && H.sizeClass('0-3 MTHS') === 'age' && H.sizeClass('ONE SIZE') === 'one' && H.sizeClass('LLO') === 'other');
+t('page: alpha and numeric sizes on separate lines, never wrapped together (Ray, 30 Sep 2026)', /, c = HS\.sizeClass\(z\[0\]\);/.test(SP) && /'<div class="szr" data-sc="' \+ c \+ '">'/.test(SP) && /\.szr\{display:flex;flex-wrap:wrap/.test(SP));
 t('sizeCore sets the system aside ("UK 10" → "10"), a bare size is itself', H.sizeCore('UK 10') === '10' && H.sizeCore('EU 40.5') === '40.5' && H.sizeCore('M') === 'M');
 
 console.log('· departments and product types');
@@ -62,6 +65,11 @@ t('the columns when the path says nothing: female / mens / unisex, and a child a
   && H.deptFromCols('Unisex', '') === 'unisex' && H.deptFromCols('female', 'children') === 'kids' && H.deptFromCols('', '') === '');
 t('Superdry’s shape: a bare category + a gender column → "Men > T-Shirts"', H.typeLabel('T-Shirts', 'mens', '') === 'Men > T-Shirts');
 t('Reiss’s shape: the path already names it, no prefix', H.typeLabel('Womenswear > Dresses', 'female', 'adult') === 'Womenswear > Dresses');
+t('every roster language: Superdry DE\u2019s "Damen" / "Herren" keep the types apart, in the brand\u2019s own words', H.typeLabel('Jacken', 'Damen', '') === 'Damen > Jacken' && H.typeLabel('Jacken', 'Herren', '') === 'Herren > Jacken'
+  && H.deptOf('Damen > Jacken') === 'women' && H.deptOf('Herren > Jacken') === 'men' && H.deptOf('Femme > Vestes') === 'women' && H.deptOf('Miehet > Takit') === 'men' && H.deptOf('Kobiety > Kurtki') === 'women');
+t('a gender word nobody placed still separates the types; a placeholder does not', H.typeLabel('Jacken', 'Zorblax', '') === 'Zorblax > Jacken' && H.typeLabel('Jacken', 'N/A', '') === 'Jacken' && H.genderWord('123') === '');
+t('a child\u2019s age group wins over the gender word (a girls\u2019 dress is not a women\u2019s dress)', H.typeLabel('Kleider', 'Damen', 'Kinder') === 'Kids > Kleider' && H.typeLabel('Dresses', 'female', 'children') === 'Kids > Dresses');
+t('merchandising buckets in the other languages are not types either', !H.usableType('Alles Anzeigen') && !H.usableType('Kampagne 3') && !H.usableType('Voir tout') && !H.usableType('Näytä kaikki') && H.usableType('Jacken'));
 t('two levels, a generic "Clothing" level stepped over', H.typeLabel('Women > Clothing > Dresses > Midi', '', '') === 'Women > Dresses' && H.typeLabel('Men > Shirts > Oxford', '', '') === 'Men > Shirts');
 t('a row with no usable type is still counted, under its department', H.typeLabel('', 'womens', '') === 'Women > (no product type)' && H.typeLabel('', '', '') === '(no product type)');
 t('not a product type: a category id, a bare department word, a merchandising bucket', !H.usableType('1234') && !H.usableType('Womens') && !H.usableType('View All') && !H.usableType('Campaign 3') && H.usableType('T-Shirts') && H.usableType('Mens > Shirts'));
@@ -113,6 +121,10 @@ const X1 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><c
   + '</channel></rss>';
 const cx = H.census(E), px = FA.createXmlParser((r, h) => cx.onRow(r, h)); px.push(X1); px.end();
 const CX = cx.finish();
+const M4 = [['product_id', 'item_group_id', 'gender', 'category', 'type', 'size', 'availability']];
+[['D1', 'Damen', 'Jacken', ['34', '36', '38']], ['D2', 'Herren', 'Jacken', ['S', 'M', 'L']], ['D3', 'Damen', 'Alles Anzeigen', ['36']]].forEach(([g, gen, cat, sizes]) => sizes.forEach((z) => M4.push([g + z, g, gen, cat, 'Bomberjacke', z, 'IN_STOCK'])));
+const C4 = csvCensus(csv(M4));
+t('a German master: one type per department, "Alles Anzeigen" falls through to the next column', eq(C4.types.map((x) => x.k).sort(), ['Damen > Bomberjacke', 'Damen > Jacken', 'Herren > Jacken']) && C4.types.find((x) => x.k === 'Damen > Jacken').d === 'women', C4.types.map((x) => x.k).join(' | '));
 t('an XML master reads the same way (g:product_type, g:size, g:availability)', CX.types.length === 1 && CX.types[0].k === 'Tea Dresses' && eq(CX.types[0].pat, [['212', 1]]));
 
 console.log('· the measure — a hero list against one type');
@@ -189,7 +201,7 @@ t('a census of another shape is refused whole', HW.sanitizeCensus(Object.assign(
 const bad = (f) => { const c = JSON.parse(JSON.stringify(C1)); f(c); return HW.sanitizeCensus(c); };
 t('a pattern that does not fit its run, in + out above rows, or a size nobody writes → refused', bad((c) => { c.types[0].pat[0][0] += '2'; }) === null && bad((c) => { c.types[0].sz[0][2] = 999; }) === null
   && bad((c) => { c.types[0].sz[0][0] = '<script>'; }) === null && bad((c) => { c.types[0].pat[0][0] = c.types[0].pat[0][0].replace(/./, '9'); }) === null);
-t('the one-line summary the index carries', eq(HW.censusSummary(SC, 5), { t: 5, types: SC.types.length, sized: SC.sized, rows: SC.rows, groups: SC.groups, v: 1 }));
+t('the one-line summary the index carries', eq(HW.censusSummary(SC, 5), { t: 5, types: SC.types.length, sized: SC.sized, rows: SC.rows, groups: SC.groups, v: HW.CENSUS_V }));
 const CTX = { brands: ['Acme', 'Bolt'], inScope: (b) => b === 'Acme', canEx: true, by: 'Ray', now: 42 };
 const K = (k, v, c) => HW.sanitizeHeroKey(k, v, c || CTX);
 t('a guide: stamped by and at on the server, the document link must be https', eq(K('g:Acme', { doc: { name: 'Doc', url: 'https://example.com/x' }, ex: 'fs-fashion-uk' }).value, { doc: { name: 'Doc', url: 'https://example.com/x' }, ex: 'fs-fashion-uk', from: '', note: '', by: 'Ray', at: 42 })

@@ -20,7 +20,7 @@
  */
 
 // the census SHAPE — docs/herosize_engine.js CENSUS_V holds the same number (tools/test_herosize.mjs pins both)
-export const CENSUS_V = 1;
+export const CENSUS_V = 2;   // 2: departments in every roster market's language
 export const HERO_KEY = 'heroguide';
 const CAP = { types: 80, sz: 30, pat: 400, rows: 200, sizes: 40 };
 const DEPTS = ['', 'kids', 'women', 'men', 'unisex'];
