@@ -288,6 +288,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: ROAS segment (picking one populates the markets in view; the band filter names what it hid)"
   NODE_PATH=$(npm root -g) node tools/check_roasseg.js || {
     echo "✗ ROAS segment tripwire failed — a picked segment left the table empty, the band filter hid markets silently, or a cut FeedHero has not set up read as an error"; exit 1; }
+  echo "── validating: the ROAS dashboard, modular (even cards, ⊞ Modules read off the paint, every card against the book, PNG / CSV / Excel / PDF)"
+  NODE_PATH=$(npm root -g) node tools/check_roasmods.js || {
+    echo "✗ ROAS modules tripwire failed — the cards went uneven, a hidden module still painted, a card disagreed with the book, or an export lost rows / its currency / its capture height"; exit 1; }
   echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
   NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
     echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }
