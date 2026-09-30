@@ -1497,7 +1497,11 @@ window.addEventListener('load',restore);
      drawing it, no fetch, nothing of the FCC in it. Inside the file: the same 🔍 filter across
      every pane, sortable headers, show-all, market tabs — and the two views one feed can never
      give: coverage per label per market side by side, and any label's values compared across
-     markets. ⤓ CSV lives INSIDE the file (this market / all markets — the page's own CSV
+     markets — which since 30 Sep 2026 the reader BUILDS (Ray: "allow customization of side-by-side
+     comparison … if I want to see custom label 2 only across 5 markets side by side"): pick the
+     label, tick the markets (All / Google / Meta / Clear), SKUs · share · both, every value / in
+     every market / missing somewhere, sort by any column incl. the spread (widest share gap), ⤓ CSV
+     of exactly that view, and the address carries it so a reload lands on it. ⤓ CSV lives INSIDE the file (this market / all markets — the page's own CSV
      columns plus market + channel), so one download gives both formats. Demo mode masks the
      file exactly as it masks the screen. */
   function lgxPivot(s, ref, key) {
@@ -1559,9 +1563,15 @@ window.addEventListener('load',restore);
     '.pop .pf{margin-top:7px;color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.55}.pop .pf b{color:var(--ink)}.pop.na{font-size:11.5px;font-weight:700;color:var(--muted)}' +
     '.lg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-top:14px}.lc{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;min-width:0;overflow:auto}.lc.absent{opacity:.62}.lc td,.lc th{padding-left:5px;padding-right:5px}.lc td.v{max-width:150px}' +
     '.lh{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:7px}.lh .nm{font-size:14px;font-weight:900}.lh .cv{font-size:12.5px;font-weight:900;color:var(--orange-deep)}.lh .sub{font-size:10.5px;color:var(--muted);font-weight:700}.lh .dl{font-size:10.5px;font-weight:900;margin-left:auto}' +
+    '.cmpctl{display:grid;gap:8px;margin:2px 0 12px;padding:10px 12px;background:var(--wash);border:1px solid var(--line);border-radius:12px}.cr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
+    '.cl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:58px}.qp{display:flex;gap:4px;align-items:center;font-size:11px;font-weight:700;color:var(--muted)}' +
+    '.lnk{border:0;background:none;font:inherit;font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:2px 4px}.lnk:hover{text-decoration:underline}.lnk[disabled]{color:var(--muted);cursor:default;text-decoration:none}' +
+    '.chip.off{background:#fff;color:var(--muted);border-style:dashed}.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}.seg button{border:0;border-right:1px solid var(--line);background:none;font:inherit;font-size:11.5px;font-weight:800;color:var(--ink-2);padding:5px 10px;cursor:pointer}.seg button:last-child{border-right:0}.seg button.on{background:var(--orange-deep);color:#fff}' +
+    '.cr .btn{margin-left:auto}.csum{font-size:12px;font-weight:700;color:var(--ink-2);margin:0 0 8px}.csum b{color:var(--ink)}th small{display:block;font-size:9.5px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--muted)}th small.no{color:var(--risk)}' +
+    '#cmp th.s{cursor:pointer}#cmp th.s:hover{color:var(--orange-deep)}#cmp td.r{white-space:nowrap}td.sp{font-weight:800}' +
     '.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.foot{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:700;padding:10px 0 26px}' +
     '@media(max-width:600px){.wrap{padding:0 14px}.lg{grid-template-columns:1fr}.tools{margin-left:0}}' +
-    '@media print{.tools,.tabs,.more,.chips{display:none}.card{box-shadow:none;break-inside:avoid}body{background:#fff}}';
+    '@media print{.tools,.tabs,.more,.chips,.cmpctl{display:none}.card{box-shadow:none;break-inside:avoid}body{background:#fff}}';
   /* The script inside the file — serialised with .toString(), so it is parsed and checked as
      part of THIS page rather than living in a string. Reads only window.LGX. No fetch, no FCC. */
   function LGX_APP() {
@@ -1573,7 +1583,26 @@ window.addEventListener('load',restore);
     function cc(m) { return m.ch === 'fb' ? '<span class="cc fb" title="Facebook catalogue feed">f</span>' : '<span class="cc g" title="Google Shopping feed">G</span>'; }
     function covBand(c) { return c == null ? '' : c >= 95 ? 'g' : c >= 60 ? 'a' : 'r'; }
     var scanned = D.markets.filter(function (m) { return m.scanned; });
-    var S = { tab: scanned.length ? D.markets.indexOf(scanned[0]) : -1, q: '', sorts: {}, more: {}, cmp: 0, cmpAll: false };
+    var S = { tab: scanned.length ? D.markets.indexOf(scanned[0]) : -1, q: '', sorts: {}, more: {}, cmp: 0, cmpAll: false,
+      // the side-by-side comparison is BUILT by the reader (Ray, 30 Sep 2026: "allow customization of
+      // side-by-side comparison … if I want to see custom label 2 only across 5 markets side by side"):
+      // which label, which markets, SKUs / share / both, which rows, sorted by any column
+      sel: scanned.map(function (m) { return D.markets.indexOf(m); }), show: 'both', rows: 'all', csort: { col: 'tot', dir: -1 } };
+    // the comparison travels in the address (#l=2&m=0,3,5&show=pct&rows=gap&sort=spread~-1), so a reload or a
+    // bookmark of the file lands on the same view
+    (function readHash() {
+      String(location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+        var p = kv.split('='), k = p[0], v = decodeURIComponent(p[1] || '');
+        if (k === 'l' && /^[0-4]$/.test(v)) S.cmp = +v;
+        else if (k === 'm') S.sel = v.split(',').filter(function (x) { return x !== ''; }).map(Number).filter(function (i) { return D.markets[i] && D.markets[i].scanned; });
+        else if (k === 'show' && /^(n|pct|both)$/.test(v)) S.show = v;
+        else if (k === 'rows' && /^(all|every|gap)$/.test(v)) S.rows = v;
+        else if (k === 'sort' && /^(v|tot|spread|m\d+)~-?1$/.test(v)) S.csort = { col: v.split('~')[0], dir: +v.split('~')[1] };
+      });
+    })();
+    function writeHash() {
+      try { history.replaceState(null, '', '#l=' + S.cmp + '&m=' + S.sel.join(',') + '&show=' + S.show + '&rows=' + S.rows + '&sort=' + S.csort.col + '~' + S.csort.dir); } catch (e) {}
+    }
     function qm(v) { return !S.q || String(v).toLowerCase().indexOf(S.q.toLowerCase()) >= 0; }
     function sortOf(id) { return S.sorts[id] || { col: 'n', dir: -1 }; }
     function arr(st, col) { return st.col === col ? (st.dir < 0 ? ' ▼' : ' ▲') : ''; }
@@ -1611,41 +1640,114 @@ window.addEventListener('load',restore);
       });
       return h + '</tbody></table></div></section>';
     }
-    function compare() {
-      if (scanned.length < 2) return '<section class="card" id="cmp"><div class="ch"><h2>Values across markets</h2><span class="n">' + (scanned.length ? 'one market scanned — nothing to compare yet' : 'no market scanned yet') + '</span></div></section>';
-      var have = [0, 1, 2, 3, 4].filter(function (i) { return scanned.some(function (m) { return m.labels[i].present; }); });
-      if (have.indexOf(S.cmp) < 0) S.cmp = have.length ? have[0] : 0;
-      var h = '<section class="card" id="cmp"><div class="ch"><h2>Values across markets</h2><div class="chips">';
-      have.forEach(function (i) { h += '<button class="chip' + (i === S.cmp ? ' on' : '') + '" data-cmp="' + i + '">CL' + i + '</button>'; });
-      h += '</div><span class="n">SKUs (share of the market) per value · biggest first</span></div>';
-      // per-market counts keyed by the market's POSITION, never its code — GB and GB-FB share "GB"
-      var byV = {}, order = [];
-      scanned.forEach(function (m, si) {
-        var L = m.labels[S.cmp]; if (!L.present) return;
-        (L.rows || []).forEach(function (r) {
+    function mcode(m) { return m.code + (m.ch === 'fb' ? '-FB' : ''); }
+    // the comparison the reader built: the chosen label over the chosen markets, keyed by each
+    // market's POSITION in the file — never its code, GB and GB-FB share "GB"
+    function cmpModel() {
+      var L = S.cmp;
+      var sel = S.sel.filter(function (mi) { return D.markets[mi] && D.markets[mi].scanned; }).sort(function (a, b) { return a - b; });
+      var cols = sel.map(function (mi) { var m = D.markets[mi], lb = m.labels[L]; return { mi: mi, m: m, has: !!(lb && lb.present), cov: lb && lb.present ? lb.cov : null, was: lb && !lb.present ? lb.was : null }; });
+      var carry = cols.filter(function (c) { return c.has; });
+      var byV = {}, vals = [];
+      carry.forEach(function (c) {
+        (c.m.labels[L].rows || []).forEach(function (r) {
           if (r.gone) return;
-          if (!byV[r.v]) { byV[r.v] = { v: r.v, tot: 0, per: {} }; order.push(byV[r.v]); }
-          byV[r.v].tot += r.n; byV[r.v].per[si] = r.n;
+          if (!byV[r.v]) { byV[r.v] = { v: r.v, tot: 0, per: {}, pct: {} }; vals.push(byV[r.v]); }
+          byV[r.v].tot += r.n; byV[r.v].per[c.mi] = r.n; byV[r.v].pct[c.mi] = c.m.rows ? Math.round(r.n / c.m.rows * 1000) / 10 : 0;
         });
       });
-      order.sort(function (a, b) { return b.tot - a.tot || String(a.v).localeCompare(String(b.v)); });
-      var rows = order.filter(function (r) { return qm(r.v); });
-      var lim = (S.q || S.cmpAll) ? rows.length : 25;
-      h += '<div class="tw"><table><thead><tr><th>Value</th>';
-      scanned.forEach(function (m) { h += '<th class="r">' + cc(m) + esc(m.code) + '</th>'; });
-      h += '<th class="r">Total</th></tr></thead><tbody>';
-      if (!rows.length) h += '<tr><td colspan="' + (scanned.length + 2) + '" class="muted">' + (S.q ? 'no values match “' + esc(S.q) + '”' : 'no values') + '</td></tr>';
+      // spread = the widest gap in SHARE between the markets that carry the label (a missing value is
+      // 0% there) — the column that surfaces a value one market leans on and another barely uses
+      vals.forEach(function (o) {
+        var ps = carry.map(function (c) { return o.pct[c.mi] || 0; });
+        o.spread = ps.length > 1 ? Math.round((Math.max.apply(null, ps) - Math.min.apply(null, ps)) * 10) / 10 : 0;
+        o.inN = carry.filter(function (c) { return o.per[c.mi] != null; }).length;
+      });
+      return { cols: cols, carry: carry, vals: vals };
+    }
+    function cmpRows(M) {
+      var st = S.csort, rows = M.vals.filter(function (o) {
+        if (!qm(o.v)) return false;
+        if (S.rows === 'every') return o.inN === M.carry.length;
+        if (S.rows === 'gap') return o.inN < M.carry.length;
+        return true;
+      });
+      var key = function (o) {
+        if (st.col === 'tot') return o.tot;
+        if (st.col === 'spread') return o.spread;
+        var mi = +st.col.slice(1);
+        var v = S.show === 'pct' ? o.pct[mi] : o.per[mi];
+        return v == null ? -1 : v;
+      };
+      rows.sort(function (a, b) {
+        var d = st.col === 'v' ? String(a.v).toLowerCase().localeCompare(String(b.v).toLowerCase()) : key(a) - key(b);
+        return (d * st.dir) || (b.tot - a.tot) || String(a.v).localeCompare(String(b.v));
+      });
+      return rows;
+    }
+    function compare() {
+      if (scanned.length < 2) return '<section class="card" id="cmp"><div class="ch"><h2>Compare markets side by side</h2><span class="n">' + (scanned.length ? 'one market scanned — nothing to compare yet' : 'no market scanned yet') + '</span></div></section>';
+      var have = [0, 1, 2, 3, 4].filter(function (i) { return scanned.some(function (m) { return m.labels[i].present; }); });
+      if (have.indexOf(S.cmp) < 0) S.cmp = have.length ? have[0] : 0;
+      var goog = scanned.filter(function (m) { return m.ch !== 'fb'; }), meta = scanned.filter(function (m) { return m.ch === 'fb'; });
+      var h = '<section class="card" id="cmp"><div class="ch"><h2>Compare markets side by side</h2><span class="n">pick a label and the markets to line up</span></div>' +
+        '<div class="cmpctl"><div class="cr"><span class="cl">Label</span><div class="chips">';
+      have.forEach(function (i) { h += '<button class="chip' + (i === S.cmp ? ' on' : '') + '" data-cmp="' + i + '">CL' + i + '</button>'; });
+      h += '</div></div><div class="cr"><span class="cl">Markets</span><div class="chips">';
+      D.markets.forEach(function (m, mi) {
+        var on = S.sel.indexOf(mi) >= 0;
+        h += '<button class="chip' + (!m.scanned ? '' : on ? ' on' : ' off') + '" data-cm="' + mi + '"' + (m.scanned ? ' aria-pressed="' + on + '"' : ' disabled title="not scanned yet"') + '>' + cc(m) + esc(m.code) + '</button>';
+      });
+      h += '</div><span class="qp"><button class="lnk" data-cq="all">All</button>·<button class="lnk" data-cq="g"' + (goog.length ? '' : ' disabled') + '>Google</button>·<button class="lnk" data-cq="fb"' + (meta.length ? '' : ' disabled') + '>Meta</button>·<button class="lnk" data-cq="none">Clear</button></span></div>' +
+        '<div class="cr"><span class="cl">Show</span><div class="seg">';
+      [['n', 'SKUs'], ['pct', 'Share'], ['both', 'Both']].forEach(function (o) { h += '<button data-show="' + o[0] + '"' + (S.show === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>'; });
+      h += '</div><span class="cl">Rows</span><div class="seg">';
+      [['all', 'Every value'], ['every', 'In every market'], ['gap', 'Missing somewhere']].forEach(function (o) { h += '<button data-rows="' + o[0] + '"' + (S.rows === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>'; });
+      h += '</div><button class="btn" id="cmp-csv">⤓ CSV · this comparison</button></div></div>';
+      var M = cmpModel();
+      if (!M.cols.length) return h + '<p class="csum">Pick at least one market above to compare CL' + S.cmp + '.</p></section>';
+      var rows = cmpRows(M), lim = (S.q || S.cmpAll) ? rows.length : 25;
+      var every = M.vals.filter(function (o) { return o.inN === M.carry.length; }).length;
+      h += '<p class="csum"><b>CL' + S.cmp + '</b> across <b>' + M.cols.length + '</b> market' + (M.cols.length === 1 ? '' : 's') + ' (' + M.cols.map(function (c) { return esc(mcode(c.m)); }).join(', ') + ') · <b>' + fmt(M.vals.length) + '</b> values · <b>' + fmt(every) + '</b> in every market that carries it · <b>' + fmt(M.vals.length - every) + '</b> missing from at least one' +
+        (M.carry.length < M.cols.length ? ' · <span class="down">' + (M.cols.length - M.carry.length) + ' without CL' + S.cmp + '</span>' : '') + '</p>';
+      var st = S.csort, sh = function (col, lbl, cls, sub) { return '<th class="s' + (cls ? ' ' + cls : '') + '" data-cs="' + col + '">' + lbl + (st.col === col ? (st.dir < 0 ? ' ▼' : ' ▲') : '') + (sub || '') + '</th>'; };
+      h += '<div class="tw"><table><thead><tr>' + sh('v', 'Value');
+      M.cols.forEach(function (c) {
+        h += sh('m' + c.mi, cc(c.m) + esc(c.m.code), 'r', c.has ? '<small>' + c.cov + '% filled</small>' : '<small class="no">' + (c.was != null ? 'CL' + S.cmp + ' vanished' : 'no CL' + S.cmp) + '</small>');
+      });
+      h += sh('tot', 'Total', 'r', '<small>SKUs</small>') + (M.carry.length > 1 ? sh('spread', 'Spread', 'r', '<small>share gap</small>') : '') + '</tr></thead><tbody>';
+      var span = M.cols.length + 2 + (M.carry.length > 1 ? 1 : 0);
+      if (!rows.length) h += '<tr><td colspan="' + span + '" class="muted">' + (S.q ? 'no values match “' + esc(S.q) + '”' : S.rows === 'every' ? 'no value is in every market' : S.rows === 'gap' ? 'every value is in every market' : 'no values') + '</td></tr>';
       rows.slice(0, lim).forEach(function (r) {
         h += '<tr><td class="v" title="' + esc(r.v) + '">' + esc(r.v) + '</td>';
-        scanned.forEach(function (m, si) {
-          var n = r.per[si];
-          h += '<td class="r">' + (n == null ? '<span class="muted">—</span>' : fmt(n) + ' <span class="muted">' + (m.rows ? Math.round(n / m.rows * 1000) / 10 : 0) + '%</span>') + '</td>';
+        M.cols.forEach(function (c) {
+          var n = r.per[c.mi];
+          if (n == null) { h += '<td class="r"><span class="muted"' + (c.has ? '' : ' title="no CL' + S.cmp + ' in this feed"') + '>—</span></td>'; return; }
+          var pc = r.pct[c.mi] + '%';
+          h += '<td class="r">' + (S.show === 'n' ? fmt(n) : S.show === 'pct' ? pc : fmt(n) + ' <span class="muted">' + pc + '</span>') + '</td>';
         });
-        h += '<td class="r"><b>' + fmt(r.tot) + '</b></td></tr>';
+        h += '<td class="r"><b>' + fmt(r.tot) + '</b></td>' + (M.carry.length > 1 ? '<td class="r sp">' + r.spread + 'pp</td>' : '') + '</tr>';
       });
       h += '</tbody></table></div>';
       if (rows.length > lim) h += '<span class="more" id="cmp-more">show all ' + rows.length + ' values ▾</span>';
       return h + '</section>';
+    }
+    function cmpCsv() {
+      var M = cmpModel(), rows = cmpRows(M);
+      var head = ['value'];
+      M.cols.forEach(function (c) { head.push(mcode(c.m) + '_skus', mcode(c.m) + '_share_pct'); });
+      head.push('total_skus', 'spread_pp', 'in_markets');
+      var out = [head.join(',')];
+      rows.forEach(function (r) {
+        var line = ['"' + String(r.v).replace(/"/g, '""') + '"'];
+        M.cols.forEach(function (c) { var n = r.per[c.mi]; line.push(n == null ? '' : n, n == null ? '' : r.pct[c.mi]); });
+        line.push(r.tot, r.spread, r.inN + '/' + M.carry.length);
+        out.push(line.join(','));
+      });
+      var blob = new Blob([out.join('\n')], { type: 'text/csv' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'labelguard_' + D.brand.replace(/\W+/g, '') + '_CL' + S.cmp + '_' + M.cols.map(function (c) { return mcode(c.m).toLowerCase(); }).join('-') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
     }
     function tabs() {
       var h = '<div class="tabs" id="tabs">';
@@ -1731,6 +1833,7 @@ window.addEventListener('load',restore);
       var mk = $('mk'); if (mk) mk.outerHTML = S.tab >= 0 ? market(D.markets[S.tab], S.tab) : '<section id="mk"></section>';
       Array.prototype.forEach.call(document.querySelectorAll('#ov tbody tr'), function (tr) { tr.classList.toggle('cur', +tr.getAttribute('data-mi') === S.tab); });
       var c1 = $('csv1'); if (c1) c1.disabled = S.tab < 0;
+      writeHash();
       wire();
     }
     function wire() {
@@ -1738,6 +1841,32 @@ window.addEventListener('load',restore);
       Array.prototype.forEach.call(document.querySelectorAll('#ov tbody tr'), function (tr) { tr.onclick = function () { var mi = +tr.getAttribute('data-mi'); if (!D.markets[mi].scanned) return; S.tab = mi; paint(); var mk = $('mk'); if (mk) mk.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
       Array.prototype.forEach.call(document.querySelectorAll('[data-cmp]'), function (b) { b.onclick = function () { S.cmp = +b.getAttribute('data-cmp'); S.cmpAll = false; paint(); }; });
       var cm = $('cmp-more'); if (cm) cm.onclick = function () { S.cmpAll = true; paint(); };
+      Array.prototype.forEach.call(document.querySelectorAll('[data-cm]'), function (b) {
+        b.onclick = function () {
+          if (b.disabled) return;
+          var mi = +b.getAttribute('data-cm'), at = S.sel.indexOf(mi);
+          if (at >= 0) S.sel.splice(at, 1); else S.sel.push(mi);
+          paint();
+        };
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-cq]'), function (b) {
+        b.onclick = function () {
+          if (b.disabled) return;
+          var q = b.getAttribute('data-cq');
+          S.sel = q === 'none' ? [] : scanned.filter(function (m) { return q === 'all' || (q === 'fb') === (m.ch === 'fb'); }).map(function (m) { return D.markets.indexOf(m); });
+          paint();
+        };
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-show]'), function (b) { b.onclick = function () { S.show = b.getAttribute('data-show'); paint(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-rows]'), function (b) { b.onclick = function () { S.rows = b.getAttribute('data-rows'); S.cmpAll = false; paint(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('#cmp th[data-cs]'), function (th) {
+        th.onclick = function () {
+          var col = th.getAttribute('data-cs'), st = S.csort;
+          S.csort = st.col === col ? { col: col, dir: -st.dir } : { col: col, dir: col === 'v' ? 1 : -1 };
+          paint();
+        };
+      });
+      var cc2 = $('cmp-csv'); if (cc2) cc2.onclick = cmpCsv;
       Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function (el) { el.onclick = function () { S.more[el.getAttribute('data-more')] = true; paint(); }; });
       Array.prototype.forEach.call(document.querySelectorAll('th.s[data-id]'), function (th) {
         th.onclick = function () {

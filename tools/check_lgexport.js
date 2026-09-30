@@ -135,10 +135,11 @@ async function saveDownload(dl, name) {
   ok('a second click flips it (Z→A)', await doc.evaluate(() => Array.from(document.querySelector('#mk .lc').querySelectorAll('tbody tr')).map((r) => r.querySelector('td.v').textContent).join(',') === 'SALE,FULL,CLEARANCE'));
   // compare matrix
   const cmpHead = await doc.evaluate(() => Array.from(document.querySelectorAll('#cmp thead th')).map((h) => h.textContent.trim()));
-  ok('values across markets — one column per scanned market plus the total', cmpHead.join('|') === 'Value|GDE|GGB|fGB|Total', cmpHead);
+  ok('compare markets — one column per scanned market (each saying how filled the label is there), the total (the default sort) and the spread',
+    cmpHead.join('|') === 'Value|GDE100% filled|GGB100% filled|fGB100% filled|Total ▼SKUs|Spreadshare gap', cmpHead);
   const cmpRow = await doc.evaluate(() => Array.from(document.querySelector('#cmp tbody tr').cells).map((c) => c.textContent.replace(/\s+/g, ' ').trim()).join(' | '));
   ok('the matrix leads with the biggest CL0 value across markets — SKUs and share PER MARKET, GB and GB-FB told apart although they share a code',
-    cmpRow === 'FULL | 7,200 60% | 15,863 60% | 5,400 60% | 28,463', cmpRow);
+    cmpRow === 'FULL | 7,200 60% | 15,863 60% | 5,400 60% | 28,463 | 0pp', cmpRow);
   await doc.evaluate(() => document.querySelector('#cmp [data-cmp="2"]').click());
   await doc.waitForTimeout(150);
   ok('picking CL2 shows values that exist in some markets and not others — a dash where a market lacks the value',
@@ -164,6 +165,55 @@ async function saveDownload(dl, name) {
   const c0f = await saveDownload(c0, 'lgcsv0');
   const c0t = fs.readFileSync(c0f, 'utf8').split('\n');
   ok('⤓ CSV · all markets — every scanned market, the GONE value carried with its reference count', c0t.some((l) => /^GB,google,CL0,"CLEARANCE",0,0,last known-good,40,-40$/.test(l)) && c0t.some((l) => /^GB,facebook,/.test(l)) && c0t.some((l) => /^DE,google,/.test(l)), c0t.filter((l) => /CLEARANCE/.test(l)));
+  // ---- BUILD A COMPARISON (Ray, 30 Sep 2026: "allow customization of side-by-side comparison … if I
+  // want to see a custom label 2 only across different 5 markets side by side")
+  const heads = () => doc.evaluate(() => Array.from(document.querySelectorAll('#cmp thead th')).map((h) => h.childNodes[0] && h.querySelector('small') ? h.textContent.replace(h.querySelector('small').textContent, '').trim() : h.textContent.trim()));
+  const body = () => doc.evaluate(() => Array.from(document.querySelectorAll('#cmp tbody tr')).map((r) => Array.from(r.cells).map((c) => c.textContent.replace(/\s+/g, ' ').trim()).join(' | ')));
+  const click = async (sel) => { await doc.evaluate((s) => document.querySelector(s).click(), sel); await doc.waitForTimeout(120); };
+  ok('the market picker lists every market, the never-scanned one there but not pickable, every scanned one picked by default',
+    await doc.evaluate(() => { const c = Array.from(document.querySelectorAll('#cmp [data-cm]')); return c.length === 4 && c[2].disabled && c.filter((b) => b.classList.contains('on')).length === 3; }));
+  await click('#cmp [data-cq="none"]');
+  ok('Clear leaves nothing to compare and says so, rather than drawing an empty table', /Pick at least one market/.test(await t('#cmp')) && !(await doc.$('#cmp table')));
+  await click('#cmp [data-cm="1"]'); await click('#cmp [data-cm="0"]');
+  ok('picked markets line up in the estate’s own order, whatever order they were clicked in (GB, then DE → DE | GB)', (await heads()).join('|') === 'Value|GDE|GGB|Total ▼|Spread', await heads());
+  ok('the summary names the label and exactly the markets being compared', /CL2 across 2 markets \(DE, GB\)/.test(await t('#cmp .csum')), await t('#cmp .csum'));
+  ok('the comparison is written into the address so a reload or bookmark lands on it', /#l=2&m=1,0&show=both&rows=all&sort=tot~-1$/.test(await doc.evaluate(() => location.hash)), await doc.evaluate(() => location.hash));
+  await click('#cmp [data-cq="fb"]');
+  ok('Meta picks only the Facebook catalogue — one column, and no spread (a gap needs two markets)', (await heads()).join('|') === 'Value|fGB|Total ▼', await heads());
+  await click('#cmp [data-cq="g"]');
+  ok('Google picks only the Shopping feeds', (await heads()).join('|') === 'Value|GDE|GGB|Total ▼|Spread', await heads());
+  await click('#cmp [data-cmp="3"]');
+  ok('a market that does not carry the label keeps its column and says so — GB has no CL3', await doc.evaluate(() => /no CL3/.test(document.querySelectorAll('#cmp thead th')[2].textContent)) && /1 without CL3/.test(await t('#cmp .csum')), await t('#cmp .csum'));
+  ok('…its cells read a dash with the reason, never a zero', (await body()).every((r) => / \| — \| /.test(r)), await body());
+  await click('#cmp [data-cq="all"]');
+  await click('#cmp [data-rows="every"]');
+  ok('“In every market” keeps only the CL3 values every market that CARRIES CL3 has (DE + GB-FB: New In, Festival)', (await body()).map((r) => r.split(' | ')[0]).join(',') === 'New In,Festival', await body());
+  await click('#cmp [data-cmp="2"]');
+  ok('…and on CL2, where no hoodie value is shared, it says none is rather than showing nothing', /no value is in every market/.test(await t('#cmp tbody')));
+  await click('#cmp [data-rows="gap"]');
+  ok('“Missing somewhere” keeps the values at least one market lacks — every CL2 value here', (await body()).length === 25 && /show all 45 values/.test(await t('#cmp')), [(await body()).length, await t('#cmp-more')]);
+  await click('#cmp [data-rows="all"]'); await click('#cmp [data-cmp="1"]');
+  await click('#cmp [data-show="pct"]');
+  ok('Share shows the share of each market alone', (await body())[0] === 'Zombie 1 | 10.8% | 4.9% | 14.4% | 3,900 | 9.5pp', (await body())[0]);
+  await click('#cmp [data-show="n"]');
+  ok('SKUs shows the count alone', (await body())[0] === 'Zombie 1 | 1,300 | 1,300 | 1,300 | 3,900 | 9.5pp', (await body())[0]);
+  await click('#cmp th[data-cs="m3"]');
+  ok('any market column sorts — the header click marks it', /fGB ▼/.test(await t('#cmp thead')), await t('#cmp thead'));
+  await click('#cmp th[data-cs="v"]');
+  ok('the value column sorts A→Z', (await body()).map((r) => r.split(' | ')[0]).join(',') === 'Zombie 1,Zombie 2,Zombie 3,Zombie 4,Zombie 5');
+  await click('#cmp th[data-cs="spread"]');
+  ok('spread sorts widest share gap first — the value the markets use most differently', await doc.evaluate(() => { const v = Array.from(document.querySelectorAll('#cmp tbody td.sp')).map((c) => parseFloat(c.textContent)); return v.length === 5 && v.every((x, i) => !i || v[i - 1] >= x); }));
+  await click('#cmp [data-cm="3"]');
+  const [cc] = await Promise.all([doc.waitForEvent('download'), doc.click('#cmp-csv')]);
+  const ccf = await saveDownload(cc, 'lgcmp');
+  const cct = fs.readFileSync(ccf, 'utf8').split('\n');
+  ok('⤓ CSV · this comparison — the label and the markets in the name, a SKUs + share column per picked market, total, spread, in how many',
+    /labelguard_Schuh_CL1_de-gb_\d{4}-\d{2}-\d{2}\.csv$/.test(cc.suggestedFilename()) && cct[0] === 'value,DE_skus,DE_share_pct,GB_skus,GB_share_pct,total_skus,spread_pp,in_markets' &&
+    cct.length === 6 && /^"Zombie 1",1300,10.8,1300,4.9,2600,5.9,2\/2$/.test(cct.find((l) => /Zombie 1/.test(l)) || ''), [cc.suggestedFilename(), cct[0], cct[1]]);
+  await click('#cmp [data-show="pct"]');
+  await doc.reload(); await doc.waitForTimeout(400);
+  ok('a reload of the file comes back on the same comparison — CL1, DE + GB, shares, sorted by spread', (await heads()).join('|') === 'Value|GDE|GGB|Total|Spread ▼' && /^Zombie \d \| [\d.]+% \| [\d.]+%/.test((await body())[0]) &&
+    await doc.evaluate(() => document.querySelector('#cmp [data-cmp="1"]').classList.contains('on')), [await heads(), (await body())[0]]);
   ok('no errors in the file', derr.length === 0, derr);
 
   // ---- the brand-card door: same file, and the click never folds the card
@@ -171,7 +221,7 @@ async function saveDownload(dl, name) {
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('.est-dl[data-dl="Schuh"]')]);
   ok('⬇ HTML on the brand card downloads the same file without folding the card', /labelguard_Schuh_all-markets/.test(dl2.suggestedFilename()) && await page.evaluate(() => !document.querySelector('.est-card[data-client="Schuh"]').classList.contains('collapsed')));
   ok('no page errors', errs.length === 0, errs);
-  if (process.env.LGX_KEEP) console.log('   · export kept at ' + file); else [file, c1f, c0f].forEach((f) => { try { fs.unlinkSync(f); } catch (e) {} });
+  if (process.env.LGX_KEEP) console.log('   · export kept at ' + file); else [file, c1f, c0f, ccf].forEach((f) => { try { fs.unlinkSync(f); } catch (e) {} });
   await browser.close();
   if (fail) { console.log('\n✗ Label Guard HTML export: ' + fail + ' check(s) failed'); process.exit(1); }
   console.log('   ✓ Label Guard ⬇ HTML · all markets: one file, every market, filter/sort/show-all/tabs live, CSV inside, nothing of the FCC');
