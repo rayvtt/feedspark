@@ -79,6 +79,8 @@ import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 import CASE_BRIEF from "../../../docs/FCC_Business_Case_Brief.html";
+// feedspark.com redesign mockup (Ray, 30 Sep 2026: "devise a proper website … host the mockup site on FCC too")
+import WEBSITE_PAGE from "../../../docs/FeedSpark_Website.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
@@ -298,6 +300,7 @@ const PAGES = {
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
   '/case':        { html: CASE_BRIEF,  slug: 'case' },
+  '/website':     { html: WEBSITE_PAGE, slug: 'website' },   // the feedspark.com redesign mockup — a document, see DOC_PATHS
 };
 
 // DOCUMENTS, NOT APP PAGES. /case is the FCC business case — a narrative that is read
@@ -306,7 +309,9 @@ const PAGES = {
 // avatars over somebody's shoulder in a meeting room, no Feed Chat bubble sitting on the
 // page's own section rail, and no skim view folding a scroll built to be scrolled. Exactly
 // the boundary /deck/ already draws — this is the same kind of thing at a different path.
-const DOC_PATHS = new Set(['/case']);
+// /website is the same kind of thing: the feedspark.com redesign mockup, a public-site layout that
+// must look like the public site — the live editor for copy, no FCC chrome over it.
+const DOC_PATHS = new Set(['/case', '/website']);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
