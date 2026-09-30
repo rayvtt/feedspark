@@ -10806,9 +10806,16 @@
       "pr": 558
     },
     {
-      "name": "Stock: the route prices each market off the ROAS index and its own feed-row read",
+      "name": "Stock: the route prices each market off the ROAS index and its own feed-row read, found by the cmpid",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid], vdidx[r.client + '|' + r.market]))",
+      "pattern": "return RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,",
+      "pr": 0
+    },
+    {
+      "name": "Stock: a scan index is never looked up by the roster label (Reiss|GB vs the indexed Reiss|gb)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "vdidx[r.client + '|' + r.market]",
+      "forbidden": true,
       "pr": 0
     },
     {
@@ -11189,6 +11196,19 @@
     {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0},
     {"name": "Catalogue: column filters — every view passes them", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passFacet(i) || !passCF(i)) continue;", "pr": 0},
     {"name": "Catalogue: a column's value list is counted without its own filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passCF(i, skip)", "pr": 0},
-    {"name": "Catalogue: the column-filter pop-up follows its ▾ on scroll", "file": "docs/FeedSpark_Catalog.html", "pattern": "$('gw').addEventListener('scroll', cfPlace", "pr": 0}
+    {"name": "Catalogue: the column-filter pop-up follows its ▾ on scroll", "file": "docs/FeedSpark_Catalog.html", "pattern": "$('gw').addEventListener('scroll', cfPlace", "pr": 0},
+    {"name": "Stock availability: a roster market joins its scanned feeds on the FeedHero company id", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function feedKeys(list) {", "pr": 0},
+    {"name": "Stock availability: the master / Google / Meta counts per market", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function availView(a) {", "pr": 0},
+    {"name": "Stock availability: the book pairs like with like", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function availBook(markets, ch) {", "pr": 0},
+    {"name": "Stock availability: the route reads both indexes and joins on the cmpid", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const fkeys = RULES.feedKeys(wiredXmlList());", "pr": 0},
+    {"name": "Stock availability: an output feed's counts ride confirmed scans", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (vol && vol.av) { try { await availTrack(env, client, mkt, vol.av); } catch (e) {} }", "pr": 0},
+    {"name": "Stock availability: the push lane streams a roster master", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (typeof body.masterfile === 'string') {", "pr": 0},
+    {"name": "Stock availability: the push lane stores the master counts", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (Array.isArray(body.masterstock)) {", "pr": 0},
+    {"name": "Stock availability: the feed counter on the scan stream", "file": "cloudflare/feedspark-deck/src/labelguard.js", "pattern": "export function availBucket(v) {", "pr": 0},
+    {"name": "Stock availability: the master counter", "file": "docs/catalog_engine.js", "pattern": "function stockTally() {", "pr": 0},
+    {"name": "Stock availability: the master agent reads a zipped / 1252 / XML master", "file": "tools/master_stock.mjs", "pattern": "export function tallyMaster(u8) {", "pr": 0},
+    {"name": "Stock availability: the master agent's schedule", "file": ".github/workflows/master-stock.yml", "pattern": "run: node tools/master_stock.mjs", "pr": 0},
+    {"name": "Stock availability: the card on /stock", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"av-card\">", "pr": 0},
+    {"name": "Stock availability: the page twin of availBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function avBook(markets, ch) {", "pr": 0}
   ]
 }

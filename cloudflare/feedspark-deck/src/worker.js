@@ -973,6 +973,62 @@ async function route(request, env, ctx) {
         return json({ ok: true, results });
       }
 
+      // ---- MASTER STOCK (Ray, 30 Sep 2026: "In the stock management module, bring in the availability ratio
+      // between master feed and output feeds as well (instock & outofstock)"). tools/master_stock.mjs
+      // (.github/workflows/master-stock.yml) counts each ROSTER company's master by stock. {masterfile: cmpid}
+      // streams that master through this worker — resolved by the Catalogue's catMasterInfo, so FeedHero's
+      // backup URL never leaves the server — or answers `unchanged` when the stored reading is of the same
+      // import; {masterstock:[…]} files the counts in ONE index, masteravail (cmpid → counts), one write per
+      // post. Roster companies only, named by cmpid — never a caller-supplied URL.
+      if (typeof body.masterfile === 'string') {
+        const cmpid = body.masterfile.trim().toLowerCase().slice(0, 60);
+        if (!ROAS.cmpidBrand(cmpid)) return json({ ok: false, error: 'not a roster company' }, 404);
+        try {
+          let rec = await catMasterInfo(env, cmpid, false);
+          if (rec.state !== 'ok') return json({ ok: false, state: rec.state, note: rec.note || '', error: rec.error || '' }, rec.state === 'preparing' ? 202 : 503);
+          if (!body.force) {
+            const have = ((await env.EDITS.get('masteravail', 'json')) || {})[cmpid];
+            if (have && have.imp && have.imp === rec.lastImport) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
+          }
+          let target = rec.src;
+          if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
+          let up = await fetch(target);
+          if ((up.status === 404 || up.status === 403) && rec.cached) {
+            // FeedHero re-imported since the cached read and the timestamped file moved on
+            rec = await catMasterInfo(env, cmpid, true);
+            target = rec.state === 'ok' ? rec.src : '';
+            if (target) up = await fetch(target);
+          }
+          if (!up.ok || !up.body) return json({ ok: false, error: 'master file fetch failed (' + up.status + ')' }, 502);
+          return new Response(up.body, { headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
+            'x-master-file': String(rec.file || 'master').replace(/[^\w.\-]/g, '_').slice(0, 120), 'x-master-import': String(rec.lastImport || '').slice(0, 40),
+            'x-master-rows': String(rec.rows || '') } });
+        } catch (e) {
+          const msg = String((e && e.message) || e).slice(0, 160);
+          if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+          return json({ ok: false, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error', error: msg }, 502);
+        }
+      }
+      if (Array.isArray(body.masterstock)) {
+        const idx = (await env.EDITS.get('masteravail', 'json')) || {};
+        const results = [];
+        const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+        for (const e of body.masterstock.slice(0, 20)) {
+          const cmpid = str(e && e.cmpid, 60).trim().toLowerCase(), who = ROAS.cmpidBrand(cmpid);
+          if (!who) { results.push({ cmpid, error: 'not a roster company' }); continue; }
+          const a = sanitizeAvail(e);
+          if (!a) { results.push({ cmpid, error: 'bad tally — the buckets must add up to the rows read' }); continue; }
+          idx[cmpid] = Object.assign({ client: who.client, market: who.market, cmpid, t: Date.now() }, a, {
+            via: ['availability', 'quantity', 'mixed', 'none'].indexOf(e.via) >= 0 ? e.via : 'none',
+            qcol: str(e.qcol, 60), fmt: str(e.fmt, 12), enc: str(e.enc, 16), imp: str(e.imp, 40),
+            rows: Math.max(0, Math.round(+e.rows || 0)) || null });
+          results.push({ cmpid, ok: true });
+        }
+        if (results.some((r) => r.ok)) await env.EDITS.put('masteravail', JSON.stringify(idx));
+        logActivity(ctx, env, request, 'master-stock', results.filter((r) => r.ok).length + ' master(s) counted · ' + results.filter((r) => r.error).length + ' refused', 'master-stock');
+        return json({ ok: true, results });
+      }
+
       // ---- THE 09:00 UK DAILY GOLDEN RECORD RUN (Ray, 24 Sep 2026: "Golden Record and content
       // quality should automatically scan on a daily basis, then at 9 a.m. UK time, so every day
       // there's a tracker. If there's a manual scan on any day, that new score can override that
@@ -2729,12 +2785,24 @@ async function route(request, env, ctx) {
         // of 60,235" — see the model note on RULES.adsBasis): voldobidx already carries each Shopping
         // feed's own row count from the SAME 4x-daily xml-scan agent the Product Volume module reads —
         // one more KV get, keyed client|market, never a second scan.
+        // A ROSTER MARKET IS JOINED TO ITS SCANNED FEEDS ON THE FEEDHERO COMPANY ID (RULES.feedKeys), never
+        // on its label: the scan indexes key a feed as wired ('Reiss|gb', 'Superdry|befr'), the roster names it
+        // 'GB' / 'BE-FR', and the first cut of this route looked up 'Reiss|GB' and found nothing.
+        // AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "bring in the availability ratio between master feed
+        // and output feeds as well (instock & outofstock)"): two more KV gets — masteravail (cmpid → the
+        // master's stock counts, written by tools/master_stock.mjs) and feedavail (client|mkt → each output
+        // feed's, written on every confirmed xml-scan) — never a read of either feed here.
         const ridx = (await env.EDITS.get('roasidx', 'json')) || {};
         const vdidx = (await env.EDITS.get('voldobidx', 'json')) || {};
+        const mavail = (await env.EDITS.get('masteravail', 'json')) || {};
+        const favail = (await env.EDITS.get('feedavail', 'json')) || {};
+        const fkeys = RULES.feedKeys(wiredXmlList());
         return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
           matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), heroRuns: RULES.heroRuns(rows), findings: RULES.stockFindings(rows, now),
           sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
-          markets: rows.map((r) => RULES.stockView(r, ridx[r.cmpid], vdidx[r.client + '|' + r.market])) }));
+          markets: rows.map((r) => { const k = fkeys[r.cmpid] || {};
+            return RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,
+              { master: mavail[r.cmpid], g: k.g ? favail[k.g] : null, fb: k.fb ? favail[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }); }) }));
       }
       const findings = [];
       rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));
@@ -3842,6 +3910,16 @@ function catCmpid(src) {
   const m = src && src.xml ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
   return m ? m[1].toLowerCase() : null;
 }
+// every wired FeedHero output as {client, mkt, url} — the list RULES.feedKeys joins a roster market to its
+// scanned feeds by. DEFAULT_FEEDS only (the feeds the xml-scan agent reads), so the stock route costs no read.
+function wiredXmlList() {
+  const out = [];
+  Object.keys(DEFAULT_FEEDS).forEach((c) => Object.keys(DEFAULT_FEEDS[c] || {}).forEach((m) => {
+    const s = DEFAULT_FEEDS[c][m];
+    if (s && s.xml) out.push({ client: c, mkt: m, url: s.xml });
+  }));
+  return out;
+}
 // a FeedHero IMPORT file of THIS company and nothing else: https, *.feedhero.net, /import_feeds/<cmpid>/
 function catFileOk(u, cmpid) {
   try {
@@ -4236,6 +4314,38 @@ async function markScanUnreachable(env, client, mkt, msg, wantPT) {
   } catch (e2) {}
 }
 
+// ---- AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "In the stock management module, bring in the
+// availability ratio between master feed and output feeds as well (instock & outofstock)"). Two indexes,
+// one per side, each ONE KV key /api/rules/stock reads whole (RULES.availView joins them on the cmpid):
+//   feedavail   client|mkt -> an OUTPUT feed's products counted by stock, written by availTrack on every
+//               CONFIRMED scan (the 4x-daily agent and the guard pages' live rescan) — Google and Meta alike
+//   masteravail cmpid      -> the MASTER's, written by tools/master_stock.mjs through {masterstock}
+// Counts only, bucketed by one word table (labelguard.js / catalog_engine.js › availBucket), and a tally
+// whose buckets do not add up to its product count is refused rather than stored.
+const AV_BUCKETS = ['in', 'out', 'pre', 'none', 'other'];
+function sanitizeAvail(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const num = (v) => Math.max(0, Math.round(+v || 0));
+  const n = num(raw.n);
+  if (!n || n > 5000000) return null;
+  const o = { n };
+  let sum = 0;
+  AV_BUCKETS.forEach((k) => { o[k] = num(raw[k]); sum += o[k]; });
+  if (sum !== n) return null;
+  o.col = String(raw.col == null ? '' : raw.col).slice(0, 60);
+  o.ow = (Array.isArray(raw.ow) ? raw.ow : []).slice(0, 5)
+    .filter((x) => Array.isArray(x) && /^[\w .\/-]{1,24}$/.test(String(x[0]))).map((x) => [String(x[0]), num(x[1])]);
+  return o;
+}
+async function availTrack(env, client, mkt, raw) {
+  const a = sanitizeAvail(raw);
+  if (!a) return null;
+  const idx = (await env.EDITS.get('feedavail', 'json')) || {};
+  idx[client + '|' + mkt] = Object.assign({ client, mkt, t: Date.now() }, a);
+  await env.EDITS.put('feedavail', JSON.stringify(idx));
+  return a;
+}
+
 // ---- New-product ARRIVALS by first-seen date (Ray, 15 Sep 2026: "fs:date_of_birth signals the
 // timestamp when the product ID first appears — use that to forecast how many products arrive
 // per year per quarter per month for all my accounts"). The collector histograms
@@ -4342,6 +4452,8 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img, opts) 
   // the image-library capture rides the same confirmed scan, for the same reason
   let images = null;
   if (img) { try { images = await imageTrack(env, client, mkt, img); } catch (e) {} }
+  // the feed's products counted by stock (/stock's master → feed ratio) ride the same confirmed scan
+  if (vol && vol.av) { try { await availTrack(env, client, mkt, vol.av); } catch (e) {} }
   return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays, images };
 }
 

@@ -669,8 +669,68 @@ export function svBook(markets, pct, days) {
 // `ads` is the market's price for traffic: its ROAS index entry for spend/clicks/CPC, its voldobidx
 // entry (`feedIdx`, {rows,t} — the live output feed's own row count) for the SKU denominator, null
 // when either is unread.
-export function stockView(r, roasEntry, feedIdx) {
+export function stockView(r, roasEntry, feedIdx, avail) {
   return { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items,
     stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock),
-    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }) };
+    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }), av: availView(avail) };
+}
+
+// ---- WHICH SCANNED FEED IS WHICH MARKET — joined on the FeedHero company id --------------------------
+// The scan indexes (voldobidx, feedavail) key a feed as it is WIRED — 'Reiss|gb', 'Superdry|befr',
+// 'Reiss|gb-fb' — while the roster names a market its own way ('GB', 'BE-FR'), so a label is never
+// matched to a label (the first cut of the SKU denominator did, and 'Reiss|GB' found nothing). Every
+// FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file> — the same read as the Catalogue's
+// catCmpid — and a Meta (-fb) feed sits under its Google market's cmpid, so one company id names both.
+// list = [{client, mkt, url}] (the wired XML feeds) -> { cmpid: { g: 'Client|mkt', fb: 'Client|mkt-fb' } }
+export function feedKeys(list) {
+  const out = {};
+  (list || []).forEach((f) => {
+    const m = f && f.url ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(f.url)) : null;
+    if (!m || !f.client || !f.mkt) return;
+    const cmpid = m[1].toLowerCase(), ch = /-fb$/i.test(String(f.mkt)) ? 'fb' : 'g';
+    const e = out[cmpid] || (out[cmpid] = {});
+    if (!e[ch]) e[ch] = f.client + '|' + f.mkt;
+  });
+  return out;
+}
+
+// ---- AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "In the stock management module, bring in the
+// availability ratio between master feed and output feeds as well (instock & outofstock)"). Three readings
+// of one market, each a COUNT of products by the stock it states: the MASTER as the client sent it
+// (FeedHero's own import, read by tools/master_stock.mjs — the availability word, or the quantity where a
+// row has no word) and each OUTPUT feed FeedSpark sends from it (Google, Meta — counted on the 4x-daily
+// xml-scan stream). The distance between them is what the stock rules did, so each is kept whole and
+// nothing is joined or inferred: a product the master has out of stock and the feed does not carry is
+// not called "excluded" here, because two counts cannot say which products they are.
+//   in    in stock                       pre   pre-order, backorder, available for order — sellable, not on the shelf
+//   out   out of stock, sold out, discontinued, not available
+//   none  no reading (no word, no quantity) other a word nobody recognised — kept, never guessed into a bucket
+export const AV_KEYS = ['in', 'out', 'pre', 'none', 'other'];
+export function availSide(x) {
+  const n = x ? Math.max(0, Math.round(+x.n || 0)) : 0;
+  if (!(n > 0)) return null;
+  const o = { n, t: +x.t || null };
+  AV_KEYS.forEach((k) => { o[k] = Math.min(n, Math.max(0, Math.round(+x[k] || 0))); });
+  o.inPct = (o.in / n) * 100; o.outPct = (o.out / n) * 100;
+  return o;
+}
+// a = { master, g, fb, wired: {g, fb} } — the two indexes' entries (masteravail[cmpid], feedavail[client|mkt])
+// and whether the market HAS a Google / Meta feed wired, so "no Meta feed" is never read as "not scanned yet"
+export function availView(a) {
+  if (!a) return null;
+  const master = availSide(a.master), g = availSide(a.g), fb = availSide(a.fb), m = master ? a.master : null, w = a.wired || {};
+  return { master, g, fb, wired: { g: !!w.g, fb: !!w.fb },
+    via: (m && m.via) || null, imp: (m && m.imp) || null, col: (m && m.col) || '', qcol: (m && m.qcol) || '' };
+}
+// the book for one channel ('g' | 'fb'): markets whose master AND that feed are both read, their counts
+// summed (a count carries no currency, so it can cross markets); a market read on one side only is
+// counted apart (`one`), never half-added into a ratio it would skew
+export function availBook(markets, ch) {
+  const c = ch === 'fb' ? 'fb' : 'g', b = { markets: 0, one: 0, master: { n: 0, in: 0, out: 0 }, feed: { n: 0, in: 0, out: 0 } };
+  (markets || []).forEach((mk) => {
+    const av = mk && mk.av, ms = av && av.master, fd = av && av[c];
+    if (ms && fd) { b.markets++; ['n', 'in', 'out'].forEach((k) => { b.master[k] += ms[k]; b.feed[k] += fd[k]; }); }
+    else if (ms || fd) b.one++;
+  });
+  return b;
 }

@@ -258,6 +258,27 @@ window.addEventListener('load',restore);
     .svp .big{font-size:28px}
   }
   @media(prefers-reduced-motion:reduce){.svp,.svl .b i{transition:none}}
+  /* ---- /stock: in stock, master feed → output feeds — one bar per feed (in stock · pre-order · out · not stated) ---- */
+  :root{--av-in:var(--good);--av-pre:var(--navy);--av-out:var(--chart-2);--av-na:#CBD2D9}
+  [data-theme=dark]{--av-na:#3A404C}
+  .avc{display:flex;flex-direction:column;gap:4px;min-width:150px;max-width:260px}
+  .avt{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .avt b{font-size:15px;font-weight:900;color:var(--ink);margin-right:2px}
+  .avb{display:flex;height:10px;border-radius:0 4px 4px 0;overflow:hidden;background:var(--wash)}
+  .avb i{display:block;height:100%;flex:none;transform-origin:left;animation:grow .7s cubic-bezier(.22,.68,.32,1) both}
+  .avb i+i{box-shadow:inset 2px 0 0 var(--paper)}
+  .avb .in,.legend i.in{background:var(--av-in)}.avb .pre,.legend i.pre{background:var(--av-pre)}
+  .avb .out,.legend i.out{background:var(--av-out)}.avb .na,.legend i.na{background:var(--av-na)}
+  .avc .sub2{font-size:11.5px;color:var(--muted);font-weight:700}
+  .av-none{display:inline-block;font-size:11.5px;font-weight:800;color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:3px 8px;white-space:nowrap}
+  #av-t td,#av-t th{vertical-align:middle}
+  .sv-sum .it b .ar{display:inline;font-size:15px;color:var(--muted);font-weight:800;margin:0 5px;vertical-align:1px}
+  .sv-sum .it.av2{min-width:240px}
+  .sv-sum .it.av2 .h{display:block;font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .sv-sum .it.av2 .r{display:flex;align-items:baseline;gap:8px}
+  .sv-sum .it.av2 .r b{display:inline;font-size:18px}
+  .sv-sum .it.av2 .r span{font-size:12px}
+  @media(prefers-reduced-motion:reduce){.avb i{animation:none}}
 
 </style>
 <style>/* FCC-THEME */
@@ -316,6 +337,14 @@ window.addEventListener('load',restore);
 
 <main class="wrap">
   <div class="kpis" id="kpis"></div>
+
+  <section class="card" id="av-card">
+    <div class="chead"><div class="sp"><h3>In stock — master feed → output feeds</h3><p class="ch">What the client sends against what each channel receives, counted product by product.</p></div>
+      <div class="tools"><button class="btn" id="av-csv" type="button" title="These availability counts">⬇ CSV</button></div></div>
+    <div class="sv-sum" id="av-sum"></div>
+    <div class="tw"><table class="t" id="av-t"><thead><tr><th>Market</th><th>Master feed</th><th>Google Shopping</th><th>Meta</th></tr></thead><tbody></tbody></table></div>
+    <div class="legend"><span><i class="in"></i>In stock</span><span><i class="pre"></i>Pre-order / backorder</span><span><i class="out"></i>Out of stock</span><span><i class="na"></i>Not stated</span></div>
+  </section>
 
   <section class="card" id="sv-card">
     <div class="chead"><div class="sp"><h3>Ad spend kept off low-stock products</h3><p class="ch" id="sv-sub">A forecast for the stock thresholds and range-completion rules holding products back. Hover a rule for its working.</p></div>
@@ -557,7 +586,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderKpis(); renderSv(); renderCov(); renderHeroes(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderKpis(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
   }
   function renderChips() {
@@ -584,7 +613,11 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var svTile = '<div class="kpi sv-k link" data-sv="book" tabindex="0" title="Hover for the working"><div class="n num" id="svk-n">' + (top ? money(top.cur, top.amt, 0) : '—') + '</div><div class="l">Ad spend kept off ' + svPer() + '</div><div class="d">'
       + (top ? 'at least · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '% · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + (bk.byCur.length > 1 ? ' · + ' + bk.byCur.slice(1).map(function (b) { return money(b.cur, b.amt, 0); }).join(', ') : '')
         : bk.unpriced ? 'no Google Ads read for these markets yet' : 'no stock rule holding products back') + '</div></div>';
-    $('#kpis').innerHTML = !ms.length ? '' : svTile +
+    var ab = avBook(ms, 'g');
+    var avTile = '<div class="kpi link" data-go="av-card" tabindex="0" title="The Google Shopping feed against its master, on the markets where both are counted"><div class="n num">'
+      + (ab.markets ? pctS(ab.feed.in / ab.feed.n * 100) : '—') + '</div><div class="l">In stock in the Google feed</div><div class="d">'
+      + (ab.markets ? 'master ' + pctS(ab.master.in / ab.master.n * 100) + ' in stock · ' + ab.markets + ' market' + (ab.markets === 1 ? '' : 's') : 'master feeds not counted yet') + '</div></div>';
+    $('#kpis').innerHTML = !ms.length ? '' : svTile + avTile +
       kpi(n0(n), 'Stock rules', 'across ' + withStock + ' of ' + ms.length + ' market' + (ms.length === 1 ? '' : 's'))
       + kpi(n0(avail), 'Availability rules', 'what each channel is told is in or out of stock')
       + kpi(n0(hero), 'Markets with hero sizes', hero ? 'core sizes explicitly protected' : 'no market defines them yet')
@@ -592,6 +625,59 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + kpi(n0(local), 'Markets with local inventory', 'store pickup / LIA rules')
       + kpi(n0(idle), 'Idle stock rules', idle ? 'not impacting any items' : 'every stock rule touched products', idle ? 'warn' : '')
       + kpi(n0(broken + act), 'Act now', broken ? broken + ' writing a missing column' : act ? 'overdue reviews' : 'nothing urgent', broken + act ? 'risk' : 'good');
+  }
+  // ---- IN STOCK, MASTER FEED → OUTPUT FEEDS (Ray, 30 Sep 2026: "In the stock management module, bring in the availability
+  // ratio between master feed and output feeds as well (instock & outofstock)"). Counts only, straight off the route
+  // (RULES.availView): the master as FeedHero last imported it, each output feed as last scanned. A book figure pairs like
+  // with like — a market counts only where BOTH sides are read (avBook, the twin of RULES.availBook) — so it never
+  // compares one set of markets' masters with another set's feeds.
+  var AVL = { master: 'Master feed', g: 'Google Shopping', fb: 'Meta' };
+  function avBook(markets, ch) {
+    var c = ch === 'fb' ? 'fb' : 'g', b = { markets: 0, one: 0, master: { n: 0, in: 0, out: 0 }, feed: { n: 0, in: 0, out: 0 } };
+    (markets || []).forEach(function (mk) {
+      var av = mk && mk.av, ms = av && av.master, fd = av && av[c];
+      if (ms && fd) { b.markets++; ['n', 'in', 'out'].forEach(function (k) { b.master[k] += ms[k]; b.feed[k] += fd[k]; }); }
+      else if (ms || fd) b.one++;
+    });
+    return b;
+  }
+  // a share as a person reads it: whole at the ends (100%, 0%), one decimal between
+  function pctS(v) { if (v == null || !isFinite(v)) return '—'; return (v >= 99.95 ? '100' : v <= 0.05 ? (v > 0 ? '<0.1' : '0') : v.toFixed(1)) + '%'; }
+  function avSegs(s) {
+    return '<div class="avb" aria-hidden="true">' + [['in', s.in], ['pre', s.pre], ['out', s.out], ['na', s.none + s.other]].filter(function (x) { return x[1] > 0; })
+      .map(function (x) { return '<i class="' + x[0] + '" style="width:' + (x[1] / s.n * 100).toFixed(2) + '%"></i>'; }).join('') + '</div>';
+  }
+  function avCell(m, k) {
+    var av = m.av || {}, s = av[k], w = av.wired || {};
+    if (!s) {
+      var why = k === 'master' ? 'not counted yet' : !w[k] ? (k === 'fb' ? 'no Meta feed' : 'no feed wired') : 'not scanned yet';
+      return '<td><span class="av-none">' + why + '</span></td>';
+    }
+    var tip = '<b>' + esc(m.client + ' ' + m.market) + ' · ' + AVL[k] + '</b><br>' + n0(s.in) + ' in stock · ' + n0(s.out) + ' out of stock'
+      + (s.pre ? '<br>' + n0(s.pre) + ' pre-order / backorder' : '') + (s.none ? '<br>' + n0(s.none) + ' state no stock' : '') + (s.other ? '<br>' + n0(s.other) + ' unreadable' : '');
+    if (k === 'master') tip += '<br><span class="m">FeedHero import ' + esc(av.imp || '—') + ' · counted ' + since(s.t)
+      + (av.via === 'quantity' ? ' · from the ' + esc(av.qcol || 'quantity') + ' column' : av.via === 'mixed' ? ' · the ' + esc(av.col || 'availability') + ' word, else the quantity' : '') + '</span>';
+    else {
+      tip += '<br><span class="m">scanned ' + since(s.t) + '</span>';
+      if (av.master) tip += '<br><span class="m">master: ' + n0(av.master.in) + ' in stock · ' + n0(av.master.out) + ' out of ' + n0(av.master.n) + '</span>';
+    }
+    return '<td><div class="avc" data-tip="' + esc(tip) + '"><div class="avt"><b>' + pctS(s.inPct) + '</b> in stock · ' + pctS(s.outPct) + ' out</div>' + avSegs(s)
+      + '<span class="sub2">' + n0(s.n) + ' products</span></div></td>';
+  }
+  function renderAv() {
+    var ms = mkts();
+    $('#av-t tbody').innerHTML = ms.map(function (m) {
+      return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td>' + avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + '</tr>';
+    }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No market in view.' : 'No rules read yet.') + '</td></tr>';
+    // one tile per channel: master → that feed, in stock over out of stock, on the markets where both are counted
+    var pair = function (b, lbl) {
+      if (!b.markets) return '';
+      var row = function (k, w) { return '<div class="r"><b>' + pctS(b.master[k] / b.master.n * 100) + '<span class="ar">→</span>' + pctS(b.feed[k] / b.feed.n * 100) + '</b><span>' + w + '</span></div>'; };
+      return '<div class="it av2"><span class="h">Master → ' + lbl + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + '</span>' + row('in', 'in stock') + row('out', 'out of stock') + '</div>';
+    };
+    var any = ms.some(function (m) { return m.av && (m.av.master || m.av.g || m.av.fb); });
+    $('#av-sum').innerHTML = pair(avBook(ms, 'g'), 'Google') + pair(avBook(ms, 'fb'), 'Meta')
+      || '<p class="note">' + (any ? 'No market in view has its master and a feed both counted yet.' : 'Nothing counted yet — master feeds are read after FeedHero\u2019s morning imports, output feeds on every scan.') + '</p>';
   }
   // ---- coverage: market x mechanism — one hue, darker = more rules (a count, never a colour-only identity: the number is in the cell)
   function shade(n, mx) { if (!n) return ''; var a = 0.12 + 0.5 * (n / Math.max(1, mx)); return 'background:rgba(37,99,235,' + a.toFixed(2) + ')'; }
@@ -851,6 +937,16 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     S.brand = p[0]; S.market = p[1]; S.mech = p[2]; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: S.market, mech: S.mech });
     if (S.d && S.d.scope && S.d.scope.brand !== S.brand && S.d.scope.brand) { load(); return; }
     render(); var el = document.getElementById('set-' + ((mkts()[0] || {}).cmpid || '')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('#kpis').addEventListener('click', function (e) { var g = e.target.closest('[data-go]'); if (!g) return; var el = document.getElementById(g.getAttribute('data-go')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  $('#kpis').addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; var g = e.target.closest('[data-go]'); if (g) g.click(); });
+  $('#av-csv').addEventListener('click', function () {
+    var rows = [];
+    mkts().forEach(function (m) { ['master', 'g', 'fb'].forEach(function (k) {
+      var s = m.av && m.av[k]; if (!s) return;
+      rows.push([m.client, m.market, AVL[k], s.n, s.in, s.out, s.pre, s.none, s.other, (s.inPct).toFixed(1), (s.outPct).toFixed(1), s.t ? new Date(s.t).toISOString() : '', k === 'master' ? (m.av.imp || '') : '']);
+    }); });
+    csvDownload('stock_availability' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'feed', 'products', 'in stock', 'out of stock', 'pre-order / backorder', 'not stated', 'unreadable', 'in stock %', 'out of stock %', 'counted at', 'FeedHero import'], rows);
   });
   $('#chan').addEventListener('change', function () { S.chan = this.checked; remember('fcc-stock-chan', S.chan ? '1' : ''); renderCov(); });
   $('#sevs').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.sev = +b.getAttribute('data-s'); renderFinds(); });
