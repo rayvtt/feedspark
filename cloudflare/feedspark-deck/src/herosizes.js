@@ -20,9 +20,14 @@
  */
 
 // the census SHAPE — docs/herosize_engine.js CENSUS_V holds the same number (tools/test_herosize.mjs pins both)
-export const CENSUS_V = 2;   // 2: departments in every roster market's language
+//   3: types placed on the Google Shopping feed's own product_type tree and kept at their finest level (every tier is a
+//      roll-up of them on the page) — Ray, 30 Sep 2026: "can you allow tier 2, tier 3 of PT to be chosen too"
+//   2: departments in every roster market's language
+export const CENSUS_V = 3;
+// a census of an unchanged import is still read again after this long: its types ride the Google feed's product_type tree
+export const CENSUS_FRESH_MS = 20 * 3600 * 1000;
 export const HERO_KEY = 'heroguide';
-const CAP = { types: 80, sz: 30, pat: 400, rows: 200, sizes: 40 };
+const CAP = { types: 600, sz: 30, pat: 400, rows: 200, sizes: 40 };
 const DEPTS = ['', 'kids', 'women', 'men', 'unisex'];
 const SRCS = ['set', 'doc', 'core', 'ex'];
 const SEED_EX = /^fs-/;   // the engine's own examples — never overwritten from the page
@@ -51,16 +56,21 @@ export function sanitizeCensus(c) {
       const c2 = int(p[1]); if (!c2) return null;
       pat.push([p[0], c2]);
     }
-    const o = { k, d: DEPTS.indexOf(t.d) >= 0 ? t.d : '', n: int(t.n), in: int(t.in), out: int(t.out), one: int(t.one), nos: int(t.nos),
+    const o = { k, t: Math.max(1, int(t.t, 12)), d: DEPTS.indexOf(t.d) >= 0 ? t.d : '', n: int(t.n), in: int(t.in), out: int(t.out), one: int(t.one), nos: int(t.nos),
       st: int(t.st), sz, more: int(t.more, 1e5), pat, patx: int(t.patx) };
     if (t.fw) o.fw = 1;
+    if (t.m) o.m = 1;
     if (o.in + o.out > o.n) return null;
     types.push(o);
   }
   const cols = {};
   ['pt', 'size', 'gender', 'age', 'grp', 'av', 'qty'].forEach((k) => { cols[k] = str(c.cols && c.cols[k], 60); });
+  // where the types came from: the feed's tree (and how each master row found its place on it), or the master's own words
+  const tr = c.tree && typeof c.tree === 'object' ? c.tree : null;
+  const tree = tr ? { feed: int(tr.feed), typed: int(tr.typed), id: int(tr.id), grp: int(tr.grp), learn: int(tr.learn), word: int(tr.word), own: int(tr.own),
+    join: str(tr.join, 60), on: tr.on === 'g:id' ? 'g:id' : tr.on === 'fs_data_original_id' ? 'fs_data_original_id' : '' } : null;
   return { v: CENSUS_V, rows: int(c.rows), sized: int(c.sized), one: int(c.one), nos: int(c.nos), groups: int(c.groups), capped: !!c.capped,
-    cols, types, tx: { n: int(c.tx && c.tx.n), k: int(c.tx && c.tx.k, 1e5) } };
+    cols, src: c.src === 'feed' && tree ? 'feed' : 'master', tree, types, tx: { n: int(c.tx && c.tx.n), k: int(c.tx && c.tx.k, 1e5) } };
 }
 // the one-line summary /api/rules/stock carries for every market (no second read of the census)
 export function censusSummary(c, t) {

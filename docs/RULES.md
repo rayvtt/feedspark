@@ -280,10 +280,12 @@ a style carries in two colours is in stock when either is). Posted per market as
 KV `mastersize:<cmpid>`; the tally that follows carries `szv` only when its census was stored, and the
 worker answers `unchanged` only when both the counts and the census are of this import and this
 census shape (`CENSUS_V`, held equal in the engine and `src/herosizes.js`). Caps, each counted rather
-than dropped: the 80 biggest product types per market (`tx` counts the rest), 30 sizes per type,
-400 run patterns per type (`patx` counts the styles in rarer ones).
+than dropped: 600 product types per market at their finest level (past it the smallest fold into their
+parent — §3h), 30 sizes per type, 400 run patterns per type (`patx` counts the styles in rarer ones).
 
-**Product types and sizes.** A type is the brand's own path to two levels (a generic "Clothing"
+**Product types and sizes.** Where the market's Google Shopping feed is read, the types are the FEED's
+own product_type tree and the master's words below only place the rows the feed never sends (§3h);
+without a feed they are the types. A master type is the brand's own path to two levels (a generic "Clothing"
 middle level stepped over), prefixed with the department from the gender / age columns only when
 the path names none — Superdry's bare "T-Shirts" + `mens` → "Men > T-Shirts", Reiss's "Womenswear >
 Dresses" as it is. A category id, a bare department word ("Womens") or a merchandising bucket ("View
@@ -403,6 +405,76 @@ list, and carries a negative control — the shared auto-fit grid forced back on
 six tiles 5 + 1 at 1100px, and the even-row measure must fail on it. Against the page as it was
 before this change, 26 of its 38 checks fail.
 
+## 3h. Hero sizes at the tier of PT you pick (`/stock`)
+
+Ray, 30 Sep 2026, circling the PRODUCT TYPE head of the hero-size card: *"can you allow tier 2, tier 3 of
+PT to be chosen too ? sometimes no need too much granulartiy"*.
+
+**Why the master alone could not.** A master names its types its own way. Superdry's reads a category
+for most rows and a leaf type for the rows whose category is a merchandising bucket, so "Women ›
+Jumpers" and "Women › V-Neck Jumper" sat side by side; Monsoon's is one flat word; Reiss's and Schuh's go
+to two levels. There was no tier 2 or tier 3 to offer. The tree the FCC calls PT is the Google Shopping
+feed's: `g:product_type` slot 1, the path Product Type Guard reads.
+
+**Census shape 3.** Before each master, the agent streams that market's Google Shopping feed (the wired
+FeedHero XML — 45 of the 57 roster markets have one) into `treeIndex`: each product's path by `g:id`, by
+original id and by item group, paths only. The census then places every master row on that tree:
+
+1. by product id (the column carrying the feed's ids, found on the first 4,000 rows as the Catalogue
+   finds it), else by its style;
+2. a product the feed never sends — the very styles a hero-size gap hides in — where 80%+ of its master
+   type's SENT products sit, and no deeper than they agree (`commonPath`, never on fewer than five).
+   Every product-type column of the row is a reading, so Superdry's sub-brand category "Bench" is still
+   placed by its type "Puffer Jacket";
+3. else by the master's own word, where the tree has exactly one type of that name in the row's
+   department (`wordPlace`). A word a children's and a women's branch both use goes by the run: ages to
+   the kids' branch, 10 to the women's (Monsoon's master names no gender);
+4. else under the feed's word for its department, or `Master only`, marked `m` — the master's own word,
+   shown on the card as **master type**.
+
+Types are kept at their finest level (up to 600 per market; past that the smallest fold into their
+parent, so every coarser tier stays complete). A market with no Google feed, or a feed the agent could
+not read, keeps the master's own types and says so (`src: 'master'`). An unchanged import is read again
+once a day all the same (`CENSUS_FRESH_MS`), because the feed's tree moves on its own.
+
+Measured 30 Sep 2026 in session (nothing committed):
+
+| Market | Placed on the tree | Tiers (types at each) |
+|---|---|---|
+| Superdry GB | 100% — 67% by id or style, 33% by master type | 4 · 14 · 95 · 326 |
+| Reiss GB | 99.8% | 5 · 41 · 118 · 368 · 575 |
+| Schuh GB | 99.8% | 7 · 41 · 377 · 557 |
+| Superdry DE | 99.9% | 37 · 138 · 525 |
+| Monsoon GB | 96.5% — the rest are master words the feed has no type for ("Bridal Dresses", "Utility Jackets") | 3 · 86 · 110 · 187 |
+
+**The tiers.** `tiers(cen)` offers a tier when at least 1% of the products reach it, numbered as the tree
+numbers them. `tierTypes` rolls the finest types up: counts added, the runs laid on one ladder, each
+style's pattern re-read onto it, so a rolled-up type measures exactly as its types added up. The card
+opens on the finest tier at which 90% of the sized products sit in at most 40 types (`defaultTier` —
+tier 3 for Superdry GB, Reiss and Monsoon; tier 2 for Schuh and Superdry DE). A pick is remembered per
+brand on the device (`fcc-stock-hmtier`): a screen preference, never shared state.
+
+**A list set at a tier.** It is written as that tier's key (`m:<Brand>|<path at that tier>`) and read by
+every finer type under it that sets none of its own, shown as **⤴ Tier N** with where it came from in the
+tooltip. It reaches a finer type only when it names a size that type is made in, so a women's-clothing
+list of S–L and 10–14 never becomes the jeans' list, or when it records that the whole branch has no hero
+sizes. The resolution is now: the type's own entry → the nearest coarser tier the brand set → the brand
+it follows (the same two steps) → the example it follows → not mapped. An entry keyed on a path of this
+tree is placed EXACTLY, never leaf-matched onto another branch's type of the same name; any other entry
+(a document's rows, a list saved before the tree) still meets its type by its leaf.
+
+**The figures.** A row's hero stock is its finest types added up, each measured on the list that reaches
+IT. A coarse row, the tiles and every other tier therefore agree, and the hero-stock headline does not
+move with the tier. On the card:
+
+- a row whose types below it set their own list says how many ("2 types under it set their own");
+- a name several rows share leads with its department ("Women › Clothing", "Men › Clothing");
+- a master-only type is badged **master type**;
+- a type filed shallower than the tier, beside finer types of its branch, says **no finer type**.
+
+The ⇪ Import matches a document's rows against every tier's types, and ⬇ Sheet exports the tier on
+screen.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -439,6 +511,11 @@ first); a **cut-off** set to different values across a brand's markets.
   1100 / 390px and beside the forecast panel, tile rows that fill their card, one ad-spend row height,
   a market named once, equal matrix columns, one chip width, one-line findings and setup summaries,
   the phone search row; with a negative control. Presync.
+- `tools/check_herotier.js` — the hero card driven at the tier of PT picked (§3h): every tier with its
+  count, the default tier, a pick listing exactly that tier's types (negative control: two tiers list
+  different rows), a shared name led by its department, the pick remembered per brand, a save at tier 2
+  writing that tier's key and the tier-3 types under it reading "⤴ Tier 2", the headline not moving with
+  the tier, the phone. Fails on the page as it was before. Presync.
 - `tools/test_rules.mjs` — the classifier on real rule-name shapes (counts and dates invented), the
   findings, `rulesStore` + `rulesPull` lifted from `worker.js` and run against a stub MCP
   (pagination, the cmpid guard, rotation, no_token / unauthorized / unreachable), the wiring, both
@@ -451,7 +528,12 @@ first); a **cut-off** set to different values across a brand's markets.
   synthetic CSV / XML masters, the measure, core, every example rule, the guide resolution, the document
   import + export), the worker's half (`src/herosizes.js`: the census it stores, the edits a signin may
   make), the held-back join (`feedIndex` + `heldBack`), the agent's census on an in-process zip, the
-  route, the page, the stub, and that no census or guide is committed. In `qa_gate.sh`, `presync.sh`,
+  route, the page, the stub, and that no census or guide is committed. Tiers (§3h): `treeIndex` on a
+  synthetic feed, every placement rule (id, style, master type, word, the run telling kids from women,
+  master only), `commonPath`, the fold past the cap, `tiers` / `defaultTier` / `tierTypes` (a rolled-up
+  type measures as its types added up), inheritance (own → coarser tier → followed brand → example, a
+  coarser list that names none of a type's sizes skipped, a branch's "no hero sizes", exact-only tree
+  keys), the tier-independent headline, and the agent placing its census on a feed. In `qa_gate.sh`, `presync.sh`,
   `validate.yml`.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

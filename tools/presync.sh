@@ -301,6 +301,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: /stock, evenly spaced for a client screen (six-tile band, full tile rows, one row height, a market named once)"
   NODE_PATH=$(npm root -g) node tools/check_stockeven.js || {
     echo "✗ stock-layout tripwire failed — the KPI band went ragged, a tile row stopped filling its card, a row grew taller for one button, a market was named twice in its run, or a finding painted its reason closed"; exit 1; }
+  echo "── validating: /stock hero sizes at the tier of PT picked (the tier control, a list set at a tier reaching the types under it)"
+  NODE_PATH=$(npm root -g) node tools/check_herotier.js || {
+    echo "✗ hero-tier tripwire failed — the tier control lost a tier or its count, a pick listed another tier's types, the pick was not remembered, a save wrote the wrong tier's key, or a finer type stopped reading its tier's list"; exit 1; }
   echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
   NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
     echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }

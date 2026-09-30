@@ -33,11 +33,16 @@
   var VERSION = '1.0.0';
   // the census SHAPE — the worker's sanitiser (src/herosizes.js CENSUS_V) holds the same number, and the
   // agent re-reads a master whose stored census is of an older shape even when its import has not moved
-  var CENSUS_V = 2;   // 2: departments read in every roster market's language (Superdry DE's "Damen" / "Herren")
-  var TYPE_CAP = 80;      // product types kept per market (biggest first); the rest are counted, not listed
+  var CENSUS_V = 3;   // 3: types placed on the Google Shopping feed's own product_type tree, kept at their finest level
+                      //    (2: departments read in every roster market's language — Superdry DE's "Damen" / "Herren")
+  var TYPE_CAP = 600;     // product types kept per market at their finest level; past it the smallest fold into their parent
   var LADDER_CAP = 30;    // sizes kept per type (most-carried first, shown in size order)
   var PAT_CAP = 400;      // style patterns kept per type (most common first); the rest are counted
   var GROUP_CAP = 250000; // styles tracked across a master before patterns stop (counts never stop)
+  var JOIN_SAMPLE = 4000; // master rows read before the column carrying the feed's ids is chosen (as the Catalogue does)
+  var LEARN_SHARE = 0.8;  // a master type places the products the feed never sends where 80%+ of its sent products sit
+  var LEARN_MIN = 5;      // … and only on the strength of at least five of them
+  var MASTER_ONLY = 'Master only';   // the root a master type is filed under when the feed has no department word for it
 
   function s0(v) { return v == null ? '' : String(v); }
   function first(v) { return Array.isArray(v) ? (v.length ? v[0] : '') : v; }
@@ -185,6 +190,8 @@
     return ((pre ? pre + ' > ' : '') + p.join(' > ')).slice(0, 160);
   }
   function typeKey(label) { return squash(label).toLowerCase(); }
+  // one type name as a comparable word: letters and digits, each word without its plural s ("Maxi Dresses" = "maxi dresse")
+  function wordKey(w) { return s0(w).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9\u00c0-\u024f]+/g, ' ').trim().split(' ').map(function (x) { return x.replace(/s$/, ''); }).join(' '); }
   function leafOf(label) { var p = pathOf(label); return p.length ? p[p.length - 1].toLowerCase() : ''; }
 
   // FOOTWEAR is read from the type's words, else from its run: a run of half sizes (UK 4.5, 5.5 …) is a shoe run —
@@ -198,17 +205,75 @@
     return halves >= 3 && halves / Math.max(1, small) >= 0.2;
   }
 
+  // ---- THE FEED'S PRODUCT-TYPE TREE — what "tier 2, tier 3 of PT" means (Ray, 30 Sep 2026: "can you allow tier 2, tier 3
+  // of PT to be chosen too ? sometimes no need too much granulartiy") ---------------------------------------------------
+  // A master names its types its own way — Superdry's by a category for most rows and by a leaf type for the rest, Monsoon's
+  // by a flat word, Reiss's and Schuh's to two levels — so the master alone has no tier 2 or tier 3 to offer. The tree the
+  // FCC calls PT is the one the Google Shopping feed sends: g:product_type slot 1, the path Product Type Guard reads
+  // ("Women > Clothing > Jumpers > V-neck Jumper"). treeIndex(E).onRow(row, header?) reads that OUTPUT feed with the
+  // Catalogue's own outPlan/outRow; finish() -> {n, typed, paths, o, i, g}: each product's path by its original id (o),
+  // by its g:id (i) and, by majority, by its item group (g). Paths only — never a title, a price or a stock word.
+  function treeUsable(v) { var p = pathOf(v); return p.length > 0 && !/^\d+$/.test(p.join('')); }
+  function treeIndex(E) {
+    var hdr = null, pl = null, plN = 0, n = 0, typed = 0, o = new Map(), i = new Map(), gv = new Map(), own = new Map();
+    function onRow(row, h) {
+      if (!hdr) { hdr = (h || row).slice(); pl = E.outPlan(hdr); plN = hdr.length; return; }
+      if (h && h.length !== plN) { pl = E.outPlan(h); plN = h.length; }
+      var p = E.outRow(pl, row); if (!p.id) return;
+      n++;
+      var raw = p.f.product_type; if (!treeUsable(raw)) return;
+      var path = pathOf(raw).join(' > ').slice(0, 300);
+      var s = own.get(path); if (s == null) { own.set(path, path); s = path; }   // one string per path, however many products
+      typed++;
+      var a = E.idKey(p.oid), c = E.idKey(p.id), g = E.idKey(p.f.item_group_id);
+      if (a && !o.has(a)) o.set(a, s);
+      if (c && !i.has(c)) i.set(c, s);
+      if (g) { var m = gv.get(g); if (!m) gv.set(g, m = new Map()); m.set(s, (m.get(s) || 0) + 1); }
+    }
+    function finish() {
+      var g = new Map();
+      gv.forEach(function (m, k) { var best = '', bn = 0; m.forEach(function (c, p) { if (c > bn) { bn = c; best = p; } }); g.set(k, best); });
+      return { n: n, typed: typed, paths: own.size, o: o, i: i, g: g };
+    }
+    return { onRow: onRow, finish: finish };
+  }
+  // the deepest level of a master type's feed paths that 80%+ of them share — where the products of that type the feed
+  // never sends are placed. Nothing deeper is claimed than the products that ARE sent agree on.
+  function commonPath(m) {
+    if (!m) return '';
+    var tot = 0; m.forEach(function (c) { tot += c; });
+    if (tot < LEARN_MIN) return '';
+    var best = '';
+    for (var L = 1; L <= 12; L++) {
+      var c = new Map(), any = false;
+      m.forEach(function (n, p) { var parts = pathOf(p); if (parts.length < L) return; any = true; var k = parts.slice(0, L).join(' > '); c.set(k, (c.get(k) || 0) + n); });
+      if (!any) break;
+      var top = null; c.forEach(function (n, k) { if (!top || n > top[1]) top = [k, n]; });
+      if (top[1] / tot < LEARN_SHARE) break;
+      best = top[0];
+    }
+    return best;
+  }
+
   // ---- THE CENSUS — one pass over a master ------------------------------------------------------------------------
-  // census(E).onRow(row, header?) — E is the Catalogue engine (FeedCatalog); the first call is the header (the XML
+  // census(E, tree?).onRow(row, header?) — E is the Catalogue engine (FeedCatalog); the first call is the header (the XML
   // parser's shape; wrap delimParser, whose second argument is a row index). finish() -> the stored shape:
-  //   {v, rows, sized, one, nos, groups, cols:{pt,size,gender,age,grp,av,qty},
-  //    types:[{k, d, n, in, out, one, nos, st, sz:[[size, rows, in, out]], more, pat:[[pattern, styles]], patx}],
+  //   {v, rows, sized, one, nos, groups, cols:{pt,size,gender,age,grp,av,qty}, src:'feed'|'master', tree:{…}|null,
+  //    types:[{k, t, d, n, in, out, one, nos, st, sz:[[size, rows, in, out]], more, pat:[[pattern, styles]], patx, m?}],
   //    tx:{n, k}}
   // A pattern is one character per ladder size: 0 not made in it · 1 out of stock · 2 in stock · 3 stock not stated.
   // A size a style carries twice (two colours under one group) is in stock when ANY of its rows is.
-  function census(E) {
+  // WITH A TREE (the market's Google Shopping feed, treeIndex above) every row is placed on the FEED's product_type path:
+  // by its product id (the column carrying the feed's ids, found on the first 4,000 rows as the Catalogue finds it), else
+  // by its style, else — a product the feed never sends, the very styles a hero-size gap hides in — where 80%+ of its
+  // master type's sent products sit (commonPath), else under its master type, marked m (the master's own word, not the
+  // feed's). Types are kept at their FINEST level (k = the whole path, t = its depth); every coarser tier is a roll-up of
+  // them (tierTypes), so a coarse tier is complete. Without a tree the types are the master's own (typeLabel), src 'master'.
+  function census(E, tree) {
     var hdr = null, pl = null, qi = -1, cols = {};
     var T = new Map(), rows = 0, sized = 0, ones = 0, nos = 0, groups = 0, grpAll = new Set(), capped = false;
+    var useTree = !!(tree && tree.typed && tree.o && tree.i && tree.g), sample = useTree ? [] : null;
+    var join = -1, jmap = null, jon = '', joinH = '', via = { id: 0, grp: 0, learn: 0, word: 0, own: 0 }, learn = new Map(), prov = new Map();
     function head(h) {
       hdr = h.slice(); pl = E.plan(hdr); qi = E.qtyCol(hdr);
       var at = function (k) { var l = pl.attr[k] || []; return l.length ? s0(hdr[l[0]]).slice(0, 60) : ''; };
@@ -220,19 +285,66 @@
       for (var i = 0; i < c.length; i++) { var v = first(c[i].v); if (usableType(v)) return v; }
       return '';
     }
+    function bucket(key) {
+      var t = T.get(key);
+      if (!t) { t = { k: key, n: 0, in: 0, out: 0, one: 0, nos: 0, sz: new Map(), g: new Map(), d: '' }; T.set(key, t); }
+      return t;
+    }
+    // what the master says a row is, as keys to learn the feed's tree by: EVERY product-type column it fills (Superdry's
+    // category AND its type AND its category id), each with the row's department and whether its run is a child's — so a
+    // row filed under a sub-brand category ("Bench") is still placed by its type ("Puffer Jacket")
+    // (and, for a row the feed never sends, the last word of each reading with its department — for wordPlace)
+    function learnKeys(row, sk, label, words) {
+      var c = E.cands('product_type', row, pl), out = [], g = val('gender', row), a = val('age_group', row);
+      var dc = deptFromCols(g, a) || genderWord(g).toLowerCase(), kid = / (YRS|MTHS)$/.test(sk) ? '|kid' : '';
+      for (var i = 0; i < c.length; i++) {
+        var v = first(c[i].v); if (!usableType(v)) continue;
+        var pp = pathOf(v), k = (deptOf(v) || dc) + '|' + typeKey(pp.join(' > ')) + kid;
+        if (out.indexOf(k) < 0) { out.push(k); if (words) words.push({ d: deptOf(v) || dc || (kid ? 'kids' : ''), w: wordKey(pp[pp.length - 1]) }); }
+      }
+      if (!out.length) out.push((deptOf(label) || dc) + '|' + typeKey(label) + kid);
+      return out;
+    }
+    // where a row sits: the feed's path, or (not placed yet) its master reading, waiting for finish() to place it
+    function place(row, sk) {
+      var label = typeLabel(ptOf(row), val('gender', row), val('age_group', row));
+      if (!useTree) return label;
+      var path = '', how = '';
+      if (join >= 0) { var k = E.idKey(row[join]); if (k) { path = jmap.get(k) || ''; if (path) how = 'id'; } }
+      if (!path) { var g = E.idKey(val('item_group_id', row)); if (g) { path = tree.g.get(g) || ''; if (path) how = 'grp'; } }
+      var words = path ? null : [], keys = learnKeys(row, sk, label, words);
+      if (!path) {
+        // rows with the same master reading wait together
+        var pk = '\u0001' + keys.join('\u0002');
+        if (!prov.has(pk)) prov.set(pk, { keys: keys, words: words, label: label, kid: / (YRS|MTHS)$/.test(sk) });
+        return pk;
+      }
+      via[how]++;
+      keys.forEach(function (lk) { var m = learn.get(lk); if (!m) learn.set(lk, m = new Map()); m.set(path, (m.get(path) || 0) + 1); });
+      return path;
+    }
+    function decide() {
+      var s = sample; sample = null;
+      var jA = E.detectJoin(pl, s, new Set(tree.o.keys())), jB = E.detectJoin(pl, s, new Set(tree.i.keys()));
+      var useB = jB.hit > jA.hit * 1.2, j = useB ? jB : jA;
+      if (j.col >= 0) { join = j.col; joinH = j.h; jmap = useB ? tree.i : tree.o; jon = useB ? 'g:id' : 'fs_data_original_id'; }
+      s.forEach(take);
+    }
     function onRow(row, h) {
       if (!hdr) { head(Array.isArray(h) ? h : row); return; }
       if (Array.isArray(h) && h.length !== hdr.length) head(h);
       if (!row || !row.some(function (x) { return s0(x).trim() !== ''; })) return;
+      if (sample) { sample.push(row); if (sample.length >= JOIN_SAMPLE) decide(); return; }
+      take(row);
+    }
+    function take(row) {
       rows++;
-      var label = typeLabel(ptOf(row), val('gender', row), val('age_group', row));
-      var t = T.get(label);
-      if (!t) { t = { k: label, n: 0, in: 0, out: 0, one: 0, nos: 0, sz: new Map(), g: new Map(), d: '' }; T.set(label, t); }
+      var sk = sizeKey(val('size', row));
+      var t = bucket(place(row, sk));
       t.n++;
       var ac = E.cands('availability', row, pl);
       var st = E.stockOf(ac.length ? first(ac[0].v) : '', qi >= 0 ? row[qi] : null);
       if (st === 'in') t.in++; else if (st === 'out') t.out++;
-      var sk = sizeKey(val('size', row));
       if (!sk) { t.nos++; nos++; return; }
       if (sk === 'ONE SIZE') { t.one++; ones++; return; }
       sized++;
@@ -247,13 +359,91 @@
         if (!grpAll.has(gk)) { grpAll.add(gk); groups++; if (groups > GROUP_CAP) { capped = true; return; } }
         t.g.set(gk, gm = {});
       }
-      var ch = st === 'in' ? 2 : st === 'out' ? 1 : 3, was = gm[sk] || 0;
-      // in stock wins over out, and a reading (in or out) wins over no reading
-      if (!was || ch === 2 || (was === 3 && ch === 1)) gm[sk] = ch;
+      gm[sk] = better(gm[sk] || 0, st === 'in' ? 2 : st === 'out' ? 1 : 3);
+    }
+    // in stock wins over out, and a reading (in or out) wins over no reading
+    function better(was, ch) { return !was || ch === 2 || (was === 3 && ch === 1) ? ch : was; }
+    // one type's products into another (placing a master type, folding a small type into its parent)
+    function mergeInto(key, t) {
+      var d = T.get(key);
+      if (!d) { t.k = key; T.set(key, t); return; }
+      d.n += t.n; d.in += t.in; d.out += t.out; d.one += t.one; d.nos += t.nos;
+      t.sz.forEach(function (c, s) { var e = d.sz.get(s); if (!e) d.sz.set(s, c.slice()); else { e[0] += c[0]; e[1] += c[1]; e[2] += c[2]; } });
+      t.g.forEach(function (gm, gk) {
+        var e = d.g.get(gk);
+        if (!e) d.g.set(gk, gm);
+        else Object.keys(gm).forEach(function (s) { e[s] = better(e[s] || 0, gm[s]); });
+      });
     }
     function finish() {
-      var list = Array.from(T.values()).sort(function (a, b) { return b.n - a.n || (a.k < b.k ? -1 : 1); });
+      if (sample && hdr) decide();
+      var placed = via.id + via.grp, feedPre = {};
+      if (useTree) {
+        // every level of every path the feed itself gave — a type anywhere on it is the feed's, not the master's
+        T.forEach(function (t, key) {
+          if (key.charAt(0) === '\u0001') return;
+          var p = pathOf(key); for (var L = 1; L <= p.length; L++) feedPre[p.slice(0, L).join(' > ')] = 1;
+        });
+        // the feed's own top-level word for each department ("Women", "Womens", "Womenswear", "Damen")
+        var roots = {};
+        T.forEach(function (t, key) {
+          if (key.charAt(0) === '\u0001') return;
+          var r = pathOf(key)[0], d = deptOf(r); if (!d) return;
+          roots[d] = roots[d] || {}; roots[d][r] = (roots[d][r] || 0) + t.n;
+        });
+        // every level of the feed's tree by its own word: 'maxi dresse' -> ["Womens > Clothing > Dresses > Maxi Dresses"], and
+        // how much of each level's own run is ages — so a word both a children's and a women's branch use ("Maxi Dresses"
+        // on Monsoon, whose master names no gender) goes to the one whose sent products are sized like this row
+        var byWord = new Map(), ages = new Map();
+        Object.keys(feedPre).forEach(function (pth) {
+          var w = wordKey(pathOf(pth).slice(-1)[0]), l = byWord.get(w); if (!l) byWord.set(w, l = []); l.push(pth);
+        });
+        T.forEach(function (t, key) {
+          if (key.charAt(0) === '\u0001') return;
+          var a = 0, n = 0; t.sz.forEach(function (c, sz) { n += c[0]; if (/ (YRS|MTHS)$/.test(sz)) a += c[0]; });
+          var p = pathOf(key);
+          for (var L = 1; L <= p.length; L++) { var k = p.slice(0, L).join(' > '), e = ages.get(k); if (!e) ages.set(k, e = [0, 0]); e[0] += n; e[1] += a; }
+        });
+        var wordPlace = function (ws, kid) {
+          for (var i = 0; i < (ws || []).length; i++) {
+            var l = (byWord.get(ws[i].w) || []).filter(function (pth) { return !ws[i].d || deptOf(pth) === ws[i].d; });
+            if (l.length > 1) l = l.filter(function (pth) { var e = ages.get(pth); if (!e || !e[0]) return false; var sh = e[1] / e[0]; return kid ? sh >= 0.6 : sh < 0.4; });
+            if (l.length === 1) return l[0];
+          }
+          return '';
+        };
+        var rootOf = function (d) { var m = roots[d]; if (!m) return ''; var best = '', bn = -1; Object.keys(m).forEach(function (r) { if (m[r] > bn) { bn = m[r]; best = r; } }); return best; };
+        Array.from(T.keys()).forEach(function (key) {
+          if (key.charAt(0) !== '\u0001') return;
+          var t = T.get(key), pv = prov.get(key); T.delete(key);
+          // the deepest place any of the row's master readings agrees on (80%+ of its sent products), the surer on a tie
+          var cp = '', cd = 0;
+          if (placed) pv.keys.forEach(function (lk) { var c = commonPath(learn.get(lk)), n = pathOf(c).length; if (n > cd) { cp = c; cd = n; } });
+          if (cp) { via.learn += t.n; mergeInto(cp, t); return; }
+          // no sent product to learn from: the master's own word, where the feed's tree has exactly one type of that name
+          // (in the row's department) — Monsoon's "Maxi Dresses" is the feed's "Womens > … > Maxi Dresses"
+          var wp = placed ? wordPlace(pv.words, pv.kid) : '';
+          if (wp) { via.word += t.n; mergeInto(wp, t); return; }
+          // the master's own type, under the feed's word for its department — else under "Master only", so the tiers keep
+          // to the feed's own roots and a type the feed never sends is never mistaken for one of them
+          var lab = pv.label, p = pathOf(lab), d = deptOf(lab) || (pv.kid ? 'kids' : ''), r = placed && d ? rootOf(d) : '';
+          if (r && p.length && deptOf(p[0]) === d) p[0] = r; else if (r) p.unshift(r); else if (placed) p.unshift(MASTER_ONLY);
+          via.own += t.n;
+          mergeInto((p.join(' > ') || lab).slice(0, 300), t);
+        });
+      }
+      // too many types: the smallest finest ones fold into their parent (their products stay counted at every coarser tier)
+      var list = Array.from(T.values());
+      while (list.length > TYPE_CAP) {
+        var small = null;
+        for (var i = 0; i < list.length; i++) if (pathOf(list[i].k).length > 1 && (!small || list[i].n < small.n)) small = list[i];
+        if (!small) break;
+        T.delete(small.k); mergeInto(pathOf(small.k).slice(0, -1).join(' > '), small);
+        list = Array.from(T.values());
+      }
+      list.sort(function (a, b) { return b.n - a.n || (a.k < b.k ? -1 : 1); });
       var kept = list.slice(0, TYPE_CAP), rest = list.slice(TYPE_CAP);
+      var src = useTree && placed ? 'feed' : 'master';
       var out = kept.map(function (t) {
         var all = Array.from(t.sz.entries()).sort(function (a, b) { return b[1][0] - a[1][0] || cmpSize(a[0], b[0]); });
         var lad = all.slice(0, LADDER_CAP).map(function (e) { return e[0]; }).sort(cmpSize);
@@ -269,21 +459,108 @@
         var pl2 = Array.from(pats.entries()).sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
         var keep = pl2.slice(0, PAT_CAP), patx = 0;
         pl2.slice(PAT_CAP).forEach(function (e) { patx += e[1]; });
-        // who it is for: the brand's words, else a run that is mostly ages (Monsoon names no gender)
-        var d = deptOf(t.k), kidRows = 0, sizedRows = 0;
-        lad.forEach(function (s) { var c = t.sz.get(s)[0]; sizedRows += c; if (/ (YRS|MTHS)$/.test(s)) kidRows += c; });
-        if (!d && sizedRows && kidRows / sizedRows >= 0.6) d = 'kids';
-        var o = { k: t.k, d: d, n: t.n, in: t.in, out: t.out, one: t.one, nos: t.nos, st: st,
+        var o = { k: t.k, t: pathOf(t.k).length || 1, d: deptByRun(t.k, lad, function (s) { return t.sz.get(s)[0]; }), n: t.n, in: t.in, out: t.out, one: t.one, nos: t.nos, st: st,
           sz: lad.map(function (s) { var c = t.sz.get(s); return [s, c[0], c[1], c[2]]; }),
           more: Math.max(0, all.length - lad.length), pat: keep, patx: patx };
         if (isFootwear(t.k, lad)) o.fw = 1;
+        if (src === 'feed' && !feedPre[t.k]) o.m = 1;
         return o;
       });
       var tx = { n: 0, k: rest.length };
       rest.forEach(function (t) { tx.n += t.n; });
-      return { v: CENSUS_V, rows: rows, sized: sized, one: ones, nos: nos, groups: Math.min(groups, GROUP_CAP), capped: capped, cols: cols, types: out, tx: tx };
+      return { v: CENSUS_V, rows: rows, sized: sized, one: ones, nos: nos, groups: Math.min(groups, GROUP_CAP), capped: capped, cols: cols, src: src,
+        tree: useTree ? { feed: tree.n, typed: tree.typed, id: via.id, grp: via.grp, learn: via.learn, word: via.word, own: via.own, join: joinH.slice(0, 60), on: jon } : null,
+        types: out, tx: tx };
     }
     return { onRow: onRow, finish: finish };
+  }
+  // who a type is for: the brand's words, else a run that is mostly ages (Monsoon names no gender)
+  function deptByRun(k, lad, rowsOf) {
+    var d = deptOf(k), kidRows = 0, sizedRows = 0;
+    if (d) return d;
+    lad.forEach(function (s) { var c = rowsOf(s); sizedRows += c; if (/ (YRS|MTHS)$/.test(s)) kidRows += c; });
+    return sizedRows && kidRows / sizedRows >= 0.6 ? 'kids' : '';
+  }
+
+  // ---- TIERS — the census's types at any level of their path -------------------------------------------------------
+  // A type at tier L is its path cut to L levels; a path shorter than L is its own type at every tier past its depth.
+  // Stored types under one tier-L path are rolled up: counts added, their runs laid on one ladder (the most-carried sizes,
+  // in size order) and each style's pattern re-read onto it — so tier 2 is its tier-3 types added together, exactly.
+  function depthOf(k) { return pathOf(k).length; }
+  function tierKey(k, L) { return pathOf(k).slice(0, Math.max(1, L)).join(' > '); }
+  function tiers(cen) {
+    var types = (cen && cen.types) || [], max = 0, out = [], all = 0;
+    types.forEach(function (t) { max = Math.max(max, depthOf(t.k)); all += t.n; });
+    for (var L = 1; L <= max; L++) {
+      var keys = {}, sized = {}, big = {}, deep = 0;
+      types.forEach(function (t) {
+        var k = tierKey(t.k, L), r = t.sz.reduce(function (a, z) { return a + z[1]; }, 0);
+        keys[k] = 1; if (r) { sized[k] = (sized[k] || 0) + r; }
+        if (depthOf(k) === L) big[k] = (big[k] || 0) + t.n;
+        if (depthOf(t.k) >= L) deep += t.n;
+      });
+      var ex = Object.keys(big).sort(function (a, b) { return big[b] - big[a]; })[0] || '';
+      out.push({ t: L, types: Object.keys(keys).length, sized: Object.keys(sized).length, ex: ex, sizes: sized, deep: deep });
+    }
+    // a tier is offered when at least 1% of the products reach it — a level a handful of products are filed at is the tier
+    // above it again, as far as a hero list is concerned (they roll up into it). Tiers stay numbered as the tree numbers
+    // them, so "tier 3" on the card is the third level of the feed's product_type, whatever it holds.
+    return out.filter(function (x, i) { return !i || x.deep >= all * 0.01; })
+      .map(function (x) { return { t: x.t, types: x.types, sized: x.sized, ex: x.ex, top: top90(x.sizes) }; });
+  }
+  // how many types hold 90% of the sized products at a tier — the count a person has to look at to cover the range
+  function top90(m) {
+    var v = Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b - a; }), tot = 0, acc = 0, n = 0;
+    v.forEach(function (c) { tot += c; });
+    for (var i = 0; i < v.length && acc < tot * 0.9; i++) { acc += v[i]; n++; }
+    return n;
+  }
+  // the tier the card opens on before anyone picks one: the finest at which 90% of the sized products sit in at most 40
+  // types — a garment category on every fashion roster brand (Superdry GB and Reiss tier 3, Schuh and Superdry DE tier 2)
+  function defaultTier(cen) {
+    var ts = tiers(cen), pick = ts.length ? ts[0].t : 1;
+    ts.forEach(function (x) { if (x.top <= 40) pick = x.t; });
+    return pick;
+  }
+  function tierTypes(cen, L) {
+    var types = (cen && cen.types) || [], groups = new Map();
+    types.forEach(function (t, i) { var k = tierKey(t.k, L); var g = groups.get(k); if (!g) groups.set(k, g = []); g.push(i); });
+    var out = [];
+    groups.forEach(function (ix, k) {
+      var ts = ix.map(function (i) { return types[i]; });
+      out.push(ts.length === 1 && ts[0].k === k ? Object.assign({}, ts[0], { t: depthOf(k), nodes: ix }) : rollUp(k, ts, ix));
+    });
+    return out.sort(function (a, b) { return b.n - a.n || (a.k < b.k ? -1 : 1); });
+  }
+  function rollUp(k, ts, ix) {
+    var sz = new Map(), o = { k: k, t: depthOf(k), n: 0, in: 0, out: 0, one: 0, nos: 0, st: 0, more: 0, patx: 0, nodes: ix };
+    ts.forEach(function (t) {
+      o.n += t.n; o.in += t.in; o.out += t.out; o.one += t.one; o.nos += t.nos; o.more += t.more || 0; o.patx += t.patx || 0;
+      (t.sz || []).forEach(function (z) { var e = sz.get(z[0]); if (!e) sz.set(z[0], e = [0, 0, 0]); e[0] += z[1]; e[1] += z[2]; e[2] += z[3]; });
+    });
+    var all = Array.from(sz.entries()).sort(function (a, b) { return b[1][0] - a[1][0] || cmpSize(a[0], b[0]); });
+    var lad = all.slice(0, LADDER_CAP).map(function (e) { return e[0]; }).sort(cmpSize);
+    o.more += Math.max(0, all.length - lad.length);
+    var at = {}; lad.forEach(function (s, i) { at[s] = i; });
+    o.sz = lad.map(function (s) { var c = sz.get(s); return [s, c[0], c[1], c[2]]; });
+    var pats = new Map();
+    ts.forEach(function (t) {
+      var to = (t.sz || []).map(function (z) { return at[z[0]] != null ? at[z[0]] : -1; });
+      (t.pat || []).forEach(function (p) {
+        var q = new Array(lad.length + 1).join('0').split(''), any = false;
+        for (var j = 0; j < to.length; j++) { var ch = p[0].charAt(j); if (ch && ch !== '0' && to[j] >= 0) { q[to[j]] = ch; any = true; } }
+        if (!any) { o.patx += p[1]; return; }
+        var s = q.join(''); pats.set(s, (pats.get(s) || 0) + p[1]);
+      });
+    });
+    o.pat = Array.from(pats.entries()).sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
+    o.pat.forEach(function (p) { o.st += p[1]; });
+    var ds = {}; ts.forEach(function (t) { ds[t.d || ''] = 1; });
+    var one = Object.keys(ds).length === 1 ? Object.keys(ds)[0] : '';
+    o.d = deptOf(k) || one || deptByRun(k, lad, function (s) { return sz.get(s)[0]; });
+    if (isFootwear(k, lad) || ts.every(function (t) { return t.fw; })) o.fw = 1;
+    if (ts.every(function (t) { return t.m; })) o.m = 1;
+    return o;
   }
 
   // ---- THE MEASURE — a hero list against one type of the census ----------------------------------------------------
@@ -442,28 +719,80 @@
     if (!same.length && any.length === 1) return { key: any[0], e: map[any[0]], how: 'leaf' };
     return null;
   }
-  // THE RESOLUTION, strongest first: the brand's own entry (set by hand, or imported from its document), then the
-  // brand it follows, then the example it follows. Nothing fits = not mapped, with no sizes — never a guess.
-  function heroFor(store, brand, t) {
-    var lad = {}; ((t && t.sz) || []).forEach(function (z) { lad[z[0]] = 1; });
-    var own = entryFor(entriesOf(store, brand), t);
-    if (own) return { s: (own.e.s || []).filter(function (x) { return lad[x]; }), all: own.e.s || [], src: own.e.src || 'set', by: own.e.by || '', at: own.e.at || 0, key: own.key, how: own.how, own: true };
-    var g = guideOf(store, brand) || {};
-    if (g.from && g.from !== brand) {
-      var o = entryFor(entriesOf(store, g.from), t);
-      if (o) return { s: (o.e.s || []).filter(function (x) { return lad[x]; }), all: o.e.s || [], src: 'brand', from: g.from, how: o.how };
+  // every path of the census at every tier. An entry keyed on one of them is placed EXACTLY — a list set at tier 3 is never
+  // leaf-matched onto another branch's type of the same name. Any other entry (a document's "Dresses", a list saved against
+  // the master's own words before the tree) still meets a type by its leaf, as entryFor always has.
+  function treeKeys(cen) {
+    var s = {};
+    ((cen && cen.types) || []).forEach(function (t) { var p = pathOf(t.k); for (var L = 1; L <= p.length; L++) s[typeKey(p.slice(0, L).join(' > '))] = 1; });
+    return s;
+  }
+  // what the resolution needs, read once per card: each brand's entries split into placed and loose, the guide, the example
+  function ctxOf(store, brand, cen) {
+    var tk = treeKeys(cen);
+    function split(b) {
+      var all = entriesOf(store, b), loose = {};
+      Object.keys(all).forEach(function (k) { if (!tk[k]) loose[k] = all[k]; });
+      return { all: all, loose: loose };
     }
-    if (g.ex) {
-      var ex = exampleById(store, g.ex);
-      if (ex) { var r = fromExample(ex, t); if (r.s.length) return { s: r.s, all: r.s, src: 'ex', ex: ex.id, exName: ex.name, row: r.row }; }
+    var g = guideOf(store, brand) || {};
+    return { brand: brand, tk: tk, own: split(brand), g: g, other: g.from && g.from !== brand ? split(g.from) : null, ex: g.ex ? exampleById(store, g.ex) : null };
+  }
+  // a type's path and every coarser tier of it, nearest first
+  function chainOf(k) { var p = pathOf(k), out = []; for (var L = p.length; L >= 1; L--) out.push(p.slice(0, L).join(' > ')); return out; }
+  // one brand's entry for a type: its own path (a loose entry by its leaf), then each coarser tier — where an entry reaches
+  // this type only when it names a size this type is made in, or records that the whole branch has no hero sizes
+  function lookup(set, t, lad) {
+    var chain = chainOf(t.k);
+    for (var i = 0; i < chain.length; i++) {
+      var key = typeKey(chain[i]), e = set.all[key], how = 'exact';
+      if (!e) { var lf = entryFor(set.loose, { k: chain[i], d: i ? deptOf(chain[i]) : t.d }); if (lf) { e = lf.e; key = lf.key; how = 'leaf'; } }
+      if (!e) continue;
+      var all = e.s || [], s = all.filter(function (x) { return lad[x]; });
+      if (i && all.length && !s.length) continue;
+      return { e: e, key: key, how: how, s: s, up: i ? chain[i] : '' };
+    }
+    return null;
+  }
+  // THE RESOLUTION, strongest first: the brand's own entry for this type (set by hand, or imported from its document), then
+  // the nearest coarser tier the brand set (Ray, 30 Sep 2026: "sometimes no need too much granulartiy" — a list set for
+  // "Women > Clothing" reaches every women's clothing type that does not set its own), then the brand it follows (the same
+  // two steps), then the example it follows. Nothing fits = not mapped, with no sizes — never a guess.
+  //   own = the entry is this type's own · up = the coarser tier it came from · dec = a decision reached it (a list, or "none")
+  function heroFor(store, brand, t, ctx) {
+    ctx = ctx || ctxOf(store, brand, null);
+    var lad = {}; ((t && t.sz) || []).forEach(function (z) { lad[z[0]] = 1; });
+    var o = lookup(ctx.own, t, lad);
+    if (o) return { s: o.s, all: o.e.s || [], src: o.e.src || 'set', by: o.e.by || '', at: o.e.at || 0, key: o.key, how: o.how, own: !o.up, up: o.up, dec: true };
+    if (ctx.other) {
+      var b = lookup(ctx.other, t, lad);
+      if (b) return { s: b.s, all: b.e.s || [], src: 'brand', from: ctx.g.from, how: b.how, up: b.up, dec: !!b.s.length || !(b.e.s || []).length };
+    }
+    if (ctx.ex) {
+      var r = fromExample(ctx.ex, t);
+      if (r.s.length) return { s: r.s, all: r.s, src: 'ex', ex: ctx.ex.id, exName: ctx.ex.name, row: r.row, dec: true };
     }
     return { s: [], all: [], src: '' };
   }
-  // the whole card for one market: every type with its hero list, its measure and where the list came from
-  function map(store, brand, cen) {
-    var types = ((cen && cen.types) || []).map(function (t) {
-      var h = heroFor(store, brand, t);
-      return { t: t, h: h, m: measure(t, h.s) };
+  // the whole card for one market at one tier (none = every stored type at its finest): each type with its hero list, where
+  // the list came from, and its MEASURE — which is always the sum of its finest types, each measured on the list that
+  // reaches IT. So a coarse row, the tiles and every other tier agree, and a finer type that sets its own list is counted
+  // on its own list wherever it is added up (`finer` = how many of a row's types read a list set BELOW the row — a person's
+  // decision at a finer tier; an example reading each type's own run differently is not one).
+  function map(store, brand, cen, tier) {
+    var ctx = ctxOf(store, brand, cen), nodes = (cen && cen.types) || [];
+    var eff = nodes.map(function (t) { var h = heroFor(store, brand, t, ctx); return { h: h, m: measure(t, h.s) }; });
+    var rowsOf = tier ? tierTypes(cen, tier) : nodes.map(function (t, i) { return Object.assign({}, t, { nodes: [i] }); });
+    var types = rowsOf.map(function (t) {
+      var h = heroFor(store, brand, t, ctx), m = { hero: h.s.slice(), rows: 0, in: 0, out: 0, st: 0, full: 0, some: 0, none: 0, unk: 0, untracked: 0, pats: false }, finer = 0;
+      var below = typeKey(t.k) + ' > ';
+      (t.nodes || []).forEach(function (i) {
+        var e = eff[i], n = nodes[i];
+        ['rows', 'in', 'out', 'st', 'full', 'some', 'none', 'unk', 'untracked'].forEach(function (k) { m[k] += e.m[k]; });
+        if (e.m.pats) m.pats = true;
+        if (e.h.dec && e.h.src !== 'ex' && typeKey(e.h.up || n.k).indexOf(below) === 0) finer++;
+      });
+      return { t: t, h: h, m: m, finer: t.nodes && t.nodes.length > 1 ? finer : 0 };
     });
     var sum = { types: types.length, sized: 0, mapped: 0, mappedRows: 0, sizedRows: 0, rows: 0, in: 0, st: 0, full: 0, bySrc: {} };
     types.forEach(function (x) {
@@ -471,13 +800,13 @@
       if (!sizedRows) return;
       sum.sized++; sum.sizedRows += sizedRows;
       // a type counts as mapped once a list reaches it — including a person's decision that it has NO hero sizes
-      if (!x.h.s.length && !x.h.own) return;
+      if (!x.h.s.length && !x.h.dec) return;
       sum.mapped++; sum.mappedRows += sizedRows;
-      sum.bySrc[x.h.src] = (sum.bySrc[x.h.src] || 0) + 1;
-      if (!x.h.s.length) return;
-      sum.rows += x.m.rows; sum.in += x.m.in; sum.st += x.m.st; sum.full += x.m.full;
+      sum.bySrc[x.h.up ? 'up' : x.h.src] = (sum.bySrc[x.h.up ? 'up' : x.h.src] || 0) + 1;
     });
-    return { types: types, sum: sum };
+    // the hero-stock headline is the brand's, whatever the tier: every finest type on the list that reaches it
+    eff.forEach(function (e) { if (!e.h.s.length) return; sum.rows += e.m.rows; sum.in += e.m.in; sum.st += e.m.st; sum.full += e.m.full; });
+    return { types: types, sum: sum, tier: tier || 0 };
   }
 
   // ---- A BRAND'S DOCUMENT — a sheet of product types and their hero sizes -------------------------------------------
@@ -509,19 +838,19 @@
     });
     return { rows: out, layout: si >= 0 && si !== ti ? 'column' : 'cells', header: hi };
   }
-  // the brand's map as a sheet (the export is also the template a brand fills in)
-  function docRows(store, brand, cen) {
+  // the brand's map as a sheet, at the tier on screen (the export is also the template a brand fills in)
+  function docRows(store, brand, cen, tier) {
     var head = ['Product type', 'Hero sizes', 'Source', 'Sizes made in'];
-    var body = ((cen && cen.types) || []).filter(function (t) { return t.sz.length; }).map(function (t) {
-      var h = heroFor(store, brand, t);
-      return [t.k, h.s.join(', '), srcWord(h), t.sz.map(function (z) { return z[0]; }).join(', ')];
+    var body = map(store, brand, cen, tier).types.filter(function (x) { return x.t.sz.length; }).map(function (x) {
+      return [x.t.k, x.h.s.join(', '), srcWord(x.h), x.t.sz.map(function (z) { return z[0]; }).join(', ')];
     });
     return [head].concat(body);
   }
   function srcWord(h) {
     if (!h || !h.src) return 'Not mapped';
-    return h.src === 'doc' ? 'Brand document' : h.src === 'set' ? 'Set by hand' : h.src === 'core' ? 'Core of the run'
+    var w = h.src === 'doc' ? 'Brand document' : h.src === 'set' ? 'Set by hand' : h.src === 'core' ? 'Core of the run'
       : h.src === 'brand' ? 'Follows ' + h.from : h.src === 'ex' ? 'Example: ' + (h.exName || h.ex) : h.src;
+    return h.up ? w + ' (from ' + h.up + ')' : w;
   }
   // a type's leaf as the words an example row asks for: each word with an optional plural and ANY separator between
   // ("T-Shirts" = "T Shirt"), and an "and" that may also be written "&" or left out ("Hoodies and Sweatshirts" =
@@ -554,9 +883,10 @@
     VERSION: VERSION, CENSUS_V: CENSUS_V, TYPE_CAP: TYPE_CAP, LADDER_CAP: LADDER_CAP, PAT_CAP: PAT_CAP,
     sizeKey: sizeKey, sizeRank: sizeRank, cmpSize: cmpSize, sortSizes: sortSizes, sizeCore: sizeCore, sizeClass: sizeClass,
     deptOf: deptOf, deptFromCols: deptFromCols, genderWord: genderWord, usableType: usableType, typeLabel: typeLabel, typeKey: typeKey, leafOf: leafOf,
-    census: census, measure: measure, core: core,
+    census: census, measure: measure, core: core, treeIndex: treeIndex, commonPath: commonPath, MASTER_ONLY: MASTER_ONLY,
+    tiers: tiers, tierTypes: tierTypes, tierKey: tierKey, defaultTier: defaultTier, treeKeys: treeKeys, chainOf: chainOf,
     EXAMPLES: EXAMPLES, fromExample: fromExample, examplesOf: examplesOf, exampleById: exampleById, exampleFromBrand: exampleFromBrand,
-    guideOf: guideOf, entriesOf: entriesOf, entryFor: entryFor, heroFor: heroFor, map: map,
+    guideOf: guideOf, entriesOf: entriesOf, entryFor: entryFor, ctxOf: ctxOf, heroFor: heroFor, map: map,
     parseDoc: parseDoc, docRows: docRows, srcWord: srcWord, leafWords: leafWords
   };
 });

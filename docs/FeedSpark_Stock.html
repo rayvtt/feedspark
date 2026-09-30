@@ -333,6 +333,15 @@ window.addEventListener('load',restore);
   .hm-guide .wide input{font:inherit;font-size:12.5px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--paper);color:var(--ink);min-width:150px;flex:1}
   .hm-warn{margin:0 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--risk);color:var(--risk);font-size:12.5px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .hm-empty{font-size:13px;font-weight:700;color:var(--muted);padding:10px 2px}
+  /* the PT tier control: tier 1 … N of the product_type tree, each with its count of types */
+  .hm-tiers{display:inline-flex;align-items:center;gap:8px;flex:none}
+  .hm-tiers .lb{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);cursor:help}
+  .hm-tiers .seg button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .hm-tiers .seg button .k{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .hm-tiers .seg button.on .k{color:var(--orange-ink)}
+  #hm-t td.nm .par{color:var(--muted)}
+  #hm-t td.nm .mo{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:0 5px;margin-left:4px;vertical-align:1px}
+  #hm-t td.hsrc .sub2{display:block;margin-top:3px;white-space:normal}
   .szr{display:flex;flex-wrap:wrap;align-items:center}
   .szr+.szr{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
   .sz{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:48px;height:24px;padding:0 7px 2px;margin:2px 3px 2px 0;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;vertical-align:middle}
@@ -363,7 +372,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .sz{background:#20242E}
   [data-theme=dark] .sz.hero{background:rgba(245,166,35,.16)}
   [data-theme=dark] .hm-acts button{background:#20242E}
-  @media(max-width:760px){#hm-sum .it b{font-size:18px}.hm-legend .note{margin-left:0}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
+  @media(max-width:760px){.hm-tiers{flex-basis:100%}.hm-tiers .seg{flex:1;overflow-x:auto}.hm-tiers .seg button{flex:1;justify-content:center;padding:0 8px;gap:4px}#hm-sum .it b{font-size:18px}.hm-legend .note{margin-left:0}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
 
 </style>
 <style>/* FCC-THEME */
@@ -462,7 +471,7 @@ window.addEventListener('load',restore);
     <div class="hm-guide" id="hm-guide" hidden></div>
     <div class="hm-warn" id="hm-warn" hidden></div>
     <div class="sv-sum" id="hm-sum"></div>
-    <div class="toolbar" id="hm-bar" hidden><input class="q" id="hm-q" type="search" placeholder="Filter product types…" aria-label="Filter product types" autocomplete="off"><div class="chips" id="hm-f"></div></div>
+    <div class="toolbar" id="hm-bar" hidden><span class="hm-tiers" id="hm-tw2" hidden><span class="lb" id="hm-tl" title="How deep into the product_type tree the types are listed — tier 1 is the first level (Women), each tier one level finer">PT tier</span><span class="seg" id="hm-tiers" role="group" aria-labelledby="hm-tl"></span></span><input class="q" id="hm-q" type="search" placeholder="Filter product types…" aria-label="Filter product types" autocomplete="off"><div class="chips" id="hm-f"></div></div>
     <div class="tw tall" id="hm-tw" hidden><table class="t" id="hm-t"><thead><tr><th>Product type</th><th title="Every size this product type is made in — the crown marks a hero size, the line under a size is its products in stock">Sizes</th><th class="num" title="Hero-size products in stock, of every hero-size product">Hero in stock</th><th class="num" title="Styles with every hero size they are made in, in stock">Full hero runs</th><th class="hsrc" title="Where this type's hero sizes come from">Source</th></tr></thead><tbody></tbody></table></div>
     <div class="empty hm-empty" id="hm-empty">Loading…</div>
     <div class="hm-legend"><div class="legend" id="hm-legend"><span><span class="sz hero"><svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>M<i style="width:70%"></i></span> hero size</span><span><span class="sz">XL<i style="width:40%"></i></span> made in, not hero</span><span>the line under a size = its products in stock</span></div><p class="note" id="hm-foot"></p></div>
@@ -1163,6 +1172,16 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // its own entries (ticked by hand, or imported from its document), then the brand it follows, then the example it
   // follows — and a type nothing reaches reads "not mapped", never a guessed list.
   var HM = { d: null, store: {}, base: 0, edit: false, q: '', f: '', mk: '', key: '', pend: {}, t: null, busy: false, err: '', warn: '', link: false, imp: null };
+  // the PT tier each brand is read at on this device (Ray, 30 Sep 2026: "can you allow tier 2, tier 3 of PT to be chosen
+  // too ? sometimes no need too much granulartiy") — a screen preference, never shared state; a list set at a tier is
+  // the team's, and reaches every finer type under it whatever tier anyone is looking at
+  function hmTiers() { try { return JSON.parse(recall('fcc-stock-hmtier') || '{}') || {}; } catch (e) { return {}; } }
+  function hmTier(cen) {
+    var ts = HS && cen ? HS.tiers(cen) : [], want = +(hmTiers()[hmBrand()] || 0);
+    if (!ts.length) return 1;
+    return ts.some(function (x) { return x.t === want; }) ? want : HS.defaultTier(cen);
+  }
+  function hmSetTier(t) { var m = hmTiers(); m[hmBrand()] = t; remember('fcc-stock-hmtier', JSON.stringify(m)); }
   var HS = null;
   function hsLoad() {
     if (window.HeroSizes) return Promise.resolve(HS = window.HeroSizes);
@@ -1230,19 +1249,21 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       });
   }
   function hmType(t) { return 'm:' + hmBrand() + '|' + HS.typeKey(t.k); }
-  function hmPretty(label) { return esc(String(label || '')).replace(/ &gt; /g, ' › '); }
   function hmPc(a, b) { return b ? Math.round((a / b) * 1000) / 10 : null; }
   function hmPcCell(a, b, what, lowAt) {
     if (!b) return '<span class="muted">—</span>';
     var p = hmPc(a, b);
     return '<div class="hm-pct' + (p < lowAt ? ' low' : '') + '" data-tip="' + esc('<b>' + n0(a) + ' of ' + n0(b) + '</b> ' + what) + '"><span class="bar"><i style="width:' + Math.max(2, p) + '%"></i></span>' + p + '%</div>';
   }
+  function hmUp(h) { return h.up ? ' · from ' + h.up.replace(/ > /g, ' › ') + ' (tier ' + h.up.split(' > ').length + ')' : ''; }
   function hmSrcTag(h) {
     if (!h || !h.src) return '<span class="tg dash">Not mapped</span>';
-    if (h.own && !h.s.length && !(h.all || []).length) return '<span class="tg" title="' + esc('Set by ' + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">No hero sizes</span>';
+    if (h.dec && !h.s.length && !(h.all || []).length) return '<span class="tg" title="' + esc('Set by ' + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '') + hmUp(h)) + '">No hero sizes</span>';
+    // a list set for a coarser tier, reaching this type because it sets none of its own
+    if (h.up && h.src !== 'brand') return '<span class="tg ' + (h.src === 'doc' ? 'gr' : 'or') + '" title="' + esc((h.src === 'doc' ? 'From the brand’s own document' : 'Set by ' + (h.by || 'a person')) + (h.at ? ' · ' + dstr(h.at) : '') + hmUp(h) + ' — a list set for a coarser tier reaches every type under it that does not set its own') + '">⤴ Tier ' + h.up.split(' > ').length + '</span>';
     if (h.src === 'doc') return '<span class="tg gr" title="' + esc('From the brand’s own document' + (h.at ? ' · imported ' + dstr(h.at) : '')) + '">📄 Document</span>';
     if (h.src === 'set' || h.src === 'core') return '<span class="tg or" title="' + esc((h.src === 'core' ? 'Core of the run, applied by ' : 'Set by ') + (h.by || 'a person') + (h.at ? ' · ' + dstr(h.at) : '')) + '">✎ ' + esc(h.by || 'Set by hand') + '</span>';
-    if (h.src === 'brand') return '<span class="tg bl" title="' + esc('Follows ' + h.from + '’s guide for the same product type') + '">⧉ ' + esc(h.from) + '</span>';
+    if (h.src === 'brand') return '<span class="tg bl" title="' + esc('Follows ' + h.from + '’s guide for the same product type' + hmUp(h)) + '">⧉ ' + esc(h.from) + '</span>';
     if (h.src === 'ex') return '<span class="tg bl" title="' + esc('Example — ' + (h.exName || h.ex) + '. A FeedSpark starting point to adapt, not a published standard.') + '">⧉ Example</span>';
     return '<span class="tg">' + esc(h.src) + '</span>';
   }
@@ -1298,7 +1319,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     // the market select: every roster market of the brand, the ones with no census marked
     var ms = $('#hm-mkt'), mk = (d && d.markets) || [];
     ms.hidden = mk.length < 2;
-    ms.innerHTML = mk.map(function (m) { return '<option value="' + esc(m.market) + '"' + (d && m.market === d.market ? ' selected' : '') + '>' + esc(m.market) + (m.census ? ' · ' + m.census.types + ' types' : ' · not read yet') + '</option>'; }).join('');
+    ms.innerHTML = mk.map(function (m) { return '<option value="' + esc(m.market) + '"' + (d && m.market === d.market ? ' selected' : '') + '>' + esc(m.market) + (m.census ? '' : ' · not read yet') + '</option>'; }).join('');
     $('#hm-sub').textContent = b ? b + (d && d.market ? ' ' + d.market : '') + ' · each product type’s hero sizes against the stock in its master feed' + (d && d.auto ? ' · pick a brand to switch' : '') : 'Each brand’s hero sizes, type by type, against the stock in its master feed.';
     if (!HS || !d) { empty.hidden = false; empty.textContent = HM.err ? 'Could not read the hero sizes — ' + HM.err : 'Loading…'; tw.hidden = true; bar.hidden = true; $('#hm-sum').innerHTML = ''; $('#hm-foot').textContent = ''; return; }
     if (!b) { empty.hidden = false; empty.textContent = 'No brand has a size census yet — it fills on the next Master stock run (07:40, 13:40 and 19:40 UTC).'; tw.hidden = true; bar.hidden = true; $('#hm-sum').innerHTML = ''; $('#hm-foot').textContent = ''; return; }
@@ -1307,11 +1328,16 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       empty.textContent = (d.market ? b + ' ' + d.market + ': the master’s sizes are not counted yet' : 'No size census for ' + b + ' yet') + ' — they fill on the next Master stock run. The guide above can be set up now.';
       return;
     }
-    var mp = HS.map(HM.store, b, cen), sm = mp.sum;
+    var ts = HS.tiers(cen), tier = hmTier(cen);
+    var mp = HS.map(HM.store, b, cen, tier), sm = mp.sum;
+    $('#hm-tw2').hidden = ts.length < 2;
+    $('#hm-tiers').innerHTML = ts.map(function (x) {
+      return '<button type="button" data-tier="' + x.t + '" class="' + (x.t === tier ? 'on' : '') + '" aria-pressed="' + (x.t === tier) + '" title="' + esc('Tier ' + x.t + ' · ' + n0(x.types) + ' product types' + (x.ex ? ' · e.g. ' + x.ex.replace(/ > /g, ' › ') : '')) + '">Tier ' + x.t + ' <span class="k">' + n0(x.types) + '</span></button>';
+    }).join('');
     var rows = mp.types.filter(function (x) { return x.t.sz.length; });
     var low = rows.filter(function (x) { return x.m.rows && hmPc(x.m.in, x.m.rows) < 70; }).length, unm = rows.filter(function (x) { return !x.h.s.length && !x.h.own; }).length;
     $('#hm-sum').innerHTML = [
-      '<div class="it" title="' + esc((hmPc(sm.mappedRows, sm.sizedRows) || 0) + '% of the sized products sit in a mapped type') + '"><b>' + n0(sm.mapped) + ' <small style="font-size:13px;color:var(--muted)">of ' + n0(sm.sized) + '</small></b><span>product types mapped</span></div>',
+      '<div class="it" title="' + esc((hmPc(sm.mappedRows, sm.sizedRows) || 0) + '% of the sized products sit in a mapped type') + '"><b>' + n0(sm.mapped) + ' <small style="font-size:13px;color:var(--muted)">of ' + n0(sm.sized) + '</small></b><span>product types mapped' + (ts.length > 1 ? ' · tier ' + tier : '') + '</span></div>',
       '<div class="it" title="Hero-size products in stock, of every hero-size product"><b>' + (sm.rows ? hmPc(sm.in, sm.rows) + '%' : '—') + '</b><span>hero in stock' + (sm.rows ? ' · ' + n0(sm.in) + ' of ' + n0(sm.rows) : '') + '</span></div>',
       '<div class="it" title="Styles with every hero size they are made in, in stock"><b>' + (sm.st ? hmPc(sm.full, sm.st) + '%' : '—') + '</b><span>full hero runs' + (sm.st ? ' · ' + n0(sm.full) + ' of ' + n0(sm.st) : '') + '</span></div>',
       '<div class="it" title="' + esc('The ' + (d.market || '') + ' master as FeedHero last imported it · ' + n0(cen.groups) + ' styles') + '"><b>' + esc(d.market || '') + ' master</b><span>read ' + since(cen.t) + '</span></div>'
@@ -1326,6 +1352,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       if (HM.f === 'low') return x.m.rows && hmPc(x.m.in, x.m.rows) < 70;
       return true;
     });
+    // a row shallower than the tier whose products could not go finer, beside the rows of the ones that did ("Dresses" next
+    // to "Midi Dresses") — named, so it never reads as a duplicate
+    var deeper = {}, leaves = {};
+    rows.forEach(function (x) { var p = x.t.k.split(' > '); leaves[p[p.length - 1]] = (leaves[p[p.length - 1]] || 0) + 1; for (var L = 1; L < p.length; L++) deeper[p.slice(0, L).join(' > ')] = 1; });
     $('#hm-t tbody').innerHTML = shown.length ? shown.map(function (x, i) {
       var t = x.t, h = x.h, m = x.m, hero = {}, carry = t.sz.map(function () { return 0; }), st = 0;
       h.s.forEach(function (s) { hero[s] = 1; });
@@ -1346,16 +1376,30 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var acts = HM.edit ? '<div class="hm-acts"><button type="button" data-ha="core" data-ht="' + i + '" title="Core of the run — tick the sizes nearly as many of its styles are made in as its most-made size" aria-label="Tick the core of the run">✦</button>'
         + (h.own ? '<button type="button" data-ha="guide" data-ht="' + i + '" title="Back to the guide — drop this type’s own list" aria-label="Back to the guide">↺</button>' : '')
         + '<button type="button" data-ha="none" data-ht="' + i + '" title="No hero sizes — record that this type has none" aria-label="No hero sizes">∅</button></div>' : '';
-      return '<tr data-hi="' + i + '"><td class="nm"><b>' + hmPretty(t.k) + '</b><span class="sub2">' + (st ? n0(st) + ' styles · ' : '') + n0(t.n) + ' products' + (t.fw ? ' · footwear' : '') + '</span></td>'
+      // the type's own level in bold, the tiers above it on the line under (a master-only type's "Master only" root is its badge)
+      var parts = t.k.split(' > '), leaf = parts.pop();
+      if (t.m && parts[0] === HS.MASTER_ONLY) parts.shift();
+      // a name several rows share at this tier ("Clothing" for Women, Men and Kids) leads with its department
+      var name = leaves[leaf] > 1 && parts.length ? parts[0] + ' › ' + leaf : leaf;
+      if (name !== leaf) parts.shift();   // the department now leads the name — the line under it need not say it again
+      var fin = x.finer ? '<span class="sub2" title="' + esc(x.finer + ' of the product types under it have their own hero sizes, set at a finer tier. The figures on this row add each type up on the list that reaches it.') + '">' + x.finer + (x.finer === 1 ? ' type under it sets its own' : ' types under it set their own') + '</span>' : '';
+      return '<tr data-hi="' + i + '"><td class="nm" title="' + esc(t.k.replace(/ > /g, ' › ')) + '"><b>' + esc(name) + '</b>'
+        + (t.m ? '<span class="mo" title="Not one of the Google Shopping feed’s product types — the master’s own word, for products the feed never sends">master type</span>' : '')
+        + (t.t < tier && deeper[t.k] ? '<span class="mo" title="' + esc('Products filed at tier ' + t.t + ' with no finer type — the feed never sends them, or sends them no deeper — while other ' + leaf + ' go finer, on the rows beside it') + '">no finer type</span>' : '')
+        + '<span class="sub2">' + (parts.length ? '<span class="par">' + esc(parts.join(' › ')) + '</span> · ' : '') + (st ? n0(st) + ' styles · ' : '') + n0(t.n) + ' products' + (t.fw ? ' · footwear' : '') + '</span></td>'
         + '<td class="szs">' + chips + '</td>'
-        + '<td class="num">' + (h.s.length ? hmPcCell(m.in, m.rows, 'hero-size products in stock', 70) : '<span class="muted">—</span>') + '</td>'
-        + '<td class="num">' + (h.s.length ? (m.pats ? hmPcCell(m.full, m.st, 'styles with every hero size they are made in, in stock' + (m.untracked ? ' <span class="m">(' + n0(m.untracked) + ' styles in rarer runs not counted)</span>' : ''), 60) : '<span class="muted" title="This master names no style (item group)">—</span>') : '<span class="muted">—</span>') + '</td>'
-        + '<td class="hsrc">' + hmSrcTag(h) + acts + '</td></tr>';
+        + '<td class="num">' + (m.rows ? hmPcCell(m.in, m.rows, 'hero-size products in stock', 70) : '<span class="muted">—</span>') + '</td>'
+        + '<td class="num">' + (m.rows ? (m.pats ? hmPcCell(m.full, m.st, 'styles with every hero size they are made in, in stock' + (m.untracked ? ' <span class="m">(' + n0(m.untracked) + ' styles in rarer runs not counted)</span>' : ''), 60) : '<span class="muted" title="This master names no style (item group)">—</span>') : '<span class="muted">—</span>') + '</td>'
+        + '<td class="hsrc">' + hmSrcTag(h) + fin + acts + '</td></tr>';
     }).join('') : '<tr><td colspan="5" class="empty">' + (rows.length ? 'No product type matches.' : 'No sized product types in this master.') + '</td></tr>';
     HM.rows = shown;
     var foot = [];
     var oneOnly = mp.types.filter(function (x) { return !x.t.sz.length; }).length;
-    if (cen.tx && cen.tx.k) foot.push(n0(cen.tx.k) + ' smaller product types (' + n0(cen.tx.n) + ' products) are not listed — the census keeps each market’s 80 biggest.');
+    var tr = cen.tree, placed = tr ? tr.id + tr.grp + tr.learn + (tr.word || 0) + tr.own : 0, pcs = function (a) { var v = placed ? Math.round((a / placed) * 100) : 0; return a && !v ? '<1' : String(v); };
+    if (cen.src === 'feed' && tr) foot.push('Product types are the Google Shopping feed’s own product_type tree: ' + pcs(tr.id + tr.grp) + '% of the master’s products matched to a feed product by id or style, '
+      + pcs(tr.learn + (tr.word || 0)) + '% placed by their master type' + (tr.own ? ', ' + pcs(tr.own) + '% marked master type (the feed has no type for them)' : '') + '.');
+    else foot.push('Product types are the master’s own — no Google Shopping feed was read for this market’s tree.');
+    if (cen.tx && cen.tx.k) foot.push(n0(cen.tx.k) + ' smaller product types (' + n0(cen.tx.n) + ' products) are not listed — the census keeps each market’s ' + n0(HS.TYPE_CAP) + ' biggest.');
     if (oneOnly) foot.push(oneOnly + ' product type' + (oneOnly === 1 ? '' : 's') + ' sold in one size only.');
     if (sm.bySrc.ex) foot.push('Examples are FeedSpark starting points to adapt, not a published standard.');
     $('#hm-foot').textContent = foot.join(' ');
@@ -1379,7 +1423,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var doc = HS.parseDoc(rows);
       if (!doc.rows.length) { toast('No product types found in ' + name + ' — a "Product type" column and a "Hero sizes" column'); return; }
       var cen = hmCensus(), tmap = {};
-      ((cen && cen.types) || []).forEach(function (t) { tmap[HS.typeKey(t.k)] = { k: t.k, fw: t.fw }; });
+      HS.tiers(cen).forEach(function (x) { HS.tierTypes(cen, x.t).forEach(function (t) { tmap[HS.typeKey(t.k)] = { k: t.k, fw: t.fw }; }); });
       var put = {}, matched = 0, kept = 0, b = hmBrand();
       doc.rows.forEach(function (r) {
         var hit = HS.entryFor(tmap, { k: r.k, d: HS.deptOf(r.k) });
@@ -1393,7 +1437,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   function hmExport() {
     var b = hmBrand(); if (!b || !HS) return;
-    var rows = HS.docRows(HM.store, b, hmCensus()).slice(1);
+    var rows = HS.docRows(HM.store, b, hmCensus(), hmTier(hmCensus())).slice(1);
     if (!rows.length) rows = Object.keys(HS.entriesOf(HM.store, b)).map(function (k) { var e = HS.entriesOf(HM.store, b)[k]; return [e.k || k, (e.s || []).join(', '), HS.srcWord({ src: e.src }), '']; });
     xlLoad().then(function (X) {
       X.download([{ name: 'Hero sizes', cols: [{ k: 'a', l: 'Product type', w: 44 }, { k: 'b', l: 'Hero sizes', w: 34 }, { k: 'c', l: 'Source', w: 26 }, { k: 'd', l: 'Sizes made in', w: 70 }],
@@ -1434,6 +1478,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   });
   var hqt; $('#hm-q').addEventListener('input', function () { var v = this.value; clearTimeout(hqt); hqt = setTimeout(function () { HM.q = v.trim(); renderHmap(); }, 120); });
   $('#hm-f').addEventListener('click', function (e) { var c = e.target.closest('[data-hf]'); if (!c) return; HM.f = c.getAttribute('data-hf'); renderHmap(); });
+  $('#hm-tiers').addEventListener('click', function (e) { var c = e.target.closest('[data-tier]'); if (!c) return; hmSetTier(+c.getAttribute('data-tier')); renderHmap(); });
   $('#hm-warn').addEventListener('click', function (e) { if (e.target.id === 'hm-retry') { HM.warn = ''; hmFlush(); renderHmap(); } });
   $('#hm-t').addEventListener('click', function (e) {
     if (!HM.edit) return;

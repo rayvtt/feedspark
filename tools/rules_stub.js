@@ -118,39 +118,58 @@ function build() {
   return { book, stock, market, hero: heroBuild(now) };
 }
 // HERO SIZES (/api/rules/hero): a synthetic master pushed through the REAL census (docs/herosize_engine.js, reading rows
-// with the Catalogue's own engine) — so the card meets size chips, hero crowns, both measures, a document-sourced type,
-// a hand-set type, an example-sourced type and an unmapped one. Invented product types, sizes and stock.
+// with the Catalogue's own engine) and placed on a synthetic Google Shopping feed's product_type tree (treeIndex) — so the
+// card meets size chips, hero crowns, both measures, every tier of the tree, a list set for a coarser tier reaching the
+// types under it, a type matched by the master's own word, a master-only type, a document-sourced type, a hand-set type,
+// an example-sourced type and an unmapped one. Invented product types, sizes and stock.
 function heroBuild(now) {
   const E = require(path.join(__dirname, '..', 'docs', 'catalog_engine.js'));
   const H = require(path.join(__dirname, '..', 'docs', 'herosize_engine.js'));
-  const c = H.census(E);
-  c.onRow(null, ['id', 'item_group_id', 'title', 'gender', 'product_type', 'size', 'availability']);
+  // the master, and — for the in-stock half of each style, as a real feed sends it — the feed's product_type path
+  const master = [], feed = [];
   let id = 0;
-  const style = (pt, g, sizes, n, seed) => {
-    for (let s = 0; s < n; s++) sizes.forEach((z, j) => {
-      const inStock = ((s * 7 + j * 3 + seed) % 10) < 7 - (j === 0 || j === sizes.length - 1 ? 2 : 0);
-      c.onRow(['P' + (++id), pt.slice(0, 3).toUpperCase() + seed + '-' + s, pt + ' ' + s, g, pt, z, inStock ? 'in stock' : 'out of stock']);
-    });
+  const style = (pt, g, sizes, n, seed, tree) => {
+    for (let s = 0; s < n; s++) {
+      const grp = pt.slice(0, 3).toUpperCase() + seed + '-' + s, path = typeof tree === 'function' ? tree(s) : tree;
+      // every fourth style is out of the feed altogether — placed by where its master type's sent products sit
+      const sent = path && s % 4 !== 3;
+      sizes.forEach((z, j) => {
+        const inStock = ((s * 7 + j * 3 + seed) % 10) < 7 - (j === 0 || j === sizes.length - 1 ? 2 : 0), pid = 'P' + (++id);
+        master.push([pid, grp, pt + ' ' + s, g, pt, z, inStock ? 'in stock' : 'out of stock']);
+        if (sent && inStock) feed.push([pid, grp, path]);
+      });
+    }
   };
-  style('Dresses', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 42, 1);
-  style('T-Shirts', 'mens', ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 36, 2);
-  style('Jackets', 'womens', ['6', '8', '10', '12', '14', '16'], 24, 3);
-  style('Trainers', 'womens', ['UK 3', 'UK 3.5', 'UK 4', 'UK 4.5', 'UK 5', 'UK 5.5', 'UK 6', 'UK 7'], 18, 4);
-  style('Coats', 'kids', ['3-4 years', '5-6 years', '7-8 years', '9-10 years'], 14, 5);
-  style('Jumpers', 'mens', ['S', 'M', 'L', 'XL'], 12, 6);
+  style('Dresses', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 42, 1, (s) => 'Women > Clothing > Dresses > ' + (s % 2 ? 'Maxi Dresses' : 'Midi Dresses'));
+  style('T-Shirts', 'mens', ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 36, 2, (s) => 'Men > Clothing > T-Shirts > ' + (s % 3 ? 'Graphic T-Shirt' : 'Plain T-Shirt'));
+  style('Jackets', 'womens', ['6', '8', '10', '12', '14', '16'], 24, 3, 'Women > Clothing > Jackets and Coats > Puffer Jacket');
+  style('Trainers', 'womens', ['UK 3', 'UK 3.5', 'UK 4', 'UK 4.5', 'UK 5', 'UK 5.5', 'UK 6', 'UK 7'], 18, 4, 'Women > Shoes > Trainers');
+  style('Coats', 'kids', ['3-4 years', '5-6 years', '7-8 years', '9-10 years'], 14, 5, 'Kids > Clothing > Coats');
+  style('Jumpers', 'mens', ['S', 'M', 'L', 'XL'], 12, 6, 'Men > Clothing > Knitwear > Jumpers');
   // one type made in BOTH alpha and numeric runs (by different styles) — the card keeps each kind on its own line
-  style('Tops', 'womens', ['XS', 'S', 'M', 'L', 'XL'], 10, 7);
-  style('Tops', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 12, 8);
-  for (let s = 0; s < 20; s++) c.onRow(['P' + (++id), 'BAG-' + s, 'Bag ' + s, 'womens', 'Bags', 'One Size', 'in stock']);
+  style('Tops', 'womens', ['XS', 'S', 'M', 'L', 'XL'], 10, 7, 'Women > Clothing > Tops');
+  style('Tops', 'womens', ['6', '8', '10', '12', '14', '16', '18'], 12, 8, 'Women > Clothing > Tops');
+  // a type the feed never sends — kept under its department, marked as the master's own word
+  style('Bralettes', 'womens', ['XS', 'S', 'M', 'L'], 6, 9, '');
+  for (let s = 0; s < 20; s++) { const pid = 'P' + (++id); master.push([pid, 'BAG-' + s, 'Bag ' + s, 'womens', 'Bags', 'One Size', 'in stock']); feed.push([pid, 'BAG-' + s, 'Women > Accessories > Bags']); }
+  const ti = H.treeIndex(E);
+  ti.onRow(null, ['g:id', 'g:item_group_id', 'g:product_type']);
+  feed.forEach((r) => ti.onRow(r, ['g:id', 'g:item_group_id', 'g:product_type']));
+  const c = H.census(E, ti.finish());
+  c.onRow(null, ['id', 'item_group_id', 'title', 'gender', 'product_type', 'size', 'availability']);
+  master.forEach((r) => c.onRow(r));
   const census = Object.assign({ client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', t: now - 5400000, imp: '2026-09-28 05:27:48' }, c.finish());
   const store = {
     'g:Superdry': { doc: { name: 'Superdry hero sizes 2026', url: 'https://example.com/superdry-hero-sizes' }, ex: 'fs-fashion-uk', from: '', note: '', by: 'Analyst A', at: now - 86400000 },
+    // a document row in the brand's own words ("Women > Dresses") — it meets the feed's "… > Dresses" by its leaf
     'm:Superdry|women > dresses': { k: 'Women > Dresses', s: ['10', '12', '14'], src: 'doc', fw: 0, by: 'Analyst A', at: now - 86400000 },
     'm:Superdry|men > jumpers': { k: 'Men > Jumpers', s: ['M', 'L'], src: 'set', fw: 0, by: 'Analyst B', at: now - 3600000 },
+    // a list set for a whole tier-2 branch — every men's clothing type that sets none of its own reads it
+    'm:Superdry|men > clothing': { k: 'Men > Clothing', s: ['M', 'L', 'XL'], src: 'set', fw: 0, by: 'Analyst B', at: now - 7200000 },
   };
   const sum = { t: census.t, types: census.types.length, sized: census.sized, rows: census.rows, groups: census.groups, v: census.v };
   return { ok: true, v: H.CENSUS_V, store, at: now, auto: true,
-    brands: [{ client: 'Reiss', doc: false, ex: '', from: '', own: 0, fromDoc: 0, census: false }, { client: 'Superdry', doc: true, ex: 'fs-fashion-uk', from: '', own: 2, fromDoc: 1, census: true }],
+    brands: [{ client: 'Reiss', doc: false, ex: '', from: '', own: 0, fromDoc: 0, census: false }, { client: 'Superdry', doc: true, ex: 'fs-fashion-uk', from: '', own: 3, fromDoc: 1, census: true }],
     brand: 'Superdry', market: 'GB', cmpid: 'superdry_gb', census,
     markets: [{ market: 'GB', cmpid: 'superdry_gb', census: sum }, { market: 'DE', cmpid: 'superdry_de', census: null }, { market: 'FR', cmpid: 'superdry_fr', census: null }] };
 }

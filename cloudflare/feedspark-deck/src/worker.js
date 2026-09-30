@@ -992,9 +992,10 @@ async function route(request, env, ctx) {
           let rec = await catMasterInfo(env, cmpid, false);
           if (rec.state !== 'ok') return json({ ok: false, state: rec.state, note: rec.note || '', error: rec.error || '' }, rec.state === 'preparing' ? 202 : 503);
           if (!body.force) {
-            // unchanged = the stored counts AND the stored size census are both of this import (and of this census shape)
+            // unchanged = the stored counts AND the stored size census are both of this import (and of this census shape),
+            // and read within the day — the census also rides the Google feed's product_type tree, which moves on its own
             const have = ((await env.EDITS.get('masteravail', 'json')) || {})[cmpid];
-            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
+            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
           }
           let target = rec.src;
           if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
