@@ -212,6 +212,20 @@ window.addEventListener('load',restore);
   .cb{position:relative;display:inline-block;min-width:78px}
   .cb i{position:absolute;right:0;bottom:-4px;height:3px;border-radius:2px;background:var(--vout);opacity:.55}
   .cb.rv i{background:var(--vin)}
+  /* ◐ HEAT — a colour scale per column, trough → peak (Ray, 30 Sep 2026). The chart pair's own steps, tinted
+     under ink text: orange below the group's typical row, blue above it, deepest at the trough and the peak. */
+  :root{--heat-hi:37,99,235;--heat-lo:237,111,11;--heat-k:1}
+  table.pt td.hx{background:rgba(var(--heat-hi),calc(var(--hx) * .34 * var(--heat-k)))!important}
+  table.pt td.hx.lo{background:rgba(var(--heat-lo),calc(var(--hx) * .34 * var(--heat-k)))!important}
+  table.pt td .hk{font-size:9px;color:var(--ink-2);margin-right:5px;vertical-align:1px}
+  table.pt th.hx::before{content:'';position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:2px;background:linear-gradient(90deg,rgb(var(--heat-lo)),rgba(var(--heat-lo),.15) 45%,rgba(var(--heat-hi),.15) 55%,rgb(var(--heat-hi)))}
+  #heat-btn .hn{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:11px;font-weight:900}
+  #heat-pop{width:290px}
+  #heat-pop .hrow{display:flex;gap:6px;margin:6px 0 2px}
+  #heat-pop .hleg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:10px}
+  #heat-pop .hleg .hsw{grid-column:1/-1;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--heat-lo),.34),rgba(var(--heat-lo),.04) 48%,rgba(var(--heat-hi),.04) 52%,rgba(var(--heat-hi),.34))}
+  #heat-pop .hleg span:nth-child(3){text-align:center}#heat-pop .hleg span:nth-child(4){text-align:right}
+  #heat-pop .hnote{font-size:11.5px;font-weight:700;color:var(--ink-2);line-height:1.45;margin:8px 0 2px}
   .cc{display:inline-block;margin-left:6px;white-space:nowrap}
   .band-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;border:1px solid var(--line);letter-spacing:.02em}
   .band-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
@@ -225,7 +239,7 @@ window.addEventListener('load',restore);
   .more{font:inherit;font-size:12px;font-weight:800;color:var(--orange-deep);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;margin:2px 0 2px calc(var(--dp,0)*18px + 26px)}
   .tfoot{font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:flex;gap:12px;flex-wrap:wrap}
   /* ---- popovers (columns, views) ---- */
-  .pop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:10px 12px;min-width:220px;max-height:60vh;overflow:auto}
+  .pop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;max-width:calc(100vw - 16px);background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:10px 12px;min-width:220px;max-height:60vh;overflow:auto}
   .pop[hidden]{display:none}
   .pop label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;padding:4px 2px;cursor:pointer}
   .pop .hd{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 6px}
@@ -297,6 +311,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .b-strong{border-color:#2f5d3f}[data-theme=dark] .b-steady{border-color:#3a4f7d}[data-theme=dark] .b-weak{border-color:#6b4a2b}[data-theme=dark] .b-losing{border-color:#6b3a37}
 [data-theme=dark] .b-strong{color:#48D07E}[data-theme=dark] .b-steady{color:#7BA4F0}[data-theme=dark] .b-weak{color:#F0A44E}[data-theme=dark] .b-losing{color:#F1707A}
 [data-theme=dark] .cb i{background:#C67B28}[data-theme=dark] .cb.rv i{background:#4C82E0}
+:root[data-theme=dark]{--heat-hi:76,130,224;--heat-lo:198,123,40;--heat-k:1.3}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -321,7 +336,7 @@ window.addEventListener('load',restore);
       <button class="xi" id="pdf" type="button">📄 PDF of the dashboard<small>this screen on one page, ready to attach</small></button>
       <button class="xi" id="csv" type="button">⬇ Table as CSV<small>every visible row, the chosen columns</small></button>
     </div></span>
-    <span class="rel"><button class="btn" id="views-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Saved views — the whole screen as you have it: brand, market, period, currency, metrics, columns, sort, filters">★ Views</button><div class="pop" id="views-pop" hidden></div></span>
+    <span class="rel"><button class="btn" id="views-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Saved views — the whole screen as you have it: brand, market, period, currency, metrics, columns, colour scale, sort, filters">★ Views</button><div class="pop" id="views-pop" hidden></div></span>
   </div>
   <div class="chips" id="mkts" style="margin-top:10px"></div>
   <div class="status"><span class="pip off" id="pip"></span><span id="mstate">Loading…</span><span class="ml" id="scopeline"></span></div>
@@ -391,6 +406,7 @@ window.addEventListener('load',restore);
       <div class="chips" id="bands"></div>
       <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — picking one opens the markets in view (up to 8, busiest first). Category is stored by the sync; every other cut is read live from FeedHero"><option value="Category">Segment · Category</option></select>
       <span class="rel"><button class="btn" id="cols-btn" type="button" aria-haspopup="true" aria-expanded="false">⊞ Columns</button><div class="pop" id="cols-pop" hidden></div></span>
+      <span class="rel"><button class="btn" id="heat-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Colour a column's cells from its trough to its peak — pick the columns one by one">◐ Heat</button><div class="pop" id="heat-pop" hidden></div></span>
       <button class="btn" id="expand-all" type="button" title="Open every brand to its markets">⊕ Open all</button>
     </div>
     <div class="tscroll"><table class="pt" id="pt"><thead></thead><tbody></tbody></table></div>
@@ -482,6 +498,7 @@ window.addEventListener('load',restore);
   var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{},segNote:'',segPending:false};
   try{ var c0=JSON.parse(LS('fcc-roas-cols')||'null'); if(Array.isArray(c0)&&c0.length)S.cols=c0; }catch(e){}
   if(!S.cols)S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k});
+  S.heat=[]; try{ var h0=JSON.parse(LS('fcc-roas-heat')||'null'); if(Array.isArray(h0))S.heat=h0.filter(function(k){return COLS.some(function(c){return c.k===k})}); }catch(e){}
   var DATA=null, CACHE={}, TREES={}, LIVE={}, WINS=[], BACK=7, OWNER=null, SYNCING=false;
 
   function scopeKey(){ return (S.brand||'*')+'|'+(S.market||'*'); }
@@ -723,12 +740,61 @@ window.addEventListener('load',restore);
       var hid=0; if(r.type==='brand'&&r.open&&r.kids){ var got={}; kidsOut.forEach(function(k){got[k.key]=1}); hid=r.kids.filter(function(m){return m.type==='market'&&matchQ(m)&&!matchBand(m)&&!got[m.key]}).length; }
       if(show||anyKid||hid){ out.push(r); if(r.open){ var cap=S.more[r.key]?Infinity:(r.type==='market'?30:Infinity); var shown=kidsOut.slice(0,cap); shown.forEach(function(k){out.push(k)}); if(kidsOut.length>cap)out.push({type:'more',key:r.key+'|more',depth:r.depth+1,n:kidsOut.length-cap,parent:r.key});
         if(hid)out.push({type:'note',band:1,key:r.key+'|bandhid',depth:1,html:hid+' market'+(hid===1?'':'s')+' hidden by the band filter ('+esc(bandWords())+') · <button class="lnk" type="button" data-clear-bands>Show them</button>',parent:r.key}); } } }); return out; }
+  /* ================= ◐ heat — a colour scale per column, trough → peak ================= */
+  // Ray, 30 Sep 2026: "can you allow option to highlight column cells color in gradiant to find peak and trough
+  // too, selected columns individually". Excel's colour scale, on the columns the reader ticks one by one. Three
+  // rules, each because the obvious version lies: (1) a scale runs within ONE LEVEL — brands with brands, markets
+  // with markets, categories at one depth — since a brand's total beside one of its categories is not a
+  // comparison; (2) a MONEY column compares within one currency (the rule every figure here follows); (3) the
+  // midpoint is the group's MEDIAN, not the middle of the range — spend is skewed, and a midrange scale paints
+  // every market but the biggest one orange. High or low, never good or bad: a peak CPC is a peak too.
+  var HEAT_NO={band:1,upd:1}, MONEY_K={sp:1,rv:1,cpc:1,cpa:1,aov:1,avgp:1};
+  function heatable(){ return visCols().filter(function(c){return !HEAT_NO[c.k]}); }
+  function heatOn(){ var hc=heatable(); return S.heat.filter(function(k){ return hc.some(function(c){return c.k===k}); }); }
+  // the currency a brand row's money cells show — the same pick cellOf makes
+  function brandCur(b){ var by=(b&&b.byCur)||{}, curs=Object.keys(by).sort(function(a,c){return by[c].sp-by[a].sp}); return (S.cur&&by[S.cur])?S.cur:curs[0]; }
+  function heatLevel(type,depth){ return type==='brand'?'brands':type==='market'?'markets':(S.seg==='Category'?(depth>2?'categories at this depth':'categories'):segWord()+' rows'); }
+  function heatMap(rows){
+    var out={}; heatOn().forEach(function(k){
+      var groups={};
+      rows.forEach(function(r){ if(r.type!=='brand'&&r.type!=='market'&&r.type!=='cat')return; var v=cellOf(r,k).n; if(v==null||typeof v!=='number'||!isFinite(v))return;
+        var cur=MONEY_K[k]?(r.type==='brand'?brandCur(r.b):r.cur)||'?':null;
+        var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');
+        (groups[g]=groups[g]||[]).push({key:r.key,v:v,type:r.type,depth:r.depth,cur:cur}); });
+      Object.keys(groups).forEach(function(g){
+        var L=groups[g], vs=L.map(function(x){return x.v}).sort(function(a,b){return a-b}), mn=vs[0], mx=vs[vs.length-1];
+        if(!(mx>mn))return;   // one row, or every row the same: nothing to scale
+        var h=vs.length/2, med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2;
+        L.forEach(function(x){
+          var t=x.v>med?(mx>med?(x.v-med)/(mx-med):0):x.v<med?-(med>mn?(med-x.v)/(med-mn):0):0;
+          out[x.key+'|'+k]={t:t,peak:x.v===mx,trough:x.v===mn,rank:1+vs.filter(function(y){return y>x.v}).length,n:L.length,level:heatLevel(x.type,x.depth),cur:x.cur};
+        });
+      });
+    });
+    return out;
+  }
+  function ordW(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+  function heatTd(h,c,html){
+    var ttl=(h.peak?'Peak — the highest ':h.trough?'Trough — the lowest ':ordW(h.rank)+' highest ')+c.l+' of the '+h.n+' '+h.level+' shown'+(h.cur?' in '+h.cur:'');
+    var a=Math.abs(h.t); if(!a&&!h.peak&&!h.trough)return '<td title="'+esc(ttl)+'">'+html+'</td>';
+    return '<td class="hx'+(h.t<0?' lo':'')+(h.peak?' pk':'')+(h.trough?' tr':'')+'" style="--hx:'+(a?(0.2+0.8*a).toFixed(3):'0')+'" title="'+esc(ttl)+'">'+(h.peak?'<span class="hk" aria-hidden="true">▲</span>':h.trough?'<span class="hk" aria-hidden="true">▼</span>':'')+html+'</td>';
+  }
+  function renderHeatBtn(){ var n=heatOn().length; $('#heat-btn').innerHTML='◐ Heat'+(n?' <span class="hn">'+n+'</span>':''); $('#heat-btn').setAttribute('title',n?'Colour scale on '+n+' column'+(n===1?'':'s')+' — orange at the trough, blue at the peak':'Colour a column\'s cells from its trough to its peak — pick the columns one by one'); }
+  function renderHeat(){
+    var hc=heatable();
+    $('#heat-pop').innerHTML='<div class="hd">Colour scale · peak and trough</div>'
+      +hc.map(function(c){return '<label><input type="checkbox" data-heat="'+c.k+'"'+(S.heat.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')
+      +'<div class="hrow"><button class="chip" type="button" data-heat-all>All</button><button class="chip" type="button" data-heat-none>Clear</button></div>'
+      +'<div class="hleg"><span class="hsw"></span><span>▼ trough</span><span>typical</span><span>peak ▲</span></div>'
+      +'<p class="hnote">Each column on its own scale, within each level — brands with brands, markets with markets, categories at the same depth — and money within one currency. High or low, not good or bad. Only columns shown in ⊞ Columns are listed.</p>';
+  }
+  function saveHeat(){ LS('fcc-roas-heat',S.heat.length?JSON.stringify(S.heat):null); renderHeatBtn(); renderTable(); }
   function renderTable(){
-    var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody');
-    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+'">'+esc(c.l)+'</th>'}).join('')+'</tr>';
+    var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody'), hon=heatOn();
+    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){var hx=hon.indexOf(c.k)>=0; return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+(hx?' hx':'')+'"'+(hx?' title="Colour scale on — orange at the trough, blue at the peak"':'')+'>'+esc(c.l)+'</th>'}).join('')+'</tr>';
     if(!DATA||!DATA.brands||!(DATA.brands[S.win]||[]).length){ body.innerHTML=''; $('#pt-empty').hidden=false; $('#pt-empty').innerHTML=DATA?'<b>No markets synced for this scope yet.</b> ⚡ Sync now, or wait for the next firing.':'<b>ROAS data is unavailable</b> — this needs the live worker.'; $('#pt-foot').textContent=''; return; }
     $('#pt-empty').hidden=true;
-    var rows=flat(buildRows());
+    var rows=flat(buildRows()), HM=heatMap(rows);
     // Google Ads' Total row — one per currency in scope, the same population the scorecards run on
     var by=agg(); var tot=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}).map(function(c){ var a=by[c]; var tr={type:'tot',cur:c,has:true,b:{byCur:{},conv:a.cv,clicks:a.ck,impr:a.im,skus:a.sk,avgZombiePct:a.zb,bandCounts:a.bands||{},updated:0}}; tr.b.byCur[c]=a;
       return '<tr class="tot"><td class="nm"><span class="in">Total · '+esc(c)+' markets <span class="dim">'+a.n+'</span></span></td>'+cols.map(function(col){ var cell=cellOf({type:'brand',b:tr.b,cur:c},col.k); return '<td>'+cell.html+'</td>'; }).join('')+'</tr>'; }).join('');
@@ -738,14 +804,16 @@ window.addEventListener('load',restore);
       if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
       var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
         +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+(r.type==='cat'&&S.seg!=='Category'&&isUnsorted(r.name)?' <span class="cur" title="Products whose '+esc(segWord())+' field is empty in the feed FeedHero reads">no value</span>':'')+'</span>';
-      return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ return '<td>'+cellOf(r,c.k).html+'</td>'; }).join('')+'</tr>';
+      return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ var cell=cellOf(r,c.k), h=HM[r.key+'|'+c.k]; return h?heatTd(h,c,cell.html):'<td>'+cell.html+'</td>'; }).join('')+'</tr>';
     }).join('');
     var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
     var nHid=rows.filter(function(r){return r.band}).reduce(function(a,r){return a+(parseInt(r.html,10)||0)},0);
     $('#pt-foot').innerHTML='<span>'+nB+' brand'+(nB===1?'':'s')+' · '+nM+' market'+(nM===1?'':'s')+(nC?' · '+nC+' '+(S.seg==='Category'?'categories':segWord()+' rows'):'')+' shown</span>'
       +(nHid?'<span>'+nHid+' market'+(nHid===1?'':'s')+' hidden by the band filter · <button class="lnk" type="button" data-clear-bands>clear it</button></span>':'')
       +(S.segNote?'<span>'+esc(S.segNote)+'</span>':'')
-      +(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>';
+      +(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>'
+      +(hon.length?'<span>◐ '+esc(hon.map(function(k){return COLS.filter(function(c){return c.k===k})[0].l}).join(', '))+': orange ▼ trough → blue ▲ peak, within each level'+(hon.some(function(k){return MONEY_K[k]})?', money within one currency':'')+'</span>':'');
+    renderHeatBtn();
     var brRows=rows.filter(function(r){return r.type==='brand'});
     $('#expand-all').textContent=brRows.length&&brRows.every(function(r){return r.open})?'⊖ Close all':'⊕ Open all';
     if(S.segPending){ S.segPending=false; if(segOpen())renderTable(); }
@@ -1009,7 +1077,7 @@ window.addEventListener('load',restore);
     var was=!p.hidden&&p.parentNode===rel; document.querySelectorAll('.pop').forEach(function(q){ q.hidden=true; }); document.querySelectorAll('[aria-haspopup]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
     if(was)return;
     p.innerHTML='<div class="hd">'+esc(MODN[k])+'</div><button class="xi" type="button" data-xk="png" data-xm="'+k+'">🖼 PNG image<small>the card as drawn, captioned with its scope</small></button><button class="xi" type="button" data-xk="csv" data-xm="'+k+'">⬇ CSV data<small>every row behind it, not only those shown</small></button>';
-    rel.appendChild(p); p.hidden=false; btn.setAttribute('aria-expanded','true');
+    rel.appendChild(p); p.hidden=false; btn.setAttribute('aria-expanded','true'); fitPop(p);
   }
 
   /* ================= CSV ================= */
@@ -1027,7 +1095,7 @@ window.addEventListener('load',restore);
   function saveViews(v){ LS('fcc-roas-views',JSON.stringify(v.slice(0,20))); }
   function renderViews(){ var v=views(); $('#views-pop').innerHTML='<div class="hd">Saved views · this device</div>'+(v.length?v.map(function(x,i){return '<div class="vw"><button class="ap" type="button" data-view="'+i+'" title="'+esc(x.brand||'All brands')+(x.market?' '+esc(x.market):'')+' · '+esc(x.win)+' · '+esc((x.metrics||[]).join(', '))+'">'+esc(x.name)+'</button><button class="x" type="button" data-viewx="'+i+'" aria-label="Delete view '+esc(x.name)+'">✕</button></div>'}).join(''):'<div class="dim" style="padding:4px 0">None yet.</div>')
     +'<div class="hd" style="margin-top:10px">Save this screen</div><div style="display:flex;gap:6px"><input class="fld" id="view-name" type="text" placeholder="Name…" style="flex:1;min-width:0" aria-label="View name"><button class="btn" id="view-save" type="button">Save</button></div><div class="hd" style="margin-top:10px">Share</div><button class="chip" id="view-link" type="button">🔗 Copy link to this screen</button>'; }
-  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; S.sort=x.sort||S.sort; S.seg=segOk(x.seg); S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
+  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; if(Array.isArray(x.heat))S.heat=x.heat.slice(); S.sort=x.sort||S.sort; S.seg=segOk(x.seg); S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
 
   /* ================= render all ================= */
   function renderAll(){
@@ -1077,13 +1145,24 @@ window.addEventListener('load',restore);
     var mg=e.target.closest('[data-mk-go]'); if(mg&&mg.getAttribute('data-mk-go')){ goMarket(mg.getAttribute('data-client'),mg.getAttribute('data-mk-go')); }
   });
   var _rz; window.addEventListener('resize',function(){ clearTimeout(_rz); _rz=setTimeout(function(){ if(DATA)renderTrend(); },150); });
-  function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); }
+  function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); if(open)fitPop(pop); }
+  // a menu hangs off its button's RIGHT edge — on a phone a button near the left put ⊞ Columns, ★ Views, ⬇ Export and
+  // ◐ Heat half off the screen. Nudged back inside, 8px from either edge; the width is capped in CSS.
+  function fitPop(el){ el.style.right=''; var r=el.getBoundingClientRect(), vw=document.documentElement.clientWidth, pad=8, base=parseFloat(getComputedStyle(el).right)||0;
+    if(r.left<pad)el.style.right=(base-(pad-r.left))+'px'; else if(r.right>vw-pad)el.style.right=(base+(r.right-(vw-pad)))+'px'; }
   $('#cols-btn').addEventListener('click',function(){ pop(this,$('#cols-pop')); });
+  $('#heat-btn').addEventListener('click',function(){ renderHeat(); pop(this,$('#heat-pop')); });
+  // ticks update in place — re-drawing the pop would detach the clicked node and the page's outside-click rule would close it
+  $('#heat-pop').addEventListener('change',function(e){ var k=e.target.getAttribute('data-heat'); if(!k)return; S.heat=S.heat.filter(function(x){return x!==k}); if(e.target.checked)S.heat.push(k); S.heat=COLS.map(function(c){return c.k}).filter(function(x){return S.heat.indexOf(x)>=0}); saveHeat(); });
+  $('#heat-pop').addEventListener('click',function(e){ var all=e.target.closest('[data-heat-all]'), none=e.target.closest('[data-heat-none]'); if(!all&&!none)return;
+    var shown=heatable().map(function(c){return c.k});
+    S.heat=all?COLS.map(function(c){return c.k}).filter(function(x){return S.heat.indexOf(x)>=0||shown.indexOf(x)>=0}):[];
+    $('#heat-pop').querySelectorAll('[data-heat]').forEach(function(cb){ cb.checked=S.heat.indexOf(cb.getAttribute('data-heat'))>=0; }); saveHeat(); });
   $('#views-btn').addEventListener('click',function(){ renderViews(); pop(this,$('#views-pop')); });
   $('#cols-pop').addEventListener('change',function(e){ var cb=e.target.closest('[data-col]'); if(!cb)return; var k=cb.getAttribute('data-col'); if(cb.checked){ if(S.cols.indexOf(k)<0)S.cols.push(k); } else S.cols=S.cols.filter(function(x){return x!==k}); S.cols=COLS.map(function(c){return c.k}).filter(function(k){return S.cols.indexOf(k)>=0}); if(!S.cols.length)S.cols=['sp']; LS('fcc-roas-cols',JSON.stringify(S.cols)); renderTable(); });
   $('#cols-pop').addEventListener('click',function(e){ if(e.target.id==='cols-reset'){ S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k}); LS('fcc-roas-cols',null); renderCols(); renderTable(); } });
   $('#views-pop').addEventListener('click',function(e){
-    if(e.target.id==='view-save'){ var nm=($('#view-name').value||'').trim(); if(!nm)return; var v=views().filter(function(x){return x.name!==nm}); v.unshift({name:nm,brand:S.brand,market:S.market,win:S.win,cur:S.cur,metrics:S.metrics.slice(),cols:S.cols.slice(),sort:S.sort,seg:S.seg,q:S.q,bands:S.bands}); saveViews(v); renderViews(); return; }
+    if(e.target.id==='view-save'){ var nm=($('#view-name').value||'').trim(); if(!nm)return; var v=views().filter(function(x){return x.name!==nm}); v.unshift({name:nm,brand:S.brand,market:S.market,win:S.win,cur:S.cur,metrics:S.metrics.slice(),cols:S.cols.slice(),heat:S.heat.slice(),sort:S.sort,seg:S.seg,q:S.q,bands:S.bands}); saveViews(v); renderViews(); return; }
     if(e.target.id==='view-link'){ var url=location.origin+linkOf(); (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(function(){ e.target.textContent='✓ Link copied'; },function(){ prompt('Copy this link',url); }); return; }
     var ap=e.target.closest('[data-view]'); if(ap){ var x=views()[+ap.getAttribute('data-view')]; if(x){ applyView(x); pop($('#views-btn'),$('#views-pop')); } return; }
     var dx=e.target.closest('[data-viewx]'); if(dx){ var v2=views(); v2.splice(+dx.getAttribute('data-viewx'),1); saveViews(v2); renderViews(); }
