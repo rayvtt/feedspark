@@ -90,6 +90,9 @@ echo "   ✓ every month gated, late = earlier month unclosed, /api/transform op
 echo "── validating: FeedSpark design guidelines (/design + /design/fcc.css)"
 node tools/test_design.mjs >/dev/null
 echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
+echo "── validating: feedspark.com redesign mockup (/website)"
+node tools/test_website.mjs >/dev/null
+echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
 
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
 node tools/test_tm.mjs >/dev/null

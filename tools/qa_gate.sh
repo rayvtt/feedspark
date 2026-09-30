@@ -315,6 +315,12 @@ if node tools/test_design.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ design harness FAILED — see node tools/test_design.mjs"; FAIL=1
 fi
+echo "── qa-gate 3h3d/7: feedspark.com redesign mockup (/website — document route, nothing private, review notes)"
+if node tools/test_website.mjs >/dev/null 2>&1; then
+  echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
+else
+  echo "   ✗ website mockup harness FAILED — see node tools/test_website.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then

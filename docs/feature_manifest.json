@@ -11175,6 +11175,14 @@
     {"name": "cuts a board asks for: a time split never folds a bucket into Other", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "if (cap && out.length > cap && !isTimeDim(dim)) {", "pr": 0},
     {"name": "the denominator: the catalogue the hours maintained", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "scale.scanned++; scale.rows +=", "pr": 0},
     {"name": "the denominator: the scale line under the verdict", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function scaleLine()", "pr": 0},
-    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0}
+    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0},
+    {"name": "Website mockup: /website is bundled and routed", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/website':     { html: WEBSITE_PAGE, slug: 'website' }", "pr": 0},
+    {"name": "Website mockup: /website is a document (editor only, no FCC chrome)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const DOC_PATHS = new Set(['/case', '/website']);", "pr": 0},
+    {"name": "Website mockup: the same-jacket-two-feeds demo", "file": "docs/FeedSpark_Website.html", "pattern": "<h3>Same jacket. Two feeds.</h3>", "pr": 0},
+    {"name": "Website mockup: the FeedHero tour rebuilt with illustrative data", "file": "docs/FeedSpark_Website.html", "pattern": "rebuilt for this page with illustrative data", "pr": 0},
+    {"name": "Website mockup: the specialist-vs-platform comparison", "file": "docs/FeedSpark_Website.html", "pattern": "For most platforms, feeds are a feature.", "pr": 0},
+    {"name": "Website mockup: the review-notes layer", "file": "docs/FeedSpark_Website.html", "pattern": "id=\"mk-notes\"", "pr": 0},
+    {"name": "Website mockup: the AI layer is SparkAI, never Tachyon", "file": "docs/FeedSpark_Website.html", "pattern": "Tachyon", "forbidden": true, "pr": 0},
+    {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0}
   ]
 }
