@@ -9962,7 +9962,7 @@
     {
       "name": "Golden score history: seeded only from readings on today's basis",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": ".filter((x) => x && cur && x.t < cur.t && !!x.sc === !!cur.sc)",
+      "pattern": ".filter((x) => x && cur && x.t < cur.t && histBasis(x) === histBasis(cur))",
       "pr": 558
     },
     {
@@ -11218,6 +11218,84 @@
       "name": "ROAS: a live cut is one 200-row FeedHero page with its own count",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "rows: split.categories, n: split.categories.length, of };",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the attribute in ATTR_SPEC (rec, derived, house)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "{ key: 'keywords',      req: 'rec', derived: true, house: true,",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: a filled slot is not a keyword (id / placeholder rejected)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function kwValueKind(v) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the XML collector reads keywords per product",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (attrCols) snap.attrs.keywords = keywordAttr(kwCols.length, kwT, snap.rows);",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the gviz lane only says absent",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (attrCols && !kwSlotCols(head[0]).length) snap.attrs.keywords = { present: false };",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: not measured is never scored",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (s.derived && !attrs[s.key]) continue;   // not measured on this read",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: history basis includes the derived attributes read",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histBasis(r) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the page twin of the basis",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function hBasis(a, b) { return hBase(a) === hBase(b); }",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the page's not-measured row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "not measured on this scan — not scored until the next XML scan",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the row's one action is a keyword brief",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "task: 'Keywords Optimisation - Catalogue coverage - ' + p.client",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: the worker files keywords in the keyword task family",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - '",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: saturation counts phrases through the kwKind twin",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function kwKind(v){",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a pre-30-Sep saturation reading says so",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var old=(idxS.sat.v||1)<SAT_V;",
+      "pr": 0
+    },
+    {
+      "name": "Golden keywords: rendered tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grkw.js",
       "pr": 0
     }
   ]

@@ -257,6 +257,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/check_grwaive.js || {
     echo "✗ Golden Record waiver tripwire failed — the 'Doesn't apply to <Brand>' button, the re-analysis, the undo or the client file regressed"; exit 1; }
   echo "── validating: Golden Record score history (daily close + day-on-day bars, gaps, re-basing, client files)"
+  echo "── validating: Golden Record keywords (measured / absent / not measured, the dial vs the engine, → Brief)"
+  NODE_PATH=$(npm root -g) node tools/check_grkw.js || {
+    echo "✗ Golden Record keywords tripwire failed — a keyword state blurred, the dial disagreed with the engine, or the brief left the keyword family"; exit 1; }
   NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
     echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
   echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"

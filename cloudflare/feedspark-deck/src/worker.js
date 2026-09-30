@@ -5442,7 +5442,8 @@ async function goldenRoutes(env, request, url) {
     if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
     const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
     // attr=pdp files the PDP recovery pass itself (Ray, 14 Sep 2026) — the same rails
-    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : 'Golden Record Fix - g:' + attr + ' - ') + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    // keywords is FeedSpark's own keyword injection, so it files in the keyword task family (30 Sep 2026)
+    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : (attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - ' : 'Golden Record Fix - g:' + attr + ' - ')) + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
     const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));
