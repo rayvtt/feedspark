@@ -286,7 +286,13 @@ than dropped: the 80 biggest product types per market (`tx` counts the rest), 30
 middle level stepped over), prefixed with the department from the gender / age columns only when
 the path names none — Superdry's bare "T-Shirts" + `mens` → "Men > T-Shirts", Reiss's "Womenswear >
 Dresses" as it is. A category id, a bare department word ("Womens") or a merchandising bucket ("View
-All", "Campaign 3") is not a type; the next product-type column is read. A size is keyed lightly so
+All", "Campaign 3", and their translations — "Alles Anzeigen", "Kampagne 3", "Voir tout" …) is not a
+type; the next product-type column is read. **Every roster language**: Superdry DE's gender column
+says "Damen" / "Herren", FR "Femme" / "Homme", FI "Naiset" / "Miehet" — the department words are read
+in each, and the prefix keeps the brand's own word ("Damen > Jacken"; GB's English "mens" still reads
+"Men"); a gender word nobody placed still SEPARATES the types, and a child's age group wins over the
+gender word (a girls' dress is not a women's dress). Census shape 2 (`CENSUS_V`) — the first census
+of 30 Sep 2026 merged men's and women's types in every non-English market. A size is keyed lightly so
 two spellings of one size meet: a conversion in brackets goes ("UK 7 (EU 40½)" → "UK 7"), so does a
 fit / leg letter ("14R" → "14"), a waist/leg pair ("30/32" → "30"), a leading zero, a written-out alpha
 ("Medium" → "M", "2XL" → "XXL"), one-size words in six languages, ages to "n YRS" / "n MTHS". A run of
@@ -325,7 +331,8 @@ signin: a scoped signin reads and writes its own brands' guides; the examples ar
 first brand with a census is shown), the guide row (📄 the brand's document — link + ⇪ Import — and
 ⧉ what it follows), four tiles (types mapped · hero sizes in stock · styles with every hero size in
 stock · which master and when), then one row per product type: its run as size chips (hero = orange
-with the crown; a thin line under each size = its products in stock; the tooltip gives the counts),
+with the crown; a thin line under each size = its products in stock; the tooltip gives the counts;
+each KIND of size on its own line — alpha, numeric, ages — never wrapped together, Ray 30 Sep 2026),
 the two measures, and where the list came from. ✎ Edit makes the chips toggles and adds ✦ core of the
 run · ↺ back to the guide · ∅ no hero sizes; an edit stays on screen until the server confirms it.
 

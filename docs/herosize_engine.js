@@ -33,7 +33,7 @@
   var VERSION = '1.0.0';
   // the census SHAPE — the worker's sanitiser (src/herosizes.js CENSUS_V) holds the same number, and the
   // agent re-reads a master whose stored census is of an older shape even when its import has not moved
-  var CENSUS_V = 1;
+  var CENSUS_V = 2;   // 2: departments read in every roster market's language (Superdry DE's "Damen" / "Herren")
   var TYPE_CAP = 80;      // product types kept per market (biggest first); the rest are counted, not listed
   var LADDER_CAP = 30;    // sizes kept per type (most-carried first, shown in size order)
   var PAT_CAP = 400;      // style patterns kept per type (most common first); the rest are counted
@@ -114,16 +114,25 @@
     return x[3] < y[3] ? -1 : x[3] > y[3] ? 1 : 0;
   }
   function sortSizes(list) { return (list || []).slice().sort(cmpSize); }
+  // which kind of size it is — the card keeps each kind on its own line (Ray, 30 Sep 2026: "numeric and alphabet
+  // sizes stay on separate rows"): alpha (XS … XXL, S/M), numeric (6 … 20, 24 … 40, UK 5, EU 38), ages, one size, other
+  function sizeClass(k) {
+    var r = sizeRank(k)[0];
+    return r === 1 || r === 2 ? 'age' : r === 3 ? 'alpha' : r === 4 ? 'num' : r === 6 ? 'one' : 'other';
+  }
   // the number a size carries once its system is set aside — how an example's bare "10" meets a ladder's "UK 10"
   function sizeCore(k) { return s0(k).replace(new RegExp('^(' + SYS.join('|') + ') '), ''); }
 
   // ---- DEPARTMENT + PRODUCT TYPE -------------------------------------------------------------------------------
   // who a type is for — read from the brand's own words first (its path), then the gender / age columns.
   // Kids before women before men: "Girls" is a kids' department, and "women" contains "men".
+  // In every language the roster ships (Superdry's gender column says "Damen" / "Herren" in DE, "Femme" / "Homme" in FR,
+  // "Naiset" / "Miehet" in FI …): a word the census cannot place still separates the types (see typeLabel), it just
+  // cannot pick an example's department row.
   var DEPT_RE = [
-    ['kids', /\b(kids?|kidswear|child(?:ren)?'?s?|childrenswear|girls?|girlswear|boys?|boyswear|junior|juniors|baby|babies|babywear|toddlers?|infants?|kinder|enfants?|ni[ñn][oa]s|bambin[io]|b[øo]rn|barn|youth|teens?|newborn|children)\b/i],
-    ['women', /\b(wom[ae]n'?s?|womenswear|ladies|lady|female|damen|dames|femmes?|mujer(?:es)?|donna|donne|kvinder|dam|dame)\b/i],
-    ['men', /\b(m[ae]n'?s?|menswear|male|herren|heren|hommes?|hombres?|uomo|uomini|herre|herr)\b/i],
+    ['kids', /\b(kids?|kidswear|child(?:ren)?'?s?|childrenswear|girls?|girlswear|boys?|boyswear|junior|juniors|baby|babies|babywear|toddlers?|infants?|kinder|kinderen|enfants?|fille|filles|gar[çc]ons?|m[äa]dchen|jungen|meisjes|jongens|ni[ñn][oa]s|beb[ée]s?|bambin[io]|ragazz[io]|b[øo]rn|barn|pige|drenge|flickor|pojkar|jenter|gutter|lapset|tyt[öo]t|pojat|dzieci|dziewcz[ęe]ta|ch[łl]opcy|crian[çc]as|youth|teens?|newborn|children)\b/i],
+    ['women', /\b(wom[ae]n'?s?|womenswear|ladies|lady|female|damen|dames|femmes?|mujer(?:es)?|donna|donne|kvinder|kvinner|kvinnor|dam|dame|naiset|naisten|kobiety|damskie|damska|mulher(?:es)?)\b/i],
+    ['men', /\b(m[ae]n'?s?|menswear|male|herren|heren|hommes?|hombres?|uomo|uomini|herre|herr|m[æa]nd|menn|m[äa]n|miehet|miesten|m[ęe][żz]czy[źz]ni|m[ęe]skie|m[ęe]ska|hom[ae]ns?)\b/i],
     ['unisex', /\b(unisex)\b/i]
   ];
   var DEPT_LABEL = { kids: 'Kids', women: 'Women', men: 'Men', unisex: 'Unisex' };
@@ -134,14 +143,21 @@
   }
   function deptFromCols(gender, age) {
     var a = light(age).toLowerCase(), g = light(gender).toLowerCase().replace(/[^a-z]/g, '');
-    var kid = /^(kids?|child|children|toddler|infant|newborn|baby|youth|junior|teen)/.test(a.replace(/[^a-z]/g, ''));
+    var kid = /^(kids?|child|children|toddler|infant|newborn|baby|youth|junior|teen)/.test(a.replace(/[^a-z]/g, '')) || deptOf(a) === 'kids';
     var d = /^(f|female|women|womens|woman|ladies|lady|w)$/.test(g) ? 'women' : /^(m|male|men|mens|man)$/.test(g) ? 'men'
-      : /^(u|unisex|both|all)$/.test(g) ? 'unisex' : /^(girl|girls|boy|boys|kids|kid|children|child)$/.test(g) ? 'kids' : '';
+      : /^(u|unisex|both|all)$/.test(g) ? 'unisex' : /^(girl|girls|boy|boys|kids|kid|children|child)$/.test(g) ? 'kids' : deptOf(light(gender));
     if (kid) return 'kids';
     return d;
   }
+  // the gender column's own word, when it is a word (not an id, not a placeholder) — the prefix a type takes in the
+  // brand's language when the census cannot place it in English
+  function genderWord(gender) {
+    var w = light(gender);
+    if (!w || w.length > 20 || /\d/.test(w) || /^(n\/?a|none|null|unknown|other|all|any|default|-)$/i.test(w)) return '';
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }
   var GENERIC = /^(clothing|apparel|footwear|accessories|bekleidung|kleidung|v[êe]tements|kleding|ropa|abbigliamento|t[øo]j|kl[äa]der)$/i;
-  var NOT_A_TYPE = /^(view all|all|all products|new in|new|sale|clearance|outlet|campaign\s*\d*|featured|gifts?|default|none|null|n\/a|-)$/i;
+  var NOT_A_TYPE = /^(view all|all|all products|shop all|new in|new|sale|clearance|outlet|campaign\s*\d*|featured|gifts?|default|none|null|n\/a|-|alles anzeigen|neuheiten|kampagne\s*\d*|voir tout|nouveaut[ée]s|campagne\s*\d*|soldes|ver todo|novedades|campa[ñn]a\s*\d*|rebajas|vedi tutto|novit[àa]|campagna\s*\d*|saldi|alle bekijken|alles bekijken|nieuw|vis alle|visa alla|nyheder|nyheter|kampanj[ea]?\s*\d*|udsalg|rea|n[äa]yt[äa] kaikki|uutuudet|ale|zobacz wszystko|poka[żz] wszystko|nowo[śs]ci|kampania\s*\d*|wyprzeda[żz]|ver tudo|campanha\s*\d*|promo[çc][õo]es)$/i;
   function pathOf(v) { return light(v).split(/\s*(?:>|›|»|\|)\s*/).map(squash).filter(Boolean); }
   // a candidate is not a product type when it is only a number (a category id), only a department word
   // ("Womens" on Superdry's category column) or a merchandising bucket ("View All", "Campaign 3")
@@ -159,8 +175,12 @@
     var p = pathOf(pt);
     if (p.length > 2 && GENERIC.test(p[1])) p = [p[0]].concat(p.slice(2));
     p = p.slice(0, 2);
-    var own = deptOf(p.join(' ')), col = deptFromCols(gender, age);
-    var pre = !own && col ? DEPT_LABEL[col] : '';
+    // English words keep the English label (GB's "mens" → "Men"); any other word keeps the brand's own ("Damen", "Homme")
+    var own = deptOf(p.join(' ')), col = deptFromCols(gender, age), word = genderWord(gender);
+    var english = /^(f|female|women|womens|woman|ladies|lady|w|m|male|men|mens|man|u|unisex|both|girl|girls|boy|boys|kids|kid|children|child)$/i.test(light(gender).replace(/[^a-z]/gi, ''));
+    // a child's age group wins over the gender word (a girls' dress is not a women's dress)
+    var kidAge = deptFromCols('', age) === 'kids';
+    var pre = own ? '' : kidAge ? DEPT_LABEL.kids : col && (english || !word) ? DEPT_LABEL[col] : word || '';
     if (!p.length) return pre ? pre + ' > (no product type)' : '(no product type)';
     return ((pre ? pre + ' > ' : '') + p.join(' > ')).slice(0, 160);
   }
@@ -532,8 +552,8 @@
 
   return {
     VERSION: VERSION, CENSUS_V: CENSUS_V, TYPE_CAP: TYPE_CAP, LADDER_CAP: LADDER_CAP, PAT_CAP: PAT_CAP,
-    sizeKey: sizeKey, sizeRank: sizeRank, cmpSize: cmpSize, sortSizes: sortSizes, sizeCore: sizeCore,
-    deptOf: deptOf, deptFromCols: deptFromCols, usableType: usableType, typeLabel: typeLabel, typeKey: typeKey, leafOf: leafOf,
+    sizeKey: sizeKey, sizeRank: sizeRank, cmpSize: cmpSize, sortSizes: sortSizes, sizeCore: sizeCore, sizeClass: sizeClass,
+    deptOf: deptOf, deptFromCols: deptFromCols, genderWord: genderWord, usableType: usableType, typeLabel: typeLabel, typeKey: typeKey, leafOf: leafOf,
     census: census, measure: measure, core: core,
     EXAMPLES: EXAMPLES, fromExample: fromExample, examplesOf: examplesOf, exampleById: exampleById, exampleFromBrand: exampleFromBrand,
     guideOf: guideOf, entriesOf: entriesOf, entryFor: entryFor, heroFor: heroFor, map: map,
