@@ -143,7 +143,8 @@ export function tallyMaster(u8, tree) {
 export function sizeLine(cs) {
   if (!cs || !cs.types) return 'no size census';
   const top = cs.types.filter((x) => x.sz.length)[0], tr = cs.tree, n0 = (v) => (v || 0).toLocaleString('en-GB');
-  const placed = tr ? ' (by id ' + n0(tr.id) + ' · style ' + n0(tr.grp) + ' · master type ' + n0(tr.learn + tr.word) + ' · master only ' + n0(tr.own) + ')' : '';
+  const placed = tr ? ' (by id ' + n0(tr.id) + ' · style ' + n0(tr.grp) + ' · master type ' + n0(tr.learn + tr.word) + ' · master only ' + n0(tr.own)
+    + (tr.fold ? ' · ' + n0(tr.fold) + ' feed spellings read as one' : '') + ')' : '';
   return (cs.src === 'feed' ? 'the Google feed’s product types' + placed : 'the master’s own product types') + ' · tiers '
     + H.tiers(cs).map((x) => x.t + ':' + x.types).join(' ') + ' · ' + n0(cs.sized) + ' sized rows · ' + n0(cs.groups) + ' styles'
     + (top ? ' · biggest: ' + top.k + ' (' + top.sz.map((z) => z[0]).join(' ') + ')' : '');

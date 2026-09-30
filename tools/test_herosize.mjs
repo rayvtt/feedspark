@@ -144,6 +144,15 @@ const TR = ti.finish();
 t('the feed’s tree: g:product_type slot 1 per product, by g:id / original id / style — a category id is not a path', TR.n === 10 && TR.typed === 9 && TR.paths === 4 && TR.i.get('a1') === 'Women > Clothing > Dresses > Midi Dresses'
   && TR.o.get('c2') === 'Men > Clothing > T-Shirts > Graphic T-Shirt' && TR.g.get('gb') === 'Women > Clothing > Dresses > Maxi Dresses' && !TR.i.has('n1'), JSON.stringify({ n: TR.n, typed: TR.typed, paths: TR.paths }));
 t('one string per path, however many products carry it', TR.i.get('a1') === TR.i.get('a2'));
+// Superdry FR writes one type two ways ("Homme > T-Shirts" / "Homme > t-shirts", "Sweats A Capuche" / "Sweats à Capuche")
+const FV = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>'
+  + [['f1', 'Homme > T-Shirts > Uni'], ['f2', 'Homme > T-Shirts > Uni'], ['f3', 'Homme > t-shirts > Uni'], ['f4', 'Femme > Sweats A Capuche > Sweat'], ['f5', 'Femme > Sweats à Capuche > Sweat'], ['f6', 'Femme > Sweats à Capuche > Sweat'], ['f7', 'Femme > Pulls']]
+    .map(([id, pt]) => '<item><g:id>' + id + '</g:id><g:product_type>' + gt(pt) + '</g:product_type></item>').join('')
+  + '</channel></rss>';
+const tv = H.treeIndex(E), pv3 = FA.createXmlParser((r, h) => tv.onRow(r, h)); pv3.push(FV); pv3.end();
+const TV = tv.finish();
+t('one spelling per type: case and accents are one type, under the spelling most products carry (and the re-spelled are counted)', TV.i.get('f3') === 'Homme > T-Shirts > Uni' && TV.i.get('f1') === 'Homme > T-Shirts > Uni'
+  && TV.i.get('f4') === 'Femme > Sweats à Capuche > Sweat' && TV.paths === 3 && TV.fold === 2, JSON.stringify({ f3: TV.i.get('f3'), f4: TV.i.get('f4'), paths: TV.paths, fold: TV.fold }));
 const MT3 = [['product_id', 'item_group_id', 'gender', 'category', 'type', 'size', 'availability']];
 const put3 = (id, g, gen, cat, typ, z, av) => MT3.push([id, g, gen, cat, typ, z, av || 'in stock']);
 // by id (a1-a3, b1-b2, c1-c2, k1-k2) and by style (a4, b3: the size the feed does not send, out of stock)
@@ -161,7 +170,7 @@ put3('y1', 'GY', '', 'Dresses', '', '7-8 years', 'out of stock'); put3('y2', 'GY
 put3('z1', 'GZ', 'womens', 'Bralettes', '', 'S', 'in stock'); put3('z2', 'GZ2', '', 'Keyrings', '', 'M', 'in stock');
 const CT = csvCensus(csv(MT3), TR);
 const ck = (k) => CT.types.find((x) => x.k === k);
-t('the census reads its types off the feed (src feed) and says how every row found its place', CT.src === 'feed' && CT.tree.id === 9 && CT.tree.grp === 2 && CT.tree.learn === 3 && CT.tree.word === 3 && CT.tree.own === 2
+t('the census reads its types off the feed (src feed) and says how every row found its place', CT.src === 'feed' && CT.tree.id === 9 && CT.tree.grp === 2 && CT.tree.learn === 3 && CT.tree.word === 3 && CT.tree.own === 2 && CT.tree.fold === 0
   && CT.tree.join === 'product_id' && CT.tree.on === 'fs_data_original_id', JSON.stringify(CT.tree));
 t('every row counted exactly once, on one type', CT.types.reduce((a, x) => a + x.n, 0) === MT3.length - 1 && CT.rows === MT3.length - 1);
 t('by id and by style: the feed’s own leaf, the out-of-stock size included (the master’s run, not the feed’s)', eq(ck('Women > Clothing > Dresses > Midi Dresses').sz.map((z) => z[0]), ['8', '10', '12', '14']) && ck('Women > Clothing > Dresses > Midi Dresses').t === 4);
@@ -383,7 +392,8 @@ t('page: an inherited list says so (⤴ Tier N, where it came from in its toolti
 t('page: the type’s own level in bold, its tiers above on the line under; a master-only type and a type that goes no finer are named', /var parts = t\.k\.split\(' > '\), leaf = parts\.pop\(\);/.test(SP) && />master type<\/span>/.test(SP) && />no finer type<\/span>/.test(SP) && /parts\[0\] === HS\.MASTER_ONLY/.test(SP));
 t('page: figures whenever a list reaches any of the row’s types (not only its own)', /'<td class="num">' \+ \(m\.rows \? hmPcCell\(m\.in, m\.rows/.test(SP));
 t('page: the import matches every tier’s types; the sheet exports the tier on screen', /HS\.tiers\(cen\)\.forEach\(function \(x\) \{ HS\.tierTypes\(cen, x\.t\)/.test(SP) && /HS\.docRows\(HM\.store, b, hmCensus\(\), hmTier\(hmCensus\(\)\)\)/.test(SP));
-t('page: the note says where the types came from — the feed’s tree, and how the master was placed on it', /Product types are the Google Shopping feed’s own product_type tree: /.test(SP) && /Product types are the master’s own — no Google Shopping feed was read/.test(SP));
+t('page: the note says where the types came from — the feed’s tree, how the master was placed on it, and the spellings read as one', /Product types are the Google Shopping feed’s own product_type tree: /.test(SP) && /Product types are the master’s own — no Google Shopping feed was read/.test(SP)
+  && /the feed spells two ways \(case or accents\) read as one\./.test(SP));
 t('page: import through the document parser, export through the sheet writer', /HS\.parseDoc\(rows\)/.test(SP) && /X\.download\(\[\{ name: 'Hero sizes'/.test(SP) && /accept="\.csv,\.xlsx,\.tsv,\.txt"/.test(SP));
 t('page: the held-back list reads the Google feed and the master through the worker and joins them in the engine', /fetch\('\/api\/feed\/proxy' \+ q/.test(SP) && /fetch\('\/api\/catalog\/master\/file' \+ q/.test(SP) && /E\.feedIndex\(\)/.test(SP) && /E\.heldBack\(feed\)/.test(SP));
 t('page: once per market on the forecast card, and in the panel; the CSV says what each row is', /hbOnce \? hbBtn\(m, 'hb-dl'\) : ''/.test(SP) && /hbBtn\(m, 'btn'\)/.test(SP) && /'style range completion %', 'google feed'\]/.test(SP) && /_held_back_products\.csv/.test(SP));

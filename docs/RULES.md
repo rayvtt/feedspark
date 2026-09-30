@@ -432,6 +432,17 @@ original id and by item group, paths only. The census then places every master r
 4. else under the feed's word for its department, or `Master only`, marked `m` — the master's own word,
    shown on the card as **master type**.
 
+**One spelling per type.** A feed can write one type two ways: Superdry FR sends "Homme > T-Shirts"
+AND "Homme > t-shirts", "Sweats A Capuche" AND "Sweats à Capuche". PMAX keys each spelling apart, but to
+a hero list (and to the guide's keys, which are case-blind) they are one type. So `treeIndex` reads
+spellings that differ only in case or accents as one, under the spelling most of its products carry
+(`fold` counts the paths re-spelled; the card's note says how many). Without it, the sent products of
+one master type split across two spellings, the 80% agreement failed, and 15% of Superdry FR's master
+could only be placed at the root; with it, 2.2%. What stays at the root is a genuine split the rule
+refuses to guess: Superdry DE's feed names hoodies two ways at tier 2 ("Hoodies Und Sweatshirts" and
+"Hoodies", 74/26), and Reiss's master calls its children's range unisex while the feed splits it Girls /
+Unisex (62/38). Those rows read **no finer type**.
+
 Types are kept at their finest level (up to 600 per market; past that the smallest fold into their
 parent, so every coarser tier stays complete). A market with no Google feed, or a feed the agent could
 not read, keeps the master's own types and says so (`src: 'master'`). An unchanged import is read again
@@ -446,6 +457,7 @@ Measured 30 Sep 2026 in session (nothing committed):
 | Schuh GB | 99.8% | 7 · 41 · 377 · 557 |
 | Superdry DE | 99.9% | 37 · 138 · 525 |
 | Monsoon GB | 96.5% — the rest are master words the feed has no type for ("Bridal Dresses", "Utility Jackets") | 3 · 86 · 110 · 187 |
+| Superdry FR | 99.9% (97.8% below the root once one type's two spellings are read as one) | 38 · 133 · 503 |
 
 **The tiers.** `tiers(cen)` offers a tier when at least 1% of the products reach it, numbered as the tree
 numbers them. `tierTypes` rolls the finest types up: counts added, the runs laid on one ladder, each

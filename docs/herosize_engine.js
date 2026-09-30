@@ -211,11 +211,18 @@
   // by a flat word, Reiss's and Schuh's to two levels — so the master alone has no tier 2 or tier 3 to offer. The tree the
   // FCC calls PT is the one the Google Shopping feed sends: g:product_type slot 1, the path Product Type Guard reads
   // ("Women > Clothing > Jumpers > V-neck Jumper"). treeIndex(E).onRow(row, header?) reads that OUTPUT feed with the
-  // Catalogue's own outPlan/outRow; finish() -> {n, typed, paths, o, i, g}: each product's path by its original id (o),
-  // by its g:id (i) and, by majority, by its item group (g). Paths only — never a title, a price or a stock word.
+  // Catalogue's own outPlan/outRow; finish() -> {n, typed, paths, fold, o, i, g}: each product's path by its original id
+  // (o), by its g:id (i) and, by majority, by its item group (g). Paths only — never a title, a price or a stock word.
+  // ONE SPELLING PER TYPE: a feed can write one type two ways — Superdry FR sends "Homme > T-Shirts" AND "Homme > t-shirts",
+  // "Sweats A Capuche" AND "Sweats à Capuche" (PMAX keys each spelling apart; to a hero list, and to the guide's case-blind
+  // keys, they are one type). Spellings that differ only in case or accents are one type, and each level takes the spelling
+  // most of its products carry; `fold` counts the paths re-spelled. Without it the sent products of one master
+  // type split across two spellings, and a style the feed never sends could only be placed at the root.
+  // a path compared without case or accents ("Sweats à Capuche" = "sweats a capuche")
+  function foldKey(v) { var t = s0(v).toLowerCase(); try { t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {} return t; }
   function treeUsable(v) { var p = pathOf(v); return p.length > 0 && !/^\d+$/.test(p.join('')); }
   function treeIndex(E) {
-    var hdr = null, pl = null, plN = 0, n = 0, typed = 0, o = new Map(), i = new Map(), gv = new Map(), own = new Map();
+    var hdr = null, pl = null, plN = 0, n = 0, typed = 0, o = new Map(), i = new Map(), gv = new Map(), own = new Map(), pc = new Map();
     function onRow(row, h) {
       if (!hdr) { hdr = (h || row).slice(); pl = E.outPlan(hdr); plN = hdr.length; return; }
       if (h && h.length !== plN) { pl = E.outPlan(h); plN = h.length; }
@@ -224,16 +231,44 @@
       var raw = p.f.product_type; if (!treeUsable(raw)) return;
       var path = pathOf(raw).join(' > ').slice(0, 300);
       var s = own.get(path); if (s == null) { own.set(path, path); s = path; }   // one string per path, however many products
-      typed++;
+      typed++; pc.set(s, (pc.get(s) || 0) + 1);
       var a = E.idKey(p.oid), c = E.idKey(p.id), g = E.idKey(p.f.item_group_id);
       if (a && !o.has(a)) o.set(a, s);
       if (c && !i.has(c)) i.set(c, s);
       if (g) { var m = gv.get(g); if (!m) gv.set(g, m = new Map()); m.set(s, (m.get(s) || 0) + 1); }
     }
     function finish() {
+      // the spellings of each level, by the case-folded path above and including it, weighted by products
+      var seg = new Map(), canon = new Map(), fold = 0, all = new Set();
+      pc.forEach(function (c, path) {
+        var p = path.split(' > ');
+        for (var L = 1; L <= p.length; L++) {
+          var key = foldKey(p.slice(0, L).join(' > ')), m = seg.get(key);
+          if (!m) seg.set(key, m = new Map());
+          m.set(p[L - 1], (m.get(p[L - 1]) || 0) + c);
+        }
+      });
+      pc.forEach(function (c, path) {
+        var p = path.split(' > '), out = [];
+        for (var L = 1; L <= p.length; L++) {
+          var best = p[L - 1], bn = -1;
+          seg.get(foldKey(p.slice(0, L).join(' > '))).forEach(function (k, sp) { if (k > bn || (k === bn && sp < best)) { bn = k; best = sp; } });
+          out.push(best);
+        }
+        var cp = out.join(' > ');
+        if (cp !== path) fold++;
+        canon.set(path, cp); all.add(cp);
+      });
+      o.forEach(function (v, k) { o.set(k, canon.get(v)); });
+      i.forEach(function (v, k) { i.set(k, canon.get(v)); });
       var g = new Map();
-      gv.forEach(function (m, k) { var best = '', bn = 0; m.forEach(function (c, p) { if (c > bn) { bn = c; best = p; } }); g.set(k, best); });
-      return { n: n, typed: typed, paths: own.size, o: o, i: i, g: g };
+      gv.forEach(function (m, k) {
+        var votes = new Map(), best = '', bn = 0;
+        m.forEach(function (c, p) { var cp = canon.get(p); votes.set(cp, (votes.get(cp) || 0) + c); });
+        votes.forEach(function (c, p) { if (c > bn) { bn = c; best = p; } });
+        g.set(k, best);
+      });
+      return { n: n, typed: typed, paths: all.size, fold: fold, o: o, i: i, g: g };
     }
     return { onRow: onRow, finish: finish };
   }
@@ -469,7 +504,7 @@
       var tx = { n: 0, k: rest.length };
       rest.forEach(function (t) { tx.n += t.n; });
       return { v: CENSUS_V, rows: rows, sized: sized, one: ones, nos: nos, groups: Math.min(groups, GROUP_CAP), capped: capped, cols: cols, src: src,
-        tree: useTree ? { feed: tree.n, typed: tree.typed, id: via.id, grp: via.grp, learn: via.learn, word: via.word, own: via.own, join: joinH.slice(0, 60), on: jon } : null,
+        tree: useTree ? { feed: tree.n, typed: tree.typed, fold: tree.fold || 0, id: via.id, grp: via.grp, learn: via.learn, word: via.word, own: via.own, join: joinH.slice(0, 60), on: jon } : null,
         types: out, tx: tx };
     }
     return { onRow: onRow, finish: finish };
