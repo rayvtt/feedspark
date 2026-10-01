@@ -22,7 +22,9 @@ rules = [
   { type = "Data", globs = ["**/materials/*.pptx", "**/materials/*.pdf", "**/materials/*.xlsx"], fallthrough = true },
   # KWCal client-calendar seeds (docs/calseed/): each brand's shared marketing-planner slide,
   # git-bundled and served at /kwcal/cal/<file> — the side-by-side default when KV has no calImg.
-  { type = "Data", globs = ["**/calseed/*.webp", "**/calseed/*.jpg", "**/calseed/*.png"], fallthrough = true }
+  { type = "Data", globs = ["**/calseed/*.webp", "**/calseed/*.jpg", "**/calseed/*.png"], fallthrough = true },
+  # feedspark.com mockup footage (docs/website/): the /website page's figures, served at /website/<file>.
+  { type = "Data", globs = ["**/website/*.webp", "**/website/*.mp4"], fallthrough = true }
 ]
 
 # The account owner — the only identity allowed to open /activity and /api/activity
