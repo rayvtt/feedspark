@@ -992,10 +992,12 @@ async function route(request, env, ctx) {
           let rec = await catMasterInfo(env, cmpid, false);
           if (rec.state !== 'ok') return json({ ok: false, state: rec.state, note: rec.note || '', error: rec.error || '' }, rec.state === 'preparing' ? 202 : 503);
           if (!body.force) {
-            // unchanged = the stored counts AND the stored size census are both of this import (and of this census shape),
-            // and read within the day — the census also rides the Google feed's product_type tree, which moves on its own
+            // unchanged = the stored counts, the stored size census AND the held-back count are all of this import (and of
+            // their current shapes), and read within the day — the census and the held-back join also ride the Google feed,
+            // which moves on its own; a held-back count the last run could not take (feed unread) leaves hbv unset, so the
+            // master is read again
             const have = ((await env.EDITS.get('masteravail', 'json')) || {})[cmpid];
-            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
+            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V && have.hbv === RULES.HELD_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
           }
           let target = rec.src;
           if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
@@ -1052,7 +1054,18 @@ async function route(request, env, ctx) {
             idx[cmpid].szv = HERO.CENSUS_V;
             idx[cmpid].sz = { types: n(e.sz.types), sized: n(e.sz.sized), groups: n(e.sz.groups) };
           }
-          results.push({ cmpid, ok: true });
+          // HELD BACK FROM GOOGLE (Ray, 1 Oct 2026: "how many instock I have been excluded from Masterfeed to Google
+          // Shopping … and the current range completion percentage"): the agent's join of this master against the
+          // market's Google feed, checked whole (RULES.sanitizeHeld — counts that add up, a histogram whose held add up
+          // to the count). hb null with hbv set = no Google feed to hold anything back from; a record that fails the
+          // check is dropped and hbv left unset, so the next run reads this master again rather than keeping a bad count
+          let held = null;
+          if (e.hbv === RULES.HELD_V) {
+            const hb = e.hb == null ? null : RULES.sanitizeHeld(e.hb);
+            if (e.hb != null && !hb) held = 'refused';
+            else { idx[cmpid].hbv = RULES.HELD_V; idx[cmpid].hb = hb; }
+          }
+          results.push(held ? { cmpid, ok: true, held } : { cmpid, ok: true });
         }
         if (results.some((r) => r.ok)) await env.EDITS.put('masteravail', JSON.stringify(idx));
         logActivity(ctx, env, request, 'master-stock', results.filter((r) => r.ok).length + ' master(s) counted · ' + results.filter((r) => r.error).length + ' refused', 'master-stock');

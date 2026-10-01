@@ -847,6 +847,12 @@
   // either never sends ('absent') or sends as out of stock ('out'). Every master row also joins its style's size run,
   // so each held product carries its style's range completion (sizes in stock of sizes made) — which is how a list
   // read off two feeds tells a range-completion hold from any other exclusion without being told the rule's logic.
+  // THE RANGE-COMPLETION LINE (Ray, 1 Oct 2026: "indicate what the current range completion percentage is that I have
+  // created"): FeedHero's rule report never carries a rule's conditions, and the range-completion rules that hold
+  // products back rarely state their cut-off in their name ("Range Completion by Availability"). The products do: the
+  // in-stock products the feed carries live sit on one side of the line and the ones it holds back on the other. So
+  // finish() also returns rcH — every in-stock master product counted by its style's range completion, held and live
+  // apart ([[rc, held, live], …], rc null = no style) — and src/rules.js › rcLine reads the line off it.
   function feedIndex() {
     var hdr = null, pl = null, plN = 0, n = 0, o = new Map(), i = new Map(), live = 0;
     function onRow(row, h) {
@@ -865,7 +871,7 @@
   }
   function heldBack(feed) {
     var hdr = null, pl = null, qi = -1, sample = [], join = -1, map = null, on = '', joinH = '', rate = 0;
-    var n = 0, inStock = 0, stated = 0, held = [], run = new Map(), absent = 0, sentOut = 0;
+    var n = 0, inStock = 0, stated = 0, held = [], run = new Map(), absent = 0, sentOut = 0, lv = new Map(), lvNone = 0;
     function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
     function decide() {
       var s = sample; sample = null;
@@ -887,7 +893,7 @@
       inStock++;
       var key = idKey(row[join]); if (!key) return;
       var b = map.get(key);
-      if (b === 'in' || b === 'pre') return;               // live in the feed
+      if (b === 'in' || b === 'pre') { if (grp) lv.set(grp, (lv.get(grp) || 0) + 1); else lvNone++; return; }   // live in the feed
       var why = b == null ? 'absent' : 'out';
       if (why === 'absent') absent++; else sentOut++;
       held.push({ id: s0(row[join]).trim().slice(0, 120), t: first('title', row).slice(0, 200), s: first('size', row).slice(0, 40), av: word.slice(0, 40), q: qty.slice(0, 12), g: grp.slice(0, 80), why: why });
@@ -904,9 +910,15 @@
       if (sample && hdr) decide();
       if (join < 0) return { ok: false, why: 'nojoin', n: n + (sample ? sample.length : 0) };
       held.forEach(function (x) { var c = x.g ? run.get(x.g) : null; x.rcN = c ? c[0] : 0; x.rcIn = c ? c[1] : 0; x.rc = c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null; });
+      // every in-stock product by its style's range completion, held and live apart — rc null = no style to read
+      var h = new Map(), add = function (rc, i, k) { var e = h.get(rc); if (!e) h.set(rc, e = [rc, 0, 0]); e[i] += k; };
+      held.forEach(function (x) { add(x.rc, 1, 1); });
+      lv.forEach(function (k, g) { var c = run.get(g); add(c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null, 2, k); });
+      if (lvNone) add(null, 2, lvNone);
+      var rcH = Array.from(h.values()).sort(function (a, b) { return (a[0] == null ? -1 : a[0]) - (b[0] == null ? -1 : b[0]); });
       // the lowest range completion first, then the style, so a broken run reads as one block
       held.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc) || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
-      return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '' };
+      return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '', rcH: rcH };
     }
     return { onRow: onRow, finish: finish };
   }

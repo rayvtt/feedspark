@@ -35,6 +35,15 @@
  * the feed's own tree. A market with no Google feed wired, or one whose feed cannot be read, falls back to the master's own
  * types and says so (census src 'master'); the stock counts never wait on it.
  *
+ * HELD BACK FROM GOOGLE (Ray, 1 Oct 2026: "add in how many instock I have been excluded from Masterfeed to Google Shopping
+ * as well, and indicate what the current range completion percentage is that I have created"): the SAME two reads also
+ * run the Catalogue's join — catalog_engine › feedIndex over the Google feed, heldBack over the master — so each tally
+ * carries `hb`: how many products the master states IN STOCK that the Google feed does not carry live (absent, or sent out
+ * of stock), and every in-stock product counted by its style's range completion, held and live apart (rcH), from which
+ * src/rules.js › rcLine reads the range-completion line the rules apply. Counts only, like everything else here: no id,
+ * title or size leaves this process. `hbv` = rules.js › HELD_V once the count is settled (read, or no Google feed to read);
+ * a feed that could not be read leaves it unset, so the worker reads the master again on the next run.
+ *
  * Runs from .github/workflows/master-stock.yml. Auth: FCC_PUSH_KEY (= the worker's GMAIL_PUSH_KEY, the
  * xml-scan secret). Every response is checked for JSON / octet-stream — the Access login page is an HTTP
  * 200 text/html. Run: node tools/master_stock.mjs
@@ -47,7 +56,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 import { rosterList } from '../cloudflare/feedspark-deck/src/roas.js';
-import { feedKeys } from '../cloudflare/feedspark-deck/src/rules.js';
+import { feedKeys, HELD_V, rcLine } from '../cloudflare/feedspark-deck/src/rules.js';
 const require = createRequire(import.meta.url);
 const FA = require('../docs/feedlab_engine.js');
 const E = require('../docs/catalog_engine.js');
@@ -93,29 +102,43 @@ export function googleFeeds(src) {
   });
   return out;
 }
-// a Google Shopping feed's text -> its product_type index (herosize_engine › treeIndex; paths only)
-export function treeFromText(txt) {
-  const ti = H.treeIndex(E), p = FA.createXmlParser((r, h) => ti.onRow(r, h));
+// a Google Shopping feed's text -> {tree, idx}: its product_type index (herosize_engine › treeIndex; paths only) and, off
+// the same rows, the Catalogue's feed index (catalog_engine › feedIndex — every product by id with its availability), which
+// the master's held-back join reads
+export function feedFromText(txt) {
+  const ti = H.treeIndex(E), fi = E.feedIndex(), p = FA.createXmlParser((r, h) => { ti.onRow(r, h); fi.onRow(r, h); });
   for (let o = 0; o < txt.length; o += CHUNK) p.push(txt.slice(o, o + CHUNK));
   p.end();
-  return ti.finish();
+  return { tree: ti.finish(), idx: fi.finish() };
 }
+export function treeFromText(txt) { return feedFromText(txt).tree; }
 // …streamed: a 120MB feed is never held as one string
-async function readTree(url) {
+async function readFeed(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(FEED_TIMEOUT) });
   if (!r.ok || !r.body) throw new Error('feed fetch failed (HTTP ' + r.status + ')');
-  const ti = H.treeIndex(E), p = FA.createXmlParser((row, h) => ti.onRow(row, h)), dec = new TextDecoder();
+  const ti = H.treeIndex(E), fi = E.feedIndex(), dec = new TextDecoder();
+  const p = FA.createXmlParser((row, h) => { ti.onRow(row, h); fi.onRow(row, h); });
   for await (const chunk of r.body) p.push(dec.decode(chunk, { stream: true }));
   p.push(dec.decode()); p.end();
-  return ti.finish();
+  return { tree: ti.finish(), idx: fi.finish() };
+}
+// the join's result -> the compact record the worker stores (rules.js › sanitizeHeld checks it whole): counts and the
+// range-completion histogram only — the held products themselves (ids, titles, sizes) never leave this process
+export function heldRecord(r, idx) {
+  const feedN = (idx && idx.n) || 0;
+  if (!r || !r.ok) return { ok: false, why: 'nojoin', feedN };
+  if (!r.stated) return { ok: false, why: 'nostock', feedN };
+  return { ok: true, n: r.held.length, absent: r.absent, out: r.out, inStock: r.inStock, feedN, feedLive: (idx && idx.live) || 0,
+    join: r.join, rcH: r.rcH };
 }
 
 // bytes -> the master's stock tally ({n, in, out, pre, none, other, via, col, qcol, ow} + fmt, enc) and, off the SAME
-// rows, its size census (census — docs/herosize_engine.js), placed on the feed's product_type tree when one is given
-export function tallyMaster(u8, tree) {
+// rows, its size census (census — docs/herosize_engine.js), placed on the feed's product_type tree when one is given, and
+// the held-back join against the feed's index when one is given (held — catalog_engine › heldBack's own result)
+export function tallyMaster(u8, tree, idx) {
   const { bytes } = masterBytes(u8);
-  const t = E.stockTally(), c = H.census(E, tree || null);
-  const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); };
+  const t = E.stockTally(), c = H.census(E, tree || null), hb = idx ? E.heldBack(idx) : null;
+  const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); if (hb) hb.onRow(r, h); };
   let dec = new TextDecoder('utf-8', { fatal: true }), enc = 'UTF-8', parser = null, fmt = '';
   for (let o = 0; o < bytes.length; o += CHUNK) {
     const part = bytes.subarray(o, Math.min(bytes.length, o + CHUNK));
@@ -137,7 +160,7 @@ export function tallyMaster(u8, tree) {
   const tail = dec.decode();
   if (tail) parser.push(tail);
   parser.end();
-  return Object.assign(t.finish(), { fmt, enc, census: c.finish() });
+  return Object.assign(t.finish(), { fmt, enc, census: c.finish(), held: hb ? hb.finish() : null });
 }
 // the census in one line — where its types came from, the tiers, sized rows, styles, and the biggest type's run
 export function sizeLine(cs) {
@@ -185,14 +208,24 @@ export function line(tag, t) {
     + (t.pre ? ' · ' + t.pre + ' pre/backorder' : '') + (t.none ? ' · ' + t.none + ' not stated' : '') + (t.other ? ' · ' + t.other + ' unread word' : '')
     + ' (via ' + t.via + ', ' + t.fmt + (t.enc !== 'UTF-8' ? ', ' + t.enc : '') + ')';
 }
+// the held-back record in one line — how many, of what, and the range-completion line when the products draw one
+export function heldLine(h) {
+  if (!h) return 'held back — not counted (no Google feed read)';
+  if (!h.ok) return 'held back — not counted (' + (h.why === 'nostock' ? 'the master states no stock' : 'none of the master’s columns carries the feed’s ids') + ')';
+  const ln = rcLine(h.rcH), n0 = (v) => (v || 0).toLocaleString('en-GB');
+  return 'held back — ' + n0(h.n) + ' in stock in the master, not live in Google (' + pct(h.n, h.inStock) + ' of its ' + n0(h.inStock) + ' in stock · '
+    + n0(h.absent) + ' not in the feed, ' + n0(h.out) + ' sent out of stock) · join ' + h.join.h + ' → ' + h.join.on
+    + ' · ' + (ln ? 'RC line ≈' + ln.x + '% (held ≤ ' + ln.lo + '%, live ≥ ' + ln.hi + '% · ' + n0(ln.held) + ' of ' + n0(ln.heldN) + ' held under it)' : 'no range-completion line in the data');
+}
 
 async function main() {
   if (process.env.MASTER_FILE) {
-    const tree = process.env.FEED_FILE ? treeFromText(readFileSync(process.env.FEED_FILE, 'utf8')) : null;
-    if (tree) console.log('  feed — ' + tree.n.toLocaleString('en-GB') + ' products · ' + tree.paths + ' product_type paths');
-    const t = tallyMaster(new Uint8Array(readFileSync(process.env.MASTER_FILE)), tree);
+    const fd = process.env.FEED_FILE ? feedFromText(readFileSync(process.env.FEED_FILE, 'utf8')) : null;
+    if (fd) console.log('  feed — ' + fd.tree.n.toLocaleString('en-GB') + ' products · ' + fd.tree.paths + ' product_type paths');
+    const t = tallyMaster(new Uint8Array(readFileSync(process.env.MASTER_FILE)), fd && fd.tree, fd && fd.idx);
     console.log(line(process.env.MASTER_FILE.split('/').pop(), t));
     console.log('  sizes — ' + sizeLine(t.census));
+    if (fd) console.log('  ' + heldLine(heldRecord(t.held, fd.idx)));
     return 0;
   }
   if (!KEY) { console.error('✗ FCC_PUSH_KEY not set — store the GMAIL_PUSH_KEY value as a GitHub secret named FCC_PUSH_KEY.'); return 2; }
@@ -212,13 +245,14 @@ async function main() {
         else later.push(m);
         return;
       }
-      // the market's Google Shopping feed first, for its product_type tree — never a reason to skip the master
-      let tree = null;
+      // the market's Google Shopping feed first, for its product_type tree and the held-back join — never a reason to skip
+      // the master
+      let fd = null;
       if (feeds[m.cmpid]) {
-        try { tree = await readTree(feeds[m.cmpid].url); }
-        catch (e) { console.log('~ ' + tag + ' — Google feed not read (' + String((e && e.message) || e).slice(0, 100) + '); types from the master'); }
+        try { fd = await readFeed(feeds[m.cmpid].url); }
+        catch (e) { console.log('~ ' + tag + ' — Google feed not read (' + String((e && e.message) || e).slice(0, 100) + '); types from the master, held back not counted'); }
       }
-      const t = tallyMaster(got.bytes, tree);
+      const t = tallyMaster(got.bytes, fd && fd.tree, fd && fd.idx);
       if (!t.n) throw new Error('no rows read');
       // the size census goes first and on its own (one market per post — a census runs to tens of KB); a refusal is
       // logged and never costs the stock counts
@@ -229,11 +263,13 @@ async function main() {
         if (one.ok) { sz = { types: t.census.types.length, sized: t.census.sized, groups: t.census.groups }; tally.sized++; }
         else console.log('✗ size census refused  ' + tag + ' — ' + (one.error || 'no reason given'));
       } catch (e) { console.log('✗ size census not stored  ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140)); }
+      // held back from Google: settled when counted, or when the market has no Google feed to hold anything back from
+      const hb = fd ? heldRecord(t.held, fd.idx) : null;
       done.push({ cmpid: m.cmpid, n: t.n, in: t.in, out: t.out, pre: t.pre, none: t.none, other: t.other,
         via: t.via, col: t.col, qcol: t.qcol, ow: t.ow, fmt: t.fmt, enc: t.enc, imp: got.imp, rows: got.rows,
-        szv: sz ? H.CENSUS_V : 0, sz });
+        szv: sz ? H.CENSUS_V : 0, sz, hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb });
       tally.read++;
-      console.log('✓ ' + line(tag, t) + '\n    sizes — ' + sizeLine(t.census));
+      console.log('✓ ' + line(tag, t) + '\n    sizes — ' + sizeLine(t.census) + (feeds[m.cmpid] ? '\n    ' + heldLine(hb) : ''));
     } catch (e) {
       tally.failed++;
       console.log('✗ ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140));
@@ -250,7 +286,7 @@ async function main() {
   let stored = 0;
   for (let b = 0; b < done.length; b += BATCH) {
     const d = await post({ masterstock: done.slice(b, b + BATCH) });
-    (d.results || []).forEach((r) => { if (r.ok) stored++; else console.log('✗ rejected  ' + r.cmpid + ' — ' + r.error); });
+    (d.results || []).forEach((r) => { if (r.ok) stored++; else console.log('✗ rejected  ' + r.cmpid + ' — ' + r.error); if (r.held === 'refused') console.log('✗ held-back count refused  ' + r.cmpid); });
   }
   console.log('\n✓ master stock — ' + stored + ' stored · ' + tally.sized + ' size censuses · ' + tally.same + ' unchanged · ' + tally.prep + ' still preparing · ' + tally.failed + ' failed');
   return tally.failed && !stored && !tally.same ? 1 : 0;

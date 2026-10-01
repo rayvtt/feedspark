@@ -221,7 +221,7 @@ feed and output feeds as well. (instock & outofstock)"*. The rules say what a ma
 IS; this is what it DOES — the client sends a catalogue that is, say, half in stock, and the feed
 Google receives is all in stock. Three counts per market, each a count of products by the stock it
 states, kept whole and never joined or inferred (two counts cannot say WHICH products moved, so the
-page never calls a product "excluded" on their strength):
+page never calls a product "excluded" on their strength — the join that can is §3i):
 
 | Side | Counted by | Stored |
 |---|---|---|
@@ -487,6 +487,72 @@ move with the tier. On the card:
 The ⇪ Import matches a document's rows against every tier's types, and ⬇ Sheet exports the tier on
 screen.
 
+## 3i. Held back from Google, the range-completion line, and the ad spend — one card (`/stock`)
+
+Ray, 1 Oct 2026, over the in-stock card: *"add in how many instock I have been excluded from Masterfeed to
+Google Shopping as well, and indicate what the current range completion percentage is that I have created.
+Then merge the Adspend kept off section into this interface as wel - makes sense that it should be there"*.
+
+**The count.** §3d keeps the three readings whole because two counts cannot say WHICH products moved. A
+join can, and the master-stock agent already reads both halves: since §3h it streams each market's Google
+Shopping feed for its product_type tree. On that SAME read it now builds the Catalogue's feed index
+(`docs/catalog_engine.js › feedIndex` — every product by `g:id` and `fs_data_original_id` with its
+availability), and on the SAME master pass it runs `heldBack` — the join §3f's ⬇ List runs in the
+browser. Each market's tally carries `hb`: how many products the master states **in stock** that the Google
+feed does not carry live (not in the feed, or sent out of stock), against how many the master holds in
+stock, joined product by product. Counts only — no id, title or size leaves the agent
+(`tools/master_stock.mjs › heldRecord`).
+
+**The range-completion line — read off the products.** The rule report never carries a rule's conditions,
+and the rules that hold products back on range completion rarely state their cut-off in their name
+(Superdry's is "Range Completion by Availability"; Reiss's "Range completion level"). So `heldBack` also
+counts every in-stock product by its style's range completion (sizes in stock of sizes made, in the
+master), held and live apart (`rcH`), and `src/rules.js › rcLine` finds the cut that puts the most products
+on their own side. A line is claimed only when it explains at least 90% of the held AND 90% of the live
+(`RC_LINE_SHARE`, with at least 20 of each — `RC_LINE_MIN`); the figure stated is the roundest one in the
+gap between the highest held level and the lowest live one (`roundIn` — a person sets 36%, not 35.8%), and
+the gap itself is in the tooltip, because no style sits inside it and the products cannot tell its values
+apart. Measured on the live masters and feeds on 1 Oct 2026, in session, nothing committed:
+
+| Market | In stock, not live in Google | The line |
+|---|---|---|
+| Superdry GB | 3,863 of 29,780 (13.0%) | ≈ 36% — styles at 35.3% or under held, 36.4% or over live (3,836 of the 3,863 under it; 25,887 of 25,917 live above it) |
+| Superdry DE | 1,595 of 29,818 (5.3%) | ≈ 21% — 20% or under held, 22.2% or over live |
+| Monsoon UK | 2,998 of 16,271 (18.4%) | none — the held spread across every level |
+| Reiss GB | 2,162 of 24,409 (8.9%) | none |
+| Schuh UK | 181 of 22,594 (0.8%) | none |
+| Accessorize UK | 483 of 5,481 (8.8%) | none (accessories — 189 held carry no style) |
+
+Where the data draws no line, a market whose stock rules STATE a range-completion cut-off in their name
+(`rcStated` — e.g. "Empty < 0.26 RC Products" → RC < 26%) shows that, labelled *in a rule name*; otherwise
+*no line in the data*, with the reason in the tooltip: the held-back products are spread across every
+level, so they are held for something else and no figure is put on what no rule does. (§3f's first live
+check called Superdry GB's held products "under 75% range completion" — true, but loose: the line the data
+draws is ≈ 36%, and the ⬇ List's message now reads the line instead of an assumed 75%.)
+
+**Stored and re-read.** The worker checks the record whole (`RULES.sanitizeHeld` — parts that add up,
+the join one of the two, a histogram whose held add up to the count) and stores it on the market's
+`masteravail` entry with `hbv` = `RULES.HELD_V`. The agent sets `hbv` only once the count is settled —
+counted, or no Google feed wired to count against; a feed it could not read leaves it unset — and the
+worker answers `unchanged` only when the count is of this shape too, so a missed count is taken on the next
+run. `GET /api/rules/stock` serves each market's `av.held` (`RULES.heldView`): `state` — `ok` · `nofeed` ·
+`unread` · `nojoin` · `nostock` — the count, its share, the join, the line and the stated cut-offs; never
+the histogram.
+
+**One card.** The ad-spend card (§3b) is merged into the in-stock card. A market reads left to right:
+**Master feed · Google Shopping · Meta** (each in stock on top, the bar, out of stock beside the product
+count), then under *Held back from Google*: **In stock, not live** (the count, its share of the master's
+in stock, ⬇ List beside it — §3f), **Range completion** (≈ the line *in the data*, or a rule name's cut-off
+*in a rule name*, or why there is none), and **Ad spend kept off** (the market's largest stock rule at the
+scenario and period — the same `svFloor` × `svCalc` as §3b; hovering it opens that rule's working). The
+scenario and period controls sit in the card's header; the summary tiles are each channel, then held back
+from Google, then the ad-spend book (hover for its working); the rule-by-rule table and the rules that are
+not sized fold under *Rule by rule*. The forecast panel adds what was **measured** beside the rule's own
+count — the forecast stays on the rule's count (it is attributable to a stock rule; the measured count is
+every in-stock product Google is not sent, for any reason). ⬇ CSV is one row per market: every feed's
+counts, the held back, the line, the stated cut-offs and the ad spend at the scenario on screen. The KPI
+"In stock in the Google feed" names the held back beside its master.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -508,9 +574,9 @@ first); a **cut-off** set to different values across a brand's markets.
 |---|---|
 | `GET /api/rules` | The book off ONE KV get: `markets[]` (summary per market), `estate`, `brands`, `findings`, `families`, `unread`, `rosterBrands`, `status`. `?brand=` narrows. Scoped per signin. |
 | `GET /api/rules?client=&market=` | One market's full rule list in run order + its `chains` + `findings` + `stockFindings`. |
-| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView` (each with `wk`, its wired Google / Meta market keys, for the held-back download — §3f): `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread), and `av` (master / Google / Meta stock counts off `masteravail` + `feedavail`, with which feeds the market has wired — §3d). Feeds are found by the cmpid (`feedKeys`), never the roster label. |
+| `GET /api/rules/stock` | `matrix`, `cutoffs`, `heroRuns` (every hero-mechanism rule, in run order — §3c), `findings`, `sv` (scenarios + window), `markets[]` via `stockView` (each with `wk`, its wired Google / Meta market keys, for the held-back download — §3f): `stock` rows each carrying `hb` (what the rule holds back), the plain-words `sentence`, `ads` (the market's price for traffic — spend/clicks/CPC off `roasidx`, the SKU denominator off `voldobidx`'s feed-row read — §3b — null when either is unread), and `av` (master / Google / Meta stock counts off `masteravail` + `feedavail`, with which feeds the market has wired — §3d — and `av.held`, the in-stock products not live in Google with the range-completion line read off the products — §3i). Feeds are found by the cmpid (`feedKeys`), never the roster label. |
 | `POST /api/gmail/push {masterfile: cmpid}` | Key-gated (the xml-scan key). A roster company's master, streamed as bytes, or `{unchanged}` when the stored reading is of this import. §3d. |
-| `POST /api/gmail/push {masterstock: […]}` | Key-gated. The master agent's counts → `masteravail`, one write per post; a tally that does not add up is refused. `szv` + `sz` mark a stored census (§3e). |
+| `POST /api/gmail/push {masterstock: […]}` | Key-gated. The master agent's counts → `masteravail`, one write per post; a tally that does not add up is refused. `szv` + `sz` mark a stored census (§3e); `hbv` + `hb` the held-back count and its range-completion histogram, checked whole by `RULES.sanitizeHeld` (§3i). |
 | `POST /api/gmail/push {mastersize: […]}` | Key-gated. One market's size census → `mastersize:<cmpid>`, validated whole by `HERO.sanitizeCensus` (§3e). |
 | `GET /api/rules/hero[?brand=&market=]` | The guide store (every example + the in-scope brands' guides), each brand's guide status, and — for one brand (the first with a census when none is asked) — its roster markets and one market's census. §3e. |
 | `PUT /api/rules/hero` | A partial map of `g:` / `m:` / `x:` keys (+ `_deleted`), every key checked (`sanitizeHeroPut`), merged with a read-stamp (`X-Sync-Base`), stamped by / at here. §3e. |
@@ -520,9 +586,13 @@ first); a **cut-off** set to different values across a brand's markets.
 ## 6. Harness
 
 - `tools/check_stockeven.js` — `/stock` rendered and measured (§3g): the six-tile band at 1440 /
-  1100 / 390px and beside the forecast panel, tile rows that fill their card, one ad-spend row height,
-  a market named once, equal matrix columns, one chip width, one-line findings and setup summaries,
-  the phone search row; with a negative control. Presync.
+  1100 / 390px and beside the forecast panel, tile rows that fill their card, a market named once,
+  equal matrix columns, one chip width, one-line findings and setup summaries, the phone search row; with
+  a negative control. The one in-stock card (§3i): no ad-spend card, its controls in the card's header,
+  seven columns fitting the card at 1440px with no header or cell clipped, the three feeds one width,
+  every market row one height with or without ⬇ List, every held-back / range-completion state drawn, a
+  market's ad spend opening its rule's working, the folded rule-by-rule table, and the table panning in
+  its own frame on a phone — five of these fail on the page before. Presync.
 - `tools/check_herotier.js` — the hero card driven at the tier of PT picked (§3h): every tier with its
   count, the default tier, a pick listing exactly that tier's types (negative control: two tiers list
   different rows), a shared name led by its department, the pick remembered per brand, a save at tier 2
@@ -536,6 +606,11 @@ first); a **cut-off** set to different values across a brand's markets.
   key), the engine, one word table through both counters, `stockTally`, the agent's reader on a zipped
   CSV / Windows-1252 TSV / XML built in-process, the collector on a synthetic Google and Meta feed,
   `sanitizeAvail` lifted from the worker, both push lanes, the route, and the page twin `avBook`.
+  Held back + the line (§3i): `rcLine` on histograms shaped like the live reads (the line, the gap, the
+  90%-of-both-sides rule, no line for a spread, too few, everything on one side), `roundIn`,
+  `sanitizeHeld`, every `heldView` state, `heldBook` + its page twin, the agent's join on an in-process
+  feed and master (counts only out of the process), the worker's store and its `unchanged` gate, and the
+  merged card's markup.
 - `tools/test_herosize.mjs` — the hero-size engine (size keys, departments, product types, the census on
   synthetic CSV / XML masters, the measure, core, every example rule, the guide resolution, the document
   import + export), the worker's half (`src/herosizes.js`: the census it stores, the edits a signin may
