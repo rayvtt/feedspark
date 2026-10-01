@@ -313,6 +313,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
   NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
     echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
+  echo "── validating: the window the hours book is read over (12 / 24 / all time, and the counts in its sentence)"
+  NODE_PATH=$(npm root -g) node tools/check_tmwindow.js || {
+    echo "✗ book-window tripwire failed — the first fetch stopped naming the window, a re-read did not change the rows, a refusal mislabelled the book, or the source line went stale"; exit 1; }
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }

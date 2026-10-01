@@ -2405,9 +2405,11 @@ async function route(request, env, ctx) {
         const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
       }
       const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
-      const data = TB.assembleBook(books, queues, accounts, Date.now());
+      // The store holds every task the pull reached; ?win=12|24|all picks what to serve from it.
+      const view = TB.bookWindow(Date.now(), TB.bookMonthsOf(url.searchParams.get('win')));
+      const data = TB.assembleBook(books, queues, accounts, Date.now(), view);
       const roster = (idx.roster || []).filter((m) => clientMatch(acc.clients, m.client));
-      data.health = TB.bookHealth(data.coverage, roster, Date.now());
+      data.health = TB.bookHealth(data.coverage, roster, Date.now(), view.from);
       data.scoped = !!acc.clients;
       data.queuesTotal = (idx.queues || []).filter((q) => clientMatch(acc.clients, q.client)).length;
       const st = (await env.EDITS.get('tmbookst', 'json')) || {};
@@ -3890,7 +3892,11 @@ async function tmBookPull(env, opts) {
   const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, accounts: [], roster: [], queues: [], rot: {}, qrot: {} };
   idx.clients = idx.clients || {}; idx.rot = idx.rot || {}; idx.qrot = idx.qrot || {};
   const mcp = opts.mcp || tmMcp(env, fetchFn);
-  const win = TB.bookWindow(now, TB.BOOK_MONTHS);
+  // ALL TIME, not twelve months (Ray, 1 Oct 2026). The MCP ignores from_date and answers
+  // newest-first up to `limit`, so asking for everything costs the same ONE call per market — the
+  // window the page shows is applied when it is served, in assembleBook.
+  const win = TB.bookWindow(now, 0);
+  win.limit = TB.BOOK_PULL_LIMIT;
   try {
     if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
     let rows = opts.clientRows;
@@ -3909,8 +3915,9 @@ async function tmBookPull(env, opts) {
 
     const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
     for (const m of plan) {
-      // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
-      // the tool takes it, and the window is applied in packMarket regardless.
+      // `from_date` is NOT applied by the server (verified 16 Sep 2026, re-verified 1 Oct 2026:
+      // a list asked from 2026-09-25 came back with 110 of its 120 rows older than that) — it is
+      // passed because the tool takes it, and the depth that matters is `limit`.
       const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
       const trows = TMM.rowsOf(payload);
       const rec = TB.packMarket(trows, { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
