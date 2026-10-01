@@ -672,7 +672,7 @@ export function svBook(markets, pct, days) {
 export function stockView(r, roasEntry, feedIdx, avail) {
   return { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, n: r.n, items: r.items,
     stock: (r.stock || []).map((x) => Object.assign({}, x, { hb: heldBack(x) })), sentence: stockSentence(r.stock),
-    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }), av: availView(avail) };
+    ads: adsBasis(roasEntry, feedIdx && { n: feedIdx.rows, t: feedIdx.t }), av: availView(avail, r.stock) };
 }
 
 // ---- WHICH SCANNED FEED IS WHICH MARKET — joined on the FeedHero company id --------------------------
@@ -716,11 +716,123 @@ export function availSide(x) {
 }
 // a = { master, g, fb, wired: {g, fb} } — the two indexes' entries (masteravail[cmpid], feedavail[client|mkt])
 // and whether the market HAS a Google / Meta feed wired, so "no Meta feed" is never read as "not scanned yet"
-export function availView(a) {
+export function availView(a, stock) {
   if (!a) return null;
   const master = availSide(a.master), g = availSide(a.g), fb = availSide(a.fb), m = master ? a.master : null, w = a.wired || {};
   return { master, g, fb, wired: { g: !!w.g, fb: !!w.fb },
-    via: (m && m.via) || null, imp: (m && m.imp) || null, col: (m && m.col) || '', qcol: (m && m.qcol) || '' };
+    via: (m && m.via) || null, imp: (m && m.imp) || null, col: (m && m.col) || '', qcol: (m && m.qcol) || '',
+    held: heldView(m, stock, w) };
+}
+// ---- HELD BACK FROM GOOGLE, AND THE RANGE-COMPLETION LINE (Ray, 1 Oct 2026: "add in how many instock I have been
+// excluded from Masterfeed to Google Shopping as well, and indicate what the current range completion percentage is that
+// I have created"). The availability counts above are kept whole and never joined; THIS is the join. The master-stock
+// agent reads each market's Google Shopping feed for its product_type tree already, so on the SAME two reads it runs the
+// Catalogue's own feedIndex + heldBack (docs/catalog_engine.js — the join /stock's ⬇ List runs in the browser) and posts
+// a compact record with the master's counts: how many products the master states IN STOCK that the Google feed does not
+// carry live (absent, or sent out of stock), joined by product id, and every in-stock product counted by its style's
+// range completion, held and live apart (rcH). The rule report never carries a rule's conditions and the range-completion
+// rules that hold products back rarely state their cut-off in their name ("Range Completion by Availability"), so the
+// cut-off is READ OFF THE PRODUCTS: the line that puts the held-back on one side and the live on the other.
+//   live, 1 Oct 2026 (in session, nothing committed): Superdry GB — 3,863 held, 3,836 of them under a line between
+//   35.3% and 36.4% and 25,887 of 25,917 live products above it; Monsoon UK, Reiss GB and Schuh UK — no line, their
+//   held-back products spread across every range-completion level (held for other reasons), so none is claimed.
+export const HELD_V = 1;            // the record's shape — the worker re-reads a master whose stored record is older
+export const RC_LINE_MIN = 20;      // held products with a style (and live ones) before a line is read at all
+export const RC_LINE_SHARE = 0.9;   // the line must put 90% of the held below it AND 90% of the live at or above it
+// the roundest figure in (lo, hi] — a person sets 75%, not 74.3%; every value in the gap separates the products alike
+export function roundIn(lo, hi) {
+  const steps = [25, 10, 5, 1, 0.5, 0.1];
+  for (let i = 0; i < steps.length; i++) {
+    const st = steps[i], v = Math.round((Math.floor(lo / st + 1e-9) + 1) * st * 10) / 10;
+    if (v > lo && v <= hi + 1e-9) return v;
+  }
+  return hi;
+}
+// rcH = [[rc, held, live], …] (rc null = no style) -> the line, or null when the products do not draw one:
+//   { x: the figure to state, lo, hi: the gap it sits in (every style at lo or under is held, at hi or over live),
+//     held: held products under it, heldN: held products with a style, live: live products at or above it, liveN }
+// The line is the cut that puts the most products on their own side; it is claimed only when it accounts for at
+// least RC_LINE_SHARE of BOTH sides — a market whose held products are spread across every level is held back for
+// other reasons, and naming a figure there would put a number on something no rule does.
+export function rcLine(rcH) {
+  const pts = [];
+  let H = 0, L = 0;
+  (rcH || []).forEach((x) => {
+    if (!Array.isArray(x) || x[0] == null || !isFinite(+x[0])) return;
+    const h = Math.max(0, +x[1] || 0), l = Math.max(0, +x[2] || 0);
+    pts.push([+x[0], h, l]); H += h; L += l;
+  });
+  if (H < RC_LINE_MIN || L < RC_LINE_MIN) return null;
+  pts.sort((a, b) => a[0] - b[0]);
+  let hb = 0, lb = 0, best = null;
+  for (let k = 0; k <= pts.length; k++) {
+    const score = hb + (L - lb);
+    if (!best || score > best.score) best = { k, score, hb, lb };
+    if (k < pts.length) { hb += pts[k][1]; lb += pts[k][2]; }
+  }
+  if (!best || best.k === 0 || best.k === pts.length) return null;
+  const held = best.hb, live = L - best.lb;
+  if (held / H < RC_LINE_SHARE || live / L < RC_LINE_SHARE) return null;
+  const lo = pts[best.k - 1][0], hi = pts[best.k][0];
+  return { x: roundIn(lo, hi), lo, hi, held, heldN: H, live, liveN: L };
+}
+// the range-completion cut-offs a market's stock rules STATE in their names (cutoffs, m:'rc') — shown beside the line,
+// never as it: a name can describe a label or another channel ("Social: RC > 65% -> out of stock")
+export function rcStated(stock) {
+  const out = [];
+  (stock || []).forEach((r) => (r.cut || []).forEach((c) => { if (c.m === 'rc' && out.length < 8) out.push({ i: r.i, rule: r.n, t: r.t || '', ch: r.ch || 'all', sk: r.sk, op: c.op, v: c.v }); }));
+  return out;
+}
+// the agent's record, checked whole: counts that add up, a join that is one of the two, a histogram whose held add up
+// to the count — anything else is refused (null) and the master is read again on the next run
+export function sanitizeHeld(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const num = (v) => Math.max(0, Math.min(5000000, Math.round(+v || 0)));
+  if (raw.ok === false) return { ok: false, why: raw.why === 'nostock' ? 'nostock' : 'nojoin', feedN: num(raw.feedN) };
+  const o = { ok: true, n: num(raw.n), absent: num(raw.absent), out: num(raw.out), inStock: num(raw.inStock), feedN: num(raw.feedN), feedLive: num(raw.feedLive) };
+  if (o.absent + o.out !== o.n || o.n > o.inStock || !o.feedN) return null;
+  const j = raw.join && typeof raw.join === 'object' ? raw.join : {};
+  o.join = { h: String(j.h == null ? '' : j.h).slice(0, 60), on: j.on === 'g:id' ? 'g:id' : 'fs_data_original_id', rate: Math.max(0, Math.min(1, Math.round((+j.rate || 0) * 1000) / 1000)) };
+  const seen = {}, H = [];
+  let hs = 0;
+  (Array.isArray(raw.rcH) ? raw.rcH : []).slice(0, 1200).forEach((x) => {
+    if (!Array.isArray(x)) return;
+    const rc = x[0] == null ? null : Math.round(+x[0] * 10) / 10;
+    if (rc != null && !(rc >= 0 && rc <= 100)) return;
+    const k = String(rc);
+    if (seen[k]) return;
+    const h = num(x[1]), l = num(x[2]);
+    if (!h && !l) return;
+    seen[k] = 1; H.push([rc, h, l]); hs += h;
+  });
+  if (hs !== o.n) return null;
+  o.rcH = H.sort((a, b) => (a[0] == null ? -1 : a[0]) - (b[0] == null ? -1 : b[0]));
+  return o;
+}
+// what /stock shows under "Held back from Google" for one market — m = its masteravail record (raw), w = which feeds
+// it has wired. state: ok · nofeed (no Google feed to hold anything back from) · unread (not counted yet, or the feed
+// could not be read on the last run) · nojoin (none of the master's columns carries the feed's ids) · nostock (the
+// master states no stock)
+export function heldView(m, stock, w) {
+  const stated = rcStated(stock);
+  if (!w || !w.g) return { state: 'nofeed', stated };
+  const h = m && m.hbv === HELD_V ? m.hb : null;
+  if (!h) return { state: 'unread', stated };
+  if (h.ok === false) return { state: h.why || 'nojoin', stated, feedN: h.feedN || 0 };
+  const ns = (h.rcH || []).filter((x) => x[0] == null)[0];
+  return { state: 'ok', t: m.t || null, imp: m.imp || null, n: h.n, absent: h.absent, out: h.out, inStock: h.inStock,
+    pct: h.inStock ? (h.n / h.inStock) * 100 : null, feedN: h.feedN, feedLive: h.feedLive, join: h.join,
+    noStyle: ns ? ns[1] : 0, line: rcLine(h.rcH), stated };
+}
+// the held-back book: markets with a reading, their held and in-stock summed (a count carries no currency)
+export function heldBook(markets) {
+  const b = { markets: 0, n: 0, inStock: 0, lines: 0 };
+  (markets || []).forEach((mk) => {
+    const h = mk && mk.av && mk.av.held;
+    if (!h || h.state !== 'ok') return;
+    b.markets++; b.n += h.n; b.inStock += h.inStock; if (h.line) b.lines++;
+  });
+  return b;
 }
 // the book for one channel ('g' | 'fb'): markets whose master AND that feed are both read, their counts
 // summed (a count carries no currency, so it can cross markets); a market read on one side only is

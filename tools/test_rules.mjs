@@ -431,7 +431,7 @@ console.log('· availability, master → feed — the join, both counters, the a
   t('worker sanitizeAvail: keeps a tally whose buckets add up to its products', JSON.stringify(san({ n: 5, in: 2, out: 1, pre: 1, none: 1, other: 0, col: 'g:availability', ow: [['weird', 2]] })) === JSON.stringify({ n: 5, in: 2, out: 1, pre: 1, none: 1, other: 0, col: 'g:availability', ow: [['weird', 2]] }));
   t('worker sanitizeAvail: refuses one that does not add up, an empty one, and a text fragment posing as a word', san({ n: 5, in: 2, out: 1, pre: 0, none: 0, other: 0 }) === null && san({ n: 0 }) === null && san(null) === null && san({ n: 1, in: 0, out: 0, pre: 0, none: 0, other: 1, ow: [['x "and this..."', 1]] }).ow.length === 0);
   t('worker: an output feed\'s counts ride only CONFIRMED scans (applyPushedSnapshot, both lanes), into ONE index feedavail', /if \(vol && vol\.av\) \{ try \{ await availTrack\(env, client, mkt, vol\.av\); \} catch \(e\) \{\} \}/.test(WK) && /const idx = \(await env\.EDITS\.get\('feedavail', 'json'\)\) \|\| \{\};\s*idx\[client \+ '\|' \+ mkt\] = Object\.assign\(\{ client, mkt, t: Date\.now\(\) \}, a\);/.test(WK));
-  t('worker {masterfile}: roster companies only, resolved by catMasterInfo, `unchanged` for the same import, the file streamed as bytes', /if \(typeof body\.masterfile === 'string'\) \{/.test(WK) && /if \(!ROAS\.cmpidBrand\(cmpid\)\) return json\(\{ ok: false, error: 'not a roster company' \}, 404\);/.test(WK) && /if \(have && have\.imp && have\.imp === rec\.lastImport && have\.szv === HERO\.CENSUS_V && Date\.now\(\) - \(have\.t \|\| 0\) < HERO\.CENSUS_FRESH_MS\) return json\(\{ ok: true, unchanged: true/.test(WK) && /'content-type': 'application\/octet-stream', 'cache-control': 'no-store'/.test(WK));
+  t('worker {masterfile}: roster companies only, resolved by catMasterInfo, `unchanged` for the same import, the file streamed as bytes', /if \(typeof body\.masterfile === 'string'\) \{/.test(WK) && /if \(!ROAS\.cmpidBrand\(cmpid\)\) return json\(\{ ok: false, error: 'not a roster company' \}, 404\);/.test(WK) && /if \(have && have\.imp && have\.imp === rec\.lastImport && have\.szv === HERO\.CENSUS_V && have\.hbv === RULES\.HELD_V && Date\.now\(\) - \(have\.t \|\| 0\) < HERO\.CENSUS_FRESH_MS\) return json\(\{ ok: true, unchanged: true/.test(WK) && /'content-type': 'application\/octet-stream', 'cache-control': 'no-store'/.test(WK));
   t('worker {masterstock}: roster companies only, sanitised, ONE write per post into masteravail', /if \(Array\.isArray\(body\.masterstock\)\) \{/.test(WK) && /if \(results\.some\(\(r\) => r\.ok\)\) await env\.EDITS\.put\('masteravail', JSON\.stringify\(idx\)\);/.test(WK));
   t('worker route: two KV gets (masteravail, feedavail), the join by cmpid, the wiring beside the counts', /const mavail = \(await env\.EDITS\.get\('masteravail', 'json'\)\) \|\| \{\};/.test(WK) && /const favail = \(await env\.EDITS\.get\('feedavail', 'json'\)\) \|\| \{\};/.test(WK) && /const fkeys = RULES\.feedKeys\(wiredXmlList\(\)\);/.test(WK) && /\{ master: mavail\[r\.cmpid\], g: k\.g \? favail\[k\.g\] : null, fb: k\.fb \? favail\[k\.fb\] : null, wired: \{ g: !!k\.g, fb: !!k\.fb \} \}/.test(WK));
 
@@ -445,6 +445,89 @@ console.log('· availability, master → feed — the join, both counters, the a
   t('page: in stock green, out of stock the chart pair\'s second colour — tokens, never a hex, so dark mode follows', /--av-in:var\(--good\);--av-pre:var\(--navy\);--av-out:var\(--chart-2\)/.test(SP));
   const stubS = require('./rules_stub.js').build().stock;
   t('stub: every market carries av; one master is left uncounted and a Meta feed is present, so the card draws every state', stubS.markets.every((m) => m.av) && stubS.markets.some((m) => !m.av.master && m.av.g) && stubS.markets.some((m) => m.av.fb) && stubS.markets.some((m) => m.av.wired && !m.av.wired.fb));
+}
+
+console.log('· held back from Google + the range-completion line (Ray, 1 Oct 2026) — the record, the line, the merged card');
+{
+  // THE LINE, on histograms SHAPED like the live reads of 1 Oct 2026 (in session, nothing committed — the levels are the
+  // real kind, the counts invented): one market's held styles all at or under 35.3%, its live ones from 36.4% bar a few
+  // let back in; another's held spread across every level
+  const SD = [[5.9, 20, 0], [12.5, 400, 5], [14.3, 500, 9], [25, 800, 7], [28.6, 450, 5], [33.3, 420, 0], [35.3, 25, 0], [36.4, 3, 30], [37.5, 0, 900], [50, 2, 2000], [62.5, 9, 6000], [75, 0, 3000], [100, 6, 1400]];
+  const L1 = R.rcLine(SD);
+  t('rcLine: the cut that puts the most products on their own side — the gap between 35.3% and 36.4%', L1 && L1.lo === 35.3 && L1.hi === 36.4, JSON.stringify(L1));
+  t('rcLine: the figure stated is the roundest in the gap (a person sets 36%, not 35.8%)', L1 && L1.x === 36);
+  t('rcLine: it says how many it explains on each side', L1 && L1.held === 2615 && L1.heldN === 2635 && L1.live === 13330 && L1.liveN === 13356, JSON.stringify(L1));
+  t('rcLine: held products spread across every level draw NO line (held for other reasons — no figure put on what no rule does)', R.rcLine([[20, 300, 1500], [40, 400, 3000], [60, 500, 5000], [80, 400, 6000], [100, 500, 7000]]) === null);
+  t('rcLine: a line must explain 90% of BOTH sides', R.rcLine([[10, 80, 0], [50, 20, 30], [90, 0, 100]]) === null && !!R.rcLine([[10, 95, 0], [50, 5, 10], [90, 0, 100]]));
+  t('rcLine: too few products read no line; a product with no style never moves it', R.rcLine([[10, 5, 0], [90, 0, 500]]) === null && JSON.stringify(R.rcLine(SD.concat([[null, 900, 900]]))) === JSON.stringify(L1));
+  t('rcLine: everything held, or everything live, is no line', R.rcLine([[10, 100, 0], [20, 100, 0]]) === null && R.rcLine([[10, 0, 100], [20, 0, 100]]) === null);
+  t('roundIn: 25 / 10 / 5 / whole / half / tenth, the first step with a value in (lo, hi]', R.roundIn(35.3, 36.4) === 36 && R.roundIn(71.4, 75) === 75 && R.roundIn(20, 22.2) === 21 && R.roundIn(33.3, 37.5) === 35 && R.roundIn(49.9, 50) === 50 && R.roundIn(50, 50.4) === 50.1);
+  // THE RECORD the agent posts — checked whole before it is stored
+  const REC = { ok: true, n: 30, absent: 28, out: 2, inStock: 400, feedN: 900, feedLive: 880, join: { h: 'product_id', on: 'fs_data_original_id', rate: 0.61234 }, rcH: [[null, 1, 3], [20, 25, 0], [80, 4, 300]] };
+  const SH = R.sanitizeHeld(REC);
+  t('sanitizeHeld: keeps a record whose counts add up, the join one of the two, the histogram sorted', SH && SH.n === 30 && SH.join.on === 'fs_data_original_id' && SH.join.rate === 0.612 && SH.rcH[0][0] === null && SH.rcH[2][0] === 80);
+  t('sanitizeHeld: refuses parts that do not add up, more held than in stock, a histogram whose held do not add up, no feed', R.sanitizeHeld(Object.assign({}, REC, { out: 3 })) === null && R.sanitizeHeld(Object.assign({}, REC, { inStock: 10 })) === null
+    && R.sanitizeHeld(Object.assign({}, REC, { rcH: [[20, 25, 0]] })) === null && R.sanitizeHeld(Object.assign({}, REC, { feedN: 0 })) === null && R.sanitizeHeld(null) === null);
+  t('sanitizeHeld: an out-of-range level, a repeated level and an empty bucket are dropped, never stored', (() => { const x = R.sanitizeHeld(Object.assign({}, REC, { rcH: [[null, 1, 3], [20, 25, 0], [20, 9, 9], [180, 0, 4], [50, 0, 0], [80, 4, 300]] })); return x && x.rcH.length === 3; })());
+  t('sanitizeHeld: a join that could not be made is kept as such (the card says why), never as zero held', JSON.stringify(R.sanitizeHeld({ ok: false, why: 'nojoin', feedN: 12 })) === JSON.stringify({ ok: false, why: 'nojoin', feedN: 12 }) && R.sanitizeHeld({ ok: false, why: 'weird' }).why === 'nojoin');
+  // THE VIEW — one market's states
+  const ST = [{ i: 4, n: 'CL2: empty < 0.26 RC', t: 'Custom label 2', ch: 'google', sk: 'label', cut: [{ m: 'rc', op: '<', v: 26 }] }, { i: 7, n: 'Stock < 11 -> OOS', t: 'Stock', ch: 'all', sk: 'threshold', cut: [{ m: 'stock', op: '<', v: 11 }] }];
+  const M0 = { n: 1000, in: 400, out: 600, t: NOW, imp: '2026-10-01 05:26:56' };
+  t('heldView: no Google feed wired = nofeed; a master never joined = unread; a record of an older shape = unread', R.heldView(M0, ST, { g: false }).state === 'nofeed' && R.heldView(M0, ST, { g: true }).state === 'unread' && R.heldView(Object.assign({ hbv: 0, hb: SH }, M0), ST, { g: true }).state === 'unread');
+  const HV = R.heldView(Object.assign({ hbv: R.HELD_V, hb: R.sanitizeHeld(Object.assign({}, REC, { n: 2635, absent: 2635, out: 0, inStock: 29000, rcH: SD })) }, M0), ST, { g: true });
+  t('heldView: ok = the count, its share of the in-stock it was matched against, the line, the cut-offs rule names state', HV.state === 'ok' && HV.n === 2635 && Math.abs(HV.pct - 2635 / 29000 * 100) < 1e-9 && HV.line && HV.line.x === 36 && HV.stated.length === 1 && HV.stated[0].v === 26 && HV.stated[0].t === 'Custom label 2');
+  t('heldView: a refused join keeps its reason', R.heldView(Object.assign({ hbv: R.HELD_V, hb: { ok: false, why: 'nostock', feedN: 5 } }, M0), ST, { g: true }).state === 'nostock');
+  t('availView carries the held-back view; stockView hands it the market\'s own stock rules', (() => { const v = R.availView({ master: Object.assign({ hbv: R.HELD_V, hb: SH }, M0), wired: { g: true } }, ST); return v.held.state === 'ok' && v.held.stated.length === 1; })()
+    && /av: availView\(avail, r\.stock\)/.test(read('cloudflare/feedspark-deck/src/rules.js')));
+  const BKM = [{ av: { held: HV } }, { av: { held: { state: 'ok', n: 10, inStock: 100, line: null } } }, { av: { held: { state: 'unread' } } }, {}];
+  t('heldBook: markets with a reading, their counts summed, lines counted', JSON.stringify(R.heldBook(BKM)) === JSON.stringify({ markets: 2, n: 2645, inStock: 29100, lines: 1 }));
+  const liftPg = (h, name) => { const a = h.indexOf('  function ' + name + '('); const b = h.indexOf('\n  }\n', a); if (a < 0 || b < 0) throw new Error('cannot lift ' + name); return h.slice(a, b + 4); };
+  const hbTw = new Function(liftPg(SP, 'hbBook') + '\nreturn hbBook;')();
+  t('page hbBook === engine heldBook', JSON.stringify(hbTw(BKM)) === JSON.stringify(R.heldBook(BKM)));
+
+  // THE AGENT — the join on the same two reads, counts only out of the process
+  const MS = await import('./master_stock.mjs');
+  const FX = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" xmlns:c="http://example.com/c"><channel>'
+    + ['A1', 'A2', 'B1', 'C1', 'C2', 'C3'].map((id) => '<item><g:id>' + id.toLowerCase() + '</g:id><g:availability>in stock</g:availability><g:product_type>Women &gt; Tops</g:product_type><c:fs_data_original_id>' + id + '</c:fs_data_original_id></item>').join('') + '</channel></rss>';
+  const FD = MS.feedFromText(FX);
+  t('agent: ONE read of the Google feed gives the product_type tree AND the feed index', FD.tree && FD.tree.n === 6 && FD.idx.n === 6 && FD.idx.live === 6 && FD.idx.o.get('a1') === 'in');
+  const MCSV = 'product_id,item_group_id,title,size,availability\nA1,A,Top,S,in stock\nA2,A,Top,M,in stock\nA3,A,Top,L,in stock\nB1,B,Tee,S,in stock\nB2,B,Tee,M,in stock\nB3,B,Tee,L,out of stock\nB4,B,Tee,XL,out of stock\nB5,B,Tee,XXL,out of stock\nC1,C,Vest,S,in stock\nC2,C,Vest,M,in stock\nC3,C,Vest,L,in stock\nD1,D,Cap,One,out of stock\n';
+  const TH = MS.tallyMaster(new Uint8Array(Buffer.from(MCSV)), FD.tree, FD.idx);
+  const HR = MS.heldRecord(TH.held, FD.idx);
+  t('agent: the master is joined on the same pass — held = in stock in the master, not live in the feed (A3, B2)', TH.n === 12 && HR.ok && HR.n === 2 && HR.absent === 2 && HR.out === 0 && HR.inStock === 8 && HR.feedN === 6, JSON.stringify(HR));
+  t('agent: every in-stock product counted by its style\'s range completion, held and live apart', JSON.stringify(HR.rcH) === JSON.stringify([[40, 1, 1], [100, 1, 5]]), JSON.stringify(HR.rcH));
+  t('agent: the record passes the worker\'s own check whole', !!R.sanitizeHeld(HR) && R.sanitizeHeld(HR).n === 2);
+  t('agent: counts and the histogram only — no id, title or size leaves the process', JSON.stringify(Object.keys(HR).sort()) === JSON.stringify(['absent', 'feedLive', 'feedN', 'inStock', 'join', 'n', 'ok', 'out', 'rcH']) && !/A3|B2|Top|Tee/.test(JSON.stringify(HR)));
+  t('agent: no feed index = no join; a master the feed\'s ids do not reach = nojoin, kept as such', MS.tallyMaster(new Uint8Array(Buffer.from(MCSV))).held === null && MS.heldRecord({ ok: false }, FD.idx).why === 'nojoin' && MS.heldRecord({ ok: true, stated: 0, held: [] }, FD.idx).why === 'nostock');
+  t('agent: its log line names the count, the share, the join and the line (or that there is none)', /^held back — 2 in stock in the master, not live in Google \(25% of its 8 in stock · 2 not in the feed, 0 sent out of stock\) · join product_id → fs_data_original_id · no range-completion line in the data$/.test(MS.heldLine(HR)), MS.heldLine(HR));
+  const AG = read('tools/master_stock.mjs');
+  t('agent: hbv = HELD_V once settled (counted, or no Google feed to count against); a feed it could not read leaves it unset', /hbv: hb \|\| !feeds\[m\.cmpid\] \? HELD_V : 0, hb \}\);/.test(AG) && /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null;/.test(AG)
+    && /import \{ feedKeys, HELD_V, rcLine \} from '\.\.\/cloudflare\/feedspark-deck\/src\/rules\.js';/.test(AG));
+
+  // THE WORKER — stored whole beside the counts; the master read again until it is
+  t('worker {masterstock}: the record is checked by RULES.sanitizeHeld and stored beside the counts; a refused one leaves hbv unset', /if \(e\.hbv === RULES\.HELD_V\) \{/.test(WK) && /const hb = e\.hb == null \? null : RULES\.sanitizeHeld\(e\.hb\);/.test(WK)
+    && /if \(e\.hb != null && !hb\) held = 'refused';/.test(WK) && /else \{ idx\[cmpid\]\.hbv = RULES\.HELD_V; idx\[cmpid\]\.hb = hb; \}/.test(WK));
+  t('worker {masterfile}: "unchanged" needs the held-back count of this shape too', /have\.szv === HERO\.CENSUS_V && have\.hbv === RULES\.HELD_V && Date\.now\(\) - \(have\.t \|\| 0\) < HERO\.CENSUS_FRESH_MS/.test(WK));
+  t('worker: the route serves the view, never the histogram', !/rcH/.test(/if \(path === '\/api\/rules\/stock'\) \{[\s\S]*?\n      \}\n/.exec(WK)[0]));
+
+  // THE PAGE — one card
+  t('page: ONE card — the ad-spend card is gone, its controls and rule-by-rule detail live in the in-stock card', !/id="sv-card"/.test(SP) && /<section class="card" id="av-card">[\s\S]*?id="sv-scn"[\s\S]*?id="sv-per"[\s\S]*?id="av-csv"[\s\S]*?<details class="sv-rest sv-rules" id="sv-rules">[\s\S]*?id="sv-t"[\s\S]*?id="sv-rest"[\s\S]*?<\/section>/.test(SP));
+  t('page: seven columns under two named halves — the feeds, then held back from Google (in stock not live · range completion · ad spend)', /<th colspan="3">In stock · master feed → output feeds<\/th><th colspan="3" class="hbg">Held back from Google<\/th>/.test(SP)
+    && /<th>Master feed<\/th><th>Google Shopping<\/th><th>Meta<\/th><th class="num hbg"[^>]*>In stock, not live<\/th><th class="num"[^>]*>Range completion<\/th><th class="num" id="sv-th"[^>]*>Ad spend kept off<\/th>/.test(SP)
+    && /avCell\(m, 'master'\) \+ avCell\(m, 'g'\) \+ avCell\(m, 'fb'\) \+ hbCell\(m\) \+ rcCell\(m\) \+ svCell\(m\)/.test(SP));
+  t('page: the held-back count with its ⬇ List beside it; an unread market says why, never 0', /<span class="big">' \+ hbBtn\(m, 'hb-dl'\) \+ n0\(h\.n\) \+ '<\/span><span class="sub2">' \+ pctS\(h\.pct\) \+ ' of in stock<\/span>/.test(SP) && /var HBWHY = \{ nofeed: /.test(SP) && /nojoin: \['ids don/.test(SP));
+  t('page: the range completion — the line read off the products (≈), else a cut-off a rule name states (Google), else "no line in the data"', /<span class="ap">≈<\/span>' \+ ln\.x \+ '%/.test(SP) && /<span class="sub2">in the data<\/span>/.test(SP) && /<span class="sub2">in a rule name<\/span>/.test(SP) && />no line in the data<\/span>/.test(SP)
+    && /return c\.ch === 'google' \|\| c\.ch === 'all';/.test(SP));
+  t('page: the market\'s ad spend is its largest rule at the scenario and period, and opens that rule\'s panel', /var f = svFloor\(m\.stock\);/.test(SP) && /return '<td class="num" data-sv="' \+ key \+ '" tabindex="0"><span class="big sv-money">' \+ money\(m\.ads\.cur, svCalc\(f\.n, m\.ads, SV\.pct, svDays\(\)\)\)/.test(SP));
+  t('page: the scenario or period redraws the market rows too', /svSave\(\); renderKpis\(\); renderAv\(\); renderSv\(\);/.test(SP));
+  t('page: the summary tiles — each channel, then held back, then the ad spend book (hover for its working)', /pair\(avBook\(ms, 'g'\), 'Google'\) \+ pair\(avBook\(ms, 'fb'\), 'Meta'\) \+ held \+ spend/.test(SP) && /<div class="it av2" data-sv="book" tabindex="0"/.test(SP));
+  t('page: the panel shows what was measured beside the rule\'s own count (the forecast stays on the rule)', /Measured — ' \+ esc\(m\.client \+ ' ' \+ m\.market\)/.test(SP) && /\+ meas\n/.test(SP) && /\+ ref \+ meas \+ acts;/.test(SP));
+  t('page: the download\'s message reads the products\' own line — never an assumed 75%', !/h\.rc < 75/.test(SP) && /r\.held\.filter\(function \(h\) \{ return h\.rc != null && h\.rc < ln\.x; \}\)/.test(SP));
+  t('page: the CSV is one row per market — every feed, the held back, the line, the ad spend', /'in stock, not live in google', 'master in stock \(matched\)'/.test(SP) && /'range completion line %', 'held at or under %', 'live at or over %'/.test(SP) && /var rows = mkts\(\)\.map\(function \(m\) \{/.test(SP));
+  t('page: the phone skim row names markets and the held back, not the folded tables\' rows', /\$\('#av-card'\)\.setAttribute\('data-m-digest', /.test(SP));
+  t('page: the KPI names the held back beside the master', /n0\(hk\.n\) \+ ' held back'/.test(SP));
+  const stubH = require('./rules_stub.js').build().stock.markets;
+  t('stub: one market draws a line, one has none (a rule name\'s cut-off instead), one is not counted — every state of the card', stubH.some((m) => m.av.held.state === 'ok' && m.av.held.line) && stubH.some((m) => m.av.held.state === 'ok' && !m.av.held.line && m.av.held.stated.length) && stubH.some((m) => m.av.held.state === 'unread'));
 }
 
 console.log('· the tripwire stub + nothing in git');

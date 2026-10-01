@@ -101,9 +101,16 @@ function build() {
     'Reiss|gb': { n: 22657, in: 22400, out: 0, pre: 257, none: 0, other: 0, t: now - 5400000 },
     'Reiss|gb-fb': { n: 9400, in: 6120, out: 3280, pre: 0, none: 0, other: 0, t: now - 5400000 },
   };
+  // held back from Google (the agent's join, invented counts, pushed through the REAL sanitizeHeld the worker stores them
+  // with): Superdry GB's held-back styles sit under one range-completion line, Reiss GB's are spread across every level
+  // (no line — the card falls back to the cut-off a rule NAME states), Superdry DE is not counted yet
   const MASTERAV = {
-    superdry_gb: { n: 58000, in: 29100, out: 28900, pre: 0, none: 0, other: 0, via: 'availability', col: 'availability', imp: '2026-09-28 05:27:48', t: now - 7200000 },
-    reiss_gb: { n: 60000, in: 24900, out: 34790, pre: 300, none: 0, other: 10, via: 'availability', col: 'availability', imp: '2026-09-28 07:00:11', t: now - 7200000 },
+    superdry_gb: { n: 58000, in: 29100, out: 28900, pre: 0, none: 0, other: 0, via: 'availability', col: 'availability', imp: '2026-09-28 05:27:48', t: now - 7200000,
+      hbv: E.HELD_V, hb: E.sanitizeHeld({ ok: true, n: 3800, absent: 3790, out: 10, inStock: 29100, feedN: 45210, feedLive: 45210, join: { h: 'product_id', on: 'fs_data_original_id', rate: 0.52 },
+        rcH: [[10, 400, 0], [20, 900, 0], [25, 1100, 4], [33.3, 1300, 0], [37.5, 5, 900], [50, 20, 4000], [66.7, 10, 8000], [100, 65, 9000]] }) },
+    reiss_gb: { n: 60000, in: 24900, out: 34790, pre: 300, none: 0, other: 10, via: 'availability', col: 'availability', imp: '2026-09-28 07:00:11', t: now - 7200000,
+      hbv: E.HELD_V, hb: E.sanitizeHeld({ ok: true, n: 2100, absent: 2100, out: 0, inStock: 24900, feedN: 22657, feedLive: 22657, join: { h: 'id', on: 'fs_data_original_id', rate: 0.54 },
+        rcH: [[20, 300, 1500], [40, 400, 3000], [60, 500, 5000], [80, 400, 6000], [100, 500, 7000]] }) },
   };
   const stock = Object.assign({}, base, { mechanisms: E.MECHANISMS, channels: E.CHANNELS, drivers: E.DRIVERS, sev: E.SEV, matrix: E.stockMatrix(list), cutoffs: E.stockCutoffs(list), heroRuns: E.heroRuns(list), findings: E.stockFindings(list, now),
     sv: { scenarios: E.SV_SCENARIOS, days: E.SV_WINDOW_DAYS },

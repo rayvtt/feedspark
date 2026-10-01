@@ -10,9 +10,11 @@
  *
  *   · the KPI band is SIX tiles on a count that divides them: one row at 1440px, 3 × 2 at 1100px and beside the
  *     open forecast panel, 3 × 2 on a phone — equal widths, and every value, label and line below it at one height
- *   · every row of summary tiles (in stock, ad spend, hero sizes) fills its card as equal tiles
- *   · the ad-spend rows are one height whether or not the ⬇ List button sits in them
- *   · a table grouped by market (ad spend, cut-offs, hero-size runs) names each market once
+ *   · every row of summary tiles (in stock + ad spend, hero sizes) fills its card as equal tiles
+ *   · ONE in-stock card (Ray, 1 Oct 2026: "merge the Adspend kept off section into this interface"): seven columns that
+ *     fit the card at 1440px with no cell or header clipped, the three feeds one width, a market row one height whether
+ *     or not its ⬇ List button sits in it, and every state of the held-back / range-completion cells drawn
+ *   · a table grouped by market (the rule-by-rule ad spend, cut-offs, hero-size runs) names each market once
  *   · the coverage matrix gives every stock control one column width
  *   · the size chips are one width, so a run lines up row under row; the Source column names the kind, not the example
  *   · a finding is one line until opened (badge · title · where), titles at one x; the reason opens with the rules
@@ -86,7 +88,7 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     ok('a tile names the card it summarises (a click jumps to it)', ['av-card', 'cov-card', 'hmap-card', 'cut-card', 'find-card'].every((g) => go.indexOf(g) >= 0), go);
 
     console.log('· rows of summary tiles fill their card');
-    for (const id of ['av-sum', 'sv-sum', 'hm-sum']) {
+    for (const id of ['av-sum', 'hm-sum']) {
       const t = await p.evaluate((id) => {
         const box = document.getElementById(id), r = box.getBoundingClientRect();
         return { r: r.right, l: r.left, its: Array.from(box.children).map((c) => { const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, right: b.right }; }) };
@@ -95,10 +97,28 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
       ok('#' + id + ': ' + t.its.length + ' tiles, one row, one width each, the last one flush with the card', t.its.length >= 2 && rows.length === 1 && same(t.its.map((b) => b.w)) && Math.abs(t.its[t.its.length - 1].right - t.r) <= 1 && Math.abs(t.its[0].x - t.l) <= 1, t);
     }
 
-    console.log('· the ad-spend rows — one height, the market named once');
-    const sv = await p.evaluate(() => Array.from(document.querySelectorAll('#sv-t tbody tr')).map((tr) => ({ h: tr.getBoundingClientRect().height, list: !!tr.querySelector('[data-hbdl]'), mk: tr.cells[0].textContent.trim(), id: (tr.getAttribute('data-sv') || '').split('|')[0] })));
-    ok('the stub sizes rules with and without the ⬇ List button', sv.some((r) => r.list) && sv.some((r) => !r.list), sv);
-    ok('a row with the ⬇ List button is no taller than one without', same(sv.map((r) => r.h), 1), sv.map((r) => [Math.round(r.h), r.list]));
+    console.log('· the in-stock card — seven columns, nothing clipped, one row height (the ad spend merged in)');
+    const av = await p.evaluate(() => {
+      const t = document.getElementById('av-t'), fr = t.parentElement;
+      const ths = Array.from(t.querySelectorAll('thead tr:last-child th'));
+      const rows = Array.from(t.querySelectorAll('tbody tr')).map((tr) => ({ h: tr.getBoundingClientRect().height, list: !!tr.querySelector('[data-hbdl]'), cells: tr.cells.length,
+        rc: tr.cells[5] ? tr.cells[5].textContent.replace(/\s+/g, ' ').trim() : '', hb: tr.cells[4] ? tr.cells[4].textContent.replace(/\s+/g, ' ').trim() : '', sv: !!(tr.cells[6] && tr.cells[6].hasAttribute('data-sv')) }));
+      const clip = Array.from(t.querySelectorAll('th,td')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim().slice(0, 30));
+      return { cols: ths.length, feeds: ths.slice(1, 4).map((x) => x.getBoundingClientRect().width), frame: fr.clientWidth, sw: fr.scrollWidth, rows, clip,
+        card: !!document.getElementById('sv-card'), inCard: !!document.querySelector('#av-card #sv-rules #sv-t') && !!document.querySelector('#av-card .chead #sv-scn') };
+    });
+    ok('one card: the ad-spend card is gone; its scenario controls sit in the in-stock card\'s header, its rule-by-rule table in the card\'s fold', !av.card && av.inCard, av);
+    ok('seven columns, the three feeds one width', av.cols === 7 && same(av.feeds), [av.cols, av.feeds.map(Math.round)]);
+    ok('the table fits its card at 1440px — nothing to scroll sideways', av.sw <= av.frame + 1, [av.sw, av.frame]);
+    ok('no header or cell has its text clipped', av.clip.length === 0, av.clip);
+    ok('the stub draws a market with the ⬇ List and one without', av.rows.some((r) => r.list) && av.rows.some((r) => !r.list), av.rows);
+    ok('every market row one height, whatever its cells hold', same(av.rows.map((r) => r.h), 1), av.rows.map((r) => [Math.round(r.h), r.list]));
+    ok('range completion: the line read off the products (≈), a rule name\'s cut-off, and "not counted yet" — each state drawn', av.rows.some((r) => /^≈\s*\d+%/.test(r.rc) && /in the data/.test(r.rc)) && av.rows.some((r) => /^RC < \d+%/.test(r.rc) && /in a rule name/.test(r.rc)) && av.rows.some((r) => /not counted yet/.test(r.hb)), av.rows.map((r) => [r.hb, r.rc]));
+    ok('a market\'s ad-spend cell opens its largest rule\'s working (data-sv)', av.rows.filter((r) => r.sv).length >= 2, av.rows.map((r) => r.sv));
+    await p.evaluate(() => { document.getElementById('sv-rules').open = true; });
+    await p.waitForTimeout(100);
+    const sv = await p.evaluate(() => Array.from(document.querySelectorAll('#sv-t tbody tr')).map((tr) => ({ h: tr.getBoundingClientRect().height, mk: tr.cells[0].textContent.trim(), id: (tr.getAttribute('data-sv') || '').split('|')[0] })));
+    ok('the rule-by-rule fold opens onto its rules, one height each', sv.length >= 2 && sv.every((r) => r.h > 0) && same(sv.map((r) => r.h), 1), sv.map((r) => Math.round(r.h)));
     for (const id of ['sv-t', 'cuts', 'heroes']) {
       const g = await p.evaluate((id) => Array.from(document.querySelectorAll('#' + id + ' tbody tr[data-sv]')).map((tr) => ({ mk: tr.cells[0].textContent.trim(), id: tr.getAttribute('data-sv').split('|')[0], gi: tr.classList.contains('gi') })), id);
       const runs = g.filter((r, i) => !i || g[i - 1].id !== r.id);
@@ -145,7 +165,7 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     ok('no page errors', errs.length === 0, errs);
 
     console.log('· beside the open forecast panel the band goes 3 × 2');
-    await p.click('#sv-t tbody tr td:nth-child(3)');   // a click on a rule row (not its link or button) docks the panel
+    await p.click('#av-t tbody td[data-sv]');   // a click on a market's ad spend (not a link or a button) docks its rule's working
     await p.waitForTimeout(350);
     const on = await p.evaluate(() => document.body.classList.contains('sv-on'));
     if (on) {
@@ -175,9 +195,15 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     ok('3 × 2 at 390px', rs.length === 2 && even(rs) && rs[0].length === 3, rs.map((r) => r.length));
     const q = await p.evaluate(() => { const r = document.getElementById('q').getBoundingClientRect(), c = document.querySelector('.hero .ctl').getBoundingClientRect(); return { w: r.width, cw: c.width }; });
     ok('the search field spans the control row (it had shrunk to its first two letters)', q.w >= q.cw - 2, q);
-    const t = await p.evaluate(() => Array.from(document.getElementById('sv-sum').children).map((c) => { const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width }; }));
-    const tr = rowsOf(t);
-    ok('an odd tile out on a phone spans the row rather than leaving a gap', tr.length === 2 && tr[1].length === 1 && tr[1][0].w > tr[0][0].w * 1.8, tr.map((r) => r.map((b) => Math.round(b.w))));
+    await p.evaluate(() => window.FCCDigest && window.FCCDigest.expandAll && window.FCCDigest.expandAll());
+    await p.waitForTimeout(150);
+    for (const id of ['av-sum', 'hm-sum']) {
+      const t = await p.evaluate((id) => Array.from(document.getElementById(id).children).map((c) => { const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width }; }), id);
+      const tr = rowsOf(t);
+      ok('#' + id + ' on a phone: even rows, or an odd tile out spanning the row rather than leaving a gap', tr.length >= 1 && tr.every((r, i) => r.length === tr[0].length || (i === tr.length - 1 && r.length === 1 && r[0].w > tr[0][0].w * 1.8)), tr.map((r) => r.map((b) => Math.round(b.w))));
+    }
+    const pan = await p.evaluate(() => { const fr = document.getElementById('av-t').parentElement; return { sw: fr.scrollWidth, cw: fr.clientWidth, ox: getComputedStyle(fr).overflowX }; });
+    ok('the in-stock table pans inside its own frame on a phone (pan, don\'t crush)', pan.sw > pan.cw && /auto|scroll/.test(pan.ox), pan);
     const over = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok('no sideways overflow', over <= 0, over);
     ok('no page errors', errs.length === 0, errs);
