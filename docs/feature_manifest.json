@@ -11478,6 +11478,13 @@
     {"name": "Hero tiers: the stub's census rides a synthetic Google feed tree", "file": "tools/rules_stub.js", "pattern": "const c = H.census(E, ti.finish());", "pr": 0},
     {"name": "Hero tiers: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_herotier.js", "pr": 0},
     {"name": "Hero tiers: one spelling per type — case and accents read as one (Superdry FR)", "file": "docs/herosize_engine.js", "pattern": "function foldKey(v) { var t = s0(v).toLowerCase(); try { t = t.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} return t; }", "pr": 0},
-    {"name": "Hero tiers: the card says how many feed spellings were read as one", "file": "docs/FeedSpark_Stock.html", "pattern": " the feed spells two ways (case or accents) read as one.", "pr": 0}
+    {"name": "Hero tiers: the card says how many feed spellings were read as one", "file": "docs/FeedSpark_Stock.html", "pattern": " the feed spells two ways (case or accents) read as one.", "pr": 0},
+    {"name": "Task Manager: the hours book is pulled over ALL TIME, not twelve months", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const win = TB.bookWindow(now, 0);", "pr": 0},
+    {"name": "Task Manager: the window is a reading choice applied when the book is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "TB.bookMonthsOf(url.searchParams.get('win'))", "pr": 0},
+    {"name": "Task Manager: an all-time pull's depth is read off the pull, not the window", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "full: win.all ? all.length < limit : (!deepest || deepest <= win.from),", "pr": 0},
+    {"name": "Task Manager: the book's read count can never exceed its total (Ray's “44 of 39”)", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "cov.forEach((c) => { const k = key(c); if (!seen[k]) { seen[k] = 1; dropped++; } });", "pr": 0},
+    {"name": "Task Manager: the window control, 12 / 24 / all time, beside the dates it changes", "file": "docs/FeedSpark_TaskManager.html", "pattern": "var WINS = [{ v: '12', label: '12 months' }, { v: '24', label: '24 months' }, { v: 'all', label: 'All time' }];", "pr": 0},
+    {"name": "Task Manager: the window is named on the FIRST fetch, so all time loads once", "file": "docs/FeedSpark_TaskManager.html", "pattern": "fetch('/api/taskmanager?win=' + encodeURIComponent(CWIN))", "pr": 0},
+    {"name": "Task Manager: the book changing redraws its own sentence, typing does not", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function refresh() { srcLine(); apply(); }", "pr": 0}
   ]
 }

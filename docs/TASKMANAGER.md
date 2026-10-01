@@ -858,23 +858,88 @@ what a task was.
 ## Two traps in the source, handled in the sync
 
 - **`from_date` is not applied.** Verified 16 Sep 2026: a task list asked for `2026-07-01` came
-  back with February rows; a ticket pull asked for `2026-08-01` returned 2024 threads. The window
-  is applied in `packMarket` / `packQueue` and nowhere else.
-- **Pulls are newest-first and capped.** A market whose deepest row starts *after* the window
-  opens did not reach back far enough, and reading that as a whole year would overstate every
-  total. It is stored `full: false`, shown as **partial** in the coverage drawer, and contributes
-  the rows it does have.
+  back with February rows; a ticket pull asked for `2026-08-01` returned 2024 threads. Re-verified
+  1 Oct 2026: a list asked from `2026-09-25` came back with 110 of its 120 rows older than that.
+  The window is applied in `assembleBook`, when the book is served, and nowhere else.
+- **Pulls are newest-first and capped by `limit`.** That cap is the only real depth control, which
+  is why `full` is read off the pull itself — the server returning *fewer* rows than were asked for
+  means it ran out of history. A pull that filled its limit is stored `full: false`, shown as
+  **partial** in the coverage drawer, and contributes the rows it does have.
 
 `0000-00-00` is **undated**: counted in the totals, in no month, and the page says so. Tickets are
-windowed by **last activity**, the same twelve months as the tasks, for every client alike. And
+windowed by **last activity**, on the same window as the tasks, for every client alike. And
 what has not been read yet is **absent, not zero** — the source line says how many markets the
 book holds and how stale the oldest read is.
+
+## All time, not twelve months
+
+> Ray, 1 Oct 2026: *"can you check if hours can be pulled from 'all time' not just from 2025?"*
+
+It can, and it costs nothing extra. **The twelve months were ours, never the reports database's.**
+`from_date` is ignored, rows arrive newest-first, and the only limit is `limit` — so a market's
+whole history comes back in the same *one* call. Measured against the live book the day he asked:
+
+| Market | Rows, all time | Reaches back to |
+|---|---|---|
+| the busiest market in the book | 3,042 | Feb 2018 |
+| the next | 1,779 | Mar 2017 |
+| the next | 1,424 | Jul 2022 |
+
+So the pull now asks for everything (`bookWindow(now, 0)`, `BOOK_PULL_LIMIT` 1,600 → 4,000,
+`BOOK_ROW_CAP` 1,200 → 4,000) and **the window became a reading choice**, applied in `assembleBook`
+when the book is served. One stored market answers every window the page offers; the rotation, the
+subrequest budget and the one-MCP-call-per-market cost are all unchanged.
+
+`GET /api/taskmanager?win=12|24|all` serves it, and a **Window** control sits on the source line
+beside the dates it changes. It is a **server read**, not a filter on rows already in hand — all
+time is roughly five times the book, and loading that on every visit to answer a question nobody
+asked would make the page slower for everyone. So:
+
+- the window is decided **before the first fetch** (a `?win=` link, else this device's own pick),
+  so all time loads once rather than twelve months and then a reload;
+- changing it refetches, and the pick is remembered **per device** like every other reading
+  preference here;
+- a **refused** refetch rolls the control back, because leaving "All time" selected over twelve
+  months of rows is the page lying about what it is showing;
+- 🔗 Link carries `?win=`, since a reading over all time is not the same reading.
+
+Two honesty flags come with it. A market last read **before** the window widened holds only its own
+span until its next turn in the rotation (about twelve hours), so the source line says *"N not read
+this far back yet"* rather than drawing a short line as though the work had stopped — that is
+`coverage[].from` against the view, and `holds` (the later of a record's floor and its oldest stored
+row) is what the drawer prints. And an unmeasured stretch is never carried flat.
+
+### "44 of 39 markets read"
+
+Ray's screenshot of the same sentence, the same day. Both numbers were right and they were answering
+different questions: `read` is every market the book **holds** a record for, while the roster is
+rebuilt from the live client master on every pull and carries only the markets booking hours **this
+cycle** (`allowance > 0 || used > 0`). A market whose cycle rolled over to zero with no block leaves
+the roster while its history stays in the book — five of them, that day.
+
+The denominator is now the **union** of the two, so the read count can never be the larger number
+again, and the markets the roster no longer carries are **counted and named** (`dropped` → *"N no
+longer booking hours"*) rather than quietly inflating one side of it. Their past hours are real and
+are still in every chart, which is exactly why they are not thrown away.
+
+Found alongside it, pre-existing: `apply()` never touched the source line, so **⟳ Sync more** — a
+button whose entire purpose is to move *"N of M markets read"* — left that sentence stale. Every
+path that replaces the book now goes through `refresh()` (`srcLine()` + `apply()`); typing still
+only calls `apply()`, since rebuilding that row mid-keystroke would replace the window control under
+the cursor. `srcLine()` therefore owns the sync button's busy state rather than a node reference a
+re-render detaches.
+
+Harness: `tools/test_reporttasks.mjs` (the windows, the depth read off the pull, one store answering
+both windows, the union denominator) and `tools/check_tmwindow.js` (Playwright, presync — the
+control painted on the source line at 1440px and 390px, the window named on the first fetch, a
+re-read that really changes the rows, the rollback, the remembered pick, and the sync moving the
+sentence it exists to move).
 
 ## Files
 
 | File | Role |
 |---|---|
-| `cloudflare/feedspark-deck/src/taskbook.js` | pure: the grammar (`parseQuery`, `matchTask`, `matchTicket`), the aggregation (`summarise`, `groupBy`, `ticketStats`), and the book store (`bookWindow`, `packMarket`, `packQueue`, `bookPlan`, `queuePlan`, `rosterOf`, `assembleBook`, `bookHealth`) |
+| `cloudflare/feedspark-deck/src/taskbook.js` | pure: the grammar (`parseQuery`, `matchTask`, `matchTicket`), the aggregation (`summarise`, `groupBy`, `ticketStats`), and the book store (`bookWindow`, `bookMonthsOf`, `inBookWindow`, `packMarket`, `packQueue`, `bookPlan`, `queuePlan`, `rosterOf`, `assembleBook`, `bookHealth`) |
 | `worker.js › tmBookPull` | the I/O: one firing's pulls into KV, on the shared MCP session |
 | `worker.js › GET /api/taskmanager` | the scoped read, and `?sync=N` for the owner |
 | `docs/FeedSpark_TaskManager.html` | the page |
@@ -1297,7 +1362,7 @@ Two lanes now read the same tasks, and left alone they would fight over one reco
 | Lane | Look-back | Why it exists |
 |---|---|---|
 | `tmPull` | 21 days (`TM_TASK_DAYS`) | a brief raised this morning shows hours within the hour |
-| `tmBookPull` | 12 months (`TM_BOOK_DAYS`) | even coverage of the whole estate |
+| `tmBookPull` | all time (`bookWindow(now, 0)`) | even coverage of the whole estate |
 
 Whichever fired last would win, and the narrow lane would keep shrinking a ref back to just its
 recent tasks — a ticket's hours would flicker between the truth and a fraction of it every half

@@ -783,7 +783,8 @@ eq(Object.keys(P.STATUS_BUCKET).sort(), Object.keys(M.STATUS_BUCKET).sort(), 'th
 console.log('── the book store (pack → KV → assemble)');
 const NOW = Date.UTC(2026, 8, 16, 12, 0, 0);
 const WIN = M.bookWindow(NOW, 12);
-eq(WIN, { from: '2025-10-01', to: '2026-09-16' }, 'the window is twelve whole months ending today');
+eq({ from: WIN.from, to: WIN.to }, { from: '2025-10-01', to: '2026-09-16' },
+  'the window is twelve whole months ending today');
 
 // a pull as the database returns it: newest first, `raw` carrying the two hour columns
 const src = (id, title, day, bill, nb, owner, status, note) => ({
@@ -908,6 +909,111 @@ console.log('── assembling the book');
 }
 
 // ---------------------------------------------------------------------------------------------
+// ALL TIME, NOT TWELVE MONTHS (Ray, 1 Oct 2026: "can you check if hours can be pulled from
+// 'all time' not just from 2025?")
+//
+// Three separate things had to become true, and each is pinned here because each would fail
+// silently: the pull has to reach a market's FIRST task, the store has to keep what it reached,
+// and the page has to be able to ask for less without the store being re-read.
+// ---------------------------------------------------------------------------------------------
+console.log('── the window is a reading choice, not a floor in the store');
+{
+  const T = Date.parse('2026-10-01T00:00:00Z');
+  const w12 = M.bookWindow(T, 12), wAll = M.bookWindow(T, 0);
+  eq(w12.from, '2025-11-01', 'twelve months still opens where it always did');
+  ok(!w12.all, '...and is not an all-time window');
+  ok(wAll.all && wAll.from <= '2010-01-01', 'all time reaches past the first market in the client master');
+  eq(wAll.months, 0, 'an all-time window reports itself as such rather than as a month count');
+  eq(M.bookWindow(T).from, w12.from, 'no argument is still the default the page opens on');
+
+  eq(M.bookMonthsOf('all'), 0, '?win=all reads as all time');
+  eq(M.bookMonthsOf('24'), 24, '?win=24 reads as two years');
+  eq(M.bookMonthsOf('13'), M.BOOK_MONTHS, 'a window nobody offers falls back to the default');
+  eq(M.bookMonthsOf(''), M.BOOK_MONTHS, '...as does an absent one, rather than reading as all time');
+  eq(M.bookMonthsOf('0'), 0, 'but an explicit zero IS all time');
+
+  // THE DEPTH IS READ OFF THE PULL. Measured against the live database 1 Oct 2026: the busiest
+  // market answers its whole history (back to Feb 2018) in 3,042 rows, so the pull limit has to
+  // clear that — and `full` has to mean "the server ran out of history", because against an
+  // all-time window the old test (deepest <= win.from) can never be satisfied by anything.
+  ok(M.BOOK_PULL_LIMIT >= 3042, 'the pull is deep enough to reach the first task of the deepest market');
+  ok(M.BOOK_ROW_CAP >= 3042, '...and the store keeps all of it rather than capping the history away');
+  const meta = { client: 'Reiss', market: 'GB', am: 'Ray', cid: 155 };
+  const old2018 = src(1, 'Feed setup', '2018-02-27', 1, 0);
+  const recent = src(2, 'Keyword optimisation', '2026-09-30', 2, 1);
+  const allWin = Object.assign({}, wAll, { limit: 4 });
+  const deep = M.packMarket([recent, old2018], meta, allWin, T);
+  eq(deep.rows.length, 2, 'an all-time pull stores the 2018 task beside the 2026 one');
+  eq(deep.deepest, '2018-02-27', '...and says how far back it reached');
+  ok(deep.full, 'fewer rows back than the limit asked for means the market has no more history');
+  const capped = M.packMarket([recent, old2018, src(3, 'x', '2019-01-01', 1, 0), src(4, 'y', '2020-01-01', 1, 0)],
+    meta, allWin, T);
+  ok(!capped.full, 'a pull that filled its limit is PARTIAL — there may be more history behind it');
+
+  // THE WINDOW IS APPLIED ON THE WAY OUT. One stored market answers every window the page offers.
+  const books = [{ client: 'Reiss', markets: { GB: deep } }];
+  const accounts = [{ cid: 155, tid: 51, client: 'Reiss', market: 'GB', am: 'Ray' }];
+  const bAll = M.assembleBook(books, [], accounts, T, wAll);
+  const b12 = M.assembleBook(books, [], accounts, T, w12);
+  eq(bAll.rows.length, 2, 'read over all time, the book hands back both tasks');
+  eq(b12.rows.length, 1, 'read over twelve months, the SAME store hands back only the recent one');
+  eq(b12.rows[0].d, '2026-09-30', '...the right one');
+  ok(bAll.all && !b12.all, 'each assembled book says which window it was read over');
+  eq(bAll.coverage[0].held, deep.rows.length, 'coverage says what the record holds');
+  eq(b12.coverage[0].n, 1, '...beside how much of it this window shows');
+  eq(bAll.coverage[0].holds, '2018-02-27',
+    'a record pulled over all time holds from its own oldest task');
+  eq(M.assembleBook(books, [], accounts, T).rows.length, 1,
+    'and with no window named it is still the twelve months every existing caller expects');
+
+  // A RECORD READ BEFORE THE WINDOW WIDENED cannot answer the wider one, and must say so rather
+  // than drawing a short line as though the work had stopped.
+  const legacy = Object.assign({}, deep, { from: '2025-11-01', deepest: '2018-02-27',
+    rows: [M.packRow(M.normTask(recent, meta))], n: 1 });
+  const bMix = M.assembleBook([{ client: 'Reiss', markets: { GB: legacy } }], [], accounts, T, wAll);
+  eq(bMix.coverage[0].holds, '2025-11-01',
+    'a twelve-month record holds from ITS floor, not from the oldest task its pull happened to see');
+  const hMix = M.bookHealth(bMix.coverage, [{ client: 'Reiss', market: 'GB' }], T, wAll.from);
+  eq(hMix.shallow, 1, 'so an all-time read names the market it cannot yet reach back for');
+  eq(hMix.shallowFrom, '2025-11-01', '...and how far back it does reach');
+  eq(M.bookHealth(bAll.coverage, [{ client: 'Reiss', market: 'GB' }], T, wAll.from).shallow, 0,
+    'a market pulled over all time is not flagged');
+}
+
+// ---------------------------------------------------------------------------------------------
+// "44 OF 39 MARKETS READ" (Ray's screenshot, 1 Oct 2026)
+//
+// Both numbers were right and they answered different questions: `read` is every market the book
+// holds, while the roster is rebuilt from the live client master on every pull and carries only
+// the markets booking hours THIS cycle. A market whose cycle rolled over to zero with no block
+// leaves the roster while its history stays in the book — so the denominator is the UNION, and the
+// ones the roster no longer carries are counted and named rather than making the sentence absurd.
+// ---------------------------------------------------------------------------------------------
+console.log('── the read count can never exceed the total');
+{
+  const T = Date.parse('2026-10-01T00:00:00Z');
+  const cov = [
+    { client: 'Reiss', market: 'GB', at: T, n: 10, from: '2010-01-01', holds: '2018-02-27', full: true },
+    { client: 'Reiss', market: 'US', at: T, n: 5, from: '2010-01-01', holds: '2019-01-01', full: true },
+    { client: 'Schuh', market: 'DE', at: T, n: 2, from: '2010-01-01', holds: '2020-01-01', full: true },
+  ];
+  // the live client master carries only two of them this cycle
+  const roster = [{ client: 'Reiss', market: 'GB' }, { client: 'Reiss', market: 'US' }];
+  const h = M.bookHealth(cov, roster, T);
+  eq(h.read, 3, 'the book holds three markets');
+  eq(h.roster, 2, 'the live roster carries two');
+  eq(h.total, 3, 'so the total is the union — the read count can never be the larger number again');
+  ok(h.read <= h.total, 'which is the whole point: "44 of 39" is now arithmetically impossible');
+  eq(h.dropped, 1, 'and the market the roster no longer carries is counted');
+  ok(h.complete, 'a book holding every market in either list is complete');
+  const h2 = M.bookHealth(cov, roster.concat([{ client: 'YuMove', market: 'GB' }]), T);
+  eq(h2.total, 4, 'a market on the roster that has never been read still counts toward the total');
+  eq(h2.read, 3, '...and is absent from the read count, not counted as zero rows');
+  ok(!h2.complete, 'so the book is not complete');
+  eq(h2.dropped, 1, 'the dropped count is unaffected by markets not yet read');
+}
+
+// ---------------------------------------------------------------------------------------------
 // the worker's tmBookPull, lifted by name, against a stub MCP server
 // ---------------------------------------------------------------------------------------------
 console.log('── worker: tmBookPull (lifted) against a stub MCP');
@@ -996,9 +1102,17 @@ const envOf = (o) => Object.assign({ TM_MCP_URL: URL0 }, o);
   ok(kv.puts.indexOf('tmbookidx') >= 0, 'the index is written');
   const book = await kv.get('tmbook:Reiss', 'json');
   eq(Object.keys(book.markets).sort(), ['DE', 'GB'], 'both markets sit in one client record');
-  eq(book.markets.GB.n, 1, 'the out-of-window row was dropped on the way in');
-  eq(book.markets.GB.full, true, 'the GB pull reached past the window start');
-  eq(book.markets.DE.full, false, 'the DE pull did not, so it is marked partial');
+  // ALL TIME ON THE WAY IN (Ray, 1 Oct 2026). The GB fixture carries a 2024-11-21 task, which the
+  // twelve-month pull used to DISCARD at this exact line — `eq(book.markets.GB.n, 1)` is what this
+  // assertion said before, and it is why a 2025 floor could not be lifted by changing the page. The
+  // store now keeps everything the pull reached and the window is applied when the book is served.
+  eq(book.markets.GB.n, 2, 'the 2024 task is KEPT — the store no longer throws history away');
+  ok(book.markets.GB.from <= '2010-01-01', '...because the pull itself asks for all time');
+  eq(book.markets.GB.full, true, 'a pull the server did not fill reached the account’s first task');
+  eq(book.markets.DE.full, true, '...and so did the market that used to be marked partial, '
+    + 'because partial now means the pull hit its row limit, not that it stopped inside a window');
+  ok(calls.filter((c) => c.name === 'get_task_list_for_client').every((c) => c.args.limit >= 3042),
+    'every pull asks deep enough to reach the first task of the deepest market in the real book');
   const idx = await kv.get('tmbookidx', 'json');
   eq(Object.keys(idx.rot).map(Number).sort(), [155, 467], 'the rotation records what it read');
   eq(idx.roster.length, 2, 'the index keeps the roster the health line counts against');
@@ -1036,7 +1150,34 @@ server.close();
 // ---------------------------------------------------------------------------------------------
 console.log('── page wiring');
 const page = fs.readFileSync(PAGE, 'utf8');
-ok(page.indexOf("fetch('/api/taskmanager')") >= 0, 'the page reads the SCOPED api route, not a baked payload');
+ok(page.indexOf("fetch('/api/taskmanager?win=") >= 0,
+  'the page reads the SCOPED api route, not a baked payload — and names the window it wants on the '
+  + 'FIRST fetch, since the window is what the server reads rather than a filter applied afterwards');
+ok(/fcc-tm-win/.test(page), 'the window pick is remembered per device like every other reading preference');
+// the control's options are built from the page's own list, so the list is what gets asserted
+const WINLIST = (page.match(/var WINS = \[[^\]]+\]/) || [''])[0];
+["v: '12'", "v: '24'", "v: 'all'", "'12 months'", "'24 months'", "'All time'"].forEach((w) => {
+  ok(WINLIST.indexOf(w) >= 0, 'the window control offers ' + w);
+});
+ok(page.indexOf("searchParams.set('win'") >= 0, 'and a shared link carries the window it was read over');
+/* THE SOURCE LINE IS REDRAWN WHENEVER THE BOOK CHANGES, and deliberately not on every keystroke:
+   apply() runs as you type, and rebuilding that row mid-typing would replace the window control
+   under the cursor. The cost of leaving it out was a stale header — "⟳ Sync more" exists to move
+   "N of M markets read" and the number on screen never moved. refresh() is the one entry point. */
+ok(/function refresh\(\) \{ srcLine\(\); apply\(\); \}/.test(page),
+  'refresh() redraws the source line and the rows together');
+ok(!/function apply\(\)[\s\S]{0,2000}?srcLine\(\)/.test(page.slice(page.indexOf('function apply()'), page.indexOf('function apply()') + 2200)),
+  '...and apply() itself does not, so typing never rebuilds the control row');
+{
+  // syncMore's own body only — refresh()'s doc comment sits between the two and discusses apply()
+  const s0 = page.indexOf('function syncMore()');
+  const sync = page.slice(s0, page.indexOf('    step();', s0));
+  // (refresh() contains the string "apply()", so the test is that nothing calls apply() DIRECTLY)
+  ok(sync.indexOf('refresh()') >= 0 && !/(^|[^.\w])apply\(\)/.test(sync.replace(/refresh\(\)/g, '')),
+    'the sync goes through refresh(), so the sentence it exists to change actually changes');
+  ok(sync.indexOf("$('syncbtn')") < 0,
+    '...and never holds a reference to a button a re-render detaches — srcLine() owns its busy state');
+}
 ok(page.indexOf('window.FSTASKS') < 0, 'the dataset is never spliced into the page — scoping happens server-side');
 ok(page.indexOf('Sync more') >= 0, 'the owner can fill the book on demand rather than waiting for :15 / :45');
 ok(/has not been read yet/.test(page), 'an unread book reads as unread, not as an empty one');

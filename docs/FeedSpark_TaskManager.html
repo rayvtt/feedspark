@@ -45,6 +45,12 @@ window.addEventListener('load',restore);
   .hero p.sub{color:var(--ink-2);font-size:14.5px;max-width:1000px;margin:0 0 12px}
   .hero p.sub b{color:var(--ink)}
   .src{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 13px;box-shadow:var(--shadow)}
+  /* the window the book is read over — beside the dates it changes, never buried in a menu */
+  .winlab{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .winlab select{font:inherit;font-size:11.5px;font-weight:800;text-transform:none;letter-spacing:0;
+    color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 7px}
+  .winlab select:disabled{opacity:.55;cursor:progress}
   .src .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
   .src .dot.live{background:var(--good)}.src .dot.snap{background:var(--orange)}
   .src .grow{flex:1;min-width:180px}
@@ -1625,20 +1631,42 @@ window.addEventListener('load',restore);
       msg = '<b>No market has been read yet.</b> The automatic sync runs at :15 and :45 past the hour and fills the book a few markets at a time.';
     } else {
       cls = h.complete ? 'live' : 'snap';
-      msg = '<b>' + esc(D.from) + ' → ' + esc(D.to) + '</b> · <b>' + h.read + ' of ' + (h.total || h.read) + '</b> market'
-        + ((h.total || h.read) === 1 ? '' : 's') + ' read'
+      var tot = h.total || h.read;
+      msg = '<b>' + esc(D.from) + ' → ' + esc(D.to) + '</b>'
+        + (D.all ? ' <span class="mut">(all time)</span>' : '')
+        + ' · <b>' + h.read + ' of ' + tot + '</b> market' + (tot === 1 ? '' : 's') + ' read'
         + (h.staleHours ? ', oldest ' + ago(h.oldest) : '')
         + ' · <b>' + num(TASKS.length) + '</b> tasks · <b>' + num(TICKETS.length) + '</b> tickets'
-        + ' · <b>' + num(ACCOUNTS.length) + '</b> markets in the client master';
+        + ' · <b>' + num(ACCOUNTS.length) + '</b> market' + (ACCOUNTS.length === 1 ? '' : 's') + ' in the client master';
+      // Markets the client master no longer books hours for, whose history the book still holds —
+      // named rather than quietly inflating the read count past the total (Ray's "44 of 39").
+      if (h.dropped) msg += ' · <span class="mut" title="Their current cycle books no hours and they carry no retainer block, '
+        + 'so the live client master leaves them out — their past hours are still real and still counted here.">'
+        + h.dropped + ' no longer booking hours</span>';
+      // A market read before the window widened holds only its own span; it fills on its next turn.
+      if (h.shallow) msg += ' · <b style="color:var(--risk)" title="These markets were last read over a shorter window, '
+        + 'so this view does not yet reach back as far for them. The rotation re-reads every market about twice a day.">'
+        + h.shallow + ' not read this far back yet</b>';
       if (h.partial) msg += ' · <b style="color:var(--risk)">' + h.partial + ' partial</b>';
       if (st.state && st.state !== 'ok') msg += ' · <b style="color:var(--risk)">last sync ' + esc(st.state) + '</b>';
     }
     // with no credential there is nothing to sync — offering the button would only fail
-    var btn = (OWNER && st.state !== 'no_token') ? '<button class="btn sm" id="syncbtn" type="button">\u27F3 Sync more</button>' : '';
+    // the button's busy state belongs HERE, not on a node reference a re-render would detach:
+    // srcLine() now runs every time the book changes, which is exactly while a sync is in flight
+    var btn = (OWNER && st.state !== 'no_token')
+      ? '<button class="btn sm" id="syncbtn" type="button"' + (SYNCING ? ' disabled' : '') + '>\u27F3 '
+        + (SYNCING ? 'Syncing\u2026' : 'Sync more') + '</button>' : '';
+    var wsel = '<label class="winlab">Window <select id="winsel" class="sel sm"'
+      + (WINBUSY ? ' disabled' : '') + '>'
+      + WINS.map(function (w) {
+        return '<option value="' + w.v + '"' + (w.v === CWIN ? ' selected' : '') + '>' + w.label + '</option>';
+      }).join('') + '</select></label>';
     $('src').innerHTML = '<span class="dot ' + cls + '"></span><span class="grow">' + msg + '</span>'
+      + (h.read ? wsel : '')
       + (h.read ? '<button class="btn sm" id="covbtn" type="button">Coverage</button>' : '') + btn;
     if ($('covbtn')) $('covbtn').onclick = coverageDrawer;
     if ($('syncbtn')) $('syncbtn').onclick = syncMore;
+    if ($('winsel')) $('winsel').onchange = function () { winSet(this.value); };
   }
 
   function ago(ms) {
@@ -1652,26 +1680,71 @@ window.addEventListener('load',restore);
   // \u27F3 Sync more (owner): read another slice of the book now rather than waiting for :15/:45.
   // Bounded per call by the worker; this loops until the estate is covered or a pull fails, and
   // says where it has got to instead of spinning silently.
+  /* ---- the window the book is read over ----------------------------------------------------
+     Ray, 1 Oct 2026: "can you check if hours can be pulled from 'all time' not just from 2025?"
+
+     The twelve months were never the reports database's limit — they were ours. The store now holds
+     every task the pull reached (the MCP ignores from_date and answers newest-first, so asking for
+     a market's whole history costs the same one call), and this picks how much of it to read.
+
+     It is a SERVER read, not a filter on rows already in hand: all time is roughly five times the
+     book, and loading that on every visit to answer a question nobody asked would make the page
+     slower for everyone. So changing it refetches, and the pick is remembered PER DEVICE like every
+     other reading preference here — pick All time once and this screen keeps it. */
+  var WINS = [{ v: '12', label: '12 months' }, { v: '24', label: '24 months' }, { v: 'all', label: 'All time' }];
+  var CWIN = '12', WINBUSY = false;
+
+  function winSet(v) {
+    if (WINBUSY || v === CWIN) return;
+    var prev = CWIN;
+    CWIN = v; WINBUSY = true;
+    try { localStorage.setItem('fcc-tm-win', CWIN); } catch (e) {}
+    var sel = $('winsel'); if (sel) { sel.disabled = true; }
+    fetch('/api/taskmanager?win=' + encodeURIComponent(CWIN)).then(function (r) { return r.json(); })
+      .then(function (d) {
+        WINBUSY = false;
+        if (!d || !d.ok || !d.data) {
+          // never leave the page showing one window while its label claims another
+          CWIN = prev; try { localStorage.setItem('fcc-tm-win', CWIN); } catch (e) {}
+          toast((d && d.error) || 'The book could not be re-read');
+          srcLine(); return;
+        }
+        STATUS = d.status || {}; D = d.data; decode(d.data);
+        refresh();
+      }).catch(function (e) {
+        WINBUSY = false; CWIN = prev;
+        toast('Could not re-read the book — ' + ((e && e.message) || e));
+        srcLine();
+      });
+  }
+
   var SYNCING = false;
   function syncMore() {
     if (SYNCING) return;
     SYNCING = true;
-    var b = $('syncbtn');
+    srcLine();
     var step = function () {
-      if (b) { b.disabled = true; b.textContent = '\u27F3 Syncing…'; }
-      fetch('/api/taskmanager?sync=6').then(function (r) { return r.json(); }).then(function (d) {
-        if (!d || !d.ok) { toast((d && d.error) || 'Sync refused'); SYNCING = false; if (b) { b.disabled = false; b.textContent = '\u27F3 Sync more'; } return; }
+      fetch('/api/taskmanager?sync=6&win=' + encodeURIComponent(CWIN)).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.ok) { toast((d && d.error) || 'Sync refused'); SYNCING = false; srcLine(); return; }
         STATUS = d.status || {}; OWNER = !!d.owner;
         D = d.data; decode(d.data);
         var sy = d.synced || {}, h = D.health || {};
         if (sy.state && sy.state !== 'ok') { toast('Sync ' + sy.state + ((sy.error ? ' — ' + sy.error : ''))); SYNCING = false; }
-        else if (h.read < (h.total || 0)) { apply(); setTimeout(step, 250); return; }
+        else if (h.read < (h.total || 0)) { refresh(); setTimeout(step, 250); return; }
         else { toast('The whole book is read — ' + h.read + ' markets'); SYNCING = false; }
-        apply();
-      }).catch(function (e) { toast('Sync failed — ' + ((e && e.message) || e)); SYNCING = false; apply(); });
+        refresh();
+      }).catch(function (e) { toast('Sync failed — ' + ((e && e.message) || e)); SYNCING = false; refresh(); });
     };
     step();
   }
+
+  /* THE BOOK CHANGED — redraw the rows AND the sentence above them.
+     apply() is called on every keystroke in the search box, so it deliberately does NOT touch the
+     source line (rebuilding that row mid-typing would replace the window control under the cursor).
+     The cost of that was a stale header: "⟳ Sync more" exists to move "N of M markets read" and the
+     count on screen never moved, and a window change would have left the old dates over new rows.
+     So every path that replaces D calls this instead of apply(). */
+  function refresh() { srcLine(); apply(); }
 
   /* =============================================================================================
      TAGS — the judgement layer (Ray, 17 Sep 2026)
@@ -4293,10 +4366,16 @@ window.addEventListener('load',restore);
     add('Rows in this export', n);
     add('Search', Q.raw.trim() || '(no search — the whole book in scope)');
     if (PQT.length) add('Filter on this tab', PQ);
-    add('Window', (D.from || '?') + ' to ' + (D.to || '?') + ' (' + (D.months || 12) + ' months)');
+    add('Window', (D.from || '?') + ' to ' + (D.to || '?') + ' (' + (D.all ? 'all time' : (D.months || 12) + ' months') + ')');
+    if (h.shallow) add('Not read this far back yet', h.shallow + ' market' + (h.shallow === 1 ? '' : 's')
+      + ' were last read over a shorter window, so this export does not reach as far back for them'
+      + (h.shallowFrom ? ' (the shallowest starts ' + h.shallowFrom + ')' : '') + '.');
     if (tab === 'tickets') add('Ticket window', 'Tickets are windowed by LAST ACTIVITY, not by when they opened.');
     add('Book read', (h.read || 0) + ' of ' + (h.total || 0) + ' markets'
       + (h.complete ? '' : ' — the sync fills the book a few markets at a time, so what has not been read is ABSENT, not zero'));
+    if (h.dropped) add('No longer booking hours', h.dropped + ' of those market' + (h.dropped === 1 ? '' : 's')
+      + ' book no hours this cycle and carry no retainer block, so the live client master leaves them out. '
+      + 'Their past hours are real and are counted here.');
     if (h.staleHours) add('Oldest read', Math.round(h.staleHours) + ' hours ago');
     if (D.scoped) add('Scope', 'This export carries only the clients this signin is allowed to see.');
     if (tab === 'tasks') {
@@ -4722,14 +4801,23 @@ window.addEventListener('load',restore);
       + 'A market <b>not yet read</b> is simply absent from every number on this page rather than counted as zero. '
       + 'A market marked <b>partial</b> is one whose pull did not reach the start of the window: the database returns rows newest-first with a row cap and ignores the date argument, '
       + 'so a capped pull would report a part-year as a whole one. Those contribute the rows they have and say so here.</p>'
+      + '<p style="font-size:13.5px;font-weight:700;color:var(--ink-2);margin:0 0 12px">'
+      + 'Each market is pulled over <b>all time</b> — the database ignores the date argument, so one call brings back as much '
+      + 'of a market\u2019s history as the row cap reaches — and the <b>Window</b> control decides how much of that this page reads. '
+      + 'A market last read before the window widened holds only its own span until its next turn in the rotation, '
+      + 'which is the <b>reaches back to</b> column below.</p>'
       + '<div class="dr-stats"><div class="s"><div class="n">' + (h.read || 0) + ' / ' + (h.total || 0) + '</div><div class="l">Markets read</div></div>'
       + '<div class="s"><div class="n">' + (h.partial || 0) + '</div><div class="l">Partial</div></div>'
+      + (h.shallow ? '<div class="s"><div class="n">' + h.shallow + '</div><div class="l">Shorter window</div></div>' : '')
+      + (h.dropped ? '<div class="s"><div class="n">' + h.dropped + '</div><div class="l">Not booking now</div></div>' : '')
       + '<div class="s"><div class="n">' + esc(ago(h.newest)) + '</div><div class="l">Newest read</div></div>'
       + '<div class="s"><div class="n">' + esc(ago(h.oldest)) + '</div><div class="l">Oldest read</div></div></div>'
-      + '<table class="st"><thead><tr><th>Market</th><th class="num">Rows</th><th class="num">Pulled</th><th>Reaches back to</th><th>Read</th><th>State</th></tr></thead><tbody>'
+      + '<table class="st"><thead><tr><th>Market</th><th class="num">In this window</th><th class="num">Held</th><th class="num">Pulled</th><th>Holds from</th><th>Oldest task seen</th><th>Read</th><th>State</th></tr></thead><tbody>'
       + cov.map(function (c) {
         return '<tr><td class="b">' + esc(c.client + ' ' + c.market) + '</td><td class="num">' + num(c.n)
-          + '</td><td class="num">' + num(c.pulled) + '</td><td>' + esc(c.deepest || '—') + '</td><td>' + esc(ago(c.at))
+          + '</td><td class="num">' + num(c.held == null ? c.n : c.held)
+          + '</td><td class="num">' + num(c.pulled) + '</td><td>' + esc(c.holds || c.from || '—')
+          + '</td><td>' + esc(c.deepest || '—') + '</td><td>' + esc(ago(c.at))
           + '</td><td><span class="st-p ' + (c.full ? 'done' : 'open') + '">' + (c.full ? 'full' : 'partial')
           + (c.capped ? ' · capped' : '') + '</span></td></tr>';
       }).join('') + '</tbody></table>';
@@ -4929,6 +5017,8 @@ window.addEventListener('load',restore);
       if (CDIM2) u.searchParams.set('dim2', CDIM2); else u.searchParams.delete('dim2');
       if (CDIM3) u.searchParams.set('dim3', CDIM3); else u.searchParams.delete('dim3');
       if (COUT) u.searchParams.set('out', COUT); else u.searchParams.delete('out');
+      // the window is part of what the link shows — a reading over all time is not the same reading
+      if (CWIN !== '12') u.searchParams.set('win', CWIN); else u.searchParams.delete('win');
       if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
       copy(u.toString(), 'Link copied — it reopens this exact view');
     };
@@ -4974,7 +5064,16 @@ window.addEventListener('load',restore);
     $('pbody').innerHTML = '<div class="empty">The reports snapshot could not be loaded, so this page has nothing to show.<br>' + esc(msg) + '</div>';
   }
 
-  fetch('/api/taskmanager').then(function (r) { return r.json(); }).then(function (d) {
+  // The window is decided BEFORE the first fetch — it is what the server reads, not a filter
+  // afterwards — so a link naming one, or this device's own pick, opens on it rather than loading
+  // twelve months and then re-loading. ?win= beats the remembered pick, like every control above.
+  (function () {
+    var w = null;
+    try { w = new URL(location.href).searchParams.get('win'); } catch (e) {}
+    if (w == null) { try { w = localStorage.getItem('fcc-tm-win'); } catch (e) {} }
+    if (w && WINS.some(function (x) { return x.v === w; })) CWIN = w;
+  })();
+  fetch('/api/taskmanager?win=' + encodeURIComponent(CWIN)).then(function (r) { return r.json(); }).then(function (d) {
     if (!d || !d.ok || !d.data) { fail((d && d.error) || 'The reports book is not available.'); return; }
     boot(d.data, d);
   }).catch(function (e) { fail('Could not reach /api/taskmanager — ' + ((e && e.message) || e)); });
