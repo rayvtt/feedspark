@@ -218,6 +218,52 @@ const CAL_SEED_FILES = {
   'reiss_marketing_planner.webp': { body: CALSEED_REISS, mime: 'image/webp' },
 };
 
+// feedspark.com mockup footage (docs/website/) -- the /website page's figures: the Command Center
+// filmed on the synthetic demo catalogue by tools/website_media.js (no client data, guarded at
+// capture). Bundled as Data modules and served at /website/<file>, which is where the page's
+// relative `website/<file>` resolves both here and from docs/ on disk. MP4 is answered with HTTP
+// Range (206) because Safari will not play a video from a server that ignores it.
+import WEB_CAT_LOOP from "../../../docs/website/catalogue-loop.mp4";
+import WEB_CAT_LOOP_P from "../../../docs/website/catalogue-loop.webp";
+import WEB_AIVIS_LOOP from "../../../docs/website/aivis-loop.mp4";
+import WEB_AIVIS_LOOP_P from "../../../docs/website/aivis-loop.webp";
+import WEB_ROAS_LOOP from "../../../docs/website/roas-loop.mp4";
+import WEB_ROAS_LOOP_P from "../../../docs/website/roas-loop.webp";
+import WEB_CAT_DASH from "../../../docs/website/catalogue-dashboard.webp";
+import WEB_CAT_STAGES from "../../../docs/website/catalogue-stages.webp";
+import WEB_STOCK from "../../../docs/website/stock-instock.webp";
+import WEB_RULES from "../../../docs/website/rules-findings.webp";
+const WEBSITE_MEDIA = {
+  'catalogue-loop.mp4': { body: WEB_CAT_LOOP, mime: 'video/mp4' },
+  'catalogue-loop.webp': { body: WEB_CAT_LOOP_P, mime: 'image/webp' },
+  'aivis-loop.mp4': { body: WEB_AIVIS_LOOP, mime: 'video/mp4' },
+  'aivis-loop.webp': { body: WEB_AIVIS_LOOP_P, mime: 'image/webp' },
+  'roas-loop.mp4': { body: WEB_ROAS_LOOP, mime: 'video/mp4' },
+  'roas-loop.webp': { body: WEB_ROAS_LOOP_P, mime: 'image/webp' },
+  'catalogue-dashboard.webp': { body: WEB_CAT_DASH, mime: 'image/webp' },
+  'catalogue-stages.webp': { body: WEB_CAT_STAGES, mime: 'image/webp' },
+  'stock-instock.webp': { body: WEB_STOCK, mime: 'image/webp' },
+  'rules-findings.webp': { body: WEB_RULES, mime: 'image/webp' },
+};
+// one bundled file, whole or by byte range (a single range: bytes=a-b, a-, -n). Anything else in
+// the Range header is answered whole, which the spec allows; an unsatisfiable range is a 416.
+function mediaResponse(request, f) {
+  const buf = f.body, size = buf.byteLength, head = request.method === 'HEAD';
+  const h = { 'content-type': f.mime, 'cache-control': 'public, max-age=86400', 'accept-ranges': 'bytes' };
+  const r = /^bytes=(\d*)-(\d*)$/.exec(String(request.headers.get('range') || '').trim());
+  if (r && (r[1] !== '' || r[2] !== '')) {
+    let start, end;
+    if (r[1] === '') { start = Math.max(0, size - Number(r[2])); end = size - 1; }
+    else { start = Number(r[1]); end = r[2] === '' ? size - 1 : Math.min(Number(r[2]), size - 1); }
+    if (!size || start >= size || start > end) {
+      return new Response(null, { status: 416, headers: { ...h, 'content-range': 'bytes */' + size } });
+    }
+    return new Response(head ? null : buf.slice(start, end + 1), { status: 206,
+      headers: { ...h, 'content-range': 'bytes ' + start + '-' + end + '/' + size, 'content-length': String(end - start + 1) } });
+  }
+  return new Response(head ? null : buf, { headers: { ...h, 'content-length': String(size) } });
+}
+
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
 /* Git-bundled materials. Adding one costs its full size on every deploy, so this list
@@ -1610,6 +1656,13 @@ async function route(request, env, ctx) {
         if (added) { try { await env.EDITS.put(LK, JSON.stringify(learned)); } catch (e) {} }
         return json({ ok: true, lang, map, added, missing: miss.filter((k) => !map[k]), ai: 'on' });
       }
+    }
+
+    // the /website mockup's footage (see WEBSITE_MEDIA above)
+    if (path.startsWith('/website/') && (request.method === 'GET' || request.method === 'HEAD')) {
+      const f = WEBSITE_MEDIA[path.slice('/website/'.length)];
+      if (!f) return json({ error: 'not_found' }, 404);
+      return mediaResponse(request, f);
     }
 
     // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
