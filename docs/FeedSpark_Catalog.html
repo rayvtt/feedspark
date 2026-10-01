@@ -817,7 +817,7 @@ window.addEventListener('load',restore);
     { k: 'sale', l: 'Sale price', w: 118, num: 1, s: 'sale' },
     { k: 'avail', l: 'Availability', w: 116, s: 'avail' },
     { k: 'lin', l: 'Lineage', w: 150, s: 'chg', tip: 'One bar per attribute — grey kept · green populated · orange optimised · violet enriched · red dropped · hatched = structured' },
-    { k: 'comp', l: 'Completeness', w: 136, num: 1, s: 'comp', tip: 'What Google asks of this product that is filled — the bar is the feed, the tick is the master' },
+    { k: 'comp', l: 'Completeness', w: 136, num: 1, s: 'comp', tip: 'What Google asks of this product, filled in Google’s format (a value not in it counts half) — the bar is the feed, the tick is the master' },
     { k: 'opti', l: 'FeedSpark', w: 120, s: 'opti', tip: 'FeedSpark’s own stamps on the product: Title · Category · Keywords · Description · Image · Identifiers' },
     { k: 'roas', l: 'ROAS · category', w: 142, num: 1, s: 'roas', tip: 'Google Ads ROAS of this product’s own category, matched on its full path (30 days) — the segment’s, not the product’s. A dashed box = re-typed since the read, not in the tree yet' },
     // Google Ads, THIS product's own, last 7 days — FeedHero's Ads Traffic report matched on the product id (off by default:
@@ -2274,12 +2274,12 @@ window.addEventListener('load',restore);
     var s = S.sum, before = s.cb / s.n, after = s.ca / s.n, dl = after - before;
     var req = [], ai = [];
     E.ATTRS.forEach(function (a, i) { if (a.k === 'id' || a.k === 'identifier_exists') return; if (a.tier === 'req') req.push(i); if (a.tier === 'ai') ai.push(i); });
-    var fixed = 0, still = 0, aiB = {}, aiA = {};
+    var fixed = 0, still = 0, refmt = 0, aiB = {}, aiA = {};
     for (var i = 0; i < S.codes.length; i++) {
       var c = S.codes[i]; if (!c || !S.comp[i] || S.comp[i][0] < 0) continue;
-      var f = false, m = false;
-      for (var j = 0; j < req.length; j++) { var ch = c.charAt(req[j]); if ('lpe'.indexOf(ch) >= 0) f = true; else if (ch === 'm' || ch === 'd') m = true; }
-      if (f) fixed++; if (m) still++;
+      var f = false, m = false, sf = false;
+      for (var j = 0; j < req.length; j++) { var ch = c.charAt(req[j]); if ('lpe'.indexOf(ch) >= 0) f = true; else if (ch === 'm' || ch === 'd') m = true; else if (ch === 's') sf = true; }
+      if (f) fixed++; if (m) still++; if (sf) refmt++;
       for (var q = 0; q < ai.length; q++) { var x = c.charAt(ai[q]); if ('ksodg'.indexOf(x) >= 0) aiB[q] = 1; if ('klpsoeg'.indexOf(x) >= 0) aiA[q] = 1; }
     }
     var col = function (v) { var b = auditBand(v); return b ? 'color:var(--band-' + b + ')' : ''; };
@@ -2288,12 +2288,13 @@ window.addEventListener('load',restore);
       + '<span class="d' + (dl < 0 ? ' dn' : '') + '">' + (dl >= 0 ? '+' : '') + (Math.round(dl * 10) / 10) + ' points</span></div>';
     h += kvl([
       { k: 'Required fields filled', v: n0(fixed), s: pct1(fixed, s.n), tip: 'Google-required fields (title, description, link, image, availability, price) missing in the master and present in the feed' },
+      { k: 'Required values put into Google’s format', v: n0(refmt), s: pct1(refmt, s.n), tip: 'Products whose master held a required value Google would not take as it stood (e.g. NOT_AVAILABLE, a price with no currency) — sent in Google’s format' },
       { k: 'Values added', v: n0(s.pop + s.enr), tip: 'Attribute values the master did not carry, populated or enriched by FeedSpark' },
       { k: 'Values rewritten', v: n0(s.opt), tip: 'Values the master carried, rewritten or put into Google’s format' },
       { k: 'AI-shopping fields carried', v: Object.keys(aiA).length + ' of ' + ai.length, s: 'master ' + Object.keys(aiB).length, tip: 'Google’s conversational attributes — question & answer, document link, related product, item group title, variant option, popularity rank' },
       { k: 'Still missing a required field', v: n0(still), s: pct1(still, s.n), tip: 'Still to fix — a required field neither the master nor the feed carries' }
     ]);
-    h += '<div class="cfoot"><span>Completeness out of 100, weighted as the Golden Record · <b>' + n0(s.n) + '</b> products traced</span></div>';
+    h += '<div class="cfoot"><span>Google-ready out of 100, weighted as the Golden Record — a value not in Google’s format counts half · <b>' + n0(s.n) + '</b> products traced</span></div>';
     $('fix-body').innerHTML = h;
   }
   // 12 · WHERE THE AD BUDGET GOES — the last 30 days of Google Ads spend split by what each top-level category returned:
@@ -2759,11 +2760,12 @@ window.addEventListener('load',restore);
   function compAt(s) {
     var I = S.insp, by = {}; I.lin.forEach(function (r) { by[r.k] = r; });
     var tot = 0, got = 0;
+    // the same credit the engine scores with: in Google's format = full, present but not = half, absent = nothing
     I.cm.list.forEach(function (x) {
-      var filled;
-      if (x.k === 'gtin / mpn') filled = ['gtin', 'mpn'].some(function (k) { return by[k] && E.valueAt(by[k], s) != null && E.valueAt(by[k], s) !== ''; });
-      else { var r = by[x.k]; var v = r ? E.valueAt(r, s) : null; filled = v != null && v !== '' && !(Array.isArray(v) && !v.length); }
-      tot += x.w; if (filled) got += x.w;
+      var c;
+      if (x.k === 'gtin / mpn') c = Math.max(by.gtin ? E.credit('gtin', E.valueAt(by.gtin, s)) : 0, by.mpn ? E.credit('mpn', E.valueAt(by.mpn, s)) : 0);
+      else { var r = by[x.k]; c = r ? E.credit(x.k, E.valueAt(r, s)) : 0; }
+      tot += x.w; got += x.w * c;
     });
     return tot ? Math.round(got / tot * 100) : 0;
   }
@@ -2834,7 +2836,7 @@ window.addEventListener('load',restore);
     var ca = joined ? compAt(s) : I.cm.after, cb = joined ? I.cm.before : null;
     var aiAt = 0; lin.forEach(function (r) { if (E.AI_SIX.indexOf(r.k) >= 0) { var v = joined ? E.valueAt(r, s) : r.o; if (v != null && v !== '' && !(Array.isArray(v) && !v.length)) aiAt++; } });
     var holdAt = joined ? sc.hold[s] : lin.filter(function (r) { return r.o; }).length;
-    h += '<div class="sc3"><div title="What Google asks of this product that is filled — the tick is the master"><div class="k">Completeness</div><div class="v">' + (cb != null ? cb + '<small> → </small>' : '') + ca + '</div><div class="cb"><i class="b-' + auditBand(ca) + '" style="width:' + ca + '%"></i>' + (cb != null ? '<em style="left:calc(' + cb + '% - 1px)"></em>' : '') + '</div></div>' +
+    h += '<div class="sc3"><div title="What Google asks of this product, filled in Google’s format (a value not in it counts half) — the tick is the master"><div class="k">Completeness</div><div class="v">' + (cb != null ? cb + '<small> → </small>' : '') + ca + '</div><div class="cb"><i class="b-' + auditBand(ca) + '" style="width:' + ca + '%"></i>' + (cb != null ? '<em style="left:calc(' + cb + '% - 1px)"></em>' : '') + '</div></div>' +
       '<div><div class="k">Fields</div><div class="v">' + (joined ? sc.hold[0] + '<small> → </small>' : '') + holdAt + '</div></div><div title="Google’s conversational attributes"><div class="k">AI-ready</div><div class="v">' + aiAt + '<small> / 6</small></div></div></div>';
     if (!joined) h += '<div class="mute" style="font-size:12px;font-weight:700;margin:6px 0">' + esc(S.m.st === 'ready' ? 'No master row for this product — the feed as sent:' : 'Waiting for the master feed — the feed as sent:') + '</div>';
     // fields, grouped the way Google's spec groups them

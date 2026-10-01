@@ -11504,6 +11504,9 @@
     {"name": "Stock: the page twin of heldBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function hbBook(markets) {", "pr": 0},
     {"name": "Stock: the panel shows what was measured beside the rule's own count", "file": "docs/FeedSpark_Stock.html", "pattern": "var meas = mh && mh.state === 'ok' ?", "pr": 0},
     {"name": "Stock: the held-back download's message reads the products' own line (no assumed 75%)", "file": "docs/FeedSpark_Stock.html", "pattern": "return h.rc != null && h.rc < ln.x;", "pr": 0},
-    {"name": "Stock: a scenario or period change redraws the market rows", "file": "docs/FeedSpark_Stock.html", "pattern": "svSave(); renderKpis(); renderAv(); renderSv();", "pr": 0}
+    {"name": "Stock: a scenario or period change redraws the market rows", "file": "docs/FeedSpark_Stock.html", "pattern": "svSave(); renderKpis(); renderAv(); renderSv();", "pr": 0},
+    {"name": "Catalogue: completeness is Google-ready as sent — a value not in Google's format counts half", "file": "docs/catalog_engine.js", "pattern": "return spec(k, v) === 'warn' ? 0.5 : 1;", "pr": 0},
+    {"name": "Catalogue: the inspector's stage scrubber scores with the same credit", "file": "docs/FeedSpark_Catalog.html", "pattern": "c = r ? E.credit(x.k, E.valueAt(r, s)) : 0;", "pr": 0},
+    {"name": "Catalogue: Google takes http or https for links and images", "file": "docs/catalog_engine.js", "pattern": "case 'image_link': return /^https?:", "pr": 0}
   ]
 }

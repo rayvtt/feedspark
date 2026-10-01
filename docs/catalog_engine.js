@@ -599,14 +599,15 @@
       case 'size_type': return /^(regular|petite|maternity|big|tall|plus)$/.test(lt) ? 'ok' : 'warn';
       case 'size_system': return /^(au|br|cn|de|eu|fr|it|jp|mex|uk|us)$/.test(lt) ? 'ok' : 'warn';
       case 'google_product_category': return (/^\d+$/.test(t) || /^[A-Za-z][^{}<]*$/.test(t)) ? 'ok' : 'warn';
-      case 'link': case 'canonical_link': case 'image_link': return /^https:\/\//i.test(t) ? 'ok' : 'warn';
+      // Google takes http OR https for a link and an image (Feed Lab dropped its https-only finding for the same reason)
+      case 'link': case 'canonical_link': case 'image_link': return /^https?:\/\//i.test(t) ? 'ok' : 'warn';
       case 'title': return (t.length >= 1 && t.length <= 150 && (t !== t.toUpperCase() || !/[A-Z]/.test(t))) ? 'ok' : 'warn';
       case 'short_title': return t.length <= 65 ? 'ok' : 'warn';
       case 'description': return (/<[a-z][^>]*>/i.test(decode(Array.isArray(v) ? v[0] : v)) || t.length > 5000) ? 'warn' : 'ok';
       case 'color': return (/[()\[\]{}]/.test(t) || t.split('/').length > 3 || /^[A-Z]{2,}$/.test(t)) ? 'warn' : 'ok';
       case 'product_type': return t.length <= 750 ? 'ok' : 'warn';
       case 'product_highlight': return (Array.isArray(v) ? v : [v]).every(function (x) { return plain(x).length <= 150; }) ? 'ok' : 'warn';
-      case 'additional_image_link': return (Array.isArray(v) ? v : [v]).every(function (x) { return /^https:\/\//i.test(plain(x)); }) ? 'ok' : 'warn';
+      case 'additional_image_link': return (Array.isArray(v) ? v : [v]).every(function (x) { return /^https?:\/\//i.test(plain(x)); }) ? 'ok' : 'warn';
       default: return 'ok';
     }
   }
@@ -946,6 +947,14 @@
   // apparel attributes only count on apparel — a pet supplement is never marked down for a
   // missing size — and gtin/mpn count once, as the identifier.
   var APPAREL = /\b(apparel|clothing|clothes|shoes|footwear|dress|shirt|jacket|coat|jumper|knitwear|trousers|jeans|skirt|lingerie|swimwear)\b/i;
+  // COMPLETENESS, GOOGLE-READY AS SENT (Ray, 30 Sep 2026, on the master scoring 83: "i think these scoreding of
+  // masterfeed is too generous across the board"): a field used to score in FULL the moment the master held it in
+  // ANY form — "NOT_AVAILABLE", a price with no currency, "womens", HTML in a description, a 200-character title — none of
+  // which Google takes as it stands; FeedSpark's restructuring was being credited to the master. A value now scores
+  // what Google would make of it AS IS: in Google's format = full weight, present but not in Google's format = HALF
+  // (it is there, it needs work before it can be sent), absent or only buried in another column's text = nothing.
+  // The SAME rule scores the feed, so the two numbers stay comparable and the gap between them is the work done.
+  function credit(k, v) { if (!has(v) || (Array.isArray(v) && !v.length)) return 0; return spec(k, v) === 'warn' ? 0.5 : 1; }
   function completeness(lin, p) {
     var by = {}; lin.forEach(function (r) { by[r.k] = r; });
     // apparel is read off the category, or a gender / age the feed states — never off a size
@@ -955,14 +964,16 @@
       ['brand', 2], ['@id', 2], ['google_product_category', 1], ['product_type', 1], ['additional_image_link', 1],
       ['product_highlight', 1], ['product_detail', 1], ['material', 1]];
     if (appar) W = W.concat([['color', 2], ['size', 2], ['gender', 2], ['age_group', 2], ['pattern', 1]]);
+    // the master's value is the one it held (r.m) — only when it held it as a field of its own (r.ex)
+    function mv(r) { return r && r.ex ? r.m : null; }
     var tot = 0, b = 0, a = 0, list = [];
     W.forEach(function (w) {
       var before, after;
       if (w[0] === '@id') {
-        before = ['gtin', 'mpn'].some(function (k) { return by[k] && by[k].ex; });
-        after = ['gtin', 'mpn'].some(function (k) { return by[k] && has(by[k].o); });
-      } else { var r = by[w[0]] || {}; before = !!r.ex; after = has(r.o); }
-      tot += w[1]; if (before) b += w[1]; if (after) a += w[1];
+        before = Math.max.apply(null, ['gtin', 'mpn'].map(function (k) { return credit(k, mv(by[k])); }));
+        after = Math.max.apply(null, ['gtin', 'mpn'].map(function (k) { return by[k] ? credit(k, by[k].o) : 0; }));
+      } else { var r = by[w[0]]; before = credit(w[0], mv(r)); after = r ? credit(w[0], r.o) : 0; }
+      tot += w[1]; b += w[1] * before; a += w[1] * after;
       list.push({ k: w[0] === '@id' ? 'gtin / mpn' : w[0], w: w[1], before: before, after: after });
     });
     return { before: tot ? Math.round(b / tot * 100) : 0, after: tot ? Math.round(a / tot * 100) : 0, apparel: appar, list: list };
@@ -1166,7 +1177,7 @@
     VERSION: VERSION, ATTRS: ATTRS, ATTR: ATTR, GROUPS: GROUPS, DNA: DNA, STATUS: STATUS, STATUS_LABEL: STATUS_LABEL, STAGES: STAGES,
     ALIAS: ALIAS, OPTI_KEYS: OPTI_KEYS,
     decode: decode, plain: plain, hkey: hkey, opti: opti, outPlan: outPlan, outRow: outRow, outRecord: outRecord, nestedText: nestedText,
-    facts: facts, completeness: completeness, aiCount: aiCount, AI_SIX: AI_SIX, depthOf: depthOf, leafOf: leafOf, money: money, norm: norm, urls: urls,
+    facts: facts, completeness: completeness, credit: credit, aiCount: aiCount, AI_SIX: AI_SIX, depthOf: depthOf, leafOf: leafOf, money: money, norm: norm, urls: urls,
     code: code, codes: codes, pathKey: pathKey,
     isOverlay: isOverlay, overlaySource: overlaySource, plan: plan, idKey: idKey, detectJoin: detectJoin, masterCells: masterCells,
     cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,

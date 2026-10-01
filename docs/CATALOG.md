@@ -317,3 +317,35 @@ must not close it. Each filterable column is 18px wider so the ▾ never pushes 
 
 Harness: the column-filter block in `tools/check_catalog.js`. The value counts are checked against an independent
 count, a filter against the rows it leaves, and a range combined with text.
+
+## Completeness is Google-ready as sent (30 Sep 2026)
+
+Ray: *"i think these scoreding of masterfeed is too generous across the board"*.
+
+He was right. A field scored in full the moment the master held it **in any form**: "NOT_AVAILABLE", a price
+with no currency, "womens" as a gender, HTML in a description. Google takes none of those as they stand, so
+FeedSpark's restructuring was being credited to the master.
+
+A value now scores what Google would make of it **as is** (`E.credit`):
+
+- in Google's format = full weight
+- present but not in Google's format = **half** (it is there, but needs work before it can be sent)
+- absent, or only buried in another column's text = nothing
+
+The **same rule scores the feed**, so the two numbers stay comparable and the gap between them is the work done.
+The inspector's stage scrubber uses the same credit.
+
+**Superdry GB**, measured on the real files of 30 Sep 2026 (first 3,000 products):
+
+| | Before | After |
+|---|---|---|
+| Master | 76 | 63 |
+| Feed | 95 | 95 |
+
+The master's points went on HTML descriptions, prices without a currency, all-caps colours and "womens".
+
+**Fixed alongside:** the format check required `https://` for a link and an image, but Google accepts `http` or
+`https` (Feed Lab dropped the same finding). It no longer flags them.
+
+The procurement card **Before and after FeedSpark** gains a row, *Required values put into Google's format*, and
+its footer now says how the score is read.

@@ -447,6 +447,22 @@ t('three kinds: values, a number range, text for near-unique columns', /var CF_T
 t('every column filter is a chip with its own ✕, and the export/brief line names it', /data-cfx="' \+ k \+ '"/.test(PG) && /Object\.keys\(S\.cf \|\| \{\}\)\.forEach\(function \(k\) \{ parts\.push\(cfLabel\(k\)\); \}\);/.test(PG));
 t('the pop-up follows its ▾ on scroll rather than closing', /\$\('gw'\)\.addEventListener\('scroll', cfPlace/.test(PG));
 t('column filters reset with the market', /S\.facet = null; S\.cf = \{\};/.test(PG));
+console.log('· completeness is Google-ready AS SENT (a master holding a value in the wrong form is not ready)');
+{
+  // Superdry GB's master shapes (30 Sep 2026): NOT_AVAILABLE, a price with no currency, "womens", HTML in the description
+  t('a value in Google\'s format scores in full', E.credit('availability', 'in stock') === 1 && E.credit('price', '24.99 GBP') === 1 && E.credit('gender', 'female') === 1);
+  t('a value present but NOT in Google\'s format scores half', E.credit('availability', 'available') === 0.5 && E.credit('availability', 'NOT_AVAILABLE') === 0.5 && E.credit('price', '24.99') === 0.5 && E.credit('gender', 'womens') === 0.5 && E.credit('description', '<ul><li>Relaxed fit</li></ul>') === 0.5);
+  t('an absent value scores nothing', E.credit('title', '') === 0 && E.credit('additional_image_link', []) === 0 && E.credit('title', null) === 0);
+  t('Google takes http as well as https for a link and an image', E.credit('image_link', 'http://img.example/a.jpg') === 1 && E.credit('link', 'http://shop.example/p') === 1 && E.credit('additional_image_link', ['http://img.example/b.jpg']) === 1 && E.credit('image_link', 'img.example/a.jpg') === 0.5);
+  // the master of a product whose feed was put into Google's format reads LOWER than when mere presence counted
+  const fmtRow = { k: 'availability', ex: true, m: 'available', o: 'in stock' }, prRow = { k: 'price', ex: true, m: '24.99', o: '24.99 GBP' };
+  const cmx = E.completeness([fmtRow, prRow], { f: {} });
+  const a2 = cmx.list.filter((x) => x.k === 'availability')[0], p2 = cmx.list.filter((x) => x.k === 'price')[0];
+  t('a master value put into Google\'s format by FeedSpark counts half before, full after', a2.before === 0.5 && a2.after === 1 && p2.before === 0.5 && p2.after === 1);
+  t('a value buried in another column (not a field of its own) is not credited to the master', E.completeness([{ k: 'material', ex: false, m: '', o: 'cotton' }], { f: {} }).list.filter((x) => x.k === 'material')[0].before === 0);
+  t('the inspector\'s stage scrubber scores with the SAME credit', /c = r \? E\.credit\(x\.k, E\.valueAt\(r, s\)\) : 0/.test(PG));
+  t('the card says how the score is read', /a value not in Google’s format counts half/.test(PG));
+}
 console.log('· the commercial view (a buyer choosing between feed vendors)');
 {
   const lift = (name) => { const i = PG.indexOf('function ' + name + '('); let d = 0, j = PG.indexOf('{', i); for (; j < PG.length; j++) { if (PG[j] === '{') d++; else if (PG[j] === '}' && !--d) break; } return PG.slice(i, j + 1); };
