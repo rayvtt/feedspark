@@ -706,6 +706,119 @@ master-stock agent re-reads every market's census on its next run, whether or no
 Superdry's document map on GB moved by one type each way: the skis are their own unmapped type, and a women's
 low-top trainer type joined *trainers · Female* (§3j).
 
+## 3l. Stock levers — BAU ↔ SALE (`/stock`)
+
+Ray, 5 Oct 2026: *"summarise a stock management dashboard for Superdry (specifically) eahc of those markets have got
+quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at 35%) - 2. Stock unit exclusion
+for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated, follow the mapping above) -
+build an facilitor interface to action BAU vs. SALE perido"*.
+
+**What a lever is.** A lever is a stock control a brand moves between business as usual and a sale period. There are
+three (`docs/stocklevers_engine.js › LEVERS`):
+- **Range completion** — the line a style is held back under (a %, inside the brand's band).
+- **Stock unit exclusion** — a minimum of units per size, scoped to a range (Superdry's Everest), or N/A.
+- **Hero sizes** — hero-size protection, on or off.
+
+**The FCC changes no FeedHero rule.** The rule report is read-only, so the card is a FACILITATOR. It:
+- reads what each market runs today off its own rules;
+- holds the brand's BAU and SALE value for each lever, and a market's own where it differs;
+- plans the sale periods;
+- turns each switch into the exact list of rules to change, in which markets — to brief, to copy and to mark done.
+
+The whole team sees which markets are in which mode.
+
+**What each market runs** (`reading`), on the Google Shopping side only (a Meta or affiliate rule, or a label that only
+names a level, is not the lever):
+- **Range completion.** Every rule whose name names range completion, plus the range mechanism. The rules engine files
+  most of these under *availability* (the field they write), so the name is what finds them. The value read is, in order:
+  1. the line MEASURED from the products the Google feed is not sent (§3i);
+  2. else a cut-off a rule name states (`Range Completion < 0.21` → 21%);
+  3. else a percentage a name states (`Range Completion (BAU & Peak) - 20%`);
+  4. else "runs, no stated line" — never a guessed number.
+- **Stock unit exclusion.** A threshold / exclusion / availability rule naming the lever's scope ("Everest") with a units
+  cut-off in its name. None reads **N/A**.
+- **Hero sizes.** A rule that sets them (`is_hero_size`), one that keeps them live (the inclusion rule) or one that pauses
+  them:
+  - **on** when a rule sets them;
+  - **part** when a rule keeps hero sizes live but none sets them;
+  - **paused** when a pausing rule is active;
+  - **none** otherwise.
+
+**Off plan** (`drift`). A market reads off plan when what it runs differs from the value it is held to in its current
+mode:
+- **Range completion** — more than 2 points away (a line nobody can state is never called off plan).
+- **Units** — any rule running against N/A, or none running against a cut-off.
+- **Hero** — anything but on against on.
+
+**Modes and periods.**
+- A **sale period** names its dates and markets. Each switch (→ SALE at its start, → BAU at its end) is
+  planned → briefed → done; who and when are stamped by the server.
+- A market is in **SALE** once its period's switch to SALE is marked done and the switch back is not.
+- When the date says otherwise, the row says **due → SALE / BAU**. A period that ended with its switch to SALE
+  never made reads **missed**, never "0 days late".
+- Each cell names where the target IN FORCE comes from: **own** when the market's own value for the current mode
+  applies, **plan** when the brand's does. A market with its own BAU is still held to the brand's SALE value during
+  a sale, so it reads plan there (`tgtOwn`, beside `own` — the market has a value of its own for this lever at all).
+
+**The switch list** (`switchList`, `briefLines`).
+- Markets making the same change sit on one line ("Range completion 35% → 20% — GB, FR"), each with its own rules and a ↗
+  to each rule on FeedHero.
+- A lever whose value for the mode is not set is a **blocker**, never assumed.
+- **→ Brief** marks the switch briefed, then opens the Workflow composer with the switch as a technical brief. The
+  mark is sent and confirmed BEFORE the page leaves: a save already in flight is waited for (every caller of a
+  flush is answered only once nothing is left to send, `lvDone`), and a mark the server refuses is said in a
+  confirm — open the brief anyway, or stay — never lost behind the navigation.
+- **⧉ Copy** gives the same text; **✓ Switched** marks it made.
+
+**A SALE value to consider** (`suggest`) is only what the brand's own rules or plan say, and only applied on a click:
+- **Range completion:** the line a market's rule names for a peak ("“Range Completion (BAU & Peak) - 20%” in NL, IT"),
+  else the band's floor.
+- **Units:** what the lever ran at before.
+- **Hero sizes:** nothing — no rule says which way a sale should take them.
+
+**Keep as it runs** (`adopt`) makes what a market runs today its own BAU — the decision that its mix is the plan. Its own
+SALE value is kept. "Keep N markets as they run" does it for every off-plan market at once, and ↺ Brand plan drops a
+market's own values.
+
+**⧉ Copy summary** (`summaryText`) is the dashboard in words: each lever's plan, then the markets grouped by what they
+run, named — then who is off plan and each period's next step.
+
+**Superdry's plan is seeded** (`src/stocklevers.js › LEVER_SEEDS`), exactly as Ray stated it:
+- range completion band 20–40%, BAU 35%;
+- Everest units BAU N/A (was > 5 units per size);
+- hero sizes BAU on.
+
+Every SALE value is left unset. `applyLeverSeeds` writes it once, on the first read after it ships, and never again once
+the key has existed (a tombstone counts).
+
+**Superdry, read live 5 Oct 2026 (in session, nothing committed):**
+- **Range completion.**
+  - GB's line measures ≈36%, on its 35% plan.
+  - DE's line measures ≈21% (its rule name says `< 0.2`).
+  - Twelve markets' rule names state 21% (`Range Completion < 0.21`); BE-FR and BE-NL state 20%.
+  - IT and NL also run `Range Completion (BAU & Peak) - 20%`.
+  - NO, PL and SE state no line.
+
+  So against a 35% plan, 15 of 19 markets read off plan on range completion (NO, PL and SE state no line, so they are
+  never called off it). That is the mix Ray described, and the card's one-click "keep as it runs" is how a market's own
+  line becomes its plan.
+- **Units · Everest.** No market runs one (N/A), matching the plan.
+- **Hero sizes.**
+  - On in ten markets (GB, IE, DE, FR, NL, ES, DK, BE-FR, BE-NL, US).
+  - CA-EN and CA-FR keep hero sizes live but no rule sets them.
+  - CH-DE, CH-FR, IT, NO, PL, SE and FI run no hero-size rule.
+
+**The store.** KV `stocklevers`: ONE kvmerge map, a key per decision. Deletions only through `_deleted`.
+- `p:<Brand>` — the plan.
+- `m:<Brand>|<MKT>` — a market's own values.
+- `e:<Brand>|<id>` — a sale period.
+
+It is scoped per signin, and writing needs the `stock` module.
+- `GET /api/rules/levers` — the in-scope store and the brands with a plan.
+- `PUT /api/rules/levers` — a partial map.
+
+The engine is served verbatim at `/stock/levers.js`.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -734,6 +847,9 @@ first); a **cut-off** set to different values across a brand's markets.
 | `GET /api/rules/hero[?brand=&market=]` | The guide store (every example + the in-scope brands' guides), each brand's guide status, and — for one brand (the first with a census when none is asked) — its roster markets and one market's census. §3e. |
 | `PUT /api/rules/hero` | A partial map of `g:` / `m:` / `x:` keys (+ `_deleted`), every key checked (`sanitizeHeroPut`), merged with a read-stamp (`X-Sync-Base`), stamped by / at here. §3e. |
 | `GET /stock/engine.js` | `docs/herosize_engine.js`, verbatim. |
+| `GET /api/rules/levers` | The stock-lever store in scope (`p:` plan · `m:` a market's own values · `e:` sale periods) + the brands with a plan; Superdry's plan seeded once (`applyLeverSeeds`). §3l. |
+| `PUT /api/rules/levers` | A partial map of `p:` / `m:` / `e:` keys (+ `_deleted`), every key checked (`sanitizeLeverPut`), merged with a read-stamp (`X-Sync-Base`), switch steps stamped by / at here. Needs the `stock` module. §3l. |
+| `GET /stock/levers.js` | `docs/stocklevers_engine.js`, verbatim. |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness
@@ -787,5 +903,19 @@ first); a **cut-off** set to different values across a brand's markets.
   hold every distortion found live (trunks in a bucket, skis beside ski jackets, a skirt tie, suit trousers
   filed one level short, a mini dress the feed files by occasion, collar sizes). Each fails on the census
   before it. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+- `tools/test_stocklevers.mjs` — the stock levers (§3l) on rules pushed through the REAL classifier (`normRules`
+  → `stockRow`, the rows `/api/rules/stock` serves; rule names in the live shapes, every count invented): what each
+  market runs (the measured line, a name's cut-off, a name's %, a Meta rule and a label left out, Everest's units
+  by scope, hero on / part / paused / none), off plan, the target's source, modes and periods (late, missed — in
+  the summary too), the switch list and its brief, the suggestions, keep-as-it-runs, the summary; then the worker's
+  half (`src/stocklevers.js`: what a signin may store, the stamps, the scope, the seed once and never over a
+  tombstone), the route, the page and the stub. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+- `tools/check_stocklevers.js` — the card driven in Chromium on the stub (served from an http origin so → Brief's
+  navigation lands): All brands, the tiles and lever tiles one size, every roster market a row, off plan marked and
+  filtered, keep-as-it-runs / a market's own values / ✎ Edit / "Use it" each saving their key, a period planned and
+  switched (the markets reading SALE, held to the brand's SALE and saying plan), ⧉ Copy summary, → Brief carrying
+  the switch — and marking it briefed first, read from a record kept OUTSIDE the page (the navigation takes the
+  page's own with it) — → Brief while another save is in flight, a refused mark said before leaving, the phone.
+  Four fail on the page before. Presync.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

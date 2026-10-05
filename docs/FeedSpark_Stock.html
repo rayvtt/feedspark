@@ -417,6 +417,61 @@ window.addEventListener('load',restore);
   [data-theme=dark] .hm-acts button{background:#20242E}
   @media(max-width:760px){.hm-tiers{flex-basis:100%}.hm-tiers .seg{flex:1;overflow-x:auto}.hm-tiers .seg button{flex:1;justify-content:center;padding:0 8px;gap:4px}#hm-sum .it b{font-size:18px}.hm-legend .note{margin-left:0}.hm-guide .btn,.hm-guide select.fld,.hm-guide .wide input{height:36px}.hm-guide select.fld{max-width:100%}button.sz{height:34px;padding:0 10px 2px}.hm-acts button{height:34px}#hm-t td.szs{min-width:220px}}
 
+  /* STOCK LEVERS — BAU ↔ SALE: three lever tiles of one size, the sale periods, the market × lever table */
+  #lev-card .lev-plan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px;align-items:stretch}
+  #lev-card .lev-plan>.empty{grid-column:1/-1}
+  #lev-card .lv{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);min-width:0;display:flex;flex-direction:column;gap:8px}
+  #lev-card .lvh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #lev-card .lvh h4{margin:0;font-size:13.5px;font-weight:900;flex:1 1 auto;min-width:0}
+  #lev-card .vals{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  #lev-card .vals3{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+  #lev-card .vb{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--wash);min-width:0;display:flex;flex-direction:column;gap:4px}
+  #lev-card .vb .h,#lev-card .mi .h{display:block;font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  #lev-card .vb.sale .h{color:var(--orange-deep)}
+  #lev-card .vb b{display:block;font-size:18px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.25}
+  #lev-card .vb b.unset{font-size:13px;color:var(--muted);font-weight:800;line-height:1.7}
+  #lev-card .vb .fld,#lev-card .mi .fld{width:100%;min-width:0;height:32px;font-size:13px}
+  #lev-card .sc{font-size:11.5px;font-weight:700;color:var(--muted);margin:0}
+  #lev-card .wn{color:var(--risk)}
+  #lev-card .sug{font-size:12px;font-weight:700;color:var(--ink-2);margin:0;line-height:1.5}
+  #lev-card .sug .hb-dl{margin:0 0 0 4px}
+  #lev-card .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  #lev-card .lev-per{margin:0 0 14px}
+  #lev-card .perh{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+  #lev-card .perh h4{margin:0;font-size:13.5px;font-weight:900;flex:1 1 auto}
+  #lev-card .perf,#lev-card .per{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper);margin:0 0 8px;display:flex;flex-direction:column;gap:8px}
+  #lev-card .lvf-mk .lb,#lev-card .stp .lb{font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+  #lev-card .ph{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #lev-card .ph b{font-size:13.5px}
+  #lev-card .sp{flex:1 1 auto}
+  #lev-card .stp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
+  #lev-card .stp .lb{min-width:118px}
+  #lev-card .nchg{font-size:11.5px;font-weight:800;color:var(--muted)}
+  #lev-card details.sw summary{cursor:pointer;font-size:12px;font-weight:900;color:var(--ink-2)}
+  #lev-card .swl{margin:8px 0 0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+  #lev-card .swl .rl{font-size:12px;font-weight:700;color:var(--ink-2);margin-top:2px}
+  #lev-card .swl a.fh{font-weight:900;margin-left:4px;white-space:nowrap}
+  #lev-card .mode{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:100px;font-size:10.5px;font-weight:900;letter-spacing:.06em;margin-right:4px}
+  #lev-card .mode.bau{background:var(--wash);color:var(--ink-2);border:1px solid var(--line)}
+  #lev-card .mode.sale{background:var(--orange-deep);color:#fff;border:1px solid var(--orange-deep)}
+  #lev-t{table-layout:fixed;min-width:860px}
+  #lev-t th:nth-child(1){width:96px}#lev-t th:nth-child(2){width:120px}#lev-t th:last-child{width:178px}
+  #lev-t td.lc .v{display:block;font-weight:800;color:var(--ink);line-height:1.35}
+  #lev-t td.lc .pl{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-top:2px}
+  #lev-t td.lc.off{background:rgba(245,166,35,.09)}
+  #lev-t td.lc.off .pl{color:var(--orange-ink)}
+  #lev-t td.lc .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--orange-deep);margin-right:5px;vertical-align:0}
+  #lev-t td.ra{text-align:right;white-space:nowrap}
+  #lev-t td.ra .hb-dl{margin:0 0 0 4px}
+  #lev-t tr.med td{background:var(--wash);vertical-align:top}
+  #lev-t .mi{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
+  #lev-card .sv-sum .it.lv-go{cursor:pointer}
+  #lev-card .sv-sum .it.lv-go:hover,#lev-card .sv-sum .it.lv-go:focus-visible{border-color:var(--orange);outline:none}
+  [data-theme=dark] #lev-card .lv,[data-theme=dark] #lev-card .perf,[data-theme=dark] #lev-card .per{background:var(--paper)}
+  [data-theme=dark] #lev-card .vb{background:#181B22}
+  [data-theme=dark] #lev-t td.lc.off{background:rgba(240,164,78,.10)}
+  @media(max-width:900px){#lev-card .lev-plan{grid-template-columns:minmax(0,1fr)}#lev-card .vals3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#lev-card .vals3 .vb:first-child{grid-column:1/-1}}
+  @media(max-width:760px){#lev-card .stp .lb{min-width:0;flex-basis:100%}}
 </style>
 <style>/* FCC-THEME */
 #theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
@@ -474,6 +529,24 @@ window.addEventListener('load',restore);
 
 <main class="wrap">
   <div class="kpis" id="kpis"></div>
+
+  <!-- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically) eahc of
+       those markets have got quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at 35%) - 2.
+       Stock unit exclusion for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated, follow the
+       mapping above) - build an facilitor interface to action BAU vs. SALE perido"). The brand's plan per lever, every
+       market's reading off its own rules, the sale periods and the switch each way — briefed, copied, marked made. -->
+  <section class="card" id="lev-card" hidden>
+    <div class="chead"><div class="sp"><h3>Stock levers — BAU ↔ SALE</h3><p class="ch" id="lev-sub">Each brand’s BAU and SALE settings for its stock levers, against what every market runs today.</p></div>
+      <div class="tools"><button class="btn" id="lev-copy" type="button" title="The levers, each market’s reading and the sale periods, in words — for an email or a call">⧉ Copy summary</button><button class="btn" id="lev-csv" type="button" title="Every market × lever: what it runs, the plan, and whether it is off plan">⬇ CSV</button></div></div>
+    <div class="chips lev-brands" id="lev-brands" hidden></div>
+    <div class="hm-warn" id="lev-warn" hidden></div>
+    <div class="sv-sum" id="lev-sum"></div>
+    <div class="lev-plan" id="lev-plan"><div class="empty">Loading…</div></div>
+    <div class="lev-per" id="lev-per"></div>
+    <div class="toolbar" id="lev-bar" hidden><div class="chips" id="lev-f"></div><button class="btn" id="lev-adopt" type="button" hidden title="Make what these markets run today their own BAU — the decision that each one’s mix is the plan">Keep markets as they run</button></div>
+    <div class="tw"><table class="t" id="lev-t" hidden><thead></thead><tbody></tbody></table></div>
+    <p class="note" id="lev-foot"></p>
+  </section>
 
   <!-- IN STOCK, HELD BACK, AND THE AD SPEND THAT KEEPS OFF THEM — ONE CARD (Ray, 1 Oct 2026: "add in how many instock I have
        been excluded from Masterfeed to Google Shopping as well, and indicate what the current range completion percentage is
@@ -731,6 +804,362 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function scnName(pct) { var s = SCN.filter(function (x) { return x.pct === pct; })[0]; return s ? s.label : 'Custom'; }
   function mById(cmpid) { return ((S.d && S.d.markets) || []).filter(function (m) { return m.cmpid === cmpid; })[0] || null; }
 
+  // ---- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically)
+  // eahc of those markets have got quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at
+  // 35%) - 2. Stock unit exclusion for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated,
+  // follow the mapping above) - build an facilitor interface to action BAU vs. SALE perido"). The engine is
+  // docs/stocklevers_engine.js (served at /stock/levers.js); the store is /api/rules/levers (KV stocklevers: the brand's
+  // plan, a market's own values, the sale periods — a key per decision). What each market RUNS is read off the rules this
+  // page already loaded (S.d) and the range-completion line the master-stock agent measured. The FCC changes no FeedHero
+  // rule: it says which to change, where, and keeps who switched what.
+  var LV = { store: {}, brands: [], base: 0, pend: {}, after: [], t: null, busy: false, err: '', warn: '', ed: '', med: '', form: false, f: '', M: null };
+  var SL = null;
+  function slLoad() {
+    if (SL) return Promise.resolve(SL);
+    if (window.StockLevers) return Promise.resolve(SL = window.StockLevers);
+    return fetch('/stock/levers.js', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('the lever engine is unavailable (HTTP ' + r.status + ')'); return r.text(); })
+      .then(function (s) { if (!s) throw new Error('the lever engine is empty'); (new Function(s))(); SL = window.StockLevers || null; if (!SL) throw new Error('the lever engine did not load'); return SL; });
+  }
+  function lvLoad() {
+    Promise.all([slLoad(), fetch('/api/rules/levers', { credentials: 'same-origin' }).then(function (r) {
+      var x = +(r.headers.get('X-Sync-Base') || 0); if (x) LV.base = x;
+      return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status + ' — not JSON (signed out?)' }; });
+    })]).then(function (a) {
+      var d = a[1] || {};
+      LV.err = d.ok ? '' : (d.error || 'could not read the stock levers');
+      if (d.ok) { LV.store = d.store || {}; LV.brands = d.brands || []; lvReapply(); }
+      renderLev();
+    }).catch(function (e) { LV.err = String((e && e.message) || e); renderLev(); });
+  }
+  function lvReapply() { Object.keys(LV.pend).forEach(function (k) { if (LV.pend[k] === null) delete LV.store[k]; else LV.store[k] = LV.pend[k]; }); }
+  // a change stays on screen until the server confirms it; `now` flushes at once (a brief that navigates away)
+  function lvPut(delta, now, then) {
+    Object.keys(delta).forEach(function (k) { LV.pend[k] = delta[k]; });
+    lvReapply(); renderLev();
+    clearTimeout(LV.t);
+    if (now) lvFlush(0, then); else LV.t = setTimeout(lvFlush, 450);
+  }
+  // every caller waiting on a save is answered once nothing is left to send — true when it landed, false when it did not
+  // (a request already in flight sends what is pending next, so a caller is never answered before ITS change is sent)
+  function lvDone(ok) { var a = LV.after; LV.after = []; a.forEach(function (f) { try { f(ok); } catch (e) {} }); }
+  function lvFlush(tries, then) {
+    if (then) LV.after.push(then);
+    if (LV.busy) return;
+    var keys = Object.keys(LV.pend);
+    if (!keys.length) { lvDone(true); return; }
+    var body = {}, del = [], sent = {};
+    keys.forEach(function (k) { sent[k] = LV.pend[k]; if (LV.pend[k] === null) del.push(k); else body[k] = LV.pend[k]; });
+    if (del.length) body._deleted = del;
+    LV.busy = true;
+    fetch('/api/rules/levers', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(LV.base || 0) }, body: JSON.stringify(body) })
+      .then(function (r) { var x = +(r.headers.get('X-Sync-Base') || 0); return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status }; }).then(function (j) { return { j: j, b: x }; }); })
+      .then(function (x) {
+        LV.busy = false;
+        if (!x.j || !x.j.ok) {
+          keys.forEach(function (k) { if (LV.pend[k] === sent[k]) delete LV.pend[k]; });
+          LV.warn = 'Not saved — ' + ((x.j && x.j.error) || 'the server refused it') + '.';
+          lvLoad(); lvDone(false); return;
+        }
+        if (x.b) LV.base = x.b;
+        keys.forEach(function (k) { if (LV.pend[k] === sent[k]) delete LV.pend[k]; });
+        LV.store = x.j.store || LV.store; if (x.j.brands) LV.brands = x.j.brands; lvReapply(); LV.warn = '';
+        renderLev(); toast(x.j.saved === 1 ? 'Saved' : 'Saved · ' + x.j.saved + ' changes');
+        lvFlush(0);
+      })
+      .catch(function (e) {
+        LV.busy = false;
+        tries = (tries || 0) + 1;
+        if (tries <= 3) { setTimeout(function () { lvFlush(tries); }, 1500 * tries); return; }
+        LV.warn = 'Not saved yet — ' + String((e && e.message) || e) + '. Your changes are kept on this page.';
+        renderLev(); lvDone(false);
+      });
+  }
+  function lvToday() { return SL ? SL.ymd(Date.now()) : ''; }
+  function lvDate(s) { if (!s) return ''; var d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]; }
+  function lvWhen(n) { return n > 1 ? 'in ' + n + ' days' : n === 1 ? 'tomorrow' : n === 0 ? 'today' : (-n === 1 ? '1 day late' : -n + ' days late'); }
+  function lvB64(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function lvCopy(text) {
+    function fall() { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); toast('Copied'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('Copied'); }, fall); else fall();
+  }
+  // the brand's markets as /api/rules/stock served them, and its whole roster (a market not read yet is still a row)
+  function lvMarkets(b) { return ((S.d && S.d.markets) || []).filter(function (m) { return m.client === b; }); }
+  function lvRoster(b) { var r = ((S.d && S.d.rosterBrands) || []).filter(function (x) { return x.client === b; })[0]; return r ? r.markets.slice() : lvMarkets(b).map(function (m) { return m.market; }); }
+  // what a value input says: '' = not set, n/a · off · none = off, on, else a number
+  function lvParse(kind, s) {
+    s = String(s == null ? '' : s).trim().toLowerCase().replace(/%|units?( per size)?|>|≥/g, '').trim();
+    if (!s) return null;
+    if (/^(n\/?a|off|none|no)$/.test(s)) return 'off';
+    if (kind === 'onoff') return s === 'on' || s === 'yes' ? 'on' : undefined;
+    var n = parseFloat(s); if (!isFinite(n) || n < 0 || (kind === 'pct' && n > 100)) return undefined;
+    return kind === 'pct' ? Math.round(n * 10) / 10 : Math.round(n);
+  }
+  function lvShow(lk, v) { return v === 'off' ? 'N/A' : v == null ? '' : String(v); }
+  // one value as an editor field: on/off/not set for hero sizes, typed for the rest
+  function lvField(lk, mode, v, ph) {
+    var kind = SL.LEVER[lk].kind;
+    if (kind === 'onoff') return '<select class="fld" data-lvf="' + mode + '" aria-label="' + esc(SL.LEVER[lk].label + ' ' + mode.toUpperCase()) + '"><option value="">' + esc(ph || 'not set') + '</option><option value="on"' + (v === 'on' ? ' selected' : '') + '>on</option><option value="off"' + (v === 'off' ? ' selected' : '') + '>off</option></select>';
+    return '<input class="fld" data-lvf="' + mode + '" inputmode="decimal" autocomplete="off" value="' + esc(lvShow(lk, v)) + '" placeholder="' + esc(ph || (kind === 'pct' ? 'e.g. 35' : 'e.g. 5, or N/A')) + '" aria-label="' + esc(SL.LEVER[lk].label + ' ' + mode.toUpperCase()) + '">';
+  }
+
+  function renderLev() {
+    var card = $('#lev-card'); if (!card) return;
+    card.hidden = false;
+    var sum = $('#lev-sum'), plan = $('#lev-plan'), per = $('#lev-per'), tb = $('#lev-t'), bar = $('#lev-bar'), br = $('#lev-brands'), foot = $('#lev-foot'), wn = $('#lev-warn');
+    wn.hidden = !LV.warn; wn.textContent = LV.warn || '';
+    var b = S.brand;
+    var clear = function (msg) { sum.innerHTML = ''; per.innerHTML = ''; tb.hidden = true; bar.hidden = true; foot.textContent = ''; plan.innerHTML = '<div class="empty">' + msg + '</div>'; };
+    if (!SL || !S.d) { br.hidden = true; clear(LV.err ? esc(LV.err) : 'Loading…'); return; }
+    // All brands: the brands with a plan, one tap away
+    if (!b) {
+      $('#lev-sub').textContent = 'Each brand’s BAU and SALE settings for its stock levers, against what every market runs today.';
+      var bl = LV.brands || [];
+      br.hidden = !bl.length;
+      br.innerHTML = bl.map(function (x) { return '<button class="chip" type="button" data-lvb="' + esc(x.client) + '">' + esc(x.client) + '<span class="k">' + x.levers + ' levers' + (x.periods ? ' · ' + x.periods + ' sale period' + (x.periods === 1 ? '' : 's') : '') + '</span></button>'; }).join('');
+      clear(bl.length ? 'Pick a brand to see its levers, market by market.' : 'No brand has a lever plan yet — pick a brand to start one.');
+      return;
+    }
+    br.hidden = true;
+    var p = SL.planOf(LV.store, b);
+    if (!p) {
+      $('#lev-sub').textContent = 'No BAU / SALE plan for ' + b + ' yet.';
+      clear('No lever plan for ' + esc(b) + ' yet. <button class="btn" type="button" data-act="lv-start">＋ Start a plan</button>');
+      return;
+    }
+    var mk = lvMarkets(b), M = LV.M = SL.model(LV.store, b, mk, lvRoster(b), lvToday());
+    var s = M.sum, levs = M.levers;
+    $('#lev-sub').textContent = 'What each ' + b + ' market runs today against the brand’s BAU and SALE plan — and the switch between them.';
+    // ---- the four tiles
+    var nx = M.periods.filter(function (q) { return q.next.dir; }).sort(function (a, c) { return a.next.on < c.next.on ? -1 : 1; })[0];
+    var nxB = nx ? (nx.next.missed ? 'missed' : lvWhen(nx.next.days)) : '—';
+    var nxS = nx ? esc(nx.name) + ' → ' + (nx.next.dir === 'sale' ? 'SALE' : 'BAU') + ' · ' + lvDate(nx.next.on) : 'No sale period planned';
+    var setN = levs.filter(function (l) { return SL.isSet(l.sale); }).length;
+    sum.innerHTML = [
+      '<div class="it"><b>' + (s.sale ? 'SALE · ' + s.sale : 'BAU') + '</b><span>' + (s.sale ? s.sale + ' of ' + s.markets + ' markets in SALE' : 'All ' + s.markets + ' markets in BAU') + (s.late ? ' · ' + s.late + ' due to switch' : '') + '</span></div>',
+      '<div class="it lv-go" data-lvf2="off" role="button" tabindex="0" title="List the markets running something other than the plan"><b>' + s.drift + ' of ' + s.markets + '</b><span>markets off plan</span></div>',
+      '<div class="it"><b>' + esc(nxB) + '</b><span>' + nxS + '</span></div>',
+      '<div class="it"><b>' + setN + ' of ' + levs.length + '</b><span>levers with a SALE value</span></div>'].join('');
+    // ---- the plan, lever by lever
+    plan.innerHTML = levs.map(function (l) {
+      var L = SL.LEVER[l.k], sg = SL.isSet(l.sale) ? null : SL.suggest(p, mk, l.k), band = l.k === 'rc' && l.lo != null && l.hi != null ? l.lo + '–' + l.hi + '%' : '';
+      var head = '<div class="lvh"><h4>' + (l.k === 'hero' ? heroIcon() : '') + esc(L.label) + (l.scope ? ' · ' + esc(l.scope) : '') + '</h4>' + (band ? '<span class="tg">band ' + esc(band) + '</span>' : '') + '</div>';
+      if (LV.ed === l.k) {
+        return '<div class="lv ed" data-lk="' + l.k + '">' + head
+          + '<div class="vals"><label class="vb"><span class="h">BAU</span>' + lvField(l.k, 'bau', l.bau) + '</label><label class="vb sale"><span class="h">SALE</span>' + lvField(l.k, 'sale', l.sale) + '</label></div>'
+          + (l.k === 'rc' ? '<div class="vals"><label class="vb"><span class="h">Band from</span><input class="fld" data-lvb2="lo" inputmode="decimal" value="' + esc(l.lo == null ? '' : l.lo) + '" placeholder="e.g. 20" aria-label="Band from"></label><label class="vb"><span class="h">Band to</span><input class="fld" data-lvb2="hi" inputmode="decimal" value="' + esc(l.hi == null ? '' : l.hi) + '" placeholder="e.g. 40" aria-label="Band to"></label></div>' : '')
+          + '<div class="acts"><button class="btn" type="button" data-act="lv-save" data-lk="' + l.k + '">Save</button><button class="btn" type="button" data-act="lv-cancel">Cancel</button></div></div>';
+      }
+      var out = function (mode) { var v = l[mode]; return SL.isSet(v) ? '<b>' + esc(SL.fmtVal(l.k, v)) + '</b>' : '<b class="unset">not set</b>'; };
+      var warnBand = l.k === 'rc' && band ? ['bau', 'sale'].filter(function (m2) { return typeof l[m2] === 'number' && (l[m2] < l.lo || l[m2] > l.hi); }) : [];
+      return '<div class="lv" data-lk="' + l.k + '">' + head
+        + '<div class="vals"><div class="vb"><span class="h">BAU</span>' + out('bau') + '</div><div class="vb sale"><span class="h">SALE</span>' + out('sale') + '</div></div>'
+        + (warnBand.length ? '<p class="sc wn">' + warnBand.map(function (m2) { return m2.toUpperCase(); }).join(' and ') + ' outside the band</p>' : '')
+        + (sg ? '<p class="sug">To consider for SALE: <b>' + esc(SL.fmtVal(l.k, sg.v)) + '</b> — ' + esc(sg.why) + ' <button class="hb-dl" type="button" data-act="lv-sug" data-lk="' + l.k + '" data-v="' + esc(sg.v) + '">Use it</button></p>' : '')
+        + (l.note ? '<p class="sc">' + esc(l.note) + '</p>' : '')
+        + '<div class="acts"><button class="btn" type="button" data-act="lv-edit" data-lk="' + l.k + '">✎ Edit</button></div></div>';
+    }).join('');
+    // ---- the sale periods: when, where, and the switch each way
+    var form = LV.form ? lvForm(lvRoster(b)) : '';
+    per.innerHTML = '<div class="perh"><h4>Sale periods</h4><button class="btn" type="button" data-act="lv-new"' + (LV.form ? ' hidden' : '') + '>＋ Plan a sale period</button></div>' + form
+      + (M.periods.length ? M.periods.map(function (q) { return lvPeriod(q, b, mk); }).join('') : (LV.form ? '' : '<p class="note">None planned. A period names its dates and markets; the card then lists exactly what to change in FeedHero to switch them to SALE, and back.</p>'));
+    // ---- the market × lever table
+    tb.hidden = false; bar.hidden = false;
+    var rows = M.rows.filter(function (r) { return LV.f !== 'off' || levs.some(function (l) { return r.cells[l.k].drift; }); });
+    $('#lev-f').innerHTML = [['', 'All markets', M.rows.length], ['off', 'Off plan', s.drift]].map(function (x) { return '<button class="chip' + (LV.f === x[0] ? ' on' : '') + '" type="button" data-lvf2="' + x[0] + '">' + esc(x[1]) + '<span class="k">' + x[2] + '</span></button>'; }).join('');
+    var adoptN = M.rows.filter(function (r) { return r.read && levs.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; }); }).length;
+    $('#lev-adopt').hidden = !adoptN;
+    $('#lev-adopt').textContent = 'Keep ' + adoptN + ' market' + (adoptN === 1 ? '' : 's') + ' as they run';
+    tb.querySelector('thead').innerHTML = '<tr><th>Market</th><th>Mode</th>' + levs.map(function (l) { return '<th>' + (l.k === 'hero' ? heroIcon() : '') + esc(SL.LEVER[l.k].label) + (l.scope ? ' · ' + esc(l.scope) : '') + '</th>'; }).join('') + '<th></th></tr>';
+    tb.querySelector('tbody').innerHTML = rows.length ? rows.map(function (r) { return lvRow(r, levs, b); }).join('') : '<tr><td colspan="' + (levs.length + 3) + '" class="empty">Every market runs its plan.</td></tr>';
+    foot.textContent = 'Read off each market’s own FeedHero rules (and, for range completion, the line measured from the products the Google feed is not sent). The FCC changes no rule — the switch list says which to change, where.';
+  }
+  function lvForm(roster) {
+    var sel = LV.fmk || roster;
+    return '<div class="perf" id="lev-form"><div class="vals3"><label class="vb"><span class="h">Name</span><input class="fld" id="lvf-name" placeholder="e.g. Black Friday" value="' + esc(LV.fname || '') + '" aria-label="Sale period name"></label>'
+      + '<label class="vb"><span class="h">From</span><input class="fld" id="lvf-from" type="date" value="' + esc(LV.ffrom || '') + '" aria-label="From"></label>'
+      + '<label class="vb"><span class="h">To</span><input class="fld" id="lvf-to" type="date" value="' + esc(LV.fto || '') + '" aria-label="To"></label></div>'
+      + '<div class="chips lvf-mk"><span class="lb">Markets</span>' + roster.map(function (m) { return '<button class="chip' + (sel.indexOf(m) >= 0 ? ' on' : '') + '" type="button" data-lvm="' + esc(m) + '">' + esc(m) + '</button>'; }).join('')
+      + '<button class="chip" type="button" data-lvm="*">All</button><button class="chip" type="button" data-lvm="-">None</button></div>'
+      + '<div class="acts"><button class="btn" type="button" data-act="lv-add">Save the period</button><button class="btn" type="button" data-act="lv-x">Cancel</button></div></div>';
+  }
+  var LVST = { planned: 'planned', briefed: 'briefed', done: 'done' };
+  function lvStep(q, dir, b, mk) {
+    var st = (q[dir] && q[dir].st) || 'planned', sw = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, dir);
+    var nx = q.next, due = nx.dir === dir ? (nx.missed ? '<span class="tg rd">missed — the period is over</span>' : '<span class="tg' + (nx.days <= 0 ? ' rd' : nx.days <= 7 ? ' or' : '') + '">' + esc(lvWhen(nx.days)) + '</span>') : '';
+    var who = q[dir] && q[dir].by ? ' title="' + esc((st === 'done' ? 'Switched' : 'Briefed') + ' by ' + q[dir].by + (q[dir].at ? ' · ' + new Date(q[dir].at).toLocaleString('en-GB') : '')) + '"' : '';
+    var lab = dir === 'sale' ? '→ SALE · ' + lvDate(q.from) : '→ BAU · ' + lvDate(q.to);
+    var n = sw.changes.length, bl = sw.blocked.length;
+    return '<div class="stp" data-p="' + esc(q.id) + '" data-dir="' + dir + '"><span class="lb">' + esc(lab) + '</span><span class="tg' + (st === 'done' ? ' gr' : st === 'briefed' ? ' bl' : '') + '"' + who + '>' + (st === 'done' ? '✓ switched' : LVST[st]) + '</span>' + (st !== 'done' ? due : '')
+      + '<span class="sp"></span><span class="nchg">' + (n ? n + ' change' + (n === 1 ? '' : 's') : 'nothing to change') + (bl ? ' · ' + bl + ' not set' : '') + '</span>'
+      + '<button class="btn" type="button" data-act="lv-brief" title="Open the Workflow composer with the switch as the brief">→ Brief</button>'
+      + '<button class="btn" type="button" data-act="lv-copyp" title="The switch, in words">⧉ Copy</button>'
+      + (st === 'done' ? '<button class="btn" type="button" data-act="lv-undo" title="Mark it not switched yet">↺ Not yet</button>' : '<button class="btn" type="button" data-act="lv-done" title="Mark the switch made in FeedHero">✓ Switched</button>') + '</div>';
+  }
+  function lvSwitchHtml(sw, b, mk) {
+    if (!sw.changes.length && !sw.blocked.length) return '<p class="note">Nothing to change — every lever reads the same in both modes.</p>';
+    var byMk = {}; mk.forEach(function (m) { byMk[m.market] = m; });
+    return '<ul class="swl">' + sw.changes.map(function (c) {
+      var names = {};
+      c.mk.forEach(function (m) { (c.rules[m] || []).forEach(function (n) { (names[n] = names[n] || []).push(m); }); });
+      var rl = Object.keys(names).map(function (n) {
+        var links = names[n].map(function (m) { var x = byMk[m]; return x ? '<a class="fh" href="' + esc(fhUrl(x.cmpid, n)) + '" target="_blank" rel="noopener" title="Open “' + esc(n) + '” in ' + esc(m) + ' on FeedHero">' + esc(m) + ' ↗</a>' : esc(m); }).join(' ');
+        return '<div class="rl">“' + esc(n) + '” ' + links + '</div>';
+      }).join('');
+      return '<li><b>' + esc(c.label) + '</b> ' + esc(SL.fmtVal(c.k, c.from)) + ' → ' + esc(SL.fmtVal(c.k, c.to)) + ' <span class="sc">' + esc(c.mk.join(', ')) + '</span>' + (rl || '<div class="rl sc">No rule runs it yet — it needs setting up in FeedHero.</div>') + '</li>';
+    }).join('') + sw.blocked.map(function (x) { return '<li class="wn"><b>' + esc(x.label) + '</b> — the value for this mode is not set (' + esc(x.mk.join(', ')) + ')</li>'; }).join('') + '</ul>';
+  }
+  function lvPeriod(q, b, mk) {
+    var md = q.next, now = lvToday(), live = now >= q.from && now <= q.to;
+    var swS = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, 'sale');
+    return '<div class="per" data-p="' + esc(q.id) + '"><div class="ph"><b>' + esc(q.name) + '</b><span class="sc">' + esc(lvDate(q.from) + ' → ' + lvDate(q.to)) + ' · ' + q.mk.length + ' market' + (q.mk.length === 1 ? '' : 's') + ': ' + esc(q.mk.join(', ')) + '</span>'
+      + (live ? '<span class="tg or">on now</span>' : md.dir === null ? '<span class="tg gr">done</span>' : '') + '<span class="sp"></span><button class="btn" type="button" data-act="lv-del" title="Delete this sale period">🗑</button></div>'
+      + lvStep(q, 'sale', b, mk) + lvStep(q, 'bau', b, mk)
+      + '<details class="sw"><summary>What to change in FeedHero</summary>' + lvSwitchHtml(swS, b, mk) + '</details></div>';
+  }
+  function lvCell(lk, c) {
+    var rd = c.rd;
+    if (!rd) return '<td class="lc na"><span class="sc">not read yet</span></td>';
+    var v = SL.readWord(lk, rd), tip = esc(rd.why || '') + (rd.rules && rd.rules.length ? '<br><br>' + rd.rules.slice(0, 5).map(function (r) { return '#' + r.i + ' ' + esc(r.n); }).join('<br>') : '');
+    var plan = SL.isSet(c.tgt) ? (c.tgtOwn ? 'own ' : 'plan ') + SL.fmtVal(lk, c.tgt) : 'no plan value';
+    return '<td class="lc' + (c.drift ? ' off' : '') + '" data-tip="' + esc(tip) + '"><span class="v">' + esc(v) + '</span><span class="pl">' + (c.drift ? '<i class="dot"></i>' : '') + esc(plan) + '</span></td>';
+  }
+  function lvRow(r, levs, b) {
+    if (LV.med === r.market) {
+      return '<tr class="med" data-mk="' + esc(r.market) + '"><td><b>' + esc(r.market) + '</b></td><td><span class="mode ' + r.mode + '">' + r.mode.toUpperCase() + '</span></td>'
+        + levs.map(function (l) {
+          var mo = SL.marketOf(LV.store, b, r.market), own = mo && mo.lv && mo.lv[l.k] || {}, pl = SL.planOf(LV.store, b).levers.filter(function (x) { return x.k === l.k; })[0] || {};
+          return '<td class="lc" data-lk="' + l.k + '"><label class="mi"><span class="h">BAU</span>' + lvField(l.k, 'bau', own.bau, SL.isSet(pl.bau) ? 'brand: ' + SL.fmtVal(l.k, pl.bau) : 'not set') + '</label><label class="mi"><span class="h">SALE</span>' + lvField(l.k, 'sale', own.sale, SL.isSet(pl.sale) ? 'brand: ' + SL.fmtVal(l.k, pl.sale) : 'not set') + '</label></td>';
+        }).join('')
+        + '<td class="ra"><button class="btn" type="button" data-act="lv-msave">Save</button><button class="btn" type="button" data-act="lv-mx">Cancel</button></td></tr>';
+    }
+    var anyOwn = levs.some(function (l) { return r.cells[l.k].own; }), off = levs.some(function (l) { return r.cells[l.k].drift; });
+    var due = r.mode !== r.expect ? '<span class="tg rd" title="' + esc(r.expect === 'sale' ? 'Its sale period is on — the switch to SALE is not marked made' : 'Its sale period is over — the switch back to BAU is not marked made') + '">due → ' + r.expect.toUpperCase() + '</span>' : '';
+    return '<tr data-mk="' + esc(r.market) + '"><td><b>' + esc(r.market) + '</b>' + (anyOwn ? ' <span class="tg" title="This market has its own values for some levers">own</span>' : '') + '</td><td><span class="mode ' + r.mode + '">' + r.mode.toUpperCase() + '</span>' + due + '</td>'
+      + levs.map(function (l) { return lvCell(l.k, r.cells[l.k]); }).join('')
+      + '<td class="ra">' + (r.read && off && levs.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; }) ? '<button class="hb-dl" type="button" data-act="lv-keep" title="Make what this market runs today its own BAU — the decision that its mix is the plan">Keep as it runs</button>' : '')
+      + (anyOwn ? '<button class="hb-dl" type="button" data-act="lv-reset" title="Drop this market’s own values — it follows the brand’s plan">↺ Brand plan</button>' : '')
+      + '<button class="hb-dl" type="button" data-act="lv-medit" title="Set this market’s own BAU / SALE values">✎</button></td></tr>';
+  }
+  function lvCsv() {
+    var M = LV.M; if (!M) return;
+    var head = ['Market', 'Mode'], rows = [];
+    M.levers.forEach(function (l) { var n = SL.LEVER[l.k].label + (l.scope ? ' · ' + l.scope : ''); head.push(n + ' — runs', n + ' — BAU', n + ' — SALE', n + ' — off plan', n + ' — rules'); });
+    M.rows.forEach(function (r) {
+      var o = [r.market, r.mode.toUpperCase()];
+      M.levers.forEach(function (l) { var c = r.cells[l.k]; o.push(SL.readWord(l.k, c.rd), SL.fmtVal(l.k, c.bau), SL.fmtVal(l.k, c.sale), c.drift ? 'yes — ' + c.drift.why : '', c.rd ? (c.rd.rules || []).map(function (x) { return x.n; }).join(' | ') : ''); });
+      rows.push(o);
+    });
+    var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var csv = [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = S.brand + ' stock levers ' + lvToday() + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function lvSaveLever(lk) {
+    var box = document.querySelector('#lev-plan .lv[data-lk="' + lk + '"]'), b = S.brand, p = SL.planOf(LV.store, b); if (!box || !p) return;
+    var kind = SL.LEVER[lk].kind, v = {};
+    ['bau', 'sale'].forEach(function (m) { var el = box.querySelector('[data-lvf="' + m + '"]'); v[m] = lvParse(kind, el ? el.value : ''); });
+    if (v.bau === undefined || v.sale === undefined) { toast('A value is a number' + (kind === 'pct' ? ' from 0 to 100' : '') + ', N/A, or blank for not set'); return; }
+    var nl = p.levers.map(function (l) {
+      if (l.k !== lk) return l;
+      var o = Object.assign({}, l, { bau: v.bau, sale: v.sale });
+      if (lk === 'rc') { var lo = lvParse('pct', (box.querySelector('[data-lvb2="lo"]') || {}).value), hi = lvParse('pct', (box.querySelector('[data-lvb2="hi"]') || {}).value); if (typeof lo === 'number') o.lo = lo; else delete o.lo; if (typeof hi === 'number') o.hi = hi; else delete o.hi; }
+      return o;
+    });
+    LV.ed = '';
+    var d = {}; d['p:' + b] = { levers: nl, note: p.note || '' }; lvPut(d);
+  }
+  function lvOwnSave(mkName) {
+    var tr = document.querySelector('#lev-t tr.med[data-mk="' + mkName + '"]'), b = S.brand; if (!tr) return;
+    var lv = {}, bad = false;
+    tr.querySelectorAll('td[data-lk]').forEach(function (td) {
+      var lk = td.getAttribute('data-lk'), kind = SL.LEVER[lk].kind, o = {};
+      ['bau', 'sale'].forEach(function (m) { var el = td.querySelector('[data-lvf="' + m + '"]'); var x = lvParse(kind, el ? el.value : ''); if (x === undefined) bad = true; o[m] = x == null ? null : x; });
+      if (o.bau !== null || o.sale !== null) lv[lk] = o;
+    });
+    if (bad) { toast('A value is a number, N/A, or blank for the brand’s'); return; }
+    LV.med = '';
+    var d = {}; d['m:' + b + '|' + mkName] = Object.keys(lv).length ? { lv: lv } : null; lvPut(d);
+  }
+  function lvSwitchText(q, dir) {
+    var b = S.brand, sw = SL.switchList(LV.M.plan, LV.store, b, lvMarkets(b), q.mk, dir);
+    return SL.briefLines(sw, b, q);
+  }
+  function lvSetStep(q, dir, st, now, then) {
+    var cur = LV.store['e:' + S.brand + '|' + q.id]; if (!cur) { if (then) then(false); return; }
+    var o = Object.assign({}, cur); o[dir] = Object.assign({}, cur[dir] || {}, { st: st });
+    var d = {}; d['e:' + S.brand + '|' + q.id] = o; lvPut(d, now, then);
+  }
+  $('#lev-card').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act],[data-lvb],[data-lvf2],[data-lvm]'); if (!t || !SL) return;
+    var b = S.brand, act = t.getAttribute('data-act');
+    if (t.hasAttribute('data-lvb')) { S.brand = t.getAttribute('data-lvb'); S.market = ''; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); return; }
+    if (t.hasAttribute('data-lvf2') && !act) { LV.f = t.getAttribute('data-lvf2'); renderLev(); if (LV.f) { var tw = $('#lev-t'); if (tw && tw.scrollIntoView) tw.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
+    if (t.hasAttribute('data-lvm')) {
+      var all = lvRoster(b), m = t.getAttribute('data-lvm'), cur = (LV.fmk || all).slice();
+      lvKeepForm();
+      if (m === '*') cur = all.slice(); else if (m === '-') cur = []; else if (cur.indexOf(m) >= 0) cur.splice(cur.indexOf(m), 1); else cur.push(m);
+      LV.fmk = all.filter(function (x) { return cur.indexOf(x) >= 0; }); renderLev(); return;
+    }
+    var pe = t.closest('[data-p]'), q = pe && LV.M ? LV.M.periods.filter(function (x) { return x.id === pe.getAttribute('data-p'); })[0] : null;
+    var dir = (t.closest('[data-dir]') || {}).getAttribute ? t.closest('[data-dir]').getAttribute('data-dir') : '';
+    var row = t.closest('tr[data-mk]'), mkName = row ? row.getAttribute('data-mk') : '';
+    switch (act) {
+      case 'lv-start': {
+        var d0 = {}; d0['p:' + b] = { levers: SL.LEVERS.map(function (l) { return { k: l.k, bau: null, sale: null }; }), note: '' }; lvPut(d0); break;
+      }
+      case 'lv-edit': LV.ed = t.getAttribute('data-lk'); renderLev(); var f0 = document.querySelector('#lev-plan .lv.ed [data-lvf="bau"]'); if (f0) f0.focus(); break;
+      case 'lv-cancel': LV.ed = ''; renderLev(); break;
+      case 'lv-save': lvSaveLever(t.getAttribute('data-lk')); break;
+      case 'lv-sug': {
+        var lk = t.getAttribute('data-lk'), pv = SL.planOf(LV.store, b), val = +t.getAttribute('data-v');
+        var d1 = {}; d1['p:' + b] = { levers: pv.levers.map(function (l) { return l.k === lk ? Object.assign({}, l, { sale: val }) : l; }), note: pv.note || '' }; lvPut(d1); break;
+      }
+      case 'lv-new': LV.form = true; LV.fmk = null; LV.fname = ''; LV.ffrom = ''; LV.fto = ''; renderLev(); var n0 = $('#lvf-name'); if (n0) n0.focus(); break;
+      case 'lv-x': LV.form = false; renderLev(); break;
+      case 'lv-add': {
+        lvKeepForm();
+        var nm = (LV.fname || '').trim(), fr = LV.ffrom, to = LV.fto, mks = LV.fmk || lvRoster(b);
+        if (!nm) { toast('Name the sale period'); return; }
+        if (!fr || !to || fr > to) { toast('A sale period runs from one day to the same day or a later one'); return; }
+        if (!mks.length) { toast('Pick at least one market'); return; }
+        var id = (nm.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'sale') + '-' + Math.random().toString(36).slice(2, 7);
+        LV.form = false;
+        var d2 = {}; d2['e:' + b + '|' + id] = { name: nm, from: fr, to: to, mk: mks, sale: { st: 'planned' }, bau: { st: 'planned' } }; lvPut(d2); break;
+      }
+      case 'lv-del': if (q && confirm('Delete the sale period “' + q.name + '”?')) { var d3 = {}; d3['e:' + b + '|' + q.id] = null; lvPut(d3); } break;
+      case 'lv-done': if (q) lvSetStep(q, dir, 'done'); break;
+      case 'lv-undo': if (q) lvSetStep(q, dir, 'planned'); break;
+      case 'lv-copyp': if (q) lvCopy(lvSwitchText(q, dir)); break;
+      case 'lv-brief': if (q) {
+        var scope = lvSwitchText(q, dir), task = 'Stock Levers - ' + (dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + ' - ' + q.name + ' - ' + b + ' - ' + (dir === 'sale' ? q.from : q.to).slice(5, 7) + (dir === 'sale' ? q.from : q.to).slice(2, 4);
+        // a mark that did not land is said before the page leaves — never lost behind the navigation
+        var go = function (ok) {
+          if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) return;
+          location.href = '/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' });
+        };
+        if (((q[dir] && q[dir].st) || 'planned') === 'planned') lvSetStep(q, dir, 'briefed', true, go); else go();
+      } break;
+      case 'lv-keep': {
+        var r = LV.M.rows.filter(function (x) { return x.market === mkName; })[0]; if (!r) return;
+        var d4 = {}; d4['m:' + b + '|' + mkName] = { lv: SL.adopt(r) }; lvPut(d4); break;
+      }
+      case 'lv-reset': { var d5 = {}; d5['m:' + b + '|' + mkName] = null; lvPut(d5); break; }
+      case 'lv-medit': LV.med = mkName; renderLev(); break;
+      case 'lv-mx': LV.med = ''; renderLev(); break;
+      case 'lv-msave': lvOwnSave(mkName); break;
+    }
+  });
+  $('#lev-card').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.it[data-lvf2]')) { e.preventDefault(); e.target.click(); } });
+  // the period form keeps what is typed across a re-render (a market chip re-draws it)
+  function lvKeepForm() { var n = $('#lvf-name'), f = $('#lvf-from'), t = $('#lvf-to'); if (n) LV.fname = n.value; if (f) LV.ffrom = f.value; if (t) LV.fto = t.value; }
+  $('#lev-adopt').addEventListener('click', function () {
+    if (!LV.M || !SL) return;
+    var b = S.brand, d = {}, n = 0;
+    LV.M.rows.forEach(function (r) { if (r.read && LV.M.levers.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; })) { d['m:' + b + '|' + r.market] = { lv: SL.adopt(r) }; n++; } });
+    if (!n || !confirm('Make what ' + n + ' market' + (n === 1 ? '' : 's') + ' run today their own BAU? The brand plan stays as it is for every other market.')) return;
+    lvPut(d);
+  });
+  $('#lev-copy').addEventListener('click', function () { if (LV.M && SL) lvCopy(SL.summaryText(LV.M, S.brand, lvToday())); else toast('Pick a brand with a lever plan first'); });
+  $('#lev-csv').addEventListener('click', function () { if (LV.M) lvCsv(); else toast('Pick a brand with a lever plan first'); });
   function load() {
     $('#mstate').textContent = 'Loading…';
     api('/api/rules/stock' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) : '')).then(function (d) {
@@ -743,7 +1172,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       if (d.sv && d.sv.scenarios && d.sv.scenarios.length) { SCN = d.sv.scenarios; SVDAYS = d.sv.days || SVDAYS; }
       render();
     });
-    HM.mk = ''; hmLoad();
+    HM.mk = ''; hmLoad(); lvLoad();
   }
   function mkts() { return ((S.d && S.d.markets) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && (!S.market || m.market === S.market); }); }
   function mechs() { return (S.d && S.d.mechanisms) || []; }
@@ -752,7 +1181,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderKpis(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderHmap(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderKpis(); renderLev(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderHmap(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
   }
   function renderChips() {

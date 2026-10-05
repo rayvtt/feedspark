@@ -77,6 +77,8 @@ jobs:
         run: node tools/test_rules.mjs
       - name: Hero sizes + held-back products harness (size census, guides, examples, worker sanitisers, the master → feed join)
         run: node tools/test_herosize.mjs
+      - name: Stock levers harness (BAU ↔ SALE — readings off each market's rules, periods, the switch list, the worker's half)
+        run: node tools/test_stocklevers.mjs
       - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
         run: node tools/test_catalog.mjs
       - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)

@@ -122,7 +122,17 @@ function build() {
   const market = { ok: true, client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', read: true, updated: now, total: rules.length + 40, capped: true, rules,
     chains: E.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })), findings: E.rulesFindings([where], now),
     stockFindings: E.stockFindings([Object.assign({ stock: rules.filter((x) => x.sk) }, where)], now), status };
-  return { book, stock, market, hero: heroBuild(now) };
+  return { book, stock, market, hero: heroBuild(now), levers: leverBuild(now) };
+}
+// STOCK LEVERS (/api/rules/levers): an invented plan for a brand — a range-completion band and a BAU line the stub's GB
+// measured line sits OFF (so a market reads off plan), a units lever scoped to a range with what it ran at before, hero
+// sizes on, every SALE value unset — and one sale period over two of its three markets. No real figure.
+function leverBuild(now) {
+  const store = {
+    'p:Superdry': { levers: [{ k: 'rc', lo: 20, hi: 40, bau: 30, sale: null, note: 'A test band' }, { k: 'units', scope: 'Everest', bau: 'off', sale: null, was: '> 5 units per size' }, { k: 'hero', bau: 'on', sale: null }], note: '', by: 'Analyst A', at: now - 86400000 },
+    'e:Superdry|peak-test': { name: 'Peak sale (test)', from: '2026-11-20', to: '2026-12-01', mk: ['GB', 'DE'], sale: { st: 'planned' }, bau: { st: 'planned' }, note: '', by: 'Analyst A', at: now - 3600000 },
+  };
+  return { ok: true, store, brands: [{ client: 'Superdry', levers: 3, periods: 1 }], at: now };
 }
 // HERO SIZES (/api/rules/hero): a synthetic master pushed through the REAL census (docs/herosize_engine.js, reading rows
 // with the Catalogue's own engine) and placed on a synthetic Google Shopping feed's product_type tree (treeIndex) — so the
@@ -190,7 +200,10 @@ function heroBuild(now) {
 function stubLines() {
   const d = build();
   const engine = JSON.stringify(fs.readFileSync(path.join(__dirname, '..', 'docs', 'herosize_engine.js'), 'utf8'));
-  return " if(url.indexOf('/stock/engine.js')>=0)return Promise.resolve(new Response(" + engine + ",{status:200,headers:{'content-type':'application/javascript'}}));\n"
+  const lengine = JSON.stringify(fs.readFileSync(path.join(__dirname, '..', 'docs', 'stocklevers_engine.js'), 'utf8'));
+  return " if(url.indexOf('/stock/levers.js')>=0)return Promise.resolve(new Response(" + lengine + ",{status:200,headers:{'content-type':'application/javascript'}}));\n"
+    + " if(url.indexOf('/api/rules/levers')>=0)return j(" + JSON.stringify(d.levers) + ");\n"
+    + " if(url.indexOf('/stock/engine.js')>=0)return Promise.resolve(new Response(" + engine + ",{status:200,headers:{'content-type':'application/javascript'}}));\n"
     + " if(url.indexOf('/api/rules/hero')>=0)return j(" + JSON.stringify(d.hero) + ");\n"
     + " if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
     + " if(url.indexOf('/api/rules?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
