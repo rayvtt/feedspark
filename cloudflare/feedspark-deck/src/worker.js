@@ -2932,7 +2932,9 @@ async function route(request, env, ctx) {
     // guides; the examples the team saves are shared. Nothing here is committed — KV only.
     //   GET /api/rules/hero                    → every in-scope brand's guide status + the store (examples included)
     //   GET /api/rules/hero?brand=[&market=]   → + that brand's roster markets (census or not) and one market's census
-    //   PUT /api/rules/hero                    → a partial map of g: / m: / x: keys (+ _deleted); by / at stamped here
+    //   PUT /api/rules/hero                    → a partial map of g: / m: / x: / d: keys (+ _deleted); by / at stamped here
+    // A brand's hero-size TABLE as Ray sent it (HERO.DOC_SEEDS — Superdry's, 5 Oct 2026) is written into the store once, on
+    // the first read after it ships, and is the team's to edit from then on (applySeeds never re-writes a key that existed).
     if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {
       const acc = await accessOf(env, request);
       const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
@@ -2941,6 +2943,7 @@ async function route(request, env, ctx) {
       if (request.method === 'PUT') {
         let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
         const hctx = { brands, inScope, canEx: !!(acc.owner || moduleAllowed(acc.modules, 'stock')), now,
+          marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),
           by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone' };
         const r = HERO.sanitizeHeroPut(body, hctx);
         if (r.errors.length) return json({ ok: false, error: r.errors.slice(0, 3).join(' · ') }, 400);
@@ -2954,7 +2957,9 @@ async function route(request, env, ctx) {
         logActivity(ctx, env, request, 'hero-guide', keys.length + ' change(s) · ' + keys.slice(0, 3).join(', '));
         return json({ ok: true, saved: keys.length, store: HERO.heroView(envelopeToClient(envx, {}), inScope) }, 200, { 'X-Sync-Base': String(Date.now()) });
       }
-      const store = HERO.heroView(envelopeToClient(liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now), {}), inScope);
+      const henv = liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now);
+      if (HERO.applySeeds(henv, now)) await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(henv));
+      const store = HERO.heroView(envelopeToClient(henv, {}), inScope);
       const mavail = (await env.EDITS.get('masteravail', 'json')) || {};
       const hasCensus = (b) => ROAS.rosterOf(b).some((m) => (mavail[m.cmpid] || {}).szv === HERO.CENSUS_V);
       const mine = brands.filter(inScope);

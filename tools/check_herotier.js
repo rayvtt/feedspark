@@ -17,6 +17,10 @@
  *   · a list set below a row is named on the row ("1 type under it sets its own"); a master-only type is badged
  *   · the hero-stock headline does not move with the tier (it is the brand's, on every type's own list)
  *   · on a phone the control stays inside the screen and the page never scrolls sideways
+ *   · THE BRAND'S OWN DOCUMENT (Ray, 5 Oct 2026, Superdry's category × gender table): the guide row names it and the
+ *     markets it is written for; ⊞ Rows opens it row by row against this market (a row reaching part of a type, a row
+ *     whose sizes are not made here, a row naming no type here, FeedSpark's note); "Document doesn't fit" lists exactly
+ *     the types it can't measure; a market chip saves the document with that market added; the panel pans on a phone
  *
  * Run: node tools/check_herotier.js      (PW_CHROMIUM overrides the browser path)
  */
@@ -133,6 +137,39 @@ const state = (p) => p.evaluate(() => ({
     const st = await state(p);
     const tr = st.rows.find((r) => r.full === 'Women › Shoes › Trainers') || {};
     ok('the tier-3 type under it now reads the tier-2 list ("⤴ Tier 2")', tr.src === '⤴ Tier 2', tr);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+
+  console.log('· the brand’s own document, as written');
+  {
+    const { ctx, p, errs } = await open(browser, 1440);
+    await p.click('#hm-tiers button[data-tier="3"]');
+    const g = await p.evaluate(() => ({ txt: document.getElementById('hm-guide').innerText, btn: !!document.querySelector('#hm-guide [data-g="docrows"]') }));
+    ok('the guide row names the document, its rows and the markets it is written for', /Superdry hero sizes/.test(g.txt) && /3 rows · GB/.test(g.txt) && g.btn, g.txt);
+    await p.click('#hm-guide [data-g="docrows"]');
+    const rows = await p.evaluate(() => Array.from(document.querySelectorAll('#hm-dt tbody tr')).map((tr) => ({ c: tr.cells[0].innerText, fit: tr.cells[3].innerText, note: tr.cells[4].innerText })));
+    ok('⊞ Rows: every row as written, each with what it reaches here', rows.length === 3 && rows[0].c === 'Tops' && rows[1].c === 'Bralettes' && rows[2].c === 'Swimwear', rows);
+    ok('…a row reaching part of a type says so; a row whose sizes are not made here says what the type is made in', /only in part/.test(rows[0].fit) && /doesn’t fit/.test(rows[1].fit) && /made in XS–L/.test(rows[1].fit), rows);
+    ok('…a row naming no type here says so, and FeedSpark’s note travels with its row', /no product type in GB/.test(rows[2].fit) && /which sizes are the heroes/.test(rows[0].note), rows);
+    await p.click('#hm-f [data-hf="fit"]');
+    let st = await state(p);
+    ok('"Document doesn’t fit" lists exactly the types it can’t measure, each tagged', st.rows.length === 2 && st.rows.some((r) => /Bralettes/.test(r.full) && r.src === '📄 Doesn’t fit') && st.rows.some((r) => /Tops/.test(r.full) && /^📄 Part · /.test(r.src)), st.rows.map((r) => r.full + ' ' + r.src));
+    await p.click('#hm-dmk button[data-dmk="DE"]');
+    await p.waitForTimeout(800);
+    const puts = await p.evaluate(() => window.__puts);
+    const last = puts[puts.length - 1] || {}, dput = last['d:Superdry'];
+    ok('a market chip saves the document with that market added — its rows untouched', !!dput && JSON.stringify(dput.mk) === JSON.stringify(['GB', 'DE']) && dput.rows.length === 3, puts);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    const { ctx, p, errs } = await open(browser, 390, 844);
+    await p.evaluate(() => window.FCCDigest && window.FCCDigest.expandAll && window.FCCDigest.expandAll());
+    await p.waitForSelector('#hm-guide [data-g="docrows"]', { timeout: 10000 });
+    await p.click('#hm-guide [data-g="docrows"]');
+    const g = await p.evaluate(() => { const t = document.getElementById('hm-dt'), w = t.closest('.tw'); return { tw: t.getBoundingClientRect().width, ww: w.getBoundingClientRect().width, pan: getComputedStyle(w).overflowX, over: document.documentElement.scrollWidth - innerWidth }; });
+    ok('on a phone the rows panel pans inside its own frame — the page never scrolls sideways', g.tw > g.ww && /auto|scroll/.test(g.pan) && g.over <= 0, g);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
   }

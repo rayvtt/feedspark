@@ -305,7 +305,9 @@ gender and a run of ages is KIDS (Monsoon).
 **Where a type's hero sizes come from, strongest first** (`heroFor`):
 1. the brand's OWN entry — ticked by hand on the card, or imported from the brand's document (a
    sheet of product types and hero sizes; ⬇ Sheet exports the current map as the template);
-2. the BRAND it follows (another roster brand's own entry for the same type);
+   — then the brand's own DOCUMENT as written, category × gender, read by words (§3j) — then a list the
+   brand set for a coarser tier (§3h);
+2. the BRAND it follows (another roster brand's own entry for the same type, then its document);
 3. the EXAMPLE it follows — FeedSpark's cross-industry starting points (Fashion · UK & IE sizing,
    Fashion · EU sizing, Footwear, Core of each run) or one the team saved from a brand's guide.
    An example row fits by department, by footwear (a shoe type NEVER takes a clothing row, a clothing
@@ -425,10 +427,13 @@ original id and by item group, paths only. The census then places every master r
 2. a product the feed never sends — the very styles a hero-size gap hides in — where 80%+ of its master
    type's SENT products sit, and no deeper than they agree (`commonPath`, never on fewer than five).
    Every product-type column of the row is a reading, so Superdry's sub-brand category "Bench" is still
-   placed by its type "Puffer Jacket";
+   placed by its type "Puffer Jacket". Since census 4 (§3k): a merchandising bucket is no reading, a tie
+   goes to the surer reading, a place sized on another scale is refused, and the master's word refines
+   the place only where that reading's sent products agree;
 3. else by the master's own word, where the tree has exactly one type of that name in the row's
-   department (`wordPlace`). A word a children's and a women's branch both use goes by the run: ages to
-   the kids' branch, 10 to the women's (Monsoon's master names no gender);
+   department (`wordPlace`), and only where that reading's sent products agree (§3k). A word a
+   children's and a women's branch both use goes by the run: ages to the kids' branch, 10 to the
+   women's (Monsoon's master names no gender);
 4. else under the feed's word for its department, or `Master only`, marked `m` — the master's own word,
    shown on the card as **master type**.
 
@@ -553,6 +558,154 @@ every in-stock product Google is not sent, for any reason). ⬇ CSV is one row p
 counts, the held back, the line, the stated cut-offs and the ad spend at the scenario on screen. The KPI
 "In stock in the Google feed" names the held back beside its master.
 
+## 3j. A brand's own hero-size document, as written — Superdry's table (`/stock`)
+
+Ray, 5 Oct 2026, sending Superdry's hero sizes as a table (Category · Gender · Hero Sizes · FeedSpark's
+note): *"can you follow this to implement hero sizes mapping in FCC for Superdry ?"*
+
+**Why it is not a list of product types.** A brand writes its hero sizes by garment CATEGORY and who it
+is for — "Jeans|Trousers · Male · M,L,30,32" — not by the feed's product types, and the feed's tree is
+not the same in every market (Superdry DE's is German: "Herren > Hosen", "Damen > Kleider"). Fixing the
+table onto one market's types at import would lose it everywhere else, and lose it again whenever the
+tree moves. So the table is kept **as written** — KV `heroguide` key `d:<Brand>`
+`{name, mk, rows: [{c, g, s, n}], by, at}` — and each row is read against whatever market and tier the
+card is on (`docs/herosize_engine.js › docRules / docRowFor / fromDoc`):
+
+- **Words.** A row's category, each alternative split on `|` `/` `;` or a comma, meets a product type
+  when its words are a run of the type's own words at one level of its path. No case, no accents;
+  `&` = "and"; a one-letter prefix joins ("T-Shirts" = "Tshirts"); singular and plural are one word
+  ("Sport bras" meets "Sports Bra", "hoodies" meets "Hoodies and Sweatshirts", "Trousers" meets
+  "Trouser") **except** where the singular is another word — *shorts* is not "Short Sleeve Polo
+  Shirt", *jeans* is not "Jean Jacket".
+- **Which row wins.** A row naming a level OUTRIGHT (every word of it but an "and") beats one whose word
+  only sits inside a level's name — the brand's categories are the feed's category levels, and a deeper
+  level is usually a product's own name: *Men > Swimwear > Swim Shorts* is Swimwear, not Shorts; *Women
+  > Clothing > Dresses > Shirt Dress* is Dresses, not Shirts. Among outright names the deeper wins (Jeans
+  over a catch-all "Clothing" row), then the document's order.
+- **Department.** Male / Female / Men / Women / Kids / Unisex, read as the gender column is; a row naming
+  none meets every department. A footwear row (trainers, boots …) meets footwear types only, and the
+  other way round — the rule the examples follow (§3e).
+- **Sizes.** Only those the type is made in count; a two-size label carries both ("10-12" and "6-8" are
+  hero when 8 or 10 is; "S/M" when S is); a bare "8" meets "UK 8".
+  - When **none** of a row's sizes is made in the type, the row still speaks for it — **📄 Doesn't fit**,
+    nothing measured, not counted as mapped — and nothing else (no example) is put in its place.
+  - When the kinds of size it names reach **under half** the type's run, it reaches **📄 Part · n%** (S,
+    M, L against women's T-shirts sold 6–20 with a handful in L).
+  - A row with no sizes is an **open question**.
+- **Markets.** A document is written in ONE size system and applies only on the markets it names (`mk`).
+  Superdry's is UK-sized. **Checked on the live masters, 5 Oct 2026, in session (nothing committed):**
+  - **GB and IE** sell women's 6–20 the UK way, so the document is written for them.
+  - **US** sells 2–16, where US 8 = UK 12, so "8, 10, 12, 14" would mark the wrong garments as hero.
+  - **DE** sells 34–48.
+  - A market is added or dropped on the card (a chip per roster market); a new document is written for the
+    market it was imported on.
+
+**Its place in the resolution** (`heroFor` → `answer`): the type's own list (set by hand, or a per-type
+import) → **the document's row** → a list set for a coarser tier → the brand it follows (the same
+steps, its document included where it covers the market) → the example. A coarser list that fits wins
+over a row that doesn't, and the row under it says the document disagreed.
+
+**Superdry's table is seeded** (`src/herosizes.js › DOC_SEEDS`). It holds the 19 rows exactly as Ray sent
+them, and FeedSpark's note to the client on men's jackets ("also comes in numeric size, do you have heros
+?"). It is written for GB and IE.
+- **Written once.** `applySeeds` writes it into the store on the first read after it ships, stamped "from
+  Ray's table".
+- **Never written again** once its key has existed. If the team edits, replaces or deletes the document,
+  even the tombstone of a delete keeps it from coming back.
+- **Why it lives in the repo.** A hero-size table is sizes and category words, not a figure.
+
+**On Superdry GB's live census** (tier 3, census v4 — §3k — measured in session, nothing committed):
+- **Mapped.** 28 of 64 sized product types mapped, all from the document. Hero sizes in stock 67% (9,429
+  of 14,081 variants).
+- **Doesn't fit (8 types, and the sports bras inside Tops).** Women's swimwear (five types), briefs, the
+  feed's separate "Hoodies" level and the alpha-sized mini skirt. The master sizes them in a run the
+  document names no hero for: the table says S, M, L where GB sells 6–20.
+- **Part (3 types).** Women's T-shirts (0.6%), hoodies and sweatshirts (4.3%) and shirts (11.2%) reach
+  only their few S/M/L products. With the 8 above, the 11 the "Document doesn't fit" filter lists.
+- **No product type in GB.** *trainers · Male* (GB sells no men's trainers today).
+- **Not in the table.** Jumpers, tops, fleece, playsuits and accessories read **not mapped**, not guessed.
+
+**The card.**
+- **The guide row** names the document, its rows and the markets it is written for.
+- **⊞ Rows** opens it row by row against this market. Each row shows:
+  - the category and gender as written;
+  - its sizes;
+  - what it reaches here: types, products, hero stock; how many only in part and in what other sizes; where
+    it doesn't fit and what the types are made in; where a person's own list won; "no product type here";
+  - FeedSpark's note.
+- **Each type** carries its tag — 📄 Document / Part / Doesn't fit / Open question — with the row named in
+  the tooltip, and the note under it.
+- **The "Document doesn't fit" filter** lists every type the document can't measure.
+- **⇪ Import** reads a sheet in this layout (any sheet with a Gender — or a Department beside a Category —
+  column) as the brand's document. It previews how many rows reach a type in this market, and replaces
+  the document whole.
+- **⬇ Sheet** leads with a Document tab in the same layout, with each row's fit here. ⇪ Import reads a workbook's first sheet, so the file that comes back replaces the document.
+
+## 3k. The catalogue check — a type is made in the sizes the brand makes it in (census v4)
+
+Ray, 5 Oct 2026, on the hero card's **Sizes made in**: *"double check [Sizes made in] are actually
+presentation of Superdry catalogue"*.
+
+**How it was checked** (in session, nothing committed).
+- Every master row was joined to its market's Google feed by its own id (the feed's `fs_data_original_id`).
+  That gives the exact place of every product the feed sends.
+- The census was rebuilt on six live markets — Superdry GB and DE, Reiss GB, Monsoon UK, Accessorize UK,
+  Schuh UK — and each type's run was read against the rows behind it.
+- **Most extra sizes are real.** The GB feed sends only in-stock variants, so a type's XXS, XS, XXXL, 18 and
+  20 are usually the out-of-stock sizes of the same styles. They are part of the catalogue, and exactly
+  where a hero-size gap hides. So are Superdry's L/XL/XXL women's T-shirts (its oversized tees) and its
+  36–40 women's trousers (parachute pants).
+
+**What was wrong, and the rule that holds now** (`docs/herosize_engine.js › census`, CENSUS_V 4 — the
+master-stock agent re-reads every market's census on its next run, whether or not the import moved):
+1. **A merchandising bucket placed products.** Superdry's `category_id` is a "/" path ("outlet/mens/view
+   all", "womens/campaign 3"), and the census took it as a reading. Men's trunks the feed never sends learned
+   the jeans that bucket mostly holds. **Rule:** a reading made only of departments and merchandising
+   buckets is no product type, however many levels it has (`usableType` › `bareLevel`). One that names a
+   product on the way ("Mens > Shirts > New In") still names it. Of the roster's masters, only Superdry's
+   carry such readings.
+2. **A product learned a place sized on another scale.**
+   - Superdry GB's skis and snowboards (149–184 cm; the feed sends none) learned "Men > Clothing" from the ski
+     jackets their category sends — a ski length in a run of S–XXL and 28–40.
+   - Monsoon's adult trainers and flip-flops (EU 37–41) learned the children's shoes (1–13). Monsoon names no
+     gender, and its "Trainers" type's sent products are children's.
+   - A women's hoodie type learned the men's hoodies.
+
+   **Rule:** a LEARNED place is refused when the run shares no scale with what the feed sends there
+   (`sizedLike`). Sizes are read as spans (`szSpan`): the letter ladder, numbers (a dual's two halves, any
+   system) and ages in months. So a trainer's 6 still meets a slider's 6-7. The next reading's place is tried,
+   then the master's own word, then its own type. A place the master's own WORD names is not tested — a "Ski
+   and Snowboard" level is the brand's word for what it holds.
+3. **A word may refine a place only where its reading agrees** (`fits`). Under a learned place, the master's
+   own word may name a finer level of the feed's tree. It is used only where 80%+ of that reading's sent
+   products sit on that level's line (at it, under it, or filed short of it):
+   - Reiss's "Menswear > Suit Trousers" are refined to "… > Trousers > Suit Trousers". The feed files some of
+     them one level short.
+   - Superdry's master type "Mini dress" stays at "Dresses". The feed files its sent mini dresses by occasion
+     (Day, Summer, Cami, Party …), almost none under the feed's own "Mini Dress" level.
+   - Two words naming two different places refine nothing. The same test now guards a word placing a type the
+     feed never sends: Accessorize's rings, split by the feed between "Jewellery > Rings", "Sterling Silver" and
+     "Z Edition", read as the master's own type rather than the largest of the three.
+4. **A tie went to the first reading.** Superdry's midi and maxi skirts the feed doesn't send learned "Mini
+   Skirt" from their category (Skirts: mostly mini among those sent), though their own type agreed on Midi /
+   Maxi at the same depth. Cargo shorts were read as Denim Shorts the same way. **Rule:** at one depth, the
+   surer reading wins (`agreed` returns the share).
+5. **Collars.** "155" was read as a collar 15½ everywhere — on Superdry's 155 cm skis as on Reiss's shirts.
+   **Rule:** it reads as a collar only in a type whose run carries whole collar sizes beside it (14, 15, 16 …;
+   `collarRun`, applied per type when the census finishes). Reiss's shirts still run 14.5 · 15 · 15.5 · 16 …;
+   a ski stays 155.
+
+**What moved** (rows placed differently, census v3 → v4, on the live masters 5 Oct 2026):
+- Superdry GB: 371 of 59,608.
+- Reiss GB: 198 — 162 of them the suit trousers refined.
+- Superdry DE: 136 — mostly campaign-bucket rows read at the coarser place their own type agrees on.
+- Monsoon UK: 73.
+- Accessorize UK: 47 — to "Master only".
+- Schuh UK: 8.
+
+Superdry's document map on GB moved by one type each way: the skis are their own unmapped type, and a women's
+low-top trainer type joined *trainers · Female* (§3j).
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -597,7 +750,10 @@ first); a **cut-off** set to different values across a brand's markets.
   count, the default tier, a pick listing exactly that tier's types (negative control: two tiers list
   different rows), a shared name led by its department, the pick remembered per brand, a save at tier 2
   writing that tier's key and the tier-3 types under it reading "⤴ Tier 2", the headline not moving with
-  the tier, the phone. Fails on the page as it was before. Presync.
+  the tier, the phone. Fails on the page as it was before. Presync. The brand's own document (§3j): the
+  guide row naming it and its markets, ⊞ Rows row by row (part, doesn't fit and what the type is made in,
+  no type here, the note), the "Document doesn't fit" filter listing exactly the types it can't measure,
+  a market chip saving the document with that market added, the panel panning on a phone.
 - `tools/test_rules.mjs` — the classifier on real rule-name shapes (counts and dates invented), the
   findings, `rulesStore` + `rulesPull` lifted from `worker.js` and run against a stub MCP
   (pagination, the cmpid guard, rotation, no_token / unauthorized / unreachable), the wiring, both
@@ -615,12 +771,21 @@ first); a **cut-off** set to different values across a brand's markets.
   synthetic CSV / XML masters, the measure, core, every example rule, the guide resolution, the document
   import + export), the worker's half (`src/herosizes.js`: the census it stores, the edits a signin may
   make), the held-back join (`feedIndex` + `heldBack`), the agent's census on an in-process zip, the
-  route, the page, the stub, and that no census or guide is committed. Tiers (§3h): `treeIndex` on a
+  route, the page, the stub, and that no census or guide is committed. The brand's own document (§3j): Ray's
+  table cell for cell through `parseDoc` (and the seed held equal to it), the word rules (T-Shirts = Tshirts,
+  shorts ≠ Short Sleeve, jeans ≠ Jean Jacket, Trouser = Trousers), which row wins (outright before inside a
+  name, then deeper, then order), department and footwear, dual sizes, doesn't fit / part / open, the
+  markets (GB + IE yes, US no), the precedence against own and coarser lists and a followed brand, the row
+  summary, the export, the worker's `d:` key and `applySeeds` (once, never over a tombstone), and the
+  Document tab round-tripped through the real sheet reader. Tiers (§3h): `treeIndex` on a
   synthetic feed, every placement rule (id, style, master type, word, the run telling kids from women,
   master only), `commonPath`, the fold past the cap, `tiers` / `defaultTier` / `tierTypes` (a rolled-up
   type measures as its types added up), inheritance (own → coarser tier → followed brand → example, a
   coarser list that names none of a type's sizes skipped, a branch's "no hero sizes", exact-only tree
-  keys), the tier-independent headline, and the agent placing its census on a feed. In `qa_gate.sh`, `presync.sh`,
-  `validate.yml`.
+  keys), the tier-independent headline, and the agent placing its census on a feed. The catalogue check
+  (§3k): `szSpan` / `sameScale`, the bucket rule, `agreed`, `collarRun`, and one invented census built to
+  hold every distortion found live (trunks in a bucket, skis beside ski jackets, a skirt tie, suit trousers
+  filed one level short, a mini dress the feed files by occasion, collar sizes). Each fails on the census
+  before it. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

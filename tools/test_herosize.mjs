@@ -45,7 +45,7 @@ const SK = [
   ['Medium', 'M'], ['X-Large', 'XL'], ['2XL', 'XXL'], ['3XL', 'XXXL'], ['XXXXL', '4XL'], ['XS / S', 'XS/S'], ['M / L', 'M/L'],
   ['1SIZE', 'ONE SIZE'], ['One Size', 'ONE SIZE'], ['Einheitsgröße', 'ONE SIZE'], ['TALLA ÚNICA', 'ONE SIZE'], ['Taglia unica', 'ONE SIZE'],
   ['3-4 years', '3-4 YRS'], ['Age 5', '5 YRS'], ['9 Y', '9 YRS'], ['0-3 mths', '0-3 MTHS'], ['12-18 months', '12-18 MTHS'],
-  ['145', '14.5'], ['155', '15.5'], ['Size: M', 'M'], ['Taille 38', '38'], ['Größe: 40', '40'], ['', ''], ['   ', ''],
+  ['145', '145'], ['155', '155'], ['Size: M', 'M'], ['Taille 38', '38'], ['Größe: 40', '40'], ['', ''], ['   ', ''],
 ];
 SK.forEach(([a, b]) => t('sizeKey(' + JSON.stringify(a) + ') = ' + JSON.stringify(b), H.sizeKey(a) === b, 'got ' + JSON.stringify(H.sizeKey(a))));
 t('a size never carries a character the worker would refuse, and never runs past 24', ['EU 40⅓', 'Size™ M', 'X'.repeat(40) + 'L'].every((v) => { const k = H.sizeKey(v); return k.length <= 24 && /^[\w .\/½+&'#-]*$/.test(k); }));
@@ -180,6 +180,69 @@ t('a type the feed has no word for: under the feed’s department, else "Master 
   && !ck('Women > Clothing > Dresses').m && !ck('Kids > Clothing > Dresses').m);
 t('commonPath: the deepest level 80% of the sent products share, never on fewer than five', H.commonPath(new Map([['A > B > C', 4], ['A > B > D', 1]])) === 'A > B > C' && H.commonPath(new Map([['A > B > C', 3], ['A > B > D', 2]])) === 'A > B'
   && H.commonPath(new Map([['A > B', 4]])) === '' && H.commonPath(null) === '');
+console.log('· the catalogue check — a type is made in the sizes the brand makes it in (census v4)');
+// Ray, 5 Oct 2026: "double check [Sizes made in] are actually presentation of Superdry catalogue" — every distortion the
+// check found on the live masters, rebuilt on invented rows, each failing on the census before it
+t('a size is a span on its kind of scale: a dual’s two halves, any system, ages in months, the letter ladder; a code nobody can read is none',
+  eq(H.szSpan('6-7'), { c: 'num', lo: 6, hi: 7 }) && eq(H.szSpan('UK 7'), { c: 'num', lo: 7, hi: 7 }) && eq(H.szSpan('S/M'), { c: 'alpha', lo: 0, hi: 1 })
+  && eq(H.szSpan('2-3 YRS'), { c: 'age', lo: 24, hi: 47 }) && H.szSpan('ONE SIZE') === null && H.szSpan('154W') === null);
+t('one scale: a trainer’s 6–12 beside a slider’s 6-7 … 12-13 · another: a ski’s 149–184 cm beside S–XXL and 28–40 · no readable size is no evidence',
+  H.sameScale(H.spansOf(['6', '9', '12']), H.spansOf(['6-7', '12-13', 'S'])) && !H.sameScale(H.spansOf(['149', '155', '184']), H.spansOf(['S', 'XXL', '28', '40']))
+  && H.sameScale({}, H.spansOf(['S'])) && H.sameScale(H.spansOf(['M']), {}));
+t('a reading made only of departments and merchandising buckets is no product type, however many levels; one naming a product on the way still is',
+  !H.usableType('outlet/mens/view all') && !H.usableType('womens/campaign 3') && !H.usableType('outlet/damen/alles anzeigen') && !H.usableType('Mens > View All')
+  && H.usableType('Mens > Shirts > New In') && H.usableType('T-Shirts/Vests') && H.usableType('outlet/mens/jeans'));
+t('agreed: the place AND how sure (a tie between two readings goes to the surer)', eq(H.agreed(new Map([['A > B > C', 4], ['A > B > D', 1]])), { p: 'A > B > C', sh: 0.8 }) && eq(H.agreed(null), { p: '', sh: 0 }));
+t('a collar written without its point is one only beside whole collar sizes — a shirt’s 145 · 155, never a ski’s 155 cm',
+  eq(H.collarRun(new Map([['14', 1], ['145', 1], ['15', 1], ['155', 1]])), { 145: '14.5', 155: '15.5' }) && H.collarRun(new Map([['149', 1], ['155', 1], ['160', 1], ['165', 1]])) === null);
+const F4 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' + [
+  ...['j1', 'j2', 'j3', 'j4', 'j5'].map((id) => [id, 'GJ', 'Men > Clothing > Joggers > Classic Joggers']),
+  ...['u1', 'u2', 'u3', 'u4', 'u5'].map((id) => [id, 'GU', 'Men > Underwear > Trunks']),
+  ...['k1', 'k2', 'k3', 'k4', 'k5'].map((id) => [id, 'GK', 'Men > Clothing > Jackets and Coats > Ski Jacket']),
+  ...['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((id) => [id, 'GH', 'Men > Clothing > Shirts']),
+  ...['m1', 'm2', 'm3', 'm4'].map((id) => [id, 'GM', 'Women > Clothing > Skirts > Mini Skirt']),
+  ...['d1', 'd2', 'd3', 'd4', 'd5'].map((id) => [id, 'GD', 'Women > Clothing > Skirts > Midi Skirt']),
+  ...['s1', 's2', 's3'].map((id) => [id, 'GS', 'Men > Clothing > Trousers > Suit Trousers']), ['s4', 'GS2', 'Men > Clothing > Trousers'], ['s5', 'GS2', 'Men > Clothing > Trousers'],
+  ...['e1', 'e2', 'e3', 'e4'].map((id) => [id, 'GE', 'Women > Clothing > Dresses > Day Dress']), ['p1', 'GP', 'Women > Clothing > Dresses > Party Dress'], ['p2', 'GP', 'Women > Clothing > Dresses > Party Dress'],
+  ['n0', 'GN', 'Women > Clothing > Dresses > Mini Dress']]
+  .map(([id, g, pt]) => '<item><g:id>' + id + '</g:id><g:item_group_id>' + g + '</g:item_group_id><g:product_type>' + gt(pt) + '</g:product_type><g:availability>in stock</g:availability></item>').join('')
+  + '</channel></rss>';
+const ti4 = H.treeIndex(E), tp4 = FA.createXmlParser((r, h) => ti4.onRow(r, h)); tp4.push(F4); tp4.end();
+const TR4 = ti4.finish();
+const MT4 = [['product_id', 'item_group_id', 'gender', 'category', 'type', 'category_id', 'size', 'availability']];
+const put4 = (id, g, gen, cat, typ, cid, z, av) => MT4.push([id, g, gen, cat, typ, cid, z, av || 'in stock']);
+// sent — every one placed by its id
+[['j1', 'S'], ['j2', 'M'], ['j3', 'L'], ['j4', 'XL'], ['j5', 'M']].forEach(([id, z]) => put4(id, 'GJ', 'mens', 'Joggers', 'Classic Joggers', 'outlet/mens/view all', z));
+[['u1', 'S'], ['u2', 'M'], ['u3', 'L'], ['u4', 'XL'], ['u5', 'M']].forEach(([id, z]) => put4(id, 'GU', 'mens', 'Underwear', 'Trunks', '', z));
+[['k1', 'S'], ['k2', 'M'], ['k3', 'L'], ['k4', 'XL'], ['k5', 'M']].forEach(([id, z]) => put4(id, 'GK', 'mens', 'Ski Snowboard', 'Ski Jacket', '', z));
+[['h1', '14'], ['h2', '145'], ['h3', '15'], ['h4', '155'], ['h5', '16'], ['h6', '165']].forEach(([id, z]) => put4(id, 'GH', 'mens', 'Shirts', 'Formal Shirt', '', z));
+[['m1', '8'], ['m2', '10'], ['m3', '12'], ['m4', '14']].forEach(([id, z]) => put4(id, 'GM', 'womens', 'Skirts', 'Mini Skirt', '', z));
+put4('d1', 'GD', 'womens', 'Skirts', 'Midi Skirt', '', '8'); [['d2', '10'], ['d3', '12'], ['d4', '14'], ['d5', '16']].forEach(([id, z]) => put4(id, 'GD', 'womens', 'Occasion', 'Midi Skirt', '', z));
+[['s1', '30'], ['s2', '32'], ['s3', '34'], ['s4', '36'], ['s5', '38']].forEach(([id, z]) => put4(id, id < 's4' ? 'GS' : 'GS2', 'mens', 'Suit Trousers', '', '', z));
+[['e1', '8'], ['e2', '10'], ['e3', '12'], ['e4', '14'], ['p1', '8'], ['p2', '10']].forEach(([id, z]) => put4(id, id.charAt(0) === 'e' ? 'GE' : 'GP', 'womens', 'Dresses', 'Mini dress', '', z));
+put4('n0', 'GN', 'womens', 'Dresses', 'Bodycon', '', '10');
+// never sent (out of stock) — where the census has to place them itself
+put4('x1', 'GX1', 'mens', 'Underwear', 'Trunks', 'outlet/mens/view all', 'M', 'out of stock');
+[['x2a', '149'], ['x2b', '155'], ['x2c', '165']].forEach(([id, z]) => put4(id, 'GX2', 'mens', 'Ski Snowboard', 'Skis', '', z, 'out of stock'));
+[['x3a', '8'], ['x3b', '10']].forEach(([id, z]) => put4(id, 'GX3', 'womens', 'Skirts', 'Midi Skirt', '', z, 'out of stock'));
+[['x4a', '30'], ['x4b', '32']].forEach(([id, z]) => put4(id, 'GX4', 'mens', 'Suit Trousers', '', '', z, 'out of stock'));
+[['x5a', '8'], ['x5b', '10']].forEach(([id, z]) => put4(id, 'GX5', 'womens', 'Dresses', 'Mini dress', '', z, 'out of stock'));
+const C4v = csvCensus(csv(MT4), TR4);
+const c4 = (k) => C4v.types.find((x) => x.k === k);
+t('every row of the check census counted once, on the feed’s tree', C4v.src === 'feed' && C4v.types.reduce((a, x) => a + x.n, 0) === MT4.length - 1, JSON.stringify(C4v.tree));
+t('a bucket is not a reading: unsent trunks filed under "outlet/mens/view all" go with the trunks, not the joggers that bucket mostly holds',
+  c4('Men > Underwear > Trunks') && c4('Men > Underwear > Trunks').n === 6 && c4('Men > Clothing > Joggers > Classic Joggers').n === 5, C4v.types.map((x) => x.k + ':' + x.n).join(' | '));
+t('a run on another scale is not placed by learning: unsent skis (149–184 cm) never join the ski jackets their category sends — they stay the master’s own type',
+  c4('Men > Clothing > Jackets and Coats > Ski Jacket').n === 5 && c4('Men > Ski Snowboard') && c4('Men > Ski Snowboard').m === 1 && eq(c4('Men > Ski Snowboard').sz.map((z) => z[0]), ['149', '155', '165']));
+t('a tie at one depth goes to the surer reading: unsent midi skirts follow their type (5 of 5 sent at Midi), not their category (4 of 5 at Mini)',
+  c4('Women > Clothing > Skirts > Midi Skirt').n === 7 && c4('Women > Clothing > Skirts > Mini Skirt').n === 4);
+t('the master’s word refines a learned place where its sent products agree — suit trousers the feed files at, or one level short of, "Suit Trousers"',
+  c4('Men > Clothing > Trousers > Suit Trousers').n === 5 && c4('Men > Clothing > Trousers').n === 2);
+t('…and never where they contradict it: a "Mini dress" the feed files by occasion (Day, Party) stays at Dresses, not the feed’s own "Mini Dress" level',
+  c4('Women > Clothing > Dresses') && c4('Women > Clothing > Dresses').n === 2 && c4('Women > Clothing > Dresses > Mini Dress').n === 1, C4v.types.map((x) => x.k + ':' + x.n).join(' | '));
+t('a shirt’s collar sizes read as collars (145 → 14.5, 155 → 15.5), the same 155 on a ski stays a length', eq(c4('Men > Clothing > Shirts').sz.map((z) => z[0]), ['14', '14.5', '15', '15.5', '16', '16.5'])
+  && c4('Men > Clothing > Shirts').pat.length === 1 && c4('Men > Clothing > Shirts').pat[0][0] === '222222' && c4('Men > Ski Snowboard').sz.some((z) => z[0] === '155'));
+t('how each row was placed, counted: by id, learned, by word, and the master’s own', C4v.tree.id === 42 && C4v.tree.learn === 5 && C4v.tree.word === 2 && C4v.tree.own === 3, JSON.stringify(C4v.tree));
 const CN = csvCensus(csv(MT3));
 t('no tree: the master’s own types, as before (src master, no tree)', CN.src === 'master' && CN.tree === null && CN.types.some((x) => x.k === 'Women > Dresses') && !CN.types.some((x) => x.m));
 const CJ = csvCensus(csv([['sku', 'size', 'category'], ['Q1', 'M', 'Tops'], ['Q2', 'L', 'Tops']]), TR);
@@ -306,6 +369,106 @@ t('leafWords: one phrase, an "and" that may be "&" or absent, never more than a 
   && (H.leafWords('one two three four five six seven eight') .match(/\?/g) || []).length <= 12 && new RegExp(H.leafWords('one two three four five six seven eight')).test('ones two three four five six seven eights'));
 t('a saved example is accepted by the worker as written (its words pass the fragment check)', !HW.sanitizeHeroKey('x:acme-guide', XB, { brands: [], inScope: () => true, canEx: true, by: 'A', now: 1 }).error);
 
+console.log('· a brand’s own document AS WRITTEN — category × gender (Superdry’s table, 5 Oct 2026)');
+// Ray's table, cell for cell (his screenshot) — a title row above it, as a sheet usually has one
+const RAY = [['Superdry hero sizes'], ['Category', 'Gender', 'Hero Sizes', 'FeedSpark\'s note'],
+  ['Jeans|Trousers', 'Male', 'M,L,30,32', ''], ['Jeans|Trousers', 'Female', '8,10,12,14,26,28,30,32', ''], ['Joggers', 'Male', 'M,L', ''], ['Joggers', 'Female', '8,10,12,14', ''],
+  ['Shorts', 'Male', 'M,L,32,34', ''], ['Shorts', 'Female', '8,10,12,14,26,28,30,32', ''], ['Skirts', 'Female', '8,10,12,14', ''], ['Underwear', 'Male', 'M,L', ''], ['Underwear', 'Female', 'M, L', ''],
+  ['Swimwear', 'Male', 'M,L', ''], ['Swimwear', 'Female', 'S,M,L', ''], ['trainers', 'Male', '8,9,10', ''], ['trainers', 'Female', '4,5,6,7', ''], ['Sport bras', 'Female', 'S,M,L', ''],
+  ['Jackets|coats', 'Male', 'M,L', 'Men\'s Jacket - also comes in numeric size, do you have heros ?'], ['Jackets|coats', 'Female', '8,10,12,14', ''], ['Dresses', 'Female', '8,10,12,14', ''],
+  ['Tshirts|Shirts|Sweatshirts|hoodies', 'Male', 'M,L', ''], ['Tshirts|Shirts|Sweatshirts|hoodies', 'Female', 'S,M,L', '']];
+const RD = H.parseDoc(RAY);
+t('the table is read as the brand’s own document: header below the title, 19 rows, every category as written', RD.layout === 'rules' && RD.header === 1 && RD.rows.length === 19
+  && RD.rows[0].c === 'Jeans|Trousers' && RD.rows[0].g === 'Male' && eq(RD.rows[0].s, ['M', 'L', '30', '32']) && RD.rows[11].c === 'trainers' && RD.rows[18].c === 'Tshirts|Shirts|Sweatshirts|hoodies');
+t('"M, L" with a space reads as M and L; FeedSpark’s note travels with its row', eq(RD.rows[8].s, ['M', 'L']) && RD.rows[14].n === 'Men\'s Jacket - also comes in numeric size, do you have heros ?' && RD.rows.filter((r) => r.n).length === 1);
+t('THE SEED IS THE TABLE: Superdry’s document in the worker is these 19 rows exactly, written for GB and IE', eq(HW.DOC_SEEDS.Superdry.rows, RD.rows) && eq(HW.DOC_SEEDS.Superdry.mk, ['GB', 'IE']));
+const RR = H.docRules({ rows: RD.rows });
+t('a gender cell of "All" / "Both" / "Everyone" is every department, not unisex; "Unisex" is unisex', H.docRules({ rows: [{ c: 'Socks', g: 'All', s: ['M'] }, { c: 'Socks', g: 'Both', s: ['M'] }, { c: 'Socks', g: 'Unisex', s: ['M'] }] }).map((r) => r.d).join(',') === ',,unisex');
+t('each row: Male → men, Female → women, trainers → footwear only, | alternatives as phrases', RR[0].d === 'men' && RR[1].d === 'women' && RR[11].fw === 1 && RR[0].fw === 0 && eq(RR[18].ph, ['tshirt', 'shirt', 'sweatshirt', 'hoodie']) && eq(RR[13].ph, ['sportbra']));
+t('a Department column beside a Category column says who a row is for; with no Gender column the per-type layout stands', H.parseDoc([['Category', 'Department', 'Hero sizes'], ['Dresses', 'Womens', '10, 12']]).layout === 'rules'
+  && H.parseDoc([['Department', 'Hero sizes'], ['Womens Dresses', '10']]).layout === 'column' && D1.layout === 'column');
+const RS1 = { 'd:Superdry': { name: 'Superdry hero sizes', mk: ['GB', 'IE'], rows: RD.rows, by: 'FeedSpark', at: 7 } };
+const tz = (k, d, sizes, fw, rows) => ({ k, d, fw: fw ? 1 : 0, sz: sizes.map((s, i) => [s, rows ? rows[i] : 10, rows ? Math.floor(rows[i] / 2) : 5, rows ? rows[i] - Math.floor(rows[i] / 2) : 5]), pat: [] });
+const SX = H.ctxOf(RS1, 'Superdry', null, 'GB');
+const hx = (k, d, sizes, fw, rows) => H.heroFor(RS1, 'Superdry', tz(k, d, sizes, fw, rows), SX);
+t('Jeans|Trousers · Male meets men’s jeans at any depth — only the sizes made (M, L have no jeans here)', (() => { const h = hx('Men > Clothing > Jeans > Slim Jeans', 'men', ['28', '30', '32', '34', '36']); return h.src === 'doc' && h.doc.i === 0 && eq(h.s, ['30', '32']) && eq(h.all, ['M', 'L', '30', '32']) && h.dec; })());
+t('…and "Trouser" (a singular the feed writes) is the same word; a Female row never meets a men’s type', hx('Women > Clothing > Trouser', 'women', ['8', '10', '12']).doc.i === 1 && hx('Men > Clothing > Trousers', 'men', ['30', '32']).doc.i === 0);
+t('"Tshirts" meets "T-Shirts"; "Sport bras" meets "Sports Bra"; "hoodies" meets "Hoodies and Sweatshirts"', hx('Men > Clothing > T-Shirts', 'men', ['S', 'M', 'L']).doc.i === 17
+  && hx('Women > Clothing > Tops > Sports Bra', 'women', ['S', 'M', 'L']).doc.i === 13 && hx('Men > Clothing > Hoodies and Sweatshirts', 'men', ['M', 'L']).doc.i === 17);
+t('a word inside another is not it: Shorts is not "Short Sleeve Polo Shirt" (that is Shirts), Jeans is not "Jean Jacket"', hx('Men > Clothing > Tops > Short Sleeve Polo Shirt', 'men', ['S', 'M', 'L']).doc.i === 17
+  && hx('Men > Clothing > Jackets and Coats > Jean Jacket', 'men', ['M', 'L']).doc.i === 14);
+t('a row naming a level OUTRIGHT beats a word inside a deeper name: Swim Shorts is Swimwear; a Shirt Dress is a Dress', hx('Men > Swimwear > Swim Shorts', 'men', ['S', 'M', 'L']).doc.i === 9
+  && hx('Women > Clothing > Dresses > Shirt Dress', 'women', ['8', '10', '12']).doc.i === 16);
+t('…and among outright names the deeper wins: a catch-all "Clothing" row loses to "Jeans"', (() => {
+  const st = { 'd:A': { mk: [], rows: [{ c: 'Clothing', g: 'Male', s: ['M'] }, { c: 'Jeans', g: 'Male', s: ['32'] }] } };
+  const h = H.heroFor(st, 'A', tz('Men > Clothing > Jeans', 'men', ['30', '32', 'M']), H.ctxOf(st, 'A', null, 'GB'));
+  const h2 = H.heroFor(st, 'A', tz('Men > Clothing > Polo', 'men', ['M', 'L']), H.ctxOf(st, 'A', null, 'GB'));
+  return h.doc.i === 1 && eq(h.s, ['32']) && h2.doc.i === 0;
+})());
+t('a footwear row meets footwear types only: trainers · Female → Hi Top Trainers; a clothing type never takes it', (() => { const h = hx('Women > Footwear > Hi Top Trainers', 'women', ['3', '4', '5', '6', '7', '8'], 1); return h.doc.i === 12 && eq(h.s, ['4', '5', '6', '7']); })()
+  && hx('Women > Clothing > Trainers Socks', 'women', ['4', '5']).src === '');
+t('a two-size label carries its sizes: "10-12" and "6-8" are hero when 8 or 10 is; a bare "8" meets "UK 8"', eq(hx('Women > Clothing > Dresses', 'women', ['6', '6-8', '8', '10', '10-12', '16']).s, ['6-8', '8', '10', '10-12'])
+  && eq(H.heroFor({ 'd:B': { rows: [{ c: 'Trainers', g: 'Men', s: ['8'] }] } }, 'B', tz('Men > Trainers', 'men', ['UK 7', 'UK 8'], 1)).s, ['UK 8']));
+const MISS = hx('Women > Swimwear > Bikini', 'women', ['6', '8', '10', '12', '14']);
+t('NONE of a row’s sizes made: the row still speaks — "doesn’t fit", no sizes, not a decision (Superdry GB swimwear 6–20 vs S, M, L)', MISS.src === 'doc' && MISS.miss === true && MISS.s.length === 0 && eq(MISS.all, ['S', 'M', 'L']) && !MISS.dec && MISS.doc.i === 10);
+t('…and an example never papers over it', (() => { const st = Object.assign({ 'g:Superdry': { ex: 'fs-fashion-uk' } }, RS1); const h = H.heroFor(st, 'Superdry', tz('Women > Swimwear > Bikini', 'women', ['6', '8', '10', '12', '14']), H.ctxOf(st, 'Superdry', null, 'GB')); return h.src === 'doc' && h.miss; })());
+const PARTH = hx('Women > Clothing > T-Shirts', 'women', ['L', 'XL', '6', '8', '10', '12'], 0, [6, 6, 400, 400, 400, 400]);
+t('PART: S, M, L against a type sold 6–20 with a few in L reaches a sliver of it — and says by how much', PARTH.src === 'doc' && eq(PARTH.s, ['L']) && PARTH.dec && PARTH.part === Math.round((12 / 1612) * 1000) / 10
+  && hx('Men > Clothing > Jeans', 'men', ['M', 'L', '30', '32'], 0, [5, 5, 40, 40]).part === undefined);
+t('MARKETS: written for GB and IE — US (US 8 = UK 12) and DE (34–48) read nothing from it', hx('Men > Clothing > Jeans', 'men', ['30', '32']).src === 'doc'
+  && H.heroFor(RS1, 'Superdry', tz('Men > Clothing > Jeans', 'men', ['30', '32']), H.ctxOf(RS1, 'Superdry', null, 'US')).src === ''
+  && H.heroFor(RS1, 'Superdry', tz('Men > Clothing > Jeans', 'men', ['30', '32']), H.ctxOf(RS1, 'Superdry', null, 'ie')).src === 'doc'
+  && H.docCovers({ mk: [] }, 'US') && !H.docCovers({ mk: ['GB'] }, '') && H.docCovers({ mk: ['GB'] }, 'gb'));
+const RS2 = Object.assign({ 'm:Superdry|men > clothing > jeans': { k: 'Men > Clothing > Jeans', s: ['34'], src: 'set' }, 'm:Superdry|women > swimwear': { k: 'Women > Swimwear', s: ['10', '12'], src: 'set' }, 'm:Superdry|men > clothing': { k: 'Men > Clothing', s: ['XL'], src: 'set' } }, RS1);
+const SX2 = H.ctxOf(RS2, 'Superdry', null, 'GB'), hy = (k, d, sizes) => H.heroFor(RS2, 'Superdry', tz(k, d, sizes), SX2);
+t('PRECEDENCE: the type’s own list beats the document; the document beats a list set for a coarser tier', hy('Men > Clothing > Jeans', 'men', ['30', '32', '34']).src === 'set' && eq(hy('Men > Clothing > Jeans', 'men', ['30', '32', '34']).s, ['34'])
+  && hy('Men > Clothing > Trousers', 'men', ['30', '32', 'XL']).src === 'doc' && hy('Men > Clothing > Fleece', 'men', ['M', 'XL']).up === 'Men > Clothing');
+t('…a coarser list that fits wins over a row that doesn’t — and says the document disagreed', (() => { const h = hy('Women > Swimwear > Bikini', 'women', ['8', '10', '12']); return h.src === 'set' && h.up === 'Women > Swimwear' && eq(h.s, ['10', '12']) && h.docMiss && h.docMiss.i === 10; })());
+t('a brand that follows Superdry reads its document too (on a market it is written for)', (() => {
+  const st = Object.assign({ 'g:Other': { from: 'Superdry' } }, RS1);
+  const h = H.heroFor(st, 'Other', tz('Men > Clothing > Joggers', 'men', ['S', 'M', 'L']), H.ctxOf(st, 'Other', null, 'GB'));
+  return h.src === 'brand' && h.from === 'Superdry' && h.via === 'doc' && eq(h.s, ['M', 'L']);
+})());
+t('a row with no sizes is an open question — named, not a decision, never a list', (() => { const st = { 'd:A': { rows: [{ c: 'Jumpers', g: 'Female', s: [], n: 'Heroes?' }] } }; const h = H.heroFor(st, 'A', tz('Women > Jumpers', 'women', ['8', '10']), H.ctxOf(st, 'A', null, 'GB')); return h.open && !h.dec && h.s.length === 0 && h.doc.n === 'Heroes?'; })());
+// the whole card: a synthetic census shaped like Superdry GB's (invented counts)
+const SDC = { types: [tz('Men > Clothing > Jeans > Slim Jeans', 'men', ['28', '30', '32', '34']), tz('Men > Clothing > Jeans > Straight Jeans', 'men', ['30', '32', '34']),
+  tz('Women > Swimwear > Bikini', 'women', ['6', '8', '10', '12']), tz('Women > Clothing > T-Shirts', 'women', ['L', '6', '8', '10'], 0, [3, 300, 300, 300]),
+  tz('Women > Clothing > Jumpers', 'women', ['8', '10', '12']), tz('Men > Clothing > Jackets and Coats > Puffer Jacket', 'men', ['S', 'M', 'L', 'XL'])] };
+SDC.types.forEach((x) => { x.n = 40; });
+const SM = H.map(RS1, 'Superdry', SDC, 3, 'GB'), SD = SM.doc;
+t('the card at a tier: a tier-3 row its finer types reach on the SAME row lists no "set their own"', (() => { const r = SM.types.find((x) => x.t.k === 'Men > Clothing > Jeans'); return r && r.h.doc && r.h.doc.i === 0 && r.finer === 0; })());
+t('the document row by row: what each reaches, what does not fit (and what it is made in), what names no type here', SD.covered && SD.rows.length === 19 && SD.rows[0].types === 2 && SD.rows[0].prod === 80
+  && SD.rows[10].miss === 1 && eq(SD.rows[10].made, ['6', '8', '10', '12']) && SD.rows[18].types === 1 && SD.rows[18].part === 1 && SD.rows[11].types === 0 && SD.rows[11].miss === 0 && SD.rows[14].n !== '');
+t('…on a market it is not written for: nothing read, every row counted at zero', (() => { const s2 = H.map(RS1, 'Superdry', SDC, 3, 'US').doc; return !s2.covered && s2.rows.every((r) => !r.types && !r.miss && !r.set); })());
+t('the headline counts what doesn’t fit, apart from what is mapped', SM.sum.miss === 1 && SM.sum.bySrc.doc >= 3);
+t('the export names the document row a type took its sizes from', H.docRows(RS1, 'Superdry', SDC, 3, 'GB').slice(1).some((r) => r[0] === 'Men > Clothing > Jeans' && /^Brand document \(Jeans\|Trousers · Male\)$/.test(r[2]))
+  && H.srcWord({ src: 'doc', miss: true, doc: { c: 'Swimwear', g: 'Female' } }) === 'Brand document — its sizes are not made here (Swimwear · Female)');
+{ // ⬇ Sheet → edit → ⇪ Import: the Document tab, built as the page builds it, read back by the real sheet reader
+  const X = require('../docs/xlsx_engine.js');
+  const bytes = X.build([{ name: 'Document', cols: [{ k: 'a', l: 'Category', w: 36 }, { k: 'b', l: 'Gender', w: 12 }, { k: 'c', l: 'Hero Sizes', w: 30 }, { k: 'd', l: 'FeedSpark’s note', w: 48 }, { k: 'e', l: 'In GB', w: 40 }],
+    rows: RD.rows.map((r) => ({ a: r.c, b: r.g, c: r.s.join(', '), d: r.n, e: '3 types · 80 products' })), note: 'Superdry hero sizes — written for GB, IE.' },
+    { name: 'Hero sizes', cols: [{ k: 'a', l: 'Product type' }, { k: 'b', l: 'Hero sizes' }], rows: [{ a: 'Men > Clothing > Jeans', b: 'M, L' }] }]);
+  const back = H.parseDoc(await X.readXlsx(bytes.buffer ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes));
+  t('the exported Document tab reads back as the same document, row for row (the sheet ⇪ Import reads is the first)', back.layout === 'rules' && eq(back.rows, RD.rows), JSON.stringify(back.rows.slice(0, 2)));
+}
+// the worker's half: the d: key, the seed
+const DCTX = { brands: ['Acme', 'Bolt', 'Superdry'], inScope: (b) => b !== 'Bolt', canEx: true, by: 'Ray', now: 42, marketsOf: (b) => (b === 'Superdry' ? ['GB', 'IE', 'US'] : ['GB']) };
+const DK = (v, k) => HW.sanitizeHeroKey(k || 'd:Superdry', v, DCTX);
+t('worker: a document is stored as written, stamped on the server, its markets the brand’s own', eq(DK({ name: 'Doc', mk: ['gb', 'IE', 'GB'], rows: [{ c: 'Jeans|Trousers', g: 'Male', s: ['M', '30'], n: 'q' }] }).value,
+  { name: 'Doc', mk: ['GB', 'IE'], rows: [{ c: 'Jeans|Trousers', g: 'Male', s: ['M', '30'], n: 'q' }], by: 'Ray', at: 42 }));
+t('worker: refused — a market not on the brand’s roster, a size nobody writes, a row with no category, no rows, out of scope', !!DK({ mk: ['FR'], rows: [{ c: 'x', s: ['M'] }] }).error && !!DK({ rows: [{ c: 'x', s: ['<b>'] }] }).error
+  && !!DK({ rows: [{ c: '', s: ['M'] }] }).error && !!DK({ rows: [] }).error && !!DK({ rows: [{ c: 'x', s: ['M'] }] }, 'd:Bolt').error && !!DK({ rows: [{ c: 'x', s: ['M'] }] }, 'd:Nobody').error && DK(null).value === null);
+t('worker: the seed passes the worker’s own check whole (what is written is what a PUT would store)', (() => { const sd = HW.DOC_SEEDS.Superdry, r = DK({ name: sd.name, mk: sd.mk, rows: sd.rows }); return !r.error && eq(r.value.rows, sd.rows) && eq(r.value.mk, sd.mk); })());
+t('worker: reading includes the document of a brand in scope, never another’s', eq(Object.keys(HW.heroView({ 'd:Acme': { rows: [] }, 'd:Bolt': { rows: [] }, 'x:t': {} }, (b) => b === 'Acme')).sort(), ['d:Acme', 'x:t']));
+t('worker: the brand list counts the document’s rows and the markets it is written for', (() => { const g = HW.guideBrands({ 'd:Superdry': { mk: ['GB', 'IE'], rows: [{}, {}] } }, ['Superdry'])[0]; return g.doc && g.rows === 2 && eq(g.mk, ['GB', 'IE']); })());
+const ENV = { data: {}, meta: {} };
+t('worker: the seed is written ONCE — never again once its key has existed, even as a tombstone', HW.applySeeds(ENV, 5) === 1 && ENV.data['d:Superdry'].rows.length === 19 && ENV.meta['d:Superdry'].t === 5 && HW.applySeeds(ENV, 6) === 0
+  && HW.applySeeds({ data: {}, meta: { 'd:Superdry': { t: 1, del: 1 } } }, 7) === 0 && /from Ray’s table/.test(ENV.data['d:Superdry'].by));
+t('worker: the route seeds on read, saves only when it wrote, and validates a document’s markets against the roster', /if \(HERO\.applySeeds\(henv, now\)\) await env\.EDITS\.put\(HERO\.HERO_KEY, JSON\.stringify\(henv\)\);/.test(WK)
+  && /marketsOf: \(b\) => ROAS\.rosterOf\(b\)\.map\(\(m\) => m\.market\)/.test(WK) && ROAS.rosterOf('Superdry').some((m) => m.market === 'IE') && ROAS.rosterOf('Superdry').some((m) => m.market === 'GB'));
+t('page: the card reads at its market, tags a row that doesn’t fit / reaches part / is open, and filters them', /HS\.map\(HM\.store, b, cen, tier, d\.market\)/.test(SP) && /function hmDocTag\(h\)/.test(SP) && /📄 Doesn’t fit/.test(SP) && /📄 Part · /.test(SP) && /📄 Open question/.test(SP) && /\['fit', 'Document doesn’t fit', nfit\]/.test(SP));
+t('page: the rows panel, the markets it is written for, a category × gender import kept whole, the document as a sheet', /function hmDocPanel\(dd, mkt\)/.test(SP) && /data-dmk/.test(SP) && /doc\.layout === 'rules'/.test(SP) && /put\['d:' \+ b0\] = nd/.test(SP) && /sheets\.unshift\(\{ name: 'Document'/.test(SP) && /partText\(z, 'xl\/worksheets\/sheet1\.xml'\)/.test(read('docs/xlsx_engine.js')));
+
 console.log('· the worker’s half (src/herosizes.js)');
 t('ONE census shape: the engine and the worker hold the same CENSUS_V', HW.CENSUS_V === H.CENSUS_V);
 const SC = HW.sanitizeCensus(C1);
@@ -334,7 +497,7 @@ const PUT = HW.sanitizeHeroPut({ 'm:Acme|a': { s: ['M'] }, 'g:Acme': null, _dele
 t('a PUT: every key checked, deletions from null and _deleted, nothing written unless all pass', PUT.errors.length === 0 && eq(Object.keys(PUT.data), ['m:Acme|a']) && eq(PUT.deleted.sort(), ['g:Acme', 'm:Acme|b'])
   && HW.sanitizeHeroPut({ 'm:Bolt|a': { s: ['M'] } }, CTX).errors.length === 1 && HW.sanitizeHeroPut([], CTX).errors.length === 1);
 t('reading: every example, and only the guides of brands in scope', eq(Object.keys(HW.heroView({ 'g:Acme': {}, 'm:Acme|a': {}, 'g:Bolt': {}, 'm:Bolt|a': {}, 'x:t': {} }, (b) => b === 'Acme')).sort(), ['g:Acme', 'm:Acme|a', 'x:t']));
-t('the brand list says which have a document, what they follow and how many types are their own', eq(HW.guideBrands(ST, ['Acme', 'Bolt']), [{ client: 'Acme', doc: true, ex: 'fs-fashion-uk', from: '', own: 3, fromDoc: 1 }, { client: 'Bolt', doc: false, ex: 'fs-footwear', from: 'Acme', own: 0, fromDoc: 0 }]));
+t('the brand list says which have a document, what they follow and how many types are their own', eq(HW.guideBrands(ST, ['Acme', 'Bolt']), [{ client: 'Acme', doc: true, ex: 'fs-fashion-uk', from: '', own: 3, fromDoc: 1, rows: 0, mk: [] }, { client: 'Bolt', doc: false, ex: 'fs-footwear', from: 'Acme', own: 0, fromDoc: 0, rows: 0, mk: [] }]));
 
 console.log('· held back — in stock in the master, not live in the Google feed');
 const FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" xmlns:c="http://example.com/c"><channel>'
@@ -385,17 +548,17 @@ t('worker: GET/PUT /api/rules/hero — scoped, the kvmerge envelope with explici
 t('worker: no brand asked for = the first in scope with a census, flagged auto', /brand = mine\.find\(hasCensus\) \|\| ''; out\.auto = !!brand;/.test(WK));
 t('worker: the engine is served verbatim at /stock/engine.js (a Text module by the *_engine.js rule)', /path === '\/stock\/engine\.js'/.test(WK) && /import HEROSIZE_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/herosize_engine\.js"/.test(WK));
 t('worker: each stock market carries its wired keys (wk) for the held-back download', /wk: \{ g: k\.g \? k\.g\.split\('\|'\)\[1\] : null/.test(WK));
-t('page: the hero card, its engine, the guide store with a read-stamp, edits kept until the server confirms', /id="hmap-card"/.test(SP) && /fetch\('\/stock\/engine\.js'/.test(SP) && /'X-Sync-Base': String\(HM\.base \|\| 0\)/.test(SP) && /function hmReapply\(\)/.test(SP) && /HS\.map\(HM\.store, b, cen, tier\)/.test(SP));
+t('page: the hero card, its engine, the guide store with a read-stamp, edits kept until the server confirms', /id="hmap-card"/.test(SP) && /fetch\('\/stock\/engine\.js'/.test(SP) && /'X-Sync-Base': String\(HM\.base \|\| 0\)/.test(SP) && /function hmReapply\(\)/.test(SP) && /HS\.map\(HM\.store, b, cen, tier, d\.market\)/.test(SP));
 t('page: a PT tier control — every tier the census offers, the count of types on each, the card’s own default until one is picked', /id="hm-tiers" role="group"/.test(SP) && /HS\.tiers\(cen\), tier = hmTier\(cen\)/.test(SP) && /HS\.defaultTier\(cen\)/.test(SP)
   && /'">Tier ' \+ x\.t \+ ' <span class="k">' \+ n0\(x\.types\) \+ '<\/span><\/button>'/.test(SP) && /\$\('#hm-tw2'\)\.hidden = ts\.length < 2;/.test(SP));
 t('page: the tier is remembered per brand on this device (never shared — a list set at a tier is what the team shares)', /recall\('fcc-stock-hmtier'\)/.test(SP) && /remember\('fcc-stock-hmtier', JSON\.stringify\(m\)\)/.test(SP) && /m\[hmBrand\(\)\] = t;/.test(SP));
 t('page: an inherited list says so (⤴ Tier N, where it came from in its tooltip); a row whose types read different lists says how many', /'">⤴ Tier ' \+ h\.up\.split\(' > '\)\.length \+ '<\/span>'/.test(SP) && /' types under it set their own'/.test(SP) && /function hmUp\(h\)/.test(SP));
 t('page: the type’s own level in bold, its tiers above on the line under; a master-only type and a type that goes no finer are named', /var parts = t\.k\.split\(' > '\), leaf = parts\.pop\(\);/.test(SP) && />master type<\/span>/.test(SP) && />no finer type<\/span>/.test(SP) && /parts\[0\] === HS\.MASTER_ONLY/.test(SP));
 t('page: figures whenever a list reaches any of the row’s types (not only its own)', /'<td class="num">' \+ \(m\.rows \? hmPcCell\(m\.in, m\.rows/.test(SP));
-t('page: the import matches every tier’s types; the sheet exports the tier on screen', /HS\.tiers\(cen\)\.forEach\(function \(x\) \{ HS\.tierTypes\(cen, x\.t\)/.test(SP) && /HS\.docRows\(HM\.store, b, hmCensus\(\), hmTier\(hmCensus\(\)\)\)/.test(SP));
+t('page: the import matches every tier’s types; the sheet exports the tier on screen', /HS\.tiers\(cen\)\.forEach\(function \(x\) \{ HS\.tierTypes\(cen, x\.t\)/.test(SP) && /HS\.docRows\(HM\.store, b, hmCensus\(\), hmTier\(hmCensus\(\)\), mk\)/.test(SP));
 t('page: the note says where the types came from — the feed’s tree, how the master was placed on it, and the spellings read as one', /Product types are the Google Shopping feed’s own product_type tree: /.test(SP) && /Product types are the master’s own — no Google Shopping feed was read/.test(SP)
   && /the feed spells two ways \(case or accents\) read as one\./.test(SP));
-t('page: import through the document parser, export through the sheet writer', /HS\.parseDoc\(rows\)/.test(SP) && /X\.download\(\[\{ name: 'Hero sizes'/.test(SP) && /accept="\.csv,\.xlsx,\.tsv,\.txt"/.test(SP));
+t('page: import through the document parser, export through the sheet writer', /HS\.parseDoc\(rows\)/.test(SP) && /var sheets = \[\{ name: 'Hero sizes'/.test(SP) && /X\.download\(sheets, /.test(SP) && /accept="\.csv,\.xlsx,\.tsv,\.txt"/.test(SP));
 t('page: the held-back list reads the Google feed and the master through the worker and joins them in the engine', /fetch\('\/api\/feed\/proxy' \+ q/.test(SP) && /fetch\('\/api\/catalog\/master\/file' \+ q/.test(SP) && /E\.feedIndex\(\)/.test(SP) && /E\.heldBack\(feed\)/.test(SP));
 t('page: once per market, beside its held-back count, and in the panel; the CSV says what each row is', /hbBtn\(m, 'hb-dl'\) \+ n0\(h\.n\)/.test(SP) && /hbBtn\(m, 'btn'\)/.test(SP) && /'style range completion %', 'google feed'\]/.test(SP) && /_held_back_products\.csv/.test(SP));
 t('page: the crown only ever marks a hero size', (SP.match(/class="sz hero"/g) || []).length === 1 && /\(on \? heroIcon\(\) : ''\)/.test(SP));
