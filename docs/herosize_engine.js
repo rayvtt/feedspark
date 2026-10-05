@@ -717,6 +717,120 @@
     return { s: [], row: -1 };
   }
 
+  // ---- A BRAND'S OWN DOCUMENT, AS WRITTEN: CATEGORY × GENDER (Ray, 5 Oct 2026, sending Superdry's: "can you follow this
+  // to implement hero sizes mapping in FCC for Superdry ?") ------------------------------------------------------------
+  // A brand's hero sizes arrive as a short table — a garment category, who it is for, the sizes, a note — not as a list of
+  // the feed's product types: Superdry's reads "Jeans|Trousers · Male · M,L,30,32" and eighteen rows more. So the document
+  // is kept AS WRITTEN (KV d:<Brand> {name, mk, rows:[{c, g, s, n}]}) and each row reaches the product types its words
+  // name, in the department it is for, at whatever tier the card is read:
+  //   · WORDS — a row's category, each alternative split on | / ; or a comma, meets a type when its words are a run of the
+  //     type's own words at one level of its path: "Jeans" meets "Men > Clothing > Jeans > Slim Jeans", "hoodies" meets
+  //     "Hoodies and Sweatshirts", "Tshirts" meets "T-Shirts", "Sport bras" meets "Sports Bra". Singular and plural are one
+  //     word, except where the singular is another word (shorts is not "Short Sleeve", jeans is not "Jean Jacket"). Two rows
+  //     meeting one type: the one naming a level OUTRIGHT beats one whose word only sits inside a name (Men > Swimwear >
+  //     Swim Shorts is Swimwear, not Shorts), then the deeper level, then the document's order.
+  //   · DEPARTMENT — Male / Female / Men / Women / Kids / Unisex read as the gender column is (deptFromCols); a row naming
+  //     none meets every department. A footwear row (trainers, boots …) meets footwear types only, and the other way round.
+  //   · SIZES — only those the type is made in count (a two-size label "10-12" carries both). When NONE is, the row still
+  //     speaks for the type: it reads "the document doesn't fit" (Superdry GB sizes its women's swimwear 6–20; the document
+  //     names S, M, L) — never a list the document does not give, and never an example's in its place. When the kinds of
+  //     size it names reach under half the type's run (S, M, L against women's T-shirts sold 6–20 with a few in L) it
+  //     reaches PART of the type, and says so. A row with no sizes is an open question.
+  //   · MARKETS — a document is written in ONE size system: Superdry's in UK sizes, which GB and IE share and US (2–16,
+  //     US 8 = UK 12) and the EU markets (34–48) do not. It applies on the markets it names (mk) and nowhere else.
+  // Its place in the resolution (heroFor): after the type's own list, before a list set for a coarser tier, the brand it
+  // follows and the example — the brand's document is the brand's own word for the type it names.
+  var KEEP_S = { shorts: 1, jeans: 1 };   // a plural whose singular is another word
+  var PART = 0.5;   // a row whose kinds of size reach less of a type's run than this reaches PART of it
+  var DEPT_TOK = { men: 1, man: 1, male: 1, women: 1, woman: 1, female: 1, ladie: 1, lady: 1, kid: 1, children: 1, child: 1, girl: 1, boy: 1, unisex: 1 };
+  function canon(w) {
+    if (KEEP_S[w]) return w;
+    if (w.length > 4 && /(ss|x|z|ch|sh)es$/.test(w)) return w.slice(0, -2);
+    if (w.length > 3 && /s$/.test(w) && !/ss$/.test(w)) return w.slice(0, -1);
+    return w;
+  }
+  // a name's words, one comparable form: no case or accents, "&" = "and", a one-letter prefix joined ("T-Shirt" = "tshirt")
+  function docWords(v) {
+    var t = foldKey(light(v)).replace(/&/g, ' and ').replace(/\b([a-z0-9])-(?=[a-z])/g, '$1').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+    return t ? t.split(' ').map(canon) : [];
+  }
+  // how a row's phrases meet ONE level of a type's path: 0 not at all, 1 inside it ("Shorts" in "Swim Shorts", "Shirt" in
+  // "Shirt Dress"), 2 the level's whole name ("Swimwear", "Hoodies and Sweatshirts" — every word but an "and" covered).
+  // A phrase is its words run together, so "sweat shirt" meets "sweatshirt" and "Sport bras" meets "Sports Bra".
+  var FILLER = { and: 1, or: 1, the: 1, of: 1, for: 1, with: 1 };
+  function coverOf(level, phs) {
+    var cov = level.map(function () { return false; }), any = false;
+    phs.forEach(function (ph) {
+      for (var i = 0; i < level.length; i++) {
+        var acc = '';
+        for (var j = i; j < level.length && acc.length < ph.length; j++) {
+          acc += level[j];
+          if (acc === ph) { any = true; for (var k = i; k <= j; k++) cov[k] = true; break; }
+        }
+      }
+    });
+    if (!any) return 0;
+    return level.every(function (w, k) { return cov[k] || FILLER[w]; }) ? 2 : 1;
+  }
+  function docOf(store, brand) { var d = store && store['d:' + brand]; return d && Array.isArray(d.rows) && d.rows.length ? d : null; }
+  function docCovers(doc, market) {
+    var mk = (doc && doc.mk) || [];
+    if (!mk.length) return true;
+    var m = s0(market).toUpperCase();
+    return !!m && mk.some(function (x) { return s0(x).toUpperCase() === m; });
+  }
+  // the document's rows, read once: department, footwear, the phrases each category names
+  function docRules(doc) {
+    return ((doc && doc.rows) || []).map(function (r, i) {
+      var c = squash(light(r.c)), g = squash(light(r.g));
+      // "All" / "Both" / "Everyone" in a gender cell is every department, not unisex
+      var d = /^(all|both|any|every|everyone|mixed|n\/?a|-)$/i.test(g) ? '' : (g && deptFromCols(g, '')) || deptOf(c) || '';
+      var ph = c.split(/\s*[|\/;,]\s*/).map(function (a) {
+        var p = pathOf(a), w = docWords(p.length ? p[p.length - 1] : a).filter(function (x) { return !DEPT_TOK[x]; });
+        return w.join('');
+      }).filter(Boolean);
+      return { i: i, c: c, g: g, d: d, fw: FOOT_RE.test(c) ? 1 : 0, ph: ph, s: (r.s || []).slice(), n: squash(light(r.n)) };
+    });
+  }
+  // which row of the document a type meets: department and footwear first, then words. A row naming a level OUTRIGHT beats
+  // one whose word only sits inside a level's name — the brand's categories are the feed's category levels, and a deeper
+  // level is usually a product's own name ("Men > Swimwear > Swim Shorts" is Swimwear; "Women > Clothing > Dresses > Shirt
+  // Dress" is Dresses). Among outright matches the deepest wins (Jeans over a catch-all "Clothing" row), then the
+  // document's order. null = no row names it.
+  function docRowFor(rules, t) {
+    if (!rules || !rules.length || !t) return null;
+    var d = t.d || deptOf(t.k), lv = pathOf(t.k).map(docWords), best = null, score = -1;
+    rules.forEach(function (r) {
+      if (r.d && r.d !== d) return;
+      if (!!r.fw !== !!t.fw) return;
+      for (var L = 0; L < lv.length; L++) {
+        var c = coverOf(lv[L], r.ph);
+        if (c && c * 100 + L > score) { score = c * 100 + L; best = { r: r, lvl: L, full: c === 2 }; }
+      }
+    });
+    return best;
+  }
+  // a row against one type: the sizes it names that the type is made in, in ladder order — a bare "10" meets "UK 10", and
+  // a two-size label carries its sizes ("10-12" and "S/M" are hero when 10 or S is) — and how much of the type's run those
+  // KINDS of size reach: a row naming only S, M, L against a type sized 6–20 with a few L tops reaches a sliver (part)
+  function fromDoc(rules, t) {
+    var hit = docRowFor(rules, t); if (!hit) return null;
+    var want = {}; hit.r.s.forEach(function (x) { want[x] = 1; });
+    var one = function (z) { return !!(want[z] || (want[sizeCore(z)] && sizeCore(z) !== z)); };
+    var sz = (t && t.sz) || [];
+    var s = sz.map(function (z) { return z[0]; }).filter(function (z) {
+      if (one(z)) return true;
+      var p = z.split(/[-\/]/);
+      return p.length === 2 && (one(squash(p[0])) || one(squash(p[1])));
+    });
+    var kinds = {}, all = 0, reach = 0;
+    s.forEach(function (z) { kinds[sizeClass(z)] = 1; });
+    sz.forEach(function (z) { all += z[1]; if (kinds[sizeClass(z[0])]) reach += z[1]; });
+    return { r: hit.r, lvl: hit.lvl, full: hit.full, s: s, reach: all ? reach / all : 0 };
+  }
+  // the row as a card reads it: which row, its words as written, its note
+  function docRef(dr, doc) { return { i: dr.r.i, c: dr.r.c, g: dr.r.g, n: dr.r.n, at: (doc && doc.at) || 0, name: (doc && doc.name) || '' }; }
+
   // ---- THE GUIDE STORE — one shared map, a key per decision so two people editing different types never collide --
   //   'g:<Brand>'          the brand's guide: {doc:{name,url}, ex, from, note, by, at}
   //   'm:<Brand>|<type>'   one product type's hero list: {k (label as written), s:[sizes], src:'set'|'doc'|'core'|'ex', by, at}
@@ -763,23 +877,24 @@
     return s;
   }
   // what the resolution needs, read once per card: each brand's entries split into placed and loose, the guide, the example
-  function ctxOf(store, brand, cen) {
+  function ctxOf(store, brand, cen, market) {
     var tk = treeKeys(cen);
     function split(b) {
-      var all = entriesOf(store, b), loose = {};
+      var all = entriesOf(store, b), loose = {}, doc = docOf(store, b);
       Object.keys(all).forEach(function (k) { if (!tk[k]) loose[k] = all[k]; });
-      return { all: all, loose: loose };
+      // the brand's document, read only where it is written for this market (a market nobody named: every market)
+      return { all: all, loose: loose, doc: doc, rules: doc && (market == null || docCovers(doc, market)) ? docRules(doc) : null };
     }
     var g = guideOf(store, brand) || {};
-    return { brand: brand, tk: tk, own: split(brand), g: g, other: g.from && g.from !== brand ? split(g.from) : null, ex: g.ex ? exampleById(store, g.ex) : null };
+    return { brand: brand, market: market == null ? null : s0(market), tk: tk, own: split(brand), g: g, other: g.from && g.from !== brand ? split(g.from) : null, ex: g.ex ? exampleById(store, g.ex) : null };
   }
   // a type's path and every coarser tier of it, nearest first
   function chainOf(k) { var p = pathOf(k), out = []; for (var L = p.length; L >= 1; L--) out.push(p.slice(0, L).join(' > ')); return out; }
   // one brand's entry for a type: its own path (a loose entry by its leaf), then each coarser tier — where an entry reaches
   // this type only when it names a size this type is made in, or records that the whole branch has no hero sizes
-  function lookup(set, t, lad) {
-    var chain = chainOf(t.k);
-    for (var i = 0; i < chain.length; i++) {
+  function lookup(set, t, lad, from, to) {
+    var chain = chainOf(t.k), end = to == null ? chain.length : Math.min(to, chain.length);
+    for (var i = from || 0; i < end; i++) {
       var key = typeKey(chain[i]), e = set.all[key], how = 'exact';
       if (!e) { var lf = entryFor(set.loose, { k: chain[i], d: i ? deptOf(chain[i]) : t.d }); if (lf) { e = lf.e; key = lf.key; how = 'leaf'; } }
       if (!e) continue;
@@ -789,23 +904,57 @@
     }
     return null;
   }
-  // THE RESOLUTION, strongest first: the brand's own entry for this type (set by hand, or imported from its document), then
-  // the nearest coarser tier the brand set (Ray, 30 Sep 2026: "sometimes no need too much granulartiy" — a list set for
-  // "Women > Clothing" reaches every women's clothing type that does not set its own), then the brand it follows (the same
-  // two steps), then the example it follows. Nothing fits = not mapped, with no sizes — never a guess.
+  // one brand's answer for a type, strongest first: its list for the type itself, its document's row (sizes the type is
+  // made in), its list for a coarser tier, and last a document row whose sizes the type is not made in — which still
+  // speaks for the type (a person's coarser list that does fit wins over it, and says the document disagreed)
+  function answer(set, t, lad) {
+    var o = lookup(set, t, lad, 0, 1);
+    if (o) return { o: o };
+    var dr = set.rules ? fromDoc(set.rules, t) : null;
+    if (dr && dr.s.length) return { d: dr };
+    var up = lookup(set, t, lad, 1);
+    if (up) return { o: up, miss: dr && dr.r.s.length ? dr : null, open: dr && !dr.r.s.length ? dr : null };
+    if (dr) return dr.r.s.length ? { d: dr, miss: true } : { d: dr, open: true };
+    return null;
+  }
+  // THE RESOLUTION, strongest first: the brand's own entry for this type (set by hand, or imported per product type), then
+  // its document's row for the type (above), then the nearest coarser tier the brand set (Ray, 30 Sep 2026: "sometimes no
+  // need too much granulartiy" — a list set for "Women > Clothing" reaches every women's clothing type that does not set
+  // its own), then the brand it follows (the same steps), then the example it follows. Nothing fits = not mapped, with no
+  // sizes — never a guess.
   //   own = the entry is this type's own · up = the coarser tier it came from · dec = a decision reached it (a list, or "none")
+  //   doc = the document row that reached it · miss = that row names no size the type is made in · open = it names none
   function heroFor(store, brand, t, ctx) {
     ctx = ctx || ctxOf(store, brand, null);
     var lad = {}; ((t && t.sz) || []).forEach(function (z) { lad[z[0]] = 1; });
-    var o = lookup(ctx.own, t, lad);
-    if (o) return { s: o.s, all: o.e.s || [], src: o.e.src || 'set', by: o.e.by || '', at: o.e.at || 0, key: o.key, how: o.how, own: !o.up, up: o.up, dec: true };
+    function told(a, set) {
+      var x;
+      if (a.o) {
+        x = { s: a.o.s, all: a.o.e.s || [], src: a.o.e.src || 'set', by: a.o.e.by || '', at: a.o.e.at || 0, key: a.o.key, how: a.o.how, own: !a.o.up, up: a.o.up, dec: true };
+        if (a.miss) x.docMiss = docRef(a.miss, set.doc);
+        if (a.open) x.docOpen = docRef(a.open, set.doc);
+        return x;
+      }
+      x = { s: a.d.s, all: a.d.r.s.slice(), src: 'doc', doc: docRef(a.d, set.doc), by: (set.doc && set.doc.by) || '', at: (set.doc && set.doc.at) || 0, dec: !a.miss && !a.open };
+      if (!a.miss && !a.open && a.d.reach < PART) x.part = Math.round(a.d.reach * 1000) / 10;
+      if (a.miss) x.miss = true;
+      if (a.open) x.open = true;
+      return x;
+    }
+    var a = answer(ctx.own, t, lad);
+    if (a) return told(a, ctx.own);
     if (ctx.other) {
-      var b = lookup(ctx.other, t, lad);
-      if (b) return { s: b.s, all: b.e.s || [], src: 'brand', from: ctx.g.from, how: b.how, up: b.up, dec: !!b.s.length || !(b.e.s || []).length };
+      var b = answer(ctx.other, t, lad);
+      if (b) {
+        var r = told(b, ctx.other);
+        // a coarser tier or a type of the brand it follows: decided when it names a size here, or records that it has none
+        if (b.o) r.dec = !!r.s.length || !(b.o.e.s || []).length;
+        return Object.assign(r, { src: 'brand', from: ctx.g.from, via: b.o ? b.o.e.src || 'set' : 'doc', own: false, key: undefined });
+      }
     }
     if (ctx.ex) {
-      var r = fromExample(ctx.ex, t);
-      if (r.s.length) return { s: r.s, all: r.s, src: 'ex', ex: ctx.ex.id, exName: ctx.ex.name, row: r.row, dec: true };
+      var e = fromExample(ctx.ex, t);
+      if (e.s.length) return { s: e.s, all: e.s, src: 'ex', ex: ctx.ex.id, exName: ctx.ex.name, row: e.row, dec: true };
     }
     return { s: [], all: [], src: '' };
   }
@@ -814,8 +963,8 @@
   // reaches IT. So a coarse row, the tiles and every other tier agree, and a finer type that sets its own list is counted
   // on its own list wherever it is added up (`finer` = how many of a row's types read a list set BELOW the row — a person's
   // decision at a finer tier; an example reading each type's own run differently is not one).
-  function map(store, brand, cen, tier) {
-    var ctx = ctxOf(store, brand, cen), nodes = (cen && cen.types) || [];
+  function map(store, brand, cen, tier, market) {
+    var ctx = ctxOf(store, brand, cen, market), nodes = (cen && cen.types) || [];
     var eff = nodes.map(function (t) { var h = heroFor(store, brand, t, ctx); return { h: h, m: measure(t, h.s) }; });
     var rowsOf = tier ? tierTypes(cen, tier) : nodes.map(function (t, i) { return Object.assign({}, t, { nodes: [i] }); });
     var types = rowsOf.map(function (t) {
@@ -825,7 +974,8 @@
         var e = eff[i], n = nodes[i];
         ['rows', 'in', 'out', 'st', 'full', 'some', 'none', 'unk', 'untracked'].forEach(function (k) { m[k] += e.m[k]; });
         if (e.m.pats) m.pats = true;
-        if (e.h.dec && e.h.src !== 'ex' && typeKey(e.h.up || n.k).indexOf(below) === 0) finer++;
+        // (a finer type its own row's document line reaches too is the row's own list, not a decision below it)
+        if (e.h.dec && e.h.src !== 'ex' && !(e.h.doc && h.doc && e.h.doc.i === h.doc.i) && typeKey(e.h.up || n.k).indexOf(below) === 0) finer++;
       });
       return { t: t, h: h, m: m, finer: t.nodes && t.nodes.length > 1 ? finer : 0 };
     });
@@ -841,50 +991,106 @@
     });
     // the hero-stock headline is the brand's, whatever the tier: every finest type on the list that reaches it
     eff.forEach(function (e) { if (!e.h.s.length) return; sum.rows += e.m.rows; sum.in += e.m.in; sum.st += e.m.st; sum.full += e.m.full; });
-    return { types: types, sum: sum, tier: tier || 0 };
+    sum.miss = types.filter(function (x) { return x.t.sz.length && (x.h.miss || x.h.open); }).length;
+    return { types: types, sum: sum, tier: tier || 0, doc: docSummary(ctx, nodes, eff) };
+  }
+  // the brand's document row by row against this market's finest types: what each row reaches (types, products, hero
+  // stock), where its sizes don't fit the type (and what the type is made in instead), where a person's own list won,
+  // and the rows that name no product type here at all — the document's own fit, for the card's rows panel
+  function docSummary(ctx, nodes, eff) {
+    var set = ctx.own, doc = set.doc;
+    if (!doc) return null;
+    var rules = set.rules || docRules(doc);
+    var out = rules.map(function (r) { return { i: r.i, c: r.c, g: r.g, d: r.d, fw: r.fw, s: r.s.slice(), n: r.n, types: 0, prod: 0, rows: 0, in: 0, part: 0, partProd: 0, other: [], miss: 0, missProd: 0, made: [], set: 0 }; });
+    if (set.rules) {
+      // made = what the types a row doesn't fit are made in; other = the sizes of a part-reached type the row names no kind of
+      var made = out.map(function () { return {}; }), other = out.map(function () { return {}; });
+      nodes.forEach(function (t, i) {
+        if (!t.sz || !t.sz.length) return;
+        var hit = docRowFor(set.rules, t); if (!hit) return;
+        var o = out[hit.r.i], h = eff[i].h, mine = h.doc && h.doc.i === hit.r.i && h.src === 'doc';
+        if (mine && h.dec) {
+          o.types++; o.prod += t.n; o.rows += eff[i].m.rows; o.in += eff[i].m.in;
+          if (h.part != null) {
+            var kinds = {}; h.s.forEach(function (x) { kinds[sizeClass(x)] = 1; });
+            o.part++; o.partProd += t.n; t.sz.forEach(function (z) { if (!kinds[sizeClass(z[0])]) other[hit.r.i][z[0]] = 1; });
+          }
+        }
+        else if (mine) { o.miss++; o.missProd += t.n; t.sz.forEach(function (z) { made[hit.r.i][z[0]] = 1; }); }
+        else o.set++;
+      });
+      out.forEach(function (o, k) { o.made = sortSizes(Object.keys(made[k])); o.other = sortSizes(Object.keys(other[k])); });
+    }
+    return { name: doc.name || '', mk: (doc.mk || []).slice(), covered: !!set.rules, by: doc.by || '', at: doc.at || 0, rows: out };
   }
 
   // ---- A BRAND'S DOCUMENT — a sheet of product types and their hero sizes -------------------------------------------
-  // Two layouts, found by the header: a "Hero sizes" column (sizes split on , ; | or new lines), or a type column
-  // followed by one size per cell. The first row naming a type-like column is the header; rows above it are a title.
+  // Three layouts, found by the header (the first row naming a type-like column; rows above it are a title):
+  //   · CATEGORY × GENDER — a category column beside a Gender (or Department) column, a Hero sizes column and any note
+  //     column ("FeedSpark's note"): Superdry's own table. Kept as written — {c, g, s, n} rows, the brand's DOCUMENT
+  //     (KV d:<Brand>) — and read against each market's types by words (docRules above), never fixed to one market's tree.
+  //   · a "Hero sizes" column beside a product-type column (sizes split on , ; | or new lines) — one list per type;
+  //   · a type column followed by one size per cell.
+  var TYPE_H = /^(producttype|product|type|category|categories|categorypath|productcategory|range|family)$/;
+  var DEPT_H = /^(department|dept)$/;
   function splitSizes(v) { return light(v).split(/\s*[,;|\n]\s*|\s{2,}/).map(sizeKey).filter(function (s) { return s && s !== 'ONE SIZE'; }); }
   function parseDoc(rows) {
     rows = (rows || []).filter(function (r) { return Array.isArray(r) && r.some(function (c) { return s0(c).trim() !== ''; }); });
-    var hi = -1, ti = -1, si = -1;
+    var hi = -1, ti = -1, si = -1, gi = -1, ni = -1;
     for (var i = 0; i < Math.min(rows.length, 12) && hi < 0; i++) {
-      rows[i].forEach(function (c, j) {
-        var h = s0(c).toLowerCase().replace(/[^a-z]/g, '');
-        if (ti < 0 && /^(producttype|product|type|category|categorypath|department|productcategory|range|family)$/.test(h)) ti = j;
-        if (si < 0 && /hero|keysize|coresize|sizes?$/.test(h) && !/^(producttype|product|type|category)$/.test(h)) si = j;
+      var hs = rows[i].map(function (c) { return s0(c).toLowerCase().replace(/[^a-z]/g, ''); }), dep = -1;
+      ti = si = gi = ni = -1;
+      hs.forEach(function (h, j) {
+        if (ti < 0 && TYPE_H.test(h)) ti = j;
+        if (gi < 0 && /^(gender|genders|sex)$/.test(h)) gi = j;
+        if (dep < 0 && DEPT_H.test(h)) dep = j;
       });
-      if (ti >= 0) hi = i; else si = -1;
+      // a Department column is the type column when nothing else names one, and says who a row is for when something does
+      if (ti < 0) ti = dep; else if (gi < 0 && dep >= 0) gi = dep;
+      hs.forEach(function (h, j) {
+        if (j === ti || j === gi) return;
+        if (si < 0 && /hero|keysize|coresize|sizes?$/.test(h)) si = j;
+        else if (ni < 0 && /note|comment|question|remark|query|feedback/.test(h)) ni = j;
+      });
+      if (ti >= 0) hi = i;
     }
-    if (hi < 0) { hi = -1; ti = 0; si = -1; }
-    var out = [], seen = {};
+    if (hi < 0) { hi = -1; ti = 0; si = gi = ni = -1; }
+    var out = [], seen = {}, rules = gi >= 0;
     rows.slice(hi + 1).forEach(function (r) {
       var k = squash(light(r[ti]));
       if (!k || !usableType(k)) return;
-      var sizes = si >= 0 && si !== ti ? splitSizes(r[si]) : r.slice(ti + 1).map(sizeKey).filter(function (s) { return s && s !== 'ONE SIZE'; });
+      var sizes = si >= 0 ? splitSizes(r[si]) : r.slice(ti + 1).filter(function (c, j) { return j + ti + 1 !== gi && j + ti + 1 !== ni; }).map(sizeKey).filter(function (s) { return s && s !== 'ONE SIZE'; });
       var uniq = []; sizes.forEach(function (s) { if (uniq.indexOf(s) < 0) uniq.push(s); });
+      if (rules) {
+        var g = squash(light(r[gi])), n = ni >= 0 ? squash(light(r[ni])).slice(0, 300) : '';
+        if (!uniq.length && !n) return;
+        var rk = k.toLowerCase() + '|' + g.toLowerCase();
+        if (seen[rk] != null) { var was = out[seen[rk]]; was.s = sortSizes(was.s.concat(uniq.filter(function (x) { return was.s.indexOf(x) < 0; }))); if (n && was.n.indexOf(n) < 0) was.n = (was.n ? was.n + ' · ' : '') + n; return; }
+        seen[rk] = out.length;
+        out.push({ c: k.slice(0, 120), g: g.slice(0, 30), s: sortSizes(uniq), n: n });
+        return;
+      }
       var key = typeKey(k);
       if (seen[key] != null) { out[seen[key]].s = sortSizes(out[seen[key]].s.concat(uniq.filter(function (s) { return out[seen[key]].s.indexOf(s) < 0; }))); return; }
       seen[key] = out.length;
       out.push({ k: k, s: sortSizes(uniq) });
     });
-    return { rows: out, layout: si >= 0 && si !== ti ? 'column' : 'cells', header: hi };
+    return { rows: out, layout: rules ? 'rules' : si >= 0 ? 'column' : 'cells', header: hi };
   }
   // the brand's map as a sheet, at the tier on screen (the export is also the template a brand fills in)
-  function docRows(store, brand, cen, tier) {
+  function docRows(store, brand, cen, tier, market) {
     var head = ['Product type', 'Hero sizes', 'Source', 'Sizes made in'];
-    var body = map(store, brand, cen, tier).types.filter(function (x) { return x.t.sz.length; }).map(function (x) {
+    var body = map(store, brand, cen, tier, market).types.filter(function (x) { return x.t.sz.length; }).map(function (x) {
       return [x.t.k, x.h.s.join(', '), srcWord(x.h), x.t.sz.map(function (z) { return z[0]; }).join(', ')];
     });
     return [head].concat(body);
   }
   function srcWord(h) {
     if (!h || !h.src) return 'Not mapped';
-    var w = h.src === 'doc' ? 'Brand document' : h.src === 'set' ? 'Set by hand' : h.src === 'core' ? 'Core of the run'
-      : h.src === 'brand' ? 'Follows ' + h.from : h.src === 'ex' ? 'Example: ' + (h.exName || h.ex) : h.src;
+    var row = h.doc ? ' (' + h.doc.c + (h.doc.g ? ' · ' + h.doc.g : '') + ')' : '';
+    var w = h.src === 'doc' ? (h.miss ? 'Brand document — its sizes are not made here' + row : h.open ? 'Brand document — open question' + row : 'Brand document' + row)
+      : h.src === 'set' ? 'Set by hand' : h.src === 'core' ? 'Core of the run'
+      : h.src === 'brand' ? 'Follows ' + h.from + row : h.src === 'ex' ? 'Example: ' + (h.exName || h.ex) : h.src;
     return h.up ? w + ' (from ' + h.up + ')' : w;
   }
   // a type's leaf as the words an example row asks for: each word with an optional plural and ANY separator between
@@ -922,6 +1128,7 @@
     tiers: tiers, tierTypes: tierTypes, tierKey: tierKey, defaultTier: defaultTier, treeKeys: treeKeys, chainOf: chainOf,
     EXAMPLES: EXAMPLES, fromExample: fromExample, examplesOf: examplesOf, exampleById: exampleById, exampleFromBrand: exampleFromBrand,
     guideOf: guideOf, entriesOf: entriesOf, entryFor: entryFor, ctxOf: ctxOf, heroFor: heroFor, map: map,
-    parseDoc: parseDoc, docRows: docRows, srcWord: srcWord, leafWords: leafWords
+    parseDoc: parseDoc, docRows: docRows, srcWord: srcWord, leafWords: leafWords,
+    docOf: docOf, docCovers: docCovers, docRules: docRules, docRowFor: docRowFor, fromDoc: fromDoc, docWords: docWords, docSummary: docSummary
   };
 });

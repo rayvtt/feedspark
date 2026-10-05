@@ -14,9 +14,13 @@
  *                             g:<Brand>          the brand's guide {doc:{name,url}, ex, from, note}
  *                             m:<Brand>|<type>   one product type's hero sizes {k, s:[…], src, fw}
  *                             x:<id>             an example a person saved from a brand's guide {name, ind, note, rows}
+ *                             d:<Brand>          the brand's own document AS WRITTEN — category × gender rows
+ *                                                {name, mk (the markets its sizes are written for), rows:[{c, g, s, n}]}
  *                           deletions only through `_deleted` (explicit tombstones): a partial view never deletes
  *
- * NOTHING HERE IS CLIENT DATA IN GIT — the census and the guides live in KV only.
+ * NO CLIENT FIGURES IN GIT — the census lives in KV only. The one thing written here is a brand's hero-size TABLE as
+ * Ray sent it (DOC_SEEDS — sizes and category words, not a figure), put into the store ONCE (applySeeds) so it lands
+ * in KV like any import: from then on the team edits, replaces or deletes it on /stock and it never comes back.
  */
 
 // the census SHAPE — docs/herosize_engine.js CENSUS_V holds the same number (tools/test_herosize.mjs pins both)
@@ -95,10 +99,33 @@ function httpsUrl(u) {
   try { const x = new URL(s); return x.protocol === 'https:' ? x.toString() : null; } catch (e) { return null; }
 }
 // one incoming key -> the value to store, or {error}
-//   ctx: { brands: roster brand names, inScope(brand), canEx: may this signin save an example, by, now }
+//   ctx: { brands: roster brand names, inScope(brand), canEx: may this signin save an example, marketsOf(brand), by, now }
 export function sanitizeHeroKey(key, val, ctx) {
   const k = String(key || '');
   let m;
+  if ((m = /^d:(.{1,80})$/.exec(k))) {
+    const brand = m[1];
+    if (ctx.brands.indexOf(brand) < 0) return { error: 'not a roster brand: ' + brand };
+    if (!ctx.inScope(brand)) return { error: 'out of scope: ' + brand };
+    if (val == null) return { value: null };
+    if (typeof val !== 'object' || !Array.isArray(val.rows)) return { error: 'bad document' };
+    // the markets the document's sizes are written for — the brand's own roster markets, nothing else
+    const all = (ctx.marketsOf && ctx.marketsOf(brand)) || [], mk = [];
+    for (const x of (Array.isArray(val.mk) ? val.mk : []).slice(0, 40)) {
+      const v = str(x, 12).toUpperCase();
+      if (all.indexOf(v) < 0) return { error: 'not a ' + brand + ' market: ' + v };
+      if (mk.indexOf(v) < 0) mk.push(v);
+    }
+    const rows = [];
+    for (const r of val.rows.slice(0, CAP.rows)) {
+      if (!r || typeof r !== 'object') return { error: 'bad document row' };
+      const c = str(r.c, 120); if (!c) return { error: 'a document row names its category' };
+      const sz = sizes(Array.isArray(r.s) ? r.s : []); if (!sz) return { error: 'bad sizes for ' + c };
+      rows.push({ c, g: str(r.g, 30), s: sz, n: str(r.n, 300) });
+    }
+    if (!rows.length) return { error: 'a document has rows' };
+    return { value: { name: str(val.name, 120) || brand + ' hero sizes', mk, rows, by: ctx.by, at: ctx.now } };
+  }
   if ((m = /^g:(.{1,80})$/.exec(k))) {
     const brand = m[1];
     if (ctx.brands.indexOf(brand) < 0) return { error: 'not a roster brand: ' + brand };
@@ -163,7 +190,7 @@ export function heroView(store, inScope) {
   const out = {};
   Object.keys(store || {}).forEach((k) => {
     if (k === '_deleted') return;
-    const m = /^(g|m):([^|]{1,80})(?:\||$)/.exec(k);
+    const m = /^(g|m|d):([^|]{1,80})(?:\||$)/.exec(k);
     if (k.indexOf('x:') === 0 || (m && inScope(m[2]))) out[k] = store[k];
   });
   return out;
@@ -172,9 +199,54 @@ export function heroView(store, inScope) {
 // all-brands view reads this without a census
 export function guideBrands(store, brands) {
   return brands.map((b) => {
-    const g = store['g:' + b] || null;
+    const g = store['g:' + b] || null, d = store['d:' + b] || null;
     let own = 0, doc = 0;
     Object.keys(store || {}).forEach((k) => { if (k.indexOf('m:' + b + '|') === 0 && store[k]) { own++; if (store[k].src === 'doc') doc++; } });
-    return { client: b, doc: !!(g && g.doc), ex: (g && g.ex) || '', from: (g && g.from) || '', own, fromDoc: doc };
+    return { client: b, doc: !!((g && g.doc) || (d && d.rows)), ex: (g && g.ex) || '', from: (g && g.from) || '', own, fromDoc: doc,
+      rows: d && Array.isArray(d.rows) ? d.rows.length : 0, mk: d && Array.isArray(d.mk) ? d.mk.slice() : [] };
   });
+}
+
+// ---- seeded documents ------------------------------------------------------------------------------------------------
+// SUPERDRY (Ray, 5 Oct 2026, sending the table: "can you follow this to implement hero sizes mapping in FCC for Superdry ?")
+// — every row exactly as the table writes it (the category with its | alternatives, the gender, the sizes, FeedSpark's note
+// to the client). Its sizes are UK sizes: GB and IE carry them (their masters sell women's 6–20 the UK way); US sells US
+// 2–16 (US 8 = UK 12) and the EU markets 34–48, so the document is written for GB and IE only — a person adds a market on
+// /stock when its sizes read the same.
+export const DOC_SEEDS = {
+  Superdry: { name: 'Superdry hero sizes', mk: ['GB', 'IE'], from: 'Ray’s table, 5 Oct 2026', rows: [
+    { c: 'Jeans|Trousers', g: 'Male', s: ['M', 'L', '30', '32'], n: '' },
+    { c: 'Jeans|Trousers', g: 'Female', s: ['8', '10', '12', '14', '26', '28', '30', '32'], n: '' },
+    { c: 'Joggers', g: 'Male', s: ['M', 'L'], n: '' },
+    { c: 'Joggers', g: 'Female', s: ['8', '10', '12', '14'], n: '' },
+    { c: 'Shorts', g: 'Male', s: ['M', 'L', '32', '34'], n: '' },
+    { c: 'Shorts', g: 'Female', s: ['8', '10', '12', '14', '26', '28', '30', '32'], n: '' },
+    { c: 'Skirts', g: 'Female', s: ['8', '10', '12', '14'], n: '' },
+    { c: 'Underwear', g: 'Male', s: ['M', 'L'], n: '' },
+    { c: 'Underwear', g: 'Female', s: ['M', 'L'], n: '' },
+    { c: 'Swimwear', g: 'Male', s: ['M', 'L'], n: '' },
+    { c: 'Swimwear', g: 'Female', s: ['S', 'M', 'L'], n: '' },
+    { c: 'trainers', g: 'Male', s: ['8', '9', '10'], n: '' },
+    { c: 'trainers', g: 'Female', s: ['4', '5', '6', '7'], n: '' },
+    { c: 'Sport bras', g: 'Female', s: ['S', 'M', 'L'], n: '' },
+    { c: 'Jackets|coats', g: 'Male', s: ['M', 'L'], n: "Men's Jacket - also comes in numeric size, do you have heros ?" },
+    { c: 'Jackets|coats', g: 'Female', s: ['8', '10', '12', '14'], n: '' },
+    { c: 'Dresses', g: 'Female', s: ['8', '10', '12', '14'], n: '' },
+    { c: 'Tshirts|Shirts|Sweatshirts|hoodies', g: 'Male', s: ['M', 'L'], n: '' },
+    { c: 'Tshirts|Shirts|Sweatshirts|hoodies', g: 'Female', s: ['S', 'M', 'L'], n: '' }
+  ] }
+};
+// write each seed into the store ONCE — on the read after a deploy — unless its key has ever existed: a document the team
+// edited, replaced or deleted (a tombstone is still a record that it existed) is theirs and is never put back.
+// envx = the kvmerge envelope ({data, meta}); returns how many it wrote (0 = nothing to save).
+export function applySeeds(envx, now) {
+  let n = 0;
+  Object.keys(DOC_SEEDS).forEach((b) => {
+    const k = 'd:' + b, sd = DOC_SEEDS[b];
+    if (!envx || !envx.meta || !envx.data || envx.meta[k]) return;
+    envx.data[k] = { name: sd.name, mk: sd.mk.slice(), rows: sd.rows.map((r) => ({ c: r.c, g: r.g, s: r.s.slice(), n: r.n })), by: 'FeedSpark · from ' + sd.from, at: now, seed: 1 };
+    envx.meta[k] = { t: now };
+    n++;
+  });
+  return n;
 }

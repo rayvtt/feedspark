@@ -173,6 +173,12 @@ function heroBuild(now) {
     'm:Superdry|men > jumpers': { k: 'Men > Jumpers', s: ['M', 'L'], src: 'set', fw: 0, by: 'Analyst B', at: now - 3600000 },
     // a list set for a whole tier-2 branch — every men's clothing type that sets none of its own reads it
     'm:Superdry|men > clothing': { k: 'Men > Clothing', s: ['M', 'L', 'XL'], src: 'set', fw: 0, by: 'Analyst B', at: now - 7200000 },
+    // the brand's own document as written (category × gender): a row reaching only PART of a type's run (alpha heroes on
+    // tops sold mostly 6–18), a row whose sizes the type is not made in, a row naming no type here, FeedSpark's note
+    'd:Superdry': { name: 'Superdry hero sizes', mk: ['GB'], by: 'FeedSpark · from a test table', at: now - 3600000, rows: [
+      { c: 'Tops', g: 'Female', s: ['S', 'M', 'L'], n: 'Numeric tops (6–18) too — which sizes are the heroes?' },
+      { c: 'Bralettes', g: 'Female', s: ['32B', '34B'], n: '' },
+      { c: 'Swimwear', g: 'Female', s: ['S', 'M', 'L'], n: '' }] },
   };
   const sum = { t: census.t, types: census.types.length, sized: census.sized, rows: census.rows, groups: census.groups, v: census.v };
   return { ok: true, v: H.CENSUS_V, store, at: now, auto: true,
