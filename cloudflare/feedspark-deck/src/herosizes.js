@@ -24,10 +24,14 @@
  */
 
 // the census SHAPE — docs/herosize_engine.js CENSUS_V holds the same number (tools/test_herosize.mjs pins both)
+//   4: no product placed by a merchandising bucket ("outlet/mens/view all") or onto another sizing scale (skis in cm beside
+//      S–XXL), the master's word refining a place only where its reading's sent products agree, a tie between two readings
+//      to the surer, a "155" read as a collar 15½ only beside whole collar sizes (Superdry's skis are 155 cm) — Ray, 5 Oct
+//      2026: "double check [Sizes made in] are actually presentation of Superdry catalogue"
 //   3: types placed on the Google Shopping feed's own product_type tree and kept at their finest level (every tier is a
 //      roll-up of them on the page) — Ray, 30 Sep 2026: "can you allow tier 2, tier 3 of PT to be chosen too"
 //   2: departments in every roster market's language
-export const CENSUS_V = 3;
+export const CENSUS_V = 4;
 // a census of an unchanged import is still read again after this long: its types ride the Google feed's product_type tree
 export const CENSUS_FRESH_MS = 20 * 3600 * 1000;
 export const HERO_KEY = 'heroguide';

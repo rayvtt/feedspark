@@ -11459,9 +11459,9 @@
     {"name": "Rules: the phone search field on a row of its own", "file": "docs/FeedSpark_Rules.html", "pattern": ".ctl .q{flex:1 1 100%}", "pr": 0},
     {"name": "Stock even: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_stockeven.js", "pr": 0},
     {"name": "Hero tiers: the Google feed's product_type tree, read per product (Ray 30 Sep 2026: \"tier 2, tier 3 of PT\")", "file": "docs/herosize_engine.js", "pattern": "function treeIndex(E) {", "pr": 0},
-    {"name": "Hero tiers: census v3 — every master row placed on the feed's tree (engine)", "file": "docs/herosize_engine.js", "pattern": "var CENSUS_V = 3;", "pr": 0},
-    {"name": "Hero tiers: census v3 — the worker stores the same shape", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export const CENSUS_V = 3;", "pr": 0},
-    {"name": "Hero tiers: a feed-less master type placed by where 80%+ of its sent products sit", "file": "docs/herosize_engine.js", "pattern": "if (placed) pv.keys.forEach(function (lk) { var c = commonPath(learn.get(lk)), n = pathOf(c).length; if (n > cd) { cp = c; cd = n; } });", "pr": 0},
+    {"name": "Hero tiers: every master row placed on the feed's tree (engine)", "file": "docs/herosize_engine.js", "pattern": "var useTree = !!(tree && tree.typed && tree.o && tree.i && tree.g), sample = useTree ? [] : null;", "pr": 0},
+    {"name": "Hero tiers: the worker stores the census shape the engine writes", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export const CENSUS_V = ", "pr": 0},
+    {"name": "Hero tiers: a feed-less master type placed by where 80%+ of its sent products sit — the surer reading on a tie, never onto another sizing scale", "file": "docs/herosize_engine.js", "pattern": "if (placed) pv.keys.forEach(function (lk) { var a = agreed(learn.get(lk)), n = pathOf(a.p).length; if (n && !sizedLike(t, a.p)) return; if (n > cd || (n === cd && n && a.sh > cs)) { cp = a.p; cd = n; cs = a.sh; } });", "pr": 0},
     {"name": "Hero tiers: else by the master's own word where the tree names it once (the run tells kids from women)", "file": "docs/herosize_engine.js", "pattern": "var wp = placed ? wordPlace(pv.words, pv.kid) : '';", "pr": 0},
     {"name": "Hero tiers: a type the feed has no word for goes under the feed's department, else Master only", "file": "docs/herosize_engine.js", "pattern": "else if (placed) p.unshift(MASTER_ONLY);", "pr": 0},
     {"name": "Hero tiers: every tier is a roll-up of the finest types (counts added, runs re-read)", "file": "docs/herosize_engine.js", "pattern": "function tierTypes(cen, L) {", "pr": 0},
@@ -11527,6 +11527,17 @@
     {"name": "Hero document: the rows panel and the markets it is written for", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmDocPanel(dd, mkt) {", "pr": 0},
     {"name": "Hero document: the 'Document doesn't fit' filter", "file": "docs/FeedSpark_Stock.html", "pattern": "['fit', 'Document doesn’t fit', nfit]", "pr": 0},
     {"name": "Hero document: a category × gender import becomes the brand's document, kept whole", "file": "docs/FeedSpark_Stock.html", "pattern": "if (doc.layout === 'rules') {", "pr": 0},
-    {"name": "Hero document: ⬇ Sheet leads with the document — the sheet ⇪ Import reads back", "file": "docs/FeedSpark_Stock.html", "pattern": "if (dd) sheets.unshift({ name: 'Document',", "pr": 0}
+    {"name": "Hero document: ⬇ Sheet leads with the document — the sheet ⇪ Import reads back", "file": "docs/FeedSpark_Stock.html", "pattern": "if (dd) sheets.unshift({ name: 'Document',", "pr": 0},
+    {"name": "Hero census v4: the catalogue check (Ray, 5 Oct 2026: \"double check [Sizes made in] are actually presentation of Superdry catalogue\") — the engine's shape", "file": "docs/herosize_engine.js", "pattern": "var CENSUS_V = 4;", "pr": 0},
+    {"name": "Hero census v4: …and the worker's", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export const CENSUS_V = 4;", "pr": 0},
+    {"name": "Hero census v4: a reading made only of departments and merchandising buckets is no product type (\"outlet/mens/view all\")", "file": "docs/herosize_engine.js", "pattern": "if (segs.length > 1 && segs.every(bareLevel)) return false;", "pr": 0},
+    {"name": "Hero census v4: a size read as a span on its kind of scale", "file": "docs/herosize_engine.js", "pattern": "function szSpan(k) {", "pr": 0},
+    {"name": "Hero census v4: a learned place refused for a run on another scale (skis in cm beside S–XXL)", "file": "docs/herosize_engine.js", "pattern": "var sizedLike = function (t, pth) { var e = szAt.get(pth); return !e || sameScale(spansOf(Array.from(t.sz.keys())), e); };", "pr": 0},
+    {"name": "Hero census v4: a word refines a learned place only where its reading's sent products agree", "file": "docs/herosize_engine.js", "pattern": "if (l.length === 1 && fits(w.k, l[0])) c.push(l[0]);", "pr": 0},
+    {"name": "Hero census v4: …and places an unsent type only where they agree", "file": "docs/herosize_engine.js", "pattern": "if (l.length === 1 && fits(ws[i].k, l[0])) return l[0];", "pr": 0},
+    {"name": "Hero census v4: two words naming two different places refine nothing", "file": "docs/herosize_engine.js", "pattern": "for (var i = 1; i < c.length; i++) if ((c[0] + ' > ').indexOf(c[i] + ' > ') !== 0) return '';", "pr": 0},
+    {"name": "Hero census v4: a collar written without its point read as one only beside whole collar sizes", "file": "docs/herosize_engine.js", "pattern": "var cm = collarRun(t.sz);", "pr": 0},
+    {"name": "Hero census v4: the catalogue-check census in the harness", "file": "tools/test_herosize.mjs", "pattern": "console.log('· the catalogue check — a type is made in the sizes the brand makes it in (census v4)');", "pr": 0},
+    {"name": "Hero census v4: sizeKey never reads every \"155\" as a collar (Superdry's skis are 155 cm) — must stay gone", "file": "docs/herosize_engine.js", "pattern": "if (/^1[3-8]5$/.test(s)) return s.slice(0, 2) + '.5';", "forbidden": true, "pr": 0}
   ]
 }

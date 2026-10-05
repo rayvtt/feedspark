@@ -45,7 +45,7 @@ const SK = [
   ['Medium', 'M'], ['X-Large', 'XL'], ['2XL', 'XXL'], ['3XL', 'XXXL'], ['XXXXL', '4XL'], ['XS / S', 'XS/S'], ['M / L', 'M/L'],
   ['1SIZE', 'ONE SIZE'], ['One Size', 'ONE SIZE'], ['Einheitsgröße', 'ONE SIZE'], ['TALLA ÚNICA', 'ONE SIZE'], ['Taglia unica', 'ONE SIZE'],
   ['3-4 years', '3-4 YRS'], ['Age 5', '5 YRS'], ['9 Y', '9 YRS'], ['0-3 mths', '0-3 MTHS'], ['12-18 months', '12-18 MTHS'],
-  ['145', '14.5'], ['155', '15.5'], ['Size: M', 'M'], ['Taille 38', '38'], ['Größe: 40', '40'], ['', ''], ['   ', ''],
+  ['145', '145'], ['155', '155'], ['Size: M', 'M'], ['Taille 38', '38'], ['Größe: 40', '40'], ['', ''], ['   ', ''],
 ];
 SK.forEach(([a, b]) => t('sizeKey(' + JSON.stringify(a) + ') = ' + JSON.stringify(b), H.sizeKey(a) === b, 'got ' + JSON.stringify(H.sizeKey(a))));
 t('a size never carries a character the worker would refuse, and never runs past 24', ['EU 40⅓', 'Size™ M', 'X'.repeat(40) + 'L'].every((v) => { const k = H.sizeKey(v); return k.length <= 24 && /^[\w .\/½+&'#-]*$/.test(k); }));
@@ -180,6 +180,69 @@ t('a type the feed has no word for: under the feed’s department, else "Master 
   && !ck('Women > Clothing > Dresses').m && !ck('Kids > Clothing > Dresses').m);
 t('commonPath: the deepest level 80% of the sent products share, never on fewer than five', H.commonPath(new Map([['A > B > C', 4], ['A > B > D', 1]])) === 'A > B > C' && H.commonPath(new Map([['A > B > C', 3], ['A > B > D', 2]])) === 'A > B'
   && H.commonPath(new Map([['A > B', 4]])) === '' && H.commonPath(null) === '');
+console.log('· the catalogue check — a type is made in the sizes the brand makes it in (census v4)');
+// Ray, 5 Oct 2026: "double check [Sizes made in] are actually presentation of Superdry catalogue" — every distortion the
+// check found on the live masters, rebuilt on invented rows, each failing on the census before it
+t('a size is a span on its kind of scale: a dual’s two halves, any system, ages in months, the letter ladder; a code nobody can read is none',
+  eq(H.szSpan('6-7'), { c: 'num', lo: 6, hi: 7 }) && eq(H.szSpan('UK 7'), { c: 'num', lo: 7, hi: 7 }) && eq(H.szSpan('S/M'), { c: 'alpha', lo: 0, hi: 1 })
+  && eq(H.szSpan('2-3 YRS'), { c: 'age', lo: 24, hi: 47 }) && H.szSpan('ONE SIZE') === null && H.szSpan('154W') === null);
+t('one scale: a trainer’s 6–12 beside a slider’s 6-7 … 12-13 · another: a ski’s 149–184 cm beside S–XXL and 28–40 · no readable size is no evidence',
+  H.sameScale(H.spansOf(['6', '9', '12']), H.spansOf(['6-7', '12-13', 'S'])) && !H.sameScale(H.spansOf(['149', '155', '184']), H.spansOf(['S', 'XXL', '28', '40']))
+  && H.sameScale({}, H.spansOf(['S'])) && H.sameScale(H.spansOf(['M']), {}));
+t('a reading made only of departments and merchandising buckets is no product type, however many levels; one naming a product on the way still is',
+  !H.usableType('outlet/mens/view all') && !H.usableType('womens/campaign 3') && !H.usableType('outlet/damen/alles anzeigen') && !H.usableType('Mens > View All')
+  && H.usableType('Mens > Shirts > New In') && H.usableType('T-Shirts/Vests') && H.usableType('outlet/mens/jeans'));
+t('agreed: the place AND how sure (a tie between two readings goes to the surer)', eq(H.agreed(new Map([['A > B > C', 4], ['A > B > D', 1]])), { p: 'A > B > C', sh: 0.8 }) && eq(H.agreed(null), { p: '', sh: 0 }));
+t('a collar written without its point is one only beside whole collar sizes — a shirt’s 145 · 155, never a ski’s 155 cm',
+  eq(H.collarRun(new Map([['14', 1], ['145', 1], ['15', 1], ['155', 1]])), { 145: '14.5', 155: '15.5' }) && H.collarRun(new Map([['149', 1], ['155', 1], ['160', 1], ['165', 1]])) === null);
+const F4 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' + [
+  ...['j1', 'j2', 'j3', 'j4', 'j5'].map((id) => [id, 'GJ', 'Men > Clothing > Joggers > Classic Joggers']),
+  ...['u1', 'u2', 'u3', 'u4', 'u5'].map((id) => [id, 'GU', 'Men > Underwear > Trunks']),
+  ...['k1', 'k2', 'k3', 'k4', 'k5'].map((id) => [id, 'GK', 'Men > Clothing > Jackets and Coats > Ski Jacket']),
+  ...['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((id) => [id, 'GH', 'Men > Clothing > Shirts']),
+  ...['m1', 'm2', 'm3', 'm4'].map((id) => [id, 'GM', 'Women > Clothing > Skirts > Mini Skirt']),
+  ...['d1', 'd2', 'd3', 'd4', 'd5'].map((id) => [id, 'GD', 'Women > Clothing > Skirts > Midi Skirt']),
+  ...['s1', 's2', 's3'].map((id) => [id, 'GS', 'Men > Clothing > Trousers > Suit Trousers']), ['s4', 'GS2', 'Men > Clothing > Trousers'], ['s5', 'GS2', 'Men > Clothing > Trousers'],
+  ...['e1', 'e2', 'e3', 'e4'].map((id) => [id, 'GE', 'Women > Clothing > Dresses > Day Dress']), ['p1', 'GP', 'Women > Clothing > Dresses > Party Dress'], ['p2', 'GP', 'Women > Clothing > Dresses > Party Dress'],
+  ['n0', 'GN', 'Women > Clothing > Dresses > Mini Dress']]
+  .map(([id, g, pt]) => '<item><g:id>' + id + '</g:id><g:item_group_id>' + g + '</g:item_group_id><g:product_type>' + gt(pt) + '</g:product_type><g:availability>in stock</g:availability></item>').join('')
+  + '</channel></rss>';
+const ti4 = H.treeIndex(E), tp4 = FA.createXmlParser((r, h) => ti4.onRow(r, h)); tp4.push(F4); tp4.end();
+const TR4 = ti4.finish();
+const MT4 = [['product_id', 'item_group_id', 'gender', 'category', 'type', 'category_id', 'size', 'availability']];
+const put4 = (id, g, gen, cat, typ, cid, z, av) => MT4.push([id, g, gen, cat, typ, cid, z, av || 'in stock']);
+// sent — every one placed by its id
+[['j1', 'S'], ['j2', 'M'], ['j3', 'L'], ['j4', 'XL'], ['j5', 'M']].forEach(([id, z]) => put4(id, 'GJ', 'mens', 'Joggers', 'Classic Joggers', 'outlet/mens/view all', z));
+[['u1', 'S'], ['u2', 'M'], ['u3', 'L'], ['u4', 'XL'], ['u5', 'M']].forEach(([id, z]) => put4(id, 'GU', 'mens', 'Underwear', 'Trunks', '', z));
+[['k1', 'S'], ['k2', 'M'], ['k3', 'L'], ['k4', 'XL'], ['k5', 'M']].forEach(([id, z]) => put4(id, 'GK', 'mens', 'Ski Snowboard', 'Ski Jacket', '', z));
+[['h1', '14'], ['h2', '145'], ['h3', '15'], ['h4', '155'], ['h5', '16'], ['h6', '165']].forEach(([id, z]) => put4(id, 'GH', 'mens', 'Shirts', 'Formal Shirt', '', z));
+[['m1', '8'], ['m2', '10'], ['m3', '12'], ['m4', '14']].forEach(([id, z]) => put4(id, 'GM', 'womens', 'Skirts', 'Mini Skirt', '', z));
+put4('d1', 'GD', 'womens', 'Skirts', 'Midi Skirt', '', '8'); [['d2', '10'], ['d3', '12'], ['d4', '14'], ['d5', '16']].forEach(([id, z]) => put4(id, 'GD', 'womens', 'Occasion', 'Midi Skirt', '', z));
+[['s1', '30'], ['s2', '32'], ['s3', '34'], ['s4', '36'], ['s5', '38']].forEach(([id, z]) => put4(id, id < 's4' ? 'GS' : 'GS2', 'mens', 'Suit Trousers', '', '', z));
+[['e1', '8'], ['e2', '10'], ['e3', '12'], ['e4', '14'], ['p1', '8'], ['p2', '10']].forEach(([id, z]) => put4(id, id.charAt(0) === 'e' ? 'GE' : 'GP', 'womens', 'Dresses', 'Mini dress', '', z));
+put4('n0', 'GN', 'womens', 'Dresses', 'Bodycon', '', '10');
+// never sent (out of stock) — where the census has to place them itself
+put4('x1', 'GX1', 'mens', 'Underwear', 'Trunks', 'outlet/mens/view all', 'M', 'out of stock');
+[['x2a', '149'], ['x2b', '155'], ['x2c', '165']].forEach(([id, z]) => put4(id, 'GX2', 'mens', 'Ski Snowboard', 'Skis', '', z, 'out of stock'));
+[['x3a', '8'], ['x3b', '10']].forEach(([id, z]) => put4(id, 'GX3', 'womens', 'Skirts', 'Midi Skirt', '', z, 'out of stock'));
+[['x4a', '30'], ['x4b', '32']].forEach(([id, z]) => put4(id, 'GX4', 'mens', 'Suit Trousers', '', '', z, 'out of stock'));
+[['x5a', '8'], ['x5b', '10']].forEach(([id, z]) => put4(id, 'GX5', 'womens', 'Dresses', 'Mini dress', '', z, 'out of stock'));
+const C4v = csvCensus(csv(MT4), TR4);
+const c4 = (k) => C4v.types.find((x) => x.k === k);
+t('every row of the check census counted once, on the feed’s tree', C4v.src === 'feed' && C4v.types.reduce((a, x) => a + x.n, 0) === MT4.length - 1, JSON.stringify(C4v.tree));
+t('a bucket is not a reading: unsent trunks filed under "outlet/mens/view all" go with the trunks, not the joggers that bucket mostly holds',
+  c4('Men > Underwear > Trunks') && c4('Men > Underwear > Trunks').n === 6 && c4('Men > Clothing > Joggers > Classic Joggers').n === 5, C4v.types.map((x) => x.k + ':' + x.n).join(' | '));
+t('a run on another scale is not placed by learning: unsent skis (149–184 cm) never join the ski jackets their category sends — they stay the master’s own type',
+  c4('Men > Clothing > Jackets and Coats > Ski Jacket').n === 5 && c4('Men > Ski Snowboard') && c4('Men > Ski Snowboard').m === 1 && eq(c4('Men > Ski Snowboard').sz.map((z) => z[0]), ['149', '155', '165']));
+t('a tie at one depth goes to the surer reading: unsent midi skirts follow their type (5 of 5 sent at Midi), not their category (4 of 5 at Mini)',
+  c4('Women > Clothing > Skirts > Midi Skirt').n === 7 && c4('Women > Clothing > Skirts > Mini Skirt').n === 4);
+t('the master’s word refines a learned place where its sent products agree — suit trousers the feed files at, or one level short of, "Suit Trousers"',
+  c4('Men > Clothing > Trousers > Suit Trousers').n === 5 && c4('Men > Clothing > Trousers').n === 2);
+t('…and never where they contradict it: a "Mini dress" the feed files by occasion (Day, Party) stays at Dresses, not the feed’s own "Mini Dress" level',
+  c4('Women > Clothing > Dresses') && c4('Women > Clothing > Dresses').n === 2 && c4('Women > Clothing > Dresses > Mini Dress').n === 1, C4v.types.map((x) => x.k + ':' + x.n).join(' | '));
+t('a shirt’s collar sizes read as collars (145 → 14.5, 155 → 15.5), the same 155 on a ski stays a length', eq(c4('Men > Clothing > Shirts').sz.map((z) => z[0]), ['14', '14.5', '15', '15.5', '16', '16.5'])
+  && c4('Men > Clothing > Shirts').pat.length === 1 && c4('Men > Clothing > Shirts').pat[0][0] === '222222' && c4('Men > Ski Snowboard').sz.some((z) => z[0] === '155'));
+t('how each row was placed, counted: by id, learned, by word, and the master’s own', C4v.tree.id === 42 && C4v.tree.learn === 5 && C4v.tree.word === 2 && C4v.tree.own === 3, JSON.stringify(C4v.tree));
 const CN = csvCensus(csv(MT3));
 t('no tree: the master’s own types, as before (src master, no tree)', CN.src === 'master' && CN.tree === null && CN.types.some((x) => x.k === 'Women > Dresses') && !CN.types.some((x) => x.m));
 const CJ = csvCensus(csv([['sku', 'size', 'category'], ['Q1', 'M', 'Tops'], ['Q2', 'L', 'Tops']]), TR);

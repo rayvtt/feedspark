@@ -33,7 +33,10 @@
   var VERSION = '1.0.0';
   // the census SHAPE — the worker's sanitiser (src/herosizes.js CENSUS_V) holds the same number, and the
   // agent re-reads a master whose stored census is of an older shape even when its import has not moved
-  var CENSUS_V = 3;   // 3: types placed on the Google Shopping feed's own product_type tree, kept at their finest level
+  var CENSUS_V = 4;   // 4: no product placed by a merchandising bucket or onto another sizing scale, a word only where its reading
+                      //    agrees, a tie between two readings to the surer, a collar read only beside collar sizes (Ray, 5 Oct
+                      //    2026: "double check [Sizes made in] are actually presentation of Superdry catalogue")
+                      // 3: types placed on the Google Shopping feed's own product_type tree, kept at their finest level
                       //    (2: departments read in every roster market's language — Superdry DE's "Damen" / "Herren")
   var TYPE_CAP = 600;     // product types kept per market at their finest level; past it the smallest fold into their parent
   var LADDER_CAP = 30;    // sizes kept per type (most-carried first, shown in size order)
@@ -89,7 +92,6 @@
     m = /^W\s*(\d{2})(?:\s*\/?\s*L\s*\d{2})?$/.exec(s); if (m) return m[1];
     m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(s); if (m && +m[1] >= 24 && +m[1] <= 44 && +m[2] >= 26 && +m[2] <= 38) return m[1];   // waist/leg
     m = /^(\d{1,3}(?:[.,]\d)?|\d{1,3}\s*½)\s*(R|L|S|T|P|REG|REGULAR|LONG|SHORT|TALL|PETITE)$/.exec(s); if (m) s = m[1];
-    if (/^1[3-8]5$/.test(s)) return s.slice(0, 2) + '.5';   // a shirt collar written without its point ("155" = 15½)
     m = new RegExp('^(' + SYS.join('|') + ')\\s*(\\d.*)$').exec(s);
     if (m) return m[1] + ' ' + num(m[2]);
     if (/^\d/.test(s)) return num(s);
@@ -127,6 +129,31 @@
   }
   // the number a size carries once its system is set aside — how an example's bare "10" meets a ladder's "UK 10"
   function sizeCore(k) { return s0(k).replace(new RegExp('^(' + SYS.join('|') + ') '), ''); }
+  // a size as a span on its kind of scale — what tells a run of a different KIND (a 155 cm ski beside S–XXL and 28–33)
+  // from the same kind written apart (a trainer's 6 beside a slider's 6-7): num — its number, a dual's two halves, any
+  // system; age — in months ("2-3 YRS" → 24…47); alpha — the letter ladder ("S/M" → S…M). One size, or a code nobody
+  // can read, is no evidence.
+  function szSpan(k) {
+    var s = s0(k), m;
+    if ((m = /^(\d+)(?:-(\d+))? (MTHS|YRS)$/.exec(s))) { var y = m[3] === 'YRS'; return { c: 'age', lo: +m[1] * (y ? 12 : 1), hi: (m[2] ? +m[2] : +m[1]) * (y ? 12 : 1) + (y ? 11 : 0) }; }
+    var a = alphaRank(s); if (a != null) return { c: 'alpha', lo: a, hi: a };
+    var p = s.split(/[\/-]/), a1, a2;
+    if (p.length === 2 && (a1 = alphaRank(p[0])) != null && (a2 = alphaRank(p[1])) != null) return { c: 'alpha', lo: Math.min(a1, a2), hi: Math.max(a1, a2) };
+    if ((m = new RegExp('^(?:(?:' + SYS.join('|') + ') )?(\\d+(?:\\.\\d+)?)(?:[\\/-](\\d+(?:\\.\\d+)?))?$').exec(s))) { var x = +m[1], w = m[2] != null ? +m[2] : x; return { c: 'num', lo: Math.min(x, w), hi: Math.max(x, w) }; }
+    return null;
+  }
+  // a run's spans, one per kind: {num:[lo, hi], age:[…], alpha:[…]}
+  function spansOf(keys, into) {
+    var o = into || {};
+    keys.forEach(function (k) { var sp = szSpan(k); if (!sp) return; var e = o[sp.c]; if (!e) o[sp.c] = [sp.lo, sp.hi]; else { if (sp.lo < e[0]) e[0] = sp.lo; if (sp.hi > e[1]) e[1] = sp.hi; } });
+    return o;
+  }
+  // do two runs share a kind of scale AND overlap on it? Two runs with no readable size are no evidence (true)
+  function sameScale(a, b) {
+    var ka = Object.keys(a), kb = Object.keys(b);
+    if (!ka.length || !kb.length) return true;
+    return ka.some(function (c) { return b[c] && a[c][0] <= b[c][1] && b[c][0] <= a[c][1]; });
+  }
 
   // ---- DEPARTMENT + PRODUCT TYPE -------------------------------------------------------------------------------
   // who a type is for — read from the brand's own words first (its path), then the gender / age columns.
@@ -164,13 +191,22 @@
   var GENERIC = /^(clothing|apparel|footwear|accessories|bekleidung|kleidung|v[êe]tements|kleding|ropa|abbigliamento|t[øo]j|kl[äa]der)$/i;
   var NOT_A_TYPE = /^(view all|all|all products|shop all|new in|new|sale|clearance|outlet|campaign\s*\d*|featured|gifts?|default|none|null|n\/a|-|alles anzeigen|neuheiten|kampagne\s*\d*|voir tout|nouveaut[ée]s|campagne\s*\d*|soldes|ver todo|novedades|campa[ñn]a\s*\d*|rebajas|vedi tutto|novit[àa]|campagna\s*\d*|saldi|alle bekijken|alles bekijken|nieuw|vis alle|visa alla|nyheder|nyheter|kampanj[ea]?\s*\d*|udsalg|rea|n[äa]yt[äa] kaikki|uutuudet|ale|zobacz wszystko|poka[żz] wszystko|nowo[śs]ci|kampania\s*\d*|wyprzeda[żz]|ver tudo|campanha\s*\d*|promo[çc][õo]es)$/i;
   function pathOf(v) { return light(v).split(/\s*(?:>|›|»|\|)\s*/).map(squash).filter(Boolean); }
+  // a level that names no product: a merchandising bucket ("View All", "Campaign 3") or only a department ("Womens")
+  function bareLevel(s) {
+    return NOT_A_TYPE.test(s) || !!(deptOf(s) && s.replace(DEPT_RE[0][1], '').replace(DEPT_RE[1][1], '').replace(DEPT_RE[2][1], '').replace(DEPT_RE[3][1], '').replace(/[^a-z]/gi, '') === '');
+  }
   // a candidate is not a product type when it is only a number (a category id), only a department word
   // ("Womens" on Superdry's category column) or a merchandising bucket ("View All", "Campaign 3")
   function usableType(v) {
     var p = pathOf(v); if (!p.length) return false;
     var s = p.join(' > ');
     if (/^\d+$/.test(s.replace(/\s*>\s*/g, ''))) return false;
-    if (p.length === 1 && (NOT_A_TYPE.test(s) || (deptOf(s) && s.replace(DEPT_RE[0][1], '').replace(DEPT_RE[1][1], '').replace(DEPT_RE[2][1], '').replace(DEPT_RE[3][1], '').replace(/[^a-z]/gi, '') === ''))) return false;
+    if (p.length === 1 && bareLevel(s)) return false;
+    // …nor when EVERY level of it is one of those, however many levels it has: Superdry's category_id "outlet/mens/view all"
+    // (a "/" path — the only shape the roster's masters hold, 5 Oct 2026) once placed men's trunks with the jeans that bucket
+    // mostly holds. A reading that names a product on the way ("Mens > Shirts > New In") still names it.
+    var segs = light(v).split(/\s*(?:>|›|»|\||\/)\s*/).map(squash).filter(Boolean);
+    if (segs.length > 1 && segs.every(bareLevel)) return false;
     return true;
   }
   // the product type a guide is written against: the brand's own path to two levels (a generic middle level
@@ -274,20 +310,34 @@
   }
   // the deepest level of a master type's feed paths that 80%+ of them share — where the products of that type the feed
   // never sends are placed. Nothing deeper is claimed than the products that ARE sent agree on.
-  function commonPath(m) {
-    if (!m) return '';
+  function commonPath(m) { return agreed(m).p; }
+  // …and how sure: the share of the reading's sent products at that depth (a tie between two readings goes to the surer)
+  function agreed(m) {
+    if (!m) return { p: '', sh: 0 };
     var tot = 0; m.forEach(function (c) { tot += c; });
-    if (tot < LEARN_MIN) return '';
-    var best = '';
+    if (tot < LEARN_MIN) return { p: '', sh: 0 };
+    var best = '', sh = 0;
     for (var L = 1; L <= 12; L++) {
       var c = new Map(), any = false;
       m.forEach(function (n, p) { var parts = pathOf(p); if (parts.length < L) return; any = true; var k = parts.slice(0, L).join(' > '); c.set(k, (c.get(k) || 0) + n); });
       if (!any) break;
       var top = null; c.forEach(function (n, k) { if (!top || n > top[1]) top = [k, n]; });
       if (top[1] / tot < LEARN_SHARE) break;
-      best = top[0];
+      best = top[0]; sh = top[1] / tot;
     }
-    return best;
+    return { p: best, sh: sh };
+  }
+
+  // A SHIRT COLLAR WRITTEN WITHOUT ITS POINT ("155" = 15½ — Reiss's shirts run 145 · 15 · 155 · 16 · 165 · 17) is read as one
+  // only in a run that carries the whole collar sizes beside it: Superdry's Gilson skis and snowboards run 149 · 155 · 160 ·
+  // 165 cm, and a size key that read "155" as 15½ everywhere put 15.5 and 16.5 on a ski. Applied per type once its run is
+  // whole (census › finish); a size typed into a guide is never rewritten.
+  var COLLAR = /^1[3-8]5$/;
+  function collarRun(sz) {
+    var whole = 0; ['14', '15', '16', '17', '18'].forEach(function (x) { if (sz.has(x)) whole++; });
+    if (whole < 2) return null;
+    var map = {}; sz.forEach(function (c, k) { if (COLLAR.test(k)) map[k] = k.slice(0, 2) + '.5'; });
+    return Object.keys(map).length ? map : null;
   }
 
   // ---- THE CENSUS — one pass over a master ------------------------------------------------------------------------
@@ -335,7 +385,7 @@
       for (var i = 0; i < c.length; i++) {
         var v = first(c[i].v); if (!usableType(v)) continue;
         var pp = pathOf(v), k = (deptOf(v) || dc) + '|' + typeKey(pp.join(' > ')) + kid;
-        if (out.indexOf(k) < 0) { out.push(k); if (words) words.push({ d: deptOf(v) || dc || (kid ? 'kids' : ''), w: wordKey(pp[pp.length - 1]) }); }
+        if (out.indexOf(k) < 0) { out.push(k); if (words) words.push({ d: deptOf(v) || dc || (kid ? 'kids' : ''), w: wordKey(pp[pp.length - 1]), k: k }); }
       }
       if (!out.length) out.push((deptOf(label) || dc) + '|' + typeKey(label) + kid);
       return out;
@@ -439,21 +489,65 @@
           var p = pathOf(key);
           for (var L = 1; L <= p.length; L++) { var k = p.slice(0, L).join(' > '), e = ages.get(k); if (!e) ages.set(k, e = [0, 0]); e[0] += n; e[1] += a; }
         });
+        // a reading's word is evidence for a level only where the reading's OWN sent products do not say otherwise: 80%+ of
+        // them sit on that level's line (at it, under it, or filed short of it — Reiss's "Womenswear > Jeans" sends its jeans
+        // to "… > Trousers > Jeans" or one level above). Superdry's category "Trousers" is no evidence that a "Classic
+        // Joggers" row is trousers: its sent products include joggers, filed BESIDE the Trousers level, not on it. A reading
+        // with fewer than five sent products neither confirms a level nor contradicts it.
+        var fits = function (lk, pth) {
+          var m = lk ? learn.get(lk) : null; if (!m) return true;
+          var tot = 0, on = 0, pre = pth + ' > ';
+          m.forEach(function (n, p) { tot += n; if (p === pth || p.indexOf(pre) === 0 || pre.indexOf(p + ' > ') === 0) on += n; });
+          return tot < LEARN_MIN || on / tot >= LEARN_SHARE;
+        };
+        // the scale each level's own sent products are sized on (every level of every path the feed gave)
+        var szAt = new Map();
+        T.forEach(function (t, key) {
+          if (key.charAt(0) === '\u0001' || !t.sz.size) return;
+          var p = pathOf(key), ks = Array.from(t.sz.keys());
+          for (var L = 1; L <= p.length; L++) { var k = p.slice(0, L).join(' > '), e = szAt.get(k); if (!e) szAt.set(k, e = {}); spansOf(ks, e); }
+        });
+        // a LEARNED place is no home for a run sized on another scale from everything the feed sends there: Superdry GB
+        // sends no skis, and the ones its master holds (149–184 cm) once learned "Men > Clothing" from the ski jackets their
+        // category sends — a ski length beside S–XXL and 28–40; Monsoon's adult trainers (37–41) once learned the children's
+        // shoes (1–13) their master type's sent products are. (A place the master's own WORD names is not tested: a "Ski
+        // and Snowboard" level is the brand's own word for what it holds.)
+        var sizedLike = function (t, pth) { var e = szAt.get(pth); return !e || sameScale(spansOf(Array.from(t.sz.keys())), e); };
         var wordPlace = function (ws, kid) {
           for (var i = 0; i < (ws || []).length; i++) {
             var l = (byWord.get(ws[i].w) || []).filter(function (pth) { return !ws[i].d || deptOf(pth) === ws[i].d; });
             if (l.length > 1) l = l.filter(function (pth) { var e = ages.get(pth); if (!e || !e[0]) return false; var sh = e[1] / e[0]; return kid ? sh >= 0.6 : sh < 0.4; });
-            if (l.length === 1) return l[0];
+            if (l.length === 1 && fits(ws[i].k, l[0])) return l[0];
           }
           return '';
+        };
+        // the deepest level under a learned place that the row's own words name — each unambiguously and each where its
+        // reading does not say otherwise (fits); two words naming two different places refine nothing
+        var wordUnder = function (ws, kid, base) {
+          var c = [];
+          (ws || []).forEach(function (w) {
+            var l = (byWord.get(w.w) || []).filter(function (pth) { return (!w.d || deptOf(pth) === w.d) && (pth + ' > ').indexOf(base + ' > ') === 0 && pth !== base; });
+            if (l.length > 1) l = l.filter(function (pth) { var e = ages.get(pth); if (!e || !e[0]) return false; var sh = e[1] / e[0]; return kid ? sh >= 0.6 : sh < 0.4; });
+            if (l.length === 1 && fits(w.k, l[0])) c.push(l[0]);
+          });
+          if (!c.length) return '';
+          c.sort(function (a, b) { return pathOf(b).length - pathOf(a).length; });
+          for (var i = 1; i < c.length; i++) if ((c[0] + ' > ').indexOf(c[i] + ' > ') !== 0) return '';
+          return c[0];
         };
         var rootOf = function (d) { var m = roots[d]; if (!m) return ''; var best = '', bn = -1; Object.keys(m).forEach(function (r) { if (m[r] > bn) { bn = m[r]; best = r; } }); return best; };
         Array.from(T.keys()).forEach(function (key) {
           if (key.charAt(0) !== '\u0001') return;
           var t = T.get(key), pv = prov.get(key); T.delete(key);
           // the deepest place any of the row's master readings agrees on (80%+ of its sent products), the surer on a tie
-          var cp = '', cd = 0;
-          if (placed) pv.keys.forEach(function (lk) { var c = commonPath(learn.get(lk)), n = pathOf(c).length; if (n > cd) { cp = c; cd = n; } });
+          var cp = '', cd = 0, cs = 0;
+          if (placed) pv.keys.forEach(function (lk) { var a = agreed(learn.get(lk)), n = pathOf(a.p).length; if (n && !sizedLike(t, a.p)) return; if (n > cd || (n === cd && n && a.sh > cs)) { cp = a.p; cd = n; cs = a.sh; } });
+          // …and where the master's own word names exactly one finer level UNDER that place, and its reading's sent
+          // products agree (fits), the finer one: Reiss's "Menswear > Suit Trousers" agree 80%+ only on "… > Trousers",
+          // because the feed files some of them one level short of "… > Trousers > Suit Trousers". A word the sent products
+          // contradict refines nothing — Superdry's master type "Mini dress" stays at "Dresses", since the feed files its
+          // sent mini dresses by occasion (Day, Summer, Cami, Party …), almost none under the feed's own "Mini Dress".
+          if (cp && placed) { var wq = wordUnder(pv.words, pv.kid, cp); if (wq) { via.word += t.n; mergeInto(wq, t); return; } }
           if (cp) { via.learn += t.n; mergeInto(cp, t); return; }
           // no sent product to learn from: the master's own word, where the feed's tree has exactly one type of that name
           // (in the row's department) — Monsoon's "Maxi Dresses" is the feed's "Womens > … > Maxi Dresses"
@@ -480,6 +574,11 @@
       var kept = list.slice(0, TYPE_CAP), rest = list.slice(TYPE_CAP);
       var src = useTree && placed ? 'feed' : 'master';
       var out = kept.map(function (t) {
+        var cm = collarRun(t.sz);
+        if (cm) {
+          Object.keys(cm).forEach(function (k) { var c = t.sz.get(k), to = cm[k], e = t.sz.get(to); t.sz.delete(k); if (!e) t.sz.set(to, c); else { e[0] += c[0]; e[1] += c[1]; e[2] += c[2]; } });
+          t.g.forEach(function (gm) { Object.keys(gm).forEach(function (k) { if (cm[k]) { gm[cm[k]] = better(gm[cm[k]] || 0, gm[k]); delete gm[k]; } }); });
+        }
         var all = Array.from(t.sz.entries()).sort(function (a, b) { return b[1][0] - a[1][0] || cmpSize(a[0], b[0]); });
         var lad = all.slice(0, LADDER_CAP).map(function (e) { return e[0]; }).sort(cmpSize);
         var at = {}; lad.forEach(function (s, i) { at[s] = i; });
@@ -1124,7 +1223,8 @@
     VERSION: VERSION, CENSUS_V: CENSUS_V, TYPE_CAP: TYPE_CAP, LADDER_CAP: LADDER_CAP, PAT_CAP: PAT_CAP,
     sizeKey: sizeKey, sizeRank: sizeRank, cmpSize: cmpSize, sortSizes: sortSizes, sizeCore: sizeCore, sizeClass: sizeClass,
     deptOf: deptOf, deptFromCols: deptFromCols, genderWord: genderWord, usableType: usableType, typeLabel: typeLabel, typeKey: typeKey, leafOf: leafOf,
-    census: census, measure: measure, core: core, treeIndex: treeIndex, commonPath: commonPath, MASTER_ONLY: MASTER_ONLY,
+    census: census, measure: measure, core: core, treeIndex: treeIndex, commonPath: commonPath, agreed: agreed, MASTER_ONLY: MASTER_ONLY,
+    szSpan: szSpan, sameScale: sameScale, spansOf: spansOf, collarRun: collarRun,
     tiers: tiers, tierTypes: tierTypes, tierKey: tierKey, defaultTier: defaultTier, treeKeys: treeKeys, chainOf: chainOf,
     EXAMPLES: EXAMPLES, fromExample: fromExample, examplesOf: examplesOf, exampleById: exampleById, exampleFromBrand: exampleFromBrand,
     guideOf: guideOf, entriesOf: entriesOf, entryFor: entryFor, ctxOf: ctxOf, heroFor: heroFor, map: map,
