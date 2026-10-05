@@ -363,6 +363,13 @@ else
   echo "   ✗ Hero-size harness FAILED — see node tools/test_herosize.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6b3/7: Stock levers — BAU ↔ SALE (readings off each market's rules, off plan, periods, the switch list, the worker's half)"
+if node tools/test_stocklevers.mjs >/dev/null 2>&1; then
+  echo "   ✓ readings, off plan, modes + periods, switch list + brief, suggestions, keep-as-it-runs, summary, sanitisers, seed, wiring hold"
+else
+  echo "   ✗ Stock-levers harness FAILED — see node tools/test_stocklevers.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h6c/7: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
 if node tools/test_catalog.mjs >/dev/null 2>&1; then
   echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"

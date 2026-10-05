@@ -114,6 +114,10 @@ echo "── validating: Hero sizes + held-back products (size census, guides, e
 node tools/test_herosize.mjs >/dev/null
 echo "   ✓ size keys, product types, census, measure, examples, guide resolution, document import, sanitisers, held-back join, wiring hold"
 
+echo "── validating: Stock levers — BAU ↔ SALE (readings off each market's rules, off plan, periods, the switch list, the worker's half)"
+node tools/test_stocklevers.mjs >/dev/null
+echo "   ✓ readings, off plan, modes + periods, switch list + brief, suggestions, keep-as-it-runs, summary, sanitisers, seed, wiring hold"
+
 echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
 node tools/test_catalog.mjs >/dev/null
 echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
@@ -304,6 +308,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: /stock hero sizes at the tier of PT picked (the tier control, a list set at a tier reaching the types under it)"
   NODE_PATH=$(npm root -g) node tools/check_herotier.js || {
     echo "✗ hero-tier tripwire failed — the tier control lost a tier or its count, a pick listed another tier's types, the pick was not remembered, a save wrote the wrong tier's key, or a finer type stopped reading its tier's list"; exit 1; }
+  echo "── validating: /stock stock levers, BAU ↔ SALE, driven (tiles, the plan, a period planned and switched, brief, copy, phone)"
+  NODE_PATH=$(npm root -g) node tools/check_stocklevers.js || {
+    echo "✗ stock-levers tripwire failed — the card lost a tile or a market, a save wrote the wrong key, a switch or brief stopped marking its step, or the phone layout scrolled sideways"; exit 1; }
   echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
   NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
     echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }

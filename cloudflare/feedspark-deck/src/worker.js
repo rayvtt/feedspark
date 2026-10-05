@@ -51,6 +51,7 @@ import * as ROAS from "./roas.js";
 import * as RULES from "./rules.js";
 // Hero sizes on /stock (Ray, 30 Sep 2026) — the census shape a push may store and the guide edits a signin may make
 import * as HERO from "./herosizes.js";
+import * as LEVERS from "./stocklevers.js";
 import * as AIVIS from "./aivis.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
@@ -115,6 +116,9 @@ import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
 // the hero-size engine (docs/herosize_engine.js): the master-stock agent builds each market's size census with it,
 // /stock maps and measures hero sizes with it — served verbatim at /stock/engine.js
 import HEROSIZE_ENGINE_SRC from "../../../docs/herosize_engine.js";
+// the stock-lever engine (docs/stocklevers_engine.js): /stock reads every market's levers, BAU ↔ SALE, with it — served
+// verbatim at /stock/levers.js
+import STOCKLEVERS_ENGINE_SRC from "../../../docs/stocklevers_engine.js";
 // /catalog (Ray, 28 Sep 2026): the product catalogue GMC / Shopify style — every product as it
 // is SENT, and hovering one shows it as the client's MASTER feed had it, field by field. The
 // engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
@@ -1602,6 +1606,9 @@ async function route(request, env, ctx) {
     if (path === '/stock/engine.js' && request.method === 'GET') {
       return new Response(HEROSIZE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/stock/levers.js' && request.method === 'GET') {
+      return new Response(STOCKLEVERS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/catalog/engine.js' && request.method === 'GET') {
       return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2921,6 +2928,47 @@ async function route(request, env, ctx) {
       return json(Object.assign(base, { families: RULES.FAMILIES, mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, sev: RULES.SEV,
         estate: RULES.estate(rows), brands: RULES.brandsOf(rows), findings,
         markets: rows.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) }));
+    }
+
+    // ---- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically)
+    // … build an facilitor interface to action BAU vs. SALE perido"). ONE shared store (KV stocklevers — the kvmerge
+    // envelope, a key per decision, deletions only through `_deleted`): a brand's plan (p:<Brand> — each lever's BAU and SALE
+    // value), a market's own values (m:<Brand>|<MKT>) and the sale periods (e:<Brand>|<id> — dates, markets, the switch each
+    // way: planned → briefed → done, who and when stamped HERE). The page reads what each market runs off /api/rules/stock;
+    // nothing here changes a FeedHero rule. Scoped per signin; writing needs the stock module. KV only.
+    //   GET /api/rules/levers  → the in-scope store + the brands with a plan
+    //   PUT /api/rules/levers  → a partial map of p: / m: / e: keys (+ _deleted)
+    // A brand's levers as Ray stated them (LEVERS.LEVER_SEEDS — Superdry's, 5 Oct 2026) are written into the store once, on
+    // the first read after it ships, and are the team's to edit from then on (applyLeverSeeds never re-writes a key that existed).
+    if (path === '/api/rules/levers' && (request.method === 'GET' || request.method === 'PUT')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const brands = Object.keys(ROAS.ROAS_ROSTER), mine = brands.filter(inScope);
+      const now = Date.now();
+      const lenv = liftEnvelope(await env.EDITS.get(LEVERS.LEVERS_KEY, 'json'), now);
+      if (request.method === 'PUT') {
+        if (!(acc.owner || moduleAllowed(acc.modules, 'stock'))) return json({ ok: false, error: 'stock management is not in your access' }, 403);
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const was = envelopeToClient(lenv, {});
+        const lctx = { brands, inScope, now, prev: (k) => was[k] || null,
+          marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),
+          by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone' };
+        const r = LEVERS.sanitizeLeverPut(body, lctx);
+        if (r.errors.length) return json({ ok: false, error: r.errors.slice(0, 3).join(' · ') }, 400);
+        const keys = Object.keys(r.data).concat(r.deleted);
+        if (!keys.length) return json({ ok: false, error: 'nothing to save' }, 400);
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const incoming = Object.assign({}, r.data);
+        if (r.deleted.length) incoming._deleted = r.deleted;
+        const envx = mergeIntoEnvelope(lenv, incoming, base, now, { explicitTombstones: true });
+        await env.EDITS.put(LEVERS.LEVERS_KEY, JSON.stringify(envx));
+        logActivity(ctx, env, request, 'stock-levers', keys.length + ' change(s) · ' + keys.slice(0, 3).join(', '));
+        const store = LEVERS.leverView(envelopeToClient(envx, {}), inScope);
+        return json({ ok: true, saved: keys.length, store, brands: LEVERS.leverBrands(store, mine) }, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      if (LEVERS.applyLeverSeeds(lenv, now)) await env.EDITS.put(LEVERS.LEVERS_KEY, JSON.stringify(lenv));
+      const store = LEVERS.leverView(envelopeToClient(lenv, {}), inScope);
+      return json({ ok: true, store, brands: LEVERS.leverBrands(store, mine), at: now }, 200, { 'X-Sync-Base': String(Date.now()) });
     }
 
     // ---- HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow cross industry
