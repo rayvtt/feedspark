@@ -374,7 +374,8 @@ change is to where it sits, and each was measured on the rendered page, not eyeb
   availability"), idle rules the Act now line, and local inventory is the coverage matrix's own
   column. The six sit on a count that divides them — 6 across, 3 × 2 under 1180px, beside the docked
   forecast panel and on a phone — and every label has the same two-line slot, so each number, label
-  and line under it sit at one height. A tile that summarises a card jumps to it.
+  and line under it sit at one height. A tile that summarises a card jumps to it. *(Removed 6 Oct 2026 —
+  every figure it carried was already on a card below it; §3m.)*
 - **Every row of summary tiles fills its card** (in stock, ad spend, hero sizes) as equal tiles; on a
   phone they pair, and an odd one out spans the row rather than leaving a gap. The in-stock tiles lay
   their in / out lines side by side across the wider tile.
@@ -405,7 +406,8 @@ change is to where it sits, and each was measured on the rendered page, not eyeb
 Tripwire: `tools/check_stockeven.js` (Playwright, presync) measures all of it on the synthetic rule
 list, and carries a negative control — the shared auto-fit grid forced back onto the band wraps the
 six tiles 5 + 1 at 1100px, and the even-row measure must fail on it. Against the page as it was
-before this change, 26 of its 38 checks fail.
+before this change, 26 of its 38 checks fail. *(Since §3m there is no band: the negative control
+forces the in-stock tiles 3 + 1 instead.)*
 
 ## 3h. Hero sizes at the tier of PT you pick (`/stock`)
 
@@ -819,6 +821,61 @@ It is scoped per signin, and writing needs the `stock` module.
 
 The engine is served verbatim at `/stock/levers.js`.
 
+## 3m. Cleaned up — no KPI band, the levers as a matrix, and a record kept by hand (`/stock`)
+
+Ray, 6 Oct 2026, a red cross over the six-tile band at the top of `/stock`: *"clean up stock section alittle bit, i was
+thining the lst should be table/ matrix for overview review (something like this blue screenshot)"* — the screenshot was
+the coverage matrix (*Which stock controls each market runs*). Then, mid-build: *"maybe there should be a manual table as
+well to keep record of it"*.
+
+**The KPI band is gone.** Every figure it carried already stood on a card below it, so the band was the page saying
+everything twice:
+
+| The band's tile | Where it still is |
+|---|---|
+| Ad spend kept off | the in-stock card's book tile (`#av-sum [data-sv="book"]`) — hovering it still opens the working |
+| In stock in the Google feed | the in-stock card's Google tile, beside its master |
+| Stock rules | the coverage matrix, its Total column |
+| Markets with hero sizes | the coverage matrix's hero column and the hero-size runs card |
+| Cut-offs stated | the cut-offs card |
+| Act now | the findings card |
+
+The page now opens on its first card. A forbidden marker keeps the band out.
+
+**The levers' market list is a matrix**, in the coverage matrix's own shape:
+- the market named once, its product count under it;
+- a lever per column, all one width, with **the plan in the column head** (`BAU 35% · SALE not set`);
+- **one short value per cell** — `≈36%` measured, `21%` from a rule name, `runs` (no stated line), `N/A`, `on`,
+  `kept live`, `paused`, `—`;
+- **blue** where a rule runs the lever on plan, **orange with a dot** where it is off plan (so it is never colour
+  alone), **muted** where no rule runs it;
+- an **Off plan** count per market (`✓` when none);
+- the detail in the cell's tooltip: what runs, why, the target it is held to and whose (its own or the brand's, BAU or
+  SALE), why it is off plan, the rules behind it (in run order), and the latest record.
+
+The matrix sits **above** the plan tiles: overview first, then the plan (now headed *Brand plan*), the sale periods and
+the record. A market's own values open in a row **under** it (✎ toggles it), with *Keep as it runs* and *↺ Brand plan*
+in that row.
+
+**The record, kept by hand.** The matrix says what the rules read; the record says what a person set in FeedHero, on
+which day, where and why. It never moves a reading.
+- A row is: the day, the markets, the lever, BAU or SALE, what it was set to (from → to), a note, and who recorded it.
+  Newest first; the newest eight, then *Show all*.
+- **＋ Add a record**, ✎ to edit, 🗑 to delete (after asking), ⬇ CSV.
+- **＋ Record it** on a switch marked made writes that switch's changes into the record in one click, dated that day:
+  each change, in the mode switched to, from → to, naming the period (`switchRecords`). The step then reads
+  *✓ recorded*, so a second click cannot double it. The records are **frozen when written** — a plan edited later
+  never rewrites what was recorded.
+- The latest record for a market × lever is in that matrix cell's tooltip; ⧉ Copy summary ends with the newest five.
+- Store: KV `stocklevers`, key `r:<Brand>|<id>` → `{d, mk, k, mode, v, was?, note, src?, by, at, ed?}`. The worker
+  checks every field (a real day, a lever, a value of that lever's kind, the brand's markets). **Who recorded it is
+  the server's word, and it stays with the record through every edit** — an editor is stamped apart as `ed`, so an
+  edit can never rewrite who said so.
+
+**One fix found on the way.** The page shell's `.sc` class (the ROAS scorecards it was cloned from) takes
+`flex-basis:170px` under 820px. The levers card used `.sc` for its small captions, so on a phone a one-line lever note
+stood 170px tall inside its tile. The card's captions are now `.lvc`. A forbidden marker keeps `.sc` off the lever note.
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -847,15 +904,16 @@ first); a **cut-off** set to different values across a brand's markets.
 | `GET /api/rules/hero[?brand=&market=]` | The guide store (every example + the in-scope brands' guides), each brand's guide status, and — for one brand (the first with a census when none is asked) — its roster markets and one market's census. §3e. |
 | `PUT /api/rules/hero` | A partial map of `g:` / `m:` / `x:` keys (+ `_deleted`), every key checked (`sanitizeHeroPut`), merged with a read-stamp (`X-Sync-Base`), stamped by / at here. §3e. |
 | `GET /stock/engine.js` | `docs/herosize_engine.js`, verbatim. |
-| `GET /api/rules/levers` | The stock-lever store in scope (`p:` plan · `m:` a market's own values · `e:` sale periods) + the brands with a plan; Superdry's plan seeded once (`applyLeverSeeds`). §3l. |
-| `PUT /api/rules/levers` | A partial map of `p:` / `m:` / `e:` keys (+ `_deleted`), every key checked (`sanitizeLeverPut`), merged with a read-stamp (`X-Sync-Base`), switch steps stamped by / at here. Needs the `stock` module. §3l. |
+| `GET /api/rules/levers` | The stock-lever store in scope (`p:` plan · `m:` a market's own values · `e:` sale periods · `r:` the record kept by hand) + the brands with a plan; Superdry's plan seeded once (`applyLeverSeeds`). §3l, §3m. |
+| `PUT /api/rules/levers` | A partial map of `p:` / `m:` / `e:` / `r:` keys (+ `_deleted`), every key checked (`sanitizeLeverPut`), merged with a read-stamp (`X-Sync-Base`), switch steps and records stamped by / at here (a record keeps its first recorder through every edit). Needs the `stock` module. §3l, §3m. |
 | `GET /stock/levers.js` | `docs/stocklevers_engine.js`, verbatim. |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
 ## 6. Harness
 
-- `tools/check_stockeven.js` — `/stock` rendered and measured (§3g): the six-tile band at 1440 /
-  1100 / 390px and beside the forecast panel, tile rows that fill their card, a market named once,
+- `tools/check_stockeven.js` — `/stock` rendered and measured (§3g): no KPI band (§3m — the page opens on a card,
+  and every figure the band carried is on one), tile rows that fill their card at 1440 / 1100px and beside the
+  forecast panel, a market named once,
   equal matrix columns, one chip width, one-line findings and setup summaries, the phone search row; with
   a negative control. The one in-stock card (§3i): no ad-spend card, its controls in the card's header,
   seven columns fitting the card at 1440px with no header or cell clipped, the three feeds one width,
@@ -909,13 +967,19 @@ first); a **cut-off** set to different values across a brand's markets.
   by scope, hero on / part / paused / none), off plan, the target's source, modes and periods (late, missed — in
   the summary too), the switch list and its brief, the suggestions, keep-as-it-runs, the summary; then the worker's
   half (`src/stocklevers.js`: what a signin may store, the stamps, the scope, the seed once and never over a
-  tombstone), the route, the page and the stub. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+  tombstone), the route, the page and the stub. And §3m: the record (newest first, the latest per market × lever,
+  a switch as frozen records, the summary's foot; the worker's checks and the first recorder kept through an edit),
+  the matrix wiring, no KPI band. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
 - `tools/check_stocklevers.js` — the card driven in Chromium on the stub (served from an http origin so → Brief's
   navigation lands): All brands, the tiles and lever tiles one size, every roster market a row, off plan marked and
   filtered, keep-as-it-runs / a market's own values / ✎ Edit / "Use it" each saving their key, a period planned and
   switched (the markets reading SALE, held to the brand's SALE and saying plan), ⧉ Copy summary, → Brief carrying
   the switch — and marking it briefed first, read from a record kept OUTSIDE the page (the navigation takes the
   page's own with it) — → Brief while another save is in flight, a refused mark said before leaving, the phone.
-  Four fail on the page before. Presync.
+  Four fail on the page before. Since §3m: the matrix (overview first, the plan in each head, one short value a
+  cell in its state, the tooltip, one width per lever, the editor row under its market and ✎ toggling it), the
+  record (add / edit / delete each saving their key, the first recorder kept, a switch recorded in one click and
+  then saying so, the latest record in the cell's tooltip) and the phone's one-line note — run on main's page the
+  matrix checks fail. Presync.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.

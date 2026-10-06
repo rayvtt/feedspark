@@ -2934,10 +2934,11 @@ async function route(request, env, ctx) {
     // … build an facilitor interface to action BAU vs. SALE perido"). ONE shared store (KV stocklevers — the kvmerge
     // envelope, a key per decision, deletions only through `_deleted`): a brand's plan (p:<Brand> — each lever's BAU and SALE
     // value), a market's own values (m:<Brand>|<MKT>) and the sale periods (e:<Brand>|<id> — dates, markets, the switch each
-    // way: planned → briefed → done, who and when stamped HERE). The page reads what each market runs off /api/rules/stock;
+    // way: planned → briefed → done, who and when stamped HERE) and the record kept by hand (r:<Brand>|<id> — what was set
+    // in FeedHero, the day and the markets; the first recorder kept through every edit). The page reads what each market runs off /api/rules/stock;
     // nothing here changes a FeedHero rule. Scoped per signin; writing needs the stock module. KV only.
     //   GET /api/rules/levers  → the in-scope store + the brands with a plan
-    //   PUT /api/rules/levers  → a partial map of p: / m: / e: keys (+ _deleted)
+    //   PUT /api/rules/levers  → a partial map of p: / m: / e: / r: keys (+ _deleted)
     // A brand's levers as Ray stated them (LEVERS.LEVER_SEEDS — Superdry's, 5 Oct 2026) are written into the store once, on
     // the first read after it ships, and are the team's to edit from then on (applyLeverSeeds never re-writes a key that existed).
     if (path === '/api/rules/levers' && (request.method === 'GET' || request.method === 'PUT')) {

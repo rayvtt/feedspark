@@ -24,7 +24,7 @@
   else root.StockLevers = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
   // the levers a plan can hold — keys are the store's, labels the card's
   //   kind: pct (a %, inside the brand's band), units (a count per size, or off), onoff
   var LEVERS = [
@@ -56,6 +56,10 @@
   //   'm:<Brand>|<MKT>'    a market's own values where they differ: {lv:{<k>:{bau?, sale?}}, by, at}
   //   'e:<Brand>|<id>'     a sale period: {name, from, to (YYYY-MM-DD), mk:[markets], sale:{st, by, at}, bau:{st, by, at}, by, at}
   //                        st: planned → briefed → done
+  //   'r:<Brand>|<id>'     a RECORD, kept by hand (Ray, 6 Oct 2026: "maybe there should be a manual table as well to keep
+  //                        record of it"): {d (YYYY-MM-DD), mk:[markets], k, mode ('bau'|'sale'|''), v, was?, note, src?,
+  //                        by, at, ed?} — what was set in FeedHero, on which day, where, and who wrote it down. It never
+  //                        moves a reading: the matrix says what the rules read, the record says what a person set.
   function planOf(store, brand) { var p = store && store['p:' + brand]; return p && Array.isArray(p.levers) ? p : null; }
   function marketOf(store, brand, mk) { return (store && store['m:' + brand + '|' + mk]) || null; }
   function periodsOf(store, brand) {
@@ -63,6 +67,29 @@
     Object.keys(store || {}).forEach(function (k) { var e = store[k]; if (k.indexOf(pre) === 0 && e && e.from && e.to) out.push(Object.assign({ id: k.slice(pre.length) }, e)); });
     return out.sort(function (a, b) { return a.from < b.from ? -1 : a.from > b.from ? 1 : (a.id < b.id ? -1 : 1); });
   }
+  // the brand's records, newest day first (the newest written first within a day)
+  function recordsOf(store, brand) {
+    var pre = 'r:' + brand + '|', out = [];
+    Object.keys(store || {}).forEach(function (k) { var e = store[k]; if (k.indexOf(pre) === 0 && e && e.d && LEVER[e.k]) out.push(Object.assign({ id: k.slice(pre.length) }, e)); });
+    return out.sort(function (a, b) { return a.d > b.d ? -1 : a.d < b.d ? 1 : ((b.at || 0) - (a.at || 0)) || (a.id < b.id ? -1 : 1); });
+  }
+  // the newest record for one market and lever — null when nobody recorded one
+  function lastRecord(recs, mk, lk) {
+    for (var i = 0; i < (recs || []).length; i++) if (recs[i].k === lk && (recs[i].mk || []).indexOf(mk) >= 0) return recs[i];
+    return null;
+  }
+  // a switch made, as records: one per change in its list (the markets, the lever, from → to, in the mode switched to),
+  // frozen the day it is written — a plan edited later never rewrites what was recorded
+  function switchRecords(sw, p, today) {
+    return (sw && sw.changes || []).map(function (c) {
+      var r = { d: today, mk: c.mk.slice(), k: c.k, mode: sw.dir, v: c.to, note: (p ? p.name + ' — ' : '') + (sw.dir === 'sale' ? 'switch to SALE' : 'back to BAU'), src: p ? 'e:' + p.id + '|' + sw.dir : '' };
+      if (isSet(c.from)) r.was = c.from;
+      return r;
+    });
+  }
+  // one record in words: "35% → 20% (SALE)"
+  function recordWord(r) { return (isSet(r.was) ? fmtVal(r.k, r.was) + ' → ' : '') + fmtVal(r.k, r.v) + (r.mode ? ' (' + r.mode.toUpperCase() + ')' : ''); }
+
   // a lever's value in one market and one mode: the market's own, else the brand's
   function valueOf(plan, mo, lk, mode) {
     var own = mo && mo.lv && mo.lv[lk];
@@ -244,7 +271,7 @@
       if (levers.some(function (l) { return r.cells[l.k].drift; })) sum.drift++;
     });
     levers.forEach(function (l) { if (!isSet(l.sale)) sum.unset.push(l.k); });
-    return { plan: plan, levers: levers, rows: rows, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), sum: sum, today: today };
+    return { plan: plan, levers: levers, rows: rows, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), records: recordsOf(store, brand), sum: sum, today: today };
   }
 
   // ---- A SALE VALUE TO CONSIDER — never set without a click -----------------------------------------------------------
@@ -323,11 +350,18 @@
     var ps = M.periods.filter(function (p) { return p.next.dir; });
     ps.forEach(function (p) { L.push('• ' + p.name + ' (' + p.from + ' → ' + p.to + '): ' + (p.next.dir === 'sale' ? 'switch to SALE ' : 'back to BAU ') + (p.next.missed ? 'missed — the period ended ' + p.to : p.next.days > 0 ? 'in ' + p.next.days + ' days' : p.next.days === 0 ? 'today' : p.next.late + ' days late') + ' · ' + list(p.mk, 6)); });
     if (!M.periods.length) L.push('• No sale period planned.');
+    var rec = M.records || [];
+    if (rec.length) {
+      L.push('• Recorded:');
+      rec.slice(0, 5).forEach(function (r) { L.push('    ' + r.d + ' — ' + (LEVER[r.k] || {}).label + ' ' + recordWord(r) + ' — ' + list(r.mk, 6) + (r.note ? ' · ' + r.note : '') + (r.by ? ' · ' + r.by : '')); });
+      if (rec.length > 5) L.push('    + ' + (rec.length - 5) + ' more in the record');
+    }
     return L.join('\n');
   }
 
   return { VERSION: VERSION, LEVERS: LEVERS, LEVER: LEVER, DRIFT_PP: DRIFT_PP, isSet: isSet, same: same, fmtVal: fmtVal,
     planOf: planOf, marketOf: marketOf, periodsOf: periodsOf, valueOf: valueOf, reading: reading, drift: drift, namePct: namePct,
     ymd: ymd, days: days, modeOf: modeOf, nextStep: nextStep, switchList: switchList, briefLines: briefLines, model: model,
-    suggest: suggest, adopt: adopt, readWord: readWord, groups: groups, summaryText: summaryText };
+    suggest: suggest, adopt: adopt, readWord: readWord, groups: groups, summaryText: summaryText,
+    recordsOf: recordsOf, lastRecord: lastRecord, switchRecords: switchRecords, recordWord: recordWord };
 });

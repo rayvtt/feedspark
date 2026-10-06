@@ -9,7 +9,9 @@
 // (src/rules.js normRules → the rows /api/rules/stock serves): what each market runs, the plan it is held to, the mode and
 // the periods, the switch list and its brief, the suggestions, "keep as it runs", the summary. Then the worker's half
 // (src/stocklevers.js: what a signin may store, the stamps, the scope, the seed written once), the route, the page and the
-// stub. Rule names are the SHAPES the live rules take; every count, id and date is invented.
+// stub. Rule names are the SHAPES the live rules take; every count, id and date is invented. Then the RECORD kept by hand
+// (Ray, 6 Oct 2026: "maybe there should be a manual table as well to keep record of it") and the matrix the market list
+// became (Ray, same day: "the lst should be table/ matrix for overview review").
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import * as W from '../cloudflare/feedspark-deck/src/stocklevers.js';
@@ -141,6 +143,31 @@ t('"keep as it runs": the market’s own BAU is what it runs (21% · N/A · on)'
 t('…a line nobody can state is not written (the brand’s value stays in force)', (() => { const m2 = L.model(store, 'Superdry', [SE], ['SE'], '2026-10-05'); return !('rc' in L.adopt(m2.rows[0])); })());
 t('…a market’s own SALE is kept', (() => { const s3 = JSON.parse(JSON.stringify(store)); s3['m:Superdry|FR'] = { lv: { rc: { bau: null, sale: 25 } } }; const m3 = L.model(s3, 'Superdry', [FR], ['FR'], '2026-10-05'); return L.adopt(m3.rows[0]).rc.sale === 25; })());
 
+console.log('· the record, kept by hand');
+const RS0 = {
+  'r:Superdry|rec-a': { d: '2026-09-14', mk: ['GB', 'FR'], k: 'hero', mode: 'bau', v: 'on', note: 'on', by: 'A', at: 100 },
+  'r:Superdry|rec-b': { d: '2026-10-01', mk: ['GB'], k: 'rc', mode: 'bau', v: 35, was: 30, note: 'moved', by: 'A', at: 200 },
+  'r:Superdry|rec-c': { d: '2026-10-01', mk: ['FR'], k: 'rc', mode: 'sale', v: 20, by: 'B', at: 300 },
+  'r:Superdry|rec-x': { d: '2026-10-02', mk: ['GB'], k: 'nope', v: 1 },
+  'r:Superdry|rec-y': { mk: ['GB'], k: 'rc', v: 1 },
+  'r:Reiss|rec-z': { d: '2026-10-03', mk: ['GB'], k: 'rc', v: 30 },
+};
+const RC0 = L.recordsOf(RS0, 'Superdry');
+t('newest day first, the newest written first within a day; this brand only; no day or an unknown lever is not a record', eq(RC0.map((r) => r.id), ['rec-c', 'rec-b', 'rec-a']), JSON.stringify(RC0.map((r) => r.id)));
+t('the newest record for a market × lever (GB range completion: 1 Oct, 30% → 35%) — none is null, never a guess', L.lastRecord(RC0, 'GB', 'rc').id === 'rec-b' && L.lastRecord(RC0, 'FR', 'hero').id === 'rec-a' && L.lastRecord(RC0, 'IT', 'rc') === null);
+t('in words: "30% → 35% (BAU)" · "20% (SALE)" · "on (BAU)"', L.recordWord(RC0[1]) === '30% → 35% (BAU)' && L.recordWord(RC0[0]) === '20% (SALE)' && L.recordWord(RC0[2]) === 'on (BAU)');
+const SWR = L.switchRecords(sw, Object.assign({ id: 'bf-1' }, ps[0]), '2026-11-20');
+t('a switch made, as records: one per change, in the mode switched to, from → to, frozen the day written, naming the period', SWR.length === sw.changes.length && SWR.every((r) => r.d === '2026-11-20' && r.mode === 'sale' && r.src === 'e:bf-1|sale' && /^Black Friday — switch to SALE$/.test(r.note))
+  && SWR.some((r) => r.k === 'rc' && eq(r.mk, ['GB', 'FR']) && r.was === 35 && r.v === 20), JSON.stringify(SWR));
+t('…a lever the switch could not set (a blocker) writes no record; "was" left out when it was not set', !SWR.some((r) => r.k === 'hero') && (() => { const x = L.switchRecords({ dir: 'sale', changes: [{ k: 'units', mk: ['GB'], from: null, to: 5 }] }, null, '2026-11-20')[0]; return !('was' in x) && x.v === 5 && x.src === ''; })());
+t('…its markets are copies (a record never shares the switch list’s array)', SWR[0].mk !== sw.changes[0].mk);
+const MR = L.model(Object.assign({}, store, RS0), 'Superdry', MKS, null, '2026-10-05');
+t('the model carries the brand’s records', eq(MR.records.map((r) => r.id), ['rec-c', 'rec-b', 'rec-a']));
+const txr = L.summaryText(MR, 'Superdry', '2026-10-05');
+t('⧉ Copy summary ends with the record — newest first, the lever, what was set, where, the note, who', /• Recorded:\n    2026-10-01 — Range completion 20% \(SALE\) — FR · B\n    2026-10-01 — Range completion 30% → 35% \(BAU\) — GB · moved · A/.test(txr), txr);
+t('…the newest five, then how many more', (() => { const big = {}; for (let i = 0; i < 7; i++) big['r:Superdry|rec-' + i + 'zz'] = { d: '2026-10-0' + (i + 1), mk: ['GB'], k: 'rc', v: 30 + i, at: i }; const x = L.summaryText(L.model(Object.assign({}, store, big), 'Superdry', MKS, null, '2026-10-05'), 'Superdry', '2026-10-05'); return (x.match(/\n    2026-10-0\d — /g) || []).length === 5 && /\+ 2 more in the record/.test(x); })());
+t('…and a brand with no record says nothing about one', !/Recorded/.test(L.summaryText(M, 'Superdry', '2026-10-05')));
+
 console.log('· the summary, in words');
 const txt = L.summaryText(M, 'Superdry', '2026-10-05');
 t('each lever: the plan, then the markets grouped by what they run — named, never a count alone', /^Superdry — stock levers, 2026-10-05/.test(txt) && /• Range completion: BAU 35% · SALE 20% \(band 20–40%\)/.test(txt) && /36% measured from the products — GB/.test(txt) && /not read yet — SE/.test(txt), txt);
@@ -164,6 +191,21 @@ t('deletions only through _deleted (or a null value), each key checked', eq(W.sa
 t('a signin reads only its brands', eq(Object.keys(W.leverView({ 'p:Superdry': {}, 'p:Reiss': {}, 'e:Reiss|a-1': {}, 'm:Superdry|GB': {} }, (b) => b === 'Superdry')).sort(), ['m:Superdry|GB', 'p:Superdry']));
 t('the brands with a plan, and their periods', eq(W.leverBrands({ 'p:Superdry': { levers: [1, 2, 3] }, 'e:Superdry|a-1': {}, 'e:Superdry|b-2': {} }, ['Superdry', 'Reiss']), [{ client: 'Superdry', levers: 3, periods: 2 }]));
 
+console.log('· the worker’s half — a record');
+const rec = { d: '2026-10-06', mk: ['gb', 'FR', 'GB'], k: 'rc', mode: 'sale', v: 20, was: 35, note: 'Black Friday line', src: 'e:bf-1|sale', by: 'forged', at: 1 };
+const rv = ok('r:Superdry|rec-20261006-rc-ab12c', rec).value;
+t('a record: the day, the brand’s markets (upper-cased, deduped), the lever, the mode, the value and what it was — who and when are the server’s', eq(rv, { d: '2026-10-06', mk: ['GB', 'FR'], k: 'rc', mode: 'sale', v: 20, note: 'Black Friday line', was: 35, src: 'e:bf-1|sale', by: 'Ray', at: 1000 }), JSON.stringify(rv));
+t('…"was" left out when blank; a mode that is neither BAU nor SALE is stored as either', (() => { const v2 = ok('r:Superdry|rec-1', { d: '2026-10-06', mk: ['GB'], k: 'hero', mode: 'peak', v: 'off' }).value; return v2 && !('was' in v2) && v2.mode === '' && v2.v === 'off'; })());
+t('…refused: no day, an unknown lever, nothing set, a % over 100, hero "maybe", a market off the roster, no market', !!ok('r:Superdry|rec-1', Object.assign({}, rec, { d: '6 Oct' })).error && !!ok('r:Superdry|rec-1', Object.assign({}, rec, { k: 'xx' })).error
+  && !!ok('r:Superdry|rec-1', Object.assign({}, rec, { v: null })).error && !!ok('r:Superdry|rec-1', Object.assign({}, rec, { v: 120 })).error && !!ok('r:Superdry|rec-1', { d: '2026-10-06', mk: ['GB'], k: 'hero', v: 'maybe' }).error
+  && /not a Superdry market/.test(ok('r:Superdry|rec-1', Object.assign({}, rec, { mk: ['XX'] })).error) && !!ok('r:Superdry|rec-1', Object.assign({}, rec, { mk: [] })).error);
+t('…a brand out of scope, or a key that is not a record id, is refused', /scope/.test(ok('r:Reiss|rec-1', rec).error) && !!ok('r:Superdry|REC 1', rec).error);
+t('an edit keeps WHO FIRST WROTE IT DOWN, and stamps the editor apart (an edit never rewrites who said so)', (() => {
+  const c3 = Object.assign({}, ctx, { by: 'Steven', now: 3000, prev: () => ({ by: 'Ray', at: 1000 }) }); const v3 = ok('r:Superdry|rec-1', rec, c3).value;
+  return v3.by === 'Ray' && v3.at === 1000 && eq(v3.ed, { by: 'Steven', at: 3000 }); })());
+t('a record is deleted like any key (through _deleted, each key checked)', eq(W.sanitizeLeverPut({ _deleted: ['r:Superdry|rec-1'] }, ctx).deleted, ['r:Superdry|rec-1']) && W.sanitizeLeverPut({ _deleted: ['r:Reiss|rec-1'] }, ctx).errors.length === 1);
+t('a signin reads only its brands’ records', eq(Object.keys(W.leverView({ 'r:Superdry|rec-1': {}, 'r:Reiss|rec-2': {} }, (b) => b === 'Superdry')), ['r:Superdry|rec-1']));
+
 console.log('· Superdry’s plan as Ray stated it — seeded once');
 const SD = W.LEVER_SEEDS.Superdry;
 t('range completion: band 20–40%, BAU 35% ("currently at 35%"), SALE not set', eq(SD.levers[0], Object.assign({ k: 'rc', lo: 20, hi: 40, bau: 35, sale: null }, { note: SD.levers[0].note })));
@@ -181,11 +223,20 @@ t('worker: GET/PUT /api/rules/levers — scoped, the kvmerge envelope with expli
 t('worker: writing needs the stock module; the stamps read what was stored', /if \(!\(acc\.owner \|\| moduleAllowed\(acc\.modules, 'stock'\)\)\) return json\(\{ ok: false, error: 'stock management is not in your access' \}, 403\);/.test(WK) && /prev: \(k\) => was\[k\] \|\| null/.test(WK));
 t('worker: the seed applied on read, written back only when it wrote', /if \(LEVERS\.applyLeverSeeds\(lenv, now\)\) await env\.EDITS\.put\(LEVERS\.LEVERS_KEY, JSON\.stringify\(lenv\)\);/.test(WK));
 t('page: the card, its engine, the store with a read-stamp, edits kept until the server confirms', /<section class="card" id="lev-card" hidden>/.test(SP) && /fetch\('\/stock\/levers\.js'/.test(SP) && /fetch\('\/api\/rules\/levers'/.test(SP) && /'X-Sync-Base': String\(LV\.base \|\| 0\)/.test(SP) && /function lvReapply\(\)/.test(SP));
-t('page: the card renders with the page (and after every save)', /renderChips\(\); renderKpis\(\); renderLev\(\);/.test(SP));
+t('page: the card renders with the page (and after every save) — and opens it: no KPI band above it any more', /renderChips\(\); renderLev\(\);/.test(SP) && !/renderKpis|id="kpis"/.test(SP));
+t('page: the market list is a MATRIX above the plan — the plan line in each lever’s head, one short value a cell, the detail in its tooltip', SP.indexOf('id="lev-tw"') > 0 && SP.indexOf('id="lev-tw"') < SP.indexOf('id="lev-plan"')
+  && /'<span class="thp">BAU ' \+ esc\(lvShort\(l\.k, l\.bau\)\) \+ ' · SALE ' \+ esc\(lvShort\(l\.k, l\.sale\)\) \+ '<\/span><\/th>'/.test(SP) && /function lvCell\(lk, c, r, b\) \{/.test(SP) && /'<td class="lc ' \+ st \+ '" data-lk="' \+ lk \+ '" data-tip="' \+ esc\(tip\) \+ '">'/.test(SP));
+t('page: a cell is on (blue — a rule runs it, on plan), off (orange, with a dot — never colour alone) or none (muted)', /#lev-t td\.lc\.on,\.legend i\.lvn\{background:rgba\(37,99,235,\.14\)\}/.test(SP) && /#lev-t td\.lc\.off,\.legend i\.lvo\{background:rgba\(245,166,35,\.30\)\}/.test(SP) && /\(st === 'off' \? '<i class="dot" aria-hidden="true"><\/i>' : ''\)/.test(SP));
+t('page: a market’s own values open in a row UNDER it (✎ toggles it), the shortcuts with them', /function lvEditRow\(r, levs, b, span\)/.test(SP) && /\(LV\.med === r\.market \? lvEditRow\(r, levs, b, span\) : ''\)/.test(SP) && /LV\.med = LV\.med === mkName \? '' : mkName;/.test(SP) && /tr\.querySelectorAll\('\.mlv\[data-lk\]'\)/.test(SP));
+t('page: the card’s captions are its own class — the shell’s .sc (170px flex-basis under 820px) never reaches them', !/class="sc[ "]|class="rl sc"/.test(SP) && /#lev-card \.lvc\{/.test(SP));
+t('page: the record — its own section, kept by hand; the newest eight, CSV, add / edit / delete', /<div class="lev-rec" id="lev-rec"><\/div>/.test(SP) && /function lvRecHtml\(M, b\)/.test(SP) && /var LVREC_N = 8;/.test(SP) && /case 'lv-radd':/.test(SP) && /case 'lv-redit':/.test(SP) && /case 'lv-rdel':/.test(SP) && /function lvRecCsv\(\)/.test(SP));
+t('page: a switch marked made is written into the record in one click — and then says it was', /SL\.switchRecords\(swr, q, lvToday\(\)\)/.test(SP) && /function lvRecStep\(q, dir, n\)/.test(SP) && /✓ recorded/.test(SP));
+t('page: the latest record for a market × lever is in that matrix cell’s tooltip', /var lr = LV\.M && SL\.lastRecord\(LV\.M\.records, r\.market, lk\);/.test(SP));
+t('page: half-typed form values survive a re-render a save elsewhere triggers', /if \(LV\.form\) lvKeepForm\(\);\n    if \(LV\.rf\) lvKeepRec\(\);/.test(SP) && /fm\.getAttribute\('data-rid'\) !== \(f\.id \|\| 'new'\)/.test(SP));
 t('page: → Brief opens the Workflow composer with the switch as the brief (technical, from the levers)', /location\.href = '\/workflow\?brief=' \+ lvB64\(\{ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' \}\)/.test(SP));
 t('page: a switch marked briefed BEFORE the page leaves (flushed now, then navigate)', /lvSetStep\(q, dir, 'briefed', true, go\)/.test(SP));
 t('page: every rule in the switch list opens on FeedHero', /fhUrl\(x\.cmpid, n\)/.test(SP));
-t('stub: serves the lever engine and a synthetic store', /\/stock\/levers\.js/.test(ST) && /\/api\/rules\/levers/.test(ST));
+t('stub: serves the lever engine and a synthetic store — with two records kept by hand, one edited', /\/stock\/levers\.js/.test(ST) && /\/api\/rules\/levers/.test(ST) && /'r:Superdry\|rec-20261001-rc-tst02': \{[^\n]*ed: \{ by: 'Analyst B'/.test(ST));
 t('harness wired into qa_gate, presync and validate', ['tools/qa_gate.sh', 'tools/presync.sh', '.github/workflows/validate.yml'].every((f) => read(f).indexOf('test_stocklevers.mjs') >= 0));
 t('no lever store is committed (KV only)', !fs.existsSync(new URL('../ops/stocklevers', import.meta.url)));
 
