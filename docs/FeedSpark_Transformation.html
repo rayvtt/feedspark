@@ -120,6 +120,16 @@ window.addEventListener('load',restore);
   table.t td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:900}
   .muted{color:var(--muted)}.sm{font-size:12px}
   .rag{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;color:#fff;white-space:nowrap}
+  .as-t{min-width:1080px}
+  .as-t td{font-size:12.5px}
+  .as-t td.b{min-width:220px}.as-t td.nt{min-width:240px}
+  .as-t .why{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .lv{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;white-space:nowrap;border:1px solid}
+  .lv.low{color:var(--good);border-color:currentColor}.lv.med{color:var(--orange-deep);border-color:currentColor}.lv.high{color:var(--risk);border-color:currentColor}
+  .pri{display:inline-block;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:100px;white-space:nowrap;color:#fff}
+  .pri.high{background:var(--orange-deep)}.pri.rec{background:var(--navy)}.pri.nice{background:var(--muted)}
+  .qw{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--good);margin-left:6px}
+  .as-sum{font-size:12.5px;font-weight:700;color:var(--ink-2);margin:0 0 10px}
   .rag.r{background:var(--risk)}.rag.a{background:var(--orange-deep)}.rag.g{background:var(--good)}.rag.c{background:var(--muted)}
   .who{font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
   /* 70/30 model */
@@ -425,6 +435,15 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
       <label class="tog"><input type="checkbox" id="mig-on"> Show badges to every AM</label></div>
     <div class="mleg" id="mleg"></div>
     <div class="mods" id="mods"></div>
+  </section>
+
+  <section class="blk" id="assess">
+    <div class="blk-h"><div class="grow"><h2>Module assessment</h2><p>What each module is worth, what it costs to move, and how much it needs the AMs. Click a row to re-rate it.</p></div>
+      <button class="btn" type="button" id="as-csv" title="The assessment as a spreadsheet">⬇ CSV</button>
+      <button class="btn" type="button" data-add="assess">＋ Module</button></div>
+    <div class="ctl" id="as-chips"></div>
+    <div class="as-sum" id="as-sum"></div>
+    <div class="tw"><table class="t as-t" id="as-t"></table></div>
   </section>
 
   <section class="blk" id="decisions">
@@ -735,6 +754,38 @@ var RM={
     {p:'/',n:'Command center',w:4,m:'2026-12',data:'clients · materials · tests · abtests · plan cache',chk:['Dossier, materials and A/B test cache copied','News digest off Ray’s Claude account','Hero figures match Workflow after the move']},
     {p:'/migration',n:'Migration roadmap',w:4,m:'2026-12',data:'transform · transformlog',chk:['Roadmap status and history log copied','Public module status reachable until the last module moves']}
   ],
+  // MODULE ASSESSMENT (Ray, 6 Oct 2026: "create a table. List all the current modules that sit on FCC and the benefit
+  // of each … how complicated it is to recreate / migrate it … account manager dependency … priority — highly
+  // recommended, recommended, or nice to have … notes for senior management to decide which module should be built
+  // first"). cx = migration complexity, am = how much the module depends on AMs to be worth running, pri = priority.
+  // A seed like every other table here: management rewords, re-rates and adds rows in place (c:assess:<id>).
+  assess:[
+    {id:'home',p:'/',n:'Command center',ben:'One home for every brand: the dossier, hero figures from the project plans, health score, next moves, materials and the daily industry digest.',cx:'high',cxw:'Reads almost every other store; dossier, materials and the A/B archive move with it.',am:'med',amw:'Figures fill themselves; contacts and materials need AM upkeep.',pri:'high',note:'The front door every AM opens first. It moves in the last wave because it reads everyone else’s data, but it must work on day one of the January live iteration.'},
+    {id:'workflow',p:'/workflow',n:'Workflow & Playbook',ben:'The brief pipeline (client → AM → ASPL), Intake from the project plans, email triage, call actions and wrap-ups, and the Playbook rail per account.',cx:'high',cxw:'Briefs and 20 shared-state stores with merge stamps; email runs through Ray’s mailbox; writes to the plan sheets.',am:'high',amw:'Every brief, status, triage decision and wrap-up is an AM action.',pri:'high',note:'The team’s operating system and the biggest hours saving. Its move is gated on the service mailbox; build or verify it before onboarding the new AMs.'},
+    {id:'golden',p:'/golden',n:'Golden Record',ben:'Feed completeness against Google’s spec, content quality and AI-readiness, scored daily at 09:00 with a score history and client-ready PDF and HTML.',cx:'high',cxw:'Daily run plus a score history that cannot be rebuilt; shares one scan with five other modules.',am:'low',amw:'Scores itself every day; AMs act on what it finds.',pri:'high',note:'The strongest client-facing proof of value: the score history is the improvement story in every review. Moves with the feed-scan family.'},
+    {id:'labels',p:'/labels',n:'Label Guard',ben:'Catches custom-label drops that silently break Performance Max listing groups, alerts on them and drafts the client email.',cx:'high',cxw:'Baselines, watches, webhooks and an email outbox; same scan as PT Guard and Golden Record.',am:'low',amw:'Monitors unattended; an AM only confirms or accepts a change.',pri:'high',note:'Protects client spend: a missed drop costs money within days. It must keep running through the move with no gap.'},
+    {id:'ptypes',p:'/ptypes',n:'PT Guard',ben:'Watches product_type for drop-offs and measures category depth against the 5-level standard, with a ready-made depth proposal.',cx:'med',cxw:'Rides Label Guard’s scan; no lane of its own.',am:'low',amw:'Monitors unattended.',pri:'rec',note:'Comes free with Label Guard; migrate them together.'},
+    {id:'volume',p:'/volume',n:'Product volume',ben:'Daily products in and out per feed, and new-product arrivals by first-seen date; feeds the quotes and the Playbook.',cx:'med',cxw:'History builds day by day; a day missed during the move is a permanent gap.',am:'low',amw:'Fully automatic.',pri:'rec',note:'Small effort, real commercial use (new-product bundles). Schedule the cut-over so the scan never pauses.'},
+    {id:'overlays',p:'/overlays',n:'Overlays',ben:'Shows which feeds carry FeedSpark image overlays, of which type, with the live images.',cx:'low',cxw:'One small capture per feed from the existing scan.',am:'low',amw:'Fully automatic.',pri:'nice',note:'Service evidence for a few accounts (Monsoon, YuMOVE). Can follow the core waves.'},
+    {id:'images',p:'/images',n:'Image library',ben:'Names every product image by shot type (packshot, on-model, detail…) from the studio’s own file naming, with AI tagging.',cx:'med',cxw:'Hand and AI tags cannot be rebuilt and must be copied.',am:'med',amw:'Each client’s shot codes need an AM decision once.',pri:'nice',note:'A differentiator for fashion accounts, not daily work. Copy the tags; the rest rebuilds itself.'},
+    {id:'feedlab',p:'/feedlab',n:'Feed Lab',ben:'An on-demand audit and AI-readiness score of any live feed; doubles as a pitch tool.',cx:'low',cxw:'Runs in the browser; a small store of saved audits.',am:'med',amw:'Run by an AM when needed.',pri:'rec',note:'Small and self-contained: a good early module to prove the migration checklist.'},
+    {id:'feedchat',p:'/feedchat',n:'Feed Chat',ben:'Plain-English questions about a live feed (“duplicate titles in Reiss UK?”) answered by fixed checks.',cx:'low',cxw:'One small question bank.',am:'med',amw:'Only useful when someone asks.',pri:'nice',note:'Already the pilot: the cheapest end-to-end test of the migration, not a priority for value.'},
+    {id:'deck',p:'/deck-builder',n:'Deck generator',ben:'Builds client deck briefs and work-volume charts that become on-brand PowerPoint decks.',cx:'med',cxw:'The final deck is built by a Claude Code skill outside the app.',am:'high',amw:'The AM writes the brief and owns the deck.',pri:'rec',note:'Saves hours on every review. The deck skill must move to a FeedSpark Claude account with it.'},
+    {id:'pricer',p:'/pricer',n:'Pricer',ben:'Per-SKU Tachyon pricing and saved quotes.',cx:'low',cxw:'Small data, but no test harness today.',am:'high',amw:'Only used when an AM prices a deal.',pri:'nice',note:'Largely superseded by AI Quote. Decide whether to retire it rather than migrate it.'},
+    {id:'aiquote',p:'/aiquote',n:'AI Quote',ben:'Quotes in Finance’s own workbook format with options 1–4, the client’s choice, and delivered / billed tracking.',cx:'med',cxw:'Saved quotes are the finance record and must be copied exactly.',am:'high',amw:'Every quote is built by an AM.',pri:'high',note:'A direct revenue tool and Finance relies on its export. Verify every saved quote after the move.'},
+    {id:'kwcal',p:'/kwcal',n:'Keyword calendar',ben:'Turns a client’s marketing calendar into scheduled keyword optimisations, ties results back and exports a client calendar PDF.',cx:'med',cxw:'Results arrive by email through Ray’s mailbox.',am:'high',amw:'Calendars are entered and curated by AMs.',pri:'rec',note:'High value on retainers with calendars (Reiss, Schuh, Accessorize, YuMOVE). Depends on the mailbox move.'},
+    {id:'schedule',p:'/schedule',n:'Scheduled work',ben:'Tracks the content team’s weekly Go / Skip schedule and how long a task has been skipped.',cx:'low',cxw:'One shared sheet read through the service account.',am:'med',amw:'Records AM decisions made in the sheet.',pri:'rec',note:'Shows billable work lost to skips. Re-share the sheet with the new service account and it moves.'},
+    {id:'tasks',p:'/tasks',n:'FS Task Manager',ben:'The hours book from the reports database: search, billable vs non-billable, tags and charts per client.',cx:'med',cxw:'The token moves into FeedSpark custody; the data source is already FeedSpark’s.',am:'low',amw:'Syncs itself; tags are an optional AM judgement.',pri:'high',note:'Margin visibility: over-servicing shows here first. Mostly a custody change, so a quick win.'},
+    {id:'roas',p:'/roas',n:'ROAS',ben:'Google Ads return on ad spend per brand and market, with trends and movers.',cx:'med',cxw:'History builds daily; the token reaches FeedHero’s whole client book.',am:'low',amw:'Fully automatic.',pri:'rec',note:'Strong in client reviews. Review the token’s scope before moving: the roster is the only control over 112 clients.'},
+    {id:'rules',p:'/rules',n:'Rules',ben:'Every active FeedHero rule per market, in the order it runs.',cx:'low',cxw:'Same token and route as ROAS.',am:'low',amw:'Fully automatic.',pri:'nice',note:'Move it with ROAS; same source, no extra work.'},
+    {id:'stock',p:'/stock',n:'Stock management',ben:'The stock-related rules and the levers that keep out-of-stock products from wasting spend.',cx:'low',cxw:'Reads the Rules and ROAS indexes.',am:'med',amw:'An AM decides which levers to pull.',pri:'nice',note:'Depends on Rules; build after it.'},
+    {id:'catalog',p:'/catalog',n:'Catalogue',ben:'Browse every product from the client’s master data to the optimised feed, before and after, with ROAS per product.',cx:'high',cxw:'Large reads of master files and output feeds.',am:'low',amw:'Reads itself; most valuable in client demos.',pri:'rec',note:'The best visual proof of FeedSpark’s enrichment. Size the database for it before moving.'},
+    {id:'aivis',p:'/aivis',n:'AI visibility',ben:'Checks whether a brand and its products appear in ChatGPT, Google AI Mode and Perplexity answers.',cx:'med',cxw:'Several third-party API keys with per-call costs.',am:'med',amw:'Each client needs its question set.',pri:'rec',note:'Strategic for the AI-ready pitch. Needs a budget line for API usage.'},
+    {id:'leadership',p:'/leadership',n:'Leadership',ben:'Book health, commercial burn-down, retention radar and portfolio trends for management.',cx:'med',cxw:'Some figures live only in Ray’s browser; opens for one email today.',am:'low',amw:'A management view.',pri:'rec',note:'Move the browser-only figures into the store first and open it to a management role.'},
+    {id:'activity',p:'/activity',n:'Activity & Build Log',ben:'Who uses what, what shipped, and suggested next builds.',cx:'med',cxw:'The activity log needs its own table; the GitHub repository is hard-coded.',am:'low',amw:'Fully automatic.',pri:'nice',note:'Internal tooling, but the adoption figures for the March review come from here, so keep the log running.'},
+    {id:'migration',p:'/migration',n:'Migration roadmap',ben:'This tracker: the roadmap, module status, checklists and history, shared with management.',cx:'low',cxw:'One small store and its history log.',am:'low',amw:'A management tool.',pri:'high',note:'Needed for the whole programme; it moves last and stays reachable until every module has moved.'},
+    {id:'design',p:'/design',n:'Design guidelines',ben:'The FeedSpark brand, components and UX rules, and the one stylesheet every module loads.',cx:'low',cxw:'One page; the stylesheet is served from it.',am:'low',amw:'Read by anyone who builds.',pri:'high',note:'A prerequisite for AM-built modules in February: without it every AM module looks different.'}
+  ],
   mst:{legacy:'Not migrated yet',owned:'On FeedSpark’s account',migrating:'Migrating now',migrated:'Migrated'},
   // a module's checklist = the eight common steps, then its own lines (appended, so ticks on the common steps keep their place)
   modtpl:['Data families confirmed for this module','Reads and writes go through the storage adapter','Dual-write running','Parity at or above 99.9% for 14 days','Switched to FeedSpark storage','Scheduled jobs and pushes re-homed (if any)','Smoke-tested by an AM on the live page','Old store retired for this module']
@@ -769,7 +820,7 @@ var TX={
   view:function(rm,S){ var items=TX.eff('items',rm.items,S);
     return {items:items,months:TX.months(rm,S,items),decisions:TX.eff('decisions',rm.decisions,S),risks:TX.eff('risks',rm.risks,S),
       kpis:TX.eff('kpis',rm.kpis,S),sources:TX.eff('sources',rm.sources,S),rules:TX.eff('rules',rm.rules,S),
-      roles:TX.eff('roles',rm.roles,S),ams:TX.eff('ams',rm.ams,S),modules:rm.modules}; },
+      roles:TX.eff('roles',rm.roles,S),ams:TX.eff('ams',rm.ams,S),modules:rm.modules,assess:TX.eff('assess',rm.assess,S)}; },
   // one card's checklist: the seed lines, their recorded state, then lines people added
   checklist:function(owner,seed,S){ S=S||{}; var pre='chk:'+owner+'|', out=[], seen={};
     if(owner==='m./migration'){ var alt='chk:m./transformation|', S2={}; Object.keys(S).forEach(function(k){ S2[k]=S[k]; });
@@ -780,6 +831,12 @@ var TX={
       out.push({id:id,t:r.t||'',done:!!r.done,ord:r.ord!=null?+r.ord:1e6+(+r.at||0),by:r.by,at:r.at}); });
     return out.sort(function(a,b){ return a.ord-b.ord; });
   },
+  AX:{cx:{low:'Low',med:'Medium',high:'High'},am:{low:'Low',med:'Medium',high:'High'},pri:{high:'Highly recommended',rec:'Recommended',nice:'Nice to have'}},
+  // the order management reads the table in: priority first, then the cheapest move, then the least AM-dependent
+  assessOrder:function(rows){ var P={high:0,rec:1,nice:2}, C={low:0,med:1,high:2};
+    return rows.slice().sort(function(a,b){ return ((P[a.pri]!=null?P[a.pri]:3)-(P[b.pri]!=null?P[b.pri]:3))||((C[a.cx]!=null?C[a.cx]:3)-(C[b.cx]!=null?C[b.cx]:3))||((C[a.am]!=null?C[a.am]:3)-(C[b.am]!=null?C[b.am]:3))||String(a.n).localeCompare(String(b.n)); }); },
+  // a quick win = worth building (highly recommended or recommended) and cheap to move
+  quickWin:function(r){ return (r.pri==='high'||r.pri==='rec')&&r.cx==='low'; },
   modLines:function(rm,m){ return (rm.modtpl||[]).concat((m&&m.chk)||[]); },
   prog:function(lines){ var d=lines.filter(function(l){ return l.done; }).length; return {done:d,n:lines.length}; },
   statusOf:function(it,S){ var r=S&&S['i:'+it.id]; return (r&&r.st)||it.st0||'todo'; },
@@ -807,10 +864,10 @@ var TX={
   /* ---- HISTORY (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic or archive actions —
      delete, remove, edit — of everything"): the worker logs every key that moved (src/txhistory.js); these turn
      a logged key back into words, since the card titles live here in the seed */
-  COLL:{items:'card',months:'month',decisions:'decision',risks:'risk',kpis:'KPI',sources:'data source',rules:'rule',roles:'role',ams:'AM slot'},
+  COLL:{assess:'module assessment',items:'card',months:'month',decisions:'decision',risks:'risk',kpis:'KPI',sources:'data source',rules:'rule',roles:'role',ams:'AM slot'},
   FL:{t:'Title',label:'Title',n:'Name',name:'Name',d:'Description',m:'Month',ws:'Workstream',o:'Owner',own:'Owner',st:'Status',note:'Note',done:'Done',
     gate:'Gate',due:'Due',rec:'Recommendation',opt:'Options',choice:'Choice',rag:'RAG',target:'Target',base:'Baseline',why:'Why',theme:'Theme',freeze:'Freeze',
-    plain:'In one line',ic:'Icon',email:'Email',def:'Person',what:'What',on:'Shown',wave:'Wave',ord:'Position',cur:'Current'},
+    plain:'In one line',ic:'Icon',ben:'Benefit',cx:'Complexity',cxw:'Why (complexity)',am:'AM dependency',amw:'Why (AM)',pri:'Priority',p:'Route',email:'Email',def:'Person',what:'What',on:'Shown',wave:'Wave',ord:'Position',cur:'Current'},
   histName:function(o){ return o&&typeof o==='object'?(o.t||o.label||o.name||o.n||''):''; },
   histSubject:function(rm,S,k,e){ e=e||{}; S=S||{}; k=String(k);
     var nm=TX.histName, find=function(coll,id,idk){ idk=idk||'id'; return (rm[coll]||[]).filter(function(x){ return String(x[idk])===String(id); })[0]; };
@@ -1144,6 +1201,28 @@ var TX={
     $('model-zones').innerHTML=z.map(function(x){ return '<div class="zone '+x.cls+'"><h3>'+esc(x.name)+'</h3><div class="share">'+x.share+'<small>'+esc(x.unit)+'</small></div><div class="sm">'+esc(x.what)+'</div><ul>'+x.list.map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul></div>'; }).join('');
     $('rule-t').innerHTML='<tbody>'+V().rules.map(function(r,i){ return '<tr class="ed" data-rule="'+esc(r.id)+'"><td style="width:36px"><b>'+(i+1)+'</b></td><td>'+esc(r.t)+'</td></tr>'; }).join('')+'</tbody>';
   }
+  var ASF='';
+  try{ ASF=localStorage.getItem('fcc-tx-asf')||''; }catch(e){}
+  function assess(){ var rows=TX.assessOrder(V().assess), AX=TX.AX;
+    var n=function(f){ return rows.filter(f).length; };
+    var chips=[['','All',rows.length],['high',AX.pri.high,n(function(r){ return r.pri==='high'; })],['rec',AX.pri.rec,n(function(r){ return r.pri==='rec'; })],['nice',AX.pri.nice,n(function(r){ return r.pri==='nice'; })],['qw','Quick wins',n(TX.quickWin)]];
+    $('as-chips').innerHTML=chips.map(function(c){ return '<button type="button" class="chip'+(ASF===c[0]?' on':'')+'" data-asf="'+c[0]+'">'+esc(c[1])+' · '+c[2]+'</button>'; }).join('');
+    var show=rows.filter(function(r){ return !ASF||(ASF==='qw'?TX.quickWin(r):r.pri===ASF); });
+    $('as-sum').innerHTML='Sorted by priority, then the cheapest move, then the least AM-dependent. <b>Quick wins</b> are worth building and cheap to move.';
+    $('as-t').innerHTML='<thead><tr><th>Module</th><th>Benefit</th><th>Complexity to migrate</th><th>AM dependency</th><th>Priority</th><th>Notes for senior management</th></tr></thead><tbody>'
+      +show.map(function(r){ return '<tr class="ed" data-as="'+esc(r.id)+'"><td><b>'+esc(r.n)+'</b>'+(r.p?'<span class="why">'+esc(r.p)+'</span>':'')+(TX.quickWin(r)?'<span class="qw">Quick win</span>':'')+'</td>'
+        +'<td class="b">'+esc(r.ben)+'</td>'
+        +'<td><span class="lv '+esc(r.cx)+'">'+esc(AX.cx[r.cx]||r.cx||'—')+'</span>'+(r.cxw?'<span class="why">'+esc(r.cxw)+'</span>':'')+'</td>'
+        +'<td><span class="lv '+esc(r.am)+'">'+esc(AX.am[r.am]||r.am||'—')+'</span>'+(r.amw?'<span class="why">'+esc(r.amw)+'</span>':'')+'</td>'
+        +'<td><span class="pri '+esc(r.pri)+'">'+esc(AX.pri[r.pri]||r.pri||'—')+'</span></td>'
+        +'<td class="nt">'+esc(r.note)+'</td></tr>'; }).join('')
+      +(show.length?'':'<tr><td colspan="6" class="empty">Nothing in this filter.</td></tr>')+'</tbody>';
+  }
+  function editAssess(r){ var AX=TX.AX;
+    editSimple('assess',r,r?r.n:'module',[{k:'n',l:'Module',max:80},{k:'p',l:'Route (optional)',max:60},{k:'ben',l:'Benefit',type:'area'},
+      {k:'cx',l:'Complexity to migrate',type:'select',o:AX.cx},{k:'cxw',l:'Why that complexity',max:200},
+      {k:'am',l:'AM dependency',type:'select',o:AX.am},{k:'amw',l:'Would it run without the AMs?',max:200},
+      {k:'pri',l:'Priority',type:'select',o:AX.pri},{k:'note',l:'Notes for senior management',type:'area'}]); }
   function sources(){ var cls={'Live':'g','Partly':'a','Not connected':'r'};
     $('src-t').innerHTML='<thead><tr><th>Source</th><th>What it gives an AM module</th><th>Status</th><th>Note</th></tr></thead><tbody>'
       +V().sources.map(function(s){ return '<tr class="ed" data-src="'+esc(s.id)+'"><td><b>'+esc(s.n)+'</b></td><td class="sm">'+esc(s.what)+'</td><td><span class="rag '+(cls[s.st]||'c')+'">'+esc(s.st)+'</span></td><td class="sm">'+esc(s.note)+'</td></tr>'; }).join('')+'</tbody>';
@@ -1171,7 +1250,7 @@ var TX={
   function opts(){ $('opts').innerHTML=RM.options.map(function(o){ return '<div class="opt'+(o.rec?' rec':'')+'">'+(o.rec?'<div class="tag">Recommended</div>':'')+'<h3>'+o.id+' · '+esc(o.name)+'</h3><p>'+esc(o.p)+'</p><p><b>Effort</b> '+esc(o.eff)+' · <b>Risk</b> '+esc(o.risk)+'</p></div>'; }).join(''); }
   function body(){ if(VIEW==='board')board(); else list(); }
   function render(){ var sc=$('canvas'), sl=sc?sc.scrollLeft:0, stp=sc?sc.scrollTop:0;
-    kpis(); team(); chips(); body(); mods(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc(); if(HOPEN)renderHist();
+    kpis(); team(); chips(); body(); mods(); assess(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc(); if(HOPEN)renderHist();
     var nc=$('canvas'); if(nc){ nc.scrollLeft=sl; nc.scrollTop=stp; } }
 
   /* ---- events (delegated, so re-renders never lose a handler) ---- */
@@ -1186,13 +1265,15 @@ var TX={
     var ac=t.closest('[data-addcard]'); if(ac){ editItem(null,ac.getAttribute('data-addcard')); return true; }
     if(t.closest('#addcol')){ addMonth(); return true; }
     var ad=t.closest('[data-add]'); if(ad){ var w=ad.getAttribute('data-add');
-      ({roles:function(){ editRole(null); },decisions:function(){ editDec(null); },kpis:function(){ editKpi(null); },risks:function(){ editRisk(null); },sources:function(){ editSource(null); },rules:function(){ editRule(null); },ams:function(){ editAm(null); }})[w](); return true; }
+      ({roles:function(){ editRole(null); },decisions:function(){ editDec(null); },kpis:function(){ editKpi(null); },risks:function(){ editRisk(null); },sources:function(){ editSource(null); },assess:function(){ editAssess(null); },rules:function(){ editRule(null); },ams:function(){ editAm(null); }})[w](); return true; }
     var mh=t.closest('[data-month]'); if(mh){ editMonth(find(V().months,mh.getAttribute('data-month'),'k')); return true; }
     var it=t.closest('[data-it]'); if(it){ var x=find(V().items,it.getAttribute('data-it')); if(x)editItem(x); return true; }
     var md=t.closest('[data-mod]'); if(md){ editMod(find(RM.modules,md.getAttribute('data-mod'),'p')); return true; }
     var d=t.closest('[data-dec]'); if(d){ editDec(find(V().decisions,d.getAttribute('data-dec'))); return true; }
     var k=t.closest('[data-kpi]'); if(k){ editKpi(find(V().kpis,k.getAttribute('data-kpi'))); return true; }
     var r=t.closest('[data-risk]'); if(r){ editRisk(find(V().risks,r.getAttribute('data-risk'))); return true; }
+    var asr=t.closest('[data-as]'); if(asr){ editAssess(find(V().assess,asr.getAttribute('data-as'))); return true; }
+    var asf=t.closest('[data-asf]'); if(asf){ ASF=asf.getAttribute('data-asf'); try{ localStorage.setItem('fcc-tx-asf',ASF); }catch(e){} assess(); return true; }
     var sr=t.closest('[data-src]'); if(sr){ editSource(find(V().sources,sr.getAttribute('data-src'))); return true; }
     var ru=t.closest('[data-rule]'); if(ru){ editRule(find(V().rules,ru.getAttribute('data-rule'))); return true; }
     var am=t.closest('[data-am]'); if(am){ editAm(find(V().ams,am.getAttribute('data-am'))); return true; }
@@ -1295,6 +1376,10 @@ var TX={
     var done=function(){ toast('Status update copied — paste it into the management email'); };
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,function(){ window.prompt('Copy the update:',txt); });
     else window.prompt('Copy the update:',txt); };
+  $('as-csv').onclick=function(){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }, AX=TX.AX;
+    var L=[['Module','Route','Benefit','Complexity to migrate','Why','AM dependency','Without the AMs','Priority','Quick win','Notes for senior management'].join(',')];
+    TX.assessOrder(V().assess).forEach(function(r){ L.push([r.n,r.p,r.ben,AX.cx[r.cx]||r.cx,r.cxw,AX.am[r.am]||r.am,r.amw,AX.pri[r.pri]||r.pri,TX.quickWin(r)?'yes':'',r.note].map(q).join(',')); });
+    var blob=new Blob([L.join('\n')],{type:'text/csv'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='FCC_module_assessment_'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); };
   $('dl-csv').onclick=function(){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }, mo=MO();
     var rows=[['Month','Workstream','Card','Gate','Status','Owner','Checklist','Note','Updated by','Updated at']];
     V().items.forEach(function(it){ var r=S['i:'+it.id]||{}, p=TX.prog(TX.checklist('i.'+it.id,it.chk,S));

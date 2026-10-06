@@ -11583,6 +11583,18 @@
     {"name": "Stock levers worker: a record keeps who first wrote it down through every edit", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; }", "pr": 0},
     {"name": "Stock levers worker: a signin reads its brands' records", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "[pmer]:([^|]{1,80})", "pr": 0},
     {"name": "Stock levers: the stub carries two records kept by hand, one edited", "file": "tools/rules_stub.js", "pattern": "'r:Superdry|rec-20261001-rc-tst02'", "pr": 0},
-    {"name": "Stock even: the negative control forces the in-stock tiles uneven (the band it used to force is gone)", "file": "tools/check_stockeven.js", "pattern": "#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}", "pr": 0}
+    {"name": "Stock even: the negative control forces the in-stock tiles uneven (the band it used to force is gone)", "file": "tools/check_stockeven.js", "pattern": "#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}", "pr": 0},
+    {
+      "name": "migration: module assessment table (benefit, complexity, AM dependency, priority, notes)",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "id=\"as-t\"",
+      "pr": 0
+    },
+    {
+      "name": "migration: assessment seed + ordering",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "assessOrder:function(rows)",
+      "pr": 0
+    }
   ]
 }
