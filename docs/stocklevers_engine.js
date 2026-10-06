@@ -24,7 +24,7 @@
   else root.StockLevers = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
   // the levers a plan can hold — keys are the store's, labels the card's
   //   kind: pct (a %, inside the brand's band), units (a count per size, or off), onoff
   var LEVERS = [
@@ -52,7 +52,8 @@
   }
 
   // ---- THE STORE (KV stocklevers — one kvmerge map, a key per decision) ------------------------------------------------
-  //   'p:<Brand>'          the brand's plan: {levers:[{k, bau, sale, lo?, hi?, scope?, was?, note?}], note, by, at}
+  //   'p:<Brand>'          the brand's plan: {levers:[{k, bau, sale, lo?, hi?, scope?, was?, note?, rule?:{n, mk}}], note,
+  //                        by, at} — rule = the ONE FeedHero rule the lever is read from, by name, picked in market mk
   //   'm:<Brand>|<MKT>'    a market's own values where they differ: {lv:{<k>:{bau?, sale?}}, by, at}
   //   'e:<Brand>|<id>'     a sale period: {name, from, to (YYYY-MM-DD), mk:[markets], sale:{st, by, at}, bau:{st, by, at}, by, at}
   //                        st: planned → briefed → done
@@ -118,11 +119,79 @@
     var w = s0(scope).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     return !!w && (' ' + s0(name).toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ').indexOf(' ' + w + ' ') >= 0;
   }
-  function reading(lk, m, lever) {
+  // the rules that READ as a lever in a market (no connection made): range completion by its mechanism or its name, a units
+  // rule naming the lever's scope on a stock field, a hero-size rule — on the Google side
+  function cands(lk, m, lever) {
     var st = (m && m.stock) || [];
+    if (lk === 'rc') return st.filter(function (r) { return gch(r) && r.sk !== 'label' && (r.sk === 'range' || RC_NAME.test(s0(r.n))) && !HERO_NAME.test(s0(r.n)); });
+    if (lk === 'units') {
+      var scope = lever && lever.scope;
+      return st.filter(function (r) {
+        if (!gch(r) || !(r.sk === 'threshold' || r.sk === 'excl' || r.sk === 'avail')) return false;
+        var units = (r.cut || []).some(function (c) { return c.m === 'stock'; }) || /\b(units?|qty|quantit(y|ies)|stock)\b/i.test(s0(r.n));
+        return units && (!scope || wordIn(r.n, scope) || wordIn(r.b, scope));
+      });
+    }
+    if (lk === 'hero') return st.filter(function (r) { return gch(r) && (r.sk === 'hero' || HERO_NAME.test(s0(r.n))); });
+    return [];
+  }
+
+  // ---- ONE RULE PER LEVER (Ray, 6 Oct 2026: "the same rules (same rule name) will be applied/copied across all different
+  // markets. Each individual stock lever will be connected to one rule, and that rule could be spotted or aggregated across
+  // different markets. For example, with Superdry UK and range completion, there are currently two overlapping logics rule
+  // on the dashboard; there should be only one that makes sense at any time. Allow a connection between a lever and a rule
+  // in a specific market, and then that same rule can be spotted or monitored across the remaining markets").
+  // The plan's lever carries rule:{n, mk} — the rule's NAME, picked as market mk runs it. Every market's reading then comes
+  // from the rule of THAT NAME in it, alone; a market without it reads MISSING — never another rule's value in its place.
+  // A name is matched as FeedHero copies it: case, spacing and typographic quotes / dashes set aside, every word kept.
+  function nameKey(n) {
+    var s = s0(n); if (s.normalize) s = s.normalize('NFKC');
+    return s.toLowerCase().replace(/[‘’‚‛`]/g, "'").replace(/[“”„]/g, '"').replace(/[‐-―−]/g, '-').replace(/\s+/g, '');
+  }
+  function sameName(a, b) { return !!nameKey(a) && nameKey(a) === nameKey(b); }
+  function boundOf(lever) { return lever && lever.rule && s0(lever.rule.n).trim() ? lever.rule : null; }
+  function reading(lk, m, lever) {
+    var bd = boundOf(lever);
+    if (bd) return bound(lk, m, lever, bd);
+    var rd = loose(lk, m, lever);
+    // more than one rule reads as the lever and none is connected — the overlap the connection exists to end
+    if (rd.rules && rd.rules.length > 1) rd.overlap = rd.rules.length;
+    return rd;
+  }
+  // a connected lever: the one rule of that name, or missing (the rules that would otherwise read as it named beside it)
+  function bound(lk, m, lever, bd) {
+    var st = (m && m.stock) || [], cand = cands(lk, m, lever);
+    var hit = st.filter(function (r) { return sameName(r.n, bd.n); });
+    var others = cand.filter(function (r) { return !sameName(r.n, bd.n); }).map(pick);
+    if (!hit.length) {
+      return { state: lk === 'units' ? 'off' : 'none', val: null, how: '', rules: [], bound: bd.n, miss: true, others: others,
+        why: '“' + bd.n + '” is not in this market' + (others.length ? ' — it runs ' + (others.length === 1 ? '“' + others[0].n + '”' : others.length + ' other rules that read as this lever') + ' instead' : '') };
+    }
+    var r = hit[0], base = { rules: [pick(r)], bound: bd.n, others: others, idle: r.imp === 0 };
+    var put = function (o) { Object.keys(o).forEach(function (k) { base[k] = o[k]; }); return base; };
     if (lk === 'rc') {
-      var rr = st.filter(function (r) { return gch(r) && r.sk !== 'label' && (r.sk === 'range' || RC_NAME.test(s0(r.n))) && !HERO_NAME.test(s0(r.n)); });
       var held = m && m.av && m.av.held, line = held && held.state === 'ok' && held.line ? held.line : null;
+      var st0 = null; (r.cut || []).forEach(function (c) { if (c.m === 'rc' && !st0) st0 = { rule: r.n, op: c.op, v: c.v }; });
+      if (!st0) { var np = namePct(r.n); if (np != null && np > 0 && np < 100) st0 = { rule: r.n, op: '', v: np }; }
+      if (line) return put({ state: 'on', val: line.x, lo: line.lo, hi: line.hi, how: 'line', stated: st0 ? [st0] : [], why: 'The line measured from the products the Google feed is not sent — the connected rule runs here' });
+      if (st0) return put({ state: 'on', val: st0.v, how: 'name', stated: [st0], why: 'The cut-off the connected rule’s name states — no line could be measured' });
+      return put({ state: 'on', val: null, how: 'rules', stated: [], why: 'The connected rule runs; its cut-off is not in its name and no line could be measured' });
+    }
+    if (lk === 'units') {
+      var uc = null; (r.cut || []).forEach(function (c) { if (c.m === 'stock' && uc == null) uc = c.v; });
+      return put({ state: 'on', val: uc, how: uc != null ? 'name' : 'rules', why: uc != null ? 'The cut-off the connected rule’s name states' : 'The connected rule runs; its cut-off is not in its name' });
+    }
+    if (lk === 'hero') {
+      if (PAUSE.test(s0(r.n))) return put({ state: 'paused', val: null, how: 'rules', pause: [pick(r)], why: 'The connected rule pauses hero sizes' });
+      return put({ state: 'on', val: null, how: 'rules', why: 'Hero sizes run on the connected rule' });
+    }
+    return put({ state: 'none', val: null, how: '', why: '' });
+  }
+  // no rule connected: every rule that reads as the lever, as before
+  function loose(lk, m, lever) {
+    var rs = cands(lk, m, lever);
+    if (lk === 'rc') {
+      var rr = rs, held = m && m.av && m.av.held, line = held && held.state === 'ok' && held.line ? held.line : null;
       var stated = [];
       rr.forEach(function (r) { (r.cut || []).forEach(function (c) { if (c.m === 'rc') stated.push({ rule: r.n, op: c.op, v: c.v }); }); });
       if (!stated.length) rr.forEach(function (r) { var v = namePct(r.n); if (v != null && v > 0 && v < 100) stated.push({ rule: r.n, op: '', v: v }); });
@@ -132,18 +201,13 @@
       return { state: 'on', val: null, how: 'rules', rules: rr.map(pick), stated: [], why: 'Range-completion rules run; their cut-off is not in a name and no line could be measured' };
     }
     if (lk === 'units') {
-      var scope = lever && lever.scope;
-      var ur = st.filter(function (r) {
-        if (!gch(r) || !(r.sk === 'threshold' || r.sk === 'excl' || r.sk === 'avail')) return false;
-        var units = (r.cut || []).some(function (c) { return c.m === 'stock'; }) || /\b(units?|qty|quantit(y|ies)|stock)\b/i.test(s0(r.n));
-        return units && (!scope || wordIn(r.n, scope) || wordIn(r.b, scope));
-      });
+      var scope = lever && lever.scope, ur = rs;
       if (!ur.length) return { state: 'off', val: null, how: '', rules: [], why: scope ? 'No active rule names ' + scope + ' on a stock field' : 'No units-per-size rule runs' };
       var cut = null; ur.forEach(function (r) { (r.cut || []).forEach(function (c) { if (c.m === 'stock' && cut == null) cut = c.v; }); });
       return { state: 'on', val: cut, how: cut != null ? 'name' : 'rules', rules: ur.map(pick), why: cut != null ? 'The cut-off a rule’s name states' : 'A rule runs; its cut-off is not in its name' };
     }
     if (lk === 'hero') {
-      var hr = st.filter(function (r) { return gch(r) && (r.sk === 'hero' || HERO_NAME.test(s0(r.n))); });
+      var hr = rs;
       if (!hr.length) return { state: 'none', val: null, how: '', rules: [], why: 'No hero-size rule runs in this market' };
       var pause = hr.filter(function (r) { return PAUSE.test(s0(r.n)); });
       var setr = hr.filter(function (r) { return pause.indexOf(r) < 0 && (/hero_size/i.test(s0(r.d)) || /\bset\b.*hero|hero size values/i.test(s0(r.n))); });
@@ -154,22 +218,33 @@
     }
     return { state: 'none', val: null, how: '', rules: [], why: '' };
   }
+  // the rules a lever can be connected to, as ONE market runs them: those that read as the lever first, the name the most
+  // markets carry first among them (the rule that was copied), then FeedHero's run order; every other stock rule after them
+  // when asked. Each names the markets carrying the same name.
+  function ruleChoices(lk, markets, mk, lever, all) {
+    var m = (markets || []).filter(function (x) { return x.market === mk; })[0]; if (!m) return [];
+    var cand = cands(lk, m, lever), pool = all ? (m.stock || []).slice() : cand.slice(), seen = {};
+    return pool.filter(function (r) { var k = nameKey(r.n); if (!k || seen[k]) return false; seen[k] = 1; return true; }).map(function (r) {
+      var carry = (markets || []).filter(function (x) { return ((x && x.stock) || []).some(function (y) { return sameName(y.n, r.n); }); }).map(function (x) { return x.market; });
+      return { n: r.n, i: r.i, t: r.t, d: r.d, imp: r.imp, of: r.of, ch: r.ch || '', sk: r.sk || '', fits: cand.indexOf(r) >= 0, carry: carry };
+    }).sort(function (a, b) { return (b.fits ? 1 : 0) - (a.fits ? 1 : 0) || b.carry.length - a.carry.length || (a.i || 0) - (b.i || 0); });
+  }
   // does the market run its target? null = it does (or there is no target to hold it to)
   function drift(lk, rd, tgt) {
     if (!isSet(tgt) || !rd) return null;
     if (lk === 'rc') {
       if (tgt === 'off') return rd.state === 'on' ? { why: 'Range-completion rules still run' } : null;
-      if (rd.state === 'none') return { why: 'No range-completion rule runs here' };
+      if (rd.state === 'none') return { why: rd.miss ? 'The connected rule “' + rd.bound + '” is not in this market' : 'No range-completion rule runs here' };
       if (rd.val == null) return null;   // a line nobody could measure is not a drift
       return Math.abs(rd.val - tgt) > DRIFT_PP ? { why: (rd.how === 'line' ? 'Measured ≈' : 'A rule name states ') + rd.val + '% — the target is ' + tgt + '%' } : null;
     }
     if (lk === 'units') {
       if (tgt === 'off') return rd.state === 'on' ? { why: 'A units-per-size rule still runs' + (rd.val != null ? ' (' + rd.val + ' units)' : '') } : null;
-      if (rd.state !== 'on') return { why: 'No units-per-size rule runs — the target is ' + fmtVal(lk, tgt) };
+      if (rd.state !== 'on') return { why: (rd.miss ? 'The connected rule “' + rd.bound + '” is not in this market' : 'No units-per-size rule runs') + ' — the target is ' + fmtVal(lk, tgt) };
       return rd.val != null && rd.val !== tgt ? { why: 'A rule name states ' + rd.val + ' units — the target is ' + tgt } : null;
     }
     if (lk === 'hero') {
-      if (tgt === 'on' && rd.state !== 'on') return { why: rd.state === 'paused' ? rd.why : rd.state === 'part' ? rd.why : 'No hero-size rule runs here' };
+      if (tgt === 'on' && rd.state !== 'on') return { why: rd.miss ? 'The connected rule “' + rd.bound + '” is not in this market' : rd.state === 'paused' ? rd.why : rd.state === 'part' ? rd.why : 'No hero-size rule runs here' };
       if (tgt === 'off' && (rd.state === 'on' || rd.state === 'part')) return { why: 'Hero sizes are still set here' };
       return null;
     }
@@ -215,11 +290,14 @@
         if (!isSet(b)) { (unset[l.k] = unset[l.k] || []).push(mk); return; }
         if (same(a, b)) return;
         var rd = m ? reading(l.k, m, l) : null;
-        if (rd && rd.state === 'none' && l.k !== 'units') return;   // a market that runs no rule for it has nothing to change
+        // a market that runs no rule for it has nothing to change — unless it is MISSING the lever's connected rule, which
+        // is the change to make first (copy the rule there), so it stays on the list, flagged
+        if (rd && rd.state === 'none' && !rd.miss && l.k !== 'units') return;
         var key = l.k + '|' + String(a) + '|' + String(b);
-        if (!groups[key]) { groups[key] = { k: l.k, label: LEVER[l.k].label + (l.scope ? ' · ' + l.scope : ''), from: a, to: b, mk: [], rules: {} }; order.push(key); }
+        if (!groups[key]) { groups[key] = { k: l.k, label: LEVER[l.k].label + (l.scope ? ' · ' + l.scope : ''), from: a, to: b, mk: [], rules: {}, rule: boundOf(l) ? boundOf(l).n : '', miss: [] }; order.push(key); }
         groups[key].mk.push(mk);
         groups[key].rules[mk] = rd ? (l.k === 'hero' && rd.pause && dir === 'bau' ? rd.pause : rd.rules).map(function (r) { return r.n; }) : [];
+        if (rd && rd.miss) groups[key].miss.push(mk);
       });
     });
     var out = order.map(function (k) { return groups[k]; });
@@ -236,7 +314,8 @@
       var names = {};
       c.mk.forEach(function (mk) { (c.rules[mk] || []).forEach(function (n) { (names[n] = names[n] || []).push(mk); }); });
       Object.keys(names).forEach(function (n) { L.push('    in FeedHero: “' + n + '”' + (names[n].length < c.mk.length ? ' (' + names[n].join(', ') + ')' : '')); });
-      if (!Object.keys(names).length) L.push('    in FeedHero: no rule runs it yet — set it up');
+      if (c.miss && c.miss.length) L.push('    ⚠ the connected rule “' + c.rule + '” is not in ' + c.miss.join(', ') + ' — copy it there first');
+      else if (!Object.keys(names).length) L.push('    in FeedHero: no rule runs it yet — set it up');
     });
     sw.blocked.forEach(function (b) { L.push('⚠ ' + b.label + ': the ' + (sw.dir === 'sale' ? 'SALE' : 'BAU') + ' value is not set — ' + b.mk.join(', ')); });
     if (!sw.changes.length && !sw.blocked.length) L.push('Nothing to change — every lever reads the same in both modes.');
@@ -271,7 +350,20 @@
       if (levers.some(function (l) { return r.cells[l.k].drift; })) sum.drift++;
     });
     levers.forEach(function (l) { if (!isSet(l.sale)) sum.unset.push(l.k); });
-    return { plan: plan, levers: levers, rows: rows, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), records: recordsOf(store, brand), sum: sum, today: today };
+    // each connected rule across the brand's markets: found · missing · not read yet; and, for a lever with none, where more
+    // than one rule reads as it
+    var spread = {};
+    levers.forEach(function (l) {
+      var o = { n: boundOf(l) ? boundOf(l).n : '', mk: boundOf(l) ? s0(boundOf(l).mk) : '', found: [], missing: [], unread: [], overlap: [] };
+      rows.forEach(function (r) {
+        var rd = r.cells[l.k] && r.cells[l.k].rd;
+        if (!rd) { o.unread.push(r.market); return; }
+        if (o.n) (rd.miss ? o.missing : o.found).push(r.market);
+        else if (rd.overlap) o.overlap.push(r.market);
+      });
+      spread[l.k] = o;
+    });
+    return { plan: plan, levers: levers, rows: rows, spread: spread, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), records: recordsOf(store, brand), sum: sum, today: today };
   }
 
   // ---- A SALE VALUE TO CONSIDER — never set without a click -----------------------------------------------------------
@@ -323,6 +415,7 @@
   // each lever: the plan, then the markets grouped by what they run (named, never a count alone)
   function readWord(lk, rd) {
     if (!rd) return 'not read yet';
+    if (rd.miss) return lk === 'units' ? 'the connected rule is not here (N/A)' : 'the connected rule is not here';
     if (lk === 'rc') {
       if (rd.state === 'none') return 'no range-completion rule';
       if (rd.val == null) return 'runs, no stated line';
@@ -342,7 +435,8 @@
     M.levers.forEach(function (l) {
       var lab = LEVER[l.k].label + (l.scope ? ' · ' + l.scope : '');
       var plan = 'BAU ' + fmtVal(l.k, l.bau) + ' · SALE ' + fmtVal(l.k, l.sale) + (l.k === 'rc' && num(l.lo) != null && num(l.hi) != null ? ' (band ' + l.lo + '–' + l.hi + '%)' : '') + (l.was ? ' (was ' + l.was + ')' : '');
-      L.push('• ' + lab + ': ' + plan);
+      var sp = M.spread && M.spread[l.k];
+      L.push('• ' + lab + ': ' + plan + (sp && sp.n ? ' — rule “' + sp.n + '”, in ' + sp.found.length + ' of ' + (sp.found.length + sp.missing.length) + ' markets' + (sp.missing.length ? ' (missing: ' + list(sp.missing, 8) + ')' : '') : ' — no rule connected'));
       groups(M, l.k).forEach(function (x) { L.push('    ' + x.w + ' — ' + x.mk.join(', ')); });
     });
     var off = M.rows.filter(function (r) { return M.levers.some(function (l) { return r.cells[l.k].drift; }); });
@@ -363,5 +457,6 @@
     planOf: planOf, marketOf: marketOf, periodsOf: periodsOf, valueOf: valueOf, reading: reading, drift: drift, namePct: namePct,
     ymd: ymd, days: days, modeOf: modeOf, nextStep: nextStep, switchList: switchList, briefLines: briefLines, model: model,
     suggest: suggest, adopt: adopt, readWord: readWord, groups: groups, summaryText: summaryText,
-    recordsOf: recordsOf, lastRecord: lastRecord, switchRecords: switchRecords, recordWord: recordWord };
+    recordsOf: recordsOf, lastRecord: lastRecord, switchRecords: switchRecords, recordWord: recordWord,
+    cands: cands, nameKey: nameKey, sameName: sameName, boundOf: boundOf, ruleChoices: ruleChoices };
 });

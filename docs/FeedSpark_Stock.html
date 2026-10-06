@@ -471,6 +471,31 @@ window.addEventListener('load',restore);
   #lev-t .mlt{font-size:12.5px;font-weight:900;color:var(--ink)}
   #lev-t .mle .acts{margin:0}
   #lev-card .legend{margin:10px 0 14px}
+  /* ONE RULE PER LEVER (Ray, 6 Oct 2026): the rule line on a plan tile, the picker under the tiles, the head's rule line */
+  #lev-card .lvr{display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--line);padding-top:8px;font-size:12px;min-width:0}
+  #lev-card .lvr-h{display:flex;align-items:center;gap:6px;min-height:22px}
+  #lev-card .lvr .h{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  #lev-card .lvr .rn{font-weight:700;color:var(--info);min-width:0;overflow-wrap:anywhere}
+  #lev-card .lvr .rn b{font-weight:900}
+  #lev-card .lvr .ra{margin-left:auto;display:inline-flex;gap:4px}
+  #lev-card .lvr .ra .hb-dl{margin:0}
+  #lev-card .lvc.ov{color:var(--orange-ink)}
+  #lev-card .lev-plan>.lv-pick{grid-column:1/-1}
+  #lev-card .lv-pick{border:1px solid rgba(37,99,235,.45);border-radius:12px;padding:12px 14px;background:var(--paper);display:flex;flex-direction:column;gap:10px;min-width:0}
+  #lev-card .pk-bar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  #lev-card .pk-bar .vb{min-width:220px}
+  #lev-card .pk-list{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto}
+  #lev-card .pk{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;min-width:0}
+  #lev-card .pk.on{border-color:var(--info);background:rgba(37,99,235,.06)}
+  #lev-card .pk .pn{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+  #lev-card .pk .pn .sub2{display:block;font-size:11.5px;font-weight:700;color:var(--muted)}
+  #lev-card .pk .pc{font-size:12px;font-weight:900;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+  #lev-t th .thr{display:block;margin-top:2px;font-size:10.5px;font-weight:800;letter-spacing:0;text-transform:none;color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #lev-t th .thr.none{color:var(--muted);font-weight:700}
+  #lev-t th .thr.miss{color:var(--risk)}
+  #lev-t td.lc.ov,.legend i.lvd{outline:1.5px dashed var(--muted);outline-offset:-5px}
+  .legend i.lvd{outline-offset:-1px;background:transparent}
+  #lev-t td.lc.miss b{color:var(--risk);font-weight:900}
   /* THE RECORD — kept by hand (Ray, 6 Oct 2026): a ledger under the sale periods, the form's six boxes 3 × 2 */
   #lev-card .lev-rec{margin:0 0 14px}
   #lev-card .perh h4 .lvc{margin-left:6px;font-weight:700}
@@ -492,6 +517,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] #lev-t td.lc.on,[data-theme=dark] #lev-card .legend i.lvn{background:rgba(76,130,224,.22)}
   [data-theme=dark] #lev-t td.lc.off,[data-theme=dark] #lev-card .legend i.lvo{background:rgba(240,164,78,.24)}
   [data-theme=dark] #lev-t .mlv{background:var(--paper)}
+  [data-theme=dark] #lev-card .pk.on{background:rgba(76,130,224,.14)}
   @media(max-width:900px){#lev-card .lev-plan{grid-template-columns:minmax(0,1fr)}#lev-card .vals3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#lev-card .vals3 .vb:first-child{grid-column:1/-1}}
   @media(max-width:760px){#lev-card .stp .lb{min-width:0;flex-basis:100%}}
 </style>
@@ -563,7 +589,7 @@ window.addEventListener('load',restore);
     <div class="sv-sum" id="lev-sum"></div>
     <div class="toolbar" id="lev-bar" hidden><div class="chips" id="lev-f"></div><button class="btn" id="lev-adopt" type="button" hidden title="Make what these markets run today their own BAU — the decision that each one’s mix is the plan">Keep markets as they run</button></div>
     <div class="tw" id="lev-tw" hidden><table class="t" id="lev-t"><thead></thead><tbody></tbody></table></div>
-    <div class="legend" id="lev-legend" hidden><span><i class="lvn"></i>A rule runs it, on plan</span><span><i class="lvo"></i>Off plan</span><span>— · N/A: no rule runs it</span><span>≈ measured from the products</span><span><span class="tg">own</span> the market’s own values</span></div>
+    <div class="legend" id="lev-legend" hidden><span><i class="lvn"></i>A rule runs it, on plan</span><span><i class="lvo"></i>Off plan</span><span>— · N/A: no rule runs it</span><span>≈ measured from the products</span><span><i class="lvd"></i>dashed: more than one rule reads as it — connect one</span><span><b>missing</b>: the lever’s connected rule is not in that market</span><span><span class="tg">own</span> the market’s own values</span></div>
     <div class="lev-plan" id="lev-plan"><div class="empty">Loading…</div></div>
     <div class="lev-per" id="lev-per"></div>
     <div class="lev-rec" id="lev-rec"></div>
@@ -834,7 +860,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // plan, a market's own values, the sale periods — a key per decision). What each market RUNS is read off the rules this
   // page already loaded (S.d) and the range-completion line the master-stock agent measured. The FCC changes no FeedHero
   // rule: it says which to change, where, and keeps who switched what.
-  var LV = { store: {}, brands: [], base: 0, pend: {}, after: [], t: null, busy: false, err: '', warn: '', ed: '', med: '', form: false, f: '', M: null, rf: null, recAll: false };
+  var LV = { store: {}, brands: [], base: 0, pend: {}, after: [], t: null, busy: false, err: '', warn: '', ed: '', med: '', form: false, f: '', M: null, rf: null, recAll: false, rk: '', rkm: '', rka: false, rksel: null };
   var LVREC_N = 8;   // the record lists its newest eight; "Show all" opens the rest
   var SL = null;
   function slLoad() {
@@ -979,11 +1005,12 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var warnBand = l.k === 'rc' && band ? ['bau', 'sale'].filter(function (m2) { return typeof l[m2] === 'number' && (l[m2] < l.lo || l[m2] > l.hi); }) : [];
       return '<div class="lv" data-lk="' + l.k + '">' + head
         + '<div class="vals"><div class="vb"><span class="h">BAU</span>' + out('bau') + '</div><div class="vb sale"><span class="h">SALE</span>' + out('sale') + '</div></div>'
+        + lvRuleLine(M, l)
         + (warnBand.length ? '<p class="lvc wn">' + warnBand.map(function (m2) { return m2.toUpperCase(); }).join(' and ') + ' outside the band</p>' : '')
         + (sg ? '<p class="sug">To consider for SALE: <b>' + esc(SL.fmtVal(l.k, sg.v)) + '</b> — ' + esc(sg.why) + ' <button class="hb-dl" type="button" data-act="lv-sug" data-lk="' + l.k + '" data-v="' + esc(sg.v) + '">Use it</button></p>' : '')
         + (l.note ? '<p class="lvc">' + esc(l.note) + '</p>' : '')
         + '<div class="acts"><button class="btn" type="button" data-act="lv-edit" data-lk="' + l.k + '">✎ Edit</button></div></div>';
-    }).join('');
+    }).join('') + (LV.rk ? lvRulePicker(M, b, mk) : '');
     // ---- the sale periods: when, where, and the switch each way
     var form = LV.form ? lvForm(lvRoster(b)) : '';
     per.innerHTML = '<div class="perh"><h4>Sale periods</h4><button class="btn" type="button" data-act="lv-new"' + (LV.form ? ' hidden' : '') + '>＋ Plan a sale period</button></div>' + form
@@ -1002,7 +1029,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     $('#lev-adopt').textContent = adoptN === 1 ? 'Keep 1 market as it runs' : 'Keep ' + adoptN + ' markets as they run';
     tb.querySelector('thead').innerHTML = '<tr><th>Market</th><th class="md">Mode</th>' + levs.map(function (l) {
       return '<th class="num" title="' + esc(SL.LEVER[l.k].q) + '">' + (l.k === 'hero' ? heroIcon() : '') + esc(SL.LEVER[l.k].label) + (l.scope ? ' · ' + esc(l.scope) : '')
-        + '<span class="thp">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span></th>';
+        + '<span class="thp">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span>' + lvRuleHead(M, l) + '</th>';
     }).join('') + '<th class="num lo">Off plan</th><th class="ed"></th></tr>';
     var items = {}; mk.forEach(function (m) { items[m.market] = m.items; });
     var span = levs.length + 4;
@@ -1048,7 +1075,8 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         var links = names[n].map(function (m) { var x = byMk[m]; return x ? '<a class="fh" href="' + esc(fhUrl(x.cmpid, n)) + '" target="_blank" rel="noopener" title="Open “' + esc(n) + '” in ' + esc(m) + ' on FeedHero">' + esc(m) + ' ↗</a>' : esc(m); }).join(' ');
         return '<div class="rl">“' + esc(n) + '” ' + links + '</div>';
       }).join('');
-      return '<li><b>' + esc(c.label) + '</b> ' + esc(SL.fmtVal(c.k, c.from)) + ' → ' + esc(SL.fmtVal(c.k, c.to)) + ' <span class="lvc">' + esc(c.mk.join(', ')) + '</span>' + (rl || '<div class="rl lvc">No rule runs it yet — it needs setting up in FeedHero.</div>') + '</li>';
+      var ms = c.miss && c.miss.length ? '<div class="rl wn">⚠ The connected rule “' + esc(c.rule) + '” is not in ' + esc(c.miss.join(', ')) + ' — copy it there first.</div>' : '';
+      return '<li><b>' + esc(c.label) + '</b> ' + esc(SL.fmtVal(c.k, c.from)) + ' → ' + esc(SL.fmtVal(c.k, c.to)) + ' <span class="lvc">' + esc(c.mk.join(', ')) + '</span>' + rl + ms + (rl || ms ? '' : '<div class="rl lvc">No rule runs it yet — it needs setting up in FeedHero.</div>') + '</li>';
     }).join('') + sw.blocked.map(function (x) { return '<li class="wn"><b>' + esc(x.label) + '</b> — the value for this mode is not set (' + esc(x.mk.join(', ')) + ')</li>'; }).join('') + '</ul>';
   }
   function lvPeriod(q, b, mk) {
@@ -1059,25 +1087,81 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + lvStep(q, 'sale', b, mk) + lvStep(q, 'bau', b, mk)
       + '<details class="sw"><summary>What to change in FeedHero</summary>' + lvSwitchHtml(swS, b, mk) + '</details></div>';
   }
+  // ---- ONE RULE PER LEVER (Ray, 6 Oct 2026: "Each individual stock lever will be connected to one rule, and that rule could
+  // be spotted or aggregated across different markets … there should be only one that makes sense at any time"): the rule is
+  // picked as one market runs it and read BY NAME in every market (engine: SL.reading → bound / loose, SL.ruleChoices)
+  function lvList(a, n) { return a.length <= n ? a.join(', ') : a.slice(0, n).join(', ') + ' + ' + (a.length - n); }
+  function lvRuleHead(M, l) {
+    var sp = (M.spread || {})[l.k] || { found: [], missing: [] }, bd = SL.boundOf(l);
+    if (!bd) return '<span class="thr none" title="No rule connected — every rule that reads as this lever is read">no rule connected</span>';
+    return '<span class="thr' + (sp.missing.length ? ' miss' : '') + '" title="' + esc('Read from “' + bd.n + '” in every market — found in ' + sp.found.length + ', missing in ' + sp.missing.length + (sp.missing.length ? ' (' + sp.missing.join(', ') + ')' : '')) + '">⛓ ' + esc(bd.n) + ' · ' + sp.found.length + '/' + (sp.found.length + sp.missing.length) + '</span>';
+  }
+  // the lever's rule on its plan tile: named, found in N of the markets read, missing where — or not connected yet, with
+  // where more than one rule reads as it
+  function lvRuleLine(M, l) {
+    var sp = (M.spread || {})[l.k] || { found: [], missing: [], overlap: [] }, bd = SL.boundOf(l);
+    if (bd) {
+      var tot = sp.found.length + sp.missing.length;
+      return '<div class="lvr"><div class="lvr-h"><span class="h">Rule</span><span class="ra"><button class="hb-dl" type="button" data-act="lv-rcon" data-lk="' + l.k + '">Change</button><button class="hb-dl" type="button" data-act="lv-rdis" data-lk="' + l.k + '" title="Disconnect — the lever reads every rule that looks like it again">✕</button></span></div>'
+        + '<div class="rn" title="' + esc('Picked as ' + (bd.mk || 'one market') + ' runs it — read by this name in every market') + '">⛓ <b>' + esc(bd.n) + '</b></div>'
+        + '<div class="lvc' + (sp.missing.length ? ' wn' : '') + '">in ' + sp.found.length + ' of ' + tot + ' market' + (tot === 1 ? '' : 's') + (sp.missing.length ? ' · missing in ' + esc(lvList(sp.missing, 4)) : '') + '</div></div>';
+    }
+    return '<div class="lvr none"><div class="lvr-h"><span class="h">Rule</span><span class="ra"><button class="hb-dl" type="button" data-act="lv-rcon" data-lk="' + l.k + '">⛓ Connect a rule</button></span></div>'
+      + '<div class="lvc' + (sp.overlap.length ? ' ov' : '') + '">' + (sp.overlap.length ? 'not connected — more than one rule reads as it in ' + esc(lvList(sp.overlap, 4)) : 'not connected') + '</div></div>';
+  }
+  // the picker: a market, the rules it runs that read as the lever (the name the most markets carry first), every stock
+  // rule on request; each names how many markets carry the same name
+  function lvRulePicker(M, b, mk) {
+    var l = M.levers.filter(function (x) { return x.k === LV.rk; })[0]; if (!l) return '';
+    var read = M.rows.filter(function (r) { return r.read; }).map(function (r) { return r.market; });
+    if (!read.length) return '<div class="lv-pick" id="lev-pick"><p class="note">No market read yet — a rule is picked as a market runs it.</p><div class="acts"><button class="btn" type="button" data-act="lv-rpx">Close</button></div></div>';
+    var bd = SL.boundOf(l), m0 = read.indexOf(LV.rkm) >= 0 ? LV.rkm : bd && read.indexOf(bd.mk) >= 0 ? bd.mk : read[0];
+    LV.rkm = m0;
+    var ch = SL.ruleChoices(l.k, mk, m0, l, LV.rka);
+    var sel = LV.rksel != null ? LV.rksel : bd ? bd.n : ch.length ? ch[0].n : '';
+    var label = SL.LEVER[l.k].label + (l.scope ? ' · ' + l.scope : '');
+    return '<div class="lv-pick" id="lev-pick" data-lk="' + l.k + '"><div class="lvh"><h4>⛓ ' + esc(label) + ' — connect one rule</h4></div>'
+      + '<p class="lvc">Pick it as one market runs it; the same rule name is then read in every other market.</p>'
+      + '<div class="pk-bar"><label class="vb"><span class="h">Market</span><select class="fld" id="lvk-mk" aria-label="The market to pick the rule in">' + read.map(function (x) { return '<option value="' + esc(x) + '"' + (x === m0 ? ' selected' : '') + '>' + esc(b + ' ' + x) + '</option>'; }).join('') + '</select></label>'
+      + '<label class="tog"><input type="checkbox" id="lvk-all"' + (LV.rka ? ' checked' : '') + '> Every stock rule in ' + esc(m0) + '</label></div>'
+      + (ch.length ? '<div class="pk-list" role="radiogroup" aria-label="Rules in ' + esc(m0) + '">' + ch.map(function (c, i) {
+          return '<label class="pk' + (c.n === sel ? ' on' : '') + '"><input type="radio" name="lvk-r" value="' + esc(c.n) + '"' + (c.n === sel ? ' checked' : '') + '>'
+            + '<span class="pn"><b>' + esc(c.n) + '</b>' + (i === 0 && c.fits && ch.length > 1 && c.carry.length > ch[1].carry.length ? ' <span class="tg bl">in the most markets</span>' : '') + (!c.fits ? ' <span class="tg dash">does not read as this lever</span>' : '')
+            + '<span class="sub2">#' + ((c.i || 0) + 1) + ' in run order · writes ' + esc(c.t || '—') + ' · ' + n0(c.imp) + ' of ' + n0(c.of) + ' products</span></span>'
+            + '<span class="pc" title="' + esc(c.carry.join(', ')) + '">in ' + c.carry.length + ' of ' + read.length + '</span></label>';
+        }).join('') + '</div>'
+        : '<p class="note">No rule in ' + esc(b + ' ' + m0) + ' reads as this lever — tick “Every stock rule” to pick from all of them.</p>')
+      + '<div class="acts"><button class="btn" type="button" data-act="lv-rpick"' + (ch.length ? '' : ' disabled') + '>Connect</button><button class="btn" type="button" data-act="lv-rpx">Cancel</button></div></div>';
+  }
+  // a lever connected (or, with null, disconnected): the plan saved with its rule — everything else as it was
+  function lvSetRule(lk, rule) {
+    var b = S.brand, p = SL.planOf(LV.store, b); if (!p) return;
+    LV.rk = ''; LV.rksel = null;
+    var d = {}; d['p:' + b] = { levers: p.levers.map(function (l) { if (l.k !== lk) return l; var o = Object.assign({}, l); if (rule) o.rule = rule; else delete o.rule; return o; }), note: p.note || '' };
+    lvPut(d);
+  }
   // a value as short as it can be said — the plan line in a lever's head
   function lvShort(lk, v) { if (!SL.isSet(v)) return 'not set'; if (v === 'off') return lk === 'units' ? 'N/A' : 'off'; if (v === 'on') return 'on'; return SL.LEVER[lk].kind === 'pct' ? v + '%' : '> ' + v; }
   // one cell: what the market runs, in a word or a number — on (a rule runs it, on plan) · off (off plan) · none (no rule
   // runs it). Never a sentence: the reading in full, the target it is held to and the rules behind it are its tooltip.
   function lvCell(lk, c, r, b) {
     var rd = c.rd, v, st;
-    if (lk === 'rc') { v = rd.state === 'none' ? '—' : rd.val == null ? 'runs' : (rd.how === 'line' ? '≈' : '') + rd.val + '%'; st = rd.state === 'none' ? 'none' : 'on'; }
+    if (lk === 'rc') { v = rd.miss ? 'missing' : rd.state === 'none' ? '—' : rd.val == null ? 'runs' : (rd.how === 'line' ? '≈' : '') + rd.val + '%'; st = rd.state === 'none' ? 'none' : 'on'; }
     else if (lk === 'units') { v = rd.state === 'on' ? (rd.val != null ? '> ' + rd.val : 'runs') : 'N/A'; st = rd.state === 'on' ? 'on' : 'none'; }
-    else { v = rd.state === 'on' ? 'on' : rd.state === 'part' ? 'kept live' : rd.state === 'paused' ? 'paused' : '—'; st = rd.state === 'none' ? 'none' : 'on'; }
+    else { v = rd.miss ? 'missing' : rd.state === 'on' ? 'on' : rd.state === 'part' ? 'kept live' : rd.state === 'paused' ? 'paused' : '—'; st = rd.state === 'none' ? 'none' : 'on'; }
     if (c.drift) st = 'off';
     var md = r.mode.toUpperCase();
     var tip = '<b>' + esc(b + ' ' + r.market) + ' · ' + esc(SL.LEVER[lk].label) + '</b><br>Runs: ' + esc(SL.readWord(lk, rd))
       + (rd.why ? '<br><span class="m">' + esc(rd.why) + '</span>' : '')
       + '<br>' + (SL.isSet(c.tgt) ? 'Held to ' + esc(SL.fmtVal(lk, c.tgt)) + ' — ' + (c.tgtOwn ? 'its own ' : 'the brand’s ') + md + ' value' : 'No ' + md + ' value set to hold it to')
       + (c.drift ? '<br><b>Off plan</b> — ' + esc(c.drift.why) : '')
-      + (rd.rules && rd.rules.length ? '<br><br>' + rd.rules.slice(0, 5).map(function (x) { return '#' + (x.i + 1) + ' ' + esc(x.n); }).join('<br>') + (rd.rules.length > 5 ? '<br><span class="m">+' + (rd.rules.length - 5) + ' more</span>' : '') : '');
+      + (rd.bound && !rd.miss ? '<br><br>⛓ The connected rule' + (rd.idle ? ' — it touched no product on its last run' : '') + ':' : '')
+      + (rd.rules && rd.rules.length ? (rd.bound ? '<br>' : '<br><br>') + rd.rules.slice(0, 5).map(function (x) { return '#' + (x.i + 1) + ' ' + esc(x.n) + (rd.bound ? ' · ' + n0(x.imp) + ' of ' + n0(x.of) + ' products' : ''); }).join('<br>') + (rd.rules.length > 5 ? '<br><span class="m">+' + (rd.rules.length - 5) + ' more</span>' : '') : '')
+      + (rd.others && rd.others.length ? '<br><br><span class="m">' + (rd.miss ? 'Runs instead' : 'Also reads as ' + esc(SL.LEVER[lk].label.toLowerCase()) + ' here, not connected') + ':</span><br>' + rd.others.slice(0, 4).map(function (x) { return '#' + (x.i + 1) + ' ' + esc(x.n); }).join('<br>') : '')
+      + (rd.overlap ? '<br><br><b>' + rd.overlap + ' rules read as this lever</b> — connect one in Brand plan' : '');
     var lr = LV.M && SL.lastRecord(LV.M.records, r.market, lk);
     if (lr) tip += '<br><br>Recorded ' + esc(lvDateY(lr.d)) + ': ' + esc(SL.recordWord(lr)) + (lr.by ? ' — ' + esc(lr.by) : '');
-    return '<td class="lc ' + st + '" data-lk="' + lk + '" data-tip="' + esc(tip) + '">' + (st === 'off' ? '<i class="dot" aria-hidden="true"></i>' : '') + '<b>' + esc(v) + '</b></td>';
+    return '<td class="lc ' + st + (rd.overlap ? ' ov' : '') + (rd.miss && lk !== 'units' ? ' miss' : '') + '" data-lk="' + lk + '" data-tip="' + esc(tip) + '">' + (st === 'off' ? '<i class="dot" aria-hidden="true"></i>' : '') + '<b>' + esc(v) + '</b></td>';
   }
   function lvRow(r, levs, b, items) {
     var anyOwn = levs.some(function (l) { return r.cells[l.k].own; }), offN = levs.filter(function (l) { return r.cells[l.k].drift; }).length;
@@ -1282,6 +1366,19 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       }
       case 'lv-mx': LV.med = ''; renderLev(); break;
       case 'lv-msave': lvOwnSave(mkName); break;
+      // ---- one rule per lever
+      case 'lv-rcon': {
+        var lk2 = t.getAttribute('data-lk'), l2 = ((LV.M && LV.M.levers) || []).filter(function (x) { return x.k === lk2; })[0], bd2 = l2 && SL.boundOf(l2);
+        LV.rk = lk2; LV.rkm = bd2 ? bd2.mk || '' : ''; LV.rka = false; LV.rksel = null; renderLev();
+        var pk0 = $('#lev-pick'); if (pk0 && pk0.scrollIntoView) pk0.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); break;
+      }
+      case 'lv-rpx': LV.rk = ''; LV.rksel = null; renderLev(); break;
+      case 'lv-rpick': {
+        var rsel = document.querySelector('#lev-pick input[name="lvk-r"]:checked');
+        if (!rsel) { toast('Pick the rule to connect'); return; }
+        lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm }); break;
+      }
+      case 'lv-rdis': lvSetRule(t.getAttribute('data-lk'), null); break;
       // ---- the record
       case 'lv-rnew': {
         LV.rf = { d: lvToday(), k: ((LV.M && LV.M.levers[0]) || SL.LEVERS[0]).k, mode: 'bau', v: '', was: '', note: '', mk: [] }; renderLev();
@@ -1324,7 +1421,14 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       } break;
     }
   });
-  $('#lev-card').addEventListener('change', function (e) { if (e.target && e.target.id === 'lvr-k' && LV.rf) renderLev(); });
+  $('#lev-card').addEventListener('change', function (e) {
+    var el = e.target; if (!el) return;
+    if (el.id === 'lvr-k' && LV.rf) renderLev();
+    // the rule picker: another market (its own rules), every stock rule, the rule chosen — kept through a re-render
+    else if (el.id === 'lvk-mk') { LV.rkm = el.value; LV.rksel = null; renderLev(); }
+    else if (el.id === 'lvk-all') { LV.rka = el.checked; renderLev(); }
+    else if (el.name === 'lvk-r') { LV.rksel = el.value; $$('#lev-pick .pk').forEach(function (x) { x.classList.toggle('on', !!x.querySelector('input:checked')); }); }
+  });
   $('#lev-card').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.it[data-lvf2]')) { e.preventDefault(); e.target.click(); } });
   // the period form keeps what is typed across a re-render (a market chip re-draws it)
   function lvKeepForm() { var n = $('#lvf-name'), f = $('#lvf-from'), t = $('#lvf-to'); if (n) LV.fname = n.value; if (f) LV.ffrom = f.value; if (t) LV.fto = t.value; }
