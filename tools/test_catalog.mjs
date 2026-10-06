@@ -405,11 +405,11 @@ t('the inspector follows REAL pointer movement only (the /stock lesson)', PG.ind
 t('a hover must MEAN it: a dwell to open, a shorter one to follow', /\}, open \? 150 : 380\);/.test(PG));
 t('the arrivals engine is handed a Date (a timestamp broke the whole stream once)', /AR\.stats\(dob, new Date\(\), S\.prods\.length\)/.test(PG));
 t('one chart failing never stops the master join', /\[counts, detectRoasField, renderStatus, renderKpis, renderTabs, function \(\) \{ refresh\(false\); \}, renderArrivals, renderRoasChart, renderMods\]\.forEach\(safe\);\n\s+maybeJoin\(g\);/.test(PG));
-t('the dashboard is EIGHTEEN modules of one size on an even grid that follows the page\'s own width', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 18 && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
+t('the dashboard is NINETEEN modules of one size on an even grid that follows the page\'s own width (Image pixels spans its row)', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 19 && /\.mod\[data-mod="pix"\]\{grid-column:1\/-1\}/.test(PG) && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
 t('stock control reads Stock management\'s OWN route and matches the market on the feed\'s FeedHero company id, never a name', /fetch\('\/api\/rules\/stock\?brand=/.test(PG) && /String\(x\.cmpid\) === String\(e\.cmpid\)/.test(PG) && /loadRoas\(g\); loadStock\(g\);/.test(PG));
 t('stock control is /stock\'s coverage matrix for this market — one hue, the count in the cell, — where none', /function covShade\(n, mx\)/.test(PG) && /<table class="covt/.test(PG) && /none: the market has no rule doing this/.test(PG) && /fcc-cat-stkch/.test(PG));
 t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /best\.n \* a\.spendDay \* D/.test(PG));
-t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail'\) return passModFacet\(F, i, x\);/.test(PG));
+t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability · image pixels)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail' \|\| F\.k === 'pix'\) return passModFacet\(F, i, x\);/.test(PG));
 t('modules are the viewer\'s to hide and reorder, per device, never shared', /lsSet\('fcc-cat-mods', st\)/.test(PG) && PG.indexOf("/api/state?ns=catmods") < 0);
 t('a path cut names its leaf, not a truncated root repeated ten times', /var shortLab = function \(c\)/.test(PG));
 t('blue is ROAS\'s alone: bars paint var(--chart-1), the lineage has its own four tokens in both themes', /\.cht \.bar\{fill:var\(--chart-1\)/.test(PG) && /--lk:#9aa3ae;--lp:#15a070;--lo:#ED6F0B;--le:#5b47c7;--ld:#d23c3c/.test(PG) && /--lk:#6b7482;--lp:#199e70;--lo:#C67B28;--le:#9085e9;--ld:#e66767/.test(PG) && !/#2563EB/i.test(PG));
@@ -469,13 +469,107 @@ console.log('· the commercial view (a buyer choosing between feed vendors)');
   const liftSide = new Function(lift('liftSide') + '; return liftSide;')();
   t('optimised vs not reads FeedHero’s words both ways (Optimized / Non Optimized, optimised / not optimised)', liftSide('Optimized') === 'o' && liftSide('Non Optimized') === 'n' && liftSide('Optimised') === 'o' && liftSide('Not optimised') === 'n' && liftSide('Non-optimised') === 'n' && liftSide('Unsorted') === null);
   const mods = (PG.match(/var MODS = \[([\s\S]*?)\]\];/) || [])[1] || '';
-  t('eighteen modules on the dashboard, the six commercial ones registered', (mods.match(/\['[a-z]+', /g) || []).length === 18 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
+  t('nineteen modules on the dashboard (the six commercial ones + Image pixels) registered', (mods.match(/\['[a-z]+', /g) || []).length === 19 && mods.indexOf("['pix'") >= 0 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
   t('👔 Procurement view is a preset of the same per-device module state, and ?view=procurement opens it', /var PROC = \['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'\]/.test(PG) && /v: 'proc'/.test(PG) && /qp\('view'\)/.test(PG));
   t('the fee a buyer types never leaves the device — no request in the fee check', !/fetch\(|api\(/.test(lift('renderFee') + lift('feeSet')) && /lsSet\('fcc-cat-fee'/.test(PG));
   t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('renderLift')));
   t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('renderVendor')) && /have == null/.test(lift('renderVendor')));
   t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('renderWaste')) && /rv \/ sp \* 100/.test(lift('renderWaste')));
   t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('renderLift')) && !/class="cmp"/.test(lift('renderLift')));
+}
+
+console.log('· image pixels (docs/pixel_engine.js) — synthetic pictures, never a client\'s');
+{
+  const PX = require('../docs/pixel_engine.js');
+  const img = (w, h, fn) => { const a = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = fn(x, y), i = (y * w + x) * 4; a[i] = c[0]; a[i + 1] = c[1]; a[i + 2] = c[2]; a[i + 3] = c[3] == null ? 255 : c[3]; } return a; };
+  const box = (x, y, x0, y0, x1, y1) => x >= x0 && x < x1 && y >= y0 && y < y1;
+  const W = 200, H = 200;
+  // a packshot: a navy box spanning 80% of a white frame
+  const pack1 = img(W, H, (x, y) => box(x, y, 20, 20, 180, 180) ? [30, 40, 90] : [255, 255, 255]);
+  const r1 = PX.analyse(pack1, W, H, { w: 1200, h: 1200, bytes: 180000, type: 'image/jpeg' });
+  t('a white packshot reads white, the product spanning 80%, JPEG, nothing to fix', r1.bg === 'white' && r1.fill === 80 && r1.fmt === 'JPEG' && PX.checks(r1, { apparel: true }).length === 0);
+  // a studio sweep: a pale wall fading into a darker floor — one backdrop, not a scene
+  const sweep = img(W, H, (x, y) => box(x, y, 50, 20, 150, 185) ? [40, 30, 30] : (y < 140 ? [232 - y * 0.1, 232 - y * 0.1, 230 - y * 0.1] : [205, 198, 190]));
+  const r2 = PX.analyse(sweep, W, H, { w: 1800, h: 2400 });
+  t('a studio wall-and-floor sweep reads light (a plain backdrop), not a scene', r2.bg === 'light' && r2.fill != null);
+  t('… and its product is measured against each row\'s own backdrop (wall above, floor below)', r2.fill >= 80 && r2.fill <= 86);
+  // a model cropped at the knee and filling the sides: the pale backdrop shows on under half the edge
+  const crop = img(W, H, (x, y) => box(x, y, 20, 15, 200, 200) || box(x, y, 0, 140, 60, 200) ? [60, 50, 45] : [226, 226, 224]);
+  const r3 = PX.analyse(crop, W, H, { w: 1800, h: 2400 });
+  t('a model cropped at the side and knee, a chair at the edge: under half the edge is backdrop, and it still reads light, not a scene', r3.bg === 'light');
+  // a scene: no backdrop anywhere round the edge
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const scene = img(W, H, () => [rnd() * 255, rnd() * 160, rnd() * 90]);
+  const r4 = PX.analyse(scene, W, H, { w: 1000, h: 1000 });
+  t('a busy, colourful edge reads as a scene, with no fill claimed', r4.bg === 'scene' && r4.fill == null && PX.checks(r4).some((c) => c.k === 'scene' && c.sev === 'info'));
+  const green = img(W, H, (x, y) => box(x, y, 30, 30, 170, 170) ? [250, 250, 250] : [46, 125, 50]);
+  const r5 = PX.analyse(green, W, H, { w: 1000, h: 1000 });
+  t('a solid green backdrop reads as a colour, and Google\'s white/grey/light ask is a warning', r5.bg === 'colour' && r5.bgc === '#2e7d32' && PX.checks(r5).some((c) => c.k === 'colour' && c.sev === 'warn'));
+  const clear = img(W, H, (x, y) => box(x, y, 40, 40, 160, 160) ? [10, 10, 10, 255] : [0, 0, 0, 0]);
+  t('a transparent PNG reads transparent and its product is measured on the alpha', PX.analyse(clear, W, H, {}).bg === 'transparent' && PX.analyse(clear, W, H, {}).fill === 60);
+  const ck = (o, meta) => PX.checks(Object.assign({}, r1, o), meta).map((c) => c.k + ':' + c.sev + ':' + c.src).join(' ');
+  t('under 100 × 100 fails Google\'s stated minimum', ck({ w: 90, h: 90 }) === 'small:fail:google');
+  t('apparel under 250 × 250 fails; the same picture for a non-apparel product passes the minimum', /small:fail/.test(ck({ w: 200, h: 200 }, { apparel: true })) && !/small/.test(ck({ w: 200, h: 200 })));
+  t('under 800 px on the long side is FeedSpark\'s warning, labelled ours, never a Google fail', ck({ w: 600, h: 600 }) === 'lowres:warn:feedspark');
+  t('over 16 MB, over 64 MP and an unaccepted format each fail', /heavy:fail/.test(ck({ bytes: 17 * 1048576 })) && /huge:fail/.test(ck({ w: 9000, h: 9000 })) && /format:fail/.test(ck({ fmt: 'AVIF' })));
+  t('a product spanning 40% is a warning; 70% is a note (Google suggests 75–90%)', /tiny:warn/.test(ck({ fill: 40 })) && /loose:info/.test(ck({ fill: 70 })));
+  t('a reading that failed has no checks (it is reported as unreadable instead)', PX.checks({ err: 'HTTP 404' }).length === 0);
+  // fingerprints
+  t('the fingerprint is 256 bits (64 hex) and the same picture is 0 bits from itself', r1.hash.length === 64 && PX.hamming(r1.hash, r1.hash) === 0);
+  const pack1s = img(100, 100, (x, y) => box(x, y, 10, 10, 90, 90) ? [30, 40, 90] : [255, 255, 255]);
+  t('the same picture drawn at half the size stays within the tolerance', PX.hamming(r1.hash, PX.dhash(pack1s, 100, 100)) <= PX.TOL);
+  const other = img(W, H, (x, y) => (box(x, y, 60, 20, 140, 180) || box(x, y, 20, 60, 180, 100)) ? [30, 40, 90] : [255, 255, 255]);
+  t('a different silhouette on the same backdrop is well outside the tolerance', PX.hamming(r1.hash, PX.dhash(other, W, H)) > PX.TOL * 2);
+  // across a scan
+  const rec = (id, grp, r) => ({ id, grp, r });
+  const ph = PX.analyse(img(W, H, (x, y) => box(x, y, 70, 70, 130, 130) ? [180, 180, 180] : [240, 240, 240]), W, H, { w: 400, h: 400 });
+  const ivory = Object.assign({}, ph, { cc: '#f0ead8' }), black = Object.assign({}, ph, { cc: '#151515' });
+  const f1 = PX.scanFindings([rec('a', 'g1', ph), rec('b', 'g2', ph), rec('c', 'g3', ph), rec('d', 'g4', r1)]);
+  t('one picture on three different products is SHARED (a placeholder or a reused shot)', f1.shared.a === 3 && f1.shared.c === 3 && !f1.shared.d && f1.groups.length === 1);
+  t('three variants of ONE product sharing a shot is expected, not a finding', Object.keys(PX.scanFindings([rec('a', 'g1', ph), rec('b', 'g1', ph), rec('c', 'g1', ph)]).shared).length === 0);
+  t('the same layout in a different colour at the centre is not the same picture', Object.keys(PX.scanFindings([rec('a', 'g1', ivory), rec('b', 'g2', black), rec('c', 'g3', ivory)]).shared).length === 0);
+  const sharpRecs = []; for (let i = 0; i < 30; i++) sharpRecs.push(rec('s' + i, 'g' + i, Object.assign({}, r1, { sharp: 1000 + i * 10, hash: (i.toString(16) + 'f'.repeat(64)).slice(0, 64) })));
+  sharpRecs[0].r.sharp = 50;
+  const fs2 = PX.scanFindings(sharpRecs);
+  t('soft is RELATIVE: the bottom 5% and under a quarter of the scan\'s median', fs2.soft.s0 === 1 && Object.keys(fs2.soft).length === 1);
+  t('under 20 readings nothing is called soft (too few to compare)', Object.keys(PX.scanFindings(sharpRecs.slice(0, 19)).soft).length === 0);
+  const rt = PX.unpack(PX.pack(Object.assign({}, r1, { cc: '#1e285a' })));
+  t('a reading packs and unpacks whole (size, bytes, format, backdrop, fill, edges, sharpness, fingerprint, centre colour)', rt.w === 1200 && rt.bytes === 180000 && rt.fmt === 'JPEG' && rt.bg === 'white' && rt.fill === 80 && rt.hash === r1.hash && rt.cc === '#1e285a');
+  t('a failed read packs as an error and comes back as one', PX.unpack(PX.pack({ err: 'HTTP 403' })).err === 'HTTP 403');
+  t('the page draws at most 256 px on the long side', PX.sampleSize(1800, 2400).join('x') === '192x256' && PX.sampleSize(100, 50).join('x') === '100x50');
+}
+console.log('· image pixels — the worker (no open proxy, the store)');
+{
+  const liftF = (name) => { const a = WK.indexOf('function ' + name + '('); const b = WK.indexOf('\n}\n', a); if (a < 0 || b < 0) throw new Error('cannot lift ' + name); return WK.slice(a, b + 2); };
+  const consts = WK.slice(WK.indexOf('const CAT_IMG_FS_HOSTS'), WK.indexOf('function catImgKey('));
+  const I = new Function(consts + liftF('catImgHostOf') + liftF('pdpSplitCsv') + liftF('catImgHostsFromHead') + liftF('catImgAllowed') + liftF('catImgClean') + liftF('catImgMerge') + 'return { catImgHostsFromHead, catImgAllowed, catImgClean, catImgMerge, CAT_IMG_KEEP };')();
+  const xml = '<rss><channel><item><g:image_link><![CDATA[https://cdn.shop.example/a.jpg]]></g:image_link><g:additional_image_link>https://img2.shop.example/b.jpg</g:additional_image_link></item>'
+    + '<item><g:image_link>https://lia.feedspark.com/x.php?template_hash=t&amp;img_url=https%3A%2F%2Fsrc.shop.example%2Fc.jpg</g:image_link></item></channel></rss>';
+  const hx = I.catImgHostsFromHead(xml);
+  t('image hosts are learned from the feed head: image_link, additional_image_link, CDATA and an overlay\'s img_url source', ['cdn.shop.example', 'img2.shop.example', 'lia.feedspark.com', 'src.shop.example'].every((h) => hx.indexOf(h) >= 0));
+  const hc = I.catImgHostsFromHead('id,title,image_link\n1,"A, B",https://www.cdn.sheet.example/1.jpg\n');
+  t('… and from a CSV sheet\'s image column (a quoted comma does not shift it; www. folded)', hc.length === 1 && hc[0] === 'cdn.sheet.example');
+  t('a learned host is allowed; a FeedSpark overlay host is allowed; anything else is refused', I.catImgAllowed('https://cdn.shop.example/z.jpg', hx) && I.catImgAllowed('https://dashboard.feedspark.com/i.php', []) && !I.catImgAllowed('https://evil.example/z.jpg', hx) && !I.catImgAllowed('http://169.254.169.254/latest', hx) && !I.catImgAllowed('file:///etc/passwd', hx));
+  const H64 = 'ab'.repeat(32);
+  const cl = I.catImgClean({ r: { 'https://a.example/1.jpg': [1200, 1200, 1e5, 'JPEG', 'white', '#ffffff', 80, 0, 900, H64, 64, '#1e285a'], 'https://a.example/2.jpg': [0, 0, 0, '', 'err', 'HTTP 404'],
+    'https://a.example/3.jpg': [1, 1, 1, 'JPEG', 'neon', '', 1, 1, 1, H64, 1], 'https://a.example/4.jpg': [1, 1, 1, 'JPEG', 'white', '', 1, 1, 1, 'abc', 1], 'javascript:alert(1)': [1, 1, 1, 'JPEG', 'white', '', 1, 1, 1, H64, 1],
+    'https://a.example/5.jpg': [1, 1, 1, 'JPEG', 'white', 'red', 400, 9, -5, H64, 1, 'x'] } });
+  t('a posted scan is checked whole: a good reading and an error kept; an unknown backdrop, a bad fingerprint and a non-http key dropped', cl && cl.r['https://a.example/1.jpg'] && cl.r['https://a.example/2.jpg'][4] === 'err' && !cl.r['https://a.example/3.jpg'] && !cl.r['https://a.example/4.jpg'] && !cl.r['javascript:alert(1)']);
+  const c5 = cl.r['https://a.example/5.jpg'];
+  t('… and every number clamped, a non-hex colour emptied', c5[5] === '' && c5[6] === 100 && c5[7] === 4 && c5[8] === 0 && c5[11] === '' && cl.r['https://a.example/1.jpg'][11] === '#1e285a');
+  t('a scan with nothing valid is refused', I.catImgClean({ r: { 'x': [1] } }) === null && I.catImgClean(null) === null);
+  const prev = { t: 1, r: { 'https://a.example/old.jpg': [1], 'https://a.example/1.jpg': [2] }, at: { 'https://a.example/old.jpg': 1, 'https://a.example/1.jpg': 1 } };
+  const mg = I.catImgMerge(prev, { r: { 'https://a.example/1.jpg': [3] } });
+  t('a new reading replaces the old one for that image; readings the scan did not touch are kept', mg.r['https://a.example/1.jpg'][0] === 3 && mg.r['https://a.example/old.jpg'][0] === 1 && Object.keys(mg.r)[0] === 'https://a.example/1.jpg');
+  t('the store keeps the newest ' + I.CAT_IMG_KEEP + ' readings a feed', I.CAT_IMG_KEEP === 6000 && /slice\(0, CAT_IMG_KEEP\)/.test(liftF('catImgMerge')));
+  const route = WK.slice(WK.indexOf("if (path === '/api/catalog/img')") - 1200, WK.indexOf("if (path === '/api/catalog/img')"));
+  t('the image route sits behind the client scope check and the wired-feed check', /if \(!inScope\(client\)\)/.test(route) && /feedSourceFor\(env, client/.test(route));
+  const img = liftF('catImg').replace(/^async /, '');
+  t('only an image comes back — never SVG — with its own type and nosniff, and a size cap', /\^image\\\//.test(img) && /svg/.test(img) && /'x-content-type-options': 'nosniff'/.test(img) && /CAT_IMG_MAX_BYTES/.test(img));
+  t('a host the cached head never showed gets ONE fresh read of the head before it is refused (at most once an hour)', /catImgHosts\(env, client, mkt, src, true\)/.test(img) && /3600000/.test(WK.slice(WK.indexOf('async function catImgHosts('), WK.indexOf('function catImgAllowed('))));
+  t('saving a scan checks the client scope and that the feed is wired', /path === '\/api\/catalog\/imgscan' && request\.method === 'PUT'[\s\S]{0,400}clientMatch\(acc\.clients, client\)[\s\S]{0,200}feedSourceFor/.test(WK));
+  t('the engine is served at /catalog/pixels.js and the page loads it', /'\/catalog\/pixels\.js'/.test(WK) && /\/catalog\/pixels\.js/.test(PG) && /PIXEL_ENGINE_SRC/.test(WK));
+  t('the page reads pixels only from its own origin (/api/catalog/img), never the client\'s CDN directly', /fetch\('\/api\/catalog\/img' \+ mq\(\)/.test(PG));
 }
 
 console.log('· no client data in git');

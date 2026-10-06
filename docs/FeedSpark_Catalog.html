@@ -117,7 +117,7 @@ window.addEventListener('load',restore);
   .kpi.link{cursor:pointer;transition:border-color .15s,transform .15s}
   .kpi.link:hover{border-color:var(--orange);transform:translateY(-1px)}
   .kpi .arrow{color:var(--muted);font-weight:800;font-size:15px;margin:0 3px}
-  .ins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+  .ins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;grid-auto-flow:row dense}
   .ins>.card{margin:0}
   /* THE DASHBOARD IS MODULES: one size, one rhythm — every card the same height, its body filling what the header leaves */
   .mod{display:flex;flex-direction:column;height:340px;overflow:hidden}
@@ -335,6 +335,29 @@ window.addEventListener('load',restore);
   .cfp .cfn{color:var(--muted);font-size:12px;margin:4px 0}
   .cfp .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
   .cfp .btn[disabled]{opacity:.45;cursor:default}
+  /* the pixel scan */
+  /* the one module that spans the row: 18 modules fill six even rows of three, and Image pixels takes a seventh whole */
+  .mod[data-mod="pix"]{grid-column:1/-1}
+  .pixg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1;min-height:0}
+  .pixg>div{min-width:0;display:flex;flex-direction:column;min-height:0}
+  .pixlook{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;align-content:start;overflow:hidden}
+  .pixlook button{border:1px solid var(--line);border-radius:10px;background:var(--wash);padding:0;aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer}
+  .pixlook button img{width:100%;height:100%;object-fit:contain;display:block}
+  .pixlook button b{position:absolute;left:3px;bottom:3px;font-size:10px;font-weight:800;padding:1px 4px;border-radius:5px;background:var(--paper);color:var(--ink);max-width:calc(100% - 6px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pixlook button b.fail{color:var(--band-red)}
+  .pixlook button:hover{border-color:var(--orange)}
+  .pixh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px}
+  @container cat (max-width:700px){.pixg{grid-template-columns:minmax(0,1fr)}}
+  .pixctl{display:inline-flex;gap:6px;align-items:center;flex:none}
+  .pixctl .btn{height:30px;padding:0 10px;font-size:12px}
+  .pixctl select{height:30px;min-width:84px;padding-right:22px}
+  .pxrow{font-size:12.5px;line-height:1.5;margin:2px 0 6px}
+  .pxrow b{font-variant-numeric:tabular-nums}
+  .pxchk{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+  .pxchk span{font-size:11px;font-weight:700;padding:2px 7px;border-radius:100px;border:1px solid var(--line);background:var(--wash)}
+  .pxchk span.fail{border-color:var(--band-red);color:var(--band-red)}
+  .pxchk span.warn{border-color:var(--orange-deep);color:var(--orange-deep)}
+  .pxsw{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid var(--line);vertical-align:-1px;margin-right:3px}
   .cfchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;height:28px;padding:0 6px 0 10px;border-radius:100px;background:var(--wash);border:1px solid var(--line);color:var(--ink);max-width:260px}
   .cfchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cfchip button,.cfclr{border:0;background:none;cursor:pointer;color:var(--muted);font:inherit;padding:0 2px}
@@ -649,6 +672,11 @@ window.addEventListener('load',restore);
       <div class="chead"><div class="sp"><h3>Size-run health</h3><p class="ch" id="run-sub">Item groups by the share of their variants in stock.</p></div></div>
       <div class="mbody" id="run-body"><div class="empty2">Reading the feed…</div></div>
     </section>
+    <section class="card mod" id="m-pix" data-mod="pix">
+      <div class="chead"><div class="sp"><h3>Image pixels</h3><p class="ch" id="pix-sub">What each main image shows, read off its pixels.</p></div>
+        <span class="pixctl"><select class="fld agg" id="pix-n" aria-label="How many images to scan"><option value="100">100</option><option value="250" selected>250</option><option value="500">500</option><option value="1000">1,000</option><option value="3000">3,000</option></select><button class="btn" type="button" id="pix-go" title="Read the main image of the products in the table as it is filtered now, the ones not read yet first">🔍 Scan</button></span></div>
+      <div class="mbody" id="pix-body"><div class="empty2">Reading the feed…</div></div>
+    </section>
     <section class="card mod" id="m-mix" data-mod="mix">
       <div class="chead"><div class="sp"><h3>Catalogue mix</h3><p class="ch" id="mix-sub">The biggest groups in the feed, with their share on sale.</p></div>
         <select class="fld agg" id="mix-f" aria-label="Group the catalogue by"></select></div>
@@ -751,7 +779,7 @@ window.addEventListener('load',restore);
      (streamed through /api/feed/proxy, parsed by the Feed Lab engine), the master (the client's own
      import file from FeedHero, unzipped and parsed here), and Google Ads ROAS (FeedHero's reporting).
      The maths lives in docs/catalog_engine.js, which tools/test_catalog.mjs runs on the same fixtures. */
-  var E = null, FA = null, AR = null, OV = null;
+  var E = null, FA = null, AR = null, OV = null, PX = null;
   var NOW = Date.now(), DAY = 86400000, CAP = 150000, LIGHT_CAP = 150000;
   var DNA_IDX = [], ATTR_IDX = {};
   function $(id) { return document.getElementById(id); }
@@ -784,7 +812,7 @@ window.addEventListener('load',restore);
 
   // the engines load the way /golden loads them (fetched + run), so the browser tripwires can hand them over from a stub
   function loadEngines() {
-    var need = [['/feedlab/engine.js', 'FeedAudit', 1], ['/catalog/engine.js', 'FeedCatalog', 1], ['/volume/engine.js', 'FeedArrivals', 0], ['/overlays/engine.js', 'Overlay', 0]];
+    var need = [['/feedlab/engine.js', 'FeedAudit', 1], ['/catalog/engine.js', 'FeedCatalog', 1], ['/volume/engine.js', 'FeedArrivals', 0], ['/overlays/engine.js', 'Overlay', 0], ['/catalog/pixels.js', 'FeedPixels', 0]];
     return Promise.all(need.map(function (n) {
       if (window[n[1]]) return window[n[1]];
       return fetch(n[0]).then(function (r) { if (!r.ok) throw new Error(n[0] + ' unavailable'); return r.text(); })
@@ -792,7 +820,7 @@ window.addEventListener('load',restore);
         .catch(function (e) { if (n[2]) throw e; return null; });
     })).then(function (a) {
       if (!a[0] || !a[1]) throw new Error('engines not ready');
-      return { FA: a[0], E: a[1], AR: a[2], OV: a[3] };
+      return { FA: a[0], E: a[1], AR: a[2], OV: a[3], PX: a[4] };
     });
   }
 
@@ -854,6 +882,12 @@ window.addEventListener('load',restore);
     { k: 'cl4', l: 'Custom label 4', w: 150, off: 1, s: 'cl4' },
     { k: 'kw', l: 'Keyword slots', w: 116, off: 1, num: 1, s: 'kw' },
     { k: 'imgs', l: 'Images', w: 88, off: 1, num: 1, s: 'imgs' },
+    // the main image as its pixels read (the Image pixels scan) — off by default, blank until a product's image is scanned
+    { k: 'pxs', l: 'Image size', w: 116, off: 1, num: 1, px: 1, s: 'pxs', tip: 'The main image’s own size in pixels (width × height), read off the file' },
+    { k: 'pxbg', l: 'Background', w: 120, off: 1, px: 1, s: 'pxbg', tip: 'The main image’s background, read off its outer edge: white, light, a colour, a scene or transparent' },
+    { k: 'pxfill', l: 'Product fill', w: 112, off: 1, num: 1, px: 1, s: 'pxfill', tip: 'On a plain background, how far the product spans the frame along its longer side — Google suggests 75–90%' },
+    { k: 'pxsharp', l: 'Sharpness', w: 104, off: 1, num: 1, px: 1, s: 'pxsharp', tip: 'The variance of the Laplacian on the main image — compare it across products, not on its own' },
+    { k: 'pxiss', l: 'Image checks', w: 170, off: 1, px: 1, s: 'pxiss', tip: 'What the pixel scan found against Google’s image rules and FeedSpark’s working thresholds' },
     { k: 'tlen', l: 'Title length', w: 110, off: 1, num: 1, s: 'tlen' },
     { k: 'link', l: 'Page', w: 70, off: 1 }
   ];
@@ -890,7 +924,7 @@ window.addEventListener('load',restore);
     if (/^proc/i.test(qp('view') || '') && !procOn()) { var pv = {}; MODS.forEach(function (x) { if (PROC.indexOf(x[0]) < 0) pv[x[0]] = 1; }); lsSet('fcc-cat-mods', { v: 'proc', order: PROC.concat(MODS.map(function (x) { return x[0]; }).filter(function (k) { return PROC.indexOf(k) < 0; })), off: pv }); }
     applyMods(); renderTabs(); renderQuick(); paintSegs(); layout(); gwMsg('⏳', 'Loading the catalogue engines…');
     loadEngines().then(function (x) {
-      FA = x.FA; E = x.E; AR = x.AR; OV = x.OV;
+      FA = x.FA; E = x.E; AR = x.AR; OV = x.OV; PX = x.PX;
       E.ATTRS.forEach(function (a, i) { ATTR_IDX[a.k] = i; });
       DNA_IDX = E.DNA.map(function (k) { return ATTR_IDX[k]; });
       renderMatrixLegend();
@@ -970,7 +1004,7 @@ window.addEventListener('load',restore);
     $('ls-body').innerHTML = '<div class="empty2">Joining the master feed…</div>';
     $('lm-body').innerHTML = '<div class="empty2">The matrix fills in once the master feed is joined.</div>';
     layout(); refresh(true);
-    loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g);
+    loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g); loadPix(g);
     if (adsWanted()) loadAds(g);
   }
   function loadOutput(g) {
@@ -1413,7 +1447,7 @@ window.addEventListener('load',restore);
     var p = S.prods[i], x = S.fx[i];
     if (F.k === 'dob') return x.dob != null && new Date(x.dob).toISOString().slice(0, 7) === F.v;
     if (F.k === 'lin') { var c = S.codes[i]; return !!c && F.codes.indexOf(c.charAt(F.a)) >= 0; }
-    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth' || F.k === 'avail') return passModFacet(F, i, x);
+    if (F.k === 'spec' || F.k === 'price' || F.k === 'run' || F.k === 'mix' || F.k === 'depth' || F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);
     if (F.k === 'roas') {
       if (F.agg === 'Category') { var h = roasFor(i); return !!h && !h.miss && (E.pathKey(h.parts.join(' > ')) + ' >').indexOf(E.pathKey(F.v) + ' >') === 0; }
       if (F.agg === 'Price_type') return /sale/i.test(F.v) ? x.onSale : !x.onSale;
@@ -1453,6 +1487,8 @@ window.addEventListener('load',restore);
       case 'opti': var o = p.opti || {}, on = E.OPTI_KEYS.filter(function (q) { return o[q.k]; }).map(function (q) { return q.l; }); return on.length ? on : ['(none)'];
       case 'dob': return [x.dob != null ? new Date(x.dob).toISOString().slice(0, 7) : CF_BLANK];
       case 'chg': return [String(sv('chg', i) == null ? CF_BLANK : sv('chg', i))];
+      case 'pxbg': var pbv = pxOf(i); return [pbv ? (PXBG[pbv.bg] || pbv.bg) : 'Not scanned'];
+      case 'pxiss': var pcs = pxChecks(i); return pcs == null ? ['Not scanned'] : pcs.length ? pcs.map(function (c) { return PXK[c.k] || c.k; }) : ['No issue found'];
       default:
         if (!FIELD[k]) { v = sv(k, i); return [v == null || v === '' ? CF_BLANK : String(v)]; }
         v = f[FIELD[k]]; var a = (Array.isArray(v) ? v : [v]).map(function (y) { return cfPlain(E.plain(y)); }).filter(Boolean);
@@ -1613,6 +1649,11 @@ window.addEventListener('load',restore);
         var ar = adsOf(i); return ar ? ar[ADS_M[k]] : (ar === null && (k === 'a7imp' || k === 'a7clk' || k === 'a7cost' || k === 'a7conv' || k === 'a7val') ? 0 : null);
       case 'type': return low(x.pt);
       case 'var': var gr = x.grp ? grpC(x.grp) : null; return gr ? gr[0] : null;
+      case 'pxs': var ps = pxOf(i); return ps ? Math.max(ps.w, ps.h) : null;
+      case 'pxbg': var pb = pxOf(i); return pb ? (PXBG[pb.bg] || pb.bg) : null;
+      case 'pxfill': var pf = pxOf(i); return pf && pf.fill != null && pf.bg !== 'scene' ? pf.fill : null;
+      case 'pxsharp': var pq = pxOf(i); return pq ? pq.sharp : null;
+      case 'pxiss': var pi = pxChecks(i); return pi ? pi.length : null;
       case 'dob': return x.dob;
       case 'kw': return f.keywords ? f.keywords.length : 0;
       case 'imgs': return x.imgs;
@@ -1899,7 +1940,7 @@ window.addEventListener('load',restore);
   // spaced also, and generate 4-5 more interesting views"). Nine cards of ONE size on a 3-column grid; each is a module the
   // viewer can hide or move (per device, fcc-cat-mods), and every bar in every one of them lists its products below.
   var MODS = [['arr', 'New arrivals'], ['roas', 'ROAS by segment'], ['did', 'What FeedSpark did'], ['gain', 'Data FeedSpark added'],
-    ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'],
+    ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['pix', 'Image pixels'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'],
     ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off'],
     ['lift', 'Optimised vs not'], ['fix', 'Before and after FeedSpark'], ['waste', 'Where the ad budget goes'],
     ['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];
@@ -1929,7 +1970,7 @@ window.addEventListener('load',restore);
   $('mods-p').addEventListener('change', function (e) { var k = e.target.getAttribute('data-mod-on'); if (!k) return; var st = modState(); if (e.target.checked) delete st.off[k]; else st.off[k] = 1; saveMods(st); });
   document.addEventListener('click', function (e) { if (!e.target.closest('.pop')) { $('mods-p').hidden = true; $('mods-b').setAttribute('aria-expanded', 'false'); } });
 
-  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderMix, renderDepth, renderAvail, renderStock, renderKept].forEach(safe); renderProc(); }
+  function renderMods() { [renderGain, renderSpec, renderPrice, renderRun, renderPix, renderMix, renderDepth, renderAvail, renderStock, renderKept].forEach(safe); renderProc(); }
   function facetId() { return S.facet ? S.facet.id || '' : ''; }
   function toggleFacet(f) { setFacet(S.facet && S.facet.id && S.facet.id === f.id ? null : f); }
   function modEmpty(id, msg) { $(id).innerHTML = '<div class="empty2">' + esc(msg) + '</div>'; }
@@ -2045,6 +2086,202 @@ window.addEventListener('load',restore);
       return { id: 'run:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(g[b[0]] || 0) + ' item groups, ' + n0(p[b[0]] || 0) + (M ? ' sizes in the master' : ' products') + ' · click to list the ones in the feed', bars: [{ w: (g[b[0]] || 0) / tot * 100, c: b[2] }], v: pc(g[b[0]] || 0, tot), sub: n0(g[b[0]] || 0) + ' groups' };
     }), { foot: '<span><b>' + pc(broken, tot) + '</b> of ' + n0(tot) + ' size runs are broken — some sizes out' + (M && held ? ' · <b>' + n0(held) + '</b> out-of-stock sizes left out of the feed' : '') + '</span>' });
   }
+  // ---- IMAGE PIXELS (Ray, 6 Oct 2026: "on Catalog - scan and crawl the pixel for client's imagery as well") ----
+  // The feed says WHERE each picture is and nothing about what it shows. 🔍 Scan reads the MAIN image of the products
+  // in the table as it is filtered now (the ones not read yet first): each file comes through /api/catalog/img — our own
+  // origin, so a canvas may read it — is drawn small, and docs/pixel_engine.js reads the pixels: the file's own size,
+  // weight and format, the background, how far the product spans the frame, sharpness and a fingerprint. Readings are
+  // kept per feed by IMAGE URL (/api/catalog/imgscan), so a scan done once is there on the next visit.
+  // TWO HONESTY RULES: an image not read is "not scanned", never a pass; and only what Google STATES is a failure —
+  // FeedSpark's own thresholds (800 px, soft focus) are named as ours.
+  var PXBG = { white: 'White', light: 'Light', colour: 'A colour', scene: 'A scene', transparent: 'Transparent' };
+  var PXK = { small: 'Under Google’s minimum size', huge: 'Over 64 megapixels', heavy: 'Over 16 MB', format: 'A format Google refuses', lowres: 'Under 800 px',
+    scene: 'A scene, not plain', colour: 'Coloured background', tiny: 'Product under half the frame', loose: 'Product under 75% of the frame',
+    edge: 'Runs to the frame edge', soft: 'Soft focus', shared: 'Same picture on 3+ products' };
+  // the word on a gallery tile — a tile is ~90px, so the full label lives in its tooltip
+  var PXT = { small: 'Too small', huge: 'Over 64 MP', heavy: 'Over 16 MB', format: 'Format', lowres: 'Under 800 px', scene: 'Scene', colour: 'Colour bg',
+    tiny: 'Small in frame', loose: 'Loose', edge: 'Cropped', soft: 'Soft', shared: 'Shared' };
+  var PXB = [['req', 'Below Google’s image rules', 'var(--band-red)', 'too small, over 64 MP or 16 MB, or a format Google refuses'],
+    ['lowres', 'Under 800 px', 'var(--band-orange)', 'FeedSpark’s working threshold — too small to zoom on'],
+    ['plain', 'White or light background', 'var(--good)', 'what Google asks for on the main image'],
+    ['colour', 'Coloured background', 'var(--band-orange)', 'Google asks for white, grey or light'],
+    ['scene', 'A scene, not a plain background', 'var(--chart-1)', 'lifestyle or on location — fine as an extra image, not the main one'],
+    ['tiny', 'Product under half the frame', 'var(--band-orange)', 'Google suggests the product spans 75–90% of the image'],
+    ['soft', 'Soft focus', 'var(--band-orange)', 'relative — the softest 5% of what has been scanned, well under its typical sharpness'],
+    ['shared', 'Same picture on 3+ products', 'var(--band-red)', 'a placeholder or one shot reused across different products']];
+  function imgUrlOf(i) { var p = S.prods[i]; if (!p) return ''; var v = p.f.image_link; v = Array.isArray(v) ? v[0] : v; return String(v == null ? '' : v).trim(); }
+  function pxRaw(i) { return S.px && S.px.map ? S.px.map.get(imgUrlOf(i)) || null : null; }
+  function pxOf(i) { var r = pxRaw(i); return r && !r.err ? r : null; }
+  function pxApparel(i) { var f = S.prods[i].f; return /\b(apparel|clothing|clothes|shoes|footwear|bekleidung|vêtements|kleding|schuhe|chaussures)\b/i.test(String(f.google_product_category || '') + ' ' + String(f.product_type || '')); }
+  function pxChecks(i) {
+    var r = pxOf(i); if (!r || !PX) return null;
+    var F = (S.px && S.px.find) || {}, u = imgUrlOf(i);
+    return PX.checks(r, { apparel: pxApparel(i), soft: !!(F.soft && F.soft[u]), shared: F.shared && F.shared[u] });
+  }
+  function pixB(i, b) {
+    var r = pxOf(i); if (!r) return false;
+    var cs = pxChecks(i) || [], has = function (k) { return cs.some(function (c) { return c.k === k; }); };
+    if (b === 'req') return cs.some(function (c) { return c.sev === 'fail'; });
+    if (b === 'plain') return r.bg === 'white' || r.bg === 'light' || r.bg === 'transparent';
+    return has(b);
+  }
+  function pxFind() {
+    if (!PX || !S.px) return;
+    var recs = [];
+    for (var i = 0; i < S.prods.length; i++) { var u = imgUrlOf(i), r = u && S.px.map.get(u); if (r && !r.err) recs.push({ id: u, grp: S.fx[i].grp || ('#' + i), r: r }); }
+    S.px.find = PX.scanFindings(recs);
+  }
+  function loadPix(g) {
+    S.px = { map: new Map(), find: null, run: null, t: null, st: 'loading' };
+    renderPix();
+    fetch('/api/catalog/imgscan' + mq(), sig()).then(function (r) { return r.json(); }).then(function (j) {
+      if (g !== S.gen) return;
+      var sc = j && j.ok && j.scan;
+      if (sc && sc.r && PX) Object.keys(sc.r).forEach(function (u) { var r = PX.unpack(sc.r[u]); if (r) S.px.map.set(u, r); });
+      S.px.t = sc ? sc.t : null; S.px.st = 'ok';
+      pxFind(); renderPix(); renderRows(true);
+    }).catch(function (er) { if (g !== S.gen || (er && er.name === 'AbortError')) return; S.px.st = 'ok'; renderPix(); });
+  }
+  // one image: through our own origin, drawn small, read
+  function pixOne(u) {
+    return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig()).then(function (res) {
+      if (!res.ok) return res.json().catch(function () { return {}; }).then(function (j) { return { err: (j && j.error) || ('HTTP ' + res.status) }; });
+      return res.blob().then(function (b) {
+        return createImageBitmap(b).then(function (bm) {
+          var sz = PX.sampleSize(bm.width, bm.height), cv = document.createElement('canvas');
+          cv.width = sz[0]; cv.height = sz[1];
+          var cx = cv.getContext('2d', { willReadFrequently: true });
+          cx.drawImage(bm, 0, 0, sz[0], sz[1]);
+          var r = PX.analyse(cx.getImageData(0, 0, sz[0], sz[1]).data, sz[0], sz[1], { w: bm.width, h: bm.height, bytes: b.size, type: b.type || res.headers.get('content-type') });
+          if (bm.close) bm.close();
+          return r;
+        });
+      });
+    }).catch(function (e) { return { err: e && e.name === 'AbortError' ? 'stopped' : 'the file could not be decoded as an image' }; });
+  }
+  function pixSave(g, run) {
+    var fresh = run.fresh, n = Object.keys(fresh).length; if (!n) return;
+    run.fresh = {};
+    fetch('/api/catalog/imgscan' + mq(), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ r: fresh }) })
+      .then(function (r) { return r.json(); }).then(function (j) { if (g === S.gen && j && j.ok) { S.px.t = j.t; renderPix(); } }).catch(function () {});
+  }
+  // the scan: the main images of the table as filtered, the unread first; ⏹ stops and keeps what was read
+  function pixScan(only) {
+    if (!PX || !S.px || !S.prods.length) return Promise.resolve();
+    if (S.px.run) { S.px.run.stop = true; renderPix(); return Promise.resolve(); }
+    var cap = only != null ? 1 : Math.max(1, +($('pix-n').value || 250));
+    var pool = only != null ? [only] : (S.tab === 'gone' ? [] : S.view.slice());
+    if (!pool.length && only == null) for (var p = 0; p < S.prods.length; p++) pool.push(p);
+    var seenU = {}, unread = [], read = [];
+    pool.forEach(function (i) { var u = imgUrlOf(i); if (!u || seenU[u]) return; seenU[u] = 1; var r = S.px.map.get(u); (r && !r.err && only == null ? read : unread).push(u); });
+    var list = (unread.length ? unread : read).slice(0, cap);
+    if (!list.length) return Promise.resolve();
+    var g = S.gen, run = S.px.run = { total: list.length, done: 0, err: 0, stop: false, fresh: {}, one: only != null }, k = 0, live = 0, last = 0;
+    renderPix();
+    return new Promise(function (resolve) {
+      function finish() {
+        if (S.px.run !== run) return resolve();
+        S.px.run = null; pixSave(g, run); pxFind(); renderPix(); renderRows(true);
+        if (S.insp && !S.insp.gone) renderInspector();
+        resolve();
+      }
+      function next() {
+        if (g !== S.gen) return resolve();
+        if (run.stop || k >= list.length) { if (!live) finish(); return; }
+        var u = list[k++]; live++;
+        pixOne(u).then(function (r) {
+          live--;
+          if (g !== S.gen) return resolve();
+          if (r.err !== 'stopped') { S.px.map.set(u, r); run.fresh[u] = PX.pack(r); run.done++; if (r.err) run.err++; }
+          if (Date.now() - last > 450) { last = Date.now(); pxFind(); renderPix(); if (!run.one) renderRows(true); }
+          if (Object.keys(run.fresh).length >= 100) pixSave(g, run);
+          next();
+        });
+      }
+      for (var c = 0; c < 6; c++) next();
+    });
+  }
+  function renderPix() {
+    var body = $('pix-body'); if (!body) return;
+    var go = $('pix-go');
+    if (go) { go.textContent = S.px && S.px.run && !S.px.run.one ? '⏹ Stop' : '🔍 Scan'; go.disabled = !PX || !S.prods.length; }
+    if (!PX) { modEmpty('pix-body', 'The pixel reader did not load — reload the page.'); return; }
+    if (!S.prods.length || !S.px) { modEmpty('pix-body', 'Reading the feed…'); return; }
+    var N = 0, scanned = 0, err = 0, errWhy = {}, c = {}, seenU = {};
+    for (var i = 0; i < S.prods.length; i++) {
+      var u = imgUrlOf(i); if (!u) continue; N++;
+      var r = S.px.map.get(u); if (!r) continue;
+      if (r.err) { err++; errWhy[r.err] = (errWhy[r.err] || 0) + 1; continue; }
+      scanned++;
+      PXB.forEach(function (b) { if (pixB(i, b[0])) c[b[0]] = (c[b[0]] || 0) + 1; });
+    }
+    var run = S.px.run, why = Object.keys(errWhy).sort(function (a, b) { return errWhy[b] - errWhy[a]; })[0];
+    $('pix-sub').textContent = scanned ? 'Main images of ' + n0(scanned) + ' of ' + n0(N) + ' products, read off their pixels.' : 'What each main image shows, read off its pixels.';
+    var foot = (run ? '<span>Reading <b>' + n0(run.done) + '</b> of ' + n0(run.total) + ' images…</span>'
+      : '<span><b>' + n0(scanned) + '</b> of ' + n0(N) + ' products’ main images read' + (S.px.t ? ' · last scan ' + new Date(S.px.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '') + '</span>')
+      + (err ? '<span title="' + esc(why || '') + '">' + n0(err) + ' could not be read</span>' : '');
+    if (!scanned) {
+      body.innerHTML = '<div class="empty2">' + (run ? 'Reading the first images…' : S.px.st === 'loading' ? 'Looking for an earlier scan…' : 'No image read yet. 🔍 Scan reads the main image of the products in the table as it is filtered now — up to ' + n0(+$('pix-n').value || 250) + ' at a time.') + (err && why ? '<br><small>' + esc(why) + '</small>' : '') + '</div><div class="cfoot">' + foot + '</div>';
+      return;
+    }
+    var list = modList(PXB.map(function (b) {
+      var n = c[b[0]] || 0;
+      return { id: 'pix:' + b[0], lab: b[1], tip: b[1] + ' · ' + n0(n) + ' of ' + n0(scanned) + ' products with a scanned image · ' + b[3] + ' · click to list them', bars: [{ w: n / scanned * 100, c: b[2] }], v: pc(n, scanned), sub: n0(n) };
+    }));
+    // TO LOOK AT: one tile per distinct picture, what Google refuses first, then what it advises against — each opens its product
+    var look = [], seenL = {}, sevR = { fail: 0, warn: 1, info: 2 };
+    for (var q = 0; q < S.prods.length; q++) {
+      var cq = pxChecks(q); if (!cq || !cq.length) continue;
+      var uq = imgUrlOf(q); if (seenL[uq]) continue; seenL[uq] = 1;
+      var top = cq.slice().sort(function (a, b) { return sevR[a.sev] - sevR[b.sev]; })[0];
+      if (top.sev === 'info' && top.k !== 'scene') continue;
+      look.push({ i: q, c: top, w: sevR[top.sev] });
+    }
+    look.sort(function (a, b) { return a.w - b.w || a.i - b.i; });
+    var tiles = look.slice(0, 24).map(function (x) {
+      return '<button type="button" data-px-open="' + x.i + '" title="' + esc(S.prods[x.i].id + ' · ' + x.c.t) + '" aria-label="' + esc('Open ' + S.prods[x.i].id + ': ' + (PXK[x.c.k] || x.c.k)) + '">' + img(S.prods[x.i].f.image_link) + '<b class="' + x.c.sev + '">' + esc(PXT[x.c.k] || PXK[x.c.k] || x.c.k) + '</b></button>';
+    }).join('');
+    body.innerHTML = '<div class="pixg"><div>' + list + '</div><div><div class="pixh">To look at · ' + n0(look.length) + ' picture' + (look.length === 1 ? '' : 's') + '</div>'
+      + (tiles ? '<div class="pixlook">' + tiles + '</div>' : '<div class="empty2">Nothing to look at among the images read — every one meets Google’s rules.</div>') + '</div></div><div class="cfoot">' + foot + '</div>';
+  }
+  function pxKb(b) { return b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+  function pxCell(k, i) {
+    var r = pxRaw(i);
+    if (!r) return '<span class="mute" title="Not scanned yet — 🔍 Scan in the Image pixels module">—</span>';
+    if (r.err) return '<span class="mute" title="' + esc('Could not be read: ' + r.err) + '">⚠</span>';
+    switch (k) {
+      case 'pxs': var cs = pxChecks(i) || [], bad = cs.some(function (c) { return c.k === 'small'; }); return '<span' + (bad ? ' style="color:var(--band-red);font-weight:800"' : '') + ' title="' + esc(r.w + ' × ' + r.h + ' px · ' + (r.fmt || '?') + (r.bytes ? ' · ' + pxKb(r.bytes) : '')) + '">' + n0(r.w) + '×' + n0(r.h) + '</span>';
+      case 'pxbg': return '<span title="' + esc((r.bgc || '') + ' at the frame’s edge') + '"><i class="pxsw" style="background:' + esc(r.bgc || 'transparent') + '"></i>' + esc(PXBG[r.bg] || r.bg) + '</span>';
+      case 'pxfill': return r.fill != null && r.bg !== 'scene' ? r.fill + '%' : '<span class="mute" title="A scene has no measurable fill">—</span>';
+      case 'pxsharp': return n0(r.sharp);
+      case 'pxiss':
+        var ch = pxChecks(i) || [];
+        if (!ch.length) return '<span style="color:var(--good)" title="Nothing found against Google’s image rules">✓ none</span>';
+        return '<span class="tt" title="' + esc(ch.map(function (c) { return c.t; }).join(' · ')) + '"' + (ch.some(function (c) { return c.sev === 'fail'; }) ? ' style="color:var(--band-red)"' : '') + '>' + esc(PXK[ch[0].k] || ch[0].k) + (ch.length > 1 ? ' +' + (ch.length - 1) : '') + '</span>';
+    }
+    return '';
+  }
+  function pxInspHtml(i) {
+    if (!PX || !S.px || (S.insp && S.insp.gone)) return '';
+    var u = imgUrlOf(i); if (!u) return '';
+    var r = pxRaw(i), open = !(S.insp && S.insp.open && S.insp.open['g:px'] === false);
+    var h = '<details class="fg" data-g="px"' + (open ? ' open' : '') + '><summary>Image pixels<span class="mute" style="letter-spacing:0;text-transform:none;font-weight:800">the main image</span></summary>';
+    if (!r || r.err) h += '<div class="pxrow mute">' + (r && r.err ? 'Could not be read: ' + esc(r.err) + ' · ' : 'Not scanned yet · ') + '<button class="btn" type="button" data-px-one="1" style="height:26px;padding:0 8px;font-size:12px">🔍 Read this image</button></div>';
+    else {
+      h += '<div class="pxrow"><b>' + n0(r.w) + ' × ' + n0(r.h) + '</b> px · ' + esc(r.fmt || '?') + (r.bytes ? ' · ' + pxKb(r.bytes) : '') + ' · <i class="pxsw" style="background:' + esc(r.bgc || 'transparent') + '"></i>' + esc(PXBG[r.bg] || r.bg) + ' background'
+        + (r.fill != null && r.bg !== 'scene' ? ' · the product spans <b>' + r.fill + '%</b>' : '') + ' · sharpness <b>' + n0(r.sharp) + '</b></div>';
+      var cs = pxChecks(i) || [];
+      h += cs.length ? '<div class="pxchk">' + cs.map(function (c) { return '<span class="' + c.sev + '" title="' + esc(c.t + (c.src === 'feedspark' ? ' — FeedSpark’s working threshold' : ' — Google’s image guidance')) + '">' + esc(PXK[c.k] || c.k) + '</span>'; }).join('') + '</div>'
+        : '<div class="pxrow" style="color:var(--good)">Nothing found against Google’s image rules.</div>';
+    }
+    return h + '</details>';
+  }
+  $('pix-go').addEventListener('click', function () { pixScan(); });
+  $('pix-body').addEventListener('click', function (e) { var b = e.target.closest('[data-px-open]'); if (!b) return; e.stopPropagation(); inspect(+b.getAttribute('data-px-open'), 'click'); });
+  $('pix-n').addEventListener('change', function () { lsSet('fcc-cat-pixn', this.value); renderPix(); });
+  (function () { var v = lsGet('fcc-cat-pixn', null); if (v && $('pix-n').querySelector('option[value="' + v + '"]')) $('pix-n').value = v; })();
+  $('insp') && $('insp').addEventListener('click', function (e) { if (e.target.closest('[data-px-one]') && S.insp) { e.stopPropagation(); pixScan(S.insp.i); } });
+
   // 5 · CATALOGUE MIX — the biggest groups by any field, with their share on sale
   var MIXF = [['brand', 'Brand'], ['cat', 'Top category'], ['sub', 'Sub-category'], ['color', 'Colour'], ['gender', 'Gender'], ['age_group', 'Age group'], ['custom_label_0', 'Custom label 0'], ['custom_label_1', 'Custom label 1'], ['custom_label_2', 'Custom label 2'], ['custom_label_3', 'Custom label 3'], ['custom_label_4', 'Custom label 4']];
   function mixVal(f, i) {
@@ -2401,6 +2638,7 @@ window.addEventListener('load',restore);
     if (k === 'gain') return { id: id, k: 'lin', a: +p[1], codes: 'lpe', label: E.ATTRS[+p[1]].l + ' · added by FeedSpark' };
     if (k === 'spec') return { id: id, k: 'spec', a: +p[1], label: E.ATTRS[+p[1]].l + ' · not in Google’s format' };
     if (k === 'price') { var r = p[1].split('-'), sym = curSym(); return { id: id, k: 'price', lo: +r[0], hi: r[1] === '' ? null : +r[1], label: 'Price · ' + (r[1] === '' ? sym + r[0] + '+' : sym + r[0] + '–' + sym + r[1]) }; }
+    if (k === 'pix') return { id: id, k: 'pix', b: p[1], label: 'Image · ' + (PXB.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] };
     if (k === 'run') return { id: id, k: 'run', b: p[1], label: 'Size run · ' + (RUNB.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] };
     if (k === 'mix') { var v = p.slice(2).join(':'); return { id: id, k: 'mix', f: p[1], v: v, label: (MIXF.filter(function (x) { return x[0] === p[1]; })[0] || [0, p[1]])[1] + ' · ' + (v === '—' ? 'Not set' : v) }; }
     if (k === 'depth') return { id: id, k: 'depth', m: p[1], b: p.slice(2).join(':'), label: DEPTH[p[1]].l + ' · ' + p.slice(2).join(':') };
@@ -2408,7 +2646,7 @@ window.addEventListener('load',restore);
     return null;
   }
   $('ins').addEventListener('click', function (e) {
-    var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-mix,#m-depth,#m-avail,#m-stock')) return;
+    var el = e.target.closest('[data-f],.mod [data-k]'); if (!el || !el.closest('#m-gain,#m-spec,#m-price,#m-run,#m-pix,#m-mix,#m-depth,#m-avail,#m-stock')) return;
     var f = facetFor(el.getAttribute('data-f') || el.getAttribute('data-k')); if (!f) return;
     toggleFacet(f); $('cat').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   });
@@ -2419,6 +2657,7 @@ window.addEventListener('load',restore);
     if (F.k === 'mix') return (low(mixVal(F.f, i)) || '—') === F.v;
     if (F.k === 'depth') return DEPTH[F.m].of(i) === F.b;
     if (F.k === 'avail') return (x.av || 'none') === F.v;
+    if (F.k === 'pix') return pixB(i, F.b);
     return true;
   }
   function renderMatrixLegend() {
@@ -2494,10 +2733,11 @@ window.addEventListener('load',restore);
   $('dens').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b) return; S.dens = b.getAttribute('data-d'); lsSet('fcc-cat-dens', S.dens); paintSegs(); layout(); renderRows(true); });
   function colOn(c) { return c.fix || (S.cols ? S.cols.indexOf(c.k) >= 0 : !c.off); }
   function renderColsPop() {
-    var seen = false;
+    var seen = false, seenPx = false;
     $('cols-p').innerHTML = COLS.filter(function (c) { return !c.fix; }).map(function (c) {
       var h = c.ads && !seen ? '<div class="grp">Google Ads · this product · 7 days<small>FeedHero’s Ads Traffic report, matched on the product ID</small></div>' : '';
       if (c.ads) seen = true;
+      if (c.px && !seenPx) { h += '<div class="grp">Image pixels · the main image<small>Filled in by the Image pixels scan</small></div>'; seenPx = true; }
       return h + '<label><input type="checkbox" data-col="' + c.k + '"' + (colOn(c) ? ' checked' : '') + '> ' + esc(c.l) + '</label>';
     }).join('') +
       '<div class="ft"><button class="btn" type="button" data-reset="1" style="height:30px">Reset</button><button class="btn" type="button" data-close="1" style="height:30px">Done</button></div>';
@@ -2608,6 +2848,7 @@ window.addEventListener('load',restore);
       case 'roas': return roasHtml(i);
       case 'a7imp': case 'a7clk': case 'a7ctr': case 'a7cost': case 'a7cpc': case 'a7conv': case 'a7val': case 'a7roas': case 'a7cr': case 'a7cpa': return adsCell(k, i);
       case 'type': var d = x.depth; return '<span class="pips" title="' + d + ' level' + (d === 1 ? '' : 's') + ' deep">' + [1, 2, 3, 4, 5].map(function (z) { return '<i class="' + (z <= d ? 'on' : '') + '"></i>'; }).join('') + '</span><span class="tt" title="' + esc(x.pt) + '">' + esc(x.leaf || '—') + '</span>';
+      case 'pxs': case 'pxbg': case 'pxfill': case 'pxsharp': case 'pxiss': return pxCell(k, i);
       case 'var': var gr = x.grp ? grpC(x.grp) : null; return gr && gr[0] > 1 ? '<span title="' + esc(n0(gr[1]) + ' of ' + n0(gr[0]) + (S.run ? ' sizes' : '') + ' in item group ' + x.grp + ' in stock' + (S.run ? ' (master)' : '')) + '">' + n0(gr[1]) + '/' + n0(gr[0]) + '</span>' : '<span class="mute">—</span>';
       case 'dob': return x.dob != null ? '<span title="First seen ' + new Date(x.dob).toISOString().slice(0, 10) + '">' + ago(x.age) + '</span>' : '<span class="mute">—</span>';
       case 'kw': return f.keywords ? n0(f.keywords.length) : '<span class="mute">0</span>';
@@ -2839,6 +3080,7 @@ window.addEventListener('load',restore);
     h += '<div class="sc3"><div title="What Google asks of this product, filled in Google’s format (a value not in it counts half) — the tick is the master"><div class="k">Completeness</div><div class="v">' + (cb != null ? cb + '<small> → </small>' : '') + ca + '</div><div class="cb"><i class="b-' + auditBand(ca) + '" style="width:' + ca + '%"></i>' + (cb != null ? '<em style="left:calc(' + cb + '% - 1px)"></em>' : '') + '</div></div>' +
       '<div><div class="k">Fields</div><div class="v">' + (joined ? sc.hold[0] + '<small> → </small>' : '') + holdAt + '</div></div><div title="Google’s conversational attributes"><div class="k">AI-ready</div><div class="v">' + aiAt + '<small> / 6</small></div></div></div>';
     if (!joined) h += '<div class="mute" style="font-size:12px;font-weight:700;margin:6px 0">' + esc(S.m.st === 'ready' ? 'No master row for this product — the feed as sent:' : 'Waiting for the master feed — the feed as sent:') + '</div>';
+    h += pxInspHtml(I.i);
     // fields, grouped the way Google's spec groups them
     var prev = I.prev || {}, next = {};
     E.GROUPS.forEach(function (gname) {

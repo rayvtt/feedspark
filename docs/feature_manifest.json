@@ -11611,6 +11611,18 @@
     {"name": "Stock levers engine: a lever connected before the field was stored has it read off the market it was picked in", "file": "docs/stocklevers_engine.js", "pattern": "function resolved(lever, markets) {", "pr": 0},
     {"name": "Stock levers engine: names compared by their words, the joining words set aside", "file": "docs/stocklevers_engine.js", "pattern": "function nameSim(a, b) {", "pr": 0},
     {"name": "Stock levers worker: a connected rule's field (its database name) is stored with it", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (rd && /^[A-Za-z0-9_]+$/.test(rd)) o.rule.d = rd;", "pr": 0},
-    {"name": "Stock levers: the cell's tooltip says when the connected rule runs here under another name", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.mt === 'job' ? 'The connected rule’s job, run here under another name' : 'The connected rule')", "pr": 0}
+    {"name": "Stock levers: the cell's tooltip says when the connected rule runs here under another name", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.mt === 'job' ? 'The connected rule’s job, run here under another name' : 'The connected rule')", "pr": 0},
+    {"name": "Catalogue pixels: the engine reads a studio sweep's pale backdrop as plain", "file": "docs/pixel_engine.js", "pattern": "var paleBd = P[0].length / N >= 0.4;", "pr": 0},
+    {"name": "Catalogue pixels: a 256-bit fingerprint, not 64", "file": "docs/pixel_engine.js", "pattern": "var HW = 17, HH = 16, HBITS = (HW - 1) * HH, TOL = 12, CC_TOL = 24;", "pr": 0},
+    {"name": "Catalogue pixels: the same picture needs the centre colour to match too", "file": "docs/pixel_engine.js", "pattern": "return !ca || !cb || dist(ca, cb) <= CC_TOL;", "pr": 0},
+    {"name": "Catalogue pixels: fill measured against each row's own backdrop", "file": "docs/pixel_engine.js", "pattern": "rowBg[y] = sr.length ? [median(sr), median(sg), median(sb)] : bg.rgb;", "pr": 0},
+    {"name": "Catalogue pixels: worker serves the engine", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/catalog/pixels.js' && request.method === 'GET') {", "pr": 0},
+    {"name": "Catalogue pixels: the image route sits inside the scoped, wired-feed block", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/img') return catImg(env, url, src, client, mktOf(url.searchParams.get('market')));", "pr": 0},
+    {"name": "Catalogue pixels: no open proxy — only the feed's own image hosts", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed", "pr": 0},
+    {"name": "Catalogue pixels: a posted scan carries the 256-bit fingerprint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;", "pr": 0},
+    {"name": "Catalogue pixels: the module is registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['pix', 'Image pixels']", "pr": 0},
+    {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
+    {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);", "pr": 0},
+    {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0}
   ]
 }
