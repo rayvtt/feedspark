@@ -124,6 +124,8 @@ import STOCKLEVERS_ENGINE_SRC from "../../../docs/stocklevers_engine.js";
 // engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
 import CATALOG_PAGE from "../../../docs/FeedSpark_Catalog.html";
 import CATALOG_ENGINE_SRC from "../../../docs/catalog_engine.js";
+// the Catalogue's pixel reader (docs/pixel_engine.js — what each product image shows, read off its pixels in the browser)
+import PIXEL_ENGINE_SRC from "../../../docs/pixel_engine.js";
 // /aivis (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time"): does a brand, its
 // site and its products turn up when a shopper asks ChatGPT, Google AI Mode / AI Overviews, Perplexity or
 // Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
@@ -1612,6 +1614,9 @@ async function route(request, env, ctx) {
     if (path === '/catalog/engine.js' && request.method === 'GET') {
       return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/catalog/pixels.js' && request.method === 'GET') {
+      return new Response(PIXEL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/aivis/engine.js' && request.method === 'GET') {
       return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2758,6 +2763,24 @@ async function route(request, env, ctx) {
     //   GET /api/catalog/master?client=&market=        → the master's info: file, headings, rows, last import (one MCP call, KV 20 min)
     //   GET /api/catalog/master/file?client=&market=   → the master's own source file, streamed untouched (zip / XML / CSV / TSV)
     //   GET /api/catalog/master/row?client=&market=&q= → master rows containing q, by the MCP's own search (the inspector's fallback)
+    // the pixel scan's readings, kept per feed so a scan done once is there on the next visit (one KV key a feed,
+    // keyed by IMAGE URL so a reading follows the picture, not the product row it was first seen on)
+    if (path === '/api/catalog/imgscan' && request.method === 'PUT') {
+      const acc = await accessOf(env, request);
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!(acc.owner || clientMatch(acc.clients, client))) return json({ ok: false, error: 'out of scope' }, 403);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!(await feedSourceFor(env, client, mkt))) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const clean = catImgClean(b);
+      if (!clean) return json({ ok: false, error: 'no readings' }, 400);
+      const key = catImgKey(client, mkt), prev = (await env.EDITS.get(key, 'json')) || null;
+      const merged = catImgMerge(prev, clean);
+      await env.EDITS.put(key, JSON.stringify(merged));
+      logActivity(ctx, env, request, 'catalog-pixels', client + ' ' + mkt + ' ' + Object.keys(clean.r).length);
+      return json({ ok: true, n: Object.keys(merged.r).length, t: merged.t });
+    }
     if (path.startsWith('/api/catalog/') && request.method === 'GET') {
       const acc = await accessOf(env, request);
       const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
@@ -2777,6 +2800,16 @@ async function route(request, env, ctx) {
       if (!inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
       const src = await feedSourceFor(env, client, url.searchParams.get('market'));
       if (!src) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      // THE PIXEL SCAN (Ray, 6 Oct 2026: "on Catalog - scan and crawl the pixel for client's imagery as well"):
+      // a canvas can only read an image's pixels when the image comes from our own origin, so the page fetches
+      // each one through here. NO OPEN PROXY: the URL's host must be one this feed's own image links use
+      // (learned from the feed head, catImgHosts) or a FeedSpark overlay host, and only an image comes back.
+      // Both routes work on a sheet-backed feed too — no FeedHero master is needed to look at a picture.
+      if (path === '/api/catalog/img') return catImg(env, url, src, client, mktOf(url.searchParams.get('market')));
+      if (path === '/api/catalog/imgscan') {
+        const rec = await env.EDITS.get(catImgKey(client, mktOf(url.searchParams.get('market'))), 'json');
+        return json({ ok: true, scan: rec || null });
+      }
       const cmpid = catCmpid(src);
       if (!cmpid) return json({ ok: false, state: 'no_master', error: 'this feed is read from a Google Sheet — FeedHero holds no master for it' }, 404);
       try {
@@ -4131,6 +4164,107 @@ function roasMcp(env, fetchFn) {
 // every FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file>, Meta (-fb) feeds under
 // the same cmpid as their Google market — so the only masters this can reach are the ones behind
 // feeds FeedSpark actually runs, and a sheet-backed feed honestly has none.
+// ---- the Catalogue's pixel scan (see /api/catalog/img) -------------------------------------------------------
+// FeedSpark's own image hosts — an overlay is the picture actually sent, so it is read where it is served
+const CAT_IMG_FS_HOSTS = ['dashboard.feedspark.com', 'lia.feedspark.com', 'feed5.com'];
+const CAT_IMG_MAX_BYTES = 20 * 1024 * 1024;
+const CAT_IMG_KEEP = 6000;   // readings kept per feed (one per image URL), newest first
+function catImgKey(client, mkt) { return 'catimg:' + client + ':' + mkt; }
+function catImgHostOf(u) { const m = /^https?:\/\/([^/?#:]+)/i.exec(String(u || '').trim()); return m ? m[1].toLowerCase().replace(/^www\./, '') : ''; }
+// every image host the feed head uses — image_link AND additional_image_link, XML or CSV, plus the source host
+// an overlay URL carries in its img_url params; a few dozen products are enough to learn a CDN's name
+function catImgHostsFromHead(text) {
+  text = String(text || '');
+  const out = {}, dec = (v) => String(v || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&amp;/g, '&');
+  const add = (u) => { u = dec(u).trim(); const h = catImgHostOf(u); if (h) out[h] = (out[h] || 0) + 1;
+    const m = u.match(/img_url[^=]*=([^&]+)/gi); if (m) m.forEach((p) => { try { const v = decodeURIComponent(p.split('=').slice(1).join('=')); const h2 = catImgHostOf(v); if (h2) out[h2] = (out[h2] || 0) + 1; } catch (e) {} }); };
+  if (/<item[\s>]|<entry[\s>]/.test(text)) {
+    const re = /<(?:g:)?(?:image_link|additional_image_link)>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/gi; let m;
+    while ((m = re.exec(text))) add(m[1]);
+  } else {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim()).slice(0, 60);
+    if (lines.length > 1) {
+      const head = pdpSplitCsv(lines[0]).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase());
+      const cols = head.map((k, i) => (/^(image_link|additional_image_link)/.test(k) ? i : -1)).filter((i) => i >= 0);
+      for (let i = 1; i < lines.length; i++) { const c = pdpSplitCsv(lines[i]); cols.forEach((j) => String(c[j] || '').split(/[,|]\s*(?=https?:)/).forEach(add)); }
+    }
+  }
+  return Object.keys(out).sort((a, b) => out[b] - out[a]).slice(0, 12);
+}
+function pdpSplitCsv(line) { const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) { const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; }
+  out.push(cur); return out; }
+async function catImgHosts(env, client, mkt, src, fresh) {
+  const ck = 'imghost:' + client + ':' + mkt;
+  // a cached list is used as it is; a FRESH read is allowed at most once an hour, so a host the feed truly does
+  // not use cannot make every image of a scan re-read the feed head
+  const c = await env.EDITS.get(ck, 'json');
+  if (c && Array.isArray(c.hosts) && c.hosts.length && (!fresh || Date.now() - (c.t || 0) < 3600000)) return c.hosts;
+  let hosts = [];
+  try {
+    if (src.xml) { const r = await fetch(src.xml); if (r.ok && r.body) hosts = catImgHostsFromHead(await readHead(r, 768 * 1024)); }
+    else if (src.id) {
+      const r = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + (src.gid || '0'));
+      if (r.ok && r.body) hosts = catImgHostsFromHead(await readHead(r, 256 * 1024));
+    }
+  } catch (e) { hosts = []; }
+  if (hosts.length) { try { await env.EDITS.put(ck, JSON.stringify({ hosts, t: Date.now() }), { expirationTtl: 86400 }); } catch (e) {} }
+  return hosts;
+}
+function catImgAllowed(u, hosts) {
+  const h = catImgHostOf(u); if (!h) return false;
+  return CAT_IMG_FS_HOSTS.some((f) => h === f || h.endsWith('.' + f)) || (hosts || []).indexOf(h) >= 0;
+}
+async function catImg(env, url, src, client, mkt) {
+  const target = String(url.searchParams.get('url') || '').trim().slice(0, 2000);
+  if (!/^https?:\/\//i.test(target)) return json({ ok: false, error: 'url required' }, 400);
+  let hosts = await catImgHosts(env, client, mkt, src, false);
+  // a host the cached head never showed: read the head again once before refusing (a feed can move CDN)
+  if (!catImgAllowed(target, hosts)) hosts = await catImgHosts(env, client, mkt, src, true);
+  if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed — this feed\'s images are served from ' + (hosts.slice(0, 3).join(', ') || 'no host the feed head names') }, 403);
+  const ctl = new AbortController(), timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 12000), t0 = Date.now();
+  let up;
+  try { up = await fetch(target, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': PDP_SCAN_UA, accept: 'image/avif,image/webp,image/*;q=0.9,*/*;q=0.5' } }); }
+  catch (e) { clearTimeout(timer); return json({ ok: false, error: /abort/i.test(String(e && e.name)) ? 'timed out after 12s' : 'fetch failed' }, 502); }
+  clearTimeout(timer);
+  if (!up.ok || !up.body) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, http: up.status, error: 'HTTP ' + up.status }, 502); }
+  const ct = String(up.headers.get('content-type') || '').toLowerCase();
+  if (!/^image\//.test(ct) || /svg/.test(ct)) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, error: 'not an image (' + (ct.split(';')[0] || 'no type') + ')' }, 502); }
+  const len = +(up.headers.get('content-length') || 0);
+  if (len > CAT_IMG_MAX_BYTES) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, error: 'image over ' + Math.round(CAT_IMG_MAX_BYTES / 1048576) + ' MB' }, 413); }
+  // an image on OUR origin: its own image type, nosniff, a short private cache so a re-scan is quick
+  const h = { 'content-type': ct.split(';')[0], 'x-content-type-options': 'nosniff', 'cache-control': 'private, max-age=86400', 'x-img-ms': String(Date.now() - t0) };
+  if (len && !up.headers.get('content-encoding')) h['x-img-bytes'] = String(len);
+  return new Response(up.body, { headers: h });
+}
+// a posted scan, kept whole or refused: { r: { <image url>: packed reading }, n?, of? } — packed = FeedPixels.pack
+function catImgClean(b) {
+  if (!b || typeof b !== 'object' || !b.r || typeof b.r !== 'object') return null;
+  const out = {};
+  const s = (v, n) => String(v == null ? '' : v).slice(0, n), num = (v, hi) => { const x = +v; return isFinite(x) ? Math.max(0, Math.min(hi, Math.round(x))) : 0; };
+  for (const u of Object.keys(b.r).slice(0, 2000)) {
+    const a = b.r[u];
+    if (!/^https?:\/\//i.test(u) || u.length > 2000 || !Array.isArray(a)) continue;
+    if (a[4] === 'err') { out[u] = [0, 0, 0, '', 'err', s(a[5], 80)]; continue; }
+    const bg = ['white', 'light', 'colour', 'scene', 'transparent'].indexOf(a[4]) >= 0 ? a[4] : '';
+    if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;   // FeedPixels' 256-bit fingerprint
+    out[u] = [num(a[0], 100000), num(a[1], 100000), num(a[2], 1e9), s(a[3], 8), bg, /^#[0-9a-f]{6}$/.test(String(a[5] || '')) ? a[5] : '',
+      a[6] < 0 ? -1 : num(a[6], 100), a[7] < 0 ? -1 : num(a[7], 4), num(a[8], 1e7), String(a[9]), a[10] == null || a[10] < 0 ? -1 : num(a[10], 100),
+      /^#[0-9a-f]{6}$/.test(String(a[11] || '')) ? a[11] : ''];
+  }
+  return Object.keys(out).length ? { r: out } : null;
+}
+function catImgMerge(prev, clean) {
+  const t = Date.now(), r = {}, at = {};
+  const pr = (prev && prev.r) || {}, pa = (prev && prev.at) || {};
+  Object.keys(clean.r).forEach((u) => { r[u] = clean.r[u]; at[u] = t; });
+  Object.keys(pr).forEach((u) => { if (!(u in r)) { r[u] = pr[u]; at[u] = pa[u] || (prev && prev.t) || t; } });
+  const keys = Object.keys(r).sort((a, b) => at[b] - at[a]).slice(0, CAT_IMG_KEEP), R = {}, A = {};
+  keys.forEach((u) => { R[u] = r[u]; A[u] = at[u]; });
+  return { v: 1, t, r: R, at: A };
+}
 function catCmpid(src) {
   const m = src && src.xml ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
   return m ? m[1].toLowerCase() : null;

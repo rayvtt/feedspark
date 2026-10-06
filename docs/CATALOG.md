@@ -349,3 +349,75 @@ The master's points went on HTML descriptions, prices without a currency, all-ca
 
 The procurement card **Before and after FeedSpark** gains a row, *Required values put into Google's format*, and
 its footer now says how the score is read.
+
+## Image pixels — what each main image actually shows (6 Oct 2026)
+
+Ray: *"on Catalog - scan and crawl the pixel for client's imagery as well"*.
+
+The feed says **where** an image is and nothing about what the picture is like. **🔍 Scan** on the *Image pixels*
+module (the full-width row under the dashboard) reads each product's **main image** pixel by pixel. It reads the
+first 100 / 250 / 500 / 1,000 / 3,000 products of the table as it is filtered now, the ones not read yet first.
+The choice is saved per device in `fcc-cat-pixn`.
+
+**How a picture is read.** A canvas can only read an image that comes from our own origin. So the page fetches
+each file through `GET /api/catalog/img?client=&market=&url=` and draws it so its long side is at most 256 px.
+It then hands the RGBA array to `docs/pixel_engine.js` (`FeedPixels`, UMD, served at `/catalog/pixels.js`).
+Everything is arithmetic on that array — no model, no guess:
+
+| Reading | How |
+|---|---|
+| Size, format, file size | the file itself, not the canvas |
+| Background | the frame's outer strip (3% of the short side) |
+| Product fill | on a plain background, how far the product spans the frame along its longer side |
+| Sharpness | variance of the Laplacian on greyscale |
+| Fingerprint | a 256-bit difference hash plus the colour at the centre of the frame |
+
+**Background.** The border counts as **plain** when either:
+- a pale backdrop (light and barely coloured: white, grey, stone, ecru) shows on 40%+ of it, or
+- one colour holds 60%+ of it.
+
+It is a **scene** only when no backdrop holds the frame.
+
+Calibrated on real catalogues (6 Oct 2026, read in session, nothing committed):
+- A studio sweep is rarely one colour: a wall fading into a floor, a model cropped at the knee, a chair arm at the side. The first cut, which needed one uniform colour, called 19 of 21 Reiss pictures "scenes". All four studio catalogues (Schuh, Reiss, Monsoon, Superdry) now read as plain backdrops.
+- On a sweep, fill is measured against each **row's** own edges, so the floor is not read as product.
+
+**What a reading means** (`FeedPixels.checks`). Two sources, never blurred:
+
+| Finding | Severity | Source |
+|---|---|---|
+| Under 100 × 100 px (250 × 250 for apparel) | fail | Google's stated requirement |
+| Over 64 megapixels | fail | Google's stated requirement |
+| Over 16 MB | fail | Google's stated requirement |
+| Not JPEG / WebP / PNG / GIF / BMP / TIFF | fail | Google's stated requirement |
+| A coloured background | warn | Google's best practice |
+| A scene | info | Google's best practice |
+| Product under 50% / 75% of the frame (Google suggests 75–90%) | warn / info | Google's best practice |
+| Cropped on 3+ sides | info | Google's best practice |
+| Under 800 px on the long side | warn | **FeedSpark's own threshold**, labelled as ours |
+| Soft focus | warn | **FeedSpark's own threshold**, labelled as ours |
+
+**Across a scan** (`scanFindings`):
+- **Soft** is *relative*: the bottom 5% of the scan's sharpness, and under a quarter of its median. It needs at least 20 images, because a catalogue of soft-focus fashion photography is not blurry image by image.
+- **Same picture on 3+ products** (a placeholder, a "coming soon" tile, one shot reused across a range) needs both fingerprint and centre colour to match, across three different item groups. Variants of one product sharing a shot are expected.
+  - The first cut used a 64-bit hash, and four *different* Reiss garments on the same studio wall hashed as one picture. A 256-bit hash plus the centre colour fixed it (Reiss, Monsoon, Schuh, Superdry: no false duplicates).
+
+**The page:**
+- The module lists eight buckets, each one a table filter (facet `pix`), and a **To look at** gallery: one tile per distinct picture, with what Google refuses first. A tile opens its product.
+- ⊞ Columns gains an *Image pixels · the main image* group: Image, Background, Product fill, Sharpness, Image issues. All are off by default and filterable by value.
+- The inspector shows the reading under the score tiles, with **🔍 Read this image** for a single product.
+
+**No open proxy.** `/api/catalog/img`:
+- Sits behind the client scope and the wired-feed check.
+- Fetches only from a host this feed's own image links use. The hosts are learned from the feed head (`image_link`, `additional_image_link`, and an overlay's `img_url` source; XML or a sheet's CSV) and cached in KV `imghost:<client>:<mkt>` for 24 h. A host the cache never showed gets one fresh read of the head (at most once an hour), then a 403.
+- FeedSpark's own overlay hosts are also allowed.
+- Returns only an image, never SVG, at most 20 MB. It comes back with its own type, `nosniff` and a private 24 h cache.
+
+Readings are kept per feed **by image URL** in KV `catimg:<client>:<mkt>`, so a reading follows the picture rather than the row:
+- `PUT /api/catalog/imgscan` checks the post whole (`catImgClean`: known backdrop words, a 64-hex fingerprint, every number clamped) and keeps the newest 6,000.
+- `GET` returns them, so a scan done once is there on the next visit.
+- Both work on a sheet-backed feed too — no FeedHero master is needed to look at a picture.
+
+Harness:
+- `tools/test_catalog.mjs` runs the engine on synthetic pictures: a packshot, a studio sweep, a knee crop, a scene, a colour backdrop, alpha, every check, the fingerprints, scan findings and pack/unpack. It also lifts the worker's host learning, allow-list, clean and merge.
+- `tools/check_catalog.js` scans the Northwind stub in the browser and checks every bucket against an independent count, the filter, the gallery order and the inspector.

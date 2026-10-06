@@ -196,17 +196,20 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const wantSale = prods.filter((p, i) => fx[i].onSale).length;
     ok('the matrix: "Sale price · structured" lists every sale the master stated under another column', seg === wantSale && await view() === wantSale, { seg, page: await view(), want: wantSale });
 
-    console.log('· the dashboard — eighteen modules of one size, evenly spaced, each one a filter');
+    console.log('· the dashboard — eighteen modules of one size and Image pixels across the row, evenly spaced, each one a filter');
     await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
     await pg.waitForTimeout(250);
     const grid = await pg.evaluate(() => {
       const ms = Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).map((m) => { const r = m.getBoundingClientRect(); return { id: m.dataset.mod, t: Math.round(r.top), h: Math.round(r.height), l: Math.round(r.left), w: Math.round(r.width) }; });
       const rows = {}; ms.forEach((m) => { (rows[m.t] = rows[m.t] || []).push(m); });
       const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
-      return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(ms.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size };
+      const one = ms.filter((m) => m.id !== 'pix'), px = ms.filter((m) => m.id === 'pix')[0] || null, ins = document.getElementById('ins').getBoundingClientRect();
+      return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(one.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size,
+        px: px && { w: px.w, full: Math.abs(px.w - Math.round(ins.width)) <= 2 } };
     });
-    ok('eighteen modules, every one the same height and width', grid.n === 18 && grid.hs === 1 && grid.ws === 1, grid);
-    ok('three to a row at 1440px — six even rows', grid.rows.length === 6 && grid.rows.every((r) => r === 3), grid.rows);
+    ok('nineteen modules, every one the same height; the eighteen one width', grid.n === 19 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('Image pixels spans the whole row', grid.px && grid.px.full, grid.px);
+    ok('three to a row at 1440px — six even rows of three and the Image pixels row, no hole', grid.rows.length === 7 && grid.rows.filter((r) => r === 3).length === 6 && grid.rows.filter((r) => r === 1).length === 1, grid.rows);
     ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
     const pb = await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); const S = window.__FCCCatalogue.state(); return { lo: S.facet && S.facet.lo, hi: S.facet && S.facet.hi, k: S.facet && S.facet.k }; });
     await pg.waitForTimeout(300);
@@ -261,6 +264,52 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('two column filters offer "Clear column filters"', await pg.evaluate(() => !!document.querySelector('#facet [data-cfx="*"]')));
     await pg.evaluate(() => document.querySelector('#facet [data-cfx="*"]').click()); await pg.waitForTimeout(250);
     ok('"Clear column filters" clears them all', await view() === prods.length, await view());
+    console.log('· the pixel scan — what each main image shows, read off its pixels (Ray, 6 Oct 2026)');
+    {
+      // the expectations, counted here off the stub's own table of what each item group's picture is
+      const grpOf = (i) => String(prods[i].f.item_group_id || ''), specOf = (i) => STUBS.PIX[grpOf(i)] || STUBS.PIX_DEFAULT;
+      const urls = new Set(prods.map((p) => String(p.f.image_link || '').trim()).filter(Boolean));
+      const want = { req: 0, lowres: 0, colour: 0, scene: 0, tiny: 0, shared: 0, plain: 0 };
+      prods.forEach((p, i) => { const s = specOf(i), g = grpOf(i);
+        if (s.w < 100) want.req++; else if (s.w < 800) want.lowres++;
+        if (s.bg) want.colour++; else if (s.scene) want.scene++; else want.plain++;
+        if ((s.box != null && s.box < 0.5) || s.ph) want.tiny++;   // a placeholder's graphic sits small in its frame too
+        if (s.ph) want.shared++; });
+      await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet [data-fx]').click(); document.getElementById('pix-n').value = '3000'; });
+      await pg.waitForTimeout(200);
+      const before = await pg.evaluate(() => document.getElementById('pix-body').textContent);
+      ok('before a scan the card says no image is read yet — never a pass', /No image read yet/.test(before), before.slice(0, 120));
+      await pg.click('#pix-go');
+      await pg.waitForFunction(() => { const S = window.__FCCCatalogue.state(); return S.px && !S.px.run && S.px.map.size > 0; }, null, { timeout: 30000 });
+      await pg.waitForTimeout(400);
+      const got = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); const out = {}; S.px.map.forEach((r, u) => { out[u] = r; }); return { n: S.px.map.size, r: out, put: (window.__pxPut || []).reduce((a, b) => a + Object.keys(b.r || {}).length, 0), gets: window.__pxGets || 0 }; });
+      ok('🔍 Scan reads every distinct main image once (variants sharing a picture are read once)', got.n === urls.size && got.gets === urls.size, { got: got.n, gets: got.gets, want: urls.size });
+      const i100 = prods.findIndex((p) => grpOf(prods.indexOf(p)) === 'NW100' && !/feedspark/.test(String(p.f.image_link)));
+      const r100 = got.r[String(prods[i100].f.image_link).trim()];
+      ok('the reading is the picture: 1200 × 1200, a white background, the product spanning 90% of the frame', r100 && r100.w === 1200 && r100.h === 1200 && r100.bg === 'white' && Math.abs(r100.fill - 90) <= 1, r100);
+      const r103 = got.r[String(prods[prods.findIndex((p, i) => grpOf(i) === 'NW103')].f.image_link).trim()];
+      ok('a coloured background is read as one, its colour named', r103 && r103.bg === 'colour' && /^#2e7d32$/i.test(r103.bgc), r103);
+      ok('every reading is saved for the next visit (one KV write per batch, keyed by image URL)', got.put === urls.size, got.put);
+      const rows = await pg.evaluate(() => { const o = {}; document.querySelectorAll('#pix-body .mlist .v').forEach((v) => { const l = v.previousElementSibling.previousElementSibling; o[l.getAttribute('data-f').slice(4)] = +String((v.querySelector('small') || {}).textContent || '0').replace(/,/g, ''); }); return o; });
+      ok('each row counts the products an independent count gives — Google’s rules, under 800 px, plain, coloured, scene, under half the frame, the same picture on 3+ products',
+        ['req', 'lowres', 'plain', 'colour', 'scene', 'tiny', 'shared'].every((k) => rows[k] === want[k]), { rows, want });
+      await pg.evaluate(() => document.querySelector('#pix-body [data-f="pix:req"]').click());
+      await pg.waitForTimeout(300);
+      ok('a row is a table filter: “Below Google’s image rules” lists exactly those products', await view() === want.req && want.req > 0, { page: await view(), want: want.req });
+      await pg.evaluate(() => { const b = document.querySelector('#facet [data-fx]'); b && b.click(); });
+      await pg.waitForTimeout(250);
+      const look = await pg.evaluate(() => Array.from(document.querySelectorAll('#pix-body .pixlook button')).map((b) => b.querySelector('b').className));
+      ok('“To look at” leads with what Google refuses, then what it advises against', look.length > 0 && look[0] === 'fail', look);
+      if (process.env.CAT_SHOT) { await pg.locator('#m-pix').scrollIntoViewIfNeeded(); await pg.locator('#m-pix').screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_pix.png') }); }
+      const i103 = prods.findIndex((p, i) => grpOf(i) === 'NW103');
+      await pg.evaluate((i) => window.__FCCCatalogue.state && document.querySelector('#pix-body [data-px-open]') && (function () { const b = document.querySelector('#pix-body [data-px-open="' + i + '"]'); if (b) b.click(); })(), i103);
+      await pg.waitForTimeout(500);
+      const insp = await pg.evaluate(() => (document.getElementById('i-stage') || {}).textContent || '');
+      ok('a tile opens its product, and the inspector reads its picture out', /Image pixels/.test(insp) && /Coloured background/.test(insp) && /1,000 × 1,000/.test(insp), insp.slice(0, 200));
+      // CAT_SHOT=<dir> keeps a picture of the module and the inspector for a visual pass
+      if (process.env.CAT_SHOT) { const d = pg.locator('#insp details[data-g="px"]'); await d.scrollIntoViewIfNeeded().catch(() => {}); await d.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_pix_insp.png') }).catch(() => {}); }
+      await pg.keyboard.press('Escape'); await pg.waitForTimeout(300);
+    }
     console.log('· stock control — off Stock management\'s own read of this market');
     const oosEl = await pg.evaluate(() => { const el = document.querySelector('#avail-body [data-f="avail:out_of_stock"]'); if (!el) return false; el.click(); return true; });
     await pg.waitForTimeout(250);
@@ -285,7 +334,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
     await pg.waitForTimeout(200);
     const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
-    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /17 of 18/.test(hid.note), hid);
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /18 of 19/.test(hid.note), hid);
     await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
     await pg.waitForTimeout(200);
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
@@ -294,7 +343,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // 👔 Procurement view: nine modules, the commercial six first, the operational ones put away — and off again restores all
     await pg.click('#proc-b'); await pg.waitForTimeout(300);
     const pv = await pg.evaluate(() => ({ shown: Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden && getComputedStyle(m).display !== 'none').sort((a, b) => (+a.style.order) - (+b.style.order)).map((m) => m.dataset.mod), on: document.getElementById('proc-b').getAttribute('aria-pressed'), note: document.getElementById('mods-s').textContent }));
-    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 18/.test(pv.note), pv);
+    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 19/.test(pv.note), pv);
     // optimised vs not: FeedHero's own cut of Google Ads, re-added in node
     const lr = DATA.live.Title_optimisation_status.rows.filter((r) => !/unlisted/i.test(r.category));
     const side = (r) => (/non/i.test(r.category) ? 'n' : 'o'), acc = { o: { s: 0, r: 0, sp: 0 }, n: { s: 0, r: 0, sp: 0 } };
@@ -327,7 +376,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('Fee check: per product and against Ads revenue are the typed fee over this catalogue and this market', fee.o['Per product, a month'] === gbp(2500 / prods.length) && fee.o['vs Google Ads revenue'] === fpc(2500 / rev) && fee.o['Costs more by'] === gbp(700 * 12), fee);
     ok('…and the fees stay on this device (fcc-cat-fee), never a request', JSON.parse(fee.saved || '{}').a === 2500);
     await pg.click('#proc-b'); await pg.waitForTimeout(250);
-    ok('turning the view off brings all eighteen back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 18 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
+    ok('turning the view off brings all nineteen back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 19 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
 

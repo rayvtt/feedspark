@@ -126,6 +126,26 @@ function build() {
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs); every line
 // sits behind the Catalogue guard so no other page is served an engine or a feed it never asked for
+// THE PIXEL SCAN: one synthetic picture per item group, drawn IN THE PAGE (an OffscreenCanvas → PNG, lossless, so every
+// reading is exactly what was drawn). What each group's picture is — and so what the scan must find — is stated here,
+// and tools/check_catalog.js counts its expectations off this table, never off the page.
+const PIX = {
+  NW100: { w: 1200, h: 1200, box: 0.9 },                       // white, product spans 90% — passes everything
+  NW101: { w: 80, h: 80, box: 0.85 },                          // under Google's 100 x 100 minimum
+  NW102: { w: 600, h: 600, box: 0.85 },                        // under 800 px (FeedSpark's threshold)
+  NW103: { w: 1000, h: 1000, box: 0.8, bg: '#2E7D32' },        // a coloured background
+  NW104: { w: 1000, h: 1000, scene: 1 },                       // a scene
+  NW105: { w: 1000, h: 1000, box: 0.3 },                       // the product under half the frame
+  NW106: { w: 900, h: 900, ph: 1 }, NW107: { w: 900, h: 900, ph: 1 }, NW108: { w: 900, h: 900, ph: 1 }   // one placeholder on three products
+};
+const PIX_DEFAULT = { w: 1000, h: 1000, box: 0.88 };
+const PIX_JS = "function(u){var m=String(decodeURIComponent(u)).match(/NW\\d+/),S=" + JSON.stringify(PIX) + ",D=" + JSON.stringify(PIX_DEFAULT) + ",s=(m&&S[m[0]])||D;"
+  + "var c=new OffscreenCanvas(s.w,s.h),x=c.getContext('2d');"
+  + "if(s.scene){var seed=7;for(var y=0;y<s.h;y+=10)for(var q=0;q<s.w;q+=10){seed=(seed*16807)%2147483647;x.fillStyle='hsl('+(seed%360)+',55%,'+(30+seed%40)+'%)';x.fillRect(q,y,10,10);}}"
+  + "else if(s.ph){x.fillStyle='#f2f2f2';x.fillRect(0,0,s.w,s.h);x.fillStyle='#bdbdbd';x.fillRect(s.w*.3,s.h*.42,s.w*.4,s.h*.06);x.fillRect(s.w*.36,s.h*.52,s.w*.28,s.h*.04);}"
+  // every group its OWN picture (a different garment shape + detail per group), so only the placeholder reads as shared
+  + "else{var n=m?+m[0].slice(2):0;x.fillStyle=s.bg||'#ffffff';x.fillRect(0,0,s.w,s.h);var bh=Math.round(s.h*s.box),bw=Math.round(bh*(.35+(n%6)*.08));x.fillStyle='#1a2b4c';x.fillRect(Math.round((s.w-bw)/2),Math.round((s.h-bh)/2),bw,bh);x.fillStyle='#d9a441';for(var k=0;k<1+n%4;k++)x.fillRect(Math.round(s.w/2-bw/2+bw*(k*.22+.05)),Math.round(s.h/2-bh/2+bh*((n*.13+k*.21)%.8)),Math.round(bw*.15),Math.round(bh*.12));}"
+  + "return c.convertToBlob({type:'image/png'});}";
 function stubLines() {
   const d = build();
   const src = (f) => JSON.stringify(fs.readFileSync(path.join(D, f), 'utf8'));
@@ -135,6 +155,9 @@ function stubLines() {
     + "  if(url.indexOf('/feedlab/engine.js')>=0)" + txt(src('feedlab_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/volume/engine.js')>=0)" + txt(src('arrivals_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/overlays/engine.js')>=0)" + txt(src('overlay_engine.js'), 'application/javascript') + "\n"
+    + "  if(url.indexOf('/catalog/pixels.js')>=0)" + txt(src('pixel_engine.js'), 'application/javascript') + "\n"
+    + "  if(url.indexOf('/api/catalog/imgscan')>=0){if(opts&&opts.method==='PUT'){window.__pxPut=(window.__pxPut||[]).concat([JSON.parse(opts.body)]);return j({ok:true,n:1,t:Date.now()});}return j({ok:true,scan:null});}\n"
+    + "  if(url.indexOf('/api/catalog/img')>=0){window.__pxGets=(window.__pxGets||0)+1;var uu=(url.match(/[?&]url=([^&]+)/)||[])[1]||'';return (" + PIX_JS + ")(uu).then(function(b){return new Response(b,{status:200,headers:{'content-type':'image/png'}});});}\n"
     + "  if(url.indexOf('/api/catalog/roster')>=0)return j(" + JSON.stringify(d.roster) + ");\n"
     + "  if(url.indexOf('/api/feed/proxy')>=0)" + txt(JSON.stringify(d.xml), 'application/xml', { 'x-feed-bytes': String(Buffer.byteLength(d.xml)) }) + "\n"
     + "  if(url.indexOf('/api/catalog/master/file')>=0)" + txt(JSON.stringify(d.csv), 'text/csv', { 'x-feed-bytes': String(Buffer.byteLength(d.csv)) }) + "\n"
@@ -147,4 +170,4 @@ function stubLines() {
     + "  if(url.indexOf('/api/roas?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " }\n";
 }
-module.exports = { build, stubLines, CLIENT, MKT, CMPID, DROPPED, HELD };
+module.exports = { build, stubLines, CLIENT, MKT, CMPID, DROPPED, HELD, PIX, PIX_DEFAULT };
