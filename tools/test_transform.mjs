@@ -191,6 +191,29 @@ console.log('Plan reviewed against each module as it stands (28 Sep 2026)');
   ok(RM.kpis.filter((k) => k.id === 'pers')[0].base === '8', 'eight personal-account dependencies (the news routine counted)');
 }
 
+console.log('Module assessment (benefit, complexity, AM dependency, priority, notes)');
+{
+  const A = RM.assess, paths = A.map((r) => r.p);
+  ok(RM.modules.every((m) => paths.indexOf(m.p) >= 0), 'every module on the migration list has an assessment row (' + RM.modules.length + ')');
+  ok(A.every((r) => r.n && r.ben && r.note && TX.AX.cx[r.cx] && TX.AX.am[r.am] && TX.AX.pri[r.pri]), 'every row carries a benefit, a complexity, an AM dependency, a priority and a note');
+  ok(A.every((r) => r.cxw && r.amw), 'every rating says why');
+  ok(new Set(A.map((r) => r.id)).size === A.length, 'row ids are unique');
+  const o = TX.assessOrder(A).map((r) => r.pri);
+  const rank = { high: 0, rec: 1, nice: 2 };
+  ok(o.every((p, i) => i === 0 || rank[o[i - 1]] <= rank[p]), 'sorted highly recommended first, then recommended, then nice to have');
+  ok(TX.quickWin({ pri: 'rec', cx: 'low' }) && !TX.quickWin({ pri: 'nice', cx: 'low' }) && !TX.quickWin({ pri: 'high', cx: 'high' }), 'a quick win is worth building and cheap to move');
+  ok(TX.view(RM, { 'c:assess:pricer': { pri: 'rec', note: 'Keep it' } }).assess.filter((r) => r.id === 'pricer')[0].pri === 'rec', 'management can re-rate a row in place (an override, the seed untouched)');
+  ok(TX.histSubject(RM, {}, 'c:assess:golden', { a: { pri: 'rec' } }).what === 'module assessment', 'a re-rating shows in History in words');
+  ok(/id="assess"/.test(PAGE) && /id="as-t"/.test(PAGE) && /data-add="assess"/.test(PAGE) && /id="as-csv"/.test(PAGE), 'the table, ＋ Module and ⬇ CSV are on the page');
+  ok(/<th>Benefit<\/th><th>Complexity to migrate<\/th><th>AM dependency<\/th><th>Priority<\/th><th>Notes for senior management<\/th>/.test(PAGE), 'the five columns, in the order asked for');
+  ok(/\.as-t\{min-width:1080px\}/.test(PAGE), 'the table pans on the phone instead of crushing');
+}
+
+console.log('Sections Ray removed (6 Oct 2026)');
+ok(!/id="model"/.test(PAGE) && !/id="ams"/.test(PAGE) && !/id="kpi-sec"/.test(PAGE), 'AM operating model, AM onboarding and Migration and adoption KPIs are off the page');
+ok(/var ASF='';/.test(PAGE) && PAGE.indexOf("var ASF=''") < PAGE.indexOf('function assess()'), 'the assessment filter state is declared before the table that reads it');
+ok(!/New AMs onboarded/.test(PAGE) && !/function kpiT\(/.test(PAGE) && !/function editAm\(/.test(PAGE), 'and nothing on the page still draws or edits them');
+
 console.log('Board graphics');
 ok(RM.months.every((m) => m.ic), 'every planned month has an icon on the road');
 ok(/\.canvas-in\{display:flex;align-items:flex-start;gap:48px/.test(PAGE), 'the months are spaced out (48px apart)');
