@@ -209,6 +209,11 @@ console.log('Module assessment (benefit, complexity, AM dependency, priority, no
   ok(/\.as-t\{min-width:1080px\}/.test(PAGE), 'the table pans on the phone instead of crushing');
 }
 
+console.log('Sections Ray removed (6 Oct 2026)');
+ok(!/id="model"/.test(PAGE) && !/id="ams"/.test(PAGE) && !/id="kpi-sec"/.test(PAGE), 'AM operating model, AM onboarding and Migration and adoption KPIs are off the page');
+ok(/var ASF='';/.test(PAGE) && PAGE.indexOf("var ASF=''") < PAGE.indexOf('function assess()'), 'the assessment filter state is declared before the table that reads it');
+ok(!/New AMs onboarded/.test(PAGE) && !/function kpiT\(/.test(PAGE) && !/function editAm\(/.test(PAGE), 'and nothing on the page still draws or edits them');
+
 console.log('Board graphics');
 ok(RM.months.every((m) => m.ic), 'every planned month has an icon on the road');
 ok(/\.canvas-in\{display:flex;align-items:flex-start;gap:48px/.test(PAGE), 'the months are spaced out (48px apart)');

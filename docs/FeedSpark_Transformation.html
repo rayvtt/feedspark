@@ -452,30 +452,10 @@ window.DECK_EDITOR_SELECTOR='.hero .sub';</script>
     <div class="tw"><table class="t" id="dec-t"></table></div>
   </section>
 
-  <section class="blk" id="model">
-    <div class="blk-h"><div class="grow"><h2>AM operating model: 70% fixed, 30% your own</h2><p>What every AM gets unchanged, what they can configure, and where their own modules live.</p></div></div>
-    <div class="stack" id="model-stack" aria-hidden="true"></div>
-    <div class="split" id="model-zones"></div>
-    <div class="blk-h" style="margin:16px 0 4px"><div class="grow"><h2 style="font-size:15px">Rules</h2></div><button class="btn" type="button" data-add="rules">＋ Rule</button></div>
-    <div class="tw"><table class="t" id="rule-t"></table></div>
-  </section>
-
   <section class="blk" id="sources">
     <div class="blk-h"><div class="grow"><h2>Data sources for AM-built modules</h2><p>An AM's own module can only read from sources connected here.</p></div>
       <button class="btn" type="button" data-add="sources">＋ Source</button></div>
     <div class="tw"><table class="t" id="src-t"></table></div>
-  </section>
-
-  <section class="blk" id="ams">
-    <div class="blk-h"><div class="grow"><h2>AM onboarding</h2><p>The account managers joining, by wave. Click a row to name them and move them along.</p></div>
-      <button class="btn" type="button" data-add="ams">＋ AM</button></div>
-    <div class="tw"><table class="t" id="am-t"></table></div>
-  </section>
-
-  <section class="blk" id="kpi-sec">
-    <div class="blk-h"><div class="grow"><h2>Migration and adoption KPIs</h2><p>Each figure is typed in by whoever measured it, with their name and the date beside it.</p></div>
-      <button class="btn" type="button" data-add="kpis">＋ KPI</button></div>
-    <div class="tw"><table class="t" id="kpi-t"></table></div>
   </section>
 
   <section class="blk" id="risks">
@@ -1082,15 +1062,6 @@ var TX={
         if(isNew)out['c:decisions:'+d.id]=Object.assign(vals,{code:d.code,add:1}); else contentWrite('decisions',d,vals,out);
         var sr={st:gv('f-st'),choice:gv('f-choice')}; if(isNew||sr.st!==(r.st||'open')||sr.choice!==(r.choice||''))out['d:'+d.id]=sr; }});
   }
-  function editKpi(k){ var isNew=!k, r=isNew?{}:(S['k:'+k.id]||{}); k=k||{id:uid('u'),t:'',base:'',target:'',why:''};
-    openForm({title:isNew?'New KPI':k.t,ctx:k.auto?'This figure is counted live on the page; edit its wording here.':'',stamp:stamp(r),
-      fields:[{k:'t',l:'Measure',v:k.t,max:120},{k:'why',l:'How it is measured',type:'area',v:k.why},
-        {pair:[{k:'base',l:'Baseline',v:k.base,max:40},{k:'target',l:'Target',v:k.target,max:40}]}].concat(k.auto?[]:[{k:'v',l:'Current value',v:r.v,max:40},{k:'note',l:'Note',type:'area',v:r.note}]),
-      del:isNew?null:function(out){ out['c:kpis:'+k.id]=merged('c:kpis:'+k.id,{del:1}); },
-      save:function(out){ var t=gv('f-t'); if(!t)return; var vals={t:t,why:gv('f-why'),base:gv('f-base'),target:gv('f-target')};
-        if(isNew)out['c:kpis:'+k.id]=Object.assign(vals,{add:1}); else contentWrite('kpis',k,vals,out);
-        if(!k.auto){ var sr={v:gv('f-v'),note:gv('f-note')}; if(isNew||sr.v!==(r.v||'')||sr.note!==(r.note||''))out['k:'+k.id]=sr; } }});
-  }
   function editRisk(k){ var isNew=!k, r=isNew?{}:(S['r:'+k.id]||{}); k=k||{id:uid('u'),t:'',m:'',rag:'a'};
     openForm({title:isNew?'New risk':k.t,stamp:stamp(r),
       fields:[{k:'t',l:'Risk',v:k.t,max:200},{k:'m',l:'Mitigation',type:'area',v:k.m},{k:'rag',l:'Rating',type:'select',o:{r:'Red',a:'Amber',g:'Green',c:'Closed'},v:r.rag||k.rag},{k:'note',l:'Note',type:'area',v:r.note}],
@@ -1107,22 +1078,12 @@ var TX={
         if(isNew)out['c:'+coll+':'+row.id]=Object.assign(vals,{add:1}); else contentWrite(coll,row,vals,out); }});
   }
   function editSource(s){ editSimple('sources',s,s?s.n:'data source',[{k:'n',l:'Source',max:80},{k:'what',l:'What it gives an AM module',max:160},{k:'st',l:'Status',type:'select',o:{'Live':'Live','Partly':'Partly','Not connected':'Not connected'}},{k:'note',l:'Note',type:'area'}]); }
-  function editRule(r){ editSimple('rules',r,r?'Rule':'rule',[{k:'t',l:'Rule',type:'area'}]); }
   function editRole(ro){ var isNew=!ro, r=isNew?{}:(S['p:'+ro.id]||{}); ro=ro||{id:uid('u'),label:'',def:''};
     openForm({title:isNew?'New role':ro.label,ctx:'Named on every card this role owns, and in the status update.',stamp:stamp(r),
       fields:[{k:'label',l:'Role',v:ro.label,max:60},{k:'name',l:'Person',v:r.name,ph:ro.def||'Not named yet',max:60}],
       del:(isNew||ro.id==='po')?null:function(out){ out['c:roles:'+ro.id]=merged('c:roles:'+ro.id,{del:1}); },
       save:function(out){ var lb=gv('f-label'); if(!lb)return; if(isNew)out['c:roles:'+ro.id]={label:lb,add:1}; else contentWrite('roles',ro,{label:lb},out);
         var nm=gv('f-name'); if(isNew||nm!==(r.name||''))out['p:'+ro.id]={name:nm}; }});
-  }
-  function editAm(a){ var isNew=!a, r=isNew?{}:(S['a:'+a.id]||{}); a=a||{id:uid('u'),wave:2};
-    openForm({title:isNew?'New AM':(r.name||'AM'),ctx:'Onboarding: access profile first, then the one-hour walkthrough, then their first brief from Workflow.',stamp:stamp(r),
-      fields:[{pair:[{k:'name',l:'Name',v:r.name,max:60},{k:'email',l:'Email',v:r.email,max:120}]},
-        {pair:[{k:'wave',l:'Wave',type:'select',o:{'1':'Wave 1','2':'Wave 2','3':'Wave 3'},v:String(a.wave)},{k:'st',l:'Stage',type:'select',o:Object.assign({'':'Not started'},RM.amst),v:r.st||''}]},
-        {k:'note',l:'Note',type:'area',v:r.note}],
-      del:isNew?null:function(out){ out['c:ams:'+a.id]=merged('c:ams:'+a.id,{del:1}); },
-      save:function(out){ var w=+gv('f-wave')||1; if(isNew)out['c:ams:'+a.id]={wave:w,add:1}; else if(w!==+a.wave)contentWrite('ams',a,{wave:w},out);
-        out['a:'+a.id]={name:gv('f-name'),email:gv('f-email'),st:gv('f-st'),note:gv('f-note')}; }});
   }
   function editMod(m){ var r=TX.modRec(m,S)||{};
     openForm({title:m.n,ctx:'Wave '+m.w+' · data: '+m.data+'. Every AM sees this state on the module’s icon and page.',stamp:stamp(r),
@@ -1132,7 +1093,7 @@ var TX={
   }
 
   /* ---- render ---- */
-  function kpis(){ var s=TX.summary(RM,S,NOW), am=TX.amsActive(RM,S), mo=MO(), cm=mo[s.cur]||{name:s.cur,theme:''};
+  function kpis(){ var s=TX.summary(RM,S,NOW), mo=MO(), cm=mo[s.cur]||{name:s.cur,theme:''};
     var gateTxt=s.gate?((mo[s.gate.m]||{name:s.gate.m}).name.replace(/ \d{4}$/,'')+': '+s.gate.t):'All gates passed';
     $('kpis').innerHTML=''
       +'<div class="kpi"><div class="n">'+s.pct+'%<small> · '+s.done+'/'+s.total+'</small></div><div class="l">Programme complete</div><div class="pbar"><i style="width:'+s.pct+'%;background:var(--good)"></i></div></div>'
@@ -1140,8 +1101,7 @@ var TX={
       +'<div class="kpi"><div class="n">'+s.thisDone+'<small> of '+s.thisN+'</small></div><div class="l">'+(s.started?'This month':'First month')+'</div><div class="d">'+esc(cm.name+(cm.theme?' · '+cm.theme:''))+'</div></div>'
       +'<div class="kpi '+(s.late.length?'risk':'good')+'"><div class="n">'+s.late.length+'</div><div class="l">Late cards</div><div class="d">'+(s.late.length?esc(s.late[0].t):'Nothing behind plan')+'</div></div>'
       +'<div class="kpi"><div class="n" style="font-size:16px;white-space:normal">'+esc(gateTxt)+'</div><div class="l">Next gate</div></div>'
-      +'<div class="kpi '+(s.decided<s.decTotal?'warn':'good')+'"><div class="n">'+s.decided+'<small> of '+s.decTotal+'</small></div><div class="l">Decisions signed</div></div>'
-      +'<div class="kpi"><div class="n">'+am+'<small> of '+V().ams.length+'</small></div><div class="l">New AMs onboarded</div></div>';
+      +'<div class="kpi '+(s.decided<s.decTotal?'warn':'good')+'"><div class="n">'+s.decided+'<small> of '+s.decTotal+'</small></div><div class="l">Decisions signed</div></div>';
   }
   function team(){ $('team-roles').innerHTML=V().roles.map(function(ro){ var nm=roleName(ro.id), set=!!((S['p:'+ro.id]||{}).name||ro.def);
       return '<button class="role" type="button" data-role="'+esc(ro.id)+'"><span class="rl">'+esc(ro.label)+'</span><span class="rn'+(set?'':' unset')+'">'+esc(set?nm:'Not named yet')+'</span></button>'; }).join(''); }
@@ -1196,11 +1156,6 @@ var TX={
         +'<td><span class="rag '+(st==='decided'?'g':over?'r':st==='proposed'?'a':'c')+'">'+(st==='decided'?'Decided':st==='proposed'?'Proposed':over?'Overdue':'Open')+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td></tr>'; });
     $('dec-t').innerHTML=h+'</tbody>';
   }
-  function model(){ var z=RM.model.zones, cols={fix:'var(--navy)',cfg:'var(--orange)',ext:'var(--ws-ext)'};
-    $('model-stack').innerHTML=z.map(function(x){ return '<i style="width:'+Math.max(x.share,2)+'%;background:'+cols[x.cls]+'"></i>'; }).join('');
-    $('model-zones').innerHTML=z.map(function(x){ return '<div class="zone '+x.cls+'"><h3>'+esc(x.name)+'</h3><div class="share">'+x.share+'<small>'+esc(x.unit)+'</small></div><div class="sm">'+esc(x.what)+'</div><ul>'+x.list.map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul></div>'; }).join('');
-    $('rule-t').innerHTML='<tbody>'+V().rules.map(function(r,i){ return '<tr class="ed" data-rule="'+esc(r.id)+'"><td style="width:36px"><b>'+(i+1)+'</b></td><td>'+esc(r.t)+'</td></tr>'; }).join('')+'</tbody>';
-  }
   var ASF='';
   try{ ASF=localStorage.getItem('fcc-tx-asf')||''; }catch(e){}
   function assess(){ var rows=TX.assessOrder(V().assess), AX=TX.AX;
@@ -1227,21 +1182,6 @@ var TX={
     $('src-t').innerHTML='<thead><tr><th>Source</th><th>What it gives an AM module</th><th>Status</th><th>Note</th></tr></thead><tbody>'
       +V().sources.map(function(s){ return '<tr class="ed" data-src="'+esc(s.id)+'"><td><b>'+esc(s.n)+'</b></td><td class="sm">'+esc(s.what)+'</td><td><span class="rag '+(cls[s.st]||'c')+'">'+esc(s.st)+'</span></td><td class="sm">'+esc(s.note)+'</td></tr>'; }).join('')+'</tbody>';
   }
-  function ams(){ var h='<thead><tr><th>Wave</th><th>Name</th><th>Stage</th><th>Note</th></tr></thead><tbody>';
-    V().ams.forEach(function(a){ var r=S['a:'+a.id]||{};
-      h+='<tr class="ed" data-am="'+esc(a.id)+'"><td class="sm" style="white-space:nowrap"><b>Wave '+esc(a.wave)+'</b></td>'
-        +'<td>'+(r.name?'<b>'+esc(r.name)+'</b>'+(r.email?'<div class="sm muted">'+esc(r.email)+'</div>':''):'<span class="muted">Not named yet</span>')+'</td>'
-        +'<td><span class="rag '+(r.st==='active'||r.st==='onboarded'?'g':r.st?'a':'c')+'">'+esc(RM.amst[r.st]||'Not started')+'</span>'+(r.at?'<div class="who">'+stamp(r)+'</div>':'')+'</td><td class="sm">'+esc(r.note||'')+'</td></tr>'; });
-    $('am-t').innerHTML=h+'</tbody>';
-  }
-  function kpiT(){ var s=TX.summary(RM,S,NOW), h='<thead><tr><th>Measure</th><th>Baseline</th><th>Now</th><th>Target</th><th>Updated</th></tr></thead><tbody>';
-    V().kpis.forEach(function(k){ var r=S['k:'+k.id]||{}, v=r.v;
-      if(k.auto==='ams')v=TX.amsActive(RM,S)+' of '+V().ams.length;
-      if(k.auto==='mods')v=s.mods.migrated+' of '+s.modN;
-      h+='<tr class="ed" data-kpi="'+esc(k.id)+'"><td><b>'+esc(k.t)+'</b><div class="sm muted">'+esc(k.why)+'</div>'+(r.note?'<div class="sm">'+esc(r.note)+'</div>':'')+'</td>'
-        +'<td class="num muted">'+esc(k.base)+'</td><td class="num">'+esc(v||'—')+'</td><td class="num">'+esc(k.target)+'</td><td class="sm">'+(k.auto?'<span class="muted">live</span>':(r.at?stamp(r):'<span class="muted">not measured yet</span>'))+'</td></tr>'; });
-    $('kpi-t').innerHTML=h+'</tbody>';
-  }
   function risks(){ var L={r:'Red',a:'Amber',g:'Green',c:'Closed'}, ord={r:0,a:1,g:2,c:3};
     var list=V().risks.slice().sort(function(x,y){ var a=(S['r:'+x.id]||{}).rag||x.rag, b=(S['r:'+y.id]||{}).rag||y.rag; return ord[a]-ord[b]; });
     $('risk-t').innerHTML='<thead><tr><th>Rating</th><th>Risk</th><th>Mitigation</th><th>Note</th></tr></thead><tbody>'+list.map(function(k){ var r=S['r:'+k.id]||{}, g=r.rag||k.rag||'a';
@@ -1250,7 +1190,7 @@ var TX={
   function opts(){ $('opts').innerHTML=RM.options.map(function(o){ return '<div class="opt'+(o.rec?' rec':'')+'">'+(o.rec?'<div class="tag">Recommended</div>':'')+'<h3>'+o.id+' · '+esc(o.name)+'</h3><p>'+esc(o.p)+'</p><p><b>Effort</b> '+esc(o.eff)+' · <b>Risk</b> '+esc(o.risk)+'</p></div>'; }).join(''); }
   function body(){ if(VIEW==='board')board(); else list(); }
   function render(){ var sc=$('canvas'), sl=sc?sc.scrollLeft:0, stp=sc?sc.scrollTop:0;
-    kpis(); team(); chips(); body(); mods(); assess(); decs(); model(); sources(); ams(); kpiT(); risks(); opts(); setSrc(); if(HOPEN)renderHist();
+    kpis(); team(); chips(); body(); mods(); assess(); decs(); sources(); risks(); opts(); setSrc(); if(HOPEN)renderHist();
     var nc=$('canvas'); if(nc){ nc.scrollLeft=sl; nc.scrollTop=stp; } }
 
   /* ---- events (delegated, so re-renders never lose a handler) ---- */
@@ -1265,18 +1205,15 @@ var TX={
     var ac=t.closest('[data-addcard]'); if(ac){ editItem(null,ac.getAttribute('data-addcard')); return true; }
     if(t.closest('#addcol')){ addMonth(); return true; }
     var ad=t.closest('[data-add]'); if(ad){ var w=ad.getAttribute('data-add');
-      ({roles:function(){ editRole(null); },decisions:function(){ editDec(null); },kpis:function(){ editKpi(null); },risks:function(){ editRisk(null); },sources:function(){ editSource(null); },assess:function(){ editAssess(null); },rules:function(){ editRule(null); },ams:function(){ editAm(null); }})[w](); return true; }
+      ({roles:function(){ editRole(null); },decisions:function(){ editDec(null); },risks:function(){ editRisk(null); },sources:function(){ editSource(null); },assess:function(){ editAssess(null); }})[w](); return true; }
     var mh=t.closest('[data-month]'); if(mh){ editMonth(find(V().months,mh.getAttribute('data-month'),'k')); return true; }
     var it=t.closest('[data-it]'); if(it){ var x=find(V().items,it.getAttribute('data-it')); if(x)editItem(x); return true; }
     var md=t.closest('[data-mod]'); if(md){ editMod(find(RM.modules,md.getAttribute('data-mod'),'p')); return true; }
     var d=t.closest('[data-dec]'); if(d){ editDec(find(V().decisions,d.getAttribute('data-dec'))); return true; }
-    var k=t.closest('[data-kpi]'); if(k){ editKpi(find(V().kpis,k.getAttribute('data-kpi'))); return true; }
     var r=t.closest('[data-risk]'); if(r){ editRisk(find(V().risks,r.getAttribute('data-risk'))); return true; }
     var asr=t.closest('[data-as]'); if(asr){ editAssess(find(V().assess,asr.getAttribute('data-as'))); return true; }
     var asf=t.closest('[data-asf]'); if(asf){ ASF=asf.getAttribute('data-asf'); try{ localStorage.setItem('fcc-tx-asf',ASF); }catch(e){} assess(); return true; }
     var sr=t.closest('[data-src]'); if(sr){ editSource(find(V().sources,sr.getAttribute('data-src'))); return true; }
-    var ru=t.closest('[data-rule]'); if(ru){ editRule(find(V().rules,ru.getAttribute('data-rule'))); return true; }
-    var am=t.closest('[data-am]'); if(am){ editAm(find(V().ams,am.getAttribute('data-am'))); return true; }
     var p=t.closest('[data-role]'); if(p){ editRole(find(V().roles,p.getAttribute('data-role'))); return true; }
     return false;
   }
