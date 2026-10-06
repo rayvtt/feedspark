@@ -23,6 +23,12 @@
  *   · editing a lever, using a suggestion, a market's own values and "Keep as it runs" each save the key they should
  *   · ⧉ Copy summary is the dashboard in words; → Brief marks the switch briefed BEFORE it opens the Workflow composer
  *     with the switch as the brief
+ *   · ONE RULE PER LEVER (Ray, 6 Oct 2026: "Each individual stock lever will be connected to one rule, and that rule could
+ *     be spotted or aggregated across different markets"): with none connected, a lever more than one rule reads as is
+ *     dashed where they overlap; ⛓ Connect a rule picks one as a market runs it (every stock rule on request, another
+ *     market on request) and saves it on the plan; every market then reads that rule alone — the overlap gone, the head
+ *     naming the rule and found / total, a market without it reading missing (and the switch list saying copy it there
+ *     first); ✕ disconnects; ⧉ Copy summary names each lever's rule
  *   · on a phone the lever tiles stack, the tiles pair, the matrix pans in its own frame, a one-line note stays one line
  *     (the page shell's .sc flex-basis once stood one 170px tall) and the page never scrolls sideways
  *
@@ -283,6 +289,68 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.waitForTimeout(300);
     ok('a mark the server refused is SAID before the page leaves — and declining keeps the page', /could not be marked briefed/.test(asked) && /refused \(test\)/.test(asked) && p.url() === url0, { asked, url: p.url() });
     ok('…the step still reads planned (nothing claims a brief that was not recorded)', /planned/.test(await p.$eval('.per[data-p="peak-test"] .stp[data-dir="sale"] .tg', (x) => x.textContent).catch(() => '')));
+    await ctx.close();
+
+    console.log('· one rule per lever — connected in one market, read in every market');
+    ({ ctx, p, errs, seen } = await open(browser, 1440, 1000, '?brand=Superdry'));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    const cls = (mk, lk) => p.$eval('#lev-t tr[data-mk="' + mk + '"]:not(.med) td.lc[data-lk="' + lk + '"]', (td) => td.className).catch(() => '');
+    const heads = () => p.$$eval('#lev-t thead th .thr', (a) => a.map((x) => ({ t: x.textContent.trim(), c: x.className })));
+    let H = await heads();
+    R = await rows(p);
+    ok('no rule connected: each head says so; where two rules read as a lever the cell is dashed (GB and DE: range completion, hero sizes)', H.length === 3 && H.every((h) => h.t === 'no rule connected')
+      && /\bov\b/.test(await cls('GB', 'rc')) && /\bov\b/.test(await cls('DE', 'rc')) && /\bov\b/.test(await cls('GB', 'hero')) && !/\bov\b/.test(await cls('GB', 'units')), H);
+    ok('…the plan tile says where they overlap, and offers to connect one', /not connected — more than one rule reads as it in GB, DE/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent)) && /Connect a rule/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent)));
+    ok('…and the cell’s tooltip counts them', /2 rules read as this lever<\/b> — connect one in Brand plan/.test(R[0].cells[0].tip), R[0].cells[0].tip);
+    await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-rcon"]');
+    await p.waitForSelector('#lev-pick');
+    const pick0 = await p.evaluate(() => ({ mk: document.getElementById('lvk-mk').value, items: Array.from(document.querySelectorAll('#lev-pick .pk')).map((x) => ({ n: x.querySelector('input').value, on: x.querySelector('input').checked, pc: x.querySelector('.pc').textContent.trim() })) }));
+    ok('⛓ Connect a rule opens the picker on the first market read (GB): the rules that read as range completion, each "in 2 of 2"', pick0.mk === 'GB' && pick0.items.map((x) => x.n).join('|') === 'Range completion percentage|Range completion exclusion' && pick0.items.every((x) => x.pc === 'in 2 of 2') && pick0.items[0].on, pick0);
+    await p.check('#lev-pick input[name="lvk-r"][value="Range completion exclusion"]');
+    await p.click('#lev-pick [data-act="lv-rpick"]');
+    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'rc')[0]; return l && l.rule; }, null, { timeout: 5000 });
+    put = await lastPut(p);
+    const rcL = put['p:Superdry'].levers.filter((x) => x.k === 'rc')[0];
+    ok('Connect saves the plan with the rule — its name and the market it was picked in — every other value as it was', JSON.stringify(rcL.rule) === JSON.stringify({ n: 'Range completion exclusion', mk: 'GB' }) && rcL.bau === 30 && rcL.lo === 20 && put['p:Superdry'].levers.filter((x) => x.k !== 'rc').every((x) => !x.rule), put);
+    await p.waitForFunction(() => /Range completion exclusion · 2\/2/.test((document.querySelector('#lev-t thead th .thr') || {}).textContent || ''), null, { timeout: 5000 });
+    R = await rows(p);
+    ok('…every market now reads that ONE rule: the head names it and 2/2, the overlap is gone, the tooltip names it and what it touched', !/\bov\b/.test(await cls('GB', 'rc')) && !/\bov\b/.test(await cls('DE', 'rc')) && /⛓ The connected rule:<br>#11 Range completion exclusion · 3,480 of 58,000 products/.test(R[0].cells[0].tip)
+      && /Also reads as range completion here, not connected:<\/span><br>#9 Range completion percentage/.test(R[0].cells[0].tip), R[0].cells[0].tip);
+    ok('…and the plan tile says where it is found', /Range completion exclusion\s*in 2 of 2 markets/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent.replace(/\s+/g, ' '))));
+    await p.click('#lev-plan .lv[data-lk="units"] [data-act="lv-rcon"]');
+    await p.waitForSelector('#lev-pick');
+    ok('a lever no rule reads as yet says so in the picker', /No rule in Superdry GB reads as this lever/.test(await p.$eval('#lev-pick', (x) => x.textContent)));
+    await p.check('#lvk-all');
+    await p.waitForSelector('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]');
+    const pkAll = await p.$eval('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]', (i) => i.closest('.pk').textContent.replace(/\s+/g, ' '));
+    ok('…"Every stock rule in GB" lists the rest, marking each that does not read as the lever, with the markets carrying it (a GB-only name: 1 of 2)', /does not read as this lever/.test(pkAll) && /in 1 of 2/.test(pkAll), pkAll);
+    await p.check('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]');
+    await p.click('#lev-pick [data-act="lv-rpick"]');
+    await p.waitForFunction(() => /Stock < 9 -> OOS · 1\/2/.test(Array.from(document.querySelectorAll('#lev-t thead th .thr')).map((x) => x.textContent).join('|')), null, { timeout: 5000 });
+    H = await heads(); R = await rows(p);
+    ok('a rule only GB runs: the head reads 1/2 in red; DE’s cell says the connected rule is not there (N/A — on its N/A plan)', /miss/.test(H[1].c) && R[1].cells[1].v === 'N/A' && /“Stock &lt; 9 -&gt; OOS” is not in this market|“Stock < 9 -> OOS” is not in this market/.test(R[1].cells[1].tip), [H[1], R[1].cells[1]]);
+    ok('…and the tile names where it is missing', /in 1 of 2 markets · missing in DE/.test(await p.$eval('#lev-plan .lv[data-lk="units"] .lvr', (x) => x.textContent.replace(/\s+/g, ' '))));
+    await p.click('#lev-plan .lv[data-lk="hero"] [data-act="lv-rcon"]');
+    await p.selectOption('#lvk-mk', 'DE');
+    await p.waitForFunction(() => document.getElementById('lvk-mk').value === 'DE' && /Every stock rule in DE/.test(document.getElementById('lev-pick').textContent), null, { timeout: 5000 });
+    await p.check('#lev-pick input[name="lvk-r"][value="Set hero sizes"]');
+    await p.click('#lev-pick [data-act="lv-rpick"]');
+    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'hero')[0]; return l && l.rule; }, null, { timeout: 5000 });
+    put = await lastPut(p);
+    ok('a rule can be picked as ANOTHER market runs it (DE) — the plan says where it was picked', JSON.stringify(put['p:Superdry'].levers.filter((x) => x.k === 'hero')[0].rule) === JSON.stringify({ n: 'Set hero sizes', mk: 'DE' }) && !!put['p:Superdry'].levers.filter((x) => x.k === 'rc')[0].rule, put);
+    await p.click('#lev-plan .lv[data-lk="units"] [data-act="lv-sug"]');
+    await p.waitForFunction(() => /copy it there first/.test((document.querySelector('.per[data-p="peak-test"] details.sw') || {}).textContent || ''), null, { timeout: 5000 });
+    const swM = await p.$eval('.per[data-p="peak-test"] details.sw', (d) => d.textContent.replace(/\s+/g, ' '));
+    ok('the switch list names only the connected rule where it runs, and flags a market without it: copy it there first', /Stock unit exclusion · Everest N\/A → > 5 units per size GB, DE/.test(swM) && /“Stock < 9 -> OOS” GB ↗/.test(swM) && /The connected rule “Stock < 9 -> OOS” is not in DE — copy it there first/.test(swM), swM);
+    await p.click('#lev-copy');
+    await p.waitForFunction(() => /no rule connected|rule “/.test(window.__copied || ''), null, { timeout: 5000 });
+    const txR = await p.evaluate(() => window.__copied);
+    ok('⧉ Copy summary names each lever’s rule, where it is found and missing', /• Range completion: [^\n]* — rule “Range completion exclusion”, in 2 of 2 markets/.test(txR) && /• Stock unit exclusion · Everest: [^\n]* — rule “Stock < 9 -> OOS”, in 1 of 2 markets \(missing: DE\)/.test(txR), txR);
+    await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-rdis"]');
+    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'rc')[0]; return l && !l.rule; }, null, { timeout: 5000 });
+    await p.waitForFunction(() => /no rule connected/.test((document.querySelector('#lev-t thead th .thr') || {}).textContent || ''), null, { timeout: 5000 });
+    ok('✕ disconnects: the lever reads every rule that looks like it again — the overlap back', /\bov\b/.test(await cls('GB', 'rc')));
+    ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
     console.log('· on a phone');

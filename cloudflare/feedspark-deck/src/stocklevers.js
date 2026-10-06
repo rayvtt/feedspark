@@ -9,7 +9,10 @@
  * may make.
  *
  *   KV stocklevers   ONE shared map in the kvmerge envelope, a key per decision (deletions only through `_deleted`):
- *                      p:<Brand>          the brand's plan {levers:[{k, bau, sale, lo, hi, scope, was, note}], note}
+ *                      p:<Brand>          the brand's plan {levers:[{k, bau, sale, lo, hi, scope, was, note, rule}], note}
+ *                                         — rule {n, mk}: the ONE FeedHero rule the lever is read from, by name, picked as
+ *                                         market mk runs it (Ray, 6 Oct 2026: "Each individual stock lever will be
+ *                                         connected to one rule … spotted or monitored across the remaining markets")
  *                      m:<Brand>|<MKT>    a market's own values {lv:{<k>:{bau, sale}}}
  *                      e:<Brand>|<id>     a sale period {name, from, to, mk:[markets], sale:{st}, bau:{st}}
  *                      r:<Brand>|<id>     a record kept by hand {d, mk:[markets], k, mode, v, was, note, src} — what was
@@ -74,6 +77,14 @@ export function sanitizeLeverKey(key, v, ctx) {
       if (l.scope) o.scope = str(l.scope, 40);
       if (l.was) o.was = str(l.was, 80);
       if (l.note) o.note = str(l.note, 200);
+      if (l.rule != null) {
+        const rn = l.rule && typeof l.rule === 'object' ? str(l.rule.n, 160) : '';
+        if (!rn) return { error: 'bad rule for ' + l.k };
+        const rmk = str(l.rule.mk, 8).toUpperCase();
+        if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };
+        o.rule = { n: rn };
+        if (rmk) o.rule.mk = rmk;
+      }
       levers.push(o);
     }
     return { value: { levers, note: str(v.note, 300), by: ctx.by, at: ctx.now } };

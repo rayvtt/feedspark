@@ -876,6 +876,51 @@ which day, where and why. It never moves a reading.
 `flex-basis:170px` under 820px. The levers card used `.sc` for its small captions, so on a phone a one-line lever note
 stood 170px tall inside its tile. The card's captions are now `.lvc`. A forbidden marker keeps `.sc` off the lever note.
 
+## 3n. One rule per lever — connected in one market, read in every market (`/stock`)
+
+Ray, 6 Oct 2026: *"the same rules (same rule name) will be applied/ copied across all different markets. Each individual
+stock lever will be connected to one rule, and that rule could be spotted or aggregated across different markets. For
+example, with Superdry UK and range completion, there are currently two overlapping logics rule on the dashboard; there
+should be only one that makes sense at any time. Allow a connection between a lever and a rule in a specific market, and
+then that same rule can be spotted or monitored across the remaining markets, to ensure monitoring between 30 markets is
+accurate."*
+
+**Before a rule is connected**, a lever reads every rule that looks like it (§3l): range completion by its mechanism or
+its name, units by the lever's scope on a stock field, hero sizes by mechanism or name. Where **more than one** rule reads
+as a lever in a market, the matrix cell is **dashed**, its tooltip counts them, and the plan tile says where they overlap
+("not connected — more than one rule reads as it in GB, DE").
+
+**Connecting.** *⛓ Connect a rule* on a plan tile opens the picker:
+- a market (the first one read, or the one the rule was last picked in);
+- the rules that market runs that read as the lever — **the name the most markets carry first** (that is the rule that
+  was copied), then FeedHero's run order — each with its run position, the field it writes, what it touched and **in how
+  many markets the same name is found**;
+- *Every stock rule in GB* lists the rest too, each marked "does not read as this lever".
+
+*Connect* saves the plan: the lever carries `rule: {n, mk}` — the rule's name and the market it was picked in. Nothing
+else in the plan moves. *Change* re-opens the picker; *✕* disconnects.
+
+**Once connected, every market reads that one rule** (`docs/stocklevers_engine.js › bound`):
+- The rule is found **by name**, as FeedHero copies it: case, spacing, typographic quotes and dashes are set aside, every
+  word is kept (`nameKey`). "Range Completion < 0.21" and "Range Completion < 0.2" are different rules.
+- **Found:** the lever reads that rule alone — range completion still takes the line measured from the products first,
+  then the cut-off the connected rule's own name states; units take the rule's cut-off; hero sizes read *on*, or
+  *paused* when the connected rule pauses them. Other rules that would read as the lever are set aside and named in the
+  tooltip ("Also reads as range completion here, not connected"). A connected rule that touched no product on its last
+  run says so.
+- **Missing:** the market does not run a rule of that name. The cell reads **missing** (red) — never another rule's value
+  in its place — and its tooltip names what the market runs instead. Against a set plan that is off plan, with the reason
+  "The connected rule “…” is not in this market". A units lever missing its rule reads N/A, which is on plan when the plan
+  is N/A.
+- The **column head** names the rule and *found / total* (red when it is missing anywhere); the **plan tile** names it,
+  "in N of M markets", and where it is missing.
+- The **switch list** names only the connected rule in the markets that run it, and keeps a market without it on the
+  list, flagged: "⚠ The connected rule “…” is not in DE — copy it there first" (the brief says the same).
+- **⧉ Copy summary** names each lever's rule, where it is found and where it is missing, or "no rule connected".
+
+Store: the plan key `p:<Brand>`; the worker checks the rule's name (≤160 characters) and that the market it was picked
+in is one of the brand's (`sanitizeLeverKey`).
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -905,7 +950,7 @@ first); a **cut-off** set to different values across a brand's markets.
 | `PUT /api/rules/hero` | A partial map of `g:` / `m:` / `x:` keys (+ `_deleted`), every key checked (`sanitizeHeroPut`), merged with a read-stamp (`X-Sync-Base`), stamped by / at here. §3e. |
 | `GET /stock/engine.js` | `docs/herosize_engine.js`, verbatim. |
 | `GET /api/rules/levers` | The stock-lever store in scope (`p:` plan · `m:` a market's own values · `e:` sale periods · `r:` the record kept by hand) + the brands with a plan; Superdry's plan seeded once (`applyLeverSeeds`). §3l, §3m. |
-| `PUT /api/rules/levers` | A partial map of `p:` / `m:` / `e:` / `r:` keys (+ `_deleted`), every key checked (`sanitizeLeverPut`), merged with a read-stamp (`X-Sync-Base`), switch steps and records stamped by / at here (a record keeps its first recorder through every edit). Needs the `stock` module. §3l, §3m. |
+| `PUT /api/rules/levers` | A partial map of `p:` (each lever's BAU / SALE and, §3n, its connected rule) / `m:` / `e:` / `r:` keys (+ `_deleted`), every key checked (`sanitizeLeverPut`), merged with a read-stamp (`X-Sync-Base`), switch steps and records stamped by / at here (a record keeps its first recorder through every edit). Needs the `stock` module. §3l, §3m. |
 | `GET /stock/levers.js` | `docs/stocklevers_engine.js`, verbatim. |
 | `GET /api/rules?pull=1` | Owner-only sync-now (≤ 6 markets a call). |
 
@@ -969,7 +1014,10 @@ first); a **cut-off** set to different values across a brand's markets.
   half (`src/stocklevers.js`: what a signin may store, the stamps, the scope, the seed once and never over a
   tombstone), the route, the page and the stub. And §3m: the record (newest first, the latest per market × lever,
   a switch as frozen records, the summary's foot; the worker's checks and the first recorder kept through an edit),
-  the matrix wiring, no KPI band. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
+  the matrix wiring, no KPI band. And §3n: a rule name matched as FeedHero copies it, a connected lever reading one rule
+  (found / missing / paused / idle, the others named), the overlap flag when none is connected, the picker's order and
+  its markets, where each rule is found, the switch list and brief flagging a market without it, the summary line; the
+  worker's check of the rule. In `qa_gate.sh`, `presync.sh`, `validate.yml`.
 - `tools/check_stocklevers.js` — the card driven in Chromium on the stub (served from an http origin so → Brief's
   navigation lands): All brands, the tiles and lever tiles one size, every roster market a row, off plan marked and
   filtered, keep-as-it-runs / a market's own values / ✎ Edit / "Use it" each saving their key, a period planned and
@@ -980,6 +1028,8 @@ first); a **cut-off** set to different values across a brand's markets.
   cell in its state, the tooltip, one width per lever, the editor row under its market and ✎ toggling it), the
   record (add / edit / delete each saving their key, the first recorder kept, a switch recorded in one click and
   then saying so, the latest record in the cell's tooltip) and the phone's one-line note — run on main's page the
-  matrix checks fail. Presync.
+  matrix checks fail. Since §3n: one rule per lever in its own page — the overlap dashed, the picker (the rules that
+  read as the lever, every stock rule, another market), Connect saving the rule on the plan, the overlap gone, a
+  GB-only rule reading missing in DE, the switch list's "copy it there first", the summary, ✕ disconnecting. Presync.
 - `tools/rules_stub.js` — a synthetic rule list pushed through the real engine for `check_mobile.js` /
   `check_darkmode.js`, which also inline `/design/fcc.css` for pages that link it.
