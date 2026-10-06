@@ -11567,8 +11567,8 @@
     {"name": "Stock levers: a period that ended unswitched reads missed in the summary, never \"0 days late\"", "file": "docs/stocklevers_engine.js", "pattern": "(p.next.missed ? 'missed — the period ended ' + p.to :", "pr": 0},
     {"name": "Stock levers: the tripwire reads every PUT outside the page (a brief's navigation takes the page's own record)", "file": "tools/check_stocklevers.js", "pattern": "await p.exposeBinding('__putSeen', (src, body) => { try { seen.push(JSON.parse(body)); } catch (e) {} });", "pr": 0},
     {"name": "Stock: the KPI band's renderer is gone too (must stay gone)", "file": "docs/FeedSpark_Stock.html", "pattern": "function renderKpis()", "forbidden": true, "pr": 0},
-    {"name": "Stock levers: the market list is a MATRIX — the plan line in each lever's head (Ray, 6 Oct 2026: \"the lst should be table/ matrix for overview review\")", "file": "docs/FeedSpark_Stock.html", "pattern": "'<span class=\"thp\">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span></th>'", "pr": 0},
-    {"name": "Stock levers: a matrix cell is one word or number — on / off (with a dot) / none — the detail in its tooltip", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<td class=\"lc ' + st + '\" data-lk=\"' + lk + '\" data-tip=\"' + esc(tip) + '\">' + (st === 'off' ? '<i class=\"dot\" aria-hidden=\"true\"></i>' : '') + '<b>' + esc(v) + '</b></td>';", "pr": 0},
+    {"name": "Stock levers: the market list is a MATRIX — the plan line in each lever's head (Ray, 6 Oct 2026: \"the lst should be table/ matrix for overview review\")", "file": "docs/FeedSpark_Stock.html", "pattern": "'<span class=\"thp\">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span>' + lvRuleHead(M, l) + '</th>'", "pr": 595},
+    {"name": "Stock levers: a matrix cell is one word or number — on / off (with a dot) / none — the detail in its tooltip", "file": "docs/FeedSpark_Stock.html", "pattern": "(st === 'off' ? '<i class=\"dot\" aria-hidden=\"true\"></i>' : '') + '<b>' + esc(v) + '</b></td>';", "pr": 595},
     {"name": "Stock levers: the matrix sits above the plan, overview first", "file": "docs/FeedSpark_Stock.html", "pattern": "<div class=\"tw\" id=\"lev-tw\" hidden><table class=\"t\" id=\"lev-t\"><thead></thead><tbody></tbody></table></div>", "pr": 0},
     {"name": "Stock levers: a market's own values open in a row under it", "file": "docs/FeedSpark_Stock.html", "pattern": "(LV.med === r.market ? lvEditRow(r, levs, b, span) : '')", "pr": 0},
     {"name": "Stock levers: the card's captions are .lvc — the shell's .sc (170px flex-basis under 820px) never reaches them", "file": "docs/FeedSpark_Stock.html", "pattern": "#lev-card .lvc{font-size:11.5px;font-weight:700;color:var(--muted);margin:0}", "pr": 0},
@@ -11595,6 +11595,17 @@
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "assessOrder:function(rows)",
       "pr": 0
-    }
+    },
+    {"name": "Stock levers engine: ONE RULE PER LEVER — a connected lever reads only the rule of that name, a market without it reads missing (Ray, 6 Oct 2026: \"Each individual stock lever will be connected to one rule\")", "file": "docs/stocklevers_engine.js", "pattern": "function bound(lk, m, lever, bd) {", "pr": 0},
+    {"name": "Stock levers engine: a rule name matched as FeedHero copies it (case, spacing, typographic quotes and dashes set aside)", "file": "docs/stocklevers_engine.js", "pattern": "function nameKey(n) {", "pr": 0},
+    {"name": "Stock levers engine: an unconnected lever flags where more than one rule reads as it", "file": "docs/stocklevers_engine.js", "pattern": "if (rd.rules && rd.rules.length > 1) rd.overlap = rd.rules.length;", "pr": 0},
+    {"name": "Stock levers engine: the picker's choices — the rules that read as the lever, the name the most markets carry first", "file": "docs/stocklevers_engine.js", "pattern": "function ruleChoices(lk, markets, mk, lever, all) {", "pr": 0},
+    {"name": "Stock levers engine: where each connected rule is found, missing, not read", "file": "docs/stocklevers_engine.js", "pattern": "var o = { n: boundOf(l) ? boundOf(l).n : '', mk: boundOf(l) ? s0(boundOf(l).mk) : '', found: [], missing: [], unread: [], overlap: [] };", "pr": 0},
+    {"name": "Stock levers engine: the switch list keeps a market missing the connected rule, flagged — the brief says copy it there first", "file": "docs/stocklevers_engine.js", "pattern": "if (c.miss && c.miss.length) L.push('    ⚠ the connected rule “' + c.rule + '” is not in ' + c.miss.join(', ') + ' — copy it there first');", "pr": 0},
+    {"name": "Stock levers worker: a plan lever's connected rule — its name, the market it was picked in (the brand's)", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };", "pr": 0},
+    {"name": "Stock levers: each plan tile names its lever's ONE rule — found in N of the markets, missing where — or offers to connect one", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvRuleLine(M, l) {", "pr": 0},
+    {"name": "Stock levers: the rule picker — a market, its rules, every stock rule on request", "file": "docs/FeedSpark_Stock.html", "pattern": "var ch = SL.ruleChoices(l.k, mk, m0, l, LV.rka);", "pr": 0},
+    {"name": "Stock levers: connecting saves the plan with the rule, everything else as it was", "file": "docs/FeedSpark_Stock.html", "pattern": "lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm });", "pr": 0},
+    {"name": "Stock levers: a missing connected rule reads missing; an unconnected overlap is dashed", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.overlap ? ' ov' : '') + (rd.miss && lk !== 'units' ? ' miss' : '')", "pr": 0}
   ]
 }
