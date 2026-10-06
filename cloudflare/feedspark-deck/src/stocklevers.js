@@ -10,8 +10,8 @@
  *
  *   KV stocklevers   ONE shared map in the kvmerge envelope, a key per decision (deletions only through `_deleted`):
  *                      p:<Brand>          the brand's plan {levers:[{k, bau, sale, lo, hi, scope, was, note, rule}], note}
- *                                         — rule {n, mk}: the ONE FeedHero rule the lever is read from, by name, picked as
- *                                         market mk runs it (Ray, 6 Oct 2026: "Each individual stock lever will be
+ *                                         — rule {n, mk, d}: the ONE FeedHero rule the lever is read from — its name, the
+ *                                         market it was picked in, the field it writes (Ray, 6 Oct 2026: "Each individual stock lever will be
  *                                         connected to one rule … spotted or monitored across the remaining markets")
  *                      m:<Brand>|<MKT>    a market's own values {lv:{<k>:{bau, sale}}}
  *                      e:<Brand>|<id>     a sale period {name, from, to, mk:[markets], sale:{st}, bau:{st}}
@@ -84,6 +84,9 @@ export function sanitizeLeverKey(key, v, ctx) {
         if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };
         o.rule = { n: rn };
         if (rmk) o.rule.mk = rmk;
+        // the field the rule writes (its database name) — how a market's copy under another name is found
+        const rd = str(l.rule.d, 60);
+        if (rd && /^[A-Za-z0-9_]+$/.test(rd)) o.rule.d = rd;
       }
       levers.push(o);
     }

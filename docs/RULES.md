@@ -897,13 +897,27 @@ as a lever in a market, the matrix cell is **dashed**, its tooltip counts them, 
   many markets the same name is found**;
 - *Every stock rule in GB* lists the rest too, each marked "does not read as this lever".
 
-*Connect* saves the plan: the lever carries `rule: {n, mk}` — the rule's name and the market it was picked in. Nothing
-else in the plan moves. *Change* re-opens the picker; *✕* disconnects.
+*Connect* saves the plan: the lever carries `rule: {n, mk, d}` — the rule's name, the market it was picked in and the
+field it writes. Nothing else in the plan moves. *Change* re-opens the picker; *✕* disconnects.
 
-**Once connected, every market reads that one rule** (`docs/stocklevers_engine.js › bound`):
-- The rule is found **by name**, as FeedHero copies it: case, spacing, typographic quotes and dashes are set aside, every
-  word is kept (`nameKey`). "Range Completion < 0.21" and "Range Completion < 0.2" are different rules.
-- **Found:** the lever reads that rule alone — range completion still takes the line measured from the products first,
+**Once connected, every market reads that one rule** (`docs/stocklevers_engine.js › bound`, `findRule`):
+- **Which rule is "that rule" in another market** (Ray, 6 Oct 2026, pointing at Superdry FR's "Range Completion based
+  Availability": *"i see this rule in … (FR) market - but system is not picking it up"*). The copies drift in name while
+  their job never moves. Read live that day, Superdry's hold rule is "Range Completion by Availability" in GB, ES and
+  BE-NL, "Range Completion based Availability" in FR, DE, DK, FI and nine more, "Availability by Range completion" in IE,
+  and "Range Completion (BAU & Peak) - 20%" in IT and NL — and every one of them writes Availability. NO and PL even carry
+  one name on two rules (one writes Availability, the other RC Availability). So a market's copy is, in order:
+  1. the **same name on the same field** (the name compared as FeedHero copies it — case, spacing, typographic quotes and
+     dashes set aside, every word kept: `nameKey`; "Range Completion < 0.21" and "Range Completion < 0.2" stay different);
+  2. else the rule **doing the same job** — reading as the lever and writing the same field, the closest name first when
+     more than one does (`nameSim`: the share of words in common, joining words such as "by" / "based" set aside); a
+     rule picked from *every stock rule* finds its copy among rules on the same field with a near name;
+  3. else **missing**.
+
+  A lever connected before the field was stored has it read off the market it was picked in (`resolved`), never written
+  back. Run on the live names: the hold rule connected in GB is found in all 19 markets (3 by name, 16 under another
+  name); the RC-flag rule connected in FR in all 19, each with its own stated cut-off (21% in most, 20% in DE and BE).
+- **Found:** the lever reads that rule alone (the tooltip says when the market runs it under another name) — range completion still takes the line measured from the products first,
   then the cut-off the connected rule's own name states; units take the rule's cut-off; hero sizes read *on*, or
   *paused* when the connected rule pauses them. Other rules that would read as the lever are set aside and named in the
   tooltip ("Also reads as range completion here, not connected"). A connected rule that touched no product on its last
@@ -913,13 +927,14 @@ else in the plan moves. *Change* re-opens the picker; *✕* disconnects.
   "The connected rule “…” is not in this market". A units lever missing its rule reads N/A, which is on plan when the plan
   is N/A.
 - The **column head** names the rule and *found / total* (red when it is missing anywhere); the **plan tile** names it,
-  "in N of M markets", and where it is missing.
-- The **switch list** names only the connected rule in the markets that run it, and keeps a market without it on the
+  "in N of M markets", how many run it under another name (the names in its tooltip), and where it is missing. The
+  **picker** counts the markets where each rule would be found, and how many of those run it under another name.
+- The **switch list** names each market's own copy of the connected rule (its own name), and keeps a market without it on the
   list, flagged: "⚠ The connected rule “…” is not in DE — copy it there first" (the brief says the same).
 - **⧉ Copy summary** names each lever's rule, where it is found and where it is missing, or "no rule connected".
 
-Store: the plan key `p:<Brand>`; the worker checks the rule's name (≤160 characters) and that the market it was picked
-in is one of the brand's (`sanitizeLeverKey`).
+Store: the plan key `p:<Brand>`; the worker checks the rule's name (≤160 characters), that the market it was picked in
+is one of the brand's, and keeps the field only as a database name (`sanitizeLeverKey`).
 
 ## 4. Findings
 

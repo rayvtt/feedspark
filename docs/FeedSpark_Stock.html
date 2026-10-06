@@ -489,7 +489,8 @@ window.addEventListener('load',restore);
   #lev-card .pk.on{border-color:var(--info);background:rgba(37,99,235,.06)}
   #lev-card .pk .pn{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
   #lev-card .pk .pn .sub2{display:block;font-size:11.5px;font-weight:700;color:var(--muted)}
-  #lev-card .pk .pc{font-size:12px;font-weight:900;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+  #lev-card .pk .pc{font-size:12px;font-weight:900;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+  #lev-card .pk .pc .pa{display:block;font-size:11px;font-weight:700;color:var(--muted)}
   #lev-t th .thr{display:block;margin-top:2px;font-size:10.5px;font-weight:800;letter-spacing:0;text-transform:none;color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #lev-t th .thr.none{color:var(--muted);font-weight:700}
   #lev-t th .thr.miss{color:var(--risk)}
@@ -1092,19 +1093,21 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // picked as one market runs it and read BY NAME in every market (engine: SL.reading → bound / loose, SL.ruleChoices)
   function lvList(a, n) { return a.length <= n ? a.join(', ') : a.slice(0, n).join(', ') + ' + ' + (a.length - n); }
   function lvRuleHead(M, l) {
-    var sp = (M.spread || {})[l.k] || { found: [], missing: [] }, bd = SL.boundOf(l);
+    var sp = (M.spread || {})[l.k] || { found: [], missing: [], alias: [] }, bd = SL.boundOf(l);
     if (!bd) return '<span class="thr none" title="No rule connected — every rule that reads as this lever is read">no rule connected</span>';
-    return '<span class="thr' + (sp.missing.length ? ' miss' : '') + '" title="' + esc('Read from “' + bd.n + '” in every market — found in ' + sp.found.length + ', missing in ' + sp.missing.length + (sp.missing.length ? ' (' + sp.missing.join(', ') + ')' : '')) + '">⛓ ' + esc(bd.n) + ' · ' + sp.found.length + '/' + (sp.found.length + sp.missing.length) + '</span>';
+    return '<span class="thr' + (sp.missing.length ? ' miss' : '') + '" title="' + esc('Read from “' + bd.n + '” in every market — found in ' + sp.found.length + (sp.alias.length ? ' (' + sp.alias.length + ' under another name)' : '') + ', missing in ' + sp.missing.length + (sp.missing.length ? ' (' + sp.missing.join(', ') + ')' : '')) + '">⛓ ' + esc(bd.n) + ' · ' + sp.found.length + '/' + (sp.found.length + sp.missing.length) + '</span>';
   }
   // the lever's rule on its plan tile: named, found in N of the markets read, missing where — or not connected yet, with
   // where more than one rule reads as it
   function lvRuleLine(M, l) {
-    var sp = (M.spread || {})[l.k] || { found: [], missing: [], overlap: [] }, bd = SL.boundOf(l);
+    var sp = (M.spread || {})[l.k] || { found: [], missing: [], overlap: [], alias: [] }, bd = SL.boundOf(l);
     if (bd) {
       var tot = sp.found.length + sp.missing.length;
       return '<div class="lvr"><div class="lvr-h"><span class="h">Rule</span><span class="ra"><button class="hb-dl" type="button" data-act="lv-rcon" data-lk="' + l.k + '">Change</button><button class="hb-dl" type="button" data-act="lv-rdis" data-lk="' + l.k + '" title="Disconnect — the lever reads every rule that looks like it again">✕</button></span></div>'
         + '<div class="rn" title="' + esc('Picked as ' + (bd.mk || 'one market') + ' runs it — read by this name in every market') + '">⛓ <b>' + esc(bd.n) + '</b></div>'
-        + '<div class="lvc' + (sp.missing.length ? ' wn' : '') + '">in ' + sp.found.length + ' of ' + tot + ' market' + (tot === 1 ? '' : 's') + (sp.missing.length ? ' · missing in ' + esc(lvList(sp.missing, 4)) : '') + '</div></div>';
+        + '<div class="lvc' + (sp.missing.length ? ' wn' : '') + '">in ' + sp.found.length + ' of ' + tot + ' market' + (tot === 1 ? '' : 's')
+        + (sp.alias.length ? ' · <span title="' + esc(sp.alias.map(function (x) { return x.mk + ': “' + x.n + '”'; }).join('\n')) + '">' + sp.alias.length + ' under another name</span>' : '')
+        + (sp.missing.length ? ' · missing in ' + esc(lvList(sp.missing, 4)) : '') + '</div></div>';
     }
     return '<div class="lvr none"><div class="lvr-h"><span class="h">Rule</span><span class="ra"><button class="hb-dl" type="button" data-act="lv-rcon" data-lk="' + l.k + '">⛓ Connect a rule</button></span></div>'
       + '<div class="lvc' + (sp.overlap.length ? ' ov' : '') + '">' + (sp.overlap.length ? 'not connected — more than one rule reads as it in ' + esc(lvList(sp.overlap, 4)) : 'not connected') + '</div></div>';
@@ -1121,14 +1124,14 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var sel = LV.rksel != null ? LV.rksel : bd ? bd.n : ch.length ? ch[0].n : '';
     var label = SL.LEVER[l.k].label + (l.scope ? ' · ' + l.scope : '');
     return '<div class="lv-pick" id="lev-pick" data-lk="' + l.k + '"><div class="lvh"><h4>⛓ ' + esc(label) + ' — connect one rule</h4></div>'
-      + '<p class="lvc">Pick it as one market runs it; the same rule name is then read in every other market.</p>'
+      + '<p class="lvc">Pick it as one market runs it; every other market is then read from its copy — the same name, or the rule doing the same job under another.</p>'
       + '<div class="pk-bar"><label class="vb"><span class="h">Market</span><select class="fld" id="lvk-mk" aria-label="The market to pick the rule in">' + read.map(function (x) { return '<option value="' + esc(x) + '"' + (x === m0 ? ' selected' : '') + '>' + esc(b + ' ' + x) + '</option>'; }).join('') + '</select></label>'
       + '<label class="tog"><input type="checkbox" id="lvk-all"' + (LV.rka ? ' checked' : '') + '> Every stock rule in ' + esc(m0) + '</label></div>'
       + (ch.length ? '<div class="pk-list" role="radiogroup" aria-label="Rules in ' + esc(m0) + '">' + ch.map(function (c, i) {
-          return '<label class="pk' + (c.n === sel ? ' on' : '') + '"><input type="radio" name="lvk-r" value="' + esc(c.n) + '"' + (c.n === sel ? ' checked' : '') + '>'
-            + '<span class="pn"><b>' + esc(c.n) + '</b>' + (i === 0 && c.fits && ch.length > 1 && c.carry.length > ch[1].carry.length ? ' <span class="tg bl">in the most markets</span>' : '') + (!c.fits ? ' <span class="tg dash">does not read as this lever</span>' : '')
+          return '<label class="pk' + (c.n === sel ? ' on' : '') + '"><input type="radio" name="lvk-r" value="' + esc(c.n) + '" data-d="' + esc(c.d || '') + '"' + (c.n === sel ? ' checked' : '') + '>'
+            + '<span class="pn"><b>' + esc(c.n) + '</b>' + (i === 0 && c.fits && ch.length > 1 && c.carry.length > ch[1].carry.length ? ' <span class="tg bl">runs in the most markets</span>' : '') + (!c.fits ? ' <span class="tg dash">does not read as this lever</span>' : '')
             + '<span class="sub2">#' + ((c.i || 0) + 1) + ' in run order · writes ' + esc(c.t || '—') + ' · ' + n0(c.imp) + ' of ' + n0(c.of) + ' products</span></span>'
-            + '<span class="pc" title="' + esc(c.carry.join(', ')) + '">in ' + c.carry.length + ' of ' + read.length + '</span></label>';
+            + '<span class="pc" title="' + esc('Found in ' + c.carry.length + ': under this name in ' + (c.same.join(', ') || 'none') + (c.carry.length > c.same.length ? ' · under another name, doing the same job, in ' + c.carry.filter(function (x) { return c.same.indexOf(x) < 0; }).join(', ') : '')) + '">in ' + c.carry.length + ' of ' + read.length + (c.carry.length > c.same.length ? '<span class="pa">' + (c.carry.length - c.same.length) + ' under another name</span>' : '') + '</span></label>';
         }).join('') + '</div>'
         : '<p class="note">No rule in ' + esc(b + ' ' + m0) + ' reads as this lever — tick “Every stock rule” to pick from all of them.</p>')
       + '<div class="acts"><button class="btn" type="button" data-act="lv-rpick"' + (ch.length ? '' : ' disabled') + '>Connect</button><button class="btn" type="button" data-act="lv-rpx">Cancel</button></div></div>';
@@ -1155,7 +1158,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + (rd.why ? '<br><span class="m">' + esc(rd.why) + '</span>' : '')
       + '<br>' + (SL.isSet(c.tgt) ? 'Held to ' + esc(SL.fmtVal(lk, c.tgt)) + ' — ' + (c.tgtOwn ? 'its own ' : 'the brand’s ') + md + ' value' : 'No ' + md + ' value set to hold it to')
       + (c.drift ? '<br><b>Off plan</b> — ' + esc(c.drift.why) : '')
-      + (rd.bound && !rd.miss ? '<br><br>⛓ The connected rule' + (rd.idle ? ' — it touched no product on its last run' : '') + ':' : '')
+      + (rd.bound && !rd.miss ? '<br><br>⛓ ' + (rd.mt === 'job' ? 'The connected rule’s job, run here under another name' : 'The connected rule') + (rd.idle ? ' — it touched no product on its last run' : '') + ':' : '')
       + (rd.rules && rd.rules.length ? (rd.bound ? '<br>' : '<br><br>') + rd.rules.slice(0, 5).map(function (x) { return '#' + (x.i + 1) + ' ' + esc(x.n) + (rd.bound ? ' · ' + n0(x.imp) + ' of ' + n0(x.of) + ' products' : ''); }).join('<br>') + (rd.rules.length > 5 ? '<br><span class="m">+' + (rd.rules.length - 5) + ' more</span>' : '') : '')
       + (rd.others && rd.others.length ? '<br><br><span class="m">' + (rd.miss ? 'Runs instead' : 'Also reads as ' + esc(SL.LEVER[lk].label.toLowerCase()) + ' here, not connected') + ':</span><br>' + rd.others.slice(0, 4).map(function (x) { return '#' + (x.i + 1) + ' ' + esc(x.n); }).join('<br>') : '')
       + (rd.overlap ? '<br><br><b>' + rd.overlap + ' rules read as this lever</b> — connect one in Brand plan' : '');
@@ -1376,7 +1379,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       case 'lv-rpick': {
         var rsel = document.querySelector('#lev-pick input[name="lvk-r"]:checked');
         if (!rsel) { toast('Pick the rule to connect'); return; }
-        lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm }); break;
+        lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm, d: rsel.getAttribute('data-d') || undefined }); break;
       }
       case 'lv-rdis': lvSetRule(t.getAttribute('data-lk'), null); break;
       // ---- the record

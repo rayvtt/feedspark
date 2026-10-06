@@ -24,7 +24,7 @@
   else root.StockLevers = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  var VERSION = '1.2.0';
+  var VERSION = '1.3.0';
   // the levers a plan can hold — keys are the store's, labels the card's
   //   kind: pct (a %, inside the brand's band), units (a count per size, or off), onoff
   var LEVERS = [
@@ -52,8 +52,9 @@
   }
 
   // ---- THE STORE (KV stocklevers — one kvmerge map, a key per decision) ------------------------------------------------
-  //   'p:<Brand>'          the brand's plan: {levers:[{k, bau, sale, lo?, hi?, scope?, was?, note?, rule?:{n, mk}}], note,
-  //                        by, at} — rule = the ONE FeedHero rule the lever is read from, by name, picked in market mk
+  //   'p:<Brand>'          the brand's plan: {levers:[{k, bau, sale, lo?, hi?, scope?, was?, note?, rule?:{n, mk, d}}],
+  //                        note, by, at} — rule = the ONE FeedHero rule the lever is read from: its name, the market it
+  //                        was picked in, the field it writes
   //   'm:<Brand>|<MKT>'    a market's own values where they differ: {lv:{<k>:{bau?, sale?}}, by, at}
   //   'e:<Brand>|<id>'     a sale period: {name, from, to (YYYY-MM-DD), mk:[markets], sale:{st, by, at}, bau:{st, by, at}, by, at}
   //                        st: planned → briefed → done
@@ -141,15 +142,55 @@
   // different markets. For example, with Superdry UK and range completion, there are currently two overlapping logics rule
   // on the dashboard; there should be only one that makes sense at any time. Allow a connection between a lever and a rule
   // in a specific market, and then that same rule can be spotted or monitored across the remaining markets").
-  // The plan's lever carries rule:{n, mk} — the rule's NAME, picked as market mk runs it. Every market's reading then comes
-  // from the rule of THAT NAME in it, alone; a market without it reads MISSING — never another rule's value in its place.
-  // A name is matched as FeedHero copies it: case, spacing and typographic quotes / dashes set aside, every word kept.
+  // The plan's lever carries rule:{n, mk, d} — the rule's NAME, picked as market mk runs it, and the FIELD it writes (d).
+  // Every market's reading then comes from that ONE rule in it, alone; a market without it reads MISSING — never another
+  // rule's value in its place.
+  // WHICH rule is "that rule" in another market (Ray, 6 Oct 2026, on Superdry FR: "i see this rule … but system is not
+  // picking it up"): the copies DRIFT in name — Superdry's hold rule is "Range Completion by Availability" in GB, ES and
+  // BE-NL, "Range Completion based Availability" in FR, DE, DK, FI and nine more, "Availability by Range completion" in IE,
+  // "Range Completion (BAU & Peak) - 20%" in IT and NL — while its JOB never moves: every one writes Availability. So a
+  // market's copy is, in order: the same name writing the same field; else the one rule doing the same job — reading as
+  // the lever and writing that field (the closest name when more than one does); else none. NO and PL even carry ONE name
+  // on two rules (one writes Availability, the other RC Availability) — the field is what tells them apart.
+  // A name is compared as FeedHero copies it: case, spacing and typographic quotes / dashes set aside, every word kept.
   function nameKey(n) {
     var s = s0(n); if (s.normalize) s = s.normalize('NFKC');
     return s.toLowerCase().replace(/[‘’‚‛`]/g, "'").replace(/[“”„]/g, '"').replace(/[‐-―−]/g, '-').replace(/\s+/g, '');
   }
   function sameName(a, b) { return !!nameKey(a) && nameKey(a) === nameKey(b); }
   function boundOf(lever) { return lever && lever.rule && s0(lever.rule.n).trim() ? lever.rule : null; }
+  // how alike two names are — the share of their words in common, the joining words ("by", "based on") set aside
+  var STOPW = { by: 1, based: 1, on: 1, the: 1, of: 1, with: 1, and: 1, for: 1, a: 1, an: 1, to: 1, in: 1 };
+  function nameToks(n) { var s = s0(n); if (s.normalize) s = s.normalize('NFKC'); var o = {}; s.toLowerCase().split(/[^a-z0-9%]+/).forEach(function (w) { if (w && !STOPW[w]) o[w] = 1; }); return o; }
+  function nameSim(a, b) {
+    var A = nameToks(a), B = nameToks(b), u = {}, n = 0;
+    Object.keys(A).forEach(function (w) { u[w] = 1; if (B[w]) n++; }); Object.keys(B).forEach(function (w) { u[w] = 1; });
+    var t = Object.keys(u).length; return t ? n / t : 0;
+  }
+  // a market's copy of the connected rule: {r, mt: 'name' | 'job'}, or null
+  function findRule(lk, m, lever, bd) {
+    var st = (m && m.stock) || [];
+    var named = st.filter(function (r) { return sameName(r.n, bd.n) && (!bd.d || r.d === bd.d); });
+    if (named.length) return { r: named[0], mt: 'name' };
+    if (!bd.d) return null;   // a field nobody knows: the name alone
+    var pool = cands(lk, m, lever).filter(function (r) { return r.d === bd.d; });
+    // a rule picked from "every stock rule" does not read as the lever: its copy writes the same field under a near name
+    if (!pool.length) pool = st.filter(function (r) { return r.d === bd.d && nameSim(r.n, bd.n) >= 0.5; });
+    if (!pool.length) return null;
+    pool = pool.slice().sort(function (a, b) { return nameSim(b.n, bd.n) - nameSim(a.n, bd.n) || (a.i || 0) - (b.i || 0); });
+    return { r: pool[0], mt: 'job', of: pool.length };
+  }
+  // the connected rule's FIELD, read off the market it was picked in when the plan does not carry it (a lever connected
+  // before the field was stored) — never written back, and a rule that market no longer runs keeps the name alone
+  function resolved(lever, markets) {
+    var bd = boundOf(lever); if (!bd || bd.d) return lever;
+    var ms = (markets || []).filter(function (x) { return x && x.market === bd.mk; }).concat(markets || []), r = null;
+    for (var i = 0; i < ms.length && !r; i++) r = ((ms[i] && ms[i].stock) || []).filter(function (y) { return sameName(y.n, bd.n); })[0] || null;
+    if (!r || !r.d) return lever;
+    var o = {}; Object.keys(lever).forEach(function (k) { o[k] = lever[k]; });
+    o.rule = { n: bd.n, mk: bd.mk, d: r.d };
+    return o;
+  }
   function reading(lk, m, lever) {
     var bd = boundOf(lever);
     if (bd) return bound(lk, m, lever, bd);
@@ -160,14 +201,14 @@
   }
   // a connected lever: the one rule of that name, or missing (the rules that would otherwise read as it named beside it)
   function bound(lk, m, lever, bd) {
-    var st = (m && m.stock) || [], cand = cands(lk, m, lever);
-    var hit = st.filter(function (r) { return sameName(r.n, bd.n); });
-    var others = cand.filter(function (r) { return !sameName(r.n, bd.n); }).map(pick);
-    if (!hit.length) {
-      return { state: lk === 'units' ? 'off' : 'none', val: null, how: '', rules: [], bound: bd.n, miss: true, others: others,
-        why: '“' + bd.n + '” is not in this market' + (others.length ? ' — it runs ' + (others.length === 1 ? '“' + others[0].n + '”' : others.length + ' other rules that read as this lever') + ' instead' : '') };
+    var cand = cands(lk, m, lever), f = findRule(lk, m, lever, bd);
+    if (!f) {
+      var oth = cand.map(pick);
+      return { state: lk === 'units' ? 'off' : 'none', val: null, how: '', rules: [], bound: bd.n, miss: true, others: oth,
+        why: '“' + bd.n + '” is not in this market' + (bd.d ? ', nor a rule doing its job' : '') + (oth.length ? ' — it runs ' + (oth.length === 1 ? '“' + oth[0].n + '”' : oth.length + ' other rules that read as this lever') + ' instead' : '') };
     }
-    var r = hit[0], base = { rules: [pick(r)], bound: bd.n, others: others, idle: r.imp === 0 };
+    var r = f.r, others = cand.filter(function (x) { return x !== r; }).map(pick);
+    var base = { rules: [pick(r)], bound: bd.n, mt: f.mt, as: f.mt === 'job' ? r.n : '', others: others, idle: r.imp === 0 };
     var put = function (o) { Object.keys(o).forEach(function (k) { base[k] = o[k]; }); return base; };
     if (lk === 'rc') {
       var held = m && m.av && m.av.held, line = held && held.state === 'ok' && held.line ? held.line : null;
@@ -218,15 +259,16 @@
     }
     return { state: 'none', val: null, how: '', rules: [], why: '' };
   }
-  // the rules a lever can be connected to, as ONE market runs them: those that read as the lever first, the name the most
-  // markets carry first among them (the rule that was copied), then FeedHero's run order; every other stock rule after them
-  // when asked. Each names the markets carrying the same name.
+  // the rules a lever can be connected to, as ONE market runs them: those that read as the lever first, the one the most
+  // markets run first among them (the rule that was copied), then FeedHero's run order; every other stock rule after them
+  // when asked. Each names the markets where it would be found (carry) and those running it under the same name (same).
   function ruleChoices(lk, markets, mk, lever, all) {
     var m = (markets || []).filter(function (x) { return x.market === mk; })[0]; if (!m) return [];
     var cand = cands(lk, m, lever), pool = all ? (m.stock || []).slice() : cand.slice(), seen = {};
-    return pool.filter(function (r) { var k = nameKey(r.n); if (!k || seen[k]) return false; seen[k] = 1; return true; }).map(function (r) {
-      var carry = (markets || []).filter(function (x) { return ((x && x.stock) || []).some(function (y) { return sameName(y.n, r.n); }); }).map(function (x) { return x.market; });
-      return { n: r.n, i: r.i, t: r.t, d: r.d, imp: r.imp, of: r.of, ch: r.ch || '', sk: r.sk || '', fits: cand.indexOf(r) >= 0, carry: carry };
+    return pool.filter(function (r) { var k = nameKey(r.n) + '|' + s0(r.d); if (!nameKey(r.n) || seen[k]) return false; seen[k] = 1; return true; }).map(function (r) {
+      var bx = { n: r.n, d: r.d }, carry = [], same = [];
+      (markets || []).forEach(function (x) { var f = x && findRule(lk, x, lever, bx); if (f) { carry.push(x.market); if (f.mt === 'name') same.push(x.market); } });
+      return { n: r.n, i: r.i, t: r.t, d: r.d, imp: r.imp, of: r.of, ch: r.ch || '', sk: r.sk || '', fits: cand.indexOf(r) >= 0, carry: carry, same: same };
     }).sort(function (a, b) { return (b.fits ? 1 : 0) - (a.fits ? 1 : 0) || b.carry.length - a.carry.length || (a.i || 0) - (b.i || 0); });
   }
   // does the market run its target? null = it does (or there is no target to hold it to)
@@ -283,9 +325,10 @@
   function switchList(plan, store, brand, markets, mks, dir) {
     var from = dir === 'sale' ? 'bau' : 'sale', to = dir, groups = {}, order = [], unset = {};
     var byMk = {}; (markets || []).forEach(function (m) { byMk[m.market] = m; });
+    var levs = (plan ? plan.levers : []).map(function (l) { return resolved(l, markets); });
     (mks || []).forEach(function (mk) {
       var mo = marketOf(store, brand, mk), m = byMk[mk];
-      (plan ? plan.levers : []).forEach(function (l) {
+      levs.forEach(function (l) {
         var a = valueOf(plan, mo, l.k, from), b = valueOf(plan, mo, l.k, to);
         if (!isSet(b)) { (unset[l.k] = unset[l.k] || []).push(mk); return; }
         if (same(a, b)) return;
@@ -329,7 +372,7 @@
     var plan = planOf(store, brand), periods = periodsOf(store, brand), byMk = {};
     (markets || []).forEach(function (m) { byMk[m.market] = m; });
     var mks = (roster && roster.length ? roster : (markets || []).map(function (m) { return m.market; })).slice();
-    var levers = plan ? plan.levers.filter(function (l) { return LEVER[l.k]; }) : [];
+    var levers = plan ? plan.levers.filter(function (l) { return LEVER[l.k]; }).map(function (l) { return resolved(l, markets); }) : [];
     var rows = mks.map(function (mk) {
       var m = byMk[mk] || null, mo = marketOf(store, brand, mk), md = modeOf(periods, mk, today);
       var cells = {};
@@ -354,11 +397,11 @@
     // than one rule reads as it
     var spread = {};
     levers.forEach(function (l) {
-      var o = { n: boundOf(l) ? boundOf(l).n : '', mk: boundOf(l) ? s0(boundOf(l).mk) : '', found: [], missing: [], unread: [], overlap: [] };
+      var o = { n: boundOf(l) ? boundOf(l).n : '', mk: boundOf(l) ? s0(boundOf(l).mk) : '', d: boundOf(l) ? s0(boundOf(l).d) : '', found: [], missing: [], unread: [], overlap: [], alias: [] };
       rows.forEach(function (r) {
         var rd = r.cells[l.k] && r.cells[l.k].rd;
         if (!rd) { o.unread.push(r.market); return; }
-        if (o.n) (rd.miss ? o.missing : o.found).push(r.market);
+        if (o.n) { (rd.miss ? o.missing : o.found).push(r.market); if (rd.mt === 'job') o.alias.push({ mk: r.market, n: rd.as }); }
         else if (rd.overlap) o.overlap.push(r.market);
       });
       spread[l.k] = o;
@@ -436,7 +479,8 @@
       var lab = LEVER[l.k].label + (l.scope ? ' · ' + l.scope : '');
       var plan = 'BAU ' + fmtVal(l.k, l.bau) + ' · SALE ' + fmtVal(l.k, l.sale) + (l.k === 'rc' && num(l.lo) != null && num(l.hi) != null ? ' (band ' + l.lo + '–' + l.hi + '%)' : '') + (l.was ? ' (was ' + l.was + ')' : '');
       var sp = M.spread && M.spread[l.k];
-      L.push('• ' + lab + ': ' + plan + (sp && sp.n ? ' — rule “' + sp.n + '”, in ' + sp.found.length + ' of ' + (sp.found.length + sp.missing.length) + ' markets' + (sp.missing.length ? ' (missing: ' + list(sp.missing, 8) + ')' : '') : ' — no rule connected'));
+      var ex = sp && sp.n ? [sp.alias.length ? sp.alias.length + ' under another name' : '', sp.missing.length ? 'missing: ' + list(sp.missing, 8) : ''].filter(Boolean).join('; ') : '';
+      L.push('• ' + lab + ': ' + plan + (sp && sp.n ? ' — rule “' + sp.n + '”, in ' + sp.found.length + ' of ' + (sp.found.length + sp.missing.length) + ' markets' + (ex ? ' (' + ex + ')' : '') : ' — no rule connected'));
       groups(M, l.k).forEach(function (x) { L.push('    ' + x.w + ' — ' + x.mk.join(', ')); });
     });
     var off = M.rows.filter(function (r) { return M.levers.some(function (l) { return r.cells[l.k].drift; }); });
@@ -458,5 +502,5 @@
     ymd: ymd, days: days, modeOf: modeOf, nextStep: nextStep, switchList: switchList, briefLines: briefLines, model: model,
     suggest: suggest, adopt: adopt, readWord: readWord, groups: groups, summaryText: summaryText,
     recordsOf: recordsOf, lastRecord: lastRecord, switchRecords: switchRecords, recordWord: recordWord,
-    cands: cands, nameKey: nameKey, sameName: sameName, boundOf: boundOf, ruleChoices: ruleChoices };
+    cands: cands, nameKey: nameKey, sameName: sameName, boundOf: boundOf, ruleChoices: ruleChoices, nameSim: nameSim, findRule: findRule, resolved: resolved };
 });
