@@ -8,9 +8,12 @@
  * one character wide beside one three characters wide — so this drives the real page through Chromium on the
  * synthetic rule list (tools/rules_stub.js, no real figure) and measures it:
  *
- *   · the KPI band is SIX tiles on a count that divides them: one row at 1440px, 3 × 2 at 1100px and beside the
- *     open forecast panel, 3 × 2 on a phone — equal widths, and every value, label and line below it at one height
- *   · every row of summary tiles (in stock + ad spend, hero sizes) fills its card as equal tiles
+ *   · NO KPI band (Ray, 6 Oct 2026, a red cross over it: "clean up stock section alittle bit"): the page opens on its
+ *     first card, and every figure the band carried still stands on a card below — the ad-spend book is a tile of the
+ *     in-stock card, the rules and hero sizes are the coverage matrix and the hero-size runs, the cut-offs and the
+ *     findings their own cards
+ *   · every row of summary tiles (in stock + ad spend, hero sizes) fills its card as equal tiles — at 1440px, at 1100px
+ *     and beside the open forecast panel
  *   · ONE in-stock card (Ray, 1 Oct 2026: "merge the Adspend kept off section into this interface"): seven columns that
  *     fit the card at 1440px with no cell or header clipped, the three feeds one width, a market row one height whether
  *     or not its ⬇ List button sits in it, and every state of the held-back / range-completion cells drawn
@@ -22,8 +25,8 @@
  *   · a market's setup is a one-line summary; its plain-words sentence opens with its rules
  *   · on a phone the search field has a row of its own (it shrank to its first two letters)
  *
- * NEGATIVE CONTROL: the shared auto-fit grid (/design/fcc.css .kpis) forced back onto the band puts the six tiles
- * 5 + 1 at 1100px, and the even-row measure must say so — the check cannot pass on a band nobody is laying out.
+ * NEGATIVE CONTROL: a fixed-width fill (auto-fill, 260px) forced onto the in-stock tiles at 1100px leaves them 3 + 1, and
+ * the even-row measure must say so — the check cannot pass on tiles nobody is laying out.
  *
  * Run: node tools/check_stockeven.js      (PW_CHROMIUM overrides the browser path)
  */
@@ -65,27 +68,20 @@ async function open(browser, w, h) {
 }
 // rows of boxes, grouped by their top edge
 const rowsOf = (bs) => { const m = {}; bs.forEach((b) => { const k = Math.round(b.y); (m[k] = m[k] || []).push(b); }); return Object.keys(m).sort((a, c) => a - c).map((k) => m[k]); };
-const kpis = (p) => p.evaluate(() => Array.from(document.querySelectorAll('#kpis .kpi')).map((el) => {
-  const r = el.getBoundingClientRect(), l = el.querySelector('.l').getBoundingClientRect(), d = el.querySelector('.d');
-  return { x: r.left, y: r.top, w: r.width, h: r.height, ly: l.top, dy: d ? d.getBoundingClientRect().top : null };
-}));
+const tiles = (p, id) => p.evaluate((id) => Array.from(document.getElementById(id).children).map((c) => { const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, right: b.right }; }), id);
 const even = (rs) => rs.length > 0 && rs.every((r) => r.length === rs[0].length);
 const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 1 : tol));
 
 (async () => {
   const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
-  console.log('· the KPI band — six tiles, even rows');
+  console.log('· no KPI band — the page opens on its first card');
   {
     const { ctx, p, errs } = await open(browser, 1440);
-    const k = await kpis(p);
-    const rs = rowsOf(k);
-    ok('six tiles', k.length === 6, k.length);
-    ok('one row of six at 1440px', rs.length === 1 && rs[0].length === 6, rs.map((r) => r.length));
-    ok('every tile one width', same(k.map((b) => b.w)), k.map((b) => Math.round(b.w)));
-    ok('every label, and every line under it, starts at one height', same(k.map((b) => b.ly)) && same(k.filter((b) => b.dy != null).map((b) => b.dy)), k.map((b) => [Math.round(b.ly), Math.round(b.dy)]));
-    const go = await p.evaluate(() => Array.from(document.querySelectorAll('#kpis [data-go]')).map((el) => el.getAttribute('data-go')));
-    ok('a tile names the card it summarises (a click jumps to it)', ['av-card', 'cov-card', 'hmap-card', 'cut-card', 'find-card'].every((g) => go.indexOf(g) >= 0), go);
+    const top = await p.evaluate(() => { const f = Array.from(document.querySelectorAll('main.wrap > *')).filter((e) => !e.hidden && e.getBoundingClientRect().height > 0)[0]; return { band: !!document.getElementById('kpis') || !!document.querySelector('main .kpis'), first: f ? f.id : '', card: f ? f.classList.contains('card') : false }; });
+    ok('no KPI band on the page; the first thing under the header is a card', !top.band && top.card && top.first === 'lev-card', top);
+    const kept = await p.evaluate(() => ({ book: !!document.querySelector('#av-sum [data-sv="book"]'), google: /Google/.test((document.getElementById('av-sum') || {}).textContent || ''), cov: document.querySelectorAll('#cov tbody tr').length, heroes: document.querySelectorAll('#heroes tbody tr[data-sv]').length, cuts: document.querySelectorAll('#cuts tbody tr[data-sv]').length, finds: document.querySelectorAll('#finds .fd').length }));
+    ok('every figure the band carried still stands on a card: the ad-spend book and Google’s in-stock tile, the coverage matrix, the hero-size runs, the cut-offs, the findings', kept.book && kept.google && kept.cov > 0 && kept.heroes > 0 && kept.cuts > 0 && kept.finds > 0, kept);
 
     console.log('· rows of summary tiles fill their card');
     for (const id of ['av-sum', 'hm-sum']) {
@@ -164,35 +160,34 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     ok('the setup table carries no column that repeats "every" / "all" down every row (batch rides under the channel)', cols.indexOf('Batch') < 0 && cols.indexOf('Channel') >= 0, cols);
     ok('no page errors', errs.length === 0, errs);
 
-    console.log('· beside the open forecast panel the band goes 3 × 2');
+    console.log('· beside the open forecast panel the in-stock tiles stay even');
     await p.click('#av-t tbody td[data-sv]');   // a click on a market's ad spend (not a link or a button) docks its rule's working
     await p.waitForTimeout(350);
     const on = await p.evaluate(() => document.body.classList.contains('sv-on'));
     if (on) {
-      const kr = rowsOf(await kpis(p));
-      ok('with the panel docked, the six tiles sit 3 × 2', kr.length === 2 && even(kr) && kr[0].length === 3, kr.map((r) => r.length));
-    } else ok('the forecast panel opened on a rule row (needed for the next measure)', false, 'panel did not open');
+      const tr = rowsOf(await tiles(p, 'av-sum'));
+      ok('with the panel docked, the in-stock tiles sit in even rows, one width each', tr.length >= 1 && even(tr) && same([].concat(...tr).map((b) => b.w)), tr.map((r) => r.map((b) => Math.round(b.w))));
+    } else ok('the forecast panel opened on a market row (needed for the next measure)', false, 'panel did not open');
     await ctx.close();
   }
 
-  console.log('· 1100px — 3 × 2, and the negative control');
+  console.log('· 1100px — the in-stock tiles even, and the negative control');
   {
     const { ctx, p } = await open(browser, 1100);
-    let rs = rowsOf(await kpis(p));
-    ok('3 × 2 at 1100px', rs.length === 2 && even(rs) && rs[0].length === 3, rs.map((r) => r.length));
-    // NEGATIVE CONTROL — the shared auto-fit grid put back: the band goes ragged, and the measure must catch it
-    await p.addStyleTag({ content: '#kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important}' });
+    let rs = rowsOf(await tiles(p, 'av-sum'));
+    ok('the in-stock tiles sit in even rows at 1100px, one width each', rs.length >= 1 && even(rs) && same([].concat(...rs).map((b) => b.w)), rs.map((r) => r.map((b) => Math.round(b.w))));
+    // NEGATIVE CONTROL — a fixed-width fill forced onto the same tiles leaves them 3 + 1, and the measure must catch it
+    await p.addStyleTag({ content: '#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}' });
     await p.waitForTimeout(100);
-    rs = rowsOf(await kpis(p));
-    ok('negative control: the shared auto-fit grid wraps the same six tiles unevenly, and the even-row measure says so', !even(rs), rs.map((r) => r.length));
+    rs = rowsOf(await tiles(p, 'av-sum'));
+    ok('negative control: a fixed-width fill wraps the same tiles unevenly, and the even-row measure says so', !even(rs), rs.map((r) => r.length));
     await ctx.close();
   }
 
-  console.log('· a phone — the band 3 × 2, the search field on a row of its own');
+  console.log('· a phone — the search field on a row of its own');
   {
     const { ctx, p, errs } = await open(browser, 390, 844);
-    const rs = rowsOf(await kpis(p));
-    ok('3 × 2 at 390px', rs.length === 2 && even(rs) && rs[0].length === 3, rs.map((r) => r.length));
+    ok('no KPI band on the phone either', !(await p.$('#kpis')));
     const q = await p.evaluate(() => { const r = document.getElementById('q').getBoundingClientRect(), c = document.querySelector('.hero .ctl').getBoundingClientRect(); return { w: r.width, cw: c.width }; });
     ok('the search field spans the control row (it had shrunk to its first two letters)', q.w >= q.cw - 2, q);
     await p.evaluate(() => window.FCCDigest && window.FCCDigest.expandAll && window.FCCDigest.expandAll());

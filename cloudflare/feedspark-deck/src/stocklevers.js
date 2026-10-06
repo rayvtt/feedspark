@@ -12,7 +12,11 @@
  *                      p:<Brand>          the brand's plan {levers:[{k, bau, sale, lo, hi, scope, was, note}], note}
  *                      m:<Brand>|<MKT>    a market's own values {lv:{<k>:{bau, sale}}}
  *                      e:<Brand>|<id>     a sale period {name, from, to, mk:[markets], sale:{st}, bau:{st}}
- *                    by / at stamped here, never trusted from the page
+ *                      r:<Brand>|<id>     a record kept by hand {d, mk:[markets], k, mode, v, was, note, src} — what was
+ *                                         set in FeedHero, the day, where (Ray, 6 Oct 2026: "maybe there should be a
+ *                                         manual table as well to keep record of it")
+ *                    by / at stamped here, never trusted from the page — and a record keeps the person who FIRST wrote
+ *                    it down through every edit (the editor is stamped as ed), so an edit can never rewrite who said so
  *
  * NO CLIENT FIGURES IN GIT. The one thing written here is a brand's lever settings as Ray stated them (LEVER_SEEDS —
  * Superdry's, 5 Oct 2026: a range-completion band and line, a units rule and its scope, hero sizes on), put into the
@@ -104,6 +108,27 @@ export function sanitizeLeverKey(key, v, ctx) {
     const was = (ctx.prev && ctx.prev(k)) || {};
     return { value: { name, from: v.from, to: v.to, mk, sale: step(v.sale, was.sale, ctx), bau: step(v.bau, was.bau, ctx), note: str(v.note, 300), by: ctx.by, at: ctx.now } };
   }
+  if ((m = /^r:(.{1,80})\|([a-z0-9-]{3,40})$/.exec(k))) {
+    const brand = m[1];
+    if (ctx.brands.indexOf(brand) < 0) return { error: 'not a roster brand: ' + brand };
+    if (!ctx.inScope(brand)) return { error: 'out of scope: ' + brand };
+    if (v == null) return { value: null };
+    if (typeof v !== 'object') return { error: 'bad record' };
+    if (!DAY.test(String(v.d || ''))) return { error: 'a record has a day' };
+    if (!KINDS[v.k]) return { error: 'bad lever ' + str(v.k, 20) };
+    const kind = KINDS[v.k], to = val(kind, v.v), from = val(kind, v.was);
+    if (to === undefined || to === null) return { error: 'a record says what was set' };
+    if (from === undefined) return { error: 'bad value for what it was' };
+    const all = ctx.marketsOf(brand), mk = [];
+    for (const x of (Array.isArray(v.mk) ? v.mk : []).slice(0, 40)) { const c = str(x, 8).toUpperCase(); if (all.indexOf(c) < 0) return { error: 'not a ' + brand + ' market: ' + c }; if (mk.indexOf(c) < 0) mk.push(c); }
+    if (!mk.length) return { error: 'a record names at least one market' };
+    const prev = (ctx.prev && ctx.prev(k)) || null;
+    const o = { d: v.d, mk, k: v.k, mode: v.mode === 'sale' || v.mode === 'bau' ? v.mode : '', v: to, note: str(v.note, 300) };
+    if (from !== null) o.was = from;
+    const src = str(v.src, 60); if (src) o.src = src;
+    if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; } else { o.by = ctx.by; o.at = ctx.now; }
+    return { value: o };
+  }
   return { error: 'unknown key' };
 }
 // a whole PUT body -> {data, deleted, errors}; nothing is written unless every key is acceptable
@@ -127,7 +152,7 @@ export function leverView(store, inScope) {
   const out = {};
   Object.keys(store || {}).forEach((k) => {
     if (k === '_deleted') return;
-    const m = /^[pme]:([^|]{1,80})(?:\||$)/.exec(k);
+    const m = /^[pmer]:([^|]{1,80})(?:\||$)/.exec(k);
     if (m && inScope(m[1])) out[k] = store[k];
   });
   return out;

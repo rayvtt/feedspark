@@ -126,11 +126,15 @@ function build() {
 }
 // STOCK LEVERS (/api/rules/levers): an invented plan for a brand — a range-completion band and a BAU line the stub's GB
 // measured line sits OFF (so a market reads off plan), a units lever scoped to a range with what it ran at before, hero
-// sizes on, every SALE value unset — and one sale period over two of its three markets. No real figure.
+// sizes on, every SALE value unset — one sale period over two of its three markets, and two records kept by hand. No real
+// figure.
 function leverBuild(now) {
   const store = {
     'p:Superdry': { levers: [{ k: 'rc', lo: 20, hi: 40, bau: 30, sale: null, note: 'A test band' }, { k: 'units', scope: 'Everest', bau: 'off', sale: null, was: '> 5 units per size' }, { k: 'hero', bau: 'on', sale: null }], note: '', by: 'Analyst A', at: now - 86400000 },
     'e:Superdry|peak-test': { name: 'Peak sale (test)', from: '2026-11-20', to: '2026-12-01', mk: ['GB', 'DE'], sale: { st: 'planned' }, bau: { st: 'planned' }, note: '', by: 'Analyst A', at: now - 3600000 },
+    // the record kept by hand: two invented entries, the newer one edited by someone else
+    'r:Superdry|rec-20260914-hero-tst01': { d: '2026-09-14', mk: ['GB', 'DE'], k: 'hero', mode: 'bau', v: 'on', note: 'Hero sizes switched on (test)', by: 'Analyst A', at: now - 20 * 86400000 },
+    'r:Superdry|rec-20261001-rc-tst02': { d: '2026-10-01', mk: ['GB'], k: 'rc', mode: 'bau', v: 35, was: 30, note: 'Line moved after the review (test)', by: 'Analyst A', at: now - 5 * 86400000, ed: { by: 'Analyst B', at: now - 4 * 86400000 } },
   };
   return { ok: true, store, brands: [{ client: 'Superdry', levers: 3, periods: 1 }], at: now };
 }
