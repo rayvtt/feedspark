@@ -276,6 +276,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record keywords (measured / absent / not measured, the dial vs the engine, → Brief)"
   NODE_PATH=$(npm root -g) node tools/check_grkw.js || {
     echo "✗ Golden Record keywords tripwire failed — a keyword state blurred, the dial disagreed with the engine, or the brief left the keyword family"; exit 1; }
+  echo "── validating: Golden Record depth (images / highlights / details per product — the dial vs the engine, not measured, profiles, exports)"
+  NODE_PATH=$(npm root -g) node tools/check_grdepth.js || {
+    echo "✗ Golden Record depth tripwire failed — a depth row scored beside the presence row it replaces, read 'missing' when it was not measured, the dial disagreed with the engine, or a client file lost it"; exit 1; }
   NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
     echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
   echo "── validating: Golden Record client documents — every market at the foot (multi-market brands)"

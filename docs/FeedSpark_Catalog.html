@@ -2114,13 +2114,14 @@ window.addEventListener('load',restore);
   // TWO HONESTY RULES: an image not read is "not scanned", never a pass; and only what Google STATES is a failure —
   // FeedSpark's own thresholds (800 px, soft focus) are named as ours.
   var PXBG = { white: 'White', light: 'Light', colour: 'A colour', scene: 'A scene', transparent: 'Transparent' };
-  var PXK = { small: 'Under Google’s minimum size', huge: 'Over 64 megapixels', heavy: 'Over 16 MB', format: 'A format Google refuses', lowres: 'Under 800 px',
+  var PXK = { small: 'Under Google’s minimum size', small27: 'Under 500 px — Google’s minimum from 31 Jan 2027', huge: 'Over 64 megapixels', heavy: 'Over 16 MB', format: 'A format Google refuses', lowres: 'Under 800 px',
     scene: 'A scene, not plain', colour: 'Coloured background', tiny: 'Product under half the frame', loose: 'Product under 75% of the frame',
     edge: 'Runs to the frame edge', soft: 'Soft focus', shared: 'Same picture on 3+ products' };
   // the word on a gallery tile — a tile is ~90px, so the full label lives in its tooltip
-  var PXT = { small: 'Too small', huge: 'Over 64 MP', heavy: 'Over 16 MB', format: 'Format', lowres: 'Under 800 px', scene: 'Scene', colour: 'Colour bg',
+  var PXT = { small: 'Too small', small27: 'Under 500 px', huge: 'Over 64 MP', heavy: 'Over 16 MB', format: 'Format', lowres: 'Under 800 px', scene: 'Scene', colour: 'Colour bg',
     tiny: 'Small in frame', loose: 'Loose', edge: 'Cropped', soft: 'Soft', shared: 'Shared' };
   var PXB = [['req', 'Below Google’s image rules', 'var(--band-red)', 'too small, over 64 MP or 16 MB, or a format Google refuses'],
+    ['small27', 'Under 500 px — Google from 31 Jan 2027', 'var(--band-orange)', 'Google raises its minimum to 500 × 500 for every product on 31 Jan 2027 — under it the image will not be shown'],
     ['lowres', 'Under 800 px', 'var(--band-orange)', 'FeedSpark’s working threshold — too small to zoom on'],
     ['plain', 'White or light background', 'var(--good)', 'what Google asks for on the main image'],
     ['colour', 'Coloured background', 'var(--band-orange)', 'Google asks for white, grey or light'],

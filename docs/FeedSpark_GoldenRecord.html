@@ -464,6 +464,22 @@ window.addEventListener('load',restore);
      resolution: a fixed-height row of width:X% segments always lays out exactly as measured */
   /* POPULATION card — the PT depth table's row format (label · bar · %), inline (Ray, 18 Sep
      2026: "the table breakdown for highlight population (1, 2, 3, 4, 5, >5)") */
+  /* depth rows (Ray, 7 Oct 2026): images / highlights / details per product, broken down 0 … 6+ */
+  .dep-card{margin:2px 0 10px;padding:9px 13px;background:var(--wash);border:1px solid var(--line);border-radius:10px;max-width:720px}
+  .dep-bar{display:flex;height:10px;border-radius:100px;overflow:hidden;background:#E3E6EB}
+  .dep-bar i{display:block;height:100%}
+  .dep-leg{display:flex;flex-wrap:wrap;gap:4px 13px;margin-top:7px;font-size:11px;font-weight:700;color:var(--muted)}
+  .dep-leg span{white-space:nowrap}
+  .dep-leg span.dep-full{color:var(--ink)}
+  .dep-leg b{color:var(--ink)}
+  .dep-leg .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .dep-foot{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.55}
+  .dep-foot b{color:var(--ink)}
+  .fs-std.g-std{background:#E8F0FE;color:#1A56C4;border-color:#C9D9F8}
+  .wv.dep-by{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+  [data-theme=dark] .dep-card{background:#181B22}
+  [data-theme=dark] .dep-bar{background:#2A2F38}
+  [data-theme=dark] .fs-std.g-std{background:#1B2A44;color:#8FB4F5;border-color:#2C4470}
   .pop{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}
   .pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
@@ -1019,11 +1035,20 @@ window.addEventListener('load',restore);
     { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
     // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
     // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
-    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
+    { k: 'keywords', t: 'rec', d: 1, h: 1, kw: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
     { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
+    // DEPTH (Ray, 7 Oct 2026): `of` = the presence attribute a measured depth twin replaces in the
+    // score, `tg` = the count that earns full credit — the engine's ATTR_SPEC, row for row
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
+    { k: 'img_depth', t: 'rec', d: 1, h: 1, of: 'additional_image_link', tg: 4, lbl: 'images per product', one: 'image', many: 'images',
+      n: 'distinct images per product (image_link + additional_image_link) — 4 or more is full credit; FeedSpark’s standard, Google allows up to 11' },
+    { k: 'lifestyle_image_link', t: 'rec', n: 'up to 5 — the product worn or in use (Fashion)' },
     { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
+    { k: 'hl_depth', t: 'rec', d: 1, of: 'product_highlight', tg: 4, lbl: 'highlights per product', one: 'highlight', many: 'highlights',
+      n: 'highlights per product — Google recommends 4–6; 4 or more is full credit' },
     { k: 'product_detail', t: 'rec', n: 'structured tech specs' },
+    { k: 'detail_depth', t: 'rec', d: 1, h: 1, of: 'product_detail', tg: 3, lbl: 'details per product', one: 'detail', many: 'details',
+      n: 'product details that DESCRIBE the product (sleeve length, neckline, fit …) — 3 or more is full credit; care lines and repeats of other attributes do not count' },
     { k: 'material', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'pattern', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'size_type', t: 'rec', n: 'apparel: regular / petite / plus / tall…' },
@@ -1035,6 +1060,8 @@ window.addEventListener('load',restore);
     { k: 'variant_option', t: 'ai', n: 'name–value pairs defining variant differences' },
     { k: 'popularity_rank', t: 'ai', n: '0–100 rank — powers "bestseller" answers' }
   ];
+  // the depth twin that replaces each presence attribute in the score when it was measured
+  var DEPTH_OF = {}; SPEC.forEach(function (x) { if (x.of) DEPTH_OF[x.of] = x.k; });
   // the category each scoped attribute is asked of — mirrors GPC_SCOPE[k].what in the engine
   var GPC_WHAT = { color: 'clothing & accessories', gender: 'clothing & accessories', age_group: 'clothing & accessories',
     size: 'clothing & shoes', material: 'clothing & accessories', pattern: 'clothing & accessories' };
@@ -1060,12 +1087,67 @@ window.addEventListener('load',restore);
       ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword string' +
       (a.hash ? '; ' + fmt(a.hash) + ' products hold a 32-character id in a keyword slot — an id is not a keyword, so it is not counted' : '');
   }
+  // DEPTH rows, in words (Ray, 7 Oct 2026). A depth reading is the AVERAGE per-product credit
+  // min(count ÷ target, 1) — so the bar and the % read "how full", while the note says how many each
+  // product actually carries and the card under the row breaks the catalogue down 0 … 6+
+  function depAtLeast(a, tg) {
+    var t = 0; if (!a || !a.dist) return null;
+    Object.keys(a.dist).forEach(function (b) { if ((b === '6+' ? 6 : +b) >= tg) t += +a.dist[b] || 0; });
+    return Math.round(t * 10) / 10;
+  }
+  function depNote(x, a) {
+    if (!a || !a.present) return 'no g:' + x.of + ' in this feed';
+    var at = depAtLeast(a, x.tg);
+    return (a.avg != null ? a.avg + ' ' + x.many + ' per product' : '') + (at != null ? ' · ' + at + '% carry ' + x.tg + '+' : '') +
+      (x.k === 'detail_depth' && (a.care || a.dup) ? ' · ' + fmt((a.care || 0) + (a.dup || 0)) + ' lines not counted' : '');
+  }
+  function depWhy(x, a, rows) {
+    if (!a || !a.present) return '';
+    var w = ' · each product scores ' + x.many + ' ÷ ' + x.tg + ', capped at 100% — ' + x.tg + ' or more is full credit, ' +
+      (x.tg === 4 ? '3 is 75%, 2 is 50%, 1 is 25%' : '2 is 67%, 1 is 33%') + ', none is 0 — averaged over all ' + fmt(rows) + ' products';
+    if (x.k === 'detail_depth') {
+      w += (a.care ? '; ' + fmt(a.care) + ' care lines (washing, cleaning) are not counted' : '') +
+        (a.dup ? '; ' + fmt(a.dup) + ' lines repeat another attribute (colour, size, brand, price …) or each other, so they are not counted' : '') +
+        (a.bad ? '; ' + fmt(a.bad) + ' lines carry no name or value' : '');
+    }
+    return w + ' · replaces g:' + x.of + ' in the score (filled is not full)';
+  }
+  var DEP_KEYS = ['0', '1', '2', '3', '4', '5', '6+'];
+  function depCol(b, tg) {
+    var n = b === '6+' ? 6 : +b;
+    if (n === 0) return '#D9534F';
+    if (n < tg) return n / tg >= 0.5 ? '#F5A623' : '#ED6F0B';
+    return n >= 6 ? '#2E7D32' : '#48A868';
+  }
+  // the facets Google's AI can read off a product, by product type — the examples a client asks for
+  var DEP_FACETS = 'shirts and tops: sleeve length, neckline or collar, fit, fastening · dresses: dress length, silhouette, neckline, sleeve length · ' +
+    'trousers and jeans: fit, rise, leg shape, wash · shoes and trainers: heel height, toe shape, fastening, sole · bags: bag type, closure, strap type, size';
+  function depCard(x, a) {
+    if (!a || !a.dist) return '';
+    var segs = '', leg = '';
+    DEP_KEYS.forEach(function (b) {
+      var v = +a.dist[b] || 0, col = depCol(b, x.tg), full = (b === '6+' ? 6 : +b) >= x.tg;
+      var lab = b + ' ' + (b === '1' ? x.one : x.many);
+      if (v > 0) segs += '<i style="width:' + v + '%;background:' + col + '" title="' + esc(lab + ': ' + v + '% of products') + '"></i>';
+      leg += '<span' + (full ? ' class="dep-full"' : '') + '><i class="sw" style="background:' + col + '"></i>' + esc(lab) + ' <b>' + v + '%</b></span>';
+    });
+    var foot = x.k === 'img_depth'
+      ? 'Full credit at <b>' + x.tg + '+</b> (FeedSpark’s standard). Google allows the main image plus up to 10 more and asks for the product from different angles and in use.'
+      : x.k === 'hl_depth'
+        ? 'Full credit at <b>4+</b> — Google recommends 4–6 highlights per product (minimum 2), read on its AI surfaces such as AI Mode.'
+        : 'Full credit at <b>' + x.tg + '+</b> details that describe the product — Google reads them on its AI surfaces; it asks for no repeats of other attributes and no promotion.' +
+          (a.names && a.names.length ? '<br>Carried today: ' + a.names.slice(0, 8).map(function (n) { return esc(n[0]) + ' <b>' + fmt(n[1]) + '</b>'; }).join(' · ') : '') +
+          '<br>Examples by product type — ' + esc(DEP_FACETS);
+    return '<div class="dep-card" data-dep="' + esc(x.k) + '"><div class="dep-bar">' + segs + '</div><div class="dep-leg">' + leg + '</div>' +
+      '<div class="dep-foot">' + foot + '</div></div>';
+  }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
     var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
       if (s.d && !attrs[s.k]) return;   // not measured on this read — never scored as missing
+      if (DEPTH_OF[s.k] && attrs[DEPTH_OF[s.k]]) return;   // its depth twin counts instead — one fact, one weight
       var a = attrs[s.k] || { present: false };
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
       if (a.na) return;
@@ -1107,7 +1189,27 @@ window.addEventListener('load',restore);
     return { n: n, of: of };
   }
   // mirrors the engine's attrAskEmail — the per-attribute client ask (proposal, not alarm)
-  function attrAskEmail(client, mkt, s, cov) {
+  // the depth rows' ask — twin of labelguard.js DEPTH_ASK / perProductAskEmail
+  var DEPTH_ASK = {
+    img_depth: { what: 'images', why: 'Google allows the main image plus up to ten more per product and asks for the product from different angles and in use. FeedSpark’s standard is four or more images per product — more angles give Shopping and Google’s AI surfaces more to show and to read.',
+      how: 'If the extra shots exist in your DAM or on the product pages, we can map them into the feed from our side — happy to share the product set for sign-off before anything changes in the live feed.' },
+    hl_depth: { what: 'highlights', why: 'Google recommends four to six highlights per product — short selling points it reads on its AI surfaces, such as AI Mode.',
+      how: 'We can draft them per product from your copy and product pages, and share them for sign-off before anything changes in the live feed.' },
+    detail_depth: { what: 'product details', why: 'Product details are the structured facts Google reads on its AI surfaces, such as AI Mode — sleeve length, neckline, fit, fastening. Care instructions and values already sent in other fields (colour, size, material) do not add to them.',
+      how: 'We can propose the details for each product type and fill them from your PIM, the product pages or our AI enrichment, and share the values for sign-off before anything changes in the live feed.' }
+  };
+  function perProductAskEmail(client, mkt, s, a) {
+    var loc = client + ' ' + String(mkt || '').toUpperCase(), t = DEPTH_ASK[s.k], at = depAtLeast(a, s.tg);
+    return {
+      subject: loc + ' — feed data: proposal to add more ' + t.what + ' per product',
+      body: 'Hi team,\n\nA quick recommendation from our feed monitoring. '
+        + (a && a.present ? 'In the ' + loc + ' feed, ' + at + '% of products carry ' + s.tg + ' or more ' + t.what + ' (' + a.avg + ' per product on average).'
+          : 'The ' + loc + ' feed does not currently carry ' + t.what + '.')
+        + ' ' + t.why + '\n\n' + t.how + '\n\nBest regards,\nRay'
+    };
+  }
+  function attrAskEmail(client, mkt, s, cov, a) {
+    if (s.of && DEPTH_ASK[s.k]) return perProductAskEmail(client, mkt, s, a);
     var loc = client + ' ' + String(mkt || '').toUpperCase();
     var disp = 'g:' + s.k;
     var missing = cov == null;
@@ -1144,7 +1246,22 @@ window.addEventListener('load',restore);
   // industry scoring profiles: defaults + KV overrides from /api/golden/profile (the
   // engine's INDUSTRY_PROFILES/profileFor mirrored — expected counts-when-absent, waived
   // drops out; required + gtin/mpn untouchable). The profile IS the industry best practice.
-  var PROF = { defaults: {}, overrides: {}, industryMap: {}, ready: false };
+  var PROF = { defaults: {}, overrides: {}, industryMap: {}, upgrade: null, ready: false };
+  // twin of labelguard.js profileLayer: a record saved under an older profile version gets each
+  // later default laid over it, unless the record named that attribute the other way (7 Oct 2026)
+  function layerOf(rec, ind) {
+    if (!rec) return null;
+    var isA = function (v) { return Object.prototype.toString.call(v) === '[object Array]'; };
+    if (!isA(rec.expected) && !isA(rec.waived)) return rec;
+    var e = (rec.expected || []).map(String), w = (rec.waived || []).map(String), up = PROF.upgrade || { v: 1, delta: {} };
+    for (var v = (+rec.v || 1) + 1; v <= (+up.v || 1); v++) {
+      var dv = (up.delta || {})[v] || {}, d = dv[ind] || dv['*'] || {};
+      (d.expected || []).forEach(function (k) { if (e.indexOf(k) < 0 && w.indexOf(k) < 0) e.push(k); });
+      (d.waived || []).forEach(function (k) { if (w.indexOf(k) < 0 && e.indexOf(k) < 0) w.push(k); });
+    }
+    var o = {}; Object.keys(rec).forEach(function (k) { o[k] = rec[k]; }); o.expected = e; o.waived = w;
+    return o;
+  }
   function industryOfC(c) { return PROF.industryMap[c] || INDUSTRY[c] || 'Retail'; }
   function profOk(k) {
     var x = SPEC.filter(function (sp) { return sp.k === k; })[0];
@@ -1152,8 +1269,8 @@ window.addEventListener('load',restore);
   }
   function profileForC(client) {
     var ind = industryOfC(client);
-    var base = (PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] };
-    var cl = (PROF.overrides.clients || {})[client];
+    var base = layerOf((PROF.overrides.industries || {})[ind], ind) || PROF.defaults[ind] || PROF.defaults.Retail || { expected: [], waived: [] };
+    var cl = layerOf((PROF.overrides.clients || {})[client], ind);
     function pick(src, k2) { return src && Object.prototype.toString.call(src[k2]) === '[object Array]' ? src[k2] : null; }
     var expected = pick(cl, 'expected') || pick(base, 'expected') || [];
     var waived = pick(cl, 'waived') || pick(base, 'waived') || [];
@@ -1672,7 +1789,8 @@ window.addEventListener('load',restore);
   }
   function hCls(n) { var v = hDelta(n); return v > 0 ? 'up' : (v < 0 ? 'down' : 'muted'); }
   function hMoveTxt(m) {
-    var k = 'g:' + m[0], a = m[1], b = m[2];
+    var dx = SPEC.filter(function (y) { return y.k === m[0] && y.lbl; })[0];   // a depth row reads by its name
+    var k = dx ? dx.lbl : (m[0] === 'keywords' ? m[0] : 'g:' + m[0]), a = m[1], b = m[2];
     if (typeof a === 'number' && typeof b === 'number') return { t: k + ' ' + hSigned(b - a, 'pp'), c: hCls(b - a), tip: k + ' ' + a + '% → ' + b + '%' };
     if (b === 'na') return { t: k + ' no longer applies', c: 'muted', tip: k + ': no product in the feed is asked for it any more' };
     if (a === 'na') return { t: k + ' now applies', c: 'muted', tip: k + ': products Google asks it of are now in the feed' };
@@ -2274,10 +2392,16 @@ window.addEventListener('load',restore);
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
-        var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
-          (x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
+        // its depth twin was measured: this presence row stays (is it in the feed at all?) but the twin scores
+        var repl = DEPTH_OF[x.k] && s.attrs[DEPTH_OF[x.k]] ? SPEC.filter(function (y) { return y.k === DEPTH_OF[x.k]; })[0] : null;
+        var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + (x.of ? ' dep-row' : '') + (repl ? ' dep-by-row' : '') + '">' +
+          (x.of ? '<span class="at-nm dep-nm" title="' + esc(x.n) + '">' + esc(x.lbl) +
+            (x.h ? '<span class="fs-std" title="FeedSpark’s standard — ' + x.tg + ' or more ' + esc(x.many) + ' per product is full credit; Google sets no number">FeedSpark</span>'
+              : '<span class="fs-std g-std" title="Google’s own recommendation (answer 9216100): 4–6 highlights per product">Google 4–6</span>')
+          : x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
             '<span class="fs-std" title="A FeedSpark standard, not a Google specification requirement — scored like a recommended attribute">FeedSpark</span>'
             : '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k)) +
+          (repl ? '<span class="wv dep-by" title="Scored as ' + esc(repl.lbl) + ' — the row below. A filled field is not the same as a full one: this row shows how many products carry it at all">scored by depth ↓</span>' : '') +
           (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
           (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
         // what the coverage is a share OF — the products Google asks this attribute of
@@ -2286,9 +2410,11 @@ window.addEventListener('load',restore);
           (a.scope.u ? ' (' + fmt(a.scope.u) + ' of them carry no readable category and are counted in)' : '') +
           (a.all != null ? ' · ' + a.all + '% across the whole catalogue' : '') : '';
         if (nm) {
-          row += '<span class="at-miss" title="Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored">not measured</span>' +
+          row += '<span class="at-miss" title="' + (x.kw ? 'Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored'
+            : 'Counted product by product on the XML scan — this reading could only see whether the column is filled, so g:' + esc(x.of) + ' is scored on that instead') + '">not measured</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
-            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 12:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
+            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 12:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">' +
+            (x.kw ? 'not measured on this scan — not scored until the next XML scan' : 'not measured on this scan — g:' + esc(x.of) + ' scores until the next XML scan') + '</span>';
           h += row + '<span class="at-act"></span></div>'; return;
         } else if (na) {
           row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
@@ -2309,16 +2435,17 @@ window.addEventListener('load',restore);
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a, s.rows) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.kw ? kwWhy(a, s.rows) : (x.of ? depWhy(x, a, s.rows) : ''))) + '">' +
+            esc(x.kw ? kwNote(a) : (x.of ? depNote(x, a) : (basis ? basis + ' — ' + x.n : x.n))) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.d ? 'no keyword slots' : 'not in feed') + '</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
-        if (x.h) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
+        if (x.kw) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
           h += row + '<span class="at-act"><button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button></span></div>';
           return;
         }
@@ -2328,8 +2455,9 @@ window.addEventListener('load',restore);
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
-          (x.t === 'req' ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
+          (x.t === 'req' || x.of ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
+        if (x.of && a.present) h += depCard(x, a);   // how many each product carries, 0 … 6+
       });
       h += '</div>';
     });
@@ -2356,7 +2484,7 @@ window.addEventListener('load',restore);
     var p = parts(k);
     var x = SPEC.filter(function (s) { return s.k === attr; })[0]; if (!x && !override) return;
     var a = x ? (d.snapshot.attrs[attr] || { present: false }) : { present: false };
-    var t = override || attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null);
+    var t = override || attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null, a);
     var slot = $('askp-slot'); if (!slot) return;
     slot.innerHTML = '<div class="askp">' +
       '<div class="af"><label>To</label><input id="ask-to" value="' + esc(ASK.cfg.to[p.client] || '') + '" placeholder="client contact email"></div>' +
@@ -2368,7 +2496,7 @@ window.addEventListener('load',restore);
       '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ask-task" checked> file task in the Project Plan</label>' +
       '<button class="btn" id="ask-cancel">✕</button>' +
       '<span class="scanmsg" id="ask-msg"></span></div>' +
-      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "' + (attr === 'pdp' ? 'Golden Record PDP Recovery' : 'Golden Record Fix - g:' + esc(attr)) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
+      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "' + (attr === 'pdp' ? 'Golden Record PDP Recovery' : 'Golden Record Fix - ' + (x && x.of ? esc(x.lbl.charAt(0).toUpperCase() + x.lbl.slice(1)) : 'g:' + esc(attr))) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
     slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     function maybeTask(then) {
       if (!$('ask-task').checked) { then(''); return; }
@@ -2413,7 +2541,7 @@ window.addEventListener('load',restore);
     // chip states seed from the layer being edited: brand scope = the merged effective
     // profile; industry scope = the industry layer (override or committed default)
     var seed = scope === 'client' ? profileForC(pPar.client)
-      : ((PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] });
+      : (layerOf((PROF.overrides.industries || {})[ind], ind) || PROF.defaults[ind] || PROF.defaults.Retail || { expected: [], waived: [] });
     var st = slot.__st && slot.__scopeDrawn === scope ? slot.__st : (function () {
       var m = {};
       (seed.expected || []).filter(profOk).forEach(function (k2) { m[k2] = 'exp'; });
@@ -2439,8 +2567,8 @@ window.addEventListener('load',restore);
       h += '<div class="pgrp">' + g[1] + '</div>';
       SPEC.filter(function (x) { return x.t === g[0] && profOk(x.k); }).forEach(function (x) {
         var m = st[x.k] || '';
-        h += '<button class="pchip' + (m === 'exp' ? ' exp' : (m === 'wav' ? ' wav' : '')) + '" data-pk="' + esc(x.k) + '">' +
-          (m === 'exp' ? '★ ' : '') + esc(x.k) + '</button>';
+        h += '<button class="pchip' + (m === 'exp' ? ' exp' : (m === 'wav' ? ' wav' : '')) + '" data-pk="' + esc(x.k) + '"' + (x.lbl ? ' title="' + esc(x.n) + '"' : '') + '>' +
+          (m === 'exp' ? '★ ' : '') + esc(x.lbl || x.k) + '</button>';
       });
     });
     h += '<div class="ab"><button class="btn pri" id="prof-save">Save profile</button>' +
@@ -2486,7 +2614,7 @@ window.addEventListener('load',restore);
     var x = SPEC.filter(function (sp) { return sp.k === attr; })[0]; if (!x) return;
     var a = s.attrs[attr] || { present: false };
     var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
-    if (x.h) {   // keywords — a keyword brief (cat keyword), in the keyword task family
+    if (x.kw) {   // keywords — a keyword brief (cat keyword), in the keyword task family
       var todo = a.present ? Math.max(0, s.rows - a.filled) : s.rows;
       var kl = [
         'Keywords: keyword strings (chevron-separated) in g:product_type 2–10 (FeedSpark keyword injection)',
@@ -2500,6 +2628,23 @@ window.addEventListener('load',restore);
       location.href = '/workflow?brief=' + b64url({ client: p.client,
         task: 'Keywords Optimisation - Catalogue coverage - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
         cat: 'keyword', scope: kl.join('\n') });
+      return;
+    }
+    if (x.of) {   // a depth row — how many each product carries, not whether the column exists
+      var at = depAtLeast(a, x.tg), cap = x.lbl.charAt(0).toUpperCase() + x.lbl.slice(1);
+      var dl = [
+        'Measure: ' + x.lbl + ' (' + x.n + ')',
+        'Current: ' + (a.present ? a.avg + ' ' + x.many + ' per product on average; ' + at + '% of ' + fmt(s.rows) + ' products carry ' + x.tg + ' or more (depth score ' + a.cov + '%)' : 'no g:' + x.of + ' in the feed'),
+        x.k === 'detail_depth' && a.present && (a.care || a.dup) ? 'Not counted: ' + fmt(a.care || 0) + ' care lines, ' + fmt(a.dup || 0) + ' repeats of other attributes' : '',
+        x.k === 'detail_depth' ? 'Examples by product type — ' + DEP_FACETS : '',
+        'Target: ' + x.tg + '+ ' + x.many + ' on every product',
+        'Source: Golden Record scorecard (/golden)',
+      ].filter(Boolean);
+      try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+        '&attr=' + encodeURIComponent(attr), { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+      location.href = '/workflow?brief=' + b64url({ client: p.client,
+        task: 'Golden Record Fix - ' + cap + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+        cat: x.k === 'img_depth' ? 'image' : 'data', scope: dl.join('\n') });
       return;
     }
     var tierName = x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required in specific cases' : (x.t === 'ai' ? 'conversational AI' : 'recommended'));
@@ -4300,7 +4445,7 @@ window.addEventListener('load',restore);
       var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
       var same = refA && !!refA.scope === !!a.scope;   // never difference two bases
       var was = refA && refA.present && same ? refA.cov : '';
-      out.push([(x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
+      out.push([x.of ? x.lbl.replace(/ /g, '_') : (x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
         a.present ? a.filled : '', nm ? 'not_measured' : (a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed')),
         a.scope ? a.scope.n : s.rows, was,
         (a.present && !a.na && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
@@ -4439,6 +4584,7 @@ window.addEventListener('load',restore);
     PROF.defaults = (d && d.defaults) || {};
     PROF.overrides = (d && d.overrides) || {};
     PROF.industryMap = (d && d.industryMap) || {};
+    PROF.upgrade = (d && d.upgrade) || null;   // later defaults laid over an older saved profile
     PROF.ready = true;   // from here every render live-derives scores from cov + profile
     if (Object.keys(ESTATE.feeds).length) renderEstate();
     if (SEL) renderDetail(SEL);

@@ -1088,6 +1088,114 @@ XML stream, the three states through index/history/score, basis, alerts, the KWC
 tools/check_grkw.js (Playwright, presync: the row in each state, the dial against the engine's
 score, → Brief opening a keyword brief).
 
+### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
+
+Ray: *"this golden score will be the entire new base … image population … at least four plus …
+100% score … product details … separated from product highlight … please give me more scoring logic
+and let me approve if it should be in the golden score or not."* He approved five changes:
+
+- **images per product**
+- **highlights per product**
+- **product details per product**
+- **lifestyle_image_link**
+- **size_system** as best practice for apparel
+
+All five score at ×1, like the other recommended fields. He did not approve "valid values". Main-image
+quality is phase 2, once a scheduled image scan exists.
+
+**A filled column is not a full one.** A product with ONE extra image has `additional_image_link`
+filled. A product with two highlights has `product_highlight` filled. A product whose only "details"
+are washing instructions has `product_detail` filled. Presence scored all three as done. Each now gets
+a DEPTH twin (ATTR_SPEC `of`), read product by product on the XML scan:
+
+| Row | Counts, per product | Full credit | Standard |
+|---|---|---|---|
+| images per product (`img_depth`) | distinct images: the main image plus every additional one (a cell with several comma-separated URLs is split; the same URL twice counts once) | 4+ | FeedSpark's. Google allows the main image plus up to 10 more and names no count |
+| highlights per product (`hl_depth`) | distinct highlights (repeated tags or the `\|\|\|` list form; blanks and repeats dropped) | 4+ | Google's own 4–6 (answer 9216100) |
+| details per product (`detail_depth`) | details that describe the product | 3+ | FeedSpark's |
+
+**Each product earns** `min(count ÷ target, 1)`, and the row's score is that credit averaged over
+EVERY product, with a product carrying none counted as 0. So 3 of 4 images scores 75%, and 2 of 3
+details scores 67%. A card under each row breaks the catalogue down by count, 0 … 6+, with the buckets
+at full credit marked.
+
+**What a detail is.** Google (answer 9218260) asks product details not to repeat other attributes or
+carry promotion, and not to repeat themselves. `detailKind` therefore does not count:
+
+- a line repeating another attribute (colour, size, brand, price, availability …)
+- a material or pattern line that only repeats the product's own `g:material` or `g:pattern`
+- a line repeated within the product
+- a line with no name or no value
+
+Care lines (washing, cleaning) are left out by FeedSpark's rule: the details that matter are the ones
+Google's AI reads, such as sleeve length, neckline, fit and fastening. The row counts how many lines it
+set aside, and the card names the details the feed does carry, with examples per product type.
+
+**One fact, one weight.** When a depth twin was measured, it scores INSTEAD of its presence row
+(`goldenScore` skips the presence key). The presence row stays on the page, since "is it in the feed
+at all?" is still worth seeing, and wears **scored by depth ↓**. When the twin was NOT measured (a
+sheet-read feed, or a snapshot from before 7 Oct), the presence row scores as it always did. The depth
+row then reads "not measured … g:<attr> scores until the next XML scan" with no actions, never
+"missing". `histBasis` includes the derived keys, so the first depth-measured scan is a change of
+measurement and never drawn as a move. `diffCoverage` raises no alert on a depth key appearing or
+going.
+
+**The profiles.** Fashion and Footwear star `size_system` (Google, answer 6324502: "Submit this
+attribute for all apparel products") and `img_depth`. `lifestyle_image_link` is a recommended field
+for every industry except those it does not fit: it is waived for Footwear, Beauty, Pet Care,
+Sporting Goods, Arts & Crafts, Tools & DIY and Retail. **A saved profile predates a new default:**
+the ⚙ editor saves a brand's whole list, so a record saved before 7 Oct would silently hide the new
+defaults. Every record now carries `v`, stamped by the worker on save. `profileLayer` (engine), and
+its page twin `layerOf` reading the `upgrade` table served on GET /api/golden/profile, lays each later
+version's changes over an older record. A choice the record made explicitly the other way stands.
+
+**On the page.** Each depth row is named in words (never a `g:` key) and badged with whose standard
+it is: **FeedSpark** for images and details, **Google 4–6** for highlights. Its note reads e.g.
+*"4.1 images per product · 82% carry 4+"*, and its tooltip gives the arithmetic. The row's actions
+are ✉ Ask client and → Brief, with no PDP scan, because a product page holds one product, not a
+count:
+
+- **✉ Ask client** composes a per-product proposal (`perProductAskEmail`): *"proposal to add more
+  images per product"*.
+- **→ Brief** opens a brief in words (*Golden Record Fix - Images per product - <Brand> <MKT> - MMYY*,
+  `cat image` for images, `cat data` for the others). The worker files the same words.
+
+The CSV names the rows (`images_per_product` …). The ⬇ HTML and PDF carry the rows and their cards.
+`cleanDepth` (worker) checks a pushed depth reading whole before it is stored.
+
+**Live impact, 7 Oct 2026** (the full GB Shopping feeds through the shipped collector, the engine
+before and after, default profiles):
+
+| Feed | Before | After | Images / product | Highlights / product | Details / product |
+|---|---|---|---|---|---|
+| Monsoon GB | 91.9 | 86.1 | 4.1 (91.5%) | 3.4 (78%) | 0.5 (2.2%) |
+| Accessorize GB | 89.0 | 84.3 | 3.6 (81.1%) | 2.8 (68.8%) | 0.5 (2.0%) |
+| Superdry GB | 89.2 | 83.9 | 2.0 (50%) | 1.3 (26.9%) | none in feed |
+| Reiss GB | 90.2 | 86.7 | 5.9 (99.9%) | 1.5 (33.5%) | none in feed |
+| Schuh GB | 85.5 | 84.1 | 4.0 (100%) | 0.5 (9.9%) | none in feed |
+| Hobbycraft GB | 90.9 | 90.6 | 3.2 (68.3%) | 2.9 (47.2%) | 0.1 (0.4%) |
+| American Golf GB | 77.9 | 77.9 | 4.2 (80.3%) | 0.7 (16.8%) | none in feed |
+| YuMOVE GB | 88.4 | 88.1 | 1.0 (25%) | 1.3 (32.9%) | none in feed |
+
+Where the Fashion points went:
+
+- **lifestyle_image_link** costs about 1.9 points. No feed in the estate carries it.
+- **size_system ★** costs about 1.8. No feed carries it either.
+- **images per product** costs 1.7 on Superdry (2 images per product) and slightly lifts Reiss and
+  Schuh (4 or more on every product).
+- **details per product** costs Monsoon 2 points. Its `product_detail` is filled on 98.8% of
+  products, but almost every line is a care instruction or repeats another attribute, so it averages
+  0.5 real details per product.
+
+**Harnesses.**
+
+- tools/test_labelguard.mjs: the readers, depthAttr, cleanDepth, the collector on a real XML stream,
+  the score with and without depth, profile layering, the client ask, and the page twin's score and
+  ask held to the engine's.
+- tools/check_grdepth.js (Playwright, presync): the rows, badges, notes, cards, the dial against the
+  engine, not measured, Pet Care, a v1 profile, ask, brief, CSV, HTML, PDF and 390px.
+- tools/check_grkw.js: the profile route is now stubbed as the worker answers it.
+
 ### 9.12a Three scores, one chart (7 Oct 2026)
 
 Ray, on the Score history card: *"merge 3 scores as 3 lines chart in 1 graph pls"*.

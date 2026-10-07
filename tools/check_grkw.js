@@ -45,7 +45,10 @@ const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, strings: 181970, 
   const open = async (attrs) => {
     const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
     page.on('pageerror', (e) => errs.push(e.message));
-    await page.addInitScript(({ attrs, ROWS }) => {
+    // the profile route answers as the worker does — the engine's own defaults + upgrade table, so
+    // the page scores Reiss under the same Fashion profile the engine's profileFor reads
+    const profAns = { defaults: LG.INDUSTRY_PROFILES, overrides: {}, industryMap: LG.INDUSTRY, upgrade: { v: LG.PROFILE_V, delta: LG.PROFILE_DELTA } };
+    await page.addInitScript(({ attrs, ROWS, profAns }) => {
       try { localStorage.clear(); } catch (e) {}
       const real = window.fetch.bind(window);
       const cov = {};
@@ -60,10 +63,10 @@ const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, strings: 181970, 
         if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feed }, alerts: {}, daily: null });
         if (u.includes('/api/golden/history')) return j({ hist: null });
         if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: Date.now(), rows: ROWS, client: 'Reiss', market: 'gb', attrs }, baseline: null, daily: null });
-        if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
+        if (u.includes('/api/golden/profile')) return j(profAns);
         return j({});
       };
-    }, { attrs, ROWS });
+    }, { attrs, ROWS, profAns });
     await page.goto(PAGE);
     await page.waitForSelector('.at-row', { timeout: 8000 });
     await page.waitForTimeout(300);
