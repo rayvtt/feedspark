@@ -11627,9 +11627,6 @@
     {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
     {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);", "pr": 0},
     {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0},
-<<<<<<< HEAD
-{
-=======
     {"name": "Stock levers: FOUR levers for every brand — range completion, hero sizes, stock quantity threshold, stock-based exclusion (Ray, 7 Oct 2026: \"every client should have these stock levers\")", "file": "docs/stocklevers_engine.js", "pattern": "{ k: 'thresh', label: 'Stock quantity threshold', short: 'Stock threshold', kind: 'units', op: '<', unit: 'units', mech: ['threshold'],", "pr": 603},
     {"name": "Stock levers: the stored `units` lever IS the stock-based exclusion — read as it everywhere", "file": "docs/stocklevers_engine.js", "pattern": "var LEGACY = { units: 'excl' };", "pr": 603},
     {"name": "Stock levers: all four levers in order, a plan saved or not", "file": "docs/stocklevers_engine.js", "pattern": "return LEVERS.map(function (L) { return held[L.k] || { k: L.k, bau: null, sale: null }; });", "pr": 603},
@@ -11649,7 +11646,6 @@
     {"name": "Stock: the in-stock card's header carries NO scenario / period switch (Ray, 7 Oct 2026: \"these button doesnt apply/ make sense\") — the forecast panel holds them", "file": "docs/FeedSpark_Stock.html", "pattern": "id=\"sv-scn\"", "forbidden": true, "pr": 603},
     {"name": "Stock tripwire: every card folds, as a person uses it", "file": "tools/check_stockfold.js", "pattern": "const OPEN0 = ['cov-card', 'lev-card'];", "pr": 603},
     {
->>>>>>> origin/main
       "name": "Golden daily: the run waits for noon London",
       "file": "tools/golden_daily.mjs",
       "pattern": "export const RUN_HOUR = 12;",
@@ -11665,10 +11661,9 @@
       "name": "Golden daily: the page chip names the noon run",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "⏱ auto 12:00 UK · last ",
-<<<<<<< HEAD
-      "pr": 0
+      "pr": 602
     },
-{"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
+    {"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
     {"name": "Restock: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')", "pr": 0},
     {"name": "Restock: the Catalogue's Ads lane reads by PERIOD", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh, period) {", "pr": 0},
     {"name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();", "pr": 0},
@@ -11687,9 +11682,5 @@
     {"name": "Restock: the tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_restock.js", "pr": 0},
     {"name": "Restock: the harness runs in CI", "file": ".github/workflows/validate.yml", "pattern": "run: node tools/test_restock.mjs", "pr": 0},
     {"name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)", "file": "docs/navrow_widget.html", "pattern": "body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }", "pr": 0}
-=======
-      "pr": 602
-    }
->>>>>>> origin/main
   ]
 }
