@@ -1105,6 +1105,37 @@ three.
 named at its end, each bar inside its own score's row, the gaps and rings per line, the hover
 reading all three, the merged log, the client download and the dark steps.
 
+### 9.12b Every market at the foot of the client documents (7 Oct 2026)
+
+Ray: *"For multi-market clients, when you download the HTML or report card, at bottom there should
+be an overview of all the market scores as well."*
+
+The ⬇ PDF and ⬇ HTML read ONE market. A brand on 28 markets sent its client a file that never said
+how the other 27 stood. Now both documents (and a bare Ctrl+P) end with an **All markets** table,
+written by `mktOverview()` into `#print-mkts` at the moment an export starts (`fillPrint`, the one
+call all three exits share).
+
+- **One row per Google Shopping market of the brand**, in the estate scorecard's order: Golden
+  Score, content quality, AI-readiness (with its tier name), products, required attributes
+  missing (named) and the day it was scanned. Each score has a short bar on one track length, so
+  a fill always means its number.
+- **The report's own market prints the document's numbers** — the dial, the content-quality
+  headline and the AI ring above it — not the estate index's copy, so one file never shows two
+  figures for one market. It is marked *this report*.
+- **A dash is a dash.** A market scanned but not analysed shows a dash for content quality and
+  AI-readiness; a market never scanned says *not scanned yet*. Never a zero.
+- **Averages read only the markets that carry each score**, and say how many (*of 3*) when that is
+  not all of them. Products are summed over the scanned markets; the required-missing cell counts
+  the markets missing one.
+- **A single-market brand gets nothing** — the document above already is its only market.
+- **Never on screen.** The estate scorecard is this table for the AM. Demo mode masks the brand
+  name here too.
+
+`tools/check_grmkts.js` (Playwright, presync) renders a four-market brand — one analysed, one
+analysed elsewhere, one scanned only, one never scanned — and checks the Ctrl+P layout, the
+one-click PDF capture, the HTML file (position, figures, no buttons), that the table fits the
+PDF's 960px column on one line per row, demo mode and the single-market case.
+
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 
 Ray: *"Should there be an additional interface for AM only to view these charts across their

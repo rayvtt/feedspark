@@ -278,6 +278,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
     echo "✗ Golden Record keywords tripwire failed — a keyword state blurred, the dial disagreed with the engine, or the brief left the keyword family"; exit 1; }
   NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
     echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
+  echo "── validating: Golden Record client documents — every market at the foot (multi-market brands)"
+  NODE_PATH=$(npm root -g) node tools/check_grmkts.js || {
+    echo "✗ Golden Record all-markets tripwire failed — the PDF/HTML lost the market table, printed a different figure for the report's own market, or a column ran off the page"; exit 1; }
   echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
   NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
     echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }
