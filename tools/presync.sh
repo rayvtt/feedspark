@@ -284,6 +284,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record ⬇ HTML — the Catalogue modules the AM picked (framed Catalogue, per-measure ticks, the file)"
   NODE_PATH=$(npm root -g) node tools/check_grcatx.js || {
     echo "✗ Golden Record Catalogue-modules tripwire failed — the framed Catalogue, a tick, the picked cards in the HTML or the device's own Catalogue preferences regressed"; exit 1; }
+  echo "── validating: Golden Record — every scorecard section folds (default, remembered, header controls, exports open, phone)"
+  NODE_PATH=$(npm root -g) node tools/check_grfold.js || {
+    echo "✗ Golden Record section-fold tripwire failed — a fold hid a finding, swallowed a header control, reached a client document or double-toggled on a phone"; exit 1; }
   echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
   NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
     echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }

@@ -11857,6 +11857,42 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grcatx.js",
       "pr": 0
+    },
+    {
+      "name": "Golden: every scorecard section folds — the fold applies on every render",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "    histWire(k);\n    tfApply();\n  }",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the 'Two scores, two questions' card starts folded",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var TF_DEFAULT = { recon: 1 };",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a folded section prints open — the fold rule is screen-only",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body:not(.pdf) .tier.folded>:not(.tier-h){display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the fold controls leave the HTML file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.tfold', '#tf-all', '.tf-sum',",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the header stands down when the phone skim view claims it (one tap, one toggle)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (h.classList.contains('fcc-dg-own') && window.matchMedia && matchMedia('(max-width:760px)').matches) return;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the section-fold tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grfold.js",
+      "pr": 0
     }
   ]
 }
