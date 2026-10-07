@@ -115,16 +115,29 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/kwcal'] === 'kwcal', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 21 && MODULES.every((m) => m.slug && m.label && m.path), 'twenty-one grantable modules, each {slug,label,path}');
+ok(MODULES.length === 22 && MODULES.every((m) => m.slug && m.label), 'twenty-two grantable modules, each {slug,label}');
+ok(MODULES.filter((m) => !m.path).map((m) => m.slug).join(',') === 'pricer-cost', 'every module has a page path except the pricer-cost grant (a grant without a page)');
+ok(!Object.prototype.hasOwnProperty.call(MODULE_PATHS, 'undefined') && Object.keys(MODULE_PATHS).every((p) => p.charAt(0) === '/'),
+  'MODULE_PATHS carries only real routes — a path-less grant never writes MODULE_PATHS["undefined"]');
+ok(Object.keys(MODULE_PATHS).length === 21, 'twenty-one module pages behind the page gate');
 ok(MODULES.some((m) => m.slug === 'catalog' && m.path === '/catalog'), 'the Catalogue is a grantable module, its slug the path (MODGATE reads the slug off the link)');
 // the AI transformation roadmap is a MANAGEMENT page: opt-in, never inherited by an unrestricted signin
-ok(OPT_IN_MODULES.length === 1 && OPT_IN_MODULES[0] === 'transformation', 'transformation is the one opt-in module');
+ok(OPT_IN_MODULES.join(',') === 'transformation,pricer-cost', 'two opt-in modules: the transformation roadmap and the Pricer cost grant');
 ok(MODULE_PATHS['/migration'] === 'transformation', '/migration is a grantable module (slug stays transformation so existing grants hold)');
 ok(moduleAllowed(null, 'transformation') === false && moduleAllowed(undefined, 'transformation') === false, 'an unrestricted signin (modules null) does NOT get the transformation roadmap');
 ok(moduleAllowed(['transformation'], 'transformation') === true && moduleAllowed(['workflow'], 'transformation') === false, 'only a row that names transformation opens it');
 ok(moduleAllowed(null, 'workflow') === true, 'opt-in does not narrow the ordinary modules for an unrestricted signin');
 ok(sanitizeDir({ 'andy@x.com': { name: 'Andy', modules: ['transformation', 'leadership'] } })['andy@x.com'].modules.join(',') === 'transformation', 'sanitizer keeps a transformation grant (and still drops unknown slugs)');
 ok(MODULE_PATHS['/images'] === 'images', 'the Image Library is a grantable module of its own');
+// SERVICES & PRICER (7 Oct 2026): Management's price and cost are an opt-in grant WITHOUT a page —
+// an unrestricted AM keeps /pricer but never inherits the cost layer, and the grant opens no route
+const pc = MODULES.find((m) => m.slug === 'pricer-cost');
+ok(pc && pc.optIn === true && pc.label === 'Pricer costs & margin' && pc.path === undefined, 'pricer-cost: {slug, label, optIn} and no path');
+ok(moduleAllowed(null, 'pricer-cost') === false && moduleAllowed(undefined, 'pricer-cost') === false, 'an unrestricted signin (modules null) does NOT get the Pricer cost grant');
+ok(moduleAllowed(null, 'pricer') === true, '…but keeps the Pricer itself');
+ok(moduleAllowed(['pricer', 'pricer-cost'], 'pricer-cost') === true && moduleAllowed(['pricer'], 'pricer-cost') === false, 'only a row that names pricer-cost opens costs and margin');
+ok(sanitizeDir({ 'cfo@x.com': { name: 'CFO', modules: ['pricer', 'pricer-cost', 'nope'] } })['cfo@x.com'].modules.join(',') === 'pricer,pricer-cost', 'sanitizer keeps a pricer-cost grant (unknown slugs still dropped)');
+ok(!Object.values(MODULE_PATHS).includes('pricer-cost') && MODULE_PATHS['/pricer'] === 'pricer', 'the page gate still maps /pricer to pricer; pricer-cost maps no route');
 // the Playbook stopped being a module of its own on 16 Sep 2026 — it is Workflow's right-hand
 // rail, so it is reachable exactly when `workflow` is. A leftover slug would grant a page that
 // no longer exists, and worse, let someone be granted the rail without the board it lives in.

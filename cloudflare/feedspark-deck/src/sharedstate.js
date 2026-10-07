@@ -77,36 +77,52 @@ export const STATE_NS = {
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }
 
-// the client an entry belongs to, or '' when the namespace is house-wide
-export function clientOfEntry(ns, key, val) {
-  const how = STATE_NS[ns];
+// the client an entry belongs to under a scoping RULE ('key' | 'self' | 'field' | null), or ''
+// when the rule is house-wide. Split out of clientOfEntry (7 Oct 2026) so a store that is not a
+// /api/state namespace — the Pricer's proposals and rollout (src/pricerstore.js) — scopes by the
+// SAME rule rather than a second copy of it that could drift.
+export function clientOfBy(how, key, val) {
   if (how === 'key') return String(key || '').split('|')[0];
   if (how === 'self') return String(key || '');
   if (how === 'field') return String((val && val.client) || '');
   return '';
 }
 
-// a scoped signin's view: house-wide namespaces whole, client-keyed ones filtered
-export function scopeStateView(ns, data, clients, match) {
-  if (!clients || !STATE_NS[ns]) return data || {};
+// the client an entry belongs to, or '' when the namespace is house-wide
+export function clientOfEntry(ns, key, val) {
+  return clientOfBy(STATE_NS[ns], key, val);
+}
+
+// a scoped signin's view of any map scoped by `how`: house-wide (how null) whole, client-keyed
+// entries filtered to theirs
+export function scopeViewBy(how, data, clients, match) {
+  if (!clients || !how) return data || {};
   const out = {};
   for (const k of Object.keys(data || {})) {
-    if (match(clients, clientOfEntry(ns, k, data[k]))) out[k] = data[k];
+    if (match(clients, clientOfBy(how, k, data[k]))) out[k] = data[k];
   }
   return out;
 }
 
 // their PUT is a whole-map save of a PARTIAL view against a delete-by-absence store, so
 // re-inject every foreign entry before the merge or their save would wipe everyone else's.
-export function scopeStateIncoming(ns, cur, incoming, clients, match) {
-  if (!clients || !STATE_NS[ns]) return incoming || {};
+export function scopeIncomingBy(how, cur, incoming, clients, match) {
+  if (!clients || !how) return incoming || {};
   const out = {};
   for (const k of Object.keys(cur || {})) {
-    if (!match(clients, clientOfEntry(ns, k, cur[k]))) out[k] = cur[k];       // not theirs — keep
+    if (!match(clients, clientOfBy(how, k, cur[k]))) out[k] = cur[k];         // not theirs — keep
   }
   for (const k of Object.keys(incoming || {})) {
-    const c = clientOfEntry(ns, k, incoming[k]);
+    const c = clientOfBy(how, k, incoming[k]);
     if (match(clients, c)) out[k] = incoming[k];                              // theirs — accept
   }
   return out;
+}
+
+// the /api/state namespaces delegate to the rule-level pair — identical behaviour, one copy
+export function scopeStateView(ns, data, clients, match) {
+  return scopeViewBy(STATE_NS[ns], data, clients, match);
+}
+export function scopeStateIncoming(ns, cur, incoming, clients, match) {
+  return scopeIncomingBy(STATE_NS[ns], cur, incoming, clients, match);
 }

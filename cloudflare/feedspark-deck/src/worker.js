@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
+import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming, scopeViewBy, scopeIncomingBy } from "./sharedstate.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
 const AB_SHAPE = 4;   // bump when parseAbTests grows a field the page reads, the served order
@@ -55,6 +55,8 @@ import * as LEVERS from "./stocklevers.js";
 import * as AIVIS from "./aivis.js";
 // /restock (Ray, 7 Oct 2026): the ledger half — first seen unavailable per product, kept in KV
 import * as RESTOCK from "./restock.js";
+// SERVICES & PRICER (7 Oct 2026): the six /api/pricer/* stores — key grammar, allow-lists, sanitizers
+import * as PSTORE from "./pricerstore.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -653,7 +655,9 @@ async function route(request, env, ctx) {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger',
+        '/api/pricer/ops': 'pricer-ops', '/api/pricer/price': 'pricer-price', '/api/pricer/cost': 'pricer-cost',
+        '/api/pricer/proposals': 'pricer-prop', '/api/pricer/rollout': 'pricer-roll', '/api/pricer/roadmap': 'pricer-map' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -1606,6 +1610,11 @@ async function route(request, env, ctx) {
       const r = await mapStoreRoute(env, request, 'tachyontrack', {});
       if (r) return r;
     }
+    // ---- SERVICES & PRICER stores (pricerRoute below, src/pricerstore.js): the three-team rate
+    // card (ops / price / cost), saved proposal options, the services rollout and the delivery
+    // roadmap. Every one is gated on the `pricer` grant; price writes and the whole cost store on
+    // the opt-in `pricer-cost` grant too, refused before the cost key is ever read.
+    if (path.startsWith('/api/pricer/')) return pricerRoute(request, env, path);
     if (path === '/pricer/gpc.txt' && request.method === 'GET') {
       return new Response(GPC_TAXONOMY, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=86400' } });
     }
@@ -4686,6 +4695,57 @@ async function mapStoreRoute(env, request, kvKey, opts) {
     return json(envelopeToClient(envx, opts), 200, { 'X-Sync-Base': String(Date.now()) });
   }
   return null;
+}
+
+/* ---- SERVICES & PRICER — /api/pricer/{ops,price,cost,proposals,rollout,roadmap} (7 Oct 2026) ----
+   Six kvmerge stores behind the transformed /pricer: the rate card split three ways (pricerops —
+   hours, minutes and tokens ASPL and the London AMs enter; pricerprice — the sell £ Management
+   owns; pricercost — what the work costs us, Management's alone), saved proposal OPTIONS
+   (pricerprop, client-scoped by the record's own client), the services rollout per client
+   (svcroll, scoped by the key) and the delivery roadmap per package line × industry (svcmap).
+   ONE door so the gates read the same everywhere:
+     every store      owner, or the `pricer` grant — else 403
+     price PUT        + owner or the opt-in `pricer-cost` grant — 403 before the store is read
+     cost GET + PUT   + owner or `pricer-cost` — 403 before EDITS.get('pricercost'), so a cost
+                      figure never leaves the worker for an AM signin
+   A PUT is a whole-map save under X-Sync-Base (absence deletes what the writer had seen, exactly
+   like /api/briefs) and answers the MERGED map plus a fresh stamp. src/pricerstore.js validates
+   every key: a refused key keeps its stored value and comes back listed in `_rejected`, and the
+   rate-card stamps {by, at} are the server's word, written only on a value that moved. A scoped
+   signin's partial view is re-injected with every foreign record before the merge (the
+   /api/state rule, scopeIncomingBy), so their save can never delete another client's proposal.
+   ACT logs each write (pricer-ops … pricer-map) from the activity map at the top of route(). */
+async function pricerRoute(request, env, path) {
+  const name = path.slice('/api/pricer/'.length);
+  const S = Object.prototype.hasOwnProperty.call(PSTORE.PRICER_STORES, name) ? PSTORE.PRICER_STORES[name] : null;
+  if (!S) return json({ ok: false, error: 'unknown pricer store' }, 404);
+  if (request.method !== 'GET' && request.method !== 'PUT') return json({ ok: false, error: 'method not allowed' }, 405);
+  const acc = await accessOf(env, request);
+  if (!acc.owner && !moduleAllowed(acc.modules, 'pricer')) return json({ ok: false, error: 'the Pricer is not in your access' }, 403);
+  const mgmt = acc.owner || moduleAllowed(acc.modules, 'pricer-cost');
+  if (!mgmt && (S.mgmtRead || (S.mgmtWrite && request.method === 'PUT'))) {
+    return json({ ok: false, error: S.mgmtRead ? 'costs and margin are Management only (the pricer-cost grant)' : 'the sell price is set by Management (the pricer-cost grant)' }, 403);
+  }
+  const now = Date.now();
+  const cur = liftEnvelope(await env.EDITS.get(S.kv, 'json'), now);
+  const curApi = PSTORE.fromStore(cur.data);
+  const scoped = !!(S.scope && acc.clients);
+  const view = (m) => (scoped ? scopeViewBy(S.scope, m, acc.clients, clientMatch) : m);
+  if (request.method === 'GET') return json(view(curApi), 200, { 'X-Sync-Base': String(Date.now()) });
+  let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+  const ctx = { now, by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone',
+    inScope: (c) => acc.owner || clientMatch(acc.clients, c) };
+  const r = PSTORE.sanitizePut(name, body, curApi, ctx);
+  if (r.error) return json({ ok: false, error: r.error }, 400);
+  const inc = scoped ? scopeIncomingBy(S.scope, curApi, r.data, acc.clients, clientMatch) : r.data;
+  const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+  const envx = mergeIntoEnvelope(cur, PSTORE.toStore(inc), base, now, {});
+  const raw = JSON.stringify(envx);
+  if (raw.length > 20e6) return json({ ok: false, error: 'the ' + name + ' store would pass 20 MB — nothing was saved' }, 413);
+  await env.EDITS.put(S.kv, raw);
+  const out = view(PSTORE.fromStore(envx.data));
+  if (r.rejected.length) out._rejected = r.rejected.slice(0, 50);
+  return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
 }
 
 /* ================= Label Guard: custom-label monitoring (docs/LABELGUARD.md) =================
