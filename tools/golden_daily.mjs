@@ -23,10 +23,11 @@
  * hand the same day (storeGoldenQuality for quality; histAdd's manual pin for the score).
  *
  * WHEN. GitHub cron speaks UTC and the UK moves between GMT and BST, so the workflow fires at
- * 11:00, 12:00 and 13:00 UTC and THIS script decides: it runs once the London clock has reached
- * 12:00 and today's noon run (London date) is not yet on the worker's ledger. In summer the 11:00
- * UTC firing is 12:00 London; in winter the 12:00 one is; the later firings are the catch-up for
- * a delayed or failed run, and a finished run makes them no-ops. GOLDEN_FORCE=1 runs regardless.
+ * :07 and :37 past 11:00-14:00 UTC (off the hour, where GitHub delays and drops the most) and THIS
+ * script decides: it runs once the London clock has reached 12:00 and today's noon run (London
+ * date) is not yet on the worker's ledger. In summer the 11:07 UTC firing is 12:07 London; in
+ * winter the 12:07 one is; the later firings are the catch-up for a delayed or dropped run, and a
+ * finished run makes them no-ops. GOLDEN_FORCE=1 runs regardless.
  * Only a run that FINISHED from 12:00 London counts as the day's run (runDone): one on the ledger
  * from earlier that day — a forced dispatch, or the 09:00 run of the day the schedule moved — read
  * the feeds before they refreshed, which is the reading this run exists to replace.
