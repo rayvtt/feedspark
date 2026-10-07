@@ -603,6 +603,7 @@ ok(PQt.perMarket[0].projected.blockers.some((b) => b.key === 'gtin/mpn' && b.tag
 ok(PQt.perMarket[0].projected.blockers.some((b) => b.key === 'product_highlight' && b.tag === 'in Tier 2'), 'a Tier-2 attribute is tagged in Tier 2');
 const PQall = E.packageQuote(Object.assign({ markets: [{ mkt: 'gb', audit: AP }] }, base10), LG);
 const pj = PQall.perMarket[0].projected;
+ok(Array.isArray(pj.fixed) && pj.fixed.indexOf('title') < 0 === !PQall.lines.some((l) => l.key === 'title' && l.status === 'priced') && PQt.perMarket[0].projected.fixed.every((k) => k === 'title'), 'projection.fixed names exactly the attributes the option fills (the tier preview animates them)');
 ok(pj.after > pj.now, 'Tier 2 lifts the score');
 eq(pj.met, pj.after >= 95, 'met only at 95+'); ok(!pj.met, 'still short while identifiers are missing (client data)');
 ok(!('keywords' in AP.golden.attrs) && pj.blockers.every((b) => b.key !== 'keywords'), 'keywords not measured → left out of the projection');

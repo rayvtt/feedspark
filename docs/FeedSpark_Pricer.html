@@ -343,6 +343,33 @@ window.addEventListener('load',restore);
   /* 2 · the proposal */
   .prop-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
   .prop-act .mode{font-size:12px;font-weight:800;color:var(--orange-ink)}
+  /* tier preview — the catalogue filling in as the option changes (Ray, 7 Oct 2026: "there should be data population
+     animation for a products when switching between tier 1 & tier 2"); widths/numbers move by CSS transition + rAF only */
+  .pv{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin:0 0 14px}
+  .pv-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+  .pv-h h3{margin:0;font-size:15px;font-weight:900}
+  .pv-seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--wash)}
+  .pv-seg button{font:inherit;font-size:13px;font-weight:800;border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 11px;min-height:36px;cursor:pointer}
+  .pv-seg button[aria-pressed=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+  .pv-mk{margin-left:auto}
+  .pv-k{display:flex;flex-wrap:wrap;gap:8px 22px;margin:12px 0 6px;font-size:13px;color:var(--muted)}
+  .pv-k b{display:block;font-size:24px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+  .pv-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:4px 26px}
+  .pv-gh{grid-column:1/-1;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
+  .pv-r{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 3.4em;align-items:center;gap:8px;padding:4px 0;font-size:13px;position:relative}
+  .pv-r .lb{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pv-t{height:9px;border-radius:5px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
+  .pv-f{display:block;height:100%;width:0;border-radius:5px;background:var(--muted);transition:width .75s cubic-bezier(.2,.7,.2,1),background-color .3s}
+  .pv-f.b-g{background:var(--good)}.pv-f.b-y{background:var(--orange)}.pv-f.b-o{background:var(--orange-deep)}.pv-f.b-r{background:var(--risk)}
+  .pv-v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .pv-c{grid-column:2/-1;font-size:11px;font-weight:800;color:var(--muted);margin-top:-2px}
+  .pv-c.t1{color:var(--orange-deep)}.pv-c.t2{color:var(--navy)}
+  .pv-r.pop .pv-t::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-100%);animation:pvsweep .9s ease-out forwards}
+  .pv-r.pop .pv-c{animation:pvin .45s ease-out both}
+  .pv-n{font-size:12px;color:var(--muted);margin:10px 0 0}
+  @keyframes pvsweep{to{transform:translateX(100%)}}
+  @keyframes pvin{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.pv-f{transition:none}.pv-r.pop .pv-t::after,.pv-r.pop .pv-c{animation:none}}
   .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr));gap:14px;align-items:start}
   .tier{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;min-width:0}
   .tier.hl{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.2)}
@@ -569,6 +596,7 @@ window.addEventListener('load',restore);
     <span class="mode" id="pq-mode"></span>
   </div>
   <div class="cust" id="svc-cust" hidden></div>
+  <div class="pv" id="svc-prev" hidden></div>
   <div class="tiers" id="svc-tiers"></div>
 </div></section>
 
@@ -1924,6 +1952,7 @@ function renderTiers(){
   renderMode();
   if(!opts.length){host.innerHTML='<div class="empty">The proposal appears once a market is audited.</div>';$('#svc-prop').setAttribute('data-m-digest','no audit yet');return}
   host.innerHTML=opts.map(tierCard).join('');
+  renderPreview();
   $('#svc-prop').setAttribute('data-m-digest',sized(PQ.go)?'T1 '+GBP(PQ.go.oneOff.total)+' one-off · '+GBP(PQ.go.monthly.total)+'/mo':'T1 not sized');
 }
 // version / add mode stays visible even while no audit has run (a file-lane option waits for its file)
@@ -1936,6 +1965,80 @@ function renderMode(){
     :SV.addTo?'adding options to an existing proposal <button type="button" class="lnk" data-act="cancelmode">cancel</button>':'';
 }
 
+/* ---- tier preview: what the catalogue looks like today, with Tier 1, with Tier 2 ----
+   Coverage per attribute off the market's own audit; the attributes an option FILLS come from the engine's
+   projection (q.perMarket[i].projected.fixed), so the bars can never promise a field the quote does not price.
+   Switching animates the bars (CSS transition), the score and the 99% count (rAF), and sweeps the rows that change. */
+var PV={opt:'now',mkt:0,last:null};
+var PV_GROUPS=[['Google basics',['title','description','google_product_category','product_type','keywords']],
+  ['Attributes',['color','size','gender','age_group','material','pattern','size_type','size_system']],
+  ['AI readiness',['product_highlight','product_detail','question_and_answer','document_link','related_product','item_group_title','variant_option','popularity_rank']]];
+var PV_LBL={google_product_category:'GPC',product_type:'Product type',product_highlight:'Highlights',product_detail:'Product details',question_and_answer:'Q&A',document_link:'Document link',
+  related_product:'Related products',item_group_title:'Item group title',variant_option:'Variant options',popularity_rank:'Popularity rank',age_group:'Age group',size_type:'Size type',size_system:'Size system'};
+function pvLabel(k){return PV_LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g,' '))}
+function pvTween(el,to,dec){if(!el)return;var from=parseFloat(el.getAttribute('data-v'));el.setAttribute('data-v',to==null?'':to);
+  if(to==null){el.textContent='—';return}
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(isNaN(from)||reduce){el.textContent=(+to).toFixed(dec);return}
+  var t0=performance.now(),D=700;(function st(t){var k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(st)})(t0)}
+function renderPreview(){
+  var host=$('#svc-prev');if(!host)return;
+  var A=SV.audits||[],q1=PQ.go,q2=PQ['go+ar'];
+  if(!A.length||!q1||!q2){host.hidden=true;return}
+  if(PV.mkt>=A.length)PV.mkt=0;
+  var a=A[PV.mkt].audit,at=(a.golden&&a.golden.attrs)||null;
+  if(!at){host.hidden=true;return}
+  host.hidden=false;
+  var pm=function(q){return (q.perMarket||[]).filter(function(m){return m.mkt===a.mkt})[0]||{}};
+  var p1=pm(q1).projected||{},p2=pm(q2).projected||{};
+  var f1={},f2={};(p1.fixed||[]).forEach(function(k){f1[k]=1});(p2.fixed||[]).forEach(function(k){f2[k]=1});
+  if(!host.firstChild){
+    host.innerHTML='<div class="pv-h"><h3>What changes in the feed</h3><span class="pv-seg" role="group" aria-label="Show the catalogue">'
+      +[['now','Today'],['go','Tier 1 · Google-ready'],['go+ar','Tier 2 · AI-ready']].map(function(x){return '<button type="button" data-pv="'+x[0]+'" aria-pressed="false">'+esc(x[1])+'</button>'}).join('')
+      +'</span><span class="pv-mk"></span></div><div class="pv-k"></div><div class="pv-g"></div>'
+      +'<p class="pv-n">Share of products carrying each attribute; an option fills only the lines it prices. Values are never invented — gaps that are the client\'s own data stay open.</p>';
+    host.addEventListener('click',function(e){var b=e.target.closest('[data-pv]');if(!b)return;PV.opt=b.getAttribute('data-pv');renderPreview()});
+    host.addEventListener('change',function(e){if(e.target.matches('[data-pvm]')){PV.mkt=+e.target.value||0;PV.last=null;renderPreview()}});
+  }
+  host.querySelector('.pv-mk').innerHTML=A.length>1?'<select class="fld sm" data-pvm aria-label="Market">'+A.map(function(x,i){return '<option value="'+i+'"'+(i===PV.mkt?' selected':'')+'>'+esc(String(x.audit.mkt).toUpperCase())+'</option>'}).join('')+'</select>':esc(String(a.mkt).toUpperCase());
+  host.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-pv')===PV.opt?'true':'false')});
+  var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:{};
+  // the rows (built once per market, then only widths / text / classes move so the transition runs)
+  var g=host.querySelector('.pv-g'),key=a.client+'|'+a.mkt;
+  if(g.getAttribute('data-k')!==key){
+    g.setAttribute('data-k',key);
+    g.innerHTML=PV_GROUPS.map(function(G){var rows=G[1].filter(function(k){var x=at[k];return !(x&&x.na)});
+      return rows.length?'<div class="pv-gh">'+esc(G[0])+'</div>'+rows.map(function(k){
+        return '<div class="pv-r" data-k="'+k+'"><span class="lb" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="pv-t"><span class="pv-f"></span></span><span class="pv-v">—</span><span class="pv-c"></span></div>'}).join(''):''}).join('');
+  }
+  var full=0,tot=0,prev=PV.last||{},gapT={};
+  ((PV.opt==='go'?p1:p2).blockers||[]).forEach(function(b){gapT[b.key]=b.tag});
+  g.querySelectorAll('.pv-r').forEach(function(r,i){
+    var k=r.getAttribute('data-k'),x=at[k],measured=!!x,now=x&&x.present?(+x.cov||0):0,filled=!!fill[k],v=filled?100:now;
+    var f=r.querySelector('.pv-f'),c=r.querySelector('.pv-c');
+    f.style.transitionDelay=(i*28)+'ms';
+    f.style.width=(measured?v:0)+'%';
+    f.className='pv-f '+(measured?band(v):'');
+    r.querySelector('.pv-v').textContent=measured?Math.round(v)+'%':'—';
+    // an unfilled row says WHO closes it, in the engine's own words (its projection's gap tags)
+    var gt=gapT[k],GT={'client to supply':'client\'s own data','in Tier 2':'Tier 2 fills it','in Tier 1':'Tier 1 fills it','price to follow':'in this option — price to follow',
+      'to be sized':'in this option — to be sized','coming':'coming — included when live','already contracted':'already contracted','not in this quote':'not in this quote'};
+    var tag=!measured?'not measured on this read':filled?(f1[k]?'filled by Tier 1':'filled by Tier 2'):now>=99?'already complete':f1[k]?'Tier 1 fills it':f2[k]?'Tier 2 fills it':(GT[gt]||gt||'client\'s own data');
+    c.textContent=tag;c.className='pv-c'+(f1[k]||/Tier 1|this option/.test(tag)?' t1':(f2[k]||/Tier 2/.test(tag)?' t2':''));
+    if(measured){tot++;if(v>=99)full++}
+    var was=prev[k];r.classList.remove('pop');
+    if(was!=null&&was!==v){void r.offsetWidth;r.classList.add('pop')}
+    prev[k]=v;
+  });
+  PV.last=prev;
+  var sc=PV.opt==='go'?p1.after:PV.opt==='go+ar'?p2.after:a.golden.score;
+  var k=host.querySelector('.pv-k');
+  if(!k.firstChild)k.innerHTML='<div>Golden Score<b class="pv-s" data-v=""></b></div><div>Attributes at 99%+<b class="pv-full" data-v=""></b></div><div>Filled by this option<b class="pv-add" data-v=""></b></div>';
+  pvTween(k.querySelector('.pv-s'),sc,1);
+  pvTween(k.querySelector('.pv-full'),full,0);
+  pvTween(k.querySelector('.pv-add'),Object.keys(fill).length,0);
+  k.querySelector('.pv-full').setAttribute('title','of '+tot+' attributes measured');
+}
 /* ---- the customise drawer ---- */
 function renderCust(){
   var host=$('#svc-cust');if(host.hidden||busy(host))return;

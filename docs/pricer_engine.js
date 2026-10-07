@@ -1810,7 +1810,8 @@
       var bl = gs ? gs.parts.filter(function (p) { return p.cov < 99; }).map(function (p) {
         return { key: p.key, cov: p.cov, tag: gapTag(p.key, m) };
       }) : [];
-      return { now: a.golden.score, after: sc, met: sc != null && sc >= 95, blockers: bl };
+      // `fixed` = the Golden Record attributes this option fills in this market (the page animates them)
+      return { now: a.golden.score, after: sc, met: sc != null && sc >= 95, blockers: bl, fixed: Object.keys(fix) };
     }
     function airOf(m) {
       var a = m.audit, n = a.conv ? a.conv.n : null, add = 0;
