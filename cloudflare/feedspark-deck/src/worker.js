@@ -4349,7 +4349,6 @@ const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS
 // record is already keyed by its period, so the two live side by side. 30 days is a SECOND full read
 // of a big account (Schuh UK 22,283 rows), so it is never the default — the caller asks for it.
 const CAT_ADS_PERIODS = ['7_days', '30_days'];
-const catAdsPeriod = (v) => (CAT_ADS_PERIODS.indexOf(String(v || '')) >= 0 ? String(v) : CAT_ADS_PERIOD);
 const CAT_ADS_TTL = 12 * 3600000, CAT_ADS_PART_TTL = 50 * 60000, CAT_ADS_MISSING_TTL = 24 * 3600000;
 // one report row -> [key, [impr, clicks, cost, conversions, conversion value], currency] — Google Ads' own
 // figures; every rate (CTR, CPC, ROAS, CR, cost / conv.) is worked out from these sums on the page, never read
@@ -4361,7 +4360,10 @@ function catAdsRow(r) {
   return [k.slice(0, 120), [Math.round(n(r.c1)), Math.round(n(r.c2)), Math.round(n(r.c3) * 100) / 100, Math.round(n(r.c5) * 100) / 100, Math.round(n(r.c4) * 100) / 100], String(r.cur || '').trim().slice(0, 3)];
 }
 async function catAdsRead(env, cmpid, fresh, period) {
-  const per = catAdsPeriod(period);
+  // the allow-list is read INSIDE the function on purpose: tools/test_catalog.mjs lifts this
+  // function out of the file by name and evaluates it with only the CAT_ADS_* constants beside
+  // it, so a module-level helper here is a name that does not exist when the harness runs it
+  const per = CAT_ADS_PERIODS.indexOf(String(period || '')) >= 0 ? String(period) : CAT_ADS_PERIOD;
   const key = 'catads:' + cmpid + ':' + per, now = Date.now();
   let rec = null;
   try { rec = await env.EDITS.get(key, 'json'); } catch (e) { rec = null; }
