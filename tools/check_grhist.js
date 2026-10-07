@@ -10,6 +10,10 @@
    whether the client download keeps the chart and drops the hover furniture. So this renders the
    REAL page against a stubbed FCC carrying a forty-day record and uses it.
 
+   Since 7 Oct 2026 the three scores — Golden Score, content quality, AI-readiness — are three lines
+   on ONE chart (Ray: "merge 3 scores as 3 lines chart in 1 graph pls"), each with its own row of
+   day-on-day bars, so every read below is per series.
+
    Playwright-based, so it runs in presync (like check_grpdf), not in validate.yml.
    Run: NODE_PATH=$(npm root -g) node tools/check_grhist.js   (GRHIST_SHOT=/dir keeps screenshots)
 */
@@ -92,24 +96,36 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
     return page;
   };
 
+  // THE THREE SCORES ON ONE CHART (Ray, 7 Oct 2026: "merge 3 scores as 3 lines chart in 1 graph
+  // pls") — every read is PER SERIES: bars, dots and line segments carry data-ser, and each score's
+  // row of bars has its own zero line
   const read = (page) => page.evaluate(() => {
     const tier = document.getElementById('hs-tier');
     const svg = tier && tier.querySelector('.hs-svg');
-    const bars = svg ? Array.from(svg.querySelectorAll('path[style]')) : [];
-    const mid = (() => { const a = svg && svg.querySelector('line.axis'); return a ? +a.getAttribute('y1') : null; })();
-    const barInfo = bars.map((b) => { const bb = b.getBBox(); return { up: /--hup/.test(b.getAttribute('style')), top: bb.y, bot: bb.y + bb.height, fill: getComputedStyle(b).fill }; });
+    const bars = svg ? Array.from(svg.querySelectorAll('path.bar')) : [];
+    const mids = {};
+    if (svg) svg.querySelectorAll('line.axis[data-ser]').forEach((a) => { mids[a.getAttribute('data-ser')] = +a.getAttribute('y1'); });
+    const barInfo = bars.map((b) => { const bb = b.getBBox(), k = b.getAttribute('data-ser');
+      return { ser: k, up: b.getAttribute('data-up') === '1', top: bb.y, bot: bb.y + bb.height, mid: mids[k], fill: getComputedStyle(b).fill }; });
     const hits = svg ? svg.querySelectorAll('.hit').length : 0;
-    const dots = svg ? svg.querySelectorAll('circle.z').length : 0;
-    const segs = svg ? (svg.querySelector('path.ln').getAttribute('d').match(/M/g) || []).length : 0;
+    const dotsOf = (k) => svg ? svg.querySelectorAll('circle.z[data-ser="' + k + '"]').length : 0;
+    const segsOf = (k) => { const l = svg && svg.querySelector('path.ln[data-ser="' + k + '"]'); return l ? (l.getAttribute('d').match(/M/g) || []).length : 0; };
+    const ends = svg ? Array.from(svg.querySelectorAll('text.end')).map((t) => ({ ser: t.getAttribute('data-ser'), t: t.textContent })) : [];
+    const lines = svg ? Array.from(svg.querySelectorAll('path.ln')).map((l) => ({ ser: l.getAttribute('data-ser'), stroke: getComputedStyle(l).stroke })) : [];
+    const rings = (k) => svg ? svg.querySelectorAll('circle.pt.man[data-ser="' + k + '"]').length : 0;
     const kpis = Array.from(document.querySelectorAll('#hs-tier .hs-k')).map((k) => k.innerText.replace(/\s+/g, ' ').trim());
     const logRows = Array.from(document.querySelectorAll('#hs-tier .hs-log tbody tr')).map((r) => r.innerText.replace(/\s+/g, ' ').trim());
     const more = document.querySelector('#hs-tier .hs-more');
     const est = document.querySelector('.est-mkt .est-su span i');
-    return { has: !!tier, empty: !!(tier && tier.classList.contains('hs-empty')), bars: barInfo, mid, hits, dots, segs, kpis, logRows,
+    return { has: !!tier, empty: !!(tier && tier.classList.contains('hs-empty')), bars: barInfo, mids, hits, kpis, logRows,
+      dots: { gs: dotsOf('gs'), q: dotsOf('q'), air: dotsOf('air') }, segs: { gs: segsOf('gs'), q: segsOf('q'), air: segsOf('air') },
+      ends, lines, rings: { gs: rings('gs'), q: rings('q'), air: rings('air') },
+      legend: Array.from(document.querySelectorAll('#hs-tier .hs-leg [data-ser]')).map((e) => e.textContent.trim()),
+      switches: document.querySelectorAll('#hs-tier [data-hmet]').length,
       more: more ? more.textContent : null, est: est ? { t: est.textContent, c: est.className } : null,
-      rng: (tier && tier.querySelector('.hs-rng:not(.hs-met) .on') || {}).textContent || null,
-      met: (tier && tier.querySelector('.hs-met .on') || {}).textContent || null };
+      rng: (tier && tier.querySelector('.hs-rng .on') || {}).textContent || null };
   });
+  const gsBars = (x) => x.bars.filter((b) => b.ser === 'gs');
 
   console.log('── the card, against a forty-day record');
   const page = await open({});
@@ -118,25 +134,41 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   ok('the default window is 90 days', a.rng === '90 days', a.rng);
   // 41 calendar days from the first reading to today; the record starts inside the window
   ok('one day column per calendar day from the first reading to today', a.hits === 41, a.hits);
-  const ups = a.bars.filter((b) => b.up), dns = a.bars.filter((b) => !b.up);
-  ok('the improvements draw ABOVE the zero line', ups.length >= 4 && ups.every((b) => b.bot <= a.mid + 0.5), ups);
-  ok('the colour slip draws BELOW it — a deduction is a bar under the line', dns.length === 1 && dns[0].top >= a.mid - 0.5, dns);
+  ok('ONE chart draws all three scores — a line each, in its own colour, and no switch between them',
+    a.lines.length === 3 && new Set(a.lines.map((l) => l.stroke)).size === 3 && a.switches === 0, { lines: a.lines, switches: a.switches });
+  ok('…on ONE axis: one set of score gridlines, the three rows of bars below it', await page.$$eval('#hs-tier .hs-svg line.grid', (g) => g.length) >= 2 && Object.keys(a.mids).length === 3, a.mids);
+  ok('…each line named at its right end with its latest value — the hand-run analysis holds its day',
+    a.ends.length === 3 && a.ends.some((e) => e.ser === 'gs' && /Golden Score/.test(e.t)) && a.ends.some((e) => e.ser === 'q' && /^80\.5\s*Content quality/.test(e.t)) &&
+    a.ends.some((e) => e.ser === 'air' && /^58\s*AI-readiness/.test(e.t)), a.ends);
+  ok('…and the key names the three', a.legend.length === 3 && /Golden Score/.test(a.legend[0]) && /Content quality/.test(a.legend[1]) && /AI-readiness/.test(a.legend[2]), a.legend);
+  const g0 = gsBars(a), ups = g0.filter((b) => b.up), dns = g0.filter((b) => !b.up);
+  ok('the improvements draw ABOVE their row\'s zero line', ups.length >= 4 && ups.every((b) => b.bot <= b.mid + 0.5), ups);
+  ok('the colour slip draws BELOW it — a deduction is a bar under the line', dns.length === 1 && dns[0].top >= dns[0].mid - 0.5, dns);
+  ok('every bar sits in its OWN score\'s row', a.bars.every((b) => b.mid != null && (b.up ? b.bot <= b.mid + 0.5 && b.top >= b.mid - 16.5 : b.top >= b.mid - 0.5 && b.bot <= b.mid + 16.5)), a.bars);
   // Ray, 24 Sep 2026: "If there's a manual scan on any day, that new score can override that day" —
   // the colour slip was read BY HAND and an automatic scan six hours later read it back; the day
   // stays the hand-run reading, so the recovery lands on the NEXT day instead of erasing the slip
   ok('a day with a scan run by hand is set by that scan, even when an automatic one came after it', dns.length === 1 && ups.length >= 5, { ups: ups.length, dns: dns.length });
-  ok('…and wears a ring on the line', await page.$$eval('#hs-tier circle.pt.man', (e) => e.length) === 1);
+  ok('…and wears a ring on its line — as does the content-quality analysis run by hand', a.rings.gs === 1 && a.rings.q === 1, a.rings);
   // 41 days − 3 not scanned − 6 moves (5 recorded + the live day is the same as the last one) → dots
-  ok('a scanned day with no change is a dot on the line, not a bar', a.dots >= 25, a.dots);
-  ok('the three days nobody scanned are a GAP in the line, never a flat copy', a.segs === 2, a.segs);
+  ok('a scanned day with no change is a dot on the line, not a bar', a.dots.gs >= 25, a.dots);
+  ok('the three days nobody scanned are a GAP in the line, never a flat copy', a.segs.gs === 2, a.segs);
+  // two analyses seventeen days apart: the first is a dot (nothing before it to compare), the days
+  // between draw nothing at all, and the line is two points — never a flat run across the gap
+  ok('content quality: a day with no analysis is a gap — two points, never a flat copy', a.segs.q === 2 && a.dots.q === 1, { segs: a.segs.q, dots: a.dots.q });
+  ok('…its hand-run analysis holds its day over the automatic one four hours later — one rise, in its own row',
+    a.bars.filter((b) => b.ser === 'q').length === 1 && a.bars.filter((b) => b.ser === 'q')[0].up, a.bars.filter((b) => b.ser === 'q'));
+  ok('AI-readiness draws in the same chart, its rise in its own row', a.bars.filter((b) => b.ser === 'air').length === 1 && a.bars.filter((b) => b.ser === 'air')[0].up && a.dots.air === 1);
   ok('the headline reads the last change and the move over the window',
     a.kpis.some((x) => /^Last change ▲ \+\d/i.test(x)) && a.kpis.some((x) => /^Since tracking began ▲ \+\d/i.test(x)), a.kpis);
   ok('a window longer than the record never claims the days it did not see', !a.kpis.some((x) => /^Over 90 days/i.test(x)), a.kpis);
   ok('content quality and AI-readiness ride along as analysed',
     a.kpis.some((x) => /Content quality 80\.5 ▲ \+8\.1/i.test(x)) && a.kpis.some((x) => /AI-readiness 58 ▲ \+3/i.test(x)), a.kpis);
-  ok('the change log lists the latest six, newest first', a.logRows.length === 6 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]), a.logRows.slice(0, 2));
+  ok('the change log lists the latest six, newest first — score moves and analyses together', a.logRows.length === 6 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]) &&
+    a.logRows.some((x) => /Content quality · AI-readiness/.test(x) && /by hand/.test(x) && /80\.5/.test(x)), a.logRows.slice(0, 3));
   ok('…with the deduction named by the attribute that moved — and marked as run by hand', a.logRows.some((x) => /by hand/.test(x) && /g:color ▼ −10pp/.test(x)), a.logRows);
-  ok('…and the rest one click away', /Show all 7 changes/.test(a.more || ''), a.more);
+  ok('…and the rest one click away', /Show all 10 changes/.test(a.more || ''), a.more);
+  ok('the header counts both: score changes and analyses', /6 score changes · 3 analyses in view/.test(await page.$eval('#hs-tier .hs-since', (e) => e.textContent)));
   ok('the card says the tracker fills itself at 12:00 UK, and when it last ran', await page.$eval('#hs-tier .hs-auto', (e) => /auto 12:00 UK · last/.test(e.textContent) && /47 feeds analysed/.test(e.title)));
   ok('the estate row names the last move under the feed score', a.est && /^▲[\d.]+$/.test(a.est.t) && a.est.c === 'up', a.est);
 
@@ -151,12 +183,13 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   await page.mouse.move(box.x, box.y);
   await page.waitForTimeout(200);
   const tip = await page.$eval('#hs-tip', (t) => ({ o: getComputedStyle(t).opacity, txt: t.innerText }));
-  ok('hovering a day says what moved that day', +tip.o > 0.5 && /▼ −/.test(tip.txt) && /g:color/.test(tip.txt), tip);
+  ok('hovering a day says what moved that day — and reads all three scores', +tip.o > 0.5 && /▼ −/.test(tip.txt) && /g:color/.test(tip.txt) &&
+    /Content quality/.test(tip.txt) && /AI-readiness/.test(tip.txt), tip);
   const gapIdx = 41 - 1 - 9;
   const gbox = await page.$$eval('#hs-tier .hit', (h, i) => { const r = h[i].getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + 40 }; }, gapIdx);
   await page.mouse.move(gbox.x, gbox.y);
   await page.waitForTimeout(150);
-  ok('…and a gap day says it was not scanned', /not scanned/.test(await page.$eval('#hs-tip', (t) => t.innerText)));
+  ok('…and a gap day says it was not scanned', /Golden Score not scanned/.test(await page.$eval('#hs-tip', (t) => t.innerText)));
   if (SHOT) await page.screenshot({ path: path.join(SHOT, 'grhist_light.png'), clip: await page.$eval('#hs-tier', (e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y + window.scrollY, width: r.width, height: r.height }; }), fullPage: true });
 
   // the range chips re-draw in place and are remembered on the device
@@ -175,31 +208,18 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   const w = await open({ waive: ['material', 'color'] });
   const b = await read(w);
   ok('waive the attributes that moved and their days stop reading as moves — the line is re-based, not rewritten',
-    b.bars.length === base90.bars.length - 4 && !b.bars.some((x) => !x.up), { before: base90.bars.length, after: b.bars.length });
+    gsBars(b).length === gsBars(base90).length - 4 && !gsBars(b).some((x) => !x.up), { before: gsBars(base90).length, after: gsBars(b).length });
+  ok('…and the other two scores do not move with it — they are analyses, not re-scored',
+    b.bars.filter((x) => x.ser !== 'gs').length === base90.bars.filter((x) => x.ser !== 'gs').length);
   ok('…and the log says so: the colour change costs the score nothing now', b.logRows.some((x) => /±0/.test(x) && /g:color/.test(x)), b.logRows);
   await w.close();
-
-  console.log('── content quality, day by day');
-  await page.click('[data-hmet="q"]');
-  await page.waitForTimeout(200);
-  const cq = await read(page);
-  ok('the chart switches to content quality', await page.$eval('#hs-tier .hs-svg text.pl', (t) => /CONTENT QUALITY · DAY BY DAY/.test(t.textContent)));
-  // two analyses seventeen days apart: the first is a dot (nothing before it to compare), the days
-  // between draw nothing at all, and the line is two points — never a flat run across the gap
-  ok('a day with no analysis is a gap — nothing drawn, not a flat copy', cq.dots === 1 && cq.hits >= 21 && cq.met === 'Content quality', { dots: cq.dots, met: cq.met });
-  ok('the hand-run analysis holds its day over the automatic one four hours later',
-    cq.bars.length === 1 && cq.bars[0].up && cq.kpis.some((x) => /Content quality 80\.5/i.test(x)), { bars: cq.bars.length, kpis: cq.kpis });
-  ok('the log lists the analyses, the hand-run one marked', cq.logRows.length === 3 && cq.logRows.some((x) => /by hand/.test(x) && /80\.5/.test(x)), cq.logRows);
-  ok('…and the choice is remembered on this device', await page.evaluate(() => localStorage.getItem('gr-hist-met')) === 'q');
-  await page.click('[data-hmet="gs"]');
-  await page.waitForTimeout(150);
 
   console.log('── the client PDF (body.pdf is the layout both client documents share)');
   const pdf = await page.evaluate(() => {
     document.body.classList.add('pdf');
     const t = document.getElementById('hs-tier');
     const vis = (e) => !!e && getComputedStyle(e).display !== 'none';
-    const r = { card: vis(t), bars: t.querySelectorAll('.hs-svg path[style]').length,
+    const r = { card: vis(t), bars: t.querySelectorAll('.hs-svg path.bar').length,
       offRange: Array.from(t.querySelectorAll('.hs-rng button:not(.on)')).filter(vis).length,
       onRange: vis(t.querySelector('.hs-rng .on')), more: vis(t.querySelector('.hs-more')) };
     document.body.classList.remove('pdf');
@@ -225,14 +245,15 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   await out.waitForTimeout(300);
   const x = await out.evaluate(() => {
     const t = document.getElementById('hs-tier');
-    return { has: !!t, bars: t ? t.querySelectorAll('.hs-svg path[style]').length : 0,
+    return { has: !!t, bars: t ? t.querySelectorAll('.hs-svg path.bar').length : 0, lines: t ? t.querySelectorAll('.hs-svg path.ln').length : 0,
       buttons: t ? t.querySelectorAll('button').length : -1,
       rng: Array.from(t ? t.querySelectorAll('.hs-rng .on') : []).map((e) => e.tagName + ':' + e.textContent).join(' + '),
       hits: t ? t.querySelectorAll('.hit').length : -1, tip: !!document.getElementById('hs-tip'),
       log: t ? t.querySelectorAll('.hs-log tbody tr').length : 0 };
   });
-  ok('the download carries the history — chart and change log', x.has && x.bars > 0 && x.log === 6, x);
-  ok('…the metric and the range as plain chips, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:Golden Score + SPAN:90 days', x);
+  // Show all was pressed above, and the file keeps the log as it was on screen
+  ok('the download carries the history — the three lines, the bars and the change log', x.has && x.lines === 3 && x.bars > 0 && x.log === 10, x);
+  ok('…the range as a plain chip, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:90 days', x);
   ok('…and none of the hover furniture', x.hits === 0 && !x.tip, x);
   fs.unlinkSync(tmp);
   await out.close();
@@ -254,8 +275,9 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   console.log('── dark, and the phone');
   const dk = await open({ dark: true });
   const dd = await read(dk);
-  ok('dark mode draws the selected dark steps, not the light ones',
-    dd.bars.some((x) => /76, 130, 224/.test(x.fill)) && dd.bars.some((x) => /198, 123, 40/.test(x.fill)), dd.bars.slice(0, 2).map((x) => x.fill));
+  ok('dark mode draws the selected dark steps, not the light ones — all three',
+    dd.bars.some((x) => /76, 130, 224/.test(x.fill)) && dd.bars.some((x) => /198, 123, 40/.test(x.fill)) && dd.bars.some((x) => /25, 158, 112/.test(x.fill)) &&
+    dd.lines.length === 3 && !dd.lines.some((l) => /37, 99, 235/.test(l.stroke)), { bars: dd.bars.map((x) => x.fill), lines: dd.lines });
   if (SHOT) await dk.screenshot({ path: path.join(SHOT, 'grhist_dark.png'), clip: await dk.$eval('#hs-tier', (e2) => { const r = e2.getBoundingClientRect(); return { x: r.x, y: r.y + window.scrollY, width: r.width, height: r.height }; }), fullPage: true });
   await dk.close();
   const ph = await open({ vp: { width: 390, height: 844 } });

@@ -182,7 +182,15 @@ console.log('── the page reads a move exactly as the engine records it');
   ok('the card sits in the scorecard and is wired after every render', /h \+= histSection\(k, s\);/.test(page) && /wire\(k, s\);\n    histWire\(k\);/.test(page));
   ok('the client download keeps the chart and drops the hover furniture', /'\.hs\.hs-empty', '\.hs-tip', '\.hs-more', '\.hs-svg \.hit',/.test(page) && /\.hs-rng button'\), function \(b\)/.test(page));
   ok('the PDF hides the same furniture', /body\.pdf \.hs-rng button:not\(\.on\),body\.pdf \.hs-more,body\.pdf \.hs-tip,body\.pdf \.hs\.hs-empty\{display:none!important\}/.test(page));
-  ok('the bars are the Product Volume pair, light and dark', /\.hs\{--hup:#2563EB;--hdn:#ED6F0B\}/.test(page) && /\[data-theme=dark\] \.hs\{--hup:#4C82E0;--hdn:#C67B28\}/.test(page));
+  // THE THREE SCORES ON ONE CHART (Ray, 7 Oct 2026: "merge 3 scores as 3 lines chart in 1 graph pls"):
+  // colour is the SCORE now — its line, its points and its own row of bars — and direction is position
+  ok('each score wears its own series colour, light and dark (the FCC chart pair + a third validated slot)',
+    /\.hs\{--hs-gs:#2563EB;--hs-q:#ED6F0B;--hs-air:#1BAF7A\}/.test(page) && /\[data-theme=dark\] \.hs\{--hs-gs:#4C82E0;--hs-q:#C67B28;--hs-air:#199E70\}/.test(page));
+  ok('one chart, three lines — the metric switch is gone and the card reads all three on one calendar',
+    !/data-hmet/.test(page) && /var m = histModelAll\(h0, s, profileForC\(p\.client\), HRNG, null\);/.test(page) &&
+    /if \(path\) sv \+= '<path class="ln" data-ser="' \+ k \+ '" style="stroke:var\(--hs-' \+ k \+ '\)"/.test(page));
+  ok('…every score keeps its own row of day-on-day bars, each on its own stated scale',
+    /DAY-ON-DAY CHANGE · EACH ROW ON ITS OWN SCALE/.test(page) && /peaks\[k\] = \[0\.5, 1, 2, 5, 10, 20, 50, 100\]/.test(page));
 }
 
 console.log('── the worker writes it');
@@ -354,7 +362,7 @@ console.log('── the portfolio view: every feed day by day, off the same engi
   const page = read('docs/FeedSpark_GoldenRecord.html');
   const cut = (a, b) => { const i = page.indexOf(a), j = page.indexOf(b, i); if (i < 0 || j < 0) throw new Error('page block not found: ' + a); return page.slice(i, j); };
   const twin = new Function(cut('  var SPEC = [', '  // the category each scoped') + cut('  function scopeShare(a)', '  // industry benchmark from the estate index') +
-    cut('  function attrsFromCov(cov, sc, rows)', '  function rescoreEstate()') + cut('  function hDay(t)', '  function histChart(m)') +
+    cut('  function attrsFromCov(cov, sc, rows)', '  function rescoreEstate()') + cut('  function hDay(t)', '  function histChart(M)') +
     '; return { goldenScore: goldenScore, attrsFromCov: attrsFromCov, histModel: histModel };')();
   const profs = [prof, LG.profileFor('YuMOVE', {}), { expected: ['material', 'pattern'], waived: ['size_type'] }];
   ok('the engine\'s attrsFromCov is the page\'s, reading for reading, under every profile',
