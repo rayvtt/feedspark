@@ -212,13 +212,16 @@ window.addEventListener('load',restore);
   .cb{position:relative;display:inline-block;min-width:78px}
   .cb i{position:absolute;right:0;bottom:-4px;height:3px;border-radius:2px;background:var(--vout);opacity:.55}
   .cb.rv i{background:var(--vin)}
-  /* ◐ HEAT — a colour scale per column, trough → peak (Ray, 30 Sep 2026). The chart pair's own steps, tinted
-     under ink text: orange below the group's typical row, blue above it, deepest at the trough and the peak. */
-  :root{--heat-hi:37,99,235;--heat-lo:237,111,11;--heat-k:1}
+  /* ◐ HEAT — a colour scale per column, trough → peak (Ray, 30 Sep 2026), ORANGE → GREEN (Ray, 7 Oct 2026: "can
+     the heatmap be orange > green for highest ?"). Tinted under ink text: orange at the weak end, green at the
+     strong end, deepest at the trough and the peak. Green is the step the palette validator passes beside the
+     deep orange (#166534 — protan ΔE 14.5; the brand's #15803D sits at 6.3, too close for a protan reader). */
+  :root{--heat-hi:22,101,52;--heat-lo:237,111,11;--heat-k:1}
   table.pt td.hx{background:rgba(var(--heat-hi),calc(var(--hx) * .34 * var(--heat-k)))!important}
   table.pt td.hx.lo{background:rgba(var(--heat-lo),calc(var(--hx) * .34 * var(--heat-k)))!important}
   table.pt td .hk{font-size:9px;color:var(--ink-2);margin-right:5px;vertical-align:1px}
   table.pt th.hx::before{content:'';position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:2px;background:linear-gradient(90deg,rgb(var(--heat-lo)),rgba(var(--heat-lo),.15) 45%,rgba(var(--heat-hi),.15) 55%,rgb(var(--heat-hi)))}
+  table.pt th.hx.rev::before{background:linear-gradient(90deg,rgb(var(--heat-hi)),rgba(var(--heat-hi),.15) 45%,rgba(var(--heat-lo),.15) 55%,rgb(var(--heat-lo)))}
   #heat-btn .hn{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:11px;font-weight:900}
   #heat-pop{width:290px}
   #heat-pop .hrow{display:flex;gap:6px;margin:6px 0 2px}
@@ -311,7 +314,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .b-strong{border-color:#2f5d3f}[data-theme=dark] .b-steady{border-color:#3a4f7d}[data-theme=dark] .b-weak{border-color:#6b4a2b}[data-theme=dark] .b-losing{border-color:#6b3a37}
 [data-theme=dark] .b-strong{color:#48D07E}[data-theme=dark] .b-steady{color:#7BA4F0}[data-theme=dark] .b-weak{color:#F0A44E}[data-theme=dark] .b-losing{color:#F1707A}
 [data-theme=dark] .cb i{background:#C67B28}[data-theme=dark] .cb.rv i{background:#4C82E0}
-:root[data-theme=dark]{--heat-hi:76,130,224;--heat-lo:198,123,40;--heat-k:1.3}
+:root[data-theme=dark]{--heat-hi:34,160,107;--heat-lo:198,123,40;--heat-k:1.3}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -747,8 +750,12 @@ window.addEventListener('load',restore);
   // with markets, categories at one depth — since a brand's total beside one of its categories is not a
   // comparison; (2) a MONEY column compares within one currency (the rule every figure here follows); (3) the
   // midpoint is the group's MEDIAN, not the middle of the range — spend is skewed, and a midrange scale paints
-  // every market but the biggest one orange. High or low, never good or bad: a peak CPC is a peak too.
-  var HEAT_NO={band:1,upd:1}, MONEY_K={sp:1,rv:1,cpc:1,cpa:1,aov:1,avgp:1};
+  // every market but the biggest one orange.
+  // ORANGE → GREEN (Ray, 7 Oct 2026: "can the heatmap be orange > green for highest ?"). Green reads as GOOD, so
+  // on the three columns where lower is better — Avg. CPC, Cost / conv., Zombie % — green marks the LOWEST:
+  // a green peak CPC would tell a client the most expensive market is the best one. ▲ / ▼ still mark the highest
+  // and lowest VALUE on every column, and the tooltip says which way a column runs.
+  var HEAT_NO={band:1,upd:1}, MONEY_K={sp:1,rv:1,cpc:1,cpa:1,aov:1,avgp:1}, HEAT_LOW={cpc:1,cpa:1,zb:1};
   function heatable(){ return visCols().filter(function(c){return !HEAT_NO[c.k]}); }
   function heatOn(){ var hc=heatable(); return S.heat.filter(function(k){ return hc.some(function(c){return c.k===k}); }); }
   // the currency a brand row's money cells show — the same pick cellOf makes
@@ -767,7 +774,7 @@ window.addEventListener('load',restore);
         var h=vs.length/2, med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2;
         L.forEach(function(x){
           var t=x.v>med?(mx>med?(x.v-med)/(mx-med):0):x.v<med?-(med>mn?(med-x.v)/(med-mn):0):0;
-          out[x.key+'|'+k]={t:t,peak:x.v===mx,trough:x.v===mn,rank:1+vs.filter(function(y){return y>x.v}).length,n:L.length,level:heatLevel(x.type,x.depth),cur:x.cur};
+          out[x.key+'|'+k]={t:t,rev:!!HEAT_LOW[k],peak:x.v===mx,trough:x.v===mn,rank:1+vs.filter(function(y){return y>x.v}).length,n:L.length,level:heatLevel(x.type,x.depth),cur:x.cur};
         });
       });
     });
@@ -775,23 +782,24 @@ window.addEventListener('load',restore);
   }
   function ordW(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
   function heatTd(h,c,html){
-    var ttl=(h.peak?'Peak — the highest ':h.trough?'Trough — the lowest ':ordW(h.rank)+' highest ')+c.l+' of the '+h.n+' '+h.level+' shown'+(h.cur?' in '+h.cur:'');
+    var ttl=(h.peak?'Peak — the highest ':h.trough?'Trough — the lowest ':ordW(h.rank)+' highest ')+c.l+' of the '+h.n+' '+h.level+' shown'+(h.cur?' in '+h.cur:'')+(h.rev?' · lower is better here, so green marks the lowest':'');
     var a=Math.abs(h.t); if(!a&&!h.peak&&!h.trough)return '<td title="'+esc(ttl)+'">'+html+'</td>';
-    return '<td class="hx'+(h.t<0?' lo':'')+(h.peak?' pk':'')+(h.trough?' tr':'')+'" style="--hx:'+(a?(0.2+0.8*a).toFixed(3):'0')+'" title="'+esc(ttl)+'">'+(h.peak?'<span class="hk" aria-hidden="true">▲</span>':h.trough?'<span class="hk" aria-hidden="true">▼</span>':'')+html+'</td>';
+    var weak=h.rev?h.t>0:h.t<0;   // the orange end: low on most columns, high where lower is better
+    return '<td class="hx'+(weak?' lo':'')+(h.peak?' pk':'')+(h.trough?' tr':'')+'" style="--hx:'+(a?(0.2+0.8*a).toFixed(3):'0')+'" title="'+esc(ttl)+'">'+(h.peak?'<span class="hk" aria-hidden="true">▲</span>':h.trough?'<span class="hk" aria-hidden="true">▼</span>':'')+html+'</td>';
   }
-  function renderHeatBtn(){ var n=heatOn().length; $('#heat-btn').innerHTML='◐ Heat'+(n?' <span class="hn">'+n+'</span>':''); $('#heat-btn').setAttribute('title',n?'Colour scale on '+n+' column'+(n===1?'':'s')+' — orange at the trough, blue at the peak':'Colour a column\'s cells from its trough to its peak — pick the columns one by one'); }
+  function renderHeatBtn(){ var n=heatOn().length; $('#heat-btn').innerHTML='◐ Heat'+(n?' <span class="hn">'+n+'</span>':''); $('#heat-btn').setAttribute('title',n?'Colour scale on '+n+' column'+(n===1?'':'s')+' — orange at the weak end, green at the strong end':'Colour a column\'s cells from its trough to its peak — pick the columns one by one'); }
   function renderHeat(){
     var hc=heatable();
     $('#heat-pop').innerHTML='<div class="hd">Colour scale · peak and trough</div>'
       +hc.map(function(c){return '<label><input type="checkbox" data-heat="'+c.k+'"'+(S.heat.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')
       +'<div class="hrow"><button class="chip" type="button" data-heat-all>All</button><button class="chip" type="button" data-heat-none>Clear</button></div>'
-      +'<div class="hleg"><span class="hsw"></span><span>▼ trough</span><span>typical</span><span>peak ▲</span></div>'
-      +'<p class="hnote">Each column on its own scale, within each level — brands with brands, markets with markets, categories at the same depth — and money within one currency. High or low, not good or bad. Only columns shown in ⊞ Columns are listed.</p>';
+      +'<div class="hleg"><span class="hsw"></span><span>▼ lowest</span><span>typical</span><span>highest ▲</span></div>'
+      +'<p class="hnote">Green is the highest — except Avg. CPC, Cost / conv. and Zombie %, where lower is better, so green is the lowest. Each column on its own scale, within each level — brands with brands, markets with markets, categories at the same depth — and money within one currency. Only columns shown in ⊞ Columns are listed.</p>';
   }
   function saveHeat(){ LS('fcc-roas-heat',S.heat.length?JSON.stringify(S.heat):null); renderHeatBtn(); renderTable(); }
   function renderTable(){
     var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody'), hon=heatOn();
-    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){var hx=hon.indexOf(c.k)>=0; return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+(hx?' hx':'')+'"'+(hx?' title="Colour scale on — orange at the trough, blue at the peak"':'')+'>'+esc(c.l)+'</th>'}).join('')+'</tr>';
+    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){var hx=hon.indexOf(c.k)>=0, rv=hx&&HEAT_LOW[c.k]; return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+(hx?' hx':'')+(rv?' rev':'')+'"'+(hx?' title="Colour scale on — '+(rv?'green at the lowest, orange at the highest (lower is better)':'orange at the lowest, green at the highest')+'"':'')+'>'+esc(c.l)+'</th>'}).join('')+'</tr>';
     if(!DATA||!DATA.brands||!(DATA.brands[S.win]||[]).length){ body.innerHTML=''; $('#pt-empty').hidden=false; $('#pt-empty').innerHTML=DATA?'<b>No markets synced for this scope yet.</b> ⚡ Sync now, or wait for the next firing.':'<b>ROAS data is unavailable</b> — this needs the live worker.'; $('#pt-foot').textContent=''; return; }
     $('#pt-empty').hidden=true;
     var rows=flat(buildRows()), HM=heatMap(rows);
@@ -812,7 +820,7 @@ window.addEventListener('load',restore);
       +(nHid?'<span>'+nHid+' market'+(nHid===1?'':'s')+' hidden by the band filter · <button class="lnk" type="button" data-clear-bands>clear it</button></span>':'')
       +(S.segNote?'<span>'+esc(S.segNote)+'</span>':'')
       +(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>'
-      +(hon.length?'<span>◐ '+esc(hon.map(function(k){return COLS.filter(function(c){return c.k===k})[0].l}).join(', '))+': orange ▼ trough → blue ▲ peak, within each level'+(hon.some(function(k){return MONEY_K[k]})?', money within one currency':'')+'</span>':'');
+      +(hon.length?'<span>◐ '+esc(hon.map(function(k){return COLS.filter(function(c){return c.k===k})[0].l}).join(', '))+': orange = lowest → green = highest'+(hon.some(function(k){return HEAT_LOW[k]})?' (green = lowest on '+esc(hon.filter(function(k){return HEAT_LOW[k]}).map(function(k){return COLS.filter(function(c){return c.k===k})[0].l}).join(', '))+', where lower is better)':'')+', within each level'+(hon.some(function(k){return MONEY_K[k]})?', money within one currency':'')+'</span>':'');
     renderHeatBtn();
     var brRows=rows.filter(function(r){return r.type==='brand'});
     $('#expand-all').textContent=brRows.length&&brRows.every(function(r){return r.open})?'⊖ Close all':'⊕ Open all';

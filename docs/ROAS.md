@@ -202,14 +202,22 @@ Three rules, each because the obvious version would mislead:
    impressions, conversions, SKUs) compare across currencies.
 3. **The midpoint is the median, not the middle of the range.** Spend is skewed: on a midrange scale
    one big market paints every other market orange. Around the median, orange means below the
-   typical row and blue means above it. Both deepen toward the trough ▼ and the peak ▲, and the
+   typical row and green means above it. Both deepen toward the trough ▼ and the peak ▲, and the
    median row is left untinted.
 
-The tint is the chart pair's own steps (light `#ED6F0B` / `#2563EB`, dark `#C67B28` / `#4C82E0`),
-under ink text, so every figure keeps its contrast. The colour means **high or low, not good or bad**:
-a peak CPC is a peak too, and the menu says so. Each tinted cell's tooltip names the peak, the trough
-or its rank (*"2nd highest ROAS of the 3 markets shown"*). The header carries a trough → peak bar, and
-the footer names the columns on. The Total rows are never on the scale.
+**Orange → green** (Ray, 7 Oct 2026: *"can the heatmap be orange > green for highest ?"* — it was
+orange → blue). Green reads as *good*, so on the three columns where **lower is better** — Avg. CPC,
+Cost / conv. and Zombie % — green marks the **lowest** value and orange the highest. A green peak CPC
+would tell a client the most expensive market is the best one. ▲ / ▼ still mark the highest and lowest
+*value* on every column, the tooltip of a reversed column ends "lower is better here, so green marks
+the lowest", its header bar runs green → orange, and the footer names it.
+
+The tint sits under ink text, so every figure keeps its contrast. The green is the step the palette
+validator passes beside the deep orange: light `#166534` beside `#ED6F0B` (protan ΔE 14.5), dark
+`#22A06B` beside `#C67B28` (ΔE 8.1). The brand's own `#15803D` sits at 6.3, too close to the orange
+for a protan reader without the ▲ / ▼ to help. Each tinted cell's tooltip names the peak, the trough
+or its rank (*"2nd highest ROAS of the 3 markets shown"*). The header carries a lowest → highest bar,
+and the footer names the columns on. The Total rows are never on the scale.
 
 The chosen columns are saved **on this device** (`fcc-roas-heat`) and inside a ★ saved view. The
 setting describes how one screen reads the table, so it is never shared state.
@@ -232,13 +240,15 @@ setting describes how one screen reads the table, so it is never shared state.
   390px. Two negative controls were run at build: without the `[hidden]` rule a hidden card still
   paints, without the capture rule a long card is clipped — both fail it.
   ◐ Heat block: nothing tinted until a column is picked; the menu lists exactly the columns shown bar
-  Band/Updated and stays open across ticks; the peak / trough brand (counted in the test) blue ▲ /
-  orange ▼; only the picked column coloured, header + footer naming it, Total rows never; with every
+  Band/Updated and stays open across ticks; the peak / trough brand (counted in the test) green ▲ /
+  orange ▼; on Zombie % (lower is better) the lowest brand green ▼ and the highest orange ▲, its
+  header bar reversed and the footer naming it; only the picked column coloured, header + footer naming it, Total rows never; with every
   brand open, markets ranked against markets across currencies for a ratio, the median market
   untinted with its rank in the tooltip, the lone € market off the £ spend scale; reload keeps it,
   Clear clears it, a saved view restores it; on a dozen £ markets the tint deepens monotonically away
-  from the median, one hue each side, one ▲ and one ▼; dark mode in the dark pair; every menu inside
-  a 390px screen. Negative control at build: dropping the per-currency grouping fails four of them.
+  from the median, one hue each side, one ▲ and one ▼; dark mode in its dark steps; every menu inside
+  a 390px screen. Negative controls at build: dropping the per-currency grouping fails four of them,
+  ignoring the lower-is-better flip fails the two Zombie % checks.
 - `tools/check_roasseg.js` — Playwright, in presync. It drives the real page on the synthetic
   stub:
   - the search opens a brand;
