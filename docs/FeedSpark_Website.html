@@ -230,7 +230,8 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
 .spec-s{min-width:0}
 .pz{margin-top:72px}
 .pz-q{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
-.pz-l{font-size:14px;font-weight:700;color:var(--ink)}
+.pz-q+.pz-q{margin-top:14px}
+.pz-l{font-size:14px;font-weight:700;color:var(--ink);min-width:190px}
 .seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
 .seg button{border:0;background:transparent;border-radius:3px;height:38px;padding:0 14px;font-size:14.5px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
 .seg button:hover{color:var(--ink)}
@@ -245,6 +246,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
 .t-p{margin-top:24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
 .t-n{font-size:clamp(40px,4.4vw,60px);font-weight:900;letter-spacing:-.045em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
 .t-u{font-size:14.5px;color:var(--mute)}
+.t-x{margin-top:8px;font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}
 .t-inc{margin-top:10px;font-size:14.5px;color:var(--text);min-height:1.6em}
 .t-inc b{color:var(--ink);font-variant-numeric:tabular-nums}
 .t-goal{margin-top:22px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:12px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
@@ -255,6 +257,11 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
 .t-l li::before{content:"";position:absolute;left:2px;top:16px;width:10px;height:5px;border-left:2px solid var(--or2);border-bottom:2px solid var(--or2);transform:rotate(-45deg)}
 .t-l li.all{font-weight:700;color:var(--ink)}
 .t-gap{margin-top:16px;font-size:14.5px;font-style:italic;color:var(--mute)}
+.tp{margin-top:56px;padding-top:28px;border-top:2px solid var(--ink)}
+.tp h3{font-size:24px;letter-spacing:-.02em}
+.tp-p{margin-top:10px;color:var(--mute);max-width:760px}
+.tp .spec-wrap{margin-top:22px}
+.tp .spec td,.tp .spec th{font-variant-numeric:tabular-nums}
 .terms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 40px;margin-top:64px}
 .terms div{border-top:1px solid var(--rule);padding-top:14px}
 .terms h4{font-size:16px}
@@ -391,6 +398,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   .spec-s tbody th{width:28%}
   .spec-s .us{padding-left:10px}
   .seg{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .pz-l{min-width:0}
   .f2{grid-template-columns:1fr}
   .form{padding:22px}
   .foot-g{grid-template-columns:1fr 1fr}
@@ -729,12 +737,22 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
             <button type="button" role="radio" aria-checked="false" data-b="3">100,000+</button>
           </div>
         </div>
+        <div class="pz-q">
+          <span class="pz-l" id="pz-tlbl">Tests a month</span>
+          <div class="seg" id="pz-tseg" role="radiogroup" aria-labelledby="pz-tlbl">
+            <button type="button" role="radio" aria-checked="true" data-b="0">None</button>
+            <button type="button" role="radio" aria-checked="false" data-b="2">2 tests</button>
+            <button type="button" role="radio" aria-checked="false" data-b="3">3 tests</button>
+            <button type="button" role="radio" aria-checked="false" data-b="4">4 tests</button>
+          </div>
+        </div>
         <div class="tiers">
           <article class="tier">
             <p class="t-k">Tier 1</p>
             <h3>Google-ready</h3>
             <p class="t-s">Eligible on every channel, and optimised to everything Google and Meta recommend.</p>
             <div class="t-p" aria-live="polite"><span class="t-n" id="pz-g">£2,200</span><span class="t-u" id="pz-gu">a month, per catalogue</span></div>
+            <div class="t-x" id="pz-gx" hidden></div>
             <div class="t-inc" id="pz-gi"><b>2,500</b> new products a month included</div>
             <div class="t-goal"><span>The line we hold</span><b>Golden Score 95+</b></div>
             <ul class="t-l">
@@ -742,7 +760,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
               <li>Identifiers, variants and the apparel attributes wherever Google asks for them</li>
               <li>Google's recommended attributes: category, product type depth, highlights, product detail, material, pattern, extra images</li>
               <li>Meta catalogues built to Meta's own specification</li>
-              <li>Titles and keywords tested against a control, kept only when they win</li>
+              <li>Titles written to Google's guidance: brand, product type and the details shoppers search for</li>
               <li>Disapprovals and drops in coverage flagged the day they happen</li>
               <li>Every new product brought to this standard as it arrives</li>
             </ul>
@@ -752,6 +770,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
             <h3>Agent-ready</h3>
             <p class="t-s">Everything Google-ready holds, plus the fields AI shopping agents read before they recommend a product.</p>
             <div class="t-p" aria-live="polite"><span class="t-n" id="pz-a">£3,400</span><span class="t-u" id="pz-au">a month, per catalogue</span></div>
+            <div class="t-x" id="pz-ax" hidden></div>
             <div class="t-inc" id="pz-ai"><b>2,500</b> new products a month included</div>
             <div class="t-goal"><span>The line we hold</span><b>AI-readiness 80+ · Golden Score 95+</b></div>
             <ul class="t-l">
@@ -765,6 +784,20 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
             </ul>
             <p class="t-gap">A feed without the conversational attributes tops out at 79 on our AI-readiness scale. This tier is the last 21 points.</p>
           </article>
+        </div>
+        <div class="tp">
+          <h3>Test packages</h3>
+          <p class="tp-p">An add-on to either tier. Each test changes one thing on a set of products, such as a title pattern, a keyword theme, an attribute or an image, and runs it against a control on Google Shopping. You get a read-out with the result. A winner rolls out across the catalogue and a loser is rolled back. The results in section 05 came from tests like these.</p>
+          <div class="spec-wrap">
+            <table class="spec spec-s">
+              <thead><tr><th scope="col">Package</th><th scope="col">Tests started a month</th><th scope="col">A month</th><th scope="col">Each test</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Steady</th><td>2</td><td>£800</td><td>£400</td></tr>
+                <tr><th scope="row">Active</th><td>3</td><td>£1,140</td><td>£380</td></tr>
+                <tr><th scope="row">Intensive</th><td>4</td><td>£1,440</td><td>£360</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <p class="note">Golden Score: every product checked against Google's product data specification, weighted by how much each attribute matters, measured daily. AI-readiness: the eight-pillar scale above. Prices exclude VAT.</p>
       </div>
@@ -922,7 +955,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
         <li id="mk-n9"><span><b>SparkAI guardrails</b>Align with the wording on the current AI Guardrails page.</span></li>
         <li id="mk-n10"><span><b>Switching</b>Align with the current Switching Process page.</span></li>
         <li id="mk-n11"><span><b>Audit form</b>Not connected. It needs a destination (CRM or inbox) before launch.</span></li>
-        <li id="mk-n13"><span><b>Pricing figures</b>Proposed, not agreed. Bands, prices, included new products, the 10p / 20p overage, the 35% market add-on and the one-off are a first cut, checked against today's ratecard (£585 per 8-hour day): similar-sized catalogues on hours retainers land within about 10% of these prices, now with new-product work included. Confirm every figure, and whether prices go on the public site at all or stay "from" figures.</span></li>
+        <li id="mk-n13"><span><b>Pricing figures</b>Proposed, not agreed. Bands, prices, included new products, the 10p / 20p overage, the test packages (2 / 3 / 4 tests at £800 / £1,140 / £1,440 a month), the 35% market add-on and the one-off are a first cut, checked against today's ratecard (£585 per 8-hour day): similar-sized catalogues on hours retainers land within about 10% of these prices, now with new-product work included. Confirm every figure, and whether prices go on the public site at all or stay "from" figures.</span></li>
         <li id="mk-n14"><span><b>Score guarantee</b>A service credit. Commercial and legal to confirm the wording, and what "in our control" excludes (a master feed missing the data, a client-side platform change).</span></li>
         <li id="mk-n12"><span><b>Showing the Command Center</b>Our internal tool, shown publicly for the first time. Confirm management is happy to show it.</span></li>
       </ol>
@@ -972,28 +1005,38 @@ window.DECK_EDITOR_SELECTOR = 'h1,h2,h3,h4,p,li,summary,blockquote,figcaption,.s
     label();
   });
 
-  /* pricing: the catalogue band sets both tiers' monthly fee and the new products each includes (figures proposed — review note 13) */
+  /* pricing: the catalogue band sets both tiers' monthly fee and the new products each includes; a test package adds to
+     either tier (figures proposed — review note 13) */
   var PZ = [{ g: 1200, a: 1900, inc: 500 }, { g: 2200, a: 3400, inc: 2500 }, { g: 3800, a: 5800, inc: 10000 }, null];
+  var TESTS = { 0: 0, 2: 800, 3: 1140, 4: 1440 };
   var gbp = function (n) { return '£' + n.toLocaleString('en-GB'); };
-  var seg = d.getElementById('pz-seg');
-  function band(i) {
-    var b = PZ[i], set = function (id, v) { d.getElementById(id).textContent = v; };
-    all('button', seg).forEach(function (x) { var on = +x.getAttribute('data-b') === i; x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
+  var seg = d.getElementById('pz-seg'), tseg = d.getElementById('pz-tseg'), pick = { b: 1, t: 0 };
+  function render() {
+    var b = PZ[pick.b], tn = pick.t, tp = TESTS[tn], set = function (id, v) { d.getElementById(id).textContent = v; };
+    [[seg, pick.b], [tseg, tn]].forEach(function (g) {
+      all('button', g[0]).forEach(function (x) { var on = +x.getAttribute('data-b') === g[1]; x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
+    });
     ['g', 'a'].forEach(function (t) {
-      set('pz-' + t, b ? gbp(b[t]) : "Let's talk");
+      var x = d.getElementById('pz-' + t + 'x');
+      set('pz-' + t, b ? gbp(b[t] + tp) : "Let's talk");
       set('pz-' + t + 'u', b ? 'a month, per catalogue' : 'priced on your catalogue and markets');
+      x.hidden = !tn;
+      x.textContent = !tn ? '' : b ? gbp(b[t]) + ' standard + ' + gbp(tp) + ' for ' + tn + ' tests' : 'plus ' + tn + ' tests a month, ' + gbp(tp);
       d.getElementById('pz-' + t + 'i').innerHTML = b ? '<b>' + b.inc.toLocaleString('en-GB') + '</b> new products a month included' : 'New-product allowance set to your launch calendar';
     });
   }
-  seg.addEventListener('click', function (e) { var x = e.target.closest('button'); if (x) band(+x.getAttribute('data-b')); });
-  seg.addEventListener('keydown', function (e) {
-    var k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-    if (!k) return;
-    e.preventDefault();
-    var cur = +seg.querySelector('[aria-checked=true]').getAttribute('data-b'), nx = (cur + k + PZ.length) % PZ.length;
-    band(nx); seg.querySelector('[data-b="' + nx + '"]').focus();
+  [[seg, 'b'], [tseg, 't']].forEach(function (g) {
+    var el = g[0], key = g[1];
+    el.addEventListener('click', function (e) { var x = e.target.closest('button'); if (x) { pick[key] = +x.getAttribute('data-b'); render(); } });
+    el.addEventListener('keydown', function (e) {
+      var k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!k) return;
+      e.preventDefault();
+      var bs = all('button', el), i = bs.indexOf(el.querySelector('[aria-checked=true]')), nx = bs[(i + k + bs.length) % bs.length];
+      pick[key] = +nx.getAttribute('data-b'); render(); nx.focus();
+    });
   });
-  band(1);
+  render();
 
   /* audit form (mockup: nothing is sent) */
   d.getElementById('form').addEventListener('submit', function (e) { e.preventDefault(); d.getElementById('ff').hidden = true; d.getElementById('fd').hidden = false; });
