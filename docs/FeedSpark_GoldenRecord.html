@@ -3839,7 +3839,7 @@ window.addEventListener('load',restore);
       '<style>html,body{background:transparent!important;margin:0}main.wrap{max-width:none!important;margin:0!important;padding:2px!important}' +
       '.ins{grid-auto-flow:row;grid-template-columns:repeat(' + Math.min(3, cards.length) + ',minmax(0,1fr))!important}' +
       '.mod,.mod[hidden]{display:flex!important;height:340px!important;min-height:0!important}.mod>.chead{flex-wrap:nowrap!important}</style></head>' +
-      '<body><main class="wrap"><div class="ins mods">' + cards.join('') + '</div></main></body></html>';
+      '<body><main class="wrap"><div class="ins mods">' + cards.join('') + '</div></main><\/body><\/html>';
   }
   // a script-free frame is laid out where it lands, so its height is measured here first, at the file's own column
   function catxMeasure(html) {
