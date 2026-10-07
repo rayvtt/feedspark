@@ -265,7 +265,11 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   layer see exactly the DOM they always did; check_nav still compares the nav markup byte for byte
   across 24 pages. The ☰ collapse toggle needed an explicit rule for the whole row (hairline, icons,
   bundle) — the page's own `.nav-collapsed .tb-modules` is two classes and the row's selector
-  carries an id, which beats it. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the
+  carries an id, which beats it. ONE ROW WHATEVER THE COUNT (7 Oct 2026: the 24th module, Restock,
+  broke the row at 1100px and 900px by 5px and 3px — a wrapping row breaks the moment one more icon
+  arrives at a width the breakpoints were tuned for): the icons SHRINK on one line (flex-wrap nowrap,
+  a tile's width its flex-basis, a 24px floor) and the breakpoints only size the glyph; the tripwire
+  appends six more icons at 900px and asserts one row. Tripwire `tools/check_navrow.js` (Playwright, presync) drives the
   real served pages at four widths — one row, flush right, the ▦ on it at the bar's edge, no text,
   every canonical module once in canonical order on a fresh device with an empty bundle, a viewer's
   bundled Pricer off the row and in the ▦ (dot, labelled row), the customiser moving a module out

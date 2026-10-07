@@ -11644,6 +11644,7 @@
     {"name": "Restock: the stub feeds the dark-mode tripwire", "file": "tools/check_darkmode.js", "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();", "pr": 0},
     {"name": "Restock: the harness runs in qa_gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_restock.mjs", "pr": 0},
     {"name": "Restock: the tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_restock.js", "pr": 0},
-    {"name": "Restock: the harness runs in CI", "file": ".github/workflows/validate.yml", "pattern": "run: node tools/test_restock.mjs", "pr": 0}
+    {"name": "Restock: the harness runs in CI", "file": ".github/workflows/validate.yml", "pattern": "run: node tools/test_restock.mjs", "pr": 0},
+    {"name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)", "file": "docs/navrow_widget.html", "pattern": "body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }", "pr": 0}
   ]
 }

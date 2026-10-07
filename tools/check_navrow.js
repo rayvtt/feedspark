@@ -167,6 +167,21 @@ const minus = (h) => CANON.filter((x) => x !== h);
     await p.close();
   }
 
+  /* ONE ROW WHATEVER THE COUNT (7 Oct 2026: the 24th module broke the tuned breakpoints at 1100px and 900px) —
+     the tiles shrink on one line rather than wrap, so SIX MORE icons than the nav carries today still hold one row
+     at 900px, and the tiles are measurably narrower than at 1440px (shrunk, not wrapped) */
+  console.log('\none row whatever the count — six more icons than today, still one row at 900px');
+  {
+    const p = await open(CC, 900);
+    await p.evaluate(() => { const n = document.getElementById('tb-modules'); const src = [...n.querySelectorAll('a.tbm')].slice(0, 6); src.forEach((a, i) => { const c = a.cloneNode(true); c.setAttribute('href', '/extra-' + i); c.classList.remove('on'); n.appendChild(c); }); });
+    await p.waitForTimeout(200);
+    const r = await read(p);
+    const tileW = await p.evaluate(() => { const a = document.querySelector('#tb-modules a.tbm'); return Math.round(a.getBoundingClientRect().width); });
+    ok('thirty icons at 900px: still ONE row, the ▦ still at its end', r.rows === 1 && r.appsSameRow === true && r.appsRightOfIcons === true, { rows: r.rows, sameRow: r.appsSameRow, rightOf: r.appsRightOfIcons });
+    ok('the tiles shrank to fit (narrower than a 38px tile, never under the 24px floor)', tileW < 38 && tileW >= 24, tileW);
+    await p.close();
+  }
+
   /* the negative control — without the widget the same page wraps, so the one-row assertion
      measures something real rather than passing on a bar that was never crowded */
   console.log('\nthe negative control (the same page without the widget)');
