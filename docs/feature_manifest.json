@@ -11195,6 +11195,8 @@
     {"name": "Website mockup v2: the footage is bundled as Data modules", "file": "wrangler.toml", "pattern": "{ type = \"Data\", globs = [\"**/website/*.webp\", \"**/website/*.mp4\"], fallthrough = true }", "pr": 0},
     {"name": "Website mockup: the review-notes layer", "file": "docs/FeedSpark_Website.html", "pattern": "id=\"mk-notes\"", "pr": 0},
     {"name": "Website mockup: the AI layer is SparkAI, never Tachyon", "file": "docs/FeedSpark_Website.html", "pattern": "Tachyon", "forbidden": true, "pr": 0},
+    {"name": "Website mockup: pricing section — priced on the result, two tiers by catalogue size", "file": "docs/FeedSpark_Website.html", "pattern": "<h2 data-r>Priced on the result, not the hours.</h2>", "pr": 0},
+    {"name": "Website mockup: pricing — the catalogue band sets both tiers", "file": "docs/FeedSpark_Website.html", "pattern": "var PZ = [{ g: 1200, a: 1900, inc: 500 }, { g: 2200, a: 3400, inc: 2500 }, { g: 3800, a: 5800, inc: 10000 }, null];", "pr": 0},
     {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0},
     {"name": "Catalogue: column filters — every view passes them", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passFacet(i) || !passCF(i)) continue;", "pr": 0},
     {"name": "Catalogue: a column's value list is counted without its own filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passCF(i, skip)", "pr": 0},
