@@ -355,6 +355,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }
+  echo "── validating: guard pages — scan scope (all brands / a brand / a market, forced, XML streamed, Stop)"
+  NODE_PATH=$(npm root -g) node tools/check_scanscope.js || {
+    echo "✗ scan-scope tripwire failed — a scope read the wrong feeds, skipped fresh feeds unasked, counted an XML refusal as scanned, or the three pages' blocks drifted"; exit 1; }
   echo "── validating: Label Guard ⬇ HTML · all markets (one file per brand — every market, filter/sort/tabs live, CSV inside)"
   NODE_PATH=$(npm root -g) node tools/check_lgexport.js || {
     echo "✗ Label Guard export tripwire failed — the multi-market file lost a market, a control, a CSV, or let FCC chrome in"; exit 1; }

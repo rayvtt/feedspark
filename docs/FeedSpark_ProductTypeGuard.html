@@ -59,6 +59,12 @@ window.addEventListener('load',restore);
   .est-card h3{margin:0 0 8px;font-size:16px;font-weight:900}
   /* the card header IS the per-brand collapse toggle (Ray, 18 Sep 2026: the Golden Record
      scorecard's "expand and collapse, all and individual" on the product-type cards too) */
+  /* scan scope (Ray, 7 Oct 2026): All brands / a brand / a market */
+  .scan-ctl{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .scan-sel{font:inherit;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--paper,#fff);color:var(--ink);max-width:210px;min-width:0}
+  .scan-sel:disabled{opacity:.55}
+  .scan-skip{font-size:11.5px;font-weight:700;color:var(--muted);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer}
+  .est-hd .est-scan{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
   .est-card.collapsed .est-hd{margin-bottom:-6px}
   .est-hd h3{margin:0;font-size:16px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -358,9 +364,9 @@ window.addEventListener('load',restore);
 
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">02</span><h2>Estate health</h2>
-    <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
+    <span class="scan-ctl"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
-    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels and product types land in the same pass">⚡ Scan whole estate</button></span></div>
+    <select class="scan-sel" id="scan-brand" aria-label="Brands to scan" title="What to scan — every brand, one brand, or (with a brand picked) one market"></select><select class="scan-sel" id="scan-mkt" aria-label="Markets to scan" title="Pick a brand first, then every market of it or one"></select><label class="scan-skip" title="Leave out feeds already read in the last 20 hours — off, every feed in the scope is read now"><input type="checkbox" id="scan-skip"> skip feeds read in the last 20 h</label><button class="btn" id="scan-stop" hidden title="Finish the feed in hand, then stop">⏹ Stop</button><button class="btn pri" id="scan-all" title="Read every feed in the scope now — FeedHero XML feeds stream live in this browser, sheet feeds through the server">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — Meta catalogues
   segment differently, so they stay on <a href="/labels">Label Guard</a>. Bar = product_type coverage.
   Click a market to dissect it below. Product types ride the same scan rotation as the custom labels;
@@ -644,7 +650,7 @@ window.addEventListener('load',restore);
         '<span>' + sum.n + ' market' + (sum.n === 1 ? '' : 's') + (sum.scanned < sum.n ? ' · ' + sum.scanned + ' scanned' : '') + '</span>' +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span></div>';
+        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(c) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(c) + '">⚡</button>' + '</div>';
       if (!collapsed) byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
@@ -662,8 +668,12 @@ window.addEventListener('load',restore);
       h += '</div>';
     });
     $('est-grid').innerHTML = h;
+    if (typeof scopeRender === 'function') scopeRender();
     Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
       el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.est-scan'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); scanBrand(el.getAttribute('data-scanb')); };
     });
     collapseAllBtn();
     Array.prototype.forEach.call(document.querySelectorAll('.est-mkt'), function (el) {
@@ -1295,25 +1305,104 @@ window.addEventListener('load',restore);
     }).catch(function () {});
   }
 
-  $('scan-all').onclick = function () {
-    var feeds = feedList(); if (!feeds.length) return;
-    var btn = $('scan-all'); btn.disabled = true;
-    var i = 0, skipped = 0;
+
+  /* ---- SCAN SCOPE (Ray, 7 Oct 2026: "allow scan per brand (all markets) / all brands / single
+     market", over a "Done — 0 scanned, 73 fresh (skipped)"). The estate button had one scope and
+     two traps: on /labels it skipped every feed read in the last 20 h, so a catch-up after a fix
+     scanned nothing; and on every guard page it POSTed only the server scan, which REFUSES a
+     FeedHero XML feed (gviz cannot query XML) — so the XML markets, most of the estate, were
+     counted as scanned and never read. Now a scope is picked — All brands, one brand (every
+     market) or one market — every pick is a FORCED read unless "skip feeds read in the last
+     20 h" is ticked, and each feed takes the SAME path as the per-feed button: the server scan,
+     and on its XML refusal the live stream in this browser (xmlLiveScan). ⏹ Stop finishes the
+     feed in hand and stops. Each brand card carries ⚡ Scan for that brand's markets.
+     The same block sits on /labels, /ptypes and /golden; tools/check_scanscope.js holds them equal. */
+  var SCOPE = { b: '*', m: '*', running: false, stop: false };
+  function scopeFeeds() {
+    return feedList().filter(function (f) { return (SCOPE.b === '*' || f.client === SCOPE.b) && (SCOPE.m === '*' || f.mkt === SCOPE.m); });
+  }
+  function scopeLbl(f) { return scDisp(f.client) + ' · ' + scMkt(f.mkt); }
+  function scopeRender() {
+    var bs = $('scan-brand'), ms = $('scan-mkt'), btn = $('scan-all'), stp = $('scan-stop');
+    if (!bs || !ms || !btn) return;
+    var all = feedList(), by = {};
+    all.forEach(function (f) { (by[f.client] = by[f.client] || []).push(f); });
+    if (SCOPE.b !== '*' && !by[SCOPE.b]) { SCOPE.b = '*'; SCOPE.m = '*'; }
+    var bh = '<option value="*">All brands · ' + all.length + ' feed' + (all.length === 1 ? '' : 's') + '</option>';
+    Object.keys(by).sort().forEach(function (c) {
+      bh += '<option value="' + esc(c) + '">' + esc(scDisp(c)) + ' · ' + by[c].length + ' market' + (by[c].length === 1 ? '' : 's') + '</option>';
+    });
+    bs.innerHTML = bh; bs.value = SCOPE.b;
+    var mk = SCOPE.b === '*' ? [] : by[SCOPE.b];
+    if (SCOPE.m !== '*' && !mk.some(function (f) { return f.mkt === SCOPE.m; })) SCOPE.m = '*';
+    ms.innerHTML = '<option value="*">' + (SCOPE.b === '*' ? 'Every market' : 'All markets') + '</option>' +
+      mk.map(function (f) { return '<option value="' + esc(f.mkt) + '">' + esc(scMkt(f.mkt)) + '</option>'; }).join('');
+    ms.value = SCOPE.m;
+    bs.disabled = SCOPE.running; ms.disabled = SCOPE.running || SCOPE.b === '*';
+    var n = scopeFeeds().length;
+    if (!SCOPE.running) btn.textContent = SCOPE.b === '*' ? '⚡ Scan whole estate'
+      : (SCOPE.m === '*' ? '⚡ Scan ' + scDisp(SCOPE.b) + ' — ' + n + ' market' + (n === 1 ? '' : 's') : '⚡ Scan ' + scDisp(SCOPE.b) + ' · ' + scMkt(SCOPE.m));
+    btn.disabled = SCOPE.running || !n;
+    if (stp) { stp.hidden = !SCOPE.running; stp.disabled = SCOPE.running && SCOPE.stop; }
+  }
+  function scDur(ms) { var s = Math.round(ms / 1000); return s < 90 ? s + 's' : Math.round(s / 60) + ' min'; }
+  // one feed, the path the per-feed button takes: the server scan, and on its XML refusal the live
+  // stream in this browser. Resolves 'ok' | 'held' | an error message — never rejects
+  function scanOneQuiet(f, onState) {
+    return fetch(API + '/api/ptypes/scan' + '?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.error && XML_REFUSAL.test(d.error)) {
+          if (onState) onState('streaming the live XML');
+          return xmlLiveScan(f.client, f.mkt, onState).then(function (d2) { return d2 && d2.skipped ? 'held' : (d2 && d2.error ? String(d2.error) : 'ok'); });
+        }
+        return d && d.error ? String(d.error) : 'ok';
+      })
+      .catch(function (e) { return (e && e.message) || 'network'; });
+  }
+  function scanScope() {
+    if (SCOPE.running) return;
+    var feeds = scopeFeeds(); if (!feeds.length) return;
+    var skipFresh = !!($('scan-skip') && $('scan-skip').checked);
+    SCOPE.running = true; SCOPE.stop = false; scopeRender();
+    var i = 0, done = 0, skipped = 0, failed = [], held = [], t0 = Date.now(), msg = $('scan-all-msg');
+    var what = SCOPE.b === '*' ? 'Whole estate' : scDisp(SCOPE.b) + (SCOPE.m === '*' ? '' : ' · ' + scMkt(SCOPE.m));
+    function show(f, s) { msg.innerHTML = '<span class="spin"></span>' + esc(scopeLbl(f)) + ' (' + i + '/' + feeds.length + ')' + (s ? ' — ' + esc(s) : ''); }
+    function finish() {
+      var stopped = SCOPE.stop && i < feeds.length;
+      SCOPE.running = false; SCOPE.stop = false;
+      msg.textContent = (stopped ? 'Stopped — ' : 'Done — ') + what + ': ' + done + ' scanned' + scWhat() +
+        (skipped ? ', ' + skipped + ' read in the last 20 h (skipped)' : '') +
+        (failed.length ? ', ' + failed.length + ' failed (' + failed.slice(0, 4).join(', ') + (failed.length > 4 ? ' …' : '') + ')' : '') +
+        (held.length ? ', ' + held.length + ' held — two live reads disagreed (' + held.slice(0, 3).join(', ') + ')' : '') +
+        (stopped ? ', ' + (feeds.length - i) + ' not reached' : '') + ' · ' + scDur(Date.now() - t0);
+      scopeRender();
+      return refreshEstate().then(function () { if (SEL) select(SEL); });
+    }
     function step() {
-      if (i >= feeds.length) {
-        $('scan-all-msg').textContent = 'Done — ' + (feeds.length - skipped) + ' scanned' + (skipped ? ', ' + skipped + ' fresh (skipped)' : '');
-        btn.disabled = false;
-        return refreshEstate().then(function () { if (SEL) select(SEL); });
-      }
+      if (SCOPE.stop || i >= feeds.length) return finish();
       var f = feeds[i++];
-      // no freshness skip here — this button is the estate CATCH-UP: it force-rescans
-      // every feed so a fix or re-segmentation lands everywhere at once, ~42 × a few s
-      $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(f.client) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' (' + i + '/' + feeds.length + ')';
-      return fetch(API + '/api/ptypes/scan?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
-        .then(function (r) { return r.json(); }).catch(function () {}).then(step);
+      if (skipFresh && f.t && (Date.now() - f.t) < STALE_MS && f.status !== 'unreachable') { skipped++; return step(); }
+      show(f, 'scanning');
+      return scOne(f, function (s) { show(f, s); })
+        .then(function (r) { if (r === 'held') held.push(scopeLbl(f)); else if (r !== 'ok') failed.push(scopeLbl(f)); else done++; })
+        .then(step);
     }
     step();
-  };
+  }
+  $('scan-brand').onchange = function () { SCOPE.b = this.value; SCOPE.m = '*'; scopeRender(); };
+  $('scan-mkt').onchange = function () { SCOPE.m = this.value; scopeRender(); };
+  $('scan-stop').onclick = function () { SCOPE.stop = true; scopeRender(); var m = $('scan-all-msg'); if (m) m.insertAdjacentText('beforeend', ' — stopping after this feed…'); };
+  $('scan-all').onclick = scanScope;
+  // ⚡ on a brand card: that brand, every market
+  function scanBrand(c) { if (SCOPE.running) return; SCOPE.b = c; SCOPE.m = '*'; scopeRender(); scanScope(); }
+  scopeRender();
+  function scWhat() { return ''; }   // what one feed's pass reads, on this page
+  function scDisp(c) { return c; }
+  function scMkt(m) { return String(m || '').toUpperCase(); }
+  function scOne(f, onState) {
+    return scanOneQuiet(f, onState);
+  }
 
   // ask-the-client state (contact memory + ✉ asked stamps — Label Guard's shared rails)
   fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); }).then(function (d) {
