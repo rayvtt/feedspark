@@ -10155,10 +10155,10 @@
       "pr": 558
     },
     {
-      "name": "Golden daily: the workflow fires 11/12/13 UTC and the script decides",
+      "name": "Golden daily: the workflow fires off the hour, 11-14 UTC, and the script decides",
       "file": ".github/workflows/golden-daily.yml",
-      "pattern": "cron: '0 11,12,13 * * *'",
-      "pr": 0
+      "pattern": "cron: '7,37 11,12,13,14 * * *'",
+      "pr": 602
     },
     {
       "name": "Golden daily: one content-quality stream for the page and the agent",
@@ -11631,19 +11631,19 @@
       "name": "Golden daily: the run waits for noon London",
       "file": "tools/golden_daily.mjs",
       "pattern": "export const RUN_HOUR = 12;",
-      "pr": 0
+      "pr": 602
     },
     {
       "name": "Golden daily: only a run finished from noon is the day's run",
       "file": "tools/golden_daily.mjs",
       "pattern": "export function runDone(last, clock) {",
-      "pr": 0
+      "pr": 602
     },
     {
       "name": "Golden daily: the page chip names the noon run",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "⏱ auto 12:00 UK · last ",
-      "pr": 0
+      "pr": 602
     }
   ]
 }

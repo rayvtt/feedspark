@@ -287,6 +287,8 @@ console.log('── the agent runs once a day, from 12:00 London (moved from 09:
   ok('before 12:00 London it waits — the old 09:00 firing included', !A.shouldRun(at('2026-12-01T11:00:00Z'), false, false) && !A.shouldRun(at('2026-07-01T08:00:00Z'), false, false));
   ok('from 12:00 it runs', A.shouldRun(at('2026-07-01T11:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T12:00:00Z'), false, false));
   ok('a late firing is the catch-up for a missed or failed run', A.shouldRun(at('2026-07-01T12:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T13:00:00Z'), false, false));
+  ok('every slot on the schedule is noon or later London in summer, and only the 11:xx UTC slots wait in winter', ['11:07', '11:37', '12:07', '12:37', '13:07', '13:37', '14:07', '14:37'].every((h) => A.shouldRun(at('2026-07-01T' + h + ':00Z'), false, false))
+    && ['11:07', '11:37'].every((h) => !A.shouldRun(at('2026-12-01T' + h + ':00Z'), false, false)) && ['12:07', '12:37', '13:07', '13:37', '14:07', '14:37'].every((h) => A.shouldRun(at('2026-12-01T' + h + ':00Z'), false, false)));
   ok('once today is on the ledger every later firing does nothing', !A.shouldRun(at('2026-07-01T12:00:00Z'), true, false));
   ok('a forced dispatch runs regardless', A.shouldRun(at('2026-12-01T06:00:00Z'), true, true));
   // the ledger: only a run that FINISHED from noon London is the day's run
@@ -303,7 +305,7 @@ console.log('── the agent runs once a day, from 12:00 London (moved from 09:
   ok('sheet-backed ones read Google\'s public CSV export, as the feed proxy does', feeds.filter((f) => f.kind === 'sheet').every((f) => /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[^/]+\/export\?format=csv&gid=/.test(f.url)) && feeds.some((f) => f.kind === 'sheet'));
   ok('a client name with a space is read whole', feeds.some((f) => f.client === 'House of Bruar'));
   const wf = read('.github/workflows/golden-daily.yml');
-  ok('the workflow fires at 11:00, 12:00 and 13:00 UTC and lets the script decide', /cron: '0 11,12,13 \* \* \*'/.test(wf) && !/cron: '0 8,9,10/.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
+  ok('the workflow fires at :07/:37 past 11:00-14:00 UTC — off the hour, where GitHub drops the most — and lets the script decide', /cron: '7,37 11,12,13,14 \* \* \*'/.test(wf) && !/cron: '0 /.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
   ok('a one-feed dispatch never marks the day done', /if \(!ONLY\) await post\(\{ goldendaily: \{ day: clock\.day, finish: true,/.test(read('tools/golden_daily.mjs')));
 }
 
