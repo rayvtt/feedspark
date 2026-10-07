@@ -10221,6 +10221,30 @@
       "pr": 558
     },
     {
+      "name": "Workflow Playbook: the account picker lists only the accounts the Task Manager says are yours (Ray, 29 Sep 2026) — and stands down to every account rather than emptying when no AM is known",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function rosterView(){",
+      "pr": 606
+    },
+    {
+      "name": "Workflow Playbook: the rail reads the signed-in identity through the FCCMe bridge — it is in its own script block and cannot see ACCESS_ME",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCMe=function()",
+      "pr": 606
+    },
+    {
+      "name": "Workflow Playbook: the picker narrows when /api/hours lands, not on the next poll",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "document.addEventListener('fcc-hours',function(){ fillBrands(); render(); });",
+      "pr": 606
+    },
+    {
+      "name": "Workflow intake: the view the board opens on — three statuses, due date latest first (Ray, 29 Sep 2026); the window holds at 2m because widening it hides a colleague's brief (test_teamsync [2])",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var IT_DEF={statuses:['open','progress','briefed'],window:'2m',sort:'dsort',dir:-1}",
+      "pr": 606
+    },
+    {
       "name": "Workflow intake: Task is the only auto column; controls px, text percent",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "#itbl col.ic-task{width:auto}",

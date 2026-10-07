@@ -41,6 +41,24 @@ ok(/#itbl col\.ic-(?:client|feed|owner|due)\{width:[\d.]+%\}/.test(html),
 ok(/#itbl col\.ic-(?:status|source|act)\{width:\d+px\}/.test(html),
   'while the fixed-size controls are px — more width there is only whitespace');
 
+console.log('\n── the view the board opens on');
+/* Ray, 29 Sep 2026: "default view is (plan: all history) (3 statuses) (sort Due Date latest)" —
+   the three he was re-setting by hand on every load. Read off ONE object, because the
+   Clear-filter button restores the default too and used to restate the retired 2-month window. */
+const def = (html.match(/var IT_DEF=\{([^}]*)\}/) || [])[1] || '';
+/* NOT all-history yet: '' reproducibly hides a colleague's just-arrived brief (test_teamsync [2]
+   fails on that change alone), so the window holds at 2m until that is understood — asserted so
+   the reason travels with the value and nobody widens it without reading why */
+ok(/window:'2m'/.test(def), 'the plan window is still 2m \u2014 widening it hides a colleague\u2019s brief');
+ok(/statuses:\['open','progress','briefed'\]/.test(def), 'three statuses — open, in progress, briefed');
+ok(/sort:'dsort'/.test(def) && /dir:-1/.test(def), 'sorted by the DUE date, latest first');
+ok(/itState=\{[^;]*statuses:IT_DEF\.statuses\.slice\(\)[^;]*window:IT_DEF\.window[^;]*sort:IT_DEF\.sort[^;]*dir:IT_DEF\.dir/.test(html),
+  'the board reads those defaults rather than restating them');
+ok(/itState\.statuses=IT_DEF\.statuses\.slice\(\); itState\.q=''; itState\.window=IT_DEF\.window/.test(html),
+  'and so does Clear filter — it used to pin the window back to the retired 2-month default');
+ok(/function sortArrow\(\)/.test(html) && /\n  sortArrow\(\);/.test(html),
+  'the sort arrow is painted at boot, not only by a click — a default sort had nothing naming it');
+
 console.log('\n── every row is one height, and the floor is on the row');
 const tkw = (html.match(/\.itbl \.c-task \.tk-w\{([\s\S]*?)\}/) || [])[1] || '';
 ok(/-webkit-line-clamp:2/.test(tkw), 'the task box is clamped to two lines, so a long task cannot push its row taller');
@@ -73,12 +91,20 @@ if (chromium) {
       const t = document.getElementById('itbl');
       const cols = [...t.querySelectorAll('col')].map((c) => ({ cls: c.className, d: getComputedStyle(c).display }));
       const th = [...t.querySelectorAll('thead th')].map((x) => Math.round(x.getBoundingClientRect().width));
+      const wsel = document.getElementById('it-window');
+      const view = { win: wsel ? wsel.value : null,
+        winLabel: wsel && wsel.selectedOptions[0] ? wsel.selectedOptions[0].textContent : '',
+        statusBtn: (document.getElementById('it-status-btn') || {}).textContent || '',
+        arrow: (function () { const t = document.querySelector('#itbl thead th .ar');
+          return t ? t.closest('th').getAttribute('data-k') + t.textContent.trim() : null; })(),
+        /* the dates actually drawn, in the order drawn — dateless rows read '—' and sink */
+        due: [...document.querySelectorAll('#it-body .c-due')].map((c) => c.textContent.trim()) };
       const rows = [...document.querySelectorAll('#it-body tr')];
       const hs = rows.map((r) => Math.round(r.getBoundingClientRect().height));
       const ws = [...document.querySelectorAll('#it-body .tk-w')];
       const clipped = ws.filter((w) => w.scrollHeight > w.clientHeight + 1);
       const whole = ws.filter((w) => w.scrollHeight <= w.clientHeight + 1);
-      return { cols, th, tw: Math.round(t.getBoundingClientRect().width), n: rows.length, hi: Math.max(...hs), lo: Math.min(...hs),
+      return { view, cols, th, tw: Math.round(t.getBoundingClientRect().width), n: rows.length, hi: Math.max(...hs), lo: Math.min(...hs),
         clip: clipped.length, clipTitled: clipped.filter((w) => (w.title || '').length > 10).length,
         wholeTitled: whole.filter((w) => w.title).length,
         clipFull: clipped.length ? clipped[0].title.length >= clipped[0].innerText.trim().length : true,
@@ -128,6 +154,17 @@ if (chromium) {
     return g;
   };
   const a = await read(1131), b = await read(1500);
+  console.log('\n── and that view is what actually renders');
+  ok(a.view.win === '2m' && /2 months/i.test(a.view.winLabel),
+    'the window control opens on “' + a.view.winLabel + '”');
+  ok(/3 statuses/.test(a.view.statusBtn), 'the status control opens on “' + a.view.statusBtn.trim() + '”');
+  ok(a.view.arrow === 'dsort▼', 'the Due header carries the descending arrow on load — got ' + a.view.arrow);
+  ok((function () {   // latest due first, with the dateless rows at the bottom in date order terms
+    const d = a.view.due, i = d.findIndex((x) => x === '—');
+    const dated = i < 0 ? d : d.slice(0, i);
+    return dated.length > 5 && (i < 0 || d.slice(i).every((x) => x === '—'));
+  })(), a.view.due.length + ' rows: the dated ones lead and every dateless row sinks to the bottom');
+
   console.log('\n── measured at 1131px, the width Ray works at');
   ok(a.cols.every((c) => c.d === 'table-column'),
     'every <col> is still a table column: ' + a.cols.filter((c) => c.d !== 'table-column').map((c) => c.cls).join(', ')

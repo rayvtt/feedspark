@@ -66,8 +66,13 @@ ok('the query string is cleared so a refresh is not stuck in the filter',
    /deep-link[\s\S]{0,2200}history\.replaceState/.test(WF));
 ok('it says what it filtered', /Filtered from the brand dossier/.test(WF));
 ok('…with one click to clear it', /Clear filter/.test(WF));
+/* it used to restate the default statuses and window as literals, which is how the window came to
+   be pinned to a 2-month default the board had stopped opening on — it reads IT_DEF now, so this
+   asks that it restores THE defaults rather than a copy of what they once were */
 ok('clearing restores the board’s defaults, not an empty board',
-   /itState\.statuses=\['open','progress','briefed'\]/.test(WF));
+   /itState\.statuses=IT_DEF\.statuses\.slice\(\)/.test(WF)
+   && /itState\.window=IT_DEF\.window/.test(WF)
+   && /var IT_DEF=\{statuses:\['open','progress','briefed'\]/.test(WF));
 ok('it re-renders rather than waiting for the next interaction',
    /renderIntake\(\);[\s\S]{0,400}scrollIntoView/.test(WF));
 ok('the existing ?brief= deep link still stands', /\[\?&\]brief=/.test(WF));
