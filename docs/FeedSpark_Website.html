@@ -226,6 +226,40 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
 .sc-lab b{display:block;color:var(--ink)}
 .sc-lab span{color:var(--mute)}
 
+/* pricing: priced on the result, by catalogue size (Ray, 7 Oct 2026 — two tiers on the Golden Score / AI-readiness line) */
+.spec-s{min-width:0}
+.pz{margin-top:72px}
+.pz-q{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
+.pz-l{font-size:14px;font-weight:700;color:var(--ink)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.seg button{border:0;background:transparent;border-radius:3px;height:38px;padding:0 14px;font-size:14.5px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-checked=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.tiers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px;margin-top:36px}
+.tier{border-top:2px solid var(--ink);padding-top:20px;min-width:0}
+.tier.ag{border-top-color:var(--or2)}
+.t-k{font-size:13px;font-weight:700;color:var(--mute)}
+.tier.ag .t-k{color:var(--or2)}
+.tier h3{font-size:30px;letter-spacing:-.03em;margin-top:4px}
+.t-s{margin-top:8px;color:var(--mute);min-height:3.2em}
+.t-p{margin-top:24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.t-n{font-size:clamp(40px,4.4vw,60px);font-weight:900;letter-spacing:-.045em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.t-u{font-size:14.5px;color:var(--mute)}
+.t-inc{margin-top:10px;font-size:14.5px;color:var(--text);min-height:1.6em}
+.t-inc b{color:var(--ink);font-variant-numeric:tabular-nums}
+.t-goal{margin-top:22px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:12px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.t-goal span{font-size:13px;font-weight:700;color:var(--mute)}
+.t-goal b{color:var(--ink);font-weight:900}
+.t-l{list-style:none;margin:6px 0 0;padding:0}
+.t-l li{position:relative;padding:10px 0 10px 26px;border-bottom:1px solid var(--rule2);font-size:15.5px;line-height:1.45}
+.t-l li::before{content:"";position:absolute;left:2px;top:16px;width:10px;height:5px;border-left:2px solid var(--or2);border-bottom:2px solid var(--or2);transform:rotate(-45deg)}
+.t-l li.all{font-weight:700;color:var(--ink)}
+.t-gap{margin-top:16px;font-size:14.5px;font-style:italic;color:var(--mute)}
+.terms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 40px;margin-top:64px}
+.terms div{border-top:1px solid var(--rule);padding-top:14px}
+.terms h4{font-size:16px}
+.terms p{margin-top:6px;font-size:15px;color:var(--mute)}
+
 /* services index */
 .idx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px;margin-top:48px}
 .idx h3{font-size:17px;padding-bottom:12px;border-bottom:2px solid var(--ink)}
@@ -333,7 +367,9 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   .ledger{grid-template-columns:repeat(3,1fr)}
   .ledger div:nth-child(4){border-left:0;padding-left:0}
   .ledger div:nth-child(n+4){margin-top:22px}
-  .two,.gal,.side,.res,.quotes,.cols3,.au,.rules{grid-template-columns:minmax(0,1fr)}
+  .two,.gal,.side,.res,.quotes,.cols3,.au,.rules,.tiers{grid-template-columns:minmax(0,1fr)}
+  .terms{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .t-s{min-height:0}
   .gal .w{grid-column:auto}
   .tl-r{grid-template-columns:90px minmax(0,1fr);gap:6px 18px}
   .tl-w{grid-column:2}
@@ -349,6 +385,12 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   .ledger div:nth-child(n+3){margin-top:20px}
   .hero-act .btn{width:100%}
   .idx{grid-template-columns:minmax(0,1fr)}
+  .terms{grid-template-columns:minmax(0,1fr)}
+  .spec-s{font-size:14px}
+  .spec-s th,.spec-s td{padding-right:10px}
+  .spec-s tbody th{width:28%}
+  .spec-s .us{padding-left:10px}
+  .seg{display:grid;grid-template-columns:1fr 1fr;width:100%}
   .f2{grid-template-columns:1fr}
   .form{padding:22px}
   .foot-g{grid-template-columns:1fr 1fr}
@@ -379,13 +421,13 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   <div class="wrap nav-in">
     <a class="brand" href="#top" aria-label="FeedSpark home" data-note="1">Feed<span>Spark</span><svg viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></a>
     <nav class="nav-links" aria-label="Main">
-      <a href="#now">Why now</a><a href="#software">Software</a><a href="#sparkai">SparkAI</a><a href="#results">Results</a><a href="#services">Services</a>
+      <a href="#now">Why now</a><a href="#software">Software</a><a href="#sparkai">SparkAI</a><a href="#results">Results</a><a href="#pricing">Pricing</a><a href="#services">Services</a>
     </nav>
     <div class="nav-r"><a class="login" href="#software">Log in</a><a class="btn btn-pri btn-sm" href="#audit">Free feed audit</a></div>
     <button class="burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
   <div class="sheet" id="sheet" hidden>
-    <a href="#now">Why now</a><a href="#software">Software</a><a href="#sparkai">SparkAI</a><a href="#results">Results</a><a href="#services">Services</a><a href="#software">Log in</a>
+    <a href="#now">Why now</a><a href="#software">Software</a><a href="#sparkai">SparkAI</a><a href="#results">Results</a><a href="#pricing">Pricing</a><a href="#services">Services</a><a href="#software">Log in</a>
     <a class="btn btn-pri" href="#audit">Free feed audit</a>
   </div>
 </header>
@@ -656,10 +698,93 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   </div>
 </section>
 
-<!-- ================= 07 SERVICES ================= -->
+<!-- ================= 07 PRICING ================= -->
+<section class="sec" id="pricing">
+  <div class="wrap grid">
+    <div class="mark"><div class="mark-in"><i>07</i>Pricing</div></div>
+    <div class="body">
+      <h2 data-r>Priced on the result, not the hours.</h2>
+      <p class="lead" data-r>Feed work has been sold by the hour, because the hours were the hard part. AI has made the writing fast. What a retailer needs now is an outcome: every product meeting the standard Google, Meta and the AI shopping agents set, from the moment it reaches the catalogue.</p>
+      <p class="lead" data-r>So that is what we price. You choose the standard, we hold every product to it, and the score is measured every day where you can see it. The price follows the size of your catalogue.</p>
+
+      <div class="spec-wrap" data-r>
+        <table class="spec spec-s">
+          <thead><tr><th scope="col"></th><th scope="col">An hours retainer</th><th scope="col" class="us">FeedSpark, priced on the result</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">You pay for</th><td>Time spent</td><td class="us">A standard, held on every product</td></tr>
+            <tr><th scope="row">A new product</th><td>Waits for the next block of hours</td><td class="us">Brought to standard on the first feed build after it arrives</td></tr>
+            <tr><th scope="row">The proof</th><td>A timesheet</td><td class="us">Your score, measured every day</td></tr>
+            <tr><th scope="row">When the catalogue grows</th><td>Hours to renegotiate</td><td class="us">The next size band, known in advance</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pz" data-r data-note="13">
+        <div class="pz-q">
+          <span class="pz-l" id="pz-lbl">Products in your catalogue</span>
+          <div class="seg" id="pz-seg" role="radiogroup" aria-labelledby="pz-lbl">
+            <button type="button" role="radio" aria-checked="false" data-b="0">Up to 5,000</button>
+            <button type="button" role="radio" aria-checked="true" data-b="1">5,000–25,000</button>
+            <button type="button" role="radio" aria-checked="false" data-b="2">25,000–100,000</button>
+            <button type="button" role="radio" aria-checked="false" data-b="3">100,000+</button>
+          </div>
+        </div>
+        <div class="tiers">
+          <article class="tier">
+            <p class="t-k">Tier 1</p>
+            <h3>Google-ready</h3>
+            <p class="t-s">Eligible on every channel, and optimised to everything Google and Meta recommend.</p>
+            <div class="t-p" aria-live="polite"><span class="t-n" id="pz-g">£2,200</span><span class="t-u" id="pz-gu">a month, per catalogue</span></div>
+            <div class="t-inc" id="pz-gi"><b>2,500</b> new products a month included</div>
+            <div class="t-goal"><span>The line we hold</span><b>Golden Score 95+</b></div>
+            <ul class="t-l">
+              <li>Every required attribute present, in Google's format</li>
+              <li>Identifiers, variants and the apparel attributes wherever Google asks for them</li>
+              <li>Google's recommended attributes: category, product type depth, highlights, product detail, material, pattern, extra images</li>
+              <li>Meta catalogues built to Meta's own specification</li>
+              <li>Titles and keywords tested against a control, kept only when they win</li>
+              <li>Disapprovals and drops in coverage flagged the day they happen</li>
+              <li>Every new product brought to this standard as it arrives</li>
+            </ul>
+          </article>
+          <article class="tier ag">
+            <p class="t-k">Tier 2</p>
+            <h3>Agent-ready</h3>
+            <p class="t-s">Everything Google-ready holds, plus the fields AI shopping agents read before they recommend a product.</p>
+            <div class="t-p" aria-live="polite"><span class="t-n" id="pz-a">£3,400</span><span class="t-u" id="pz-au">a month, per catalogue</span></div>
+            <div class="t-inc" id="pz-ai"><b>2,500</b> new products a month included</div>
+            <div class="t-goal"><span>The line we hold</span><b>AI-readiness 80+ · Golden Score 95+</b></div>
+            <ul class="t-l">
+              <li class="all">Everything in Google-ready</li>
+              <li>Google's conversational attributes: questions and answers, documents, related products, variant titles and options, popularity rank</li>
+              <li>Descriptions and highlights written to Google's guidance, for answer engines to quote</li>
+              <li>Attributes read from your product images and pages, with the source kept on every value</li>
+              <li>Feeds prepared for agent channels as each one opens to your market</li>
+              <li>A monthly check of whether ChatGPT, Google AI Mode, Perplexity and Claude recommend your products</li>
+              <li>Every new product brought to this standard as it arrives</li>
+            </ul>
+            <p class="t-gap">A feed without the conversational attributes tops out at 79 on our AI-readiness scale. This tier is the last 21 points.</p>
+          </article>
+        </div>
+        <p class="note">Golden Score: every product checked against Google's product data specification, weighted by how much each attribute matters, measured daily. AI-readiness: the eight-pillar scale above. Prices exclude VAT.</p>
+      </div>
+
+      <div class="terms" data-r>
+        <div><h4>Getting to the standard</h4><p>Bringing your existing catalogue up to the line is a one-off, equal to one month's fee. The free audit scopes it before you commit.</p></div>
+        <div><h4>A new product</h4><p>A product ID your catalogue has not carried before, dated by the first-seen stamp FeedHero puts on every product.</p></div>
+        <div><h4>More new products than included</h4><p>10p a product on Google-ready, 20p on Agent-ready. A collection launch never waits for a quote.</p></div>
+        <div><h4>Another market or language</h4><p>35% of the fee for each further market on the same catalogue, optimised in its own language.</p></div>
+        <div data-note="14"><h4>If the score slips</h4><p>If your score sits below the tier's line for a full calendar month for a reason in our control, that month is on us.</p></div>
+        <div><h4>Beyond the standard</h4><p>Scraping, image overlays, landing pages and campaign work are quoted separately at our day rate.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 08 SERVICES ================= -->
 <section class="sec" id="services">
   <div class="wrap grid">
-    <div class="mark"><div class="mark-in"><i>07</i>Services</div></div>
+    <div class="mark"><div class="mark-in"><i>08</i>Services</div></div>
     <div class="body">
       <h2 data-r>What we do.</h2>
       <div class="idx" data-r>
@@ -672,10 +797,10 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   </div>
 </section>
 
-<!-- ================= 08 AUDIT ================= -->
+<!-- ================= 09 AUDIT ================= -->
 <section class="sec audit" id="audit">
   <div class="wrap grid">
-    <div class="mark"><div class="mark-in"><i>08</i>Free audit</div></div>
+    <div class="mark"><div class="mark-in"><i>09</i>Free audit</div></div>
     <div class="body au">
       <div>
         <h2 data-r>Find out where your feed stands.</h2>
@@ -706,10 +831,10 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
   </div>
 </section>
 
-<!-- ================= 09 FAQ ================= -->
+<!-- ================= 10 FAQ ================= -->
 <section class="sec" id="faq">
   <div class="wrap grid">
-    <div class="mark"><div class="mark-in"><i>09</i>Questions</div></div>
+    <div class="mark"><div class="mark-in"><i>10</i>Questions</div></div>
     <div class="body">
       <h2 data-r>Questions we get asked.</h2>
       <div class="faq" data-r>
@@ -717,6 +842,8 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
         <details><summary>Do you replace our media agency?</summary><p class="a">No. We work alongside media agencies and in-house teams, and agencies are a large part of who we work with. Better product data makes every campaign they run perform better.</p></details>
         <details><summary>What makes a feed "AI-ready"?</summary><p class="a">Complete required data, clean identifiers, deep and accurate categories, rich detail such as material, pattern and highlights, and the conversational attributes Google publishes for AI surfaces. The free audit scores all of it.</p></details>
         <details><summary>Which channels do you support?</summary><p class="a">More than a hundred: Google, Microsoft, Meta, TikTok, Pinterest, marketplaces, affiliates and price comparison sites, all from one source of truth in FeedHero.</p></details>
+        <details><summary>Why price on a score rather than hours?</summary><p class="a">Because the score is what decides whether a product is shown. Hours measured our effort; the Golden Score and the AI-readiness scale measure your data, product by product, every day. You can see the number move, and so can we.</p></details>
+        <details><summary>Can we still buy hours?</summary><p class="a">Yes. Project work outside the standard, such as scraping, image overlays or a channel launch, is quoted at our day rate.</p></details>
         <details data-note="10"><summary>How does switching to FeedSpark work?</summary><p class="a">We build and check your new feeds before anything is switched over, so campaigns keep running while you move. Your specialist handles the channel set-up with you.</p></details>
         <details><summary>Can we see our own data?</summary><p class="a">Yes. Clients log in to FeedHero to see their feeds, audits, batches and performance.</p></details>
       </div>
@@ -732,7 +859,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
       <div><a class="brand" href="#top">Feed<span>Spark</span><svg viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></a><p>Product feed specialists. Google Partner and Meta Business Partner.</p></div>
       <div><h4>Software</h4><ul><li><a href="#software">FeedHero</a></li><li><a href="#software">Command Center</a></li><li><a href="#sparkai">SparkAI</a></li><li><a href="#software">Log in</a></li></ul></div>
       <div><h4>Services</h4><ul><li><a href="#services">Feed management</a></li><li><a href="#services">Data enrichment</a></li><li><a href="#services">Testing</a></li><li><a href="#services">All services</a></li></ul></div>
-      <div><h4>Company</h4><ul><li><a href="#specialist">Why FeedSpark</a></li><li><a href="#results">Results</a></li><li><a href="#faq">Switching</a></li><li><a href="#audit">Free audit</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="#specialist">Why FeedSpark</a></li><li><a href="#results">Results</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">Switching</a></li><li><a href="#audit">Free audit</a></li></ul></div>
       <div><h4>Contact</h4><ul><li><a href="mailto:hello@feedspark.com">hello@feedspark.com</a></li><li>167–169 Great Portland Street<br>London W1W 5PF</li></ul></div>
     </div>
     <div class="foot-b"><span>© 2026 Aroxo Ltd, trading as FeedSpark.</span><nav aria-label="Legal"><a href="#top">Privacy</a><a href="#top">Cookies</a></nav></div>
@@ -742,7 +869,7 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
 <!-- ================= MOCKUP REVIEW LAYER (internal only — strip before launch) ================= -->
 <div class="mk-bar" role="toolbar" aria-label="Mockup review">
   <span class="t">MOCKUP v2</span>
-  <button type="button" id="mk-notes" aria-pressed="false">Review notes<em>12</em></button>
+  <button type="button" id="mk-notes" aria-pressed="false">Review notes<em>14</em></button>
   <button type="button" id="mk-why">Design notes</button>
 </div>
 <aside class="mk-dr" id="mk-dr" aria-label="Mockup notes" aria-hidden="true">
@@ -759,6 +886,8 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
         <li><b>Editorial, not template.</b> Numbered sections with the label in a margin, hairline rules, captions under every figure, flat buttons. Gone: highlighted headline words, glows, sparkle icons, the chat-bubble mock, the channel orbit and rows of identical cards.</li>
         <li><b>Plainer copy.</b> Shorter sentences, dated facts instead of claims, and the position stated once: we only do product feeds.</li>
       </ul>
+      <h4>The pricing model</h4>
+      <p>Two tiers, both priced per catalogue by product count, both including new products on arrival. Each tier is defined by a line on a score we already measure daily: Google-ready holds Golden Score 95+ (green on the audit legend); Agent-ready adds AI-readiness 80+, which a feed cannot reach without the conversational attributes. The hours retainer stays for project work only.</p>
       <h4>The position</h4>
       <p>Every competitor studied sells feeds as part of something bigger: a commerce suite, a paid-media agency, a commerce platform. The one claim none of them can make is that feeds are the whole job, and the shift to AI shopping makes that claim more valuable.</p>
       <table class="tear">
@@ -793,6 +922,8 @@ figcaption .fn{color:var(--or2);font-weight:900;margin-right:6px;font-variant-nu
         <li id="mk-n9"><span><b>SparkAI guardrails</b>Align with the wording on the current AI Guardrails page.</span></li>
         <li id="mk-n10"><span><b>Switching</b>Align with the current Switching Process page.</span></li>
         <li id="mk-n11"><span><b>Audit form</b>Not connected. It needs a destination (CRM or inbox) before launch.</span></li>
+        <li id="mk-n13"><span><b>Pricing figures</b>Proposed, not agreed. Bands, prices, included new products, the 10p / 20p overage, the 35% market add-on and the one-off are a first cut, checked against today's ratecard (£585 per 8-hour day): similar-sized catalogues on hours retainers land within about 10% of these prices, now with new-product work included. Confirm every figure, and whether prices go on the public site at all or stay "from" figures.</span></li>
+        <li id="mk-n14"><span><b>Score guarantee</b>A service credit. Commercial and legal to confirm the wording, and what "in our control" excludes (a master feed missing the data, a client-side platform change).</span></li>
         <li id="mk-n12"><span><b>Showing the Command Center</b>Our internal tool, shown publicly for the first time. Confirm management is happy to show it.</span></li>
       </ol>
     </div>
@@ -840,6 +971,29 @@ window.DECK_EDITOR_SELECTOR = 'h1,h2,h3,h4,p,li,summary,blockquote,figcaption,.s
     }
     label();
   });
+
+  /* pricing: the catalogue band sets both tiers' monthly fee and the new products each includes (figures proposed — review note 13) */
+  var PZ = [{ g: 1200, a: 1900, inc: 500 }, { g: 2200, a: 3400, inc: 2500 }, { g: 3800, a: 5800, inc: 10000 }, null];
+  var gbp = function (n) { return '£' + n.toLocaleString('en-GB'); };
+  var seg = d.getElementById('pz-seg');
+  function band(i) {
+    var b = PZ[i], set = function (id, v) { d.getElementById(id).textContent = v; };
+    all('button', seg).forEach(function (x) { var on = +x.getAttribute('data-b') === i; x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
+    ['g', 'a'].forEach(function (t) {
+      set('pz-' + t, b ? gbp(b[t]) : "Let's talk");
+      set('pz-' + t + 'u', b ? 'a month, per catalogue' : 'priced on your catalogue and markets');
+      d.getElementById('pz-' + t + 'i').innerHTML = b ? '<b>' + b.inc.toLocaleString('en-GB') + '</b> new products a month included' : 'New-product allowance set to your launch calendar';
+    });
+  }
+  seg.addEventListener('click', function (e) { var x = e.target.closest('button'); if (x) band(+x.getAttribute('data-b')); });
+  seg.addEventListener('keydown', function (e) {
+    var k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!k) return;
+    e.preventDefault();
+    var cur = +seg.querySelector('[aria-checked=true]').getAttribute('data-b'), nx = (cur + k + PZ.length) % PZ.length;
+    band(nx); seg.querySelector('[data-b="' + nx + '"]').focus();
+  });
+  band(1);
 
   /* audit form (mockup: nothing is sent) */
   d.getElementById('form').addEventListener('submit', function (e) { e.preventDefault(); d.getElementById('ff').hidden = true; d.getElementById('fd').hidden = false; });
