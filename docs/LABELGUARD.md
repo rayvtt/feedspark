@@ -850,12 +850,12 @@ top-right; the choice is remembered per device (`gr-hist-rng`). The card has fou
   window. When the record is shorter than the window, that last tile reads "Since tracking
   began", never "90 days". Content quality and AI-readiness appear with their move since the
   analysis before the window.
-- **Chart, top plot:** the daily close as a line. It is zoomed to the data, since a line needs
-  no zero baseline.
-- **Chart, bottom plot:** the day's move against the previous scanned day. Improvement is drawn
-  above the zero line and deduction below it, in the Product Volume module's validated pair
-  (light `#2563EB` / `#ED6F0B`, dark `#4C82E0` / `#C67B28`). A scanned day with no change is a
-  dot on the line. The two plots share the calendar but never a y-axis.
+- **Chart, top plot:** the daily close as a line — since 7 Oct 2026 **three lines on one chart**,
+  the Golden Score, content quality and AI-readiness (see *Three scores, one chart* below). It is
+  zoomed to the data, since a line needs no zero baseline.
+- **Chart, bottom plot:** the day's move against the previous measured day, one row per score.
+  Improvement is drawn above its row's zero line and deduction below it. A measured day with no
+  change is a dot on the line. The two plots share the calendar but never a y-axis.
 - **Hover and change log:** hovering a day names what moved that day. The change log lists
   every recorded move in the window, newest first: the score from → to, the Δ, and the
   attributes that moved (`g:color ▼ −10pp`, `g:product_highlight added (60%)`), with the
@@ -954,10 +954,9 @@ monitoring, not the daily tracker.
 
 **The card.**
 
-- A metric switch (Golden Score · Content quality · AI-readiness, remembered per device as
-  `gr-hist-met`) draws each one day by day.
+- All three are drawn day by day on one chart (below). Until 7 Oct 2026 a metric switch
+  (`gr-hist-met`) showed one at a time.
 - A day with no analysis is a gap in the chart.
-- AI-readiness keeps its tier colours.
 - A day set by hand wears a ring on the line, and its change-log row reads "✋ by hand".
 - The header chip reads "⏱ auto 12:00 UK · last …", from the ledger the estate route now
   returns.
@@ -1057,6 +1056,46 @@ it was measured before ids were excluded until it is re-synced.
 XML stream, the three states through index/history/score, basis, alerts, the KWCal twin) and
 tools/check_grkw.js (Playwright, presync: the row in each state, the dial against the engine's
 score, → Brief opening a keyword brief).
+
+### 9.12a Three scores, one chart (7 Oct 2026)
+
+Ray, on the Score history card: *"merge 3 scores as 3 lines chart in 1 graph pls"*.
+
+The card used to show one score at a time behind a Golden Score · Content quality · AI-readiness
+switch, so the three were never seen together. Now the switch is gone and the chart draws all
+three.
+
+- **One calendar.** Each score is still read by `histModel`, one metric at a time — the twin that
+  `tools/test_goldenhist.mjs` holds to the engine. `histModelAll` then lays all three on the
+  earliest window start any of them needs (`startAt`), so a day sits in the same column on every
+  line.
+- **One axis.** All three are scores out of 100, so they share one y-axis, zoomed to the combined
+  range. There is never a second scale.
+- **Colour is the score.** Each line, its points and its row of bars wear the score's own colour:
+  Golden Score `--hs-gs` (#2563EB / dark #4C82E0, the FCC chart pair), content quality `--hs-q`
+  (#ED6F0B / dark #C67B28) and AI-readiness `--hs-air` (#1BAF7A / dark #199E70, the reference
+  palette's third slot). The three validate all-pairs in both themes. The light aqua sits under
+  3:1 on white, so every line is also named at its right end (latest value + name) and in the key.
+- **Direction is position.** The day-on-day plot has one row per score. A bar above its row is an
+  improvement, below it a deduction. Each row has its own stated scale (`±0.5`, `±10`, …),
+  because the Golden Score moves in tenths while an analysis can move eight points, and one shared
+  scale would flatten every score move to a dash.
+- **Gaps and rings stay per line.** A day a score was not measured is a gap in that line only. A
+  day set by a run by hand wears a ring on that score's line.
+- **One hover, all three.** Hovering a day reads every score that day: its value, its move against
+  the day it was last measured, and — for the Golden Score — the attributes that moved it.
+- **One change log.** Score moves and analyses are listed together, newest first. The header
+  counts both ("6 score changes · 3 analyses in view").
+- **AI-readiness keeps its tier ladder** on the AI card and in the KPI. On this chart it wears its
+  series colour like the other two, since colour here names the score, not its band.
+- **Client documents** carry the three lines, the rows of bars and the log. The range is the only
+  chip.
+- **Leadership's tiles** still set the window they open on (`gr-hist-rng`). The `gr-hist-met`
+  they also write is no longer read; all three scores are always drawn.
+
+`tools/check_grhist.js` renders it: three lines in three colours on one axis with no switch, each
+named at its end, each bar inside its own score's row, the gaps and rings per line, the hover
+reading all three, the merged log, the client download and the dark steps.
 
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 
