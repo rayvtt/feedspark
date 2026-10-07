@@ -10,8 +10,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-function engine() {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'cloudflare', 'feedspark-deck', 'src', 'rules.js'), 'utf8');
+function engine(file) {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'cloudflare', 'feedspark-deck', 'src', file || 'rules.js'), 'utf8');
   const names = [];
   const body = src.replace(/^export (const|function) ([A-Za-z0-9_]+)/gm, (_, kw, n) => { names.push(n); return kw + ' ' + n; });
   return new Function(body + '\nreturn {' + names.join(',') + '};')();
@@ -47,14 +47,26 @@ function rows(cmpid, company, of, seed) {
   for (let i = 0; i < 4 + seed; i++) add('Label rule ' + (i + 1), 'Custom label 3', 'custom_label_3', 'User', i % 2 ? 0 : 200, '0' + (1 + i) + '/0' + (1 + (i % 8)) + '/2025 at 10:00 AM', '', 'Analyst A', i % 2 ? ['Not impacting any items'] : []);
   return R;
 }
-function build() {
+// opts.many: Superdry with NINE roster markets (eight read, FR not yet) — markets built from the same seed run the same
+// rules, so they read the same on every lever: the shape the levers matrix groups (tools/check_stocklevers.js). Every
+// other tripwire takes the default three.
+function build(opts) {
+  opts = opts || {};
   const E = engine();
   const now = Date.UTC(2026, 8, 28, 9);
   const MK = [
     { client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', of: 58000, seed: 1 },
     { client: 'Superdry', market: 'DE', cmpid: 'superdry_de', of: 41000, seed: 3 },
+  ].concat(opts.many ? [
+    { client: 'Superdry', market: 'NL', cmpid: 'superdry_nl', of: 40000, seed: 3 },
+    { client: 'Superdry', market: 'IE', cmpid: 'superdry_ie', of: 40500, seed: 3 },
+    { client: 'Superdry', market: 'ES', cmpid: 'superdry_es', of: 39000, seed: 5 },
+    { client: 'Superdry', market: 'IT', cmpid: 'superdry_it', of: 39100, seed: 5 },
+    { client: 'Superdry', market: 'DK', cmpid: 'superdry_dk', of: 38000, seed: 5 },
+    { client: 'Superdry', market: 'SE', cmpid: 'superdry_se', of: 37000, seed: 5 },
+  ] : []).concat([
     { client: 'Reiss', market: 'GB', cmpid: 'reiss_gb', of: 60000, seed: 2 },
-  ];
+  ]);
   const recs = {}, idx = {};
   MK.forEach((m) => {
     const rules = E.normRules(rows(m.cmpid, m.client + ' ' + m.market, m.of, m.seed));
@@ -62,10 +74,10 @@ function build() {
     idx[m.cmpid] = E.idxEntry(m, rules, { total: m.cmpid === 'superdry_gb' ? rules.length + 40 : rules.length }, now);
   });
   const list = Object.keys(idx).map((k) => idx[k]);
-  const status = { state: 'ok', at: now, ok_at: now - 1800000, fails: 0, error: null, auth: 'Authorization', url: 'mcp.feedhero.net', pulled: ['Superdry GB (24)'], read: 3, total: 5 };
-  const rosterBrands = [{ client: 'Reiss', markets: ['GB', 'US'] }, { client: 'Superdry', markets: ['GB', 'DE', 'FR'] }];
+  const status = { state: 'ok', at: now, ok_at: now - 1800000, fails: 0, error: null, auth: 'Authorization', url: 'mcp.feedhero.net', pulled: ['Superdry GB (24)'], read: MK.length, total: MK.length + 2 };
+  const rosterBrands = [{ client: 'Reiss', markets: ['GB', 'US'] }, { client: 'Superdry', markets: MK.filter((m) => m.client === 'Superdry').map((m) => m.market).concat(['FR']) }];
   const unread = [{ client: 'Reiss', market: 'US', cmpid: 'reiss_us' }, { client: 'Superdry', market: 'FR', cmpid: 'superdry_fr' }];
-  const base = { ok: true, tracked: list.length, roster: 5, unread, rosterBrands, scope: { brand: null }, status, at: now };
+  const base = { ok: true, tracked: list.length, roster: MK.length + 2, unread, rosterBrands, scope: { brand: null }, status, at: now };
   const findings = []; list.forEach((r) => (r.find || []).forEach((f) => findings.push(f))); findings.sort((a, b) => b.sev - a.sev || b.n - a.n);
   const book = Object.assign({}, base, { families: E.FAMILIES, mechanisms: E.MECHANISMS, channels: E.CHANNELS, sev: E.SEV, estate: E.estate(list), brands: E.brandsOf(list), findings,
     markets: list.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) });
@@ -125,9 +137,12 @@ function build() {
   return { book, stock, market, hero: heroBuild(now), levers: leverBuild(now) };
 }
 // STOCK LEVERS (/api/rules/levers): an invented plan for a brand — a range-completion band and a BAU line the stub's GB
-// measured line sits OFF (so a market reads off plan), a units lever scoped to a range with what it ran at before, hero
-// sizes on, every SALE value unset — one sale period over two of its three markets, and two records kept by hand. No real
-// figure.
+// measured line sits OFF (so a market reads off plan), a stock-based exclusion scoped to a range with what it ran at
+// before, hero sizes on, every SALE value unset, the stock quantity threshold never planned (it reads off the rules) — one
+// sale period over two of its three markets, and two records kept by hand. Reiss has no plan at all: it still reads all
+// four levers off its rules. No real figure.
+// The exclusion is stored under its LEGACY key on purpose (`units`, the key Superdry's seed was written with on 5 Oct
+// 2026, before the four levers): the live store still carries it, and the page must read it as the stock-based exclusion.
 function leverBuild(now) {
   const store = {
     'p:Superdry': { levers: [{ k: 'rc', lo: 20, hi: 40, bau: 30, sale: null, note: 'A test band' }, { k: 'units', scope: 'Everest', bau: 'off', sale: null, was: '> 5 units per size' }, { k: 'hero', bau: 'on', sale: null }], note: '', by: 'Analyst A', at: now - 86400000 },
@@ -136,7 +151,8 @@ function leverBuild(now) {
     'r:Superdry|rec-20260914-hero-tst01': { d: '2026-09-14', mk: ['GB', 'DE'], k: 'hero', mode: 'bau', v: 'on', note: 'Hero sizes switched on (test)', by: 'Analyst A', at: now - 20 * 86400000 },
     'r:Superdry|rec-20261001-rc-tst02': { d: '2026-10-01', mk: ['GB'], k: 'rc', mode: 'bau', v: 35, was: 30, note: 'Line moved after the review (test)', by: 'Analyst A', at: now - 5 * 86400000, ed: { by: 'Analyst B', at: now - 4 * 86400000 } },
   };
-  return { ok: true, store, brands: [{ client: 'Superdry', levers: 3, periods: 1 }], at: now };
+  // the brands as the worker lists them — every brand in scope, a plan or not (the REAL leverBrands)
+  return { ok: true, store, brands: engine('stocklevers.js').leverBrands(store, ['Reiss', 'Superdry']), at: now };
 }
 // HERO SIZES (/api/rules/hero): a synthetic master pushed through the REAL census (docs/herosize_engine.js, reading rows
 // with the Catalogue's own engine) and placed on a synthetic Google Shopping feed's product_type tree (treeIndex) — so the
@@ -201,8 +217,8 @@ function heroBuild(now) {
     markets: [{ market: 'GB', cmpid: 'superdry_gb', census: sum }, { market: 'DE', cmpid: 'superdry_de', census: null }, { market: 'FR', cmpid: 'superdry_fr', census: null }] };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs)
-function stubLines() {
-  const d = build();
+function stubLines(opts) {
+  const d = build(opts);
   const engine = JSON.stringify(fs.readFileSync(path.join(__dirname, '..', 'docs', 'herosize_engine.js'), 'utf8'));
   const lengine = JSON.stringify(fs.readFileSync(path.join(__dirname, '..', 'docs', 'stocklevers_engine.js'), 'utf8'));
   return " if(url.indexOf('/stock/levers.js')>=0)return Promise.resolve(new Response(" + lengine + ",{status:200,headers:{'content-type':'application/javascript'}}));\n"
@@ -214,4 +230,13 @@ function stubLines() {
     + " if(url.indexOf('/api/rules?pull')>=0)return j({ok:true,status:" + JSON.stringify(d.book.status) + "});\n"
     + " if(url.indexOf('/api/rules')>=0)return j(" + JSON.stringify(d.book) + ");\n";
 }
-module.exports = { build, stubLines, engine, rows };
+// EVERY /stock CARD OPEN — for the tripwires that measure what is INSIDE the cards. Each card folds (Ray, 7 Oct 2026: "each
+// module info on Stock Management is collapsible pls - too many at once") and a fresh device opens only the overview and
+// the levers; this is the device having opened them all. The ids are read off the page itself, so a card added later is
+// opened too. (tools/check_stockfold.js is the one that tests the fold.)
+function openCards(html) {
+  const o = {};
+  String(html).replace(/<section class="card" id="([a-z0-9-]+)"/g, (m, id) => { o[id] = 1; return m; });
+  return 'try{localStorage.setItem("fcc-stock-fold",' + JSON.stringify(JSON.stringify(o)) + ');}catch(e){}';
+}
+module.exports = { build, stubLines, engine, rows, openCards };

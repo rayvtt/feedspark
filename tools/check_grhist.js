@@ -137,7 +137,7 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   ok('the change log lists the latest six, newest first', a.logRows.length === 6 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]), a.logRows.slice(0, 2));
   ok('…with the deduction named by the attribute that moved — and marked as run by hand', a.logRows.some((x) => /by hand/.test(x) && /g:color ▼ −10pp/.test(x)), a.logRows);
   ok('…and the rest one click away', /Show all 7 changes/.test(a.more || ''), a.more);
-  ok('the card says the tracker fills itself at 09:00 UK, and when it last ran', await page.$eval('#hs-tier .hs-auto', (e) => /auto 09:00 UK · last/.test(e.textContent) && /47 feeds analysed/.test(e.title)));
+  ok('the card says the tracker fills itself at 12:00 UK, and when it last ran', await page.$eval('#hs-tier .hs-auto', (e) => /auto 12:00 UK · last/.test(e.textContent) && /47 feeds analysed/.test(e.title)));
   ok('the estate row names the last move under the feed score', a.est && /^▲[\d.]+$/.test(a.est.t) && a.est.c === 'up', a.est);
 
   // hover a deduction day — the tooltip names what moved

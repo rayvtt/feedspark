@@ -882,7 +882,7 @@ renders a forty-day record and asserts:
 - the download keeps the chart and drops the furniture;
 - the card works in dark mode and at 390px.
 
-### 9.12 Daily at 09:00 UK, and a hand-run scan sets its day (24 Sep 2026)
+### 9.12 Daily at 12:00 UK, and a hand-run scan sets its day (24 Sep 2026; moved to noon 7 Oct 2026)
 
 Ray: *"Golden Record and content quality should automatically scan on a daily basis, then at 9
 a.m. UK time, so every day there's a tracker. If there's a manual scan on any day, that new score
@@ -892,13 +892,23 @@ The feed score already had an automatic lane, the 4x-daily xml-scan. Content qua
 AI-readiness had none: they ran only when somebody pressed **Analyse**. So the history only moved
 on days a person remembered to run them.
 
-**The daily run.** `.github/workflows/golden-daily.yml` fires at 08:00, 09:00 and 10:00 UTC, and
+**Moved to 12:00 UK (7 Oct 2026).** Ray: *"can golden score be scanned each day at 12:00 pm UK
+time ? because sometimes 9AM, not all output feeds have been refreshed (every market/ every
+client)"*. A reading taken before a client's output feed has rebuilt for the day records
+yesterday's feed under today's date, so the run now waits until noon.
+
+**The daily run.** `.github/workflows/golden-daily.yml` fires at 11:00, 12:00 and 13:00 UTC, and
 `tools/golden_daily.mjs` decides whether to run. Cron speaks UTC and the UK moves between GMT and
-BST, so the script runs once the London clock has reached 09:00 and today's London date is not
-yet on the worker's ledger. In summer the 08:00 UTC firing is 09:00 London; in winter the 09:00
-UTC firing is. The other firings are catch-up for a late or failed run, and do nothing once the
-day is done. A manual dispatch can force a run. A single-feed dispatch (`only`) never marks the
-day done.
+BST, so the script runs once the London clock has reached 12:00 (`RUN_HOUR`) and today's noon run
+is not yet on the worker's ledger. In summer the 11:00 UTC firing is 12:00 London; in winter the
+12:00 UTC firing is. The other firings are catch-up for a late or failed run, and do nothing once
+the day is done. A manual dispatch can force a run. A single-feed dispatch (`only`) never marks
+the day done.
+
+Only a run that **finished from 12:00 London** counts as the day's run (`runDone`, read off the
+ledger's own time). One on the ledger from earlier the same day — a forced dispatch, or the 09:00
+run on the day the schedule moved — read the feeds before they refreshed, which is exactly the
+reading the noon run exists to replace, so it does not stand in for it.
 
 The script reads every wired Google Shopping feed once: 49 today, never a `-fb` Meta feed. XML
 feeds stream from FeedHero. House of Bruar's three sheet feeds come through Google's public CSV
@@ -941,7 +951,7 @@ monitoring, not the daily tracker.
 - A day with no analysis is a gap in the chart.
 - AI-readiness keeps its tier colours.
 - A day set by hand wears a ring on the line, and its change-log row reads "✋ by hand".
-- The header chip reads "⏱ auto 09:00 UK · last …", from the ledger the estate route now
+- The header chip reads "⏱ auto 12:00 UK · last …", from the ledger the estate route now
   returns.
 - A single reading with no scanned neighbour is drawn as a point. Before, it vanished.
 
@@ -980,7 +990,7 @@ how many products carry an id, so the reading explains itself.
 
 - **Measured** — the XML scan reads every product (`xmlCollector` → `keywordAttr`: coverage,
   keyword strings in total and per SKU, products carrying an id). Every XML lane measures it: the
-  4×-daily agent, the 09:00 UK run and the page's live scan.
+  4×-daily agent, the 12:00 UK run and the page's live scan.
 - **Absent** — the feed has no keyword slots at all. Scored at 0, like any recommended attribute
   the feed does not carry. The sheet (gviz) lane can say this much from the header.
 - **Not measured** — the sheet lane when keyword slots exist (a column count cannot tell a phrase

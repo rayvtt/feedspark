@@ -134,7 +134,7 @@ const days = (from, to, skip) => { const o = []; for (let d = from; d >= to; d--
     const k = await page.$$eval('#gp-roll .kpi', (a) => a.map((x) => [x.querySelector('.n').textContent, x.querySelector('.l').textContent]));
     ok('the strip counts the moves', k[1][0] === '1' && k[2][0] === '1' && k[3][0] === '2' && k[4][0] === '1', k);
     const src = await page.$eval('#gp-src', (e) => e.textContent);
-    ok('the source line names the 09:00 run and how far back the readings go', /Scored daily at 09:00 UK · last run/.test(src) && /49 analysed/.test(src) && /earliest reading in this window/.test(src), src);
+    ok('the source line names the 12:00 run and how far back the readings go', /Scored daily at 12:00 UK · last run/.test(src) && /49 analysed/.test(src) && /earliest reading in this window/.test(src), src);
     // hover: the day's value under the cursor, on the window's calendar
     await page.$eval('#gp-body a.gp-tile .gp-sp', (e) => e.scrollIntoView({ block: 'center' }));
     const box = await page.$eval('#gp-body a.gp-tile .gp-sp', (e) => { const r = e.getBoundingClientRect(); return { x: r.right - 2, y: r.top + r.height / 2 }; });

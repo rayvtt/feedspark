@@ -10149,16 +10149,16 @@
       "pr": 558
     },
     {
-      "name": "Golden daily: the 09:00 UK agent",
+      "name": "Golden daily: the 12:00 UK agent",
       "file": "tools/golden_daily.mjs",
       "pattern": "export function shouldRun(clock, done, force) {",
       "pr": 558
     },
     {
-      "name": "Golden daily: the workflow fires 08/09/10 UTC and the script decides",
+      "name": "Golden daily: the workflow fires 11/12/13 UTC and the script decides",
       "file": ".github/workflows/golden-daily.yml",
-      "pattern": "cron: '0 8,9,10 * * *'",
-      "pr": 558
+      "pattern": "cron: '0 11,12,13 * * *'",
+      "pr": 0
     },
     {
       "name": "Golden daily: one content-quality stream for the page and the agent",
@@ -10215,7 +10215,7 @@
       "pr": 558
     },
     {
-      "name": "Golden daily: the card names the 09:00 UK run",
+      "name": "Golden daily: the card names the 12:00 UK run",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function histDailyChip() {",
       "pr": 558
@@ -11633,7 +11633,7 @@
     {"name": "Stock levers: each plan tile names its lever's ONE rule — found in N of the markets, missing where — or offers to connect one", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvRuleLine(M, l) {", "pr": 596},
     {"name": "Stock levers: the rule picker — a market, its rules, every stock rule on request", "file": "docs/FeedSpark_Stock.html", "pattern": "var ch = SL.ruleChoices(l.k, mk, m0, l, LV.rka);", "pr": 596},
     {"name": "Stock levers: connecting saves the plan with the rule (its name, market and field), everything else as it was", "file": "docs/FeedSpark_Stock.html", "pattern": "lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm, d: rsel.getAttribute('data-d') || undefined });", "pr": 0},
-    {"name": "Stock levers: a missing connected rule reads missing; an unconnected overlap is dashed", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.overlap ? ' ov' : '') + (rd.miss && lk !== 'units' ? ' miss' : '')", "pr": 596},
+    {"name": "Stock levers: a missing connected rule reads missing; an unconnected overlap is dashed (since the four levers: neither units lever reads 'missing' — it reads N/A)", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.overlap ? ' ov' : '') + (rd.miss && !SL.isUnits(lk) ? ' miss' : '')", "pr": 596},
     {"name": "Stock levers engine: a market's copy of the connected rule — the same name on the same field, else the rule doing its job under another name (Ray, 6 Oct 2026, Superdry FR: \"system is not picking it up\")", "file": "docs/stocklevers_engine.js", "pattern": "function findRule(lk, m, lever, bd) {", "pr": 0},
     {"name": "Stock levers engine: a lever connected before the field was stored has it read off the market it was picked in", "file": "docs/stocklevers_engine.js", "pattern": "function resolved(lever, markets) {", "pr": 0},
     {"name": "Stock levers engine: names compared by their words, the joining words set aside", "file": "docs/stocklevers_engine.js", "pattern": "function nameSim(a, b) {", "pr": 0},
@@ -11650,6 +11650,42 @@
     {"name": "Catalogue pixels: the module is registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['pix', 'Image pixels']", "pr": 0},
     {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
     {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);", "pr": 0},
-    {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0}
+    {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0},
+    {"name": "Stock levers: FOUR levers for every brand — range completion, hero sizes, stock quantity threshold, stock-based exclusion (Ray, 7 Oct 2026: \"every client should have these stock levers\")", "file": "docs/stocklevers_engine.js", "pattern": "{ k: 'thresh', label: 'Stock quantity threshold', short: 'Stock threshold', kind: 'units', op: '<', unit: 'units', mech: ['threshold'],", "pr": 603},
+    {"name": "Stock levers: the stored `units` lever IS the stock-based exclusion — read as it everywhere", "file": "docs/stocklevers_engine.js", "pattern": "var LEGACY = { units: 'excl' };", "pr": 603},
+    {"name": "Stock levers: all four levers in order, a plan saved or not", "file": "docs/stocklevers_engine.js", "pattern": "return LEVERS.map(function (L) { return held[L.k] || { k: L.k, bau: null, sale: null }; });", "pr": 603},
+    {"name": "Stock levers: a threshold-field rule that only works out a number, restates a state or lets products back in is set aside, and named", "file": "docs/stocklevers_engine.js", "pattern": "function holds(r) { var k = holdKind(r); return k !== 'calc' && k !== 'mirror' && k !== 'releases'; }", "pr": 603},
+    {"name": "Stock levers: a range's own unit rule reads under its scoped lever only (sibbed, in the model and the switch list)", "file": "docs/stocklevers_engine.js", "pattern": "var levers = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));", "pr": 603},
+    {"name": "Stock levers: keep a market as it runs — a lever nobody plans that the market does not run stays out of its plan", "file": "docs/stocklevers_engine.js", "pattern": "if (v === 'off' && !isSet(c.bau) && !isSet(c.sale)) return;", "pr": 603},
+    {"name": "Stock levers (worker): the four kinds, held equal to the engine; a legacy key stored under the lever it is now", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "export const LEVER_KINDS = { rc: 'pct', hero: 'onoff', thresh: 'units', excl: 'units' };", "pr": 603},
+    {"name": "Stock levers (worker): every brand in scope listed, a plan or not", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };", "pr": 603},
+    {"name": "Stock levers: markets that read the same share a row — grouped from 8 markets, per device (Ray, 7 Oct 2026: \"not optimised for view yet (especilly multi markets client)\")", "file": "docs/FeedSpark_Stock.html", "pattern": "var LVGRP_AT = 8;", "pr": 603},
+    {"name": "Stock levers: markets join a row only when every cell is drawn the same, held to the same targets, in the same mode", "file": "docs/FeedSpark_Stock.html", "pattern": "return cv.v + '/' + cv.st + (rd.overlap ? '/ov' : '') + (rd.miss ? '/m' : '') + '/' + String(c.tgt) + (c.tgtOwn ? '/own' : '');", "pr": 603},
+    {"name": "Stock levers: a group's market chip opens ITS own values under the group", "file": "docs/FeedSpark_Stock.html", "pattern": "var row = t.closest('.mkc[data-mk]') || t.closest('tr[data-mk]'), mkName = row ? row.getAttribute('data-mk') : '';", "pr": 603},
+    {"name": "Stock: every card folds (Ray, 7 Oct 2026: \"each module info on Stock Management is collapsible pls - too many at once\") — the overview and the levers open on a fresh device", "file": "docs/FeedSpark_Stock.html", "pattern": "var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'cov-card': 1, 'lev-card': 1 }, FOLD = {};", "pr": 603},
+    {"name": "Stock: a card's title is ONE fold button (chevron, title, the line that survives the fold)", "file": "docs/FeedSpark_Stock.html", "pattern": "<h3><button class=\"fold\" type=\"button\" aria-expanded=\"true\" title=\"Fold or open this card\"><span class=\"fch\" aria-hidden=\"true\"></span>Which stock controls each market runs<span class=\"fsum\"></span></button></h3>", "pr": 603},
+    {"name": "Stock: ⊖ Collapse all / ⊕ Expand all in the page header", "file": "docs/FeedSpark_Stock.html", "pattern": "<button class=\"btn\" id=\"fold-all\" type=\"button\" data-to=\"fold\"", "pr": 603},
+    {"name": "Stock: a jump to the market setups opens them first", "file": "docs/FeedSpark_Stock.html", "pattern": "if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }", "pr": 603},
+    {"name": "Stock: which controls each market runs — FIRST on the page (Ray, 7 Oct 2026: \"this is good actually ! should be pushed to top\")", "file": "docs/FeedSpark_Stock.html", "pattern": "<main class=\"wrap\">\n  <!-- WHICH STOCK CONTROLS EACH MARKET RUNS — first on the page", "pr": 603},
+    {"name": "Stock: the in-stock card's header carries NO scenario / period switch (Ray, 7 Oct 2026: \"these button doesnt apply/ make sense\") — the forecast panel holds them", "file": "docs/FeedSpark_Stock.html", "pattern": "id=\"sv-scn\"", "forbidden": true, "pr": 603},
+    {"name": "Stock tripwire: every card folds, as a person uses it", "file": "tools/check_stockfold.js", "pattern": "const OPEN0 = ['cov-card', 'lev-card'];", "pr": 603},
+    {
+      "name": "Golden daily: the run waits for noon London",
+      "file": "tools/golden_daily.mjs",
+      "pattern": "export const RUN_HOUR = 12;",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: only a run finished from noon is the day's run",
+      "file": "tools/golden_daily.mjs",
+      "pattern": "export function runDone(last, clock) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the page chip names the noon run",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "⏱ auto 12:00 UK · last ",
+      "pr": 0
+    }
   ]
 }
