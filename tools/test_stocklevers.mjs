@@ -13,7 +13,10 @@
 // (Ray, 6 Oct 2026: "maybe there should be a manual table as well to keep record of it") and the matrix the market list
 // became (Ray, same day: "the lst should be table/ matrix for overview review"). Then ONE RULE PER LEVER (Ray, same day: "Each
 // individual stock lever will be connected to one rule, and that rule could be spotted or aggregated across different
-// markets … there should be only one that makes sense at any time").
+// markets … there should be only one that makes sense at any time"). Then the FOUR LEVERS every brand carries (Ray, 7 Oct
+// 2026: "every client should have these stock levers: 1. range completion 2. hero sizes 3. stock quantity threshold 4. stock
+// based exclusion"), on the shapes the roster's live rules take that day (Monsoon UK "Stock < 11 -> OOS", Accessorize UK
+// "Removing products with quantity with 3 or less", Schuh's stock-count calculations, Superdry's "Not available to Zero").
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import * as W from '../cloudflare/feedspark-deck/src/stocklevers.js';
@@ -52,12 +55,26 @@ const SOC = market('DK', 'b_dk', [rule('Social: RC > 65% -> out of stock', 'Soci
 // an Everest units rule (the lever as it ran before) and one for another range
 const EV = market('US', 'b_us', [RC_SET('Range Completion < 0.2 ( 20% completion)'), rule('Everest: stock <= 5 -> out of stock', 'Availability', 'stock_status', 40, OF), rule('Stock < 4 -> OOS', 'Availability', 'stock_status', 80, OF), HERO_SET(), rule('Temporarily pause hero sizes', 'Availability', 'stock_status', 0, OF)]);
 const MKS = [GB, FR, NL, IT, SE, CA, SOC, EV];
+// the roster's live shapes for the two units levers (7 Oct 2026; counts invented): a threshold written on the stock field,
+// an exclusion field for stock reasons, rules on a threshold field that only work out a number or restate a state — set
+// aside — an age exclusion (lifecycle, not stock), an exclusion BY range completion (the range-completion lever's), a Meta one
+const MON = market('UK', 'b_mon', [rule('Copy Range completion', 'Stock Range', 'stock_range', OF, OF), rule('Stock < 11 -> OOS', 'Stock quantity', 'stock_quantity', 412, OF),
+  rule('Range Completion Exclusion', 'RC Exclusion', 'rc_exclusion', 68, OF), rule('exclusion', 'Older than 3 months', 'older_than_3_months', 527, OF)]);
+const ACC = market('UK', 'b_acc', [rule('Removing products with quantity with 3 or less', 'Excluded destination', 'excluded_destination', 209, OF), rule('Stock Exclusion except Jan Launch', 'Meta exclusion', 'meta_exclusion', 217, OF), rule('Set hero sizes', 'Is hero size', 'is_hero_size', OF, OF)]);
+const SCH = market('GB', 'b_sch', [rule('Calculate stock count details', 'Stock num', 'stock_num', OF, OF), rule('Calculate Stock number count details', 'Stock num sum', 'stock_num_sum', OF, OF), rule('Ordering the Quantity', 'Product quantity rank', 'product_quantity_rank', 829, OF)]);
+const SDZ = market('GB', 'b_sdz', [rule('Not available to Zero', 'Product Stock', 'product_stock', 503, OF), rule('Pre 2024 Products Exclusion', 'Pre 2024 exclusion', 'pre_2024_exclusion', 95, OF), HERO_SET()]);
 const by = (m) => MKS.filter((x) => x.market === m)[0];
 
 console.log('· the levers, and a value');
-t('three levers: range completion (a %), stock unit exclusion (units per size, or off), hero sizes (on / off)', eq(L.LEVERS.map((l) => [l.k, l.kind]), [['rc', 'pct'], ['units', 'units'], ['hero', 'onoff']]));
+t('FOUR levers, in Ray’s order: range completion (a %), hero sizes (on / off), stock quantity threshold and stock-based exclusion (units, or N/A)', eq(L.LEVERS.map((l) => [l.k, l.kind]), [['rc', 'pct'], ['hero', 'onoff'], ['thresh', 'units'], ['excl', 'units']]));
+t('…each read off ONE mechanism of the coverage matrix (range · hero · threshold · exclusion), held equal to the worker’s kinds', eq(L.LEVERS.map((l) => l.mech[0]), ['range', 'hero', 'threshold', 'excl']) && eq(Object.keys(W.LEVER_KINDS), L.LEVERS.map((l) => l.k)) && L.LEVERS.every((l) => W.LEVER_KINDS[l.k] === l.kind)
+  && L.LEVERS.every((l) => R.MECHANISMS.some((m) => m.k === l.mech[0])));
+t('the stored `units` lever (Superdry’s Everest, 5 Oct 2026) IS the stock-based exclusion — read as it everywhere', L.LEGACY.units === 'excl' && W.LEVER_LEGACY.units === 'excl' && L.keyOf('units') === 'excl' && L.keyOf('rc') === 'rc');
 t('a value is a number, on, off — or not set (null, never a guess)', L.isSet(35) && L.isSet('on') && L.isSet('off') && !L.isSet(null) && !L.isSet('') && !L.isSet(undefined) && !L.isSet(NaN));
-t('shown in the brand’s words: 35% · "> 5 units per size" · N/A · on · not set', L.fmtVal('rc', 35) === '35%' && L.fmtVal('units', 5) === '> 5 units per size' && L.fmtVal('units', 'off') === 'N/A' && L.fmtVal('hero', 'on') === 'on' && L.fmtVal('rc', null) === 'not set');
+t('shown in the brand’s words: 35% · "< 11 units" · "> 5 units per size" · N/A · on · not set', L.fmtVal('rc', 35) === '35%' && L.fmtVal('thresh', 11) === '< 11 units' && L.fmtVal('excl', 5) === '> 5 units per size' && L.fmtVal('units', 5) === '> 5 units per size'
+  && L.fmtVal('thresh', 'off') === 'N/A' && L.fmtVal('excl', 'off') === 'N/A' && L.fmtVal('hero', 'on') === 'on' && L.fmtVal('rc', null) === 'not set');
+t('a stock cut-off reduces to the units a product needs to STAY live — the held-back side < ≤ =, the kept side > ≥', L.mlOf('<', 11) === 11 && L.mlOf('≤', 3) === 4 && L.mlOf('=', 0) === 1 && L.mlOf('>', 5) === 6 && L.mlOf('≥', 6) === 6
+  && L.planMl('thresh', 4) === 4 && L.planMl('excl', 5) === 6 && L.fromMl('thresh', 4) === 4 && L.fromMl('excl', 6) === 5);
 
 console.log('· what each market runs — read off its own rules');
 const rd = (m, k, sc) => L.reading(k, by(m), { k, scope: sc || '' });
@@ -69,8 +86,18 @@ t('…rules that run with no stated or measured line read "on", no number — ne
 t('…and a market with none reads "none"', L.reading('rc', market('ZZ', 'b_zz', [HERO_SET()]), {}).state === 'none');
 t('a Meta rule ("Social: RC > 65%") and a label ("CL2: empty < 0.26 RC") are not the Google lever', rd('DK', 'rc').state === 'none');
 t('a hero-size inclusion rule is never counted as range completion', !rd('FR', 'rc').rules.some((r) => /hero/i.test(r.n)));
-t('stock unit exclusion · Everest: the rule naming Everest, its cut-off from the name (≤ 5)', rd('US', 'units', 'Everest').state === 'on' && rd('US', 'units', 'Everest').val === 5 && rd('US', 'units', 'Everest').rules.length === 1);
-t('…a units rule for another range is not Everest’s; no such rule reads "off" (N/A)', rd('GB', 'units', 'Everest').state === 'off' && rd('FR', 'units', 'Everest').state === 'off');
+t('stock-based exclusion · Everest: the rule naming Everest — on whichever stock field it is written — its cut-off from the name (≤ 5, kept above 5)', rd('US', 'excl', 'Everest').state === 'on' && rd('US', 'excl', 'Everest').val === 5 && rd('US', 'excl', 'Everest').rules.length === 1 && eq(rd('US', 'excl', 'Everest').cut, { op: '≤', v: 5, ml: 6, rule: 'Everest: stock <= 5 -> out of stock' }));
+t('…a units rule for another range is not Everest’s; no such rule reads "off" (N/A)', rd('GB', 'excl', 'Everest').state === 'off' && rd('FR', 'excl', 'Everest').state === 'off');
+t('…the stored `units` key reads exactly as the exclusion does', eq(rd('US', 'units', 'Everest'), rd('US', 'excl', 'Everest')));
+const thU = (m, lv) => L.reading('thresh', m, lv || { k: 'thresh' }), exU = (m, lv) => L.reading('excl', m, lv || { k: 'excl' });
+t('stock quantity threshold: a threshold written on the stock field, its cut-off in the rule’s own words (Monsoon UK "Stock < 11 -> OOS")', thU(MON).state === 'on' && thU(MON).val === 11 && eq(thU(MON).cut, { op: '<', v: 11, ml: 11, rule: 'Stock < 11 -> OOS' }) && eq(thU(MON).rules.map((r) => r.n), ['Stock < 11 -> OOS']));
+t('…or an availability rule whose name states a stock cut-off ("Stock < 4 -> OOS")', (() => { const r = thU(EV); return r.state === 'on' && r.rules.some((x) => x.n === 'Stock < 4 -> OOS'); })());
+t('…a rule on a threshold field that only works out a number (Schuh’s stock counts) or restates a state ("Not available to Zero") is NOT a threshold — set aside and named', thU(SCH).state === 'off' && thU(SCH).aside.length === 2 && /works out a stock figure/.test(thU(SCH).aside[0].why)
+  && thU(SDZ).state === 'off' && thU(SDZ).aside.length === 1 && /restates availability/.test(thU(SDZ).aside[0].why) && /Not available to Zero/.test(thU(SDZ).why), JSON.stringify(thU(SCH)));
+t('…the range-completion and hero-size rules a market runs are never read as its threshold', thU(GB).state === 'off' && thU(FR).state === 'off');
+t('stock-based exclusion: an exclusion field written for stock reasons (Accessorize UK "Removing products with quantity with 3 or less") — "≤ 3", kept above 3', exU(ACC).state === 'on' && exU(ACC).val === 3 && exU(ACC).cut.op === '≤' && exU(ACC).cut.v === 3 && eq(exU(ACC).rules.map((r) => r.n), ['Removing products with quantity with 3 or less']));
+t('…a Meta exclusion is Meta’s, an age exclusion is lifecycle, an exclusion BY range completion is the range-completion lever’s', !exU(ACC).rules.some((r) => /Meta|Jan Launch/.test(r.n)) && exU(SDZ).state === 'off' && exU(MON).state === 'off' && L.reading('rc', MON, { k: 'rc' }).rules.some((r) => r.n === 'Range Completion Exclusion'));
+t('…an unscoped lever leaves a range another lever names to that lever (the threshold leaves Everest to the Everest exclusion)', (() => { const r = L.reading('thresh', EV, { k: 'thresh', sib: ['Everest'] }); return r.state === 'on' && eq(r.rules.map((x) => x.n), ['Stock < 4 -> OOS']) && r.val === 4; })());
 t('hero sizes: set and kept live → on, naming both rules', rd('FR', 'hero').state === 'on' && /Set Hero size values/.test(rd('FR', 'hero').why) && /inclusion/.test(rd('FR', 'hero').why));
 t('…an inclusion rule with nothing setting the sizes it reads → part (Superdry CA’s shape)', rd('CA-EN', 'hero').state === 'part');
 t('…a rule that pauses hero sizes → paused, whatever else runs', rd('US', 'hero').state === 'paused' && rd('US', 'hero').pause.length === 1);
@@ -81,7 +108,9 @@ t('range completion within 2 points of the plan is on plan (36% measured vs 35%)
 t('…21% in a rule name against 35% is off plan, and says both numbers', /21%/.test(L.drift('rc', rd('FR', 'rc'), 35).why) && /35%/.test(L.drift('rc', rd('FR', 'rc'), 35).why));
 t('…a line nobody can state is never called off plan', L.drift('rc', rd('SE', 'rc'), 35) === null);
 t('…no rule at all is', !!L.drift('rc', L.reading('rc', market('ZZ', 'b_zz', []), {}), 35));
-t('units: N/A planned and none running is on plan; one running is off plan', L.drift('units', rd('GB', 'units', 'Everest'), 'off') === null && !!L.drift('units', rd('US', 'units', 'Everest'), 'off'));
+t('exclusion: N/A planned and none running is on plan; one running is off plan', L.drift('excl', rd('GB', 'excl', 'Everest'), 'off') === null && !!L.drift('excl', rd('US', 'excl', 'Everest'), 'off'));
+t('threshold: compared as the units a product needs to stay live — the plan’s "< 4" is a name’s "≤ 3", "< 5" is not', L.drift('thresh', { state: 'on', val: 4, ml: 4, cut: { op: '≤', v: 3, ml: 4 } }, 4) === null && /stock ≤ 3 — the target is < 5 units/.test(L.drift('thresh', { state: 'on', val: 4, ml: 4, cut: { op: '≤', v: 3, ml: 4 } }, 5).why)
+  && L.drift('thresh', thU(MON), 11) === null && !!L.drift('thresh', thU(MON), 'off') && !!L.drift('thresh', thU(SCH), 11) && L.drift('thresh', { state: 'on', val: null, ml: null, cut: null }, 11) === null);
 t('hero: on planned — none, part or paused is off plan; off planned — on is', !!L.drift('hero', rd('IT', 'hero'), 'on') && !!L.drift('hero', rd('CA-EN', 'hero'), 'on') && !!L.drift('hero', rd('US', 'hero'), 'on') && !!L.drift('hero', rd('GB', 'hero'), 'off') && L.drift('hero', rd('GB', 'hero'), 'on') === null);
 t('no plan value → nothing to be off', L.drift('rc', rd('FR', 'rc'), null) === null);
 
@@ -111,7 +140,8 @@ t('one line per change, its markets together (35% → 20% in GB and FR)', rc && 
 t('…IT moves 21% → 20% on its own line (its own BAU)', sw.changes.some((c) => c.k === 'rc' && eq(c.mk, ['IT']) && c.from === 21 && c.to === 20));
 t('each market names ITS rules to edit in FeedHero', rc.rules.GB.indexOf('Range Completion by Availability') >= 0 && rc.rules.FR.indexOf('Range Completion based Availability') >= 0);
 t('a lever whose SALE value is not set is a BLOCKER, never assumed (hero sizes)', sw.blocked.some((b) => b.k === 'hero' && eq(b.mk, ['GB', 'FR', 'IT'])));
-t('units N/A → > 5: listed even where no rule runs it yet', sw.changes.some((c) => c.k === 'units' && c.mk.indexOf('GB') >= 0 && eq(c.rules.GB, [])));
+t('exclusion N/A → > 5: listed even where no rule runs it yet — a stored `units` lever read as the stock-based exclusion', sw.changes.some((c) => c.k === 'excl' && c.label === 'Stock-based exclusion · Everest' && c.mk.indexOf('GB') >= 0 && eq(c.rules.GB, [])));
+t('…a lever with no value in either mode is not part of the switch — no change, no blocker (the threshold nobody planned)', !sw.changes.some((c) => c.k === 'thresh') && !sw.blocked.some((b) => b.k === 'thresh'));
 const back = L.switchList(P, store, 'Superdry', MKS, ['GB'], 'bau');
 t('back to BAU is the same list the other way', back.changes.some((c) => c.k === 'rc' && c.from === 20 && c.to === 35));
 const bl = L.briefLines(sw, 'Superdry', ps[0]);
@@ -132,6 +162,14 @@ t('…the target in force names its source: IT’s own BAU now; in a sale, the b
 t('IT keeps its own BAU (21%) — on plan; FR at 21% against 35% — off plan', !M.rows.filter((r) => r.market === 'IT')[0].cells.rc.drift && !!M.rows.filter((r) => r.market === 'FR')[0].cells.rc.drift);
 t('the sums: markets, read, in SALE, due to switch, off plan', M.sum.markets === 8 && M.sum.read === 7 && M.sum.sale === 0 && M.sum.late === 0 && M.sum.drift === M.rows.filter((r) => M.levers.some((l) => r.cells[l.k].drift)).length);
 t('the periods carry their next step', M.periods.length === 2 && M.periods[0].next.dir === 'sale');
+t('all four levers on every model, in Ray’s order, whatever the plan holds', eq(M.levers.map((l) => l.k), ['rc', 'hero', 'thresh', 'excl']) && eq(L.model({}, 'Reiss', [EV], ['US'], '2026-10-05').levers.map((l) => l.k), ['rc', 'hero', 'thresh', 'excl']));
+t('…in the model a range’s own rule reads under its scoped lever ONLY: US’s Everest rule is the Everest exclusion, the threshold reads the rest', (() => {
+  const us = L.model(store, 'Superdry', [EV], ['US'], '2026-10-05').rows[0].cells;
+  return eq(us.excl.rd.rules.map((x) => x.n), ['Everest: stock <= 5 -> out of stock']) && eq(us.thresh.rd.rules.map((x) => x.n), ['Stock < 4 -> OOS']) && us.thresh.rd.val === 4; })());
+t('…a brand with NO plan still reads every lever off its rules — nothing to be off plan against', (() => {
+  const m0 = L.model({}, 'Reiss', [EV], ['US'], '2026-10-05'), c = m0.rows[0].cells;
+  return m0.plan === null && c.rc.rd.state === 'on' && c.hero.rd.state === 'paused' && c.thresh.rd.state === 'on' && m0.sum.drift === 0 && eq(m0.sum.planned, []) && eq(m0.sum.unset, []); })());
+t('…the SALE values still to set are the PLANNED levers’ only (here range completion and the exclusion have one, hero sizes does not; the threshold is unplanned)', eq(M.sum.planned, ['rc', 'hero', 'excl']) && eq(M.sum.unset, ['hero']));
 
 console.log('· a SALE value to consider, and keeping a market as it runs');
 const P0 = { levers: [{ k: 'rc', bau: 35, sale: null, lo: 20, hi: 40 }, { k: 'units', bau: 'off', sale: null, was: '> 5 units per size' }, { k: 'hero', bau: 'on', sale: null }] };
@@ -141,7 +179,8 @@ t('…else the band’s floor', (() => { const s2 = L.suggest(P0, [GB, FR], 'rc'
 t('units: what the lever ran at before', eq(L.suggest(P0, MKS, 'units'), { v: 5, why: 'what it ran at before (> 5 units per size)' }));
 t('hero sizes: nothing in the rules says which way a sale takes them — no suggestion', L.suggest(P0, MKS, 'hero') === null);
 const fr = M.rows.filter((r) => r.market === 'FR')[0];
-t('"keep as it runs": the market’s own BAU is what it runs (21% · N/A · on)', eq(L.adopt(fr), { rc: { bau: 21, sale: null }, units: { bau: 'off', sale: null }, hero: { bau: 'on', sale: null } }), JSON.stringify(L.adopt(fr)));
+t('"keep as it runs": the market’s own BAU is what it runs (21% · on · N/A)', eq(L.adopt(fr), { rc: { bau: 21, sale: null }, hero: { bau: 'on', sale: null }, excl: { bau: 'off', sale: null } }), JSON.stringify(L.adopt(fr)));
+t('…a lever nobody plans that the market does not run is left out — absence is not a decision (no threshold runs in FR, none planned)', !('thresh' in L.adopt(fr)));
 t('…a line nobody can state is not written (the brand’s value stays in force)', (() => { const m2 = L.model(store, 'Superdry', [SE], ['SE'], '2026-10-05'); return !('rc' in L.adopt(m2.rows[0])); })());
 t('…a market’s own SALE is kept', (() => { const s3 = JSON.parse(JSON.stringify(store)); s3['m:Superdry|FR'] = { lv: { rc: { bau: null, sale: 25 } } }; const m3 = L.model(s3, 'Superdry', [FR], ['FR'], '2026-10-05'); return L.adopt(m3.rows[0]).rc.sale === 25; })());
 
@@ -249,7 +288,8 @@ t('…a step the save did not move keeps the stamp it had', (() => { const c2 = 
 t('a whole save is refused if any key is (nothing half-written)', (() => { const r = W.sanitizeLeverPut({ 'p:Superdry': { levers: [] }, 'm:Superdry|XX': { lv: {} } }, ctx); return r.errors.length === 1; })());
 t('deletions only through _deleted (or a null value), each key checked', eq(W.sanitizeLeverPut({ _deleted: ['e:Superdry|bf-1'], 'm:Superdry|IT': null }, ctx).deleted.sort(), ['e:Superdry|bf-1', 'm:Superdry|IT']) && W.sanitizeLeverPut({ _deleted: ['e:Reiss|x-1'] }, ctx).errors.length === 1);
 t('a signin reads only its brands', eq(Object.keys(W.leverView({ 'p:Superdry': {}, 'p:Reiss': {}, 'e:Reiss|a-1': {}, 'm:Superdry|GB': {} }, (b) => b === 'Superdry')).sort(), ['m:Superdry|GB', 'p:Superdry']));
-t('the brands with a plan, and their periods', eq(W.leverBrands({ 'p:Superdry': { levers: [1, 2, 3] }, 'e:Superdry|a-1': {}, 'e:Superdry|b-2': {} }, ['Superdry', 'Reiss']), [{ client: 'Superdry', levers: 3, periods: 2 }]));
+t('every brand in scope — four levers each, a plan or not: how many levers are planned (a legacy key counted as its lever), periods, records', eq(W.leverBrands({ 'p:Superdry': { levers: [{ k: 'rc', bau: 35 }, { k: 'units', bau: 'off' }, { k: 'hero', bau: 'on' }, { k: 'thresh', bau: null, sale: null }, { k: 'xx', bau: 1 }] }, 'e:Superdry|a-1': {}, 'e:Superdry|b-2': {}, 'r:Superdry|rec-1': {} }, ['Superdry', 'Reiss']),
+  [{ client: 'Superdry', plan: true, levers: 3, periods: 2, records: 1 }, { client: 'Reiss', plan: false, levers: 0, periods: 0, records: 0 }]));
 
 console.log('· the worker’s half — a record');
 const rec = { d: '2026-10-06', mk: ['gb', 'FR', 'GB'], k: 'rc', mode: 'sale', v: 20, was: 35, note: 'Black Friday line', src: 'e:bf-1|sale', by: 'forged', at: 1 };
@@ -269,8 +309,9 @@ t('a signin reads only its brands’ records', eq(Object.keys(W.leverView({ 'r:S
 console.log('· Superdry’s plan as Ray stated it — seeded once');
 const SD = W.LEVER_SEEDS.Superdry;
 t('range completion: band 20–40%, BAU 35% ("currently at 35%"), SALE not set', eq(SD.levers[0], Object.assign({ k: 'rc', lo: 20, hi: 40, bau: 35, sale: null }, { note: SD.levers[0].note })));
-t('stock unit exclusion for Everest: BAU N/A, was "> 5 units per size", SALE not set', SD.levers[1].k === 'units' && SD.levers[1].scope === 'Everest' && SD.levers[1].bau === 'off' && SD.levers[1].was === '> 5 units per size' && SD.levers[1].sale === null);
-t('hero sizes: BAU on ("current activated"), SALE not set', SD.levers[2].k === 'hero' && SD.levers[2].bau === 'on' && SD.levers[2].sale === null);
+t('hero sizes: BAU on ("current activated"), SALE not set', SD.levers[1].k === 'hero' && SD.levers[1].bau === 'on' && SD.levers[1].sale === null);
+t('stock unit exclusion for Everest = the stock-based exclusion, scoped: BAU N/A, was "> 5 units per size", SALE not set', SD.levers[2].k === 'excl' && SD.levers[2].scope === 'Everest' && SD.levers[2].bau === 'off' && SD.levers[2].was === '> 5 units per size' && SD.levers[2].sale === null);
+t('…the stock quantity threshold Ray did not state is NOT seeded — it reads off the rules with no plan value', !SD.levers.some((l) => l.k === 'thresh'));
 t('every seed passes the sanitiser it will be edited through', SD.levers.every((l) => !ok('p:Superdry', { levers: [l] }).error));
 const envx = { data: {}, meta: {} };
 t('written once into an empty store, stamped from Ray’s brief', W.applyLeverSeeds(envx, 5) === 1 && envx.data['p:Superdry'].seed === 1 && /from Ray/.test(envx.data['p:Superdry'].by) && envx.meta['p:Superdry'].t === 5);
@@ -285,7 +326,7 @@ t('worker: the seed applied on read, written back only when it wrote', /if \(LEV
 t('page: the card, its engine, the store with a read-stamp, edits kept until the server confirms', /<section class="card" id="lev-card" hidden>/.test(SP) && /fetch\('\/stock\/levers\.js'/.test(SP) && /fetch\('\/api\/rules\/levers'/.test(SP) && /'X-Sync-Base': String\(LV\.base \|\| 0\)/.test(SP) && /function lvReapply\(\)/.test(SP));
 t('page: the card renders with the page (and after every save) — and opens it: no KPI band above it any more', /renderChips\(\); renderLev\(\);/.test(SP) && !/renderKpis|id="kpis"/.test(SP));
 t('page: the market list is a MATRIX above the plan — the plan line in each lever’s head, one short value a cell, the detail in its tooltip', SP.indexOf('id="lev-tw"') > 0 && SP.indexOf('id="lev-tw"') < SP.indexOf('id="lev-plan"')
-  && /'<span class="thp">BAU ' \+ esc\(lvShort\(l\.k, l\.bau\)\) \+ ' · SALE ' \+ esc\(lvShort\(l\.k, l\.sale\)\) \+ '<\/span>' \+ lvRuleHead\(M, l\) \+ '<\/th>'/.test(SP) && /function lvCell\(lk, c, r, b\) \{/.test(SP) && /'<td class="lc ' \+ st \+ \(rd\.overlap \? ' ov' : ''\) \+ \(rd\.miss && lk !== 'units' \? ' miss' : ''\) \+ '" data-lk="' \+ lk \+ '" data-tip="' \+ esc\(tip\) \+ '">'/.test(SP));
+  && /'<span class="thp">BAU ' \+ esc\(lvShort\(l\.k, l\.bau\)\) \+ ' · SALE ' \+ esc\(lvShort\(l\.k, l\.sale\)\) \+ '<\/span>' \+ lvRuleHead\(M, l\) \+ '<\/th>'/.test(SP) && /function lvCell\(lk, c, r, b\) \{/.test(SP) && /'<td class="lc ' \+ st \+ \(rd\.overlap \? ' ov' : ''\) \+ \(rd\.miss && !SL\.isUnits\(lk\) \? ' miss' : ''\) \+ '" data-lk="' \+ lk \+ '" data-tip="' \+ esc\(tip\) \+ '">'/.test(SP));
 t('page: a cell is on (blue — a rule runs it, on plan), off (orange, with a dot — never colour alone) or none (muted)', /#lev-t td\.lc\.on,\.legend i\.lvn\{background:rgba\(37,99,235,\.14\)\}/.test(SP) && /#lev-t td\.lc\.off,\.legend i\.lvo\{background:rgba\(245,166,35,\.30\)\}/.test(SP) && /\(st === 'off' \? '<i class="dot" aria-hidden="true"><\/i>' : ''\)/.test(SP));
 t('page: a market’s own values open in a row UNDER it (✎ toggles it), the shortcuts with them', /function lvEditRow\(r, levs, b, span\)/.test(SP) && /\(LV\.med === r\.market \? lvEditRow\(r, levs, b, span\) : ''\)/.test(SP) && /LV\.med = LV\.med === mkName \? '' : mkName;/.test(SP) && /tr\.querySelectorAll\('\.mlv\[data-lk\]'\)/.test(SP));
 t('page: the card’s captions are its own class — the shell’s .sc (170px flex-basis under 820px) never reaches them', !/class="sc[ "]|class="rl sc"/.test(SP) && /#lev-card \.lvc\{/.test(SP));
@@ -294,11 +335,21 @@ t('page: a switch marked made is written into the record in one click — and th
 t('page: the latest record for a market × lever is in that matrix cell’s tooltip', /var lr = LV\.M && SL\.lastRecord\(LV\.M\.records, r\.market, lk\);/.test(SP));
 t('page: each plan tile names its lever’s ONE rule — found in N of the markets read, missing where — or offers to connect one', /function lvRuleLine\(M, l\)/.test(SP) && /\+ lvRuleLine\(M, l\)/.test(SP) && /in ' \+ sp\.found\.length \+ ' of ' \+ tot \+ ' market'/.test(SP) && /data-act="lv-rcon"/.test(SP));
 t('page: the picker — a market, its rules that read as the lever (the most-run first), every stock rule on request; Connect saves the rule’s field too', /function lvRulePicker\(M, b, mk\)/.test(SP) && /SL\.ruleChoices\(l\.k, mk, m0, l, LV\.rka\)/.test(SP) && /lvSetRule\(LV\.rk, \{ n: rsel\.value, mk: LV\.rkm, d: rsel\.getAttribute\('data-d'\) \|\| undefined \}\)/.test(SP) && /data-d="' \+ esc\(c\.d \|\| ''\) \+ '"'/.test(SP));
-t('page: the matrix head names the rule and found / total; a missing rule reads "missing"; an unconnected overlap is dashed', /lvRuleHead\(M, l\) \+ '<\/th>'/.test(SP) && /v = rd\.miss \? 'missing'/.test(SP) && /\(rd\.overlap \? ' ov' : ''\) \+ \(rd\.miss && lk !== 'units' \? ' miss' : ''\)/.test(SP));
+t('page: the matrix head names the rule and found / total; a missing rule reads "missing"; an unconnected overlap is dashed', /lvRuleHead\(M, l\) \+ '<\/th>'/.test(SP) && /v = rd\.miss \? 'missing'/.test(SP) && /\(rd\.overlap \? ' ov' : ''\) \+ \(rd\.miss && !SL\.isUnits\(lk\) \? ' miss' : ''\)/.test(SP));
 t('page: half-typed form values survive a re-render a save elsewhere triggers', /if \(LV\.form\) lvKeepForm\(\);\n    if \(LV\.rf\) lvKeepRec\(\);/.test(SP) && /fm\.getAttribute\('data-rid'\) !== \(f\.id \|\| 'new'\)/.test(SP));
 t('page: → Brief opens the Workflow composer with the switch as the brief (technical, from the levers)', /location\.href = '\/workflow\?brief=' \+ lvB64\(\{ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' \}\)/.test(SP));
 t('page: a switch marked briefed BEFORE the page leaves (flushed now, then navigate)', /lvSetStep\(q, dir, 'briefed', true, go\)/.test(SP));
 t('page: every rule in the switch list opens on FeedHero', /fhUrl\(x\.cmpid, n\)/.test(SP));
+t('page: every brand on All brands — four levers each, a plan or not; a brand with no plan opens its matrix, its plan saved on the first edit', /var bl = LV\.brands \|\| \[\];/.test(SP) && /\(x\.levers \? x\.levers \+ ' of 4 planned' : 'no plan yet'\)/.test(SP)
+  && !/data-act="lv-start"/.test(SP) && /function lvPlanPut\(b, p, fn\) \{\n    var d = \{\}; d\['p:' \+ b\] = \{ levers: SL\.planLevers\(p\)\.map\(fn\), note: \(p && p\.note\) \|\| '' \}; lvPut\(d\);/.test(SP));
+t('page: four lever tiles, one width — two columns on a narrower screen or beside the forecast panel', /#lev-card \.lev-plan\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/.test(SP));
+t('page: MARKETS THAT READ THE SAME SHARE A ROW — grouped from 8 markets unless the device chose, the switch remembered per device, a group\'s market chip opening its own values', /var LVGRP_AT = 8;/.test(SP)
+  && /function lvGrouped\(M\) \{ var v = recall\('fcc-stock-lvgrp'\); return v === '1' \? true : v === '0' \? false : M\.rows\.length >= LVGRP_AT; \}/.test(SP)
+  && /if \(t\.hasAttribute\('data-lvv'\)\) \{ remember\('fcc-stock-lvgrp', t\.getAttribute\('data-lvv'\)\); renderLev\(\); return; \}/.test(SP)
+  && /function lvGroupRow\(g, levs, b, items\) \{\n    if \(g\.rows\.length === 1\) return lvRow\(g\.rows\[0\], levs, b, items\[g\.rows\[0\]\.market\]\);/.test(SP) && /data-act="lv-medit" data-mk="/.test(SP));
+t('page: …markets join a row only when every cell is DRAWN the same, held to the same target from the same source, in the same mode — one drawing (lvCellView) for a market and for a group', /return r\.mode \+ '\|' \+ r\.expect \+ '\|' \+ levs\.map\(function \(l\) \{/.test(SP)
+  && /var c = r\.cells\[l\.k\], cv = lvCellView\(l\.k, c\), rd = c\.rd;/.test(SP) && /var rd = c\.rd, cv = lvCellView\(lk, c\), v = cv\.v, st = cv\.st;/.test(SP) && /var r0 = g\.rows\[0\], c = r0\.cells\[lk\], rd = c\.rd, cv = lvCellView\(lk, c\)/.test(SP));
+t('page: …the biggest mix first, then the roster\'s order; markets not read yet last; nothing to group = no switch', /\(a\.k === 'unread'\) - \(c\.k === 'unread'\) \|\| c\.rows\.length - a\.rows\.length \|\| a\.at - c\.at/.test(SP) && /vw\.hidden = mixes >= M\.rows\.length;/.test(SP));
 t('stub: serves the lever engine and a synthetic store — with two records kept by hand, one edited', /\/stock\/levers\.js/.test(ST) && /\/api\/rules\/levers/.test(ST) && /'r:Superdry\|rec-20261001-rc-tst02': \{[^\n]*ed: \{ by: 'Analyst B'/.test(ST));
 t('harness wired into qa_gate, presync and validate', ['tools/qa_gate.sh', 'tools/presync.sh', '.github/workflows/validate.yml'].every((f) => read(f).indexOf('test_stocklevers.mjs') >= 0));
 t('no lever store is committed (KV only)', !fs.existsSync(new URL('../ops/stocklevers', import.meta.url)));

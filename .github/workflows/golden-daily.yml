@@ -4,17 +4,23 @@
 # (Ray, 7 Oct 2026: "can golden score be scanned each day at 12:00 pm UK time ? because sometimes
 # 9AM, not all output feeds have been refreshed (every market/ every client)").
 #
-# Cron speaks UTC and the UK moves between GMT and BST, so this fires at 11:00, 12:00 and 13:00
-# UTC and tools/golden_daily.mjs decides: it runs once the London clock has reached 12:00 and
-# today's noon run is not yet on the worker's ledger. Summer: the 11:00 UTC firing IS 12:00
-# London. Winter: the 12:00 UTC firing is. The rest are the catch-up for a late or failed run and
-# do nothing once the day is done.
+# Cron speaks UTC and the UK moves between GMT and BST, so this fires at :07 and :37 past 11:00,
+# 12:00, 13:00 and 14:00 UTC and tools/golden_daily.mjs decides: it runs once the London clock has
+# reached 12:00 and today's noon run is not yet on the worker's ledger. Summer: the 11:07 UTC
+# firing IS 12:07 London. Winter: the 12:07 UTC firing is. The rest are the catch-up for a late or
+# failed run and do nothing once the day is done (one POST, well under a minute).
+#
+# OFF THE HOUR, AND EIGHT CHANCES: GitHub delays scheduled runs at busy times and DROPS some,
+# worst at the start of the hour (its own docs say to schedule at another minute). On the old
+# '0 8,9,10' schedule only ONE of the three daily firings ever arrived, 4-7 hours late — the
+# "09:00" run started between 13:40 and 17:47 London from 25 Sep to 6 Oct 2026. Firing at :07/:37
+# with three hours of catch-up gives the noon run a far better chance of landing near noon.
 #
 # Secret: FCC_PUSH_KEY (the worker's GMAIL_PUSH_KEY) — the same one the XML scan uses.
 name: Golden Record daily
 on:
   schedule:
-    - cron: '0 11,12,13 * * *'
+    - cron: '7,37 11,12,13,14 * * *'
   workflow_dispatch:
     inputs:
       force:

@@ -897,13 +897,21 @@ time ? because sometimes 9AM, not all output feeds have been refreshed (every ma
 client)"*. A reading taken before a client's output feed has rebuilt for the day records
 yesterday's feed under today's date, so the run now waits until noon.
 
-**The daily run.** `.github/workflows/golden-daily.yml` fires at 11:00, 12:00 and 13:00 UTC, and
-`tools/golden_daily.mjs` decides whether to run. Cron speaks UTC and the UK moves between GMT and
-BST, so the script runs once the London clock has reached 12:00 (`RUN_HOUR`) and today's noon run
-is not yet on the worker's ledger. In summer the 11:00 UTC firing is 12:00 London; in winter the
-12:00 UTC firing is. The other firings are catch-up for a late or failed run, and do nothing once
-the day is done. A manual dispatch can force a run. A single-feed dispatch (`only`) never marks
-the day done.
+**The daily run.** `.github/workflows/golden-daily.yml` fires at :07 and :37 past 11:00, 12:00,
+13:00 and 14:00 UTC, and `tools/golden_daily.mjs` decides whether to run. Cron speaks UTC and the
+UK moves between GMT and BST, so the script runs once the London clock has reached 12:00
+(`RUN_HOUR`) and today's noon run is not yet on the worker's ledger. In summer the 11:07 UTC
+firing is 12:07 London; in winter the 12:07 UTC firing is. The other firings are catch-up for a
+late or dropped run, and do nothing once the day is done. A manual dispatch can force a run. A
+single-feed dispatch (`only`) never marks the day done.
+
+**Why off the hour, and eight firings.** GitHub delays scheduled runs at busy times and drops
+some, worst at the start of the hour; its own docs say to schedule at another minute. On the old
+`'0 8,9,10 * * *'` schedule only one of the three daily firings ever arrived, 4–7 hours late: from
+25 Sep to 6 Oct 2026 the "09:00" run started between 13:40 and 17:47 London. The `:07`/`:37`
+slots with three hours of catch-up give the noon run a much better chance of landing near noon.
+GitHub still decides when a scheduled run actually starts, so the chip's "last …" time is the
+truth about when it ran.
 
 Only a run that **finished from 12:00 London** counts as the day's run (`runDone`, read off the
 ledger's own time). One on the ledger from earlier the same day — a forced dispatch, or the 09:00
