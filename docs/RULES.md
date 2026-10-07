@@ -936,6 +936,82 @@ field it writes. Nothing else in the plan moves. *Change* re-opens the picker; *
 Store: the plan key `p:<Brand>`; the worker checks the rule's name (≤160 characters), that the market it was picked in
 is one of the brand's, and keeps the field only as a database name (`sanitizeLeverKey`).
 
+## 3o. Four levers for every brand, markets that read the same in one row, and every card folds (`/stock`)
+
+Ray, 7 Oct 2026: *"i thin the system on stock is still not optimised for view yet (especilly multi markets client) -
+every client should have these stock levers: 1. range completion 2. hero sizes 3. stock quantity threshold 4. stock
+based exclusion"* — then, mid-build, over the in-stock card's header switches: *"in section - these button doesnt apply/
+make sense"*; over the coverage matrix: *"this is good actually ! should be pushed to top"*; and *"each module info on
+Stock Management is collapsible pls - too many at once"*.
+
+**Four levers, every brand, in Ray's order** (`docs/stocklevers_engine.js › LEVERS`, the worker's `LEVER_KINDS` held
+equal by the harness). Each reads the rules of ONE stock mechanism, so a lever and its column in *Which stock controls
+each market runs* can never be read off different rules:
+
+| lever | kind | reads | said as |
+|---|---|---|---|
+| Range completion | % in the brand's band | `range`, or a name saying range completion | the measured line, else a stated cut-off |
+| Hero sizes | on / off | `hero`, or a name saying hero | on · kept live · paused |
+| Stock quantity threshold | units, or N/A | `threshold`, or an availability rule whose name states a stock cut-off | "< N units" — out of stock below N |
+| Stock-based exclusion | units, or N/A | `excl` (an exclusion *by* range completion is range completion's) | "> N units per size" — kept only above N |
+
+- **A brand with no plan still reads all four off its rules.** `planLevers(plan)` returns the four in order whether or
+  not a plan was saved; every value nobody set reads *not set*, and the first edit writes the plan. All brands lists
+  **every** brand in scope (the worker's `leverBrands`), each with *N of 4 planned* or *no plan yet*.
+- **The stored `units` lever is the stock-based exclusion.** Superdry's "Stock unit exclusion for Everest" (5 Oct) was
+  saved under the key `units`; the engine reads that key as `excl` everywhere (plan, a market's own values, records) and
+  the worker stores any save carrying it under `excl`. Nothing in KV had to be migrated by hand. The seed is
+  re-ordered (range completion, hero sizes, the Everest exclusion); the threshold Ray did not state is not seeded — it
+  reads off the rules with no plan value.
+- **What a threshold is.** A rule on a stock field counts only when it HOLDS stock back (the rules engine's own
+  `heldBack` kind, else the same reading of its field and name — `holdKind`). Three shapes are set aside and **named in
+  the cell's tooltip**, never silently dropped: a rule that only *works out a figure* other rules act on (Schuh's
+  "Calculate stock count details"), one that *restates* a state ("Not available to Zero" — every Superdry market runs
+  it, which is why the coverage matrix counts a stock threshold everywhere while the lever reads N/A) and one that *lets
+  products back in*. Read live 7 Oct 2026 (in session, nothing committed): Monsoon UK's "Stock < 11 -> OOS" reads
+  < 11; Accessorize UK's "Removing products with quantity with 3 or less" is an exclusion at ≤ 3; Superdry runs neither
+  (both N/A); Reiss's and Schuh's threshold-field rules are calculations.
+- **One setting, said two ways.** A name states the held-back side ("< 11", "≤ 3") or the kept side ("> 5"); the plan
+  states the lever's way. Both reduce to the units a product needs to stay live (`mlOf` / `planMl`), so a name's
+  "≤ 3" and a plan's "< 4" are one setting and never read as off plan. The cell prints the rule's own words.
+- **A range's own rule reads under its scoped lever only.** A units lever scoped to a range (the Everest exclusion) reads
+  the rules naming that range on any stock-holding field; the other units lever leaves those rules to it (`sibbed`, in
+  the model and the switch list), so one rule never reads as two levers.
+- **A lever nobody plans is not part of a switch** — no change, no blocker. *Keep as it runs* writes a market's own BAU
+  for what it runs; a lever it does not run that nobody plans stays out (absence is not a decision).
+
+**Markets that read the same share a row** (`lvGroups`, `lvGroupRow`). Superdry's nineteen markets read as eight mixes
+(FR, US, ES and DK all "21% · on · N/A · N/A"), so a brand with **8 or more markets opens grouped**: one row per mix —
+the number of markets, each a chip that opens ITS own values in a row under the group — biggest mix first, then the
+roster's order, markets not read yet last. A market joins a row only when **every cell is drawn the same** (value,
+colour, dot, dashed, missing), it is **held to the same targets from the same source** and it is **in the same mode**,
+so nothing its own row would say is lost; a market alone reads exactly as before. A group's cell names its markets and
+the rule each runs (a copy's name can drift). *By market · Grouped · N mixes* in the matrix toolbar, remembered per
+device (`fcc-stock-lvgrp`); hidden when every market reads differently. *Off plan* narrows first, then groups.
+
+**The coverage matrix is first on the page**, and **the in-stock card's header carries no scenario or period switch**:
+there they read as controls for the whole card (the availability bars too) and on a brand with nothing sized they
+changed nothing. They live in the forecast panel only, where the figure is worked out; the *Ad spend kept off* column
+head names the forecast shown ("conservative 5% · a month").
+
+**Every card folds.** Each card's title is one button — a chevron, the title and, folded, a line that survives the fold
+(the in-stock card: markets, Google in stock, held back, the spend kept off; the hero map: product types mapped, hero in
+stock; findings; cut-offs; …). A folded card is one row (~52px), its tools and subtitle away. On a device that has
+never chosen, the overview and the levers are open and the rest folded; what a person folds or opens by hand is kept
+per device (`fcc-stock-fold`, never shared state). A link or a jump opens what it points at **for the visit**, without
+rewriting that choice: `?mech=` opens the market setups, a `#hash` the card it names (or sits in), a click on a coverage
+cell the setups at that market. *⊕ Expand all / ⊖ Collapse all* in the page header names the action still available.
+Side by side, a folded card does not stretch to its open neighbour. On the phone the skim view
+(`docs/digest_widget.html`) leaves these headings to the page — an `[aria-expanded]` heading is the page's own — so one
+fold serves both screens.
+
+Harness: `tools/test_stocklevers.mjs` (162: the four levers, the legacy key, the threshold and exclusion readings on
+real rule-name shapes with invented counts, the set-aside kinds, ml, sibbed in the model, adopt, the brands list, the
+seed, the page's grouping and fold sources); `tools/check_stocklevers.js` (103 — a nine-market stub, `rules_stub.js
+build({ many: true })`, for the grouped view); `tools/check_stockfold.js` (Playwright, presync, 29 — the fold as a
+person uses it, desktop and phone; fails on the page before); `tools/test_rules.mjs` (cards in order, every card a fold
+button and a folded line).
+
 ## 4. Findings
 
 Every finding names the market and the rules.
