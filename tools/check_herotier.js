@@ -50,7 +50,7 @@ const ok = (n, c, got) => {
   else { fail++; console.log('  ✗ ' + n + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
 // the hero route answers from a store the page's own PUTs write into, so a save reads back as the server would
-const STUB = (keep) => `${keep ? '' : 'try{localStorage.clear();}catch(e){}'}
+const STUB = (keep) => `${(keep ? '' : 'try{localStorage.clear();}catch(e){}') + RS.openCards(HTML)}
 window.__puts=[];var HB=${JSON.stringify(HB)};
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
  if(url.indexOf('/api/rules/hero')>=0&&opts&&opts.method==='PUT'){var body=JSON.parse(opts.body);window.__puts.push(body);Object.keys(body).forEach(function(k){if(k==='_deleted')body[k].forEach(function(d){delete HB.store[d];});else HB.store[k]=body[k];});return j({ok:true,saved:Object.keys(body).length,store:HB.store});}

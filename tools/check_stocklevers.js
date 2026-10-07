@@ -9,8 +9,11 @@
  * page, so this drives the real page through Chromium on the synthetic stub (tools/rules_stub.js — invented rules and an
  * invented plan, no real figure) and checks:
  *
- *   · on All brands the card offers the brands with a plan, one tap away
- *   · for a brand: four tiles of one size, three lever tiles of one size, a SALE value to consider with its reason — and
+ *   · FOUR LEVERS FOR EVERY BRAND (Ray, 7 Oct 2026: "every client should have these stock levers: 1. range completion 2.
+ *     hero sizes 3. stock quantity threshold 4. stock based exclusion"): on All brands the card offers every brand, a plan
+ *     or not, one tap away; a brand with no plan still reads all four levers off its rules; the stored `units` lever is
+ *     read as the stock-based exclusion; the threshold reads the cut-off a rule's name states ("Stock < 9 -> OOS")
+ *   · for a brand: four tiles of one size, four lever tiles of one size, a SALE value to consider with its reason — and
  *     the market × lever MATRIX above them (Ray, 6 Oct 2026: "the lst should be table/ matrix for overview review",
  *     pointing at the coverage matrix): every roster market a row (one not read yet says so), the plan line in each
  *     lever's head, one short value a cell — blue on plan, orange with a dot off plan, muted where no rule runs it — the
@@ -56,7 +59,7 @@ const ok = (n, c, got) => {
   else { fail++; console.log('  ✗ ' + n + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
 // the levers route answers from a store the page's own PUTs write into (as the server would, stamping a moved step)
-const STUB = `try{localStorage.clear();}catch(e){}
+const stubFor = (lines) => `try{localStorage.clear();}catch(e){}
 window.__puts=[];window.__copied='';var LB=${JSON.stringify(LB)};
 try{Object.defineProperty(navigator,'clipboard',{value:{writeText:function(s){window.__copied=s;return Promise.resolve();}},configurable:true});}catch(e){}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
@@ -67,10 +70,13 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
   if(window.__slow){var ms=window.__slow;window.__slow=0;window.__inflight=1;return new Promise(function(r){setTimeout(r,ms);}).then(function(){window.__inflight=0;return resp;});}
   return resp;}
  if(url.indexOf('/api/rules/levers')>=0)return j(LB);
-${RS.stubLines().split('\n').filter((l) => l.indexOf('/api/rules/levers') < 0).join('\n')}
+${lines.split('\n').filter((l) => l.indexOf('/api/rules/levers') < 0).join('\n')}
  return j({ok:false,error:'stub'},404);};`;
+const STUB = stubFor(RS.stubLines());
+// a brand with MANY markets (tools/rules_stub.js build({ many: true }) — nine Superdry markets, markets of one seed reading alike)
+const STUB_MANY = stubFor(RS.stubLines({ many: true }));
 
-async function open(browser, w, h, q, extra) {
+async function open(browser, w, h, q, extra, stub) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h || 1000 } });
   const p = await ctx.newPage();
   const errs = [], seen = [];
@@ -86,7 +92,7 @@ async function open(browser, w, h, q, extra) {
     if (u.pathname === '/workflow') return r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><title>Workflow</title><p>Workflow</p>' });
     return r.abort();
   });
-  await p.addInitScript(STUB);
+  await p.addInitScript(stub || STUB);
   if (extra) await p.addInitScript(extra);
   await p.goto('http://fcc.test/stock' + (q || ''));
   await p.waitForSelector('#lev-card:not([hidden])', { timeout: 10000, state: 'attached' });
@@ -105,11 +111,12 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
   const exe = process.env.PW_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? undefined : undefined);
   const browser = await chromium.launch(exe ? { executablePath: exe } : {});
   try {
-    console.log('· All brands — the brands with a plan, one tap away');
+    console.log('· All brands — every brand, a plan or not, one tap away');
     let { ctx, p, errs } = await open(browser, 1440, 1000);
     await p.waitForSelector('#lev-brands [data-lvb]', { timeout: 10000 });
-    const chip = await p.$eval('#lev-brands [data-lvb]', (b) => b.textContent);
-    ok('a chip per brand with a plan, its levers and sale periods counted', /Superdry/.test(chip) && /3 levers/.test(chip) && /1 sale period/.test(chip), chip);
+    const chips = await p.$$eval('#lev-brands [data-lvb]', (a) => a.map((b) => ({ b: b.getAttribute('data-lvb'), t: b.textContent.replace(/\s+/g, ' ') })));
+    ok('a chip per brand — Superdry: 3 markets, 3 of 4 levers planned, 1 sale period; Reiss, with no plan, is there too', chips.length === 2 && chips.some((c) => c.b === 'Superdry' && /3 markets/.test(c.t) && /3 of 4 planned/.test(c.t) && /1 sale period/.test(c.t))
+      && chips.some((c) => c.b === 'Reiss' && /2 markets/.test(c.t) && /no plan yet/.test(c.t)), chips);
     await p.click('#lev-brands [data-lvb="Superdry"]');
     await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
     ok('…a tap opens the brand (the page’s own brand select follows)', (await p.$eval('#brand', (s) => s.value)) === 'Superdry');
@@ -122,23 +129,28 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     const tiles = await boxes(p, '#lev-sum .it');
     ok('four tiles, one row, one size', tiles.length === 4 && new Set(tiles.map((b) => b.y)).size === 1 && Math.max(...tiles.map((b) => b.w)) - Math.min(...tiles.map((b) => b.w)) <= 1, tiles);
     const lv = await boxes(p, '#lev-plan .lv');
-    ok('three lever tiles, one row, one size, one height', lv.length === 3 && new Set(lv.map((b) => b.y)).size === 1 && Math.max(...lv.map((b) => b.w)) - Math.min(...lv.map((b) => b.w)) <= 1 && Math.max(...lv.map((b) => b.h)) - Math.min(...lv.map((b) => b.h)) <= 1, lv);
-    const plan = await p.evaluate(() => Array.from(document.querySelectorAll('#lev-plan .lv')).map((x) => x.textContent.replace(/\s+/g, ' ')));
-    ok('range completion: BAU 30%, SALE not set, its band — and a SALE value to consider, with its reason', /Range completion/.test(plan[0]) && /BAU\s*30%/.test(plan[0]) && /SALE\s*not set/.test(plan[0]) && /band 20–40%/.test(plan[0]) && /To consider for SALE: 20% — the band’s floor/.test(plan[0]), plan[0]);
-    ok('stock unit exclusion · Everest: BAU N/A, what it ran at before offered for SALE', /Everest/.test(plan[1]) && /BAU\s*N\/A/.test(plan[1]) && /> 5 units per size/.test(plan[1]), plan[1]);
-    ok('hero sizes: BAU on, no SALE value offered (nothing in the rules says which way)', /Hero sizes/.test(plan[2]) && /BAU\s*on/.test(plan[2]) && !/To consider/.test(plan[2]), plan[2]);
+    ok('FOUR lever tiles, one row, one size, one height', lv.length === 4 && new Set(lv.map((b) => b.y)).size === 1 && Math.max(...lv.map((b) => b.w)) - Math.min(...lv.map((b) => b.w)) <= 1 && Math.max(...lv.map((b) => b.h)) - Math.min(...lv.map((b) => b.h)) <= 1, lv);
+    const plan = await p.evaluate(() => Array.from(document.querySelectorAll('#lev-plan .lv')).map((x) => ({ k: x.getAttribute('data-lk'), t: x.textContent.replace(/\s+/g, ' ') })));
+    ok('in Ray’s order: range completion, hero sizes, stock quantity threshold, stock-based exclusion', plan.map((x) => x.k).join(',') === 'rc,hero,thresh,excl', plan.map((x) => x.k));
+    ok('range completion: BAU 30%, SALE not set, its band — and a SALE value to consider, with its reason', /Range completion/.test(plan[0].t) && /BAU\s*30%/.test(plan[0].t) && /SALE\s*not set/.test(plan[0].t) && /band 20–40%/.test(plan[0].t) && /To consider for SALE: 20% — the band’s floor/.test(plan[0].t), plan[0]);
+    ok('hero sizes: BAU on, no SALE value offered (nothing in the rules says which way)', /Hero sizes/.test(plan[1].t) && /BAU\s*on/.test(plan[1].t) && !/To consider/.test(plan[1].t), plan[1]);
+    ok('stock quantity threshold: never planned — BAU and SALE not set, nothing offered', /Stock quantity threshold/.test(plan[2].t) && /BAU\s*not set/.test(plan[2].t) && /SALE\s*not set/.test(plan[2].t) && !/To consider/.test(plan[2].t), plan[2]);
+    ok('stock-based exclusion · Everest (stored as the legacy `units` lever): BAU N/A, what it ran at before offered for SALE', /Stock-based exclusion · Everest/.test(plan[3].t) && /BAU\s*N\/A/.test(plan[3].t) && /> 5 units per size/.test(plan[3].t), plan[3]);
     const order = await p.evaluate(() => ['lev-sum', 'lev-bar', 'lev-tw', 'lev-legend', 'lev-plan', 'lev-per', 'lev-rec'].map((id) => { const e = document.getElementById(id); return e ? Math.round(e.getBoundingClientRect().top) : null; }));
     ok('overview first: the tiles, the filter, the MATRIX and its legend — then the plan, the sale periods and the record', order.every((y, i) => y !== null && (!i || y > order[i - 1])), order);
     const head = await p.evaluate(() => Array.from(document.querySelectorAll('#lev-t thead th')).map((th) => ({ t: th.textContent.replace(/\s+/g, ' ').trim(), w: th.getBoundingClientRect().width, lev: th.classList.contains('num') && !th.classList.contains('lo') })));
     const lh = head.filter((h) => h.lev);
-    ok('a lever per column, each head carrying the plan: BAU 30% · SALE not set · BAU N/A · SALE not set · BAU on · SALE not set', lh.length === 3 && /Range completion\s*BAU 30% · SALE not set/.test(lh[0].t) && /Everest\s*BAU N\/A · SALE not set/.test(lh[1].t) && /Hero sizes\s*BAU on · SALE not set/.test(lh[2].t), head.map((h) => h.t));
+    ok('a lever per column, each head carrying the plan: BAU 30% · SALE not set · BAU on · SALE not set · BAU not set · SALE not set · BAU N/A · SALE not set', lh.length === 4 && /Range completion\s*BAU 30% · SALE not set/.test(lh[0].t) && /Hero sizes\s*BAU on · SALE not set/.test(lh[1].t)
+      && /Stock quantity threshold\s*BAU not set · SALE not set/.test(lh[2].t) && /Stock-based exclusion · Everest\s*BAU N\/A · SALE not set/.test(lh[3].t), head.map((h) => h.t));
     ok('…the lever columns one width', Math.max(...lh.map((h) => h.w)) - Math.min(...lh.map((h) => h.w)) <= 1, lh.map((h) => Math.round(h.w)));
     let R = await rows(p);
     ok('every roster market is a row — named with its products, one not read yet saying so across the levers', R.map((r) => r.mk).join(',') === 'GB,DE,FR' && /^Superdry GB\s*[\d,]+ products/.test(R[0].text) && R[2].unread && R[2].cells.length === 0 && /not read yet/.test(R[2].text) && /Waiting for its first read/.test(R[2].text), R);
     ok('GB: ≈35% measured, off a 30% plan — orange, a dot, the Off plan count 1; the tooltip says what runs, what it is held to, why it is off, and the rules', R[0].cells[0].v === '≈35%' && R[0].cells[0].st === 'off' && R[0].cells[0].dot && R[0].lo === '1'
       && /Runs: 35% measured from the products/.test(R[0].cells[0].tip) && /Held to 30% — the brand’s BAU value/.test(R[0].cells[0].tip) && /Off plan<\/b> — Measured ≈35% — the target is 30%/.test(R[0].cells[0].tip) && /#\d+ Range completion/.test(R[0].cells[0].tip), R[0]);
     ok('DE: range completion runs with no stated line — "runs", blue, never called off plan (✓)', R[1].cells[0].v === 'runs' && R[1].cells[0].st === 'on' && /no stated line/.test(R[1].cells[0].tip) && R[1].lo === '✓', R[1]);
-    ok('units N/A (muted — no rule runs it) and hero sizes on (blue) — on plan in both read markets', R.slice(0, 2).every((r) => r.cells[1].v === 'N/A' && r.cells[1].st === 'none' && r.cells[2].v === 'on' && r.cells[2].st === 'on'), R);
+    ok('hero sizes on (blue) and the Everest exclusion N/A (muted — no rule runs it) — on plan in both read markets', R.slice(0, 2).every((r) => r.cells[1].v === 'on' && r.cells[1].st === 'on' && r.cells[3].v === 'N/A' && r.cells[3].st === 'none'), R);
+    ok('the stock quantity threshold reads the cut-off each market’s rule name states, in the rule’s own words (GB < 9, DE < 11) — the rule and where the number comes from in the tooltip', R[0].cells[2].v === '< 9' && R[1].cells[2].v === '< 11' && R[0].cells[2].st === 'on'
+      && /Runs: stock &lt; 9 in a rule name|Runs: stock < 9 in a rule name/.test(R[0].cells[2].tip) && /The cut-off a rule’s name states/.test(R[0].cells[2].tip) && /#\d+ Stock &lt; 9 -&gt; OOS|#\d+ Stock < 9 -> OOS/.test(R[0].cells[2].tip) && /No BAU value set to hold it to/.test(R[0].cells[2].tip), R[0].cells[2]);
     ok('no cell holds a sentence — a word or a number each, the detail in the tooltip', R.every((r) => r.cells.every((c) => c.v.length <= 10)), R.map((r) => r.cells.map((c) => c.v)));
     ok('the legend names the three states and the marks', /A rule runs it, on plan/.test(await p.$eval('#lev-legend', (x) => x.textContent)) && /Off plan/.test(await p.$eval('#lev-legend', (x) => x.textContent)) && /measured from the products/.test(await p.$eval('#lev-legend', (x) => x.textContent)));
     ok('the latest record for a market × lever is in its cell’s tooltip (GB range completion: 1 Oct, 30% → 35%)', /Recorded 1 Oct: 30% → 35% \(BAU\) — Analyst A/.test(R[0].cells[0].tip), R[0].cells[0].tip);
@@ -154,7 +166,7 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.click('#lev-t tr.med[data-mk="GB"] [data-act="lv-keep"]');
     await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; return b && b['m:Superdry|GB']; }, null, { timeout: 5000 });
     let put = await lastPut(p);
-    ok('"Keep as it runs" makes what GB runs its own BAU (35% · N/A · on)', put['m:Superdry|GB'].lv.rc.bau === 35 && put['m:Superdry|GB'].lv.units.bau === 'off' && put['m:Superdry|GB'].lv.hero.bau === 'on', put);
+    ok('"Keep as it runs" makes what GB runs its own BAU (35% · on · < 9 · N/A) — under the four levers’ keys, never the legacy one', put['m:Superdry|GB'].lv.rc.bau === 35 && put['m:Superdry|GB'].lv.hero.bau === 'on' && put['m:Superdry|GB'].lv.thresh.bau === 9 && put['m:Superdry|GB'].lv.excl.bau === 'off' && !('units' in put['m:Superdry|GB'].lv), put);
     R = await rows(p);
     ok('…and GB reads on plan — its own tag, its own value named in the tooltip, the editor closed', !R[0].cells[0].off && R[0].own && /Held to 35% — its own BAU value/.test(R[0].cells[0].tip) && R[0].lo === '✓' && !(await p.$('#lev-t tr.med')), R[0]);
     ok('…the off-plan tile follows (0 of 3) and the bulk button goes', /0 of 3/.test(await p.$eval('#lev-sum .it.lv-go b', (b) => b.textContent)) && await p.$eval('#lev-adopt', (b) => b.hidden));
@@ -173,6 +185,8 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; return b && b['p:Superdry']; }, null, { timeout: 5000 });
     put = await lastPut(p);
     ok('✎ Edit → SALE off saves the plan with hero sizes off for SALE, everything else as it was', put['p:Superdry'].levers.filter((l) => l.k === 'hero')[0].sale === 'off' && put['p:Superdry'].levers.filter((l) => l.k === 'rc')[0].bau === 30, put);
+    ok('…the plan saved carries all four levers in order — the legacy `units` lever saved as the stock-based exclusion, its scope and history kept', put['p:Superdry'].levers.map((l) => l.k).join(',') === 'rc,hero,thresh,excl'
+      && put['p:Superdry'].levers[3].scope === 'Everest' && put['p:Superdry'].levers[3].was === '> 5 units per size', put['p:Superdry'].levers);
     await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-sug"]');
     await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'rc')[0]; return l && l.sale === 20; }, null, { timeout: 5000 });
     ok('"Use it" sets that SALE value — and only on a click', /SALE\s*20%/.test(await p.$eval('#lev-plan .lv[data-lk="rc"]', (x) => x.textContent.replace(/\s+/g, ' '))));
@@ -269,9 +283,9 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     console.log('· → Brief while another save is in flight, and a mark that does not land');
     ({ ctx, p, errs, seen } = await open(browser, 1440, 1000, '?brand=Superdry'));
     await p.waitForSelector('.per[data-p="peak-test"] .stp[data-dir="sale"] [data-act="lv-brief"]', { timeout: 10000 });
-    // a save that is still on the wire when → Brief is pressed (the units lever re-saved as it is)
+    // a save that is still on the wire when → Brief is pressed (the stock-based exclusion re-saved as it is)
     await p.evaluate(() => { window.__slow = 900; });
-    await p.click('#lev-plan .lv[data-lk="units"] [data-act="lv-edit"]');
+    await p.click('#lev-plan .lv[data-lk="excl"] [data-act="lv-edit"]');
     await p.click('#lev-plan .lv.ed [data-act="lv-save"]');
     await p.waitForFunction(() => window.__inflight === 1, null, { timeout: 5000 });
     const n2 = seen.length;
@@ -300,8 +314,8 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     const heads = () => p.$$eval('#lev-t thead th .thr', (a) => a.map((x) => ({ t: x.textContent.trim(), c: x.className })));
     let H = await heads();
     R = await rows(p);
-    ok('no rule connected: each head says so; where two rules read as a lever the cell is dashed (GB and DE: range completion, hero sizes)', H.length === 3 && H.every((h) => h.t === 'no rule connected')
-      && /\bov\b/.test(await cls('GB', 'rc')) && /\bov\b/.test(await cls('DE', 'rc')) && /\bov\b/.test(await cls('GB', 'hero')) && !/\bov\b/.test(await cls('GB', 'units')), H);
+    ok('no rule connected: each head says so; where two rules read as a lever the cell is dashed (GB and DE: range completion, hero sizes — one threshold rule each, so not the threshold)', H.length === 4 && H.every((h) => h.t === 'no rule connected')
+      && /\bov\b/.test(await cls('GB', 'rc')) && /\bov\b/.test(await cls('DE', 'rc')) && /\bov\b/.test(await cls('GB', 'hero')) && !/\bov\b/.test(await cls('GB', 'thresh')) && !/\bov\b/.test(await cls('GB', 'excl')), H);
     ok('…the plan tile says where they overlap, and offers to connect one', /not connected — more than one rule reads as it in GB, DE/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent)) && /Connect a rule/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent)));
     ok('…and the cell’s tooltip counts them', /2 rules read as this lever<\/b> — connect one in Brand plan/.test(R[0].cells[0].tip), R[0].cells[0].tip);
     await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-rcon"]');
@@ -319,23 +333,31 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     ok('…every market now reads that ONE rule: the head names it and 2/2, the overlap is gone, the tooltip names it and what it touched', !/\bov\b/.test(await cls('GB', 'rc')) && !/\bov\b/.test(await cls('DE', 'rc')) && /⛓ The connected rule:<br>#11 Range completion exclusion · 3,480 of 58,000 products/.test(R[0].cells[0].tip)
       && /Also reads as range completion here, not connected:<\/span><br>#9 Range completion percentage/.test(R[0].cells[0].tip), R[0].cells[0].tip);
     ok('…and the plan tile says where it is found', /Range completion exclusion\s*in 2 of 2 markets/.test(await p.$eval('#lev-plan .lv[data-lk="rc"] .lvr', (x) => x.textContent.replace(/\s+/g, ' '))));
-    await p.click('#lev-plan .lv[data-lk="units"] [data-act="lv-rcon"]');
+    // the Everest exclusion: nothing in GB reads as it — said so, and "every stock rule" lists the rest, each that does not
+    // read as the lever marked, with where its copy would be found
+    await p.click('#lev-plan .lv[data-lk="excl"] [data-act="lv-rcon"]');
     await p.waitForSelector('#lev-pick');
-    ok('a lever no rule reads as yet says so in the picker', /No rule in Superdry GB reads as this lever/.test(await p.$eval('#lev-pick', (x) => x.textContent)));
+    ok('a lever no rule reads as yet says so in the picker (the Everest exclusion in GB)', /No rule in Superdry GB reads as this lever/.test(await p.$eval('#lev-pick', (x) => x.textContent)));
     await p.check('#lvk-all');
     await p.waitForSelector('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]');
     const pkAll = await p.$eval('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]', (i) => i.closest('.pk').textContent.replace(/\s+/g, ' '));
     ok('…"Every stock rule in GB" lists the rest, marking each that does not read as the lever, with where it would be found (DE runs its copy under another name: 2 of 2)', /does not read as this lever/.test(pkAll) && /in 2 of 2\s*1 under another name/.test(pkAll), pkAll);
-    await p.check('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]');
+    await p.click('#lev-pick [data-act="lv-rpx"]');
+    await p.waitForFunction(() => !document.getElementById('lev-pick'), null, { timeout: 5000 });
+    // the threshold: GB's "Stock < 9 -> OOS" reads as it — connected, and DE's "Stock < 11 -> OOS" found doing its job
+    await p.click('#lev-plan .lv[data-lk="thresh"] [data-act="lv-rcon"]');
+    await p.waitForSelector('#lev-pick input[name="lvk-r"][value="Stock < 9 -> OOS"]');
+    const pkT = await p.evaluate(() => Array.from(document.querySelectorAll('#lev-pick .pk')).map((x) => ({ n: x.querySelector('input').value, on: x.querySelector('input').checked, t: x.textContent.replace(/\s+/g, ' ') })));
+    ok('the threshold’s picker: GB’s one stock threshold, picked, reading as the lever — in 2 of 2, DE’s copy under another name', pkT.length === 1 && pkT[0].n === 'Stock < 9 -> OOS' && pkT[0].on && !/does not read as this lever/.test(pkT[0].t) && /in 2 of 2\s*1 under another name/.test(pkT[0].t), pkT);
     await p.click('#lev-pick [data-act="lv-rpick"]');
     await p.waitForFunction(() => /Stock < 9 -> OOS · 2\/2/.test(Array.from(document.querySelectorAll('#lev-t thead th .thr')).map((x) => x.textContent).join('|')), null, { timeout: 5000 });
     // the head moves on the change itself; the save leaves a beat later
-    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'units')[0]; return l && l.rule; }, null, { timeout: 5000 });
+    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'thresh')[0]; return l && l.rule; }, null, { timeout: 5000 });
     put = await lastPut(p);
-    ok('Connect stores the rule’s field with it (how its copies under other names are found)', JSON.stringify(put['p:Superdry'].levers.filter((x) => x.k === 'units')[0].rule) === JSON.stringify({ n: 'Stock < 9 -> OOS', mk: 'GB', d: 'stock_quantity' }), put);
+    ok('Connect stores the rule’s field with it (how its copies under other names are found)', JSON.stringify(put['p:Superdry'].levers.filter((x) => x.k === 'thresh')[0].rule) === JSON.stringify({ n: 'Stock < 9 -> OOS', mk: 'GB', d: 'stock_quantity' }), put);
     H = await heads(); R = await rows(p);
-    ok('DE runs GB’s rule under another name ("Stock < 11 -> OOS", the same field): found 2/2, DE reads ITS cut-off, its tooltip saying so', !/miss/.test(H[1].c) && R[1].cells[1].v === '> 11' && /run here under another name:<br>#\d+ Stock &lt; 11 -&gt; OOS|run here under another name:<br>#\d+ Stock < 11 -> OOS/.test(R[1].cells[1].tip), [H[1], R[1].cells[1]]);
-    ok('…and the tile counts it', /in 2 of 2 markets · 1 under another name/.test(await p.$eval('#lev-plan .lv[data-lk="units"] .lvr', (x) => x.textContent.replace(/\s+/g, ' '))));
+    ok('DE runs GB’s rule under another name ("Stock < 11 -> OOS", the same field): found 2/2, DE reads ITS cut-off, its tooltip saying so', !/miss/.test(H[2].c) && R[1].cells[2].v === '< 11' && /run here under another name:<br>#\d+ Stock &lt; 11 -&gt; OOS|run here under another name:<br>#\d+ Stock < 11 -> OOS/.test(R[1].cells[2].tip), [H[2], R[1].cells[2]]);
+    ok('…and the tile counts it', /in 2 of 2 markets · 1 under another name/.test(await p.$eval('#lev-plan .lv[data-lk="thresh"] .lvr', (x) => x.textContent.replace(/\s+/g, ' '))));
     await p.click('#lev-plan .lv[data-lk="hero"] [data-act="lv-rcon"]');
     await p.selectOption('#lvk-mk', 'DE');
     await p.waitForFunction(() => document.getElementById('lvk-mk').value === 'DE' && /Every stock rule in DE/.test(document.getElementById('lev-pick').textContent), null, { timeout: 5000 });
@@ -344,14 +366,26 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'hero')[0]; return l && l.rule; }, null, { timeout: 5000 });
     put = await lastPut(p);
     ok('a rule can be picked as ANOTHER market runs it (DE) — the plan says where it was picked', JSON.stringify(put['p:Superdry'].levers.filter((x) => x.k === 'hero')[0].rule) === JSON.stringify({ n: 'Set hero sizes', mk: 'DE', d: 'is_hero_size' }) && !!put['p:Superdry'].levers.filter((x) => x.k === 'rc')[0].rule, put);
-    await p.click('#lev-plan .lv[data-lk="units"] [data-act="lv-sug"]');
-    await p.waitForFunction(() => /Stock unit exclusion · Everest N\/A → > 5/.test((document.querySelector('.per[data-p="peak-test"] details.sw') || {}).textContent || ''), null, { timeout: 5000 });
+    // a plan for the threshold — BAU < 9, SALE < 4 — puts it on the switch list with each market's own copy of its rule
+    await p.click('#lev-plan .lv[data-lk="thresh"] [data-act="lv-edit"]');
+    await p.fill('#lev-plan .lv.ed [data-lvf="bau"]', '9');
+    await p.fill('#lev-plan .lv.ed [data-lvf="sale"]', '4');
+    await p.click('#lev-plan .lv.ed [data-act="lv-save"]');
+    await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'thresh')[0]; return l && l.bau === 9 && l.sale === 4; }, null, { timeout: 5000 });
+    put = await lastPut(p);
+    ok('the threshold’s plan saves as numbers, its connected rule kept', JSON.stringify(put['p:Superdry'].levers.filter((x) => x.k === 'thresh')[0]) === JSON.stringify({ k: 'thresh', bau: 9, sale: 4, rule: { n: 'Stock < 9 -> OOS', mk: 'GB', d: 'stock_quantity' } }), put['p:Superdry'].levers);
+    R = await rows(p);
+    ok('…DE’s "< 11" against a "< 9 units" plan is off plan, and says both', R[1].cells[2].st === 'off' && /Off plan<\/b> — A rule name states stock &lt; 11 — the target is &lt; 9 units|Off plan<\/b> — A rule name states stock < 11 — the target is < 9 units/.test(R[1].cells[2].tip) && R[0].cells[2].st === 'on', [R[0].cells[2], R[1].cells[2]]);
+    await p.click('#lev-plan .lv[data-lk="excl"] [data-act="lv-sug"]');
+    await p.waitForFunction(() => /Stock-based exclusion · Everest N\/A → > 5/.test((document.querySelector('.per[data-p="peak-test"] details.sw') || {}).textContent || ''), null, { timeout: 5000 });
     const swM = await p.$eval('.per[data-p="peak-test"] details.sw', (d) => d.textContent.replace(/\s+/g, ' '));
-    ok('the switch list names EACH market’s own copy of the connected rule — GB’s, and DE’s under its own name', /Stock unit exclusion · Everest N\/A → > 5 units per size GB, DE/.test(swM) && /“Stock < 9 -> OOS” GB ↗/.test(swM) && /“Stock < 11 -> OOS” DE ↗/.test(swM) && !/copy it there first/.test(swM), swM);
+    ok('the switch list names EACH market’s own copy of the connected rule — GB’s, and DE’s under its own name', /Stock quantity threshold < 9 units → < 4 units GB, DE/.test(swM) && /“Stock < 9 -> OOS” GB ↗/.test(swM) && /“Stock < 11 -> OOS” DE ↗/.test(swM) && !/copy it there first/.test(swM), swM);
+    ok('…and a lever no market runs yet is listed with nothing to edit — set it up (the Everest exclusion, N/A → > 5)', /Stock-based exclusion · Everest N\/A → > 5 units per size GB, DE/.test(swM) && /No rule runs it yet — it needs setting up in FeedHero/.test(swM), swM);
     await p.click('#lev-copy');
     await p.waitForFunction(() => /no rule connected|rule “/.test(window.__copied || ''), null, { timeout: 5000 });
     const txR = await p.evaluate(() => window.__copied);
-    ok('⧉ Copy summary names each lever’s rule, where it is found, and how many run it under another name', /• Range completion: [^\n]* — rule “Range completion exclusion”, in 2 of 2 markets/.test(txR) && /• Stock unit exclusion · Everest: [^\n]* — rule “Stock < 9 -> OOS”, in 2 of 2 markets \(1 under another name\)/.test(txR), txR);
+    ok('⧉ Copy summary names each lever’s rule, where it is found, and how many run it under another name', /• Range completion: [^\n]* — rule “Range completion exclusion”, in 2 of 2 markets/.test(txR) && /• Stock quantity threshold: BAU < 9 units · SALE < 4 units — rule “Stock < 9 -> OOS”, in 2 of 2 markets \(1 under another name\)/.test(txR)
+      && /• Stock-based exclusion · Everest: [^\n]* — no rule connected/.test(txR), txR);
     await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-rdis"]');
     await p.waitForFunction(() => { const b = window.__puts[window.__puts.length - 1]; const l = b && b['p:Superdry'] && b['p:Superdry'].levers.filter((x) => x.k === 'rc')[0]; return l && !l.rule; }, null, { timeout: 5000 });
     await p.waitForFunction(() => /no rule connected/.test((document.querySelector('#lev-t thead th .thr') || {}).textContent || ''), null, { timeout: 5000 });
@@ -382,13 +416,53 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
+    console.log('· a brand with many markets — the markets that read the same share a row');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry', null, STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-g]', { timeout: 10000 });
+    const grp = () => p.evaluate(() => ({ on: document.getElementById('lev-t').classList.contains('grouped'), view: Array.from(document.querySelectorAll('#lev-view button')).map((b) => ({ t: b.textContent.trim(), on: b.getAttribute('aria-pressed') === 'true' })), hidden: document.getElementById('lev-view').hidden,
+      rows: Array.from(document.querySelectorAll('#lev-t tbody tr:not(.med)')).map((tr) => ({ g: tr.hasAttribute('data-g'), mk: tr.getAttribute('data-mk') || '', chips: Array.from(tr.querySelectorAll('.mkc')).map((c) => c.textContent.trim()), name: (tr.querySelector('td.nm') || {}).textContent || '', ed: !!tr.querySelector('[data-act="lv-medit"]'),
+        cells: Array.from(tr.querySelectorAll('td.lc')).map((td) => ({ v: td.textContent.trim(), st: ['on', 'off', 'none'].filter((c) => td.classList.contains(c))[0] || '', ov: td.classList.contains('ov'), tip: td.getAttribute('data-tip') || '' })), lo: ((tr.querySelector('td.lo') || {}).textContent || '').trim() })) }));
+    let G = await grp();
+    ok('nine roster markets open GROUPED on a fresh device — the switch reads "Grouped · 4 mixes", pressed', G.on && !G.hidden && G.view.length === 2 && G.view[1].on && /^Grouped · 4 mixes$/.test(G.view[1].t) && !G.view[0].on, G.view);
+    ok('one row per mix, the biggest first: ES IT DK SE · then DE NL IE · then GB alone · then FR, not read yet — last', G.rows.length === 4 && G.rows[0].chips.join(',') === 'ES,IT,DK,SE' && /^4 markets/.test(G.rows[0].name) && G.rows[1].chips.join(',') === 'DE,NL,IE'
+      && G.rows[2].mk === 'GB' && !G.rows[2].g && /^Superdry GB/.test(G.rows[2].name) && G.rows[2].ed && G.rows[3].mk === 'FR' && /not read yet/.test(G.rows[3].name), G.rows.map((r) => [r.mk || r.chips.join(','), r.name.slice(0, 30)]));
+    ok('a group’s row draws what each of its markets would — the threshold each runs (< 13, < 11), the rest on plan (✓), GB off plan on its own', G.rows[0].cells[2].v === '< 13' && G.rows[1].cells[2].v === '< 11' && G.rows[0].lo === '✓' && G.rows[1].lo === '✓' && G.rows[2].lo === '1' && G.rows[2].cells[0].st === 'off', G.rows.map((r) => [r.cells.map((c) => c.v).join(' · '), r.lo]));
+    ok('…a group’s cell names its markets and the rule each runs, in its tooltip', /ES, IT, DK, SE/.test(G.rows[0].cells[2].tip) && /Stock &lt; 13 -&gt; OOS|Stock < 13 -> OOS/.test(G.rows[0].cells[2].tip) && /Runs: stock/.test(G.rows[0].cells[2].tip), G.rows[0].cells[2].tip);
+    ok('…a mark a market would carry is kept on its group (dashed: more than one rule reads as range completion and hero sizes)', G.rows[0].cells[0].ov && G.rows[0].cells[1].ov && G.rows[1].cells[0].ov, G.rows.slice(0, 2).map((r) => r.cells.map((c) => c.ov)));
+    await p.click('#lev-t .mkc[data-mk="IT"]');
+    const edG = await p.evaluate(() => { const m = document.querySelector('#lev-t tr.med'); return m ? { mk: m.getAttribute('data-mk'), prev: m.previousElementSibling && m.previousElementSibling.getAttribute('data-g') !== null, exp: document.querySelector('#lev-t .mkc[data-mk="IT"]').getAttribute('aria-expanded'), head: (m.querySelector('.mlh') || {}).textContent || '' } : null; });
+    ok('a market’s chip opens ITS own values in a row directly under its group', edG && edG.mk === 'IT' && edG.prev && edG.exp === 'true' && /^Superdry IT — its own values/.test(edG.head), edG);
+    await p.click('#lev-t .mkc[data-mk="IT"]');
+    ok('…and a second tap closes it', !(await p.$('#lev-t tr.med')));
+    await p.click('#lev-f [data-lvf2="off"]');
+    G = await grp();
+    ok('Off plan narrows first, then groups: GB alone', G.rows.length === 1 && G.rows[0].mk === 'GB', G.rows.map((r) => r.mk || r.chips.join(',')));
+    await p.click('#lev-f [data-lvf2=""]');
+    await p.click('#lev-view [data-lvv="0"]');
+    G = await grp();
+    ok('By market: every one of the nine markets a row again, each with its ✎', !G.on && G.rows.length === 9 && G.rows.every((r) => !r.g && r.ed) && G.view[0].on, G.rows.map((r) => r.mk));
+    const kept = await p.evaluate(() => localStorage.getItem('fcc-stock-lvgrp'));
+    ok('…the choice is this device’s', kept === '0', kept);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry', 'try{localStorage.setItem("fcc-stock-lvgrp","0");}catch(e){}', STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    G = await grp();
+    ok('…and holds on the next visit (nine markets, by market)', !G.on && G.rows.length === 9, G.rows.length);
+    await ctx.close();
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry'));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    G = await grp();
+    ok('a brand whose markets all read differently (GB, DE, FR not read) has nothing to group: no switch, a row each', !G.on && G.hidden && G.rows.length === 3, G);
+    await ctx.close();
+
     console.log('· on a phone');
     ({ ctx, p, errs } = await open(browser, 390, 860, '?brand=Superdry'));
     await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000, state: 'attached' });
     await p.evaluate(() => { if (window.FCCDigest && window.FCCDigest.expandAll) window.FCCDigest.expandAll(); });
     await p.waitForTimeout(150);
     const pl = await boxes(p, '#lev-plan .lv');
-    ok('the lever tiles stack, one column', pl.length === 3 && new Set(pl.map((b) => b.x)).size === 1 && pl[1].y > pl[0].y, pl);
+    ok('the four lever tiles stack, one column', pl.length === 4 && new Set(pl.map((b) => b.x)).size === 1 && pl[1].y > pl[0].y, pl);
     const tl = await boxes(p, '#lev-sum .it');
     ok('the tiles pair', tl.length === 4 && new Set(tl.map((b) => b.y)).size === 2, tl);
     const ov = await p.evaluate(() => ({ doc: document.documentElement.scrollWidth, vw: window.innerWidth, tw: (() => { const t = document.querySelector('#lev-t'), w = t.closest('.tw'); return { t: t.scrollWidth, w: w.clientWidth, ox: getComputedStyle(w).overflowX }; })() }));
