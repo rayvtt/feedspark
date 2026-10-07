@@ -12372,6 +12372,12 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "function pvExample(",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: tier preview shows example values built from each product's own row when Spark AI is not connected; product image large and uncropped",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvDerive(",
+      "pr": 0
     }
   ]
 }
