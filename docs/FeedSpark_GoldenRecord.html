@@ -145,6 +145,18 @@ window.addEventListener('load',restore);
   .tier-h h4{margin:0;font-size:15px;font-weight:900}
   .tier-h .tavg{margin-left:auto;font-size:12px;font-weight:900;color:var(--orange-deep)}
   .tier-sub{font-size:12px;color:var(--muted);margin:0 0 8px}
+  /* every scorecard section folds on its own (Ray, 7 Oct 2026: "make these boxes collapsible as
+     well") — the header keeps what the section found, so a folded box never hides a finding */
+  .tfold{border:0;background:transparent;cursor:pointer;padding:2px;margin:0 -4px 0 -4px;color:var(--muted);font:inherit;font-size:14px;line-height:1;display:inline-flex;align-items:center;border-radius:6px}
+  .tfold:hover,.tfold:focus-visible{color:var(--ink);background:var(--wash)}
+  .tfold i{display:inline-block;font-style:normal;transition:transform .15s ease}
+  .tier.folded .tfold i{transform:rotate(-90deg)}
+  .tier[data-tf]>.tier-h{cursor:pointer}
+  body:not(.pdf) .tier.folded>:not(.tier-h){display:none!important}
+  body:not(.pdf) .tier.folded>.tier-h{margin-bottom:0}
+  .tf-sum{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+  .tf-sum[hidden]{display:none!important}
+  body.pdf .tfold,body.pdf #tf-all,body.pdf .tf-sum{display:none!important}
   .tbadge{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none}
   .tbadge.req{background:#FDECEC;color:var(--risk)}
   .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
@@ -2112,6 +2124,64 @@ window.addEventListener('load',restore);
     var w = document.createElement('div'); w.innerHTML = histSection(k, d.snapshot);
     el.parentNode.replaceChild(w.firstChild, el);
     histWire(k);
+    tfApply();
+  }
+
+  /* ---- every section folds (Ray, 7 Oct 2026: "make these boxes collapsible as well") ----
+     A viewing preference for THIS screen, so it lives on the device like gr-collapse (the estate
+     cards) and never in shared state. Folded, a section keeps its header — badge, title and what it
+     found (avg fill, the content-quality score, "⚠ 3 fields read differently") — so closing a box
+     never hides a finding. "Two scores, two questions" starts folded: it explains how the two
+     sections score, it is not a finding about the feed. Every export prints every section open. */
+  var TF_DEFAULT = { recon: 1 };
+  var TF_IDS = { 'hs-tier': 'hist', 'qz-tier': 'qual', 'air-tier': 'air', 'rec-tier': 'recon' };
+  var TFOLD = (function () {
+    try { var v = JSON.parse(localStorage.getItem('gr-tfold') || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; }
+  })();
+  function tfSave() { try { localStorage.setItem('gr-tfold', JSON.stringify(TFOLD)); } catch (e) {} }
+  function tfIs(key) { return Object.prototype.hasOwnProperty.call(TFOLD, key) ? !!TFOLD[key] : !!TF_DEFAULT[key]; }
+  function tfTiers() {
+    var p = $('det-panel'); if (!p) return [];
+    return Array.prototype.filter.call(p.querySelectorAll('.tier'), function (t) {
+      var key = t.getAttribute('data-tf') || TF_IDS[t.id] || '';
+      if (key) t.setAttribute('data-tf', key);
+      return !!key && t.firstElementChild && t.firstElementChild.classList.contains('tier-h');
+    });
+  }
+  function tfApply() {
+    tfTiers().forEach(function (t) {
+      var key = t.getAttribute('data-tf'), h = t.firstElementChild, b = h.querySelector('.tfold');
+      if (!b) {
+        b = document.createElement('button'); b.type = 'button'; b.className = 'tfold'; b.innerHTML = '<i>▾</i>';
+        h.insertBefore(b, h.firstChild);
+        b.addEventListener('click', function (ev) { ev.stopPropagation(); tfToggle(t); });
+        h.addEventListener('click', function (ev) {
+          // the header's own controls keep working (ⓘ scoring logic, Analyse, the range chips)
+          if (ev.target && ev.target.closest && ev.target.closest('button,a,input,select,label,textarea,summary,.info-pop')) return;
+          // on a phone the skim view hands a tap on this heading to the chevron itself
+          if (h.classList.contains('fcc-dg-own') && window.matchMedia && matchMedia('(max-width:760px)').matches) return;
+          tfToggle(t);
+        });
+      }
+      var f = tfIs(key), name = (h.querySelector('h4') || {}).textContent || 'this section';
+      t.classList.toggle('folded', f);
+      // a section whose headline number lives in its body carries it into the header while folded
+      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : null);
+      if (src && !sum) { sum = document.createElement('span'); sum.className = 'tf-sum'; var h4 = h.querySelector('h4'); h.insertBefore(sum, h4 ? h4.nextSibling : null); }
+      if (sum) { sum.textContent = src ? src.textContent + (key === 'air' ? '/100' : '') : ''; sum.style.color = src ? src.style.color : ''; sum.hidden = !f || !src; }
+      b.setAttribute('aria-expanded', f ? 'false' : 'true');
+      b.setAttribute('aria-label', (f ? 'Open ' : 'Fold ') + name);
+      b.title = (f ? 'Open' : 'Fold') + ' this section';
+    });
+    tfAllBtn();
+  }
+  function tfToggle(t) { var key = t.getAttribute('data-tf'); TFOLD[key] = tfIs(key) ? 0 : 1; tfSave(); tfApply(); }
+  // the button always names the action still available, like the estate's ⊖ Collapse all
+  function tfAllBtn() {
+    var b = $('tf-all'); if (!b) return;
+    var ts = tfTiers(), all = ts.length > 0 && ts.every(function (t) { return t.classList.contains('folded'); });
+    b.textContent = all ? '⊕ Open all sections' : '⊖ Fold all sections';
+    b.onclick = function () { tfTiers().forEach(function (t) { TFOLD[t.getAttribute('data-tf')] = all ? 0 : 1; }); tfSave(); tfApply(); };
   }
 
   var TIERS = [
@@ -2162,7 +2232,8 @@ window.addEventListener('load',restore);
       (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') +
       (d.pdp && d.pdp.matrix ? '<button class="btn" id="pdp-last" style="padding:3px 9px;font-size:10.5px" title="Open the last PDP recovery sample for this feed">🔎 PDP sample · ' + fmt(d.pdp.ok) + ' pages · ' + ago(d.pdp.t) + '</button>' : '') +
       '<span class="prof-chip" title="Attributes marked ★ are scored for this brand — the ' + esc(prof.industry) + ' best-practice profile (industry defaults + any brand override)">⚖ ' + esc(prof.industry) + ' best practice</span>' +
-      '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button></div>' +
+      '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button>' +
+      '<button class="btn" id="tf-all" style="padding:3px 9px;font-size:10.5px" title="Fold or open every section of this scorecard — remembered on this device">⊖ Fold all sections</button></div>' +
       '<p class="gr-verdict">' +
       (reqMiss.length
         ? '<b>' + reqMiss.length + ' required attribute' + (reqMiss.length === 1 ? '' : 's') + ' missing from the feed</b> (' + esc(reqMiss.map(function (x) { return x.k; }).join(', ')) + ') — products cannot serve without them. '
@@ -2181,7 +2252,7 @@ window.addEventListener('load',restore);
       var list = SPEC.filter(function (x) { return x.t === T.t; });
       var present = list.filter(function (x) { var a = s.attrs[x.k] || {}; return a.present && !a.na; });
       var avg = present.length ? Math.round(present.reduce(function (a, x) { return a + s.attrs[x.k].cov; }, 0) / present.length * 10) / 10 : null;
-      h += '<div class="tier"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
+      h += '<div class="tier" data-tf="' + T.t + '"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
         '<span class="tavg">' + (T.t === 'ai' ? present.length + ' of ' + list.length + ' live'
           : (avg == null ? 'none in feed' : 'avg fill ' + avg + '%')) + '</span></div>' +
         '<p class="tier-sub">' + T.sub + '</p>';
@@ -2259,6 +2330,7 @@ window.addEventListener('load',restore);
     airAnimate();
     wire(k, s);
     histWire(k);
+    tfApply();
   }
 
   /* ---- per-attribute actions: the client ask (shared askdraft rails) + the brief ---- */
@@ -4148,6 +4220,8 @@ window.addEventListener('load',restore);
      '.de-rtbar', '.de-collapse', '.de-fbpanel', '.de-fbnote', '.de-fbmark',
      '#tky-fab', '#tky-scrim', '#tky-drawer', '#fcc-fcb', '#fcc-fcp', '#fcc-viewas', '#fcc-apps',
      '#fcc-navcz', '#fcc-navcz-scrim', '.instr-tgl', '.instr-hide', '#askp-slot', '#profp-slot',
+     /* the section folds are screen controls — the file opens every section */
+     '.tfold', '#tf-all', '.tf-sum',
      /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
         weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
      /* the live Catalogue picker card (its frame points at the FCC) — the picked modules travel as #print-catx */

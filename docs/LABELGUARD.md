@@ -1180,6 +1180,42 @@ the three picks in order, a chart in each, no control or hook, the stylesheet, o
 two window widths), the frame put back, ✕ and Clear all, a saved set exported with the frame closed, and a
 signin without the Catalogue.
 
+### 9.12d Every scorecard section folds (7 Oct 2026)
+
+Ray, over a screenshot of the "Two scores, two questions" card: *"make these boxes collapsible as
+well"* — the estate cards already folded; the scorecard's own boxes did not, so a feed's card ran
+to eight full sections whether or not the AM needed them.
+
+Every `.tier` box on the scorecard — Score history, the four spec tiers, Content quality,
+AI-readiness and Two scores — now folds on its own: a chevron (`.tfold`, `aria-expanded`) at the
+front of the header, and a click anywhere on the header that is not one of its own controls
+(ⓘ Scoring logic, Re-analyse, the history range chips keep doing their job). **⊖ Fold all
+sections / ⊕ Open all sections** sits beside ⚙ and always names the action still available.
+
+- **A fold never hides a finding.** The header stays: badge, title and what the section found —
+  `avg fill`, `4 of 6 live`, `⚠ N fields read differently` — and Content quality / AI-readiness,
+  whose headline number lives in the body, carry it into the header while folded (`.tf-sum`).
+- **Defaults:** "Two scores, two questions" starts folded (it explains how the two sections
+  score; it is not a finding about the feed); every other section starts open.
+- **A device preference**, like `gr-collapse` for the estate cards: `localStorage gr-tfold`
+  `{key: 1|0}`, never shared state. Keys: `hist req cond rec ai qual air recon` (the four tiers by
+  `data-tf`, the rest by their ids). An explicit open of a default-folded section is remembered.
+- **Re-applied on every render** (`renderDetail` → `tfApply`) and when the history card redraws
+  itself in place (`histRedraw`).
+- **Exports always print open:** the fold rule is `body:not(.pdf)`, so ⬇ PDF, ⬇ HTML and Ctrl+P
+  paint every section; `.tfold`, `#tf-all` and `.tf-sum` are hidden in `body.pdf` and removed from
+  the HTML file.
+- **Phone:** the skim view hands a tap on a heading that already toggles to that heading's
+  `[aria-expanded]` button, so the header's own handler stands down when the skim view has claimed
+  the heading — one tap is one toggle.
+
+Tripwire `tools/check_grfold.js` (Playwright, presync) renders the real page: every section
+carries the chevron, the fresh-device defaults read off the paint, header click / chevron /
+header controls, the stored choice and a reload, fold-all / open-all, the folded headers keeping
+their score, the print layout and the downloaded HTML opened in a browser with every section open,
+and at 390px one tap = one toggle (negative control: with the stand-down guard removed, a heading
+the skim view claims folds and re-opens on one tap).
+
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 
 Ray: *"Should there be an additional interface for AM only to view these charts across their
