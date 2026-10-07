@@ -11797,6 +11797,66 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grmkts.js",
       "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the Catalogue's modules, picked by the AM (catxCapture)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function catxCapture(k, picks, tell) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: a tick per card PER MEASURE (two content depths are two picks)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return sel && sel.value ? mod + ':' + sel.value : mod;",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the picked cards close the document, before the footer",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the Catalogue section runs nothing (a sandboxed srcdoc frame)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "f.setAttribute('sandbox', '');",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the export waits for a card's measure list before deciding it is missing",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return catxWait(function () { return !v || !sel || sel.options.length > 0; }, until)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the live picker card never reaches the client file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "     '#catx',\n     '.pillar .pf2'",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: ?embed=mods — module grid alone, nothing written to the device",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "var EMB = /[?&]embed=mods(&|$)/.test(location.search), MEM = EMB ?",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: embedded, the address it was opened on is kept",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (!EMB) try { history.replaceState(null, '', '/catalog?client=' + encodeURIComponent(c)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: embedded, the skim view and the collapse leave the cards whole",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "document.documentElement.setAttribute('data-no-digest', ''); document.documentElement.setAttribute('data-no-collapse', '');",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the Catalogue-modules tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grcatx.js",
+      "pr": 0
     }
   ]
 }

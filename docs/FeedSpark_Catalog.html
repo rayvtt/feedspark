@@ -556,6 +556,13 @@ window.addEventListener('load',restore);
   .prov b{color:var(--ink-2)}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;font-weight:800;font-size:13px;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:300}
   .toast.on{opacity:1}
+  /* EMBEDDED IN THE GOLDEN RECORD (?embed=mods, see EMB below): the module grid and nothing else — no topbar, hero, KPIs,
+     table or injected layer — and the Fee check stays out (a calculator the AM types into, not a reading of the feed) */
+  html.emb body>*:not(main){display:none!important}
+  html.emb main.wrap>*:not(#ins){display:none!important}
+  html.emb body{background:transparent!important}
+  html.emb main.wrap{padding:2px 2px 8px!important;margin:0!important;max-width:none!important}
+  html.emb .mod[data-mod="fee"]{display:none!important}
   /* columns follow the space the page actually has (the inspector pushes it), not the window */
   main.wrap{container-type:inline-size;container-name:cat}
   @container cat (max-width:1150px){.ins{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kpi .n{font-size:21px}}
@@ -799,8 +806,18 @@ window.addEventListener('load',restore);
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function monLbl(k) { return MON[+k.slice(5, 7) - 1] + ' ' + k.slice(2, 4); }
   function fmtDay(t) { var d = new Date(t); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
-  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
-  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  /* EMBEDDED IN THE GOLDEN RECORD (?embed=mods — Ray, 7 Oct 2026: "within Golden Score record, at bottom, pull in modules
+     dashboard from Catalogue … Leave AM to actually select which module of the dashboard is shown inside the HTML download").
+     /golden frames this page for one market and shows the module grid alone; the AM ticks the modules (and, on a card with a
+     measure, each measure) that go into the Golden Record's ⬇ HTML. NOTHING the frame does is remembered on the device: the
+     AM's own Catalogue — the last brand opened, the depth measure, the modules shown — stays exactly as they left it, so every
+     preference read here is read through MEM first, every write lands in MEM only, and the module set starts complete. */
+  var EMB = /[?&]embed=mods(&|$)/.test(location.search), MEM = EMB ? { 'fcc-cat-mods': null, 'fcc-cat-last': null } : {};
+  // …and the cards stay whole: the phone's skim view and the ⓘ collapse fold a page's cards for a reader, but here the
+  // cards ARE the content being picked (and copied into the download), so both layers stand down for the frame
+  if (EMB) { document.documentElement.classList.add('emb'); document.documentElement.setAttribute('data-no-digest', ''); document.documentElement.setAttribute('data-no-collapse', ''); }
+  function lsGet(k, d) { if (EMB && Object.prototype.hasOwnProperty.call(MEM, k)) return MEM[k] == null ? d : MEM[k]; try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+  function lsSet(k, v) { if (EMB) { MEM[k] = v; return; } try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   var TT = null;
   function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(TT); TT = setTimeout(function () { el.classList.remove('on'); }, 2600); }
   function imgUrl(u) { return String(u || '').trim().replace(/^http:\/\//i, 'https://'); }
@@ -958,7 +975,9 @@ window.addEventListener('load',restore);
     S.client = c; S.mkt = e.mkt; S.entry = e; S.chan = e.channel;
     $('brand').value = c; paintChan(); paintMkts();
     lsSet('fcc-cat-last', { c: c, m: e.mkt });
-    try { history.replaceState(null, '', '/catalog?client=' + encodeURIComponent(c) + '&market=' + encodeURIComponent(e.mkt) + (S.q ? '&q=' + encodeURIComponent(S.q) : '') + (S.tab !== 'all' ? '&tab=' + S.tab : '')); } catch (er) {}
+    // framed in the Golden Record the address stays the one it was opened on — rewriting it would drop ?embed=mods,
+    // and a reload of the frame would come back as the whole Catalogue page
+    if (!EMB) try { history.replaceState(null, '', '/catalog?client=' + encodeURIComponent(c) + '&market=' + encodeURIComponent(e.mkt) + (S.q ? '&q=' + encodeURIComponent(S.q) : '') + (S.tab !== 'all' ? '&tab=' + S.tab : '')); } catch (er) {}
     $('to-roas').href = '/roas?brand=' + encodeURIComponent(c);
     $('to-golden').href = '/golden#' + encodeURIComponent(c) + '|' + e.mkt.replace(/-fb$/, '');
     load();

@@ -1136,6 +1136,50 @@ analysed elsewhere, one scanned only, one never scanned — and checks the Ctrl+
 one-click PDF capture, the HTML file (position, figures, no buttons), that the table fits the
 PDF's 960px column on one line per row, demo mode and the single-market case.
 
+### 9.12c The Catalogue's modules at the end of the ⬇ HTML, picked by the AM (7 Oct 2026)
+
+Ray: *"within Golden Score record, at bottom, pull in modules dashboard from Catalogue (module) also, and
+Leave AM to actually select which module of the dashboard is shown inside the HTML download. For example,
+with content depth, there could be multiple content depths displayed on the dashboard. It could be images
+per product, highlight per product, length, or description length. All this would be added at the end of
+the HTML, and AM can also have the option of not including it if it's not needed."*
+
+- **A card under the scorecard** (`#catx`, on screen only) offers *Show the Catalogue dashboard for
+  <Brand> <MKT>*. It loads on demand, because the Catalogue streams the feed and the master — not a cost
+  to pay on every visit to /golden.
+- **The real Catalogue, framed.** `/catalog?embed=mods&client=&market=` shows the module grid alone
+  (`html.emb`): no topbar, hero, KPI band, table or injected layer, and no Fee check (a calculator, not a
+  reading). It is the same page and the same engine, so a module reads here exactly as it reads there.
+  Nothing the frame does is remembered on the device: every Catalogue preference is read through an
+  in-memory layer (`EMB`/`MEM`) and written only there, the module set starts complete, the frame keeps the
+  address it was opened on (rewriting it would drop `embed=mods`), and the phone's skim view and the ⓘ
+  collapse stand down (`data-no-digest`, `data-no-collapse`) so the cards stay whole. The frame is capped at
+  860px and scrolls inside its card.
+- **One tick per card, per measure.** Each card gets an *In ⬇ HTML* tick. A card with a measure (Content
+  depth, Catalogue mix, ROAS by, Optimised vs not) is ticked per measure, so images per product and
+  highlights per product are two picks. Image pixels' scan-count select is a control, not a measure.
+  The picks are chips on the card, each with ✕, plus *Clear all*.
+- **Nothing is carried until something is ticked.** The picks live per device (`gr-catx`) and outlive the
+  market, so a set chosen once applies to the next brand.
+- **The export.** ⬇ HTML reads each pick in order: it sets the measure, waits for the card to finish
+  reading (and for a measure list that is only built once the feed is read), and copies the card as drawn,
+  with every control, link, id, click hook and "click to list" tooltip removed. The cards go into a
+  script-free frame (`sandbox=""`, `srcdoc`) with the Catalogue's own stylesheet, so neither page's CSS can
+  restyle the other's. The grid keeps a fixed column count and the Catalogue's fixed card height, so the
+  frame holds the whole grid at any window width. The section sits after the all-markets table and before
+  the footer. The frame is put back on the measures the AM left it on.
+- **A pick that cannot go in is named on the card** (*Left out of the last download, not on this market's
+  Catalogue: …*), never silently dropped. A signin without the Catalogue (or a page that did not load) says
+  so at once and offers the button again.
+- **The PDF does not carry the modules.** It is a picture of the page, and a frame is not.
+
+`tools/check_grcatx.js` (Playwright, presync) serves both real pages over HTTP and runs the Catalogue on
+the synthetic Northwind set: the card, the frame (this market, grid alone, every module, no Fee check,
+reading but never writing the device's preferences), ticking two measures of one card, the file (position,
+the three picks in order, a chart in each, no control or hook, the stylesheet, one row, no inner scroll at
+two window widths), the frame put back, ✕ and Clear all, a saved set exported with the frame closed, and a
+signin without the Catalogue.
+
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 
 Ray: *"Should there be an additional interface for AM only to view these charts across their
