@@ -11982,6 +11982,7 @@
       "name": "Services & Pricer: the one feed stream fans out to needCollector (live + file lanes, min 2)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "E.needCollector(",
+      "min": 2,
       "pr": 0
     },
     {
@@ -12000,6 +12001,7 @@
       "name": "Services & Pricer: the /api/pricer stores (min 2)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "/api/pricer/",
+      "min": 2,
       "pr": 0
     },
     {
@@ -12012,6 +12014,7 @@
       "name": "Services & Pricer: talk track, evidence, flags and email never collapse behind ⓘ (min 4)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "data-no-collapse",
+      "min": 4,
       "pr": 0
     },
     {

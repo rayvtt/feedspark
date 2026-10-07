@@ -87,23 +87,26 @@ function quality() {
     material: { filled: 6, cov: 25, rules: {} },
   }, ai: { total: 58.4, tier: 2, tierLabel: 'Enriched', pillars: [] } };
 }
-function stores() {
+function stores(opts) {
+  opts = opts || {};
   // one saved proposal per brand: Northwind's still guarded (draft rates), Thornfield's chosen and client-safe
   const opt = (ref, client, n, label, option, one, mon, safe, extra) => Object.assign({ ref, client, markets: ['gb'], t: NOW - 2 * DAY, by: 'Ray',
     prop: { id: client === 'Northwind' ? 'ppnorth01' : 'ppthorn01', n, label }, option, pkgVersion: '', audit: {}, rates: {}, opts: {}, aimSources: {},
     pq: { label, option, oneOff: { total: one }, monthly: { total: mon }, lines: [], perMarket: [] }, clientSafe: safe,
     blockers: safe ? [] : [{ code: 'draft-unit', why: 'Title optimisation: the unit price is still a draft — Management' }], hist: [{ s: 'Saved', t: NOW - 2 * DAY, by: 'Ray' }] }, extra || {});
   return {
-    ops: {}, price: {}, cost: {}, roadmap: {},
+    ops: {}, cost: {}, roadmap: {},
+    // Management's test-package prices when a run asks for them (else the engine's DRAFT defaults apply)
+    price: Object.keys(opts.testPrices || {}).reduce((m, n) => { m['_g|test' + n] = { v: opts.testPrices[n], by: 'Ray', at: NOW - DAY }; return m; }, {}),
     proposals: {
-      onorth00001: opt('SVC100001', 'Northwind', 1, 'Tier 1 · Google Optimise', 'go', 1840.5, 120, false),
-      othorn00001: opt('SVC200001', 'Thornfield', 1, 'Tier 1 · Google Optimise', 'go', 2210, 150, true, { chosen: { t: NOW - DAY, by: 'Ray' }, sentAt: { t: NOW - 2 * DAY, by: 'Ray', via: 'manual' } }),
-      othorn00002: opt('SVC200001-2', 'Thornfield', 2, 'Tier 2 · Google Optimise + AI Readiness', 'go+ar', 4120, 260, true, { sentAt: { t: NOW - 2 * DAY, by: 'Ray', via: 'manual' } }),
+      onorth00001: opt('SVC100001', 'Northwind', 1, 'Tier 1 · Google-ready', 'go', 1840.5, 120, false),
+      othorn00001: opt('SVC200001', 'Thornfield', 1, 'Tier 1 · Google-ready', 'go', 2210, 150, true, { chosen: { t: NOW - DAY, by: 'Ray' }, sentAt: { t: NOW - 2 * DAY, by: 'Ray', via: 'manual' } }),
+      othorn00002: opt('SVC200001-2', 'Thornfield', 2, 'Tier 2 · AI-ready', 'go+ar', 4120, 260, true, { sentAt: { t: NOW - 2 * DAY, by: 'Ray', via: 'manual' } }),
     },
     rollout: { Thornfield: { debriefAt: { t: NOW - 6 * DAY, by: 'Ray' }, next: 'Confirm Tier 1 start date', nextDue: '2026-10-01', am: 'Ray' } },
   };
 }
-function build() {
+function build(opts) {
   const xml = feedXml(), m = {};
   for (let k = 0; k < 14; k++) { const key = ym(NOW - k * 30 * DAY); m[key] = (m[key] || 0) + (k % 3) + 1; }
   return {
@@ -119,15 +122,22 @@ function build() {
       Thornfield: { tracked: true, allowance: 30, used: 34, balance: -4, health: 'negative', am: 'Ray', amEmail: 'ray@feedspark.com' } },
     sched: [{ client: 'Northwind', mkt: 'gb', kind: 'kw', skips: 3, goes: 2, streak: 2, skipRate: 60 }, { client: 'Northwind', mkt: 'gb', kind: 'titles', skips: 0, goes: 4, streak: 0, skipRate: 0 },
       { client: 'Thornfield', mkt: 'gb', kind: 'kw', skips: 1, goes: 5, streak: 0, skipRate: 17 }],
-    aiqsaved: { qthorn01: { client: 'Thornfield', mkt: 'gb', t: NOW - 40 * DAY, ref: 'QT260101', stage: 'Greenlight', lines: [{ id: 'keywords' }] } },
-    stores: stores(),
+    // a Greenlit AI Quote with a monthly new-products bundle: Thornfield GB's new products are already covered (overlap)
+    aiqsaved: { qthorn01: { client: 'Thornfield', mkt: 'gb', t: NOW - 40 * DAY, ref: 'QT260101', stage: 'Greenlight', lines: [{ id: 'keywords' }], upd: { gbp: 100, band: 'up to 1,000' } } },
+    stores: stores(opts),
   };
 }
 // opts: { delay (ms before the GB feed lands — 0 by default; check_pricer.js holds it back to see the stored paint), me ({email, owner, modules, name}: answer /api/access on this page),
-//         costDenied (the cost store answers 403) }
+//         costDenied (the cost store answers 403), testPrices ({2:£,3:£,4:£} — Management-set test packages),
+//         emptyFeed (the Northwind GB feed answers with no products), full (the proposals store answers 413 "store is full", as the worker does past 20 MB) }
+// The /api/pricer/* stores behave like the worker's (pricerstore.js): a PUT sends X-Sync-Base, and a key whose stored
+// value was stamped AFTER that base and differs from what the page sent is KEPT and listed in _rejected ('changed by …
+// since you loaded'); every accepted key is stamped (cells {by,at}, proposals/rollout lu {by,at}); a scoped signin's
+// proposal for a client outside its scope is refused. window.__pzS holds the stores — a harness simulates a colleague
+// by writing a key there with a later `at`.
 function stubLines(opts) {
   opts = opts || {};
-  const d = build();
+  const d = build(opts);
   const src = (f) => JSON.stringify(fs.readFileSync(path.join(D, f), 'utf8'));
   const js = (f) => 'return Promise.resolve(new Response(' + src(f) + ',{status:200,headers:{"content-type":"application/javascript"}}));';
   const delay = opts.delay == null ? 0 : +opts.delay;   // the tripwires that snapshot twice (desktop, phone) meet the same settled page
@@ -148,6 +158,7 @@ function stubLines(opts) {
     + "  if(url.indexOf('/api/volume/arrivals')>=0)return j(" + JSON.stringify(d.arrivals) + ");\n"
     + "  if(url.indexOf('/api/feed/markets')>=0){var MK=" + JSON.stringify(d.markets) + ";return j({client:qs('client'),markets:MK[qs('client')]||{}});}\n"
     + "  if(url.indexOf('/api/feed/proxy')>=0){if(qs('client')==='Northwind'&&qs('market')==='gb'){window.__pzFeed=(window.__pzFeed||0)+1;var X=" + JSON.stringify(d.xml) + ";"
+    +     (opts.emptyFeed ? "X='<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>empty</title></channel></rss>';" : '')
     +     "return new Promise(function(res){setTimeout(function(){res(new Response(X,{status:200,headers:{'content-type':'application/xml','x-feed-bytes':String(X.length)}}))}," + delay + ")});}"
     +     "return j({error:'no feed for this market in the synthetic book'},404);}\n"
     + "  if(url.indexOf('/api/aiquote/saved')>=0)return j(" + JSON.stringify(d.aiqsaved) + ");\n"
@@ -157,8 +168,19 @@ function stubLines(opts) {
     + "  if(url.indexOf('/api/labels/askdraft')>=0){if(opts&&opts.method==='POST'){window.__pzAsk=(window.__pzAsk||[]).concat([JSON.parse(opts.body)]);return j({ok:true,id:'ad_x'});}return j({cfg:{to:{Northwind:'buyer@northwind.invalid'}},asked:{},pending:0});}\n"
     + "  if(url.indexOf('/api/pricer/')>=0){var nm=url.split('/api/pricer/')[1].split('?')[0];window.__pzS=window.__pzS||" + JSON.stringify(d.stores) + ";"
     +     (opts.costDenied ? "if(nm==='cost'||(nm==='price'&&opts&&opts.method==='PUT'))return j({ok:false,error:'Management only (the pricer-cost grant)'},403);" : '')
-    +     "if(opts&&opts.method==='PUT'){var b=JSON.parse(opts.body);window.__pzPuts=(window.__pzPuts||[]).concat([{name:nm,body:b}]);window.__pzS[nm]=b;}"
-    +     "return j(window.__pzS[nm]||{});}\n"
+    +     (opts.full ? "if(nm==='proposals'&&opts&&opts.method==='PUT'){window.__pzFull=(window.__pzFull||0)+1;return j({ok:false,error:'the proposals store is full (it would pass 20 MB) — nothing was saved. Delete options nobody needs (a deleted option keeps only its name) and save again'},413);}" : '')
+    +     "var sb=function(o){return new Response(JSON.stringify(o),{status:200,headers:{'content-type':'application/json','X-Sync-Base':String(Date.now())}})};"
+    +     "var cell=nm==='ops'||nm==='price'||nm==='cost'||nm==='roadmap',stamp=function(v){return v&&typeof v==='object'?(cell?+v.at||0:(v.lu&&+v.lu.at)||0):0};"
+    +     "if(opts&&opts.method==='PUT'){var b=JSON.parse(opts.body),hd=opts.headers||{},base=+(hd['X-Sync-Base']||hd['x-sync-base'])||0,cur=window.__pzS[nm]||{},out={},rej=[],now=Date.now();"
+    +       "window.__pzPuts=(window.__pzPuts||[]).concat([{name:nm,body:b,base:base}]);"
+    +       "Object.keys(cur).forEach(function(k){if(!(k in b)&&stamp(cur[k])>base)out[k]=cur[k]});"
+    +       "Object.keys(b).forEach(function(k){var v=b[k],o=cur[k];"
+    +         "if(o!==undefined&&JSON.stringify(o)===JSON.stringify(v)){out[k]=o;return}"
+    +         "if(o!==undefined&&stamp(o)>base){out[k]=o;rej.push({k:k,why:'changed by '+((cell?o.by:(o.lu&&o.lu.by))||'someone')+' since you loaded — reload to edit it'});return}"
+    +         (opts.me && opts.me.clients ? "if(nm==='proposals'&&v&&v.client&&" + JSON.stringify(opts.me.clients) + ".indexOf(v.client)<0){if(o!==undefined)out[k]=o;rej.push({k:k,why:'outside your clients — \"'+v.client+'\" is not one of your accounts, so this signin cannot save it (a prospect proposal needs an unscoped signin)'});return}" : '')
+    +         "var n=JSON.parse(JSON.stringify(v));if(n&&typeof n==='object'){if(cell){n.by='Ray';n.at=now}else n.lu={by:'Ray',at:now}}out[k]=n});"
+    +       "window.__pzS[nm]=out;var r=JSON.parse(JSON.stringify(out));if(rej.length)r._rejected=rej;return Promise.resolve(sb(r));}"
+    +     "return Promise.resolve(sb(window.__pzS[nm]||{}));}\n"
     + "  if(url.indexOf('/api/tachyon/')>=0)return j({});\n"
     + "  if(url.indexOf('/api/briefs')>=0)return j({});\n"
     + "  if(url.indexOf('/pricer/gpc.txt')>=0)return Promise.resolve(new Response('Apparel & Accessories\\nApparel & Accessories > Clothing',{status:200}));\n"

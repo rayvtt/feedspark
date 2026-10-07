@@ -17,15 +17,15 @@ Every figure is **ex VAT**. One-off and monthly are **always shown apart**. Noth
 
 | # | Section | What it does |
 |---|---|---|
-| 0 | **Client bar** (the hero, never folded) | Source — **Stored** · **⚡ Live** · **⇪ File**; the client (`<select id="brand">`, so the hours badge follows it); one chip per **Google Shopping** market (a Meta `-fb` market is never listed — the bar says how many it left out), each with its status (`stored` · `counting… n%` · `live ✓` · `failed` · `never scanned`) and, when selected, its **language group**; the client's derived **stage**, its **AM** (Task Manager) and the **next step**. A failed count offers a **typed parent count**. Deep link `?client=&market=gb,de&pkg=go+ar`. |
+| 0 | **Client bar** (the hero, never folded) | Source — **Stored** · **⚡ Live** · **⇪ File**; the client (`<select id="brand">`, so the hours badge follows it); one chip per **Google Shopping** market (a Meta `-fb` market is never listed — the bar says how many it left out), each with its status (`stored` · `counting… n%` · `live ✓` · `failed` · `never scanned`) and, when selected, its **language group**; the client's derived **stage**, its **AM** (Task Manager) and the **next step**. A failed count (or a live read that returns no products) offers a **typed parent count**. Deep link `?client=&market=gb,de&pkg=go%2Bar` — the page also accepts `pkg=go+ar` (a `+` in a query string reads as a space, so the page maps it back), `t1` and `t2`. In ⇪ File a **client-scoped signin** is told up front that a prospect proposal needs an unscoped signin, and 💾 Save is disabled there. |
 | 1 | **Audit** | Eight readings per market — read the feed (SKUs · parents · variants per product), Golden coverage (re-scored under the brand's *current* profile), content quality, taxonomy depth, keywords, AI-readiness + conversational n/6, new products a month, packages. A reading nobody has made says *why* ("not measured — …"), never 0. |
-| 2 | **Proposal** | Tier cards — **Tier 1 · Google Optimise**, **Tier 2 · Google Optimise + AI Readiness** (one quote over the union), and **AI Readiness only** when every market already projects Golden 95+ (or the AM ticks it). Per card: Golden now → after per market, one-off and monthly apart, both hourly rates labelled, **every new product £**, the honest always-on line, every line with its need, £ and status, the unsized / unpriced lines with their **fix**, and the blockers. ⧉ Copy (the email, guarded) · ⧉ Options · 💾 Save as proposal · ✉ Debrief · ⚙ Customise. |
+| 2 | **Proposal** | Tier cards — **Tier 1 · Google-ready** (*Google Optimise — eligible + everything Google recommends*), **Tier 2 · AI-ready** (*Google-ready + AI Readiness — the bundle*, one quote over the union), and **AI-ready only** (*AI Readiness without Tier 1*) when every market already projects Golden 95+ (or the AM ticks it). Per card: Golden now → after per market, one-off and monthly apart, both hourly rates labelled, **every new product £** (a market whose new products an AI Quote bundle already covers reads *covered by QT…*), the honest always-on line, the **test package** line when one is chosen, every line with its need, £ and status, the unsized / unpriced lines with their **fix**, and the blockers. An option with nothing sized reads **not sized — see below**, never £0 (the step-8 line and the phone digest say the same). ⧉ Copy (the email, guarded) · ⧉ Options · 💾 Save as proposal · ✉ Debrief · ⚙ Customise. |
 | 3 | **Debrief kit** | Talk track (5 bullets), the client's own offending products (`goldenqual` examples), flags to raise first, the email in two tones (direct / consultative). Exits: ✉ Create Gmail draft (existing `/api/labels/askdraft`), ↗ Open in Gmail (compose link with the account AM on **CC** unless that is you), ⧉ Copy, → Deck brief (copies a brief for the Deck generator). |
 | 4 | **Services rollout** | Stage KPIs and one row per account (My accounts by default): **From** (scheduled work + skip rate, AI briefs, retainer balance) → **To** (latest proposal, chosen?), stage + days in it, next step + due (overdue in red), always-on. A row click loads the client. Rows become cards on a phone. |
 | 5 | **Roadmap & quick wins** (folded) | Line × industry delivery status, editable and stamped; `quickWins()` read off the book with *Load client*; the **delivery plan** (`DELIVERY_PLAN`). |
 | 6 | **Rate card — three teams** | Tabs **ASPL** · **London AM** · **Management 🔒** · **Spark AI** (read-only). Every cell's tooltip says who set it and when. |
-| 7 | **Custom quote** (folded) | The original per-optimisation builder, unchanged in behaviour (scaffolds and the monthly refresh select kept); "ex VAT" and "Spark AI" in its client copy; it now prices off the **same** composed rate card. |
-| 8 | **AI briefs — delivery tracking** (folded) | Unchanged: title-scanned briefs, token economics, per-brand totals; its averages are the rate card's *actuals*. |
+| 7 | **Custom quote** (folded) | The original per-optimisation builder, unchanged in behaviour (scaffolds and the monthly refresh select kept); "ex VAT" and "Spark AI" in its client copy; it now prices off the **same** composed rate card and redraws whenever that card moves (a store load, a cell edit, the 90 s poll), so the figure on screen is the one ⧉ Copy quote and 💾 Save carry. |
+| 8 | **AI briefs — delivery tracking** (folded) | Title-scanned briefs, token economics, per-brand totals; its averages are the rate card's *actuals*. The *Tachyon task* dropdown offers every id the engine tags (the catalogue plus the package rows, so an attribute-population brief reads as itself, never *— pick —*). |
 | 9 | **Saved proposals & quotes** | Proposals grouped by proposal id, each **counted once** (`countedOption`: the chosen option, else the lowest-numbered); legacy custom quotes below. |
 
 ---
@@ -81,7 +81,16 @@ characters (160 / 300 / 500 / 1,000), highlights to 6+ (house) or 4+ (Google's f
 conversational routes per attribute, highlight sources (description, source feed, product page — disabled when the
 PDP blocks the scanner — reviews, which needs a client reviews feed), new products priced as incomplete as today or
 every attribute, retainer hours (with the Task Manager balance beside it), today's run, include contracted, offer
-AI Readiness alone.
+AI-ready only, and a **test package** — None / 2 / 3 / 4 tests a month. Every Customise setting (and the language
+groups) belongs to ONE client: loading another client starts from the defaults, and ↺ Reset restores every group,
+the highlight sources included.
+
+**Test packages.** *Each test changes one thing on a set of products — a title pattern, a keyword theme, an
+attribute or an image — runs it against a control on Google Shopping, and reports back; a winner rolls out, a loser
+is rolled back.* A package rides on any option as a flat monthly line (no one-off, outside β, the bundle % and the
+floor). Its price is Management's (`_g|test2`, `_g|test3`, `_g|test4` in `pricerprice`); until Management enters one
+it reads the DRAFT default (£800 / £1,140 / £1,440 a month) and the proposal is not client-safe. The client email,
+⧉ Options and the talk track name it when it is on.
 
 ---
 
@@ -90,13 +99,21 @@ AI Readiness alone.
 **💾 Save as proposal** stores every shown tier as an **option** of ONE proposal (`prop {id, n, label}`), each
 with its own `SVC123456` reference (`-2`, `-3` the same day) — a frozen snapshot the page renders and exports
 from (`snapshotOption`; cost figures never travel). An option over 60 KB is refused before the save (too many
-markets in one go).
+markets in one go) and names the tier that is over.
 
 Per option: **✓ Chosen** (choosing un-chooses its siblings — a sibling then reads *Not taken*, never Declined),
 **Mark sent** (disabled while not client-safe), **Declined**, **✎ New version** (loads it back into the bar; the
 next save writes the replacement at the same option number and stamps the old one `superseded`), **✕** (a
 `deleted` stamp — out of the pipeline). **➕ Add option** on a proposal makes the next save add the shown tiers to
-it. Gmail draft / Open in Gmail from a saved, client-safe proposal record `sentAt`.
+it. On a prospect's (⇪ File) option both return to ⇪ File with the prospect's name, market and industry filled in
+and ask for its feed file again; a save is refused if the client on the bar is not the proposal's own. Gmail draft /
+Open in Gmail from a saved, client-safe proposal record `sentAt`.
+
+**The debrief email.** The client contact belongs to the client it was filled for — loading another client brings
+that client's remembered contact (or an empty field), and an address another client is remembered by is asked about
+before anything is drafted to it. An email the AM edited is **kept** when the figures move (the kit says so and
+offers ↺ Regenerate); a tone or source switch asks before replacing it. ✉ Create Gmail draft refuses a body over
+8,000 characters (the Drafts bridge keeps no more) and points at ↗ Open in Gmail / ⧉ Copy.
 
 The client's **stage is derived**, never written (`rolloutStage`): Declined › Always-on live › Agreed (any chosen) ›
 Proposal sent › Debriefed › Audit ready › Not started.
@@ -109,7 +126,7 @@ Proposal sent › Debriefed › Audit ready › Not started.
 |---|---|---|
 | **ASPL** | the AI team | set-up hours, lead days, attended minutes / 100, tokens / product (`pricerops`); tracked tokens / product from the AI-briefs averages beside it; hours per FeedHero rule, set-up hours per extra language (`_g`) |
 | **London AM** | London | QC h, PM h, monitoring h / month, QC share %, QC minutes, note (`pricerops`) |
-| **Management 🔒** | owner or the opt-in **`pricer-cost`** grant | £ / unit, block £ + hours, the volume ladder, Tier 2 bundle % (generation only), re-use %, monthly floor, package version (`pricerprice`); cost rates, £ per million tokens + as-of date, overhead %, target margin (`pricercost`); outputs per row (loaded cost, list margin, floor check at the lowest ladder band, suggested £, set-up cost) and the current build's Tier 2 margins (`costModel`, Spark AI left out of both sides) |
+| **Management 🔒** | owner or the opt-in **`pricer-cost`** grant | £ / unit, block £ + hours, the volume ladder, Tier 2 bundle % (generation only), re-use %, monthly floor, package version, the **test packages** (2 / 3 / 4 tests a month, £ a month) (`pricerprice`); cost rates, £ per million tokens + as-of date, overhead %, target margin (`pricercost`); outputs per row (loaded cost, list margin, floor check at the lowest ladder band, suggested £, set-up cost) and the current build's Tier 2 margins (`costModel`, Spark AI left out of both sides) |
 | **Spark AI** | read-only | Spark AI's rate card as `/aiquote` keeps it |
 
 Every value is `{v, by, at}` per `<row>|<field>`, stamped by the server, so ASPL and London editing the same row at
@@ -126,8 +143,10 @@ signin (the worker refuses with 403 before touching the key) and the Management 
 
 `/api/pricer/{ops, price, cost, proposals, rollout, roadmap}` — kvmerge maps under `X-Sync-Base`, each saved as a
 whole map with retry and backoff (an edit made during a save is re-applied on the merged answer, so a colleague's
-key is never deleted by our next save). `proposals` is client-scoped by the record's own client, `rollout` by its
-key; `roadmap` is house-wide. See `cloudflare/feedspark-deck/src/pricerstore.js`.
+key is never deleted by our next save). A key a colleague changed after this page loaded is **kept** by the server
+and listed in `_rejected` (*changed by … since you loaded — reload to edit it*); the page reports only the keys it
+changed itself and re-adopts the merged map. A 400 / 403 / 413 (the proposals store full) is said once and never
+retried. `proposals` is client-scoped by the record's own client, `rollout` by its key; `roadmap` is house-wide. See `cloudflare/feedspark-deck/src/pricerstore.js`.
 
 ---
 
@@ -142,8 +161,8 @@ ASPL, London AM and the team each have a short list (below); the "Next" and "Lat
 ## 8. Open items for Ray
 
 1. **Set the package prices (≈15 min, Management tab):** the `attr_pop` unit price (attribute population is
-   *not priced* until then), the Tier 2 bundle %, the re-use % for same-language markets, the monthly floor and a
-   package version.
+   *not priced* until then), the Tier 2 bundle %, the re-use % for same-language markets, the monthly floor, a
+   package version and the three test-package prices (draft £800 / £1,140 / £1,440 a month until confirmed).
 2. **One published hourly rate, or two labelled?** Today a proposal can carry the Pricer block (£585 / 8h default)
    for set-up and Spark AI's own rate for the conversational lines; both are printed. Management's call.
 3. **"Spark AI" in client copy** — confirm the name (it matches the AI Quote and the website).
