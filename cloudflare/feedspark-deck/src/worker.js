@@ -1133,7 +1133,8 @@ async function route(request, env, ctx) {
         return json({ ok: true, results });
       }
 
-      // ---- THE 09:00 UK DAILY GOLDEN RECORD RUN (Ray, 24 Sep 2026: "Golden Record and content
+      // ---- THE DAILY GOLDEN RECORD RUN — 12:00 UK since 7 Oct 2026, when Ray moved it off 09:00 because
+      // not every output feed had refreshed by then (Ray, 24 Sep 2026: "Golden Record and content
       // quality should automatically scan on a daily basis, then at 9 a.m. UK time, so every day
       // there's a tracker. If there's a manual scan on any day, that new score can override that
       // day. So let's do that for all clients"). tools/golden_daily.mjs (.github/workflows/
@@ -5541,7 +5542,7 @@ async function productTypeRoutes(env, request, url) {
 // ONE WRITER for a content-quality reading, whichever lane brought it (Ray, 24 Sep 2026: "Golden
 // Record and content quality should automatically scan on a daily basis … at 9 a.m. UK time … If
 // there's a manual scan on any day, that new score can override that day"): the /golden PUT is a
-// person pressing Analyse (manual); the {goldenqual} push is the 09:00 UK daily agent (auto). An
+// person pressing Analyse (manual); the {goldenqual} push is the 12:00 UK daily agent (auto). An
 // automatic reading NEVER replaces a hand-run analysis taken earlier the same day — that reading is
 // the day's, and the automatic one is simply not stored. Returns { status, body }.
 async function storeGoldenQuality(env, client, mkt, b, opts) {
@@ -5688,7 +5689,7 @@ async function goldenRoutes(env, request, url) {
         feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
       }
     });
-    // the 09:00 UK daily run's own record, so the page can say when the tracker last filled
+    // the 12:00 UK daily run's own record, so the page can say when the tracker last filled
     const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
     return json({ feeds, alerts, daily });
   }
