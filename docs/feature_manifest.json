@@ -1680,7 +1680,7 @@
     {
       "name": "PTGuard: ⚡ estate catch-up button force-rescans (no freshness skip)",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
-      "pattern": "no freshness skip"
+      "pattern": "var skipFresh = !!($('scan-skip') && $('scan-skip').checked);"
     },
     {
       "name": "ops: estate-rescan parallel agent (workflow_dispatch + service-token script)",
@@ -7463,7 +7463,7 @@
     {
       "name": "Golden Record: Scan whole estate ALSO runs content quality for every feed, not just score/labels/PT/attribute coverage — Ray, 17 Sep 2026: 'scan whole estate > will also scan content quality too for all estate'",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "return qualityRun(k).catch(function () {});",
+      "pattern": "return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });",
       "min": 1
     },
     {
@@ -11892,6 +11892,48 @@
       "name": "Golden: the section-fold tripwire runs in presync",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grfold.js",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /labels (all brands / a brand / a market)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /ptypes",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /golden",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: an estate scan streams the XML feed the server refuses (never counted unread)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "return xmlLiveScan(f.client, f.mkt, onState).then(function (d2) { return d2 && d2.skipped ? 'held' : (d2 && d2.error ? String(d2.error) : 'ok'); });",
+      "pr": 0
+    },
+    {
+      "name": "Guards: skipping fresh feeds is opt-in, never the default",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "var skipFresh = !!($('scan-skip') && $('scan-skip').checked);",
+      "pr": 0
+    },
+    {
+      "name": "Guards: /golden's estate scan still reads content quality per feed",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_scanscope.js",
       "pr": 0
     }
   ]

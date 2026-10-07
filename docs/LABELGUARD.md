@@ -307,6 +307,37 @@ to industry "Retail" until added to the map. NOTE: this anonymises Ray's own log
 for live demos — it is NOT a client-accessible URL; that would need its own Cloudflare Access
 policy and a server-side masking layer (deliberately out of scope).
 
+### 5d. Scan scope — all brands, one brand, one market (7 Oct 2026)
+
+Ray, over a /labels "Done — 0 scanned, 73 fresh (skipped)": *"allow scan per brand (all markets) /
+all brands / single market"*.
+
+The estate button had ONE scope and TWO traps. On /labels it skipped every feed read in the last
+20 h, so a catch-up run after a fix scanned nothing. And on all three guard pages it POSTed only
+the server scan, which refuses a FeedHero XML feed (`gviz cannot query XML`) — so the XML markets,
+most of the estate, were counted as scanned and never read.
+
+The section header of /labels, /ptypes and /golden now carries:
+
+- **Brand** — *All brands · N feeds* or one brand · N markets.
+- **Market** — with a brand picked, *All markets* or one market.
+- **skip feeds read in the last 20 h** — OFF by default: every pick is a FORCED read.
+- **⚡ Scan …** — the button names the scope (*Scan whole estate* / *Scan Reiss — 39 markets* /
+  *Scan Reiss · DE*); **⏹ Stop** finishes the feed in hand and stops; the scope locks while it runs.
+- **⚡ Scan** on every brand card — that brand, every market.
+
+Each feed takes the SAME path as the per-feed button: the server scan, and on its XML refusal the
+live stream in the browser (`xmlLiveScan` → `/api/labels/scanpush`), so a held catastrophic
+reading reads *held — two live reads disagreed* rather than *scanned*. /golden reads content
+quality on the same pass, as its estate scan already did. The done line names the scope and every
+outcome: scanned, skipped, failed (named), held, not reached, and how long it took.
+
+ONE block (`/* ---- SCAN SCOPE`) sits on all three pages, identical but for the route each scans
+through and its page wording (`scDisp` / `scMkt` / `scOne` / `scWhat`). Tripwire
+`tools/check_scanscope.js` (Playwright, presync) holds the three blocks equal and drives each
+page: picker contents, all brands forced, XML refusals streamed and pushed, the skip, a brand, a
+market, Stop, the card button, and the controls inside a 390px screen.
+
 ## 6. Custom alerts — the watch builder (§04 on the page)
 
 Beyond the estate-wide baseline monitoring, Ray can pin the **exact values PMAX depends on**
