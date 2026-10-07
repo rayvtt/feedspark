@@ -55,6 +55,10 @@ async function open(b, html, vp, o) {
   const tmp = path.join(os.tmpdir(), '_pzcheck_' + Math.random().toString(36).slice(2) + '_FeedSpark_Pricer.html');
   fs.writeFileSync(tmp, html);
   const ctx = await b.newContext(vp === 390 ? { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } } : { viewport: { width: 1440, height: 1000 } });
+  // the synthetic catalogue's product images live on an .invalid host — answer them locally (an SVG stand-in)
+  // so the preview's product card shows a picture here as it does live, and no request leaves the sandbox
+  await ctx.route(/^https?:\/\/img\.northwind\.invalid\//, (r) => r.fulfill({ contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#EFE7DA"/><path d="M130 110h140l30 60-40 20v120H140V190l-40-20z" fill="#2F4F6F"/><text x="200" y="372" font-family="sans-serif" font-size="20" text-anchor="middle" fill="#6b6b6b">demo product</text></svg>' }));
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e).slice(0, 200)));
@@ -112,10 +116,11 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       const q = o === 'now' ? null : window.__PZX.PQ[o];
       return { full: rows.filter((r) => r.querySelector('.pv-v').textContent === '100%').length, pop: rows.filter((r) => r.classList.contains('pop')).length,
         score: document.querySelector('#svc-prev .pv-s').textContent, want: q ? q.perMarket[0].projected.after : window.__PZX.SV.audits[0].audit.golden.score,
-        fixed: q ? q.perMarket[0].projected.fixed.length : 0, pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv') }; }, opt); };
+        fixed: q ? q.perMarket[0].projected.fixed.length : 0, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), on: document.querySelectorAll('#svc-prev .pv-fr.on').length, invented: Array.from(document.querySelectorAll('#svc-prev .pv-fr.on .fs')).every((x) => /^✦ (filled|optimised) — /.test(x.textContent)), pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv') }; }, opt); };
     const v0 = await pv('now'), v1 = await pv('go'), v2 = await pv('go+ar');
     ok('the tier preview fills more attributes Today → Tier 1 → Tier 2, each row the engine says the option fills', v0.full <= v1.full && v1.full < v2.full && v1.fixed > 0 && v2.fixed > v1.fixed, [v0, v1, v2]);
     ok('the preview score lands on the engine\'s projected Golden Score for each option, and the changed rows sweep', +v1.score === +(+v1.want).toFixed(1) && +v2.score === +(+v2.want).toFixed(1) && v2.pop > 0 && v2.pressed === 'go+ar', [v1, v2]);
+    ok('the preview shows one of the client\'s own products, its image and fields filling in Today → Tier 1 → Tier 2, each filled field naming HOW (never a value)', v0.img && v0.on === 0 && v1.on > 0 && v2.on > v1.on && v2.invented, [v0.on, v1.on, v2.on, v0.img]);
     if (vp === 1440 && process.env.PZ_SHOTS) await (await p.$('#svc-prev')).screenshot({ path: process.env.PZ_SHOTS + '/preview_t2.png' });
     // a market whose feed cannot be read
     await p.click('.mchip[data-m="de"]');

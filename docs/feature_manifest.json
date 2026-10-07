@@ -12360,6 +12360,12 @@
       "file": "docs/pricer_engine.js",
       "pattern": "fixed: Object.keys(fix)",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the tier preview shows one of the client's own products (image + values) filling in, beside one vertical column of coverage",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function prodSampler(",
+      "pr": 0
     }
   ]
 }
