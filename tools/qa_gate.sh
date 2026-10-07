@@ -47,6 +47,13 @@ else
   echo "   ✗ shared-state harness FAILED — see node tools/test_sharedstate.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3a1/7: Services & Pricer stores (allow-lists, server stamps, the cost gate, scoped proposals)"
+if node tools/test_pricerstore.mjs >/dev/null 2>&1; then
+  echo "   ✓ cell allow-lists + ranges, the ladder, server stamps, the _g| KV swap, frozen options, the pricerRoute gates + scoping hold"
+else
+  echo "   ✗ Services & Pricer store harness FAILED — see node tools/test_pricerstore.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3a2/7: brief recovery from the brief email"
 if node tools/test_briefrecover.mjs >/dev/null 2>&1; then
   echo "   ✓ an emailed brief rebuilds its missing ticket, and never touches a live one"
@@ -300,6 +307,13 @@ if node tools/test_aimode.mjs >/dev/null 2>&1; then
   echo "   ✓ rates, routes, the scrape-once rule, the AI monthly floor + the page wiring hold"
 else
   echo "   ✗ AI Mode harness FAILED — see node tools/test_aimode.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3g3/7: Services & Pricer engine (needs per parent, the package, the Spark AI twin, the client-safe guard)"
+if node tools/test_pricer.mjs >/dev/null 2>&1; then
+  echo "   ✓ v1 quote maths unchanged, exact needs, stored bounds, packageQuote, the Spark AI twin, costModel + the guard hold"
+else
+  echo "   ✗ Services & Pricer harness FAILED — see node tools/test_pricer.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3h/7: Golden Record PDP harvest (page extraction + host allowlist + sampler)"

@@ -610,9 +610,9 @@
       "forbidden": true
     },
     {
-      "name": "Pricer: module page (quote builder + collaborative rate card)",
+      "name": "Pricer: module page — Services & Pricer (quote builder, packages, rollout, team rate card)",
       "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "Tachyon Pricer",
+      "pattern": "Services &amp; Pricer",
       "min": 2,
       "pr": 141
     },
@@ -11745,6 +11745,317 @@
       "pr": 0
     },
     {
+      "name": "Pricer engine 2.0.0: version",
+      "file": "docs/pricer_engine.js",
+      "pattern": "VERSION: '2.0.0'",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: needCollector — exact needs per parent off the one feed stream",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function needCollector(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: packageQuote — the services package priced line by line (β, one block rounding, Spark AI build, monthly floor)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function packageQuote(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: composeRates — per-team, per-field rate card over the legacy card",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function composeRates(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: auditStored — the Golden Record stored lane",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function auditStored(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: costModel — Management-only cost and margin",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function costModel(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: proposalText — two tones + the client-safe guard",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function proposalText(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine 2.0.0: the client-safe guard placeholder",
+      "file": "docs/pricer_engine.js",
+      "pattern": "[£ to confirm — Ray]",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: Spark AI twin of the AI Quote AIMODE:ENGINE block (byte-identical, held by test_pricer)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "AIMODE:TWIN-START",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: package-only rate rows kept OUT of CATALOG (attr_pop)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "var PKG_ROWS = [",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: LIVE_IDS carries PKG_ROWS",
+      "file": "docs/pricer_engine.js",
+      "pattern": "CATALOG.concat(PKG_ROWS).forEach(function (c) { LIVE_IDS",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: parentCounter re-resolves item_group_id on the parser's live header",
+      "file": "docs/pricer_engine.js",
+      "pattern": "row: function (r, liveHeader)",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: classifyTach — conversational briefs untagged + attribute population → attr_pop",
+      "file": "docs/pricer_engine.js",
+      "pattern": "/attribute population/",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: quoteText + client copy say ex VAT",
+      "file": "docs/pricer_engine.js",
+      "pattern": "' ex VAT'",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: delivery plan rendered on the Roadmap section",
+      "file": "docs/pricer_engine.js",
+      "pattern": "var DELIVERY_PLAN",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: '+VAT' wording RETIRED — every figure ex VAT (must stay gone)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "+VAT",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: 'TACHYON AI OPTIMISATION' quote header RETIRED — client copy says Spark AI (must stay gone)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "TACHYON AI OPTIMISATION",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Pricer harness: services engine (§8 items 1–16) wired",
+      "file": "tools/test_pricer.mjs",
+      "pattern": "AIMODE:TWIN-START",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: the cost grant is opt-in and opens no page",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "{ slug: 'pricer-cost', label: 'Pricer costs & margin', optIn: true }",
+      "pr": 0
+    },
+    {
+      "name": "Access: MODULE_PATHS built only from modules with a page",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "export const MODULE_PATHS = MODULES.filter((x) => x.path).reduce(",
+      "pr": 0
+    },
+    {
+      "name": "Access: a path-less grant can never write MODULE_PATHS['undefined'] again",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "export const MODULE_PATHS = MODULES.reduce(",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Pricer: every /api/pricer/* path goes through pricerRoute",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path.startsWith('/api/pricer/')) return pricerRoute(request, env, path);",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: the pricer grant gates every store",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!acc.owner && !moduleAllowed(acc.modules, 'pricer')) return json({ ok: false, error: 'the Pricer is not in your access' }, 403);",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: Management (pricer-cost) gate before the store is read (api/pricer/cost)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!mgmt && (S.mgmtRead || (S.mgmtWrite && request.method === 'PUT'))) {",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: scoped stores re-inject foreign records before the merge",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const inc = scoped ? scopeIncomingBy(S.scope, curApi, r.data, acc.clients, clientMatch) : r.data;",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: ACT logs rate-card writes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/api/pricer/ops': 'pricer-ops', '/api/pricer/price': 'pricer-price', '/api/pricer/cost': 'pricer-cost',",
+      "pr": 0
+    },
+    {
+      "name": "Pricer: ACT logs proposal / rollout / roadmap writes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/api/pricer/proposals': 'pricer-prop', '/api/pricer/rollout': 'pricer-roll', '/api/pricer/roadmap': 'pricer-map' };",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: the cost store is Management read + write",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "cost:      { kv: 'pricercost',  kind: 'cell', scope: null,    mgmtRead: true,  mgmtWrite: true,  maxKeys: 200 },",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: proposals scoped by the record's client, rollout by the key",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "proposals: { kv: 'pricerprop',  kind: 'prop', scope: 'field',",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: _g|/_c| rows swapped at the KV boundary (kvmerge skips '_' keys)",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "export function toStoreKey(k) { return k.charAt(0) === '_' ? '~' + k.slice(1) : k; }",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: by/at re-stamped only on a value that moved",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "if (isObj(stored) && same(stored.v, c.v)) { data[k] = stored; continue; }",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: a refused key keeps its stored value",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "const refuse = (why) => { rejected.push({ k, why }); if (stored !== undefined) data[k] = stored; };",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: saved options are frozen",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "const PROP_FROZEN = ['ref', 'client', 'markets', 't', 'by', 'prop', 'option', 'pkgVersion', 'audit', 'rates',",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: catalogue ids duplicated (engine is bundled as text)",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "export const PRICER_IDS = ['title_gen', 'title_short', 'title_intent', 'desc_gen', 'desc_pro', 'highlights',",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: rule-level view scoping",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "export function scopeViewBy(how, data, clients, match) {",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: rule-level incoming re-injection",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "export function scopeIncomingBy(how, cur, incoming, clients, match) {",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: namespaces delegate to the rule-level pair",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "return scopeIncomingBy(STATE_NS[ns], cur, incoming, clients, match);",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: audit stepper section",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "id=\"svc-audit\"",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: services rollout section",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "id=\"svc-rollout\"",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the one feed stream fans out to needCollector (live + file lanes, min 2)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "E.needCollector(",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: tiers priced by packageQuote",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "E.packageQuote(",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: labelguard via Blob import",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "import(URL.createObjectURL(new Blob(",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the /api/pricer stores (min 2)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "/api/pricer/",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: client-safe guard shown on the debrief",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "E.GUARD_TXT",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: talk track, evidence, flags and email never collapse behind ⓘ (min 4)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "data-no-collapse",
+      "min": 4,
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: Management tab gated on the pricer-cost grant",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "indexOf('pricer-cost')",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the page never writes the legacy tachyonrates card",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "fetch('/api/tachyon/rates',{method:'PUT'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: ex VAT everywhere, never +VAT",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "+VAT",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: pricer stub registered in the phone tripwire",
+      "file": "tools/check_mobile.js",
+      "pattern": "pricer_stub.js",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: pricer stub registered in the dark tripwire",
+      "file": "tools/check_darkmode.js",
+      "pattern": "pricer_stub.js",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: /migration row carries the six new stores",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "pricerops · pricerprice · pricercost · pricerprop · svcroll · svcmap",
       "name": "Golden score history: a day nobody measured carries the last reading — no gapped line",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function histCarry(days, seed, seedD) {",

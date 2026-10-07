@@ -21,7 +21,9 @@ if(document.readyState!=='loading')mk();else document.addEventListener('DOMConte
 window.addEventListener('load',restore);
 })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FeedSpark · Tachyon Pricer</title>
+<title>FeedSpark · Services &amp; Pricer</title>
+<meta name="description" content="Services &amp; Pricer — Golden Record audit to package proposal, the debrief kit, the services rollout and the three-team rate card">
+<link rel="stylesheet" href="/design/fcc.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
   :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
@@ -282,6 +284,219 @@ window.addEventListener('load',restore);
   @media(max-width:640px){.wrap{padding:0 14px}.cat-grid{grid-template-columns:1fr}
     input,select{font-size:16px!important}.rc input.r-in{font-size:13px!important}}
 
+  /* ---------------- SERVICES & PRICER (7 Oct 2026) — tokens only, so the dark view follows ---------------- */
+  .eng-fail{background:var(--risk);color:#fff;font-weight:800;padding:10px 16px}
+  .hero .sub{color:var(--ink-2);font-size:14px;max-width:880px;margin:0}
+  .svc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .svc-f{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .svc-seg{display:inline-flex;height:36px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:nowrap;max-width:100%;overflow-x:auto}
+  .svc-seg button{font:inherit;font-size:12.5px;font-weight:800;border:0;background:transparent;color:var(--muted);padding:0 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .svc-seg button.on{background:var(--paper);color:var(--orange-deep);box-shadow:0 1px 2px rgba(16,24,40,.1)}
+  .svc-seg button:hover{color:var(--orange-deep)}
+  .fld{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);max-width:100%}
+  .fld:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .fld.sm{height:30px;font-size:12px;padding:0 8px}
+  .lnk{font:inherit;font-size:12px;font-weight:800;color:var(--orange-ink);background:none;border:0;padding:2px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+  .lnk:hover{color:var(--orange-deep)}
+  .btn.sm{font-size:11.5px;padding:4px 9px;min-height:30px}
+  .btn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .svc-mk{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .mgrp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:100px;background:var(--paper);overflow:hidden}
+  .mgrp.on{border-color:var(--orange);background:rgba(245,166,35,.09)}
+  .mchip{font:inherit;font-size:12px;font-weight:900;border:0;background:transparent;color:var(--ink-2);padding:0 12px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;min-height:34px}
+  .mchip .st{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .mchip .st.live{color:var(--good)}.mchip .st.fail{color:var(--risk)}.mchip .st.run{color:var(--orange-ink)}
+  .mlang{font:inherit;font-size:11px;font-weight:800;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink-2);padding:0 6px;height:34px;cursor:pointer}
+  .svc-hint{font-size:12.5px;color:var(--muted);font-weight:700}
+  .svc-note{font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .svc-note:empty{display:none}
+  .svc-note .tp{display:inline-flex;gap:6px;align-items:center;color:var(--risk)}
+  .svc-note .tp-in{width:140px;height:30px}
+  .svc-stage{display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:800;color:var(--ink-2);margin-left:auto}
+  .svc-stage .nx{color:var(--ink-2)}
+  .late,.svc-stage .nx.late{color:var(--risk)}
+  .late-b{border-color:var(--risk)!important;color:var(--risk)}
+  .stg{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;padding:3px 9px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);white-space:nowrap}
+  .stg.s-auditready{color:var(--navy);border-color:rgba(26,54,93,.35)}
+  .stg.s-debriefed,.stg.s-proposalsent{color:var(--orange-ink);border-color:rgba(237,111,11,.45)}
+  .stg.s-agreed,.stg.s-alwaysonlive{color:var(--good);border-color:rgba(21,128,61,.45);background:rgba(21,128,61,.07)}
+  .stg.s-declined{color:var(--risk);border-color:rgba(192,57,43,.4)}
+  .stg.s-sup{color:var(--muted);border-style:dashed}
+  .nm{color:var(--muted);font-weight:700;font-size:11.5px}
+  section h3{font-size:14px;font-weight:900;margin:14px 0 6px}
+  /* the score colours: ONE audit legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green) */
+  .sc.b-g{color:var(--good)}.sc.b-y{color:var(--orange-ink)}.sc.b-o{color:var(--orange-deep)}.sc.b-r{color:var(--risk)}
+  /* 1 · the audit stepper */
+  .stp{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .stp-i{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;min-width:0}
+  .stp-i.stp-empty{grid-column:1/-1}
+  .stp-h{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}
+  .stp-h .sn{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(245,166,35,.16);color:var(--orange-deep);font-size:12px;font-weight:900;display:grid;place-items:center}
+  .stp-h h4{margin:2px 0 0;font-size:13px;font-weight:900}
+  .stp-s{font-size:11px;color:var(--muted);font-weight:700;line-height:1.35}
+  .stp-m{display:flex;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px dashed var(--line);align-items:baseline}
+  .stp-m .mk{flex:none;font-size:10.5px;font-weight:900;color:var(--muted);min-width:24px}
+  .stp-m .mv{min-width:0;overflow-wrap:anywhere}
+  .stp-m b{font-variant-numeric:tabular-nums}
+  @media(max-width:1100px){.stp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:760px){.stp{grid-template-columns:1fr}}
+  /* 2 · the proposal */
+  .prop-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+  .prop-act .mode{font-size:12px;font-weight:800;color:var(--orange-ink)}
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr));gap:14px;align-items:start}
+  .tier{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+  .tier.hl{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.2)}
+  .tier-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .tier-h h3{margin:0;font-size:15.5px;font-weight:900;flex:1;min-width:180px}
+  .tier-h .tier-sub{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-top:2px;letter-spacing:0}
+  .money .mv.nm{font-size:13px;line-height:1.5;color:var(--muted);font-weight:800}
+  .tier-n{flex:none;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-weight:900;display:grid;place-items:center}
+  .proj{display:flex;flex-direction:column;gap:4px;font-size:12.5px;margin-bottom:8px}
+  .pj .mk{display:inline-block;min-width:26px;font-size:10.5px;font-weight:900;color:var(--muted)}
+  .pj-bl{font-size:11.5px;color:var(--muted);font-weight:700}
+  .money{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 6px}
+  .money .mb{background:var(--wash);border:1px solid var(--line);border-radius:11px;padding:10px 12px;min-width:0}
+  .money .ml{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .money .mv{font-size:24px;font-weight:900;color:var(--orange-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+  .money .mx,.mx{font-size:11px;color:var(--muted);font-weight:700;line-height:1.45}
+  .rates-l{font-size:11px;color:var(--muted);font-weight:700;margin:2px 0 8px}
+  .aon{font-size:12.5px;color:var(--ink-2);background:rgba(26,54,93,.06);border-radius:10px;padding:8px 11px;margin:6px 0 8px}
+  .aon .aon-m{font-size:11.5px;color:var(--muted);font-weight:700}
+  .save-l{font-size:12px;font-weight:800;color:var(--good);margin:0 0 8px}
+  /* no min-width on the table itself: at desktop widths a tier card's content box is ~553px, and a 560px floor
+     pushed the → Brief column past the frame (clipped to a sliver); the line cell's own floor sets the minimum */
+  .lines{width:100%;border-collapse:collapse;font-size:12.5px;min-width:0}
+  .lines th{text-align:left;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .lines td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .lines th.num,.lines td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .lines tr:last-child td{border-bottom:0}
+  .lines .ln-l{font-weight:800;min-width:120px}
+  .lines .ln-r{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+  .lines .ln-a{white-space:nowrap}
+  .lines tr.st-off td,.lines tr.st-none td,.lines tr.st-client td,.lines tr.st-contracted td{color:var(--muted)}
+  .nd-parts{font-size:11px;color:var(--muted);font-weight:700}
+  .est{display:inline-block;font-size:9.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;padding:1px 7px;border:1px dashed var(--line);color:var(--muted);white-space:nowrap;vertical-align:1px}
+  .est-bound{color:var(--orange-ink);border-color:rgba(237,111,11,.5)}
+  .est-ratio{color:var(--navy);border-color:rgba(26,54,93,.35)}
+  .est-sku{color:var(--risk);border-color:rgba(192,57,43,.4)}
+  .stc{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .stc-priced{color:var(--good);border-color:rgba(21,128,61,.4)}
+  .stc-unknown,.stc-unpriced{color:var(--orange-ink);border-color:rgba(237,111,11,.45)}
+  .stc-coming{color:var(--navy);border-color:rgba(26,54,93,.35)}
+  .fixes{margin:10px 0 0;padding-left:18px;font-size:12px;color:var(--ink-2)}
+  .fixes li{margin:3px 0}
+  .blk-l{margin-top:10px;font-size:12px;color:var(--ink-2)}
+  .blk-l summary{cursor:pointer;font-weight:800;color:var(--orange-ink)}
+  .blk-l ul{margin:6px 0 0;padding-left:18px}
+  .cust{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;margin:0 0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:16px}
+  .cust h4{margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .cu-l{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:12.5px}
+  .cu-l .tog{flex:1;min-width:0}
+  .cu-c .tog{display:flex;font-size:12px;padding:3px 0}
+  .cu-n{font-size:11px;color:var(--muted);font-weight:700;margin:6px 0}
+  .tseg{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;background:var(--paper)}
+  .tseg button{font:inherit;font-size:11.5px;font-weight:800;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink-2);padding:0 10px;min-height:30px;cursor:pointer}
+  .tseg button:first-child{border-left:0}
+  .tseg button.on{background:var(--navy);color:#fff}
+  .tst-l{display:block;margin-top:2px}
+  .cust h4.cu-h2{margin-top:14px}
+  /* 3 · the debrief kit */
+  .db-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+  .db-ctl #db-to{min-width:240px}
+  .db-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+  .db-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 16px;min-width:0}
+  .db-card h3:first-child{margin-top:2px}
+  #db-talk,#db-flags{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink-2)}
+  #db-talk li,#db-flags li{margin:4px 0}
+  .ev-m{margin:6px 0 10px}
+  .ev-h{font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .ev-i{font-size:12px;margin:6px 0}
+  .ev-i ul{margin:2px 0 0;padding-left:16px;color:var(--ink-2);font-size:11.5px;overflow-wrap:anywhere}
+  .db-guard{font-size:12px;color:var(--ink-2);margin:0 0 8px}
+  #db-sub{width:100%;margin:0 0 8px}
+  #db-body{width:100%;min-height:360px;font:inherit;font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+  #db-body:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .db-x{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .db-cc{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:6px}
+  .db-stale{font-size:12px;font-weight:800;color:var(--orange-ink);margin:0 0 8px}
+  .db-stale:empty{display:none}
+  .pros-scope{font-size:12px;font-weight:800;color:var(--risk);flex-basis:100%}
+  @media(max-width:960px){.db-grid{grid-template-columns:1fr}}
+  /* 4 · the rollout */
+  #ro-kpis{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+  .ro-ctl{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  .ro-ctl #ro-note{font-size:12px;color:var(--muted);font-weight:700}
+  .ro-t{min-width:1080px}
+  .ro-t tr.ro-r{cursor:pointer}
+  .ro-t tr.ro-r.cur td{background:rgba(245,166,35,.07)}
+  .ro-t .ro-c{min-width:120px}
+  .ro-t .ro-f{min-width:220px;font-size:12px;line-height:1.5}
+  .ro-t .ro-n{min-width:220px}
+  .ro-t .ro-n .fld{display:block;width:100%;margin:2px 0}
+  .ro-t td .tog{margin-top:4px}
+  /* 5 · roadmap, quick wins, the delivery plan */
+  .rm-s{min-width:96px}
+  .rm-s.inh{color:var(--muted);font-style:italic}
+  .rm-s.rm-live{color:var(--good)}.rm-s.rm-pilot{color:var(--orange-ink)}.rm-s.rm-building,.rm-s.rm-planned{color:var(--navy)}
+  #rm-qw{margin:0;padding-left:18px;font-size:12.5px}
+  #rm-qw li{margin:5px 0}
+  .own{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+  .own-thispr{color:var(--good);border-color:rgba(21,128,61,.4)}
+  .own-raymanagement{color:var(--orange-ink);border-color:rgba(237,111,11,.45)}
+  .own-next,.own-later{color:var(--muted);border-style:dashed}
+  .rm-plan td{vertical-align:top}
+  /* 6 · the rate card */
+  .rc-tabs{margin:0 0 10px}
+  .rc .r-ro{font-variant-numeric:tabular-nums;font-weight:700;padding:3px 7px;display:inline-block;color:var(--ink-2)}
+  .rc td.num{text-align:right}
+  .src-default,.src-unset{color:var(--muted)!important;font-style:italic}
+  .src-legacy{border-bottom:1px dotted var(--muted)}
+  .src-actuals{color:var(--navy)}
+  #rc-g{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-top:10px}
+  #rc-g:empty{display:none}
+  .gsec{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--wash);width:100%}
+  .gsec>b{width:100%;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .gsec .gm{font-size:13px;font-weight:800;color:var(--ink)}
+  .gfld{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+  .gfld .fld{width:130px}
+  .gfld.wide .fld{width:280px}
+  /* 9 · saved proposals */
+  .sp-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  .pg{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;margin:0 0 10px}
+  .pg-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .pg-h .btn{margin-left:auto}
+  .po{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .po.counted .po-n{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff}
+  .po.sup{opacity:.65}
+  .po-n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--wash);border:1px solid var(--line);font-size:12px;font-weight:900;display:grid;place-items:center}
+  .po-b{flex:1;min-width:220px;font-size:12.5px}
+  .po-m{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .po-a{display:flex;gap:6px;flex-wrap:wrap}
+  .sec-tog{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;margin-left:8px;vertical-align:3px}
+  .sec-tog:hover{border-color:var(--orange);color:var(--orange-deep)}
+  @media(max-width:760px){
+    .svc-stage{margin-left:0;width:100%}
+    .money{grid-template-columns:1fr}
+    .ro-t{min-width:0}
+    .ro-t thead{display:none}
+    .ro-t,.ro-t tbody,.ro-t tr,.ro-t td{display:block;width:100%}
+    .ro-t tr.ro-r{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;padding:8px 12px;background:var(--paper);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 12px}
+    .ro-t tr.ro-r td.ro-f,.ro-t tr.ro-r td.ro-n{grid-column:1/-1}
+    .ro-t td{border:0!important;padding:4px 0!important}
+    .ro-t td::before{content:attr(data-l);display:block;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+    .gfld .fld,.gfld.wide .fld{width:100%}
+    .gfld{width:100%}
+    .db-ctl #db-to{min-width:0;width:100%}
+    /* a package line reads as a small card: the line, then what needs it · £, then its status · → Brief */
+    .lines{min-width:0}
+    .lines thead{display:none}
+    .lines tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+    .lines tr:last-child{border-bottom:0}
+    .lines td{display:block;border:0!important;padding:0!important}
+    .lines .ln-l{grid-column:1/-1;min-width:0}
+    .lines td.num{text-align:right}
+    .lines .ln-a{text-align:right}
+  }
 </style>
 <style>[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
 [data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
@@ -308,18 +523,133 @@ window.addEventListener('load',restore);
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
-  <div class="tb-tag">Tachyon Pricer</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/restock" class="tbm" data-lbl="Restock" title="Restock — demanded in Google Ads, not buyable" aria-label="Restock"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v8.5"/><path d="M8.5 7.5 12 11l3.5-3.5"/><path d="M3.5 11.5v6.5l8.5 4 8.5-4v-6.5"/><path d="M3.5 11.5 12 15.5l8.5-4"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+  <div class="tb-tag">Services &amp; Pricer</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm on" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/restock" class="tbm" data-lbl="Restock" title="Restock — demanded in Google Ads, not buyable" aria-label="Restock"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v8.5"/><path d="M8.5 7.5 12 11l3.5-3.5"/><path d="M3.5 11.5v6.5l8.5 4 8.5-4v-6.5"/><path d="M3.5 11.5 12 15.5l8.5-4"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
-  <div class="eyebrow">Private &amp; Confidential · AI optimisation cost studio</div>
-  <h1>Tachyon Pricer</h1>
-  <p>What it really costs to switch on any Tachyon optimisation for a client — the retainer hours each team tags (ASPL setup, AM QC, project management, monitoring) sold in £585+VAT 8-hour blocks, plus Tachyon processing priced per <b>parent product</b> (unique <code>g:item_group_id</code> — Tachyon generates once per product and the variants inherit) through the volume ladder. Rates live in the collaborative rate card below: London and ASPL edit the same numbers, quotes update everywhere instantly.</p>
+  <div class="eyebrow">Services migration · Private &amp; Confidential</div>
+  <h1>Services &amp; Pricer</h1>
+  <p class="sub" data-instr>Audit a client's Google Shopping feeds against Google's product data spec, price the two packages on the products that actually need the work, debrief the client and track the rollout. Every figure is ex VAT, and one-off and monthly are always shown apart.</p>
+  <div class="svc-bar">
+    <div class="svc-seg" id="svc-src" role="group" aria-label="Where the audit reads from">
+      <button type="button" data-src="stored" title="The Golden Record stores only — instant, with honest bounds where a stored reading cannot count exactly">Stored</button>
+      <button type="button" data-src="live" title="Stored first, then each market's live feed is streamed once and every need turns exact">⚡ Live</button>
+      <button type="button" data-src="file" title="A prospect: read their feed file (CSV, TSV or XML) in this browser">⇪ File</button>
+    </div>
+    <span id="svc-cl-wrap" class="svc-f"><select id="brand" class="fld" aria-label="Client"></select></span>
+    <span id="svc-pros" class="svc-f" hidden>
+      <input id="svc-pname" class="fld" type="text" maxlength="60" placeholder="Prospect name" aria-label="Prospect name">
+      <select id="svc-ind" class="fld" aria-label="Industry — sets the scoring profile" title="Industry — sets the scoring profile"></select>
+      <select id="svc-fmkt" class="fld" aria-label="Market" title="Market — sets the language group"></select>
+      <label class="btn" for="svc-file">⇪ Choose feed file</label>
+      <input id="svc-file" type="file" accept=".csv,.tsv,.txt,.xml,text/csv,text/xml,application/xml,text/plain" hidden>
+    </span>
+    <span class="svc-stage" id="svc-stage"></span>
+  </div>
+  <div class="svc-mk" id="svc-mk"></div>
+  <div class="svc-note" id="svc-note"></div>
 </div></header>
 
-<section><div class="wrap">
-  <h2>Quote builder</h2>
+<section id="svc-audit"><div class="wrap">
+  <h2>Audit — what the feed says <span class="ai-n" id="aud-src"></span></h2>
+  <p class="sub">Eight readings per market, each from its own store or the live read; a reading nobody has made says why rather than showing a zero.</p>
+  <ol class="stp" id="svc-steps"></ol>
+</div></section>
+
+<section id="svc-prop" data-m-digest="no audit yet"><div class="wrap">
+  <h2>Proposal</h2>
+  <p class="sub">Tier 1 · Google-ready makes the feed eligible and adds everything Google recommends; Tier 2 · AI-ready bundles AI Readiness on top as one quote, with the set-up hours rounded to blocks once. A test package can ride on any option.</p>
+  <div class="prop-act">
+    <button class="btn" id="pq-copy" type="button" title="The client email for every option shown — figures read [£ to confirm — Ray] while a blocker stands">⧉ Copy</button>
+    <button class="btn" id="pq-opts" type="button" title="Every option side by side — what each includes, one-off and monthly">⧉ Options</button>
+    <button class="btn pri" id="pq-save" type="button" title="Save every option shown under one proposal">💾 Save as proposal</button>
+    <button class="btn" id="pq-debrief" type="button">✉ Debrief</button>
+    <button class="btn" id="pq-cust" type="button" aria-expanded="false" aria-controls="svc-cust">⚙ Customise</button>
+    <span class="mode" id="pq-mode"></span>
+  </div>
+  <div class="cust" id="svc-cust" hidden></div>
+  <div class="tiers" id="svc-tiers"></div>
+</div></section>
+
+<section id="svc-debrief"><div class="wrap">
+  <h2>Debrief kit</h2>
+  <p class="sub">The talk track, the client's own offending products and the email, in two tones.</p>
+  <div class="db-ctl">
+    <select id="db-src" class="fld" aria-label="What the debrief covers"></select>
+    <div class="svc-seg" id="db-tone" role="group" aria-label="Tone"><button type="button" data-tone="direct">Confident · direct</button><button type="button" data-tone="consult">Collaborative · consultative</button></div>
+    <input id="db-to" class="fld" type="email" placeholder="client contact email" aria-label="Client contact email">
+  </div>
+  <div class="db-grid">
+    <div class="db-card">
+      <h3>Talk track</h3>
+      <ol id="db-talk" data-no-collapse></ol>
+      <h3>Evidence</h3>
+      <div id="db-ev" data-no-collapse></div>
+      <h3>Flags to raise first</h3>
+      <ul id="db-flags" data-no-collapse></ul>
+    </div>
+    <div class="db-card" id="db-mail" data-no-collapse>
+      <h3>Email</h3>
+      <div class="db-guard" id="db-guard"></div>
+      <div class="db-stale" id="db-stale" role="status"></div>
+      <input id="db-sub" class="fld" type="text" aria-label="Email subject">
+      <textarea id="db-body" aria-label="Email body" spellcheck="true"></textarea>
+      <div class="db-x">
+        <button class="btn pri" id="db-draft" type="button" title="Queues a draft in Gmail Drafts through the bridge — never sends">✉ Create Gmail draft</button>
+        <button class="btn" id="db-open" type="button" title="Opens Gmail's compose with the account AM on CC">↗ Open in Gmail</button>
+        <button class="btn" id="db-copy" type="button">⧉ Copy</button>
+        <button class="btn" id="db-deck" type="button" title="Copies a deck brief for the Deck generator and opens it">→ Deck brief</button>
+        <button class="btn" id="db-reset" type="button" hidden>↺ Back to the generated text</button>
+      </div>
+      <div class="db-cc" id="db-cc"></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="svc-rollout" data-m-digest="rollout"><div class="wrap">
+  <h2>Services rollout</h2>
+  <p class="sub">Every account's stage, derived from its proposals and debrief, with where it comes from and where it is going.</p>
+  <div class="kpi-wrap"><div class="kpis" id="ro-kpis"></div></div>
+  <div class="ro-ctl"><label class="tog"><input type="checkbox" id="ro-mine" checked> My accounts</label><input id="ro-q" class="fld" type="search" placeholder="Filter accounts" aria-label="Filter accounts"><span id="ro-note"></span><span class="savedok" id="ro-state"></span></div>
+  <div class="rc-scroll"><table class="rc ro-t" id="ro-t">
+    <thead><tr><th>Client</th><th>AM</th><th title="Scheduled work and its skip rate, AI briefs delivered, the retainer balance">From</th><th title="The latest proposal and whether the client chose it">To</th><th>Stage</th><th>Next step · due</th><th>Always-on</th></tr></thead>
+    <tbody id="ro-body"></tbody>
+  </table></div>
+</div></section>
+
+<section id="svc-roadmap"><div class="wrap">
+  <h2>Roadmap &amp; quick wins <button class="sec-tog" type="button" aria-expanded="false" data-sec="rm">▸ Show</button></h2>
+  <div class="sec-body" id="sec-rm" hidden>
+    <p class="sub">What each package line can be sold as today, per industry; an unconfirmed line is priced but flagged for Ray.</p>
+    <div class="rc-scroll"><table class="rc" id="rm-grid"></table></div>
+    <h3>Quick wins read off the book</h3>
+    <ul id="rm-qw"></ul>
+    <h3>How the change is delivered</h3>
+    <div class="rc-scroll"><table class="rc rm-plan"><thead><tr><th class="num">#</th><th>Step</th><th>Who</th></tr></thead><tbody id="rm-plan"></tbody></table></div>
+  </div>
+</div></section>
+
+<section id="svc-rates"><div class="wrap">
+  <h2>Rate card — three teams</h2>
+  <p class="sub">ASPL and London AM enter the hours the work really takes; Management owns the sell price and what the work costs us.</p>
+  <div class="svc-seg rc-tabs" id="rc-tabs" role="group" aria-label="Rate card team">
+    <button type="button" data-tab="aspl">ASPL</button><button type="button" data-tab="am">London AM</button><button type="button" data-tab="mgmt" hidden>Management 🔒</button><button type="button" data-tab="aim">Spark AI</button>
+  </div>
+  <div class="pz-card">
+    <div class="rc-scroll"><table class="rc" id="rc"><thead id="rc-head"></thead><tbody id="rc-body"></tbody></table></div>
+    <div id="rc-g"></div>
+    <div class="rc-foot">
+      <span class="tiers-line" id="tiers-line"></span>
+      <label class="pz-tog" id="act-tog-wrap" hidden><input type="checkbox" id="act-tog"> <span id="act-tog-lbl">Price from tagged-brief averages</span></label>
+      <span id="rc-state"></span>
+    </div>
+  </div>
+</div></section>
+
+<section id="pz-custom"><div class="wrap">
+  <h2>Custom quote <button class="sec-tog" type="button" aria-expanded="false" data-sec="cq">▸ Show</button></h2>
+  <div class="sec-body" id="sec-cq" hidden>
   <p class="sub">Pick the client — the volume fills itself in <b>parent products</b>, counted live from the wired feed by distinct <code>g:item_group_id</code> (variant SKUs shown beside it for context) — tick the optimisations, read the number. Copy it, save it, or brief it straight into Workflow.</p>
   <div class="pz-scaf" id="pz-scaf"></div>
   <div class="pz-ctl pz-card">
@@ -349,10 +679,12 @@ window.addEventListener('load',restore);
       <span class="savedok" id="q-savedok"></span>
     </div>
   </div>
+  </div>
 </div></section>
 
-<section><div class="wrap">
-  <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
+<section id="ai-briefs"><div class="wrap">
+  <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span> <button class="sec-tog" type="button" aria-expanded="false" data-sec="ai">▸ Show</button></h2>
+  <div class="sec-body" id="sec-ai" hidden>
   <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the brief's token economics in a single <b>Bill units</b> column — hover a value for the <b>actual tokens</b> and <b>billing tokens</b> behind it, click it to edit them (run times live in the same pop-up). Run-time and token totals per brand are summarised below the table. Averages (and tokens per parent product) feed the rate card's evidence pricing.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
@@ -383,30 +715,19 @@ window.addEventListener('load',restore);
       <tbody id="ai-sum"></tbody>
     </table></div>
   </div>
-</div></section>
-
-<section><div class="wrap">
-  <h2>Rate card — hours &amp; unit prices, owned by the teams</h2>
-  <p class="sub">This is the collaborative bit: ASPL tags the setup hours they really take, London tags QC / PM / monitoring, commercial sets the £ per parent product. Click any number to edit — saves instantly for everyone (concurrency-safe), and the row loses its DRAFT flag once a human has confirmed it. Every edit is attributed in the owner's Activity log.</p>
-  <div class="pz-card">
-    <div class="rc-scroll"><table class="rc" id="rc">
-      <thead><tr><th>Optimisation</th><th>ASPL setup h</th><th>AM QC h</th><th>PM h</th><th>Monitor h/mo</th><th title="Per parent product — unique g:item_group_id, variants inherit">Tachyon £/product</th><th>Lead (days)</th><th>Status</th><th>Note</th></tr></thead>
-      <tbody id="rc-body"></tbody>
-    </table></div>
-    <div class="rc-foot">
-      <span class="blockfld">Retainer block £ <input id="rc-block" type="number" min="1" step="1"> +VAT / 8h</span>
-      <span class="tiers-line" id="tiers-line"></span>
-      <label class="pz-tog" id="act-tog-wrap" hidden><input type="checkbox" id="act-tog"> <span id="act-tog-lbl">Price from tagged-brief averages</span></label>
-      <span id="rc-state"></span>
-    </div>
   </div>
 </div></section>
 
-<section><div class="wrap">
-  <h2>Saved quotes</h2>
-  <p class="sub">Every saved quote keeps its numbers as they were on the day — the paper trail for what was offered to whom.</p>
+<section id="svc-saved"><div class="wrap">
+  <h2>Saved proposals &amp; quotes</h2>
+  <p class="sub">Each proposal is counted once in the pipeline — the chosen option, else the lowest-numbered.</p>
+  <div class="kpi-wrap"><div class="kpis" id="sp-kpis"></div></div>
+  <div class="sp-ctl"><div class="svc-seg" id="sp-filter" role="group" aria-label="Which proposals"><button type="button" data-spf="client">This client</button><button type="button" data-spf="all">Every client</button></div><span class="savedok" id="sp-state"></span></div>
+  <div id="sp-list"></div>
+  <h3 class="ai-sum-h">Custom quotes</h3>
   <div class="sq" id="sq"></div>
 </div></section>
+
 
 <!-- floating field guide: definitions for every tracking column, so ASPL + London tag
      to the SAME rules. Collapsible tab pinned right; open state remembered. -->
@@ -468,84 +789,84 @@ window.addEventListener('load',restore);
   <div class="gpc-foot"><span id="gpc-n"></span><button class="btn" id="gpc-done" type="button">Done</button></div>
 </div>
 
-<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Tachyon Pricer<span class="fv" id="eng-v"></span></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="/feedlab/engine.js" onerror="window.__feedFail=1"></script>
-<script src="/pricer/engine.js" onerror="window.__engineFail=1"></script>
+<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Services &amp; Pricer<span class="fv" id="eng-v"></span></div></div>
+
+<script>/* PRICER ENGINE LOADERS — fetched and run the way /golden and /catalog load theirs, so the browser
+   tripwires can hand every engine over from a stub and the page meets the real loading path. The
+   labelguard module is an ES module (served at /labels/engine.js), imported from a Blob. */
+(function () {
+  'use strict';
+  function loadEngines() {
+    // only the Pricer engine is fatal: without the Feed Lab parser the page still renders (the stored lane, the rate
+    // card, the custom quote, tracking and the saved quotes) and every stream says 'feed parser missing' instead
+    var need = [['/pricer/engine.js', 'PricerEngine', 1], ['/feedlab/engine.js', 'FeedAudit', 0], ['/volume/engine.js', 'FeedArrivals', 0], ['/catalog/engine.js', 'FeedCatalog', 0]];
+    return Promise.all(need.map(function (n) {
+      if (window[n[1]]) return window[n[1]];
+      return fetch(n[0]).then(function (r) { if (!r.ok) throw new Error(n[0] + ' unavailable'); return r.text(); })
+        .then(function (s) { if (!s) throw new Error(n[0] + ' is empty'); (new Function(s))(); return window[n[1]] || null; })
+        .catch(function (e) { if (n[2]) throw e; return null; });
+    })).then(function (a) {
+      if (!a[0]) throw new Error('engines not ready');
+      return { E: a[0], FA: a[1], AR: a[2], CAT: a[3] };
+    });
+  }
+  function loadLG() {
+    if (window.__LG) return Promise.resolve(window.__LG);
+    return fetch('/labels/engine.js').then(function (r) { if (!r.ok) throw new Error('labelguard engine unavailable'); return r.text(); })
+      .then(function (s) { return import(URL.createObjectURL(new Blob([s], { type: 'text/javascript' }))); })
+      .then(function (m) { window.__LG = m; return m; });
+  }
+  window.PZLOAD = { engines: loadEngines, lg: loadLG };
+})();
+</script>
 <script>
 (function(){
 'use strict';
 function $(s){return document.querySelector(s)}
+function $$(s,root){return Array.prototype.slice.call((root||document).querySelectorAll(s))}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function fmt(n){return (+n||0).toLocaleString('en-GB')}
-if(window.__engineFail||!window.PricerEngine){document.body.insertAdjacentHTML('afterbegin','<div style="background:#C0392B;color:#fff;font-weight:800;padding:10px 16px">The Pricer engine failed to load — hard-refresh to pick up the latest deploy.</div>');return}
-var E=window.PricerEngine;
-try{$('#eng-v').textContent='engine v'+E.VERSION}catch(e){}
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var TT=null;
+function toast(t){var el=$('#toast');if(!el)return;el.textContent=t;el.classList.add('on');clearTimeout(TT);TT=setTimeout(function(){el.classList.remove('on')},3200)}
+var E=null,FA=null,AR=null,CATE=null,LG=null;     // the engines, once loaded (PZLOAD below)
 
 /* ---------------- state ---------------- */
-var RATES={},RATES_BASE=0;         // rate-card overrides map (kvmerge-backed)
+var LEGACY={};                     // the legacy tachyonrates card — READ-ONLY now, composeRates' fallback
 var BRIEFS={},ACTUALS={};          // Workflow briefs → tagged-hours averages per optimisation
 var TRACK={},TRACK_BASE=0;         // per-brief AI delivery tracking (KV tachyontrack, kvmerge)
 var USE_ACTUALS=(function(){try{return localStorage.getItem('fcc-pricer-actuals')!=='0'}catch(e){return true}})();
-var QUOTES={},QUOTES_BASE=0;       // saved quotes map
+var QUOTES={},QUOTES_BASE=0;       // saved custom quotes map (KV tachyonquotes)
 var CLIENTS=['Schuh','Reiss','Monsoon','Accessorize','YuMOVE','Superdry','RYOBI','Estée Lauder'];
-var MKROWS={};                     // market -> rows for the selected client (from Feed Lab)
+var MKROWS={};                     // market -> rows for the custom quote's client (from Feed Lab)
 var picks={},CLIENT='',MARKET='';
 
 function b64url(o){var j=JSON.stringify(o),b=new TextEncoder().encode(j),s='';b.forEach(function(c){s+=String.fromCharCode(c)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function copyText(t,okMsg){
+  return (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast(okMsg||'copied')},function(){
+    var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast(okMsg||'copied')}catch(e){}ta.remove()});
+}
 
-/* ---------------- rate card ---------------- */
-function blockGBP(){var g=RATES._globals||{};return isFinite(+g.blockGBP)&&+g.blockGBP>0?+g.blockGBP:E.DEFAULTS.blockGBP}
-function effOverrides(){return (USE_ACTUALS&&Object.keys(ACTUALS).length)?E.overridesWithActuals(RATES,ACTUALS):RATES}
-function effRates(){return E.rates(effOverrides())}
-function saveRates(){
-  fetch('/api/tachyon/rates',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(RATES_BASE)},body:JSON.stringify(RATES)})
-    .then(function(r){RATES_BASE=+r.headers.get('X-Sync-Base')||RATES_BASE;return r.json()})
-    .then(function(m){if(m&&typeof m==='object'&&!m.ok){RATES=m;renderRates();renderQuote()}})
-    .catch(function(){$('#rc-state').textContent='save failed — offline?'});
+/* ---------------- ONE rate card, composed ----------------
+   Per field the first that holds a number wins: the team stores (pricerops — ASPL + London AM;
+   pricerprice — Management's £) → the legacy tachyonrates card (read-only) → the tracked-brief
+   actuals (with the toggle on) → the catalogue default (PricerEngine.composeRates). The custom
+   quote below reads the SAME card through v1Overrides(), so the two pricing surfaces can never
+   quote one optimisation at two rates. */
+function composed(){return E.composeRates({legacy:LEGACY,ops:OPS.data,price:PRICE.data,actuals:ACTUALS,useActuals:USE_ACTUALS})}
+function blockGBP(){return composed().g.blockGBP}
+function v1Overrides(){
+  var R=composed(),o={};
+  E.CATALOG.forEach(function(c){var r=R.rows[c.id],ov={},any=false;
+    ['aspl','qc','pm','mon','unit','lead'].forEach(function(f){if(r.src[f]&&r.src[f]!=='default'&&r.src[f]!=='unset'&&r[f]!=null){ov[f]=r[f];any=true}});
+    if(r.note){ov.note=r.note;any=true}
+    if(any)o[c.id]=ov});
+  return o;
 }
-function setRate(id,field,val){
-  var row=RATES[id]||{};row[field]=val;row.t=Date.now();RATES[id]=row;
-  renderRates();renderQuote();saveRates();
-  $('#rc-state').textContent='saved · shared with every team';setTimeout(function(){$('#rc-state').textContent=''},2500);
-}
-function renderRates(){
-  var rows=effRates();
-  $('#rc-body').innerHTML=rows.map(function(r){
-    function cell(f,v,step){return '<td><span class="r-ed" data-id="'+r.id+'" data-f="'+f+'" data-step="'+(step||1)+'" title="Click to edit">'+v+'</span></td>'}
-    return '<tr>'
-      +'<td class="r-name"><span class="r-grp">'+esc(r.grp)+'</span>'+esc(r.name)+'</td>'
-      +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
-      +cell('unit','£'+r.unit,0.01)+cell('lead',r.lead)
-      +'<td>'+(function(){var a=ACTUALS[r.id];
-          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')
-            +(a.tokPerProd?(' · ≈'+fmt(Math.round(a.tokPerProd))+' actual tok/product over '+fmt(a.prodDone)+' parent products'):'')+(a.billPerProd?(' · ≈'+fmt(Math.round(a.billPerProd))+' billing tok/product'):'')
-            +(a.tokPerSku?(' · ≈'+fmt(Math.round(a.tokPerSku))+' tok/SKU over '+fmt(a.volDone)+' variants'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
-          if(a)return '<span class="r-ok" title="actuals available (×'+a.n+') but the toggle is off">confirmed</span>';
-          return r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>'})()+'</td>'
-      +'<td class="r-note"><span class="r-ed" data-id="'+r.id+'" data-f="note" data-txt="1">'+(esc(r.note)||'<span style="opacity:.4">add note…</span>')+'</span></td>'
-      +'</tr>'}).join('');
-  $('#rc-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editCell(el)}});
-  var bl=$('#rc-block');bl.value=blockGBP();
-  $('#tiers-line').textContent='Volume ladder (marginal): first 5k ×1.0 · 5–20k ×0.8 · 20–50k ×0.65 · 50k+ ×0.5';
-}
-function editCell(el){
-  if(el.__editing)return;el.__editing=1;
-  var id=el.getAttribute('data-id'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
-  var cur=isTxt?((RATES[id]||{}).note||''):String(el.textContent).replace(/[^0-9.]/g,'');
-  var in_=document.createElement('input');in_.className='r-in';if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0'}
-  in_.value=cur;el.replaceWith(in_);in_.focus();in_.select();
-  function done(commit){
-    if(commit){var v=isTxt?in_.value.trim():+in_.value;
-      if(isTxt||isFinite(v))setRate(id,f,isTxt?v:Math.max(0,v));else renderRates()}
-    else renderRates()}
-  in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
-  in_.addEventListener('blur',function(){done(true)});
-}
-$('#rc-block').addEventListener('change',function(){
-  var v=+this.value;if(!isFinite(v)||v<=0)return;
-  var g=RATES._globals||{};g.blockGBP=v;g.t=Date.now();RATES._globals=g;saveRates();renderQuote();
-});
+function effRates(){return E.rates(v1Overrides())}
 
 /* ---------------- catalogue picker ---------------- */
 function renderCatalog(){
@@ -559,13 +880,15 @@ function renderCatalog(){
     cb.onchange=function(){if(cb.checked)picks[cb.getAttribute('data-id')]=1;else delete picks[cb.getAttribute('data-id')];renderCatalog();renderQuote()}});
 }
 
-/* ---------------- the quote ---------------- */
+/* ---------------- the custom quote ---------------- */
 function currentQuote(){
-  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,skus:(MARKET&&MKROWS[MARKET])||0,rateOverrides:effOverrides(),
-    blockGBP:blockGBP(),absorbMonitoring:$('#pz-absorb').checked,refreshPct:+$('#pz-refresh').value||0,
+  var R=composed();
+  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,skus:(MARKET&&MKROWS[MARKET])||0,rateOverrides:v1Overrides(),
+    blockGBP:R.g.blockGBP,blockHours:R.g.blockH,tiers:R.g.tiers,absorbMonitoring:$('#pz-absorb').checked,refreshPct:+$('#pz-refresh').value||0,
     client:CLIENT,market:Object.keys(MKROWS).length>1?MARKET:''});
 }
 function renderQuote(){
+  if(!E)return;
   var q=currentQuote(),F=E.fmtGBP;
   $('#q-title').textContent='Quote — '+(CLIENT||'client');
   $('#q-sub').textContent=q.picks.length? q.picks.length+' optimisation'+(q.picks.length===1?'':'s')+' · '+fmt(q.volume)+' parent products'+(q.skus>q.volume?' ('+fmt(q.skus)+' SKUs)':'')+(q.market?' · '+q.market.toUpperCase():'') : 'tick an optimisation to price it';
@@ -574,24 +897,23 @@ function renderQuote(){
   h+=q.lines.map(function(l){return '<div class="q-line small"><span>'+esc(l.name)+'</span><b>'+l.hours+'h · '+F(l.tachyon)+'</b></div>'}).join('');
   h+='<div class="q-sec"><div class="qh">One-off setup</div>'
     +'<div class="q-line"><span>Team setup '+q.oneOff.hours+'h (ASPL '+q.oneOff.byRole.aspl+' · QC '+q.oneOff.byRole.qc+' · PM '+q.oneOff.byRole.pm+')</span><b>'+q.oneOff.blocks+' × '+F(q.blockGBP)+' = '+F(q.oneOff.blockCost)+'</b></div>'
-    +'<div class="q-line"><span>Tachyon processing (tiered)</span><b>'+F(q.oneOff.tachyon)+'</b></div>'
-    +'<div class="q-total"><span>One-off</span><span class="amt">'+F(q.oneOff.total)+'</span></div><div class="q-vat">+VAT</div></div>';
+    +'<div class="q-line"><span>Spark AI processing (tiered)</span><b>'+F(q.oneOff.tachyon)+'</b></div>'
+    +'<div class="q-total"><span>One-off</span><span class="amt">'+F(q.oneOff.total)+'</span></div><div class="q-vat">ex VAT</div></div>';
   h+='<div class="q-sec"><div class="qh">Ongoing monthly</div>'
     +'<div class="q-line"><span>Monitoring '+q.monthly.monHours+'h/mo'+(q.monthly.absorbed?' — absorbed':'')+'</span><b>'+(q.monthly.absorbed?'£0':q.monthly.blocks+' × '+F(q.blockGBP)+' = '+F(q.monthly.blockCost))+'</b></div>'
     +(q.monthly.refreshPct>0?'<div class="q-line"><span>New/refreshed products ~'+Math.round(q.monthly.refreshPct*100)+'%/mo</span><b>'+F(q.monthly.refreshTachyon)+'</b></div>':'')
-    +'<div class="q-total"><span>Monthly</span><span class="amt">'+F(q.monthly.total)+'</span></div><div class="q-vat">+VAT</div></div>';
+    +'<div class="q-total"><span>Monthly</span><span class="amt">'+F(q.monthly.total)+'</span></div><div class="q-vat">ex VAT</div></div>';
   h+='<div class="q-sla">⏱ Live in ~'+q.slaDays+' working days from sign-off</div>';
   if(q.draftRates)h+='<div class="q-draft">DRAFT RATES — confirm hours &amp; unit £ in the rate card before this goes near a client</div>';
   $('#q-body').innerHTML=h;
   $('#q-copy').disabled=false;$('#q-save').disabled=false;
-  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' parent products'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
+  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' parent products'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' ex VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
   var a=$('#q-brief');a.hidden=false;a.href='/workflow?brief='+b64url(brief);
 }
 ['pz-volume','pz-refresh','pz-absorb'].forEach(function(id){var el=document.getElementById(id);
   el.addEventListener('change',renderQuote);el.addEventListener('input',renderQuote)});
 $('#q-copy').addEventListener('click',function(){
-  var t=E.quoteText(currentQuote());
-  (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){ok('#q-savedok','copied — client-ready text')},function(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok('#q-savedok','copied')}catch(e){}ta.remove()});
+  copyText(E.quoteText(currentQuote()),'copied — client-ready text').then(function(){ok('#q-savedok','copied — client-ready text')});
 });
 function ok(sel,msg){$(sel).textContent=msg;setTimeout(function(){$(sel).textContent=''},2600)}
 $('#q-save').addEventListener('click',function(){
@@ -605,14 +927,15 @@ $('#q-save').addEventListener('click',function(){
     .catch(function(){ok('#q-savedok','save failed — offline?')});
 });
 function renderSaved(){
-  var ids=Object.keys(QUOTES).sort(function(a,b){return (QUOTES[b].t||0)-(QUOTES[a].t||0)});
+  if(!E)return;
+  var ids=Object.keys(QUOTES).filter(function(id){return QUOTES[id]&&typeof QUOTES[id]==='object'}).sort(function(a,b){return (QUOTES[b].t||0)-(QUOTES[a].t||0)});
   $('#sq').innerHTML=ids.length?ids.map(function(id){var s=QUOTES[id];
     var d=new Date(s.t||0);
     return '<div class="sq-card"><div class="sh"><span class="sc">'+esc(s.client||'—')+(s.market?' · '+esc(String(s.market).toUpperCase()):'')+'</span><span class="st">'+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+'</span></div>'
       +'<div class="sp">'+esc((s.names||[]).join(' + '))+' · '+fmt(s.volume)+(s.unit==='product'?' parent products'+(s.skus>s.volume?' ('+fmt(s.skus)+' SKUs)':''):' SKUs · pre-Sep-26 quote, priced per SKU')+'</div>'
       +'<div class="sm"><span>One-off <span class="a">'+E.fmtGBP(s.oneOff||0)+'</span></span><span>Monthly <span class="a">'+E.fmtGBP(s.monthly||0)+'</span></span></div>'
       +'<div class="sx"><button data-del="'+id+'" type="button">Delete</button>'+(s.draft?'<span class="r-draft" style="align-self:center">draft rates</span>':'')+'</div></div>'}).join('')
-    :'<div class="sq-empty">No saved quotes yet — build one above and hit 💾 Save.</div>';
+    :'<div class="sq-empty">No saved custom quotes yet — build one in the custom quote and hit 💾 Save.</div>';
   $('#sq').querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){
     if(!confirm('Delete this saved quote?'))return;
     delete QUOTES[b.getAttribute('data-del')];
@@ -642,7 +965,7 @@ function renderScaffolds(){
     sel.value=sc.client;
     picks={};sc.picks.forEach(function(id){picks[id]=1});
     CLIENT=sc.client;
-    loadClientVolume();
+    loadClientVolume(true);
     setTimeout(function(){ if(sc.vol&&(!(+$('#pz-volume').value))&&!MKPROD[CLIENT+'|'+MARKET]){$('#pz-volume').value=sc.vol;
         if(!COUNTING[CLIENT+'|'+MARKET])volSrc(fmt(sc.vol)+' SKUs from the account record — no live count; type the unique-product count (g:item_group_id)')}
       renderCatalog();renderQuote();
@@ -685,7 +1008,7 @@ function setTrack(bid,field,val){
 }
 function refreshActuals(){
   ACTUALS=E.actualsFromBriefs(BRIEFS,TRACK);
-  renderTrack();renderRates();renderCatalog();renderQuote();refreshActToggle();
+  renderTrack();renderCatalog();renderQuote();refreshActToggle();svRender();
 }
 function refreshActToggle(){
   var n=Object.keys(ACTUALS).length,w=$('#act-tog-wrap');
@@ -699,7 +1022,7 @@ function renderTrack(){
   $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
   renderSummary(rows);
   if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="11"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
-  var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
+  var opts=[['','— pick —']].concat(E.CATALOG.concat(E.PKG_ROWS||[]).map(function(c){return [c.id,c.name]}));
   $('#ai-body').innerHTML=rows.map(function(r){
     function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
     var head=r.manual
@@ -737,7 +1060,7 @@ function renderTrack(){
 function editTrackCell(el){
   if(el.__editing)return;el.__editing=1;
   var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
-  var cur=isTxt?String((TRACK[bid]||{})[f]||''):String((TRACK[bid]||{})[f]||'');
+  var cur=String((TRACK[bid]||{})[f]||'');
   var in_=document.createElement('input');in_.className='r-in';
   if(isTxt){in_.type='text';in_.style.width=(f==='task'?'300px':f==='client'?'130px':'160px');in_.style.textAlign='left'}
   else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
@@ -1023,16 +1346,21 @@ document.addEventListener('mousedown',function(e){var pop=$('#gpc-pop');
   if(!pop.hidden&&!pop.contains(e.target)&&!(e.target.closest&&e.target.closest('.cat-count')))gpcClose(true)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')gpcClose(false)});
 
-/* ---------------- client + volume (Feed Lab wired) ----------------
+/* ---------------- ONE STREAM PER MARKET: the parent count, extended into the services audit ----------------
    Volume = PARENT PRODUCTS (unique g:item_group_id), not variant SKUs — Ray, 10 Sep 2026:
    Tachyon generates once per unique product and the variants inherit. The Feed Lab index
-   only knows row counts, so on client/market selection the page streams the wired feed once
-   (the same £0 in-browser parser the AI Quote and KWCal use), counts distinct item_group_id
-   through the engine's parentCounter and fills the volume; the SKU rows stay beside it as
-   context. A volume typed by hand wins over a count that lands later; ⟳ re-counts on demand.
-   Counts are cached per client|market for the session. */
+   only knows row counts, so the page streams the wired feed once (the same £0 in-browser
+   parser the AI Quote and KWCal use), counts distinct item_group_id through the engine's
+   parentCounter and fills the volume; the SKU rows stay beside it as context. A volume typed
+   by hand wins over a count that lands later; ⟳ re-counts on demand.
+   SERVICES (7 Oct 2026): the SAME read now fans out — parentCounter (this custom quote), the
+   engine's needCollector (exact needs per parent product), labelguard's xmlCollector
+   (coverage, GPC scope, keywords, first-seen dates) and, only when the market has no stored
+   content-quality reading, labelguard's qualityStream. One fetch, four readings; streams run
+   one market at a time and each client|market is read once a session (cached in MKPROD/LIVE). */
 var MKPROD={};                    // 'client|market' -> {rows, products, grouped, hasGroups, ratio, when}
 var COUNTING={},VOL_MANUAL=false;
+var LIVE={},PROG={},FAILED={},STREAMQ=[],STREAMING=false;   // finished stream readings · progress · failures · the queue
 function volSrc(html){$('#pz-vol-src').innerHTML=html}
 function mktLabel(k){var p=MKPROD[CLIENT+'|'+k];
   return esc(k.toUpperCase())+' · '+(p?fmt(p.products)+' products · '+fmt(p.rows)+' SKUs':(MKROWS[k]?fmt(MKROWS[k])+' SKUs':'not scanned yet'))}
@@ -1053,30 +1381,67 @@ function countParents(client,mkt,force){
   var key=client+'|'+mkt;
   if(MKPROD[key]){applyCount(client,mkt,force);return}
   if(COUNTING[key])return;
-  if(window.__feedFail||!window.FeedAudit||!FeedAudit.createParser||!E.parentCounter){
-    volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · the parent-product count needs the live worker (feed parser missing) — type the unique-product count');return}
-  COUNTING[key]=1;$('#pz-count').disabled=true;
-  volSrc('counting parent products in the live feed… ('+fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan)');
-  var pc=E.parentCounter(FeedAudit.normKey),header=false,parser=null;
-  function onRow(r){if(!header){header=true;pc.header(r);return}pc.row(r)}
-  function mkParser(t){if(/^\s*</.test(t)){if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh');return FeedAudit.createXmlParser(onRow)}return FeedAudit.createParser(onRow)}
-  function finish(){var res=pc.result();res.when=Date.now();MKPROD[key]=res;delete COUNTING[key];$('#pz-count').disabled=false;
-    if(res.rows>0)MKROWS[mkt]=res.rows;   // the live stream is fresher than the scan index
-    applyCount(client,mkt,force)}
-  fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(res){
-    if(!res.ok)throw new Error('feed proxy said '+res.status);
-    var reader=res.body.getReader(),dec=new TextDecoder();
-    function step(){return reader.read().then(function(x){
-      if(x.done){if(parser){parser.push(dec.decode());parser.end()}finish();return}
-      var chunk=dec.decode(x.value,{stream:true});
-      if(!parser){if(!chunk.trim())return step();parser=mkParser(chunk)}
-      parser.push(chunk);return step()})}
-    return step();
-  }).catch(function(e2){delete COUNTING[key];$('#pz-count').disabled=false;
-    if(client!==CLIENT||mkt!==MARKET)return;
-    volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · live count failed ('+esc((e2&&e2.message)||e2)+') — type the unique-product count')});
+  if(!FA||!FA.createParser||!E||!E.parentCounter){
+    if(!FAILED[key]){FAILED[key]='the feed parser did not load — hard-refresh';svRender()}
+    if(client===CLIENT&&mkt===MARKET)volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · the parent-product count needs the live worker (feed parser missing) — type the unique-product count');return}
+  COUNTING[key]={force:!!force};delete FAILED[key];
+  if(client===CLIENT&&mkt===MARKET){$('#pz-count').disabled=true;volSrc('counting parent products in the live feed… ('+fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan)')}
+  STREAMQ.push(key);svRender();runStreams();
 }
-function loadClientVolume(){
+function runStreams(){
+  if(STREAMING||!STREAMQ.length)return;
+  var key=STREAMQ.shift(),i=key.indexOf('|'),client=key.slice(0,i),mkt=key.slice(i+1);
+  STREAMING=true;
+  streamOne(client,mkt,key).then(function(res){onStreamed(key,client,mkt,res)},function(e2){onStreamFail(key,client,mkt,e2)})
+    .then(function(){STREAMING=false;runStreams()});
+}
+function streamOne(client,mkt,key){
+  var g=/-fb$/.test(mkt);   // a Meta feed is only ever counted (the services audit is Google Shopping only)
+  return Promise.all([g?null:PZLOAD.lg().catch(function(){return null}),g?null:qFetch(client,mkt)]).then(function(a){
+    var lg=a[0],q=a[1];
+    var pc=E.parentCounter(FA.normKey),col={nc:null,xc:null,qs:null};
+    if(lg){
+      try{col.nc=E.needCollector(lg,AR,{})}catch(e){}
+      try{col.xc=lg.xmlCollector({client:client,market:mkt})}catch(e){}
+      if(!(q&&q.attrs)){try{var pf=lg.profileFor(client,PROF.overrides);col.qs=lg.qualityStream({FA:FA,client:client,market:mkt,expected:pf.expected,waived:pf.waived})}catch(e){}}
+    }
+    // the live header is read only when it is an Array — a parser that hands a row NUMBER there must
+    // never be mistaken for one; a collector that throws on a row is dropped, never the count
+    function fan(r,h){h=Array.isArray(h)?h:undefined;pc.row(r,h);
+      for(var k in col){if(col[k]){try{col[k].onRow(r,h)}catch(e){col[k]=null}}}}
+    return fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(res){
+      if(!res.ok)throw new Error('feed proxy said '+res.status);
+      var total=+res.headers.get('x-feed-bytes')||0,got=0,last=0,reader=res.body.getReader(),dec=new TextDecoder(),parser=null;
+      function mkParser(t){if(/^\s*</.test(t)){if(!FA.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh');return FA.createXmlParser(fan)}return FA.createParser(fan)}
+      function finish(){var out={pc:pc.result(),t:Date.now(),nc:null,xc:null,qs:null};
+        ['nc','xc','qs'].forEach(function(k){if(col[k]){try{out[k]=col[k].finish()}catch(e){out[k]=null}}});
+        return out}
+      function step(){return reader.read().then(function(x){
+        if(x.done){if(parser){parser.push(dec.decode());parser.end()}return finish()}
+        got+=x.value.length;var now=Date.now();
+        if(now-last>350){last=now;PROG[key]={got:got,total:total};svProgress()}
+        var chunk=dec.decode(x.value,{stream:true});
+        if(!parser){if(!chunk.trim())return step();parser=mkParser(chunk)}
+        parser.push(chunk);return step()})}
+      return step();
+    });
+  });
+}
+function onStreamed(key,client,mkt,res){
+  if(!res||!res.pc||!res.pc.rows)return onStreamFail(key,client,mkt,new Error('the live read returned no products — check the feed and read it again'));
+  var force=COUNTING[key]&&COUNTING[key].force;delete COUNTING[key];delete PROG[key];
+  var p=res.pc;p.when=Date.now();MKPROD[key]=p;LIVE[key]=res;
+  if(client===CLIENT){if(p.rows>0)MKROWS[mkt]=p.rows;$('#pz-count').disabled=false}
+  applyCount(client,mkt,force);svRender();
+}
+function onStreamFail(key,client,mkt,e2){
+  delete COUNTING[key];delete PROG[key];FAILED[key]=String((e2&&e2.message)||e2);
+  if(client===CLIENT){$('#pz-count').disabled=false;
+    if(mkt===MARKET)volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · live count failed ('+esc(FAILED[key])+') — type the unique-product count')}
+  svRender();
+}
+// the custom quote counts its market when it is open, already read, or the services audit is streaming it anyway
+function loadClientVolume(force){
   CLIENT=$('#pz-client').value;MKROWS={};MARKET='';VOL_MANUAL=false;
   $('#pz-mkt-wrap').hidden=true;$('#pz-count').hidden=true;volSrc('');
   fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
@@ -1086,35 +1451,1098 @@ function loadClientVolume(){
     var ks=Object.keys(MKROWS).sort();
     if(ks.length>1){$('#pz-mkt-wrap').hidden=false;MARKET=ks.indexOf('gb')>=0?'gb':ks[0];renderMkts()}
     else if(ks.length===1)MARKET=ks[0];
-    if(MARKET){$('#pz-count').hidden=false;$('#pz-volume').value=MKROWS[MARKET]||0;countParents(CLIENT,MARKET,false)}
+    if(MARKET){$('#pz-count').hidden=false;$('#pz-volume').value=MKROWS[MARKET]||0;
+      var key=CLIENT+'|'+MARKET,svc=SV.mode==='live'&&SV.client===CLIENT&&SV.mkts.indexOf(MARKET)>=0;
+      if(force||MKPROD[key]||COUNTING[key]||secOpen('cq')||svc)countParents(CLIENT,MARKET,false);
+      else volSrc(fmt(MKROWS[MARKET]||0)+' SKUs on the Feed Lab scan · ⟳ count reads the live feed for the parent-product count')}
     else volSrc('no feed wired for this client — enter the volume in parent products (unique g:item_group_id)');
     renderQuote();
   });
 }
-$('#pz-client').addEventListener('change',loadClientVolume);
+$('#pz-client').addEventListener('change',function(){loadClientVolume(true)});
 $('#pz-mkt').addEventListener('change',function(){MARKET=this.value;VOL_MANUAL=false;$('#pz-volume').value=MKROWS[MARKET]||0;countParents(CLIENT,MARKET,false);renderQuote()});
-$('#pz-count').addEventListener('click',function(){if(!CLIENT||!MARKET)return;delete MKPROD[CLIENT+'|'+MARKET];VOL_MANUAL=false;countParents(CLIENT,MARKET,true)});
+$('#pz-count').addEventListener('click',function(){if(!CLIENT||!MARKET)return;delete MKPROD[CLIENT+'|'+MARKET];delete LIVE[CLIENT+'|'+MARKET];VOL_MANUAL=false;countParents(CLIENT,MARKET,true)});
 $('#pz-volume').addEventListener('input',function(){VOL_MANUAL=true});
 
+/* ---------------- collapsed sections (Roadmap, the custom quote, AI briefs) ----------------
+   the heading carries its own ▸ Show toggle — the skim view on a phone hands a tap to it */
+var SECS=lsGet('fcc-pz-sec',{});
+function secOpen(k){return !!SECS[k]}
+function secSet(k,on){SECS[k]=on?1:0;lsSet('fcc-pz-sec',SECS);secApply()}
+function secApply(){
+  $$('.sec-tog').forEach(function(b){var k=b.getAttribute('data-sec'),on=secOpen(k),body=document.getElementById('sec-'+k);
+    b.setAttribute('aria-expanded',on?'true':'false');b.textContent=on?'▾ Hide':'▸ Show';if(body)body.hidden=!on});
+}
+$$('.sec-tog').forEach(function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-sec'),on=!secOpen(k);secSet(k,on);
+  if(on&&k==='cq'&&CLIENT&&MARKET&&!MKPROD[CLIENT+'|'+MARKET])countParents(CLIENT,MARKET,false);
+  if(on)svRender()})});
+secApply();
+
+/* =====================================================================================================
+   SERVICES & PRICER (7 Oct 2026) — the transformed module. One client × its Google Shopping markets:
+   an AUDIT read first from the Golden Record stores (instant, with honest bounds) and then from the live
+   feed (exact needs per parent product, the stream above), priced as two cumulative tiers on the
+   products that actually NEED each line (PricerEngine.packageQuote), a debrief kit with a client-safe
+   guard, the services rollout per client, the delivery roadmap, and ONE rate card split three ways —
+   ASPL and London AM enter their hours (pricerops), Management owns the sell price (pricerprice) and
+   what the work costs (pricercost, never read for an AM signin). Every figure is ex VAT; one-off and
+   monthly are always apart; no yearly money. A gap is never a zero: an unmeasured need is UNKNOWN and an
+   unset price UNPRICED, both named with their fix and kept out of every total.
+   ===================================================================================================== */
+var ME={email:'',owner:false,modules:null,name:'',clients:null},MGMT=false;
+var EST={},PTE={},ARRV=[],PROF={defaults:{},overrides:{},industryMap:{}},AIQ={},AIQS={},HRS={},CAD=[],ASKTO={},FBN={};
+var SVQ={},SVQP={},SVPS={},SVPSP={};      // stored content quality + its fetch, the PDP sample + its fetch — per client|mkt
+var PQ={};                                // option -> the package quote for the current build
+var SV={client:'',mode:lsGet('fcc-svc-src','live'),mkts:[],allMkts:[],lang:{},typedP:{},file:null,audits:[],
+  lineOpts:{},targets:null,aimSources:null,popts:null,hlSrc:null,
+  tone:lsGet('fcc-svc-tone','direct'),dbSrc:'build',dbEdited:false,dbBase:'',dbToFor:null,addTo:null,version:null,tab:lsGet('fcc-svc-tab','aspl'),mine:true,spAll:false,silent:false,boot:false};
+// ONE set of Customise defaults — a new client, ↺ Reset and a loaded option all start from it, so nothing the AM
+// set for one client (retainer hours, monitoring absorbed, a test package, a language group …) reprices the next
+function custDefaults(){
+  SV.lineOpts={};SV.aimSources=null;SV.targets={hlTarget:6,descTarget:500,ptMinDepth:3};
+  SV.popts={absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false,tests:0};
+  SV.hlSrc={desc:true,feed:true,pdp:false,reviews:false};
+}
+custDefaults();
+if(['stored','live','file'].indexOf(SV.mode)<0)SV.mode='live';
+
+/* ---- the six /api/pricer/* stores: whole-map kvmerge saves under X-Sync-Base, retried with backoff.
+   An edit made while a save is in flight is re-applied on top of the merged map the server answers,
+   so a colleague's key that arrived meanwhile is never deleted by our next save. The server refuses a
+   key whose stored value was stamped after our X-Sync-Base (a colleague changed it since we loaded) and
+   keeps theirs — it lists every such key in _rejected, including keys WE never touched (our whole-map
+   save still carried their old value), so only the keys in our own dirty set (S.dk) are ever reported.
+   A 400 (too many keys), 403 (not allowed) or 413 (the store is full) is HARD: said once, never retried. */
+function mkStore(name){
+  var S={name:name,data:{},base:0,denied:false,loaded:false,err:null,inflight:false,pend:null,dirty:false,wait:2000,timer:null,state:'',dk:{},sent:null};
+  S.load=function(){
+    return fetch('/api/pricer/'+name).then(function(r){
+      if(r.status===403){S.denied=true;S.loaded=true;return S}
+      if(!r.ok)throw new Error(name+' answered '+r.status);
+      var b=+r.headers.get('X-Sync-Base')||Date.now();
+      return r.json().then(function(m){
+        // a reload never lands on an edit still waiting to be saved
+        if(m&&typeof m==='object'&&!Array.isArray(m)&&!S.inflight&&!S.pend&&!S.dirty){delete m._rejected;S.data=m;S.base=b}
+        S.loaded=true;return S});
+    }).catch(function(e){S.err=String((e&&e.message)||e);S.loaded=true;return S});
+  };
+  // several keys in ONE save (a proposal's options land together, never one PUT each)
+  S.setMany=function(m){
+    Object.keys(m).forEach(function(k){var v=m[k];S.dk[k]=1;
+      if(v==null)delete S.data[k];else S.data[k]=v;
+      if(S.inflight){S.pend=S.pend||{};S.pend[k]=v==null?null:v}});
+    S.dirty=true;S.push();
+  };
+  S.set=function(k,v){var m={};m[k]=v;S.setMany(m)};
+  S.push=function(){
+    if(S.inflight)return;
+    clearTimeout(S.timer);S.inflight=true;S.state='saving…';svSaveState();
+    // the keys THIS save carries a change to — a retry keeps them (sent stays until a save lands)
+    S.sent=Object.assign(S.sent||{},S.dk);S.dk={};
+    fetch('/api/pricer/'+name,{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(S.base)},body:JSON.stringify(S.data)})
+      .then(function(r){
+        if(r.status===403||r.status===400||r.status===413)return r.json().catch(function(){return{}}).then(function(j){var er=new Error(j.error||('refused ('+r.status+')'));er.hard=true;throw er});
+        if(!r.ok)throw new Error('save failed ('+r.status+')');
+        var b=+r.headers.get('X-Sync-Base')||Date.now();
+        return r.json().then(function(m){return{m:m,b:b}});
+      })
+      .then(function(x){
+        S.inflight=false;S.wait=2000;S.base=x.b;
+        var mine=S.sent||{};S.sent=null;
+        var rej=((x.m&&x.m._rejected)||[]).filter(function(r){return r&&mine[r.k]});
+        if(x.m&&typeof x.m==='object'&&!Array.isArray(x.m)){delete x.m._rejected;S.data=x.m}
+        var p=S.pend;S.pend=null;
+        if(p){Object.keys(p).forEach(function(k){if(p[k]==null)delete S.data[k];else S.data[k]=p[k]})}
+        S.dirty=!!p;
+        S.state=rej.length?'⚠ '+rej[0].why:'saved · shared with the team';svSaveState();
+        if(rej.length)toast(storeLabel(name,rej[0].k)+' — '+rej[0].why+(rej.length>1?' (+'+(rej.length-1)+' more)':''));
+        if(p)S.push();else svRender();
+      })
+      .catch(function(e){
+        S.inflight=false;
+        if(e.hard){S.state='⚠ '+e.message;S.pend=null;S.dirty=false;S.sent=null;S.dk={};toast(e.message);S.load().then(svRender);svSaveState();return}
+        S.state='⚠ Not saved yet — retrying in '+Math.round(S.wait/1000)+'s';svSaveState();
+        S.timer=setTimeout(S.push,S.wait);S.wait=Math.min(60000,S.wait*2);
+      });
+  };
+  return S;
+}
+// a refused key, named the way the AM knows it: an option by its SVC reference, a cell by its row and field
+function storeLabel(name,k){
+  if(name==='proposals'){var q=PROPS.data[k];return 'Option '+((q&&q.ref)||k)}
+  if(name==='rollout')return 'Rollout · '+k;
+  return k.replace(/^_[gc]\|/,'').replace('|',' · ');
+}
+var OPS=mkStore('ops'),PRICE=mkStore('price'),COST=mkStore('cost'),PROPS=mkStore('proposals'),ROLL=mkStore('rollout'),RMAP=mkStore('roadmap');
+var STORES={ops:OPS,price:PRICE,cost:COST,proposals:PROPS,rollout:ROLL,roadmap:RMAP};
+function svSaveState(){
+  var bad=Object.keys(STORES).map(function(k){return STORES[k]}).filter(function(S){return /^⚠/.test(S.state)})[0];
+  var el=$('#rc-state');if(el)el.textContent=bad?bad.state:((OPS.state||PRICE.state||COST.state)||'');
+  var sp=$('#sp-state');if(sp)sp.textContent=bad?bad.state:(PROPS.state||'');
+  var ro=$('#ro-state');if(ro)ro.textContent=bad?bad.state:(ROLL.state||RMAP.state||'');
+}
+
+/* ---- small helpers ---- */
+var GBP=function(n){return E.fmtGBP(Math.round((+n||0)*100)/100)};
+function norm(s){return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]/g,'')}
+function meName(){return ME.name||(ME.email?ME.email.split('@')[0].replace(/^./,function(c){return c.toUpperCase()}):'')}
+function rid(n){var s='';while(s.length<(n||10))s+=Math.random().toString(36).slice(2);return s.slice(0,n||10)}
+function fmtDate(t){if(!t)return '—';var d=new Date(t);return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getFullYear()}
+function ago(t){if(!t)return '';var s=(Date.now()-t)/1000;if(s<90)return 'just now';if(s<5400)return Math.round(s/60)+' min ago';if(s<172800)return Math.round(s/3600)+'h ago';return Math.round(s/86400)+'d ago'}
+// a section is left alone while somebody is TYPING in it (a checkbox or a select that just changed is not typing)
+function busy(el){var a=document.activeElement;return !!(el&&a&&el.contains(a)&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&/^(text|search|number|email|date|url|tel)$/.test(a.type))))}
+function tOf(x){return x==null?null:(typeof x==='object'?(+x.t||null):(+x||null))}
+function hoursOf(c){if(!c)return null;var k=norm(c);if(HRS[c])return HRS[c];
+  var hit=Object.keys(HRS).filter(function(n){return norm(n)===k})[0]||Object.keys(HRS).filter(function(n){var m=norm(n);return m&&(m.indexOf(k)===0||k.indexOf(m)===0)})[0];
+  return hit?HRS[hit]:null}
+function inScope(c){return !ME.clients||ME.clients.some(function(x){return norm(x)===norm(c)})}
+function aimRaw(){return (AIQ&&AIQ.ratecard&&AIQ.ratecard.aim)||null}
+function curClient(){return SV.mode==='file'?((SV.file&&SV.file.name)||''):SV.client}
+// ONE normaliser for a prospect's name — typed, or read off the file name: no ':' or '|', no leading '_' / '~'
+// (the store refuses both), trimmed, at most 60 characters
+function prospectName(s){return String(s==null?'':s).replace(/[:|]/g,' ').replace(/\s+/g,' ').replace(/^[\s_~]+/,'').slice(0,60).trim()}
+function propFirst(pid){var k=pid&&Object.keys(PROPS.data).filter(function(k){var q=PROPS.data[k];return q&&q.prop&&q.prop.id===pid&&!q.deleted})[0];return k?PROPS.data[k]:null}
+function wfCat(k){return {title:'title',keywords:'keyword',ptype:'product_type',attr_rule:'technical'}[k]||'data'}
+function gwWord(g,n){return g==='sku'?(n===1?'value':'values'):g==='none'?(n===1?'attribute':'attributes'):(n===1?'product':'products')}
+
+/* ---- the stored lane's per-market reads ---- */
+function qFetch(c,m){var k=c+'|'+m;if(SVQP[k])return SVQP[k];
+  SVQP[k]=fetch('/api/golden/quality?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m))
+    .then(function(r){return r.ok?r.json():null}).then(function(j){SVQ[k]=(j&&j.quality)||null;return SVQ[k]})
+    .catch(function(){SVQ[k]=null;return null});
+  return SVQP[k]}
+function pdpFetch(c,m){var k=c+'|'+m;if(SVPSP[k])return SVPSP[k];
+  SVPSP[k]=fetch('/api/golden/pdp?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m))
+    .then(function(r){return r.ok?r.json():null}).then(function(j){SVPS[k]=(j&&j.sample)||null;return SVPS[k]})
+    .catch(function(){SVPS[k]=null;return null});
+  return SVPSP[k]}
+function storedAudit(c,m){
+  var k=c+'|'+m,D=(ARRV.filter(function(f){return f&&f.client===c&&f.mkt===m})[0]||{}).dob||null;
+  return E.auditStored({client:c,mkt:m,G:EST[k],Q:SVQ[k],PT:PTE[k],D:D,PR:PROF,PS:SVPS[k],now:Date.now()},LG,AR);
+}
+// the AUDIT a market is priced on: stored, then (Live) merged with its stream, or a typed parent count
+function auditFor(c,m){
+  var st=storedAudit(c,m),k=c+'|'+m,L=LIVE[k];
+  if(!st)return null;
+  if(SV.mode==='live'&&L)return E.auditMerge(st,{pc:L.pc,nc:L.nc,xc:L.xc,qs:L.qs,src:'live',client:c,mkt:m,PR:PROF},LG,AR,L.t);
+  var tp=+SV.typedP[k];
+  if(tp>0&&st.P==null)return E.auditMerge(st,{typedP:tp,src:'live',client:c,mkt:m,PR:PROF},LG,AR,Date.now());
+  return st;
+}
+function fileAudit(){
+  var F=SV.file;if(!F||!F.res)return null;
+  return E.auditMerge(null,{pc:F.res.pc,nc:F.res.nc,xc:F.res.xc,qs:F.res.qs,src:'file',industry:F.industry,client:F.name||'Prospect',mkt:F.mkt,PR:PROF},LG,AR,F.t);
+}
+function popts(){var o={};Object.keys(SV.popts).forEach(function(k){o[k]=SV.popts[k]});return o}
+function svBuild(){
+  var c=curClient(),list=[];
+  if(SV.mode==='file'){var fa=fileAudit();if(fa)list=[{mkt:fa.mkt,audit:fa}]}
+  else SV.mkts.forEach(function(m){var a=auditFor(c,m);if(a)list.push({mkt:m,audit:a})});
+  SV.audits=list;PQ={};
+  if(!list.length)return;
+  var contracted={};list.forEach(function(x){contracted[x.mkt]=E.contractedFrom(AIQS,c,x.mkt)});
+  var spec={client:c,markets:list.map(function(x){return {mkt:x.mkt,audit:x.audit,lang:SV.lang[x.mkt]||E.langOf(x.mkt)}}),
+    rates:composed(),aimRates:aimRaw(),aimSources:SV.aimSources||undefined,lineOpts:SV.lineOpts,roadmap:RMAP.data,actuals:ACTUALS,
+    contracted:contracted,targets:SV.targets,opts:popts()};
+  ['go','go+ar','ar'].forEach(function(o){PQ[o]=E.packageQuote(Object.assign({},spec,{option:o}),LG)});
+}
+function arEligible(){var g=PQ.go;return !!g&&(SV.popts.offerAr||(g.perMarket.length>0&&g.perMarket.every(function(m){return m.projected&&m.projected.met})))}
+function shownOpts(){return PQ.go?(['go','go+ar'].concat(arEligible()?['ar']:[])):[]}
+
+/* ---- render: throttled, every section from the same build; a section being typed in is left alone ---- */
+var SVR=null;
+function svRender(){if(SVR||!SV.boot)return;SVR=setTimeout(function(){SVR=null;svRenderNow()},40)}
+function svRenderNow(){
+  if(!E||!LG||!SV.boot)return;
+  var parts=[['build',svBuild],['hero',renderHero],['steps',renderSteps],['tiers',renderTiers],['cust',renderCust],['debrief',renderDebrief],
+    ['rollout',renderRollout],['roadmap',renderRoadmap],['rates',renderRateCard],['saved',renderSaved2],
+    // the custom quote reads the SAME composed card that ⧉ Copy quote and 💾 Save re-read — a store load, a rate-card
+    // edit, a Management block-£ change or the 90 s poll redraws it too, so the screen never disagrees with the copy
+    ['cq',function(){renderCatalog();renderQuote()}]];
+  parts.forEach(function(p){try{p[1]()}catch(e){if(window.console)console.error('pricer '+p[0],e)}});
+  window.__PZX={SV:SV,PQ:PQ,LIVE:LIVE,FAILED:FAILED,COUNTING:COUNTING,stores:STORES,ME:ME,MGMT:MGMT,render:svRenderNow,composed:composed};
+}
+function svProgress(){if(SV.boot)renderHero()}
+
+/* ---- 0. the client bar ---- */
+function clientList(){
+  var s={};Object.keys(EST).forEach(function(k){var e=EST[k];if(e&&e.client)s[e.client]=1});
+  CLIENTS.forEach(function(c){s[c]=1});
+  return Object.keys(s).filter(inScope).sort(function(a,b){return a.localeCompare(b)});
+}
+function marketsOf(c){
+  var out=[];Object.keys(EST).forEach(function(k){var e=EST[k];if(e&&e.client===c&&e.mkt&&!/-fb$/.test(e.mkt)&&out.indexOf(e.mkt)<0)out.push(e.mkt)});
+  return out.sort(function(a,b){return (a==='gb'?-1:b==='gb'?1:0)||(a<b?-1:a>b?1:0)});
+}
+function svLoadClient(c,mkts){
+  // another client starts from the defaults — the language groups too (they are keyed by market code only)
+  if(norm(c)!==norm(SV.client)){custDefaults();SV.lang={}}
+  SV.client=c;lsSet('fcc-svc-client',c);SV.addTo=null;SV.version=null;SV.dbEdited=false;SV.dbSrc='build';
+  SV.allMkts=marketsOf(c);
+  var want=(mkts||[]).filter(function(m){return SV.allMkts.indexOf(m)>=0});
+  SV.mkts=want.length?want:(SV.allMkts.length?[SV.allMkts.indexOf('gb')>=0?'gb':SV.allMkts[0]]:[]);
+  var sel=$('#brand');
+  if(sel.value!==c){SV.silent=true;sel.value=c;try{sel.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}SV.silent=false}
+  if(FBN[c]==null)fetch('/api/feed/markets?client='+encodeURIComponent(c)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var mk=(d&&d.markets)||{};FBN[c]=Object.keys(mk).filter(function(k){return /-fb$/.test(k)}).length;
+    // a wired Google market the estate has not listed yet still belongs on the bar
+    Object.keys(mk).forEach(function(k){if(!/-fb$/.test(k)&&SV.allMkts.indexOf(k)<0&&c===SV.client)SV.allMkts.push(k)});
+    renderHero()});
+  SV.mkts.forEach(function(m){fetchMarket(c,m)});
+  // the custom quote follows the client on the bar (the scaffolds still load their own)
+  var pz=$('#pz-client');
+  if(pz&&Array.prototype.some.call(pz.options,function(o){return o.value===c})&&pz.value!==c){pz.value=c;loadClientVolume(false)}
+  svKick();svRender();
+}
+function fetchMarket(c,m){Promise.all([qFetch(c,m),pdpFetch(c,m)]).then(svRender)}
+function svKick(){if(SV.mode!=='live')return;SV.mkts.forEach(function(m){countParents(SV.client,m,false)})}
+function mStatus(c,m){
+  var k=c+'|'+m;
+  if(COUNTING[k]){var p=PROG[k];return {cls:'run',t:'counting…'+(p&&p.total?' '+Math.min(99,Math.round(p.got/p.total*100))+'%':(p?' '+(p.got/1048576).toFixed(1)+' MB':''))}}
+  if(FAILED[k])return {cls:'fail',t:'failed'};
+  if(SV.mode==='live'&&LIVE[k])return {cls:'live',t:'live ✓'};
+  var e=EST[k];
+  if(!e||!e.cov)return {cls:'',t:'never scanned'};
+  return {cls:'',t:'stored'};
+}
+function renderHero(){
+  var c=SV.client,file=SV.mode==='file';
+  $$('#svc-src button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-src')===SV.mode);b.setAttribute('aria-pressed',b.getAttribute('data-src')===SV.mode?'true':'false')});
+  $('#svc-cl-wrap').hidden=file;$('#svc-pros').hidden=!file;
+  var mk=$('#svc-mk'),note=[];
+  if(file){
+    var F=SV.file;
+    mk.innerHTML=F?'<span class="mgrp on"><span class="mchip">'+esc(String(F.mkt||'').toUpperCase())+' <span class="st '+(F.status==='done'?'live':F.status==='fail'?'fail':'run')+'">'+esc(F.status==='done'?'read ✓ · '+F.fname:F.status==='fail'?'failed — '+F.err:'reading… '+(F.pct!=null?F.pct+'%':''))+'</span></span></span>'
+      :'<span class="svc-hint">Choose the prospect\'s feed file — CSV, TSV or XML. It is read in this browser and never uploaded.</span>';
+    if(ME.clients)note.push('<span class="pros-scope">Prospect proposals need an unscoped signin — your signin covers '+esc(ME.clients.join(', '))+', so a prospect can be audited here but not saved. Ask Ray to save it.</span>');
+    if(SV.version||SV.addTo){var tgt=PROPS.data[SV.version]||propFirst(SV.addTo);
+      if(tgt&&(!F||F.status!=='done'||norm(F.name)!==norm(tgt.client)))note.push('<span class="pros-scope">Re-read '+esc(tgt.client)+'\'s feed file to '+(SV.version?'version this option':'add options to this proposal')+'.</span>')}
+  }else{
+    mk.innerHTML=SV.allMkts.length?SV.allMkts.map(function(m){
+      var on=SV.mkts.indexOf(m)>=0,s=mStatus(c,m),lg=SV.lang[m]||E.langOf(m);
+      var langs=['en','de','fr','nl','es','it','da','sv','fi','pl','pt','cs','sk','ro','el'];if(langs.indexOf(lg)<0)langs.push(lg);
+      return '<span class="mgrp'+(on?' on':'')+'"><button type="button" class="mchip" data-m="'+esc(m)+'" aria-pressed="'+(on?'true':'false')+'" title="'+(on?'In the proposal — click to leave it out':'Add this market to the proposal')+'">'
+        +esc(m.toUpperCase())+' <span class="st '+s.cls+'">'+esc(s.t)+'</span></button>'
+        +(on?'<select class="mlang" data-lang="'+esc(m)+'" title="Language group — markets sharing a language re-use the lead market\'s copy" aria-label="Language group for '+esc(m.toUpperCase())+'">'
+          +langs.map(function(l){return '<option value="'+esc(l)+'"'+(l===lg?' selected':'')+'>'+esc(/^m:/.test(l)?l.slice(2).toUpperCase()+' own':l.toUpperCase())+'</option>'}).join('')+'</select>':'')+'</span>'}).join('')
+      :'<span class="svc-hint">'+(c?'No Google Shopping feed wired for '+esc(c)+' — use ⇪ File for a prospect, or wire the feed first.':'Pick a client.')+'</span>';
+    if(FBN[c])note.push('<span>'+FBN[c]+' Meta feed'+(FBN[c]===1?'':'s')+' not shown — services price Google Shopping only</span>');
+    SV.mkts.forEach(function(m){var k=c+'|'+m;
+      if(FAILED[k]){var st=storedAudit(c,m);if(!st||st.P==null)note.push('<label class="tp" title="The live count failed ('+esc(FAILED[k])+') — type the parent-product count (distinct g:item_group_id)">'+esc(m.toUpperCase())+' parents <input class="fld tp-in" type="number" min="0" step="1" data-tp="'+esc(m)+'" value="'+(SV.typedP[k]||'')+'" placeholder="type the count"></label>')}});
+    if(SV.mode==='stored'&&SV.mkts.some(function(m){return !LIVE[c+'|'+m]}))note.push('<span>Stored readings only — <button type="button" class="lnk" data-act="golive">⚡ go live</button> for exact counts</span>');
+  }
+  var nt=$('#svc-note');if(!busy(nt))nt.innerHTML=note.join('');
+  // the client's stage, AM and next step
+  var cl=curClient(),st=E.rolloutStage(ROLL.data[cl],optionsOf(cl),auditsOfClient(cl)),h=hoursOf(cl),r=ROLL.data[cl]||{};
+  $('#svc-stage').innerHTML=cl?('<span class="stg '+stgCls(st.stage)+'" title="Derived from the proposals and the rollout record'+(st.since?' · since '+fmtDate(st.since):'')+'">'+esc(st.stage)+'</span>'
+    +(h&&h.am?'<span title="Account AM (Task Manager)">AM '+esc(h.am)+'</span>':'')
+    +(r.next?'<span class="nx'+(r.nextDue&&r.nextDue<todayYmd()?' late':'')+'" title="Next step (Services rollout)">→ '+esc(r.next)+(r.nextDue?' · '+esc(r.nextDue):'')+'</span>':'')):'';
+  var ds=$('#aud-src');if(ds)ds.textContent=SV.audits.length?SV.audits.map(function(x){return x.mkt.toUpperCase()+' '+(x.audit.src==='live'?'live':x.audit.src==='file'?'file':'stored')}).join(' · '):'';
+  syncUrl();
+}
+function stgCls(s){return 's-'+norm(s)}
+function todayYmd(){return new Date().toISOString().slice(0,10)}
+function syncUrl(){
+  try{if(SV.mode==='file'||!SV.client)return;
+    var u=new URL(location.href);u.searchParams.set('client',SV.client);u.searchParams.set('market',SV.mkts.join(','));
+    history.replaceState(null,'',u.pathname+'?'+u.searchParams.toString()+u.hash)}catch(e){}
+}
+function auditsOfClient(c){var out=[];Object.keys(EST).forEach(function(k){var e=EST[k];if(e&&e.client===c&&e.t&&e.cov)out.push({t:{cov:e.t}})});return out}
+function optionsOf(c){var out=[];Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&typeof q==='object'&&!q.deleted&&norm(q.client)===norm(c))out.push(q)});return out}
+
+/* ---- 1. the audit stepper: eight readings per market, each with its source or why it is missing ---- */
+function nm(why){return '<span class="nm">not measured — '+esc(why)+'</span>'}
+function why(a,re,def){var m=(a.missing||[]).filter(function(s){return re.test(s)})[0];return m||def}
+var STEPS=[
+  ['Read the feed','SKUs, parent products, variants per product',function(a,m){
+    if(a.S==null)return nm(why(a,/never scanned/,'never scanned'));
+    var k=curClient()+'|'+m;
+    return '<b>'+fmt(a.S)+'</b> SKUs · '+(a.P!=null?'<b>'+fmt(a.P)+'</b> parents · ×'+(a.r||1).toFixed(2)+(a.pSrc==='typed'?' <span class="est est-sku">typed</span>':'')
+      :(COUNTING[k]?'parents counting…':'<span class="nm">parents not counted yet</span>'))}],
+  ['Golden coverage','re-scored under the brand\'s current profile',function(a){
+    if(!a.golden||a.golden.score==null)return nm(why(a,/never scanned/,'never scanned'));
+    var gs=a.golden.gs||{};
+    return '<b class="sc '+band(a.golden.score)+'">'+a.golden.score+'</b> · req '+((gs.reqMissing||[]).length)+' · cond '+((gs.condMissing||[]).length)+' · rec '+((gs.recMissing||[]).length)+' missing'}],
+  ['Content quality','rules read off Google\'s own spec pages',function(a){
+    if(a.qScore==null)return nm(why(a,/content-quality/,'no content-quality reading yet'));
+    return '<b class="sc '+band(a.qScore)+'">'+a.qScore+'</b> · '+fmt(a.qFails||0)+' rule'+(a.qFails===1?'':'s')+' failing'}],
+  ['Taxonomy','product type depth and GPC depth',function(a){
+    var dp=a.ptDepth,out=[];
+    if(dp)out.push('PT avg <b>'+(+dp.avg||0).toFixed(1)+'</b> levels · '+Math.round((+dp.pct['1']||0)+(+dp.pct['2']||0))+'% at ≤2');
+    if(a.gpcDepth!=null)out.push('GPC <b>'+a.gpcDepth.toFixed(1)+'</b>');
+    return out.length?out.join(' · '):nm(why(a,/product type depth/,'product type depth not profiled'))}],
+  ['Keywords','products carrying a keyword phrase in product_type 2–10',function(a){
+    var cv=a.golden&&a.golden.cov;
+    if(!cv||!Object.prototype.hasOwnProperty.call(cv,'keywords'))return nm(why(a,/keyword slots/,'keyword slots not read on this scan'));
+    return cv.keywords==null?'<b>0%</b> · no keyword slots in this feed':'<b class="sc '+band(cv.keywords)+'">'+cv.keywords+'%</b> keyworded'}],
+  ['AI-readiness','the agentic ladder + Google\'s six conversational attributes',function(a){
+    var s=a.air?'<b>'+a.air.total+'</b>'+(a.air.tier?' · Tier '+a.air.tier:''):nm(why(a,/AI-readiness/,'AI-readiness not analysed yet'));
+    return s+(a.conv&&a.conv.n!=null?' · conversational <b>'+a.conv.n+'</b>/6':'')}],
+  ['New products / month','first-seen dates, counted on products still live',function(a,m){
+    var pm=PQ.go&&PQ.go.perMarket.filter(function(x){return x.mkt===m})[0],ar=a.arrivals||{};
+    if(!pm||pm.newP==null)return nm(why(a,/first-seen|10\.5/,'no first-seen dates captured'));
+    return 'at least <b>'+fmt(pm.newP)+'</b> a month'+(pm.newEst==='fallback'?' <span class="est est-sku" title="'+esc(ar.basis||'FeedSpark working estimate 10.5% a year')+'">estimate</span>':pm.newEst==='sku-ceiling'?' <span class="est est-sku">SKU rate</span>':'')
+      +(ar.coverage!=null&&ar.coverage<0.9?' · dates on '+Math.round(ar.coverage*100)+'%':'')}]
+];
+function band(v){return v==null||isNaN(v)?'':(v>=95?'b-g':v>=85?'b-y':v>=70?'b-o':'b-r')}
+function renderSteps(){
+  var L=SV.audits,host=$('#svc-steps');
+  if(!L.length){host.innerHTML='<li class="stp-i stp-empty"><div class="empty">'+(SV.mode==='file'?'Choose a feed file in the bar above to audit a prospect.':'Pick a client with a wired Google Shopping feed.')+'</div></li>';return}
+  var h=STEPS.map(function(s,i){
+    return '<li class="stp-i"><div class="stp-h"><span class="sn">'+(i+1)+'</span><div><h4>'+esc(s[0])+'</h4><div class="stp-s">'+esc(s[1])+'</div></div></div>'
+      +L.map(function(x){return '<div class="stp-m"><span class="mk">'+esc(x.mkt.toUpperCase())+'</span><span class="mv">'+s[2](x.audit,x.mkt)+'</span></div>'}).join('')+'</li>'});
+  // 8 — the packages, in one line each
+  h.push('<li class="stp-i"><div class="stp-h"><span class="sn">8</span><div><h4>Packages</h4><div class="stp-s">priced on the products that need each line</div></div></div>'
+    +shownOpts().map(function(o){var q=PQ[o];return '<div class="stp-m"><span class="mk">'+(o==='go'?'T1':o==='go+ar'?'T2':'AR')+'</span><span class="mv">'+headline(q)+'</span></div>'}).join('')+'</li>');
+  host.innerHTML=h.join('');
+}
+// does any priced line put money on the option? — when none does, its £0 is a GAP (nothing could be sized or
+// priced), never a free package: the card, step 8 and the phone digest all say "not sized" instead
+function sized(q){return q.lines.some(function(l){return l.status==='priced'&&((l.gen||0)>0||(l.genHi||0)>0||(l.setupH||0)>0||l.key==='conv')})}
+function headline(q){
+  if(!sized(q))return '<span class="nm">not sized</span>'+(q.unknown.length?' · '+q.unknown.length+' not sized':'')+(q.unpriced.length?' · '+q.unpriced.length+' not priced':'')
+    +(q.tests&&q.tests.status==='priced'?' · test package <b>'+GBP(q.tests.price)+'</b>/mo':'');
+  var from=(q.unknown.length||q.unpriced.length||q.lines.some(function(l){return l.status==='priced'&&(l.genHi!=null&&l.genHi>l.gen||l.est)}))?'from ':'';
+  var bits=[from+'<b>'+GBP(q.oneOff.total)+'</b> one-off · <b>'+GBP(q.monthly.total)+'</b>/mo'];
+  if(q.unknown.length)bits.push(q.unknown.length+' not sized');
+  if(q.unpriced.length)bits.push(q.unpriced.length+' not priced');
+  return bits.join(' · ');
+}
+
+/* ---- 2. the proposal: tier cards ---- */
+var ST_LBL={priced:'priced',unknown:'not sized',unpriced:'not priced',coming:'coming',contracted:'contracted',off:'off',none:'nothing to do',client:'client supplies'};
+function estChip(n,est){
+  if(!n||!est)return '';
+  if(est==='bound')return '<span class="est est-bound" title="An estimate the stored reading can bound but not count exactly — the live audit counts each product once">'+(n.hi!=null&&n.hi>n.lo?'at least '+fmt(n.lo)+', up to '+fmt(n.hi):'bound')+'</span>';
+  if(est==='ratio')return '<span class="est est-ratio" title="An SKU count taken to parent products at the exact SKUs-per-parent ratio">≈ from SKUs</span>';
+  if(est==='sku-ceiling')return '<span class="est est-sku" title="Parent products not counted yet — the SKU count stands in, a ceiling">SKU count</span>';
+  if(est==='fallback')return '<span class="est est-sku">estimate</span>';
+  return '';
+}
+function needCell(l){
+  var n=l.need||{};
+  if(l.key==='client'){
+    // several markets: each count names its market (GB GTIN / MPN 8 · DE GTIN / MPN 9), never two bare figures
+    var mks=Object.keys(l.byMkt||{}),multi=mks.length>1,parts=[];
+    mks.forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){parts.push((multi?m.toUpperCase()+' ':'')+p.label+(p.n!=null?' '+fmt(p.n):''))})});
+    return parts.length?'<span class="nd-parts" title="'+esc(parts.join('\n'))+'">'+esc(parts.slice(0,6).join(' · '))+(parts.length>6?' +'+(parts.length-6)+' more':'')+'</span>':'<span class="nm">nothing missing</span>'}
+  if(n.est==='unknown'||n.n==null)return '<span class="nm" title="'+esc(n.why||'')+'">not sized</span>';
+  // the count PRICED: a market where the line is already contracted is left out of it (the whole need in the tooltip)
+  if(l.pricedNeed&&l.status==='priced'){var pn=l.pricedNeed;n={n:pn.n,lo:pn.lo,hi:pn.hi,est:pn.est,why:'priced on '+fmt(pn.n)+' of '+fmt(l.need.n)+' — the rest is already contracted'}}
+  if(n.est==='na')return '<span class="nm" title="'+esc(n.why||'')+'">n/a</span>';
+  if(l.key==='attr_rule'){var ps=[];Object.keys(l.byMkt||{}).forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){if(ps.indexOf(p.label)<0)ps.push(p.label)})});
+    return '<b>'+fmt(n.n)+'</b> '+gwWord('none',n.n)+(ps.length?' <span class="nd-parts">'+esc(ps.join(', '))+'</span>':'')+estChip(n,l.status==='priced'?(l.est||null):n.est)}
+  // the units actually priced, when they differ from the need (a re-used language market, or every product)
+  var un=l.status==='priced'&&l.grain!=='none'&&l.units!=null&&Math.abs(l.units-(n.n||0))>=0.5?' <span class="nd-parts" title="Units priced after the language re-use weighting and the line\'s scope">priced on '+fmt(Math.round(l.units))+'</span>':'';
+  var allChip=l.scope!=='all'?'':(l.est==='bound'?' <span class="est est-bound" title="Category scope not measured — every product of the brand is taken as in scope, an upper bound; the live audit measures it">upper bound</span>'
+    :l.est==='sku-ceiling'?' '+estChip(n,'sku-ceiling'):'')+' <span class="est est-ratio">every product priced</span>';
+  return '<b'+(l.pricedNeed&&l.status==='priced'?' title="'+esc(n.why)+'"':'')+'>'+fmt(n.n)+'</b> '+gwWord(l.grain,n.n)+' '+estChip(n,l.scope==='all'?null:n.est)+allChip+un;
+}
+function moneyCell(l,q){
+  if(l.key==='conv'&&q.conv&&l.status==='priced')return '<b>'+GBP(q.conv.setup)+'</b><br><span class="mx">+ '+GBP(q.conv.monthly)+'/mo</span>';
+  if(l.key==='attr_rule'&&l.status==='priced')return '<span class="mx">'+(composed().g.ruleH==null?'hours to enter — ASPL':(l.setupH||0)+'h set-up')+'</span>';
+  if(l.status!=='priced')return '<span class="nm">—</span>';
+  if(l.genHi!=null&&l.genHi>l.gen)return 'from <b>'+GBP(l.gen)+'</b><span class="mx"> up to '+GBP(l.genHi)+'</span>';
+  return '<b>'+GBP(l.gen)+'</b>';
+}
+function briefHref(l,q){
+  var c=curClient(),mk=q.perMarket.map(function(m){return m.mkt.toUpperCase()}),n=l.need||{};
+  var task=E.briefTask(l.key,c,mk.length===1?mk[0]:'',l.label+(mk.length>1?' ('+mk.join(', ')+')':''),'');
+  var scope=(n.n!=null?fmt(n.n)+' '+gwWord(l.grain,n.n)+' need it'+(n.est&&n.est!=='na'?' (estimated — '+n.est+')':''):'not sized yet')+'; '+(n.why||'')+'. From the Services & Pricer audit ('+q.label+').';
+  return '/workflow?brief='+b64url({client:c,task:task,cat:wfCat(l.key),source:'pricer',scope:scope});
+}
+function fixOf(l){
+  var w=(l.reason||'')+' '+((l.need||{}).why||'');
+  if(l.status==='unpriced')return MGMT?'<button type="button" class="lnk" data-act="tab" data-tab="mgmt">price not set — Management · set it</button>':'price not set — Management';
+  if(/category scope|keyword slots|content-quality|count the feed|not counted|never scanned|not measured|column not read/i.test(w)){
+    if(SV.mode==='file')return 'the file did not carry it — ask the prospect for a fuller export';
+    return '<button type="button" class="lnk" data-act="golive">⚡ count the live feed</button> or <button type="button" class="lnk" data-act="file">⇪ read a file</button>';
+  }
+  return esc(l.reason||'');
+}
+function tierCard(o){
+  var q=PQ[o],safe=q.clientSafe,c=curClient();
+  var nShown=o==='go'?'1':o==='go+ar'?'2':'A';
+  var h='<div class="tier'+(SV.hlPkg===o?' hl':'')+'" data-opt="'+esc(o)+'" data-oneoff="'+q.oneOff.total+'" data-monthly="'+q.monthly.total+'" data-safe="'+(safe?1:0)+'">';
+  h+='<div class="tier-h"><span class="tier-n">'+nShown+'</span><h3>'+esc(q.label)+((q.sub||E.OPTION_SUB&&E.OPTION_SUB[o])?'<span class="tier-sub">'+esc(q.sub||E.OPTION_SUB[o])+'</span>':'')+'</h3>'
+    +(safe?'<span class="pill good" title="No blocker stands behind any figure — client copy shows the numbers">client-safe</span>'
+      :'<span class="pill warn" title="Client copy shows [£ to confirm — Ray] until every blocker below is cleared">Ray to confirm · '+q.blockers.length+'</span>')+'</div>';
+  // the Golden Record now → after, per market
+  h+='<div class="proj">'+q.perMarket.map(function(m){var p=m.projected||{},bl=(p.blockers||[]);
+    return '<div class="pj"><span class="mk">'+esc(m.mkt.toUpperCase())+'</span> Golden <b class="sc '+band(p.now)+'">'+(p.now!=null?p.now:'—')+'</b> → <b class="sc '+band(p.after)+'">'+(p.after!=null?p.after:'—')+'</b>'
+      +(p.met?' <span class="pill good">met</span>':(bl.length?' <span class="pj-bl" title="'+esc(bl.map(function(b){return b.key+' '+b.cov+'% — '+b.tag}).join('\n'))+'">still under 99%: '+esc(bl.slice(0,3).map(function(b){return b.key.replace(/_/g,' ')+' ('+b.tag+')'}).join(', '))+(bl.length>3?' …':'')+'</span>':''))
+      +(m.air&&m.air.now!=null?' · AI-readiness <b>'+m.air.now+'</b>':'')+(m.lead?'':' <span class="est est-ratio" title="Same language as the lead market — generated copy re-used at the re-use rate">re-use ×'+m.w+'</span>')+'</div>'}).join('')+'</div>';
+  // one-off and monthly, apart, ex VAT
+  var oo=q.oneOff,mo=q.monthly,sz=sized(q),T=q.tests||{n:0,status:'off'};
+  // the test package, a flat monthly add-on: its own line, its own status — never inside new products or the floor
+  var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">test package '+T.n+' tests '+GBP(T.price)+' ('+GBP(T.perTest)+' a test)'+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
+    :'<span class="tst-l">test package '+T.n+' tests — <span class="nm">price not set — Management</span></span>';
+  var noSz='<div class="mv nm">not sized — see below</div>';
+  h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div>'
+    +(sz?'<div class="mv">'+GBP(oo.total)+'</div>'
+      +'<div class="mx">set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+')'
+      +'<br>generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?'<br>Spark AI set-up '+GBP(oo.conv):'')+'</div>'
+      :noSz+'<div class="mx">no line could be sized or priced yet</div>')+'</div>'
+    +'<div class="mb"><div class="ml">Monthly · ex VAT</div>'
+    +(sz?'<div class="mv">'+GBP(mo.total)+'</div>'
+      +'<div class="mx">monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+'<br>new products '+(mo.overlapMkts&&mo.overlapMkts.length&&mo.overlapMkts.length===q.perMarket.length?'covered — '+esc(mo.overlap):GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):''))+(mo.conv?'<br>Spark AI '+GBP(mo.conv)+'/mo':'')+tLine+'</div>'
+      :noSz+'<div class="mx">'+(tLine||'no line could be sized or priced yet')+'</div>')+'</div></div>';
+  // two hourly rates, both labelled — never a silent rate
+  h+='<div class="rates-l">'+esc(oo.rateLabel)+(q.conv?' · conversational '+esc(q.conv.rateLabel)+(q.conv.rangeLabel?', '+esc(q.conv.rangeLabel):''):'')+' · volume factor β '+q.beta.toFixed(3)+'</div>';
+  // every new product, and the honest always-on line
+  // every new product, per market: a market whose new products an AI Quote bundle already covers says so (its
+  // perNew is the would-be price, never charged here); a £0 that only means nothing was sized reads "not sized"
+  var newUnsized=!sz||q.lines.some(function(l){return l.status==='unknown'&&l.grain!=='none'});
+  var newN=0,per=[];q.perMarket.forEach(function(m){var pre=q.perMarket.length>1?m.mkt.toUpperCase()+' ':'';
+    if(m.overlap){per.push(pre+'covered by '+esc(m.overlap));return}
+    if(m.newP!=null){newN+=m.newP;per.push(pre+(!(m.perNew>0)&&newUnsized?'not sized':(newUnsized?'from ':'')+GBP(m.perNew)))}});
+  var ao=q.alwaysOn||{};
+  h+='<div class="aon"><b>Every new product: '+(per.length?per.join(' · '):'—')+'</b>'
+    +(newN>0?' · about '+fmt(newN)+' new a month (at least — products still live)':'')
+    +'<br><span class="aon-m">'+(ao.live?'New products are picked up on arrival.':'Today: '+esc({weekly:'a weekly',fortnightly:'a fortnightly',monthly:'a monthly'}[ao.mechanism]||'a monthly')+' ASPL run the AM picks · target: on arrival once routing ships')+'</span></div>';
+  if(o==='go+ar'&&PQ.go&&PQ.ar){var apart=PQ.go.oneOff.total+PQ.ar.oneOff.total;
+    if(sz&&sized(PQ.go)&&sized(PQ.ar)&&q.oneOff.total<apart)h+='<div class="save-l">'+GBP(apart-q.oneOff.total)+' less one-off than Tier 1 and AI-ready only bought apart — set-up rounded to blocks once'+(oo.bundleDisc?', bundle on generation':'')+'</div>'}
+  // the lines
+  h+='<div class="rc-scroll"><table class="lines"><thead><tr><th>Line</th><th>Products needing it</th><th class="num">£ one-off</th><th>Status</th><th></th></tr></thead><tbody>'
+    +q.lines.map(function(l){
+      var brief=(l.status==='priced'||l.status==='unknown'||l.status==='unpriced')&&l.key!=='client';
+      return '<tr class="ln st-'+l.status+'" data-line="'+esc(l.key)+'"><td class="ln-l">'+esc(l.label)+(l.reason&&l.status==='priced'?'<span class="ln-r">'+esc(l.reason)+'</span>':'')+'</td>'
+        +'<td>'+needCell(l)+'</td><td class="num">'+moneyCell(l,q)+'</td>'
+        +'<td><span class="stc stc-'+l.status+'" title="'+esc(l.reason||'')+'">'+esc(ST_LBL[l.status]||l.status)+'</span></td>'
+        +'<td class="ln-a">'+(brief?'<a class="lnk" href="'+briefHref(l,q)+'" title="Brief this line into Workflow">→ Brief</a>':'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  // what is not sized / not priced, each with its fix
+  var gaps=q.lines.filter(function(l){return l.status==='unknown'||l.status==='unpriced'});
+  if(gaps.length||T.status==='unpriced')h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')
+    +(T.status==='unpriced'?'<li><b>Test package ('+T.n+' tests a month)</b> — not priced · <span class="fx">'+fixOf({status:'unpriced'})+'</span></li>':'')+'</ul>';
+  if(q.blockers.length){var seen={},bl=q.blockers.filter(function(b){if(seen[b.why])return false;seen[b.why]=1;return true});
+    h+='<details class="blk-l"><summary>Before this goes to a client — '+bl.length+' to confirm</summary><ul>'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul></details>'}
+  if(q.sla)h+='<div class="q-sla">⏱ Live in about '+q.sla+' working days from sign-off</div>';
+  return h+'</div>';
+}
+function renderTiers(){
+  var host=$('#svc-tiers'),opts=shownOpts();
+  renderMode();
+  if(!opts.length){host.innerHTML='<div class="empty">The proposal appears once a market is audited.</div>';$('#svc-prop').setAttribute('data-m-digest','no audit yet');return}
+  host.innerHTML=opts.map(tierCard).join('');
+  $('#svc-prop').setAttribute('data-m-digest',sized(PQ.go)?'T1 '+GBP(PQ.go.oneOff.total)+' one-off · '+GBP(PQ.go.monthly.total)+'/mo':'T1 not sized');
+}
+// version / add mode stays visible even while no audit has run (a file-lane option waits for its file)
+function renderMode(){
+  var sv=$('#pq-save');
+  sv.textContent=SV.version?'💾 Save as a new version':SV.addTo?'💾 Add to the proposal as options':'💾 Save as proposal';
+  var scoped=SV.mode==='file'&&!!ME.clients;
+  sv.disabled=scoped;sv.title=scoped?'Prospect proposals need an unscoped signin — a prospect is outside your clients':'Save every option shown under one proposal';
+  $('#pq-mode').innerHTML=SV.version?'replacing an option — the old one is kept as an earlier version <button type="button" class="lnk" data-act="cancelmode">cancel</button>'
+    :SV.addTo?'adding options to an existing proposal <button type="button" class="lnk" data-act="cancelmode">cancel</button>':'';
+}
+
+/* ---- the customise drawer ---- */
+function renderCust(){
+  var host=$('#svc-cust');if(host.hidden||busy(host))return;
+  var src=(PQ['go+ar']&&PQ['go+ar'].conv&&PQ['go+ar'].conv.sources)||E.aimDefaultSources(SV.audits.map(function(x){return x.audit}));
+  var blocked=SV.audits.some(function(x){return x.audit.pdp==='blocked'}),h=hoursOf(curClient());
+  function sel(id,val,opts){return '<select class="fld" data-c="'+id+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(val)?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>'}
+  var lines=E.PKG_LINES.filter(function(d){return d.key!=='client'}).map(function(d){var lo=SV.lineOpts[d.key]||{};
+    return '<div class="cu-l"><label class="tog"><input type="checkbox" data-lon="'+d.key+'"'+(lo.on===false?'':' checked')+'> '+esc(d.label.replace(/ —.*$/,''))+' <span class="nm">'+(d.pkg==='go'?'T1':'T2')+'</span></label>'
+      +(d.grain==='parent'||d.grain==='sku'?'<select class="fld sm" data-lsc="'+d.key+'"><option value="need"'+(lo.scope==='all'?'':' selected')+'>products needing it</option><option value="all"'+(lo.scope==='all'?' selected':'')+'>every product</option></select>':'')+'</div>'}).join('');
+  var routes=E.AIM_ATTRS.map(function(a){var cur=src[a.id]||'off';
+    return '<div class="cu-l"><span>'+esc(a.name)+'</span><select class="fld sm" data-route="'+a.id+'">'+['off'].concat(a.routes).map(function(r){return '<option value="'+r+'"'+(r===cur?' selected':'')+'>'+esc(r==='ai'?'Spark AI':E.AIM_ROUTE_LABEL[r]||r)+'</option>'}).join('')+'</select></div>'}).join('');
+  host.innerHTML='<div class="cu-c"><h4>Lines</h4>'+lines+'</div>'
+    +'<div class="cu-c"><h4>Targets</h4>'
+      +'<div class="cu-l"><span>Description to</span>'+sel('descTarget',SV.targets.descTarget,[[160,'160 characters'],[300,'300 characters'],[500,'500 characters'],[1000,'1,000 characters']])+'</div>'
+      +'<div class="cu-l"><span>Highlights to</span>'+sel('hlTarget',SV.targets.hlTarget,[[6,'6+ (house)'],[4,'4+ (Google\'s floor)']])+'</div>'
+      +'<div class="cu-l"><span>Product type depth</span>'+sel('ptMinDepth',SV.targets.ptMinDepth,[[3,'3+ levels'],[4,'4+ levels'],[5,'5+ levels']])+'</div>'
+      +'<p class="cu-n">Google: descriptions 1–5,000 characters with the key facts in the first 160–500; highlights from 2, 4–6 recommended.</p>'
+      +'<h4>Highlights drawn from</h4>'
+      +[['desc','the description'],['feed','the source feed'],['pdp','the product page'+(blocked?' (blocked)':'')],['reviews','reviews (client to supply a reviews feed)']].map(function(x){
+        return '<label class="tog"><input type="checkbox" data-hl="'+x[0]+'"'+(SV.hlSrc[x[0]]&&!(x[0]==='pdp'&&blocked)?' checked':'')+(x[0]==='pdp'&&blocked?' disabled':'')+'> '+esc(x[1])+'</label>'}).join('')+'</div>'
+    +'<div class="cu-c"><h4>Conversational routes · Spark AI</h4>'+routes+'<p class="cu-n">An attribute already at 95%+ in every market starts off; AI cannot invent a document link, a related product or a variant option.</p></div>'
+    +'<div class="cu-c"><h4>Monthly &amp; scope</h4>'
+      +'<div class="cu-l"><span>New products priced as</span>'+sel('newBasis',SV.popts.newBasis,[['measured','as incomplete as today'],['every','every attribute, every product']])+'</div>'
+      +'<div class="cu-l"><span>Today\'s new-product run</span>'+sel('mechanism',SV.popts.mechanism,[['weekly','weekly'],['fortnightly','fortnightly'],['monthly','monthly']])+'</div>'
+      +'<div class="cu-l"><span>Retainer hours to use</span><input class="fld sm" type="number" min="0" step="0.5" data-c="retainerH" value="'+(SV.popts.retainerH||0)+'"></div>'
+      +'<p class="cu-n">'+(h&&h.balance!=null?'Retainer balance '+(Math.round(h.balance*10)/10)+'h of '+(h.allowance||0)+'h (Task Manager)':'No retainer balance on record for this client')+' — only QC and PM hours can come off it.</p>'
+      +'<label class="tog"><input type="checkbox" data-cb="absorbMonitoring"'+(SV.popts.absorbMonitoring?' checked':'')+'> Monitoring absorbed into the retainer</label>'
+      +'<label class="tog"><input type="checkbox" data-cb="includeContracted"'+(SV.popts.includeContracted?' checked':'')+'> Include lines already contracted</label>'
+      +'<label class="tog"><input type="checkbox" data-cb="offerAr"'+(SV.popts.offerAr?' checked':'')+'> Offer AI-ready only (AI Readiness without Tier 1)</label>'
+      // a test package rides on every option shown — a flat monthly line, priced by Management
+      +'<h4 class="cu-h2">Test package</h4><div class="cu-l"><span>Tests a month</span><span class="tseg" role="group" aria-label="Test package — tests a month">'
+      +[[0,'None']].concat((E.TEST_COUNTS||[2,3,4]).map(function(n){return [n,String(n)]})).map(function(x){var on=(+SV.popts.tests||0)===x[0];
+        return '<button type="button" data-tests="'+x[0]+'" class="'+(on?'on':'')+'" aria-pressed="'+(on?'true':'false')+'">'+esc(x[1])+'</button>'}).join('')+'</span></div>'
+      +'<p class="cu-n">'+esc(E.TEST_WHAT?E.TEST_WHAT.charAt(0).toUpperCase()+E.TEST_WHAT.slice(1):'')+'</p>'
+      +'<p class="cu-n">'+(E.TEST_COUNTS||[2,3,4]).map(function(n){var R=composed().g,v=R.tests&&R.tests[n],src=R.src.tests&&R.tests?R.src.tests[n]:'unset';
+        return n+' tests '+(v==null?'not priced':GBP(v)+'/mo'+(src==='ops'?'':' (draft)'))}).join(' · ')+' — set by Management.</p>'
+      +'<button type="button" class="btn" data-act="custreset">↺ Reset</button></div>';
+}
+
+/* ---- 3. the debrief kit ---- */
+function dbList(){
+  if(SV.dbSrc==='build')return shownOpts().map(function(o){return PQ[o]});
+  return Object.keys(PROPS.data).map(function(k){return PROPS.data[k]}).filter(function(q){return q&&q.prop&&q.prop.id===SV.dbSrc&&!q.deleted&&!q.superseded})
+    .sort(function(a,b){return (a.prop.n||0)-(b.prop.n||0)});
+}
+function evidence(){
+  var KEYS=['title','description','google_product_category','product_type','product_highlight','color','material','pattern'],out=[];
+  SV.audits.forEach(function(x){var Q=x.audit.quality;if(!Q||!Q.attrs)return;var items=[];
+    KEYS.forEach(function(k){var a=Q.attrs[k],spec=LG.qspecOf(k);if(!a||!a.rules)return;
+      Object.keys(a.rules).forEach(function(id){var r=a.rules[id];if(!r||!r.n||!r.eg||!r.eg.length)return;
+        var rs=spec&&spec.rules.filter(function(z){return z.id===id})[0];
+        items.push({k:k,n:r.n,label:rs?rs.label:id,sev:rs?rs.sev:'warn',eg:r.eg.slice(0,3)})})});
+    items.sort(function(a,b){return ((a.sev==='fail'?0:1)-(b.sev==='fail'?0:1))||(b.n-a.n)});
+    if(items.length)out.push({mkt:x.mkt,items:items.slice(0,5)})});
+  return out;
+}
+function dbText(){
+  var list=dbList();if(!list.length)return null;
+  var t=E.proposalText(list,{tone:SV.tone,guard:true,contact:$('#db-to').value.trim(),from:meName()});
+  var hl=[];if(SV.hlSrc.desc)hl.push('the description');if(SV.hlSrc.feed)hl.push('the source feed');if(SV.hlSrc.pdp)hl.push('the product page');if(SV.hlSrc.reviews)hl.push('reviews');
+  if(hl.length)t.flags.push('Highlights drawn from '+hl.join(', ')+'.');
+  if(SV.hlSrc.reviews)t.flags.push('Reviews as a highlight source need the client to supply a reviews feed.');
+  return t;
+}
+function amCc(){var h=hoursOf(curClient());return h&&h.amEmail&&norm(h.amEmail)!==norm(ME.email)?h.amEmail:''}
+function renderDebrief(){
+  var sec=$('#svc-debrief');if(busy(sec))return;
+  var c=curClient(),props={};
+  optionsOf(c).forEach(function(q){if(q.prop&&!q.superseded)(props[q.prop.id]=props[q.prop.id]||[]).push(q)});
+  var srcSel=$('#db-src'),opts='<option value="build">The build above (unsaved)</option>'+Object.keys(props).map(function(pid){var a=props[pid];
+    return '<option value="'+esc(pid)+'">'+esc(a.map(function(q){return q.ref}).sort()[0]+' · '+a.length+' option'+(a.length===1?'':'s')+' · '+fmtDate(Math.max.apply(null,a.map(function(q){return +q.t||0}))))+'</option>'}).join('');
+  if(SV.dbSrc!=='build'&&!props[SV.dbSrc])SV.dbSrc='build';
+  srcSel.innerHTML=opts;srcSel.value=SV.dbSrc;
+  $$('#db-tone button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tone')===SV.tone)});
+  // the contact belongs to the client it was filled for: another client brings ITS remembered contact (or none),
+  // never the last client's buyer — else a draft goes to the wrong client and that address is remembered for it
+  if(SV.dbToFor!==norm(c)){$('#db-to').value=ASKTO[c]||'';SV.dbToFor=norm(c)}
+  else if(!$('#db-to').value&&ASKTO[c])$('#db-to').value=ASKTO[c];
+  var t=dbText();
+  $('#db-reset').hidden=!SV.dbEdited;
+  if(!t){$('#db-talk').innerHTML='<li class="nm">The talk track appears once a market is audited.</li>';$('#db-ev').innerHTML='';$('#db-flags').innerHTML='';$('#db-stale').textContent='';if(!SV.dbEdited){$('#db-sub').value='';$('#db-body').value=''}dbExits(null);return}
+  $('#db-talk').innerHTML=t.talk.map(function(x){return '<li>'+esc(x)+'</li>'}).join('');
+  var ev=evidence();
+  $('#db-ev').innerHTML=ev.length?ev.map(function(m){return '<div class="ev-m"><div class="ev-h">'+esc(m.mkt.toUpperCase())+' — the client\'s own products</div>'+m.items.map(function(it){
+      return '<div class="ev-i"><b>'+esc(it.label)+'</b> <span class="nm">'+fmt(it.n)+' · '+esc(it.k.replace(/_/g,' '))+(it.sev==='fail'?' · Google requirement':' · best practice')+'</span>'
+        +'<ul>'+it.eg.map(function(e){var s=String(e==null?'':e);return '<li>'+esc(s.length>140?s.slice(0,140)+'…':s)+'</li>'}).join('')+'</ul></div>'}).join('')+'</div>'}).join('')
+    :'<div class="nm">No offender examples yet — they come from the content-quality reading (stored, or the live audit).</div>';
+  var rtc=t.flags.filter(function(f){return /^Ray to confirm: /.test(f)}),tech=t.flags.filter(function(f){return !/^Ray to confirm: /.test(f)});
+  $('#db-flags').innerHTML=tech.map(function(f){return '<li>'+esc(f)+'</li>'}).join('')
+    +(rtc.length?'<li><details class="blk-l"><summary>For Ray to confirm before sending — '+rtc.length+' item'+(rtc.length===1?'':'s')+'</summary><ul>'+rtc.map(function(f){return '<li>'+esc(f.replace(/^Ray to confirm: /,''))+'</li>'}).join('')+'</ul></details></li>':'');
+  // an edited email is KEPT when the figures move — the AM is told, and ↺ regenerates on request
+  if(!SV.dbEdited){$('#db-sub').value=t.subject;$('#db-body').value=t.body;SV.dbBase=t.subject+'\n'+t.body}
+  $('#db-stale').innerHTML=SV.dbEdited&&SV.dbBase!==t.subject+'\n'+t.body?'⚠ The figures or options changed since you edited this email — your text is kept. <button type="button" class="lnk" data-act="dbregen">↺ Regenerate it</button>':'';
+  $('#db-guard').innerHTML=t.guarded?'<span class="pill warn">guarded</span> every figure reads <b>'+esc(E.GUARD_TXT)+'</b> until its blockers clear — send it to Ray, not the client':'<span class="pill good">client-safe</span> the figures are shown';
+  dbExits(t);
+}
+function dbExits(t){
+  var cc=amCc(),h=hoursOf(curClient());
+  $('#db-cc').innerHTML=cc?'CC '+esc(cc)+' (the account AM) on ↗ Open in Gmail — the Drafts bridge adds it after the script update':(h&&h.am?'AM '+esc(h.am)+' has no address on file — no CC':'');
+  ['db-draft','db-open','db-copy','db-deck'].forEach(function(id){$('#'+id).disabled=!t});
+}
+function dbKeys(){return ['svc|'+curClient()+'|'+(SV.dbSrc==='build'?'build':SV.dbSrc)]}
+// sending a saved, client-safe proposal records it as sent on each of its live options
+function markSent(via,quiet){
+  var msg;
+  if(SV.dbSrc==='build')msg='not recorded as sent — save the proposal first';
+  else if(!dbList().every(function(q){return q.clientSafe}))msg='not marked sent while figures read "to confirm" (drafted for Ray)';
+  else{
+    var now=Date.now();
+    var upd={};Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&q.prop&&q.prop.id===SV.dbSrc&&!q.deleted&&!q.superseded){var n=JSON.parse(JSON.stringify(q));n.sentAt={t:now,via:via};upd[k]=n}});
+    PROPS.setMany(upd);msg='recorded as sent';
+  }
+  if(!quiet)toast(msg.charAt(0).toUpperCase()+msg.slice(1));
+  return msg;
+}
+// a click that asks for the generated text again: an edited email is replaced only once the AM says so
+function dbReplaceOk(){return !SV.dbEdited||confirm('Replace your edited email with the generated text?')}
+var DRAFT_MAX=8000;   // the Gmail Drafts bridge (/api/labels/askdraft) keeps 8,000 characters of the body
+
+/* ---- 4. the services rollout ---- */
+var KIND_W={kw:'keywords',titles:'titles',pt:'product types',tagging:'tagging',social:'social titles',short:'short titles'};
+function rolloutClients(){
+  var s={};Object.keys(EST).forEach(function(k){var e=EST[k];if(e&&e.client)s[e.client]=1});
+  Object.keys(ROLL.data).forEach(function(c){if(c.charAt(0)!=='_')s[c]=1});
+  Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&q.client&&!q.deleted)s[q.client]=1});
+  return Object.keys(s).filter(inScope).sort(function(a,b){return a.localeCompare(b)});
+}
+function fromCell(c){
+  var rows=CAD.filter(function(r){return r&&norm(r.client)===norm(c)}),by={},bits=[];
+  rows.forEach(function(r){var k=r.kind;var e=by[k]=by[k]||{s:0,g:0,streak:0};e.s+=r.skips||0;e.g+=r.goes||0;e.streak=Math.max(e.streak,r.streak||0)});
+  Object.keys(by).forEach(function(k){var e=by[k],d=e.s+e.g;bits.push(esc(KIND_W[k]||k)+(d?' '+Math.round(e.s/d*100)+'% skipped':'')+(e.streak>=2?' <span class="late">'+e.streak+' mo streak</span>':''))});
+  var ai=E.aiBriefRows(BRIEFS,TRACK).filter(function(r){return norm(r.client)===norm(c)}).length,h=hoursOf(c),out=[];
+  out.push(bits.length?'<span title="Scheduled work (ASPL weekly schedule)">⏭ '+bits.join(' · ')+'</span>':'<span class="nm">no scheduled work</span>');
+  if(ai)out.push('<span>'+ai+' AI brief'+(ai===1?'':'s')+'</span>');
+  if(h&&h.balance!=null)out.push('<span class="'+(h.balance<0?'late':'')+'" title="Retainer balance (Task Manager)">'+(Math.round(h.balance*10)/10)+'h left</span>');
+  return out.join('<br>');
+}
+function toCell(c){
+  var g={};optionsOf(c).forEach(function(q){if(q.prop&&!q.superseded)(g[q.prop.id]=g[q.prop.id]||[]).push(q)});
+  var pids=Object.keys(g).sort(function(a,b){return Math.max.apply(null,g[b].map(function(q){return +q.t||0}))-Math.max.apply(null,g[a].map(function(q){return +q.t||0}))});
+  if(!pids.length)return '<span class="nm">no proposal yet</span>';
+  var oid=E.countedOption(PROPS.data,pids[0]),q=PROPS.data[oid]||g[pids[0]][0];
+  return esc((q.pq&&q.pq.label)||'')+(q.chosen?' <span class="pill good">chosen</span>':' <span class="nm">· '+g[pids[0]].length+' option'+(g[pids[0]].length===1?'':'s')+'</span>');
+}
+function renderRollout(){
+  var sec=$('#svc-rollout');if(busy($('#ro-body')))return;
+  var all=rolloutClients(),me=norm(meName()),mine=all.filter(function(c){var h=hoursOf(c);return h&&h.am&&me&&norm(h.am).indexOf(me.slice(0,5))===0});
+  var useMine=SV.mine&&mine.length>0,list=useMine?mine:all,q=($('#ro-q').value||'').trim().toLowerCase();
+  if(q)list=list.filter(function(c){return c.toLowerCase().indexOf(q)>=0});
+  $('#ro-mine').checked=SV.mine;
+  $('#ro-note').textContent=SV.mine&&!mine.length?'no account lists you as AM — showing every account':'';
+  var counts={};E.ROLL_STAGES.forEach(function(s){counts[s]=0});
+  var rows=list.map(function(c){var st=E.rolloutStage(ROLL.data[c],optionsOf(c),auditsOfClient(c));counts[st.stage]=(counts[st.stage]||0)+1;return {c:c,st:st}});
+  $('#ro-kpis').innerHTML=E.ROLL_STAGES.map(function(s){return '<div class="kpi'+(!counts[s]?'':(s==='Agreed'||s==='Always-on live'?' good':s==='Declined'?' risk':''))+'"><div class="n">'+(counts[s]||0)+'</div><div class="l">'+esc(s)+'</div></div>'}).join('');
+  sec.setAttribute('data-m-digest',(counts['Debriefed']||0)+' debriefed · '+((counts['Agreed']||0)+(counts['Always-on live']||0))+' agreed');
+  var today=todayYmd();
+  $('#ro-body').innerHTML=rows.length?rows.map(function(x){var c=x.c,r=ROLL.data[c]||{},h=hoursOf(c),days=x.st.since?Math.max(0,Math.floor((Date.now()-x.st.since)/864e5)):null,ao=r.alwaysOn||{};
+    return '<tr class="ro-r'+(c===curClient()?' cur':'')+'" data-client="'+esc(c)+'" tabindex="0" title="Load '+esc(c)+' into the bar above">'
+      +'<td data-l="Client" class="ro-c"><b>'+esc(c)+'</b></td>'
+      +'<td data-l="AM">'+esc((h&&h.am)||'—')+'</td>'
+      +'<td data-l="From" class="ro-f">'+fromCell(c)+'</td>'
+      +'<td data-l="To">'+toCell(c)+'</td>'
+      +'<td data-l="Stage"><span class="stg '+stgCls(x.st.stage)+'">'+esc(x.st.stage)+'</span>'+(days!=null?' <span class="nm">'+days+'d</span>':'')
+        +'<br><button type="button" class="lnk" data-ro="debrief" data-client="'+esc(c)+'">'+(r.debriefAt?'✓ debriefed '+fmtDate(tOf(r.debriefAt)):'mark debriefed')+'</button></td>'
+      +'<td data-l="Next step" class="ro-n"><input class="fld sm" type="text" maxlength="160" data-ro="next" data-client="'+esc(c)+'" value="'+esc(r.next||'')+'" placeholder="next step…" aria-label="Next step for '+esc(c)+'">'
+        +'<input class="fld sm'+(r.nextDue&&r.nextDue<today?' late-b':'')+'" type="date" data-ro="nextDue" data-client="'+esc(c)+'" value="'+esc(r.nextDue||'')+'" aria-label="Due date for '+esc(c)+'"></td>'
+      +'<td data-l="Always-on"><select class="fld sm" data-ro="ao" data-client="'+esc(c)+'" aria-label="Always-on for '+esc(c)+'">'
+        +[['','—'],['weekly','weekly run'],['fortnightly','fortnightly run'],['monthly','monthly run']].map(function(o){return '<option value="'+o[0]+'"'+((ao.on?ao.mechanism:'')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
+        +'<label class="tog"><input type="checkbox" data-ro="live" data-client="'+esc(c)+'"'+(r.live?' checked':'')+'> live</label></td></tr>'}).join('')
+    :'<tr><td colspan="7"><div class="empty">No accounts to show.</div></td></tr>';
+}
+function rollSet(c,patch){
+  var r=JSON.parse(JSON.stringify(ROLL.data[c]||{}));
+  Object.keys(patch).forEach(function(k){if(patch[k]==null||patch[k]==='')delete r[k];else r[k]=patch[k]});
+  if(!r.am){var h=hoursOf(c);if(h&&h.am)r.am=String(h.am).slice(0,40)}
+  ROLL.set(c,r);renderHero();
+}
+
+/* ---- 5. roadmap + quick wins + the delivery plan ---- */
+function industries(){
+  var s={'*':1};Object.keys(LG.INDUSTRY_PROFILES||{}).forEach(function(k){s[k]=1});
+  Object.keys((PROF.overrides&&PROF.overrides.industries)||{}).forEach(function(k){s[k]=1});
+  s.Retail=1;return Object.keys(s).sort(function(a,b){return a==='*'?-1:b==='*'?1:a.localeCompare(b)});
+}
+function renderRoadmap(){
+  if(!secOpen('rm'))return;
+  var host=$('#rm-grid');if(busy(host))return;
+  var inds=industries(),rows=E.PKG_LINES.filter(function(d){return d.key!=='client'}).map(function(d){return [d.key,d.label.replace(/ —.*$/,'')]}).concat([['alwayson','Always-on (new products on arrival)']]);
+  host.innerHTML='<thead><tr><th>Line</th>'+inds.map(function(i){return '<th>'+esc(i==='*'?'Every industry':i)+'</th>'}).join('')+'</tr></thead><tbody>'
+    +rows.map(function(r){return '<tr><td class="r-name">'+esc(r[1])+'</td>'+inds.map(function(ind){
+      var k=r[0]+'|'+ind,v=RMAP.data[k],eff=E.roadmapStatus(RMAP.data,r[0],ind==='*'?null:ind,ACTUALS);
+      var t=v?'set by '+(v.by||'—')+(v.at?', '+fmtDate(v.at):''):(eff.status?'inherits: '+eff.status+' ('+eff.src+')':'unconfirmed');
+      return '<td><select class="fld sm rm-s rm-'+(v?v.status:eff.status||'none')+(v?'':' inh')+'" data-rm="'+esc(k)+'" title="'+esc(t)+'" aria-label="'+esc(r[1]+' · '+ind)+'">'
+        +[['','—'],['live','live'],['pilot','pilot'],['building','building'],['planned','planned']].map(function(o){return '<option value="'+o[0]+'"'+((v?v.status:'')===o[0]?' selected':'')+'>'+(o[0]===''&&!v&&eff.status?'('+eff.status+')':o[1])+'</option>'}).join('')+'</select></td>'}).join('')+'</tr>'}).join('')+'</tbody>';
+  var qw=E.quickWins({estate:{feeds:EST},rollout:ROLL.data,schedule:CAD,arrivals:ARRV,options:PROPS.data,LG:LG,profiles:PROF.overrides,now:Date.now()}).filter(function(w){return inScope(w.client)});
+  $('#rm-qw').innerHTML=qw.length?qw.map(function(w){return '<li><b>'+esc(w.client)+'</b> — '+esc(w.why)+' <button type="button" class="lnk" data-load="'+esc(w.client)+'">Load client</button></li>'}).join(''):'<li class="nm">No quick wins read off the book right now.</li>';
+  $('#rm-plan').innerHTML=E.DELIVERY_PLAN.map(function(p){return '<tr><td class="num">'+p.n+'</td><td><b>'+esc(p.title)+'</b><div class="nm">'+esc(p.detail)+'</div></td><td><span class="own own-'+norm(p.owner)+'">'+esc(p.owner)+'</span></td></tr>'}).join('');
+}
+
+/* ---- 6. the rate card, three teams ---- */
+var RC_TABS=[
+  ['aspl','ASPL',[['aspl','Set-up h','ops',0.5],['lead','Lead days','ops',1],['aMin','Attended min / 100 products','ops',1],['tokPerP','Tokens / product','ops',100]]],
+  ['am','London AM',[['qc','QC h','ops',0.5],['pm','PM h','ops',0.5],['mon','Monitoring h / month','ops',0.5],['qcPct','QC share %','ops',1],['qcMin','QC min / product','ops',0.5],['note','Note','ops','txt']]],
+  ['mgmt','Management 🔒',[['unit','£ / unit','price',0.01]]],
+  ['aim','Spark AI',[]]
+];
+var AIM_LBL={dayRate:'Day rate (£)',hoursPerDay:'Hours in a day',hoursSupplied:'Hours to add a feed field',hoursScrape:'Hours per scraped field',scrapeMonthly:'Scrape run (£ / month)',
+  aiSetupDays:'AI set-up (days per field)',aiPerField:'AI cost per field (£)',hoursFeedHero:'Hours for a FeedHero rule',aiMinMonthly:'AI minimum (£ / month)',buffer:'Volume buffer (%)'};
+var SRC_T={ops:'entered by the team',legacy:'from the legacy rate card (read-only now)',actuals:'average of the tracked briefs',default:'draft default — not yet entered',unset:'not set yet'};
+function stampT(st,src){return (st&&st.by?'by '+st.by+(st.at?', '+fmtDate(st.at):''):SRC_T[src]||'')}
+function cellV(f,v){if(v==null||v==='')return '—';if(f==='unit')return '£'+(+v);if(f==='note')return esc(v);return fmt(v)}
+function edCell(store,key,f,v,src,st,step,ro){
+  var t=stampT(st,src);
+  if(ro)return '<td class="num"><span class="r-ro src-'+src+'" title="'+esc(t)+'">'+cellV(f,v)+'</span></td>';
+  return '<td class="'+(step==='txt'?'r-note':'num')+'"><span class="r-ed src-'+src+'" role="button" tabindex="0" data-store="'+store+'" data-k="'+esc(key)+'" data-f="'+f+'" data-step="'+step+'" title="'+esc(t+' — click to edit')+'">'+(v==null||v===''?(step==='txt'?'<span style="opacity:.4">add note…</span>':'—'):cellV(f,v))+'</span></td>';
+}
+function renderRateCard(){
+  var host=$('#svc-rates');if(busy(host))return;
+  var R=composed(),tab=SV.tab;
+  if(tab==='mgmt'&&!MGMT)tab='aspl';
+  $$('#rc-tabs button').forEach(function(b){var k=b.getAttribute('data-tab');b.hidden=(k==='mgmt'&&!MGMT);b.classList.toggle('on',k===tab);b.setAttribute('aria-pressed',k===tab?'true':'false')});
+  var T=RC_TABS.filter(function(x){return x[0]===tab})[0],rows=E.CATALOG.concat(E.PKG_ROWS);
+  var head='',body='',cm=null;
+  if(tab==='aim'){
+    var ar=E.aim.ratesOf(aimRaw());
+    head='<tr><th>Spark AI rate</th><th class="num">Value</th></tr>';
+    body=Object.keys(AIM_LBL).map(function(k){return '<tr><td class="r-name">'+esc(AIM_LBL[k])+'</td><td class="num"><span class="r-ro">'+fmt(ar[k])+'</span></td></tr>'}).join('')
+      +'<tr><td colspan="2" class="nm">Read-only here — Spark AI\'s rates are set on <a href="/aiquote">/aiquote</a>; the conversational lines price at '+esc('£'+ar.dayRate+'/'+ar.hoursPerDay+'h')+'.</td></tr>';
+  }else{
+    if(tab==='mgmt')cm=E.costModel(R,COST.data,ACTUALS,PQ['go+ar']||null);
+    head='<tr><th>Optimisation</th>'+T[2].map(function(f){return '<th class="'+(f[3]==='txt'?'':'num')+'">'+esc(f[1])+'</th>'}).join('')
+      +(tab==='aspl'?'<th class="num" title="Billing tokens per parent product, averaged over the tracked briefs">tracked tok / product</th>':'')
+      +(tab!=='mgmt'?'<th class="num" title="Sell price per unit — set by Management">Sell £ / unit</th>':'<th class="num">Loaded cost</th><th class="num">List margin</th><th>Floor check</th><th class="num">Suggested £</th><th class="num">Set-up cost</th>')
+      +'<th>Status</th></tr>';
+    body=rows.map(function(b){var r=R.rows[b.id],a=ACTUALS[b.id];
+      var cells=T[2].map(function(f){var store=f[2],ro=store==='price'&&!MGMT;
+        return edCell(store,b.id+'|'+f[0],f[0],r[f[0]],r.src[f[0]]||'unset',r.by[f[0]],f[3],ro)}).join('');
+      if(tab==='aspl')cells+='<td class="num"><span class="r-ro src-actuals" title="'+esc(a&&a.billPerProd?'over '+a.n+' tracked brief'+(a.n===1?'':'s'):'no tracked brief yet')+'">'+(a&&a.billPerProd?fmt(Math.round(a.billPerProd)):'—')+'</span></td>';
+      if(tab!=='mgmt')cells+='<td class="num"><span class="r-ro src-'+(r.src.unit||'unset')+'" title="'+esc(stampT(r.by.unit,r.src.unit))+'">'+(r.unit!=null?'£'+r.unit:'—')+'</span></td>';
+      else{var x=cm.rows[b.id]||{},w=(x.why||[]).join(' · ');
+        cells+='<td class="num" title="'+esc(w)+'">'+(x.loaded!=null?'£'+x.loaded.toFixed(4):'—')+'</td>'
+          +'<td class="num">'+(x.listMargin!=null?(x.listMargin*100).toFixed(1)+'%':'—')+'</td>'
+          +'<td>'+(x.floorOK==null?'<span class="nm">—</span>':x.floorOK?'<span class="stc stc-priced">clears</span>':'<span class="stc stc-unknown" title="At the lowest ladder multiplier the unit price is below the loaded cost">below cost</span>')+'</td>'
+          +'<td class="num">'+(x.suggested!=null?'£'+x.suggested.toFixed(3):'—')+'</td>'
+          +'<td class="num">'+(x.setupCost!=null?GBP(x.setupCost):'—')+'</td>'}
+      var draft=tab==='mgmt'?r.draftUnit:r.draftHours;
+      return '<tr><td class="r-name"><span class="r-grp">'+esc(b.grp)+'</span>'+esc(b.name)+'</td>'+cells
+        +'<td>'+(r.unpriced&&tab==='mgmt'?'<span class="r-draft">unpriced</span>':draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>')+'</td></tr>'}).join('');
+  }
+  $('#rc-head').innerHTML=head;$('#rc-body').innerHTML=body;
+  // the house-wide inputs under each tab
+  var g=R.g,foot=$('#rc-g');
+  function gIn(store,key,label,val,st,src,step,ro,kind){var t=stampT(st,src);
+    return '<label class="gfld" title="'+esc(t)+'"><span>'+esc(label)+'</span><input class="fld sm" '+(kind==='txt'?'type="text"':kind==='date'?'type="date"':'type="number" min="0" step="'+step+'"')+' data-gs="'+store+'" data-k="'+esc(key)+'" value="'+esc(val==null?'':val)+'"'+(ro?' disabled':'')+'></label>'}
+  var gh='';
+  if(tab==='aspl')gh=gIn('ops','_g|ruleH','Hours per FeedHero rule',g.ruleH,g.by.ruleH,g.src.ruleH,0.5)+gIn('ops','_g|langSetupH','Set-up hours per extra language',g.langSetupH,g.by.langSetupH,g.src.langSetupH,0.5);
+  if(tab==='mgmt'){
+    var tiers=(g.tiers||[]).map(function(t){return (t.upTo===Infinity||t.upTo==null?'∞':t.upTo)+'×'+t.x}).join(', ');
+    gh='<div class="gsec"><b>Sell (every Pricer signin reads these)</b>'
+      +gIn('price','_g|blockGBP','Block £ (ex VAT)',g.blockGBP,g.by.blockGBP,g.src.blockGBP,1)+gIn('price','_g|blockH','Block hours',g.blockH,g.by.blockH,g.src.blockH,0.5)
+      +'<label class="gfld wide" title="'+esc(stampT(g.by.tiers,g.src.tiers))+'"><span>Volume ladder (upTo×multiplier)</span><input class="fld sm" type="text" data-gs="price" data-k="_g|tiers" value="'+esc(tiers)+'"></label>'
+      +gIn('price','_g|bundlePct','Tier 2 bundle % (generation)',g.bundlePct,g.by.bundlePct,g.src.bundlePct,1)+gIn('price','_g|reusePct','Re-use % (same language)',g.reusePct,g.by.reusePct,g.src.reusePct,1)
+      +gIn('price','_g|floorMonthly','Monthly floor £',g.floorMonthly,g.by.floorMonthly,g.src.floorMonthly,10)+gIn('price','_g|pkgVersion','Package version',g.pkgVersion,g.by.pkgVersion,g.src.pkgVersion,0,false,'txt')+'</div>';
+    // the test packages: £ a month per count. Until Management enters one it reads the DRAFT default (shown as the
+    // placeholder, never as a value) and keeps every proposal carrying it off "client-safe"
+    var gt=g.tests||{},gts=g.src.tests||{},gtb=g.by.tests||{};
+    gh+='<div class="gsec"><b>Test packages (£ a month, ex VAT)</b>'+(E.TEST_COUNTS||[2,3,4]).map(function(n){var own=gts[n]==='ops';
+      return '<label class="gfld" title="'+esc(own?stampT(gtb[n],'ops'):'draft default '+(gt[n]!=null?'£'+gt[n]:'')+' — not yet confirmed')+'"><span>'+n+' tests a month £</span><input class="fld sm" type="number" min="0" step="10" data-gs="price" data-k="_g|test'+n+'" value="'+(own?esc(gt[n]):'')+'" placeholder="'+(gt[n]!=null?'draft '+gt[n]:'not set')+'"></label>'}).join('')
+      +'<span class="nm">'+esc(E.TEST_WHAT?E.TEST_WHAT.charAt(0).toUpperCase()+E.TEST_WHAT.slice(1):'')+'</span></div>';
+    var cv=function(k){var x=COST.data['_c|'+k];return x&&typeof x==='object'?x.v:x},cs=function(k){var x=COST.data['_c|'+k];return x&&typeof x==='object'?{by:x.by,at:x.at}:null};
+    gh+='<div class="gsec"><b>Cost (Management only — never sent to an AM signin)</b>'
+      +gIn('cost','_c|rateAspl','ASPL cost £ / h',cv('rateAspl'),cs('rateAspl'),cv('rateAspl')!=null?'ops':'unset',1)+gIn('cost','_c|rateAm','London AM cost £ / h',cv('rateAm'),cs('rateAm'),cv('rateAm')!=null?'ops':'unset',1)
+      +gIn('cost','_c|gbpPerMTok','£ per million tokens',cv('gbpPerMTok'),cs('gbpPerMTok'),cv('gbpPerMTok')!=null?'ops':'unset',0.01)+gIn('cost','_c|tokAsOf','Token price as of',cv('tokAsOf'),cs('tokAsOf'),cv('tokAsOf')?'ops':'unset',0,false,'date')
+      +gIn('cost','_c|ohPct','Overhead % on labour',cv('ohPct'),cs('ohPct'),cv('ohPct')!=null?'ops':'unset',1)+gIn('cost','_c|marginPct','Target margin %',cv('marginPct'),cs('marginPct'),cv('marginPct')!=null?'ops':'unset',1)+'</div>';
+    var p=cm&&cm.proposal;
+    if(p)gh+='<div class="gsec"><b>'+esc(curClient()||'This build')+' · Tier 2 margins</b><span class="gm">generation '+(p.genMargin!=null?(p.genMargin*100).toFixed(1)+'%':'—')+' · set-up '+(p.setupMargin!=null?(p.setupMargin*100).toFixed(1)+'%':'—')+' · monthly '+(p.monthlyMargin!=null?(p.monthlyMargin*100).toFixed(1)+'%':'—')+'</span><span class="nm">'+esc(p.why.join(' · '))+'</span></div>';
+  }
+  if(tab==='am')gh='<span class="nm">QC share = the share of products a London AM checks by hand; QC minutes = per product checked.</span>';
+  if(tab==='aim')gh='';
+  foot.innerHTML=gh;
+  $('#tiers-line').textContent='Volume ladder (marginal): '+(g.tiers||[]).map(function(t,i,a){var lo=i?a[i-1].upTo:0;return (t.upTo===Infinity||t.upTo==null?(lo/1000)+'k+':(lo?(lo/1000)+'–':'first ')+(t.upTo/1000)+'k')+' ×'+t.x}).join(' · ')+' · block '+GBP(g.blockGBP)+' ex VAT per '+g.blockH+'h';
+}
+function rcEdit(el){
+  if(el.__editing)return;el.__editing=1;
+  var S=STORES[el.getAttribute('data-store')],k=el.getAttribute('data-k'),step=el.getAttribute('data-step'),txt=step==='txt';
+  var cur=S.data[k],v=cur&&typeof cur==='object'&&!Array.isArray(cur)?cur.v:cur;
+  if(v==null){var R=composed(),i=k.indexOf('|'),row=R.rows[k.slice(0,i)];if(row){var x=row[k.slice(i+1)];if(x!=null&&!txt)v=x}}
+  var in_=document.createElement('input');in_.className='r-in';in_.type=txt?'text':'number';
+  if(!txt){in_.step=step||'1';in_.min='0'}else{in_.style.width='160px';in_.style.textAlign='left';in_.maxLength=200}
+  in_.value=v==null?'':v;el.replaceWith(in_);in_.focus();in_.select();
+  var done=false;
+  function fin(commit){if(done)return;done=true;
+    if(commit){var raw=in_.value.trim();
+      if(raw===''){S.set(k,null)}
+      else if(txt)S.set(k,{v:raw});
+      else if(isFinite(+raw))S.set(k,{v:Math.max(0,+raw)});}
+    // drop focus first: a focused input inside the card reads as "typing" and the redraw would skip it, leaving a
+    // dead input whose next Enter is silently ignored (the blur listener returns, `done` is already set)
+    if(document.activeElement===in_)in_.blur();
+    svRender()}
+  in_.addEventListener('keydown',function(e){if(e.key==='Enter')fin(true);if(e.key==='Escape')fin(false)});
+  in_.addEventListener('blur',function(){fin(true)});
+}
+function parseTiers(s){
+  var parts=String(s||'').split(',').map(function(x){return x.trim()}).filter(Boolean),out=[];
+  for(var i=0;i<parts.length;i++){var m=/^(∞|inf|\d+)\s*[×x:*]\s*([0-9.]+)$/i.exec(parts[i]);if(!m)return null;
+    out.push({upTo:/^(∞|inf)$/i.test(m[1])?null:+m[1],x:+m[2]})}
+  if(out.length&&out[out.length-1].upTo!=null)out.push({upTo:null,x:out[out.length-1].x});
+  return out.length?out:null;
+}
+
+/* ---- 9. saved proposals (grouped by prop id), counted once each ---- */
+function propGroups(){
+  var g={};Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(!q||typeof q!=='object'||!q.prop||q.deleted)return;
+    if(!SV.spAll&&curClient()&&norm(q.client)!==norm(curClient()))return;
+    if(!inScope(q.client))return;
+    (g[q.prop.id]=g[q.prop.id]||[]).push({id:k,q:q})});
+  return Object.keys(g).map(function(pid){var a=g[pid].sort(function(x,y){return ((x.q.superseded?1:0)-(y.q.superseded?1:0))||((x.q.prop.n||0)-(y.q.prop.n||0))||((+y.q.t||0)-(+x.q.t||0))});
+    return {pid:pid,ops:a,t:Math.max.apply(null,a.map(function(x){return +x.q.t||0})),client:a[0].q.client}}).sort(function(a,b){return b.t-a.t});
+}
+function optStage(q,anyChosen){
+  if(q.superseded)return ['Earlier version','s-sup'];
+  if(q.declined)return ['Declined','s-declined'];
+  if(q.chosen)return ['Chosen ✓','s-agreed'];
+  if(anyChosen)return ['Not taken','s-sup'];
+  if(q.sentAt)return ['Sent','s-proposalsent'];
+  return ['Saved','s-saved'];
+}
+function renderSaved2(){
+  var sec=$('#svc-saved');if(busy(sec))return;
+  var gs=propGroups(),one=0,mon=0,chosen=0;
+  $$('#sp-filter button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-spf')==='all')===SV.spAll)});
+  gs.forEach(function(g){var oid=E.countedOption(PROPS.data,g.pid),q=PROPS.data[oid];if(!q||q.declined)return;
+    one+=(q.pq&&q.pq.oneOff&&q.pq.oneOff.total)||0;mon+=(q.pq&&q.pq.monthly&&q.pq.monthly.total)||0;if(q.chosen)chosen++});
+  $('#sp-kpis').innerHTML='<div class="kpi"><div class="n">'+gs.length+'</div><div class="l">proposals</div></div>'
+    +'<div class="kpi"><div class="n">'+GBP(one)+'</div><div class="l">one-off · counted once</div></div>'
+    +'<div class="kpi"><div class="n">'+GBP(mon)+'</div><div class="l">monthly · counted once</div></div>'
+    +'<div class="kpi good"><div class="n">'+chosen+'</div><div class="l">chosen</div></div>';
+  $('#sp-list').innerHTML=gs.length?gs.map(function(g){
+    var anyChosen=g.ops.some(function(x){return x.q.chosen&&!x.q.superseded}),cid=E.countedOption(PROPS.data,g.pid);
+    return '<div class="pg" data-pid="'+esc(g.pid)+'"><div class="pg-h"><b>'+esc(g.client)+'</b> <span class="nm">'+esc((g.ops[0].q.markets||[]).map(function(m){return m.toUpperCase()}).join(', '))+' · '+fmtDate(g.t)+'</span>'
+      +'<button type="button" class="btn sm" data-sp="add" data-pid="'+esc(g.pid)+'" title="Load the client and add the shown tiers to this proposal as further options">➕ Add option</button></div>'
+      +g.ops.map(function(x){var q=x.q,p=q.pq||{},st=optStage(q,anyChosen),safe=!!q.clientSafe;
+        return '<div class="po'+(x.id===cid?' counted':'')+(q.superseded?' sup':'')+'"><span class="po-n">'+(q.prop.n||'?')+'</span>'
+          +'<div class="po-b"><div><b>'+esc(q.ref)+'</b> · '+esc(p.label||q.option)+' <span class="stg '+st[1]+'">'+esc(st[0])+'</span>'+(safe?'':' <span class="pill warn" title="'+esc((q.blockers||[]).map(function(b){return typeof b==='string'?b:b.why}).join('\n'))+'">to confirm</span>')+(x.id===cid?' <span class="nm" title="The figure this proposal counts at in the pipeline">counted</span>':'')+'</div>'
+          +'<div class="po-m">One-off <b>'+GBP(p.oneOff&&p.oneOff.total)+'</b> · monthly <b>'+GBP(p.monthly&&p.monthly.total)+'</b> <span class="nm">ex VAT · by '+esc(q.by||'—')+(q.sentAt?' · sent '+fmtDate(tOf(q.sentAt)):'')+'</span></div></div>'
+          +'<div class="po-a">'+(q.superseded?'':'<button type="button" class="btn sm'+(q.chosen?' on':'')+'" data-sp="chosen" data-id="'+x.id+'" aria-pressed="'+(q.chosen?'true':'false')+'">✓ Chosen</button>'
+            +'<button type="button" class="btn sm" data-sp="sent" data-id="'+x.id+'"'+(safe&&!q.sentAt?'':' disabled')+' title="'+(safe?(q.sentAt?'Already recorded as sent':'Record this option as sent to the client'):'Not client-safe — figures still read “to confirm”')+'">Mark sent</button>'
+            +'<button type="button" class="btn sm'+(q.declined?' on':'')+'" data-sp="declined" data-id="'+x.id+'">Declined</button>'
+            +'<button type="button" class="btn sm" data-sp="version" data-id="'+x.id+'" title="Load it, change it, save — this one is kept as an earlier version">✎ New version</button>')
+            +'<button type="button" class="btn sm" data-sp="del" data-id="'+x.id+'" title="Delete this option">✕</button></div></div>'}).join('')+'</div>'}).join('')
+    :'<div class="sq-empty">No saved proposals'+(SV.spAll?'':' for '+esc(curClient()||'this client'))+' yet — build one above and hit 💾 Save as proposal.</div>';
+}
+function propPatch(id,fn){var q=PROPS.data[id];if(!q)return;var n=JSON.parse(JSON.stringify(q));fn(n);PROPS.set(id,n)}
+function saveProposal(){
+  var opts=shownOpts(),c=curClient();
+  if(!opts.length){toast('Nothing to save — audit a market first');return}
+  if(!c||c.length>60||/[:|]/.test(c)||/^[_~]/.test(c)){toast('Name the client or prospect first (no ":" or "|", not starting with "_" or "~")');return}
+  // the store refuses a client outside a scoped signin — said here, before anything is built or lost
+  if(!inScope(c)){toast(SV.mode==='file'?'Prospect proposals need an unscoped signin — a prospect is outside your clients. Ask Ray to save it.':c+' is not one of your clients — this signin cannot save its proposal');return}
+  // a new version or an added option belongs to the proposal's own client, never the one on the bar by accident
+  var tgt=SV.version?PROPS.data[SV.version]:SV.addTo?propFirst(SV.addTo):null;
+  if(tgt&&norm(tgt.client)!==norm(c)){toast('This '+(SV.version?'version':'option')+' belongs to '+tgt.client+' — '+(SV.mode==='file'?'name the prospect "'+tgt.client+'" and re-read its feed file':'load '+tgt.client)+', or cancel');return}
+  var now=Date.now(),by=meName(),aud=SV.audits.map(function(x){return x.audit}),R=composed(),refs=PROPS.data;
+  var pid,n0=0,label=null;
+  if(SV.version){var old=PROPS.data[SV.version];if(!old){SV.version=null;return saveProposal()}
+    pid=old.prop.id;opts=[shownOpts().indexOf(old.option)>=0?old.option:opts[0]];n0=old.prop.n-1;label=old.prop.label}
+  else if(SV.addTo){pid=SV.addTo;Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&q.prop&&q.prop.id===pid&&!q.deleted)n0=Math.max(n0,q.prop.n||0)})}
+  else pid='pp'+rid(10);
+  if(n0+opts.length>6){toast('A proposal holds six options at most');return}
+  var made=[];
+  for(var i=0;i<opts.length;i++){
+    var q=PQ[opts[i]],rec=E.snapshotOption(q,aud,R,aimRaw(),{client:c,by:by,t:now,prop:{id:pid,n:n0+i+1,label:label||q.label},
+      opts:{popts:popts(),targets:SV.targets,lineOpts:SV.lineOpts,lang:SV.lang,hlSrc:SV.hlSrc,src:SV.mode,industry:SV.mode==='file'&&SV.file?SV.file.industry:undefined},existingRefs:refs});
+    var bytes=new TextEncoder().encode(JSON.stringify(rec)).length;
+    if(bytes>60*1024){toast(q.label+' is '+Math.round(bytes/1024)+' KB — over the 60 KB a saved option can hold, so nothing was saved. Save fewer markets at once.');return}
+    var oid='o'+rid(12);refs=Object.assign({},refs);refs[oid]=rec;made.push([oid,rec]);
+  }
+  var upd={};made.forEach(function(x){upd[x[0]]=x[1]});
+  if(SV.version){var o2=JSON.parse(JSON.stringify(PROPS.data[SV.version]));o2.superseded={t:now,ref:made[0][1].ref};upd[SV.version]=o2}
+  PROPS.setMany(upd);
+  SV.version=null;SV.addTo=null;SV.dbSrc=pid;   // an email the AM edited is kept (the saved options carry the same figures)
+  svRender();
+  toast('Saved '+made.length+' option'+(made.length===1?'':'s')+' — '+made.map(function(x){return x[1].ref}).join(', '));
+}
+// ✎ New version / ➕ Add option go back to the lane the option was built in: a prospect's (file) option returns
+// to ⇪ File with its name, market and industry filled in — the page then asks for its feed file again; a client's
+// option returns to the live/stored lane. Answers true when it switched to the file lane.
+function toLaneOf(q){
+  var o=q.opts||{};
+  if(o.src==='file'){
+    SV.mode='file';lsSet('fcc-svc-src','file');
+    $('#svc-pname').value=q.client||'';
+    var mk=(q.markets||[])[0];if(mk&&Array.prototype.some.call($('#svc-fmkt').options,function(x){return x.value===mk}))$('#svc-fmkt').value=mk;
+    if(o.industry&&Array.prototype.some.call($('#svc-ind').options,function(x){return x.value===o.industry}))$('#svc-ind').value=o.industry;
+    // a file read for ANOTHER prospect is no basis for this one's version
+    if(SV.file&&norm(SV.file.name)!==norm(q.client))SV.file=null;
+    if(!SV.file)toast('Re-read '+q.client+'\'s feed file (⇪ Choose feed file) to build on this proposal');
+    window.scrollTo({top:0,behavior:'smooth'});
+    return true;
+  }
+  if(SV.mode==='file'){SV.mode='live';lsSet('fcc-svc-src','live')}
+  return false;
+}
+// load a saved option's settings back into the bar (✎ New version) — rendering stays from the snapshot
+function loadOption(q){
+  var o=q.opts||{};
+  if(q.client!==SV.client&&SV.mode!=='file')svLoadClient(q.client,q.markets||[]);
+  custDefaults();SV.lang={};
+  if(o.targets)SV.targets=Object.assign({},SV.targets,o.targets);
+  if(o.popts)Object.keys(o.popts).forEach(function(k){SV.popts[k]=o.popts[k]});
+  if(o.lineOpts)SV.lineOpts=JSON.parse(JSON.stringify(o.lineOpts));
+  if(o.lang)Object.keys(o.lang).forEach(function(k){SV.lang[k]=o.lang[k]});
+  if(o.hlSrc)SV.hlSrc=Object.assign({},SV.hlSrc,o.hlSrc);
+  if(q.aimSources&&Object.keys(q.aimSources).length)SV.aimSources=JSON.parse(JSON.stringify(q.aimSources));
+}
+
+/* ---- the file lane: a prospect's feed, read in this browser ---- */
+function readFile(f){
+  if(!f)return;
+  if(!FA||!FA.createParser){SV.file={name:prospectName($('#svc-pname').value),mkt:$('#svc-fmkt').value||'gb',fname:f.name,status:'fail',err:'the feed parser did not load — hard-refresh',res:null};svRender();return}
+  var name=prospectName($('#svc-pname').value)||prospectName(f.name.replace(/\.[^.]+$/,''))||'Prospect';
+  $('#svc-pname').value=name;
+  SV.file={name:name,industry:$('#svc-ind').value||'Retail',mkt:$('#svc-fmkt').value||'gb',fname:f.name,status:'run',pct:0,res:null};
+  renderHero();
+  f.arrayBuffer().then(function(buf){
+    var u=new Uint8Array(buf),txt;
+    try{txt=new TextDecoder('utf-8',{fatal:true}).decode(u)}catch(e){txt=new TextDecoder('windows-1252').decode(u)}
+    txt=txt.replace(/^\uFEFF/,'');
+    return PZLOAD.lg().then(function(lg){
+      var F=SV.file,pc=E.parentCounter(FA.normKey),nc=E.needCollector(lg,AR,{}),xc=lg.xmlCollector({client:F.name,market:F.mkt});
+      var pf=E.profileForIndustry(lg,F.industry,PROF),qs=lg.qualityStream({FA:FA,client:F.name,market:F.mkt,expected:pf.expected,waived:pf.waived});
+      var col={nc:nc,xc:xc,qs:qs};
+      function fan(r,h){h=Array.isArray(h)?h:undefined;pc.row(r,h);for(var k in col){if(col[k]){try{col[k].onRow(r,h)}catch(e){col[k]=null}}}}
+      var sn=CATE&&CATE.sniff?CATE.sniff(txt.slice(0,4000)):{fmt:/^\s*</.test(txt)?'xml':'delim',delim:',',quotes:true};
+      var parser=sn.fmt==='xml'?FA.createXmlParser(fan):(CATE&&CATE.delimParser?CATE.delimParser(sn.delim,fan,{quotes:sn.quotes}):FA.createParser(fan));
+      var CH=1<<20;
+      for(var i=0;i<txt.length;i+=CH){parser.push(txt.slice(i,i+CH))}
+      parser.end();
+      var out={pc:pc.result()};
+      ['nc','xc','qs'].forEach(function(k){try{out[k]=col[k]?col[k].finish():null}catch(e){out[k]=null}});
+      if(!out.pc.rows)throw new Error('no product rows found in the file');
+      F.res=out;F.t=Date.now();F.status='done';
+    });
+  }).catch(function(e){if(SV.file){SV.file.status='fail';SV.file.err=String((e&&e.message)||e)}}).then(svRender);
+}
+
+/* ---- event wiring (delegated, so a re-render never loses a handler) ---- */
+function wire(){
+  $('#svc-src').addEventListener('click',function(e){var b=e.target.closest('button[data-src]');if(!b)return;
+    SV.mode=b.getAttribute('data-src');lsSet('fcc-svc-src',SV.mode);svKick();svRender()});
+  $('#brand').addEventListener('change',function(){if(SV.silent)return;svLoadClient(this.value)});
+  $('#svc-mk').addEventListener('click',function(e){var b=e.target.closest('.mchip[data-m]');if(!b)return;
+    var m=b.getAttribute('data-m'),i=SV.mkts.indexOf(m);
+    if(i>=0){if(SV.mkts.length===1){toast('A proposal needs at least one market');return}SV.mkts.splice(i,1)}
+    else{SV.mkts.push(m);fetchMarket(SV.client,m);if(SV.mode==='live')countParents(SV.client,m,false)}
+    svRender()});
+  $('#svc-mk').addEventListener('change',function(e){var s=e.target.closest('select[data-lang]');if(!s)return;SV.lang[s.getAttribute('data-lang')]=s.value;svRender()});
+  $('#svc-note').addEventListener('change',function(e){var t=e.target.closest('input[data-tp]');if(!t)return;
+    var v=Math.round(+t.value);SV.typedP[SV.client+'|'+t.getAttribute('data-tp')]=v>0?v:0;svRender()});
+  $('#svc-file').addEventListener('change',function(){readFile(this.files&&this.files[0]);this.value=''});
+  $('#svc-ind').addEventListener('change',function(){if(SV.file){SV.file.industry=this.value;svRender()}});
+  $('#svc-fmkt').addEventListener('change',function(){if(SV.file){SV.file.mkt=this.value;svRender()}});
+  $('#svc-pname').addEventListener('change',function(){var v=prospectName(this.value);this.value=v;if(SV.file&&v){SV.file.name=v;svRender()}});
+  // page-wide actions
+  document.addEventListener('click',function(e){var a=e.target.closest('[data-act],[data-load],[data-sp],[data-ro]');if(!a)return;
+    var act=a.getAttribute('data-act');
+    if(act==='golive'){SV.mode='live';lsSet('fcc-svc-src','live');svKick();svRender();return}
+    if(act==='file'){SV.mode='file';lsSet('fcc-svc-src','file');svRender();window.scrollTo({top:0,behavior:'smooth'});return}
+    if(act==='tab'){SV.tab=a.getAttribute('data-tab');lsSet('fcc-svc-tab',SV.tab);svRender();var r=$('#svc-rates');if(r)r.scrollIntoView({block:'start'});return}
+    if(act==='custreset'){custDefaults();svRender();return}
+    if(act==='cancelmode'){SV.version=null;SV.addTo=null;svRender();return}
+    if(a.hasAttribute('data-load')){svLoadClient(a.getAttribute('data-load'));window.scrollTo({top:0,behavior:'smooth'});return}
+    var sp=a.getAttribute('data-sp');
+    if(sp){var id=a.getAttribute('data-id'),now=Date.now(),q=PROPS.data[id];
+      if(sp==='add'){var pid=a.getAttribute('data-pid'),first=propFirst(pid);
+        if(first){var fl=toLaneOf(first);if(!fl)svLoadClient(first.client,first.markets);SV.addTo=pid;SV.version=null;svRender();if(!fl)$('#svc-prop').scrollIntoView({block:'start'})}return}
+      if(!q)return;
+      if(sp==='chosen'){var on=!q.chosen,upd={};
+        // choosing un-chooses the siblings — one save, so the pipeline never counts two choices
+        Object.keys(PROPS.data).forEach(function(k){var x=PROPS.data[k];if(x&&x.prop&&x.prop.id===q.prop.id&&x.chosen&&k!==id){var n2=JSON.parse(JSON.stringify(x));delete n2.chosen;upd[k]=n2}});
+        var n1=JSON.parse(JSON.stringify(q));if(on)n1.chosen={t:now};else delete n1.chosen;upd[id]=n1;
+        PROPS.setMany(upd);return}
+      if(sp==='sent'){if(!q.clientSafe)return;propPatch(id,function(n){n.sentAt={t:now,via:'manual'}});return}
+      if(sp==='declined'){propPatch(id,function(n){if(n.declined)delete n.declined;else n.declined={t:now}});return}
+      if(sp==='version'){var fv=toLaneOf(q);loadOption(q);SV.version=id;SV.addTo=null;svRender();if(!fv)$('#svc-prop').scrollIntoView({block:'start'});return}
+      if(sp==='del'){if(!confirm('Delete option '+q.ref+'? It leaves the pipeline.'))return;propPatch(id,function(n){n.deleted={t:now}});return}
+      return}
+    var ro=a.getAttribute('data-ro');
+    if(ro==='debrief'){var c=a.getAttribute('data-client'),r=ROLL.data[c]||{};rollSet(c,{debriefAt:r.debriefAt?null:{t:Date.now()}});return}
+  });
+  // the proposal's actions
+  $('#pq-copy').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;var t=E.proposalText(o.map(function(k){return PQ[k]}),{tone:SV.tone,guard:true,from:meName()});copyText(t.subject+'\n\n'+t.body,'copied — client copy (guarded while figures are to confirm)')});
+  $('#pq-opts').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;copyText(E.optionsText(o.map(function(k){return PQ[k]}),{guard:true}),'copied — every option, side by side')});
+  $('#pq-save').addEventListener('click',saveProposal);
+  $('#pq-debrief').addEventListener('click',function(){if(SV.dbSrc!=='build'||SV.dbEdited){if(!dbReplaceOk())return;SV.dbSrc='build';SV.dbEdited=false;svRenderNow()}$('#svc-debrief').scrollIntoView({block:'start'})});
+  $('#pq-cust').addEventListener('click',function(){var h=$('#svc-cust'),on=h.hidden;h.hidden=!on;this.setAttribute('aria-expanded',on?'true':'false');if(on)renderCust()});
+  // the test-package segmented control (a button, so a click — guarded on its own data attribute)
+  $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-tests]');if(!b)return;
+    var n=+b.getAttribute('data-tests');SV.popts.tests=(E.TEST_COUNTS||[2,3,4]).indexOf(n)>=0?n:0;svRender()});
+  $('#svc-cust').addEventListener('change',function(e){var t=e.target;
+    if(t.hasAttribute('data-lon')){var k=t.getAttribute('data-lon'),lo=SV.lineOpts[k]=SV.lineOpts[k]||{};lo.on=t.checked}
+    else if(t.hasAttribute('data-lsc')){var k2=t.getAttribute('data-lsc');(SV.lineOpts[k2]=SV.lineOpts[k2]||{}).scope=t.value}
+    else if(t.hasAttribute('data-route')){var cur=(PQ['go+ar']&&PQ['go+ar'].conv&&PQ['go+ar'].conv.sources)||E.aimDefaultSources(SV.audits.map(function(x){return x.audit}));
+      SV.aimSources=Object.assign({},cur,SV.aimSources||{});SV.aimSources[t.getAttribute('data-route')]=t.value}
+    else if(t.hasAttribute('data-hl')){SV.hlSrc[t.getAttribute('data-hl')]=t.checked}
+    else if(t.hasAttribute('data-cb')){SV.popts[t.getAttribute('data-cb')]=t.checked}
+    else if(t.hasAttribute('data-c')){var f=t.getAttribute('data-c');
+      if(f in SV.targets)SV.targets[f]=+t.value;else if(f==='retainerH')SV.popts.retainerH=Math.max(0,+t.value||0);else SV.popts[f]=t.value}
+    t.blur&&t.blur();svRender()});
+  // the debrief kit
+  $('#db-src').addEventListener('change',function(){if(!dbReplaceOk()){this.value=SV.dbSrc;return}SV.dbSrc=this.value;SV.dbEdited=false;svRender()});
+  $('#db-tone').addEventListener('click',function(e){var b=e.target.closest('button[data-tone]');if(!b||b.getAttribute('data-tone')===SV.tone)return;if(!dbReplaceOk())return;
+    SV.tone=b.getAttribute('data-tone');lsSet('fcc-svc-tone',SV.tone);SV.dbEdited=false;svRender()});
+  $('#db-to').addEventListener('input',function(){SV.dbToFor=norm(curClient())});
+  $('#db-to').addEventListener('change',function(){SV.dbToFor=norm(curClient());if(!SV.dbEdited)svRender()});
+  $('#db-body').addEventListener('input',function(){SV.dbEdited=true;$('#db-reset').hidden=false});
+  $('#db-sub').addEventListener('input',function(){SV.dbEdited=true;$('#db-reset').hidden=false});
+  $('#db-reset').addEventListener('click',function(){SV.dbEdited=false;this.hidden=true;svRenderNow()});
+  $('#db-stale').addEventListener('click',function(e){if(!e.target.closest('[data-act="dbregen"]'))return;SV.dbEdited=false;svRenderNow()});
+  $('#db-copy').addEventListener('click',function(){copyText($('#db-sub').value+'\n\n'+$('#db-body').value,'copied — the email')});
+  // an address another client is remembered by is asked about before anything is drafted to it
+  function toCheck(to){var c=curClient(),lo=to.toLowerCase(),other=Object.keys(ASKTO).filter(function(k){return norm(k)!==norm(c)&&String(ASKTO[k]||'').toLowerCase()===lo})[0];
+    return !other||confirm(to+' is '+other+'\'s remembered contact. Address '+c+'\'s proposal to it anyway?')}
+  $('#db-draft').addEventListener('click',function(){
+    var to=$('#db-to').value.trim(),body=$('#db-body').value;if(to.indexOf('@')<1){toast('Add the client contact first');$('#db-to').focus();return}
+    // the bridge keeps 8,000 characters and answers ok either way — a longer email would land cut mid-text
+    if(body.length>DRAFT_MAX){toast('This email is '+fmt(body.length)+' characters — the Gmail Drafts bridge keeps '+fmt(DRAFT_MAX)+'. Use ↗ Open in Gmail or ⧉ Copy, or shorten it.');return}
+    if(!toCheck(to))return;
+    var btn=this,c=curClient();btn.disabled=true;
+    fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:to,subject:$('#db-sub').value,text:body,keys:dbKeys(),client:c})})
+      .then(function(r){return r.json()}).then(function(j){btn.disabled=false;
+        if(j&&j.ok){ASKTO[c]=to;toast('Gmail draft queued (no CC — ↗ Open in Gmail adds the AM) · '+markSent('gmail-draft',true))}else toast((j&&j.error)||'draft failed')})
+      .catch(function(){btn.disabled=false;toast('draft failed — offline?')});
+  });
+  $('#db-open').addEventListener('click',function(){
+    var to=$('#db-to').value.trim(),cc=amCc();
+    if(to&&!toCheck(to))return;
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)+(cc?'&cc='+encodeURIComponent(cc):'')+'&su='+encodeURIComponent($('#db-sub').value)+'&body='+encodeURIComponent($('#db-body').value),'_blank','noopener');
+    if(to.indexOf('@')>0)fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:to,markOnly:true,keys:dbKeys(),client:curClient()})}).catch(function(){});
+    markSent('gmail-open');
+  });
+  $('#db-deck').addEventListener('click',function(){
+    var t=dbText();if(!t)return;var c=curClient(),list=dbList();
+    var md='# '+c+' — Services proposal deck\n\nMarkets: '+SV.audits.map(function(x){return x.mkt.toUpperCase()}).join(', ')+' · Options: '+list.map(function(q){return (q.pq||q).label}).join(' / ')
+      +'\n\n## Outline\n1. Where the feed stands (Golden Record now → after, AI-readiness)\n2. What we found — '+t.talk.join(' ')+'\n3. The options — what each includes, one-off and monthly apart, ex VAT\n4. New products and always-on\n5. What we need from you\n6. Next steps\n\n## Email copy (figures guarded until Ray confirms)\n'+t.body;
+    copyText(md,'deck brief copied — paste it into the Deck generator');window.open('/deck-builder','_blank','noopener');
+  });
+  // the rollout
+  $('#ro-mine').addEventListener('change',function(){SV.mine=this.checked;renderRollout()});
+  $('#ro-q').addEventListener('input',function(){renderRollout()});
+  $('#ro-body').addEventListener('change',function(e){var t=e.target,ro=t.getAttribute('data-ro'),c=t.getAttribute('data-client');if(!ro||!c)return;
+    if(ro==='next')rollSet(c,{next:t.value.trim().slice(0,160)});
+    if(ro==='nextDue')rollSet(c,{nextDue:t.value||null});
+    if(ro==='ao')rollSet(c,{alwaysOn:t.value?{t:Date.now(),on:true,mechanism:t.value}:null});
+    if(ro==='live')rollSet(c,{live:t.checked?{t:Date.now()}:null});
+    t.blur&&t.blur()});
+  $('#ro-body').addEventListener('click',function(e){if(e.target.closest('input,select,button,label,a'))return;var tr=e.target.closest('tr[data-client]');if(!tr)return;
+    var c=tr.getAttribute('data-client');if(SV.mode==='file'){SV.mode='live';lsSet('fcc-svc-src','live')}
+    if(marketsOf(c).length){svLoadClient(c);window.scrollTo({top:0,behavior:'smooth'})}else toast(c+' has no Google Shopping feed wired')});
+  $('#ro-body').addEventListener('keydown',function(e){if(e.key!=='Enter'||e.target.tagName!=='TR')return;e.target.click()});
+  // the roadmap
+  $('#rm-grid').addEventListener('change',function(e){var s=e.target.closest('select[data-rm]');if(!s)return;var k=s.getAttribute('data-rm');
+    RMAP.set(k,s.value?{status:s.value,note:''}:null);s.blur()});
+  // the rate card
+  $('#rc-tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-tab]');if(!b)return;SV.tab=b.getAttribute('data-tab');lsSet('fcc-svc-tab',SV.tab);renderRateCard()});
+  $('#rc-body').addEventListener('click',function(e){var el=e.target.closest('.r-ed[data-store]');if(el)rcEdit(el)});
+  $('#rc-body').addEventListener('keydown',function(e){var el=e.target.closest('.r-ed[data-store]');if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();rcEdit(el)}});
+  $('#rc-g').addEventListener('change',function(e){var t=e.target.closest('input[data-gs]');if(!t)return;var S=STORES[t.getAttribute('data-gs')],k=t.getAttribute('data-k'),v=t.value.trim();
+    if(v===''){S.set(k,null)}
+    else if(k==='_g|tiers'){var tt=parseTiers(v);if(!tt){toast('Ladder format: 5000×1, 20000×0.8, 50000×0.65, ∞×0.5');return}S.set(k,{v:tt})}
+    else if(t.type==='number'){if(isFinite(+v))S.set(k,{v:+v})}
+    else S.set(k,{v:v});
+    t.blur();svRender()});
+  // the saved list's filter
+  $('#sp-filter').addEventListener('click',function(e){var b=e.target.closest('button[data-spf]');if(!b)return;SV.spAll=b.getAttribute('data-spf')==='all';renderSaved2()});
+  document.addEventListener('focusout',function(){setTimeout(function(){if(!document.activeElement||document.activeElement===document.body)svRender()},60)});
+}
+
+/* a colleague's edit arrives without a reload: the shared stores are re-read every 90 s and when the tab
+   comes back — a store with an edit still waiting to be saved keeps its own copy (load() skips it) */
+function poll(){
+  if(document.hidden||!SV.boot)return;
+  Promise.all([OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),MGMT?COST.load():null]).then(svRender);
+}
+setInterval(poll,90000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)poll()});
+
 /* ---------------- boot ---------------- */
+function j(u){return fetch(u).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+function qp(k){var m=new RegExp('[?&]'+k+'=([^&]+)').exec(location.search);return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''}
 function boot(){
+  // the custom quote's own client list (the dossier), its rates and saved quotes
   fetch('/api/clients').then(function(r){return r.json()}).catch(function(){return{}}).then(function(store){
     store=store||{};var dead=store._deleted||[];
     var names=Object.keys(store).filter(function(k){return k.charAt(0)!=='_'&&dead.indexOf(k)<0});
     if(names.length)CLIENTS=names.sort();
     $('#pz-client').innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
-    var q=/[?&]client=([^&]+)/.exec(location.search);
-    if(q){var pre=decodeURIComponent(q[1].replace(/\+/g,' '));if(CLIENTS.indexOf(pre)>=0)$('#pz-client').value=pre}
-    loadClientVolume();
+    var pre=qp('client');if(pre&&CLIENTS.indexOf(pre)>=0)$('#pz-client').value=pre;
+    loadClientVolume(false);
+    if(SV.boot){var sel=$('#brand'),cur=sel.value;sel.innerHTML=clientList().map(function(c){return '<option>'+esc(c)+'</option>'}).join('');if(cur)sel.value=cur}
   });
-  fetch('/api/tachyon/rates').then(function(r){RATES_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}}).then(function(m){
-    if(m&&typeof m==='object')RATES=m;renderRates();renderCatalog();renderQuote()});
+  fetch('/api/tachyon/rates').then(function(r){return r.json()}).catch(function(){return{}}).then(function(m){
+    if(m&&typeof m==='object'&&!Array.isArray(m))LEGACY=m;renderCatalog();renderQuote();svRender()});
   fetch('/api/tachyon/quotes').then(function(r){QUOTES_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}}).then(function(m){
     if(m&&typeof m==='object')QUOTES=m;renderSaved()});
   // the evidence layer: title-scanned AI briefs + their tracking records → averages
-  $('#act-tog').onchange=function(){USE_ACTUALS=this.checked;
-    try{localStorage.setItem('fcc-pricer-actuals',USE_ACTUALS?'1':'0')}catch(e){}
-    renderRates();renderCatalog();renderQuote()};
   Promise.all([
     fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return{}}),
     fetch('/api/tachyon/track').then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}})
@@ -1124,9 +2552,49 @@ function boot(){
     applySeeds();
     mergeLegacyIntoSeeds();
     refreshActuals()});
-  renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
+  $('#act-tog').onchange=function(){USE_ACTUALS=this.checked;try{localStorage.setItem('fcc-pricer-actuals',USE_ACTUALS?'1':'0')}catch(e){}renderCatalog();renderQuote();svRender()};
+  renderCatalog();renderQuote();renderSaved();renderScaffolds();
+  // the services half: the house reads + the six stores, then the bar
+  j('/api/access?me=1').then(function(me){
+    if(me){ME.email=me.email||'';ME.owner=!!me.owner;ME.modules=me.modules||null;ME.name=me.name||'';ME.clients=me.clients||null}
+    MGMT=ME.owner||(Array.isArray(ME.modules)&&ME.modules.indexOf('pricer-cost')>=0);
+    return Promise.all([
+      j('/api/golden/estate').then(function(d){EST=(d&&d.feeds)||{}}),
+      j('/api/ptypes/estate').then(function(d){PTE=(d&&d.feeds)||{}}),
+      j('/api/volume/arrivals').then(function(d){ARRV=(d&&d.feeds)||[]}),
+      j('/api/golden/profile').then(function(d){if(d)PROF={defaults:d.defaults||{},overrides:d.overrides||{},industryMap:d.industryMap||{}}}),
+      j('/api/aiquote').then(function(d){AIQ=d||{}}),
+      j('/api/aiquote/saved').then(function(d){AIQS=d||{}}),
+      j('/api/hours').then(function(d){HRS=(d&&d.clients)||{}}),
+      j('/api/schedule?lite=1').then(function(d){CAD=(d&&d.cadence)||[]}),
+      j('/api/labels/askdraft').then(function(d){ASKTO=(d&&d.cfg&&d.cfg.to)||{}}),
+      OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),
+      MGMT?COST.load().then(function(){if(COST.denied)MGMT=false}):null,
+      PZLOAD.lg().then(function(m){LG=m})
+    ]);
+  }).then(function(){
+    var inds=Object.keys(LG.INDUSTRY_PROFILES||{});if(inds.indexOf('Retail')<0)inds.push('Retail');
+    $('#svc-ind').innerHTML=inds.sort().map(function(i){return '<option'+(i==='Retail'?' selected':'')+'>'+esc(i)+'</option>'}).join('');
+    $('#svc-fmkt').innerHTML=Object.keys(E.MKT_LANG).map(function(m){return '<option value="'+m+'"'+(m==='gb'?' selected':'')+'>'+m.toUpperCase()+'</option>'}).join('');
+    // ?pkg=go+ar reads back as "go ar" (a '+' in a query string is a space) — both spellings, and t1 / t2 / ar, land
+    var list=clientList(),pre=qp('client'),mk=qp('market').toLowerCase().split(',').filter(Boolean),pkg=qp('pkg').trim().toLowerCase().replace(/\s+/g,'+');
+    pkg={t1:'go',t2:'go+ar',tier1:'go',tier2:'go+ar'}[pkg]||pkg;
+    $('#brand').innerHTML=list.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
+    var c=list.indexOf(pre)>=0?pre:(list.indexOf(lsGet('fcc-svc-client',''))>=0?lsGet('fcc-svc-client',''):(list.filter(function(x){return marketsOf(x).length})[0]||list[0]||''));
+    if(['go','go+ar','ar'].indexOf(pkg)>=0)SV.hlPkg=pkg;
+    SV.boot=true;wire();
+    if(c)svLoadClient(c,mk);else svRender();
+    if(SV.hlPkg)setTimeout(function(){var t=document.querySelector('.tier[data-opt="'+SV.hlPkg+'"]');if(t)t.scrollIntoView({block:'center'})},600);
+  }).catch(function(e){
+    $('#svc-tiers').innerHTML='<div class="empty">The services audit could not start ('+esc((e&&e.message)||e)+') — hard-refresh to pick up the latest deploy.</div>';
+  });
 }
-boot();
+PZLOAD.engines().then(function(x){
+  E=x.E;FA=x.FA;AR=x.AR;CATE=x.CAT;
+  try{$('#eng-v').textContent='engine v'+E.VERSION}catch(e){}
+  boot();
+}).catch(function(){
+  document.body.insertAdjacentHTML('afterbegin','<div class="eng-fail">The Pricer engine failed to load — hard-refresh to pick up the latest deploy.</div>');
+});
 })();
 </script>
-

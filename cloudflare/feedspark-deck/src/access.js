@@ -64,10 +64,20 @@ export const MODULES = [
   // row that names 'transformation' explicitly. Without this the five AMs joining would open the
   // board where the migration and the fixed-core decision are negotiated, on day one.
   { slug: 'transformation', label: 'Migration', path: '/migration', optIn: true },
+  // SERVICES & PRICER — MANAGEMENT'S PRICE AND COST (7 Oct 2026). A GRANT WITHOUT A PAGE: it opens
+  // no route of its own, it unlocks the half of /pricer that Management owns — writing the sell
+  // price (unit £, block £, the ladder, bundle / re-use / floor) and reading or writing the COST
+  // layer (labour rates, token cost, overhead, margin). The worker refuses /api/pricer/cost and a
+  // /api/pricer/price write with a 403 BEFORE the store is read, so a cost figure never leaves the
+  // worker for an AM signin. Opt-in for the same reason as the Migration board: an unrestricted
+  // signin must not inherit what Management negotiates. No `path`, so MODULE_PATHS skips it.
+  { slug: 'pricer-cost', label: 'Pricer costs & margin', optIn: true },
 ];
 // slugs an unrestricted signin (modules null) does NOT receive — they must be granted by name
 export const OPT_IN_MODULES = MODULES.filter((m) => m.optIn).map((m) => m.slug);
-export const MODULE_PATHS = MODULES.reduce((m, x) => { m[x.path] = x.slug; return m; }, {});
+// route -> slug for the PAGE gate. Only entries that HAVE a page: a path-less grant (pricer-cost)
+// would otherwise write MODULE_PATHS['undefined'].
+export const MODULE_PATHS = MODULES.filter((x) => x.path).reduce((m, x) => { m[x.path] = x.slug; return m; }, {});
 const MODULE_SLUGS = MODULES.map((x) => x.slug);
 
 // is this module allowed for the resolved scope? modules null/undefined = all (owner or an

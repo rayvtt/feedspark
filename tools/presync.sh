@@ -43,6 +43,9 @@ echo "   ✓ an emailed brief rebuilds its missing ticket, and never touches a l
 echo "── validating: shared working state (one team, one store)"
 node tools/test_sharedstate.mjs >/dev/null
 echo "   ✓ scoped views + the partial-save wipe trap hold on /api/state"
+echo "── validating: Services & Pricer stores (allow-lists, server stamps, the cost gate, scoped proposals)"
+node tools/test_pricerstore.mjs >/dev/null
+echo "   ✓ cell allow-lists + ranges, the ladder, server stamps, the _g| KV swap, frozen options, the pricerRoute gates + scoping hold"
 
 echo "── validating: Feed Lab AI-readiness model (conversational weighting, labels unscored)"
 node tools/test_feedlab.mjs >/dev/null
@@ -79,6 +82,9 @@ echo "   ✓ engine maths + collector capture + worker store hold"
 echo "── validating: AI Mode attributes (priced by data source)"
 node tools/test_aimode.mjs >/dev/null
 echo "   ✓ rates, routes, scrape-once, the AI floor + the page wiring hold"
+echo "── validating: Services & Pricer engine (needs per parent, the package, the Spark AI twin)"
+node tools/test_pricer.mjs >/dev/null
+echo "   ✓ v1 quote maths unchanged, exact needs, stored bounds, packageQuote, the Spark AI twin, costModel + the guard hold"
 
 echo "── validating: Golden Record PDP harvest (extraction + allowlist + sampler)"
 node tools/test_pdpharvest.mjs >/dev/null
@@ -343,6 +349,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Restock, driven (the join on the page, the KPIs against an independent count, the views, the ledger observation, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_restock.js || {
     echo "✗ restock tripwire failed — the join, a KPI, a view, the sort, the ledger observation or the phone layout regressed"; exit 1; }
+  echo "── validating: Services & Pricer, driven (stored paint → live exact, tiers, the guard, the proposal save, the Management gate, the phone)"
+  NODE_PATH=$(npm root -g) node tools/check_pricer.js || {
+    echo "✗ pricer tripwire failed — the audit lanes, a tier card, the client-safe guard, the proposal save, the Management gate or the phone layout regressed"; exit 1; }
   echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
   NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
     echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
