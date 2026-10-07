@@ -136,6 +136,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     if (vp === 1440) ok('the product image is large and never cropped — drawn at its own aspect, contain', off.imgW >= 150 && off.fit === 'contain' && off.nat, [off.imgW, off.fit, off.nat]);
     if (vp === 1440) ok('the preview fits one screen: product card + catalogue column under 760px tall', v2.h < 760, v2.h);
     if (vp === 1440 && process.env.PZ_SHOTS) await (await p.$('#svc-prev')).screenshot({ path: process.env.PZ_SHOTS + '/preview_t2.png' });
+    if (process.env.PZ_SHOTS) await (await p.$('#svc-tiers')).screenshot({ path: process.env.PZ_SHOTS + '/tiers_' + vp + '.png' });
     // a market whose feed cannot be read
     await p.click('.mchip[data-m="de"]');
     await p.waitForFunction(() => window.__PZX && window.__PZX.FAILED['Northwind|de'], null, { timeout: 10000 });
@@ -145,7 +146,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       chip: document.querySelector('.mchip[data-m="de"]').innerText,
       tp: !!document.querySelector('.tp-in[data-tp="de"]'),
       kw: (document.querySelector('.tier[data-opt="go"] tr[data-line="keywords"] .stc') || {}).textContent,
-      fix: Array.from(document.querySelectorAll('.tier[data-opt="go"] .fixes li')).map((li) => li.innerText).join(' | '),
+      fix: Array.from(document.querySelectorAll('.tier[data-opt="go"] .fixes li')).map((li) => li.textContent).join(' | '),
       money: Array.from(document.querySelectorAll('.tier[data-opt="go"] .money .mv')).map((x) => x.innerText),
       aon: (document.querySelector('.tier[data-opt="go"] .aon') || {}).innerText || '',
       digest: document.querySelector('#svc-prop').getAttribute('data-m-digest'),
@@ -220,11 +221,17 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     // 23 / 39 — the documented deep link, '+' and all
     ok('?pkg=go+ar highlights the Tier 2 card (a "+" in a query reads as a space — the page maps it back)', await p.evaluate(() => !!document.querySelector('.tier.hl[data-opt="go+ar"]')));
     // 22 — every → Brief link sits inside its card's frame
-    const clip = await p.evaluate(() => Array.from(document.querySelectorAll('.tier .ln-a a')).map((a) => { const f = a.closest('.rc-scroll').getBoundingClientRect(), r = a.getBoundingClientRect(); return Math.round(r.right - f.right); }));
+    const clip = await p.evaluate(() => { document.querySelectorAll('.tier .tier-more').forEach((d) => { d.open = true; }); return Array.from(document.querySelectorAll('.tier .ln-a a')).map((a) => { const f = a.closest('.rc-scroll').getBoundingClientRect(), r = a.getBoundingClientRect(); return Math.round(r.right - f.right); }); });
     ok('no "→ Brief" link is clipped by its tier card at 1440px', clip.length > 0 && clip.every((d) => d <= 0), clip);
     // A — the tier names
     const names = await p.evaluate(() => Array.from(document.querySelectorAll('.tier h3')).map((h) => h.innerText));
     ok('the tiers read Tier 1 · Google-ready and Tier 2 · AI-ready, each with its sub-label', /^Tier 1 · Google-ready/.test(names[0]) && /eligible \+ everything Google recommends/.test(names[0]) && /^Tier 2 · AI-ready/.test(names[1]) && /the bundle/.test(names[1]), names);
+    // the card reads in a glance: score bar, what you get, two prices — the working folded under See the breakdown
+    const bite = await p.evaluate(() => { const t = document.querySelector('.tier[data-opt="go+ar"]'); const d = t.querySelector('.tier-more');
+      d.open = false; const h = t.getBoundingClientRect().height; const chips = Array.from(t.querySelectorAll('.tk-get .tk-c')).map((c) => c.textContent);
+      return { h, chips, bars: t.querySelectorAll('.proj .tk-bar').length, folded: !d.open && !!d.querySelector('table.lines') && !!d.querySelector('.rates-l'), mv: t.querySelectorAll('.money .mv').length,
+        words: t.innerText.replace(d.innerText, '').split(/\s+/).filter(Boolean).length }; });
+    ok('a tier card leads with a score bar, what-you-get chips and two prices, the line table and rates folded under See the breakdown', bite.bars >= 1 && bite.chips.length >= 4 && /^✓ Everything in Tier 1/.test(bite.chips[0]) && bite.chips.slice(1).every((c) => /^(—|[\d,]+) /.test(c)) && bite.folded && bite.mv === 2 && bite.words < 120, bite);
     // 16 — the client contact
     ok('the debrief opens with Northwind\'s remembered contact', (await p.inputValue('#db-to')) === 'buyer@northwind.invalid');
     // 21 — an edited email survives a Customise change, and says the figures moved
