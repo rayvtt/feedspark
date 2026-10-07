@@ -178,6 +178,15 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /overlays/studio.js — the Design studio's own engine (Ray, 7 Oct 2026: "build a design module to
+// see if client's images would look like with our FeedSpark smart overlay … pulling in messaging
+// based on feeds & adwords data using a module to summon fields"). Where overlay_engine.js reads
+// what overlay is ALREADY live, this one answers what a feed COULD say: the fact catalogue, the
+// field summoner (which of THIS feed's columns carries each fact — resolved by value, because the
+// masters disagree and Monsoon's price pair is the reverse of Schuh's), the design catalogue mapping
+// onto the real image-creator scripts, and the pure layout geometry. Named *_engine.js so the Text
+// glob covers it — the trap that shipped /images with an empty engine.
+import OVERLAY_STUDIO_SRC from "../../../docs/overlay_studio_engine.js";
 // /images module (Ray, 15 Sep 2026): the client's whole media estate — image_link +
 // additional_image_link 1..10 — grouped by the SHOT TOKEN read off each URL, so one tag
 // lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
@@ -1635,6 +1644,9 @@ async function route(request, env, ctx) {
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/overlays/studio.js' && request.method === 'GET') {
+      return new Response(OVERLAY_STUDIO_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/design/fcc.css' && request.method === 'GET') {
       return new Response(DESIGN_CSS, { headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2928,7 +2940,7 @@ async function route(request, env, ctx) {
         // only the finished read carries the rows. Google Ads is the GOOGLE feed's; a Meta market is refused.
         if (path === '/api/catalog/ads') {
           if (/-fb$/i.test(String(url.searchParams.get('market') || ''))) return json({ ok: false, error: 'Google Ads is read for the Google feed' }, 400);
-          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'));
+          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), url.searchParams.get('period'));
           if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
           if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
           if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
@@ -4411,6 +4423,8 @@ async function catMasterInfo(env, cmpid, fresh) {
 // splicing two reports. Sorted by the Ads item id so the page order holds across calls. Nothing in git: KV only.
 const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS_CONC = 4;
 // the periods a caller may ask for (the Catalogue reads 7 days, /restock 30 — RESTOCK.RESTOCK_PERIODS is its twin); anything else reads the default
+// The Design studio asks for the longer one (Ray, 7 Oct 2026: "x clicks over past 30 days"). 30 days
+// is a SECOND full read of a big account (Schuh UK 22,283 rows), so it is never the default.
 const CAT_ADS_PERIODS = ['7_days', '30_days'];
 const CAT_ADS_TTL = 12 * 3600000, CAT_ADS_PART_TTL = 50 * 60000, CAT_ADS_MISSING_TTL = 24 * 3600000;
 // one report row -> [key, [impr, clicks, cost, conversions, conversion value], currency] — Google Ads' own
@@ -4423,7 +4437,10 @@ function catAdsRow(r) {
   return [k.slice(0, 120), [Math.round(n(r.c1)), Math.round(n(r.c2)), Math.round(n(r.c3) * 100) / 100, Math.round(n(r.c5) * 100) / 100, Math.round(n(r.c4) * 100) / 100], String(r.cur || '').trim().slice(0, 3)];
 }
 async function catAdsRead(env, cmpid, fresh, period) {
-  // one record per company × period (catads:<cmpid>:<period>) — a 30-day read never splices into the 7-day one
+  // one record per company × period (catads:<cmpid>:<period>) — a 30-day read never splices into the 7-day one.
+  // The allow-list is read INSIDE this function on purpose: tools/test_catalog.mjs lifts the function
+  // out of the file by name and evaluates it with only the CAT_ADS_* constants beside it, so a
+  // module-level helper here is a name that does not exist when the harness runs it.
   const per = CAT_ADS_PERIODS.indexOf(period) >= 0 ? period : CAT_ADS_PERIOD;
   const key = 'catads:' + cmpid + ':' + per, now = Date.now();
   let rec = null;

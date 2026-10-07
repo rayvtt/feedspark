@@ -56,6 +56,10 @@ echo "── validating: image library engine (shot tokens + collector)"
 node tools/test_images.mjs >/dev/null
 echo "   ✓ shot codes read off the image URLs; unpatterned feeds refused"
 
+echo "── validating: overlay design studio engine (summoner + designs + layout)"
+node tools/test_ovstudio.mjs >/dev/null
+echo "   ✓ price pair read by value; coverage stated; a missing fact is reported not invented"
+
 echo "── validating: KWCal KPI band partition + market list"
 node tools/test_kwcal_kpis.mjs >/dev/null
 echo "   ✓ every stage lands in a bucket, the tiles sum, and -fb never reaches the chips"
@@ -358,6 +362,10 @@ fi
 echo "── validating: the /images page loads its engines through its own script tags"
 node tools/check_images.js >/dev/null
 echo "   ✓ real script-tag path exercised (skips without IMG_FIXTURES)"
+
+echo "── validating: the Design studio paints, exports and refuses honestly"
+node tools/check_ovstudio.js >/dev/null
+echo "   ✓ real script tags, same-origin canvas, no overlay text off the picture"
 
 echo "── validating: text modules (every served engine bundles as a string)"
 node tools/check_textmodules.js >/dev/null
