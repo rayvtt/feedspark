@@ -507,10 +507,20 @@ console.log('· image pixels (docs/pixel_engine.js) — synthetic pictures, neve
   t('a solid green backdrop reads as a colour, and Google\'s white/grey/light ask is a warning', r5.bg === 'colour' && r5.bgc === '#2e7d32' && PX.checks(r5).some((c) => c.k === 'colour' && c.sev === 'warn'));
   const clear = img(W, H, (x, y) => box(x, y, 40, 40, 160, 160) ? [10, 10, 10, 255] : [0, 0, 0, 0]);
   t('a transparent PNG reads transparent and its product is measured on the alpha', PX.analyse(clear, W, H, {}).bg === 'transparent' && PX.analyse(clear, W, H, {}).fill === 60);
-  const ck = (o, meta) => PX.checks(Object.assign({}, r1, o), meta).map((c) => c.k + ':' + c.sev + ':' + c.src).join(' ');
+  // checks read the date (Google's minimum moves on 31 Jan 2027) — pinned here, so the suite reads the same any day
+  const ck = (o, meta) => PX.checks(Object.assign({}, r1, o), Object.assign({ now: Date.UTC(2026, 9, 7) }, meta)).map((c) => c.k + ':' + c.sev + ':' + c.src).join(' ');
   t('under 100 × 100 fails Google\'s stated minimum', ck({ w: 90, h: 90 }) === 'small:fail:google');
-  t('apparel under 250 × 250 fails; the same picture for a non-apparel product passes the minimum', /small:fail/.test(ck({ w: 200, h: 200 }, { apparel: true })) && !/small/.test(ck({ w: 200, h: 200 })));
+  t('apparel under 250 × 250 fails; the same picture for a non-apparel product passes the minimum', /small:fail/.test(ck({ w: 200, h: 200 }, { apparel: true })) && !/small:fail/.test(ck({ w: 200, h: 200 })));
   t('under 800 px on the long side is FeedSpark\'s warning, labelled ours, never a Google fail', ck({ w: 600, h: 600 }) === 'lowres:warn:feedspark');
+  // Google's 500 × 500 for every product from 31 Jan 2027 (answer 6324350) — a warning naming the date until then, a fail from it
+  const before27 = Date.UTC(2026, 9, 7), on27 = Date.UTC(2027, 0, 31), mk27 = (o, meta) => ck(o, Object.assign({}, meta, { now: before27 }));
+  t('under 500 × 500 before 31 Jan 2027 is Google\'s warning naming the date — never a fail yet', mk27({ w: 400, h: 400 }) === 'small27:warn:google lowres:warn:feedspark' &&
+    /rises to 500 × 500 for every product on 31 Jan 2027/.test(PX.checks(Object.assign({}, r1, { w: 400, h: 400 }), { now: before27 })[0].t));
+  t('…from 31 Jan 2027 the same picture fails Google\'s minimum, apparel or not', ck({ w: 400, h: 400 }, { now: on27 }) === 'small:fail:google' && ck({ w: 400, h: 400 }, { apparel: true, now: on27 }) === 'small:fail:google' &&
+    /minimum of 500 × 500$/.test(PX.checks(Object.assign({}, r1, { w: 400, h: 400 }), { apparel: true, now: on27 })[0].t));
+  t('…an image at 500 × 500 or over is never flagged against it, either side of the date', !/small/.test(mk27({ w: 500, h: 500 })) && !/small/.test(ck({ w: 500, h: 500 }, { now: on27 })));
+  t('…and an image already under today\'s minimum stays a fail, not the 2027 warning', mk27({ w: 90, h: 90 }) === 'small:fail:google');
+  t('the Catalogue names the 2027 bucket in words, apart from FeedSpark\'s 800 px', /\['small27', 'Under 500 px — Google from 31 Jan 2027'/.test(PG) && /small27: 'Under 500 px'/.test(PG));
   t('over 16 MB, over 64 MP and an unaccepted format each fail', /heavy:fail/.test(ck({ bytes: 17 * 1048576 })) && /huge:fail/.test(ck({ w: 9000, h: 9000 })) && /format:fail/.test(ck({ fmt: 'AVIF' })));
   t('a product spanning 40% is a warning; 70% is a note (Google suggests 75–90%)', /tiny:warn/.test(ck({ fill: 40 })) && /loose:info/.test(ck({ fill: 70 })));
   t('a reading that failed has no checks (it is reported as unreadable instead)', PX.checks({ err: 'HTTP 404' }).length === 0);

@@ -62,6 +62,12 @@ window.addEventListener('load',restore);
   /* padding, not just the text's own line-height, gets the tap target to the phone floor
      (docs/MOBILE.md: buttons >=36px); negative margins keep the visible gaps — 8px above the
      chevron, 8px before the first market row — the same as before this row became clickable */
+  /* scan scope (Ray, 7 Oct 2026): All brands / a brand / a market */
+  .scan-ctl{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .scan-sel{font:inherit;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--paper,#fff);color:var(--ink);max-width:210px;min-width:0}
+  .scan-sel:disabled{opacity:.55}
+  .scan-skip{font-size:11.5px;font-weight:700;color:var(--muted);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer}
+  .est-hd .est-scan{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
   .est-card.collapsed .est-hd{margin-bottom:-6px}
   .est-hd h3{margin:0;font-size:16px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -145,6 +151,18 @@ window.addEventListener('load',restore);
   .tier-h h4{margin:0;font-size:15px;font-weight:900}
   .tier-h .tavg{margin-left:auto;font-size:12px;font-weight:900;color:var(--orange-deep)}
   .tier-sub{font-size:12px;color:var(--muted);margin:0 0 8px}
+  /* every scorecard section folds on its own (Ray, 7 Oct 2026: "make these boxes collapsible as
+     well") — the header keeps what the section found, so a folded box never hides a finding */
+  .tfold{border:0;background:transparent;cursor:pointer;padding:2px;margin:0 -4px 0 -4px;color:var(--muted);font:inherit;font-size:14px;line-height:1;display:inline-flex;align-items:center;border-radius:6px}
+  .tfold:hover,.tfold:focus-visible{color:var(--ink);background:var(--wash)}
+  .tfold i{display:inline-block;font-style:normal;transition:transform .15s ease}
+  .tier.folded .tfold i{transform:rotate(-90deg)}
+  .tier[data-tf]>.tier-h{cursor:pointer}
+  body:not(.pdf) .tier.folded>:not(.tier-h){display:none!important}
+  body:not(.pdf) .tier.folded>.tier-h{margin-bottom:0}
+  .tf-sum{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+  .tf-sum[hidden]{display:none!important}
+  body.pdf .tfold,body.pdf #tf-all,body.pdf .tf-sum{display:none!important}
   .tbadge{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none}
   .tbadge.req{background:#FDECEC;color:var(--risk)}
   .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
@@ -246,6 +264,10 @@ window.addEventListener('load',restore);
   .hs-svg text.end .en,.hs-svg text.rl{fill:var(--ink-2);font-weight:700;font-size:11px}
   .hs-svg .pt{stroke:#fff;stroke-width:2}
   .hs-svg .z{fill:var(--muted)}
+  .hs-svg .z.c{fill:none;stroke:var(--muted);stroke-width:1.2}
+  .hs-svg .ln.nb{stroke-dasharray:4 4}
+  .hs-leg i.hc{width:6px;height:6px;border-radius:50%;border:1.2px solid var(--muted);box-sizing:border-box;vertical-align:1px}
+  .hs-leg i.nb{height:0;width:16px;border-top:2px dashed var(--ink-2);vertical-align:3px;border-radius:0}
   .hs-svg .hit{fill:transparent;cursor:crosshair}
   .hs-svg .hit:hover{fill:rgba(26,54,93,.05)}
   .hs-tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;line-height:1.55;opacity:0;transition:opacity .12s;z-index:20;max-width:320px;box-shadow:0 6px 20px rgba(16,24,40,.25)}
@@ -442,6 +464,22 @@ window.addEventListener('load',restore);
      resolution: a fixed-height row of width:X% segments always lays out exactly as measured */
   /* POPULATION card — the PT depth table's row format (label · bar · %), inline (Ray, 18 Sep
      2026: "the table breakdown for highlight population (1, 2, 3, 4, 5, >5)") */
+  /* depth rows (Ray, 7 Oct 2026): images / highlights / details per product, broken down 0 … 6+ */
+  .dep-card{margin:2px 0 10px;padding:9px 13px;background:var(--wash);border:1px solid var(--line);border-radius:10px;max-width:720px}
+  .dep-bar{display:flex;height:10px;border-radius:100px;overflow:hidden;background:#E3E6EB}
+  .dep-bar i{display:block;height:100%}
+  .dep-leg{display:flex;flex-wrap:wrap;gap:4px 13px;margin-top:7px;font-size:11px;font-weight:700;color:var(--muted)}
+  .dep-leg span{white-space:nowrap}
+  .dep-leg span.dep-full{color:var(--ink)}
+  .dep-leg b{color:var(--ink)}
+  .dep-leg .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .dep-foot{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.55}
+  .dep-foot b{color:var(--ink)}
+  .fs-std.g-std{background:#E8F0FE;color:#1A56C4;border-color:#C9D9F8}
+  .wv.dep-by{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+  [data-theme=dark] .dep-card{background:#181B22}
+  [data-theme=dark] .dep-bar{background:#2A2F38}
+  [data-theme=dark] .fs-std.g-std{background:#1B2A44;color:#8FB4F5;border-color:#2C4470}
   .pop{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}
   .pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
@@ -582,7 +620,7 @@ window.addEventListener('load',restore);
      Ctrl+P gets the same treatment via beforeprint. Width is pinned to the 186mm
      printable column (210 − 2×12mm margins) = 703 CSS px at 96dpi, so measured px map
      1:1 onto printed mm. */
-  #print-head,#print-foot{display:none}
+  #print-head,#print-foot,#print-mkts{display:none}
   /* THE PDF IS THE PAGE, SCALED — not a second design (Ray, 16 Sep 2026: "PDF export still
      doesn't reflect exact same visual as FCC"). It used to restyle twenty-odd properties on
      the way to paper — smaller dial, tighter rows, cut type scale, different grid columns —
@@ -701,6 +739,63 @@ window.addEventListener('load',restore);
   body.pdf #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
   body.pdf #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
   body.pdf #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+  /* ALL MARKETS, AT THE FOOT OF THE CLIENT DOCUMENT (Ray, 7 Oct 2026: "For multi-market clients,
+     when you download the HTML or report card, at bottom there should be an overview of all the
+     market scores as well"). The scorecard above reads ONE market; a brand on twenty-eight sends
+     its client a file that never says how the other twenty-seven stand. mktOverview() writes the
+     brand's markets — the same three scores the estate scorecard shows — into #print-mkts when an
+     export starts; a single-market brand leaves it empty, so nothing prints. Never on screen: the
+     estate scorecard IS this table for the AM. */
+  body.pdf #print-mkts:not(:empty){display:block;margin-top:16px}
+  .pm{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+  .pm-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .pm-h h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+  .pm-sub{font-size:12px;font-weight:700;color:var(--muted)}
+  .pm-t{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .pm-t th{text-align:left;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+    padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .pm-t td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink)}
+  .pm-t .n{text-align:right}
+  .pm-t tr.me td{background:rgba(245,166,35,.12)}
+  .pm-t tr.me td:first-child{box-shadow:inset 3px 0 0 var(--orange-deep)}
+  .pm-t tfoot td{border-bottom:0;border-top:2px solid var(--line);font-weight:900}
+  .pm-mk{font-weight:900;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .pm-me{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--orange-deep);
+    border:1px solid var(--orange-deep);border-radius:100px;padding:1px 6px}
+  .pm-s{display:flex;align-items:center;gap:7px}
+  .pm-s b{font-weight:900;min-width:34px;text-align:right}
+  /* ONE bar length in every cell: a flexing track shrinks beside a tier label or an "of 3", and a
+     71 drawn shorter than a 64 one column over is a chart lying about its own numbers */
+  .pm-bar{flex:none;width:52px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+  .pm-bar i{display:block;height:100%;border-radius:3px}
+  .pm-tier{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .pm-x{color:var(--muted);font-weight:700}
+  .pm-of{font-size:10.5px;font-weight:700;color:var(--muted);margin-left:2px;white-space:nowrap}
+  .pm-t td:first-child,.pm-t td:last-child{white-space:nowrap}
+  .pm-miss{color:var(--risk);font-weight:900}
+  .pm-note{margin:10px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5}
+  /* THE CATALOGUE'S MODULES, PICKED FOR THE ⬇ HTML (Ray, 7 Oct 2026) — see catxLoad(). On screen only: the PDF and the
+     HTML never carry this card (the HTML carries the picked modules themselves, in #print-catx). */
+  .catx{margin-top:16px}
+  .catx-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .catx-h h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+  .catx-sub{font-size:12px;font-weight:700;color:var(--muted);flex:1;min-width:200px}
+  .catx-picks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:12px;font-weight:700;color:var(--muted)}
+  .catx-picks:empty{display:none}
+  .catx-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--orange);color:var(--ink);background:rgba(245,166,35,.1);
+    border-radius:100px;padding:3px 4px 3px 10px;font-size:12px;font-weight:800}
+  .catx-chip button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;font-weight:900;line-height:1;padding:2px 5px;border-radius:100px}
+  .catx-chip button:hover{color:var(--risk)}
+  .catx-clear{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;font-weight:700}
+  .catx-fw:empty{display:none}
+  .catx-x{padding:14px;border:1px dashed var(--line);border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  .catx-fw{margin-top:12px}
+  .catx-f{display:block;width:100%;height:420px;border:0;background:transparent}
+  #print-catx{display:none}
+  body.pdf #catx{display:none!important}
+  body.xhtml #print-catx{display:block;margin-top:16px}
+  #print-catx .pm-h{margin-bottom:8px}
+  #print-catx iframe{display:block;width:100%;border:0;background:transparent}
   /* --- the page's own ≤900px rules, put back to their DESKTOP form. The print viewport is
      the page box (703px), so every one of these would fire on paper and hand the client a
      phone layout. The values are the screen's, minus only the columns whose contents are
@@ -869,10 +964,10 @@ window.addEventListener('load',restore);
 
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">02</span><h2>Estate scorecard</h2>
-    <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
+    <span class="scan-ctl"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
-    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels, product types, attribute coverage AND content quality land in the same pass">⚡ Scan whole estate</button></span></div>
+    <select class="scan-sel" id="scan-brand" aria-label="Brands to scan" title="What to scan — every brand, one brand, or (with a brand picked) one market"></select><select class="scan-sel" id="scan-mkt" aria-label="Markets to scan" title="Pick a brand first, then every market of it or one"></select><label class="scan-skip" title="Leave out feeds already read in the last 20 hours — off, every feed in the scope is read now"><input type="checkbox" id="scan-skip"> skip feeds read in the last 20 h</label><button class="btn" id="scan-stop" hidden title="Finish the feed in hand, then stop">⏹ Stop</button><button class="btn pri" id="scan-all" title="Read every feed in the scope now — FeedHero XML feeds stream live in this browser, sheet feeds through the server">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — the score is each
   feed’s weighted attribute completeness (required ×3 · conditional ×2 · recommended ×1). FeedSpark’s Golden
   Record target: <b>99.9%</b>. Click a market for the full scorecard below. Coverage rides the same scan
@@ -892,6 +987,13 @@ window.addEventListener('load',restore);
   product pages for that attribute and see how much of the gap the site already holds (composition
   lines, colour names, FAQ pairs, size guides) — evidence for the ask, or a supplemental feed.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+  <div class="panel catx" id="catx" data-no-collapse hidden>
+    <div class="catx-h"><h3>Catalogue dashboard</h3><span class="catx-sub" id="catx-sub"></span>
+      <button class="btn" id="catx-load" type="button"></button></div>
+    <div class="catx-picks" id="catx-picks"></div>
+    <div class="catx-fw" id="catx-fw"></div>
+  </div>
+  <div id="print-mkts" data-no-collapse></div>
   <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
 
@@ -933,11 +1035,20 @@ window.addEventListener('load',restore);
     { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
     // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
     // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
-    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
+    { k: 'keywords', t: 'rec', d: 1, h: 1, kw: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
     { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
+    // DEPTH (Ray, 7 Oct 2026): `of` = the presence attribute a measured depth twin replaces in the
+    // score, `tg` = the count that earns full credit — the engine's ATTR_SPEC, row for row
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
+    { k: 'img_depth', t: 'rec', d: 1, h: 1, of: 'additional_image_link', tg: 4, lbl: 'images per product', one: 'image', many: 'images',
+      n: 'distinct images per product (image_link + additional_image_link) — 4 or more is full credit; FeedSpark’s standard, Google allows up to 11' },
+    { k: 'lifestyle_image_link', t: 'rec', n: 'up to 5 — the product worn or in use (Fashion)' },
     { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
+    { k: 'hl_depth', t: 'rec', d: 1, of: 'product_highlight', tg: 4, lbl: 'highlights per product', one: 'highlight', many: 'highlights',
+      n: 'highlights per product — Google recommends 4–6; 4 or more is full credit' },
     { k: 'product_detail', t: 'rec', n: 'structured tech specs' },
+    { k: 'detail_depth', t: 'rec', d: 1, h: 1, of: 'product_detail', tg: 3, lbl: 'details per product', one: 'detail', many: 'details',
+      n: 'product details that DESCRIBE the product (sleeve length, neckline, fit …) — 3 or more is full credit; care lines and repeats of other attributes do not count' },
     { k: 'material', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'pattern', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'size_type', t: 'rec', n: 'apparel: regular / petite / plus / tall…' },
@@ -949,6 +1060,8 @@ window.addEventListener('load',restore);
     { k: 'variant_option', t: 'ai', n: 'name–value pairs defining variant differences' },
     { k: 'popularity_rank', t: 'ai', n: '0–100 rank — powers "bestseller" answers' }
   ];
+  // the depth twin that replaces each presence attribute in the score when it was measured
+  var DEPTH_OF = {}; SPEC.forEach(function (x) { if (x.of) DEPTH_OF[x.of] = x.k; });
   // the category each scoped attribute is asked of — mirrors GPC_SCOPE[k].what in the engine
   var GPC_WHAT = { color: 'clothing & accessories', gender: 'clothing & accessories', age_group: 'clothing & accessories',
     size: 'clothing & shoes', material: 'clothing & accessories', pattern: 'clothing & accessories' };
@@ -974,12 +1087,67 @@ window.addEventListener('load',restore);
       ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword string' +
       (a.hash ? '; ' + fmt(a.hash) + ' products hold a 32-character id in a keyword slot — an id is not a keyword, so it is not counted' : '');
   }
+  // DEPTH rows, in words (Ray, 7 Oct 2026). A depth reading is the AVERAGE per-product credit
+  // min(count ÷ target, 1) — so the bar and the % read "how full", while the note says how many each
+  // product actually carries and the card under the row breaks the catalogue down 0 … 6+
+  function depAtLeast(a, tg) {
+    var t = 0; if (!a || !a.dist) return null;
+    Object.keys(a.dist).forEach(function (b) { if ((b === '6+' ? 6 : +b) >= tg) t += +a.dist[b] || 0; });
+    return Math.round(t * 10) / 10;
+  }
+  function depNote(x, a) {
+    if (!a || !a.present) return 'no g:' + x.of + ' in this feed';
+    var at = depAtLeast(a, x.tg);
+    return (a.avg != null ? a.avg + ' ' + x.many + ' per product' : '') + (at != null ? ' · ' + at + '% carry ' + x.tg + '+' : '') +
+      (x.k === 'detail_depth' && (a.care || a.dup) ? ' · ' + fmt((a.care || 0) + (a.dup || 0)) + ' lines not counted' : '');
+  }
+  function depWhy(x, a, rows) {
+    if (!a || !a.present) return '';
+    var w = ' · each product scores ' + x.many + ' ÷ ' + x.tg + ', capped at 100% — ' + x.tg + ' or more is full credit, ' +
+      (x.tg === 4 ? '3 is 75%, 2 is 50%, 1 is 25%' : '2 is 67%, 1 is 33%') + ', none is 0 — averaged over all ' + fmt(rows) + ' products';
+    if (x.k === 'detail_depth') {
+      w += (a.care ? '; ' + fmt(a.care) + ' care lines (washing, cleaning) are not counted' : '') +
+        (a.dup ? '; ' + fmt(a.dup) + ' lines repeat another attribute (colour, size, brand, price …) or each other, so they are not counted' : '') +
+        (a.bad ? '; ' + fmt(a.bad) + ' lines carry no name or value' : '');
+    }
+    return w + ' · replaces g:' + x.of + ' in the score (filled is not full)';
+  }
+  var DEP_KEYS = ['0', '1', '2', '3', '4', '5', '6+'];
+  function depCol(b, tg) {
+    var n = b === '6+' ? 6 : +b;
+    if (n === 0) return '#D9534F';
+    if (n < tg) return n / tg >= 0.5 ? '#F5A623' : '#ED6F0B';
+    return n >= 6 ? '#2E7D32' : '#48A868';
+  }
+  // the facets Google's AI can read off a product, by product type — the examples a client asks for
+  var DEP_FACETS = 'shirts and tops: sleeve length, neckline or collar, fit, fastening · dresses: dress length, silhouette, neckline, sleeve length · ' +
+    'trousers and jeans: fit, rise, leg shape, wash · shoes and trainers: heel height, toe shape, fastening, sole · bags: bag type, closure, strap type, size';
+  function depCard(x, a) {
+    if (!a || !a.dist) return '';
+    var segs = '', leg = '';
+    DEP_KEYS.forEach(function (b) {
+      var v = +a.dist[b] || 0, col = depCol(b, x.tg), full = (b === '6+' ? 6 : +b) >= x.tg;
+      var lab = b + ' ' + (b === '1' ? x.one : x.many);
+      if (v > 0) segs += '<i style="width:' + v + '%;background:' + col + '" title="' + esc(lab + ': ' + v + '% of products') + '"></i>';
+      leg += '<span' + (full ? ' class="dep-full"' : '') + '><i class="sw" style="background:' + col + '"></i>' + esc(lab) + ' <b>' + v + '%</b></span>';
+    });
+    var foot = x.k === 'img_depth'
+      ? 'Full credit at <b>' + x.tg + '+</b> (FeedSpark’s standard). Google allows the main image plus up to 10 more and asks for the product from different angles and in use.'
+      : x.k === 'hl_depth'
+        ? 'Full credit at <b>4+</b> — Google recommends 4–6 highlights per product (minimum 2), read on its AI surfaces such as AI Mode.'
+        : 'Full credit at <b>' + x.tg + '+</b> details that describe the product — Google reads them on its AI surfaces; it asks for no repeats of other attributes and no promotion.' +
+          (a.names && a.names.length ? '<br>Carried today: ' + a.names.slice(0, 8).map(function (n) { return esc(n[0]) + ' <b>' + fmt(n[1]) + '</b>'; }).join(' · ') : '') +
+          '<br>Examples by product type — ' + esc(DEP_FACETS);
+    return '<div class="dep-card" data-dep="' + esc(x.k) + '"><div class="dep-bar">' + segs + '</div><div class="dep-leg">' + leg + '</div>' +
+      '<div class="dep-foot">' + foot + '</div></div>';
+  }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
     var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
       if (s.d && !attrs[s.k]) return;   // not measured on this read — never scored as missing
+      if (DEPTH_OF[s.k] && attrs[DEPTH_OF[s.k]]) return;   // its depth twin counts instead — one fact, one weight
       var a = attrs[s.k] || { present: false };
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
       if (a.na) return;
@@ -1021,7 +1189,27 @@ window.addEventListener('load',restore);
     return { n: n, of: of };
   }
   // mirrors the engine's attrAskEmail — the per-attribute client ask (proposal, not alarm)
-  function attrAskEmail(client, mkt, s, cov) {
+  // the depth rows' ask — twin of labelguard.js DEPTH_ASK / perProductAskEmail
+  var DEPTH_ASK = {
+    img_depth: { what: 'images', why: 'Google allows the main image plus up to ten more per product and asks for the product from different angles and in use. FeedSpark’s standard is four or more images per product — more angles give Shopping and Google’s AI surfaces more to show and to read.',
+      how: 'If the extra shots exist in your DAM or on the product pages, we can map them into the feed from our side — happy to share the product set for sign-off before anything changes in the live feed.' },
+    hl_depth: { what: 'highlights', why: 'Google recommends four to six highlights per product — short selling points it reads on its AI surfaces, such as AI Mode.',
+      how: 'We can draft them per product from your copy and product pages, and share them for sign-off before anything changes in the live feed.' },
+    detail_depth: { what: 'product details', why: 'Product details are the structured facts Google reads on its AI surfaces, such as AI Mode — sleeve length, neckline, fit, fastening. Care instructions and values already sent in other fields (colour, size, material) do not add to them.',
+      how: 'We can propose the details for each product type and fill them from your PIM, the product pages or our AI enrichment, and share the values for sign-off before anything changes in the live feed.' }
+  };
+  function perProductAskEmail(client, mkt, s, a) {
+    var loc = client + ' ' + String(mkt || '').toUpperCase(), t = DEPTH_ASK[s.k], at = depAtLeast(a, s.tg);
+    return {
+      subject: loc + ' — feed data: proposal to add more ' + t.what + ' per product',
+      body: 'Hi team,\n\nA quick recommendation from our feed monitoring. '
+        + (a && a.present ? 'In the ' + loc + ' feed, ' + at + '% of products carry ' + s.tg + ' or more ' + t.what + ' (' + a.avg + ' per product on average).'
+          : 'The ' + loc + ' feed does not currently carry ' + t.what + '.')
+        + ' ' + t.why + '\n\n' + t.how + '\n\nBest regards,\nRay'
+    };
+  }
+  function attrAskEmail(client, mkt, s, cov, a) {
+    if (s.of && DEPTH_ASK[s.k]) return perProductAskEmail(client, mkt, s, a);
     var loc = client + ' ' + String(mkt || '').toUpperCase();
     var disp = 'g:' + s.k;
     var missing = cov == null;
@@ -1058,7 +1246,22 @@ window.addEventListener('load',restore);
   // industry scoring profiles: defaults + KV overrides from /api/golden/profile (the
   // engine's INDUSTRY_PROFILES/profileFor mirrored — expected counts-when-absent, waived
   // drops out; required + gtin/mpn untouchable). The profile IS the industry best practice.
-  var PROF = { defaults: {}, overrides: {}, industryMap: {}, ready: false };
+  var PROF = { defaults: {}, overrides: {}, industryMap: {}, upgrade: null, ready: false };
+  // twin of labelguard.js profileLayer: a record saved under an older profile version gets each
+  // later default laid over it, unless the record named that attribute the other way (7 Oct 2026)
+  function layerOf(rec, ind) {
+    if (!rec) return null;
+    var isA = function (v) { return Object.prototype.toString.call(v) === '[object Array]'; };
+    if (!isA(rec.expected) && !isA(rec.waived)) return rec;
+    var e = (rec.expected || []).map(String), w = (rec.waived || []).map(String), up = PROF.upgrade || { v: 1, delta: {} };
+    for (var v = (+rec.v || 1) + 1; v <= (+up.v || 1); v++) {
+      var dv = (up.delta || {})[v] || {}, d = dv[ind] || dv['*'] || {};
+      (d.expected || []).forEach(function (k) { if (e.indexOf(k) < 0 && w.indexOf(k) < 0) e.push(k); });
+      (d.waived || []).forEach(function (k) { if (w.indexOf(k) < 0 && e.indexOf(k) < 0) w.push(k); });
+    }
+    var o = {}; Object.keys(rec).forEach(function (k) { o[k] = rec[k]; }); o.expected = e; o.waived = w;
+    return o;
+  }
   function industryOfC(c) { return PROF.industryMap[c] || INDUSTRY[c] || 'Retail'; }
   function profOk(k) {
     var x = SPEC.filter(function (sp) { return sp.k === k; })[0];
@@ -1066,8 +1269,8 @@ window.addEventListener('load',restore);
   }
   function profileForC(client) {
     var ind = industryOfC(client);
-    var base = (PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] };
-    var cl = (PROF.overrides.clients || {})[client];
+    var base = layerOf((PROF.overrides.industries || {})[ind], ind) || PROF.defaults[ind] || PROF.defaults.Retail || { expected: [], waived: [] };
+    var cl = layerOf((PROF.overrides.clients || {})[client], ind);
     function pick(src, k2) { return src && Object.prototype.toString.call(src[k2]) === '[object Array]' ? src[k2] : null; }
     var expected = pick(cl, 'expected') || pick(base, 'expected') || [];
     var waived = pick(cl, 'waived') || pick(base, 'waived') || [];
@@ -1251,7 +1454,7 @@ window.addEventListener('load',restore);
         (sum.req ? '<span class="est-flag crit">' + sum.req + ' req</span>' : '') +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span></div>';
+        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(dispClient(c)) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(dispClient(c)) + '">⚡</button>' + '</div>';
       if (!collapsed) {
         byClient[c].forEach(function (f) {
           var k = keyOf(f.client, f.mkt), st = statusOf(f);
@@ -1278,11 +1481,15 @@ window.addEventListener('load',restore);
       h += '</div>';
     });
     $('est-grid').innerHTML = h;
+    if (typeof scopeRender === 'function') scopeRender();
     Array.prototype.forEach.call(document.querySelectorAll('.est-mkt'), function (el) {
       el.onclick = function () { select(el.getAttribute('data-k')); };
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
       el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.est-scan'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); scanBrand(el.getAttribute('data-scanb')); };
     });
     collapseAllBtn();
   }
@@ -1382,6 +1589,8 @@ window.addEventListener('load',restore);
     SEL = k;
     try { history.replaceState(null, '', '#' + encodeURIComponent(k)); } catch (e) {}
     renderEstate();
+    if (CATX.k && CATX.k !== k) catxDrop();   // another market's Catalogue is not this market's
+    catxHead(k);
     var p = parts(k);
     $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Loading ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '…</span>';
     fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
@@ -1580,7 +1789,8 @@ window.addEventListener('load',restore);
   }
   function hCls(n) { var v = hDelta(n); return v > 0 ? 'up' : (v < 0 ? 'down' : 'muted'); }
   function hMoveTxt(m) {
-    var k = 'g:' + m[0], a = m[1], b = m[2];
+    var dx = SPEC.filter(function (y) { return y.k === m[0] && y.lbl; })[0];   // a depth row reads by its name
+    var k = dx ? dx.lbl : (m[0] === 'keywords' ? m[0] : 'g:' + m[0]), a = m[1], b = m[2];
     if (typeof a === 'number' && typeof b === 'number') return { t: k + ' ' + hSigned(b - a, 'pp'), c: hCls(b - a), tip: k + ' ' + a + '% → ' + b + '%' };
     if (b === 'na') return { t: k + ' no longer applies', c: 'muted', tip: k + ': no product in the feed is asked for it any more' };
     if (a === 'na') return { t: k + ' now applies', c: 'muted', tip: k + ': products Google asks it of are now in the feed' };
@@ -1723,6 +1933,26 @@ window.addEventListener('load',restore);
       var f = x[0] === 'gs' ? g.first : ser[x[0]].firstMet;
       if (f && (!since || f < since)) since = f;
     });
+    // ONE LINE A SCORE, NEVER GAPPED (Ray, 7 Oct 2026: "ensure all lines are not gapped, must show
+    // consistent line DoD"): a day nobody measured CARRIES the score as last measured — on the line,
+    // with a hollow mark in its day-on-day row and the hover saying which reading it carries. The
+    // measured days are untouched (histModel is the engine's twin and stays so); a reading before
+    // the window seeds the first days, so a 30-day view does not start blank on an unscanned day
+    var reads = ((h && h.r) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var qas = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    HMETS.forEach(function (x) {
+      var k = x[0], dd = ser[k].days, seed = null, seedD = null;
+      var firstM = dd.filter(function (d) { return d.score != null; })[0];
+      if (k === 'gs') {
+        var bf = reads.filter(function (r) { return hDay(r.t) < start; }).pop();
+        // never carried into a reading taken another way — that join is the dashed one
+        if (bf && (!firstM || hBasis(bf, firstM.r))) { seed = hScore(bf, prof); seedD = hDay(bf.t); }
+      } else {
+        var bq = qas.filter(function (r) { return r[k] != null && hDay(r.t) < start; }).pop();
+        if (bq) { seed = bq[k]; seedD = hDay(bq.t); }
+      }
+      histCarry(dd, seed, seedD);
+    });
     // the change log reads BOTH: the score's recorded moves and the analyses, newest first (an
     // analysis row already carries content quality AND AI-readiness, so it is taken once)
     var log = g.log.concat(ser.q.log).sort(function (a, b) { return b.t - a.t; });
@@ -1730,6 +1960,15 @@ window.addEventListener('load',restore);
       changes: g.changes, analysesIn: ser.q.changes, q: g.q, air: g.air, start: start, today: g.today,
       recorded: g.recorded, analyses: g.analyses };
   }
+  // a day with no reading of its own takes the last one (cv = the value, cvFrom = the day it was read)
+  function histCarry(days, seed, seedD) {
+    var last = seed, lastD = seedD;
+    days.forEach(function (x) {
+      if (x.score != null) { last = x.score; lastD = x.d; return; }
+      if (last != null) { x.cv = last; x.cvFrom = lastD; }
+    });
+  }
+  function hVal(x) { return x.score != null ? x.score : (x.cv != null ? x.cv : null); }
   // ONE chart, ONE axis — all three are scores out of 100, so they share a scale and are never put
   // on two; colour is the SCORE (the line, its points, its row of bars), direction is position
   function histChart(M) {
@@ -1760,32 +1999,42 @@ window.addEventListener('load',restore);
       sv += '<line class="grid" x1="' + L + '" y1="' + yS(g) + '" x2="' + (W - R) + '" y2="' + yS(g) + '"/>' +
         '<text x="' + (L - 7) + '" y="' + (yS(g) + 4) + '" text-anchor="end">' + g + '</text>';
     }
-    // every line first, then the points over all of them, so no line paints across a point; a line
-    // breaks wherever its score was not measured that day, or (the Golden Score) its basis changed
+    // every line first, then the points over all of them, so no line paints across a point. A line
+    // runs UNBROKEN across the days nobody measured — each carries the last reading (histCarry) —
+    // and the one join that is not a carry, a Golden Score read on a new basis, is DASHED: the two
+    // ends were measured differently and are not compared, but the line does not stop
+    var nbAny = false;
     keys.forEach(function (k) {
-      var path = '', open = false;
-      M.ser[k].days.forEach(function (x, i) {
-        if (x.score == null || !x.basis) { open = false; if (x.score == null) return; }
-        path += (open ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yS(x.score).toFixed(1);
-        open = true;
+      var path = '', dash = '', prev = -1, dd = M.ser[k].days;
+      dd.forEach(function (x, i) {
+        var v = hVal(x);
+        if (v == null) { prev = -1; return; }
+        var pt = cx(i).toFixed(1) + ' ' + yS(v).toFixed(1);
+        if (prev >= 0 && x.score != null && !x.basis) {
+          dash += 'M' + cx(prev).toFixed(1) + ' ' + yS(hVal(dd[prev])).toFixed(1) + 'L' + pt;
+          path += 'M' + pt;
+        } else path += (prev >= 0 ? 'L' : 'M') + pt;
+        prev = i;
       });
       if (path) sv += '<path class="ln" data-ser="' + k + '" style="stroke:var(--hs-' + k + ')" d="' + path + '"/>';
+      if (dash) { nbAny = true; sv += '<path class="ln nb" data-ser="' + k + '" style="stroke:var(--hs-' + k + ')" d="' + dash + '"/>'; }
     });
+    M.nbAny = nbAny;
     var ends = [];
     keys.forEach(function (k) {
-      var dd = M.ser[k].days, lastI = -1;
-      dd.forEach(function (x, i) { if (x.score != null) lastI = i; });
+      var dd = M.ser[k].days, lastM = -1, lastV = -1;
+      dd.forEach(function (x, i) { if (x.score != null) lastM = i; if (hVal(x) != null) lastV = i; });
       dd.forEach(function (x, i) {
         if (x.score == null) return;
-        var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
-        // a reading with no measured neighbour is a line of one point — draw the point, or it vanishes
-        var lone = !((i > 0 && dd[i - 1].score != null && x.basis) || (i < dd.length - 1 && dd[i + 1].score != null && dd[i + 1].basis));
+        var mark = i === lastM || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
+        // a reading with nothing either side of it is a line of one point — draw the point, or it vanishes
+        var lone = !((i > 0 && hVal(dd[i - 1]) != null && x.basis) || (i < dd.length - 1 && hVal(dd[i + 1]) != null));
         if (!mark && !lone) return;
         // a day set by a run by hand wears a ring, so it can be told apart from the automatic ones
         sv += '<circle class="pt' + (x.man ? ' man' : '') + '" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) +
           '" r="' + (x.man ? 5.5 : (mark ? 4.5 : 3)) + '" style="fill:var(--hs-' + k + ')"/>';
       });
-      if (lastI >= 0) ends.push({ k: k, y: yS(dd[lastI].score), v: dd[lastI].score });
+      if (lastV >= 0) ends.push({ k: k, y: yS(hVal(dd[lastV])), v: hVal(dd[lastV]) });
     });
     // each line named at its right end — its latest value and the score — nudged apart where two finish close
     ends.sort(function (a, b) { return a.y - b.y; });
@@ -1798,8 +2047,9 @@ window.addEventListener('load',restore);
         '<text class="v end" data-ser="' + x.k + '" x="' + (x0 + 15) + '" y="' + (x.y + 4).toFixed(1) + '">' + x.v +
         '<tspan class="en" dx="5">' + esc(hMetName(x.k)) + '</tspan></text>';
     });
-    // the daily move, one row per score: a bar above its row is an improvement, below it a
-    // deduction, a dot is a day measured with no change, nothing is a day not measured
+    // the daily move, one row per score — a mark on EVERY day once the score has a reading: a bar
+    // above its row is an improvement, below it a deduction, a dot a day measured with no change,
+    // a hollow dot a day not measured (the reading before carries, so the score did not move)
     sv += '<text class="pl" x="' + L + '" y="' + PL + '">DAY-ON-DAY CHANGE · EACH ROW ON ITS OWN SCALE</text>';
     var bw = Math.max(2, Math.min(28, slot - 2));    // 2px surface gap between neighbours
     keys.forEach(function (k, j) {
@@ -1809,7 +2059,10 @@ window.addEventListener('load',restore);
         '<text class="rl" x="' + (W - R + 25) + '" y="' + (mid + 4) + '">' + esc(hMetName(k)) + '</text>' +
         '<text class="sc" data-ser="' + k + '" x="' + (L - 7) + '" y="' + (mid + 4) + '" text-anchor="end">±' + peaks[k] + '</text>';
       M.ser[k].days.forEach(function (x, i) {
-        if (!x.scanned) return;
+        if (!x.scanned) {
+          if (x.cv != null) sv += '<circle class="z c" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + mid + '" r="2.2"/>';
+          return;
+        }
         if (x.delta == null || x.delta === 0) { sv += '<circle class="z" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + mid + '" r="1.8"/>'; return; }
         var hgt = Math.max(2, Math.abs(x.delta) / peaks[k] * AMP), up = x.delta > 0;
         sv += '<path class="bar" data-ser="' + k + '" data-up="' + (up ? 1 : 0) + '" style="fill:var(--hs-' + k + ')" d="' +
@@ -1920,6 +2173,7 @@ window.addEventListener('load',restore);
     } else if (noQa) {
       out += '<p class="hs-empty-note">No content quality or AI-readiness reading on record for this feed yet — the 12:00 UK daily run records one every day.</p>';
     }
+    var chart = histChart(m);    // drawn first: it tells the key whether a dashed join is on it
     // the key names every line — a score with nothing on record in the window says so rather than
     // leaving a colour in the key that matches nothing on the chart
     out += '<div class="hs-leg">' + HMETS.map(function (x) {
@@ -1928,9 +2182,10 @@ window.addEventListener('load',restore);
     }).join('') +
       '<span>▲ bar above its row = improvement · ▼ below = deduction</span>' +
       '<span><i class="dot"></i>measured, no change</span>' +
+      '<span><i class="hc"></i>not measured — the last reading carries</span>' +
       '<span><i class="hsm"></i>set by a run by hand</span>' +
-      '<span class="muted">a gap = not measured that day</span></div>' +
-      '<div class="hs-zone">' + histChart(m) + '<div class="hs-tip" id="hs-tip"></div></div>' +
+      (chart && m.nbAny ? '<span><i class="nb"></i>measured a new way — joined, not compared</span>' : '') + '</div>' +
+      '<div class="hs-zone">' + chart + '<div class="hs-tip" id="hs-tip"></div></div>' +
       histLog(k, m) + '</div>';
     HMODEL = m;
     return out;
@@ -1953,7 +2208,11 @@ window.addEventListener('load',restore);
     HMETS.forEach(function (mm) {
       var x = HMODEL.ser[mm[0]].days[i]; if (!x) return;
       h += '<br><i class="sw" style="background:var(--hs-' + mm[0] + ')"></i>' + esc(mm[1]) + ' ';
-      if (!x.scanned) { h += '<span class="m">not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day</span>'; return; }
+      if (!x.scanned) {
+        h += x.cv != null ? '<b>' + x.cv + '</b> <span class="m">· not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day — carries ' + esc(hDayLbl(x.cvFrom)) + '’s reading</span>'
+          : '<span class="m">not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day</span>';
+        return;
+      }
       h += '<b>' + x.score + '</b>';
       if (!x.basis) h += ' <span class="m">· measured on a new basis — not compared</span>';
       else if (x.delta == null) h += ' <span class="m">· first reading</span>';
@@ -1993,6 +2252,64 @@ window.addEventListener('load',restore);
     var w = document.createElement('div'); w.innerHTML = histSection(k, d.snapshot);
     el.parentNode.replaceChild(w.firstChild, el);
     histWire(k);
+    tfApply();
+  }
+
+  /* ---- every section folds (Ray, 7 Oct 2026: "make these boxes collapsible as well") ----
+     A viewing preference for THIS screen, so it lives on the device like gr-collapse (the estate
+     cards) and never in shared state. Folded, a section keeps its header — badge, title and what it
+     found (avg fill, the content-quality score, "⚠ 3 fields read differently") — so closing a box
+     never hides a finding. "Two scores, two questions" starts folded: it explains how the two
+     sections score, it is not a finding about the feed. Every export prints every section open. */
+  var TF_DEFAULT = { recon: 1 };
+  var TF_IDS = { 'hs-tier': 'hist', 'qz-tier': 'qual', 'air-tier': 'air', 'rec-tier': 'recon' };
+  var TFOLD = (function () {
+    try { var v = JSON.parse(localStorage.getItem('gr-tfold') || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; }
+  })();
+  function tfSave() { try { localStorage.setItem('gr-tfold', JSON.stringify(TFOLD)); } catch (e) {} }
+  function tfIs(key) { return Object.prototype.hasOwnProperty.call(TFOLD, key) ? !!TFOLD[key] : !!TF_DEFAULT[key]; }
+  function tfTiers() {
+    var p = $('det-panel'); if (!p) return [];
+    return Array.prototype.filter.call(p.querySelectorAll('.tier'), function (t) {
+      var key = t.getAttribute('data-tf') || TF_IDS[t.id] || '';
+      if (key) t.setAttribute('data-tf', key);
+      return !!key && t.firstElementChild && t.firstElementChild.classList.contains('tier-h');
+    });
+  }
+  function tfApply() {
+    tfTiers().forEach(function (t) {
+      var key = t.getAttribute('data-tf'), h = t.firstElementChild, b = h.querySelector('.tfold');
+      if (!b) {
+        b = document.createElement('button'); b.type = 'button'; b.className = 'tfold'; b.innerHTML = '<i>▾</i>';
+        h.insertBefore(b, h.firstChild);
+        b.addEventListener('click', function (ev) { ev.stopPropagation(); tfToggle(t); });
+        h.addEventListener('click', function (ev) {
+          // the header's own controls keep working (ⓘ scoring logic, Analyse, the range chips)
+          if (ev.target && ev.target.closest && ev.target.closest('button,a,input,select,label,textarea,summary,.info-pop')) return;
+          // on a phone the skim view hands a tap on this heading to the chevron itself
+          if (h.classList.contains('fcc-dg-own') && window.matchMedia && matchMedia('(max-width:760px)').matches) return;
+          tfToggle(t);
+        });
+      }
+      var f = tfIs(key), name = (h.querySelector('h4') || {}).textContent || 'this section';
+      t.classList.toggle('folded', f);
+      // a section whose headline number lives in its body carries it into the header while folded
+      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : null);
+      if (src && !sum) { sum = document.createElement('span'); sum.className = 'tf-sum'; var h4 = h.querySelector('h4'); h.insertBefore(sum, h4 ? h4.nextSibling : null); }
+      if (sum) { sum.textContent = src ? src.textContent + (key === 'air' ? '/100' : '') : ''; sum.style.color = src ? src.style.color : ''; sum.hidden = !f || !src; }
+      b.setAttribute('aria-expanded', f ? 'false' : 'true');
+      b.setAttribute('aria-label', (f ? 'Open ' : 'Fold ') + name);
+      b.title = (f ? 'Open' : 'Fold') + ' this section';
+    });
+    tfAllBtn();
+  }
+  function tfToggle(t) { var key = t.getAttribute('data-tf'); TFOLD[key] = tfIs(key) ? 0 : 1; tfSave(); tfApply(); }
+  // the button always names the action still available, like the estate's ⊖ Collapse all
+  function tfAllBtn() {
+    var b = $('tf-all'); if (!b) return;
+    var ts = tfTiers(), all = ts.length > 0 && ts.every(function (t) { return t.classList.contains('folded'); });
+    b.textContent = all ? '⊕ Open all sections' : '⊖ Fold all sections';
+    b.onclick = function () { tfTiers().forEach(function (t) { TFOLD[t.getAttribute('data-tf')] = all ? 0 : 1; }); tfSave(); tfApply(); };
   }
 
   var TIERS = [
@@ -2043,7 +2360,8 @@ window.addEventListener('load',restore);
       (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') +
       (d.pdp && d.pdp.matrix ? '<button class="btn" id="pdp-last" style="padding:3px 9px;font-size:10.5px" title="Open the last PDP recovery sample for this feed">🔎 PDP sample · ' + fmt(d.pdp.ok) + ' pages · ' + ago(d.pdp.t) + '</button>' : '') +
       '<span class="prof-chip" title="Attributes marked ★ are scored for this brand — the ' + esc(prof.industry) + ' best-practice profile (industry defaults + any brand override)">⚖ ' + esc(prof.industry) + ' best practice</span>' +
-      '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button></div>' +
+      '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button>' +
+      '<button class="btn" id="tf-all" style="padding:3px 9px;font-size:10.5px" title="Fold or open every section of this scorecard — remembered on this device">⊖ Fold all sections</button></div>' +
       '<p class="gr-verdict">' +
       (reqMiss.length
         ? '<b>' + reqMiss.length + ' required attribute' + (reqMiss.length === 1 ? '' : 's') + ' missing from the feed</b> (' + esc(reqMiss.map(function (x) { return x.k; }).join(', ')) + ') — products cannot serve without them. '
@@ -2062,7 +2380,7 @@ window.addEventListener('load',restore);
       var list = SPEC.filter(function (x) { return x.t === T.t; });
       var present = list.filter(function (x) { var a = s.attrs[x.k] || {}; return a.present && !a.na; });
       var avg = present.length ? Math.round(present.reduce(function (a, x) { return a + s.attrs[x.k].cov; }, 0) / present.length * 10) / 10 : null;
-      h += '<div class="tier"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
+      h += '<div class="tier" data-tf="' + T.t + '"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
         '<span class="tavg">' + (T.t === 'ai' ? present.length + ' of ' + list.length + ' live'
           : (avg == null ? 'none in feed' : 'avg fill ' + avg + '%')) + '</span></div>' +
         '<p class="tier-sub">' + T.sub + '</p>';
@@ -2074,10 +2392,16 @@ window.addEventListener('load',restore);
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
-        var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
-          (x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
+        // its depth twin was measured: this presence row stays (is it in the feed at all?) but the twin scores
+        var repl = DEPTH_OF[x.k] && s.attrs[DEPTH_OF[x.k]] ? SPEC.filter(function (y) { return y.k === DEPTH_OF[x.k]; })[0] : null;
+        var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + (x.of ? ' dep-row' : '') + (repl ? ' dep-by-row' : '') + '">' +
+          (x.of ? '<span class="at-nm dep-nm" title="' + esc(x.n) + '">' + esc(x.lbl) +
+            (x.h ? '<span class="fs-std" title="FeedSpark’s standard — ' + x.tg + ' or more ' + esc(x.many) + ' per product is full credit; Google sets no number">FeedSpark</span>'
+              : '<span class="fs-std g-std" title="Google’s own recommendation (answer 9216100): 4–6 highlights per product">Google 4–6</span>')
+          : x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
             '<span class="fs-std" title="A FeedSpark standard, not a Google specification requirement — scored like a recommended attribute">FeedSpark</span>'
             : '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k)) +
+          (repl ? '<span class="wv dep-by" title="Scored as ' + esc(repl.lbl) + ' — the row below. A filled field is not the same as a full one: this row shows how many products carry it at all">scored by depth ↓</span>' : '') +
           (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
           (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
         // what the coverage is a share OF — the products Google asks this attribute of
@@ -2086,9 +2410,11 @@ window.addEventListener('load',restore);
           (a.scope.u ? ' (' + fmt(a.scope.u) + ' of them carry no readable category and are counted in)' : '') +
           (a.all != null ? ' · ' + a.all + '% across the whole catalogue' : '') : '';
         if (nm) {
-          row += '<span class="at-miss" title="Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored">not measured</span>' +
+          row += '<span class="at-miss" title="' + (x.kw ? 'Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored'
+            : 'Counted product by product on the XML scan — this reading could only see whether the column is filled, so g:' + esc(x.of) + ' is scored on that instead') + '">not measured</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
-            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 12:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
+            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 12:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">' +
+            (x.kw ? 'not measured on this scan — not scored until the next XML scan' : 'not measured on this scan — g:' + esc(x.of) + ' scores until the next XML scan') + '</span>';
           h += row + '<span class="at-act"></span></div>'; return;
         } else if (na) {
           row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
@@ -2109,16 +2435,17 @@ window.addEventListener('load',restore);
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a, s.rows) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.kw ? kwWhy(a, s.rows) : (x.of ? depWhy(x, a, s.rows) : ''))) + '">' +
+            esc(x.kw ? kwNote(a) : (x.of ? depNote(x, a) : (basis ? basis + ' — ' + x.n : x.n))) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.d ? 'no keyword slots' : 'not in feed') + '</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
-        if (x.h) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
+        if (x.kw) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
           h += row + '<span class="at-act"><button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button></span></div>';
           return;
         }
@@ -2128,8 +2455,9 @@ window.addEventListener('load',restore);
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
-          (x.t === 'req' ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
+          (x.t === 'req' || x.of ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
+        if (x.of && a.present) h += depCard(x, a);   // how many each product carries, 0 … 6+
       });
       h += '</div>';
     });
@@ -2140,6 +2468,7 @@ window.addEventListener('load',restore);
     airAnimate();
     wire(k, s);
     histWire(k);
+    tfApply();
   }
 
   /* ---- per-attribute actions: the client ask (shared askdraft rails) + the brief ---- */
@@ -2155,7 +2484,7 @@ window.addEventListener('load',restore);
     var p = parts(k);
     var x = SPEC.filter(function (s) { return s.k === attr; })[0]; if (!x && !override) return;
     var a = x ? (d.snapshot.attrs[attr] || { present: false }) : { present: false };
-    var t = override || attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null);
+    var t = override || attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null, a);
     var slot = $('askp-slot'); if (!slot) return;
     slot.innerHTML = '<div class="askp">' +
       '<div class="af"><label>To</label><input id="ask-to" value="' + esc(ASK.cfg.to[p.client] || '') + '" placeholder="client contact email"></div>' +
@@ -2167,7 +2496,7 @@ window.addEventListener('load',restore);
       '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ask-task" checked> file task in the Project Plan</label>' +
       '<button class="btn" id="ask-cancel">✕</button>' +
       '<span class="scanmsg" id="ask-msg"></span></div>' +
-      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "' + (attr === 'pdp' ? 'Golden Record PDP Recovery' : 'Golden Record Fix - g:' + esc(attr)) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
+      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "' + (attr === 'pdp' ? 'Golden Record PDP Recovery' : 'Golden Record Fix - ' + (x && x.of ? esc(x.lbl.charAt(0).toUpperCase() + x.lbl.slice(1)) : 'g:' + esc(attr))) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
     slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     function maybeTask(then) {
       if (!$('ask-task').checked) { then(''); return; }
@@ -2212,7 +2541,7 @@ window.addEventListener('load',restore);
     // chip states seed from the layer being edited: brand scope = the merged effective
     // profile; industry scope = the industry layer (override or committed default)
     var seed = scope === 'client' ? profileForC(pPar.client)
-      : ((PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] });
+      : (layerOf((PROF.overrides.industries || {})[ind], ind) || PROF.defaults[ind] || PROF.defaults.Retail || { expected: [], waived: [] });
     var st = slot.__st && slot.__scopeDrawn === scope ? slot.__st : (function () {
       var m = {};
       (seed.expected || []).filter(profOk).forEach(function (k2) { m[k2] = 'exp'; });
@@ -2238,8 +2567,8 @@ window.addEventListener('load',restore);
       h += '<div class="pgrp">' + g[1] + '</div>';
       SPEC.filter(function (x) { return x.t === g[0] && profOk(x.k); }).forEach(function (x) {
         var m = st[x.k] || '';
-        h += '<button class="pchip' + (m === 'exp' ? ' exp' : (m === 'wav' ? ' wav' : '')) + '" data-pk="' + esc(x.k) + '">' +
-          (m === 'exp' ? '★ ' : '') + esc(x.k) + '</button>';
+        h += '<button class="pchip' + (m === 'exp' ? ' exp' : (m === 'wav' ? ' wav' : '')) + '" data-pk="' + esc(x.k) + '"' + (x.lbl ? ' title="' + esc(x.n) + '"' : '') + '>' +
+          (m === 'exp' ? '★ ' : '') + esc(x.lbl || x.k) + '</button>';
       });
     });
     h += '<div class="ab"><button class="btn pri" id="prof-save">Save profile</button>' +
@@ -2285,7 +2614,7 @@ window.addEventListener('load',restore);
     var x = SPEC.filter(function (sp) { return sp.k === attr; })[0]; if (!x) return;
     var a = s.attrs[attr] || { present: false };
     var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
-    if (x.h) {   // keywords — a keyword brief (cat keyword), in the keyword task family
+    if (x.kw) {   // keywords — a keyword brief (cat keyword), in the keyword task family
       var todo = a.present ? Math.max(0, s.rows - a.filled) : s.rows;
       var kl = [
         'Keywords: keyword strings (chevron-separated) in g:product_type 2–10 (FeedSpark keyword injection)',
@@ -2299,6 +2628,23 @@ window.addEventListener('load',restore);
       location.href = '/workflow?brief=' + b64url({ client: p.client,
         task: 'Keywords Optimisation - Catalogue coverage - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
         cat: 'keyword', scope: kl.join('\n') });
+      return;
+    }
+    if (x.of) {   // a depth row — how many each product carries, not whether the column exists
+      var at = depAtLeast(a, x.tg), cap = x.lbl.charAt(0).toUpperCase() + x.lbl.slice(1);
+      var dl = [
+        'Measure: ' + x.lbl + ' (' + x.n + ')',
+        'Current: ' + (a.present ? a.avg + ' ' + x.many + ' per product on average; ' + at + '% of ' + fmt(s.rows) + ' products carry ' + x.tg + ' or more (depth score ' + a.cov + '%)' : 'no g:' + x.of + ' in the feed'),
+        x.k === 'detail_depth' && a.present && (a.care || a.dup) ? 'Not counted: ' + fmt(a.care || 0) + ' care lines, ' + fmt(a.dup || 0) + ' repeats of other attributes' : '',
+        x.k === 'detail_depth' ? 'Examples by product type — ' + DEP_FACETS : '',
+        'Target: ' + x.tg + '+ ' + x.many + ' on every product',
+        'Source: Golden Record scorecard (/golden)',
+      ].filter(Boolean);
+      try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+        '&attr=' + encodeURIComponent(attr), { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+      location.href = '/workflow?brief=' + b64url({ client: p.client,
+        task: 'Golden Record Fix - ' + cap + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+        cat: x.k === 'img_depth' ? 'image' : 'data', scope: dl.join('\n') });
       return;
     }
     var tierName = x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required in specific cases' : (x.t === 'ai' ? 'conversational AI' : 'recommended'));
@@ -3443,7 +3789,13 @@ window.addEventListener('load',restore);
     var el = document.getElementById('pdf-page'); if (el) el.parentNode.removeChild(el);
   }
   // a bare Ctrl+P gets the same single-page document as the ⬇ PDF button
-  window.addEventListener('beforeprint', function () { if (!document.body.classList.contains('pdf')) preparePdf(); });
+  window.addEventListener('beforeprint', function () {
+    if (document.body.classList.contains('pdf')) return;
+    // …with the same header and all-markets table the buttons write (fillPrint is hoisted)
+    var c = SEL && CACHE[SEL];
+    if (c && c.snapshot) fillPrint(SEL, parts(SEL), c.snapshot);
+    preparePdf();
+  });
   window.addEventListener('afterprint', restorePdf);
 
   // both exports (⬇ PDF, ⬇ HTML) share the SAME branded header — one place states what the
@@ -3456,6 +3808,350 @@ window.addEventListener('load',restore);
       '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
       (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
   }
+  /* ALL MARKETS, AT THE FOOT OF BOTH CLIENT DOCUMENTS (Ray, 7 Oct 2026: "For multi-market
+     clients, when you download the HTML or report card, at bottom there should be an overview of
+     all the market scores as well"). One row per Google Shopping market of the brand, in the
+     estate scorecard's own order, carrying the three scores the estate shows — Golden Score,
+     content quality, AI-readiness — plus products, required attributes missing and the day it
+     was scanned. THREE RULES: the market this report is about reads the SAME numbers as the
+     document above it (its dial, its content-quality headline, its AI ring), never the index's
+     copy, so one file can never print two figures for one market; a score nobody has measured is
+     a dash and says why, never a zero; and the averages read only the markets that carry each
+     score, stating how many when that is not all of them. A single-market brand gets nothing —
+     the document above already IS its only market. */
+  function mktOverview(k, s) {
+    var p = parts(k);
+    rescoreEstate();
+    var rows = feedList().filter(function (f) { return f.client === p.client; });
+    if (rows.length < 2) return '';
+    rows.sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
+    var prof = profileForC(p.client), qd = null;
+    try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
+    var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
+    var day = function (t) { return t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
+    var r1 = function (v) { return Math.round(v * 10) / 10; };
+    var list = rows.map(function (f) {
+      var me = keyOf(f.client, f.mkt) === k;
+      var g = me ? goldenScore(s.attrs, prof) : f.score;
+      var q = me && qd && qd.score != null ? qd.score : f.q;
+      var a = me && ai ? ai.total : f.air, tier = me && ai ? ai.tier : f.airTier;
+      return { mkt: String(f.mkt).toUpperCase(), me: me, t: me ? s.t : f.t, rows: me ? s.rows : f.rows,
+        g: g == null ? null : +g, q: q == null ? null : +q, a: a == null || !a ? null : +a, tier: tier,
+        miss: f.reqMissing || [], scanned: me || !!f.t };
+    });
+    var bar = function (v, col) { return '<span class="pm-bar"><i style="width:' + Math.max(0, Math.min(100, v)) + '%;background:' + col + '"></i></span>'; };
+    var cell = function (v, col, why, extra) {
+      return v == null ? '<td><span class="pm-x" title="' + esc(why) + '">—</span></td>'
+        : '<td><span class="pm-s"><b style="color:' + col + '">' + v + '</b>' + bar(v, col) + (extra || '') + '</span></td>';
+    };
+    var tierWord = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
+    var body = list.map(function (r) {
+      return '<tr' + (r.me ? ' class="me"' : '') + '>' +
+        '<td><span class="pm-mk">' + esc(r.mkt) + (r.me ? '<span class="pm-me">this report</span>' : '') + '</span></td>' +
+        cell(r.g, scoreCol(r.g), r.scanned ? 'No Golden Score on this scan' : 'Not scanned yet') +
+        cell(r.q, scoreCol(r.q), 'Content quality not analysed yet for this market') +
+        cell(r.a, r.a == null ? '' : airCol(r.a), 'AI-readiness not analysed yet for this market',
+          r.a != null && r.tier ? '<span class="pm-tier" title="AI-readiness Tier ' + r.tier + ' of 4">' + esc(tierWord(r.tier)) + '</span>' : '') +
+        '<td class="n">' + (r.scanned ? fmt(r.rows) : '<span class="pm-x">—</span>') + '</td>' +
+        '<td>' + (!r.scanned ? '<span class="pm-x">—</span>' : (r.miss.length
+          ? '<span class="pm-miss" title="' + esc(r.miss.join(', ')) + '">' + r.miss.length + '</span> <span class="pm-x">' + esc(r.miss.join(', ')) + '</span>'
+          : '<span class="pm-x">none</span>')) + '</td>' +
+        '<td>' + (r.scanned ? esc(day(r.t)) : '<span class="pm-x">not scanned yet</span>') + '</td></tr>';
+    }).join('');
+    var avg = function (key) {
+      var v = list.filter(function (r) { return r[key] != null; });
+      return v.length ? { v: r1(v.reduce(function (t, r) { return t + r[key]; }, 0) / v.length), n: v.length } : null;
+    };
+    var avgCell = function (x, colFn) {
+      if (!x) return '<td><span class="pm-x">—</span></td>';
+      return '<td><span class="pm-s"><b style="color:' + colFn(x.v) + '">' + x.v + '</b>' + bar(x.v, colFn(x.v)) +
+        (x.n < list.length ? '<span class="pm-of">of ' + x.n + '</span>' : '') + '</span></td>';
+    };
+    var scanned = list.filter(function (r) { return r.scanned; });
+    var prods = scanned.reduce(function (t, r) { return t + (+r.rows || 0); }, 0);
+    var missMk = scanned.filter(function (r) { return r.miss.length; }).length;
+    var foot = '<tr><td>Average</td>' +
+      avgCell(avg('g'), scoreCol) + avgCell(avg('q'), scoreCol) + avgCell(avg('a'), airCol) +
+      '<td class="n">' + (scanned.length ? fmt(prods) : '—') + '</td>' +
+      '<td>' + (scanned.length ? (missMk ? '<span class="pm-miss">' + missMk + '</span> market' + (missMk === 1 ? '' : 's') : 'none') : '—') + '</td>' +
+      '<td>' + (scanned.length < list.length ? scanned.length + ' of ' + list.length + ' scanned' : '') + '</td></tr>';
+    return '<div class="pm"><div class="pm-h"><h3>All markets — ' + esc(dispClient(p.client)) + '</h3>' +
+      '<span class="pm-sub">' + list.length + ' Google Shopping markets · each as last scanned</span></div>' +
+      '<table class="pm-t"><thead><tr><th>Market</th><th>Golden Score</th><th>Content quality</th><th>AI-readiness</th>' +
+      '<th class="n">Products</th><th>Required missing</th><th>Scanned</th></tr></thead>' +
+      '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>' +
+      '<p class="pm-note">Golden Score = attribute completeness against Google’s product data specification · ' +
+      'Content quality = what the title, description and other free-text fields say, against Google’s own rules · ' +
+      'AI-readiness = how ready the feed is for AI shopping surfaces, Foundational → Agentic-ready · a dash = not measured for that market yet; ' +
+      'averages read only the markets that carry each score.</p></div>';
+  }
+  /* ---------------- THE CATALOGUE'S MODULES, AT THE END OF THE ⬇ HTML (Ray, 7 Oct 2026: "within Golden Score record, at
+     bottom, pull in modules dashboard from Catalogue (module) also, and Leave AM to actually select which module of the
+     dashboard is shown inside the HTML download. For example, with content depth, there could be multiple content depths
+     displayed on the dashboard. It could be images per product, highlight per product, length, or description length. All
+     this would be added at the end of the HTML, and AM can also have the option of not including it if it's not needed.")
+     The card under the scorecard frames the REAL Catalogue for this market (/catalog?embed=mods — its module grid alone,
+     every preference it writes kept in memory, see the Catalogue's EMB), so a module reads here exactly as it reads there:
+     one implementation, never a copy of it. Loaded on demand — it streams the feed AND the master, which is not a cost to
+     pay on every visit to /golden. Each card in the frame gets an "In ⬇ HTML" tick; a card with a measure (Content depth,
+     Catalogue mix, ROAS by, Optimised vs not) is ticked PER MEASURE, so images per product and highlights per product can
+     both go in. THREE RULES: nothing is ticked until the AM ticks it (the download carries no Catalogue module by default);
+     the picks are the AM's per device (gr-catx) and outlive the market, so a set chosen once applies to the next brand; and
+     the download carries each module as the Catalogue drew it at that moment — markup and the Catalogue's own stylesheet in
+     a script-free frame of its own, so neither page's CSS can restyle the other's — with a measure that is still reading
+     waited for, never captured half-drawn. The PDF does not carry them: it is a picture of this page, and a frame is not. */
+  var CATX_SRC = window.__grCatSrc || '/catalog';
+  var CATX = { k: null, f: null, w: null, p: null, timer: null };
+  var CATX_BUSY = /reading|waiting|joining|tracing|loading|preparing|scanning/i;
+  var CATX_MAXH = 860;
+  function catxPicks() {
+    try { var v = JSON.parse(localStorage.getItem('gr-catx') || '[]'); return Array.isArray(v) ? v.filter(function (x) { return x && typeof x.k === 'string' && typeof x.l === 'string'; }) : []; } catch (e) { return []; }
+  }
+  function catxSave(a) { try { localStorage.setItem('gr-catx', JSON.stringify(a)); } catch (e) {} }
+  function catxHas(key) { return catxPicks().some(function (x) { return x.k === key; }); }
+  // a card's MEASURE select — Image pixels' "how many to scan" count is a control, not a measure
+  function catxSel(card) { return card.querySelector('.chead select.agg:not(#pix-n)'); }
+  function catxKeyOf(card) {
+    var mod = card.getAttribute('data-mod'), sel = catxSel(card);
+    return sel && sel.value ? mod + ':' + sel.value : mod;
+  }
+  function catxLabelOf(card) {
+    var h = card.querySelector('.chead h3'), t = h ? h.textContent.replace(/\s+/g, ' ').trim() : card.getAttribute('data-mod');
+    var sel = catxSel(card), o = sel && sel.options[sel.selectedIndex];
+    var v = o ? o.text.trim() : '';
+    return v && t.toLowerCase().indexOf(v.toLowerCase()) < 0 ? t + ' · ' + v : t;
+  }
+  function catxHead(k) {
+    var el = $('catx'); if (!el) return;
+    if (!k) { el.hidden = true; return; }
+    el.hidden = false;
+    var p = parts(k), n = catxPicks().length, live = CATX.k === k && CATX.f;
+    $('catx-sub').textContent = n ? n + ' module' + (n === 1 ? '' : 's') + ' from the Catalogue added to the end of ⬇ HTML'
+      : 'Tick a Catalogue module to add it to the end of ⬇ HTML — none is, so the download carries none.';
+    if (CATX.k === k && CATX.miss && CATX.miss.length) $('catx-sub').textContent += ' · Left out of the last download, not on this market’s Catalogue: ' + CATX.miss.join(', ') + '.';
+    var b = $('catx-load');
+    b.hidden = !!live && !CATX.fail;
+    b.textContent = 'Show the Catalogue dashboard for ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    var picks = catxPicks();
+    $('catx-picks').innerHTML = picks.length ? '<span>In ⬇ HTML:</span>' + picks.map(function (x, i) {
+      return '<span class="catx-chip">' + esc(x.l) + '<button type="button" data-catx-rm="' + i + '" aria-label="Leave ' + esc(x.l) + ' out of the HTML" title="Leave it out of the HTML">✕</button></span>';
+    }).join('') + '<button type="button" class="catx-clear" id="catx-clear">Clear all</button>' : '';
+  }
+  function catxSync() {
+    var d = CATX.w && CATX.w.document; if (!d) return;
+    Array.prototype.forEach.call(d.querySelectorAll('.mod[data-mod]'), function (card) {
+      var cb = card.querySelector('.grx input'); if (!cb) return;
+      var key = catxKeyOf(card);
+      cb.checked = catxHas(key);
+      card.classList.toggle('grx-on', cb.checked);
+      cb.parentNode.title = 'Adds “' + catxLabelOf(card) + '” to the end of the Golden Record ⬇ HTML';
+    });
+  }
+  // one "In ⬇ HTML" tick per card, written into the framed Catalogue (same origin)
+  function catxDecorate(w) {
+    var d = w.document;
+    if (!d.getElementById('grx-css')) {
+      var st = d.createElement('style'); st.id = 'grx-css';
+      st.textContent = '.grx{display:inline-flex;align-items:center;gap:5px;flex:none;margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);' +
+        'border:1px solid var(--line);border-radius:100px;padding:3px 9px;cursor:pointer;white-space:nowrap;background:var(--paper)}' +
+        '.grx input{margin:0;accent-color:#ED6F0B}.mod.grx-on{outline:2px solid #ED6F0B;outline-offset:-2px}.mod.grx-on .grx{color:#ED6F0B;border-color:#ED6F0B}' +
+        'html.emb .mod>.chead{flex-wrap:wrap}html.emb .mod{height:auto;min-height:340px}';
+      d.head.appendChild(st);
+    }
+    Array.prototype.forEach.call(d.querySelectorAll('.mod[data-mod]'), function (card) {
+      if (card.getAttribute('data-mod') === 'fee' || card.querySelector('.grx')) return;
+      var head = card.querySelector('.chead'); if (!head) return;
+      var lab = d.createElement('label'); lab.className = 'grx';
+      lab.innerHTML = '<input type="checkbox"> In ⬇ HTML';
+      head.appendChild(lab);
+      lab.querySelector('input').addEventListener('change', function () {
+        var key = catxKeyOf(card), lbl = catxLabelOf(card), picks = catxPicks().filter(function (x) { return x.k !== key; });
+        if (this.checked) picks.push({ k: key, l: lbl });
+        catxSave(picks); catxSync(); catxHead(CATX.k);
+      });
+    });
+    if (!d.__grx) { d.__grx = 1; d.addEventListener('change', function (e) { if (e.target && e.target.matches && e.target.matches('select.agg')) setTimeout(catxSync, 0); }); }
+    catxSync();
+  }
+  function catxDrop() {
+    if (CATX.timer) clearInterval(CATX.timer);
+    if (CATX.f && CATX.f.parentNode) CATX.f.parentNode.removeChild(CATX.f);
+    var fw = $('catx-fw'); if (fw) fw.innerHTML = '';
+    CATX = { k: null, f: null, w: null, p: null, timer: null };
+  }
+  // frame the Catalogue for k; resolves with its window once the module grid is up (null if it never comes)
+  function catxLoad(k) {
+    if (CATX.k === k && CATX.p) return CATX.p;
+    catxDrop();
+    var p = parts(k), f = document.createElement('iframe');
+    f.className = 'catx-f';
+    f.title = 'Catalogue dashboard — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    f.src = CATX_SRC + '?embed=mods&client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt);
+    CATX.k = k; CATX.f = f;
+    $('catx-fw').appendChild(f);
+    var t0 = Date.now(), me = CATX;
+    CATX.p = new Promise(function (res) {
+      var fail = function (why) {
+        clearInterval(me.timer); me.fail = why;
+        $('catx-fw').innerHTML = '<div class="catx-x">' + esc(why) + '</div>';
+        res(null);
+      };
+      // a page that is not the Catalogue — no access to the module, the sign-in page — says so at once
+      f.addEventListener('load', function () {
+        setTimeout(function () {
+          if (me.w || CATX !== me) return;
+          var d = null; try { d = f.contentDocument; } catch (e) {}
+          if (!d || (!d.querySelector('.mod[data-mod]') && !d.getElementById('ins'))) fail('The Catalogue could not be opened here — this signin may not have the Catalogue module, or the page did not load.');
+        }, 1500);
+      });
+      me.timer = setInterval(function () {
+        if (CATX !== me) { clearInterval(me.timer); return res(null); }
+        var w = null, d = null;
+        try { w = f.contentWindow; d = w && w.document; } catch (e) {}
+        if (d && d.body) {
+          // the grid's own height, not the document's: a scroll height never shrinks below the frame it sits in
+          var mn = d.querySelector('main'), h = mn ? Math.ceil(mn.getBoundingClientRect().bottom) + 8 : d.documentElement.scrollHeight;
+          h = Math.min(h, CATX_MAXH);   // the whole dashboard is ~3,600px tall: it scrolls inside its card instead
+          if (h > 60 && Math.abs(h - (parseFloat(f.style.height) || 0)) > 2) f.style.height = h + 'px';
+          if (!me.w && w.__FCCCatalogue && d.querySelector('.mod[data-mod]')) { me.w = w; catxDecorate(w); res(w); }
+        }
+        if (!me.w && Date.now() - t0 > 45000) fail('The Catalogue did not finish loading for this market.');
+      }, 400);
+    });
+    catxHead(k);
+    return CATX.p;
+  }
+  function catxWait(test, until) {
+    return new Promise(function (res) {
+      (function poll() { if (test() || Date.now() > until) return requestAnimationFrame(function () { requestAnimationFrame(res); }); setTimeout(poll, 200); })();
+    });
+  }
+  // one picked card, as the client file carries it: no control, no id, no click-to-filter, no FCC link
+  function catxClean(card, vlabel) {
+    var c = card.cloneNode(true);
+    c.removeAttribute('hidden'); c.style.order = ''; c.classList.remove('grx-on');
+    Array.prototype.forEach.call(c.querySelectorAll('.grx,select,button,input,textarea,.pixctl,a.btn'), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    var h = c.querySelector('.chead h3');
+    if (h && vlabel && h.textContent.toLowerCase().indexOf(vlabel.toLowerCase()) < 0) h.appendChild(document.createTextNode(' · ' + vlabel));
+    Array.prototype.forEach.call(c.querySelectorAll('a'), function (a) { var s = document.createElement('span'); s.innerHTML = a.innerHTML; a.parentNode.replaceChild(s, a); });
+    [c].concat(Array.prototype.slice.call(c.querySelectorAll('*'))).forEach(function (n) {
+      Array.prototype.slice.call(n.attributes || []).forEach(function (at) {
+        var nm = at.name;
+        if (/^on/i.test(nm) || nm === 'id' || nm === 'tabindex' || /^data-(f|k|mv|mod-on)$/.test(nm) || (nm === 'role' && at.value === 'button')) n.removeAttribute(nm);
+        else if (nm === 'title') n.setAttribute('title', at.value.replace(/\s*·\s*click[^·]*$/i, ''));
+      });
+    });
+    // a chart's own tooltips are <title> elements — the same "click to list them" an AM reads, which a file cannot do
+    Array.prototype.forEach.call(c.querySelectorAll('title'), function (t) { t.textContent = t.textContent.replace(/\s*·\s*click[^·]*$/i, ''); });
+    return c.outerHTML;
+  }
+  // the Catalogue's own stylesheet — the page's, not the injected layers' (those sit in <body>)
+  function catxCss(d) {
+    var css = '';
+    Array.prototype.forEach.call(d.styleSheets, function (sh) {
+      var own = sh.ownerNode; if (own && own.closest && !own.closest('head')) return;
+      try { Array.prototype.forEach.call(sh.cssRules, function (r) { css += r.cssText + '\n'; }); } catch (e) {}
+    });
+    return css;
+  }
+  function catxDoc(d, cards) {
+    var fonts = Array.prototype.map.call(d.querySelectorAll('link[rel="stylesheet"][href^="https://fonts.googleapis.com"]'), function (l) {
+      return '<link rel="stylesheet" href="' + esc(l.href) + '">';
+    }).join('');
+    return '<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8">' + fonts +
+      '<style>' + catxCss(d).replace(/<\/style/gi, '<\\/style') + '</style>' +
+      /* ONE height at any window width: the reader's window is not the one the frame was measured in, so the grid keeps
+         a fixed column count and every card the Catalogue's own fixed height — a frame that scrolls inside a report, or
+         leaves half its height empty, is the export looking broken */
+      '<style>html,body{background:transparent!important;margin:0}main.wrap{max-width:none!important;margin:0!important;padding:2px!important}' +
+      '.ins{grid-auto-flow:row;grid-template-columns:repeat(' + Math.min(3, cards.length) + ',minmax(0,1fr))!important}' +
+      '.mod,.mod[hidden]{display:flex!important;height:340px!important;min-height:0!important}.mod>.chead{flex-wrap:nowrap!important}</style></head>' +
+      '<body><main class="wrap"><div class="ins mods">' + cards.join('') + '</div></main><\/body><\/html>';
+  }
+  // a script-free frame is laid out where it lands, so its height is measured here first, at the file's own column
+  function catxMeasure(html) {
+    return new Promise(function (res) {
+      var f = document.createElement('iframe');
+      f.setAttribute('sandbox', 'allow-same-origin');
+      f.style.cssText = 'position:absolute;left:-10000px;top:0;width:1124px;height:200px;border:0;visibility:hidden';
+      var done = false, end = function () {
+        if (done) return; done = true;
+        var h = 0; try { h = f.contentDocument.documentElement.scrollHeight; } catch (e) {}
+        if (f.parentNode) f.parentNode.removeChild(f); res(h || 800);
+      };
+      f.onload = function () { setTimeout(end, 250); };
+      setTimeout(end, 4000);
+      f.srcdoc = html;
+      document.body.appendChild(f);
+    });
+  }
+  // every pick, captured in order, each measure set and waited for, the frame put back as the AM left it
+  function catxCapture(k, picks, tell) {
+    return catxLoad(k).then(function (w) {
+      if (!w) return null;
+      var d = w.document, out = [], miss = [], prev = {}, until = Date.now() + 45000;
+      var step = function (i) {
+        if (i >= picks.length) return Promise.resolve();
+        var pk = picks[i], mod = pk.k.split(':')[0], v = pk.k.slice(mod.length + 1);
+        var card = d.querySelector('.mod[data-mod="' + mod + '"]');
+        var sel = card && catxSel(card);
+        if (!card) { miss.push(pk.l); return step(i + 1); }
+        // a card builds its measure list once the feed is read — wait for it before deciding a measure is not there
+        return catxWait(function () { return !v || !sel || sel.options.length > 0; }, until).then(function () {
+        var has = sel && v && Array.prototype.some.call(sel.options, function (o) { return o.value === v; });
+        if (v && !has) { miss.push(pk.l); return step(i + 1); }
+        if (v) {
+          if (!(mod in prev)) prev[mod] = sel.value;
+          if (sel.value !== v) { sel.value = v; sel.dispatchEvent(new w.Event('change', { bubbles: true })); }
+        }
+        if (tell) tell(i + 1, picks.length);
+        return catxWait(function () { var e = card.querySelector('.empty2'); return !(e && CATX_BUSY.test(e.textContent)); }, until).then(function () {
+          var o = v && sel.options[sel.selectedIndex];
+          out.push(catxClean(card, o ? o.text.trim() : ''));
+          return step(i + 1);
+        });
+        });
+      };
+      return step(0).then(function () {
+        Object.keys(prev).forEach(function (mod) {
+          var c = d.querySelector('.mod[data-mod="' + mod + '"]'), s = c && catxSel(c);
+          if (s && s.value !== prev[mod]) { s.value = prev[mod]; s.dispatchEvent(new w.Event('change', { bubbles: true })); }
+        });
+        catxSync();
+        CATX.miss = miss;
+        catxHead(k);
+        if (!out.length) return null;
+        var html = catxDoc(d, out.map(function (h) { return maskText(h); }));
+        return catxMeasure(html).then(function (h) { return { html: html, h: h, n: out.length, miss: miss }; });
+      });
+    });
+  }
+  function catxSection(p, cx) {
+    var sec = document.createElement('div');
+    sec.id = 'print-catx';
+    sec.innerHTML = '<div class="pm-h"><h3>Catalogue dashboard — ' + esc(dispClient(p.client)) + ' ' + esc(p.mkt.toUpperCase()) + '</h3>' +
+      '<span class="pm-sub">' + cx.n + ' module' + (cx.n === 1 ? '' : 's') + ' from the FeedSpark Catalogue · read ' +
+      esc(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })) + '</span></div>';
+    var f = document.createElement('iframe');
+    f.setAttribute('sandbox', '');
+    f.setAttribute('title', 'Catalogue dashboard — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase());
+    f.setAttribute('style', 'height:' + Math.ceil(cx.h + 4) + 'px');
+    f.setAttribute('srcdoc', cx.html);
+    sec.appendChild(f);
+    return sec;
+  }
+  $('catx-load').onclick = function () { if (!SEL) return; if (CATX.fail) catxDrop(); catxLoad(SEL).then(function () { catxHead(SEL); }); };
+  $('catx-picks').onclick = function (e) {
+    var rm = e.target.closest('[data-catx-rm]');
+    if (rm) { var a = catxPicks(); a.splice(+rm.getAttribute('data-catx-rm'), 1); catxSave(a); }
+    else if (e.target.closest('#catx-clear')) catxSave([]);
+    else return;
+    catxSync(); catxHead(SEL);
+  };
+  function fillPrint(k, p, s) {
+    $('print-head').innerHTML = pdfHead(p, s);
+    var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);
+  }
   function pdfFilename(p, s, ext) {
     return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
   }
@@ -3464,7 +4160,7 @@ window.addEventListener('load',restore);
   function printPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var t0 = document.title;
     document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
     var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
@@ -3511,7 +4207,7 @@ window.addEventListener('load',restore);
   function exportPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
     loadPdfLibs().then(function () {
@@ -3679,8 +4375,12 @@ window.addEventListener('load',restore);
      '.de-rtbar', '.de-collapse', '.de-fbpanel', '.de-fbnote', '.de-fbmark',
      '#tky-fab', '#tky-scrim', '#tky-drawer', '#fcc-fcb', '#fcc-fcp', '#fcc-viewas', '#fcc-apps',
      '#fcc-navcz', '#fcc-navcz-scrim', '.instr-tgl', '.instr-hide', '#askp-slot', '#profp-slot',
+     /* the section folds are screen controls — the file opens every section */
+     '.tfold', '#tf-all', '.tf-sum',
      /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
         weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
+     /* the live Catalogue picker card (its frame points at the FCC) — the picked modules travel as #print-catx */
+     '#catx',
      '.pillar .pf2', '.heat-card', '#rec-tier'].forEach(function (sel) {
       Array.prototype.forEach.call(doc.querySelectorAll(sel), function (el) {
         if (el.classList && el.classList.contains('pillar')) { el.removeAttribute('data-scpop'); return; }
@@ -3693,7 +4393,19 @@ window.addEventListener('load',restore);
     while ((c = walker.nextNode())) drop.push(c);
     drop.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
   }
+  /* ⬇ HTML: when the AM has picked Catalogue modules, read them first (the frame may still be streaming the feed), then
+     build the file with them at the end; with none picked the file is built at once, exactly as before */
   function exportHtml(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var picks = catxPicks();
+    if (!picks.length) return buildHtml(k, null);
+    var btn = $('det-html'), old = btn ? btn.textContent : '';
+    var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
+    if (btn) { btn.disabled = true; btn.textContent = 'Reading the Catalogue…'; }
+    var done = function () { if (btn) { btn.disabled = false; btn.textContent = old; } };
+    catxCapture(k, picks, tell).then(function (cx) { done(); buildHtml(k, cx); }, function () { done(); buildHtml(k, null); });
+  }
+  function buildHtml(k, cx) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
     /* open every content-quality row first: a closed row's detail is never rendered, so without
@@ -3702,11 +4414,13 @@ window.addEventListener('load',restore);
     qualKeys(k).forEach(function (key) { var kk = k + '|' + key; was[kk] = !!QOPEN[kk]; QOPEN[kk] = true; });
     renderDetail(k);
     var pops = grabPops(k);
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var doc = document.documentElement.cloneNode(true);
     Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
+    // the picked Catalogue modules close the document, after every market's scores and before the footer
+    if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
     title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
     var html = '<!doctype html>\n' + doc.outerHTML;
@@ -3731,7 +4445,7 @@ window.addEventListener('load',restore);
       var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
       var same = refA && !!refA.scope === !!a.scope;   // never difference two bases
       var was = refA && refA.present && same ? refA.cov : '';
-      out.push([(x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
+      out.push([x.of ? x.lbl.replace(/ /g, '_') : (x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
         a.present ? a.filled : '', nm ? 'not_measured' : (a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed')),
         a.scope ? a.scope.n : s.rows, was,
         (a.present && !a.na && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
@@ -3761,30 +4475,108 @@ window.addEventListener('load',restore);
   // SAME in-browser stream + PUT the per-feed button uses, so a feed scanned from here reads
   // identically to one scanned by hand. One feed's content-quality failure never halts the
   // estate run, matching the existing score-scan step's own silent-continue.
-  $('scan-all').onclick = function () {
-    var feeds = feedList(); if (!feeds.length) return;
-    var btn = $('scan-all'); btn.disabled = true;
-    var i = 0;
+
+  /* ---- SCAN SCOPE (Ray, 7 Oct 2026: "allow scan per brand (all markets) / all brands / single
+     market", over a "Done — 0 scanned, 73 fresh (skipped)"). The estate button had one scope and
+     two traps: on /labels it skipped every feed read in the last 20 h, so a catch-up after a fix
+     scanned nothing; and on every guard page it POSTed only the server scan, which REFUSES a
+     FeedHero XML feed (gviz cannot query XML) — so the XML markets, most of the estate, were
+     counted as scanned and never read. Now a scope is picked — All brands, one brand (every
+     market) or one market — every pick is a FORCED read unless "skip feeds read in the last
+     20 h" is ticked, and each feed takes the SAME path as the per-feed button: the server scan,
+     and on its XML refusal the live stream in this browser (xmlLiveScan). ⏹ Stop finishes the
+     feed in hand and stops. Each brand card carries ⚡ Scan for that brand's markets.
+     The same block sits on /labels, /ptypes and /golden; tools/check_scanscope.js holds them equal. */
+  var SCOPE = { b: '*', m: '*', running: false, stop: false };
+  function scopeFeeds() {
+    return feedList().filter(function (f) { return (SCOPE.b === '*' || f.client === SCOPE.b) && (SCOPE.m === '*' || f.mkt === SCOPE.m); });
+  }
+  function scopeLbl(f) { return scDisp(f.client) + ' · ' + scMkt(f.mkt); }
+  function scopeRender() {
+    var bs = $('scan-brand'), ms = $('scan-mkt'), btn = $('scan-all'), stp = $('scan-stop');
+    if (!bs || !ms || !btn) return;
+    var all = feedList(), by = {};
+    all.forEach(function (f) { (by[f.client] = by[f.client] || []).push(f); });
+    if (SCOPE.b !== '*' && !by[SCOPE.b]) { SCOPE.b = '*'; SCOPE.m = '*'; }
+    var bh = '<option value="*">All brands · ' + all.length + ' feed' + (all.length === 1 ? '' : 's') + '</option>';
+    Object.keys(by).sort().forEach(function (c) {
+      bh += '<option value="' + esc(c) + '">' + esc(scDisp(c)) + ' · ' + by[c].length + ' market' + (by[c].length === 1 ? '' : 's') + '</option>';
+    });
+    bs.innerHTML = bh; bs.value = SCOPE.b;
+    var mk = SCOPE.b === '*' ? [] : by[SCOPE.b];
+    if (SCOPE.m !== '*' && !mk.some(function (f) { return f.mkt === SCOPE.m; })) SCOPE.m = '*';
+    ms.innerHTML = '<option value="*">' + (SCOPE.b === '*' ? 'Every market' : 'All markets') + '</option>' +
+      mk.map(function (f) { return '<option value="' + esc(f.mkt) + '">' + esc(scMkt(f.mkt)) + '</option>'; }).join('');
+    ms.value = SCOPE.m;
+    bs.disabled = SCOPE.running; ms.disabled = SCOPE.running || SCOPE.b === '*';
+    var n = scopeFeeds().length;
+    if (!SCOPE.running) btn.textContent = SCOPE.b === '*' ? '⚡ Scan whole estate'
+      : (SCOPE.m === '*' ? '⚡ Scan ' + scDisp(SCOPE.b) + ' — ' + n + ' market' + (n === 1 ? '' : 's') : '⚡ Scan ' + scDisp(SCOPE.b) + ' · ' + scMkt(SCOPE.m));
+    btn.disabled = SCOPE.running || !n;
+    if (stp) { stp.hidden = !SCOPE.running; stp.disabled = SCOPE.running && SCOPE.stop; }
+  }
+  function scDur(ms) { var s = Math.round(ms / 1000); return s < 90 ? s + 's' : Math.round(s / 60) + ' min'; }
+  // one feed, the path the per-feed button takes: the server scan, and on its XML refusal the live
+  // stream in this browser. Resolves 'ok' | 'held' | an error message — never rejects
+  function scanOneQuiet(f, onState) {
+    return fetch(API + '/api/golden/scan' + '?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.error && XML_REFUSAL.test(d.error)) {
+          if (onState) onState('streaming the live XML');
+          return xmlLiveScan(f.client, f.mkt, onState).then(function (d2) { return d2 && d2.skipped ? 'held' : (d2 && d2.error ? String(d2.error) : 'ok'); });
+        }
+        return d && d.error ? String(d.error) : 'ok';
+      })
+      .catch(function (e) { return (e && e.message) || 'network'; });
+  }
+  function scanScope() {
+    if (SCOPE.running) return;
+    var feeds = scopeFeeds(); if (!feeds.length) return;
+    var skipFresh = !!($('scan-skip') && $('scan-skip').checked);
+    SCOPE.running = true; SCOPE.stop = false; scopeRender();
+    var i = 0, done = 0, skipped = 0, failed = [], held = [], t0 = Date.now(), msg = $('scan-all-msg');
+    var what = SCOPE.b === '*' ? 'Whole estate' : scDisp(SCOPE.b) + (SCOPE.m === '*' ? '' : ' · ' + scMkt(SCOPE.m));
+    function show(f, s) { msg.innerHTML = '<span class="spin"></span>' + esc(scopeLbl(f)) + ' (' + i + '/' + feeds.length + ')' + (s ? ' — ' + esc(s) : ''); }
+    function finish() {
+      var stopped = SCOPE.stop && i < feeds.length;
+      SCOPE.running = false; SCOPE.stop = false;
+      msg.textContent = (stopped ? 'Stopped — ' : 'Done — ') + what + ': ' + done + ' scanned' + scWhat() +
+        (skipped ? ', ' + skipped + ' read in the last 20 h (skipped)' : '') +
+        (failed.length ? ', ' + failed.length + ' failed (' + failed.slice(0, 4).join(', ') + (failed.length > 4 ? ' …' : '') + ')' : '') +
+        (held.length ? ', ' + held.length + ' held — two live reads disagreed (' + held.slice(0, 3).join(', ') + ')' : '') +
+        (stopped ? ', ' + (feeds.length - i) + ' not reached' : '') + ' · ' + scDur(Date.now() - t0);
+      scopeRender();
+      return refreshEstate().then(function () { if (SEL) select(SEL); });
+    }
     function step() {
-      if (i >= feeds.length) {
-        $('scan-all-msg').textContent = 'Done — ' + feeds.length + ' scanned (score + content quality)';
-        btn.disabled = false;
-        return refreshEstate().then(function () { if (SEL) select(SEL); });
-      }
-      var f = feeds[i++], k = f.client + '|' + f.mkt;
-      // no freshness skip — the estate catch-up: labels, product types and attribute
-      // coverage all land in the same forced pass
-      $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' — score (' + i + '/' + feeds.length + ')';
-      return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
-        .then(function (r) { return r.json(); }).catch(function () {})
-        .then(function () {
-          $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' — content quality (' + i + '/' + feeds.length + ')';
-          return qualityRun(k).catch(function () {});
-        })
+      if (SCOPE.stop || i >= feeds.length) return finish();
+      var f = feeds[i++];
+      if (skipFresh && f.t && (Date.now() - f.t) < STALE_MS && f.status !== 'unreachable') { skipped++; return step(); }
+      show(f, 'scanning');
+      return scOne(f, function (s) { show(f, s); })
+        .then(function (r) { if (r === 'held') held.push(scopeLbl(f)); else if (r !== 'ok') failed.push(scopeLbl(f)); else done++; })
         .then(step);
     }
     step();
-  };
+  }
+  $('scan-brand').onchange = function () { SCOPE.b = this.value; SCOPE.m = '*'; scopeRender(); };
+  $('scan-mkt').onchange = function () { SCOPE.m = this.value; scopeRender(); };
+  $('scan-stop').onclick = function () { SCOPE.stop = true; scopeRender(); var m = $('scan-all-msg'); if (m) m.insertAdjacentText('beforeend', ' — stopping after this feed…'); };
+  $('scan-all').onclick = scanScope;
+  // ⚡ on a brand card: that brand, every market
+  function scanBrand(c) { if (SCOPE.running) return; SCOPE.b = c; SCOPE.m = '*'; scopeRender(); scanScope(); }
+  scopeRender();
+  function scWhat() { return ' (score + content quality)'; }   // what one feed's pass reads, on this page
+  function scDisp(c) { return dispClient(c); }
+  function scMkt(m) { return String(m || '').toUpperCase(); }
+  function scOne(f, onState) {
+    return scanOneQuiet(f, onState).then(function (r) {
+      // the estate catch-up also reads content quality + AI-readiness (Ray, 17 Sep 2026)
+      if (onState) onState('content quality');
+      return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });
+    });
+  }
 
   // industry scoring profiles (defaults + overrides + client->industry map) — the boot
   // select() waits on this so the first render is already scored to the right profile
@@ -3792,6 +4584,7 @@ window.addEventListener('load',restore);
     PROF.defaults = (d && d.defaults) || {};
     PROF.overrides = (d && d.overrides) || {};
     PROF.industryMap = (d && d.industryMap) || {};
+    PROF.upgrade = (d && d.upgrade) || null;   // later defaults laid over an older saved profile
     PROF.ready = true;   // from here every render live-derives scores from cov + profile
     if (Object.keys(ESTATE.feeds).length) renderEstate();
     if (SEL) renderDetail(SEL);

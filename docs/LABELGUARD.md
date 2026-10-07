@@ -307,6 +307,37 @@ to industry "Retail" until added to the map. NOTE: this anonymises Ray's own log
 for live demos — it is NOT a client-accessible URL; that would need its own Cloudflare Access
 policy and a server-side masking layer (deliberately out of scope).
 
+### 5d. Scan scope — all brands, one brand, one market (7 Oct 2026)
+
+Ray, over a /labels "Done — 0 scanned, 73 fresh (skipped)": *"allow scan per brand (all markets) /
+all brands / single market"*.
+
+The estate button had ONE scope and TWO traps. On /labels it skipped every feed read in the last
+20 h, so a catch-up run after a fix scanned nothing. And on all three guard pages it POSTed only
+the server scan, which refuses a FeedHero XML feed (`gviz cannot query XML`) — so the XML markets,
+most of the estate, were counted as scanned and never read.
+
+The section header of /labels, /ptypes and /golden now carries:
+
+- **Brand** — *All brands · N feeds* or one brand · N markets.
+- **Market** — with a brand picked, *All markets* or one market.
+- **skip feeds read in the last 20 h** — OFF by default: every pick is a FORCED read.
+- **⚡ Scan …** — the button names the scope (*Scan whole estate* / *Scan Reiss — 39 markets* /
+  *Scan Reiss · DE*); **⏹ Stop** finishes the feed in hand and stops; the scope locks while it runs.
+- **⚡ Scan** on every brand card — that brand, every market.
+
+Each feed takes the SAME path as the per-feed button: the server scan, and on its XML refusal the
+live stream in the browser (`xmlLiveScan` → `/api/labels/scanpush`), so a held catastrophic
+reading reads *held — two live reads disagreed* rather than *scanned*. /golden reads content
+quality on the same pass, as its estate scan already did. The done line names the scope and every
+outcome: scanned, skipped, failed (named), held, not reached, and how long it took.
+
+ONE block (`/* ---- SCAN SCOPE`) sits on all three pages, identical but for the route each scans
+through and its page wording (`scDisp` / `scMkt` / `scOne` / `scWhat`). Tripwire
+`tools/check_scanscope.js` (Playwright, presync) holds the three blocks equal and drives each
+page: picker contents, all brands forced, XML refusals streamed and pushed, the skip, a brand, a
+market, Stop, the card button, and the controls inside a 390px screen.
+
 ## 6. Custom alerts — the watch builder (§04 on the page)
 
 Beyond the estate-wide baseline monitoring, Ray can pin the **exact values PMAX depends on**
@@ -1057,6 +1088,114 @@ XML stream, the three states through index/history/score, basis, alerts, the KWC
 tools/check_grkw.js (Playwright, presync: the row in each state, the dial against the engine's
 score, → Brief opening a keyword brief).
 
+### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
+
+Ray: *"this golden score will be the entire new base … image population … at least four plus …
+100% score … product details … separated from product highlight … please give me more scoring logic
+and let me approve if it should be in the golden score or not."* He approved five changes:
+
+- **images per product**
+- **highlights per product**
+- **product details per product**
+- **lifestyle_image_link**
+- **size_system** as best practice for apparel
+
+All five score at ×1, like the other recommended fields. He did not approve "valid values". Main-image
+quality is phase 2, once a scheduled image scan exists.
+
+**A filled column is not a full one.** A product with ONE extra image has `additional_image_link`
+filled. A product with two highlights has `product_highlight` filled. A product whose only "details"
+are washing instructions has `product_detail` filled. Presence scored all three as done. Each now gets
+a DEPTH twin (ATTR_SPEC `of`), read product by product on the XML scan:
+
+| Row | Counts, per product | Full credit | Standard |
+|---|---|---|---|
+| images per product (`img_depth`) | distinct images: the main image plus every additional one (a cell with several comma-separated URLs is split; the same URL twice counts once) | 4+ | FeedSpark's. Google allows the main image plus up to 10 more and names no count |
+| highlights per product (`hl_depth`) | distinct highlights (repeated tags or the `\|\|\|` list form; blanks and repeats dropped) | 4+ | Google's own 4–6 (answer 9216100) |
+| details per product (`detail_depth`) | details that describe the product | 3+ | FeedSpark's |
+
+**Each product earns** `min(count ÷ target, 1)`, and the row's score is that credit averaged over
+EVERY product, with a product carrying none counted as 0. So 3 of 4 images scores 75%, and 2 of 3
+details scores 67%. A card under each row breaks the catalogue down by count, 0 … 6+, with the buckets
+at full credit marked.
+
+**What a detail is.** Google (answer 9218260) asks product details not to repeat other attributes or
+carry promotion, and not to repeat themselves. `detailKind` therefore does not count:
+
+- a line repeating another attribute (colour, size, brand, price, availability …)
+- a material or pattern line that only repeats the product's own `g:material` or `g:pattern`
+- a line repeated within the product
+- a line with no name or no value
+
+Care lines (washing, cleaning) are left out by FeedSpark's rule: the details that matter are the ones
+Google's AI reads, such as sleeve length, neckline, fit and fastening. The row counts how many lines it
+set aside, and the card names the details the feed does carry, with examples per product type.
+
+**One fact, one weight.** When a depth twin was measured, it scores INSTEAD of its presence row
+(`goldenScore` skips the presence key). The presence row stays on the page, since "is it in the feed
+at all?" is still worth seeing, and wears **scored by depth ↓**. When the twin was NOT measured (a
+sheet-read feed, or a snapshot from before 7 Oct), the presence row scores as it always did. The depth
+row then reads "not measured … g:<attr> scores until the next XML scan" with no actions, never
+"missing". `histBasis` includes the derived keys, so the first depth-measured scan is a change of
+measurement and never drawn as a move. `diffCoverage` raises no alert on a depth key appearing or
+going.
+
+**The profiles.** Fashion and Footwear star `size_system` (Google, answer 6324502: "Submit this
+attribute for all apparel products") and `img_depth`. `lifestyle_image_link` is a recommended field
+for every industry except those it does not fit: it is waived for Footwear, Beauty, Pet Care,
+Sporting Goods, Arts & Crafts, Tools & DIY and Retail. **A saved profile predates a new default:**
+the ⚙ editor saves a brand's whole list, so a record saved before 7 Oct would silently hide the new
+defaults. Every record now carries `v`, stamped by the worker on save. `profileLayer` (engine), and
+its page twin `layerOf` reading the `upgrade` table served on GET /api/golden/profile, lays each later
+version's changes over an older record. A choice the record made explicitly the other way stands.
+
+**On the page.** Each depth row is named in words (never a `g:` key) and badged with whose standard
+it is: **FeedSpark** for images and details, **Google 4–6** for highlights. Its note reads e.g.
+*"4.1 images per product · 82% carry 4+"*, and its tooltip gives the arithmetic. The row's actions
+are ✉ Ask client and → Brief, with no PDP scan, because a product page holds one product, not a
+count:
+
+- **✉ Ask client** composes a per-product proposal (`perProductAskEmail`): *"proposal to add more
+  images per product"*.
+- **→ Brief** opens a brief in words (*Golden Record Fix - Images per product - <Brand> <MKT> - MMYY*,
+  `cat image` for images, `cat data` for the others). The worker files the same words.
+
+The CSV names the rows (`images_per_product` …). The ⬇ HTML and PDF carry the rows and their cards.
+`cleanDepth` (worker) checks a pushed depth reading whole before it is stored.
+
+**Live impact, 7 Oct 2026** (the full GB Shopping feeds through the shipped collector, the engine
+before and after, default profiles):
+
+| Feed | Before | After | Images / product | Highlights / product | Details / product |
+|---|---|---|---|---|---|
+| Monsoon GB | 91.9 | 86.1 | 4.1 (91.5%) | 3.4 (78%) | 0.5 (2.2%) |
+| Accessorize GB | 89.0 | 84.3 | 3.6 (81.1%) | 2.8 (68.8%) | 0.5 (2.0%) |
+| Superdry GB | 89.2 | 83.9 | 2.0 (50%) | 1.3 (26.9%) | none in feed |
+| Reiss GB | 90.2 | 86.7 | 5.9 (99.9%) | 1.5 (33.5%) | none in feed |
+| Schuh GB | 85.5 | 84.1 | 4.0 (100%) | 0.5 (9.9%) | none in feed |
+| Hobbycraft GB | 90.9 | 90.6 | 3.2 (68.3%) | 2.9 (47.2%) | 0.1 (0.4%) |
+| American Golf GB | 77.9 | 77.9 | 4.2 (80.3%) | 0.7 (16.8%) | none in feed |
+| YuMOVE GB | 88.4 | 88.1 | 1.0 (25%) | 1.3 (32.9%) | none in feed |
+
+Where the Fashion points went:
+
+- **lifestyle_image_link** costs about 1.9 points. No feed in the estate carries it.
+- **size_system ★** costs about 1.8. No feed carries it either.
+- **images per product** costs 1.7 on Superdry (2 images per product) and slightly lifts Reiss and
+  Schuh (4 or more on every product).
+- **details per product** costs Monsoon 2 points. Its `product_detail` is filled on 98.8% of
+  products, but almost every line is a care instruction or repeats another attribute, so it averages
+  0.5 real details per product.
+
+**Harnesses.**
+
+- tools/test_labelguard.mjs: the readers, depthAttr, cleanDepth, the collector on a real XML stream,
+  the score with and without depth, profile layering, the client ask, and the page twin's score and
+  ask held to the engine's.
+- tools/check_grdepth.js (Playwright, presync): the rows, badges, notes, cards, the dial against the
+  engine, not measured, Pet Care, a v1 profile, ask, brief, CSV, HTML, PDF and 390px.
+- tools/check_grkw.js: the profile route is now stubbed as the worker answers it.
+
 ### 9.12a Three scores, one chart (7 Oct 2026)
 
 Ray, on the Score history card: *"merge 3 scores as 3 lines chart in 1 graph pls"*.
@@ -1080,8 +1219,16 @@ three.
   improvement, below it a deduction. Each row has its own stated scale (`±0.5`, `±10`, …),
   because the Golden Score moves in tenths while an analysis can move eight points, and one shared
   scale would flatten every score move to a dash.
-- **Gaps and rings stay per line.** A day a score was not measured is a gap in that line only. A
-  day set by a run by hand wears a ring on that score's line.
+- **No line is ever gapped (Ray, 7 Oct 2026: *"ensure all lines are not gapped, must show
+  consistent line DoD"*).** A day a score was not measured CARRIES its last reading (`histCarry`):
+  the line runs on, its day-on-day row shows a HOLLOW mark (not measured, nothing moved), and the
+  hover says which day's reading it carries. A reading from before the window seeds the first
+  days; nothing is drawn before a score's first reading. The one join that is not a carry — a
+  Golden Score read on a new basis (keywords from 30 Sep 2026) — is DASHED, and the key names it
+  only when one is on the chart: the two ends were measured differently and are not compared, but
+  the line does not stop. `histModel` itself is unchanged, so the engine twin and Leadership's
+  tiles (which still show an unmeasured day as a gap) read the same measured days.
+- **Rings stay per line.** A day set by a run by hand wears a ring on that score's line.
 - **One hover, all three.** Hovering a day reads every score that day: its value, its move against
   the day it was last measured, and — for the Golden Score — the attributes that moved it.
 - **One change log.** Score moves and analyses are listed together, newest first. The header
@@ -1096,6 +1243,117 @@ three.
 `tools/check_grhist.js` renders it: three lines in three colours on one axis with no switch, each
 named at its end, each bar inside its own score's row, the gaps and rings per line, the hover
 reading all three, the merged log, the client download and the dark steps.
+
+### 9.12b Every market at the foot of the client documents (7 Oct 2026)
+
+Ray: *"For multi-market clients, when you download the HTML or report card, at bottom there should
+be an overview of all the market scores as well."*
+
+The ⬇ PDF and ⬇ HTML read ONE market. A brand on 28 markets sent its client a file that never said
+how the other 27 stood. Now both documents (and a bare Ctrl+P) end with an **All markets** table,
+written by `mktOverview()` into `#print-mkts` at the moment an export starts (`fillPrint`, the one
+call all three exits share).
+
+- **One row per Google Shopping market of the brand**, in the estate scorecard's order: Golden
+  Score, content quality, AI-readiness (with its tier name), products, required attributes
+  missing (named) and the day it was scanned. Each score has a short bar on one track length, so
+  a fill always means its number.
+- **The report's own market prints the document's numbers** — the dial, the content-quality
+  headline and the AI ring above it — not the estate index's copy, so one file never shows two
+  figures for one market. It is marked *this report*.
+- **A dash is a dash.** A market scanned but not analysed shows a dash for content quality and
+  AI-readiness; a market never scanned says *not scanned yet*. Never a zero.
+- **Averages read only the markets that carry each score**, and say how many (*of 3*) when that is
+  not all of them. Products are summed over the scanned markets; the required-missing cell counts
+  the markets missing one.
+- **A single-market brand gets nothing** — the document above already is its only market.
+- **Never on screen.** The estate scorecard is this table for the AM. Demo mode masks the brand
+  name here too.
+
+`tools/check_grmkts.js` (Playwright, presync) renders a four-market brand — one analysed, one
+analysed elsewhere, one scanned only, one never scanned — and checks the Ctrl+P layout, the
+one-click PDF capture, the HTML file (position, figures, no buttons), that the table fits the
+PDF's 960px column on one line per row, demo mode and the single-market case.
+
+### 9.12c The Catalogue's modules at the end of the ⬇ HTML, picked by the AM (7 Oct 2026)
+
+Ray: *"within Golden Score record, at bottom, pull in modules dashboard from Catalogue (module) also, and
+Leave AM to actually select which module of the dashboard is shown inside the HTML download. For example,
+with content depth, there could be multiple content depths displayed on the dashboard. It could be images
+per product, highlight per product, length, or description length. All this would be added at the end of
+the HTML, and AM can also have the option of not including it if it's not needed."*
+
+- **A card under the scorecard** (`#catx`, on screen only) offers *Show the Catalogue dashboard for
+  <Brand> <MKT>*. It loads on demand, because the Catalogue streams the feed and the master — not a cost
+  to pay on every visit to /golden.
+- **The real Catalogue, framed.** `/catalog?embed=mods&client=&market=` shows the module grid alone
+  (`html.emb`): no topbar, hero, KPI band, table or injected layer, and no Fee check (a calculator, not a
+  reading). It is the same page and the same engine, so a module reads here exactly as it reads there.
+  Nothing the frame does is remembered on the device: every Catalogue preference is read through an
+  in-memory layer (`EMB`/`MEM`) and written only there, the module set starts complete, the frame keeps the
+  address it was opened on (rewriting it would drop `embed=mods`), and the phone's skim view and the ⓘ
+  collapse stand down (`data-no-digest`, `data-no-collapse`) so the cards stay whole. The frame is capped at
+  860px and scrolls inside its card.
+- **One tick per card, per measure.** Each card gets an *In ⬇ HTML* tick. A card with a measure (Content
+  depth, Catalogue mix, ROAS by, Optimised vs not) is ticked per measure, so images per product and
+  highlights per product are two picks. Image pixels' scan-count select is a control, not a measure.
+  The picks are chips on the card, each with ✕, plus *Clear all*.
+- **Nothing is carried until something is ticked.** The picks live per device (`gr-catx`) and outlive the
+  market, so a set chosen once applies to the next brand.
+- **The export.** ⬇ HTML reads each pick in order: it sets the measure, waits for the card to finish
+  reading (and for a measure list that is only built once the feed is read), and copies the card as drawn,
+  with every control, link, id, click hook and "click to list" tooltip removed. The cards go into a
+  script-free frame (`sandbox=""`, `srcdoc`) with the Catalogue's own stylesheet, so neither page's CSS can
+  restyle the other's. The grid keeps a fixed column count and the Catalogue's fixed card height, so the
+  frame holds the whole grid at any window width. The section sits after the all-markets table and before
+  the footer. The frame is put back on the measures the AM left it on.
+- **A pick that cannot go in is named on the card** (*Left out of the last download, not on this market's
+  Catalogue: …*), never silently dropped. A signin without the Catalogue (or a page that did not load) says
+  so at once and offers the button again.
+- **The PDF does not carry the modules.** It is a picture of the page, and a frame is not.
+
+`tools/check_grcatx.js` (Playwright, presync) serves both real pages over HTTP and runs the Catalogue on
+the synthetic Northwind set: the card, the frame (this market, grid alone, every module, no Fee check,
+reading but never writing the device's preferences), ticking two measures of one card, the file (position,
+the three picks in order, a chart in each, no control or hook, the stylesheet, one row, no inner scroll at
+two window widths), the frame put back, ✕ and Clear all, a saved set exported with the frame closed, and a
+signin without the Catalogue.
+
+### 9.12d Every scorecard section folds (7 Oct 2026)
+
+Ray, over a screenshot of the "Two scores, two questions" card: *"make these boxes collapsible as
+well"* — the estate cards already folded; the scorecard's own boxes did not, so a feed's card ran
+to eight full sections whether or not the AM needed them.
+
+Every `.tier` box on the scorecard — Score history, the four spec tiers, Content quality,
+AI-readiness and Two scores — now folds on its own: a chevron (`.tfold`, `aria-expanded`) at the
+front of the header, and a click anywhere on the header that is not one of its own controls
+(ⓘ Scoring logic, Re-analyse, the history range chips keep doing their job). **⊖ Fold all
+sections / ⊕ Open all sections** sits beside ⚙ and always names the action still available.
+
+- **A fold never hides a finding.** The header stays: badge, title and what the section found —
+  `avg fill`, `4 of 6 live`, `⚠ N fields read differently` — and Content quality / AI-readiness,
+  whose headline number lives in the body, carry it into the header while folded (`.tf-sum`).
+- **Defaults:** "Two scores, two questions" starts folded (it explains how the two sections
+  score; it is not a finding about the feed); every other section starts open.
+- **A device preference**, like `gr-collapse` for the estate cards: `localStorage gr-tfold`
+  `{key: 1|0}`, never shared state. Keys: `hist req cond rec ai qual air recon` (the four tiers by
+  `data-tf`, the rest by their ids). An explicit open of a default-folded section is remembered.
+- **Re-applied on every render** (`renderDetail` → `tfApply`) and when the history card redraws
+  itself in place (`histRedraw`).
+- **Exports always print open:** the fold rule is `body:not(.pdf)`, so ⬇ PDF, ⬇ HTML and Ctrl+P
+  paint every section; `.tfold`, `#tf-all` and `.tf-sum` are hidden in `body.pdf` and removed from
+  the HTML file.
+- **Phone:** the skim view hands a tap on a heading that already toggles to that heading's
+  `[aria-expanded]` button, so the header's own handler stands down when the skim view has claimed
+  the heading — one tap is one toggle.
+
+Tripwire `tools/check_grfold.js` (Playwright, presync) renders the real page: every section
+carries the chevron, the fresh-device defaults read off the paint, header click / chevron /
+header controls, the stored choice and a reload, fold-all / open-all, the folded headers keeping
+their score, the print layout and the downloaded HTML opened in a browser with every section open,
+and at 390px one tap = one toggle (negative control: with the stand-down guard removed, a heading
+the skim view claims folds and re-opens on one tap).
 
 ### 9.13 The portfolio trend on Leadership (24 Sep 2026)
 

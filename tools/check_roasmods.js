@@ -237,12 +237,21 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     ok('ticking a column keeps the menu open (pick several in one go)', await p.evaluate(() => !document.getElementById('heat-pop').hidden));
     ok('…the button counts the columns on', /◐ Heat\s*1/.test(await p.evaluate(() => document.getElementById('heat-btn').textContent)));
     let a = await cell(p, 'b|' + brOrder[0], 'roas'), z = await cell(p, 'b|' + brOrder[brOrder.length - 1], 'roas');
-    ok('the brand with the highest ROAS (counted here) is the PEAK — ▲, blue', a && /\bpk\b/.test(a.cls) && a.mark === '▲' && rgb(a.bg).slice(0, 3).join() === '37,99,235' && /^Peak/.test(a.title), a);
+    ok('the brand with the highest ROAS (counted here) is the PEAK — ▲, green', a && /\bpk\b/.test(a.cls) && a.mark === '▲' && rgb(a.bg).slice(0, 3).join() === '22,101,52' && /^Peak/.test(a.title), a);
     ok('…the lowest is the TROUGH — ▼, orange', z && /\btr\b/.test(z.cls) && z.mark === '▼' && rgb(z.bg).slice(0, 3).join() === '237,111,11' && /^Trough/.test(z.title), z);
     ok('…only the column picked is coloured', (await p.evaluate(() => Array.from(document.querySelectorAll('#pt td.hx')).every((td) => { var i = Array.prototype.indexOf.call(td.parentElement.children, td); return document.querySelectorAll('#pt thead th')[i].getAttribute('data-k') === 'roas'; }))));
-    ok('…its header carries the scale, and the footer names it', await p.evaluate(() => document.querySelector('#pt thead th[data-k="roas"]').classList.contains('hx') && !document.querySelector('#pt thead th[data-k="sp"]').classList.contains('hx') && /◐ ROAS: orange ▼ trough → blue ▲ peak, within each level/.test(document.getElementById('pt-foot').textContent)));
+    ok('…its header carries the scale, and the footer names it', await p.evaluate(() => document.querySelector('#pt thead th[data-k="roas"]').classList.contains('hx') && !document.querySelector('#pt thead th[data-k="sp"]').classList.contains('hx') && /◐ ROAS: orange = lowest → green = highest, within each level/.test(document.getElementById('pt-foot').textContent)));
     ok('the Total rows are never on the scale', (await p.evaluate(() => document.querySelectorAll('#pt tr.tot td.hx').length)) === 0);
 
+    // a column where LOWER is better runs the other way: green is read as good, so it marks the lowest
+    // (Ray, 7 Oct 2026: "orange > green for highest" — and a green peak CPC would call the dearest market the best)
+    await p.check('#heat-pop [data-heat="zb"]'); await p.waitForTimeout(150);
+    const zbB = D.book.brands[W].slice().sort((x, y) => x.avgZombiePct - y.avgZombiePct);
+    const zLo = await cell(p, 'b|' + zbB[0].client, 'zb'), zHi = await cell(p, 'b|' + zbB[zbB.length - 1].client, 'zb');
+    ok('Zombie % (lower is better): the LOWEST brand is green — still marked ▼ as the trough', zLo && /\btr\b/.test(zLo.cls) && zLo.mark === '▼' && rgb(zLo.bg).slice(0, 3).join() === '22,101,52' && /lower is better here, so green marks the lowest$/.test(zLo.title), zLo);
+    ok('…and the HIGHEST is orange, still marked ▲ as the peak', zHi && /\bpk\b/.test(zHi.cls) && zHi.mark === '▲' && rgb(zHi.bg).slice(0, 3).join() === '237,111,11', zHi);
+    ok('…its header bar runs green → orange, and the footer says which column runs the other way', await p.evaluate(() => document.querySelector('#pt thead th[data-k="zb"]').classList.contains('rev') && !document.querySelector('#pt thead th[data-k="roas"]').classList.contains('rev') && /green = lowest on Zombie %, where lower is better/.test(document.getElementById('pt-foot').textContent)));
+    await p.uncheck('#heat-pop [data-heat="zb"]'); await p.waitForTimeout(100);
     await p.check('#heat-pop [data-heat="sp"]'); await p.keyboard.press('Escape');
     await p.click('#expand-all'); await p.waitForTimeout(250);
     a = await cell(p, mkAll[0].k, 'roas'); z = await cell(p, mkAll[mkAll.length - 1].k, 'roas');
@@ -279,7 +288,7 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     const hue = (x) => (x.bg.match(/[\d.]+/g) || []).slice(0, 3).join();
     const above = list.filter((x) => x.v > med).sort((x, y) => x.v - y.v), below = list.filter((x) => x.v < med).sort((x, y) => y.v - x.v);
     ok('(the longer book has a dozen £ markets to scale)', list.length >= 12, list.length);
-    ok('above the median: blue, deepening toward the peak', above.every((x) => hue(x) === '37,99,235') && above.every((x, i) => !i || al(x) >= al(above[i - 1])), above.map((x) => [x.v, x.bg]));
+    ok('above the median: green, deepening toward the peak', above.every((x) => hue(x) === '22,101,52') && above.every((x, i) => !i || al(x) >= al(above[i - 1])), above.map((x) => [x.v, x.bg]));
     ok('below the median: orange, deepening toward the trough', below.every((x) => hue(x) === '237,111,11') && below.every((x, i) => !i || al(x) >= al(below[i - 1])), below.map((x) => [x.v, x.bg]));
     ok('exactly one ▲ peak and one ▼ trough among the £ markets', list.filter((x) => /\bpk\b/.test(x.cls)).length === 1 && list.filter((x) => /\btr\b/.test(x.cls)).length === 1 && list.find((x) => /\bpk\b/.test(x.cls)).v === vs[vs.length - 1] && list.find((x) => /\btr\b/.test(x.cls)).v === vs[0]);
     ok('no page errors', errs.length === 0, errs);
@@ -288,7 +297,7 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
   {
     const { ctx, p, errs } = await open(browser, { init: "localStorage.setItem('fcc-theme','dark');localStorage.setItem('fcc-roas-heat','[\"roas\"]');" });
     const bgs = await p.evaluate(() => Array.from(document.querySelectorAll('#pt td.hx')).map((td) => getComputedStyle(td).backgroundColor.match(/[\d.]+/g).slice(0, 3).join()));
-    ok('dark mode draws the scale in the chart pair\'s own dark steps', bgs.length && bgs.every((c) => c === '76,130,224' || c === '198,123,40'), bgs);
+    ok('dark mode draws the scale in its own validated dark steps (green #22A06B, orange #C67B28)', bgs.length && bgs.every((c) => c === '34,160,107' || c === '198,123,40') && bgs.indexOf('34,160,107') >= 0, bgs);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
   }

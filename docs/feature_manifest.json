@@ -1680,7 +1680,7 @@
     {
       "name": "PTGuard: ⚡ estate catch-up button force-rescans (no freshness skip)",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
-      "pattern": "no freshness skip"
+      "pattern": "var skipFresh = !!($('scan-skip') && $('scan-skip').checked);"
     },
     {
       "name": "ops: estate-rescan parallel agent (workflow_dispatch + service-token script)",
@@ -7463,7 +7463,7 @@
     {
       "name": "Golden Record: Scan whole estate ALSO runs content quality for every feed, not just score/labels/PT/attribute coverage — Ray, 17 Sep 2026: 'scan whole estate > will also scan content quality too for all estate'",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "return qualityRun(k).catch(function () {});",
+      "pattern": "return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });",
       "min": 1
     },
     {
@@ -11467,7 +11467,10 @@
     {"name": "ROAS: ◐ Heat — the button + menu beside ⊞ Columns", "file": "docs/FeedSpark_ROAS.html", "pattern": "id=\"heat-btn\"", "pr": 0},
     {"name": "ROAS: ◐ Heat — a scale per LEVEL, money per currency", "file": "docs/FeedSpark_ROAS.html", "pattern": "var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');", "pr": 0},
     {"name": "ROAS: ◐ Heat — the midpoint is the MEDIAN", "file": "docs/FeedSpark_ROAS.html", "pattern": "med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2", "pr": 0},
-    {"name": "ROAS: ◐ Heat — the chart pair's dark steps", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:76,130,224;--heat-lo:198,123,40", "pr": 0},
+    {"name": "ROAS: ◐ Heat — orange → green, the validator-passed dark steps", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:34,160,107;--heat-lo:198,123,40", "pr": 0},
+    {"name": "ROAS: ◐ Heat — orange → green, the validator-passed light step", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:22,101,52;--heat-lo:237,111,11", "pr": 0},
+    {"name": "ROAS: ◐ Heat — where lower is better, green marks the lowest", "file": "docs/FeedSpark_ROAS.html", "pattern": "var weak=h.rev?h.t>0:h.t<0;", "pr": 0},
+    {"name": "ROAS: ◐ Heat — the reversed column checked in the tripwire", "file": "tools/check_roasmods.js", "pattern": "Zombie % (lower is better): the LOWEST brand is green", "pr": 0},
     {"name": "ROAS: ◐ Heat — per device + carried by a saved view", "file": "docs/FeedSpark_ROAS.html", "pattern": "heat:S.heat.slice()", "pr": 0},
     {"name": "ROAS: every menu nudged back inside the screen (fitPop)", "file": "docs/FeedSpark_ROAS.html", "pattern": "if(open)fitPop(pop);", "pr": 0},
     {"name": "ROAS: ◐ Heat rendered in the tripwire", "file": "tools/check_roasmods.js", "pattern": "◐ Heat — a colour scale per column", "pr": 0},
@@ -12053,6 +12056,297 @@
       "name": "Services & Pricer: /migration row carries the six new stores",
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "pricerops · pricerprice · pricercost · pricerprop · svcroll · svcmap",
+      "name": "Golden score history: a day nobody measured carries the last reading — no gapped line",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function histCarry(days, seed, seedD) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a carried day wears a hollow mark in its day-on-day row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (x.cv != null) sv += '<circle class=\"z c\" data-ser=\"' + k + '\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a new-basis reading is joined dashed, never a gap",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "sv += '<path class=\"ln nb\" data-ser=\"' + k + '\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: every market of the brand at the foot (mktOverview)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function mktOverview(k, s) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: all three exits fill the header and the market table through fillPrint",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the report's own market prints the document's numbers, not the index copy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var g = me ? goldenScore(s.attrs, prof) : f.score;",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the market table prints only on paper / in the file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf #print-mkts:not(:empty){display:block;margin-top:16px}",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the market table slot sits under the scorecard, above the footer",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<div id=\"print-mkts\" data-no-collapse></div>",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the all-markets tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grmkts.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the Catalogue's modules, picked by the AM (catxCapture)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function catxCapture(k, picks, tell) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: a tick per card PER MEASURE (two content depths are two picks)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return sel && sel.value ? mod + ':' + sel.value : mod;",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the picked cards close the document, before the footer",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the Catalogue section runs nothing (a sandboxed srcdoc frame)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "f.setAttribute('sandbox', '');",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the export waits for a card's measure list before deciding it is missing",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return catxWait(function () { return !v || !sel || sel.options.length > 0; }, until)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the live picker card never reaches the client file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "     '#catx',\n     '.pillar .pf2'",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: ?embed=mods — module grid alone, nothing written to the device",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "var EMB = /[?&]embed=mods(&|$)/.test(location.search), MEM = EMB ?",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: embedded, the address it was opened on is kept",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (!EMB) try { history.replaceState(null, '', '/catalog?client=' + encodeURIComponent(c)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: embedded, the skim view and the collapse leave the cards whole",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "document.documentElement.setAttribute('data-no-digest', ''); document.documentElement.setAttribute('data-no-collapse', '');",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the Catalogue-modules tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grcatx.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden: every scorecard section folds — the fold applies on every render",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "    histWire(k);\n    tfApply();\n  }",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the 'Two scores, two questions' card starts folded",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var TF_DEFAULT = { recon: 1 };",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a folded section prints open — the fold rule is screen-only",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body:not(.pdf) .tier.folded>:not(.tier-h){display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the fold controls leave the HTML file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.tfold', '#tf-all', '.tf-sum',",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the header stands down when the phone skim view claims it (one tap, one toggle)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (h.classList.contains('fcc-dg-own') && window.matchMedia && matchMedia('(max-width:760px)').matches) return;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the section-fold tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grfold.js",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /labels (all brands / a brand / a market)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /ptypes",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope block on /golden",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var SCOPE = { b: '*', m: '*', running: false, stop: false };",
+      "pr": 0
+    },
+    {
+      "name": "Guards: an estate scan streams the XML feed the server refuses (never counted unread)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "return xmlLiveScan(f.client, f.mkt, onState).then(function (d2) { return d2 && d2.skipped ? 'held' : (d2 && d2.error ? String(d2.error) : 'ok'); });",
+      "pr": 0
+    },
+    {
+      "name": "Guards: skipping fresh feeds is opt-in, never the default",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "var skipFresh = !!($('scan-skip') && $('scan-skip').checked);",
+      "pr": 0
+    },
+    {
+      "name": "Guards: /golden's estate scan still reads content quality per feed",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });",
+      "pr": 0
+    },
+    {
+      "name": "Guards: the scan-scope tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_scanscope.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden: depth attributes are read per product (images / highlights / details per product)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function depthAttr(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a measured depth twin scores INSTEAD of its presence row (one fact, one weight)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (DEPTH_OF[s.key] && attrs[DEPTH_OF[s.key]]) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: product details — care lines and repeats of other attributes are not counted",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "function detailKind(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: Fashion scores size_system and images per product as best practice (approved 7 Oct 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "'Fashion':        { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id', 'size_system', 'img_depth'], waived: [] },",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a saved profile from an older version gets the later defaults laid over it",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const PROFILE_V = 2;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the client ask for a depth row is a per-product proposal",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "function perProductAskEmail(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the worker serves the profile upgrade table to the page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "upgrade: { v: PROFILE_V, delta: PROFILE_DELTA }",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the push lanes' depth readings are checked whole (cleanDepth)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "cleanDepth(raw.attrs)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a depth plan task is filed in words, never a key",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const dep = ATTR_SPEC.find((s) => s.key === attr && s.of);",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the depth twin replaces its presence row in the dial",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (DEPTH_OF[s.k] && attrs[DEPTH_OF[s.k]]) return;   // its depth twin counts instead",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: each depth row carries its 0 … 6+ breakdown card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function depCard(x, a)",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the presence row says the depth row scores instead",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "scored by depth ↓",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the profile upgrade twin (layerOf)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function layerOf(rec, ind)",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: not measured never reads missing for a depth row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "' scores until the next XML scan'",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: Google's 500 x 500 minimum from 31 Jan 2027",
+      "file": "docs/pixel_engine.js",
+      "pattern": "min2027: 500, from2027: Date.UTC(2027, 0, 31)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the 2027 minimum is its own bucket",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "['small27', 'Under 500 px — Google from 31 Jan 2027'",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the depth tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grdepth.js",
       "pr": 0
     }
   ]

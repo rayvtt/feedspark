@@ -386,7 +386,9 @@ Calibrated on real catalogues (6 Oct 2026, read in session, nothing committed):
 
 | Finding | Severity | Source |
 |---|---|---|
-| Under 100 × 100 px (250 × 250 for apparel) | fail | Google's stated requirement |
+| Under 100 × 100 px (250 × 250 for apparel) — until 30 Jan 2027 | fail | Google's stated requirement |
+| Under 500 × 500 px — until 30 Jan 2027 | warn, naming the date | Google's stated requirement from 31 Jan 2027 |
+| Under 500 × 500 px — from 31 Jan 2027, every product, apparel or not | fail | Google's stated requirement (answer 6324350: "new image size requirements of at least 500 x 500 pixels for all products beginning January 31, 2027") |
 | Over 64 megapixels | fail | Google's stated requirement |
 | Over 16 MB | fail | Google's stated requirement |
 | Not JPEG / WebP / PNG / GIF / BMP / TIFF | fail | Google's stated requirement |
@@ -421,3 +423,11 @@ Readings are kept per feed **by image URL** in KV `catimg:<client>:<mkt>`, so a 
 Harness:
 - `tools/test_catalog.mjs` runs the engine on synthetic pictures: a packshot, a studio sweep, a knee crop, a scene, a colour backdrop, alpha, every check, the fingerprints, scan findings and pack/unpack. It also lifts the worker's host learning, allow-list, clean and merge.
 - `tools/check_catalog.js` scans the Northwind stub in the browser and checks every bucket against an independent count, the filter, the gallery order and the inspector.
+
+## Embedded in the Golden Record (`?embed=mods`, 7 Oct 2026)
+
+/golden frames this page for one market so the AM can pick modules for the Golden Record's ⬇ HTML (see
+docs/LABELGUARD.md §9.12c). With `?embed=mods` the page shows its module grid alone (`html.emb`), reads
+every preference through an in-memory layer and writes none to the device, keeps its own address, hides
+the Fee check, and marks its root `data-no-digest` + `data-no-collapse` so the phone's skim view and the
+ⓘ collapse leave the cards whole. Without the parameter nothing changes.

@@ -72,7 +72,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -5144,7 +5144,7 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
     return {
       lbl: Object.assign({}, raw, { labels: lblOnly, attrs: undefined, labelPop: lp, ptPop: undefined }),
       pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } }, attrs: undefined, labelPop: undefined, ptPop: pp }),
-      gr: raw.attrs ? { v: 1, t: raw.t, client: raw.client, market: raw.market, rows: raw.rows, attrs: raw.attrs } : null,
+      gr: raw.attrs ? { v: 1, t: raw.t, client: raw.client, market: raw.market, rows: raw.rows, attrs: cleanDepth(raw.attrs) } : null,
     };
   };
   let { lbl: snapL, pt: ptSnap, gr: grSnap } = splitRaw(snapIn);
@@ -6032,7 +6032,9 @@ async function goldenRoutes(env, request, url) {
   if (path === '/api/golden/profile') {
     if (request.method === 'GET') {
       const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
-      return json({ defaults: INDUSTRY_PROFILES, overrides, industryMap: INDUSTRY });
+      // `upgrade`: a record saved under an older profile version gets the later defaults laid over
+      // it (labelguard.js profileLayer) — the page applies the same table so the two never disagree
+      return json({ defaults: INDUSTRY_PROFILES, overrides, industryMap: INDUSTRY, upgrade: { v: PROFILE_V, delta: PROFILE_DELTA } });
     }
     if (request.method === 'PUT') {
       let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
@@ -6058,6 +6060,7 @@ async function goldenRoutes(env, request, url) {
         const cur = {};
         if (Array.isArray(prev.expected)) cur.expected = prev.expected;
         if (Array.isArray(prev.waived)) cur.waived = prev.waived;
+        if (prev.v != null) cur.v = prev.v;   // the version its lists were saved under travels with them
         if (next.length) cur.qwaived = next.slice(0, 200);
         if (Object.keys(cur).length) overrides[scope][name] = cur; else delete overrides[scope][name];
       } else if (b.reset) {
@@ -6065,7 +6068,9 @@ async function goldenRoutes(env, request, url) {
       } else {
         const clean = (v) => (Array.isArray(v) ? v : []).map(String)
           .filter((k) => ATTR_SPEC.some((sp) => sp.key === k && sp.req !== 'required' && k !== 'gtin' && k !== 'mpn')).slice(0, 40);
-        overrides[scope][name] = { expected: clean(b.expected), waived: clean(b.waived) };
+        // stamped with the profile version the editor saw, so a LATER default change is laid over it
+        // rather than masked by it (labelguard.js profileLayer)
+        overrides[scope][name] = { expected: clean(b.expected), waived: clean(b.waived), v: PROFILE_V };
         if (keepQ.length) overrides[scope][name].qwaived = keepQ;
       }
       await env.EDITS.put('goldenprofiles', JSON.stringify(overrides));
@@ -6108,7 +6113,10 @@ async function goldenRoutes(env, request, url) {
     const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
     // attr=pdp files the PDP recovery pass itself (Ray, 14 Sep 2026) — the same rails
     // keywords is FeedSpark's own keyword injection, so it files in the keyword task family (30 Sep 2026)
-    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : (attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - ' : 'Golden Record Fix - g:' + attr + ' - ')) + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    // a depth row files under its own words ('Golden Record Fix - Images per product - …'), never a key
+    const dep = ATTR_SPEC.find((s) => s.key === attr && s.of);
+    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : (attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - '
+      : (dep ? 'Golden Record Fix - ' + dep.label.charAt(0).toUpperCase() + dep.label.slice(1) + ' - ' : 'Golden Record Fix - g:' + attr + ' - '))) + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
     const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));

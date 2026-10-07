@@ -282,8 +282,20 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record keywords (measured / absent / not measured, the dial vs the engine, → Brief)"
   NODE_PATH=$(npm root -g) node tools/check_grkw.js || {
     echo "✗ Golden Record keywords tripwire failed — a keyword state blurred, the dial disagreed with the engine, or the brief left the keyword family"; exit 1; }
+  echo "── validating: Golden Record depth (images / highlights / details per product — the dial vs the engine, not measured, profiles, exports)"
+  NODE_PATH=$(npm root -g) node tools/check_grdepth.js || {
+    echo "✗ Golden Record depth tripwire failed — a depth row scored beside the presence row it replaces, read 'missing' when it was not measured, the dial disagreed with the engine, or a client file lost it"; exit 1; }
   NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
     echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
+  echo "── validating: Golden Record client documents — every market at the foot (multi-market brands)"
+  NODE_PATH=$(npm root -g) node tools/check_grmkts.js || {
+    echo "✗ Golden Record all-markets tripwire failed — the PDF/HTML lost the market table, printed a different figure for the report's own market, or a column ran off the page"; exit 1; }
+  echo "── validating: Golden Record ⬇ HTML — the Catalogue modules the AM picked (framed Catalogue, per-measure ticks, the file)"
+  NODE_PATH=$(npm root -g) node tools/check_grcatx.js || {
+    echo "✗ Golden Record Catalogue-modules tripwire failed — the framed Catalogue, a tick, the picked cards in the HTML or the device's own Catalogue preferences regressed"; exit 1; }
+  echo "── validating: Golden Record — every scorecard section folds (default, remembered, header controls, exports open, phone)"
+  NODE_PATH=$(npm root -g) node tools/check_grfold.js || {
+    echo "✗ Golden Record section-fold tripwire failed — a fold hid a finding, swallowed a header control, reached a client document or double-toggled on a phone"; exit 1; }
   echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
   NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
     echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }
@@ -355,6 +367,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }
+  echo "── validating: guard pages — scan scope (all brands / a brand / a market, forced, XML streamed, Stop)"
+  NODE_PATH=$(npm root -g) node tools/check_scanscope.js || {
+    echo "✗ scan-scope tripwire failed — a scope read the wrong feeds, skipped fresh feeds unasked, counted an XML refusal as scanned, or the three pages' blocks drifted"; exit 1; }
   echo "── validating: Label Guard ⬇ HTML · all markets (one file per brand — every market, filter/sort/tabs live, CSV inside)"
   NODE_PATH=$(npm root -g) node tools/check_lgexport.js || {
     echo "✗ Label Guard export tripwire failed — the multi-market file lost a market, a control, a CSV, or let FCC chrome in"; exit 1; }
