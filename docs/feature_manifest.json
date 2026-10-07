@@ -10239,9 +10239,9 @@
       "pr": 0
     },
     {
-      "name": "Workflow intake: the view the board opens on — all plan history, three statuses, due date latest first (Ray, 29 Sep 2026)",
+      "name": "Workflow intake: the view the board opens on — three statuses, due date latest first (Ray, 29 Sep 2026); the window holds at 2m because widening it hides a colleague's brief (test_teamsync [2])",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "var IT_DEF={statuses:['open','progress','briefed'],window:'',sort:'dsort',dir:-1}",
+      "pattern": "var IT_DEF={statuses:['open','progress','briefed'],window:'2m',sort:'dsort',dir:-1}",
       "pr": 0
     },
     {

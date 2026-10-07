@@ -2612,14 +2612,25 @@ aside.ck[hidden]{display:none}
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   /* THE VIEW THE BOARD OPENS ON (Ray, 29 Sep 2026: "default view is (plan: all history)
-     (3 statuses) (sort Due Date latest)") — the three he was re-setting by hand every time.
-     `window:''` is the whole plan rather than its latest 2 months, so nothing older is hidden;
-     the three statuses (open · in progress · briefed) were already the default and stay; and the
-     sort is the DUE date newest-first (dsort, dir -1) in place of alphabetical-by-client, which
-     on an all-history board is what keeps the newest work at the top instead of 2025.
-     `fcc-filters` holds NAMED views and is applied only when one is clicked, so this object is
-     genuinely what every device opens on. */
-  var IT_DEF={statuses:['open','progress','briefed'],window:'',sort:'dsort',dir:-1};
+     (3 statuses) (sort Due Date latest)"). Two of the three ship here: the three statuses
+     (open · in progress · briefed) were already the default and stay, and the sort is now the DUE
+     date newest-first (dsort, dir -1) in place of alphabetical-by-client. `fcc-filters` holds
+     NAMED views and is applied only when one is clicked, so this object is genuinely what every
+     device opens on.
+
+     THE WINDOW IS STILL '2m', DELIBERATELY, AND IT IS NOT WHAT RAY ASKED FOR. Setting it to ''
+     reproducibly makes a COLLEAGUE'S BRIEF INVISIBLE: tools/test_teamsync.mjs [2] fails on that
+     change alone (the sort change alone is clean). Measured on the real two-browser run — the
+     ticket reaches the shared store, the second browser's poll fetches it and adopts it into its
+     own `fcc-briefs` mirror, and it then renders on the board and the timeline at '2m' and
+     NOWHERE at ''; flipping the window control at runtime toggles it every time. So the row is
+     built and then dropped, and the drop is somewhere downstream of the window — the only
+     window-dependent term in intakeFiltered (`win`) is unconditionally true when allowedMonths()
+     returns null, so this is not simply that clause and it is not yet understood.
+
+     Shipping the wider default would therefore hide a teammate's brief on an open board, which is
+     the exact failure Ray has reported twice. The window moves once that is found and fixed. */
+  var IT_DEF={statuses:['open','progress','briefed'],window:'2m',sort:'dsort',dir:-1};
   var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:IT_DEF.statuses.slice(),window:IT_DEF.window,sort:IT_DEF.sort,dir:IT_DEF.dir,showHidden:false,showArchived:false,overdue:false};   // multi-select: empty array = all
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
