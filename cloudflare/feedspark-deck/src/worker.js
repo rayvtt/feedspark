@@ -1597,7 +1597,7 @@ async function route(request, env, ctx) {
       return json({ ok: true, me, owner: !!roster, now, users, roster });
     }
     if (path === '/api/tachyon/rates') {
-      const r = await mapStoreRoute(env, request, 'tachyonrates', {});
+      const r = await tachyonRatesRoute(request, env);
       if (r) return r;
     }
     if (path === '/api/tachyon/quotes') {
@@ -4697,6 +4697,24 @@ async function mapStoreRoute(env, request, kvKey, opts) {
   return null;
 }
 
+/* ---- the LEGACY rate card (/api/tachyon/rates, KV tachyonrates) ----
+   GET stays open: the AI Quote and the Pricer read it, and PricerEngine.composeRates still falls
+   back to its `unit` for any row whose sell price Management has not entered in pricerprice. That
+   fallback is exactly why its PUT is now Management's (fix round 1, 7 Oct 2026): the new price
+   gate on /api/pricer/price meant nothing while any signin could PUT {title_gen:{unit:0.0001}}
+   here and have every un-entered row priced off it. Nothing writes this store any more (the
+   Pricer page writes only pricerops / pricerprice / pricercost), so the owner or the opt-in
+   `pricer-cost` grant — the same rule as the sell price — loses nobody a working button. */
+async function tachyonRatesRoute(request, env) {
+  if (request.method === 'PUT') {
+    const acc = await accessOf(env, request);
+    if (!acc.owner && !moduleAllowed(acc.modules, 'pricer-cost')) {
+      return json({ ok: false, error: 'the legacy rate card is read-only — sell prices are set by Management (the pricer-cost grant) in the Pricer' }, 403);
+    }
+  }
+  return mapStoreRoute(env, request, 'tachyonrates', {});
+}
+
 /* ---- SERVICES & PRICER — /api/pricer/{ops,price,cost,proposals,rollout,roadmap} (7 Oct 2026) ----
    Six kvmerge stores behind the transformed /pricer: the rate card split three ways (pricerops —
    hours, minutes and tokens ASPL and the London AMs enter; pricerprice — the sell £ Management
@@ -4711,9 +4729,13 @@ async function mapStoreRoute(env, request, kvKey, opts) {
    A PUT is a whole-map save under X-Sync-Base (absence deletes what the writer had seen, exactly
    like /api/briefs) and answers the MERGED map plus a fresh stamp. src/pricerstore.js validates
    every key: a refused key keeps its stored value and comes back listed in `_rejected`, and the
-   rate-card stamps {by, at} are the server's word, written only on a value that moved. A scoped
-   signin's partial view is re-injected with every foreign record before the merge (the
-   /api/state rule, scopeIncomingBy), so their save can never delete another client's proposal.
+   rate-card stamps {by, at} are the server's word, written only on a value that moved. A STALE
+   COPY NEVER WINS: a value written after the writer's X-Sync-Base keeps its stored value and comes
+   back in `_rejected` as 'changed by <who> since you loaded', as does a key removed since the
+   read (pricerstore.js header). A scoped signin's partial view is re-injected with every foreign
+   record before the merge (the /api/state rule, scopeIncomingBy), so their save can never delete
+   another client's proposal. The legacy tachyonrates card composeRates falls back to is written
+   under the same Management rule as the sell price (tachyonRatesRoute above).
    ACT logs each write (pricer-ops … pricer-map) from the activity map at the top of route(). */
 async function pricerRoute(request, env, path) {
   const name = path.slice('/api/pricer/'.length);
@@ -4733,18 +4755,31 @@ async function pricerRoute(request, env, path) {
   const view = (m) => (scoped ? scopeViewBy(S.scope, m, acc.clients, clientMatch) : m);
   if (request.method === 'GET') return json(view(curApi), 200, { 'X-Sync-Base': String(Date.now()) });
   let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-  const ctx = { now, by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone',
+  // the writer's read stamp: absence deletes only what it had seen (kvmerge), and a stored value
+  // written AFTER it is never overwritten by the writer's stale copy (pricerstore staleStamp)
+  const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+  const ctx = { now, base, by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone',
     inScope: (c) => acc.owner || clientMatch(acc.clients, c) };
   const r = PSTORE.sanitizePut(name, body, curApi, ctx);
   if (r.error) return json({ ok: false, error: r.error }, 400);
+  // a key removed AFTER the writer's read: kvmerge drops the writer's copy of it — say so
+  const named = new Set(r.rejected.map((x) => x.k));
+  for (const k of Object.keys(r.data)) {
+    const m = cur.meta[PSTORE.toStoreKey(k)];
+    if (m && m.del && (m.t || 0) > base && !named.has(k)) r.rejected.push({ k, why: 'removed since you loaded — reload to edit it' });
+  }
   const inc = scoped ? scopeIncomingBy(S.scope, curApi, r.data, acc.clients, clientMatch) : r.data;
-  const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
   const envx = mergeIntoEnvelope(cur, PSTORE.toStore(inc), base, now, {});
   const raw = JSON.stringify(envx);
-  if (raw.length > 20e6) return json({ ok: false, error: 'the ' + name + ' store would pass 20 MB — nothing was saved' }, 413);
+  if (raw.length > 20e6) {
+    return json({ ok: false, error: 'the ' + name + ' store is full (it would pass 20 MB) — nothing was saved' +
+      (S.kind === 'prop' ? '. Delete options nobody needs (a deleted option keeps only its name) and save again' : '') }, 413);
+  }
   await env.EDITS.put(S.kv, raw);
   const out = view(PSTORE.fromStore(envx.data));
-  if (r.rejected.length) out._rejected = r.rejected.slice(0, 50);
+  // every refusal, never a first 50: the page shows only those for keys IT changed, so a long list
+  // of a colleague's newer keys must never push the writer's own refusal off the end
+  if (r.rejected.length) out._rejected = r.rejected.slice(0, S.maxKeys * 2);
   return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
 }
 

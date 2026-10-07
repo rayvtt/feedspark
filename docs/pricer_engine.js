@@ -597,11 +597,12 @@
     return (map && map[m]) || MKT_LANG[m] || ('m:' + m);
   }
 
-  // The package lines. `pkg` go = Tier 1 (Google Optimise), ar = the AI Readiness lines Tier 2
-  // adds. `row` = the rate row it is priced on (null: priced another way or never), `grain` =
-  // what one unit IS (a parent product, an SKU value, or nothing — counted, never priced per
-  // unit), `cat` = what classifyTach reads its brief title back as, `fixes` = the Golden Record
-  // attributes the line completes (the projection; attr_* lines name theirs per market).
+  // The package lines. `pkg` go = Tier 1 · Google-ready (Google Optimise), ar = the AI Readiness
+  // lines Tier 2 · AI-ready adds on top of it. `row` = the rate row it is priced on (null:
+  // priced another way or never), `grain` = what one unit IS (a parent product, an SKU value, or
+  // nothing — counted, never priced per unit), `cat` = what classifyTach reads its brief title
+  // back as, `fixes` = the Golden Record attributes the line completes (the projection; attr_*
+  // lines name theirs per market).
   var PKG_LINES = [
     { key: 'title',      pkg: 'go', row: 'title_gen',  grain: 'parent', cat: 'title_gen',  label: 'Title optimisation',              fixes: ['title'] },
     { key: 'keywords',   pkg: 'go', row: 'keywords',   grain: 'parent', cat: 'keywords',   label: 'Keyword optimisation',            fixes: ['keywords'] },
@@ -617,7 +618,23 @@
   ];
   var LINE_BY = {};
   PKG_LINES.forEach(function (l) { LINE_BY[l.key] = l; });
-  var OPTION_LABEL = { go: 'Tier 1 · Google Optimise', 'go+ar': 'Tier 2 · Google Optimise + AI Readiness', ar: 'AI Readiness only' };
+  // The tiers BY NAME (Ray, 7 Oct 2026: "where's the bundle function? (Google-ready) (AI-Ready)"):
+  // Tier 1 is Google-ready, Tier 2 is the AI-ready BUNDLE (Tier 1 + AI Readiness, set-up rounded
+  // once, the bundle % on generation), and AI Readiness alone is the odd one out. OPTION_SUB is
+  // the one-line descriptor the page and the client copy print under the name.
+  var OPTION_LABEL = { go: 'Tier 1 · Google-ready', 'go+ar': 'Tier 2 · AI-ready', ar: 'AI-ready only' };
+  var OPTION_SUB = { go: 'Google Optimise — eligible + everything Google recommends',
+    'go+ar': 'Google-ready + AI Readiness — the bundle', ar: 'AI Readiness without Tier 1' };
+
+  // TEST PACKAGES — a monthly add-on to any option: N tests a month, each changing ONE thing on a
+  // set of products against a control. The prices are Management's price-store cells
+  // _g|test2 / _g|test3 / _g|test4; until Management sets them these are DRAFT figures (the
+  // website mockup's proposed ladder), so a proposal carrying a test package is not client-safe
+  // until the price is confirmed. A test package is a flat monthly price: never in generation,
+  // never touched by β, the bundle % or the floor.
+  var TEST_COUNTS = [2, 3, 4];
+  var TEST_DEFAULTS = { 2: 800, 3: 1140, 4: 1440 };
+  var TEST_WHAT = 'each test changes one thing on a set of products — a title pattern, a keyword theme, an attribute or an image — runs it against a control on Google Shopping, and reports back; a winner rolls out, a loser is rolled back.';
 
   var TITLE_BITS = ['empty', 'len-over', 'caps', 'promo', 'gimmick', 'thin', 'short', 'no-brand'];
   var GPC_BITS = ['empty', 'not-taxonomy', 'shallow'];
@@ -625,6 +642,7 @@
   var DESC_TARGETS = [160, 300, 500, 1000];
   var HKEYS = ['0', '1', '2', '3', '4', '5', '6+'];
   var ATTR_AI = ['color', 'material', 'pattern'];
+  var RULE_ATTRS = ['gender', 'age_group', 'size_type', 'size_system', 'condition'];
   // a filled value that breaks one of these FAIL rules is as unusable as an empty one
   var ATTR_INV = { color: ['not-colour', 'hex', 'one-letter'], material: ['placeholder'], pattern: ['placeholder'] };
   var ATTR_WORD = { color: 'colour', material: 'material', pattern: 'pattern', gender: 'gender', age_group: 'age group',
@@ -884,6 +902,16 @@
       var v = numOr(sv(ops['_g|' + f]));
       gset(f, v, v != null ? 'ops' : 'unset', v != null ? stampOf(ops['_g|' + f]) : null);
     });
+    // test packages: g.tests = {2,3,4} → £ a month; g.src.tests / g.by.tests per count like every
+    // other _g field. A count Management has not priced reads the DRAFT default ('default'); a
+    // count with neither is 'unset' (null) and prices nothing.
+    g.tests = {}; g.src.tests = {}; g.by.tests = {};
+    TEST_COUNTS.forEach(function (n) {
+      var k = '_g|test' + n, v = numOr(sv(price[k]));
+      if (v != null && v >= 0) { g.tests[n] = v; g.src.tests[n] = 'ops'; g.by.tests[n] = stampOf(price[k]); }
+      else if (TEST_DEFAULTS[n] != null) { g.tests[n] = TEST_DEFAULTS[n]; g.src.tests[n] = 'default'; g.by.tests[n] = null; }
+      else { g.tests[n] = null; g.src.tests[n] = 'unset'; g.by.tests[n] = null; }
+    });
     return { rows: rows, g: g, draft: draft };
   }
 
@@ -905,7 +933,7 @@
   function auditBase(client, mkt, src, prof) {
     return { v: 1, client: client, mkt: mkt, src: src, industry: prof.industry, prof: prof,
       t: { cov: null, qual: null, pt: null, dob: null, live: null },
-      S: null, P: null, r: null, pSrc: null, hasGroups: null, grouped: null,
+      S: null, P: null, r: null, pSrc: null, pRefused: null, emptyRead: false, hasGroups: null, grouped: null,
       golden: null, quality: null, qScore: null, qFails: null, ptDepth: null, gpcDepth: null, air: null,
       conv: { cov: {}, n: null, hasVariants: null },
       arrivals: { perMonthP: null, perMonthS: null, basis: null, coverage: null, unit: null, months: null },
@@ -939,6 +967,8 @@
     var m = [];
     if (!A.golden) m.push('never scanned — no Golden Record coverage yet');
     if (!A.quality) m.push('no content-quality reading yet — runs automatically at ' + DAILY_RUN + ', or run the live audit');
+    if (A.emptyRead) m.push('the live read returned no products' + (A.S != null ? ' — the stored reading is kept' : ' — check the feed and read it again'));
+    if (A.pRefused != null) m.push('the typed parent count ' + fmtInt(A.pRefused) + ' is more than the ' + fmtInt(A.S) + ' SKUs read — a parent product can never outnumber its SKUs; check the figure');
     if (A.P == null) m.push(A.src === 'stored' ? 'parent products not counted yet — the live count fills it' : 'parent products could not be counted — type the count');
     if (!A.ptDepth) m.push('product type depth not profiled on this read');
     if (A.air == null) m.push('AI-readiness not analysed yet');
@@ -1009,12 +1039,24 @@
       A.src = src; A.prof = prof;
     }
     A.t.live = now;
-    // the count: NEEDCOUNTS is the full read; a parentCounter result alone still gives P
-    if (nc && nc.S != null) { A.S = nc.S; A.P = nc.P; A.hasGroups = nc.hasGroups; A.grouped = nc.grouped; A.pSrc = 'counted'; }
-    else if (pc && pc.rows != null) { A.S = pc.rows; A.P = pc.products; A.hasGroups = pc.hasGroups; A.grouped = pc.grouped; A.pSrc = 'counted'; }
-    else if (numOr(inp.typedP) != null && +inp.typedP > 0) { A.P = Math.round(+inp.typedP); A.pSrc = 'typed'; }
+    // A READ THAT FOUND NOTHING IS NOT A COUNT OF ZERO. An empty 200, a channel with no <item>, a
+    // header-only sheet all finish cleanly with S = 0 — taken at its word that would replace a
+    // populated stored reading with "nothing to fix" on every line, at £0, client-safe. So a
+    // count (and the stream's coverage / arrivals) is accepted only when it found products; an
+    // empty read keeps whatever the stored lane had and says so.
+    var ncOk = !!(nc && nc.S > 0), pcOk = !!(pc && pc.rows > 0), xOk = !!(X && X.snap && X.snap.attrs && +X.snap.rows > 0);
+    if (!ncOk && !pcOk && (nc || pc || X)) A.emptyRead = true;
+    if (ncOk) { A.S = nc.S; A.P = nc.P; A.hasGroups = nc.hasGroups; A.grouped = nc.grouped; A.pSrc = 'counted'; }
+    else if (pcOk) { A.S = pc.rows; A.P = pc.products; A.hasGroups = pc.hasGroups; A.grouped = pc.grouped; A.pSrc = 'counted'; }
+    else if (numOr(inp.typedP) != null && +inp.typedP > 0) {
+      // a typed count is a human's figure: one larger than the SKUs read is a typo (parents can
+      // never outnumber SKUs) — refused and named, never priced as a 5× multiplier
+      var tp = Math.round(+inp.typedP);
+      if (A.S && tp > A.S) A.pRefused = tp;
+      else { A.P = tp; A.pSrc = 'typed'; }
+    }
     A.r = (A.S && A.P) ? A.S / A.P : null;
-    if (X && X.snap && X.snap.attrs) {
+    if (xOk) {
       var ci = LG.goldenCovIndex(X.snap.attrs);
       A.golden = goldenOf(LG, X.snap.attrs, ci.cov, Object.keys(ci.sc).length ? ci.sc : null, prof);
       A.t.cov = now;
@@ -1027,8 +1069,9 @@
     // content quality: a stored reading wins on the live lane (it is the whole catalogue,
     // analysed); the stream's own read fills in when there is none, and is the file lane's only one
     var storedQ = src !== 'file' && stored && stored.quality;
-    if (!storedQ && qs && qs.attrs) { A.quality = { t: +qs.t || now, rows: +qs.rows || 0, attrs: qs.attrs, ai: qs.ai || null }; A.t.qual = now; }
-    if (src === 'file' && !(qs && qs.attrs)) A.quality = null;
+    var qsOk = !!(qs && qs.attrs && !A.emptyRead);
+    if (!storedQ && qsOk) { A.quality = { t: +qs.t || now, rows: +qs.rows || 0, attrs: qs.attrs, ai: qs.ai || null }; A.t.qual = now; }
+    if (src === 'file' && !qsOk) A.quality = null;
     scoreQuality(LG, A);
     if (A.quality && A.quality.ai) A.air = { total: +A.quality.ai.total, tier: +A.quality.ai.tier || null };
     else if (src === 'file') A.air = null;
@@ -1037,7 +1080,7 @@
     // new products a month — per PARENT when the feed carries first-seen dates (a parent is
     // dated by its earliest row), else the stored SKU rate over the live S/P, else (file) the
     // FeedSpark working estimate, labelled as one
-    if (nc && nc.dob && nc.dob.col && Arr) {
+    if (ncOk && nc.dob && nc.dob.col && Arr) {
       var sp = Arr.stats({ n: nc.dob.par.n, m: nc.dob.par.m }, new Date(now), nc.P);
       var perP = sp.m12 != null ? sp.m12 : (sp.forecast ? sp.forecast.month : null);
       A.arrivals = { perMonthP: perP, perMonthS: null, basis: sp.forecast ? sp.forecast.basis : null, coverage: sp.coverage,
@@ -1050,7 +1093,7 @@
       A.arrivals.perMonthP = A.r ? A.arrivals.perMonthS / A.r : null;
       A.arrivals.unit = A.arrivals.perMonthP != null ? 'parent' : 'sku';
     }
-    A.counts = nc && nc.S != null ? nc : null;
+    A.counts = ncOk ? nc : null;
     A.pdp = src === 'file' ? 'unknown' : (stored ? stored.pdp : 'unknown');
     A.missing = missingOf(A);
     return A;
@@ -1401,8 +1444,11 @@
     var blockGBP = numOr(g.blockGBP) || DEFAULTS.blockGBP, blockH = numOr(g.blockH) || DEFAULTS.blockHours;
     var mk = (spec.markets || []).filter(function (m) { return m && m.audit; }).map(function (m) {
       var a = m.audit, mkt = lower(m.mkt || a.mkt);
+      // P_m := P ?? S — but a size of ZERO is no size: a read that found nothing (S 0) is
+      // "not sized", never "nothing to fix"
+      var Pm = a.P != null && +a.P > 0 ? +a.P : (a.S != null && +a.S > 0 ? +a.S : null);
       return { mkt: mkt, audit: a, needs: m.needs || needsOf(a, tg, LG), lang: m.lang || langOf(mkt),
-        S: a.S, P: a.P, Pm: a.P != null ? a.P : a.S };
+        S: a.S, P: a.P, Pm: Pm, empty: a.S != null && +a.S === 0 };
     });
     // language groups: the lead (largest P; gb first on a tie, then A–Z) is written, the rest re-used
     var groups = {};
@@ -1430,18 +1476,20 @@
     var EST_RANK = { 'sku-ceiling': 3, bound: 2, ratio: 1 };
     var lines = [], unknown = [], unpriced = [], coming = [], estimated = [], blockers = [];
     function block(code, why, extra) { var b = { code: code, why: why }; if (extra) Object.keys(extra).forEach(function (k) { b[k] = extra[k]; }); blockers.push(b); }
-    // the number of in-scope SKU VALUES for the attr line's "every product" scope
+    // the number of in-scope SKU VALUES for the attr line's "every product" scope → {n, bound} or
+    // null. bound: the category scope was NOT measured on this read, so every product of an
+    // apparel brand was taken as in scope — an UPPER bound (§3.3), never priced as exact.
     function allValues(m) {
-      var a = m.audit, n = 0, ok = true;
+      var a = m.audit, n = 0, ok = true, bound = false;
       ATTR_AI.forEach(function (k) {
         if ((a.prof.waived || []).indexOf(k) >= 0) return;
         if (a.counts) { n += a.counts.attrs[k] ? a.counts.attrs[k].n : 0; return; }
         var sc = a.golden && a.golden.sc;
         if (sc && Object.prototype.hasOwnProperty.call(sc, k)) n += +sc[k] || 0;
-        else if (a.S != null && (APPAREL.indexOf(a.industry) >= 0 || (a.prof.expected || []).indexOf(k) >= 0)) n += a.S;
+        else if (a.S != null && (APPAREL.indexOf(a.industry) >= 0 || (a.prof.expected || []).indexOf(k) >= 0)) { n += a.S; bound = true; }
         else ok = false;
       });
-      return ok ? n : null;
+      return ok ? { n: n, bound: bound } : null;
     }
     var priced = {}, conv = null;   // key -> line, for the monthly and the projection; the Spark AI build
     PKG_LINES.forEach(function (def) {
@@ -1466,6 +1514,17 @@
       L.need = { n: anyUnknown ? null : nn, lo: anyUnknown ? null : nlo, hi: anyUnknown ? null : nhi, est: anyUnknown ? 'unknown' : (allNa && mk.length ? 'na' : est), grain: def.grain, why: anyUnknown || why.join(' · ') };
       var cMk = mk.filter(function (m) { return !incC && (def.key === 'conv' ? false : !!contr(m).lines[def.key]); });
       L.contractedIn = cMk.map(function (m) { return m.mkt; });
+      // the need over the markets this line PRICES — the count the client copy prints beside the
+      // £, which leaves out a market where the line is already contracted
+      if (cMk.length && !anyUnknown) {
+        var pn = 0, plo = 0, phi = 0;
+        mk.forEach(function (m) {
+          if (cMk.indexOf(m) >= 0) return;
+          var x = L.byMkt[m.mkt]; if (x.est === 'na') return;
+          pn += x.n || 0; plo += x.lo || 0; phi = (phi == null || x.hi == null) ? null : phi + x.hi;
+        });
+        L.pricedNeed = { n: pn, lo: plo, hi: phi, est: L.need.est, grain: def.grain, why: L.need.why };
+      }
       if (def.key === 'client') { L.status = 'client'; L.reason = 'listed — the client supplies these values; never priced'; lines.push(L); return; }
       if (!on) { L.status = 'off'; L.reason = 'switched off for this proposal'; lines.push(L); return; }
       if (rm.status === 'building' || rm.status === 'planned') { L.status = 'coming'; L.reason = 'coming — included when live'; coming.push(def.key); lines.push(L); return; }
@@ -1474,10 +1533,13 @@
       }
       if (def.aim) return priceConv(L);
       var sizeUnknown = mk.some(function (m) { return m.Pm == null; });
-      if (anyUnknown || (scope === 'all' && sizeUnknown)) {
-        L.status = 'unknown'; L.reason = anyUnknown || 'not sized — count the feed first'; unknown.push(def.key);
+      // a market whose read found no products cannot say "nothing to fix" — it is not sized
+      var emptyMk = mk.filter(function (m) { return m.empty && cMk.indexOf(m) < 0; });
+      if (anyUnknown || (scope === 'all' && sizeUnknown) || emptyMk.length) {
+        var uwhy = anyUnknown || (emptyMk.length ? emptyMk.map(function (m) { return m.mkt.toUpperCase(); }).join(', ') + ': the feed read returned no products — read it again' : 'not sized — count the feed first');
+        L.status = 'unknown'; L.reason = uwhy; unknown.push(def.key);
         if (row && row.unpriced) unpriced.push(def.key);
-        block('unknown', def.label + ' not sized — ' + (anyUnknown || 'count the feed'), { line: def.key });
+        block('unknown', def.label + ' not sized — ' + (anyUnknown || (emptyMk.length ? uwhy : 'count the feed')), { line: def.key });
         lines.push(L); return;
       }
       if (row && row.unpriced) {
@@ -1491,13 +1553,18 @@
         lines.push(L); return;
       }
       // units per market — the products needing the line, or every product
-      var units = 0, raw = 0, unitsHi = 0, hiOk = true, gen = 0, genHi = 0, lineEst = scope === 'all' ? null : L.need.est;
+      var units = 0, raw = 0, rawHi = 0, unitsHi = 0, hiOk = true, gen = 0, genHi = 0, lineEst = scope === 'all' ? null : L.need.est, allBound = false;
       mk.forEach(function (m) {
         var x = L.byMkt[m.mkt];
         if (cMk.indexOf(m) >= 0) return;
         var u, uh;
         if (scope === 'all') {
-          u = def.grain === 'sku' ? allValues(m) : m.Pm;
+          if (def.grain === 'sku') {
+            var av = allValues(m); u = av.n;
+            // the category scope not measured: every product of the brand taken as in scope — an
+            // UPPER bound, so the line is an estimate and the guard holds the figure back
+            if (av.bound) { allBound = true; if ((EST_RANK[lineEst] || 0) < EST_RANK.bound) lineEst = 'bound'; }
+          } else u = m.Pm;
           uh = u;
           if (def.grain === 'parent' && m.P == null) lineEst = 'sku-ceiling';
         } else {
@@ -1505,10 +1572,17 @@
           uh = x.est === 'na' ? 0 : x.hi;
           if (uh == null) hiOk = false;
         }
-        units += m.w * u; raw += u; unitsHi += m.w * (uh || 0);
-        if (def.grain !== 'none' && Pbeta > 0) {
-          gen += round2(L.unit * TU * (u * m.w) / Pbeta);
-          genHi += round2(L.unit * TU * ((uh || 0) * m.w) / Pbeta);
+        units += m.w * u; raw += u; rawHi += uh || 0; unitsHi += m.w * (uh || 0);
+        if (def.grain !== 'none') {
+          // gen = unit × β × units × w, β = TU / Pβ — and β = 1 when no market is sized (Pβ = 0):
+          // a need read off the content-quality record still prices, never a silent £0
+          if (Pbeta > 0) {
+            gen += round2(L.unit * TU * (u * m.w) / Pbeta);
+            genHi += round2(L.unit * TU * ((uh || 0) * m.w) / Pbeta);
+          } else {
+            gen += round2(L.unit * u * m.w);
+            genHi += round2(L.unit * (uh || 0) * m.w);
+          }
         }
       });
       L.units = units;
@@ -1519,19 +1593,30 @@
         L.setupH = (numOr(g.ruleH) || 0) * maxAttrs;
         if (numOr(g.ruleH) == null) block('draft-ruleH', 'hours per FeedHero rule not entered — ASPL', { line: def.key, draft: true });
       } else {
-        if (L.need.est === 'na' || !raw) {
+        // "nothing to fix" only when the reading PROVES zero: an exact 0, or a bound whose upper end
+        // is 0 too. A bound of 0 to 1,000 (the 160–D description band, a 4+ product-type depth, an
+        // attribute with no content-quality reading) stays priced at its lower end with its upper end
+        // beside it, and the estimate blocker keeps it out of client copy.
+        if (L.need.est === 'na' || (!raw && hiOk && !rawHi)) {
           L.status = 'none'; L.reason = L.need.est === 'na' ? (L.need.why || 'does not apply') : 'nothing to fix'; lines.push(L); return;
         }
         L.gen = round2(gen);
-        L.genHi = lineEst === 'bound' ? (hiOk ? round2(genHi) : null) : null;
+        L.genHi = hiOk && (lineEst === 'bound' || (lineEst === 'sku-ceiling' && round2(genHi) > L.gen)) ? round2(genHi) : null;
         L.setupH = (row.aspl || 0) + (row.qc || 0) + (row.pm || 0);
         L.monH = row.mon || 0;
         if (row.draftUnit) block('draft-unit', def.label + ': the unit price is still a draft — Management', { line: def.key, draft: true });
         if (row.draftHours) block('draft-hours', def.label + ': hours still draft defaults — ASPL / London AM', { line: def.key, draft: true });
       }
       L.est = lineEst;
-      if (lineEst === 'bound' || lineEst === 'sku-ceiling') block('estimate', def.label + ': ' + (lineEst === 'sku-ceiling' ? 'parent products not counted — SKU count used'
-        : def.key === 'attr_rule' ? 'category scope not measured' : 'an estimated count, at least ' + fmtInt(L.need.lo)) + ' — run the live audit', { line: def.key });
+      if (lineEst === 'bound' || lineEst === 'sku-ceiling') {
+        var nd = L.pricedNeed || L.need, ew;
+        if (lineEst === 'sku-ceiling') ew = 'parent products not counted — SKU count used';
+        else if (def.key === 'attr_rule') ew = 'category scope not measured';
+        else if (allBound) ew = 'category scope not measured — every product taken as in scope (an upper bound)';
+        else if (nd.lo) ew = 'an estimated count, at least ' + fmtInt(nd.lo) + (nd.hi != null && nd.hi > nd.lo ? ', up to ' + fmtInt(nd.hi) : '');
+        else ew = 'not counted on this reading' + (nd.hi != null && nd.hi > 0 ? ' — up to ' + fmtInt(nd.hi) : '');
+        block('estimate', def.label + ': ' + ew + ' — run the live audit', { line: def.key });
+      }
       if (lineEst) estimated.push(def.key);
       if (rm.src === 'unconfirmed') block('roadmap', def.label + ': confirm delivery status', { line: def.key });
       if (rm.status === 'pilot') L.reason = 'pilot';
@@ -1549,12 +1634,22 @@
       return { rate: null, est: 'unknown' };
     }
     function priceConv(L) {
-      var srcs = {}, given = spec.aimSources || aimDefaultSources(mk.map(function (m) { return m.audit; })), set = [];
+      var srcs = {}, given = spec.aimSources || aimDefaultSources(mk.map(function (m) { return m.audit; })), set = [], part = [];
       AIM_ATTRS.forEach(function (a) {
         var r = given[a.id] || 'off';
         if (!aimRouteOk(a.id, r)) r = 'off';
-        // an attribute already contracted in any selected market is set aside, and said so
-        if (r !== 'off' && !incC) { var hit = mk.filter(function (m) { return contr(m).conv[a.id]; })[0]; if (hit) { set.push(a.name + ' (' + contr(hit).conv[a.id] + ')'); r = 'off'; } }
+        // an attribute already contracted in EVERY selected market is set aside, and said so. One
+        // contracted in SOME of them stays priced over the combined range (one Spark AI build
+        // cannot leave a market out of one attribute) and blocks the proposal until the AM
+        // settles the scope — never silently dropped for the markets that do not have it.
+        if (r !== 'off' && !incC) {
+          var hits = mk.filter(function (m) { return contr(m).conv[a.id]; });
+          if (hits.length) {
+            var where = a.name + ' (' + hits.map(function (m) { return contr(m).conv[a.id] + ', ' + m.mkt.toUpperCase(); }).join('; ') + ')';
+            if (hits.length === mk.length) { set.push(where); r = 'off'; }
+            else part.push({ name: a.name, where: where, rest: mk.filter(function (m) { return hits.indexOf(m) < 0; }).map(function (m) { return m.mkt.toUpperCase(); }) });
+          }
+        }
         srcs[a.id] = r;
       });
       L.sources = srcs;
@@ -1578,6 +1673,12 @@
       conv.rangeLabel = mk.length > 1 ? 'combined range of ' + mk.length + ' markets' : '';
       L.units = unitsC; L.est = est; L.setupGBP = conv.setup; L.monthlyGBP = conv.monthly;
       if (set.length) L.reason = 'set aside as already contracted: ' + set.join(', ');
+      if (part.length) {
+        L.reason = (L.reason ? L.reason + ' · ' : '') + 'priced over every market although already contracted in some: ' + part.map(function (p) { return p.where; }).join(', ');
+        part.forEach(function (p) {
+          block('contracted-partial', p.where.replace(/ \(/, ' already contracted (') + ' — confirm the ' + p.rest.join(', ') + ' scope, or quote ' + p.rest.join(', ') + ' on its own', { line: L.key });
+        });
+      }
       if (est) { estimated.push(L.key); block('estimate', L.label + ': parent products not counted — SKU count used — run the live audit', { line: L.key }); }
       if (L.roadmap.src === 'unconfirmed') block('roadmap', L.label + ': confirm delivery status', { line: L.key });
       if (L.roadmap.status === 'pilot') L.reason = (L.reason ? L.reason + ' · ' : '') + 'pilot';
@@ -1617,35 +1718,76 @@
     var monCost = absorbed ? 0 : round2(monBlocks * blockGBP);
     var parentRows = rowLines.filter(function (l) { return l.grain === 'parent'; });
     var attrL = priced.attr_ai || null, attrRow = R.rows.attr_pop || {};
-    var perMarket = [], monthlyGen = 0;
+    var perMarket = [], monthlyGen = 0, overlaps = [];
     mk.forEach(function (m) {
       var r = rateOf(m), C = contr(m);
+      // an AI Quote new-products bundle covers ITS OWN market (contractedFrom is per client ×
+      // market): that market's new products are left out, the others are still priced
+      var ov = !incC && C.bundle ? C.bundle : null;
       var newP = r.rate != null ? Math.ceil(r.rate * (1 + buffer / 100)) : null;
       var units = {}, perUnit = 0;
       parentRows.forEach(function (l) { if (incC || !C.lines[l.key]) { units[l.key] = 1; perUnit += l.unit; } });
       if (attrL && (incC || !C.lines.attr_ai) && m.S) {
         var rr = m.Pm ? m.S / m.Pm : 1, share = 0, parts = (attrL.byMkt[m.mkt] || {}).parts || [];
-        if (opts.newBasis === 'every') { var all = allValues(m); share = all != null ? all / m.S : 0; }
+        if (opts.newBasis === 'every') { var all = allValues(m); share = all != null ? all.n / m.S : 0; }
         else parts.forEach(function (p) { share += (p.n || 0) / m.S; });
         units.attr_ai = rr * share; perUnit += (attrL.unit || 0) * rr * share;
       }
       var perNew = beta * perUnit;
-      if (newP != null) monthlyGen += m.w * newP * perNew;
+      if (ov) overlaps.push({ mkt: m.mkt, ref: ov });
+      else if (newP != null) monthlyGen += m.w * newP * perNew;
       perMarket.push({ mkt: m.mkt, lang: m.lang, lead: m.lead, w: m.w, pdp: m.audit.pdp, rate: r.rate, newP: newP, newEst: r.est, perNew: round2(perNew),
-        perNewUnits: units, projected: projection(m), air: airOf(m) });
-      if (r.est === 'fallback' || r.est === 'sku-ceiling') estimated.push('newP:' + m.mkt);
+        perNewUnits: ov ? {} : units, overlap: ov, projected: projection(m), air: airOf(m) });
+      if (!ov && (r.est === 'fallback' || r.est === 'sku-ceiling')) estimated.push('newP:' + m.mkt);
     });
     monthlyGen = round2(monthlyGen);
-    var overlap = null;
-    if (!incC) mk.forEach(function (m) { if (contr(m).bundle && !overlap) overlap = contr(m).bundle; });
-    if (overlap) monthlyGen = 0;
+    var open = mk.length > overlaps.length;   // at least one market's new products are priced here
     var floor = numOr(g.floorMonthly) || 0, hasGen = lines.some(function (l) { return l.status === 'priced' && l.grain !== 'none' && !LINE_BY[l.key].aim && l.gen > 0; });
-    var genCharged = hasGen && !overlap ? Math.max(floor, monthlyGen) : monthlyGen;
+    var genCharged = hasGen && open ? Math.max(floor, monthlyGen) : monthlyGen;
+    // TEST PACKAGE — a flat monthly add-on: no one-off, outside β, the bundle % and the floor
+    var tN = TEST_COUNTS.indexOf(+opts.tests) >= 0 ? +opts.tests : 0;
+    var tests = { n: tN, price: null, perTest: null, draft: false, status: tN ? 'priced' : 'off' };
+    if (tN) {
+      var tp = g.tests ? numOr(g.tests[tN]) : null, tsrc = g.src && g.src.tests ? g.src.tests[tN] : null;
+      if (tp == null) { tests.status = 'unpriced'; block('unpriced', 'test package price not set — Management', { line: 'tests' }); }
+      else {
+        tests.price = round2(tp); tests.perTest = round2(tp / tN); tests.draft = tsrc !== 'ops';
+        if (tests.draft) block('draft-tests', 'test package price not confirmed — Management', { line: 'tests', draft: true });
+      }
+    }
+    var testsGBP = tests.status === 'priced' ? tests.price : 0;
     var monthly = { monH: monH, monBlocks: monBlocks, monCost: monCost, absorbed: absorbed, gen: monthlyGen, floor: floor,
-      floorApplied: genCharged > monthlyGen, overlap: overlap ? 'overlaps ' + overlap + ' monthly bundle' : null,
-      conv: round2(convMonthly), total: round2(monCost + genCharged + convMonthly) };
+      floorApplied: genCharged > monthlyGen,
+      overlap: overlaps.length ? overlaps.map(function (o) { return (mk.length > 1 ? o.mkt.toUpperCase() + ' ' : '') + 'overlaps ' + o.ref + ' monthly bundle'; }).join(' · ') : null,
+      overlapMkts: overlaps.map(function (o) { return o.mkt; }),
+      conv: round2(convMonthly), tests: testsGBP, total: round2(monCost + genCharged + convMonthly + testsGBP) };
 
     // the projection: the Golden Score once the option's priced lines land, under the brand's profile
+    // which line closes a Golden Record attribute (null: nobody's but the client's)
+    function ownerOf(key) {
+      if (CONV_KEYS.indexOf(key) >= 0) return 'conv';
+      if (ATTR_AI.indexOf(key) >= 0) return 'attr_ai';
+      if (RULE_ATTRS.indexOf(key) >= 0) return 'attr_rule';
+      var d = PKG_LINES.filter(function (x) { return x.fixes && x.fixes.indexOf(key) >= 0; })[0];
+      return d ? d.key : null;
+    }
+    // WHO closes each gap still under 99% once the option lands: a line in the other tier, a line
+    // in this option that is not priced yet (and why), or the client's own data. Only the last is
+    // "client to supply" — the email's "95 needs data only you hold" leans on that tag.
+    function gapTag(key, m) {
+      var lk = ownerOf(key);
+      if (!lk) return 'client to supply';
+      var d = LINE_BY[lk];
+      if (!(option === 'go+ar' || d.pkg === (option === 'ar' ? 'ar' : 'go'))) return d.pkg === 'ar' ? 'in Tier 2' : 'in Tier 1';
+      var L = lines.filter(function (l) { return l.key === lk; })[0];
+      if (!L) return 'not in this quote';
+      if (lk === 'conv' && !incC) {
+        var at = AIM_ATTRS.filter(function (x) { return x.key === key; })[0];
+        if (at && contr(m).conv[at.id]) return 'already contracted';
+      }
+      if ((L.contractedIn || []).indexOf(m.mkt) >= 0 || L.status === 'contracted') return 'already contracted';
+      return { coming: 'coming', unknown: 'to be sized', unpriced: 'price to follow', off: 'not in this quote', none: 'to be checked' }[L.status] || 'not in this quote';
+    }
     function projection(m) {
       var a = m.audit;
       if (!a.golden || !a.golden.attrs) return { now: null, after: null, met: false, blockers: [] };
@@ -1665,10 +1807,8 @@
         });
       });
       var gs = LG.goldenScore(after, a.prof), sc = gs ? gs.score : null;
-      var t2 = {}; PKG_LINES.forEach(function (d) { if (d.pkg === 'ar' && d.fixes) d.fixes.forEach(function (k) { t2[k] = 1; }); });
-      CONV_KEYS.forEach(function (k) { t2[k] = 1; });
       var bl = gs ? gs.parts.filter(function (p) { return p.cov < 99; }).map(function (p) {
-        return { key: p.key, cov: p.cov, tag: option === 'go' && t2[p.key] ? 'in Tier 2' : 'client to supply' };
+        return { key: p.key, cov: p.cov, tag: gapTag(p.key, m) };
       }) : [];
       return { now: a.golden.score, after: sc, met: sc != null && sc >= 95, blockers: bl };
     }
@@ -1683,12 +1823,20 @@
     }
 
     if (reuseUnset) block('reuse', 'two or more markets share a language — the re-use rate is not set (Management)');
+    // β is read on the SKU count while a grouped feed's parents are uncounted: every generation
+    // figure then moves once P lands (β rises as the volume falls), even on a line that is
+    // itself exact (an SKU-grain attribute line). Said once, unless a line already says it.
+    var betaOnSku = mk.some(function (m) { return m.P == null && m.Pm != null && m.audit.hasGroups !== false; });
+    if (betaOnSku && Pbeta > 0 && beta < 1
+      && lines.some(function (l) { return l.status === 'priced' && l.grain !== 'none' && !LINE_BY[l.key].aim && (l.gen || 0) > 0; })
+      && !blockers.some(function (b) { return b.code === 'estimate' && /parent products not counted/.test(b.why); }))
+      block('estimate', 'parent products not counted — the volume discount is read on the SKU count — run the live audit');
     var sla = leadN ? lead + (leadN - 1) * DEFAULTS.staggerDays : 0;
     var draftRates = blockers.some(function (b) { return b.draft; });
     var alwaysOn = roadmapStatus(spec.roadmap, 'alwayson', industry, null);
-    return { v: 1, client: spec.client || '', option: option, label: OPTION_LABEL[option], pkgVersion: g.pkgVersion || null, targets: tg,
+    return { v: 1, client: spec.client || '', option: option, label: OPTION_LABEL[option], sub: OPTION_SUB[option], pkgVersion: g.pkgVersion || null, targets: tg,
       beta: beta, Pbeta: Pbeta, reuse: reuse, reuseUnset: reuseUnset, nLang: nLang,
-      lines: lines, perMarket: perMarket, conv: conv, oneOff: oneOff, monthly: monthly, sla: sla,
+      lines: lines, perMarket: perMarket, conv: conv, oneOff: oneOff, monthly: monthly, tests: tests, sla: sla,
       unknown: unknown, unpriced: unpriced, coming: coming, estimated: estimated, blockers: blockers,
       clientSafe: blockers.length === 0, draftRates: draftRates,
       alwaysOn: { status: alwaysOn.status, live: alwaysOn.status === 'live', mechanism: opts.mechanism || 'monthly' } };
@@ -1745,6 +1893,15 @@
         if (cr.setupCost == null) sok = false; else setupCost += cr.setupCost;
       });
       if (!ok) { genCost = null; why.push('a priced line has no loaded cost yet'); }
+      // the set-up hours that sit on NO rate row — the FeedHero rule hours and the hours per extra
+      // language — are billed in the blocks, so they cost too (ASPL builds both, at the ASPL rate)
+      var rowH = 0;
+      (pq.lines || []).forEach(function (l) { var d = LINE_BY[l.key]; if (d && d.row && l.status === 'priced') rowH += +l.setupH || 0; });
+      var extraH = Math.max(0, (+pq.oneOff.H || 0) - rowH);
+      if (extraH > 0) {
+        if (c.rateAspl == null || c.ohPct == null) { sok = false; why.push('rule / language set-up hours — cost rates ' + MG); }
+        else setupCost += extraH * c.rateAspl * (1 + c.ohPct / 100);
+      }
       if (!sok) { setupCost = null; why.push('a priced line has no set-up cost yet'); }
       var net = pq.oneOff.gen - pq.oneOff.bundleDisc;
       var monthlyCost = null;
@@ -1753,19 +1910,25 @@
         (pq.perMarket || []).forEach(function (m) {
           if (monthlyCost == null || m.newP == null) return;
           Object.keys(m.perNewUnits || {}).forEach(function (k) {
+            // one line with no loaded cost nulls the whole figure — and it STAYS null (null + x is x)
+            if (monthlyCost == null) return;
             var d = LINE_BY[k]; if (!d || !d.row) return;
             var cr = rows[d.row];
-            if (cr.loaded == null) { monthlyCost = null; return; }
+            if (cr.loaded == null) { monthlyCost = null; why.push('a monthly line has no loaded cost yet'); return; }
             monthlyCost += m.w * m.newP * cr.loaded * m.perNewUnits[k];
           });
         });
       } else why.push('cost rates — ' + MG);
-      var monSell = pq.monthly.total - pq.monthly.conv;
+      // a test package is not costed (its labour is not on the rate card) — out of both sides,
+      // like Spark AI
+      var testsSell = pq.monthly.tests || 0;
+      var monSell = pq.monthly.total - pq.monthly.conv - testsSell;
+      if (testsSell) why.push('test packages are not costed — left out of both sides');
       proposal = { genCost: genCost, genMargin: genCost != null && net > 0 ? 1 - genCost / net : null,
         setupCost: setupCost, setupMargin: setupCost != null && pq.oneOff.blockCost > 0 ? 1 - setupCost / pq.oneOff.blockCost : null,
         setupNote: 'retainer hours still cost — they are in the set-up cost even when the block is absorbed',
         monthlyCost: monthlyCost, monthlyMargin: monthlyCost != null && monSell > 0 ? 1 - monthlyCost / monSell : null,
-        excluded: ['conv'], why: why.concat(['Spark AI lines are not costed — left out of both sides']) };
+        excluded: testsSell ? ['conv', 'tests'] : ['conv'], why: why.concat(['Spark AI lines are not costed — left out of both sides']) };
     }
     return { rows: rows, proposal: proposal, inputs: c };
   }
@@ -1803,10 +1966,10 @@
     (Array.isArray(audits) ? audits : entries(audits).map(function (e) { return e[1]; })).forEach(function (a) {
       if (!a) return;
       var pm = (pq.perMarket || []).filter(function (m) { return m.mkt === a.mkt; })[0];
-      var needs = {};
-      (pq.lines || []).forEach(function (l) { if (l.byMkt && l.byMkt[a.mkt]) needs[l.key] = compactNeed(l.byMkt[a.mkt]); });
+      // the market's needs are NOT copied here: pq.lines[].byMkt already carries every one, and a
+      // second copy per market is what put a 28-market proposal over the 60 KB store limit
       A[a.mkt] = { src: a.src, t: a.t, S: a.S, P: a.P, r: a.r, pSrc: a.pSrc, golden: { score: a.golden ? a.golden.score : null },
-        qScore: a.qScore, air: a.air, newP: pm ? pm.newP : null, needs: needs };
+        qScore: a.qScore, air: a.air, newP: pm ? pm.newP : null };
     });
     var rrows = {};
     CATALOG.concat(PKG_ROWS).forEach(function (b) {
@@ -1815,18 +1978,26 @@
     });
     var gg = (R && R.g) || {};
     var pqc = JSON.parse(JSON.stringify(pq, function (k, v) { return v === Infinity ? null : v; }));
-    (pqc.lines || []).forEach(function (l) { Object.keys(l.byMkt || {}).forEach(function (m) { l.byMkt[m] = compactNeed(l.byMkt[m]); }); });
+    (pqc.lines || []).forEach(function (l) {
+      Object.keys(l.byMkt || {}).forEach(function (m) { l.byMkt[m] = compactNeed(l.byMkt[m]); });
+      if (l.pricedNeed) l.pricedNeed = compactNeed(l.pricedNeed);
+    });
     if (pqc.conv) pqc.conv.lines = (pqc.conv.lines || []).map(function (l) {
       return { id: l.id, key: l.key, label: l.label, route: l.route, detail: l.detail, hours: l.hours, setup: l.setup, man: l.man, gen: l.gen, monthly: l.monthly, monthlyNote: l.monthlyNote || null, shared: !!l.shared };
     });
     return { ref: ctx.ref || proposalRef(pq.client || ctx.client, now, ctx.existingRefs),
       client: ctx.client || pq.client || '', markets: (pq.perMarket || []).map(function (m) { return m.mkt; }), t: now, by: by,
-      prop: ctx.prop || null, option: pq.option, pkgVersion: pq.pkgVersion || null, audit: A,
+      // the frozen fields are written in the form the store keeps them ('' / {} — never null), so
+      // a re-push of the page's own copy (a click while the first save is in flight) compares
+      // equal and is not reported as an edit to a frozen option
+      prop: ctx.prop ? { id: ctx.prop.id, n: +ctx.prop.n, label: ctx.prop.label == null ? '' : String(ctx.prop.label) } : null,
+      option: pq.option, pkgVersion: pq.pkgVersion || '', audit: A,
       rates: { rows: rrows, g: { blockGBP: gg.blockGBP, blockH: gg.blockH,
         tiers: (gg.tiers || []).map(function (t) { return { upTo: t.upTo === Infinity ? null : t.upTo, x: t.x }; }),
-        bundlePct: gg.bundlePct, reusePct: gg.reusePct, floorMonthly: gg.floorMonthly, pkgVersion: gg.pkgVersion, ruleH: gg.ruleH, langSetupH: gg.langSetupH },
+        bundlePct: gg.bundlePct, reusePct: gg.reusePct, floorMonthly: gg.floorMonthly, pkgVersion: gg.pkgVersion, ruleH: gg.ruleH, langSetupH: gg.langSetupH,
+        tests: gg.tests ? { 2: gg.tests[2], 3: gg.tests[3], 4: gg.tests[4] } : null },
         aim: aimRatesOf(aimRates) },
-      opts: ctx.opts || null, aimSources: pq.conv ? pq.conv.sources : (ctx.aimSources || null),
+      opts: ctx.opts || {}, aimSources: (pq.conv ? pq.conv.sources : ctx.aimSources) || {},
       pq: pqc, clientSafe: !!pq.clientSafe, blockers: (pq.blockers || []).slice(), hist: [{ s: 'Saved', t: now, by: by }] };
   }
 
@@ -1845,37 +2016,72 @@
   function safeOf(op) { return op && op.clientSafe != null ? !!op.clientSafe : !!(pqOf(op) || {}).clientSafe; }
   function mechWord(m) { return { weekly: 'a weekly', fortnightly: 'a fortnightly', monthly: 'a monthly' }[m] || 'a monthly'; }
   function lineText(l, M) {
-    var n = l.need || {}, one = l.grain === 'sku' ? 'value' : 'product', many = one + 's';
+    // the count the £ beside it covers: a market where the line is already contracted is left
+    // out of both, and named, so "2,000 products — £80" can never price 1,000 of them
+    var n = l.pricedNeed || l.need || {}, one = l.grain === 'sku' ? 'value' : 'product', many = one + 's';
+    var cin = (l.contractedIn || []).map(function (m) { return String(m).toUpperCase(); });
+    var skip = cin.length && l.status === 'priced' ? ' (already covered in ' + cin.join(', ') + ')' : '';
     if (l.status === 'coming') return '· ' + l.label + ' — coming, included when live';
     if (l.status === 'unknown') return '· ' + l.label + ' — to be sized once the full feed is counted';
-    if (l.status === 'unpriced') return '· ' + l.label + ' — ' + nWord(n.n, one, many) + ' · price to follow';
+    if (l.status === 'unpriced') return '· ' + l.label + ' — ' + (n.n != null ? nWord(n.n, one, many) + ' · ' : '') + 'price to follow';
     if (l.key === 'conv') return null;
     if (l.key === 'attr_rule') return '· ' + l.label + ' — ' + l.ruleAttrs + ' rule' + (l.ruleAttrs === 1 ? '' : 's') + ' built in FeedHero (set-up time)';
-    // the REAL count of products (re-use lowers the price of a repeated language, not the count)
-    var cnt = l.scope === 'all' ? 'every product' : (n.est === 'bound' && n.hi != null && n.hi > n.lo ? 'at least ' + nWord(n.lo, one, many) + ', up to ' + fmtInt(n.hi) : nWord(n.n, one, many));
-    return '· ' + l.label + ' — ' + cnt + ' — ' + (l.genHi != null && l.genHi > l.gen ? 'from ' + M(l.gen) + ' up to ' + M(l.genHi) : M(l.gen)) + (l.reason === 'pilot' || /pilot/.test(l.reason) ? ' (pilot)' : '');
+    // the REAL count of products (re-use lowers the price of a repeated language, not the count);
+    // a reading that can only bound the count says so — "up to" when it proves no lower end
+    var range = n.hi != null && n.hi > (n.lo || 0);
+    var cnt = l.scope === 'all' ? 'every product'
+      : range ? (n.lo ? 'at least ' + nWord(n.lo, one, many) + ', up to ' + fmtInt(n.hi) : 'up to ' + nWord(n.hi, one, many))
+      : nWord(n.n, one, many);
+    var money = l.genHi != null && l.genHi > l.gen ? (l.gen > 0 ? 'from ' + M(l.gen) + ' up to ' + M(l.genHi) : 'up to ' + M(l.genHi)) : M(l.gen);
+    return '· ' + l.label + ' — ' + cnt + skip + ' — ' + money + (l.reason === 'pilot' || /pilot/.test(l.reason) ? ' (pilot)' : '');
+  }
+  // the test package line — "Test package: N tests a month — £X a month (£Y a test)"
+  function testsText(T, M) {
+    if (!T || !T.n) return null;
+    return 'Test package: ' + T.n + ' tests a month — ' + (T.status === 'priced' ? M(T.price) + ' a month (' + M(T.perTest) + ' a test)' : 'price to follow');
   }
   function optionBlock(op, idx, M, guarded) {
     var q = pqOf(op) || {}, L = [];
     L.push('OPTION ' + (op && op.prop && op.prop.n ? op.prop.n : idx + 1) + ' · ' + (q.label || ''));
+    var sub = q.sub || OPTION_SUB[q.option];
+    if (sub) L.push(sub);
     (q.lines || []).forEach(function (l) {
       if (l.status === 'priced' || l.status === 'coming' || l.status === 'unknown' || l.status === 'unpriced') { var t = lineText(l, M); if (t) L.push(t); }
     });
     if (q.conv) {
       L.push('· Conversational attributes (Spark AI) — ' + (guarded ? 'at Spark AI rates' : q.conv.rateLabel) + (q.conv.rangeLabel ? ', ' + q.conv.rangeLabel : '') + ': set-up ' + M(q.conv.setup) + ', then ' + M(q.conv.monthly) + ' a month');
     }
+    var tt = testsText(q.tests, M);
+    if (tt) L.push('· ' + tt);
     L.push('One-off: ' + M(q.oneOff.total) + ' ex VAT');
     L.push('Monthly: ' + M(q.monthly.total) + ' ex VAT');
-    // every new product, priced PER MARKET (a re-used language costs less there)
-    var newN = 0, per = [];
-    (q.perMarket || []).forEach(function (m) { if (m.newP != null) { newN += m.newP; per.push((q.perMarket.length > 1 ? m.mkt.toUpperCase() + ' ' : '') + M(m.perNew)); } });
+    // every new product, priced PER MARKET (a re-used language costs less there); a market whose
+    // new products an existing bundle already covers is named apart and never priced twice
+    var newN = 0, per = [], covd = [];
+    (q.perMarket || []).forEach(function (m) {
+      if (m.overlap) { covd.push(m.mkt.toUpperCase()); return; }
+      if (m.newP != null) { newN += m.newP; per.push((q.perMarket.length > 1 ? m.mkt.toUpperCase() + ' ' : '') + M(m.perNew)); }
+    });
     if (per.length) {
       var ao = q.alwaysOn || {};
-      L.push('Every new product: ' + per.join(' · ') + ' each — about ' + nWord(newN, 'new product', 'new products') + ' a month' + (q.perMarket.length > 1 ? ' across the markets' : '') + '. '
+      L.push('Every new product: ' + per.join(' · ') + ' each — about ' + nWord(newN, 'new product', 'new products') + ' a month' + (per.length > 1 ? ' across the markets' : '') + '. '
         + (ao.live ? 'New products are picked up on arrival.' : 'Today we run new products through on ' + mechWord(ao.mechanism) + ' cycle; the target is on arrival once automatic routing ships.'));
     }
+    if (covd.length) L.push('New products in ' + covd.join(', ') + ': already covered by your current new-products bundle.');
     if (q.sla) L.push('Live in about ' + q.sla + ' working days from sign-off.');
     return L;
+  }
+  // the clause after "N once this work lands": Google-ready, or WHO closes the rest — "data only
+  // you hold" ONLY when every attribute still under 99% is the client's own data
+  function standTail(p, n) {
+    if (p.met) return ' (Google-ready at 95+' + (n ? ' with option ' + n : '') + ')';
+    var bl = p.blockers || [], rest = bl.filter(function (b) { return b.tag !== 'client to supply'; });
+    if (!bl.length) return '';
+    if (!rest.length) return ' (95 needs data only you hold — listed below)';
+    var PENDING = { coming: 1, 'to be sized': 1, 'price to follow': 1 };
+    if (rest.every(function (b) { return b.tag === 'in Tier 2'; })) return ' (Tier 2 · AI-ready takes it further)';
+    if (rest.every(function (b) { return PENDING[b.tag] || b.tag === 'in Tier 2'; })) return ' (the rest follows the work still to be confirmed below)';
+    return ' (95 needs work outside ' + (n ? 'these options' : 'this option') + ')';
   }
   // the client email (two tones) + the AM's talk track + the flags to raise before sending.
   // guard (default on): while an option is not client-safe EVERY £ in its copy reads
@@ -1898,33 +2104,56 @@
       : 'Thank you for the time on our recent review. We have audited your ' + feedWord + ' against Google\'s product data specification, and I wanted to share what we found and how we would suggest approaching it — very happy to shape this around your priorities.');
     B.push('');
     B.push('WHERE THE FEED STANDS');
+    // every option's own projection for the market — never the first option's alone
+    function projOf(op, mkt) { var pm = ((pqOf(op) || {}).perMarket || []).filter(function (x) { return x.mkt === mkt; })[0]; return pm ? pm.projected || {} : {}; }
     (q0.perMarket || []).forEach(function (m) {
       var p = m.projected || {}, s = '· ' + m.mkt.toUpperCase() + ': Golden Record score ' + (p.now != null ? p.now : 'not measured yet');
-      if (p.after != null) s += ' today, ' + p.after + ' once this work lands' + (p.met ? ' (Google-ready at 95+)' : ' (95 needs data only you hold — listed below)');
+      var outs = list.map(function (op, i) { return { n: op && op.prop && op.prop.n ? op.prop.n : i + 1, p: projOf(op, m.mkt) }; }).filter(function (x) { return x.p.after != null; });
+      if (list.length > 1 && outs.length > 1) {
+        var best = outs.slice().sort(function (a, b) { return b.p.after - a.p.after; })[0];
+        s += ' today — ' + outs.map(function (x) { return x.p.after + ' with option ' + x.n; }).join(', ') + standTail(best.p, best.n);
+      } else if (p.after != null) s += ' today, ' + p.after + ' once this work lands' + standTail(p);
       if (m.air && m.air.now != null) s += ' · AI-readiness ' + m.air.now;
       B.push(s);
     });
     B.push('');
     B.push(list.length > 1 ? 'THE OPTIONS' : 'THE PROPOSAL');
     list.forEach(function (op, i) { optionBlock(op, i, Mfor(op), guarded(op)).forEach(function (l) { B.push(l); }); B.push(''); });
-    var needFrom = {};
+    // what we need from the client: the client line's own counts, then every other attribute the
+    // projection says only the client can close — so "listed below" is true
+    var needFrom = {}, nfKey = {};
     list.forEach(function (op) { ((pqOf(op) || {}).lines || []).forEach(function (l) {
       if (l.key !== 'client') return;
-      Object.keys(l.byMkt || {}).forEach(function (mkt) { ((l.byMkt[mkt] || {}).parts || []).forEach(function (p) { needFrom[p.label] = (needFrom[p.label] || 0) + (p.n || 0); }); });
+      Object.keys(l.byMkt || {}).forEach(function (mkt) { ((l.byMkt[mkt] || {}).parts || []).forEach(function (p) {
+        needFrom[p.label] = needFrom[p.label] || { n: 0, cov: null }; needFrom[p.label].n += (p.n || 0); nfKey[p.k] = 1;
+      }); });
     }); });
+    list.forEach(function (op) { ((pqOf(op) || {}).perMarket || []).forEach(function (m) { (((m.projected || {}).blockers) || []).forEach(function (b) {
+      if (b.tag !== 'client to supply') return;
+      var k = String(b.key).replace('/', '_');
+      if (nfKey[k]) return;
+      var lab = ATTR_WORD[k] || String(b.key).replace(/_/g, ' ');
+      needFrom[lab] = needFrom[lab] || { n: 0, cov: null };
+      if (b.cov != null) needFrom[lab].cov = needFrom[lab].cov == null ? b.cov : Math.min(needFrom[lab].cov, b.cov);
+    }); }); });
     var nf = Object.keys(needFrom);
     if (nf.length) {
       B.push('WHAT WE NEED FROM YOU');
-      nf.forEach(function (k) { B.push('· ' + k + (needFrom[k] ? ' — missing on ' + nWord(needFrom[k], 'product', 'products') : '')); });
+      nf.forEach(function (k) {
+        var x = needFrom[k];
+        B.push('· ' + k + (x.n ? ' — missing on ' + nWord(x.n, 'product', 'products') : x.cov != null ? ' — filled on ' + x.cov + '% of products today' : ''));
+      });
       B.push('Identifiers, prices and links come from your systems — we never generate them.');
       B.push('');
     }
     var hasConv = list.some(function (op) { return (pqOf(op) || {}).conv; });
     var hasGpc = list.some(function (op) { return ((pqOf(op) || {}).lines || []).some(function (l) { return l.key === 'gpc' && l.status === 'priced'; }); });
-    if (hasConv || hasGpc) {
+    var hasTests = list.some(function (op) { var T = (pqOf(op) || {}).tests; return T && T.n; });
+    if (hasConv || hasGpc || hasTests) {
       B.push('HOW WE WOULD DO IT');
       if (hasGpc) B.push('· Google product category is Google\'s own fixed taxonomy — we map each product to it, we never invent categories.');
       if (hasConv) B.push('· Conversational attributes go to Google through a supplemental data source, so your main feed stays untouched.');
+      if (hasTests) B.push('· Test package: ' + TEST_WHAT);
       B.push('');
     }
     B.push('All figures are ex VAT.');
@@ -1936,13 +2165,16 @@
     B.push('Best regards,' + (o.from ? '\n' + o.from : ''));
     var subject = client + ' — Google Shopping services proposal' + (list.length > 1 ? ': ' + list.length + ' options' : ': ' + (q0.label || ''));
     // the AM's talk track — five bullets for the debrief call
-    var worst = (q0.lines || []).filter(function (l) { return l.status === 'priced' && l.grain !== 'none' && l.need && l.need.n; })
-      .sort(function (a, b) { return (b.need.n || 0) - (a.need.n || 0); })[0];
+    var nOf = function (l) { return (l.pricedNeed || l.need || {}).n; };
+    var worst = (q0.lines || []).filter(function (l) { return l.status === 'priced' && l.grain !== 'none' && nOf(l); })
+      .sort(function (a, b) { return (nOf(b) || 0) - (nOf(a) || 0); })[0];
     var pm0 = (q0.perMarket || [])[0] || {}, pr0 = pm0.projected || {};
+    var T0 = q0.tests && q0.tests.n ? q0.tests : null;
     var talk = [
       'Golden Record ' + (pr0.now != null ? pr0.now : '—') + (pr0.after != null ? ' → ' + pr0.after + ' with ' + (q0.label || 'this option') : '') + ' — the 95 line is Google-ready.',
-      worst ? 'Biggest gap: ' + worst.label.toLowerCase() + ' on ' + nWord(worst.need.n, worst.grain === 'sku' ? 'value' : 'product', worst.grain === 'sku' ? 'values' : 'products') + '.' : 'Nothing priced needs work yet — size the feed first.',
-      'One-off ' + M0(q0.oneOff ? q0.oneOff.total : 0) + ', monthly ' + M0(q0.monthly ? q0.monthly.total : 0) + ' — ex VAT, never added together.',
+      worst ? 'Biggest gap: ' + worst.label.toLowerCase() + ' on ' + nWord(nOf(worst), worst.grain === 'sku' ? 'value' : 'product', worst.grain === 'sku' ? 'values' : 'products') + '.' : 'Nothing priced needs work yet — size the feed first.',
+      'One-off ' + M0(q0.oneOff ? q0.oneOff.total : 0) + ', monthly ' + M0(q0.monthly ? q0.monthly.total : 0)
+        + (T0 ? ' (with a ' + T0.n + '-test package' + (T0.status === 'priced' ? ' at ' + M0(T0.price) : ', price to follow') + ')' : '') + ' — ex VAT, never added together.',
       (q0.alwaysOn && q0.alwaysOn.live) ? 'New products are picked up on arrival.' : 'New products run on ' + mechWord(q0.alwaysOn && q0.alwaysOn.mechanism) + ' ASPL cycle today — on arrival is the target, not a promise yet.',
       nf.length ? 'Ask them for: ' + nf.slice(0, 4).join(', ') + '.' : 'Nothing needed from their side for this option.'
     ];
@@ -1969,8 +2201,12 @@
     list.forEach(function (op, i) {
       var q = pqOf(op) || {}, M = function (n) { return guard && !safeOf(op) ? GUARD_TXT : fmtGBP(round2(+n || 0)); };
       var inc = (q.lines || []).filter(function (l) { return l.status === 'priced'; }).map(function (l) { return l.label.replace(/ —.*$/, ''); });
-      L.push((op.prop && op.prop.n ? op.prop.n : i + 1) + '. ' + (op.prop && op.prop.label ? op.prop.label : q.label));
+      if (q.tests && q.tests.n) inc.push('Test package (' + q.tests.n + ' tests a month)');
+      var sub = q.sub || OPTION_SUB[q.option];
+      L.push((op.prop && op.prop.n ? op.prop.n : i + 1) + '. ' + (op.prop && op.prop.label ? op.prop.label : q.label) + (sub ? ' (' + sub + ')' : ''));
       L.push('   Includes: ' + (inc.length ? inc.join(', ') : 'nothing priced yet'));
+      var tt = testsText(q.tests, M);
+      if (tt) L.push('   ' + tt);
       L.push('   One-off ' + M(q.oneOff ? q.oneOff.total : 0) + ' · monthly ' + M(q.monthly ? q.monthly.total : 0));
       L.push('');
     });
@@ -1985,9 +2221,11 @@
     var name = row ? row.name : (BRIEF_NAME[l.key] || l.label);
     return name + ' — ' + String(client || '').trim() + (mkt ? ' ' + String(mkt).toUpperCase() : '') + ' — ' + (label || l.label) + (ref ? ' (' + ref + ')' : '');
   }
-  // the ONE option a proposal is counted at: the newest choice, else the lowest-numbered
+  // the ONE option a proposal is counted at: the newest choice, else the lowest-numbered — of the
+  // options still OPEN: a declined option is never the one a proposal is counted at (a proposal
+  // whose every option is declined counts at none), so a live sibling keeps it in the pipeline
   function countedOption(options, pid) {
-    var ops = entries(options).filter(function (e) { var q = e[1]; return q && !q.deleted && !q.superseded && q.prop && q.prop.id === pid; });
+    var ops = entries(options).filter(function (e) { var q = e[1]; return q && !q.deleted && !q.superseded && !q.declined && q.prop && q.prop.id === pid; });
     if (!ops.length) return null;
     var chosen = ops.filter(function (e) { return e[1].chosen; }).sort(function (a, b) { return (tOf(b[1].chosen) || 0) - (tOf(a[1].chosen) || 0); });
     if (chosen.length) return chosen[0][0];
@@ -2000,9 +2238,18 @@
     roll = roll || {};
     var ops = entries(options).map(function (e) { return e[1]; }).filter(function (q) { return q && !q.deleted; });
     function maxT(f) { var m = 0; ops.forEach(function (q) { m = Math.max(m, tOf(q[f]) || 0); }); return m || null; }
-    var latest = ops.slice().sort(function (a, b) { return (+b.t || 0) - (+a.t || 0); })[0];
+    // the latest LIVE option (a superseded one is history), deterministic on a tie: options saved
+    // in one click share their `t`, so the higher option number counts as the later one
+    var latest = ops.filter(function (q) { return !q.superseded; }).sort(function (a, b) {
+      return ((+b.t || 0) - (+a.t || 0)) || (((b.prop && +b.prop.n) || 0) - ((a.prop && +a.prop.n) || 0));
+    })[0];
     if (roll.declined) return { stage: 'Declined', since: tOf(roll.declined) };
-    if (latest && latest.declined) return { stage: 'Declined', since: tOf(latest.declined) };
+    // the latest option declined is the CLIENT declining — unless they chose a live sibling in the
+    // same proposal: turning Tier 1 down while taking Tier 2 is an agreement, not a decline
+    var sibChosen = latest && latest.prop && latest.prop.id && ops.some(function (q) {
+      return q !== latest && q.chosen && !q.superseded && !q.declined && q.prop && q.prop.id === latest.prop.id;
+    });
+    if (latest && latest.declined && !sibChosen) return { stage: 'Declined', since: tOf(latest.declined) };
     if (roll.live) return { stage: 'Always-on live', since: tOf(roll.live) };
     var t = maxT('chosen'); if (t) return { stage: 'Agreed', since: t };
     t = maxT('sentAt'); if (t) return { stage: 'Proposal sent', since: t };
@@ -2103,7 +2350,8 @@
     AIM_ATTRS: AIM_ATTRS, AIM_RATE_DEFAULT: AIM_RATE_DEFAULT, AIM_NEWNESS_DEFAULT: AIM_NEWNESS_DEFAULT, AIM_ROUTE_LABEL: AIM_ROUTE_LABEL,
     aim: { build: aimBuild, newness: aimNewness, hourly: aimHourly, ratesOf: aimRatesOf, routeOk: aimRouteOk, defaults: aimDefaultSources },
     aimDefaultSources: aimDefaultSources, langOf: langOf, targetsOf: targetsOf, profileForIndustry: profileForIndustry,
-    TITLE_BITS: TITLE_BITS, GPC_BITS: GPC_BITS, DESC_B: DESC_B, HKEYS: HKEYS, OPTION_LABEL: OPTION_LABEL, GUARD_TXT: GUARD_TXT,
+    TITLE_BITS: TITLE_BITS, GPC_BITS: GPC_BITS, DESC_B: DESC_B, HKEYS: HKEYS, OPTION_LABEL: OPTION_LABEL, OPTION_SUB: OPTION_SUB, GUARD_TXT: GUARD_TXT,
+    TEST_COUNTS: TEST_COUNTS, TEST_DEFAULTS: TEST_DEFAULTS, TEST_WHAT: TEST_WHAT,
     needCollector: needCollector, composeRates: composeRates, auditStored: auditStored, auditMerge: auditMerge, needsOf: needsOf,
     contractedFrom: contractedFrom, roadmapStatus: roadmapStatus, ROADMAP_SEED: ROADMAP_SEED, packageQuote: packageQuote,
     costModel: costModel, proposalRef: proposalRef, snapshotOption: snapshotOption, proposalText: proposalText, optionsText: optionsText,

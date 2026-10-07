@@ -25,6 +25,15 @@
  *  11  the Spark AI twin byte-identical to the AI Quote's AIMODE:ENGINE block AND equal on 6+ builds
  *  12  the projection   13 costModel   14 proposalText (guard, tones, no Tachyon / annual / VAT-in)
  *  15  contractedFrom / rolloutStage / countedOption / quickWins / proposalRef / snapshotOption
+ *  15b the review's confirmed findings (fix round 1), each pinned on the exact shape that failed:
+ *      a 0-to-N bound read as "nothing to fix" [0], an empty live read zeroing a stored one [1],
+ *      a one-market bundle zeroing every market's new products [2], a one-market Spark AI
+ *      contract dropping the attribute everywhere [3], null + x in the monthly cost [4], the
+ *      derived stage on declined siblings [5/18/29], a declined option counted [6], Pβ 0 → £0
+ *      [7], scope-all upper bounds priced exact [8], β on SKUs [9], uncosted rule/language hours
+ *      [10], the client count beside a contracted market [11], a typed P above S [12], "only you
+ *      hold" [19], the duplicated snapshot needs [31], the store's frozen-field forms [33]; and
+ *      the two additions — the tiers renamed Google-ready / AI-ready (A) and test packages (B)
  *  16  the engine stays pure (no import, require( or document.)
  *
  * Nothing here is a client figure: every feed is invented (Northwind), the roster names are read
@@ -445,7 +454,9 @@ const PQgo = E.packageQuote({ client: 'Northwind', option: 'go', markets: [{ mkt
 const PQar = E.packageQuote({ client: 'Northwind', option: 'ar', markets: [{ mkt: 'gb', audit: A1 }], rates: R0, aimSources: OFF6 }, LG);
 ok(PQ.oneOff.blocks < PQgo.oneOff.blocks + PQar.oneOff.blocks, 'go+ar set-up block-rounded ONCE over the union: ' + PQ.oneOff.blocks + ' < ' + PQgo.oneOff.blocks + ' + ' + PQar.oneOff.blocks);
 eq(PQ.oneOff.H, PQgo.oneOff.H + PQar.oneOff.H, '…the hours themselves add');
-eq(PQgo.label, 'Tier 1 · Google Optimise', 'Tier 1 label'); eq(PQ.label, 'Tier 2 · Google Optimise + AI Readiness', 'Tier 2 label');
+eq(PQgo.label, 'Tier 1 · Google-ready', 'Tier 1 label: Google-ready'); eq(PQ.label, 'Tier 2 · AI-ready', 'Tier 2 label: AI-ready (the bundle)');
+eq(PQar.label, 'AI-ready only', 'AI Readiness alone: AI-ready only');
+eq(PQgo.sub, 'Google Optimise — eligible + everything Google recommends', 'Tier 1 sub-label'); eq(PQ.sub, 'Google-ready + AI Readiness — the bundle', 'Tier 2 sub-label'); eq(PQar.sub, 'AI Readiness without Tier 1', 'AI-ready only sub-label');
 ok(PQgo.lines.every((l) => l.pkg === 'go') && PQar.lines.every((l) => l.pkg === 'ar'), 'each option carries only its own lines');
 // the bundle discount touches generation only
 const Rb = E.composeRates({ price: { '_g|bundlePct': { v: 10, by: 'm', at: 1 } } });
@@ -703,7 +714,8 @@ const SNAP = E.snapshotOption(Object.assign({}, PQre2), [AC, AIe], RCr, null, { 
 ok(/^SVC\d{6}$/.test(SNAP.ref) && SNAP.client === 'Northwind' && SNAP.markets.join() === 'gb,ie', 'snapshot: ref, client, markets');
 ok(J(SNAP).length < 60000, 'snapshot under 60 KB (' + J(SNAP).length + ' bytes)');
 ok(!/genCost|listMargin|loaded|setupCost|rateAspl|marginPct/.test(J(SNAP)), 'snapshot carries no cost field');
-ok(SNAP.audit.gb && SNAP.audit.gb.needs.title && SNAP.audit.gb.golden && 'score' in SNAP.audit.gb.golden, 'snapshot audit per market with its needs');
+ok(SNAP.audit.gb && SNAP.audit.gb.golden && 'score' in SNAP.audit.gb.golden, 'snapshot audit per market');
+ok(!('needs' in SNAP.audit.gb) && SNAP.pq.lines.find((l) => l.key === 'title').byMkt.gb.n != null, 'the needs live ONCE, on pq.lines[].byMkt — never duplicated into audit[mkt]');
 eq(SNAP.rates.g.tiers[SNAP.rates.g.tiers.length - 1].upTo, null, 'the open-ended tier is stored as null (JSON-safe)');
 eq(SNAP.clientSafe, true, 'clientSafe frozen on the snapshot'); deq(SNAP.rates.aim, E.AIM_RATE_DEFAULT, 'Spark AI rates frozen');
 const SNAPr = JSON.parse(J(SNAP));   // as it comes back from the store
@@ -736,6 +748,263 @@ eq(E.quote(['title_gen'], { volume: 1000, rateOverrides: { title_gen: { unit: 0.
 eq(RQ.rows.title_gen.unit, 0.09, 'v2 reads the same legacy unit');
 eq(E.DELIVERY_PLAN.length >= 13 && E.DELIVERY_PLAN.every((d) => ['this PR', 'Ray / Management', 'ASPL', 'London AM', 'Team', 'Next', 'Later'].indexOf(d.owner) >= 0 && d.title && d.detail), true, 'DELIVERY_PLAN rows carry a known owner, a title and a detail');
 ok(!/£\s?\d/.test(J(E.DELIVERY_PLAN)), 'DELIVERY_PLAN carries no figure');
+
+/* ---------- 15b. review fixes (round 1) — every confirmed finding pinned on the shape that failed ---------- */
+section('15b · review fixes — each finding\'s failing shape, now held');
+const offBut = (keep) => { const o = {}; E.PKG_LINES.forEach((l) => { if (keep.indexOf(l.key) < 0) o[l.key] = { on: false }; }); return o; };
+const lineOf = (pq, k) => pq.lines.find((l) => l.key === k) || {};
+const r2 = (x) => Math.round(x * 100) / 100;
+// [0] a stored-lane BOUND need whose lower end is 0 is not "nothing to fix": it stays priced and blocks
+{
+  const AB0 = stored({ rows: 1000, P: 1000, qattrs: { description: qa(1000, { thin: 0 }), product_highlight: qa(1000, {}) } });
+  const NB0 = E.needsOf(AB0, { descTarget: 500, hlTarget: 6 }, LG);
+  ok(NB0.desc.lo === 0 && NB0.desc.hi === 1000 && NB0.desc.est === 'bound', 'fixture: every description ≥160 → the 160–500 band reads 0 to 1,000');
+  const pq = E.packageQuote({ client: 'Northwind', option: 'ar', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: AB0 }], lineOpts: offBut(['desc', 'highlights']), aimSources: OFF6, targets: { descTarget: 500, hlTarget: 6 } }, LG);
+  ['desc', 'highlights'].forEach((k) => {
+    const l = lineOf(pq, k);
+    ok(l.status === 'priced' && l.reason !== 'nothing to fix', '[0] ' + k + ': a 0-to-1,000 bound stays priced (was "none · nothing to fix")', l.status + ' / ' + l.reason);
+    ok(l.gen === 0 && l.genHi > 0, '[0] ' + k + ': priced at its lower end with its upper end beside it (gen 0, genHi ' + l.genHi + ')');
+    ok(pq.blockers.some((b) => b.code === 'estimate' && b.line === k && /up to 1,000/.test(b.why)), '[0] ' + k + ': the estimate blocker fires, worded "up to" (never "at least 0")');
+  });
+  eq(pq.clientSafe, false, '[0] the proposal is NOT client-safe (was true at £0)');
+  ok(pq.oneOff.total > 0, '[0] the set-up hours of the two lines are in the one-off (was £0)');
+  const body = E.proposalText(pq, { guard: false }).body;
+  ok(/· Description enrichment — up to 1,000 products — up to £150\b/.test(body), '[0] client copy reads "up to 1,000 products — up to £150"', body.split('\n').filter((x) => /Description/.test(x)).join(' | '));
+  // product type to 4+ levels on the stored lane: lo = missing + single-level = 0, hi = filled
+  const APT = stored({ rows: 1000, P: 1000, qattrs: { product_type: qa(1000, {}) } });
+  const pqt = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: APT }], lineOpts: offBut(['ptype']), targets: { ptMinDepth: 4 } }, LG);
+  ok(lineOf(pqt, 'ptype').status === 'priced' && !pqt.clientSafe && pqt.blockers.some((b) => b.line === 'ptype' && b.code === 'estimate'), '[0] ptMinDepth 4 with no single-level paths: priced + blocked, never "nothing to fix"');
+  // attribute population with no content-quality reading and nothing missing (hi null)
+  const AAN = stored({ rows: 1000, P: 1000, sc: { color: 1000, material: 1000, pattern: 1000, gender: 1000, age_group: 1000, size: 1000 } });
+  const pqa = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: AAN }], lineOpts: offBut(['attr_ai']) }, LG);
+  eq(lineOf(pqa, 'attr_ai').need.hi, null, 'fixture: attr_ai with no quality reading has no upper bound');
+  ok(lineOf(pqa, 'attr_ai').status === 'priced' && !pqa.clientSafe, '[0] attr_ai with no quality reading and nothing missing: priced + blocked, not "nothing to fix"');
+  // control: an EXACT zero is still nothing to fix
+  const z = [0, 0], AOK = liveAudit('gb', 3000, 1000, { desc: { b: { empty: z, lt160: z, lt300: z, lt500: z, lt1000: z, ok: [3000, 1000] } } });
+  eq(lineOf(E.packageQuote({ client: 'Northwind', option: 'ar', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: AOK }], lineOpts: offBut(['desc']) }, LG), 'desc').status, 'none', '[0] control: an exact zero (live count) is still "nothing to fix"');
+}
+// [1] an empty or item-less live read never replaces a populated stored reading with zeros
+{
+  const stE = stored({ rows: 5000, cov: { keywords: 40, product_detail: 10 }, qattrs: { title: qa(4800, { caps: 300 }), description: qa(4000, { thin: 900 }) } });
+  const ncE = E.needCollector(LG, Arr); ncE.onRow(H.slice());                 // a header, then nothing
+  const xcE = LG.xmlCollector({ client: 'Northwind', market: 'gb' }); xcE.onRow(H.slice());
+  const AE = E.auditMerge(stE, { nc: ncE, pc: E.parentCounter(), xc: xcE, src: 'live', client: 'Northwind', mkt: 'gb', PR: { overrides: {} } }, LG, Arr, NOW);
+  eq(AE.S, 5000, '[1] an empty live read keeps the stored S (was S 0)'); eq(AE.P, null, '[1] …and P stays uncounted (was P 0)'); eq(AE.pSrc, null, '[1] nothing is reported as counted');
+  eq(AE.counts, null, '[1] counts stay null — the zeros are never read as exact needs');
+  ok(AE.golden && AE.golden.cov === stE.golden.cov, '[1] an item-less xmlCollector read leaves the stored coverage in place');
+  ok(AE.emptyRead && AE.missing.some((m) => /live read returned no products — the stored reading is kept/.test(m)), '[1] and the audit says so');
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: AE }] }, LG);
+  ok(lineOf(pq, 'title').status === 'priced' && pq.oneOff.total > 0 && !pq.clientSafe, '[1] the stored quote stands: title priced, one-off > 0, not client-safe (was £0, client-safe)');
+  // the file lane: a file whose rows all lack an id counts S 0 — nothing reads "nothing to fix"
+  const ncF = E.needCollector(LG, Arr); ncF.onRow(['id', 'title']); ncF.onRow(['', 'x']);
+  const AFE = E.auditMerge(null, { nc: ncF, src: 'file', client: 'Prospect', mkt: 'gb', industry: 'Fashion' }, LG, Arr, NOW);
+  ok(AFE.S == null && AFE.emptyRead, '[1] file lane: an empty read leaves S unknown');
+  const pqf = E.packageQuote({ client: 'Prospect', option: 'go+ar', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: AFE }] }, LG);
+  ok(!pqf.lines.some((l) => l.status === 'none') && lineOf(pqf, 'conv').status === 'unknown' && !pqf.clientSafe, '[1] file lane: no line "nothing to fix", conversational not sized, not client-safe');
+  // a stored reading of ZERO rows is not sized either (P_m = P ?? S, and a size of 0 is no size)
+  const A0r = stored({ rows: 0, qrows: 0, qattrs: { title: qa(0, {}) } });
+  const pq0 = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: A0r }], lineOpts: offBut(['title']) }, LG);
+  ok(lineOf(pq0, 'title').status === 'unknown' && /returned no products/.test(lineOf(pq0, 'title').reason), '[1] a zero-row reading: title "not sized", never "nothing to fix"');
+}
+// [2] a new-products bundle contracted on ONE market leaves only that market's new products out
+{
+  const GBm = liveAudit('gb', 3000, 1000, extraRule, { perMonthP: 40, unit: 'parent' }), DEm = liveAudit('de', 3000, 1000, extraRule, { perMonthP: 40, unit: 'parent' });
+  const b = { client: 'Northwind', option: 'go', rates: RC, roadmap: live, aimSources: OFF6, markets: [{ mkt: 'gb', audit: GBm }, { mkt: 'de', audit: DEm }] };
+  const noC = E.packageQuote(b, LG);
+  const withC = E.packageQuote(Object.assign({}, b, { contracted: { gb: { lines: {}, conv: {}, bundle: 'QT260001' }, de: { lines: {}, conv: {}, bundle: null } } }), LG);
+  const gbP = withC.perMarket.find((m) => m.mkt === 'gb'), deP = withC.perMarket.find((m) => m.mkt === 'de');
+  near(withC.monthly.gen, r2(deP.newP * deP.perNew), '[2] monthly generation = DE\'s new products only (was £0 for both)', 0.011);
+  ok(withC.monthly.gen > 0 && withC.monthly.gen < noC.monthly.gen, '[2] …between nothing and both markets');
+  ok(gbP.overlap === 'QT260001' && deP.overlap == null && Object.keys(gbP.perNewUnits).length === 0, '[2] the overlap is per market: GB carries the ref and no new-product units');
+  deq(withC.monthly.overlapMkts, ['gb'], '[2] overlapMkts names GB'); ok(/GB overlaps QT260001 monthly bundle/.test(withC.monthly.overlap), '[2] overlap names the market and the ref');
+  const body = E.proposalText(withC, { guard: false }).body;
+  ok(/Every new product: DE £0\.30 each — about 44 new products a month\./.test(body) && !/GB £0\.30/.test(body), '[2] client copy prices DE\'s new products only', body.split('\n').filter((x) => /new product/i.test(x)).join(' | '));
+  ok(/New products in GB: already covered by your current new-products bundle\./.test(body), '[2] …and says GB is covered by the bundle');
+  const RCfl = E.composeRates(Object.assign(cleanStores(), { price: Object.assign(cleanStores().price, { '_g|floorMonthly': { v: 5000, by: 'r', at: 1 } }) }));
+  ok(E.packageQuote(Object.assign({}, b, { rates: RCfl, contracted: { gb: { lines: {}, conv: {}, bundle: 'QT1' }, de: { lines: {}, conv: {}, bundle: null } } }), LG).monthly.floorApplied, '[2] the floor still applies while one market is priced');
+  ok(!E.packageQuote(Object.assign({}, b, { rates: RCfl, contracted: { gb: { lines: {}, conv: {}, bundle: 'QT1' }, de: { lines: {}, conv: {}, bundle: 'QT2' } } }), LG).monthly.floorApplied, '[2] …and not when every market is covered');
+}
+// [3] a Spark AI attribute contracted in SOME markets is never silently dropped for the rest
+{
+  const GBc = liveAudit('gb', 3000, 1000, null, { perMonthP: 40, unit: 'parent' }), DEc = liveAudit('de', 6000, 2000, null, { perMonthP: 80, unit: 'parent' });
+  const b = { client: 'Northwind', option: 'ar', rates: RC, roadmap: live, aimSources: { qa: 'ai', doc: 'off', rel: 'off', igt: 'off', vopt: 'off', pop: 'off', hi: 'off' }, markets: [{ mkt: 'gb', audit: GBc }, { mkt: 'de', audit: DEc }], lineOpts: offBut(['conv']) };
+  const a = E.packageQuote(b, LG);
+  const part = E.packageQuote(Object.assign({}, b, { contracted: { gb: { lines: {}, conv: { qa: 'QT9' }, bundle: null }, de: { lines: {}, conv: {}, bundle: null } } }), LG);
+  ok(lineOf(part, 'conv').status === 'priced' && part.oneOff.conv === a.oneOff.conv && part.monthly.conv === a.monthly.conv, '[3] Q&A contracted on GB only: still priced over GB + DE (was "contracted", £0)');
+  ok(!part.clientSafe && part.blockers.some((x) => x.code === 'contracted-partial' && /QT9, GB/.test(x.why) && /DE/.test(x.why)), '[3] …and blocked until the AM settles the DE scope, naming both markets');
+  const all = E.packageQuote(Object.assign({}, b, { contracted: { gb: { lines: {}, conv: { qa: 'QT9' }, bundle: null }, de: { lines: {}, conv: { qa: 'QT8' }, bundle: null } } }), LG);
+  ok(lineOf(all, 'conv').status === 'contracted' && /QT9, GB/.test(lineOf(all, 'conv').reason) && /QT8, DE/.test(lineOf(all, 'conv').reason), '[3] contracted in EVERY market: set aside, each market\'s quote named');
+}
+// [4] a null loaded cost anywhere in the monthly loop keeps monthlyCost null (null + x is x)
+{
+  const costs4 = { '_c|rateAspl': { v: 30 }, '_c|rateAm': { v: 40 }, '_c|gbpPerMTok': { v: 2 }, '_c|ohPct': { v: 20 }, '_c|marginPct': { v: 40 } };
+  const st = cleanStores();
+  E.CATALOG.concat(E.PKG_ROWS).forEach((c) => { if (c.id === 'title_gen') return; st.ops[c.id + '|aMin'] = { v: 10 }; st.ops[c.id + '|tokPerP'] = { v: 1000 }; st.ops[c.id + '|qcPct'] = { v: 10 }; st.ops[c.id + '|qcMin'] = { v: 2 }; });
+  const R4 = E.composeRates(st), A4 = liveAudit('gb', 3000, 1000, null, { perMonthP: 400, unit: 'parent' });
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: R4, roadmap: live, markets: [{ mkt: 'gb', audit: A4 }], aimSources: OFF6 }, LG);
+  ok(Object.keys(pq.perMarket[0].perNewUnits)[0] === 'title', 'fixture: the uncosted line is the FIRST monthly key (the order that hid it)');
+  const cm = E.costModel(R4, costs4, {}, pq);
+  ok(cm.proposal.monthlyCost === null && cm.proposal.monthlyMargin === null, '[4] monthlyCost and its margin stay null (were 587.41 / 18.1%)');
+  ok(cm.proposal.why.some((w) => /monthly line has no loaded cost/.test(w)), '[4] …with the reason');
+  st.ops['title_gen|aMin'] = { v: 10 }; st.ops['title_gen|tokPerP'] = { v: 1000 }; st.ops['title_gen|qcPct'] = { v: 10 }; st.ops['title_gen|qcMin'] = { v: 2 };
+  ok(typeof E.costModel(E.composeRates(st), costs4, {}, pq).proposal.monthlyCost === 'number', '[4] control: every line costed → a number');
+}
+// [5][18][29] the derived stage: a decline beside a chosen sibling is an agreement; ties are deterministic
+{
+  const S1 = { o1: { t: 1000, prop: { id: 'ppabcd', n: 1 }, chosen: { t: 6000 } }, o2: { t: 1000, prop: { id: 'ppabcd', n: 2 } }, o3: { t: 5000, prop: { id: 'ppabcd', n: 3 }, declined: { t: 7000 } } };
+  eq(E.rolloutStage({}, S1, {}).stage, 'Agreed', '[5] option 1 chosen, a later-added option 3 declined → Agreed (was Declined)');
+  const tie = (first) => { const d = { oA: { t: 1000, prop: { id: 'ppx1', n: 1 }, declined: { t: 300 } }, oB: { t: 1000, prop: { id: 'ppx1', n: 2 }, chosen: { t: 500 } } }; return first === 'A' ? d : { oB: d.oB, oA: d.oA }; };
+  eq(E.rolloutStage({}, tie('A'), {}).stage, 'Agreed', '[29] same save, Tier 1 declined + Tier 2 chosen, Tier 1 first in the map → Agreed');
+  eq(E.rolloutStage({}, tie('B'), {}).stage, 'Agreed', '[29] …and with the map in the other order (the order no longer decides)');
+  const mir = { oA: { t: 1000, prop: { id: 'ppx2', n: 1 }, chosen: { t: 500 } }, oB: { t: 1000, prop: { id: 'ppx2', n: 2 }, declined: { t: 300 } } };
+  eq(E.rolloutStage({}, mir, {}).stage, 'Agreed', '[18] the mirror (Tier 1 chosen, Tier 2 declined) → Agreed');
+  eq(E.rolloutStage({}, { oA: { t: 1000, prop: { id: 'ppx3', n: 1 }, declined: { t: 300 } }, oB: { t: 1000, prop: { id: 'ppx3', n: 2 }, declined: { t: 400 } } }, {}).stage, 'Declined', '[29] every live option declined, none chosen → Declined');
+  eq(E.rolloutStage({}, { o1: { t: 1, sentAt: { t: 9 }, prop: { id: 'ppx4', n: 1 } }, o2: { t: 50, superseded: { ref: 'x' }, declined: { t: 60 }, prop: { id: 'ppx4', n: 1 } } }, {}).stage, 'Proposal sent', '[18] a superseded option is history — never the "latest" that declines');
+  eq(E.rolloutStage({}, { o1: { t: 1, chosen: t(10) }, o2: { t: 2, declined: t(12) } }, []).stage, 'Declined', '[5] unchanged: options of DIFFERENT proposals (no prop) — the newest declined still reads Declined');
+}
+// [6] countedOption never counts a declined option; a live sibling keeps the proposal in the pipeline
+{
+  const C6 = { oc1: { t: 1, prop: { id: 'ppy', n: 1 }, declined: { t: 7 } }, oc2: { t: 1, prop: { id: 'ppy', n: 2 } } };
+  eq(E.countedOption(C6, 'ppy'), 'oc2', '[6] option 1 declined, option 2 open → option 2 is counted (was the declined option 1)');
+  eq(E.countedOption({ oc1: C6.oc1, oc2: Object.assign({}, C6.oc2, { declined: { t: 8 } }) }, 'ppy'), null, '[6] every option declined → counted at none');
+  eq(E.countedOption({ oc1: Object.assign({}, C6.oc1, { chosen: { t: 9 } }), oc2: C6.oc2 }, 'ppy'), 'oc2', '[6] a chosen-then-declined option is not counted either');
+}
+// [7] no market sized (Pβ = 0): β = 1, so a need read off the quality record prices — never a silent £0
+{
+  const A7 = E.auditStored({ client: 'Northwind', mkt: 'gb', G: { client: 'Northwind', mkt: 'gb', status: 'never' },
+    Q: { rows: 1000, t: 1, attrs: { title: qa(900, { caps: 50 }), description: qa(900, { thin: 100 }) } }, PR: { overrides: {} } }, LG, Arr);
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: A7 }], lineOpts: offBut(['title']) }, LG);
+  ok(A7.S == null && pq.Pbeta === 0 && pq.beta === 1, 'fixture: S unknown, Pβ 0, β 1');
+  eq(lineOf(pq, 'title').gen, r2(0.08 * 150), '[7] title gen = unit × β(1) × 150 (was £0)');
+  ok(pq.oneOff.gen > 0 && !pq.clientSafe, '[7] the generation is in the one-off; still an estimate, not client-safe');
+}
+// [8] scope "every product" on attribute population with the category scope NOT measured is an upper bound
+{
+  const B8 = stored({ rows: 1000, cov: { color: 80, material: 50, pattern: 100 }, qattrs: { color: qa(800, {}), material: qa(500, {}), pattern: qa(1000, {}) }, P: 1000, industry: 'Fashion' });
+  const lo8 = offBut(['attr_ai']); lo8.attr_ai = { on: true, scope: 'all' };
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: B8 }], lineOpts: lo8 }, LG);
+  ok(lineOf(pq, 'attr_ai').est === 'bound' && !pq.clientSafe, '[8] scope all, scope not measured: est bound, not client-safe (was exact + client-safe)');
+  ok(pq.blockers.some((b) => b.line === 'attr_ai' && /category scope not measured/.test(b.why)), '[8] …the blocker names the unmeasured scope');
+  const B8m = stored({ rows: 1000, cov: { color: 80, material: 50, pattern: 100 }, sc: { color: 1000, material: 1000, pattern: 1000, gender: 1000, age_group: 1000, size: 1000 }, qattrs: { color: qa(800, {}), material: qa(500, {}), pattern: qa(1000, {}) }, P: 1000, industry: 'Fashion' });
+  eq(lineOf(E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: B8m }], lineOpts: lo8 }, LG), 'attr_ai').est, null, '[8] control: the scope measured → exact');
+}
+// [9] β read on SKUs while a grouped feed's parents are uncounted blocks, even when every line is exact
+{
+  const sc9 = { color: 60000, material: 60000, pattern: 60000, gender: 60000, age_group: 60000, size: 60000 };
+  const mk9 = (P) => stored({ rows: 60000, cov: { color: 50, material: 50, pattern: 50 }, sc: sc9, qattrs: { color: qa(30000, {}), material: qa(30000, {}), pattern: qa(30000, {}) }, P, industry: 'Fashion' });
+  const spec9 = (A) => ({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, markets: [{ mkt: 'gb', audit: A }], lineOpts: offBut(['attr_ai']) });
+  const q0 = E.packageQuote(spec9(mk9(null)), LG), q1 = E.packageQuote(spec9(mk9(12000)), LG);
+  ok(lineOf(q0, 'attr_ai').est === null && !q0.clientSafe && q0.blockers.some((b) => /volume discount is read on the SKU count/.test(b.why)), '[9] P uncounted: the β-on-SKUs blocker (was client-safe at a price that moves)');
+  ok(q1.clientSafe && !q1.blockers.some((b) => /volume discount/.test(b.why)), '[9] P counted: no β blocker');
+  const A9 = mk9(null); A9.hasGroups = false;
+  ok(!E.packageQuote(spec9(A9), LG).blockers.some((b) => /volume discount/.test(b.why)), '[9] no item groups (P = S exactly): no β blocker');
+}
+// [10] set-up hours on no rate row (FeedHero rules, extra languages) are costed — the margin is no longer overstated
+{
+  const costs10 = { '_c|rateAspl': { v: 30 }, '_c|rateAm': { v: 40 }, '_c|gbpPerMTok': { v: 2 }, '_c|ohPct': { v: 20 }, '_c|marginPct': { v: 40 } };
+  const st = cleanStores(); st.ops['_g|ruleH'] = { v: 6 }; st.ops['_g|langSetupH'] = { v: 16 };
+  const R10 = E.composeRates(st);
+  const rule4 = { rule: { gender: { n: 100, u: 0, miss: 10 }, age_group: { n: 100, u: 0, miss: 10 }, size_type: { n: 100, miss: 10 }, size_system: { n: 100, miss: 10 }, condition: { n: 100, miss: 0 } } };
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: R10, roadmap: live, aimSources: OFF6, markets: [{ mkt: 'gb', audit: liveAudit('gb', 3000, 1000, rule4) }, { mkt: 'de', audit: liveAudit('de', 3000, 1000, rule4) }] }, LG);
+  let rowH = 0, rowCost = 0;
+  pq.lines.forEach((l) => { const d = E.PKG_LINES.find((x) => x.key === l.key); if (d.row && l.status === 'priced') { const r = R10.rows[d.row]; rowH += r.aspl + r.qc + r.pm; rowCost += (r.aspl * 30 + (r.qc + r.pm) * 40) * 1.2; } });
+  ok(pq.oneOff.H - rowH === 24 + 16, 'fixture: 24 rule hours + 16 language hours on no rate row');
+  const cm = E.costModel(R10, costs10, {}, pq);
+  near(cm.proposal.setupCost, rowCost + 40 * 30 * 1.2, '[10] setupCost = row lines + the rule and language hours at the ASPL rate × (1 + oh)', 1e-6);
+  const pqR = E.packageQuote({ client: 'Northwind', option: 'go', rates: R10, roadmap: live, aimSources: OFF6, markets: [{ mkt: 'gb', audit: liveAudit('gb', 3000, 1000, rule4) }],
+    contracted: { lines: { title: 'Q', keywords: 'Q', ptype: 'Q', gpc: 'Q', attr_ai: 'Q' }, conv: {}, bundle: null } }, LG);
+  ok(lineOf(pqR, 'attr_rule').status === 'priced' && E.costModel(R10, costs10, {}, pqR).proposal.setupMargin < 1, '[10] a rules-only proposal no longer reads a 100% set-up margin');
+  ok(E.costModel(R10, { '_c|rateAm': { v: 40 }, '_c|ohPct': { v: 20 } }, {}, pqR).proposal.setupCost === null, '[10] no ASPL cost rate → the set-up cost is null, never partial');
+}
+// [11] the client copy's count is the count the £ beside it covers
+{
+  const pq = E.packageQuote({ client: 'Northwind', option: 'go', rates: RC, roadmap: live, aimSources: OFF6, markets: [{ mkt: 'gb', audit: liveAudit('gb', 3000, 1000) }, { mkt: 'de', audit: liveAudit('de', 3000, 1000) }],
+    contracted: { gb: { lines: { title: 'QT7' }, conv: {}, bundle: null }, de: { lines: {}, conv: {}, bundle: null } }, lineOpts: { attr_ai: { on: false } } }, LG);
+  const tl = lineOf(pq, 'title');
+  ok(tl.need.n === 2000 && tl.pricedNeed && tl.pricedNeed.n === 1000, '[11] need over every market 2,000; the priced need 1,000');
+  ok(/· Title optimisation — 1,000 products \(already covered in GB\) — £80/.test(E.proposalText(pq, { guard: false }).body), '[11] client copy: "1,000 products (already covered in GB) — £80" (was 2,000 for £80)');
+  ok(/1,000 products/.test(E.proposalText(pq, { guard: false }).talk[1]) || !/title/.test(E.proposalText(pq, { guard: false }).talk[1]), '[11] the talk track\'s biggest gap reads the priced count too');
+}
+// [12] a typed parent count above the SKUs read is refused, never priced as a multiplier
+{
+  const st = stored({ rows: 10000, qrows: 10000, cov: { product_detail: 90 }, qattrs: { title: qa(10000, { caps: 500 }) } });
+  const A50 = E.auditMerge(st, { typedP: 50000, src: 'live' }, LG, Arr, NOW), A5 = E.auditMerge(st, { typedP: 5000, src: 'live' }, LG, Arr, NOW);
+  ok(A50.P === null && A50.pRefused === 50000 && A50.missing.some((m) => /50,000 is more than the 10,000 SKUs/.test(m)), '[12] typed 50,000 on 10,000 SKUs: refused and named');
+  eq(E.needsOf(A50, {}, LG).details.n, 1000, '[12] …so details stays at the SKU count (was 5,000 "parents")');
+  ok(A5.P === 5000 && A5.pSrc === 'typed', '[12] control: a typed 5,000 is taken');
+}
+// [19] "95 needs data only you hold" only when every remaining gap IS the client's data
+{
+  const t1 = PQt.perMarket[0].projected, t2 = PQall.perMarket[0].projected;
+  ok(t2.blockers.length && t2.blockers.every((b) => b.tag === 'client to supply'), 'fixture: Tier 2 leaves only client data under 99%');
+  ok(/once this work lands \(Tier 2 · AI-ready takes it further\)/.test(E.proposalText(PQt, { guard: false }).body), '[19] Tier 1 with a Tier-2 gap: "Tier 2 · AI-ready takes it further", never "only you hold"');
+  ok(/once this work lands \(95 needs data only you hold — listed below\)/.test(E.proposalText(PQall, { guard: false }).body), '[19] Tier 2, client data alone left: "data only you hold — listed below"');
+  ok(/WHAT WE NEED FROM YOU\n· sale price — filled on 0% of products today\n· GTIN \/ MPN — filled on 0% of products today/.test(E.proposalText(PQall, { guard: false }).body), '[19] …and "listed below" is true: every client-to-supply gap is listed');
+  const PQcm = E.packageQuote(Object.assign({ markets: [{ mkt: 'gb', audit: AP }] }, base10, { roadmap: Object.assign({}, live, { 'highlights|*': { status: 'building' } }) }), LG);
+  ok(PQcm.perMarket[0].projected.blockers.some((b) => b.key === 'product_highlight' && b.tag === 'coming'), '[19] a FeedSpark line that is coming is tagged "coming", not "client to supply"');
+  ok(/\(the rest follows the work still to be confirmed below\)/.test(E.proposalText(PQcm, { guard: false }).body), '[19] …and the email says so');
+  const APg = Object.assign({}, AP, { golden: (() => { const cov = Object.assign({}, AP.golden.cov, { google_product_category: 80 }); const at = LG.attrsFromCov(cov, null, 3000); return { attrs: at, cov, sc: null, score: LG.goldenScore(at, AP.prof).score, gs: LG.goldenScore(at, AP.prof) }; })() });
+  const PQoff = E.packageQuote(Object.assign({ markets: [{ mkt: 'gb', audit: APg }], lineOpts: { gpc: { on: false } } }, base10, { option: 'go' }), LG);
+  ok(PQoff.perMarket[0].projected.blockers.some((b) => b.key === 'google_product_category' && b.tag === 'not in this quote'), '[19] GPC switched off: "not in this quote" (was "client to supply")');
+  ok(/\(95 needs work outside this option\)/.test(E.proposalText(PQoff, { guard: false }).body), '[19] …and the email does not blame the client');
+  const both = E.proposalText([PQt, PQall], { guard: false }).body;
+  ok(new RegExp('today — ' + t1.after + ' with option 1, ' + t2.after + ' with option 2 \\(95 needs data only you hold').test(both), '[19] several options: every option\'s projection, the tail read off the best one', both.split('\n').filter((x) => /Golden Record/.test(x)).join(' | '));
+}
+// [31][33] the snapshot: needs stored once; the frozen fields in the store's own form
+{
+  ok(!('needs' in SNAP.audit.gb) && !('needs' in SNAP.audit.ie), '[31] no market\'s needs copied into audit[mkt] (pq.lines[].byMkt holds them)');
+  const SN1 = E.snapshotOption(PQgo, [A1], RC, null, { t: NOW });
+  ok(SN1.pkgVersion === '' && J(SN1.opts) === '{}' && J(SN1.aimSources) === '{}', '[33] pkgVersion "" · opts {} · aimSources {} — never null, so a re-push compares equal');
+  eq(SNAP.prop.label, 'Tier 2', '[33] prop carried as the store keeps it'); eq(E.snapshotOption(PQgo, [A1], RC, null, { t: NOW, prop: { id: 'ppabcd', n: '2' } }).prop.label, '', '[33] a prop with no label stores ""');
+}
+// ADDITION B — test packages: a flat monthly add-on to any option
+{
+  const Rt = E.composeRates({});
+  deq(Rt.g.tests, { 2: 800, 3: 1140, 4: 1440 }, 'B: draft test package prices {2: £800, 3: £1,140, 4: £1,440} a month');
+  deq(Rt.g.src.tests, { 2: 'default', 3: 'default', 4: 'default' }, 'B: …each read as a draft default');
+  const Rm = E.composeRates({ price: { '_g|test3': { v: 1200, by: 'ray@feedspark.com', at: 5 } } });
+  ok(Rm.g.tests[3] === 1200 && Rm.g.src.tests[3] === 'ops' && Rm.g.by.tests[3].by === 'ray@feedspark.com', 'B: Management\'s _g|test3 wins, stamped');
+  const stT = cleanStores(); stT.price['_g|test2'] = { v: 800, by: 'm', at: 1 }; stT.price['_g|test3'] = { v: 1140, by: 'm', at: 1 }; stT.price['_g|test4'] = { v: 1440, by: 'm', at: 1 };
+  const RCt = E.composeRates(stT);
+  const spec = (R, tests) => Object.assign({ markets: [{ mkt: 'gb', audit: AC }] }, base10, { rates: R, opts: { tests } });
+  const q0 = E.packageQuote(spec(RCt, 0), LG), q3 = E.packageQuote(spec(RCt, 3), LG), qd = E.packageQuote(spec(RC, 3), LG);
+  deq(q0.tests, { n: 0, price: null, perTest: null, draft: false, status: 'off' }, 'B: tests 0 → off'); eq(q0.monthly.tests, 0, 'B: …nothing on the monthly');
+  deq(q3.tests, { n: 3, price: 1140, perTest: 380, draft: false, status: 'priced' }, 'B: 3 tests a month, Management-priced');
+  near(q3.monthly.total, q0.monthly.total + 1140, 'B: the monthly total carries the package', 1e-6); eq(q3.monthly.tests, 1140, 'B: monthly.tests');
+  ok(q3.monthly.gen === q0.monthly.gen && q3.oneOff.total === q0.oneOff.total && q3.oneOff.bundleDisc === q0.oneOff.bundleDisc, 'B: no one-off, never in generation, outside β and the bundle %');
+  ok(q3.clientSafe, 'B: a confirmed test price keeps the proposal client-safe');
+  ok(qd.tests.draft && !qd.clientSafe && qd.blockers.some((b) => b.code === 'draft-tests' && b.why === 'test package price not confirmed — Management'), 'B: a DRAFT test price blocks: "test package price not confirmed — Management"');
+  const RCf2 = E.composeRates(Object.assign(cleanStores(), { price: Object.assign({}, stT.price, { '_g|floorMonthly': { v: 99999, by: 'r', at: 1 } }) }));
+  const qf0 = E.packageQuote(spec(RCf2, 0), LG), qf2 = E.packageQuote(spec(RCf2, 2), LG);
+  near(qf2.monthly.total - qf0.monthly.total, 800, 'B: the floor never absorbs the package', 1e-6);
+  const Ru = JSON.parse(J(RCt)); Ru.g.tests[4] = null; Ru.g.src.tests[4] = 'unset';
+  Ru.g.tiers = RCt.g.tiers;
+  const qu = E.packageQuote(spec(Ru, 4), LG);
+  ok(qu.tests.status === 'unpriced' && qu.monthly.tests === 0 && Math.abs(qu.monthly.total - q0.monthly.total) < 1e-6 && qu.blockers.some((b) => b.code === 'unpriced' && b.line === 'tests'), 'B: an unset price → unpriced, out of the total, blocked');
+  eq(E.packageQuote(spec(RCt, 5), LG).tests.status, 'off', 'B: only 2, 3 or 4 tests');
+  const body = E.proposalText(q3, { guard: false }).body;
+  ok(/· Test package: 3 tests a month — £1,140 a month \(£380 a test\)/.test(body), 'B: client copy "Test package: 3 tests a month — £1,140 a month (£380 a test)"');
+  ok(body.indexOf('· Test package: ' + E.TEST_WHAT) >= 0, 'B: …and what a test IS, once, under HOW WE WOULD DO IT');
+  ok(/Test package: 3 tests a month — \[£ to confirm — Ray\] a month \(\[£ to confirm — Ray\] a test\)/.test(E.proposalText(qd, {}).body), 'B: guarded while the price is a draft');
+  ok(/3-test package/.test(E.proposalText(q3, {}).talk[2]), 'B: the talk track mentions it');
+  ok(!/Test package/.test(E.proposalText(q0, { guard: false }).body), 'B: nothing about tests when there is none');
+  const ot = E.optionsText([{ client: 'Northwind', pq: q3, clientSafe: true }]);
+  ok(/Includes: .*Test package \(3 tests a month\)/.test(ot) && /   Test package: 3 tests a month — £1,140 a month \(£380 a test\)/.test(ot), 'B: optionsText lists it in Includes and prices it');
+  const sn = JSON.parse(J(E.snapshotOption(q3, [AC], RCt, null, { t: NOW, opts: { tests: 3 } })));
+  ok(sn.pq.tests.price === 1140 && sn.rates.g.tests[3] === 1140 && sn.opts.tests === 3, 'B: the snapshot keeps the package, its frozen price and the option');
+  eq(E.proposalText(sn, { guard: false }).body, E.proposalText(q3, { guard: false }).body, 'B: the email from the saved option is the live one');
+  const costsB = { '_c|rateAspl': { v: 30 }, '_c|rateAm': { v: 40 }, '_c|gbpPerMTok': { v: 2 }, '_c|ohPct': { v: 20 }, '_c|marginPct': { v: 40 } };
+  const cm0 = E.costModel(RCt, costsB, {}, q0), cm3 = E.costModel(RCt, costsB, {}, q3);
+  ok(cm3.proposal.monthlyMargin === cm0.proposal.monthlyMargin && cm3.proposal.excluded.indexOf('tests') >= 0, 'B: the package is out of both sides of the monthly margin');
+  deq(E.contractedFrom({ x: Object.assign({}, sn, { mkt: 'gb', chosen: { t: 1 } }) }, 'Northwind', 'gb'), { lines: {}, conv: {}, bundle: null }, 'B: contractedFrom ignores a test package');
+}
+// ADDITION A — the tier names in client copy
+{
+  const tx = E.proposalText([PQt, PQall], { guard: false }).body;
+  ok(/OPTION 1 · Tier 1 · Google-ready\nGoogle Optimise — eligible \+ everything Google recommends\n/.test(tx) && /OPTION 2 · Tier 2 · AI-ready\nGoogle-ready \+ AI Readiness — the bundle\n/.test(tx), 'A: the email names Tier 1 · Google-ready and Tier 2 · AI-ready, each with its one-line descriptor');
+  ok(!/Google Optimise \+ AI Readiness|AI Readiness only/.test(tx + E.optionsText([{ pq: PQt }, { pq: PQall }, { pq: PQar }])), 'A: the old tier names are gone from client copy');
+  ok(/3\. AI-ready only \(AI Readiness without Tier 1\)/.test(E.optionsText([{ pq: PQt }, { pq: PQall }, { pq: PQar }])), 'A: optionsText — "AI-ready only (AI Readiness without Tier 1)"');
+}
 
 /* ---------- 16. purity ---------- */
 section('16 · the engine stays pure');

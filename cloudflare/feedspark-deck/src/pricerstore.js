@@ -30,6 +30,24 @@
  * Deletion is by absence under X-Sync-Base, exactly like /api/briefs; a cell sent as null or ''
  * is a clear (the key is left out, so the read stamp decides).
  *
+ * A STALE COPY NEVER WINS (fix round 1, 7 Oct 2026). The page saves its WHOLE map and re-reads
+ * only every 90 s, so a tab that read `aMin = 30` before a colleague saved 45 sends 30 back on its
+ * next save of ANY field — and comparing values alone, that read as a fresh edit: the colleague's
+ * 45 was lost and the revert credited to someone who never touched it (a stale proposal copy did
+ * the same to a ✓ Chosen). kvmerge's read stamp only ever guarded absence. So every store here
+ * also guards PRESENCE: when the incoming value DIFFERS from the stored one and the stored one was
+ * written AFTER the writer's read (its server stamp — a cell's / roadmap entry's `at`, a
+ * proposal's / rollout record's `lu.at` — is later than ctx.base, the X-Sync-Base the page sent),
+ * the stored value stays and the key is listed in `rejected` as 'changed by <who> since you
+ * loaded — reload to edit it'. That includes the same person in another tab (named as such):
+ * a stale tab of your own is as blind to the newer value as a colleague's. A value equal to the
+ * stored one is untouched (stamps kept); a new key, or a change on top of the latest value, is
+ * accepted and stamped. A writer that sends no read stamp (base 0) has read nothing, so every
+ * stamped value is newer than its read. Keys the writer LEFT OUT that were written after its read
+ * are kept by kvmerge and listed the same way (staleAbsent), so a cleared cell that a colleague
+ * had just changed is reported, never silently undone. The reply names every such key; the page
+ * shows only those it changed itself and re-adopts the merged map.
+ *
  * ONE KV TRAP: kvmerge treats every key that STARTS WITH '_' as reserved and never writes it, and
  * the house-wide rows here are `_g|…` / `_c|…`. toStore/fromStore swap that leading '_' for '~'
  * at the KV boundary, so the API grammar stays what the engine reads and the merge still writes.
@@ -62,6 +80,9 @@ export const PRICER_STORES = {
 };
 
 export const PROPOSAL_MAX_BYTES = 60 * 1024;
+// a deleted option keeps only its identity and stamps (stripDeleted); one deleted longer ago than
+// this leaves the map entirely on the next save (kvmerge tombstones it under the read stamp)
+export const DELETED_PURGE_MS = 30 * 86400000;
 
 /* ---------------------------------- field allow-lists ---------------------------------- */
 const num = (min, max, dp) => ({ t: 'num', min, max, dp });
@@ -73,11 +94,15 @@ export const OPS_ROW_FIELDS = {
   aMin: num(0, 10000, 2), tokPerP: num(0, 1e8, 2), qcPct: num(0, 100, 2), qcMin: num(0, 600, 2), note: str(200),
 };
 export const OPS_G_FIELDS = { ruleH: num(0, 100, 2), langSetupH: num(0, 200, 2) };
-// pricerprice: `<id>|unit` per row, and the house-wide `_g` commercials
+// pricerprice: `<id>|unit` per row, and the house-wide `_g` commercials. test2 / test3 / test4 are
+// the TEST PACKAGE prices (£ a month for 2, 3 or 4 tests a month — Ray, 7 Oct 2026: the bundle
+// add-on), Management-owned like every other sell price; unset = the engine prices the line as
+// draft / unpriced, never a guess
 export const PRICE_ROW_FIELDS = { unit: num(0, 100, 4) };
 export const PRICE_G_FIELDS = {
   blockGBP: num(1, 10000, 2), blockH: num(1, 24, 2), tiers: { t: 'tiers' },
   bundlePct: num(0, 50, 2), reusePct: num(0, 100, 2), floorMonthly: num(0, 100000, 2), pkgVersion: str(20),
+  test2: num(0, 100000, 2), test3: num(0, 100000, 2), test4: num(0, 100000, 2),
 };
 // pricercost: `_c|<field>` only
 export const COST_FIELDS = {
@@ -149,6 +174,26 @@ export function cleanClient(c) {
 // a time the page stamped: kept when it is a plausible epoch ms, else now
 function tOf(t, now) { return (typeof t === 'number' && isFinite(t) && t > 1.5e12 && t <= now + 86400000) ? Math.round(t) : now; }
 
+// the server stamp {by, at} a stored value carries: a cell / roadmap entry IS its stamp, a
+// proposal option / rollout record carries it as `lu`
+function stampOf(kind, stored) {
+  if (!isObj(stored)) return null;
+  const s = (kind === 'prop' || kind === 'roll') ? stored.lu : stored;
+  return isObj(s) && typeof s.at === 'number' && isFinite(s.at) ? s : null;
+}
+// the stored value was written AFTER the writer's read (ctx.base = the X-Sync-Base it sent) — so
+// the copy it is saving over it is stale. A caller that passes no base at all (a unit-level call)
+// gets no check; the route always passes one, and a base of 0 means "read nothing".
+export function staleStamp(kind, stored, ctx) {
+  if (!ctx || typeof ctx.base !== 'number' || !isFinite(ctx.base)) return null;
+  const s = stampOf(kind, stored);
+  return s && s.at > ctx.base ? s : null;
+}
+export function staleWhy(stamp, ctx) {
+  const who = !stamp.by ? 'someone' : (stamp.by === ctx.by ? 'you in another tab' : stamp.by);
+  return 'changed by ' + who + ' since you loaded — reload to edit it';
+}
+
 // one {t, by, …extra} stamp (sentAt / chosen / declined / superseded / debriefAt / live / …).
 // absent / null / false clears it; `true` means "now". The page's `t` is kept (countedOption
 // compares chosen.t across two AMs' clicks), `by` is ALWAYS the server's word — but a stamp
@@ -212,10 +257,12 @@ export function cleanTiers(raw) {
       continue;
     }
     if (last) return { ok: false, why: 'the last band must be open-ended (upTo null)' };
-    const u = typeof b.upTo === 'number' ? b.upTo : +b.upTo;
-    if (!isFinite(u) || u <= prev || u > 1e9) return { ok: false, why: 'band upper bounds must rise (band ' + (i + 1) + ')' };
+    // rounded BEFORE the rise is checked, so 5000.2 then 5000.4 cannot both land as 5000 (and 0.3
+    // cannot land as a 0 bound): the stored ladder is what must rise, not the typed one
+    const u = Math.round(typeof b.upTo === 'number' ? b.upTo : +b.upTo);
+    if (!isFinite(u) || u <= prev || u > 1e9) return { ok: false, why: 'band upper bounds must rise, in whole products (band ' + (i + 1) + ')' };
     prev = u;
-    out.push({ upTo: Math.round(u), x: roundTo(x, 4) });
+    out.push({ upTo: u, x: roundTo(x, 4) });
   }
   return { ok: true, v: out };
 }
@@ -233,10 +280,16 @@ export function sanitizeCellPut(store, body, cur, ctx) {
     if (!spec) { refuse('unknown key'); continue; }
     let raw = body[k];
     if (isObj(raw) && Object.prototype.hasOwnProperty.call(raw, 'v')) raw = raw.v;
-    if (raw == null || (typeof raw === 'string' && raw.trim() === '')) continue;    // a clear — absence decides
+    if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {            // a clear — absence decides,
+      const st = staleStamp('cell', stored, ctx);                                 // unless the value is newer than the read
+      if (st) refuse(staleWhy(st, ctx));
+      continue;
+    }
     const c = coerceCell(spec, raw);
     if (!c.ok) { refuse(c.why); continue; }
     if (isObj(stored) && same(stored.v, c.v)) { data[k] = stored; continue; }     // unchanged — keep its stamp
+    const st = staleStamp('cell', stored, ctx);
+    if (st) { refuse(staleWhy(st, ctx)); continue; }                             // newer than the writer's read — it stays
     data[k] = { v: c.v, by: ctx.by, at: ctx.now };
   }
   return { data, rejected };
@@ -250,11 +303,33 @@ const PROP_FROZEN = ['ref', 'client', 'markets', 't', 'by', 'prop', 'option', 'p
   'opts', 'aimSources', 'pq', 'clientSafe', 'blockers'];
 export const OPTION_ID_RE = /^o[a-z0-9]{6,20}$/;
 
+// A DELETED OPTION SHEDS ITS SNAPSHOT (fix round 1). ✕ Delete was a stamp on a record that kept
+// its whole 11–60 KB snapshot, and the store is one whole-map save every click moves, so it only
+// ever grew — past 20 MB every save is a 413, past 1,500 options a 400, and deleting could not
+// free a byte. A deleted option has left the pipeline (every reader skips `deleted`), so it keeps
+// who / what / when — ref, client, markets, proposal, option, version, the two totals and its
+// stamps — and nothing else; DELETED_PURGE_MS later it leaves the map altogether.
+const PROP_SHED = ['audit', 'rates', 'opts', 'aimSources', 'blockers'];
+export function stripDeleted(o) {
+  for (const f of PROP_SHED) delete o[f];
+  if (isObj(o.pq)) {
+    const pq = o.pq, slim = {};
+    if (typeof pq.label === 'string') slim.label = pq.label.slice(0, 80);
+    for (const h of ['oneOff', 'monthly']) {
+      if (isObj(pq[h]) && typeof pq[h].total === 'number' && isFinite(pq[h].total)) slim[h] = { total: pq[h].total };
+    }
+    o.pq = slim;
+  }
+  return o;
+}
+// a stored option that has already shed its snapshot
+export function isShed(o) { return isObj(o) && !!o.deleted && o.audit === undefined; }
+
 // the snapshot half of a NEW option
 function cleanSnapshot(v, ctx) {
   if (typeof v.ref !== 'string' || !/^SVC\d{6}(-\d+)?$/.test(v.ref)) return { ok: false, why: 'ref must look like SVC123456 (or SVC123456-2)' };
   const client = cleanClient(v.client);
-  if (!client) return { ok: false, why: 'client is missing or not a client name' };
+  if (!client) return { ok: false, why: 'client must be a name of 1–60 characters (no ":" or "|", not starting with "_" or "~")' };
   if (!Array.isArray(v.markets) || !v.markets.length || v.markets.length > 40) return { ok: false, why: 'markets must list 1 to 40 market codes' };
   const markets = v.markets.map(cleanMkt);
   if (markets.some((m) => !m)) return { ok: false, why: 'a market code is not a wired Google market (Meta "-fb" markets are never priced)' };
@@ -308,7 +383,8 @@ export function cleanOption(v, stored, ctx) {
   if (isObj(stored)) {
     out = {};
     for (const f of PROP_FROZEN) { if (stored[f] !== undefined) out[f] = stored[f]; }
-    const tried = PROP_FROZEN.filter((f) => f !== 'prop' && v[f] !== undefined && !same(v[f], stored[f]));
+    // a shed record has no snapshot left to compare a copy against — the copy is simply older
+    const tried = isShed(stored) ? [] : PROP_FROZEN.filter((f) => f !== 'prop' && v[f] !== undefined && !same(v[f], stored[f]));
     const sp = isObj(stored.prop) ? stored.prop : {};
     if (isObj(v.prop) && (v.prop.id !== sp.id || +v.prop.n !== sp.n)) tried.push('prop');
     if (isObj(v.prop) && v.prop.label != null && v.prop.label !== sp.label) {
@@ -324,9 +400,17 @@ export function cleanOption(v, stored, ctx) {
   }
   const b = cleanBuyIn(v, stored, ctx, out);
   if (!b.ok) return b;
+  if (isShed(stored) && !out.deleted) return { ok: false, why: 'a deleted option cannot be restored (it kept only its name) — build it again as a new option' };
+  if (out.deleted) stripDeleted(out);
   if (isObj(stored)) {
     const was = Object.assign({}, stored); delete was.lu;
     if (same(out, was)) return { ok: true, v: stored, note };       // nothing moved — keep lu as stored
+    // an option deleted before records shed their snapshot: shedding it now is housekeeping, not
+    // an edit — it keeps its lu, and `shed` tells the caller nobody changed anything
+    if (stored.deleted && same(out, stripDeleted(Object.assign({}, was)))) {
+      if (stored.lu !== undefined) out.lu = stored.lu;
+      return { ok: true, v: out, note, shed: true };
+    }
   }
   out.lu = { by: ctx.by, at: ctx.now };
   return { ok: true, v: out, note };
@@ -335,8 +419,18 @@ export function cleanOption(v, stored, ctx) {
 // PUT /api/pricer/proposals. ctx.inScope(client) is the signin's client fence: a write for (or
 // over) a foreign client is refused here, and the route re-injects every foreign record so a
 // scoped save of a partial view can never delete one.
+// The refusal says WHY in words the page can show as it stands (finding 34): a prospect built in
+// file mode is never one of a scoped signin's clients, and the fence stays — but the AM is told
+// that, rather than watching the options vanish. A FOREIGN STORED record is never named.
+export function scopeWhy(client, stored) {
+  if (stored !== undefined) return 'outside your clients — this record belongs to an account your signin cannot edit';
+  const c = String(client == null ? '' : client).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 60);
+  return 'outside your clients — ' + (c ? '"' + c + '" is not one of your accounts' : 'it names no client') +
+    ', so this signin cannot save it (a prospect proposal needs an unscoped signin)';
+}
+
 export function sanitizeProposalPut(body, cur, ctx) {
-  const data = {}, rejected = [];
+  const data = {}, rejected = [], purged = [];
   cur = cur || {};
   const inScope = ctx.inScope || (() => true);
   for (const k of Object.keys(body || {})) {
@@ -345,13 +439,20 @@ export function sanitizeProposalPut(body, cur, ctx) {
     const refuse = (why) => { rejected.push({ k, why }); if (stored !== undefined) data[k] = stored; };
     if (!OPTION_ID_RE.test(k)) { refuse('an option id looks like o + 6–20 lowercase letters or digits'); continue; }
     const owner = stored !== undefined ? (stored && stored.client) : (body[k] && body[k].client);
-    if (!inScope(String(owner || ''))) { rejected.push({ k, why: 'outside your clients' }); continue; }
+    if (!inScope(String(owner || ''))) { rejected.push({ k, why: scopeWhy(owner, stored) }); continue; }
+    // deleted long enough ago, and still deleted in this copy: left out, so the read stamp purges it
+    if (isShed(stored) && isObj(body[k]) && body[k].deleted && isObj(stored.deleted) &&
+        typeof stored.deleted.t === 'number' && ctx.now - stored.deleted.t > DELETED_PURGE_MS) { purged.push(k); continue; }
     const r = cleanOption(body[k], stored, ctx);
+    if (stored !== undefined && !r.shed && !(r.ok && r.v === stored)) {
+      const st = staleStamp('prop', stored, ctx);
+      if (st) { refuse(staleWhy(st, ctx)); continue; }                         // a colleague's newer copy stays
+    }
     if (!r.ok) { refuse(r.why); continue; }
     if (r.note) rejected.push({ k, why: r.note });
     data[k] = r.v;
   }
-  return { data, rejected };
+  return { data, rejected, purged };
 }
 
 /* --------------------------------------- rollout --------------------------------------- */
@@ -392,9 +493,13 @@ export function sanitizeRolloutPut(body, cur, ctx) {
     if (META_KEYS[k]) continue;
     const stored = cur[k];
     const refuse = (why) => { rejected.push({ k, why }); if (stored !== undefined) data[k] = stored; };
-    if (cleanClient(k) !== k) { refuse('the key must be a client name (1–60 characters, no ":" or "|")'); continue; }
-    if (!inScope(k)) { rejected.push({ k, why: 'outside your clients' }); continue; }
+    if (cleanClient(k) !== k) { refuse('the key must be a client name (1–60 characters, no ":" or "|", not starting with "_" or "~", no space at either end)'); continue; }
+    if (!inScope(k)) { rejected.push({ k, why: scopeWhy(k) }); continue; }
     const r = cleanRollout(body[k], stored, ctx);
+    if (stored !== undefined && !(r.ok && r.v === stored)) {
+      const st = staleStamp('roll', stored, ctx);
+      if (st) { refuse(staleWhy(st, ctx)); continue; }
+    }
     if (!r.ok) { refuse(r.why); continue; }
     data[k] = r.v;
   }
@@ -423,13 +528,15 @@ export function sanitizeRoadmapPut(body, cur, ctx) {
     const refuse = (why) => { rejected.push({ k, why }); if (stored !== undefined) data[k] = stored; };
     if (!roadmapKey(k)) { refuse('unknown key — <line or alwayson>|<industry or *>'); continue; }
     const v = body[k];
-    if (v == null) continue;                                                     // a clear
+    const st = staleStamp('map', stored, ctx);
+    if (v == null) { if (st) refuse(staleWhy(st, ctx)); continue; }             // a clear (unless it is newer than the read)
     if (!isObj(v)) { refuse('a roadmap entry must be {status, note}'); continue; }
     if (ROADMAP_STATUS.indexOf(v.status) < 0) { refuse('status must be live, pilot, building or planned'); continue; }
     const note = cleanStr(v.note == null ? '' : v.note, 200, 'note');
     if (!note.ok) { refuse(note.why); continue; }
     const out = { status: v.status, note: note.v };
     if (isObj(stored) && stored.status === out.status && (stored.note || '') === out.note) { data[k] = stored; continue; }
+    if (st) { refuse(staleWhy(st, ctx)); continue; }
     data[k] = Object.assign(out, { by: ctx.by, at: ctx.now });
   }
   return { data, rejected };
@@ -438,13 +545,40 @@ export function sanitizeRoadmapPut(body, cur, ctx) {
 /* ---------------------------------------- one door ---------------------------------------- */
 // the route's single call: store name -> its sanitizer. -> {data, rejected} | {error}
 export function sanitizePut(store, body, cur, ctx) {
-  const S = PRICER_STORES[store];
+  const S = Object.prototype.hasOwnProperty.call(PRICER_STORES, store) ? PRICER_STORES[store] : null;
   if (!S) return { error: 'unknown pricer store' };
   if (!isObj(body)) return { error: 'the body must be a JSON object (the whole map)' };
-  const n = Object.keys(body).filter((k) => !META_KEYS[k]).length;
-  if (n > S.maxKeys) return { error: 'too many keys in one save (' + n + ' > ' + S.maxKeys + ')' };
-  if (S.kind === 'cell') return sanitizeCellPut(store, body, cur, ctx);
-  if (S.kind === 'prop') return sanitizeProposalPut(body, cur, ctx);
-  if (S.kind === 'roll') return sanitizeRolloutPut(body, cur, ctx);
-  return sanitizeRoadmapPut(body, cur, ctx);
+  // an option that already shed its snapshot does not count against a save (it is about to be
+  // purged, and counting it would refuse the very save that purges it)
+  const cnt = (k) => !META_KEYS[k] && !(S.kind === 'prop' && isShed(cur && Object.prototype.hasOwnProperty.call(cur, k) ? cur[k] : null));
+  const n = Object.keys(body).filter(cnt).length;
+  if (n > S.maxKeys) {
+    return { error: 'too many keys in one save (' + n + ' > ' + S.maxKeys + ')' +
+      (S.kind === 'prop' ? ' — the proposals store is full: delete options nobody needs (a deleted option no longer counts) and save again' : '') };
+  }
+  let r;
+  if (S.kind === 'cell') r = sanitizeCellPut(store, body, cur, ctx);
+  else if (S.kind === 'prop') r = sanitizeProposalPut(body, cur, ctx);
+  else if (S.kind === 'roll') r = sanitizeRolloutPut(body, cur, ctx);
+  else r = sanitizeRoadmapPut(body, cur, ctx);
+  r.rejected = r.rejected.concat(staleAbsent(store, body, cur, ctx));
+  return r;
+}
+
+// keys the writer LEFT OUT that were written after its read: kvmerge keeps them (the writer never
+// saw them), and the reply names them — so a value the writer cleared, which a colleague had just
+// changed, is reported rather than silently undone. A foreign record is never named.
+export function staleAbsent(store, body, cur, ctx) {
+  const out = [];
+  const S = Object.prototype.hasOwnProperty.call(PRICER_STORES, store) ? PRICER_STORES[store] : null;
+  if (!S || !ctx || typeof ctx.base !== 'number') return out;
+  const inScope = ctx.inScope || (() => true);
+  for (const k of Object.keys(cur || {})) {
+    if (META_KEYS[k] || Object.prototype.hasOwnProperty.call(body || {}, k)) continue;
+    const owner = S.scope === 'field' ? String((cur[k] && cur[k].client) || '') : (S.scope === 'self' ? k : null);
+    if (owner !== null && !inScope(owner)) continue;
+    const st = staleStamp(S.kind, cur[k], ctx);
+    if (st) out.push({ k, why: staleWhy(st, ctx) });
+  }
+  return out;
 }

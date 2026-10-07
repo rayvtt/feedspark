@@ -348,6 +348,8 @@ window.addEventListener('load',restore);
   .tier.hl{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.2)}
   .tier-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
   .tier-h h3{margin:0;font-size:15.5px;font-weight:900;flex:1;min-width:180px}
+  .tier-h .tier-sub{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-top:2px;letter-spacing:0}
+  .money .mv.nm{font-size:13px;line-height:1.5;color:var(--muted);font-weight:800}
   .tier-n{flex:none;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-weight:900;display:grid;place-items:center}
   .proj{display:flex;flex-direction:column;gap:4px;font-size:12.5px;margin-bottom:8px}
   .pj .mk{display:inline-block;min-width:26px;font-size:10.5px;font-weight:900;color:var(--muted)}
@@ -361,12 +363,14 @@ window.addEventListener('load',restore);
   .aon{font-size:12.5px;color:var(--ink-2);background:rgba(26,54,93,.06);border-radius:10px;padding:8px 11px;margin:6px 0 8px}
   .aon .aon-m{font-size:11.5px;color:var(--muted);font-weight:700}
   .save-l{font-size:12px;font-weight:800;color:var(--good);margin:0 0 8px}
-  .lines{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+  /* no min-width on the table itself: at desktop widths a tier card's content box is ~553px, and a 560px floor
+     pushed the → Brief column past the frame (clipped to a sliver); the line cell's own floor sets the minimum */
+  .lines{width:100%;border-collapse:collapse;font-size:12.5px;min-width:0}
   .lines th{text-align:left;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
   .lines td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
   .lines th.num,.lines td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   .lines tr:last-child td{border-bottom:0}
-  .lines .ln-l{font-weight:800;min-width:170px}
+  .lines .ln-l{font-weight:800;min-width:120px}
   .lines .ln-r{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
   .lines .ln-a{white-space:nowrap}
   .lines tr.st-off td,.lines tr.st-none td,.lines tr.st-client td,.lines tr.st-contracted td{color:var(--muted)}
@@ -390,6 +394,11 @@ window.addEventListener('load',restore);
   .cu-l .tog{flex:1;min-width:0}
   .cu-c .tog{display:flex;font-size:12px;padding:3px 0}
   .cu-n{font-size:11px;color:var(--muted);font-weight:700;margin:6px 0}
+  .tseg{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;background:var(--paper)}
+  .tseg button{font:inherit;font-size:11.5px;font-weight:800;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink-2);padding:0 10px;min-height:30px;cursor:pointer}
+  .tseg button:first-child{border-left:0}
+  .tseg button.on{background:var(--navy);color:#fff}
+  .tst-l{display:block;margin-top:2px}
   /* 3 · the debrief kit */
   .db-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
   .db-ctl #db-to{min-width:240px}
@@ -408,6 +417,9 @@ window.addEventListener('load',restore);
   #db-body:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   .db-x{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
   .db-cc{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:6px}
+  .db-stale{font-size:12px;font-weight:800;color:var(--orange-ink);margin:0 0 8px}
+  .db-stale:empty{display:none}
+  .pros-scope{font-size:12px;font-weight:800;color:var(--risk);flex-basis:100%}
   @media(max-width:960px){.db-grid{grid-template-columns:1fr}}
   /* 4 · the rollout */
   #ro-kpis{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
@@ -546,7 +558,7 @@ window.addEventListener('load',restore);
 
 <section id="svc-prop" data-m-digest="no audit yet"><div class="wrap">
   <h2>Proposal</h2>
-  <p class="sub">Tier 1 is Google Optimise; Tier 2 adds AI Readiness on top as one quote, with the set-up hours rounded to blocks once.</p>
+  <p class="sub">Tier 1 · Google-ready makes the feed eligible and adds everything Google recommends; Tier 2 · AI-ready bundles AI Readiness on top as one quote, with the set-up hours rounded to blocks once. A test package can ride on any option.</p>
   <div class="prop-act">
     <button class="btn" id="pq-copy" type="button" title="The client email for every option shown — figures read [£ to confirm — Ray] while a blocker stands">⧉ Copy</button>
     <button class="btn" id="pq-opts" type="button" title="Every option side by side — what each includes, one-off and monthly">⧉ Options</button>
@@ -579,6 +591,7 @@ window.addEventListener('load',restore);
     <div class="db-card" id="db-mail" data-no-collapse>
       <h3>Email</h3>
       <div class="db-guard" id="db-guard"></div>
+      <div class="db-stale" id="db-stale" role="status"></div>
       <input id="db-sub" class="fld" type="text" aria-label="Email subject">
       <textarea id="db-body" aria-label="Email body" spellcheck="true"></textarea>
       <div class="db-x">
@@ -785,14 +798,16 @@ window.addEventListener('load',restore);
 (function () {
   'use strict';
   function loadEngines() {
-    var need = [['/pricer/engine.js', 'PricerEngine', 1], ['/feedlab/engine.js', 'FeedAudit', 1], ['/volume/engine.js', 'FeedArrivals', 0], ['/catalog/engine.js', 'FeedCatalog', 0]];
+    // only the Pricer engine is fatal: without the Feed Lab parser the page still renders (the stored lane, the rate
+    // card, the custom quote, tracking and the saved quotes) and every stream says 'feed parser missing' instead
+    var need = [['/pricer/engine.js', 'PricerEngine', 1], ['/feedlab/engine.js', 'FeedAudit', 0], ['/volume/engine.js', 'FeedArrivals', 0], ['/catalog/engine.js', 'FeedCatalog', 0]];
     return Promise.all(need.map(function (n) {
       if (window[n[1]]) return window[n[1]];
       return fetch(n[0]).then(function (r) { if (!r.ok) throw new Error(n[0] + ' unavailable'); return r.text(); })
         .then(function (s) { if (!s) throw new Error(n[0] + ' is empty'); (new Function(s))(); return window[n[1]] || null; })
         .catch(function (e) { if (n[2]) throw e; return null; });
     })).then(function (a) {
-      if (!a[0] || !a[1]) throw new Error('engines not ready');
+      if (!a[0]) throw new Error('engines not ready');
       return { E: a[0], FA: a[1], AR: a[2], CAT: a[3] };
     });
   }
@@ -1006,7 +1021,7 @@ function renderTrack(){
   $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
   renderSummary(rows);
   if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="11"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
-  var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
+  var opts=[['','— pick —']].concat(E.CATALOG.concat(E.PKG_ROWS||[]).map(function(c){return [c.id,c.name]}));
   $('#ai-body').innerHTML=rows.map(function(r){
     function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
     var head=r.manual
@@ -1366,7 +1381,8 @@ function countParents(client,mkt,force){
   if(MKPROD[key]){applyCount(client,mkt,force);return}
   if(COUNTING[key])return;
   if(!FA||!FA.createParser||!E||!E.parentCounter){
-    volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · the parent-product count needs the live worker (feed parser missing) — type the unique-product count');return}
+    if(!FAILED[key]){FAILED[key]='the feed parser did not load — hard-refresh';svRender()}
+    if(client===CLIENT&&mkt===MARKET)volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · the parent-product count needs the live worker (feed parser missing) — type the unique-product count');return}
   COUNTING[key]={force:!!force};delete FAILED[key];
   if(client===CLIENT&&mkt===MARKET){$('#pz-count').disabled=true;volSrc('counting parent products in the live feed… ('+fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan)')}
   STREAMQ.push(key);svRender();runStreams();
@@ -1411,6 +1427,7 @@ function streamOne(client,mkt,key){
   });
 }
 function onStreamed(key,client,mkt,res){
+  if(!res||!res.pc||!res.pc.rows)return onStreamFail(key,client,mkt,new Error('the live read returned no products — check the feed and read it again'));
   var force=COUNTING[key]&&COUNTING[key].force;delete COUNTING[key];delete PROG[key];
   var p=res.pc;p.when=Date.now();MKPROD[key]=p;LIVE[key]=res;
   if(client===CLIENT){if(p.rows>0)MKROWS[mkt]=p.rows;$('#pz-count').disabled=false}
@@ -1476,17 +1493,27 @@ var EST={},PTE={},ARRV=[],PROF={defaults:{},overrides:{},industryMap:{}},AIQ={},
 var SVQ={},SVQP={},SVPS={},SVPSP={};      // stored content quality + its fetch, the PDP sample + its fetch — per client|mkt
 var PQ={};                                // option -> the package quote for the current build
 var SV={client:'',mode:lsGet('fcc-svc-src','live'),mkts:[],allMkts:[],lang:{},typedP:{},file:null,audits:[],
-  lineOpts:{},targets:{hlTarget:6,descTarget:500,ptMinDepth:3},aimSources:null,
-  popts:{absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false},
-  hlSrc:{desc:true,feed:true,pdp:false,reviews:false},
-  tone:lsGet('fcc-svc-tone','direct'),dbSrc:'build',dbEdited:false,addTo:null,version:null,tab:lsGet('fcc-svc-tab','aspl'),mine:true,spAll:false,silent:false,boot:false};
+  lineOpts:{},targets:null,aimSources:null,popts:null,hlSrc:null,
+  tone:lsGet('fcc-svc-tone','direct'),dbSrc:'build',dbEdited:false,dbBase:'',dbToFor:null,addTo:null,version:null,tab:lsGet('fcc-svc-tab','aspl'),mine:true,spAll:false,silent:false,boot:false};
+// ONE set of Customise defaults — a new client, ↺ Reset and a loaded option all start from it, so nothing the AM
+// set for one client (retainer hours, monitoring absorbed, a test package, a language group …) reprices the next
+function custDefaults(){
+  SV.lineOpts={};SV.aimSources=null;SV.targets={hlTarget:6,descTarget:500,ptMinDepth:3};
+  SV.popts={absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false,tests:0};
+  SV.hlSrc={desc:true,feed:true,pdp:false,reviews:false};
+}
+custDefaults();
 if(['stored','live','file'].indexOf(SV.mode)<0)SV.mode='live';
 
 /* ---- the six /api/pricer/* stores: whole-map kvmerge saves under X-Sync-Base, retried with backoff.
    An edit made while a save is in flight is re-applied on top of the merged map the server answers,
-   so a colleague's key that arrived meanwhile is never deleted by our next save. */
+   so a colleague's key that arrived meanwhile is never deleted by our next save. The server refuses a
+   key whose stored value was stamped after our X-Sync-Base (a colleague changed it since we loaded) and
+   keeps theirs — it lists every such key in _rejected, including keys WE never touched (our whole-map
+   save still carried their old value), so only the keys in our own dirty set (S.dk) are ever reported.
+   A 400 (too many keys), 403 (not allowed) or 413 (the store is full) is HARD: said once, never retried. */
 function mkStore(name){
-  var S={name:name,data:{},base:0,denied:false,loaded:false,err:null,inflight:false,pend:null,dirty:false,wait:2000,timer:null,state:''};
+  var S={name:name,data:{},base:0,denied:false,loaded:false,err:null,inflight:false,pend:null,dirty:false,wait:2000,timer:null,state:'',dk:{},sent:null};
   S.load=function(){
     return fetch('/api/pricer/'+name).then(function(r){
       if(r.status===403){S.denied=true;S.loaded=true;return S}
@@ -1500,7 +1527,7 @@ function mkStore(name){
   };
   // several keys in ONE save (a proposal's options land together, never one PUT each)
   S.setMany=function(m){
-    Object.keys(m).forEach(function(k){var v=m[k];
+    Object.keys(m).forEach(function(k){var v=m[k];S.dk[k]=1;
       if(v==null)delete S.data[k];else S.data[k]=v;
       if(S.inflight){S.pend=S.pend||{};S.pend[k]=v==null?null:v}});
     S.dirty=true;S.push();
@@ -1509,32 +1536,41 @@ function mkStore(name){
   S.push=function(){
     if(S.inflight)return;
     clearTimeout(S.timer);S.inflight=true;S.state='saving…';svSaveState();
+    // the keys THIS save carries a change to — a retry keeps them (sent stays until a save lands)
+    S.sent=Object.assign(S.sent||{},S.dk);S.dk={};
     fetch('/api/pricer/'+name,{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(S.base)},body:JSON.stringify(S.data)})
       .then(function(r){
-        if(r.status===403||r.status===400)return r.json().catch(function(){return{}}).then(function(j){var er=new Error(j.error||('refused ('+r.status+')'));er.hard=true;throw er});
+        if(r.status===403||r.status===400||r.status===413)return r.json().catch(function(){return{}}).then(function(j){var er=new Error(j.error||('refused ('+r.status+')'));er.hard=true;throw er});
         if(!r.ok)throw new Error('save failed ('+r.status+')');
         var b=+r.headers.get('X-Sync-Base')||Date.now();
         return r.json().then(function(m){return{m:m,b:b}});
       })
       .then(function(x){
         S.inflight=false;S.wait=2000;S.base=x.b;
-        var rej=x.m&&x.m._rejected;
+        var mine=S.sent||{};S.sent=null;
+        var rej=((x.m&&x.m._rejected)||[]).filter(function(r){return r&&mine[r.k]});
         if(x.m&&typeof x.m==='object'&&!Array.isArray(x.m)){delete x.m._rejected;S.data=x.m}
         var p=S.pend;S.pend=null;
         if(p){Object.keys(p).forEach(function(k){if(p[k]==null)delete S.data[k];else S.data[k]=p[k]})}
         S.dirty=!!p;
-        S.state=(rej&&rej.length)?'⚠ '+rej[0].why:'saved · shared with the team';svSaveState();
-        if(rej&&rej.length)toast(name+': '+rej[0].k+' — '+rej[0].why);
+        S.state=rej.length?'⚠ '+rej[0].why:'saved · shared with the team';svSaveState();
+        if(rej.length)toast(storeLabel(name,rej[0].k)+' — '+rej[0].why+(rej.length>1?' (+'+(rej.length-1)+' more)':''));
         if(p)S.push();else svRender();
       })
       .catch(function(e){
         S.inflight=false;
-        if(e.hard){S.state='⚠ '+e.message;S.pend=null;S.dirty=false;toast(e.message);S.load().then(svRender);svSaveState();return}
+        if(e.hard){S.state='⚠ '+e.message;S.pend=null;S.dirty=false;S.sent=null;S.dk={};toast(e.message);S.load().then(svRender);svSaveState();return}
         S.state='⚠ Not saved yet — retrying in '+Math.round(S.wait/1000)+'s';svSaveState();
         S.timer=setTimeout(S.push,S.wait);S.wait=Math.min(60000,S.wait*2);
       });
   };
   return S;
+}
+// a refused key, named the way the AM knows it: an option by its SVC reference, a cell by its row and field
+function storeLabel(name,k){
+  if(name==='proposals'){var q=PROPS.data[k];return 'Option '+((q&&q.ref)||k)}
+  if(name==='rollout')return 'Rollout · '+k;
+  return k.replace(/^_[gc]\|/,'').replace('|',' · ');
 }
 var OPS=mkStore('ops'),PRICE=mkStore('price'),COST=mkStore('cost'),PROPS=mkStore('proposals'),ROLL=mkStore('rollout'),RMAP=mkStore('roadmap');
 var STORES={ops:OPS,price:PRICE,cost:COST,proposals:PROPS,rollout:ROLL,roadmap:RMAP};
@@ -1561,6 +1597,10 @@ function hoursOf(c){if(!c)return null;var k=norm(c);if(HRS[c])return HRS[c];
 function inScope(c){return !ME.clients||ME.clients.some(function(x){return norm(x)===norm(c)})}
 function aimRaw(){return (AIQ&&AIQ.ratecard&&AIQ.ratecard.aim)||null}
 function curClient(){return SV.mode==='file'?((SV.file&&SV.file.name)||''):SV.client}
+// ONE normaliser for a prospect's name — typed, or read off the file name: no ':' or '|', no leading '_' / '~'
+// (the store refuses both), trimmed, at most 60 characters
+function prospectName(s){return String(s==null?'':s).replace(/[:|]/g,' ').replace(/\s+/g,' ').replace(/^[\s_~]+/,'').slice(0,60).trim()}
+function propFirst(pid){var k=pid&&Object.keys(PROPS.data).filter(function(k){var q=PROPS.data[k];return q&&q.prop&&q.prop.id===pid&&!q.deleted})[0];return k?PROPS.data[k]:null}
 function wfCat(k){return {title:'title',keywords:'keyword',ptype:'product_type',attr_rule:'technical'}[k]||'data'}
 function gwWord(g,n){return g==='sku'?(n===1?'value':'values'):g==='none'?(n===1?'attribute':'attributes'):(n===1?'product':'products')}
 
@@ -1631,7 +1671,9 @@ function marketsOf(c){
   return out.sort(function(a,b){return (a==='gb'?-1:b==='gb'?1:0)||(a<b?-1:a>b?1:0)});
 }
 function svLoadClient(c,mkts){
-  SV.client=c;lsSet('fcc-svc-client',c);SV.addTo=null;SV.version=null;SV.aimSources=null;SV.lineOpts={};SV.dbEdited=false;SV.dbSrc='build';
+  // another client starts from the defaults — the language groups too (they are keyed by market code only)
+  if(norm(c)!==norm(SV.client)){custDefaults();SV.lang={}}
+  SV.client=c;lsSet('fcc-svc-client',c);SV.addTo=null;SV.version=null;SV.dbEdited=false;SV.dbSrc='build';
   SV.allMkts=marketsOf(c);
   var want=(mkts||[]).filter(function(m){return SV.allMkts.indexOf(m)>=0});
   SV.mkts=want.length?want:(SV.allMkts.length?[SV.allMkts.indexOf('gb')>=0?'gb':SV.allMkts[0]]:[]);
@@ -1668,6 +1710,9 @@ function renderHero(){
     var F=SV.file;
     mk.innerHTML=F?'<span class="mgrp on"><span class="mchip">'+esc(String(F.mkt||'').toUpperCase())+' <span class="st '+(F.status==='done'?'live':F.status==='fail'?'fail':'run')+'">'+esc(F.status==='done'?'read ✓ · '+F.fname:F.status==='fail'?'failed — '+F.err:'reading… '+(F.pct!=null?F.pct+'%':''))+'</span></span></span>'
       :'<span class="svc-hint">Choose the prospect\'s feed file — CSV, TSV or XML. It is read in this browser and never uploaded.</span>';
+    if(ME.clients)note.push('<span class="pros-scope">Prospect proposals need an unscoped signin — your signin covers '+esc(ME.clients.join(', '))+', so a prospect can be audited here but not saved. Ask Ray to save it.</span>');
+    if(SV.version||SV.addTo){var tgt=PROPS.data[SV.version]||propFirst(SV.addTo);
+      if(tgt&&(!F||F.status!=='done'||norm(F.name)!==norm(tgt.client)))note.push('<span class="pros-scope">Re-read '+esc(tgt.client)+'\'s feed file to '+(SV.version?'version this option':'add options to this proposal')+'.</span>')}
   }else{
     mk.innerHTML=SV.allMkts.length?SV.allMkts.map(function(m){
       var on=SV.mkts.indexOf(m)>=0,s=mStatus(c,m),lg=SV.lang[m]||E.langOf(m);
@@ -1747,8 +1792,13 @@ function renderSteps(){
     +shownOpts().map(function(o){var q=PQ[o];return '<div class="stp-m"><span class="mk">'+(o==='go'?'T1':o==='go+ar'?'T2':'AR')+'</span><span class="mv">'+headline(q)+'</span></div>'}).join('')+'</li>');
   host.innerHTML=h.join('');
 }
+// does any priced line put money on the option? — when none does, its £0 is a GAP (nothing could be sized or
+// priced), never a free package: the card, step 8 and the phone digest all say "not sized" instead
+function sized(q){return q.lines.some(function(l){return l.status==='priced'&&((l.gen||0)>0||(l.genHi||0)>0||(l.setupH||0)>0||l.key==='conv')})}
 function headline(q){
-  var from=q.lines.some(function(l){return l.status==='priced'&&(l.genHi!=null&&l.genHi>l.gen||l.est)})?'from ':'';
+  if(!sized(q))return '<span class="nm">not sized</span>'+(q.unknown.length?' · '+q.unknown.length+' not sized':'')+(q.unpriced.length?' · '+q.unpriced.length+' not priced':'')
+    +(q.tests&&q.tests.status==='priced'?' · test package <b>'+GBP(q.tests.price)+'</b>/mo':'');
+  var from=(q.unknown.length||q.unpriced.length||q.lines.some(function(l){return l.status==='priced'&&(l.genHi!=null&&l.genHi>l.gen||l.est)}))?'from ':'';
   var bits=[from+'<b>'+GBP(q.oneOff.total)+'</b> one-off · <b>'+GBP(q.monthly.total)+'</b>/mo'];
   if(q.unknown.length)bits.push(q.unknown.length+' not sized');
   if(q.unpriced.length)bits.push(q.unpriced.length+' not priced');
@@ -1767,15 +1817,22 @@ function estChip(n,est){
 }
 function needCell(l){
   var n=l.need||{};
-  if(l.key==='client'){var parts=[];Object.keys(l.byMkt||{}).forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){parts.push(p.label+(p.n!=null?' '+fmt(p.n):''))})});
-    return parts.length?'<span class="nd-parts">'+esc(parts.slice(0,6).join(' · '))+(parts.length>6?' +'+(parts.length-6):'')+'</span>':'<span class="nm">nothing missing</span>'}
+  if(l.key==='client'){
+    // several markets: each count names its market (GB GTIN / MPN 8 · DE GTIN / MPN 9), never two bare figures
+    var mks=Object.keys(l.byMkt||{}),multi=mks.length>1,parts=[];
+    mks.forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){parts.push((multi?m.toUpperCase()+' ':'')+p.label+(p.n!=null?' '+fmt(p.n):''))})});
+    return parts.length?'<span class="nd-parts" title="'+esc(parts.join('\n'))+'">'+esc(parts.slice(0,6).join(' · '))+(parts.length>6?' +'+(parts.length-6)+' more':'')+'</span>':'<span class="nm">nothing missing</span>'}
   if(n.est==='unknown'||n.n==null)return '<span class="nm" title="'+esc(n.why||'')+'">not sized</span>';
+  // the count PRICED: a market where the line is already contracted is left out of it (the whole need in the tooltip)
+  if(l.pricedNeed&&l.status==='priced'){var pn=l.pricedNeed;n={n:pn.n,lo:pn.lo,hi:pn.hi,est:pn.est,why:'priced on '+fmt(pn.n)+' of '+fmt(l.need.n)+' — the rest is already contracted'}}
   if(n.est==='na')return '<span class="nm" title="'+esc(n.why||'')+'">n/a</span>';
   if(l.key==='attr_rule'){var ps=[];Object.keys(l.byMkt||{}).forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){if(ps.indexOf(p.label)<0)ps.push(p.label)})});
     return '<b>'+fmt(n.n)+'</b> '+gwWord('none',n.n)+(ps.length?' <span class="nd-parts">'+esc(ps.join(', '))+'</span>':'')+estChip(n,l.status==='priced'?(l.est||null):n.est)}
   // the units actually priced, when they differ from the need (a re-used language market, or every product)
   var un=l.status==='priced'&&l.grain!=='none'&&l.units!=null&&Math.abs(l.units-(n.n||0))>=0.5?' <span class="nd-parts" title="Units priced after the language re-use weighting and the line\'s scope">priced on '+fmt(Math.round(l.units))+'</span>':'';
-  return '<b>'+fmt(n.n)+'</b> '+gwWord(l.grain,n.n)+' '+estChip(n,l.scope==='all'?null:n.est)+(l.scope==='all'?' <span class="est est-ratio">every product priced</span>':'')+un;
+  var allChip=l.scope!=='all'?'':(l.est==='bound'?' <span class="est est-bound" title="Category scope not measured — every product of the brand is taken as in scope, an upper bound; the live audit measures it">upper bound</span>'
+    :l.est==='sku-ceiling'?' '+estChip(n,'sku-ceiling'):'')+' <span class="est est-ratio">every product priced</span>';
+  return '<b'+(l.pricedNeed&&l.status==='priced'?' title="'+esc(n.why)+'"':'')+'>'+fmt(n.n)+'</b> '+gwWord(l.grain,n.n)+' '+estChip(n,l.scope==='all'?null:n.est)+allChip+un;
 }
 function moneyCell(l,q){
   if(l.key==='conv'&&q.conv&&l.status==='priced')return '<b>'+GBP(q.conv.setup)+'</b><br><span class="mx">+ '+GBP(q.conv.monthly)+'/mo</span>';
@@ -1803,7 +1860,7 @@ function tierCard(o){
   var q=PQ[o],safe=q.clientSafe,c=curClient();
   var nShown=o==='go'?'1':o==='go+ar'?'2':'A';
   var h='<div class="tier'+(SV.hlPkg===o?' hl':'')+'" data-opt="'+esc(o)+'" data-oneoff="'+q.oneOff.total+'" data-monthly="'+q.monthly.total+'" data-safe="'+(safe?1:0)+'">';
-  h+='<div class="tier-h"><span class="tier-n">'+nShown+'</span><h3>'+esc(q.label)+'</h3>'
+  h+='<div class="tier-h"><span class="tier-n">'+nShown+'</span><h3>'+esc(q.label)+((q.sub||E.OPTION_SUB&&E.OPTION_SUB[o])?'<span class="tier-sub">'+esc(q.sub||E.OPTION_SUB[o])+'</span>':'')+'</h3>'
     +(safe?'<span class="pill good" title="No blocker stands behind any figure — client copy shows the numbers">client-safe</span>'
       :'<span class="pill warn" title="Client copy shows [£ to confirm — Ray] until every blocker below is cleared">Ray to confirm · '+q.blockers.length+'</span>')+'</div>';
   // the Golden Record now → after, per market
@@ -1812,22 +1869,35 @@ function tierCard(o){
       +(p.met?' <span class="pill good">met</span>':(bl.length?' <span class="pj-bl" title="'+esc(bl.map(function(b){return b.key+' '+b.cov+'% — '+b.tag}).join('\n'))+'">still under 99%: '+esc(bl.slice(0,3).map(function(b){return b.key.replace(/_/g,' ')+' ('+b.tag+')'}).join(', '))+(bl.length>3?' …':'')+'</span>':''))
       +(m.air&&m.air.now!=null?' · AI-readiness <b>'+m.air.now+'</b>':'')+(m.lead?'':' <span class="est est-ratio" title="Same language as the lead market — generated copy re-used at the re-use rate">re-use ×'+m.w+'</span>')+'</div>'}).join('')+'</div>';
   // one-off and monthly, apart, ex VAT
-  var oo=q.oneOff,mo=q.monthly;
-  h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div><div class="mv">'+GBP(oo.total)+'</div>'
-    +'<div class="mx">set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+')'
-    +'<br>generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?'<br>Spark AI set-up '+GBP(oo.conv):'')+'</div></div>'
-    +'<div class="mb"><div class="ml">Monthly · ex VAT</div><div class="mv">'+GBP(mo.total)+'</div>'
-    +'<div class="mx">monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+'<br>new products '+GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):'')+(mo.conv?'<br>Spark AI '+GBP(mo.conv)+'/mo':'')+'</div></div></div>';
+  var oo=q.oneOff,mo=q.monthly,sz=sized(q),T=q.tests||{n:0,status:'off'};
+  // the test package, a flat monthly add-on: its own line, its own status — never inside new products or the floor
+  var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">test package '+T.n+' tests '+GBP(T.price)+' ('+GBP(T.perTest)+' a test)'+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
+    :'<span class="tst-l">test package '+T.n+' tests — <span class="nm">price not set — Management</span></span>';
+  var noSz='<div class="mv nm">not sized — see below</div>';
+  h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div>'
+    +(sz?'<div class="mv">'+GBP(oo.total)+'</div>'
+      +'<div class="mx">set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+')'
+      +'<br>generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?'<br>Spark AI set-up '+GBP(oo.conv):'')+'</div>'
+      :noSz+'<div class="mx">no line could be sized or priced yet</div>')+'</div>'
+    +'<div class="mb"><div class="ml">Monthly · ex VAT</div>'
+    +(sz?'<div class="mv">'+GBP(mo.total)+'</div>'
+      +'<div class="mx">monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+'<br>new products '+GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):'')+(mo.conv?'<br>Spark AI '+GBP(mo.conv)+'/mo':'')+tLine+'</div>'
+      :noSz+'<div class="mx">'+(tLine||'no line could be sized or priced yet')+'</div>')+'</div></div>';
   // two hourly rates, both labelled — never a silent rate
   h+='<div class="rates-l">'+esc(oo.rateLabel)+(q.conv?' · conversational '+esc(q.conv.rateLabel)+(q.conv.rangeLabel?', '+esc(q.conv.rangeLabel):''):'')+' · volume factor β '+q.beta.toFixed(3)+'</div>';
   // every new product, and the honest always-on line
-  var newN=0,per=[];q.perMarket.forEach(function(m){if(m.newP!=null){newN+=m.newP;per.push((q.perMarket.length>1?m.mkt.toUpperCase()+' ':'')+GBP(m.perNew))}});
+  // every new product, per market: a market whose new products an AI Quote bundle already covers says so (its
+  // perNew is the would-be price, never charged here); a £0 that only means nothing was sized reads "not sized"
+  var newUnsized=!sz||q.lines.some(function(l){return l.status==='unknown'&&l.grain!=='none'});
+  var newN=0,per=[];q.perMarket.forEach(function(m){var pre=q.perMarket.length>1?m.mkt.toUpperCase()+' ':'';
+    if(m.overlap){per.push(pre+'covered by '+esc(m.overlap));return}
+    if(m.newP!=null){newN+=m.newP;per.push(pre+(!(m.perNew>0)&&newUnsized?'not sized':(newUnsized?'from ':'')+GBP(m.perNew)))}});
   var ao=q.alwaysOn||{};
   h+='<div class="aon"><b>Every new product: '+(per.length?per.join(' · '):'—')+'</b>'
-    +(per.length?' · about '+fmt(newN)+' new a month (at least — products still live)':'')
+    +(newN>0?' · about '+fmt(newN)+' new a month (at least — products still live)':'')
     +'<br><span class="aon-m">'+(ao.live?'New products are picked up on arrival.':'Today: '+esc({weekly:'a weekly',fortnightly:'a fortnightly',monthly:'a monthly'}[ao.mechanism]||'a monthly')+' ASPL run the AM picks · target: on arrival once routing ships')+'</span></div>';
   if(o==='go+ar'&&PQ.go&&PQ.ar){var apart=PQ.go.oneOff.total+PQ.ar.oneOff.total;
-    if(q.oneOff.total<apart)h+='<div class="save-l">'+GBP(apart-q.oneOff.total)+' less one-off than Tier 1 and AI Readiness bought apart — set-up rounded to blocks once'+(oo.bundleDisc?', bundle on generation':'')+'</div>'}
+    if(sz&&sized(PQ.go)&&sized(PQ.ar)&&q.oneOff.total<apart)h+='<div class="save-l">'+GBP(apart-q.oneOff.total)+' less one-off than Tier 1 and AI-ready only bought apart — set-up rounded to blocks once'+(oo.bundleDisc?', bundle on generation':'')+'</div>'}
   // the lines
   h+='<div class="rc-scroll"><table class="lines"><thead><tr><th>Line</th><th>Products needing it</th><th class="num">£ one-off</th><th>Status</th><th></th></tr></thead><tbody>'
     +q.lines.map(function(l){
@@ -1838,7 +1908,8 @@ function tierCard(o){
         +'<td class="ln-a">'+(brief?'<a class="lnk" href="'+briefHref(l,q)+'" title="Brief this line into Workflow">→ Brief</a>':'')+'</td></tr>'}).join('')+'</tbody></table></div>';
   // what is not sized / not priced, each with its fix
   var gaps=q.lines.filter(function(l){return l.status==='unknown'||l.status==='unpriced'});
-  if(gaps.length)h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')+'</ul>';
+  if(gaps.length||T.status==='unpriced')h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')
+    +(T.status==='unpriced'?'<li><b>Test package ('+T.n+' tests a month)</b> — not priced · <span class="fx">'+fixOf({status:'unpriced'})+'</span></li>':'')+'</ul>';
   if(q.blockers.length){var seen={},bl=q.blockers.filter(function(b){if(seen[b.why])return false;seen[b.why]=1;return true});
     h+='<details class="blk-l"><summary>Before this goes to a client — '+bl.length+' to confirm</summary><ul>'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul></details>'}
   if(q.sla)h+='<div class="q-sla">⏱ Live in about '+q.sla+' working days from sign-off</div>';
@@ -1846,11 +1917,17 @@ function tierCard(o){
 }
 function renderTiers(){
   var host=$('#svc-tiers'),opts=shownOpts();
+  renderMode();
   if(!opts.length){host.innerHTML='<div class="empty">The proposal appears once a market is audited.</div>';$('#svc-prop').setAttribute('data-m-digest','no audit yet');return}
   host.innerHTML=opts.map(tierCard).join('');
-  $('#svc-prop').setAttribute('data-m-digest','T1 '+GBP(PQ.go.oneOff.total)+' one-off · '+GBP(PQ.go.monthly.total)+'/mo');
+  $('#svc-prop').setAttribute('data-m-digest',sized(PQ.go)?'T1 '+GBP(PQ.go.oneOff.total)+' one-off · '+GBP(PQ.go.monthly.total)+'/mo':'T1 not sized');
+}
+// version / add mode stays visible even while no audit has run (a file-lane option waits for its file)
+function renderMode(){
   var sv=$('#pq-save');
   sv.textContent=SV.version?'💾 Save as a new version':SV.addTo?'💾 Add to the proposal as options':'💾 Save as proposal';
+  var scoped=SV.mode==='file'&&!!ME.clients;
+  sv.disabled=scoped;sv.title=scoped?'Prospect proposals need an unscoped signin — a prospect is outside your clients':'Save every option shown under one proposal';
   $('#pq-mode').innerHTML=SV.version?'replacing an option — the old one is kept as an earlier version <button type="button" class="lnk" data-act="cancelmode">cancel</button>'
     :SV.addTo?'adding options to an existing proposal <button type="button" class="lnk" data-act="cancelmode">cancel</button>':'';
 }
@@ -1883,8 +1960,15 @@ function renderCust(){
       +'<p class="cu-n">'+(h&&h.balance!=null?'Retainer balance '+(Math.round(h.balance*10)/10)+'h of '+(h.allowance||0)+'h (Task Manager)':'No retainer balance on record for this client')+' — only QC and PM hours can come off it.</p>'
       +'<label class="tog"><input type="checkbox" data-cb="absorbMonitoring"'+(SV.popts.absorbMonitoring?' checked':'')+'> Monitoring absorbed into the retainer</label>'
       +'<label class="tog"><input type="checkbox" data-cb="includeContracted"'+(SV.popts.includeContracted?' checked':'')+'> Include lines already contracted</label>'
-      +'<label class="tog"><input type="checkbox" data-cb="offerAr"'+(SV.popts.offerAr?' checked':'')+'> Offer AI Readiness alone</label>'
-      +'<button type="button" class="btn" data-act="custreset">↺ Reset</button></div>';
+      +'<label class="tog"><input type="checkbox" data-cb="offerAr"'+(SV.popts.offerAr?' checked':'')+'> Offer AI-ready only (AI Readiness without Tier 1)</label>'
+      +'<button type="button" class="btn" data-act="custreset">↺ Reset</button></div>'
+    // a test package rides on every option shown — a flat monthly line, priced by Management
+    +'<div class="cu-c"><h4>Test package</h4><div class="cu-l"><span>Tests a month</span><span class="tseg" role="group" aria-label="Test package — tests a month">'
+      +[[0,'None']].concat((E.TEST_COUNTS||[2,3,4]).map(function(n){return [n,String(n)]})).map(function(x){var on=(+SV.popts.tests||0)===x[0];
+        return '<button type="button" data-tests="'+x[0]+'" class="'+(on?'on':'')+'" aria-pressed="'+(on?'true':'false')+'">'+esc(x[1])+'</button>'}).join('')+'</span></div>'
+      +'<p class="cu-n">'+esc(E.TEST_WHAT?E.TEST_WHAT.charAt(0).toUpperCase()+E.TEST_WHAT.slice(1):'')+'</p>'
+      +'<p class="cu-n">'+(E.TEST_COUNTS||[2,3,4]).map(function(n){var R=composed().g,v=R.tests&&R.tests[n],src=R.src.tests&&R.tests?R.src.tests[n]:'unset';
+        return n+' tests '+(v==null?'not priced':GBP(v)+'/mo'+(src==='ops'?'':' (draft)'))}).join(' · ')+' — set by Management.</p></div>';
 }
 
 /* ---- 3. the debrief kit ---- */
@@ -1922,9 +2006,13 @@ function renderDebrief(){
   if(SV.dbSrc!=='build'&&!props[SV.dbSrc])SV.dbSrc='build';
   srcSel.innerHTML=opts;srcSel.value=SV.dbSrc;
   $$('#db-tone button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tone')===SV.tone)});
-  if(!$('#db-to').value&&ASKTO[c])$('#db-to').value=ASKTO[c];
+  // the contact belongs to the client it was filled for: another client brings ITS remembered contact (or none),
+  // never the last client's buyer — else a draft goes to the wrong client and that address is remembered for it
+  if(SV.dbToFor!==norm(c)){$('#db-to').value=ASKTO[c]||'';SV.dbToFor=norm(c)}
+  else if(!$('#db-to').value&&ASKTO[c])$('#db-to').value=ASKTO[c];
   var t=dbText();
-  if(!t){$('#db-talk').innerHTML='<li class="nm">The talk track appears once a market is audited.</li>';$('#db-ev').innerHTML='';$('#db-flags').innerHTML='';if(!SV.dbEdited){$('#db-sub').value='';$('#db-body').value=''}dbExits(null);return}
+  $('#db-reset').hidden=!SV.dbEdited;
+  if(!t){$('#db-talk').innerHTML='<li class="nm">The talk track appears once a market is audited.</li>';$('#db-ev').innerHTML='';$('#db-flags').innerHTML='';$('#db-stale').textContent='';if(!SV.dbEdited){$('#db-sub').value='';$('#db-body').value=''}dbExits(null);return}
   $('#db-talk').innerHTML=t.talk.map(function(x){return '<li>'+esc(x)+'</li>'}).join('');
   var ev=evidence();
   $('#db-ev').innerHTML=ev.length?ev.map(function(m){return '<div class="ev-m"><div class="ev-h">'+esc(m.mkt.toUpperCase())+' — the client\'s own products</div>'+m.items.map(function(it){
@@ -1934,7 +2022,9 @@ function renderDebrief(){
   var rtc=t.flags.filter(function(f){return /^Ray to confirm: /.test(f)}),tech=t.flags.filter(function(f){return !/^Ray to confirm: /.test(f)});
   $('#db-flags').innerHTML=tech.map(function(f){return '<li>'+esc(f)+'</li>'}).join('')
     +(rtc.length?'<li><details class="blk-l"><summary>For Ray to confirm before sending — '+rtc.length+' item'+(rtc.length===1?'':'s')+'</summary><ul>'+rtc.map(function(f){return '<li>'+esc(f.replace(/^Ray to confirm: /,''))+'</li>'}).join('')+'</ul></details></li>':'');
-  if(!SV.dbEdited){$('#db-sub').value=t.subject;$('#db-body').value=t.body}
+  // an edited email is KEPT when the figures move — the AM is told, and ↺ regenerates on request
+  if(!SV.dbEdited){$('#db-sub').value=t.subject;$('#db-body').value=t.body;SV.dbBase=t.subject+'\n'+t.body}
+  $('#db-stale').innerHTML=SV.dbEdited&&SV.dbBase!==t.subject+'\n'+t.body?'⚠ The figures or options changed since you edited this email — your text is kept. <button type="button" class="lnk" data-act="dbregen">↺ Regenerate it</button>':'';
   $('#db-guard').innerHTML=t.guarded?'<span class="pill warn">guarded</span> every figure reads <b>'+esc(E.GUARD_TXT)+'</b> until its blockers clear — send it to Ray, not the client':'<span class="pill good">client-safe</span> the figures are shown';
   dbExits(t);
 }
@@ -1945,15 +2035,21 @@ function dbExits(t){
 }
 function dbKeys(){return ['svc|'+curClient()+'|'+(SV.dbSrc==='build'?'build':SV.dbSrc)]}
 // sending a saved, client-safe proposal records it as sent on each of its live options
-function markSent(via){
-  if(SV.dbSrc==='build'){toast('Sent text built — save the proposal to record it as sent');return}
-  var list=dbList();
-  if(!list.every(function(q){return q.clientSafe})){toast('Drafted for Ray — not marked sent while figures read "to confirm"');return}
-  var now=Date.now();
-  var upd={};Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&q.prop&&q.prop.id===SV.dbSrc&&!q.deleted&&!q.superseded){var n=JSON.parse(JSON.stringify(q));n.sentAt={t:now,via:via};upd[k]=n}});
-  PROPS.setMany(upd);
-  toast('Recorded as sent');
+function markSent(via,quiet){
+  var msg;
+  if(SV.dbSrc==='build')msg='not recorded as sent — save the proposal first';
+  else if(!dbList().every(function(q){return q.clientSafe}))msg='not marked sent while figures read "to confirm" (drafted for Ray)';
+  else{
+    var now=Date.now();
+    var upd={};Object.keys(PROPS.data).forEach(function(k){var q=PROPS.data[k];if(q&&q.prop&&q.prop.id===SV.dbSrc&&!q.deleted&&!q.superseded){var n=JSON.parse(JSON.stringify(q));n.sentAt={t:now,via:via};upd[k]=n}});
+    PROPS.setMany(upd);msg='recorded as sent';
+  }
+  if(!quiet)toast(msg.charAt(0).toUpperCase()+msg.slice(1));
+  return msg;
 }
+// a click that asks for the generated text again: an edited email is replaced only once the AM says so
+function dbReplaceOk(){return !SV.dbEdited||confirm('Replace your edited email with the generated text?')}
+var DRAFT_MAX=8000;   // the Gmail Drafts bridge (/api/labels/askdraft) keeps 8,000 characters of the body
 
 /* ---- 4. the services rollout ---- */
 var KIND_W={kw:'keywords',titles:'titles',pt:'product types',tagging:'tagging',social:'social titles',short:'short titles'};
@@ -2184,7 +2280,12 @@ function propPatch(id,fn){var q=PROPS.data[id];if(!q)return;var n=JSON.parse(JSO
 function saveProposal(){
   var opts=shownOpts(),c=curClient();
   if(!opts.length){toast('Nothing to save — audit a market first');return}
-  if(!c||c.length>60||/[:|]/.test(c)){toast('Name the client or prospect first (no ":" or "|")');return}
+  if(!c||c.length>60||/[:|]/.test(c)||/^[_~]/.test(c)){toast('Name the client or prospect first (no ":" or "|", not starting with "_" or "~")');return}
+  // the store refuses a client outside a scoped signin — said here, before anything is built or lost
+  if(!inScope(c)){toast(SV.mode==='file'?'Prospect proposals need an unscoped signin — a prospect is outside your clients. Ask Ray to save it.':c+' is not one of your clients — this signin cannot save its proposal');return}
+  // a new version or an added option belongs to the proposal's own client, never the one on the bar by accident
+  var tgt=SV.version?PROPS.data[SV.version]:SV.addTo?propFirst(SV.addTo):null;
+  if(tgt&&norm(tgt.client)!==norm(c)){toast('This '+(SV.version?'version':'option')+' belongs to '+tgt.client+' — '+(SV.mode==='file'?'name the prospect "'+tgt.client+'" and re-read its feed file':'load '+tgt.client)+', or cancel');return}
   var now=Date.now(),by=meName(),aud=SV.audits.map(function(x){return x.audit}),R=composed(),refs=PROPS.data;
   var pid,n0=0,label=null;
   if(SV.version){var old=PROPS.data[SV.version];if(!old){SV.version=null;return saveProposal()}
@@ -2197,13 +2298,13 @@ function saveProposal(){
     var q=PQ[opts[i]],rec=E.snapshotOption(q,aud,R,aimRaw(),{client:c,by:by,t:now,prop:{id:pid,n:n0+i+1,label:label||q.label},
       opts:{popts:popts(),targets:SV.targets,lineOpts:SV.lineOpts,lang:SV.lang,hlSrc:SV.hlSrc,src:SV.mode},existingRefs:refs});
     var bytes=new TextEncoder().encode(JSON.stringify(rec)).length;
-    if(bytes>60*1024){toast('This option is '+Math.round(bytes/1024)+' KB — over the 60 KB a saved option can hold. Save fewer markets at once.');return}
+    if(bytes>60*1024){toast(q.label+' is '+Math.round(bytes/1024)+' KB — over the 60 KB a saved option can hold, so nothing was saved. Save fewer markets at once.');return}
     var oid='o'+rid(12);refs=Object.assign({},refs);refs[oid]=rec;made.push([oid,rec]);
   }
   var upd={};made.forEach(function(x){upd[x[0]]=x[1]});
   if(SV.version){var o2=JSON.parse(JSON.stringify(PROPS.data[SV.version]));o2.superseded={t:now,ref:made[0][1].ref};upd[SV.version]=o2}
   PROPS.setMany(upd);
-  SV.version=null;SV.addTo=null;SV.dbSrc=pid;SV.dbEdited=false;
+  SV.version=null;SV.addTo=null;SV.dbSrc=pid;   // an email the AM edited is kept (the saved options carry the same figures)
   svRender();
   toast('Saved '+made.length+' option'+(made.length===1?'':'s')+' — '+made.map(function(x){return x[1].ref}).join(', '));
 }
@@ -2211,6 +2312,7 @@ function saveProposal(){
 function loadOption(q){
   var o=q.opts||{};
   if(q.client!==SV.client&&SV.mode!=='file')svLoadClient(q.client,q.markets||[]);
+  custDefaults();SV.lang={};
   if(o.targets)SV.targets=Object.assign({},SV.targets,o.targets);
   if(o.popts)Object.keys(o.popts).forEach(function(k){SV.popts[k]=o.popts[k]});
   if(o.lineOpts)SV.lineOpts=JSON.parse(JSON.stringify(o.lineOpts));
@@ -2222,9 +2324,10 @@ function loadOption(q){
 /* ---- the file lane: a prospect's feed, read in this browser ---- */
 function readFile(f){
   if(!f)return;
-  var name=($('#svc-pname').value||'').trim()||f.name.replace(/\.[^.]+$/,'').slice(0,60);
+  if(!FA||!FA.createParser){SV.file={name:prospectName($('#svc-pname').value),mkt:$('#svc-fmkt').value||'gb',fname:f.name,status:'fail',err:'the feed parser did not load — hard-refresh',res:null};svRender();return}
+  var name=prospectName($('#svc-pname').value)||prospectName(f.name.replace(/\.[^.]+$/,''))||'Prospect';
   $('#svc-pname').value=name;
-  SV.file={name:name.replace(/[:|]/g,' ').slice(0,60),industry:$('#svc-ind').value||'Retail',mkt:$('#svc-fmkt').value||'gb',fname:f.name,status:'run',pct:0,res:null};
+  SV.file={name:name,industry:$('#svc-ind').value||'Retail',mkt:$('#svc-fmkt').value||'gb',fname:f.name,status:'run',pct:0,res:null};
   renderHero();
   f.arrayBuffer().then(function(buf){
     var u=new Uint8Array(buf),txt;
@@ -2251,27 +2354,27 @@ function readFile(f){
 /* ---- event wiring (delegated, so a re-render never loses a handler) ---- */
 function wire(){
   $('#svc-src').addEventListener('click',function(e){var b=e.target.closest('button[data-src]');if(!b)return;
-    SV.mode=b.getAttribute('data-src');lsSet('fcc-svc-src',SV.mode);SV.dbEdited=false;svKick();svRender()});
+    SV.mode=b.getAttribute('data-src');lsSet('fcc-svc-src',SV.mode);svKick();svRender()});
   $('#brand').addEventListener('change',function(){if(SV.silent)return;svLoadClient(this.value)});
   $('#svc-mk').addEventListener('click',function(e){var b=e.target.closest('.mchip[data-m]');if(!b)return;
     var m=b.getAttribute('data-m'),i=SV.mkts.indexOf(m);
     if(i>=0){if(SV.mkts.length===1){toast('A proposal needs at least one market');return}SV.mkts.splice(i,1)}
     else{SV.mkts.push(m);fetchMarket(SV.client,m);if(SV.mode==='live')countParents(SV.client,m,false)}
-    SV.dbEdited=false;svRender()});
+    svRender()});
   $('#svc-mk').addEventListener('change',function(e){var s=e.target.closest('select[data-lang]');if(!s)return;SV.lang[s.getAttribute('data-lang')]=s.value;svRender()});
   $('#svc-note').addEventListener('change',function(e){var t=e.target.closest('input[data-tp]');if(!t)return;
     var v=Math.round(+t.value);SV.typedP[SV.client+'|'+t.getAttribute('data-tp')]=v>0?v:0;svRender()});
   $('#svc-file').addEventListener('change',function(){readFile(this.files&&this.files[0]);this.value=''});
   $('#svc-ind').addEventListener('change',function(){if(SV.file){SV.file.industry=this.value;svRender()}});
   $('#svc-fmkt').addEventListener('change',function(){if(SV.file){SV.file.mkt=this.value;svRender()}});
-  $('#svc-pname').addEventListener('change',function(){if(SV.file){SV.file.name=this.value.trim().replace(/[:|]/g,' ').slice(0,60);svRender()}});
+  $('#svc-pname').addEventListener('change',function(){var v=prospectName(this.value);this.value=v;if(SV.file&&v){SV.file.name=v;svRender()}});
   // page-wide actions
   document.addEventListener('click',function(e){var a=e.target.closest('[data-act],[data-load],[data-sp],[data-ro]');if(!a)return;
     var act=a.getAttribute('data-act');
     if(act==='golive'){SV.mode='live';lsSet('fcc-svc-src','live');svKick();svRender();return}
     if(act==='file'){SV.mode='file';lsSet('fcc-svc-src','file');svRender();window.scrollTo({top:0,behavior:'smooth'});return}
     if(act==='tab'){SV.tab=a.getAttribute('data-tab');lsSet('fcc-svc-tab',SV.tab);svRender();var r=$('#svc-rates');if(r)r.scrollIntoView({block:'start'});return}
-    if(act==='custreset'){SV.lineOpts={};SV.targets={hlTarget:6,descTarget:500,ptMinDepth:3};SV.aimSources=null;SV.popts={absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false};svRender();return}
+    if(act==='custreset'){custDefaults();svRender();return}
     if(act==='cancelmode'){SV.version=null;SV.addTo=null;svRender();return}
     if(a.hasAttribute('data-load')){svLoadClient(a.getAttribute('data-load'));window.scrollTo({top:0,behavior:'smooth'});return}
     var sp=a.getAttribute('data-sp');
@@ -2296,8 +2399,11 @@ function wire(){
   $('#pq-copy').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;var t=E.proposalText(o.map(function(k){return PQ[k]}),{tone:SV.tone,guard:true,from:meName()});copyText(t.subject+'\n\n'+t.body,'copied — client copy (guarded while figures are to confirm)')});
   $('#pq-opts').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;copyText(E.optionsText(o.map(function(k){return PQ[k]}),{guard:true}),'copied — every option, side by side')});
   $('#pq-save').addEventListener('click',saveProposal);
-  $('#pq-debrief').addEventListener('click',function(){SV.dbSrc='build';SV.dbEdited=false;svRenderNow();$('#svc-debrief').scrollIntoView({block:'start'})});
+  $('#pq-debrief').addEventListener('click',function(){if(SV.dbSrc!=='build'||SV.dbEdited){if(!dbReplaceOk())return;SV.dbSrc='build';SV.dbEdited=false;svRenderNow()}$('#svc-debrief').scrollIntoView({block:'start'})});
   $('#pq-cust').addEventListener('click',function(){var h=$('#svc-cust'),on=h.hidden;h.hidden=!on;this.setAttribute('aria-expanded',on?'true':'false');if(on)renderCust()});
+  // the test-package segmented control (a button, so a click — guarded on its own data attribute)
+  $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-tests]');if(!b)return;
+    var n=+b.getAttribute('data-tests');SV.popts.tests=(E.TEST_COUNTS||[2,3,4]).indexOf(n)>=0?n:0;svRender()});
   $('#svc-cust').addEventListener('change',function(e){var t=e.target;
     if(t.hasAttribute('data-lon')){var k=t.getAttribute('data-lon'),lo=SV.lineOpts[k]=SV.lineOpts[k]||{};lo.on=t.checked}
     else if(t.hasAttribute('data-lsc')){var k2=t.getAttribute('data-lsc');(SV.lineOpts[k2]=SV.lineOpts[k2]||{}).scope=t.value}
@@ -2307,24 +2413,35 @@ function wire(){
     else if(t.hasAttribute('data-cb')){SV.popts[t.getAttribute('data-cb')]=t.checked}
     else if(t.hasAttribute('data-c')){var f=t.getAttribute('data-c');
       if(f in SV.targets)SV.targets[f]=+t.value;else if(f==='retainerH')SV.popts.retainerH=Math.max(0,+t.value||0);else SV.popts[f]=t.value}
-    SV.dbEdited=false;t.blur&&t.blur();svRender()});
+    t.blur&&t.blur();svRender()});
   // the debrief kit
-  $('#db-src').addEventListener('change',function(){SV.dbSrc=this.value;SV.dbEdited=false;svRender()});
-  $('#db-tone').addEventListener('click',function(e){var b=e.target.closest('button[data-tone]');if(!b)return;SV.tone=b.getAttribute('data-tone');lsSet('fcc-svc-tone',SV.tone);SV.dbEdited=false;svRender()});
-  $('#db-to').addEventListener('change',function(){if(!SV.dbEdited)svRender()});
+  $('#db-src').addEventListener('change',function(){if(!dbReplaceOk()){this.value=SV.dbSrc;return}SV.dbSrc=this.value;SV.dbEdited=false;svRender()});
+  $('#db-tone').addEventListener('click',function(e){var b=e.target.closest('button[data-tone]');if(!b||b.getAttribute('data-tone')===SV.tone)return;if(!dbReplaceOk())return;
+    SV.tone=b.getAttribute('data-tone');lsSet('fcc-svc-tone',SV.tone);SV.dbEdited=false;svRender()});
+  $('#db-to').addEventListener('input',function(){SV.dbToFor=norm(curClient())});
+  $('#db-to').addEventListener('change',function(){SV.dbToFor=norm(curClient());if(!SV.dbEdited)svRender()});
   $('#db-body').addEventListener('input',function(){SV.dbEdited=true;$('#db-reset').hidden=false});
   $('#db-sub').addEventListener('input',function(){SV.dbEdited=true;$('#db-reset').hidden=false});
   $('#db-reset').addEventListener('click',function(){SV.dbEdited=false;this.hidden=true;svRenderNow()});
+  $('#db-stale').addEventListener('click',function(e){if(!e.target.closest('[data-act="dbregen"]'))return;SV.dbEdited=false;svRenderNow()});
   $('#db-copy').addEventListener('click',function(){copyText($('#db-sub').value+'\n\n'+$('#db-body').value,'copied — the email')});
+  // an address another client is remembered by is asked about before anything is drafted to it
+  function toCheck(to){var c=curClient(),lo=to.toLowerCase(),other=Object.keys(ASKTO).filter(function(k){return norm(k)!==norm(c)&&String(ASKTO[k]||'').toLowerCase()===lo})[0];
+    return !other||confirm(to+' is '+other+'\'s remembered contact. Address '+c+'\'s proposal to it anyway?')}
   $('#db-draft').addEventListener('click',function(){
-    var to=$('#db-to').value.trim();if(to.indexOf('@')<1){toast('Add the client contact first');$('#db-to').focus();return}
-    var btn=this;btn.disabled=true;
-    fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:to,subject:$('#db-sub').value,text:$('#db-body').value,keys:dbKeys(),client:curClient()})})
-      .then(function(r){return r.json()}).then(function(j){btn.disabled=false;if(j&&j.ok){ASKTO[curClient()]=to;toast('Gmail draft queued — CC is added when you use ↗ Open in Gmail');markSent('gmail-draft')}else toast((j&&j.error)||'draft failed')})
+    var to=$('#db-to').value.trim(),body=$('#db-body').value;if(to.indexOf('@')<1){toast('Add the client contact first');$('#db-to').focus();return}
+    // the bridge keeps 8,000 characters and answers ok either way — a longer email would land cut mid-text
+    if(body.length>DRAFT_MAX){toast('This email is '+fmt(body.length)+' characters — the Gmail Drafts bridge keeps '+fmt(DRAFT_MAX)+'. Use ↗ Open in Gmail or ⧉ Copy, or shorten it.');return}
+    if(!toCheck(to))return;
+    var btn=this,c=curClient();btn.disabled=true;
+    fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:to,subject:$('#db-sub').value,text:body,keys:dbKeys(),client:c})})
+      .then(function(r){return r.json()}).then(function(j){btn.disabled=false;
+        if(j&&j.ok){ASKTO[c]=to;toast('Gmail draft queued (no CC — ↗ Open in Gmail adds the AM) · '+markSent('gmail-draft',true))}else toast((j&&j.error)||'draft failed')})
       .catch(function(){btn.disabled=false;toast('draft failed — offline?')});
   });
   $('#db-open').addEventListener('click',function(){
     var to=$('#db-to').value.trim(),cc=amCc();
+    if(to&&!toCheck(to))return;
     window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)+(cc?'&cc='+encodeURIComponent(cc):'')+'&su='+encodeURIComponent($('#db-sub').value)+'&body='+encodeURIComponent($('#db-body').value),'_blank','noopener');
     if(to.indexOf('@')>0)fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({to:to,markOnly:true,keys:dbKeys(),client:curClient()})}).catch(function(){});
     markSent('gmail-open');
