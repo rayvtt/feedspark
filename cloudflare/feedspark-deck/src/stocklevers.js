@@ -4,6 +4,10 @@
  * units per size, now N/A) - 3. Hero Sizes (current activated, follow the mapping above) - build an facilitor interface
  * to action BAU vs. SALE perido").
  *
+ * Since 7 Oct 2026 EVERY brand carries four levers (Ray: "every client should have these stock levers: 1. range
+ * completion 2. hero sizes 3. stock quantity threshold 4. stock based exclusion") — a plan saved or not; the Everest
+ * "unit exclusion" above is the stock-based exclusion, scoped to one range.
+ *
  * The reading is docs/stocklevers_engine.js (served to /stock at /stock/levers.js). This module is what the worker trusts
  * instead of the page: the shape a lever plan, a market's own values and a sale period may take, and the edits a signin
  * may make.
@@ -22,11 +26,18 @@
  *                    it down through every edit (the editor is stamped as ed), so an edit can never rewrite who said so
  *
  * NO CLIENT FIGURES IN GIT. The one thing written here is a brand's lever settings as Ray stated them (LEVER_SEEDS —
- * Superdry's, 5 Oct 2026: a range-completion band and line, a units rule and its scope, hero sizes on), put into the
+ * Superdry's, 5 Oct 2026: a range-completion band and line, hero sizes on, a stock-based exclusion and its scope), put into the
  * store ONCE (applyLeverSeeds) and the team's to edit from then on.
  */
 export const LEVERS_KEY = 'stocklevers';
-const KINDS = { rc: 'pct', units: 'units', hero: 'onoff' };
+// the four levers every brand carries (Ray, 7 Oct 2026: "every client should have these stock levers: 1. range completion
+// 2. hero sizes 3. stock quantity threshold 4. stock based exclusion") — held equal to docs/stocklevers_engine.js LEVERS
+export const LEVER_KINDS = { rc: 'pct', hero: 'onoff', thresh: 'units', excl: 'units' };
+const KINDS = LEVER_KINDS;
+// a key stored before the four levers: Superdry's "Stock unit exclusion for Everest" was `units` — it IS the stock-based
+// exclusion, and any save carrying it is stored under its new key
+export const LEVER_LEGACY = { units: 'excl' };
+const keyOf = (k) => LEVER_LEGACY[k] || k;
 const STEPS = ['planned', 'briefed', 'done'];
 const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -63,11 +74,12 @@ export function sanitizeLeverKey(key, v, ctx) {
     if (typeof v !== 'object' || !Array.isArray(v.levers)) return { error: 'bad plan' };
     const levers = [], seen = {};
     for (const l of v.levers.slice(0, 12)) {
-      if (!l || typeof l !== 'object' || !KINDS[l.k] || seen[l.k]) return { error: 'bad lever' };
-      seen[l.k] = 1;
-      const kind = KINDS[l.k], bau = val(kind, l.bau), sale = val(kind, l.sale);
-      if (bau === undefined || sale === undefined) return { error: 'bad value for ' + l.k };
-      const o = { k: l.k, bau, sale };
+      const lk = l && typeof l === 'object' ? keyOf(l.k) : '';
+      if (!lk || !KINDS[lk] || seen[lk]) return { error: 'bad lever' };
+      seen[lk] = 1;
+      const kind = KINDS[lk], bau = val(kind, l.bau), sale = val(kind, l.sale);
+      if (bau === undefined || sale === undefined) return { error: 'bad value for ' + lk };
+      const o = { k: lk, bau, sale };
       if (kind === 'pct') {
         const lo = val('pct', l.lo), hi = val('pct', l.hi);
         if (lo === undefined || hi === undefined || (typeof lo === 'number' && typeof hi === 'number' && lo > hi)) return { error: 'bad band for ' + l.k };
@@ -79,7 +91,7 @@ export function sanitizeLeverKey(key, v, ctx) {
       if (l.note) o.note = str(l.note, 200);
       if (l.rule != null) {
         const rn = l.rule && typeof l.rule === 'object' ? str(l.rule.n, 160) : '';
-        if (!rn) return { error: 'bad rule for ' + l.k };
+        if (!rn) return { error: 'bad rule for ' + lk };
         const rmk = str(l.rule.mk, 8).toUpperCase();
         if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };
         o.rule = { n: rn };
@@ -100,9 +112,11 @@ export function sanitizeLeverKey(key, v, ctx) {
     if (v == null) return { value: null };
     if (typeof v !== 'object' || !v.lv || typeof v.lv !== 'object') return { error: 'bad market values' };
     const lv = {};
-    for (const lk of Object.keys(v.lv).slice(0, 12)) {
-      if (!KINDS[lk]) return { error: 'bad lever ' + lk };
-      const o = v.lv[lk] || {}, bau = val(KINDS[lk], o.bau), sale = val(KINDS[lk], o.sale);
+    for (const raw of Object.keys(v.lv).slice(0, 12)) {
+      const lk = keyOf(raw);
+      if (!KINDS[lk]) return { error: 'bad lever ' + raw };
+      if (lv[lk] && raw !== lk) continue;   // the lever's own key wins over a legacy one in the same save
+      const o = v.lv[raw] || {}, bau = val(KINDS[lk], o.bau), sale = val(KINDS[lk], o.sale);
       if (bau === undefined || sale === undefined) return { error: 'bad value for ' + lk };
       if (bau !== null || sale !== null) lv[lk] = { bau, sale };
     }
@@ -129,15 +143,16 @@ export function sanitizeLeverKey(key, v, ctx) {
     if (v == null) return { value: null };
     if (typeof v !== 'object') return { error: 'bad record' };
     if (!DAY.test(String(v.d || ''))) return { error: 'a record has a day' };
-    if (!KINDS[v.k]) return { error: 'bad lever ' + str(v.k, 20) };
-    const kind = KINDS[v.k], to = val(kind, v.v), from = val(kind, v.was);
+    const rk = keyOf(v.k);
+    if (!KINDS[rk]) return { error: 'bad lever ' + str(v.k, 20) };
+    const kind = KINDS[rk], to = val(kind, v.v), from = val(kind, v.was);
     if (to === undefined || to === null) return { error: 'a record says what was set' };
     if (from === undefined) return { error: 'bad value for what it was' };
     const all = ctx.marketsOf(brand), mk = [];
     for (const x of (Array.isArray(v.mk) ? v.mk : []).slice(0, 40)) { const c = str(x, 8).toUpperCase(); if (all.indexOf(c) < 0) return { error: 'not a ' + brand + ' market: ' + c }; if (mk.indexOf(c) < 0) mk.push(c); }
     if (!mk.length) return { error: 'a record names at least one market' };
     const prev = (ctx.prev && ctx.prev(k)) || null;
-    const o = { d: v.d, mk, k: v.k, mode: v.mode === 'sale' || v.mode === 'bau' ? v.mode : '', v: to, note: str(v.note, 300) };
+    const o = { d: v.d, mk, k: rk, mode: v.mode === 'sale' || v.mode === 'bau' ? v.mode : '', v: to, note: str(v.note, 300) };
     if (from !== null) o.was = from;
     const src = str(v.src, 60); if (src) o.src = src;
     if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; } else { o.by = ctx.by; o.at = ctx.now; }
@@ -171,26 +186,28 @@ export function leverView(store, inScope) {
   });
   return out;
 }
-// the brands in scope with a plan, and how many sale periods each holds — the page's brand row on "All brands"
+// EVERY brand in scope — every brand carries the four levers, a plan or not — with how many levers its plan sets, how
+// many sale periods and records it holds: the page's brand row on "All brands"
 export function leverBrands(store, mine) {
   return (mine || []).map((b) => {
-    const p = store && store['p:' + b];
-    if (!p || !Array.isArray(p.levers)) return null;
-    const periods = Object.keys(store).filter((k) => k.indexOf('e:' + b + '|') === 0).length;
-    return { client: b, levers: p.levers.length, periods };
-  }).filter(Boolean);
+    const p = store && store['p:' + b], has = (pre) => Object.keys(store || {}).filter((k) => k.indexOf(pre + b + '|') === 0).length;
+    const set = p && Array.isArray(p.levers) ? p.levers.filter((l) => l && (l.bau != null || l.sale != null) && KINDS[keyOf(l.k)]).length : 0;
+    return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };
+  });
 }
 
 // ---- seeded plans ----------------------------------------------------------------------------------------------------
-// SUPERDRY (Ray, 5 Oct 2026) — the three levers as Ray stated them, nothing he did not:
+// SUPERDRY (Ray, 5 Oct 2026) — the levers as Ray stated them, nothing he did not (the stock quantity threshold he did not
+// state, so it reads off the rules with no plan value until the team sets one):
 //   range completion: the band 20–40%, BAU at 35% ("currently at 35%"); the SALE line is the team's to set
-//   stock unit exclusion for Everest: N/A now in BAU ("previously >5 units per size, now N/A"); SALE not set
 //   hero sizes: on in BAU ("current activated, follow the mapping above"); SALE not set
+//   stock-based exclusion for Everest: N/A now in BAU ("Stock unit exclusion for Everest (previously >5 units per size,
+//   now N/A)"); SALE not set
 export const LEVER_SEEDS = {
   Superdry: { from: 'Ray’s brief, 5 Oct 2026', levers: [
     { k: 'rc', lo: 20, hi: 40, bau: 35, sale: null, note: '20–40%, currently at 35%' },
-    { k: 'units', scope: 'Everest', bau: 'off', sale: null, was: '> 5 units per size', note: 'previously > 5 units per size, now N/A' },
-    { k: 'hero', bau: 'on', sale: null, note: 'activated — follows the hero-size mapping' }
+    { k: 'hero', bau: 'on', sale: null, note: 'activated — follows the hero-size mapping' },
+    { k: 'excl', scope: 'Everest', bau: 'off', sale: null, was: '> 5 units per size', note: 'previously > 5 units per size, now N/A' }
   ] }
 };
 // written into the store ONCE (on the first read after it ships) unless its key has ever existed — a plan the team

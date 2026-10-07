@@ -49,7 +49,7 @@ const ok = (n, c, got) => {
   if (c) { pass++; console.log('  ✓ ' + n); }
   else { fail++; console.log('  ✗ ' + n + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
-const STUB = `try{localStorage.clear();}catch(e){}
+const STUB = `try{localStorage.clear();}catch(e){}${require('./rules_stub.js').openCards(HTML)}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
 ${RULES_STUB}
  return j({ok:false,error:'stub'},404);};`;
@@ -79,7 +79,7 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
   {
     const { ctx, p, errs } = await open(browser, 1440);
     const top = await p.evaluate(() => { const f = Array.from(document.querySelectorAll('main.wrap > *')).filter((e) => !e.hidden && e.getBoundingClientRect().height > 0)[0]; return { band: !!document.getElementById('kpis') || !!document.querySelector('main .kpis'), first: f ? f.id : '', card: f ? f.classList.contains('card') : false }; });
-    ok('no KPI band on the page; the first thing under the header is a card', !top.band && top.card && top.first === 'lev-card', top);
+    ok('no KPI band on the page; the first thing under the header is a card — which controls each market runs (Ray, 7 Oct 2026: "should be pushed to top")', !top.band && top.card && top.first === 'cov-card', top);
     const kept = await p.evaluate(() => ({ book: !!document.querySelector('#av-sum [data-sv="book"]'), google: /Google/.test((document.getElementById('av-sum') || {}).textContent || ''), cov: document.querySelectorAll('#cov tbody tr').length, heroes: document.querySelectorAll('#heroes tbody tr[data-sv]').length, cuts: document.querySelectorAll('#cuts tbody tr[data-sv]').length, finds: document.querySelectorAll('#finds .fd').length }));
     ok('every figure the band carried still stands on a card: the ad-spend book and Google’s in-stock tile, the coverage matrix, the hero-size runs, the cut-offs, the findings', kept.book && kept.google && kept.cov > 0 && kept.heroes > 0 && kept.cuts > 0 && kept.finds > 0, kept);
 
@@ -101,9 +101,14 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
         rc: tr.cells[5] ? tr.cells[5].textContent.replace(/\s+/g, ' ').trim() : '', hb: tr.cells[4] ? tr.cells[4].textContent.replace(/\s+/g, ' ').trim() : '', sv: !!(tr.cells[6] && tr.cells[6].hasAttribute('data-sv')) }));
       const clip = Array.from(t.querySelectorAll('th,td')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim().slice(0, 30));
       return { cols: ths.length, feeds: ths.slice(1, 4).map((x) => x.getBoundingClientRect().width), frame: fr.clientWidth, sw: fr.scrollWidth, rows, clip,
-        card: !!document.getElementById('sv-card'), inCard: !!document.querySelector('#av-card #sv-rules #sv-t') && !!document.querySelector('#av-card .chead #sv-scn') };
+        card: !!document.getElementById('sv-card'), inCard: !!document.querySelector('#av-card #sv-rules #sv-t'),
+        // Ray, 7 Oct 2026, crossing them out on the card: "these button doesnt apply/ make sense" — the scenario and period
+        // switches live in the forecast panel only; the column head names the forecast it shows
+        tools: Array.from(document.querySelectorAll('#av-card .chead .tools > *')).map((x) => x.id || x.className), sw: !!document.querySelector('#av-card #sv-scn, #av-card #sv-per'),
+        th: ((document.getElementById('sv-th') || {}).textContent || '').replace(/\s+/g, ' ').trim() };
     });
-    ok('one card: the ad-spend card is gone; its scenario controls sit in the in-stock card\'s header, its rule-by-rule table in the card\'s fold', !av.card && av.inCard, av);
+    ok('one card: the ad-spend card is gone; its rule-by-rule table in the card\'s fold', !av.card && av.inCard, av);
+    ok('…no scenario or period switch in the card\'s header (Ray: "these button doesnt apply") — only ⬇ CSV; the column head names the forecast shown', !av.sw && av.tools.join(',') === 'av-csv' && /^Ad spend kept off\s*conservative 5% · a month$/.test(av.th), [av.tools, av.th]);
     ok('seven columns, the three feeds one width', av.cols === 7 && same(av.feeds), [av.cols, av.feeds.map(Math.round)]);
     ok('the table fits its card at 1440px — nothing to scroll sideways', av.sw <= av.frame + 1, [av.sw, av.frame]);
     ok('no header or cell has its text clipped', av.clip.length === 0, av.clip);
