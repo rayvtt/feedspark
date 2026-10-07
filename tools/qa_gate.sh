@@ -244,6 +244,13 @@ else
   echo "   ✗ image harness FAILED — see node tools/test_images.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e3/7: overlay design studio (field summoner, design catalogue, layout)"
+if node tools/test_ovstudio.mjs >/dev/null 2>&1; then
+  echo "   ✓ the price pair is read by value; a fact not in the feed is reported, never invented"
+else
+  echo "   ✗ overlay studio harness FAILED — see node tools/test_ovstudio.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3f/7: KWCal event ⇄ ticket tie + result-window join"
 if node tools/test_kwcal_tie.mjs >/dev/null 2>&1; then
   echo "   ✓ stamped-id precedence, the name-collision guard and the half-month join hold"

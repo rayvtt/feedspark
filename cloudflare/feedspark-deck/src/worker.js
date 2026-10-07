@@ -171,6 +171,15 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /overlays/studio.js — the Design studio's own engine (Ray, 7 Oct 2026: "build a design module to
+// see if client's images would look like with our FeedSpark smart overlay … pulling in messaging
+// based on feeds & adwords data using a module to summon fields"). Where overlay_engine.js reads
+// what overlay is ALREADY live, this one answers what a feed COULD say: the fact catalogue, the
+// field summoner (which of THIS feed's columns carries each fact — resolved by value, because the
+// masters disagree and Monsoon's price pair is the reverse of Schuh's), the design catalogue mapping
+// onto the real image-creator scripts, and the pure layout geometry. Named *_engine.js so the Text
+// glob covers it — the trap that shipped /images with an empty engine.
+import OVERLAY_STUDIO_SRC from "../../../docs/overlay_studio_engine.js";
 // /images module (Ray, 15 Sep 2026): the client's whole media estate — image_link +
 // additional_image_link 1..10 — grouped by the SHOT TOKEN read off each URL, so one tag
 // lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
@@ -1622,6 +1631,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/overlays/studio.js' && request.method === 'GET') {
+      return new Response(OVERLAY_STUDIO_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/design/fcc.css' && request.method === 'GET') {
       return new Response(DESIGN_CSS, { headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' } });

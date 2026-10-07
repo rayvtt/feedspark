@@ -35,6 +35,8 @@ jobs:
         run: node tools/check_textmodules.js
       - name: Image library engine unit tests (shot tokens off the URL + collector)
         run: node tools/test_images.mjs
+      - name: Overlay design studio engine (field summoner, designs, layout geometry)
+        run: node tools/test_ovstudio.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
         run: node tools/test_kwcal_tie.mjs
       - name: KWCal KPI band + market list

@@ -254,6 +254,76 @@ window.addEventListener('load',restore);
 [data-theme=dark] table.est tr.row:hover td{background:#20242E}
 [data-theme=dark] .hero p.sub code,[data-theme=dark] .meth code{background:#20242E}
 </style>
+<style>/* ===== OVL-STUDIO: the Design studio ===== */
+#studio .sth{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.st-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.st-box{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:3px 4px 3px 9px;min-width:260px;flex:1 1 300px}
+.st-box input{border:0;outline:0;font:inherit;font-size:13px;color:var(--ink);background:transparent;flex:1;min-width:0;padding:5px 2px}
+.st-state{font-size:12px;color:var(--ink-2);min-height:16px}
+.st-wrap{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:16px;align-items:start;margin-top:14px}
+.st-prod{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;background:var(--wash);padding:10px;margin-bottom:14px}
+.st-prod img{width:76px;height:76px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px;flex:none}
+.st-prod .pn{font-size:13px;font-weight:700;line-height:1.35}
+.st-prod .pm{font-size:11.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.st-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:12px}
+.st-card{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.st-card:hover{border-color:var(--orange);box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.st-card.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.28)}
+.st-card canvas{display:block;width:100%;height:auto;background:#F2F2F2}
+.st-card .cf{padding:7px 9px 8px}
+.st-card .cn{font-size:12.5px;font-weight:700;display:flex;gap:6px;align-items:center;justify-content:space-between}
+.st-card .cd{font-size:11px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+.st-card .cd b{color:var(--orange-ink);font-weight:700}
+.st-pill{font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:999px;white-space:nowrap;flex:none}
+.st-pill.yes{background:var(--goog-bg);color:#1C7A47}
+.st-pill.thin{background:rgba(245,166,35,.2);color:var(--orange-ink)}
+.st-pill.partial{background:rgba(245,166,35,.2);color:var(--orange-ink)}
+.st-pill.no{background:rgba(215,38,61,.14);color:#A81C2E}
+.st-pill.always{background:var(--tile);color:var(--ink-2)}
+.st-rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.st-pan{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px}
+.st-pan h4{margin:0 0 3px;font-size:13px}
+.st-pan .ph,.st-wb .ph{font-size:11.5px;color:var(--ink-2);line-height:1.5;margin-bottom:9px}
+.st-wb .ph{margin:3px 0 7px}
+.st-rec code,.st-wb code{text-transform:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+.st-f{display:grid;grid-template-columns:1fr auto;gap:3px 8px;align-items:center;font-size:12px;padding:6px 0;border-top:1px solid var(--line)}
+.st-f:first-of-type{border-top:0}
+.st-f .fn{font-weight:700;display:flex;gap:5px;align-items:center;min-width:0}
+.st-f .fw{grid-column:1/-1;font-size:11px;color:var(--ink-2);line-height:1.45}
+.st-f .fb{grid-column:1/-1;height:4px;border-radius:2px;background:var(--tile);overflow:hidden}
+.st-f .fb i{display:block;height:100%;border-radius:2px}
+.st-src{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:3px;flex:none}
+.st-src.feed{background:var(--goog-bg);color:#1C7A47}
+.st-src.ads{background:rgba(37,99,235,.14);color:#1D4ED8}
+.st-src.master{background:rgba(245,166,35,.2);color:var(--orange-ink)}
+.st-src.none{background:var(--tile);color:var(--ink-2)}
+.st-val{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--ink);text-align:right;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-gap{font-size:11.5px;line-height:1.5;border-left:3px solid var(--orange);background:var(--wash);padding:8px 10px;border-radius:0 6px 6px 0;margin-top:9px}
+.st-wb{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px;margin-top:14px}
+.st-wb canvas{display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#F2F2F2}
+.st-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.st-ed{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.st-ed label{font-size:11px;font-weight:700;color:var(--ink-2);display:flex;gap:6px;align-items:center;justify-content:space-between}
+.st-ed input[type=text]{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);width:100%;box-sizing:border-box}
+.st-ed .tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--ink-2);background:var(--tile);padding:1px 5px;border-radius:3px}
+.st-rec{margin-top:4px}
+table.st-rt{width:100%;border-collapse:collapse;font-size:11.5px}
+table.st-rt td{padding:4px 6px;border-top:1px solid var(--line);vertical-align:top}
+table.st-rt td.k{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;white-space:nowrap;color:var(--orange-ink)}
+table.st-rt td.v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+table.st-rt td.nt{color:var(--ink-2)}
+.st-url{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;background:var(--wash);border:1px solid var(--line);border-radius:6px;padding:8px;word-break:break-all;line-height:1.5;max-height:112px;overflow:auto;margin-top:8px}
+.st-acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.st-drop{font-size:11.5px;color:var(--ink-2);line-height:1.5;margin-top:8px}
+.st-drop b{color:var(--ink)}
+@media (max-width:1180px){.st-wrap{grid-template-columns:minmax(0,1fr)}.st-two{grid-template-columns:minmax(0,1fr)}}
+[data-theme=dark] .st-box,[data-theme=dark] .st-box input{background:#20242E;color:var(--ink)}
+[data-theme=dark] .st-card,[data-theme=dark] .st-pan,[data-theme=dark] .st-wb{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] .st-prod{background:#20242E}
+[data-theme=dark] .st-ed input[type=text]{background:#20242E;color:var(--ink);border-color:var(--line)}
+[data-theme=dark] .st-url,[data-theme=dark] .st-gap{background:#20242E}
+[data-theme=dark] .st-card canvas,[data-theme=dark] .st-wb canvas{background:#15171D}
+</style>
 
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
@@ -303,6 +373,33 @@ window.addEventListener('load',restore);
 
   </div>
 
+  <div class="card" id="studio">
+    <div class="sth">
+      <div>
+        <h3>🎨 Design studio</h3>
+        <div class="ch" data-instr>What this client's own images would look like carrying a FeedSpark smart overlay. Every message is read off this feed and this brand's Google Ads — a design whose message is not in the data is shown as unavailable rather than filled with a number nobody can check.</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <button class="btn pri" id="st-read" type="button" title="Read a sample of this feed and work out which of its own columns carries each overlay message">⚡ Read this feed's fields</button>
+        <button class="btn" id="st-ads" type="button" title="Read this brand's Google Ads traffic per product (FeedHero reports) so an overlay can carry clicks, views and sales">📈 Add Google Ads</button>
+      </div>
+    </div>
+    <div class="st-bar">
+      <div class="st-box"><span aria-hidden="true">🔍</span><input id="st-q" type="search" placeholder="Pick a product to design on — ID or title" autocomplete="off" aria-label="Pick a product by ID or title"><button class="btn sm pri" id="st-go" type="button">Find</button></div>
+      <button class="btn sm" id="st-rand" type="button" title="Take a product from this feed that carries a discount, so every design has something to say">🎲 A product on offer</button>
+    </div>
+    <div class="st-state" id="st-state">Pick a client and market above, then read the feed's fields.</div>
+    <div class="st-wrap" id="st-wrap" hidden>
+      <div>
+        <div class="st-prod" id="st-prod" hidden></div>
+        <div class="st-gal" id="st-gal"></div>
+        <div class="st-wb" id="st-wb" hidden></div>
+      </div>
+      <div class="st-rail" id="st-rail"></div>
+    </div>
+  </div>
+
+
   <div class="split2">
     <div>
       <div class="card">
@@ -343,6 +440,7 @@ window.addEventListener('load',restore);
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
 <script src="/overlays/engine.js" onerror="window.__ovEngineFail=1"></script>
+<script src="/overlays/studio.js" onerror="window.__stEngineFail=1"></script>
 
 <script>
 (function(){
@@ -429,6 +527,9 @@ window.addEventListener('load',restore);
 
   /* ---------- one feed's capture ---------- */
   function load(){
+    /* the Design studio keeps a whole feed's summoned fields, so it has to be told when the page
+       moves to another one — otherwise it would draw Monsoon's price columns over Schuh's product */
+    try{ window.dispatchEvent(new CustomEvent('fcc-ovl-feed',{detail:{client:CLIENT,market:MKT}})); }catch(e){}
     if(!CLIENT||!MKT){ DATA=null; render(); return; }
     var c=CLIENT,m=MKT;
     fetch('/api/overlays?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
@@ -785,6 +886,590 @@ window.addEventListener('load',restore);
     }
     return next();
   }
+
+  /* ========================= OVL-STUDIO =========================
+     The Design studio. Ray, 7 Oct 2026: "build a design module to see if client's images would
+     look like with our FeedSpark smart overlay … pulling in messaging based on feeds & adwords
+     data using a module to summon fields and make it techy".
+
+     The field summoner is the module he asked for: it reads a SAMPLE of this feed (500 products,
+     then the stream is cancelled — the summoner needs values, not a 125MB feed) and works out
+     which of the feed's OWN columns carries each overlay message, by value where a name would
+     mislead. Google Ads comes from /api/catalog/ads, the same per-product read the Catalogue
+     module uses, and stock from the master through /api/catalog/master — because no output feed
+     in the estate carries stock, which is the finding the readiness panel reports rather than
+     papering over with an invented number.
+
+     Pixels come through /api/catalog/img so the canvas is same-origin and the composite can be
+     downloaded; a feed whose image host the proxy does not allow still shows every design, drawn
+     on a plain plate and saying so. ================================================= */
+  var STU=window.FeedOverlayStudio;
+  var ST_ROWS=500, ST_GAL=480, ST_BIG=1000;
+  var ST={client:'',mkt:'',hdr:null,rows:[],sum:null,ads:null,adsCov:null,adsWin:'',adsNote:'',
+          adsShort:'',mqty:null,mval:null,mfile:'',pid:'',row:null,res:null,design:'',text:{},
+          img:null,img2:null,imgWhy:'',imgSrc:'',busy:false,read:false};
+  var stState=function(t){ var e=$('#st-state'); if(e)e.textContent=t||''; };
+  var wait=function(ms){ return new Promise(function(r){setTimeout(r,ms)}); };
+  var stFail=function(){ return window.__engineFail||window.__stEngineFail||!window.FeedAudit||!STU; };
+
+  /* ---------- read a sample of the feed: header + full rows ---------- */
+  function stStream(client,mkt,onProg){
+    return new Promise(function(res,rej){
+      if(stFail())return rej(new Error(window.__engineFail||window.__stEngineFail?'engine scripts did not load — hard-refresh the page':'engines not ready'));
+      var hdr=null,rows=[],parser=null,n=0,reader=null,done=false;
+      var finish=function(){ if(done)return; done=true; try{if(reader)reader.cancel()}catch(e){} res({hdr:hdr||[],rows:rows,read:n}); };
+      var onRow=function(r,h){
+        if(!hdr){ hdr=r.map(function(x){return String(x==null?'':x)}); return; }
+        if(h&&h.length&&h.length!==hdr.length) hdr=h.map(function(x){return String(x==null?'':x)});
+        if(rows.length<ST_ROWS){
+          var o={};
+          for(var i=0;i<hdr.length;i++){ var v=r[i]; if(v!=null&&String(v).trim()!=='') o[hdr[i]]=String(v).trim(); }
+          rows.push(o);
+        }
+        if(++n%200===0&&onProg)onProg(n);
+      };
+      fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(resp){
+        if(!resp.ok||!resp.body)return resp.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('the feed proxy said '+resp.status))});
+        reader=resp.body.getReader(); var dec=new TextDecoder();
+        function step(){ return reader.read().then(function(x){
+          if(done)return;
+          if(x.done){ if(parser){parser.push(dec.decode());parser.end();} return finish(); }
+          var chunk=dec.decode(x.value,{stream:true});
+          if(!parser){ if(!chunk.trim())return step(); parser=/^\s*</.test(chunk)?window.FeedAudit.createXmlParser(onRow):window.FeedAudit.createParser(onRow); }
+          parser.push(chunk);
+          /* a sample is enough — stop reading rather than pull a whole catalogue down */
+          if(rows.length>=ST_ROWS&&hdr&&hdr.length)return finish();
+          return step(); }); }
+        return step();
+      }).catch(function(e){ if(!done)rej(e); });
+    });
+  }
+
+  /* ---------- Google Ads per product (a chunk a call, as the route serves it) ---------- */
+  function stAdsLoad(){
+    var tries=0;
+    function step(){
+      return fetch('/api/catalog/ads?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt))
+        .then(function(r){ return r.json().catch(function(){return{}}).then(function(j){ j.__s=r.status; return j; }); })
+        .then(function(j){
+          if(j.__s===202){ if(++tries>15)throw new Error('Google Ads is still downloading this report — try again in a minute'); stState('Google Ads — FeedHero is downloading this report from Google…'); return wait(4000).then(step); }
+          if(!j.ok)throw new Error(j.error||('Google Ads unavailable ('+j.__s+')'));
+          if(j.missing){ ST.ads=null; ST.adsCov=0; ST.adsNote=j.note||'Google Ads returned no traffic for this account'; return null; }
+          if(!j.done){ if(++tries>60)throw new Error('the Google Ads read did not finish'); stState('Google Ads — '+fmt(j.got)+' of '+fmt(j.total)+' products read…'); return step(); }
+          return j;
+        });
+    }
+    return step().then(function(j){
+      if(!j)return;
+      var map={}; var rw=j.rows||{};
+      Object.keys(rw).forEach(function(k){ var a=rw[k]||[]; map[String(k).toLowerCase()]={impr:+a[0]||0,clicks:+a[1]||0,cost:+a[2]||0,conv:+a[3]||0,value:+a[4]||0}; });
+      ST.ads=map; ST.adsWin=j.range||String(j.period||'').replace(/_/g,' ');
+      /* the panel says "Last 7 Days (30/09/2026 - 06/10/2026)"; an overlay cannot — a date range
+         on a product card is longer than the message it qualifies, and it ran off the picture */
+      ST.adsShort=String(j.period||'').replace(/_/g,' ').replace(/^(\d+) (day|month)s?$/,'$1 $2s')||'the window';
+      var hit=0; ST.rows.forEach(function(r){ var id=stIdOf(r); if(id&&map[id.toLowerCase()])hit++; });
+      ST.adsCov=ST.rows.length?hit/ST.rows.length:null;
+      ST.adsNote='';
+    });
+  }
+  function stIdOf(r){ var b=ST.sum&&ST.sum.slots.id; if(b&&b.col)return String(r[b.col]||''); 
+    for(var k in r){ if(STU.normKey(k)==='id')return String(r[k]||''); } return ''; }
+
+  /* ---------- the master feed: the stock column no output feed carries ---------- */
+  function stMasterLoad(){
+    return fetch('/api/catalog/master?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt))
+      .then(function(r){ return r.json().catch(function(){return{}}); })
+      .then(function(j){
+        if(!j||!j.ok||!j.headers)return;
+        ST.mfile=j.file||'';
+        var want=STU.SLOTS.qty.names, col='';
+        j.headers.forEach(function(h){ if(!col&&want.indexOf(STU.normKey(h))>=0)col=h; });
+        ST.mqty=col?{col:col,fill:null,conf:'high',why:'the master feed names it '+col,samples:[]}:null;
+      }).catch(function(){});
+  }
+  /* this one product's real stock figure, so the scarcity designs preview a real number */
+  function stMasterRow(pid){
+    ST.mval=null;
+    if(!ST.mqty||!pid)return Promise.resolve();
+    return fetch('/api/catalog/master/row?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt)+'&q='+encodeURIComponent(pid))
+      .then(function(r){ return r.json().catch(function(){return{}}); })
+      .then(function(j){
+        if(!j||!j.ok||!j.rows||!j.rows.length)return;
+        var qi=-1,ii=-1;
+        (j.headers||[]).forEach(function(h,i){ var k=STU.normKey(h); if(qi<0&&STU.SLOTS.qty.names.indexOf(k)>=0)qi=i; if(ii<0&&k==='id')ii=i; });
+        if(qi<0)return;
+        var want=String(pid).toLowerCase(),hit=null;
+        j.rows.forEach(function(rw){ if(hit)return; if(ii<0||String(rw[ii]||'').toLowerCase()===want)hit=rw; });
+        if(hit&&STU.intOf(hit[qi])!=null)ST.mval=STU.intOf(hit[qi]);
+      }).catch(function(){});
+  }
+
+  /* ---------- summon ---------- */
+  function stSummon(){
+    ST.sum=STU.summon(ST.hdr,ST.rows,{
+      ads:!!ST.ads, adsCov:ST.adsCov, adsWindow:ST.adsWin,
+      adsWhy:isFb(ST.mkt)?'Google Ads belongs to the Google market — a Meta catalogue feed has none':(ST.adsNote||'press Add Google Ads'),
+      master:ST.mqty?{qty:ST.mqty}:null });
+  }
+  function stRead(){
+    if(ST.busy)return Promise.resolve();
+    if(!CLIENT||!MKT){ stState('Pick a client and market above first.'); return Promise.resolve(); }
+    ST.busy=true; $('#st-read').disabled=true;
+    ST.client=CLIENT; ST.mkt=MKT; ST.ads=null; ST.adsCov=null; ST.adsWin=''; ST.adsShort=''; ST.adsNote=''; ST.mqty=null; ST.mval=null;
+    var who=ST.client+' '+mktLbl(ST.mkt);
+    stState(who+' — reading a sample of the live feed…');
+    return stStream(ST.client,ST.mkt,function(n){ stState(who+' — '+fmt(n)+' products read…'); })
+      .then(function(d){
+        ST.hdr=d.hdr; ST.rows=d.rows;
+        if(!ST.rows.length)throw new Error('the feed read back no products');
+        return stMasterLoad();
+      })
+      .then(function(){
+        stSummon(); ST.read=true;
+        $('#st-wrap').hidden=false;
+        stState(who+' — '+ST.cols()+' columns read off '+fmt(ST.rows.length)+' products. '+STU.readiness(ST.sum).verdict+'.');
+        stRail();
+        return stAuto();
+      })
+      .catch(function(e){ stState(who+' — could not read this feed: '+((e&&e.message)||e)); })
+      .then(function(){ ST.busy=false; $('#st-read').disabled=false; });
+  }
+  ST.cols=function(){ return ST.hdr?ST.hdr.length:0; };
+
+  /* pick a product worth designing on: one that carries a discount, so every design has
+     something to say; failing that, the first product with an image */
+  function stAuto(force){
+    if(!ST.sum)return Promise.resolve();
+    var best=null,any=null;
+    for(var i=0;i<ST.rows.length;i++){
+      var r=ST.rows[i]; if(!srcImage(r).url)continue;
+      if(!any)any=r;
+      var rr=STU.resolveFacts(r,ST.sum,null,null);
+      if(rr.sale_pct.ok){ best=r; break; }
+    }
+    var pickRow=best||any;
+    if(!pickRow){ stState(stMsg()+' — no product in the sample carries a readable image.'); return Promise.resolve(); }
+    if(!force&&ST.row)return Promise.resolve();
+    return stPick(pickRow,best?'':'no product in the sample carries a discount, so the sale designs have nothing to say on it');
+  }
+  var stMsg=function(){ return ST.client+' '+mktLbl(ST.mkt); };
+
+  /* ---------- the source image (behind any overlay already live) ---------- */
+  function srcImage(row){
+    var b=ST.sum&&ST.sum.slots.image, u=b&&b.col?String(row[b.col]||'').trim():'';
+    if(!u){ var b2=ST.sum&&ST.sum.slots.image2; u=b2&&b2.col?String(row[b2.col]||'').split(/[,|]\s*(?=https?:)/)[0].trim():''; }
+    var why='',second='';
+    if(u&&window.Overlay&&window.Overlay.isOverlayUrl(u)){
+      var cls=window.Overlay.classifyOverlay(u);
+      var got=(cls&&cls.sources&&cls.sources.length)?cls.sources.slice():[];
+      /* the estate's overlay URLs carry their source images RAW (checked on Monsoon's live Meta
+         feed, 7 Oct 2026), which is what the classifier reads. A feed that percent-encoded them
+         instead would hand back no sources at all and this would silently composite on top of the
+         composite — so the image params are decoded as a fallback rather than trusted to be raw. */
+      if(!got.length&&cls&&cls.recipe){
+        cls.recipe.forEach(function(r){
+          if(got.length>1||!/^img_url/.test(String(r.k||'')))return;
+          var v=String(r.v||''); if(/^https?:\/\//i.test(v)){ got.push(v); return; }
+          try{ var dv=decodeURIComponent(v); if(/^https?:\/\//i.test(dv))got.push(dv); }catch(e){}
+        });
+      }
+      if(got.length){
+        why='the source image behind the '+((cls&&cls.label)||'overlay')+' already live on this feed';
+        if(got.length>1)second=got[1];
+        u=got[0];
+      }
+    }
+    if(!second){ var b3=ST.sum&&ST.sum.slots.image2; var v3=b3&&b3.col?String(row[b3.col]||'').split(/[,|]\s*(?=https?:)/)[0].trim():''; if(v3&&v3!==u)second=v3; }
+    return {url:u,why:why,second:second};
+  }
+  function stLoadImg(url){
+    return new Promise(function(res){
+      if(!url)return res({img:null,why:'this product carries no image'});
+      var im=new Image();
+      im.onload=function(){ res({img:im,why:''}); };
+      im.onerror=function(){ res({img:null,why:'the pixels of this image could not be read — its host is not one this feed’s own image links use, so the designs are drawn on a plain plate'}); };
+      im.src='/api/catalog/img?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt)+'&url='+encodeURIComponent(url);
+    });
+  }
+
+  /* ---------- pick a product ---------- */
+  function stPick(row,note){
+    ST.row=row; ST.text={}; ST.img=null; ST.img2=null;
+    var src=srcImage(row);
+    ST.pid=stIdOf(row); ST.imgSrc=src.url; ST.imgWhy=src.why;
+    stState(stMsg()+' — reading '+(ST.pid||'this product')+'…');
+    return stMasterRow(ST.pid)
+      .then(function(){ ST.res=stResolve(); return stLoadImg(src.url); })
+      .then(function(g){ ST.img=g.img; ST.imgWhy=g.why||src.why;
+        if(!src.second)return null;
+        return stLoadImg(src.second).then(function(g2){ ST.img2=g2.img; }); })
+      .then(function(){
+        var rd=STU.readiness(ST.sum);
+        stState(stMsg()+' — '+ST.cols()+' columns, '+fmt(ST.rows.length)+' products read. '+rd.verdict+(note?' · '+note:'')+'.');
+        stProd(); stGallery(); stRail();
+        if(ST.design)stWb(ST.design);
+      });
+  }
+  function stResolve(){
+    var a=ST.ads?ST.ads[String(ST.pid).toLowerCase()]:null;
+    if(a)a={clicks:a.clicks,impr:a.impr,conv:a.conv,cost:a.cost,value:a.value,window:ST.adsShort||ST.adsWin};
+    return STU.resolveFacts(ST.row,ST.sum,a||null,ST.mval!=null?{qty:ST.mval}:null);
+  }
+  function stProd(){
+    var e=$('#st-prod'); if(!e)return;
+    var b=ST.sum.slots.title, ti=b&&b.col?String(ST.row[b.col]||''):'';
+    var bits=[];
+    if(ST.pid)bits.push('ID '+esc(ST.pid));
+    var pn=ST.res.price_now.text,pw=ST.res.price_was.text;
+    if(pn)bits.push(esc(pn)+(pw?' <span style="text-decoration:line-through;opacity:.7">'+esc(pw.replace(/^was /,''))+'</span>':''));
+    if(ST.mval!=null)bits.push(esc(ST.mval)+' in stock <span class="st-src master">master</span>');
+    var ad=ST.ads?ST.ads[String(ST.pid).toLowerCase()]:null;
+    if(ad)bits.push(fmt(ad.clicks)+' clicks · '+fmt(ad.impr)+' impressions'+(ST.adsWin?' · '+esc(ST.adsWin):'')+' <span class="st-src ads">ads</span>');
+    else if(ST.ads)bits.push('no Google Ads traffic in the window');
+    e.hidden=false;
+    e.innerHTML=(ST.img?'<img src="'+esc(ST.img.src)+'" alt="">':'<div style="width:76px;height:76px;border:1px dashed var(--line);border-radius:6px;flex:none"></div>')
+      +'<div style="min-width:0"><div class="pn">'+(esc(ti)||'(no title)')+'</div><div class="pm">'+bits.join(' &nbsp;·&nbsp; ')+'</div>'
+      +(ST.imgWhy?'<div class="pm" style="color:var(--orange-ink)">'+esc(ST.imgWhy)+'</div>':'')+'</div>';
+  }
+
+  /* ---------- paint ---------- */
+  function drawFit(g,img,x,y,w,h){
+    var iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+    if(!iw||!ih)return;
+    var s=Math.min(w/iw,h/ih),dw=iw*s,dh=ih*s;
+    g.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+  }
+  function plate(g,W,H){
+    g.fillStyle='#E9E9E6'; g.fillRect(0,0,W,H);
+    g.strokeStyle='#CFCFC9'; g.lineWidth=Math.max(2,W/300);
+    g.strokeRect(W*0.22,H*0.18,W*0.56,H*0.64);
+    g.fillStyle='#B9B9B2'; g.font='600 '+Math.round(W*0.034)+'px Lato,system-ui,sans-serif';
+    g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('product image', W/2, H/2);
+  }
+  function rrect(g,x,y,w,h,r){
+    r=Math.min(r,w/2,h/2); g.beginPath();
+    g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r);
+    g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+    g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath();
+  }
+  function label(g,b,cx,cy,align){
+    g.fillStyle=b.fg||'#fff';
+    g.font='800 '+b.fs+'px Lato,system-ui,sans-serif';
+    g.textAlign=align||'center'; g.textBaseline='middle';
+    /* the layout already shrank the type to fit; if the real glyphs are still wider than the box
+       it measured, the words are cut rather than drawn off the edge of the picture */
+    var t=String(b.text), lim=b.maxW||b.w;
+    if(lim>0&&g.measureText(t).width>lim){
+      while(t.length>1&&g.measureText(t+'\u2026').width>lim)t=t.slice(0,-1);
+      t=t.replace(/[\s\u2013\u2014(,]+$/,'')+'\u2026';
+    }
+    g.fillText(t,cx,cy);
+    if(b.strike){
+      var w=g.measureText(t).width;
+      var x0=align==='left'?cx:(align==='right'?cx-w:cx-w/2);
+      g.strokeStyle=b.fg||'#fff'; g.lineWidth=Math.max(1,b.fs*0.07);
+      g.beginPath(); g.moveTo(x0,cy+b.fs*0.04); g.lineTo(x0+w,cy+b.fs*0.04); g.stroke();
+    }
+  }
+  function paint(g,b,W,H){
+    if(b.as==='split')return;
+    if(b.as==='frame'){
+      g.strokeStyle=b.fg||'#F5A623'; g.lineWidth=b.inset;
+      g.strokeRect(b.inset/2,b.inset/2,W-b.inset,H-b.inset); return;
+    }
+    if(!b.text)return;
+    var cx=b.x+b.w/2, cy=b.y+b.h/2;
+    if(b.as==='flash'){
+      var sz=Math.max(b.w,b.h)*1.9, tl=b.at==='tl'||b.at==='bl', top=b.at==='tl'||b.at==='tr';
+      var ox=tl?0:W, oy=top?0:H;
+      g.save(); g.fillStyle=b.bg||'#ED6F0B'; g.beginPath(); g.moveTo(ox,oy);
+      g.lineTo(ox+(tl?sz:-sz),oy); g.lineTo(ox,oy+(top?sz:-sz)); g.closePath(); g.fill();
+      g.translate(ox+(tl?sz*0.33:-sz*0.33), oy+(top?sz*0.33:-sz*0.33));
+      g.rotate((tl===top?-45:45)*Math.PI/180);
+      label(g,b,0,0,'center'); g.restore(); return;
+    }
+    if(b.as==='ribbon'){
+      var rw=W*1.1, rh=b.h, right=b.at==='tr'||b.at==='br', top2=b.at==='tl'||b.at==='tr';
+      var ax=right?W-b.w*0.9:b.w*0.9, ay=top2?b.h*1.5:H-b.h*1.5;
+      g.save(); g.translate(ax,ay); g.rotate(((right===top2)?45:-45)*Math.PI/180);
+      g.fillStyle=b.bg||'#F5A623'; g.fillRect(-rw/2,-rh/2,rw,rh);
+      label(g,b,0,0,'center'); g.restore(); return;
+    }
+    if(b.as==='burst'){
+      var R=Math.max(b.w,b.h)*0.78, pts=12;
+      g.save(); g.translate(cx,cy); g.fillStyle=b.bg||'#D7263D'; g.beginPath();
+      for(var i=0;i<pts*2;i++){ var rr2=i%2?R*0.74:R, an=(i/(pts*2))*Math.PI*2-Math.PI/2;
+        g[i?'lineTo':'moveTo'](Math.cos(an)*rr2,Math.sin(an)*rr2); }
+      g.closePath(); g.fill(); label(g,b,0,0,'center'); g.restore(); return;
+    }
+    if(b.as==='tag'){
+      g.fillStyle=b.bg||'#333'; rrect(g,b.x,b.y,b.w,b.h,b.h*0.28); g.fill();
+      g.fillStyle='rgba(255,255,255,.55)'; g.beginPath();
+      g.arc(b.x+b.h*0.34,cy,Math.max(2,b.fs*0.11),0,Math.PI*2); g.fill();
+      label(g,b,b.x+b.h*0.34+b.fs*0.42,cy,'left'); return;
+    }
+    if(b.as==='pill'){
+      g.fillStyle=b.bg||'#ED6F0B'; rrect(g,b.x,b.y,b.w,b.h,b.h/2); g.fill();
+      if(/^#?f{3,}/i.test(String(b.bg||''))){ g.strokeStyle='rgba(0,0,0,.12)'; g.lineWidth=1; g.stroke(); }
+      label(g,b,cx,cy,'center'); return;
+    }
+    /* bar · strip · band — the full-width shapes */
+    g.fillStyle=b.bg||'#333'; g.fillRect(b.x,b.y,b.w,b.h);
+    if(b.band&&b.row===0&&b.at==='b'){ g.fillStyle='rgba(0,0,0,.06)'; g.fillRect(b.x,b.y,b.w,Math.max(1,b.h*0.04)); }
+    label(g,b,cx,cy,'center');
+  }
+  function stDraw(cv,designId,px){
+    try{ window.__res=ST.res; window.__stText=ST.text; }catch(e){}   /* harness hook: what was drawn */
+    var c=STU.compose(designId,ST.res||{},{text:ST.text});
+    if(!c.ok)return c;
+    var img=ST.img,iw=img?(img.naturalWidth||1000):1000,ih=img?(img.naturalHeight||1000):1000;
+    var W=px||ST_GAL, H=Math.max(Math.round(W*0.6),Math.min(Math.round(W*1.6),Math.round(W*ih/iw)));
+    cv.width=W; cv.height=H;
+    var g=cv.getContext('2d'); if(!g)return c;
+    g.clearRect(0,0,W,H);
+    var isSplit=c.zones.some(function(z){return z.as==='split'});
+    if(img){
+      if(isSplit){ drawFit(g,img,0,0,W/2,H); drawFit(g,ST.img2||img,W/2,0,W/2,H);
+        g.strokeStyle='#fff'; g.lineWidth=Math.max(2,W/240); g.beginPath(); g.moveTo(W/2,0); g.lineTo(W/2,H); g.stroke(); }
+      else drawFit(g,img,0,0,W,H);
+    } else plate(g,W,H);
+    var L=STU.layout(c,W,H);
+    L.boxes.forEach(function(b){ paint(g,b,W,H); });
+    return c;
+  }
+
+  /* ---------- the design gallery ---------- */
+  var ST_ORDER={always:0,yes:1,thin:2,partial:3,no:4};
+  function stGallery(){
+    var e=$('#st-gal'); if(!e||!ST.sum||!ST.res)return;
+    var ds=STU.designsFor(ST.sum).slice().sort(function(a,b){
+      var d=(ST_ORDER[a.state]||9)-(ST_ORDER[b.state]||9); if(d)return d; return a.name.localeCompare(b.name); });
+    e.innerHTML=ds.map(function(d){
+      return '<div class="st-card'+(d.id===ST.design?' on':'')+'" data-st-d="'+esc(d.id)+'" tabindex="0" role="button" aria-label="'+esc(d.name)+'">'
+        +'<canvas data-st-cv="'+esc(d.id)+'" aria-label="'+esc(d.name)+' preview"></canvas>'
+        +'<div class="cf"><div class="cn"><span>'+esc(d.name)+'</span><span class="st-pill '+esc(d.state)+'">'+stWord(d)+'</span></div>'
+        +'<div class="cd" data-st-note="'+esc(d.id)+'"></div></div></div>';
+    }).join('');
+    ds.forEach(function(d){
+      var cv=e.querySelector('[data-st-cv="'+d.id+'"]'); if(!cv)return;
+      var c=stDraw(cv,d.id,ST_GAL);
+      var note=e.querySelector('[data-st-note="'+d.id+'"]');
+      if(note)note.innerHTML=stNote(d,c);
+    });
+  }
+  function stWord(d){
+    if(d.state==='always')return 'every product';
+    if(d.state==='yes')return Math.round(d.cov*100)+'% of the feed';
+    if(d.state==='thin')return Math.round(d.cov*100)+'% of the feed';
+    if(d.state==='partial')return 'part of it';
+    return 'not in this feed';
+  }
+  function stNote(d,c){
+    if(!c||!c.ok)return '';
+    if(c.empty)return '<b>Nothing to say on this product</b> — '+esc(c.dropped.map(function(x){return x.label.toLowerCase()+': '+x.why}).join('; '));
+    var bits=[];
+    if(c.dropped.length)bits.push('dropped '+esc(c.dropped.map(function(x){return x.label.toLowerCase()}).join(', ')));
+    if(d.missing&&d.missing.length)bits.push('needs '+esc(d.missing.join(', ').toLowerCase()));
+    if(!bits.length)bits.push(esc(d.blurb));
+    return bits.join(' · ');
+  }
+
+  /* ---------- the rail: what this feed can say, and out of which columns ---------- */
+  function stRail(){
+    var e=$('#st-rail'); if(!e||!ST.sum)return;
+    var rd=STU.readiness(ST.sum);
+    var bar=function(cov){ if(cov==null)return ''; var p=Math.round(cov*100);
+      var col=p>=85?'#2E7D32':p>=50?'#F5A623':'#ED6F0B';
+      return '<div class="fb"><i style="width:'+p+'%;background:'+col+'"></i></div>'; };
+    var frow=function(r){
+      var val=ST.res&&ST.res[r.id];
+      return '<div class="st-f"><div class="fn">'+esc(r.label)+' <span class="st-src '+esc(r.src)+'">'+esc(r.src==='none'?'fixed':r.src)+'</span></div>'
+        +'<div class="st-val">'+(val&&val.ok?esc(val.text):'<span style="color:var(--ink-2)">—</span>')+'</div>'
+        +bar(r.cov)+'<div class="fw">'+esc(r.why)+'</div></div>'; };
+    var fields=Object.keys(STU.SLOTS).concat(['price_now','price_was','free_shipping']).filter(function(k,i,a){
+      return a.indexOf(k)===i&&['priceA','priceB','shipping'].indexOf(k)<0; });
+    var srow=function(k){
+      var b=ST.sum.slots[k]; if(!b)return '';
+      var lbl=STU.SLOTS[k]?STU.SLOTS[k].label:(k==='price_now'?'Live price':k==='price_was'?'Reference price':'Free delivery');
+      var v=b.col&&ST.row?String(ST.row[b.col]||''):'';
+      return '<div class="st-f"><div class="fn">'+esc(lbl)+'</div>'
+        +'<div class="st-val">'+(b.col?esc(b.col):'<span style="color:var(--ink-2)">—</span>')+'</div>'
+        +'<div class="fw">'+esc(b.why)+(v?' · reads “'+esc(v.slice(0,46))+'” on this product':'')+'</div></div>'; };
+    e.innerHTML=
+      '<div class="st-pan"><h4>What this feed can say</h4><div class="ph">'+esc(rd.verdict)+'. Coverage is the share of the '+fmt(ST.rows.length)+' products read that carry the fact — a message on a third of a catalogue is a third of a campaign.</div>'
+      +rd.ready.map(frow).join('')+rd.thin.map(frow).join('')+rd.gaps.map(frow).join('')
+      +(rd.masterOnly.length?'<div class="st-gap"><b>'+esc(rd.masterOnly.map(function(g){return g.label}).join(' and '))+' needs a field passing through.</b> '
+        +esc(ST.mqty?('The master feed carries '+ST.mqty.col+' and no output feed in this estate carries stock, so a FeedHero rule has to map it into the output feed before a scarcity overlay could go live. The preview below uses this product’s real figure from the master.')
+          :'No stock column was found in the output feed or the master.')+'</div>':'')
+      +'</div>'
+      +'<div class="st-pan"><h4>Fields summoned</h4><div class="ph">Which of this feed’s own columns carries each fact. The price pair is resolved by comparing values, not by column names — the masters in this estate disagree, and two brands’ price columns mean opposite things.</div>'
+      +fields.map(srow).join('')+'</div>';
+  }
+
+  /* ---------- the workbench ---------- */
+  function stWb(id){
+    ST.design=id;
+    var d=STU.designById(id), e=$('#st-wb');
+    if(!d||!e)return;
+    e.hidden=false;
+    var c=STU.compose(id,ST.res||{},{text:ST.text});
+    var rec=STU.recipeFor(c,{client:ST.client,market:ST.mkt});
+    var facts=d.zones.filter(function(z){return z.fact}).map(function(z){return z.fact})
+      .filter(function(f,i,a){return a.indexOf(f)===i});
+    e.innerHTML='<div class="sth"><div><h4 style="margin:0;font-size:14px">'+esc(d.name)+'</h4>'
+      +'<div class="ch" style="margin-top:2px">'+esc(d.blurb)+'</div></div>'
+      +'<button class="btn sm" id="st-close" type="button">✕ Close</button></div>'
+      +'<div class="st-two" style="margin-top:12px"><div><canvas id="st-big"></canvas>'
+      +'<div class="st-drop" id="st-dropline"></div>'
+      +'<div class="st-acts">'
+      +'<button class="btn sm pri" id="st-png" type="button">↓ PNG</button>'
+      +'<button class="btn sm" id="st-copy" type="button">⧉ Copy the recipe</button>'
+      +'<button class="btn sm" id="st-brief" type="button">→ Brief this overlay</button>'
+      +'</div></div>'
+      +'<div><div style="font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)">The message</div>'
+      +'<div class="st-ed">'+(facts.length?facts.map(function(f){
+          var r=ST.res&&ST.res[f], def=ST.text[f]!=null?ST.text[f]:(r?r.text:'');
+          return '<label>'+esc(STU.FACTS[f].label)+'<span class="tk">'+esc(STU.tokenFor({fact:f}))+'</span></label>'
+            +'<input type="text" data-st-tx="'+esc(f)+'" value="'+esc(def)+'" placeholder="'+esc(r&&!r.ok?('unavailable — '+r.why):STU.FACTS[f].ex)+'">'
+            +(r&&!r.ok?'<div style="font-size:11px;color:var(--orange-ink);line-height:1.45;margin:-2px 0 2px">'+esc(r.why)+'</div>':''); }).join('')
+        :'<div class="ph">This design carries no message — it is the control every other design is judged against.</div>')+'</div>'
+      +'<div class="st-rec"><div style="font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin-top:14px">The recipe · <code>'+esc(rec.script)+'</code></div>'
+      +'<div class="ph">'+esc(rec.note)+'</div>'
+      +'<table class="st-rt"><tbody>'+rec.params.map(function(p){
+          return '<tr><td class="k">'+esc(p.k)+'</td><td class="v">'+esc(p.v)+'</td><td class="nt">'+esc(p.note||'')+'</td></tr>'; }).join('')
+      +'</tbody></table><div class="st-url" id="st-urlbox">'+esc(rec.url)+'</div></div></div></div>';
+    stBig();
+    $('#st-close').addEventListener('click',function(){ e.hidden=true; ST.design=''; stGallery(); });
+    e.querySelectorAll('[data-st-tx]').forEach(function(inp){
+      inp.addEventListener('input',function(){
+        var f=this.getAttribute('data-st-tx');
+        if(this.value==='')delete ST.text[f]; else ST.text[f]=this.value;
+        stBig(); stRecipe(); });
+    });
+    $('#st-png').addEventListener('click',stPng);
+    $('#st-copy').addEventListener('click',stCopy);
+    $('#st-brief').addEventListener('click',stBrief);
+  }
+  function stBig(){
+    var cv=$('#st-big'); if(!cv)return;
+    var c=stDraw(cv,ST.design,ST_BIG);
+    var dl=$('#st-dropline');
+    if(dl)dl.innerHTML=!c||!c.ok?''
+      :(c.empty?'<b>Nothing this design needs is on this product.</b> '+esc(c.dropped.map(function(x){return x.label.toLowerCase()+' — '+x.why}).join('; '))
+        :(c.dropped.length?'<b>'+c.dropped.length+' zone'+(c.dropped.length===1?'':'s')+' dropped:</b> '+esc(c.dropped.map(function(x){return x.label.toLowerCase()+' — '+x.why}).join('; '))
+          :'Every zone in this design drew. Drawn on the image this feed serves, at '+$('#st-big').width+'×'+$('#st-big').height+'.'));
+  }
+  function stRecipe(){
+    var box=$('#st-urlbox'); if(!box)return;
+    var c=STU.compose(ST.design,ST.res||{},{text:ST.text});
+    box.textContent=STU.recipeFor(c,{client:ST.client,market:ST.mkt}).url;
+  }
+  function stPng(){
+    var cv=$('#st-big'); if(!cv)return;
+    var d=STU.designById(ST.design);
+    try{
+      cv.toBlob(function(bl){
+        if(!bl){ stState('The composite could not be exported — the image host is not one the proxy allows, so the canvas cannot be read.'); return; }
+        var a=document.createElement('a'),u=URL.createObjectURL(bl);
+        /* the RAW market, not mktLbl — that strips the -fb, so a Google and a Meta composite of
+           the same product would download under one name and overwrite each other */
+        a.href=u; a.download=('feedspark-'+ST.client+'-'+ST.mkt+'-'+(d?d.id:'overlay')+'-'+(ST.pid||'product')+'.png').replace(/[^\w.\-]+/g,'-');
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u)},4000);
+      },'image/png');
+    }catch(e){ stState('The composite could not be exported: '+((e&&e.message)||e)); }
+  }
+  function stCopy(){
+    var c=STU.compose(ST.design,ST.res||{},{text:ST.text});
+    var rec=STU.recipeFor(c,{client:ST.client,market:ST.mkt});
+    var d=STU.designById(ST.design);
+    var txt=['FeedSpark overlay — '+(d?d.name:ST.design),
+      ST.client+' '+mktLbl(ST.mkt)+(ST.pid?' · product '+ST.pid:''),
+      '','Engine: '+rec.script,'Project: '+rec.project,'',
+      'Parameters','———']
+      .concat(rec.params.map(function(p){ return p.k+' = '+p.v+(p.note?'   # '+p.note:''); }))
+      .concat(['','URL',rec.url,'',rec.note]);
+    if(c.dropped.length)txt=txt.concat(['','Not available on this product'].concat(c.dropped.map(function(x){return '- '+x.label+': '+x.why})));
+    var s=txt.join('\n');
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(function(){stState('Recipe copied.')},function(){stState('Could not copy — select the URL box instead.')});
+    else stState('Copy is unavailable in this browser — select the URL box instead.');
+  }
+  function stBrief(){
+    var c=STU.compose(ST.design,ST.res||{},{text:ST.text});
+    var rec=STU.recipeFor(c,{client:ST.client,market:ST.mkt});
+    var d=STU.designById(ST.design), rd=STU.readiness(ST.sum);
+    var mm=String(new Date().getMonth()+1).padStart(2,'0')+String(new Date().getFullYear()).slice(2);
+    var scope=['Design: '+(d?d.name:ST.design)+' ('+rec.script+')',
+      'Feed: '+ST.client+' '+mktLbl(ST.mkt)+' · '+ST.cols()+' columns read off '+ST.rows.length+' products',
+      'Messages drawn: '+c.zones.filter(function(z){return z.text}).map(function(z){return STU.FACTS[z.fact].label+' = “'+z.text+'”'}).join('; '),
+      'Coverage: '+rd.verdict,
+      '','Parameters'].concat(rec.params.map(function(p){return p.k+' = '+p.v}));
+    if(rd.masterOnly.length&&c.zones.some(function(z){return z.fact&&STU.FACTS[z.fact].src==='master'}))
+      scope.push('','BLOCKER: '+rd.masterOnly.map(function(g){return g.label}).join(' / ')+' is not in the output feed'
+        +(ST.mqty?' — a FeedHero rule must map '+ST.mqty.col+' from the master into the output feed first.':'.'));
+    var p={client:ST.client,cat:'feature',
+      task:'Image Overlay — '+(d?d.name:ST.design)+' — '+ST.client+' '+mktLbl(ST.mkt)+' — '+mm,
+      scope:scope.join('\n'),
+      dod:'The overlay is live on '+ST.client+' '+mktLbl(ST.mkt)+', rendering from the feed on every product the message applies to, and /overlays reads it back on the next scan.'};
+    try{ window.open('/workflow?brief='+encodeURIComponent(JSON.stringify(p)),'_blank','noopener'); }
+    catch(e){ stState('Could not open the brief composer.'); }
+  }
+
+  /* ---------- product search ---------- */
+  function stFind(){
+    var q=String($('#st-q').value||'').trim();
+    if(!ST.sum){ stState('Read this feed’s fields first.'); return; }
+    if(!q){ stAuto(true); return; }
+    var lq=q.toLowerCase(),tb=ST.sum.slots.title,hit=null,part=null;
+    for(var i=0;i<ST.rows.length;i++){
+      var r=ST.rows[i],id=stIdOf(r),ti=tb&&tb.col?String(r[tb.col]||''):'';
+      if(id&&id.toLowerCase()===lq){ hit=r; break; }
+      if(!part&&((id&&id.toLowerCase().indexOf(lq)>=0)||(ti&&ti.toLowerCase().indexOf(lq)>=0)))part=r;
+    }
+    var pick=hit||part;
+    if(!pick){ stState('Nothing matching “'+q+'” in the '+fmt(ST.rows.length)+' products read. The studio reads a sample of the feed, not all of it — try a product ID from the gallery above.'); return; }
+    stPick(pick,hit?'':'nearest match on “'+q+'”');
+  }
+
+  /* ---------- wiring ---------- */
+  $('#st-read').addEventListener('click',function(){ stRead(); });
+  $('#st-go').addEventListener('click',stFind);
+  $('#st-q').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();stFind();} });
+  $('#st-rand').addEventListener('click',function(){ if(!ST.sum){stState('Read this feed’s fields first.');return;} stAuto(true); });
+  $('#st-ads').addEventListener('click',function(){
+    if(!ST.sum){ stState('Read this feed’s fields first.'); return; }
+    if(isFb(ST.mkt)){ stState('Google Ads belongs to the Google market — a Meta catalogue feed has no Ads traffic of its own. Switch to the Google market to design with clicks.'); return; }
+    var b=$('#st-ads'); b.disabled=true;
+    stState('Reading this brand’s Google Ads traffic per product…');
+    stAdsLoad().then(function(){
+      stSummon();
+      if(ST.row){ ST.res=stResolve(); }
+      stProd(); stGallery(); stRail(); if(ST.design)stWb(ST.design);
+      stState(ST.ads?(stMsg()+' — Google Ads read'+(ST.adsWin?' over '+ST.adsWin:'')+': '+fmt(Object.keys(ST.ads).length)+' products carry traffic, '+Math.round((ST.adsCov||0)*100)+'% of the sample.')
+        :(stMsg()+' — '+(ST.adsNote||'Google Ads returned no traffic for this account')+'.'));
+    }).catch(function(e){ stState('Google Ads: '+((e&&e.message)||e)); })
+      .then(function(){ b.disabled=false; });
+  });
+  document.addEventListener('click',function(e){
+    var c=e.target.closest&&e.target.closest('[data-st-d]');
+    if(c){ stWb(c.getAttribute('data-st-d')); stGallery();
+      var wb=$('#st-wb'); if(wb)wb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ')return;
+    var c=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('[data-st-d]');
+    if(c){ e.preventDefault(); stWb(c.getAttribute('data-st-d')); stGallery(); }
+  });
+  /* the studio follows the page's client/market, and never keeps a stale feed's fields */
+  window.addEventListener('fcc-ovl-feed',function(){
+    if(!ST.read)return;
+    if(ST.client===CLIENT&&ST.mkt===MKT)return;
+    ST.read=false; ST.sum=null; ST.row=null; ST.res=null; ST.design=''; ST.text={}; ST.img=null; ST.img2=null;
+    $('#st-wrap').hidden=true; var wb=$('#st-wb'); if(wb)wb.hidden=true;
+    stState('Showing '+CLIENT+' '+mktLbl(MKT)+' — read this feed’s fields to design on it.');
+  });
+  if(stFail())stState('The studio engine did not load — hard-refresh the page.');
 
   loadEstate(false);
 })();
