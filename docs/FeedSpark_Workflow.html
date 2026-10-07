@@ -1022,6 +1022,12 @@ aside.ck[hidden]{display:none}
 .ck-tab-r{right:0;border-right:none;border-radius:10px 0 0 10px}
 /* ---- the playbook's own furniture ---- */
 .ck-sub{padding:8px 13px;border-bottom:1px solid var(--line,#E6E6E6);font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);flex:none}
+/* what the account picker above is showing, and the one click back to the rest — ordinary muted
+   copy, since a filter working as asked is not an alarm */
+.ck-sub .ck-mine{font-weight:700;color:var(--muted,#8a94a0)}
+.ck-sub .ck-mine-b{border:0;background:none;padding:0 0 0 2px;font:inherit;color:var(--orange-ink,#A86A12);
+  text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}
+.ck-sub .ck-mine-b:hover{color:var(--orange-deep,#ED6F0B)}
 .ck-sub b{color:var(--ink-2,#4a4a4a)}
 .ck-tabs{display:flex;gap:4px;padding:7px 13px 0;border-bottom:1px solid var(--line,#E6E6E6);flex:none}
 .ck-tab-b{font:inherit;font-size:11.5px;font-weight:800;padding:6px 11px;border:1px solid transparent;border-bottom:none;
@@ -2605,7 +2611,16 @@ aside.ck[hidden]{display:none}
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false,showArchived:false,overdue:false};   // multi-select: empty array = all
+  /* THE VIEW THE BOARD OPENS ON (Ray, 29 Sep 2026: "default view is (plan: all history)
+     (3 statuses) (sort Due Date latest)") — the three he was re-setting by hand every time.
+     `window:''` is the whole plan rather than its latest 2 months, so nothing older is hidden;
+     the three statuses (open · in progress · briefed) were already the default and stay; and the
+     sort is the DUE date newest-first (dsort, dir -1) in place of alphabetical-by-client, which
+     on an all-history board is what keeps the newest work at the top instead of 2025.
+     `fcc-filters` holds NAMED views and is applied only when one is clicked, so this object is
+     genuinely what every device opens on. */
+  var IT_DEF={statuses:['open','progress','briefed'],window:'',sort:'dsort',dir:-1};
+  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:IT_DEF.statuses.slice(),window:IT_DEF.window,sort:IT_DEF.sort,dir:IT_DEF.dir,showHidden:false,showArchived:false,overdue:false};   // multi-select: empty array = all
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
   var tlState={scope:[],flags:[],weeks:6};
@@ -3289,11 +3304,17 @@ aside.ck[hidden]{display:none}
   (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   (function(){ var ot=document.getElementById('it-over-tog'); if(ot)ot.onclick=function(){ itState.overdue=!itState.overdue; renderIntake(); }; })();
   (function(){ var at=document.getElementById('it-arch-tog'); if(at)at.onclick=function(){ itState.showArchived=!itState.showArchived; renderIntake(); }; })();
+  function sortArrow(){
+    document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
+    var th=document.querySelector('#itbl thead th[data-k="'+itState.sort+'"]'); if(!th)return;
+    var ar=document.createElement('span'); ar.className='ar'; ar.textContent=itState.dir>0?' ▲':' ▼'; th.appendChild(ar);
+  }
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
-    document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
-    var ar=document.createElement('span'); ar.className='ar'; ar.textContent=itState.dir>0?' ▲':' ▼'; th.appendChild(ar);
-    renderIntake(); }; });
+    sortArrow(); renderIntake(); }; });
+  /* the arrow used to be drawn ONLY by that handler, so the board's own default sort had nothing
+     on screen naming it — the rows were ordered by a column the header did not mark */
+  sortArrow();
   // status filter · select-all · bulk actions · live refresh · add-test
   (function(){
     var wsel=document.getElementById('it-window'); if(wsel){ wsel.value=itState.window; wsel.addEventListener('change',function(){ itState.window=this.value; renderIntake(); }); }
@@ -3703,6 +3724,12 @@ aside.ck[hidden]{display:none}
   // stored ticket, so the day someone proves a dash was somebody else's, the record is intact.
   // ownerName rides on /api/access?me=1 for every signin, so the whole team reads the same name.
   function ownerName(){ try{ return String((ACCESS_ME&&ACCESS_ME.ownerName)||'').trim(); }catch(e){ return ''; } }
+  /* WHO IS READING — for the Playbook rail, which is in its own script block and cannot see
+     ACCESS_ME (the same reason FCCSolo / FCCBrief / FCCFilterClient / FCCCalls exist). It answers
+     null until /api/access lands, so a caller can tell "nobody yet" from "signed in with no name"
+     and stand its filtering down rather than filtering against an empty string. */
+  window.FCCMe=function(){ if(!ACCESS_ME)return null;
+    return { email:meEmail(), name:meName(), owner:!!ACCESS_ME.owner }; };
   function briefedBy(b){ return (b&&b.by)||ownerName()||'—'; }
   function briefedByCell(b){ if(b&&b.by)return esc(b.by);
     var o=ownerName(); if(!o)return '—';
@@ -4662,8 +4689,11 @@ aside.ck[hidden]{display:none}
         b.type='button'; b.textContent='Clear filter';
         b.style.cssText='margin-left:auto;border:1px solid #E0C48A;background:#fff;border-radius:6px;'
           +'padding:3px 9px;font:800 11.5px system-ui;cursor:pointer;color:#8A5A00';
+        // Clear filter means "back to the view the board opens on", so it reads IT_DEF rather
+        // than restating it — it used to pin the window back to the retired 2-month default
         b.onclick=function(){ itState.clients=[]; itState.overdue=false;
-          itState.statuses=['open','progress','briefed']; itState.q=''; itState.window='2m';
+          itState.statuses=IT_DEF.statuses.slice(); itState.q=''; itState.window=IT_DEF.window;
+          var w=document.getElementById('it-window'); if(w)w.value=itState.window;
           n.remove(); try{ renderIntake(); }catch(e4){} };
         n.appendChild(b); host.parentNode.insertBefore(n,host);
       }
@@ -5764,6 +5794,54 @@ aside.ck[hidden]{display:none}
     if(ARR&&ARR.feeds)ARR.feeds.forEach(function(f){if(f.client)set[f.client]=1;});
     return Object.keys(set).sort();
   }
+
+  /* ---- only my accounts ------------------------------------------------------------------- */
+  /* Ray, 29 Sep 2026: "clean up the client's dropdown in Playbook pls - only my accounts". The
+     roster above is every brand the FCC can see — plan tasks ∪ the whole wired Google Shopping
+     estate ∪ every arrivals feed — which is the right list for an estate page and the wrong one
+     for a rail that reviews ONE account you are responsible for.
+
+     WHOSE an account is, is a fact the Task Manager already states: primary_am per client, which
+     reaches this page through /api/hours as the hours badge's own record. So nothing new is
+     fetched and nothing is guessed — amFor reads what the TM says and returns null where it says
+     nothing. Two rungs, strongest first: the resolved ADDRESS (exact; access.js refuses to invent
+     one, so where it has an address it is right), else the TM's own WORD for the person against
+     your display name, folded. Never a partial match — 'Ray' is 'Ray', never merely inside
+     'Rayhan' — because a wrongly-claimed account is worse than one you have to un-hide.
+
+     THREE rules keep this from hiding work:
+     (1) A brand with NO AM on record is not yours and not anyone's, so it sits out of the default
+         list — but it is COUNTED and named in the subtitle, never silently dropped.
+     (2) If the filter would leave NOTHING it stands down whole and says why. /api/hours lands
+         after the first paint, the Task Manager may never have synced, and the widget is injected
+         by the worker — in all three the AM is simply unknown, and an empty picker would read as
+         a broken rail rather than as missing data.
+     (3) It is one click to see every account, remembered per device (fcc-ck-mine) like every
+         other reading preference here — what one screen shows is not a team fact. */
+  var MINE_KEY='fcc-ck-mine';
+  function mineOnly(){ try{ return localStorage.getItem(MINE_KEY)!=='0'; }catch(e){ return true; } }
+  function mineSet(v){ try{ localStorage.setItem(MINE_KEY, v?'1':'0'); }catch(e){} }
+  function fold(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+  function amFor(brand){
+    var W=window.FCCHours, hit=(W&&W.rec)?W.rec(brand):null, r=hit&&hit.rec;
+    if(!r||!r.am)return null;
+    return { name:String(r.am), email:fold(r.amEmail) };
+  }
+  function isMine(brand){
+    var a=amFor(brand); if(!a)return false;
+    var me=window.FCCMe?window.FCCMe():null; if(!me)return false;
+    if(a.email&&me.email&&a.email===fold(me.email))return true;
+    return !!(a.name&&me.name&&fold(a.name)===fold(me.name));
+  }
+  /* the roster as the picker shows it, plus what it set aside and why — one reader, so the list
+     and the sentence under it can never disagree */
+  function rosterView(){
+    var all=roster();
+    var mine=all.filter(isMine);
+    if(!mineOnly())  return { list:all, all:all, mine:mine.length, hidden:0, stood:'off' };
+    if(!mine.length) return { list:all, all:all, mine:0, hidden:0, stood:'unknown' };
+    return { list:mine, all:all, mine:mine.length, hidden:all.length-mine.length, stood:null };
+  }
   function goldOf(brand){
     var out=[];
     if(!GOLD||!GOLD.feeds)return out;
@@ -6463,7 +6541,19 @@ aside.ck[hidden]{display:none}
     parts.push(nf+' Shopping feed'+(nf===1?'':'s'));
     if(NOBOARD)parts.push('not on the board');
     if(!LOADED)parts.push('still loading');
-    sub.innerHTML='<b>'+esc(BRAND)+'</b> · '+esc(parts.join(' · '));
+    sub.innerHTML='<b>'+esc(BRAND)+'</b> · '+esc(parts.join(' · '))+mineLine();
+  }
+  /* what the picker is showing, and the way back — never just a shorter list with no explanation */
+  function mineLine(){
+    var v=rosterView();
+    if(v.stood==='unknown')
+      return ' <span class="ck-mine">· every account — the Task Manager names no AM on any of these yet</span>';
+    if(v.stood==='off')
+      return ' <span class="ck-mine">· every account (' + v.all.length + ')'
+        + (v.mine?' <button type="button" class="ck-mine-b" data-mine="1">mine only</button>':'') + '</span>';
+    if(!v.hidden) return '';
+    return ' <span class="ck-mine">· your ' + v.mine + ' of ' + v.all.length + ' accounts'
+      + ' <button type="button" class="ck-mine-b" data-mine="0">show all</button></span>';
   }
   /* Picking the account here filters Intake to it — the same link the board already has back to
      this panel. Only on a REAL change of the picker: the rail choosing its own default on open,
@@ -6486,8 +6576,12 @@ aside.ck[hidden]{display:none}
   }
   function fillBrands(){
     var sel=$('#ck-brand'); if(!sel)return;
-    var rs=roster();
+    var v=rosterView(), rs=v.list;
     if(!rs.length)return;
+    /* an account picked before the filter narrowed (or from the board's chips) is KEPT and shown
+       even when it is not yours — the rail follows the board, and silently jumping to another
+       brand would answer a question nobody asked */
+    if(BRAND&&rs.indexOf(BRAND)<0&&v.all.indexOf(BRAND)>=0)rs=rs.concat([BRAND]).sort();
     if(!BRAND||rs.indexOf(BRAND)<0)BRAND=rs[0];
     sel.innerHTML=rs.map(function(b){
       var n=wrapPending(b);
@@ -6579,6 +6673,17 @@ aside.ck[hidden]{display:none}
     // without this the red prompt only appears on the next poll, i.e. up to two minutes after the
     // call notes reached the FCC, which is exactly the window a wrap-up is written in
     document.addEventListener('fcc-calls',function(){ fillBrands(); render(); });
+    /* the AM is stated by /api/hours, which the worker-injected hours widget fetches AFTER the
+       first paint — so without this the rail opens on every account and only narrows to yours on
+       the next poll, which reads as the filter not working */
+    document.addEventListener('fcc-hours',function(){ fillBrands(); render(); });
+    /* the toggle lives in the subtitle, which subLine() rewrites on every render, so it is
+       delegated off the host rather than bound to a button that is about to be replaced */
+    var sub=$('#ck-sub');
+    if(sub)sub.addEventListener('click',function(e){
+      var b=e.target&&e.target.closest?e.target.closest('.ck-mine-b'):null; if(!b)return;
+      mineSet(b.getAttribute('data-mine')==='1'); fillBrands(); render();
+    });
     var tOpen=$('#ck-tune-open'); if(tOpen)tOpen.onclick=function(){tuneOpen(true);};
     var tX=$('#ck-tune-x'); if(tX)tX.onclick=function(){tuneOpen(false);};
     var tScrim=$('#ck-tune-scrim');
