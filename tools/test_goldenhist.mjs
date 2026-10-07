@@ -189,6 +189,18 @@ console.log('── the page reads a move exactly as the engine records it');
   ok('one chart, three lines — the metric switch is gone and the card reads all three on one calendar',
     !/data-hmet/.test(page) && /var m = histModelAll\(h0, s, profileForC\(p\.client\), HRNG, null\);/.test(page) &&
     /if \(path\) sv \+= '<path class="ln" data-ser="' \+ k \+ '" style="stroke:var\(--hs-' \+ k \+ '\)"/.test(page));
+  // NEVER GAPPED (Ray, 7 Oct 2026: "ensure all lines are not gapped, must show consistent line DoD"):
+  // lifted and run — a day with no reading carries the last one, nothing before the first is invented
+  const carry = new Function(page.match(/  function histCarry\(days, seed, seedD\) \{[\s\S]*?\n  \}\n/)[0] + '; return histCarry;')();
+  const cd = [{ d: 'a', score: null }, { d: 'b', score: 80 }, { d: 'c', score: null }, { d: 'd', score: null }, { d: 'e', score: 82 }, { d: 'f', score: null }];
+  carry(cd, null, null);
+  ok('a day with no reading carries the last one, and says from when — never anything before the first',
+    cd[0].cv === undefined && cd[2].cv === 80 && cd[2].cvFrom === 'b' && cd[3].cv === 80 && cd[5].cv === 82 && cd[5].cvFrom === 'e' && cd[1].cv === undefined, cd);
+  const cs = [{ d: 'a', score: null }, { d: 'b', score: 81 }];
+  carry(cs, 79, 'z');
+  ok('…a reading from before the window seeds its first days', cs[0].cv === 79 && cs[0].cvFrom === 'z', cs);
+  ok('…the chart runs the line through carried days, dashes a new-basis join, and marks a carried day hollow in its row',
+    /var v = hVal\(x\);/.test(page) && /class="ln nb"/.test(page) && /<circle class="z c" data-ser="/.test(page) && /histCarry\(dd, seed, seedD\);/.test(page));
   ok('…every score keeps its own row of day-on-day bars, each on its own stated scale',
     /DAY-ON-DAY CHANGE · EACH ROW ON ITS OWN SCALE/.test(page) && /peaks\[k\] = \[0\.5, 1, 2, 5, 10, 20, 50, 100\]/.test(page));
 }

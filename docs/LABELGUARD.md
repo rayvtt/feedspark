@@ -1080,8 +1080,16 @@ three.
   improvement, below it a deduction. Each row has its own stated scale (`±0.5`, `±10`, …),
   because the Golden Score moves in tenths while an analysis can move eight points, and one shared
   scale would flatten every score move to a dash.
-- **Gaps and rings stay per line.** A day a score was not measured is a gap in that line only. A
-  day set by a run by hand wears a ring on that score's line.
+- **No line is ever gapped (Ray, 7 Oct 2026: *"ensure all lines are not gapped, must show
+  consistent line DoD"*).** A day a score was not measured CARRIES its last reading (`histCarry`):
+  the line runs on, its day-on-day row shows a HOLLOW mark (not measured, nothing moved), and the
+  hover says which day's reading it carries. A reading from before the window seeds the first
+  days; nothing is drawn before a score's first reading. The one join that is not a carry — a
+  Golden Score read on a new basis (keywords from 30 Sep 2026) — is DASHED, and the key names it
+  only when one is on the chart: the two ends were measured differently and are not compared, but
+  the line does not stop. `histModel` itself is unchanged, so the engine twin and Leadership's
+  tiles (which still show an unmeasured day as a gap) read the same measured days.
+- **Rings stay per line.** A day set by a run by hand wears a ring on that score's line.
 - **One hover, all three.** Hovering a day reads every score that day: its value, its move against
   the day it was last measured, and — for the Golden Score — the attributes that moved it.
 - **One change log.** Score moves and analyses are listed together, newest first. The header

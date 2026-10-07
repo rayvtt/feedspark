@@ -246,6 +246,10 @@ window.addEventListener('load',restore);
   .hs-svg text.end .en,.hs-svg text.rl{fill:var(--ink-2);font-weight:700;font-size:11px}
   .hs-svg .pt{stroke:#fff;stroke-width:2}
   .hs-svg .z{fill:var(--muted)}
+  .hs-svg .z.c{fill:none;stroke:var(--muted);stroke-width:1.2}
+  .hs-svg .ln.nb{stroke-dasharray:4 4}
+  .hs-leg i.hc{width:6px;height:6px;border-radius:50%;border:1.2px solid var(--muted);box-sizing:border-box;vertical-align:1px}
+  .hs-leg i.nb{height:0;width:16px;border-top:2px dashed var(--ink-2);vertical-align:3px;border-radius:0}
   .hs-svg .hit{fill:transparent;cursor:crosshair}
   .hs-svg .hit:hover{fill:rgba(26,54,93,.05)}
   .hs-tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;line-height:1.55;opacity:0;transition:opacity .12s;z-index:20;max-width:320px;box-shadow:0 6px 20px rgba(16,24,40,.25)}
@@ -1723,6 +1727,26 @@ window.addEventListener('load',restore);
       var f = x[0] === 'gs' ? g.first : ser[x[0]].firstMet;
       if (f && (!since || f < since)) since = f;
     });
+    // ONE LINE A SCORE, NEVER GAPPED (Ray, 7 Oct 2026: "ensure all lines are not gapped, must show
+    // consistent line DoD"): a day nobody measured CARRIES the score as last measured — on the line,
+    // with a hollow mark in its day-on-day row and the hover saying which reading it carries. The
+    // measured days are untouched (histModel is the engine's twin and stays so); a reading before
+    // the window seeds the first days, so a 30-day view does not start blank on an unscanned day
+    var reads = ((h && h.r) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var qas = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    HMETS.forEach(function (x) {
+      var k = x[0], dd = ser[k].days, seed = null, seedD = null;
+      var firstM = dd.filter(function (d) { return d.score != null; })[0];
+      if (k === 'gs') {
+        var bf = reads.filter(function (r) { return hDay(r.t) < start; }).pop();
+        // never carried into a reading taken another way — that join is the dashed one
+        if (bf && (!firstM || hBasis(bf, firstM.r))) { seed = hScore(bf, prof); seedD = hDay(bf.t); }
+      } else {
+        var bq = qas.filter(function (r) { return r[k] != null && hDay(r.t) < start; }).pop();
+        if (bq) { seed = bq[k]; seedD = hDay(bq.t); }
+      }
+      histCarry(dd, seed, seedD);
+    });
     // the change log reads BOTH: the score's recorded moves and the analyses, newest first (an
     // analysis row already carries content quality AND AI-readiness, so it is taken once)
     var log = g.log.concat(ser.q.log).sort(function (a, b) { return b.t - a.t; });
@@ -1730,6 +1754,15 @@ window.addEventListener('load',restore);
       changes: g.changes, analysesIn: ser.q.changes, q: g.q, air: g.air, start: start, today: g.today,
       recorded: g.recorded, analyses: g.analyses };
   }
+  // a day with no reading of its own takes the last one (cv = the value, cvFrom = the day it was read)
+  function histCarry(days, seed, seedD) {
+    var last = seed, lastD = seedD;
+    days.forEach(function (x) {
+      if (x.score != null) { last = x.score; lastD = x.d; return; }
+      if (last != null) { x.cv = last; x.cvFrom = lastD; }
+    });
+  }
+  function hVal(x) { return x.score != null ? x.score : (x.cv != null ? x.cv : null); }
   // ONE chart, ONE axis — all three are scores out of 100, so they share a scale and are never put
   // on two; colour is the SCORE (the line, its points, its row of bars), direction is position
   function histChart(M) {
@@ -1760,32 +1793,42 @@ window.addEventListener('load',restore);
       sv += '<line class="grid" x1="' + L + '" y1="' + yS(g) + '" x2="' + (W - R) + '" y2="' + yS(g) + '"/>' +
         '<text x="' + (L - 7) + '" y="' + (yS(g) + 4) + '" text-anchor="end">' + g + '</text>';
     }
-    // every line first, then the points over all of them, so no line paints across a point; a line
-    // breaks wherever its score was not measured that day, or (the Golden Score) its basis changed
+    // every line first, then the points over all of them, so no line paints across a point. A line
+    // runs UNBROKEN across the days nobody measured — each carries the last reading (histCarry) —
+    // and the one join that is not a carry, a Golden Score read on a new basis, is DASHED: the two
+    // ends were measured differently and are not compared, but the line does not stop
+    var nbAny = false;
     keys.forEach(function (k) {
-      var path = '', open = false;
-      M.ser[k].days.forEach(function (x, i) {
-        if (x.score == null || !x.basis) { open = false; if (x.score == null) return; }
-        path += (open ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yS(x.score).toFixed(1);
-        open = true;
+      var path = '', dash = '', prev = -1, dd = M.ser[k].days;
+      dd.forEach(function (x, i) {
+        var v = hVal(x);
+        if (v == null) { prev = -1; return; }
+        var pt = cx(i).toFixed(1) + ' ' + yS(v).toFixed(1);
+        if (prev >= 0 && x.score != null && !x.basis) {
+          dash += 'M' + cx(prev).toFixed(1) + ' ' + yS(hVal(dd[prev])).toFixed(1) + 'L' + pt;
+          path += 'M' + pt;
+        } else path += (prev >= 0 ? 'L' : 'M') + pt;
+        prev = i;
       });
       if (path) sv += '<path class="ln" data-ser="' + k + '" style="stroke:var(--hs-' + k + ')" d="' + path + '"/>';
+      if (dash) { nbAny = true; sv += '<path class="ln nb" data-ser="' + k + '" style="stroke:var(--hs-' + k + ')" d="' + dash + '"/>'; }
     });
+    M.nbAny = nbAny;
     var ends = [];
     keys.forEach(function (k) {
-      var dd = M.ser[k].days, lastI = -1;
-      dd.forEach(function (x, i) { if (x.score != null) lastI = i; });
+      var dd = M.ser[k].days, lastM = -1, lastV = -1;
+      dd.forEach(function (x, i) { if (x.score != null) lastM = i; if (hVal(x) != null) lastV = i; });
       dd.forEach(function (x, i) {
         if (x.score == null) return;
-        var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
-        // a reading with no measured neighbour is a line of one point — draw the point, or it vanishes
-        var lone = !((i > 0 && dd[i - 1].score != null && x.basis) || (i < dd.length - 1 && dd[i + 1].score != null && dd[i + 1].basis));
+        var mark = i === lastM || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
+        // a reading with nothing either side of it is a line of one point — draw the point, or it vanishes
+        var lone = !((i > 0 && hVal(dd[i - 1]) != null && x.basis) || (i < dd.length - 1 && hVal(dd[i + 1]) != null));
         if (!mark && !lone) return;
         // a day set by a run by hand wears a ring, so it can be told apart from the automatic ones
         sv += '<circle class="pt' + (x.man ? ' man' : '') + '" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) +
           '" r="' + (x.man ? 5.5 : (mark ? 4.5 : 3)) + '" style="fill:var(--hs-' + k + ')"/>';
       });
-      if (lastI >= 0) ends.push({ k: k, y: yS(dd[lastI].score), v: dd[lastI].score });
+      if (lastV >= 0) ends.push({ k: k, y: yS(hVal(dd[lastV])), v: hVal(dd[lastV]) });
     });
     // each line named at its right end — its latest value and the score — nudged apart where two finish close
     ends.sort(function (a, b) { return a.y - b.y; });
@@ -1798,8 +1841,9 @@ window.addEventListener('load',restore);
         '<text class="v end" data-ser="' + x.k + '" x="' + (x0 + 15) + '" y="' + (x.y + 4).toFixed(1) + '">' + x.v +
         '<tspan class="en" dx="5">' + esc(hMetName(x.k)) + '</tspan></text>';
     });
-    // the daily move, one row per score: a bar above its row is an improvement, below it a
-    // deduction, a dot is a day measured with no change, nothing is a day not measured
+    // the daily move, one row per score — a mark on EVERY day once the score has a reading: a bar
+    // above its row is an improvement, below it a deduction, a dot a day measured with no change,
+    // a hollow dot a day not measured (the reading before carries, so the score did not move)
     sv += '<text class="pl" x="' + L + '" y="' + PL + '">DAY-ON-DAY CHANGE · EACH ROW ON ITS OWN SCALE</text>';
     var bw = Math.max(2, Math.min(28, slot - 2));    // 2px surface gap between neighbours
     keys.forEach(function (k, j) {
@@ -1809,7 +1853,10 @@ window.addEventListener('load',restore);
         '<text class="rl" x="' + (W - R + 25) + '" y="' + (mid + 4) + '">' + esc(hMetName(k)) + '</text>' +
         '<text class="sc" data-ser="' + k + '" x="' + (L - 7) + '" y="' + (mid + 4) + '" text-anchor="end">±' + peaks[k] + '</text>';
       M.ser[k].days.forEach(function (x, i) {
-        if (!x.scanned) return;
+        if (!x.scanned) {
+          if (x.cv != null) sv += '<circle class="z c" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + mid + '" r="2.2"/>';
+          return;
+        }
         if (x.delta == null || x.delta === 0) { sv += '<circle class="z" data-ser="' + k + '" cx="' + cx(i).toFixed(1) + '" cy="' + mid + '" r="1.8"/>'; return; }
         var hgt = Math.max(2, Math.abs(x.delta) / peaks[k] * AMP), up = x.delta > 0;
         sv += '<path class="bar" data-ser="' + k + '" data-up="' + (up ? 1 : 0) + '" style="fill:var(--hs-' + k + ')" d="' +
@@ -1920,6 +1967,7 @@ window.addEventListener('load',restore);
     } else if (noQa) {
       out += '<p class="hs-empty-note">No content quality or AI-readiness reading on record for this feed yet — the 12:00 UK daily run records one every day.</p>';
     }
+    var chart = histChart(m);    // drawn first: it tells the key whether a dashed join is on it
     // the key names every line — a score with nothing on record in the window says so rather than
     // leaving a colour in the key that matches nothing on the chart
     out += '<div class="hs-leg">' + HMETS.map(function (x) {
@@ -1928,9 +1976,10 @@ window.addEventListener('load',restore);
     }).join('') +
       '<span>▲ bar above its row = improvement · ▼ below = deduction</span>' +
       '<span><i class="dot"></i>measured, no change</span>' +
+      '<span><i class="hc"></i>not measured — the last reading carries</span>' +
       '<span><i class="hsm"></i>set by a run by hand</span>' +
-      '<span class="muted">a gap = not measured that day</span></div>' +
-      '<div class="hs-zone">' + histChart(m) + '<div class="hs-tip" id="hs-tip"></div></div>' +
+      (chart && m.nbAny ? '<span><i class="nb"></i>measured a new way — joined, not compared</span>' : '') + '</div>' +
+      '<div class="hs-zone">' + chart + '<div class="hs-tip" id="hs-tip"></div></div>' +
       histLog(k, m) + '</div>';
     HMODEL = m;
     return out;
@@ -1953,7 +2002,11 @@ window.addEventListener('load',restore);
     HMETS.forEach(function (mm) {
       var x = HMODEL.ser[mm[0]].days[i]; if (!x) return;
       h += '<br><i class="sw" style="background:var(--hs-' + mm[0] + ')"></i>' + esc(mm[1]) + ' ';
-      if (!x.scanned) { h += '<span class="m">not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day</span>'; return; }
+      if (!x.scanned) {
+        h += x.cv != null ? '<b>' + x.cv + '</b> <span class="m">· not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day — carries ' + esc(hDayLbl(x.cvFrom)) + '’s reading</span>'
+          : '<span class="m">not ' + (mm[0] === 'gs' ? 'scanned' : 'analysed') + ' this day</span>';
+        return;
+      }
       h += '<b>' + x.score + '</b>';
       if (!x.basis) h += ' <span class="m">· measured on a new basis — not compared</span>';
       else if (x.delta == null) h += ' <span class="m">· first reading</span>';

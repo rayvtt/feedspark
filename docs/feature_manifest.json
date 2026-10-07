@@ -11743,6 +11743,24 @@
       "pattern": "data-hmet=",
       "forbidden": true,
       "pr": 0
+    },
+    {
+      "name": "Golden score history: a day nobody measured carries the last reading — no gapped line",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function histCarry(days, seed, seedD) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a carried day wears a hollow mark in its day-on-day row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (x.cv != null) sv += '<circle class=\"z c\" data-ser=\"' + k + '\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: a new-basis reading is joined dashed, never a gap",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "sv += '<path class=\"ln nb\" data-ser=\"' + k + '\"",
+      "pr": 0
     }
   ]
 }
