@@ -411,9 +411,38 @@ window.addEventListener('load',restore);
   .tier-h .tier-sub{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-top:2px;letter-spacing:0}
   .money .mv.nm{font-size:13px;line-height:1.5;color:var(--muted);font-weight:800}
   .tier-n{flex:none;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-weight:900;display:grid;place-items:center}
-  .proj{display:flex;flex-direction:column;gap:4px;font-size:12.5px;margin-bottom:8px}
-  .pj .mk{display:inline-block;min-width:26px;font-size:10.5px;font-weight:900;color:var(--muted)}
-  .pj-bl{font-size:11.5px;color:var(--muted);font-weight:700}
+  .proj{display:flex;flex-direction:column;gap:6px;font-size:12.5px;margin:4px 0 10px}
+  .pj{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pj .mk{display:inline-block;min-width:24px;font-size:10.5px;font-weight:900;color:var(--muted)}
+  .pj-l{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .pj .sc{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+  .pj .sc.b-g{color:var(--good)}.pj .sc.b-y{color:var(--orange-ink)}.pj .sc.b-o{color:var(--orange-deep)}.pj .sc.b-r{color:var(--risk)}
+  .tk-bar{position:relative;flex:1 1 90px;min-width:70px;max-width:220px;height:8px;border-radius:5px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
+  .tk-bar i{position:absolute;top:0;bottom:0;display:block}
+  .tk-now{left:0;background:var(--muted);opacity:.45}
+  .tk-gain{background:var(--good)}.tk-gain.b-y{background:var(--orange)}.tk-gain.b-o{background:var(--orange-deep)}.tk-gain.b-r{background:var(--risk)}
+  .tk-tgt{width:2px;background:var(--ink);opacity:.55}
+  .pj-bl{font-size:11px;color:var(--muted);font-weight:800;border:1px dashed var(--line);border-radius:100px;padding:1px 8px;cursor:help}
+  .pj-ai{font-size:11px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.07);border-radius:100px;padding:2px 8px}
+  .tk-get{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .tk-c{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:4px 10px;cursor:default}
+  .tk-c b{font-size:13.5px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+  .tk-c i{font-style:normal;font-size:10px;font-weight:900;color:var(--orange-ink);text-transform:uppercase;letter-spacing:.03em}
+  .tk-c.st-unpriced,.tk-c.st-unknown{border-style:dashed}
+  .tk-c.st-coming{color:var(--muted)}
+  .tk-c.tk-all{background:rgba(21,128,61,.08);border-color:rgba(21,128,61,.35);color:var(--good);font-weight:900}
+  .tk-foot{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;font-weight:800;color:var(--ink-2);margin:2px 0 0}
+  .tk-gap{color:var(--orange-ink)}
+  .tier-more{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  .tier-more>summary{cursor:pointer;font-size:12.5px;font-weight:900;color:var(--navy);list-style:none;padding:4px 0}
+  .tier-more>summary::-webkit-details-marker{display:none}
+  .tier-more>summary::before{content:"▸";display:inline-block;margin-right:6px}
+  .tier-more[open]>summary::before{content:"▾"}
+  .tier-more>summary .nm{font-weight:700;margin-left:4px}
+  .tk-sub{font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+  .tk-ul{margin:0 0 6px;padding-left:18px;font-size:12px;color:var(--ink-2)}
+  .tk-ul li{margin:2px 0}
+  .tk-bd{margin-bottom:4px}
   .money{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 6px}
   .money .mb{background:var(--wash);border:1px solid var(--line);border-radius:11px;padding:10px 12px;min-width:0}
   .money .ml{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
@@ -422,7 +451,7 @@ window.addEventListener('load',restore);
   .rates-l{font-size:11px;color:var(--muted);font-weight:700;margin:2px 0 8px}
   .aon{font-size:12.5px;color:var(--ink-2);background:rgba(26,54,93,.06);border-radius:10px;padding:8px 11px;margin:6px 0 8px}
   .aon .aon-m{font-size:11.5px;color:var(--muted);font-weight:700}
-  .save-l{font-size:12px;font-weight:800;color:var(--good);margin:0 0 8px}
+  .save-l{font-size:12.5px;font-weight:900;color:var(--good);margin:0 0 6px;cursor:help}
   /* no min-width on the table itself: at desktop widths a tier card's content box is ~553px, and a 560px floor
      pushed the → Brief column past the frame (clipped to a sliver); the line cell's own floor sets the minimum */
   .lines{width:100%;border-collapse:collapse;font-size:12.5px;min-width:0}
@@ -1921,49 +1950,69 @@ function fixOf(l){
   }
   return esc(l.reason||'');
 }
+// A TIER CARD IS READ BY A HEAD OF MARKETING (Ray, 7 Oct 2026: "theres too much texts — repackage / revisualise this
+// and expandable details if needed — the clients are mainly head of marketing so they'd want fast / bite size"):
+// the card leads with the three things that person decides on — the score it moves, what they get, what it costs —
+// in a number and a few words each; every working figure (block maths, rates, the line table, the gaps, what Ray
+// confirms) is still on the card, folded under "See the breakdown". Nothing is removed, only re-ordered.
+var TK_GET={title:'titles rewritten',keywords:'products keyworded',ptype:'product types deepened',gpc:'categories mapped',
+  attr_ai:'colour · material · pattern values',attr_rule:'attributes set by rule',highlights:'products with highlights',
+  details:'products with details',desc:'descriptions enriched',conv:'products with AI Mode answers'};
+function tkBar(now,after){
+  var n=Math.max(0,Math.min(100,+now||0)),a=Math.max(n,Math.min(100,after!=null?+after:n));
+  return '<span class="tk-bar" aria-hidden="true"><i class="tk-now" style="width:'+n+'%"></i><i class="tk-gain '+band(a)+'" style="left:'+n+'%;width:'+(a-n)+'%"></i><i class="tk-tgt" style="left:99%"></i></span>';
+}
 function tierCard(o){
-  var q=PQ[o],safe=q.clientSafe,c=curClient();
+  var q=PQ[o],safe=q.clientSafe;
   var nShown=o==='go'?'1':o==='go+ar'?'2':'A';
   var h='<div class="tier'+(SV.hlPkg===o?' hl':'')+'" data-opt="'+esc(o)+'" data-oneoff="'+q.oneOff.total+'" data-monthly="'+q.monthly.total+'" data-safe="'+(safe?1:0)+'">';
   h+='<div class="tier-h"><span class="tier-n">'+nShown+'</span><h3>'+esc(q.label)+((q.sub||E.OPTION_SUB&&E.OPTION_SUB[o])?'<span class="tier-sub">'+esc(q.sub||E.OPTION_SUB[o])+'</span>':'')+'</h3>'
     +(safe?'<span class="pill good" title="No blocker stands behind any figure — client copy shows the numbers">client-safe</span>'
-      :'<span class="pill warn" title="Client copy shows [£ to confirm — Ray] until every blocker below is cleared">Ray to confirm · '+q.blockers.length+'</span>')+'</div>';
-  // the Golden Record now → after, per market
+      :'<span class="pill warn" title="Client copy shows [£ to confirm — Ray] until every blocker in the breakdown is cleared">Ray to confirm · '+q.blockers.length+'</span>')+'</div>';
+  // 1 — the outcome: the score it moves, per market, as a bar to the 99% line
   h+='<div class="proj">'+q.perMarket.map(function(m){var p=m.projected||{},bl=(p.blockers||[]);
-    return '<div class="pj"><span class="mk">'+esc(m.mkt.toUpperCase())+'</span> Golden <b class="sc '+band(p.now)+'">'+(p.now!=null?p.now:'—')+'</b> → <b class="sc '+band(p.after)+'">'+(p.after!=null?p.after:'—')+'</b>'
-      +(p.met?' <span class="pill good">met</span>':(bl.length?' <span class="pj-bl" title="'+esc(bl.map(function(b){return b.key+' '+b.cov+'% — '+b.tag}).join('\n'))+'">still under 99%: '+esc(bl.slice(0,3).map(function(b){return b.key.replace(/_/g,' ')+' ('+b.tag+')'}).join(', '))+(bl.length>3?' …':'')+'</span>':''))
-      +(m.air&&m.air.now!=null?' · AI-readiness <b>'+m.air.now+'</b>':'')+(m.lead?'':' <span class="est est-ratio" title="Same language as the lead market — generated copy re-used at the re-use rate">re-use ×'+m.w+'</span>')+'</div>'}).join('')+'</div>';
-  // one-off and monthly, apart, ex VAT
+    return '<div class="pj"><span class="mk">'+esc(m.mkt.toUpperCase())+'</span><span class="pj-l">Golden Score</span><b class="sc '+band(p.now)+'">'+(p.now!=null?p.now:'—')+'</b>'
+      +tkBar(p.now,p.after)+'<b class="sc '+band(p.after)+'">'+(p.after!=null?p.after:'—')+'</b>'
+      +(p.met?'<span class="pill good">met</span>':(bl.length?'<span class="pj-bl" title="'+esc(bl.map(function(b){return b.key+' '+b.cov+'% — '+b.tag}).join('\n'))+'">'+bl.length+' field'+(bl.length===1?'':'s')+' below 99%</span>':''))
+      +(m.air&&m.air.now!=null?'<span class="pj-ai" title="AI-readiness today">AI '+m.air.now+'</span>':'')
+      +(m.lead?'':' <span class="est est-ratio" title="Same language as the lead market — generated copy re-used at the re-use rate">re-use ×'+m.w+'</span>')+'</div>'}).join('')+'</div>';
+  // 2 — what they get, one chip per line: a number and a few words
+  var get=q.lines.filter(function(l){return TK_GET[l.key]&&['priced','unpriced','unknown','coming'].indexOf(l.status)>=0});
+  // the bundle names Tier 1 once rather than repeating its chips, then lists what it adds
+  var inT1=o==='go+ar'&&get.some(function(l){return l.pkg==='go'});
+  if(inT1)get=get.filter(function(l){return l.pkg!=='go'});
+  if(get.length||inT1)h+='<div class="tk-get">'+(inT1?'<span class="tk-c tk-all" title="Every Tier 1 line is in this bundle — see the breakdown">✓ Everything in Tier 1, plus</span>':'')+get.map(function(l){var n=l.pricedNeed&&l.status==='priced'?l.pricedNeed.n:(l.need&&l.need.n);
+    var tag=l.status==='unpriced'?'£ tbc':l.status==='unknown'?'to size':l.status==='coming'?'coming':'';
+    return '<span class="tk-c st-'+l.status+'" title="'+esc(l.label+(l.reason?' — '+l.reason:''))+'"><b>'+(n!=null&&l.status!=='unknown'?fmt(Math.round(n)):'—')+'</b> '+esc(TK_GET[l.key])+(tag?' <i>'+tag+'</i>':'')+'</span>'}).join('')+'</div>';
+  // 3 — what it costs: two numbers, ex VAT
   var oo=q.oneOff,mo=q.monthly,sz=sized(q),T=q.tests||{n:0,status:'off'};
-  // the test package, a flat monthly add-on: its own line, its own status — never inside new products or the floor
-  var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">test package '+T.n+' tests '+GBP(T.price)+' ('+GBP(T.perTest)+' a test)'+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
-    :'<span class="tst-l">test package '+T.n+' tests — <span class="nm">price not set — Management</span></span>';
-  var noSz='<div class="mv nm">not sized — see below</div>';
-  h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div>'
-    +(sz?'<div class="mv">'+GBP(oo.total)+'</div>'
-      +'<div class="mx">set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+')'
-      +'<br>generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?'<br>Spark AI set-up '+GBP(oo.conv):'')+'</div>'
-      :noSz+'<div class="mx">no line could be sized or priced yet</div>')+'</div>'
-    +'<div class="mb"><div class="ml">Monthly · ex VAT</div>'
-    +(sz?'<div class="mv">'+GBP(mo.total)+'</div>'
-      +'<div class="mx">monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+'<br>new products '+(mo.overlapMkts&&mo.overlapMkts.length&&mo.overlapMkts.length===q.perMarket.length?'covered — '+esc(mo.overlap):GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):''))+(mo.conv?'<br>Spark AI '+GBP(mo.conv)+'/mo':'')+tLine+'</div>'
-      :noSz+'<div class="mx">'+(tLine||'no line could be sized or priced yet')+'</div>')+'</div></div>';
-  // two hourly rates, both labelled — never a silent rate
-  h+='<div class="rates-l">'+esc(oo.rateLabel)+(q.conv?' · conversational '+esc(q.conv.rateLabel)+(q.conv.rangeLabel?', '+esc(q.conv.rangeLabel):''):'')+' · volume factor β '+q.beta.toFixed(3)+'</div>';
-  // every new product, and the honest always-on line
-  // every new product, per market: a market whose new products an AI Quote bundle already covers says so (its
-  // perNew is the would-be price, never charged here); a £0 that only means nothing was sized reads "not sized"
+  var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">+ test package '+T.n+' tests '+GBP(T.price)+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
+    :'<span class="tst-l">+ test package '+T.n+' tests — <span class="nm">price not set</span></span>';
+  var noSz='<div class="mv nm">not sized — see the breakdown</div>';
+  h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div>'+(sz?'<div class="mv">'+GBP(oo.total)+'</div><div class="mx">set-up + content, paid once</div>':noSz)+'</div>'
+    +'<div class="mb"><div class="ml">Monthly · ex VAT</div>'+(sz?'<div class="mv">'+GBP(mo.total)+'</div><div class="mx">upkeep + every new product'+(tLine?'<br>'+tLine:'')+'</div>':noSz+(tLine?'<div class="mx">'+tLine+'</div>':''))+'</div></div>';
+  // every new product, one line
   var newUnsized=!sz||q.lines.some(function(l){return l.status==='unknown'&&l.grain!=='none'});
   var newN=0,per=[];q.perMarket.forEach(function(m){var pre=q.perMarket.length>1?m.mkt.toUpperCase()+' ':'';
     if(m.overlap){per.push(pre+'covered by '+esc(m.overlap));return}
-    if(m.newP!=null){newN+=m.newP;per.push(pre+(!(m.perNew>0)&&newUnsized?'not sized':(newUnsized?'from ':'')+GBP(m.perNew)))}});
+    if(m.newP!=null){newN+=m.newP;per.push(pre+(!(m.perNew>0)&&newUnsized?'not sized':(newUnsized?'from ':'')+GBP(m.perNew)+' each'))}});
   var ao=q.alwaysOn||{};
-  h+='<div class="aon"><b>Every new product: '+(per.length?per.join(' · '):'—')+'</b>'
-    +(newN>0?' · about '+fmt(newN)+' new a month (at least — products still live)':'')
-    +'<br><span class="aon-m">'+(ao.live?'New products are picked up on arrival.':'Today: '+esc({weekly:'a weekly',fortnightly:'a fortnightly',monthly:'a monthly'}[ao.mechanism]||'a monthly')+' ASPL run the AM picks · target: on arrival once routing ships')+'</span></div>';
+  h+='<div class="aon"><b>New products</b> '+(per.length?per.join(' · '):'—')+(newN>0?' · ~'+fmt(newN)+' a month':'')+'</div>';
   if(o==='go+ar'&&PQ.go&&PQ.ar){var apart=PQ.go.oneOff.total+PQ.ar.oneOff.total;
-    if(sz&&sized(PQ.go)&&sized(PQ.ar)&&q.oneOff.total<apart)h+='<div class="save-l">'+GBP(apart-q.oneOff.total)+' less one-off than Tier 1 and AI-ready only bought apart — set-up rounded to blocks once'+(oo.bundleDisc?', bundle on generation':'')+'</div>'}
-  // the lines
+    if(sz&&sized(PQ.go)&&sized(PQ.ar)&&q.oneOff.total<apart)h+='<div class="save-l" title="Against Tier 1 and AI-ready only bought apart — set-up rounded to blocks once'+(oo.bundleDisc?', bundle on generation':'')+'">✓ Saves '+GBP(apart-q.oneOff.total)+' one-off vs buying separately</div>'}
+  var gaps=q.lines.filter(function(l){return l.status==='unknown'||l.status==='unpriced'});
+  h+='<div class="tk-foot">'+(q.sla?'<span>⏱ Live in ~'+q.sla+' working days</span>':'')+(gaps.length?'<span class="tk-gap">'+gaps.length+' line'+(gaps.length===1?'':'s')+' still to price or size</span>':'')+'</div>';
+  // THE BREAKDOWN — every working figure, folded
+  var nCount=q.lines.filter(function(l){return l.status!=='off'&&l.status!=='none'}).length;
+  h+='<details class="tier-more"><summary>See the breakdown <span class="nm">'+nCount+' lines'+(q.blockers.length?' · '+q.blockers.length+' to confirm':'')+'</span></summary>';
+  var under=q.perMarket.filter(function(m){return m.projected&&!m.projected.met&&(m.projected.blockers||[]).length});
+  if(under.length)h+='<div class="tk-sub">Still under 99% after this option</div><ul class="tk-ul">'+under.map(function(m){return '<li><b>'+esc(m.mkt.toUpperCase())+'</b> '+esc(m.projected.blockers.map(function(b){return b.key.replace(/_/g,' ')+' ('+b.tag+')'}).join(', '))+'</li>'}).join('')+'</ul>';
+  h+='<div class="tk-sub">How the price is made</div><div class="mx tk-bd">'
+    +(sz?'One-off: set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+') · generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?' · Spark AI set-up '+GBP(oo.conv):'')
+      +'<br>Monthly: monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+' · new products '+(mo.overlapMkts&&mo.overlapMkts.length&&mo.overlapMkts.length===q.perMarket.length?'covered — '+esc(mo.overlap):GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):''))+(mo.conv?' · Spark AI '+GBP(mo.conv)+'/mo':'')
+      :'no line could be sized or priced yet')+'</div>';
+  h+='<div class="rates-l">'+esc(oo.rateLabel)+(q.conv?' · conversational '+esc(q.conv.rateLabel)+(q.conv.rangeLabel?', '+esc(q.conv.rangeLabel):''):'')+' · volume factor β '+q.beta.toFixed(3)+'</div>';
+  h+='<div class="mx">'+(newN>0?'About '+fmt(newN)+' new products a month (at least — products still live). ':'')+(ao.live?'New products are picked up on arrival.':'Today: '+esc({weekly:'a weekly',fortnightly:'a fortnightly',monthly:'a monthly'}[ao.mechanism]||'a monthly')+' ASPL run the AM picks · target: on arrival once routing ships')+'</div>';
   h+='<div class="rc-scroll"><table class="lines"><thead><tr><th>Line</th><th>Products needing it</th><th class="num">£ one-off</th><th>Status</th><th></th></tr></thead><tbody>'
     +q.lines.map(function(l){
       var brief=(l.status==='priced'||l.status==='unknown'||l.status==='unpriced')&&l.key!=='client';
@@ -1971,13 +2020,11 @@ function tierCard(o){
         +'<td>'+needCell(l)+'</td><td class="num">'+moneyCell(l,q)+'</td>'
         +'<td><span class="stc stc-'+l.status+'" title="'+esc(l.reason||'')+'">'+esc(ST_LBL[l.status]||l.status)+'</span></td>'
         +'<td class="ln-a">'+(brief?'<a class="lnk" href="'+briefHref(l,q)+'" title="Brief this line into Workflow">→ Brief</a>':'')+'</td></tr>'}).join('')+'</tbody></table></div>';
-  // what is not sized / not priced, each with its fix
-  var gaps=q.lines.filter(function(l){return l.status==='unknown'||l.status==='unpriced'});
   if(gaps.length||T.status==='unpriced')h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')
     +(T.status==='unpriced'?'<li><b>Test package ('+T.n+' tests a month)</b> — not priced · <span class="fx">'+fixOf({status:'unpriced'})+'</span></li>':'')+'</ul>';
   if(q.blockers.length){var seen={},bl=q.blockers.filter(function(b){if(seen[b.why])return false;seen[b.why]=1;return true});
-    h+='<details class="blk-l"><summary>Before this goes to a client — '+bl.length+' to confirm</summary><ul>'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul></details>'}
-  if(q.sla)h+='<div class="q-sla">⏱ Live in about '+q.sla+' working days from sign-off</div>';
+    h+='<div class="tk-sub">Before this goes to a client — '+bl.length+' to confirm</div><ul class="tk-ul blk-l">'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul>'}
+  h+='</details>';
   return h+'</div>';
 }
 function renderTiers(){
