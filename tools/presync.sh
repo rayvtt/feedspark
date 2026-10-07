@@ -281,6 +281,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record client documents — every market at the foot (multi-market brands)"
   NODE_PATH=$(npm root -g) node tools/check_grmkts.js || {
     echo "✗ Golden Record all-markets tripwire failed — the PDF/HTML lost the market table, printed a different figure for the report's own market, or a column ran off the page"; exit 1; }
+  echo "── validating: Golden Record ⬇ HTML — the Catalogue modules the AM picked (framed Catalogue, per-measure ticks, the file)"
+  NODE_PATH=$(npm root -g) node tools/check_grcatx.js || {
+    echo "✗ Golden Record Catalogue-modules tripwire failed — the framed Catalogue, a tick, the picked cards in the HTML or the device's own Catalogue preferences regressed"; exit 1; }
   echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
   NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
     echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }

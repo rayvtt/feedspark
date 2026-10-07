@@ -740,6 +740,28 @@ window.addEventListener('load',restore);
   .pm-t td:first-child,.pm-t td:last-child{white-space:nowrap}
   .pm-miss{color:var(--risk);font-weight:900}
   .pm-note{margin:10px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5}
+  /* THE CATALOGUE'S MODULES, PICKED FOR THE ⬇ HTML (Ray, 7 Oct 2026) — see catxLoad(). On screen only: the PDF and the
+     HTML never carry this card (the HTML carries the picked modules themselves, in #print-catx). */
+  .catx{margin-top:16px}
+  .catx-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .catx-h h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+  .catx-sub{font-size:12px;font-weight:700;color:var(--muted);flex:1;min-width:200px}
+  .catx-picks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:12px;font-weight:700;color:var(--muted)}
+  .catx-picks:empty{display:none}
+  .catx-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--orange);color:var(--ink);background:rgba(245,166,35,.1);
+    border-radius:100px;padding:3px 4px 3px 10px;font-size:12px;font-weight:800}
+  .catx-chip button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;font-weight:900;line-height:1;padding:2px 5px;border-radius:100px}
+  .catx-chip button:hover{color:var(--risk)}
+  .catx-clear{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;font-weight:700}
+  .catx-fw:empty{display:none}
+  .catx-x{padding:14px;border:1px dashed var(--line);border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  .catx-fw{margin-top:12px}
+  .catx-f{display:block;width:100%;height:420px;border:0;background:transparent}
+  #print-catx{display:none}
+  body.pdf #catx{display:none!important}
+  body.xhtml #print-catx{display:block;margin-top:16px}
+  #print-catx .pm-h{margin-bottom:8px}
+  #print-catx iframe{display:block;width:100%;border:0;background:transparent}
   /* --- the page's own ≤900px rules, put back to their DESKTOP form. The print viewport is
      the page box (703px), so every one of these would fire on paper and hand the client a
      phone layout. The values are the screen's, minus only the columns whose contents are
@@ -931,6 +953,12 @@ window.addEventListener('load',restore);
   product pages for that attribute and see how much of the gap the site already holds (composition
   lines, colour names, FAQ pairs, size guides) — evidence for the ask, or a supplemental feed.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+  <div class="panel catx" id="catx" data-no-collapse hidden>
+    <div class="catx-h"><h3>Catalogue dashboard</h3><span class="catx-sub" id="catx-sub"></span>
+      <button class="btn" id="catx-load" type="button"></button></div>
+    <div class="catx-picks" id="catx-picks"></div>
+    <div class="catx-fw" id="catx-fw"></div>
+  </div>
   <div id="print-mkts" data-no-collapse></div>
   <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
@@ -1422,6 +1450,8 @@ window.addEventListener('load',restore);
     SEL = k;
     try { history.replaceState(null, '', '#' + encodeURIComponent(k)); } catch (e) {}
     renderEstate();
+    if (CATX.k && CATX.k !== k) catxDrop();   // another market's Catalogue is not this market's
+    catxHead(k);
     var p = parts(k);
     $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Loading ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '…</span>';
     fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
@@ -3628,6 +3658,269 @@ window.addEventListener('load',restore);
       'AI-readiness = how ready the feed is for AI shopping surfaces, Foundational → Agentic-ready · a dash = not measured for that market yet; ' +
       'averages read only the markets that carry each score.</p></div>';
   }
+  /* ---------------- THE CATALOGUE'S MODULES, AT THE END OF THE ⬇ HTML (Ray, 7 Oct 2026: "within Golden Score record, at
+     bottom, pull in modules dashboard from Catalogue (module) also, and Leave AM to actually select which module of the
+     dashboard is shown inside the HTML download. For example, with content depth, there could be multiple content depths
+     displayed on the dashboard. It could be images per product, highlight per product, length, or description length. All
+     this would be added at the end of the HTML, and AM can also have the option of not including it if it's not needed.")
+     The card under the scorecard frames the REAL Catalogue for this market (/catalog?embed=mods — its module grid alone,
+     every preference it writes kept in memory, see the Catalogue's EMB), so a module reads here exactly as it reads there:
+     one implementation, never a copy of it. Loaded on demand — it streams the feed AND the master, which is not a cost to
+     pay on every visit to /golden. Each card in the frame gets an "In ⬇ HTML" tick; a card with a measure (Content depth,
+     Catalogue mix, ROAS by, Optimised vs not) is ticked PER MEASURE, so images per product and highlights per product can
+     both go in. THREE RULES: nothing is ticked until the AM ticks it (the download carries no Catalogue module by default);
+     the picks are the AM's per device (gr-catx) and outlive the market, so a set chosen once applies to the next brand; and
+     the download carries each module as the Catalogue drew it at that moment — markup and the Catalogue's own stylesheet in
+     a script-free frame of its own, so neither page's CSS can restyle the other's — with a measure that is still reading
+     waited for, never captured half-drawn. The PDF does not carry them: it is a picture of this page, and a frame is not. */
+  var CATX_SRC = window.__grCatSrc || '/catalog';
+  var CATX = { k: null, f: null, w: null, p: null, timer: null };
+  var CATX_BUSY = /reading|waiting|joining|tracing|loading|preparing|scanning/i;
+  var CATX_MAXH = 860;
+  function catxPicks() {
+    try { var v = JSON.parse(localStorage.getItem('gr-catx') || '[]'); return Array.isArray(v) ? v.filter(function (x) { return x && typeof x.k === 'string' && typeof x.l === 'string'; }) : []; } catch (e) { return []; }
+  }
+  function catxSave(a) { try { localStorage.setItem('gr-catx', JSON.stringify(a)); } catch (e) {} }
+  function catxHas(key) { return catxPicks().some(function (x) { return x.k === key; }); }
+  // a card's MEASURE select — Image pixels' "how many to scan" count is a control, not a measure
+  function catxSel(card) { return card.querySelector('.chead select.agg:not(#pix-n)'); }
+  function catxKeyOf(card) {
+    var mod = card.getAttribute('data-mod'), sel = catxSel(card);
+    return sel && sel.value ? mod + ':' + sel.value : mod;
+  }
+  function catxLabelOf(card) {
+    var h = card.querySelector('.chead h3'), t = h ? h.textContent.replace(/\s+/g, ' ').trim() : card.getAttribute('data-mod');
+    var sel = catxSel(card), o = sel && sel.options[sel.selectedIndex];
+    var v = o ? o.text.trim() : '';
+    return v && t.toLowerCase().indexOf(v.toLowerCase()) < 0 ? t + ' · ' + v : t;
+  }
+  function catxHead(k) {
+    var el = $('catx'); if (!el) return;
+    if (!k) { el.hidden = true; return; }
+    el.hidden = false;
+    var p = parts(k), n = catxPicks().length, live = CATX.k === k && CATX.f;
+    $('catx-sub').textContent = n ? n + ' module' + (n === 1 ? '' : 's') + ' from the Catalogue added to the end of ⬇ HTML'
+      : 'Tick a Catalogue module to add it to the end of ⬇ HTML — none is, so the download carries none.';
+    if (CATX.k === k && CATX.miss && CATX.miss.length) $('catx-sub').textContent += ' · Left out of the last download, not on this market’s Catalogue: ' + CATX.miss.join(', ') + '.';
+    var b = $('catx-load');
+    b.hidden = !!live && !CATX.fail;
+    b.textContent = 'Show the Catalogue dashboard for ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    var picks = catxPicks();
+    $('catx-picks').innerHTML = picks.length ? '<span>In ⬇ HTML:</span>' + picks.map(function (x, i) {
+      return '<span class="catx-chip">' + esc(x.l) + '<button type="button" data-catx-rm="' + i + '" aria-label="Leave ' + esc(x.l) + ' out of the HTML" title="Leave it out of the HTML">✕</button></span>';
+    }).join('') + '<button type="button" class="catx-clear" id="catx-clear">Clear all</button>' : '';
+  }
+  function catxSync() {
+    var d = CATX.w && CATX.w.document; if (!d) return;
+    Array.prototype.forEach.call(d.querySelectorAll('.mod[data-mod]'), function (card) {
+      var cb = card.querySelector('.grx input'); if (!cb) return;
+      var key = catxKeyOf(card);
+      cb.checked = catxHas(key);
+      card.classList.toggle('grx-on', cb.checked);
+      cb.parentNode.title = 'Adds “' + catxLabelOf(card) + '” to the end of the Golden Record ⬇ HTML';
+    });
+  }
+  // one "In ⬇ HTML" tick per card, written into the framed Catalogue (same origin)
+  function catxDecorate(w) {
+    var d = w.document;
+    if (!d.getElementById('grx-css')) {
+      var st = d.createElement('style'); st.id = 'grx-css';
+      st.textContent = '.grx{display:inline-flex;align-items:center;gap:5px;flex:none;margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);' +
+        'border:1px solid var(--line);border-radius:100px;padding:3px 9px;cursor:pointer;white-space:nowrap;background:var(--paper)}' +
+        '.grx input{margin:0;accent-color:#ED6F0B}.mod.grx-on{outline:2px solid #ED6F0B;outline-offset:-2px}.mod.grx-on .grx{color:#ED6F0B;border-color:#ED6F0B}' +
+        'html.emb .mod>.chead{flex-wrap:wrap}html.emb .mod{height:auto;min-height:340px}';
+      d.head.appendChild(st);
+    }
+    Array.prototype.forEach.call(d.querySelectorAll('.mod[data-mod]'), function (card) {
+      if (card.getAttribute('data-mod') === 'fee' || card.querySelector('.grx')) return;
+      var head = card.querySelector('.chead'); if (!head) return;
+      var lab = d.createElement('label'); lab.className = 'grx';
+      lab.innerHTML = '<input type="checkbox"> In ⬇ HTML';
+      head.appendChild(lab);
+      lab.querySelector('input').addEventListener('change', function () {
+        var key = catxKeyOf(card), lbl = catxLabelOf(card), picks = catxPicks().filter(function (x) { return x.k !== key; });
+        if (this.checked) picks.push({ k: key, l: lbl });
+        catxSave(picks); catxSync(); catxHead(CATX.k);
+      });
+    });
+    if (!d.__grx) { d.__grx = 1; d.addEventListener('change', function (e) { if (e.target && e.target.matches && e.target.matches('select.agg')) setTimeout(catxSync, 0); }); }
+    catxSync();
+  }
+  function catxDrop() {
+    if (CATX.timer) clearInterval(CATX.timer);
+    if (CATX.f && CATX.f.parentNode) CATX.f.parentNode.removeChild(CATX.f);
+    var fw = $('catx-fw'); if (fw) fw.innerHTML = '';
+    CATX = { k: null, f: null, w: null, p: null, timer: null };
+  }
+  // frame the Catalogue for k; resolves with its window once the module grid is up (null if it never comes)
+  function catxLoad(k) {
+    if (CATX.k === k && CATX.p) return CATX.p;
+    catxDrop();
+    var p = parts(k), f = document.createElement('iframe');
+    f.className = 'catx-f';
+    f.title = 'Catalogue dashboard — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    f.src = CATX_SRC + '?embed=mods&client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt);
+    CATX.k = k; CATX.f = f;
+    $('catx-fw').appendChild(f);
+    var t0 = Date.now(), me = CATX;
+    CATX.p = new Promise(function (res) {
+      var fail = function (why) {
+        clearInterval(me.timer); me.fail = why;
+        $('catx-fw').innerHTML = '<div class="catx-x">' + esc(why) + '</div>';
+        res(null);
+      };
+      // a page that is not the Catalogue — no access to the module, the sign-in page — says so at once
+      f.addEventListener('load', function () {
+        setTimeout(function () {
+          if (me.w || CATX !== me) return;
+          var d = null; try { d = f.contentDocument; } catch (e) {}
+          if (!d || (!d.querySelector('.mod[data-mod]') && !d.getElementById('ins'))) fail('The Catalogue could not be opened here — this signin may not have the Catalogue module, or the page did not load.');
+        }, 1500);
+      });
+      me.timer = setInterval(function () {
+        if (CATX !== me) { clearInterval(me.timer); return res(null); }
+        var w = null, d = null;
+        try { w = f.contentWindow; d = w && w.document; } catch (e) {}
+        if (d && d.body) {
+          // the grid's own height, not the document's: a scroll height never shrinks below the frame it sits in
+          var mn = d.querySelector('main'), h = mn ? Math.ceil(mn.getBoundingClientRect().bottom) + 8 : d.documentElement.scrollHeight;
+          h = Math.min(h, CATX_MAXH);   // the whole dashboard is ~3,600px tall: it scrolls inside its card instead
+          if (h > 60 && Math.abs(h - (parseFloat(f.style.height) || 0)) > 2) f.style.height = h + 'px';
+          if (!me.w && w.__FCCCatalogue && d.querySelector('.mod[data-mod]')) { me.w = w; catxDecorate(w); res(w); }
+        }
+        if (!me.w && Date.now() - t0 > 45000) fail('The Catalogue did not finish loading for this market.');
+      }, 400);
+    });
+    catxHead(k);
+    return CATX.p;
+  }
+  function catxWait(test, until) {
+    return new Promise(function (res) {
+      (function poll() { if (test() || Date.now() > until) return requestAnimationFrame(function () { requestAnimationFrame(res); }); setTimeout(poll, 200); })();
+    });
+  }
+  // one picked card, as the client file carries it: no control, no id, no click-to-filter, no FCC link
+  function catxClean(card, vlabel) {
+    var c = card.cloneNode(true);
+    c.removeAttribute('hidden'); c.style.order = ''; c.classList.remove('grx-on');
+    Array.prototype.forEach.call(c.querySelectorAll('.grx,select,button,input,textarea,.pixctl,a.btn'), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    var h = c.querySelector('.chead h3');
+    if (h && vlabel && h.textContent.toLowerCase().indexOf(vlabel.toLowerCase()) < 0) h.appendChild(document.createTextNode(' · ' + vlabel));
+    Array.prototype.forEach.call(c.querySelectorAll('a'), function (a) { var s = document.createElement('span'); s.innerHTML = a.innerHTML; a.parentNode.replaceChild(s, a); });
+    [c].concat(Array.prototype.slice.call(c.querySelectorAll('*'))).forEach(function (n) {
+      Array.prototype.slice.call(n.attributes || []).forEach(function (at) {
+        var nm = at.name;
+        if (/^on/i.test(nm) || nm === 'id' || nm === 'tabindex' || /^data-(f|k|mv|mod-on)$/.test(nm) || (nm === 'role' && at.value === 'button')) n.removeAttribute(nm);
+        else if (nm === 'title') n.setAttribute('title', at.value.replace(/\s*·\s*click[^·]*$/i, ''));
+      });
+    });
+    // a chart's own tooltips are <title> elements — the same "click to list them" an AM reads, which a file cannot do
+    Array.prototype.forEach.call(c.querySelectorAll('title'), function (t) { t.textContent = t.textContent.replace(/\s*·\s*click[^·]*$/i, ''); });
+    return c.outerHTML;
+  }
+  // the Catalogue's own stylesheet — the page's, not the injected layers' (those sit in <body>)
+  function catxCss(d) {
+    var css = '';
+    Array.prototype.forEach.call(d.styleSheets, function (sh) {
+      var own = sh.ownerNode; if (own && own.closest && !own.closest('head')) return;
+      try { Array.prototype.forEach.call(sh.cssRules, function (r) { css += r.cssText + '\n'; }); } catch (e) {}
+    });
+    return css;
+  }
+  function catxDoc(d, cards) {
+    var fonts = Array.prototype.map.call(d.querySelectorAll('link[rel="stylesheet"][href^="https://fonts.googleapis.com"]'), function (l) {
+      return '<link rel="stylesheet" href="' + esc(l.href) + '">';
+    }).join('');
+    return '<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8">' + fonts +
+      '<style>' + catxCss(d).replace(/<\/style/gi, '<\\/style') + '</style>' +
+      /* ONE height at any window width: the reader's window is not the one the frame was measured in, so the grid keeps
+         a fixed column count and every card the Catalogue's own fixed height — a frame that scrolls inside a report, or
+         leaves half its height empty, is the export looking broken */
+      '<style>html,body{background:transparent!important;margin:0}main.wrap{max-width:none!important;margin:0!important;padding:2px!important}' +
+      '.ins{grid-auto-flow:row;grid-template-columns:repeat(' + Math.min(3, cards.length) + ',minmax(0,1fr))!important}' +
+      '.mod,.mod[hidden]{display:flex!important;height:340px!important;min-height:0!important}.mod>.chead{flex-wrap:nowrap!important}</style></head>' +
+      '<body><main class="wrap"><div class="ins mods">' + cards.join('') + '</div></main></body></html>';
+  }
+  // a script-free frame is laid out where it lands, so its height is measured here first, at the file's own column
+  function catxMeasure(html) {
+    return new Promise(function (res) {
+      var f = document.createElement('iframe');
+      f.setAttribute('sandbox', 'allow-same-origin');
+      f.style.cssText = 'position:absolute;left:-10000px;top:0;width:1124px;height:200px;border:0;visibility:hidden';
+      var done = false, end = function () {
+        if (done) return; done = true;
+        var h = 0; try { h = f.contentDocument.documentElement.scrollHeight; } catch (e) {}
+        if (f.parentNode) f.parentNode.removeChild(f); res(h || 800);
+      };
+      f.onload = function () { setTimeout(end, 250); };
+      setTimeout(end, 4000);
+      f.srcdoc = html;
+      document.body.appendChild(f);
+    });
+  }
+  // every pick, captured in order, each measure set and waited for, the frame put back as the AM left it
+  function catxCapture(k, picks, tell) {
+    return catxLoad(k).then(function (w) {
+      if (!w) return null;
+      var d = w.document, out = [], miss = [], prev = {}, until = Date.now() + 45000;
+      var step = function (i) {
+        if (i >= picks.length) return Promise.resolve();
+        var pk = picks[i], mod = pk.k.split(':')[0], v = pk.k.slice(mod.length + 1);
+        var card = d.querySelector('.mod[data-mod="' + mod + '"]');
+        var sel = card && catxSel(card);
+        if (!card) { miss.push(pk.l); return step(i + 1); }
+        // a card builds its measure list once the feed is read — wait for it before deciding a measure is not there
+        return catxWait(function () { return !v || !sel || sel.options.length > 0; }, until).then(function () {
+        var has = sel && v && Array.prototype.some.call(sel.options, function (o) { return o.value === v; });
+        if (v && !has) { miss.push(pk.l); return step(i + 1); }
+        if (v) {
+          if (!(mod in prev)) prev[mod] = sel.value;
+          if (sel.value !== v) { sel.value = v; sel.dispatchEvent(new w.Event('change', { bubbles: true })); }
+        }
+        if (tell) tell(i + 1, picks.length);
+        return catxWait(function () { var e = card.querySelector('.empty2'); return !(e && CATX_BUSY.test(e.textContent)); }, until).then(function () {
+          var o = v && sel.options[sel.selectedIndex];
+          out.push(catxClean(card, o ? o.text.trim() : ''));
+          return step(i + 1);
+        });
+        });
+      };
+      return step(0).then(function () {
+        Object.keys(prev).forEach(function (mod) {
+          var c = d.querySelector('.mod[data-mod="' + mod + '"]'), s = c && catxSel(c);
+          if (s && s.value !== prev[mod]) { s.value = prev[mod]; s.dispatchEvent(new w.Event('change', { bubbles: true })); }
+        });
+        catxSync();
+        CATX.miss = miss;
+        catxHead(k);
+        if (!out.length) return null;
+        var html = catxDoc(d, out.map(function (h) { return maskText(h); }));
+        return catxMeasure(html).then(function (h) { return { html: html, h: h, n: out.length, miss: miss }; });
+      });
+    });
+  }
+  function catxSection(p, cx) {
+    var sec = document.createElement('div');
+    sec.id = 'print-catx';
+    sec.innerHTML = '<div class="pm-h"><h3>Catalogue dashboard — ' + esc(dispClient(p.client)) + ' ' + esc(p.mkt.toUpperCase()) + '</h3>' +
+      '<span class="pm-sub">' + cx.n + ' module' + (cx.n === 1 ? '' : 's') + ' from the FeedSpark Catalogue · read ' +
+      esc(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })) + '</span></div>';
+    var f = document.createElement('iframe');
+    f.setAttribute('sandbox', '');
+    f.setAttribute('title', 'Catalogue dashboard — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase());
+    f.setAttribute('style', 'height:' + Math.ceil(cx.h + 4) + 'px');
+    f.setAttribute('srcdoc', cx.html);
+    sec.appendChild(f);
+    return sec;
+  }
+  $('catx-load').onclick = function () { if (!SEL) return; if (CATX.fail) catxDrop(); catxLoad(SEL).then(function () { catxHead(SEL); }); };
+  $('catx-picks').onclick = function (e) {
+    var rm = e.target.closest('[data-catx-rm]');
+    if (rm) { var a = catxPicks(); a.splice(+rm.getAttribute('data-catx-rm'), 1); catxSave(a); }
+    else if (e.target.closest('#catx-clear')) catxSave([]);
+    else return;
+    catxSync(); catxHead(SEL);
+  };
   function fillPrint(k, p, s) {
     $('print-head').innerHTML = pdfHead(p, s);
     var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);
@@ -3857,6 +4150,8 @@ window.addEventListener('load',restore);
      '#fcc-navcz', '#fcc-navcz-scrim', '.instr-tgl', '.instr-hide', '#askp-slot', '#profp-slot',
      /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
         weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
+     /* the live Catalogue picker card (its frame points at the FCC) — the picked modules travel as #print-catx */
+     '#catx',
      '.pillar .pf2', '.heat-card', '#rec-tier'].forEach(function (sel) {
       Array.prototype.forEach.call(doc.querySelectorAll(sel), function (el) {
         if (el.classList && el.classList.contains('pillar')) { el.removeAttribute('data-scpop'); return; }
@@ -3869,7 +4164,19 @@ window.addEventListener('load',restore);
     while ((c = walker.nextNode())) drop.push(c);
     drop.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
   }
+  /* ⬇ HTML: when the AM has picked Catalogue modules, read them first (the frame may still be streaming the feed), then
+     build the file with them at the end; with none picked the file is built at once, exactly as before */
   function exportHtml(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var picks = catxPicks();
+    if (!picks.length) return buildHtml(k, null);
+    var btn = $('det-html'), old = btn ? btn.textContent : '';
+    var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
+    if (btn) { btn.disabled = true; btn.textContent = 'Reading the Catalogue…'; }
+    var done = function () { if (btn) { btn.disabled = false; btn.textContent = old; } };
+    catxCapture(k, picks, tell).then(function (cx) { done(); buildHtml(k, cx); }, function () { done(); buildHtml(k, null); });
+  }
+  function buildHtml(k, cx) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
     /* open every content-quality row first: a closed row's detail is never rendered, so without
@@ -3883,6 +4190,8 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
+    // the picked Catalogue modules close the document, after every market's scores and before the footer
+    if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
     title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
     var html = '<!doctype html>\n' + doc.outerHTML;

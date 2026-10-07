@@ -421,3 +421,11 @@ Readings are kept per feed **by image URL** in KV `catimg:<client>:<mkt>`, so a 
 Harness:
 - `tools/test_catalog.mjs` runs the engine on synthetic pictures: a packshot, a studio sweep, a knee crop, a scene, a colour backdrop, alpha, every check, the fingerprints, scan findings and pack/unpack. It also lifts the worker's host learning, allow-list, clean and merge.
 - `tools/check_catalog.js` scans the Northwind stub in the browser and checks every bucket against an independent count, the filter, the gallery order and the inspector.
+
+## Embedded in the Golden Record (`?embed=mods`, 7 Oct 2026)
+
+/golden frames this page for one market so the AM can pick modules for the Golden Record's ⬇ HTML (see
+docs/LABELGUARD.md §9.12c). With `?embed=mods` the page shows its module grid alone (`html.emb`), reads
+every preference through an in-memory layer and writes none to the device, keeps its own address, hides
+the Fee check, and marks its root `data-no-digest` + `data-no-collapse` so the phone's skim view and the
+ⓘ collapse leave the cards whole. Without the parameter nothing changes.
