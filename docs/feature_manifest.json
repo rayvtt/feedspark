@@ -12366,6 +12366,12 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "function prodSampler(",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the tier preview shows Spark AI example values for the sampled product (pattern, 10+ keyword strings …) on compact one-line rows",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvExample(",
+      "pr": 0
     }
   ]
 }

@@ -346,30 +346,36 @@ window.addEventListener('load',restore);
   /* tier preview — the catalogue filling in as the option changes (Ray, 7 Oct 2026: "there should be data population
      animation for a products when switching between tier 1 & tier 2"); widths/numbers move by CSS transition + rAF only */
   .pv{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin:0 0 14px}
-  .pv-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+  .pv-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
   .pv-h h3{margin:0;font-size:15px;font-weight:900}
   .pv-seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--wash)}
-  .pv-seg button{font:inherit;font-size:13px;font-weight:800;border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 11px;min-height:36px;cursor:pointer}
+  .pv-seg button{font:inherit;font-size:13px;font-weight:800;border:0;background:transparent;color:var(--muted);border-radius:7px;padding:6px 11px;min-height:36px;cursor:pointer}
   .pv-seg button[aria-pressed=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
   .pv-mk{margin-left:auto}
-  .pv-k{display:flex;flex-wrap:wrap;gap:8px 22px;margin:12px 0 6px;font-size:13px;color:var(--muted)}
-  .pv-k b{display:block;font-size:24px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
-  .pv-body{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start;margin-top:8px}
-  @media(max-width:900px){.pv-body{grid-template-columns:minmax(0,1fr)}}
-  .pv-g{display:flex;flex-direction:column;gap:2px}
-  .pv-prod{border:1px solid var(--line);border-radius:12px;background:var(--wash);padding:12px}
-  .pv-img{background:var(--paper);border:1px solid var(--line);border-radius:9px;overflow:hidden;aspect-ratio:1/1;display:grid;place-items:center}
+  .pv-k{display:flex;flex-wrap:wrap;gap:6px 22px;margin:8px 0 4px;font-size:12.5px;color:var(--muted)}
+  .pv-k b{display:inline-block;margin-left:6px;font-size:18px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+  .pv-body{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:18px;align-items:start;margin-top:6px}
+  @media(max-width:1000px){.pv-body{grid-template-columns:minmax(0,1fr)}}
+  .pv-g{display:flex;flex-direction:column}
+  .pv-prod{border:1px solid var(--line);border-radius:12px;background:var(--wash);padding:8px}
+  .pv-ph{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:center;margin-bottom:4px}
+  .pv-img{background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden;width:84px;height:84px;display:grid;place-items:center}
   .pv-img img{width:100%;height:100%;object-fit:contain;display:block}
-  .pv-noimg{font-size:13px;color:var(--muted);padding:26px 8px;text-align:center}
-  .pv-pt{font-weight:900;font-size:14px;margin:10px 0 2px;line-height:1.3}
-  .pv-pid{font-size:11.5px;color:var(--muted);margin-bottom:8px;overflow-wrap:anywhere}
+  .pv-noimg{font-size:13px;color:var(--muted);padding:22px 8px;text-align:center}
+  .pv-pt{font-weight:900;font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .pv-pid{font-size:11px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+  .pv-ex{font-size:11px;font-weight:800;color:var(--muted);margin-top:3px}
+  .pv-ex.on{color:var(--navy)}.pv-ex.err{color:var(--orange-deep)}
   .pv-fl{display:flex;flex-direction:column}
-  .pv-fr{display:grid;grid-template-columns:7.4em minmax(0,1fr);gap:0 8px;padding:6px 8px;border-top:1px solid var(--line);font-size:12.5px;border-radius:6px;transition:background-color .45s}
-  .pv-fr .fk{font-weight:800;grid-row:1/3}
+  .pv-fr{display:grid;grid-template-columns:7.8em minmax(0,1fr) auto;align-items:center;gap:0 8px;padding:2px 6px;min-height:22px;border-top:1px solid var(--line);font-size:12px;line-height:1.35;border-radius:5px;transition:background-color .45s}
+  .pv-fr .fk{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pv-fr .fv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
   .pv-fr .fv.miss{color:var(--risk);font-weight:800}
   .pv-fr .fv.gone{text-decoration:line-through;color:var(--muted);font-weight:400}
-  .pv-fr .fs{font-size:11px;font-weight:800;color:var(--muted)}
+  .pv-fr .fv.how{color:var(--muted);font-style:italic}
+  .pv-fr .fv.wait{color:var(--muted)}
+  .pv-fr .fv.ex{font-weight:700}
+  .pv-fr .fs{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;max-width:8.5em;overflow:hidden;text-overflow:ellipsis;text-align:right}
   .pv-fr.on{background:rgba(21,128,61,.08)}
   .pv-fr.on .fs{color:var(--good)}
   .pv-fr.t2.on{background:rgba(26,54,93,.07)}
@@ -377,15 +383,17 @@ window.addEventListener('load',restore);
   .pv-fr.pop{animation:pvin .45s ease-out both}
   [data-theme=dark] .pv-fr.on{background:rgba(72,208,126,.10)}
   [data-theme=dark] .pv-fr.t2.on{background:rgba(91,130,190,.14)}
-  .pv-gh{grid-column:1/-1;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
-  .pv-r{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 3.4em;max-width:720px;align-items:center;gap:8px;padding:4px 0;font-size:13px;position:relative}
+  .pv-gh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 1px}
+  .pv-gh:first-child{margin-top:0}
+  .pv-r{display:grid;grid-template-columns:minmax(0,8.6em) minmax(0,1fr) 3em minmax(0,12em);align-items:center;gap:8px;padding:2px 0;min-height:22px;font-size:12.5px;position:relative}
   .pv-r .lb{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pv-t{height:9px;border-radius:5px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
+  .pv-t{height:8px;border-radius:5px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
   .pv-f{display:block;height:100%;width:0;border-radius:5px;background:var(--muted);transition:width .75s cubic-bezier(.2,.7,.2,1),background-color .3s}
   .pv-f.b-g{background:var(--good)}.pv-f.b-y{background:var(--orange)}.pv-f.b-o{background:var(--orange-deep)}.pv-f.b-r{background:var(--risk)}
   .pv-v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
-  .pv-c{grid-column:2/-1;font-size:11px;font-weight:800;color:var(--muted);margin-top:-2px}
+  .pv-c{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pv-c.t1{color:var(--orange-deep)}.pv-c.t2{color:var(--navy)}
+  @media(max-width:600px){.pv-r{grid-template-columns:minmax(0,7.4em) minmax(0,1fr) 3em}.pv-c{grid-column:2/-1;margin-top:-3px}}
   .pv-r.pop .pv-t::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-100%);animation:pvsweep .9s ease-out forwards}
   .pv-r.pop .pv-c{animation:pvin .45s ease-out both}
   .pv-n{font-size:12px;color:var(--muted);margin:10px 0 0}
@@ -1989,26 +1997,33 @@ function renderMode(){
 
 /* ---- tier preview: what the catalogue looks like today, with Tier 1, with Tier 2 ----
    Ray, 7 Oct 2026: "data population animation … when switching between tier 1 & tier 2", then "it should all stacked
-   up vertically — with a visual of an actual image and example of it filling up". So: ONE of the client's own
-   products (picked off the live/file stream — the product with the most gaps, its own image and its own values)
-   beside ONE vertical column of coverage per attribute. Switching tier fills the product's fields and the bars.
-   What an option fills comes from the engine's projection (q.perMarket[i].projected.fixed) and an unfilled field
-   says who closes it (the projection's gap tags), so nothing on this card can promise a field the quote does not
-   price — and no value is ever invented: a filled field names HOW FeedSpark fills it, never a made-up value. */
-var PV={opt:'now',mkt:0,last:null};
+   up vertically — with a visual of an actual image and example of it filling up", then "compress rows … fit to see
+   better in 1 screen view — also, allow actual data being populated (pattern for this trouser would be: plain) …
+   keywords would be: FS 10+ strings of keywords". So: ONE of the client's own products (picked off the live/file
+   stream — the product with the most gaps, its own image and its own values) beside ONE column of coverage per
+   attribute, every row one line. Switching tier fills the product's fields and the bars. What an option fills comes
+   from the engine's projection (q.perMarket[i].projected.fixed), so nothing on this card can promise a field the
+   quote does not price. The VALUES a tier writes are a Spark AI EXAMPLE for this product — one /api/claude call per
+   product (image + its own row), cached for the session, labelled as an example ASPL and the AM review — and only
+   from facts in the image or the row: no identifier, size or price is ever generated, and the four fields built in
+   FeedHero or scraped (document link, related products, variant options, popularity rank) show HOW, not a value. */
+var PV={opt:'now',mkt:0,last:null,ex:{}};
 var PV_GROUPS=[['Google basics',['title','description','google_product_category','product_type','keywords']],
   ['Attributes',['color','size','gender','age_group','material','pattern','size_type','size_system']],
   ['AI readiness',['product_highlight','product_detail','question_and_answer','document_link','related_product','item_group_title','variant_option','popularity_rank']]];
 var PV_LBL={google_product_category:'GPC',product_type:'Product type',product_highlight:'Highlights',product_detail:'Product details',question_and_answer:'Q&A',document_link:'Document link',
   related_product:'Related products',item_group_title:'Item group title',variant_option:'Variant options',popularity_rank:'Popularity rank',age_group:'Age group',size_type:'Size type',size_system:'Size system'};
-// HOW each field is filled — the method, never a value
+// HOW each field is filled
 var PV_HOW={title:'rewritten: brand + material + fit + colour + use',description:'enriched to the description target',google_product_category:'mapped to Google\'s taxonomy',
-  product_type:'deepened to a 3+ level path',keywords:'search phrases added to the keyword slots',color:'read from the product image and page',material:'read from the product image and page',
-  pattern:'read from the product image and page',gender:'set by a FeedHero rule',age_group:'set by a FeedHero rule',size_type:'set by a FeedHero rule',size_system:'set by a FeedHero rule',
+  product_type:'deepened to a 3+ level path',keywords:'10+ search phrases in the keyword slots',color:'read from the product image and page',material:'read from the product image and page',
+  pattern:'read from the product image and page',size:'from the client\'s own size data',gender:'set by a FeedHero rule',age_group:'set by a FeedHero rule',size_type:'set by a FeedHero rule',size_system:'set by a FeedHero rule',
   condition:'set by a FeedHero rule',product_highlight:'drawn from the description, feed, product page and reviews',product_detail:'harvested from the product images and page',
   question_and_answer:'written by Spark AI',item_group_title:'written by Spark AI',document_link:'scraped from the product page',related_product:'built in FeedHero',
   variant_option:'built in FeedHero',popularity_rank:'computed in FeedHero from Google Ads data'};
 var PV_REWRITE={title:1,description:1,google_product_category:1,product_type:1,keywords:1,product_highlight:1};
+// the fields Spark AI writes an example for — never an identifier, a size, a price, or what FeedHero builds
+var PV_GEN=['title','description','google_product_category','product_type','keywords','color','material','pattern','gender','age_group','size_type','size_system',
+  'product_highlight','product_detail','question_and_answer','item_group_title'];
 function pvLabel(k){return PV_LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g,' '))}
 // one product off the stream: the one (with an image) carrying the most gaps among the fields the tiers fill
 function prodSampler(){
@@ -2029,16 +2044,63 @@ function prodSampler(){
       if(++seen>3000)return;
       var v=function(k){var i=C[k];return i==null?'':String(r[i]==null?'':r[i]).trim()};
       if(!v('image_link')||!v('title'))return;
-      var hl=C._hl.filter(function(i){return String(r[i]||'').trim()}).length;
+      var hl=C._hl.map(function(i){return String(r[i]||'').trim()}).filter(Boolean);
       var kw=C._kw.map(function(i){return String(r[i]||'').trim()}).filter(function(x){return x&&!/^[0-9a-f]{24,}$/i.test(x)});
       var gap=['google_product_category','product_type','color','material','pattern','product_detail','question_and_answer','item_group_title'].filter(function(k){return !v(k)}).length
-        +(v('description').length<160?1:0)+(hl<4?1:0)+(kw.length?0:1);
-      if(gap>bestGap){bestGap=gap;var o={hl:hl,kw:kw.slice(0,3)};WANT.forEach(function(k){o[k]=v(k).slice(0,k==='description'?600:220)});best=o}
+        +(v('description').length<160?1:0)+(hl.length<4?1:0)+(kw.length?0:1);
+      if(gap>bestGap){bestGap=gap;var o={hl:hl.length,hlv:hl.slice(0,6).map(function(x){return x.slice(0,160)}),kw:kw.slice(0,3)};WANT.forEach(function(k){o[k]=v(k).slice(0,k==='description'?600:220)});best=o}
     },finish:function(){return best}};
 }
 function pvSample(a){
   if(SV.mode==='file'&&SV.file&&SV.file.res)return SV.file.res.ps||null;
   var L=LIVE[a.client+'|'+a.mkt];return (L&&L.ps)||null;
+}
+// a Spark AI example of what the tiers write for THIS product — one call per product, cached for the session
+var PV_SYS='You are Spark AI, FeedSpark\'s product-feed optimisation model. Write EXAMPLE optimised Google Shopping feed values for ONE product, shown to a client as a preview of what FeedSpark\'s packages fill in. '
+  +'Use only facts visible in the product image or stated in the supplied product data. If a fact cannot be established from them, return null for that field. Never invent identifiers, prices, sizes, stock, reviews, awards or certifications. '
+  +'No promotional words (sale, free delivery, best), no shouting capitals, no HTML. British English unless the data is in another language, in which case write in that language. '
+  +'Reply with ONE JSON object and nothing else, with exactly these keys:\n'
+  +'"title": 80-120 characters, structured Brand + gender/type + material + fit + colour + product + key use (MASK);\n'
+  +'"description": 500-900 characters, the key facts in the first 160 characters, plain sentences;\n'
+  +'"google_product_category": an existing Google product taxonomy path in English, levels joined by " > ";\n'
+  +'"product_type": a retailer category path of 4-5 levels joined by " > ";\n'
+  +'"keywords": an array of 10-14 distinct search phrases a shopper would type for this product, 2-6 words each, lowercase;\n'
+  +'"color", "material", "pattern" (e.g. "plain", "striped", "floral"), "gender" (male/female/unisex), "age_group" (adult/kids/toddler/infant/newborn), "size_type" (regular/petite/plus/tall/big/maternity), "size_system" (UK/EU/US/...): strings;\n'
+  +'"product_highlight": an array of 4-6 short benefit lines, each under 150 characters;\n'
+  +'"product_detail": an array of 3-4 objects {"section","attribute","value"};\n'
+  +'"question_and_answer": an array of 2 objects {"q","a"} a shopper would ask, answered only from the facts given;\n'
+  +'"item_group_title": the style name shared by every size and colour of this product.';
+function pvClean(o){
+  var out={},S=function(x,n){return typeof x==='string'&&x.trim()?x.trim().replace(/\s+/g,' ').slice(0,n):null};
+  ['title','google_product_category','product_type','color','material','pattern','gender','age_group','size_type','size_system','item_group_title'].forEach(function(k){var v=S(o[k],k==='title'?160:200);if(v)out[k]=v});
+  var d=S(o.description,1200);if(d)out.description=d;
+  var A=function(x,max,n){return Array.isArray(x)?x.map(function(y){return S(y,n)}).filter(Boolean).slice(0,max):[]};
+  var kw=A(o.keywords,16,80);if(kw.length)out.keywords=kw;
+  var hl=A(o.product_highlight,6,160);if(hl.length)out.product_highlight=hl;
+  var pd=Array.isArray(o.product_detail)?o.product_detail.map(function(x){x=x||{};var at=S(x.attribute,60),v=S(x.value,120);return at&&v?(S(x.section,40)||'General')+': '+at+': '+v:null}).filter(Boolean).slice(0,4):[];
+  if(pd.length)out.product_detail=pd;
+  var qa=Array.isArray(o.question_and_answer)?o.question_and_answer.map(function(x){x=x||{};var q=S(x.q,160),a=S(x.a,300);return q&&a?{q:q,a:a}:null}).filter(Boolean).slice(0,2):[];
+  if(qa.length)out.question_and_answer=qa;
+  return out;
+}
+function pvExample(P){
+  if(!P||!P.id||PV.ex[P.id])return;
+  var X=PV.ex[P.id]={st:'wait'};
+  var data={};['title','brand','description','google_product_category','product_type','color','material','pattern','gender','age_group','size','price','item_group_title'].forEach(function(k){if(P[k])data[k]=P[k]});
+  if(P.hlv&&P.hlv.length)data.product_highlight=P.hlv;
+  var txt='Product data from the client\'s feed (JSON):\n'+JSON.stringify(data)+'\n\nWrite the example values now. JSON only.';
+  function ask(withImg){
+    var content=(withImg&&/^https?:\/\//.test(P.image_link||'')?[{type:'image',source:{type:'url',url:P.image_link}}]:[]).concat([{type:'text',text:txt}]);
+    return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({model:'claude-opus-5',max_tokens:2200,system:PV_SYS,messages:[{role:'user',content:content}]})})
+      .then(function(r){return r.json()});
+  }
+  ask(true).then(function(d){return d&&d.error==='upstream'?ask(false):d}).then(function(d){
+    if(!d||d.error){X.st=d&&d.error==='no_key'?'off':'err';X.msg=(d&&d.message)||'';return}
+    var m=String(d.text||'').match(/\{[\s\S]*\}/),o=null;try{o=m&&JSON.parse(m[0])}catch(e){}
+    var v=o&&pvClean(o);
+    if(!v||!Object.keys(v).length){X.st='err';X.msg='Spark AI returned no usable values';return}
+    X.st='ok';X.v=v;
+  }).catch(function(e){X.st='err';X.msg=String(e&&e.message||e)}).then(function(){renderPreview()});
 }
 function pvTween(el,to,dec){if(!el)return;var from=parseFloat(el.getAttribute('data-v'));el.setAttribute('data-v',to==null?'':to);
   if(to==null){el.textContent='—';return}
@@ -2047,9 +2109,18 @@ function pvTween(el,to,dec){if(!el)return;var from=parseFloat(el.getAttribute('d
   var t0=performance.now(),D=700;(function st(t){var k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(st)})(t0)}
 function pvVal(P,k){
   if(!P)return '';
-  if(k==='product_highlight')return P.hl?P.hl+' highlight'+(P.hl===1?'':'s'):'';
+  if(k==='product_highlight')return P.hl?P.hl+' highlight'+(P.hl===1?'':'s')+(P.hlv&&P.hlv.length?': '+P.hlv.join(' · '):''):'';
   if(k==='keywords')return P.kw&&P.kw.length?P.kw.join(' · '):'';
   return P[k]||'';
+}
+// an example value as one line, and in full for the tooltip
+function pvExVal(v,k){
+  var x=v&&v[k];if(!x)return null;
+  if(k==='keywords')return {s:x.length+' strings: '+x.join(' · '),t:x.join('\n')};
+  if(k==='product_highlight')return {s:x.length+' highlights: '+x.join(' · '),t:x.join('\n')};
+  if(k==='product_detail')return {s:x.join(' · '),t:x.join('\n')};
+  if(k==='question_and_answer')return {s:x.map(function(y){return 'Q: '+y.q+' A: '+y.a}).join(' · '),t:x.map(function(y){return 'Q: '+y.q+'\nA: '+y.a}).join('\n\n')};
+  return {s:x,t:x};
 }
 function renderPreview(){
   var host=$('#svc-prev');if(!host)return;
@@ -2067,40 +2138,58 @@ function renderPreview(){
       +[['now','Today'],['go','Tier 1 · Google-ready'],['go+ar','Tier 2 · AI-ready']].map(function(x){return '<button type="button" data-pv="'+x[0]+'" aria-pressed="false">'+esc(x[1])+'</button>'}).join('')
       +'</span><span class="pv-mk"></span></div><div class="pv-k"></div>'
       +'<div class="pv-body"><div class="pv-prod"></div><div class="pv-g"></div></div>'
-      +'<p class="pv-n">One of the client\'s own products (the one with the most gaps), and the share of the catalogue carrying each attribute. An option fills only the lines it prices; a filled field says how FeedSpark fills it — no value is invented, and the client\'s own data stays theirs.</p>';
+      +'<p class="pv-n">One of the client\'s own products (the one with the most gaps), and the share of the catalogue carrying each attribute. An option fills only the lines it prices. The values shown under a tier are a Spark AI example for this product, written from its own image and feed row — ASPL and the AM review every value before it reaches the feed; identifiers, sizes and prices are never generated.</p>';
     host.addEventListener('click',function(e){var b=e.target.closest('[data-pv]');if(!b)return;PV.opt=b.getAttribute('data-pv');renderPreview()});
     host.addEventListener('change',function(e){if(e.target.matches('[data-pvm]')){PV.mkt=+e.target.value||0;PV.last=null;renderPreview()}});
   }
   host.querySelector('.pv-mk').innerHTML=A.length>1?'<select class="fld sm" data-pvm aria-label="Market">'+A.map(function(x,i){return '<option value="'+i+'"'+(i===PV.mkt?' selected':'')+'>'+esc(String(x.audit.mkt).toUpperCase())+'</option>'}).join('')+'</select>':esc(String(a.mkt).toUpperCase());
   host.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-pv')===PV.opt?'true':'false')});
-  var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:{},gapT={};
+  var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:{},gapT={},g1={};
   ((PV.opt==='go'?p1:p2).blockers||[]).forEach(function(b){gapT[b.key]=b.tag});
-  var GT={'client to supply':'client\'s own data','in Tier 2':'Tier 2 fills it','in Tier 1':'Tier 1 fills it','price to follow':'in this option — price to follow',
-    'to be sized':'in this option — to be sized','coming':'coming — included when live','already contracted':'already contracted','not in this quote':'not in this quote'};
+  (p1.blockers||[]).forEach(function(b){g1[b.key]=b.tag});
+  // in this option but not yet priced/sized: the product card still shows what it writes; the bars and score stay on what is priced
+  var TBC=/price to follow|to be sized/;
+  function inT1(k){return !!f1[k]||TBC.test(g1[k]||'')}
+  var GT={'client to supply':'client\'s own data','in Tier 2':'Tier 2 fills it','in Tier 1':'Tier 1 fills it','price to follow':'in option · price to follow',
+    'to be sized':'in option · to be sized','coming':'coming — included when live','already contracted':'already contracted','not in this quote':'not in this quote'};
   function who(k,now){return fill[k]?(f1[k]?'filled by Tier 1':'filled by Tier 2'):now>=99?'already complete':f1[k]?'Tier 1 fills it':f2[k]?'Tier 2 fills it':(GT[gapT[k]]||gapT[k]||'client\'s own data')}
-  function cls(k,tag){return f1[k]||/Tier 1|this option/.test(tag)?' t1':(f2[k]||/Tier 2/.test(tag)?' t2':'')}
+  function cls(k,tag){return f1[k]||/Tier 1|in option/.test(tag)?' t1':(f2[k]||/Tier 2/.test(tag)?' t2':'')}
   var key=a.client+'|'+a.mkt,P=pvSample(a);
+  if(P&&PV.opt!=='now')pvExample(P);
+  var EX=P&&PV.ex[P.id];
   // the product card — the client's own product, its fields filling in by tier
   var pp=host.querySelector('.pv-prod'),pk=key+'|'+(P?P.id:'');
   if(pp.getAttribute('data-k')!==pk){
     pp.setAttribute('data-k',pk);
     pp.innerHTML=!P?'<div class="pv-noimg">'+(SV.mode==='stored'?'Switch to <b>⚡ Live</b> or <b>⇪ File</b> to show one of the client\'s own products here.':'Reading the feed — a product appears here once the read lands.')+'</div>'
-      :'<div class="pv-img"><img src="'+esc(P.image_link)+'" alt="'+esc(P.title)+'" loading="lazy" referrerpolicy="no-referrer"></div>'
-       +'<div class="pv-pt">'+esc(P.title)+'</div><div class="pv-pid">'+esc(P.id||'')+(P.brand?' · '+esc(P.brand):'')+(P.price?' · '+esc(P.price):'')+'</div>'
+      :'<div class="pv-ph"><div class="pv-img"><img src="'+esc(P.image_link)+'" alt="'+esc(P.title)+'" loading="lazy" referrerpolicy="no-referrer"></div>'
+       +'<div><div class="pv-pt">'+esc(P.title)+'</div><div class="pv-pid">'+esc(P.id||'')+(P.brand?' · '+esc(P.brand):'')+(P.price?' · '+esc(P.price):'')+'</div><div class="pv-ex"></div></div></div>'
        +'<div class="pv-fl">'+PV_GROUPS.map(function(G){return G[1].filter(function(k){var x=at[k];return !(x&&x.na)}).map(function(k){
-         return '<div class="pv-fr" data-k="'+k+'"><span class="fk">'+esc(pvLabel(k))+'</span><span class="fv"></span><span class="fs"></span></div>'}).join('')}).join('')+'</div>';
+         return '<div class="pv-fr" data-k="'+k+'"><span class="fk" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="fv"></span><span class="fs"></span></div>'}).join('')}).join('')+'</div>';
   }
-  if(P)pp.querySelectorAll('.pv-fr').forEach(function(r,i){
-    var k=r.getAttribute('data-k'),val=pvVal(P,k),had=!!val,tag=who(k,had?100:0),on=!!fill[k];
-    var fv=r.querySelector('.fv'),fs=r.querySelector('.fs');
-    fv.textContent=had?val:'missing';fv.className='fv'+(had?'':' miss')+(on&&!had?' gone':'');
-    fs.textContent=on?(had&&PV_REWRITE[k]?'✦ optimised — ':'✦ filled — ')+(PV_HOW[k]||'by FeedSpark'):(had?'as supplied':tag);
-    var was=r.getAttribute('data-on');r.setAttribute('data-on',on?'1':'0');
-    r.className='pv-fr'+(on?' on':'')+(had?'':' gap')+cls(k,on?(f1[k]?'Tier 1':'Tier 2'):tag);
-    r.style.transitionDelay=(i*35)+'ms';
-    if(was!=null&&was!==(on?'1':'0')&&on){r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop')}
-  });
-  // the catalogue — one vertical column of coverage per attribute
+  if(P){
+    var exl=pp.querySelector('.pv-ex');
+    exl.className='pv-ex'+(PV.opt==='now'?'':EX&&EX.st==='ok'?' on':EX&&EX.st==='err'?' err':'');
+    exl.textContent=PV.opt==='now'?'As the client supplies it today':!EX||EX.st==='wait'?'✦ Spark AI is writing an example for this product…':EX.st==='ok'?'✦ Values below are a Spark AI example — reviewed before they reach the feed'
+      :EX.st==='off'?'Spark AI examples need the Claude connection — showing how each field is filled':'Spark AI example unavailable — showing how each field is filled';
+    exl.title=EX&&EX.msg?EX.msg:'';
+    pp.querySelectorAll('.pv-fr').forEach(function(r,i){
+      var k=r.getAttribute('data-k'),val=pvVal(P,k),had=!!val,tag=who(k,had?100:0),tbc=PV.opt!=='now'&&!fill[k]&&TBC.test(gapT[k]||''),on=!!fill[k]||tbc;
+      var fv=r.querySelector('.fv'),fs=r.querySelector('.fs'),tier=inT1(k)?'T1':'T2',how=PV_HOW[k]||'by FeedSpark';
+      var gen=on&&PV_GEN.indexOf(k)>=0&&(!had||PV_REWRITE[k]),ex=gen&&EX&&EX.st==='ok'?pvExVal(EX.v,k):null;
+      if(ex){fv.textContent=ex.s;fv.className='fv ex';fv.title=ex.t+(had?'\n\nToday: '+val:'')}
+      else if(gen&&EX&&EX.st==='wait'){fv.textContent=had?val:'writing an example…';fv.className='fv wait';fv.title=''}
+      else if(on&&!had){fv.textContent=how;fv.className='fv how';fv.title=''}
+      else{fv.textContent=had?val:'missing';fv.className='fv'+(had?'':' miss');fv.title=had?val:''}
+      fs.textContent=on?'✦ '+tier+(tbc?' · £ tbc':''):(had?'':tag);
+      fs.title=on?(had&&PV_REWRITE[k]?'optimised — ':'filled — ')+how+(ex?' · Spark AI example':'')+(tbc?' · in this option, '+gapT[k]+' — not yet counted in the score':''):(had?'as supplied':tag);
+      var was=r.getAttribute('data-on');r.setAttribute('data-on',on?'1':'0');
+      r.className='pv-fr'+(on?' on':'')+(had?'':' gap')+cls(k,on?(tier==='T1'?'Tier 1':'Tier 2'):tag);
+      r.style.transitionDelay=(i*30)+'ms';
+      if(was!=null&&was!==(on?'1':'0')&&on){r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop')}
+    });
+  }
+  // the catalogue — one line of coverage per attribute
   var g=host.querySelector('.pv-g');
   if(g.getAttribute('data-k')!==key){
     g.setAttribute('data-k',key);
@@ -2117,7 +2206,7 @@ function renderPreview(){
     f.className='pv-f '+(measured?band(v):'');
     r.querySelector('.pv-v').textContent=measured?Math.round(v)+'%':'—';
     var tag=!measured?'not measured on this read':who(k,now);
-    c.textContent=tag;c.className='pv-c'+cls(k,tag);
+    c.textContent=tag;c.title=tag;c.className='pv-c'+cls(k,tag);
     if(measured){tot++;if(v>=99)full++}
     var was=prev[k];r.classList.remove('pop');
     if(was!=null&&was!==v){void r.offsetWidth;r.classList.add('pop')}
