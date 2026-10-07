@@ -108,8 +108,11 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
     const barInfo = bars.map((b) => { const bb = b.getBBox(), k = b.getAttribute('data-ser');
       return { ser: k, up: b.getAttribute('data-up') === '1', top: bb.y, bot: bb.y + bb.height, mid: mids[k], fill: getComputedStyle(b).fill }; });
     const hits = svg ? svg.querySelectorAll('.hit').length : 0;
-    const dotsOf = (k) => svg ? svg.querySelectorAll('circle.z[data-ser="' + k + '"]').length : 0;
-    const segsOf = (k) => { const l = svg && svg.querySelector('path.ln[data-ser="' + k + '"]'); return l ? (l.getAttribute('d').match(/M/g) || []).length : 0; };
+    const dotsOf = (k) => svg ? svg.querySelectorAll('circle.z:not(.c)[data-ser="' + k + '"]').length : 0;
+    const hollowOf = (k) => svg ? svg.querySelectorAll('circle.z.c[data-ser="' + k + '"]').length : 0;
+    const segsOf = (k) => { const l = svg && svg.querySelector('path.ln:not(.nb)[data-ser="' + k + '"]'); return l ? (l.getAttribute('d').match(/M/g) || []).length : 0; };
+    const dashOf = (k) => { const l = svg && svg.querySelector('path.ln.nb[data-ser="' + k + '"]'); return l ? l.getAttribute('d') : null; };
+    const solidOf = (k) => { const l = svg && svg.querySelector('path.ln:not(.nb)[data-ser="' + k + '"]'); return l ? l.getAttribute('d') : null; };
     const ends = svg ? Array.from(svg.querySelectorAll('text.end')).map((t) => ({ ser: t.getAttribute('data-ser'), t: t.textContent })) : [];
     const lines = svg ? Array.from(svg.querySelectorAll('path.ln')).map((l) => ({ ser: l.getAttribute('data-ser'), stroke: getComputedStyle(l).stroke })) : [];
     const rings = (k) => svg ? svg.querySelectorAll('circle.pt.man[data-ser="' + k + '"]').length : 0;
@@ -119,6 +122,8 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
     const est = document.querySelector('.est-mkt .est-su span i');
     return { has: !!tier, empty: !!(tier && tier.classList.contains('hs-empty')), bars: barInfo, mids, hits, kpis, logRows,
       dots: { gs: dotsOf('gs'), q: dotsOf('q'), air: dotsOf('air') }, segs: { gs: segsOf('gs'), q: segsOf('q'), air: segsOf('air') },
+      hollow: { gs: hollowOf('gs'), q: hollowOf('q'), air: hollowOf('air') }, dash: { gs: dashOf('gs'), q: dashOf('q'), air: dashOf('air') },
+      solid: { gs: solidOf('gs') },
       ends, lines, rings: { gs: rings('gs'), q: rings('q'), air: rings('air') },
       legend: Array.from(document.querySelectorAll('#hs-tier .hs-leg [data-ser]')).map((e) => e.textContent.trim()),
       switches: document.querySelectorAll('#hs-tier [data-hmet]').length,
@@ -152,10 +157,17 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   ok('…and wears a ring on its line — as does the content-quality analysis run by hand', a.rings.gs === 1 && a.rings.q === 1, a.rings);
   // 41 days − 3 not scanned − 6 moves (5 recorded + the live day is the same as the last one) → dots
   ok('a scanned day with no change is a dot on the line, not a bar', a.dots.gs >= 25, a.dots);
-  ok('the three days nobody scanned are a GAP in the line, never a flat copy', a.segs.gs === 2, a.segs);
+  // NEVER GAPPED (Ray, 7 Oct 2026: "ensure all lines are not gapped, must show consistent line DoD"):
+  // a day nobody measured carries the last reading — the line runs on, and its row says so with a
+  // hollow mark rather than leaving the day blank
+  ok('the three days nobody scanned do not break the line — one unbroken Golden Score line', a.segs.gs === 1 && !a.dash.gs, { segs: a.segs, dash: a.dash.gs });
+  ok('…and each wears a HOLLOW mark in its row: not measured, the reading before carries', a.hollow.gs === 3, a.hollow);
   // two analyses seventeen days apart: the first is a dot (nothing before it to compare), the days
-  // between draw nothing at all, and the line is two points — never a flat run across the gap
-  ok('content quality: a day with no analysis is a gap — two points, never a flat copy', a.segs.q === 2 && a.dots.q === 1, { segs: a.segs.q, dots: a.dots.q });
+  // between and after carry the reading, so the line runs from the first analysis to today
+  ok('content quality: one unbroken line from its first analysis to today', a.segs.q === 1 && a.dots.q === 1, { segs: a.segs.q, dots: a.dots.q });
+  ok('…a mark in its row on every day from the first reading — hollow where nobody analysed', a.hollow.q === 19 && a.hollow.air === 19, a.hollow);
+  ok('…and nothing before the first reading: a line is never carried back from nothing',
+    await page.evaluate(() => { const svg = document.querySelector('#hs-tier .hs-svg'); const q = svg.querySelectorAll('[data-ser="q"].z,[data-ser="q"].bar'); return q.length; }) === 1 + 19 + 1);
   ok('…its hand-run analysis holds its day over the automatic one four hours later — one rise, in its own row',
     a.bars.filter((b) => b.ser === 'q').length === 1 && a.bars.filter((b) => b.ser === 'q')[0].up, a.bars.filter((b) => b.ser === 'q'));
   ok('AI-readiness draws in the same chart, its rise in its own row', a.bars.filter((b) => b.ser === 'air').length === 1 && a.bars.filter((b) => b.ser === 'air')[0].up && a.dots.air === 1);
@@ -189,7 +201,8 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   const gbox = await page.$$eval('#hs-tier .hit', (h, i) => { const r = h[i].getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + 40 }; }, gapIdx);
   await page.mouse.move(gbox.x, gbox.y);
   await page.waitForTimeout(150);
-  ok('…and a gap day says it was not scanned', /Golden Score not scanned/.test(await page.$eval('#hs-tip', (t) => t.innerText)));
+  ok('…and a day nobody scanned says so, and which reading it carries', /Golden Score [\d.]+ · not scanned this day — carries \d+ \w+’s reading/.test(await page.$eval('#hs-tip', (t) => t.innerText)),
+    await page.$eval('#hs-tip', (t) => t.innerText));
   if (SHOT) await page.screenshot({ path: path.join(SHOT, 'grhist_light.png'), clip: await page.$eval('#hs-tier', (e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y + window.scrollY, width: r.width, height: r.height }; }), fullPage: true });
 
   // the range chips re-draw in place and are remembered on the device
@@ -213,6 +226,22 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
     b.bars.filter((x) => x.ser !== 'gs').length === base90.bars.filter((x) => x.ser !== 'gs').length);
   ok('…and the log says so: the colour change costs the score nothing now', b.logRows.some((x) => /±0/.test(x) && /g:color/.test(x)), b.logRows);
   await w.close();
+
+  console.log('── a reading taken a new way is JOINED, dashed — never a gap');
+  {
+    // keywords start being measured 7 days ago (the 30 Sep 2026 change): every reading from then on
+    // is on a new basis, so the line may not compare across it — but it must not stop either
+    const KW = Object.assign({}, HIST, { r: HIST.r.map((r) => (r.t >= T(7) - 3600e3 ? Object.assign({}, r, { cov: Object.assign({}, r.cov, { keywords: 30 }) }) : r)) });
+    const kp = await open({ HIST: KW, R5: Object.assign({}, R5, { keywords: 30 }) });
+    const k = await read(kp);
+    const dash = k.dash.gs, solid = k.solid.gs || '';
+    const pts = (d) => (d.match(/[ML][\d.]+ [\d.]+/g) || []).map((x) => x.slice(1));
+    ok('the Golden Score line is joined across the change by ONE dashed segment', !!dash && (dash.match(/M/g) || []).length === 1, dash);
+    ok('…whose two ends are the solid line\'s own points — the line never stops', !!dash && pts(dash).every((p) => pts(solid).indexOf(p) >= 0), { dash, solid: solid.slice(0, 80) });
+    ok('…and the key names the dashed join only when one is on the chart',
+      /measured a new way/.test(await kp.$eval('#hs-tier .hs-leg', (e) => e.textContent)) && !/measured a new way/.test(await page.$eval('#hs-tier .hs-leg', (e) => e.textContent)));
+    await kp.close();
+  }
 
   console.log('── the client PDF (body.pdf is the layout both client documents share)');
   const pdf = await page.evaluate(() => {
