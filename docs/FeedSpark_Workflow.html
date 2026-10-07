@@ -83,6 +83,9 @@ window.addEventListener('load',restore);
   .sw-who{font-size:14px;font-weight:900;color:var(--ink)}
   .sw-cvs{font-size:12px;font-weight:700;color:var(--muted)}
   .sw-rows{display:flex;flex-direction:column;gap:5px}
+  .sw-mkt{display:flex;align-items:baseline;gap:8px;margin:5px 0 -1px;padding:0 3px;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--navy)}
+  .sw-mkt:first-child{margin-top:0}
+  .sw-mkt span:last-child{font-weight:800;color:var(--muted);text-transform:none;letter-spacing:0}
   .sw-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--wash)}
   .sw-row .k{font-size:12.5px;font-weight:900;color:var(--ink);min-width:150px}
   .sw-row .k em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
@@ -299,7 +302,7 @@ window.addEventListener('load',restore);
   .comm .cw .cwd{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
   .comm .cw .cwt{font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
   .comm .cb{font-size:12.5px;color:var(--ink-2)}
-  .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
+  .comm .cmk{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
   .scan-hit{background:#EBF7EF;border:1px solid #CDE9D8;color:var(--good);font-size:12px;font-weight:700;border-radius:8px;padding:8px 10px;margin-top:9px;display:none}
@@ -410,7 +413,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Workflow</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -563,9 +566,24 @@ window.addEventListener('load',restore);
   .it-scroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
   .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #itbl{table-layout:fixed}
-  #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
-  #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:166px}   /* four controls now — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
+  /* ic- = intake column. NOT cw-, which is the call-wrap composer's component namespace: its
+     .cw-task{flex:1 1 auto} and .cw-act{display:flex} matched these <col> elements and took them
+     out of the table-column model, so Brief's fixed width was ignored and it ate 103px of Task. */
+  /* TASK FIRST, THE REST DEPRIORITISED BUT NOT FROZEN (Ray, 24 Sep 2026: "the most important
+     column that should fit content is TASK, the rest can be deprioritised width but still show as
+     much as they could when user adjusting the browser tab width"). Two kinds of column, and the
+     difference decides the unit:
+       - FIXED PX where the content is a fixed-size control: the checkbox, the status select, the
+         source pill, the four action buttons. More width there is whitespace, so they take none.
+       - PERCENT where the content is text that can always be longer: client, feed, owner, a date.
+         They widen with the window, just slowly.
+       - AUTO for Task alone, so it takes everything the other two leave — about two thirds of any
+         widening, which is what "the most important column" means in pixels.
+     They were ALL percentages before, which spent a wide screen widening columns beside names that
+     had stopped growing; pinning them outright was the opposite mistake, and this is the middle. */
+  #itbl col.ic-cb{width:30px}#itbl col.ic-client{width:11.3%}#itbl col.ic-feed{width:8.9%}
+  #itbl col.ic-task{width:auto}#itbl col.ic-owner{width:8.3%}#itbl col.ic-due{width:5.2%}
+  #itbl col.ic-status{width:104px}#itbl col.ic-source{width:68px}#itbl col.ic-act{width:162px}   /* four controls — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -574,7 +592,36 @@ window.addEventListener('load',restore);
   .itbl tbody tr:last-child td{border-bottom:0}
   .itbl tbody tr:hover{background:var(--wash)}
   .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
-  .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
+  .itbl .c-task{color:var(--ink);line-height:1.35;white-space:normal;word-break:break-word}
+  /* EVERY ROW THE SAME HEIGHT (Ray, 24 Sep 2026: "make sure the row are evenly spread pls").
+     A task ran 1 to 5 lines, so the table stepped 43 / 50 / 66 / 82 / 98px down the page and read
+     as broken rhythm rather than a grid. The CLAMP is what makes the rows even — it caps the box at
+     two lines, so no task can push its row taller — and two lines, not one, because the ask was to
+     expand the cell: at this width one line shows ~55 characters and two show ~110, which is nearly
+     every task in the book whole.
+     THE FLOOR IS THE ROW, NOT THE BOX (Ray, 29 Sep 2026: "task row (especially 1 row) is not
+     centered in Intake"). This rule also carried a min-height of two lines, which held a ONE-LINE
+     task in a two-line box — and a -webkit-box lays its single line at the TOP of that box, so the
+     text sat 9.4px above the row's centre while the status select and every other cell in the same
+     row were genuinely middle-aligned by .itbl tbody td{vertical-align:middle}. The box is now
+     exactly as tall as the lines it shows, and the cell centres it.
+     What the clamp does hide is not lost: tkClip() measures each box after render and puts the FULL
+     task in its tooltip when, and only when, it is actually cut off (measured, never guessed from a
+     character count — the cut-off point moves with the window), and the ticket carries it in full. */
+  .itbl .c-task .tk-w{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+    overflow:hidden}
+  /* ...and the floor it was also doing, put where it belongs. A row with a one-line task is only
+     43px tall (the ✕/Brief buttons at 26px + the cell's padding), so dropping the box's min-height
+     alone left the table stepping 43 / 51 again. `height` on a <tr> is a MINIMUM, so stating the
+     two-line task cell here — the same 2 x 1.35em as the clamp above, plus the 8px+8px the cell
+     pads with — floors every row at the height the tallest kind of row reaches naturally, and a row
+     that somehow needs more still gets it. #itbl, not .itbl: the Brief ledger and the tests table
+     share the class and Ray asked for the Intake alone.
+     The 17px is 8px + 8px of cell padding plus the 1px rule the row draws under itself: `height` on
+     a collapsed-border row is read as the BORDER box, so stating only the padding leaves every
+     floored row exactly one pixel short of the rows that reach the floor by their own content. */
+  #itbl tbody tr{height:calc(2 * 1.35em + 17px)}
+  .itbl .c-task .tk-in{-webkit-line-clamp:none}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
   /* an owner name shown because the ticket predates the `by` field — dotted, so it reads as
      the inference it is rather than as something the ticket actually recorded */
@@ -586,7 +633,11 @@ window.addEventListener('load',restore);
   .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
   .itbl .tk-open{cursor:pointer}
   .itbl .tk-open:hover{color:var(--orange-ink)}
-  .itbl .tk-ed{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
+  /* ✎ leaves the text flow: inside the clamped box it was the first thing a two-line-plus task
+     pushed out of sight, so the rows that most need renaming were the ones that lost the handle.
+     It only paints on row hover, where the row's own wash is behind it. */
+  .itbl td.c-task{position:relative}
+  .itbl .tk-ed{position:absolute;right:3px;top:50%;transform:translateY(-50%);border:0;background:var(--wash);color:var(--muted);font:inherit;font-size:11px;font-weight:700;line-height:1;padding:2px 4px;border-radius:5px;cursor:pointer;opacity:0}
   .itbl tbody tr:hover .tk-ed{opacity:.55}
   .itbl .tk-ed:hover{opacity:1;color:var(--orange-ink);background:rgba(245,166,35,.14)}
   .itbl .tk-in{font:inherit;font-size:12px;width:100%;min-width:150px;box-sizing:border-box;padding:3px 6px;border:1px solid var(--orange);border-radius:6px;background:var(--paper);color:var(--ink);outline:none}
@@ -594,7 +645,8 @@ window.addEventListener('load',restore);
   .itbl td.g-active{outline:2px solid var(--orange);outline-offset:-2px;background:rgba(245,166,35,.2)}
   [data-theme=dark] .itbl td.g-sel{background:rgba(245,166,35,.16)}
   [data-theme=dark] .itbl td.g-active{background:rgba(245,166,35,.24)}
-  .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap;
+    display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}   /* a chip clipped mid-character reads as a broken chip; an ellipsis reads as a long name — the full one is in the title */
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
@@ -878,7 +930,7 @@ window.addEventListener('load',restore);
   .lu{flex-direction:column}
   .it-ctl>input{flex:1 1 100%;min-width:0}
   /* pan, don't crush: the tracker + tests tables keep desktop widths inside their scroll pane */
-  #itbl{min-width:880px}
+  #itbl{min-width:960px}   /* pan, don't crush — 960 keeps Task ~260px once the fixed columns are paid for */
   .itbl.tstbl{min-width:740px}
   .it-scroll{max-height:70vh}
   /* pipeline board: near-full-width lanes, swipe between them */
@@ -938,10 +990,17 @@ body.ck-r-on{padding-right:var(--ck-w)}
   body.ck-l-on .scrim{padding-left:calc(var(--ck-w) + 16px)}
   body.ck-r-on .scrim{padding-right:calc(var(--ck-w) + 16px)}
 }
-.ck{position:fixed;top:0;bottom:0;width:var(--ck-w);z-index:70;display:flex;flex-direction:column;
+/* aside.ck, NEVER a bare .ck — a rail is an <aside>, and this rule is position:fixed, full height,
+   var(--ck-w) wide and opaque. Unscoped it also matched the ASPL-tracking comms chip
+   <span class="ck">↗ picked up</span> (whose own rule, .comm .ck, only sets type and colour and so
+   lost every one of these declarations), painting a 336px white column down the whole viewport over
+   an open ticket. Ray, 24 Sep 2026: "there's still issue with this white rectangular space when
+   opening brief ticket on workflow". The chip is renamed .cmk as well — belt and braces, since the
+   element selector only stops the next collision for things that are not an <aside>. */
+aside.ck{position:fixed;top:0;bottom:0;width:var(--ck-w);z-index:70;display:flex;flex-direction:column;
   background:var(--paper,#fff);border-left:1px solid var(--line,#E6E6E6);border-right:1px solid var(--line,#E6E6E6);
   box-shadow:0 0 34px rgba(16,24,40,.10)}
-.ck[hidden]{display:none}
+aside.ck[hidden]{display:none}
 .ck-l{left:0;border-left:none}
 .ck-r{right:0;border-right:none}
 .ck-head{display:flex;align-items:center;gap:8px;padding:11px 13px 10px;border-bottom:1px solid var(--line,#E6E6E6);flex:none}
@@ -1011,6 +1070,58 @@ body.ck-r-on{padding-right:var(--ck-w)}
 
 
 
+/* CALL WRAP-UP (Ray, 24 Sep 2026). Red is earned here and nowhere else in this rail: ONE recent
+   call, unwrapped, on this account. The moment it is routine (an old call that will never be
+   wrapped) it drops to .ck-stale muted copy — a permanent red banner is how a colour stops
+   meaning anything, which is what Ray objected to on the New-products rows. */
+.ck-alert{margin:0 0 10px}
+.ck-alert-go{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid #F1707A;
+  border-left:3px solid #D93B47;background:rgba(217,59,71,.07);border-radius:10px;padding:9px 11px;font:inherit}
+.ck-alert-go:hover{background:rgba(217,59,71,.13);border-color:#D93B47}
+.ck-alert-t{display:block;font-size:12px;font-weight:900;color:#B4232F;letter-spacing:-.01em}
+.ck-alert-s{display:block;margin-top:3px;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
+.ck-lnk{border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--orange-deep,#ED6F0B);
+  cursor:pointer;text-decoration:underline}
+.ck-stale{opacity:.85}
+[data-theme=dark] .ck-alert-go{border-color:#8E2B34;border-left-color:#F1707A;background:rgba(241,112,122,.10)}
+[data-theme=dark] .ck-alert-t{color:#F1707A}
+.cw-modal{width:min(760px,100%)}
+.cw-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.cw-head h3{margin:0;font-size:16px;font-weight:900;letter-spacing:-.01em}
+.cw-sub{margin:3px 0 0;font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0)}
+.cw-head .ck-x{margin-left:auto}
+.cw-note{margin:0 0 12px;font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);line-height:1.45}
+.cw-rows{max-height:34vh;overflow:auto;border:1px solid var(--line,#E6E6E6);border-radius:10px;padding:6px}
+.cw-row{display:flex;align-items:center;gap:7px;padding:3px 2px}
+.cw-row+.cw-row{border-top:1px solid var(--line,#E6E6E6)}
+.cw-on{flex:none;display:flex;align-items:center}
+.cw-task{flex:1 1 auto;min-width:0;font:inherit;font-size:12px;border:1px solid transparent;background:none;
+  color:var(--ink,#333);border-radius:6px;padding:5px 6px}
+.cw-own{flex:none;width:104px;font:inherit;font-size:11px;font-weight:700;border:1px solid transparent;
+  background:none;color:var(--muted,#8a94a0);border-radius:6px;padding:5px 6px}
+.cw-task:focus,.cw-own:focus{border-color:var(--orange,#F5A623);background:var(--paper,#fff);outline:none}
+.cw-row:has(.cw-on input:not(:checked)) .cw-task{text-decoration:line-through;opacity:.45}
+.cw-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:12px 0 10px}
+.cw-to{flex:1 1 260px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#8a94a0)}
+.cw-to input{flex:1;font:inherit;font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;
+  color:var(--ink,#333);border:1px solid var(--line,#E6E6E6);border-radius:8px;padding:6px 8px;background:var(--paper,#fff)}
+.cw-tones{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--muted,#8a94a0)}
+.cw-tone{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);
+  color:var(--muted,#8a94a0);border-radius:100px;padding:5px 11px;cursor:pointer;text-transform:none;letter-spacing:0}
+.cw-tone.on{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);background:rgba(245,166,35,.10)}
+.cw-prev{border:1px solid var(--line,#E6E6E6);border-radius:10px;padding:10px 12px;background:var(--wash,#F7F7F5);
+  max-height:30vh;overflow:auto}
+.cw-subj{font-size:12px;font-weight:900;margin-bottom:6px}
+.cw-body{margin:0;font:inherit;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink,#333)}
+.cw-tab{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--muted,#8a94a0);cursor:pointer}
+.cw-shot{margin-top:10px;border:1px solid var(--line,#E6E6E6);border-radius:10px;overflow:auto;max-height:26vh;background:#fff}
+.cw-shot img{display:block;width:100%;height:auto}
+.cw-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cw-stat{font-size:11px;font-weight:800;color:var(--muted,#8a94a0)}
+@media(max-width:760px){.cw-own{width:80px}.cw-rows{max-height:40vh}}
 .ck-s{margin:0 0 16px}
 .ck-s>h4{margin:0 0 2px;font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:6px}
 .ck-s>h4 .n{margin-left:auto;font-size:10px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
@@ -1061,7 +1172,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-brief{flex:none;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--muted,#8a94a0);border-radius:7px;
   font:inherit;font-size:10px;font-weight:800;padding:2px 6px;cursor:pointer;text-decoration:none}
 .ck-brief:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
-[data-theme=dark] .ck{background:var(--paper,#1C1F27);box-shadow:0 0 34px rgba(0,0,0,.5)}
+[data-theme=dark] aside.ck{background:var(--paper,#1C1F27);box-shadow:0 0 34px rgba(0,0,0,.5)}
 [data-theme=dark] .ck-tab{background:var(--paper,#1C1F27)}
 [data-theme=dark] .ck-bar i{background:#4C82E0}
 [data-theme=dark] .ck-bar.good i{background:#48D07E}
@@ -1074,11 +1185,11 @@ body.ck-r-on{padding-right:var(--ck-w)}
 /* One rail at a time once the page can no longer spare two — the script enforces it; these rules
    just make the single open rail behave. */
 @media(max-width:900px){
-  .ck{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
+  aside.ck{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
   body.ck-l-on,body.ck-r-on{padding-left:0;padding-right:0}
 }
 @media(max-width:760px){
-  .ck{width:100vw;left:0;right:0;top:0;bottom:0;border:none}
+  aside.ck{width:100vw;left:0;right:0;top:0;bottom:0;border:none}
   /* the handles stay on the phone — they are how a rail is opened here, and Ray's standing rule
      is that the phone mirrors the desktop's controls rather than hiding them. Nudged above the
      module bar's reach and off the Feed Chat bubble. */
@@ -1134,7 +1245,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     <button class="btn sm ghost" id="bulk-clear">Clear</button>
   </div>
   <div class="it-scroll"><table class="itbl" id="itbl">
-    <colgroup><col class="cw-cb"><col class="cw-client"><col class="cw-feed"><col class="cw-task"><col class="cw-owner"><col class="cw-due"><col class="cw-status"><col class="cw-source"><col class="cw-act"></colgroup>
+    <colgroup><col class="ic-cb"><col class="ic-client"><col class="ic-feed"><col class="ic-task"><col class="ic-owner"><col class="ic-due"><col class="ic-status"><col class="ic-source"><col class="ic-act"></colgroup>
     <thead><tr>
       <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select all shown"></th>
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
@@ -1297,6 +1408,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
   <div class="acl-note">👁 on a row previews the FCC as that signin — the server treats you as them until you Exit (pill at the top of every page; auto-expires in 2h). Scoping only ever <b>narrows</b> a view — it can't grant anything. A person's scope applies the moment they next load Workflow; they keep working their client's pipeline with you (shared board, same tickets), they just don't see the rest of the book.</div>
 </div></div>
 <div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
+<!-- CALL WRAP-UP workbench (Ray, 24 Sep 2026). A .scrim like every other overlay, so it rides
+     soloModal (one modal at a time) and the rail-aware centring for free. -->
+<div class="scrim" id="cw-scrim"><div class="modal cw-modal" id="cw-modal" role="dialog" aria-modal="true" aria-label="Wrap up the call"></div></div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Workflow control center · live from the project plans</div></div>
 
@@ -1651,7 +1765,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
   function hashStr(s){ s=s||''; var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
 
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function slug(s){return (s||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');}
   function pad(n){return (n<10?'0':'')+n;}
   function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
@@ -2558,6 +2672,26 @@ body.ck-r-on{padding-right:var(--ck-w)}
   // ---- inline task-name editor (replaces the old prompt()) — commits through the SAME
   // setTaskText pipeline (rename overlay + key migration + sheet write), it only swaps the UX ----
   function taskTdFor(t){ var td=null,k=rowKey(t); if(gridBody)gridBody.querySelectorAll('td.c-task-ed').forEach(function(x){ var r=gridRows[+x.getAttribute('data-i')]; if(!td&&r&&rowKey(r)===k)td=x; }); return td; }
+  // THE TOOLTIP ONLY PROMISES WHAT THE CELL IS ACTUALLY HIDING. The task box is clamped to two
+  // lines, so on a narrow window a long task is cut and on a wide one the same task is whole —
+  // where that flips depends on the rendered width, never on a character count. So it is MEASURED:
+  // a box whose content is taller than the box it is in carries the full task in its title, and one
+  // that shows everything carries none, leaving the cell's own "double-click to edit" hint to show.
+  function tkClip(){ var b=document.getElementById('it-body'); if(!b)return;
+    b.querySelectorAll('.tk-w').forEach(function(w){
+      if(w.scrollHeight>w.clientHeight+1){ if(!w.title)w.title=(w.innerText||'').trim(); }
+      else if(w.title)w.removeAttribute('title'); });
+    // The same rule sideways. Owner is free text — "Ray/ Michelle / Assembly" is one cell's worth
+    // of people, and no column width fixes that — so a cut one names them in full. The cell's own
+    // edit hint rides along rather than being replaced: both matter and only one tooltip can show.
+    b.querySelectorAll('.c-client,.c-owner').forEach(function(td){
+      var hint=td.getAttribute('data-hint');
+      if(hint==null){ hint=td.getAttribute('title')||''; td.setAttribute('data-hint',hint); }
+      var full=td.getAttribute('data-hrs')||(td.innerText||'').trim();
+      if(td.scrollWidth>td.clientWidth+1)td.title=full+(hint?(' — '+hint):'');
+      else if(hint)td.title=hint; else td.removeAttribute('title'); }); }
+  // the cut-off point moves with the window, so the reading is retaken when the window changes
+  (function(){ var t=null; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(tkClip,160); }); })();
   function startTaskEdit(td,t){ if(!td||!t)return; if(td.querySelector('.tk-in'))return;
     var open=gridBody&&gridBody.querySelector('.tk-in');
     if(open&&open.__cancel){ open.__cancel(); td=taskTdFor(t); if(!td)return; }   // one editor at a time — cancelling re-renders, so re-find our cell
@@ -2673,7 +2807,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
-      var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
+      var feedL=t.cat?(CAT_LBL[t.cat]||t.cat):'';
+      var feed=t.cat?('<span class="feed-tag" title="'+esc(feedL)+'">'+esc(feedL)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'.'+(t.client==='—'?' No client detected — double-click the client cell to file it into a plan':'')+'">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
@@ -2687,8 +2822,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client" data-hrs="'+esc(t.client)+'" data-hrs-flag>'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
-        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
-             :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan"><div class="tk-w">'+tkTxt+bfChip+'</div><button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task"><div class="tk-w">'+tkTxt+bfChip+'</div></td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt'||t.source==='call')
@@ -2728,6 +2863,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
       sel.onchange=function(){ if(sel.value&&sel.value!==t.client)setTaskClient(t,sel.value); else renderIntake(); };
       sel.onblur=function(){ setTimeout(renderIntake,120); };
     }; });
+    tkClip();
     body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
     body.querySelectorAll('.cl-rm').forEach(function(x){ x.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
       x.onclick=function(e){ e.stopPropagation(); var c=x.getAttribute('data-c');
@@ -3574,8 +3710,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
   // a reply's chip states what it actually was: a completion, or a pickup that is not one
   function commChip(c){
     var v=classifyReply((c&&c.note)||'');
-    if(v==='done')return ' <span class="ck">✓ done signal</span>';
-    if(v==='ack')return ' <span class="ck" style="color:var(--navy)" title="Picked up — the work is not finished until they confirm it is">↗ picked up</span>';
+    if(v==='done')return ' <span class="cmk">✓ done signal</span>';
+    if(v==='ack')return ' <span class="cmk" style="color:var(--navy)" title="Picked up — the work is not finished until they confirm it is">↗ picked up</span>';
     return '';
   }
   // ---- RE-LABEL THE LEDGER (Ray, 11 Sep 2026: "please re-browse the entire brief ledger and
@@ -4787,8 +4923,31 @@ body.ck-r-on{padding-right:var(--ck-w)}
         updateGmailState(); renderEmailPanel(); }
       // call actions ride the same response even when the triage queue is empty — file them,
       // then write the client-attributed ones through to their plan sheets (Ray's rule)
-      if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll(); }
+      if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll();
+        // the Playbook rail lives in its own script block and cannot see CALLS — the same
+        // closure boundary that broke the cockpit tuner's soloModal call. A named bridge, like
+        // window.FCCSolo / FCCBrief / FCCFilterClient, is how this page crosses it.
+        try{ document.dispatchEvent(new CustomEvent('fcc-calls')); }catch(e){} }
     }).catch(function(){}); })();
+  window.FCCCalls=function(){ return CALLS.slice(); };
+  /* THE WRAP-UP TABLE READS THE PLAN, NOT THE PARSE (Ray, 24 Sep 2026, sending the wrap-up he had
+     written by hand: "this is the type of wrap-up pre-written by FCC that i was looking for
+     (including the screenshot)"). The screenshot in it is THIS BOARD: the actions with the feed
+     category, owner, due date and status they now carry, not the bare lines a transcript produced.
+     Those live on the intake row the action was adopted into, which is in this script block and not
+     the rail's, so it is handed over by name like FCCCalls / FCCBrief / FCCSolo.
+     EXACT wording only — sameTask is fuzzy and one call's actions routinely share a prefix
+     ("Contact Support Department: …", "Consult Alex J: …"), so a fuzzy match would put one action's
+     due date beside another's text in an email going to the client. */
+  window.FCCPlanRow=function(client,task){
+    var want=normTask(task||''); if(!want)return null;
+    var hit=null;
+    allIntake().forEach(function(r){ if(hit||r.client!==client)return;
+      if(normTask(r.task)===want)hit=r; });
+    if(!hit)return null;
+    return { catLbl:hit.cat?(CAT_LBL[hit.cat]||hit.cat):'', owner:hit.owner||'',
+             due:dueDisplay(hit), status:String(hit.s||(hit.b==='done'?'Done':'Open')),
+             bucket:hit.b||bucketOf(hit.s||'') }; };
 
   // ---- individual access bootstrap: learn my scope, mirror the server's gate in the chrome ----
   // (the data itself is already filtered per signin by the worker — this locks the roster,
@@ -4820,12 +4979,17 @@ body.ck-r-on{padding-right:var(--ck-w)}
       if(msel)row.modules.forEach(function(s){msel[s]=1;});
       md.innerHTML='<span class="acl-mlbl">Modules</span>';
       var mall=document.createElement('button'); mall.type='button'; mall.className='acl-mall'; md.appendChild(mall);
-      function syncAll(){ var on=md.querySelectorAll('.acl-mchip.on').length; mall.textContent=(on===ACL_MODULES.length&&on>0)?'None':'All'; }
+      // OPT-IN modules (m.optIn — the management-only Transformation roadmap) are never implied by an
+      // unrestricted row and never swept in by All/None: each is granted by its own chip, on purpose
+      var STD=ACL_MODULES.filter(function(m){return !m.optIn;});
+      function syncAll(){ var on=md.querySelectorAll('.acl-mchip.on:not(.opt)').length; mall.textContent=(on===STD.length&&on>0)?'None':'All'; }
       ACL_MODULES.forEach(function(m){ var ch=document.createElement('button'); ch.type='button';
-        ch.className='acl-chip acl-mchip'+((!msel||msel[m.slug])?' on':''); ch.setAttribute('data-mod',m.slug); ch.textContent=m.label;
+        var has=m.optIn?!!(msel&&msel[m.slug]):(!msel||msel[m.slug]);
+        ch.className='acl-chip acl-mchip'+(m.optIn?' opt':'')+(has?' on':''); ch.setAttribute('data-mod',m.slug); ch.textContent=(m.optIn?'🔒 ':'')+m.label;
+        if(m.optIn)ch.title='Management only — never included by All; grant it to this person on purpose';
         ch.onclick=function(){ ch.classList.toggle('on'); syncAll(); }; md.appendChild(ch); });
-      mall.onclick=function(){ var on=md.querySelectorAll('.acl-mchip.on').length, want=on<ACL_MODULES.length;
-        md.querySelectorAll('.acl-mchip').forEach(function(ch){ ch.classList.toggle('on',want); }); syncAll(); };
+      mall.onclick=function(){ var on=md.querySelectorAll('.acl-mchip.on:not(.opt)').length, want=on<STD.length;
+        md.querySelectorAll('.acl-mchip:not(.opt)').forEach(function(ch){ ch.classList.toggle('on',want); }); syncAll(); };
       if(!ACL_MODULES.length)md.style.display='none';
       syncAll(); d.appendChild(md);
       return d; }
@@ -4878,6 +5042,16 @@ body.ck-r-on{padding-right:var(--ck-w)}
    payload per signin, so a scoped AM only sees their clients here. Deep-links into /schedule. */
 (function(){
   var KL={kw:'Keywords',titles:'Titles',pt:'Product Type',tagging:'Data tagging',social:'Social titles',short:'Short titles'};
+  // MARKET ORDER (Ray, 24 Sep 2026: "sorted into each market, but just sort them correctly"):
+  // the rows group by market — the home market (GB) first, the rest alphabetical — and inside a
+  // market the paused tasks lead, longest pause first, then the running ones in the schedule's
+  // own task order (Keywords, Titles, Product Type, Social, Short, Data tagging). The /schedule
+  // page carries the SAME two functions (tools/test_schedule.mjs holds them identical).
+  var KORD=['kw','titles','pt','social','short','tagging'];
+  function mktRank(m){ m=String(m||'').toLowerCase(); return (m==='gb'||m==='uk')?'0':'1'+m; }
+  function schedOrder(a,b){ var ra=mktRank(a.mkt),rb=mktRank(b.mkt); if(ra!==rb)return ra<rb?-1:1;
+    var pa=a.streak>0?1:0,pb=b.streak>0?1:0; if(pa!==pb)return pb-pa; if(a.streak!==b.streak)return b.streak-a.streak;
+    var ka=KORD.indexOf(a.kind),kb=KORD.indexOf(b.kind); if(ka<0)ka=99; if(kb<0)kb=99; return (ka-kb)||String(a.kind).localeCompare(String(b.kind)); }
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function mlbl(m){ if(!m)return ''; var p=m.split('-'); return MON[+p[1]-1]+' '+p[0].slice(2); }
@@ -4912,14 +5086,18 @@ body.ck-r-on{padding-right:var(--ck-w)}
     // from being on screen. The brand is named, and changing it is the Intake client filter above
     // (or leaving client view) — both of which are Ray's controls, not a shared-screen surface.
     document.getElementById('sw-brand').textContent=brand;
-    var mine=(d.cadence||[]).filter(function(c){ return c.inRoster&&c.client===brand; })
-      .sort(function(a,b){ return (b.streak-a.streak)||a.kind.localeCompare(b.kind)||a.mkt.localeCompare(b.mkt); });
+    var mine=(d.cadence||[]).filter(function(c){ return c.inRoster&&c.client===brand; }).sort(schedOrder);
     var paused=mine.filter(function(c){return c.streak>0}).length;
     document.getElementById('sw-cvs').innerHTML=esc(mine.length
       ? (mine.length+' scheduled task'+(mine.length===1?'':'s')+' · '+(paused?paused+' paused':'all running'))
       : 'No scheduled optimisation on this account yet.')
       +(PINNED?'':' <span style="opacity:.75">— filter Intake to a client to point this at them</span>');
+    // one group per market, in schedOrder's market order, each headed by its own count
+    var lastMkt=null;
     document.getElementById('sw-rows').innerHTML=mine.map(function(c){
+      var head='';
+      if(c.mkt!==lastMkt){ lastMkt=c.mkt; var grp=mine.filter(function(x){return x.mkt===c.mkt}), gp=grp.filter(function(x){return x.streak>0}).length;
+        head='<div class="sw-mkt"><span>'+esc((c.mkt||'').toUpperCase()||'—')+'</span><span>'+grp.length+' task'+(grp.length===1?'':'s')+(gp?' · '+gp+' paused':' · all running')+'</span></div>'; }
       var strip=(c.months||[]).slice(-12).map(function(m){
         return '<i class="'+esc(m.v)+'" title="'+esc(mlbl(m.m)+' — '+(m.v==='go'?'went ahead':m.v==='skip'?'skipped':'not scheduled'))+'"></i>'; }).join('');
       var ago=monthsAgo(c.lastGo), st;
@@ -4927,7 +5105,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
         +(c.lastGo?' · last one '+mlbl(c.lastGo):' · none on record');
       else if(c.lastGo) st='<b>Running</b> · last optimisation '+mlbl(c.lastGo)+(ago!=null&&ago>0?' ('+ago+' mo ago)':'');
       else st='<b>Scheduled</b> · nothing run yet';
-      return '<div class="sw-row'+(c.streak>0?'':' ok')+'"><span class="k">'+esc(KL[c.kind]||c.kind)
+      return head+'<div class="sw-row'+(c.streak>0?'':' ok')+'"><span class="k">'+esc(KL[c.kind]||c.kind)
         +'<em>'+esc((c.mkt||'').toUpperCase())+'</em></span>'
         +'<span class="sw-strip">'+strip+'</span>'
         +'<span class="st">'+st+'</span></div>';
@@ -5410,6 +5588,127 @@ body.ck-r-on{padding-right:var(--ck-w)}
     cand.sort(function(a,b){ return a.p-b.p || b.rank-a.rank || a.key.localeCompare(b.key); });
     return cand.slice(0,3);
   }
+
+  /* ---- CALL WRAP-UP (Ray, 24 Sep 2026) ---------------------------------------------------
+     "when actions are parsed from Gemini transcript and added inside the task … within the
+      playbook for [the client] there should be a red message: Wrap up latest call actions for
+      client's email … pre-write the emails. Add a table of actions from the call after AM has
+      tidying up, then ask AM if they want to send it, and draft directly on FCC or on Gmail."
+
+     The actions already reach the PROJECT PLAN (callactions → adoptIntoPlan). What never
+     happened is the other half of the same five minutes: the note back to the client saying
+     what was agreed. These functions decide when to ask for it and what it should say. */
+  var WRAP_DAYS = 7;          // a wrap-up is same-week work; see wrapCalls for why it is bounded
+  /* the engine is LIFTED WHOLE by tools/test_callwrap.mjs, so it reaches for nothing outside this
+     block — a helper two lines below PBENGINE:END is a helper the harness does not get */
+  function wrapKey(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+
+  /* Group one brand's call actions by the CALL they came from (every action carries the notes
+     email's own message id), newest first. A call is the unit a wrap-up is written about. */
+  function wrapCalls(calls, brand, wrapped, now, days){
+    var byMid = {}, out = [];
+    (calls || []).forEach(function(a){
+      if (!a || !a.mid) return;
+      if (wrapKey(a.client) !== wrapKey(brand)) return;
+      var g = byMid[a.mid];
+      if (!g) { g = byMid[a.mid] = { mid:a.mid, call:a.call || 'Client call', when:a.when || 0,
+                                     client:a.client, actions:[] }; out.push(g); }
+      if (a.when && a.when > g.when) g.when = a.when;
+      g.actions.push({ id:a.id, owner:a.owner || '', task:a.task || '' });
+    });
+    var w = wrapped || {}, cut = (now || Date.now()) - (days == null ? WRAP_DAYS : days) * 86400000;
+    out.forEach(function(g){
+      var rec = w[g.mid];
+      g.wrapped = rec || null;
+      g.recent  = g.when >= cut;
+      g.ageDays = Math.floor(((now || Date.now()) - g.when) / 86400000);
+    });
+    out.sort(function(a,b){ return (b.when||0) - (a.when||0); });
+    return out;
+  }
+
+  /* What the rail should say about them. A wrap-up is time-sensitive — it goes out the same day
+     or it stops being a wrap-up — so only a RECENT unwrapped call earns the red prompt. An older
+     one is not silently dropped (the gap is real and an AM may still want the record) but it is
+     stated as a quiet count: a permanent red alarm about a call from three weeks ago is the
+     kind of highlight that teaches people to ignore the colour, which is exactly what Ray
+     objected to on the New-products rows. */
+  function wrapDue(groups){
+    var due = [], stale = [], done = 0;
+    (groups || []).forEach(function(g){
+      if (g.wrapped) { done++; return; }
+      (g.recent ? due : stale).push(g);
+    });
+    return { due:due, stale:stale, done:done, top:due[0] || null };
+  }
+
+  /* The email itself, composed from the rows the AM LEFT TICKED — never from the raw parse.
+     A parsed action is an internal instruction, often truncated mid-sentence ("Contact Support
+     Department: Verify if the customer support"), and several are notes to ourselves that no
+     client should ever read. So the text that goes out is whatever the AM edited, and this only
+     arranges it. Nothing here is generated by a model: the actions are the client's own words
+     from their own call, and a wrap-up that invented one would be worse than no wrap-up.
+     TWO TONES, the house rule for any client email. */
+  /* A first name off the address, but ONLY when the address plainly belongs to a person. A
+     shared mailbox greeted as "Hi Info," is worse than no name at all, so anything on the
+     role list, anything with a digit, and anything under three letters stays anonymous. */
+  var WRAP_ROLE = ['info','hello','hi','support','team','sales','marketing','accounts','admin',
+                   'contact','enquiries','enquiry','help','office','noreply','no-reply','ecommerce','digital'];
+  function wrapGreet(to){
+    var l = String(to || '').split('@')[0].split(/[._-]/)[0].toLowerCase();
+    if (!l || l.length < 3 || /\d/.test(l) || WRAP_ROLE.indexOf(l) >= 0) return '';
+    return l.charAt(0).toUpperCase() + l.slice(1);
+  }
+  function wrapEmail(group, rows, opts){
+    opts = opts || {};
+    var who = (opts.me || '').split(/[\s.@]/)[0] || '';
+    who = who ? who.charAt(0).toUpperCase() + who.slice(1) : '';
+    var keep = (rows || []).filter(function(r){ return r && r.on !== false && String(r.task || '').trim(); });
+    var when = group && group.when ? new Date(group.when) : null;
+    var dateW = when ? when.toLocaleDateString('en-GB',{day:'numeric',month:'long'}) : '';
+    var title = (group && group.call) || 'our call';
+    /* THE SUBJECT IS THE MEETING'S OWN NAME plus the day, which is how Ray writes one:
+       "Hobbycraft x FeedSpark - SEO & AI convo - Sept24". A Gemini notes email is already titled
+       with the meeting, and that title usually carries both names, so the brand is prefixed ONLY
+       when the title does not already say it - a subject reading "Hobbycraft x FeedSpark -
+       Hobbycraft x FeedSpark - ..." is the kind of thing that makes an automated mail look
+       automated. The month is the locale's own short form, not a hand-written list: in a subject
+       line there is no column to overflow, so "Sept" is simply how en-GB writes September. */
+    var stamp = when ? (when.toLocaleDateString('en-GB',{month:'short'}) + when.getDate()) : '';
+    var cl = String((group && group.client) || '');
+    var named = cl && wrapKey(title).indexOf(wrapKey(cl)) >= 0;
+    var subject = ((named || !cl) ? title : (cl + ' x FeedSpark - ' + title))
+      + (stamp ? ' - ' + stamp : '');
+    /* "Hi team," where wrapGreet found no person. A shared mailbox is a group, and a bare "Hi,"
+       reads as a mail nobody addressed - which is exactly what it would be. */
+    var hi = opts.name ? 'Hi ' + opts.name + ',' : 'Hi team,';
+    var lines = keep.map(function(r, i){
+      var o = String(r.owner || '').trim();
+      return (i + 1) + '. ' + String(r.task).trim() + (o ? '  (' + o + ')' : '');
+    });
+    /* The table rides along as an image (opts.table), the way Ray pasted one by hand. The list
+       stays in the text REGARDLESS: an attachment is not always shown, never searchable, and
+       never readable on a phone's preview - the image is the nice version of the same facts,
+       never the only copy of them. */
+    var att = opts.table ? '\nThe same actions are attached as a table.' : '';
+    var body;
+    if (opts.tone === 'direct') {
+      body = [hi, '',
+        'Wrap-up from ' + title + (dateW ? ' on ' + dateW : '') + '. Actions below.' + att, '',
+        lines.join('\n'), '',
+        'Anything wrong or missing, reply and I will correct it.', '',
+        who ? who : ''].join('\n');
+    } else {
+      body = [hi, '',
+        'It was great speaking to everyone on the call' + (dateW ? ' on ' + dateW : '')
+          + '. Please find below the actions that were agreed and discussed.' + att, '',
+        'WHAT WE AGREED', lines.join('\n'), '',
+        'We will come back to you on these. If we have mis-heard anything or missed something you '
+          + 'expected to see, just reply and I will put it right.', '',
+        'Best,', who ? who : ''].join('\n');
+    }
+    return { subject:subject, text:body.replace(/\n{3,}/g,'\n\n').trim(), n:keep.length };
+  }
 /* PBENGINE:END */
 
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -5782,6 +6081,318 @@ body.ck-r-on{padding-right:var(--ck-w)}
      structure lines, so that should be kept as a theme across the whole playbook") — a pill, a
      name, a number — and hangs the evidence, the client line and the buttons beneath it, the way
      the New products rows already hang their raise line. */
+  /* ---- the red prompt (Ray, 24 Sep 2026) ---------------------------------------------- */
+  var WRAP={};        // mid -> {client,at,by,to,n} — the TEAM's record, /api/state ns callwrap
+  var WRAPG=[];       // this render's groups, so the workbench opens on the one that was clicked
+  /* the client's address is the one the ask-rails already remember per brand (Label Guard and
+     Golden Record write the same store), and the signature is whoever is signed in — asked once
+     across the whole FCC rather than once per module */
+  var ASKCFG={to:{}}, ME_NAME='';
+  function wrapWho(){
+    fetch('/api/labels/askdraft').then(function(r){return r.json();}).then(function(d){
+      if(d&&d.cfg&&d.cfg.to)ASKCFG=d.cfg;
+    }).catch(function(){});
+    fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){
+      if(d)ME_NAME=d.name||d.ownerName||'';
+    }).catch(function(){});
+  }
+  function wrapLoad(){
+    fetch('/api/state?ns=callwrap').then(function(r){return r.json();}).then(function(m){
+      if(!m||m.error||typeof m!=='object')return;
+      WRAP=m.callwrap||{}; fillBrands(); render();
+    }).catch(function(){});
+  }
+  function wrapSave(mid,rec){
+    WRAP[mid]=rec;
+    var one={}; one[mid]=rec;
+    return fetch('/api/state',{method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify({callwrap:one})}).catch(function(){});
+  }
+  function secWrap(brand){
+    WRAPG=wrapCalls(window.FCCCalls?window.FCCCalls():[],brand,WRAP,Date.now());
+    var d=wrapDue(WRAPG);
+    if(!d.due.length&&!d.stale.length&&!d.done)return '';
+    var h='<section class="ck-s ck-wrap">';
+    if(d.due.length){
+      var g=d.top,n=g.actions.length;
+      h+='<div class="ck-alert" role="status">'
+        +'<button type="button" class="ck-alert-go" data-wrap="'+esc(g.mid)+'">'
+        +'<span class="ck-alert-t">📞 Wrap up latest call actions for '+esc(brand)+'’s email</span>'
+        +'<span class="ck-alert-s">'+esc(g.call)+' · '+wrapAgo(g)+' · '+n+' action'+(n===1?'':'s')+' captured</span>'
+        +'</button></div>';
+      if(d.due.length>1)
+        h+='<p class="ck-h">'+(d.due.length-1)+' more call'+(d.due.length===2?'':'s')
+          +' this week still to wrap: '+d.due.slice(1).map(function(x){
+              return '<button type="button" class="ck-lnk" data-wrap="'+esc(x.mid)+'">'+esc(x.call)+'</button>';
+            }).join(', ')+'.</p>';
+    }
+    if(d.stale.length)
+      h+='<p class="ck-h ck-stale">'+d.stale.length+' older call'+(d.stale.length===1?'':'s')
+        +' never wrapped — past the week, so not flagged: '
+        +d.stale.slice(0,3).map(function(x){
+            return '<button type="button" class="ck-lnk" data-wrap="'+esc(x.mid)+'">'+esc(x.call)+'</button>';
+          }).join(', ')+(d.stale.length>3?' +'+(d.stale.length-3):'')+'.</p>';
+    if(!d.due.length&&d.done)
+      h+='<p class="ck-h">✓ Every call on this account is wrapped.</p>';
+    return h+'</section>';
+  }
+  function wrapAgo(g){
+    var h=Math.floor((Date.now()-(g.when||0))/3600000);
+    if(h<1)return 'just now';
+    if(h<24)return h+'h ago';
+    return (g.ageDays||Math.floor(h/24))+'d ago';
+  }
+
+  /* ---- the workbench: tidy the actions, then decide whether to send --------------------
+     Ray: "Add a table of actions from the call after AM has tidying up, then ask AM if they want
+     to send it, and obviously draft directly on FCC or on Gmail."  The tidying is the point —
+     a parsed action is an internal instruction and several are notes to ourselves, so every row
+     is editable and droppable and the email is built from what SURVIVES, never from the parse. */
+  var CWMID='',CWTONE='consult',CWTO='',CWPNG=null;
+  /* whether to attach the table is a preference about one screen, so it lives on the device like
+     every other one here — not in shared state, which is for the work itself */
+  var CWTAB=true; try{ CWTAB=localStorage.getItem('fcc-cw-table')!=='0'; }catch(e){}
+  function wrapOpen(mid){
+    var g=null; WRAPG.forEach(function(x){ if(x.mid===mid)g=x; });
+    if(!g)return;
+    CWMID=mid;
+    if(!CWTO)CWTO=(ASKCFG.to||{})[g.client]||'';
+    var box=$('#cw-modal'); if(!box)return;
+    box.innerHTML=
+      '<div class="cw-head"><div><h3>Wrap up the call</h3>'
+       +'<p class="cw-sub">'+esc(g.call)+' · '+esc(g.client)+' · '+wrapAgo(g)+'</p></div>'
+       +'<button type="button" class="ck-x" id="cw-x" aria-label="Close">✕</button></div>'
+      +'<p class="cw-note">These came off the call notes and are already in the project plan. '
+       +'They are written for us, not for the client — reword them, drop the internal ones, then '
+       +'decide whether to send.</p>'
+      +'<div class="cw-rows" id="cw-rows">'
+      +g.actions.map(function(a,i){
+          return '<div class="cw-row" data-i="'+i+'" data-orig="'+esc(a.task)+'">'
+            +'<label class="cw-on"><input type="checkbox" checked aria-label="Include this action"></label>'
+            +'<input class="cw-task" value="'+esc(a.task)+'" aria-label="Action '+(i+1)+'">'
+            +'<input class="cw-own" value="'+esc(a.owner)+'" placeholder="owner" aria-label="Owner for action '+(i+1)+'">'
+            +'</div>'; }).join('')
+      +'</div>'
+      +'<div class="cw-bar">'
+       +'<label class="cw-to">To <input id="cw-to" type="email" value="'+esc(CWTO)+'" placeholder="name@client.com"></label>'
+       +'<span class="cw-tones">Tone '
+         +'<button type="button" class="cw-tone'+(CWTONE==='consult'?' on':'')+'" data-tone="consult">Collaborative</button>'
+         +'<button type="button" class="cw-tone'+(CWTONE==='direct'?' on':'')+'" data-tone="direct">Direct</button>'
+       +'</span>'
+       +'<label class="cw-tab"><input type="checkbox" id="cw-tab"'+(CWTAB?' checked':'')+'> Attach the action table</label>'
+       +'</div>'
+      +'<div class="cw-prev"><div class="cw-subj" id="cw-subj"></div><pre class="cw-body" id="cw-body"></pre></div>'
+      +'<div class="cw-shot" id="cw-shot" hidden><img id="cw-img" alt="The actions from this call, as a table"></div>'
+      +'<div class="cw-act">'
+       +'<button type="button" class="btn orange" id="cw-draft">✉ Create Gmail draft</button>'
+       +'<button type="button" class="btn" id="cw-gmail">↗ Open in Gmail</button>'
+       +'<button type="button" class="btn" id="cw-copy">⧉ Copy</button>'
+       +'<button type="button" class="btn" id="cw-dl" title="Save the table — paste it into the mail yourself, the way you did by hand">⬇ Table PNG</button>'
+       +'<span class="cw-stat" id="cw-stat"></span></div>';
+    if(window.FCCSolo)window.FCCSolo('cw-scrim');
+    $('#cw-scrim').classList.add('on');
+    wrapBind(g);
+    wrapPrev(g);
+  }
+  function wrapClose(){ var sc=$('#cw-scrim'); if(sc)sc.classList.remove('on'); }
+  function wrapRows(){
+    return Array.prototype.map.call(document.querySelectorAll('#cw-rows .cw-row'),function(r){
+      return { on:r.querySelector('.cw-on input').checked,
+               task:r.querySelector('.cw-task').value,
+               owner:r.querySelector('.cw-own').value,
+               /* the wording the transcript produced, kept apart from the wording the AM is
+                  typing: the plan row is found by the ORIGINAL, so rewriting the sentence for
+                  the client never costs the row its category, due date or status */
+               orig:r.getAttribute('data-orig')||'' };
+    });
+  }
+  /* ---- THE ACTION TABLE, AS AN IMAGE ------------------------------------------------------
+     Ray, 24 Sep 2026, sending the wrap-up he had written by hand: "this is the type of wrap-up
+     pre-written by FCC that i was looking for ( including the screenshot )". The screenshot in it
+     was the Intake board, pasted in. So the draft carries one — DRAWN rather than screenshotted,
+     which matters three ways: it is the same on every screen and theme, it cannot capture a
+     colleague's rows that happen to be on screen, and it carries none of the board's internal
+     chrome. No checkbox, no Source or Brief column, no status dropdown a client cannot use — and
+     no Client column, because the subject line already says whose call this was and every row
+     would repeat it. The house canvas style is Label Guard's (2x, white, orange rule, Lato). */
+  var WPCOL = { done:'#15803D', progress:'#C96A12', briefed:'#7A5AA8', client:'#1A365D',
+                hold:'#8a94a0', open:'#8a94a0' };
+  function wrapPlan(g,r){
+    if(!r||!window.FCCPlanRow)return null;
+    try{ return window.FCCPlanRow(g.client, r.orig||r.task); }catch(e){ return null; }
+  }
+  /* wrap a sentence to the column, measured — never a character count, since the same 60
+     characters are a different width in Lato depending on what they are */
+  function wpWrap(ctx,t,w,max){
+    var words=String(t||'').split(/\s+/), out=[], line='';
+    for(var i=0;i<words.length;i++){
+      var test=line?(line+' '+words[i]):words[i];
+      if(ctx.measureText(test).width<=w||!line){ line=test; continue; }
+      out.push(line); line=words[i];
+      if(out.length===max-1)break;
+    }
+    if(out.length<max){
+      if(out.length===max-1&&line){
+        var rest=words.slice(words.indexOf(line.split(' ')[0])).join(' ');
+        line=(ctx.measureText(rest).width<=w)?rest:line;
+      }
+      if(line)out.push(line);
+    }
+    if(out.length===max){
+      var last=out[max-1];
+      if(ctx.measureText(String(t)).width>w*max){
+        while(last.length>1&&ctx.measureText(last+'…').width>w)last=last.slice(0,-1);
+        out[max-1]=last+'…';
+      }
+    }
+    return out;
+  }
+  function wrapPng(g,rows){
+    var keep=(rows||[]).filter(function(r){ return r&&r.on!==false&&String(r.task||'').trim(); });
+    if(!keep.length)return null;
+    var W=980, PADX=28, c0=document.createElement('canvas'), gx0=c0.getContext('2d');
+    if(!gx0)return null;
+    /* the columns are laid out right to left from the page edge, and every width is DERIVED from
+       the gap to its neighbour — a hand-written width is how the action text came to be wrapped at
+       530px inside a 442px column and ran straight through the owner's name */
+    var GAP=14, R=W-PADX;
+    var X={}, WD={};
+    WD.stat=130; X.stat=R-WD.stat;
+    WD.due=70;   X.due=X.stat-GAP-WD.due;
+    WD.own=124;  X.own=X.due-GAP-WD.own;
+    X.feed=PADX; WD.feed=118;
+    X.task=X.feed+WD.feed+GAP; WD.task=X.own-GAP-X.task;
+    gx0.font='400 13.5px Lato, Arial, sans-serif';
+    var lines=keep.map(function(r){ return wpWrap(gx0,String(r.task).trim(),WD.task,2); });
+    var top=104, rh=lines.map(function(l){ return l.length>1?52:34; });
+    var H=top+12+rh.reduce(function(a,b){return a+b;},0)+46;
+    var c=document.createElement('canvas'); c.width=W*2; c.height=H*2;
+    var x=c.getContext('2d'); x.scale(2,2);
+    x.fillStyle='#fff'; x.fillRect(0,0,W,H);
+    x.fillStyle='#ED6F0B'; x.fillRect(0,0,W,5);
+    x.textAlign='left';
+    x.fillStyle='#333'; x.font='800 17px Lato, Arial, sans-serif';
+    x.fillText(String(g.call||'Client call'),PADX,40);
+    x.font='400 12.5px Lato, Arial, sans-serif'; x.fillStyle='#8a94a0';
+    var dW=g.when?new Date(g.when).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}):'';
+    x.fillText(String(g.client||'')+(dW?(' · '+dW):'')+' · '+keep.length+' action'+(keep.length===1?'':'s'),PADX,60);
+    x.font='800 10.5px Lato, Arial, sans-serif'; x.fillStyle='#8a94a0';
+    x.fillText('AREA',X.feed,top); x.fillText('ACTION',X.task,top);
+    x.fillText('OWNER',X.own,top); x.fillText('DUE',X.due,top); x.fillText('STATUS',X.stat,top);
+    x.strokeStyle='#E6E6E6'; x.beginPath(); x.moveTo(PADX,top+8); x.lineTo(W-PADX,top+8); x.stroke();
+    var y=top+8;
+    keep.forEach(function(r,i){
+      var pl=wrapPlan(g,r), base=y+22;
+      // the AM's own edits always win over the plan row: the workbench is where they tidy
+      var own=String(r.owner||'').trim()||(pl&&pl.owner)||'—';
+      var due=(pl&&pl.due)||'—', st=(pl&&pl.status)||'', bk=(pl&&pl.bucket)||'open';
+      var area=(pl&&pl.catLbl)||'';
+      if(area){ x.font='800 9.5px Lato, Arial, sans-serif';
+        var aw=Math.min(x.measureText(area.toUpperCase()).width+14,WD.feed);
+        x.fillStyle='rgba(245,166,35,.12)'; x.strokeStyle='rgba(245,166,35,.30)';
+        x.beginPath(); x.rect(X.feed,base-11,aw,17); x.fill(); x.stroke();
+        x.fillStyle='#B1550A'; x.save(); x.beginPath(); x.rect(X.feed,base-12,aw,19); x.clip();
+        x.fillText(area.toUpperCase(),X.feed+7,base+1); x.restore(); }
+      x.fillStyle='#333'; x.font='400 13.5px Lato, Arial, sans-serif';
+      lines[i].forEach(function(ln,li){ x.fillText(ln,X.task,base+li*18); });
+      x.fillStyle='#8a94a0'; x.font='700 12px Lato, Arial, sans-serif';
+      var o2=own; while(o2.length>1&&x.measureText(o2).width>WD.own)o2=o2.slice(0,-1);
+      x.fillText(o2+(o2===own?'':'…'),X.own,base);
+      x.fillStyle='#4a4a4a'; x.fillText(due,X.due,base);
+      if(st){ x.font='800 10px Lato, Arial, sans-serif'; x.fillStyle=WPCOL[bk]||'#8a94a0';
+        x.fillText(st.toUpperCase(),X.stat,base); }
+      y+=rh[i];
+      x.strokeStyle='#F0F0EE'; x.beginPath(); x.moveTo(PADX,y+8); x.lineTo(W-PADX,y+8); x.stroke();
+    });
+    x.fillStyle='#8a94a0'; x.font='400 11px Lato, Arial, sans-serif';
+    x.fillText('FeedSpark · Private \u0026 Confidential',PADX,H-16);
+    return c.toDataURL('image/png');
+  }
+  function wrapPrev(g){
+    var rows=wrapRows();
+    CWPNG=CWTAB?wrapPng(g,rows):null;
+    var sh=$('#cw-shot'), im=$('#cw-img');
+    if(sh){ sh.hidden=!CWPNG; if(im&&CWPNG)im.src=CWPNG; }
+    var e=wrapEmail(g,rows,{tone:CWTONE,me:ME_NAME,name:wrapGreet(CWTO),table:!!CWPNG});
+    var sj=$('#cw-subj'),bd=$('#cw-body');
+    if(sj)sj.textContent=e.subject;
+    if(bd)bd.textContent=e.text;
+    var d=$('#cw-draft');
+    if(d){ d.disabled=!e.n; d.textContent=e.n?('✉ Create Gmail draft — '+e.n+' action'+(e.n===1?'':'s')):'✉ Nothing ticked'; }
+    return e;
+  }
+  function wrapBind(g){
+    $('#cw-x').onclick=wrapClose;
+    var sc=$('#cw-scrim');
+    sc.onclick=function(ev){ if(ev.target===sc)wrapClose(); };
+    var rows=$('#cw-rows');
+    rows.addEventListener('input',function(){ wrapPrev(g); });
+    rows.addEventListener('change',function(){ wrapPrev(g); });
+    Array.prototype.forEach.call(document.querySelectorAll('.cw-tone'),function(b){
+      b.onclick=function(){ CWTONE=b.getAttribute('data-tone');
+        Array.prototype.forEach.call(document.querySelectorAll('.cw-tone'),function(o){o.classList.toggle('on',o===b);});
+        wrapPrev(g); };
+    });
+    $('#cw-to').addEventListener('input',function(){ CWTO=this.value.trim(); });
+    $('#cw-tab').onchange=function(){ CWTAB=this.checked;
+      try{ localStorage.setItem('fcc-cw-table',CWTAB?'1':'0'); }catch(x){}
+      wrapPrev(g); };
+    /* the same image, saved — for the ↗ Gmail path, where a compose deep link can carry text and
+       nothing else, so the AM pastes it in exactly as Ray did by hand */
+    $('#cw-dl').onclick=function(){
+      var d=CWPNG||wrapPng(g,wrapRows());
+      if(!d){ wrapStat('Nothing ticked to put in the table.'); return; }
+      var a=document.createElement('a'); a.href=d;
+      a.download=(String(g.client||'call').replace(/[^\w-]+/g,'-')+'-actions.png');
+      document.body.appendChild(a); a.click(); a.remove();
+      wrapStat('Saved — paste it under the greeting.'); };
+    $('#cw-copy').onclick=function(){ var e=wrapPrev(g);
+      try{navigator.clipboard.writeText(e.subject+'\n\n'+e.text);}catch(x){}
+      wrapStat('Copied — paste it wherever you send from.'); };
+    /* DRAFT ON FCC: the same askdraft rails Label Guard and Golden Record use — it queues a
+       GMAIL DRAFT in Ray's own mailbox and never sends anything. */
+    $('#cw-draft').onclick=function(){
+      var e=wrapPrev(g), to=(CWTO||'').trim();
+      if(to.indexOf('@')<1){ wrapStat('Add the client’s address first.'); $('#cw-to').focus(); return; }
+      /* the rails cap attachments at ~1.5MB of base64, which a call with dozens of actions can
+         reach. Rather than letting the whole draft be refused for the sake of the picture, the
+         table is dropped and SAID to be dropped — the actions themselves are in the text. */
+      var b64=CWPNG?CWPNG.split(',')[1]:'', big=b64.length>1200000;
+      wrapStat(big?'The table is too large to attach — drafting without it, use ⬇ Table PNG.':'Queueing the draft…');
+      fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({to:to,subject:e.subject,text:e.text,client:g.client,keys:['callwrap|'+g.mid],
+          atts:(b64&&!big)?[{name:'call-actions.png',b64:b64}]:[]})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d&&d.error){ wrapStat('Could not queue it: '+d.error); return; }
+          wrapMark(g,to,e.n,'It is in your Gmail drafts — nothing was sent.');
+        }).catch(function(){ wrapStat('Could not reach the server — try ↗ Open in Gmail.'); });
+    };
+    /* DRAFT ON GMAIL: compose in Gmail itself. markOnly records the contact + the stamp without
+       queueing anything for the bridge, so the two paths agree about what happened. */
+    $('#cw-gmail').onclick=function(){
+      var e=wrapPrev(g), to=(CWTO||'').trim();
+      var u='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)
+        +'&su='+encodeURIComponent(e.subject)+'&body='+encodeURIComponent(e.text);
+      window.open(u,'_blank','noopener');
+      if(to.indexOf('@')>0)
+        fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({to:to,client:g.client,keys:['callwrap|'+g.mid],markOnly:true})}).catch(function(){});
+      wrapMark(g,to,e.n,'Opened in Gmail — send it from there.');
+    };
+  }
+  function wrapStat(t){ var el=$('#cw-stat'); if(el)el.textContent=t; }
+  function wrapMark(g,to,n,msg){
+    wrapSave(g.mid,{client:g.client,at:Date.now(),by:ME_NAME||'',to:to,n:n});
+    wrapStat(msg);
+    fillBrands(); render();
+    setTimeout(wrapClose,1400);
+  }
+  function wireWrap(){
+    Array.prototype.forEach.call(document.querySelectorAll('#ck-r-body [data-wrap]'),function(b){
+      b.onclick=function(){ wrapOpen(b.getAttribute('data-wrap')); };
+    });
+  }
+
   function secActions(brand){
     var gold=goldOf(brand).filter(function(f){return f.score!=null;});
     var tasks=(MODEL[brand]||{}).tasks||[];
@@ -5835,8 +6446,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
     if(!BRAND){ body.innerHTML='<p class="ck-empty">Pick an account above.</p>'; if(sub)sub.textContent=''; return; }
     // the volume panel is the SAME data the review section carries, given the whole rail — every
     // scanned market's breakdown open, nothing to scroll past to reach it
-    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true):(secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
-    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND);
+    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true)
+      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
+    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap();
     if(RTAB==='volume')openAllMix(BRAND);
     subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);
@@ -5863,12 +6475,25 @@ body.ck-r-on{padding-right:var(--ck-w)}
     subLine();
   }
 
+  /* The rail follows ONE account (Ray's rule), and it opens on whichever brand sorts first — so
+     a call that landed on Hobbycraft while the rail sat on Accessorize would show nothing at all,
+     and a wrap-up is the one thing here with a same-day clock on it. The picker therefore MARKS
+     the accounts with a call waiting. The option's value stays the bare brand name, because
+     fillBrands round-trips BRAND through it and a decorated value would stop matching the roster. */
+  function wrapPending(brand){
+    var g=wrapCalls(window.FCCCalls?window.FCCCalls():[],brand,WRAP,Date.now());
+    return wrapDue(g).due.length;
+  }
   function fillBrands(){
     var sel=$('#ck-brand'); if(!sel)return;
     var rs=roster();
     if(!rs.length)return;
     if(!BRAND||rs.indexOf(BRAND)<0)BRAND=rs[0];
-    sel.innerHTML=rs.map(function(b){return '<option'+(b===BRAND?' selected':'')+'>'+esc(b)+'</option>';}).join('');
+    sel.innerHTML=rs.map(function(b){
+      var n=wrapPending(b);
+      return '<option value="'+esc(b)+'"'+(b===BRAND?' selected':'')+'>'+esc(b)
+        +(n?' · 📞 '+n:'')+'</option>';
+    }).join('');
   }
 
   /* ---- ⚙ tune ----------------------------------------------------------------------------- */
@@ -5936,6 +6561,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     fetch('/api/playbook').then(function(r){return r.json();}).then(function(d){ingestLive(d);}).catch(function(){}).then(fin);
     fetch('/api/golden/estate').then(function(r){return r.json();}).then(function(d){if(d&&d.feeds)GOLD=d;}).catch(function(){}).then(fin);
     fetch('/api/volume/arrivals').then(function(r){return r.json();}).then(function(d){if(d&&d.feeds)ARR=d;}).catch(function(){}).then(fin);
+    wrapLoad(); wrapWho();   // its own lane: the call actions arrive on the board's fetch, not this one
   }
 
   /* ---- boot ------------------------------------------------------------------------------- */
@@ -5949,6 +6575,10 @@ body.ck-r-on{padding-right:var(--ck-w)}
       var on=b.getAttribute('data-tab')===RTAB;
       b.classList.toggle('on',on); b.setAttribute('aria-selected',on?'true':'false');
     });
+    // the call actions arrive on the BOARD's fetch, which may land after this rail has rendered —
+    // without this the red prompt only appears on the next poll, i.e. up to two minutes after the
+    // call notes reached the FCC, which is exactly the window a wrap-up is written in
+    document.addEventListener('fcc-calls',function(){ fillBrands(); render(); });
     var tOpen=$('#ck-tune-open'); if(tOpen)tOpen.onclick=function(){tuneOpen(true);};
     var tX=$('#ck-tune-x'); if(tX)tX.onclick=function(){tuneOpen(false);};
     var tScrim=$('#ck-tune-scrim');

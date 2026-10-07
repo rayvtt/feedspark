@@ -178,6 +178,7 @@ window.addEventListener('load',restore);
   .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
   /* industry best-practice layer: ★ scored attrs, waived rows, bar ticks, profile editor */
   .bpstar{color:var(--orange-deep);font-size:10px;cursor:default}
+  .fs-std{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--orange-deep);border:1px solid rgba(237,111,11,.35);border-radius:100px;padding:1px 6px;margin-left:5px;cursor:default}
   .at-row.waived{opacity:.5}
   .wv{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:1px 6px;margin-left:4px}
   .at-bar{position:relative}
@@ -205,6 +206,59 @@ window.addEventListener('load',restore);
   .at-cov{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .at-delta{text-align:right;font-weight:900;font-size:11px;font-variant-numeric:tabular-nums}
   .up{color:var(--good)}.down{color:var(--risk)}
+  /* SCORE HISTORY (Ray, 24 Sep 2026) — the feed's Golden Score over time: the daily close as a
+     line, the day's move against the previous scanned day as mirrored bars (improvement above,
+     deduction below — the Product Volume module's validated pair, light + dark), and a change
+     log. One axis per plot: the score level and the daily move are different scales, so they are
+     two plots sharing the calendar, never a dual-axis chart. */
+  .hs{--hup:#2563EB;--hdn:#ED6F0B}
+  .tbadge.hsb{background:#EAF1FD;color:#1D4ED8}
+  .hs-rng{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-left:auto}
+  .hs-rng button,.hs-rng span{border:0;background:#fff;font:inherit;font-size:11px;font-weight:800;color:var(--muted);padding:4px 10px;cursor:pointer}
+  .hs-rng button+button{border-left:1px solid var(--line)}
+  .hs-rng .on{background:var(--navy);color:#fff}
+  .hs-rng.hs-met{margin-left:auto}.hs-met+.hs-rng{margin-left:6px}
+  .hs-auto{font-size:11px;font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:2px 9px;background:var(--wash);cursor:default}
+  .hs-man{display:inline-block;font-size:10px;font-weight:900;color:var(--navy);background:#EEF2F7;border-radius:100px;padding:1px 7px;margin-left:4px}
+  .hs-svg .pt.man{stroke:var(--ink);stroke-width:2}
+  .hs-leg i.hsm{width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid var(--ink);box-sizing:border-box}
+  .hs-since{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .hs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0 8px}
+  .hs-k{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--wash);min-width:0}
+  .hs-k .l{display:block;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .hs-k b{display:block;font-size:20px;font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums}
+  .hs-k small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hs-leg{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--ink-2);margin:4px 0 2px}
+  .hs-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+  .hs-leg i.ln{height:2px;width:14px;border-radius:2px;background:var(--ink-2);vertical-align:3px}
+  .hs-leg i.dot{width:5px;height:5px;border-radius:50%;background:var(--muted);vertical-align:1px}
+  .hs-zone{position:relative}
+  .hs-svg{width:100%;height:auto;display:block}
+  .hs-svg text{font-size:11px;fill:var(--muted);font-weight:700;font-family:Lato,system-ui,sans-serif}
+  .hs-svg text.v{fill:var(--ink);font-weight:900;font-size:12px}
+  .hs-svg text.pl{fill:var(--ink-2);font-weight:900;font-size:10px;letter-spacing:.05em}
+  .hs-svg .grid{stroke:var(--line);stroke-width:1}
+  .hs-svg .axis{stroke:#C9CDD3;stroke-width:1}
+  .hs-svg .ln{fill:none;stroke:var(--ink-2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .hs-svg .pt{stroke:#fff;stroke-width:2}
+  .hs-svg .z{fill:var(--muted)}
+  .hs-svg .hit{fill:transparent;cursor:crosshair}
+  .hs-svg .hit:hover{fill:rgba(26,54,93,.05)}
+  .hs-tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;line-height:1.55;opacity:0;transition:opacity .12s;z-index:20;max-width:320px;box-shadow:0 6px 20px rgba(16,24,40,.25)}
+  .hs-tip b{font-weight:900}.hs-tip .u{color:#9DBDF3}.hs-tip .d{color:#F5C08A}.hs-tip .m{color:#C9D3E0;font-size:11px}
+  .hs-empty-note{font-size:12.5px;color:var(--muted);margin:6px 0 4px}
+  .hs-log{margin-top:10px;overflow-x:auto}
+  .hs-log table{width:100%;border-collapse:collapse;font-size:12px;min-width:620px}
+  .hs-log th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--line)}
+  .hs-log td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .hs-log td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .hs-log td.w{white-space:nowrap;color:var(--ink-2);font-weight:700}
+  .hs-log .mv{display:inline-block;margin:0 10px 2px 0;white-space:nowrap;font-weight:700;color:var(--ink-2)}
+  .hs-log .mv i{font-style:normal;color:var(--muted)}
+  .hs-log .ms{color:var(--muted);font-size:11px;font-weight:700}
+  .hs-more{margin-top:6px}
+  /* the estate row names the last move under the feed score */
+  .est-su span i{font-style:normal}
   .at-note{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .at-miss{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:2px 9px;justify-self:start}
   .at-miss.hard{color:var(--risk);border-color:var(--risk)}
@@ -566,6 +620,9 @@ window.addEventListener('load',restore);
   body.pdf button[data-qinfo],body.pdf button[data-scpop],body.pdf .qz-na{display:none!important}
   /* the live editor's saved-edits note card (a toolbar affordance, never client content) */
   body.pdf .de-stalepanel{display:none!important}
+  /* the score history on paper: the active range as the chip it is on screen, none of the hover
+     furniture, and no card at all while there is nothing yet to show a client */
+  body.pdf .hs-rng button:not(.on),body.pdf .hs-more,body.pdf .hs-tip,body.pdf .hs.hs-empty{display:none!important}
   /* THE CLIENT DOCUMENT IS SIMPLER THAN THE AM'S SCREEN (Ray, 18 Sep 2026, sending the ⬇ HTML
      to clients: "Let's remove a few things so it's not too complicated for the client to read.
      Keep the content quality score description, but remove the weight. The 1.4 × 1.6 factor
@@ -751,6 +808,18 @@ window.addEventListener('load',restore);
 [data-theme=dark] .pdp-chip.ai{border-color:rgba(154,120,255,.6);color:#B9A3F5}
 [data-theme=dark] .pdp-sku .st.bad{color:#F3868F}
 [data-theme=dark] .pdp-note,[data-theme=dark] .pdp-sub{color:var(--muted)}
+[data-theme=dark] .hs{--hup:#4C82E0;--hdn:#C67B28}
+[data-theme=dark] .tbadge.hsb{background:rgba(76,130,224,.18);color:#93B4E0}
+[data-theme=dark] .hs-rng button,[data-theme=dark] .hs-rng span{background:#20242E;color:var(--muted)}
+[data-theme=dark] .hs-rng .on{background:var(--navy);color:#fff}
+[data-theme=dark] .hs-k{background:#181B22}
+[data-theme=dark] .hs-auto{background:#181B22}
+[data-theme=dark] .hs-man{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .hs-leg i.hsm{background:var(--paper)}
+[data-theme=dark] .hs-svg .axis{stroke:#3A3F4A}
+[data-theme=dark] .hs-svg .pt{stroke:var(--paper)}
+[data-theme=dark] .hs-svg .hit:hover{fill:rgba(255,255,255,.04)}
+[data-theme=dark] .hs-tip{background:#0B0D12}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
@@ -758,7 +827,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Golden Record</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm on" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm on" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
 </div></div>
 
 <div class="demo-banner"><div class="wrap">🎭 DEMO MODE — client identities masked (industry aliases)
@@ -856,6 +925,9 @@ window.addEventListener('load',restore);
     { k: 'age_group', t: 'cond', a: 1, n: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
     { k: 'google_product_category', t: 'rec', n: 'Google auto-assigns; submit to override' },
     { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+    // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
+    // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
+    { k: 'keywords', t: 'rec', d: 1, h: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
     { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
     { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
@@ -880,11 +952,28 @@ window.addEventListener('load',restore);
   // scored over the products whose Google category calls for them (a.cov is that coverage),
   // weighted by the share of the catalogue they cover, and not at all when none does (a.na)
   function scopeShare(a) { var c = a && a.scope; return c && c.t ? Math.min(1, c.n / c.t) : 1; }
+  // the keywords row, in words: keyword STRINGS per SKU — each chevron-separated phrase in each slot
+  // counted, averaged over EVERY product (the ones with none count as none — Ray, 30 Sep 2026: an
+  // average over only the keyworded products describes a catalogue that does not exist), and the
+  // ids that are not keywords. A scan from before the string count carries no perSku and says so.
+  function kwNote(a) {
+    if (!a || !a.present) return 'no keyword slots in this feed';
+    return (a.perSku != null ? a.perSku + ' keyword string' + (a.perSku === 1 ? '' : 's') + ' per SKU' : 'strings per SKU counted on the next XML scan') +
+      (a.hash ? ' · ' + fmt(a.hash) + ' carry an id, not a keyword' : '');
+  }
+  function kwWhy(a, rows) {
+    if (!a || !a.present) return '';
+    return ' · a keyword string is one phrase between chevrons (>)' +
+      (a.perSku != null ? '; ' + fmt(a.strings) + ' strings across all ' + fmt(rows) + ' SKUs = ' + a.perSku + ' per SKU, the ' + fmt(Math.max(0, rows - a.filled)) + ' with no keywords counted as none' : '') +
+      ' · read across ' + a.slots + ' keyword slot' + (a.slots === 1 ? '' : 's') + ' (g:product_type 2–10); ' + fmt(a.filled) + ' products carry at least one keyword string' +
+      (a.hash ? '; ' + fmt(a.hash) + ' products hold a 32-character id in a keyword slot — an id is not a keyword, so it is not counted' : '');
+  }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
     var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
+      if (s.d && !attrs[s.k]) return;   // not measured on this read — never scored as missing
       var a = attrs[s.k] || { present: false };
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
       if (a.na) return;
@@ -997,6 +1086,10 @@ window.addEventListener('load',restore);
   function attrsFromCov(cov, sc, rows) {
     var at = {};
     SPEC.forEach(function (s) {
+      if (s.d) {   // measured only when its key is in the map (null = measured, absent)
+        if (cov && s.k in cov) at[s.k] = cov[s.k] != null ? { present: true, cov: cov[s.k] } : { present: false };
+        return;
+      }
       var c = cov ? cov[s.k] : null, n = sc ? sc[s.k] : null;
       var scope = n != null ? { n: n, t: Math.max(n, rows || 0) } : null;
       if (scope && !n) at[s.k] = { present: false, na: true, scope: scope };
@@ -1004,6 +1097,17 @@ window.addEventListener('load',restore);
       else if (scope) at[s.k] = { present: false, scope: scope };
     });
     return at;
+  }
+  // the estate row's last move: the index carries the reading before the feed's last recorded
+  // change (hp) and when it changed (ht); both ends are scored against the CURRENT profile, and a
+  // reading measured on another basis (before GPC category scope) is never compared
+  function estMove(f) {
+    if (!PROF.ready || !f || !f.hp || !f.hp.cov || !f.cov || f.score == null) return null;
+    if (!hBasis(f.hp, f)) return null;   // never a move across a change of measurement
+    var was = goldenScore(attrsFromCov(f.hp.cov, f.hp.sc, f.hp.rows), profileForC(f.client));
+    if (was == null) return null;
+    var d = Math.round((f.score - was) * 10) / 10;
+    return d === 0 ? null : { d: d, was: was, at: f.ht };
   }
   function rescoreEstate() {
     if (!PROF.ready) return;   // first paint keeps the scan-time (already profiled) scores
@@ -1150,7 +1254,13 @@ window.addEventListener('load',restore);
             '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
             '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
             '<span class="est-scores">' +
-            (f.score != null ? '<span class="est-su" title="Feed scorecard — weighted attribute completeness against Google’s product data spec, out of 100"><b style="color:' + scoreCol(f.score) + '">' + f.score + '</b><span>feed</span></span>' : '') +
+            (f.score != null ? (function () {
+              // the last move, re-scored to today's profile (Ray, 24 Sep 2026 — score history)
+              var mv = estMove(f);
+              return '<span class="est-su" title="Feed scorecard — weighted attribute completeness against Google’s product data spec, out of 100' +
+                (mv ? ' · last move ' + mv.was + ' → ' + f.score + ' on ' + esc(hDayLbl(hDay(mv.at || f.t))) : '') + '"><b style="color:' + scoreCol(f.score) + '">' + f.score + '</b>' +
+                '<span>feed' + (mv ? ' <i class="' + hCls(mv.d) + '">' + (mv.d > 0 ? '▲' : '▼') + Math.abs(mv.d) + '</i>' : '') + '</span></span>';
+            })() : '') +
             (f.q != null ? '<span class="est-su" title="Content quality score — what is actually IN the free-text fields (title, description, highlights…), out of 100"><b style="color:' + scoreCol(f.q) + '">' + f.q + '</b><span>content</span></span>' : '') +
             '</span>' +
             (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
@@ -1276,6 +1386,8 @@ window.addEventListener('load',restore);
         else renderDetail(k);
         // the stored content-quality reading (non-blocking; the section fills in when it lands)
         if (QUAL[k] === undefined) loadQuality(k).then(function () { if (SEL === k) renderDetail(k); });
+        // the score history (non-blocking; the card fills in place when it lands)
+        if (HIST[k] === undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -1344,7 +1456,12 @@ window.addEventListener('load',restore);
       if (!d || d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(maskText((d && d.error) || 'no response')) + '</span>'; return refreshEstate(); }
       return fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (r) { return r.json(); })
-        .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        .then(function (full) {
+          CACHE[k] = full;
+          // a scan can add a reading to the history — re-read it when this feed's card is in play
+          var hl = (HIST[k] !== undefined || SEL === k) ? loadHistory(k) : Promise.resolve();
+          return hl.then(function () { if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        });
     };
     return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
@@ -1381,6 +1498,441 @@ window.addEventListener('load',restore);
       '<circle class="dial-fg" cx="60" cy="60" r="52" style="stroke:' + scoreCol(score) + ';stroke-dasharray:' + Math.round(C * v) / 100 + ' ' + C + '"/>' +
       '<text class="dial-n" x="60" y="63" text-anchor="middle">' + (score == null ? '—' : score) + '</text>' +
       '<text class="dial-s" x="60" y="80" text-anchor="middle">GOLDEN SCORE</text></svg>';
+  }
+
+  /* ---- SCORE HISTORY (Ray, 24 Sep 2026: "Can the Golden Score module record historic changes in
+     terms of improvement or deduction from the previous scan … good to show clients on improvement
+     progress. At the same time, maybe also track it on a day-to-day basis, similar to [product]
+     volumes"). The worker keeps goldenhist:<client>:<mkt> (labelguard.js histAdd): READINGS — the
+     coverage each score is computed FROM, recorded only when the feed moved — the SCAN DAYS, and
+     the content-quality / AI-readiness ANALYSES. Every reading is RE-SCORED here against the
+     brand's CURRENT profile with the same goldenScore + attrsFromCov the estate uses, so editing
+     what counts re-bases the whole line instead of reading as the feed improving. A day nobody
+     scanned is a GAP, never a copy of the day before. The daily bars are the day's move against
+     the previous scanned day's close, drawn in the Product Volume module's validated pair. */
+  var HIST = {};          // key -> {v,r,s,q} | null (asked the API, nothing stored yet)
+  var HSHOW = {};         // key -> the change log lists every row, not the latest few
+  var HRNGS = [['30', '30 days'], ['90', '90 days'], ['365', '1 year'], ['all', 'All']];
+  var HRNG = (function () { try { var v = localStorage.getItem('gr-hist-rng'); return /^(30|90|365|all)$/.test(v || '') ? v : '90'; } catch (e) { return '90'; } })();
+  var HLOG_N = 6;         // change-log rows shown before "Show all"
+  function loadHistory(k) {
+    var p = parts(k);
+    return fetch(API + '/api/golden/history?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { HIST[k] = (d && d.hist && d.hist.r) ? d.hist : null; })
+      .catch(function () { HIST[k] = null; });
+  }
+  function hDay(t) { return new Date(+t).toISOString().slice(0, 10); }
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function hDayLbl(d) { var x = new Date(d + 'T00:00:00Z'); return x.getUTCDate() + ' ' + MON[x.getUTCMonth()]; }
+  function hWhen(t) { var x = new Date(+t); return x.getDate() + ' ' + MON[x.getMonth()] + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); }
+  function hAddDays(d, n) { var x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+  // the page's twin of labelguard.js goldenCovIndex + histReading: a snapshot as a reading
+  function hReadingOf(s) {
+    if (!s || !s.attrs) return null;
+    var cov = {}, sc = {}, any = false;
+    SPEC.forEach(function (x) {
+      var a = s.attrs[x.k];
+      if (a && a.present && !a.na && a.cov != null && isFinite(a.cov)) cov[x.k] = Math.round(a.cov * 10) / 10;
+      else if (x.d && a) cov[x.k] = null;   // measured and absent — kept, so "measured" survives (histReading)
+      if (a && a.scope) { sc[x.k] = a.scope.n; any = true; }
+    });
+    var r = { t: +s.t || Date.now(), rows: Math.max(0, Math.round(+s.rows || 0)), cov: cov };
+    if (any) r.sc = sc;
+    return r;
+  }
+  // mirrors labelguard.js histMoved — what moved between two readings, biggest first:
+  // [key, from, to], null = not in the feed, 'na' = no product in the feed is asked for it
+  function histMoved(a, b) {
+    var out = [];
+    if (!a || !b) return out;
+    var st = function (x, k) { return x.sc && x.sc[k] === 0 ? 'na' : (x.cov && x.cov[k] != null ? x.cov[k] : null); };
+    var keys = {};
+    [a, b].forEach(function (x) { Object.keys(x.cov || {}).forEach(function (k) { keys[k] = 1; }); Object.keys(x.sc || {}).forEach(function (k) { keys[k] = 1; }); });
+    Object.keys(keys).forEach(function (k) {
+      var x = st(a, k), y = st(b, k);
+      if (x === y) return;
+      if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) return;
+      out.push([k, x, y]);
+    });
+    var mag = function (m) { return typeof m[1] === 'number' && typeof m[2] === 'number' ? Math.abs(m[2] - m[1]) : 1000; };
+    return out.sort(function (m, n) { return mag(n) - mag(m) || (m[0] < n[0] ? -1 : 1); });
+  }
+  function hScore(r, prof) { return r ? goldenScore(attrsFromCov(r.cov, r.sc, r.rows), prof) : null; }
+  // mirrors labelguard.js histBasis — HOW a reading was measured: with or without GPC category scope,
+  // and which derived attributes it read (keywords from 30 Sep 2026). Different bases are never compared
+  function hBase(r) {
+    if (!r) return '';
+    return (r.sc ? 's' : '-') + SPEC.filter(function (x) { return x.d; }).map(function (x) { return r.cov && x.k in r.cov ? 'k' : '-'; }).join('');
+  }
+  function hBasis(a, b) { return hBase(a) === hBase(b); }   // measured the same way?
+  function hDelta(n) { return Math.round(n * 10) / 10; }
+  function hSigned(n, unit) {
+    var v = hDelta(n);
+    if (v === 0) return '±0' + (unit || '');
+    return (v > 0 ? '▲ +' + v : '▼ −' + (-v)) + (unit || '');
+  }
+  function hCls(n) { var v = hDelta(n); return v > 0 ? 'up' : (v < 0 ? 'down' : 'muted'); }
+  function hMoveTxt(m) {
+    var k = 'g:' + m[0], a = m[1], b = m[2];
+    if (typeof a === 'number' && typeof b === 'number') return { t: k + ' ' + hSigned(b - a, 'pp'), c: hCls(b - a), tip: k + ' ' + a + '% → ' + b + '%' };
+    if (b === 'na') return { t: k + ' no longer applies', c: 'muted', tip: k + ': no product in the feed is asked for it any more' };
+    if (a === 'na') return { t: k + ' now applies', c: 'muted', tip: k + ': products Google asks it of are now in the feed' };
+    if (a == null) return { t: k + ' added (' + b + '%)', c: 'up', tip: k + ' appeared in the feed at ' + b + '%' };
+    return { t: k + ' removed (was ' + a + '%)', c: 'down', tip: k + ' left the feed — it was ' + a + '% filled' };
+  }
+  // everything the card draws, from the stored record + the live snapshot, under one profile
+  // THE THREE THINGS THE CARD CAN TRACK (Ray, 24 Sep 2026: "Golden Record and content quality should
+  // automatically scan on a daily basis … so every day there's a tracker"): the Golden Score from
+  // the readings, content quality and AI-readiness from the analyses — each drawn day by day
+  var HMETS = [['gs', 'Golden Score'], ['q', 'Content quality'], ['air', 'AI-readiness']];
+  var HMET = (function () { try { var v = localStorage.getItem('gr-hist-met'); return /^(gs|q|air)$/.test(v || '') ? v : 'gs'; } catch (e) { return 'gs'; } })();
+  function hMetName(met) { return HMETS.filter(function (x) { return x[0] === met; })[0][1]; }
+  // mirrors labelguard.js histDayPick — a day's value is its last HAND-RUN reading when there is
+  // one ("If there's a manual scan on any day, that new score can override that day"), else its
+  // last reading; the store keeps the same reading when it thins old days
+  function histDayPick(list, day) {
+    var last = -1, lastM = -1;
+    for (var i = 0; i < list.length; i++) {
+      if (hDay(list[i].t) !== day) continue;
+      last = i;
+      if (list[i].m) lastM = i;
+    }
+    return lastM >= 0 ? lastM : last;
+  }
+  function histModel(h, s, prof, rng, today, met) {
+    today = today || hDay(Date.now());
+    met = met || 'gs';
+    var reads = ((h && h.r) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var rec = reads.length;                 // the RECORDED readings (the change log reads these)
+    var live = hReadingOf(s);
+    // the live snapshot closes today's line even when it moved less than the recording threshold,
+    // so the chart ends where the dial is — unless a scan run by hand already set today
+    if (live && (!rec || live.t > reads[rec - 1].t)) { live.live = true; reads.push(live); }
+    var sset = {};
+    ((h && h.s) || []).forEach(function (d) { sset[d] = 1; });
+    if (live) sset[hDay(live.t)] = 1;
+    var qa = ((h && h.q) || []).slice().sort(function (a, b) { return a.t - b.t; });
+    var qf = met === 'gs' ? null : met;       // the analysis field this metric reads
+    var pts = qf ? qa.filter(function (x) { return x[qf] != null; }) : null;
+    var firstT = qf ? (pts.length ? pts[0].t : null) : (reads.length ? reads[0].t : null);
+    var first = firstT ? hDay(firstT) : today;
+    var span = rng === 'all' ? null : parseInt(rng, 10);
+    var start = span ? hAddDays(today, -(span - 1)) : first;
+    if (start < first) start = first;
+    if (start > hAddDays(today, -13)) start = hAddDays(today, -13);   // a fortnight at least, so a young record is not two giant bars
+    var val = function (x) { return qf ? x[qf] : hScore(x, prof); };
+    var days = [], prev = null, list = qf ? pts : reads, ri = -1;
+    for (var d = start; d <= today; d = hAddDays(d, 1)) {
+      var j0 = ri + 1;
+      while (ri + 1 < list.length && hDay(list[ri + 1].t) <= d) ri++;
+      // a reading taken ON this day sets it (a hand-run one first); a score day with none carries
+      // the feed as last read, an analysis day with none is a gap — nobody measured it
+      var pick = -1, pickM = -1;
+      for (var j = j0; j <= ri; j++) if (hDay(list[j].t) === d) { pick = j; if (list[j].m) pickM = j; }
+      if (pickM >= 0) pick = pickM;
+      var close = pick >= 0 ? list[pick] : (!qf && ri >= 0 ? list[ri] : null);
+      var e = { d: d, scanned: qf ? pick >= 0 : (!!sset[d] && !!close), r: null, score: null, delta: null, moved: [], basis: true,
+        man: pick >= 0 && !!list[pick].m };
+      if (e.scanned) {
+        e.r = close; e.score = val(close);
+        if (prev) {
+          e.basis = qf ? true : hBasis(prev.r, close);
+          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = qf ? [] : histMoved(prev.r, close); e.vs = prev.d; }
+        }
+        prev = e;
+      }
+      days.push(e);
+    }
+    // the readings BEFORE the window still anchor its first day's move
+    var inWin = days.filter(function (x) { return x.scanned; });
+    if (inWin.length && inWin[0].delta == null) {
+      var before = null;
+      list.forEach(function (x) { if (hDay(x.t) < inWin[0].d) before = x; });
+      if (before && (qf || hBasis(before, inWin[0].r))) {
+        inWin[0].delta = hDelta(inWin[0].score - val(before));
+        inWin[0].moved = qf ? [] : histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
+      }
+    }
+    // the change log follows the metric: the score's recorded moves, or the analyses
+    var log = [];
+    if (!qf) {
+      for (var i = 0; i < rec; i++) {
+        var x = reads[i];
+        if (hDay(x.t) < start) continue;
+        if (i === 0) { log.push({ t: x.t, kind: 'first', to: hScore(x, prof), rows: x.rows, m: !!x.m }); continue; }
+        var a = reads[i - 1];
+        if (!hBasis(a, x)) { log.push({ t: x.t, kind: 'basis', to: hScore(x, prof), rows: x.rows, m: !!x.m }); continue; }
+        log.push({ t: x.t, kind: 'feed', from: hScore(a, prof), to: hScore(x, prof), moved: histMoved(a, x), rows0: a.rows, rows: x.rows, m: !!x.m });
+      }
+    } else {
+      qa.forEach(function (x, j) {
+        if (hDay(x.t) < start) return;
+        log.push({ t: x.t, kind: 'qa', prev: j ? qa[j - 1] : null, cur: x, m: !!x.m });
+      });
+    }
+    log.sort(function (a, b) { return b.t - a.t; });
+    // headline figures — the Golden Score's, whatever the chart is showing
+    var now = live ? hScore(live, prof) : (rec ? hScore(reads[rec - 1], prof) : null);
+    var last = null;
+    if (rec >= 2 && hBasis(reads[rec - 2], reads[rec - 1])) {
+      last = { t: reads[rec - 1].t, from: hScore(reads[rec - 2], prof), to: hScore(reads[rec - 1], prof), since: reads[rec - 2].t };
+    }
+    var over = null;
+    var gsDays = qf ? null : inWin;
+    if (gsDays && gsDays.length && now != null) {
+      var o0 = gsDays[0];
+      if (hBasis(o0.r, live || reads[reads.length - 1]) && o0.d < today) over = { from: o0.score, d: o0.d, delta: hDelta(now - o0.score), all: o0.d === first };
+    }
+    var qIn = qa.filter(function (x) { return hDay(x.t) >= start; });
+    var qBefore = qa.filter(function (x) { return hDay(x.t) < start; }).pop() || null;
+    function track(f) {
+      var ps = qIn.filter(function (x) { return x[f] != null; });
+      if (!ps.length) return null;
+      // the latest DAY's value — a hand-run analysis holds its day over a later automatic one
+      var lastP = ps[histDayPick(ps, hDay(ps[ps.length - 1].t))];
+      var base = qBefore && qBefore[f] != null ? qBefore : (ps.length > 1 ? ps[0] : null);
+      return { now: lastP[f], t: lastP.t, from: base ? base[f] : null, fromT: base ? base.t : null };
+    }
+    return { met: met, days: days, log: log, now: now, last: last, over: over, first: rec ? reads[0].t : null,
+      firstMet: firstT, changes: log.filter(function (x) { return x.kind === (qf ? 'qa' : 'feed'); }).length,
+      q: track('q'), air: track('air'), scannedDays: inWin.length, start: start, today: today, recorded: rec, analyses: qa.length };
+  }
+  function histChart(m) {
+    var W = 1000, L = 46, R = 14, T0 = 30, T1 = 140, MID = 224, AMP = 40, H = 292;
+    var days = m.days, n = days.length, slot = (W - L - R) / Math.max(1, n);
+    var vals = days.filter(function (x) { return x.score != null; }).map(function (x) { return x.score; });
+    if (!vals.length) return '';
+    var lo = Math.floor(Math.min.apply(null, vals) - 1), hi = Math.ceil(Math.max.apply(null, vals) + 1);
+    if (hi - lo < 4) { var mid = (hi + lo) / 2; lo = Math.floor(mid - 2); hi = Math.ceil(mid + 2); }
+    lo = Math.max(0, lo); hi = Math.min(100, hi); if (hi - lo < 4) lo = Math.max(0, hi - 4);
+    var step = [1, 2, 5, 10, 20].filter(function (x) { return (hi - lo) / x <= 4; })[0] || 25;
+    var yS = function (v) { return T1 - (v - lo) / (hi - lo) * (T1 - T0); };
+    var peak = 0.5;
+    days.forEach(function (x) { if (x.delta != null) peak = Math.max(peak, Math.abs(x.delta)); });
+    peak = [0.5, 1, 2, 5, 10, 20, 50, 100].filter(function (x) { return x >= peak; })[0] || peak;
+    var cx = function (i) { return L + slot * i + slot / 2; };
+    var col = m.met === 'air' ? airCol : scoreCol;    // AI-readiness keeps its own tier ladder
+    var sv = '<text class="pl" x="' + L + '" y="14">' + esc(hMetName(m.met).toUpperCase()) + ' · DAY BY DAY</text>';
+    for (var g = Math.ceil(lo / step) * step; g <= hi; g += step) {
+      sv += '<line class="grid" x1="' + L + '" y1="' + yS(g) + '" x2="' + (W - R) + '" y2="' + yS(g) + '"/>' +
+        '<text x="' + (L - 7) + '" y="' + (yS(g) + 4) + '" text-anchor="end">' + g + '</text>';
+    }
+    // the line: broken wherever a day was not scanned or the measuring basis changed
+    var path = '', open = false;
+    days.forEach(function (x, i) {
+      if (x.score == null || !x.basis) { open = false; if (x.score == null) return; }
+      path += (open ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yS(x.score).toFixed(1);
+      open = true;
+    });
+    sv += '<path class="ln" d="' + path + '"/>';
+    var lastI = -1;
+    days.forEach(function (x, i) { if (x.score != null) lastI = i; });
+    days.forEach(function (x, i) {
+      if (x.score == null) return;
+      var mark = i === lastI || (x.delta != null && x.delta !== 0) || !x.basis || x.man;
+      // a reading with no scanned neighbour is a line of one point — draw the point, or it vanishes
+      var lone = !((i > 0 && days[i - 1].score != null && x.basis) || (i < days.length - 1 && days[i + 1].score != null && days[i + 1].basis));
+      if (!mark && lone) sv += '<circle class="pt" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="3" style="fill:' + col(x.score) + '"/>';
+      // a day set by a scan run by hand wears a ring, so it can be told apart from the automatic ones
+      if (mark) sv += '<circle class="pt' + (x.man ? ' man' : '') + '" cx="' + cx(i).toFixed(1) + '" cy="' + yS(x.score).toFixed(1) + '" r="' + (x.man ? 5.5 : 4.5) + '" style="fill:' + col(x.score) + '"/>';
+    });
+    if (lastI >= 0) {
+      var lx = cx(lastI), ly = yS(days[lastI].score);
+      sv += '<text class="v" x="' + (lx - 8) + '" y="' + (ly - 10) + '" text-anchor="end">' + days[lastI].score + '</text>';
+    }
+    // the daily move — improvement above the line, deduction below
+    sv += '<text class="pl" x="' + L + '" y="' + (MID - AMP - 10) + '">DAY-ON-DAY CHANGE</text>' +
+      '<line class="grid" x1="' + L + '" y1="' + (MID - AMP) + '" x2="' + (W - R) + '" y2="' + (MID - AMP) + '"/>' +
+      '<line class="grid" x1="' + L + '" y1="' + (MID + AMP) + '" x2="' + (W - R) + '" y2="' + (MID + AMP) + '"/>' +
+      '<text x="' + (L - 7) + '" y="' + (MID - AMP + 4) + '" text-anchor="end">+' + peak + '</text>' +
+      '<text x="' + (L - 7) + '" y="' + (MID + 4) + '" text-anchor="end">0</text>' +
+      '<text x="' + (L - 7) + '" y="' + (MID + AMP + 4) + '" text-anchor="end">−' + peak + '</text>' +
+      '<line class="axis" x1="' + L + '" y1="' + MID + '" x2="' + (W - R) + '" y2="' + MID + '"/>';
+    var bw = Math.max(2, Math.min(28, slot - 2));    // 2px surface gap between neighbours
+    days.forEach(function (x, i) {
+      if (!x.scanned) return;
+      var bx = cx(i) - bw / 2;
+      if (x.delta == null || x.delta === 0) { sv += '<circle class="z" cx="' + cx(i).toFixed(1) + '" cy="' + MID + '" r="1.8"/>'; return; }
+      var hgt = Math.max(2, Math.abs(x.delta) / peak * AMP), up = x.delta > 0;
+      sv += '<path style="fill:var(' + (up ? '--hup' : '--hdn') + ')" d="' + barPath(bx, bw, up ? MID - 1 : MID + 1, hgt, up) + '"/>';
+    });
+    var every = Math.max(1, Math.ceil(n / 9));
+    days.forEach(function (x, i) {
+      if (i % every === 0 || i === n - 1) {
+        if (i !== n - 1 && n - 1 - i < every * 0.6) return;   // keep the last label clear of its neighbour
+        sv += '<text x="' + cx(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + hDayLbl(x.d) + '</text>';
+      }
+    });
+    days.forEach(function (x, i) {
+      sv += '<rect class="hit" data-hd="' + i + '" x="' + (L + slot * i).toFixed(1) + '" y="' + T0 + '" width="' + slot.toFixed(1) + '" height="' + (MID + AMP - T0) + '" rx="4"/>';
+    });
+    return '<svg class="hs-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(hMetName(m.met)) + ' day by day, and the day-on-day change">' + sv + '</svg>';
+  }
+  // a bar with a rounded DATA end, square at the baseline (the Product Volume chart's own mark)
+  function barPath(x, w, y0, h, up) {
+    var r = Math.min(2, w / 2, h);
+    if (h <= 0) return '';
+    if (up) {
+      var yt = y0 - h;
+      return 'M' + x + ' ' + y0 + 'V' + (yt + r) + 'Q' + x + ' ' + yt + ' ' + (x + r) + ' ' + yt + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + yt + ' ' + (x + w) + ' ' + (yt + r) + 'V' + y0 + 'Z';
+    }
+    var yb = y0 + h;
+    return 'M' + x + ' ' + y0 + 'V' + (yb - r) + 'Q' + x + ' ' + yb + ' ' + (x + r) + ' ' + yb + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + yb + ' ' + (x + w) + ' ' + (yb - r) + 'V' + y0 + 'Z';
+  }
+  function histKpi(label, big, cls, small, tip) {
+    return '<div class="hs-k"' + (tip ? ' title="' + esc(tip) + '"' : '') + '><span class="l">' + label + '</span>' +
+      '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + big + '</b>' + (small ? '<small>' + small + '</small>' : '') + '</div>';
+  }
+  function histTrackKpi(label, tr) {
+    if (!tr) return '';
+    var d = tr.from != null ? tr.now - tr.from : null;
+    return histKpi(label, String(tr.now), '', d == null ? 'as analysed ' + hDayLbl(hDay(tr.t))
+      : '<span class="' + hCls(d) + '">' + hSigned(d) + '</span> since ' + hDayLbl(hDay(tr.fromT)),
+      label + ' is recorded as analysed — each reading is the analysis that day, not re-scored');
+  }
+  function histLog(k, m) {
+    if (!m.log.length) return '';
+    var all = !!HSHOW[k], rows = all ? m.log : m.log.slice(0, HLOG_N);
+    var h = '<div class="hs-log"><table><thead><tr><th>When</th><th>Measure</th><th style="text-align:right">Score</th><th style="text-align:right">Change</th><th>What moved</th></tr></thead><tbody>';
+    rows.forEach(function (x) {
+      h += '<tr><td class="w">' + esc(hWhen(x.t)) + (x.m ? ' <span class="hs-man" title="Run by hand — a hand-run reading sets its day, whatever the automatic scans read">✋ by hand</span>' : '') + '</td>';
+      if (x.kind === 'first') {
+        h += '<td>Golden Score</td><td class="n">' + x.to + '</td><td class="n muted">—</td><td class="ms">first reading recorded · ' + fmt(x.rows) + ' products</td>';
+      } else if (x.kind === 'basis') {
+        h += '<td>Golden Score</td><td class="n">' + x.to + '</td><td class="n muted">—</td><td class="ms">measured on a new basis (category scope) — not compared with the reading before</td>';
+      } else if (x.kind === 'feed') {
+        var d = x.to - x.from, mv = x.moved.slice(0, 4).map(hMoveTxt);
+        h += '<td>Golden Score</td><td class="n">' + x.from + ' → ' + x.to + '</td>' +
+          '<td class="n ' + hCls(d) + '">' + hSigned(d) + '</td><td>' +
+          mv.map(function (t) { return '<span class="mv" title="' + esc(t.tip) + '"><span class="' + t.c + '">' + esc(t.t) + '</span></span>'; }).join('') +
+          (x.moved.length > 4 ? '<span class="ms">+' + (x.moved.length - 4) + ' more</span>' : '') +
+          (x.rows0 !== x.rows ? '<span class="ms"> · ' + fmt(x.rows0) + ' → ' + fmt(x.rows) + ' products</span>' : '') + '</td>';
+      } else {
+        var parts2 = [];
+        [['q', 'Content quality'], ['air', 'AI-readiness']].forEach(function (f) {
+          if (x.cur[f[0]] == null) return;
+          var was = x.prev ? x.prev[f[0]] : null;
+          parts2.push({ lbl: f[1], txt: (was != null ? was + ' → ' : '') + x.cur[f[0]], d: was != null ? x.cur[f[0]] - was : null });
+        });
+        h += '<td>' + parts2.map(function (p2) { return p2.lbl; }).join(' · ') + '</td>' +
+          '<td class="n">' + parts2.map(function (p2) { return p2.txt; }).join(' · ') + '</td>' +
+          '<td class="n">' + parts2.map(function (p2) { return p2.d == null ? '<span class="muted">—</span>' : '<span class="' + hCls(p2.d) + '">' + hSigned(p2.d) + '</span>'; }).join(' · ') + '</td>' +
+          '<td class="ms">' + (x.prev ? 'analysed — compared with the analysis of ' + hDayLbl(hDay(x.prev.t)) : 'first analysis recorded') + '</td>';
+      }
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    if (m.log.length > HLOG_N) h += '<button class="btn hs-more" data-hmore="1">' + (all ? 'Show the latest ' + HLOG_N : 'Show all ' + m.log.length + ' changes') + '</button>';
+    return h + '</div>';
+  }
+  function histSection(k, s) {
+    var p = parts(k), h0 = HIST[k];
+    var head = '<div class="tier-h"><span class="tbadge hsb">Progress</span><h4>Score history</h4>';
+    var rngHtml = '<span class="hs-rng hs-met" role="group" aria-label="What the chart tracks">' + HMETS.map(function (r) {
+      return '<button data-hmet="' + r[0] + '"' + (HMET === r[0] ? ' class="on"' : '') + '>' + r[1] + '</button>';
+    }).join('') + '</span>' +
+      '<span class="hs-rng" role="group" aria-label="History range">' + HRNGS.map(function (r) {
+      return '<button data-hrng="' + r[0] + '"' + (HRNG === r[0] ? ' class="on"' : '') + '>' + r[1] + '</button>';
+    }).join('') + '</span>';
+    if (h0 === undefined) {
+      return '<div class="tier hs hs-empty" id="hs-tier">' + head + '</div><p class="hs-empty-note"><span class="spin"></span>Loading the score history…</p></div>';
+    }
+    var m = histModel(h0, s, profileForC(p.client), HRNG, null, HMET);
+    var thin = !h0 || m.recorded < 2 && !(h0.q || []).length;
+    var out = '<div class="tier hs' + (thin ? ' hs-empty' : '') + '" id="hs-tier">' + head +
+      (m.first ? '<span class="hs-since">tracking since ' + esc(hDayLbl(hDay(m.first))) + ' · ' + m.changes + ' ' + (HMET === 'gs' ? 'change' : 'analys') + (HMET === 'gs' ? (m.changes === 1 ? '' : 's') : (m.changes === 1 ? 'is' : 'es')) + ' in view</span>' : '') +
+      histDailyChip() +
+      rngHtml + '</div>';
+    if (!h0) {
+      return out + '<p class="hs-empty-note">History starts with this feed’s next scan — from then every move is recorded here with the attributes behind it.</p></div>';
+    }
+    out += '<div class="hs-kpis">' +
+      histKpi('Golden Score now', m.now == null ? '—' : String(m.now), '', 'as the dial above', 'Every reading in this history is scored against the brand’s current profile, so the line compares like with like') +
+      (m.last ? histKpi('Last change', hSigned(m.last.to - m.last.from), hCls(m.last.to - m.last.from),
+        esc(hDayLbl(hDay(m.last.t))) + ' · was ' + m.last.from, 'The last scan that moved the feed: ' + m.last.from + ' → ' + m.last.to)
+        : histKpi('Last change', '—', 'muted', 'none recorded yet')) +
+      // a window longer than the record says so rather than claiming 90 days it never saw
+      (m.over ? histKpi(m.over.all ? 'Since tracking began' : 'Over ' + HRNGS.filter(function (r) { return r[0] === HRNG; })[0][1],
+        hSigned(m.over.delta), hCls(m.over.delta), 'from ' + m.over.from + ' on ' + esc(hDayLbl(m.over.d))) : '') +
+      histTrackKpi('Content quality', m.q) + histTrackKpi('AI-readiness', m.air) + '</div>';
+    if (HMET !== 'gs' && !m.firstMet) {
+      out += '<p class="hs-empty-note">No ' + esc(hMetName(HMET).toLowerCase()) + ' reading on record for this feed yet — the 09:00 UK daily run records one every morning.</p>';
+    } else if (HMET === 'gs' && m.recorded < 2) {
+      out += '<p class="hs-empty-note">' + (m.first ? 'First reading recorded ' + esc(hDayLbl(hDay(m.first))) + ' — the chart fills in from the next scan that moves a number.'
+        : 'Score readings start with this feed’s next scan — the analyses above are already on record.') + '</p>';
+    }
+    out += '<div class="hs-leg"><span><i style="background:var(--hup)"></i>▲ Improvement on the day</span>' +
+      '<span><i style="background:var(--hdn)"></i>▼ Deduction on the day</span>' +
+      '<span><i class="dot"></i>' + (HMET === 'gs' ? 'scanned' : 'analysed') + ', no change</span>' +
+      '<span><i class="hsm"></i>set by a scan run by hand</span>' +
+      '<span class="muted">a gap = not ' + (HMET === 'gs' ? 'scanned' : 'analysed') + ' that day</span></div>' +
+      '<div class="hs-zone">' + histChart(m) + '<div class="hs-tip" id="hs-tip"></div></div>' +
+      histLog(k, m) + '</div>';
+    HMODEL = m;
+    return out;
+  }
+  var HMODEL = null;      // the model the hover layer reads
+  function HMETS_CUR() { return HMODEL ? HMODEL.met : HMET; }
+  // the 09:00 UK daily run's own ledger (/api/golden/estate → daily): when the tracker last filled
+  function histDailyChip() {
+    var dl = ESTATE && ESTATE.daily;
+    var tip = 'Every Google Shopping feed is read automatically at 09:00 UK each day — the Golden Score, content quality and AI-readiness. A scan or analysis run by hand sets its own day.';
+    if (!dl || !dl.t) return '<span class="hs-auto" title="' + esc(tip) + '">⏱ auto 09:00 UK daily</span>';
+    return '<span class="hs-auto" title="' + esc(tip + ' Last run: ' + hWhen(dl.t) + ' · ' + (dl.quality || 0) + ' feeds analysed' +
+      (dl.kept ? ' · ' + dl.kept + ' kept a hand-run reading' : '') + (dl.failed ? ' · ' + dl.failed + ' failed' : '')) + '">⏱ auto 09:00 UK · last ' + esc(hWhen(dl.t)) + '</span>';
+  }
+  function histTip(ev, i) {
+    var tip = $('hs-tip'), zone = tip && tip.parentNode; if (!tip || !HMODEL) return;
+    var x = HMODEL.days[i]; if (!x) return;
+    var h = '<b>' + esc(hDayLbl(x.d)) + '</b><br>';
+    if (!x.scanned) h += '<span class="m">not ' + (HMETS_CUR() === 'gs' ? 'scanned' : 'analysed') + ' this day</span>';
+    else {
+      h += esc(hMetName(HMETS_CUR())) + ' <b>' + x.score + '</b>' + (x.man ? ' <span class="m">· set by a scan run by hand</span>' : '') + '<br>';
+      if (!x.basis) h += '<span class="m">measured on a new basis — not compared</span>';
+      else if (x.delta == null) h += '<span class="m">first reading</span>';
+      else if (x.delta === 0 && !x.moved.length) h += '<span class="m">no change vs ' + esc(hDayLbl(x.vs)) + '</span>';
+      else {
+        h += '<span class="' + (x.delta > 0 ? 'u' : (x.delta < 0 ? 'd' : 'm')) + '">' + hSigned(x.delta) + '</span> vs ' + esc(hDayLbl(x.vs));
+        x.moved.slice(0, 3).forEach(function (mm) { h += '<br><span class="m">' + esc(hMoveTxt(mm).t) + '</span>'; });
+        if (x.moved.length > 3) h += '<br><span class="m">+' + (x.moved.length - 3) + ' more</span>';
+      }
+    }
+    tip.innerHTML = h; tip.style.opacity = 1;
+    var zr = zone.getBoundingClientRect();
+    var px = ev.clientX - zr.left + 14, py = ev.clientY - zr.top - 14;
+    if (px + tip.offsetWidth > zr.width - 8) px = ev.clientX - zr.left - tip.offsetWidth - 14;
+    tip.style.left = px + 'px'; tip.style.top = Math.max(0, py) + 'px';
+  }
+  function histWire(k) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hrng]'), function (b) {
+      b.onclick = function () {
+        HRNG = b.getAttribute('data-hrng');
+        try { localStorage.setItem('gr-hist-rng', HRNG); } catch (e) {}
+        histRedraw(k);
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hmet]'), function (b) {
+      b.onclick = function () {
+        HMET = b.getAttribute('data-hmet');
+        try { localStorage.setItem('gr-hist-met', HMET); } catch (e) {}
+        histRedraw(k);
+      };
+    });
+    var more = document.querySelector('[data-hmore]');
+    if (more) more.onclick = function () { HSHOW[k] = !HSHOW[k]; histRedraw(k); };
+    Array.prototype.forEach.call(document.querySelectorAll('.hs-svg .hit'), function (r) {
+      r.addEventListener('mousemove', function (ev) { histTip(ev, +r.getAttribute('data-hd')); });
+      r.addEventListener('mouseleave', function () { var t = $('hs-tip'); if (t) t.style.opacity = 0; });
+    });
+  }
+  // redraw the card in place — a range change must not rebuild (and re-scroll) the whole scorecard
+  function histRedraw(k) {
+    var el = $('hs-tier'), d = CACHE[k];
+    if (!el || !d || !d.snapshot) return;
+    var w = document.createElement('div'); w.innerHTML = histSection(k, d.snapshot);
+    el.parentNode.replaceChild(w.firstChild, el);
+    histWire(k);
   }
 
   var TIERS = [
@@ -1444,6 +1996,7 @@ window.addEventListener('load',restore);
       (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' estate feeds): avg <b>' + bench.avg + '</b> · best <b>' + bench.best.score + '</b> (' + esc(dispClient(bench.best.client)) + ').' : '') + '</p>' +
       '</div></div></div>';    // …gr-info · gr-top · gr-sticky
     h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
+    h += histSection(k, s);   // the score over time — improvement and deduction, day by day
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
@@ -1454,12 +2007,17 @@ window.addEventListener('load',restore);
           : (avg == null ? 'none in feed' : 'avg fill ' + avg + '%')) + '</span></div>' +
         '<p class="tier-sub">' + T.sub + '</p>';
       list.forEach(function (x) {
+        // KEYWORDS (Ray, 30 Sep 2026) — read per product on the XML scan; a sheet-read feed or a scan
+        // from before 30 Sep never measured it, which is NOT the same as a feed without keywords
+        var nm = !!x.d && !s.attrs[x.k];
         var a = s.attrs[x.k] || { present: false };
-        var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+        var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
         var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + '">' +
-          '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) +
+          (x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
+            '<span class="fs-std" title="A FeedSpark standard, not a Google specification requirement — scored like a recommended attribute">FeedSpark</span>'
+            : '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k)) +
           (isExp && !na ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
           (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
         // what the coverage is a share OF — the products Google asks this attribute of
@@ -1467,7 +2025,12 @@ window.addEventListener('load',restore);
         var basisTip = a.scope && gs ? ' · scored over the ' + fmt(a.scope.n) + ' of ' + fmt(a.scope.t || s.rows) + ' products in ' + gs +
           (a.scope.u ? ' (' + fmt(a.scope.u) + ' of them carry no readable category and are counted in)' : '') +
           (a.all != null ? ' · ' + a.all + '% across the whole catalogue' : '') : '';
-        if (na) {
+        if (nm) {
+          row += '<span class="at-miss" title="Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored">not measured</span>' +
+            '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
+            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 09:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
+          h += row + '<span class="at-act"></span></div>'; return;
+        } else if (na) {
           row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc('No ' + gs + ' products in this feed — not scored. ' + x.n) + '">no ' + esc(gs) + ' products — not scored</span>';
@@ -1486,15 +2049,19 @@ window.addEventListener('load',restore);
             (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip) + '">' + esc(basis ? basis + ' — ' + x.n : x.n) + '</span>';
+            '<span class="at-note" title="' + esc((basis ? basis + ' — ' : '') + x.n + basisTip + (x.d ? kwWhy(a, s.rows) : '')) + '">' + esc(x.d ? kwNote(a) : (basis ? basis + ' — ' + x.n : x.n)) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.d ? 'no keyword slots' : 'not in feed') + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
+        if (x.h) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
+          h += row + '<span class="at-act"><button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button></span></div>';
+          return;
+        }
         row += '<span class="at-act">' +
           '<button class="abtn' + (stamp ? ' asked' : '') + '" data-ask="' + esc(x.k) + '" title="' +
           (stamp ? 'Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + ' — click to compose again'
@@ -1512,6 +2079,7 @@ window.addEventListener('load',restore);
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
+    histWire(k);
   }
 
   /* ---- per-attribute actions: the client ask (shared askdraft rails) + the brief ---- */
@@ -1657,6 +2225,22 @@ window.addEventListener('load',restore);
     var x = SPEC.filter(function (sp) { return sp.k === attr; })[0]; if (!x) return;
     var a = s.attrs[attr] || { present: false };
     var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    if (x.h) {   // keywords — a keyword brief (cat keyword), in the keyword task family
+      var todo = a.present ? Math.max(0, s.rows - a.filled) : s.rows;
+      var kl = [
+        'Keywords: keyword strings (chevron-separated) in g:product_type 2–10 (FeedSpark keyword injection)',
+        'Current: ' + (a.present ? fmt(a.filled) + ' of ' + fmt(s.rows) + ' products keyworded (' + a.cov + '%)' + (a.perSku != null ? ', ' + a.perSku + ' keyword strings per SKU on average' : '') : 'no keyword slots in the feed'),
+        a.present && a.hash ? 'Note: ' + fmt(a.hash) + ' products carry a 32-character id in a keyword slot — an id is not a keyword and is not counted' : '',
+        'Target: keyword the remaining ' + fmt(todo) + ' products',
+        'Source: Golden Record scorecard (/golden)',
+      ].filter(Boolean);
+      try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+        '&attr=keywords', { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+      location.href = '/workflow?brief=' + b64url({ client: p.client,
+        task: 'Keywords Optimisation - Catalogue coverage - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+        cat: 'keyword', scope: kl.join('\n') });
+      return;
+    }
     var tierName = x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required in specific cases' : (x.t === 'ai' ? 'conversational AI' : 'recommended'));
     var lines = [
       'Attribute: g:' + attr + ' (' + tierName + ' — ' + x.n + ')',
@@ -1928,7 +2512,7 @@ window.addEventListener('load',restore);
     var d = CACHE[k]; if (!d || !d.snapshot || !R.matrix) return null;
     var s = d.snapshot, prof = profileForC(parts(k).client), base = goldenScore(s.attrs, prof);
     var attrs2 = {};
-    SPEC.forEach(function (x) { var a = s.attrs[x.k] || { present: false }; attrs2[x.k] = { present: !!a.present, cov: a.cov || 0 }; });
+    SPEC.forEach(function (x) { if (x.d && !s.attrs[x.k]) return; var a = s.attrs[x.k] || { present: false }; attrs2[x.k] = { present: !!a.present, cov: a.cov || 0 }; });
     Object.keys(R.matrix.attrs).forEach(function (kk) {
       var mx = R.matrix.attrs[kk]; if (!mx.blank || !mx.found || !attrs2[kk]) return;
       var cov = attrs2[kk].present ? attrs2[kk].cov : 0;
@@ -2056,28 +2640,14 @@ window.addEventListener('load',restore);
     };
     tell('connect', 0, 0, 0);
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
-      var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
-      var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
-      function onRow(r, liveHeader) {
-        // the header goes in too: a repeatable attribute (product highlights) lives in several
-        // columns, and the collector needs them all or it reads one value out of four
-        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols, { header: header }); return; }
-        nRows++;
-        if (sample.length < AUD_CAP) sample.push(r);
-        // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
-        // Monsoon custom_label_1 lesson). Growth only ever APPENDS, so every column we
-        // already resolved stays valid — but a free-text attribute that debuts after the
-        // first item was never in the collector, and back-filling it would mean re-reading
-        // the feed. Record it and say so rather than quietly scoring a partial column.
-        if (liveHeader && liveHeader.length !== header.length) {
-          header = liveHeader.slice();
-          var grown = LG.findAttrCols(header);
-          LG.QSPEC.forEach(function (q) {
-            if (grown[q.key] >= 0 && !(cols[q.key] >= 0) && late.indexOf(q.key) < 0) late.push(q.key);
-          });
-        }
-        col.onRow(r);
-      }
+      var FA = a[0], LG = a[1];
+      // the analysis itself is labelguard's qualityStream — the ONE implementation the 09:00 UK
+      // daily agent runs too (tools/golden_daily.mjs), so a hand-run analysis and the automatic
+      // one can never read the same feed two ways (Ray, 24 Sep 2026)
+      var wProf = profileForC(p.client);
+      var qs = LG.qualityStream({ FA: FA, client: p.client, market: p.mkt, audCap: AUD_CAP,
+        expected: wProf.expected, waived: wProf.waived });     // same industry profile as goldenScore
+      var onRow = qs.onRow;
       var parser = null, got = 0, total = 0, last = 0;
       return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (res) {
@@ -2093,7 +2663,7 @@ window.addEventListener('load',restore);
               if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow);
               got += x.value.length;
               var now = Date.now();
-              if (now - last > 180) { last = now; tell('read', got, total, nRows); }
+              if (now - last > 180) { last = now; tell('read', got, total, qs.rows()); }
               parser.push(chunk);
               return pump();
             });
@@ -2101,17 +2671,9 @@ window.addEventListener('load',restore);
           return pump();
         })
         .then(function () {
-          tell('score', got, total || got, nRows);
-          if (!col) throw new Error('the feed produced no rows');
-          var snap = col.finish({ client: p.client, market: p.mkt, late: late.length ? late : undefined });
-          if (!snap.rows) throw new Error('the feed produced no rows');
-          // the SAME read, scored on the AI-Readiness ladder — one stream, two readings
-          try {
-            var wProf = profileForC(p.client);
-            snap.ai = packAudit(FA.audit(header, sample, { client: p.client,
-              rowTotalEstimate: nRows, channel: 'google',       // /golden is Google-channel only
-              expected: wProf.expected, waived: wProf.waived })); // same industry profile as goldenScore
-          } catch (e) { snap.ai = null; }
+          tell('score', got, total || got, qs.rows());
+          // content quality AND the AI-Readiness ladder, off the one stream (qualityStream.finish)
+          var snap = qs.finish();
           tell('save', got, total || got, snap.rows);
           return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
             { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snap) })
@@ -2119,6 +2681,8 @@ window.addEventListener('load',restore);
             .then(function (d) {
               if (d && d.error) throw new Error(d.error);
               QUAL[k] = snap;
+              // the analysis is now a point in the feed's history — refresh the card in place
+              if (HIST[k] !== undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
               // mirror onto the estate row exactly what the worker just wrote to goldenidx,
               // so this market joins the pillar heatmap now rather than after a reload
               var row = ESTATE.feeds[k];
@@ -2446,25 +3010,7 @@ window.addEventListener('load',restore);
   function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
   // keep only what the card renders — the full audit carries issues, recs and dissection the
   // Feed Lab page owns, and none of it belongs in this store
-  function packAudit(a) {
-    if (!a || !a.score) return null;
-    var s = a.score, t = a.titles || {};
-    return {
-      total: Math.round(+s.total || 0), tier: +s.tier || 1, tierLabel: String(s.tierLabel || ''),
-      sampled: +a.sampled || 0, rows: +a.rowCount || 0,
-      pillars: (s.pillars || []).slice(0, 8).map(function (p) {
-        return { key: String(p.key || ''), label: String(p.label || ''), score: Math.round(+p.score || 0),
-          weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160),
-          // the live components behind the number, for the scoring pop-up
-          reads: (p.reads || []).slice(0, 8).map(function (x) { return String(x || '').slice(0, 140); }) };
-      }),
-      titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
-        buckets: (t.buckets || []).slice(0, 6).map(function (b) { return { b: String(b.b || ''), n: +b.n || 0 }; }),
-        mask: { brand: Math.round(+(t.mask || {}).brand || 0), material: Math.round(+(t.mask || {}).material || 0),
-          fit: Math.round(+(t.mask || {}).fit || 0), colour: Math.round(+(t.mask || {}).colour || 0),
-          use: Math.round(+(t.mask || {}).use || 0) } },
-    };
-  }
+  // packAudit lives in the engine now (labelguard.js) beside qualityStream, which calls it
 
   // ---- pillar heatmap: this brand's markets × the eight pillars (Ray: "the pillar heatmap
   // is great too"). Feed Lab draws this per brand too; here it reads off the estate index,
@@ -2878,19 +3424,27 @@ window.addEventListener('load',restore);
   var PDF_LIBS = null;
   function loadPdfLibs() {
     if (PDF_LIBS) return PDF_LIBS;
-    function loadScript(src, already) {
+    function loadScript(src, already, sri) {
       return new Promise(function (res, rej) {
         if (already()) return res();
         var el = document.createElement('script');
         el.src = src;
+        /* SUBRESOURCE INTEGRITY (security checklist, 24 Sep 2026, item 20): these two run with
+           full access to the page that is about to render a client's scorecard, so the browser
+           checks the bytes against a hash before executing. crossOrigin is required for SRI to
+           be enforced at all on a cross-origin script. Hashes verified against cdnjs's own
+           published SRI, not just computed from a download. A bumped version needs a new hash —
+           tools/test_escaping.mjs' sibling check in tools/check_csp.js will not catch that, but
+           the library simply refuses to load, which is the safe direction to fail. */
+        if (sri) { el.integrity = sri; el.crossOrigin = 'anonymous'; }
         el.onload = function () { res(); };
         el.onerror = function () { rej(new Error('failed to load ' + src)); };
         document.head.appendChild(el);
       });
     }
     PDF_LIBS = Promise.all([
-      loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function () { return !!window.html2canvas; }),
-      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function () { return !!(window.jspdf && window.jspdf.jsPDF); }),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function () { return !!window.html2canvas; }, 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function () { return !!(window.jspdf && window.jspdf.jsPDF); }, 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA=='),
     ]).catch(function (e) { PDF_LIBS = null; throw e; });   // a transient CDN miss is retried next click, not remembered forever
     return PDF_LIBS;
   }
@@ -3040,11 +3594,20 @@ window.addEventListener('load',restore);
       var s = document.createElement('span'); s.className = 'on'; s.textContent = b.textContent;
       b.parentNode.replaceChild(s, b);
     });
+    // 3c. the score history's range reads as the chip it is on screen (the others are toggles no
+    //     script can flip), and a card with nothing to show a client yet leaves the file
+    Array.prototype.forEach.call(doc.querySelectorAll('.hs-rng button'), function (b) {
+      if (!b.parentNode) return;
+      if (!b.classList.contains('on')) { b.parentNode.removeChild(b); return; }
+      var s2 = document.createElement('span'); s2.className = 'on'; s2.textContent = b.textContent;
+      b.parentNode.replaceChild(s2, b);
+    });
     // 4. nothing that needs JavaScript survives in a file that has none
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
      '.at-act', '.det-actions', '#pdp-last', '#prof-edit',
+     '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the
         live editor's ✎ handle, its "Send an element to Claude Code" panel and 💬 Feedback
@@ -3103,12 +3666,13 @@ window.addEventListener('load',restore);
     var s = d.snapshot, rf = refFor(d), ref = rf.ref;
     var out = ['attribute,tier,filled,coverage_pct,scored_over_products,' + (rf.isDaily ? 'yesterday_pct' : 'known_good_pct') + ',delta_pp,spec_note'];
     SPEC.forEach(function (x) {
+      var nm = !!x.d && !s.attrs[x.k];
       var a = s.attrs[x.k] || { present: false };
-      var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+      var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
       var same = refA && !!refA.scope === !!a.scope;   // never difference two bases
       var was = refA && refA.present && same ? refA.cov : '';
-      out.push(['g:' + x.k, x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended'),
-        a.present ? a.filled : '', a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed'),
+      out.push([(x.h ? '' : 'g:') + x.k, x.h ? 'feedspark_standard' : (x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended')),
+        a.present ? a.filled : '', nm ? 'not_measured' : (a.na ? 'not_applicable' : (a.present ? a.cov : 'not_in_feed')),
         a.scope ? a.scope.n : s.rows, was,
         (a.present && !a.na && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
         '"' + String(x.n).replace(/"/g, '""') + '"'].join(','));

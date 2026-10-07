@@ -110,6 +110,16 @@ ok(vwModals.length === 0,
     + vwModals.map((m) => m[0].trim()).join(' | ')
     : 'no modal sizes itself off vw — each measures the column its scrim reserves');
 
+console.log('\n── the rail owns <aside>, not the two-letter class');
+/* The rail is position:fixed, full height and opaque. As a bare `.ck` it also claimed every
+   <span class="ck"> on the page — the ASPL-tracking chip — and painted one over an open ticket.
+   Element-scoped, the collision cannot recur for anything that is not itself an <aside>. */
+const code = html.replace(/\/\*[\s\S]*?\*\//g, '');   // the comments below quote the bug verbatim
+ok(!/(^|[^-\w.])\.ck\s*[,{[]/m.test(code),
+  'no rule selects a bare .ck — the rail is written aside.ck');
+ok(/aside\.ck\{position:fixed/.test(html), 'and the rail rule is the one that says so');
+ok(!/<span class="ck"/.test(code), 'no span wears the rail class; the comms chip is .cmk');
+
 /* The rules above pin the mechanism; this measures the result. Renders the real page with the
    Playbook rail up, opens a ticket from the ledger and asserts the two boxes do not intersect,
    at the widths where they used to. */
@@ -121,7 +131,11 @@ if (chromium) {
   const day = (n) => new Date(Date.now() - n * 86400000).toISOString();
   const BRIEFS = { 'MONS-20260812-01': { id: 'MONS-20260812-01', client: 'Monsoon', market: 'gb',
     task: 'FS to breakdown the volume count', cat: 'technical', status: 'progress', code: 'MONS-GB',
-    created: day(40), due: day(30), by: 'Ray', comms: [] } };
+    created: day(40), due: day(30), by: 'Ray',
+    /* an ASPL pickup — classifyReply reads this as `ack`, so the modal renders the chip that
+       carried Ray's second white rectangle (24 Sep 2026). Seeded here so the geometry pass below
+       is measuring a ticket shaped like the one he actually opened. */
+    comms: [{ from: 'vimalesh', at: day(1), note: 'Picked this up, will update you shortly.' }] } };
   const INIT = `(function(){var BR=${JSON.stringify(BRIEFS)};
     window.fetch=function(u,o){var s=String(u),b={ok:true};
       if(s.indexOf('/api/briefs')>=0&&(!o||(o.method||'GET')==='GET'))b=BR;
@@ -143,8 +157,21 @@ if (chromium) {
         const cs = getComputedStyle(r); return cs.display !== 'none' && r.getBoundingClientRect().width > 2; });
       if (!sc || !sc.classList.contains('on') || !rail) return { open: false, rail: !!rail };
       const r = m.getBoundingClientRect(), rr = rail.getBoundingClientRect();
+      /* NOTHING INSIDE THE TICKET ESCAPES THE TICKET. Ray, 24 Sep 2026: "there's still issue with
+         this white rectangular space when opening brief ticket on workflow" — a 336px white column
+         down the whole viewport, over the open ticket. Not a second overlay this time and not the
+         rail: the ASPL-tracking chip is <span class="ck">, and the cockpit rail's rule was a BARE
+         .ck — position:fixed, top:0, bottom:0, width:var(--ck-w), opaque — so the chip became a
+         rail. The specific chip is not the point; anything in the modal that positions itself
+         against the viewport reproduces it, so the test is the general one. */
+      const esc = [...m.querySelectorAll('*')].filter((el) => {
+        if (getComputedStyle(el).position === 'fixed') return true;
+        const b = el.getBoundingClientRect();
+        if (!b.width && !b.height) return false;
+        return b.width > r.width + 2 || b.height > r.height + 2;
+      }).slice(0, 4).map((el) => el.tagName.toLowerCase() + '.' + (el.className || '?'));
       return { open: true, rail: true, w: Math.round(r.width), mx: Math.round(r.x),
-        rx: Math.round(rr.x), rw: Math.round(rr.width),
+        rx: Math.round(rr.x), rw: Math.round(rr.width), esc,
         hits: !(r.x + r.width <= rr.x + 0.5 || rr.x + rr.width <= r.x + 0.5),
         onScreen: rr.x >= -0.5 && rr.x + rr.width <= innerWidth + 0.5 };
     });
@@ -153,6 +180,8 @@ if (chromium) {
       ok(!g.hits, W + 'px — modal ' + g.mx + '..' + (g.mx + g.w) + ' clears the rail at ' + g.rx
         + (g.hits ? ' — IT LANDS ON THE RAIL' : ''));
       ok(g.onScreen, W + 'px — and the rail is still whole on screen');
+      ok(g.esc.length === 0, W + 'px — nothing inside the ticket is fixed to the viewport or bigger'
+        + ' than the card' + (g.esc.length ? ': ' + g.esc.join(', ') : ''));
     }
     await ctx.close();
   }

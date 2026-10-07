@@ -158,3 +158,24 @@ QA: `tools/test_schedule.mjs` (79 → 101) pins the strip encoding, the gap rule
 the per-client aggregation, hours summing only over tasks actually on a streak, the three-row cap
 with its "more" count, the all-green case, and the real committed workbook digesting end to end —
 plus the badge's rendering of it.
+
+## Market order (24 Sep 2026)
+
+> Ray, 24 Sep 2026, on the Schuh client view (nine tasks reading GB, GB, GB, IE, IE, DE, IE, DE,
+> GB): *"Can the schedule work display be sorted into each market, but just sort them correctly."*
+
+The rows had been sorted by streak length first, which interleaves markets. Both surfaces — the
+Workflow band's client view and the `/schedule` table when one brand is on screen with the
+default sort — now share one rule, `schedOrder` (the two copies are held byte-identical by
+`tools/test_schedule.mjs`):
+
+1. **Group by market**: the home market (GB / UK) first, the other markets alphabetical (DE, EU,
+   FR, IE, NL, US …).
+2. **Inside a market, paused tasks lead**, longest pause first.
+3. **Then the running tasks in the schedule's own task order** — Keywords, Titles, Product Type,
+   Social titles, Short titles, Data tagging — not alphabetically.
+
+The band heads each market with its code and count ("GB · 4 tasks · 2 paused"); the page's
+"sorted by" line reads *market, paused first*. Clicking any column header on `/schedule` still
+sorts by that column.
+

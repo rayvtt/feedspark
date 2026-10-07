@@ -1,0 +1,1199 @@
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · ROAS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
+    --vin:#2563EB;--vout:#ED6F0B;--grid:#ECECEA;--tip:rgba(22,24,32,.94)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1360px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1360px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  /* ---- hero: aurora wash, a travelling edge, one stagger down the banner (the Command Center's own banner language) ---- */
+  .hero{position:relative;overflow:hidden;isolation:isolate;padding:30px 0 20px}
+  .hero::before{content:'';position:absolute;inset:-40% -20% auto -20%;height:180%;z-index:-1;pointer-events:none;
+    background:radial-gradient(38% 46% at 18% 22%,rgba(245,166,35,.20),transparent 70%),radial-gradient(34% 42% at 82% 8%,rgba(37,99,235,.12),transparent 72%),radial-gradient(30% 38% at 62% 88%,rgba(26,54,93,.07),transparent 70%);
+    animation:heroAurora 26s ease-in-out infinite alternate}
+  @keyframes heroAurora{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}100%{transform:translate3d(2%,-1%,0) scale(1.04)}}
+  .hero::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;z-index:1;pointer-events:none;
+    background:linear-gradient(90deg,transparent 0 18%,var(--orange) 34%,var(--orange-deep) 50%,var(--orange) 66%,transparent 82% 100%);background-size:220% 100%;opacity:.85;animation:heroEdge 7.5s linear infinite}
+  @keyframes heroEdge{from{background-position:120% 0}to{background-position:-120% 0}}
+  .hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{animation:heroRise .62s cubic-bezier(.22,.68,.32,1) both}
+  .hero h1{animation-delay:.07s}.hero .sub{animation-delay:.13s}.hero .ctl{animation-delay:.19s}.hero .status{animation-delay:.25s}
+  @keyframes heroRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:40px;font-weight:900;margin:8px 0 6px;letter-spacing:-.025em}
+  h1 small{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:0;vertical-align:middle;margin-left:8px}
+  .hero p.sub{color:var(--ink-2);font-size:14px;max-width:880px;margin:0 0 14px}
+  /* ---- controls: ONE field height, ONE pill height ---- */
+  .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fld{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  select.fld{padding-right:28px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+  .btn{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn:disabled{opacity:.55;cursor:default}
+  .seg{display:inline-flex;height:36px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+  .seg button{font:inherit;font-size:12.5px;font-weight:800;border:none;background:transparent;color:var(--muted);padding:0 12px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button.on{background:var(--paper);color:var(--orange-deep);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{font:inherit;font-size:12px;font-weight:800;height:28px;padding:0 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .chip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .chip.on{background:rgba(245,166,35,.16);border-color:var(--orange);color:var(--orange-ink)}
+  table.pt tr.note td.nm{white-space:normal}
+  .lnk{font:inherit;font-weight:900;color:var(--orange-deep);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
+  .status{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status .pip{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);animation:heroPulse 2.4s ease-out infinite}
+  .status .pip.off{background:var(--muted);animation:none}.status .pip.warn{background:var(--orange-deep)}.status .pip.bad{background:var(--risk)}
+  @keyframes heroPulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+  .status .ml{margin-left:auto}
+  /* ---- cards: glass edge (a gradient border in the brand pair), lift on hover ---- */
+  .card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(135deg,rgba(245,166,35,.55),rgba(37,99,235,.28) 55%,rgba(230,230,230,.6)) border-box;border:1px solid transparent;border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin:14px 0;position:relative}
+  .card h3{margin:0 0 2px;font-size:16px;font-weight:900;letter-spacing:-.01em}
+  .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .chead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .chead .sp{flex:1}
+  .chead .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .empty{padding:26px 10px;text-align:center;color:var(--muted);font-size:13.5px;font-weight:700}
+  .empty b{color:var(--ink-2)}
+  /* ---- scorecards: Google Ads' metric cards — value, delta chip, sparkline; click to plot ---- */
+  .sc-row{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;scrollbar-width:thin}
+  .sc{flex:0 0 196px;scroll-snap-align:start;text-align:left;font:inherit;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px 10px;cursor:pointer;position:relative;overflow:hidden;transition:transform .18s cubic-bezier(.22,.68,.32,1),border-color .18s,box-shadow .18s;color:var(--ink)}
+  .sc:hover{transform:translateY(-2px);border-color:var(--orange);box-shadow:0 10px 26px rgba(237,111,11,.14)}
+  .sc::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--sc-c,transparent);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+  .sc.on::before{transform:scaleX(1)}
+  .sc.on{border-color:var(--sc-c)}
+  .sc .l{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .sc .l i{width:8px;height:8px;border-radius:50%;background:var(--sc-c,transparent);display:none}
+  .sc.on .l i{display:inline-block}
+  .sc .n{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:4px;letter-spacing:-.01em;line-height:1.1}
+  .sc .d{font-size:11.5px;font-weight:800;margin-top:4px;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .sc .d.up{color:var(--good)}.sc .d.dn{color:var(--risk)}
+  .sc svg{display:block;width:100%;height:34px;margin-top:6px;overflow:visible}
+  .sc svg path.ln{fill:none;stroke:var(--sc-c,#2563EB);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw 1.1s cubic-bezier(.22,.68,.32,1) forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .sc svg circle{fill:var(--sc-c,#2563EB);stroke:var(--paper);stroke-width:2}
+  .sc .nt{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:6px}
+  .sc-foot{font-size:12px;color:var(--muted);font-weight:700;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  /* ---- trend: one axis per panel, never two — two metrics = two stacked panels on one calendar ---- */
+  .tr-panel{position:relative;margin-top:6px}
+  .tr-panel .ttl{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;margin:6px 0 2px}
+  .tr-panel .ttl i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .tr-panel svg{display:block;width:100%;height:auto;overflow:visible}
+  .tr-panel svg .g{stroke:var(--grid);stroke-width:1}
+  .tr-panel svg .ax{font-size:11px;fill:var(--muted);font-weight:700}
+  .tr-panel svg .ln{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tr-panel svg .cross{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;opacity:0;pointer-events:none}
+  .tr-panel svg .hot{opacity:0;pointer-events:none;stroke:var(--paper);stroke-width:2}
+  .tr-panel svg .hit{fill:transparent}
+  .tip{position:absolute;pointer-events:none;background:var(--tip);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5;line-height:1.45}
+  .tip b{font-weight:900}.tip .m{color:#B9BEC7;font-weight:700}
+  .tr-note{font-size:12px;color:var(--muted);font-weight:700;margin-top:8px}
+  /* ---- movers ---- */
+  .mv{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .mv h4{margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .mv .row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+  .mv .row:last-child{border-bottom:none}
+  .mv .row .nm b{font-weight:900}.mv .row .nm small{color:var(--muted);font-weight:700;margin-left:6px}
+  .mv .row .dl{font-variant-numeric:tabular-nums;font-weight:900}
+  .mv .row .dl.up{color:var(--good)}.mv .row .dl.dn{color:var(--risk)}
+  .mv .bar{height:4px;border-radius:2px;background:var(--line);position:relative;margin-top:4px;overflow:hidden}
+  .mv .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--vin)}
+  .mv .row.dn .bar i{background:var(--vout)}
+  /* ---- THE DASHBOARD MODULES (Ray, 30 Sep 2026: "make roas dashboard modularised also pls, allow exports") — the
+     Catalogue's own pattern: one card size on a 3-column grid driven by a CONTAINER query on main, so it re-flows
+     3→2→1 with the column it sits in, never the window width ---- */
+  main.wrap{container-type:inline-size;container-name:roas}
+  .modbar{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
+  .modbar .mb-t{font-size:11.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .modbar .mb-s{flex:1;font-size:12px;font-weight:700;color:var(--muted)}
+  .modbar .pop{width:280px}
+  .modbar .mrow{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--line)}
+  .modbar .mrow label{flex:1;padding:2px}
+  .modbar .mrow button{font:inherit;font-size:12px;font-weight:900;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .modbar .mrow button:disabled{opacity:.35;cursor:default}
+  .modbar .ft{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+  .ins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+  .ins>.card{margin:0}
+  .mod{display:flex;flex-direction:column;height:372px;overflow:hidden}
+  .mod[hidden]{display:none!important}
+  .mod.wide{grid-column:span 2}
+  .mod>.chead{flex:none;flex-wrap:nowrap;margin-bottom:6px}
+  .mod>.chead>div:first-child{min-width:0}
+  .mod>.chead .ch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+  .mod .mbody{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+  .mod .mfoot{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;padding-top:7px;margin-top:6px;border-top:1px dashed var(--line);display:flex;gap:10px;flex-wrap:wrap}
+  .btn.xs{height:28px;padding:0 9px;font-size:12.5px;border-radius:8px}
+  .pop .xi{display:flex;flex-direction:column;align-items:flex-start;width:100%;gap:1px;font:inherit;font-size:12.5px;font-weight:800;text-align:left;background:transparent;border:none;color:var(--ink);cursor:pointer;padding:6px 6px;border-radius:7px}
+  .pop .xi:hover{background:var(--wash);color:var(--orange-deep)}
+  .pop .xi small{display:block;font-size:11px;font-weight:700;color:var(--muted)}
+  .xpop{min-width:250px}
+  /* a module row: name · bar · figure — one line, the figure never pushed off by a long name */
+  .hb{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700}
+  .hb:last-child{border-bottom:none}
+  .hb.go{cursor:pointer;border-radius:8px}.hb.go:hover{background:var(--wash)}
+  .hb .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hb .nm b{font-weight:900}.hb .nm small{color:var(--muted);font-weight:700;margin-left:5px}
+  .hb .v{font-variant-numeric:tabular-nums;font-weight:900;text-align:right;white-space:nowrap}
+  .hb .v small{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+  .trk{position:relative;height:8px;border-radius:4px;background:var(--wash)}
+  .trk i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--vin)}
+  .trk.sp i{background:var(--vout)}
+  .trk .ref{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ink-2);opacity:.55}
+  .trk2{display:flex;flex-direction:column;gap:3px}
+  .trk2 .trk{height:6px}
+  .mleg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;color:var(--muted);margin:0 0 4px}
+  .mleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .mleg .rl{display:inline-block;width:0;height:11px;border-left:2px dashed var(--ink-2);opacity:.6;margin-right:5px;vertical-align:-2px}
+  .gap{font-size:11px;font-weight:900;margin-left:6px}.gap.up{color:var(--good)}.gap.dn{color:var(--risk)}
+  .xcap{font-size:11px;font-weight:800;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px solid var(--line)}
+  .xhead{padding:6px 2px 10px}.xhead b{font-size:18px;font-weight:900}.xhead span{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--tip);color:#fff;font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+  #toast.on{opacity:1}
+  .mod.xshot,body.xshotall .mod{height:auto}.mod.xshot .mbody,body.xshotall .mod .mbody{overflow:visible}
+  body.xshotall .tscroll{max-height:none}
+  @container roas (max-width:1100px){.ins{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @container roas (max-width:700px){.ins{grid-template-columns:minmax(0,1fr)}.mod.wide{grid-column:auto}.mod{height:auto;min-height:260px}.mod .mbody{overflow:visible}}
+  /* ---- the table: Google Ads' reporting grid — sticky header + name column, drill rows, inline bars ---- */
+  .tbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .tbar .q{min-width:220px;flex:1}
+  .tscroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+  table.pt{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:920px}
+  table.pt th{position:sticky;top:0;background:var(--paper);z-index:2;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;cursor:pointer;user-select:none}
+  table.pt th:hover{color:var(--orange-deep)}
+  table.pt th.s{color:var(--orange-deep)}
+  table.pt th.s::after{content:' ▾';font-size:10px}table.pt th.s.asc::after{content:' ▴'}
+  table.pt th:first-child,table.pt td:first-child{text-align:left;position:sticky;left:0;background:var(--paper);z-index:1}
+  table.pt th:first-child{z-index:3}
+  table.pt td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  table.pt tr:last-child td{border-bottom:none}
+  table.pt tr.r{animation:rowIn .22s both}
+  @keyframes rowIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  table.pt tr.r:hover td{background:rgba(245,166,35,.06)}
+  table.pt tr.d0 td{font-weight:900}
+  table.pt tr.d0 td:first-child{background:linear-gradient(90deg,rgba(245,166,35,.10),var(--paper) 70%)}
+  table.pt tr.tot td{background:var(--wash);font-weight:900;color:var(--ink)}
+  table.pt tr.tot td:first-child{background:var(--wash)}
+  table.pt td.nm{white-space:nowrap}
+  .nm .in{display:inline-flex;align-items:center;gap:6px;padding-left:calc(var(--dp,0)*18px)}
+  .nm .chv{width:20px;height:20px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;padding:0;font:inherit;transition:transform .15s,color .15s}
+  .nm .chv:hover{color:var(--orange-deep);background:rgba(245,166,35,.14)}
+  .nm .chv.open{transform:rotate(90deg)}
+  .nm .dot{width:20px;display:inline-block;text-align:center;color:var(--line)}
+  .nm .cur{font-size:10.5px;font-weight:900;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:2px}
+  .nm .pth{color:var(--muted);font-weight:700}
+  .cb{position:relative;display:inline-block;min-width:78px}
+  .cb i{position:absolute;right:0;bottom:-4px;height:3px;border-radius:2px;background:var(--vout);opacity:.55}
+  .cb.rv i{background:var(--vin)}
+  /* ◐ HEAT — a colour scale per column, trough → peak (Ray, 30 Sep 2026). The chart pair's own steps, tinted
+     under ink text: orange below the group's typical row, blue above it, deepest at the trough and the peak. */
+  :root{--heat-hi:37,99,235;--heat-lo:237,111,11;--heat-k:1}
+  table.pt td.hx{background:rgba(var(--heat-hi),calc(var(--hx) * .34 * var(--heat-k)))!important}
+  table.pt td.hx.lo{background:rgba(var(--heat-lo),calc(var(--hx) * .34 * var(--heat-k)))!important}
+  table.pt td .hk{font-size:9px;color:var(--ink-2);margin-right:5px;vertical-align:1px}
+  table.pt th.hx::before{content:'';position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:2px;background:linear-gradient(90deg,rgb(var(--heat-lo)),rgba(var(--heat-lo),.15) 45%,rgba(var(--heat-hi),.15) 55%,rgb(var(--heat-hi)))}
+  #heat-btn .hn{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:11px;font-weight:900}
+  #heat-pop{width:290px}
+  #heat-pop .hrow{display:flex;gap:6px;margin:6px 0 2px}
+  #heat-pop .hleg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:10px}
+  #heat-pop .hleg .hsw{grid-column:1/-1;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--heat-lo),.34),rgba(var(--heat-lo),.04) 48%,rgba(var(--heat-hi),.04) 52%,rgba(var(--heat-hi),.34))}
+  #heat-pop .hleg span:nth-child(3){text-align:center}#heat-pop .hleg span:nth-child(4){text-align:right}
+  #heat-pop .hnote{font-size:11.5px;font-weight:700;color:var(--ink-2);line-height:1.45;margin:8px 0 2px}
+  .cc{display:inline-block;margin-left:6px;white-space:nowrap}
+  .band-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;border:1px solid var(--line);letter-spacing:.02em}
+  .band-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+  .b-strong{color:#15803D;border-color:#bfe3cc}.b-steady{color:#2563EB;border-color:#c6d8fb}.b-weak{color:#ED6F0B;border-color:#f7d9b8}.b-losing{color:#C0392B;border-color:#f2c6c1}.b-none{color:var(--muted)}
+  .band-mini{display:inline-flex;gap:2px;align-items:center;vertical-align:middle}
+  .band-mini i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-left:5px}
+  .band-mini i:first-child{margin-left:0}
+  .band-mini span{font-size:11.5px}
+  .band-mini .b-strong{background:#15803D}.band-mini .b-steady{background:#2563EB}.band-mini .b-weak{background:#ED6F0B}.band-mini .b-losing{background:#C0392B}
+  .dim{color:var(--muted);font-weight:700}
+  .more{font:inherit;font-size:12px;font-weight:800;color:var(--orange-deep);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;margin:2px 0 2px calc(var(--dp,0)*18px + 26px)}
+  .tfoot{font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:flex;gap:12px;flex-wrap:wrap}
+  /* ---- popovers (columns, views) ---- */
+  .pop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;max-width:calc(100vw - 16px);background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:10px 12px;min-width:220px;max-height:60vh;overflow:auto}
+  .pop[hidden]{display:none}
+  .pop label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;padding:4px 2px;cursor:pointer}
+  .pop .hd{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 6px}
+  .pop .vw{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+  .pop .vw:last-of-type{border-bottom:none}
+  .pop .vw button.ap{flex:1;text-align:left;font:inherit;font-size:12.5px;font-weight:800;background:transparent;border:none;color:var(--ink);cursor:pointer;padding:3px 2px}
+  .pop .vw button.ap:hover{color:var(--orange-deep)}
+  .pop .vw button.x{font:inherit;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px}
+  .pop .vw button.x:hover{color:var(--risk)}
+  .rel{position:relative}
+  .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+  .meth li{margin:7px 0}.meth b{color:var(--ink)}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:28px}.ctl{gap:8px}.hero{padding:24px 0 18px}.sc{flex-basis:170px}}
+  @media(prefers-reduced-motion:reduce){.hero::before,.hero::after,.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status,.status .pip,.sc svg path.ln,table.pt tr.r{animation:none!important}.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{opacity:1;transform:none}.sc svg path.ln{stroke-dashoffset:0}.sc,.sc::before{transition:none}}
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+</style>
+<style>/* FCC-THEME */
+#theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
+.nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
+.tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.tb-modules a.tbm{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;color:var(--ink-2,#4a4a4a);text-decoration:none;transition:background .15s,color .15s}
+.tb-modules a.tbm:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm.on{background:rgba(245,166,35,.14);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm::after{content:attr(data-lbl);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1A365D;color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;padding:4px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:70}
+.tb-modules a.tbm:hover::after{opacity:1}
+.nav-collapsed .tb-modules{display:none}
+[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
+[data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
+[data-theme=dark] .tb-modules a.tbm::after{background:#0B0D12}
+[data-theme=dark] .nav-collapse:hover{color:var(--orange-ink)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42);
+  --vin:#4C82E0;--vout:#C67B28;--grid:#242830}
+[data-theme=dark] body{background:var(--wash);color:var(--ink)}
+[data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+[data-theme=dark] a{color:var(--orange-ink)}
+[data-theme=dark] .kpi,[data-theme=dark] .card{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
+[data-theme=dark] tr.cat-sub td{background:#181B22}
+[data-theme=dark] tr.brand-row:hover td{background:#181B22}
+</style>
+<style>/* ROAS dark steps — the chart pair's validated dark steps, the tooltip surface, the glass edge */
+:root[data-theme=dark]{--tip:rgba(8,10,14,.96)}
+[data-theme=dark] .card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(135deg,rgba(245,166,35,.42),rgba(76,130,224,.30) 55%,rgba(44,48,57,.9)) border-box}
+[data-theme=dark] .sc,[data-theme=dark] .fld,[data-theme=dark] .chip,[data-theme=dark] .pop,[data-theme=dark] .tscroll{background:var(--paper);border-color:var(--line);color:var(--ink)}
+[data-theme=dark] .seg{background:#181B22}[data-theme=dark] .seg button.on{background:#262A34;color:var(--orange-ink)}
+[data-theme=dark] .chip.on{background:rgba(245,166,35,.18)}
+[data-theme=dark] table.pt th,[data-theme=dark] table.pt td:first-child,[data-theme=dark] table.pt th:first-child{background:var(--paper)}
+[data-theme=dark] table.pt tr.d0 td:first-child{background:linear-gradient(90deg,rgba(245,166,35,.12),var(--paper) 70%)}
+[data-theme=dark] table.pt tr.tot td,[data-theme=dark] table.pt tr.tot td:first-child{background:#181B22}
+[data-theme=dark] table.pt tr.r:hover td{background:#181B22}
+[data-theme=dark] .b-strong{border-color:#2f5d3f}[data-theme=dark] .b-steady{border-color:#3a4f7d}[data-theme=dark] .b-weak{border-color:#6b4a2b}[data-theme=dark] .b-losing{border-color:#6b3a37}
+[data-theme=dark] .b-strong{color:#48D07E}[data-theme=dark] .b-steady{color:#7BA4F0}[data-theme=dark] .b-weak{color:#F0A44E}[data-theme=dark] .b-losing{color:#F1707A}
+[data-theme=dark] .cb i{background:#C67B28}[data-theme=dark] .cb.rv i{background:#4C82E0}
+:root[data-theme=dark]{--heat-hi:76,130,224;--heat-lo:198,123,40;--heat-k:1.3}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">ROAS · working name</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm on" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Commercial performance</div>
+  <h1>ROAS<small>working name, not final</small></h1>
+  <p class="sub" data-instr>Google Ads return on ad spend, read straight from FeedHero's own reporting — the <b>FeedHero_reports</b> MCP, a different server from the Task Manager's hours. Scoped to FeedSpark's own roster only (Superdry, Reiss, Schuh, Monsoon, Accessorize, YuMOVE, Hobbycraft): FeedHero serves 112 clients and nothing outside that list is pulled, stored or shown. Money is never summed across currencies — each market's own symbol is kept apart, and every figure on this page runs on one currency at a time.</p>
+  <div class="ctl">
+    <select class="fld" id="brand" aria-label="Brand"><option value="">All brands</option></select>
+    <div class="seg" id="win" role="group" aria-label="Period"></div>
+    <select class="fld" id="cur" aria-label="Currency" title="Every scorecard, chart and total on this page runs on ONE currency's markets"></select>
+    <button class="btn" id="sync-now" type="button" title="Owner-only — reads the roster market by market, the same rotation the cron runs">⚡ Sync now</button>
+    <span class="rel"><button class="btn" id="exp-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Export this screen — the table, every module, or the whole dashboard">⬇ Export ▾</button><div class="pop xpop" id="exp-pop" hidden>
+      <div class="hd">Export</div>
+      <button class="xi" id="xlsx" type="button">📗 Excel workbook<small>scorecards, every module shown and the table — a tab each</small></button>
+      <button class="xi" id="pdf" type="button">📄 PDF of the dashboard<small>this screen on one page, ready to attach</small></button>
+      <button class="xi" id="csv" type="button">⬇ Table as CSV<small>every visible row, the chosen columns</small></button>
+    </div></span>
+    <span class="rel"><button class="btn" id="views-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Saved views — the whole screen as you have it: brand, market, period, currency, metrics, columns, colour scale, sort, filters">★ Views</button><div class="pop" id="views-pop" hidden></div></span>
+  </div>
+  <div class="chips" id="mkts" style="margin-top:10px"></div>
+  <div class="status"><span class="pip off" id="pip"></span><span id="mstate">Loading…</span><span class="ml" id="scopeline"></span></div>
+</div></header>
+
+<main class="wrap">
+  <section class="card" id="sc-card">
+    <div class="chead"><div><h3>Scorecards</h3><div class="ch">Click a card to plot it — up to two at once, each on its own axis. Deltas read against the reading nearest to 7 days before the latest one.</div></div><span class="sp"></span><div class="sc-foot" id="sc-foot"></div></div>
+    <div class="sc-row" id="sc-row"></div>
+  </section>
+
+  <div class="modbar"><span class="mb-t">Dashboard</span><span class="mb-s" id="mods-s"></span>
+    <span class="rel"><button class="btn xs" id="mods-b" type="button" aria-haspopup="true" aria-expanded="false" title="Show, hide and reorder the modules — remembered on this device">⊞ Modules</button><div class="pop" id="mods-p" hidden></div></span></div>
+  <div class="ins" id="ins">
+  <section class="card mod wide" id="tr-card" data-mod="trend">
+    <div class="chead"><div><h3>Trend</h3><div class="ch" id="tr-ch">The selected metrics day by day.</div></div><span class="sp"></span><span class="dim" id="tr-range" style="font-size:12px;font-weight:700;white-space:nowrap"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="trend" aria-haspopup="true" aria-expanded="false" aria-label="Export Trend" title="Export Trend — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody"><div id="tr-panels"></div>
+    <div class="tr-note" data-instr id="tr-note">FeedHero reports trailing windows, never a day's own figure, so each point is the selected window's total <b>as read that day</b> — the 7-day line moves fastest, the 90-day line smooths. History accrues from the first sync; a day the sync did not run is a gap, never a copy.</div></div>
+  </section>
+
+  <section class="card mod" id="mv-card" data-mod="movers">
+    <div class="chead"><div><h3>Movers</h3><div class="ch" id="mv-ch">Markets whose revenue moved most against the reading 7 days earlier.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="movers" aria-haspopup="true" aria-expanded="false" aria-label="Export Movers" title="Export Movers — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody"><div class="mv" id="mv"></div></div>
+  </section>
+
+  <section class="card mod" id="m-bands" data-mod="bands">
+    <div class="chead"><div><h3>ROAS bands</h3><div class="ch" id="m-bands-ch">Where the spend sits by FeedHero’s own verdict.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="bands" aria-haspopup="true" aria-expanded="false" aria-label="Export ROAS bands" title="Export ROAS bands — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-bands-b"></div>
+    <div class="mfoot" id="m-bands-f"></div>
+  </section>
+
+  <section class="card mod" id="m-split" data-mod="split">
+    <div class="chead"><div><h3>Spend vs revenue share</h3><div class="ch" id="m-split-ch">Each one’s share of the spend against its share of the revenue.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="split" aria-haspopup="true" aria-expanded="false" aria-label="Export Spend vs revenue share" title="Export Spend vs revenue share — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-split-b"></div>
+    <div class="mfoot" id="m-split-f"></div>
+  </section>
+
+  <section class="card mod" id="m-ladder" data-mod="ladder">
+    <div class="chead"><div><h3>ROAS by market</h3><div class="ch" id="m-ladder-ch">Every market ranked, against the blended ROAS.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="ladder" aria-haspopup="true" aria-expanded="false" aria-label="Export ROAS by market" title="Export ROAS by market — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-ladder-b"></div>
+    <div class="mfoot" id="m-ladder-f"></div>
+  </section>
+
+  <section class="card mod" id="m-cost" data-mod="cost">
+    <div class="chead"><div><h3>Cost per conversion</h3><div class="ch" id="m-cost-ch">What a conversion costs in each market, against the blended figure.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="cost" aria-haspopup="true" aria-expanded="false" aria-label="Export Cost per conversion" title="Export Cost per conversion — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-cost-b"></div>
+    <div class="mfoot" id="m-cost-f"></div>
+  </section>
+
+  <section class="card mod" id="m-zombie" data-mod="zombie">
+    <div class="chead"><div><h3>Zombie SKUs</h3><div class="ch" id="m-zombie-ch">Products FeedHero counts with no ad traffic, per market.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="zombie" aria-haspopup="true" aria-expanded="false" aria-label="Export Zombie SKUs" title="Export Zombie SKUs — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-zombie-b"></div>
+    <div class="mfoot" id="m-zombie-f"></div>
+  </section>
+
+  <section class="card mod" id="m-fresh" data-mod="fresh">
+    <div class="chead"><div><h3>Data freshness</h3><div class="ch" id="m-fresh-ch">How recently each market on the roster was read.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="fresh" aria-haspopup="true" aria-expanded="false" aria-label="Export Data freshness" title="Export Data freshness — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-fresh-b"></div>
+    <div class="mfoot" id="m-fresh-f"></div>
+  </section>
+  </div>
+
+  <section class="card" id="pt-card">
+    <div class="chead"><div><h3>Performance</h3><div class="ch">Brand → market → category, every level FeedHero's own aggregate. Sort any column, filter by name or band, choose the columns, segment a market by any of FeedHero's eighteen cuts — brand, colour, product age, price type, FeedSpark's optimisation status, custom labels and more.</div></div></div>
+    <div class="tbar">
+      <input class="fld q" id="q" type="search" placeholder="Filter brand, market or category…" aria-label="Filter rows">
+      <div class="chips" id="bands"></div>
+      <select class="fld" id="seg" aria-label="Segment" title="How a market's rows are cut — picking one opens the markets in view (up to 8, busiest first). Category is stored by the sync; every other cut is read live from FeedHero"><option value="Category">Segment · Category</option></select>
+      <span class="rel"><button class="btn" id="cols-btn" type="button" aria-haspopup="true" aria-expanded="false">⊞ Columns</button><div class="pop" id="cols-pop" hidden></div></span>
+      <span class="rel"><button class="btn" id="heat-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Colour a column's cells from its trough to its peak — pick the columns one by one">◐ Heat</button><div class="pop" id="heat-pop" hidden></div></span>
+      <button class="btn" id="expand-all" type="button" title="Open every brand to its markets">⊕ Open all</button>
+    </div>
+    <div class="tscroll"><table class="pt" id="pt"><thead></thead><tbody></tbody></table></div>
+    <div class="empty" id="pt-empty" hidden></div>
+    <div class="tfoot" id="pt-foot"></div>
+  </section>
+
+  <section class="card meth" id="meth">
+    <h3>How this reads</h3>
+    <div class="ch" data-instr>The breakdown behind every number on this page.</div>
+    <ol data-instr>
+      <li><b>Source.</b> FeedHero's own ROAS dashboard (Google Ads), read via the <code>FeedHero_reports</code> MCP's <code>roas_dashboard</code> tool — the same figures a login at mcp.feedhero.net/reports/roas-dashboard shows. Impressions, clicks, conversions, revenue and spend come from Google Ads; SKUs, zombie% and the category split come from the product feed FeedHero has on file.</li>
+      <li><b>Scope, deliberately narrow.</b> FeedHero's client list carries 112 clients — most are not FeedSpark accounts. This page is hard-limited to the seven brands Ray named across every market FeedHero has on file for them. A client outside that list is never pulled, stored or shown.</li>
+      <li><b>Three periods, three reads.</b> FeedHero reports a trailing window (7, 30 or 90 days) and nothing finer, so the sync reads each market once per window. Switching the period switches the read — it does not re-cut the same rows.</li>
+      <li><b>History is the window as read each day.</b> One point per market per day (a re-read the same day replaces it). A delta "vs 7 days ago" compares the latest trailing figure with the one read a week earlier — the same comparison Google Ads' own previous-period chip makes — and reads "no history yet" until the record is old enough, never a guess.</li>
+      <li><b>Sync cadence.</b> The worker pulls FeedHero itself twice an hour (:10 and :40), 5 markets × 3 windows per firing, stalest first — the 57-market roster turns over roughly every 6 hours, well ahead of the source's own ~daily refresh. ⚡ Sync now walks the whole roster in one go (owner only).</li>
+      <li><b>Money never crosses a currency.</b> A brand's markets report in different currencies (Superdry alone spans GBP, EUR and USD), so every scorecard, chart, total and blended ROAS on this page runs on the selected currency's markets only; the currency selector names how many markets each one covers.</li>
+      <li><b>The band is FeedHero's own verdict</b> — Strong 400%+ ROAS, Steady 200%+, Weak 100%+, Losing under that — never a threshold invented here. A market with no Google Ads activity in the window carries no band at all, which is a different fact from Losing.</li>
+      <li><b>Segments.</b> Category is stored by the sync — and FeedHero breaks the category tree down on the <b>30-day window only</b>: a 7- or 90-day read carries the market's total and its "Unlisted SKUs in Ads traffic" row (Ads traffic on SKUs not in the feed — real spend, tagged <i>not in feed</i>), nothing else. Every other cut — eighteen in all, brand, colour, product age, price type, FeedSpark's optimisation status, custom labels — is read live for any period and cached for six hours; picking one opens the markets in view (up to eight, busiest by clicks first). <b>Price group is not set up in FeedHero</b> for any of the seven brands yet (checked 28 Sep 2026) — a market says so rather than showing an error.</li>
+      <li><b>The dashboard modules.</b> Eight cards, each reading the same book as the table — no second fetch. Every money module runs on the selected currency's markets; Data freshness is not money, so it covers every roster market in scope. <b>⊞ Modules</b> shows, hides and reorders them on this device. Each card's <b>⬇</b> saves it as a PNG (captioned with its scope, for a deck) or a CSV (every row behind it, not only those that fit); <b>⬇ Export</b> saves the whole screen as an Excel workbook (scorecards, each module shown, the table — a tab each, money as numbers beside a Currency column) or a one-page PDF.</li>
+    </ol>
+  </section>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate"></span></div></div>
+
+<script>
+(function(){
+  'use strict';
+  var $=function(s){return document.querySelector(s)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var REDUCE=false; try{REDUCE=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);}catch(e){}
+  var LS=function(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null}};
+  var DARK=function(){return document.documentElement.getAttribute('data-theme')==='dark'};
+  var PAIR=function(){return DARK()?['#4C82E0','#C67B28']:['#2563EB','#ED6F0B']};   // the FCC's validated chart pair, light + dark steps
+
+  /* ================= metrics (Google Ads' scorecard vocabulary, on FeedHero's fields) ================= */
+  var METRICS=[
+    {k:'sp',l:'Spend',kind:'money',good:0},
+    {k:'rv',l:'Revenue',kind:'money',good:1},
+    {k:'roas',l:'ROAS',kind:'pct',good:1},
+    {k:'cv',l:'Conversions',kind:'num',good:1},
+    {k:'ck',l:'Clicks',kind:'num',good:1},
+    {k:'im',l:'Impressions',kind:'num',good:1},
+    {k:'ctr',l:'CTR',kind:'pct2',good:1},
+    {k:'cpc',l:'Avg. CPC',kind:'money2',good:-1},
+    {k:'cpa',l:'Cost / conv.',kind:'money2',good:-1},
+    {k:'cr',l:'Conv. rate',kind:'pct2',good:1},
+    {k:'aov',l:'AOV',kind:'money2',good:1},
+    {k:'zb',l:'Zombie SKUs',kind:'pct2',good:-1,noTrend:1}
+  ];
+  var MBY={}; METRICS.forEach(function(m){MBY[m.k]=m});
+  // a metric off a summed point {sp,rv,cv,ck,im,sk,zb}
+  function mval(p,k){ if(!p)return null;
+    switch(k){ case 'sp':return p.sp; case 'rv':return p.rv; case 'cv':return p.cv; case 'ck':return p.ck; case 'im':return p.im; case 'zb':return p.zb==null?null:p.zb;
+      case 'roas':return p.sp>0?(p.rv/p.sp)*100:null; case 'ctr':return p.im>0?(p.ck/p.im)*100:null; case 'cpc':return p.ck>0?p.sp/p.ck:null;
+      case 'cpa':return p.cv>0?p.sp/p.cv:null; case 'cr':return p.ck>0?(p.cv/p.ck)*100:null; case 'aov':return p.cv>0?p.rv/p.cv:null; } return null; }
+  function fmtN(n,d){ if(n==null||isNaN(n))return '—'; return Number(n).toLocaleString('en-GB',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}); }
+  function fmtM(cur,n,dec){ if(n==null||isNaN(n))return '—'; var d=dec!=null?dec:(Math.abs(n)<100?2:0); return (cur||'')+fmtN(n,d); }
+  function fmtP(n,dec){ if(n==null||isNaN(n))return '—'; return fmtN(n,dec!=null?dec:(Math.abs(n)>=100?0:2))+'%'; }
+  function fmtV(m,v,cur){ if(v==null||isNaN(v))return '—'; if(m.kind==='money')return fmtM(cur,v,Math.abs(v)<100?2:0); if(m.kind==='money2')return fmtM(cur,v,2); if(m.kind==='pct')return fmtP(v); if(m.kind==='pct2')return fmtP(v,2); return fmtN(v,m.k==='cv'?(Math.abs(v)<100?2:0):0); }
+  function since(t){ if(!t)return '—'; var h=Math.round((Date.now()-t)/3600000); if(h<1)return '<1h ago'; if(h<48)return h+'h ago'; return Math.round(h/24)+'d ago'; }
+  function dLbl(d){ if(!d)return ''; var p=d.split('-'); var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return (+p[2])+' '+M[(+p[1])-1]; }
+
+  /* ================= state ================= */
+  var COLS=[
+    {k:'sp',l:'Spend',def:1},{k:'rv',l:'Revenue',def:1},{k:'roas',l:'ROAS',def:1},{k:'band',l:'Band',def:1},
+    {k:'cv',l:'Conv.',def:1},{k:'ck',l:'Clicks',def:1},{k:'im',l:'Impr.',def:1},{k:'ctr',l:'CTR'},{k:'cpc',l:'Avg. CPC'},
+    {k:'cpa',l:'Cost / conv.'},{k:'cr',l:'Conv. rate'},{k:'aov',l:'AOV'},{k:'avgp',l:'Avg. price'},{k:'up',l:'Uplift'},{k:'mm',l:'Min margin'},
+    {k:'sk',l:'SKUs',def:1},{k:'zb',l:'Zombie %',def:1},{k:'upd',l:'Updated'}
+  ];
+  // EVERY CUT FEEDHERO OFFERS (Ray, 30 Sep 2026: "add more segment type inside ROAS dashboard module") — the
+  // MCP's own list of aggregations, asked of it with a cut it does not know: eighteen, where this select offered
+  // four. Grouped by what the cut answers; the value is FeedHero's own key (the worker allow-lists the same
+  // eighteen), the label the words a reader uses. ONE list — the select, the column head, the footer and every
+  // sentence about a cut read it, so a cut can never be named two ways.
+  var SEGS=[
+    ['Product',[['Category','Category'],['Brand','Brand'],['Colour','Colour'],['Gender','Gender'],['Age_group','Age group'],['Google_product_category','Google product category']]],
+    ['Price',[['Price_type','Price type'],['Price_group','Price group']]],
+    ['Lifecycle',[['Product_age','Product age']]],
+    ['FeedSpark work',[['Title_optimisation_status','Title optimisation'],['Keyword_optimisation_status','Keyword optimisation'],['Data_field_optimisation_status','Data-field review'],['Batch_id','Batch']]],
+    ['Custom labels',[['Custom_label_0','Custom label 0'],['Custom_label_1','Custom label 1'],['Custom_label_2','Custom label 2'],['Custom_label_3','Custom label 3'],['Custom_label_4','Custom label 4']]]
+  ];
+  var SEGL={}; SEGS.forEach(function(g){ g[1].forEach(function(x){ SEGL[x[0]]=x[1]; }); });
+  function segOk(v){ return SEGL[v]?v:'Category'; }
+  // Product age is a LADDER, not a list — sorted by name it reads newest to oldest, never alphabetically
+  var AGE_ORDER=['brand new','new','this season','last season','this year','perennial'];
+  var S={brand:'',market:'',win:'w30',cur:null,metrics:['sp','rv'],cols:null,sort:{k:'sp',dir:-1},seg:'Category',q:'',bands:{},open:{},more:{},segNote:'',segPending:false};
+  try{ var c0=JSON.parse(LS('fcc-roas-cols')||'null'); if(Array.isArray(c0)&&c0.length)S.cols=c0; }catch(e){}
+  if(!S.cols)S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k});
+  S.heat=[]; try{ var h0=JSON.parse(LS('fcc-roas-heat')||'null'); if(Array.isArray(h0))S.heat=h0.filter(function(k){return COLS.some(function(c){return c.k===k})}); }catch(e){}
+  var DATA=null, CACHE={}, TREES={}, LIVE={}, WINS=[], BACK=7, OWNER=null, SYNCING=false;
+
+  function scopeKey(){ return (S.brand||'*')+'|'+(S.market||'*'); }
+  function readUrl(){ var u=new URLSearchParams(location.search);
+    if(u.get('brand'))S.brand=u.get('brand'); if(u.get('market'))S.market=u.get('market'); if(u.get('win'))S.win=u.get('win');
+    if(u.get('cur'))S.cur=u.get('cur'); if(u.get('m'))S.metrics=u.get('m').split(',').filter(function(k){return MBY[k]}).slice(0,2);
+    if(u.get('seg')){ S.seg=segOk(u.get('seg')); S.segPending=S.seg!=='Category'; } if(u.get('q'))S.q=u.get('q'); if(!S.metrics.length)S.metrics=['sp']; }
+  function linkOf(){ var u=new URLSearchParams(); if(S.brand)u.set('brand',S.brand); if(S.market)u.set('market',S.market); u.set('win',S.win); if(S.cur)u.set('cur',S.cur); u.set('m',S.metrics.join(',')); if(S.seg!=='Category')u.set('seg',S.seg); if(S.q)u.set('q',S.q); return location.pathname+'?'+u.toString(); }
+
+  /* ================= load ================= */
+  function load(force){
+    var key=scopeKey();
+    if(!force&&CACHE[key]){ DATA=CACHE[key]; renderAll(); return; }
+    $('#mstate').textContent='Loading…';
+    var url='/api/roas'+(S.brand?'?brand='+encodeURIComponent(S.brand)+(S.market?'&market='+encodeURIComponent(S.market):''):'');
+    fetch(url).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+      if(!d||!d.ok){ DATA=null; renderAll(); return; }
+      CACHE[key]=d; DATA=d; WINS=d.wins||WINS; BACK=d.back||7; renderAll();
+    });
+  }
+  function status(s){
+    var pip=$('#pip'), el=$('#mstate');
+    if(!s||!s.state){ pip.className='pip off'; el.textContent='Waiting for the first sync.'; return; }
+    if(s.state==='no_token'){ pip.className='pip bad'; el.textContent='ROAS_MCP_TOKEN not set — set the secret on the feedspark worker.'; return; }
+    if(s.state==='unauthorized'){ pip.className='pip bad'; el.textContent='Unauthorized — check ROAS_MCP_TOKEN / ROAS_MCP_AUTH.'; return; }
+    if(s.state==='unreachable'){ pip.className='pip warn'; el.textContent='Unreachable — '+(s.error||'')+' (check ROAS_MCP_URL).'; return; }
+    if(s.state==='error'){ pip.className='pip warn'; el.textContent='Sync error — '+(s.error||''); return; }
+    pip.className='pip'; el.textContent='Synced '+since(s.ok_at)+' · '+fmtN(s.read)+' of '+fmtN(s.total)+' markets read · every 30 min';
+  }
+
+  /* ================= header controls ================= */
+  function renderBrands(){
+    var sel=$('#brand'), list=(DATA&&DATA.rosterBrands)||[];
+    var cur=sel.value; var html='<option value="">All brands</option>'+list.map(function(b){return '<option value="'+esc(b.client)+'">'+esc(b.client)+'</option>'}).join('');
+    if(sel.innerHTML!==html)sel.innerHTML=html; sel.value=S.brand||''; if(sel.value!==(S.brand||''))sel.value='';
+    var mk=$('#mkts'); if(!S.brand){ mk.innerHTML=''; return; }
+    var b=list.filter(function(x){return x.client===S.brand})[0]; if(!b){ mk.innerHTML=''; return; }
+    var read={}; ((DATA&&DATA.markets)||[]).forEach(function(m){read[m.market]=m});
+    mk.innerHTML='<button class="chip'+(S.market?'':' on')+'" data-mkt="" type="button">All markets <span class="k">'+b.markets.length+'</span></button>'+b.markets.map(function(m){
+      var r=read[m]; var t=r&&r[S.win]; return '<button class="chip'+(S.market===m?' on':'')+'" data-mkt="'+esc(m)+'" type="button" title="'+(r?(t&&t.band?esc(t.band)+' · ':'')+'read '+since(r.updated):'not read yet')+'">'+esc(m)+(r?(t&&t.band?' <span class="k">'+esc(t.band.slice(0,1))+'</span>':''):' <span class="k">—</span>')+'</button>'; }).join('');
+  }
+  function renderWin(){ $('#win').innerHTML=(WINS.length?WINS:[{k:'w7',label:'7 days'},{k:'w30',label:'30 days'},{k:'w90',label:'90 days'}]).map(function(w){return '<button type="button" data-win="'+w.k+'" class="'+(S.win===w.k?'on':'')+'" aria-pressed="'+(S.win===w.k)+'">'+esc(w.label)+'</button>'}).join(''); }
+  function agg(){ var b=DATA&&DATA.book&&DATA.book[S.win]; return (b&&b.byCur)||{}; }
+  function pickCur(){ var by=agg(); var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); if(!ks.length){S.cur=null;return;} if(!S.cur||!by[S.cur])S.cur=ks[0]; }
+  function renderCur(){ var by=agg(); var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); var sel=$('#cur');
+    sel.innerHTML=ks.length?ks.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+' markets · '+by[c].n+'</option>'}).join(''):'<option value="">No currency read yet</option>';
+    sel.value=S.cur||''; sel.disabled=ks.length<2; sel.title=ks.length<2?'Every market in scope reports in '+(ks[0]||'one currency'):'Every scorecard, chart and total on this page runs on ONE currency\'s markets — pick which'; }
+  function scopeLine(){ var by=agg(); var a=S.cur&&by[S.cur]; var n=(DATA&&DATA.tracked)||0, tot=(DATA&&DATA.roster)||0;
+    $('#scopeline').textContent=(S.brand?S.brand+(S.market?' · '+S.market:' · all markets'):'All brands')+' · '+n+' of '+tot+' markets read'+(a?' · '+S.cur+' markets: '+a.n:''); }
+
+  /* ================= series helpers ================= */
+  function series(){ var s=DATA&&DATA.series&&DATA.series[S.win]; if(!s)return []; return (S.cur&&s[S.cur])||[]; }
+  function seriesAll(){ var s=DATA&&DATA.series&&DATA.series[S.win]; return (s&&s['*'])||[]; }
+  function dayN(d){ return Math.round(Date.parse(d)/86400000); }
+  function backPt(ser){ if(ser.length<2)return null; var last=ser[ser.length-1]; var tgt=dayN(last.d)-BACK; var hit=null; for(var i=0;i<ser.length;i++){ if(dayN(ser[i].d)<=tgt)hit=ser[i]; else break; } return hit; }
+  function dpct(now,prev){ if(now==null||prev==null||!isFinite(now)||!isFinite(prev)||prev===0)return null; return ((now-prev)/Math.abs(prev))*100; }
+
+  /* ================= scorecards ================= */
+  function countUp(el,target,fmt){ if(REDUCE||!isFinite(target)){ el.textContent=fmt(target); return; } var t0=null, ms=700;
+    function step(ts){ if(t0===null)t0=ts; var k=Math.min(1,(ts-t0)/ms); el.textContent=fmt(target*(1-Math.pow(1-k,3))); if(k<1)requestAnimationFrame(step); else el.textContent=fmt(target); } requestAnimationFrame(step); }
+  function spark(vals,color){ var v=vals.filter(function(x){return x!=null}); if(v.length<2)return '<div class="nt">history starts with the first sync</div>';
+    var W=170,H=30,mn=Math.min.apply(null,v),mx=Math.max.apply(null,v); var rng=(mx-mn)||1; var pts=vals.map(function(x,i){ return x==null?null:[(i/(vals.length-1))*W, H-((x-mn)/rng)*(H-4)-2]; }).filter(Boolean);
+    var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(''); var last=pts[pts.length-1];
+    // the area is filled with the card's OWN colour inline — a shared <defs> gradient resolves
+    // its stop-color against the defs' ancestor, not the card, so every area came out blue
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true" style="--sc-c:'+color+'"><path class="ar" d="'+d+'L'+W+' '+H+'L0 '+H+'Z" fill="'+color+'" fill-opacity=".16"/><path class="ln" d="'+d+'"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.6"/></svg>'; }
+  function renderScorecards(){
+    var by=agg(), a=S.cur&&by[S.cur], row=$('#sc-row'), pair=PAIR();
+    if(!a){ row.innerHTML='<div class="empty" style="flex:1"><b>Nothing read for this scope yet.</b> ⚡ Sync now, or wait for the next firing.</div>'; $('#sc-foot').textContent=''; return; }
+    var ser=series(), last=ser[ser.length-1], prev=backPt(ser);
+    row.innerHTML=METRICS.map(function(m){
+      var v=mval(a,m.k); var on=S.metrics.indexOf(m.k); var color=on<0?'':pair[on];
+      var dn=null, dtxt='no history yet', cls='';
+      if(!m.noTrend&&last&&prev){ dn=dpct(mval(last,m.k),mval(prev,m.k)); if(dn!=null){ var good=m.good; var sign=dn>0?1:dn<0?-1:0; cls=sign===0||good===0?'':(sign===good?'up':'dn'); dtxt=(sign>0?'▲ ':sign<0?'▼ ':'— ')+fmtN(Math.abs(dn),1)+'% vs '+BACK+'d ago'; } else dtxt='— vs '+BACK+'d ago'; }
+      if(m.noTrend)dtxt='SKU-weighted across '+S.cur+' markets';
+      var vals=m.noTrend?[]:ser.slice(-30).map(function(p){return mval(p,m.k)});
+      return '<button type="button" class="sc'+(on>=0?' on':'')+'" data-m="'+m.k+'" style="--sc-c:'+(color||'transparent')+'" aria-pressed="'+(on>=0)+'" title="'+(on>=0?'Remove from the trend':'Plot in the trend')+'">'
+        +'<div class="l"><i></i>'+esc(m.l)+'</div><div class="n" data-v="'+(v==null?'':v)+'">'+esc(fmtV(m,v,S.cur))+'</div><div class="d '+cls+'">'+esc(dtxt)+'</div>'+(m.noTrend?'':spark(vals,color||'#94A0AE'))+'</button>'; }).join('');
+    Array.prototype.forEach.call(row.querySelectorAll('.sc .n'),function(el){ var m=MBY[el.parentNode.getAttribute('data-m')]; var v=parseFloat(el.getAttribute('data-v')); if(!isNaN(v))countUp(el,v,function(x){return fmtV(m,x,S.cur)}); });
+    $('#sc-foot').innerHTML='<span>'+esc(S.cur)+' markets · '+a.n+' read · '+esc((WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win)+'</span>'+(last?'<span>latest reading '+esc(dLbl(last.d))+(prev?' · vs '+esc(dLbl(prev.d)):'')+'</span>':'');
+  }
+
+  /* ================= trend ================= */
+  function renderTrend(){
+    var host=$('#tr-panels'), ser=series(), pair=PAIR(), wl=(WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win;
+    $('#tr-ch').textContent=S.metrics.map(function(k){return MBY[k].l}).join(' and ')+' — the trailing '+wl+' figure as read each day, '+(S.cur||'')+' markets.';
+    var pts=ser.filter(function(p){return p.d});
+    if(pts.length<2){ host.innerHTML='<div class="empty"><b>History starts with the first sync.</b> One point per day accrues from here — the trend draws from the second day.'+(pts.length?' First reading: '+esc(dLbl(pts[0].d))+'.':'')+'</div>'; $('#tr-range').textContent=''; return; }
+    $('#tr-range').textContent=dLbl(pts[0].d)+' → '+dLbl(pts[pts.length-1].d)+' · '+pts.length+' readings';
+    // drawn at the module's OWN pixel width, one panel tall enough for two to share the card (a viewBox scaled to
+    // the width made each panel as tall as a fifth of the card's width, and two ran off the bottom)
+    var W=Math.max(320,Math.round(host.clientWidth||1000)),H=S.metrics.length>1?118:236,L=64,R=16,T=14,B=28;
+    host.innerHTML=S.metrics.map(function(k,idx){
+      var m=MBY[k], color=pair[idx]; var vals=pts.map(function(p){return mval(p,k)}); var v=vals.filter(function(x){return x!=null});
+      if(!v.length)return '<div class="tr-panel"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+'</div><div class="empty">No '+esc(m.l.toLowerCase())+' reading in this window.</div></div>';
+      var mn=Math.min.apply(null,v), mx=Math.max.apply(null,v); if(mn>0)mn=0; var rng=(mx-mn)||1;
+      var x=function(i){return L+(i/(pts.length-1))*(W-L-R)}, y=function(val){return T+(H-T-B)-((val-mn)/rng)*(H-T-B)};
+      var d='', started=false; vals.forEach(function(val,i){ if(val==null){started=false;return;} d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(val).toFixed(1); started=true; });
+      var axf=function(val){ if(m.kind==='money'||m.kind==='money2')return fmtM(S.cur,val,mx<100?2:0); if(m.kind==='pct'||m.kind==='pct2')return fmtP(val,mx>=100?0:1); return fmtN(val,0); };
+      var grid=[0,.5,1].map(function(f){ var val=mn+rng*f; return '<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(val).toFixed(1)+'" y2="'+y(val).toFixed(1)+'"/><text class="ax" x="'+(L-8)+'" y="'+(y(val)+4).toFixed(1)+'" text-anchor="end">'+esc(axf(val))+'</text>'; }).join('');
+      var step=Math.max(1,Math.ceil(pts.length/8)); var xl=pts.map(function(p,i){ if(i%step&&i!==pts.length-1)return ''; return '<text class="ax" x="'+x(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+(i===pts.length-1?'end':i===0?'start':'middle')+'">'+esc(dLbl(p.d))+'</text>'; }).join('');
+      var lastI=vals.length-1; while(lastI>0&&vals[lastI]==null)lastI--;
+      return '<div class="tr-panel" data-k="'+k+'"><div class="ttl"><i style="background:'+color+'"></i>'+esc(m.l)+' <span class="dim" style="text-transform:none;letter-spacing:0">· '+esc(fmtV(m,vals[lastI],S.cur))+' latest</span></div>'
+        +'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.l)+' trend">'+grid+xl
+        +'<path class="ln" d="'+d+'" stroke="'+color+'"/><line class="cross" x1="0" x2="0" y1="'+T+'" y2="'+(H-B)+'"/><circle class="hot" r="4.5" fill="'+color+'"/>'
+        +'<rect class="hit" x="'+L+'" y="0" width="'+(W-L-R)+'" height="'+H+'"/></svg><div class="tip"></div></div>';
+    }).join('');
+    // one crosshair across every panel — hover anywhere and every panel marks that day; the
+    // tooltip (naming every plotted metric for the day) follows the panel under the pointer only
+    Array.prototype.forEach.call(host.querySelectorAll('.tr-panel'),function(pn){
+      var svg=pn.querySelector('svg'); if(!svg)return;
+      svg.addEventListener('mousemove',function(e){ var r=svg.getBoundingClientRect(); var fx=(e.clientX-r.left)/r.width*W; var i=Math.round((fx-L)/(W-L-R)*(pts.length-1)); i=Math.max(0,Math.min(pts.length-1,i)); hover(i,pn); });
+      svg.addEventListener('mouseleave',function(){ hover(-1); });
+    });
+    function hover(i,at){
+      Array.prototype.forEach.call(host.querySelectorAll('.tr-panel'),function(pn){
+        var k=pn.getAttribute('data-k'), m=MBY[k], svg=pn.querySelector('svg'), tip=pn.querySelector('.tip'), cr=svg&&svg.querySelector('.cross'), hot=svg&&svg.querySelector('.hot');
+        if(!svg||!cr)return;
+        if(i<0||pn!==at){ if(i<0){ cr.style.opacity=0; hot.style.opacity=0; } tip.style.opacity=0; if(i<0)return; }
+        var vals=pts.map(function(p){return mval(p,k)}); var v=vals.filter(function(x){return x!=null}); var mn=Math.min.apply(null,v); if(mn>0)mn=0; var mx=Math.max.apply(null,v); var rng=(mx-mn)||1;
+        var xx=L+(i/(pts.length-1))*(W-L-R), val=vals[i]; var yy=val==null?null:T+(H-T-B)-((val-mn)/rng)*(H-T-B);
+        cr.setAttribute('x1',xx); cr.setAttribute('x2',xx); cr.style.opacity=1;
+        if(yy!=null){ hot.setAttribute('cx',xx); hot.setAttribute('cy',yy); hot.style.opacity=1; } else hot.style.opacity=0;
+        tip.innerHTML='<b>'+esc(dLbl(pts[i].d))+'</b> <span class="m">· '+pts[i].n+' market'+(pts[i].n===1?'':'s')+'</span><br>'+S.metrics.map(function(kk,j){ return '<span style="color:'+PAIR()[j]+'">●</span> '+esc(MBY[kk].l)+' <b>'+esc(fmtV(MBY[kk],mval(pts[i],kk),S.cur))+'</b>'; }).join('<br>');
+        var r=svg.getBoundingClientRect(); var px=(xx/W)*r.width; tip.style.left=Math.min(r.width-190,Math.max(0,px+12))+'px'; tip.style.top='26px'; tip.style.opacity=1;
+      });
+    }
+  }
+
+  /* ================= movers ================= */
+  function renderMovers(){
+    var host=$('#mv'), mv=(DATA&&DATA.movers&&DATA.movers[S.win])||[];
+    var rows=mv.filter(function(r){return (!S.cur||r.cur===S.cur)&&r.dRv!=null});
+    $('#mv-ch').textContent='Markets whose revenue moved most against the reading '+BACK+' days earlier — '+(S.cur||'')+' markets, '+((WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win)+'.';
+    if(S.market){ host.innerHTML='<div class="empty">Movers compare markets — widen the scope to the brand or the whole book.</div>'; return; }
+    if(!rows.length){ host.innerHTML='<div class="empty"><b>No movers yet.</b> A market moves once it has a reading at least '+BACK+' days older than its latest — history starts with the first sync.</div>'; return; }
+    var up=rows.filter(function(r){return r.dRv>0}).sort(function(a,b){return b.dRv-a.dRv}).slice(0,5), dn=rows.filter(function(r){return r.dRv<0}).sort(function(a,b){return a.dRv-b.dRv}).slice(0,5);
+    var mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.dRv)}))||1;
+    var col=function(list,ttl,cls){ return '<div><h4>'+ttl+'</h4>'+(list.length?list.map(function(r){ return '<div class="row '+cls+'"><div class="nm"><b>'+esc(r.client)+'</b> '+esc(r.market)+'<small>'+esc(fmtM(r.cur,r.rv,0))+' revenue · ROAS '+esc(fmtP(r.roas))+'</small><div class="bar"><i style="width:'+Math.round(Math.abs(r.dRv)/mx*100)+'%"></i></div></div><span class="dl '+cls+'">'+(r.dRv>0?'▲':'▼')+' '+fmtN(Math.abs(r.dRv),1)+'%</span>'+bandPill(r.band)+'</div>'; }).join(''):'<div class="dim">none</div>')+'</div>'; };
+    host.innerHTML=col(up,'Rising · revenue','up')+col(dn,'Falling · revenue','dn');
+  }
+
+  /* ================= the table ================= */
+  function bandCls(b){ return b?'b-'+String(b).toLowerCase():'b-none'; }
+  // FeedHero's own row on every window — Ads traffic on SKUs not in the feed it holds; real spend, not a product type
+  function isUnlisted(s){ return /^unlisted skus in ads traffic$/i.test(String(s||'').trim()); }
+  function bandPill(b){ return '<span class="band-pill '+bandCls(b)+'">'+esc(b||'no ad activity')+'</span>'; }
+  // a coloured square + its count per band, each named in full on hover ("St" would read as
+  // Strong and Steady alike)
+  function bandMini(counts){ var order=['Strong','Steady','Weak','Losing']; var ks=order.filter(function(b){return counts&&counts[b]}); if(!ks.length)return '<span class="dim">—</span>';
+    return '<span class="band-mini" title="'+esc(ks.map(function(b){return counts[b]+' '+b}).join(' · '))+'">'+ks.map(function(b){return '<i class="'+bandCls(b)+'"></i><span>'+counts[b]+'</span>'}).join('')+'</span>'; }
+  function visCols(){ return COLS.filter(function(c){return S.cols.indexOf(c.k)>=0}); }
+  function bar(cls,n,ref){ if(n==null||!ref||ref<=0)return ''; var w=Math.max(2,Math.min(100,Math.round(n/ref*100))); return '<i style="width:'+w+'%"></i>'; }
+  // one cell: {n (sort), html}
+  function cellOf(row,k){
+    var t=row.t||{}, cur=row.cur;
+    if(row.type==='brand'){
+      var b=row.b, by=b.byCur||{}, curs=Object.keys(by).sort(function(a,c){return by[c].sp-by[a].sp}); var pc=(S.cur&&by[S.cur])?S.cur:curs[0]; var a=pc?by[pc]:null; var multi=curs.length>1;
+      var chips=function(f){ return curs.map(function(c){return '<span class="cc'+(c===pc?'':' dim')+'">'+esc(fmtM(c,by[c][f],0))+'</span>'}).join(''); };
+      switch(k){
+        case 'sp': return {n:a?a.sp:0,html:multi?chips('sp'):'<span class="cb">'+esc(fmtM(pc,a?a.sp:null,0))+(row.ref?bar('',a&&a.sp,row.ref.sp):'')+'</span>'};
+        case 'rv': return {n:a?a.rv:0,html:multi?chips('rv'):'<span class="cb rv">'+esc(fmtM(pc,a?a.rv:null,0))+(row.ref?bar('',a&&a.rv,row.ref.rv):'')+'</span>'};
+        case 'roas': return {n:a?a.roas:null,html:a&&a.roas!=null?esc(fmtP(a.roas))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'band': return {n:(b.bandCounts&&b.bandCounts.Strong)||0,html:bandMini(b.bandCounts)};
+        case 'cv': return {n:b.conv,html:fmtN(b.conv,0)}; case 'ck': return {n:b.clicks,html:fmtN(b.clicks)}; case 'im': return {n:b.impr,html:fmtN(b.impr)};
+        case 'ctr': return {n:b.impr>0?b.clicks/b.impr*100:null,html:fmtP(b.impr>0?b.clicks/b.impr*100:null,2)};
+        case 'cr': return {n:b.clicks>0?b.conv/b.clicks*100:null,html:fmtP(b.clicks>0?b.conv/b.clicks*100:null,2)};
+        case 'cpc': return {n:a&&a.ck>0?a.sp/a.ck:null,html:a&&a.ck>0?esc(fmtM(pc,a.sp/a.ck,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'cpa': return {n:a&&a.cv>0?a.sp/a.cv:null,html:a&&a.cv>0?esc(fmtM(pc,a.sp/a.cv,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'aov': return {n:a&&a.cv>0?a.rv/a.cv:null,html:a&&a.cv>0?esc(fmtM(pc,a.rv/a.cv,2))+(multi?' <span class="dim">'+esc(pc)+'</span>':''):'<span class="dim">—</span>'};
+        case 'avgp': case 'up': case 'mm': return {n:null,html:'<span class="dim">per market</span>'};
+        case 'sk': return {n:b.skus,html:fmtN(b.skus)}; case 'zb': return {n:b.avgZombiePct,html:fmtP(b.avgZombiePct,1)};
+        case 'upd': return {n:b.updated,html:'<span class="dim">'+esc(since(b.updated))+'</span>'};
+      }
+    }
+    if(!row.has)return {n:null,html:'<span class="dim">'+(k==='band'?'not read for this period':'—')+'</span>'};
+    var m=function(o){return o&&o.n!=null?o.n:null};
+    switch(k){
+      case 'sp': return {n:m(t.spend),html:'<span class="cb">'+esc(fmtM(cur,m(t.spend),0))+bar('',m(t.spend),row.ref&&row.ref.sp)+'</span>'};
+      case 'rv': return {n:m(t.revenue),html:'<span class="cb rv">'+esc(fmtM(cur,m(t.revenue),0))+bar('',m(t.revenue),row.ref&&row.ref.rv)+'</span>'};
+      case 'roas': return {n:t.roasPct,html:fmtP(t.roasPct)}; case 'band': return {n:['Losing','Weak','Steady','Strong'].indexOf(t.band),html:bandPill(t.band)};
+      case 'cv': return {n:t.conv,html:fmtN(t.conv,Math.abs(t.conv||0)<100?2:0)}; case 'ck': return {n:t.clicks,html:fmtN(t.clicks)}; case 'im': return {n:t.impr,html:fmtN(t.impr)};
+      case 'ctr': return {n:t.ctrPct,html:fmtP(t.ctrPct,2)}; case 'cpc': return {n:m(t.cpc),html:fmtM(cur,m(t.cpc),2)}; case 'cpa': return {n:m(t.cpa),html:fmtM(cur,m(t.cpa),2)};
+      case 'cr': return {n:t.crPct,html:fmtP(t.crPct,2)}; case 'aov': return {n:m(t.aov),html:fmtM(cur,m(t.aov),2)}; case 'avgp': return {n:m(t.avgPrice),html:fmtM(cur,m(t.avgPrice),2)};
+      case 'up': return {n:t.upliftPct,html:fmtP(t.upliftPct,1)}; case 'mm': return {n:t.minMarginPct,html:fmtP(t.minMarginPct,1)};
+      case 'sk': return {n:t.skus,html:fmtN(t.skus)}; case 'zb': return {n:t.zombiePct,html:fmtP(t.zombiePct,1)};
+      case 'upd': return {n:row.updated,html:'<span class="dim">'+esc(since(row.updated))+'</span>'};
+    }
+    return {n:null,html:''};
+  }
+  function sortRows(list){ var k=S.sort.k, dir=S.sort.dir; list.sort(function(a,b){ var x=k==='name'?(a.ord!=null?a.ord:a.name):cellOf(a,k).n, y=k==='name'?(b.ord!=null?b.ord:b.name):cellOf(b,k).n; if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; if(typeof x==='string')return x.localeCompare(y)*dir; return (x-y)*dir; }); return list; }
+  function matchQ(row){ var q=S.q.trim().toLowerCase(); if(!q)return true; return (row.path||row.name||'').toLowerCase().indexOf(q)>=0||(row.client||'').toLowerCase().indexOf(q)>=0||(row.market||'').toLowerCase().indexOf(q)>=0; }
+  function matchBand(row){ var ks=Object.keys(S.bands).filter(function(k){return S.bands[k]}); if(!ks.length||row.type==='brand')return true; var b=row.has?(row.t&&row.t.band)||'none':'none'; return ks.indexOf(b)>=0; }
+  // brand → market → category rows for the current scope; categories/segments from their caches
+  function buildRows(){
+    var out=[], brands=(DATA&&DATA.brands&&DATA.brands[S.win])||[], mkts=(DATA&&DATA.markets)||[];
+    brands.forEach(function(b){
+      // a brand picked in the header opens on its markets; a market picked opens on its rows
+      // a brand the search NAMES opens too (typing "schuh" means Schuh's markets); a chevron the reader closed stays closed
+      var bk='b|'+b.client; var qb=S.q.trim().toLowerCase(); var brow={type:'brand',key:bk,depth:0,name:b.client,client:b.client,b:b,updated:b.updated,open:S.open[bk]==null?(!!S.brand||(!!qb&&b.client.toLowerCase().indexOf(qb)>=0)):!!S.open[bk]};
+      var kids=[]; var byCurRef=b.byCur||{};
+      mkts.filter(function(m){return m.client===b.client}).forEach(function(m){
+        var t=m[S.win]; var mk='m|'+m.cmpid; var ref=m.cur&&byCurRef[m.cur]?{sp:byCurRef[m.cur].sp,rv:byCurRef[m.cur].rv}:null;
+        var mrow={type:'market',key:mk,depth:1,name:m.market,client:m.client,market:m.market,cmpid:m.cmpid,cur:m.cur,t:t,has:!!t,updated:m.updated,ref:ref,open:S.open[mk]==null?!!S.market:!!S.open[mk],expandable:!!t,parent:bk};
+        var kk=[];
+        if(mrow.open&&t){
+          openMarket(m.cmpid);   // idempotent — a no-op once the rows are cached or in flight
+          if(S.seg==='Category'){ var tr=TREES[m.cmpid+'|'+S.win]; if(tr&&tr.tree){ kk=catRows(tr.tree,mrow,2,mk); if(!tr.tree.length)kk=[{type:'note',key:mk+'|n',depth:2,html:'No category rows for this period.',parent:mk}]; else if(S.win!=='w30'&&tr.tree.every(function(n){return isUnlisted(n.name)}))kk.push({type:'note',key:mk+'|n30',depth:2,html:'FeedHero breaks categories down on the <b>30-day</b> window only — switch to 30 days for the tree, or pick a Segment (brand, colour, product age and fifteen more), which FeedHero cuts live for any period.',parent:mk}); } else kk=[{type:'note',key:mk+'|n',depth:2,html:tr&&tr.err?'Could not load this market\'s categories.':'Loading categories…',parent:mk}]; }
+          else { var lv=LIVE[m.cmpid+'|'+S.seg+'|'+S.win]; if(lv&&lv.missing){ kk=[{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' report set up for this market — the cut is configured per client in FeedHero. Brand and Gender are available.',parent:mk}]; } else if(lv&&lv.rows){ kk=segRows(lv,m,t,mk); }
+            else kk=[{type:'note',key:mk+'|n',depth:2,html:lv&&lv.err?'Could not read this segment from FeedHero — '+esc(lv.err):'Reading '+esc(segWord())+' rows live from FeedHero…',parent:mk}]; }
+        }
+        mrow.kids=kk; kids.push(mrow);
+      });
+      brow.kids=sortRows(kids); out.push(brow);
+    });
+    return sortRows(out);
+  }
+  // one market's live cut. Two things a bare list would hide: a cut whose every product sits in FeedHero's
+  // "Unsorted" bucket has NO values for this market (Superdry GB's Batch id, Monsoon's custom labels) — said,
+  // never passed off as one big segment; and a cut longer than FeedHero's page carries its biggest spenders
+  // only — "top N of M", never a page passed off as the whole list.
+  function isUnsorted(s){ return /^unsorted$/i.test(String(s||'').trim()); }
+  function segRows(lv,m,t,mk){
+    var ref=t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null, age=S.seg==='Product_age';
+    var kk=lv.rows.map(function(c,i){ var o=age?AGE_ORDER.indexOf(String(c.category||'').trim().toLowerCase()):-1;
+      return {type:'cat',key:mk+'|s'+i,depth:2,name:c.category,path:c.category,client:m.client,market:m.market,cur:m.cur,t:c,has:true,updated:lv.at,ref:ref,parent:mk,ord:age?(o<0?99:o):null}; });
+    if(!kk.length)return [{type:'note',key:mk+'|n',depth:2,html:'FeedHero has no '+esc(segWord())+' rows for this market.',parent:mk}];
+    var real=lv.rows.filter(function(c){ return !isUnlisted(c.category); });
+    if(real.length&&real.every(function(c){ return isUnsorted(c.category); }))kk.push({type:'note',key:mk+'|nu',depth:2,html:'Every product in this market sits in <b>Unsorted</b> — the '+esc(segWord())+' field is empty in the feed FeedHero reads, so there is nothing to cut by.',parent:mk});
+    if(lv.of>lv.rows.length)kk.push({type:'note',key:mk+'|nof',depth:2,html:'The '+lv.rows.length+' biggest-spending of '+lv.of.toLocaleString('en-GB')+' '+esc(segWord())+' values — FeedHero reads one page per cut.',parent:mk});
+    // the notes lead: a market shows 30 rows before "Show all", and a note under row 200 is a note nobody reads
+    return kk.filter(function(r){return r.type==='note'}).concat(sortRows(kk.filter(function(r){return r.type==='cat'})));
+  }
+  function catRows(tree,mrow,depth,pk){ var t=mrow.t; var list=tree.map(function(n,i){ var key=pk+'|'+n.path; var r={type:'cat',key:key,depth:depth,name:n.name,path:n.path,client:mrow.client,market:mrow.market,cur:mrow.cur,t:n.row,has:true,updated:mrow.updated,ref:t?{sp:t.spend&&t.spend.n,rv:t.revenue&&t.revenue.n}:null,expandable:n.kids.length>0,open:!!S.open[key],parent:pk}; r.kids=r.open?catRows(n.kids,mrow,depth+1,key):[]; return r; }); return sortRows(list); }
+  // the band filter hides markets by THEIR OWN band — so an open brand whose markets all have spend reads
+  // empty under "No activity". Never silently: the brand carries a line naming how many it hid, one click to show them.
+  function bandWords(){ var L={Strong:'Strong',Steady:'Steady',Weak:'Weak',Losing:'Losing',none:'No activity'}; return Object.keys(S.bands).filter(function(k){return S.bands[k]}).map(function(k){return L[k]||k}).join(', '); }
+  function flat(rows,out,vis){ out=out||[]; rows.forEach(function(r){ var show=matchQ(r)&&matchBand(r); var kidsOut=[]; if(r.kids&&r.open)flat(r.kids,kidsOut,true); var anyKid=kidsOut.length>0; if(r.type==='note'){ out.push(r); return; }
+      var hid=0; if(r.type==='brand'&&r.open&&r.kids){ var got={}; kidsOut.forEach(function(k){got[k.key]=1}); hid=r.kids.filter(function(m){return m.type==='market'&&matchQ(m)&&!matchBand(m)&&!got[m.key]}).length; }
+      if(show||anyKid||hid){ out.push(r); if(r.open){ var cap=S.more[r.key]?Infinity:(r.type==='market'?30:Infinity); var shown=kidsOut.slice(0,cap); shown.forEach(function(k){out.push(k)}); if(kidsOut.length>cap)out.push({type:'more',key:r.key+'|more',depth:r.depth+1,n:kidsOut.length-cap,parent:r.key});
+        if(hid)out.push({type:'note',band:1,key:r.key+'|bandhid',depth:1,html:hid+' market'+(hid===1?'':'s')+' hidden by the band filter ('+esc(bandWords())+') · <button class="lnk" type="button" data-clear-bands>Show them</button>',parent:r.key}); } } }); return out; }
+  /* ================= ◐ heat — a colour scale per column, trough → peak ================= */
+  // Ray, 30 Sep 2026: "can you allow option to highlight column cells color in gradiant to find peak and trough
+  // too, selected columns individually". Excel's colour scale, on the columns the reader ticks one by one. Three
+  // rules, each because the obvious version lies: (1) a scale runs within ONE LEVEL — brands with brands, markets
+  // with markets, categories at one depth — since a brand's total beside one of its categories is not a
+  // comparison; (2) a MONEY column compares within one currency (the rule every figure here follows); (3) the
+  // midpoint is the group's MEDIAN, not the middle of the range — spend is skewed, and a midrange scale paints
+  // every market but the biggest one orange. High or low, never good or bad: a peak CPC is a peak too.
+  var HEAT_NO={band:1,upd:1}, MONEY_K={sp:1,rv:1,cpc:1,cpa:1,aov:1,avgp:1};
+  function heatable(){ return visCols().filter(function(c){return !HEAT_NO[c.k]}); }
+  function heatOn(){ var hc=heatable(); return S.heat.filter(function(k){ return hc.some(function(c){return c.k===k}); }); }
+  // the currency a brand row's money cells show — the same pick cellOf makes
+  function brandCur(b){ var by=(b&&b.byCur)||{}, curs=Object.keys(by).sort(function(a,c){return by[c].sp-by[a].sp}); return (S.cur&&by[S.cur])?S.cur:curs[0]; }
+  function heatLevel(type,depth){ return type==='brand'?'brands':type==='market'?'markets':(S.seg==='Category'?(depth>2?'categories at this depth':'categories'):segWord()+' rows'); }
+  function heatMap(rows){
+    var out={}; heatOn().forEach(function(k){
+      var groups={};
+      rows.forEach(function(r){ if(r.type!=='brand'&&r.type!=='market'&&r.type!=='cat')return; var v=cellOf(r,k).n; if(v==null||typeof v!=='number'||!isFinite(v))return;
+        var cur=MONEY_K[k]?(r.type==='brand'?brandCur(r.b):r.cur)||'?':null;
+        var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');
+        (groups[g]=groups[g]||[]).push({key:r.key,v:v,type:r.type,depth:r.depth,cur:cur}); });
+      Object.keys(groups).forEach(function(g){
+        var L=groups[g], vs=L.map(function(x){return x.v}).sort(function(a,b){return a-b}), mn=vs[0], mx=vs[vs.length-1];
+        if(!(mx>mn))return;   // one row, or every row the same: nothing to scale
+        var h=vs.length/2, med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2;
+        L.forEach(function(x){
+          var t=x.v>med?(mx>med?(x.v-med)/(mx-med):0):x.v<med?-(med>mn?(med-x.v)/(med-mn):0):0;
+          out[x.key+'|'+k]={t:t,peak:x.v===mx,trough:x.v===mn,rank:1+vs.filter(function(y){return y>x.v}).length,n:L.length,level:heatLevel(x.type,x.depth),cur:x.cur};
+        });
+      });
+    });
+    return out;
+  }
+  function ordW(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+  function heatTd(h,c,html){
+    var ttl=(h.peak?'Peak — the highest ':h.trough?'Trough — the lowest ':ordW(h.rank)+' highest ')+c.l+' of the '+h.n+' '+h.level+' shown'+(h.cur?' in '+h.cur:'');
+    var a=Math.abs(h.t); if(!a&&!h.peak&&!h.trough)return '<td title="'+esc(ttl)+'">'+html+'</td>';
+    return '<td class="hx'+(h.t<0?' lo':'')+(h.peak?' pk':'')+(h.trough?' tr':'')+'" style="--hx:'+(a?(0.2+0.8*a).toFixed(3):'0')+'" title="'+esc(ttl)+'">'+(h.peak?'<span class="hk" aria-hidden="true">▲</span>':h.trough?'<span class="hk" aria-hidden="true">▼</span>':'')+html+'</td>';
+  }
+  function renderHeatBtn(){ var n=heatOn().length; $('#heat-btn').innerHTML='◐ Heat'+(n?' <span class="hn">'+n+'</span>':''); $('#heat-btn').setAttribute('title',n?'Colour scale on '+n+' column'+(n===1?'':'s')+' — orange at the trough, blue at the peak':'Colour a column\'s cells from its trough to its peak — pick the columns one by one'); }
+  function renderHeat(){
+    var hc=heatable();
+    $('#heat-pop').innerHTML='<div class="hd">Colour scale · peak and trough</div>'
+      +hc.map(function(c){return '<label><input type="checkbox" data-heat="'+c.k+'"'+(S.heat.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')
+      +'<div class="hrow"><button class="chip" type="button" data-heat-all>All</button><button class="chip" type="button" data-heat-none>Clear</button></div>'
+      +'<div class="hleg"><span class="hsw"></span><span>▼ trough</span><span>typical</span><span>peak ▲</span></div>'
+      +'<p class="hnote">Each column on its own scale, within each level — brands with brands, markets with markets, categories at the same depth — and money within one currency. High or low, not good or bad. Only columns shown in ⊞ Columns are listed.</p>';
+  }
+  function saveHeat(){ LS('fcc-roas-heat',S.heat.length?JSON.stringify(S.heat):null); renderHeatBtn(); renderTable(); }
+  function renderTable(){
+    var cols=visCols(), head=$('#pt thead'), body=$('#pt tbody'), hon=heatOn();
+    head.innerHTML='<tr><th data-k="name" class="'+(S.sort.k==='name'?'s'+(S.sort.dir>0?' asc':''):'')+'">Brand / market / '+esc(segWord())+'</th>'+cols.map(function(c){var hx=hon.indexOf(c.k)>=0; return '<th data-k="'+c.k+'" class="'+(S.sort.k===c.k?'s'+(S.sort.dir>0?' asc':''):'')+(hx?' hx':'')+'"'+(hx?' title="Colour scale on — orange at the trough, blue at the peak"':'')+'>'+esc(c.l)+'</th>'}).join('')+'</tr>';
+    if(!DATA||!DATA.brands||!(DATA.brands[S.win]||[]).length){ body.innerHTML=''; $('#pt-empty').hidden=false; $('#pt-empty').innerHTML=DATA?'<b>No markets synced for this scope yet.</b> ⚡ Sync now, or wait for the next firing.':'<b>ROAS data is unavailable</b> — this needs the live worker.'; $('#pt-foot').textContent=''; return; }
+    $('#pt-empty').hidden=true;
+    var rows=flat(buildRows()), HM=heatMap(rows);
+    // Google Ads' Total row — one per currency in scope, the same population the scorecards run on
+    var by=agg(); var tot=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}).map(function(c){ var a=by[c]; var tr={type:'tot',cur:c,has:true,b:{byCur:{},conv:a.cv,clicks:a.ck,impr:a.im,skus:a.sk,avgZombiePct:a.zb,bandCounts:a.bands||{},updated:0}}; tr.b.byCur[c]=a;
+      return '<tr class="tot"><td class="nm"><span class="in">Total · '+esc(c)+' markets <span class="dim">'+a.n+'</span></span></td>'+cols.map(function(col){ var cell=cellOf({type:'brand',b:tr.b,cur:c},col.k); return '<td>'+cell.html+'</td>'; }).join('')+'</tr>'; }).join('');
+    body.innerHTML=tot+rows.map(function(r){
+      // a note spans the table — a long sentence in the name column widened it and pushed the figures off screen
+      if(r.type==='note')return '<tr class="r note" data-key="'+esc(r.key)+'"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+r.depth+'"><span class="in"><span class="dot">·</span><span class="dim">'+r.html+'</span></span></td></tr>';
+      if(r.type==='more')return '<tr class="r"><td class="nm" colspan="'+(cols.length+1)+'" style="--dp:'+(r.depth-1)+'"><button class="more" type="button" data-more="'+esc(r.parent)+'">Show all · '+r.n+' more</button></td></tr>';
+      var exp=r.type==='brand'||r.expandable; var nm='<span class="in">'+(exp?'<button class="chv'+(r.open?' open':'')+'" type="button" data-tg="'+esc(r.key)+'" aria-label="'+(r.open?'Collapse':'Expand')+' '+esc(r.name)+'" aria-expanded="'+!!r.open+'">▸</button>':'<span class="dot">·</span>')
+        +(r.type==='cat'&&r.depth>2&&r.name.indexOf(' > ')<0?'<span class="pth">'+esc(r.path.split(' > ').slice(0,-1).join(' › '))+' ›</span> ':'')+'<span>'+esc(r.name)+'</span>'+(r.type==='market'?' <span class="cur">'+esc(r.cur||'?')+'</span>':'')+(r.type==='cat'&&isUnlisted(r.name)?' <span class="cur" title="Google Ads traffic on SKUs that are not in the feed FeedHero holds — a real row with real spend, not a product type">not in feed</span>':'')+(r.type==='cat'&&S.seg!=='Category'&&isUnsorted(r.name)?' <span class="cur" title="Products whose '+esc(segWord())+' field is empty in the feed FeedHero reads">no value</span>':'')+'</span>';
+      return '<tr class="r d'+r.depth+'" data-key="'+esc(r.key)+'"><td class="nm" style="--dp:'+r.depth+'">'+nm+'</td>'+cols.map(function(c){ var cell=cellOf(r,c.k), h=HM[r.key+'|'+c.k]; return h?heatTd(h,c,cell.html):'<td>'+cell.html+'</td>'; }).join('')+'</tr>';
+    }).join('');
+    var nB=rows.filter(function(r){return r.type==='brand'}).length, nM=rows.filter(function(r){return r.type==='market'}).length, nC=rows.filter(function(r){return r.type==='cat'}).length;
+    var nHid=rows.filter(function(r){return r.band}).reduce(function(a,r){return a+(parseInt(r.html,10)||0)},0);
+    $('#pt-foot').innerHTML='<span>'+nB+' brand'+(nB===1?'':'s')+' · '+nM+' market'+(nM===1?'':'s')+(nC?' · '+nC+' '+(S.seg==='Category'?'categories':segWord()+' rows'):'')+' shown</span>'
+      +(nHid?'<span>'+nHid+' market'+(nHid===1?'':'s')+' hidden by the band filter · <button class="lnk" type="button" data-clear-bands>clear it</button></span>':'')
+      +(S.segNote?'<span>'+esc(S.segNote)+'</span>':'')
+      +(S.q?'<span>filter "'+esc(S.q)+'" — reaches the rows loaded so far; open a market to filter its categories</span>':'')+'<span>bars = share of the parent\'s '+(S.brand?'':'same-currency ')+'total</span>'
+      +(hon.length?'<span>◐ '+esc(hon.map(function(k){return COLS.filter(function(c){return c.k===k})[0].l}).join(', '))+': orange ▼ trough → blue ▲ peak, within each level'+(hon.some(function(k){return MONEY_K[k]})?', money within one currency':'')+'</span>':'');
+    renderHeatBtn();
+    var brRows=rows.filter(function(r){return r.type==='brand'});
+    $('#expand-all').textContent=brRows.length&&brRows.every(function(r){return r.open})?'⊖ Close all':'⊕ Open all';
+    if(S.segPending){ S.segPending=false; if(segOpen())renderTable(); }
+  }
+  function renderBands(){ var ks=[['Strong','Strong'],['Steady','Steady'],['Weak','Weak'],['Losing','Losing'],['none','No activity']]; $('#bands').innerHTML=ks.map(function(p){return '<button class="chip'+(S.bands[p[0]]?' on':'')+'" type="button" data-band="'+p[0]+'" aria-pressed="'+!!S.bands[p[0]]+'">'+p[1]+'</button>'}).join(''); }
+  function renderCols(){ $('#cols-pop').innerHTML='<div class="hd">Columns</div>'+COLS.map(function(c){return '<label><input type="checkbox" data-col="'+c.k+'"'+(S.cols.indexOf(c.k)>=0?' checked':'')+'> '+esc(c.l)+'</label>'}).join('')+'<div class="hd" style="margin-top:8px">Reset</div><label><button class="chip" type="button" id="cols-reset">Default columns</button></label>'; }
+
+  /* ================= fetching a market's rows ================= */
+  function openMarket(cmpid){
+    if(S.seg==='Category'){ var k=cmpid+'|'+S.win; if(TREES[k])return; TREES[k]={}; var m=(DATA.markets||[]).filter(function(x){return x.cmpid===cmpid})[0]; if(!m)return;
+      fetch('/api/roas?client='+encodeURIComponent(m.client)+'&market='+encodeURIComponent(m.market)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ TREES[k]=d&&d.ok?{tree:d.tree||[],n:d.n}:{err:1}; renderTable(); }); return; }
+    var lk=cmpid+'|'+S.seg+'|'+S.win; if(LIVE[lk])return; LIVE[lk]={};
+    fetch('/api/roas/live?cmpid='+encodeURIComponent(cmpid)+'&agg='+encodeURIComponent(S.seg)+'&win='+S.win).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ LIVE[lk]=d&&d.ok?{rows:d.rows||[],at:d.at,missing:!!d.missing,of:+d.of||0}:{err:(d&&d.error)||'no answer'}; renderTable(); });
+  }
+  function segWord(){ var l=SEGL[S.seg]||S.seg; return l.replace(/^[A-Z]/,function(c){return c.toLowerCase()}).replace(/^google /,'Google '); }
+  // PICKING A SEGMENT SHOWS IT (Ray, 28 Sep 2026: "in Roas module - segment doesnt populate properly"): a cut is
+  // read per MARKET, so choosing one used to change nothing until a market was opened by hand. It now opens the
+  // markets a reader can see — under an open brand, passing the search — busiest first by clicks (a count, so no
+  // currency is compared), capped at SEG_AUTO so one choice can never fire a live FeedHero read per roster market.
+  var SEG_AUTO=8;
+  function segOpen(){
+    S.segNote=''; if(!DATA||!DATA.brands)return false;
+    var vis=[], anyBrand=false;
+    buildRows().forEach(function(b){ if(!b.open)return; anyBrand=true; (b.kids||[]).forEach(function(m){ if(m.type==='market'&&m.has&&matchQ(m))vis.push(m); }); });
+    if(!vis.length){ S.segNote=anyBrand?'No market in view to cut by '+segWord()+'.':'Open a brand (or pick one above) to cut its markets by '+segWord()+'.'; return false; }
+    vis.sort(function(a,b){ return ((b.t&&b.t.clicks)||0)-((a.t&&a.t.clicks)||0); });
+    vis.slice(0,SEG_AUTO).forEach(function(m){ S.open[m.key]=true; openMarket(m.cmpid); });
+    if(vis.length>SEG_AUTO)S.segNote='Opened the '+SEG_AUTO+' busiest of '+vis.length+' markets (by clicks) — open any other to read its '+segWord()+' cut.';
+    return true;
+  }
+
+  /* ================= THE DASHBOARD MODULES =================
+     Ray, 30 Sep 2026: "make roas dashboard modularised also pls, allow exports". The Catalogue's own pattern — one card
+     size on a 3-column grid, ⊞ Modules hides and reorders them PER DEVICE (fcc-roas-mods: how one screen reads the book,
+     never shared state) — and every module can leave the page as a PNG (for a deck) or a CSV (for a spreadsheet).
+     Every module reads the book /api/roas already served: no second fetch, no figure the table does not already hold.
+     THE CURRENCY RULE HOLDS: every money module runs on the selected currency's markets only, like the scorecards;
+     Data freshness is the one module that is not money, so it covers the whole roster in scope and says so. */
+  var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness']];
+  var MODN={}; MODS.forEach(function(x){ MODN[x[0]]=x[1]; });
+  function modState(){ var m=null; try{ m=JSON.parse(LS('fcc-roas-mods')||'null'); }catch(e){} m=m||{};
+    var ord=(m.order||[]).filter(function(k){ return MODN[k]; }); MODS.forEach(function(x){ if(ord.indexOf(x[0])<0)ord.push(x[0]); }); return {order:ord,off:m.off||{}}; }
+  function applyMods(){
+    var st=modState(), shown=0;
+    st.order.forEach(function(k,i){ var el=document.querySelector('.mod[data-mod="'+k+'"]'); if(!el)return; el.style.order=i; el.hidden=!!st.off[k]; if(!st.off[k])shown++; });
+    $('#mods-s').textContent=shown===MODS.length?'':shown+' of '+MODS.length+' modules shown';
+    Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; });
+  }
+  function renderModsPop(){
+    var st=modState(), L=st.order.length;
+    $('#mods-p').innerHTML='<div class="hd">Modules · this device</div>'+st.order.map(function(k,i){ var nm=MODN[k];
+      return '<div class="mrow"><label><input type="checkbox" data-mod-on="'+k+'"'+(st.off[k]?'':' checked')+'> '+esc(nm)+'</label><button type="button" data-mv="'+k+'" data-d="-1"'+(i?'':' disabled')+' aria-label="Move '+esc(nm)+' earlier">↑</button><button type="button" data-mv="'+k+'" data-d="1"'+(i<L-1?'':' disabled')+' aria-label="Move '+esc(nm)+' later">↓</button></div>'; }).join('')
+      +'<div class="ft"><button class="btn xs" type="button" data-mreset="1">Reset</button><button class="btn xs" type="button" data-mclose="1">Done</button></div>';
+  }
+  function saveMods(st){ LS('fcc-roas-mods',st?JSON.stringify(st):null); applyMods(); renderModsPop(); }
+
+  function winLbl(){ return (WINS.filter(function(w){return w.k===S.win})[0]||{}).label||S.win; }
+  function nOf(o){ return o==null?null:(typeof o==='number'?o:(o.n!=null?o.n:null)); }
+  // the markets every money module reads: in scope, read for this window, in the chosen currency
+  function curMkts(){ return ((DATA&&DATA.markets)||[]).filter(function(m){ return m[S.win]&&m.cur===S.cur; }); }
+  function mName(m){ return S.brand?m.market:m.client+' '+m.market; }
+  function goMarket(client,cmpid){ S.open['b|'+client]=true; if(cmpid){ S.open['m|'+cmpid]=true; openMarket(cmpid); } renderTable(); var el=document.querySelector('#pt tbody tr[data-key="m|'+cmpid+'"]')||$('#pt-card'); try{ el.scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'center'}); }catch(e){} }
+  function trk(pct,cls,ref){ var w=pct==null?0:Math.max(pct>0?1.5:0,Math.min(100,pct)); return '<div class="trk'+(cls?' '+cls:'')+'"><i style="width:'+w.toFixed(1)+'%"></i>'+(ref!=null?'<span class="ref" style="left:'+Math.max(0,Math.min(100,ref)).toFixed(1)+'%"></span>':'')+'</div>'; }
+  function none(id,msg){ $('#m-'+id+'-b').innerHTML='<div class="empty">'+msg+'</div>'; $('#m-'+id+'-f').innerHTML=''; }
+  function curNote(){ return esc(S.cur||'')+' markets · '+esc(winLbl()); }
+
+  /* ---- the models: each is WHAT the module draws AND what its CSV / Excel tab carries — one source, three exits ---- */
+  var BAND_ORD=['Strong','Steady','Weak','Losing',null];
+  function mBands(){
+    var ms=curMkts(), T=0, by={};
+    ms.forEach(function(m){ var t=m[S.win], k=t.band||'none', sp=nOf(t.spend)||0; var o=by[k]||(by[k]={band:t.band||null,n:0,sp:0,rv:0,names:[]}); o.n++; o.sp+=sp; o.rv+=nOf(t.revenue)||0; o.names.push(mName(m)); T+=sp; });
+    var rows=BAND_ORD.map(function(b){ var o=by[b||'none']; if(!o)return null; return {band:b||'No ad activity',key:b||'none',n:o.n,sp:o.sp,share:T>0?o.sp/T*100:null,rv:o.rv,roas:o.sp>0?o.rv/o.sp*100:null,markets:o.names.join(', ')}; }).filter(Boolean);
+    return {money:1,rows:rows,T:T,nm:ms.length,cols:[{k:'band',l:'Band'},{k:'n',l:'Markets',t:'int'},{k:'sp',l:'Spend',t:'num'},{k:'share',l:'Share of spend',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'roas',l:'ROAS',t:'pct'},{k:'markets',l:'Markets in band',w:60}]};
+  }
+  function mSplit(){
+    var ms=curMkts(), by={}, TS=0, TR=0, lvl=S.brand?'market':'brand';
+    ms.forEach(function(m){ var t=m[S.win], k=lvl==='brand'?m.client:m.market, sp=nOf(t.spend)||0, rv=nOf(t.revenue)||0;
+      var o=by[k]||(by[k]={name:k,client:m.client,cmpid:lvl==='market'?m.cmpid:'',sp:0,rv:0,n:0}); o.sp+=sp; o.rv+=rv; o.n++; TS+=sp; TR+=rv; });
+    var rows=Object.keys(by).map(function(k){ var o=by[k]; o.ssp=TS>0?o.sp/TS*100:null; o.srv=TR>0?o.rv/TR*100:null; o.gap=(o.ssp!=null&&o.srv!=null)?o.srv-o.ssp:null; o.roas=o.sp>0?o.rv/o.sp*100:null; return o; })
+      .sort(function(a,b){ return b.sp-a.sp; });
+    return {money:1,lvl:lvl,rows:rows,TS:TS,TR:TR,cols:[{k:'name',l:lvl==='brand'?'Brand':'Market'},{k:'sp',l:'Spend',t:'num'},{k:'ssp',l:'Share of spend',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'srv',l:'Share of revenue',t:'pct'},{k:'gap',l:'Revenue share minus spend share (points)',t:'num'},{k:'roas',l:'ROAS',t:'pct'}]};
+  }
+  function mLadder(){
+    var ms=curMkts(), TS=0, TR=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sp=nOf(t.spend)||0, rv=nOf(t.revenue)||0; TS+=sp; TR+=rv; return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,band:t.band||'',sp:sp,rv:rv,roas:sp>0?rv/sp*100:null}; });
+    var ref=TS>0?TR/TS*100:null;
+    rows.forEach(function(r){ r.vs=(r.roas!=null&&ref!=null)?r.roas-ref:null; });
+    rows.sort(function(a,b){ return (b.roas==null?-Infinity:b.roas)-(a.roas==null?-Infinity:a.roas); });
+    return {money:1,ref:ref,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'roas',l:'ROAS',t:'pct'},{k:'vs',l:'Against the blended ROAS (points)',t:'num'},{k:'band',l:'Band'},{k:'sp',l:'Spend',t:'num'},{k:'rv',l:'Revenue',t:'num'}]};
+  }
+  function mCost(){
+    var ms=curMkts(), TS=0, TC=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sp=nOf(t.spend)||0, cv=t.conv||0, ck=t.clicks||0; TS+=sp; TC+=cv; return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,sp:sp,cv:cv,ck:ck,cpa:cv>0?sp/cv:null,cpc:ck>0?sp/ck:null}; });
+    var ref=TC>0?TS/TC:null;
+    // most expensive first; a market with NO conversions has no cost per conversion — listed last, never as zero
+    rows.sort(function(a,b){ return (b.cpa==null?-Infinity:b.cpa)-(a.cpa==null?-Infinity:a.cpa); });
+    return {money:1,ref:ref,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'cpa',l:'Cost per conversion',t:'num'},{k:'cpc',l:'Avg. CPC',t:'num'},{k:'cv',l:'Conversions',t:'num'},{k:'ck',l:'Clicks',t:'int'},{k:'sp',l:'Spend',t:'num'}]};
+  }
+  function mZombie(){
+    var ms=curMkts(), SK=0, ZN=0;
+    var rows=ms.map(function(m){ var t=m[S.win], sk=t.skus||0, zp=t.zombiePct, zn=zp==null?null:Math.round(sk*zp/100); if(zn!=null){ SK+=sk; ZN+=zn; } return {name:mName(m),client:m.client,market:m.market,cmpid:m.cmpid,sk:sk,zp:zp,zn:zn}; });
+    rows.sort(function(a,b){ return (b.zn==null?-1:b.zn)-(a.zn==null?-1:a.zn); });
+    return {rows:rows,SK:SK,ZN:ZN,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'zn',l:'Zombie SKUs',t:'int'},{k:'sk',l:'SKUs',t:'int'},{k:'zp',l:'Zombie share',t:'pct'}]};
+  }
+  var FRESH=['Under 12 hours','12–24 hours','1–3 days','Over 3 days','Never read'];
+  function mFresh(){
+    var rb=(DATA&&DATA.rosterBrands)||[], read={}, now=Date.now(), rows=[];
+    ((DATA&&DATA.markets)||[]).forEach(function(m){ read[m.client+'|'+m.market]=m; });
+    rb.filter(function(b){ return !S.brand||b.client===S.brand; }).forEach(function(b){ (b.markets||[]).filter(function(mk){ return !S.market||mk===S.market; }).forEach(function(mk){
+      var m=read[b.client+'|'+mk], t=m&&m.updated||null, h=t?(now-t)/3600000:null;
+      rows.push({name:b.client+' '+mk,client:b.client,market:mk,cmpid:m?m.cmpid:'',updated:t,age:h==null?null:Math.round(h*10)/10,bucket:h==null?FRESH[4]:h<12?FRESH[0]:h<24?FRESH[1]:h<72?FRESH[2]:FRESH[3]}); }); });
+    rows.sort(function(a,b){ return (b.age==null?Infinity:b.age)-(a.age==null?Infinity:a.age); });
+    var buckets=FRESH.map(function(b){ var rs=rows.filter(function(r){ return r.bucket===b; }); return {b:b,n:rs.length,names:rs.map(function(r){return r.name}).join(', ')}; });
+    return {rows:rows,buckets:buckets,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'bucket',l:'Freshness'},{k:'updated',l:'Last read',t:'date'},{k:'age',l:'Hours since read',t:'num'}]};
+  }
+  function mTrend(){
+    var pts=series().filter(function(p){return p.d});
+    var ks=['sp','rv','roas','cv','ck','im','ctr','cpc','cpa','cr','aov'];
+    return {money:1,rows:pts.map(function(p){ var r={d:p.d,n:p.n}; ks.forEach(function(k){ r[k]=mval(p,k); }); return r; }),
+      cols:[{k:'d',l:'Day read',t:'date'},{k:'n',l:'Markets',t:'int'}].concat(ks.map(function(k){ var m=MBY[k]; return {k:k,l:m.l+' (trailing '+winLbl()+')',t:m.kind==='pct'||m.kind==='pct2'?'pct':'num'}; }))};
+  }
+  function mMovers(){
+    var mv=(DATA&&DATA.movers&&DATA.movers[S.win])||[];
+    var rows=mv.filter(function(r){ return (!S.cur||r.cur===S.cur)&&r.dRv!=null; }).slice().sort(function(a,b){ return b.dRv-a.dRv; })
+      .map(function(r){ return {client:r.client,market:r.market,dir:r.dRv>0?'Rising':r.dRv<0?'Falling':'Flat',dRv:r.dRv,rv:r.rv,sp:r.sp,roas:r.roas,band:r.band||''}; });
+    return {money:1,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'dir',l:'Direction'},{k:'dRv',l:'Revenue vs '+BACK+' days earlier',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'sp',l:'Spend',t:'num'},{k:'roas',l:'ROAS',t:'pct'},{k:'band',l:'Band'}]};
+  }
+  var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh};
+
+  /* ---- the draws ---- */
+  function dBands(){
+    var x=mBands(); if(!x.rows.length)return none('bands','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    $('#m-bands-b').innerHTML=x.rows.map(function(r){ return '<div class="hb go" data-band-go="'+esc(r.key)+'" title="Show only '+esc(r.band)+' markets in the table">'
+      +'<div class="nm">'+bandPill(r.key==='none'?null:r.band)+'</div>'+trk(r.share,'sp')
+      +'<div class="v">'+esc(fmtP(r.share,1))+' of spend<small>'+r.n+' market'+(r.n===1?'':'s')+' · '+esc(fmtM(S.cur,r.sp,0))+(r.roas!=null?' · ROAS '+esc(fmtP(r.roas)):'')+'</small></div></div>'; }).join('');
+    $('#m-bands-f').innerHTML='<span>'+x.nm+' '+curNote()+'</span><span>'+esc(fmtM(S.cur,x.T,0))+' spend · click a band to filter the table</span>';
+  }
+  function dSplit(){
+    var x=mSplit(), pair=PAIR(); if(!x.rows.length)return none('split','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return Math.max(r.ssp||0,r.srv||0); }))||1;
+    $('#m-split-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[1]+'"></i>Share of spend</span><span><i style="background:'+pair[0]+'"></i>Share of revenue</span></div>'
+      +x.rows.map(function(r){ var g=r.gap, gc=g==null||Math.abs(g)<0.5?'':(g>0?'up':'dn');
+        return '<div class="hb go" data-split-go="'+esc(r.name)+'" data-client="'+esc(r.client)+'" data-cmpid="'+esc(r.cmpid)+'" title="'+esc(r.name)+': '+esc(fmtP(r.ssp,1))+' of the spend, '+esc(fmtP(r.srv,1))+' of the revenue'+(x.lvl==='brand'?' — click to open the brand':' — click to find it in the table')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b></div><div class="trk2">'+trk(r.ssp/mx*100,'sp')+trk(r.srv/mx*100,'')+'</div>'
+        +'<div class="v">'+esc(fmtP(r.ssp,1))+' · '+esc(fmtP(r.srv,1))+(g==null?'':'<span class="gap '+gc+'">'+(g>0?'▲':g<0?'▼':'')+fmtN(Math.abs(g),1)+' pts</span>')+'</div></div>'; }).join('');
+    $('#m-split-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+'</span><span>▲ = more of the revenue than of the spend</span>';
+  }
+  function dLadder(){
+    var x=mLadder(); if(!x.rows.length)return none('ladder','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return r.roas||0; }).concat([x.ref||0]))||1, rp=x.ref!=null?x.ref/mx*100:null;
+    $('#m-ladder-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[0]+'"></i>ROAS</span>'+(x.ref!=null?'<span><span class="rl"></span>blended '+esc(fmtP(x.ref))+'</span>':'')+'</div>'
+      +x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+(r.vs!=null?' — '+(r.vs>=0?'+':'−')+fmtN(Math.abs(r.vs),0)+' points against the blended ROAS':'')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b>'+(r.band?'<small>'+esc(r.band)+'</small>':'')+'</div>'+trk(r.roas==null?null:r.roas/mx*100,'',rp)
+        +'<div class="v">'+(r.roas==null?'<span class="dim">no spend</span>':esc(fmtP(r.roas)))+'</div></div>'; }).join('');
+    $('#m-ladder-f').innerHTML='<span>'+x.rows.length+' '+curNote()+'</span><span>dashed line = the blended ROAS of these markets</span>';
+  }
+  function dCost(){
+    var x=mCost(); if(!x.rows.length)return none('cost','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    var mx=Math.max.apply(null,x.rows.map(function(r){ return r.cpa||0; }).concat([x.ref||0]))||1, rp=x.ref!=null?x.ref/mx*100:null;
+    $('#m-cost-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[1]+'"></i>Cost per conversion</span>'+(x.ref!=null?'<span><span class="rl"></span>blended '+esc(fmtM(S.cur,x.ref,2))+'</span>':'')+'</div>'
+      +x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+' — '+(r.cpa==null?'no conversions this period':esc(fmtM(S.cur,r.cpa,2))+' a conversion, '+esc(fmtM(S.cur,r.cpc,2))+' a click')+'">'
+        +'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.cpa==null?null:r.cpa/mx*100,'sp',rp)
+        +'<div class="v">'+(r.cpa==null?'<span class="dim">no conversions</span>':esc(fmtM(S.cur,r.cpa,2))+'<small>CPC '+esc(fmtM(S.cur,r.cpc,2))+'</small>')+'</div></div>'; }).join('');
+    $('#m-cost-f').innerHTML='<span>'+x.rows.length+' '+curNote()+' · most expensive first</span>';
+  }
+  function dZombie(){
+    var x=mZombie(); if(!x.rows.length)return none('zombie','<b>No '+esc(S.cur||'')+' market read for this period.</b>');
+    $('#m-zombie-b').innerHTML=x.rows.map(function(r){ return '<div class="hb go" data-mk-go="'+esc(r.cmpid)+'" data-client="'+esc(r.client)+'" title="'+esc(r.name)+(r.zn==null?' — FeedHero reports no zombie share':' — '+fmtN(r.zn)+' of '+fmtN(r.sk)+' SKUs had no ad traffic')+'">'
+      +'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.zp,'')
+      +'<div class="v">'+(r.zn==null?'<span class="dim">—</span>':fmtN(r.zn)+'<small>'+esc(fmtP(r.zp,1))+' of '+fmtN(r.sk)+'</small>')+'</div></div>'; }).join('');
+    $('#m-zombie-f').innerHTML='<span>'+(x.SK?fmtN(x.ZN)+' of '+fmtN(x.SK)+' SKUs ('+esc(fmtP(x.ZN/x.SK*100,1))+')':'no SKU count')+' · '+curNote()+'</span><span>FeedHero’s zombie share, SKU-weighted</span>';
+  }
+  function dFresh(){
+    var x=mFresh(); if(!x.rows.length)return none('fresh','<b>No roster market in scope.</b>');
+    var T=x.rows.length, pair=PAIR(), stale=x.rows.filter(function(r){ return r.bucket===FRESH[3]||r.bucket===FRESH[4]; });
+    $('#m-fresh-b').innerHTML=x.buckets.map(function(b,i){ var warn=i>=3&&b.n>0;
+      return '<div class="hb" title="'+esc(b.names||'none')+'"><div class="nm">'+(warn?'⚠ ':'')+'<b>'+esc(b.b)+'</b></div>'+trk(b.n/T*100,i>=3?'sp':'')+'<div class="v">'+b.n+'<small>of '+T+'</small></div></div>'; }).join('')
+      +(stale.length?'<div class="hb" style="grid-template-columns:1fr"><div class="nm" style="white-space:normal"><small style="margin:0">Stale or never read: '+esc(stale.slice(0,12).map(function(r){return r.name}).join(', '))+(stale.length>12?' +'+(stale.length-12)+' more':'')+'</small></div></div>':'');
+    $('#m-fresh-f').innerHTML='<span>'+T+' roster market'+(T===1?'':'s')+' · every currency (not money)</span><span>the sync turns the roster over ~every 6 h</span>';
+  }
+  function renderMods(){ [dBands,dSplit,dLadder,dCost,dZombie,dFresh].forEach(function(f){ try{ f(); }catch(e){ if(window.console)console.error(e); } }); Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; }); }
+
+  /* ================= EXPORTS =================
+     A module leaves as a PNG (the card as drawn, captioned with its scope, for a deck) or a CSV (its model — every row,
+     not only the ones that fit the card). The dashboard leaves as an Excel workbook (scorecards, every module shown, the
+     table — typed cells, a tab each) or a PDF (the screen on one page). Money is written as a NUMBER beside a Currency
+     column, never as text with a symbol glued on, so the spreadsheet sums it — and never across two currencies. */
+  function toast(msg){ var t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('on'); },3200); }
+  function fileTag(){ return ((S.brand||'all')+(S.market?'_'+S.market:'')+'_'+S.win+(S.cur?'_'+S.cur:'')).replace(/[£€$¥]/g,function(c){return {'£':'GBP','€':'EUR','$':'USD','¥':'JPY'}[c]}).replace(/[^\w-]+/g,'-'); }
+  function scopeWords(){ return (S.brand?S.brand+(S.market?' · '+S.market:' · all markets'):'All brands')+' · '+winLbl()+(S.cur?' · '+S.cur+' markets':''); }
+  function dlBlob(blob,name){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+  function withCur(x){ return x.money?[{k:'__cur',l:'Currency'}].concat(x.cols):x.cols; }
+  function csvOf(x){
+    var cols=withCur(x), q=function(s){ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    var val=function(r,c){ if(c.k==='__cur')return S.cur||''; var v=r[c.k]; if(v==null||v==='')return ''; if(c.t==='pct')return (+v).toFixed(2)+'%'; if(c.t==='date')return typeof v==='number'?new Date(v).toISOString().slice(0,16).replace('T',' '):v; if(c.t==='num')return Math.round(v*100)/100; return v; };
+    return '﻿'+[cols.map(function(c){return q(c.l)}).join(',')].concat(x.rows.map(function(r){ return cols.map(function(c){ return q(val(r,c)); }).join(','); })).join('\n');
+  }
+  function modCsv(k){ var x=MODEL[k](); dlBlob(new Blob([csvOf(x)],{type:'text/csv;charset=utf-8'}),'roas_'+k+'_'+fileTag()+'.csv'); }
+  // html2canvas + jsPDF from cdnjs, loaded on first use with the same SRI hashes /golden and /kwcal pin
+  var LIBS={};
+  function loadScript(src,already,sri){ if(LIBS[src])return LIBS[src]; LIBS[src]=new Promise(function(res,rej){ if(already())return res(); var el=document.createElement('script'); el.src=src; if(sri){ el.integrity=sri; el.crossOrigin='anonymous'; } el.onload=function(){res()}; el.onerror=function(){ LIBS[src]=null; rej(new Error('failed to load '+src)); }; document.head.appendChild(el); }); return LIBS[src]; }
+  function h2c(){ return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',function(){return !!window.html2canvas},'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='); }
+  function jspdf(){ return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF)},'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA=='); }
+  function fontsReady(){ if(!document.fonts)return Promise.resolve(); return Promise.all(['400','700','900'].map(function(w){ return document.fonts.load(w+' 16px Lato'); })).then(function(){ return document.fonts.ready; }).catch(function(){}); }
+  var SKIP=function(el){ return !!(el.classList&&(el.classList.contains('xb')||el.classList.contains('pop')||el.id==='mods-b'||el.id==='toast')); };
+  function bg(){ return getComputedStyle(document.body).backgroundColor||'#fff'; }
+  function modPng(k){
+    var el=document.querySelector('.mod[data-mod="'+k+'"]'); if(!el)return;
+    var cap=document.createElement('div'); cap.className='xcap'; cap.textContent='ROAS · '+MODN[k]+' · '+scopeWords()+' · '+new Date().toISOString().slice(0,10)+' · FeedSpark · Private & Confidential';
+    toast('Preparing the '+MODN[k]+' image…');
+    h2c().then(fontsReady).then(function(){
+      // the card is drawn at its natural height for the capture — a scrolled body would clip the rows below the fold
+      el.classList.add('xshot'); el.appendChild(cap);
+      return window.html2canvas(el,{scale:2,backgroundColor:getComputedStyle(el).backgroundColor||bg(),useCORS:true,ignoreElements:SKIP});
+    }).then(function(cv){ el.classList.remove('xshot'); cap.remove(); cv.toBlob(function(b){ dlBlob(b,'roas_'+k+'_'+fileTag()+'.png'); toast(MODN[k]+' saved as PNG'); },'image/png'); })
+      .catch(function(){ el.classList.remove('xshot'); if(cap.parentNode)cap.remove(); toast('The image library could not load — try again, or take the CSV'); });
+  }
+  function dashPdf(){
+    var main=document.querySelector('main'); var head=document.createElement('div'); head.className='xhead';
+    head.innerHTML='<b>ROAS · '+esc(scopeWords())+'</b><span>'+esc($('#mstate').textContent)+' · exported '+esc(new Date().toISOString().slice(0,16).replace('T',' '))+' UTC · FeedSpark · Private &amp; Confidential</span>';
+    toast('Preparing the PDF…');
+    Promise.all([h2c(),jspdf()]).then(fontsReady).then(function(){ main.insertBefore(head,main.firstChild); document.body.classList.add('xshotall');
+      return window.html2canvas(main,{scale:1.6,backgroundColor:bg(),useCORS:true,ignoreElements:SKIP}); })
+      .then(function(cv){ head.remove(); document.body.classList.remove('xshotall');
+        var wMM=297, hMM=Math.round((wMM*cv.height/cv.width)*10)/10, pdf=new window.jspdf.jsPDF({unit:'mm',format:[wMM,hMM],orientation:hMM>wMM?'portrait':'landscape'});
+        pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,wMM,hMM); pdf.save('roas_dashboard_'+fileTag()+'.pdf'); toast('Dashboard saved as PDF'); })
+      .catch(function(){ if(head.parentNode)head.remove(); document.body.classList.remove('xshotall'); toast('The PDF library could not load — opening the print dialog instead'); setTimeout(function(){ window.print(); },300); });
+  }
+  // the table as the Excel tab: the SAME rows the CSV and the screen carry, typed — a figure is a number, its currency beside it
+  var PCT_COLS={roas:1,ctr:1,cr:1,zb:1,up:1,mm:1}, INT_COLS={ck:1,im:1,sk:1};
+  function tableSheet(){
+    var cols=visCols(), rows=flat(buildRows()).filter(function(r){ return r.type!=='note'&&r.type!=='more'; });
+    var strip=function(h){ var d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+    var sc=[{k:'lvl',l:'Level',w:9},{k:'brand',l:'Brand',w:14},{k:'market',l:'Market',w:9},{k:'name',l:'Name',w:30},{k:'path',l:'Path',w:30},{k:'cur',l:'Currency',w:9}]
+      .concat(cols.map(function(c){ return {k:c.k,l:c.l,t:c.k==='band'?'text':c.k==='upd'?'date':PCT_COLS[c.k]?'pct':INT_COLS[c.k]?'int':'num'}; }));
+    var out=rows.map(function(r){ var cur=r.cur||''; if(r.type==='brand'){ var by=(r.b&&r.b.byCur)||{}; var ks=Object.keys(by).sort(function(a,b){return by[b].sp-by[a].sp}); cur=(S.cur&&by[S.cur])?S.cur:(ks[0]||''); }
+      var o={lvl:r.type,brand:r.client||r.name,market:r.market||'',name:r.name,path:r.path||'',cur:cur};
+      cols.forEach(function(c){ var cell=cellOf(r,c.k); if(c.k==='band'){ o[c.k]=strip(cell.html); return; } var n=cell.n; o[c.k]=(n==null||!isFinite(n))?null:(PCT_COLS[c.k]?n/100:n); }); return o; });
+    return {name:'Performance',cols:sc,rows:out};
+  }
+  function scoreSheet(){
+    var by=agg(), a=S.cur&&by[S.cur], ser=series(), last=ser[ser.length-1], prev=backPt(ser);
+    return {name:'Scorecards',cols:[{k:'m',l:'Metric',w:16},{k:'cur',l:'Currency',w:9},{k:'v',l:'Value (trailing '+winLbl()+')',t:'num',w:22},{k:'d',l:'vs '+BACK+' days earlier',t:'pct',w:18}],
+      rows:METRICS.map(function(m){ var v=a?mval(a,m.k):null, d=(!m.noTrend&&last&&prev)?dpct(mval(last,m.k),mval(prev,m.k)):null; var pct=m.kind==='pct'||m.kind==='pct2';
+        return {m:m.l,cur:(m.kind==='money'||m.kind==='money2')?S.cur:'',v:v==null?null:(pct?v/100:v),d:d==null?null:d/100}; })};
+  }
+  function sheetOf(k){ var x=MODEL[k](); var cols=withCur(x).map(function(c){ return {k:c.k,l:c.l,t:c.t==='date'?'date':c.t==='pct'?'pct':c.t==='int'?'int':c.t==='num'?'num':'text',w:c.w||Math.min(40,Math.max(10,c.l.length+2))}; });
+    return {name:MODN[k],cols:cols,rows:x.rows.map(function(r){ var o={}; cols.forEach(function(c){ var v=c.k==='__cur'?S.cur:r[c.k]; if(c.t==='pct'&&v!=null)v=v/100; o[c.k]=v; }); return o; })}; }
+  function workbook(){
+    var st=modState(), sheets=[{name:'About',cols:[{k:'a',l:'ROAS export',w:34},{k:'b',l:'',w:90}],rows:[{a:'Scope',b:scopeWords()},{a:'Source',b:'FeedHero’s own ROAS dashboard (Google Ads), via the FeedHero_reports MCP'},{a:'Status',b:$('#mstate').textContent},{a:'Exported',b:new Date().toISOString().slice(0,16).replace('T',' ')+' UTC'},{a:'Currency rule',b:'Every money figure runs on ONE currency’s markets ('+(S.cur||'—')+'); nothing is summed across currencies.'},{a:'Confidentiality',b:'FeedSpark · Private & Confidential'}]},scoreSheet()];
+    st.order.forEach(function(k){ if(!st.off[k])sheets.push(sheetOf(k)); });
+    sheets.push(tableSheet());
+    return sheets;
+  }
+  function xlsx(){
+    loadScript('/xlsx/engine.js',function(){ return !!window.FeedXlsx; }).then(function(){ var n=window.FeedXlsx.download(workbook(),'roas_'+fileTag()+'.xlsx'); toast('Excel workbook saved · '+Math.round(n/1024)+' KB'); })
+      .catch(function(){ toast('The Excel writer could not load — this needs the live worker'); });
+  }
+  function openX(btn){ var k=btn.getAttribute('data-x'), rel=btn.parentNode, p=$('#x-pop');
+    if(!p){ p=document.createElement('div'); p.className='pop xpop'; p.id='x-pop'; }
+    var was=!p.hidden&&p.parentNode===rel; document.querySelectorAll('.pop').forEach(function(q){ q.hidden=true; }); document.querySelectorAll('[aria-haspopup]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
+    if(was)return;
+    p.innerHTML='<div class="hd">'+esc(MODN[k])+'</div><button class="xi" type="button" data-xk="png" data-xm="'+k+'">🖼 PNG image<small>the card as drawn, captioned with its scope</small></button><button class="xi" type="button" data-xk="csv" data-xm="'+k+'">⬇ CSV data<small>every row behind it, not only those shown</small></button>';
+    rel.appendChild(p); p.hidden=false; btn.setAttribute('aria-expanded','true'); fitPop(p);
+  }
+
+  /* ================= CSV ================= */
+  function csv(){
+    var cols=visCols(), rows=flat(buildRows()).filter(function(r){return r.type!=='note'&&r.type!=='more'});
+    var strip=function(h){ var d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+    var q=function(s){ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    var lines=[['Level','Brand','Market','Name','Path','Currency'].concat(cols.map(function(c){return c.l})).map(q).join(',')];
+    rows.forEach(function(r){ lines.push([r.type,r.client||r.name,r.market||'',r.name,r.path||'',r.cur||''].concat(cols.map(function(c){return strip(cellOf(r,c.k).html)})).map(q).join(',')); });
+    var blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='roas_'+(S.brand||'all')+(S.market?'_'+S.market:'')+'_'+S.win+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  /* ================= views ================= */
+  function views(){ try{ var v=JSON.parse(LS('fcc-roas-views')||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+  function saveViews(v){ LS('fcc-roas-views',JSON.stringify(v.slice(0,20))); }
+  function renderViews(){ var v=views(); $('#views-pop').innerHTML='<div class="hd">Saved views · this device</div>'+(v.length?v.map(function(x,i){return '<div class="vw"><button class="ap" type="button" data-view="'+i+'" title="'+esc(x.brand||'All brands')+(x.market?' '+esc(x.market):'')+' · '+esc(x.win)+' · '+esc((x.metrics||[]).join(', '))+'">'+esc(x.name)+'</button><button class="x" type="button" data-viewx="'+i+'" aria-label="Delete view '+esc(x.name)+'">✕</button></div>'}).join(''):'<div class="dim" style="padding:4px 0">None yet.</div>')
+    +'<div class="hd" style="margin-top:10px">Save this screen</div><div style="display:flex;gap:6px"><input class="fld" id="view-name" type="text" placeholder="Name…" style="flex:1;min-width:0" aria-label="View name"><button class="btn" id="view-save" type="button">Save</button></div><div class="hd" style="margin-top:10px">Share</div><button class="chip" id="view-link" type="button">🔗 Copy link to this screen</button>'; }
+  function applyView(x){ S.brand=x.brand||''; S.market=x.market||''; S.win=x.win||'w30'; S.cur=x.cur||null; S.metrics=(x.metrics||['sp']).filter(function(k){return MBY[k]}).slice(0,2)||['sp']; if(x.cols)S.cols=x.cols; if(Array.isArray(x.heat))S.heat=x.heat.slice(); S.sort=x.sort||S.sort; S.seg=segOk(x.seg); S.segPending=S.seg!=='Category'; S.q=x.q||''; S.bands=x.bands||{}; $('#q').value=S.q; $('#seg').value=S.seg; load(); }
+
+  /* ================= render all ================= */
+  function renderAll(){
+    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; ['bands','split','ladder','cost','zombie','fresh'].forEach(function(k){ none(k,'<b>ROAS data is unavailable</b> — this needs the live worker.'); }); renderTable(); return; }
+    status(DATA.status); pickCur(); renderBrands(); renderWin(); renderCur(); scopeLine(); renderScorecards(); renderTrend(); renderMovers(); renderMods(); renderBands(); renderCols(); renderTable(); renderViews();
+    try{ history.replaceState(null,'',linkOf()); }catch(e){}
+  }
+
+  /* ================= events ================= */
+  $('#brand').addEventListener('change',function(){ S.brand=this.value; S.market=''; S.open={}; load(); });
+  $('#mkts').addEventListener('click',function(e){ var b=e.target.closest('[data-mkt]'); if(!b)return; S.market=b.getAttribute('data-mkt'); load(); });
+  $('#win').addEventListener('click',function(e){ var b=e.target.closest('[data-win]'); if(!b)return; S.win=b.getAttribute('data-win'); renderAll(); });
+  $('#cur').addEventListener('change',function(){ S.cur=this.value||null; renderAll(); });
+  $('#sc-row').addEventListener('click',function(e){ var b=e.target.closest('.sc'); if(!b)return; var k=b.getAttribute('data-m'); var i=S.metrics.indexOf(k); if(i>=0){ if(S.metrics.length>1)S.metrics.splice(i,1); } else { S.metrics.push(k); if(S.metrics.length>2)S.metrics.shift(); } renderScorecards(); renderTrend(); try{ history.replaceState(null,'',linkOf()); }catch(e2){} });
+  $('#q').addEventListener('input',function(){ S.q=this.value; renderTable(); });
+  $('#bands').addEventListener('click',function(e){ var b=e.target.closest('[data-band]'); if(!b)return; var k=b.getAttribute('data-band'); S.bands[k]=!S.bands[k]; renderBands(); renderTable(); });
+  $('#seg').addEventListener('change',function(){ S.seg=this.value; Object.keys(S.open).forEach(function(k){ if(k.indexOf('m|')===0&&S.open[k]){ openMarket(k.slice(2)); } }); segOpen(); renderTable(); try{ history.replaceState(null,'',linkOf()); }catch(e2){} });
+  $('#pt-foot').addEventListener('click',function(e){ if(e.target.closest('[data-clear-bands]')){ S.bands={}; renderBands(); renderTable(); } });
+  $('#pt thead').addEventListener('click',function(e){ var th=e.target.closest('th'); if(!th)return; var k=th.getAttribute('data-k'); if(S.sort.k===k)S.sort.dir=-S.sort.dir; else S.sort={k:k,dir:k==='name'?1:-1}; renderTable(); });
+  $('#pt tbody').addEventListener('click',function(e){
+    var more=e.target.closest('[data-more]'); if(more){ S.more[more.getAttribute('data-more')]=1; renderTable(); return; }
+    if(e.target.closest('[data-clear-bands]')){ S.bands={}; renderBands(); renderTable(); return; }
+    // the chevron toggles; so does a click anywhere on a row that HAS one (Google Ads' rows open on the name)
+    var tg=e.target.closest('[data-tg]'), key=null;
+    if(tg)key=tg.getAttribute('data-tg'); else { var tr=e.target.closest('tr.r'); if(tr&&tr.querySelector('[data-tg]'))key=tr.getAttribute('data-key'); }
+    if(!key)return;
+    var chv=tg||e.target.closest('tr.r').querySelector('[data-tg]'); var was=chv&&chv.getAttribute('aria-expanded')==='true';
+    S.open[key]=!was; if(key.indexOf('m|')===0&&S.open[key])openMarket(key.slice(2)); renderTable();
+  });
+  $('#expand-all').addEventListener('click',function(){ var all=(DATA&&DATA.brands&&DATA.brands[S.win])||[]; var allOpen=buildRows().every(function(r){return r.open}); all.forEach(function(b){ S.open['b|'+b.client]=!allOpen; }); renderTable(); });
+  $('#csv').addEventListener('click',function(){ csv(); $('#exp-pop').hidden=true; });
+  $('#exp-btn').addEventListener('click',function(){ pop(this,$('#exp-pop')); });
+  $('#xlsx').addEventListener('click',function(){ $('#exp-pop').hidden=true; xlsx(); });
+  $('#pdf').addEventListener('click',function(){ $('#exp-pop').hidden=true; dashPdf(); });
+  $('#mods-b').addEventListener('click',function(){ renderModsPop(); pop(this,$('#mods-p')); });
+  $('#mods-p').addEventListener('click',function(e){
+    var mv=e.target.closest('[data-mv]'); if(mv){ var st=modState(), k=mv.getAttribute('data-mv'), i=st.order.indexOf(k), j=i+(+mv.getAttribute('data-d')); if(j>=0&&j<st.order.length){ st.order[i]=st.order[j]; st.order[j]=k; saveMods(st); } return; }
+    if(e.target.closest('[data-mreset]')){ saveMods(null); renderTrend(); return; }
+    if(e.target.closest('[data-mclose]')){ $('#mods-p').hidden=true; $('#mods-b').setAttribute('aria-expanded','false'); }
+  });
+  $('#mods-p').addEventListener('change',function(e){ var k=e.target.getAttribute('data-mod-on'); if(!k)return; var st=modState(); if(e.target.checked)delete st.off[k]; else st.off[k]=1; saveMods(st); if(k==='trend'&&e.target.checked)renderTrend(); });
+  $('#ins').addEventListener('click',function(e){
+    var xb=e.target.closest('[data-x]'); if(xb){ openX(xb); return; }
+    var xi=e.target.closest('[data-xk]'); if(xi){ var k=xi.getAttribute('data-xm'); $('#x-pop').hidden=true; if(xi.getAttribute('data-xk')==='png')modPng(k); else modCsv(k); return; }
+    var bg2=e.target.closest('[data-band-go]'); if(bg2){ S.bands={}; S.bands[bg2.getAttribute('data-band-go')]=true; renderBands(); renderTable(); try{ $('#pt-card').scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'start'}); }catch(e2){} return; }
+    var sg=e.target.closest('[data-split-go]'); if(sg){ if(!S.brand){ S.brand=sg.getAttribute('data-split-go'); S.market=''; S.open={}; load(); } else goMarket(sg.getAttribute('data-client'),sg.getAttribute('data-cmpid')); return; }
+    var mg=e.target.closest('[data-mk-go]'); if(mg&&mg.getAttribute('data-mk-go')){ goMarket(mg.getAttribute('data-client'),mg.getAttribute('data-mk-go')); }
+  });
+  var _rz; window.addEventListener('resize',function(){ clearTimeout(_rz); _rz=setTimeout(function(){ if(DATA)renderTrend(); },150); });
+  function pop(btn,pop){ var open=pop.hidden; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); pop.hidden=!open; btn.setAttribute('aria-expanded',String(open)); if(open)fitPop(pop); }
+  // a menu hangs off its button's RIGHT edge — on a phone a button near the left put ⊞ Columns, ★ Views, ⬇ Export and
+  // ◐ Heat half off the screen. Nudged back inside, 8px from either edge; the width is capped in CSS.
+  function fitPop(el){ el.style.right=''; var r=el.getBoundingClientRect(), vw=document.documentElement.clientWidth, pad=8, base=parseFloat(getComputedStyle(el).right)||0;
+    if(r.left<pad)el.style.right=(base-(pad-r.left))+'px'; else if(r.right>vw-pad)el.style.right=(base+(r.right-(vw-pad)))+'px'; }
+  $('#cols-btn').addEventListener('click',function(){ pop(this,$('#cols-pop')); });
+  $('#heat-btn').addEventListener('click',function(){ renderHeat(); pop(this,$('#heat-pop')); });
+  // ticks update in place — re-drawing the pop would detach the clicked node and the page's outside-click rule would close it
+  $('#heat-pop').addEventListener('change',function(e){ var k=e.target.getAttribute('data-heat'); if(!k)return; S.heat=S.heat.filter(function(x){return x!==k}); if(e.target.checked)S.heat.push(k); S.heat=COLS.map(function(c){return c.k}).filter(function(x){return S.heat.indexOf(x)>=0}); saveHeat(); });
+  $('#heat-pop').addEventListener('click',function(e){ var all=e.target.closest('[data-heat-all]'), none=e.target.closest('[data-heat-none]'); if(!all&&!none)return;
+    var shown=heatable().map(function(c){return c.k});
+    S.heat=all?COLS.map(function(c){return c.k}).filter(function(x){return S.heat.indexOf(x)>=0||shown.indexOf(x)>=0}):[];
+    $('#heat-pop').querySelectorAll('[data-heat]').forEach(function(cb){ cb.checked=S.heat.indexOf(cb.getAttribute('data-heat'))>=0; }); saveHeat(); });
+  $('#views-btn').addEventListener('click',function(){ renderViews(); pop(this,$('#views-pop')); });
+  $('#cols-pop').addEventListener('change',function(e){ var cb=e.target.closest('[data-col]'); if(!cb)return; var k=cb.getAttribute('data-col'); if(cb.checked){ if(S.cols.indexOf(k)<0)S.cols.push(k); } else S.cols=S.cols.filter(function(x){return x!==k}); S.cols=COLS.map(function(c){return c.k}).filter(function(k){return S.cols.indexOf(k)>=0}); if(!S.cols.length)S.cols=['sp']; LS('fcc-roas-cols',JSON.stringify(S.cols)); renderTable(); });
+  $('#cols-pop').addEventListener('click',function(e){ if(e.target.id==='cols-reset'){ S.cols=COLS.filter(function(c){return c.def}).map(function(c){return c.k}); LS('fcc-roas-cols',null); renderCols(); renderTable(); } });
+  $('#views-pop').addEventListener('click',function(e){
+    if(e.target.id==='view-save'){ var nm=($('#view-name').value||'').trim(); if(!nm)return; var v=views().filter(function(x){return x.name!==nm}); v.unshift({name:nm,brand:S.brand,market:S.market,win:S.win,cur:S.cur,metrics:S.metrics.slice(),cols:S.cols.slice(),heat:S.heat.slice(),sort:S.sort,seg:S.seg,q:S.q,bands:S.bands}); saveViews(v); renderViews(); return; }
+    if(e.target.id==='view-link'){ var url=location.origin+linkOf(); (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(function(){ e.target.textContent='✓ Link copied'; },function(){ prompt('Copy this link',url); }); return; }
+    var ap=e.target.closest('[data-view]'); if(ap){ var x=views()[+ap.getAttribute('data-view')]; if(x){ applyView(x); pop($('#views-btn'),$('#views-pop')); } return; }
+    var dx=e.target.closest('[data-viewx]'); if(dx){ var v2=views(); v2.splice(+dx.getAttribute('data-viewx'),1); saveViews(v2); renderViews(); }
+  });
+  document.addEventListener('click',function(e){ if(e.target.closest('.rel'))return; document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); document.querySelectorAll('[aria-haspopup]').forEach(function(b){b.setAttribute('aria-expanded','false')}); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ document.querySelectorAll('.pop').forEach(function(p){p.hidden=true}); } if(e.key==='/'&&document.activeElement!==$('#q')&&!/input|select|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); $('#q').focus(); } });
+  try{ new MutationObserver(function(){ if(DATA){ renderScorecards(); renderTrend(); renderMods(); } }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+
+  // ⚡ Sync now walks the WHOLE roster — each call is one firing's budget (5 markets x 3
+  // windows, stalest first), so it loops ceil(roster / per-call) times: `read` on the status is
+  // every market read EVER, which is the whole roster after the first day, so it cannot be the
+  // stop condition. Bounded at 16 calls so a failing market can never loop forever.
+  $('#sync-now').addEventListener('click',function(){
+    if(SYNCING)return; var btn=this; SYNCING=true; btn.disabled=true; var n=0, need=null;
+    (function step(){
+      $('#mstate').textContent='Syncing… '+(need?'call '+(n+1)+' of '+need:'');
+      fetch('/api/roas?pull=1').then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+        n++;
+        if(!d){ done('Sync failed — this needs the live worker.'); return; }
+        if(!d.ok&&d.status===undefined){ done('Owner only — ask Ray to sync.'); return; }
+        var s=d.status||{}; if(s.state!=='ok'){ CACHE={}; TREES={}; status(s); SYNCING=false; btn.disabled=false; return; }
+        var per=(s.pulled&&s.pulled.length)||5; if(need==null)need=Math.min(16,Math.ceil((s.total||per)/per));
+        $('#mstate').textContent='Syncing… call '+n+' of '+need+' · '+(s.pulled||[]).join(', ');
+        if(n<need){ setTimeout(step,250); return; }
+        done(null);
+      });
+    })();
+    function done(msg){ SYNCING=false; btn.disabled=false; CACHE={}; TREES={}; if(msg){ $('#mstate').textContent=msg; return; } load(true); }
+  });
+
+  $('#seg').innerHTML=SEGS.map(function(g){ return '<optgroup label="'+esc(g[0])+'">'+g[1].map(function(x){ return '<option value="'+x[0]+'">Segment · '+esc(x[1])+'</option>'; }).join('')+'</optgroup>'; }).join('');
+  readUrl(); $('#q').value=S.q; $('#seg').value=S.seg; applyMods(); renderWin(); renderBands(); renderCols(); load();
+})();
+</script>

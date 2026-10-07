@@ -91,7 +91,12 @@ const ok = (n, c, got) => {
     await p.evaluate(() => { const el = [...document.querySelectorAll('.dz-list *')]
       .find((e) => e.textContent.trim() === 'Reiss'); if (el) el.click(); });
     await p.waitForTimeout(1600);
-    await p.locator('.dz-showb').first().click();
+    // on a MONDAY the page opens its Monday catch-up panel over the dossier (by design) — close it, as the AM would
+    await p.evaluate(() => { const m = document.getElementById('mc-panel'); if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); } });
+    // dispatched on the button itself: this bare page has no phone layer, so at 430px its desktop
+    // nav wraps and the sticky topbar grows with every module added — a pointer click would land
+    // on the topbar instead (the real phone moves the nav into the bottom bar; check_mobile.js)
+    await p.locator('.dz-showb').first().dispatchEvent('click');
     await p.waitForTimeout(3200);
     return { p, errs };
   }

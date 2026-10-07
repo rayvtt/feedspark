@@ -103,6 +103,12 @@ else
   echo "   ✗ xlsx harness FAILED — see node tools/test_xlsx.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2c/7: what the hours moved (month closes, brand coverage, honest gaps)"
+if node tools/test_outcomes.mjs >/dev/null 2>&1; then
+  echo "   ✓ a month is its close, an unmeasured one stays a gap, a brand names its markets"
+else
+  echo "   ✗ outcomes harness FAILED — see node tools/test_outcomes.mjs"; FAIL=1
+fi
 echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
 if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
   echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"
@@ -117,10 +123,21 @@ else
   echo "   ✗ AM-CC harness FAILED — see node tools/test_amcc.mjs"; FAIL=1
 fi
 
+if node tools/test_callwrap.mjs >/dev/null 2>&1; then
+  echo "   ✓ call wrap-up: the red prompt, the tidy-up and the two draft exits hold"
+else
+  echo "   ✗ call-wrap harness FAILED — see node tools/test_callwrap.mjs"; FAIL=1
+fi
 if node tools/test_modalsolo.mjs >/dev/null 2>&1; then
   echo "   ✓ one-modal-at-a-time guard intact"
 else
   echo "   ✗ modal-solo harness FAILED — see node tools/test_modalsolo.mjs"; FAIL=1
+fi
+
+if node tools/test_wfintake.mjs >/dev/null 2>&1; then
+  echo "   ✓ intake table: Task takes the slack, every row one height"
+else
+  echo "   ✗ intake-table harness FAILED — see node tools/test_wfintake.mjs"; FAIL=1
 fi
 
 if node tools/test_playbook_panel.mjs >/dev/null 2>&1; then
@@ -157,11 +174,25 @@ else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: output escaping (every esc() neutralises a quote — XSS)"
+if node tools/test_escaping.mjs >/dev/null 2>&1; then
+  echo "   ✓ escaping harness"
+else
+  echo "   ✗ escaping harness FAILED — see node tools/test_escaping.mjs"; FAIL=1
+fi
+
 echo "── qa-gate: one audit colour legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)"
 if node tools/test_bands.mjs >/dev/null 2>&1; then
   echo "   ✓ /golden, /feedlab, the dossier and the Playbook rail band every audit number the same way"
 else
   echo "   ✗ audit-bands harness FAILED — see node tools/test_bands.mjs"; FAIL=1
+fi
+
+echo "── qa-gate: Golden Record score history (one reading per real move, re-scored to today's profile)"
+if node tools/test_goldenhist.mjs >/dev/null 2>&1; then
+  echo "   ✓ identical scans write nothing, drift is caught, gaps stay gaps, the page reads moves as the engine records them"
+else
+  echo "   ✗ score-history harness FAILED — see node tools/test_goldenhist.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
@@ -183,6 +214,13 @@ if node tools/test_hero.mjs >/dev/null 2>&1; then
   echo "   ✓ one date rule on both pages; overdue is the board's rule; a baked plan offers no due dates"
 else
   echo "   ✗ hero KPI harness FAILED — see node tools/test_hero.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3e0/7: the news digest's road to main (branch → gate → landed → deployed)"
+if node tools/test_news.mjs >/dev/null 2>&1 && node tools/check_news.js docs/news_digest.json --offline >/dev/null 2>&1; then
+  echo "   ✓ one gate for the Routine and the lane; the committed digest passes it; nothing pushes to main"
+else
+  echo "   ✗ news digest harness FAILED — see node tools/test_news.mjs / node tools/check_news.js docs/news_digest.json --offline"; FAIL=1
 fi
 
 echo "── qa-gate 3d8/7: 🎬 Present (the one-pager played — one renderer, two presentations)"
@@ -225,6 +263,12 @@ else
   echo "   ✗ KWCal client-PDF harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_pdf.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs >/dev/null 2>&1; then
+  echo "   ✓ the Superdry focus themes render, and a scope that is set is never reported as absent"
+else
+  echo "   ✗ KWCal Superdry harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_superdry.mjs"; FAIL=1
+fi
+
 if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
   echo "   ✓ KWCal KPI band partitions every stage; -fb markets never reach the chips"
 else
@@ -265,6 +309,25 @@ else
   echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h3b/7: AI transformation roadmap (roadmap shape, progress maths, opt-in gate, no £ on the page)"
+if node tools/test_transform.mjs >/dev/null 2>&1; then
+  echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
+else
+  echo "   ✗ transformation harness FAILED — see node tools/test_transform.mjs"; FAIL=1
+fi
+echo "── qa-gate 3h3c/7: FeedSpark design guidelines (/design + the shared /design/fcc.css)"
+if node tools/test_design.mjs >/dev/null 2>&1; then
+  echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
+else
+  echo "   ✗ design harness FAILED — see node tools/test_design.mjs"; FAIL=1
+fi
+echo "── qa-gate 3h3d/7: feedspark.com redesign mockup (/website — document route, nothing private, review notes)"
+if node tools/test_website.mjs >/dev/null 2>&1; then
+  echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
+else
+  echo "   ✗ website mockup harness FAILED — see node tools/test_website.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
 if node tools/test_tm.mjs >/dev/null 2>&1; then
   echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
@@ -277,6 +340,48 @@ if node tools/test_tmmcp.mjs >/dev/null 2>&1; then
   echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
 else
   echo "   ✗ Task Manager sync harness FAILED — see node tools/test_tmmcp.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6/7: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)"
+if node tools/test_roas.mjs >/dev/null 2>&1; then
+  echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+else
+  echo "   ✗ ROAS harness FAILED — see node tools/test_roas.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6b/7: Rules + Stock management (FeedHero rule_report — classifier, findings, lifted rulesPull vs a stub MCP)"
+if node tools/test_rules.mjs >/dev/null 2>&1; then
+  echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
+else
+  echo "   ✗ Rules harness FAILED — see node tools/test_rules.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6b2/7: Hero sizes + held-back products (size census, guides, examples, worker sanitisers, the master → feed join)"
+if node tools/test_herosize.mjs >/dev/null 2>&1; then
+  echo "   ✓ size keys, product types, census, measure, examples, guide resolution, document import, sanitisers, held-back join, wiring hold"
+else
+  echo "   ✗ Hero-size harness FAILED — see node tools/test_herosize.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6b3/7: Stock levers — BAU ↔ SALE (readings off each market's rules, off plan, periods, the switch list, the worker's half)"
+if node tools/test_stocklevers.mjs >/dev/null 2>&1; then
+  echo "   ✓ readings, off plan, modes + periods, switch list + brief, suggestions, keep-as-it-runs, summary, sanitisers, seed, wiring hold"
+else
+  echo "   ✗ Stock-levers harness FAILED — see node tools/test_stocklevers.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6c/7: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+if node tools/test_catalog.mjs >/dev/null 2>&1; then
+  echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+else
+  echo "   ✗ Catalogue harness FAILED — see node tools/test_catalog.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6d/7: AI visibility (reading engine, surface adapters vs stub answers, the lifted /api/aivis route)"
+if node tools/test_aivis.mjs >/dev/null 2>&1; then
+  echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, adapters, scope + grant, NDJSON hold"
+else
+  echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
@@ -321,6 +426,13 @@ if node tools/check_textmodules.js >/dev/null 2>&1; then
   echo "   ✓ no worker-served engine can bundle as code and serve an empty body"
 else
   echo "   ✗ a served docs/*.js is NOT a Text module — see node tools/check_textmodules.js"; FAIL=1
+fi
+
+echo "── qa-gate 3z2/7: a bare reload does not blank the page (Task Manager controls, four brand pickers)"
+if node tools/test_uistate.mjs >/dev/null 2>&1; then
+  echo "   ✓ URL param wins, else the device's last pick, else the page's own default — never blank"
+else
+  echo "   ✗ UI-state persistence harness FAILED — see node tools/test_uistate.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 4/7: shipped-feature markers"

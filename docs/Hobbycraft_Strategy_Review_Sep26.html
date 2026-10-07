@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hobbycraft × FeedSpark — Strategy Review, September 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
+  --paper:#FFFFFF;--paper-2:#F7F7F5;--paper-warm:#FEF9F2;
+  --orange:#F5A623;--orange-deep:#ED6F0B;--dark:#1C1C1C;
+  --green:#2E7D32;--red:#C62828;--blue:#1565C0;--purple:#6A1B9A;
+  --shadow:0 2px 10px rgba(0,0,0,.06);--shadow-lift:0 8px 24px rgba(0,0,0,.10);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink-2);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.55}
+h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:var(--orange-deep)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 40px}
+section{padding:104px 0}
+.band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band-warm{background:var(--paper-warm);border-top:1px solid #EDE3D3;border-bottom:1px solid #EDE3D3}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:14px}
+.eyebrow.on-dark{color:var(--orange)}
+.sec-title{font-size:34px;margin-bottom:6px}
+.sec-sub{font-size:15.5px;color:var(--muted);margin-bottom:44px;max-width:760px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:translateY(0)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
+.tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.tb-brand span{color:var(--orange-deep)}
+.tb-nav{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.tb-nav a{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
+
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column. Every section name is always visible (not hover-gated) — it's a live table of
+   contents, not a collapsed icon rail — with the currently-active section picked out by a
+   filled background + orange rail rather than dimming or hiding the rest. Hidden below
+   1300px, same cutoff logic as .tb-nav's own mobile hide, since there's no side margin
+   left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;width:196px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:7px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
+@media(min-width:1300px){.side-nav{display:flex}}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
+.hero:after{content:"";position:absolute;top:9px;left:0;right:0;height:1px;background:rgba(255,255,255,.16)}
+.hero h1{color:#fff;font-size:64px;font-weight:900;letter-spacing:-.025em;margin:18px 0 22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lede{font-size:19px;color:rgba(255,255,255,.72);max-width:620px;font-weight:300}
+.hero-rule{width:64px;height:3px;background:var(--orange);margin:34px 0 26px}
+.hero-meta{display:flex;gap:36px;flex-wrap:wrap;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+.hero-meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;margin-top:5px}
+.scrollcue{margin-top:56px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:flex;align-items:center;gap:10px}
+.scrollcue i{display:block;width:26px;height:1px;background:var(--orange);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.7)}}
+
+/* chapter divider */
+.chapter{background:var(--dark);color:#fff;padding:88px 0;position:relative;overflow:hidden}
+.chapter-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.ch-num{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:190px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,166,35,.42);letter-spacing:-.04em;user-select:none;z-index:1}
+.chapter h2{color:#fff;font-size:42px;font-weight:900;letter-spacing:-.025em;margin-bottom:12px}
+.chapter p{color:rgba(255,255,255,.6);font-size:15.5px;max-width:640px}
+.ch-rule{width:48px;height:3px;background:var(--orange);margin-bottom:24px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
+.ag-t{font-size:16.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:13.5px;color:var(--muted)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
+.stat{background:var(--paper);padding:26px 22px}
+.stat .n{font-size:40px;font-weight:900;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.stat .n small{font-size:19px;font-weight:700;color:var(--muted)}
+.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:9px}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card h4{font-size:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:#fff;text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--paper-2)}
+.tbl-wrap{border:1px solid var(--line);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto}
+
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.p-done{background:rgba(46,125,50,.10);color:var(--green)}
+.p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+.p-open{background:#EEE;color:var(--muted)}
+.p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px}
+.bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-row .bl span{color:var(--muted);font-weight:400}
+.track{height:7px;background:var(--paper-2);border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--orange);transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.green{background:var(--green)}
+.fill.grey{background:#C9C9C9}
+.fill.red{background:var(--red)}
+
+/* protocol cards */
+.proto{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden}
+.proto:before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
+.proto.g:before{background:var(--green)}
+.proto.b:before{background:var(--blue)}
+.proto.p:before{background:var(--purple)}
+.proto .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.proto.g .tag{color:var(--green)}
+.proto.b .tag{color:var(--blue)}
+.proto.p .tag{color:var(--purple)}
+.proto h4{font-size:17px;margin-bottom:4px}
+.proto .desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px}
+.proto ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.proto li{padding-left:14px;position:relative;margin-bottom:8px}
+.proto li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%}
+.proto.g li:before{background:var(--green)}
+.proto.b li:before{background:var(--blue)}
+.proto.p li:before{background:var(--purple)}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pipe-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative}
+.pipe-card h4{font-size:16px;margin-bottom:4px}
+.pipe-card .sub{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.pipe-card ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.pipe-card li{padding-left:14px;position:relative;margin-bottom:8px}
+.pipe-card li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+
+/* tachyon flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
+.flow-step{background:var(--paper);padding:24px 20px;position:relative}
+.flow-step:not(:last-child):after{content:"→";position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--orange);font-weight:900;z-index:2}
+.fs-num{font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--orange);margin-bottom:10px}
+.flow-step h4{font-size:14px;margin-bottom:6px}
+.flow-step p{font-size:12.5px;color:var(--muted)}
+
+/* description enrichment */
+.enrich{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.en-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px;border-left:3px solid var(--orange)}
+.en-card h4{font-size:14px;margin-bottom:8px}
+.en-card .before{background:#FFF3F3;border:1px solid #FFCDD2;padding:12px 14px;font-size:12.5px;color:var(--red);margin-bottom:10px;font-family:ui-monospace,monospace;line-height:1.6}
+.en-card .after{background:#E8F5E9;border:1px solid #C8E6C9;padding:12px 14px;font-size:12.5px;color:var(--green);font-family:ui-monospace,monospace;line-height:1.6}
+
+/* maturity tiers */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tier{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 20px;position:relative}
+.tier.here{border-color:var(--orange);border-width:2px;box-shadow:var(--shadow-lift)}
+.tier .flag{position:absolute;top:-11px;left:20px;background:var(--orange);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px}
+.tier .tn{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--orange-deep);margin-bottom:8px}
+.tier h4{font-size:17px;margin-bottom:3px}
+.tier .ts{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.tier ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.tier li{padding-left:14px;position:relative;margin-bottom:9px}
+.tier li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+.tier.done h4:after{content:" ✓";color:var(--green)}
+
+/* interactive panel */
+.agent{display:grid;grid-template-columns:1fr 1.15fr;gap:0;border:1px solid var(--line);box-shadow:var(--shadow-lift);background:var(--paper)}
+.agent-l{padding:32px;border-right:1px solid var(--line);background:var(--paper-2)}
+.agent-l h4{font-size:14px;margin-bottom:6px}
+.agent-l>p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.qs{display:flex;flex-direction:column;gap:9px}
+.q{text-align:left;font-family:inherit;font-size:13.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:.18s;line-height:1.4}
+.q:hover{border-color:var(--orange);transform:translateX(3px)}
+.q.active{border-color:var(--orange);border-left:3px solid var(--orange);background:#fff;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+.q:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+.agent-r{padding:32px;min-height:340px}
+.ar-head{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px}
+.attr-name{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px}
+.attr-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep);margin-bottom:18px}
+.attr-why{font-size:14px;color:var(--ink-2);margin-bottom:20px}
+.feedrow{background:var(--dark);padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#E8E8E8;line-height:1.65;overflow-x:auto}
+.feedrow .k{color:var(--orange)}
+.feedrow .c{color:#7A7A7A}
+.attr-note{font-size:12.5px;color:var(--muted);margin-top:16px;padding-left:12px;border-left:2px solid var(--orange)}
+.fade-swap{animation:sw .34s ease}
+@keyframes sw{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* scorecard */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.sc-cell{background:var(--paper);padding:22px}
+.sc-cell .sc-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sc-cell .sc-pct{font-size:32px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.sc-cell .sc-label{font-size:14px;font-weight:700;color:var(--ink)}
+.sc-cell .sc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sc-cell .sc-tgt{font-size:11.5px;color:var(--green);margin-top:4px;font-weight:700}
+.sc-cell .sc-warn{font-size:11.5px;color:var(--red);margin-top:4px;font-weight:700}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mo{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column}
+.mo.peak{border-color:var(--orange);border-width:2px}
+.mo-m{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--ink);margin-bottom:12px}
+.mo-s{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;align-self:flex-start;margin-bottom:14px}
+.s-close{background:rgba(46,125,50,.10);color:var(--green)}
+.s-build{background:rgba(245,166,35,.18);color:var(--orange-deep)}
+.s-next{background:#EEE;color:var(--muted)}
+.s-peak{background:var(--orange);color:#fff}
+.mo h4{font-size:14px;margin-bottom:8px}
+.mo ul{list-style:none;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.mo li{padding-left:13px;position:relative;margin-bottom:9px;line-height:1.45}
+.mo li:before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--orange);border-radius:50%}
+.mo li b{color:var(--ink)}
+
+/* asks */
+.ask{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ask-i{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--orange);display:flex;align-items:center;justify-content:center;color:var(--orange-deep);font-weight:900;font-size:13px}
+
+/* callout + note */
+.callout{background:var(--orange);color:#fff;padding:24px 28px;margin-top:32px}
+.callout h4{color:#fff;font-size:15px;margin-bottom:6px}
+.callout p{font-size:14px;color:rgba(255,255,255,.95)}
+.note{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--orange);padding:18px 22px;font-size:13.5px;color:var(--ink-2);margin-top:28px}
+.note b{color:var(--ink)}
+
+.chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
+body.hide-checks .chk{display:none}
+/* ---- INTERNAL-ONLY note -------------------------------------------------------------
+   A deck is written to the CLIENT. Anything written to FeedSpark — a figure Ray still has
+   to confirm, where a number came from, why a source is weak, what this deck could not
+   reach — belongs in one of these, never in body copy. Ray flagged exactly this on the
+   Monsoon intro deck: "it sounds like it's being presented to me rather than to the
+   client... if you need to make a note, make it more apparent so I can delete it properly."
+   Deliberately loud, so it can never be mistaken for deck copy, and stripped automatically
+   from every client-bound output: tools/deck_to_pptx.py skips it, and the Download-HTML
+   builder in worker.js removes it. The topbar's "Data checks" toggle hides it for
+   presenting. */
+.int-note{border:2px dashed var(--red);background:#FFF5F3;padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.55;color:var(--ink)}
+.int-note::before{content:"\26A0  INTERNAL \2014 NOT FOR CLIENT";display:block;font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:9px}
+.int-note b{color:var(--red)}
+body.hide-checks .int-note{display:none}
+.flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
+.flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
+
+/* close */
+.close{background:var(--dark);color:#fff;padding:96px 0}
+.close h2{color:#fff;font-size:44px;font-weight:900;margin-bottom:10px}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.ct{border-top:2px solid var(--orange);padding-top:16px}
+.ct b{display:block;color:#fff;font-size:16px;font-weight:700}
+.ct span{display:block;font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
+.footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda,.enrich{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+
+<body class="">
+
+
+<div class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="tb-brand">Feed<span>Spark</span> × Hobbycraft</div>
+    <nav class="tb-nav">
+      <a href="#c1" class="">01 Recap</a>
+      <a href="#c2" class="">02 Channels</a>
+      <a href="#c3" class="">03 Look-back</a>
+      <a href="#c4" class="">04 Results</a>
+      <a href="#c5" class="">05 Feed score</a>
+      <a href="#c6" class="">06 AI readiness</a>
+      <a href="#c7" class="">07 Case studies</a>
+      <a href="#c8" class="">08 Roadmap</a>
+      <a href="#c9" class="">09 Attributes</a>
+      <a href="#c10" class="">10 Value</a>
+      <a href="#c11" class="">11 Tachyon</a>
+    </nav>
+    <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
+    <div class="progress" id="progress" style="width: 0%;"></div>
+  </div>
+</div>
+<nav class="side-nav">
+  <a href="#c1"><span class="num">01</span><span class="lbl">Recap</span></a>
+  <a href="#c2"><span class="num">02</span><span class="lbl">Channels</span></a>
+  <a href="#c3"><span class="num">03</span><span class="lbl">Look-back</span></a>
+  <a href="#c4"><span class="num">04</span><span class="lbl">Results</span></a>
+  <a href="#c5"><span class="num">05</span><span class="lbl">Feed score</span></a>
+  <a href="#c6"><span class="num">06</span><span class="lbl">AI readiness</span></a>
+  <a href="#c7"><span class="num">07</span><span class="lbl">Case studies</span></a>
+  <a href="#c8"><span class="num">08</span><span class="lbl">Roadmap</span></a>
+  <a href="#c9"><span class="num">09</span><span class="lbl">Attributes</span></a>
+  <a href="#c10"><span class="num">10</span><span class="lbl">Value</span></a>
+  <a href="#c11"><span class="num">11</span><span class="lbl">Tachyon</span></a>
+</nav>
+<div class="footmark">FeedSpark · Private &amp; Confidential</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Strategy Review · September 2026</div>
+    <h1>Hobbycraft&nbsp;<br></h1>
+    <div class="hero-rule"></div>
+    <p class="lede">"The feed becomes transaction infrastructure - In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
+cart logic, displayed total, legal notice and ability to complete checkout. Accuracy, identifiers and
+policy data become commercial controls"<br>Google&nbsp;</p>
+    <div class="hero-meta" style="margin-top:40px">
+      <div>Market<b>United Kingdom</b></div>
+      <div>Catalogue<b>24,464 live SKUs · 7 feeds</b></div>
+      <div>Cycle<b>Look-back: Oct 2025 – Sep 2026</b></div>
+    </div>
+    <div class="scrollcue"><i></i> Scroll</div>
+  </div>
+</header>
+
+<!-- ================= AGENDA ================= -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Agenda</div>
+    <h2 class="sec-title rv in">What we'll cover</h2>
+    <p class="sec-sub rv in">Eleven chapters, four sources: the project plan, the A/B test archive, the time log, and a live read of the Google Shopping feed this morning.</p>
+    <div class="agenda rv in">
+      <div>
+        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">146 of 222 initiatives closed · 153 live rules holding the feed</div></div></div>
+        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Channel coverage</div><div class="ag-d">Seven live feeds, LIA among them — and what is still unlit</div></div></div>
+        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Look-back period</div><div class="ag-d">October 2025 to September 2026, month by month</div></div></div>
+        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">Ten measured tests — four of five controlled A/B tests won</div></div></div>
+        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">73/100 — eleven lanes, read against the live feed</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">06</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Golden Record 90.9, and a hard ceiling at 79.3</div></div></div>
+      </div>
+      <div>
+        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">The same levers on comparable FeedSpark accounts</div></div></div>
+        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Sequenced against Hobbycraft's own trading calendar</div></div></div>
+        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six fields built for AI assistants — none live yet</div></div></div>
+        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Value delivered</div><div class="ag-d">437.5 hours, 153 rules, one catalogue held together</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">11</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent, enrichment and visual harvest for craft</div></div></div>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:28px"><b>Where the plan and the feed disagree, the feed wins</b> &mdash; every chapter shows both numbers rather than the friendlier one.</div>
+  </div>
+</section>
+
+<!-- ================= CH 01 — REVIEW & PROJECT RECAP ================= -->
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Review &amp; project recap</h2><p>146 of 222 tracked initiatives closed since May 2020 &mdash; and 153 live rules now hold the catalogue without anybody touching it.</p></div></div>
+<section>
+  <div class="wrap">
+    <div class="grid-4 rv in" style="margin-bottom:36px">
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">146</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Closed to date</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">75</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">1</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">On hold</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">222</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Tracked initiatives</div></div>
+    </div>
+    <h3>What closed in the current cycle</h3>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:40%">Action</th><th style="width:12%">Owner</th><th style="width:16%">Status</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Custom label aligned to promotional offers &mdash; linelist process removed</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>custom_label_1 now carries Full Price / On Offer on <b>100%</b> of 24,464 SKUs, by rule</td></tr>
+        <tr><td>Valentine's Day &mdash; [Heart] related products, keywords removed by 15 Feb</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Seasonal keywords applied and retired to schedule &mdash; no residue in the live feed</td></tr>
+        <tr><td>All custom label overview, PPC &amp; Social &mdash; for Performics to review</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Five-slot architecture documented per channel; feeds the restructure still open</td></tr>
+        <tr><td>Promo roundel location confirmed in the Social feed</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Overlay engine live &mdash; 25%, 40%, 60% off and Save £x frames in production</td></tr>
+        <tr><td>Easter &mdash; Easter Party &amp; Occasions keyword optimisation</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Occasion terms applied to the Easter range on the trading calendar's own month</td></tr>
+        <tr><td>Kids &mdash; keyword optimisation</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>April's primary category on the calendar, optimised in April</td></tr>
+        <tr><td>TikTok feed setup reviewed with Claudia</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>TikTok is one of the seven feeds live today &mdash; chapter 02</td></tr>
+        <tr><td>Delivery rate moved into GMC &mdash; removed from the feed</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Shipping now configured where Google expects it, not duplicated in product data</td></tr>
+        <tr><td>Review product_type for non-existent values</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>1,087 distinct primary category paths in the feed today, all resolving</td></tr>
+        <tr><td>AI Titles A/B test &mdash; [Search Intent] on 200 products</td><td>Ezgi</td><td><span class="pill p-prog">In progress</span></td><td>The next measured test. Chapter 04 says what the last one returned</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>The account is older than most of the work in it.</b> The project plan opens in May 2020 and has run continuously since &mdash; product type rules, competitor keyword batches, LIA, the custom label architecture, DPA overlays, Pinterest, TikTok. What holds it today is <b>153 active rules</b> and <b>8 live batches</b> in FeedHero, with 174 batches expired behind them. That is six years of decisions still being applied to every product that arrives.</div>
+  </div>
+</section>
+
+<!-- ================= CH 02 — CHANNEL COVERAGE ================= -->
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Channel coverage</h2><p>Seven feeds live on one market, Local Inventory Ads among them &mdash; and three channels nobody has commissioned yet.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Read from FeedHero's own feed register and from each channel's live output.</p>
+    <div class="note rv in" style="margin-top:24px"><b>A channel marked not in scope is not a delivery gap</b> &mdash; it is a channel nobody has commissioned, and each one runs on product data Hobbycraft already maintains.</div>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:22%">Channel</th><th style="width:17%">State</th><th style="width:17%">Coverage</th><th>What the evidence shows</th></tr></thead>
+      <tbody>
+        <tr><td><b>Google Shopping</b></td><td><span class="pill p-done">✓ Optimised</span></td><td>24,464 SKUs</td><td>The primary feed. Required attributes complete, GPC on 100% at 4.18 levels average, titles rewritten by rule</td></tr>
+        <tr><td><b>Google Base &mdash; FS mapping</b></td><td><span class="pill p-done">✓ Live</span></td><td>Same catalogue</td><td>FeedSpark's own mapping feed, carrying the category and label architecture into Merchant Center</td></tr>
+        <tr><td><b>LIA &mdash; Local Inventory Ads</b></td><td><span class="pill p-done">✓ Live</span></td><td>Store inventory</td><td>Built out in four weeks against the plan's own step list &mdash; master inventory review, feed production, GMB link, SFTP, inventory verification, Local campaign enabled</td></tr>
+        <tr><td><b>Meta / Commerce Manager</b></td><td><span class="pill p-done">✓ Live</span></td><td>Facebook catalogue</td><td>Own title rule (short_title on 100% of SKUs, mean 39.6 characters), own five-slot label architecture, DPA overlays in production</td></tr>
+        <tr><td><b>Bing Shopping</b></td><td><span class="pill p-done">✓ Live</span></td><td>Same catalogue</td><td>Feed live in FeedHero; no separate optimisation lane commissioned</td></tr>
+        <tr><td><b>Pinterest</b></td><td><span class="pill p-done">✓ Live</span></td><td>GB XML feed</td><td>Set live off the plan's August action; running on the same structured product data</td></tr>
+        <tr><td><b>TikTok Shop</b></td><td><span class="pill p-done">✓ Live</span></td><td>Tailored production</td><td>Reactivated Feb 2026 and reviewed this cycle</td></tr>
+        <tr><td><b>Product Type CSV</b></td><td><span class="pill p-done">✓ Live</span></td><td>Internal</td><td>The category-tree export the PPC and SEO teams work from</td></tr>
+        <tr><td><b>CSS</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>Discussed for non-performing products; the account runs a Zombie campaign instead</td></tr>
+        <tr><td><b>Affiliate feeds</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No affiliate feed currently maintained &mdash; an open opportunity</td></tr>
+      </tbody></table>
+    </div>
+    <div class="int-note rv in">Channel states are read from FeedHero's client register (7 live feeds, LIA enabled, image pack + overlay + optimisation on) plus the project plan. The two "not in scope" rows rest on the plan carrying no active reference to them &mdash; weaker evidence than a live feed. Also note the register records <b>7 live feeds against a maximum of 5</b> on the current plan; worth a commercial conversation before the next renewal, not a slide.</div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Seven feeds is unusual for a single-market account</h4>
+        <p>Most accounts this size run two. Hobbycraft runs Shopping, a mapping feed, LIA, Meta, Bing, Pinterest and TikTok off one master feed imported by FTP, on a scheduled refresh &mdash; plus four live scrapes topping up web offers daily, product highlights, product type and the back-to-school SKU list.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Every one of those channels is fed by the same rules. A category or label change made once lands in all seven.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Where the next channel is cheapest</h4>
+        <p>The expensive part of a new channel is structured product data, and that is already done: identifiers at <b>100%</b>, GPC at <b>100%</b>, 381 brands normalised, 16,720 variant families resolved.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">An affiliate feed is a configuration and a QA cycle. So is a second market, if Hobbycraft ever takes the range beyond the UK.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 03 — LOOK-BACK PERIOD ================= -->
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Look-back period</h2><p>October 2025 to September 2026 &mdash; 437.5 hours delivered against a 288-hour allowance, on a catalogue taking in 571 new products a month.</p></div></div>
+<section>
+  <div class="wrap">
+    <h3>Hours delivered per month</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="col"><thead><tr><th style="width:30%">Month</th><th>Hours delivered</th></tr></thead>
+      <tbody>
+        <tr><td>Oct 2025</td><td>81.75</td></tr>
+        <tr><td>Nov 2025</td><td>26.5</td></tr>
+        <tr><td>Dec 2025</td><td>87.0</td></tr>
+        <tr><td>Jan 2026</td><td>24.0</td></tr>
+        <tr><td>Feb 2026</td><td>26.25</td></tr>
+        <tr><td>Mar 2026</td><td>27.25</td></tr>
+        <tr><td>Apr 2026</td><td>13.0</td></tr>
+        <tr><td>May 2026</td><td>39.75</td></tr>
+        <tr><td>Jun 2026</td><td>33.25</td></tr>
+        <tr><td>Jul 2026</td><td>28.0</td></tr>
+        <tr><td>Aug 2026</td><td>35.0</td></tr>
+        <tr data-chart-cat="Sep (part)"><td>Sep 2026 — to 14th</td><td>15.75</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Peak is where the retainer actually goes.</b> October and December carried 81.75 and 87.0 hours against a 24-hour monthly allowance &mdash; Halloween, Black Friday and Christmas keyword batches, the Christmas half-price labels and the Peak overlay work, all landing inside ten weeks. The quiet months average 26. Peak is roughly three months of retainer compressed into one, twice.</div>
+
+    <h3>Where the 437.5 hours went</h3>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:36%">Work</th><th style="width:12%">Tasks</th><th style="width:13%">Hours</th><th style="width:13%">Charged</th><th>Absorbed</th></tr></thead>
+      <tbody>
+        <tr><td>Data field and title optimisation</td><td>7</td><td><b>66.75</b></td><td>28.5</td><td>38.25</td></tr>
+        <tr><td>Keyword optimisation</td><td>11</td><td><b>52.25</b></td><td>31.5</td><td>20.75</td></tr>
+        <tr><td>DPA image overlay</td><td>16</td><td><b>38.25</b></td><td>27.25</td><td>11.0</td></tr>
+        <tr><td>Data field update</td><td>6</td><td><b>38.0</b></td><td>—</td><td>38.0</td></tr>
+        <tr><td>Title optimisation</td><td>7</td><td><b>34.0</b></td><td>23.75</td><td>10.25</td></tr>
+        <tr><td>Custom label update</td><td>9</td><td><b>17.0</b></td><td>16.75</td><td>0.25</td></tr>
+        <tr><td>General account management</td><td>12</td><td>12.0</td><td>12.0</td><td>—</td></tr>
+        <tr><td>Category mapping</td><td>12</td><td>10.5</td><td>5.5</td><td>5.0</td></tr>
+        <tr><td>Client calls and monthly catch-ups</td><td>19</td><td>9.75</td><td>7.75</td><td>2.0</td></tr>
+        <tr data-chart-skip="1"><td><b>Everything, 357 tasks</b></td><td><b>357</b></td><td><b>437.5</b></td><td><b>260.0</b></td><td><b>177.5</b></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>260 hours charged, 437.5 delivered.</b> The 24-hour monthly retainer gives an allowance of 288 hours over the year; 260 of those were used. The other <b>177.5 hours</b> were absorbed &mdash; 41% of everything delivered. Optimisation accounts for 57.9% of the total, account management 20.1%, feature builds (overlays, labels) 14.8%, and technical work 2.6%.</div>
+
+    <h3 class="sec-title rv in" style="font-size:22px;margin-bottom:6px">New products entering the feed</h3>
+    <div class="stats rv in">
+      <div class="stat"><div class="n">24,464</div><div class="l">Live SKUs</div></div>
+      <div class="stat"><div class="n">571</div><div class="l">New per month</div></div>
+      <div class="stat"><div class="n">1,712</div><div class="l">New per quarter</div></div>
+      <div class="stat"><div class="n">6,848</div><div class="l">New per year</div></div>
+    </div>
+    <h3>New products by first-seen month</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="col"><thead><tr><th style="width:30%">Month</th><th>New products</th></tr></thead>
+      <tbody>
+        <tr><td>Sep 2025</td><td>375</td></tr>
+        <tr><td>Oct 2025</td><td>1,020</td></tr>
+        <tr><td>Nov 2025</td><td>631</td></tr>
+        <tr><td>Dec 2025</td><td>414</td></tr>
+        <tr><td>Jan 2026</td><td>389</td></tr>
+        <tr><td>Feb 2026</td><td>164</td></tr>
+        <tr><td>Mar 2026</td><td>725</td></tr>
+        <tr><td>Apr 2026</td><td>690</td></tr>
+        <tr><td>May 2026</td><td>302</td></tr>
+        <tr><td>Jun 2026</td><td>317</td></tr>
+        <tr><td>Jul 2026</td><td>944</td></tr>
+        <tr><td>Aug 2026</td><td>877</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>How this is counted.</b> Every product in the feed carries the date its ID first appeared, so arrivals are read off the feed itself rather than from when monitoring started &mdash; the record runs back to October 2014, 144 months. The figures above are the twelve complete months to August 2026 divided by twelve, which averages the seasonality out; the three-month run-rate is higher at <b>713 a month</b> because July and August were the two heaviest months of the year. Only products still live today are counted, so older months are a floor.</div>
+  </div>
+</section>
+
+<!-- ================= CH 04 — NUMBER OF WINS / RESULTS ================= -->
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Number of wins / results</h2><p>Ten measured tests in the archive. Four of the five controlled A/B tests won &mdash; and the two that lost were measured straight through the post-Christmas collapse.</p></div></div>
+<section class="band-warm">
+  <div class="wrap">
+    <h3>Impressions uplift per test · Hobbycraft UK, Jul 2025 – Jan 2026</h3>
+    <div class="tbl-wrap rv in">
+      <table data-chart="bar" data-chart-series="3" data-chart-pct="1" data-chart-table="1"><thead><tr><th style="width:30%">Test</th><th style="width:14%">Method</th><th style="width:11%">Batch</th><th style="width:15%">Impressions</th><th>Clicks</th></tr></thead>
+      <tbody>
+        <tr data-chart-cat="Jul I — keywords"><td>July I — keyword optimisation</td><td>A/B, controlled</td><td>500</td><td>+8.51%</td><td>+15.25%</td></tr>
+        <tr data-chart-cat="Jul II — keywords"><td>July II — keyword optimisation</td><td>A/B, controlled</td><td>500</td><td>+7.27%</td><td>+5.06%</td></tr>
+        <tr data-chart-cat="Aug I — keywords"><td>Aug I — keyword optimisation</td><td>A/B, controlled</td><td>500</td><td>−5.63%</td><td>−10.85%</td></tr>
+        <tr data-chart-cat="Sep I — keywords"><td>Sep I — keyword optimisation</td><td>A/B, controlled</td><td>500</td><td>+5.32%</td><td>+13.46%</td></tr>
+        <tr data-chart-cat="Titles — [Brand], machines"><td><b>Titles — [Brand] on machines</b></td><td>A/B, controlled</td><td>40</td><td><b>+38.69%</b></td><td><b>+63.63%</b></td></tr>
+        <tr data-chart-cat="Back to School"><td>Back to School — keywords</td><td>Single group</td><td>1,516</td><td>+50.52%</td><td>+44.63%</td></tr>
+        <tr data-chart-cat="Halloween"><td>Halloween — keywords</td><td>Single group</td><td>361</td><td>+9.46%</td><td>+22.39%</td></tr>
+        <tr data-chart-cat="Black Friday"><td>Black Friday — keywords</td><td>Single group</td><td>2,147</td><td><b>+139.77%</b></td><td><b>+176.48%</b></td></tr>
+        <tr data-chart-cat="Christmas I"><td>Christmas I — keywords</td><td>Single group</td><td>2,450</td><td>−46.73%</td><td>−38.28%</td></tr>
+        <tr data-chart-cat="Christmas II"><td>Christmas II — keywords</td><td>Single group</td><td>4,069</td><td>−46.33%</td><td>−40.10%</td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-3 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Keywords: the proven lever</h4>
+        <p>Three of the four controlled keyword tests won. Plan against the <b>median: +6.3% impressions</b> and <b>+9.3% clicks</b>, not the single-group headlines.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">In both of the wider wins clicks moved further than impressions &mdash; the terms are not only adding reach, they are matching intent.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The title question, finally answered</h4>
+        <p>2020's brand-placement test came back inconclusive and the rule stayed "keep [Brand] front". In 2024 brand was removed from Shopping titles; in Sept 2025 it was put back on machines only &mdash; <b>+38.69% impressions, +63.63% clicks</b>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">On 40 products, so treat the size of the number with care. The direction is not in doubt, and the live feed now leads with the brand on <b>94.9%</b> of SKUs.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>Christmas measured the season, not the keywords</h4>
+        <p>Both Christmas batches read <b>−46%</b> impressions. Both were single-group tests running <b>12 Dec to 22 Jan</b> &mdash; a window whose second half is the steepest demand drop in the retail year.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">With no control group there is nothing to separate the intervention from the calendar. Seasonal ranges need a control, or a window that ends before the season does.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>The archive is longer than the current cycle.</b> Eight further results are recorded in the plan from 2020 to 2023, seven of them positive: Valentine's <b>+35%</b>, Digital Cutting <b>+31%</b>, Cricut <b>+22%</b>, Wedding decoration and planning <b>+16%</b>, Sewing <b>+14%</b>, Wedding <b>+7%</b>, Digital Cutting <b>+5%</b> and one early competitor-keyword batch at <b>−8%</b>. Median across those eight: <b>+15%</b>. Six years of testing and the answer has not moved &mdash; category-specific keyword work returns high single to low double digits, reliably, and the exceptions are events.</div>
+    <div class="int-note rv in">The five "Single group" rows are before/after reads on the whole batch with no control. Three of them (Back to School +50.52%, Black Friday +139.77%, and both Christmas losses) sit in windows with heavy seasonal movement in the same direction as the result. Present them as recorded, but the controlled A/B median is the number to quote in a commercial conversation. Worth agreeing with Hobbycraft that seasonal batches get a control group from Peak 2026 onward.</div>
+  </div>
+</section>
+
+<!-- ================= CH 05 — FEED OPTIMISATION SCORE ================= -->
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Feed optimisation score</h2><p>73 out of 100. Every required attribute is complete; keyword coverage, product highlights and title length carry almost all of the remaining gap.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">The weighted completion of eleven workstreams, every percentage read from the live Google Shopping feed this morning.</p>
+    <div class="note rv in" style="margin-top:24px"><b>Where a completed task and the live feed disagree, the feed number is the headline.</b></div>
+    <div class="sc-grid rv in" style="margin-bottom:32px">
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Required attributes</div><div class="sc-note">ID, title, link, image, availability, price, GTIN, identifier_exists, condition and item_group_id are all at 100% on 24,464 SKUs. Description 99.76%.</div><div class="sc-tgt">Target: 99.9% — met, and the reason there are no policy disapprovals of substance</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">50.1%</div></div><div class="sc-label">Keyword coverage</div><div class="sc-note">12,266 of 24,464 SKUs carry a readable keyword string alongside their category path. The other 11,942 carry only a reference code.</div><div class="sc-warn">Half the catalogue has never been through a keyword batch</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">45.7%</div></div><div class="sc-label">Product highlights</div><div class="sc-note">11,186 SKUs carry highlights and where they exist they are excellent — 6,370 carry six, 3,562 carry five. 13,278 carry none at all.</div><div class="sc-warn">P0 gap — highlights are the sentences AI surfaces quote back</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">1.2%</div></div><div class="sc-label">Titles in the MASK band</div><div class="sc-note">299 of 24,464 titles land in the 80–120 character band. Mean length is 47.8; 1,236 titles are under 30 characters.</div><div class="sc-warn">Titles are clean and brand-led — they are about half the AI-ready length</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">4.18</div></div><div class="sc-label">GPC depth (avg. levels)</div><div class="sc-note">Google's category is on 100% of SKUs at an average of 4.18 levels — 32.6% sit at five levels or deeper. 88.9% of the range is Arts &amp; Entertainment.</div><div class="sc-tgt">Among the deepest category mappings in the FeedSpark portfolio</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">3.08</div></div><div class="sc-label">product_type depth (avg.)</div><div class="sc-note">1,087 distinct paths, 66.8% at three levels and 21.4% at four. Nothing reaches five, and 2,876 SKUs sit at one or two levels.</div><div class="sc-warn">The industry standard is 30–40% of volume at five levels</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Three numbers for keyword coverage, and all three are right</h4>
+        <p>The live feed shows a readable keyword string on <b>50.1%</b> of SKUs. FeedHero's own audit, run this morning against the product database, flags <b>14,151 products (52%) with no keywords attached</b> &mdash; the same answer from a different direction. The feed's process flag reads <b>26.0%</b>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The flag counts products touched by a keyword <i>batch</i>; the other two count products that actually carry terms today, including from the category rules. Two independent sources agreeing at roughly half the catalogue is the number to plan against.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>Two custom label slots are carrying 2018 and 2020 data</h4>
+        <p>The rule-driven labels are perfect: <b>custom_label_1</b> (Full Price / On Offer) and <b>custom_label_3</b> (stock status) are both on <b>100%</b> of the catalogue. The two that depend on a human upload are not.</p>
+        <p style="margin-top:12px;font-size:13px"><b>custom_label_2</b> — Best Seller, manual — reaches <b>0.5%</b> of SKUs, and its values are <i>Bestsellers_Jul20</i>, <i>ChristmasAd_Peak_Oct20</i>, <i>HighBounceRate_Baking_Sept20</i>.<br><b>custom_label_4</b> reaches <b>3.5%</b>, carrying <i>2018 Priority Lines</i> and <i>BFCM 2018</i>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">This is not neglect, it is a dependency: the bestseller threshold needs GA access to extract, and that request has been open in the plan since May. Chapter 08 makes it ask number one.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>Where the keywords actually live.</b> Optimised keywords on this account are written as additional <code>product_type</code> values, not into the numbered <code>product_type2..10</code> slots &mdash; those read <b>0%</b> across the whole feed. So a naive saturation check reports zero on a catalogue that is half keyworded. 12,266 SKUs carry a readable second or third value (<i>"simplicity sewing pattern &gt; shop sewing pattern uk"</i>, <i>"pink Embroidery Thread &gt; pink Thread"</i>); 11,942 carry only a 32-character reference code. Both readings are correct; they describe different fields.</div>
+    <div class="int-note rv in"><b>Highlights need one check before this goes out.</b> The live output feed carries highlights on 45.7% of SKUs (13,278 with none). FeedHero's audit, reading the product database behind it, flags only 5,197 products (19%) with zero highlights. The likely explanation is a feed rule: the scrape has collected highlights for far more products than the Google feed is emitting. If that is right, a large slice of this gap is a rule change rather than new scraping work &mdash; which would make W3 in the roadmap cheaper and faster than it currently reads. Confirm before presenting.</div>
+  </div>
+</section>
+
+<!-- ================= CH 06 — AI READINESS ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>AI readiness</h2><p>A Golden Record score of 90.9 &mdash; and a hard ceiling at 79.3, because none of Google's six conversational attributes is in the feed.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <div class="tiers rv in" style="margin-bottom:32px">
+      <div class="tier done">
+        <div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">The starting point</div>
+        <ul><li>Feed meets minimum spec</li><li>Source titles passed through unchanged</li><li>Invisible to AI surfaces</li></ul>
+      </div>
+      <div class="tier here">
+        <div class="flag">◆ Hobbycraft is here</div>
+        <div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation</div>
+        <ul><li>Required attributes at 100%</li><li>GPC on 100% at 4.18 levels</li><li>Brand leads the title on 94.9%</li><li>Descriptions averaging 811 characters</li></ul>
+      </div>
+      <div class="tier">
+        <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer</div>
+        <ul><li>item_group_title — not in the feed</li><li>variant_option — not in the feed</li><li>question_and_answer — not in the feed</li><li>16,720 variant families ready to carry them</li></ul>
+      </div>
+      <div class="tier">
+        <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
+        <ul><li>Tachyon vision models read product imagery</li><li>79.7% of SKUs already carry 2+ images</li><li>Feeds material and pattern where Google asks for them</li></ul>
+      </div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The foundation is genuinely strong</h4>
+        <p>Golden Record completeness reads <b>90.9</b> against a 99.9% target &mdash; and that figure is measured the strict way, scoring each attribute only over the products Google actually asks for it. Material at 47.8% and pattern at 43.8% look thin until you notice there are <b>two clothing products in 24,413</b>, so Google does not ask for either across the range.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Scored the loose way, over every product, the same feed reads 82.7. The 90.9 is the honest one, and it is the higher number for once.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>The ceiling, and why it is a ceiling</h4>
+        <p>Google's six conversational attributes are the only fields in the spec whose stated purpose is AI comprehension. None is present in the Hobbycraft feed &mdash; confirmed from the schema, not inferred. A feed carrying none of them <b>cannot score above 79.3</b> on AI readiness however good everything else is.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">So the gap is not "some work to do". It is specifically: <b>0 of 6</b> conversational attributes, <b>13,278</b> SKUs with no highlight, <b>299</b> titles in the AI-ready band, and nothing in the category tree reaching five levels.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>Craft is the category where this matters most.</b> A shopper buying a sewing pattern, a yarn weight or a Cricut blade is asking a question, not naming a product &mdash; will this fit my machine, is this enough for a queen-size quilt, what weight is this yarn. Those answers exist on Hobbycraft's product pages and in the 811-character descriptions already in the feed. What is missing is the structure that lets an assistant quote them rather than guess.</div>
+  </div>
+</section>
+
+<!-- ================= CH 07 — CASE STUDIES / TEST WINS ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Case studies / test wins</h2><p>What the same interventions returned on comparable FeedSpark accounts, and which of them apply here.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">The same interventions, on comparable FeedSpark accounts.</p>
+    <div class="note rv in" style="margin-top:24px"><b>Chapter 04 is Hobbycraft's own quantified record</b> &mdash; read alongside it, these say which levers Hobbycraft has not tested yet.</div>
+    <div class="grid-3 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Occasion and seasonal language</h4>
+        <p><b>+86%</b> and <b>+61%</b> &mdash; Monsoon, on seasonal and category keyword sets. The largest returns on that account came from occasion terms, not brand terms.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Applies directly, and this is the closest match in the portfolio: Hobbycraft's own trading calendar <i>is</i> a list of occasions — Easter, Halloween, Christmas, Black Friday, gifting, weddings, back to school.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Naming the category term the shopper types</h4>
+        <p><b>+126.62%</b> &mdash; YuMOVE, on the single term "Multivitamins". Adding the plain category noun a buyer actually searches, rather than the brand's own product name.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Applies with force here: 1,236 Hobbycraft titles are under 30 characters and many name the product without naming what it is for — "Clay Beads 68g" is not how a shopper searches for bracelet-making supplies.</p>
+      </div>
+      <div class="card">
+        <h4>Benefit-led copy beat feature-led copy</h4>
+        <p><b>+24.7%</b> &mdash; YuMOVE, pet supplements. Rewriting titles and descriptions around what the product does for the buyer rather than what it is.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Applies to the 13,278 SKUs with no highlights: where highlights do exist here they are already benefit-led ("Easy to thread", "Ideal for bracelet making"), which is why extending them is a coverage job, not a copy project.</p>
+      </div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The pattern across all three</h4>
+        <p>Every one came from putting <b>more specific, more decomposable language</b> into the product data &mdash; the occasion, the benefit, the category noun the shopper types. None came from bidding, budget or campaign structure.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">That is what makes them portable: they are feed-side changes, and Hobbycraft's attribute foundation is already stronger than either account these results came from.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>What does not transfer, and why that matters</h4>
+        <p>Both accounts started from weaker attribute coverage than Hobbycraft has, and both are far smaller catalogues. Part of their gain came from fixing gaps that do not exist here &mdash; identifiers, categories and stock labelling are already complete.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">So these figures point at <i>which lever</i>, not at the size of the return. Hobbycraft's own controlled median in chapter 04 &mdash; <b>+6.3% impressions</b> per keyword batch &mdash; is the number to plan against.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 08 — ROADMAP / NEXT QUARTER ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Roadmap / next quarter</h2><p>Sequenced against Hobbycraft's own trading calendar &mdash; Christmas in October, Black Friday in November, gifting in December.</p></div></div>
+<section class="band-warm">
+  <div class="wrap">
+    <div class="road rv in" style="grid-template-columns:repeat(3,1fr)">
+      <div class="mo">
+        <div class="mo-m">Oct 2026</div><div class="mo-s s-close">Land before Peak</div>
+        <h4>Christmas · Halloween</h4>
+        <ul>
+          <li><b>Christmas keyword batch</b> — with a control group this time</li>
+          <li><b>Highlights rule check</b> — the 13,278 with none</li>
+          <li><b>GA access</b> — unblock bestseller automation</li>
+          <li><b>Overlay set</b> — % off frames refreshed for Peak</li>
+        </ul>
+      </div>
+      <div class="mo mo peak">
+        <div class="mo-m">Nov 2026</div><div class="mo-s s-peak">Peak — hold steady</div>
+        <h4>Black Friday · Christmas</h4>
+        <ul>
+          <li><b>Black Friday linelist</b> — keywords and labels</li>
+          <li><b>No architecture changes</b> once the month opens</li>
+          <li><b>Disapproval sweeps</b> across all seven feeds</li>
+          <li><b>Stock labelling</b> holds through the sale</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Dec 2026 – Jan 2027</div><div class="mo-s s-build">Build</div>
+        <h4>Gifting, then the AI layer</h4>
+        <ul>
+          <li><b>Gifting keywords</b> — under £10, under £20</li>
+          <li><b>Conversational attributes</b> — the first two</li>
+          <li><b>Title length</b> toward the 80–120 band</li>
+          <li><b>Custom label restructure</b> goes live</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tbl-wrap rv in" style="margin:32px 0">
+      <table><thead><tr><th style="width:6%">#</th><th style="width:26%">Workstream</th><th>What it needs</th><th style="width:13%">Owner</th><th style="width:11%">Priority</th></tr></thead>
+      <tbody>
+        <tr><td><b>W1</b></td><td>Keyword coverage past half the catalogue</td><td>Nothing external — 12,198 SKUs carry no readable terms today, and the controlled median return is +6.3% impressions per batch</td><td>Ezgi / Ray</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W2</b></td><td>Product highlights on the whole range</td><td>One feed-rule check first — the scrape may already hold what the feed is not emitting on 13,278 SKUs</td><td>Ray / Ezgi</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W3</b></td><td>Bestseller automation — custom_label_2</td><td>GA access to extract the category threshold. Open in the plan since May; the slot currently carries July 2020 values on 0.5% of SKUs</td><td>Hobbycraft → Ray</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W4</b></td><td>Title length toward the MASK band</td><td>A rule change — 1.2% in band at a 47.8-character mean, and the machines test already proved the direction</td><td>Ray / Ezgi</td><td><span class="pill p-done">High</span></td></tr>
+        <tr><td><b>W5</b></td><td>Zombie labelling to match the real population</td><td>The rule labels 198 SKUs; Google Ads reports 12.7% of the catalogue as zombie and 8,139 products under 100 impressions in 30 days</td><td>Ray</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W6</b></td><td>First two conversational attributes</td><td>item_group_title and variant_option — structural, no copy sign-off, and 16,720 variant families are already resolved in the feed</td><td>Ray / Steven</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W7</b></td><td>Category depth beyond four levels</td><td>The website breadcrumb scrape is live; nothing in the tree reaches five levels against a 30–40% industry standard</td><td>Ray + SEO</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W8</b></td><td>Size where Google requires it</td><td>8,489 products are missing size where Google requires it; separately, 5,603 carry a size in the title but not in the size field — a mapping job, not new data</td><td>Ezgi</td><td><span class="pill p-prog">Medium</span></td></tr>
+        <tr><td><b>W9</b></td><td>Put a control group on seasonal tests</td><td>Both Christmas batches read −46% because they were measured to 22 January with nothing to compare against</td><td>Ray</td><td><span class="pill p-open">Low</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Three things we need from Hobbycraft</h4>
+        <p>Each unblocks work that is already scoped and waiting &mdash; none needs new budget.</p>
+        <p style="margin-top:12px;font-size:13px"><b>1. GA access to extract the bestseller threshold.</b> Open since May. It unblocks custom_label_2, which has carried 2020 values ever since.<br>
+        <b>2. The 2027 trading calendar.</b> Keyword batches need three weeks' lead; the calendar is what lets us be early rather than in-month.<br>
+        <b>3. An introduction to the new SEO manager.</b> Category depth and the PLP project are the same conversation, and W7 waits on it.</p>
+      </div>
+      <div class="card">
+        <h4>Sequencing logic</h4>
+        <p>W1, W2 and W4 come first because none is blocked on anybody: the keyword pass, the highlight rule and the title engine all run on part of the catalogue already. They are deployment, not development.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">W3 and W7 are chased in parallel as client-side dependencies. Everything structural lands in October &mdash; once Black Friday opens, nothing architectural moves until January.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 09 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Google conversational attributes</h2><p>Six attributes built for AI assistants. None is in the Hobbycraft feed today &mdash; and two of them need no new content at all.</p></div></div>
+<section>
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Six fields an AI assistant can answer a shopper from, rather than guessing from a description.</p>
+    <div class="note rv in" style="margin-top:24px"><b>Submission status is read from the live feed</b> &mdash; present means the field carries real values on real products, not that the column exists.</div>
+    <div class="agent rv in">
+      <div class="agent-l">
+        <h4>A Hobbycraft customer asks an AI assistant…</h4>
+        <p>Select a question.</p>
+        <div class="qs" id="qs" role="tablist">
+          <button class="q active" role="tab" data-k="qa">"Will this blade fit my Cricut Maker?"</button>
+          <button class="q" role="tab" data-k="variant">"Do you have this yarn in aran weight, in cream?"</button>
+          <button class="q" role="tab" data-k="group">"What's the difference between the Maker 3 and the Explore 3?"</button>
+          <button class="q" role="tab" data-k="related">"What else do I need to start machine embroidery?"</button>
+          <button class="q" role="tab" data-k="pop">"What's your best-selling acrylic paint set?"</button>
+          <button class="q" role="tab" data-k="doc">"Can I see the pattern instructions?"</button>
+        </div>
+      </div>
+      <div class="agent-r">
+        <div class="ar-head">Attribute that answers it</div>
+        <div id="panel"></div>
+      </div>
+    </div>
+    <div class="tbl-wrap rv in" style="margin-top:32px">
+      <table><thead><tr><th style="width:22%">Attribute</th><th style="width:13%">In the feed</th><th style="width:17%">Content needed</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><b>item_group_title</b></td><td><span class="pill p-open">—</span></td><td>None — derived</td><td>Not submitted. 16,720 variant families already resolved; this names each one cleanly. The cheapest of the six</td></tr>
+        <tr><td><b>variant_option</b></td><td><span class="pill p-open">—</span></td><td>None — derived</td><td>Not submitted. Colour is on 85.8% and size on 62.7% of SKUs; this restructures what is there as name/value pairs</td></tr>
+        <tr><td><b>popularity_rank</b></td><td><span class="pill p-open">—</span></td><td>GA / Ads data</td><td>Not submitted. Computable from Hobbycraft's own performance data — the same extract W3 needs</td></tr>
+        <tr><td><b>related_product</b></td><td><span class="pill p-open">—</span></td><td>Relationships</td><td>Not submitted. The mechanism for the kit-and-consumable pairing that defines craft retail</td></tr>
+        <tr><td><b>document_link</b></td><td><span class="pill p-open">—</span></td><td>Stable URLs</td><td>Not submitted. Patterns, instructions and material lists where permanent URLs already exist on site</td></tr>
+        <tr><td><b>question_and_answer</b></td><td><span class="pill p-open">—</span></td><td>Approved copy</td><td>Not submitted. Highest value and the only one carrying real governance risk — compatibility and quantity answers</td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Start with the two that need no content</h4>
+        <p><b>item_group_title</b> and <b>variant_option</b> are structural: they describe the catalogue rather than make a claim about a product, so neither needs copy sign-off and neither can be wrong in a way that costs anything.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Both are built from fields already in the feed. With 16,720 variant families and deep colour and size coverage, this is a configuration change on a build that is proven in production elsewhere in the portfolio.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>⚑ The governance flag — Q&amp;A copy</h4>
+        <p><b>question_and_answer</b> is the highest-value attribute and the highest-risk one for a craft retailer. "Will this fit my machine?" and "is this enough for a queen-size quilt?" are the two most-asked questions in the category, and a wrong answer at feed scale drives returns.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Proposal: draft from approved product-page copy only, nothing live without Hobbycraft's sign-off. The roadmap deliberately keeps structural attributes and claims attributes on separate tracks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 10 — VALUE DELIVERED ================= -->
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Value delivered</h2><p>Seven feeds, 24,464 live products, 153 rules &mdash; and 437.5 hours delivered against a 288-hour allowance.</p></div></div>
+<section class="band">
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">437.5</div><div class="l">Hours delivered in twelve months</div></div>
+      <div class="stat"><div class="n">177.5</div><div class="l">Of those, absorbed and not charged</div></div>
+      <div class="stat"><div class="n">153</div><div class="l">Live rules holding the catalogue</div></div>
+      <div class="stat"><div class="n">381</div><div class="l">Brands normalised in one feed</div></div>
+      <div class="stat"><div class="n">571</div><div class="l">New products absorbed per month</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The work that compounds</h4>
+        <p>Almost every mechanic on this account is a <b>rule</b>, not a one-off edit. A product arriving tomorrow gets a brand-led title, a category path 4.18 levels deep, a price band, a stock label and a promotional label without anyone touching it.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">That is what absorbs 571 new products a month, across seven feeds, without the retainer moving &mdash; and it is why the coverage gaps in chapter 05 are all batch work, never the automated layer.</p>
+      </div>
+      <div class="card">
+        <h4>The work that never appears as a win</h4>
+        <p>A meaningful share of any feed retainer goes on keeping things from breaking, and none of it produces an uplift number:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>GMC</b> disapproval sweeps</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>Seven feeds</b> kept in sync</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>Four scrapes</b> topping up the feed</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b>381 brands</b> of naming variance</div>
+        </div>
+        <p style="margin-top:12px;font-size:12px;color:var(--muted)">Twelve disapproval tasks, twelve category-mapping tasks and nineteen client calls in the last twelve months — the housekeeping that keeps 24,464 products approved.</p>
+      </div>
+    </div>
+    <div class="note rv in" style="margin-top:24px"><b>What the feed is carrying commercially.</b> In the last thirty days the Shopping catalogue returned <b>£1,375,637</b> in conversion value on <b>£127,674</b> of spend &mdash; a ROAS of <b>1,077%</b> at a £1.54 cost per acquisition, off 53.2 million impressions and 1.08 million clicks. Over the last year the account has spent <b>£1.36 million</b> through the same feeds. Every one of the gaps in chapter 05 sits on top of that base, not instead of it.</div>
+    <div class="int-note rv in">The 30-day ROAS block above is FeedHero's own Google Ads read, collected 24 Sep. <b>Do not quote the dashboard's 1-year ROAS of 462%</b> — its annual conversion value (£6.27m) reads low against twelve months at the current rate while annual spend is consistent, which points at the attribution window rather than performance. Spend and impressions are safe at year scale; conversion value is not. Also note 8,139 products took under 100 impressions in thirty days and 3,868 took over 100 with no conversion — the zombie story in W5, and a candidate for its own piece of work.</div>
+  </div>
+</section>
+
+<!-- ================= CH 11 — SPARK AI ENGINE (TACHYON) ================= -->
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Spark AI engine (Tachyon)</h2><p>Intent generation, description enrichment and visual attribute harvest &mdash; run against 811-character descriptions and a category tree four levels deep.</p></div></div>
+<section>
+  <div class="wrap">
+    <div class="flow rv in" style="margin-bottom:32px">
+      <div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Hobbycraft product data — title, the 811-character description, colour, size, brand, category, price.</p></div>
+      <div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>20–40 long-tail intent phrases per SKU, generated from attributes already in the feed.</p></div>
+      <div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description and product highlights — starting with the 13,278 SKUs that carry none.</p></div>
+    </div>
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Hobbycraft example — Pink and Gold Clay Beads</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">A real SKU from today's feed. Input: Pink · 68g · Jewellery Making &gt; Beads · £5.00 · six highlights, no keywords</p>
+        <p style="font-size:13px"><b>Title today (39 characters):</b><br>"Hobbycraft Pink and Gold Clay Beads 68g"</p>
+        <p style="margin-top:12px;font-size:13px"><b>Intent terms Tachyon would generate:</b><br>"clay beads for bracelet making" · "pink and gold polymer clay beads 68g" · "letter bead bracelet kit supplies" · "friendship bracelet beads for kids"</p>
+        <p style="margin-top:12px;font-size:12px;color:var(--muted)">20–40 generated per SKU, top 4–6 used. Note what the existing highlights already say — "Ideal for bracelet making", "Combine with letter beads, charms and more". The occasion and use-case language is on the product page; it is simply not in the title.</p>
+      </div>
+      <div class="card">
+        <h4>Why the visual harvest matters here</h4>
+        <p>Craft is a visual category where the feed's own words run out fast. <b>79.7%</b> of SKUs already carry two or more images and 25.9% carry five or more &mdash; the raw material for vision models is largely in place.</p>
+        <p style="margin-top:12px;font-size:13px">Vision models read those images for what a craft shopper actually needs: colour accuracy on a 1,000-shade thread range, pattern and finish on fabric, scale on a pack shot. <b>4,970 SKUs</b> carry only one image, which is where the harvest has least to work with and where the alt-image gap in the audit sits.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The highlight scrape has already shown what enrichment does here: where it has run, SKUs carry five or six well-formed benefit statements. Tachyon extends the same pattern to the half of the catalogue it has not reached.</p>
+      </div>
+    </div>
+    <div class="callout rv in"><h4>The through-line</h4><p>Every structural win on this account &mdash; required attributes at 100%, a category tree deeper than most retailers manage, seven feeds off one master, six years of rules still applying &mdash; is one pattern: <b>fuller, more decomposable data, applied as a rule not a task</b>. Keyword coverage, highlights and the conversational attributes are the next three steps on that same line.</p></div>
+  </div>
+</section>
+
+<footer class="close">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Thank you</div>
+    <h2>Questions?</h2>
+    <div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
+    <div class="contacts">
+      <div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+      <div class="ct"><b>Steven Opuni</b><span>Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+      <div class="ct"><b>FeedSpark support</b><span>Peak &amp; ad-hoc</span><a href="mailto:support@feedspark.com">support@feedspark.com</a></div>
+    </div>
+    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential&nbsp;</p>
+  </div>
+</footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ======== reveal ======== */
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ======== bars ======== */
+  var fills = document.querySelectorAll('.fill');
+  if('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.width=e.target.getAttribute('data-w')+'%';io3.unobserve(e.target)}})},{threshold:.4});
+    fills.forEach(function(el){io3.observe(el)});
+  } else fills.forEach(function(el){el.style.width=el.getAttribute('data-w')+'%'});
+
+  /* ======== topbar + progress ======== */
+  var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    tb.classList.toggle('show',y>420);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pg.style.width=(h>0?(y/h)*100:0)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
+    links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  /* ======== data-check toggle ======== */
+  document.getElementById('flagbtn').addEventListener('click',function(){
+    var on=this.getAttribute('aria-pressed')==='true';
+    this.setAttribute('aria-pressed',String(!on));
+    document.body.classList.toggle('hide-checks',on);
+  });
+
+  /* ======== agent panel ======== */
+  var DATA={
+    qa:{name:'Question and answer',code:'question_and_answer',
+      why:'Pre-answers what shoppers actually ask. In craft that is overwhelmingly compatibility and quantity: will this fit my machine, how much do I need, is this suitable for a beginner. The agent quotes Hobbycraft rather than inferring from a description.',
+      row:'<span class="c">// supplemental feed · Cricut Fine Point Blade</span>\n<span class="k">question_and_answer</span>:\n  "Which machines does this fit?":\n    "Maker 3, Maker, Explore 3, Explore Air 2."\n  "What can I cut with it?":\n    "Paper, card, vinyl, iron-on and thin acetate."',
+      note:'Not submitted. Highest value and highest governance risk — a wrong compatibility answer at feed scale drives returns. Draft from approved product-page copy only.'},
+    variant:{name:'Variant option',code:'variant_option',
+      why:'Names each property that separates one variant from another, so the agent can answer a weight-and-shade question instead of showing forty near-identical yarns and picking arbitrarily.',
+      row:'<span class="c">// colour is on 85.8% of SKUs, size on 62.7%</span>\n<span class="k">item_group_id</span>: 675322\n<span class="k">variant_option</span>:\n  Colour: Cream\n  Weight: Aran',
+      note:'Not submitted, but the data is already there — this restructures colour and size into name/value pairs. Structural, so no copy sign-off. One of the two to do first.'},
+    group:{name:'Item group title',code:'item_group_title',
+      why:'Gives a whole variant family one clean parent name, so the agent understands which products are siblings and which are genuinely different lines.',
+      row:'<span class="c">// 16,720 variant families already resolved in the feed</span>\n<span class="k">item_group_id</span>: 675322\n<span class="k">item_group_title</span>: Hobbycraft Clay Beads 68g\n<span class="k">title</span>: Hobbycraft Pink and Gold Clay Beads 68g',
+      note:'Not submitted. With 381 brands and 1,087 category paths, this is what stops a thread range reading as hundreds of unrelated products. The cheapest of the six.'},
+    related:{name:'Related product',code:'related_product',
+      why:'Declares relationships between SKUs — the machine and its blades, the pattern and its fabric, the embroidery hoop and its threads. Craft retail is consumables around a kit.',
+      row:'<span class="c">// relationship_type : identifier_type : identifier</span>\n<span class="k">related_product</span>:\n  often_bought_with:id:6753221000\n  often_bought_with:id:6848561006',
+      note:'Not submitted. Structural rather than claims-based, so it needs no copy sign-off — and in this category it is the single most natural fit of the six.'},
+    pop:{name:'Popularity rank',code:'popularity_rank',
+      why:'A percentile of how a product performs against Hobbycraft’s own inventory — an honest ranking signal handed straight to the agent, from data Hobbycraft already has.',
+      row:'<span class="c">// percentile within the catalogue</span>\n<span class="k">popularity_rank</span>: 96.4\n\n<span class="c">// computed from Hobbycraft’s own performance data</span>',
+      note:'Not submitted. Needs the same GA extract as the bestseller label in W3, so the two should be asked for together rather than twice.'},
+    doc:{name:'Document link',code:'document_link',
+      why:'Points the agent at authoritative pages — pattern instructions, material lists, machine manuals — so the model can cite something real rather than paraphrase.',
+      row:'<span class="c">// comma-separated for multiple documents</span>\n<span class="k">document_link</span>:\n  https://www.hobbycraft.co.uk/pattern-instructions/',
+      note:'Not submitted. Needs stable public URLs per document — worth auditing what already exists on site before scoping, since patterns and instructions are published already.'}
+  };
+  var panel=document.getElementById('panel');
+  function render(k){
+    var d=DATA[k];
+    panel.innerHTML='<div class="fade-swap"><div class="attr-name">'+d.name+'</div><div class="attr-code">['+d.code+']</div><div class="attr-why">'+d.why+'</div><div class="feedrow">'+d.row+'</div><div class="attr-note">'+d.note+'</div></div>';
+  }
+  document.getElementById('qs').addEventListener('click',function(e){
+    var b=e.target.closest('.q');if(!b)return;
+    this.querySelectorAll('.q').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active');render(b.getAttribute('data-k'));
+  });
+  render('qa');
+
+})();
+</script>
+
+
+</body></html>

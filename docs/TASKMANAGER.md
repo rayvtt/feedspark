@@ -605,6 +605,70 @@ Three rules keep it from becoming a number that quietly went missing:
 3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
    that card exists to answer; this toggle governs the chart below it and nothing else.
 
+### The legend's percentages add up to 100
+
+> Ray, 23 Sep 2026, ringing the right-hand column: *"This percentage number here should always
+> accumulate to 100%, if that makes sense. It makes more sense to show that. Don't mention the
+> percentage billable. The top two rows, billable and non-billable, are good enough."*
+
+That column used to be each row's **own billable ratio** — twelve unrelated numbers under a
+`% billable` head, none of which could be added to anything, answering a question the two head
+rows directly above it already answer. It is now **the row's share of what the chart draws**, which
+is what a legend beside a chart is actually asked.
+
+**The base is the sum of these rows**, not the view's total hours, because that is the only figure
+they are guaranteed to add to: the tail is already folded into *Other (N more)* carrying its hours,
+a series put away is already out of `mv()`, and hidden untagged rows are already out of the
+population. Any of those would otherwise leave a column stopping short of 100 with nothing on
+screen saying why.
+
+The head says which base it is on — `% of hours`, or `% of billable` / `% of non-billable` when a
+series is put away. On a **tag split** it reads `% of tagged`, because a task can carry several
+tags: those rows count some hours twice, so they add to 100% of *themselves*, not of the book, and
+the column's tooltip says so rather than quietly meaning two different things on two dimensions.
+
+Each row is rounded to **its own true share**, so twelve of them can read 99.8 rather than a flat
+100. That is deliberate: nudging a row to force an exact total would put the legend a decimal away
+from the percentage the donut itself draws, and a visible disagreement between two numbers for one
+slice is worse than a column reading 99.8. (`check_tmviews` allows N×0.05 of drift and asserts the
+legend and the ring print the *same* share for every slice.)
+
+### What is inside "Other"
+
+> Ray, 24 Sep 2026, ringing the fold on a twelve-group Schuh donut: *"When hovering over the
+> grouped Task, for example, it should display a pop-up of 10 tasks names that sit under Other."*
+
+The fold is the one mark on the chart whose name is a **count rather than a thing** — 201.5 h and
+35% of the ring, labelled *Other (213 more)*. It is therefore the mark a reader most needs to open,
+and it was the only one with nothing behind it: `groupBy` summed the tail and threw the tail away.
+
+It now keeps the tail's own sub-groups as `members`. Hovering the fold — its **legend row** or its
+**mark** — opens ten names, biggest first, each with its hours, and a `+ N more` line carrying
+whatever is left.
+
+Four things worth knowing:
+
+- **Ranked by the measure the chart is drawing**, not by raw hours. On a billable-only donut a list
+  ranked by total hours would put the names in an order the ring contradicts.
+- **`rest` is already sorted** when the cut is made, so the first ten *are* the biggest ten — no
+  second sort that could rank them differently from the chart they came off.
+- **The remainder is counted, not dropped.** A list that stops at ten without saying so is a fold
+  inside a fold.
+- **Sub-groups, not rows.** A surface wants the names and their hours; holding the raw rows of a
+  20,000-task tail to print ten names would be paying for the whole book to answer a tooltip.
+
+One builder feeds the legend row and the mark, so the rail and the ring can never name a different
+ten. The pop-up may sit **above** the cursor when a ten-row list would otherwise run off the bottom
+of the window.
+
+**The trap this shipped with, and why only a rendered test caught it.** `data-t` is a
+double-quoted attribute that the tooltip reads back with `getAttribute` and parses as HTML — so one
+double quote in the pop-up's own markup closes the attribute and spills the rest of the mark into
+the page. It did exactly that: every donut path broke apart and its `d="M215.99 48.31A119…"`
+printed as body text, while every string in the source still read correctly. The pop-up's markup
+uses single-quoted attributes, and `check_tmviews` asserts the donut still has its paths and that
+no raw SVG source is printing as page text.
+
 ### One row, three menus
 
 > Ray, 23 Sep 2026, counting the controls on the chart card: *"you see how many button there are
@@ -794,23 +858,88 @@ what a task was.
 ## Two traps in the source, handled in the sync
 
 - **`from_date` is not applied.** Verified 16 Sep 2026: a task list asked for `2026-07-01` came
-  back with February rows; a ticket pull asked for `2026-08-01` returned 2024 threads. The window
-  is applied in `packMarket` / `packQueue` and nowhere else.
-- **Pulls are newest-first and capped.** A market whose deepest row starts *after* the window
-  opens did not reach back far enough, and reading that as a whole year would overstate every
-  total. It is stored `full: false`, shown as **partial** in the coverage drawer, and contributes
-  the rows it does have.
+  back with February rows; a ticket pull asked for `2026-08-01` returned 2024 threads. Re-verified
+  1 Oct 2026: a list asked from `2026-09-25` came back with 110 of its 120 rows older than that.
+  The window is applied in `assembleBook`, when the book is served, and nowhere else.
+- **Pulls are newest-first and capped by `limit`.** That cap is the only real depth control, which
+  is why `full` is read off the pull itself — the server returning *fewer* rows than were asked for
+  means it ran out of history. A pull that filled its limit is stored `full: false`, shown as
+  **partial** in the coverage drawer, and contributes the rows it does have.
 
 `0000-00-00` is **undated**: counted in the totals, in no month, and the page says so. Tickets are
-windowed by **last activity**, the same twelve months as the tasks, for every client alike. And
+windowed by **last activity**, on the same window as the tasks, for every client alike. And
 what has not been read yet is **absent, not zero** — the source line says how many markets the
 book holds and how stale the oldest read is.
+
+## All time, not twelve months
+
+> Ray, 1 Oct 2026: *"can you check if hours can be pulled from 'all time' not just from 2025?"*
+
+It can, and it costs nothing extra. **The twelve months were ours, never the reports database's.**
+`from_date` is ignored, rows arrive newest-first, and the only limit is `limit` — so a market's
+whole history comes back in the same *one* call. Measured against the live book the day he asked:
+
+| Market | Rows, all time | Reaches back to |
+|---|---|---|
+| the busiest market in the book | 3,042 | Feb 2018 |
+| the next | 1,779 | Mar 2017 |
+| the next | 1,424 | Jul 2022 |
+
+So the pull now asks for everything (`bookWindow(now, 0)`, `BOOK_PULL_LIMIT` 1,600 → 4,000,
+`BOOK_ROW_CAP` 1,200 → 4,000) and **the window became a reading choice**, applied in `assembleBook`
+when the book is served. One stored market answers every window the page offers; the rotation, the
+subrequest budget and the one-MCP-call-per-market cost are all unchanged.
+
+`GET /api/taskmanager?win=12|24|all` serves it, and a **Window** control sits on the source line
+beside the dates it changes. It is a **server read**, not a filter on rows already in hand — all
+time is roughly five times the book, and loading that on every visit to answer a question nobody
+asked would make the page slower for everyone. So:
+
+- the window is decided **before the first fetch** (a `?win=` link, else this device's own pick),
+  so all time loads once rather than twelve months and then a reload;
+- changing it refetches, and the pick is remembered **per device** like every other reading
+  preference here;
+- a **refused** refetch rolls the control back, because leaving "All time" selected over twelve
+  months of rows is the page lying about what it is showing;
+- 🔗 Link carries `?win=`, since a reading over all time is not the same reading.
+
+Two honesty flags come with it. A market last read **before** the window widened holds only its own
+span until its next turn in the rotation (about twelve hours), so the source line says *"N not read
+this far back yet"* rather than drawing a short line as though the work had stopped — that is
+`coverage[].from` against the view, and `holds` (the later of a record's floor and its oldest stored
+row) is what the drawer prints. And an unmeasured stretch is never carried flat.
+
+### "44 of 39 markets read"
+
+Ray's screenshot of the same sentence, the same day. Both numbers were right and they were answering
+different questions: `read` is every market the book **holds** a record for, while the roster is
+rebuilt from the live client master on every pull and carries only the markets booking hours **this
+cycle** (`allowance > 0 || used > 0`). A market whose cycle rolled over to zero with no block leaves
+the roster while its history stays in the book — five of them, that day.
+
+The denominator is now the **union** of the two, so the read count can never be the larger number
+again, and the markets the roster no longer carries are **counted and named** (`dropped` → *"N no
+longer booking hours"*) rather than quietly inflating one side of it. Their past hours are real and
+are still in every chart, which is exactly why they are not thrown away.
+
+Found alongside it, pre-existing: `apply()` never touched the source line, so **⟳ Sync more** — a
+button whose entire purpose is to move *"N of M markets read"* — left that sentence stale. Every
+path that replaces the book now goes through `refresh()` (`srcLine()` + `apply()`); typing still
+only calls `apply()`, since rebuilding that row mid-keystroke would replace the window control under
+the cursor. `srcLine()` therefore owns the sync button's busy state rather than a node reference a
+re-render detaches.
+
+Harness: `tools/test_reporttasks.mjs` (the windows, the depth read off the pull, one store answering
+both windows, the union denominator) and `tools/check_tmwindow.js` (Playwright, presync — the
+control painted on the source line at 1440px and 390px, the window named on the first fetch, a
+re-read that really changes the rows, the rollback, the remembered pick, and the sync moving the
+sentence it exists to move).
 
 ## Files
 
 | File | Role |
 |---|---|
-| `cloudflare/feedspark-deck/src/taskbook.js` | pure: the grammar (`parseQuery`, `matchTask`, `matchTicket`), the aggregation (`summarise`, `groupBy`, `ticketStats`), and the book store (`bookWindow`, `packMarket`, `packQueue`, `bookPlan`, `queuePlan`, `rosterOf`, `assembleBook`, `bookHealth`) |
+| `cloudflare/feedspark-deck/src/taskbook.js` | pure: the grammar (`parseQuery`, `matchTask`, `matchTicket`), the aggregation (`summarise`, `groupBy`, `ticketStats`), and the book store (`bookWindow`, `bookMonthsOf`, `inBookWindow`, `packMarket`, `packQueue`, `bookPlan`, `queuePlan`, `rosterOf`, `assembleBook`, `bookHealth`) |
 | `worker.js › tmBookPull` | the I/O: one firing's pulls into KV, on the shared MCP session |
 | `worker.js › GET /api/taskmanager` | the scoped read, and `?sync=N` for the owner |
 | `docs/FeedSpark_TaskManager.html` | the page |
@@ -924,6 +1053,145 @@ under 8% as flat.
 Client decks and the embedded Feed Chat frame are skipped — the first because this is internal
 commercial data, the second because a popover inside a small iframe would be clipped.
 
+## Show the calculation (28 Sep 2026)
+
+> Ray, circling the **used** figure on a brand dossier: *"actually i dont understand how [it] was
+> calculated"* → *"maybe show calculation when hover that number on brand dossier"*
+
+He is right to distrust it. A brand's **used**, **block** and **balance** are three *independent*
+sums across its markets, each stated by the Task Manager — **not one derived from another**. So two
+things can be true at once and look like an error:
+
+* a brand reads **more hours used than its block allows**, because some of those hours sit on a
+  market carrying **no block at all** — the used total and the block are not measuring the same
+  set of markets;
+* **block − used does not give the balance**, because the balance already counts the hours carried
+  in from the previous cycle.
+
+`hoursSplit(rec)` (`src/taskbook.js`, twinned in `docs/hours_widget.html`, exported as
+`window.FCCHours.split`) adds the markets up in front of the reader:
+
+| | |
+|---|---|
+| `rows` | one per market — used, block, balance — **biggest user first**, so the sum reads in the order that matters |
+| `used` / `allowance` / `balance` | what the **rows** come to |
+| `stated` | what the record's own headline says |
+| `agrees` | whether the two match, per figure |
+| `noBlock` | the markets carrying no allowance, and the hours sitting on them |
+
+Three rules, each one a way the breakdown could have quietly lied:
+
+1. **The rows are the sum.** When the record's headline is something the rows cannot reproduce — a
+   market the index has not re-read since — `agrees` says so and the card prints the row total with
+   a note, rather than restating a figure nobody on screen can check.
+2. **No rows, no breakdown.** A record the Task Manager index has not re-read since this shipped
+   keeps its plain caption. A fabricated breakdown would be worse than none.
+3. **The balance is never presented as block − used**, because it is not that subtraction.
+
+### Getting the rows to the page
+
+`tm:<client>` always held the per-market rows; `tmidx` held only the summary. `/api/hours` serves
+**every** brand from that one index key, so fetching `tm:<client>` per brand to answer a hover would
+turn one KV get into forty. The rows therefore ride the index itself (`mk`) — the whole estate is
+~70 markets at a few dozen bytes each. `tmStore`'s quiet-firing shortcut gained one extra condition:
+an entry is rewritten when it has **no** `mk` even though its signature has not moved, or a brand
+whose figures never change would never gain its breakdown.
+
+### On the dossier
+
+The two caption figures under the retainer meter **are** the trigger. Hover opens it, focus opens it
+for the keyboard, and a click **pins** it — a phone has no hover. Closing it lets the trigger's focus
+go as well: `:focus-within` holds the card open on its own, so dropping the class alone left it on
+screen and made Esc read as doing nothing. Esc is taken in **capture** and stopped, so dismissing the
+tooltip never closes the dossier underneath it.
+
+`tools/check_hrssplit.js` (Playwright, presync) renders the real card at 1440px and 390px and
+asserts what a source read cannot see: it is **not painted** at rest — read off the computed paint,
+never the `hidden` property, which is the mistake that shipped three menus open on the Task Manager
+chart card; every edge is inside the viewport; it owns its own pixels rather than the card beneath
+showing through; the rows and the footer total; pin, outside-click and Esc; and the plain caption on
+a record with no rows.
+
+## What the hours moved (28 Sep 2026)
+
+> Ray, on the chart card: *"find more way even making data dissectment even more useful —
+> especially if im trying to get charts for procurement heads/ senior executives to defend
+> feedspark services."*
+
+The card answered an **internal** question — where our hours went, billable against
+non-billable — on a screen being used for an **external** argument. A procurement head does not
+buy hours; the first thing they ask of a row of hours is what it produced, and no amount of
+re-cutting hours can answer that.
+
+So ⚙ **Display → What moved** hangs the brand's **outcome** under the hours, on the same
+months: **Golden Record score**, **Content quality** or **AI-readiness**. Two plots, one calendar,
+each on its own axis — never a dual axis.
+
+### What it refuses to do
+
+| | |
+|---|---|
+| **No calendar** | It draws only where the hours chart itself is over time (Show as → Over time, or Split by → Month). On a donut there is no shared axis to hang it under, and the control says so. |
+| **More than one account** | A score averaged across two brands is not a number. One account, or it says to pick one. |
+| **An unmeasured month** | A gap, never a zero and never carried flat. The scan history only began in Sep 2026, so most windows have holes; joining across one would show a client a trend through months nobody measured. Each run of measured months is its own path. |
+| **A blank panel** | "No movement" and "nobody has scanned this brand" are opposite findings, so the empty state names which — and tells a metric nobody has analysed apart from a brand with no history at all. |
+
+### Where the numbers come from
+
+`GET /api/outcomes?client=&months=&end=` reads each of the brand's Google Shopping markets through
+**labelguard's own `histSeries`**, re-scored against the brand's **current** scoring profile — the
+same call `/golden` and Leadership's portfolio trend make, so the figure a buyer is shown is the
+figure the audit page shows. `src/outcomes.js` then only reduces:
+
+* **a month's value is its CLOSE** — the last reading in it, not a mean of its days. A mean smears
+  the step a piece of work produced across the month it happened in, which is the movement being
+  credited;
+* **a brand is the mean of the markets MEASURED that month**, and `n` travels with every value —
+  "88.4 across 3 markets" and "88.4" are different claims, so the caption always states coverage.
+
+Meta (`-fb`) feeds are excluded: they carry none of these readings. The route is scoped per signin
+like every other client-data route.
+
+### Into the deck
+
+These go straight into a client deck, so **⬇ PNG stacks both panels** at the same width, in the
+same column, with the footer naming the second reading and the account. Both panels share one
+column on screen (`.cmain`) for the same reason — a full-width outcome strip beside a 250px legend
+would sit on a different x-scale, and the month under a point would not be the month above it.
+
+### The cuts a board asks for, and the denominator
+
+**Split by → Quarter** and **Week** join Month. All three are **time dims**: they read in **time
+order**, not biggest-first, and they **never fold a tail into "Other"** — a missing quarter in the
+middle of a year is a hole in the argument, not a tidy-up. The week is **ISO-8601** (a date's week
+is the one holding its Thursday), because the naive `dayOfYear / 7` form files 1 January under a
+year it does not belong to, and a delivery week in the wrong year is a wrong column.
+
+Under the verdict, the **scale line** answers the thing a bare hour count cannot — Ray's own
+example, *"886 hours maintained 47k SKUs across 28 markets"*. Procurement prices a service per
+unit, so the hours travel with their denominators:
+
+| | |
+|---|---|
+| hours delivered, pieces of work | counted from the chart's own population |
+| markets, people | the distinct client×market pairs and owners carrying work in this view |
+| **products in the feed** | the catalogue each market was last **scanned** at, riding the same `/api/outcomes` record — and it states **how many of the brand's markets that covers**, because a total over three of twenty-eight is a different claim |
+
+The catalogue appears for **one account** (the only scope where "products in the feed" means
+anything) and the fetch follows the **account**, not the What-moved toggle — a scale line that only
+appeared when a second, unrelated control was on would be a hidden dependency. A brand nobody has
+scanned simply has no products figure; it never reads as zero. The line is `data-no-collapse`: it is
+the **scale of** the number above it, not an explanation of it.
+
+### QA
+
+`tools/test_outcomes.mjs` (qa_gate, presync, `validate.yml`) pins the month walk across a year end
+and a 28-day February, the close-not-mean rule, the absent-not-zero rule, brand coverage, and the
+route/page wiring. `tools/check_outcomes.js` (Playwright, presync) renders the real page at 1440px
+and 390px: not painted until asked for — read off the **paint**, never the `hidden` property —
+both refusals stated, the gap left unjoined, the two panels in one column, and the export proved by
+**pressing the button and measuring the PNG**, which is taller with the panel on.
+
 ## No client hours in git
 
 Unchanged from the lanes above. `hours_widget.html` bakes no figures and names no clients; its only
@@ -933,7 +1201,7 @@ asserts both.
 ## QA
 
 `tools/test_hoursbadge.mjs` (qa_gate, presync, `validate.yml`) pins the trail maths, the posture
-states, the trend's refusals, the wiring, and — because the widget cannot import the module — lifts
+states, the trend's refusals, the breakdown arithmetic, the wiring, and — because the widget cannot import the module — lifts
 its hand-written engine twin out by name at `/* FCC-HOURS:ENGINE-END */` and runs it against the
 **same assertion table** as `src/taskbook.js`. `tools/check_mobile.js` renders the widget with every
 other injected layer at 390px.
@@ -1094,7 +1362,7 @@ Two lanes now read the same tasks, and left alone they would fight over one reco
 | Lane | Look-back | Why it exists |
 |---|---|---|
 | `tmPull` | 21 days (`TM_TASK_DAYS`) | a brief raised this morning shows hours within the hour |
-| `tmBookPull` | 12 months (`TM_BOOK_DAYS`) | even coverage of the whole estate |
+| `tmBookPull` | all time (`bookWindow(now, 0)`) | even coverage of the whole estate |
 
 Whichever fired last would win, and the narrow lane would keep shrinking a ref back to just its
 recent tasks — a ticket's hours would flicker between the truth and a fraction of it every half

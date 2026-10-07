@@ -53,6 +53,14 @@ export const STATE_NS = {
   // the task is in, so 'field' scoping is what keeps a scoped signin inside their own clients.
   //   taskId -> {client, tags:[slug], by, at}
   tmtags:      'field',
+  // CALL WRAP-UPS (Ray, 24 Sep 2026: "After a call, an action is added to the project plan; I also
+  // need to send a wrap-up so the system can help automate that"). Whether a call has been wrapped
+  // is a fact about the ACCOUNT, not about one person's screen — if Steven sends Hobbycraft's
+  // wrap-up, Ray's rail must stop asking for it, or the red prompt trains everyone to ignore it.
+  // Keyed on the call's own Gmail message id (the `mid` every action of that call carries), so the
+  // value has to name its client for a scoped signin to stay inside their own accounts.
+  //   mid -> {client, at, by, to, n}   (n = how many actions went out, for the record)
+  callwrap:    'field',
   // TYPE OVERRIDES (Ray, 17 Sep 2026: "Can Type also be edited on FCC and made changed data sticky
   // … because the daily report fetched from the MCP will actually overwrite?"). He is right: `cat`
   // is DERIVED from the title in normTask and PACKED INTO the KV record, so every tmBookPull

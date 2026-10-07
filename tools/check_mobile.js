@@ -23,8 +23,27 @@ const SHOTS = process.argv.indexOf('--shots') >= 0 ? process.argv[process.argv.i
 // pages whose control scale has been set — add a page here in the PR that tidies it
 const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
+// /roas reads its book from /api/roas (KV, nothing committed) — the synthetic stub in
+// tools/roas_stub.js lets the scorecards, trend, movers and drill table render so the overflow
+// and parity rules actually meet them
+const ROAS_STUB = require('./roas_stub.js').stubLines();
+// /rules + /stock read FeedHero's rule report from KV — tools/rules_stub.js pushes a synthetic rule
+// list through the real engine so the bars, findings, tables and coverage matrix render
+const RULES_STUB = require('./rules_stub.js').stubLines();
+// /catalog streams a feed, a master file and FeedHero's Google Ads read, and loads four engines by
+// fetch — tools/catalog_stub.js hands over a SYNTHETIC set (behind a guard on the page's file name,
+// so no other page is served an engine it never asked for) so the table, charts and matrix render
+const CATALOG_STUB = require('./catalog_stub.js').stubLines();
+// /aivis reads stored AI answers from KV — tools/aivis_stub.js hands over a SYNTHETIC book (behind a guard on the
+// page's file name) pushed through the real reading engine, so the grid, charts and history render
+const AIVIS_STUB = require('./aivis_stub.js').stubLines();
+// a page that loads the shared stylesheet (/design/fcc.css) is opened from file:// here, where
+// that URL resolves to nothing — inline the SAME slice the worker serves so the page is
+// checked as it looks live
+const FCC_CSS = (() => { const s = fs.readFileSync(path.join(__dirname, '..', 'docs', 'FeedSpark_Design.html'), 'utf8'); const a = s.indexOf('/* FCC-DESIGN:START */'), b = s.indexOf('/* FCC-DESIGN:END */'); return a >= 0 && b > a ? s.slice(a, b + '/* FCC-DESIGN:END */'.length) : ''; })();
+const withFccCss = (h) => h.split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
 const PAGES = fs.readdirSync(D).filter((f) => /^FeedSpark_.*\.html$/.test(f) && !/Strategy_Review|Deck/.test(f))
   .filter((f) => fs.readFileSync(path.join(D, f), 'utf8').indexOf('tb-modules') >= 0 || f === 'FeedSpark_Command_Center.html');
 // FS Task Manager reads its book from /api/taskmanager (the worker pulls it out of the reports
@@ -54,6 +73,10 @@ const TMDATA = (() => {
 })();
 const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
+${CATALOG_STUB}
+${AIVIS_STUB}
+${ROAS_STUB}
+${RULES_STUB}
  if(url.indexOf('/api/presence')>=0)return j({ok:true,me:'ray@feedspark.com',owner:true,now:Date.now(),users:[{e:'ray@feedspark.com',n:'Ray',p:'/workflow',t:Date.now()},{e:'steven@feedspark.com',n:'Steven',p:'/',t:Date.now()}],roster:[]});
  if(url.indexOf('/api/access')>=0)return j({ok:true,email:'ray@feedspark.com',owner:true,clients:null,modules:null});
  if(url.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:1,warn:2,pt:{crit:0,warn:1},gr:{crit:0,warn:0},clients:{}});
@@ -100,7 +123,7 @@ const COLLECT = `(() => {
   for (const f of PAGES) {
     const name = f.replace('FeedSpark_', '').replace('.html', '');
     const src = fs.readFileSync(path.join(D, f), 'utf8');
-    const html = src.indexOf('</body>') >= 0 ? src.replace('</body>', WIDGETS + '\n</body>') : src + '\n' + WIDGETS;
+    const html = withFccCss(src.indexOf('</body>') >= 0 ? src.replace('</body>', WIDGETS + '\n</body>') : src + '\n' + WIDGETS);
     const tmp = path.join(os.tmpdir(), '_mobcheck_' + f); fs.writeFileSync(tmp, html);
     const res = {};
     for (const mode of ['desk', 'mob']) {

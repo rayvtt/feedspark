@@ -84,6 +84,16 @@ echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
 node tools/test_i18n.mjs >/dev/null
 echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 
+echo "── validating: AI transformation roadmap (shape + progress maths + opt-in gate + no £ on the page)"
+node tools/test_transform.mjs >/dev/null
+echo "   ✓ every month gated, late = earlier month unclosed, /api/transform opt-in, no commercial figures"
+echo "── validating: FeedSpark design guidelines (/design + /design/fcc.css)"
+node tools/test_design.mjs >/dev/null
+echo "   ✓ one stylesheet, brand tokens + dark values, the audit legend, served as text/css, linked"
+echo "── validating: feedspark.com redesign mockup (/website)"
+node tools/test_website.mjs >/dev/null
+echo "   ✓ served as a document, no client names or recorded figures, every pin has its note"
+
 echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
 node tools/test_tm.mjs >/dev/null
 echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
@@ -91,6 +101,30 @@ echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Le
 echo "── validating: Task Manager AUTOMATIC sync (MCP transport + rotation + ticket hours + lifted tmPull)"
 node tools/test_tmmcp.mjs >/dev/null
 echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
+
+echo "── validating: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster)"
+node tools/test_roas.mjs >/dev/null
+echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+
+echo "── validating: Rules + Stock management (FeedHero rule_report — classifier, findings, lifted rulesPull)"
+node tools/test_rules.mjs >/dev/null
+echo "   ✓ families, stock mechanisms, cut-offs from names, hygiene + stock findings, pull/rotation/cmpid guard, wiring, pages hold"
+
+echo "── validating: Hero sizes + held-back products (size census, guides, examples, worker sanitisers, the master → feed join)"
+node tools/test_herosize.mjs >/dev/null
+echo "   ✓ size keys, product types, census, measure, examples, guide resolution, document import, sanitisers, held-back join, wiring hold"
+
+echo "── validating: Stock levers — BAU ↔ SALE (readings off each market's rules, off plan, periods, the switch list, the worker's half)"
+node tools/test_stocklevers.mjs >/dev/null
+echo "   ✓ readings, off plan, modes + periods, switch list + brief, suggestions, keep-as-it-runs, summary, sanitisers, seed, wiring hold"
+
+echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
+node tools/test_catalog.mjs >/dev/null
+echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
+
+echo "── validating: AI visibility (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)"
+node tools/test_aivis.mjs >/dev/null
+echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
@@ -109,6 +143,10 @@ echo "── validating: FS Task Manager (query grammar, billable split, page/en
 node tools/test_reporttasks.mjs >/dev/null
 echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
 
+echo "── validating: a bare reload does not blank the page (Task Manager controls, four brand pickers)"
+node tools/test_uistate.mjs >/dev/null
+echo "   ✓ URL param wins, else the device's last pick, else the page's own default — never blank"
+
 echo "── validating: the shipped panel (build log slide-over)"
 node tools/test_shipped.mjs >/dev/null
 echo "   ✓ silent on first run, announces only new merges, prompts to close the tab"
@@ -122,6 +160,7 @@ node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"
 
 echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine parity)"
+node tools/test_outcomes.mjs >/dev/null
 node tools/test_hoursbadge.mjs >/dev/null
 echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
 
@@ -129,10 +168,19 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
+echo "── validating: the call wrap-up (red prompt, tidy-up, draft on FCC or Gmail)"
+node tools/test_callwrap.mjs >/dev/null
+echo "   ✓ the email is built from what the AM left ticked, never from the raw parse"
+
 echo "── validating: one modal at a time, and none of them lands on an open rail"
 NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
 echo "   ✓ and a ticket modal measured against the open Playbook rail clears it at 1100–1500px"
+
+echo "── validating: the intake table (Task takes the slack, rows are one height)"
+NODE_PATH=$(npm root -g) node tools/test_wfintake.mjs >/dev/null
+echo "   ✓ every <col> is still a table column, Brief renders the width it declares"
+echo "   ✓ and a cut cell names what it hides — measured at 1131px and 1500px"
 
 echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null
@@ -154,9 +202,15 @@ echo "── validating: Golden Record snapshot in the dossier"
 node tools/test_goldensnap.mjs >/dev/null
 echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
 
+echo "── validating: output escaping — every esc() neutralises a quote (XSS)"
+node tools/test_escaping.mjs >/dev/null
 echo "── validating: one audit colour legend across every page"
 node tools/test_bands.mjs >/dev/null
 echo "   ✓ <70 red · 70–85 orange · 85–95 yellow · 95+ green on /golden, /feedlab, the dossier, the Playbook rail"
+
+echo "── validating: Golden Record score history (engine, worker wiring, the page's twin)"
+node tools/test_goldenhist.mjs >/dev/null
+echo "   ✓ one reading per real move, gaps stay gaps, re-scored to today's profile"
 
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
@@ -165,6 +219,11 @@ echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what
 echo "── validating: hero KPIs from the project plans"
 node tools/test_hero.mjs >/dev/null
 echo "   ✓ tracker gone; wfDate IS parseUKDate; overdue = the board's rule with the team's overlays"
+
+echo "── validating: the news digest's road to main"
+node tools/test_news.mjs >/dev/null
+node tools/check_news.js docs/news_digest.json --offline >/dev/null
+echo "   ✓ one gate for the Routine and the landing lane; the committed digest passes it; nothing pushes to main"
 
 echo "── validating: 🎬 Present — the one-pager played"
 node tools/test_present.mjs >/dev/null
@@ -187,6 +246,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
+  echo "── validating: the module row (one row below the bar, nothing lost, nothing denied on it)"
+  NODE_PATH=$(npm root -g) node tools/check_navrow.js || {
+    echo "✗ module-row tripwire failed — the menu wrapped, lost a module into neither the row nor More, or put one this signin may not open on screen"; exit 1; }
   echo "── validating: phone layout (every app page at 390px — one-row header, module bar, no overflow, desktop parity)"
   NODE_PATH=$(npm root -g) node tools/check_mobile.js || {
     echo "✗ phone tripwire failed — a page overflows sideways, hides a desktop control or lost its module bar"; exit 1; }
@@ -202,6 +264,15 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record per-rule waiver (one click sets a rule aside, the score re-analyses, undo restores)"
   NODE_PATH=$(npm root -g) node tools/check_grwaive.js || {
     echo "✗ Golden Record waiver tripwire failed — the 'Doesn't apply to <Brand>' button, the re-analysis, the undo or the client file regressed"; exit 1; }
+  echo "── validating: Golden Record score history (daily close + day-on-day bars, gaps, re-basing, client files)"
+  echo "── validating: Golden Record keywords (measured / absent / not measured, the dial vs the engine, → Brief)"
+  NODE_PATH=$(npm root -g) node tools/check_grkw.js || {
+    echo "✗ Golden Record keywords tripwire failed — a keyword state blurred, the dial disagreed with the engine, or the brief left the keyword family"; exit 1; }
+  NODE_PATH=$(npm root -g) node tools/check_grhist.js || {
+    echo "✗ Golden Record score-history tripwire failed — a deduction drew above the line, a gap drew flat, the profile stopped re-basing it, or a client file kept hover furniture"; exit 1; }
+  echo "── validating: Leadership › Golden Record portfolio trend (AM filter, shared calendar, gaps, the engine's own figures)"
+  NODE_PATH=$(npm root -g) node tools/check_leadgp.js || {
+    echo "✗ Leadership portfolio tripwire failed — a tile disagreed with the engine, a gap drew flat, the AM filter or the window regressed"; exit 1; }
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }
@@ -211,12 +282,50 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: KWCal client PDF — one click (no dialog), and the reported results are on it"
   NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs || {
     echo "✗ KWCal client-PDF tripwire failed — the print dialog came back, or a result went missing from the file"; exit 1; }
+  echo "── validating: KWCal Superdry board — sixteen focus themes, and a seeded scope that reports itself honestly"
+  NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs || {
+    echo "✗ KWCal Superdry tripwire failed — a seeded path is not in the live feed, a note quotes a count its scope cannot support, or a set scope reads as absent"; exit 1; }
   echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
   NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
     echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
+  echo "── validating: security headers render + SRI is enforced"
+  NODE_PATH=$(npm root -g) node tools/check_csp.js || {
+    echo "   ✗ security-headers / SRI tripwire FAILED — see node tools/check_csp.js"; exit 1; }
+
   echo "── validating: Task Manager chart card — one control row, three menus, leader labels, saved views"
+
   NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
     echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
+  echo "── validating: ROAS segment (picking one populates the markets in view; the band filter names what it hid)"
+  NODE_PATH=$(npm root -g) node tools/check_roasseg.js || {
+    echo "✗ ROAS segment tripwire failed — a picked segment left the table empty, the band filter hid markets silently, or a cut FeedHero has not set up read as an error"; exit 1; }
+  echo "── validating: the ROAS dashboard, modular (even cards, ⊞ Modules read off the paint, every card against the book, PNG / CSV / Excel / PDF)"
+  NODE_PATH=$(npm root -g) node tools/check_roasmods.js || {
+    echo "✗ ROAS modules tripwire failed — the cards went uneven, a hidden module still painted, a card disagreed with the book, or an export lost rows / its currency / its capture height"; exit 1; }
+  echo "── validating: /stock, evenly spaced for a client screen (six-tile band, full tile rows, one row height, a market named once)"
+  NODE_PATH=$(npm root -g) node tools/check_stockeven.js || {
+    echo "✗ stock-layout tripwire failed — the KPI band went ragged, a tile row stopped filling its card, a row grew taller for one button, a market was named twice in its run, or a finding painted its reason closed"; exit 1; }
+  echo "── validating: /stock hero sizes at the tier of PT picked (the tier control, a list set at a tier reaching the types under it)"
+  NODE_PATH=$(npm root -g) node tools/check_herotier.js || {
+    echo "✗ hero-tier tripwire failed — the tier control lost a tier or its count, a pick listed another tier's types, the pick was not remembered, a save wrote the wrong tier's key, or a finer type stopped reading its tier's list"; exit 1; }
+  echo "── validating: /stock stock levers, BAU ↔ SALE, driven (tiles, the plan, a period planned and switched, brief, copy, phone)"
+  NODE_PATH=$(npm root -g) node tools/check_stocklevers.js || {
+    echo "✗ stock-levers tripwire failed — the card lost a tile or a market, a save wrote the wrong key, a switch or brief stopped marking its step, or the phone layout scrolled sideways"; exit 1; }
+  echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
+  NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
+    echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }
+  echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
+  NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
+    echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
+  NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
+    echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
+  echo "── validating: the window the hours book is read over (12 / 24 / all time, and the counts in its sentence)"
+  NODE_PATH=$(npm root -g) node tools/check_tmwindow.js || {
+    echo "✗ book-window tripwire failed — the first fetch stopped naming the window, a re-read did not change the rows, a refusal mislabelled the book, or the source line went stale"; exit 1; }
+  echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
+  NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
+    echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }

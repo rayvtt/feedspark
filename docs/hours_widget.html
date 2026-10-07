@@ -194,6 +194,31 @@
     var pct = a ? Math.round(((b - a) / a) * 100) : 100;
     return { dir: pct > 8 ? 'up' : pct < -8 ? 'down' : 'flat', pct: pct, enough: true };
   }
+  /* The brand figures are SUMS ACROSS MARKETS, and the three of them are independent sums the
+     Task Manager states — not one derived from another (Ray, 28 Sep 2026: "i dont understand how
+     [the used figure] was calculated"). Identical to src/taskbook.js hoursSplit. */
+  function hoursSplit(rec) {
+    var r = rec || {};
+    var n2 = function (v) { return Math.round((Number(v) || 0) * 100) / 100; };
+    var rows = (Object.prototype.toString.call(r.mk) === '[object Array]' ? r.mk : []).map(function (m) {
+      var allowance = n2(m && m.allowance);
+      return { market: String((m && m.market) || '').replace(/^\s+|\s+$/g, '') || '\u2014',
+        used: n2(m && m.used), allowance: allowance, balance: n2(m && m.balance),
+        health: (m && m.health) || null, noBlock: !(allowance > 0) };
+    }).sort(function (a, b) { return (b.used - a.used) || (a.market < b.market ? -1 : a.market > b.market ? 1 : 0); });
+    var sum = function (k) { return n2(rows.reduce(function (t, x) { return t + x[k]; }, 0)); };
+    var used = sum('used'), allowance = sum('allowance'), balance = sum('balance');
+    var stated = { used: r.used == null ? null : n2(r.used),
+      allowance: r.allowance == null ? null : n2(r.allowance),
+      balance: r.balance == null ? null : n2(r.balance) };
+    var same = function (a, b) { return a == null || Math.abs(a - b) <= 0.011; };
+    var blockless = rows.filter(function (x) { return x.noBlock && x.used > 0; });
+    return { ok: rows.length > 0, n: rows.length, rows: rows, used: used, allowance: allowance,
+      balance: balance, stated: stated,
+      agrees: { used: same(stated.used, used), allowance: same(stated.allowance, allowance), balance: same(stated.balance, balance) },
+      noBlock: { n: blockless.length, used: n2(blockless.reduce(function (t, x) { return t + x.used; }, 0)),
+        markets: blockless.map(function (x) { return x.market; }) } };
+  }
   /* FCC-HOURS:ENGINE-END */
 
   // ---- data ------------------------------------------------------------------------------------
@@ -600,5 +625,5 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
   if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
-  window.FCCHours = { reload: load, decorate: decorate, state: hoursState, verdict: hoursVerdict, rec: recOf, dock: dockShow, docked: function () { return !!dockEl(); } };
+  window.FCCHours = { reload: load, decorate: decorate, state: hoursState, verdict: hoursVerdict, split: hoursSplit, rec: recOf, dock: dockShow, docked: function () { return !!dockEl(); } };
 })();</script>

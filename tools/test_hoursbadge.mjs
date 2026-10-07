@@ -256,5 +256,88 @@ ok(/portHours/.test(CC), "the dossier's portfolio band carries the hours inline 
 ok(/fcc-hours/.test(CC) && /fcc-hours/.test(WIDGET),
   'and refills when the hours land, rather than polling for them');
 
+// ---------------------------------------------------------------------------------------------
+// the calculation behind the figure (Ray, 28 Sep 2026)
+// ---------------------------------------------------------------------------------------------
+// "maybe show calculation when hover that number on brand dossier" — a brand's used / block /
+// balance are three INDEPENDENT sums across its markets, so block − used does not give the
+// balance and a brand can read more hours used than its block covers. The breakdown has to add
+// up in front of the reader or it is just another number to distrust.
+console.log('── the breakdown behind a brand figure');
+
+// the real shape that prompted the ask: two markets, one of them carrying no block at all
+const SPLIT_REC = { tracked: true, used: 45.5, allowance: 27, balance: -7.5, markets: 2, mk: [
+  { market: 'GB', allowance: 27, used: 28.75, balance: -7.5, health: 'negative' },
+  { market: 'IE', allowance: 0, used: 16.75, balance: 0, health: 'zero' },
+] };
+const sp = M.hoursSplit(SPLIT_REC);
+ok(sp.ok && sp.n === 2, 'both markets are in the breakdown');
+eq(sp.rows.map((r) => r.market), ['GB', 'IE'], 'biggest user first, so the sum reads in the order it matters');
+eq([sp.used, sp.allowance, sp.balance], [45.5, 27, -7.5],
+  'the rows add up to the brand figures the card shows');
+eq(sp.agrees, { used: true, allowance: true, balance: true },
+  'and the breakdown says so, rather than asking the reader to take the total on trust');
+ok(sp.noBlock.n === 1 && sp.noBlock.used === 16.75 && sp.noBlock.markets[0] === 'IE',
+  'the hours sitting on a market with NO block are named — that is why used can exceed the block');
+ok(sp.rows[1].noBlock === true && sp.rows[0].noBlock === false,
+  'a market with an allowance is never flagged as blockless');
+ok(sp.balance !== M.hoursSplit(SPLIT_REC).allowance - M.hoursSplit(SPLIT_REC).used,
+  'the balance is NOT block minus used on this record — the very confusion being explained');
+
+// a headline the rows cannot reproduce is reported, never quietly re-stated
+const drift = M.hoursSplit(Object.assign({}, SPLIT_REC, { used: 60 }));
+ok(!drift.agrees.used && drift.agrees.allowance,
+  'a used figure the markets do not add up to is flagged, and only that figure');
+eq(drift.used, 45.5, 'and the breakdown still reports what the ROWS come to, not the headline');
+
+// absence is absence
+ok(!M.hoursSplit({ tracked: true, used: 45.5 }).ok,
+  'a record with no per-market rows reports no breakdown rather than inventing one');
+ok(!M.hoursSplit(null).ok && M.hoursSplit(null).n === 0, 'and a missing record does not throw');
+eq(M.hoursSplit({ mk: [{ market: 'GB', used: 1.014, allowance: 0.004, balance: 0 }] }).rows[0],
+  { market: 'GB', used: 1.01, allowance: 0, balance: 0, health: null, noBlock: true },
+  'figures are rounded to the 2dp the store holds, and a rounding-to-zero block is blockless');
+
+const twinSplit = new Function('h1',
+  WIDGET.slice(A, B) + '\nreturn { hoursSplit };')(
+  (n) => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString()).hoursSplit;
+[SPLIT_REC, Object.assign({}, SPLIT_REC, { used: 60 }), { tracked: true, used: 4 }, {}, null,
+  { mk: [{ market: '', used: 2, allowance: 2, balance: 0 }, { market: 'GB', used: 2, allowance: 1, balance: 1 }] },
+].forEach((c, i) => eq(twinSplit(c), M.hoursSplit(c), 'parity: hoursSplit case ' + i));
+
+// the rows have to REACH the page: tmidx carries them, /api/hours serves them
+const WORKER = rd('cloudflare', 'feedspark-deck', 'src', 'worker.js');
+ok(/idx\[client\] = \{[^}]*mk: rec\.markets/.test(WORKER),
+  'tmStore writes the per-market rows onto the one-read index — /api/hours serves every brand '
+  + 'from that ONE key, so a per-brand fetch would turn one KV get into forty');
+ok(/idx\[client\]\.sig === sig && Array\.isArray\(idx\[client\]\.mk\)/.test(WORKER),
+  'and a record stored before the rows existed is rewritten even though its figures never moved, '
+  + 'or a quiet brand would never gain its breakdown');
+ok(/mk: r && Array\.isArray\(r\.mk\) \? r\.mk : null/.test(WORKER),
+  '/api/hours serves the rows, and null — never an empty list — when it has none');
+
+ok(/function hrsSplitCard/.test(CC) && /W\.split\?W\.split\(r\):null/.test(CC),
+  'the dossier draws the breakdown from the widget’s own engine, never a second calculation');
+ok(/if\(!sp\|\|!sp\.ok\) return ''/.test(CC),
+  'and renders NOTHING without the rows, so an unsynced brand keeps the plain caption');
+ok(/dzp-mx/.test(CC) && /class="dzp-mx" aria-expanded="false"/.test(CC),
+  'the figure itself is the trigger, and announces whether it is open');
+ok(/\.dzp-mcap:hover \+ \.dzp-split/.test(CC) && /\.dzp-mcap:focus-within \+ \.dzp-split/.test(CC)
+  && /\.dzp-split\.on/.test(CC),
+  'hover opens it, focus opens it for the keyboard, and a click pins it — a phone has no hover');
+ok(/balance is not block minus used/.test(CC),
+  'the card states outright that the balance is not the subtraction a reader would try');
+ok(/no block of /.test(CC), 'and names the hours booked against no block at all');
+ok(/hrsSplitShut\(\)\) e\.stopPropagation\(\)/.test(CC),
+  'Esc closes the breakdown BEFORE the dossier under it, rather than both at once');
+// NO CLIENT HOURS IN GIT — the rule the hours lane shipped with. The breakdown was written about
+// a real account, so its own code and comments are checked for that account's figures.
+const cut = (a, b) => CC.slice(CC.indexOf(a), CC.indexOf(b));
+const SPLITSRC = cut('/* SHOW THE CALCULATION', '[data-theme=dark] .dzp-split')
+  + cut('/* HOW THE TWO CAPTION FIGURES', 'function hrsSplitShut');
+ok(SPLITSRC.length > 2000 && !/\d+\.\d+ ?h|45\.5|28\.75|16\.75/.test(SPLITSRC),
+  'no client hours in git: the breakdown carries no real account\u2019s figures, not even as an example');
+ok(!/45\.5|28\.75|16\.75/.test(WIDGET), 'nor does the widget');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

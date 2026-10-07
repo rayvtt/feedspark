@@ -35,6 +35,9 @@ from lxml import html as LH
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_LABEL_POSITION, XL_TICK_MARK
+from pptx.enum.dml import MSO_THEME_COLOR
 from PIL import ImageFont
 
 # ------------------------------------------------------------------ status ink
@@ -44,6 +47,17 @@ MUTED      = RGBColor(0x76, 0x76, 0x76)
 ORANGE_DP  = RGBColor(0xED, 0x6F, 0x0B)
 GREEN      = RGBColor(0x2E, 0x7D, 0x32)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
+RED        = RGBColor(0xC0, 0x39, 0x2B)
+
+# Chart series ink. These are the SAME six slots the FCC's dataviz palette uses on
+# /volume, /tasks and the Deck Generator chart workbench -- so a chart lifted out of
+# a module and a chart drawn in a deck cannot come out two different colours.
+SERIES_INK = [RGBColor(0x25, 0x63, 0xEB),   # blue      (slot 1, /volume "in")
+              RGBColor(0xED, 0x6F, 0x0B),   # deep orange (slot 2, /volume "out")
+              RGBColor(0x2E, 0x7D, 0x32),   # green
+              RGBColor(0x0F, 0x17, 0x2A),   # slate
+              RGBColor(0x4C, 0x82, 0xE0),   # light blue
+              RGBColor(0xC6, 0x7B, 0x28)]   # light orange
 
 # Pillow metrics mirror preview_tmpl.py (Liberation Sans ~ Arial metrics), so
 # heights measured here match what the QA previewer will measure.
@@ -206,6 +220,21 @@ def parse_section(sec, sc):
                 head["title"] = sc(el); continue
             if el.tag == "p" and "sec-sub" in k and not head["sub"]:
                 head["sub"] = sc(el); continue
+            # A bare h3/h4 sitting at section level (not inside a card, which
+            # classify() handles on the parent div) names the block that follows
+            # it -- typically a table or a chart. Without this it fell through
+            # classify (which only maps div/table) AND the descend-into test, so
+            # the heading was silently dropped and the block inherited the
+            # chapter title with "(cont.)" after it.
+            if el.tag in ("h3", "h4") and "sec-title" not in k:
+                _h = sc(el)
+                # "heading", NOT "subhead": a component's own lead label (the
+                # bars chart's axis caption) is a subhead and has always titled
+                # its slide, and it is the better title because it names the
+                # data. This is a heading standing above a block, so it must
+                # never displace either of those.
+                if _h: blocks.append(("heading", _h))
+                continue
             bs = classify(el, sc)
             if bs:
                 blocks.extend(bs)
@@ -236,6 +265,98 @@ def bars_of(el):
             rows.append((lab, val, w, "green" in fk, "grey" in fk))
     return rows
 
+_NUMRE = re.compile(r"-?[\d][\d,\u00a0 ]*\.?\d*")
+
+def chart_num(txt):
+    """The number inside a table cell, or None. Reads the deck's own formatting:
+    thousands separators, a trailing %, a leading ~/\u2248, a signed uplift.
+
+    The sign matters more than anything else here and is the easy thing to get
+    wrong: the decks write a real MINUS SIGN (U+2212), not a hyphen, because that
+    is what reads correctly in Lato/Inter -- so a naive startswith("-") plots
+    every loss as a win. Normalised first, before any parsing."""
+    t = (txt or "").replace("\u2248", "").replace("~", "")
+    t = t.replace("\u2212", "-").replace("\u2013", "-").replace("\u2010", "-").strip()
+    if not t or t in ("-", "\u2014", "n/a", "N/A"): return None
+    neg = t.startswith("-")
+    m = _NUMRE.search(t.lstrip("+-"))
+    if not m: return None
+    raw = m.group(0).replace(",", "").replace("\u00a0", "").replace(" ", "").strip()
+    if not raw or raw in ("-", "."): return None
+    try: v = float(raw.lstrip("-"))
+    except ValueError: return None
+    return -v if neg else v
+
+def chart_spec(t, heads, trs, rows):
+    """A chart to draw from this table, or None.
+
+    Opt-in by attribute, deliberately: a chart is a claim about shape, and most
+    tables in a deck are not making one (a roadmap, a contact list, a status
+    grid). `data-chart` on the <table> asks for one; `data-chart-skip` on a <tr>
+    keeps a summary or total row out of the plot while leaving it in the table,
+    which is what a "\u2248 per year" row needs.
+
+      data-chart="col|bar|line"   column (default) / horizontal bar / line
+                 "|barstack|colstack|donut"
+                                  stacked horizontal / stacked column (the
+                                  parts of one whole per category) / a donut
+                                  of ONE series (the parts of one total)
+      data-chart-cats="0"         column index holding the category label
+      data-chart-series="1,2,3"   column indices to plot (default: every column
+                                  whose cells all read as numbers)
+      data-chart-pct="1"          values are percentages (label format)
+      data-chart-table="1"        also emit the table
+      data-chart-ink="#9AA3AE,…"  one colour per series (a donut: per slice),
+                                  when the series already HAVE a colour in the
+                                  FCC module the chart is lifted from -- the
+                                  Catalogue's four lineage stages, say -- so the
+                                  deck cannot repaint a meaning the client has
+                                  already learned. Default: SERIES_INK.
+      data-chart-fmt='0.0'        data-label number format (Excel syntax, so a
+                                  condition can hide a label too small to read:
+                                  '[<2]"";0.0')
+      data-chart-side="1"         draw the chart in the LEFT half and the next
+                                  table in the right half of the same slide
+    """
+    kind = (t.get("data-chart") or "").strip().lower()
+    if not kind: return None
+    ci = int(t.get("data-chart-cats") or 0)
+
+    keep = [i for i, tr in enumerate(trs)
+            if (tr.get("data-chart-skip") or "").strip() in ("", "0")]
+    body = [rows[i] for i in keep if ci < len(rows[i])]
+    if not body: return None
+
+    want = (t.get("data-chart-series") or "").strip()
+    if want:
+        cols = [int(x) for x in re.split(r"[,\s]+", want) if x.strip().isdigit()]
+    else:
+        ncol = max(len(r) for r in body)
+        cols = [c for c in range(ncol)
+                if c != ci and all(chart_num(r[c] if c < len(r) else "") is not None
+                                   for r in body)]
+    if not cols: return None
+
+    # A category label is read on an axis, not in a table cell, so a row may
+    # carry a shorter one: data-chart-cat="Sep (part)".
+    kept_trs = [trs[i] for i in keep if ci < len(rows[i])]
+    cats = [(kept_trs[r].get("data-chart-cat") or body[r][ci])
+            for r in range(len(body))]
+    series = []
+    for c in cols:
+        name = heads[c] if c < len(heads) else ""
+        vals = [chart_num(r[c] if c < len(r) else "") for r in body]
+        series.append((name or ("Series %d" % (c + 1)), [0.0 if v is None else v for v in vals]))
+    ink = []
+    for x in re.split(r"[,\s]+", (t.get("data-chart-ink") or "").strip()):
+        x = x.lstrip("#")
+        if re.fullmatch(r"[0-9A-Fa-f]{6}", x):
+            ink.append(RGBColor.from_string(x.upper()))
+    return dict(cats=cats, series=series, kind=kind,
+                pct=(t.get("data-chart-pct") or "").strip() not in ("", "0"),
+                ink=ink or None, fmt=(t.get("data-chart-fmt") or "").strip() or None,
+                side=(t.get("data-chart-side") or "").strip() not in ("", "0"))
+
 def card_body(c, sc):
     paras = [sc(p) for p in c.xpath(".//p")]
     lis = [sc(li) for li in c.xpath(".//li")]
@@ -265,8 +386,21 @@ def classify(el, sc):
         t = el if el.tag == "table" else first(el, ".//table")
         if t is None: return None
         heads = [sc(th) for th in t.xpath(".//thead//th")]
-        rows = [[sc(td) for td in tr.xpath("./td")] for tr in t.xpath(".//tbody/tr")]
-        return [("table", dict(heads=heads, rows=rows))] if rows else None
+        trs = t.xpath(".//tbody/tr")
+        rows = [[sc(td) for td in tr.xpath("./td")] for tr in trs]
+        if not rows: return None
+        out = []
+        spec = chart_spec(t, heads, trs, rows)
+        if spec:
+            out.append(("chart", spec))
+            # The chart is the slide unless the table carries detail the chart
+            # cannot (a market column, a metric name) -- then both are emitted,
+            # chart first, because the shape is the point and the numbers are
+            # the evidence for it.
+            if (t.get("data-chart-table") or "").strip() not in ("", "0"):
+                out.append(("table", dict(heads=heads, rows=rows)))
+            return out
+        return [("table", dict(heads=heads, rows=rows))]
 
     if "sc-grid" in k:
         cells = []
@@ -390,9 +524,19 @@ MAXCARDS = 6
 
 # Table body geometry, mirroring the reference deck.
 TB_L, TB_W, TB_T = 0.67, 12.00, 2.02
+# A table on a slide with NO subtitle starts where the subtitle would have been.
+# The Table layout's Subtitle sits at 1.24-1.71 and the Title ends at 1.21, so an
+# empty subtitle leaves half an inch of dead canvas above the table -- and that
+# half inch is two more rows, which is the difference between an 11-test archive
+# on one page and the same archive split across two.
+TB_T_NOSUB = 1.52
 TB_BOT   = 6.17           # must clear the Key Message strip at 6.34
 HDR_H    = 0.42
 ROW_MIN  = 0.42
+
+def rows_per_slide(has_sub):
+    top = TB_T if has_sub else TB_T_NOSUB
+    return max(1, int((TB_BOT - top - HDR_H) / ROW_MIN))
 
 def ph_style(layout, name):
     """(width_in, height_in, pt, bold) of a layout placeholder, read from its
@@ -483,6 +627,10 @@ class Emitter:
         self.idx = {n: {p.name: p.placeholder_format.idx for p in l.placeholders}
                     for n, l in self.lay.items()}
         self.audit = []
+        # Copy a one-liner strip lost because a paragraph was poured into it.
+        # Kept APART from `audit`, whose entries are unpacked five-wide by the
+        # reporter -- a sixth field here would break every other row.
+        self.trunc = []
 
     def slide(self, layout):
         return self.prs.slides.add_slide(self.lay[layout])
@@ -503,7 +651,17 @@ class Emitter:
         src = "\n".join(lines)
         scale, dropped, body = fit(src, geom)
         if scale < MIN_OK and name in ONE_LINERS:
-            scale, dropped, body = fit(first_sentence(src), geom)
+            lead = first_sentence(src)
+            scale, dropped, body = fit(lead, geom)
+            # A one-liner strip carrying the lead sentence is the right call,
+            # but the rest of the paragraph is GONE from the deck and nothing
+            # said so -- an agenda lost the sentence stating which of two
+            # sources wins when they disagree, which is the whole method. The
+            # audit now names it so a build can be told to move the copy
+            # somewhere that fits (a .note becomes the Key Message strip).
+            if norm(lead) != norm(src):
+                self.trunc.append((len(self.prs.slides._sldIdLst), lname, name,
+                                   norm(src)[len(norm(lead)):].strip()))
         lines = [l for l in body.split("\n") if l.strip()]
         if dropped or scale < 1.0:
             self.audit.append((len(self.prs.slides._sldIdLst), lname, name, scale, dropped))
@@ -535,7 +693,10 @@ class Emitter:
                 shape._element.getparent().remove(shape._element)
 
     # ------------------------------------------------------------ native table
-    def table(self, slide, heads, rows):
+    def table(self, slide, heads, rows, has_sub=True, left=None, width=None):
+        # left/width: a table sharing its slide with a chart (data-chart-side)
+        # takes the right-hand column instead of the full body width.
+        TB_L_, TB_W_ = (TB_L if left is None else left), (TB_W if width is None else width)
         rows = rows[:]
         ncol = max(len(heads), max((len(r) for r in rows), default=0))
         heads = (list(heads) + [""] * ncol)[:ncol]
@@ -545,11 +706,22 @@ class Emitter:
         # headerless table is built instead.
         hdr = any((h or "").strip() for h in heads)
 
-        avail = TB_BOT - TB_T - (HDR_H if hdr else 0)
+        # rows_per_slide() already decides how many rows fit by measuring from
+        # TB_T_NOSUB when the slide carries no subtitle -- but the table was drawn
+        # from TB_T regardless, so on those slides the splitter filled the taller
+        # box and the emitter drew it in the shorter one. Ten body rows then ran
+        # 0.47in past TB_BOT and straight through the Key Message strip, with the
+        # audit reporting nothing (it measures text fit, not table geometry).
+        # One top, read the same way by both.
+        top = TB_T if has_sub else TB_T_NOSUB
+        avail = TB_BOT - top - (HDR_H if hdr else 0)
         body_h = min(0.75, max(ROW_MIN, avail / max(1, len(rows))))
+        # A last-resort clamp: if a caller ever hands over more rows than fit, a
+        # tight table is recoverable and one drawn over the footer is not.
+        body_h = min(body_h, avail / max(1, len(rows))) if avail > 0 else body_h
         h = (HDR_H if hdr else 0) + body_h * len(rows)
         gf = slide.shapes.add_table(len(rows) + (1 if hdr else 0), ncol,
-                                    Inches(TB_L), Inches(TB_T), Inches(TB_W), Inches(h))
+                                    Inches(TB_L_), Inches(top), Inches(TB_W_), Inches(h))
         tbl = gf.table
         pr = tbl._tbl.find(A + "tblPr")
         pr.set("firstRow", "1" if hdr else "0"); pr.set("bandRow", "1")
@@ -564,8 +736,8 @@ class Emitter:
             longest = max([len(heads[c])] + [len(r[c]) for r in rows] or [1])
             want.append(max(6, min(longest, 90)))
         tot = float(sum(want))
-        widths = [max(0.9, TB_W * w / tot) for w in want]
-        scale = TB_W / sum(widths)
+        widths = [max(0.9, TB_W_ * w / tot) for w in want]
+        scale = TB_W_ / sum(widths)
         for c, w in enumerate(widths):
             tbl.columns[c].width = Emu(int(Inches(w * scale)))
 
@@ -587,6 +759,289 @@ class Emitter:
                         if col is not None:
                             r_.font.bold = True; r_.font.color.rgb = col
         return gf
+
+    # ------------------------------------------------------------ native chart
+    def chart(self, slide, cats, series, kind="col", pct=False, labels=True,
+              has_sub=True, ink=None, fmt=None, left=None, width=None):
+        """A real PowerPoint chart object, built from the deck's own numbers.
+
+        This is NOT the "never add a shape" rule being broken. That rule forbids
+        faking a layout out of add_shape rectangles and absolutely-positioned
+        textboxes -- a picture of a deck. A chart is the opposite: add_chart
+        writes a native c:chart part with its own embedded worksheet, so the
+        client can click it, edit the numbers, restyle it or change the chart
+        type, exactly as with the native tables above. There is no layout
+        placeholder that can hold one, and inventing a "Chart" layout would not
+        help -- a chart is data, not a text frame.
+
+        cats:   category labels (x axis, or the bar labels on a horizontal bar)
+        series: [(name, [values])] -- one entry draws no legend
+        kind:   col | bar | line   (bar = horizontal, for long category names)
+                barstack | colstack  the parts of one whole per category
+                donut                the parts of ONE total (first series only)
+        ink:    [RGBColor] per series (per slice on a donut); default SERIES_INK
+        fmt:    data-label number format, Excel syntax
+        left/width: a chart sharing its slide with a table (data-chart-side)
+        """
+        TYPES = {"col": XL_CHART_TYPE.COLUMN_CLUSTERED,
+                 "bar": XL_CHART_TYPE.BAR_CLUSTERED,
+                 "line": XL_CHART_TYPE.LINE_MARKERS,
+                 "barstack": XL_CHART_TYPE.BAR_STACKED,
+                 "colstack": XL_CHART_TYPE.COLUMN_STACKED,
+                 "donut": XL_CHART_TYPE.DOUGHNUT}
+        stacked = kind in ("barstack", "colstack")
+        donut = kind == "donut"
+        if donut:
+            series = series[:1]           # a donut is one total cut into parts
+        # Excel/PowerPoint draw a horizontal bar chart's first category at the
+        # BOTTOM, so a chronological or ranked list reads bottom-to-top -- Jan
+        # under Feb under Mar. Reversing the data (rather than flipping the axis
+        # orientation, which also throws the value axis to the top of the plot)
+        # puts the first row at the top where a reader looks for it.
+        if kind in ("bar", "barstack"):
+            cats = list(cats)[::-1]
+            series = [(n, list(v)[::-1]) for n, v in series]
+        pal = ink or SERIES_INK
+
+        cd = CategoryChartData()
+        cd.categories = cats
+        for name, vals in series:
+            cd.add_series(name, vals)
+
+        # Same column the native tables occupy, so a chart slide and a table
+        # slide read as the same document rather than two different templates.
+        top = TB_T if has_sub else TB_T_NOSUB
+        h = TB_BOT - top
+        x = TB_L if left is None else left
+        w = TB_W if width is None else width
+        gf = slide.shapes.add_chart(TYPES.get(kind, TYPES["col"]),
+                                    Inches(x), Inches(top),
+                                    Inches(w), Inches(h), cd)
+        ch = gf.chart
+        ch.font.size = Pt(11)
+        ch.font.name = "Inter"
+
+        # A legend for one series is a label repeated beside itself -- except on
+        # a donut, where the legend IS the category key (one series, many parts).
+        multi = len(series) > 1
+        ch.has_legend = multi or donut
+        if ch.has_legend:
+            ch.legend.position = XL_LEGEND_POSITION.RIGHT if donut else XL_LEGEND_POSITION.TOP
+            ch.legend.include_in_layout = False
+            ch.legend.font.size = Pt(11)
+
+        plot = ch.plots[0]
+        if donut:
+            plot.vary_by_categories = True
+            try:   # hole size is not wrapped by python-pptx; 58% reads as a ring, not a pie
+                dn = plot._element
+                hs = dn.find("{http://schemas.openxmlformats.org/drawingml/2006/chart}holeSize")
+                if hs is None:
+                    hs = dn.makeelement("{http://schemas.openxmlformats.org/drawingml/2006/chart}holeSize", {})
+                    dn.append(hs)
+                hs.set("val", "58")
+            except Exception:
+                pass
+            ser = plot.series[0]
+            for pi in range(len(cats)):
+                pt_ = ser.points[pi]
+                pt_.format.fill.solid()
+                pt_.format.fill.fore_color.rgb = pal[pi % len(pal)]
+                pt_.format.line.color.rgb = WHITE     # a hairline gap between slices
+        else:
+            if stacked:
+                plot.gap_width = 35
+                plot.overlap = 100                     # the parts sit end to end
+            else:
+                plot.gap_width = 60 if multi else 110
+                if multi:
+                    plot.overlap = -10
+            for i, ser in enumerate(plot.series):
+                ink_ = pal[i % len(pal)]
+                if kind == "line":
+                    ser.format.line.color.rgb = ink_
+                    ser.format.line.width = Pt(2.25)
+                else:
+                    ser.format.fill.solid()
+                    ser.format.fill.fore_color.rgb = ink_
+
+        # Direct value labels, so the chart is readable without the reader
+        # tracing a bar back to a gridline -- and readable in print.
+        plot.has_data_labels = bool(labels)
+        if labels:
+            dl = plot.data_labels
+            # a stacked bar carries many labels in a thin band, a donut labels its
+            # ring: both smaller than the standalone value label
+            dl.font.size = Pt(8) if stacked else Pt(10)
+            dl.number_format = fmt or ('0.0"%"' if pct else ("0%" if donut else "#,##0"))
+            dl.number_format_is_linked = False
+            if donut:
+                dl.show_percentage = True; dl.show_value = False
+                dl.show_category_name = False
+                dl.font.bold = True; dl.font.color.rgb = WHITE
+            elif stacked:
+                dl.font.color.rgb = WHITE
+            # A doughnut takes NO label position: c:dLblPos is not valid there,
+            # and PowerPoint answers one with a "repair this file" prompt. Its
+            # labels sit on the ring by default, which is where they belong.
+            if not donut:
+                try:
+                    dl.position = (XL_LABEL_POSITION.CENTER if stacked else
+                                   XL_LABEL_POSITION.OUTSIDE_END if kind != "line"
+                                   else XL_LABEL_POSITION.ABOVE)
+                except Exception:
+                    pass   # a variant that refuses the position
+
+        if donut:
+            return gf
+        # With direct labels on every point the value axis is redundant chrome.
+        try:
+            va = ch.value_axis
+            va.has_major_gridlines = False
+            va.visible = False
+            ca = ch.category_axis
+            ca.has_major_gridlines = False
+            ca.major_tick_mark = XL_TICK_MARK.NONE
+            ca.format.line.color.rgb = MUTED
+            # thirty bars on one axis need a smaller label than eight -- and
+            # PowerPoint's automatic label skip would then silently drop every
+            # other market name, so every label is asked for explicitly
+            ca.tick_labels.font.size = Pt(9) if len(cats) > 16 else Pt(11)
+            if len(cats) > 16:
+                C = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
+                ax = ca._element
+                if ax.find(C + "tickLblSkip") is None:
+                    sk = ax.makeelement(C + "tickLblSkip", {"val": "1"})
+                    anchor = ax.find(C + "noMultiLvlLbl")
+                    if anchor is not None: anchor.addprevious(sk)
+                    else: ax.append(sk)
+        except Exception:
+            pass
+        return gf
+
+    def key_fits(self, text):
+        """Can this note ride the Key Message strip WHOLE?
+
+        The strip is one line, by design -- it is the slide's takeaway, not a
+        paragraph. A note poured into it kept its lead sentence and lost the
+        rest SILENTLY, which on one deck cost eleven sentences of real analysis
+        (a live-feed confirmation, a market-by-market readiness read, the
+        reason two keyword figures disagree). So a note that does not fit is
+        not cut: it is left in the block list and becomes its own statement
+        slide, which holds a paragraph at full size. Every layout carrying the
+        strip defines it identically, so one geometry answers for all of them.
+        """
+        geom = None
+        for lname in self.lay:
+            geom = ph_style(self.lay[lname], "Key Message")
+            if geom: break
+        if not geom or not text: return True
+        scale, dropped, _b = fit(text, geom)
+        return scale >= MIN_OK and not dropped
+
+    # ----------------------------------------------------------- agenda column
+    # An agenda is a contents page, so its job is to be SCANNED: the eye should
+    # find chapter seven without reading chapters one to six. Poured into a
+    # placeholder as "07  Case studies / test wins - Proof from comparable
+    # accounts" it is eleven identical lines of run-together text at one size,
+    # which is the opposite -- nothing is findable because nothing is
+    # distinguished. So each entry is laid out as the HTML deck lays it out:
+    # the number in the theme accent, the chapter name bold beside it, and the
+    # one-line description under them in muted type, indented to hang off the
+    # name rather than the number.
+    AG_TSZ, AG_DSZ = 13.5, 10.5   # chapter name / description
+    AG_GAP, AG_TGAP = 11.0, 2.0   # between entries / name to description
+    AG_IND = 0.31                 # description indent, ~ the width of "01  "
+
+    def agenda(self, slide, items, names=("Left Content", "Right Content")):
+        """items: [(number, title, description)] laid across the named columns.
+
+        BOTH columns are sized together at ONE scale. Sizing each to its own
+        content is the obvious mistake and it looks broken: the left column
+        carries one more entry than the right on an odd count, so it would
+        render a size smaller and the two halves of one list would disagree.
+        """
+        lname = slide.slide_layout.name
+        geoms = [ph_style(self.lay[lname], n) for n in names]
+        cols = self._ag_split(items, len(names))
+        scale = 1.0
+        for sc_ in SCALES:
+            if all(self._ag_h(c, sc_, g) <= (g[1] if g else 99) 
+                   for c, g in zip(cols, geoms) if c):
+                scale = sc_; break
+        else:
+            scale = SCALES[-1]
+        if scale < 1.0:
+            self.audit.append((len(self.prs.slides._sldIdLst), lname, "Agenda", scale, 0))
+        for name, col, geom in zip(names, cols, geoms):
+            self._ag_fill(slide, name, col, scale)
+        return scale
+
+    @staticmethod
+    def _ag_split(items, n):
+        """Down the first column, then the next -- reading order. A row-major
+        fill would put chapter 2 at the top of the right column."""
+        per = -(-len(items) // n)
+        return [items[i * per:(i + 1) * per] for i in range(n)]
+
+    def _ag_h(self, col, sc_, geom):
+        """Laid-out height of one column, in inches."""
+        if not geom: return 0.0
+        w = geom[0] * SAFETY
+        tsz, dsz = self.AG_TSZ * sc_, self.AG_DSZ * sc_
+        h = 0.0
+        for i, (num, ti, de) in enumerate(col):
+            if i: h += self.AG_GAP * sc_ / 72.0
+            h += len(wrap_lines(("%s  %s" % (num, ti)).strip(), tsz, w, True)) * tsz * 1.28 / 72.0
+            if de:
+                h += self.AG_TGAP * sc_ / 72.0
+                h += len(wrap_lines(de, dsz, w - self.AG_IND, False)) * dsz * 1.22 / 72.0
+        return h
+
+    def _ag_fill(self, slide, name, col, sc_):
+        i = self.idx[slide.slide_layout.name].get(name)
+        if i is None: return
+        try: shape = slide.placeholders[i]
+        except KeyError: return
+        if not col:
+            shape._element.getparent().remove(shape._element)
+            return
+        tf = shape.text_frame
+        tf.word_wrap = True
+        tf.clear()
+        first = True
+        for num, ti, de in col:
+            p_ = tf.paragraphs[0] if first else tf.add_paragraph()
+            first = False
+            if not p_.runs and p_.text:
+                p_.text = ""
+            # The number is the only coloured ink on the slide and it is an
+            # ACCENT, not a literal: theme colour, so re-theming the deck or
+            # dropping the slide on another master re-colours it like every
+            # other accent. The name's own colour stays inherited from the
+            # layout for the same reason.
+            r = p_.add_run(); r.text = "%s  " % num
+            r.font.size = Pt(round(self.AG_TSZ * sc_, 1)); r.font.bold = True
+            r.font.color.theme_color = MSO_THEME_COLOR.ACCENT_1
+            r = p_.add_run(); r.text = ti
+            r.font.size = Pt(round(self.AG_TSZ * sc_, 1)); r.font.bold = True
+            p_.space_before = Pt(round(self.AG_GAP * sc_, 1))
+            p_.space_after = Pt(0)
+            if not de: continue
+            d = tf.add_paragraph()
+            r = d.add_run(); r.text = de
+            r.font.size = Pt(round(self.AG_DSZ * sc_, 1))
+            r.font.color.rgb = MUTED
+            d.space_before = Pt(round(self.AG_TGAP * sc_, 1))
+            d.space_after = Pt(0)
+            # Hang the description off the chapter NAME, not the number -- the
+            # number is a label in the margin, and a description starting under
+            # it reads as a third column.
+            d._pPr.set("marL", str(Emu(int(Inches(self.AG_IND)))))
+            d._pPr.set("indent", "0")
+        # A first paragraph with space_before pushes the whole column off its
+        # own top edge, so the gap belongs BETWEEN entries only.
+        tf.paragraphs[0].space_before = Pt(0)
 
 # ---------------------------------------------------------------- block -> slide
 def chunks(seq, n):
@@ -625,9 +1080,33 @@ def grid_slide(em, title, sub, cards, key=None):
 def emit_cards(em, base_title, t, sub, cards, key):
     """Emit a card list across as many slides as readability needs."""
     n = pick_grid(em, cards)
-    for part in balanced(cards, n):
-        grid_slide(em, t, sub, part, key)
+    parts = list(balanced(cards, n))
+    for ci, part in enumerate(parts):
+        # The note closing a block is its takeaway, so it belongs on the last
+        # slide of that block -- handing it to every part printed the same
+        # sentence verbatim on each continuation slide.
+        grid_slide(em, t, sub, part, key if ci == len(parts) - 1 else None)
         t, sub = (base_title + " (cont.)") if base_title else "", ""
+
+def kpi_line(cards):
+    """One line from a card grid that is really a row of KPIs, else None.
+
+    A .grid-4 of big-number cards ("61 / Closed to date") is a KPI row, not four
+    cards of argument -- and giving it a whole slide spends a sixteen-by-nine canvas
+    on four numbers. Recognised here so emit_blocks can fold it into the following
+    table's subtitle instead. Deliberately strict: a real card (multi-line body, a
+    prose body, a worded heading) must never be flattened into a strip.
+    """
+    out = []
+    for h, b in cards:
+        h = (h or "").strip(); b = (b or "").strip()
+        if not h or len(h) > 12:      # a number or a percentage, never a heading
+            return None
+        if not b or "\n" in b or len(b) > 34:
+            return None               # a body with an argument in it is a card
+        out.append(("%s %s" % (h, b)).strip())
+    return "  ·  ".join(out) if len(out) >= 3 else None
+
 
 def emit_blocks(em, head, blocks, fallback=""):
     """Flow one parsed <section> onto as many slides as its content needs."""
@@ -638,14 +1117,37 @@ def emit_blocks(em, head, blocks, fallback=""):
     sub = head.get("sub") or ""
     first_done = False
     pending_sub = None           # a ("subhead") becomes the next slide's title
+    pending_kpi = None           # a KPI row folded onto the next table's subtitle
     i = 0
     while i < len(blocks):
         kind, payload = blocks[i]
         i += 1
         # A trailing note is the slide's Key Message, not a slide of its own.
+        # NOT after a subhead: a subhead emits no slide -- it only names the next
+        # one -- so taking the note here consumed it and then dropped it on the
+        # floor, losing the note entirely. (Latent until section-level headings
+        # started parsing; a YuMOVE spec note disappeared this way.)
         key = None
-        if i < len(blocks) and blocks[i][0] == "note":
+        if (kind not in ("subhead", "heading") and i < len(blocks)
+                and blocks[i][0] == "note" and em.key_fits(blocks[i][1])):
             key = blocks[i][1]; i += 1
+
+        # A KPI row immediately before a table rides that table's subtitle rather
+        # than taking a slide of its own -- four numbers do not earn a canvas.
+        # Only when the section has no subtitle to displace, and when the row
+        # carries no note of its own (a note makes it a statement, not a strip).
+        if kind in ("cards", "stats") and key is None and not sub:
+            _cards = (payload["cards"] if kind == "cards" else payload)
+            _line = kpi_line([((h or ""), (b_ or "")) for h, b_ in _cards])
+            # Look PAST a subhead: a heading naming the table/chart sits between
+            # the KPI row and the block it belongs to, and stopping at it put the
+            # four numbers back on a slide of their own.
+            _j = i
+            while _j < len(blocks) and blocks[_j][0] in ("subhead", "heading"):
+                _j += 1
+            if _line and _j < len(blocks) and blocks[_j][0] in ("table", "bars", "chart"):
+                pending_kpi = _line
+                continue
 
         cont = (title + " (cont.)") if title else ""
         t = pending_sub or (title if not first_done else cont)
@@ -654,6 +1156,19 @@ def emit_blocks(em, head, blocks, fallback=""):
 
         if kind == "subhead":
             pending_sub = payload
+            continue
+
+        if kind == "heading":
+            # A heading standing above a block. On the section's FIRST slide the
+            # section title is the one in the agenda and the nav, so the heading
+            # names the block as the subtitle instead (only when the section has
+            # no subtitle of its own); from the second slide on it becomes the
+            # title, where the alternative is a bare "<Section> (cont.)". Either
+            # way it yields to a component's own lead label, which follows it.
+            if not first_done and title:
+                if not sub: sub = payload
+            elif not pending_sub:
+                pending_sub = payload
             continue
 
         if kind == "note":
@@ -723,31 +1238,72 @@ def emit_blocks(em, head, blocks, fallback=""):
             first_done = True; continue
 
         if kind == "agenda":
-            rows = ["%s  %s — %s" % (n_, ti, de) for n_, ti, de in payload]
-            half = (len(rows) + 1) // 2
             s = em.slide("Two Content")
             em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-            em.put(s, "Left Content", "\n".join(rows[:half]))
-            em.put(s, "Right Content", "\n".join(rows[half:]))
+            em.agenda(s, payload)
             em.finish(s, key); first_done = True; continue
 
         if kind == "bars":
             heads = ["", ""]
             rws = [[lab, val] for lab, val, _w, _g, _y in payload]
-            for part in chunks(rws, 8):
+            parts = list(chunks(rws, 8))
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            for ci, part in enumerate(parts):
                 s = em.slide("Table")
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-                em.table(s, heads, part); em.finish(s, key)
+                em.table(s, heads, part, has_sub=bool(s_))
+                em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
+            first_done = True; continue
+
+        if kind == "chart":
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            sl = em.slide("Table")          # the chart column layout: title, subtitle, body
+            em.put(sl, "Title", t); em.put(sl, "Subtitle", s_)
+            # data-chart-side: the chart takes the left half and the NEXT table
+            # the right half of the same slide -- a donut beside the team that
+            # did the work, say. Only when that table fits one slide; a longer
+            # one keeps its own slides rather than being cut.
+            side = None
+            if (payload.get("side") and i < len(blocks) and blocks[i][0] == "table"
+                    and len(blocks[i][1]["rows"]) <= rows_per_slide(bool(s_))):
+                side = blocks[i][1]; i += 1
+                if key is None and i < len(blocks) and blocks[i][0] == "note" and em.key_fits(blocks[i][1]):
+                    key = blocks[i][1]; i += 1
+            CW = TB_W * 0.44 if side else None
+            em.chart(sl, payload["cats"], payload["series"],
+                     kind=payload["kind"], pct=payload["pct"], has_sub=bool(s_),
+                     ink=payload.get("ink"), fmt=payload.get("fmt"),
+                     width=CW)
+            if side:
+                em.table(sl, side["heads"], side["rows"], has_sub=bool(s_),
+                         left=TB_L + TB_W * 0.47, width=TB_W * 0.53)
+            # A chart has no text frame, so finish()'s empty-placeholder sweep
+            # would otherwise leave the body placeholder on the slide as a
+            # "Click to add text" prompt sitting under the plot.
+            em.finish(sl, key)
+            t, s_ = cont, ""
             first_done = True; continue
 
         if kind == "table":
             heads, rws = payload["heads"], payload["rows"]
-            per = max(1, int((TB_BOT - TB_T - HDR_H) / ROW_MIN))
-            for part in chunks(rws, per):
+            if pending_kpi and not s_:
+                s_ = pending_kpi
+            pending_kpi = None
+            per = rows_per_slide(bool(s_))
+            parts = list(chunks(rws, per))
+            for ci, part in enumerate(parts):
                 s = em.slide("Table")
                 em.put(s, "Title", t); em.put(s, "Subtitle", s_)
-                em.table(s, heads, part); em.finish(s, key)
+                # The note is a conclusion drawn from the whole table, so it belongs
+                # on the last slide of it -- passing it to every chunk repeated the
+                # same sentence verbatim on each continuation slide.
+                em.table(s, heads, part, has_sub=bool(s_))
+                em.finish(s, key if ci == len(parts) - 1 else None)
                 t, s_ = cont, ""
             first_done = True; continue
 
@@ -825,6 +1381,14 @@ def main():
         print("\nshrunk to fit: %d   |   still over capacity: %d" % (len(shrunk), len(cut)))
         for sn, lay, name, scale, dropped in cut:
             print("  DROPPED slide %-3d %-20s %-22s -%d line(s)" % (sn, lay, name, dropped))
+        if em.trunc:
+            print("\n  COPY CUT to the lead sentence (a one-line strip "
+                  "cannot hold a paragraph):")
+            for sn, lay, name, rest in em.trunc:
+                print("    slide %-3d %-20s %-16s lost: %s" % (
+                    sn, lay, name, (rest[:88] + "...") if len(rest) > 88 else rest))
+            print("    -> move it into a .note (which becomes the slide's Key "
+                  "Message) or shorten the source.")
         tight = sorted(shrunk, key=lambda a: a[3])[:8]
         if tight:
             print("\n  tightest fits:")

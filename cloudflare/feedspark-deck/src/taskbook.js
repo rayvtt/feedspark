@@ -733,6 +733,9 @@ export const DIMS = [
   { k: 'owner', label: 'Who did it' },
   { k: 'cat', label: 'Type of work' },
   { k: 'month', label: 'Month' },
+  // a board reads a book by quarter, and a delivery conversation reads it by week
+  { k: 'quarter', label: 'Quarter' },
+  { k: 'week', label: 'Week' },
   { k: 'market', label: 'Market' },
   { k: 'am', label: 'Account manager' },
   { k: 'bucket', label: 'Status' },
@@ -740,9 +743,44 @@ export const DIMS = [
   { k: 'tag', label: 'Tag' },
 ];
 
+/* CUTS AN EXECUTIVE ASKS FOR (Ray, 28 Sep 2026, on charts "for procurement heads/ senior
+   executives"): a board reads a book by QUARTER, and a delivery conversation reads it by WEEK, and
+   neither could be asked for. All three time dims read in TIME order rather than biggest-first,
+   and none of them folds a tail into "Other" — a missing quarter in the middle of a year is a
+   hole in the argument, not a tidy-up. */
+export const TIME_DIMS = ['month', 'quarter', 'week'];
+export const isTimeDim = (d) => TIME_DIMS.indexOf(d) >= 0;
+
+/** '2026-07-14' → '2026-Q3'. Lexicographic order IS chronological order, which is why the key
+    carries the year rather than being a bare 'Q3'. */
+export function quarterOf(v) {
+  const m = monthOf(v);
+  return m ? m.slice(0, 4) + '-Q' + (Math.floor((+m.slice(5, 7) - 1) / 3) + 1) : '';
+}
+
+/** ISO-8601 week: '2026-W39'. The week a date belongs to is the one holding its Thursday, which is
+    the whole reason this is not (dayOfYear / 7) — the naive form puts 1 January in week 1 of a year
+    it does not belong to, and a delivery week that lands in the wrong year is a wrong column. */
+export function weekOf(v) {
+  const iso = isoOf(v);
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return '';
+  const day = (d.getUTCDay() + 6) % 7;                  // Monday = 0
+  d.setUTCDate(d.getUTCDate() - day + 3);               // the Thursday of this week
+  const y = d.getUTCFullYear();
+  const jan4 = new Date(Date.UTC(y, 0, 4));
+  const jd = (jan4.getUTCDay() + 6) % 7;
+  jan4.setUTCDate(jan4.getUTCDate() - jd + 3);          // the Thursday of week 1
+  const wk = 1 + Math.round((d - jan4) / (7 * 24 * 3600 * 1000));
+  return y + '-W' + (wk < 10 ? '0' : '') + wk;
+}
+
 function dimKey(t, dim) {
   if (dim === 'total') return 'All work';
   if (dim === 'month') return monthOf(t.d) || '(undated)';
+  if (dim === 'quarter') return quarterOf(t.d) || '(undated)';
+  if (dim === 'week') return weekOf(t.d) || '(undated)';
   if (dim === 'cat') return t.cat;
   if (dim === 'market') return (t.client && t.market) ? t.client + ' ' + t.market : (t.market || '(none)');
   if (dim === 'task') return t.title || '(untitled)';
@@ -833,9 +871,9 @@ function nodesAt(rows, dim, cap, measure) {
     }
   }
   let out = [...m.values()].map((b) => Object.assign(tally(b.rows), { k: b.k, rows: b.rows }));
-  if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
+  if (isTimeDim(dim)) out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
   else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
-  if (cap && out.length > cap && dim !== 'month') {
+  if (cap && out.length > cap && !isTimeDim(dim)) {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     // the fold keeps the folded rows, so its own children stay real rather than a dead end
     const rws = [];
@@ -976,14 +1014,14 @@ export function groupBy(rows, dim, cap, measure) {
     k: g.k, n: g.n, bill: r2(g.bill), nonbill: r2(g.nonbill), hours: r2(g.hours),
     billPct: g.hours ? Math.round((g.bill / g.hours) * 1000) / 10 : 0,
   }));
-  // months read in time order; everything else reads biggest-first
-  if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
+  // time reads in time order; everything else reads biggest-first
+  if (isTimeDim(dim)) out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
   else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
   // a tag dimension can place one task in several buckets, so the bucket hours legitimately sum
   // to more than the book. Say so rather than letting a chart imply otherwise.
   out.multi = placements > rows.length;
   out.placements = placements;
-  if (cap && out.length > cap && dim !== 'month') {
+  if (cap && out.length > cap && !isTimeDim(dim)) {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     const fold0 = rest.reduce((s, x) => ({
       n: s.n + x.n, bill: s.bill + x.bill, nonbill: s.nonbill + x.nonbill, hours: s.hours + x.hours,
@@ -992,6 +1030,16 @@ export function groupBy(rows, dim, cap, measure) {
       k: 'Other (' + rest.length + ' more)', n: fold0.n, bill: r2(fold0.bill),
       nonbill: r2(fold0.nonbill), hours: r2(fold0.hours),
       billPct: fold0.hours ? Math.round((fold0.bill / fold0.hours) * 1000) / 10 : 0, fold: rest.length,
+      /* WHAT IS ACTUALLY INSIDE THE FOLD (Ray, 24 Sep 2026, ringing "Other (213 more)": "When
+         hovering over the grouped Task, for example, it should display a pop-up of 10 tasks names
+         that sit under Other"). The fold used to keep only a total, so the biggest single mark on
+         a chart of 213 task names was the one thing nobody could ask a question about.
+         `rest` is ALREADY RANKED — out is sorted before the cut — so a surface takes the first N
+         and has the biggest N, with no second sort that could rank them differently from the
+         chart they came off. Kept as the sub-GROUPS, not their rows: a surface wants the names
+         and their hours, and holding the raw rows of a 20,000-task tail to print ten names would
+         be paying for the whole book to answer a tooltip. */
+      members: rest,
     });
     out = keep;
   }
@@ -1047,19 +1095,51 @@ export function balanceState(allowance, balance) {
 // THE BOOK STORE — what the worker's tmBookPull writes into KV, and what /api/taskmanager serves
 // ---------------------------------------------------------------------------------------------
 
-export const BOOK_MONTHS = 12;      // the window the module reads
-export const BOOK_PULL_LIMIT = 1600; // rows per get_task_list_for_client — deep enough for a busy market
+export const BOOK_MONTHS = 12;      // the window the page OPENS on
+export const BOOK_WINDOWS = [12, 24, 0]; // the windows it offers; 0 = all time
+export const BOOK_EPOCH = '2010-01-01';  // older than the first market in the client master
+export const BOOK_PULL_LIMIT = 4000; // rows per get_task_list_for_client — deep enough to reach a market's FIRST task
 export const BOOK_MARKETS = 2;      // markets read per cron firing (the whole book turns over ~2×/day)
 export const BOOK_QUEUES = 1;       // ticket queues read per cron firing
-export const BOOK_ROW_CAP = 1200;   // rows kept per market — a guard, not a normal limit
+export const BOOK_ROW_CAP = 4000;   // rows kept per market — a guard, not a normal limit
+export const BOOK_TICKET_CAP = 3000; // tickets kept per queue — raised with the window, same reason
 
-/** The 12-month window, ending today. */
+/**
+ * The window, ending today. `months` 0 (or BOOK_WINDOWS' last entry) = ALL TIME.
+ *
+ * Ray, 1 Oct 2026: "can you check if hours can be pulled from 'all time' not just from 2025?"
+ *
+ * It can, and it costs nothing extra. The twelve months were OURS, never the reports database's:
+ * `from_date` is ignored by the MCP (re-verified 1 Oct 2026 — a list asked from 2026-09-25 came
+ * back with 110 of 120 rows older than that), rows arrive newest-first and the only real limit is
+ * `limit`. Measured the same day: the busiest market in the book answers its WHOLE history —
+ * every task back to Feb 2018 — in ONE call of 3,042 rows, and the next two biggest in 1,779 and
+ * 1,424. So the pull now asks for everything and the window is a READING choice applied when the
+ * page is served, not a floor baked into the store. Same one MCP call per market; same rotation.
+ */
 export function bookWindow(now, months) {
   const d = new Date(now || Date.now());
   const to = d.toISOString().slice(0, 10);
+  const m = months == null ? BOOK_MONTHS : (parseInt(months, 10) || 0);
+  if (!m) return { from: BOOK_EPOCH, to: to, months: 0, all: true };
   d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() - ((months || BOOK_MONTHS) - 1));
-  return { from: d.toISOString().slice(0, 10), to };
+  d.setUTCMonth(d.getUTCMonth() - (m - 1));
+  return { from: d.toISOString().slice(0, 10), to: to, months: m };
+}
+
+/** '12' / '24' / 'all' off a query string → the months bookWindow wants. Anything else = the default. */
+export function bookMonthsOf(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  if (s === 'all' || s === '0') return 0;
+  const n = parseInt(s, 10);
+  return BOOK_WINDOWS.indexOf(n) >= 0 ? n : BOOK_MONTHS;
+}
+
+/** Is a row's day inside the window being served? An undated row belongs to no window. */
+export function inBookWindow(day, win) {
+  if (!day) return false;
+  if (!win) return true;
+  return day >= win.from && day <= win.to;
 }
 
 // A stored row. Strings are inline rather than dictionary-encoded: the dictionary existed only to
@@ -1098,15 +1178,19 @@ export function packMarket(rows, meta, win, now) {
   const all = (Array.isArray(rows) ? rows : []).map((r) => normTask(r, meta));
   const dated = all.map((t) => t.d).filter(Boolean).sort();
   const deepest = dated[0] || '';
-  const inWin = all.filter((t) => t.d && t.d >= win.from && t.d <= win.to);
+  const inWin = all.filter((t) => inBookWindow(t.d, win));
   const kept = inWin.slice(0, BOOK_ROW_CAP);
   let bill = 0, nonbill = 0;
   kept.forEach((t) => { bill += t.bill; nonbill += t.nonbill; });
+  // DID THE PULL REACH THE ACCOUNT'S FIRST TASK? Against a dated window that is `deepest <=
+  // win.from`; against an ALL-TIME window nothing can satisfy that test, so the depth is read off
+  // the pull itself — the server returned fewer rows than were asked for, so it ran out of history.
+  const limit = win.limit || BOOK_PULL_LIMIT;
   return {
     cid: meta.cid || 0, am: meta.am || '', at: now || Date.now(),
     from: win.from, to: win.to, deepest: deepest,
-    // truncated === the pull did not reach the window start, so this market is PARTIAL
-    full: !deepest || deepest <= win.from,
+    // truncated === the pull did not reach the start of what was asked for, so this market is PARTIAL
+    full: win.all ? all.length < limit : (!deepest || deepest <= win.from),
     pulled: all.length, n: kept.length, capped: inWin.length > kept.length,
     bill: Math.round(bill * 100) / 100, nonbill: Math.round(nonbill * 100) / 100,
     rows: kept.map(packRow),
@@ -1116,12 +1200,12 @@ export function packMarket(rows, meta, win, now) {
 /** One ticket queue's pull → the record KV keeps. Windowed by LAST ACTIVITY, like the tasks. */
 export function packQueue(rows, client, win, now) {
   const all = (Array.isArray(rows) ? rows : []).map(normTicket);
-  const inWin = all.filter((t) => t.d && t.d >= win.from && t.d <= win.to);
+  const inWin = all.filter((t) => inBookWindow(t.d, win));
   const dated = all.map((t) => t.d).filter(Boolean).sort();
   return {
     client: client, at: now || Date.now(), from: win.from, to: win.to,
     pulled: all.length, n: inWin.length, deepest: dated[0] || '',
-    rows: inWin.slice(0, 600).map((t) => [t.id, t.subject, t.status, t.d, t.first, t.by,
+    rows: inWin.slice(0, BOOK_TICKET_CAP).map((t) => [t.id, t.subject, t.status, t.d, t.first, t.by,
       t.origin, t.from, t.age, t.level, t.idle, t.msgs, t.tasks, Math.round(t.hours * 4)]),
   };
 }
@@ -1190,7 +1274,8 @@ function n2(v) { const n = Number(v); return Number.isFinite(n) ? Math.round(n *
  * "Yumove". Folding case, spacing, accents and punctuation joins them; left unfolded a brand
  * appears twice in every filter and its tickets never meet its tasks.
  */
-export function assembleBook(books, queues, accounts, now) {
+export function assembleBook(books, queues, accounts, now, win) {
+  const view = win || bookWindow(now, BOOK_MONTHS);
   const canon = {}, amOf = {};
   (accounts || []).forEach((a) => { if (a.client) { canon[brandKey(a.client)] = a.client; if (a.am) amOf[a.client + '|' + a.market] = a.am; } });
   const name = (n) => canon[brandKey(n)] || String(n || '');
@@ -1201,35 +1286,83 @@ export function assembleBook(books, queues, accounts, now) {
     Object.keys(b.markets).forEach((mk) => {
       const m = b.markets[mk];
       if (!m) return;
-      coverage.push({ client: client, market: mk, cid: m.cid || 0, at: m.at || 0, n: m.n || 0,
-        pulled: m.pulled || 0, deepest: m.deepest || '', full: m.full !== false, capped: !!m.capped });
       const am = amOf[client + '|' + mk] || m.am || '';
-      (m.rows || []).forEach((r) => rows.push(unpackRow(r, client, mk, am)));
+      // The store holds everything the pull reached; the WINDOW is applied here, on the way out, so
+      // one stored market answers every window the page offers without being re-read.
+      let n = 0;
+      (m.rows || []).forEach((r) => {
+        const t = unpackRow(r, client, mk, am);
+        if (!inBookWindow(t.d, view)) return;
+        rows.push(t); n++;
+      });
+      // `holds` is the oldest day this record can actually answer for, and it is NOT `deepest`:
+      // the pull may have SEEN tasks from 2018 while the record was written over a twelve-month
+      // window and stored none of them. So it is whichever of the two is later — the record's own
+      // floor, or its oldest stored row. A wider view cannot invent what a shallower record never
+      // kept, and bookHealth counts the markets in that position rather than drawing a short line
+      // as if the work had stopped.
+      const mf = m.from || '', md = m.deepest || '';
+      coverage.push({ client: client, market: mk, cid: m.cid || 0, at: m.at || 0, n: n,
+        held: m.n || 0, from: mf, holds: (md && md > mf) ? md : mf, pulled: m.pulled || 0,
+        deepest: md, full: m.full !== false, capped: !!m.capped });
     });
   });
   const tickets = [], tcov = [];
   (queues || []).forEach((q) => {
     if (!q) return;
     const client = name(q.client);
-    tcov.push({ client: client, at: q.at || 0, n: q.n || 0, pulled: q.pulled || 0, deepest: q.deepest || '' });
     const am = (accounts || []).filter((a) => a.client === client)[0];
-    (q.rows || []).forEach((r) => tickets.push(unpackTicket(r, client, am ? am.am : '')));
+    let tn = 0;
+    (q.rows || []).forEach((r) => {
+      const t = unpackTicket(r, client, am ? am.am : '');
+      if (!inBookWindow(t.d, view)) return;
+      tickets.push(t); tn++;
+    });
+    tcov.push({ client: client, at: q.at || 0, n: tn, held: q.n || 0, from: q.from || '',
+      pulled: q.pulled || 0, deepest: q.deepest || '' });
   });
   rows.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
   tickets.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
   coverage.sort((a, b) => (a.client + a.market < b.client + b.market ? -1 : 1));
-  const win = bookWindow(now, BOOK_MONTHS);
-  return { from: win.from, to: win.to, months: BOOK_MONTHS, at: now || Date.now(),
+  return { from: view.from, to: view.to, months: view.months == null ? BOOK_MONTHS : view.months,
+    all: !!view.all, windows: BOOK_WINDOWS.slice(), at: now || Date.now(),
     rows: rows, tickets: tickets, accounts: (accounts || []).map((a) => Object.assign({}, a, { client: name(a.client) })),
     coverage: coverage, ticketCoverage: tcov };
 }
 
-/** How much of the book has actually been read — the page states this rather than implying it. */
-export function bookHealth(coverage, roster, now) {
-  const cov = coverage || [], total = (roster && roster.length) || cov.length;
+/**
+ * How much of the book has actually been read — the page states this rather than implying it.
+ *
+ * THE DENOMINATOR IS THE UNION, not the roster (Ray's own screenshot, 1 Oct 2026, read "44 of 39
+ * markets read" — a count of markets read that was LARGER than the count of markets there are).
+ * Both numbers were right and they were answering different questions: `read` is every market the
+ * book HOLDS a record for, while the roster is rebuilt from the live client master on every pull
+ * and carries only the markets booking hours THIS cycle (allowance > 0 or used > 0). A market whose
+ * cycle rolled over to zero with no block drops off the roster while its history stays in the book —
+ * five of them, on the day he asked. So the total is every market in either, and the ones the
+ * roster no longer carries are COUNTED AND NAMED (`dropped`) rather than making the sentence absurd:
+ * their hours are still real and still in the chart, which is exactly why they are not thrown away.
+ *
+ * `shallow` is the other honesty flag: a market read before the window widened holds only its own
+ * span, so it cannot answer a wider view until its next turn in the rotation.
+ */
+export function bookHealth(coverage, roster, now, viewFrom) {
+  const cov = coverage || [];
+  const key = (x) => String((x && x.client) || '') + '|' + String((x && x.market) || '');
+  const seen = {};
+  (roster || []).forEach((m) => { if (m) seen[key(m)] = 1; });
+  const onRoster = Object.keys(seen).length;
+  let dropped = 0;
+  cov.forEach((c) => { const k = key(c); if (!seen[k]) { seen[k] = 1; dropped++; } });
+  const total = Object.keys(seen).length || cov.length;
   const at = cov.map((c) => c.at).filter(Boolean).sort();
   const partial = cov.filter((c) => c.full === false).length;
-  return { read: cov.length, total: total, partial: partial,
+  // A record is SHALLOW when its own floor is later than the window being read — not when its
+  // oldest task is. A market pulled over all time whose first task is 2018 holds everything there
+  // is; flagging it would turn the honest signal into noise on every all-time read.
+  const shallow = viewFrom ? cov.filter((c) => c.from && c.from > viewFrom) : [];
+  return { read: cov.length, total: total, roster: onRoster, dropped: dropped, partial: partial,
+    shallow: shallow.length, shallowFrom: shallow.map((c) => c.from).sort().pop() || '',
     oldest: at[0] || 0, newest: at[at.length - 1] || 0,
     complete: total > 0 && cov.length >= total,
     staleHours: at[0] ? Math.round(((now || Date.now()) - at[0]) / 36e5) : 0 };
@@ -1368,4 +1501,55 @@ export function trailTrend(rows) {
   if (!a && !b) return { dir: 'flat', pct: 0, enough: true };
   const pct = a ? Math.round(((b - a) / a) * 100) : 100;
   return { dir: pct > 8 ? 'up' : pct < -8 ? 'down' : 'flat', pct, enough: true };
+}
+
+/**
+ * WHERE A BRAND'S HOURS FIGURE COMES FROM (Ray, 28 Sep 2026, circling the USED figure on a brand
+ * dossier: "actually i dont understand how [it] was calculated" → "maybe show calculation when
+ * hover that number on brand dossier").
+ *
+ * A brand's headline figures are SUMS ACROSS ITS MARKETS, and the three of them are three
+ * INDEPENDENT sums the Task Manager states — not one derived from another. That is exactly what
+ * makes them unreadable side by side: a brand can read more hours used than its block allows and
+ * still not be that far negative, and block − used will not give you the balance. Nothing is
+ * wrong; two different things are true at once — some of those hours sit on a market carrying NO
+ * block at all, and the balance already counts hours carried in from the previous cycle.
+ *
+ * So the breakdown names each market and adds them up in front of the reader. Three rules:
+ *   · the ROWS are the sum — `agrees` reports when the record's own headline disagrees (a market
+ *     the index has not re-read, a rounding drift) rather than printing a total nobody can
+ *     reproduce from what is on screen;
+ *   · a market with NO allowance is named, because hours booked against no block are the usual
+ *     reason a brand total looks wrong beside its block;
+ *   · the balance is NEVER presented as block − used, because it is not that subtraction.
+ */
+export function hoursSplit(rec) {
+  const r = rec || {};
+  const n2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+  const rows = (Array.isArray(r.mk) ? r.mk : [])
+    .map((m) => {
+      const allowance = n2(m && m.allowance);
+      return {
+        market: String((m && m.market) || '').trim() || '—',
+        used: n2(m && m.used), allowance, balance: n2(m && m.balance),
+        health: (m && m.health) || null, noBlock: !(allowance > 0),
+      };
+    })
+    .sort((a, b) => (b.used - a.used) || (a.market < b.market ? -1 : a.market > b.market ? 1 : 0));
+  const sum = (k) => n2(rows.reduce((t, x) => t + x[k], 0));
+  const used = sum('used'), allowance = sum('allowance'), balance = sum('balance');
+  const stated = {
+    used: r.used == null ? null : n2(r.used),
+    allowance: r.allowance == null ? null : n2(r.allowance),
+    balance: r.balance == null ? null : n2(r.balance),
+  };
+  const same = (a, b) => a == null || Math.abs(a - b) <= 0.011;
+  const blockless = rows.filter((x) => x.noBlock && x.used > 0);
+  return {
+    ok: rows.length > 0,
+    n: rows.length,
+    rows, used, allowance, balance, stated,
+    agrees: { used: same(stated.used, used), allowance: same(stated.allowance, allowance), balance: same(stated.balance, balance) },
+    noBlock: { n: blockless.length, used: n2(blockless.reduce((t, x) => t + x.used, 0)), markets: blockless.map((x) => x.market) },
+  };
 }

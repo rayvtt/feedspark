@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superdry × FeedSpark — Service Review, September 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
+  --paper:#FFFFFF;--paper-2:#F7F7F5;--paper-warm:#FEF9F2;
+  --orange:#F5A623;--orange-deep:#ED6F0B;--dark:#1C1C1C;
+  --green:#2E7D32;--red:#C62828;--blue:#1565C0;--purple:#6A1B9A;
+  --shadow:0 2px 10px rgba(0,0,0,.06);--shadow-lift:0 8px 24px rgba(0,0,0,.10);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink-2);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.55}
+h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:var(--orange-deep)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 40px}
+section{padding:104px 0}
+.band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band-warm{background:var(--paper-warm);border-top:1px solid #EDE3D3;border-bottom:1px solid #EDE3D3}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:14px}
+.eyebrow.on-dark{color:var(--orange)}
+.sec-title{font-size:34px;margin-bottom:6px}
+.sec-sub{font-size:15.5px;color:var(--muted);margin-bottom:44px;max-width:760px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:translateY(0)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
+.tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.tb-brand span{color:var(--orange-deep)}
+.tb-nav{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.tb-nav a{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
+
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column. Every section name is always visible (not hover-gated) — it's a live table of
+   contents, not a collapsed icon rail — with the currently-active section picked out by a
+   filled background + orange rail rather than dimming or hiding the rest. Hidden below
+   1300px, same cutoff logic as .tb-nav's own mobile hide, since there's no side margin
+   left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;width:196px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:7px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
+@media(min-width:1300px){.side-nav{display:flex}}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
+.hero:after{content:"";position:absolute;top:9px;left:0;right:0;height:1px;background:rgba(255,255,255,.16)}
+.hero h1{color:#fff;font-size:64px;font-weight:900;letter-spacing:-.025em;margin:18px 0 22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lede{font-size:19px;color:rgba(255,255,255,.72);max-width:620px;font-weight:300}
+.hero-rule{width:64px;height:3px;background:var(--orange);margin:34px 0 26px}
+.hero-meta{display:flex;gap:36px;flex-wrap:wrap;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+.hero-meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;margin-top:5px}
+.scrollcue{margin-top:56px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:flex;align-items:center;gap:10px}
+.scrollcue i{display:block;width:26px;height:1px;background:var(--orange);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.7)}}
+
+/* chapter divider */
+.chapter{background:var(--dark);color:#fff;padding:88px 0;position:relative;overflow:hidden}
+.chapter-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.ch-num{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:190px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,166,35,.42);letter-spacing:-.04em;user-select:none;z-index:1}
+.chapter h2{color:#fff;font-size:42px;font-weight:900;letter-spacing:-.025em;margin-bottom:12px}
+.chapter p{color:rgba(255,255,255,.6);font-size:15.5px;max-width:640px}
+.ch-rule{width:48px;height:3px;background:var(--orange);margin-bottom:24px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
+.ag-t{font-size:16.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:13.5px;color:var(--muted)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
+.stat{background:var(--paper);padding:26px 22px}
+.stat .n{font-size:40px;font-weight:900;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.stat .n small{font-size:19px;font-weight:700;color:var(--muted)}
+.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:9px}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card h4{font-size:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:#fff;text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--paper-2)}
+.tbl-wrap{border:1px solid var(--line);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto}
+
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.p-done{background:rgba(46,125,50,.10);color:var(--green)}
+.p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+.p-open{background:#EEE;color:var(--muted)}
+.p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px}
+.bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-row .bl span{color:var(--muted);font-weight:400}
+.track{height:7px;background:var(--paper-2);border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--orange);transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.green{background:var(--green)}
+.fill.grey{background:#C9C9C9}
+.fill.red{background:var(--red)}
+
+/* protocol cards */
+.proto{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden}
+.proto:before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
+.proto.g:before{background:var(--green)}
+.proto.b:before{background:var(--blue)}
+.proto.p:before{background:var(--purple)}
+.proto .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.proto.g .tag{color:var(--green)}
+.proto.b .tag{color:var(--blue)}
+.proto.p .tag{color:var(--purple)}
+.proto h4{font-size:17px;margin-bottom:4px}
+.proto .desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px}
+.proto ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.proto li{padding-left:14px;position:relative;margin-bottom:8px}
+.proto li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%}
+.proto.g li:before{background:var(--green)}
+.proto.b li:before{background:var(--blue)}
+.proto.p li:before{background:var(--purple)}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pipe-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative}
+.pipe-card h4{font-size:16px;margin-bottom:4px}
+.pipe-card .sub{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.pipe-card ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.pipe-card li{padding-left:14px;position:relative;margin-bottom:8px}
+.pipe-card li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+
+/* tachyon flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
+.flow-step{background:var(--paper);padding:24px 20px;position:relative}
+.flow-step:not(:last-child):after{content:"→";position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--orange);font-weight:900;z-index:2}
+.fs-num{font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--orange);margin-bottom:10px}
+.flow-step h4{font-size:14px;margin-bottom:6px}
+.flow-step p{font-size:12.5px;color:var(--muted)}
+
+/* description enrichment */
+.enrich{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.en-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px;border-left:3px solid var(--orange)}
+.en-card h4{font-size:14px;margin-bottom:8px}
+.en-card .before{background:#FFF3F3;border:1px solid #FFCDD2;padding:12px 14px;font-size:12.5px;color:var(--red);margin-bottom:10px;font-family:ui-monospace,monospace;line-height:1.6}
+.en-card .after{background:#E8F5E9;border:1px solid #C8E6C9;padding:12px 14px;font-size:12.5px;color:var(--green);font-family:ui-monospace,monospace;line-height:1.6}
+
+/* maturity tiers */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tier{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 20px;position:relative}
+.tier.here{border-color:var(--orange);border-width:2px;box-shadow:var(--shadow-lift)}
+.tier .flag{position:absolute;top:-11px;left:20px;background:var(--orange);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px}
+.tier .tn{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--orange-deep);margin-bottom:8px}
+.tier h4{font-size:17px;margin-bottom:3px}
+.tier .ts{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.tier ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.tier li{padding-left:14px;position:relative;margin-bottom:9px}
+.tier li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+.tier.done h4:after{content:" ✓";color:var(--green)}
+
+/* interactive panel */
+.agent{display:grid;grid-template-columns:1fr 1.15fr;gap:0;border:1px solid var(--line);box-shadow:var(--shadow-lift);background:var(--paper)}
+.agent-l{padding:32px;border-right:1px solid var(--line);background:var(--paper-2)}
+.agent-l h4{font-size:14px;margin-bottom:6px}
+.agent-l>p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.qs{display:flex;flex-direction:column;gap:9px}
+.q{text-align:left;font-family:inherit;font-size:13.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:.18s;line-height:1.4}
+.q:hover{border-color:var(--orange);transform:translateX(3px)}
+.q.active{border-color:var(--orange);border-left:3px solid var(--orange);background:#fff;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+.q:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+.agent-r{padding:32px;min-height:340px}
+.ar-head{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px}
+.attr-name{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px}
+.attr-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep);margin-bottom:18px}
+.attr-why{font-size:14px;color:var(--ink-2);margin-bottom:20px}
+.feedrow{background:var(--dark);padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#E8E8E8;line-height:1.65;overflow-x:auto}
+.feedrow .k{color:var(--orange)}
+.feedrow .c{color:#7A7A7A}
+.attr-note{font-size:12.5px;color:var(--muted);margin-top:16px;padding-left:12px;border-left:2px solid var(--orange)}
+.fade-swap{animation:sw .34s ease}
+@keyframes sw{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* scorecard */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.sc-cell{background:var(--paper);padding:22px}
+.sc-cell .sc-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sc-cell .sc-pct{font-size:32px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.sc-cell .sc-label{font-size:14px;font-weight:700;color:var(--ink)}
+.sc-cell .sc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sc-cell .sc-tgt{font-size:11.5px;color:var(--green);margin-top:4px;font-weight:700}
+.sc-cell .sc-warn{font-size:11.5px;color:var(--red);margin-top:4px;font-weight:700}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mo{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column}
+.mo.peak{border-color:var(--orange);border-width:2px}
+.mo-m{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--ink);margin-bottom:12px}
+.mo-s{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;align-self:flex-start;margin-bottom:14px}
+.s-close{background:rgba(46,125,50,.10);color:var(--green)}
+.s-build{background:rgba(245,166,35,.18);color:var(--orange-deep)}
+.s-next{background:#EEE;color:var(--muted)}
+.s-peak{background:var(--orange);color:#fff}
+.mo h4{font-size:14px;margin-bottom:8px}
+.mo ul{list-style:none;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.mo li{padding-left:13px;position:relative;margin-bottom:9px;line-height:1.45}
+.mo li:before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--orange);border-radius:50%}
+.mo li b{color:var(--ink)}
+
+/* asks */
+.ask{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ask-i{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--orange);display:flex;align-items:center;justify-content:center;color:var(--orange-deep);font-weight:900;font-size:13px}
+
+/* callout + note */
+.callout{background:var(--orange);color:#fff;padding:24px 28px;margin-top:32px}
+.callout h4{color:#fff;font-size:15px;margin-bottom:6px}
+.callout p{font-size:14px;color:rgba(255,255,255,.95)}
+.note{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--orange);padding:18px 22px;font-size:13.5px;color:var(--ink-2);margin-top:28px}
+.note b{color:var(--ink)}
+
+.chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
+body.hide-checks .chk{display:none}
+/* ---- INTERNAL-ONLY note -------------------------------------------------------------
+   A deck is written to the CLIENT. Anything written to FeedSpark — a figure Ray still has
+   to confirm, where a number came from, why a source is weak, what this deck could not
+   reach — belongs in one of these, never in body copy. Ray flagged exactly this on the
+   Monsoon intro deck: "it sounds like it's being presented to me rather than to the
+   client... if you need to make a note, make it more apparent so I can delete it properly."
+   Deliberately loud, so it can never be mistaken for deck copy, and stripped automatically
+   from every client-bound output: tools/deck_to_pptx.py skips it, and the Download-HTML
+   builder in worker.js removes it. The topbar's "Data checks" toggle hides it for
+   presenting. */
+.int-note{border:2px dashed var(--red);background:#FFF5F3;padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.55;color:var(--ink)}
+.int-note::before{content:"\26A0  INTERNAL \2014 NOT FOR CLIENT";display:block;font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:9px}
+.int-note b{color:var(--red)}
+body.hide-checks .int-note{display:none}
+.flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
+.flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
+
+/* close */
+.close{background:var(--dark);color:#fff;padding:96px 0}
+.close h2{color:#fff;font-size:44px;font-weight:900;margin-bottom:10px}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.ct{border-top:2px solid var(--orange);padding-top:16px}
+.ct b{display:block;color:#fff;font-size:16px;font-weight:700}
+.ct span{display:block;font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
+.footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda,.enrich{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+
+<body class="">
+
+
+<div class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="tb-brand">Feed<span>Spark</span> &times; Superdry</div>
+    <nav class="tb-nav">
+      <a href="#c1">01 The work</a>
+      <a href="#c2">02 What we cut</a>
+      <a href="#c3">03 What we add</a>
+      <a href="#c4">04 Measurement</a>
+      <a href="#c5">05 Push back</a>
+      <a href="#c6">06 Net position</a>
+    </nav>
+    <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">&#9873; Data checks</button>
+    <div class="progress" id="progress" style="width: 0%;"></div>
+  </div>
+</div>
+<nav class="side-nav">
+  <a href="#c1"><span class="num">01</span><span class="lbl">The work</span></a>
+  <a href="#c2"><span class="num">02</span><span class="lbl">What we cut</span></a>
+  <a href="#c3"><span class="num">03</span><span class="lbl">What we add</span></a>
+  <a href="#c4"><span class="num">04</span><span class="lbl">Measurement</span></a>
+  <a href="#c5"><span class="num">05</span><span class="lbl">Push back</span></a>
+  <a href="#c6"><span class="num">06</span><span class="lbl">Net position</span></a>
+</nav>
+<div class="footmark">FeedSpark &middot; Private &amp; Confidential</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Service Review &middot; September 2026</div>
+    <h1>Superdry</h1>
+    <div class="hero-rule"></div>
+    <p class="lede">Value for money, in both directions: what the retainer bought, and what changes next.</p>
+    <div class="hero-meta" style="margin-top:40px">
+      <div>Estate<b>19 markets &middot; 53 feeds</b></div>
+      <div>Since<b>June 2022 &middot; four years</b></div>
+      <div>Delivered<b>3,793 hours &middot; 2,846 tasks</b></div>
+    </div>
+    <div class="scrollcue"><i></i> Scroll</div>
+  </div>
+</header>
+
+<!-- ================= 01 ================= -->
+<section id="c1">
+  <div class="wrap">
+    <div class="eyebrow rv in">01 &middot; Confirming the existing service</div>
+    <h2 class="sec-title rv in">The work behind the retainer</h2>
+    <p class="sec-sub rv in">The eight largest lanes &mdash; 2,225 of the 3,793 hours delivered since June 2022.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:23%">Lane</th><th style="width:10%">Hours</th><th style="width:37%">What the task actually is</th><th>Where AI helps &mdash; and where it cannot</th></tr></thead>
+      <tbody>
+        <tr><td><b>Keyword optimisation</b></td><td><b>598.5</b></td><td>Term research per category, then a rule per term set, then a controlled test to prove it</td><td>Drafts candidate terms. Cannot write the rule, run the test or read the result</td></tr>
+        <tr><td><b>Account management</b></td><td><b>443.0</b></td><td>Calls, reporting, plan upkeep, inbound requests across 19 markets</td><td><span class="pill p-prog">This is where time can come out</span></td></tr>
+        <tr><td><b>Data field population</b></td><td><b>410.25</b></td><td>Size, colour, material, identifier and availability mapped across 19 localisations</td><td>Nothing to generate from &mdash; the source values do not exist in the master feed</td></tr>
+        <tr><td><b>Title optimisation</b></td><td><b>259.5</b></td><td>29 characters supplied per product; 83 shipped. 100% of the catalogue rewritten</td><td>Drafts copy. A human sets the pattern per category &mdash; and the pattern is category-specific</td></tr>
+        <tr><td><b>Category mapping</b></td><td><b>217.75</b></td><td>Google&rsquo;s fixed taxonomy plus a 305-path product_type tree, 93% of it four levels deep</td><td>No. GPC is a fixed taxonomy to be matched, not text to be generated</td></tr>
+        <tr><td><b>Rule engineering &amp; build</b></td><td><b>133.5</b></td><td>1,774 live rules over 53 feeds and 19 scheduled imports</td><td>No. This is engineering against a live revenue channel</td></tr>
+        <tr><td><b>Custom label maintenance</b></td><td><b>88.0</b></td><td>The labels PMax bids and structures against &mdash; kept in step with stock and season</td><td>No. It reads Superdry&rsquo;s own trading intent, which is not in the feed</td></tr>
+        <tr><td><b>Disapprovals cleared</b></td><td><b>74.75</b></td><td>Merchant Center rejections, policy classes, price and stock mismatches</td><td>No. Needs access to Superdry&rsquo;s systems and a judgement call on each</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Two years to September 2026: 2,036.75 hours delivered against 1,008 hours sold. 648 of them were never charged.</b></div>
+  </div>
+</section>
+
+<!-- ================= 02 ================= -->
+<section id="c2" class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">02 &middot; What we propose to cut</div>
+    <h2 class="sec-title rv in">What comes out, and what you take on</h2>
+    <p class="sec-sub rv in">Hours released are monthly averages read over the 51 months since June 2022.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:26%">Proposal</th><th style="width:12%">Released</th><th style="width:31%">What it means for Superdry</th><th>What it means for us</th></tr></thead>
+      <tbody>
+        <tr><td><b>Freeze the 12 unfunded markets to feed integrity only</b></td><td><b>&asymp; 7.5 / month</b></td><td>No change in the seven funded markets. The other twelve keep trading, and stop being optimised</td><td>We stop absorbing work that has never been billed &mdash; 388 hours of it since 2022</td></tr>
+        <tr><td><b>Monthly reporting moves to the FeedSpark dashboard</b></td><td><b>&asymp; 4 / month</b></td><td>Live numbers on demand rather than a monthly pack. One review call a quarter instead of one a month</td><td>Admin time returns to optimisation, which is where you want it</td></tr>
+        <tr><td><b>Disapproval sweeps become automated alerts</b></td><td><b>&asymp; 1 / month</b></td><td>You hear about a rejection the hour it happens, not at the next scheduled sweep</td><td>Alerts have to be configured first. None are set up on any of the 19 instances today</td></tr>
+        <tr><td><b>Product names populated at source</b></td><td><span class="pill p-open">Superdry side</span></td><td>22,368 products &mdash; 39% of the master feed &mdash; reach us with no product name at all</td><td>Removes a whole repair layer, so title hours buy optimisation instead of patching</td></tr>
+        <tr><td><b>Margin and stock-depth data supplied</b></td><td><span class="pill p-open">Superdry side</span></td><td>Two fields we have asked for repeatedly. They gate range completion and stock exclusion</td><td>Unlocks the largest measured opportunity on the account &mdash; see the next slide</td></tr>
+        <tr><td><b>Google Analytics access</b></td><td><span class="pill p-open">Superdry side</span></td><td>Lets us read behaviour behind the click rather than inferring it from Ads alone</td><td>Without it we cannot measure what we actually caused</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>About 12.5 hours a month comes back. None of it comes out of optimisation, keyword work or disapprovals.</b></div>
+    <div class="int-note rv in">Ray &mdash; two things only you can answer here, and the deck cannot: (1) <b>how happy Superdry actually is with delivery</b>, and what they said they would be willing to lose. Nothing in the plan, the task log, the reports database or the test archive records a satisfaction read or a cut proposal, so this slide is written as <b>our</b> proposal, not as an agreed position. (2) Whether any of these six were already put to them and answered &mdash; if they were, the wording should say so, because a proposal they have already agreed to reads much stronger than one they are seeing for the first time. The three &ldquo;Superdry side&rdquo; rows come from your own Vendor Review tab (margin all markets, return rate in Shopping, Analytics access) plus the 39% missing-product-name reading in the FeedHero audit.</div>
+  </div>
+</section>
+
+<!-- ================= 03 ================= -->
+<section id="c3">
+  <div class="wrap">
+    <div class="eyebrow rv in">03 &middot; New services on the table</div>
+    <h2 class="sec-title rv in">What we would add, and what it is worth</h2>
+    <p class="sec-sub rv in">Every figure below was read from the live feeds and the Google Ads record this morning.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:23%">New service</th><th style="width:33%">The evidence it is needed</th><th style="width:29%">The prize</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td><b>Catalogue activation</b><br><span style="font-size:12px;color:var(--muted)">Range completion &amp; stock exclusion</span></td><td><b>47.1%</b> of the UK catalogue took under 100 impressions in thirty days. Germany 51.2%, France 48.8%, the Netherlands <b>57.6%</b></td><td>Roughly <b>12,100 of 25,699</b> UK products are effectively invisible. The largest single opportunity on the account</td><td><span class="pill p-prog">Written &amp; open in the plan</span></td></tr>
+        <tr><td><b>Germany, France &amp; Netherlands parity</b></td><td>All three carry the title rewrite and the category tree and <b>nothing else</b> &mdash; 0% product highlights, 0% keyword enrichment</td><td>Germany already returns the <b>highest ROAS on the account</b> &mdash; 1,042% &mdash; from the least-built feed we run</td><td><span class="pill p-open">Scoped, never funded</span></td></tr>
+        <tr><td><b>Search-term coverage</b></td><td><b>578 of the top 1,000</b> UK search terms (58%) appear in no product title. 313 return zero hits at all</td><td>&ldquo;Jackets for men&rdquo;: 14,800 searches a month, <b>100% title miss</b>. &ldquo;Jacket in yellow&rdquo;: 8,100, zero hits anywhere</td><td><span class="pill p-prog">Method proven on 13 tests</span></td></tr>
+        <tr><td><b>AI-surface readiness</b></td><td><b>0 of 6</b> of Google&rsquo;s conversational attributes are present on any of the 19 markets</td><td>The fields AI Mode and agentic shopping read. 62.7% of UK titles are already in the band they need</td><td><span class="pill p-open">Not started</span></td></tr>
+        <tr><td><b>ALP &amp; DPA overlay</b></td><td>Local inventory fields are already live in the UK feed &mdash; ship-to-store, next-day &mdash; and unused by any campaign</td><td>Store stock into Shopping, and creative overlays onto the social feeds already running</td><td><span class="pill p-prog">Ready to present</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Four of the five are already written into Superdry&rsquo;s own plan. What is missing is funded time, not a plan.</b></div>
+    <div class="int-note rv in">Ray &mdash; deliberately <b>no prices and no deploy hours on this slide</b>. The upside figures are all measured, but nothing I can reach holds a Superdry ratecard, a proposed fee for any of these five, or an answer on whether they have budget at all (your point 3). The net-position slide is where the money lands: it carries the measured savings and leaves the new-cost column for you. If you drop the five fees and their deploy hours in, both slides complete without touching anything else.</div>
+  </div>
+</section>
+
+<!-- ================= 04 ================= -->
+<section id="c4" class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">04 &middot; How this gets measured</div>
+    <h2 class="sec-title rv in">The number we should be judged on</h2>
+    <p class="sec-sub rv in">Five candidate measures, and who can actually stand behind each one.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:22%">Measure</th><th style="width:26%">What it currently reads</th><th style="width:26%">What it really measures</th><th>Our position</th></tr></thead>
+      <tbody>
+        <tr><td><b>Shopping &amp; PMax revenue</b><br><span style="font-size:12px;color:var(--muted)">Google Ads, last click</span></td><td>UK <b>&pound;16.18m</b> on &pound;1.68m spend &mdash; <b>966% ROAS</b>. Germany 1,042%, France 968%, Netherlands 816%</td><td>Everything the channel did. The feed is necessary to it and is not the only cause</td><td><span class="pill p-open">We should stop claiming this as ours</span></td></tr>
+        <tr><td><b>Controlled A/B on the same catalogue</b></td><td>13 controlled tests, <b>9 won</b>. Median <b>+9.42% impressions, +8.54% clicks</b></td><td>Causal. Same products, same moment, one group changed &mdash; nothing else can explain the gap</td><td><span class="pill p-done">Propose as the primary measure</span></td></tr>
+        <tr><td><b>Catalogue activation</b></td><td><b>47.1%</b> of the UK range under 100 impressions in thirty days</td><td>How much of what Superdry pays to hold is actually in circulation</td><td><span class="pill p-done">Propose as the headline KPI</span></td></tr>
+        <tr><td><b>Search-term coverage</b></td><td><b>58%</b> of the top 1,000 terms absent from every title</td><td>Directly attributable to feed copy, and to nothing else</td><td><span class="pill p-done">Propose as a monthly tracker</span></td></tr>
+        <tr><td><b>Incremental revenue</b></td><td><span class="pill p-block">Not measured by anyone today</span></td><td>What would not have happened without the work. Needs a geo split or a holdout</td><td><span class="pill p-prog">We will build it if the DM team will agree the design</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>We are not asking to be measured on attributed revenue. We are asking to be measured on what we can prove we caused.</b></div>
+    <div class="int-note rv in">Ray &mdash; this slide is written to <b>concede the revenue argument on purpose</b>, because that is the one Matt Roper&rsquo;s team can win and keeping it costs us the room. Nothing in the reports database, the plan or the archive records what KPIs the DM team have set, whether they signed anything, or the exact objection they raised to the revenue calculation, so I have inferred the objection as the standard one (last-click Shopping revenue credits the channel, not the feed). <b>Three things to confirm before this goes out:</b> (1) that the objection really is the attribution one; (2) whether the DM team have actually issued KPIs, and if so what they are &mdash; the row order should follow theirs, not ours; (3) whether you want to offer the holdout test, since it will show a smaller number than 966% and we cannot take that back.</div>
+  </div>
+</section>
+
+<!-- ================= 05 ================= -->
+<section id="c5">
+  <div class="wrap">
+    <div class="eyebrow rv in">05 &middot; Where you can push back</div>
+    <h2 class="sec-title rv in">The six hardest questions, asked for you</h2>
+    <p class="sec-sub rv in">We would rather put these on the table than have them found.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:27%">The challenge</th><th style="width:38%">What is true</th><th>What we are doing about it</th></tr></thead>
+      <tbody>
+        <tr><td><b>&ldquo;The title rewrite has never been proved&rdquo;</b></td><td>Correct. Eight of forty tests returned no data, and five of those eight were title tests. The change from 29 to 83 characters is the biggest single change made to this feed and it has no control behind it</td><td>The first batch of the new cycle is a title A/B on 10,000 products with a control group held back</td></tr>
+        <tr><td><b>&ldquo;Only half the retainer goes on optimisation&rdquo;</b></td><td>Correct. 2,057 of the 3,738 classified hours &mdash; 55% &mdash; went on optimisation. The rest went on management, build and repair. Superdry&rsquo;s own target is 80%</td><td>The cut list releases 12.5 hours a month, and every hour of it comes from the other 45%</td></tr>
+        <tr><td><b>&ldquo;Half the range is invisible and you knew&rdquo;</b></td><td>Correct. The UK zombie rate is 47.1% and both fixes have sat open in the plan</td><td>They are gated on margin and stock-depth data we have asked for since 2024 and not received</td></tr>
+        <tr><td><b>&ldquo;Three markets are half-built after four years&rdquo;</b></td><td>Correct. Germany, France and the Netherlands carry 0% product highlights and 0% keyword enrichment</td><td>Scoped and never funded. It is back on the table as a costed build</td></tr>
+        <tr><td><b>&ldquo;Nothing alerts you when we break&rdquo;</b></td><td>Correct. No custom alerts are configured on any of the 19 instances. A rejection is found at the next sweep</td><td>Included in the cut list at no additional fee, as part of what the released hours pay for</td></tr>
+        <tr><td><b>&ldquo;Your own audit grades you E&rdquo;</b></td><td>It grades high-priority issues E, reviews E, search terms E and alerting F</td><td>Alerting is ours and is fixed above. Reviews and 39% missing product names are upstream of us &mdash; the three rows we asked you to own</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>None of these six is new to us. Every one is already in the plan, the audit or the test archive.</b></div>
+  </div>
+</section>
+
+<!-- ================= 06 ================= -->
+<section id="c6" class="band-warm">
+  <div class="wrap">
+    <div class="eyebrow rv in">06 &middot; Cost and benefit</div>
+    <h2 class="sec-title rv in">The net position</h2>
+    <p class="sec-sub rv in">42 hours a month are sold. 84.9 hours a month have been delivered, every month, for two years.</p>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:36%">Line</th><th style="width:14%">Hours</th><th style="width:14%">Fee</th><th>What changes</th></tr></thead>
+      <tbody>
+        <tr><td>Released &mdash; twelve unfunded markets held at feed integrity</td><td><b>&minus;7.5</b></td><td>&mdash;</td><td>Never billed, so no fee moves. The absorbed cost stops</td></tr>
+        <tr><td>Released &mdash; reporting moves to the FeedSpark dashboard</td><td><b>&minus;4.0</b></td><td>&mdash;</td><td>Live numbers on demand; one review call a quarter</td></tr>
+        <tr><td>Released &mdash; disapproval sweeps become automated alerts</td><td><b>&minus;1.0</b></td><td>&mdash;</td><td>Faster detection, and it costs nothing to switch on</td></tr>
+        <tr><td><b>Total released back into the retainer</b></td><td><b>&minus;12.5</b></td><td><b>&pound;0</b></td><td><b>30% of the contracted 42 hours, redeployed</b></td></tr>
+        <tr><td>Added &mdash; catalogue activation, and parity for Germany, France and the Netherlands</td><td><span class="pill p-open">To scope</span></td><td><span class="pill p-open">To quote</span></td><td>12,100 invisible UK products; three feeds brought up to the UK build</td></tr>
+        <tr><td>Added &mdash; search-term coverage and AI-surface readiness</td><td><span class="pill p-open">To scope</span></td><td><span class="pill p-open">To quote</span></td><td>58% of the top 1,000 terms covered; the conversational six populated</td></tr>
+        <tr><td>Added &mdash; ALP and DPA overlay</td><td><span class="pill p-open">To scope</span></td><td><span class="pill p-open">To quote</span></td><td>Store stock into Shopping; creative overlays on the social feeds</td></tr>
+        <tr><td><b>Net position</b></td><td><b>12.5 released</b></td><td><b>New scope only</b></td><td><b>The existing service costs less to run before any new fee is agreed</b></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>What we need agreed today: the cut list, one primary measure, and a budget for the new services.</b></div>
+    <div class="int-note rv in">Ray &mdash; the four <b>To scope / To quote</b> cells and their two subtotals are the whole commercial ask and they are deliberately empty. Nothing I can read holds a Superdry ratecard, a fee for any of the five new services, or an answer on budget. Drop the hours and the fees in and the net row completes itself. Two of my own figures to sanity-check first: the <b>12.5 hours a month</b> is built from 51-month averages (388.25 unfunded hours, 443.0 account-management hours, 74.75 disapproval hours) and assumes reporting cadence halves &mdash; if you think reporting will not really drop, the honest number is closer to 8.5. And <b>84.9 hours a month</b> is the two-year average across all 19 markets against the 42-hour contracted block; it is the strongest number in the deck, so expect it to be challenged.</div>
+  </div>
+</section>
+
+<!-- ================= CLOSE ================= -->
+<footer class="close">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <p class="lede" style="max-width:640px;margin-bottom:40px">Four years, nineteen markets and 3,793 hours. Every figure in this deck was read from a live source on 29 September 2026.</p>
+    <div class="contacts">
+      <div class="ct"><b>Ray Vu</b><span>Account Director</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+      <div class="ct"><b>Steven Opuni</b><span>Executive Account Director</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+      <div class="ct"><b>FeedSpark Technical AM</b><span>Feed engineering &amp; escalations</span><a href="mailto:tech-am@feedspark.com">tech-am@feedspark.com</a></div>
+    </div>
+  </div>
+</footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ======== reveal ======== */
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ======== bars ======== */
+  var fills = document.querySelectorAll('.fill');
+  if('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.width=e.target.getAttribute('data-w')+'%';io3.unobserve(e.target)}})},{threshold:.4});
+    fills.forEach(function(el){io3.observe(el)});
+  } else fills.forEach(function(el){el.style.width=el.getAttribute('data-w')+'%'});
+
+  /* ======== topbar + progress ======== */
+  var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    tb.classList.toggle('show',y>420);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pg.style.width=(h>0?(y/h)*100:0)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
+    links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  /* ======== data-check toggle ======== */
+  document.getElementById('flagbtn').addEventListener('click',function(){
+    var on=this.getAttribute('aria-pressed')==='true';
+    this.setAttribute('aria-pressed',String(!on));
+    document.body.classList.toggle('hide-checks',on);
+  });
+})();
+</script>
+
+</body>
+</html>

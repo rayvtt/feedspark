@@ -1,0 +1,103 @@
+name: News digest → main
+
+# THE DIGEST'S ROAD TO MAIN (Ray, 28 Sep 2026: "why i vhnt' seen industry updated or a while ?
+# it should be a daily thing").
+#
+# The daily news Routine runs as a cloud session, and a cloud session pushes freely only to
+# claude/-prefixed branches. Its ship step said `git push origin main` — so for ten days
+# (18→28 Sep 2026) every run researched, wrote docs/news_digest.json, reported success, and the
+# file never left its container: not one Actions run on any branch at any 06:xx. The run list
+# stayed green, because green means the session exited without an infrastructure error, not that
+# the task happened.
+#
+# Now the Routine pushes the one file to claude/news-digest and THIS lands it:
+#   1. refuse anything but docs/news_digest.json (this lane is content-only by construction);
+#   2. run the same gate the Routine ran before pushing — tools/check_news.js against main's
+#      digest (schema, ≤8 items, https links checked for real, the 90-day rule, a changed id,
+#      newer than main's) — plus the wrangler dry-run, since a malformed digest breaks the bundle;
+#   3. commit that file onto main as "[News] Digest <id>" with the workflow's own token;
+#   4. dispatch the Deploy workflow BY NAME — a push made with GITHUB_TOKEN starts no other
+#      workflow on its own (GitHub's recursion guard); workflow_dispatch is the exception;
+#   5. delete the branch, so tomorrow's push is a plain create.
+# The Routine then polls origin/main for its commit and reports landed / not landed.
+
+on:
+  push:
+    branches: ['claude/news-digest', 'claude/news-digest-*']
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: news-digest-land
+  cancel-in-progress: false
+
+jobs:
+  land:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Only the digest may change
+        run: |
+          git fetch origin main
+          changed="$(git diff --name-only "origin/main...${GITHUB_SHA}")"
+          echo "changed since main: ${changed:-<nothing>}"
+          if [ "$changed" != "docs/news_digest.json" ]; then
+            echo "::error::this lane lands docs/news_digest.json alone — anything else goes through a pull request"
+            exit 1
+          fi
+
+      - name: Validate against main's digest (the Routine ran this too, offline)
+        run: |
+          git show origin/main:docs/news_digest.json > /tmp/main_digest.json
+          node tools/check_news.js docs/news_digest.json --against /tmp/main_digest.json --fresh
+
+      - name: Dry-run build the worker with the new digest bundled
+        run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/wr-out
+
+      - name: Land on main
+        id: land
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          id="$(node -p "require('./docs/news_digest.json').id")"
+          # main may move under us while this runs — take the file, commit, push; on a non-fast-forward
+          # start again from the new main (the file is ours alone, so there is nothing to merge)
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -q -B main origin/main
+            git checkout -q "$GITHUB_SHA" -- docs/news_digest.json
+            if git diff --cached --quiet; then
+              echo "main already carries this digest ($id) — nothing to land"
+              echo "landed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git commit -q -m "[News] Digest $id" -m "Landed from $GITHUB_REF_NAME by the news-digest workflow (run $GITHUB_RUN_ID)."
+            if git push origin main; then
+              echo "landed $id on main as $(git rev-parse --short HEAD)"
+              echo "landed=true" >> "$GITHUB_OUTPUT"
+              echo "id=$id" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "push rejected (main moved) — attempt $attempt"
+          done
+          echo "::error::could not land the digest on main after three attempts"
+          exit 1
+
+      - name: Deploy (a GITHUB_TOKEN push starts no workflow by itself)
+        if: steps.land.outputs.landed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
+
+      - name: Retire the branch
+        if: steps.land.outputs.landed == 'true'
+        run: git push origin --delete "$GITHUB_REF_NAME" || echo "branch already gone"

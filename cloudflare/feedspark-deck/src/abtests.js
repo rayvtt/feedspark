@@ -264,6 +264,44 @@ export function parseAbTests(values, opts) {
   return { ok: true, tests: out };
 }
 
+// parseAbTests itself returns tests in SHEET order (top to bottom) deliberately — that is the
+// order the merge/carry-down logic above reasons about, and it is what the existing fixtures
+// pin. The sheet's own order is chronological ascending (the team appends each new batch below
+// the last), which is exactly backwards for a reader: a brand tested since Jan 2025 buried its
+// Aug 2026 batches at the bottom of the array, so a capped list (the one-pager's 14, a dossier
+// card that does not scroll far) showed a year-old test book and never reached this month's
+// (Ray, 23 Sep 2026, on Schuh: "Why Schuh dossier not be documented until September 2026? It
+// should always show the latest six-month test first in the brand dossier"). abSortTests is the
+// one place that reorders for DISPLAY — called once by the worker before it caches/serves the
+// payload, so the dossier list, the one-pager's slice and any future consumer read the same
+// newest-first order and can never disagree about which test is "latest".
+const AB_DATE_RE = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/;
+export function abDate(s) {
+  const m = AB_DATE_RE.exec(String(s || '').trim());
+  if (!m) return null;
+  let y = +m[3]; if (y < 100) y += 2000;
+  const d = new Date(y, +m[2] - 1, +m[1]);
+  return isNaN(d.getTime()) ? null : d;
+}
+// Best-available date for a test: the Live Date is when the test actually ran, so it wins over
+// the Report Date (when the write-up was filed, sometimes weeks later); a test with neither
+// (many single-group runs record "NA") is UNDATED, never guessed at, and sorts to the end.
+export function abSortKey(t) {
+  const d = abDate(t && t.live) || abDate(t && t.reportDate);
+  return d ? d.getTime() : null;
+}
+export function abSortTests(tests) {
+  return (tests || [])
+    .map((t, i) => ({ t, i, k: abSortKey(t) }))
+    .sort((a, b) => {
+      if (a.k == null && b.k == null) return a.i - b.i;   // both undated: keep the sheet's own order
+      if (a.k == null) return 1;                            // undated sinks below every dated test
+      if (b.k == null) return -1;
+      return b.k - a.k || a.i - b.i;                        // newest first; a tied date keeps sheet order
+    })
+    .map((x) => x.t);
+}
+
 // Headline the dossier can show without opening anything: how many ran, how many won.
 export function abSummary(tests) {
   const s = { total: (tests || []).length, positive: 0, negative: 0, mixed: 0, inconclusive: 0, unknown: 0, types: {} };

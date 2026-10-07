@@ -102,6 +102,8 @@ async function run(stubs) {
   });
   await page.waitForTimeout(800);
   const btn = await page.locator('.dz-opb').count();
+  // on a MONDAY the page opens its Monday catch-up panel over the dossier (by design) — close it, as the AM would
+  await page.evaluate(() => { const m = document.getElementById('mc-panel'); if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); } });
   if (btn) { await page.locator('.dz-opb').first().click(); await page.waitForTimeout(1400); }
   const sheet = await page.locator('#op-sheet').count();
   const text = sheet ? await page.locator('#op-sheet').innerText() : '';

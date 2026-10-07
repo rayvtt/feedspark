@@ -173,6 +173,21 @@ share the specific tab as its own link/export — that sidesteps the tool limita
    yet visible in another market's live audit) is itself a real, deck-worthy finding, not
    a discrepancy to quietly resolve by picking the source you like better.
 
+**"No evidence of X exists" is a claim about the account, and it has to be read across every
+source — not the one you happened to open.** On the first Schuh Strategy Review build the deck
+said *"no quantified uplift figure exists anywhere in Schuh's plan or task log"* and carried an
+internal note to that effect. That was true of the project plan and wrong about the account: the
+FCC's **A/B Test Archive** held eleven quantified tests for Schuh, which became the deck's
+strongest chapter once read. Before writing any sentence of the form "there is no…", "nothing
+records…", "we have never measured…", check ALL of: `plan_tasks.json`, the raw
+`plan_exports/<client>_projectplan.csv`, the FCC A/B Test Archive (the brand dossier surfaces it
+per brand — it is a live source, not only an attached export), `/api/kwresults` (Dino's scheduled
+optimisation read-outs), and CLAUDE.md's own account notes. A "nothing here" statement is the
+single highest-risk sentence in a client deck: it is unflattering to FeedSpark, it is what a
+client will push back on, and it is the one class of claim that is wrong the moment any one
+source disagrees. This is the second deck where such a sentence was the defect rather than the
+finding.
+
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
 numbers, test results, or client facts that aren't sourced from somewhere above.
@@ -513,6 +528,73 @@ Rules when extending it:
   `pdftoppm` are absent in Code, and `preview_tmpl.py` cannot see layout-inherited chrome, so it
   will render these slides as near-empty. That is a limitation of the previewer, not a bug in
   the export; trust `--audit`, not the PNGs.
+
+- **Three space-saving behaviours are already automatic — don't rebuild them per deck** (all
+  added for Schuh, Sep 2026, after Ray asked for three recap slides to be merged):
+  · `kpi_line()` folds a `.stats` KPI row into the **following** table's or bar block's subtitle
+    when that block has no subtitle of its own (≥3 cards, headings ≤12 chars, single-line bodies
+    ≤34 chars) — so four headline numbers no longer cost a slide of their own.
+  · Table capacity is **subtitle-aware** (`TB_T_NOSUB = 1.52` vs `TB_T = 2.02`): a table with no
+    subtitle fits **10** rows, one with a subtitle fits **8**. If a table is one row over, dropping
+    a redundant subtitle is the cheap fix before splitting it.
+  · A block-level `.note` rides the **last** continuation chunk only. Before this, a table or card
+    grid that split across slides repeated its note on every slide.
+
+- **A chart is a chart, not a table of the same numbers** (added Sep 2026, after Ray asked twice for
+  the Volume module's bar chart and the A/B archive and got tables both times). The exporter had no
+  chart component at all: every `.bars` block and every hand-built chart panel was read for its
+  numbers and emitted through `em.table`. `Emitter.chart()` now writes a **native PowerPoint chart**
+  — `add_chart`, its own embedded worksheet, clickable and editable and restylable, in the same
+  column the native tables occupy. This does not break "never add a shape": that rule forbids faking
+  a layout out of rectangles and textboxes, and a chart is data, not a text frame — there is no
+  placeholder that can hold one.
+  Opt in **on the table**, so the chart and the table can never carry different numbers:
+  ```html
+  <table data-chart="col"          <!-- col | bar (horizontal) | line -->
+         data-chart-series="1,2,3" <!-- column indices to plot; default = every all-numeric column -->
+         data-chart-cats="0"       <!-- column holding the category label (default 0) -->
+         data-chart-pct="1"        <!-- values are percentages (label format) -->
+         data-chart-table="1">     <!-- also emit the table, for detail the chart can't carry -->
+    <tr data-chart-cat="Sep (part)">…</tr>   <!-- shorter label for the axis -->
+    <tr data-chart-skip="1">…</tr>           <!-- a total or run-rate row: in the table, out of the plot -->
+  ```
+  Four more attributes (Sep 2026, for the Reiss FY26/27 deck): `data-chart="barstack|colstack|donut"`
+  — stacked parts per category (30 markets on one slide is a `barstack`, which a clustered bar or a
+  table cannot hold), or one total in parts; `data-chart-ink` — the series colours, when the data
+  already has colours in the FCC module it came from; `data-chart-fmt` — the label format, Excel
+  syntax, so `[<2]"";0.0` hides a label its segment is too thin to carry; `data-chart-side="1"` —
+  chart left, the next table right, one slide (a donut beside the team that did the work).
+  Judgement the attributes exist to let you exercise: **never plot a total beside its own parts**
+  (a run-rate row derived from the months above it draws the same products twice at two scales —
+  `data-chart-skip`), **never mix two interventions on one axis** (Schuh's title tests are not
+  keyword tests, so they stay in the table and carry their own card), and put the full name in the
+  table with a short label on the axis. Series colours are `SERIES_INK` — the same validated slots
+  `/volume`, `/tasks` and the chart workbench use, so a chart lifted from a module and one drawn in a
+  deck cannot come out different colours. A horizontal `bar` chart has its data reversed on the way
+  in, because PowerPoint draws the first category at the bottom otherwise.
+- **A section-level `<h3>`/`<h4>` now names the block below it.** It used to be dropped silently by
+  the walker (it matched neither `classify` nor the descend-into test), so a chart or table inherited
+  the chapter title with "(cont.)" after it. It yields to a component's own lead label, and on a
+  section's first slide it becomes the subtitle rather than displacing the section title.
+
+- **The one-line strips are one line, and the exporter no longer cuts copy to make that true**
+  (Sep 2026). `Key Message`, `Subtitle`, `Section Subtitle`, `Attribution` hold ~121 / ~100 characters
+  at full size. A paragraph poured into one used to keep its lead sentence and drop the rest in
+  silence: across the five decks in the repo that was **1,242 words** of real analysis missing from
+  the .pptx. Two changes:
+  · A trailing `.note` becomes the slide's Key Message **only when the whole note fits** (`key_fits`);
+    otherwise it stays in the block list and renders as its own statement slide, which holds a
+    paragraph at full size. So write a `.note` for what it says, not for a character budget.
+  · A subtitle that still has to be trimmed is **reported** by `--audit` under `COPY CUT`, naming the
+    slide and the sentence lost. A section subtitle genuinely is a one-line strip, so that one is
+    editorial: shorten it, and move the point into a `.note` (which now survives either way).
+  `--audit` must show **`COPY CUT`: nothing** as well as `still over capacity: 0` before shipping.
+- **The agenda is laid out, not listed.** `Emitter.agenda()` renders each entry as the HTML deck does
+  — number in the theme accent, chapter name bold beside it, description under them in muted type,
+  hanging off the NAME not the number — across both columns of `Two Content`, filled down the first
+  column then the second (reading order), **both columns sized at one scale** so the halves of one
+  list can never render a size apart. It was previously eleven identical run-together lines at one
+  size, which defeats the only job a contents page has: being scanned.
 
 Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../../../tools/README.md).
 

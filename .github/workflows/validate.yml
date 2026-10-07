@@ -43,6 +43,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs
       - name: KWCal stage map (every Workflow stage has a client word)
         run: NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs
+      - name: KWCal Superdry focus themes (seeded paths exist in the feed; a set scope is never "absent")
+        run: NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs
       - name: Product-volume churn harness (running close-to-close baseline)
         run: node tools/test_volume.mjs
       - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)
@@ -59,10 +61,28 @@ jobs:
         run: node tools/test_pdpharvest.mjs
       - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)
         run: node tools/test_i18n.mjs
+      - name: AI transformation roadmap harness (roadmap shape, progress maths, opt-in gate, no commercial figures)
+        run: node tools/test_transform.mjs
+      - name: FeedSpark design guidelines harness (one stylesheet, brand tokens, dark values, route, links)
+        run: node tools/test_design.mjs
+      - name: feedspark.com redesign mockup harness (document route, nothing private on a public layout, review notes)
+        run: node tools/test_website.mjs
       - name: Task Manager harness (parser, agent, worker store + scoped read, Leadership overlay)
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
         run: node tools/test_tmmcp.mjs
+      - name: ROAS harness (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)
+        run: node tools/test_roas.mjs
+      - name: Rules + Stock management harness (FeedHero rule_report — classifier, findings, lifted rulesPull vs a stub MCP)
+        run: node tools/test_rules.mjs
+      - name: Hero sizes + held-back products harness (size census, guides, examples, worker sanitisers, the master → feed join)
+        run: node tools/test_herosize.mjs
+      - name: Stock levers harness (BAU ↔ SALE — readings off each market's rules, periods, the switch list, the worker's half)
+        run: node tools/test_stocklevers.mjs
+      - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
+        run: node tools/test_catalog.mjs
+      - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)
+        run: node tools/test_aivis.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
 
@@ -82,20 +102,37 @@ jobs:
         run: node tools/test_goldensnap.mjs
       - name: Present harness (the one-pager played — one renderer, the number rule)
         run: node tools/test_present.mjs
+      - name: Output escaping (every esc() neutralises a quote — XSS)
+        run: node tools/test_escaping.mjs
+
       - name: Audit colour bands harness (one legend on /golden, /feedlab, the dossier, the Playbook rail)
         run: node tools/test_bands.mjs
+      - name: Golden Record score history harness (one reading per real move, re-scored to today's profile)
+        run: node tools/test_goldenhist.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
       - name: Hero KPI harness (project plans are the source; one date rule with Workflow)
         run: node tools/test_hero.mjs
+      - name: News digest harness (the gate's rules, the landing lane's shape, the skill never pushes to main)
+        run: node tools/test_news.mjs
+      - name: News digest gate on the committed file (schema, ≤8 items, https, the 90-day rule)
+        run: node tools/check_news.js docs/news_digest.json --offline
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
+      - name: UI-state persistence harness (a bare reload does not blank the page)
+        run: node tools/test_uistate.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
+      - name: What the hours moved (month closes, brand coverage, honest gaps)
+        run: node tools/test_outcomes.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
         run: node tools/test_playbook_panel.mjs
+      - name: Call wrap-up (red prompt, the tidy-up, draft on FCC or Gmail)
+        run: node tools/test_callwrap.mjs
       - name: One-modal-at-a-time guard (every overlay opener routes through soloModal)
         run: node tools/test_modalsolo.mjs
+      - name: Workflow intake table (Task takes the slack; every row one height)
+        run: node tools/test_wfintake.mjs
       - name: AM CC harness (name→address resolution, dedupe, never yourself, never guessed)
         run: node tools/test_amcc.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)

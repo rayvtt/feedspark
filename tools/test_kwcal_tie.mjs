@@ -303,6 +303,119 @@ is('…and each says it is a forecast', peaks.every((e) => /forecast/i.test(e.no
 // A UK & ROI calendar: nothing in it is German. A pinned market would brief the wrong feed.
 is('no moment pins a market — they follow the board', SCH.some((e) => e.mkt), false);
 
+// ---------- Superdry: FeedSpark's OWN focus themes (Ray, 30 Sep 2026) ----------
+/* "look at superdry product types and create 4 focus themes for each month from now till january".
+ * Unlike every other brand here, nothing about this seed came from the client — it is derived from
+ * the live GB feed and the search-terms report, so the two things worth losing are the SHAPE
+ * (4 per month, Oct 2026 → Jan 2027) and the discipline that each theme names its own evidence
+ * and never claims a scope it did not measure. */
+const SD = seedApi.Superdry && seedApi.Superdry.events;
+is('Superdry is seeded', Array.isArray(SD), true);
+is('16 themes', SD.length, 16);
+is('ids unique and brand-prefixed', new Set(SD.map((e) => e.id)).size === 16 && SD.every((e) => e.id.startsWith('sd_')), true);
+is('every theme carries keyword themes', SD.every((e) => Array.isArray(e.terms) && e.terms.length), true);
+is('every theme has a real ISO date', SD.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)), true);
+is('every theme states its evidence', SD.every((e) => e.note && e.note.length > 60), true);
+is('every lane is one the board renders', SD.every((e) => ['campaign','location','studio','sale'].includes(e.lane)), true);
+
+// FOUR A MONTH, from this month to January — the whole ask. A theme drifting into a fifth month,
+// or two months sharing five, is the plan quietly changing shape.
+const briefBy = (e) => schedDate(e).toISOString().slice(0, 7);   // schedDate = live − LEAD_DAYS
+is('LEAD_DAYS is still 21, which is what these dates were laid out against',
+  /LEAD_DAYS\s*=\s*21\b/.test(src), true);
+const byMonth = SD.reduce((o, e) => (o[briefBy(e)] = (o[briefBy(e)] || 0) + 1, o), {});
+is('the WORK months are Oct 2026 → Jan 2027 and nothing else', Object.keys(byMonth).sort(),
+  ['2026-10', '2026-11', '2026-12', '2027-01']);
+is('exactly four briefed in each', Object.keys(byMonth).sort().map((k) => byMonth[k]), [4, 4, 4, 4]);
+is('nothing is born overdue — the earliest brief-by is 1 Oct 2026, after the day this shipped',
+  SD.map((e) => schedDate(e).toISOString().slice(0, 10)).sort()[0],
+  '2026-10-01');
+
+// THE FINDING behind most of them is a word with real demand that is in NO title. Each of those
+// themes must say so in its own note — the claim is checkable against the feed, and a later edit
+// that softens it to "low coverage" loses the whole point.
+const zeroWord = { sd_sweater: 'sweater', sd_longline: 'longline', sd_hoodzip: 'zipper', sd_varsity: 'letterman', sd_festive: 'fair isle' };
+Object.keys(zeroWord).forEach((id) => {
+  const e = SD.find((x) => x.id === id) || {};
+  is(`${id} names the absent word`, new RegExp('"' + zeroWord[id] + '"').test(e.note || ''), true);
+  is(`…and says it is in ZERO titles`, /ZERO titles|in no title|in ZERO of/.test(e.note || ''), true);
+  is(`…and carries that word as a keyword theme`, e.terms.some((t) => t.includes(zeroWord[id].split(' ')[0])), true);
+});
+
+// SCOPE IS SEEDED FROM THE LIVE GB FEED, and it is the one thing here that could silently go
+// stale. Paths must be the feed's own primary g:product_type shape, deduped, and never on a
+// brand-wide theme — brandwide ignores pts, so carrying both states two different scopes.
+const scoped = SD.filter((e) => Array.isArray(e.pts) && e.pts.length);
+is('eleven themes carry a product-type scope', scoped.length, 11);
+is('every seeded path is a chevron path of at least three levels',
+  scoped.every((e) => e.pts.every((p) => p.split(' > ').length >= 3)), true);
+is('every seeded path starts at a gender/Unisex root the feed actually uses',
+  scoped.every((e) => e.pts.every((p) => ['Men', 'Women', 'Unisex'].includes(p.split(' > ')[0]))), true);
+is('no path is repeated inside a scope', scoped.every((e) => new Set(e.pts).size === e.pts.length), true);
+is('no theme is both scoped and brand-wide', SD.every((e) => !(e.brandwide && e.pts)), true);
+is('the brand-wide themes are the catalogue-wide ones only', SD.filter((e) => e.brandwide).map((e) => e.id).sort(),
+  ['sd_blackfri', 'sd_eoss', 'sd_forwhom']);
+// the two that are deliberately left for the AM to scope say WHY — an empty scope with no reason
+// reads as an oversight rather than a decision
+['sd_newin', 'sd_fit'].forEach((id) => {
+  const e = SD.find((x) => x.id === id) || {};
+  is(`${id} carries no scope`, !e.pts && !e.brandwide, true);
+  is(`…and says where its scope comes from instead`, /Playbook|TEXT filters|text filters/.test(e.note || ''), true);
+});
+// GB ONLY: the analysis was GB, so a scope must never be pinned to another market or claimed for one
+is('no theme pins a market — GB is the board default and the only one measured', SD.some((e) => e.mkt), false);
+is('no theme carries a per-market scope map it did not measure', SD.some((e) => e.ptsm), false);
+
+// THE ORDER OF PLAY. The board buckets by brief-by, so the first card a reader meets is the one
+// briefed first — and that has to be the biggest seasonal win, not whatever sorts first by name.
+is('the first theme on the board is winter outerwear intent',
+  SD.slice().sort((a, b) => (a.date < b.date ? -1 : 1))[0].id, 'sd_winterintent');
+is('…and it is live while the season is still climbing', (SD.find((e) => e.id === 'sd_winterintent') || {}).date, '2026-10-22');
+
+// Black Friday 2026 is Fri 27 Nov; the feed carries sale language a week early, and the festive
+// knitwear must be live in NOVEMBER — a December brief misses its own season.
+is('Black Friday sale language goes live a week before the day', (SD.find((e) => e.id === 'sd_blackfri') || {}).date, '2026-11-20');
+is('festive knitwear is live in early November', (SD.find((e) => e.id === 'sd_festive') || {}).date, '2026-11-05');
+is('…and says why it cannot wait for December', /mid-December|by mid-December|spent by/.test((SD.find((e) => e.id === 'sd_festive') || {}).note || ''), true);
+is('the end-of-season sale opens on Boxing Day', (SD.find((e) => e.id === 'sd_eoss') || {}).date, '2026-12-26');
+
+// The product_type data-quality splits the read turned up are a Product Type Guard job, not a
+// keyword theme — but the two scopes that CONTAIN a split path must carry both spellings, or the
+// scope silently drops products. PMAX listing groups key on the exact value.
+const halfZip = SD.find((e) => e.id === 'sd_hoodzip') || {};
+is('the hoodie scope carries BOTH spellings of the split type',
+  ['Men > Clothing > Hoodies and Sweatshirts > Half Zip Sweats', 'Men > Clothing > Hoodies and Sweatshirts > Half zip Sweats']
+    .every((p) => (halfZip.pts || []).includes(p)), true);
+const knit = SD.find((e) => e.id === 'sd_sweater') || {};
+is('…and so does the knitwear scope', ['Men > Clothing > Jumpers > Half Zip Sweats', 'Men > Clothing > Jumpers > Half zip Sweats']
+  .every((p) => (knit.pts || []).includes(p)), true);
+is('the loungewear scope carries the singular "Trouser" branch as well as "Trousers"',
+  (SD.find((e) => e.id === 'sd_lounge') || {}).pts.some((p) => / > Trouser > /.test(p))
+  && (SD.find((e) => e.id === 'sd_lounge') || {}).pts.some((p) => / > Trousers > /.test(p)), true);
+
+// ---------- a scope can be SET and not yet MEASURABLE ----------
+/* volOf needs the market's product-type index and returns null without one, so before anybody has
+ * run ⟳ Sync product types a seeded scope read "No product scope yet" on the card and counted in
+ * the "Scopes to set" KPI. An unread index is not a zero — the same rule the rest of the FCC
+ * follows. ONE reader, so the card and the KPI can never disagree. */
+const hasScope = new Function(`${lift('ptsOf')} ${lift('txOf')} ${lift('cndOf')} ${lift('hasScope')} return hasScope;`)();
+is('a seeded GB product-type scope counts as scoped', hasScope({ pts: ['Men > Clothing > Jumpers > Cable Knit Jumper'] }, 'gb'), true);
+is('…and legacy pts is GB only, as ptsOf has always had it', hasScope({ pts: ['Men > Clothing > Jumpers > Cable Knit Jumper'] }, 'de'), false);
+is('a per-market scope counts for its own market', hasScope({ ptsm: { de: ['x > y > z'] } }, 'de'), true);
+is('a text filter counts', hasScope({ txsm: { gb: { qs: [{ q: 'oversized', n: 12 }] } } }, 'gb'), true);
+is('an attribute condition counts', hasScope({ cndm: { gb: { conds: [{ attr: 'color', vals: ['Black'] }] } } }, 'gb'), true);
+is('a theme with nothing set is honestly unscoped', hasScope({}, 'gb'), false);
+is('an EMPTY pts array is not a scope', hasScope({ pts: [] }, 'gb'), false);
+is('an empty text-filter list is not a scope', hasScope({ txsm: { gb: { qs: [] } } }, 'gb'), false);
+// both surfaces must go through it — a second, private test would drift
+is('scopeBtn names a set-but-unmeasured scope instead of calling it absent',
+  /if\(!v&&hasScope\(e,pmkt\)\)/.test(src) && /sync to measure/.test(src), true);
+is('…and a brand-wide theme is a scope decision too, not an empty one',
+  /if\(!v&&e\.brandwide\)/.test(src) && /whole catalogue \u00b7 sync to measure|whole catalogue · sync to measure/.test(src), true);
+is('…and the KPI stops counting it as a scope to set', /!hasScope\(e,evMkt\(CLIENT,e\)\)\)unset\+\+/.test(src), true);
+is('the pending state has its own look in both themes',
+  /(^|\n)\s*\.scope\.pend\{/.test(src) && /\[data-theme=dark\] \.scope\.pend\{/.test(src), true);
+
 // ---------- lane names are a brand's own words, and DISPLAY ONLY ----------
 /* "Moments · Studio" is the wrong phrase for a Nike drop. A brand may rename its four lanes; the
  * KEYS must not move, or the colours, the stored events and the tie-matching all follow. */
@@ -313,6 +426,9 @@ is('Schuh names its own lanes', ['campaign','studio','location','sale'].map((k) 
   ['Schuh campaign', 'Brand launch', 'Search peak', 'Promotion']);
 is('a brand with no map keeps the generic words', ['campaign','studio','location','sale'].map((k) => laneName('Reiss', k)),
   ['Campaign', 'Studio', 'Location', 'Sale']);
+is('Superdry names its lanes for the KIND of work, not a marketing stream',
+  ['campaign','studio','location','sale'].map((k) => laneName('Superdry', k)),
+  ['Seasonal focus', 'Vocabulary gap', 'Catalogue sweep', 'Promotion']);
 is('the all-brands overview keeps them too', laneName('*', 'studio'), 'Studio');
 is('an unknown lane key never returns undefined', laneName('Schuh', 'nope'), '');
 is('the lane KEYS on Schuh’s moments are the board’s own four',

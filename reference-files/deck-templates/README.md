@@ -26,6 +26,36 @@ Design system it carries (also lives in the machine template's theme):
   Table, Quote / Statement, Closing, Blank
 - Footer "Private & Confidential" convention; no logo, no decoration for its own sake
 
+## The Strategy Review reference
+
+**`StrategyReview_Reference.pptx`** — the shape a **Strategy Review** takes, deposited by Ray
+on 24 Sep 2026: the Schuh Sep-2026 review after he edited it end to end (55 slides down to 32).
+Read this one before any Strategy Review; it overrides the core template on *structure and
+proportion*, never on design.
+
+What it teaches that the core template does not:
+
+- **Eight chapters, each a Section Marker plus two to four content slides.** The marker's
+  subtitle is a one-sentence CLAIM the slides after it then have to support. Chapter count is
+  the deck's spine — an agenda that disagrees with the markers is the defect (see below).
+- **The FCC's own modules carry the evidence.** Ray pasted screenshots straight from
+  `/schedule` (paused scheduled work), `/tasks` (hours by type — billable vs technical),
+  `/golden` (required / recommended / content quality, the Golden Score dial) and `/volume`
+  (new-product arrivals). A Strategy Review is largely a guided read of the client's own live
+  data, not prose about it.
+- **A live dissection is a named chapter.** "Feed optimisation score (let's dissect
+  real-time!)" is an in-meeting demo of `/golden`, not a static slide.
+- **Hours allocation is client-facing.** Where the retainer went, with the displacement
+  finding stated plainly ("~20% of hours are going into Technical work — there's an
+  opportunity for automation here").
+- **Cut hard.** Ray removed two whole chapters (Look-back period, Value delivered) and every
+  slide whose only job was to restate a number another slide already carried.
+
+**A screenshot sized past the right-hand card hides that card.** On three slides here the
+picture spans 6.5″–13.3″ while the Two-Card Grid's card 2 starts at 7.11″, so the card's text
+was in the file and invisible on screen. Either drop card 2 on a picture slide or keep the
+picture inside the right column — never leave copy underneath it.
+
 ## Two files, two jobs
 
 | File | Job |

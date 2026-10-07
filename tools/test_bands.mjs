@@ -28,6 +28,8 @@ const PAGES = {
   feedlab: read('FeedSpark_FeedLab.html'),
   dossier: read('FeedSpark_Command_Center.html'),
   playbook: read('FeedSpark_Workflow.html'),
+  // Leadership's Golden Record portfolio trend colours each tile's score (Ray, 24 Sep 2026)
+  leadership: read('FeedSpark_Leadership.html'),
 };
 const lift = (src, name) => {
   const m = src.match(new RegExp('function ' + name + '\\([^)]*\\) ?\\{[^\\n]*\\}'));

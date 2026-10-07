@@ -82,7 +82,19 @@ const shape = () => ({
   const errs = [];
   p.on('pageerror', e => errs.push(String(e).slice(0, 200)));
   await p.route('**/api/**', r => r.fulfill({ json: { ok: true, owner: true, clients: null, modules: null, users: [], roster: [], crit: 0, warn: 0 } }));
-  await p.route('**/api/state*', r => r.fulfill({ json: { tmtags: {}, tmtagdef: { tags: [], rules: [] }, tmtype: {} }, headers: { 'X-Sync-Base': String(Date.now()) } }));
+  // a tag vocabulary and some judgements: a task can carry SEVERAL tags, which is the one split
+  // whose legend rows legitimately count some hours twice
+  const TAGS = {};
+  rows.forEach((r, n) => {
+    const t = [];
+    if (n % 2 === 0) t.push('urgent');
+    if (n % 3 === 0) t.push('agency');
+    if (t.length) TAGS[String(r.id)] = { client: r.client, tags: t, by: 'Ray', at: Date.now() };
+  });
+  const TAGDEF = { tags: [
+    { slug: 'urgent', label: 'Urgent', color: '#e34948', displaces: true },
+    { slug: 'agency', label: 'Agency work', color: '#4a3aa7' }], rules: [] };
+  await p.route('**/api/state*', r => r.fulfill({ json: { tmtags: TAGS, tmtagdef: TAGDEF, tmtype: {} }, headers: { 'X-Sync-Base': String(Date.now()) } }));
   await p.route('**/api/taskmanager*', r => r.fulfill({ json: { ok: true, owner: true, scoped: false, status: { state: 'ok', at: Date.now() }, data: DATA } }));
   await p.route('https://fcc.test/tasks*', r => r.fulfill({ contentType: 'text/html', body: page + W }));
   await p.goto('https://fcc.test/tasks', { waitUntil: 'domcontentloaded' });
@@ -344,6 +356,151 @@ const shape = () => ({
   await menu('disp');
   await p.evaluate(() => { const c = document.getElementById('cleg'); c.checked = true; c.dispatchEvent(new Event('change')); });
   await shut();
+
+  // ---- THE LEGEND'S PERCENTAGES ADD UP (Ray, 23 Sep 2026: "This percentage number here should
+  // always accumulate to 100%, if that makes sense … Don't mention the percentage billable. The
+  // top two rows, billable and non-billable, are good enough.") ---------------------------------
+  const legend = () => ({
+    unit: (document.querySelector('#clegend .lg-cap .u') || {}).textContent || null,
+    title: (document.querySelector('#clegend .lg-cap .u') || {}).title || '',
+    head: [...document.querySelectorAll('#clegend .lg-row.hd')].map(r => (r.querySelector('.p') || {}).textContent),
+    rows: [...document.querySelectorAll('#clegend .lg-row:not(.hd)')].map(r => ({
+      nm: (r.querySelector('.nm') || {}).textContent,
+      h: parseFloat(((r.querySelector('.v') || {}).textContent || '').replace(/[^\d.]/g, '')),
+      p: parseFloat(((r.querySelector('.p') || {}).textContent || '').replace('%', '')),
+    })),
+    // what the DONUT itself draws, so the legend and the chart can be compared rather than trusted
+    slice: [...document.querySelectorAll('#cstage svg text')].map(t => t.textContent)
+      .filter(t => /^\d+(\.\d+)?%$/.test(t)).map(t => parseFloat(t)),
+  });
+  const sumOf = (l) => Math.round(l.rows.reduce((a, r) => a + (r.p || 0), 0) * 10) / 10;
+  // each row is rounded to ITS OWN true share, so N rows can drift up to N×0.05 from a flat 100.
+  // Nudging a row to force an exact total is the alternative, and it would put the legend a
+  // decimal away from the percentage the donut itself draws — a visible disagreement between two
+  // numbers for one slice, which is worse than a column reading 99.8.
+  const adds = (l) => Math.abs(sumOf(l) - 100) <= 0.05 * l.rows.length + 0.05;
+
+  // the saved-view test above left the chart on billable-only; this block is about the base, so it
+  // starts from the default rather than inheriting one
+  await menu('disp'); await p.selectOption('#cmeas', 'hours'); await shut();
+
+  for (const [dim, form] of [['cat', 'donut'], ['owner', 'bars'], ['client', 'stack'], ['month', 'line']]) {
+    await p.selectOption('#cdim', dim);
+    await p.selectOption('#cform', form);
+    await p.waitForTimeout(400);
+    const l = await p.evaluate(legend);
+    // ±0.1 is per-row rounding, deliberately kept: nudging a row to force an exact 100 would put
+    // the legend a decimal away from the percentage the chart itself draws
+    ok(`${dim} · ${form}: the legend's percentages add up to 100`,
+      l.rows.length > 1 && adds(l), { sum: sumOf(l), rows: l.rows });
+    ok(`${dim} · ${form}: and the column says what they are a share of`,
+      l.unit === '% of hours', l.unit);
+    // the old column was each row's OWN billable ratio — twelve unrelated numbers under a
+    // "% billable" head. That head is gone, and the sum-to-100 assertion above is what proves
+    // the numbers under it are shares of one whole rather than ratios of twelve different ones.
+    ok(`${dim} · ${form}: the "% billable" column head is gone`,
+      l.unit.toLowerCase().indexOf('% billable') < 0, l.unit);
+  }
+
+  // the donut draws its OWN percentage per slice — the legend beside it must not disagree
+  await p.selectOption('#cdim', 'cat');
+  await p.selectOption('#cform', 'donut');
+  await p.waitForTimeout(450);
+  const ld = await p.evaluate(legend);
+  ok('the legend and the donut print the SAME share for every slice',
+    ld.slice.length >= 3 && ld.slice.every(v => ld.rows.some(r => Math.abs(r.p - v) < 0.05)),
+    { slices: ld.slice, legend: ld.rows.map(r => r.p) });
+  // the two head rows already answer "how much was billable", which is why the column below stopped
+  ok('and the two head rows still carry the billable split, adding to 100 themselves',
+    ld.head.length === 2 && Math.abs(ld.head.reduce((a, x) => a + parseFloat(x), 0) - 100) <= 0.2, ld.head);
+
+  // the base follows the series on screen — a share of hours the chart is not drawing is a lie
+  await menu('disp'); await p.selectOption('#cmeas', 'bill'); await shut();
+  await p.waitForTimeout(400);
+  const lb = await p.evaluate(legend);
+  ok('with one series put away the column is a share of THAT series, and says so',
+    lb.unit === '% of billable' && adds(lb), { unit: lb.unit, sum: sumOf(lb) });
+  await menu('disp'); await p.selectOption('#cmeas', 'hours'); await shut();
+
+  // a task can carry several tags, so these rows count some hours twice — they still add to 100 of
+  // themselves, and the column must not quietly mean two different things on two dimensions
+  await p.selectOption('#cdim', 'tag');
+  await p.selectOption('#cform', 'bars');
+  await p.waitForTimeout(450);
+  const lt = await p.evaluate(legend);
+  ok('on a tag split the rows still add to 100', adds(lt), { sum: sumOf(lt), rows: lt.rows });
+  ok('but the column names its own base rather than claiming the book',
+    lt.unit === '% of tagged', lt.unit);
+  ok('and says out loud that a task can be counted twice',
+    /more than once/.test(lt.title), lt.title.slice(0, 90));
+  await p.selectOption('#cdim', 'task');
+
+  // ---- WHAT IS INSIDE THE FOLD (Ray, 24 Sep 2026, ringing "Other (213 more)": "When hovering
+  // over the grouped Task, for example, it should display a pop-up of 10 tasks names that sit
+  // under Other") -------------------------------------------------------------------------------
+  await p.selectOption('#cdim', 'task');
+  await p.selectOption('#cform', 'donut');
+  await p.waitForTimeout(500);
+
+  // THE ESCAPING TRAP FIRST. `data-t` is a double-quoted attribute the tooltip reads back and
+  // parses as HTML, so one double quote in the pop-up's own markup closes it and spills the rest
+  // of the mark into the page. It did exactly that on the first run: every donut path broke apart
+  // and its `d="M215.99 48.31A119…"` printed as body text. No source read could have caught it.
+  const svg = await p.evaluate(() => {
+    const st = document.getElementById('cstage');
+    return { paths: st.querySelectorAll('svg path.cg, svg circle.cg').length,
+      spill: /d="M|fill="#|stroke-width="/.test(document.getElementById('chartcard').textContent) };
+  });
+  ok('the donut is still whole — nothing broke out of the tooltip attribute', svg.paths >= 5, svg);
+  ok('and no raw SVG source is printing as page text', !svg.spill, svg);
+
+  const foldRow = await p.$('#clegend .lg-row[data-t]');
+  ok('the folded row is the one legend row that opens something', !!foldRow);
+  if (foldRow) {
+    await foldRow.scrollIntoViewIfNeeded();
+    await foldRow.hover();
+    const fb = await foldRow.boundingBox();
+    await p.mouse.move(fb.x + fb.width / 2, fb.y + fb.height / 2);
+    await p.waitForTimeout(350);
+    const tip = await p.evaluate(() => {
+      const t = document.getElementById('tip');
+      const r = t.getBoundingClientRect();
+      const rows = [...t.querySelectorAll('.ft-r')];
+      return { on: t.classList.contains('on'), wide: t.classList.contains('wide'),
+        head: (t.querySelector('.ft-h') || {}).textContent || '',
+        names: rows.map(x => (x.querySelector('span') || {}).textContent),
+        hours: rows.map(x => (x.querySelector('b') || {}).textContent),
+        more: rows.filter(x => x.classList.contains('ft-more')).length,
+        box: { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), rr: Math.round(r.right) },
+        vw: innerWidth, vh: innerHeight };
+    });
+    ok('hovering it opens the pop-up', tip.on, tip);
+    // ten names plus the "+ N more" line — Ray asked for ten, and a list that stops at ten
+    // without saying so is a fold inside a fold
+    ok('with ten names in it', tip.names.length - tip.more === 10, { rows: tip.names.length, more: tip.more });
+    ok('and a line counting whatever is left', tip.more === 1 && /^\+ \d/.test(tip.names[tip.names.length - 1]),
+      tip.names[tip.names.length - 1]);
+    ok('every name carries its hours', tip.hours.length === tip.names.length && tip.hours.every(h => /\d/.test(h)), tip.hours);
+    ok('the header says how many are in there and what they add to', /\d+ · [\d.,]+ h/.test(tip.head), tip.head);
+    ok('the box is wider than a one-line reading', tip.wide);
+    ok('and the whole pop-up is on screen, not run off the bottom',
+      tip.box.t >= 0 && tip.box.b <= tip.vh && tip.box.l >= 0 && tip.box.rr <= tip.vw, tip.box);
+
+    // the fold's own MARK opens the same list — one builder, so the rail and the ring can never
+    // name a different ten
+    const arc = await p.evaluate(() => {
+      const m = [...document.querySelectorAll('#cstage .cg')].find(x => /Other \(/.test(x.getAttribute('data-t') || ''));
+      if (!m) return null;
+      const d = document.createElement('div');
+      d.innerHTML = m.getAttribute('data-t');
+      return [...d.querySelectorAll('.ft-r span')].map(x => x.textContent);
+    });
+    ok('the fold\'s slice opens the same ten names as its legend row',
+      !!arc && JSON.stringify(arc) === JSON.stringify(tip.names), { slice: arc, legend: tip.names });
+  }
+  // a group that is NOT folded has nothing to open
+  ok('an ordinary legend row opens nothing',
+    await p.evaluate(() => [...document.querySelectorAll('#clegend .lg-row')].filter(r => r.hasAttribute('data-t')).length) === 1);
 
   // ---- it survives a reload, because it is the device's own shelf ------------------------------
   await p.reload({ waitUntil: 'domcontentloaded' });

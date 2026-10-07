@@ -1,0 +1,89 @@
+<!-- FCC-NAVROW — the module menu gets the row below: every icon on the right, the ▦ bundle at its end
+     Ray, 25 Sep 2026, over a screenshot of the Command Center topbar: "tidy up this menu
+     pleease , or allow the core modules dropdown ai the below row". The first cut (#543) put
+     NAMED chips on the row and folded the rest into a "More ▾" while the ▦ bundle button stayed
+     in the top row — two places holding hidden modules. Ray, 27 Sep 2026: "I just want to see
+     icons, so the icons should stay on the right. There's no point in having the first bar with
+     bundle tool and more … keep all the icons of the menu on the right-hand side, below the text
+     on the first row, for visual clarity and cadence." The second cut (#544) did that and hid the
+     ▦ on the desktop altogether, putting whatever a viewer had bundled back on the row. Ray,
+     28 Sep 2026: "Can you bring back the bundle, menu bundle feature, on the module menu bar
+     please?"
+
+     So: row one is the wordmark, the page tag, the viewer's name and the widgets; row two is the
+     module menu — every module the viewer keeps in it, as the icon it always was, right-aligned —
+     and at the row's END, behind a hairline, the ▦ bundle. The customiser (docs/apps_widget.html)
+     works on the desktop again: a module a viewer bundles leaves the row and lives in the ▦ menu
+     on every viewport, in the viewer's own order, saved on the device. Nothing is bundled out of
+     the box (DEFAULT_APPS is empty) — bundling is the viewer's choice, and the hover tooltip the
+     icons always carried (data-lbl) names them.
+
+     NO NODE IS MOVED. The second cut lifted bundled anchors out of the ▦ onto the row and handed
+     them back on a resize — two writers to one node, and the reason the bundle had to go. This is
+     CSS: .topbar-in::before is a full-width, zero-height flex item that carries the hairline and
+     forces the line break; the nav takes the row and right-aligns its icons; the ▦ host follows
+     it by `order`. The only script marks the body, so a page without the widget keeps its own
+     layout. The ▦ customiser, MODGATE (whose inline display:none travels with an anchor, so a
+     denied module shows in neither place) and the phone layer see exactly the DOM they always
+     did; under 760px none of this applies and the phone layer owns the node. tools/check_nav.js
+     still compares the nav markup byte for byte across 24 pages — the source is untouched.
+-->
+<style>
+/* the row is desktop only: under 760px docs/mobile_widget.html moves the same node into the
+   fixed bottom bar and gives the ▦ its own bottom sheet. */
+@media (min-width: 761px) {
+  body.fcc-navrow .topbar-in { flex-wrap: wrap; row-gap: 0; }
+  /* the break: a full-width, zero-height item ordered before the row, carrying the hairline */
+  body.fcc-navrow .topbar-in::before {
+    content: ''; order: 89; flex: 1 0 100%; height: 0; margin: 8px 0 7px;
+    border-top: 1px solid var(--line, #E6E6E6);
+  }
+  /* flex-basis 0 + min-width 0: for line-breaking the nav is zero wide, so the ▦ always shares its
+     line; the nav then grows to fill it, and only its own icons wrap inside it on a narrow window */
+  body.fcc-navrow .topbar-in > #tb-modules {
+    order: 90; flex: 1 1 0; width: auto; min-width: 0; margin: 0 !important; padding: 0;
+    display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px;
+  }
+  /* the ▦ bundle at the row's end, behind a hairline, dressed as one more tile */
+  body.fcc-navrow .topbar-in > #fcc-apps {
+    order: 91; flex: none; margin: 0 0 0 6px !important; padding-left: 8px;
+    border-left: 1px solid var(--line, #E6E6E6);
+  }
+  body.fcc-navrow #fcc-apps-btn { width: 38px; height: 38px; border: none; border-radius: 10px; }
+  /* a narrow desktop window: nineteen tiles plus the ▦ outgrow ~900px at 38px, so the tiles compact
+     to 34px there rather than the row breaking in two */
+  @media (max-width: 1040px) {
+    body.fcc-navrow .topbar-in > #tb-modules { gap: 2px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm, body.fcc-navrow #fcc-apps-btn { width: 34px; height: 34px; border-radius: 9px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm svg, body.fcc-navrow #fcc-apps-btn svg { width: 17px; height: 17px; }
+    body.fcc-navrow .topbar-in > #fcc-apps { margin-left: 4px !important; padding-left: 6px; }
+  }
+  /* …and once more under 960px: twenty-three tiles (the Catalogue made it 23) outgrow a 900px window
+     even at 34px, so they step down to 32px with a 1px gap — still one row, the ▦ still at its end */
+  @media (max-width: 960px) {
+    body.fcc-navrow .topbar-in > #tb-modules { gap: 1px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm, body.fcc-navrow #fcc-apps-btn { width: 32px; height: 32px; border-radius: 8px; }
+    body.fcc-navrow .topbar-in > #tb-modules a.tbm svg, body.fcc-navrow #fcc-apps-btn svg { width: 16px; height: 16px; }
+    body.fcc-navrow .topbar-in > #fcc-apps { margin-left: 3px !important; padding-left: 5px; }
+  }
+  body.fcc-navrow #fcc-apps-btn:hover, body.fcc-navrow #fcc-apps.open #fcc-apps-btn { background: var(--wash, #F7F7F5); }
+  [data-theme=dark] body.fcc-navrow #fcc-apps-btn:hover, [data-theme=dark] body.fcc-navrow #fcc-apps.open #fcc-apps-btn { background: #20242E; }
+  /* the ☰ toggle hides the menu with `.nav-collapsed .tb-modules{display:none}` — two classes,
+     which the id selector above beats, so it is restated here for the whole row: hairline,
+     icons and bundle */
+  .nav-collapsed body.fcc-navrow .topbar-in::before, body.fcc-navrow.nav-collapsed .topbar-in::before,
+  .nav-collapsed body.fcc-navrow .topbar-in > #tb-modules, body.fcc-navrow.nav-collapsed .topbar-in > #tb-modules,
+  .nav-collapsed body.fcc-navrow .topbar-in > #fcc-apps, body.fcc-navrow.nav-collapsed .topbar-in > #fcc-apps { display: none }
+}
+@media print {
+  body.fcc-navrow .topbar-in::before, body.fcc-navrow .topbar-in > #tb-modules, body.fcc-navrow .topbar-in > #fcc-apps { display: none !important }
+}
+</style>
+<script>
+(function () {
+  if (window.__fccNavRow) return; window.__fccNavRow = 1;
+  function mount() { if (document.getElementById('tb-modules')) document.body.classList.add('fcc-navrow'); }
+  if (document.readyState !== 'loading') mount(); else document.addEventListener('DOMContentLoaded', mount);
+  window.FCCNavRow = { version: 3 };
+})();
+</script>

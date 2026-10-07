@@ -240,6 +240,9 @@ export async function scanFeed(fetchFn, src, meta, keys, opts) {
 
   const snap = snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys);
   if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
+  // keywords: a column count cannot tell a phrase from an id, so this lane only ever says ABSENT
+  // (no keyword slots in the sheet at all) — with slots present it leaves the attribute unmeasured
+  if (attrCols && !kwSlotCols(head[0]).length) snap.attrs.keywords = { present: false };
   return snap;
 }
 
@@ -811,6 +814,12 @@ export const ATTR_SPEC = [
   { key: 'age_group',     req: 'cond', apparel: true, note: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
   { key: 'google_product_category', req: 'rec', note: 'Google auto-assigns; submit to override' },
   { key: 'product_type',  req: 'rec', note: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+  // KEYWORDS (Ray, 30 Sep 2026: "add keywords fields (product_type2,3,4,5,6,7,8,9) to the golden score
+  // mix also"): not a Google spec field — FeedSpark's keyword injection into the numbered
+  // g:product_type slots — so it is `house` (the page badges it as a FeedSpark standard, never as
+  // Google's) and `derived` (no column is called "keywords"; it is READ per product across the
+  // slots, see kwValueKind). Scored like any recommended attribute.
+  { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
   { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
   { key: 'additional_image_link', req: 'rec', note: 'up to 10 — fuels image cycling' },
   { key: 'product_highlight', req: 'rec', note: '2–100 highlights — AI-surfaces read these' },
@@ -845,6 +854,7 @@ export function findAttrCols(headerRow) {
   const norm = (headerRow || []).map(normHeader);
   const out = {};
   for (const s of ATTR_SPEC) {
+    if (s.derived) { out[s.key] = -1; continue; }   // read per product, never a column
     let i = norm.indexOf(s.key);
     if (i < 0 && ATTR_ALIASES[s.key]) {
       for (const a of ATTR_ALIASES[s.key]) { i = norm.indexOf(a); if (i >= 0) break; }
@@ -859,12 +869,71 @@ export function findAttrCols(headerRow) {
 export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
   const attrs = {};
   for (const s of ATTR_SPEC) {
+    if (s.derived) continue;   // measured per product by the lane that can (keywordAttr) — or not at all
     const c = attrCols[s.key];
     if (c == null || c < 0) { attrs[s.key] = { present: false }; continue; }
     const filled = Math.max(0, Math.round(parseFloat(countsRow && countsRow[attrPos[s.key]]) || 0));
     attrs[s.key] = { present: true, filled, cov: rows ? Math.min(100, Math.round((filled / rows) * 1000) / 10) : 0 };
   }
   return attrs;
+}
+
+/* ---- KEYWORDS, READ PER PRODUCT (Ray, 30 Sep 2026: "add keywords fields (product_type2,3,4,5,6,7,8,9)
+   to the golden score mix also?"). FeedSpark's keyword injection writes phrases into the numbered
+   g:product_type slots — slot 1 (or the bare column) is the category tree, 2..10 the keywords.
+   Counting a FILLED slot as a keyword would be wrong on the live estate (sampled 30 Sep 2026): on
+   Schuh, Reiss and Hobbycraft slot 2 holds a 32-character hex id on ~100% of products and the real
+   phrases start at slot 3, and YuMOVE carries #N/A on 65% — "any slot filled" reads those feeds
+   100% / 100% / 99.7% / 75% keyworded against a real 37% / 22% / 50% / 11%. So a value only counts
+   when it is a PHRASE: not a long hex id, not a spreadsheet placeholder. The coverage is the share
+   of products carrying at least one keyword string; `hash` is how many products hold an id in a
+   keyword slot (named on the row, so the reading explains itself). The Keyword Calendar's
+   saturation reads the SAME rule (its twin is pinned).
+   THE UNIT IS THE STRING, NOT THE SLOT (Ray, 30 Sep 2026, on "3.5 phrases per keyworded product":
+   "keywords look like multiple phrases separated by chevrons … you could say, on average, how many
+   keyword strings there are per SKU"): FeedSpark writes each slot as a CHAIN — "superdry hoodie >
+   purple hoodie > mens hoodie > …" — so counting filled slots read Superdry GB as 3 when its
+   keyworded products carry 23 strings each. kwStrings counts the chevron-separated strings in a
+   slot; `strings` is the catalogue's total and `perSku` the average over EVERY product — the ones
+   with no keywords count as none, because an average over only the keyworded ones describes a
+   catalogue that does not exist.
+   Only a per-product read can do this, so only the XML lanes measure it: the gviz sheet lane counts
+   columns, so it reports the attribute ABSENT when the sheet has no keyword slots at all and leaves
+   it UNMEASURED otherwise — never a column count that would call an id a keyword. */
+export const KW_SLOT_MIN = 2, KW_SLOT_MAX = 10;
+const KW_HASH = /^[0-9a-f]{24,}$/i;
+const KW_PLACEHOLDER = /^(#?n\/?a|#ref!|#value!|#name\?|#div\/0!|null|none|nil|undefined|tbc|tbd|-+|\.+|0)$/i;
+export function kwValueKind(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return 'empty';
+  if (KW_HASH.test(s)) return 'hash';
+  if (KW_PLACEHOLDER.test(s)) return 'ph';
+  return 'kw';
+}
+// how many keyword STRINGS a slot holds — the chevron-separated phrases, each one tested the same way
+// (an id or a placeholder between chevrons is not a keyword either)
+export function kwStrings(v) {
+  if (kwValueKind(v) !== 'kw') return 0;
+  let n = 0;
+  for (const part of String(v).split('>')) if (kwValueKind(part) === 'kw') n++;
+  return n;
+}
+// the keyword slots in a header: product_type(2..10), product_type2 or product_type_2 — never the tree
+export function kwSlotCols(headerRow) {
+  const hits = [];
+  (headerRow || []).map(normHeader).forEach((k, i) => {
+    const m = /^product_type(?:\((\d+)\)|_?(\d+))$/.exec(k);
+    const n = m ? +(m[1] || m[2]) : 0;
+    if (n >= KW_SLOT_MIN && n <= KW_SLOT_MAX) hits.push(i);
+  });
+  return hits;
+}
+// the keywords attribute from a per-product tally {filled, str, hash} over `rows` products
+export function keywordAttr(slotCount, k, rows) {
+  if (!slotCount) return { present: false };
+  const t = k || {};
+  return { present: true, filled: t.filled || 0, cov: rows ? Math.min(100, Math.round(((t.filled || 0) / rows) * 1000) / 10) : 0,
+    slots: slotCount, strings: t.str || 0, perSku: rows ? Math.round(((t.str || 0) / rows) * 10) / 10 : 0, hash: t.hash || 0 };
 }
 
 /* ---- GPC CATEGORY SCOPE (Ray, 23 Sep 2026, on Hobbycraft's material 47.9% / pattern 43.9%:
@@ -1035,6 +1104,7 @@ export function goldenCovIndex(attrs) {
   const cov = {}, sc = {};
   for (const s of ATTR_SPEC) {
     const a = (attrs || {})[s.key];
+    if (s.derived && !a) continue;   // not measured — the KEY is absent, so a re-score leaves it out
     cov[s.key] = a && a.present && !a.na ? a.cov : null;
     if (a && a.scope) sc[s.key] = a.scope.n;
   }
@@ -1057,12 +1127,27 @@ export const VOLCAP = 40000;   // id-set cap — beyond it the capture is TRUNCA
 // dobMonth (tools/test_arrivals.mjs pins the two agree). Shopping feeds only (Ray: "just use
 // Shopping feed") — a -fb market captures nothing.
 export const DOB_KEY = 'fs_date_of_birth';
+// ---- AVAILABILITY as an output feed STATES it, per product (Ray, 30 Sep 2026: "In the stock management module,
+// bring in the availability ratio between master feed and output feeds as well (instock & outofstock)"). Five
+// buckets — in · out · pre (pre-order, backorder, available for order) · none (nothing stated) · other (a word
+// nobody knows) — read with the SAME word table docs/catalog_engine.js reads a master with (its availBucket);
+// tools/test_rules.mjs runs one table through both, so a master and its feed can never bucket a word apart.
+export function availBucket(v) {
+  const s = String(v == null ? '' : v).toLowerCase().replace(/^https?:\/\/schema\.org\//, '').replace(/[\s_\-]+/g, '');
+  if (!s) return 'none';
+  if (/^(instock|available|yes|true|1|limitedstock|lowstock|limitedavailability)$/.test(s)) return 'in';
+  if (/^(outofstock|soldout|unavailable|notavailable|notinstock|oos|no|false|0|discontinued)$/.test(s)) return 'out';
+  if (/^(preorder|backorder|availablefororder)/.test(s)) return 'pre';
+  return 'other';
+}
 export function xmlCollector(meta) {
   const wantPT = !/-fb$/.test(String((meta && meta.market) || ''));
   const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
   let header = null, cols = null, attrCols = null, ptCol = -1, rows = 0;
   const vids = []; let volTrunc = false;
   let dobCol = -1; const dob = { n: 0, bad: 0, m: {}, min: null, max: null };
+  // availability, counted per product on BOTH channels (Google and Meta) — /stock's master → feed ratio
+  let avCol = -1; const av = { in: 0, out: 0, pre: 0, none: 0, other: 0 }; const avOw = {}; let avOwN = 0;
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
   const gsc = gpcScopeCounter(() => attrCols);   // the category scope, counted per product
@@ -1070,12 +1155,16 @@ export function xmlCollector(meta) {
   // product_type VALUES (the tree + every keyword slot) — histograms of count -> SKUs
   let ptSlots = [];
   const lblHist = {}, ptHist = {};
+  let kwCols = [];                       // keyword slots (product_type 2..10), read per product
+  const kwT = { filled: 0, str: 0, hash: 0 };
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
     ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
     ptSlots = wantPT ? slotCols(header, 'product_type') : [];
+    kwCols = wantPT ? kwSlotCols(header) : [];
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
+    { const ac = findAttrCols(header).availability; avCol = ac == null ? -1 : ac; }
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
     if (wantPT) {
       attrCols = findAttrCols(header);
@@ -1108,8 +1197,20 @@ export function xmlCollector(meta) {
         let pn = 0;
         for (const ci of ptSlots) if (String(r[ci] == null ? '' : r[ci]).trim() !== '') pn++;
         ptHist[pn] = (ptHist[pn] || 0) + 1;
+        // keywords: a product counts when a slot holds a keyword STRING (an id or a placeholder is not
+        // one), and every chevron-separated string in every slot is counted
+        let kn = 0, kh = 0;
+        for (const ci of kwCols) { const kind = kwValueKind(r[ci]); if (kind === 'kw') kn += kwStrings(r[ci]); else if (kind === 'hash') kh = 1; }
+        if (kn) { kwT.filled++; kwT.str += kn; }
+        if (kh) kwT.hash++;
       }
       if (attrFilled) gsc.add(r);
+      {
+        const w = avCol >= 0 ? String(r[avCol] == null ? '' : r[avCol]).trim() : '', b = availBucket(w);
+        av[b]++;
+        // only a WORD is recorded, never a spilled fragment of text (the master counter's rule)
+        if (b === 'other' && /^[\w .\/-]{1,24}$/.test(w)) { if (avOw[w] != null || avOwN < 40) { if (avOw[w] == null) avOwN++; avOw[w] = (avOw[w] || 0) + 1; } }
+      }
       if (vids.length < VOLCAP) {
         const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
         vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
@@ -1160,11 +1261,14 @@ export function xmlCollector(meta) {
     }
     const snap = snapshotFromParts({ client: meta.client, market: meta.market, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
     if (attrCols) snap.attrs = applyGpcScope(attrsFromCounts(attrCols, attrPos, countsRow, snap.rows), gsc.counts(), snap.rows);
+    if (attrCols) snap.attrs.keywords = keywordAttr(kwCols.length, kwT, snap.rows);
     // per-SKU population — only a full read can say it, so only this lane carries it (the
     // gviz lane counts columns, never rows; a sheet-backed feed's card says so)
     snap.labelPop = popProfile(lblHist);
     if (wantPT) snap.ptPop = popProfile(ptHist);
-    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null } };
+    const ow = Object.keys(avOw).map((k) => [k, avOw[k]]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null,
+      av: Object.assign({ n: rows, col: avCol >= 0 ? String(header[avCol] || '').slice(0, 60) : '' }, av, { ow }) } };
   };
   return { onRow, finish };
 }
@@ -1245,6 +1349,7 @@ export function goldenScore(attrs, profile) {
   const parts = [];
   let idBest = null;
   for (const s of ATTR_SPEC) {
+    if (s.derived && !attrs[s.key]) continue;   // not measured on this read (keywords on a sheet lane, a pre-30-Sep reading)
     const a = attrs[s.key] || { present: false };
     if (s.key === 'gtin' || s.key === 'mpn') {
       if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
@@ -1277,7 +1382,7 @@ export function goldenScore(attrs, profile) {
   for (const p of parts) { ws += p.w; sum += p.w * p.cov; }
   const score = ws ? Math.round((sum / ws) * 10) / 10 : 0;
   const reqMissing = ATTR_SPEC.filter((s) => s.req === 'required' && !(attrs[s.key] || {}).present).map((s) => s.key);
-  const gone = (s) => !(attrs[s.key] || {}).present && !(attrs[s.key] || {}).na;
+  const gone = (s) => !(s.derived && !attrs[s.key]) && !(attrs[s.key] || {}).present && !(attrs[s.key] || {}).na;
   const condMissing = ATTR_SPEC.filter((s) => s.req === 'cond' && gone(s)).map((s) => s.key);
   const recMissing = ATTR_SPEC.filter((s) => s.req === 'rec' && gone(s)).map((s) => s.key);
   const aiSpec = ATTR_SPEC.filter((s) => s.req === 'ai');
@@ -1296,6 +1401,9 @@ export function diffCoverage(base, cur, th) {
   const A = [];
   if (!base || !cur || !base.attrs || !cur.attrs) return A;
   for (const s of ATTR_SPEC) {
+    // a derived attribute one side never measured (a baseline from before 30 Sep, a sheet-lane
+    // read) is not an attribute that appeared or vanished
+    if (s.derived && (!base.attrs[s.key] || !cur.attrs[s.key])) continue;
     const b = base.attrs[s.key] || { present: false };
     const c = cur.attrs[s.key] || { present: false };
     const disp = s.key;
@@ -1341,6 +1449,332 @@ export function goldenAlertEmail(feedName, alerts, link) {
 }
 export function goldenRecoveryEmail(feedName, link) {
   return '✅ Golden Record — ' + feedName + ' recovered\nEvery flagged attribute-coverage alert has cleared vs last known-good.' + (link ? '\n' + link : '');
+}
+
+/* ---- GOLDEN SCORE HISTORY (Ray, 24 Sep 2026: "Can the Golden Score module record historic
+   changes in terms of improvement or deduction from the previous scan … good to show clients on
+   improvement progress. At the same time, maybe also track it on a day-to-day basis, similar to
+   [product] volumes").
+
+   Before this the module kept three snapshots and no past at all: the latest, yesterday's and the
+   last known-good. KV goldenhist:<client>:<mkt> is the feed's record over time:
+     r  READINGS — what the score is computed FROM, never the score itself ({t, rows, cov, sc?},
+        the goldenidx shape). The page re-scores every reading against the brand's CURRENT
+        profile, so a change in what FeedSpark counts (an industry profile edit, a rule set aside)
+        re-bases the whole line instead of reading as the feed getting better or worse.
+        A reading is only recorded when the feed MOVED since the last recorded one — an attribute
+        appearing / vanishing / going out of scope, or its coverage moving HIST_MOVE_PP — so four
+        identical scans a day cost nothing and the log is a list of real changes. Drift below the
+        threshold accumulates against the last RECORDED reading, so a slow slide is still caught.
+        The last HIST_RECENT_DAYS keep every change scan by scan; older days keep their close.
+     s  SCAN DAYS — the UTC days the feed was read at all. A day with no scan is a GAP on the
+        chart, never a copy of the day before: a feed that stopped being read must not look flat.
+     q  CONTENT QUALITY + AI-READINESS as ANALYSED ({t, q, air, tier}) — measured by the page's
+        in-browser analysis, not the scan, recorded when either moves.
+   No backfill beyond what the stores already hold: a fresh record is seeded from the known-good
+   and the previous scan when they were measured on the same basis as today's reading (a
+   snapshot from before GPC category scope is a different measurement, not a past score). */
+export const HIST_MOVE_PP = 0.5;       // an attribute moving this far (pp) makes a new reading
+export const HIST_RECENT_DAYS = 30;    // readings inside this window are kept scan by scan
+export const HIST_MAX = 500;           // stored readings (≈ a year of daily closes + a month of scans)
+export const HIST_DAYS_MAX = 400;      // scan-day calendar
+export const HIST_QA_MAX = 200;        // content-quality / AI-readiness analyses
+export function histDay(t) { return new Date(+t).toISOString().slice(0, 10); }
+const HIST_DERIVED = ATTR_SPEC.filter((s) => s.derived).map((s) => s.key);
+// HOW a reading was measured: with or without GPC category scope, and which derived attributes it
+// read (keywords from 30 Sep 2026). Two readings on different bases are two different measurements
+// — never compared, never drawn as a move (the page's hBasis is the same function)
+export function histBasis(r) {
+  if (!r) return '';
+  return (r.sc ? 's' : '-') + HIST_DERIVED.map((k) => (r.cov && k in r.cov ? 'k' : '-')).join('');
+}
+export function histReading(snap) {
+  if (!snap || !snap.attrs) return null;
+  const { cov, sc } = goldenCovIndex(snap.attrs);
+  const c = {};
+  for (const k of Object.keys(cov)) {
+    if (cov[k] != null && isFinite(cov[k])) c[k] = Math.round(cov[k] * 10) / 10;
+    else if (HIST_DERIVED.indexOf(k) >= 0) c[k] = null;   // measured and absent — kept, so "measured" survives
+  }
+  const r = { t: +snap.t || Date.now(), rows: Math.max(0, Math.round(+snap.rows || 0)), cov: c };
+  if (Object.keys(sc).length) r.sc = sc;
+  return r;
+}
+// what moved between two readings, biggest first: [key, from, to] — null = not in the feed,
+// 'na' = in the feed's categories nobody asks for it. An attribute that appeared or vanished
+// outranks any coverage move.
+export function histMoved(a, b) {
+  const out = [];
+  if (!a || !b) return out;
+  const st = (x, k) => (x.sc && x.sc[k] === 0 ? 'na' : (x.cov && x.cov[k] != null ? x.cov[k] : null));
+  const keys = {};
+  [a, b].forEach((x) => { Object.keys(x.cov || {}).forEach((k) => { keys[k] = 1; }); Object.keys(x.sc || {}).forEach((k) => { keys[k] = 1; }); });
+  for (const k of Object.keys(keys)) {
+    const x = st(a, k), y = st(b, k);
+    if (x === y) continue;
+    if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) continue;
+    out.push([k, x, y]);
+  }
+  const mag = (m) => (typeof m[1] === 'number' && typeof m[2] === 'number' ? Math.abs(m[2] - m[1]) : 1000);
+  return out.sort((m, n) => mag(n) - mag(m) || (m[0] < n[0] ? -1 : 1));
+}
+// did the feed MOVE: a presence / scope flip, a coverage move of HIST_MOVE_PP, or a change of
+// measuring basis (with vs without GPC scope — recorded so the page can refuse to compare it)
+export function histChanged(a, b, pp) {
+  if (!a) return true;
+  if (histBasis(a) !== histBasis(b)) return true;
+  const lim = pp == null ? HIST_MOVE_PP : pp;
+  return histMoved(a, b).some((m) => typeof m[1] !== 'number' || typeof m[2] !== 'number' || Math.abs(m[2] - m[1]) >= lim);
+}
+export function histEmpty() { return { v: 1, r: [], s: [], q: [] }; }
+// A DAY'S VALUE (Ray, 24 Sep 2026: "If there's a manual scan on any day, that new score can
+// override that day"): the last MANUAL reading of the day when there is one, else the day's last
+// reading. The same rule for the analyses. One function, so the store and the page can never
+// pick a different reading for the same day.
+export function histDayPick(list, day) {
+  let last = -1, lastM = -1;
+  for (let i = 0; i < list.length; i++) {
+    if (histDay(list[i].t) !== day) continue;
+    last = i;
+    if (list[i].m) lastM = i;
+  }
+  return lastM >= 0 ? lastM : last;
+}
+function histThin(list, cut) {
+  // older than the recent window, a day keeps only the reading that IS its value
+  const keep = {};
+  list.forEach((x) => { if (x.t < cut) { const d = histDay(x.t); if (!(d in keep)) keep[d] = histDayPick(list, d); } });
+  return list.filter((x, i) => x.t >= cut || i === list.length - 1 || keep[histDay(x.t)] === i);
+}
+function histKeep(h, now) {
+  const cut = now - HIST_RECENT_DAYS * 864e5;
+  h.r = histThin(h.r, cut);
+  h.q = histThin(h.q, cut);
+  if (h.r.length > HIST_MAX) h.r.splice(0, h.r.length - HIST_MAX);
+  if (h.s.length > HIST_DAYS_MAX) h.s.splice(0, h.s.length - HIST_DAYS_MAX);
+  if (h.q.length > HIST_QA_MAX) h.q.splice(0, h.q.length - HIST_QA_MAX);
+  return h;
+}
+// record one scan's reading → { hist, wrote } — wrote=false means nothing new (same day, no
+// move), so the caller skips the KV write. opts.manual = a scan somebody ran by hand: it is
+// recorded (and marked m) even when nothing moved, once per day, because it SETS its day
+// (histDayPick) and a later automatic reading must not quietly replace it
+export function histAdd(hist, r, opts) {
+  const h = hist && hist.v === 1 ? { v: 1, r: (hist.r || []).slice(), s: (hist.s || []).slice(), q: (hist.q || []).slice() } : histEmpty();
+  if (!r || !r.cov) return { hist: h, wrote: false };
+  const last = h.r[h.r.length - 1];
+  if (last && r.t <= last.t) return { hist: h, wrote: false };   // out of order — never rewrite the past
+  const man = !!(opts && opts.manual);
+  let wrote = false;
+  const day = histDay(r.t);
+  if (h.s[h.s.length - 1] !== day) { h.s.push(day); wrote = true; }
+  const pinned = man && last && last.m && histDay(last.t) === day;
+  if (histChanged(last, r) || (man && !pinned)) {
+    const x = man ? Object.assign({}, r, { m: 1 }) : r;
+    h.r.push(x); wrote = true;
+  }
+  return { hist: wrote ? histKeep(h, r.t) : h, wrote };
+}
+// a fresh record: the stored past readings that were measured the way today's is, oldest first,
+// then today's — the known-good and the previous scan are real readings, not estimates
+export function histSeed(past, cur, opts) {
+  let h = histEmpty();
+  (past || []).map(histReading)
+    .filter((x) => x && cur && x.t < cur.t && histBasis(x) === histBasis(cur))
+    .sort((a, b) => a.t - b.t)
+    .forEach((x) => { h = histAdd(h, x).hist; });
+  return histAdd(h, cur, opts).hist;
+}
+// one content-quality / AI-readiness analysis → recorded when either figure moved
+export function histQa(hist, p) {
+  const h = hist && hist.v === 1 ? { v: 1, r: (hist.r || []).slice(), s: (hist.s || []).slice(), q: (hist.q || []).slice() } : histEmpty();
+  if (!p || (p.q == null && p.air == null)) return { hist: h, wrote: false };
+  const pt = { t: +p.t || Date.now() };
+  if (p.q != null && isFinite(p.q)) pt.q = Math.round(p.q * 10) / 10;
+  if (p.air != null && isFinite(p.air)) pt.air = Math.round(p.air * 10) / 10;
+  if (p.tier != null) pt.tier = Math.max(1, Math.min(4, parseInt(p.tier, 10) || 1));
+  if (p.m) pt.m = 1;                     // run by hand — it sets its day (histDayPick)
+  const last = h.q[h.q.length - 1];
+  if (last && pt.t <= last.t) return { hist: h, wrote: false };
+  const same = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) < 0.1);
+  const pinned = pt.m && last && last.m && histDay(last.t) === histDay(pt.t);
+  if (last && same(last.q, pt.q) && same(last.air, pt.air) && (!pt.m || pinned)) return { hist: h, wrote: false };
+  h.q.push(pt);
+  return { hist: histKeep(h, pt.t), wrote: true };
+}
+// what the estate index carries so a row can say "▲ +1.8 since 21 Sep" without reading the
+// record: the reading BEFORE the last change (hp) and when that change happened (ht)
+/* ---- THE CONTENT-QUALITY STREAM, ONE IMPLEMENTATION (Ray, 24 Sep 2026: "Golden Record and
+   content quality should automatically scan on a daily basis … at 9 a.m. UK time"). Until now
+   the analysis lived only in /golden's qualityRun, so it happened when somebody clicked. The
+   daily agent (tools/golden_daily.mjs) and the page now both feed the SAME object: the first
+   row is the header, a column an XML feed grows mid-stream is named 'late' rather than scored
+   partially, rows are sampled to audCap for the AI-Readiness audit, and the audit is packed to
+   the shape the worker stores. FA is the Feed Lab engine (FeedAudit), handed in so this module
+   never imports a browser file. */
+export function packAudit(a) {
+  if (!a || !a.score) return null;
+  const s = a.score, t = a.titles || {}, mk = t.mask || {};
+  return {
+    total: Math.round(+s.total || 0), tier: +s.tier || 1, tierLabel: String(s.tierLabel || ''),
+    sampled: +a.sampled || 0, rows: +a.rowCount || 0,
+    pillars: (s.pillars || []).slice(0, 8).map((p) => ({ key: String(p.key || ''), label: String(p.label || ''),
+      score: Math.round(+p.score || 0), weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160),
+      reads: (p.reads || []).slice(0, 8).map((x) => String(x || '').slice(0, 140)) })),
+    titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
+      buckets: (t.buckets || []).slice(0, 6).map((b) => ({ b: String(b.b || ''), n: +b.n || 0 })),
+      mask: { brand: Math.round(+mk.brand || 0), material: Math.round(+mk.material || 0), fit: Math.round(+mk.fit || 0),
+        colour: Math.round(+mk.colour || 0), use: Math.round(+mk.use || 0) } },
+  };
+}
+export function qualityStream(opts) {
+  const o = opts || {};
+  const cap = o.audCap || 30000;
+  let col = null, cols = null, header = null, nRows = 0;
+  const late = [], sample = [];
+  return {
+    onRow(r, liveHeader) {
+      // the header goes in too: a repeatable attribute (product highlights) lives in several
+      // columns, and the collector needs them all or it reads one value out of four
+      if (!col) { header = r.slice(); cols = findAttrCols(header); col = qualityCollector(cols, { header }); return; }
+      nRows++;
+      if (sample.length < cap) sample.push(r);
+      // an XML feed can GROW its header mid-stream when a sparse tag debuts late: every column
+      // already resolved stays valid, but a free-text attribute that debuts after the first item
+      // was never in the collector — record it and say so rather than scoring a partial column
+      if (liveHeader && liveHeader.length !== header.length) {
+        header = liveHeader.slice();
+        const grown = findAttrCols(header);
+        QSPEC.forEach((q) => { if (grown[q.key] >= 0 && !(cols[q.key] >= 0) && late.indexOf(q.key) < 0) late.push(q.key); });
+      }
+      col.onRow(r);
+    },
+    rows() { return nRows; },
+    finish() {
+      if (!col) throw new Error('the feed produced no rows');
+      const snap = col.finish({ client: o.client, market: o.market, late: late.length ? late : undefined });
+      if (!snap.rows) throw new Error('the feed produced no rows');
+      // the SAME read, scored on the AI-Readiness ladder — one stream, two readings — under the
+      // brand's industry profile, exactly as goldenScore reads it
+      try {
+        snap.ai = o.FA ? packAudit(o.FA.audit(header, sample, { client: o.client, rowTotalEstimate: nRows,
+          channel: 'google', expected: o.expected || [], waived: o.waived || [] })) : null;
+      } catch (e) { snap.ai = null; }
+      return snap;
+    },
+  };
+}
+export function histIdx(h) {
+  const r = (h && h.r) || [];
+  if (r.length < 2) return {};
+  const p = r[r.length - 2];
+  const hp = { t: p.t, rows: p.rows, cov: p.cov };
+  if (p.sc) hp.sc = p.sc;
+  return { hp, ht: r[r.length - 1].t };
+}
+
+/* ---- THE PORTFOLIO VIEW (Ray, 24 Sep 2026: "should there be an additional interface for AM only
+   to view these charts across their portfolio at once?" — then "can you build on leadership").
+   Leadership draws every feed's record side by side, so the daily values are computed HERE, off
+   the same goldenScore the estate and the Score history card use, instead of in a third copy of
+   the scoring engine on a third page. A day reads exactly as it does on the card:
+     · the Golden Score is the day's reading — a hand-run one first (histDayPick) — or, on a day
+       the feed was scanned and did not move, the last reading carried; a day nobody scanned is a
+       GAP, never a copy;
+     · content quality and AI-readiness are the day's analysis, or a gap;
+     · every reading is re-scored against the brand's CURRENT profile, and a reading measured on
+       another basis than the latest (before GPC category scope) is left out rather than drawn as
+       a jump nobody made. */
+// a stored reading's coverage map back into the attribute shape goldenScore reads — the page's
+// attrsFromCov, held here so the server scores a reading exactly as the page does
+export function attrsFromCov(cov, sc, rows) {
+  const at = {};
+  for (const s of ATTR_SPEC) {
+    if (s.derived) {   // measured only when its key is in the map (null = measured, absent)
+      if (cov && s.key in cov) at[s.key] = cov[s.key] != null ? { present: true, cov: cov[s.key] } : { present: false };
+      continue;
+    }
+    const c = cov ? cov[s.key] : null, n = sc ? sc[s.key] : null;
+    const scope = n != null ? { n, t: Math.max(n, rows || 0) } : null;
+    if (scope && !n) at[s.key] = { present: false, na: true, scope };
+    else if (c != null) at[s.key] = scope ? { present: true, cov: c, scope } : { present: true, cov: c };
+    else if (scope) at[s.key] = { present: false, scope };
+  }
+  return at;
+}
+export function histScore(r, profile) {
+  if (!r || !r.cov) return null;
+  const g = goldenScore(attrsFromCov(r.cov, r.sc, r.rows), profile);
+  return g ? g.score : null;
+}
+function histPlusDays(d, n) { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+export const PORTFOLIO_FLAT = 0.5;     // a window move smaller than this reads as flat
+// one feed's record → its three metrics day by day over the last `days` days, plus a summary per
+// metric. opts: { days, today (YYYY-MM-DD, UTC), live: the estate index's current reading
+// {t, rows, cov, sc} — it closes the line where the estate's own score is, as on the card }.
+// Leading days on which none of the three has a value are trimmed off (`start` moves up), so a
+// young record costs a few numbers, not a year of nulls.
+export function histSeries(hist, profile, opts) {
+  const o = opts || {};
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(String(o.today || '')) ? o.today : histDay(Date.now());
+  const span = Math.max(1, Math.min(HIST_DAYS_MAX, parseInt(o.days, 10) || 90));
+  const reads = ((hist && hist.r) || []).filter((x) => x && x.cov && x.t).slice().sort((a, b) => a.t - b.t);
+  const live = o.live && o.live.cov && o.live.t ? { t: +o.live.t, rows: o.live.rows, cov: o.live.cov, sc: o.live.sc } : null;
+  if (live && (!reads.length || live.t > reads[reads.length - 1].t)) reads.push(live);
+  const scanned = {};
+  ((hist && hist.s) || []).forEach((d) => { scanned[d] = 1; });
+  if (live) scanned[histDay(live.t)] = 1;
+  const basis = reads.length ? histBasis(reads[reads.length - 1]) : null;
+  const qa = ((hist && hist.q) || []).filter((x) => x && x.t).slice().sort((a, b) => a.t - b.t);
+  const lists = { q: qa.filter((x) => x.q != null), air: qa.filter((x) => x.air != null) };
+  const days = [], gs = [], q = [], air = [];
+  let ri = -1;
+  const qi = { q: -1, air: -1 };
+  const memo = new Map();
+  // the day's pick among list[from..to] (a hand-run entry first, else the last) — histDayPick's
+  // rule, walked with a cursor so a year of days over a year of readings stays linear
+  const pickIn = (list, from, to, d) => {
+    let p = -1, pm = -1;
+    for (let j = from; j <= to; j++) if (histDay(list[j].t) === d) { p = j; if (list[j].m) pm = j; }
+    return pm >= 0 ? pm : p;
+  };
+  for (let d = histPlusDays(today, -(span - 1)); d <= today; d = histPlusDays(d, 1)) {
+    const r0 = ri + 1;
+    while (ri + 1 < reads.length && histDay(reads[ri + 1].t) <= d) ri++;
+    const pick = pickIn(reads, r0, ri, d);
+    const close = pick >= 0 ? reads[pick] : (ri >= 0 ? reads[ri] : null);
+    const ok = scanned[d] && close && histBasis(close) === basis;
+    days.push(d);
+    // a reading carried across quiet days is scored once, not once a day
+    if (ok && !memo.has(close)) memo.set(close, histScore(close, profile));
+    gs.push(ok ? memo.get(close) : null);
+    for (const f of ['q', 'air']) {
+      const L = lists[f], f0 = qi[f] + 1;
+      while (qi[f] + 1 < L.length && histDay(L[qi[f] + 1].t) <= d) qi[f]++;
+      const p = pickIn(L, f0, qi[f], d);
+      (f === 'q' ? q : air).push(p >= 0 ? L[p][f] : null);
+    }
+  }
+  let lead = 0;
+  while (lead < days.length - 1 && gs[lead] == null && q[lead] == null && air[lead] == null) lead++;
+  const cut = (a) => a.slice(lead);
+  const out = { start: days[lead], today, days: span, gs: cut(gs), q: cut(q), air: cut(air), sum: {} };
+  if (gs.every((v) => v == null) && q.every((v) => v == null) && air.every((v) => v == null)) out.start = null;
+  for (const [k, a] of [['gs', out.gs], ['q', out.q], ['air', out.air]]) {
+    let first = -1, last = -1, n = 0;
+    a.forEach((v, i) => { if (v != null) { n++; if (first < 0) first = i; last = i; } });
+    const s = { now: last >= 0 ? a[last] : null, nowD: last >= 0 ? histPlusDays(out.start, last) : null, n,
+      from: null, fromD: null, delta: null, dir: null };
+    if (first >= 0 && last > first) {
+      s.from = a[first]; s.fromD = histPlusDays(out.start, first);
+      s.delta = Math.round((s.now - s.from) * 10) / 10;
+      s.dir = Math.abs(s.delta) < PORTFOLIO_FLAT ? 'flat' : (s.delta > 0 ? 'up' : 'down');
+    }
+    out.sum[k] = s;
+  }
+  const lastQa = qa.filter((x) => x.tier != null).pop();
+  out.tier = lastQa ? lastQa.tier : null;
+  return out;
 }
 
 // The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,

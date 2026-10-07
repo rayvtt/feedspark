@@ -245,9 +245,31 @@ draws, and `lgxHtml()` writes **one self-contained file**:
   `custom_label_n`; the FeedSpark · Private & Confidential footer;
 - **Across markets** — one row per market: SKUs, coverage per label side by side (green ≥95 /
   amber ≥60 / red), labels per SKU, scanned date, flags; a row click opens that market;
-- **Values across markets** — pick a label, see every value as a column per market (SKUs and
-  share of that market, a dash where a market lacks the value) with a total; biggest first, 25
-  then show-all. Per-market counts are keyed by the market's POSITION, never its code — GB and
+- **Compare markets side by side** — a comparison the reader BUILDS (Ray, 30 Sep 2026: *"allow
+  customization of side-by-side comparison. For example, selected market. If I want to see a
+  custom label 2 only across different 5 markets side by side, I'm allowed to do that as well"*):
+  - **Label** — one of CL0–CL4 (only labels some scanned market carries are offered);
+  - **Markets** — a chip per market, ticked = a column; quick picks All · Google · Meta · Clear;
+    a never-scanned market is listed but cannot be picked. Columns always sit in the estate's own
+    order whatever order they were ticked in, so two readers building the same view see the same
+    table. Clear says "pick at least one market" rather than drawing an empty table;
+  - **Show** — SKUs · Share (of that market's catalogue) · Both; **Rows** — every value · in every
+    market · missing somewhere. "In every market" is judged over the picked markets that CARRY
+    the label — a market without CL3 would otherwise make every CL3 value "missing";
+  - each column header states how filled the label is in that market, and a market without the
+    label keeps its column and says "no CL3" (or "CL3 vanished") with dashes, never zeros;
+  - **Spread** = the widest gap in share between the picked markets that carry the label (a
+    market lacking the value counts 0%) — sort by it and the values the markets use most
+    differently come first. Every header sorts (value A→Z, any market, total, spread); default
+    is total, biggest first; 25 rows then show-all;
+  - a summary line names the label, the exact markets and how many values are shared / missing;
+  - **⤓ CSV · this comparison** — exactly the rows on screen: `value` then `<MKT>_skus`,
+    `<MKT>_share_pct` per picked market (`GB-FB` for the catalogue), `total_skus`, `spread_pp`,
+    `in_markets`; the file name carries the label and the markets;
+  - the view lives in the address (`#l=2&m=0,3,5&show=pct&rows=gap&sort=spread~-1`), so a reload
+    or a bookmark of the file comes back on it; the controls are hidden in print, the summary is not.
+
+  Per-market counts are keyed by the market's POSITION in the file, never its code — GB and
   GB-FB share "GB";
 - **market tabs** in the estate's own order (Google A→Z, then Facebook) with a flag dot, the
   never-scanned market present but disabled; each market = the dissection as on the page: the
@@ -784,6 +806,300 @@ red. The harness pins that scale unchanged.
 The same Playbook panel read coverage as a fraction (floors 0.99 / 0.9 / 0.6) while the index stores
 percentages. Every real reading cleared the floors, so "Weakest first" only ever listed an attribute
 under 1%, printed ×100. The floors, the bars and the "worst N%" figure now read percentages.
+
+### 9.11 Score history — improvement and deduction, day by day (24 Sep 2026)
+
+Ray: *"Can the Golden Score module record historic changes in terms of improvement or deduction
+from the previous scan? That would be good to show clients on improvement progress. At the same
+time, maybe also track it on a day-to-day basis, similar to [product] volumes."*
+
+Before this the module kept no past at all, only three snapshots: the latest, yesterday's and
+the last known-good. Now each feed has a record over time.
+
+**The store.** `goldenhist:<client>:<mkt>` (engine: `labelguard.js` `histAdd` / `histSeed` /
+`histQa` / `histIdx`) holds three lists:
+
+| Key | What it holds | When it is written |
+|---|---|---|
+| `r` readings | `{t, rows, cov, sc?}`: the coverage the score is computed **from**, never the score itself | When the feed moved since the last recorded reading: an attribute appeared, vanished or changed scope, or its coverage moved 0.5pp (`HIST_MOVE_PP`) |
+| `s` scan days | the UTC days the feed was read at all | The first scan of each day |
+| `q` analyses | `{t, q, air, tier}`: content quality and AI-readiness, as analysed | When either figure moved (written by the `/api/golden/quality` PUT) |
+
+Four identical scans a day write nothing after the first. Drift below the threshold builds up
+against the last *recorded* reading, so a slow slide is still caught. The last 30 days
+(`HIST_RECENT_DAYS`) keep every move, scan by scan. Older days keep only their close, the last
+reading of the day. The record is capped at 500 readings, 400 scan days and 200 analyses. A busy
+feed's full year is under 400KB.
+
+**Every reading is re-scored.** The page scores each reading against the brand's **current**
+profile, using the same `goldenScore` + `attrsFromCov` the estate uses. An industry-profile edit
+or a waived attribute therefore re-bases the whole line. It never reads as the feed improving or
+slipping. A reading measured on another basis is never compared across. (That means a snapshot
+from before GPC category scope, where `!!sc` differs.) The line breaks there and the log says
+"measured on a new basis".
+
+**No invented past.** A new record is seeded from the known-good snapshot as it stood before
+this scan rolled it, and from the previous scan. Both are real readings, used only when they
+were measured on today's basis. A day nobody scanned is a **gap** in the chart, never a copy of
+the day before, because a feed that stopped being read must not look flat.
+
+**The card** sits under the scorecard header. Range chips 30 days / 90 days / 1 year / All sit
+top-right; the choice is remembered per device (`gr-hist-rng`). The card has four parts:
+
+- **KPIs:** Golden Score now (as the dial), the last change and its date, and the move over the
+  window. When the record is shorter than the window, that last tile reads "Since tracking
+  began", never "90 days". Content quality and AI-readiness appear with their move since the
+  analysis before the window.
+- **Chart, top plot:** the daily close as a line. It is zoomed to the data, since a line needs
+  no zero baseline.
+- **Chart, bottom plot:** the day's move against the previous scanned day. Improvement is drawn
+  above the zero line and deduction below it, in the Product Volume module's validated pair
+  (light `#2563EB` / `#ED6F0B`, dark `#4C82E0` / `#C67B28`). A scanned day with no change is a
+  dot on the line. The two plots share the calendar but never a y-axis.
+- **Hover and change log:** hovering a day names what moved that day. The change log lists
+  every recorded move in the window, newest first: the score from → to, the Δ, and the
+  attributes that moved (`g:color ▼ −10pp`, `g:product_highlight added (60%)`), with the
+  analyses interleaved. It shows six rows, with "Show all N" behind a button.
+
+**The estate row** shows the last move under the feed score (`FEED ▲1.8`). `goldenidx` carries
+the reading before the last change (`hp`) and when it changed (`ht`). A scan rebuilds both from
+the record, the ack carries them unchanged (`keepHist`), and both ends are re-scored to today's
+profile.
+
+**Client documents.** The card prints in the PDF and the ⬇ HTML. It keeps the active range as a
+plain chip. The other range chips, the Show-all button, the tooltip and the hover targets are
+removed. A card with nothing to show yet (fewer than two readings and no analyses) is dropped
+from both client documents.
+
+Route: `GET /api/golden/history?client=&market=` → `{hist}`. Harnesses:
+`tools/test_goldenhist.mjs` (engine, worker wiring, the page's `histMoved` twin;
+qa_gate/presync/validate) and `tools/check_grhist.js` (Playwright, presync). The Playwright check
+renders a forty-day record and asserts:
+
+- deductions draw below the line;
+- gaps are gaps;
+- waiving the attributes that moved re-bases the history;
+- the download keeps the chart and drops the furniture;
+- the card works in dark mode and at 390px.
+
+### 9.12 Daily at 09:00 UK, and a hand-run scan sets its day (24 Sep 2026)
+
+Ray: *"Golden Record and content quality should automatically scan on a daily basis, then at 9
+a.m. UK time, so every day there's a tracker. If there's a manual scan on any day, that new score
+can override that day. So let's do that for all clients."*
+
+The feed score already had an automatic lane, the 4x-daily xml-scan. Content quality and
+AI-readiness had none: they ran only when somebody pressed **Analyse**. So the history only moved
+on days a person remembered to run them.
+
+**The daily run.** `.github/workflows/golden-daily.yml` fires at 08:00, 09:00 and 10:00 UTC, and
+`tools/golden_daily.mjs` decides whether to run. Cron speaks UTC and the UK moves between GMT and
+BST, so the script runs once the London clock has reached 09:00 and today's London date is not
+yet on the worker's ledger. In summer the 08:00 UTC firing is 09:00 London; in winter the 09:00
+UTC firing is. The other firings are catch-up for a late or failed run, and do nothing once the
+day is done. A manual dispatch can force a run. A single-feed dispatch (`only`) never marks the
+day done.
+
+The script reads every wired Google Shopping feed once: 49 today, never a `-fb` Meta feed. XML
+feeds stream from FeedHero. House of Bruar's three sheet feeds come through Google's public CSV
+export, the same source the feed proxy reads. Off that one stream it pushes:
+
+| Push | What it carries | Where it lands |
+|---|---|---|
+| `{xmlscan}` | the snapshot (XML feeds) | the Golden Score, exactly as the 4x-daily agent sends it |
+| `{goldenscan}` | a scan request (sheet feeds) | the worker's own gviz scan |
+| `{goldenqual}` | content quality + AI-readiness | `storeGoldenQuality` |
+| `{goldendaily}` | the day, then the run's totals | the ledger `goldendaily`; the first call returns every brand's scoring profile |
+
+The quality reading is computed with `labelguard.js` **`qualityStream`** (plus `packAudit`). That
+is the one implementation /golden's Analyse button now runs too: `qualityRun` was moved onto it,
+so a hand-run analysis and the automatic one can never read a feed two ways.
+
+**A hand-run scan sets its day.** Every write records who took the reading:
+
+- **Analyses.** `storeGoldenQuality` is the one writer for both the page's PUT (manual) and the
+  agent's push (auto). It refuses to store an automatic reading over a hand-run one taken the
+  same day. `goldenidx` carries `qSrc` (`'m'` or `'a'`), and `QUAL_KEEP` keeps it across scans.
+- **Scans.** Every scan button a person presses passes `manual` through `runLabelScan` /
+  `applyPushedSnapshot` → `processScanSnapshot` → `histAdd`. That covers `/api/golden/scan`,
+  `/api/labels/scan`, `/api/ptypes/scan` and `/api/labels/scanpush`.
+- **In the record.** A hand-run reading is recorded, marked `m`, even when nothing moved (once
+  a day).
+- **Picking the day.** `histDayPick` (engine, with a page twin) makes a day's value its last
+  hand-run reading when there is one, and otherwise its last reading.
+
+The record still keeps every later truthful reading; only the day's value follows the person's
+scan. Old days thin down to that same reading.
+
+The estate dial and the feed score on `goldenidx` still show the latest scan. They are
+monitoring, not the daily tracker.
+
+**The card.**
+
+- A metric switch (Golden Score · Content quality · AI-readiness, remembered per device as
+  `gr-hist-met`) draws each one day by day.
+- A day with no analysis is a gap in the chart.
+- AI-readiness keeps its tier colours.
+- A day set by hand wears a ring on the line, and its change-log row reads "✋ by hand".
+- The header chip reads "⏱ auto 09:00 UK · last …", from the ledger the estate route now
+  returns.
+- A single reading with no scanned neighbour is drawn as a point. Before, it vanished.
+
+**Harnesses.** `tools/test_goldenhist.mjs` covers:
+
+- the day rule and the hand-run pin;
+- `qualityStream` against the collector written out by hand;
+- the one-writer rule and the manual flags;
+- the agent's London clock (summer and winter), its gate, its roster and its workflow.
+
+`tools/check_grhist.js` renders a hand-run day followed by an automatic one, and the content
+quality view.
+
+### 9.14 Keywords in the Golden Score (30 Sep 2026)
+
+Ray: *"add keywords fields (product_type2,3,4,5,6,7,8,9) to the golden score mix also?"*
+
+FeedSpark's keyword injection writes phrases into the numbered `g:product_type` slots. Slot 1 (or
+the bare column) is the category tree and slots 2–10 hold the keywords. The Golden Score now carries
+one attribute for them, **keywords**: the share of products carrying at least one keyword phrase.
+
+**A filled slot is not a keyword.** Sampled on the live estate before building:
+
+| Feed | Real keyword coverage | "Any slot filled" | Why they differ |
+|---|---|---|---|
+| Schuh GB | 36.7% | 100% | a 32-character hex id in slot 2 on every product |
+| Reiss GB | 22.3% | 100% | the same id in slot 2 |
+| Hobbycraft GB | 49.8% | 99.7% | the same id in slot 2 |
+| YuMOVE GB | 10.6% | 75.3% | `#N/A` in slot 2 on 65% |
+
+So a value only counts when it is a phrase. `kwValueKind` (labelguard.js) rejects a hex id of 24+
+characters and spreadsheet placeholders (`#N/A`, `N/A`, `null`, `-`, `0`, `#REF!` …). The row names
+how many products carry an id, so the reading explains itself.
+
+**Three states, never blurred:**
+
+- **Measured** — the XML scan reads every product (`xmlCollector` → `keywordAttr`: coverage,
+  keyword strings in total and per SKU, products carrying an id). Every XML lane measures it: the
+  4×-daily agent, the 09:00 UK run and the page's live scan.
+- **Absent** — the feed has no keyword slots at all. Scored at 0, like any recommended attribute
+  the feed does not carry. The sheet (gviz) lane can say this much from the header.
+- **Not measured** — the sheet lane when keyword slots exist (a column count cannot tell a phrase
+  from an id), and every snapshot or reading from before 30 Sep. Left OUT of the score, never
+  counted as missing. In the index this is the key being absent from `cov`; measured-absent is `null`.
+
+**Keyword strings per SKU, not slots.** Ray, same day, on the first version's *"3.5 phrases per
+keyworded product"*: *"keywords look like multiple phrases separated by chevrons … some products
+don't have keywords at all. You could say, on average, how many keyword strings there are per SKU."*
+Each slot is a chain, e.g. `superdry hoodie > purple hoodie > mens hoodie > …`, so the first version
+was counting filled slots (about 3 on Superdry GB) where the keyworded products carry about 23
+strings each. `kwStrings` counts the strings between chevrons (an id or a placeholder inside a chain
+is not counted either), and `keywordAttr` reports `strings` (the catalogue's total) and `perSku`,
+which is the total divided by EVERY SKU. Products with no keywords count as none, because an average
+over only the keyworded products describes a catalogue that does not exist. The row reads *"8.2
+keyword strings per SKU"* and the tooltip shows the sum. A snapshot scanned before the string count
+carries the old slot figure (`per`), which the page never shows as strings; it reads *"strings per
+SKU counted on the next XML scan"* until the next scan. Coverage and the score are unchanged by this.
+
+Live on 30 Sep 2026 (full feeds, the collector as shipped):
+
+| Feed | SKUs | Keyworded | Keyword strings | Per SKU | (per keyworded SKU) |
+|---|---|---|---|---|---|
+| Superdry GB | 25,695 | 10,658 (41.5%) | 275,576 | **10.7** | 25.9 |
+| Schuh GB | 21,972 | 8,071 (36.7%) | 180,170 | **8.2** | 22.3 |
+| Reiss GB | 24,048 | 5,342 (22.2%) | 186,236 | **7.7** | 34.9 |
+| Hobbycraft GB | 24,648 | 12,283 (49.8%) | 178,491 | **7.2** | 14.5 |
+| Accessorize GB | 4,254 | 1,153 (27.1%) | 29,699 | **7.0** | 25.8 |
+| American Golf GB | 7,783 | 1,228 (15.8%) | 13,168 | **1.7** | 10.7 |
+| Monsoon GB | 10,627 | 550 (5.2%) | 11,179 | **1.1** | 20.3 |
+| YuMOVE GB | 85 | 9 (10.6%) | 63 | **0.7** | 7.0 |
+
+The last column is shown here only to explain the gap. The page prints the per-SKU figure.
+
+**Scoring.** `rec` tier, ×1; ★ in the profile editor lifts it to ×2, and it can be waived per brand
+or industry. It is `house: true`: the page badges it **FeedSpark**, never as a Google specification
+attribute. Its row has one action, **→ Brief**, which opens a keyword brief (`cat keyword`, task
+*Keywords Optimisation - Catalogue coverage - <Brand> <MKT> - …*). There is no client ask and no PDP
+scan, because keywords are FeedSpark's own work.
+
+**History.** Readings from before 30 Sep never read keywords, so `histBasis` (engine) and `hBase`
+(page twin) include "which derived attributes were read". The first measured scan is a change of
+measurement: recorded, never drawn as a move. The estate's last-move chip, the Score history card and
+Leadership's portfolio all start the comparison there. `diffCoverage` raises nothing against a
+baseline that never measured keywords.
+
+**Live impact on 30 Sep 2026** (default profiles): Golden Scores move 1 to 2.2 points (Schuh GB
+86.6 → 85.6, Reiss GB 91.7 → 90.2, YuMOVE GB 89.9 → 87.7, Monsoon GB 93.8 → 92.0).
+
+**The Keyword Calendar reads the same rule.** Its saturation counted any filled slot, which is why
+Reiss read "100% keyword saturation" on 21 Sep. Both of its stream loops now use `kwKind` (a twin of
+`kwValueKind`, held to one table by tools/test_labelguard.mjs). A stored reading without `v:2` says
+it was measured before ids were excluded until it is re-synced.
+
+**Harnesses.** tools/test_labelguard.mjs (the value table, slot resolution, the collector on a real
+XML stream, the three states through index/history/score, basis, alerts, the KWCal twin) and
+tools/check_grkw.js (Playwright, presync: the row in each state, the dial against the engine's
+score, → Brief opening a keyword brief).
+
+### 9.13 The portfolio trend on Leadership (24 Sep 2026)
+
+Ray: *"Should there be an additional interface for AM only to view these charts across their
+portfolio at once?"*, then *"can you build on leadership"*.
+
+The Score history card shows one feed. **Leadership › Golden Record — portfolio trend** puts every
+Google Shopping feed's line on one screen, filtered by the account's AM.
+
+**Nothing is scored on Leadership.** `GET /api/golden/portfolio?days=30|90|365` runs each feed's
+record (`goldenhist`) through the engine's `histSeries` under the brand's current profile. The
+engine now holds `attrsFromCov` (the page's twin) and `histScore`, so the server scores a stored
+reading exactly as the page does. The estate index's own reading closes each line, so a tile ends
+at the score the estate scorecard shows. A day reads exactly as it does on the card:
+
+- **Golden Score:** the day's reading (a hand-run one first). On a day the feed was scanned
+  without moving, the last reading carries. A day nobody scanned is a gap.
+- **Content quality and AI-readiness:** the day's analysis, or a gap.
+- **Basis:** a reading measured on another basis than the latest (before GPC category scope) is
+  left out, so no tile draws a jump nobody made.
+
+Leading days with no value are trimmed off, so a young record costs a few numbers, not a year of
+nulls. Each series carries a summary per metric: now, first value in the window, the change and
+its direction. A move under `PORTFOLIO_FLAT` (0.5) reads as flat.
+
+**The AM** is the Task Manager's (`tmidx`, the same name the hours badge shows), matched on the
+folded client name. A brand the Task Manager has not reached is listed under "No AM on record",
+never guessed. The route is scoped per signin like every client list (scoping only narrows).
+
+**The page.**
+
+- One row of filters: AM (with counts), score (Golden Score · Content quality · AI-readiness),
+  window (30 days by default · 90 days · 1 year), Movers first / By account, ⊞ Table. All
+  remembered per device (`fcc-lead-gp`). A remembered AM who no longer has a feed falls back to
+  All rather than an empty grid.
+- A strip: the average, then Improved / Declined / Flat / No reading. Until a feed has two
+  measured days there is nothing to compare, so those three print a dash, not a zero.
+- One tile per feed: account · market · AM, today's value in the audit colour legend
+  (AI-readiness on its tier ladder), the change since the first measured day in the window in the
+  Score history card's own blue / orange pair, and a small line.
+- **One calendar for every tile.** The x-axis is the whole window with today on the right, so a
+  record that began last week starts near the right edge. Each tile's y-range is its own, at least
+  four points tall, so the printed change is the headline, not the slope.
+- Movers first: drops (biggest first), gains, flat, one reading, then none. Within the quiet
+  groups the lowest score leads.
+- Hover gives a crosshair and the day's value. Clicking a tile opens `/golden#<client>|<mkt>` with
+  its Score history card on the same score and window.
+- An unauthenticated read (the Access login page, HTML with a 200) reads as a failed read, never
+  as an empty book.
+
+**Harnesses.** `tools/test_goldenhist.mjs` covers:
+
+- the series rules;
+- the page's own `histModel`, lifted from /golden and run on the same record: every day of all
+  three scores must match;
+- the route and the page wiring.
+
+`tools/check_leadgp.js` (Playwright, presync) builds the payload with the real engine and uses
+the real Leadership page: order, gaps, the shared calendar, the AM filter, the score and window
+switches, the table, hover, the click-through, the empty and error states, dark mode and 390px.
+`tools/test_bands.mjs` lifts Leadership's copy of the colour legend.
 
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 

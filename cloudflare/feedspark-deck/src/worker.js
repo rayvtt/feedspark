@@ -27,8 +27,13 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
-import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
-const AB_SHAPE = 2;   // bump when parseAbTests grows a field the page reads (2 = winner/title)
+import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
+const AB_SHAPE = 4;   // bump when parseAbTests grows a field the page reads, the served order
+                       // changes, or the FETCH ITSELF reads more of the sheet (2 = winner/title,
+                       // 3 = newest-first, 4 = A1:Z400 -> A1:ZZ5000 — a payload cached under the
+                       // old range is missing rows, not just mis-ordered, and no re-sort of it
+                       // can recover a test that was never fetched; six more hours of that is
+                       // still wrong)
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
@@ -41,12 +46,20 @@ import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } fr
 import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
+import * as ROAS from "./roas.js";
+// Rules + Stock management (Ray, 28 Sep 2026) — FeedHero's rule_report off the SAME MCP + token as ROAS
+import * as RULES from "./rules.js";
+// Hero sizes on /stock (Ray, 30 Sep 2026) — the census shape a push may store and the guide edits a signin may make
+import * as HERO from "./herosizes.js";
+import * as LEVERS from "./stocklevers.js";
+import * as AIVIS from "./aivis.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
 // module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
 // and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
 import * as TB from "./taskbook.js";
+import * as OUT from "./outcomes.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
 // New batch = commit the JSON + add it to INGEST_BATCHES.
@@ -55,7 +68,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -69,6 +82,8 @@ import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 import CASE_BRIEF from "../../../docs/FCC_Business_Case_Brief.html";
+// feedspark.com redesign mockup (Ray, 30 Sep 2026: "devise a proper website … host the mockup site on FCC too")
+import WEBSITE_PAGE from "../../../docs/FeedSpark_Website.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
@@ -95,6 +110,27 @@ import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
+import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
+import RULES_MOD_PAGE from "../../../docs/FeedSpark_Rules.html";
+import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
+// the hero-size engine (docs/herosize_engine.js): the master-stock agent builds each market's size census with it,
+// /stock maps and measures hero sizes with it — served verbatim at /stock/engine.js
+import HEROSIZE_ENGINE_SRC from "../../../docs/herosize_engine.js";
+// the stock-lever engine (docs/stocklevers_engine.js): /stock reads every market's levers, BAU ↔ SALE, with it — served
+// verbatim at /stock/levers.js
+import STOCKLEVERS_ENGINE_SRC from "../../../docs/stocklevers_engine.js";
+// /catalog (Ray, 28 Sep 2026): the product catalogue GMC / Shopify style — every product as it
+// is SENT, and hovering one shows it as the client's MASTER feed had it, field by field. The
+// engine (docs/catalog_engine.js) is served verbatim at /catalog/engine.js and node-tested.
+import CATALOG_PAGE from "../../../docs/FeedSpark_Catalog.html";
+import CATALOG_ENGINE_SRC from "../../../docs/catalog_engine.js";
+// the Catalogue's pixel reader (docs/pixel_engine.js — what each product image shows, read off its pixels in the browser)
+import PIXEL_ENGINE_SRC from "../../../docs/pixel_engine.js";
+// /aivis (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time"): does a brand, its
+// site and its products turn up when a shopper asks ChatGPT, Google AI Mode / AI Overviews, Perplexity or
+// Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
+import AIVIS_PAGE from "../../../docs/FeedSpark_AIVisibility.html";
+import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -104,7 +140,17 @@ import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 // /playbook 301s to /workflow?pb=1 so every old link and bookmark still lands on it.
 import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
 import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
+// the AI transformation roadmap — migration off personal GitHub/Cloudflare onto FeedSpark-owned
+// servers + the AM adoption plan, tracked live with management (opt-in module, see access.js)
+import TRANSFORM_PAGE from "../../../docs/FeedSpark_Transformation.html";
+// FeedSpark design guidelines (Ray, 28 Sep 2026: "if I start designing their own module it will automatically follow
+// Feedspark brand guidelines … where is that on the dashboard, or add it"): the page renders the brand FROM the
+// stylesheet between its FCC-DESIGN markers, and /design/fcc.css serves that same slice to any module that loads it
+import DESIGN_PAGE from "../../../docs/FeedSpark_Design.html";
+const DESIGN_CSS = (() => { const a = DESIGN_PAGE.indexOf("/* FCC-DESIGN:START */"), b = DESIGN_PAGE.indexOf("/* FCC-DESIGN:END */");
+  return a >= 0 && b > a ? DESIGN_PAGE.slice(a, b + "/* FCC-DESIGN:END */".length) + "\n" : ""; })();
 import APPSW from "../../../docs/apps_widget.html";
+import NAVROWW from "../../../docs/navrow_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -155,12 +201,20 @@ import HOURSW from "../../../docs/hours_widget.html";
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
 import SHIPPEDW from "../../../docs/shipped_widget.html";
 import TOUCHW from "../../../docs/touch_widget.html";
+// module-by-module migration badge: a status dot on every nav icon + a pill on the current page,
+// read from the public projection GET /api/migration/status (src/migration.js)
+import MIGW from "../../../docs/migration_widget.html";
+import { migrationView } from "./migration.js";
+import { txDiff, txLogAppend } from "./txhistory.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
 import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Aug26.pptx";
 import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introduction_Aug26.pptx";
 import MAT_SCHUH_SR_SEP26 from "../../../docs/materials/Schuh_Strategy_Review_Sep26.pptx";
+import MAT_HOBBY_SR_SEP26 from "../../../docs/materials/Hobbycraft_Strategy_Review_Sep26.pptx";
+import MAT_SUPERDRY_SVC_SEP26 from "../../../docs/materials/Superdry_Service_Review_Sep26.pptx";
+import MAT_REISS_FY2627 from "../../../docs/materials/Reiss_NewFiscal_FY2627.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -169,6 +223,52 @@ import CALSEED_REISS from "../../../docs/calseed/reiss_marketing_planner.webp";
 const CAL_SEED_FILES = {
   'reiss_marketing_planner.webp': { body: CALSEED_REISS, mime: 'image/webp' },
 };
+
+// feedspark.com mockup footage (docs/website/) -- the /website page's figures: the Command Center
+// filmed on the synthetic demo catalogue by tools/website_media.js (no client data, guarded at
+// capture). Bundled as Data modules and served at /website/<file>, which is where the page's
+// relative `website/<file>` resolves both here and from docs/ on disk. MP4 is answered with HTTP
+// Range (206) because Safari will not play a video from a server that ignores it.
+import WEB_CAT_LOOP from "../../../docs/website/catalogue-loop.mp4";
+import WEB_CAT_LOOP_P from "../../../docs/website/catalogue-loop.webp";
+import WEB_AIVIS_LOOP from "../../../docs/website/aivis-loop.mp4";
+import WEB_AIVIS_LOOP_P from "../../../docs/website/aivis-loop.webp";
+import WEB_ROAS_LOOP from "../../../docs/website/roas-loop.mp4";
+import WEB_ROAS_LOOP_P from "../../../docs/website/roas-loop.webp";
+import WEB_CAT_DASH from "../../../docs/website/catalogue-dashboard.webp";
+import WEB_CAT_STAGES from "../../../docs/website/catalogue-stages.webp";
+import WEB_STOCK from "../../../docs/website/stock-instock.webp";
+import WEB_RULES from "../../../docs/website/rules-findings.webp";
+const WEBSITE_MEDIA = {
+  'catalogue-loop.mp4': { body: WEB_CAT_LOOP, mime: 'video/mp4' },
+  'catalogue-loop.webp': { body: WEB_CAT_LOOP_P, mime: 'image/webp' },
+  'aivis-loop.mp4': { body: WEB_AIVIS_LOOP, mime: 'video/mp4' },
+  'aivis-loop.webp': { body: WEB_AIVIS_LOOP_P, mime: 'image/webp' },
+  'roas-loop.mp4': { body: WEB_ROAS_LOOP, mime: 'video/mp4' },
+  'roas-loop.webp': { body: WEB_ROAS_LOOP_P, mime: 'image/webp' },
+  'catalogue-dashboard.webp': { body: WEB_CAT_DASH, mime: 'image/webp' },
+  'catalogue-stages.webp': { body: WEB_CAT_STAGES, mime: 'image/webp' },
+  'stock-instock.webp': { body: WEB_STOCK, mime: 'image/webp' },
+  'rules-findings.webp': { body: WEB_RULES, mime: 'image/webp' },
+};
+// one bundled file, whole or by byte range (a single range: bytes=a-b, a-, -n). Anything else in
+// the Range header is answered whole, which the spec allows; an unsatisfiable range is a 416.
+function mediaResponse(request, f) {
+  const buf = f.body, size = buf.byteLength, head = request.method === 'HEAD';
+  const h = { 'content-type': f.mime, 'cache-control': 'public, max-age=86400', 'accept-ranges': 'bytes' };
+  const r = /^bytes=(\d*)-(\d*)$/.exec(String(request.headers.get('range') || '').trim());
+  if (r && (r[1] !== '' || r[2] !== '')) {
+    let start, end;
+    if (r[1] === '') { start = Math.max(0, size - Number(r[2])); end = size - 1; }
+    else { start = Number(r[1]); end = r[2] === '' ? size - 1 : Math.min(Number(r[2]), size - 1); }
+    if (!size || start >= size || start > end) {
+      return new Response(null, { status: 416, headers: { ...h, 'content-range': 'bytes */' + size } });
+    }
+    return new Response(head ? null : buf.slice(start, end + 1), { status: 206,
+      headers: { ...h, 'content-range': 'bytes ' + start + '-' + end + '/' + size, 'content-length': String(end - start + 1) } });
+  }
+  return new Response(head ? null : buf, { headers: { ...h, 'content-length': String(size) } });
+}
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
@@ -199,7 +299,25 @@ const SEED_MATERIALS = [
     cat: 'marketing', occasion: 'Strategy Review Sep-26',
     file: 'Schuh_Strategy_Review_Sep26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    at: '2026-09-22', body: MAT_SCHUH_SR_SEP26 },
+    at: '2026-09-24', body: MAT_SCHUH_SR_SEP26 },
+  { id: 'hobbycraft-sr-sep26', client: 'Hobbycraft',
+    title: 'Hobbycraft \u00d7 FeedSpark \u2014 Strategy Review, Sep 2026',
+    cat: 'marketing', occasion: 'Strategy Review Sep-26',
+    file: 'Hobbycraft_Strategy_Review_Sep26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-24', body: MAT_HOBBY_SR_SEP26 },
+  { id: 'superdry-svc-sep26', client: 'Superdry',
+    title: 'Superdry \u00d7 FeedSpark \u2014 Service Review, Sep 2026',
+    cat: 'marketing', occasion: 'Service Review Sep-26',
+    file: 'Superdry_Service_Review_Sep26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-29', body: MAT_SUPERDRY_SVC_SEP26 },
+  { id: 'reiss-fy2627', client: 'Reiss',
+    title: 'Reiss \u00d7 FeedSpark \u2014 New fiscal FY26/27',
+    cat: 'marketing', occasion: 'New fiscal FY26/27',
+    file: 'Reiss_NewFiscal_FY2627.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-29', body: MAT_REISS_FY2627 },
 ];
 
 const PAGES = {
@@ -224,14 +342,22 @@ const PAGES = {
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
+  '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
+  '/rules':       { html: RULES_MOD_PAGE, slug: 'rules' },
+  '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
+  '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
+  '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
+  '/migration': { html: TRANSFORM_PAGE, slug: 'transformation' },
+  '/design':    { html: DESIGN_PAGE, slug: 'design' },   // every signin: the guidelines are for everyone who builds
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
   '/case':        { html: CASE_BRIEF,  slug: 'case' },
+  '/website':     { html: WEBSITE_PAGE, slug: 'website' },   // the feedspark.com redesign mockup — a document, see DOC_PATHS
 };
 
 // DOCUMENTS, NOT APP PAGES. /case is the FCC business case — a narrative that is read
@@ -240,7 +366,9 @@ const PAGES = {
 // avatars over somebody's shoulder in a meeting room, no Feed Chat bubble sitting on the
 // page's own section rail, and no skim view folding a scroll built to be scrolled. Exactly
 // the boundary /deck/ already draws — this is the same kind of thing at a different path.
-const DOC_PATHS = new Set(['/case']);
+// /website is the same kind of thing: the feedspark.com redesign mockup, a public-site layout that
+// must look like the public site — the live editor for copy, no FCC chrome over it.
+const DOC_PATHS = new Set(['/case', '/website']);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -274,6 +402,24 @@ const PLAN_SHEETS = {
   'Jo Malone': '1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
   'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
+
+// THE PLAN ROSTER IS THIS MAP — the one Workflow itself reads — with the dossier's pasted links
+// layered on top as per-brand OVERRIDES (KV `plansheets`, written by /api/plan/live below).
+//
+// It is a helper because three things used to read that KV record ALONE, and therefore did
+// nothing whatever until somebody opened the Command Center with a plan URL pasted into a
+// dossier card (Ray, 25 Sep 2026, screenshotting his own hero: "Project plans synced no plan
+// links yet"): the hourly warm that fills planlive:<id>, the Playbook rail — which reads only
+// those warmed caches — and the 12:00 GMT due-task reminder emails to Ray and Steven. The
+// sheets were wired the whole time and Workflow was reading them, so the roster belongs to git
+// and KV can only ever ADD to it.
+async function planSheetMap(env) {
+  let over = {};
+  try { over = (await env.EDITS.get('plansheets', 'json')) || {}; } catch (e) {}
+  const out = Object.assign({}, PLAN_SHEETS);
+  Object.keys(over).forEach((b) => { if (over[b]) out[b] = over[b]; });
+  return out;
+}
 
 // Classify a Sheets API error into something a person can act on. PERMISSION_DENIED / 403 means
 // the workbook simply isn't shared with the worker's service account — the commonest cause by
@@ -453,7 +599,21 @@ async function feedRoster(env) {
 }
 
 export default {
+  // SECURITY HEADERS (security checklist, 24 Sep 2026, item 18): the worker returns responses from
+  // ~200 places, so rather than stamp each one the router is a plain function and every answer
+  // leaves through secHeaders() below. Nothing about routing changes.
   async fetch(request, env, ctx) {
+    const res = await route(request, env, ctx);
+    return secHeaders(res, new URL(request.url).pathname);
+  },
+
+  // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
+  // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
+  // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
+  async scheduled(event, env, ctx) { return scheduledRun(event, env, ctx); },
+};
+
+async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -467,7 +627,7 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/materials': 'material-save',
-        '/api/briefs': 'briefs-save', '/api/state': 'state-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
+        '/api/briefs': 'briefs-save', '/api/state': 'state-save', '/api/buildqueue': 'queue-save', '/api/transform': 'transform-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
@@ -505,6 +665,12 @@ export default {
     // the Build Log merged into /activity's 🔨 tab — keep the old URL working
     if (path === '/buildlog') {
       return new Response(null, { status: 301, headers: { Location: '/activity#build', ...CORS } });
+    }
+
+    // the transformation roadmap moved to /migration (Ray, 28 Sep 2026: "makes more sense") — the
+    // first links sent to management still land on it
+    if (path === '/transformation') {
+      return new Response(null, { status: 301, headers: { Location: '/migration', ...CORS } });
     }
 
     // the Playbook is now Workflow's right-hand rail, not a module of its own — old links land on it
@@ -861,6 +1027,159 @@ export default {
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
           + results.filter((r) => r.retry).length + ' held · ' + results.filter((r) => r.error || r.unreachable).length + ' failed', 'xml-scan');
+        return json({ ok: true, results });
+      }
+
+      // ---- MASTER STOCK (Ray, 30 Sep 2026: "In the stock management module, bring in the availability ratio
+      // between master feed and output feeds as well (instock & outofstock)"). tools/master_stock.mjs
+      // (.github/workflows/master-stock.yml) counts each ROSTER company's master by stock. {masterfile: cmpid}
+      // streams that master through this worker — resolved by the Catalogue's catMasterInfo, so FeedHero's
+      // backup URL never leaves the server — or answers `unchanged` when the stored reading is of the same
+      // import; {masterstock:[…]} files the counts in ONE index, masteravail (cmpid → counts), one write per
+      // post. Roster companies only, named by cmpid — never a caller-supplied URL.
+      if (typeof body.masterfile === 'string') {
+        const cmpid = body.masterfile.trim().toLowerCase().slice(0, 60);
+        if (!ROAS.cmpidBrand(cmpid)) return json({ ok: false, error: 'not a roster company' }, 404);
+        try {
+          let rec = await catMasterInfo(env, cmpid, false);
+          if (rec.state !== 'ok') return json({ ok: false, state: rec.state, note: rec.note || '', error: rec.error || '' }, rec.state === 'preparing' ? 202 : 503);
+          if (!body.force) {
+            // unchanged = the stored counts, the stored size census AND the held-back count are all of this import (and of
+            // their current shapes), and read within the day — the census and the held-back join also ride the Google feed,
+            // which moves on its own; a held-back count the last run could not take (feed unread) leaves hbv unset, so the
+            // master is read again
+            const have = ((await env.EDITS.get('masteravail', 'json')) || {})[cmpid];
+            if (have && have.imp && have.imp === rec.lastImport && have.szv === HERO.CENSUS_V && have.hbv === RULES.HELD_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS) return json({ ok: true, unchanged: true, cmpid, imp: rec.lastImport, t: have.t });
+          }
+          let target = rec.src;
+          if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
+          let up = await fetch(target);
+          if ((up.status === 404 || up.status === 403) && rec.cached) {
+            // FeedHero re-imported since the cached read and the timestamped file moved on
+            rec = await catMasterInfo(env, cmpid, true);
+            target = rec.state === 'ok' ? rec.src : '';
+            if (target) up = await fetch(target);
+          }
+          if (!up.ok || !up.body) return json({ ok: false, error: 'master file fetch failed (' + up.status + ')' }, 502);
+          return new Response(up.body, { headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
+            'x-master-file': String(rec.file || 'master').replace(/[^\w.\-]/g, '_').slice(0, 120), 'x-master-import': String(rec.lastImport || '').slice(0, 40),
+            'x-master-rows': String(rec.rows || '') } });
+        } catch (e) {
+          const msg = String((e && e.message) || e).slice(0, 160);
+          if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+          return json({ ok: false, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error', error: msg }, 502);
+        }
+      }
+      // HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand … breakdown by their product type"): the
+      // master-stock agent's SIZE CENSUS of one market — per product type, every size it is made in with rows + in
+      // stock, and each style's run as a pattern — so /stock can measure any hero list without reading the feed.
+      // Validated whole by HERO.sanitizeCensus (off-shape = refused, never half-stored); one key per market.
+      if (Array.isArray(body.mastersize)) {
+        const results = [];
+        for (const e of body.mastersize.slice(0, 4)) {
+          const cmpid = String((e && e.cmpid) || '').slice(0, 60).trim().toLowerCase(), who = ROAS.cmpidBrand(cmpid);
+          if (!who) { results.push({ cmpid, error: 'not a roster company' }); continue; }
+          const c = HERO.sanitizeCensus(e && e.census);
+          if (!c) { results.push({ cmpid, error: 'bad census — refused whole' }); continue; }
+          await env.EDITS.put('mastersize:' + cmpid, JSON.stringify(Object.assign({ client: who.client, market: who.market, cmpid, t: Date.now(), imp: String((e && e.imp) || '').slice(0, 40) }, c)));
+          results.push({ cmpid, ok: true, types: c.types.length });
+        }
+        logActivity(ctx, env, request, 'master-sizes', results.filter((r) => r.ok).map((r) => r.cmpid).join(', ').slice(0, 60) || 'refused', 'master-stock');
+        return json({ ok: true, results });
+      }
+      if (Array.isArray(body.masterstock)) {
+        const idx = (await env.EDITS.get('masteravail', 'json')) || {};
+        const results = [];
+        const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+        for (const e of body.masterstock.slice(0, 20)) {
+          const cmpid = str(e && e.cmpid, 60).trim().toLowerCase(), who = ROAS.cmpidBrand(cmpid);
+          if (!who) { results.push({ cmpid, error: 'not a roster company' }); continue; }
+          const a = sanitizeAvail(e);
+          if (!a) { results.push({ cmpid, error: 'bad tally — the buckets must add up to the rows read' }); continue; }
+          idx[cmpid] = Object.assign({ client: who.client, market: who.market, cmpid, t: Date.now() }, a, {
+            via: ['availability', 'quantity', 'mixed', 'none'].indexOf(e.via) >= 0 ? e.via : 'none',
+            qcol: str(e.qcol, 60), fmt: str(e.fmt, 12), enc: str(e.enc, 16), imp: str(e.imp, 40),
+            rows: Math.max(0, Math.round(+e.rows || 0)) || null });
+          // the size census rode its own {mastersize} post first; the tally says whether it was stored
+          if (e.szv === HERO.CENSUS_V && e.sz && typeof e.sz === 'object') {
+            const n = (v) => Math.max(0, Math.min(1e8, Math.round(+v || 0)));
+            idx[cmpid].szv = HERO.CENSUS_V;
+            idx[cmpid].sz = { types: n(e.sz.types), sized: n(e.sz.sized), groups: n(e.sz.groups) };
+          }
+          // HELD BACK FROM GOOGLE (Ray, 1 Oct 2026: "how many instock I have been excluded from Masterfeed to Google
+          // Shopping … and the current range completion percentage"): the agent's join of this master against the
+          // market's Google feed, checked whole (RULES.sanitizeHeld — counts that add up, a histogram whose held add up
+          // to the count). hb null with hbv set = no Google feed to hold anything back from; a record that fails the
+          // check is dropped and hbv left unset, so the next run reads this master again rather than keeping a bad count
+          let held = null;
+          if (e.hbv === RULES.HELD_V) {
+            const hb = e.hb == null ? null : RULES.sanitizeHeld(e.hb);
+            if (e.hb != null && !hb) held = 'refused';
+            else { idx[cmpid].hbv = RULES.HELD_V; idx[cmpid].hb = hb; }
+          }
+          results.push(held ? { cmpid, ok: true, held } : { cmpid, ok: true });
+        }
+        if (results.some((r) => r.ok)) await env.EDITS.put('masteravail', JSON.stringify(idx));
+        logActivity(ctx, env, request, 'master-stock', results.filter((r) => r.ok).length + ' master(s) counted · ' + results.filter((r) => r.error).length + ' refused', 'master-stock');
+        return json({ ok: true, results });
+      }
+
+      // ---- THE 09:00 UK DAILY GOLDEN RECORD RUN (Ray, 24 Sep 2026: "Golden Record and content
+      // quality should automatically scan on a daily basis, then at 9 a.m. UK time, so every day
+      // there's a tracker. If there's a manual scan on any day, that new score can override that
+      // day. So let's do that for all clients"). tools/golden_daily.mjs (.github/workflows/
+      // golden-daily.yml) streams every wired Google Shopping feed once, pushes the XML ones'
+      // snapshots down the {xmlscan} lane above (the feed score), asks for a gviz scan of the
+      // sheet-backed ones ({goldenscan}) and posts the content-quality + AI-readiness reading it
+      // computed with labelguard's qualityStream ({goldenqual}) — all AUTOMATIC, so none of it
+      // displaces a hand-run reading of the same day. {goldendaily} is the run's own ledger: the
+      // agent asks whether today's run is done (and for every brand's scoring profile, which the
+      // AI-readiness audit needs) and records the run when it finishes.
+      if (body.goldendaily && typeof body.goldendaily === 'object') {
+        const g = body.goldendaily;
+        const day = /^\d{4}-\d{2}-\d{2}$/.test(String(g.day || '')) ? String(g.day) : null;
+        if (!day) return json({ ok: false, error: 'day (YYYY-MM-DD, London) required' }, 400);
+        const cur = (await env.EDITS.get('goldendaily', 'json')) || null;
+        if (g.finish) {
+          const rec = { day, t: Date.now(), feeds: Math.max(0, parseInt(g.feeds, 10) || 0),
+            quality: Math.max(0, parseInt(g.quality, 10) || 0), kept: Math.max(0, parseInt(g.kept, 10) || 0),
+            failed: Math.max(0, parseInt(g.failed, 10) || 0), by: String(g.by || 'schedule').slice(0, 20) };
+          await env.EDITS.put('goldendaily', JSON.stringify(rec));
+          logActivity(ctx, env, request, 'golden-daily', rec.quality + ' analysed · ' + rec.kept + ' kept a hand-run reading · ' + rec.failed + ' failed', 'golden-daily');
+          return json({ ok: true, daily: rec });
+        }
+        const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+        const profiles = {};
+        (await feedRoster(env)).forEach((f) => {
+          if (!f || !f.client || profiles[f.client]) return;
+          const pf = profileFor(f.client, overrides);
+          profiles[f.client] = { expected: pf.expected || [], waived: pf.waived || [] };
+        });
+        return json({ ok: true, day, done: !!(cur && cur.day === day), last: cur, profiles });
+      }
+      if (Array.isArray(body.goldenqual)) {
+        const results = [];
+        for (const e of body.goldenqual.slice(0, 4)) {   // one or two per post — a reading can run to ~200KB
+          const client = String((e && e.client) || '').slice(0, 60), mkt = mktOf(e && e.mkt);
+          if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0 || /-fb$/.test(mkt)) { results.push({ client, mkt, error: 'bad client/market' }); continue; }
+          if (!(await feedSourceFor(env, client, mkt))) { results.push({ client, mkt, error: 'not a wired feed' }); continue; }
+          try {
+            const r = await storeGoldenQuality(env, client, mkt, e.snap, { auto: true });
+            results.push(Object.assign({ client, mkt }, r.status === 200 ? r.body : { error: r.body.error }));
+          } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
+        }
+        return json({ ok: true, results });
+      }
+      if (Array.isArray(body.goldenscan)) {
+        const results = [];
+        for (const e of body.goldenscan.slice(0, 4)) {   // sheet-backed Google feeds: the gviz scan, automatic
+          const client = String((e && e.client) || '').slice(0, 60), mkt = mktOf(e && e.mkt);
+          if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0 || /-fb$/.test(mkt)) { results.push({ client, mkt, error: 'bad client/market' }); continue; }
+          try {
+            const r = await runLabelScan(env, client, mkt);
+            results.push(r.error ? { client, mkt, error: r.error } : (r.skipped ? { client, mkt, skipped: true } : { client, mkt, ok: true }));
+          } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
+        }
         return json({ ok: true, results });
       }
 
@@ -1286,8 +1605,26 @@ export default {
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/stock/engine.js' && request.method === 'GET') {
+      return new Response(HEROSIZE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/stock/levers.js' && request.method === 'GET') {
+      return new Response(STOCKLEVERS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/catalog/engine.js' && request.method === 'GET') {
+      return new Response(CATALOG_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/catalog/pixels.js' && request.method === 'GET') {
+      return new Response(PIXEL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/aivis/engine.js' && request.method === 'GET') {
+      return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/design/fcc.css' && request.method === 'GET') {
+      return new Response(DESIGN_CSS, { headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/volume/engine.js' && request.method === 'GET') {
       return new Response(ARRIVALS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -1331,6 +1668,13 @@ export default {
         if (added) { try { await env.EDITS.put(LK, JSON.stringify(learned)); } catch (e) {} }
         return json({ ok: true, lang, map, added, missing: miss.filter((k) => !map[k]), ai: 'on' });
       }
+    }
+
+    // the /website mockup's footage (see WEBSITE_MEDIA above)
+    if (path.startsWith('/website/') && (request.method === 'GET' || request.method === 'HEAD')) {
+      const f = WEBSITE_MEDIA[path.slice('/website/'.length)];
+      if (!f) return json({ error: 'not_found' }, 404);
+      return mediaResponse(request, f);
     }
 
     // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
@@ -1482,6 +1826,49 @@ export default {
     // multi-count query — these routes just read/ack the golden* stores.
     if (path.startsWith('/api/golden/')) {
       const r = await goldenRoutes(env, request, url);
+      if (r) return r;
+    }
+
+    // ---- AI transformation roadmap: the LIVE status of every milestone, decision, KPI and risk on
+    // /migration (KV `transform`, kvmerge per key like the build queue, so Ray, Andy and Matt
+    // updating different rows at once all survive). The roadmap ITSELF is git (the page); only what
+    // people say about it lives here. Same opt-in gate as the page: the owner, or a directory row
+    // that names 'transformation' — an unrestricted AM can neither read nor write it.
+    // ---- the MIGRATION STATUS every AM sees (Ray, 24 Sep 2026: "when other AMs start using the
+    // dashboard, each module needs to be highlighted if it has been migrated or not"). A public
+    // projection of the management store — each module's state + planned month, never the notes,
+    // names or checklists — so any signin may read it while /api/transform stays opt-in.
+    if (path === '/api/migration/status' && request.method === 'GET') {
+      const lifted = liftEnvelope(await env.EDITS.get('transform', 'json'), Date.now());
+      return json(migrationView(lifted.data), 200, { 'Cache-Control': 'private, max-age=60' });
+    }
+
+    if (path === '/api/transform') {
+      const acc = await accessOf(env, request);
+      if (!acc.owner && !moduleAllowed(acc.modules, 'transformation')) return json({ error: 'the transformation roadmap is not granted to this signin' }, 403);
+      // HISTORY (Ray, 28 Sep 2026: "a pop-up panel on the right-hand side for any historic or archive
+      // actions — delete, remove, edit — of everything, because it will be co-worked by Matt and Andy
+      // and me"): the page PUTs the whole map, so the worker diffs the map before and after the merge
+      // and logs each key that moved to KV `transformlog`, stamped with the ACCESS identity
+      // (src/txhistory.js). GET ?history=1 serves the log to the same opt-in signins.
+      if (request.method === 'GET' && url.searchParams.get('history')) {
+        return json({ entries: (await env.EDITS.get('transformlog', 'json')) || [] }, 200, { 'Cache-Control': 'no-store' });
+      }
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const now = Date.now();
+        const cur = liftEnvelope(await env.EDITS.get('transform', 'json'), now);
+        const prev = JSON.parse(JSON.stringify(cur.data || {}));
+        const envx = mergeIntoEnvelope(cur, body, base, now, {});
+        await env.EDITS.put('transform', JSON.stringify(envx));
+        const ents = txDiff(prev, envx.data, acc.name || displayName(acc.email), acc.email, now);
+        if (ents.length) {
+          try { await env.EDITS.put('transformlog', JSON.stringify(txLogAppend(await env.EDITS.get('transformlog', 'json'), ents))); } catch (e) {}
+        }
+        return json(envelopeToClient(envx, {}), 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      const r = await mapStoreRoute(env, request, 'transform', {});
       if (r) return r;
     }
 
@@ -2039,7 +2426,12 @@ export default {
           tracked: !!r,
           allowance: r ? r.allowance : null, used: r ? r.used : null,
           balance: r ? r.balance : null, health: r ? r.health : null,
-          markets: r ? r.marketCount : null, am: r ? r.am : null, amEmail: r ? amAddr(r.am) : null, updated: r ? r.updated : null,
+          markets: r ? r.marketCount : null,
+          // the rows the brand figures above were summed FROM — absent (never null-padded) on a
+          // record the index has not re-read since they shipped, so a surface can say so rather
+          // than draw a breakdown it does not have
+          mk: r && Array.isArray(r.mk) ? r.mk : null,
+          am: r ? r.am : null, amEmail: r ? amAddr(r.am) : null, updated: r ? r.updated : null,
           trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
             at: t.at, windowHours: t.windowHours } : null,
           posture: p && p.state ? p : null,
@@ -2091,9 +2483,11 @@ export default {
         const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
       }
       const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
-      const data = TB.assembleBook(books, queues, accounts, Date.now());
+      // The store holds every task the pull reached; ?win=12|24|all picks what to serve from it.
+      const view = TB.bookWindow(Date.now(), TB.bookMonthsOf(url.searchParams.get('win')));
+      const data = TB.assembleBook(books, queues, accounts, Date.now(), view);
       const roster = (idx.roster || []).filter((m) => clientMatch(acc.clients, m.client));
-      data.health = TB.bookHealth(data.coverage, roster, Date.now());
+      data.health = TB.bookHealth(data.coverage, roster, Date.now(), view.from);
       data.scoped = !!acc.clients;
       data.queuesTotal = (idx.queues || []).filter((q) => clientMatch(acc.clients, q.client)).length;
       const st = (await env.EDITS.get('tmbookst', 'json')) || {};
@@ -2164,12 +2558,26 @@ export default {
         // of thirty with no hint of the cut read as the whole workbook, and sent us looking for
         // a tab that was sitting just past the truncation.
         if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tabCount: titles.length, tests: [] });
+        // A1:Z400 was a silent CAP, not a generous one: a test spans ~13 sheet rows (its graph's
+        // height), so 400 rows covers roughly the archive's first 30 tests and NOTHING BELOW
+        // THAT LINE — on a brand tested since early 2025 that is exactly its oldest work, and
+        // abSortTests (added to put the newest tests first) has nothing to sort if the newest
+        // rows were never fetched at all (Ray, 24 Sep 2026, after the sort shipped: "still not
+        // seeing 2026 tests for Schuh dossier" — Schuh's archive runs to row 850+, its Aug 2026
+        // batches sitting ~450 rows past this cutoff). A1:ZZ5000 matches every other whole-tab
+        // read in this file (the plan-tab and project-plan reads below all use it) rather than
+        // inventing a second, narrower convention for one handler.
         const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
-          + encodeURIComponent(tab + '!A1:Z400'), { headers: { Authorization: 'Bearer ' + token } })).json();
+          + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } })).json();
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
         const p = parseAbTests(r.values || []);
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
-        const payload = { ok: true, v: AB_SHAPE, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };
+        // Served and cached NEWEST-FIRST (abSortTests) — parseAbTests itself keeps the sheet's
+        // own chronological-ascending order, which every consumer would otherwise have to
+        // re-sort (or, as shipped, silently not) — sorting once here is the one place the
+        // dossier card, the one-pager's capped slice and any future reader can never disagree.
+        const sorted = abSortTests(p.tests);
+        const payload = { ok: true, v: AB_SHAPE, client, tab, at: Date.now(), tests: sorted, summary: abSummary(sorted) };
         await env.EDITS.put(ck, JSON.stringify(payload));
         return json(payload);
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e), client, tests: [] }); }
@@ -2215,6 +2623,569 @@ export default {
       const out = {}; let updated = 0;
       Object.keys(idx).forEach((c) => { if (inScope(c)) { const r = Object.assign({}, idx[c]); delete r.sig; out[c] = r; if (idx[c].updated > updated) updated = idx[c].updated; } });
       return json({ ok: true, clients: out, tracked: Object.keys(out).length, updated: updated || null, source: src, status });
+    }
+
+    // ROAS (working name) — FeedHero_reports MCP's roas_dashboard, FeedSpark's own roster only
+    // (Ray, 23 Sep 2026 — see src/roas.js's header for the scope call). Scoped like /api/tm:
+    // owner sees the whole roster, a client-scoped signin only their clients. Bare GET = the
+    // per-brand rollup (money kept apart by currency — never summed across symbols) + book KPIs
+    // + `status`; ?client=<brand> = that brand's per-market Total row + top categories; ?pull=1
+    // = OWNER-ONLY sync-now, the same rotation the cron runs.
+    if (path === '/api/roas' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
+      if (url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        // capped at 6: each market is three MCP calls + four KV ops and a request has ~50
+        // subrequests — the page loops this call until the roster is read rather than asking
+        // for more per call
+        const s = await roasPull(env, { pulls: Math.min(6, Math.max(0, +url.searchParams.get('pulls') || ROAS.ROAS_PULLS)) });
+        logActivity(ctx, env, request, 'roas-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('roasstatus', 'json'));
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const winKeys = ROAS.ROAS_WINDOWS.map((w) => w.k);
+      const winOf = (v) => (winKeys.indexOf(v) >= 0 ? v : ROAS.ROAS_DEFAULT_WIN);
+      const one = url.searchParams.get('client');
+      if (one) {
+        // ?client=&market=&win= → ONE market's category tree for that window (the table's
+        // drill-down fetches a market as it is opened — a 30-market brand is never sent whole);
+        // ?client= alone → every market's record trimmed to its Totals + history (v1 shape kept
+        // for the dossier: markets[<MKT>] = record)
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
+        const markets = ROAS.rosterOf(one);
+        if (!markets.length) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+        const mkt = url.searchParams.get('market');
+        const win = winOf(url.searchParams.get('win'));
+        if (mkt) {
+          const m = markets.find((x) => x.market === mkt);
+          if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+          const r = await env.EDITS.get('roas:' + m.cmpid, 'json');
+          if (!r) return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, win, read: false, total: null, tree: [], n: 0, updated: null, status });
+          // v1 record: {total, categories} flat = the 30-day read
+          const w = r[win] || (win === ROAS.ROAS_DEFAULT_WIN && r.categories ? { total: r.total, categories: r.categories } : null);
+          const cats = (w && w.categories) || [];
+          return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, win, read: !!w, total: (w && w.total) || null, tree: ROAS.catTree(cats), n: cats.length, updated: r.updated || null, hist: (r.hist || []).slice(-ROAS.ROAS_SPARK_DAYS), status });
+        }
+        const recs = {};
+        for (const m of markets) {
+          const r = await env.EDITS.get('roas:' + m.cmpid, 'json');
+          if (!r) continue;
+          const o = { client: r.client, market: r.market, cmpid: r.cmpid, updated: r.updated, hist: (r.hist || []).slice(-ROAS.ROAS_SPARK_DAYS) };
+          ROAS.ROAS_WINDOWS.forEach((w) => { o[w.k] = r[w.k] ? { total: r[w.k].total, n: (r[w.k].categories || []).length } : (w.k === ROAS.ROAS_DEFAULT_WIN && r.total ? { total: r.total, n: (r.categories || []).length } : null); });
+          // the v1 fields the dossier read
+          o.total = (o[ROAS.ROAS_DEFAULT_WIN] && o[ROAS.ROAS_DEFAULT_WIN].total) || null;
+          recs[m.market] = o;
+        }
+        return json({ ok: true, client: one, roster: markets.length, read: Object.keys(recs).length, markets: recs, status });
+      }
+      // the book — ONE KV get. ?brand= narrows every figure to that brand (&market= to one
+      // market) so the page's scope switch is a refetch of the same shape, never a second
+      // rollup written in the page; every window's rollup, the per-currency daily series and
+      // the movers are computed here by the engine the harness tests.
+      const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+      const brandQ = url.searchParams.get('brand'), mktQ = url.searchParams.get('market');
+      if (brandQ && !inScope(brandQ)) return json({ ok: false, error: 'out of scope' }, 403);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client) && (!brandQ || r.client === brandQ) && (!mktQ || r.market === mktQ));
+      const brands = {}, book = {}, series = {}, moversBy = {};
+      const curs = Array.from(new Set(rows.map((r) => r.cur || ROAS.rowCur(ROAS.windowTotal(r, ROAS.ROAS_DEFAULT_WIN))).filter(Boolean)));
+      winKeys.forEach((k) => {
+        brands[k] = ROAS.brandRollup(rows, k);
+        book[k] = ROAS.bookKpis(brands[k]);
+        series[k] = { '*': ROAS.seriesFor(rows, k, null) };
+        curs.forEach((c) => { series[k][c] = ROAS.seriesFor(rows, k, c); });
+        moversBy[k] = ROAS.movers(rows, k, ROAS.ROAS_DELTA_BACK);
+      });
+      const rosterN = ROAS.rosterList().filter((m) => inScope(m.client) && (!brandQ || m.client === brandQ) && (!mktQ || m.market === mktQ)).length;
+      const rosterBrands = Object.keys(ROAS.ROAS_ROSTER).filter(inScope).map((c) => ({ client: c, markets: ROAS.ROAS_ROSTER[c].map((m) => m.market) }));
+      return json({ ok: true, wins: ROAS.ROAS_WINDOWS, defaultWin: ROAS.ROAS_DEFAULT_WIN, back: ROAS.ROAS_DELTA_BACK, brands, book, markets: rows.map(ROAS.marketView), series, movers: moversBy, curs, tracked: rows.length, roster: rosterN, rosterBrands, scope: { brand: brandQ || null, market: mktQ || null }, status });
+    }
+
+    // Google Ads' "segment" — FeedHero can cut one market's read eighteen ways (its own list,
+    // asked of the MCP 30 Sep 2026: Category, Brand, Colour, Gender, Age group, Google product
+    // category, Price type, Price group, Product age, the three FeedSpark optimisation statuses,
+    // Batch id and custom labels 0–4), but only as a live query (the pull stores Category alone,
+    // three windows already cost three calls). One MCP call per (market, aggregation, period),
+    // KV-cached six hours, scoped like the read above, the roster the only companies it will
+    // ever ask for.
+    if (path === '/api/roas/live' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const cmpid = String(url.searchParams.get('cmpid') || '');
+      const who2 = ROAS.cmpidBrand(cmpid);
+      if (!who2) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+      if (!(acc.owner || clientMatch(acc.clients, who2.client))) return json({ ok: false, error: 'out of scope' }, 403);
+      // the /catalog inspector places ONE product in every cut it can be matched to exactly —
+      // product age, price type, FeedSpark's own optimisation statuses, custom labels, colour —
+      // so those cuts are allowed here too (same one call, same six-hour cache)
+      const AGGS = ['Brand', 'Gender', 'Price_group', 'Category', 'Product_age', 'Price_type', 'Colour', 'Age_group',
+        'Title_optimisation_status', 'Keyword_optimisation_status', 'Data_field_optimisation_status', 'Google_product_category',
+        'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4', 'Batch_id'];
+      const agg = AGGS.indexOf(url.searchParams.get('agg')) >= 0 ? url.searchParams.get('agg') : 'Brand';
+      const win = ROAS.ROAS_WINDOWS.find((w) => w.k === url.searchParams.get('win')) || ROAS.ROAS_WINDOWS.find((w) => w.k === ROAS.ROAS_DEFAULT_WIN);
+      const key = 'roaslive:' + cmpid + ':' + agg + ':' + win.k;
+      const cached = await env.EDITS.get(key, 'json');
+      if (cached && cached.at && Date.now() - cached.at < (cached.missing ? ROAS.ROAS_SEG_MISSING_TTL : 6 * 3600000) && !url.searchParams.get('fresh')) return json(Object.assign({ ok: true, cached: true }, cached));
+      if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+      try {
+        const mcp = roasMcp(env, fetch);
+        try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+        // 200 = the MCP's own page ceiling: a Colour cut runs to ~150 rows (Monsoon UK, 144), and the
+        // rows kept are the biggest spenders; `of` carries FeedHero's own count so a cut longer than
+        // one page says "top 200 of N" rather than passing a page off as the whole list
+        const payload = await mcp.call('roas_dashboard', { company: cmpid, period: win.period, aggregation: agg, page_size: 200, sort: 'spend', order: 'desc' });
+        const split = ROAS.splitClientRows(TMM.rowsOf(payload), 200);
+        const tr = Number(payload && payload.total_rows);
+        const of = isFinite(tr) && tr > 0 ? Math.max(split.categories.length, tr - (split.total ? 1 : 0)) : split.categories.length;
+        const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length, of };
+        try { await env.EDITS.put(key, JSON.stringify(out), { expirationTtl: 86400 }); } catch (e) {}
+        logActivity(ctx, env, request, 'roas-live-segment', cmpid + ' ' + agg + ' ' + win.k);
+        return json(Object.assign({ ok: true, cached: false }, out));
+      } catch (e) {
+        // a cut FeedHero has not set up for this client (Price group, on every roster brand today) is
+        // an answer — cached like a read, so the page says so instead of a red error on every open
+        if (ROAS.segMissing(e)) {
+          const out = { cmpid, client: who2.client, market: who2.market, agg, win: win.k, at: Date.now(), total: null, rows: [], n: 0, missing: true };
+          try { await env.EDITS.put(key, JSON.stringify(out), { expirationTtl: 86400 }); } catch (e2) {}
+          return json(Object.assign({ ok: true, cached: false }, out));
+        }
+        return json({ ok: false, error: String((e && e.message) || e).slice(0, 160) }, 502);
+      }
+    }
+
+    // THE CATALOGUE (Ray, 28 Sep 2026: "a module to browse / view / track / deep dive product
+    // catalogs … when you hover over an image or product, you should have access to what we call
+    // a master feed source in FeedHero report MCP … the product data before FeedSpark
+    // optimization"). The OUTPUT feed streams through /api/feed/proxy as it does for every feed
+    // module; what these add is the MASTER — see catMasterInfo for where its company id comes from
+    // (the wired output feed's own URL, never the query). Scoped like /api/roas.
+    //   GET /api/catalog/roster                        → every client × market this signin may browse
+    //   GET /api/catalog/master?client=&market=        → the master's info: file, headings, rows, last import (one MCP call, KV 20 min)
+    //   GET /api/catalog/master/file?client=&market=   → the master's own source file, streamed untouched (zip / XML / CSV / TSV)
+    //   GET /api/catalog/master/row?client=&market=&q= → master rows containing q, by the MCP's own search (the inspector's fallback)
+    // the pixel scan's readings, kept per feed so a scan done once is there on the next visit (one KV key a feed,
+    // keyed by IMAGE URL so a reading follows the picture, not the product row it was first seen on)
+    if (path === '/api/catalog/imgscan' && request.method === 'PUT') {
+      const acc = await accessOf(env, request);
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!(acc.owner || clientMatch(acc.clients, client))) return json({ ok: false, error: 'out of scope' }, 403);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!(await feedSourceFor(env, client, mkt))) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const clean = catImgClean(b);
+      if (!clean) return json({ ok: false, error: 'no readings' }, 400);
+      const key = catImgKey(client, mkt), prev = (await env.EDITS.get(key, 'json')) || null;
+      const merged = catImgMerge(prev, clean);
+      await env.EDITS.put(key, JSON.stringify(merged));
+      logActivity(ctx, env, request, 'catalog-pixels', client + ' ' + mkt + ' ' + Object.keys(clean.r).length);
+      return json({ ok: true, n: Object.keys(merged.r).length, t: merged.t });
+    }
+    if (path.startsWith('/api/catalog/') && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
+      if (path === '/api/catalog/roster') {
+        const out = {};
+        (await feedRoster(env)).filter((r) => inScope(r.client)).forEach((r) => {
+          const cmpid = catCmpid(r.src), meta = /-fb$/.test(r.mkt);
+          // Google Ads ROAS is a Google market's; the ROAS roster names it its own way (GB, BE-FR)
+          const rb = cmpid && !meta ? ROAS.cmpidBrand(cmpid) : null;
+          (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, channel: meta ? 'meta' : 'google', kind: r.src && r.src.xml ? 'xml' : 'sheet',
+            cmpid, roas: rb ? { client: rb.client, market: rb.market } : null });
+        });
+        return json({ ok: true, clients: out });
+      }
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
+      const src = await feedSourceFor(env, client, url.searchParams.get('market'));
+      if (!src) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      // THE PIXEL SCAN (Ray, 6 Oct 2026: "on Catalog - scan and crawl the pixel for client's imagery as well"):
+      // a canvas can only read an image's pixels when the image comes from our own origin, so the page fetches
+      // each one through here. NO OPEN PROXY: the URL's host must be one this feed's own image links use
+      // (learned from the feed head, catImgHosts) or a FeedSpark overlay host, and only an image comes back.
+      // Both routes work on a sheet-backed feed too — no FeedHero master is needed to look at a picture.
+      if (path === '/api/catalog/img') return catImg(env, url, src, client, mktOf(url.searchParams.get('market')));
+      if (path === '/api/catalog/imgscan') {
+        const rec = await env.EDITS.get(catImgKey(client, mktOf(url.searchParams.get('market'))), 'json');
+        return json({ ok: true, scan: rec || null });
+      }
+      const cmpid = catCmpid(src);
+      if (!cmpid) return json({ ok: false, state: 'no_master', error: 'this feed is read from a Google Sheet — FeedHero holds no master for it' }, 404);
+      try {
+        if (path === '/api/catalog/master') {
+          const rec = await catMasterInfo(env, cmpid, !!url.searchParams.get('fresh'));
+          if (rec.state !== 'ok') return json(Object.assign({ ok: false }, rec), rec.state === 'preparing' ? 202 : 503);
+          if (!rec.cached) logActivity(ctx, env, request, 'catalog-master', cmpid);
+          const pub = Object.assign({ ok: true, hasFile: !!rec.src, hasWorkbook: !!rec.wb }, rec);
+          delete pub.src; delete pub.wb;   // FeedHero's backup URLs stay on the server
+          return json(pub);
+        }
+        if (path === '/api/catalog/master/file') {
+          const wantWb = url.searchParams.get('kind') === 'wb';
+          let rec = await catMasterInfo(env, cmpid, false);
+          if (rec.state !== 'ok') return json(Object.assign({ ok: false }, rec), rec.state === 'preparing' ? 202 : 503);
+          let target = wantWb ? rec.wb : rec.src;
+          if (!target) return json({ ok: false, error: 'no readable master file' }, 404);
+          let up = await fetch(target);
+          if ((up.status === 404 || up.status === 403) && rec.cached) {
+            // FeedHero re-imported since the cached read and the timestamped file moved on
+            rec = await catMasterInfo(env, cmpid, true);
+            target = rec.state === 'ok' ? (wantWb ? rec.wb : rec.src) : '';
+            if (target) up = await fetch(target);
+          }
+          if (!up.ok || !up.body) return json({ ok: false, error: 'master file fetch failed (' + up.status + ')' }, 502);
+          // the client's own file on OUR origin: never with FeedHero's content-type (a text/html answer
+          // would render here) — bytes, nosniff, a download if anyone opens the URL itself
+          const fname = String((wantWb ? rec.wbFile : rec.file) || 'master').replace(/[^\w.\-]/g, '_').slice(0, 120);
+          const h = { 'content-type': 'application/octet-stream', 'x-content-type-options': 'nosniff', 'cache-control': 'no-store',
+            'content-disposition': 'attachment; filename="' + fname + '"', 'x-master-file': fname };
+          // the page's progress bar reads the size up front — informational, never content-length
+          // (the feed proxy records why: a decoded stream would be truncated to the encoded size)
+          const len = up.headers.get('content-length') || '';
+          if (!up.headers.get('content-encoding') && /^\d+$/.test(len)) h['x-feed-bytes'] = len;
+          return new Response(up.body, { headers: h });
+        }
+        // Google Ads per product, last 7 days (catAdsRead): a chunk a call — the page calls again until done, and
+        // only the finished read carries the rows. Google Ads is the GOOGLE feed's; a Meta market is refused.
+        if (path === '/api/catalog/ads') {
+          if (/-fb$/i.test(String(url.searchParams.get('market') || ''))) return json({ ok: false, error: 'Google Ads is read for the Google feed' }, 400);
+          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'));
+          if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
+          if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
+          if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
+          const head = { ok: true, cmpid, period: rec.period, from: rec.from, to: rec.to, range: rec.range, total: rec.total, pages: rec.pages, next: rec.next,
+            got: Object.keys(rec.rows || {}).length, cur: rec.cur, curMix: !!rec.curMix, restarted: !!rec.restarted, cached: !!rec.cached };
+          if (rec.state !== 'ok') return json(Object.assign(head, { done: false }));
+          if (!rec.cached) logActivity(ctx, env, request, 'catalog-ads', cmpid + ' ' + rec.period + ' ' + head.got);
+          return json(Object.assign(head, { done: true, at: rec.at, rows: rec.rows }));
+        }
+        if (path === '/api/catalog/master/row') {
+          const q = String(url.searchParams.get('q') || '').trim().slice(0, 80);
+          if (!q) return json({ ok: false, error: 'q required' }, 400);
+          if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+          const mcp = roasMcp(env, fetch);
+          try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+          const payload = await mcp.call('master_feed', { company: cmpid, search: q, page_size: 10 });
+          const keys = catColKeys(payload && payload.columns);
+          const rows = TMM.rowsOf(payload).map((r) => keys.map((k) => (r[k] == null ? '' : String(r[k]))));
+          logActivity(ctx, env, request, 'catalog-master-row', cmpid + ' ' + q);
+          return json({ ok: true, cmpid, q, headers: keys.map((k) => String(payload.columns[k])), rows, total: +(payload && payload.total_rows) || rows.length });
+        }
+      } catch (e) {
+        const msg = String((e && e.message) || e).slice(0, 160);
+        // FeedHero's FIRST read of a big master downloads the whole import and can outlast the MCP
+        // client's 25-second timeout — that is "still preparing" (the next call hits its cache), not a failure
+        if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+        return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
+      }
+      return json({ ok: false, error: 'not found' }, 404);
+    }
+
+    // RULES + STOCK MANAGEMENT (Ray, 28 Sep 2026: "bring other data points from FeedHero reports
+    // MCPs as well … 'Rules' … I'm most interested in stock management related rules … The new
+    // module can be called rules and another is stock management"). FeedHero's rule_report, read
+    // by rulesPull off the SAME server + token as ROAS and the SAME roster (nothing outside it is
+    // pulled, stored or shown), classified by src/rules.js. Scoped like /api/roas.
+    //   GET /api/rules                    → the book: every market's summary + its findings (rulesidx, one KV get)
+    //   GET /api/rules?client=&market=    → ONE market's full rule list in run order + its chains + findings
+    //   GET /api/rules?pull=1             → OWNER-ONLY sync-now (≤6 markets a call; the page loops it)
+    //   GET /api/rules/stock              → the stock view: coverage matrix, cut-offs, stock findings, every stock rule
+    if ((path === '/api/rules' || path === '/api/rules/stock') && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
+      if (path === '/api/rules' && url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await rulesPull(env, { pulls: Math.min(6, Math.max(0, +url.searchParams.get('pulls') || 6)) });
+        logActivity(ctx, env, request, 'rules-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('rulesstatus', 'json'));
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const now = Date.now();
+      const one = url.searchParams.get('client'), mkt = url.searchParams.get('market');
+      if (path === '/api/rules' && one && mkt) {
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
+        const m = ROAS.rosterOf(one).find((x) => x.market === mkt);
+        if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+        const r = await env.EDITS.get('rules:' + m.cmpid, 'json');
+        if (!r) return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, read: false, rules: [], chains: [], findings: [], status });
+        const rules = r.rules || [];
+        const where = { client: one, market: mkt, cmpid: m.cmpid, rules };
+        return json({ ok: true, client: one, market: mkt, cmpid: m.cmpid, read: true, updated: r.updated || null, total: r.total == null ? rules.length : r.total, capped: !!r.capped,
+          rules, chains: RULES.chains(rules, 2).map((c) => ({ d: c.d, t: c.t, fam: c.fam, rules: c.rules.map((x) => x.i) })),
+          findings: RULES.rulesFindings([where], now), stockFindings: RULES.stockFindings([Object.assign({ stock: rules.filter((x) => x.sk) }, where)], now), status });
+      }
+      const idx = (await env.EDITS.get('rulesidx', 'json')) || {};
+      const brandQ = url.searchParams.get('brand');
+      if (brandQ && !inScope(brandQ)) return json({ ok: false, error: 'out of scope' }, 403);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client) && (!brandQ || r.client === brandQ) && ROAS.cmpidBrand(r.cmpid));
+      const roster = ROAS.rosterList().filter((m) => inScope(m.client) && (!brandQ || m.client === brandQ));
+      const unread = roster.filter((m) => !idx[m.cmpid]).map((m) => ({ client: m.client, market: m.market, cmpid: m.cmpid }));
+      const rosterBrands = Object.keys(ROAS.ROAS_ROSTER).filter(inScope).map((c) => ({ client: c, markets: ROAS.ROAS_ROSTER[c].map((x) => x.market) }));
+      const base = { ok: true, tracked: rows.length, roster: roster.length, unread, rosterBrands, scope: { brand: brandQ || null }, status, at: now };
+      if (path === '/api/rules/stock') {
+        // AD SPEND KEPT OFF (Ray, 28 Sep 2026): each market's price for traffic comes off the SAME ROAS
+        // index /roas reads — one more KV get, keyed by the market's cmpid, never a second MCP call.
+        // THE SKU DENOMINATOR IS THE LIVE OUTPUT FEED, NOT FEEDHERO'S ADS-TRAFFIC COUNT (Ray, 28 Sep
+        // 2026: "spend per product per day should be base on the volume of output feeds … rather than
+        // the products impacted number in the rule — Reiss GB Shopping should have 22,657 SKUs instead
+        // of 60,235" — see the model note on RULES.adsBasis): voldobidx already carries each Shopping
+        // feed's own row count from the SAME 4x-daily xml-scan agent the Product Volume module reads —
+        // one more KV get, keyed client|market, never a second scan.
+        // A ROSTER MARKET IS JOINED TO ITS SCANNED FEEDS ON THE FEEDHERO COMPANY ID (RULES.feedKeys), never
+        // on its label: the scan indexes key a feed as wired ('Reiss|gb', 'Superdry|befr'), the roster names it
+        // 'GB' / 'BE-FR', and the first cut of this route looked up 'Reiss|GB' and found nothing.
+        // AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "bring in the availability ratio between master feed
+        // and output feeds as well (instock & outofstock)"): two more KV gets — masteravail (cmpid → the
+        // master's stock counts, written by tools/master_stock.mjs) and feedavail (client|mkt → each output
+        // feed's, written on every confirmed xml-scan) — never a read of either feed here.
+        const ridx = (await env.EDITS.get('roasidx', 'json')) || {};
+        const vdidx = (await env.EDITS.get('voldobidx', 'json')) || {};
+        const mavail = (await env.EDITS.get('masteravail', 'json')) || {};
+        const favail = (await env.EDITS.get('feedavail', 'json')) || {};
+        const fkeys = RULES.feedKeys(wiredXmlList());
+        return json(Object.assign(base, { mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, drivers: RULES.DRIVERS, sev: RULES.SEV,
+          matrix: RULES.stockMatrix(rows), cutoffs: RULES.stockCutoffs(rows), heroRuns: RULES.heroRuns(rows), findings: RULES.stockFindings(rows, now),
+          sv: { scenarios: RULES.SV_SCENARIOS, days: RULES.SV_WINDOW_DAYS },
+          markets: rows.map((r) => { const k = fkeys[r.cmpid] || {};
+            // wk = the wired market keys ('gb', 'gb-fb') the feed routes take — the held-back download reads the Google feed
+            // and the master through /api/feed/proxy + /api/catalog/master/file with them (scoped there as everywhere)
+            return Object.assign(RULES.stockView(r, ridx[r.cmpid], k.g ? vdidx[k.g] : null,
+              { master: mavail[r.cmpid], g: k.g ? favail[k.g] : null, fb: k.fb ? favail[k.fb] : null, wired: { g: !!k.g, fb: !!k.fb } }),
+              { wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }); }) }));
+      }
+      const findings = [];
+      rows.forEach((r) => (r.find || []).forEach((f) => findings.push(f)));
+      findings.sort((a, b) => b.sev - a.sev || b.n - a.n);
+      return json(Object.assign(base, { families: RULES.FAMILIES, mechanisms: RULES.MECHANISMS, channels: RULES.CHANNELS, sev: RULES.SEV,
+        estate: RULES.estate(rows), brands: RULES.brandsOf(rows), findings,
+        markets: rows.map((r) => { const o = Object.assign({}, r); delete o.find; o.sn = (r.stock || []).length; delete o.stock; return o; }) }));
+    }
+
+    // ---- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically)
+    // … build an facilitor interface to action BAU vs. SALE perido"). ONE shared store (KV stocklevers — the kvmerge
+    // envelope, a key per decision, deletions only through `_deleted`): a brand's plan (p:<Brand> — each lever's BAU and SALE
+    // value), a market's own values (m:<Brand>|<MKT>) and the sale periods (e:<Brand>|<id> — dates, markets, the switch each
+    // way: planned → briefed → done, who and when stamped HERE) and the record kept by hand (r:<Brand>|<id> — what was set
+    // in FeedHero, the day and the markets; the first recorder kept through every edit). The page reads what each market runs off /api/rules/stock;
+    // nothing here changes a FeedHero rule. Scoped per signin; writing needs the stock module. KV only.
+    //   GET /api/rules/levers  → the in-scope store + the brands with a plan
+    //   PUT /api/rules/levers  → a partial map of p: / m: / e: / r: keys (+ _deleted)
+    // A brand's levers as Ray stated them (LEVERS.LEVER_SEEDS — Superdry's, 5 Oct 2026) are written into the store once, on
+    // the first read after it ships, and are the team's to edit from then on (applyLeverSeeds never re-writes a key that existed).
+    if (path === '/api/rules/levers' && (request.method === 'GET' || request.method === 'PUT')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const brands = Object.keys(ROAS.ROAS_ROSTER), mine = brands.filter(inScope);
+      const now = Date.now();
+      const lenv = liftEnvelope(await env.EDITS.get(LEVERS.LEVERS_KEY, 'json'), now);
+      if (request.method === 'PUT') {
+        if (!(acc.owner || moduleAllowed(acc.modules, 'stock'))) return json({ ok: false, error: 'stock management is not in your access' }, 403);
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const was = envelopeToClient(lenv, {});
+        const lctx = { brands, inScope, now, prev: (k) => was[k] || null,
+          marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),
+          by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone' };
+        const r = LEVERS.sanitizeLeverPut(body, lctx);
+        if (r.errors.length) return json({ ok: false, error: r.errors.slice(0, 3).join(' · ') }, 400);
+        const keys = Object.keys(r.data).concat(r.deleted);
+        if (!keys.length) return json({ ok: false, error: 'nothing to save' }, 400);
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const incoming = Object.assign({}, r.data);
+        if (r.deleted.length) incoming._deleted = r.deleted;
+        const envx = mergeIntoEnvelope(lenv, incoming, base, now, { explicitTombstones: true });
+        await env.EDITS.put(LEVERS.LEVERS_KEY, JSON.stringify(envx));
+        logActivity(ctx, env, request, 'stock-levers', keys.length + ' change(s) · ' + keys.slice(0, 3).join(', '));
+        const store = LEVERS.leverView(envelopeToClient(envx, {}), inScope);
+        return json({ ok: true, saved: keys.length, store, brands: LEVERS.leverBrands(store, mine) }, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      if (LEVERS.applyLeverSeeds(lenv, now)) await env.EDITS.put(LEVERS.LEVERS_KEY, JSON.stringify(lenv));
+      const store = LEVERS.leverView(envelopeToClient(lenv, {}), inScope);
+      return json({ ok: true, store, brands: LEVERS.leverBrands(store, mine), at: now }, 200, { 'X-Sync-Base': String(Date.now()) });
+    }
+
+    // ---- HERO SIZES (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow cross industry
+    // "guildlines" - (this is a document per brand or they can follow examples) - sit within stock management -
+    // breakdown by their product type"). FeedHero's own hero-size rules never expose their conditions, so each brand's
+    // map lives here: ONE shared store (KV heroguide — the kvmerge envelope, a key per decision, deletions only through
+    // `_deleted`) plus each market's SIZE CENSUS (KV mastersize:<cmpid>, written by the master-stock agent) that the
+    // page measures any hero list against. Scoped per signin: a scoped signin reads and writes its own brands'
+    // guides; the examples the team saves are shared. Nothing here is committed — KV only.
+    //   GET /api/rules/hero                    → every in-scope brand's guide status + the store (examples included)
+    //   GET /api/rules/hero?brand=[&market=]   → + that brand's roster markets (census or not) and one market's census
+    //   PUT /api/rules/hero                    → a partial map of g: / m: / x: / d: keys (+ _deleted); by / at stamped here
+    // A brand's hero-size TABLE as Ray sent it (HERO.DOC_SEEDS — Superdry's, 5 Oct 2026) is written into the store once, on
+    // the first read after it ships, and is the team's to edit from then on (applySeeds never re-writes a key that existed).
+    if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const brands = Object.keys(ROAS.ROAS_ROSTER);
+      const now = Date.now();
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const hctx = { brands, inScope, canEx: !!(acc.owner || moduleAllowed(acc.modules, 'stock')), now,
+          marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),
+          by: acc.name || displayName(acc.email) || String(acc.email || '').split('@')[0] || 'someone' };
+        const r = HERO.sanitizeHeroPut(body, hctx);
+        if (r.errors.length) return json({ ok: false, error: r.errors.slice(0, 3).join(' · ') }, 400);
+        const keys = Object.keys(r.data).concat(r.deleted);
+        if (!keys.length) return json({ ok: false, error: 'nothing to save' }, 400);
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const incoming = Object.assign({}, r.data);
+        if (r.deleted.length) incoming._deleted = r.deleted;
+        const envx = mergeIntoEnvelope(liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now), incoming, base, now, { explicitTombstones: true });
+        await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(envx));
+        logActivity(ctx, env, request, 'hero-guide', keys.length + ' change(s) · ' + keys.slice(0, 3).join(', '));
+        return json({ ok: true, saved: keys.length, store: HERO.heroView(envelopeToClient(envx, {}), inScope) }, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      const henv = liftEnvelope(await env.EDITS.get(HERO.HERO_KEY, 'json'), now);
+      if (HERO.applySeeds(henv, now)) await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(henv));
+      const store = HERO.heroView(envelopeToClient(henv, {}), inScope);
+      const mavail = (await env.EDITS.get('masteravail', 'json')) || {};
+      const hasCensus = (b) => ROAS.rosterOf(b).some((m) => (mavail[m.cmpid] || {}).szv === HERO.CENSUS_V);
+      const mine = brands.filter(inScope);
+      const out = { ok: true, v: HERO.CENSUS_V, store, brands: HERO.guideBrands(store, mine).map((b) => Object.assign(b, { census: hasCensus(b.client) })), at: now };
+      // no brand asked for (the page is on "All brands") = the first brand in scope with a census, flagged auto
+      let brand = url.searchParams.get('brand');
+      if (!brand) { brand = mine.find(hasCensus) || ''; out.auto = !!brand; }
+      if (brand) {
+        if (brands.indexOf(brand) < 0) return json({ ok: false, error: 'not a roster brand' }, 404);
+        if (!inScope(brand)) return json({ ok: false, error: 'out of scope' }, 403);
+        const mk = ROAS.rosterOf(brand).map((m) => {
+          const a = mavail[m.cmpid] || {};
+          return { market: m.market, cmpid: m.cmpid, census: a.szv === HERO.CENSUS_V ? Object.assign({ t: a.t || null }, a.sz || {}) : null };
+        });
+        // the market asked for (even one with no census yet — the page says so), else the first with a census
+        const want = url.searchParams.get('market');
+        const pick = mk.find((m) => m.market === want) || mk.find((m) => m.census) || null;
+        const census = pick && pick.census ? await env.EDITS.get('mastersize:' + pick.cmpid, 'json') : null;
+        Object.assign(out, { brand, markets: mk, market: pick ? pick.market : null, cmpid: pick ? pick.cmpid : null, census });
+      }
+      return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
+    }
+
+    // ---- AI VISIBILITY (Ray, 29 Sep 2026: "lets build 2 AI Surface visibility tracker real-time") ----
+    // One shopper question → one AI answer engine with its live web search on (src/aivis.js), streamed back as
+    // NDJSON while it happens; the page reads the answer (docs/aivis_engine.js) and saves the run. KV only —
+    // aiviscfg:<client> (questions, competitors, domains) and aivisrun:<client>:<id> (every answer, with the
+    // run's headline in the key's METADATA so the history lists without reading a value). Scoped per signin;
+    // asking and saving need the `aivis` grant, because asking spends money on the connected surfaces.
+    //   GET  /api/aivis                    → surfaces (which secrets are set — names, never values), markets, every brand + its last run
+    //   GET  /api/aivis?client=[&market=]  → the brand's setup + its run history + the latest run in full
+    //   GET  /api/aivis?client=&run=       → one stored run in full
+    //   PUT  /api/aivis?client=            → save the setup
+    //   PUT  /api/aivis/run?client=        → save a run (the page saves as answers land, then once more when done)
+    //   DELETE /api/aivis/run?client=&run= → drop a run (the person who ran it, or the owner)
+    //   POST /api/aivis/ask                → ask ONE question on ONE surface — streamed NDJSON, heartbeat every 10s
+    if (path === '/api/aivis' || path.startsWith('/api/aivis/')) {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const granted = !!(acc.owner || moduleAllowed(acc.modules, 'aivis'));
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (client && (client.indexOf(':') >= 0 || client.indexOf('|') >= 0)) return json({ ok: false, error: 'bad client' }, 400);
+      if (client && !inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
+      const RUN_ID = /^r\d{13}[a-z0-9]{0,6}$/;
+      const listAll = async (prefix, max) => {
+        const keys = []; let cursor;
+        for (let i = 0; i < 5; i++) {
+          const l = await env.EDITS.list({ prefix, cursor, limit: 1000 });
+          keys.push(...l.keys);
+          if (l.list_complete || !l.cursor || keys.length >= max) break;
+          cursor = l.cursor;
+        }
+        return keys;
+      };
+      const runOf = (k) => {
+        const m = k.metadata || {}, parts = k.name.split(':');
+        return { id: parts[parts.length - 1], client: parts[1], at: m.at || 0, by: m.by || '', mkt: m.mkt || '', sv: m.sv || [], n: m.n || 0, final: !!m.f, sum: m.sum || null };
+      };
+      if (path === '/api/aivis' && request.method === 'GET' && !client) {
+        const brands = {};
+        (await feedRoster(env)).filter((r) => AIVIS.aivisMarket(r.mkt) && inScope(r.client)).forEach((r) => {
+          (brands[r.client] = brands[r.client] || { client: r.client, markets: [], runs: 0, last: null }).markets.push(r.mkt);
+        });
+        (await listAll('aivisrun:', 5000)).map(runOf).forEach((r) => {
+          const b = brands[r.client]; if (!b) return;
+          b.runs++; if (!b.last || r.at > b.last.at) b.last = r;
+        });
+        return json({ ok: true, surfaces: AIVIS.surfaceStatus(env), markets: AIVIS.MARKETS, brands: Object.keys(brands).sort().map((k) => brands[k]), granted, owner: !!acc.owner });
+      }
+      if (path === '/api/aivis' && request.method === 'GET') {
+        const runId = url.searchParams.get('run') || '';
+        if (runId) {
+          if (!RUN_ID.test(runId)) return json({ ok: false, error: 'bad run id' }, 400);
+          const r = await env.EDITS.get('aivisrun:' + client + ':' + runId, 'json');
+          return r ? json({ ok: true, run: r }) : json({ ok: false, error: 'no such run' }, 404);
+        }
+        const cfg = await env.EDITS.get('aiviscfg:' + client, 'json');
+        const runs = (await listAll('aivisrun:' + client + ':', 2000)).map(runOf).sort((a, b) => b.at - a.at);
+        const want = String(url.searchParams.get('market') || '').toLowerCase();
+        const pick = runs.find((r) => !want || r.mkt === want);
+        const last = pick ? await env.EDITS.get('aivisrun:' + client + ':' + pick.id, 'json') : null;
+        return json({ ok: true, client, cfg: cfg || null, runs: runs.slice(0, 150), last, surfaces: AIVIS.surfaceStatus(env), granted });
+      }
+      if (!granted && request.method !== 'GET') return json({ ok: false, error: 'AI visibility is not granted to this signin' }, 403);
+      if (path === '/api/aivis' && request.method === 'PUT') {
+        if (!client) return json({ ok: false, error: 'client required' }, 400);
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const cfg = Object.assign(AIVIS.sanitizeCfg(b && b.cfg), { at: Date.now(), by: who(request) });
+        await env.EDITS.put('aiviscfg:' + client, JSON.stringify(cfg));
+        logActivity(ctx, env, request, 'aivis-setup', client);
+        return json({ ok: true, cfg });
+      }
+      if (path === '/api/aivis/run' && request.method === 'PUT') {
+        if (!client) return json({ ok: false, error: 'client required' }, 400);
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const run = AIVIS.sanitizeRun(b && b.run);
+        if (!run) return json({ ok: false, error: 'bad run' }, 400);
+        run.client = client; run.by = who(request);
+        let meta = { at: run.at, by: run.by.slice(0, 60), mkt: run.mkt, sv: run.sv, n: run.cells.length, f: run.final ? 1 : 0, sum: AIVIS.sanitizeSum(b.sum) };
+        if (JSON.stringify(meta).length > 1000) meta = Object.assign(meta, { sum: { all: meta.sum.all, by: {} } });   // KV metadata is capped at 1 KB
+        await env.EDITS.put('aivisrun:' + client + ':' + run.id, JSON.stringify(run), { metadata: meta, expirationTtl: 60 * 60 * 24 * 400 });
+        if (run.final) logActivity(ctx, env, request, 'aivis-run', client + ' ' + run.mkt.toUpperCase() + ' · ' + run.cells.length + ' answers');
+        return json({ ok: true, id: run.id });
+      }
+      if (path === '/api/aivis/run' && request.method === 'DELETE') {
+        const id = url.searchParams.get('run') || '';
+        if (!client || !RUN_ID.test(id)) return json({ ok: false, error: 'client and run required' }, 400);
+        const key = 'aivisrun:' + client + ':' + id;
+        const k = ((await env.EDITS.list({ prefix: key, limit: 5 })).keys || []).find((x) => x.name === key);
+        if (!k) return json({ ok: false, error: 'no such run' }, 404);
+        if (!acc.owner && (k.metadata || {}).by !== who(request)) return json({ ok: false, error: 'only the person who ran it, or the owner, can remove a run' }, 403);
+        await env.EDITS.delete(key);
+        logActivity(ctx, env, request, 'aivis-run-delete', client + ' ' + id);
+        return json({ ok: true });
+      }
+      if (path === '/api/aivis/ask' && request.method === 'POST') {
+        let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const c2 = String((b && b.client) || '').slice(0, 60), mkt = String((b && b.market) || '').toLowerCase();
+        if (!c2 || c2.indexOf(':') >= 0 || !inScope(c2)) return json({ ok: false, error: 'out of scope' }, 403);
+        if (!AIVIS.aivisMarket(mkt)) return json({ ok: false, error: 'not a Google Shopping market this tracker asks about' }, 400);
+        const s = String((b && b.s) || ''), q = String((b && b.q) || '').slice(0, 400);
+        const { readable, writable } = new TransformStream();
+        const w = writable.getWriter(), enc = new TextEncoder();
+        let open = true;
+        const send = (o) => (open ? w.write(enc.encode(JSON.stringify(o) + '\n')).catch(() => { open = false; }) : Promise.resolve());
+        const work = (async () => {
+          // a heartbeat keeps the connection alive while a surface that answers whole (ChatGPT, SerpApi) thinks
+          const hb = setInterval(() => { send({ t: 'ping' }); }, 10000);
+          try {
+            await send({ t: 'start', s, model: AIVIS.modelOf(env, s) });
+            const r = await AIVIS.ask(fetch, env, { s, q, mkt, now: Date.now() }, (ev) => { send(ev); });
+            await send({ t: 'done', r });
+          } catch (e) {
+            await send({ t: 'done', r: { ok: false, err: String((e && e.message) || e).slice(0, 200) } });
+          } finally {
+            clearInterval(hb);
+            open = false;
+            try { await w.close(); } catch (e) {}
+          }
+        })();
+        if (ctx && ctx.waitUntil) ctx.waitUntil(work);
+        return new Response(readable, { headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store', ...CORS } });
+      }
+      return json({ ok: false, error: 'not found' }, 404);
     }
 
     if (path === '/api/gmail/intake' && request.method === 'GET') {
@@ -2441,8 +3412,28 @@ export default {
     if (path === '/api/plan/live' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ connected: false, error: 'no_sa', brands: {} });
       let body; try { body = await request.json(); } catch (e) { return json({ connected: false, error: 'bad_json' }, 400); }
-      const sheets = body.sheets || {}, tab = body.tab || 'Project Plan', force = !!body.force;
-      try { await env.EDITS.put('plansheets', JSON.stringify(sheets)); } catch (e) {}
+      const asked = body.sheets || {}, tab = body.tab || 'Project Plan', force = !!body.force;
+      // A brand the caller NAMES but cannot supply an id for is resolved from the wired map: the
+      // dossier's pasted link is an override, never the only way in. Resolved brands are SCOPED
+      // (a client-scoped signin naming "Reiss" must not be handed Reiss's plan); an id the caller
+      // supplied itself is passed through exactly as before. No brands named at all = the roster.
+      const acc = await accessOf(env, request);
+      const names = Object.keys(asked).length ? Object.keys(asked) : Object.keys(PLAN_SHEETS);
+      const sheets = {}, wired = {};
+      names.forEach((brand) => {
+        if (asked[brand]) { sheets[brand] = asked[brand]; return; }
+        const id = PLAN_SHEETS[brand];
+        if (id && clientMatch(acc.clients, brand)) { sheets[brand] = id; wired[brand] = 1; }
+      });
+      // KV keeps the OVERRIDES, merged in. The roster lives in git, and one screen only ever
+      // shows part of the house (a scoped signin, or a dossier still being filled in), so a save
+      // from it can add an override and can never drop somebody else's.
+      try {
+        const prev = (await env.EDITS.get('plansheets', 'json')) || {};
+        const next = Object.assign({}, prev);
+        Object.keys(asked).forEach((b) => { if (asked[b]) next[b] = asked[b]; });
+        if (JSON.stringify(next) !== JSON.stringify(prev)) await env.EDITS.put('plansheets', JSON.stringify(next));
+      } catch (e) {}
       const out = {};
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
@@ -2460,7 +3451,7 @@ export default {
           }
           out[brand] = cached; seen[id] = cached;
         }
-        return json({ connected: true, brands: out });
+        return json({ connected: true, brands: out, wired });
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }
     }
 
@@ -2719,7 +3710,7 @@ export default {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
-          + '\n' + HOURSW + '\n' + TOUCHW
+          + '\n' + NAVROWW + '\n' + HOURSW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
@@ -2744,12 +3735,9 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
-  },
+}
 
-  // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
-  // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
-  // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
-  async scheduled(event, env, ctx) {
+async function scheduledRun(event, env, ctx) {
     // Task Manager sync (Ray, 16 Sep 2026: "that sync must be automatic") — :15 and :45, its
     // own firing so its MCP + KV subrequests never compete with the guard sweeps' budget.
     if (event && event.cron === '15,45 * * * *') {
@@ -2757,6 +3745,20 @@ export default {
       // and the /tasks module's own book — its own rotation (even coverage of twelve months,
       // stalest market first) on the same firing, so the estate turns over ~twice a day.
       await tmBookPull(env);
+      return;
+    }
+    // ROAS sync — its OWN firing (a different MCP server, FeedHero's own) so it never competes
+    // with the TM pull's subrequest budget. 6 clients off the 57-market roster, stalest first —
+    // the whole roster turns over roughly every 5 hours, well inside the ~daily refresh the
+    // source data itself carries.
+    // RULES take the :40 half of this firing while any roster market's rules are older than a day
+    // (RULES_STALE_MS) — same MCP, same token, its own budget; once every market is fresh the :40
+    // half goes back to ROAS, and a failed rules firing backs off 3 hours (rulesDue) so an error
+    // can never starve ROAS of its slot.
+    if (event && event.cron === '10,40 * * * *') {
+      const mi = new Date((event && event.scheduledTime) || Date.now()).getUTCMinutes();
+      if (mi >= 30 && RULES.rulesDue(await env.EDITS.get('rulesstatus', 'json'), ROAS.rosterList(), Date.now())) { await rulesPull(env); return; }
+      await roasPull(env);
       return;
     }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
@@ -2788,7 +3790,7 @@ export default {
     if (!env.GOOGLE_SA_JSON) return;
     const warmed = {};   // sheet id → freshly parsed tasks (feeds the 12:00 reminder for free)
     try {
-      const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+      const sheets = await planSheetMap(env);
       const ids = Array.from(new Set(Object.keys(sheets).map(b => sheets[b]).filter(Boolean)));
       if (!ids.length) return;
       const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
@@ -2808,8 +3810,74 @@ export default {
       const hour = new Date(event && event.scheduledTime ? event.scheduledTime : Date.now()).getUTCHours();
       if (hour === 12) await queueDueReminders(env, { tasksById: warmed });
     } catch (e) {}
-  },
-};
+}
+
+/* SECURITY HEADERS — one exit for every response (security checklist item 18).
+ *
+ * What each one buys here, and what it deliberately does not:
+ *   frame-ancestors 'self' / X-Frame-Options SAMEORIGIN — the FCC may not be framed by another
+ *     site (clickjacking). NOT 'none': the Feed Chat bubble iframes /feedchat?embed=1 on every
+ *     app page, so same-origin framing has to stay.
+ *   object-src 'none' + base-uri 'self' — kill <object>/<embed> and <base>-tag hijacking, both
+ *     classic ways to turn one injected tag into full page control.
+ *   script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: + cdnjs — the pages are built from inline
+ *     <script> blocks and four modules (Golden Record, Label Guard, PT Guard, the VI toggle)
+ *     fetch their engine same-origin and run it through new Function(), so BOTH keywords are
+ *     required today. AND blob: (Ray, 24 Sep 2026, the day this policy shipped: "Failed to fetch
+ *     dynamically imported module: blob:…" under Content quality on /golden, stuck on "Loading
+ *     the rule library…"): /golden, /labels and /ptypes load labelguard.js — an ES MODULE, so
+ *     new Function() cannot run it — by fetching /labels/engine.js and import()ing it from a
+ *     blob: URL. Without blob: here that import is refused, which killed the content-quality
+ *     rule library, the Analyse button, Label Guard's and PT Guard's manual live rescan and the
+ *     brand ⬇ HTML export all at once. It grants nothing new: a blob: URL can only be minted by
+ *     script ALREADY running on the page, which 'unsafe-inline' + 'unsafe-eval' already allow;
+ *     it names no network host. tools/check_csp.js now serves the engine routes and runs each
+ *     page's own loader under this policy, so the next directive change fails there first. Be honest about the consequence: with 'unsafe-inline' a CSP does not stop
+ *     an injected event handler — escaping does, which is why item 15 was the real fix. What this
+ *     DOES stop is a script pulled from a host we never named, which is how an injected tag
+ *     exfiltrates. Dropping the two keywords means serving the engines as real <script src> and
+ *     moving inline blocks out; worth doing, not worth rushing.
+ *   img-src https: data: blob: — the Overlays module renders live overlay images straight off
+ *     client CDNs we cannot enumerate, so this stays open by necessity.
+ *   connect-src 'self' — verified: no page fetches a cross-origin URL; feeds are streamed through
+ *     /api/feed/proxy, which is same-origin and host-allowlisted on the worker side.
+ *   Referrer-Policy — client names and market codes ride in query strings (?client=&market=), so
+ *     same-origin keeps them out of the Referer header sent to any third party.
+ *
+ * Client decks are served under /deck/ to people outside the company and get the same treatment;
+ * /api/ answers get the non-CSP headers (a JSON body has no document to police).
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self'",
+  "frame-src 'self'",
+  "frame-ancestors 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
+function secHeaders(res, path) {
+  try {
+    const h = new Headers(res.headers);
+    h.set('X-Content-Type-Options', 'nosniff');
+    h.set('X-Frame-Options', 'SAMEORIGIN');
+    h.set('Referrer-Policy', 'same-origin');
+    h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    // Cloudflare terminates TLS in front of the worker; HSTS tells the browser never to try
+    // plain HTTP again. No preload flag — that is a one-way submission for the whole domain.
+    h.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    const type = String(h.get('Content-Type') || '');
+    if (type.includes('text/html')) h.set('Content-Security-Policy', CSP);
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+  } catch (e) {
+    return res;   // a header pass can never be the reason a page fails to serve
+  }
+}
 
 function json(data, status = 200, extraHeaders) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });
@@ -2892,9 +3960,18 @@ async function tmStore(env, brands, opts) {
     const markets = Array.isArray(c.markets) ? c.markets.slice(0, 60).map((m) => ({ market: String(m.market || '').slice(0, 24), allowance: nn(m.allowance), used: nn(m.used), balance: nn(m.balance), health: String(m.health || '').slice(0, 16) || null })) : [];
     const rec = { client, group: String(c.group || '').slice(0, 60), am: String(c.am || '').slice(0, 40), allowance: nn(c.allowance), used: nn(c.used), balance: nn(c.balance), current: nn(c.current), carried: nn(c.carried), health: String(c.health || '').slice(0, 16) || null, marketCount: markets.length, markets, updated: Date.now(), src: String(opts.source || 'push') };
     const sig = TMM.sigOf(rec, ['updated', 'src']);
-    if (opts.onlyChanged && idx[client] && idx[client].sig === sig) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
+    // `mk` in the guard is deliberate: an entry stored before the per-market rows shipped has the
+    // same sig forever, so without it a brand whose figures never move would never gain its
+    // breakdown. One rewrite each, then the quiet-firing shortcut holds again.
+    if (opts.onlyChanged && idx[client] && idx[client].sig === sig && Array.isArray(idx[client].mk)) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
     try { await env.EDITS.put('tm:' + client, JSON.stringify(rec)); } catch (e) { results.push({ client, error: 'kv put failed' }); continue; }
-    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, am: rec.am, updated: rec.updated, sig, src: rec.src };
+    /* THE MARKETS RIDE THE INDEX (Ray, 28 Sep 2026: "maybe show calculation when hover that
+       number on brand dossier"). A brand's used / block / balance are sums across its markets,
+       so the only way a reader can check one is to see the rows it was added from — and
+       /api/hours serves every brand from this ONE key, so fetching tm:<client> per brand to
+       answer a hover would turn one KV get into forty. The whole estate is ~70 markets at a
+       few dozen bytes each; it belongs here. */
+    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, mk: rec.markets, am: rec.am, updated: rec.updated, sig, src: rec.src };
     changed++;
     results.push({ client, ok: true, allowance: rec.allowance, used: rec.used });
   }
@@ -2968,7 +4045,11 @@ async function tmBookPull(env, opts) {
   const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, accounts: [], roster: [], queues: [], rot: {}, qrot: {} };
   idx.clients = idx.clients || {}; idx.rot = idx.rot || {}; idx.qrot = idx.qrot || {};
   const mcp = opts.mcp || tmMcp(env, fetchFn);
-  const win = TB.bookWindow(now, TB.BOOK_MONTHS);
+  // ALL TIME, not twelve months (Ray, 1 Oct 2026). The MCP ignores from_date and answers
+  // newest-first up to `limit`, so asking for everything costs the same ONE call per market — the
+  // window the page shows is applied when it is served, in assembleBook.
+  const win = TB.bookWindow(now, 0);
+  win.limit = TB.BOOK_PULL_LIMIT;
   try {
     if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
     let rows = opts.clientRows;
@@ -2987,8 +4068,9 @@ async function tmBookPull(env, opts) {
 
     const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
     for (const m of plan) {
-      // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
-      // the tool takes it, and the window is applied in packMarket regardless.
+      // `from_date` is NOT applied by the server (verified 16 Sep 2026, re-verified 1 Oct 2026:
+      // a list asked from 2026-09-25 came back with 110 of its 120 rows older than that) — it is
+      // passed because the tool takes it, and the depth that matters is `limit`.
       const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
       const trows = TMM.rowsOf(payload);
       const rec = TB.packMarket(trows, { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
@@ -3032,6 +4114,404 @@ async function tmBookPull(env, opts) {
     const msg = String((e && e.message) || e).slice(0, 160);
     const code = e && e.code;
     return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
+// ---- ROAS: the worker pulls the FeedHero_reports MCP itself (same shape as tmMcp/tmPull, a
+// DIFFERENT server — FeedHero's own Google Ads reporting, not the reports-database Task Manager
+// MCP). ROAS_MCP_TOKEN secret — `Authorization: Bearer` unless ROAS_MCP_AUTH names the header
+// the server reads; ROAS_MCP_URL overrides the endpoint (the default in src/roas.js is a
+// best guess pending confirmation against the live server). roasStore = the one writer of
+// roas:<cmpid> + roasidx; roasPull = one firing: a rotation of ROAS_PULLS clients off
+// ROAS_ROSTER (src/roas.js — FeedSpark's own roster only, stalest cmpid first), each read via
+// roas_dashboard(company=<cmpid>) and split into its Total row + top categories by spend.
+function roasMcp(env, fetchFn) {
+  const url = String(env.ROAS_MCP_URL || ROAS.ROAS_MCP_URL);
+  const auth = TMM.authHeader(env.ROAS_MCP_TOKEN, env.ROAS_MCP_AUTH);
+  let sid = null, n = 0;
+  const post = async (body) => {
+    const h = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
+    if (auth) h[auth.name] = auth.value;
+    if (sid) h['Mcp-Session-Id'] = sid;
+    const init = { method: 'POST', headers: h, body: JSON.stringify(body) };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(25000);
+    const r = await fetchFn(url, init);
+    const s = r.headers.get('Mcp-Session-Id') || r.headers.get('mcp-session-id'); if (s) sid = s;
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) { const e = new Error('unauthorized (HTTP ' + r.status + ')'); e.code = 'unauthorized'; throw e; }
+    if (r.status === 202 || !text) return null;
+    if (!r.ok) { const e = new Error('HTTP ' + r.status + (/json/i.test(r.headers.get('content-type') || '') ? '' : ' (non-JSON — Access login page? wrong URL?)')); e.code = r.status >= 500 ? 'unreachable' : 'http'; throw e; }
+    return TMM.parseRpc(text, r.headers.get('content-type') || '');
+  };
+  return {
+    async init() {
+      const m = await post(TMM.rpc(++n, 'initialize', { protocolVersion: ROAS.ROAS_PROTOCOL, capabilities: {}, clientInfo: { name: 'feedspark-command-center', version: '1' } }));
+      if (m && m.error) { const e = new Error('initialize: ' + String(m.error.message || m.error.code)); e.code = 'init'; throw e; }
+      try { await post({ jsonrpc: '2.0', method: 'notifications/initialized' }); } catch (e) {}
+      return m;
+    },
+    async call(name, args) { return TMM.toolPayload(await post(TMM.rpc(++n, 'tools/call', { name, arguments: args || {} }))); },
+    auth: auth ? auth.name : null,
+    host: url.replace(/^https?:\/\//, '').split('/')[0],
+  };
+}
+
+// ---- THE CATALOGUE's master: FeedHero's master_feed tool, through roasMcp (same server + token).
+// WHICH company is never taken from a query: it is READ OFF the wired output feed's own URL —
+// every FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file>, Meta (-fb) feeds under
+// the same cmpid as their Google market — so the only masters this can reach are the ones behind
+// feeds FeedSpark actually runs, and a sheet-backed feed honestly has none.
+// ---- the Catalogue's pixel scan (see /api/catalog/img) -------------------------------------------------------
+// FeedSpark's own image hosts — an overlay is the picture actually sent, so it is read where it is served
+const CAT_IMG_FS_HOSTS = ['dashboard.feedspark.com', 'lia.feedspark.com', 'feed5.com'];
+const CAT_IMG_MAX_BYTES = 20 * 1024 * 1024;
+const CAT_IMG_KEEP = 6000;   // readings kept per feed (one per image URL), newest first
+function catImgKey(client, mkt) { return 'catimg:' + client + ':' + mkt; }
+function catImgHostOf(u) { const m = /^https?:\/\/([^/?#:]+)/i.exec(String(u || '').trim()); return m ? m[1].toLowerCase().replace(/^www\./, '') : ''; }
+// every image host the feed head uses — image_link AND additional_image_link, XML or CSV, plus the source host
+// an overlay URL carries in its img_url params; a few dozen products are enough to learn a CDN's name
+function catImgHostsFromHead(text) {
+  text = String(text || '');
+  const out = {}, dec = (v) => String(v || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&amp;/g, '&');
+  const add = (u) => { u = dec(u).trim(); const h = catImgHostOf(u); if (h) out[h] = (out[h] || 0) + 1;
+    const m = u.match(/img_url[^=]*=([^&]+)/gi); if (m) m.forEach((p) => { try { const v = decodeURIComponent(p.split('=').slice(1).join('=')); const h2 = catImgHostOf(v); if (h2) out[h2] = (out[h2] || 0) + 1; } catch (e) {} }); };
+  if (/<item[\s>]|<entry[\s>]/.test(text)) {
+    const re = /<(?:g:)?(?:image_link|additional_image_link)>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/gi; let m;
+    while ((m = re.exec(text))) add(m[1]);
+  } else {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim()).slice(0, 60);
+    if (lines.length > 1) {
+      const head = pdpSplitCsv(lines[0]).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase());
+      const cols = head.map((k, i) => (/^(image_link|additional_image_link)/.test(k) ? i : -1)).filter((i) => i >= 0);
+      for (let i = 1; i < lines.length; i++) { const c = pdpSplitCsv(lines[i]); cols.forEach((j) => String(c[j] || '').split(/[,|]\s*(?=https?:)/).forEach(add)); }
+    }
+  }
+  return Object.keys(out).sort((a, b) => out[b] - out[a]).slice(0, 12);
+}
+function pdpSplitCsv(line) { const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) { const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; }
+  out.push(cur); return out; }
+async function catImgHosts(env, client, mkt, src, fresh) {
+  const ck = 'imghost:' + client + ':' + mkt;
+  // a cached list is used as it is; a FRESH read is allowed at most once an hour, so a host the feed truly does
+  // not use cannot make every image of a scan re-read the feed head
+  const c = await env.EDITS.get(ck, 'json');
+  if (c && Array.isArray(c.hosts) && c.hosts.length && (!fresh || Date.now() - (c.t || 0) < 3600000)) return c.hosts;
+  let hosts = [];
+  try {
+    if (src.xml) { const r = await fetch(src.xml); if (r.ok && r.body) hosts = catImgHostsFromHead(await readHead(r, 768 * 1024)); }
+    else if (src.id) {
+      const r = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + (src.gid || '0'));
+      if (r.ok && r.body) hosts = catImgHostsFromHead(await readHead(r, 256 * 1024));
+    }
+  } catch (e) { hosts = []; }
+  if (hosts.length) { try { await env.EDITS.put(ck, JSON.stringify({ hosts, t: Date.now() }), { expirationTtl: 86400 }); } catch (e) {} }
+  return hosts;
+}
+function catImgAllowed(u, hosts) {
+  const h = catImgHostOf(u); if (!h) return false;
+  return CAT_IMG_FS_HOSTS.some((f) => h === f || h.endsWith('.' + f)) || (hosts || []).indexOf(h) >= 0;
+}
+async function catImg(env, url, src, client, mkt) {
+  const target = String(url.searchParams.get('url') || '').trim().slice(0, 2000);
+  if (!/^https?:\/\//i.test(target)) return json({ ok: false, error: 'url required' }, 400);
+  let hosts = await catImgHosts(env, client, mkt, src, false);
+  // a host the cached head never showed: read the head again once before refusing (a feed can move CDN)
+  if (!catImgAllowed(target, hosts)) hosts = await catImgHosts(env, client, mkt, src, true);
+  if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed — this feed\'s images are served from ' + (hosts.slice(0, 3).join(', ') || 'no host the feed head names') }, 403);
+  const ctl = new AbortController(), timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 12000), t0 = Date.now();
+  let up;
+  try { up = await fetch(target, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': PDP_SCAN_UA, accept: 'image/avif,image/webp,image/*;q=0.9,*/*;q=0.5' } }); }
+  catch (e) { clearTimeout(timer); return json({ ok: false, error: /abort/i.test(String(e && e.name)) ? 'timed out after 12s' : 'fetch failed' }, 502); }
+  clearTimeout(timer);
+  if (!up.ok || !up.body) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, http: up.status, error: 'HTTP ' + up.status }, 502); }
+  const ct = String(up.headers.get('content-type') || '').toLowerCase();
+  if (!/^image\//.test(ct) || /svg/.test(ct)) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, error: 'not an image (' + (ct.split(';')[0] || 'no type') + ')' }, 502); }
+  const len = +(up.headers.get('content-length') || 0);
+  if (len > CAT_IMG_MAX_BYTES) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, error: 'image over ' + Math.round(CAT_IMG_MAX_BYTES / 1048576) + ' MB' }, 413); }
+  // an image on OUR origin: its own image type, nosniff, a short private cache so a re-scan is quick
+  const h = { 'content-type': ct.split(';')[0], 'x-content-type-options': 'nosniff', 'cache-control': 'private, max-age=86400', 'x-img-ms': String(Date.now() - t0) };
+  if (len && !up.headers.get('content-encoding')) h['x-img-bytes'] = String(len);
+  return new Response(up.body, { headers: h });
+}
+// a posted scan, kept whole or refused: { r: { <image url>: packed reading }, n?, of? } — packed = FeedPixels.pack
+function catImgClean(b) {
+  if (!b || typeof b !== 'object' || !b.r || typeof b.r !== 'object') return null;
+  const out = {};
+  const s = (v, n) => String(v == null ? '' : v).slice(0, n), num = (v, hi) => { const x = +v; return isFinite(x) ? Math.max(0, Math.min(hi, Math.round(x))) : 0; };
+  for (const u of Object.keys(b.r).slice(0, 2000)) {
+    const a = b.r[u];
+    if (!/^https?:\/\//i.test(u) || u.length > 2000 || !Array.isArray(a)) continue;
+    if (a[4] === 'err') { out[u] = [0, 0, 0, '', 'err', s(a[5], 80)]; continue; }
+    const bg = ['white', 'light', 'colour', 'scene', 'transparent'].indexOf(a[4]) >= 0 ? a[4] : '';
+    if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;   // FeedPixels' 256-bit fingerprint
+    out[u] = [num(a[0], 100000), num(a[1], 100000), num(a[2], 1e9), s(a[3], 8), bg, /^#[0-9a-f]{6}$/.test(String(a[5] || '')) ? a[5] : '',
+      a[6] < 0 ? -1 : num(a[6], 100), a[7] < 0 ? -1 : num(a[7], 4), num(a[8], 1e7), String(a[9]), a[10] == null || a[10] < 0 ? -1 : num(a[10], 100),
+      /^#[0-9a-f]{6}$/.test(String(a[11] || '')) ? a[11] : ''];
+  }
+  return Object.keys(out).length ? { r: out } : null;
+}
+function catImgMerge(prev, clean) {
+  const t = Date.now(), r = {}, at = {};
+  const pr = (prev && prev.r) || {}, pa = (prev && prev.at) || {};
+  Object.keys(clean.r).forEach((u) => { r[u] = clean.r[u]; at[u] = t; });
+  Object.keys(pr).forEach((u) => { if (!(u in r)) { r[u] = pr[u]; at[u] = pa[u] || (prev && prev.t) || t; } });
+  const keys = Object.keys(r).sort((a, b) => at[b] - at[a]).slice(0, CAT_IMG_KEEP), R = {}, A = {};
+  keys.forEach((u) => { R[u] = r[u]; A[u] = at[u]; });
+  return { v: 1, t, r: R, at: A };
+}
+function catCmpid(src) {
+  const m = src && src.xml ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
+  return m ? m[1].toLowerCase() : null;
+}
+// every wired FeedHero output as {client, mkt, url} — the list RULES.feedKeys joins a roster market to its
+// scanned feeds by. DEFAULT_FEEDS only (the feeds the xml-scan agent reads), so the stock route costs no read.
+function wiredXmlList() {
+  const out = [];
+  Object.keys(DEFAULT_FEEDS).forEach((c) => Object.keys(DEFAULT_FEEDS[c] || {}).forEach((m) => {
+    const s = DEFAULT_FEEDS[c][m];
+    if (s && s.xml) out.push({ client: c, mkt: m, url: s.xml });
+  }));
+  return out;
+}
+// a FeedHero IMPORT file of THIS company and nothing else: https, *.feedhero.net, /import_feeds/<cmpid>/
+function catFileOk(u, cmpid) {
+  try {
+    const x = new URL(String(u || ''));
+    return x.protocol === 'https:' && /(^|\.)feedhero\.net$/i.test(x.hostname) && x.pathname.indexOf('/import_feeds/' + cmpid + '/') === 0;
+  } catch (e) { return false; }
+}
+// the MCP's {c0: heading, c1: …} → its keys in column order (c10 after c9, not after c1)
+function catColKeys(cols) {
+  return Object.keys(cols || {}).filter((k) => /^c\d+$/.test(k)).sort((a, b) => +a.slice(1) - +b.slice(1));
+}
+// ONE MCP call (page_size 1) → where the latest import's source file lives + its headings, row
+// count and import time; KV 20 minutes (FeedHero re-imports on its own schedule and every file
+// name carries its timestamp, so a stale read is caught by the file route's 404 retry).
+async function catMasterInfo(env, cmpid, fresh) {
+  const key = 'catmaster:' + cmpid;
+  if (!fresh) {
+    const c = await env.EDITS.get(key, 'json');
+    if (c && c.at && Date.now() - c.at < 20 * 60000) return Object.assign({ cached: true }, c);
+  }
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' };
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const payload = await mcp.call('master_feed', { company: cmpid, page_size: 1 });
+  const info = (payload && payload.info) || {};
+  // the first read of a big feed makes FeedHero download it — "still being prepared, call again"
+  if (!info.source_url && !info.master_feed_url) {
+    return { state: 'preparing', note: String((payload && (payload.message || payload.note || payload.status)) || 'FeedHero is still reading this master feed').slice(0, 160) };
+  }
+  const file = (u) => String(u || '').split('?')[0].split('/').pop();
+  const keys = catColKeys(payload.columns);
+  const rec = { state: 'ok', at: Date.now(), cmpid, name: String(info.client_name || ''),
+    rows: +info.total_rows || +payload.total_rows || null, lastImport: String(info.last_import || ''),
+    importStatus: String(info.import_status || ''), readFrom: String(info.read_from || ''),
+    file: file(info.source_url), wbFile: file(info.master_feed_url),
+    headers: keys.map((k) => String(payload.columns[k])), web: String(payload.web_url || ''),
+    src: catFileOk(info.source_url, cmpid) ? String(info.source_url) : '',
+    wb: catFileOk(info.master_feed_url, cmpid) ? String(info.master_feed_url) : '' };
+  try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 86400 }); } catch (e) {}
+  return rec;
+}
+
+// ---- THE CATALOGUE's Google Ads, per PRODUCT (Ray, 29 Sep 2026: "catalog module - bring in adwords data 7days
+// in these columns option too", then "isn't it in Ads Traffic from feedhero reports? (you can then match by
+// product ID)"): FeedHero's `ads_traffic` tool — one row per advertised product as Google Ads returns it, keyed
+// on the client's OWN Product ID (pid; blank when no product matches, when the Ads item id stands in, lower-cased
+// by Google). Only products with an impression in the range are listed (sorted by impressions the smallest is
+// 1), so a feed product missing from a WHOLE read had none. A big account is 100+ pages of 200 (Schuh UK 22,283
+// rows, Superdry GB 26,673, Reiss GB 24,541 on 29 Sep 2026), so it is read a CHUNK a call and the record keeps
+// where it got to — the page calls again until done. FeedHero keeps a report an hour and then re-downloads it,
+// so a read that meets a different window or row count than the one it started from STARTS AGAIN rather than
+// splicing two reports. Sorted by the Ads item id so the page order holds across calls. Nothing in git: KV only.
+const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS_CONC = 4;
+const CAT_ADS_TTL = 12 * 3600000, CAT_ADS_PART_TTL = 50 * 60000, CAT_ADS_MISSING_TTL = 24 * 3600000;
+// one report row -> [key, [impr, clicks, cost, conversions, conversion value], currency] — Google Ads' own
+// figures; every rate (CTR, CPC, ROAS, CR, cost / conv.) is worked out from these sums on the page, never read
+function catAdsRow(r) {
+  if (!r) return null;
+  const n = (v) => { const x = parseFloat(String(v == null ? '' : v).replace(/[,%\s£€$]/g, '')); return isFinite(x) ? x : 0; };
+  const k = String(r.pid || '').trim() || String(r.c0 || '').trim();
+  if (!k) return null;
+  return [k.slice(0, 120), [Math.round(n(r.c1)), Math.round(n(r.c2)), Math.round(n(r.c3) * 100) / 100, Math.round(n(r.c5) * 100) / 100, Math.round(n(r.c4) * 100) / 100], String(r.cur || '').trim().slice(0, 3)];
+}
+async function catAdsRead(env, cmpid, fresh) {
+  const key = 'catads:' + cmpid + ':' + CAT_ADS_PERIOD, now = Date.now();
+  let rec = null;
+  try { rec = await env.EDITS.get(key, 'json'); } catch (e) { rec = null; }
+  if (rec && !fresh) {
+    if (rec.missing && now - rec.at < CAT_ADS_MISSING_TTL) return Object.assign({ state: 'missing', cached: true }, rec);
+    if (rec.done && now - rec.at < CAT_ADS_TTL) return Object.assign({ state: 'ok', cached: true }, rec);
+  }
+  if (!rec || rec.done || rec.missing || fresh || now - (rec.at0 || 0) > CAT_ADS_PART_TTL) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' };
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const call = (page) => mcp.call('ads_traffic', { company: cmpid, period: CAT_ADS_PERIOD, page, page_size: CAT_ADS_SIZE, sort: 'c0', order: 'asc' });
+  let restarted = false;
+  const take = (p) => {
+    const info = (p && p.info) || {};
+    const sig = [info.from, info.to, info.report_rows != null ? info.report_rows : p.total_rows].join('|');
+    if (rec.sig && rec.sig !== sig) { restarted = true; return false; }
+    rec.sig = sig; rec.from = String(info.from || ''); rec.to = String(info.to || ''); rec.range = String(info.range || '');
+    rec.total = +(p.total_rows != null ? p.total_rows : info.report_rows) || 0; rec.pages = +p.pages || 0;
+    TMM.rowsOf(p).forEach((r) => { const a = catAdsRow(r); if (!a) return; rec.rows[a[0]] = a[1]; if (a[2]) rec.curs[a[2]] = (rec.curs[a[2]] || 0) + 1; });
+    return true;
+  };
+  let first;
+  try { first = await call(rec.next); }
+  catch (e) {
+    const msg = String((e && e.message) || e);
+    // an account Google Ads returns nothing for (Accessorize UK, 29 Sep 2026) is an ANSWER — kept a day
+    if (/no ads traffic data/i.test(msg)) { const m = { v: 1, cmpid, period: CAT_ADS_PERIOD, missing: true, at: now, note: msg.slice(0, 200) }; try { await env.EDITS.put(key, JSON.stringify(m), { expirationTtl: 86400 }); } catch (e2) {} return Object.assign({ state: 'missing' }, m); }
+    throw e;
+  }
+  // the FIRST request for a client makes FeedHero download the report from Google Ads — "still being prepared"
+  if (!first || (first.total_rows == null && !Array.isArray(first.rows))) return { state: 'preparing', note: String((first && (first.message || first.note || first.status)) || 'FeedHero is still downloading this report from Google Ads').slice(0, 200) };
+  if (!take(first)) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+  else {
+    const want = []; for (let pg = rec.next + 1; pg <= Math.min(rec.pages, rec.next + CAT_ADS_CHUNK - 1); pg++) want.push(pg);
+    let i = 0;
+    const worker = async () => { while (i < want.length && !restarted) { const pg = want[i++]; take(await call(pg)); } };
+    await Promise.all(Array.from({ length: Math.min(CAT_ADS_CONC, want.length) }, worker));
+    if (restarted) rec = { v: 1, cmpid, period: CAT_ADS_PERIOD, at0: now, next: 1, pages: 0, total: 0, rows: {}, curs: {} };
+    else { rec.next = want.length ? want[want.length - 1] + 1 : rec.next + 1; if (rec.next > rec.pages) { rec.done = true; rec.at = Date.now(); } }
+  }
+  const cs = Object.keys(rec.curs || {}).sort((a, b) => rec.curs[b] - rec.curs[a]);
+  rec.cur = cs[0] || ''; rec.curMix = cs.length > 1;
+  try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 2 * 86400 }); } catch (e) {}
+  return Object.assign({ state: rec.done ? 'ok' : 'reading', restarted }, rec);
+}
+
+// wins = { w7: {total, categories}, w30: …, w90: … } as splitClientRows returns them per window.
+// A market with no Google Ads activity in FeedHero's window returns no Total row at all
+// (split.total is null) — never store a record missing spend/revenue/band: normRow({}) gives
+// the same safe, fully-shaped zero-reading every other market's record carries, distinguishable
+// from a real zero-spend reading only by band staying null (no reading, never "Losing").
+// HISTORY rides on the record (roas:<cmpid>.hist, ROAS_HIST_DAYS) and the last ROAS_SPARK_DAYS
+// on the index entry — the trailing figure AS READ EACH DAY, one point a day (same-day replace),
+// which is what the page's trend, sparklines, deltas and movers read. idx is passed in (read
+// ONCE per pull) and written after every market so a firing cut short keeps what it read.
+async function roasStore(env, m, wins, now, idx) {
+  const cmpid = m.cmpid;
+  const totals = {};
+  ROAS.ROAS_WINDOWS.forEach((w) => { totals[w.k] = (wins[w.k] && wins[w.k].total) || ROAS.normRow({ cmpid, category: 'Total' }); });
+  let prev = null;
+  try { prev = await env.EDITS.get('roas:' + cmpid, 'json'); } catch (e) { prev = null; }
+  const hist = ROAS.histAdd((prev && prev.hist) || [], ROAS.dayKey(now), totals, ROAS.ROAS_HIST_DAYS);
+  const entry = ROAS.idxEntry({ client: m.client, market: m.market, cmpid, updated: now }, totals, hist);
+  if (idx[cmpid] && idx[cmpid].sig === entry.sig && idx[cmpid].day === entry.day) return { changed: false };
+  const rec = { client: m.client, market: m.market, cmpid, updated: now, hist };
+  ROAS.ROAS_WINDOWS.forEach((w) => { rec[w.k] = { total: (wins[w.k] && wins[w.k].total) || null, categories: (wins[w.k] && wins[w.k].categories) || [] }; });
+  try { await env.EDITS.put('roas:' + cmpid, JSON.stringify(rec)); }
+  catch (e) { return { changed: false, error: 'kv put failed' }; }
+  idx[cmpid] = entry;
+  try { await env.EDITS.put('roasidx', JSON.stringify(idx)); } catch (e) {}
+  return { changed: true };
+}
+
+async function roasPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('roasstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null, pulled: [] };
+  const save = async (s) => { try { await env.EDITS.put('roasstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.ROAS_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' }));
+  const mcp = opts.mcp || roasMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    const roster = ROAS.rosterList();
+    const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? ROAS.ROAS_PULLS : opts.pulls, now);
+    const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+    let changed = 0;
+    for (const m of plan) {
+      // three reads per market — one per window the page switches between (7 / 30 / 90 days);
+      // FeedHero reports trailing windows only, so a period switch is a different read, not a
+      // re-cut of the same rows
+      const wins = {};
+      for (const w of ROAS.ROAS_WINDOWS) {
+        const payload = await mcp.call('roas_dashboard', { company: m.cmpid, period: w.period, page_size: 200, sort: 'spend', order: 'desc' });
+        wins[w.k] = ROAS.splitClientRows(TMM.rowsOf(payload), w.k === ROAS.ROAS_DEFAULT_WIN ? ROAS.ROAS_KEEP_CATS : ROAS.ROAS_KEEP_CATS_ALT);
+      }
+      const r = await roasStore(env, m, wins, now, idx);
+      if (r.changed) changed++;
+      const t30 = wins[ROAS.ROAS_DEFAULT_WIN] && wins[ROAS.ROAS_DEFAULT_WIN].total;
+      st.rot[m.cmpid] = now; st.pulled.push(m.client + ' ' + m.market + (t30 ? '' : ' (no Total row)'));
+    }
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: Object.keys(st.rot).length, total: roster.length, changed }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
+// ---- RULES: the worker pulls FeedHero's rule_report through roasMcp (same server, same token).
+// rulesStore = the one writer of rules:<cmpid> (the full normalised list, in run order) and the
+// rulesidx entry (RULES.idxEntry: summary + stock rows + findings). rulesPull = one firing: a
+// rotation of RULES_PULLS roster markets, stalest first, each read page by page (FeedHero's page
+// ceiling is 200; RULES_MAX_PAGES caps a market at 600 and a capped market says so). Only rows
+// whose cmpid IS the market are kept — the company filter matches by id OR name, and a name match
+// must never let a client outside the roster in.
+async function rulesStore(env, m, rows, meta, now, idx) {
+  const rules = RULES.normRules(rows);
+  const entry = RULES.idxEntry(m, rules, meta, now);
+  const rec = { client: m.client, market: m.market, cmpid: m.cmpid, updated: now, total: entry.total, capped: entry.capped, rules };
+  try { await env.EDITS.put('rules:' + m.cmpid, JSON.stringify(rec)); }
+  catch (e) { return { changed: false, error: 'kv put failed' }; }
+  idx[m.cmpid] = entry;
+  try { await env.EDITS.put('rulesidx', JSON.stringify(idx)); } catch (e) {}
+  return { changed: true, n: rules.length };
+}
+
+async function rulesPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('rulesstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null, pulled: [] };
+  const save = async (s) => { try { await env.EDITS.put('rulesstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.ROAS_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — the rules read uses the same FeedHero reports token as ROAS' }));
+  const mcp = opts.mcp || roasMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    const roster = ROAS.rosterList();
+    const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? RULES.RULES_PULLS : opts.pulls, now);
+    const idx = (await env.EDITS.get('rulesidx', 'json')) || {};
+    let changed = 0;
+    for (const m of plan) {
+      const rows = []; let total = null, pages = 1;
+      for (let p = 1; p <= Math.min(pages, RULES.RULES_MAX_PAGES); p++) {
+        const payload = await mcp.call('rule_report', { company: m.cmpid, page: p, page_size: RULES.RULES_PAGE });
+        const got = TMM.rowsOf(payload);
+        got.forEach((r) => { if (r && r.cmpid === m.cmpid) rows.push(r); });
+        if (payload && payload.pages != null) pages = Math.max(1, +payload.pages || 1);
+        if (payload && payload.total_rows != null) total = +payload.total_rows;
+        if (!got.length) break;
+      }
+      const r = await rulesStore(env, m, rows, { total }, now, idx);
+      if (r.changed) changed++;
+      st.rot[m.cmpid] = now;
+      st.pulled.push(m.client + ' ' + m.market + ' (' + rows.length + (total != null && total > rows.length ? ' of ' + total : '') + ')');
+    }
+    const onRoster = Object.keys(st.rot).filter((k) => roster.some((x) => x.cmpid === k)).length;
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: onRoster, total: roster.length, changed }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      fails: (st.fails | 0) + 1,
       state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
       error: msg,
     }));
@@ -3122,7 +4602,9 @@ async function mapStoreRoute(env, request, kvKey, opts) {
 
 const lgKey = (c, m) => c + '|' + m;
 
-async function runLabelScan(env, client, mkt) {
+// opts.manual = a person pressed a scan button (Ray, 24 Sep 2026: "If there's a manual scan on any day,
+// that new score can override that day") — the score history marks the reading so it SETS its day
+async function runLabelScan(env, client, mkt, opts) {
   const src = await feedSourceFor(env, client, mkt);
   if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
   if (src.xml) return { error: 'XML feed - live scans are sheets-only (gviz cannot query XML); XML feeds are scanned by the 4x-daily xml-scan push instead', status: 400 };
@@ -3142,7 +4624,7 @@ async function runLabelScan(env, client, mkt) {
     await markScanUnreachable(env, client, mkt, msg, wantPT);
     return { error: msg, status: 502 };
   }
-  return processScanSnapshot(env, client, mkt, snap, { wantPT,
+  return processScanSnapshot(env, client, mkt, snap, { wantPT, manual: !!(opts && opts.manual),
     rescan: async () => { try { return await scanFeed(fetch, src, { client, market: mkt }, keys, scanOpts); } catch (e) { return null; } } });
 }
 
@@ -3153,10 +4635,18 @@ async function runLabelScan(env, client, mkt) {
 // dossier scorecard reading FEED only for Schuh's three markets an hour after the agent's pass
 // — "why content quality score isn't saved?". The reading stays what it was until the next
 // analysis; qT dates it. Shared by the scan lane (processScanSnapshot) and the ack.
-const QUAL_KEEP = ['q', 'qFails', 'qT', 'air', 'airTier', 'airP'];
+const QUAL_KEEP = ['q', 'qFails', 'qT', 'qSrc', 'air', 'airTier', 'airP'];
 function keepQual(prev) {
   const out = {};
   if (prev) QUAL_KEEP.forEach((k) => { if (prev[k] !== undefined && prev[k] !== null) out[k] = prev[k]; });
+  return out;
+}
+// the score history's pointer on the index (hp = the reading before the last change, ht = when
+// it changed) — rebuilt from goldenhist on every scan, carried unchanged by the ack, which moves
+// the alert reference and nothing about the feed's past
+function keepHist(prev) {
+  const out = {};
+  if (prev && prev.hp) { out.hp = prev.hp; if (prev.ht) out.ht = prev.ht; }
   return out;
 }
 
@@ -3181,6 +4671,38 @@ async function markScanUnreachable(env, client, mkt, msg, wantPT) {
     gidx[lgKey(client, mkt)] = Object.assign({}, gidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
     await env.EDITS.put('goldenidx', JSON.stringify(gidx));
   } catch (e2) {}
+}
+
+// ---- AVAILABILITY, MASTER → FEED (Ray, 30 Sep 2026: "In the stock management module, bring in the
+// availability ratio between master feed and output feeds as well (instock & outofstock)"). Two indexes,
+// one per side, each ONE KV key /api/rules/stock reads whole (RULES.availView joins them on the cmpid):
+//   feedavail   client|mkt -> an OUTPUT feed's products counted by stock, written by availTrack on every
+//               CONFIRMED scan (the 4x-daily agent and the guard pages' live rescan) — Google and Meta alike
+//   masteravail cmpid      -> the MASTER's, written by tools/master_stock.mjs through {masterstock}
+// Counts only, bucketed by one word table (labelguard.js / catalog_engine.js › availBucket), and a tally
+// whose buckets do not add up to its product count is refused rather than stored.
+const AV_BUCKETS = ['in', 'out', 'pre', 'none', 'other'];
+function sanitizeAvail(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const num = (v) => Math.max(0, Math.round(+v || 0));
+  const n = num(raw.n);
+  if (!n || n > 5000000) return null;
+  const o = { n };
+  let sum = 0;
+  AV_BUCKETS.forEach((k) => { o[k] = num(raw[k]); sum += o[k]; });
+  if (sum !== n) return null;
+  o.col = String(raw.col == null ? '' : raw.col).slice(0, 60);
+  o.ow = (Array.isArray(raw.ow) ? raw.ow : []).slice(0, 5)
+    .filter((x) => Array.isArray(x) && /^[\w .\/-]{1,24}$/.test(String(x[0]))).map((x) => [String(x[0]), num(x[1])]);
+  return o;
+}
+async function availTrack(env, client, mkt, raw) {
+  const a = sanitizeAvail(raw);
+  if (!a) return null;
+  const idx = (await env.EDITS.get('feedavail', 'json')) || {};
+  idx[client + '|' + mkt] = Object.assign({ client, mkt, t: Date.now() }, a);
+  await env.EDITS.put('feedavail', JSON.stringify(idx));
+  return a;
 }
 
 // ---- New-product ARRIVALS by first-seen date (Ray, 15 Sep 2026: "fs:date_of_birth signals the
@@ -3273,11 +4795,11 @@ async function volTrack(env, client, mkt, rows, vol) {
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
 // catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
 // confirming re-read). Identity fields are always forced server-side.
-async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img) {
+async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img, opts) {
   const wantPT = !/-fb$/.test(mkt);
   snap.client = client; snap.market = mkt; snap.v = 1;
   if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
-  const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
+  const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null, manual: !!(opts && opts.manual) });
   if (r && r.skipped) return { skipped: true, retry: !!r.retry };
   // volume tracking rides only CONFIRMED scans — a held catastrophic reading's id set
   // would fake a churn crater, so it lands with the confirming re-push
@@ -3289,6 +4811,8 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl, img) {
   // the image-library capture rides the same confirmed scan, for the same reason
   let images = null;
   if (img) { try { images = await imageTrack(env, client, mkt, img); } catch (e) {} }
+  // the feed's products counted by stock (/stock's master → feed ratio) ride the same confirmed scan
+  if (vol && vol.av) { try { await availTrack(env, client, mkt, vol.av); } catch (e) {} }
   return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays, images };
 }
 
@@ -3553,13 +5077,15 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
   let gr = null;
   if (grSnap) try {
     const GK = ':' + client + ':' + mkt;
+    let gPrev = null;
     try {
-      const gPrev = await env.EDITS.get('golden' + GK, 'json');
+      gPrev = await env.EDITS.get('golden' + GK, 'json');
       if (gPrev && gPrev.t && new Date(gPrev.t).toISOString().slice(0, 10) !== new Date(grSnap.t).toISOString().slice(0, 10)) {
         await env.EDITS.put('goldenday' + GK, JSON.stringify(gPrev));
       }
     } catch (e) {}
     let gBase = await env.EDITS.get('goldenbase' + GK, 'json');
+    const gBaseWas = gBase;   // before it rolls forward below — a past reading the history can seed from
     if (!gBase) { gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap)); }
     const gAlerts = diffCoverage(gBase, grSnap);
     const gActive = gAlerts.filter((a) => a.sev !== 'info');
@@ -3567,6 +5093,26 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
       gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap));
     }
     await env.EDITS.put('golden' + GK, JSON.stringify(grSnap));
+    // SCORE HISTORY (Ray, 24 Sep 2026): the feed's record over time, one reading per real move
+    // (labelguard.js histAdd). A scan that moved nothing on a day already recorded writes nothing.
+    // A first record is seeded from the known-good and the previous scan — both real readings —
+    // when they were measured on today's basis.
+    let gHist = null;
+    try {
+      const cur = histReading(grSnap);
+      const had = await env.EDITS.get('goldenhist' + GK, 'json');
+      if (had && had.r && had.r.length) {
+        const r = histAdd(had, cur, { manual: !!(opts && opts.manual) });
+        gHist = r.hist;
+        if (r.wrote) await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
+      } else if (cur) {
+        // no readings yet — a record holding only an analysis (the quality PUT got here first)
+        // still seeds, and keeps the analyses it already had
+        gHist = histSeed([gBaseWas, gPrev], cur, { manual: !!(opts && opts.manual) });
+        if (had && Array.isArray(had.q)) gHist.q = had.q;
+        await env.EDITS.put('goldenhist' + GK, JSON.stringify(gHist));
+      }
+    } catch (e) {}
     // score to the brand's industry best-practice profile (KV goldenprofiles overrides);
     // the index also carries per-attribute coverage + the industry, so the page can
     // compute estate-wide industry benchmarks (avg / best) from the one estate call
@@ -3583,7 +5129,7 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length },
-      keepQual(gidx[lgKey(client, mkt)]));
+      keepQual(gidx[lgKey(client, mkt)]), gHist ? histIdx(gHist) : keepHist(gidx[lgKey(client, mkt)]));
     await env.EDITS.put('goldenidx', JSON.stringify(gidx));
     const gMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     const gPlan = estateMailPlan(gMap[lgKey(client, mkt)], gActive);
@@ -3678,7 +5224,7 @@ async function labelGuardRoutes(env, request, url) {
 
   if (path === '/api/labels/scan' && request.method === 'POST') {
     if (badClient) return json({ error: 'bad client' }, 400);
-    const r = await runLabelScan(env, client, mkt);
+    const r = await runLabelScan(env, client, mkt, { manual: true });
     if (r.error) return json({ error: r.error }, r.status || 502);
     return json(r);
   }
@@ -3698,7 +5244,7 @@ async function labelGuardRoutes(env, request, url) {
     const snap = body && body.snap;
     if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') return json({ error: 'bad snapshot' }, 400);
     try {
-      const r = await applyPushedSnapshot(env, client, mkt, snap, body.vol);
+      const r = await applyPushedSnapshot(env, client, mkt, snap, body.vol, undefined, undefined, { manual: true });
       if (r.skipped) return json({ skipped: true, retry: r.retry }, 202);
       // the full processScanSnapshot result, so each guard page can read its own slice
       // (labels pages use .snapshot/.alerts, /ptypes uses .pt, /golden uses .gr)
@@ -3913,7 +5459,7 @@ async function productTypeRoutes(env, request, url) {
 
   if (path === '/api/ptypes/scan' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
-    const r = await runLabelScan(env, client, mkt);   // one pass writes labels AND ptype stores
+    const r = await runLabelScan(env, client, mkt, { manual: true });   // one pass writes labels AND ptype stores
     if (r.error) return json({ error: r.error }, r.status || 502);
     if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.pt) return json({ error: 'scan succeeded but captured no product_type view' }, 502);
@@ -3980,6 +5526,134 @@ async function productTypeRoutes(env, request, url) {
    data specification — required vs required-in-cases vs recommended — captured by
    runLabelScan on every Google-feed scan (zero extra subrequests: the roster rides the
    same multi-count query). These routes read/ack the golden* stores. */
+// ONE WRITER for a content-quality reading, whichever lane brought it (Ray, 24 Sep 2026: "Golden
+// Record and content quality should automatically scan on a daily basis … at 9 a.m. UK time … If
+// there's a manual scan on any day, that new score can override that day"): the /golden PUT is a
+// person pressing Analyse (manual); the {goldenqual} push is the 09:00 UK daily agent (auto). An
+// automatic reading NEVER replaces a hand-run analysis taken earlier the same day — that reading is
+// the day's, and the automatic one is simply not stored. Returns { status, body }.
+async function storeGoldenQuality(env, client, mkt, b, opts) {
+  const auto = !!(opts && opts.auto);
+  if (auto) {
+    const cur = ((await env.EDITS.get('goldenidx', 'json')) || {})[lgKey(client, mkt)];
+    if (cur && cur.qSrc === 'm' && cur.qT && histDay(cur.qT) === histDay(Date.now())) {
+      return { status: 200, body: { ok: true, skipped: 'analysed by hand today — that reading holds the day' } };
+    }
+  }
+  if (!b || typeof b !== 'object' || !b.attrs || typeof b.attrs !== 'object') return { status: 400, body: { error: 'attrs required' } };
+  const rows = Math.max(0, parseInt(b.rows, 10) || 0);
+  if (!rows) return { status: 400, body: { error: 'a run over zero rows is not a reading' } };
+  // keep only attributes the spec knows, and only the shape the page renders — a client
+  // cannot widen what is stored by inventing keys
+  const attrs = {};
+  for (const q of QSPEC) {
+    const a = b.attrs[q.key];
+    if (!a || typeof a !== 'object') continue;
+    const rules = {};
+    for (const rule of q.rules) {
+      const hit = (a.rules || {})[rule.id];
+      if (!hit) continue;
+      rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
+        pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
+        eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
+      // a duplicate rule carries its groups — the repeated value, how many products share
+      // it and which ones — so the finding can be verified on the page rather than taken
+      // on trust. Same discipline as everything else here: only the shape we render.
+      if (Array.isArray(hit.groups) && hit.groups.length) {
+        rules[rule.id].groups = hit.groups.slice(0, 4).map((g) => ({
+          v: String((g && g.v) || '').slice(0, 160),
+          n: Math.max(0, parseInt(g && g.n, 10) || 0),
+          ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
+          x: g && g.x ? 1 : 0,        // shared with a DIFFERENT product, not just a variant
+        })).filter((g) => g.v && g.n > 1);
+        rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
+        // what the rule deliberately did NOT count, so the number is never a mystery
+        if (hit.within) {
+          rules[rule.id].within = Math.max(0, parseInt(hit.within, 10) || 0);
+          rules[rule.id].withinVals = Math.max(0, parseInt(hit.withinVals, 10) || 0);
+        }
+      }
+    }
+    attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
+      cov: Math.round((Number(a.cov) || 0) * 10) / 10,
+      avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
+      minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
+      maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
+      rules, dupeCapped: a.dupeCapped === true || undefined,
+      // how many columns a repeatable attribute was read across, and values per product —
+      // the evidence behind a count-based finding like "fewer than 2 highlights"
+      cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
+      perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
+      // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
+      avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined,
+      // highlight-count distribution (product_highlight only) — fixed bucket keys, each
+      // independently clamped so a client cannot widen the shape of the store
+      hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {
+        o[b] = Math.max(0, Math.min(100, Math.round((Number(a.hlDist[b]) || 0) * 10) / 10)); return o;
+      }, {}) : undefined };
+  }
+  if (!Object.keys(attrs).length) return { status: 400, body: { error: 'no known free-text attribute in this feed' } };
+  // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
+  // kept to the shape the card renders, so the store can't be widened from the browser
+  const num = (x, max) => Math.min(max, Math.max(0, Math.round(Number(x) || 0)));
+  let ai = null;
+  if (b.ai && typeof b.ai === 'object' && Number(b.ai.total) > 0) {
+    const t = b.ai.titles && typeof b.ai.titles === 'object' ? b.ai.titles : {};
+    const mask = t.mask && typeof t.mask === 'object' ? t.mask : {};
+    ai = {
+      total: num(b.ai.total, 100), tier: Math.min(4, Math.max(1, parseInt(b.ai.tier, 10) || 1)),
+      tierLabel: String(b.ai.tierLabel || '').slice(0, 40),
+      sampled: num(b.ai.sampled, 1e9), rows: num(b.ai.rows, 1e9),
+      pillars: Array.isArray(b.ai.pillars) ? b.ai.pillars.slice(0, 8).map((p) => ({
+        key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
+        score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
+        summary: String(p.summary || '').slice(0, 160),
+        // the live components behind the number, for the scoring pop-up (Ray, 17 Sep
+        // 2026) — a bounded list of short strings, never HTML
+        reads: Array.isArray(p.reads) ? p.reads.slice(0, 8).map((x) => String(x || '').slice(0, 140)) : [],
+      })) : [],
+      titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
+        dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
+        buckets: Array.isArray(t.buckets) ? t.buckets.slice(0, 6).map((x) => ({ b: String(x.b || '').slice(0, 20), n: num(x.n, 1e9) })) : [],
+        mask: { brand: num(mask.brand, 100), material: num(mask.material, 100), fit: num(mask.fit, 100),
+          colour: num(mask.colour, 100), use: num(mask.use, 100) } },
+    };
+  }
+  const rec = { t: Date.now(), client, market: mkt, rows, attrs, ai, kind: String(b.kind || '').slice(0, 8) };
+  const packed = JSON.stringify(rec);
+  if (packed.length > 250000) return { status: 413, body: { error: 'quality reading too large' } };
+  await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
+  // surface the headline on the estate index (never invents a row — only annotates one).
+  // Scored against the brand's CURRENT profile — attribute waivers and the rules set aside
+  // for the brand — so the stored figure is the one the page computes (before 21 Sep 2026
+  // the index carried the unprofiled score while /golden showed the profiled one)
+  const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));
+  const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+  const key = lgKey(client, mkt);
+  if (idx[key] && (qs || ai)) {
+    if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
+    if (ai) {
+      idx[key].air = ai.total; idx[key].airTier = ai.tier;
+      // per-pillar scores too, so the estate can draw the markets × pillars heatmap
+      // without re-reading every feed's stored block (8 numbers per feed)
+      const pm = {};
+      ai.pillars.forEach((p) => { if (p.key) pm[p.key] = p.score; });
+      idx[key].airP = pm;
+    }
+    idx[key].qT = rec.t;
+    idx[key].qSrc = auto ? 'a' : 'm';   // who took the reading — a hand-run one holds its day
+    await env.EDITS.put('goldenidx', JSON.stringify(idx));
+  }
+  // …and the analysis joins the feed's history as measured (content quality + AI-readiness),
+  // a hand-run one marked so it sets its day (histDayPick)
+  if (qs || ai) try {
+    const hk = 'goldenhist:' + client + ':' + mkt;
+    const hq = histQa(await env.EDITS.get(hk, 'json'), { t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null, m: !auto });
+    if (hq.wrote) await env.EDITS.put(hk, JSON.stringify(hq.hist));
+  } catch (e) {}
+  return { status: 200, body: { ok: true, t: rec.t, score: qs ? qs.score : null, src: auto ? 'auto' : 'manual' } };
+}
+
 async function goldenRoutes(env, request, url) {
   const path = url.pathname;
   const client = (url.searchParams.get('client') || '').slice(0, 60);
@@ -4002,7 +5676,117 @@ async function goldenRoutes(env, request, url) {
         feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
       }
     });
-    return json({ feeds, alerts });
+    // the 09:00 UK daily run's own record, so the page can say when the tracker last filled
+    const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
+    return json({ feeds, alerts, daily });
+  }
+
+  /* THE PORTFOLIO VIEW (Ray, 24 Sep 2026: "should there be an additional interface for AM only to
+     view these charts across their portfolio at once?" — "can you build on leadership"). Every
+     Google Shopping feed's three scores day by day, in ONE request: the record of each feed
+     (goldenhist) run through the engine's histSeries under the brand's CURRENT profile, closed by
+     the estate index's own reading — so Leadership draws what the Score history card and the
+     estate scorecard say, never a second reading of them. The AM is the Task Manager's (tmidx,
+     the same name the hours badge shows), matched on the folded client name; a brand the Task
+     Manager has not reached is named as having no AM on record, never guessed. Scoped per signin
+     like every route that lists clients (scoping only narrows). */
+  /* WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to
+     defend feedspark services"). ONE BRAND's outcome month by month, to hang under the Task
+     Manager's hours chart on the SAME calendar — two plots, each on its own axis, never a dual one.
+     Nothing is scored here: labelguard's histSeries produces each market's daily line, re-scored
+     against the brand's CURRENT profile exactly as /golden and Leadership's portfolio trend do, and
+     src/outcomes.js only reduces days to months and markets to a brand. So the figure a buyer is
+     shown is the figure the audit page shows, and a month nobody measured stays a GAP. */
+  if (path === '/api/outcomes' && request.method === 'GET') {
+    const who = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who || who.indexOf(':') >= 0 || who.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who)) return json({ ok: false, error: 'out of scope' }, 403);
+    const months = OUT.monthsBack(String(url.searchParams.get('end') || '').slice(0, 7)
+      || new Date().toISOString().slice(0, 7), url.searchParams.get('months'));
+    // the brand's Google Shopping markets — the roster it is wired for, plus any the index has
+    // reached; -fb is a Meta catalogue and carries none of these readings
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const want = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      if (clientSlug(f.client) === clientSlug(who)) want[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      const c = k.split('|')[0], m = k.split('|')[1] || 'gb';
+      if (!want[k] && !/-fb$/.test(m) && clientSlug(c) === clientSlug(who)) want[k] = { client: c, mkt: m };
+    });
+    const list = Object.keys(want).map((k) => want[k]);
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const today = histDay(Date.now());
+    // a window is measured in MONTHS; histSeries reads days, so ask it for the whole span + this
+    // month, and let the reducer keep only the months asked for
+    const span = Math.min(365, Math.max(30, months.length * 31 + 31));
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profileFor(f.client, overrides);
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ mkt: f.mkt }, histSeries(hists[i], pf, { days: span, today, live }));
+    }).filter((f) => f.start);
+    const all = (await env.EDITS.get('kwresults', 'json')) || [];
+    const q = clientSlug(who);
+    const results = all.filter((k) => k && clientSlug(String(k.client || '')) === q);
+    /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+       Procurement prices a service per unit, not per hour, so a row of hours with no scale beside
+       it cannot be argued with. `rows` is the catalogue each market was last SCANNED at — stated as
+       that rather than as "the catalogue", since a market nobody has scanned contributes nothing
+       and the count of scanned markets travels with the figure. */
+    const scale = { markets: list.length, scanned: 0, rows: 0, at: 0 };
+    list.forEach((f) => {
+      const x = idx[lgKey(f.client, f.mkt)];
+      if (!x || !x.rows) return;
+      scale.scanned++; scale.rows += +x.rows || 0;
+      if (x.t && x.t > scale.at) scale.at = x.t;
+    });
+    const out = OUT.brandOutcomes(feeds, months, { results });
+    return json(Object.assign({ ok: true, at: Date.now(), client: who, scale }, out));
+  }
+
+  if (path === '/api/golden/portfolio' && request.method === 'GET') {
+    const want = parseInt(url.searchParams.get('days'), 10);
+    const days = [30, 90, 365].indexOf(want) >= 0 ? want : 90;
+    const acc = await accessOf(env, request);
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const tm = (await env.EDITS.get('tmidx', 'json')) || {};
+    const tmBy = {};
+    Object.keys(tm).forEach((n) => { if (tm[n] && tm[n].am) tmBy[clientSlug(n)] = String(tm[n].am); });
+    const amOf = (client) => {
+      const s = clientSlug(client);
+      if (tmBy[s]) return tmBy[s];
+      const k = Object.keys(tmBy).filter((x) => x.length >= 4 && s.length >= 4 && (x.indexOf(s) === 0 || s.indexOf(x) === 0));
+      return k.length === 1 ? tmBy[k[0]] : null;   // one unambiguous prefix match, or nobody
+    };
+    const keys = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      keys[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      if (!keys[k] && !/-fb$/.test(k.split('|')[1] || '')) keys[k] = { client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true };
+    });
+    const list = Object.keys(keys).map((k) => keys[k]).filter((f) => !acc.clients || clientMatch(acc.clients, f.client));
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const profs = {};
+    const today = histDay(Date.now());
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profs[f.client] || (profs[f.client] = profileFor(f.client, overrides));
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ client: f.client, mkt: f.mkt, am: amOf(f.client), ind: pf.industry,
+        status: x ? (x.status || null) : 'never', detached: f.detached || undefined },
+      histSeries(hists[i], pf, { days, today, live }));
+    });
+    const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
+    return json({ ok: true, at: Date.now(), today, days, scoped: !!acc.clients, feeds, daily });
   }
 
   // email-on-warning settings (recipient + on/off) — mirrors ptypealertcfg's shape
@@ -4029,9 +5813,17 @@ async function goldenRoutes(env, request, url) {
     return json({ snapshot: snap || null, baseline: base || null, daily: daily || null });
   }
 
+  // the feed's score history (Ray, 24 Sep 2026) — readings, scan days, analyses; the page
+  // re-scores every reading against the brand's current profile
+  if (path === '/api/golden/history' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const hist = await env.EDITS.get('goldenhist:' + client + ':' + mkt, 'json');
+    return json({ hist: hist || null });
+  }
+
   if (path === '/api/golden/scan' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
-    const r = await runLabelScan(env, client, mkt);   // one pass writes labels, ptype AND golden stores
+    const r = await runLabelScan(env, client, mkt, { manual: true });   // one pass writes labels, ptype AND golden stores
     if (r.error) return json({ error: r.error }, r.status || 502);
     if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.gr) return json({ error: 'scan succeeded but captured no attribute-coverage view' }, 502);
@@ -4121,7 +5913,8 @@ async function goldenRoutes(env, request, url) {
     if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
     const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
     // attr=pdp files the PDP recovery pass itself (Ray, 14 Sep 2026) — the same rails
-    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : 'Golden Record Fix - g:' + attr + ' - ') + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    // keywords is FeedSpark's own keyword injection, so it files in the keyword task family (30 Sep 2026)
+    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : (attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - ' : 'Golden Record Fix - g:' + attr + ' - ')) + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
     const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));
@@ -4202,110 +5995,9 @@ async function goldenRoutes(env, request, url) {
   if (path === '/api/golden/quality' && request.method === 'PUT') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
-    if (!b || typeof b !== 'object' || !b.attrs || typeof b.attrs !== 'object') return json({ error: 'attrs required' }, 400);
-    const rows = Math.max(0, parseInt(b.rows, 10) || 0);
-    if (!rows) return json({ error: 'a run over zero rows is not a reading' }, 400);
-    // keep only attributes the spec knows, and only the shape the page renders — a client
-    // cannot widen what is stored by inventing keys
-    const attrs = {};
-    for (const q of QSPEC) {
-      const a = b.attrs[q.key];
-      if (!a || typeof a !== 'object') continue;
-      const rules = {};
-      for (const rule of q.rules) {
-        const hit = (a.rules || {})[rule.id];
-        if (!hit) continue;
-        rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
-          pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
-          eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
-        // a duplicate rule carries its groups — the repeated value, how many products share
-        // it and which ones — so the finding can be verified on the page rather than taken
-        // on trust. Same discipline as everything else here: only the shape we render.
-        if (Array.isArray(hit.groups) && hit.groups.length) {
-          rules[rule.id].groups = hit.groups.slice(0, 4).map((g) => ({
-            v: String((g && g.v) || '').slice(0, 160),
-            n: Math.max(0, parseInt(g && g.n, 10) || 0),
-            ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
-            x: g && g.x ? 1 : 0,        // shared with a DIFFERENT product, not just a variant
-          })).filter((g) => g.v && g.n > 1);
-          rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
-          // what the rule deliberately did NOT count, so the number is never a mystery
-          if (hit.within) {
-            rules[rule.id].within = Math.max(0, parseInt(hit.within, 10) || 0);
-            rules[rule.id].withinVals = Math.max(0, parseInt(hit.withinVals, 10) || 0);
-          }
-        }
-      }
-      attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
-        cov: Math.round((Number(a.cov) || 0) * 10) / 10,
-        avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
-        minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
-        maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
-        rules, dupeCapped: a.dupeCapped === true || undefined,
-        // how many columns a repeatable attribute was read across, and values per product —
-        // the evidence behind a count-based finding like "fewer than 2 highlights"
-        cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
-        perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
-        // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
-        avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined,
-        // highlight-count distribution (product_highlight only) — fixed bucket keys, each
-        // independently clamped so a client cannot widen the shape of the store
-        hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {
-          o[b] = Math.max(0, Math.min(100, Math.round((Number(a.hlDist[b]) || 0) * 10) / 10)); return o;
-        }, {}) : undefined };
-    }
-    if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
-    // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
-    // kept to the shape the card renders, so the store can't be widened from the browser
-    const num = (x, max) => Math.min(max, Math.max(0, Math.round(Number(x) || 0)));
-    let ai = null;
-    if (b.ai && typeof b.ai === 'object' && Number(b.ai.total) > 0) {
-      const t = b.ai.titles && typeof b.ai.titles === 'object' ? b.ai.titles : {};
-      const mask = t.mask && typeof t.mask === 'object' ? t.mask : {};
-      ai = {
-        total: num(b.ai.total, 100), tier: Math.min(4, Math.max(1, parseInt(b.ai.tier, 10) || 1)),
-        tierLabel: String(b.ai.tierLabel || '').slice(0, 40),
-        sampled: num(b.ai.sampled, 1e9), rows: num(b.ai.rows, 1e9),
-        pillars: Array.isArray(b.ai.pillars) ? b.ai.pillars.slice(0, 8).map((p) => ({
-          key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
-          score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
-          summary: String(p.summary || '').slice(0, 160),
-          // the live components behind the number, for the scoring pop-up (Ray, 17 Sep
-          // 2026) — a bounded list of short strings, never HTML
-          reads: Array.isArray(p.reads) ? p.reads.slice(0, 8).map((x) => String(x || '').slice(0, 140)) : [],
-        })) : [],
-        titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
-          dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
-          buckets: Array.isArray(t.buckets) ? t.buckets.slice(0, 6).map((x) => ({ b: String(x.b || '').slice(0, 20), n: num(x.n, 1e9) })) : [],
-          mask: { brand: num(mask.brand, 100), material: num(mask.material, 100), fit: num(mask.fit, 100),
-            colour: num(mask.colour, 100), use: num(mask.use, 100) } },
-      };
-    }
-    const rec = { t: Date.now(), client, market: mkt, rows, attrs, ai, kind: String(b.kind || '').slice(0, 8) };
-    const packed = JSON.stringify(rec);
-    if (packed.length > 250000) return json({ error: 'quality reading too large' }, 413);
-    await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
-    // surface the headline on the estate index (never invents a row — only annotates one).
-    // Scored against the brand's CURRENT profile — attribute waivers and the rules set aside
-    // for the brand — so the stored figure is the one the page computes (before 21 Sep 2026
-    // the index carried the unprofiled score while /golden showed the profiled one)
-    const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));
-    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    const key = lgKey(client, mkt);
-    if (idx[key] && (qs || ai)) {
-      if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
-      if (ai) {
-        idx[key].air = ai.total; idx[key].airTier = ai.tier;
-        // per-pillar scores too, so the estate can draw the markets × pillars heatmap
-        // without re-reading every feed's stored block (8 numbers per feed)
-        const pm = {};
-        ai.pillars.forEach((p) => { if (p.key) pm[p.key] = p.score; });
-        idx[key].airP = pm;
-      }
-      idx[key].qT = rec.t;
-      await env.EDITS.put('goldenidx', JSON.stringify(idx));
-    }
-    return json({ ok: true, t: rec.t, score: qs ? qs.score : null });
+    // a person pressed Analyse — the reading holds its day (storeGoldenQuality)
+    const r = await storeGoldenQuality(env, client, mkt, b, { auto: false });
+    return json(r.body, r.status);
   }
 
   // "expected change" — adopt the current coverage snapshot as the new known-good
@@ -4321,7 +6013,7 @@ async function goldenRoutes(env, request, url) {
     idx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
       score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov, sc: Object.keys(ackSc).length ? ackSc : undefined,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
-      status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score
+      status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]), keepHist(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score — or the last move
     await env.EDITS.put('goldenidx', JSON.stringify(idx));
     const alertsMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     delete alertsMap[lgKey(client, mkt)];
@@ -4608,7 +6300,7 @@ async function queueDueReminders(env, opts) {
     const done = await env.EDITS.get('taskremday');
     if (done === day) return { ok: true, skipped: 'already ran today' };
   }
-  const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+  const sheets = await planSheetMap(env);
   const byId = {};   // brands sharing a sheet share its rows — group per sheet so nothing mails twice
   Object.keys(sheets).forEach((b) => { const id = sheets[b]; if (id) (byId[id] = byId[id] || []).push(b); });
   const groups = [];
