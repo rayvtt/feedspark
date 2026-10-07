@@ -83,6 +83,8 @@ jobs:
         run: node tools/test_catalog.mjs
       - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)
         run: node tools/test_aivis.mjs
+      - name: Restock harness (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)
+        run: node tools/test_restock.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
 
