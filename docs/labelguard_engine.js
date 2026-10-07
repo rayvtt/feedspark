@@ -821,9 +821,28 @@ export const ATTR_SPEC = [
   // slots, see kwValueKind). Scored like any recommended attribute.
   { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
   { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
+  // DEPTH, NOT JUST PRESENCE (Ray, 7 Oct 2026: "a new score, image population … the content depth of how
+  // many image per product. Industry standard for fashion should be around at least four plus … product
+  // details now becoming a bit more important as well for fashion … separated from product highlight").
+  // A FILLED field and a USEFUL one are different facts: Superdry GB sends exactly two images on every
+  // product, and Monsoon GB a product_detail on 98.8% of products that is, on 96.6%, one "washing type"
+  // line — both read ~100% filled. Each depth twin (`of`) is READ PER PRODUCT on the XML lanes and, when
+  // measured, is what the score counts INSTEAD of its presence attribute (never both — one fact, one
+  // weight); a sheet-read feed or an older reading keeps the presence reading (see goldenScore).
+  // Credit per product = min(count ÷ target, 1), so 4 images of 4 is full and 2 of 4 is half.
   { key: 'additional_image_link', req: 'rec', note: 'up to 10 — fuels image cycling' },
+  { key: 'img_depth',     req: 'rec', derived: true, house: true, of: 'additional_image_link', target: 4, label: 'images per product',
+    note: 'distinct images per product (image_link + additional_image_link) — 4 or more is full credit; FeedSpark’s standard, Google allows up to 11' },
+  // Google's lifestyle image (answer 9103186): "showcase your product in a real world context, for
+  // example, clothing worn by a model" — up to 5. Scored for Fashion only (waived in every other
+  // industry's profile, Ray 7 Oct 2026)
+  { key: 'lifestyle_image_link', req: 'rec', note: 'up to 5 — the product worn or in use (Fashion)' },
   { key: 'product_highlight', req: 'rec', note: '2–100 highlights — AI-surfaces read these' },
+  { key: 'hl_depth',      req: 'rec', derived: true, of: 'product_highlight', target: 4, label: 'highlights per product',
+    note: 'highlights per product — Google recommends 4–6; 4 or more is full credit' },
   { key: 'product_detail',    req: 'rec', note: 'structured tech specs' },
+  { key: 'detail_depth',  req: 'rec', derived: true, house: true, of: 'product_detail', target: 3, label: 'details per product',
+    note: 'product details that DESCRIBE the product (sleeve length, neckline, fit …) — 3 or more is full credit; care lines and repeats of other attributes do not count' },
   { key: 'material',      req: 'rec', note: 'required only when it distinguishes variants' },
   { key: 'pattern',       req: 'rec', note: 'required only when it distinguishes variants' },
   { key: 'size_type',     req: 'rec', note: 'apparel: regular / petite / plus / tall…' },
@@ -845,6 +864,7 @@ const ATTR_ALIASES = {
   additional_image_link: ['additional_image_link(1)'],
   product_highlight: ['product_highlight(1)'],
   product_detail: ['product_detail(1)'],
+  lifestyle_image_link: ['lifestyle_image_link(1)'],
   question_and_answer: ['question_and_answer(1)'],
   document_link: ['document_link(1)'],
   related_product: ['related_product(1)'],
@@ -934,6 +954,133 @@ export function keywordAttr(slotCount, k, rows) {
   const t = k || {};
   return { present: true, filled: t.filled || 0, cov: rows ? Math.min(100, Math.round(((t.filled || 0) / rows) * 1000) / 10) : 0,
     slots: slotCount, strings: t.str || 0, perSku: rows ? Math.round(((t.str || 0) / rows) * 10) / 10 : 0, hash: t.hash || 0 };
+}
+
+/* ---- DEPTH, READ PER PRODUCT (Ray, 7 Oct 2026 — see img_depth / hl_depth / detail_depth in ATTR_SPEC).
+   Each reader takes ONE product's raw values and returns how many count; xmlCollector tallies them
+   and depthAttr turns the tally into the attribute the score reads. Pure, so the harness pins them. */
+// the depth twin that replaces each presence attribute in the score when it was measured
+export const DEPTH_OF = ATTR_SPEC.filter((s) => s.of).reduce((m, s) => { m[s.of] = s.key; return m; }, {});
+export const DEPTH_KEYS = ['0', '1', '2', '3', '4', '5', '6+'];
+// distinct images on one product: the main image + every additional one (a cell carrying several
+// comma-separated URLs is split), the same URL twice counted once
+export function imageCount(values) {
+  const seen = new Set();
+  for (const v of values || []) {
+    for (const u of String(v == null ? '' : v).split(/\s*,\s*(?=https?:\/\/)/i)) {
+      const t = u.trim();
+      if (/^https?:\/\//i.test(t)) seen.add(t);
+    }
+  }
+  return seen.size;
+}
+// distinct highlights on one product — repeated tags or the ||| list form, blanks and repeats dropped
+export function highlightCount(values) {
+  const seen = new Set();
+  for (const v of values || []) {
+    for (const h of String(v == null ? '' : v).split('|||')) {
+      const t = h.trim().toLowerCase();
+      if (t) seen.add(t);
+    }
+  }
+  return seen.size;
+}
+// one product_detail value → {s, n, v}: the XML lane keeps the nested form
+// (<g:section_name>…</g:section_name><g:attribute_name>…), a text feed the "section:name:value" form
+export function parseDetail(v) {
+  const raw = String(v == null ? '' : v).trim();
+  if (!raw) return null;
+  if (/<[\w:]*attribute_name\b/i.test(raw)) {
+    const tag = (t) => { const m = new RegExp('<(?:[\\w]+:)?' + t + '\\b[^>]*>([\\s\\S]*?)</(?:[\\w]+:)?' + t + '\\s*>', 'i').exec(raw); return m ? m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim() : ''; };
+    return { s: tag('section_name'), n: tag('attribute_name'), v: tag('attribute_value') };
+  }
+  const p = raw.split(':');
+  if (p.length < 3) return { s: '', n: '', v: raw };
+  return { s: p[0].trim(), n: p[1].trim(), v: p.slice(2).join(':').trim() };
+}
+// What does NOT count as describing the product. Google (answer 9218260): "Avoid adding information
+// covered in other attributes or promotion text" (price, sale price, sale dates, shipping, delivery
+// date, time-related info, company name) and "Don't duplicate data within the attribute". Care
+// lines are left out by FeedSpark's rule (Ray, 7 Oct 2026: the details that matter are the visual
+// ones Google's AI reads — sleeve length, neckline, fit — not a washing instruction).
+const DETAIL_CARE = /\b(care|wash|washing|washable|clean|cleaning|dry[\s-]?clean|iron|ironing|bleach|tumble|launder)/i;
+const DETAIL_OTHER = /^(colou?r|colou?rs|size|sizes|size type|size system|gender|age ?group|age_group|brand|price|sale price|sale|discount|offer|promotion|shipping|delivery|delivery date|availability|stock|condition|gtin|ean|upc|mpn|sku|id|title|description|product highlight)$/i;
+export function detailKind(d, sameAs) {
+  if (!d || !d.n || !d.v) return 'bad';                       // Google requires a name AND a value
+  if (DETAIL_CARE.test(d.n) || DETAIL_CARE.test(d.s || '')) return 'care';
+  if (DETAIL_OTHER.test(d.n.trim())) return 'dup';
+  // a material / pattern line that only repeats the product's own g:material / g:pattern
+  const v = d.v.trim().toLowerCase();
+  if (/^(material|fabric|composition|pattern)$/i.test(d.n.trim()) && sameAs && sameAs.indexOf(v) >= 0) return 'dup';
+  return 'ok';
+}
+// one product's product_detail values → {n: details that describe it, care, dup, bad, names}
+export function detailRead(values, sameAs) {
+  const out = { n: 0, care: 0, dup: 0, bad: 0, names: [] };
+  const seen = new Set();
+  for (const v of values || []) {
+    const d = parseDetail(v);
+    if (!d) continue;
+    const key = (d.n + '\u0001' + d.v).toLowerCase();
+    if (seen.has(key)) { out.dup++; continue; }               // the same detail twice is one detail
+    seen.add(key);
+    const kind = detailKind(d, sameAs);
+    if (kind === 'ok') { out.n++; out.names.push(d.n.trim().toLowerCase()); } else out[kind]++;
+  }
+  return out;
+}
+export function depthBucket(n) { return n >= 6 ? '6+' : String(Math.max(0, n | 0)); }
+// a depth tally {hist: {count: products}, credit, ...} over `rows` products → the scored attribute.
+// cov = the average per-product credit min(count ÷ target, 1) as a percentage; dist = the share of
+// ALL products at each count (0 included — a product with none is part of the catalogue)
+export function depthAttr(key, t, rows) {
+  const spec = ATTR_SPEC.find((s) => s.key === key);
+  if (!t || !t.src || !spec) return { present: false };
+  const target = spec.target, hist = t.hist || {};
+  let credit = 0, filled = 0, full = 0, sum = 0, n = 0;
+  const dist = {};
+  for (const k of DEPTH_KEYS) dist[k] = 0;
+  for (const c of Object.keys(hist)) {
+    const cnt = Math.max(0, Math.round(+c || 0)), m = Math.max(0, Math.round(+hist[c] || 0));
+    if (!m) continue;
+    n += m; sum += cnt * m;
+    credit += Math.min(cnt / target, 1) * m;
+    if (cnt > 0) filled += m;
+    if (cnt >= target) full += m;
+    dist[depthBucket(cnt)] += m;
+  }
+  const tot = Math.max(rows || 0, n);
+  if (!tot) return { present: false };
+  for (const k of DEPTH_KEYS) dist[k] = Math.round((dist[k] / tot) * 1000) / 10;
+  const a = { present: true, filled, full, target, cov: Math.min(100, Math.round((credit / tot) * 1000) / 10),
+    avg: Math.round((sum / tot) * 10) / 10, dist };
+  if (key === 'detail_depth') {
+    a.care = t.care || 0; a.dup = t.dup || 0; a.bad = t.bad || 0;
+    a.names = Object.keys(t.names || {}).map((k) => [k, t.names[k]]).sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1)).slice(0, 10);
+  }
+  return a;
+}
+
+// the push lanes hand over what a browser or the agent computed — a depth reading is stored in this
+// fixed shape only, every number clamped and the detail names bounded (the page escapes them too)
+export function cleanDepth(attrs) {
+  if (!attrs || typeof attrs !== 'object') return attrs;
+  const num = (v, cap) => Math.max(0, Math.min(cap, Math.round((Number(v) || 0) * 10) / 10));
+  const int = (v) => Math.max(0, Math.round(Number(v) || 0));
+  for (const s of ATTR_SPEC) {
+    if (!s.of || !(s.key in attrs)) continue;
+    const a = attrs[s.key];
+    if (!a || typeof a !== 'object' || !a.present) { attrs[s.key] = { present: false }; continue; }
+    const o = { present: true, filled: int(a.filled), full: int(a.full), target: s.target, cov: num(a.cov, 100), avg: num(a.avg, 1000), dist: {} };
+    for (const k of DEPTH_KEYS) o.dist[k] = num(a.dist && a.dist[k], 100);
+    if (s.key === 'detail_depth') {
+      o.care = int(a.care); o.dup = int(a.dup); o.bad = int(a.bad);
+      o.names = (Array.isArray(a.names) ? a.names : [])
+        .filter((x) => Array.isArray(x) && typeof x[0] === 'string').slice(0, 10).map((x) => [x[0].slice(0, 60), int(x[1])]);
+    }
+    attrs[s.key] = o;
+  }
+  return attrs;
 }
 
 /* ---- GPC CATEGORY SCOPE (Ray, 23 Sep 2026, on Hobbycraft's material 47.9% / pattern 43.9%:
@@ -1157,12 +1304,24 @@ export function xmlCollector(meta) {
   const lblHist = {}, ptHist = {};
   let kwCols = [];                       // keyword slots (product_type 2..10), read per product
   const kwT = { filled: 0, str: 0, hash: 0 };
+  // depth (Ray, 7 Oct 2026): images / highlights / descriptive details per product
+  let dImg = [], dHl = [], dDet = [], dSame = [];
+  const depT = { img_depth: { hist: {} }, hl_depth: { hist: {} }, detail_depth: { hist: {}, care: 0, dup: 0, bad: 0, names: {} } };
+  let depNames = 0;
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
     ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
     ptSlots = wantPT ? slotCols(header, 'product_type') : [];
     kwCols = wantPT ? kwSlotCols(header) : [];
+    if (wantPT) {
+      const ac = findAttrCols(header);
+      dImg = (ac.image_link >= 0 ? [ac.image_link] : []).concat(slotCols(header, 'additional_image_link'));
+      dHl = slotCols(header, 'product_highlight');
+      dDet = slotCols(header, 'product_detail');
+      dSame = [ac.material, ac.pattern].filter((i) => i != null && i >= 0);
+      depT.img_depth.src = ac.image_link >= 0; depT.hl_depth.src = dHl.length > 0; depT.detail_depth.src = dDet.length > 0;
+    }
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
     { const ac = findAttrCols(header).availability; avCol = ac == null ? -1 : ac; }
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
@@ -1203,6 +1362,19 @@ export function xmlCollector(meta) {
         for (const ci of kwCols) { const kind = kwValueKind(r[ci]); if (kind === 'kw') kn += kwStrings(r[ci]); else if (kind === 'hash') kh = 1; }
         if (kn) { kwT.filled++; kwT.str += kn; }
         if (kh) kwT.hash++;
+        // depth: one product, one count per measure
+        const vals = (ix) => ix.map((i) => r[i]);
+        const ni = imageCount(vals(dImg)), nh = highlightCount(vals(dHl));
+        depT.img_depth.hist[ni] = (depT.img_depth.hist[ni] || 0) + 1;
+        depT.hl_depth.hist[nh] = (depT.hl_depth.hist[nh] || 0) + 1;
+        const dr = detailRead(vals(dDet), dSame.map((i) => String(r[i] == null ? '' : r[i]).trim().toLowerCase()).filter(Boolean));
+        const dt = depT.detail_depth;
+        dt.hist[dr.n] = (dt.hist[dr.n] || 0) + 1;
+        dt.care += dr.care; dt.dup += dr.dup; dt.bad += dr.bad;
+        for (const nm of dr.names) {   // which details the feed carries — bounded, a name list never grows the scan
+          if (dt.names[nm] != null) dt.names[nm]++;
+          else if (depNames < 200 && nm.length <= 60) { dt.names[nm] = 1; depNames++; }
+        }
       }
       if (attrFilled) gsc.add(r);
       {
@@ -1262,6 +1434,7 @@ export function xmlCollector(meta) {
     const snap = snapshotFromParts({ client: meta.client, market: meta.market, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
     if (attrCols) snap.attrs = applyGpcScope(attrsFromCounts(attrCols, attrPos, countsRow, snap.rows), gsc.counts(), snap.rows);
     if (attrCols) snap.attrs.keywords = keywordAttr(kwCols.length, kwT, snap.rows);
+    if (attrCols) for (const k of ['img_depth', 'hl_depth', 'detail_depth']) snap.attrs[k] = depthAttr(k, depT[k], snap.rows);
     // per-SKU population — only a full read can say it, so only this lane carries it (the
     // gviz lane counts columns, never rows; a sheet-backed feed's card says so)
     snap.labelPop = popProfile(lblHist);
@@ -1287,23 +1460,54 @@ export const INDUSTRY = { 'Reiss': 'Fashion', 'Superdry': 'Fashion', 'Monsoon': 
   'Hobbycraft': 'Arts & Crafts', 'Ryobi': 'Tools & DIY',
   'Estée Lauder': 'Beauty', 'Bobbi Brown': 'Beauty', 'Benefit': 'Beauty', 'Clinique': 'Beauty', 'MAC': 'Beauty', 'Jo Malone': 'Beauty' };
 export const INDUSTRY_PROFILES = {
-  // the apparel five — exactly Google's apparel-market conditions — score even when absent
-  'Fashion':        { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id'], waived: [] },
-  'Footwear':       { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id'], waived: [] },
-  'Beauty':         { expected: ['color', 'item_group_id'], waived: ['size_type', 'size_system'] },
-  'Pet Care':       { expected: [], waived: ['size_type', 'size_system', 'pattern'] },
-  'Sporting Goods': { expected: ['item_group_id'], waived: [] },
-  'Arts & Crafts':  { expected: [], waived: ['size_type', 'size_system'] },
-  'Tools & DIY':    { expected: [], waived: ['size_type', 'size_system', 'pattern'] },
+  // the apparel five — exactly Google's apparel-market conditions — score even when absent.
+  // size_system ★ for apparel (Google, answer 6324502: "Submit this attribute for all apparel
+  // products") and images per product ★ (FeedSpark's 4+ standard) — Ray, 7 Oct 2026
+  'Fashion':        { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id', 'size_system', 'img_depth'], waived: [] },
+  'Footwear':       { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id', 'size_system', 'img_depth'], waived: ['lifestyle_image_link'] },
+  'Beauty':         { expected: ['color', 'item_group_id'], waived: ['size_type', 'size_system', 'lifestyle_image_link'] },
+  'Pet Care':       { expected: [], waived: ['size_type', 'size_system', 'pattern', 'lifestyle_image_link'] },
+  'Sporting Goods': { expected: ['item_group_id'], waived: ['lifestyle_image_link'] },
+  'Arts & Crafts':  { expected: [], waived: ['size_type', 'size_system', 'lifestyle_image_link'] },
+  'Tools & DIY':    { expected: [], waived: ['size_type', 'size_system', 'pattern', 'lifestyle_image_link'] },
+  'Retail':         { expected: [], waived: ['lifestyle_image_link'] },
 };
+/* A SAVED PROFILE PREDATES A NEW DEFAULT (7 Oct 2026). The ⚙ editor saves a brand's or an industry's
+   WHOLE list, so a record saved before a default changed carries no opinion about it — and would
+   silently mask it ("default" in the editor means "in neither list", which then meant the old
+   default). So every record carries the profile version it was saved under (`v`, stamped by the
+   worker on save; none = 1), and a record older than PROFILE_V gets each later version's changes
+   laid over it — EXCEPT where the record itself named that attribute the other way, which is a
+   decision a person made and stands. '*' = every industry not named. */
+export const PROFILE_V = 2;
+export const PROFILE_DELTA = {
+  2: {
+    'Fashion':  { expected: ['size_system', 'img_depth'] },
+    'Footwear': { expected: ['size_system', 'img_depth'], waived: ['lifestyle_image_link'] },
+    '*':        { waived: ['lifestyle_image_link'] },
+  },
+};
+export function profileLayer(rec, ind) {
+  if (!rec) return null;
+  const ex = Array.isArray(rec.expected) ? rec.expected.map(String) : null;
+  const wv = Array.isArray(rec.waived) ? rec.waived.map(String) : null;
+  if (!ex && !wv) return rec;
+  const e = (ex || []).slice(), w = (wv || []).slice();
+  for (let v = (+rec.v || 1) + 1; v <= PROFILE_V; v++) {
+    const d = (PROFILE_DELTA[v] || {})[ind] || (PROFILE_DELTA[v] || {})['*'] || {};
+    for (const k of d.expected || []) if (e.indexOf(k) < 0 && w.indexOf(k) < 0) e.push(k);
+    for (const k of d.waived || []) if (w.indexOf(k) < 0 && e.indexOf(k) < 0) w.push(k);
+  }
+  return Object.assign({}, rec, { expected: e, waived: w });
+}
 export function industryOf(client) { return INDUSTRY[client] || 'Retail'; }
 // merged profile for one brand: industry defaults <- KV industry override <- KV brand
 // override. `overrides` = the KV `goldenprofiles` value { industries: {..}, clients: {..} }.
 export function profileFor(client, overrides) {
   const ind = industryOf(client);
   const o = overrides || {};
-  const base = ((o.industries || {})[ind]) || INDUSTRY_PROFILES[ind] || { expected: [], waived: [] };
-  const cl = (o.clients || {})[client];
+  const base = profileLayer((o.industries || {})[ind], ind) || INDUSTRY_PROFILES[ind] || INDUSTRY_PROFILES.Retail;
+  const cl = profileLayer((o.clients || {})[client], ind);
   const pick = (src, k) => Array.isArray(src && src[k]) ? src[k] : null;
   const expected = pick(cl, 'expected') || pick(base, 'expected') || [];
   const waived = pick(cl, 'waived') || pick(base, 'waived') || [];
@@ -1350,6 +1554,9 @@ export function goldenScore(attrs, profile) {
   let idBest = null;
   for (const s of ATTR_SPEC) {
     if (s.derived && !attrs[s.key]) continue;   // not measured on this read (keywords on a sheet lane, a pre-30-Sep reading)
+    // its depth twin was measured (images / highlights / details per product): the twin is what
+    // counts — one fact, one weight; a reading without the twin keeps the presence reading
+    if (DEPTH_OF[s.key] && attrs[DEPTH_OF[s.key]]) continue;
     const a = attrs[s.key] || { present: false };
     if (s.key === 'gtin' || s.key === 'mpn') {
       if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
@@ -1406,7 +1613,9 @@ export function diffCoverage(base, cur, th) {
     if (s.derived && (!base.attrs[s.key] || !cur.attrs[s.key])) continue;
     const b = base.attrs[s.key] || { present: false };
     const c = cur.attrs[s.key] || { present: false };
-    const disp = s.key;
+    const disp = s.label || s.key;
+    // a depth twin's column appearing or vanishing is its presence attribute's alert, said once there
+    if (s.of && b.present !== c.present) continue;
     const soft = s.req === 'rec' || s.req === 'ai';   // recommended + conversational AI never crit
     // no product in this feed sits in a category Google asks this attribute of: nothing it
     // does can take a product down (GPC scope)
@@ -1779,7 +1988,35 @@ export function histSeries(hist, profile, opts) {
 
 // The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,
 // not an alarm. cov = current fill % when the column exists, null when it's not in the feed.
-export function attrAskEmail(client, mkt, spec, cov) {
+// the depth rows' ask (7 Oct 2026; not PT Guard's depthAskEmail above, which proposes TREE depth) — how many each product carries, not whether the column exists.
+// The /golden page carries the same table (DEPTH_ASK); tools/test_labelguard.mjs holds the two equal
+export const DEPTH_ASK = {
+  img_depth: { what: 'images', why: 'Google allows the main image plus up to ten more per product and asks for the product from different angles and in use. FeedSpark’s standard is four or more images per product — more angles give Shopping and Google’s AI surfaces more to show and to read.',
+    how: 'If the extra shots exist in your DAM or on the product pages, we can map them into the feed from our side — happy to share the product set for sign-off before anything changes in the live feed.' },
+  hl_depth: { what: 'highlights', why: 'Google recommends four to six highlights per product — short selling points it reads on its AI surfaces, such as AI Mode.',
+    how: 'We can draft them per product from your copy and product pages, and share them for sign-off before anything changes in the live feed.' },
+  detail_depth: { what: 'product details', why: 'Product details are the structured facts Google reads on its AI surfaces, such as AI Mode — sleeve length, neckline, fit, fastening. Care instructions and values already sent in other fields (colour, size, material) do not add to them.',
+    how: 'We can propose the details for each product type and fill them from your PIM, the product pages or our AI enrichment, and share the values for sign-off before anything changes in the live feed.' },
+};
+// the share of products carrying `tg` or more, off a depth reading's 0 … 6+ distribution
+export function depthAtLeast(a, tg) {
+  if (!a || !a.dist) return null;
+  let t = 0;
+  for (const b of Object.keys(a.dist)) if ((b === '6+' ? 6 : +b) >= tg) t += +a.dist[b] || 0;
+  return Math.round(t * 10) / 10;
+}
+export function perProductAskEmail(client, mkt, spec, a) {
+  const loc = client + ' ' + String(mkt || '').toUpperCase(), t = DEPTH_ASK[spec.key], at = depthAtLeast(a, spec.target);
+  return {
+    subject: loc + ' — feed data: proposal to add more ' + t.what + ' per product',
+    body: 'Hi team,\n\nA quick recommendation from our feed monitoring. '
+      + (a && a.present ? 'In the ' + loc + ' feed, ' + at + '% of products carry ' + spec.target + ' or more ' + t.what + ' (' + a.avg + ' per product on average).'
+        : 'The ' + loc + ' feed does not currently carry ' + t.what + '.')
+      + ' ' + t.why + '\n\n' + t.how + '\n\nBest regards,\nRay',
+  };
+}
+export function attrAskEmail(client, mkt, spec, cov, a) {
+  if (spec.of && DEPTH_ASK[spec.key]) return perProductAskEmail(client, mkt, spec, a);
   const loc = client + ' ' + String(mkt || '').toUpperCase();
   const disp = 'g:' + spec.key;
   const missing = cov == null;

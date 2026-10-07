@@ -11935,6 +11935,108 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_scanscope.js",
       "pr": 0
+    },
+    {
+      "name": "Golden: depth attributes are read per product (images / highlights / details per product)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function depthAttr(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a measured depth twin scores INSTEAD of its presence row (one fact, one weight)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "if (DEPTH_OF[s.key] && attrs[DEPTH_OF[s.key]]) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: product details — care lines and repeats of other attributes are not counted",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "function detailKind(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: Fashion scores size_system and images per product as best practice (approved 7 Oct 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "'Fashion':        { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id', 'size_system', 'img_depth'], waived: [] },",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a saved profile from an older version gets the later defaults laid over it",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const PROFILE_V = 2;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the client ask for a depth row is a per-product proposal",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "function perProductAskEmail(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the worker serves the profile upgrade table to the page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "upgrade: { v: PROFILE_V, delta: PROFILE_DELTA }",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the push lanes' depth readings are checked whole (cleanDepth)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "cleanDepth(raw.attrs)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: a depth plan task is filed in words, never a key",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const dep = ATTR_SPEC.find((s) => s.key === attr && s.of);",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the depth twin replaces its presence row in the dial",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (DEPTH_OF[s.k] && attrs[DEPTH_OF[s.k]]) return;   // its depth twin counts instead",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: each depth row carries its 0 … 6+ breakdown card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function depCard(x, a)",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the presence row says the depth row scores instead",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "scored by depth ↓",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: the profile upgrade twin (layerOf)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function layerOf(rec, ind)",
+      "pr": 0
+    },
+    {
+      "name": "Golden page: not measured never reads missing for a depth row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "' scores until the next XML scan'",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: Google's 500 x 500 minimum from 31 Jan 2027",
+      "file": "docs/pixel_engine.js",
+      "pattern": "min2027: 500, from2027: Date.UTC(2027, 0, 31)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the 2027 minimum is its own bucket",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "['small27', 'Under 500 px — Google from 31 Jan 2027'",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the depth tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grdepth.js",
+      "pr": 0
     }
   ]
 }

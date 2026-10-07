@@ -386,7 +386,9 @@ Calibrated on real catalogues (6 Oct 2026, read in session, nothing committed):
 
 | Finding | Severity | Source |
 |---|---|---|
-| Under 100 × 100 px (250 × 250 for apparel) | fail | Google's stated requirement |
+| Under 100 × 100 px (250 × 250 for apparel) — until 30 Jan 2027 | fail | Google's stated requirement |
+| Under 500 × 500 px — until 30 Jan 2027 | warn, naming the date | Google's stated requirement from 31 Jan 2027 |
+| Under 500 × 500 px — from 31 Jan 2027, every product, apparel or not | fail | Google's stated requirement (answer 6324350: "new image size requirements of at least 500 x 500 pixels for all products beginning January 31, 2027") |
 | Over 64 megapixels | fail | Google's stated requirement |
 | Over 16 MB | fail | Google's stated requirement |
 | Not JPEG / WebP / PNG / GIF / BMP / TIFF | fail | Google's stated requirement |

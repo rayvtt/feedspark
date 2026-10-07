@@ -631,7 +631,10 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   delete s.attrs.keywords;
 
   const gs = LG.goldenScore(s.attrs);
-  eq('goldenScore: weighted completeness', gs.score, 75.5);
+  // 73.7 since 7 Oct 2026: lifestyle_image_link joined the roster as a recommended attribute, absent
+  // from this fixture, and with NO profile every recommended attribute counts (a profile waives it
+  // outside Fashion — see the depth block)
+  eq('goldenScore: weighted completeness', gs.score, 73.7);
   eq('goldenScore: no required attr missing', gs.reqMissing, []);
   eq('goldenScore: conditional gaps flagged', gs.condMissing, ['mpn', 'condition', 'gender', 'age_group']);
   ok('goldenScore: identifier pair merges into one part', gs.parts.filter((p) => p.key === 'gtin/mpn').length === 1 &&
@@ -686,13 +689,14 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 /* ---------- industry scoring profiles (the best-practice layer) ---------- */
 {
   const pR = LG.profileFor('Reiss', null);
-  eq('profileFor: Fashion defaults = the apparel five', [pR.industry, pR.expected],
-    ['Fashion', ['color', 'size', 'gender', 'age_group', 'item_group_id']]);
+  eq('profileFor: Fashion defaults = the apparel five + size_system + images per product (7 Oct 2026)', [pR.industry, pR.expected],
+    ['Fashion', ['color', 'size', 'gender', 'age_group', 'item_group_id', 'size_system', 'img_depth']]);
   const pY = LG.profileFor('YuMOVE', null);
-  eq('profileFor: Pet Care waives apparel-only recs', [pY.industry, pY.waived], ['Pet Care', ['size_type', 'size_system', 'pattern']]);
-  eq('profileFor: unknown brand -> Retail, empty profile', LG.profileFor('Acme', null), { industry: 'Retail', expected: [], waived: [], qwaived: [] });
-  const ov = { industries: { Fashion: { expected: ['color'], waived: ['pattern'] } },
-    clients: { Reiss: { expected: ['color', 'question_and_answer'] } } };
+  eq('profileFor: Pet Care waives apparel-only recs (lifestyle images are Fashion only)', [pY.industry, pY.waived], ['Pet Care', ['size_type', 'size_system', 'pattern', 'lifestyle_image_link']]);
+  eq('profileFor: unknown brand -> Retail, lifestyle images waived', LG.profileFor('Acme', null), { industry: 'Retail', expected: [], waived: ['lifestyle_image_link'], qwaived: [] });
+  // v:2 = saved under the current defaults, so nothing is laid over them (the migration block below)
+  const ov = { industries: { Fashion: { expected: ['color'], waived: ['pattern'], v: 2 } },
+    clients: { Reiss: { expected: ['color', 'question_and_answer'], v: 2 } } };
   eq('profileFor: brand override beats industry override beats default',
     LG.profileFor('Reiss', ov).expected, ['color', 'question_and_answer']);
   eq('profileFor: industry override applies to sibling brands', LG.profileFor('Superdry', ov),
@@ -710,7 +714,7 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('qwaivedFor: the rule ids for ONE attribute, prefix stripped', LG.qwaivedFor(LG.profileFor('Reiss', ovq), 'title'), ['promo', 'no-brand']);
   eq('qwaivedFor: nothing for an attribute with no waiver, and nothing without a profile', [LG.qwaivedFor(LG.profileFor('Reiss', ovq), 'color'), LG.qwaivedFor(null, 'title')], [[], []]);
   eq('profileFor: required + identifier attrs can never be profiled',
-    LG.profileFor('Reiss', { clients: { Reiss: { expected: ['title', 'gtin', 'color'], waived: [] } } }).expected, ['color']);
+    LG.profileFor('Reiss', { clients: { Reiss: { expected: ['title', 'gtin', 'color'], waived: [], v: 2 } } }).expected, ['color']);
   eq('profileFor: expected beats waived on a clash',
     LG.profileFor('Reiss', { clients: { Reiss: { expected: ['color'], waived: ['color', 'material'] } } }).waived, ['material']);
 }
@@ -729,26 +733,28 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   delete s.attrs.keywords;   // the profile maths is pinned on the spec attributes (keywords: own block)
   const apparel = LG.profileFor('Reiss', null);
   const gs = LG.goldenScore(s.attrs, apparel);
-  eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 68.8);
+  // 65.9 since 7 Oct 2026: the Fashion profile also stars size_system (absent here, ×2) and the
+  // fixture carries no lifestyle_image_link (×1); images per product is not measured on a gviz read
+  eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 65.9);
   ok('profiled parts carry the best-practice flag', gs.parts.some((p) => p.key === 'gender' && p.bp && p.missing && p.w === 2));
   eq('profile echoed on the result', gs.profile.industry, 'Fashion');
   const waivedGs = LG.goldenScore(s.attrs, { industry: 'Pet Care', expected: [], waived: ['size_type', 'size_system', 'pattern'] });
-  eq('goldenScore + waivers: irrelevant recs drop out and lift the score', waivedGs.score, 81.5);
+  eq('goldenScore + waivers: irrelevant recs drop out and lift the score', waivedGs.score, 79.4);
   const aiIn = LG.goldenScore(Object.assign({}, s.attrs, { question_and_answer: { present: true, filled: 500, cov: 50 } }),
     { industry: 'Fashion', expected: ['question_and_answer'], waived: [] });
   ok('goldenScore: an expected AI attr joins the score at weight 1',
     aiIn.parts.some((p) => p.key === 'question_and_answer' && p.w === 1 && p.bp) && aiIn.score !== LG.goldenScore(s.attrs).score);
-  eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 75.5);
+  eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 73.7);
   // ★ on a REC attr must MOVE the number (Ray, 16 Sep 2026: sale_price "doesn't actually
   // do anything") — rec attrs always score, so expected lifts them to weight 2.
   const recStar = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['sale_price'], waived: [] });
-  eq('goldenScore + ★ rec: sale_price at 24% weighs double, score drops', recStar.score, 74.3);
+  eq('goldenScore + ★ rec: sale_price at 24% weighs double, score drops', recStar.score, 72.6);
   ok('★ rec part carries w:2 + bp', recStar.parts.some((p) => p.key === 'sale_price' && p.w === 2 && p.bp && !p.missing));
   const recStarGone = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['product_highlight'], waived: [] });
-  eq('goldenScore + ★ absent rec: the gap counts at weight 2', recStarGone.score, 73.7);
+  eq('goldenScore + ★ absent rec: the gap counts at weight 2', recStarGone.score, 72);
   ok('★ absent rec part flagged missing at w:2', recStarGone.parts.some((p) => p.key === 'product_highlight' && p.w === 2 && p.bp && p.missing));
   eq('goldenScore + waived rec: sale_price drops out and lifts the score',
-    LG.goldenScore(s.attrs, { industry: 'Fashion', expected: [], waived: ['sale_price'] }).score, 76.8);
+    LG.goldenScore(s.attrs, { industry: 'Fashion', expected: [], waived: ['sale_price'] }).score, 75);
 }
 {
   const mail = LG.goldenAlertEmail('Reiss · GB', [{ sev: 'crit', msg: 'availability coverage dropped 12pp' }], 'https://x/golden');
@@ -1644,6 +1650,122 @@ console.log('\n── keywords in the Golden Score (Ray, 30 Sep 2026)');
   ok('…in BOTH of its stream loops, and stamps the reading so an old one says so',
     (kc.match(/var kk=kwKind\(r\[kwc\[ki\]\]\); if\(kk==='kw'\)sflag=1; else if\(kk==='hash'\)sid=1;/g) || []).length === 2 &&
     (kc.match(/sat[=:]\{n:satN,cols:kwc\.length,v:SAT_V,id:satId\}/g) || []).length === 2 && /var old=\(idxS\.sat\.v\|\|1\)<SAT_V;/.test(kc));
+}
+
+
+console.log('\n── depth in the Golden Score: images, highlights and details per product (Ray, 7 Oct 2026)');
+{
+  const FA = (await import('node:module')).createRequire(import.meta.url)('../docs/feedlab_engine.js');
+  // the readers — one product's raw values in, how many count out
+  eq('imageCount: the main image + every additional one, the same URL once, a comma list split, non-URLs ignored',
+    LG.imageCount(['https://x/a.jpg', 'https://x/a.jpg', 'https://x/b.jpg', 'https://x/c.jpg, https://x/d.jpg', '', 'not a url']), 4);
+  eq('highlightCount: repeated tags and the ||| form, blanks and case-blind repeats dropped',
+    LG.highlightCount(['Soft cotton', 'soft cotton', 'Relaxed fit|||Machine washable', '', '  ']), 3);
+  eq('parseDetail reads the XML lane\'s nested form', LG.parseDetail('<g:section_name>Design</g:section_name><g:attribute_name>Sleeve length</g:attribute_name><g:attribute_value>Long sleeve</g:attribute_value>'),
+    { s: 'Design', n: 'Sleeve length', v: 'Long sleeve' });
+  eq('…and a text feed\'s section:name:value form, a colon inside the value kept', LG.parseDetail('Fit:Rise:High: 28cm'), { s: 'Fit', n: 'Rise', v: 'High: 28cm' });
+  eq('…and an empty section', LG.parseDetail(':Warranty:1 year'), { s: '', n: 'Warranty', v: '1 year' });
+  const K = (n, v, s2, same) => LG.detailKind({ s: s2 || '', n, v }, same);
+  eq('detailKind: describing details count; care lines, repeats of other attributes and half-written lines do not',
+    [K('Sleeve length', 'Long'), K('washing type', 'Machine wash'), K('Fabric', 'Soft', 'Care'), K('Colour', 'Navy'), K('size', 'M'),
+      K('Material', 'cotton', '', ['cotton']), K('Material', 'recycled', 'Sustainability', ['cotton']), K('Neckline', ''), K('', 'x')],
+    ['ok', 'care', 'care', 'dup', 'dup', 'dup', 'ok', 'bad', 'bad']);
+  const dr = LG.detailRead(['Design:Sleeve length:Long sleeve', 'Design:Sleeve length:Long sleeve', 'Care:Washing type:30°', 'Design:Neck shape:Round'], []);
+  ok('detailRead: one product\'s describing details, the same detail twice once, the names kept', dr.n === 2 && dr.dup === 1 && dr.care === 1 && dr.names.join() === 'sleeve length,neck shape', dr);
+  const da = LG.depthAttr('img_depth', { src: true, hist: { 1: 1, 2: 1, 4: 1, 6: 1 } }, 4);
+  ok('depthAttr: each product scores count ÷ target capped (¼ + ½ + 1 + 1 over 4 = 68.75%), full at 4+, the average over every product',
+    da.present && da.cov === 68.8 && da.full === 2 && da.avg === 3.3 && da.target === 4 && da.dist['1'] === 25 && da.dist['6+'] === 25 && da.dist['0'] === 0, da);
+  ok('…and a feed with no such column is measured ABSENT (scored 0 like any missing recommended attribute)', LG.depthAttr('hl_depth', { src: false, hist: {} }, 10).present === false);
+
+  // a real XML stream through the shared collector
+  const im = (n) => '<g:image_link>https://cdn/x' + n + '_1.jpg</g:image_link>' + Array.from({ length: n - 1 }, (_, i) => '<g:additional_image_link>https://cdn/x' + n + '_' + (i + 2) + '.jpg</g:additional_image_link>').join('');
+  const hl = (n) => Array.from({ length: n }, (_, i) => '<g:product_highlight>Point ' + i + '</g:product_highlight>').join('');
+  const pd = (names) => names.map((nm) => '<g:product_detail><g:section_name>Design</g:section_name><g:attribute_name>' + nm + '</g:attribute_name><g:attribute_value>v ' + nm + '</g:attribute_value></g:product_detail>').join('');
+  const item = (id, imgs, hls, dets) => '<item><g:id>' + id + '</g:id><g:title>T ' + id + '</g:title><g:material>cotton</g:material>' + im(imgs) + hl(hls) + pd(dets) + '</item>';
+  const xml = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' +
+    item('a', 2, 4, ['Washing type']) + item('b', 5, 2, ['Sleeve length', 'Neck shape', 'Fit type', 'washing type']) +
+    item('c', 1, 0, []) + item('d', 4, 6, ['Sleeve length', 'Colour']) + '</channel></rss>';
+  const col = LG.xmlCollector({ client: 'Monsoon', market: 'gb' });
+  const px = FA.createXmlParser(col.onRow); px.push(xml); px.end();
+  const A = col.finish().snap.attrs;
+  ok('the XML scan counts images per product: 2 · 5 · 1 · 4 → (½ + 1 + ¼ + 1) ÷ 4 = 68.8%, 2 at 4+', A.img_depth && A.img_depth.cov === 68.8 && A.img_depth.full === 2, A.img_depth);
+  ok('…highlights per product: 4 · 2 · 0 · 6 → (1 + ½ + 0 + 1) ÷ 4 = 62.5%', A.hl_depth && A.hl_depth.cov === 62.5 && A.hl_depth.dist['0'] === 25, A.hl_depth);
+  ok('…details that describe the product: 0 · 3 · 0 · 1 (care lines and a colour line left out) → (0 + 1 + 0 + ⅓) ÷ 4',
+    A.detail_depth && A.detail_depth.cov === 33.3 && A.detail_depth.care === 2 && A.detail_depth.dup === 1 && A.detail_depth.names[0][0] === 'sleeve length' && A.detail_depth.names[0][1] === 2, A.detail_depth);
+  ok('…while the presence attributes still read FILLED (that is the gap depth closes)', A.product_detail.cov === 75 && A.additional_image_link.cov === 75, [A.product_detail, A.additional_image_link]);
+  const colFb = LG.xmlCollector({ client: 'Monsoon', market: 'gb-fb' });
+  const pf = FA.createXmlParser(colFb.onRow); pf.push(xml); pf.end();
+  ok('a Meta feed carries no depth read (no Golden Record at all)', !colFb.finish().snap.attrs);
+
+  // the score: a measured depth twin replaces its presence attribute — one fact, one weight
+  const fash = LG.profileFor('Monsoon', null), pet = LG.profileFor('YuMOVE', null);
+  const g = LG.goldenScore(A, fash), keys = g.parts.map((x) => x.key);
+  ok('measured, the depth twins score and the presence attributes do not', ['img_depth', 'hl_depth', 'detail_depth'].every((k) => keys.includes(k)) &&
+    !['additional_image_link', 'product_highlight', 'product_detail'].some((k) => keys.includes(k)), keys);
+  ok('Fashion stars images per product (×2) and size_system (×2); details and highlights stay ×1', g.parts.find((x) => x.key === 'img_depth').w === 2 &&
+    g.parts.find((x) => x.key === 'size_system').w === 2 && g.parts.find((x) => x.key === 'detail_depth').w === 1 && g.parts.find((x) => x.key === 'hl_depth').w === 1);
+  const pres = {}; Object.keys(A).forEach((k) => { if (!/_depth$/.test(k)) pres[k] = A[k]; });
+  const gp = LG.goldenScore(pres, fash).parts.map((x) => x.key);
+  ok('not measured (a sheet-read feed, a reading from before), the presence attributes score as before', ['additional_image_link', 'product_highlight', 'product_detail'].every((k) => gp.includes(k)) && !gp.some((k) => /_depth$/.test(k)), gp);
+  ok('lifestyle images count ×1 for Fashion and are waived everywhere else', g.parts.some((x) => x.key === 'lifestyle_image_link' && x.w === 1) &&
+    !LG.goldenScore(A, pet).parts.some((x) => x.key === 'lifestyle_image_link') && LG.profileFor('Acme', null).waived.includes('lifestyle_image_link') &&
+    LG.profileFor('Schuh', null).waived.includes('lifestyle_image_link'));
+
+  // a saved profile predates the new defaults: the later defaults are laid over it, a stated choice stands
+  const old = { industries: { Fashion: { expected: ['color'], waived: ['pattern'] } }, clients: { Reiss: { expected: ['color', 'gender'], waived: ['size_system'] }, YuMOVE: { expected: ['lifestyle_image_link'], waived: [] } } };
+  eq('a pre-version Fashion override gains size_system + images per product', LG.profileFor('Superdry', old).expected, ['color', 'size_system', 'img_depth']);
+  ok('…but a brand that WAIVED size_system keeps it waived — a decision a person made stands',
+    LG.profileFor('Reiss', old).waived.includes('size_system') && !LG.profileFor('Reiss', old).expected.includes('size_system') && LG.profileFor('Reiss', old).expected.includes('img_depth'));
+  ok('…a brand that starred lifestyle images keeps it starred, never waived on top', LG.profileFor('YuMOVE', old).expected.includes('lifestyle_image_link') && !LG.profileFor('YuMOVE', old).waived.includes('lifestyle_image_link'));
+  eq('…and a record saved under the current version is read exactly as saved', LG.profileFor('Superdry', { industries: { Fashion: { expected: ['color'], waived: [], v: LG.PROFILE_V } } }).expected, ['color']);
+  ok('…a rule-waiver-only record is untouched by the upgrade', LG.profileLayer({ qwaived: ['title:promo'] }, 'Fashion').expected === undefined);
+
+  // history: the first scan that measures depth is a change of measurement, never a move
+  const r0 = LG.histReading({ t: 1, rows: 4, attrs: pres }), r1 = LG.histReading({ t: 2, rows: 4, attrs: A });
+  ok('a reading with depth and one without are on different bases', LG.histBasis(r0) !== LG.histBasis(r1) && 'img_depth' in r1.cov && !('img_depth' in r0.cov));
+  // alerts: a depth DROP warns (recommended, never crit) under its own name; its column coming or going is the presence row's alert
+  const drop = LG.diffCoverage({ attrs: { img_depth: { present: true, cov: 90 } } }, { attrs: { img_depth: { present: true, cov: 70 } } });
+  ok('a depth drop warns under its own words', drop.length === 1 && drop[0].sev === 'warn' && /^images per product coverage dropped 20pp/.test(drop[0].msg), drop);
+  ok('…its column coming or going is said once, on the presence row', LG.diffCoverage({ attrs: { hl_depth: { present: true, cov: 50 } } }, { attrs: { hl_depth: { present: false } } }).length === 0);
+
+  // the push lanes store a fixed shape
+  const dirty = { img_depth: { present: true, cov: 140, avg: -2, full: '7', dist: { '1': 'x', '6+': 30, evil: 1 }, extra: '<script>' },
+    detail_depth: { present: true, cov: 10, names: [['<b>sleeve</b>'.repeat(10), 5], 'junk', ['ok', 'x']].concat(Array(20).fill(['n', 1])) }, hl_depth: 'nope', title: { present: true, cov: 100 } };
+  const cl = LG.cleanDepth(dirty);
+  ok('cleanDepth clamps every number, keeps the fixed keys, drops what it does not know', cl.img_depth.cov === 100 && cl.img_depth.avg === 0 && cl.img_depth.full === 7 &&
+    cl.img_depth.dist['1'] === 0 && !('evil' in cl.img_depth.dist) && !('extra' in cl.img_depth) && cl.img_depth.target === 4, cl.img_depth);
+  ok('…bounds the detail names (≤10, ≤60 characters, [string, count] only) and turns junk into "absent"',
+    cl.detail_depth.names.length === 10 && cl.detail_depth.names.every((x) => typeof x[0] === 'string' && x[0].length <= 60) && cl.hl_depth.present === false && cl.title.cov === 100, cl.detail_depth.names.slice(0, 3));
+
+  // the page: the same roster, score, profile upgrade and client ask as the engine
+  const gr = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  const cut = (a, b) => { const i = gr.indexOf(a), j = gr.indexOf(b, i); if (i < 0 || j < 0) throw new Error('page block not found: ' + a); return gr.slice(i, j); };
+  const twin = new Function(cut('  var SPEC = [', '  // the category each scoped') + cut('  function scopeShare(a)', '  // industry benchmark from the estate index') +
+    cut('  function attrsFromCov(cov, sc, rows)', '  function rescoreEstate()') + cut('  var DEPTH_ASK = {', '  function askKey(') +
+    '; return { goldenScore: goldenScore, attrsFromCov: attrsFromCov, SPEC: SPEC, ask: attrAskEmail, DEPTH_OF: DEPTH_OF };')();
+  const profs = [fash, pet, LG.profileFor('Schuh', null), null];
+  ok('the /golden page scores depth exactly as the engine does — measured, not measured, every profile',
+    [A, pres].every((a) => profs.every((pp) => twin.goldenScore(a, pp) === LG.goldenScore(a, pp).score)));
+  const ix = LG.goldenCovIndex(A);
+  ok('…and through the estate index (the depth keys survive the round trip)', profs.every((pp) => twin.goldenScore(twin.attrsFromCov(ix.cov, ix.sc, 4), pp) === LG.goldenScore(A, pp).score));
+  eq('the page roster carries the engine\'s attributes, in the engine\'s order', twin.SPEC.map((x) => x.k), LG.ATTR_SPEC.map((x) => x.key));
+  ok('…the depth twins with the same targets and the same attribute they replace', LG.ATTR_SPEC.filter((x) => x.of).every((x) => { const y = twin.SPEC.find((z) => z.k === x.key); return y && y.of === x.of && y.tg === x.target && !!y.h === !!x.house; }));
+  const asksSame = LG.ATTR_SPEC.filter((x) => x.of).every((x) => { const y = twin.SPEC.find((z) => z.k === x.key); const a2 = A[x.key];
+    return JSON.stringify(twin.ask('Monsoon', 'gb', y, a2.cov, a2)) === JSON.stringify(LG.attrAskEmail('Monsoon', 'gb', x, a2.cov, a2)); });
+  ok('the client ask for a depth row reads identically from the page and the engine', asksSame);
+  const ask = LG.attrAskEmail('Monsoon', 'gb', LG.ATTR_SPEC.find((x) => x.key === 'img_depth'), 68.8, A.img_depth);
+  ok('…and asks about images per product in words, never a key', /proposal to add more images per product/.test(ask.subject) && /50% of products carry 4 or more images/.test(ask.body) && !/img_depth/.test(ask.subject + ask.body), ask);
+  const lay = new Function('PROF', cut('  function layerOf(rec, ind) {', '  function industryOfC(c)') + '; return layerOf;')({ upgrade: { v: LG.PROFILE_V, delta: LG.PROFILE_DELTA } });
+  ok('the page lays the later defaults over an old saved profile exactly as the engine does',
+    [['Fashion', old.industries.Fashion], ['Fashion', old.clients.Reiss], ['Pet Care', old.clients.YuMOVE], ['Footwear', { expected: [], waived: [] }], ['Fashion', { expected: ['color'], waived: [], v: 2 }]]
+      .every(([ind, rec]) => JSON.stringify(lay(rec, ind)) === JSON.stringify(LG.profileLayer(rec, ind))));
+
+  // the worker: the profile route hands the upgrade table out and stamps a save; the push lanes clean depth
+  const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('GET /api/golden/profile serves the upgrade table the page applies', /upgrade: \{ v: PROFILE_V, delta: PROFILE_DELTA \}/.test(wk));
+  ok('a profile save is stamped with the version it was saved under; a rule waiver keeps the record\'s own', /waived: clean\(b\.waived\), v: PROFILE_V \}/.test(wk) && /if \(prev\.v != null\) cur\.v = prev\.v;/.test(wk));
+  ok('a pushed snapshot\'s depth readings are cleaned before they are stored', /attrs: cleanDepth\(raw\.attrs\)/.test(wk));
+  ok('a depth row\'s plan task is named in words', /'Golden Record Fix - ' \+ dep\.label\.charAt\(0\)\.toUpperCase\(\) \+ dep\.label\.slice\(1\)/.test(wk));
 }
 
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);

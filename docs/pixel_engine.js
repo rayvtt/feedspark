@@ -23,7 +23,10 @@
   var SAMPLE = 256;            // the long side the page draws an image at before reading it
   // GOOGLE'S IMAGE REQUIREMENTS (Merchant Center, image_link): 100 x 100 px at least, 250 x 250 for apparel,
   // no more than 64 megapixels, no more than 16 MB; JPEG, WebP, PNG, GIF (not animated), BMP or TIFF.
-  var REQ = { min: 100, minApparel: 250, maxMp: 64, maxBytes: 16 * 1024 * 1024 };
+  // FROM 31 JAN 2027 the minimum is 500 x 500 for EVERY product (answer 6324350: "new image size requirements
+  // of at least 500 x 500 pixels for all products beginning January 31, 2027" — the page names no separate
+  // apparel minimum). Until that date an image under it is a WARNING naming the date; from it, a fail.
+  var REQ = { min: 100, minApparel: 250, min2027: 500, from2027: Date.UTC(2027, 0, 31), maxMp: 64, maxBytes: 16 * 1024 * 1024 };
   var FORMATS = { 'image/jpeg': 'JPEG', 'image/jpg': 'JPEG', 'image/pjpeg': 'JPEG', 'image/webp': 'WebP', 'image/png': 'PNG', 'image/gif': 'GIF',
     'image/bmp': 'BMP', 'image/x-ms-bmp': 'BMP', 'image/tiff': 'TIFF' };
   // FeedSpark's own working thresholds — labelled as ours wherever they are shown
@@ -167,8 +170,10 @@
     o = o || {};
     var out = [];
     if (!r || r.err) return out;
-    var min = o.apparel ? REQ.minApparel : REQ.min;
-    if (r.w < min || r.h < min) out.push({ k: 'small', sev: 'fail', src: 'google', t: r.w + ' × ' + r.h + ' px is under Google\'s minimum of ' + min + ' × ' + min + (o.apparel ? ' for apparel' : '') });
+    var now = o.now != null ? +o.now : Date.now(), y27 = now >= REQ.from2027;
+    var min = y27 ? REQ.min2027 : (o.apparel ? REQ.minApparel : REQ.min);
+    if (r.w < min || r.h < min) out.push({ k: 'small', sev: 'fail', src: 'google', t: r.w + ' × ' + r.h + ' px is under Google\'s minimum of ' + min + ' × ' + min + (o.apparel && !y27 ? ' for apparel' : '') });
+    else if (!y27 && (r.w < REQ.min2027 || r.h < REQ.min2027)) out.push({ k: 'small27', sev: 'warn', src: 'google', t: r.w + ' × ' + r.h + ' px — Google\'s minimum rises to ' + REQ.min2027 + ' × ' + REQ.min2027 + ' for every product on 31 Jan 2027; under it the image will not be shown' });
     if (r.w * r.h > REQ.maxMp * 1e6) out.push({ k: 'huge', sev: 'fail', src: 'google', t: 'over Google\'s 64-megapixel limit' });
     if (r.bytes > REQ.maxBytes) out.push({ k: 'heavy', sev: 'fail', src: 'google', t: 'over Google\'s 16 MB file limit' });
     if (r.fmt && ['JPEG', 'WebP', 'PNG', 'GIF', 'BMP', 'TIFF'].indexOf(r.fmt) < 0) out.push({ k: 'format', sev: 'fail', src: 'google', t: r.fmt + ' is not a format Google accepts (JPEG, WebP, PNG, GIF, BMP, TIFF)' });
