@@ -12348,6 +12348,18 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grdepth.js",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: tier preview — the catalogue fills in Today → Tier 1 → Tier 2 (animated bars, score, swept rows)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function renderPreview(",
+      "pr": 0
+    },
+    {
+      "name": "Pricer engine: projection.fixed names the attributes an option fills (the tier preview reads it)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "fixed: Object.keys(fix)",
+      "pr": 0
     }
   ]
 }

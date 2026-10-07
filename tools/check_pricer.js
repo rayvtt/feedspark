@@ -106,6 +106,17 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the live read counted the synthetic catalogue\'s 12 parent products', live.counted === 12, live.counted);
     ok('Tier 1 and Tier 2 cards are drawn', live.cards[0] === 'go' && live.cards[1] === 'go+ar', live.cards);
     ok('Tier 2 one-off < Tier 1 + AI Readiness bought apart (blocks rounded once)', live.t2 < live.t1 + live.ar, [live.t2, live.t1, live.ar]);
+    // the tier preview: the catalogue fills in as the option changes (bars, the score, the swept rows)
+    const pv = async (opt) => { await p.click('#svc-prev [data-pv="' + opt + '"]'); await p.waitForTimeout(1300); return p.evaluate((o) => {
+      const rows = Array.from(document.querySelectorAll('#svc-prev .pv-r'));
+      const q = o === 'now' ? null : window.__PZX.PQ[o];
+      return { full: rows.filter((r) => r.querySelector('.pv-v').textContent === '100%').length, pop: rows.filter((r) => r.classList.contains('pop')).length,
+        score: document.querySelector('#svc-prev .pv-s').textContent, want: q ? q.perMarket[0].projected.after : window.__PZX.SV.audits[0].audit.golden.score,
+        fixed: q ? q.perMarket[0].projected.fixed.length : 0, pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv') }; }, opt); };
+    const v0 = await pv('now'), v1 = await pv('go'), v2 = await pv('go+ar');
+    ok('the tier preview fills more attributes Today → Tier 1 → Tier 2, each row the engine says the option fills', v0.full <= v1.full && v1.full < v2.full && v1.fixed > 0 && v2.fixed > v1.fixed, [v0, v1, v2]);
+    ok('the preview score lands on the engine\'s projected Golden Score for each option, and the changed rows sweep', +v1.score === +(+v1.want).toFixed(1) && +v2.score === +(+v2.want).toFixed(1) && v2.pop > 0 && v2.pressed === 'go+ar', [v1, v2]);
+    if (vp === 1440 && process.env.PZ_SHOTS) await (await p.$('#svc-prev')).screenshot({ path: process.env.PZ_SHOTS + '/preview_t2.png' });
     // a market whose feed cannot be read
     await p.click('.mchip[data-m="de"]');
     await p.waitForFunction(() => window.__PZX && window.__PZX.FAILED['Northwind|de'], null, { timeout: 10000 });
