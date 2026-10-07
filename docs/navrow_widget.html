@@ -39,27 +39,32 @@
     border-top: 1px solid var(--line, #E6E6E6);
   }
   /* flex-basis 0 + min-width 0: for line-breaking the nav is zero wide, so the ▦ always shares its
-     line; the nav then grows to fill it, and only its own icons wrap inside it on a narrow window */
+     line; the nav then grows to fill it. ONE ROW WHATEVER THE COUNT (7 Oct 2026 — the 24th module,
+     Restock, broke the row at 1100px and 900px by 5px and 3px): a WRAPPING row breaks the moment one
+     more icon arrives at a width the breakpoints below were tuned for, so the icons no longer wrap
+     inside the nav — they SHRINK on one line (a tile's width is its flex-basis, a 24px floor keeps the
+     hover target), and the breakpoints below only size the glyph and the ▦ to match. */
   body.fcc-navrow .topbar-in > #tb-modules {
     order: 90; flex: 1 1 0; width: auto; min-width: 0; margin: 0 !important; padding: 0;
-    display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px;
+    display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 3px;
   }
+  body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }
   /* the ▦ bundle at the row's end, behind a hairline, dressed as one more tile */
   body.fcc-navrow .topbar-in > #fcc-apps {
     order: 91; flex: none; margin: 0 0 0 6px !important; padding-left: 8px;
     border-left: 1px solid var(--line, #E6E6E6);
   }
   body.fcc-navrow #fcc-apps-btn { width: 38px; height: 38px; border: none; border-radius: 10px; }
-  /* a narrow desktop window: nineteen tiles plus the ▦ outgrow ~900px at 38px, so the tiles compact
-     to 34px there rather than the row breaking in two */
+  /* a narrow desktop window: the tiles already shrink to fit (above); these steps size the GLYPH and the
+     ▦ down with them so a 34px tile is not a 19px icon with no air */
   @media (max-width: 1040px) {
     body.fcc-navrow .topbar-in > #tb-modules { gap: 2px; }
     body.fcc-navrow .topbar-in > #tb-modules a.tbm, body.fcc-navrow #fcc-apps-btn { width: 34px; height: 34px; border-radius: 9px; }
     body.fcc-navrow .topbar-in > #tb-modules a.tbm svg, body.fcc-navrow #fcc-apps-btn svg { width: 17px; height: 17px; }
     body.fcc-navrow .topbar-in > #fcc-apps { margin-left: 4px !important; padding-left: 6px; }
   }
-  /* …and once more under 960px: twenty-three tiles (the Catalogue made it 23) outgrow a 900px window
-     even at 34px, so they step down to 32px with a 1px gap — still one row, the ▦ still at its end */
+  /* …and once more under 960px: 32px with a 1px gap — the shrink rule above keeps the row whole past
+     this too; this step only keeps the glyph in proportion */
   @media (max-width: 960px) {
     body.fcc-navrow .topbar-in > #tb-modules { gap: 1px; }
     body.fcc-navrow .topbar-in > #tb-modules a.tbm, body.fcc-navrow #fcc-apps-btn { width: 32px; height: 32px; border-radius: 8px; }

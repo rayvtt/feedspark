@@ -11181,7 +11181,7 @@
     {"name": "Catalogue: the 7-day read is called again until whole", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }", "pr": 0},
     {"name": "Catalogue: the inspector's own Google Ads line", "file": "docs/FeedSpark_Catalog.html", "pattern": "function inspAdsHtml(i) {", "pr": 0},
     {"name": "Catalogue engine: Ads join is the product id, case-blind; rates from the sums", "file": "docs/catalog_engine.js", "pattern": "function adsRates(v) {", "pr": 0},
-    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh) {", "pr": 0},
+    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (rec.sig && rec.sig !== sig) { restarted = true; return false; }", "pr": 0},
     {"name": "Worker: /api/catalog/ads", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/ads') {", "pr": 0},
     {"name": "Deck export: stacked + donut native charts", "file": "tools/deck_to_pptx.py", "pattern": "\"donut\": XL_CHART_TYPE.DOUGHNUT", "pr": 568},
     {"name": "Deck export: chart left, next table right (data-chart-side)", "file": "tools/deck_to_pptx.py", "pattern": "side = blocks[i][1]; i += 1", "pr": 568},
@@ -11686,6 +11686,25 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "⏱ auto 12:00 UK · last ",
       "pr": 602
-    }
+    },
+    {"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
+    {"name": "Restock: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')", "pr": 0},
+    {"name": "Restock: the Catalogue's Ads lane reads by PERIOD", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh, period) {", "pr": 0},
+    {"name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();", "pr": 0},
+    {"name": "Restock: /api/restock/* scoped like /api/catalog, PUT only on the ledger", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {", "pr": 0},
+    {"name": "Restock: the ledger is written only from a real observation", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!obs) return json({ ok: false, error: 'no observation' }, 400);", "pr": 0},
+    {"name": "Restock: the ledger write is logged", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/api/restock/ledger': 'restock-ledger'", "pr": 0},
+    {"name": "Restock: a grantable module", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "{ slug: 'restock', label: 'Restock', path: '/restock' }", "pr": 0},
+    {"name": "Restock: on the migration board", "file": "cloudflare/feedspark-deck/src/migration.js", "pattern": "{ p: '/restock', n: 'Restock', w: 3, m: '2026-12' }", "pr": 0},
+    {"name": "Restock: the migration board's page twin", "file": "docs/FeedSpark_Transformation.html", "pattern": "{p:'/restock',n:'Restock',w:3,m:'2026-12',", "pr": 0},
+    {"name": "Restock: an episode keeps its first-seen date while the product stays unavailable", "file": "cloudflare/feedspark-deck/src/restock.js", "pattern": "if (e && !e[3]) L.p[id] = [e[0], now, code, 0];", "pr": 0},
+    {"name": "Restock: money never crosses a currency", "file": "docs/restock_engine.js", "pattern": "if (!curMix) { s.money = { value: r2(value), cost: r2(cost), valueAll: r2(valueAll), costAll: r2(costAll) }; s.share = valueAll > 0 ? value / valueAll : null; }", "pr": 0},
+    {"name": "Restock: nothing is joined against a feed that did not stream whole", "file": "docs/FeedSpark_Restock.html", "pattern": "if (S.feed.st !== 'done' || S.ads.st !== 'ready') return;", "pr": 0},
+    {"name": "Restock: the stub feeds the phone tripwire", "file": "tools/check_mobile.js", "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();", "pr": 0},
+    {"name": "Restock: the stub feeds the dark-mode tripwire", "file": "tools/check_darkmode.js", "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();", "pr": 0},
+    {"name": "Restock: the harness runs in qa_gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_restock.mjs", "pr": 0},
+    {"name": "Restock: the tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_restock.js", "pr": 0},
+    {"name": "Restock: the harness runs in CI", "file": ".github/workflows/validate.yml", "pattern": "run: node tools/test_restock.mjs", "pr": 0},
+    {"name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)", "file": "docs/navrow_widget.html", "pattern": "body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }", "pr": 0}
   ]
 }

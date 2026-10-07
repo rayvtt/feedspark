@@ -384,6 +384,13 @@ else
   echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6e/7: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
+if node tools/test_restock.mjs >/dev/null 2>&1; then
+  echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
+else
+  echo "   ✗ Restock harness FAILED — see node tools/test_restock.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"

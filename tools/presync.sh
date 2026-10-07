@@ -126,6 +126,10 @@ echo "── validating: AI visibility (reading engine, every surface adapter vs
 node tools/test_aivis.mjs >/dev/null
 echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
+echo "── validating: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
+node tools/test_restock.mjs >/dev/null
+echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null
@@ -320,6 +324,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
   NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
     echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: Restock, driven (the join on the page, the KPIs against an independent count, the views, the ledger observation, the phone)"
+  NODE_PATH=$(npm root -g) node tools/check_restock.js || {
+    echo "✗ restock tripwire failed — the join, a KPI, a view, the sort, the ledger observation or the phone layout regressed"; exit 1; }
   echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
   NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
     echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
