@@ -130,6 +130,10 @@ echo "── validating: AI visibility (reading engine, every surface adapter vs
 node tools/test_aivis.mjs >/dev/null
 echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
+echo "── validating: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
+node tools/test_restock.mjs >/dev/null
+echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null
@@ -324,6 +328,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
   NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
     echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: Restock, driven (the join on the page, the KPIs against an independent count, the views, the ledger observation, the phone)"
+  NODE_PATH=$(npm root -g) node tools/check_restock.js || {
+    echo "✗ restock tripwire failed — the join, a KPI, a view, the sort, the ledger observation or the phone layout regressed"; exit 1; }
   echo "── validating: what the hours moved (the outcome panel under the chart, one calendar)"
   NODE_PATH=$(npm root -g) node tools/check_outcomes.js || {
     echo "✗ outcome-panel tripwire failed — it drew without a calendar or an account, joined a gap, lost its column, or dropped out of the PNG"; exit 1; }
@@ -333,6 +340,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }
+  echo "── validating: the Playbook picker lists YOUR accounts (and stands down rather than emptying)"
+  NODE_PATH=$(npm root -g) node tools/check_playbook_mine.js || {
+    echo "✗ Playbook-picker tripwire failed — the rail stopped filtering to your accounts, emptied the picker when no AM was known, lost the way back to all of them, or no longer narrows when /api/hours lands"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }

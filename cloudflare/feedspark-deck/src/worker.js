@@ -53,6 +53,8 @@ import * as RULES from "./rules.js";
 import * as HERO from "./herosizes.js";
 import * as LEVERS from "./stocklevers.js";
 import * as AIVIS from "./aivis.js";
+// /restock (Ray, 7 Oct 2026): the ledger half — first seen unavailable per product, kept in KV
+import * as RESTOCK from "./restock.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -131,6 +133,11 @@ import PIXEL_ENGINE_SRC from "../../../docs/pixel_engine.js";
 // Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
 import AIVIS_PAGE from "../../../docs/FeedSpark_AIVisibility.html";
 import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
+// /restock (Ray, 7 Oct 2026: "feedhero-reports have got By Products report - and 'Restock products' is interesting
+// to build as a module"): products Google Ads is still serving that the feed sends out of stock or no longer carries.
+// The join runs in the page (docs/restock_engine.js, served verbatim at /restock/engine.js, node-tested).
+import RESTOCK_PAGE from "../../../docs/FeedSpark_Restock.html";
+import RESTOCK_ENGINE_SRC from "../../../docs/restock_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -356,6 +363,7 @@ const PAGES = {
   '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
   '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
   '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
+  '/restock':     { html: RESTOCK_PAGE, slug: 'restock' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
@@ -645,7 +653,7 @@ async function route(request, env, ctx) {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -1629,6 +1637,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/aivis/engine.js' && request.method === 'GET') {
       return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/restock/engine.js' && request.method === 'GET') {
+      return new Response(RESTOCK_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -2764,6 +2775,72 @@ async function route(request, env, ctx) {
         }
         return json({ ok: false, error: String((e && e.message) || e).slice(0, 160) }, 502);
       }
+    }
+
+    // RESTOCK (Ray, 7 Oct 2026: "feedhero-reports have got By Products report - and 'Restock products' is
+    // interesting to build as a module"). A restock product = one Google Ads is still serving (an impression, a
+    // click, a conversion in FeedHero's trailing 30-day Ads Traffic read — the Catalogue's lane, catAdsRead with
+    // a period) that a shopper cannot buy: the output feed sends it OUT OF STOCK, or no longer carries it at all
+    // (FeedHero's own "Unlisted SKUs in Ads traffic"). The feed streams through /api/feed/proxy and the JOIN runs
+    // in the page (docs/restock_engine.js); what the worker adds is the DEMAND read and the LEDGER (src/restock.js:
+    // first seen unavailable per product, so "out for N days" is read off a record, never guessed from a window).
+    // Company id off the WIRED output feed (catCmpid), never the query; scoped like /api/catalog; a Meta market is
+    // refused (Google Ads is the Google feed's). Nothing in git: KV only.
+    //   GET /api/restock/roster                      → every client × Google market this signin may open (ads: FeedHero holds a company for it)
+    //   GET /api/restock/ads?client=&market=[&fresh] → the 30-day read, a chunk a call: 202 preparing · done:false → call again · done:true carries the rows
+    //   GET /api/restock/ledger?client=&market=      → the market's ledger + its summary (tracking began …)
+    //   PUT /api/restock/ledger?client=&market=      → the page's observation {oos, gone, back, n, feedN} merged in; the ledger comes back
+    if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {
+      const acc = await accessOf(env, request);
+      const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
+      if (path === '/api/restock/roster') {
+        const out = {};
+        (await feedRoster(env)).filter((r) => inScope(r.client) && !/-fb$/.test(r.mkt)).forEach((r) => {
+          const cmpid = catCmpid(r.src);
+          (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, kind: r.src && r.src.xml ? 'xml' : 'sheet', cmpid, ads: !!cmpid });
+        });
+        return json({ ok: true, period: RESTOCK.RESTOCK_PERIOD, keep: RESTOCK.RESTOCK_BACK_KEEP_DAYS, clients: out });
+      }
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (/-fb$/i.test(mkt)) return json({ ok: false, error: 'Google Ads is read for the Google feed — pick the Google market' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
+      const cmpid = catCmpid(src);
+      if (!cmpid) return json({ ok: false, state: 'no_ads', error: 'this feed is read from a Google Sheet — FeedHero holds no Ads Traffic report for it' }, 404);
+      try {
+        if (path === '/api/restock/ads') {
+          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), RESTOCK.RESTOCK_PERIOD);
+          if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
+          if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
+          if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
+          const head = { ok: true, cmpid, period: rec.period, from: rec.from, to: rec.to, range: rec.range, total: rec.total, pages: rec.pages, next: rec.next,
+            got: Object.keys(rec.rows || {}).length, cur: rec.cur, curMix: !!rec.curMix, restarted: !!rec.restarted, cached: !!rec.cached };
+          if (rec.state !== 'ok') return json(Object.assign(head, { done: false }));
+          if (!rec.cached) logActivity(ctx, env, request, 'restock-ads', cmpid + ' ' + rec.period + ' ' + head.got);
+          return json(Object.assign(head, { done: true, at: rec.at, rows: rec.rows }));
+        }
+        if (path === '/api/restock/ledger') {
+          const key = RESTOCK.ledgerKey(cmpid), now = Date.now();
+          let L = null; try { L = await env.EDITS.get(key, 'json'); } catch (e) { L = null; }
+          if (request.method === 'PUT') {
+            let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+            const obs = RESTOCK.cleanObs(b);
+            // a feed that failed to stream carries no lists — never written as "everything came back"
+            if (!obs) return json({ ok: false, error: 'no observation' }, 400);
+            L = RESTOCK.ledgerUpdate(L, obs, now);
+            await env.EDITS.put(key, JSON.stringify(L), { expirationTtl: RESTOCK.RESTOCK_TTL_S });
+          }
+          return json({ ok: true, cmpid, client, market: mkt, ledger: L || null, summary: RESTOCK.ledgerSummary(L, now), keep: RESTOCK.RESTOCK_BACK_KEEP_DAYS, stale: RESTOCK.RESTOCK_STALE_DAYS });
+        }
+      } catch (e) {
+        const msg = String((e && e.message) || e).slice(0, 160);
+        if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+        return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
+      }
+      return json({ ok: false, error: 'not found' }, 404);
     }
 
     // THE CATALOGUE (Ray, 28 Sep 2026: "a module to browse / view / track / deep dive product
@@ -4345,9 +4422,9 @@ async function catMasterInfo(env, cmpid, fresh) {
 // so a read that meets a different window or row count than the one it started from STARTS AGAIN rather than
 // splicing two reports. Sorted by the Ads item id so the page order holds across calls. Nothing in git: KV only.
 const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS_CONC = 4;
-// The Design studio asks for a longer window (Ray, 7 Oct 2026: "x clicks over past 30 days"), and a
-// record is already keyed by its period, so the two live side by side. 30 days is a SECOND full read
-// of a big account (Schuh UK 22,283 rows), so it is never the default — the caller asks for it.
+// the periods a caller may ask for (the Catalogue reads 7 days, /restock 30 — RESTOCK.RESTOCK_PERIODS is its twin); anything else reads the default
+// The Design studio asks for the longer one (Ray, 7 Oct 2026: "x clicks over past 30 days"). 30 days
+// is a SECOND full read of a big account (Schuh UK 22,283 rows), so it is never the default.
 const CAT_ADS_PERIODS = ['7_days', '30_days'];
 const CAT_ADS_TTL = 12 * 3600000, CAT_ADS_PART_TTL = 50 * 60000, CAT_ADS_MISSING_TTL = 24 * 3600000;
 // one report row -> [key, [impr, clicks, cost, conversions, conversion value], currency] — Google Ads' own
@@ -4360,10 +4437,11 @@ function catAdsRow(r) {
   return [k.slice(0, 120), [Math.round(n(r.c1)), Math.round(n(r.c2)), Math.round(n(r.c3) * 100) / 100, Math.round(n(r.c5) * 100) / 100, Math.round(n(r.c4) * 100) / 100], String(r.cur || '').trim().slice(0, 3)];
 }
 async function catAdsRead(env, cmpid, fresh, period) {
-  // the allow-list is read INSIDE the function on purpose: tools/test_catalog.mjs lifts this
-  // function out of the file by name and evaluates it with only the CAT_ADS_* constants beside
-  // it, so a module-level helper here is a name that does not exist when the harness runs it
-  const per = CAT_ADS_PERIODS.indexOf(String(period || '')) >= 0 ? String(period) : CAT_ADS_PERIOD;
+  // one record per company × period (catads:<cmpid>:<period>) — a 30-day read never splices into the 7-day one.
+  // The allow-list is read INSIDE this function on purpose: tools/test_catalog.mjs lifts the function
+  // out of the file by name and evaluates it with only the CAT_ADS_* constants beside it, so a
+  // module-level helper here is a name that does not exist when the harness runs it.
+  const per = CAT_ADS_PERIODS.indexOf(period) >= 0 ? period : CAT_ADS_PERIOD;
   const key = 'catads:' + cmpid + ':' + per, now = Date.now();
   let rec = null;
   try { rec = await env.EDITS.get(key, 'json'); } catch (e) { rec = null; }
