@@ -10149,16 +10149,16 @@
       "pr": 558
     },
     {
-      "name": "Golden daily: the 09:00 UK agent",
+      "name": "Golden daily: the 12:00 UK agent",
       "file": "tools/golden_daily.mjs",
       "pattern": "export function shouldRun(clock, done, force) {",
       "pr": 558
     },
     {
-      "name": "Golden daily: the workflow fires 08/09/10 UTC and the script decides",
+      "name": "Golden daily: the workflow fires 11/12/13 UTC and the script decides",
       "file": ".github/workflows/golden-daily.yml",
-      "pattern": "cron: '0 8,9,10 * * *'",
-      "pr": 558
+      "pattern": "cron: '0 11,12,13 * * *'",
+      "pr": 0
     },
     {
       "name": "Golden daily: one content-quality stream for the page and the agent",
@@ -10215,7 +10215,7 @@
       "pr": 558
     },
     {
-      "name": "Golden daily: the card names the 09:00 UK run",
+      "name": "Golden daily: the card names the 12:00 UK run",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function histDailyChip() {",
       "pr": 558
@@ -11627,7 +11627,25 @@
     {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
     {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);", "pr": 0},
     {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0},
-    {"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
+{
+      "name": "Golden daily: the run waits for noon London",
+      "file": "tools/golden_daily.mjs",
+      "pattern": "export const RUN_HOUR = 12;",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: only a run finished from noon is the day's run",
+      "file": "tools/golden_daily.mjs",
+      "pattern": "export function runDone(last, clock) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden daily: the page chip names the noon run",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "⏱ auto 12:00 UK · last ",
+      "pr": 0
+    },
+{"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
     {"name": "Restock: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')", "pr": 0},
     {"name": "Restock: the Catalogue's Ads lane reads by PERIOD", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh, period) {", "pr": 0},
     {"name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();", "pr": 0},

@@ -658,7 +658,7 @@ window.addEventListener('load',restore);
   function srcLine(d){
     var y=d.daily, bits=[];
     if(y&&y.day){ var t=y.t?new Date(y.t):null;
-      bits.push('⏱ Scored daily at 09:00 UK · last run '+dayLbl(y.day)+(t?' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2):'')
+      bits.push('⏱ Scored daily at 12:00 UK · last run '+dayLbl(y.day)+(t?' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2):'')
         +' · '+(y.quality|0)+' analysed'+(y.failed?' · '+y.failed+' failed':'')); }
     var first=null; d.feeds.forEach(function(f){ if(f.start&&(!first||f.start<first)) first=f.start; });
     if(first){ var young=gap(first,d.today)<14;

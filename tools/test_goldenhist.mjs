@@ -276,24 +276,34 @@ console.log('── the worker: one writer, and an automatic reading never overr
   ok('a Meta feed is never taken as a Golden Record feed', (wk.match(/\/-fb\$\/\.test\(mkt\)\) \{ results\.push\(\{ client, mkt, error: 'bad client\/market' \}\)/g) || []).length === 2);
 }
 
-console.log('── the agent runs once a day, from 09:00 London');
+console.log('── the agent runs once a day, from 12:00 London (moved from 09:00, Ray 7 Oct 2026)');
 {
   const A = await import('./golden_daily.mjs');
   const at = (iso) => A.londonClock(new Date(iso));
-  ok('in summer 08:00 UTC is 09:00 London', at('2026-07-01T08:00:00Z').hour === 9 && at('2026-07-01T08:00:00Z').day === '2026-07-01');
-  ok('in winter 09:00 UTC is 09:00 London', at('2026-12-01T09:00:00Z').hour === 9 && at('2026-12-01T08:00:00Z').hour === 8);
+  ok('the run hour is noon', A.RUN_HOUR === 12);
+  ok('in summer 11:00 UTC is 12:00 London', at('2026-07-01T11:00:00Z').hour === 12 && at('2026-07-01T11:00:00Z').day === '2026-07-01');
+  ok('in winter 12:00 UTC is 12:00 London', at('2026-12-01T12:00:00Z').hour === 12 && at('2026-12-01T11:00:00Z').hour === 11);
   ok('the London date is the day the run files under — 23:30 UTC in summer is already tomorrow', at('2026-07-01T23:30:00Z').day === '2026-07-02');
-  ok('before 09:00 London it waits', !A.shouldRun(at('2026-12-01T08:00:00Z'), false, false));
-  ok('from 09:00 it runs', A.shouldRun(at('2026-07-01T08:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T09:00:00Z'), false, false));
-  ok('a late firing is the catch-up for a missed or failed run', A.shouldRun(at('2026-07-01T09:00:00Z'), false, false));
-  ok('once today is on the ledger every later firing does nothing', !A.shouldRun(at('2026-07-01T09:00:00Z'), true, false));
+  ok('before 12:00 London it waits — the old 09:00 firing included', !A.shouldRun(at('2026-12-01T11:00:00Z'), false, false) && !A.shouldRun(at('2026-07-01T08:00:00Z'), false, false));
+  ok('from 12:00 it runs', A.shouldRun(at('2026-07-01T11:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T12:00:00Z'), false, false));
+  ok('a late firing is the catch-up for a missed or failed run', A.shouldRun(at('2026-07-01T12:00:00Z'), false, false) && A.shouldRun(at('2026-12-01T13:00:00Z'), false, false));
+  ok('once today is on the ledger every later firing does nothing', !A.shouldRun(at('2026-07-01T12:00:00Z'), true, false));
   ok('a forced dispatch runs regardless', A.shouldRun(at('2026-12-01T06:00:00Z'), true, true));
+  // the ledger: only a run that FINISHED from noon London is the day's run
+  const led = (iso, day) => ({ day, t: Date.parse(iso) });
+  ok('a noon run finished today is the day\'s run', A.runDone(led('2026-10-07T11:40:00Z', '2026-10-07'), at('2026-10-07T12:00:00Z')));
+  ok('…and in winter', A.runDone(led('2026-12-01T12:50:00Z', '2026-12-01'), at('2026-12-01T13:00:00Z')));
+  ok('a 09:00 run on the ledger today is NOT the noon run — the day the schedule moved still gets one', !A.runDone(led('2026-10-07T08:40:00Z', '2026-10-07'), at('2026-10-07T11:00:00Z')));
+  ok('a forced run finished before noon does not stand in for it either', !A.runDone(led('2026-12-01T10:30:00Z', '2026-12-01'), at('2026-12-01T12:00:00Z')));
+  ok('yesterday\'s run is not today\'s', !A.runDone(led('2026-10-06T11:40:00Z', '2026-10-06'), at('2026-10-07T11:00:00Z')));
+  ok('an empty ledger is not done', !A.runDone(null, at('2026-10-07T11:00:00Z')) && !A.runDone({ day: '2026-10-07' }, at('2026-10-07T11:00:00Z')));
+  ok('the agent gates on runDone, never on the worker\'s bare same-day flag', /const done = runDone\(st\.last, clock\);\n    if \(!shouldRun\(clock, done, FORCE\)\) \{/.test(read('tools/golden_daily.mjs')) && !/st\.done/.test(read('tools/golden_daily.mjs')));
   const feeds = A.googleFeeds(read('cloudflare/feedspark-deck/src/worker.js'));
   ok('every wired Google Shopping feed, never a Meta one', feeds.length >= 40 && !feeds.some((f) => /-fb$/.test(f.mkt)), feeds.length);
   ok('sheet-backed ones read Google\'s public CSV export, as the feed proxy does', feeds.filter((f) => f.kind === 'sheet').every((f) => /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[^/]+\/export\?format=csv&gid=/.test(f.url)) && feeds.some((f) => f.kind === 'sheet'));
   ok('a client name with a space is read whole', feeds.some((f) => f.client === 'House of Bruar'));
   const wf = read('.github/workflows/golden-daily.yml');
-  ok('the workflow fires at 08:00, 09:00 and 10:00 UTC and lets the script decide', /cron: '0 8,9,10 \* \* \*'/.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
+  ok('the workflow fires at 11:00, 12:00 and 13:00 UTC and lets the script decide', /cron: '0 11,12,13 \* \* \*'/.test(wf) && !/cron: '0 8,9,10/.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
   ok('a one-feed dispatch never marks the day done', /if \(!ONLY\) await post\(\{ goldendaily: \{ day: clock\.day, finish: true,/.test(read('tools/golden_daily.mjs')));
 }
 

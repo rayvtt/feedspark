@@ -1857,7 +1857,7 @@ window.addEventListener('load',restore);
         hSigned(m.over.delta), hCls(m.over.delta), 'from ' + m.over.from + ' on ' + esc(hDayLbl(m.over.d))) : '') +
       histTrackKpi('Content quality', m.q) + histTrackKpi('AI-readiness', m.air) + '</div>';
     if (HMET !== 'gs' && !m.firstMet) {
-      out += '<p class="hs-empty-note">No ' + esc(hMetName(HMET).toLowerCase()) + ' reading on record for this feed yet — the 09:00 UK daily run records one every morning.</p>';
+      out += '<p class="hs-empty-note">No ' + esc(hMetName(HMET).toLowerCase()) + ' reading on record for this feed yet — the 12:00 UK daily run records one every day.</p>';
     } else if (HMET === 'gs' && m.recorded < 2) {
       out += '<p class="hs-empty-note">' + (m.first ? 'First reading recorded ' + esc(hDayLbl(hDay(m.first))) + ' — the chart fills in from the next scan that moves a number.'
         : 'Score readings start with this feed’s next scan — the analyses above are already on record.') + '</p>';
@@ -1874,13 +1874,13 @@ window.addEventListener('load',restore);
   }
   var HMODEL = null;      // the model the hover layer reads
   function HMETS_CUR() { return HMODEL ? HMODEL.met : HMET; }
-  // the 09:00 UK daily run's own ledger (/api/golden/estate → daily): when the tracker last filled
+  // the 12:00 UK daily run's own ledger (/api/golden/estate → daily): when the tracker last filled
   function histDailyChip() {
     var dl = ESTATE && ESTATE.daily;
-    var tip = 'Every Google Shopping feed is read automatically at 09:00 UK each day — the Golden Score, content quality and AI-readiness. A scan or analysis run by hand sets its own day.';
-    if (!dl || !dl.t) return '<span class="hs-auto" title="' + esc(tip) + '">⏱ auto 09:00 UK daily</span>';
+    var tip = 'Every Google Shopping feed is read automatically at 12:00 UK each day, once the output feeds have refreshed — the Golden Score, content quality and AI-readiness. A scan or analysis run by hand sets its own day.';
+    if (!dl || !dl.t) return '<span class="hs-auto" title="' + esc(tip) + '">⏱ auto 12:00 UK daily</span>';
     return '<span class="hs-auto" title="' + esc(tip + ' Last run: ' + hWhen(dl.t) + ' · ' + (dl.quality || 0) + ' feeds analysed' +
-      (dl.kept ? ' · ' + dl.kept + ' kept a hand-run reading' : '') + (dl.failed ? ' · ' + dl.failed + ' failed' : '')) + '">⏱ auto 09:00 UK · last ' + esc(hWhen(dl.t)) + '</span>';
+      (dl.kept ? ' · ' + dl.kept + ' kept a hand-run reading' : '') + (dl.failed ? ' · ' + dl.failed + ' failed' : '')) + '">⏱ auto 12:00 UK · last ' + esc(hWhen(dl.t)) + '</span>';
   }
   function histTip(ev, i) {
     var tip = $('hs-tip'), zone = tip && tip.parentNode; if (!tip || !HMODEL) return;
@@ -2028,7 +2028,7 @@ window.addEventListener('load',restore);
         if (nm) {
           row += '<span class="at-miss" title="Keywords are read product by product on the XML scan — this reading could not tell a keyword from an id, so it is not scored">not measured</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
-            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 09:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
+            '<span class="at-note" title="' + esc('Not measured on this scan — the next XML scan (4× daily, and the 12:00 UK run) reads it. Not counted in the score until then. ' + x.n) + '">not measured on this scan — not scored until the next XML scan</span>';
           h += row + '<span class="at-act"></span></div>'; return;
         } else if (na) {
           row += '<span class="at-miss" title="Google asks for g:' + esc(x.k) + ' on ' + esc(gs) + ' products — this feed carries none, so it is not scored">not applicable</span>' +
@@ -2641,7 +2641,7 @@ window.addEventListener('load',restore);
     tell('connect', 0, 0, 0);
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
       var FA = a[0], LG = a[1];
-      // the analysis itself is labelguard's qualityStream — the ONE implementation the 09:00 UK
+      // the analysis itself is labelguard's qualityStream — the ONE implementation the 12:00 UK
       // daily agent runs too (tools/golden_daily.mjs), so a hand-run analysis and the automatic
       // one can never read the same feed two ways (Ray, 24 Sep 2026)
       var wProf = profileForC(p.client);
