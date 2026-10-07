@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 /*
- * GOLDEN RECORD DAILY — 09:00 UK (Ray, 24 Sep 2026: "I think Golden Record and content quality
+ * GOLDEN RECORD DAILY — 12:00 UK (Ray, 24 Sep 2026: "I think Golden Record and content quality
  * should automatically scan on a daily basis, then at 9 a.m. UK time, so every day there's a
  * tracker. If there's a manual scan on any day, that new score can override that day. So let's
- * do that for all clients.").
+ * do that for all clients."). MOVED TO NOON (Ray, 7 Oct 2026: "can golden score be scanned each
+ * day at 12:00 pm UK time ? because sometimes 9AM, not all output feeds have been refreshed
+ * (every market/ every client)") — a reading taken before a client's output feed has rebuilt for
+ * the day records yesterday's feed under today's date.
  *
  * The feed score already had an automatic lane (the 4x-daily xml-scan); content quality and
  * AI-readiness had none — they were computed in the browser when somebody pressed Analyse, so
@@ -20,10 +23,13 @@
  * hand the same day (storeGoldenQuality for quality; histAdd's manual pin for the score).
  *
  * WHEN. GitHub cron speaks UTC and the UK moves between GMT and BST, so the workflow fires at
- * 08:00, 09:00 and 10:00 UTC and THIS script decides: it runs once the London clock has reached
- * 09:00 and today's run (London date) is not yet on the worker's ledger. In summer the 08:00 UTC
- * firing is 09:00 London; in winter the 09:00 one is; the later firings are the catch-up for a
- * delayed or failed run, and a finished run makes them no-ops. GOLDEN_FORCE=1 runs regardless.
+ * 11:00, 12:00 and 13:00 UTC and THIS script decides: it runs once the London clock has reached
+ * 12:00 and today's noon run (London date) is not yet on the worker's ledger. In summer the 11:00
+ * UTC firing is 12:00 London; in winter the 12:00 one is; the later firings are the catch-up for
+ * a delayed or failed run, and a finished run makes them no-ops. GOLDEN_FORCE=1 runs regardless.
+ * Only a run that FINISHED from 12:00 London counts as the day's run (runDone): one on the ledger
+ * from earlier that day — a forced dispatch, or the 09:00 run of the day the schedule moved — read
+ * the feeds before they refreshed, which is the reading this run exists to replace.
  *
  * Auth: FCC_PUSH_KEY = the worker's GMAIL_PUSH_KEY (same secret as the xml-scan agent). Every
  * response is JSON-verified — the Access login page is an HTTP 200 text/html.
@@ -53,8 +59,15 @@ export function londonClock(d) {
   const g = (t) => (parts.find((p) => p.type === t) || {}).value;
   return { day: g('year') + '-' + g('month') + '-' + g('day'), hour: parseInt(g('hour'), 10) % 24, minute: parseInt(g('minute'), 10) };
 }
-export const RUN_HOUR = 9;
-// once a day, from 09:00 London: a finished run makes every later firing a no-op
+export const RUN_HOUR = 12;
+// the day's run is one on the ledger for today that finished from RUN_HOUR London — an earlier one
+// (a forced dispatch, the old 09:00 run) read the feeds before they refreshed and is not it
+export function runDone(last, clock) {
+  if (!last || !last.t || last.day !== clock.day) return false;
+  const at = londonClock(new Date(last.t));
+  return at.day === clock.day && at.hour >= RUN_HOUR;
+}
+// once a day, from 12:00 London: a finished run makes every later firing a no-op
 export function shouldRun(clock, done, force) {
   if (force) return true;
   if (done) return false;
@@ -132,9 +145,10 @@ async function main() {
   if (!DRY) {
     const st = await post({ goldendaily: { day: clock.day } });
     profiles = st.profiles || {};
-    if (!shouldRun(clock, st.done, FORCE)) {
+    const done = runDone(st.last, clock);
+    if (!shouldRun(clock, done, FORCE)) {
       console.log('· ' + clock.day + ' ' + String(clock.hour).padStart(2, '0') + ':' + String(clock.minute).padStart(2, '0') + ' London — '
-        + (st.done ? 'today\'s run is already on the ledger (' + new Date(st.last.t).toISOString() + ')' : 'before 09:00 London') + '; nothing to do');
+        + (done ? 'today\'s run is already on the ledger (' + new Date(st.last.t).toISOString() + ')' : 'before ' + String(RUN_HOUR).padStart(2, '0') + ':00 London') + '; nothing to do');
       return 0;
     }
   }

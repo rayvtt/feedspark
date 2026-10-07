@@ -1,22 +1,24 @@
-# Golden Record daily — 09:00 UK (Ray, 24 Sep 2026: "Golden Record and content quality should
+# Golden Record daily — 12:00 UK (Ray, 24 Sep 2026: "Golden Record and content quality should
 # automatically scan on a daily basis, then at 9 a.m. UK time, so every day there's a tracker.
-# If there's a manual scan on any day, that new score can override that day").
+# If there's a manual scan on any day, that new score can override that day"). MOVED TO NOON
+# (Ray, 7 Oct 2026: "can golden score be scanned each day at 12:00 pm UK time ? because sometimes
+# 9AM, not all output feeds have been refreshed (every market/ every client)").
 #
-# Cron speaks UTC and the UK moves between GMT and BST, so this fires at 08:00, 09:00 and 10:00
-# UTC and tools/golden_daily.mjs decides: it runs once the London clock has reached 09:00 and
-# today's run is not yet on the worker's ledger. Summer: the 08:00 UTC firing IS 09:00 London.
-# Winter: the 09:00 UTC firing is. The rest are the catch-up for a late or failed run and do
-# nothing once the day is done.
+# Cron speaks UTC and the UK moves between GMT and BST, so this fires at 11:00, 12:00 and 13:00
+# UTC and tools/golden_daily.mjs decides: it runs once the London clock has reached 12:00 and
+# today's noon run is not yet on the worker's ledger. Summer: the 11:00 UTC firing IS 12:00
+# London. Winter: the 12:00 UTC firing is. The rest are the catch-up for a late or failed run and
+# do nothing once the day is done.
 #
 # Secret: FCC_PUSH_KEY (the worker's GMAIL_PUSH_KEY) — the same one the XML scan uses.
 name: Golden Record daily
 on:
   schedule:
-    - cron: '0 8,9,10 * * *'
+    - cron: '0 11,12,13 * * *'
   workflow_dispatch:
     inputs:
       force:
-        description: Run now even if today's run is done or it is before 09:00 London
+        description: Run now even if today's run is done or it is before 12:00 London
         type: boolean
         default: false
       only:

@@ -141,7 +141,7 @@ they use the same FCC whichever store is behind it.
 | Worker cron | `15,45 * * * *` | Task Manager pull (feedspark-reports MCP) + book rotation |
 | Worker cron | `10,40 * * * *` | ROAS pull (FeedHero reports MCP) |
 | Actions | `xml-scan.yml`, 4× a day | every FeedHero XML feed → `/api/gmail/push {xmlscan}` |
-| Actions | `golden-daily.yml`, 08–10 UTC | content quality + AI-readiness at 09:00 UK |
+| Actions | `golden-daily.yml`, 11–13 UTC | content quality + AI-readiness at 12:00 UK |
 | Apps Script | every 5–15 min | `syncFCC()` in Ray's mailbox |
 
 Also: `deploy.yml` (push to main), `validate.yml` (PRs), and the manual `estate-rescan.yml` and
