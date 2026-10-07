@@ -11761,6 +11761,42 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "sv += '<path class=\"ln nb\" data-ser=\"' + k + '\"",
       "pr": 0
+    },
+    {
+      "name": "Golden client documents: every market of the brand at the foot (mktOverview)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function mktOverview(k, s) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: all three exits fill the header and the market table through fillPrint",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the report's own market prints the document's numbers, not the index copy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var g = me ? goldenScore(s.attrs, prof) : f.score;",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the market table prints only on paper / in the file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf #print-mkts:not(:empty){display:block;margin-top:16px}",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the market table slot sits under the scorecard, above the footer",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<div id=\"print-mkts\" data-no-collapse></div>",
+      "pr": 0
+    },
+    {
+      "name": "Golden client documents: the all-markets tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grmkts.js",
+      "pr": 0
     }
   ]
 }

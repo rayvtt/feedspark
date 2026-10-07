@@ -586,7 +586,7 @@ window.addEventListener('load',restore);
      Ctrl+P gets the same treatment via beforeprint. Width is pinned to the 186mm
      printable column (210 − 2×12mm margins) = 703 CSS px at 96dpi, so measured px map
      1:1 onto printed mm. */
-  #print-head,#print-foot{display:none}
+  #print-head,#print-foot,#print-mkts{display:none}
   /* THE PDF IS THE PAGE, SCALED — not a second design (Ray, 16 Sep 2026: "PDF export still
      doesn't reflect exact same visual as FCC"). It used to restyle twenty-odd properties on
      the way to paper — smaller dial, tighter rows, cut type scale, different grid columns —
@@ -705,6 +705,41 @@ window.addEventListener('load',restore);
   body.pdf #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
   body.pdf #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
   body.pdf #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+  /* ALL MARKETS, AT THE FOOT OF THE CLIENT DOCUMENT (Ray, 7 Oct 2026: "For multi-market clients,
+     when you download the HTML or report card, at bottom there should be an overview of all the
+     market scores as well"). The scorecard above reads ONE market; a brand on twenty-eight sends
+     its client a file that never says how the other twenty-seven stand. mktOverview() writes the
+     brand's markets — the same three scores the estate scorecard shows — into #print-mkts when an
+     export starts; a single-market brand leaves it empty, so nothing prints. Never on screen: the
+     estate scorecard IS this table for the AM. */
+  body.pdf #print-mkts:not(:empty){display:block;margin-top:16px}
+  .pm{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+  .pm-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .pm-h h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+  .pm-sub{font-size:12px;font-weight:700;color:var(--muted)}
+  .pm-t{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .pm-t th{text-align:left;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+    padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .pm-t td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink)}
+  .pm-t .n{text-align:right}
+  .pm-t tr.me td{background:rgba(245,166,35,.12)}
+  .pm-t tr.me td:first-child{box-shadow:inset 3px 0 0 var(--orange-deep)}
+  .pm-t tfoot td{border-bottom:0;border-top:2px solid var(--line);font-weight:900}
+  .pm-mk{font-weight:900;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .pm-me{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--orange-deep);
+    border:1px solid var(--orange-deep);border-radius:100px;padding:1px 6px}
+  .pm-s{display:flex;align-items:center;gap:7px}
+  .pm-s b{font-weight:900;min-width:34px;text-align:right}
+  /* ONE bar length in every cell: a flexing track shrinks beside a tier label or an "of 3", and a
+     71 drawn shorter than a 64 one column over is a chart lying about its own numbers */
+  .pm-bar{flex:none;width:52px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+  .pm-bar i{display:block;height:100%;border-radius:3px}
+  .pm-tier{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .pm-x{color:var(--muted);font-weight:700}
+  .pm-of{font-size:10.5px;font-weight:700;color:var(--muted);margin-left:2px;white-space:nowrap}
+  .pm-t td:first-child,.pm-t td:last-child{white-space:nowrap}
+  .pm-miss{color:var(--risk);font-weight:900}
+  .pm-note{margin:10px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5}
   /* --- the page's own ≤900px rules, put back to their DESKTOP form. The print viewport is
      the page box (703px), so every one of these would fire on paper and hand the client a
      phone layout. The values are the screen's, minus only the columns whose contents are
@@ -896,6 +931,7 @@ window.addEventListener('load',restore);
   product pages for that attribute and see how much of the gap the site already holds (composition
   lines, colour names, FAQ pairs, size guides) — evidence for the ask, or a supplemental feed.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+  <div id="print-mkts" data-no-collapse></div>
   <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
 
@@ -3496,7 +3532,13 @@ window.addEventListener('load',restore);
     var el = document.getElementById('pdf-page'); if (el) el.parentNode.removeChild(el);
   }
   // a bare Ctrl+P gets the same single-page document as the ⬇ PDF button
-  window.addEventListener('beforeprint', function () { if (!document.body.classList.contains('pdf')) preparePdf(); });
+  window.addEventListener('beforeprint', function () {
+    if (document.body.classList.contains('pdf')) return;
+    // …with the same header and all-markets table the buttons write (fillPrint is hoisted)
+    var c = SEL && CACHE[SEL];
+    if (c && c.snapshot) fillPrint(SEL, parts(SEL), c.snapshot);
+    preparePdf();
+  });
   window.addEventListener('afterprint', restorePdf);
 
   // both exports (⬇ PDF, ⬇ HTML) share the SAME branded header — one place states what the
@@ -3509,6 +3551,87 @@ window.addEventListener('load',restore);
       '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
       (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
   }
+  /* ALL MARKETS, AT THE FOOT OF BOTH CLIENT DOCUMENTS (Ray, 7 Oct 2026: "For multi-market
+     clients, when you download the HTML or report card, at bottom there should be an overview of
+     all the market scores as well"). One row per Google Shopping market of the brand, in the
+     estate scorecard's own order, carrying the three scores the estate shows — Golden Score,
+     content quality, AI-readiness — plus products, required attributes missing and the day it
+     was scanned. THREE RULES: the market this report is about reads the SAME numbers as the
+     document above it (its dial, its content-quality headline, its AI ring), never the index's
+     copy, so one file can never print two figures for one market; a score nobody has measured is
+     a dash and says why, never a zero; and the averages read only the markets that carry each
+     score, stating how many when that is not all of them. A single-market brand gets nothing —
+     the document above already IS its only market. */
+  function mktOverview(k, s) {
+    var p = parts(k);
+    rescoreEstate();
+    var rows = feedList().filter(function (f) { return f.client === p.client; });
+    if (rows.length < 2) return '';
+    rows.sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
+    var prof = profileForC(p.client), qd = null;
+    try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
+    var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
+    var day = function (t) { return t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
+    var r1 = function (v) { return Math.round(v * 10) / 10; };
+    var list = rows.map(function (f) {
+      var me = keyOf(f.client, f.mkt) === k;
+      var g = me ? goldenScore(s.attrs, prof) : f.score;
+      var q = me && qd && qd.score != null ? qd.score : f.q;
+      var a = me && ai ? ai.total : f.air, tier = me && ai ? ai.tier : f.airTier;
+      return { mkt: String(f.mkt).toUpperCase(), me: me, t: me ? s.t : f.t, rows: me ? s.rows : f.rows,
+        g: g == null ? null : +g, q: q == null ? null : +q, a: a == null || !a ? null : +a, tier: tier,
+        miss: f.reqMissing || [], scanned: me || !!f.t };
+    });
+    var bar = function (v, col) { return '<span class="pm-bar"><i style="width:' + Math.max(0, Math.min(100, v)) + '%;background:' + col + '"></i></span>'; };
+    var cell = function (v, col, why, extra) {
+      return v == null ? '<td><span class="pm-x" title="' + esc(why) + '">—</span></td>'
+        : '<td><span class="pm-s"><b style="color:' + col + '">' + v + '</b>' + bar(v, col) + (extra || '') + '</span></td>';
+    };
+    var tierWord = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
+    var body = list.map(function (r) {
+      return '<tr' + (r.me ? ' class="me"' : '') + '>' +
+        '<td><span class="pm-mk">' + esc(r.mkt) + (r.me ? '<span class="pm-me">this report</span>' : '') + '</span></td>' +
+        cell(r.g, scoreCol(r.g), r.scanned ? 'No Golden Score on this scan' : 'Not scanned yet') +
+        cell(r.q, scoreCol(r.q), 'Content quality not analysed yet for this market') +
+        cell(r.a, r.a == null ? '' : airCol(r.a), 'AI-readiness not analysed yet for this market',
+          r.a != null && r.tier ? '<span class="pm-tier" title="AI-readiness Tier ' + r.tier + ' of 4">' + esc(tierWord(r.tier)) + '</span>' : '') +
+        '<td class="n">' + (r.scanned ? fmt(r.rows) : '<span class="pm-x">—</span>') + '</td>' +
+        '<td>' + (!r.scanned ? '<span class="pm-x">—</span>' : (r.miss.length
+          ? '<span class="pm-miss" title="' + esc(r.miss.join(', ')) + '">' + r.miss.length + '</span> <span class="pm-x">' + esc(r.miss.join(', ')) + '</span>'
+          : '<span class="pm-x">none</span>')) + '</td>' +
+        '<td>' + (r.scanned ? esc(day(r.t)) : '<span class="pm-x">not scanned yet</span>') + '</td></tr>';
+    }).join('');
+    var avg = function (key) {
+      var v = list.filter(function (r) { return r[key] != null; });
+      return v.length ? { v: r1(v.reduce(function (t, r) { return t + r[key]; }, 0) / v.length), n: v.length } : null;
+    };
+    var avgCell = function (x, colFn) {
+      if (!x) return '<td><span class="pm-x">—</span></td>';
+      return '<td><span class="pm-s"><b style="color:' + colFn(x.v) + '">' + x.v + '</b>' + bar(x.v, colFn(x.v)) +
+        (x.n < list.length ? '<span class="pm-of">of ' + x.n + '</span>' : '') + '</span></td>';
+    };
+    var scanned = list.filter(function (r) { return r.scanned; });
+    var prods = scanned.reduce(function (t, r) { return t + (+r.rows || 0); }, 0);
+    var missMk = scanned.filter(function (r) { return r.miss.length; }).length;
+    var foot = '<tr><td>Average</td>' +
+      avgCell(avg('g'), scoreCol) + avgCell(avg('q'), scoreCol) + avgCell(avg('a'), airCol) +
+      '<td class="n">' + (scanned.length ? fmt(prods) : '—') + '</td>' +
+      '<td>' + (scanned.length ? (missMk ? '<span class="pm-miss">' + missMk + '</span> market' + (missMk === 1 ? '' : 's') : 'none') : '—') + '</td>' +
+      '<td>' + (scanned.length < list.length ? scanned.length + ' of ' + list.length + ' scanned' : '') + '</td></tr>';
+    return '<div class="pm"><div class="pm-h"><h3>All markets — ' + esc(dispClient(p.client)) + '</h3>' +
+      '<span class="pm-sub">' + list.length + ' Google Shopping markets · each as last scanned</span></div>' +
+      '<table class="pm-t"><thead><tr><th>Market</th><th>Golden Score</th><th>Content quality</th><th>AI-readiness</th>' +
+      '<th class="n">Products</th><th>Required missing</th><th>Scanned</th></tr></thead>' +
+      '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>' +
+      '<p class="pm-note">Golden Score = attribute completeness against Google’s product data specification · ' +
+      'Content quality = what the title, description and other free-text fields say, against Google’s own rules · ' +
+      'AI-readiness = how ready the feed is for AI shopping surfaces, Foundational → Agentic-ready · a dash = not measured for that market yet; ' +
+      'averages read only the markets that carry each score.</p></div>';
+  }
+  function fillPrint(k, p, s) {
+    $('print-head').innerHTML = pdfHead(p, s);
+    var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);
+  }
   function pdfFilename(p, s, ext) {
     return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
   }
@@ -3517,7 +3640,7 @@ window.addEventListener('load',restore);
   function printPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var t0 = document.title;
     document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
     var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
@@ -3564,7 +3687,7 @@ window.addEventListener('load',restore);
   function exportPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
     loadPdfLibs().then(function () {
@@ -3755,7 +3878,7 @@ window.addEventListener('load',restore);
     qualKeys(k).forEach(function (key) { var kk = k + '|' + key; was[kk] = !!QOPEN[kk]; QOPEN[kk] = true; });
     renderDetail(k);
     var pops = grabPops(k);
-    $('print-head').innerHTML = pdfHead(p, s);
+    fillPrint(k, p, s);
     var doc = document.documentElement.cloneNode(true);
     Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
