@@ -24,7 +24,7 @@ Ray named three messages; two are real and one is not in the feeds at all:
 | Message | Source | Verdict |
 |---|---|---|
 | `sale … % off` | `g:price` + `g:sale_price` | **Real**, and thin — `g:sale_price` fills **11/60** of Schuh GB and **22/60** of Monsoon GB |
-| `x clicks over past 30 days` | `/api/catalog/ads` (FeedHero `ads_traffic`), per product id | **Real**, Google markets only; the lane's window is **7 days**, and the studio prints the window it got |
+| `x clicks over past 30 days` | `/api/catalog/ads` (FeedHero `ads_traffic`), per product id | **Real**, Google markets only. The shared lane was 7 days; the studio adds a **7 / 30-day picker** and prints the window it actually got |
 | `x units left` | **in no output feed in the estate** — it is in the MASTERS (`stock_quantity`, `stockquantity`, `inventory_quantity`) | **Blocked**: a FeedHero rule must map it into the output feed before a scarcity overlay could ship |
 
 That third row is the finding, and the studio reports it rather than papering over it — it previews
@@ -66,6 +66,17 @@ sees it. It never falls back to column order.
 3. **A number that would read as nonsense is refused.** YuMOVE's `inventory_quantity` is 5,044 —
    "Only 5044 left" is not scarcity, so `SCARCITY_MAX` (25) stands the message down **and says why**.
    `SALE_MIN_PCT` (5) does the same for a 3%-off flash.
+
+### The Ads window
+
+Ray asked for 30 days; `/api/catalog/ads` (shared with the Catalogue module) was hardcoded to 7.
+The record was already keyed by its period, so both now live side by side and the route takes
+`?period=7_days|30_days`, validated against an allowlist. **7 days stays the default** — 30 is a
+second full read of the account (Schuh UK is 22,283 rows), so the caller asks for it.
+
+Changing the picker after a read **drops the figures on screen** rather than relabelling them: the
+numbers belong to the window they were read over, and a card quietly claiming a month of traffic off
+a week of numbers is exactly the kind of wrong number this module exists not to print.
 
 ## 4. The designs
 

@@ -95,7 +95,9 @@ const FEEDS = [
 ];
 const MASTER_HEADERS = ['g:id', 'title', 'g:availability', 'stock_quantity', 'g:price', 'g:was_price', 'g:brand', 'g:image_link'];
 const ADS_ROWS = {}; for (let i = 0; i < 90; i++) ADS_ROWS['20001' + (600 + i)] = [367863 - i * 900, 1267 - i * 5, 688.49, 55.24, 2853.02];
-const seen = { ads: 0, master: 0, row: 0, img: 0, proxy: 0 };
+// a 30-day window is a different read, not the same numbers relabelled
+const ADS_ROWS_30 = {}; for (let i = 0; i < 90; i++) ADS_ROWS_30['20001' + (600 + i)] = [1488210 - i * 900, 5102 - i * 5, 2871.4, 223.9, 11602.7];
+const seen = { ads: 0, master: 0, row: 0, img: 0, proxy: 0, adsPer: [] };
 const FILES = {
   '/overlays/engine.js': 'docs/overlay_engine.js',
   '/overlays/studio.js': 'docs/overlay_studio_engine.js',
@@ -131,9 +133,13 @@ const srv = http.createServer((req, res) => {
   if (p === '/api/catalog/ads') {
     seen.ads++;
     if (/-fb$/.test(q.get('market') || '')) return j({ ok: false, error: 'Google Ads is read for the Google feed' }, 400);
-    return j({ ok: true, cmpid: 'monsoon_uk', period: '7_days', from: '2026-09-30', to: '2026-10-06',
-      range: 'Last 7 Days (30/09/2026 - 06/10/2026)', total: 90, pages: 1, next: 2, got: 90, cur: 'GBP',
-      done: true, at: Date.now(), rows: ADS_ROWS });
+    const per = q.get('period') === '30_days' ? '30_days' : '7_days';
+    seen.adsPer.push(per);
+    const long = per === '30_days';
+    return j({ ok: true, cmpid: 'monsoon_uk', period: per, from: long ? '2026-09-07' : '2026-09-30', to: '2026-10-06',
+      range: long ? 'Last 30 Days (07/09/2026 - 06/10/2026)' : 'Last 7 Days (30/09/2026 - 06/10/2026)',
+      total: 90, pages: 1, next: 2, got: 90, cur: 'GBP', done: true, at: Date.now(),
+      rows: long ? ADS_ROWS_30 : ADS_ROWS });
   }
   return j({ ok: true });
 });
@@ -345,6 +351,32 @@ await page.waitForFunction(() => /Google Ads read/.test(document.querySelector('
   // the panel says "Last 7 Days (30/09/2026 - 06/10/2026)"; a product card cannot carry that
   t('the overlay text takes a SHORT window, not FeedHero\u2019s full date range',
     /in 7 days$/.test(cv) && !/\d{2}\/\d{2}\/\d{4}/.test(cv), cv);
+}
+
+console.log('· the Ads window Ray asked for');
+{
+  // Ray asked for "x clicks over past 30 days"; the shared ads lane is 7. The window is a control,
+  // and the figures on screen belong to the window they were read over.
+  const before = await page.$eval('[data-st-tx="clicks"]', (e) => e.value);
+  t('the default window is the already-cached 7 days', seen.adsPer.every((x) => x === '7_days'), seen.adsPer.join(','));
+  await page.selectOption('#st-adswin', '30_days');
+  await page.waitForTimeout(250);
+  const st0 = await txt('#st-state');
+  t('changing the window DROPS the old figures rather than relabelling them',
+    /press Add Google Ads to read it/.test(st0) && !(await page.$eval('[data-st-tx="clicks"]', (e) => e.value)).includes('1,267'), st0);
+  await page.click('#st-ads');
+  await page.waitForFunction(() => /Google Ads read/.test(document.querySelector('#st-state').textContent), null, { timeout: 20000 });
+  t('the 30-day window is actually asked of the route', seen.adsPer.includes('30_days'), seen.adsPer.join(','));
+  const after = await page.$eval('[data-st-tx="clicks"]', (e) => e.value);
+  t('the overlay now carries the 30-day figure', /5,102 clicks in 30 days/.test(after), after);
+  t('and it really is a different reading from the 7-day one', after !== before, before + ' -> ' + after);
+  const rail = await txt('#st-rail');
+  t('the panel names the longer window', /Last 30 Days/.test(rail), rail.slice(0, 500));
+  await page.selectOption('#st-adswin', '7_days');
+  await page.click('#st-ads');
+  await page.waitForFunction(() => /Google Ads read/.test(document.querySelector('#st-state').textContent), null, { timeout: 20000 });
+  t('and it goes back', /1,267 clicks in 7 days/.test(await page.$eval('[data-st-tx="clicks"]', (e) => e.value)),
+    await page.$eval('[data-st-tx="clicks"]', (e) => e.value));
 }
 
 console.log('· a product search inside the studio');

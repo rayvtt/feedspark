@@ -256,6 +256,8 @@ window.addEventListener('load',restore);
 </style>
 <style>/* ===== OVL-STUDIO: the Design studio ===== */
 #studio .sth{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+#st-adswin{font:inherit;font-size:12px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink)}
+[data-theme=dark] #st-adswin{background:#20242E;color:var(--ink)}
 .st-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
 .st-box{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:3px 4px 3px 9px;min-width:260px;flex:1 1 300px}
 .st-box input{border:0;outline:0;font:inherit;font-size:13px;color:var(--ink);background:transparent;flex:1;min-width:0;padding:5px 2px}
@@ -382,6 +384,7 @@ table.st-rt td.nt{color:var(--ink-2)}
       <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
         <button class="btn pri" id="st-read" type="button" title="Read a sample of this feed and work out which of its own columns carries each overlay message">⚡ Read this feed's fields</button>
         <button class="btn" id="st-ads" type="button" title="Read this brand's Google Ads traffic per product (FeedHero reports) so an overlay can carry clicks, views and sales">📈 Add Google Ads</button>
+        <select id="st-adswin" aria-label="Google Ads window" title="How far back to read. 7 days is usually already downloaded; 30 days is a second full read of the account and takes longer."><option value="7_days">last 7 days</option><option value="30_days">last 30 days</option></select>
       </div>
     </div>
     <div class="st-bar">
@@ -906,7 +909,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   var STU=window.FeedOverlayStudio;
   var ST_ROWS=500, ST_GAL=480, ST_BIG=1000;
   var ST={client:'',mkt:'',hdr:null,rows:[],sum:null,ads:null,adsCov:null,adsWin:'',adsNote:'',
-          adsShort:'',mqty:null,mval:null,mfile:'',pid:'',row:null,res:null,design:'',text:{},
+          adsShort:'',adsPer:'7_days',mqty:null,mval:null,mfile:'',pid:'',row:null,res:null,design:'',text:{},
           img:null,img2:null,imgWhy:'',imgSrc:'',busy:false,read:false};
   var stState=function(t){ var e=$('#st-state'); if(e)e.textContent=t||''; };
   var wait=function(ms){ return new Promise(function(r){setTimeout(r,ms)}); };
@@ -949,7 +952,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   function stAdsLoad(){
     var tries=0;
     function step(){
-      return fetch('/api/catalog/ads?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt))
+      return fetch('/api/catalog/ads?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt)+'&period='+encodeURIComponent(ST.adsPer||'7_days'))
         .then(function(r){ return r.json().catch(function(){return{}}).then(function(j){ j.__s=r.status; return j; }); })
         .then(function(j){
           if(j.__s===202){ if(++tries>15)throw new Error('Google Ads is still downloading this report — try again in a minute'); stState('Google Ads — FeedHero is downloading this report from Google…'); return wait(4000).then(step); }
@@ -1441,7 +1444,9 @@ table.st-rt td.nt{color:var(--ink-2)}
     if(!ST.sum){ stState('Read this feed’s fields first.'); return; }
     if(isFb(ST.mkt)){ stState('Google Ads belongs to the Google market — a Meta catalogue feed has no Ads traffic of its own. Switch to the Google market to design with clicks.'); return; }
     var b=$('#st-ads'); b.disabled=true;
-    stState('Reading this brand’s Google Ads traffic per product…');
+    ST.adsPer=($('#st-adswin')&&$('#st-adswin').value)||'7_days';
+    stState('Reading this brand’s Google Ads traffic per product over the '+ST.adsPer.replace(/_/g,' ')+'…'
+      +(ST.adsPer==='30_days'?' A 30-day window is a second full read of the account, so this one takes longer.':''));
     stAdsLoad().then(function(){
       stSummon();
       if(ST.row){ ST.res=stResolve(); }
@@ -1450,6 +1455,14 @@ table.st-rt td.nt{color:var(--ink-2)}
         :(stMsg()+' — '+(ST.adsNote||'Google Ads returned no traffic for this account')+'.'));
     }).catch(function(e){ stState('Google Ads: '+((e&&e.message)||e)); })
       .then(function(){ b.disabled=false; });
+  });
+  $('#st-adswin').addEventListener('change',function(){
+    /* the figures on screen belong to the window they were read over "" relabelling them would be
+       the card quietly claiming a month of traffic off a week of numbers */
+    if(!ST.ads)return;
+    ST.ads=null; ST.adsCov=null; ST.adsWin=''; ST.adsShort='';
+    if(ST.sum){ stSummon(); if(ST.row)ST.res=stResolve(); stProd(); stGallery(); stRail(); if(ST.design)stWb(ST.design); }
+    stState('Window changed to the '+this.value.replace(/_/g,' ')+' — press Add Google Ads to read it.');
   });
   document.addEventListener('click',function(e){
     var c=e.target.closest&&e.target.closest('[data-st-d]');

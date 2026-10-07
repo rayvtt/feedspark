@@ -11157,7 +11157,7 @@
     {"name": "Catalogue: the 7-day read is called again until whole", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }", "pr": 0},
     {"name": "Catalogue: the inspector's own Google Ads line", "file": "docs/FeedSpark_Catalog.html", "pattern": "function inspAdsHtml(i) {", "pr": 0},
     {"name": "Catalogue engine: Ads join is the product id, case-blind; rates from the sums", "file": "docs/catalog_engine.js", "pattern": "function adsRates(v) {", "pr": 0},
-    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh) {", "pr": 0},
+    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (rec.sig && rec.sig !== sig) { restarted = true;", "pr": 0},
     {"name": "Worker: /api/catalog/ads", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/ads') {", "pr": 0},
     {"name": "Deck export: stacked + donut native charts", "file": "tools/deck_to_pptx.py", "pattern": "\"donut\": XL_CHART_TYPE.DOUGHNUT", "pr": 568},
     {"name": "Deck export: chart left, next table right (data-chart-side)", "file": "tools/deck_to_pptx.py", "pattern": "side = blocks[i][1]; i += 1", "pr": 568},
@@ -11652,6 +11652,8 @@
     {"name": "Overlay studio: stock is reported as master-only, never mocked up — no output feed in the estate carries it", "file": "docs/overlay_studio_engine.js", "pattern": "master_only", "pr": 0},
     {"name": "Overlay studio: the recipe emits the REAL image-creator params", "file": "docs/overlay_studio_engine.js", "pattern": "tags_img_type", "pr": 0},
     {"name": "Overlay studio: a full-width band reserves its edge so a corner zone cannot land under it", "file": "docs/overlay_studio_engine.js", "pattern": "PASS 1 — the full-width bands", "pr": 0},
-    {"name": "Overlay studio: the PNG filename keeps the market's channel (gb and gb-fb must not collide)", "file": "docs/FeedSpark_Overlays.html", "pattern": "the RAW market, not mktLbl", "pr": 0}
+    {"name": "Overlay studio: the PNG filename keeps the market's channel (gb and gb-fb must not collide)", "file": "docs/FeedSpark_Overlays.html", "pattern": "the RAW market, not mktLbl", "pr": 0},
+    {"name": "Overlay studio: the Google Ads window is a 7/30-day control, allowlisted, 7 by default", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const CAT_ADS_PERIODS", "pr": 0},
+    {"name": "Overlay studio: changing the Ads window drops the figures rather than relabelling them", "file": "docs/FeedSpark_Overlays.html", "pattern": "press Add Google Ads to read it", "pr": 0}
   ]
 }
