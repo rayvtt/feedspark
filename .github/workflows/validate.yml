@@ -53,10 +53,14 @@ jobs:
         run: node tools/test_arrivals.mjs
       - name: AI Mode harness (conversational attributes priced by data source)
         run: node tools/test_aimode.mjs
+      - name: Services & Pricer engine harness (needs per parent, the package, the Spark AI twin, the client-safe guard)
+        run: node tools/test_pricer.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
       - name: Shared working state harness (one team, one store)
         run: node tools/test_sharedstate.mjs
+      - name: Services & Pricer store harness (allow-lists, server stamps, the cost gate before KV, scoped proposals)
+        run: node tools/test_pricerstore.mjs
       - name: Brief recovery harness (the brief email rebuilds a missing ticket)
         run: node tools/test_briefrecover.mjs
       - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)

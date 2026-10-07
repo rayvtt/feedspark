@@ -467,7 +467,8 @@ window.addEventListener('load',restore);
     .ro-t{min-width:0}
     .ro-t thead{display:none}
     .ro-t,.ro-t tbody,.ro-t tr,.ro-t td{display:block;width:100%}
-    .ro-t tr.ro-r{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;padding:6px 10px;background:var(--paper)}
+    .ro-t tr.ro-r{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;padding:8px 12px;background:var(--paper);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 12px}
+    .ro-t tr.ro-r td.ro-f,.ro-t tr.ro-r td.ro-n{grid-column:1/-1}
     .ro-t td{border:0!important;padding:4px 0!important}
     .ro-t td::before{content:attr(data-l);display:block;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
     .gfld .fld,.gfld.wide .fld{width:100%}
@@ -1772,7 +1773,9 @@ function needCell(l){
   if(n.est==='na')return '<span class="nm" title="'+esc(n.why||'')+'">n/a</span>';
   if(l.key==='attr_rule'){var ps=[];Object.keys(l.byMkt||{}).forEach(function(m){((l.byMkt[m]||{}).parts||[]).forEach(function(p){if(ps.indexOf(p.label)<0)ps.push(p.label)})});
     return '<b>'+fmt(n.n)+'</b> '+gwWord('none',n.n)+(ps.length?' <span class="nd-parts">'+esc(ps.join(', '))+'</span>':'')+estChip(n,l.status==='priced'?(l.est||null):n.est)}
-  return '<b>'+fmt(n.n)+'</b> '+gwWord(l.grain,n.n)+' '+estChip(n,l.scope==='all'?null:n.est)+(l.scope==='all'?' <span class="est est-ratio">every product priced</span>':'');
+  // the units actually priced, when they differ from the need (a re-used language market, or every product)
+  var un=l.status==='priced'&&l.grain!=='none'&&l.units!=null&&Math.abs(l.units-(n.n||0))>=0.5?' <span class="nd-parts" title="Units priced after the language re-use weighting and the line\'s scope">priced on '+fmt(Math.round(l.units))+'</span>':'';
+  return '<b>'+fmt(n.n)+'</b> '+gwWord(l.grain,n.n)+' '+estChip(n,l.scope==='all'?null:n.est)+(l.scope==='all'?' <span class="est est-ratio">every product priced</span>':'')+un;
 }
 function moneyCell(l,q){
   if(l.key==='conv'&&q.conv&&l.status==='priced')return '<b>'+GBP(q.conv.setup)+'</b><br><span class="mx">+ '+GBP(q.conv.monthly)+'/mo</span>';
@@ -1837,7 +1840,7 @@ function tierCard(o){
   var gaps=q.lines.filter(function(l){return l.status==='unknown'||l.status==='unpriced'});
   if(gaps.length)h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')+'</ul>';
   if(q.blockers.length){var seen={},bl=q.blockers.filter(function(b){if(seen[b.why])return false;seen[b.why]=1;return true});
-    h+='<details class="blk-l"><summary>'+bl.length+' thing'+(bl.length===1?'':'s')+' to confirm before this goes to a client</summary><ul>'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul></details>'}
+    h+='<details class="blk-l"><summary>Before this goes to a client — '+bl.length+' to confirm</summary><ul>'+bl.map(function(b){return '<li>'+esc(b.why)+'</li>'}).join('')+'</ul></details>'}
   if(q.sla)h+='<div class="q-sla">⏱ Live in about '+q.sla+' working days from sign-off</div>';
   return h+'</div>';
 }
@@ -1930,7 +1933,7 @@ function renderDebrief(){
     :'<div class="nm">No offender examples yet — they come from the content-quality reading (stored, or the live audit).</div>';
   var rtc=t.flags.filter(function(f){return /^Ray to confirm: /.test(f)}),tech=t.flags.filter(function(f){return !/^Ray to confirm: /.test(f)});
   $('#db-flags').innerHTML=tech.map(function(f){return '<li>'+esc(f)+'</li>'}).join('')
-    +(rtc.length?'<li><details class="blk-l"><summary>Ray to confirm · '+rtc.length+' item'+(rtc.length===1?'':'s')+'</summary><ul>'+rtc.map(function(f){return '<li>'+esc(f.replace(/^Ray to confirm: /,''))+'</li>'}).join('')+'</ul></details></li>':'');
+    +(rtc.length?'<li><details class="blk-l"><summary>For Ray to confirm before sending — '+rtc.length+' item'+(rtc.length===1?'':'s')+'</summary><ul>'+rtc.map(function(f){return '<li>'+esc(f.replace(/^Ray to confirm: /,''))+'</li>'}).join('')+'</ul></details></li>':'');
   if(!SV.dbEdited){$('#db-sub').value=t.subject;$('#db-body').value=t.body}
   $('#db-guard').innerHTML=t.guarded?'<span class="pill warn">guarded</span> every figure reads <b>'+esc(E.GUARD_TXT)+'</b> until its blockers clear — send it to Ray, not the client':'<span class="pill good">client-safe</span> the figures are shown';
   dbExits(t);

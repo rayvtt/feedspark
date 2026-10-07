@@ -8,7 +8,7 @@
 //
 // The lines stubLines() returns only answer on the Pricer page (a guard on the file name), so the engines they hand
 // over never change what another page meets under the same tripwire. The Northwind GB feed lands after `delay` ms,
-// so a tripwire sees the STORED first paint (estimates, bound chips) before the live read turns the needs exact; the
+// so check_pricer.js sees the STORED first paint (estimates, bound chips) before the live read turns the needs exact; the
 // DE feed is refused (404), so the page shows its failed state, the typed-parents input and an unsized line's fix.
 'use strict';
 const fs = require('fs');
@@ -123,14 +123,14 @@ function build() {
     stores: stores(),
   };
 }
-// opts: { delay (ms before the GB feed lands), me ({email, owner, modules, name}: answer /api/access on this page),
+// opts: { delay (ms before the GB feed lands — 0 by default; check_pricer.js holds it back to see the stored paint), me ({email, owner, modules, name}: answer /api/access on this page),
 //         costDenied (the cost store answers 403) }
 function stubLines(opts) {
   opts = opts || {};
   const d = build();
   const src = (f) => JSON.stringify(fs.readFileSync(path.join(D, f), 'utf8'));
   const js = (f) => 'return Promise.resolve(new Response(' + src(f) + ',{status:200,headers:{"content-type":"application/javascript"}}));';
-  const delay = opts.delay == null ? 1200 : +opts.delay;
+  const delay = opts.delay == null ? 0 : +opts.delay;   // the tripwires that snapshot twice (desktop, phone) meet the same settled page
   return " if(/Pricer/.test(location.pathname)){\n"
     + "  if(url.indexOf('/pricer/engine.js')>=0)" + js('pricer_engine.js') + "\n"
     + "  if(url.indexOf('/feedlab/engine.js')>=0)" + js('feedlab_engine.js') + "\n"
