@@ -1102,14 +1102,26 @@ score, → Brief opening a keyword brief).
 > from the depth row's own bar — hover or focus shows it, a tap pins it (a phone has no hover), Esc or a click
 > elsewhere closes it, and it follows its bar while the page scrolls — in Product Type Guard's dark depth card: one
 > row per bucket, label · bar · share, the buckets at full credit in white, the average + share at target and the
-> scoring note under them (`depRows`/`DEPTIP`, the shared `.dptip`). The client documents cannot hover, so the PDF
-> and ⬇ HTML print the same rows inline (`.dep-card`, `body:not(.pdf)` hides it on screen) and the file loses the
-> pop-up's hooks. Harness: `tools/check_grdepth.js`.
+> scoring note under them (`depRows`/`DEPTIP`, the shared `.dptip`). **No table in the downloads either** (8 Oct 2026,
+> Ray: "remove these tables in the downloads - either it's a hover popup or it can be shown in the below modularised
+> report"): `depCard` writes no inline copy. The ⬇ HTML carries the same dark card as a CSS hover pop-up on its row
+> (`exportDoc` appends `.dptip.dep-hov`, shown by `.at-nm:hover~` / `.at-bar:hover~`, so the script-free file still
+> opens it); the PDF carries none, because paper cannot hover; the Catalogue's Content depth modules can be picked into
+> the report for a printed breakdown (§9.12c). Harness: `tools/check_grdepth.js`.
+>
+> **Plain words in the method (8 Oct 2026, Ray: "these sentences in the report are too 'AI' - rewrite and templated as
+> how normal marketing head is writing").** The "How it is put together" bullets for content quality and AI readiness
+> now read as a marketing head would write them: what the score checks, what counts most and why, the bands, and
+> today's figures. The client copy keeps the weights as an order in words; the AM's screen still shows the ×factors.
+> Two lines then went altogether (same day, "remove these 2 sentences"): AI readiness no longer says custom labels are not
+> scored or that it is the same reading as Feed Lab. The content-quality verdict sentence under the score went too ("remove
+> this text"), since the pill and the rows already say it. The score-history chart is capped at the 1000px it is drawn at
+> (`.hs-svg{max-width:1000px}`), so on a wide window its labels stay the size of the page text.
 >
 > **Card layout (8 Oct 2026, Ray: "these texts should sit in expandable — the coloured segments should stay on the
 > same line").** Each depth card is the bar, ONE line of legend chips (0 … 6+, never wrapping; it pans on a phone)
 > and a fold, *How it's scored · full credit at N+*, holding the explanation, what the feed carries today and the
-> examples by product type. The PDF / print copy opens every fold (`preparePdf`), the ⬇ HTML keeps them as native
+> examples by product type. (Since 8 Oct 2026 the card lives in the pop-up only.) The PDF / print copy opened every fold (`preparePdf`), the ⬇ HTML kept them as native
 > `<details>` a client can open. Pinned in `tools/check_grdepth.js`.
 
 Ray: *"this golden score will be the entire new base … image population … at least four plus …
@@ -1402,6 +1414,35 @@ chosen in session: the WHOLE client domain, encrypted, and any @feedspark.com so
   the client domain, a subdomain, a second listed domain and FeedSpark open it; another domain and a look-alike do
   not; the file holds no domain or report text. `tools/test_htmllock.mjs` pins the domain reading on sender shapes
   from the real queues, the route and the page wiring.
+
+### 9.12g Nothing in a download can act, or speak to a machine (8 Oct 2026)
+
+Ray: *"is the downloaded pdf & html also free from any jailbreak llm agents or loophole?"* The report quotes the
+client's own feed values back to them (the offending titles, descriptions, materials), so every value is treated as
+hostile. Before this, values were already escaped (shown as text, never markup), but INVISIBLE characters passed
+through: a line of instructions written in Unicode tag characters (U+E0000–E007F) or wrapped in zero-width / bidi marks
+shows nothing to a person and is still read by an AI model the file is pasted into.
+
+`scrubExport(doc)` is the last pass `exportDoc` makes, so it covers the plain ⬇ HTML, the locked ⬇ HTML (whose
+encrypted content is that same document) and the PDF (drawn from it):
+
+- no `<script>`, `<noscript>`, `<object>`/`<embed>`, `<form>`, `<base>` or `<meta http-equiv>`;
+- no stylesheet or link other than the Lato font; no frame that loads a page. The Catalogue's srcdoc frame keeps at most
+  `allow-same-origin` (never `allow-scripts`), and its own document is parsed and scrubbed the same way;
+- no `on*` handler, and no `javascript:` / `vbscript:` / `data:` URL (a data image stays) on any element, SVG included;
+- no comment;
+- zero-width marks, bidi overrides and tag characters are removed from every text node and attribute.
+
+The PDF is one JPEG. jsPDF is handed `addImage` + `save` only, so the file has no text layer, link, form, attachment or
+script; its only `/OpenAction` is jsPDF's "open at page 1, fit width" view. The locked shell carries one script (the
+opener), and the page it writes has none. What remains is the client's own feed copy, which the report shows as written,
+because quoting it is the point of the audit.
+
+Harness `tools/check_grsafe.js` (presync) poisons the quoted values (markup, a script tag, a `javascript:` link, an
+"ignore all previous instructions" line, the same line hidden in tag characters). It renders the plain file and the
+locked one opened with a client address, inspects what the PDF is drawn from, reads the real PDF bytes with
+`GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
+(invisible characters in the file).
 
 ### 9.12d Every scorecard section folds (7 Oct 2026)
 

@@ -647,6 +647,19 @@ export default {
       const res = d.json ? json(d.body, gate.status) : new Response(d.body, { status: gate.status, headers: { 'content-type': 'text/html;charset=utf-8' } });
       return secHeaders(res, path, url.origin);
     }
+    // THE DIRECTORY GATE (Ray, 8 Oct 2026: "only personnel with access been created in the workflow
+    // section pls"): past Access, a signin must also be a row the owner created in Workflow's 👥
+    // Individual access panel; the owner always passes, nobody else without a row (ALLOW_UNLISTED=1
+    // is the escape hatch). One KV get per non-public request — the same read accessOf makes.
+    if (!gate.public) {
+      const dir = (await env.EDITS.get('accessdir', 'json')) || ACCESS_SEED;
+      const dg = SEC.dirGate(ident, ownerEmail(env), dir, env);
+      if (!dg.ok) {
+        const d = SEC.deniedBody(path, 'not_listed');
+        const res = d.json ? json(d.body, dg.status) : new Response(d.body, { status: dg.status, headers: { 'content-type': 'text/html;charset=utf-8' } });
+        return secHeaders(res, path, url.origin);
+      }
+    }
     const bg = SEC.bodyGate(path, request.method, request.headers.get('content-length'));
     if (!bg.ok) return secHeaders(json({ error: 'request body too large', cap: bg.cap, size: bg.size }, 413), path, url.origin);
     if (SEC.MONEY_PATHS.has(path) && (request.method === 'POST' || request.method === 'PUT')) {
