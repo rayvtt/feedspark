@@ -13825,7 +13825,7 @@
     {
       "name": "Golden ⬇ HTML: the picked cards close the document, before the footer",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }",
+      "pattern": "if (cx) { var ft = doc.querySelector('#print-plan') || doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }",
       "pr": 0
     },
     {
@@ -14799,6 +14799,42 @@
       "name": "Social DPA: the brand-mode tripwire",
       "file": "tools/check_social.js",
       "pattern": "a real brand: its own logo on every network, read from its own pages",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: planBuild reads the audit into Now / Next / Then (Ray 8 Oct 2026: 'an action plan must be created and recommended to client after the audit')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function planBuild(",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: Workflow-style board at the foot of the PDF + HTML",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function planHtml(",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: #print-plan sits after the all-markets table",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "id=\"print-plan\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden exports: ONE CLIENT PER FILE — the estate/alert sections and selects are removed from the export (Ray 8 Oct 2026: 'dont ever mention competitor brand in the report')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "ONE CLIENT PER FILE",
+      "pr": 0
+    },
+    {
+      "name": "Golden verdict: the industry benchmark names the industry, never the best brand",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "best in the industry <b>",
+      "pr": 0
+    },
+    {
+      "name": "presync: Golden action-plan tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grplan.js",
       "pr": 0
     }
   ]
