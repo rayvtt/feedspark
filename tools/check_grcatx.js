@@ -252,6 +252,29 @@ ${STUBS.stubLines()}
   fs.unlinkSync(tmp);
   await out.close();
 
+  // ⬇ PDF carries the picks too, now that it is the ⬇ HTML on paper (Ray, 8 Oct 2026: "can the PDF download format be
+  // adapted to latest update and ensure design is consistent?") — OPT-IN with the real libraries (GRPDF_LIBS=<dir>), since a
+  // canvas cannot see inside a frame: the section is drawn into an image in place, every card grown to its content
+  if (process.env.GRPDF_LIBS) {
+    console.log('── ⬇ PDF with the same picks (GRPDF_LIBS)');
+    for (const f of ['html2canvas.min.js', 'jspdf.umd.min.js']) await page.route('**/' + f, (r) => r.fulfill({ path: path.join(process.env.GRPDF_LIBS, f), contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } }));
+    await page.evaluate(() => { window.__pdfOut = null; window.__printed = false; window.print = () => { window.__printed = true; };
+      const iv = setInterval(() => { if (window.jspdf && window.jspdf.jsPDF && !window.jspdf.__w) { const J = window.jspdf.jsPDF; window.jspdf.__w = 1;
+        window.jspdf.jsPDF = function (o) { const j = new J(o); j.addImage = function (u) { window.__pdfImg = u; }; j.save = function (n) { window.__pdfOut = n; }; return j; }; clearInterval(iv); }
+        if (window.html2canvas && !window.html2canvas.__w) { const H = window.html2canvas; window.__h2cT = [];
+          window.html2canvas = function (el, o) { window.__h2cT.push({ catx: !!(el.ownerDocument.querySelector('.ins.mods')), mods: el.ownerDocument.querySelectorAll('.mod').length,
+            tall: Array.from(el.ownerDocument.querySelectorAll('.mod')).map((m) => Math.round(m.getBoundingClientRect().height)), imgs: el.ownerDocument.querySelectorAll('#print-catx img').length,
+            frames: el.ownerDocument.querySelectorAll('#print-catx iframe').length }); return H(el, o); }; window.html2canvas.__w = 1; } }, 20); });
+    await page.click('#det-pdf');
+    await page.waitForFunction(() => window.__pdfOut || window.__printed, null, { timeout: 90000 }).catch(() => {});
+    const pr = await page.evaluate(() => ({ out: window.__pdfOut, printed: window.__printed, calls: window.__h2cT, len: (window.__pdfImg || '').length, left: document.querySelectorAll('iframe.pdf-render').length }));
+    const inner = (pr.calls || []).find((c) => c.catx), outer = (pr.calls || []).slice(-1)[0] || {};
+    ok('⬇ PDF draws the picked Catalogue cards into the document — each grown to its content, at least the square — and saves without the print dialog',
+      !!pr.out && !pr.printed && inner && inner.mods === 3 && inner.tall.every((h) => h >= 340) && outer.imgs === 1 && outer.frames === 0 && pr.left === 0 && pr.len > 20000,
+      { out: pr.out, printed: pr.printed, inner, outer: { imgs: outer.imgs, frames: outer.frames }, left: pr.left });
+    if (process.env.GRCATX_PDFSHOT && pr.len) fs.writeFileSync(process.env.GRCATX_PDFSHOT, Buffer.from((await page.evaluate(() => window.__pdfImg)).split(',')[1], 'base64'));
+  }
+
   console.log('── the frame and the device, after the export');
   ok('the frame is put back on the measure the AM left it on', await fr.evaluate(() => document.getElementById('depth-f').value) === 'tlen');
   ok('the button is free again', await page.evaluate(() => !document.getElementById('det-html').disabled && /HTML/.test(document.getElementById('det-html').textContent)));
