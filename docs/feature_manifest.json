@@ -12396,6 +12396,24 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "function rfCust(",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: five pre-loaded example products per brand (/api/pricer/examples), ‹ › switcher, Prepare examples / every brand",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function exPrepareAll(",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: Tier 2 leaves nothing missing on the example product (contracted / completed in the Tier 2 delivery)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "var t2all=PV.opt==='go+ar'",
+      "pr": 0
+    },
+    {
+      "name": "Worker: /api/pricer/examples — pre-loaded example products per client (KV pricerex:<client>)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function pricerExamplesRoute(",
+      "pr": 0
     }
   ]
 }

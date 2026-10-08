@@ -64,6 +64,7 @@ async function open(b, html, vp, o) {
   p.on('pageerror', (e) => errs.push(String(e).slice(0, 200)));
   p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)); });
   if (o && o.seed) await p.addInitScript('window.__pzS=' + JSON.stringify(o.seed) + ';');
+  if (o && o.init) await p.addInitScript(o.init);
   await p.addInitScript(stub(o));
   await p.goto('file://' + tmp + ((o && o.query) || ''));
   return { p, ctx, errs, tmp };
@@ -116,7 +117,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       const q = o === 'now' ? null : window.__PZX.PQ[o];
       return { full: rows.filter((r) => r.querySelector('.pv-v').textContent === '100%').length, pop: rows.filter((r) => r.classList.contains('pop')).length,
         score: document.querySelector('#svc-prev .pv-s').textContent, want: q ? q.perMarket[0].projected.after : window.__PZX.SV.audits[0].audit.golden.score,
-        fixed: q ? q.perMarket[0].projected.fixed.length : 0, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), on: document.querySelectorAll('#svc-prev .pv-fr.on').length, invented: Array.from(document.querySelectorAll('#svc-prev .pv-fr.on .fs')).every((x) => /^✦ T[12]( · £ tbc)?$/.test(x.textContent) && /^(filled|optimised) — /.test(x.title)), ex: Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }])), h: document.querySelector('#svc-prev .pv-body').getBoundingClientRect().height, calls: (window.__pzClaude || []).length, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv') }; }, opt); };
+        fixed: q ? q.perMarket[0].projected.fixed.length : 0, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), on: document.querySelectorAll('#svc-prev .pv-fr.on').length, invented: Array.from(document.querySelectorAll('#svc-prev .pv-fr.on .fs')).every((x) => /^(✦ T[12]( · £ tbc)?|✓ contracted)$/.test(x.textContent) && /^(filled|optimised|completed in the Tier 2 delivery) /.test(x.title)), ex: Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }])), h: document.querySelector('#svc-prev .pv-body').getBoundingClientRect().height, calls: (window.__pzClaude || []).length, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv') }; }, opt); };
     const v0 = await pv('now'), v1 = await pv('go'), v2 = await pv('go+ar');
     ok('the tier preview fills more attributes Today → Tier 1 → Tier 2, each row the engine says the option fills', v0.full <= v1.full && v1.full < v2.full && v1.fixed > 0 && v2.fixed > v1.fixed, [v0, v1, v2]);
     ok('the preview score lands on the engine\'s projected Golden Score for each option, and the changed rows sweep', +v1.score === +(+v1.want).toFixed(1) && +v2.score === +(+v2.want).toFixed(1) && v2.pop > 0 && v2.pressed === 'go+ar', [v1, v2]);
@@ -126,7 +127,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the tiers show actual example values — pattern "Plain", 10+ keyword strings — labelled as Spark AI examples', v2.ex.pattern && v2.ex.pattern.v === 'Plain' && /ex/.test(v2.ex.pattern.c) && v2.ex.keywords && /^1\d strings: /.test(v2.ex.keywords.v), v2.ex);
     ok('fields built in FeedHero show HOW, never a generated value; no size is ever generated', (!v2.ex.popularity_rank || /how/.test(v2.ex.popularity_rank.c)) && (!v2.ex.size || !/ex/.test(v2.ex.size.c)), [v2.ex.popularity_rank, v2.ex.size]);
     // without the Claude connection every brand still sees real values, built from its own product row
-    const off = await p.evaluate(() => { const X = window.__PZX, P = X.LIVE['Northwind|gb'].ps; X.pv().ex[P.id] = { st: 'off' }; X.preview();
+    const off = await p.evaluate(() => { const X = window.__PZX, P = [].concat(X.LIVE['Northwind|gb'].ps)[0]; X.pv().ex[P.id] = { st: 'off' }; X.preview();
       const rows = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }]));
       const d = X.derive({ id: 'x', title: 'Northwind Wide Leg Trousers', brand: 'Northwind', description: 'Wide leg trousers in a soft crepe. 95% Polyester, 5% Elastane. Machine wash.', product_type: 'Women > Clothing > Trousers', product_detail: '<g:section_name>Care</g:section_name><g:attribute_name>Washing</g:attribute_name><g:attribute_value>Machine wash</g:attribute_value>' }, 'gb');
       const img = document.querySelector('#svc-prev .pv-img img'), ib = img.getBoundingClientRect();
@@ -135,6 +136,25 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the data-built example reads the row honestly: plain when no pattern is named, the largest share of the composition as material, product_detail XML as section: attribute: value, size system from the market', off.d.pattern === 'Plain' && off.d.material === 'Polyester' && off.d.product_detail[0] === 'Care: Washing: Machine wash' && off.d.size_system === 'UK' && off.d.gender === 'female' && off.d.keywords.length >= 10 && !('size' in off.d) && !('gtin' in off.d), off.d);
     if (vp === 1440) ok('the product image is large and never cropped — drawn at its own aspect, contain', off.imgW >= 150 && off.fit === 'contain' && off.nat, [off.imgW, off.fit, off.nat]);
     if (vp === 1440) ok('the preview fits one screen: product card + catalogue column under 760px tall', v2.h < 760, v2.h);
+    // FIVE products per brand, prepared ahead for a client meeting; Tier 2 leaves nothing missing (Ray, 8 Oct 2026)
+    const five = await p.evaluate(() => ({ sw: (document.querySelector('#svc-prev .pv-sw b') || {}).textContent, n: [].concat(window.__PZX.LIVE['Northwind|gb'].ps).length,
+      t0: document.querySelector('#svc-prev .pv-pt').textContent, src: (document.querySelector('#svc-prev .pv-src') || {}).textContent,
+      miss: Array.from(document.querySelectorAll('#svc-prev .pv-fr .fv.miss')).map((x) => x.closest('.pv-fr').getAttribute('data-k')),
+      contr: Array.from(document.querySelectorAll('#svc-prev .pv-fr .fs')).filter((x) => x.textContent === '✓ contracted').length }));
+    ok('the live read keeps FIVE of the client\'s own products, and the card steps through them (1 / 5, live read)', five.n === 5 && five.sw === '1 / 5' && /live read/.test(five.src), five);
+    ok('Tier 2 · AI-ready leaves nothing missing on the example product', five.miss.length === 0, five.miss);
+    await p.click('#svc-prev [data-pvp="1"]'); await p.waitForTimeout(250);
+    const nx = await p.evaluate(() => ({ sw: document.querySelector('#svc-prev .pv-sw b').textContent, t: document.querySelector('#svc-prev .pv-pt').textContent,
+      miss: document.querySelectorAll('#svc-prev .pv-fr .fv.miss').length }));
+    ok('› shows the next of the five — another product, still nothing missing in Tier 2', nx.sw === '2 / 5' && nx.t !== five.t0 && nx.miss === 0, [five.t0, nx]);
+    await p.click('#svc-prev [data-pvx="brand"]');
+    await p.waitForFunction(() => (window.__pzExPuts || []).length > 0, null, { timeout: 8000 }).catch(() => {});
+    await p.waitForTimeout(300);
+    const pre = await p.evaluate(() => ({ put: (window.__pzExPuts || [])[0], src: (document.querySelector('#svc-prev .pv-src') || {}).textContent, msg: (document.querySelector('#svc-prev .pv-pre-s') || {}).textContent }));
+    ok('⟳ Prepare examples keeps five Northwind GB products with their Spark AI examples, and the card then reads pre-loaded',
+      pre.put && pre.put.client === 'Northwind' && pre.put.mkt === 'gb' && pre.put.products.length === 5 && pre.put.products.every((x) => x.p.id && x.p.title && x.p.image_link)
+      && pre.put.products.some((x) => x.src === 'ai' && x.ex && x.ex.title) && /pre-loaded/.test(pre.src) && /5 products ready/.test(pre.msg), { src: pre.src, msg: pre.msg, n: pre.put && pre.put.products.length });
+    await p.click('#svc-prev [data-pvp="-1"]'); await p.waitForTimeout(150);
     if (vp === 1440 && process.env.PZ_SHOTS) await (await p.$('#svc-prev')).screenshot({ path: process.env.PZ_SHOTS + '/preview_t2.png' });
     if (process.env.PZ_SHOTS) await (await p.$('#svc-tiers')).screenshot({ path: process.env.PZ_SHOTS + '/tiers_' + vp + '.png' });
     // a market whose feed cannot be read
@@ -193,6 +213,25 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('no console error at ' + vp + 'px', !errs.length, errs.slice(0, 3));
     if (process.env.PZ_SHOTS) await p.screenshot({ path: path.join(process.env.PZ_SHOTS, 'check_pricer_' + vp + '.png'), fullPage: true });
     await ctx.close(); try { fs.unlinkSync(tmp); } catch (e) {}
+  }
+
+  console.log('\nPre-loaded examples open in a client meeting with no feed read');
+  {
+    const row = (i, t) => ({ id: 'NW-PRE-' + i, title: t, image_link: 'https://img.northwind.invalid/pre' + i + '.jpg', brand: 'Northwind', price: '49.00 GBP', description: 'A short description.', hl: 0, hlv: [], kw: [] });
+    const preEx = { Northwind: { gb: { t: Date.now() - 86400000, by: 'Steven', products: [
+      { p: row(1, 'Northwind Linen Shirt Dress'), src: 'ai', ex: { title: 'Northwind Women\'s Linen Relaxed Fit Sage Shirt Dress for Summer Days, Midi Length With Belt', pattern: 'Plain', keywords: ['linen shirt dress', 'sage midi dress', 'womens linen dress', 'belted shirt dress', 'summer midi dress', 'relaxed fit dress', 'linen dress uk', 'shirt dress women', 'sage green dress', 'holiday dress', 'northwind dress'] } },
+      { p: row(2, 'Northwind Cord Trousers'), src: 'derived', ex: null }] } } };
+    const { p, errs, tmp } = await open(b, HTML, 1440, { me: OWNER, preEx, delay: 8000, init: "try{localStorage.setItem('fcc-svc-src','stored')}catch(e){}", query: '?client=Northwind' });
+    await p.waitForSelector('.tier', { timeout: 15000 });
+    await p.waitForSelector('#svc-prev .pv-pt', { timeout: 8000 }).catch(() => {});
+    await p.click('#svc-prev [data-pv="go+ar"]').catch(() => {}); await p.waitForTimeout(600);
+    const st = await p.evaluate(() => ({ t: (document.querySelector('#svc-prev .pv-pt') || {}).textContent, sw: (document.querySelector('#svc-prev .pv-sw b') || {}).textContent,
+      src: (document.querySelector('#svc-prev .pv-src') || {}).textContent, title: (document.querySelector('#svc-prev .pv-fr[data-k="title"] .fv') || {}).textContent,
+      live: !!(window.__PZX.LIVE['Northwind|gb'] && window.__PZX.LIVE['Northwind|gb'].ps), claude: (window.__pzClaude || []).length, miss: document.querySelectorAll('#svc-prev .pv-fr .fv.miss').length }));
+    ok('in Stored mode the prepared product opens at once — before any live read lands, no Spark AI call — with its stored example and "pre-loaded · Steven"',
+      st.t === 'Northwind Linen Shirt Dress' && st.sw === '1 / 2' && /pre-loaded.*Steven/.test(st.src) && /Sage Shirt Dress/.test(st.title) && !st.live && st.claude === 0 && st.miss === 0, st);
+    ok('…and no console error', errs.length === 0, errs);
+    fs.unlinkSync(tmp);
   }
 
   console.log('\nA signin without the pricer-cost grant');

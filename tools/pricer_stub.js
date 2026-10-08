@@ -166,6 +166,11 @@ function stubLines(opts) {
     + "  if(url.indexOf('/api/hours')>=0)return j({ok:true,clients:" + JSON.stringify(d.hours) + "});\n"
     + "  if(url.indexOf('/api/schedule')>=0)return j({ok:true,cadence:" + JSON.stringify(d.sched) + ",brands:[]});\n"
     + "  if(url.indexOf('/api/labels/askdraft')>=0){if(opts&&opts.method==='POST'){window.__pzAsk=(window.__pzAsk||[]).concat([JSON.parse(opts.body)]);return j({ok:true,id:'ad_x'});}return j({cfg:{to:{Northwind:'buyer@northwind.invalid'}},asked:{},pending:0});}\n"
+    // the pre-loaded examples (/api/pricer/examples): one record per client, a PUT replaces one market
+    + "  if(url.indexOf('/api/pricer/examples')>=0){window.__pzEx=window.__pzEx||" + JSON.stringify(opts.preEx || {}) + ";"
+    +     "if(opts&&opts.method==='PUT'){var eb=JSON.parse(opts.body);window.__pzExPuts=(window.__pzExPuts||[]).concat([eb]);var rec={t:Date.now(),by:'Ray',products:eb.products};"
+    +       "window.__pzEx[eb.client]=window.__pzEx[eb.client]||{};window.__pzEx[eb.client][eb.mkt]=rec;return j({ok:true,client:eb.client,mkt:eb.mkt,rec:rec});}"
+    +     "return j({ok:true,client:qs('client'),mkts:window.__pzEx[qs('client')]||{}});}\n"
     + "  if(url.indexOf('/api/pricer/')>=0){var nm=url.split('/api/pricer/')[1].split('?')[0];window.__pzS=window.__pzS||" + JSON.stringify(d.stores) + ";"
     +     (opts.costDenied ? "if(nm==='cost'||(nm==='price'&&opts&&opts.method==='PUT'))return j({ok:false,error:'Management only (the pricer-cost grant)'},403);" : '')
     +     (opts.full ? "if(nm==='proposals'&&opts&&opts.method==='PUT'){window.__pzFull=(window.__pzFull||0)+1;return j({ok:false,error:'the proposals store is full (it would pass 20 MB) — nothing was saved. Delete options nobody needs (a deleted option keeps only its name) and save again'},413);}" : '')

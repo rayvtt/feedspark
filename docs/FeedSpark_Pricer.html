@@ -368,6 +368,12 @@ window.addEventListener('load',restore);
   .pv-pt{font-weight:900;font-size:13px;line-height:1.3}
   .pv-pid{font-size:11px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
   .pv-ex{font-size:11px;font-weight:800;color:var(--muted);margin-top:3px}
+  .pv-pre{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0 2px;font-size:12px}
+  .pv-sw{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px 4px;background:var(--paper)}
+  .pv-sw button{font:inherit;font-weight:900;border:0;background:transparent;color:var(--ink);min-width:30px;min-height:30px;cursor:pointer;border-radius:6px}
+  .pv-sw button:disabled{opacity:.35;cursor:default}.pv-sw b{font-size:12px;min-width:36px;text-align:center}
+  .pv-src{font-weight:800;color:var(--muted)}.pv-src.on{color:var(--good,#1B7F3B)}
+  .pv-pre-s{color:var(--muted);font-size:11.5px}
   .pv-ex.on{color:var(--navy)}.pv-ex.err{color:var(--orange-deep)}
   .pv-fl{display:flex;flex-direction:column}
   .pv-fr{display:grid;grid-template-columns:7.4em minmax(0,1fr) auto;align-items:center;gap:0 8px;padding:2px 6px;min-height:22px;border-top:1px solid var(--line);font-size:12px;line-height:1.35;border-radius:5px;transition:background-color .45s}
@@ -1775,7 +1781,7 @@ function marketsOf(c){
 function svLoadClient(c,mkts){
   // another client starts from the defaults — the language groups too (they are keyed by market code only)
   if(norm(c)!==norm(SV.client)){custDefaults();SV.lang={}}
-  SV.client=c;lsSet('fcc-svc-client',c);SV.addTo=null;SV.version=null;SV.dbEdited=false;SV.dbSrc='build';
+  SV.client=c;lsSet('fcc-svc-client',c);exLoad(c);PV.pi=0;SV.addTo=null;SV.version=null;SV.dbEdited=false;SV.dbSrc='build';
   SV.allMkts=marketsOf(c);
   var want=(mkts||[]).filter(function(m){return SV.allMkts.indexOf(m)>=0});
   SV.mkts=want.length?want:(SV.allMkts.length?[SV.allMkts.indexOf('gb')>=0?'gb':SV.allMkts[0]]:[]);
@@ -2080,7 +2086,7 @@ function renderMode(){
    product (image + its own row), cached for the session, labelled as an example ASPL and the AM review — and only
    from facts in the image or the row: no identifier, size or price is ever generated, and the four fields built in
    FeedHero or scraped (document link, related products, variant options, popularity rank) show HOW, not a value. */
-var PV={opt:'now',mkt:0,last:null,ex:{}};
+var PV={opt:'now',mkt:0,last:null,ex:{},pi:0};
 var PV_GROUPS=[['Google basics',['title','description','google_product_category','product_type','keywords']],
   ['Attributes',['color','size','gender','age_group','material','pattern','size_type','size_system']],
   ['AI readiness',['product_highlight','product_detail','question_and_answer','document_link','related_product','item_group_title','variant_option','popularity_rank']]];
@@ -2093,6 +2099,8 @@ var PV_HOW={title:'rewritten: brand + material + fit + colour + use',description
   condition:'set by a FeedHero rule',product_highlight:'drawn from the description, feed, product page and reviews',product_detail:'harvested from the product images and page',
   question_and_answer:'written by Spark AI',item_group_title:'written by Spark AI',document_link:'scraped from the product page',related_product:'built in FeedHero',
   variant_option:'built in FeedHero',popularity_rank:'computed in FeedHero from Google Ads data'};
+// what Tier 2 writes for a product that names none — Google's own values
+var PV_FALL={gender:'unisex',age_group:'adult',size_type:'regular',condition:'new'};
 var PV_REWRITE={title:1,description:1,google_product_category:1,product_type:1,keywords:1,product_highlight:1};
 // the fields Spark AI writes an example for — never an identifier, a size, a price, or what FeedHero builds
 var PV_GEN=['title','description','google_product_category','product_type','keywords','color','material','pattern','gender','age_group','size_type','size_system',
@@ -2102,7 +2110,9 @@ function pvLabel(k){return PV_LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).repl
 function prodSampler(){
   var WANT=['id','title','image_link','description','google_product_category','product_type','color','material','pattern','gender','age_group','size','size_type','size_system',
     'product_detail','question_and_answer','document_link','related_product','item_group_title','variant_option','popularity_rank','brand','price'];
-  var hdr=null,best=null,bestGap=-1,seen=0;
+  // the FIVE products with the most gaps (Ray, 8 Oct 2026: "pre-loaded population for 5 products examples per
+  // brand") — one per item group and title stem, so the five are five different products, not five sizes of one
+  var hdr=null,top=[],seen=0,N=5;
   function nk(x){return (FA&&FA.normKey?FA.normKey(x):String(x||'').toLowerCase()).replace(/^\s+|\s+$/g,'')}
   function cols(h){var m={},hl=[],kw=[];h.forEach(function(c,i){var k=nk(c);
       if(WANT.indexOf(k)>=0&&m[k]==null)m[k]=i;
@@ -2121,12 +2131,80 @@ function prodSampler(){
       var kw=C._kw.map(function(i){return String(r[i]||'').trim()}).filter(function(x){return x&&!/^[0-9a-f]{24,}$/i.test(x)});
       var gap=['google_product_category','product_type','color','material','pattern','product_detail','question_and_answer','item_group_title'].filter(function(k){return !v(k)}).length
         +(v('description').length<160?1:0)+(hl.length<4?1:0)+(kw.length?0:1);
-      if(gap>bestGap){bestGap=gap;var o={hl:hl.length,hlv:hl.slice(0,6).map(function(x){return x.slice(0,160)}),kw:kw.slice(0,3)};WANT.forEach(function(k){o[k]=v(k).slice(0,k==='description'?600:220)});best=o}
-    },finish:function(){return best}};
+      if(top.length>=N&&gap<=top[top.length-1].gap)return;
+      var stem=(v('item_group_title')||v('title')).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').slice(0,4).join(' ');
+      var dup=top.filter(function(x){return x.stem===stem})[0];
+      if(dup&&dup.gap>=gap)return;
+      var o={hl:hl.length,hlv:hl.slice(0,6).map(function(x){return x.slice(0,160)}),kw:kw.slice(0,3)};WANT.forEach(function(k){o[k]=v(k).slice(0,k==='description'?600:220)});
+      if(dup)top.splice(top.indexOf(dup),1);
+      top.push({gap:gap,stem:stem,o:o});top.sort(function(a,b){return b.gap-a.gap});if(top.length>N)top.length=N;
+    },finish:function(){return top.length?top.map(function(x){return x.o}):null}};
 }
 function pvSample(a){
-  if(SV.mode==='file'&&SV.file&&SV.file.res)return SV.file.res.ps||null;
-  var L=LIVE[a.client+'|'+a.mkt];return (L&&L.ps)||null;
+  var ps;
+  if(SV.mode==='file'&&SV.file&&SV.file.res)ps=SV.file.res.ps||null;
+  else{var L=LIVE[a.client+'|'+a.mkt];ps=(L&&L.ps)||null}
+  return ps?(Array.isArray(ps)?ps:[ps]):null;
+}
+/* ---- PRE-LOADED EXAMPLES (Ray, 8 Oct 2026: "pre-loaded population for 5 products examples per brands ahead to run
+   this audit live with client"). Five of the client's own products per market, with the example values each tier
+   writes, prepared AHEAD (⟳ Prepare examples / Prepare every brand) and kept in KV (/api/pricer/examples) — so in a
+   client meeting the product card opens at once, without streaming the feed or waiting on Spark AI. A market with
+   nothing prepared falls back to the live read's own five. */
+var EXS={},EXS_LOAD={},EXP={busy:false,msg:''};
+function exLoad(c,force){
+  if(!c)return Promise.resolve({});
+  if(EXS_LOAD[c]&&!force)return EXS_LOAD[c];
+  return EXS_LOAD[c]=fetch('/api/pricer/examples?client='+encodeURIComponent(c)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    EXS[c]=(d&&d.mkts)||{};exSeed(c);renderPreview();return EXS[c]});
+}
+// a stored Spark AI example is the example — the page never asks Spark AI for it again
+function exSeed(c){var M=EXS[c]||{};Object.keys(M).forEach(function(m){((M[m]||{}).products||[]).forEach(function(it){
+  if(it&&it.p&&it.ex&&it.src==='ai'&&!(PV.ex[it.p.id]&&PV.ex[it.p.id].st==='ok'))PV.ex[it.p.id]={st:'ok',v:it.ex,pre:1}})})}
+// the products the card steps through: the prepared five for this market, else the live read's
+function pvList(a){
+  var st=SV.mode!=='file'?(EXS[a.client]||{})[a.mkt]:null;
+  if(st&&st.products&&st.products.length)return {src:'pre',t:st.t,by:st.by,list:st.products.map(function(x){return x.p})};
+  var ps=pvSample(a);
+  return ps&&ps.length?{src:'live',list:ps}:null;
+}
+function exPut(c,mkt,list){
+  return Promise.all(list.map(function(P){return pvExample(P)})).then(function(){
+    var products=list.slice(0,5).map(function(P){var X=PV.ex[P.id];return {p:P,ex:X&&X.st==='ok'?X.v:null,src:X&&X.st==='ok'?'ai':'derived'}});
+    return fetch('/api/pricer/examples',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({client:c,mkt:mkt,products:products})})
+      .then(function(r){return r.json()}).then(function(d){if(!d||!d.ok)throw new Error((d&&d.error)||'not saved');EXS[c]=EXS[c]||{};EXS[c][mkt]=d.rec;return d.rec});
+  });
+}
+// the brand's lead Google market: GB when it has one, else its first
+function leadMkt(c){var m=marketsOf(c).filter(function(x){return !/-fb$/.test(x)});return m.indexOf('gb')>=0?'gb':(m[0]||null)}
+// one brand × market: the live read's five when this session has it, else a fresh read of the feed
+function exPrepareOne(c,mkt){
+  var L=LIVE[c+'|'+mkt],have=L&&L.ps&&(Array.isArray(L.ps)?L.ps:[L.ps]);
+  var get=have&&have.length?Promise.resolve(have):streamOne(c,mkt,c+'|'+mkt).then(function(res){var ps=res&&res.ps;return ps?(Array.isArray(ps)?ps:[ps]):[]});
+  return get.then(function(list){if(!list.length)throw new Error('no product with an image and a title in the feed');return exPut(c,mkt,list)});
+}
+function exStatus(m){EXP.msg=m;var el=document.querySelector('#svc-prev .pv-pre-s');if(el)el.textContent=m}
+function exPrepareBrand(){
+  var A=SV.audits||[],a=A[PV.mkt]&&A[PV.mkt].audit;if(!a||EXP.busy)return;
+  EXP.busy=true;exStatus('Preparing '+a.client+' '+String(a.mkt).toUpperCase()+' — five products and their examples…');renderPreview();
+  exPrepareOne(a.client,a.mkt).then(function(r){exStatus('✓ '+a.client+' '+String(a.mkt).toUpperCase()+': '+r.products.length+' products ready ('+r.products.filter(function(x){return x.src==='ai'}).length+' with Spark AI examples)')},
+    function(e){exStatus('✗ '+a.client+' '+String(a.mkt).toUpperCase()+': '+((e&&e.message)||e))}).then(function(){EXP.busy=false;renderPreview()});
+}
+// every brand's lead market, one after another; a brand prepared in the last 14 days is left as it is
+function exPrepareAll(){
+  if(EXP.busy)return;
+  var todo=clientList().filter(function(c){return leadMkt(c)}),i=0,done=0,skip=0,fail=[];
+  if(!todo.length)return;
+  EXP.busy=true;renderPreview();
+  (function next(){
+    if(i>=todo.length){EXP.busy=false;exStatus('✓ Every brand: '+done+' prepared'+(skip?', '+skip+' already fresh':'')+(fail.length?' · ✗ '+fail.join(', '):''));renderPreview();return}
+    var c=todo[i++],m=leadMkt(c);
+    exStatus('Preparing '+c+' '+m.toUpperCase()+' ('+i+' of '+todo.length+')…');
+    exLoad(c,true).then(function(M){var st=M&&M[m];
+      if(st&&st.t&&Date.now()-st.t<14*86400000){skip++;return}
+      return exPrepareOne(c,m).then(function(){done++},function(e){fail.push(c+' ('+((e&&e.message)||e)+')')});
+    }).then(next,next);
+  })();
 }
 // a Spark AI example of what the tiers write for THIS product — one call per product, cached for the session
 var PV_SYS='You are Spark AI, FeedSpark\'s product-feed optimisation model. Write EXAMPLE optimised Google Shopping feed values for ONE product, shown to a client as a preview of what FeedSpark\'s packages fill in. '
@@ -2157,7 +2235,8 @@ function pvClean(o){
   return out;
 }
 function pvExample(P){
-  if(!P||!P.id||PV.ex[P.id])return;
+  if(!P||!P.id)return Promise.resolve();
+  if(PV.ex[P.id])return PV.ex[P.id].p||Promise.resolve();
   var X=PV.ex[P.id]={st:'wait'};
   var data={};['title','brand','description','google_product_category','product_type','color','material','pattern','gender','age_group','size','price','item_group_title'].forEach(function(k){if(P[k])data[k]=P[k]});
   if(P.hlv&&P.hlv.length)data.product_highlight=P.hlv;
@@ -2167,7 +2246,7 @@ function pvExample(P){
     return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({model:'claude-opus-5',max_tokens:2200,system:PV_SYS,messages:[{role:'user',content:content}]})})
       .then(function(r){return r.json()});
   }
-  ask(true).then(function(d){return d&&d.error==='upstream'?ask(false):d}).then(function(d){
+  return X.p=ask(true).then(function(d){return d&&d.error==='upstream'?ask(false):d}).then(function(d){
     if(!d||d.error){X.st=d&&d.error==='no_key'?'off':'err';X.msg=(d&&d.message)||'';return}
     var m=String(d.text||'').match(/\{[\s\S]*\}/),o=null;try{o=m&&JSON.parse(m[0])}catch(e){}
     var v=o&&pvClean(o);
@@ -2298,12 +2377,16 @@ function renderPreview(){
   if(!host.firstChild){
     host.innerHTML='<div class="pv-h"><h3>What changes in the feed</h3><span class="pv-seg" role="group" aria-label="Show the catalogue">'
       +[['now','Today'],['go','Tier 1 · Google-ready'],['go+ar','Tier 2 · AI-ready']].map(function(x){return '<button type="button" data-pv="'+x[0]+'" aria-pressed="false">'+esc(x[1])+'</button>'}).join('')
-      +'</span><span class="pv-mk"></span></div><div class="pv-k"></div>'
+      +'</span><span class="pv-mk"></span></div><div class="pv-pre"></div><div class="pv-k"></div>'
       +'<div class="pv-body"><div class="pv-prod"></div><div class="pv-g"></div></div>'
-      +'<p class="pv-n">One of the client\'s own products (the one with the most gaps), and the share of the catalogue carrying each attribute. An option fills only the lines it prices. The values shown under a tier are an example for this product — built from its own feed row, or written by Spark AI from its image and row when connected — and ASPL and the AM review every value before it reaches the feed; identifiers, sizes and prices are never generated.</p>';
-    host.addEventListener('click',function(e){var b=e.target.closest('[data-pv]');if(!b)return;PV.opt=b.getAttribute('data-pv');renderPreview()});
+      +'<p class="pv-n">Five of the client\'s own products (those with the most gaps — ‹ › steps through them; ⟳ Prepare examples keeps them ready for a client meeting), and the share of the catalogue carrying each attribute. The bars and the score move only with the lines an option prices; on the product, Tier 2 leaves nothing missing. The values shown under a tier are an example for this product — built from its own feed row, or written by Spark AI from its image and row when connected — and ASPL and the AM review every value before it reaches the feed; identifiers, sizes and prices are never generated.</p>';
+    host.addEventListener('click',function(e){
+      var n=e.target.closest('[data-pvp]');if(n){PV.pi=Math.max(0,PV.pi+(+n.getAttribute('data-pvp')||0));renderPreview();return}
+      var x=e.target.closest('[data-pvx]');if(x){if(x.getAttribute('data-pvx')==='all')exPrepareAll();else exPrepareBrand();return}
+      var b=e.target.closest('[data-pv]');if(!b)return;PV.opt=b.getAttribute('data-pv');renderPreview()});
     host.addEventListener('change',function(e){if(e.target.matches('[data-pvm]')){PV.mkt=+e.target.value||0;PV.last=null;renderPreview()}});
   }
+  if(SV.mode!=='file'&&a.client&&!EXS_LOAD[a.client])exLoad(a.client);
   host.querySelector('.pv-mk').innerHTML=A.length>1?'<select class="fld sm" data-pvm aria-label="Market">'+A.map(function(x,i){return '<option value="'+i+'"'+(i===PV.mkt?' selected':'')+'>'+esc(String(x.audit.mkt).toUpperCase())+'</option>'}).join('')+'</select>':esc(String(a.mkt).toUpperCase());
   host.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-pv')===PV.opt?'true':'false')});
   var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:{},gapT={},g1={};
@@ -2316,7 +2399,18 @@ function renderPreview(){
     'to be sized':'in option · to be sized','coming':'coming — included when live','already contracted':'already contracted','not in this quote':'not in this quote'};
   function who(k,now){return fill[k]?(f1[k]?'filled by Tier 1':'filled by Tier 2'):now>=99?'already complete':f1[k]?'Tier 1 fills it':f2[k]?'Tier 2 fills it':(GT[gapT[k]]||gapT[k]||'client\'s own data')}
   function cls(k,tag){return f1[k]||/Tier 1|in option/.test(tag)?' t1':(f2[k]||/Tier 2/.test(tag)?' t2':'')}
-  var key=a.client+'|'+a.mkt,P=pvSample(a);
+  var key=a.client+'|'+a.mkt,PL=pvList(a),nP=PL?PL.list.length:0;
+  if(nP&&PV.pi>=nP)PV.pi=nP-1;
+  var P=nP?PL.list[PV.pi]:null;
+  // the product switcher + where the five came from + the Prepare buttons
+  var pre=host.querySelector('.pv-pre'),fileLane=SV.mode==='file';
+  pre.innerHTML=(nP?'<span class="pv-sw" role="group" aria-label="Example product"><button type="button" data-pvp="-1"'+(PV.pi<=0?' disabled':'')+' aria-label="Previous product">‹</button>'
+      +'<b>'+(PV.pi+1)+' / '+nP+'</b><button type="button" data-pvp="1"'+(PV.pi>=nP-1?' disabled':'')+' aria-label="Next product">›</button></span>':'')
+    +(PL?'<span class="pv-src '+(PL.src==='pre'?'on':'')+'" title="'+(PL.src==='pre'?'Prepared ahead and kept for this market — opens at once in a client meeting':'Read from the live feed this session — ⟳ Prepare examples keeps them for next time')+'">'
+      +(PL.src==='pre'?'✓ pre-loaded '+esc(new Date(PL.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+(PL.by?' · '+esc(PL.by):''):'live read')+'</span>':'')
+    +(fileLane?'':'<button type="button" class="btn sm" data-pvx="brand"'+(EXP.busy?' disabled':'')+' title="Keep five of this market\'s products and their examples, ready for a client meeting">⟳ Prepare examples</button>'
+      +'<button type="button" class="btn sm" data-pvx="all"'+(EXP.busy?' disabled':'')+' title="Prepare five products for every brand\'s lead market — one after another; a brand prepared in the last 14 days is kept">Prepare every brand</button>')
+    +'<span class="pv-pre-s" aria-live="polite">'+esc(EXP.msg)+'</span>';
   if(P&&PV.opt!=='now')pvExample(P);
   var EX=P&&PV.ex[P.id],DER=P?pvDerive(P,a.mkt):{};
   // the product card — the client's own product, its fields filling in by tier
@@ -2337,13 +2431,21 @@ function renderPreview(){
     exl.title=EX&&EX.msg?EX.msg:'';
     pp.querySelectorAll('.pv-fr').forEach(function(r,i){
       var k=r.getAttribute('data-k'),val=pvVal(P,k),had=!!val,tag=who(k,had?100:0),tbc=PV.opt!=='now'&&!fill[k]&&TBC.test(gapT[k]||''),on=!!fill[k]||tbc;
-      var fv=r.querySelector('.fv'),fs=r.querySelector('.fs'),tier=inT1(k)?'T1':'T2',how=PV_HOW[k]||'by FeedSpark';
+      // TIER 2 LEAVES NOTHING MISSING on the example (Ray, 8 Oct 2026: "all missing have to be filled when Tier 2
+      // AI-ready is selected"): a gap no priced line closes is still filled here — by the Spark AI work already
+      // contracted, or in the Tier 2 delivery — and says which; the bars and the score stay on what is priced
+      var t2all=PV.opt==='go+ar'&&!had&&!on,contr=t2all&&/already contracted/.test(gapT[k]||tag||'');
+      if(t2all)on=true;
+      var fv=r.querySelector('.fv'),fs=r.querySelector('.fs'),tier=t2all?'T2':inT1(k)?'T1':'T2',how=PV_HOW[k]||'by FeedSpark';
       var gen=on&&PV_GEN.indexOf(k)>=0&&(!had||PV_REWRITE[k]),ai=gen&&EX&&EX.st==='ok'?pvExVal(EX.v,k):null,ex=ai||(gen?pvExVal(DER,k):null);
+      if(!ex&&t2all&&PV_FALL[k])ex={s:PV_FALL[k],t:PV_FALL[k]+' — Google\'s value for a product that names no '+pvLabel(k).toLowerCase()};
       if(ex){fv.textContent=ex.s;fv.className='fv ex';fv.title=(ai?'Spark AI example':'Built from this product\'s own data'+(DER._why&&DER._why[k]?' — '+DER._why[k]:''))+'\n\n'+ex.t+(had?'\n\nToday: '+val:'')}
       else if(on&&!had){fv.textContent=how;fv.className='fv how';fv.title=''}
       else{fv.textContent=had?val:'missing';fv.className='fv'+(had?'':' miss');fv.title=had?val:''}
-      fs.textContent=on?'✦ '+tier+(tbc?' · £ tbc':''):(had?'':tag);
-      fs.title=on?(had&&PV_REWRITE[k]?'optimised — ':'filled — ')+how+(ai?' · Spark AI example':ex?' · example from this product\'s data':'')+(tbc?' · in this option, '+gapT[k]+' — not yet counted in the score':''):(had?'as supplied':tag);
+      fs.textContent=contr?'✓ contracted':on?'✦ '+tier+(tbc?' · £ tbc':''):(had?'':tag);
+      fs.title=contr?'filled by the Spark AI work already contracted — '+how
+        :t2all?'completed in the Tier 2 delivery for this product — '+how+' (no separate priced line: '+(GT[gapT[k]]||'the catalogue already carries it')+')'
+        :on?(had&&PV_REWRITE[k]?'optimised — ':'filled — ')+how+(ai?' · Spark AI example':ex?' · example from this product\'s data':'')+(tbc?' · in this option, '+gapT[k]+' — not yet counted in the score':''):(had?'as supplied':tag);
       var was=r.getAttribute('data-on');r.setAttribute('data-on',on?'1':'0');
       r.className='pv-fr'+(on?' on':'')+(had?'':' gap')+cls(k,on?(tier==='T1'?'Tier 1':'Tier 2'):tag);
       r.style.transitionDelay=(i*30)+'ms';

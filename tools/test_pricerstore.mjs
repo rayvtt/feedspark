@@ -349,6 +349,23 @@ console.log('· AI-Refresher: _g|rfPct on the price store, and a Tier 3 option s
   t('…and a Tier 3 option saves with its refresh settings', t3.ok && t3.v.option === 'go+ar+rf' && t3.v.opts.popts.refresh.cadence === 'quarterly', t3.why);
 }
 
+// ---- pre-loaded examples (Ray, 8 Oct 2026: five products per brand, prepared ahead) ---------------------------------------------
+console.log('· pre-loaded examples: cleanExamples + the /api/pricer/examples route');
+const J = JSON.stringify;
+{
+  const prod = (i, ex) => ({ p: { id: 'NW-' + i, title: 'Northwind item ' + i, image_link: 'https://img.northwind.invalid/' + i + '.jpg', description: 'x'.repeat(5000), gtin: '5012345678900', hl: 3, hlv: ['a', 'b'], kw: ['k'] }, ex, src: 'ai' });
+  const c = P.cleanExamples({ products: [prod(1, { title: 'A title', keywords: ['a', 'b'], gtin: '123', question_and_answer: [{ q: 'Q?', a: 'A.', evil: 'x' }] }), prod(2, null)] });
+  t('five products at most, each with its row trimmed to the preview\'s fields', c.ok && c.v.length === 2 && c.v[0].p.description.length === 1200 && !('gtin' in c.v[0].p), c.why);
+  t('…the example keeps only what the tiers write — never an identifier', c.ok && c.v[0].ex.title === 'A title' && !('gtin' in c.v[0].ex) && J(c.v[0].ex.question_and_answer) === J([{ q: 'Q?', a: 'A.' }]));
+  t('…a product with no example is "derived", never "ai"', c.ok && c.v[1].ex === null && c.v[1].src === 'derived');
+  t('six products, no products, or a row without an id is refused',
+    !P.cleanExamples({ products: [1, 2, 3, 4, 5, 6].map((i) => prod(i, null)) }).ok && !P.cleanExamples({ products: [] }).ok && !P.cleanExamples({ products: [{ p: { title: 'no id' } }] }).ok);
+  t('an image that is not http(s) is dropped', P.cleanExamples({ products: [{ p: { id: 'x', title: 'y', image_link: 'javascript:alert(1)' } }] }).v[0].p.image_link === undefined);
+  const W = fs.readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  t('the worker routes /api/pricer/examples through the Pricer gate and the client scope, one KV key per client',
+    /if \(name === 'examples'\) return pricerExamplesRoute\(request, env\);/.test(W) && /async function pricerExamplesRoute/.test(W) && /moduleAllowed\(acc\.modules, 'pricer'\)/.test(W.split('async function pricerExamplesRoute')[1].slice(0, 400)) && /'pricerex:' \+ client/.test(W) && /clientMatch\(acc\.clients, c\)/.test(W.split('async function pricerExamplesRoute')[1].slice(0, 600)));
+}
+
 // ---- the ladder rounding (found by the review's route probe) ---------------------------------------------------------------
 console.log('· the volume ladder rises as STORED, not as typed');
 {

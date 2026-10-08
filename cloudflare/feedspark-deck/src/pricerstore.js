@@ -585,3 +585,53 @@ export function staleAbsent(store, body, cur, ctx) {
   }
   return out;
 }
+
+/* ---- PRE-LOADED EXAMPLES (Ray, 8 Oct 2026: "pre-loaded population for 5 products examples per brands ahead
+   to run this audit live with client"). One KV key per client, `pricerex:<client>` = {mkts: {<mkt>: {t, by,
+   products: [{p, ex, src}]}}}: up to five of the client's own products per market (their feed row, trimmed to
+   the fields the preview shows) and the example values the tiers write for each — a Spark AI example (src 'ai')
+   or one built from the row alone ('derived'). A PUT replaces ONE market; the worker scopes it per signin like
+   every Pricer route. Client product data lives in KV only, never in git. */
+export const EXAMPLE_ROW_FIELDS = ['id', 'title', 'image_link', 'description', 'google_product_category', 'product_type', 'color', 'material',
+  'pattern', 'gender', 'age_group', 'size', 'size_type', 'size_system', 'product_detail', 'question_and_answer', 'document_link',
+  'related_product', 'item_group_title', 'variant_option', 'popularity_rank', 'brand', 'price'];
+export const EXAMPLE_EX_FIELDS = ['title', 'description', 'google_product_category', 'product_type', 'keywords', 'color', 'material', 'pattern',
+  'gender', 'age_group', 'size_type', 'size_system', 'product_highlight', 'product_detail', 'question_and_answer', 'item_group_title'];
+export const EXAMPLES_MAX = 5;
+const EX_LIST = { keywords: 16, product_highlight: 8, product_detail: 10, question_and_answer: 6 };
+function exText(v, max) { return typeof v === 'string' ? v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ').trim().slice(0, max) : null; }
+function exAny(v) {
+  if (typeof v === 'string') return exText(v, 1200);
+  if (isObj(v)) { const o = {}; for (const k of ['q', 'a', 'question', 'answer', 'section', 'name', 'value']) { const s = exText(v[k], 600); if (s) o[k] = s; } return Object.keys(o).length ? o : null; }
+  return null;
+}
+// one market's examples, or {ok:false, why}
+export function cleanExamples(body) {
+  if (!isObj(body)) return { ok: false, why: 'the examples must be an object' };
+  if (!Array.isArray(body.products) || !body.products.length || body.products.length > EXAMPLES_MAX) return { ok: false, why: 'products must list 1 to ' + EXAMPLES_MAX + ' products' };
+  const products = [];
+  for (const it of body.products) {
+    if (!isObj(it) || !isObj(it.p)) return { ok: false, why: 'every product needs its feed row (p)' };
+    const p = {};
+    for (const k of EXAMPLE_ROW_FIELDS) { const s = exText(it.p[k], k === 'description' || k === 'product_detail' ? 1200 : 400); if (s) p[k] = s; }
+    if (!p.id || !p.title) return { ok: false, why: 'every product needs an id and a title' };
+    if (p.image_link && !/^https?:\/\//.test(p.image_link)) delete p.image_link;
+    p.hl = Math.max(0, Math.min(100, Math.round(+it.p.hl || 0)));
+    p.hlv = Array.isArray(it.p.hlv) ? it.p.hlv.slice(0, 6).map((x) => exText(x, 200)).filter(Boolean) : [];
+    p.kw = Array.isArray(it.p.kw) ? it.p.kw.slice(0, 3).map((x) => exText(x, 200)).filter(Boolean) : [];
+    let ex = null;
+    if (isObj(it.ex)) {
+      ex = {};
+      for (const k of EXAMPLE_EX_FIELDS) {
+        const v = it.ex[k];
+        if (v == null) continue;
+        if (EX_LIST[k] && Array.isArray(v)) { const L = v.slice(0, EX_LIST[k]).map(exAny).filter(Boolean); if (L.length) ex[k] = L; }
+        else { const s = exText(v, k === 'description' ? 1500 : 400); if (s) ex[k] = s; }
+      }
+      if (!Object.keys(ex).length) ex = null;
+    }
+    products.push({ p, ex, src: ex && it.src === 'ai' ? 'ai' : 'derived' });
+  }
+  if (byteLen(JSON.stringify(products)) > 60 * 1024) return { ok: false, why: 'the examples are larger than 60 KB' };
+  return { ok: true, v: products };
+}
