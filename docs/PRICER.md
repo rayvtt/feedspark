@@ -140,6 +140,15 @@ margin.
 
 ---
 
+**Every section folds** (Ray, 8 Oct 2026: "make Debrief Kit collapsible pls, actually, every section collapsible"):
+each section heading carries ▸ Show / ▾ Hide (Audit, Proposal, Debrief kit, Services rollout, Roadmap, Optimisation bank,
+Rate card, Custom quote, AI briefs, Saved proposals), with ⊕ Open all / ⊖ Fold all under the hero. A fresh device opens
+Audit and Proposal; the rest is remembered per device (`fcc-pz-sec`). ✉ Debrief, a rate-card tab, ➕ Add option /
+✎ New version and `?pkg=` open their section before scrolling to it. Bodies are wrapped once at load (SEC_WRAP), so no
+renderer's element moves id.
+
+---
+
 ## 4. Saving, options and buy-in
 
 **💾 Save as proposal** stores every shown tier as an **option** of ONE proposal (`prop {id, n, label}`), each

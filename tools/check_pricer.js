@@ -65,6 +65,9 @@ async function open(b, html, vp, o) {
   p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)); });
   if (o && o.seed) await p.addInitScript('window.__pzS=' + JSON.stringify(o.seed) + ';');
   if (o && o.init) await p.addInitScript(o.init);
+  // every section folds (8 Oct 2026); the checks below read inside them, so a device that has opened them all — the
+  // fresh-device defaults have their own scenario
+  if (!(o && o.freshSec)) await p.addInitScript("try{if(!localStorage.getItem('fcc-pz-sec'))localStorage.setItem('fcc-pz-sec',JSON.stringify({au:1,pq:1,db:1,ro:1,bk:1,rc:1,sv:1,rm:1,cq:1,ai:1}))}catch(e){}");
   await p.addInitScript(stub(o));
   await p.goto('file://' + tmp + ((o && o.query) || ''));
   return { p, ctx, errs, tmp };
@@ -234,6 +237,37 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('in Stored mode the prepared product opens at once — before any live read lands, no Spark AI call — with its stored example and "pre-loaded · Steven"',
       st.t === 'Northwind Linen Shirt Dress' && st.sw === '1 / 2' && /pre-loaded.*Steven/.test(st.src) && /Sage Shirt Dress/.test(st.title) && !st.live && st.claude === 0 && st.miss === 0, st);
     ok('…and no console error', errs.length === 0, errs);
+    fs.unlinkSync(tmp);
+  }
+
+  console.log('\nEvery section folds (a fresh device)');
+  {
+    const { p, errs, tmp } = await open(b, HTML, 1440, { me: OWNER, freshSec: true });
+    await p.waitForSelector('.tier', { timeout: 15000 });
+    const st = () => p.evaluate(() => Array.from(document.querySelectorAll('section')).filter((x) => x.querySelector('.wrap > h2')).map((x) => {
+      const t = x.querySelector('.wrap > h2 .sec-tog'), body = t && document.getElementById(t.getAttribute('aria-controls') || ('sec-' + t.getAttribute('data-sec')));
+      return { id: x.id, tog: !!t, open: !!body && !body.hidden && body.getBoundingClientRect().height > 0, aria: t && t.getAttribute('aria-expanded') };
+    }));
+    const s0 = await st();
+    ok('every section heading carries a ▸ Show / ▾ Hide toggle', s0.length >= 10 && s0.every((x) => x.tog), s0.filter((x) => !x.tog).map((x) => x.id));
+    ok('a fresh device opens Audit and Proposal, every other section folded (Debrief kit included)',
+      s0.filter((x) => x.open).map((x) => x.id).join() === 'svc-audit,svc-prop' && s0.every((x) => (x.aria === 'true') === x.open), s0.map((x) => x.id + ':' + x.open));
+    await p.click('#svc-debrief .sec-tog'); await p.waitForTimeout(200);
+    ok('the Debrief kit opens from its own heading, its email and talk track on screen', await p.evaluate(() => { const b = document.querySelector('#db-body'); return !!b && b.getBoundingClientRect().height > 40 && !!document.querySelector('#db-talk li'); }));
+    await p.click('#svc-debrief .sec-tog'); await p.waitForTimeout(150);
+    await p.click('#pq-debrief'); await p.waitForTimeout(250);
+    ok('✉ Debrief opens a folded Debrief kit before scrolling to it', await p.evaluate(() => !document.getElementById('sec-db').hidden));
+    await p.click('.sec-all[data-secall="0"]'); await p.waitForTimeout(150);
+    const sF = await st();
+    ok('⊖ Fold all sections folds every one', sF.every((x) => !x.open), sF.filter((x) => x.open).map((x) => x.id));
+    await p.click('.sec-all[data-secall="1"]'); await p.waitForTimeout(300);
+    const sO = await st();
+    ok('⊕ Open all sections opens every one', sO.every((x) => x.open), sO.filter((x) => !x.open).map((x) => x.id));
+    await p.click('#svc-bank .sec-tog'); await p.waitForTimeout(150);
+    await p.reload(); await p.waitForSelector('.tier', { timeout: 15000 });
+    const sR = await st();
+    ok('…and the device remembers it: after a reload the bank stays folded, the rest open', !sR.find((x) => x.id === 'svc-bank').open && sR.filter((x) => x.id !== 'svc-bank').every((x) => x.open), sR.map((x) => x.id + ':' + x.open));
+    ok('…no console error', errs.length === 0, errs);
     fs.unlinkSync(tmp);
   }
 
@@ -408,7 +442,8 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     await p.waitForTimeout(400);
     ok('back on Northwind the field holds Northwind\'s contact again', (await p.inputValue('#db-to')) === 'buyer@northwind.invalid');
     // 24 + 36 — a rate-card cell commits on Enter, and the custom quote redraws off the same card
-    await p.click('.sec-tog[data-sec="cq"]');
+    // open the custom quote (a click on its toggle would CLOSE it when the device already holds it open)
+    if (await p.evaluate(() => document.getElementById('sec-cq').hidden)) await p.click('.sec-tog[data-sec="cq"]');
     await p.waitForSelector('#cat-grid input[data-id="title_gen"]');
     await p.check('#cat-grid input[data-id="title_gen"]');
     await p.waitForTimeout(150);
