@@ -2295,6 +2295,17 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(qUpd(q))p.push('New products bundle');
     if(+q.setup>0)p.push('Setup fee');
     return p.join(' \u00b7 ')||'no lines'; }
+  /* QUOTE-KIND (Ray, 8 Oct 2026: "stop calling all quote 'Ai Quote' it should just be either New
+     System, New Feed, Retainers Hours or SparkAI (obviously combined them if they're quoted tgt)"):
+     the name a quote goes out under is read off what is ON it - a saved quote from its frozen
+     lines, the live build from the ticked types - never a fixed "AI field generation". */
+  var KIND_ORDER=['aim','sys','feed','ret'], KIND_NAME={aim:'Spark AI',sys:'New System',feed:'New Feed',ret:'Retainer Hours'};
+  function kindsWord(set,sep){ var w=KIND_ORDER.filter(function(k){ return set[k]; }).map(function(k){ return KIND_NAME[k]; }); return w.join(sep||' + ')||'Quote'; }
+  function qKinds(q){ var s={}; if(Object.keys(optAimMap(q)).length||+q.fields>0||(q.lines||[]).length)s.aim=1;
+    (q.xlines||[]).forEach(function(l){ if(l.kind==='sys')s.sys=1; else if(l.kind==='feed'||l.kind==='lia')s.feed=1; else if(l.kind==='ret')s.ret=1; });
+    return s; }
+  function liveKinds(){ var t=typesRec(), s={}; if(t.aim||t.ai)s.aim=1; if(t.sys)s.sys=1; if(t.feed)s.feed=1; if(t.ret)s.ret=1; return s; }
+  function qKindWord(q,sep){ return kindsWord(qKinds(q),sep); }
   function qOnProducts(q){ return !!(Object.keys(optAimMap(q)).length||+q.fields>0||qUpd(q)); }
   function optDelta(q,b){ if(!q||!b)return null; var it=[], A=optAimMap(b), B=optAimMap(q), rw=function(r){ return AIM_ROUTE_SHORT[r]||r; };
     Object.keys(B).forEach(function(id){ if(!A[id])it.push({s:'+',t:B[id].label}); else if(A[id].route!==B[id].route)it.push({s:'~',t:B[id].label+': '+rw(A[id].route)+' \u2192 '+rw(B[id].route)}); });
@@ -3323,6 +3334,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     for(i=0;i<parts.length;i++){ u.set(parts[i],p); p+=parts[i].length; }
     return u;
   }
+  /* BILLING-NAME (Ray, 8 Oct 2026: "exported excel quote file should have this convention BILLING -
+     [client-name] - [quote type] retainer hours x new feeds - [DDMMYY]") */
+  function billingName(){ var d=new Date(), p=function(n){ return (n<10?'0':'')+n; };
+    var q=EDITING&&SAVED[EDITING.id], ks=q?qKinds(q):liveKinds();
+    return ('BILLING - '+(CLIENT||'Client')+' - '+kindsWord(ks,' x ')+' - '+p(d.getDate())+p(d.getMonth()+1)+String(d.getFullYear()).slice(2)).replace(/[\\/:*?"<>|]+/g,' '); }
   function fileStem(){ return 'aiquote_'+(CLIENT||'client').replace(/[^a-z0-9]+/gi,'_')+'_'+MKT; }
   function download(blob,name){ var url=URL.createObjectURL(blob), a=document.createElement('a');
     a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
@@ -3346,7 +3362,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     try{
       var tabs=exportTabs(), bytes=xlsxBytes(tabs);
       download(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
-        fileStem()+'.xlsx');
+        billingName(tabs)+'.xlsx');
       toast((tabs.length>1?('Excel quote downloaded \u2014 '+tabs.length+' options, one tab each'):'Excel quote downloaded')
         +(EDITING?' \u2014 saved figures; Save your edit to export it':''));
     }catch(e){ err('Could not build the Excel file: '+((e&&e.message)||e)); }
@@ -3718,23 +3734,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     return out.join('\n'); }
   function quoteEmail(q,tone){ var loc=qLoc(q), blk=qBlock(q,SHOWP);
     if(tone==='consult')return {
-      subject: loc+' — AI field generation: proposal for discussion ('+q.ref+')',
+      subject: loc+' — '+qKindWord(q)+': proposal for discussion ('+q.ref+')',
       body: 'Hi team,\n\n'
         +'Following our recent conversations about getting the '+loc+' feed ready for Google’s AI and agentic shopping surfaces, I have put together a proposal for the fields we would generate with Tachyon. The volumes are pulled live from the feed, so the scope below reflects the catalogue as it stands today rather than an estimate.\n\n'
         +blk+'\n\n'
         +'I would suggest we walk through this together — happy to adjust which fields or product types we start with, or phase the work, so it lands in a way that suits your priorities and budget cycle. Nothing here is fixed until you are comfortable with it.\n\n'
         +'Best regards,\nRay' };
     return {
-      subject: loc+' — AI field generation quote '+q.ref,
+      subject: loc+' — '+qKindWord(q)+' quote '+q.ref,
       body: 'Hi team,\n\n'
-        +'Please find below our quote for AI field generation on the '+loc+' feed — the fields Tachyon will generate across the scope, at the volumes pulled live from the feed on the date of issue.\n\n'
+        +'Please find below our '+qKindWord(q)+' quote for '+loc+'.\n\n'
         +blk+'\n\n'
         +'To proceed, reply confirming the scope and we will schedule the generation run and share the delivery timeline. Any questions, call me.\n\n'
         +'Best regards,\nRay' }; }
   // the task title — one string, used verbatim for the Project Plan row AND the brief, so the
   // pipeline ties the two together on wording (shape: Ray's spec)
   function quoteTaskTitle(q){ var n=q.fields||(q.lines||[]).length;
-    var XT=q.xlines||[]; if(!XT.length)return 'AI Field Quote — '+q.ref+' — '+qLoc(q)+' — '+n+' field'+(n===1?'':'s')+' · '+qTotalWord(q);
+    var XT=q.xlines||[]; if(!XT.length)return qKindWord(q)+' Quote — '+q.ref+' — '+qLoc(q)+' — '+n+' field'+(n===1?'':'s')+' · '+qTotalWord(q);
     return 'Quote — '+q.ref+' — '+qLoc(q)+' — '+(n?(n+' AI field'+(n===1?'':'s')+' · '):'')+xWord(XT)+' · '+qTotalWord(q); }
   function quoteBriefScope(q){ var L=q.lines||[], out=[];
     out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));

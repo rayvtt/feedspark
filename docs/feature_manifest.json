@@ -14512,6 +14512,18 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "EMAIL-SIMPLE",
       "pr": 0
+    },
+    {
+      "name": "AI Quote: quotes named by what is on them (Spark AI / New System / New Feed / Retainer Hours)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "QUOTE-KIND",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: Excel export named BILLING - client - kinds - DDMMYY",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "BILLING-NAME",
+      "pr": 0
     }
   ]
 }
