@@ -142,3 +142,52 @@ taints the canvas, so a `file://` harness would test a different program from th
 Editing a message in the composer redraws the preview but **never** changes the recipe URL: the
 parameters stay per-product tokens (`{discount_pct}% OFF`), because a hand-typed preview frozen into
 a feed rule is a wrong number on every other product.
+
+## 8. Where the page's sections sit — and how they fold
+
+> Ray, 7 Oct 2026, over a screenshot of `/overlays` with **Overlay estate** ringed in red:
+> *"make 'Overlay Estate' a collapsible section above the Live overlays pls (there's already a
+> dropdown above) no need side by side"*
+
+The estate had been sitting **beside** the live panel (the `.duo` grid an earlier ask put there),
+spending a quarter of the width on a list of forty feeds nobody has to read to pick one — the hero's
+own client dropdown does that, which is the parenthesis in Ray's note. The pair is gone, and the
+`.duo` rule with it, so nothing can re-create it by accident.
+
+The estate is stacked **above** and **folded on a device that has never chosen**. That default is the
+point rather than a detail: opened above the panel, a forty-row table pushes the thing the page exists
+to show off the screen, which is exactly why it had been put beside it.
+
+Every card on the page then folds — the standing rule from `/stock` and `/pricer`. One head class
+(`.fhd`) and one rule (`.card.folded>:not(.fhd)`), so each card keeps its own header layout: the live
+panel its `.chead`, the studio its `.sth`, the estate and the trend a plain head. The title is one
+button: chevron · title · the line that survives the fold.
+
+**The line a fold keeps is never a bare count.**
+
+| Card | Folded, it still says |
+|---|---|
+| Overlay estate | feeds · carrying an overlay · **never scanned** — the finding on this page |
+| Live overlays | the feed, its coverage, how many overlay types are live |
+| 🎨 Design studio | its own state line (seeded at boot — see below) |
+| Coverage trend | how many scans it draws from, now vs then |
+| How overlays are detected | 5 steps, from the image field to the trend |
+
+The studio's seed is not cosmetic: its opening sentence lives in the template, so nothing had called
+`stState` yet and the card folded to the one empty row a fold is not allowed to produce.
+
+⊕ Expand all / ⊖ Collapse all always names the action still available. A `#hash` opens the card it
+names for the visit **without** rewriting what the device chose, and a search or a design the reader
+asks for opens the card it lands in. The fold is this device's (`localStorage fcc-ovl-fold`, never
+shared state); the phone's skim view leaves an `[aria-expanded]` heading to the page, so one fold
+serves both screens.
+
+`tools/check_ovfold.js` (Playwright, presync) measures the **rendered** page — the markup can be right
+in one file while a grid rule in another puts the cards back side by side. It checks the two boxes are
+stacked at 1440px and 1100px, reads every fresh-device default and every folded line off the **paint**,
+drives click / Enter / reload / ⊕⊖ / the hash / a phone tap, and carries a **negative control**: with
+the fold's own CSS rule stripped, the "a folded card is one row" check must fail.
+
+**Found on the way, in both harnesses:** the per-feed `/api/overlays` read answers `snap` while the
+roster answers `scan`, and the stubs returned `scan` for both — so every page check had been running
+against the page's never-scanned empty state.

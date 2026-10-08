@@ -114,7 +114,8 @@ const srv = http.createServer((req, res) => {
     const c = q.get('client'), m = q.get('market');
     if (!c) return j({ ok: true, feeds: FEEDS });
     const f = FEEDS.find((x) => x.client === c && x.mkt === m);
-    return j({ ok: true, client: c, market: m, kind: 'xml', cap: null, hist: [], scan: f && f.scan });
+    // the real route answers a per-feed read with `snap`, not `scan` (worker.js /api/overlays)
+    return j({ ok: true, client: c, market: m, kind: 'xml', cap: null, hist: [], snap: (f && f.scan) || null });
   }
   if (p === '/api/feed/proxy') { seen.proxy++; return send(200, 'application/xml; charset=utf-8', FEED); }
   if (p === '/api/catalog/img') {
@@ -155,7 +156,10 @@ page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 // nothing leaves the sandbox: Google Fonts and any stray host are refused, not fetched
 await page.route('**/*', (r) => (r.request().url().startsWith(BASE) ? r.continue() : r.abort()));
 await page.goto(BASE + '/overlays');
-await page.waitForSelector('#esttbl tbody tr');
+// attached, not visible: the Overlay estate card is FOLDED on a fresh device (Ray, 7 Oct 2026 — it is
+// stacked above the live panel, so opening it by default would push the panel off the screen), and the
+// studio tripwire is about the studio, not the estate's fold. tools/check_ovfold.js owns that.
+await page.waitForSelector('#esttbl tbody tr', { state: 'attached' });
 
 let pass = 0, fail = 0;
 const t = (n, ok, x) => { ok ? pass++ : fail++; console.log((ok ? '  ✓ ' : '  ✗ ') + n + (ok ? '' : ' — ' + x)); };
