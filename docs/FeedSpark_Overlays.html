@@ -158,11 +158,24 @@ window.addEventListener('load',restore);
   .tchips{display:flex;gap:5px;flex-wrap:wrap}
   .tchips .t{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--tile);border-radius:6px;padding:2px 7px}
   .ago{color:var(--muted);font-size:12px;white-space:nowrap}
-  /* Ray: the live-overlays panel sits to the RIGHT of the estate; the estate takes the
-     width it needs first (never squeezed, never scrolled), the panel gets what remains */
-  .duo{display:grid;grid-template-columns:fit-content(62%) minmax(0,1fr);gap:14px;align-items:start;margin:14px 0}
-  .duo>.card{margin:0;min-width:0}
-  @media(max-width:1100px){.duo{grid-template-columns:minmax(0,1fr)}}
+  /* EVERY SECTION FOLDS (Ray, 7 Oct 2026: 'make "Overlay Estate" a collapsible section above the Live
+     overlays pls (there's already a dropdown above) no need side by side'). The card's title is ONE
+     button — chevron, title and, folded, the line that survives the fold — so a folded card is that
+     one row and closing it can never hide what it was telling you. Same shape as /stock and /pricer. */
+  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
+  .card h3 .fold:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+  .card h3 .fold .fch{flex:none;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;background:var(--wash);color:var(--muted);transition:transform .15s ease}
+  .card h3 .fold .fch::before{content:'';width:5px;height:5px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(45deg)}
+  .card h3 .fold:hover .fch{color:var(--ink);background:var(--line)}
+  .card.folded h3 .fold .fch{transform:rotate(-90deg)}
+  .card h3 .fold .fsum{display:none;font-size:12.5px;font-weight:700;letter-spacing:0;color:var(--muted)}
+  .card.folded h3 .fold .fsum:not(:empty){display:inline}
+  .card.folded{padding-top:12px;padding-bottom:12px}
+  .card.folded>.fhd{margin-bottom:0}
+  .card.folded>:not(.fhd),.card.folded>.fhd .ch,.card.folded>.fhd .tools,.card.folded>.fhd .instr-tgl{display:none!important}
+  .split2>div>.card.folded{align-self:start}
+  .foldbar{display:flex;justify-content:flex-end;margin:14px 0 -4px}
+  @media (prefers-reduced-motion:reduce){.card h3 .fold .fch{transition:none}}
   .split2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
   @media(max-width:900px){.split2{grid-template-columns:minmax(0,1fr)}}
   #trend{display:block;width:100%;height:auto;margin-top:6px}
@@ -351,18 +364,21 @@ table.st-rt td.nt{color:var(--ink-2)}
 </div></header>
 
 <main class="wrap">
-  <div class="duo">
+  <div class="foldbar"><button class="btn sm" id="fold-all" type="button" data-to="fold" title="Fold or open every section on the page — this device remembers each one as you leave it">⊖ Collapse all</button></div>
+
   <div class="card" id="estate">
-    <h3>Overlay estate</h3>
-    <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
+    <div class="fhd">
+      <h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Overlay estate<span class="fsum"></span></button></h3>
+      <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
+    </div>
     <table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Channel</th><th>Coverage</th><th class="types">Overlay types live</th><th class="num">Scanned</th><th></th></tr></thead><tbody></tbody></table>
     <div class="empty" id="est-empty" hidden></div>
   </div>
   <div class="card" id="detail">
-    <div class="chead">
-      <div><h3 id="det-title">Live overlays</h3><div class="ch" id="det-sub">Pick a client and market to see the overlay creative running on that feed.</div></div>
+    <div class="chead fhd">
+      <div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span><span id="det-title">Live overlays</span><span class="fsum"></span></button></h3><div class="ch" id="det-sub">Pick a client and market to see the overlay creative running on that feed.</div></div>
       <span class="spacer"></span>
-      <div id="det-chips" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
+      <div class="tools" id="det-chips" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
     <div class="psearch" id="psearch-wrap">
       <div class="psbox"><span class="psi" aria-hidden="true">🔍</span><input id="psearch" type="search" placeholder="Find a product on this feed — ID or title" autocomplete="off" aria-label="Search products by ID or title"><button class="btn sm pri" id="psgo" type="button">Search</button><button class="btn sm" id="psclear" type="button" hidden aria-label="Clear search">✕</button></div>
@@ -373,15 +389,13 @@ table.st-rt td.nt{color:var(--ink-2)}
     <div class="empty" id="det-empty" hidden></div>
   </div>
 
-  </div>
-
   <div class="card" id="studio">
-    <div class="sth">
+    <div class="sth fhd">
       <div>
-        <h3>🎨 Design studio</h3>
+        <h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>🎨 Design studio<span class="fsum"></span></button></h3>
         <div class="ch" data-instr>What this client's own images would look like carrying a FeedSpark smart overlay. Every message is read off this feed and this brand's Google Ads — a design whose message is not in the data is shown as unavailable rather than filled with a number nobody can check.</div>
       </div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+      <div class="tools" style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
         <button class="btn pri" id="st-read" type="button" title="Read a sample of this feed and work out which of its own columns carries each overlay message">⚡ Read this feed's fields</button>
         <button class="btn" id="st-ads" type="button" title="Read this brand's Google Ads traffic per product (FeedHero reports) so an overlay can carry clicks, views and sales">📈 Add Google Ads</button>
         <select id="st-adswin" aria-label="Google Ads window" title="How far back to read. 7 days is usually already downloaded; 30 days is a second full read of the account and takes longer."><option value="7_days">last 7 days</option><option value="30_days">last 30 days</option></select>
@@ -405,17 +419,21 @@ table.st-rt td.nt{color:var(--ink-2)}
 
   <div class="split2">
     <div>
-      <div class="card">
-        <h3>Coverage trend</h3>
-        <div class="ch" id="trend-sub">Share of the feed's products carrying an overlay, scan by scan.</div>
+      <div class="card" id="trend-card">
+        <div class="fhd">
+          <h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Coverage trend<span class="fsum"></span></button></h3>
+          <div class="ch" id="trend-sub">Share of the feed's products carrying an overlay, scan by scan.</div>
+        </div>
         <svg id="trend" viewBox="0 0 1000 190" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Overlay coverage trend"></svg>
         <div class="empty" id="trend-empty" hidden></div>
       </div>
     </div>
     <div>
       <div class="card meth" id="meth">
-        <h3>How overlays are detected</h3>
-        <div class="ch" data-instr>The quick breakdown behind every figure on this page.</div>
+        <div class="fhd">
+          <h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>How overlays are detected<span class="fsum"></span></button></h3>
+          <div class="ch" data-instr>The quick breakdown behind every figure on this page.</div>
+        </div>
         <ol data-instr>
           <li><b>Every feed scan reads the image field.</b> The 4×-daily monitor (and ⚡ Scan live here) streams the feed and looks at each product's <code>image_link</code> and <code>additional_image_link</code>.</li>
           <li><b>Our images are unmistakable.</b> A link served from <code>dashboard.feedspark.com</code> (or the <code>lia.</code> / <code>feed5.com</code> sibling hosts) is a FeedSpark-generated creative — the client's own CDN never appears there. That is what "overlay service on" looks like in the data.</li>
@@ -501,9 +519,11 @@ table.st-rt td.nt{color:var(--ink-2)}
     var b=e.target.closest&&e.target.closest('[data-mkc]');
     if(b){ MKT=b.getAttribute('data-mkc'); renderMkts(); return; }
     var r=e.target.closest&&e.target.closest('tr.row[data-feed]');
-    if(r&&!(e.target.closest&&e.target.closest('button'))){ var p=r.getAttribute('data-feed').split('|'); CLIENT=p[0]; MKT=p[1]; $('#brand').value=CLIENT; renderMkts(); return; }
+    /* picking a feed in the estate is asking to SEE its live overlays, so it opens that card for the
+       visit if it is folded — never writing over what this device chose (the deep-link rule) */
+    if(r&&!(e.target.closest&&e.target.closest('button'))){ var p=r.getAttribute('data-feed').split('|'); CLIENT=p[0]; MKT=p[1]; $('#brand').value=CLIENT; renderMkts(); foldOpen($('#detail')); return; }
     var sb=e.target.closest&&e.target.closest('button[data-scan]');
-    if(sb){ var q=sb.getAttribute('data-scan').split('|'); scanFeed(q[0],q[1]).then(function(){ if(q[0]===CLIENT&&q[1]===MKT)load(); }); return; }
+    if(sb){ var q=sb.getAttribute('data-scan').split('|'); foldOpen($('#detail')); scanFeed(q[0],q[1]).then(function(){ if(q[0]===CLIENT&&q[1]===MKT)load(); }); return; }
     var g=e.target.closest&&e.target.closest('.gal .g[data-ti]');
     if(g){ openLb(+g.getAttribute('data-ti'),+g.getAttribute('data-si')); return; }
     var hg=e.target.closest&&e.target.closest('.psr .g[data-hit]');
@@ -553,6 +573,7 @@ table.st-rt td.nt{color:var(--ink-2)}
       k.innerHTML='';
       $('#types').innerHTML=''; $('#det-empty').hidden=false;
       $('#det-sub').textContent='This feed has not been scanned for overlays yet.';
+      fsum('detail',CLIENT?(CLIENT+' '+mktLbl(MKT)+' — not scanned yet'):'pick a client');
       $('#det-empty').innerHTML=CLIENT?'<b>Not scanned yet.</b> Press <b>⚡ Scan this feed live</b> to stream the feed now — the 4×-daily monitor captures it on its next pass'+(kind==='sheet'?' (this market is still sheet-backed: the monitor only covers FeedHero XML feeds, so the live scan is the only lane here)':'')+'.':'Pick a client above.';
       drawTrend([]); return;
     }
@@ -567,11 +588,13 @@ table.st-rt td.nt{color:var(--ink-2)}
     if(!snap.ovl){
       $('#types').innerHTML='';
       $('#det-sub').textContent='Every image_link on this feed points at the client\'s own images — no FeedSpark overlay is running here.';
+      fsum('detail',CLIENT+' '+mktLbl(MKT)+' — no overlay live on '+fmt(snap.rows)+' products');
       $('#det-empty').hidden=false;
       var hosts=(snap.hosts||[]).map(function(h){return '<b>'+esc(h[0])+'</b> ('+fmt(h[1])+')'}).join(', ');
       $('#det-empty').innerHTML=snap.hasImage?('<b>No overlay live.</b> '+fmt(snap.rows)+' products, image_link hosts: '+(hosts||'—')+'. If this client has the overlay service on, the feed is not carrying it — worth a look.'):'<b>No image_link column</b> was found in this feed.';
     } else {
       $('#det-sub').textContent=fmt(snap.ovl)+' of '+fmt(snap.rows)+' products ('+cov+'%) carry a FeedSpark overlay'+(snap.addl?' · '+fmt(snap.addl)+' more carry one in additional_image_link':'')+(snap.plain?' · the other '+fmt(snap.plain)+' use the client\'s plain image':'')+'.';
+      fsum('detail',CLIENT+' '+mktLbl(MKT)+' — '+fmt(snap.ovl)+' of '+fmt(snap.rows)+' ('+cov+'%) · '+fmt(snap.types.length)+' overlay type'+(snap.types.length===1?'':'s'));
       $('#types').innerHTML=snap.types.map(function(t,ti){ return typeCard(t,ti,snap); }).join('');
     }
     drawTrend((DATA&&DATA.hist)||[]);
@@ -736,7 +759,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   /* ---------- estate table ---------- */
   function renderEstate(){
     var tb=$('#esttbl tbody');
-    if(!FEEDS.length){ tb.innerHTML=''; $('#est-empty').hidden=false; $('#est-empty').textContent='No feeds wired.'; return; }
+    if(!FEEDS.length){ tb.innerHTML=''; $('#est-empty').hidden=false; $('#est-empty').textContent='No feeds wired.'; fsum('estate','no feeds wired'); return; }
     $('#est-empty').hidden=true;
     tb.innerHTML=FEEDS.map(function(f){
       var s=f.scan, cov=s?pc(s.ovl,s.rows):null;
@@ -747,13 +770,18 @@ table.st-rt td.nt{color:var(--ink-2)}
         +'<td>'+covH+'</td><td class="types">'+tys+'</td><td class="num ago" title="'+esc(s?ago(s.t):'never scanned')+'">'+esc(s?agoShort(s.t):'—')+'</td>'
         +'<td class="num"><button type="button" class="btn sm" data-scan="'+esc(f.client+'|'+f.mkt)+'" title="Stream this feed now">⚡</button></td></tr>';
     }).join('');
+    /* the line the folded card keeps — never a bare feed count: a feed nobody has scanned is the
+       finding on this page, and a fold must not hide it (the guard pages' rule for their alerts) */
+    var on=0,ns=0;
+    FEEDS.forEach(function(f){ if(!f.scan)ns++; else if(f.scan.ovl)on++; });
+    fsum('estate',fmt(FEEDS.length)+' feed'+(FEEDS.length===1?'':'s')+' · '+fmt(on)+' carrying an overlay'+(ns?' · '+fmt(ns)+' never scanned':''));
   }
 
   /* ---------- trend ---------- */
   function drawTrend(hist){
     var svg=$('#trend'),empty=$('#trend-empty'),W=1000,H=190,T=16,B=H-26,L=52,R=10;
     var pts=(hist||[]).filter(function(h){return h&&h.t&&h.rows}).map(function(h){return {t:h.t,v:pc(h.ovl,h.rows),ovl:h.ovl,rows:h.rows}});
-    if(pts.length<2){ svg.style.display='none'; empty.hidden=false; empty.textContent=pts.length===1?'One scan recorded — the trend draws from the second scan onward.':'The trend appears once this feed has been scanned twice.'; return; }
+    if(pts.length<2){ svg.style.display='none'; empty.hidden=false; empty.textContent=pts.length===1?'One scan recorded — the trend draws from the second scan onward.':'The trend appears once this feed has been scanned twice.'; fsum('trend-card',pts.length===1?'one scan recorded':'needs a second scan'); return; }
     svg.style.display=''; empty.hidden=true;
     var mx=Math.max(5,Math.max.apply(null,pts.map(function(p){return p.v})))*1.15; if(mx>100)mx=100;
     var t0=pts[0].t,t1=pts[pts.length-1].t; if(t1===t0)t1=t0+1;
@@ -770,6 +798,7 @@ table.st-rt td.nt{color:var(--ink-2)}
     var dl=function(t){ var d=new Date(t); return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; };
     s+='<text x="'+L+'" y="'+(H-6)+'">'+esc(dl(pts[0].t))+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end">'+esc(dl(lp.t))+'</text>';
     svg.innerHTML=s;
+    fsum('trend-card',fmt(pts.length)+' scans · now '+lp.v+'%, was '+pts[0].v+'%');
   }
 
   /* ---------- product search (Ray, 11 Sep 2026): "search for a specific product using
@@ -911,7 +940,9 @@ table.st-rt td.nt{color:var(--ink-2)}
   var ST={client:'',mkt:'',hdr:null,rows:[],sum:null,ads:null,adsCov:null,adsWin:'',adsNote:'',
           adsShort:'',adsPer:'7_days',mqty:null,mval:null,mfile:'',pid:'',row:null,res:null,design:'',text:{},
           img:null,img2:null,imgWhy:'',imgSrc:'',busy:false,read:false};
-  var stState=function(t){ var e=$('#st-state'); if(e)e.textContent=t||''; };
+  /* the studio's state line is also the line its folded card keeps, so the fold says whether the
+     fields have been read and which product is on the easel rather than reading as an empty row */
+  var stState=function(t){ var e=$('#st-state'); if(e)e.textContent=t||''; fsum('studio',t||''); };
   var wait=function(ms){ return new Promise(function(r){setTimeout(r,ms)}); };
   var stFail=function(){ return window.__engineFail||window.__stEngineFail||!window.FeedAudit||!STU; };
 
@@ -1482,6 +1513,61 @@ table.st-rt td.nt{color:var(--ink-2)}
     $('#st-wrap').hidden=true; var wb=$('#st-wb'); if(wb)wb.hidden=true;
     stState('Showing '+CLIENT+' '+mktLbl(MKT)+' — read this feed’s fields to design on it.');
   });
+  /* ---------- EVERY SECTION FOLDS ----------------------------------------------------------
+     Ray, 7 Oct 2026: "make 'Overlay Estate' a collapsible section above the Live overlays pls
+     (there's already a dropdown above) no need side by side". The estate used to sit BESIDE the
+     live panel, taking a quarter of the width to list forty feeds nobody had to read to pick one
+     — the dropdown in the hero already does that. So it is stacked above and FOLDED on a device
+     that has never chosen, because a forty-row table opened above the panel would push the thing
+     the page exists to show off the screen; every other section opens. The same fold is on every
+     card (the standing rule from /stock and /pricer): the title is ONE button — chevron, title
+     and, folded, the line that survives the fold — so closing a section can never hide what it
+     was telling you (the estate's row keeps the feeds carrying an overlay and the ones nobody has
+     scanned). What a person folds or opens by hand is this device's (localStorage fcc-ovl-fold —
+     a screen preference, never shared state); the phone's skim view leaves an [aria-expanded]
+     heading to the page, so one fold serves both screens. A #hash opens the card it names for the
+     visit without rewriting that choice. ⊖ Collapse all / ⊕ Expand all always names the
+     action still available. */
+  var FOLD_KEY='fcc-ovl-fold', FOLD_OPEN={estate:0,detail:1,studio:1,'trend-card':1,meth:1}, FOLD={};
+  try{ FOLD=JSON.parse(localStorage.getItem(FOLD_KEY)||'{}')||{}; }catch(e){ FOLD={}; }
+  function foldCards(){ return Array.prototype.slice.call(document.querySelectorAll('main .card')).filter(function(c){ return !!c.querySelector(':scope > .fhd .fold'); }); }
+  function foldIs(c){ return Object.prototype.hasOwnProperty.call(FOLD,c.id)?!!FOLD[c.id]:!!FOLD_OPEN[c.id]; }
+  function foldBar(){
+    var b=$('#fold-all'); if(!b)return;
+    var any=foldCards().some(function(c){ return c.classList.contains('folded'); });
+    b.textContent=any?'⊕ Expand all':'⊖ Collapse all'; b.setAttribute('data-to',any?'open':'fold');
+  }
+  function foldSet(c,open,keep){
+    if(!c)return;
+    c.classList.toggle('folded',!open);
+    var b=c.querySelector(':scope > .fhd .fold'); if(b)b.setAttribute('aria-expanded',open?'true':'false');
+    if(keep){ FOLD[c.id]=open?1:0; try{ localStorage.setItem(FOLD_KEY,JSON.stringify(FOLD)); }catch(e){} }
+    foldBar();
+  }
+  /* open the card an element sits in — a link, a hash, a jump asked for it — for THIS visit only */
+  function foldOpen(el){ var c=el&&el.closest?el.closest('.card.folded'):null; if(c)foldSet(c,true,false); return c; }
+  /* the line a folded card keeps: what is in it, in a few words */
+  function fsum(id,txt){ var e=document.querySelector('#'+id+' > .fhd .fsum'); if(e)e.textContent=txt?'· '+txt:''; }
+  foldCards().forEach(function(c){
+    foldSet(c,foldIs(c),false);
+    c.querySelector(':scope > .fhd .fold').addEventListener('click',function(){ foldSet(c,c.classList.contains('folded'),true); });
+  });
+  var fa=$('#fold-all');
+  if(fa)fa.addEventListener('click',function(){ var open=this.getAttribute('data-to')==='open'; foldCards().forEach(function(c){ foldSet(c,open,true); }); });
+  var FOLD_HASH=location.hash&&location.hash.length>1?decodeURIComponent(location.hash.slice(1)):'';
+  if(FOLD_HASH){
+    var fh=document.getElementById(FOLD_HASH);
+    if(fh){ foldOpen(fh); setTimeout(function(){ try{ fh.scrollIntoView({block:'start'}); }catch(e){} },60); }
+  }
+  /* a search or a design the reader asked for must never land inside a folded card */
+  ['psgo','psearch','st-read','st-go','st-rand'].forEach(function(id){
+    var el=$('#'+id); if(el)el.addEventListener('click',function(){ foldOpen(el); });
+  });
+  fsum('meth','5 steps, from the image field to the trend');
+  /* the studio's opening sentence is in the template, so nothing has called stState yet — without
+     this seed its folded card would be the one empty row the fold is not allowed to produce */
+  fsum('studio',(($('#st-state')||{}).textContent||'').trim());
+
   if(stFail())stState('The studio engine did not load — hard-refresh the page.');
 
   loadEstate(false);
