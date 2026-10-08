@@ -61,20 +61,28 @@ function buildFeed() {
   let x = '<?xml version="1.0" encoding="utf-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel>\n';
   for (let i = 0; i < FEED_N; i++) {
     const sale = i % 3 === 0;
-    // image_link is ALREADY a FeedSpark overlay, as Monsoon's Meta feed really is — the studio has
-    // to decode the source image out of it rather than compositing on top of a composite
+    // image_link is ALREADY a FeedSpark overlay on most products, as Monsoon's Meta feed really is
+    // (329 of 1,593 overlaid, 10 Oct 2026) — the studio has to decode the source image out of it
+    // rather than compositing on top of a composite
     // the source images ride RAW, exactly as Monsoon's live feed carries them (checked 7 Oct 2026) —
     // percent-encoding them here would have tested a shape the estate does not serve
     const live = 'https://dashboard.feedspark.com/image-creator/monsoon-mix-meta/image_process_products_lifestyle.php'
       + '?img_url_left=https://www.monsoon.co.uk/img/' + i + '_a.jpg'
       + '&img_url_right=https://www.monsoon.co.uk/img/' + i + '_b.jpg&img_ver=1';
+    // A QUARTER OF THE FEED CANNOT CARRY A TWO-UP, which is the case the old fixture had none of:
+    // a plain client image whose additional_image_link is the SAME picture again. Every product
+    // having a distinct second shot is exactly why this harness passed on a split design that drew
+    // one picture twice (Ray, 8 Oct 2026).
+    const flat = i % 4 === 1;
+    const main = flat ? 'https://www.monsoon.co.uk/img/' + i + '_a.jpg' : live;
+    const add = flat ? 'https://www.monsoon.co.uk/img/' + i + '_a.jpg' : 'https://www.monsoon.co.uk/img/' + i + '_b.jpg';
     x += '<item>'
       + '<g:id>20001' + (600 + i) + '</g:id>'
       + '<title>Monsoon Women’s Mona Angel Sleeve Maxi Dress, Size: ' + (6 + (i % 8)) + '</title>'
       + '<description>Sheer elegance, cut with angel sleeves over a V-neck bodice.</description>'
       + '<link>https://www.monsoon.co.uk/p' + i + '.html</link>'
-      + '<g:image_link>' + live.replace(/&/g, '&amp;') + '</g:image_link>'
-      + '<g:additional_image_link>https://www.monsoon.co.uk/img/' + i + '_b.jpg</g:additional_image_link>'
+      + '<g:image_link>' + main.replace(/&/g, '&amp;') + '</g:image_link>'
+      + '<g:additional_image_link>' + add + '</g:additional_image_link>'
       + '<g:availability>in stock</g:availability>'
       + '<g:price>150.00 GBP</g:price>'
       + (sale ? '<g:sale_price>105.00 GBP</g:sale_price>' : '')
@@ -169,6 +177,20 @@ const pix = (sel) => page.$eval(sel, (c) => { try { const g = c.getContext('2d')
   for (let i = 0; i < d.length; i += 97) h = (h * 31 + d[i]) >>> 0; return { h, w: c.width, hh: c.height, ok: true }; }
   catch (e) { return { ok: false, err: String(e.message) }; } });
 
+const splitRead = () => page.$eval('[data-st-cv="split"]', (c) => {
+  const g = c.getContext('2d'), w = Math.floor(c.width / 2);
+  const hash = (x) => { const d = g.getImageData(x, 0, w, c.height).data; let v = 0;
+    for (let i = 0; i < d.length; i += 97) v = (v * 31 + d[i]) >>> 0; return v; };
+  // the seam: the white rule the two-up strokes down the centre. Read the TOP third only, clear of
+  // any band a design puts along the bottom edge.
+  let seam = 999;
+  for (let y = 4; y < Math.floor(c.height / 3); y += 3) {
+    const p = g.getImageData(Math.floor(c.width / 2), y, 1, 1).data;
+    seam = Math.min(seam, p[0], p[1], p[2]);
+  }
+  return { l: hash(0), r: hash(c.width - w), seam, w: c.width };
+});
+
 console.log('· the engines the page asks for arrive and define themselves');
 {
   const g = await page.evaluate(() => ({ ov: typeof window.Overlay, st: typeof window.FeedOverlayStudio,
@@ -233,6 +255,29 @@ console.log('· the design gallery paints the real image');
   const ribbon = await pix('[data-st-cv="ribbon"]'), pill = await pix('[data-st-cv="pill-badge"]');
   t('two different designs draw two different pictures', ribbon.h !== pill.h && ribbon.h !== clean.h);
 }
+console.log('· THE TWO-UP IS TWO PICTURES, NOT ONE TWICE');
+{
+  // The bug this pins (Ray, 8 Oct 2026): the split zone carried no fact, so nothing ever dropped it,
+  // and the painter fell back to the packshot — drawing the SAME cream corduroy trousers on both
+  // halves and calling it a Product × lifestyle composition. Two equal half-width draws of one
+  // image hash identically, so comparing the halves is exactly the test that fails on that page.
+  const h = await splitRead();
+  t('the two halves of the split really are two different pictures', h.l !== h.r, 'both halves hashed ' + h.l);
+  t('and the composition is seamed down the middle', h.seam >= 245, 'centre pixel min channel ' + h.seam);
+  const note = await page.$eval('[data-st-note="split"]', (e) => e.textContent.replace(/\s+/g, ' ').trim());
+  t('and the card does not claim a missing second image', !/no second image/i.test(note), note);
+  await page.click('.st-card[data-st-d="split"]');
+  await page.waitForSelector('#st-big');
+  const rows = await page.$$eval('table.st-rt tr', (ts) => ts.map((r) => ({
+    k: (r.querySelector('td.k') || {}).textContent, v: (r.querySelector('td.v') || {}).textContent,
+    n: (r.querySelector('td.nt') || {}).textContent })));
+  const L = rows.find((r) => r.k === 'img_url_left'), R = rows.find((r) => r.k === 'img_url_right');
+  t('the recipe composes image_link on the left', L && /\{image_link\}/.test(L.v), JSON.stringify(L));
+  t('and additional_image_link on the right — a per-product token, never this product’s URL',
+    R && /\{additional_image_link\}/.test(R.v), JSON.stringify(R));
+  t('and it names which additional image that is', R && /the first of \d+ this product carries|the lifestyle shot/.test(R.n || ''), JSON.stringify(R));
+}
+
 console.log('· NO OVERLAY TEXT RUNS OFF THE PICTURE');
 {
   // measured with the REAL glyphs, not the layout's estimate. The bug this pins drew
@@ -385,10 +430,10 @@ console.log('· the Ads window Ray asked for');
 
 console.log('· a product search inside the studio');
 {
-  await page.fill('#st-q', '20001605');
+  await page.fill('#st-q', '20001606');
   await page.click('#st-go');
   await page.waitForTimeout(500);
-  t('the product line moved to that ID', /20001605/.test(await txt('#st-prod')), await txt('#st-prod'));
+  t('the product line moved to that ID', /20001606/.test(await txt('#st-prod')), await txt('#st-prod'));
   await page.fill('#st-q', 'nothing-like-this');
   await page.click('#st-go');
   await page.waitForTimeout(250);
@@ -403,6 +448,43 @@ console.log('· the image behind an overlay already live');
     srcs.length === 1 && /img_url=|url=https%3A%2F%2Fwww\.monsoon\.co\.uk%2Fimg/.test(srcs[0]), String(srcs[0]).slice(0, 180));
   t('the proxy was never asked for a dashboard.feedspark.com composite',
     !/dashboard\.feedspark\.com/.test(decodeURIComponent(String(srcs[0] || ''))), String(srcs[0]).slice(0, 200));
+}
+
+console.log('· MORE SAMPLES TO DEMO ON (Ray, 8 Oct 2026)');
+{
+  const strip = await page.evaluate(() => {
+    const e = document.querySelector('#st-samp');
+    return { hidden: e.hidden, n: e.querySelectorAll('[data-st-s]').length,
+      head: (e.querySelector('.sh') || {}).textContent || '',
+      ids: Array.from(e.querySelectorAll('[data-st-s] .sl')).map((x) => x.textContent) };
+  });
+  t('the strip offers a dozen products, not one', !strip.hidden && strip.n >= 8, JSON.stringify(strip).slice(0, 200));
+  t('it says how many carry an offer and how many a second image',
+    /on offer/.test(strip.head) && /second image for the two-up/.test(strip.head), strip.head);
+  // read off the PAINT: the ⓘ collapse widget judges explanatory copy by sentence count, and a
+  // strip whose own heading is folded away is a row of unlabelled thumbnails
+  const painted = await page.$eval('#st-samp .sh', (e) => { const r = e.getBoundingClientRect();
+    return { w: r.width, h: r.height, vis: getComputedStyle(e).visibility }; });
+  t('and that line is on the screen, not folded away', painted.w > 40 && painted.h > 4 && painted.vis === 'visible', JSON.stringify(painted));
+  const thumb = await page.$eval('#st-samp [data-st-s] img, #st-samp [data-st-s] .ph', (e) => e.getBoundingClientRect().height);
+  t('every sample shows a thumbnail of the product', thumb > 20, String(thumb));
+  t('every sample is a different product', new Set(strip.ids).size === strip.ids.length, strip.ids.join(','));
+  // THE SPREAD is the point: twelve products of one shape demo one shape. The strip has to carry a
+  // product that CANNOT take the two-up, or the honest drop is never on screen for a client.
+  const kinds = await page.evaluate(() => Array.from(document.querySelectorAll('#st-samp [data-st-s]')).map((x) => x.title));
+  t('the strip spreads across what each product can carry',
+    kinds.some((k) => /two images/.test(k)) && kinds.some((k) => !/two images/.test(k)), kinds.join(' | '));
+  const at = kinds.findIndex((k) => !/two images/.test(k));
+  const before = await txt('#st-prod');
+  await page.click('#st-samp [data-st-s="' + at + '"]');
+  await page.waitForTimeout(600);
+  t('clicking a sample moves the studio onto that product', before !== (await txt('#st-prod')), before.slice(0, 80));
+  const h = await splitRead();
+  t('a product with no distinct second image is drawn as ONE picture, with no seam', h.seam < 245,
+    'a white seam at the centre means a two-up was composed from a picture this product does not have');
+  const note = await page.$eval('[data-st-note="split"]', (e) => e.textContent.replace(/\s+/g, ' ').trim());
+  t('and the card says the second image is missing, with the reason', /no second image/i.test(note)
+    && /(same picture as its main image|carries no )/i.test(note), note);
 }
 
 console.log('· the phone');

@@ -95,6 +95,56 @@ brief rather than a mock-up:
 A zone whose fact does not resolve is **dropped and says why**; a design whose every message is
 missing reads *"nothing to say on this product"* rather than being drawn blank.
 
+### The two-up is two pictures
+
+> Ray, 8 Oct 2026, over the gallery's **Product × lifestyle** card showing the same cream corduroy
+> trousers on both halves: *"should be templated by 2 images image_url and additiona_image_link —
+> also, allow more samples to be demo pls"*
+
+The split zone carried **no fact**, so nothing ever dropped it, and the painter fell back to the
+packshot (`ST.img2 || img`) — one picture drawn twice and called a composition. The fix is in the
+module's own idiom rather than in the painter:
+
+- a fact, **`second_image`**, whose value is the product's own `additional_image_link`;
+- `secondImage(row, slots, main)` takes the **first additional image that is not the main one** —
+  a repeated packshot is not a second picture, and the reason travels with the refusal
+  (*"this feed carries no second image column"* / *"this product carries no g:additional_image_link"* /
+  *"this product's g:additional_image_link is the same picture as its main image"*);
+- `imgUrls()` reads the column as the **list** it may be (comma-, pipe-, semicolon- or
+  space-separated), deduped and in order, and the recipe says *which* of them
+  (*"the lifestyle shot — the first of 3 this product carries"*);
+- the fact's coverage is measured **per product, not by how full the column is** (`rowOk`): on a feed
+  whose additional column is 75% full but repeats the packshot on a third of it, the honest reading
+  is 50%, and a fill rate would have over-stated what the two-up can run on;
+- `compose` resolves an **image** zone on whether the picture resolved, never on text, counts it in
+  `drew`, and drops it with its reason when it did not — so a product that cannot carry a two-up is
+  drawn as the single picture it has, with the card saying *"no second image — …"*.
+
+The recipe is unchanged in kind: `img_url_left={image_link}`, `img_url_right={additional_image_link}` —
+**per-product tokens**, never this product's URLs, because a preview frozen into a feed rule is a
+wrong picture on every other product.
+
+`tools/check_ovstudio.js` measures the two halves of the painted canvas **and the white seam down
+the centre**: two equal half-width draws of one image hash identically, so the halves comparison is
+exactly what fails on the old page, and the seam is what fails when a two-up is composed from a
+picture the product does not have. The fixture now gives a quarter of the feed a plain image whose
+`additional_image_link` repeats it — every product having a distinct second shot is precisely why the
+harness passed on a broken program.
+
+### More samples to demo on
+
+One product was never enough to walk a client through fourteen designs, and whichever one the studio
+landed on decided which designs had anything to say. The strip above the gallery offers twelve,
+each judged on what it can carry — a discount **and** a distinct second image (every design, the
+two-up included), a discount only, a second image only, or a readable picture and nothing else.
+
+The **best leads**, so the studio still opens on a product the whole set fits, but the strip is a
+**spread, not a top twelve**: twelve products of one shape demo one shape, while a strip carrying
+each kind lets the two-up, the sale flash and the control each land on a product that suits them —
+and puts the honest drop on screen for a client to see. Ranked, never random: a reshuffle that can
+hand you a worse product than the one on screen is not a demo tool. 🎲 *Another product* walks the
+strip from where you are rather than re-picking the same best one.
+
 ## 5. The geometry is pure, and tested
 
 `layout()` returns boxes in image pixels and takes no DOM — the painting is the page's. That split
