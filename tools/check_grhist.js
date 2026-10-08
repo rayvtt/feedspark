@@ -290,6 +290,14 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   ok('the download carries the history — the three lines, the bars and the change log', x.has && x.lines === 3 && x.bars > 0 && x.log === 13, x); // ten changes, three of them analyses — two rows each
   ok('…the range as a plain chip, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:90 days', x);
   ok('…and none of the hover furniture', x.hits === 0 && !x.tip, x);
+  // a WIDE window never blows the chart up (Ray, 8 Oct 2026: "it looks exceptionally larger than rest of body"): the chart stops
+  // at the size it was drawn at, so its labels are no bigger than the page's own text
+  await out.setViewportSize({ width: 2400, height: 1000 });
+  await out.waitForTimeout(200);
+  const wide = await out.evaluate(() => { const svg = document.querySelector('#hs-tier .hs-svg'); if (!svg) return null;
+    const w = svg.getBoundingClientRect().width, vb = svg.viewBox.baseVal.width, txt = svg.querySelector('text');
+    return { w, scale: w / vb, font: txt ? parseFloat(getComputedStyle(txt).fontSize) * (w / vb) : 0 }; });
+  ok('…and on a 2400px window the chart stays at its drawn size — labels no larger than the page text', wide && wide.w <= 1000.5 && wide.font <= 13, wide);
   fs.unlinkSync(tmp);
   await out.close();
   await page.close();

@@ -48,6 +48,24 @@ export function idGate(path, method, identity, env) {
   return { ok: false, status: 401, reason: 'no Cloudflare Access identity on this request' };
 }
 
+// ---- the directory gate (Ray, 8 Oct 2026: "only personnel with access been created in the
+// workflow section pls") ----
+// Passing Cloudflare Access is necessary, not sufficient: a signin must ALSO have a row in the
+// access directory the owner keeps in Workflow's 👥 Individual access panel (KV accessdir, the git
+// seed until first saved). Before this an unlisted signin resolved to the full house ("scoping
+// only narrows"). The owner is always listed by definition; a service token has no row and is
+// refused like anyone else (the agents use the key-gated push lane, which never reaches here).
+// env.ALLOW_UNLISTED = '1' is the escape hatch back to the old behaviour, never the default.
+export function dirGate(identity, ownerEmail, dir, env) {
+  const id = String(identity || '').toLowerCase();
+  if (!id || id === 'unknown') return { ok: false, status: 401, reason: 'no identity' };
+  if (id === String(ownerEmail || '').toLowerCase()) return { ok: true, owner: true };
+  const rows = dir && typeof dir === 'object' ? dir : {};
+  if (Object.prototype.hasOwnProperty.call(rows, id) && rows[id]) return { ok: true, listed: true };
+  if (env && String(env.ALLOW_UNLISTED || '') === '1') return { ok: true, unlisted: true };
+  return { ok: false, status: 403, reason: 'not in the access directory' };
+}
+
 // ---- request body caps (bytes), read off Content-Length before the body is touched ----
 // 4 MB covers every page save (the largest kvmerge envelopes are well under 1 MB); the materials
 // bank takes client decks (its own route already refuses over 24 MB); the push lane carries the
@@ -225,7 +243,12 @@ export function tightenHeaders(h, path, origin) {
 }
 
 // the answer an anonymous request gets
-export function deniedBody(path) {
-  if (String(path || '').startsWith('/api/')) return { json: true, body: { error: 'sign in through Cloudflare Access', code: 'no_identity' } };
+export function deniedBody(path, kind) {
+  const api = String(path || '').startsWith('/api/');
+  if (kind === 'not_listed') {
+    if (api) return { json: true, body: { error: 'this signin is not in the FCC access directory — ask the account owner to add you in Workflow → 👥 Individual access', code: 'not_listed' } };
+    return { json: false, body: '<!doctype html><meta charset="utf-8"><title>No access yet</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>No access yet</h2><p>Your signin is not in the FeedSpark Command Center access directory. Ask the account owner to add you in <b>Workflow → 👥 Individual access</b>; access starts the moment the row is saved.</p></body>' };
+  }
+  if (api) return { json: true, body: { error: 'sign in through Cloudflare Access', code: 'no_identity' } };
   return { json: false, body: '<!doctype html><meta charset="utf-8"><title>Sign in</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Sign in required</h2><p>This page is only served to a signed-in FeedSpark account through Cloudflare Access.</p></body>' };
 }

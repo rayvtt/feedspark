@@ -301,6 +301,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record ⬇ HTML locked to the client (the dialog, the encrypted file, who opens it)"
   NODE_PATH=$(npm root -g) node tools/check_grlock.js || {
     echo "✗ Golden Record HTML-lock tripwire failed — the dialog, the encryption, an address that should (or should not) open the file, or text leaking into it regressed"; exit 1; }
+  echo "── validating: Golden Record downloads are inert — nothing runs, calls home, or hides words from the reader (poisoned feed values)"
+  NODE_PATH=$(npm root -g) node tools/check_grsafe.js || {
+    echo "✗ Golden Record download-safety tripwire failed — a handler, script URL, foreign request, comment or invisible character reached the PDF/HTML, or the PDF gained a text layer or action"; exit 1; }
   echo "── validating: Golden Record ⬇ HTML — the Catalogue modules the AM picked (framed Catalogue, per-measure ticks, the file)"
   NODE_PATH=$(npm root -g) node tools/check_grcatx.js || {
     echo "✗ Golden Record Catalogue-modules tripwire failed — the framed Catalogue, a tick, the picked cards in the HTML or the device's own Catalogue preferences regressed"; exit 1; }

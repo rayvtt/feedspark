@@ -224,7 +224,7 @@ const QUALITY = {
   ok('the AI-readiness method is readable under its section, titled as its pop-up is',
     secs.some((t) => /AI-readiness — the headline/.test(t)), secs.slice(0, 8));
   ok('and both carry their prose, not just a heading',
-    /Coverage says an attribute is there/.test(html) && /weighted/.test(html));
+    /A filled field is not the same as a good one/.test(html) && /weighted/.test(html));
 
   /* every pillar explains its own number */
   const pills = await out.$$eval('.pillar', (e) => e.map((p) => !!p.querySelector('details.xd')));

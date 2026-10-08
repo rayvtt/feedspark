@@ -93,7 +93,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       note: (r.querySelector('.at-note') || {}).textContent, tip: (r.querySelector('.at-note') || {}).title,
       ask: !!r.querySelector('[data-ask]'), pdp: !!r.querySelector('[data-pdp]'), brief: !!r.querySelector('[data-brief]'),
       tier: (r.closest('.tier').querySelector('h4') || {}).textContent,
-      card: (function () { const c = r.nextElementSibling; return c && c.classList.contains('dep-card') ? c.getAttribute('data-dep') : null; })() };
+      card: (r.querySelector('[data-deptip]') || { getAttribute: () => null }).getAttribute('data-deptip') };
   }, lead);
   const dial = (page) => page.$eval('svg.dial', (e) => { const m = /score ([\d.]+)/.exec(e.getAttribute('aria-label')); return m ? +m[1] : null; });
 
@@ -118,7 +118,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       /each product scores images ÷ 4, capped at 100% — 4 or more is full credit, 3 is 75%, 2 is 50%, 1 is 25%, none is 0 — averaged over all 9,600 products/.test(img.tip) &&
       /replaces g:additional_image_link in the score \(filled is not full\)/.test(img.tip) &&
       /4,100 care lines \(washing, cleaning\) are not counted/.test(det.tip) && /900 lines repeat another attribute/.test(det.tip), [img.tip, det.tip]);
-    ok('each depth row carries its breakdown card, 0 … 6+', img.card === 'img_depth' && hl.card === 'hl_depth' && det.card === 'detail_depth');
+    ok('each depth row carries its 0 … 6+ breakdown on its own bar', img.card === 'img_depth' && hl.card === 'hl_depth' && det.card === 'detail_depth');
     // the breakdown is /ptypes' pop-up depth card (Ray, 8 Oct 2026: "these bar charts of tier population should be a pop up
     // chart followed the design from Product Type"): rows of label · bar · share, opened from the row's own bar
     const onScreen = await page.$$eval('.dep-card', (cs) => cs.filter((c) => getComputedStyle(c).display !== 'none').length);
@@ -144,10 +144,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     await page.keyboard.press('Escape'); await page.waitForTimeout(30);
     const esc = await tipOf();
     ok('moving away closes it; a tap pins it (a phone has no hover) and Esc closes the pinned card', gone === null && pinned && pinned.pin && /Highlights per product/i.test(pinned.h4) && pinned.hi === 3 && esc === null, { gone, pinned: !!pinned, esc });
-    const fold = await page.$$eval('.dep-card', (cs) => cs.map((c) => ({ k: c.getAttribute('data-dep'), rows: c.querySelectorAll('.pr').length,
-      closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' })));
-    ok('the documents\' copy is the same rows, with the explanation folded behind "How it\'s scored · full credit at N+"',
-      fold.length === 3 && fold.every((f) => f.rows === 7 && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
+    ok('no breakdown table sits under any row', await page.$$eval('.dep-card,.dep-hov', (cs) => cs.length) === 0);
     const pres = await row(page, 'additional_image_link');
     ok('additional_image_link keeps its presence row (images per product counts the main image too) and says the depth row scores instead',
       pres && pres.byDepth && /^g:/.test(pres.nm), pres && pres.nm);
@@ -211,17 +208,26 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     const html = await page.evaluate(() => window.__blobs[1]);
     const xp = await browser.newPage({ viewport: { width: 1200, height: 900 } });
     await xp.setContent(html.replace(/<link[^>]+fonts[^>]*>/g, ''));
-    const xr = await xp.evaluate(() => ({ cards: Array.from(document.querySelectorAll('.dep-card')).filter((c) => c.offsetHeight > 0).map((c) => c.getAttribute('data-dep')),
+    // Ray, 8 Oct 2026: "actually remove these tables in the downloads - either it's a hover popup or it can be shown in the below
+    // modularised report" — the file carries the screen's dark card as a CSS hover pop-up on the row, nothing inline
+    const xr = await xp.evaluate(() => ({ cards: document.querySelectorAll('.dep-card').length,
+      hov: Array.from(document.querySelectorAll('.at-row > .dptip.dep-hov')).map((c) => ({ rows: c.querySelectorAll('.pr').length, shown: getComputedStyle(c).display !== 'none' })),
       rows: Array.from(document.querySelectorAll('.dep-nm')).map((n) => n.textContent), acts: document.querySelectorAll('[data-ask],[data-brief]').length,
-      hooks: document.querySelectorAll('[data-deptip],.dptip').length, prs: Array.from(document.querySelectorAll('.dep-card')).map((c) => c.querySelectorAll('.pr').length) }));
-    ok('the client\'s ⬇ HTML shows the three depth rows and their cards, with no AM buttons',
-      xr.cards.join() === 'img_depth,hl_depth,detail_depth' && xr.rows.length === 3 && xr.acts === 0 && xr.hooks === 0 && xr.prs.every((n) => n === 7), xr);
+      hooks: document.querySelectorAll('[data-deptip],.dptip:not(.dep-hov)').length }));
+    ok('the client\'s ⬇ HTML shows the depth rows with no table under them and no AM buttons — each breakdown waits as a hover pop-up, hidden at rest',
+      xr.cards === 0 && xr.hov.length === 3 && xr.hov.every((h) => h.rows === 7 && !h.shown) && xr.rows.length === 3 && xr.acts === 0 && xr.hooks === 0, xr);
+    const hv = await xp.evaluate(() => { const n = Array.from(document.querySelectorAll('.at-row')).find((r) => r.querySelector('.dep-hov') && /product_highlight/.test(r.textContent)); if (!n) return null; const nm = n.querySelector('.at-nm'); nm.scrollIntoView({ block: 'center' }); return nm.getBoundingClientRect().toJSON(); });
+    if (hv) await xp.mouse.move(hv.x + 10, hv.y + hv.height / 2);
+    await xp.waitForTimeout(80);
+    const hs = await xp.evaluate(() => Array.from(document.querySelectorAll('.dep-hov')).filter((c) => getComputedStyle(c).display !== 'none').map((c) => ({ h4: c.querySelector('h4').textContent, bg: getComputedStyle(c).backgroundColor })));
+    ok('…hovering g:product_highlight in the file opens its card — the screen\'s own dark card, no script needed', hs.length === 1 && /Highlights per product/i.test(hs[0].h4) && hs[0].bg === 'rgb(23, 26, 33)', hs);
     await xp.close();
-    await page.evaluate(() => document.body.classList.add('pdf'));
-    const pv = await page.$$eval('.dep-card', (cs) => cs.filter((c) => getComputedStyle(c).display !== 'none' && c.offsetHeight > 0).length);
-    const pdfOpen = await page.evaluate(() => { const ds = Array.from(document.querySelectorAll('details.dep-more')); ds.forEach((d) => { d.open = true; }); return ds.length; });
-    ok('…and a paper copy can carry every explanation open (preparePdf opens the folds)', pdfOpen === 3 && /details\.dep-more:not\(\[open\]\)/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'docs', 'FeedSpark_GoldenRecord.html'), 'utf8')));
-    ok('…and the PDF layout prints the cards', pv === 3, pv);
+    // and the PDF carries none — paper cannot hover
+    await page.evaluate(() => { window.__h2dep = null; window.html2canvas = (el) => { const d = el.ownerDocument; if (d !== document && window.__h2dep == null) window.__h2dep = d.querySelectorAll('.dep-hov,.dep-card').length; return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
+      window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdep = true; }; } }; });
+    await page.click('#det-pdf');
+    await page.waitForFunction(() => window.__pdfdep === true, null, { timeout: 15000 }).catch(() => {});
+    ok('…and the PDF carries no depth table at all', await page.evaluate(() => window.__h2dep) === 0, await page.evaluate(() => window.__h2dep));
     await page.close();
   }
 

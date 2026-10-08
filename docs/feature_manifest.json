@@ -6548,9 +6548,9 @@
       "min": 1
     },
     {
-      "name": "Golden Record: the AI-Readiness footnote names conversational attributes as the heaviest pillar and custom labels as measured-not-scored",
+      "name": "Golden Record: the AI-Readiness method — plain words, conversational heaviest; the custom-labels and same-as-Feed-Lab lines removed (Ray, 8 Oct 2026: 'remove these 2 sentences')",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "Custom labels are measured but not scored",
+      "pattern": "the custom-labels and same-as-Feed-Lab lines are gone",
       "min": 1
     },
     {
@@ -14117,9 +14117,9 @@
       "pr": 0
     },
     {
-      "name": "Golden Record: depth card explanation folds behind 'How it's scored · full credit at N+'; legend on one line",
+      "name": "Golden Record: a depth breakdown is a pop-up only — depCard writes no inline copy (Ray, 8 Oct 2026: 'remove these tables in the downloads')",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "<details class=\"dep-more\">",
+      "pattern": "modules can be picked into the report instead)\n    return '';",
       "pr": 0
     },
     {
@@ -14189,9 +14189,9 @@
       "pr": 0
     },
     {
-      "name": "Golden depth rows: the inline breakdown is the documents' copy only",
+      "name": "Golden ⬇ HTML: each depth row carries the screen's dark card as a CSS hover pop-up (no script)",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "body:not(.pdf) .dep-card{display:none}",
+      "pattern": "body.xhtml .at-row .at-nm:hover~.dep-hov,body.xhtml .at-row .at-bar:hover~.dep-hov{display:block}",
       "pr": 0
     },
     {
@@ -14369,6 +14369,64 @@
       "pr": 0
     },
     {
+      "name": "Golden ⬇ HTML: exportDoc hangs DEPTIP's card on each depth row as .dptip.dep-hov (screen file only, never paper)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "hv.className = 'dptip dep-hov'",
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF: the hover card never reaches paper",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .dptip:not(.dep-hov){display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: the content-quality method reads like a marketing head wrote it (Ray, 8 Oct 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "A filled field is not the same as a good one.",
+      "pr": 0
+    },
+    {
+      "name": "check_grdepth: the file's depth card opens on hover, and the PDF carries none",
+      "file": "tools/check_grdepth.js",
+      "pattern": "hovering g:product_highlight in the file opens its card",
+      "pr": 0
+    },
+    {
+      "name": "Golden downloads: scrubExport — the last pass over the PDF + both HTML exits (no handler, script URL, foreign request, comment, frame that runs, or invisible character) (Ray, 8 Oct 2026: 'free from any jailbreak llm agents or loophole?')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function scrubExport(root)",
+      "pr": 0
+    },
+    {
+      "name": "Golden downloads: exportDoc runs scrubExport before serialising",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "    scrubExport(doc);\n    var html = '<!doctype html>\\n' + doc.outerHTML;",
+      "pr": 0
+    },
+    {
+      "name": "Golden downloads: Unicode tag characters + zero-width + bidi marks stripped (hidden instructions to an AI)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "\\uDB40[\\uDC00-\\uDC7F]/g;",
+      "pr": 0
+    },
+    {
+      "name": "presync: the download-safety tripwire runs",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grsafe.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: the chart never grows past its drawn size, so its labels match the page text at any window (Ray, 8 Oct 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".hs-svg{width:100%;max-width:1000px;height:auto;display:block}",
+      "pr": 0
+    },
+    {
+      "name": "Golden content quality: no verdict sentence under the score (Ray, 8 Oct 2026: 'remove this text')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "no verdict sentence under the score",
+      "pr": 0,
       "name": "Overlay studio: the two-up is TWO pictures — image_link beside the product's own additional_image_link (Ray, 8 Oct 2026: 'should be templated by 2 images image_url and additiona_image_link')",
       "file": "docs/overlay_studio_engine.js",
       "pattern": "function secondImage",
@@ -14523,6 +14581,24 @@
       "name": "AI Quote: Excel export named BILLING - client - kinds - DDMMYY",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "BILLING-NAME",
+      "pr": 0
+    },
+    {
+      "name": "Security: the directory gate — only a row in Workflow's 👥 Individual access passes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const dg = SEC.dirGate(ident, ownerEmail(env), dir, env);",
+      "pr": 0
+    },
+    {
+      "name": "Security module: dirGate refuses an unlisted signin (no full-house default)",
+      "file": "cloudflare/feedspark-deck/src/security.js",
+      "pattern": "return { ok: false, status: 403, reason: 'not in the access directory' };",
+      "pr": 0
+    },
+    {
+      "name": "Security harness: the directory gate",
+      "file": "tools/test_security.mjs",
+      "pattern": "a signin that passed Access but has NO row",
       "pr": 0
     }
   ]

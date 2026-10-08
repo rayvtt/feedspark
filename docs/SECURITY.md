@@ -28,6 +28,7 @@ added to another hostname, or a policy edited by mistake. The gate below closes 
 | # | Control | Where | Rule |
 |---|---|---|---|
 | 1 | **Identity gate** | `SEC.idGate` in `fetch()` | No identity → **401** on every path except the public lanes: `/api/version`, `/api/news`, `/api/gmail/push` (key-gated) and CORS `OPTIONS`. A refused API call gets JSON `{code:'no_identity'}`, a refused page a plain sign-in page. `ALLOW_ANONYMOUS=1` (a Worker var) is the only escape hatch, for an emergency, never the default. |
+| 1b | **Directory gate** (Ray, 8 Oct 2026: "only personnel with access been created in the workflow section pls") | `SEC.dirGate` in `fetch()` | Past Access, a signin must ALSO have a row the owner created in **Workflow → 👥 Individual access** (KV `accessdir`, the git seed until first saved). The owner always passes; an unlisted signin, a client-team alias without a row and a service token get **403** with a page that names the fix. The old "unassigned → full house" default is gone. `ALLOW_UNLISTED=1` is the escape hatch. One KV get per non-public request. |
 | 2 | **Verified identity** (opt-in) | `resolveIdentity` → `SEC.verifyAccessJwt` | With `ACCESS_TEAM_DOMAIN` + `ACCESS_AUD` set, the worker verifies `Cf-Access-Jwt-Assertion` (or the `CF_Authorization` cookie) — RS256 against `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs` (cached an hour, re-read once on an unknown `kid`), audience, `exp`/`nbf` — and the identity is the **token's** email, never the header's. A missing/invalid token, or an unreachable certs endpoint, is `unknown` → 401 (fail closed). Unset, the headers are trusted as before. |
 | 3 | **Body caps** | `SEC.bodyGate` | `Content-Length` over the lane's cap → **413** before the body is read: 4 MB default, 26 MB `/api/materials`, 48 MB `/api/gmail/push` (the xml-scan agent's batches of 8 snapshots). Undeclared lengths pass (Cloudflare bounds a request at 100 MB). |
 | 4 | **Push key, constant time** | `SEC.safeEqual` | The `X-FCC-Push-Key` compare runs over the longer string and folds the length into the result — no early return that times where the first wrong byte is. |
@@ -87,7 +88,7 @@ scoped whole-map save cannot tombstone the rest of the board; the 15 page escape
 ## Running the check
 
 ```
-node tools/test_security.mjs     # 78 assertions: the gate module, the lifted identity resolver on a signed token, the wiring, the repo sweep
+node tools/test_security.mjs     # 89 assertions: the gate module, the lifted identity resolver on a signed token, the wiring, the repo sweep
 node tools/test_escaping.mjs     # PR #528: the fifteen page escapers
 node tools/check_csp.js          # PR #528: every page under the real CSP (Playwright)
 ```
