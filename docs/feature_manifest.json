@@ -12462,6 +12462,24 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "Dynamic fields<b class=\"pv-dyn\"",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the preview's Golden Score is /golden's ring (r52, 11 stroke, round cap, audit-band colour), not a bare number",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "<svg class=\"pv-dial\" viewBox=\"0 0 120 120\"",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: pvDial draws the arc as the score's share of 100 in the audit band",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvDial(svg,v)",
+      "pr": 0
+    },
+    {
+      "name": "Pricer check: the preview's Golden Score ring is asserted (arc = score, band colour, score inside)",
+      "file": "tools/check_pricer.js",
+      "pattern": "the preview\\'s Golden Score is a ring as /golden draws it",
+      "pr": 0
     }
   ]
 }
