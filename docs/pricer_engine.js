@@ -687,12 +687,12 @@
   // Tier 1 is Google-ready, Tier 2 is the AI-ready BUNDLE (Tier 1 + AI Readiness, set-up rounded
   // once, the bundle % on generation), and AI Readiness alone is the odd one out. OPTION_SUB is
   // the one-line descriptor the page and the client copy print under the name.
-  var OPTION_LABEL = { go: 'Tier 1 · Google-ready', 'go+ar': 'Tier 2 · AI-ready', 'go+ar+rf': 'Tier 3 · AI-Refresher', ar: 'AI-ready only' };
+  var OPTION_LABEL = { go: 'Tier 1 · Google-ready', 'go+ar': 'Tier 2 · AI-ready', 'go+ar+rf': 'Tier 3 · AI-Intel Refresher', ar: 'AI-ready only' };
   var OPTION_SUB = { go: 'Google Optimise — eligible + everything Google recommends',
     'go+ar': 'Google-ready + AI Readiness — the bundle', 'go+ar+rf': 'AI-ready + the AI data kept fresh, monthly or quarterly',
     ar: 'AI Readiness without Tier 1' };
 
-  // AI-REFRESHER (Ray, 8 Oct 2026: "a tier-three product of AI-ready datasets, such as data fields like
+  // AI-INTEL REFRESHER (Ray, 8 Oct 2026: "a tier-three product of AI-ready datasets, such as data fields like
   // Q&A, keywords … refreshed on a monthly or quarterly basis, depending on the marketing event /
   // customer questions / AI-visibility monitor / customer reviews"). Tier 3 is Tier 2 PLUS a recurring
   // refresh of the AI-ready fields: each refresh regenerates the ticked fields over the share of the
@@ -705,7 +705,10 @@
     { id: 'keywords', label: 'Keywords', row: 'keywords', why: 'search phrases re-cut to what shoppers ask now' },
     { id: 'qa', label: 'Q&A', aim: true, why: 'the questions customers and AI surfaces are asking now' },
     { id: 'highlights', label: 'Product highlights', row: 'highlights', why: 'benefits re-ranked by what reviews and search reward' },
-    { id: 'desc', label: 'Descriptions', row: 'desc_gen', why: 'copy refreshed for the season and the moment' }];
+    { id: 'desc', label: 'Descriptions', row: 'desc_gen', why: 'copy refreshed for the season and the moment' },
+    // Ray, 8 Oct 2026: "fields that will be dynamic — 3, 4, 5, 6": titles and product details can be kept fresh too
+    { id: 'title', label: 'Titles', row: 'title_gen', why: 'titles re-cut to the words shoppers search this season' },
+    { id: 'details', label: 'Product details', row: 'details', why: 'details re-read as the range and the reviews change' }];
   var REFRESH_DEFAULT_FIELDS = ['keywords', 'qa', 'highlights'];
   var REFRESH_SIGNALS = [
     { id: 'events', label: 'Marketing calendar moments' },
@@ -1003,7 +1006,7 @@
       else if (TEST_DEFAULTS[n] != null) { g.tests[n] = TEST_DEFAULTS[n]; g.src.tests[n] = 'default'; g.by.tests[n] = null; }
       else { g.tests[n] = null; g.src.tests[n] = 'unset'; g.by.tests[n] = null; }
     });
-    // AI-Refresher price: a refresh costs this % of each field's generation price. Unset reads the
+    // AI-Intel Refresher price: a refresh costs this % of each field's generation price. Unset reads the
     // DRAFT default; the guard holds it back until Management confirms it
     var rfv = numOr(sv(price['_g|rfPct']));
     if (rfv != null && rfv >= 0) gset('rfPct', rfv, 'ops', stampOf(price['_g|rfPct'])); else gset('rfPct', REFRESH_PCT_DEFAULT, 'default');
@@ -1885,7 +1888,7 @@
       }
     }
     var testsGBP = tests.status === 'priced' ? tests.price : 0;
-    // AI-REFRESHER — Tier 3 only: the ticked fields regenerated over a share of the catalogue each refresh
+    // AI-INTEL REFRESHER — Tier 3 only: the ticked fields regenerated over a share of the catalogue each refresh
     var refresh = null;
     if (option === 'go+ar+rf') {
       var ro = opts.refresh || {};
@@ -1907,13 +1910,13 @@
       refresh = { cadence: cad, cadLabel: REFRESH_CADENCE[cad].label, per: REFRESH_CADENCE[cad].per, share: share, products: sized ? prods : null,
         fields: fl, signals: sigs, pct: pct, draft: pctDraft, status: 'priced', perRefresh: null, monthlyEq: 0 };
       if (!fl.length) { refresh.status = 'off'; }
-      else if (!sized) { refresh.status = 'unknown'; block('unknown', 'AI-Refresher not sized — count the feed first', { line: 'refresh' }); }
-      else if (fl.some(function (f) { return f.perProduct == null; })) { refresh.status = 'unpriced'; block('unpriced', 'AI-Refresher: a field has no price — Management', { line: 'refresh' }); }
+      else if (!sized) { refresh.status = 'unknown'; block('unknown', 'AI-Intel Refresher not sized — count the feed first', { line: 'refresh' }); }
+      else if (fl.some(function (f) { return f.perProduct == null; })) { refresh.status = 'unpriced'; block('unpriced', 'AI-Intel Refresher: a field has no price — Management', { line: 'refresh' }); }
       else {
         var pr = 0; fl.forEach(function (f) { pr += f.gbp; });
         refresh.perRefresh = round2(pr);
         refresh.monthlyEq = round2(pr * REFRESH_CADENCE[cad].perMonth);
-        if (pctDraft) block('draft-refresh', 'AI-Refresher price not confirmed — Management', { line: 'refresh', draft: true });
+        if (pctDraft) block('draft-refresh', 'AI-Intel Refresher price not confirmed — Management', { line: 'refresh', draft: true });
       }
     }
     var refreshGBP = refresh && refresh.status === 'priced' ? refresh.monthlyEq : 0;
@@ -2097,7 +2100,7 @@
       var monSell = pq.monthly.total - pq.monthly.conv - testsSell - refreshSell - extrasSell;
       if (extrasSell) why.push('bank services are not costed — left out of both sides');
       if (testsSell) why.push('test packages are not costed — left out of both sides');
-      if (refreshSell) why.push('the AI-Refresher is not costed yet — left out of both sides');
+      if (refreshSell) why.push('the AI-Intel Refresher is not costed yet — left out of both sides');
       proposal = { genCost: genCost, genMargin: genCost != null && net > 0 ? 1 - genCost / net : null,
         setupCost: setupCost, setupMargin: setupCost != null && pq.oneOff.blockCost > 0 ? 1 - setupCost / pq.oneOff.blockCost : null,
         setupNote: 'retainer hours still cost — they are in the set-up cost even when the block is absorbed',
@@ -2214,11 +2217,11 @@
     if (!T || !T.n) return null;
     return 'Test package: ' + T.n + ' tests a month — ' + (T.status === 'priced' ? M(T.price) + ' a month (' + M(T.perTest) + ' a test)' : 'price to follow');
   }
-  // the AI-Refresher in one line: what is refreshed, how often, against what, and its price
+  // the AI-Intel Refresher in one line: what is refreshed, how often, against what, and its price
   function refreshText(F, M) {
     if (!F || F.status === 'off') return null;
     var sig = (F.signals || []).map(function (id) { var x = REFRESH_SIGNALS.filter(function (s) { return s.id === id; })[0]; return x ? x.label.toLowerCase() : id; });
-    var t = 'AI-Refresher: ' + (F.fields || []).map(function (f) { return f.label; }).join(', ') + ' refreshed ' + F.cadLabel.toLowerCase()
+    var t = 'AI-Intel Refresher: ' + (F.fields || []).map(function (f) { return f.label; }).join(', ') + ' refreshed ' + F.cadLabel.toLowerCase()
       + (F.share < 100 ? ' on ' + F.share + '% of the catalogue' : '') + (sig.length ? ', read against ' + sig.join(', ') : '') + ' — ';
     if (F.status !== 'priced') return t + 'price to follow';
     return t + M(F.perRefresh) + ' ' + F.per + (F.cadence === 'quarterly' ? ' (counted as ' + M(F.monthlyEq) + ' a month)' : '');
@@ -2341,7 +2344,7 @@
       if (hasGpc) B.push('· Google product category is Google\'s own fixed taxonomy — we map each product to it, we never invent categories.');
       if (hasConv) B.push('· Conversational attributes go to Google through a supplemental data source, so your main feed stays untouched.');
       if (hasTests) B.push('· Test package: ' + TEST_WHAT);
-      if (hasRefresh) B.push('· AI-Refresher: ' + REFRESH_WHAT);
+      if (hasRefresh) B.push('· AI-Intel Refresher: ' + REFRESH_WHAT);
       B.push('');
     }
     B.push('All figures are ex VAT.');
@@ -2390,7 +2393,7 @@
       var q = pqOf(op) || {}, M = function (n) { return guard && !safeOf(op) ? GUARD_TXT : fmtGBP(round2(+n || 0)); };
       var inc = (q.lines || []).filter(function (l) { return l.status === 'priced'; }).map(function (l) { return l.label.replace(/ —.*$/, ''); });
       if (q.tests && q.tests.n) inc.push('Test package (' + q.tests.n + ' tests a month)');
-      if (q.refresh && q.refresh.status !== 'off') inc.push('AI-Refresher (' + q.refresh.cadLabel.toLowerCase() + ')');
+      if (q.refresh && q.refresh.status !== 'off') inc.push('AI-Intel Refresher (' + q.refresh.cadLabel.toLowerCase() + ')');
       (q.extras || []).forEach(function (x) { inc.push(x.label + (x.status === 'priced' ? ' (' + M(x.monthly) + ' a month)' : '')); });
       var sub = q.sub || OPTION_SUB[q.option];
       L.push((op.prop && op.prop.n ? op.prop.n : i + 1) + '. ' + (op.prop && op.prop.label ? op.prop.label : q.label) + (sub ? ' (' + sub + ')' : ''));
