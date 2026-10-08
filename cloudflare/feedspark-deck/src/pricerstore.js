@@ -78,6 +78,9 @@ export const PRICER_STORES = {
   proposals: { kv: 'pricerprop',  kind: 'prop', scope: 'field', mgmtRead: false, mgmtWrite: false, maxKeys: 1500 },
   rollout:   { kv: 'svcroll',     kind: 'roll', scope: 'self',  mgmtRead: false, mgmtWrite: false, maxKeys: 600 },
   roadmap:   { kv: 'svcmap',      kind: 'map',  scope: null,    mgmtRead: false, mgmtWrite: false, maxKeys: 600 },
+  // the OPTIMISATION BANK (Ray, 8 Oct 2026): every optimisation's tier + what it gives, and the team's own
+  // optimisations — house-wide; what is in a tier is a commercial decision, so Management writes it
+  bank:      { kv: 'pricerbank',  kind: 'bank', scope: null,    mgmtRead: false, mgmtWrite: true,  maxKeys: 200 },
 };
 
 export const PROPOSAL_MAX_BYTES = 60 * 1024;
@@ -545,6 +548,66 @@ export function sanitizeRoadmapPut(body, cur, ctx) {
   return { data, rejected };
 }
 
+/* ----------------------------------- the optimisation bank ----------------------------------- */
+// a built-in line key ('title' … 'conv', never 'client') carries {pkg, gives}; a team-added one (`x_<slug>`) carries
+// its label, kind (feed | service), fields, price (£ a product / set-up hours / £ a month), delivery status and why.
+// A seed the team removed is {del: true}; any other custom removed is simply absent (kvmerge, under the read stamp).
+export const BANK_TIERS = ['go', 'ar', 'rf', 'off'];
+export const BANK_SEEDS = ['x_stock_rc', 'x_restock'];
+const BANK_BUILTIN = PKG_LINE_KEYS.filter((k) => k !== 'client');
+export function bankKey(k) { return BANK_BUILTIN.indexOf(k) >= 0 ? 'builtin' : (/^x_[a-z0-9_]{2,30}$/.test(String(k || '')) ? 'custom' : null); }
+function cleanBank(k, v) {
+  const kind = bankKey(k);
+  if (!kind) return { ok: false, why: 'unknown key — a package line, or x_<slug> for a new optimisation' };
+  if (!isObj(v)) return { ok: false, why: 'a bank entry must be an object' };
+  if (kind === 'custom' && v.del === true) return BANK_SEEDS.indexOf(k) >= 0 ? { ok: true, v: { del: true } } : { ok: false, why: 'only a seeded optimisation is removed with del — remove your own by leaving it out' };
+  const out = {};
+  if (v.pkg != null) { if (BANK_TIERS.indexOf(v.pkg) < 0) return { ok: false, why: 'pkg must be go (Tier 1), ar (Tier 2), rf (Tier 3) or off' }; out.pkg = v.pkg; }
+  if (v.gives != null && v.gives !== '') { const g = cleanStr(v.gives, 90, 'gives'); if (!g.ok) return g; out.gives = g.v; }
+  if (kind === 'builtin') {
+    const extra = Object.keys(v).filter((f) => ['pkg', 'gives', 'by', 'at'].indexOf(f) < 0);
+    if (extra.length) return { ok: false, why: 'a package line only carries its tier and what it gives (' + extra.join(', ') + ' refused)' };
+    return { ok: true, v: out };
+  }
+  const isSeed = BANK_SEEDS.indexOf(k) >= 0;
+  if (!isSeed || v.label != null) { const l = cleanStr(v.label == null ? '' : v.label, 60, 'label'); if (!l.ok) return l; if (!l.v) return { ok: false, why: 'a new optimisation needs a name' }; out.label = l.v; }
+  if (!out.pkg && !isSeed) return { ok: false, why: 'a new optimisation needs a tier' };
+  if (v.kind != null) { if (['feed', 'service'].indexOf(v.kind) < 0) return { ok: false, why: 'kind must be feed or service' }; out.kind = v.kind; }
+  if (v.fields != null) {
+    if (!Array.isArray(v.fields) || v.fields.length > 6 || v.fields.some((f) => typeof f !== 'string' || !/^[a-z_]{2,40}$/.test(f))) return { ok: false, why: 'fields must list up to 6 feed attribute names (lowercase, e.g. product_highlight)' };
+    out.fields = v.fields.slice();
+  }
+  const N = { unit: [0, 100, 4], setupH: [0, 200, 2], monthly: [0, 100000, 2] };
+  for (const f of Object.keys(N)) {
+    if (v[f] == null || v[f] === '') continue;
+    const n = +v[f];
+    if (!isFinite(n) || n < N[f][0] || n > N[f][1]) return { ok: false, why: f + ' must be a number from ' + N[f][0] + ' to ' + N[f][1] };
+    out[f] = Math.round(n * Math.pow(10, N[f][2])) / Math.pow(10, N[f][2]);
+  }
+  if (v.grain != null) { if (['parent', 'sku'].indexOf(v.grain) < 0) return { ok: false, why: 'grain must be parent or sku' }; out.grain = v.grain; }
+  if (v.status != null) { if (ROADMAP_STATUS.indexOf(v.status) < 0) return { ok: false, why: 'status must be live, pilot, building or planned' }; out.status = v.status; }
+  if (v.why != null && v.why !== '') { const w = cleanStr(v.why, 200, 'why'); if (!w.ok) return w; out.why = w.v; }
+  return { ok: true, v: out };
+}
+export function sanitizeBankPut(body, cur, ctx) {
+  const data = {}, rejected = [];
+  cur = cur || {};
+  for (const k of Object.keys(body || {})) {
+    if (META_KEYS[k]) continue;
+    const stored = cur[k];
+    const refuse = (why) => { rejected.push({ k, why }); if (stored !== undefined) data[k] = stored; };
+    const v = body[k];
+    const st = staleStamp('map', stored, ctx);
+    if (v == null) { if (st) refuse(staleWhy(st, ctx)); continue; }
+    const r = cleanBank(k, v);
+    if (!r.ok) { refuse(r.why); continue; }
+    if (isObj(stored)) { const was = Object.assign({}, stored); delete was.by; delete was.at; if (same(r.v, was)) { data[k] = stored; continue; } }
+    if (st) { refuse(staleWhy(st, ctx)); continue; }
+    data[k] = Object.assign(r.v, { by: ctx.by, at: ctx.now });
+  }
+  return { data, rejected };
+}
+
 /* ---------------------------------------- one door ---------------------------------------- */
 // the route's single call: store name -> its sanitizer. -> {data, rejected} | {error}
 export function sanitizePut(store, body, cur, ctx) {
@@ -563,6 +626,7 @@ export function sanitizePut(store, body, cur, ctx) {
   if (S.kind === 'cell') r = sanitizeCellPut(store, body, cur, ctx);
   else if (S.kind === 'prop') r = sanitizeProposalPut(body, cur, ctx);
   else if (S.kind === 'roll') r = sanitizeRolloutPut(body, cur, ctx);
+  else if (S.kind === 'bank') r = sanitizeBankPut(body, cur, ctx);
   else r = sanitizeRoadmapPut(body, cur, ctx);
   r.rejected = r.rejected.concat(staleAbsent(store, body, cur, ctx));
   return r;
