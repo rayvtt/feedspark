@@ -808,6 +808,42 @@ window.addEventListener('load',restore);
   .pm-t td:first-child,.pm-t td:last-child{white-space:nowrap}
   .pm-miss{color:var(--risk);font-weight:900}
   .pm-note{margin:10px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5}
+  /* THE ACTION PLAN, LAST IN THE CLIENT DOCUMENTS (Ray, 8 Oct 2026: "since it is an audit, an action plan must be created and
+     recommended to client after the audit is completed. At the bottom of the downloaded report, include an action plan in a
+     workflow style, designed from the workflow module"). Workflow's own pipeline vocabulary — a stage strip with its colours,
+     lanes headed by a dot + count, ticket cards with a priority dot, a field tag, an owner chip and a due chip — laid over
+     THIS report's findings: every action is read off the document above it, never written by hand. Exports only. */
+  #print-plan{display:none}
+  body.pdf #print-plan:not(:empty){display:block;margin-top:16px}
+  body.xhtml #print-plan{max-width:1180px;margin-left:auto;margin-right:auto;padding-left:20px;padding-right:20px;box-sizing:border-box}
+  .ap-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0 4px;font-size:11px;font-weight:800;color:var(--ink-2)}
+  .ap-flow .st{display:inline-flex;align-items:center;gap:6px;background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:3px 10px 3px 8px;white-space:nowrap}
+  .ap-flow .st i{width:8px;height:8px;border-radius:50%;flex:none}
+  .ap-flow .ar{color:var(--muted);font-weight:900}
+  .ap-k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+  .ap-k div{background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+  .ap-k b{display:block;font-size:18px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ap-k span{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .ap-k b small{font-size:12px;font-weight:800;color:var(--muted)}
+  .ap-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}
+  .ap-lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;display:flex;flex-direction:column;gap:6px}
+  .ap-lh{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px}
+  .ap-lh i{width:9px;height:9px;border-radius:50%;flex:none}
+  .ap-lh .wh{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .ap-lh .ct{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:100px;padding:0 7px}
+  .ap-tk{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 9px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px}
+  .ap-m{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap}
+  .ap-pri{width:7px;height:7px;border-radius:50%;flex:none;background:var(--muted)}
+  .ap-pri.ur{background:var(--risk)}.ap-pri.hi{background:var(--orange-deep)}
+  .ap-f{font-size:9.5px;font-weight:900;letter-spacing:.03em;background:var(--navy);color:#fff;border-radius:5px;padding:1px 5px;flex:none}
+  .ap-own{font-size:10px;font-weight:800;color:var(--navy);background:#EAF0F7;border:1px solid #D3E0EE;border-radius:100px;padding:1px 7px;flex:none}
+  .ap-own.you{color:#B1550A;background:#FEF3E2;border-color:rgba(237,111,11,.3)}
+  .ap-gain{margin-left:auto;font-size:10.5px;font-weight:900;color:var(--good);white-space:nowrap}
+  .ap-t{font-size:12px;font-weight:800;color:var(--ink);line-height:1.32}
+  .ap-w{font-size:11px;font-weight:600;color:var(--ink-2);line-height:1.4}
+  .ap-more{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0 4px}
+  .ap-none{font-size:11.5px;color:var(--muted);font-style:italic;text-align:center;padding:10px 4px}
+  @media (max-width:760px){body.xhtml .ap-board{grid-template-columns:1fr}body.xhtml .ap-k{grid-template-columns:repeat(2,1fr)}}
   /* THE CATALOGUE'S MODULES, PICKED FOR THE ⬇ HTML (Ray, 7 Oct 2026) — see catxLoad(). On screen only: the PDF and the
      HTML never carry this card (the HTML carries the picked modules themselves, in #print-catx). */
   .catx{margin-top:16px}
@@ -1028,6 +1064,7 @@ window.addEventListener('load',restore);
     <div class="catx-fw" id="catx-fw"></div>
   </div>
   <div id="print-mkts" data-no-collapse></div>
+  <div id="print-plan" data-no-collapse></div>
   <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
 
@@ -2472,7 +2509,9 @@ window.addEventListener('load',restore);
         : '') +
       'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>. ' +
       (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() +
-      (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' estate feeds): avg <b>' + bench.avg + '</b> · best <b>' + bench.best.score + '</b> (' + esc(dispClient(bench.best.client)) + ').' : '') + '</p>' +
+      // the benchmark names the INDUSTRY, never another brand (Ray, 8 Oct 2026: "dont ever mention competitor brand in the
+      // report (just mention industry)") — this line is on the screen a client is shown and in both downloads
+      (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' feeds): average <b>' + bench.avg + '</b> · best in the industry <b>' + bench.best.score + '</b>.' : '') + '</p>' +
       '</div></div></div>';    // …gr-info · gr-top · gr-sticky
     h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
     h += histSection(k, s);   // the score over time — improvement and deduction, day by day
@@ -3997,6 +4036,116 @@ window.addEventListener('load',restore);
       'AI-readiness = how ready the feed is for AI shopping surfaces, Foundational → Agentic-ready · a dash = not measured for that market yet; ' +
       'averages read only the markets that carry each score.</p></div>';
   }
+  /* ---------------- THE ACTION PLAN (Ray, 8 Oct 2026: "since it is an audit, an action plan must be created and recommended
+     to client after the audit is completed … in a workflow style, designed from the workflow module and recommended to the client
+     to take immediately"). EVERY ACTION IS READ OFF THIS REPORT, never typed: a required field short of the spec, an identifier
+     gap, a content rule Google states as a requirement, a recommended field worth points, a best-practice rule costing the most,
+     and the AI-readiness gaps. THREE RULES: the score gain beside an action is goldenScore re-run with that field on every product
+     (the SAME function as the dial — a projection, labelled as one, never a promise); identifiers and the required data are the
+     client's to supply (FeedSpark never invents a GTIN or a price), the optimisation is FeedSpark's; and a plan with nothing to do
+     says so rather than padding a lane. Lanes are Workflow's pipeline: Now (this week) · Next (30 days) · Then (this quarter). */
+  var PLAN_CAP = { now: 5, next: 5, then: 4 };
+  var PLAN_CLIENT = { id: 1, title: 1, description: 1, link: 1, image_link: 1, availability: 1, price: 1, brand: 1, gtin: 1, mpn: 1,
+    condition: 1, item_group_id: 1, sale_price: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
+  function planBuild(attrs, prof, qd, ai) {
+    var base = goldenScore(attrs, prof), out = { now: [], next: [], then: [], base: base, proj: base };
+    if (base == null) return out;
+    var full = function (a, ks) {
+      var x = {}; Object.keys(a).forEach(function (k) { x[k] = a[k]; });
+      ks.forEach(function (k) { var o = x[k] || {}; x[k] = { present: true, cov: 100, filled: o.filled, scope: o.scope, avg: o.avg, dist: o.dist }; });
+      return x;
+    };
+    var gain = function (ks) { var g = goldenScore(full(attrs, ks), prof); return g == null ? 0 : Math.round((g - base) * 10) / 10; };
+    var wav = (prof && prof.waived) || [], exp = (prof && prof.expected) || [];
+    var name = function (x) { return x.lbl ? x.lbl : 'g:' + x.k; };
+    var covOf = function (a) { return a && a.present ? a.cov : 0; };
+    var seen = {}, attrAct = [];
+    // identifiers: one action, the pair Google reads as one fact
+    var gt = attrs.gtin || {}, mp = attrs.mpn || {}, idc = Math.max(covOf(gt), covOf(mp));
+    if (idc < 90) { var gi = gain(['gtin']); attrAct.push({ lane: 'now', pri: 'ur', f: 'g:gtin', own: 'you', g: gi, ks: ['gtin'],
+      t: 'Send a GTIN (or an MPN) for every product',
+      w: (idc ? 'Only ' + idc + '% carry one today' : 'No product carries one today') + ' — Google matches products to its Shopping Graph on the identifier; we never generate one.' }); }
+    SPEC.forEach(function (x) {
+      if (x.k === 'gtin' || x.k === 'mpn' || x.t === 'ai') return;
+      if (x.d && !attrs[x.k]) return;                              // not measured on this read
+      if (DEPTH_OF[x.k] && attrs[DEPTH_OF[x.k]]) return;           // its depth twin is the action
+      var a = attrs[x.k] || { present: false };
+      if (a.na) return;
+      if (x.t !== 'req' && wav.indexOf(x.k) >= 0) return;
+      var c = covOf(a), g = gain([x.k]), own = PLAN_CLIENT[x.k] ? 'you' : 'fs';
+      var nm = name(x), w = x.of ? (a.present ? 'Today ' + (a.avg != null ? a.avg + ' per product on average' : c + '% of full credit') + ' — full credit at ' + x.tg + ' or more.' : 'Not carried today — full credit at ' + x.tg + ' or more.')
+        : (c ? c + '% of products carry it today.' : 'No product carries it today.');
+      if (x.t === 'req' && c < 99) attrAct.push({ lane: 'now', pri: 'ur', f: nm, own: own, g: g, ks: [x.k], t: 'Complete ' + nm + ' on every product', w: w + ' Google requires it — a product without it is not shown.' });
+      else if (x.t === 'cond' && c < 90 && (a.present || exp.indexOf(x.k) >= 0 || (a.scope && a.scope.n > 0)) && g >= 0.3)
+        attrAct.push({ lane: 'now', pri: 'hi', f: nm, own: own, g: g, ks: [x.k], t: 'Fill ' + nm + (a.scope && a.scope.n ? ' on the products Google asks it of' : ' on every product'), w: w + ' ' + (x.n ? x.n.charAt(0).toUpperCase() + x.n.slice(1) + '.' : '') });
+      else if (x.t === 'rec' && g >= 0.3)
+        attrAct.push({ lane: 'next', pri: g >= 1 ? 'hi' : '', f: nm, own: own, g: g, ks: [x.k], t: (x.of ? 'Add more ' + x.many + ' per product' : 'Fill ' + nm), w: w });
+      seen[x.k] = 1;
+    });
+    // content quality: the requirement each field breaks most (Now), the best practice costing most (Next)
+    var qAct = [];
+    ((qd && qd.parts) || []).forEach(function (p) {
+      var f = (p.broken || []).filter(function (b) { return b.sev === 'fail' && b.pct >= 1; })[0];
+      var wv = (p.broken || []).filter(function (b) { return b.sev !== 'fail' && b.cost >= 2; })[0];
+      if (f) qAct.push({ lane: 'now', pri: 'ur', f: 'g:' + p.key, own: 'fs', q: f.cost, t: 'Fix g:' + p.key + ' — ' + f.label.charAt(0).toLowerCase() + f.label.slice(1),
+        w: f.pct + '% of products (' + fmt(f.n) + ') break a rule Google states as a requirement.' });
+      else if (wv) qAct.push({ lane: 'next', pri: '', f: 'g:' + p.key, own: 'fs', q: wv.cost, t: 'Improve g:' + p.key + ' — ' + wv.label.charAt(0).toLowerCase() + wv.label.slice(1),
+        w: wv.pct + '% of products (' + fmt(wv.n) + ') miss Google’s best practice here.' });
+    });
+    // AI-readiness: the conversational six, then the weakest areas
+    var thenAct = [], an = aiCount(attrs);
+    if (an.n < an.of) thenAct.push({ lane: 'then', pri: an.n ? '' : 'hi', f: 'AI', own: 'fs',
+      t: an.n ? 'Extend the conversational attributes (' + an.n + ' of ' + an.of + ' live)' : 'Start the conversational attributes Google built for AI Mode',
+      w: 'Questions and answers, related products, variant names — sent through a supplemental feed, they are what AI shopping surfaces read first.' });
+    if (ai && ai.pillars) ai.pillars.filter(function (p) { return p.key !== 'conv' && p.score < 60; })
+      .sort(function (x, y) { return x.score - y.score; }).slice(0, 2).forEach(function (p) {
+        thenAct.push({ lane: 'then', pri: '', f: 'AI', own: 'fs', t: 'Lift ' + p.label.charAt(0).toLowerCase() + p.label.slice(1) + ' (' + p.score + ' / 100)',
+          w: 'The weakest area of AI readiness on this feed — the scorecard above shows what it reads.' }); });
+    var byGain = function (x, y) { return (y.g || 0) - (x.g || 0); };
+    var byCost = function (x, y) { return (y.q || 0) - (x.q || 0); };
+    out.now = attrAct.filter(function (x) { return x.lane === 'now'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'now'; }).sort(byCost));
+    out.next = attrAct.filter(function (x) { return x.lane === 'next'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'next'; }).sort(byCost));
+    out.then = thenAct;
+    // the projection: every field action in Now + Next landed on every product, one re-score
+    var ks = []; out.now.concat(out.next).forEach(function (x) { (x.ks || []).forEach(function (k) { if (ks.indexOf(k) < 0) ks.push(k); }); });
+    out.proj = ks.length ? goldenScore(full(attrs, ks), prof) : base;
+    return out;
+  }
+  function planHtml(k, s) {
+    var d = CACHE[k]; if (!d || !s || !s.attrs) return '';
+    var p = parts(k), prof = profileForC(p.client), qd = null;
+    try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
+    var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
+    var pl = planBuild(s.attrs, prof, qd, ai);
+    if (pl.base == null) return '';
+    var lanes = [['now', 'Now', 'this week', 'var(--risk)'], ['next', 'Next', 'within 30 days', 'var(--orange-deep)'], ['then', 'Then', 'this quarter', '#7C3AED']];
+    var card = function (a) {
+      return '<div class="ap-tk"><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
+        '<span class="ap-own' + (a.own === 'you' ? ' you' : '') + '">' + (a.own === 'you' ? 'Your team' : 'FeedSpark') + '</span>' +
+        (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') + '</div>' +
+        '<div class="ap-t">' + esc(a.t) + '</div><div class="ap-w">' + esc(a.w) + '</div></div>';
+    };
+    var total = 0;
+    var board = lanes.map(function (L) {
+      var all = pl[L[0]], list = all.slice(0, PLAN_CAP[L[0]]); total += all.length;
+      return '<div class="ap-lane"><div class="ap-lh"><i style="background:' + L[3] + '"></i>' + L[1] + ' <span class="wh">· ' + L[2] + '</span><span class="ct">' + all.length + '</span></div>' +
+        (list.length ? list.map(card).join('') : '<div class="ap-none">Nothing to do here — this part of the feed meets the spec.</div>') +
+        (all.length > list.length ? '<div class="ap-more">+ ' + (all.length - list.length) + ' more in the scorecard above</div>' : '') + '</div>';
+    }).join('');
+    var flow = [['Agreed with you', '#8a94a0'], ['Briefed', '#B1550A'], ['In progress', '#2F6FB0'], ['Live in the feed', '#9D174D'], ['Confirmed on the next scan', '#15803D']]
+      .map(function (x) { return '<span class="st"><i style="background:' + x[1] + '"></i>' + x[0] + '</span>'; }).join('<span class="ar">→</span>');
+    var you = pl.now.concat(pl.next, pl.then).filter(function (a) { return a.own === 'you'; }).length;
+    var kpi = function (v, l) { return '<div><b>' + v + '</b><span>' + l + '</span></div>'; };
+    return '<div class="pm"><div class="pm-h"><h3>Action plan — ' + esc(dispClient(p.client)) + ' ' + esc(p.mkt.toUpperCase()) + '</h3>' +
+      '<span class="pm-sub">what we recommend next, read off this audit</span></div>' +
+      '<div class="ap-flow">' + flow + '</div>' +
+      '<div class="ap-k">' + kpi(total, 'Actions') + kpi(pl.now.length, 'To start this week') + kpi(you, 'Need your team') +
+        kpi(pl.base + (pl.proj != null && pl.proj > pl.base ? ' <small>→ ' + pl.proj + '</small>' : ''), 'Golden Score now → after Now + Next') + '</div>' +
+      '<div class="ap-board">' + board + '</div>' +
+      '<p class="pm-note">Each action follows FeedSpark’s workflow above: agreed with you, briefed to our team, delivered, then confirmed on the next scan. ' +
+      'The points beside an action are this report’s Golden Score re-run with that field on every product — a projection, not a promise. ' +
+      'Identifiers and required data come from your source; we never invent a GTIN, a price or a stock level.</p></div>';
+  }
   /* ---------------- THE CATALOGUE'S MODULES, AT THE END OF THE ⬇ HTML (Ray, 7 Oct 2026: "within Golden Score record, at
      bottom, pull in modules dashboard from Catalogue (module) also, and Leave AM to actually select which module of the
      dashboard is shown inside the HTML download. For example, with content depth, there could be multiple content depths
@@ -4271,6 +4420,7 @@ window.addEventListener('load',restore);
   function fillPrint(k, p, s) {
     $('print-head').innerHTML = pdfHead(p, s);
     var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);
+    var pp = $('print-plan'); if (pp) pp.innerHTML = planHtml(k, s);
   }
   function pdfFilename(p, s, ext) {
     return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
@@ -4773,6 +4923,12 @@ window.addEventListener('load',restore);
     fillPrint(k, p, s);
     var doc = document.documentElement.cloneNode(true);
     Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
+    // ONE CLIENT PER FILE (Ray, 8 Oct 2026: "dont ever mention competitor brand in the report (just mention industry)"): the
+    // clone carried the whole page — the estate scorecard (every brand's scores), the alerts panel and the scan picker's brand
+    // list — hidden by CSS but still IN the file, readable by anyone who opens its source or pastes it into an AI model. Only
+    // the scorecard section travels; every other page section and every select menu (a list of brands) is removed outright.
+    Array.prototype.forEach.call(doc.querySelectorAll('section.cat'), function (el) { if (el.id !== 'sec-detail' && el.parentNode) el.parentNode.removeChild(el); });
+    Array.prototype.forEach.call(doc.querySelectorAll('select'), function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
     // the depth pop-up: the screen's floating card never travels; the ⬇ HTML gets the same card as a CSS hover pop-up on its row
     // (no script needed), the PDF none — paper cannot hover
     Array.prototype.forEach.call(doc.querySelectorAll('.dptip'), function (el) { el.parentNode.removeChild(el); });
@@ -4787,7 +4943,7 @@ window.addEventListener('load',restore);
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
     // the picked Catalogue modules close the document, after every market's scores and before the footer
-    if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
+    if (cx) { var ft = doc.querySelector('#print-plan') || doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
     title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
     if (paper) {
