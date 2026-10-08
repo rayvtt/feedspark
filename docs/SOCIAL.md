@@ -36,6 +36,7 @@ horizontally"). The panel is a vertical tab strip with one pane at a time:
 | Tab | Holds |
 |---|---|
 | 🖼 Picture | same picture everywhere / per network, the product's images, the overlay design, the tagline's place and colour, per-network picture · overlay · button |
+| 🎨 Design | make the brand's own overlay (below) |
 | 🏷 Brand | the name and logo the ads carry (below) |
 | ⏱ Schedule | the moment the previews show (date, hour, weather, temperature, shopper, the product's numbers), the rules, and what the ad says right now |
 | 📅 Week | the week at a glance (a cell sets the moment) |
@@ -49,6 +50,29 @@ on the edge step it — and the device remembers the tab and each width (`fcc-so
 The page's column widens to 1,800px on a big screen. An old link to a section (`#sec-sched`, `#sec-how` …)
 or a tab name (`#week`) opens that tab. Under 1000px the panel stacks above the previews with the tabs as
 a scrolling row.
+
+## 🎨 Design — the brand's own overlay
+
+Ray, 8 Oct 2026: "is there a way to also have a design tool to generate overlay (Simple) for them?" A
+design is the Overlays studio's own shape — declarative zones its `compose` + `layout` already draw —
+so a design made here paints exactly like the fourteen built in, inside each network's safe zone.
+
+* **Simple by construction**: up to four elements; a place (four corners, a top or bottom band, a
+  frame), the shapes that fit that place (corners: pill · corner flash · ribbon · starburst · price
+  tag; bands: bar · band · strip), S/M/L, a fill and a text colour (eight brand swatches or any
+  colour), struck through for a was-price.
+* **What an element says**: one of the feed's facts (the studio's own: % off, price, was price, low
+  stock, clicks, free delivery, brand …) or **your own words**, which may carry the schedule's
+  fields (`Only {stock} left`, `{pct}% off`). A field the product lacks — or one that would read as
+  nonsense (60 in stock is not scarcity) — leaves the element off that product, and the editor says
+  why ("⚠ Not drawn on this product — …"). Never "0" or a raw `{stock}`.
+* **Start from** a blank pill, or copy any studio design and edit it. ❐ Duplicate, 🗑 Delete,
+  ⧉ Copy recipe (each element in words for the image-creator brief — a fact as its feed field, your
+  words as written).
+* Your designs appear first in the Picture tab's gallery (✦) and in every per-network overlay select;
+  **Use on every network** sets it as the shared overlay.
+* Saved with the brand's schedule (shared state `socialdpa`, `custom`, max 12, each checked by
+  `cleanCustom`). It is a preview and a recipe — it goes live once built in FeedSpark's image creator.
 
 ## The brand's face — its own logo on every ad
 

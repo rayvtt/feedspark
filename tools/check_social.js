@@ -134,6 +134,38 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   t('Fold all folds every section and the button offers the way back', (await p.$$eval('section[data-fold]', (a) => a.every((c) => c.classList.contains('folded')))) && /Open all/.test(await p.textContent('#fold-all')));
   await p.click('#fold-all'); await p.waitForTimeout(400);
 
+  console.log('· 🎨 design your own overlay');
+  {
+    p.on('dialog', (dg) => dg.accept());
+    const px = (sel) => p.evaluate(`(() => { const c = document.querySelector('${sel} canvas'), g = c.getContext('2d'); const d = g.getImageData(Math.round(c.width * 0.08), Math.round(c.height * 0.06), 1, 1).data; return [d[0], d[1], d[2]]; })()`);
+    await p.click('#rt-design'); await p.waitForTimeout(150);
+    t('the Design tab opens in the panel beside the previews', !(await p.$eval('#rp-design', (e) => e.hidden)) && (await p.$eval('#pv-rail', (e) => e.getBoundingClientRect().right)) <= (await p.$eval('[data-mock="fb_feed"]', (e) => e.getBoundingClientRect().left)));
+    await p.click('[data-cdnew]'); await p.waitForTimeout(400);
+    t('＋ New design draws at once, and is the overlay in use (orange pill, top left)', (await p.textContent('#fl-prev')).includes('My design') && (await px('[data-mock="fb_feed"]'))[0] > 200, await px('[data-mock="fb_feed"]'));
+    await p.click('#cd [data-cdsw="bg|#2563EB"]'); await p.waitForTimeout(400);
+    const blue = await px('[data-mock="fb_feed"]');
+    t('a swatch recolours the element on the preview (now blue)', blue[2] > 180 && blue[0] < 90, blue);
+    await p.click('#cd [data-cdadd]'); await p.waitForTimeout(300);
+    const before = await p.evaluate('(' + SIG + ')(\'[data-mock="fb_feed"] canvas\')');
+    await p.fill('#cd .cd-z >> nth=1 >> [data-k="text"]', 'Only {stock} left'); await p.waitForTimeout(600);
+    const after = await p.evaluate('(' + SIG + ')(\'[data-mock="fb_feed"] canvas\')');
+    t('own words with a field (“Only {stock} left”) paint on the picture as you type', before.h !== after.h);
+    t('…the caret never left the box (typing does not redraw the editor)', await p.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-k') === 'text'));
+    await p.click('#cd [data-cdadd]'); await p.waitForTimeout(300);
+    t('leaving the box for ＋ Add element still adds it (the click lands)', (await p.$$eval('#cd .cd-z', (a) => a.length)) === 3);
+    await p.click('#cd .cd-z >> nth=2 >> [data-cdrm]'); await p.waitForTimeout(200);
+    await p.click('#rt-sched'); await p.fill('#cx-stock', '60'); await p.waitForTimeout(400); await p.click('#rt-design'); await p.waitForTimeout(200);
+    t('a figure that is not scarcity (60 in stock) stands the element down, and the editor says why', /Not drawn on this product/.test(await p.textContent('#cd')));
+    await p.click('#rt-sched'); await p.fill('#cx-stock', '6'); await p.waitForTimeout(300); await p.click('#rt-pic'); await p.waitForTimeout(150);
+    t('your design sits in the Picture gallery and in every per-network select', (await p.$$eval('#dgal .chip.own', (a) => a.length)) === 1 && (await p.$$eval('[data-pdes="tiktok"] option', (a) => a.some((o) => /My design/.test(o.textContent)))));
+    await p.reload(); await p.waitForTimeout(1800);
+    t('…kept after a reload', (await p.$$eval('#dgal .chip.own', (a) => a.length)) === 1 && /My design/.test(await p.textContent('#fl-prev')));
+    await p.click('#rt-design'); await p.waitForTimeout(150);
+    const ctxp = p.context(); await ctxp.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+    await p.click('#cd [data-cddel]'); await p.waitForTimeout(400);
+    t('🗑 Delete removes it and the previews fall back to no overlay', (await p.$$eval('#dgal .chip.own', (a) => a.length)) === 0 && !/My design/.test(await p.textContent('#fl-prev')));
+  }
+
   console.log('· exports');
   const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 5000 }).catch(() => null), p.click('[data-png="ig_story"]')]);
   t('⬇ PNG downloads the creative, named for the network', !!dl && /ig_story\.png$/.test(dl.suggestedFilename()), dl && dl.suggestedFilename());

@@ -14756,7 +14756,7 @@
     {
       "name": "Social DPA: the panel's width is per tab and drags",
       "file": "docs/FeedSpark_Social.html",
-      "pattern": "var RAILW0 = { pic: 400, brand: 440, sched: 660,",
+      "pattern": "var RAILW0 = { pic: 400, design: 520, brand: 440, sched: 660,",
       "pr": 0
     },
     {
@@ -14799,6 +14799,42 @@
       "name": "Social DPA: the brand-mode tripwire",
       "file": "tools/check_social.js",
       "pattern": "a real brand: its own logo on every network, read from its own pages",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a \ud83c\udfa8 Design tab to make the brand's own overlay",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "<button type=\"button\" role=\"tab\" class=\"rtab\" id=\"rt-design\" data-tab=\"design\"",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: own designs draw through the studio's own shape",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "var cust = customOf(dId); if (cust) Object.assign(res, SOC.cdResolve(cust, facts(), S.ctx));",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: leaving a design text box never redraws the editor",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "words are saved as they are typed; leaving the box must not redraw the editor",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a stored design is checked",
+      "file": "docs/social_engine.js",
+      "pattern": "function cleanCustom(d, facts) {",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: own words carry the schedule's fields and stand down honestly",
+      "file": "docs/social_engine.js",
+      "pattern": "function cdResolve(d, facts, ctx) {",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the design tripwire",
+      "file": "tools/check_social.js",
+      "pattern": "design your own overlay",
       "pr": 0
     },
     {

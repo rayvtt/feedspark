@@ -148,6 +148,24 @@ window.addEventListener('load',restore);
   .rgrip::after{content:"";position:absolute;left:3px;top:50%;width:4px;height:44px;margin-top:-22px;border-radius:4px;background:var(--line)}
   .rgrip:hover::after,.rgrip:focus::after,.rgrip.drag::after{background:var(--orange)}
   .pv-main{min-width:0}
+  /* 🎨 Design — the brand's own overlay */
+  .cd-list{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .cd-ed{border-top:1px solid var(--line);padding-top:10px}
+  .cd-zh{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .cd-zh .sp{flex:1}
+  .cd-zh>b{width:22px;height:22px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+  .cd-nm{font:inherit;font-size:14px;font-weight:900;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 9px;flex:1;min-width:140px}
+  .cd-z{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:9px 10px;margin:8px 0}
+  .cd-z select{height:30px;font-size:12px;min-width:0}
+  .cd-zr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px}
+  .cd-zr input.tp{font:inherit;font-size:13px;font-weight:700;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 9px;width:100%;min-width:0}
+  .cd-col{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
+  .cd-col>span{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+  .cd-col input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+  .cd-col .sw{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.25);cursor:pointer;padding:0}
+  .cd-col .sw.on{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--orange)}
+  .cd-why{margin-top:7px;font-size:12px;font-weight:700;color:var(--orange-ink)}
+  .chip.own{border-style:dashed}
   /* the brand's own face */
   .idn .row{display:grid;grid-template-columns:86px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0}
   .idn .row>span{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -384,7 +402,7 @@ window.addEventListener('load',restore);
     <div class="fbody">
       <div class="pv-split" id="pv-split">
       <div class="pv-railw" id="pv-railw">
-      <nav class="rtabs" role="tablist" aria-label="Studio panels" aria-orientation="vertical"><button type="button" role="tab" class="rtab" id="rt-pic" data-tab="pic" aria-controls="rp-pic" aria-selected="false" title="The picture, the overlay design and what each network shows"><span class="ri" aria-hidden="true">🖼</span><span class="rl">Picture</span></button><button type="button" role="tab" class="rtab" id="rt-brand" data-tab="brand" aria-controls="rp-brand" aria-selected="false" title="The name and logo the ads carry, read from the brand’s own pages"><span class="ri" aria-hidden="true">🏷</span><span class="rl">Brand</span></button><button type="button" role="tab" class="rtab" id="rt-sched" data-tab="sched" aria-controls="rp-sched" aria-selected="false" title="Rules that decide what the ad says, and the moment to test them on"><span class="ri" aria-hidden="true">⏱</span><span class="rl">Schedule</span></button><button type="button" role="tab" class="rtab" id="rt-week" data-tab="week" aria-controls="rp-week" aria-selected="false" title="What one field says each day and daypart"><span class="ri" aria-hidden="true">📅</span><span class="rl">Week</span></button><button type="button" role="tab" class="rtab" id="rt-fields" data-tab="fields" aria-controls="rp-fields" aria-selected="false" title="What every field says when no rule applies"><span class="ri" aria-hidden="true">✎</span><span class="rl">Fields</span></button><button type="button" role="tab" class="rtab" id="rt-ideas" data-tab="ideas" aria-controls="rp-ideas" aria-selected="false" title="Ready-made rules to drop into the schedule"><span class="ri" aria-hidden="true">💡</span><span class="rl">Ideas</span></button><button type="button" role="tab" class="rtab" id="rt-data" data-tab="data" aria-controls="rp-data" aria-selected="false" title="Where each figure comes from, and how it ships"><span class="ri" aria-hidden="true">ⓘ</span><span class="rl">Data</span></button></nav>
+      <nav class="rtabs" role="tablist" aria-label="Studio panels" aria-orientation="vertical"><button type="button" role="tab" class="rtab" id="rt-pic" data-tab="pic" aria-controls="rp-pic" aria-selected="false" title="The picture, the overlay design and what each network shows"><span class="ri" aria-hidden="true">🖼</span><span class="rl">Picture</span></button><button type="button" role="tab" class="rtab" id="rt-design" data-tab="design" aria-controls="rp-design" aria-selected="false" title="Design your own overlay — shapes, words and colours, live on every network"><span class="ri" aria-hidden="true">🎨</span><span class="rl">Design</span></button><button type="button" role="tab" class="rtab" id="rt-brand" data-tab="brand" aria-controls="rp-brand" aria-selected="false" title="The name and logo the ads carry, read from the brand’s own pages"><span class="ri" aria-hidden="true">🏷</span><span class="rl">Brand</span></button><button type="button" role="tab" class="rtab" id="rt-sched" data-tab="sched" aria-controls="rp-sched" aria-selected="false" title="Rules that decide what the ad says, and the moment to test them on"><span class="ri" aria-hidden="true">⏱</span><span class="rl">Schedule</span></button><button type="button" role="tab" class="rtab" id="rt-week" data-tab="week" aria-controls="rp-week" aria-selected="false" title="What one field says each day and daypart"><span class="ri" aria-hidden="true">📅</span><span class="rl">Week</span></button><button type="button" role="tab" class="rtab" id="rt-fields" data-tab="fields" aria-controls="rp-fields" aria-selected="false" title="What every field says when no rule applies"><span class="ri" aria-hidden="true">✎</span><span class="rl">Fields</span></button><button type="button" role="tab" class="rtab" id="rt-ideas" data-tab="ideas" aria-controls="rp-ideas" aria-selected="false" title="Ready-made rules to drop into the schedule"><span class="ri" aria-hidden="true">💡</span><span class="rl">Ideas</span></button><button type="button" role="tab" class="rtab" id="rt-data" data-tab="data" aria-controls="rp-data" aria-selected="false" title="Where each figure comes from, and how it ships"><span class="ri" aria-hidden="true">ⓘ</span><span class="rl">Data</span></button></nav>
       <aside class="pv-rail" id="pv-rail" aria-label="Design controls">
         <div class="rpane" id="rp-pic" data-pane="pic" role="tabpanel" aria-labelledby="rt-pic" hidden>
           <div class="rp-h"><b>Picture & overlay</b><span class="fl" id="fl-pic"></span></div>
@@ -399,6 +417,10 @@ window.addEventListener('load',restore);
           <span class="seg" id="tagsty" role="group" aria-label="Tagline colour"><button type="button" data-s="dark" class="on">Dark</button><button type="button" data-s="orange">Orange</button><button type="button" data-s="light">Light</button><button type="button" data-s="blue">Blue</button></span></div>
         <div class="lbl">Per network <span class="note" style="margin:0;text-transform:none;letter-spacing:0">picture · overlay · button</span></div>
         <div id="ptab"></div>
+        </div>
+        <div class="rpane" id="rp-design" data-pane="design" role="tabpanel" aria-labelledby="rt-design" hidden>
+          <div class="rp-h"><b>Design an overlay</b><span class="fl" id="fl-design"></span></div>
+          <div class="cd" id="cd"></div>
         </div>
         <div class="rpane" id="rp-brand" data-pane="brand" role="tabpanel" aria-labelledby="rt-brand" hidden>
           <div class="rp-h"><b>Brand on the ad</b><span class="fl" id="fl-brand"></span></div>
@@ -778,10 +800,14 @@ window.addEventListener('load',restore);
     $('#pinfo').innerHTML = S.row ? '<b>' + esc(b || '(no title)') + '</b><div class="m">' + esc(S.pid ? 'ID ' + S.pid : '') + (r.price_now && r.price_now.text ? ' · ' + esc(r.price_now.text) : '') + (r.price_was && r.price_was.text ? ' <s>' + esc(r.price_was.text.replace(/^was /, '')) + '</s>' : '') + (r.sale_pct && r.sale_pct.ok ? ' · ' + esc(r.sale_pct.text) : '') + ' <span class="sb ' + (S.demo ? 'demo' : 'feed') + '">' + (S.demo ? 'demo' : 'feed') + '</span></div>' : '';
     renderPtab(); fl('prod', S.row ? (S.pid || 'product') + ' · ' + (titleOf(S.row) || '') : '');
   }
-  function designName(id) { var d = STU.designById(id || 'clean'); return d ? d.name : 'No overlay'; }
+  // a design id names one of the studio's fourteen OR one of the brand's own (c_…), drawn the same way
+  function customOf(id) { return (S.setup && S.setup.custom || []).filter(function (c) { return c.id === id; })[0] || null; }
+  function dsgById(id) { var c = customOf(id); return c ? SOC.cdStudio(c) : STU.designById(id); }
+  function designName(id) { var d = dsgById(id || 'clean'); return d ? d.name : 'No overlay'; }
   function renderPtab() {
     var per = S.setup.imgMode === 'per';
-    var dOpts = function (sel) { return '<option value="">Same overlay</option>' + STU.DESIGNS.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join(''); };
+    var own = S.setup.custom || [];
+    var dOpts = function (sel) { return '<option value="">Same overlay</option>' + (own.length ? '<optgroup label="Your designs">' + own.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>✦ ' + esc(d.name) + '</option>'; }).join('') + '</optgroup><optgroup label="Studio designs">' : '') + STU.DESIGNS.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join('') + (own.length ? '</optgroup>' : ''); };
     $('#ptab').innerHTML = SOC.PLATFORMS.map(function (p) {
       var c = platCfg(p.id), ctas = p.ctas.map(function (t) { return '<option' + (c.cta === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('');
       var imgSel = per ? '<select class="fld" data-pimg="' + p.id + '" aria-label="Image on ' + esc(p.name) + '">' + S.imgUrls.map(function (u, i) { return '<option value="' + i + '"' + (c.img === i ? ' selected' : '') + '>' + (i ? 'Image +' + i : 'Main image') + '</option>'; }).join('') + '<option value="up"' + (S.up[p.id] ? ' selected' : '') + '>Upload…</option></select>' : '';
@@ -789,7 +815,10 @@ window.addEventListener('load',restore);
     }).join('');
   }
   function renderDesigns() {
-    $('#dgal').innerHTML = STU.DESIGNS.map(function (d) { return '<button type="button" class="chip' + ((S.setup.design || 'clean') === d.id ? ' on' : '') + '" data-d="' + d.id + '" title="' + esc(d.blurb) + '">' + esc(d.name) + '</button>'; }).join('');
+    var cur = S.setup.design || 'clean';
+    $('#dgal').innerHTML = (S.setup.custom || []).map(function (d) { return '<button type="button" class="chip own' + (cur === d.id ? ' on' : '') + '" data-d="' + d.id + '" title="Your own design — edit it on the 🎨 Design tab">✦ ' + esc(d.name) + '</button>'; }).join('')
+      + STU.DESIGNS.map(function (d) { return '<button type="button" class="chip' + (cur === d.id ? ' on' : '') + '" data-d="' + d.id + '" title="' + esc(d.blurb) + '">' + esc(d.name) + '</button>'; }).join('')
+      + '<button type="button" class="chip" data-cdgo="1" title="Make your own on the 🎨 Design tab">＋ Design your own</button>';
     $$('#tagpos button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-p') === (S.setup.tagPos || 'b')); });
     $$('#tagsty button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-s') === (S.setup.tagStyle || 'dark')); });
   }
@@ -839,7 +868,7 @@ window.addEventListener('load',restore);
     var H = Math.round(W * ratio[1] / ratio[0]); cv.width = W; cv.height = H;
     var g = cv.getContext('2d'); if (!g) return null;
     var img = imageFor(pid), sr = SOC.safeRect(pid, W, H);
-    var dId = platCfg(pid).design || S.setup.design || 'clean', d = STU.designById(dId) || STU.designById('clean');
+    var dId = platCfg(pid).design || S.setup.design || 'clean', d = dsgById(dId) || STU.designById('clean');
     var isSplit = d.zones.some(function (z) { return z.as === 'split'; }), img2 = isSplit && img ? secondFor(img) : null;
     if (!img) plate(g, W, H);
     else if (p.fit === 'pad') {
@@ -858,6 +887,7 @@ window.addEventListener('load',restore);
     var dz = d.zones.slice();
     if (tag && pos !== 'off') { dz.push({ at: pos, as: 'bar', fact: '__tag', size: 'sm', fg: sty.fg, bg: sty.bg }); res.__tag = { ok: true, text: tag }; }
     if (img2) res.second_image = { ok: true, text: '', raw: 'x', img: true };
+    var cust = customOf(dId); if (cust) Object.assign(res, SOC.cdResolve(cust, facts(), S.ctx));
     var comp = STU.compose({ id: d.id, name: d.name, family: d.family, maps: d.maps, zones: dz }, res, {});
     var L = STU.layout(comp, sr.w, sr.h);
     g.save(); g.translate(sr.x, sr.y); L.boxes.forEach(function (b) { paint(g, b, sr.w, sr.h); }); g.restore();
@@ -1046,6 +1076,7 @@ window.addEventListener('load',restore);
     S.lastEval = ev;
     renderCtx(); renderDesigns(); renderRules(ev); renderNow(ev, f); renderPreviews(ev.fields); renderWeek(f); renderIdeas(f); renderFieldsTab(ev.fields); renderData(f);
     if (S.tab === 'brand' && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-idf]'))) renderIdent();
+    if (S.tab === 'design' && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('#cd input[type=text]'))) renderCustom();
   }
   function renderStatic() { foldInit(); tabInit(); }
 
@@ -1098,9 +1129,9 @@ window.addEventListener('load',restore);
   function openSec(id) { var tb = SEC_TAB[id]; if (tb) { id = 'sec-prev'; setTab(tb, true); } var c = $('#' + id); if (c && c.classList.contains('folded')) foldSet(c, true, false); }
 
   // ---- the studio panel: one tab at a time, its width per tab, remembered on this device ----
-  var TABS = ['pic', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
+  var TABS = ['pic', 'design', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
   var SEC_TAB = { 'sec-sched': 'sched', 'sec-week': 'week', 'sec-fields': 'fields', 'sec-ideas': 'ideas', 'sec-how': 'data' };
-  var RAILW0 = { pic: 400, brand: 440, sched: 660, week: 640, fields: 500, ideas: 500, data: 580 }, RAILW = {};
+  var RAILW0 = { pic: 400, design: 520, brand: 440, sched: 660, week: 640, fields: 500, ideas: 500, data: 580 }, RAILW = {};
   function tabInit() {
     try { RAILW = JSON.parse(recall('fcc-soc-railw') || '{}') || {}; } catch (e) { RAILW = {}; }
     var h = String(location.hash || '').replace(/^#/, ''), want = TABS.indexOf(h) >= 0 ? h : SEC_TAB[h] || (TABS.indexOf(recall('fcc-soc-tab')) >= 0 ? recall('fcc-soc-tab') : 'pic');
@@ -1119,6 +1150,7 @@ window.addEventListener('load',restore);
     var rail = $('#pv-rail'); if (rail) rail.scrollTop = 0;
     railW();
     if (k === 'brand') renderIdent();
+    if (k === 'design') renderCustom();
   }
   function railMax() { var sp = $('#pv-split'); return Math.max(320, Math.min(900, (sp ? sp.clientWidth : 1200) - 340)); }
   function railW() {
@@ -1190,6 +1222,57 @@ window.addEventListener('load',restore);
       + (net === 'fb' ? 'The picture Facebook shows for this page — check it is the brand’s own mark.' : net === 'site' ? 'Read off the brand’s own website.' : 'Is this the brand’s own account? Names can belong to somebody else.') + '</div>'
       + (net === 'tt' || net === 'pin' ? '<button class="btn sm" type="button" data-own="' + net + '">' + (own ? '✓ Ours — in use' : 'This is us') + '</button>' : '') + '</div>';
   }
+  // ---- 🎨 Design: the brand's own overlay, built from a few simple elements, live on every preview ----
+  var CD_SW = ['#F5A623', '#ED6F0B', '#333333', '#14161C', '#FFFFFF', '#2563EB', '#D7263D', '#166534'];
+  function cdFacts() { return Object.keys(STU.FACTS).filter(function (k) { return !STU.FACTS[k].img; }); }
+  function cdSel() { var c = customOf(S.cdSel); if (!c && (S.setup.custom || []).length) { c = S.setup.custom[0]; S.cdSel = c.id; } return c; }
+  // the element's verdict on THIS product: drawn, or stood down with the studio's own reason
+  function cdDropWhy(d, i) {
+    var z = d.zones[i]; if (!z || z.as === 'frame') return '';
+    if (z.fact === 'text') { var r = SOC.cdResolve(d, facts(), S.ctx)['__c' + i]; return r && !r.ok ? r.why : ''; }
+    var v = S.res && S.res[z.fact]; return v && v.ok && v.text ? '' : ((v && v.why) || 'not available on this product');
+  }
+  function renderCustom() {
+    var host = $('#cd'); if (!host || !S.setup || !SOC) return;
+    var list = S.setup.custom || [], d = cdSel(), cur = S.setup.design || 'clean';
+    var opt = function (v, t, sel) { return '<option value="' + esc(v) + '"' + (v === sel ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+    var head = '<div class="cd-list">' + list.map(function (c) { return '<button type="button" class="chip' + (d && c.id === d.id ? ' on' : '') + '" data-cdsel="' + c.id + '">✦ ' + esc(c.name) + (cur === c.id ? ' <span class="sb feed">in use</span>' : '') + '</button>'; }).join('')
+      + (list.length < SOC.CD_KEEP ? '<button type="button" class="btn sm" data-cdnew="1">＋ New design</button>' : '')
+      + '<select class="fld" data-cdfrom="1" aria-label="Start from a studio design" style="height:32px"><option value="">Start from a studio design…</option>' + STU.DESIGNS.filter(function (x) { return x.zones.length; }).map(function (x) { return opt(x.id, x.name, ''); }).join('') + '</select></div>';
+    if (!d) {
+      host.innerHTML = head + '<p class="note">Make an overlay of your own: up to ' + SOC.CD_MAX + ' elements — a pill, a ribbon, a band, a frame — each saying one of the feed’s facts or your own words. It draws on every network as you build it, and is saved with ' + esc(S.demo ? 'this demo' : S.brand) + '’s schedule.</p>';
+      fl('design', list.length ? list.length + ' of your own' : 'none yet'); return;
+    }
+    var rows = d.zones.map(function (z, i) {
+      var why = cdDropWhy(d, i), corner = ['tl', 'tr', 'bl', 'br'].indexOf(z.at) >= 0;
+      var at = '<select class="fld" data-cdz="' + i + '" data-k="at" aria-label="Where">' + Object.keys(SOC.CD_AT).map(function (k) { return opt(k, SOC.CD_AT[k], z.at); }).join('') + '</select>';
+      var as = z.as === 'frame' ? '' : '<select class="fld" data-cdz="' + i + '" data-k="as" aria-label="Shape">' + SOC.cdShapesFor(z.at).map(function (k) { return opt(k, SOC.CD_SHAPE_NAME[k], z.as); }).join('') + '</select>';
+      var what = z.as === 'frame' ? '' : '<select class="fld" data-cdz="' + i + '" data-k="fact" aria-label="What it says">' + opt('text', 'Your own words…', z.fact) + cdFacts().map(function (k) { return opt(k, STU.FACTS[k].label, z.fact); }).join('') + '</select>';
+      var txt = z.fact === 'text' ? '<input type="text" class="tp" data-cdz="' + i + '" data-k="text" maxlength="40" value="' + esc(z.text || '') + '" placeholder="e.g. Only {stock} left · New in · {pct}% off" aria-label="Your words">' : '';
+      var size = z.as === 'frame' ? '' : '<span class="seg" role="group" aria-label="Size">' + ['sm', 'md', 'lg'].map(function (k) { return '<button type="button" data-cdz="' + i + '" data-cdsz="' + k + '" class="' + (z.size === k ? 'on' : '') + '">' + ({ sm: 'S', md: 'M', lg: 'L' }[k]) + '</button>'; }).join('') + '</span>';
+      var col = function (k, lbl) {
+        return '<span class="cd-col"><span>' + lbl + '</span><input type="color" data-cdz="' + i + '" data-k="' + k + '" value="' + esc(z[k] || '#FFFFFF') + '" aria-label="' + lbl + '">'
+          + CD_SW.map(function (c) { return '<button type="button" class="sw' + ((z[k] || '').toUpperCase() === c ? ' on' : '') + '" data-cdz="' + i + '" data-cdsw="' + k + '|' + c + '" style="background:' + c + '" title="' + c + '" aria-label="' + lbl + ' ' + c + '"></button>'; }).join('') + '</span>';
+      };
+      var strike = /price_was/.test(z.fact || '') || z.strike ? '<label class="chip"><input type="checkbox" data-cdz="' + i + '" data-k="strike"' + (z.strike ? ' checked' : '') + ' style="margin:0"> Struck through</label>' : '';
+      return '<div class="cd-z"><div class="cd-zh"><b>' + (i + 1) + '</b>' + at + as + '<span class="sp"></span><button type="button" class="btn sm" data-cdrm="' + i + '" title="Remove this element" aria-label="Remove element ' + (i + 1) + '">✕</button></div>'
+        + (what ? '<div class="cd-zr">' + what + size + '</div>' : '') + (txt ? '<div class="cd-zr">' + txt + '</div>' : '')
+        + '<div class="cd-zr">' + (z.as === 'frame' ? col('fg', 'Colour') : col('bg', 'Fill') + col('fg', 'Text')) + strike + '</div>'
+        + (why ? '<div class="cd-why">⚠ Not drawn on this product — ' + esc(why) + '</div>' : '') + (corner && z.as === 'tag' ? '' : '') + '</div>';
+    }).join('');
+    host.innerHTML = head
+      + '<div class="cd-ed"><div class="cd-zh"><input type="text" data-cdname="1" value="' + esc(d.name) + '" maxlength="40" aria-label="Design name" class="cd-nm">'
+      + (cur === d.id ? '<span class="sb feed">on every network</span>' : '<button type="button" class="btn sm" data-cduse="1">Use on every network</button>') + '</div>'
+      + (rows || '<p class="note">No elements yet — add one.</p>')
+      + '<div class="chips" style="margin-top:8px">' + (d.zones.length < SOC.CD_MAX ? '<button type="button" class="btn sm" data-cdadd="1">＋ Add element</button>' : '<span class="note" style="margin:0">' + SOC.CD_MAX + ' elements is the most a simple overlay carries</span>')
+      + '<button type="button" class="btn sm" data-cdcopy="1" title="The design in words, for the image-creator brief">⧉ Copy recipe</button><button type="button" class="btn sm" data-cddup="1">❐ Duplicate</button><button type="button" class="btn sm" data-cddel="1">🗑 Delete</button></div>'
+      + '<p class="note">Your own words can carry the schedule’s fields — {pct}, {price}, {stock}, {clicks30}, {views24} … An element whose figure this product lacks is left off it, never drawn as “0” or “{stock}”. A design here is a preview and a recipe: it goes live once it is built in FeedSpark’s image creator.</p></div>';
+    fl('design', d.name + ' · ' + d.zones.length + ' element' + (d.zones.length === 1 ? '' : 's') + (cur === d.id ? ' · in use' : ''));
+  }
+  function cdEdit(fn) { var d = cdSel(); if (!d) return; fn(d); S.setup.custom = SOC.cleanCustoms(S.setup.custom); if (!S.setup.custom.length) delete S.setup.custom; renderSlots(); renderCustom(); changed(); }
+  function cdAdd(c, use) { S.setup.custom = (S.setup.custom || []).concat([c]); S.cdSel = c.id; if (use) S.setup.design = c.id; S.setup.custom = SOC.cleanCustoms(S.setup.custom); renderSlots(); renderCustom(); changed(); }
+  function cdFreeAt(d) { var used = d.zones.map(function (z) { return z.at; }); return ['tl', 'tr', 'bl', 'br', 'b', 't'].filter(function (a) { return used.indexOf(a) < 0; })[0] || 'b'; }
+
   function renderIdent() {
     var host = $('#idn'); if (!host || !S.setup || !SOC) return;
     var id = ident(), demo = S.demo || !S.brand;
@@ -1280,6 +1363,23 @@ window.addEventListener('load',restore);
     if (t.hasAttribute('data-lsrc')) { setIdent({ src: t.getAttribute('data-lsrc') }); renderIdent(); return changed(); }
     if (t.hasAttribute('data-lsrc-clear')) { setIdent({ logo: '', src: '' }); renderIdent(); return changed(); }
     if (t.id === 'id-up') return uploadLogo();
+    if (t.hasAttribute('data-cdgo')) { setTab('design', true); if (!(S.setup.custom || []).length) cdAdd(SOC.cdBlank(SOC.cdNewId(), 0), true); return; }
+    if (t.hasAttribute('data-cdsel')) { S.cdSel = t.getAttribute('data-cdsel'); return renderCustom(); }
+    if (t.hasAttribute('data-cdnew')) return cdAdd(SOC.cdBlank(SOC.cdNewId(), (S.setup.custom || []).length + 1), true);
+    if (t.hasAttribute('data-cduse')) { S.setup.design = S.cdSel; renderSlots(); renderCustom(); return changed(); }
+    if (t.hasAttribute('data-cdadd')) return cdEdit(function (d) { var a = cdFreeAt(d); d.zones.push({ at: a, as: SOC.cdShapesFor(a)[0], fact: 'text', text: a === 'b' || a === 't' ? 'New in' : 'NEW', size: 'md', fg: '#FFFFFF', bg: '#333333' }); });
+    if (t.hasAttribute('data-cdrm')) return cdEdit(function (d) { d.zones.splice(+t.getAttribute('data-cdrm'), 1); });
+    if (t.hasAttribute('data-cdsz')) return cdEdit(function (d) { var z = d.zones[+t.getAttribute('data-cdz')]; if (z) z.size = t.getAttribute('data-cdsz'); });
+    if (t.hasAttribute('data-cdsw')) return cdEdit(function (d) { var z = d.zones[+t.getAttribute('data-cdz')], kv = t.getAttribute('data-cdsw').split('|'); if (z) z[kv[0]] = kv[1]; });
+    if (t.hasAttribute('data-cddup')) { var o = cdSel(); if (!o) return; var cp = JSON.parse(JSON.stringify(o)); cp.id = SOC.cdNewId(); cp.name = (o.name + ' copy').slice(0, 40); return cdAdd(cp, false); }
+    if (t.hasAttribute('data-cddel')) {
+      var dd = cdSel(); if (!dd || !confirm('Delete “' + dd.name + '”? Any network using it goes back to the shared overlay.')) return;
+      S.setup.custom = (S.setup.custom || []).filter(function (c) { return c.id !== dd.id; }); if (!S.setup.custom.length) delete S.setup.custom;
+      if (S.setup.design === dd.id) S.setup.design = 'clean';
+      Object.keys(S.setup.plat || {}).forEach(function (k) { if (S.setup.plat[k] && S.setup.plat[k].design === dd.id) delete S.setup.plat[k].design; });
+      S.cdSel = ''; renderSlots(); renderCustom(); return changed();
+    }
+    if (t.hasAttribute('data-cdcopy')) { var dc = cdSel(); if (!dc) return; return copyText(['Overlay design — ' + dc.name + (S.demo ? '' : ' · ' + S.brand + ' ' + S.mkt.toUpperCase()), 'Engine: FeedSpark image creator (image_process_engine)'].concat(SOC.cdRecipe(dc, function (k) { return (STU.FACTS[k] ? STU.FACTS[k].label : k) + ' (from the feed)'; })).join('\n')); }
     if (t.id === 'demo') return openDemo();
     if (t.id === 'ads') return loadAds();
     if (t.id === 'play') return play();
@@ -1335,6 +1435,11 @@ window.addEventListener('load',restore);
   document.addEventListener('input', function (e) {
     var t = e.target;
     if (t.matches('[data-def]')) { S.setup.defaults[t.getAttribute('data-def')] = t.value; clearTimeout(IT); IT = setTimeout(changed, 250); return; }
+    if (t.hasAttribute('data-cdname') || (t.hasAttribute('data-cdz') && t.getAttribute('data-k') === 'text')) {
+      var dn = cdSel(); if (!dn) return;
+      if (t.hasAttribute('data-cdname')) dn.name = t.value; else { var zt = dn.zones[+t.getAttribute('data-cdz')]; if (zt) zt.text = t.value; }
+      clearTimeout(IT); IT = setTimeout(function () { if (S.lastEval) renderPreviews(S.lastEval.fields); renderDesigns(); renderPtab(); save(); }, 250); return;
+    }
     if (t.hasAttribute('data-idf')) {
       var ik = t.getAttribute('data-idf'), iv = t.value.trim().replace(/^@/, ''), ip = {}; ip[ik] = iv;
       if (ik === 'tt' || ik === 'pin') { ip[ik + 'Ok'] = false; delete LOOK[ik]; }
@@ -1374,6 +1479,21 @@ window.addEventListener('load',restore);
         f.click(); return;
       }
       delete S.up[pid]; platCfg(pid).img = +t.value; return changed();
+    }
+    if (t.hasAttribute('data-cdfrom') && t.value) { var st = STU.designById(t.value); t.value = ''; return cdAdd(SOC.cdFrom(st, SOC.cdNewId()), true); }
+    // words are saved as they are typed; leaving the box must not redraw the editor, or the click that
+    // left it (＋ Add element, a swatch) lands on a button that no longer exists
+    if (t.hasAttribute('data-cdname') || (t.hasAttribute('data-cdz') && t.getAttribute('data-k') === 'text')) return;
+    if (t.hasAttribute('data-cdz')) {
+      var ci2 = +t.getAttribute('data-cdz'), ck = t.getAttribute('data-k');
+      return cdEdit(function (d) {
+        var z = d.zones[ci2]; if (!z) return;
+        if (ck === 'strike') z.strike = t.checked;
+        else z[ck] = t.value;
+        if (ck === 'at' && SOC.cdShapesFor(z.at).indexOf(z.as) < 0) z.as = SOC.cdShapesFor(z.at)[0];
+        if (ck === 'at' && z.at !== 'frame' && !z.fact) { z.fact = 'text'; z.text = 'NEW'; z.size = 'md'; z.bg = z.bg || '#333333'; }
+        if (ck === 'fact' && z.fact === 'text' && !z.text) z.text = 'NEW';
+      });
     }
     if (t.hasAttribute('data-pdes')) { platCfg(t.getAttribute('data-pdes')).design = t.value; return changed(); }
     if (t.hasAttribute('data-pcta')) { platCfg(t.getAttribute('data-pcta')).cta = t.value; return changed(); }
