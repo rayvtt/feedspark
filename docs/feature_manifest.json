@@ -10221,6 +10221,30 @@
       "pr": 558
     },
     {
+      "name": "Golden Record: /api/golden/estate re-scores every feed under the brand's CURRENT scoring profile before serving it, so the Playbook rail and the dossier quote the number /golden shows (Ray, 8 Oct 2026: \"why the hell is this not dynamic\")",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const g = goldenScore(attrsFromCov(f.cov, f.sc, f.rows), pf);",
+      "pr": 641
+    },
+    {
+      "name": "Golden Record engine: goldenWeak reads the thin attributes off the scoring pass's own parts, so a waived or out-of-category attribute can never be listed as work",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function goldenWeak(g) {",
+      "pr": 641
+    },
+    {
+      "name": "Workflow Playbook: sale price and condition are never listed as feed work, and the panel names what it set aside (Ray, 8 Oct 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PB_NOWORK={",
+      "pr": 641
+    },
+    {
+      "name": "Workflow Playbook: the Golden Record list is grouped by ATTRIBUTE across markets and cut to the top three to work on (Ray, 8 Oct 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbGroupWeak(feeds){",
+      "pr": 641
+    },
+    {
       "name": "Workflow Playbook: the account picker lists only the accounts the Task Manager says are yours (Ray, 29 Sep 2026) — and stands down to every account rather than emptying when no AM is known",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function rosterView(){",
