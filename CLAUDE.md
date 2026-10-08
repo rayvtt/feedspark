@@ -180,6 +180,11 @@ JSON patch sync system:
   against the live host from a session will hit the login page — test pages via `file://` with
   stubbed fetches instead.
 
+### 🔒 Security enforcement (8 Oct 2026 — Ray: "a complete security check and enforcement across FCC … safe from bot attacks or any type of attack")
+- Register: **`docs/SECURITY.md`**; module `cloudflare/feedspark-deck/src/security.js` (pure); harness `tools/test_security.mjs` (78, in qa_gate/presync/validate). The first pass (escaping, headers, CSP, SRI) was PR #528.
+- **The gate runs in `fetch()` BEFORE `route()`**: (1) IDENTITY — a request with no Access identity is **401** everywhere except `/api/version`, `/api/news`, the key-gated `/api/gmail/push` and `OPTIONS` (before this an anonymous request resolved `unknown` → unassigned → FULL HOUSE, reachable on a Workers preview URL or any hostname outside the Access app); `ALLOW_ANONYMOUS=1` is the only escape hatch. (2) VERIFIED IDENTITY, opt-in: with secrets `ACCESS_TEAM_DOMAIN` + `ACCESS_AUD` set, `resolveIdentity` verifies `Cf-Access-Jwt-Assertion` (RS256 vs the team's certs, aud, exp) and the identity is the TOKEN's email — a spoofed header is worth nothing; fail closed. (3) BODY CAPS off Content-Length: 4 MB default, 26 MB `/api/materials`, 48 MB push. (4) MONEY THROTTLES per identity: `/api/claude` 120, `/api/aivis/ask` 300, `/api/i18n` 60 per 10 min (KV `rl:<bucket>:<subject>`). Then the push lane compares its key in CONSTANT TIME (`safeEqual`) behind a per-IP brake (20 failures / 10 min → 429); the image proxy + PDP fetch follow redirects BY HAND (`fetchWithin`, every hop on the allow-list — `redirect:'follow'` is a forbidden marker); `secHeaders` rewrites CORS `*` → the request origin + `Vary: Origin` and stamps `no-store` on every `/api/` answer; the view-as cookie is `Secure; SameSite=Lax`.
+- A new public lane is a DECISION: add it to `PUBLIC_PATHS` in security.js (the harness asserts the router's /api/ literals outside the gate are exactly the three). Dashboard-side actions for Ray (AUD tag → secrets, Preview URLs off, Workers toggle stays Public, custom hostname for WAF/Bot Fight Mode) are listed in SECURITY.md, not changed by code.
+
 ### Worker API (multi-page command center)
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
