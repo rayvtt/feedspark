@@ -5459,8 +5459,67 @@ aside.ck[hidden]{display:none}
      percentages too. They were written as fractions, so every real reading cleared them (47.9 >=
      0.6) and "Weakest first" only ever listed an attribute under 1% — printed as cov × 100. */
   var PB_FLOOR={req:99,cond:90,rec:60};
-  function pbWeak(rec){
+
+  /* NOT EVERY THIN ATTRIBUTE IS WORK (Ray, 8 Oct 2026: "sale price is never a recommended action
+     to work on in playbook pls").
+
+     He is right, and it is not a preference — g:sale_price is only ever present on a product that
+     is actually discounted, so its coverage measures the PROMOTION, not the feed. A footwear brand
+     running a 27% sale reads 26.9% and there is nothing to fix: filling it would mean inventing
+     discounts. g:condition is the same shape from the other end — Google asks for it on used and
+     refurbished goods, so a new-goods catalogue correctly omits it and "absent" is the right answer.
+
+     Both still SCORE (that is Google's spec and the scorecard's business, not ours) and both stay
+     visible on /golden. What they must never do is take a slot in a three-line list of what an AM
+     should go and do. The rail says how many it set aside and why, rather than quietly dropping
+     them — a number that disappears with no explanation is the thing that makes a panel untrusted. */
+  var PB_NOWORK={
+    sale_price:'only ever filled on a discounted product — its coverage is the size of the sale, not a gap',
+    condition:'Google asks for it on used and refurbished goods only'
+  };
+  function pbNotWork(k){ return PB_NOWORK[k]||''; }
+
+  /* ONE ROW PER ATTRIBUTE, NOT ONE PER MARKET (Ray, 8 Oct 2026: "highlight top 3 lowest scores /
+     attributes to work on"). The list used to be market x attribute, so Schuh's top eight were
+     g:pattern and g:material three times each — two real jobs wearing six rows, and a "top three"
+     that was really a top one. Grouped, "g:pattern thin in 3 markets" is what it is: one
+     conversation with the client, which is how pbActions has always grouped the same evidence.
+
+     An attribute is ranked by its WORST market, because that is the one that decides whether this
+     is urgent, and the tier leads the sort ahead of the number: a required attribute at 97% is
+     products being refused today, which outranks a recommended one at 4%. */
+  function pbGroupWeak(feeds){
+    var by={},order=[];
+    (feeds||[]).forEach(function(f){
+      pbWeak(f).forEach(function(w){
+        var e=by[w.k];
+        if(!e){ e=by[w.k]={k:w.k,tier:w.tier,sev:w.sev,cov:w.cov,missing:w.missing,mkts:[],gone:0};
+          order.push(e); }
+        e.mkts.push(f.mkt);
+        if(w.missing)e.gone++;
+        if(w.sev>e.sev){ e.sev=w.sev; e.tier=w.tier; }
+        // the worst market decides the row: absent beats any coverage, else the lowest number
+        if(w.missing){ if(!e.missing){ e.missing=true; e.cov=null; } }
+        else if(!e.missing&&(e.cov==null||w.cov<e.cov))e.cov=w.cov;
+      });
+    });
+    order.sort(function(a,b){
+      if(b.sev!==a.sev)return b.sev-a.sev;
+      var ac=a.cov==null?-1:a.cov,bc=b.cov==null?-1:b.cov;
+      return ac-bc||a.k.localeCompare(b.k);
+    });
+    return order;
+  }
+
+  function pbWeakRaw(rec){
     if(!rec)return [];
+    /* PROFILE-TRUE WHEN THE ROUTE SAYS SO. /api/golden/estate now re-scores every feed under the
+       brand's CURRENT scoring profile and hands over the thin attributes of that same scoring
+       pass, so what is listed here is exactly what the number above it was computed from — and an
+       attribute the profile waived, or one no product in this catalogue sits in the category for,
+       is not in the list because it was not in the score. The reading below is the fallback for a
+       record the route could not re-score (no cov map) and for stored fixtures. */
+    if(rec.weak)return rec.weak.slice();
     var out=[],seen={};
     ['req','cond'].forEach(function(tier){
       var list=(tier==='req'?rec.reqMissing:rec.condMissing)||[];
@@ -5482,6 +5541,21 @@ aside.ck[hidden]{display:none}
       return ac-bc||a.k.localeCompare(b.k);
     });
     return out;
+  }
+  // what the panel will actually act on: everything the score weighed, less the attributes no
+  // amount of feed work can move (PB_NOWORK)
+  function pbWeak(rec){
+    return pbWeakRaw(rec).filter(function(w){return w&&!pbNotWork(w.k);});
+  }
+  // the ones set aside, named once for the whole brand so the count can never be silent
+  function pbAside(feeds){
+    var seen={},out=[];
+    (feeds||[]).forEach(function(f){
+      pbWeakRaw(f).forEach(function(w){
+        if(!w||!pbNotWork(w.k)||seen[w.k])return; seen[w.k]=1; out.push(w.k);
+      });
+    });
+    return out.sort();
   }
   /* THE LAST 12 MONTHS, DRAWN THE WAY THE VOLUME MODULE DRAWS THEM (Ray, 17 Sep 2026, sending
      the estate table's own sparkline: "can you replace with these bar chart instead and no need
@@ -6141,26 +6215,36 @@ aside.ck[hidden]{display:none}
       return h;
     }
     var avg=scored.reduce(function(a,f){return a+f.score;},0)/scored.length;
-    h+=row('','<span class="nm">Completeness across '+scored.length+' market'+(scored.length===1?'':'s')+'</span>'
+    /* THE SAME NUMBER THE SCORECARD SHOWS. /api/golden/estate re-scores every feed under the
+       brand's current scoring profile before serving it, so this is the mean of the market scores
+       on /golden — not a second reading of a stored one that stopped moving when the profile did. */
+    h+=row('','<span class="nm" title="The mean of this account\u2019s market scores on the Golden Record scorecard, scored under its current industry profile">'
+      +'Completeness across '+scored.length+' market'+(scored.length===1?'':'s')+'</span>'
       +bar(avg,pbBand(avg))+'<span class="num">'+pc(avg)+'</span>');
-    var all=[];
-    scored.forEach(function(f){
-      pbWeak(f).forEach(function(w){ all.push({w:w,mkt:f.mkt}); });
-    });
-    all.sort(function(a,b){ return b.w.sev-a.w.sev || ((a.w.cov==null?-1:a.w.cov)-(b.w.cov==null?-1:b.w.cov)); });
-    if(!all.length)h+='<div class="ck-none">Every required and conditional attribute is present and filled.</div>';
+    /* TOP THREE TO WORK ON (Ray, 8 Oct 2026: "highlight top 3 lowest scores / attributes to work
+       on"). Three, grouped by attribute, because the rest of this rail already closes with three
+       actions for the same reason: a ranked list of eleven is the same as no ranking. The rows
+       beyond three are counted and sent to the scorecard, never dropped. */
+    var grp=pbGroupWeak(scored), aside=pbAside(scored);
+    if(!grp.length)h+='<div class="ck-none">Nothing thin enough to brief — every attribute the score weighed is at or above Google\u2019s bar.</div>';
     else{
-      h+='<div class="ck-lbl">Weakest first</div>';
-      h+=all.slice(0,8).map(function(r){
-        var w=r.w,sev=w.tier==='req'?'crit':w.tier==='cond'?'warn':'info';
-        return row('','<span class="mk">'+esc(r.mkt)+'</span>'
+      h+='<div class="ck-lbl">Top 3 to work on</div>';
+      h+=grp.slice(0,3).map(function(w){
+        var sev=w.tier==='req'?'crit':w.tier==='cond'?'warn':'info';
+        /* the markets are the EVIDENCE, so they are named rather than counted away: three
+           markets at 4% and one at 4% are different jobs */
+        var mk=w.mkts.length===1?w.mkts[0]:(w.mkts.length+' markets');
+        return row('','<span class="mk" title="'+esc(w.mkts.join(', '))+'">'+esc(mk)+'</span>'
           +'<span class="nm">g:'+esc(w.k)+'</span>'
           +(w.missing?'':bar(w.cov,pbBand(w.cov)))
           +'<span class="num">'+(w.missing?'absent':pc(w.cov))+'</span>'
           +'<span class="ck-pill '+sev+'">'+(w.tier==='req'?'required':w.tier==='cond'?'if applies':'recommended')+'</span>');
       }).join('');
-      if(all.length>8)h+='<div class="ck-none">+'+(all.length-8)+' more on the scorecard</div>';
+      if(grp.length>3)h+='<div class="ck-none">+'+(grp.length-3)+' more attribute'+(grp.length-3===1?'':'s')+' on the scorecard</div>';
     }
+    /* said, never silent: the attributes deliberately kept out of the list above */
+    if(aside.length)h+='<div class="ck-none" title="'+esc(aside.map(function(k){return 'g:'+k+' — '+pbNotWork(k);}).join(' \u00b7 '))+'">'
+      +'Set aside as not feed work: '+aside.map(function(k){return 'g:'+esc(k);}).join(', ')+'</div>';
     h+='<a class="ck-more" href="/golden?client='+encodeURIComponent(brand)+'">Open Golden Record →</a></section>';
     return h;
   }

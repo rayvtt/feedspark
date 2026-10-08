@@ -1768,5 +1768,51 @@ console.log('\n── depth in the Golden Score: images, highlights and details 
   ok('a depth row\'s plan task is named in words', /'Golden Record Fix - ' \+ dep\.label\.charAt\(0\)\.toUpperCase\(\) \+ dep\.label\.slice\(1\)/.test(wk));
 }
 
+/* ---- goldenWeak: what is thin, read off the score's OWN working ------------------------------
+   Ray, 8 Oct 2026: "the golden score brought up from the in-playbook is completely different and
+   not accurate compared to the golden score on the [Golden Record] module. Why the hell is this
+   not dynamic". Every reader used to re-derive its own list from the stored coverage map with its
+   own floors, so a brand's scoring profile could set an attribute aside and the list would still
+   demand it. goldenWeak reads the PARTS goldenScore actually weighed, so the number and the list
+   are two readings of one pass and can never disagree. */
+{
+  console.log('\n── goldenWeak — the thin attributes of the scoring pass itself');
+  const prof = { industry: 'Footwear', expected: [], waived: ['material'], qwaived: [] };
+  const cov = { id: 100, title: 100, description: 97, link: 100, image_link: 100, availability: 100, price: 100,
+    brand: 100, gtin: 88, item_group_id: 100, color: 99, size: 99,
+    product_type: 41, sale_price: 26.9, material: 2, pattern: 4.4, google_product_category: 100 };
+  // no product in this catalogue sits in the category Google asks `pattern` of
+  const sc = { pattern: 0, color: 1000, size: 1000 };
+  const g = LG.goldenScore(LG.attrsFromCov(cov, sc, 1000), prof);
+  const W = LG.goldenWeak(g);
+  const keys = W.map((w) => w.k);
+  ok('a waived attribute is not thin — it was never weighed', !keys.includes('material'));
+  ok('nor is one no product is in the category for', !keys.includes('pattern'));
+  ok('a required attribute under 99% is', keys.includes('description'));
+  ok('and it leads a recommended one that reads far lower', keys.indexOf('description') < keys.indexOf('product_type'));
+  ok('a recommended attribute under 60% is listed', keys.includes('product_type'));
+  ok('one at or above its floor is not', !keys.includes('google_product_category'));
+  ok('the conversational six are never a failure here', !keys.some((k) => k === 'question_and_answer' || k === 'popularity_rank'));
+  ok('the required tier is named the way every reader of this list already names it',
+    W.filter((w) => w.k === 'description')[0].tier === 'req');
+  ok('a missing required attribute reads absent, not zero',
+    (LG.goldenWeak(LG.goldenScore(LG.attrsFromCov({ title: 100 }, null, 10), prof))
+      .filter((w) => w.k === 'image_link')[0] || {}).cov === null);
+  ok('nothing in, nothing out', LG.goldenWeak(null).length === 0 && LG.goldenWeak({}).length === 0);
+  ok('the floors are per tier, because the tiers mean different things',
+    LG.GOLD_THIN.required === 99 && LG.GOLD_THIN.cond === 90 && LG.GOLD_THIN.rec === 60);
+
+  const wk2 = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('/api/golden/estate re-scores every feed under the brand\'s CURRENT profile before serving it',
+    /const g = goldenScore\(attrsFromCov\(f\.cov, f\.sc, f\.rows\), pf\);/.test(wk2)
+    && /f\.score = g\.score;/.test(wk2));
+  ok('and serves that same pass\'s thin attributes, so no reader derives a second answer',
+    /f\.weak = goldenWeak\(g\);/.test(wk2));
+  ok('a feed with no coverage map keeps its stored reading rather than being scored from nothing',
+    /if \(!f\.cov\) continue;/.test(wk2));
+  ok('the profile is read once per brand, not once per market',
+    /gProfs\[f\.client\] \|\| \(gProfs\[f\.client\] = profileFor\(f\.client, gOverrides\)\)/.test(wk2));
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

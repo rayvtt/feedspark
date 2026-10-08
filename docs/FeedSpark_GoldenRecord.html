@@ -1412,7 +1412,11 @@ window.addEventListener('load',restore);
     return d === 0 ? null : { d: d, was: was, at: f.ht };
   }
   function rescoreEstate() {
-    if (!PROF.ready) return;   // first paint keeps the scan-time (already profiled) scores
+    // first paint keeps what /api/golden/estate served, which since 8 Oct 2026 is already
+    // re-scored server-side under each brand's current profile (one answer for every reader of
+    // that route — the Playbook rail and the dossier quote it too); this pass is what keeps the
+    // page true to a profile edited HERE, before the next load
+    if (!PROF.ready) return;
     feedList().forEach(function (f) {
       if (!f.cov) return;
       var sc = goldenScore(attrsFromCov(f.cov, f.sc, f.rows), profileForC(f.client));

@@ -73,7 +73,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -5987,6 +5987,31 @@ async function goldenRoutes(env, request, url) {
         feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
       }
     });
+    /* PROFILE-TRUE, SERVED (Ray, 8 Oct 2026: "the golden score brought up from the in-playbook is
+       completely different and not accurate compared to the golden score on the [Golden Record]
+       module. Why the hell is this not dynamic"). He is right, and the cause is that the index
+       stores the score AS SCANNED while /golden re-derives every estate score in the browser from
+       the cov map under the brand's CURRENT scoring profile (rescoreEstate) — so the moment anyone
+       starred or waived an attribute, the Golden Record page moved and every other reader of this
+       route (the Playbook rail, the brand dossier) kept quoting the old number. Worse, /golden's
+       own first paint quoted it too, until its profile fetch landed.
+
+       So the re-score happens HERE, once, for every reader: the same goldenScore(attrsFromCov(...))
+       call rescoreEstate makes, with the same profile store. `weak` is that same scoring pass's
+       thin attributes — the parts it actually weighed — so a waived attribute, or one no product
+       in this catalogue sits in the category for, can never be listed as work on any surface.
+       A feed the index has no cov map for keeps its stored reading and gets no list. */
+    const gOverrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const gProfs = {};
+    for (const k of Object.keys(feeds)) {
+      const f = feeds[k];
+      if (!f.cov) continue;
+      const pf = gProfs[f.client] || (gProfs[f.client] = profileFor(f.client, gOverrides));
+      const g = goldenScore(attrsFromCov(f.cov, f.sc, f.rows), pf);
+      if (!g) continue;
+      f.score = g.score;
+      f.weak = goldenWeak(g);
+    }
     // the 12:00 UK daily run's own record, so the page can say when the tracker last filled
     const daily = (await env.EDITS.get('goldendaily', 'json')) || null;
     return json({ feeds, alerts, daily });
