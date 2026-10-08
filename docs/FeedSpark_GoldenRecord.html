@@ -4154,7 +4154,9 @@ window.addEventListener('load',restore);
          a fixed column count and every card the Catalogue's own fixed height — a frame that scrolls inside a report, or
          leaves half its height empty, is the export looking broken */
       '<style>html,body{background:transparent!important;margin:0}main.wrap{max-width:none!important;margin:0!important;padding:2px!important}' +
-      '.ins{grid-auto-flow:row;grid-template-columns:repeat(' + Math.min(3, cards.length) + ',minmax(0,1fr))!important}' +
+      '.ins{grid-auto-flow:row dense;grid-template-columns:repeat(' + Math.min(3, cards.length) + ',minmax(0,1fr))!important}' +
+      /* the two-column Product type depth card never asks for more columns than the file has */
+      '.mod[data-mod="ptd"]{grid-column:span ' + Math.min(2, cards.length) + '!important}' +
       '.mod,.mod[hidden]{display:flex!important;height:340px!important;min-height:0!important}.mod>.chead{flex-wrap:nowrap!important}' +
       /* A CARD THAT RUNS LONGER SCROLLS, IT IS NEVER CUT (Ray, 8 Oct 2026: "html downloads on golden score has visual cropping
          issue on some of the customised module - i like the balance square sizes so maybe make it scrollable?"): the file is
