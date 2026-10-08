@@ -5072,14 +5072,14 @@
     {
       "name": "AI Quote copy text: INITIAL ONE-OFF COSTS block → ONGOING MONTHLY COSTS block → SUMMARY",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "'INITIAL ONE-OFF COSTS — paid once'",
+      "pattern": "ONE-OFF COSTS — paid once",
       "min": 2,
       "pr": 379
     },
     {
       "name": "AI Quote email/brief (qBlock) reads as the same two blocks + one SUMMARY line",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "'SUMMARY'+V+': initial one-off '",
+      "pattern": "'MONTHLY COSTS — recurring'",
       "min": 1,
       "pr": 379
     },
@@ -14506,6 +14506,12 @@
       "pattern": "redirect: 'follow'",
       "pr": 0,
       "forbidden": true
+    },
+    {
+      "name": "AI Quote client email: empty sections, duplicate Net, summary and man-power footnote dropped",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "EMAIL-SIMPLE",
+      "pr": 0
     }
   ]
 }

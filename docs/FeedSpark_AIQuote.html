@@ -3680,31 +3680,37 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var oneL=L.filter(function(l){return l.charge!=='monthly'}), monL=L.filter(function(l){return l.mon>0});
     var xo=XL.filter(function(l){return l.side==='oneoff'}), xm=XL.filter(function(l){return l.side!=='oneoff'});
     var xrow=function(l){ return '• '+l.name+' — '+l.qual+(P?(' '+xLineMoney(l)):'')+(l.note?(' — '+l.note):''); };
-    out.push('','INITIAL ONE-OFF COSTS — paid once');
+    /* EMAIL-SIMPLE (Ray, 8 Oct 2026, crossing out the empty one-off block, its £0 net and the
+       closing summary: "improve generated text for emailling more simpler"): a section with nothing
+       in it is left out, Net is printed only when a discount makes it differ from the total, and the
+       summary + man-power footnote are gone - the two totals already say it. */
+    var hasOne=!!(oneL.length||xo.length||qAimBlock(q,P,'oneoff').length||(+q.setup));
+    if(hasOne){
+    out.push('','ONE-OFF COSTS — paid once');
     if(oneL.length){ out.push('Initial data optimisation ('+oneL.length+'):');
       oneL.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(P&&l.rt!=null?(' '+lineMoneyOne(l)):'')+(l.note?(' — '+l.note):'')); }); }
     ['pre','ret'].forEach(function(k){ var g=xo.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):'); g.forEach(function(l){ out.push(xrow(l)); }); });
     var aO=qAimBlock(q,P,'oneoff'); aO.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
     if(+q.setup)out.push('One-off setup & onboarding'+(P?': '+money(q.setup):''));
-    if(!oneL.length&&!xo.length&&!aO.length&&!(+q.setup))out.push('None — everything quoted is an ongoing charge.');
     if(P){ if(q.miss)out.push('One-off total: rates incomplete — '+missN+' of '+L.length+' line'+(L.length===1?'':'s')+' still to be priced; a fully priced quote follows under separate cover.');
       else { if(+q.discAmt>0){ out.push('Subtotal (ex VAT): '+money(q.sub)); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.discAmt)); }
-        out.push('Net (ex VAT): '+money(q.net)); if(q.vat)out.push('VAT 20%: '+money(q.vatAmt)); out.push('ONE-OFF TOTAL'+V+': '+money(q.gross)); } }
-    out.push('','ONGOING MONTHLY COSTS — recurring');
+        if(q.vat){ out.push('Net (ex VAT): '+money(q.net)); out.push('VAT 20%: '+money(q.vatAmt)); } out.push('ONE-OFF TOTAL'+V+': '+money(q.gross)); } }
+    }
+    var aM=qAimBlock(q,P,'monthly'), retM=xm.filter(function(l){return l.kind==='ret'});
+    var hasMon=!!(xm.length||qUpd(q)||monL.length||aM.length||(+q.tbcN>0));
+    if(hasMon){
+    out.push('','MONTHLY COSTS — recurring');
     ['sys','feed','lia'].forEach(function(k){ var g=xm.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):'); g.forEach(function(l){ out.push(xrow(l)); }); });
     if(qUpd(q))out.push('Monthly update — new products: '+updWord(qUpd(q),P));
-    var retM=xm.filter(function(l){return l.kind==='ret'});
     if(monL.length||retM.length){ out.push('Monitoring & account management (hours per month):');
       monL.forEach(function(l){ out.push('• '+l.name+(l.charge==='monthly'?' — monthly':' — maintenance')+' · '+l.mon+'h / month'+(P?(' '+money(l.monGBP)+'/month'):'')); });
       retM.forEach(function(l){ out.push(xrow(l)); }); }
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' priced separately by ASPL once the requirements are costed.');
-    var aM=qAimBlock(q,P,'monthly'); aM.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
-    if(!xm.length&&!qUpd(q)&&!monL.length&&!aM.length)out.push('None — everything quoted is a one-off charge.');
+    aM.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
     if(P&&!q.miss){ if(+q.monDisc>0){ out.push('Subtotal (ex VAT): '+money(q.monSub)+' / month'); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.monDisc)+' / month'); }
-      out.push('Net (ex VAT): '+money(q.monNet)+' / month'); if(q.vat)out.push('VAT 20%: '+money(q.monVat)+' / month'); out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month'); }
-    if(P){ if(!q.miss)out.push('','SUMMARY'+V+': initial one-off '+money(q.gross)+' · ongoing '+money(q.monGross)+' / month.');
-      if(+q.disc>0&&q.discMan===false)out.push('The partner discount excludes man power (hours at the day rate).');
-      out.push('This quotation is valid for '+qValid(q)+' days from the date of issue & prices as at '+monY(d)+'.');
+      if(q.vat){ out.push('Net (ex VAT): '+money(q.monNet)+' / month'); out.push('VAT 20%: '+money(q.monVat)+' / month'); } out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month'); }
+    }
+    if(P){ out.push('','This quotation is valid for '+qValid(q)+' days from the date of issue & prices as at '+monY(d)+'.');
     } else {
       out.push('','Commercials: to follow under separate cover.');
       out.push('This quotation is valid for '+qValid(q)+' days from the date of issue.');
