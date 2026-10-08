@@ -1468,6 +1468,8 @@ availability, link, image and so on, in `PLAN_CLIENT`) is tagged **Your team**; 
 tagged **FeedSpark**, and identifiers are never invented. Each lane caps its cards (5 / 5 / 4) and
 says how many more are in the scorecard above. An empty lane says the feed meets the spec there.
 
+**Laid out as the next quarter, month by month** (Ray, same day: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all actions …) — also remove the progress status, it might be confusing"). Every action is on the board: nothing is folded behind a "+N more". Actions are read in priority order: the Now requirements first, then Next by the points each one moves, then the AI-readiness work. They are spread evenly across the three calendar months after this one, so the first month carries the work that moves the score most. The Workflow status strip and the footnote are gone. The KPI strip now reads Actions · In <first month> · Need your team · Golden Score now → after the quarter.
+
 `#print-plan` is filled by `fillPrint`, so the PDF, the ⬇ HTML and Ctrl+P all carry it. It comes
 after the all-markets table, and the AM's picked Catalogue cards now sit before it, so the plan
 closes the document. It is never shown on screen.

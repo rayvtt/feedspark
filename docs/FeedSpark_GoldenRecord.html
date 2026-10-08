@@ -4165,7 +4165,6 @@ window.addEventListener('load',restore);
      (the SAME function as the dial — a projection, labelled as one, never a promise); identifiers and the required data are the
      client's to supply (FeedSpark never invents a GTIN or a price), the optimisation is FeedSpark's; and a plan with nothing to do
      says so rather than padding a lane. Lanes are Workflow's pipeline: Now (this week) · Next (30 days) · Then (this quarter). */
-  var PLAN_CAP = { now: 5, next: 5, then: 4 };
   var PLAN_CLIENT = { id: 1, title: 1, description: 1, link: 1, image_link: 1, availability: 1, price: 1, brand: 1, gtin: 1, mpn: 1,
     condition: 1, item_group_id: 1, sale_price: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
   function planBuild(attrs, prof, qd, ai, cl) {
@@ -4253,33 +4252,35 @@ window.addEventListener('load',restore);
     try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref); } catch (e) {}
     var pl = planBuild(s.attrs, prof, qd, ai, clr);
     if (pl.base == null) return '';
-    var lanes = [['now', 'Now', 'this week', 'var(--risk)'], ['next', 'Next', 'within 30 days', 'var(--orange-deep)'], ['then', 'Then', 'this quarter', '#7C3AED']];
+    // THE NEXT QUARTER, MONTH BY MONTH (Ray, 8 Oct 2026: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all
+    // actions …) — also remove the progress status, it might be confusing"): every action, none folded behind "+N more", read in
+    // priority order (Now's requirements first, Next by the points they move, then the AI-readiness work) and spread over the
+    // three calendar months after this one so each month carries a share of the plan — the first month the work that moves most.
+    var all = pl.now.concat(pl.next, pl.then), nM = 3, now = new Date(), months = [];
+    for (var mi = 1; mi <= nM; mi++) {
+      var md = new Date(now.getFullYear(), now.getMonth() + mi, 1);
+      months.push({ name: md.toLocaleDateString('en-GB', { month: 'long' }), yr: md.getFullYear(), list: [] });
+    }
+    var per = Math.ceil(all.length / nM) || 1;
+    all.forEach(function (x, i) { months[Math.min(nM - 1, Math.floor(i / per))].list.push(x); });
+    var cols = ['var(--orange-deep)', 'var(--orange)', '#7C3AED'];
     var card = function (a) {
       return '<div class="ap-tk"><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
         '<span class="ap-own' + (a.own === 'you' ? ' you' : '') + '">' + (a.own === 'you' ? 'Your team' : 'FeedSpark') + '</span>' +
         (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') + '</div>' +
         '<div class="ap-t">' + esc(a.t) + '</div><div class="ap-w">' + esc(a.w) + '</div></div>';
     };
-    var total = 0;
-    var board = lanes.map(function (L) {
-      var all = pl[L[0]], list = all.slice(0, PLAN_CAP[L[0]]); total += all.length;
-      return '<div class="ap-lane"><div class="ap-lh"><i style="background:' + L[3] + '"></i>' + L[1] + ' <span class="wh">· ' + L[2] + '</span><span class="ct">' + all.length + '</span></div>' +
-        (list.length ? list.map(card).join('') : '<div class="ap-none">Nothing to do here — this part of the feed meets the spec.</div>') +
-        (all.length > list.length ? '<div class="ap-more">+ ' + (all.length - list.length) + ' more in the scorecard above</div>' : '') + '</div>';
+    var board = months.map(function (M, i) {
+      return '<div class="ap-lane"><div class="ap-lh"><i style="background:' + cols[i] + '"></i>' + esc(M.name) + ' <span class="wh">· ' + M.yr + '</span><span class="ct">' + M.list.length + '</span></div>' +
+        (M.list.length ? M.list.map(card).join('') : '<div class="ap-none">Nothing planned this month — the feed meets the spec here.</div>') + '</div>';
     }).join('');
-    var flow = [['Agreed with you', '#8a94a0'], ['Briefed', '#B1550A'], ['In progress', '#2F6FB0'], ['Live in the feed', '#9D174D'], ['Confirmed on the next scan', '#15803D']]
-      .map(function (x) { return '<span class="st"><i style="background:' + x[1] + '"></i>' + x[0] + '</span>'; }).join('<span class="ar">→</span>');
-    var you = pl.now.concat(pl.next, pl.then).filter(function (a) { return a.own === 'you'; }).length;
+    var you = all.filter(function (a) { return a.own === 'you'; }).length;
     var kpi = function (v, l) { return '<div><b>' + v + '</b><span>' + l + '</span></div>'; };
     return '<div class="pm"><div class="pm-h"><h3>Action plan — ' + esc(dispClient(p.client)) + ' ' + esc(p.mkt.toUpperCase()) + '</h3>' +
-      '<span class="pm-sub">what we recommend next, read off this audit</span></div>' +
-      '<div class="ap-flow">' + flow + '</div>' +
-      '<div class="ap-k">' + kpi(total, 'Actions') + kpi(pl.now.length, 'To start this week') + kpi(you, 'Need your team') +
-        kpi(pl.base + (pl.proj != null && pl.proj > pl.base ? ' <small>→ ' + pl.proj + '</small>' : ''), 'Golden Score now → after Now + Next') + '</div>' +
-      '<div class="ap-board">' + board + '</div>' +
-      '<p class="pm-note">Each action follows FeedSpark’s workflow above: agreed with you, briefed to our team, delivered, then confirmed on the next scan. ' +
-      'The points beside an action are this report’s Golden Score re-run with that field on every product — a projection, not a promise. ' +
-      'Identifiers and required data come from your source; we never invent a GTIN, a price or a stock level.</p></div>';
+      '<span class="pm-sub">the next quarter, month by month, read off this audit</span></div>' +
+      '<div class="ap-k">' + kpi(all.length, 'Actions') + kpi(months[0].list.length, 'In ' + esc(months[0].name)) + kpi(you, 'Need your team') +
+        kpi(pl.base + (pl.proj != null && pl.proj > pl.base ? ' <small>→ ' + pl.proj + '</small>' : ''), 'Golden Score now → after the quarter') + '</div>' +
+      '<div class="ap-board">' + board + '</div></div>';
   }
   /* ---------------- THE CATALOGUE'S MODULES, AT THE END OF THE ⬇ HTML (Ray, 7 Oct 2026: "within Golden Score record, at
      bottom, pull in modules dashboard from Catalogue (module) also, and Leave AM to actually select which module of the

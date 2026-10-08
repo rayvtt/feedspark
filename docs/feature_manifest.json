@@ -14884,6 +14884,12 @@
       "file": "tools/qa_gate.sh",
       "pattern": "node tools/test_clstrategy.mjs",
       "pr": 0
+    },
+    {
+      "name": "Golden action plan: the next quarter, month by month — every action, no status strip (Ray 8 Oct 2026: 'divide into months into the next quarter … remove the progress status')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "the next quarter, month by month, read off this audit",
+      "pr": 0
     }
   ]
 }

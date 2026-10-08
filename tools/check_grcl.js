@@ -152,8 +152,7 @@ async function open(browser, withLabels) {
     return { has: !!t && getComputedStyle(t).display !== 'none', slots: t ? t.querySelectorAll('.cl-slot').length : 0, cards };
   });
   ok('the client file carries the section, open', x.has && x.slots === 5, x);
-  const thenCl = x.cards[2] || [];
-  ok('the action plan proposes the strategies not carried — price band in Then, naming the free slot', thenCl.some((c) => /price band label \(CL\d is free for it\)/.test(c.t)), x.cards);
+  ok('the action plan proposes the strategies not carried — a price band label, naming the free slot', x.cards.flat().some((c) => /price band label \(CL\d is free for it\)/.test(c.t)), x.cards);
   ok('…and no card for a strategy already carried', !x.cards.flat().some((c) => /performance|stock|margin/i.test(c.t)), x.cards);
   await out.close(); fs.unlinkSync(tmp);
   ok('no page errors', errs.length === 0, errs);
