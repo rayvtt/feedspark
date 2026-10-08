@@ -12464,6 +12464,66 @@
       "pr": 0
     },
     {
+      "name": "Services & Pricer: the preview's Golden Score is /golden's ring (r52, 11 stroke, round cap, audit-band colour), not a bare number",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "<svg class=\"pv-dial\" viewBox=\"0 0 120 120\"",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: pvDial draws the arc as the score's share of 100 in the audit band",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvDial(svg,v)",
+      "pr": 0
+    },
+    {
+      "name": "Pricer check: the preview's Golden Score ring is asserted (arc = score, band colour, score inside)",
+      "file": "tools/check_pricer.js",
+      "pattern": "the preview\\'s Golden Score is a ring as /golden draws it",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: a Catalogue card that runs longer than its square scrolls inside it, never cropped",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".mod>div:last-child{overflow-y:auto!important",
+      "pr": 0
+    },
+    {
+      "name": "Golden HTML check: a tall Catalogue card keeps 340px and scrolls to its end",
+      "file": "tools/check_grcatx.js",
+      "pattern": "keeps the square and scrolls to the end inside it",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: an analysis is two change-log rows, Content quality and AI-readiness each with its own Δ",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "AN ANALYSIS IS TWO ROWS, ONE PER SCORE",
+      "pr": 0
+    },
+    {
+      "name": "Golden history check: Content quality and AI-readiness on separate rows",
+      "file": "tools/check_grhist.js",
+      "pattern": "an analysis is two rows — Content quality in one, AI-readiness in the next",
+      "pr": 0
+    },
+    {
+      "name": "Golden depth rows: the 0…6+ breakdown is a pop-up in Product Type Guard's dark depth card, opened from the row's bar",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "data-deptip=\"' + esc(x.k) + '\" tabindex=\"0\" role=\"button\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden depth rows: the inline breakdown is the documents' copy only",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body:not(.pdf) .dep-card{display:none}",
+      "pr": 0
+    },
+    {
+      "name": "Golden depth check: hover / tap / Esc drive the depth pop-up",
+      "file": "tools/check_grdepth.js",
+      "pattern": "a tap pins it (a phone has no hover) and Esc closes the pinned card",
+      "pr": 0
+    },
+    {
       "name": "Services & Pricer: every section folds (heading toggle, Open all / Fold all, Audit + Proposal open on a fresh device)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "var SEC_WRAP={'svc-audit':'au'",

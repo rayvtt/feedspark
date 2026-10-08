@@ -1090,6 +1090,15 @@ score, → Brief opening a keyword brief).
 
 ### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
 
+> **A pop-up chart, not a card under every row (8 Oct 2026, Ray: "these bar charts of tier population should be a pop
+> up chart followed the design from Product Type (it's easier to see and cleaner)").** On screen the breakdown opens
+> from the depth row's own bar — hover or focus shows it, a tap pins it (a phone has no hover), Esc or a click
+> elsewhere closes it, and it follows its bar while the page scrolls — in Product Type Guard's dark depth card: one
+> row per bucket, label · bar · share, the buckets at full credit in white, the average + share at target and the
+> scoring note under them (`depRows`/`DEPTIP`, the shared `.dptip`). The client documents cannot hover, so the PDF
+> and ⬇ HTML print the same rows inline (`.dep-card`, `body:not(.pdf)` hides it on screen) and the file loses the
+> pop-up's hooks. Harness: `tools/check_grdepth.js`.
+>
 > **Card layout (8 Oct 2026, Ray: "these texts should sit in expandable — the coloured segments should stay on the
 > same line").** Each depth card is the bar, ONE line of legend chips (0 … 6+, never wrapping; it pans on a phone)
 > and a fold, *How it's scored · full credit at N+*, holding the explanation, what the feed carries today and the
@@ -1239,6 +1248,8 @@ three.
   the day it was last measured, and — for the Golden Score — the attributes that moved it.
 - **One change log.** Score moves and analyses are listed together, newest first. The header
   counts both ("6 score changes · 3 analyses in view").
+  An analysis is TWO rows (Ray, 8 Oct 2026: "Content Quality in 1 row and AI Readiness in 1 row, unit
+  changes each individual row") — each score with its own from → to and Δ, never paired in one cell.
 - **AI-readiness keeps its tier ladder** on the AI card and in the KPI. On this chart it wears its
   series colour like the other two, since colour here names the score, not its band.
 - **Client documents** carry the three lines, the rows of bars and the log. The range is the only
@@ -1300,6 +1311,10 @@ the HTML, and AM can also have the option of not including it if it's not needed
   address it was opened on (rewriting it would drop `embed=mods`), and the phone's skim view and the ⓘ
   collapse stand down (`data-no-digest`, `data-no-collapse`) so the cards stay whole. The frame is capped at
   860px and scrolls inside its card.
+- **A long card scrolls, it is never cropped (8 Oct 2026).** The file is read at the client's width, so a
+  ten-row ROAS list or the stock matrix with its legend can run past the 340px every card keeps. The square
+  stays and the card's body scrolls inside it, with a thin scrollbar (Ray: "i like the balance square sizes so
+  maybe make it scrollable").
 - **One tick per card, per measure.** Each card gets an *In ⬇ HTML* tick. A card with a measure (Content
   depth, Catalogue mix, ROAS by, Optimised vs not) is ticked per measure, so images per product and
   highlights per product are two picks. Image pixels' scan-count select is a control, not a measure.
