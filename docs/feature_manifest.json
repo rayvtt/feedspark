@@ -14926,6 +14926,54 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "the next quarter, month by month, read off this audit",
       "pr": 0
+    },
+    {
+      "name": "Custom labels customised per brand by the AM — the record is checked (Ray 8 Oct 2026: 'customizable for the account manager … saved going forward')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function cleanClCfg(",
+      "pr": 0
+    },
+    {
+      "name": "Custom labels: a strategy ruled out leaves the denominator",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "wsum / (100 - wout) * 60",
+      "pr": 0
+    },
+    {
+      "name": "Custom labels: a KPI signal inside a descriptive label is named",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "also.push({ k, share: sh, v });",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: clstrat namespace keyed by the brand",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "clstrat:     'self',",
+      "pr": 0
+    },
+    {
+      "name": "Golden: ✎ Customise for <Brand> on the custom-labels card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function clWire(k)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the AM's choices are saved for the team in shared state",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body: JSON.stringify({ clstrat: m })",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the editing controls never reach a client file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'#prof-edit', '.cl-am',",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: an AM priority becomes a high-priority Next card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var pr = (cl.priority || []).indexOf(kd) >= 0;",
+      "pr": 0
     }
   ]
 }

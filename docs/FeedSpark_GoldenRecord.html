@@ -217,7 +217,7 @@ window.addEventListener('load',restore);
   .pseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:8px}
   .pseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer}
   .pseg button.on{background:var(--navy);color:#fff;cursor:default}
-  body.demo #prof-edit,body.demo .profp{display:none!important}
+  body.demo #prof-edit,body.demo .profp,body.demo .cl-am{display:none!important}
   .at-nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .at-nm i{font-style:normal;color:var(--muted);font-weight:700}
   .at-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
@@ -537,7 +537,7 @@ window.addEventListener('load',restore);
   .cl-parts b{color:var(--ink);font-variant-numeric:tabular-nums}
   .cl-parts .nm b{color:var(--muted);font-weight:700}
   .cl-slots{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0 12px}
-  .cl-slot{display:grid;grid-template-columns:40px 172px minmax(0,1fr) 120px 92px;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);font-size:12px}
+  .cl-slot{display:grid;grid-template-columns:40px 190px minmax(0,1fr) 120px 92px;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);font-size:12px}
   .cl-slot:first-child{border-top:none}
   .cl-slot.off{background:var(--wash)}
   .cl-n{font-weight:900;color:var(--muted);font-size:11px;letter-spacing:.06em}
@@ -553,6 +553,16 @@ window.addEventListener('load',restore);
   .cl-cov b{text-align:right;font-variant-numeric:tabular-nums}
   .cl-mv{font-size:11px;font-weight:800;color:var(--muted);text-align:right}
   .cl-mv.on{color:var(--good)}
+  .cl-also{display:inline-block;font-size:10.5px;font-weight:800;color:#1D4ED8;background:#E8EFFC;border-radius:100px;padding:1px 8px;margin-right:4px}
+  .cl-sel{font:inherit;font-size:11.5px;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);max-width:100%}
+  .cl-ss{margin:7px 0 0 22px;width:calc(100% - 22px)}
+  #cl-ed.on{border-color:var(--orange);color:var(--orange-deep)}
+  .cl-set-note{font-size:11.5px;color:var(--muted);margin:0 0 8px}
+  .cl-st.else{border:1px solid var(--clc);background:var(--card)}
+  .cl-st.else .cl-tick,.cl-st.else .cl-sh b{color:var(--clc)}
+  .cl-st.na{opacity:.55}
+  .cl-st.pri{border:1px solid var(--risk)}
+  .cl-pri{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--risk);border-radius:100px;padding:1px 7px}
   .cl-strats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
   .cl-st{border:1px dashed var(--line);border-radius:10px;padding:9px 11px;background:var(--card)}
   .cl-st.on{border:1px solid var(--clc);background:var(--clb)}
@@ -1771,7 +1781,7 @@ window.addEventListener('load',restore);
         // the score history (non-blocking; the card fills in place when it lands)
         if (HIST[k] === undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
         // the custom labels as Label Guard last read them (non-blocking; the strategy section fills in when it lands)
-        if (CL[k] === undefined) loadCL(k).then(function () { if (SEL === k) renderDetail(k); });
+        if (CL[k] === undefined) Promise.all([loadCL(k), loadClCfg()]).then(function () { if (SEL === k) renderDetail(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -2648,6 +2658,7 @@ window.addEventListener('load',restore);
     airAnimate();
     wire(k, s);
     histWire(k);
+    clWire(k);
     tfApply();
   }
 
@@ -3858,16 +3869,43 @@ window.addEventListener('load',restore);
     return '<span class="cl-kind' + (c ? '' : ' plain') + '"' + (c ? ' style="color:' + c[0] + ';background:' + c[1] + '"' : '') + '>' + esc(lbl) +
       (st && st.inferred ? '<em title="Read from bare values — high / medium / low or percentages with no word naming them; the usual meaning in a Shopping feed, worth confirming">inferred</em>' : '') + '</span>';
   }
+  /* WHAT THE AM SETS FOR THE BRAND (Ray, 8 Oct 2026: "make this custom-labels section customizable for the account manager
+     to flag what makes sense for this client specifically. Especially with descriptive custom labels, which will be saved going
+     forward. For example, with Superdry GB, the missing custom labels would be bestsellers, margin, lifecycle, and seasons").
+     The automated reading stays the default; the AM can say what a SLOT is for and how each STRATEGY stands for this client
+     (a priority · carried in another field · not relevant). Saved for the TEAM in shared state ns clstrat, keyed by the brand,
+     so the next person to open it reads the same call; the engine (labelguard.js cleanClCfg) checks every stored value. */
+  var CLST = { map: null, base: 0, p: null };
+  var CLED = false;   // the customise panel is open (this screen only)
+  function loadClCfg() {
+    if (CLST.p) return CLST.p;
+    CLST.p = fetch(API + '/api/state?ns=clstrat').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { CLST.map = (j && j.clstrat) || {}; CLST.base = Date.now(); })
+      .catch(function () { CLST.map = {}; });
+    return CLST.p;
+  }
+  function clCfgFor(client) { return (CLST.map && CLST.map[client]) || null; }
+  function clSave(client, cfg, then) {
+    var m = Object.assign({}, CLST.map || {}); cfg.at = Date.now(); m[client] = cfg;
+    CLST.map = m;   // the screen follows the edit at once; the store confirms behind it
+    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(CLST.base || 0) }, body: JSON.stringify({ clstrat: m }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { var ok = !!(j && j.clstrat); if (ok) { CLST.map = j.clstrat; CLST.base = Date.now(); } if (then) then(ok); })
+      .catch(function () { if (then) then(false); });
+  }
+  var CL_STATE_LBL = { '': 'Expected', need: 'Priority for this client', elsewhere: 'Carried in another field', na: 'Not relevant for this client' };
   function clSection(k) {
-    var c = CL[k];
+    var c = CL[k], p = parts(k), brand = dispClient(p.client);
     if (!LGQ || !LGQ.clStrategy) return '';
     var h = '<div class="tier" data-tf="cl" id="cl-tier"><div class="tier-h">' +
       '<span class="tbadge rec" style="background:#E8EFFC;color:#1D4ED8">Custom labels</span>' +
       '<h4>What the custom labels let your campaigns bid on</h4>' +
-      (c ? '<span class="qz-meta"><span>' + fmt(c.snap.rows) + ' products · labels read ' + ago(c.snap.t) + '</span></span>' : '') + '</div>';
+      (c ? '<span class="qz-meta"><span>' + fmt(c.snap.rows) + ' products · labels read ' + ago(c.snap.t) + '</span>' +
+        '<button class="btn cl-am' + (CLED ? ' on' : '') + '" id="cl-ed" title="Say what each label is for and which strategies matter for ' + esc(brand) + ' — saved for the whole team">' + (CLED ? '✓ Done' : '✎ Customise for ' + esc(brand)) + '</button></span>' : '') + '</div>';
     if (c === undefined) return h + '<p class="qz-empty">Reading the custom labels…</p></div>';
     if (!c) return h + '<p class="qz-empty">No custom-label reading for this feed yet — the next scan reads them.</p></div>';
-    var r = LGQ.clStrategy(c.snap, c.ref);
+    var cfg = clCfgFor(p.client);
+    var r = LGQ.clStrategy(c.snap, c.ref, cfg);
     if (!r) return '';
     var K = LGQ.CL_KINDS;
     h += '<div class="qz-head"><span class="qz-score cl-score" style="color:' + scoreCol(r.score) + '">' + r.score + '</span>' +
@@ -3881,6 +3919,12 @@ window.addEventListener('load',restore);
           ? '<span class="nm" title="Whether the labels move as the business does needs an earlier reading of this feed — the other three parts are scaled to 100 until then">Dynamism <b>not measured yet</b></span>'
           : '<span title="The share of KPI labels whose products changed segment since ' + esc(new Date(r.refT).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '">Dynamism <b>' + r.parts.dyn + '</b>/15</span>') +
       '</span></div>';
+    if (r.custom) h += '<p class="cl-set-note">Set for ' + esc(brand) + ' by the team' + (cfg && cfg.at ? ' · ' + ago(cfg.at) : '') + ' — the reading of the feed is kept beside each choice.</p>';
+    var kindOpts = function (sl) {
+      var o = '<option value="" title="Read from the label’s own values">Auto · ' + esc(sl.auto === 'empty' ? 'not in feed' : sl.auto === 'unclear' ? 'unclear' : (K[sl.auto] ? K[sl.auto].label : sl.auto)) + '</option>';
+      LGQ.CL_KPI.concat(['merch']).forEach(function (kd) { o += '<option value="' + kd + '"' + (sl.set && sl.kind === kd ? ' selected' : '') + '>' + esc(K[kd].label) + '</option>'; });
+      return o + '<option value="none"' + (sl.set && sl.kind === 'unclear' ? ' selected' : '') + '>No strategy</option>';
+    };
     // the five slots, as the feed carries them
     h += '<div class="cl-slots">' + r.slots.map(function (sl) {
       var vals = sl.top.map(function (v) { return '<span class="cl-v" title="' + esc(maskText(v[0])) + ' — ' + fmt(v[1]) + ' products"><b>' + esc(maskText(v[0])) + '</b> ' + fmt(v[1]) + '</span>'; }).join('');
@@ -3888,21 +3932,34 @@ window.addEventListener('load',restore);
       var mv = !sl.kpi ? '' : sl.moved == null ? '<span class="cl-mv nm" title="Needs an earlier reading of this feed">—</span>'
         : '<span class="cl-mv' + (sl.moved >= LGQ.CL_MOVE_PP ? ' on' : '') + '" title="Products that changed segment since the earlier reading (a lower bound — two counts cannot say which products moved)">' +
           (sl.moved >= LGQ.CL_MOVE_PP ? '↻ ' + sl.moved + '% moved' : 'static') + '</span>';
-      return '<div class="cl-slot' + (sl.present ? '' : ' off') + '"><span class="cl-n">CL' + sl.n + '</span>' + clChip(sl.kind, sl) +
+      var also = (sl.also || []).map(function (x) { return '<span class="cl-also" title="' + x.share + '% of this label’s products — a ' + esc(K[x.k].label.toLowerCase()) + ' signal inside a ' + (sl.kind === 'merch' ? 'descriptive' : 'mixed') + ' label">also ' + esc(K[x.k].label.toLowerCase()) + (x.v ? ' · ' + esc(maskText(x.v)) : '') + '</span>'; }).join('');
+      var chip = CLED && sl.present ? '<select class="cl-sel cl-am" data-clslot="' + sl.n + '" aria-label="What CL' + sl.n + ' is for">' + kindOpts(sl) + '</select>' : clChip(sl.kind, sl);
+      return '<div class="cl-slot' + (sl.present ? '' : ' off') + '"><span class="cl-n">CL' + sl.n + '</span>' + chip +
         '<span class="cl-vals">' + (sl.present ? (vals || '<span class="muted">no values</span>') + more : '<span class="muted">not in the feed — a free slot</span>') +
-        (sl.why ? '<span class="cl-why">' + esc(sl.why) + '</span>' : '') + '</span>' +
+        (also ? '<span class="cl-why">' + also + '</span>' : '') +
+        (sl.why && !also ? '<span class="cl-why">' + esc(sl.why) + '</span>' : '') + '</span>' +
         '<span class="cl-cov">' + (sl.present ? '<span class="qz-bar"><i class="b-' + auditBand(sl.cov) + '" style="width:' + Math.max(1.5, Math.min(100, sl.cov)) + '%"></i></span><b>' + sl.cov + '%</b>' : '') + '</span>' +
         mv + '</div>';
     }).join('') + '</div>';
-    // the six KPI strategies: carried, or what it would take
+    // the six KPI strategies: carried, set aside, or what it would take
+    var st = (cfg && cfg.strat) || {};
     h += '<div class="cl-strats">' + LGQ.CL_KPI.map(function (kd) {
-      var S = K[kd], on = r.kinds[kd], c2 = CL_COL[kd];
-      return '<div class="cl-st' + (on ? ' on' : '') + '" style="--clc:' + c2[0] + ';--clb:' + c2[1] + '">' +
-        '<div class="cl-sh"><span class="cl-tick">' + (on ? '✓' : '○') + '</span><b>' + esc(S.label) + '</b><span class="cl-w">' + S.w + ' pts</span></div>' +
+      var S = K[kd], on = r.kinds[kd], c2 = CL_COL[kd], state = st[kd] || '';
+      var else_ = r.elsewhere.indexOf(kd) >= 0, na = r.na.indexOf(kd) >= 0, pri = r.priority.indexOf(kd) >= 0;
+      var cls = on ? ' on' : else_ ? ' else' : na ? ' na' : pri ? ' pri' : '';
+      return '<div class="cl-st' + cls + '" data-cl="' + kd + '" style="--clc:' + c2[0] + ';--clb:' + c2[1] + '">' +
+        '<div class="cl-sh"><span class="cl-tick">' + (on ? '✓' : else_ ? '◐' : na ? '–' : '○') + '</span><b>' + esc(S.label) + '</b>' +
+          (pri ? '<span class="cl-pri">Priority</span>' : '') + '<span class="cl-w">' + (na ? 'not scored' : S.w + ' pts') + '</span></div>' +
         '<div class="cl-sk">' + esc(S.kpi) + '</div>' +
         '<div class="cl-sx">' + (on ? 'Carried in ' + on.map(function (n) { return 'CL' + n; }).join(' · ')
-          : 'Not carried — e.g. ' + esc(S.eg) + '. ' + (S.who === 'you' ? 'Needs your team: ' : '') + esc(S.how) + '.') + '</div></div>';
+          : else_ ? 'Carried in another field for ' + esc(brand) + ' — counted, not read from a label.'
+          : na ? 'Not relevant for ' + esc(brand) + ' — left out of the score.'
+          : 'Not carried — e.g. ' + esc(S.eg) + '. ' + (S.who === 'you' ? 'Needs your team: ' : '') + esc(S.how) + '.') + '</div>' +
+        (CLED ? '<select class="cl-sel cl-ss cl-am" data-clstrat="' + kd + '" aria-label="' + esc(S.label) + ' for ' + esc(brand) + '">' +
+          ['', 'need', 'elsewhere', 'na'].map(function (v) { return '<option value="' + v + '"' + (state === v ? ' selected' : '') + '>' + CL_STATE_LBL[v] + '</option>'; }).join('') + '</select>' : '') +
+        '</div>';
     }).join('') + '</div>';
+    if (CLED) h += '<p class="cl-set-note cl-am"><span id="cl-msg">Each choice saves for the whole team as you make it.</span> <button class="btn" id="cl-reset" title="Drop every choice for ' + esc(brand) + ' and read the labels from the feed again">↺ Back to the automated reading</button></p>';
     if (r.descr.length || r.dup.length) {
       h += '<p class="qz-line">' +
         (r.descr.length ? r.descr.map(function (n) { return 'CL' + n; }).join(', ') + (r.descr.length === 1 ? ' carries' : ' carry') + ' descriptive values — category, gender or the like, which the feed already holds in its own attributes. ' : '') +
@@ -3910,6 +3967,20 @@ window.addEventListener('load',restore);
         (r.missing.length && (r.descr.length || r.dup.length) ? 'Those slots are the room for the strategies not yet carried.' : '') + '</p>';
     }
     return h + '</div>';
+  }
+  function clWire(k) {
+    var p = parts(k);
+    var ed = $('cl-ed'); if (ed) ed.onclick = function (ev) { ev.stopPropagation(); CLED = !CLED; renderDetail(k); };
+    var cur = function () { var c = clCfgFor(p.client) || {}; return { slots: Object.assign({}, c.slots || {}), strat: Object.assign({}, c.strat || {}) }; };
+    var msg = function (t) { var m = $('cl-msg'); if (m) m.textContent = t; };
+    var done = function (ok) { if (SEL === k) renderDetail(k); msg(ok ? '✓ Saved for the team' : '⚠ Not saved to the team yet — check the connection and try again'); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-clslot]'), function (el) {
+      el.onchange = function () { var c = cur(), n = el.getAttribute('data-clslot'); if (el.value) c.slots[n] = el.value; else delete c.slots[n]; clSave(p.client, c, done); renderDetail(k); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-clstrat]'), function (el) {
+      el.onchange = function () { var c = cur(), kd = el.getAttribute('data-clstrat'); if (el.value) c.strat[kd] = el.value; else delete c.strat[kd]; clSave(p.client, c, done); renderDetail(k); };
+    });
+    var rs = $('cl-reset'); if (rs) rs.onclick = function () { if (!confirm('Drop every custom-label choice for ' + dispClient(p.client) + '?')) return; clSave(p.client, { slots: {}, strat: {} }, done); renderDetail(k); };
   }
   function reconcileSection(k) {
     var qd = QUAL[k], a = qd && qd.ai;
@@ -4227,10 +4298,11 @@ window.addEventListener('load',restore);
       var free = cl.spare.concat(cl.descr), slot = function () { var n = free.shift(); return n == null ? '' : ' (CL' + n + ' is free for it)'; };
       cl.missing.forEach(function (kd) {
         var S = LGQ.CL_KINDS[kd];
-        if (kd !== 'perf' && kd !== 'stock' && kd !== 'margin' && cl.have.length >= 3 && !free.length) return;   // diverse already, and no slot to spare
-        var a = { pri: kd === 'perf' ? 'hi' : '', f: 'Custom labels', own: S.who === 'you' ? 'you' : 'fs',
+        var pr = (cl.priority || []).indexOf(kd) >= 0;   // the AM flagged it for this client
+        if (!pr && kd !== 'perf' && kd !== 'stock' && kd !== 'margin' && cl.have.length >= 3 && !free.length) return;   // diverse already, and no slot to spare
+        var a = { pri: pr || kd === 'perf' ? 'hi' : '', f: 'Custom labels', own: S.who === 'you' ? 'you' : 'fs',
           t: 'Add a ' + S.label.toLowerCase() + ' label' + slot(), w: 'So campaigns can bid on ' + S.kpi.split(' — ')[0].toLowerCase() + ' — e.g. ' + S.eg + '. ' + S.how.charAt(0).toUpperCase() + S.how.slice(1) + '.' };
-        if (kd === 'perf' || kd === 'stock') clNext.push(a); else thenAct.push(a);
+        if (pr || kd === 'perf' || kd === 'stock') clNext.push(a); else thenAct.push(a);
       });
     }
     var byGain = function (x, y) { return (y.g || 0) - (x.g || 0); };
@@ -4249,7 +4321,7 @@ window.addEventListener('load',restore);
     try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
     var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
     var clr = null;
-    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref); } catch (e) {}
+    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
     var pl = planBuild(s.attrs, prof, qd, ai, clr);
     if (pl.base == null) return '';
     // THE NEXT QUARTER, MONTH BY MONTH (Ray, 8 Oct 2026: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all
@@ -4815,7 +4887,7 @@ window.addEventListener('load',restore);
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
-     '.at-act', '.det-actions', '#pdp-last', '#prof-edit',
+     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am',
      '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the

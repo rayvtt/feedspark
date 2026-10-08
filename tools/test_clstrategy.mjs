@@ -69,5 +69,33 @@ ok('labels with no KPI signal score 0 and say so', r.score === 0 && r.verdict.pi
 ok('the verdict bands: 85+ KPI-driven, 60+ partly, under 60 descriptive', LG.clVerdict(90, 3).pill === 'KPI-driven' && LG.clVerdict(70, 2).pill === 'Partly KPI-driven' && LG.clVerdict(40, 1).pill === 'Mostly descriptive');
 ok('no snapshot → null', LG.clStrategy(null) === null);
 
+console.log('── what the AM sets for a brand (Ray: "customizable for the account manager … saved going forward")');
+// a feed shaped like Superdry GB's (the value WORDS as the feed carries them; the counts invented)
+const sd = { t: now, rows: 1000, labels: {
+  custom_label_0: L([['FULL', 550], ['SALE', 450]], { cov: 100 }),
+  custom_label_1: L([['Lightweight Jackets', 40], ['Zombie', 25], ['Everest', 15]], { cov: 8 }),
+  custom_label_2: L([['Hoodies & Sweatshirts', 300], ['T-Shirts', 250], ['Jackets & Coats', 250]], { cov: 99 }),
+  custom_label_3: L([['Female', 560], ['Male', 430], ['Unisex', 10]], { cov: 100 }),
+  custom_label_4: { present: false } } };
+let a = LG.clStrategy(sd, null);
+ok('FULL / SALE reads as a promotion label (full price vs on sale)', a.slots[0].kind === 'promo', a.slots[0]);
+ok('a label of jackets that also carries "Zombie" names the performance signal beside it', a.slots[1].kind === 'merch' && a.slots[1].also.some((x) => x.k === 'perf' && x.v === 'Zombie'), a.slots[1]);
+ok('the category and gender labels are descriptive', a.slots[2].kind === 'merch' && a.slots[3].kind === 'merch');
+const cfg = { slots: { 1: 'perf' }, strat: { perf: 'need', margin: 'need', life: 'need', price: 'elsewhere', stock: 'na' } };
+a = LG.clStrategy(sd, null, cfg);
+ok('the AM sets CL1 as performance: it counts, marked set by hand, the reading kept beside it', a.slots[1].kind === 'perf' && a.slots[1].set && a.slots[1].auto === 'merch' && !a.slots[1].inferred, a.slots[1]);
+ok('"carried elsewhere" counts as carried, with no label behind it', a.carried.indexOf('price') >= 0 && a.elsewhere.indexOf('price') >= 0 && !a.kinds.price);
+ok('"not relevant" leaves the denominator: (30 perf + 5 promo + 10 price) ÷ (100 − 25 stock) × 60 = 36', a.parts.strat === 36, a.parts);
+ok('…and is never a gap', a.missing.indexOf('stock') < 0 && a.na.indexOf('stock') >= 0);
+ok('the priorities still open are margin and lifecycle — performance is now carried', a.priority.join() === 'margin,life', a.priority);
+ok('diversity counts what is carried, against what is still expected', a.parts.div === 15, a.parts);
+ok('reach reads the label-carried strategies only (perf 8% + promo 100%)', a.reach === 54, a.reach);
+ok('the record says it was customised', a.custom === true && LG.clStrategy(sd, null).custom === false);
+ok('a slot set on a label the feed does not carry is ignored', LG.clStrategy(sd, null, { slots: { 4: 'margin' } }).slots[4].kind === 'empty');
+ok('"none" marks a slot as no strategy', LG.clStrategy(sd, null, { slots: { 0: 'none' } }).slots[0].kind === 'unclear');
+const cc = LG.cleanClCfg({ slots: { 0: 'perf', 1: 'bogus', 9: 'margin', '2': 'stock' }, strat: { perf: 'need', margin: 'x', merch: 'na', stock: 'elsewhere' }, by: 'a@b', at: 5, extra: 1 });
+ok('a stored record carries only known slots, kinds and states', JSON.stringify(cc) === JSON.stringify({ slots: { 0: 'perf', 2: 'stock' }, strat: { perf: 'need', stock: 'elsewhere' }, by: 'a@b', at: 5 }), cc);
+ok('no record = the automated reading, exactly', JSON.stringify(LG.clStrategy(snap, ref, null).parts) === JSON.stringify(LG.clStrategy(snap, ref).parts));
+
 console.log(fail ? '\n✗ custom label strategy: ' + fail + ' failed, ' + pass + ' passed' : '\n✓ custom label strategy: ' + pass + ' passed');
 process.exit(fail ? 1 : 0);

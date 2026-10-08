@@ -78,6 +78,12 @@ export const STATE_NS = {
   // — its rules, defaults, overlay and per-network choices — is the TEAM's plan for that account, not
   // one screen's: whoever opens the brand next must see the same schedule.  client -> setup
   socialdpa:   'self',
+  // CUSTOM LABEL STRATEGY, SET BY THE AM (Ray, 8 Oct 2026: "make this custom-labels section customizable for
+  // the account manager to flag what makes sense for this client specifically … which will be saved going
+  // forward"). What a label is FOR when its values do not say, and which strategies matter for the brand —
+  // a priority, carried in another field, or not relevant — is a judgement about the ACCOUNT, so it is the
+  // team's, not one screen's.  client -> {slots:{n:kind}, strat:{kind:state}, by, at}
+  clstrat:     'self',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }
