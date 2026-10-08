@@ -51,6 +51,14 @@ for (const f of pages) {
   const on = [...nav.matchAll(/href="([^"]+)" class="tbm on"/g)].map((m) => m[1]);
   if (on.length > 1) { fail = 1; console.error(`✗ ${f} marks ${on.length} links .on (${on.join(', ')}) — at most one`); continue; }
   if (on.length === 1 && !refLinks.includes(on[0])) { fail = 1; console.error(`✗ ${f} marks unknown href .on: ${on[0]}`); continue; }
+  // THE ROW LOOKS THE SAME TOO (Ray, 8 Oct 2026, over /social's topbar: "menus on these new modules look weird,
+  // makes sure it stays consistent as original view"): a page cloned from one that never carried the row's own
+  // rules ships its icons in the link colour, with no hover, no .on tile and no label — identical markup, a
+  // different-looking menu. Every nav-bearing page carries the shared rules.
+  const src = fs.readFileSync(path.join(DOCS, f), 'utf8');
+  const STYLE = ['.tb-modules a.tbm{', '.tb-modules a.tbm.on{', '.tb-modules a.tbm::after{content:attr(data-lbl)'];
+  const missing2 = STYLE.filter((r) => src.indexOf(r) < 0);
+  if (missing2.length) { fail = 1; console.error(`✗ ${f} carries the module row but not its styles (${missing2.join(' · ')}) — copy the FCC-THEME <style> block from docs/FeedSpark_Stock.html`); continue; }
   console.log(`✓ ${f} (${links(nav).length} links${on.length ? ', on=' + on[0] : ''})`);
 }
 console.log(`\n${pages.length} nav-bearing pages checked against ${REF_FILE}`);

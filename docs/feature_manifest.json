@@ -14704,6 +14704,24 @@
       "file": "docs/FeedSpark_Social.html",
       "pattern": "<aside class=\"pv-rail\" id=\"pv-rail\" aria-label=\"Design controls\">",
       "pr": 0
+    },
+    {
+      "name": "Nav parity: every nav-bearing page carries the module row's own styles",
+      "file": "tools/check_nav.js",
+      "pattern": "carries the module row but not its styles",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the module row styled like every other page",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": ".tb-modules a.tbm.on{background:rgba(245,166,35,.14)",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the module row styled like every other page",
+      "file": "docs/FeedSpark_Restock.html",
+      "pattern": ".tb-modules a.tbm.on{background:rgba(245,166,35,.14)",
+      "pr": 0
     }
   ]
 }
