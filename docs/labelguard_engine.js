@@ -1599,6 +1599,41 @@ export function goldenScore(attrs, profile) {
     profile: profile ? { industry: profile.industry || null, expected: (profile.expected || []).slice(), waived: (profile.waived || []).slice() } : null };
 }
 
+/* WHAT IS THIN, OFF THE SCORE ITSELF (Ray, 8 Oct 2026, on the Playbook rail: "the golden score
+   brought up from the in-playbook is completely different and not accurate compared to the golden
+   score on the [Golden Record] module. Why the hell is this not dynamic").
+
+   Every surface that lists a feed's weak attributes used to read goldenidx's stored cov map with
+   its own floors and its own idea of which attributes count — so a brand whose scoring profile
+   waives an attribute, or whose catalogue has no product in the category Google asks one of, was
+   still told to go and fix it, and the headline beside that list was the SCAN-TIME score rather
+   than the one the current profile produces. goldenWeak reads the PARTS goldenScore actually
+   weighed, so an attribute it set aside can never be listed as work, and the number and the list
+   are two readings of one scoring pass.
+
+   The floors are per tier because the tiers mean different things: a required attribute under
+   99% means products are being refused today, a conditional one under 90% means a known gap on
+   the products Google asks it of, and a recommended one under 60% is an opportunity. */
+export const GOLD_THIN = { required: 99, cond: 90, rec: 60 };
+export function goldenWeak(g) {
+  if (!g || !g.parts) return [];
+  const sev = { required: 4, cond: 2, rec: 1 };
+  const out = [];
+  for (const p of g.parts) {
+    const fl = GOLD_THIN[p.tier];
+    if (fl == null) continue;                 // the conversational six are never a failure here
+    const cov = p.missing ? null : p.cov;
+    if (!p.missing && !(p.cov < fl)) continue;
+    out.push({ k: p.key, tier: p.tier === 'required' ? 'req' : p.tier, cov,
+      missing: !!p.missing, bp: p.bp || undefined,
+      sev: p.missing && p.tier === 'cond' ? 3 : sev[p.tier] });
+  }
+  out.sort((a, b) => (b.sev - a.sev)
+    || ((a.cov == null ? -1 : a.cov) - (b.cov == null ? -1 : b.cov))
+    || String(a.k).localeCompare(String(b.k)));
+  return out;
+}
+
 // coverage drop-off -> alerts, same shape as diffSnapshots so the shared mail rails
 // (estateMailPlan / alertKey) work unchanged. required + cond tiers can go critical
 // (products disapprove); recommended never crits — it can't take a product down.

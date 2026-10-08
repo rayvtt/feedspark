@@ -36,9 +36,11 @@ const S = WF.indexOf('/* PBENGINE:START'), E = WF.indexOf('/* PBENGINE:END */');
 if (S < 0 || E < 0 || E < S) { console.error('✗ PBENGINE markers missing from docs/FeedSpark_Workflow.html'); process.exit(1); }
 const block = WF.slice(S, E);
 const names = ['pbClassify', 'pbCats', 'pbIndex', 'pbPractice', 'pbBand', 'pbArrivals', 'pbWeak', 'PB_TAX', 'PB_TIER',
-  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS', 'pbSpark', 'pbActions'];
+  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS', 'pbSpark', 'pbActions',
+  'pbWeakRaw', 'pbNotWork', 'PB_NOWORK', 'pbGroupWeak', 'pbAside'];
 const EN = new Function(block + '\n;return {' + names.map((n) => n + ':' + n).join(',') + '};')();
 const { pbSpark, pbActions } = EN;
+const { pbWeakRaw, pbNotWork, PB_NOWORK, pbGroupWeak, pbAside } = EN;
 const { pbClassify, pbCats, pbIndex, pbPractice, pbBand, pbArrivals, pbWeak, PB_TAX, PB_TIER,
   pbRaise, pbCatMix, pbLastOpt, pbAgeDays, PB_RAISE_OPTS, PB_RAISE_DEF, PB_BACKLOG_MONTHS } = EN;
 
@@ -124,6 +126,70 @@ ok(!keys.includes('question_and_answer'), 'the conversational AI six are supplem
 eq(keys.filter((k) => k === 'image_link').length, 1, 'a missing attribute is listed once, not again from the coverage map');
 ok(pbWeak(null).length === 0, 'an unscanned feed yields nothing — absent is not zero');
 ok(Object.keys(PB_TIER).filter((k) => PB_TIER[k] === 'req').length === 7, 'Google’s seven always-required attributes');
+
+/* ---- the number is the scorecard's own (Ray, 8 Oct 2026: "the golden score brought up from the
+   in-playbook is completely different and not accurate compared to the golden score on the
+   [Golden Record] module. Why the hell is this not dynamic"). /api/golden/estate re-scores every
+   feed under the brand's CURRENT profile and hands the thin attributes of that same scoring pass
+   over as `weak`; the rail must read it rather than re-deriving a second answer from the stored
+   cov map — which is what made the two surfaces disagree the moment a profile was edited. */
+console.log('\n\u2500\u2500 profile-true: the rail reads the score\u2019s own working');
+const served = { score: 90.2, cov: { material: 2, pattern: 3 },
+  // the profile waives material on this brand and no product is in pattern's category, so the
+  // scoring pass weighed NEITHER — and says so by not listing them
+  weak: [{ k: 'gtin', tier: 'cond', cov: 88, missing: false, sev: 2 },
+         { k: 'product_type', tier: 'rec', cov: 41, missing: false, sev: 1 }] };
+eq(pbWeak(served).map((w) => w.k).join(','), 'gtin,product_type',
+  'the served list wins over the rail\u2019s own reading of the coverage map');
+ok(!pbWeak(served).some((w) => w.k === 'material' || w.k === 'pattern'),
+  'an attribute the score set aside (waived, or no product in its category) is never listed as work');
+ok(pbWeak({ cov: { product_type: 41 } }).some((w) => w.k === 'product_type'),
+  'a record the route could not re-score still reads, so a stored fixture is never blank');
+
+/* ---- sale price is not feed work (Ray, 8 Oct 2026) ------------------------------------------ */
+console.log('\n\u2500\u2500 set aside: what no amount of feed work can move');
+ok(!!pbNotWork('sale_price'), 'g:sale_price carries a stated reason for being set aside');
+ok(!!pbNotWork('condition'), 'g:condition carries one too');
+ok(!pbNotWork('product_type'), 'an ordinary attribute is work');
+const sale = { weak: [{ k: 'sale_price', tier: 'rec', cov: 26.9, missing: false, sev: 1 },
+                      { k: 'pattern', tier: 'rec', cov: 4.4, missing: false, sev: 1 }] };
+ok(!pbWeak(sale).some((w) => w.k === 'sale_price'),
+  'sale price never reaches the list of things to work on');
+ok(pbWeakRaw(sale).some((w) => w.k === 'sale_price'),
+  'it is filtered at the panel, not hidden from the reading \u2014 the raw list still has it');
+eq(pbAside([sale]).join(','), 'sale_price', 'and the panel can name what it set aside');
+ok(Object.keys(PB_NOWORK).every((k) => PB_NOWORK[k] && PB_NOWORK[k].length > 20),
+  'every set-aside attribute states WHY, in words, never just a key in a list');
+
+/* ---- one row per attribute (Ray, 8 Oct 2026: "highlight top 3 lowest scores / attributes to
+   work on"). Schuh's real rail, as he screenshotted it: eight rows that were two jobs. */
+console.log('\n\u2500\u2500 grouped by attribute, worst market first');
+const w = (k, tier, cov, sev, missing) => ({ k, tier, cov: missing ? null : cov, missing: !!missing, sev });
+const schuh = [
+  { mkt: 'GB', weak: [w('product_highlight', 'rec', 10, 1), w('pattern', 'rec', 15.2, 1), w('material', 'rec', 16.6, 1), w('sale_price', 'rec', 26.9, 1)] },
+  { mkt: 'IE', weak: [w('pattern', 'rec', 4.4, 1), w('material', 'rec', 7.1, 1)] },
+  { mkt: 'DE', weak: [w('pattern', 'rec', 12.8, 1), w('material', 'rec', 13.3, 1), w('gtin', 'cond', 88, 2)] },
+];
+const G = pbGroupWeak(schuh);
+eq(G.length, 4, 'eight rows across three markets are four attributes \u2014 sale price already out');
+eq(G.map((x) => x.k).join(','), 'gtin,pattern,material,product_highlight',
+  'tier leads the sort: a conditional attribute at 88% outranks a recommended one at 4.4%');
+const pat = G.filter((x) => x.k === 'pattern')[0];
+eq(pat.mkts.length, 3, 'the markets are kept, so the row can name its own evidence');
+eq(pat.cov, 4.4, 'the row reads its WORST market, not an average and not the first one seen');
+const gone = pbGroupWeak([{ mkt: 'GB', weak: [w('gtin', 'cond', null, 3, true)] },
+                          { mkt: 'IE', weak: [w('gtin', 'cond', 94, 2)] }]);
+eq(gone[0].missing, true, 'absent in one market beats present-but-thin in another');
+eq(gone[0].gone, 1, 'and the panel knows how many markets it is absent from');
+ok(pbGroupWeak([]).length === 0 && pbGroupWeak(null).length === 0, 'no feeds is no rows, never a throw');
+
+/* the rendered panel, not just the engine: three rows and a stated set-aside line */
+ok(/Top 3 to work on/.test(WF), 'the section is headed by what it is \u2014 three things to do');
+ok(/pbGroupWeak\(scored\)/.test(WF) && /pbAside\(scored\)/.test(WF),
+  'the renderer reads the grouped list and names what it set aside');
+ok(/grp\.slice\(0, ?3\)/.test(WF), 'three rows, not eight \u2014 a ranked list of eleven is no ranking');
+ok(!/all\.slice\(0, ?8\)/.test(WF), 'the old market-by-market top eight is gone');
+ok(/Set aside as not feed work/.test(WF), 'nothing is dropped silently');
 
 console.log('\n\u2500\u2500 the bottom line: top 3 actions');
 /* Ray, 18 Sep 2026: "when you say completeness across ten markets is 76.7%, that's great, but at
