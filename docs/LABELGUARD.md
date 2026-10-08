@@ -1486,6 +1486,85 @@ too. Harness `tools/check_grplan.js` (Playwright, presync) checks the following:
 - the board is one column on a phone;
 - neither download names another brand.
 
+### 9.12i Custom label strategy, scored (8 Oct 2026)
+
+Ray: *"within Golden Score, bring in custom labels as well. The custom label strategy must be
+diverse, dynamic, and KPI-oriented … values that mimic strategies such as bestsellers inside PMax
+campaigns, stock-related metrics like percentage or range completion, and margin-related labels
+that indicate high, medium, or low … scan the custom label values to understand what they
+represent, identify the strategy type, and score against it."*
+
+**What it reads.** The section uses the same `custom_label_0..4` snapshot that Label Guard keeps for
+the feed: `/api/labels/snapshot`. The Golden scan reads that snapshot on the same pass. Movement is
+measured against the oldest earlier reading held, which is the known-good, or else yesterday's.
+
+**How a label is read.** The feed never says what a label is for, so each label is read from its own
+values, weighted by how many products carry each one. `clValueKind` sorts a value into one of these:
+
+- the six KPI strategies:
+  - performance (best sellers, zombies, ROAS, top N)
+  - stock & range completion (RC %, low stock, broken sizes, hero sizes)
+  - margin
+  - price band
+  - lifecycle & season (new in, SS26, carryover, clearance)
+  - promotion
+- merchandising, meaning descriptive values such as category or gender
+- none, meaning ids, placeholders and bare codes
+
+Two kinds of bare value are treated as guesses:
+
+- **Bare high / medium / low** reads as margin.
+- **Bare percentages** read as range completion.
+
+Both carry the word **inferred**, unless the column name says what the value measures.
+
+A label takes the kind that covers at least half of its recognised products. If no kind does, the
+label is **unclear** and the reason is given. The engine never guesses.
+
+**Score** (`clStrategy`, labelguard.js) has four parts, each printed on the card:
+
+| Part | Points | What it measures |
+|---|---|---|
+| Strategies | 60 | The KPI kinds carried. Performance 30, stock 25, margin 20, price 10, lifecycle 10, promotion 5. |
+| Diversity | 15 | How many distinct KPI kinds. One 5, two 10, three or more 15. |
+| Reach | 10 | The KPI labels' average coverage. |
+| Dynamism | 15 | The share of KPI labels whose products changed segment by at least 0.5% since the earlier reading (`clMoved`, a lower bound). |
+
+If there is no earlier reading, dynamism is **not measured**. The other three parts are then scaled
+up to 100, and the card says so. It never scores a zero for a reading nobody took.
+
+The verdict comes in four bands:
+
+| Score | Verdict |
+|---|---|
+| 85 and over | KPI-driven |
+| 60 to 84 | Partly KPI-driven |
+| Under 60 | Mostly descriptive |
+| No KPI label at all | No KPI strategy |
+
+**It is its own score.** Google never shows a custom label to a shopper, so this score never moves
+the Golden Score dial and is not part of AI-readiness. Feed Lab still leaves labels out of
+AI-readiness.
+
+**The card**, placed after "Two scores", shows:
+
+- the score, with its pill and the four part chips;
+- the five slots, each with what kind of label it is, its top values, its coverage, and whether it
+  moved or stayed static;
+- the six strategies, each ticked with the slot that carries it, or shown with what it would take
+  to add (for example, a FeedHero rule from Google Ads data, or margin bands from the client);
+- a line naming any descriptive or duplicate slots, because those are the room for new strategies.
+
+The card folds like every other section, and keeps its score in the folded header. Both downloads
+carry it.
+
+**Action plan cards.** A missing performance or stock strategy becomes a card in **Next**. Margin
+becomes a card in **Then**, owned by **Your team**. Price band and lifecycle also become **Then**
+cards while a slot is free, and each names the free slot.
+
+**Harnesses.** `tools/test_clstrategy.mjs` tests the engine; it runs in qa_gate, presync and
+validate. `tools/check_grcl.js` tests the page, the download and the plan; it runs in presync.
+
 ### 9.12d Every scorecard section folds (7 Oct 2026)
 
 Ray, over a screenshot of the "Two scores, two questions" card: *"make these boxes collapsible as

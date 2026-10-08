@@ -531,6 +531,39 @@ window.addEventListener('load',restore);
   .qz-pill.mid{background:#FDF3E3;border-color:#F3D9A8;color:var(--orange-deep)}
   .qz-pill.poor{background:#FDEBEA;border-color:#F5C4C0;color:var(--risk)}
   .qz-line{font-size:12.5px;color:var(--ink-2);margin:0 0 10px;line-height:1.55}
+  /* custom label strategy (8 Oct 2026) */
+  .cl-parts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .cl-parts span{font-size:11px;font-weight:700;color:var(--muted);background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:3px 9px}
+  .cl-parts b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .cl-parts .nm b{color:var(--muted);font-weight:700}
+  .cl-slots{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0 12px}
+  .cl-slot{display:grid;grid-template-columns:40px 172px minmax(0,1fr) 120px 92px;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);font-size:12px}
+  .cl-slot:first-child{border-top:none}
+  .cl-slot.off{background:var(--wash)}
+  .cl-n{font-weight:900;color:var(--muted);font-size:11px;letter-spacing:.06em}
+  .cl-kind{justify-self:start;font-size:10.5px;font-weight:900;border-radius:100px;padding:3px 9px;white-space:nowrap}
+  .cl-kind.plain{color:var(--muted);background:transparent;border:1px dashed var(--line)}
+  .cl-kind em{font-style:normal;font-weight:700;opacity:.75;margin-left:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em}
+  .cl-vals{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+  .cl-v{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cl-v b{color:var(--ink);font-weight:700}
+  .cl-more{font-size:11px;color:var(--muted);padding:1px 2px}
+  .cl-why{flex-basis:100%;font-size:11px;color:var(--muted)}
+  .cl-cov{display:grid;grid-template-columns:1fr 44px;gap:6px;align-items:center}
+  .cl-cov b{text-align:right;font-variant-numeric:tabular-nums}
+  .cl-mv{font-size:11px;font-weight:800;color:var(--muted);text-align:right}
+  .cl-mv.on{color:var(--good)}
+  .cl-strats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+  .cl-st{border:1px dashed var(--line);border-radius:10px;padding:9px 11px;background:var(--card)}
+  .cl-st.on{border:1px solid var(--clc);background:var(--clb)}
+  .cl-sh{display:flex;align-items:center;gap:6px;font-size:12.5px}
+  .cl-tick{width:16px;font-weight:900;color:var(--muted)}
+  .cl-st.on .cl-tick,.cl-st.on .cl-sh b{color:var(--clc)}
+  .cl-w{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted)}
+  .cl-sk{font-size:11px;color:var(--ink-2);margin:3px 0 0 22px}
+  .cl-sx{font-size:11px;color:var(--muted);margin:3px 0 0 22px;line-height:1.45}
+  @media (max-width:900px){body:not(.pdf) .cl-strats{grid-template-columns:1fr 1fr}body:not(.pdf) .cl-slot{grid-template-columns:34px 1fr 100px;}body:not(.pdf) .cl-vals{grid-column:1/-1;order:5}body:not(.pdf) .cl-mv{display:none}}
+  @media (max-width:560px){body:not(.pdf) .cl-strats{grid-template-columns:1fr}}
   .qz-row{display:grid;grid-template-columns:186px 52px minmax(90px,1fr) minmax(190px,1.4fr) 152px;gap:10px;
     align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .qz-row:first-of-type{border-top:none}
@@ -1737,6 +1770,8 @@ window.addEventListener('load',restore);
         if (QUAL[k] === undefined) loadQuality(k).then(function () { if (SEL === k) renderDetail(k); });
         // the score history (non-blocking; the card fills in place when it lands)
         if (HIST[k] === undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
+        // the custom labels as Label Guard last read them (non-blocking; the strategy section fills in when it lands)
+        if (CL[k] === undefined) loadCL(k).then(function () { if (SEL === k) renderDetail(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -1807,6 +1842,7 @@ window.addEventListener('load',restore);
         .then(function (r) { return r.json(); })
         .then(function (full) {
           CACHE[k] = full;
+          delete CL[k]; loadCL(k);   // the same scan re-read the custom labels
           // a scan can add a reading to the history — re-read it when this feed's card is in play
           var hl = (HIST[k] !== undefined || SEL === k) ? loadHistory(k) : Promise.resolve();
           return hl.then(function () { if (thenRender !== false) renderDetail(k); return refreshEstate(); });
@@ -2432,7 +2468,7 @@ window.addEventListener('load',restore);
       var f = tfIs(key), name = (h.querySelector('h4') || {}).textContent || 'this section';
       t.classList.toggle('folded', f);
       // a section whose headline number lives in its body carries it into the header while folded
-      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : null);
+      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : (key === 'cl' ? t.querySelector('.cl-score') : null));
       if (src && !sum) { sum = document.createElement('span'); sum.className = 'tf-sum'; var h4 = h.querySelector('h4'); h.insertBefore(sum, h4 ? h4.nextSibling : null); }
       if (sum) { sum.textContent = src ? src.textContent + (key === 'air' ? '/100' : '') : ''; sum.style.color = src ? src.style.color : ''; sum.hidden = !f || !src; }
       b.setAttribute('aria-expanded', f ? 'false' : 'true');
@@ -2607,6 +2643,7 @@ window.addEventListener('load',restore);
     h += qualitySection(k, s);   // Ray's content-quality read, below the four spec tiers
     h += airSection(k);          // and the AI-Readiness ladder under that
     h += reconcileSection(k);    // and where those two readings of the same field disagree
+    h += clSection(k);           // and what the custom labels let a campaign bid on
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
@@ -3790,6 +3827,90 @@ window.addEventListener('load',restore);
       why: 'legal against enough — two perfect highlights still say little' },
   ];
   var RECON_GAP = 15;     // the point at which two readings of one field are worth explaining
+  /* ---------------- CUSTOM LABEL STRATEGY (Ray, 8 Oct 2026: "within Golden Score, bring in custom labels as well. The custom
+     label strategy must be diverse, dynamic, and KPI-oriented … values that mimic strategies such as bestsellers inside PMax
+     campaigns, stock-related metrics like percentage or range completion, and margin-related labels that indicate high, medium,
+     or low … scan the custom label values to understand what they represent, identify the strategy type, and score against it.")
+     Read off the SAME custom_label_0..4 snapshot Label Guard keeps for this feed (the Golden scan reads it on the same pass), and
+     scored by labelguard.js clStrategy — ONE engine, so /labels can show the same reading later. It is its OWN score: Google never
+     shows a custom label to a shopper, so it is neither completeness nor AI-readiness, and it never moves the Golden Score dial. */
+  var CL = {};            // key -> {snap, ref} | null (asked, Label Guard holds no reading)
+  function loadCL(k) {
+    var p = parts(k);
+    return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var sn = j && j.snapshot;
+        if (!sn || !sn.labels) { CL[k] = null; return; }
+        // the movement reads against the OLDEST earlier reading held (known-good, else yesterday) — the longer the window,
+        // the fairer the test of whether a label follows the business
+        var refs = [j.baseline, j.daily].filter(function (x) { return x && x.labels && x.t && x.t < sn.t; })
+          .sort(function (a, b) { return a.t - b.t; });
+        CL[k] = { snap: sn, ref: refs[0] || null };
+      })
+      .catch(function () { CL[k] = null; });
+  }
+  var CL_COL = { perf: ['#1D4ED8', '#E8EFFC'], stock: ['#15803D', '#EAF7EE'], margin: ['#6D28D9', '#F1ECFD'], price: ['#B1550A', '#FDF3E3'],
+    life: ['#0E7490', '#E3F4F7'], promo: ['#9D174D', '#FBE7F0'] };
+  function clChip(kind, st) {
+    var K = (LGQ && LGQ.CL_KINDS) || {}, c = CL_COL[kind];
+    var lbl = kind === 'empty' ? 'not in feed' : kind === 'unclear' ? 'unclear' : (K[kind] ? K[kind].label : kind);
+    return '<span class="cl-kind' + (c ? '' : ' plain') + '"' + (c ? ' style="color:' + c[0] + ';background:' + c[1] + '"' : '') + '>' + esc(lbl) +
+      (st && st.inferred ? '<em title="Read from bare values — high / medium / low or percentages with no word naming them; the usual meaning in a Shopping feed, worth confirming">inferred</em>' : '') + '</span>';
+  }
+  function clSection(k) {
+    var c = CL[k];
+    if (!LGQ || !LGQ.clStrategy) return '';
+    var h = '<div class="tier" data-tf="cl" id="cl-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#E8EFFC;color:#1D4ED8">Custom labels</span>' +
+      '<h4>What the custom labels let your campaigns bid on</h4>' +
+      (c ? '<span class="qz-meta"><span>' + fmt(c.snap.rows) + ' products · labels read ' + ago(c.snap.t) + '</span></span>' : '') + '</div>';
+    if (c === undefined) return h + '<p class="qz-empty">Reading the custom labels…</p></div>';
+    if (!c) return h + '<p class="qz-empty">No custom-label reading for this feed yet — the next scan reads them.</p></div>';
+    var r = LGQ.clStrategy(c.snap, c.ref);
+    if (!r) return '';
+    var K = LGQ.CL_KINDS;
+    h += '<div class="qz-head"><span class="qz-score cl-score" style="color:' + scoreCol(r.score) + '">' + r.score + '</span>' +
+      '<span class="qz-of">Label strategy<br>/ 100</span>' +
+      '<span class="qz-pill ' + r.verdict.band + '">' + esc(r.verdict.pill) + '</span>' +
+      '<span class="cl-parts">' +
+        '<span title="Which KPI strategies the labels carry, weighted by what they move">Strategies <b>' + r.parts.strat + '</b>/60</span>' +
+        '<span title="How many different KPI strategies: one 5, two 10, three or more 15">Diversity <b>' + r.parts.div + '</b>/15</span>' +
+        '<span title="How many products the KPI labels reach, on average">Reach <b>' + r.parts.reach + '</b>/10</span>' +
+        (r.parts.dyn == null
+          ? '<span class="nm" title="Whether the labels move as the business does needs an earlier reading of this feed — the other three parts are scaled to 100 until then">Dynamism <b>not measured yet</b></span>'
+          : '<span title="The share of KPI labels whose products changed segment since ' + esc(new Date(r.refT).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '">Dynamism <b>' + r.parts.dyn + '</b>/15</span>') +
+      '</span></div>';
+    // the five slots, as the feed carries them
+    h += '<div class="cl-slots">' + r.slots.map(function (sl) {
+      var vals = sl.top.map(function (v) { return '<span class="cl-v" title="' + esc(maskText(v[0])) + ' — ' + fmt(v[1]) + ' products"><b>' + esc(maskText(v[0])) + '</b> ' + fmt(v[1]) + '</span>'; }).join('');
+      var more = sl.distinct > sl.top.length ? '<span class="cl-more">+' + fmt(sl.distinct - sl.top.length) + ' more</span>' : '';
+      var mv = !sl.kpi ? '' : sl.moved == null ? '<span class="cl-mv nm" title="Needs an earlier reading of this feed">—</span>'
+        : '<span class="cl-mv' + (sl.moved >= LGQ.CL_MOVE_PP ? ' on' : '') + '" title="Products that changed segment since the earlier reading (a lower bound — two counts cannot say which products moved)">' +
+          (sl.moved >= LGQ.CL_MOVE_PP ? '↻ ' + sl.moved + '% moved' : 'static') + '</span>';
+      return '<div class="cl-slot' + (sl.present ? '' : ' off') + '"><span class="cl-n">CL' + sl.n + '</span>' + clChip(sl.kind, sl) +
+        '<span class="cl-vals">' + (sl.present ? (vals || '<span class="muted">no values</span>') + more : '<span class="muted">not in the feed — a free slot</span>') +
+        (sl.why ? '<span class="cl-why">' + esc(sl.why) + '</span>' : '') + '</span>' +
+        '<span class="cl-cov">' + (sl.present ? '<span class="qz-bar"><i class="b-' + auditBand(sl.cov) + '" style="width:' + Math.max(1.5, Math.min(100, sl.cov)) + '%"></i></span><b>' + sl.cov + '%</b>' : '') + '</span>' +
+        mv + '</div>';
+    }).join('') + '</div>';
+    // the six KPI strategies: carried, or what it would take
+    h += '<div class="cl-strats">' + LGQ.CL_KPI.map(function (kd) {
+      var S = K[kd], on = r.kinds[kd], c2 = CL_COL[kd];
+      return '<div class="cl-st' + (on ? ' on' : '') + '" style="--clc:' + c2[0] + ';--clb:' + c2[1] + '">' +
+        '<div class="cl-sh"><span class="cl-tick">' + (on ? '✓' : '○') + '</span><b>' + esc(S.label) + '</b><span class="cl-w">' + S.w + ' pts</span></div>' +
+        '<div class="cl-sk">' + esc(S.kpi) + '</div>' +
+        '<div class="cl-sx">' + (on ? 'Carried in ' + on.map(function (n) { return 'CL' + n; }).join(' · ')
+          : 'Not carried — e.g. ' + esc(S.eg) + '. ' + (S.who === 'you' ? 'Needs your team: ' : '') + esc(S.how) + '.') + '</div></div>';
+    }).join('') + '</div>';
+    if (r.descr.length || r.dup.length) {
+      h += '<p class="qz-line">' +
+        (r.descr.length ? r.descr.map(function (n) { return 'CL' + n; }).join(', ') + (r.descr.length === 1 ? ' carries' : ' carry') + ' descriptive values — category, gender or the like, which the feed already holds in its own attributes. ' : '') +
+        (r.dup.length ? 'More than one label carries ' + r.dup.map(function (x) { return K[x].label.toLowerCase(); }).join(' and ') + '. ' : '') +
+        (r.missing.length && (r.descr.length || r.dup.length) ? 'Those slots are the room for the strategies not yet carried.' : '') + '</p>';
+    }
+    return h + '</div>';
+  }
   function reconcileSection(k) {
     var qd = QUAL[k], a = qd && qd.ai;
     if (!a || !a.total || !LGQ) return '';
@@ -4047,7 +4168,7 @@ window.addEventListener('load',restore);
   var PLAN_CAP = { now: 5, next: 5, then: 4 };
   var PLAN_CLIENT = { id: 1, title: 1, description: 1, link: 1, image_link: 1, availability: 1, price: 1, brand: 1, gtin: 1, mpn: 1,
     condition: 1, item_group_id: 1, sale_price: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
-  function planBuild(attrs, prof, qd, ai) {
+  function planBuild(attrs, prof, qd, ai, cl) {
     var base = goldenScore(attrs, prof), out = { now: [], next: [], then: [], base: base, proj: base };
     if (base == null) return out;
     var full = function (a, ks) {
@@ -4101,10 +4222,22 @@ window.addEventListener('load',restore);
       .sort(function (x, y) { return x.score - y.score; }).slice(0, 2).forEach(function (p) {
         thenAct.push({ lane: 'then', pri: '', f: 'AI', own: 'fs', t: 'Lift ' + p.label.charAt(0).toLowerCase() + p.label.slice(1) + ' (' + p.score + ' / 100)',
           w: 'The weakest area of AI readiness on this feed — the scorecard above shows what it reads.' }); });
+    // custom-label strategy: the KPI signals the labels do not carry yet (clStrategy — its own score, never the dial's)
+    var clNext = [];
+    if (cl && cl.missing && LGQ && LGQ.CL_KINDS) {
+      var free = cl.spare.concat(cl.descr), slot = function () { var n = free.shift(); return n == null ? '' : ' (CL' + n + ' is free for it)'; };
+      cl.missing.forEach(function (kd) {
+        var S = LGQ.CL_KINDS[kd];
+        if (kd !== 'perf' && kd !== 'stock' && kd !== 'margin' && cl.have.length >= 3 && !free.length) return;   // diverse already, and no slot to spare
+        var a = { pri: kd === 'perf' ? 'hi' : '', f: 'Custom labels', own: S.who === 'you' ? 'you' : 'fs',
+          t: 'Add a ' + S.label.toLowerCase() + ' label' + slot(), w: 'So campaigns can bid on ' + S.kpi.split(' — ')[0].toLowerCase() + ' — e.g. ' + S.eg + '. ' + S.how.charAt(0).toUpperCase() + S.how.slice(1) + '.' };
+        if (kd === 'perf' || kd === 'stock') clNext.push(a); else thenAct.push(a);
+      });
+    }
     var byGain = function (x, y) { return (y.g || 0) - (x.g || 0); };
     var byCost = function (x, y) { return (y.q || 0) - (x.q || 0); };
     out.now = attrAct.filter(function (x) { return x.lane === 'now'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'now'; }).sort(byCost));
-    out.next = attrAct.filter(function (x) { return x.lane === 'next'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'next'; }).sort(byCost));
+    out.next = attrAct.filter(function (x) { return x.lane === 'next'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'next'; }).sort(byCost)).concat(clNext);
     out.then = thenAct;
     // the projection: every field action in Now + Next landed on every product, one re-score
     var ks = []; out.now.concat(out.next).forEach(function (x) { (x.ks || []).forEach(function (k) { if (ks.indexOf(k) < 0) ks.push(k); }); });
@@ -4116,7 +4249,9 @@ window.addEventListener('load',restore);
     var p = parts(k), prof = profileForC(p.client), qd = null;
     try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
     var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
-    var pl = planBuild(s.attrs, prof, qd, ai);
+    var clr = null;
+    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref); } catch (e) {}
+    var pl = planBuild(s.attrs, prof, qd, ai, clr);
     if (pl.base == null) return '';
     var lanes = [['now', 'Now', 'this week', 'var(--risk)'], ['next', 'Next', 'within 30 days', 'var(--orange-deep)'], ['then', 'Then', 'this quarter', '#7C3AED']];
     var card = function (a) {

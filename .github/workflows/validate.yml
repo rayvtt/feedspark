@@ -27,6 +27,8 @@ jobs:
 
       - name: Label Guard engine unit tests
         run: node tools/test_labelguard.mjs
+      - name: Custom label strategy (Golden Score label section)
+        run: node tools/test_clstrategy.mjs
       - name: Feed Lab AI-readiness model (conversational weighting, custom labels unscored)
         run: node tools/test_feedlab.mjs
       - name: Overlays engine unit tests (URL-string classification + collector)
