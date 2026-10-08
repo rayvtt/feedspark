@@ -407,6 +407,9 @@ window.addEventListener('load',restore);
   [data-theme=dark] .pv-fr.on{background:rgba(72,208,126,.10)}
   [data-theme=dark] .pv-fr.t2.on{background:rgba(91,130,190,.14)}
   .pv-gh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 1px}
+  .pv-fsh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 6px 2px}
+  .pv-f.svc{background:var(--chart-1,#2563EB)}
+  .pv-sv .fk{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pv-gh:first-child{margin-top:0}
   .pv-r{display:grid;grid-template-columns:minmax(0,8.6em) minmax(0,1fr) 3em minmax(0,12em);align-items:center;gap:8px;padding:2px 0;min-height:22px;font-size:12.5px;position:relative}
   .pv-r .lb{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -599,10 +602,31 @@ window.addEventListener('load',restore);
   .po-b{flex:1;min-width:220px;font-size:12.5px}
   .po-m{font-size:12px;color:var(--ink-2);margin-top:2px}
   .po-a{display:flex;gap:6px;flex-wrap:wrap}
-  .sec-tog{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;margin-left:8px;vertical-align:3px}
-  .sec-tog:hover{border-color:var(--orange);color:var(--orange-deep)}
-  .sec-allbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-  .sec-all{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:30px}
+  /* SECTION HEADS (Ray, 8 Oct 2026: "redesign section tab so it looks better … i dont think these free floating sentences"):
+     each section opens on a white tile — title, one quiet line saying what is inside, a round chevron at the right — the grouped
+     list Apple uses for settings and spec sheets; folded tiles stack as one list, an open one keeps its tile and its body follows */
+  h2.sec-h{display:flex;align-items:center;gap:14px;margin:12px 0 0;padding:17px 18px 17px 22px;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.04);cursor:pointer;font-weight:700;transition:border-color .18s,box-shadow .18s;user-select:none;-webkit-user-select:none}
+  h2.sec-h:hover{border-color:rgba(51,51,51,.18);box-shadow:0 6px 18px rgba(15,23,42,.06)}
+  h2.sec-h:focus-within{border-color:rgba(245,166,35,.6)}
+  section.sec-on h2.sec-h{margin-bottom:16px}
+  #svc-audit h2.sec-h{margin-top:22px}
+  .sec-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .sec-tt{font-size:19px;font-weight:700;letter-spacing:-.014em;line-height:1.25;color:var(--ink);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .sec-tt .ai-n{font-size:12px;letter-spacing:0}
+  .sec-desc{font-size:13.5px;font-weight:400;letter-spacing:0;line-height:1.4;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sec-tog{order:9;flex:none;width:34px;height:34px;padding:0;margin:0;border:0;border-radius:50%;background:var(--wash);color:var(--ink-2);display:grid;place-items:center;cursor:pointer;font-size:0;line-height:0;transition:background .18s,color .18s}
+  .sec-tog::before{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .25s ease}
+  .sec-tog[aria-expanded="true"]::before{transform:translateY(2px) rotate(-135deg)}
+  h2.sec-h:hover .sec-tog,.sec-tog:focus-visible{background:rgba(245,166,35,.16);color:var(--orange-deep);outline:none}
+  @media(max-width:760px){
+    h2.sec-h,h2.sec-h.fcc-dg-hd{padding:12px 12px 12px 16px!important;margin:10px 0 0!important;border-radius:14px!important;min-height:56px}
+    section.sec-on h2.sec-h.fcc-dg-hd{margin-bottom:12px!important}
+    h2.sec-h .sec-desc{display:none}
+    h2.sec-h .sec-tt{font-size:16px}
+    h2.sec-h.fcc-dg-hd .sec-tog{font-size:0!important;padding:0!important;width:32px;min-height:32px!important;height:32px;margin-left:auto}}
+  .sec-sub-x{display:none!important}
+  .sec-allbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .sec-all{font:inherit;font-size:12px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:30px}
   .sec-all:hover{border-color:var(--orange);color:var(--orange-deep)}
   .sec-body[hidden]{display:none!important}
   @media(max-width:760px){
@@ -1623,6 +1647,32 @@ Object.keys(SEC_WRAP).forEach(function(id){
   while(h.nextSibling)body.appendChild(h.nextSibling);
   w.appendChild(body);
 });
+// the head of every section that folds: title + one line of what is inside + the chevron, the whole tile a toggle
+var SEC_DESC={au:'Eight readings per market — from the stored scans or a live read of the feed.',
+  pq:'Three tiers, each priced on the products that actually need the work.',
+  db:'The talk track, the client\u2019s own products and the email, in two tones.',
+  ro:'Every account\u2019s stage, from audit to always-on.',
+  rm:'What each line can be sold as today, industry by industry.',
+  bk:'Every optimisation, the tier it sits in and what it gives.',
+  rc:'ASPL, London AM and Management \u2014 one rate card.',
+  cq:'Price any set of optimisations by hand, for any client.',
+  ai:'AI briefs and their delivery, read straight from Workflow.',
+  sv:'Every proposal and quote, each counted once in the pipeline.'};
+$$('h2 .sec-tog').forEach(function(b){var h=b.parentNode;if(h.classList.contains('sec-h'))return;
+  var k=b.getAttribute('data-sec'),main=document.createElement('span'),tt=document.createElement('span');
+  main.className='sec-main';tt.className='sec-tt';
+  while(h.firstChild&&h.firstChild!==b)tt.appendChild(h.firstChild);
+  var rest=[];for(var n=b.nextSibling;n;n=n.nextSibling)rest.push(n);rest.forEach(function(x){tt.appendChild(x)});
+  if(tt.lastChild&&tt.lastChild.nodeType===3&&!tt.lastChild.textContent.trim())tt.removeChild(tt.lastChild);
+  main.appendChild(tt);
+  if(SEC_DESC[k]){var d=document.createElement('span');d.className='sec-desc';d.textContent=SEC_DESC[k];main.appendChild(d);
+    // the section's own explainer said the same thing as a floating sentence under the tile — it becomes the line's tooltip
+    var bd=document.getElementById('sec-'+k),sub=bd&&bd.firstElementChild;
+    if(sub&&sub.matches('p.sub')){d.title=sub.textContent.replace(/\s+/g,' ').trim();sub.classList.add('sec-sub-x')}}
+  h.insertBefore(main,b);h.classList.add('sec-h');
+  if(!b.getAttribute('aria-controls'))b.setAttribute('aria-controls','sec-'+k);
+  h.addEventListener('click',function(e){if(e.target.closest('button,a,input,select,label,textarea,.info-pop'))return;
+    if(h.classList.contains('fcc-dg-own')&&window.matchMedia&&matchMedia('(max-width:760px)').matches)return;b.click()})});
 // ⊕ Open all / ⊖ Fold all, under the hero's controls
 (function(){var hw=document.querySelector('.hero .wrap');if(!hw)return;var d=document.createElement('div');d.className='sec-allbar';
   d.innerHTML='<button type="button" class="sec-all" data-secall="1">⊕ Open all sections</button><button type="button" class="sec-all" data-secall="0">⊖ Fold all sections</button>';
@@ -1635,7 +1685,8 @@ function secOpen(k){return SECS[k]!=null?!!SECS[k]:!!SEC_DEF[k]}
 function secSet(k,on){SECS[k]=on?1:0;lsSet('fcc-pz-sec',SECS);secApply()}
 function secApply(){
   $$('.sec-tog').forEach(function(b){var k=b.getAttribute('data-sec'),on=secOpen(k),body=document.getElementById('sec-'+k);
-    b.setAttribute('aria-expanded',on?'true':'false');b.textContent=on?'▾ Hide':'▸ Show';if(body)body.hidden=!on});
+    b.setAttribute('aria-expanded',on?'true':'false');b.textContent=on?'▾ Hide':'▸ Show';b.setAttribute('aria-label',(on?'Hide ':'Show ')+((b.closest('h2')&&b.closest('h2').querySelector('.sec-tt')||{}).textContent||'section').trim());if(body)body.hidden=!on;
+    var sec=b.closest('section');if(sec)sec.classList.toggle('sec-on',on)});
 }
 $$('.sec-tog').forEach(function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-sec'),on=!secOpen(k);secSet(k,on);
   if(on&&k==='cq'&&CLIENT&&MARKET&&!MKPROD[CLIENT+'|'+MARKET])countParents(CLIENT,MARKET,false);
@@ -2434,6 +2485,15 @@ function pvExVal(v,k){
   if(k==='question_and_answer')return {s:x.map(function(y){return 'Q: '+y.q+' A: '+y.a}).join(' · '),t:x.map(function(y){return 'Q: '+y.q+'\nA: '+y.a}).join('\n\n')};
   return {s:x,t:x};
 }
+// THE BANK IN THE AUDIT (Ray, 8 Oct 2026: "add stock range completion, restock alerts, image type, AI visibility report
+// on Tier 3 too (if it's added mentioned in bank, it should show in this audit)"): every optimisation the team added
+// to the bank and placed in a tier — a service (stock range completion, restock alerts) or a new optimisation (image
+// type, the AI visibility report …) — is one row of its own under the attributes, on the product card AND in the
+// coverage column, marked with the tier that carries it. Tiers include the tiers below, so Tier 3 lists Tier 2's too.
+// A service writes no feed field, so its row says what it does rather than drawing a share of products.
+function pvBank(){return E.bankOf(BANK.data).filter(function(b){return b.custom&&b.pkg!=='off'})}
+function pvBankSig(){return pvBank().map(function(b){return b.key+':'+b.pkg+':'+b.label+':'+b.gives}).join('|')}
+var PV_TS={go:'T1',ar:'T2',rf:'T3'};
 function renderPreview(){
   var host=$('#svc-prev');if(!host)return;
   var A=SV.audits||[],q1=PQ.go,q2=PQ['go+ar'],q3=PQ['go+ar+rf']||q2;
@@ -2488,14 +2548,16 @@ function renderPreview(){
   if(P&&PV.opt!=='now')pvExample(P);
   var EX=P&&PV.ex[P.id],DER=P?pvDerive(P,a.mkt):{};
   // the product card — the client's own product, its fields filling in by tier
-  var pp=host.querySelector('.pv-prod'),pk=key+'|'+(P?P.id:'');
+  var BK=pvBank(),BSIG=pvBankSig(),pp=host.querySelector('.pv-prod'),pk=key+'|'+(P?P.id:'')+'|'+BSIG;
   if(pp.getAttribute('data-k')!==pk){
     pp.setAttribute('data-k',pk);
     pp.innerHTML=!P?'<div class="pv-noimg">'+(SV.mode==='stored'?'Switch to <b>⚡ Live</b> or <b>⇪ File</b> to show one of the client\'s own products here.':'Reading the feed — a product appears here once the read lands.')+'</div>'
       :'<div class="pv-ph"><div class="pv-img"><img src="'+esc(P.image_link)+'" alt="'+esc(P.title)+'" loading="lazy" referrerpolicy="no-referrer"></div>'
        +'<div><div class="pv-pt">'+esc(P.title)+'</div><div class="pv-pid">'+esc(P.id||'')+(P.brand?' · '+esc(P.brand):'')+(P.price?' · '+esc(P.price):'')+'</div><div class="pv-ex"></div></div></div>'
        +'<div class="pv-fl">'+PV_GROUPS.map(function(G){return G[1].filter(function(k){var x=at[k];return !(x&&x.na)}).map(function(k){
-         return '<div class="pv-fr" data-k="'+k+'"><span class="fk" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="fv"></span><span class="fs"></span></div>'}).join('')}).join('')+'</div>';
+         return '<div class="pv-fr" data-k="'+k+'"><span class="fk" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="fv"></span><span class="fs"></span></div>'}).join('')}).join('')
+       +(BK.length?'<div class="pv-fsh">FeedSpark services</div>'+BK.map(function(b){
+         return '<div class="pv-fr pv-sv" data-b="'+esc(b.key)+'"><span class="fk" title="'+esc(b.label)+'">'+esc(b.label)+'</span><span class="fv how" title="'+esc(b.why||b.gives)+'">'+esc(b.gives||b.why||'by FeedSpark')+'</span><span class="fs"></span></div>'}).join(''):'')+'</div>';
   }
   if(P){
     var exl=pp.querySelector('.pv-ex');
@@ -2506,7 +2568,7 @@ function renderPreview(){
       :!EX||EX.st==='wait'?'✦ Example values from this product\'s own data · Spark AI is writing its version…':'✦ Example values built from this product\'s own data — reviewed before they reach the feed';
     exl.textContent='';exl.setAttribute('data-note',exNote);exl.hidden=true;
     var phi=pp.querySelector('.pv-img');if(phi)phi.title=exNote+(EX&&EX.msg?' — '+EX.msg:'');
-    pp.querySelectorAll('.pv-fr').forEach(function(r,i){
+    pp.querySelectorAll('.pv-fr:not(.pv-sv)').forEach(function(r,i){
       var k=r.getAttribute('data-k'),val=pvVal(P,k),had=!!val,tag=who(k,had?100:0),tbc=PV.opt!=='now'&&!fill[k]&&TBC.test(gapT[k]||''),on=!!fill[k]||tbc;
       // TIER 2 LEAVES NOTHING MISSING on the example (Ray, 8 Oct 2026: "all missing have to be filled when Tier 2
       // AI-ready is selected"): a gap no priced line closes is still filled here — by the Spark AI work already
@@ -2529,16 +2591,25 @@ function renderPreview(){
       if(was!=null&&was!==(on?'1':'0')&&on){r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop')}
     });
   }
+  var bkIn=function(b){return PV.opt!=='now'&&E.inOption(PV.opt,b.pkg)},bkTag=function(b){return bkIn(b)?'✦ '+(PV_TS[b.pkg]||'')+' · '+(b.kind==='service'?'service':'new')
+    :PV.opt==='now'?'':(E.TIER_NAME[b.pkg]+' adds it')};
+  pp.querySelectorAll('.pv-sv').forEach(function(r){var b=BK.filter(function(x){return x.key===r.getAttribute('data-b')})[0];if(!b)return;
+    var on=bkIn(b),fs=r.querySelector('.fs');fs.textContent=on?'✦ '+(PV_TS[b.pkg]||''):PV.opt==='now'?'':bkTag(b);
+    fs.title=(on?'in this option — ':'not in this option — ')+(b.why||b.gives)+(b.monthly?'':' · no separate charge until Management prices it');
+    var was=r.getAttribute('data-on');r.setAttribute('data-on',on?'1':'0');r.className='pv-fr pv-sv'+(on?' on t'+(b.pkg==='go'?'1':'2'):'');
+    if(was!=null&&was!==(on?'1':'0')&&on){r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop')}});
   // the catalogue — one line of coverage per attribute
   var g=host.querySelector('.pv-g');
-  if(g.getAttribute('data-k')!==key){
-    g.setAttribute('data-k',key);
+  if(g.getAttribute('data-k')!==key+'|'+BSIG){
+    g.setAttribute('data-k',key+'|'+BSIG);
     g.innerHTML=PV_GROUPS.map(function(G){var rows=G[1].filter(function(k){var x=at[k];return !(x&&x.na)});
       return rows.length?'<div class="pv-gh">'+esc(G[0])+' · share of products</div>'+rows.map(function(k){
-        return '<div class="pv-r" data-k="'+k+'"><span class="lb" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="pv-t"><span class="pv-f"></span></span><span class="pv-v">—</span><span class="pv-c"></span></div>'}).join(''):''}).join('');
+        return '<div class="pv-r" data-k="'+k+'"><span class="lb" title="'+esc(k)+'">'+esc(pvLabel(k))+'</span><span class="pv-t"><span class="pv-f"></span></span><span class="pv-v">—</span><span class="pv-c"></span></div>'}).join(''):''}).join('')
+      +(BK.length?'<div class="pv-gh">FeedSpark services · in the option</div>'+BK.map(function(b){
+        return '<div class="pv-r pv-svr" data-b="'+esc(b.key)+'"><span class="lb" title="'+esc(b.why||b.gives)+'">'+esc(b.label)+'</span><span class="pv-t"><span class="pv-f"></span></span><span class="pv-v">—</span><span class="pv-c"></span></div>'}).join(''):'');
   }
   var full=0,tot=0,prev=PV.last||{};
-  g.querySelectorAll('.pv-r').forEach(function(r,i){
+  g.querySelectorAll('.pv-r:not(.pv-svr)').forEach(function(r,i){
     var k=r.getAttribute('data-k'),x=at[k],measured=!!x,now=x&&x.present?(+x.cov||0):0,filled=!!fill[k],v=filled?100:now;
     var f=r.querySelector('.pv-f'),c=r.querySelector('.pv-c');
     f.style.transitionDelay=(i*28)+'ms';
@@ -2553,6 +2624,11 @@ function renderPreview(){
     prev[k]=v;
   });
   PV.last=prev;
+  g.querySelectorAll('.pv-svr').forEach(function(r){var b=BK.filter(function(x){return x.key===r.getAttribute('data-b')})[0];if(!b)return;
+    var on=bkIn(b),f=r.querySelector('.pv-f'),c=r.querySelector('.pv-c');
+    f.style.width=on?'100%':'0%';f.className='pv-f svc';r.querySelector('.pv-v').textContent=on?'✓':'—';
+    var tag=on?(b.kind==='service'?'run by '+E.TIER_NAME[b.pkg]:'added by '+E.TIER_NAME[b.pkg]):PV.opt==='now'?'not running today':E.TIER_NAME[b.pkg]+' adds it';
+    c.textContent=tag;c.title=(b.gives?b.gives+' — ':'')+(b.why||'');c.className='pv-c'+(on?(b.pkg==='go'?' t1':' t2'):'')});
   var sc=PV.opt==='go'?p1.after:PV.opt==='go+ar'?p2.after:T3?p3.after:a.golden.score;
   // WHAT THIS TIER GIVES — the bank's phrases for the tier on screen (Ray, 8 Oct 2026: "Highlights +4 fields · details
   // + 5-8 fields · Stock RC% · Restock …"), the tier's own items after one "everything in the tier below" chip
