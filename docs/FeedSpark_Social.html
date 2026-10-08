@@ -109,18 +109,69 @@ window.addEventListener('load',restore);
   .slot i{position:absolute;left:3px;bottom:3px;font-style:normal;font-size:9.5px;font-weight:900;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:0 4px}
   .dgal{display:flex;gap:6px;flex-wrap:wrap}
 
-  /* previews — the design controls ride beside them (Ray, 8 Oct 2026: "the overlay design section should be on the
-     left-hand side of the platform previews; otherwise I have to scroll up and down just to change things") */
-  .pv-split{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
-  .pv-rail{position:sticky;top:calc(var(--tbh,64px) + 12px);max-height:calc(100vh - var(--tbh,64px) - 24px);overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--wash);min-width:0}
+  /* THE AD STUDIO — every control in one panel on the left, the previews on the right (Ray, 8 Oct 2026: "the dynamic
+     schedule should also sit within the platform reviews. Within the left panel you can navigate between picture,
+     dynamic schedule, AI fields … optimization ideas, and see that directly on the preview rather than scrolling up
+     and down … flipping navigation and controller to the left as a panel. Feel free to extend it horizontally").
+     A vertical tab strip + ONE pane at a time; the panel's width is per tab (a week grid needs more room than a
+     picture picker) and a drag on its right edge sets it, remembered per tab per device (fcc-soc-railw). */
+  main.wrap{max-width:1800px}
+  .pv-split{--railw:400px;display:grid;grid-template-columns:var(--railw) minmax(0,1fr);gap:18px;align-items:start}
+  .pv-railw{position:sticky;top:calc(var(--tbh,64px) + 12px);display:grid;grid-template-columns:62px minmax(0,1fr);border:1px solid var(--line);border-radius:12px;background:var(--wash);min-width:0;height:calc(100vh - var(--tbh,64px) - 24px);max-height:1100px}
+  .rtabs{display:flex;flex-direction:column;gap:2px;padding:8px 5px;border-right:1px solid var(--line);overflow-y:auto}
+  .rtab{font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:none;color:var(--muted);border-radius:9px;padding:7px 2px;cursor:pointer;position:relative}
+  .rtab .ri{font-size:17px;line-height:1}
+  .rtab .rl{font-size:10px;font-weight:900;letter-spacing:.02em}
+  .rtab:hover{background:var(--paper);color:var(--ink)}
+  .rtab[aria-selected="true"]{background:var(--paper);color:var(--orange-ink);box-shadow:inset 3px 0 0 var(--orange)}
+  .rtab .dot{position:absolute;top:5px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--orange)}
+  .pv-rail{overflow-y:auto;overflow-x:hidden;padding:12px 14px;min-width:0}
+  .rpane[hidden]{display:none!important}
+  .rp-h{display:flex;flex-direction:column;gap:1px;margin:0 0 10px}
+  .rp-h b{font-size:15px;font-weight:900;letter-spacing:-.01em}
+  .rp-h .fl{font-size:12px;color:var(--muted);font-weight:700}
   .pv-rail .seg{max-width:100%}
+  .pv-rail .sched{grid-template-columns:minmax(0,1fr);gap:12px}
+  .pv-rail{container-type:inline-size}
+  .pv-rail .ctxg{position:static;background:var(--paper);padding:10px 12px}
+  .pv-rail .ctxg .r{margin:4px 0}
+  .pv-rail .ctxg .r>span:first-child{width:70px}
+  .cxg{display:grid;grid-template-columns:minmax(0,1fr);gap:0 16px;margin-top:6px}
+  .cx2 .r{gap:6px;flex-wrap:nowrap}.cx2 .r>span:first-child{width:62px!important;line-height:1.2}.cx2 input{width:66px!important}
+  @container (min-width:540px){.cxg{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}.cx2{border-left:1px solid var(--line);padding-left:14px}}
+  .nowbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper)}
+  .nowbox .now{margin-top:0;border-top:none;padding-top:0}
+  .pv-rail .ctxg summary{cursor:pointer;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .pv-rail .ctxg summary b{text-transform:none;letter-spacing:0;color:var(--ink);margin-left:4px}
+  .pv-rail .defs{grid-template-columns:100px minmax(0,1fr)}
+  .rgrip{position:absolute;top:0;bottom:0;right:-11px;width:10px;cursor:col-resize;border-radius:6px;touch-action:none}
+  .rgrip::after{content:"";position:absolute;left:3px;top:50%;width:4px;height:44px;margin-top:-22px;border-radius:4px;background:var(--line)}
+  .rgrip:hover::after,.rgrip:focus::after,.rgrip.drag::after{background:var(--orange)}
   .pv-main{min-width:0}
+  /* the brand's own face */
+  .idn .row{display:grid;grid-template-columns:86px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0}
+  .idn .row>span{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .idn input[type=text]{font:inherit;font-size:13px;font-weight:700;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 9px;width:100%;min-width:0}
+  .idn .hb{display:flex;gap:6px;align-items:center;min-width:0}
+  .idn .look{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:8px 10px;margin:4px 0 10px 94px;font-size:12px;display:flex;gap:10px;align-items:center}
+  .idn .look .av{width:40px;height:40px}
+  .idn .look .who{flex:1;min-width:0}
+  .idn .look .who b{display:block;font-size:13px}
+  .idn .look.bad{border-color:var(--orange)}
+  .idn .lgo{display:flex;gap:14px;align-items:center;margin:4px 0 12px}
+  .idn .lgo .av{width:64px;height:64px;font-size:26px}
+  .idn .pv6{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .idn .lgo .seg{flex-wrap:wrap;height:auto}
+  .idn .pv6>span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--muted)}
+  .av{position:relative;overflow:hidden}
+  .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+  @media(max-width:1000px){.pv-split{grid-template-columns:minmax(0,1fr)!important}.pv-railw{position:static;height:auto;max-height:none;grid-template-columns:minmax(0,1fr)}
+    .rtabs{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line)}.rtab{flex:none;padding:6px 9px}.rtab[aria-selected="true"]{box-shadow:inset 0 -3px 0 var(--orange)}.rgrip{display:none}.idn .look{margin-left:0}}
   .pnr{border-top:1px solid var(--line);padding:7px 0}
   .pnr b{display:block;font-size:12px;font-weight:900;margin-bottom:4px}
   .pnr .s{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
   .pnr .s.two{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pnr select{height:30px;font-size:12px;padding:0 22px 0 7px;width:100%;min-width:0;background-position:calc(100% - 13px) 13px,calc(100% - 8px) 13px}
-  @media(max-width:1000px){.pv-split{grid-template-columns:minmax(0,1fr)}.pv-rail{position:static;max-height:none}}
   /* previews */
   .pv-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
   .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start}
@@ -329,10 +380,14 @@ window.addEventListener('load',restore);
   </section>
 
   <section class="card" id="sec-prev" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Platform previews</span><span class="fl" id="fl-prev">The same ad on every network, side by side</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Ad studio</span><span class="fl" id="fl-prev">The same ad on every network, side by side — every control in the panel on the left</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
     <div class="fbody">
-      <div class="pv-split">
+      <div class="pv-split" id="pv-split">
+      <div class="pv-railw" id="pv-railw">
+      <nav class="rtabs" role="tablist" aria-label="Studio panels" aria-orientation="vertical"><button type="button" role="tab" class="rtab" id="rt-pic" data-tab="pic" aria-controls="rp-pic" aria-selected="false" title="The picture, the overlay design and what each network shows"><span class="ri" aria-hidden="true">🖼</span><span class="rl">Picture</span></button><button type="button" role="tab" class="rtab" id="rt-brand" data-tab="brand" aria-controls="rp-brand" aria-selected="false" title="The name and logo the ads carry, read from the brand’s own pages"><span class="ri" aria-hidden="true">🏷</span><span class="rl">Brand</span></button><button type="button" role="tab" class="rtab" id="rt-sched" data-tab="sched" aria-controls="rp-sched" aria-selected="false" title="Rules that decide what the ad says, and the moment to test them on"><span class="ri" aria-hidden="true">⏱</span><span class="rl">Schedule</span></button><button type="button" role="tab" class="rtab" id="rt-week" data-tab="week" aria-controls="rp-week" aria-selected="false" title="What one field says each day and daypart"><span class="ri" aria-hidden="true">📅</span><span class="rl">Week</span></button><button type="button" role="tab" class="rtab" id="rt-fields" data-tab="fields" aria-controls="rp-fields" aria-selected="false" title="What every field says when no rule applies"><span class="ri" aria-hidden="true">✎</span><span class="rl">Fields</span></button><button type="button" role="tab" class="rtab" id="rt-ideas" data-tab="ideas" aria-controls="rp-ideas" aria-selected="false" title="Ready-made rules to drop into the schedule"><span class="ri" aria-hidden="true">💡</span><span class="rl">Ideas</span></button><button type="button" role="tab" class="rtab" id="rt-data" data-tab="data" aria-controls="rp-data" aria-selected="false" title="Where each figure comes from, and how it ships"><span class="ri" aria-hidden="true">ⓘ</span><span class="rl">Data</span></button></nav>
       <aside class="pv-rail" id="pv-rail" aria-label="Design controls">
+        <div class="rpane" id="rp-pic" data-pane="pic" role="tabpanel" aria-labelledby="rt-pic" hidden>
+          <div class="rp-h"><b>Picture & overlay</b><span class="fl" id="fl-pic"></span></div>
         <div class="lbl" style="margin-top:0">Picture</div>
         <span class="seg" id="imgmode" role="group" aria-label="Image source"><button type="button" data-m="same" class="on">Same everywhere</button><button type="button" data-m="per">Per network</button></span>
         <div class="slots" id="slots" style="margin-top:8px"></div>
@@ -344,7 +399,74 @@ window.addEventListener('load',restore);
           <span class="seg" id="tagsty" role="group" aria-label="Tagline colour"><button type="button" data-s="dark" class="on">Dark</button><button type="button" data-s="orange">Orange</button><button type="button" data-s="light">Light</button><button type="button" data-s="blue">Blue</button></span></div>
         <div class="lbl">Per network <span class="note" style="margin:0;text-transform:none;letter-spacing:0">picture · overlay · button</span></div>
         <div id="ptab"></div>
+        </div>
+        <div class="rpane" id="rp-brand" data-pane="brand" role="tabpanel" aria-labelledby="rt-brand" hidden>
+          <div class="rp-h"><b>Brand on the ad</b><span class="fl" id="fl-brand"></span></div>
+          <div class="idn" id="idn"></div>
+        </div>
+        <div class="rpane" id="rp-sched" data-pane="sched" role="tabpanel" aria-labelledby="rt-sched" hidden>
+          <div class="rp-h"><b>Dynamic schedule</b><span class="fl" id="fl-sched"></span></div>
+          <div class="sched">
+        <details class="ctxg" id="ctx" open><summary>The moment the previews show <b id="cx-sum"></b></summary>
+          <div class="cxg"><div class="cx1">
+          <div class="r"><span>Date</span><input type="date" id="cx-date" aria-label="Date"><button class="btn sm" id="cx-now" type="button">Now</button></div>
+          <div class="r"><span>Hour</span><input type="range" id="cx-hour" min="0" max="23" step="1" aria-label="Hour"><b id="cx-hl" class="mono"></b></div>
+          <div class="r"><span>Weather</span><div class="chips" id="cx-wx"></div></div>
+          <div class="r"><span>Temp °C</span><input type="number" id="cx-temp" min="-30" max="45" style="width:80px" aria-label="Temperature"><span class="sb ctx">simulated</span></div>
+          <div class="r"><span>Shopper</span><div class="chips" id="cx-aud"></div></div>
+          </div><div class="cx2"><div class="lbl" style="margin-top:4px">This product’s numbers</div>
+          <div class="r"><span>Clicks 30d</span><input type="number" id="cx-clicks" min="0" style="width:90px" aria-label="Clicks in 30 days"><span class="sb" id="src-clicks">demo</span></div>
+          <div class="r"><span>Bought 30d</span><input type="number" id="cx-bought" min="0" style="width:90px" aria-label="Bought in 30 days"><span class="sb" id="src-bought">demo</span></div>
+          <div class="r"><span>Viewed 24h</span><input type="number" id="cx-views" min="0" style="width:90px" aria-label="Viewed in 24 hours"><span class="sb demo" title="The FCC does not read 24-hour product views — wire the Meta pixel’s ViewContent or GA4 to make it real">demo</span></div>
+          <div class="r"><span>Stock</span><input type="number" id="cx-stock" min="0" style="width:90px" aria-label="Units in stock"><span class="sb" id="src-stock">demo</span></div>
+          </div></div>
+        </details>
+        <div>
+          <div class="chips" style="margin-bottom:10px"><select class="fld" id="addcond-field" aria-label="Field for a new rule" style="height:32px"><option value="tagline">Image tagline</option><option value="headline">Headline</option><option value="primary">Primary text</option><option value="cta">Button</option></select>
+            <button class="btn sm" id="addrule" type="button">＋ Rule</button><button class="btn sm" id="reset" type="button" title="Back to FeedSpark’s opening schedule">↺ Default schedule</button><span class="note" id="savest" style="margin:0"></span></div>
+          <div id="rules"></div>
+          <p class="note">Rules run top to bottom and the first one that matches sets its field. A rule naming a figure the product does not have, or one too small to read as proof, stands down and the next rule applies.</p>
+        </div>
+        <div class="nowbox"><div class="now" id="now"></div></div>
+          </div>
+        </div>
+        <div class="rpane" id="rp-week" data-pane="week" role="tabpanel" aria-labelledby="rt-week" hidden>
+          <div class="rp-h"><b>The week at a glance</b><span class="fl" id="fl-week"></span></div>
+      <div class="chips" style="margin-bottom:10px"><span class="seg" id="wkf" role="group" aria-label="Field"><button type="button" data-f="tagline" class="on">Tagline</button><button type="button" data-f="headline">Headline</button><button type="button" data-f="primary">Primary text</button><button type="button" data-f="cta">Button</button></span><span class="note" id="wk-n" style="margin:0"></span></div>
+      <div class="wk-wrap"><div class="wk" id="wk"></div></div>
+      <div class="wk-leg" id="wk-leg"></div>
+        </div>
+        <div class="rpane" id="rp-fields" data-pane="fields" role="tabpanel" aria-labelledby="rt-fields" hidden>
+          <div class="rp-h"><b>Ad fields & defaults</b><span class="fl" id="fl-fields"></span></div>
+      <div class="defs" id="defs">
+        <label for="d-headline">Headline</label><input id="d-headline" data-def="headline">
+        <label for="d-primary">Primary text</label><input id="d-primary" data-def="primary">
+        <label for="d-tagline">Image tagline</label><input id="d-tagline" data-def="tagline" placeholder="(none unless a rule sets one)">
+        <label for="d-cta">Button</label><select id="d-cta" data-def="cta"><option>Shop now</option><option>Buy now</option><option>Order now</option><option>Get offer</option><option>Learn more</option><option>See more</option></select>
+      </div>
+      <div class="lbl">Fields to insert <span class="note" style="margin:0;text-transform:none;letter-spacing:0">— into the last text box you clicked</span></div>
+      <div class="chips" id="toks"></div>
+      <div class="lbl">On each network</div>
+      <div style="overflow-x:auto"><table class="dt" id="limits"></table></div>
+        </div>
+        <div class="rpane" id="rp-ideas" data-pane="ideas" role="tabpanel" aria-labelledby="rt-ideas" hidden>
+          <div class="rp-h"><b>Optimisation ideas</b><span class="fl" id="fl-ideas"></span></div>
+      <div class="ideas" id="ideas"></div>
+        </div>
+        <div class="rpane" id="rp-data" data-pane="data" role="tabpanel" aria-labelledby="rt-data" hidden>
+          <div class="rp-h"><b>Where each figure comes from</b><span class="fl" id="fl-data"></span></div>
+      <div style="overflow-x:auto"><table class="dt" id="datatab"></table></div>
+      <ol data-instr>
+        <li><b>The product</b> — title, brand, price, the sale price and the pictures — is a sample of the live output feed, read through the same field summoner the Overlay design studio uses, so a price pair is resolved by value, not by column name.</li>
+        <li><b>Clicks and conversions over 30 days</b> are FeedHero’s Google Ads report, product by product — the only per-product demand the FCC reads today. A Meta catalogue market reads its Google market’s report.</li>
+        <li><b>Views in the last 24 hours, the weather and the shopper’s audience</b> are not read by the FCC. They are typed here for the preview and marked demo / simulated. In production they come from the Meta pixel (ViewContent) or GA4, a weather source per market, and the network’s own retargeting audiences.</li>
+        <li><b>Headline and primary text</b> map onto Meta’s own catalogue keywords where Meta has one ({{product.name}}, {{product.current_price}} …); any other field is written into the feed by a FeedHero rule on the schedule and lands at the next catalogue fetch.</li>
+        <li><b>The image tagline</b> is a text parameter on FeedSpark’s image-creator URL — the same engine the Overlays module reads off live feeds — re-rendered whenever the schedule changes what it says.</li>
+      </ol>
+        </div>
       </aside>
+      <div class="rgrip" id="rgrip" role="separator" aria-orientation="vertical" aria-label="Drag to widen or narrow the panel" title="Drag to widen the panel · double-click to reset" tabindex="0"></div>
+      </div>
       <div class="pv-main">
       <div class="pv-tools">
         <div class="chips" id="plats"></div>
@@ -357,78 +479,6 @@ window.addEventListener('load',restore);
       <p class="note">Safe zones and text limits are the commonly published figures, a guide to confirm in each network’s own Ads Manager preview — the networks move them.</p>
       </div>
       </div>
-    </div>
-  </section>
-
-  <section class="card" id="sec-sched" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Dynamic schedule</span><span class="fl" id="fl-sched">Rules that decide what the ad says, and the moment to test them on</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
-    <div class="fbody">
-      <div class="sched">
-        <div>
-          <div class="chips" style="margin-bottom:10px"><select class="fld" id="addcond-field" aria-label="Field for a new rule" style="height:32px"><option value="tagline">Image tagline</option><option value="headline">Headline</option><option value="primary">Primary text</option><option value="cta">Button</option></select>
-            <button class="btn sm" id="addrule" type="button">＋ Rule</button><button class="btn sm" id="reset" type="button" title="Back to FeedSpark’s opening schedule">↺ Default schedule</button><span class="note" id="savest" style="margin:0"></span></div>
-          <div id="rules"></div>
-          <p class="note">Rules run top to bottom and the first one that matches sets its field. A rule naming a figure the product does not have, or one too small to read as proof, stands down and the next rule applies.</p>
-        </div>
-        <div class="ctxg" id="ctx">
-          <div class="lbl" style="margin-top:0">The moment</div>
-          <div class="r"><span>Date</span><input type="date" id="cx-date" aria-label="Date"><button class="btn sm" id="cx-now" type="button">Now</button></div>
-          <div class="r"><span>Hour</span><input type="range" id="cx-hour" min="0" max="23" step="1" aria-label="Hour"><b id="cx-hl" class="mono"></b></div>
-          <div class="r"><span>Weather</span><div class="chips" id="cx-wx"></div></div>
-          <div class="r"><span>Temp °C</span><input type="number" id="cx-temp" min="-30" max="45" style="width:80px" aria-label="Temperature"><span class="sb ctx">simulated</span></div>
-          <div class="r"><span>Shopper</span><div class="chips" id="cx-aud"></div></div>
-          <div class="lbl">This product’s numbers</div>
-          <div class="r"><span>Clicks 30d</span><input type="number" id="cx-clicks" min="0" style="width:90px" aria-label="Clicks in 30 days"><span class="sb" id="src-clicks">demo</span></div>
-          <div class="r"><span>Bought 30d</span><input type="number" id="cx-bought" min="0" style="width:90px" aria-label="Bought in 30 days"><span class="sb" id="src-bought">demo</span></div>
-          <div class="r"><span>Viewed 24h</span><input type="number" id="cx-views" min="0" style="width:90px" aria-label="Viewed in 24 hours"><span class="sb demo" title="The FCC does not read 24-hour product views — wire the Meta pixel’s ViewContent or GA4 to make it real">demo</span></div>
-          <div class="r"><span>Stock</span><input type="number" id="cx-stock" min="0" style="width:90px" aria-label="Units in stock"><span class="sb" id="src-stock">demo</span></div>
-          <div class="now" id="now"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card" id="sec-week" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">The week at a glance</span><span class="fl" id="fl-week">What one field says each day and daypart</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
-    <div class="fbody">
-      <div class="chips" style="margin-bottom:10px"><span class="seg" id="wkf" role="group" aria-label="Field"><button type="button" data-f="tagline" class="on">Tagline</button><button type="button" data-f="headline">Headline</button><button type="button" data-f="primary">Primary text</button><button type="button" data-f="cta">Button</button></span><span class="note" id="wk-n" style="margin:0"></span></div>
-      <div class="wk-wrap"><div class="wk" id="wk"></div></div>
-      <div class="wk-leg" id="wk-leg"></div>
-    </div>
-  </section>
-
-  <section class="card" id="sec-fields" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Ad fields &amp; defaults</span><span class="fl" id="fl-fields">What every field says when no rule applies</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
-    <div class="fbody">
-      <div class="defs" id="defs">
-        <label for="d-headline">Headline</label><input id="d-headline" data-def="headline">
-        <label for="d-primary">Primary text</label><input id="d-primary" data-def="primary">
-        <label for="d-tagline">Image tagline</label><input id="d-tagline" data-def="tagline" placeholder="(none unless a rule sets one)">
-        <label for="d-cta">Button</label><select id="d-cta" data-def="cta"><option>Shop now</option><option>Buy now</option><option>Order now</option><option>Get offer</option><option>Learn more</option><option>See more</option></select>
-      </div>
-      <div class="lbl">Fields to insert <span class="note" style="margin:0;text-transform:none;letter-spacing:0">— into the last text box you clicked</span></div>
-      <div class="chips" id="toks"></div>
-      <div class="lbl">On each network</div>
-      <div style="overflow-x:auto"><table class="dt" id="limits"></table></div>
-    </div>
-  </section>
-
-  <section class="card" id="sec-ideas" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Optimisation ideas</span><span class="fl" id="fl-ideas">Ready-made rules to drop into the schedule</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
-    <div class="fbody"><div class="ideas" id="ideas"></div></div>
-  </section>
-
-  <section class="card how" id="sec-how" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Where each figure comes from, and how it ships</span><span class="fl">The data behind every field, and the route into each network</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
-    <div class="fbody">
-      <div style="overflow-x:auto"><table class="dt" id="datatab"></table></div>
-      <ol data-instr>
-        <li><b>The product</b> — title, brand, price, the sale price and the pictures — is a sample of the live output feed, read through the same field summoner the Overlay design studio uses, so a price pair is resolved by value, not by column name.</li>
-        <li><b>Clicks and conversions over 30 days</b> are FeedHero’s Google Ads report, product by product — the only per-product demand the FCC reads today. A Meta catalogue market reads its Google market’s report.</li>
-        <li><b>Views in the last 24 hours, the weather and the shopper’s audience</b> are not read by the FCC. They are typed here for the preview and marked demo / simulated. In production they come from the Meta pixel (ViewContent) or GA4, a weather source per market, and the network’s own retargeting audiences.</li>
-        <li><b>Headline and primary text</b> map onto Meta’s own catalogue keywords where Meta has one ({{product.name}}, {{product.current_price}} …); any other field is written into the feed by a FeedHero rule on the schedule and lands at the next catalogue fetch.</li>
-        <li><b>The image tagline</b> is a text parameter on FeedSpark’s image-creator URL — the same engine the Overlays module reads off live feeds — re-rendered whenever the schedule changes what it says.</li>
-      </ol>
     </div>
   </section>
 </main>
@@ -822,8 +872,14 @@ window.addEventListener('load',restore);
   }
   function cut(pid, field, text) { return SOC.fitField(pid, field, text); }
   function initial(s) { return esc(String(s || 'B').trim().charAt(0).toUpperCase() || 'B'); }
+  // the domain a Facebook ad prints under its picture: the product link's own host, never a guess
+  function siteDom(brand) {
+    var row = S.row || {}, k = (S.hdr || []).filter(function (h) { return /(^|:)link$/i.test(h); })[0];
+    var m = k && /^https?:\/\/(?:www\.)?([^/?#]+)/i.exec(String(row[k] || ''));
+    return m ? m[1].toLowerCase() : (String(brand || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '') || 'brand') + '.com';
+  }
   function mockHtml(p, F, info) {
-    var brand = (facts().brand || S.brand || 'Brand'), dom = (brand.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'brand') + '.com';
+    var brand = (facts().brand || S.brand || 'Brand'), dom = siteDom(brand), ID = ident(), nm = SOC.handleFor(ID, p.id), av = avHtml(SOC.avatarFor(ID, p.id));
     var h = cut(p.id, 'headline', F.headline.text), pr = cut(p.id, 'primary', F.primary.text), cta = SOC.ctaFor(p.id, F.cta.text || 'Shop now');
     var price = (S.res && S.res.price_now && S.res.price_now.text) || '', was = (S.res && S.res.price_was && S.res.price_was.text || '').replace(/^was /, '');
     var priceLine = price ? esc(price) + (was ? ' <s>' + esc(was) + '</s>' : '') : '';
@@ -831,19 +887,19 @@ window.addEventListener('load',restore);
     var more = function (x) { return esc(x.text).replace(/…$/, '') + (x.cut ? '<span class="more">… more</span>' : ''); };
     var body = '';
     if (p.id === 'fb_feed') {
-      body = '<div class="dev"><div class="fb-top"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(brand) + '<small>Sponsored · 🌐</small></div></div><div class="ptx">' + more(pr) + '</div>' + cw.replace('%OV%', '')
+      body = '<div class="dev"><div class="fb-top">' + av + '<div class="who">' + esc(nm) + '<small>Sponsored · 🌐</small></div></div><div class="ptx">' + more(pr) + '</div>' + cw.replace('%OV%', '')
         + '<div class="fb-bot"><div class="tx"><div class="d">' + esc(dom) + '</div><div class="h">' + esc(h.text) + '</div><div class="p">' + priceLine + '</div></div><span class="cta">' + esc(cta.text) + '</span></div><div class="fb-rx"><span>👍 Like</span><span>💬 Comment</span><span>↗ Share</span></div></div>';
     } else if (p.id === 'ig_feed') {
-      body = '<div class="dev"><div class="fb-top"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div>' + cw.replace('%OV%', '')
-        + '<div class="ig-cta"><span>' + esc(cta.text) + '</span><span>›</span></div><div class="ig-ic"><span>♡</span><span>💬</span><span>✈</span></div><div class="ig-cap"><b>' + esc(dom.replace('.com', '')) + '</b> ' + more(pr) + '</div></div>';
+      body = '<div class="dev"><div class="fb-top">' + av + '<div class="who">' + esc(nm) + '<small>Sponsored</small></div></div>' + cw.replace('%OV%', '')
+        + '<div class="ig-cta"><span>' + esc(cta.text) + '</span><span>›</span></div><div class="ig-ic"><span>♡</span><span>💬</span><span>✈</span></div><div class="ig-cap"><b>' + esc(nm) + '</b> ' + more(pr) + '</div></div>';
     } else if (p.id === 'ig_story') {
-      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="ov top"><div class="prog"><i></i></div><div class="fb-top" style="padding:0"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div></div><div class="ov bot"><div class="st-h">' + esc(h.text) + (priceLine ? ' · ' + priceLine : '') + '</div><div class="st-cta">⌃<span>' + esc(cta.text) + '</span></div></div>') + '</div>';
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="ov top"><div class="prog"><i></i></div><div class="fb-top" style="padding:0">' + av + '<div class="who">' + esc(nm) + '<small>Sponsored</small></div></div></div><div class="ov bot"><div class="st-h">' + esc(h.text) + (priceLine ? ' · ' + priceLine : '') + '</div><div class="st-cta">⌃<span>' + esc(cta.text) + '</span></div></div>') + '</div>';
     } else if (p.id === 'ig_reels') {
-      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail"><span>♡<small>2.1k</small></span><span>💬<small>84</small></span><span>✈</span><span>⋯</span></div><div class="ov bot"><div class="fb-top" style="padding:0"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div><div class="rl-cap">' + more(pr) + '</div><span class="rl-cta">' + esc(cta.text) + ' ›</span></div>') + '</div>';
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail"><span>♡<small>2.1k</small></span><span>💬<small>84</small></span><span>✈</span><span>⋯</span></div><div class="ov bot"><div class="fb-top" style="padding:0">' + av + '<div class="who">' + esc(nm) + '<small>Sponsored</small></div></div><div class="rl-cap">' + more(pr) + '</div><span class="rl-cta">' + esc(cta.text) + ' ›</span></div>') + '</div>';
     } else if (p.id === 'pinterest') {
-      body = '<div class="dev pin">' + cw.replace('%OV%', '') + '<div class="pin-t">' + esc(h.text) + '</div>' + (priceLine ? '<div class="pin-p">' + priceLine + '</div>' : '') + '<div class="pin-by">Promoted by <b>' + esc(brand) + '</b> · ' + esc(cta.text) + '</div></div>';
+      body = '<div class="dev pin">' + cw.replace('%OV%', '') + '<div class="pin-t">' + esc(h.text) + '</div>' + (priceLine ? '<div class="pin-p">' + priceLine + '</div>' : '') + '<div class="pin-by">' + avHtml(SOC.avatarFor(ID, p.id), 'width:20px;height:20px;font-size:9px;vertical-align:middle;margin-right:4px') + 'Promoted by <b>' + esc(nm) + '</b> · ' + esc(cta.text) + '</div></div>';
     } else {
-      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail"><span class="av" style="width:34px;height:34px">' + initial(brand) + '</span><span>♥<small>12k</small></span><span>💬<small>320</small></span><span>↗</span></div><div class="ov bot"><div class="who" style="color:#fff">@' + esc(dom.replace('.com', '')) + '</div><div class="rl-cap">' + more(pr) + '</div><div style="font-size:10.5px;color:rgba(255,255,255,.8);margin-bottom:6px">Sponsored' + (priceLine ? ' · ' + priceLine : '') + '</div><span class="tt-cta">' + esc(cta.text) + '</span></div>') + '</div>';
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail">' + avHtml(SOC.avatarFor(ID, p.id), 'width:34px;height:34px') + '<span>♥<small>12k</small></span><span>💬<small>320</small></span><span>↗</span></div><div class="ov bot"><div class="who" style="color:#fff">@' + esc(nm) + '</div><div class="rl-cap">' + more(pr) + '</div><div style="font-size:10.5px;color:rgba(255,255,255,.8);margin-bottom:6px">Sponsored' + (priceLine ? ' · ' + priceLine : '') + '</div><span class="tt-cta">' + esc(cta.text) + '</span></div>') + '</div>';
     }
     // the meter: what each field shows here, and what the network does to it
     var m = [];
@@ -889,6 +945,7 @@ window.addEventListener('load',restore);
   function renderCtx() {
     $('#cx-date').value = S.ctx.date; $('#cx-hour').value = S.ctx.hour; $('#cx-hl').textContent = ('0' + S.ctx.hour).slice(-2) + ':00 · ' + SOC.DAYS[S.ctx.day].slice(0, 3);
     $('#cx-temp').value = S.ctx.temp;
+    var cs = $('#cx-sum'); if (cs) cs.textContent = SOC.DAYS[S.ctx.day].slice(0, 3) + ' ' + ('0' + S.ctx.hour).slice(-2) + ':00 · ' + (SOC.WEATHER[S.ctx.weather] || '') + (S.ctx.temp !== '' ? ' ' + S.ctx.temp + '°C' : '') + ' · ' + (SOC.AUDIENCE[S.ctx.audience] || '');
     $('#cx-wx').innerHTML = Object.keys(SOC.WEATHER).map(function (w) { return '<button type="button" class="tg' + (S.ctx.weather === w ? ' on' : '') + '" data-wx="' + w + '">' + esc(SOC.WEATHER[w]) + '</button>'; }).join('');
     $('#cx-aud').innerHTML = Object.keys(SOC.AUDIENCE).map(function (a) { return '<button type="button" class="tg' + (S.ctx.audience === a ? ' on' : '') + '" data-aud="' + a + '">' + esc(SOC.AUDIENCE[a]) + '</button>'; }).join('');
   }
@@ -988,8 +1045,9 @@ window.addEventListener('load',restore);
     var f = facts(), ev = SOC.evaluate(S.setup, f, S.ctx);
     S.lastEval = ev;
     renderCtx(); renderDesigns(); renderRules(ev); renderNow(ev, f); renderPreviews(ev.fields); renderWeek(f); renderIdeas(f); renderFieldsTab(ev.fields); renderData(f);
+    if (S.tab === 'brand' && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-idf]'))) renderIdent();
   }
-  function renderStatic() { foldInit(); }
+  function renderStatic() { foldInit(); tabInit(); }
 
   // ---- the shared store: one schedule per brand, the team's (shared-state ns socialdpa) ----
   var SAVE_T = 0;
@@ -1037,7 +1095,139 @@ window.addEventListener('load',restore);
     foldBar();
   }
   function foldBar() { var any = $$('section[data-fold]').some(function (c) { return !c.classList.contains('folded'); }); $('#fold-all').textContent = any ? '⊖ Fold all' : '⊕ Open all'; }
-  function openSec(id) { var c = $('#' + id); if (c && c.classList.contains('folded')) foldSet(c, true, false); }
+  function openSec(id) { var tb = SEC_TAB[id]; if (tb) { id = 'sec-prev'; setTab(tb, true); } var c = $('#' + id); if (c && c.classList.contains('folded')) foldSet(c, true, false); }
+
+  // ---- the studio panel: one tab at a time, its width per tab, remembered on this device ----
+  var TABS = ['pic', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
+  var SEC_TAB = { 'sec-sched': 'sched', 'sec-week': 'week', 'sec-fields': 'fields', 'sec-ideas': 'ideas', 'sec-how': 'data' };
+  var RAILW0 = { pic: 400, brand: 440, sched: 660, week: 640, fields: 500, ideas: 500, data: 580 }, RAILW = {};
+  function tabInit() {
+    try { RAILW = JSON.parse(recall('fcc-soc-railw') || '{}') || {}; } catch (e) { RAILW = {}; }
+    var h = String(location.hash || '').replace(/^#/, ''), want = TABS.indexOf(h) >= 0 ? h : SEC_TAB[h] || (TABS.indexOf(recall('fcc-soc-tab')) >= 0 ? recall('fcc-soc-tab') : 'pic');
+    setTab(want, false);
+    if (TABS.indexOf(h) >= 0 || SEC_TAB[h]) { var c = $('#sec-prev'); if (c && c.classList.contains('folded')) foldSet(c, true, false); }
+    window.addEventListener('resize', railW);
+  }
+  function setTab(k, keep) {
+    if (TABS.indexOf(k) < 0) k = 'pic';
+    S.tab = k;
+    TABS.forEach(function (t) {
+      var b = $('#rt-' + t), pn = $('#rp-' + t); if (!b || !pn) return;
+      b.setAttribute('aria-selected', t === k ? 'true' : 'false'); b.tabIndex = t === k ? 0 : -1; pn.hidden = t !== k;
+    });
+    if (keep) remember('fcc-soc-tab', k);
+    var rail = $('#pv-rail'); if (rail) rail.scrollTop = 0;
+    railW();
+    if (k === 'brand') renderIdent();
+  }
+  function railMax() { var sp = $('#pv-split'); return Math.max(320, Math.min(900, (sp ? sp.clientWidth : 1200) - 340)); }
+  function railW() {
+    var sp = $('#pv-split'); if (!sp) return;
+    var w = RAILW[S.tab] || RAILW0[S.tab] || 400;
+    sp.style.setProperty('--railw', Math.max(320, Math.min(railMax(), w)) + 'px');
+  }
+  function railSet(w) { RAILW[S.tab] = Math.round(Math.max(320, Math.min(railMax(), w))); remember('fcc-soc-railw', JSON.stringify(RAILW)); railW(); }
+  (function grip() {
+    var g = $('#rgrip'); if (!g) return;
+    var x0 = 0, w0 = 0;
+    g.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); x0 = e.clientX; w0 = $('#pv-railw').getBoundingClientRect().width; g.classList.add('drag');
+      try { g.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    g.addEventListener('pointermove', function (e) {
+      if (!g.classList.contains('drag')) return;
+      $('#pv-split').style.setProperty('--railw', Math.max(320, Math.min(railMax(), w0 + e.clientX - x0)) + 'px');
+    });
+    var end = function (e) { if (!g.classList.contains('drag')) return; g.classList.remove('drag'); railSet(w0 + e.clientX - x0); };
+    g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+    g.addEventListener('dblclick', function () { delete RAILW[S.tab]; remember('fcc-soc-railw', JSON.stringify(RAILW)); railW(); });
+    g.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault();
+      railSet($('#pv-railw').getBoundingClientRect().width + (e.key === 'ArrowRight' ? 24 : -24));
+    });
+  })();
+  document.addEventListener('keydown', function (e) {
+    if (!e.target.matches || !e.target.matches('.rtab')) return;
+    var i = TABS.indexOf(e.target.getAttribute('data-tab')), j = -1;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') j = (i + 1) % TABS.length;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') j = (i + TABS.length - 1) % TABS.length;
+    if (j < 0) return; e.preventDefault(); setTab(TABS[j], true); $('#rt-' + TABS[j]).focus();
+  });
+
+  // ---- the brand's own face: name + logo, read from its Facebook page / TikTok / Pinterest / website ----
+  var LOOK = {};
+  function identBrand() { return S.demo ? (facts().brand || 'Demo') : S.brand; }
+  function ident() { return SOC.identFor(identBrand(), S.setup && S.setup.ident); }
+  function setIdent(patch) { var cur = Object.assign({}, (S.setup && S.setup.ident) || {}); Object.keys(patch).forEach(function (k) { if (patch[k] === '' || patch[k] == null || patch[k] === false) delete cur[k]; else cur[k] = patch[k]; }); S.setup.ident = SOC.cleanIdent(cur) || undefined; if (!S.setup.ident) delete S.setup.ident; }
+  function logoUrl(d) {
+    if (S.demo || !S.brand || !d) return '';
+    if (d.net === 'upload') return ident().logo;
+    if (d.net === 'initial') return '';
+    return '/api/social/logo?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt) + '&net=' + d.net + (d.h ? '&h=' + encodeURIComponent(d.h) : '');
+  }
+  function avHtml(d, style) {
+    var u = logoUrl(d), id = ident();
+    return '<span class="av"' + (style ? ' style="' + style + '"' : '') + '>' + initial(id.name) + (u ? '<img class="av-img" alt="" src="' + esc(u) + '">' : '') + '</span>';
+  }
+  // a picture that fails leaves the initial underneath showing — never a broken-image icon
+  document.addEventListener('error', function (e) { var t = e.target; if (t && t.classList && t.classList.contains('av-img')) t.remove(); }, true);
+  function lookUp(net) {
+    var id = ident(), h = net === 'tt' ? id.tt : net === 'pin' ? id.pin : net === 'fb' ? id.fb : '';
+    if (S.demo || !S.brand) return toast('Pick a brand — the demo products have no real pages to read');
+    LOOK[net] = { busy: true, h: h }; renderIdent();
+    api('/api/social/logo?info=1&fresh=1&client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt) + '&net=' + net + (h && net !== 'site' ? '&h=' + encodeURIComponent(h) : '')).then(function (j) {
+      LOOK[net] = { h: h, ok: !!(j && j.ok), name: (j && j.name) || '', verified: !!(j && j.verified), why: (j && (j.why || j.error)) || 'not read', t: Date.now() };
+      renderIdent(); render();
+    });
+  }
+  function lookCard(net, label) {
+    var L = LOOK[net], id = ident(); if (!L) return '';
+    if (L.busy) return '<div class="look">Reading ' + esc(label) + '…</div>';
+    if (!L.ok) return '<div class="look bad">⚠ ' + esc(L.why) + '</div>';
+    var own = net === 'tt' ? id.ttOk : net === 'pin' ? id.pinOk : false;
+    var u = '/api/social/logo?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt) + '&net=' + net + (L.h && net !== 'site' ? '&h=' + encodeURIComponent(L.h) : '') + '&t=' + L.t;
+    return '<div class="look"><span class="av"><img class="av-img" alt="" src="' + esc(u) + '"></span><div class="who"><b>' + esc(L.name || (net === 'fb' ? 'Facebook page “' + L.h + '”' : net === 'site' ? 'the website’s own icon' : L.h)) + (L.verified ? ' <span class="sb feed" title="The network marks this account verified">✓ verified</span>' : '') + '</b>'
+      + (net === 'fb' ? 'The picture Facebook shows for this page — check it is the brand’s own mark.' : net === 'site' ? 'Read off the brand’s own website.' : 'Is this the brand’s own account? Names can belong to somebody else.') + '</div>'
+      + (net === 'tt' || net === 'pin' ? '<button class="btn sm" type="button" data-own="' + net + '">' + (own ? '✓ Ours — in use' : 'This is us') + '</button>' : '') + '</div>';
+  }
+  function renderIdent() {
+    var host = $('#idn'); if (!host || !S.setup || !SOC) return;
+    var id = ident(), demo = S.demo || !S.brand;
+    var srcBtn = function (k, t, dis) { if (demo) dis = 'Demo products carry the initial'; return '<button type="button" data-lsrc="' + k + '" class="' + (!demo && id.src === k ? 'on' : '') + '"' + (dis ? ' disabled title="' + esc(dis) + '"' : '') + '>' + t + '</button>'; };
+    var row = function (lbl, inner) { return '<div class="row"><span>' + lbl + '</span><div class="hb">' + inner + '</div></div>'; };
+    var inp = function (k, v, guess, ph) { return '<input type="text" data-idf="' + k + '" value="' + esc(v) + '" placeholder="' + esc(ph || '') + '"' + (guess ? ' title="A guess from the brand’s name — confirm it"' : '') + ' spellcheck="false" autocomplete="off">'; };
+    var look = function (net) { return '<button class="btn sm" type="button" data-look="' + net + '"' + (demo ? ' disabled' : '') + '>Look up</button>'; };
+    host.innerHTML = (demo ? '<p class="note" style="margin-top:0">Demo products — the ads carry the demo brand’s initial. Pick a brand to read its real logo.</p>' : '')
+      + '<div class="lgo">' + avHtml(SOC.brandLogo(id)) + '<div><div class="lbl" style="margin:0 0 4px">Logo comes from</div><span class="seg" role="group" aria-label="Logo source">'
+      + srcBtn('fb', 'Facebook', id.fb ? '' : 'No Facebook page set') + srcBtn('site', 'Website') + srcBtn('upload', 'Upload', id.logo ? '' : 'Upload a logo first') + srcBtn('initial', 'Initial') + '</span></div></div>'
+      + row('Name', inp('name', id.name === identBrand() && !(S.setup.ident && S.setup.ident.name) ? '' : id.name, false, identBrand()))
+      + row('Facebook', inp('fb', id.fb, false, 'page name, e.g. monsoonuk') + look('fb')) + lookCard('fb', 'Facebook')
+      + row('Instagram', inp('ig', (S.setup.ident && S.setup.ident.ig) || '', false, '@' + id.ig + ' (a guess)'))
+      + '<p class="note" style="margin:-2px 0 8px 94px">Instagram profiles sit behind a login, so the Instagram ads carry the logo above — the mark the brand runs on its Facebook page.</p>'
+      + row('TikTok', inp('tt', (S.setup.ident && S.setup.ident.tt) || '', false, '@' + id.tt + ' (a guess)') + look('tt')) + lookCard('tt', 'TikTok')
+      + row('Pinterest', inp('pin', (S.setup.ident && S.setup.ident.pin) || '', false, id.pin + ' (a guess)') + look('pin')) + lookCard('pin', 'Pinterest')
+      + row('Website', '<span class="note" style="margin:0">its own icon</span>' + look('site')) + lookCard('site', 'the website')
+      + row('Upload', '<button class="btn sm" type="button" id="id-up"' + (demo ? ' disabled' : '') + '>⇪ Upload a logo</button>' + (id.logo ? '<button class="btn sm" type="button" data-lsrc-clear="1">✕ Remove</button>' : ''))
+      + '<div class="lbl">On each network</div><div class="pv6">' + SOC.PLATFORMS.map(function (p) { var d = SOC.avatarFor(id, p.id); return '<span>' + avHtml(d) + esc(p.short) + (d.own ? ' · own' : '') + '</span>'; }).join('') + '</div>'
+      + '<p class="note">TikTok and Pinterest use their own picture only once you have looked the account up and said it is the brand’s — a handle can belong to somebody else. Saved with the brand’s schedule, for the team.</p>';
+    var src = { fb: 'Facebook page', site: 'website icon', upload: 'uploaded logo', initial: 'initial' }[id.src];
+    fl('brand', demo ? id.name + ' · demo — the initial' : id.name + ' · logo from its ' + src);
+  }
+  function uploadLogo() {
+    var f = document.createElement('input'); f.type = 'file'; f.accept = 'image/png,image/jpeg,image/webp';
+    f.onchange = function () {
+      var file = f.files && f.files[0]; if (!file) return;
+      var im = new Image(); im.onload = function () {
+        var n = 160, c = document.createElement('canvas'); c.width = n; c.height = n;
+        var g = c.getContext('2d'), sc = Math.max(n / im.width, n / im.height); g.fillStyle = '#fff'; g.fillRect(0, 0, n, n);
+        g.drawImage(im, (n - im.width * sc) / 2, (n - im.height * sc) / 2, im.width * sc, im.height * sc);
+        var url = c.toDataURL('image/jpeg', 0.86); if (url.length > 80000) url = c.toDataURL('image/jpeg', 0.6);
+        setIdent({ logo: url, src: 'upload' }); renderIdent(); changed(); URL.revokeObjectURL(im.src);
+      };
+      im.src = URL.createObjectURL(file);
+    };
+    f.click();
+  }
 
   // ---- Google Ads, 30 days (FeedHero's per-product read, a chunk a call) ----
   function loadAds() {
@@ -1084,6 +1274,12 @@ window.addEventListener('load',restore);
     var t = e.target.closest('button,[data-cedit],.pc');
     if (!t) return;
     if (t.matches('.pc')) return pick(+t.getAttribute('data-k'));
+    if (t.matches('.rtab')) return setTab(t.getAttribute('data-tab'), true);
+    if (t.hasAttribute('data-look')) return lookUp(t.getAttribute('data-look'));
+    if (t.hasAttribute('data-own')) { var on2 = t.getAttribute('data-own'), id2 = ident(), pt = {}; pt[on2] = id2[on2]; pt[on2 + 'Ok'] = !id2[on2 + 'Ok']; setIdent(pt); renderIdent(); return changed(); }
+    if (t.hasAttribute('data-lsrc')) { setIdent({ src: t.getAttribute('data-lsrc') }); renderIdent(); return changed(); }
+    if (t.hasAttribute('data-lsrc-clear')) { setIdent({ logo: '', src: '' }); renderIdent(); return changed(); }
+    if (t.id === 'id-up') return uploadLogo();
     if (t.id === 'demo') return openDemo();
     if (t.id === 'ads') return loadAds();
     if (t.id === 'play') return play();
@@ -1139,6 +1335,19 @@ window.addEventListener('load',restore);
   document.addEventListener('input', function (e) {
     var t = e.target;
     if (t.matches('[data-def]')) { S.setup.defaults[t.getAttribute('data-def')] = t.value; clearTimeout(IT); IT = setTimeout(changed, 250); return; }
+    if (t.hasAttribute('data-idf')) {
+      var ik = t.getAttribute('data-idf'), iv = t.value.trim().replace(/^@/, ''), ip = {}; ip[ik] = iv;
+      if (ik === 'tt' || ik === 'pin') { ip[ik + 'Ok'] = false; delete LOOK[ik]; }
+      if (ik === 'fb') delete LOOK.fb;
+      setIdent(ip); clearTimeout(IT);
+      // the pane is redrawn (its logo, source buttons and per-network row follow the handle) with the caret kept
+      IT = setTimeout(function () {
+        save(); if (S.lastEval) renderPreviews(S.lastEval.fields);
+        var a = document.activeElement, fk = a && a.getAttribute && a.getAttribute('data-idf'), c0 = fk ? a.selectionStart : 0, c1 = fk ? a.selectionEnd : 0;
+        renderIdent();
+        if (fk) { var n = $('#idn [data-idf="' + fk + '"]'); if (n) { n.focus(); try { n.setSelectionRange(c0, c1); } catch (er) {} } }
+      }, 450); return;
+    }
     if (t.id === 'cx-hour') { S.ctx.hour = +t.value; return render(); }
     if (t.id === 'cx-temp') { S.ctx.temp = t.value === '' ? '' : +t.value; return render(); }
     if (/^cx-(clicks|bought|views|stock)$/.test(t.id)) { clearTimeout(IT); IT = setTimeout(render, 200); return; }
@@ -1180,7 +1389,7 @@ window.addEventListener('load',restore);
   function tbh() { var tb = document.querySelector('.topbar'); if (tb) document.documentElement.style.setProperty('--tbh', Math.round(tb.getBoundingClientRect().height) + 'px'); }
   tbh(); window.addEventListener('resize', tbh); window.addEventListener('load', tbh); setTimeout(tbh, 1500);
   try { S.plats = JSON.parse(recall('fcc-soc-plats') || '{}') || {}; } catch (e) { S.plats = {}; }
-  loadEngines().then(boot).catch(function (e) { setState('The module’s engines did not load (' + ((e && e.message) || e) + ') — hard-refresh the page.', 'warn'); foldInit(); });
+  loadEngines().then(boot).catch(function (e) { setState('The module’s engines did not load (' + ((e && e.message) || e) + ') — hard-refresh the page.', 'warn'); foldInit(); tabInit(); });
 })();
 </script>
 </body>

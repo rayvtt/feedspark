@@ -14746,6 +14746,60 @@
       "file": "docs/FeedSpark_Restock.html",
       "pattern": ".tb-modules a.tbm.on{background:rgba(245,166,35,.14)",
       "pr": 0
+    },
+    {
+      "name": "Social DPA: every control in one tabbed panel beside the previews",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "<nav class=\"rtabs\" role=\"tablist\" aria-label=\"Studio panels\" aria-orientation=\"vertical\">",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the panel's width is per tab and drags",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "var RAILW0 = { pic: 400, brand: 440, sched: 660,",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: an old section link opens its tab",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "var SEC_TAB = { 'sec-sched': 'sched',",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the avatar is the brand's own logo",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "av = avHtml(SOC.avatarFor(ID, p.id));",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a guessed handle is never read for a picture",
+      "file": "docs/social_engine.js",
+      "pattern": "if (pk === 'tiktok' && id.ttOk) return { net: 'tt', h: id.tt, own: true };",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the logo route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/social/logo' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the logo route allow-lists every hop",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SEC.fetchWithin(fetch, img, (u) => SOCLOGO.imgAllowed(net, u, siteHost)",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the account's own name comes back with its picture",
+      "file": "cloudflare/feedspark-deck/src/sociallogo.js",
+      "pattern": "export function parseProfile(net, h, body) {",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the brand-mode tripwire",
+      "file": "tools/check_social.js",
+      "pattern": "a real brand: its own logo on every network, read from its own pages",
+      "pr": 0
     }
   ]
 }

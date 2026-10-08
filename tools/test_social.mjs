@@ -17,6 +17,7 @@ import { createRequire } from 'node:module';
 import { MODULES, MODULE_PATHS } from '../cloudflare/feedspark-deck/src/access.js';
 import { MIG_SEED } from '../cloudflare/feedspark-deck/src/migration.js';
 import { STATE_NS, clientOfEntry } from '../cloudflare/feedspark-deck/src/sharedstate.js';
+import * as LOGO from '../cloudflare/feedspark-deck/src/sociallogo.js';
 const require = createRequire(import.meta.url);
 const SOC = require('../docs/social_engine.js');
 const STU = require('../docs/overlay_studio_engine.js');
@@ -170,18 +171,59 @@ t('24-hour views are a DEMO figure, with what would make them real', /ViewConten
 t('the demo products are DRAWN in the page — no client picture on a demo', /function drawProduct\(/.test(PG) && /function demoShot\(/.test(PG));
 t('a Meta catalogue market reads its Google market’s Ads report', /S\.mkt\.replace\(\/-fb\$\/, ''\)/.test(PG) && /period=30_days/.test(PG));
 t('the schedule is the TEAM’s: shared state ns socialdpa, with a device mirror', /\/api\/state\?ns=socialdpa/.test(PG) && /fcc-soc-setup:/.test(PG));
-t('every section folds: a tile per section, Fold all, per-device memory', (PG.match(/<section class="card[^"]*" id="sec-[a-z]+" data-fold>/g) || []).length === 7 && /id="fold-all"/.test(PG) && /fcc-soc-fold/.test(PG));
-t('…the fold toggle sits inside the heading, so the phone skim view leaves it to the page', (PG.match(/<h3 class="fhw"><button class="fhd" type="button" aria-expanded=/g) || []).length === 7);
+t('every section folds: two sections (product + ad studio), a tile each, Fold all, per-device memory', (PG.match(/<section class="card[^"]*" id="sec-[a-z]+" data-fold>/g) || []).length === 2 && /id="fold-all"/.test(PG) && /fcc-soc-fold/.test(PG));
+t('…the fold toggle sits inside the heading, so the phone skim view leaves it to the page', (PG.match(/<h3 class="fhw"><button class="fhd" type="button" aria-expanded=/g) || []).length === 2);
 t('the shared demo images are never handed one onload each (a second caller would steal the first)', /im\.decode\(\)/.test(PG) && !/im\.onload = function \(\) \{ res\(im\); \}; im\.onerror/.test(PG));
 {
   const rail = PG.slice(PG.indexOf('<aside class="pv-rail"'), PG.indexOf('</aside>')), prod = PG.slice(PG.indexOf('id="sec-prod"'), PG.indexOf('id="sec-prev"'));
-  t('the design controls sit in a rail INSIDE the previews section: picture, overlay design, tagline, per network', ['id="imgmode"', 'id="slots"', 'id="dgal"', 'id="tagpos"', 'id="tagsty"', 'id="ptab"'].every((x) => rail.indexOf(x) >= 0) && PG.indexOf('<aside class="pv-rail"') > PG.indexOf('id="sec-prev"'));
-  t('…and none of them is left behind in the product section', ['id="dgal"', 'id="imgmode"', 'id="ptab"'].every((x) => prod.indexOf(x) < 0));
-  t('the rail is sticky under the topbar, whatever height the topbar takes; it stacks under 1000px', /\.pv-rail\{position:sticky;top:calc\(var\(--tbh/.test(PG) && /setProperty\('--tbh'/.test(PG) && /@media\(max-width:1000px\)\{\.pv-split\{grid-template-columns:minmax\(0,1fr\)\}\.pv-rail\{position:static/.test(PG));
+  const tabs = ['pic', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
+  t('the studio panel: seven tabs, each with its pane INSIDE the rail', tabs.every((k) => PG.indexOf('id="rt-' + k + '"') >= 0 && rail.indexOf('id="rp-' + k + '"') >= 0) && PG.indexOf('<aside class="pv-rail"') > PG.indexOf('id="sec-prev"'));
+  const pane = (k) => { const a = rail.indexOf('id="rp-' + k + '"'), b = rail.indexOf('<div class="rpane"', a + 10); return rail.slice(a, b < 0 ? rail.length : b); };
+  t('each control lives in its tab: picture + overlay, schedule + moment, week, fields, ideas, data', ['id="imgmode"', 'id="dgal"', 'id="ptab"'].every((x) => pane('pic').indexOf(x) >= 0)
+    && ['id="rules"', 'id="cx-date"', 'id="cx-views"', 'id="now"'].every((x) => pane('sched').indexOf(x) >= 0) && pane('week').indexOf('id="wk"') >= 0
+    && pane('fields').indexOf('id="defs"') >= 0 && pane('ideas').indexOf('id="ideas"') >= 0 && pane('data').indexOf('id="datatab"') >= 0 && pane('brand').indexOf('id="idn"') >= 0);
+  t('…and none of them is left behind in the product section', ['id="dgal"', 'id="imgmode"', 'id="ptab"', 'id="rules"'].every((x) => prod.indexOf(x) < 0));
+  t('the panel is sticky under the topbar, whatever height the topbar takes; it stacks under 1000px', /\.pv-railw\{position:sticky;top:calc\(var\(--tbh/.test(PG) && /setProperty\('--tbh'/.test(PG) && /@media\(max-width:1000px\)\{\.pv-split\{grid-template-columns:minmax\(0,1fr\)!important\}\.pv-railw\{position:static/.test(PG));
+  t('its width is per tab, dragged on its edge and kept on this device', /var RAILW0 = \{ pic: \d+, brand: \d+, sched: \d+, week: \d+/.test(PG) && /fcc-soc-railw/.test(PG) && /id="rgrip" role="separator"/.test(PG) && /fcc-soc-tab/.test(PG));
+  t('an old link to a section opens its tab', /'sec-sched': 'sched'/.test(PG) && /'sec-how': 'data'/.test(PG));
 }
 t('every network can take its own picture, or an upload', /data-pimg/.test(PG) && /Upload…/.test(PG) && /imgMode === 'per'/.test(PG));
 t('→ Brief carries the schedule into Workflow (cat technical)', /Social DPA - Dynamic schedule - /.test(PG) && /cat: 'technical'/.test(PG));
 t('the overlay designs are the studio’s own (one catalogue, no copy)', /STU\.DESIGNS\.map/.test(PG) && !/var DESIGNS\s*=/.test(PG));
+
+console.log('· the brand’s own face');
+{
+  const id = SOC.identFor('Monsoon', {});
+  t('a brand with a vetted Facebook page reads its logo from it', id.fb === 'monsoonuk' && id.src === 'fb' && SOC.brandLogo(id).net === 'fb');
+  t('a brand with none falls back to its website icon, never a guessed page', SOC.identFor('House of Bruar', {}).src === 'site' && SOC.identFor('House of Bruar', {}).fb === '');
+  t('Instagram always carries the brand logo (no public read)', SOC.avatarFor(id, 'ig_feed').net === 'fb' && SOC.avatarFor(id, 'ig_story').net === 'fb');
+  t('a GUESSED TikTok / Pinterest handle is never read for a picture', SOC.avatarFor(id, 'tiktok').net === 'fb' && SOC.avatarFor(SOC.identFor('Reiss', { tt: 'reiss' }), 'tiktok').net === 'fb');
+  t('…only one an AM confirmed as the brand’s', SOC.avatarFor(SOC.identFor('Reiss', { tt: 'reissofficial', ttOk: true }), 'tiktok').h === 'reissofficial' && SOC.avatarFor(SOC.identFor('Monsoon', { pin: 'monsoonuk', pinOk: true }), 'pinterest').net === 'pin');
+  t('an upload wins when chosen; an upload source with no picture falls back', SOC.brandLogo(SOC.identFor('Reiss', { src: 'upload', logo: 'data:image/png;base64,AAAA' })).net === 'upload' && SOC.identFor('Reiss', { src: 'upload' }).src === 'fb');
+  const c = SOC.cleanIdent({ fb: 'ok.page', tt: 'bad handle', pin: 'x', pinOk: 1, ttOk: 1, src: 'evil', logo: 'data:image/svg+xml;base64,AAAA', name: 'N'.repeat(99) });
+  t('a stored identity is checked: bad handles, unknown sources, SVG and oversized logos dropped', c.fb === 'ok.page' && !c.tt && !c.ttOk && !c.pin && !c.src && !c.logo && c.name.length === 60, c);
+  t('…and an ok flag never outlives its handle', !SOC.cleanIdent({ ttOk: true }) && SOC.cleanSetup({ ident: { tt: 'abc', ttOk: true } }).ident.ttOk === true);
+  t('handles print per placement: page name on Facebook, handle on Instagram / TikTok', SOC.handleFor(SOC.identFor('Monsoon', { name: 'Monsoon UK', ig: 'monsoon_uk' }), 'fb_feed') === 'Monsoon UK' && SOC.handleFor(SOC.identFor('Monsoon', { ig: 'monsoon_uk' }), 'ig_reels') === 'monsoon_uk');
+}
+{
+  // the worker's reader — the real page shapes, cut down: TikTok's profile JSON and Pinterest's
+  const tt = 'x"uniqueId":"other","avatarLarger":"https:\\u002F\\u002Fp16.tiktokcdn-us.com\\u002Fwrong.jpeg","nickname":"Wrong"' + ' '.repeat(9000)
+    + '"id":"1","uniqueId":"reiss","nickname":"\u00c7ATLI","avatarLarger":"https:\\u002F\\u002Fp16-common-sign.tiktokcdn-us.com\\u002Fa\\u002Freiss.jpeg?x=1","verified":false';
+  const r = LOGO.parseProfile('tt', 'reiss', tt);
+  t('TikTok: the avatar beside the RIGHT username, unescaped, with the account’s own name', r.img === 'https://p16-common-sign.tiktokcdn-us.com/a/reiss.jpeg?x=1' && r.name === '\u00c7ATLI' && r.verified === false, r);
+  const pin = '"username":"monsoonuk","type":"user"' + ' '.repeat(5000) + '"image_xlarge_url":"https://i.pinimg.com/280x280_RS/c7/ba.jpg","is_default_image":false,"username":"monsoonuk","seo_title":"Monsoon","full_name":"Monsoon","is_verified_merchant":true';
+  const q = LOGO.parseProfile('pin', 'monsoonuk', pin);
+  t('Pinterest: the profile object (the one carrying seo_title), its 280px picture and name', q.img === 'https://i.pinimg.com/280x280_RS/c7/ba.jpg' && q.name === 'Monsoon' && q.verified === true, q);
+  t('Facebook: a silhouette is NOT a logo', !!LOGO.parseProfile('fb', 'x', '{"data":{"url":"https://scontent.xx.fbcdn.net/a.jpg","is_silhouette":true}}').none && LOGO.parseProfile('fb', 'x', '{"data":{"url":"https://scontent.xx.fbcdn.net/a.jpg","is_silhouette":false}}').img === 'https://scontent.xx.fbcdn.net/a.jpg');
+  t('a missing account says so rather than guessing', !!LOGO.parseProfile('tt', 'nobody', '<html></html>').none && !!LOGO.parseProfile('pin', 'nobody', '{}').none);
+  t('profile URLs are fixed shapes; a bad handle builds nothing', LOGO.profileUrl('fb', 'monsoonuk') === 'https://graph.facebook.com/monsoonuk/picture?type=large&redirect=false' && LOGO.profileUrl('tt', '../x') === '' && LOGO.profileUrl('pin', 'a b') === '');
+  t('pictures only from each network’s own CDN (https)', LOGO.imgAllowed('fb', 'https://scontent-ord5-1.xx.fbcdn.net/v/x.jpg') && !LOGO.imgAllowed('fb', 'https://evil.com/fbcdn.net.jpg') && !LOGO.imgAllowed('fb', 'http://a.fbcdn.net/x')
+    && LOGO.imgAllowed('tt', 'https://p16-common-sign.tiktokcdn-us.com/x') && LOGO.imgAllowed('pin', 'https://i.pinimg.com/x') && !LOGO.imgAllowed('pin', 'https://pinimg.com.evil.io/x'));
+  t('a website icon only from the brand’s own site (any subdomain of it)', LOGO.imgAllowed('site', 'https://cdn.monsoon.co.uk/i.png', 'www.monsoon.co.uk') && !LOGO.imgAllowed('site', 'https://co.uk/i.png', 'www.monsoon.co.uk') && !LOGO.imgAllowed('site', 'https://other.com/i.png', 'www.reiss.com'));
+  t('the website’s icons, best first, SVG skipped, favicon last', LOGO.siteIcons('<link rel="icon" type="image/svg+xml" href="/a.svg"><link rel="icon" sizes="32x32" href="/f32.png"><link rel="apple-touch-icon" href="/t.png">', 'https://www.reiss.com/').join() === 'https://www.reiss.com/t.png,https://www.reiss.com/f32.png,https://www.reiss.com/favicon.ico');
+  t('the route: scoped per signin, every hop allow-listed, no redirect:follow, an image only (never SVG)', /path === '\/api\/social\/logo'/.test(WK) && /clientMatch\(acc\.clients, client\)\)\) return json\(\{ ok: false, error: 'out of scope' \}, 403\)/.test(WK)
+    && /SEC\.fetchWithin\(fetch, purl, \(u\) => SOCLOGO\.pageAllowed/.test(WK) && /SEC\.fetchWithin\(fetch, img, \(u\) => SOCLOGO\.imgAllowed/.test(WK) && /\/svg\/\.test\(ct\) \|\| len > SOCLOGO\.LOGO_MAX_BYTES/.test(WK));
+}
 
 console.log('· wiring');
 t('the page is served at /social', /'\/social':\s+\{ html: SOCIAL_PAGE, slug: 'social' \}/.test(WK) && /import SOCIAL_PAGE from "\.\.\/\.\.\/\.\.\/docs\/FeedSpark_Social\.html"/.test(WK));

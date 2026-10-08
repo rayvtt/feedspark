@@ -338,6 +338,80 @@
       when: JSON.parse(JSON.stringify(idea.when || [])), on: true, idea: idea.id };
   }
 
+  // ---------------------------------------------------------------- THE BRAND'S OWN FACE
+  // Ray, 8 Oct 2026: "ensure also client's logo is as how they are — get it from their actual meta & ig &
+  // partner platforms". Instagram and TikTok profiles sit behind a login, but a brand's FACEBOOK PAGE
+  // picture is public through Graph (graph.facebook.com/<page>/picture, no token) and brands run one mark
+  // across all their social accounts — so the Facebook page is where the avatar comes from. Each page below
+  // was resolved and LOOKED AT on 8 Oct 2026 (the picture is the brand's own mark, not a namesake's):
+  // Accessorize's current crown sits on AccessorizeUK, not on 'accessorize' (an old campaign graphic).
+  // A brand with no page here (House of Bruar resolved none) falls back to its website's own icon, then to an
+  // upload; nothing is guessed into a logo.
+  var FB_PAGES = { 'Monsoon': 'monsoonuk', 'Accessorize': 'AccessorizeUK', 'Superdry': 'superdry', 'Reiss': 'reiss',
+    'Schuh': 'schuhshoes', 'YuMOVE': 'yumove', 'Hobbycraft': 'hobbycraftuk', 'American Golf': 'americangolf' };
+  function brandKey(b) { return s0(b).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function fbPageFor(brand) {
+    var k = brandKey(brand);
+    for (var n in FB_PAGES) if (brandKey(n) === k) return FB_PAGES[n];
+    return '';
+  }
+  var HANDLE_RE = /^[A-Za-z0-9._]{2,60}$/;
+  // the names a network prints beside the avatar. A handle nobody has confirmed is marked a guess, and a
+  // guess is NEVER read for a picture: checked live on 8 Oct 2026, TikTok @reiss is somebody called "ÇATLI"
+  // and Pinterest @superdry is "Dry Super" — a guessed handle would have put a stranger's face on the ad.
+  // So TikTok and Pinterest show their OWN avatar only once an AM has looked the handle up and said "this is
+  // us" (ttOk / pinOk); until then they carry the brand logo. Instagram has no public read at all (login
+  // wall), so it always carries the brand logo — the same mark the brand runs on its Facebook page.
+  var LOGO_SRC = ['fb', 'site', 'upload', 'initial'];
+  var LOGO_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/;
+  function okHandle(v) { return HANDLE_RE.test(s0(v)) ? s0(v) : ''; }
+  function identFor(brand, ident) {
+    ident = ident || {};
+    var b = s0(brand).trim() || 'Brand', h = brandKey(b) || 'brand';
+    var fb = okHandle(ident.fb) || fbPageFor(b);
+    var logo = LOGO_RE.test(s0(ident.logo)) && s0(ident.logo).length <= 80000 ? ident.logo : '';
+    var src = LOGO_SRC.indexOf(ident.src) >= 0 ? ident.src : (logo ? 'upload' : fb ? 'fb' : 'site');
+    if (src === 'upload' && !logo) src = fb ? 'fb' : 'site';
+    if (src === 'fb' && !fb) src = 'site';
+    return { name: s0(ident.name).trim() || b, fb: fb, fbSeed: !okHandle(ident.fb) && !!fb,
+      ig: okHandle(ident.ig) || h, igGuess: !okHandle(ident.ig),
+      tt: okHandle(ident.tt) || h, ttGuess: !okHandle(ident.tt), ttOk: !!(okHandle(ident.tt) && ident.ttOk),
+      pin: okHandle(ident.pin) || h, pinGuess: !okHandle(ident.pin), pinOk: !!(okHandle(ident.pin) && ident.pinOk),
+      src: src, logo: logo };
+  }
+  // which picture a placement's avatar is: { net:'fb'|'site'|'tt'|'pin', h } (read through /api/social/logo),
+  // { net:'upload' } or { net:'initial' }
+  function brandLogo(id) {
+    if (id.src === 'upload') return { net: 'upload' };
+    if (id.src === 'fb') return { net: 'fb', h: id.fb };
+    if (id.src === 'site') return { net: 'site' };
+    return { net: 'initial' };
+  }
+  function avatarFor(id, pk) {
+    if (pk === 'tiktok' && id.ttOk) return { net: 'tt', h: id.tt, own: true };
+    if (pk === 'pinterest' && id.pinOk) return { net: 'pin', h: id.pin, own: true };
+    return brandLogo(id);
+  }
+  // the name a placement prints: Facebook the page's display name, Instagram / TikTok / Pinterest the handle
+  function handleFor(id, pk) {
+    if (pk === 'fb_feed') return id.name;
+    if (pk === 'tiktok') return id.tt;
+    if (pk === 'pinterest') return id.name;
+    return id.ig;
+  }
+  function cleanIdent(x) {
+    if (!x || typeof x !== 'object') return null;
+    var o = {};
+    if (s0(x.name).trim()) o.name = s0(x.name).trim().slice(0, 60);
+    ['fb', 'ig', 'tt', 'pin'].forEach(function (k) { if (okHandle(x[k])) o[k] = s0(x[k]); });
+    if (o.tt && x.ttOk) o.ttOk = true;
+    if (o.pin && x.pinOk) o.pinOk = true;
+    if (LOGO_SRC.indexOf(x.src) >= 0) o.src = x.src;
+    var l = s0(x.logo);
+    if (LOGO_RE.test(l) && l.length <= 80000) o.logo = l;
+    return Object.keys(o).length ? o : null;
+  }
+
   var DEFAULTS = { tagline: '', headline: '{title}', primary: 'Shop {title} from {brand} — {price}.', cta: 'Shop now' };
   // the opening schedule: three taglines that take turns across a week (the weekend offer, live
   // interest in the evening, 30-day proof the rest of the time) and a retargeting button + copy —
@@ -385,6 +459,8 @@
     if (s.tagPos) o.tagPos = s.tagPos === 't' ? 't' : 'b';
     if (s.tagStyle) o.tagStyle = ['orange', 'dark', 'light', 'blue'].indexOf(s.tagStyle) >= 0 ? s.tagStyle : 'dark';
     if (s.imgMode) o.imgMode = s.imgMode === 'per' ? 'per' : 'same';
+    if (s.img0 != null) o.img0 = clamp(s.img0, 0, 10);
+    var id = cleanIdent(s.ident); if (id) o.ident = id;
     return o;
   }
 
@@ -419,6 +495,8 @@
     tokenValue: tokenValue, fill: fill, tokensIn: tokensIn, metaTemplate: metaTemplate,
     condMatch: condMatch, condLabel: condLabel, inHours: inHours, evaluate: evaluate,
     weekGrid: weekGrid, weekVariety: weekVariety, ideaById: ideaById, ruleFromIdea: ruleFromIdea,
+    FB_PAGES: FB_PAGES, fbPageFor: fbPageFor, identFor: identFor, cleanIdent: cleanIdent, HANDLE_RE: HANDLE_RE,
+    brandLogo: brandLogo, avatarFor: avatarFor, handleFor: handleFor,
     defaultSetup: defaultSetup, cleanSetup: cleanSetup, cleanCond: cleanCond, briefLines: briefLines, compact: compact,
   };
 }));
