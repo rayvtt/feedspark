@@ -21,7 +21,7 @@
     var el=document.createElement('div'); el.id='fcc-viewas';
     el.innerHTML='<span class="vw-eye">👁</span><span>Viewing as <b>'+clean(d.name||d.email)+'</b>'
       +' <span class="vw-scope">· '+clean(scope)+'</span></span><button type="button" title="Back to your own (owner) view">Exit</button>';
-    el.querySelector('button').onclick=function(){ document.cookie='fcc-viewas=;path=/;max-age=0'; location.reload(); };
+    el.querySelector('button').onclick=function(){ document.cookie='fcc-viewas=;path=/;max-age=0;Secure;SameSite=Lax'; location.reload(); };
     document.body.appendChild(el);
   }).catch(function(){});
 })();

@@ -46,7 +46,7 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
 
   // ---------------------------------------------------------------- helpers
   var s0 = function (v) { return v == null ? '' : String(v); };
@@ -110,6 +110,37 @@
     return Math.round(((was - now) / was) * 100);
   }
 
+  // A PRODUCT'S IMAGES (Ray, 8 Oct 2026, circling the Product × lifestyle card: "should be
+  // templated by 2 images image_url and additiona_image_link"). One cell can carry several: Google
+  // allows up to ten additional_image_link values and a Meta catalogue packs them into one column
+  // comma- or pipe-separated, so the composition takes the FIRST additional image and the studio
+  // states how many the product has rather than implying it read them all.
+  function imgUrls(v) {
+    var out = [], seen = {};
+    s0(v).split(/[,|;\s]+(?=https?:\/\/)|[,|;]\s*/).forEach(function (t) {
+      t = s0(t).trim().replace(/[,;|]+$/, '');
+      if (!/^https?:\/\//i.test(t) || seen[t]) return;
+      seen[t] = 1; out.push(t);
+    });
+    return out;
+  }
+  // The second image a two-up can really be built on: present, readable as a URL, and NOT the same
+  // picture as the packshot. A feed that repeats its main image in additional_image_link (or whose
+  // second slot is empty) cannot carry the split, and saying so is the point — drawing the
+  // packshot twice would be the studio inventing a composition the product does not have.
+  function secondImage(row, slots, mainUrl) {
+    var b = slots && slots.image2, col = b && b.col ? b.col : '';
+    if (!col) return { url: '', n: 0, all: [], why: 'this feed carries no second image column' };
+    var all = imgUrls(row ? row[col] : ''), main = s0(mainUrl).trim();
+    if (!all.length) return { url: '', n: 0, all: all, why: 'this product carries no ' + col };
+    var pick = '';
+    for (var i = 0; i < all.length; i++) { if (all[i] !== main) { pick = all[i]; break; } }
+    if (!pick) return { url: '', n: all.length, all: all, why: all.length === 1
+      ? 'this product\u2019s ' + col + ' is the same picture as its main image'
+      : 'every ' + col + ' on this product repeats the main image' };
+    return { url: pick, n: all.length, all: all, why: '' };
+  }
+
   // ---------------------------------------------------------------- SLOTS
   // A slot is a RAW fact a feed column can carry. `names` are the spellings seen across the live
   // estate (Google/Meta output feeds + the FeedHero masters, read 7 Oct 2026) — a name match is a
@@ -153,6 +184,15 @@
     colour:    { label: 'Colour',           src: 'feed',   needs: ['colour'],                 ex: 'Navy Blue',      blurb: 'A plain attribute, useful on a variant-level card.' },
     promo:     { label: 'Promotion',        src: 'feed',   needs: ['promo'],                  ex: 'SALE',           blurb: 'The feed\'s own promotion id or promo label, so the overlay follows the campaign.' },
     sale_word: { label: 'SALE',             src: 'none',   needs: [],                         ex: 'SALE',           blurb: 'A fixed word. Needs no data, so it fits every product — and says nothing specific.' },
+    // AN IMAGE, NOT A MESSAGE: the only fact the composition itself needs rather than a line of
+    // words. `rowOk` measures its REAL coverage over the sample — a column's fill rate counts a
+    // product whose second image repeats the first, which cannot carry a two-up.
+    second_image: { label: 'Second image', src: 'feed', needs: ['image2'], img: true, ex: 'a lifestyle shot',
+      blurb: 'The product\u2019s own additional_image_link — what the right-hand half of a two-up composition is made of.',
+      rowOk: function (row, slots) {
+        var b = slots.image, main = b && b.col ? s0(row[b.col]).trim() : '';
+        return !!secondImage(row, slots, main).url;
+      } },
   };
   var FACT_IDS = Object.keys(FACTS);
 
@@ -288,6 +328,18 @@
         if (!got || !got.col || got.conf === 'none') { miss.push(sl); why.push((SLOTS[sl] ? SLOTS[sl].label : sl) + ': ' + ((got && got.why) || 'not in this feed')); return; }
         cov = Math.min(cov, got.fill);
       });
+      // a fact that can judge a row for itself is counted over the sample, not off a column's fill
+      if (!miss.length && typeof def.rowOk === 'function') {
+        var ok = 0;
+        for (var ri = 0; ri < rows.length; ri++) { if (def.rowOk(rows[ri], slots)) ok++; }
+        cov = rows.length ? ok / rows.length : 0;
+        if (!ok) { facts[f] = { id: f, src: def.src, state: 'none', cov: 0,
+          why: 'no product read carries a usable ' + (SLOTS[need[0]] ? SLOTS[need[0]].label.toLowerCase() : need[0]) }; return; }
+        facts[f] = { id: f, src: def.src, state: cov < 0.5 ? 'thin' : 'ready', cov: cov,
+          why: ok + ' of the ' + rows.length + ' products read carry a ' + (SLOTS[need[0]] ? SLOTS[need[0]].label.toLowerCase() : need[0])
+            + ' that is a different picture from the main one (' + Math.round(cov * 100) + '%)' };
+        return;
+      }
       facts[f] = { id: f, src: def.src, state: miss.length ? 'none' : (cov < 0.5 ? 'thin' : 'ready'), cov: miss.length ? 0 : cov,
         why: miss.length ? why.join('; ') : 'reads on ' + Math.round(cov * 100) + '% of the products read' };
     });
@@ -358,6 +410,14 @@
     if (qty == null && master && master.qty != null) qty = intOf(master.qty);
     var out = {};
     var put = function (id, text, raw, why) { out[id] = { id: id, ok: !!text, text: text || '', raw: raw, why: why || '', src: FACTS[id].src }; };
+
+    // the main picture as the PAGE is painting it — on a feed already carrying an overlay that is
+    // the source decoded out of the composite, not the composite URL, or an additional image that
+    // repeats it would read as a second picture
+    var mainImg = opts.mainImg != null ? s0(opts.mainImg) : get('image');
+    var si = secondImage(row, S, mainImg);
+    out.second_image = { id: 'second_image', ok: !!si.url, text: '', raw: si.url, img: true, n: si.n, all: si.all,
+      why: si.why, src: 'feed' };
 
     var pct = was && now ? pctOff(was.n, now.n) : null;
     if (pct == null) put('sale_pct', '', null, !was ? 'no reference price on this product' : !now ? 'no live price on this product' : 'the live price is not below the reference price');
@@ -444,7 +504,7 @@
               { at: 'b', as: 'band', fact: 'sale_pct', size: 'sm', fg: '#333333', bg: '#FFFFFF' }] },
     { id: 'split', name: 'Product \u00d7 lifestyle', family: 'compose', maps: 'image_process_products_lifestyle',
       blurb: 'The two-up composition already live on Monsoon\'s Meta feed: the packshot beside a lifestyle shot, with one message across the join.',
-      zones: [{ at: 'split', as: 'split' },
+      zones: [{ at: 'split', as: 'split', fact: 'second_image' },
               { at: 'b', as: 'bar', fact: 'sale_pct', size: 'md', fg: '#FFFFFF', bg: '#ED6F0B' }] },
     { id: 'full-house', name: 'Everything on', family: 'stress',  maps: 'image_process_engine',
       blurb: 'Every corner used at once. Not a design to ship \u2014 it is here to show how much a card can carry before it stops reading.',
@@ -471,11 +531,19 @@
       if (!z.fact) { zones.push(Object.assign({}, z, { i: i, text: '' })); return; }
       wanted++;
       var r = resolved[z.fact];
+      // an IMAGE zone (the two-up's right half) carries no words, so it is resolved on whether the
+      // picture exists — judging it on `text` would drop every composition, and letting it
+      // through regardless is what drew the packshot twice
+      if (FACTS[z.fact] && FACTS[z.fact].img) {
+        if (!r || !r.ok) { dropped.push({ fact: z.fact, label: FACTS[z.fact].label, why: (r && r.why) || 'not available on this product' }); return; }
+        zones.push(Object.assign({}, z, { i: i, text: '', img: true, fact: z.fact, raw: r.raw, n: r.n }));
+        return;
+      }
       var txt = over[z.fact] != null ? s0(over[z.fact]) : (r ? r.text : '');
       if (!txt) { dropped.push({ fact: z.fact, label: FACTS[z.fact] ? FACTS[z.fact].label : z.fact, why: (r && r.why) || 'not available on this product' }); return; }
       zones.push(Object.assign({}, z, { i: i, text: txt, fact: z.fact, raw: r ? r.raw : null }));
     });
-    var drew = zones.filter(function (z) { return z.text; }).length;
+    var drew = zones.filter(function (z) { return z.text || z.img; }).length;
     return { ok: true, id: design.id, name: design.name, family: design.family, maps: design.maps,
       zones: zones, dropped: dropped, wanted: wanted, drew: drew,
       empty: wanted > 0 && drew === 0,
@@ -593,8 +661,10 @@
     var P = [], tz = (composed.zones || []).filter(function (z) { return z.text; });
     P.push({ k: 'img_url', v: '{image_link}', note: 'the product image, from the feed' });
     if (script === 'image_process_products_lifestyle') {
+      var iz = (composed.zones || []).filter(function (z) { return z.as === 'split'; })[0];
+      var nAdd = iz && iz.n > 1 ? ' — the first of ' + iz.n + ' this product carries' : '';
       P[0] = { k: 'img_url_left', v: '{image_link}', note: 'the packshot' };
-      P.push({ k: 'img_url_right', v: '{additional_image_link}', note: 'the lifestyle shot' });
+      P.push({ k: 'img_url_right', v: '{additional_image_link}', note: 'the lifestyle shot' + nAdd });
     }
     if (script === 'image_process_subscription_v1') {
       P.push({ k: 'show_price', v: '1', note: 'draw the price tag' });
@@ -667,5 +737,6 @@
     summon: summon, pricePair: pricePair, resolveFacts: resolveFacts,
     designById: designById, compose: compose, layout: layout, overlaps: overlaps,
     recipeFor: recipeFor, tokenFor: tokenFor, readiness: readiness, designsFor: designsFor,
+    imgUrls: imgUrls, secondImage: secondImage,
   };
 }));

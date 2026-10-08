@@ -258,6 +258,7 @@ import WEB_CAT_DASH from "../../../docs/website/catalogue-dashboard.webp";
 import WEB_CAT_STAGES from "../../../docs/website/catalogue-stages.webp";
 import WEB_STOCK from "../../../docs/website/stock-instock.webp";
 import WEB_RULES from "../../../docs/website/rules-findings.webp";
+import * as SEC from './security.js';   // the request gate: identity, body caps, throttles, redirect-checked fetch (docs/SECURITY.md)
 const WEBSITE_MEDIA = {
   'catalogue-loop.mp4': { body: WEB_CAT_LOOP, mime: 'video/mp4' },
   'catalogue-loop.webp': { body: WEB_CAT_LOOP_P, mime: 'image/webp' },
@@ -623,8 +624,28 @@ export default {
   // ~200 places, so rather than stamp each one the router is a plain function and every answer
   // leaves through secHeaders() below. Nothing about routing changes.
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    // THE GATE (Ray, 8 Oct 2026, "a complete security check and enforcement across FCC"): identity
+    // first, then the body cap, then the money-route throttle — all before route() reads anything.
+    // Identity = the verified Access JWT when ACCESS_TEAM_DOMAIN + ACCESS_AUD are set, else the
+    // headers Access injects; stashed per request so the synchronous who() reads one answer.
+    const ident = await resolveIdentity(request, env, path);
+    IDENT.set(request, ident);
+    const gate = SEC.idGate(path, request.method, ident, env);
+    if (!gate.ok) {
+      const d = SEC.deniedBody(path);
+      const res = d.json ? json(d.body, gate.status) : new Response(d.body, { status: gate.status, headers: { 'content-type': 'text/html;charset=utf-8' } });
+      return secHeaders(res, path, url.origin);
+    }
+    const bg = SEC.bodyGate(path, request.method, request.headers.get('content-length'));
+    if (!bg.ok) return secHeaders(json({ error: 'request body too large', cap: bg.cap, size: bg.size }, 413), path, url.origin);
+    if (SEC.MONEY_PATHS.has(path) && (request.method === 'POST' || request.method === 'PUT')) {
+      const th = await SEC.throttleHit(env.EDITS, path, ident);
+      if (th.limited) return secHeaders(json({ error: 'rate limited — ' + th.limit + ' calls per ' + Math.round(th.windowS / 60) + ' minutes on ' + path, retryS: th.windowS }, 429), path, url.origin);
+    }
     const res = await route(request, env, ctx);
-    return secHeaders(res, new URL(request.url).pathname);
+    return secHeaders(res, path, url.origin);
   },
 
   // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
@@ -977,7 +998,14 @@ async function route(request, env, ctx) {
     // Cloudflare Access BYPASS policy (Apps Script can't pass Access) — docs/GOOGLE_SETUP.md §8.
     if (path === '/api/gmail/push' && request.method === 'POST') {
       if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
-      if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      // constant-time compare + a per-IP brake: 20 wrong keys in 10 minutes and the address is
+      // answered 429 for the rest of the window, before the key is even looked at
+      const pushIp = request.headers.get('cf-connecting-ip') || 'noip';
+      if (await SEC.throttleOver(env.EDITS, 'push-fail', pushIp)) return json({ ok: false, error: 'rate limited' }, 429);
+      if (!SEC.safeEqual(request.headers.get('X-FCC-Push-Key'), env.GMAIL_PUSH_KEY)) {
+        ctx.waitUntil(SEC.throttleHit(env.EDITS, 'push-fail', pushIp));
+        return json({ ok: false, error: 'unauthorized' }, 401);
+      }
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
 
       // Label Guard email bridge: the SAME key-gated Apps Script drains queued alert emails
@@ -3963,9 +3991,9 @@ const CSP = [
   "form-action 'self'",
 ].join('; ');
 
-function secHeaders(res, path) {
+function secHeaders(res, path, origin) {
   try {
-    const h = new Headers(res.headers);
+    const h = SEC.tightenHeaders(new Headers(res.headers), path, origin);
     h.set('X-Content-Type-Options', 'nosniff');
     h.set('X-Frame-Options', 'SAMEORIGIN');
     h.set('Referrer-Policy', 'same-origin');
@@ -3988,7 +4016,31 @@ function json(data, status = 200, extraHeaders) {
 // who is making this request? Cloudflare Access injects the verified email; service
 // tokens carry a client id instead; anything else (misconfig / no Access) is 'unknown'
 // and never matches the owner, so the restricted surfaces stay closed.
+// the identity fetch() resolved for this request (verified JWT or the Access headers) — who()
+// reads it first so every gate in the worker answers off ONE resolution per request
+const IDENT = new WeakMap();
+let ACCESS_CERTS = null;   // { t, certs } — the team's public keys, cached per isolate for an hour
+async function resolveIdentity(request, env, path) {
+  if (!SEC.accessConfigured(env)) return SEC.identityOf(request.headers);
+  if (SEC.isPublicPath(path, request.method)) return SEC.identityOf(request.headers);
+  const token = request.headers.get('Cf-Access-Jwt-Assertion') || (/(?:^|;\s*)CF_Authorization=([^;]+)/.exec(request.headers.get('Cookie') || '') || [])[1] || '';
+  if (!token) return 'unknown';
+  try {
+    if (!ACCESS_CERTS || Date.now() - ACCESS_CERTS.t > 3600000) {
+      const r = await fetch(SEC.accessCertsUrl(env), { cf: { cacheTtl: 3600 } });
+      if (r.ok) ACCESS_CERTS = { t: Date.now(), certs: await r.json() };
+    }
+    const v = await SEC.verifyAccessJwt(token, ACCESS_CERTS && ACCESS_CERTS.certs, env.ACCESS_AUD, Date.now(), crypto.subtle);
+    if (!v.ok && ACCESS_CERTS && /unknown kid/.test(v.reason)) {   // a rotated key: re-read the certs once
+      const r = await fetch(SEC.accessCertsUrl(env));
+      if (r.ok) { ACCESS_CERTS = { t: Date.now(), certs: await r.json() }; return SEC.identityFromJwt(await SEC.verifyAccessJwt(token, ACCESS_CERTS.certs, env.ACCESS_AUD, Date.now(), crypto.subtle)); }
+    }
+    return SEC.identityFromJwt(v);
+  } catch (e) { return 'unknown'; }
+}
 function who(request) {
+  const stashed = IDENT.get(request);
+  if (stashed) return stashed;
   const e = request.headers.get('Cf-Access-Authenticated-User-Email');
   if (e) return e.toLowerCase();
   const svc = request.headers.get('Cf-Access-Client-Id');
@@ -4328,7 +4380,12 @@ async function catImg(env, url, src, client, mkt) {
   if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed — this feed\'s images are served from ' + (hosts.slice(0, 3).join(', ') || 'no host the feed head names') }, 403);
   const ctl = new AbortController(), timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 12000), t0 = Date.now();
   let up;
-  try { up = await fetch(target, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': PDP_SCAN_UA, accept: 'image/avif,image/webp,image/*;q=0.9,*/*;q=0.5' } }); }
+  // every redirect hop is checked against the same allow-list — a 302 off the feed's CDN is refused, never followed
+  try {
+    const fw = await SEC.fetchWithin(fetch, target, (u) => catImgAllowed(u, hosts), { signal: ctl.signal, headers: { 'user-agent': PDP_SCAN_UA, accept: 'image/avif,image/webp,image/*;q=0.9,*/*;q=0.5' } });
+    if (fw.blocked) { clearTimeout(timer); return json({ ok: false, error: fw.tooMany ? 'too many redirects' : 'redirected to a host not allowed (' + fw.host + ')' }, 403); }
+    up = fw.res;
+  }
   catch (e) { clearTimeout(timer); return json({ ok: false, error: /abort/i.test(String(e && e.name)) ? 'timed out after 12s' : 'fetch failed' }, 502); }
   clearTimeout(timer);
   if (!up.ok || !up.body) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, http: up.status, error: 'HTTP ' + up.status }, 502); }
@@ -6195,9 +6252,12 @@ async function goldenRoutes(env, request, url) {
     const timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 9000);
     let up;
     try {
-      up = await fetch(target, { redirect: 'follow', signal: ctl.signal,
+      // redirects are followed by hand so each hop is held to the feed's own product host
+      const fw = await SEC.fetchWithin(fetch, target, (u) => pdpHostAllowed(u, host), { signal: ctl.signal,
         headers: { 'user-agent': PDP_SCAN_UA, accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
           'accept-language': pdpLang(mkt), 'x-feedspark-scan': 'golden-record' } });
+      if (fw.blocked) { clearTimeout(timer); return json({ ok: false, error: fw.tooMany ? 'too many redirects' : 'redirected to a host not allowed (' + fw.host + ') — this feed\'s products live on ' + host, ms: Date.now() - t0 }, 403); }
+      up = fw.res;
     } catch (e) {
       clearTimeout(timer);
       return json({ ok: false, error: /abort/i.test(String(e && e.name)) ? 'timed out after 9s' : 'fetch failed: ' + String(e && e.message || e).slice(0, 120), ms: Date.now() - t0 }, 502);

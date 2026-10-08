@@ -10493,7 +10493,7 @@
       "pr": 558
     },
     {
-      "name": "transformation: editable roadmap \u2014 overrides laid over the seed",
+      "name": "transformation: editable roadmap — overrides laid over the seed",
       "file": "docs/FeedSpark_Transformation.html",
       "pattern": "eff:function(coll,seed,S,idk)",
       "pr": 558
@@ -10576,13 +10576,49 @@
       "pattern": "if (id && clientMatch(acc.clients, brand)) { sheets[brand] = id; wired[brand] = 1; }",
       "pr": 558
     },
-    {"name": "news: the landing lane fires on the Routine's branch", "file": ".github/workflows/news-digest.yml", "pattern": "branches: ['claude/news-digest', 'claude/news-digest-*']", "pr": 0},
-    {"name": "news: the lane lands the digest alone", "file": ".github/workflows/news-digest.yml", "pattern": "this lane lands docs/news_digest.json alone", "pr": 0},
-    {"name": "news: the lane dispatches the deploy by name", "file": ".github/workflows/news-digest.yml", "pattern": "gh workflow run deploy.yml --ref main", "pr": 0},
-    {"name": "news: one gate — the 90-day rule in whole days", "file": "tools/check_news.js", "pattern": "if (dm < genDay - WINDOW_DAYS * DAY)", "pr": 0},
-    {"name": "news: the gate refuses main's own id", "file": "tools/check_news.js", "pattern": "is main\\'s id", "pr": 0},
-    {"name": "news: the skill pushes the branch, never main", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push --force -u origin claude/news-digest", "pr": 0},
-    {"name": "news: the skill never pushes to main (retired)", "file": ".claude/skills/feedspark-news-digest/SKILL.md", "pattern": "git push -u origin main", "forbidden": true, "pr": 0},
+    {
+      "name": "news: the landing lane fires on the Routine's branch",
+      "file": ".github/workflows/news-digest.yml",
+      "pattern": "branches: ['claude/news-digest', 'claude/news-digest-*']",
+      "pr": 0
+    },
+    {
+      "name": "news: the lane lands the digest alone",
+      "file": ".github/workflows/news-digest.yml",
+      "pattern": "this lane lands docs/news_digest.json alone",
+      "pr": 0
+    },
+    {
+      "name": "news: the lane dispatches the deploy by name",
+      "file": ".github/workflows/news-digest.yml",
+      "pattern": "gh workflow run deploy.yml --ref main",
+      "pr": 0
+    },
+    {
+      "name": "news: one gate — the 90-day rule in whole days",
+      "file": "tools/check_news.js",
+      "pattern": "if (dm < genDay - WINDOW_DAYS * DAY)",
+      "pr": 0
+    },
+    {
+      "name": "news: the gate refuses main's own id",
+      "file": "tools/check_news.js",
+      "pattern": "is main\\'s id",
+      "pr": 0
+    },
+    {
+      "name": "news: the skill pushes the branch, never main",
+      "file": ".claude/skills/feedspark-news-digest/SKILL.md",
+      "pattern": "git push --force -u origin claude/news-digest",
+      "pr": 0
+    },
+    {
+      "name": "news: the skill never pushes to main (retired)",
+      "file": ".claude/skills/feedspark-news-digest/SKILL.md",
+      "pattern": "git push -u origin main",
+      "forbidden": true,
+      "pr": 0
+    },
     {
       "name": "transformation: history log diffs the roadmap map on every save",
       "file": "cloudflare/feedspark-deck/src/worker.js",
@@ -11172,73 +11208,409 @@
       "pattern": "// a question cut off by ⏹ Stop is not a failed answer — it stays unasked and the run drops it",
       "pr": 561
     },
-    {"name": "Catalogue: price band on the ROAS-by list", "file": "docs/FeedSpark_Catalog.html", "pattern": "['Price_group', 'price band']", "pr": 0},
-    {"name": "Catalogue: a product sits in a price band off FeedHero's own rows", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));", "pr": 0},
-    {"name": "Catalogue: a cut FeedHero has not set up is said, never a red error", "file": "docs/FeedSpark_Catalog.html", "pattern": "Not set up in FeedHero for this market: ", "pr": 0},
-    {"name": "Catalogue engine: a price band is a range read off its label, never guessed", "file": "docs/catalog_engine.js", "pattern": "function priceGroupRange(label)", "pr": 0},
-    {"name": "Catalogue engine: the price FeedHero bands on is read off the data", "file": "docs/catalog_engine.js", "pattern": "function priceGroupBasis(bands, fx)", "pr": 0},
-    {"name": "Catalogue: Google Ads per product — ten 7-day columns, off by default", "file": "docs/FeedSpark_Catalog.html", "pattern": "{ k: 'a7roas', l: 'ROAS · 7 d', w: 100, num: 1, off: 1, ads: 1, s: 'a7roas' },", "pr": 0},
-    {"name": "Catalogue: the 7-day read is called again until whole", "file": "docs/FeedSpark_Catalog.html", "pattern": "if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }", "pr": 0},
-    {"name": "Catalogue: the inspector's own Google Ads line", "file": "docs/FeedSpark_Catalog.html", "pattern": "function inspAdsHtml(i) {", "pr": 0},
-    {"name": "Catalogue engine: Ads join is the product id, case-blind; rates from the sums", "file": "docs/catalog_engine.js", "pattern": "function adsRates(v) {", "pr": 0},
-    {"name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (rec.sig && rec.sig !== sig) { restarted = true; return false; }", "pr": 0},
-    {"name": "Worker: /api/catalog/ads", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/ads') {", "pr": 0},
-    {"name": "Deck export: stacked + donut native charts", "file": "tools/deck_to_pptx.py", "pattern": "\"donut\": XL_CHART_TYPE.DOUGHNUT", "pr": 568},
-    {"name": "Deck export: chart left, next table right (data-chart-side)", "file": "tools/deck_to_pptx.py", "pattern": "side = blocks[i][1]; i += 1", "pr": 568},
-    {"name": "Deck export: a doughnut never gets c:dLblPos (PowerPoint repair prompt)", "file": "tools/deck_to_pptx.py", "pattern": "A doughnut takes NO label position", "pr": 568},
-    {"name": "Materials: Reiss FY26/27 deck filed in the dossier", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "id: 'reiss-fy2627'", "pr": 568},
-    {"name": "Catalogue: the commercial view — six buyer modules registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];", "pr": 569},
-    {"name": "Catalogue: 👔 Procurement view is a preset of the module state", "file": "docs/FeedSpark_Catalog.html", "pattern": "var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];", "pr": 569},
-    {"name": "Catalogue: optimised vs not reads FeedHero's own optimisation cut", "file": "docs/FeedSpark_Catalog.html", "pattern": "var LIFTF = [['Title_optimisation_status', 'Titles'], ['Keyword_optimisation_status', 'Keywords']];", "pr": 569},
-    {"name": "Catalogue: optimised vs not is labelled a comparison, not a test", "file": "docs/FeedSpark_Catalog.html", "pattern": "side by side, not a controlled test", "pr": 569},
-    {"name": "Catalogue: the fee check stays on the device", "file": "docs/FeedSpark_Catalog.html", "pattern": "function feeSet() { lsSet('fcc-cat-fee',", "pr": 569},
-    {"name": "Catalogue: the comparison table is .vs, never the completeness bar's .cmp", "file": "docs/FeedSpark_Catalog.html", "pattern": "h += '<table class=\"vs\"><thead>", "pr": 569},
-    {"name": "what moved: the reducer that turns days into months", "file": "cloudflare/feedspark-deck/src/outcomes.js", "pattern": "export function monthlyClose", "pr": 0},
-    {"name": "what moved: a brand figure carries its market coverage", "file": "cloudflare/feedspark-deck/src/outcomes.js", "pattern": "export function brandMonthly", "pr": 0},
-    {"name": "what moved: the route, scored by labelguard's own histSeries", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "path === '/api/outcomes'", "pr": 0},
-    {"name": "what moved: the panel under the hours chart", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function outDraw()", "pr": 0},
-    {"name": "what moved: it needs a calendar to share", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function outCal()", "pr": 0},
-    {"name": "what moved: a gap breaks the line, never joined through", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (p.v == null) flush();", "pr": 0},
-    {"name": "what moved: both panels share one column, so the calendars line up", "file": "docs/FeedSpark_TaskManager.html", "pattern": ".cmain{flex:1 1 460px", "pr": 0},
-    {"name": "what moved: the PNG stacks both panels for the deck slide", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function pngSvgs()", "pr": 0},
-    {"name": "cuts a board asks for: quarter and week join the time dims", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "export const TIME_DIMS", "pr": 0},
-    {"name": "cuts a board asks for: ISO week reads off the Thursday", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "export function weekOf", "pr": 0},
-    {"name": "cuts a board asks for: a time split never folds a bucket into Other", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "if (cap && out.length > cap && !isTimeDim(dim)) {", "pr": 0},
-    {"name": "the denominator: the catalogue the hours maintained", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "scale.scanned++; scale.rows +=", "pr": 0},
-    {"name": "the denominator: the scale line under the verdict", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function scaleLine()", "pr": 0},
-    {"name": "the denominator: it follows the account, not the What-moved toggle", "file": "docs/FeedSpark_TaskManager.html", "pattern": "if (acct) outFetch(acct);", "pr": 0},
-    {"name": "Catalogue: size runs are read off the master (the feed drops out-of-stock sizes)", "file": "docs/FeedSpark_Catalog.html", "pattern": "E.runAdd(run, gc[0].v, E.stockOf(", "pr": 572},
-    {"name": "Catalogue: one size-run count for the card, filter and Variants column", "file": "docs/FeedSpark_Catalog.html", "pattern": "function grpC(g) { return (S.run && S.run.get(g))", "pr": 572},
-    {"name": "Catalogue engine: NOT_AVAILABLE is out of stock, quantity decides when there is no word", "file": "docs/catalog_engine.js", "pattern": "function stockOf(av, qty) {", "pr": 572},
-    {"name": "Website mockup: /website is bundled and routed", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/website':     { html: WEBSITE_PAGE, slug: 'website' }", "pr": 0},
-    {"name": "Website mockup: /website is a document (editor only, no FCC chrome)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const DOC_PATHS = new Set(['/case', '/website']);", "pr": 0},
-    {"name": "Website mockup v2: the hero figure is Command Center footage, not an illustration", "file": "docs/FeedSpark_Website.html", "pattern": "<source src=\"website/catalogue-loop.mp4\" type=\"video/mp4\">", "pr": 0},
-    {"name": "Website mockup: the FeedHero figure is redrawn with demo data (the recording carries a live client)", "file": "docs/FeedSpark_Website.html", "pattern": "Redrawn with demo data.", "pr": 0},
-    {"name": "Website mockup: the specialist-vs-platform comparison", "file": "docs/FeedSpark_Website.html", "pattern": "For a commerce suite, feeds are a module.", "pr": 0},
-    {"name": "Website mockup v2: the footage is served at /website/<file> with HTTP Range (Safari)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path.startsWith('/website/') && (request.method === 'GET' || request.method === 'HEAD')) {", "pr": 0},
-    {"name": "Website mockup v2: the footage is bundled as Data modules", "file": "wrangler.toml", "pattern": "{ type = \"Data\", globs = [\"**/website/*.webp\", \"**/website/*.mp4\"], fallthrough = true }", "pr": 0},
-    {"name": "Website mockup: the review-notes layer", "file": "docs/FeedSpark_Website.html", "pattern": "id=\"mk-notes\"", "pr": 0},
-    {"name": "Website mockup: the AI layer is SparkAI, never Tachyon", "file": "docs/FeedSpark_Website.html", "pattern": "Tachyon", "forbidden": true, "pr": 0},
-    {"name": "Website mockup: pricing section — priced on the result, two tiers by catalogue size", "file": "docs/FeedSpark_Website.html", "pattern": "<h2 data-r>Priced on the result, not the hours.</h2>", "pr": 0},
-    {"name": "Website mockup: pricing — the catalogue band sets both tiers", "file": "docs/FeedSpark_Website.html", "pattern": "var PZ = [{ g: 1200, a: 1900, inc: 500 }, { g: 2200, a: 3400, inc: 2500 }, { g: 3800, a: 5800, inc: 10000 }, null];", "pr": 0},
-    {"name": "Website mockup: pricing — 2 / 3 / 4 test packages add to either tier", "file": "docs/FeedSpark_Website.html", "pattern": "var TESTS = { 0: 0, 2: 800, 3: 1140, 4: 1440 };", "pr": 0},
-    {"name": "Website mockup: linked from the Leadership hub", "file": "docs/FeedSpark_Leadership.html", "pattern": "<a class=\"hub-card\" href=\"/website\">", "pr": 0},
-    {"name": "Catalogue: column filters — every view passes them", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passFacet(i) || !passCF(i)) continue;", "pr": 0},
-    {"name": "Catalogue: a column's value list is counted without its own filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "!passCF(i, skip)", "pr": 0},
-    {"name": "Catalogue: the column-filter pop-up follows its ▾ on scroll", "file": "docs/FeedSpark_Catalog.html", "pattern": "$('gw').addEventListener('scroll', cfPlace", "pr": 0},
-    {"name": "Stock availability: a roster market joins its scanned feeds on the FeedHero company id", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function feedKeys(list) {", "pr": 0},
-    {"name": "Stock availability: the master / Google / Meta counts per market", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function availView(a, stock) {", "pr": 0},
-    {"name": "Stock availability: the book pairs like with like", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function availBook(markets, ch) {", "pr": 0},
-    {"name": "Stock availability: the route reads both indexes and joins on the cmpid", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const fkeys = RULES.feedKeys(wiredXmlList());", "pr": 0},
-    {"name": "Stock availability: an output feed's counts ride confirmed scans", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (vol && vol.av) { try { await availTrack(env, client, mkt, vol.av); } catch (e) {} }", "pr": 0},
-    {"name": "Stock availability: the push lane streams a roster master", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (typeof body.masterfile === 'string') {", "pr": 0},
-    {"name": "Stock availability: the push lane stores the master counts", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (Array.isArray(body.masterstock)) {", "pr": 0},
-    {"name": "Stock availability: the feed counter on the scan stream", "file": "cloudflare/feedspark-deck/src/labelguard.js", "pattern": "export function availBucket(v) {", "pr": 0},
-    {"name": "Stock availability: the master counter", "file": "docs/catalog_engine.js", "pattern": "function stockTally() {", "pr": 0},
-    {"name": "Stock availability: the master agent reads a zipped / 1252 / XML master", "file": "tools/master_stock.mjs", "pattern": "export function tallyMaster(u8, tree, idx) {", "pr": 0},
-    {"name": "Stock availability: the master agent's schedule", "file": ".github/workflows/master-stock.yml", "pattern": "run: node tools/master_stock.mjs", "pr": 0},
-    {"name": "Stock availability: the card on /stock", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"av-card\">", "pr": 0},
-    {"name": "Stock availability: the page twin of availBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function avBook(markets, ch) {", "pr": 0},
+    {
+      "name": "Catalogue: price band on the ROAS-by list",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "['Price_group', 'price band']",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: a product sits in a price band off FeedHero's own rows",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (isPg) { v = E.segValue(a, p, x, at, birth, pgOf(j));",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: a cut FeedHero has not set up is said, never a red error",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "Not set up in FeedHero for this market: ",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: a price band is a range read off its label, never guessed",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function priceGroupRange(label)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: the price FeedHero bands on is read off the data",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function priceGroupBasis(bands, fx)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: Google Ads per product — ten 7-day columns, off by default",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "{ k: 'a7roas', l: 'ROAS · 7 d', w: 100, num: 1, off: 1, ads: 1, s: 'a7roas' },",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: the 7-day read is called again until whole",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (!j.done) { A.st = 'loading'; renderStatus(); setTimeout(step, 60); return; }",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: the inspector's own Google Ads line",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function inspAdsHtml(i) {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: Ads join is the product id, case-blind; rates from the sums",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function adsRates(v) {",
+      "pr": 0
+    },
+    {
+      "name": "Worker: Ads Traffic read a chunk a call, restarting on a re-downloaded report",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (rec.sig && rec.sig !== sig) { restarted = true; return false; }",
+      "pr": 0
+    },
+    {
+      "name": "Worker: /api/catalog/ads",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/catalog/ads') {",
+      "pr": 0
+    },
+    {
+      "name": "Deck export: stacked + donut native charts",
+      "file": "tools/deck_to_pptx.py",
+      "pattern": "\"donut\": XL_CHART_TYPE.DOUGHNUT",
+      "pr": 568
+    },
+    {
+      "name": "Deck export: chart left, next table right (data-chart-side)",
+      "file": "tools/deck_to_pptx.py",
+      "pattern": "side = blocks[i][1]; i += 1",
+      "pr": 568
+    },
+    {
+      "name": "Deck export: a doughnut never gets c:dLblPos (PowerPoint repair prompt)",
+      "file": "tools/deck_to_pptx.py",
+      "pattern": "A doughnut takes NO label position",
+      "pr": 568
+    },
+    {
+      "name": "Materials: Reiss FY26/27 deck filed in the dossier",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "id: 'reiss-fy2627'",
+      "pr": 568
+    },
+    {
+      "name": "Catalogue: the commercial view — six buyer modules registered",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];",
+      "pr": 569
+    },
+    {
+      "name": "Catalogue: 👔 Procurement view is a preset of the module state",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];",
+      "pr": 569
+    },
+    {
+      "name": "Catalogue: optimised vs not reads FeedHero's own optimisation cut",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "var LIFTF = [['Title_optimisation_status', 'Titles'], ['Keyword_optimisation_status', 'Keywords']];",
+      "pr": 569
+    },
+    {
+      "name": "Catalogue: optimised vs not is labelled a comparison, not a test",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "side by side, not a controlled test",
+      "pr": 569
+    },
+    {
+      "name": "Catalogue: the fee check stays on the device",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function feeSet() { lsSet('fcc-cat-fee',",
+      "pr": 569
+    },
+    {
+      "name": "Catalogue: the comparison table is .vs, never the completeness bar's .cmp",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "h += '<table class=\"vs\"><thead>",
+      "pr": 569
+    },
+    {
+      "name": "what moved: the reducer that turns days into months",
+      "file": "cloudflare/feedspark-deck/src/outcomes.js",
+      "pattern": "export function monthlyClose",
+      "pr": 0
+    },
+    {
+      "name": "what moved: a brand figure carries its market coverage",
+      "file": "cloudflare/feedspark-deck/src/outcomes.js",
+      "pattern": "export function brandMonthly",
+      "pr": 0
+    },
+    {
+      "name": "what moved: the route, scored by labelguard's own histSeries",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/outcomes'",
+      "pr": 0
+    },
+    {
+      "name": "what moved: the panel under the hours chart",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function outDraw()",
+      "pr": 0
+    },
+    {
+      "name": "what moved: it needs a calendar to share",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function outCal()",
+      "pr": 0
+    },
+    {
+      "name": "what moved: a gap breaks the line, never joined through",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "if (p.v == null) flush();",
+      "pr": 0
+    },
+    {
+      "name": "what moved: both panels share one column, so the calendars line up",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": ".cmain{flex:1 1 460px",
+      "pr": 0
+    },
+    {
+      "name": "what moved: the PNG stacks both panels for the deck slide",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function pngSvgs()",
+      "pr": 0
+    },
+    {
+      "name": "cuts a board asks for: quarter and week join the time dims",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export const TIME_DIMS",
+      "pr": 0
+    },
+    {
+      "name": "cuts a board asks for: ISO week reads off the Thursday",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function weekOf",
+      "pr": 0
+    },
+    {
+      "name": "cuts a board asks for: a time split never folds a bucket into Other",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "if (cap && out.length > cap && !isTimeDim(dim)) {",
+      "pr": 0
+    },
+    {
+      "name": "the denominator: the catalogue the hours maintained",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "scale.scanned++; scale.rows +=",
+      "pr": 0
+    },
+    {
+      "name": "the denominator: the scale line under the verdict",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function scaleLine()",
+      "pr": 0
+    },
+    {
+      "name": "the denominator: it follows the account, not the What-moved toggle",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "if (acct) outFetch(acct);",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: size runs are read off the master (the feed drops out-of-stock sizes)",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "E.runAdd(run, gc[0].v, E.stockOf(",
+      "pr": 572
+    },
+    {
+      "name": "Catalogue: one size-run count for the card, filter and Variants column",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function grpC(g) { return (S.run && S.run.get(g))",
+      "pr": 572
+    },
+    {
+      "name": "Catalogue engine: NOT_AVAILABLE is out of stock, quantity decides when there is no word",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function stockOf(av, qty) {",
+      "pr": 572
+    },
+    {
+      "name": "Website mockup: /website is bundled and routed",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/website':     { html: WEBSITE_PAGE, slug: 'website' }",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: /website is a document (editor only, no FCC chrome)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const DOC_PATHS = new Set(['/case', '/website']);",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup v2: the hero figure is Command Center footage, not an illustration",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "<source src=\"website/catalogue-loop.mp4\" type=\"video/mp4\">",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: the FeedHero figure is redrawn with demo data (the recording carries a live client)",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "Redrawn with demo data.",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: the specialist-vs-platform comparison",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "For a commerce suite, feeds are a module.",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup v2: the footage is served at /website/<file> with HTTP Range (Safari)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path.startsWith('/website/') && (request.method === 'GET' || request.method === 'HEAD')) {",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup v2: the footage is bundled as Data modules",
+      "file": "wrangler.toml",
+      "pattern": "{ type = \"Data\", globs = [\"**/website/*.webp\", \"**/website/*.mp4\"], fallthrough = true }",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: the review-notes layer",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "id=\"mk-notes\"",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: the AI layer is SparkAI, never Tachyon",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "Tachyon",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: pricing section — priced on the result, two tiers by catalogue size",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "<h2 data-r>Priced on the result, not the hours.</h2>",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: pricing — the catalogue band sets both tiers",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "var PZ = [{ g: 1200, a: 1900, inc: 500 }, { g: 2200, a: 3400, inc: 2500 }, { g: 3800, a: 5800, inc: 10000 }, null];",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: pricing — 2 / 3 / 4 test packages add to either tier",
+      "file": "docs/FeedSpark_Website.html",
+      "pattern": "var TESTS = { 0: 0, 2: 800, 3: 1140, 4: 1440 };",
+      "pr": 0
+    },
+    {
+      "name": "Website mockup: linked from the Leadership hub",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "<a class=\"hub-card\" href=\"/website\">",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: column filters — every view passes them",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "!passFacet(i) || !passCF(i)) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: a column's value list is counted without its own filter",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "!passCF(i, skip)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: the column-filter pop-up follows its ▾ on scroll",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "$('gw').addEventListener('scroll', cfPlace",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: a roster market joins its scanned feeds on the FeedHero company id",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function feedKeys(list) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the master / Google / Meta counts per market",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function availView(a, stock) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the book pairs like with like",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function availBook(markets, ch) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the route reads both indexes and joins on the cmpid",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const fkeys = RULES.feedKeys(wiredXmlList());",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: an output feed's counts ride confirmed scans",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (vol && vol.av) { try { await availTrack(env, client, mkt, vol.av); } catch (e) {} }",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the push lane streams a roster master",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (typeof body.masterfile === 'string') {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the push lane stores the master counts",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (Array.isArray(body.masterstock)) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the feed counter on the scan stream",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function availBucket(v) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the master counter",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function stockTally() {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the master agent reads a zipped / 1252 / XML master",
+      "file": "tools/master_stock.mjs",
+      "pattern": "export function tallyMaster(u8, tree, idx) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the master agent's schedule",
+      "file": ".github/workflows/master-stock.yml",
+      "pattern": "run: node tools/master_stock.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the card on /stock",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"av-card\">",
+      "pr": 0
+    },
+    {
+      "name": "Stock availability: the page twin of availBook",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function avBook(markets, ch) {",
+      "pr": 0
+    },
     {
       "name": "ROAS: every FeedHero cut in the Segment select — the one list (Ray 30 Sep 2026)",
       "file": "docs/FeedSpark_ROAS.html",
@@ -11389,27 +11761,132 @@
       "pattern": "head.push('total_skus', 'spread_pp', 'in_markets');",
       "pr": 0
     },
-    {"name": "Hero sizes: the size census engine (per product type, runs + style patterns)", "file": "docs/herosize_engine.js", "pattern": "function census(E, tree) {", "pr": 0},
-    {"name": "Hero sizes: a brand's list resolves own entry → the nearest coarser tier it set → the brand it follows → the example it follows", "file": "docs/herosize_engine.js", "pattern": "function heroFor(store, brand, t, ctx) {", "pr": 0},
-    {"name": "Hero sizes: a shoe type never takes a clothing row (and a clothing type never a footwear one)", "file": "docs/herosize_engine.js", "pattern": "if (!!r.fw !== fw) return false;", "pr": 0},
-    {"name": "Hero sizes: the cross-industry examples, labelled as starting points", "file": "docs/herosize_engine.js", "pattern": "not a standard anyone published", "pr": 0},
-    {"name": "Hero sizes: the brand's document import (Product type + Hero sizes)", "file": "docs/herosize_engine.js", "pattern": "function parseDoc(rows) {", "pr": 0},
-    {"name": "Hero sizes: the worker's census sanitiser (refused whole when off-shape)", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export function sanitizeCensus(c) {", "pr": 0},
-    {"name": "Hero sizes: guide edits scoped per brand, examples need the stock grant", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export function sanitizeHeroKey(key, val, ctx) {", "pr": 0},
-    {"name": "Hero sizes: the /api/rules/hero route (GET + PUT, kvmerge with explicit tombstones)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {", "pr": 0},
-    {"name": "Hero sizes: the {mastersize} push lane, one key per market", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (Array.isArray(body.mastersize)) {", "pr": 0},
-    {"name": "Hero sizes: 'unchanged' only when the census is of this import and this shape", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "have.imp === rec.lastImport && have.szv === HERO.CENSUS_V", "pr": 0},
-    {"name": "Hero sizes: the engine served at /stock/engine.js", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/stock/engine.js' && request.method === 'GET') {", "pr": 0},
-    {"name": "Hero sizes: the agent posts each market's census before the counts", "file": "tools/master_stock.mjs", "pattern": "const r = await post({ mastersize: [{ cmpid: m.cmpid, imp: got.imp, census: t.census }] });", "pr": 0},
-    {"name": "Hero sizes: the card on /stock", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"hmap-card\">", "pr": 0},
-    {"name": "Hero sizes: the card measures every type through the engine's map", "file": "docs/FeedSpark_Stock.html", "pattern": "var mp = HM.mp = HS.map(HM.store, b, cen, tier, d.market), sm = mp.sum;", "pr": 0},
-    {"name": "Hero sizes: an edit stays on screen until the server confirms it", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmReapply() {", "pr": 0},
-    {"name": "Held back: the output feed indexed by g:id and fs_data_original_id", "file": "docs/catalog_engine.js", "pattern": "function feedIndex() {", "pr": 0},
-    {"name": "Held back: in stock in the master, not live in the feed, with the style's range completion", "file": "docs/catalog_engine.js", "pattern": "function heldBack(feed) {", "pr": 0},
-    {"name": "Held back: the download on /stock (feed + master joined in the browser)", "file": "docs/FeedSpark_Stock.html", "pattern": "function hbDownload(cmpid) {", "pr": 0},
-    {"name": "Held back: offered once per market, beside its held-back count in the in-stock card", "file": "docs/FeedSpark_Stock.html", "pattern": "hbBtn(m, 'hb-dl') + n0(h.n)", "pr": 0},
-    {"name": "Held back: each stock market carries its wired feed keys", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "{ wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }", "pr": 0},
-    {"name": "Hero sizes + held back: the harness runs in the QA gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_herosize.mjs", "pr": 0},
+    {
+      "name": "Hero sizes: the size census engine (per product type, runs + style patterns)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function census(E, tree) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: a brand's list resolves own entry → the nearest coarser tier it set → the brand it follows → the example it follows",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function heroFor(store, brand, t, ctx) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: a shoe type never takes a clothing row (and a clothing type never a footwear one)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!!r.fw !== fw) return false;",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the cross-industry examples, labelled as starting points",
+      "file": "docs/herosize_engine.js",
+      "pattern": "not a standard anyone published",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the brand's document import (Product type + Hero sizes)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function parseDoc(rows) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the worker's census sanitiser (refused whole when off-shape)",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "export function sanitizeCensus(c) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: guide edits scoped per brand, examples need the stock grant",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "export function sanitizeHeroKey(key, val, ctx) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the /api/rules/hero route (GET + PUT, kvmerge with explicit tombstones)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/rules/hero' && (request.method === 'GET' || request.method === 'PUT')) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the {mastersize} push lane, one key per market",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (Array.isArray(body.mastersize)) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: 'unchanged' only when the census is of this import and this shape",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "have.imp === rec.lastImport && have.szv === HERO.CENSUS_V",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the engine served at /stock/engine.js",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/stock/engine.js' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the agent posts each market's census before the counts",
+      "file": "tools/master_stock.mjs",
+      "pattern": "const r = await post({ mastersize: [{ cmpid: m.cmpid, imp: got.imp, census: t.census }] });",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the card on /stock",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"hmap-card\">",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: the card measures every type through the engine's map",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var mp = HM.mp = HS.map(HM.store, b, cen, tier, d.market), sm = mp.sum;",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: an edit stays on screen until the server confirms it",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hmReapply() {",
+      "pr": 0
+    },
+    {
+      "name": "Held back: the output feed indexed by g:id and fs_data_original_id",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function feedIndex() {",
+      "pr": 0
+    },
+    {
+      "name": "Held back: in stock in the master, not live in the feed, with the style's range completion",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function heldBack(feed) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back: the download on /stock (feed + master joined in the browser)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hbDownload(cmpid) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back: offered once per market, beside its held-back count in the in-stock card",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "hbBtn(m, 'hb-dl') + n0(h.n)",
+      "pr": 0
+    },
+    {
+      "name": "Held back: each stock market carries its wired feed keys",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "{ wk: { g: k.g ? k.g.split('|')[1] : null, fb: k.fb ? k.fb.split('|')[1] : null } }",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes + held back: the harness runs in the QA gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_herosize.mjs",
+      "pr": 0
+    },
     {
       "name": "ROAS modular: the eight modules in one list",
       "file": "docs/FeedSpark_ROAS.html",
@@ -11458,162 +11935,947 @@
       "pattern": "node tools/check_roasmods.js",
       "pr": 0
     },
-    {"name": "KWCal: Superdry focus themes seeded (16, Oct 2026 → Jan 2027)", "file": "docs/FeedSpark_KWCal.html", "pattern": "Superdry:{events:[", "pr": 0},
-    {"name": "KWCal: Superdry lanes renamed for the KIND of work", "file": "docs/FeedSpark_KWCal.html", "pattern": "Superdry:{campaign:'Seasonal focus'", "pr": 0},
-    {"name": "KWCal: a scope that is SET but unmeasured is never reported as absent", "file": "docs/FeedSpark_KWCal.html", "pattern": "function hasScope(e,mkt)", "pr": 0},
-    {"name": "KWCal: the pending-scope card names what it scopes", "file": "docs/FeedSpark_KWCal.html", "pattern": "sync to measure", "pr": 0},
-    {"name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope", "file": "docs/FeedSpark_KWCal.html", "pattern": "!hasScope(e,evMkt(CLIENT,e))", "pr": 0},
-    {"name": "KWCal: Superdry GB product-type census (independent check on every seeded path)", "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json", "pattern": "distinct_primary_paths", "pr": 0},
-    {"name": "ROAS: ◐ Heat — the button + menu beside ⊞ Columns", "file": "docs/FeedSpark_ROAS.html", "pattern": "id=\"heat-btn\"", "pr": 0},
-    {"name": "ROAS: ◐ Heat — a scale per LEVEL, money per currency", "file": "docs/FeedSpark_ROAS.html", "pattern": "var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');", "pr": 0},
-    {"name": "ROAS: ◐ Heat — the midpoint is the MEDIAN", "file": "docs/FeedSpark_ROAS.html", "pattern": "med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2", "pr": 0},
-    {"name": "ROAS: ◐ Heat — orange → green, the validator-passed dark steps", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:34,160,107;--heat-lo:198,123,40", "pr": 0},
-    {"name": "ROAS: ◐ Heat — orange → green, the validator-passed light step", "file": "docs/FeedSpark_ROAS.html", "pattern": "--heat-hi:22,101,52;--heat-lo:237,111,11", "pr": 0},
-    {"name": "ROAS: ◐ Heat — where lower is better, green marks the lowest", "file": "docs/FeedSpark_ROAS.html", "pattern": "var weak=h.rev?h.t>0:h.t<0;", "pr": 0},
-    {"name": "ROAS: ◐ Heat — the reversed column checked in the tripwire", "file": "tools/check_roasmods.js", "pattern": "Zombie % (lower is better): the LOWEST brand is green", "pr": 0},
-    {"name": "ROAS: ◐ Heat — per device + carried by a saved view", "file": "docs/FeedSpark_ROAS.html", "pattern": "heat:S.heat.slice()", "pr": 0},
-    {"name": "ROAS: every menu nudged back inside the screen (fitPop)", "file": "docs/FeedSpark_ROAS.html", "pattern": "if(open)fitPop(pop);", "pr": 0},
-    {"name": "ROAS: ◐ Heat rendered in the tripwire", "file": "tools/check_roasmods.js", "pattern": "◐ Heat — a colour scale per column", "pr": 0},
-    {"name": "Hero sizes: departments read in every roster language (Superdry DE's Damen / Herren keep types apart)", "file": "docs/herosize_engine.js", "pattern": "function genderWord(gender) {", "pr": 0},
-    {"name": "Hero sizes: a child's age group wins over the gender word", "file": "docs/herosize_engine.js", "pattern": "var kidAge = deptFromCols('', age) === 'kids';", "pr": 0},
-    {"name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';", "pr": 0},
-    {"name": "Stock: the KPI band is GONE (Ray, 6 Oct 2026, a red cross over it: \"clean up stock section alittle bit\") — every figure it carried stands on a card below (must stay gone)", "file": "docs/FeedSpark_Stock.html", "pattern": "<div class=\"kpis\" id=\"kpis\">", "forbidden": true, "pr": 0},
-    {"name": "Stock even: summary tiles fill their card as equal tiles", "file": "docs/FeedSpark_Stock.html", "pattern": ".sv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0 0 12px}", "pr": 0},
-    {"name": "Stock even: a table grouped by market names the market once", "file": "docs/FeedSpark_Stock.html", "pattern": "function grp(list, keyOf) {", "pr": 0},
-    {"name": "Stock even: the held-back list sits beside its number (rows one height)", "file": "docs/FeedSpark_Stock.html", "pattern": "<span class=\"big\">' + hbBtn(m, 'hb-dl') + n0(h.n) + '</span>", "pr": 0},
-    {"name": "Stock even: every stock control one column width in the coverage matrix", "file": "docs/FeedSpark_Stock.html", "pattern": "#cov{table-layout:fixed;min-width:860px}", "pr": 0},
-    {"name": "Stock even: one width for every short size chip", "file": "docs/FeedSpark_Stock.html", "pattern": "justify-content:center;gap:3px;min-width:48px;height:24px;", "pr": 0},
-    {"name": "Stock even: a finding is one line until opened", "file": "docs/FeedSpark_Stock.html", "pattern": "'</span></summary><div class=\"fb\"><div class=\"why\">'", "pr": 0},
-    {"name": "Stock even: a market's setup summary is one line", "file": "docs/FeedSpark_Stock.html", "pattern": "'<div class=\"toolbar set-top\"><span class=\"why\">' + esc(m.sentence) + '</span>'", "pr": 0},
-    {"name": "Stock even: the phone search field on a row of its own", "file": "docs/FeedSpark_Stock.html", "pattern": ".ctl .q{flex:1 1 100%}", "pr": 0},
-    {"name": "Rules: the phone search field on a row of its own", "file": "docs/FeedSpark_Rules.html", "pattern": ".ctl .q{flex:1 1 100%}", "pr": 0},
-    {"name": "Stock even: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_stockeven.js", "pr": 0},
-    {"name": "Hero tiers: the Google feed's product_type tree, read per product (Ray 30 Sep 2026: \"tier 2, tier 3 of PT\")", "file": "docs/herosize_engine.js", "pattern": "function treeIndex(E) {", "pr": 0},
-    {"name": "Hero tiers: every master row placed on the feed's tree (engine)", "file": "docs/herosize_engine.js", "pattern": "var useTree = !!(tree && tree.typed && tree.o && tree.i && tree.g), sample = useTree ? [] : null;", "pr": 0},
-    {"name": "Hero tiers: the worker stores the census shape the engine writes", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export const CENSUS_V = ", "pr": 0},
-    {"name": "Hero tiers: a feed-less master type placed by where 80%+ of its sent products sit — the surer reading on a tie, never onto another sizing scale", "file": "docs/herosize_engine.js", "pattern": "if (placed) pv.keys.forEach(function (lk) { var a = agreed(learn.get(lk)), n = pathOf(a.p).length; if (n && !sizedLike(t, a.p)) return; if (n > cd || (n === cd && n && a.sh > cs)) { cp = a.p; cd = n; cs = a.sh; } });", "pr": 0},
-    {"name": "Hero tiers: else by the master's own word where the tree names it once (the run tells kids from women)", "file": "docs/herosize_engine.js", "pattern": "var wp = placed ? wordPlace(pv.words, pv.kid) : '';", "pr": 0},
-    {"name": "Hero tiers: a type the feed has no word for goes under the feed's department, else Master only", "file": "docs/herosize_engine.js", "pattern": "else if (placed) p.unshift(MASTER_ONLY);", "pr": 0},
-    {"name": "Hero tiers: every tier is a roll-up of the finest types (counts added, runs re-read)", "file": "docs/herosize_engine.js", "pattern": "function tierTypes(cen, L) {", "pr": 0},
-    {"name": "Hero tiers: the default tier — the finest at which 90% of sized products sit in 40 types", "file": "docs/herosize_engine.js", "pattern": "ts.forEach(function (x) { if (x.top <= 40) pick = x.t; });", "pr": 0},
-    {"name": "Hero tiers: a coarser list reaches a finer type only when it names a size the type is made in", "file": "docs/herosize_engine.js", "pattern": "if (i && all.length && !s.length) continue;", "pr": 0},
-    {"name": "Hero tiers: a row's figures are its types added up, each on its own list", "file": "docs/herosize_engine.js", "pattern": "if (e.h.dec && e.h.src !== 'ex' && !(e.h.doc && h.doc && e.h.doc.i === h.doc.i) && typeKey(e.h.up || n.k).indexOf(below) === 0) finer++;", "pr": 0},
-    {"name": "Hero tiers: an unchanged master is read again within the day (the feed's tree moves on its own)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS", "pr": 0},
-    {"name": "Hero tiers: the agent streams each market's Google feed before its master", "file": "tools/master_stock.mjs", "pattern": "try { fd = await readFeed(feeds[m.cmpid].url); }", "pr": 0},
-    {"name": "Hero tiers: the agent finds the Google feed by FeedHero company id", "file": "tools/master_stock.mjs", "pattern": "export function googleFeeds(src) {", "pr": 0},
-    {"name": "Hero tiers: the PT tier control on the hero card", "file": "docs/FeedSpark_Stock.html", "pattern": "<span class=\"seg\" id=\"hm-tiers\" role=\"group\" aria-labelledby=\"hm-tl\"></span>", "pr": 0},
-    {"name": "Hero tiers: the tier is remembered per brand on this device", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmSetTier(t) { var m = hmTiers(); m[hmBrand()] = t; remember('fcc-stock-hmtier', JSON.stringify(m)); }", "pr": 0},
-    {"name": "Hero tiers: an inherited list says which tier it came from", "file": "docs/FeedSpark_Stock.html", "pattern": "'\">⤴ Tier ' + h.up.split(' > ').length + '</span>'", "pr": 0},
-    {"name": "Hero tiers: a row names the types under it that set their own", "file": "docs/FeedSpark_Stock.html", "pattern": "' types under it set their own'", "pr": 0},
-    {"name": "Hero tiers: a master-only type and a type that goes no finer are named", "file": "docs/FeedSpark_Stock.html", "pattern": ">no finer type</span>", "pr": 0},
-    {"name": "Hero tiers: the note says where the types came from", "file": "docs/FeedSpark_Stock.html", "pattern": "Product types are the Google Shopping feed’s own product_type tree: ", "pr": 0},
-    {"name": "Hero tiers: the stub's census rides a synthetic Google feed tree", "file": "tools/rules_stub.js", "pattern": "const c = H.census(E, ti.finish());", "pr": 0},
-    {"name": "Hero tiers: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_herotier.js", "pr": 0},
-    {"name": "Hero tiers: one spelling per type — case and accents read as one (Superdry FR)", "file": "docs/herosize_engine.js", "pattern": "function foldKey(v) { var t = s0(v).toLowerCase(); try { t = t.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} return t; }", "pr": 0},
-    {"name": "Hero tiers: the card says how many feed spellings were read as one", "file": "docs/FeedSpark_Stock.html", "pattern": " the feed spells two ways (case or accents) read as one.", "pr": 0},
-    {"name": "Task Manager: the hours book is pulled over ALL TIME, not twelve months", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const win = TB.bookWindow(now, 0);", "pr": 0},
-    {"name": "Task Manager: the window is a reading choice applied when the book is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "TB.bookMonthsOf(url.searchParams.get('win'))", "pr": 0},
-    {"name": "Task Manager: an all-time pull's depth is read off the pull, not the window", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "full: win.all ? all.length < limit : (!deepest || deepest <= win.from),", "pr": 0},
-    {"name": "Task Manager: the book's read count can never exceed its total (Ray's “44 of 39”)", "file": "cloudflare/feedspark-deck/src/taskbook.js", "pattern": "cov.forEach((c) => { const k = key(c); if (!seen[k]) { seen[k] = 1; dropped++; } });", "pr": 0},
-    {"name": "Task Manager: the window control, 12 / 24 / all time, beside the dates it changes", "file": "docs/FeedSpark_TaskManager.html", "pattern": "var WINS = [{ v: '12', label: '12 months' }, { v: '24', label: '24 months' }, { v: 'all', label: 'All time' }];", "pr": 0},
-    {"name": "Task Manager: the window is named on the FIRST fetch, so all time loads once", "file": "docs/FeedSpark_TaskManager.html", "pattern": "fetch('/api/taskmanager?win=' + encodeURIComponent(CWIN))", "pr": 0},
-    {"name": "Task Manager: the book changing redraws its own sentence, typing does not", "file": "docs/FeedSpark_TaskManager.html", "pattern": "function refresh() { srcLine(); apply(); }", "pr": 0},
-    {"name": "Held back from Google: the join counts live and held products by their style's range completion (rcH)", "file": "docs/catalog_engine.js", "pattern": "var rcH = Array.from(h.values()).sort(", "pr": 0},
-    {"name": "Held back from Google: the range-completion line is READ OFF THE PRODUCTS (Ray 1 Oct 2026)", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function rcLine(rcH) {", "pr": 0},
-    {"name": "Held back from Google: a line is claimed only when it explains 90% of both sides", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "if (held / H < RC_LINE_SHARE || live / L < RC_LINE_SHARE) return null;", "pr": 0},
-    {"name": "Held back from Google: the agent's record is checked whole before it is stored", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function sanitizeHeld(raw) {", "pr": 0},
-    {"name": "Held back from Google: one market's state (ok / nofeed / unread / nojoin / nostock) served on its av", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "export function heldView(m, stock, w) {", "pr": 0},
-    {"name": "Held back from Google: stockView hands availView the market's own stock rules (the stated RC cut-offs)", "file": "cloudflare/feedspark-deck/src/rules.js", "pattern": "av: availView(avail, r.stock) };", "pr": 0},
-    {"name": "Held back from Google: the agent joins master and Google feed on its two reads, counts only out", "file": "tools/master_stock.mjs", "pattern": "export function heldRecord(r, idx) {", "pr": 0},
-    {"name": "Held back from Google: one feed read gives the tree AND the feed index", "file": "tools/master_stock.mjs", "pattern": "const p = FA.createXmlParser((row, h) => { ti.onRow(row, h); fi.onRow(row, h); });", "pr": 0},
-    {"name": "Held back from Google: hbv only once the count is settled (a failed feed read re-reads next run)", "file": "tools/master_stock.mjs", "pattern": "hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb });", "pr": 0},
-    {"name": "Held back from Google: the worker stores the record through RULES.sanitizeHeld", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const hb = e.hb == null ? null : RULES.sanitizeHeld(e.hb);", "pr": 0},
-    {"name": "Held back from Google: unchanged needs the held-back count of this shape too", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "have.szv === HERO.CENSUS_V && have.hbv === RULES.HELD_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS", "pr": 0},
-    {"name": "Stock: ONE in-stock card — seven columns under two named halves (ad spend merged in, Ray 1 Oct 2026)", "file": "docs/FeedSpark_Stock.html", "pattern": "<th colspan=\"3\">In stock · master feed → output feeds</th><th colspan=\"3\" class=\"hbg\">Held back from Google</th>", "pr": 0},
-    {"name": "Stock: every market row carries held back, range completion and its ad spend", "file": "docs/FeedSpark_Stock.html", "pattern": "avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + hbCell(m) + rcCell(m) + svCell(m)", "pr": 0},
-    {"name": "Stock: the range-completion cell — the line in the data, else a rule name's cut-off", "file": "docs/FeedSpark_Stock.html", "pattern": "function rcCell(m) {", "pr": 0},
-    {"name": "Stock: the rule-by-rule ad spend folds under the market rows", "file": "docs/FeedSpark_Stock.html", "pattern": "<details class=\"sv-rest sv-rules\" id=\"sv-rules\"><summary></summary>", "pr": 0},
-    {"name": "Stock: the page twin of heldBook", "file": "docs/FeedSpark_Stock.html", "pattern": "function hbBook(markets) {", "pr": 0},
-    {"name": "Stock: the panel shows what was measured beside the rule's own count", "file": "docs/FeedSpark_Stock.html", "pattern": "var meas = mh && mh.state === 'ok' ?", "pr": 0},
-    {"name": "Stock: the held-back download's message reads the products' own line (no assumed 75%)", "file": "docs/FeedSpark_Stock.html", "pattern": "return h.rc != null && h.rc < ln.x;", "pr": 0},
-    {"name": "Stock: a scenario or period change redraws the market rows", "file": "docs/FeedSpark_Stock.html", "pattern": "svSave(); renderAv(); renderSv();", "pr": 0},
-    {"name": "Catalogue: completeness is Google-ready as sent — a value not in Google's format counts half", "file": "docs/catalog_engine.js", "pattern": "return spec(k, v) === 'warn' ? 0.5 : 1;", "pr": 0},
-    {"name": "Catalogue: the inspector's stage scrubber scores with the same credit", "file": "docs/FeedSpark_Catalog.html", "pattern": "c = r ? E.credit(x.k, E.valueAt(r, s)) : 0;", "pr": 0},
-    {"name": "Catalogue: Google takes http or https for links and images", "file": "docs/catalog_engine.js", "pattern": "case 'image_link': return /^https?:", "pr": 0},
-    {"name": "Hero document: a brand's table is read as written — category × gender rows, kept whole", "file": "docs/herosize_engine.js", "pattern": "return { rows: out, layout: rules ? 'rules' : si >= 0 ? 'column' : 'cells', header: hi };", "pr": 0},
-    {"name": "Hero document: a row meets a type by its words at one level — a plural whose singular is another word stays apart", "file": "docs/herosize_engine.js", "pattern": "var KEEP_S = { shorts: 1, jeans: 1 };", "pr": 0},
-    {"name": "Hero document: a row naming a level outright beats a word inside a deeper name (Swim Shorts is Swimwear)", "file": "docs/herosize_engine.js", "pattern": "if (c && c * 100 + L > score) { score = c * 100 + L; best = { r: r, lvl: L, full: c === 2 }; }", "pr": 0},
-    {"name": "Hero document: applies only on the markets it is written for (one size system)", "file": "docs/herosize_engine.js", "pattern": "rules: doc && (market == null || docCovers(doc, market)) ? docRules(doc) : null", "pr": 0},
-    {"name": "Hero document: after the type's own list, before a coarser tier, the brand it follows and the example", "file": "docs/herosize_engine.js", "pattern": "var dr = set.rules ? fromDoc(set.rules, t) : null;", "pr": 0},
-    {"name": "Hero document: a row whose sizes the type is not made in still speaks for it — never an example in its place", "file": "docs/herosize_engine.js", "pattern": "if (dr) return dr.r.s.length ? { d: dr, miss: true } : { d: dr, open: true };", "pr": 0},
-    {"name": "Hero document: a row reaching under half a type's run reaches PART of it, and says by how much", "file": "docs/herosize_engine.js", "pattern": "if (!a.miss && !a.open && a.d.reach < PART) x.part = Math.round(a.d.reach * 1000) / 10;", "pr": 0},
-    {"name": "Hero document: the document row by row against the market (docSummary)", "file": "docs/herosize_engine.js", "pattern": "return { types: types, sum: sum, tier: tier || 0, doc: docSummary(ctx, nodes, eff) };", "pr": 0},
-    {"name": "Hero document: the worker stores d:<Brand> as written, its markets the brand's own", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "if (all.indexOf(v) < 0) return { error: 'not a ' + brand + ' market: ' + v };", "pr": 0},
-    {"name": "Hero document: Superdry's table (Ray, 5 Oct 2026) seeded once, written for GB and IE", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "Superdry: { name: 'Superdry hero sizes', mk: ['GB', 'IE'], from: 'Ray’s table, 5 Oct 2026', rows: [", "pr": 0},
-    {"name": "Hero document: a seed is never re-written once its key existed (a tombstone counts)", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "if (!envx || !envx.meta || !envx.data || envx.meta[k]) return;", "pr": 0},
-    {"name": "Hero document: the route seeds on read and saves only when it wrote", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (HERO.applySeeds(henv, now)) await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(henv));", "pr": 0},
-    {"name": "Hero document: a PUT's document markets are checked against the roster", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),", "pr": 0},
-    {"name": "Hero document: the card tags a row that doesn't fit / reaches part / is open", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmDocTag(h) {", "pr": 0},
-    {"name": "Hero document: the rows panel and the markets it is written for", "file": "docs/FeedSpark_Stock.html", "pattern": "function hmDocPanel(dd, mkt) {", "pr": 0},
-    {"name": "Hero document: the 'Document doesn't fit' filter", "file": "docs/FeedSpark_Stock.html", "pattern": "['fit', 'Document doesn’t fit', nfit]", "pr": 0},
-    {"name": "Hero document: a category × gender import becomes the brand's document, kept whole", "file": "docs/FeedSpark_Stock.html", "pattern": "if (doc.layout === 'rules') {", "pr": 0},
-    {"name": "Hero document: ⬇ Sheet leads with the document — the sheet ⇪ Import reads back", "file": "docs/FeedSpark_Stock.html", "pattern": "if (dd) sheets.unshift({ name: 'Document',", "pr": 0},
-    {"name": "Hero census v4: the catalogue check (Ray, 5 Oct 2026: \"double check [Sizes made in] are actually presentation of Superdry catalogue\") — the engine's shape", "file": "docs/herosize_engine.js", "pattern": "var CENSUS_V = 4;", "pr": 0},
-    {"name": "Hero census v4: …and the worker's", "file": "cloudflare/feedspark-deck/src/herosizes.js", "pattern": "export const CENSUS_V = 4;", "pr": 0},
-    {"name": "Hero census v4: a reading made only of departments and merchandising buckets is no product type (\"outlet/mens/view all\")", "file": "docs/herosize_engine.js", "pattern": "if (segs.length > 1 && segs.every(bareLevel)) return false;", "pr": 0},
-    {"name": "Hero census v4: a size read as a span on its kind of scale", "file": "docs/herosize_engine.js", "pattern": "function szSpan(k) {", "pr": 0},
-    {"name": "Hero census v4: a learned place refused for a run on another scale (skis in cm beside S–XXL)", "file": "docs/herosize_engine.js", "pattern": "var sizedLike = function (t, pth) { var e = szAt.get(pth); return !e || sameScale(spansOf(Array.from(t.sz.keys())), e); };", "pr": 0},
-    {"name": "Hero census v4: a word refines a learned place only where its reading's sent products agree", "file": "docs/herosize_engine.js", "pattern": "if (l.length === 1 && fits(w.k, l[0])) c.push(l[0]);", "pr": 0},
-    {"name": "Hero census v4: …and places an unsent type only where they agree", "file": "docs/herosize_engine.js", "pattern": "if (l.length === 1 && fits(ws[i].k, l[0])) return l[0];", "pr": 0},
-    {"name": "Hero census v4: two words naming two different places refine nothing", "file": "docs/herosize_engine.js", "pattern": "for (var i = 1; i < c.length; i++) if ((c[0] + ' > ').indexOf(c[i] + ' > ') !== 0) return '';", "pr": 0},
-    {"name": "Hero census v4: a collar written without its point read as one only beside whole collar sizes", "file": "docs/herosize_engine.js", "pattern": "var cm = collarRun(t.sz);", "pr": 0},
-    {"name": "Hero census v4: the catalogue-check census in the harness", "file": "tools/test_herosize.mjs", "pattern": "console.log('· the catalogue check — a type is made in the sizes the brand makes it in (census v4)');", "pr": 0},
-    {"name": "Hero census v4: sizeKey never reads every \"155\" as a collar (Superdry's skis are 155 cm) — must stay gone", "file": "docs/herosize_engine.js", "pattern": "if (/^1[3-8]5$/.test(s)) return s.slice(0, 2) + '.5';", "forbidden": true, "pr": 0},
-    {"name": "Stock levers: the card (Ray, 5 Oct 2026: \"build an facilitor interface to action BAU vs. SALE perido\")", "file": "docs/FeedSpark_Stock.html", "pattern": "<section class=\"card\" id=\"lev-card\" hidden>", "pr": 0},
-    {"name": "Stock levers: the engine loaded from /stock/levers.js", "file": "docs/FeedSpark_Stock.html", "pattern": "return fetch('/stock/levers.js', { credentials: 'same-origin' })", "pr": 0},
-    {"name": "Stock levers: the card renders with the page (first under the header)", "file": "docs/FeedSpark_Stock.html", "pattern": "    renderChips(); renderLev(); renderAv();", "pr": 0},
-    {"name": "Stock levers: an edit stays on screen until the server confirms it", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvReapply() { Object.keys(LV.pend).forEach(function (k) { if (LV.pend[k] === null) delete LV.store[k]; else LV.store[k] = LV.pend[k]; }); }", "pr": 0},
-    {"name": "Stock levers: → Brief marks the switch briefed BEFORE the page leaves", "file": "docs/FeedSpark_Stock.html", "pattern": "lvSetStep(q, dir, 'briefed', true, go)", "pr": 0},
-    {"name": "Stock levers: → Brief opens the Workflow composer with the switch as the brief", "file": "docs/FeedSpark_Stock.html", "pattern": "location.href = '/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' })", "pr": 0},
-    {"name": "Stock levers: keep a market as it runs", "file": "docs/FeedSpark_Stock.html", "pattern": "d4['m:' + b + '|' + mkName] = { lv: SL.adopt(r) };", "pr": 0},
-    {"name": "Stock levers: a range-completion rule found by its NAME (the classifier files most under availability)", "file": "docs/stocklevers_engine.js", "pattern": "var RC_NAME = /\\b(range[\\s-]*completion|rc)\\b/i, HERO_NAME = /\\bhero\\b/i;", "pr": 0},
-    {"name": "Stock levers: the measured line wins, then a name's cut-off, then a name's %, never a guess", "file": "docs/stocklevers_engine.js", "pattern": "if (line) return { state: 'on', val: line.x, lo: line.lo, hi: line.hi, how: 'line'", "pr": 0},
-    {"name": "Stock levers: a lever is read on the Google side (Meta, affiliates and labels are not it)", "file": "docs/stocklevers_engine.js", "pattern": "function gch(r) { return !r.ch || r.ch === 'all' || r.ch === 'google'; }", "pr": 0},
-    {"name": "Stock levers: a line nobody can state is never called off plan", "file": "docs/stocklevers_engine.js", "pattern": "if (rd.val == null) return null;   // a line nobody could measure is not a drift", "pr": 0},
-    {"name": "Stock levers: a SALE value not set is a blocker in the switch list, never assumed", "file": "docs/stocklevers_engine.js", "pattern": "if (!isSet(b)) { (unset[l.k] = unset[l.k] || []).push(mk); return; }", "pr": 0},
-    {"name": "Stock levers: the summary, in words", "file": "docs/stocklevers_engine.js", "pattern": "function summaryText(M, brand, today) {", "pr": 0},
-    {"name": "Stock levers: the worker stamps who switched, and keeps a stamp the save did not move", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (was && was.st === st && was.by) return { st, by: was.by, at: was.at || ctx.now };", "pr": 0},
-    {"name": "Stock levers: Superdry's plan as Ray stated it, seeded once", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "{ k: 'rc', lo: 20, hi: 40, bau: 35, sale: null, note: '20–40%, currently at 35%' },", "pr": 0},
-    {"name": "Stock levers: the route — scoped, the kvmerge envelope, writing needs the stock module", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!(acc.owner || moduleAllowed(acc.modules, 'stock'))) return json({ ok: false, error: 'stock management is not in your access' }, 403);", "pr": 0},
-    {"name": "Stock levers: the engine served at /stock/levers.js", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/stock/levers.js' && request.method === 'GET') {", "pr": 0},
-    {"name": "Stock levers: the stub serves the engine and a synthetic plan", "file": "tools/rules_stub.js", "pattern": "function leverBuild(now) {", "pr": 0},
-    {"name": "Stock levers: the rendered tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_stocklevers.js", "pr": 0},
-    {"name": "Stock levers: the harness runs in the QA gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_stocklevers.mjs", "pr": 0},
-    {"name": "Stock levers: a flush answers every caller only once nothing is left to send (→ Brief never leaves before its own mark)", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvDone(ok) { var a = LV.after; LV.after = []; a.forEach(function (f) { try { f(ok); } catch (e) {} }); }", "pr": 0},
-    {"name": "Stock levers: a brief mark the server refused is said before the page leaves", "file": "docs/FeedSpark_Stock.html", "pattern": "if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) return;", "pr": 0},
-    {"name": "Stock levers: the old flush that answered a caller while a save was still in flight — must stay gone", "file": "docs/FeedSpark_Stock.html", "pattern": "if (!keys.length || LV.busy) { if (then) then(); return; }", "forbidden": true, "pr": 0},
-    {"name": "Stock levers: the target in force names its source (own vs plan) — engine", "file": "docs/stocklevers_engine.js", "pattern": "tgtOwn: !!(oc && isSet(oc[md.mode]))", "pr": 0},
-    {"name": "Stock levers: the target in force names its source (own vs plan) — page, in the matrix cell's tooltip", "file": "docs/FeedSpark_Stock.html", "pattern": "(c.tgtOwn ? 'its own ' : 'the brand’s ') + md + ' value'", "pr": 0},
-    {"name": "Stock levers: a period that ended unswitched reads missed in the summary, never \"0 days late\"", "file": "docs/stocklevers_engine.js", "pattern": "(p.next.missed ? 'missed — the period ended ' + p.to :", "pr": 0},
-    {"name": "Stock levers: the tripwire reads every PUT outside the page (a brief's navigation takes the page's own record)", "file": "tools/check_stocklevers.js", "pattern": "await p.exposeBinding('__putSeen', (src, body) => { try { seen.push(JSON.parse(body)); } catch (e) {} });", "pr": 0},
-    {"name": "Stock: the KPI band's renderer is gone too (must stay gone)", "file": "docs/FeedSpark_Stock.html", "pattern": "function renderKpis()", "forbidden": true, "pr": 0},
-    {"name": "Stock levers: the market list is a MATRIX — the plan line in each lever's head (Ray, 6 Oct 2026: \"the lst should be table/ matrix for overview review\")", "file": "docs/FeedSpark_Stock.html", "pattern": "'<span class=\"thp\">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span>' + lvRuleHead(M, l) + '</th>'", "pr": 595},
-    {"name": "Stock levers: a matrix cell is one word or number — on / off (with a dot) / none — the detail in its tooltip", "file": "docs/FeedSpark_Stock.html", "pattern": "(st === 'off' ? '<i class=\"dot\" aria-hidden=\"true\"></i>' : '') + '<b>' + esc(v) + '</b></td>';", "pr": 595},
-    {"name": "Stock levers: the matrix sits above the plan, overview first", "file": "docs/FeedSpark_Stock.html", "pattern": "<div class=\"tw\" id=\"lev-tw\" hidden><table class=\"t\" id=\"lev-t\"><thead></thead><tbody></tbody></table></div>", "pr": 0},
-    {"name": "Stock levers: a market's own values open in a row under it", "file": "docs/FeedSpark_Stock.html", "pattern": "(LV.med === r.market ? lvEditRow(r, levs, b, span) : '')", "pr": 0},
-    {"name": "Stock levers: the card's captions are .lvc — the shell's .sc (170px flex-basis under 820px) never reaches them", "file": "docs/FeedSpark_Stock.html", "pattern": "#lev-card .lvc{font-size:11.5px;font-weight:700;color:var(--muted);margin:0}", "pr": 0},
-    {"name": "Stock levers: a lever note on the shell's .sc class (stood 170px tall in a tile on a phone) — must stay gone", "file": "docs/FeedSpark_Stock.html", "pattern": "'<p class=\"sc\">' + esc(l.note)", "forbidden": true, "pr": 0},
-    {"name": "Stock levers: the RECORD kept by hand (Ray, 6 Oct 2026: \"maybe there should be a manual table as well to keep record of it\")", "file": "docs/FeedSpark_Stock.html", "pattern": "<div class=\"lev-rec\" id=\"lev-rec\"></div>", "pr": 0},
-    {"name": "Stock levers: the record — add, edit, delete, CSV", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvRecHtml(M, b) {", "pr": 0},
-    {"name": "Stock levers: a switch marked made is recorded in one click", "file": "docs/FeedSpark_Stock.html", "pattern": "SL.switchRecords(swr, q, lvToday())", "pr": 0},
-    {"name": "Stock levers: the latest record for a market × lever in its matrix cell's tooltip", "file": "docs/FeedSpark_Stock.html", "pattern": "var lr = LV.M && SL.lastRecord(LV.M.records, r.market, lk);", "pr": 0},
-    {"name": "Stock levers: half-typed form values survive a re-render a save elsewhere triggers", "file": "docs/FeedSpark_Stock.html", "pattern": "if (LV.rf) lvKeepRec();", "pr": 0},
-    {"name": "Stock levers engine: the brand's records, newest first", "file": "docs/stocklevers_engine.js", "pattern": "function recordsOf(store, brand) {", "pr": 0},
-    {"name": "Stock levers engine: a switch made as records, frozen the day written", "file": "docs/stocklevers_engine.js", "pattern": "function switchRecords(sw, p, today) {", "pr": 0},
-    {"name": "Stock levers worker: a record keeps who first wrote it down through every edit", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; }", "pr": 0},
-    {"name": "Stock levers worker: a signin reads its brands' records", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "[pmer]:([^|]{1,80})", "pr": 0},
-    {"name": "Stock levers: the stub carries two records kept by hand, one edited", "file": "tools/rules_stub.js", "pattern": "'r:Superdry|rec-20261001-rc-tst02'", "pr": 0},
-    {"name": "Stock even: the negative control forces the in-stock tiles uneven (the band it used to force is gone)", "file": "tools/check_stockeven.js", "pattern": "#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}", "pr": 0},
+    {
+      "name": "KWCal: Superdry focus themes seeded (16, Oct 2026 → Jan 2027)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Superdry:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Superdry lanes renamed for the KIND of work",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Superdry:{campaign:'Seasonal focus'",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a scope that is SET but unmeasured is never reported as absent",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function hasScope(e,mkt)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the pending-scope card names what it scopes",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "sync to measure",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "!hasScope(e,evMkt(CLIENT,e))",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Superdry GB product-type census (independent check on every seeded path)",
+      "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json",
+      "pattern": "distinct_primary_paths",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — the button + menu beside ⊞ Columns",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "id=\"heat-btn\"",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — a scale per LEVEL, money per currency",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — the midpoint is the MEDIAN",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — orange → green, the validator-passed dark steps",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "--heat-hi:34,160,107;--heat-lo:198,123,40",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — orange → green, the validator-passed light step",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "--heat-hi:22,101,52;--heat-lo:237,111,11",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — where lower is better, green marks the lowest",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "var weak=h.rev?h.t>0:h.t<0;",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — the reversed column checked in the tripwire",
+      "file": "tools/check_roasmods.js",
+      "pattern": "Zombie % (lower is better): the LOWEST brand is green",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat — per device + carried by a saved view",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "heat:S.heat.slice()",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: every menu nudged back inside the screen (fitPop)",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "if(open)fitPop(pop);",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: ◐ Heat rendered in the tripwire",
+      "file": "tools/check_roasmods.js",
+      "pattern": "◐ Heat — a colour scale per column",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: departments read in every roster language (Superdry DE's Damen / Herren keep types apart)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function genderWord(gender) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: a child's age group wins over the gender word",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var kidAge = deptFromCols('', age) === 'kids';",
+      "pr": 0
+    },
+    {
+      "name": "Hero sizes: alpha and numeric sizes on separate lines (Ray 30 Sep 2026)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "return '<div class=\"szr\" data-sc=\"' + c + '\">' + lines[c].join('') + '</div>';",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the KPI band is GONE (Ray, 6 Oct 2026, a red cross over it: \"clean up stock section alittle bit\") — every figure it carried stands on a card below (must stay gone)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<div class=\"kpis\" id=\"kpis\">",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock even: summary tiles fill their card as equal tiles",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": ".sv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0 0 12px}",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: a table grouped by market names the market once",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function grp(list, keyOf) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: the held-back list sits beside its number (rows one height)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<span class=\"big\">' + hbBtn(m, 'hb-dl') + n0(h.n) + '</span>",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: every stock control one column width in the coverage matrix",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "#cov{table-layout:fixed;min-width:860px}",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: one width for every short size chip",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "justify-content:center;gap:3px;min-width:48px;height:24px;",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: a finding is one line until opened",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "'</span></summary><div class=\"fb\"><div class=\"why\">'",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: a market's setup summary is one line",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "'<div class=\"toolbar set-top\"><span class=\"why\">' + esc(m.sentence) + '</span>'",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: the phone search field on a row of its own",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": ".ctl .q{flex:1 1 100%}",
+      "pr": 0
+    },
+    {
+      "name": "Rules: the phone search field on a row of its own",
+      "file": "docs/FeedSpark_Rules.html",
+      "pattern": ".ctl .q{flex:1 1 100%}",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: the rendered tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_stockeven.js",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the Google feed's product_type tree, read per product (Ray 30 Sep 2026: \"tier 2, tier 3 of PT\")",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function treeIndex(E) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: every master row placed on the feed's tree (engine)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var useTree = !!(tree && tree.typed && tree.o && tree.i && tree.g), sample = useTree ? [] : null;",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the worker stores the census shape the engine writes",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "export const CENSUS_V = ",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a feed-less master type placed by where 80%+ of its sent products sit — the surer reading on a tie, never onto another sizing scale",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (placed) pv.keys.forEach(function (lk) { var a = agreed(learn.get(lk)), n = pathOf(a.p).length; if (n && !sizedLike(t, a.p)) return; if (n > cd || (n === cd && n && a.sh > cs)) { cp = a.p; cd = n; cs = a.sh; } });",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: else by the master's own word where the tree names it once (the run tells kids from women)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var wp = placed ? wordPlace(pv.words, pv.kid) : '';",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a type the feed has no word for goes under the feed's department, else Master only",
+      "file": "docs/herosize_engine.js",
+      "pattern": "else if (placed) p.unshift(MASTER_ONLY);",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: every tier is a roll-up of the finest types (counts added, runs re-read)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function tierTypes(cen, L) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the default tier — the finest at which 90% of sized products sit in 40 types",
+      "file": "docs/herosize_engine.js",
+      "pattern": "ts.forEach(function (x) { if (x.top <= 40) pick = x.t; });",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a coarser list reaches a finer type only when it names a size the type is made in",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (i && all.length && !s.length) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a row's figures are its types added up, each on its own list",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (e.h.dec && e.h.src !== 'ex' && !(e.h.doc && h.doc && e.h.doc.i === h.doc.i) && typeKey(e.h.up || n.k).indexOf(below) === 0) finer++;",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: an unchanged master is read again within the day (the feed's tree moves on its own)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the agent streams each market's Google feed before its master",
+      "file": "tools/master_stock.mjs",
+      "pattern": "try { fd = await readFeed(feeds[m.cmpid].url); }",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the agent finds the Google feed by FeedHero company id",
+      "file": "tools/master_stock.mjs",
+      "pattern": "export function googleFeeds(src) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the PT tier control on the hero card",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<span class=\"seg\" id=\"hm-tiers\" role=\"group\" aria-labelledby=\"hm-tl\"></span>",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the tier is remembered per brand on this device",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hmSetTier(t) { var m = hmTiers(); m[hmBrand()] = t; remember('fcc-stock-hmtier', JSON.stringify(m)); }",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: an inherited list says which tier it came from",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "'\">⤴ Tier ' + h.up.split(' > ').length + '</span>'",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a row names the types under it that set their own",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "' types under it set their own'",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: a master-only type and a type that goes no finer are named",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": ">no finer type</span>",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the note says where the types came from",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "Product types are the Google Shopping feed’s own product_type tree: ",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the stub's census rides a synthetic Google feed tree",
+      "file": "tools/rules_stub.js",
+      "pattern": "const c = H.census(E, ti.finish());",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the rendered tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_herotier.js",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: one spelling per type — case and accents read as one (Superdry FR)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function foldKey(v) { var t = s0(v).toLowerCase(); try { t = t.normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''); } catch (e) {} return t; }",
+      "pr": 0
+    },
+    {
+      "name": "Hero tiers: the card says how many feed spellings were read as one",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": " the feed spells two ways (case or accents) read as one.",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the hours book is pulled over ALL TIME, not twelve months",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const win = TB.bookWindow(now, 0);",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the window is a reading choice applied when the book is served",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TB.bookMonthsOf(url.searchParams.get('win'))",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: an all-time pull's depth is read off the pull, not the window",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "full: win.all ? all.length < limit : (!deepest || deepest <= win.from),",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the book's read count can never exceed its total (Ray's “44 of 39”)",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "cov.forEach((c) => { const k = key(c); if (!seen[k]) { seen[k] = 1; dropped++; } });",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the window control, 12 / 24 / all time, beside the dates it changes",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "var WINS = [{ v: '12', label: '12 months' }, { v: '24', label: '24 months' }, { v: 'all', label: 'All time' }];",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the window is named on the FIRST fetch, so all time loads once",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "fetch('/api/taskmanager?win=' + encodeURIComponent(CWIN))",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the book changing redraws its own sentence, typing does not",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function refresh() { srcLine(); apply(); }",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: the join counts live and held products by their style's range completion (rcH)",
+      "file": "docs/catalog_engine.js",
+      "pattern": "var rcH = Array.from(h.values()).sort(",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: the range-completion line is READ OFF THE PRODUCTS (Ray 1 Oct 2026)",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function rcLine(rcH) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: a line is claimed only when it explains 90% of both sides",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "if (held / H < RC_LINE_SHARE || live / L < RC_LINE_SHARE) return null;",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: the agent's record is checked whole before it is stored",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function sanitizeHeld(raw) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: one market's state (ok / nofeed / unread / nojoin / nostock) served on its av",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "export function heldView(m, stock, w) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: stockView hands availView the market's own stock rules (the stated RC cut-offs)",
+      "file": "cloudflare/feedspark-deck/src/rules.js",
+      "pattern": "av: availView(avail, r.stock) };",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: the agent joins master and Google feed on its two reads, counts only out",
+      "file": "tools/master_stock.mjs",
+      "pattern": "export function heldRecord(r, idx) {",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: one feed read gives the tree AND the feed index",
+      "file": "tools/master_stock.mjs",
+      "pattern": "const p = FA.createXmlParser((row, h) => { ti.onRow(row, h); fi.onRow(row, h); });",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: hbv only once the count is settled (a failed feed read re-reads next run)",
+      "file": "tools/master_stock.mjs",
+      "pattern": "hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb });",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: the worker stores the record through RULES.sanitizeHeld",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const hb = e.hb == null ? null : RULES.sanitizeHeld(e.hb);",
+      "pr": 0
+    },
+    {
+      "name": "Held back from Google: unchanged needs the held-back count of this shape too",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "have.szv === HERO.CENSUS_V && have.hbv === RULES.HELD_V && Date.now() - (have.t || 0) < HERO.CENSUS_FRESH_MS",
+      "pr": 0
+    },
+    {
+      "name": "Stock: ONE in-stock card — seven columns under two named halves (ad spend merged in, Ray 1 Oct 2026)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<th colspan=\"3\">In stock · master feed → output feeds</th><th colspan=\"3\" class=\"hbg\">Held back from Google</th>",
+      "pr": 0
+    },
+    {
+      "name": "Stock: every market row carries held back, range completion and its ad spend",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + hbCell(m) + rcCell(m) + svCell(m)",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the range-completion cell — the line in the data, else a rule name's cut-off",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function rcCell(m) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the rule-by-rule ad spend folds under the market rows",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<details class=\"sv-rest sv-rules\" id=\"sv-rules\"><summary></summary>",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the page twin of heldBook",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hbBook(markets) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the panel shows what was measured beside the rule's own count",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var meas = mh && mh.state === 'ok' ?",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the held-back download's message reads the products' own line (no assumed 75%)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "return h.rc != null && h.rc < ln.x;",
+      "pr": 0
+    },
+    {
+      "name": "Stock: a scenario or period change redraws the market rows",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "svSave(); renderAv(); renderSv();",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: completeness is Google-ready as sent — a value not in Google's format counts half",
+      "file": "docs/catalog_engine.js",
+      "pattern": "return spec(k, v) === 'warn' ? 0.5 : 1;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: the inspector's stage scrubber scores with the same credit",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "c = r ? E.credit(x.k, E.valueAt(r, s)) : 0;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: Google takes http or https for links and images",
+      "file": "docs/catalog_engine.js",
+      "pattern": "case 'image_link': return /^https?:",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a brand's table is read as written — category × gender rows, kept whole",
+      "file": "docs/herosize_engine.js",
+      "pattern": "return { rows: out, layout: rules ? 'rules' : si >= 0 ? 'column' : 'cells', header: hi };",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a row meets a type by its words at one level — a plural whose singular is another word stays apart",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var KEEP_S = { shorts: 1, jeans: 1 };",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a row naming a level outright beats a word inside a deeper name (Swim Shorts is Swimwear)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (c && c * 100 + L > score) { score = c * 100 + L; best = { r: r, lvl: L, full: c === 2 }; }",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: applies only on the markets it is written for (one size system)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "rules: doc && (market == null || docCovers(doc, market)) ? docRules(doc) : null",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: after the type's own list, before a coarser tier, the brand it follows and the example",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var dr = set.rules ? fromDoc(set.rules, t) : null;",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a row whose sizes the type is not made in still speaks for it — never an example in its place",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (dr) return dr.r.s.length ? { d: dr, miss: true } : { d: dr, open: true };",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a row reaching under half a type's run reaches PART of it, and says by how much",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!a.miss && !a.open && a.d.reach < PART) x.part = Math.round(a.d.reach * 1000) / 10;",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the document row by row against the market (docSummary)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "return { types: types, sum: sum, tier: tier || 0, doc: docSummary(ctx, nodes, eff) };",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the worker stores d:<Brand> as written, its markets the brand's own",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "if (all.indexOf(v) < 0) return { error: 'not a ' + brand + ' market: ' + v };",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: Superdry's table (Ray, 5 Oct 2026) seeded once, written for GB and IE",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "Superdry: { name: 'Superdry hero sizes', mk: ['GB', 'IE'], from: 'Ray’s table, 5 Oct 2026', rows: [",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a seed is never re-written once its key existed (a tombstone counts)",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "if (!envx || !envx.meta || !envx.data || envx.meta[k]) return;",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the route seeds on read and saves only when it wrote",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (HERO.applySeeds(henv, now)) await env.EDITS.put(HERO.HERO_KEY, JSON.stringify(henv));",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a PUT's document markets are checked against the roster",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "marketsOf: (b) => ROAS.rosterOf(b).map((m) => m.market),",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the card tags a row that doesn't fit / reaches part / is open",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hmDocTag(h) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the rows panel and the markets it is written for",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hmDocPanel(dd, mkt) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: the 'Document doesn't fit' filter",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "['fit', 'Document doesn’t fit', nfit]",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: a category × gender import becomes the brand's document, kept whole",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (doc.layout === 'rules') {",
+      "pr": 0
+    },
+    {
+      "name": "Hero document: ⬇ Sheet leads with the document — the sheet ⇪ Import reads back",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (dd) sheets.unshift({ name: 'Document',",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: the catalogue check (Ray, 5 Oct 2026: \"double check [Sizes made in] are actually presentation of Superdry catalogue\") — the engine's shape",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var CENSUS_V = 4;",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: …and the worker's",
+      "file": "cloudflare/feedspark-deck/src/herosizes.js",
+      "pattern": "export const CENSUS_V = 4;",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: a reading made only of departments and merchandising buckets is no product type (\"outlet/mens/view all\")",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (segs.length > 1 && segs.every(bareLevel)) return false;",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: a size read as a span on its kind of scale",
+      "file": "docs/herosize_engine.js",
+      "pattern": "function szSpan(k) {",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: a learned place refused for a run on another scale (skis in cm beside S–XXL)",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var sizedLike = function (t, pth) { var e = szAt.get(pth); return !e || sameScale(spansOf(Array.from(t.sz.keys())), e); };",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: a word refines a learned place only where its reading's sent products agree",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (l.length === 1 && fits(w.k, l[0])) c.push(l[0]);",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: …and places an unsent type only where they agree",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (l.length === 1 && fits(ws[i].k, l[0])) return l[0];",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: two words naming two different places refine nothing",
+      "file": "docs/herosize_engine.js",
+      "pattern": "for (var i = 1; i < c.length; i++) if ((c[0] + ' > ').indexOf(c[i] + ' > ') !== 0) return '';",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: a collar written without its point read as one only beside whole collar sizes",
+      "file": "docs/herosize_engine.js",
+      "pattern": "var cm = collarRun(t.sz);",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: the catalogue-check census in the harness",
+      "file": "tools/test_herosize.mjs",
+      "pattern": "console.log('· the catalogue check — a type is made in the sizes the brand makes it in (census v4)');",
+      "pr": 0
+    },
+    {
+      "name": "Hero census v4: sizeKey never reads every \"155\" as a collar (Superdry's skis are 155 cm) — must stay gone",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (/^1[3-8]5$/.test(s)) return s.slice(0, 2) + '.5';",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the card (Ray, 5 Oct 2026: \"build an facilitor interface to action BAU vs. SALE perido\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"lev-card\" hidden>",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the engine loaded from /stock/levers.js",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "return fetch('/stock/levers.js', { credentials: 'same-origin' })",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the card renders with the page (first under the header)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "    renderChips(); renderLev(); renderAv();",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: an edit stays on screen until the server confirms it",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function lvReapply() { Object.keys(LV.pend).forEach(function (k) { if (LV.pend[k] === null) delete LV.store[k]; else LV.store[k] = LV.pend[k]; }); }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: → Brief marks the switch briefed BEFORE the page leaves",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "lvSetStep(q, dir, 'briefed', true, go)",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: → Brief opens the Workflow composer with the switch as the brief",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "location.href = '/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' })",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: keep a market as it runs",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "d4['m:' + b + '|' + mkName] = { lv: SL.adopt(r) };",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a range-completion rule found by its NAME (the classifier files most under availability)",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "var RC_NAME = /\\b(range[\\s-]*completion|rc)\\b/i, HERO_NAME = /\\bhero\\b/i;",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the measured line wins, then a name's cut-off, then a name's %, never a guess",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (line) return { state: 'on', val: line.x, lo: line.lo, hi: line.hi, how: 'line'",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a lever is read on the Google side (Meta, affiliates and labels are not it)",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function gch(r) { return !r.ch || r.ch === 'all' || r.ch === 'google'; }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a line nobody can state is never called off plan",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (rd.val == null) return null;   // a line nobody could measure is not a drift",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a SALE value not set is a blocker in the switch list, never assumed",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (!isSet(b)) { (unset[l.k] = unset[l.k] || []).push(mk); return; }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the summary, in words",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function summaryText(M, brand, today) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the worker stamps who switched, and keeps a stamp the save did not move",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "if (was && was.st === st && was.by) return { st, by: was.by, at: was.at || ctx.now };",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: Superdry's plan as Ray stated it, seeded once",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "{ k: 'rc', lo: 20, hi: 40, bau: 35, sale: null, note: '20–40%, currently at 35%' },",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the route — scoped, the kvmerge envelope, writing needs the stock module",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!(acc.owner || moduleAllowed(acc.modules, 'stock'))) return json({ ok: false, error: 'stock management is not in your access' }, 403);",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the engine served at /stock/levers.js",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/stock/levers.js' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the stub serves the engine and a synthetic plan",
+      "file": "tools/rules_stub.js",
+      "pattern": "function leverBuild(now) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the rendered tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_stocklevers.js",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the harness runs in the QA gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_stocklevers.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a flush answers every caller only once nothing is left to send (→ Brief never leaves before its own mark)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function lvDone(ok) { var a = LV.after; LV.after = []; a.forEach(function (f) { try { f(ok); } catch (e) {} }); }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a brief mark the server refused is said before the page leaves",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) return;",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the old flush that answered a caller while a save was still in flight — must stay gone",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (!keys.length || LV.busy) { if (then) then(); return; }",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the target in force names its source (own vs plan) — engine",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "tgtOwn: !!(oc && isSet(oc[md.mode]))",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the target in force names its source (own vs plan) — page, in the matrix cell's tooltip",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "(c.tgtOwn ? 'its own ' : 'the brand’s ') + md + ' value'",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a period that ended unswitched reads missed in the summary, never \"0 days late\"",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "(p.next.missed ? 'missed — the period ended ' + p.to :",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the tripwire reads every PUT outside the page (a brief's navigation takes the page's own record)",
+      "file": "tools/check_stocklevers.js",
+      "pattern": "await p.exposeBinding('__putSeen', (src, body) => { try { seen.push(JSON.parse(body)); } catch (e) {} });",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the KPI band's renderer is gone too (must stay gone)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function renderKpis()",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the market list is a MATRIX — the plan line in each lever's head (Ray, 6 Oct 2026: \"the lst should be table/ matrix for overview review\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "'<span class=\"thp\">BAU ' + esc(lvShort(l.k, l.bau)) + ' · SALE ' + esc(lvShort(l.k, l.sale)) + '</span>' + lvRuleHead(M, l) + '</th>'",
+      "pr": 595
+    },
+    {
+      "name": "Stock levers: a matrix cell is one word or number — on / off (with a dot) / none — the detail in its tooltip",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "(st === 'off' ? '<i class=\"dot\" aria-hidden=\"true\"></i>' : '') + '<b>' + esc(v) + '</b></td>';",
+      "pr": 595
+    },
+    {
+      "name": "Stock levers: the matrix sits above the plan, overview first",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<div class=\"tw\" id=\"lev-tw\" hidden><table class=\"t\" id=\"lev-t\"><thead></thead><tbody></tbody></table></div>",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a market's own values open in a row under it",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "(LV.med === r.market ? lvEditRow(r, levs, b, span) : '')",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the card's captions are .lvc — the shell's .sc (170px flex-basis under 820px) never reaches them",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "#lev-card .lvc{font-size:11.5px;font-weight:700;color:var(--muted);margin:0}",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a lever note on the shell's .sc class (stood 170px tall in a tile on a phone) — must stay gone",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "'<p class=\"sc\">' + esc(l.note)",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the RECORD kept by hand (Ray, 6 Oct 2026: \"maybe there should be a manual table as well to keep record of it\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<div class=\"lev-rec\" id=\"lev-rec\"></div>",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the record — add, edit, delete, CSV",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function lvRecHtml(M, b) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a switch marked made is recorded in one click",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "SL.switchRecords(swr, q, lvToday())",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the latest record for a market × lever in its matrix cell's tooltip",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var lr = LV.M && SL.lastRecord(LV.M.records, r.market, lk);",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: half-typed form values survive a re-render a save elsewhere triggers",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (LV.rf) lvKeepRec();",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers engine: the brand's records, newest first",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function recordsOf(store, brand) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers engine: a switch made as records, frozen the day written",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function switchRecords(sw, p, today) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers worker: a record keeps who first wrote it down through every edit",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers worker: a signin reads its brands' records",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "[pmer]:([^|]{1,80})",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the stub carries two records kept by hand, one edited",
+      "file": "tools/rules_stub.js",
+      "pattern": "'r:Superdry|rec-20261001-rc-tst02'",
+      "pr": 0
+    },
+    {
+      "name": "Stock even: the negative control forces the in-stock tiles uneven (the band it used to force is gone)",
+      "file": "tools/check_stockeven.js",
+      "pattern": "#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}",
+      "pr": 0
+    },
     {
       "name": "migration: module assessment table (benefit, complexity, AM dependency, priority, notes)",
       "file": "docs/FeedSpark_Transformation.html",
@@ -11626,52 +12888,283 @@
       "pattern": "assessOrder:function(rows)",
       "pr": 0
     },
-    {"name": "Stock levers engine: ONE RULE PER LEVER — a connected lever reads only the rule of that name, a market without it reads missing (Ray, 6 Oct 2026: \"Each individual stock lever will be connected to one rule\")", "file": "docs/stocklevers_engine.js", "pattern": "function bound(lk, m, lever, bd) {", "pr": 596},
-    {"name": "Stock levers engine: a rule name matched as FeedHero copies it (case, spacing, typographic quotes and dashes set aside)", "file": "docs/stocklevers_engine.js", "pattern": "function nameKey(n) {", "pr": 596},
-    {"name": "Stock levers engine: an unconnected lever flags where more than one rule reads as it", "file": "docs/stocklevers_engine.js", "pattern": "if (rd.rules && rd.rules.length > 1) rd.overlap = rd.rules.length;", "pr": 596},
-    {"name": "Stock levers engine: the picker's choices — the rules that read as the lever, the name the most markets carry first", "file": "docs/stocklevers_engine.js", "pattern": "function ruleChoices(lk, markets, mk, lever, all) {", "pr": 596},
-    {"name": "Stock levers engine: where each connected rule is found, missing, not read — and who runs it under another name", "file": "docs/stocklevers_engine.js", "pattern": "if (o.n) { (rd.miss ? o.missing : o.found).push(r.market); if (rd.mt === 'job') o.alias.push({ mk: r.market, n: rd.as }); }", "pr": 0},
-    {"name": "Stock levers engine: the switch list keeps a market missing the connected rule, flagged — the brief says copy it there first", "file": "docs/stocklevers_engine.js", "pattern": "if (c.miss && c.miss.length) L.push('    ⚠ the connected rule “' + c.rule + '” is not in ' + c.miss.join(', ') + ' — copy it there first');", "pr": 596},
-    {"name": "Stock levers worker: a plan lever's connected rule — its name, the market it was picked in (the brand's)", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };", "pr": 596},
-    {"name": "Stock levers: each plan tile names its lever's ONE rule — found in N of the markets, missing where — or offers to connect one", "file": "docs/FeedSpark_Stock.html", "pattern": "function lvRuleLine(M, l) {", "pr": 596},
-    {"name": "Stock levers: the rule picker — a market, its rules, every stock rule on request", "file": "docs/FeedSpark_Stock.html", "pattern": "var ch = SL.ruleChoices(l.k, mk, m0, l, LV.rka);", "pr": 596},
-    {"name": "Stock levers: connecting saves the plan with the rule (its name, market and field), everything else as it was", "file": "docs/FeedSpark_Stock.html", "pattern": "lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm, d: rsel.getAttribute('data-d') || undefined });", "pr": 0},
-    {"name": "Stock levers: a missing connected rule reads missing; an unconnected overlap is dashed (since the four levers: neither units lever reads 'missing' — it reads N/A)", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.overlap ? ' ov' : '') + (rd.miss && !SL.isUnits(lk) ? ' miss' : '')", "pr": 596},
-    {"name": "Stock levers engine: a market's copy of the connected rule — the same name on the same field, else the rule doing its job under another name (Ray, 6 Oct 2026, Superdry FR: \"system is not picking it up\")", "file": "docs/stocklevers_engine.js", "pattern": "function findRule(lk, m, lever, bd) {", "pr": 0},
-    {"name": "Stock levers engine: a lever connected before the field was stored has it read off the market it was picked in", "file": "docs/stocklevers_engine.js", "pattern": "function resolved(lever, markets) {", "pr": 0},
-    {"name": "Stock levers engine: names compared by their words, the joining words set aside", "file": "docs/stocklevers_engine.js", "pattern": "function nameSim(a, b) {", "pr": 0},
-    {"name": "Stock levers worker: a connected rule's field (its database name) is stored with it", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "if (rd && /^[A-Za-z0-9_]+$/.test(rd)) o.rule.d = rd;", "pr": 0},
-    {"name": "Stock levers: the cell's tooltip says when the connected rule runs here under another name", "file": "docs/FeedSpark_Stock.html", "pattern": "(rd.mt === 'job' ? 'The connected rule’s job, run here under another name' : 'The connected rule')", "pr": 0},
-    {"name": "Catalogue pixels: the engine reads a studio sweep's pale backdrop as plain", "file": "docs/pixel_engine.js", "pattern": "var paleBd = P[0].length / N >= 0.4;", "pr": 0},
-    {"name": "Catalogue pixels: a 256-bit fingerprint, not 64", "file": "docs/pixel_engine.js", "pattern": "var HW = 17, HH = 16, HBITS = (HW - 1) * HH, TOL = 12, CC_TOL = 24;", "pr": 0},
-    {"name": "Catalogue pixels: the same picture needs the centre colour to match too", "file": "docs/pixel_engine.js", "pattern": "return !ca || !cb || dist(ca, cb) <= CC_TOL;", "pr": 0},
-    {"name": "Catalogue pixels: fill measured against each row's own backdrop", "file": "docs/pixel_engine.js", "pattern": "rowBg[y] = sr.length ? [median(sr), median(sg), median(sb)] : bg.rgb;", "pr": 0},
-    {"name": "Catalogue pixels: worker serves the engine", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/catalog/pixels.js' && request.method === 'GET') {", "pr": 0},
-    {"name": "Catalogue pixels: the image route sits inside the scoped, wired-feed block", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/catalog/img') return catImg(env, url, src, client, mktOf(url.searchParams.get('market')));", "pr": 0},
-    {"name": "Catalogue pixels: no open proxy — only the feed's own image hosts", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed", "pr": 0},
-    {"name": "Catalogue pixels: a posted scan carries the 256-bit fingerprint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;", "pr": 0},
-    {"name": "Catalogue pixels: the module is registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['pix', 'Image pixels']", "pr": 0},
-    {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
-    {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix' || F.k === 'ptd' || F.k === 'ptp') return passModFacet(F, i, x);", "pr": 0},
-    {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0},
-    {"name": "Stock levers: FOUR levers for every brand — range completion, hero sizes, stock quantity threshold, stock-based exclusion (Ray, 7 Oct 2026: \"every client should have these stock levers\")", "file": "docs/stocklevers_engine.js", "pattern": "{ k: 'thresh', label: 'Stock quantity threshold', short: 'Stock threshold', kind: 'units', op: '<', unit: 'units', mech: ['threshold'],", "pr": 603},
-    {"name": "Stock levers: the stored `units` lever IS the stock-based exclusion — read as it everywhere", "file": "docs/stocklevers_engine.js", "pattern": "var LEGACY = { units: 'excl' };", "pr": 603},
-    {"name": "Stock levers: all four levers in order, a plan saved or not", "file": "docs/stocklevers_engine.js", "pattern": "return LEVERS.map(function (L) { return held[L.k] || { k: L.k, bau: null, sale: null }; });", "pr": 603},
-    {"name": "Stock levers: a threshold-field rule that only works out a number, restates a state or lets products back in is set aside, and named", "file": "docs/stocklevers_engine.js", "pattern": "function holds(r) { var k = holdKind(r); return k !== 'calc' && k !== 'mirror' && k !== 'releases'; }", "pr": 603},
-    {"name": "Stock levers: a range's own unit rule reads under its scoped lever only (sibbed, in the model and the switch list)", "file": "docs/stocklevers_engine.js", "pattern": "var levers = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));", "pr": 603},
-    {"name": "Stock levers: keep a market as it runs — a lever nobody plans that the market does not run stays out of its plan", "file": "docs/stocklevers_engine.js", "pattern": "if (v === 'off' && !isSet(c.bau) && !isSet(c.sale)) return;", "pr": 603},
-    {"name": "Stock levers (worker): the four kinds, held equal to the engine; a legacy key stored under the lever it is now", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "export const LEVER_KINDS = { rc: 'pct', hero: 'onoff', thresh: 'units', excl: 'units' };", "pr": 603},
-    {"name": "Stock levers (worker): every brand in scope listed, a plan or not", "file": "cloudflare/feedspark-deck/src/stocklevers.js", "pattern": "return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };", "pr": 603},
-    {"name": "Stock levers: markets that read the same share a row — grouped from 8 markets, per device (Ray, 7 Oct 2026: \"not optimised for view yet (especilly multi markets client)\")", "file": "docs/FeedSpark_Stock.html", "pattern": "var LVGRP_AT = 8;", "pr": 603},
-    {"name": "Stock levers: markets join a row only when every cell is drawn the same, held to the same targets, in the same mode", "file": "docs/FeedSpark_Stock.html", "pattern": "return cv.v + '/' + cv.st + (rd.overlap ? '/ov' : '') + (rd.miss ? '/m' : '') + '/' + String(c.tgt) + (c.tgtOwn ? '/own' : '');", "pr": 603},
-    {"name": "Stock levers: a group's market chip opens ITS own values under the group", "file": "docs/FeedSpark_Stock.html", "pattern": "var row = t.closest('.mkc[data-mk]') || t.closest('tr[data-mk]'), mkName = row ? row.getAttribute('data-mk') : '';", "pr": 603},
-    {"name": "Stock: every card folds (Ray, 7 Oct 2026: \"each module info on Stock Management is collapsible pls - too many at once\") — the overview and the levers open on a fresh device", "file": "docs/FeedSpark_Stock.html", "pattern": "var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'cov-card': 1, 'lev-card': 1 }, FOLD = {};", "pr": 603},
-    {"name": "Stock: a card's title is ONE fold button (chevron, title, the line that survives the fold)", "file": "docs/FeedSpark_Stock.html", "pattern": "<h3><button class=\"fold\" type=\"button\" aria-expanded=\"true\" title=\"Fold or open this card\"><span class=\"fch\" aria-hidden=\"true\"></span>Which stock controls each market runs<span class=\"fsum\"></span></button></h3>", "pr": 603},
-    {"name": "Stock: ⊖ Collapse all / ⊕ Expand all in the page header", "file": "docs/FeedSpark_Stock.html", "pattern": "<button class=\"btn\" id=\"fold-all\" type=\"button\" data-to=\"fold\"", "pr": 603},
-    {"name": "Stock: a jump to the market setups opens them first", "file": "docs/FeedSpark_Stock.html", "pattern": "if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }", "pr": 603},
-    {"name": "Stock: which controls each market runs — FIRST on the page (Ray, 7 Oct 2026: \"this is good actually ! should be pushed to top\")", "file": "docs/FeedSpark_Stock.html", "pattern": "<main class=\"wrap\">\n  <!-- WHICH STOCK CONTROLS EACH MARKET RUNS — first on the page", "pr": 603},
-    {"name": "Stock: the in-stock card's header carries NO scenario / period switch (Ray, 7 Oct 2026: \"these button doesnt apply/ make sense\") — the forecast panel holds them", "file": "docs/FeedSpark_Stock.html", "pattern": "id=\"sv-scn\"", "forbidden": true, "pr": 603},
-    {"name": "Stock tripwire: every card folds, as a person uses it", "file": "tools/check_stockfold.js", "pattern": "const OPEN0 = ['cov-card', 'lev-card'];", "pr": 603},
+    {
+      "name": "Stock levers engine: ONE RULE PER LEVER — a connected lever reads only the rule of that name, a market without it reads missing (Ray, 6 Oct 2026: \"Each individual stock lever will be connected to one rule\")",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function bound(lk, m, lever, bd) {",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers engine: a rule name matched as FeedHero copies it (case, spacing, typographic quotes and dashes set aside)",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function nameKey(n) {",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers engine: an unconnected lever flags where more than one rule reads as it",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (rd.rules && rd.rules.length > 1) rd.overlap = rd.rules.length;",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers engine: the picker's choices — the rules that read as the lever, the name the most markets carry first",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function ruleChoices(lk, markets, mk, lever, all) {",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers engine: where each connected rule is found, missing, not read — and who runs it under another name",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (o.n) { (rd.miss ? o.missing : o.found).push(r.market); if (rd.mt === 'job') o.alias.push({ mk: r.market, n: rd.as }); }",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers engine: the switch list keeps a market missing the connected rule, flagged — the brief says copy it there first",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (c.miss && c.miss.length) L.push('    ⚠ the connected rule “' + c.rule + '” is not in ' + c.miss.join(', ') + ' — copy it there first');",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers worker: a plan lever's connected rule — its name, the market it was picked in (the brand's)",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "if (rmk && ctx.marketsOf(brand).indexOf(rmk) < 0) return { error: 'not a ' + brand + ' market: ' + rmk };",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers: each plan tile names its lever's ONE rule — found in N of the markets, missing where — or offers to connect one",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function lvRuleLine(M, l) {",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers: the rule picker — a market, its rules, every stock rule on request",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var ch = SL.ruleChoices(l.k, mk, m0, l, LV.rka);",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers: connecting saves the plan with the rule (its name, market and field), everything else as it was",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "lvSetRule(LV.rk, { n: rsel.value, mk: LV.rkm, d: rsel.getAttribute('data-d') || undefined });",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: a missing connected rule reads missing; an unconnected overlap is dashed (since the four levers: neither units lever reads 'missing' — it reads N/A)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "(rd.overlap ? ' ov' : '') + (rd.miss && !SL.isUnits(lk) ? ' miss' : '')",
+      "pr": 596
+    },
+    {
+      "name": "Stock levers engine: a market's copy of the connected rule — the same name on the same field, else the rule doing its job under another name (Ray, 6 Oct 2026, Superdry FR: \"system is not picking it up\")",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function findRule(lk, m, lever, bd) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers engine: a lever connected before the field was stored has it read off the market it was picked in",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function resolved(lever, markets) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers engine: names compared by their words, the joining words set aside",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function nameSim(a, b) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers worker: a connected rule's field (its database name) is stored with it",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "if (rd && /^[A-Za-z0-9_]+$/.test(rd)) o.rule.d = rd;",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: the cell's tooltip says when the connected rule runs here under another name",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "(rd.mt === 'job' ? 'The connected rule’s job, run here under another name' : 'The connected rule')",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the engine reads a studio sweep's pale backdrop as plain",
+      "file": "docs/pixel_engine.js",
+      "pattern": "var paleBd = P[0].length / N >= 0.4;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: a 256-bit fingerprint, not 64",
+      "file": "docs/pixel_engine.js",
+      "pattern": "var HW = 17, HH = 16, HBITS = (HW - 1) * HH, TOL = 12, CC_TOL = 24;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the same picture needs the centre colour to match too",
+      "file": "docs/pixel_engine.js",
+      "pattern": "return !ca || !cb || dist(ca, cb) <= CC_TOL;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: fill measured against each row's own backdrop",
+      "file": "docs/pixel_engine.js",
+      "pattern": "rowBg[y] = sr.length ? [median(sr), median(sg), median(sb)] : bg.rgb;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: worker serves the engine",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/catalog/pixels.js' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the image route sits inside the scoped, wired-feed block",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/catalog/img') return catImg(env, url, src, client, mktOf(url.searchParams.get('market')));",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: no open proxy — only the feed's own image hosts",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!catImgAllowed(target, hosts)) return json({ ok: false, error: 'host not allowed",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: a posted scan carries the 256-bit fingerprint",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the module is registered",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "['pix', 'Image pixels']",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the module spans its row so the grid stays even",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: a bucket is a table filter",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "F.k === 'avail' || F.k === 'pix' || F.k === 'ptd' || F.k === 'ptp') return passModFacet(F, i, x);",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue pixels: the page reads pixels from its own origin",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())",
+      "pr": 0
+    },
+    {
+      "name": "Stock levers: FOUR levers for every brand — range completion, hero sizes, stock quantity threshold, stock-based exclusion (Ray, 7 Oct 2026: \"every client should have these stock levers\")",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "{ k: 'thresh', label: 'Stock quantity threshold', short: 'Stock threshold', kind: 'units', op: '<', unit: 'units', mech: ['threshold'],",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: the stored `units` lever IS the stock-based exclusion — read as it everywhere",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "var LEGACY = { units: 'excl' };",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: all four levers in order, a plan saved or not",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "return LEVERS.map(function (L) { return held[L.k] || { k: L.k, bau: null, sale: null }; });",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: a threshold-field rule that only works out a number, restates a state or lets products back in is set aside, and named",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "function holds(r) { var k = holdKind(r); return k !== 'calc' && k !== 'mirror' && k !== 'releases'; }",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: a range's own unit rule reads under its scoped lever only (sibbed, in the model and the switch list)",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "var levers = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: keep a market as it runs — a lever nobody plans that the market does not run stays out of its plan",
+      "file": "docs/stocklevers_engine.js",
+      "pattern": "if (v === 'off' && !isSet(c.bau) && !isSet(c.sale)) return;",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers (worker): the four kinds, held equal to the engine; a legacy key stored under the lever it is now",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "export const LEVER_KINDS = { rc: 'pct', hero: 'onoff', thresh: 'units', excl: 'units' };",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers (worker): every brand in scope listed, a plan or not",
+      "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+      "pattern": "return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: markets that read the same share a row — grouped from 8 markets, per device (Ray, 7 Oct 2026: \"not optimised for view yet (especilly multi markets client)\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var LVGRP_AT = 8;",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: markets join a row only when every cell is drawn the same, held to the same targets, in the same mode",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "return cv.v + '/' + cv.st + (rd.overlap ? '/ov' : '') + (rd.miss ? '/m' : '') + '/' + String(c.tgt) + (c.tgtOwn ? '/own' : '');",
+      "pr": 603
+    },
+    {
+      "name": "Stock levers: a group's market chip opens ITS own values under the group",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var row = t.closest('.mkc[data-mk]') || t.closest('tr[data-mk]'), mkName = row ? row.getAttribute('data-mk') : '';",
+      "pr": 603
+    },
+    {
+      "name": "Stock: every card folds (Ray, 7 Oct 2026: \"each module info on Stock Management is collapsible pls - too many at once\") — the overview and the levers open on a fresh device",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'cov-card': 1, 'lev-card': 1 }, FOLD = {};",
+      "pr": 603
+    },
+    {
+      "name": "Stock: a card's title is ONE fold button (chevron, title, the line that survives the fold)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<h3><button class=\"fold\" type=\"button\" aria-expanded=\"true\" title=\"Fold or open this card\"><span class=\"fch\" aria-hidden=\"true\"></span>Which stock controls each market runs<span class=\"fsum\"></span></button></h3>",
+      "pr": 603
+    },
+    {
+      "name": "Stock: ⊖ Collapse all / ⊕ Expand all in the page header",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<button class=\"btn\" id=\"fold-all\" type=\"button\" data-to=\"fold\"",
+      "pr": 603
+    },
+    {
+      "name": "Stock: a jump to the market setups opens them first",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }",
+      "pr": 603
+    },
+    {
+      "name": "Stock: which controls each market runs — FIRST on the page (Ray, 7 Oct 2026: \"this is good actually ! should be pushed to top\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<main class=\"wrap\">\n  <!-- WHICH STOCK CONTROLS EACH MARKET RUNS — first on the page",
+      "pr": 603
+    },
+    {
+      "name": "Stock: the in-stock card's header carries NO scenario / period switch (Ray, 7 Oct 2026: \"these button doesnt apply/ make sense\") — the forecast panel holds them",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "id=\"sv-scn\"",
+      "forbidden": true,
+      "pr": 603
+    },
+    {
+      "name": "Stock tripwire: every card folds, as a person uses it",
+      "file": "tools/check_stockfold.js",
+      "pattern": "const OPEN0 = ['cov-card', 'lev-card'];",
+      "pr": 603
+    },
     {
       "name": "Golden daily: the run waits for noon London",
       "file": "tools/golden_daily.mjs",
@@ -11690,42 +13183,222 @@
       "pattern": "⏱ auto 12:00 UK · last ",
       "pr": 602
     },
-    {"name": "Restock: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },", "pr": 0},
-    {"name": "Restock: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')", "pr": 0},
-    {"name": "Restock: the Catalogue's Ads lane reads by PERIOD", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "async function catAdsRead(env, cmpid, fresh, period) {", "pr": 0},
-    {"name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();", "pr": 0},
-    {"name": "Restock: /api/restock/* scoped like /api/catalog, PUT only on the ledger", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {", "pr": 0},
-    {"name": "Restock: the ledger is written only from a real observation", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!obs) return json({ ok: false, error: 'no observation' }, 400);", "pr": 0},
-    {"name": "Restock: the ledger write is logged", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/api/restock/ledger': 'restock-ledger'", "pr": 0},
-    {"name": "Restock: a grantable module", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "{ slug: 'restock', label: 'Restock', path: '/restock' }", "pr": 0},
-    {"name": "Restock: on the migration board", "file": "cloudflare/feedspark-deck/src/migration.js", "pattern": "{ p: '/restock', n: 'Restock', w: 3, m: '2026-12' }", "pr": 0},
-    {"name": "Restock: the migration board's page twin", "file": "docs/FeedSpark_Transformation.html", "pattern": "{p:'/restock',n:'Restock',w:3,m:'2026-12',", "pr": 0},
-    {"name": "Restock: an episode keeps its first-seen date while the product stays unavailable", "file": "cloudflare/feedspark-deck/src/restock.js", "pattern": "if (e && !e[3]) L.p[id] = [e[0], now, code, 0];", "pr": 0},
-    {"name": "Restock: money never crosses a currency", "file": "docs/restock_engine.js", "pattern": "if (!curMix) { s.money = { value: r2(value), cost: r2(cost), valueAll: r2(valueAll), costAll: r2(costAll) }; s.share = valueAll > 0 ? value / valueAll : null; }", "pr": 0},
-    {"name": "Restock: nothing is joined against a feed that did not stream whole", "file": "docs/FeedSpark_Restock.html", "pattern": "if (S.feed.st !== 'done' || S.ads.st !== 'ready') return;", "pr": 0},
-    {"name": "Restock: the stub feeds the phone tripwire", "file": "tools/check_mobile.js", "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();", "pr": 0},
-    {"name": "Restock: the stub feeds the dark-mode tripwire", "file": "tools/check_darkmode.js", "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();", "pr": 0},
-    {"name": "Restock: the harness runs in qa_gate", "file": "tools/qa_gate.sh", "pattern": "node tools/test_restock.mjs", "pr": 0},
-    {"name": "Restock: the tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_restock.js", "pr": 0},
-    {"name": "Restock: the harness runs in CI", "file": ".github/workflows/validate.yml", "pattern": "run: node tools/test_restock.mjs", "pr": 0},
-    {"name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)", "file": "docs/navrow_widget.html", "pattern": "body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }", "pr": 0},
-    {"name": "Overlay studio: the engine is served and bundles as a string", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "/overlays/studio.js", "pr": 0},
-    {"name": "Overlay studio: the page loads the studio engine by script tag", "file": "docs/FeedSpark_Overlays.html", "pattern": "overlays/studio.js", "pr": 0},
-    {"name": "Overlay studio: the field summoner resolves the price pair BY VALUE, never by column name (Monsoon's and Schuh's masters mean opposite things by the same names)", "file": "docs/overlay_studio_engine.js", "pattern": "function pricePair", "pr": 0},
-    {"name": "Overlay studio: a scarcity figure has a plausibility ceiling (YuMOVE's 5,044 in stock is a stock figure, not scarcity)", "file": "docs/overlay_studio_engine.js", "pattern": "SCARCITY_MAX", "pr": 0},
-    {"name": "Overlay studio: stock is reported as master-only, never mocked up — no output feed in the estate carries it", "file": "docs/overlay_studio_engine.js", "pattern": "master_only", "pr": 0},
-    {"name": "Overlay studio: the recipe emits the REAL image-creator params", "file": "docs/overlay_studio_engine.js", "pattern": "tags_img_type", "pr": 0},
-    {"name": "Overlay studio: a full-width band reserves its edge so a corner zone cannot land under it", "file": "docs/overlay_studio_engine.js", "pattern": "PASS 1 — the full-width bands", "pr": 0},
-    {"name": "Overlay studio: the PNG filename keeps the market's channel (gb and gb-fb must not collide)", "file": "docs/FeedSpark_Overlays.html", "pattern": "the RAW market, not mktLbl", "pr": 0},
-    {"name": "Overlay studio: the Google Ads window is a 7/30-day control, allowlisted, 7 by default", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const CAT_ADS_PERIODS", "pr": 0},
-    {"name": "Overlay studio: changing the Ads window drops the figures rather than relabelling them", "file": "docs/FeedSpark_Overlays.html", "pattern": "press Add Google Ads to read it", "pr": 0},
-    {"name": "Overlays: the Overlay estate is stacked ABOVE the live panel — the side-by-side pair is gone", "file": "docs/FeedSpark_Overlays.html", "pattern": "no need side by side", "pr": 0},
-    {"name": "Overlays: every section folds (the standing rule) — one fold rule, one head class", "file": "docs/FeedSpark_Overlays.html", "pattern": ".card.folded>:not(.fhd)", "pr": 0},
-    {"name": "Overlays: the estate is FOLDED on a fresh device, the rest open", "file": "docs/FeedSpark_Overlays.html", "pattern": "FOLD_OPEN={estate:0", "pr": 0},
-    {"name": "Overlays: the folded estate keeps the feeds never scanned — a fold can never hide the finding", "file": "docs/FeedSpark_Overlays.html", "pattern": "never scanned':'')", "pr": 0},
-    {"name": "Overlays: the fold is this device's preference, never shared state", "file": "docs/FeedSpark_Overlays.html", "pattern": "fcc-ovl-fold", "pr": 0},
-    {"name": "Overlays: the fold tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_ovfold.js", "pr": 0},
-    {"name": "Overlays: the fold tripwire carries a negative control", "file": "tools/check_ovfold.js", "pattern": "negative control", "pr": 0},
+    {
+      "name": "Restock: the page is served",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the engine is served verbatim",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the Catalogue's Ads lane reads by PERIOD",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function catAdsRead(env, cmpid, fresh, period) {",
+      "pr": 0
+    },
+    {
+      "name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();",
+      "pr": 0
+    },
+    {
+      "name": "Restock: /api/restock/* scoped like /api/catalog, PUT only on the ledger",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the ledger is written only from a real observation",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!obs) return json({ ok: false, error: 'no observation' }, 400);",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the ledger write is logged",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/api/restock/ledger': 'restock-ledger'",
+      "pr": 0
+    },
+    {
+      "name": "Restock: a grantable module",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "{ slug: 'restock', label: 'Restock', path: '/restock' }",
+      "pr": 0
+    },
+    {
+      "name": "Restock: on the migration board",
+      "file": "cloudflare/feedspark-deck/src/migration.js",
+      "pattern": "{ p: '/restock', n: 'Restock', w: 3, m: '2026-12' }",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the migration board's page twin",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "{p:'/restock',n:'Restock',w:3,m:'2026-12',",
+      "pr": 0
+    },
+    {
+      "name": "Restock: an episode keeps its first-seen date while the product stays unavailable",
+      "file": "cloudflare/feedspark-deck/src/restock.js",
+      "pattern": "if (e && !e[3]) L.p[id] = [e[0], now, code, 0];",
+      "pr": 0
+    },
+    {
+      "name": "Restock: money never crosses a currency",
+      "file": "docs/restock_engine.js",
+      "pattern": "if (!curMix) { s.money = { value: r2(value), cost: r2(cost), valueAll: r2(valueAll), costAll: r2(costAll) }; s.share = valueAll > 0 ? value / valueAll : null; }",
+      "pr": 0
+    },
+    {
+      "name": "Restock: nothing is joined against a feed that did not stream whole",
+      "file": "docs/FeedSpark_Restock.html",
+      "pattern": "if (S.feed.st !== 'done' || S.ads.st !== 'ready') return;",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the stub feeds the phone tripwire",
+      "file": "tools/check_mobile.js",
+      "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the stub feeds the dark-mode tripwire",
+      "file": "tools/check_darkmode.js",
+      "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the harness runs in qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_restock.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_restock.js",
+      "pr": 0
+    },
+    {
+      "name": "Restock: the harness runs in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "run: node tools/test_restock.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)",
+      "file": "docs/navrow_widget.html",
+      "pattern": "body.fcc-navrow .topbar-in > #tb-modules a.tbm { flex: 0 1 auto; min-width: 24px; }",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the engine is served and bundles as a string",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/overlays/studio.js",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the page loads the studio engine by script tag",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "overlays/studio.js",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the field summoner resolves the price pair BY VALUE, never by column name (Monsoon's and Schuh's masters mean opposite things by the same names)",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "function pricePair",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: a scarcity figure has a plausibility ceiling (YuMOVE's 5,044 in stock is a stock figure, not scarcity)",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "SCARCITY_MAX",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: stock is reported as master-only, never mocked up — no output feed in the estate carries it",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "master_only",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the recipe emits the REAL image-creator params",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "tags_img_type",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: a full-width band reserves its edge so a corner zone cannot land under it",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "PASS 1 — the full-width bands",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the PNG filename keeps the market's channel (gb and gb-fb must not collide)",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "the RAW market, not mktLbl",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the Google Ads window is a 7/30-day control, allowlisted, 7 by default",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const CAT_ADS_PERIODS",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: changing the Ads window drops the figures rather than relabelling them",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "press Add Google Ads to read it",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the Overlay estate is stacked ABOVE the live panel — the side-by-side pair is gone",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "no need side by side",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: every section folds (the standing rule) — one fold rule, one head class",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": ".card.folded>:not(.fhd)",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the estate is FOLDED on a fresh device, the rest open",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "FOLD_OPEN={estate:0",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the folded estate keeps the feeds never scanned — a fold can never hide the finding",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "never scanned':'')",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the fold is this device's preference, never shared state",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "fcc-ovl-fold",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the fold tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_ovfold.js",
+      "pr": 0
+    },
+    {
+      "name": "Overlays: the fold tripwire carries a negative control",
+      "file": "tools/check_ovfold.js",
+      "pattern": "negative control",
+      "pr": 0
+    },
     {
       "name": "Golden score history: the three scores share one calendar",
       "file": "docs/FeedSpark_GoldenRecord.html",
@@ -12060,9 +13733,6 @@
       "pr": 0
     },
     {
-      "name": "Services & Pricer: /migration row carries the six new stores",
-      "file": "docs/FeedSpark_Transformation.html",
-      "pattern": "pricerops · pricerprice · pricercost · pricerprop · svcroll · svcmap",
       "name": "Golden score history: a day nobody measured carries the last reading — no gapped line",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function histCarry(days, seed, seedD) {",
@@ -12591,9 +14261,6 @@
       "pr": 0
     },
     {
-      "name": "Golden all-markets check reads the table in the PDF's export document",
-      "file": "tools/check_grmkts.js",
-      "pattern": "the one-click PDF captures the document WITH the all-markets table on it",
       "name": "Services & Pricer: every section folds (heading toggle, Open all / Fold all, Audit + Proposal open on a fresh device)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "var SEC_WRAP={'svc-audit':'au'",
@@ -12642,9 +14309,6 @@
       "pr": 0
     },
     {
-      "name": "Golden PDF check: the AI-readiness ring is an SVG arc, never a conic-gradient",
-      "file": "tools/check_grpdf.js",
-      "pattern": "the AI-readiness ring is an SVG arc with a literal colour",
       "name": "Services & Pricer: every section head is a tile — title, one line of what is inside, round chevron (no floating sentence)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "h2.sec-h{display:flex;align-items:center",
@@ -12762,7 +14426,144 @@
       "name": "Golden content quality: no verdict sentence under the score (Ray, 8 Oct 2026: 'remove this text')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "no verdict sentence under the score",
+      "pr": 0,
+      "name": "Overlay studio: the two-up is TWO pictures — image_link beside the product's own additional_image_link (Ray, 8 Oct 2026: 'should be templated by 2 images image_url and additiona_image_link')",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "function secondImage",
       "pr": 0
+    },
+    {
+      "name": "Overlay studio: the second picture is the first additional image that is NOT the main one — a repeat is no second picture",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "is the same picture as its main image",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the second-image fact is measured PER PRODUCT, not by how full the column is",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "def.rowOk === 'function'",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the split design's image zone names its fact, so compose drops it when the product cannot carry it",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "as: 'split', fact: 'second_image'",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the painter never falls back to the packshot — the two-up is drawn only when the second picture really loaded",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "&&!!ST.img2",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: more samples to demo on — a SPREAD of products, best first, never random (Ray, 8 Oct 2026: 'allow more samples to be demo pls')",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "function stSamples",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the sample strip carries a product that cannot take the two-up, so the honest drop is on screen",
+      "file": "tools/check_ovstudio.js",
+      "pattern": "the strip spreads across what each product can carry",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the tripwire measures the two halves and the seam, so one picture drawn twice fails",
+      "file": "tools/check_ovstudio.js",
+      "pattern": "const splitRead",
+      "pr": 0
+    },
+    {
+      "name": "Security: the identity gate runs in fetch() before route()",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const gate = SEC.idGate(path, request.method, ident, env);",
+      "pr": 0
+    },
+    {
+      "name": "Security: the resolved identity is stashed per request and who() reads it first",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const stashed = IDENT.get(request);",
+      "pr": 0
+    },
+    {
+      "name": "Security: the Access JWT is verified when ACCESS_TEAM_DOMAIN + ACCESS_AUD are set",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SEC.verifyAccessJwt(token, ACCESS_CERTS && ACCESS_CERTS.certs, env.ACCESS_AUD",
+      "pr": 0
+    },
+    {
+      "name": "Security: body caps per lane before the body is read",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const bg = SEC.bodyGate(path, request.method, request.headers.get('content-length'));",
+      "pr": 0
+    },
+    {
+      "name": "Security: the money routes are throttled per identity",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (SEC.MONEY_PATHS.has(path) && (request.method === 'POST' || request.method === 'PUT')) {",
+      "pr": 0
+    },
+    {
+      "name": "Security: the push key compares in constant time behind a per-IP brake",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!SEC.safeEqual(request.headers.get('X-FCC-Push-Key'), env.GMAIL_PUSH_KEY)) {",
+      "pr": 0
+    },
+    {
+      "name": "Security: the image proxy re-checks every redirect hop",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SEC.fetchWithin(fetch, target, (u) => catImgAllowed(u, hosts)",
+      "pr": 0
+    },
+    {
+      "name": "Security: the PDP fetch re-checks every redirect hop",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SEC.fetchWithin(fetch, target, (u) => pdpHostAllowed(u, host)",
+      "pr": 0
+    },
+    {
+      "name": "Security: CORS tightened to the request origin + no-store on /api",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const h = SEC.tightenHeaders(new Headers(res.headers), path, origin);",
+      "pr": 0
+    },
+    {
+      "name": "Security module: the public lanes are exactly three",
+      "file": "cloudflare/feedspark-deck/src/security.js",
+      "pattern": "export const PUBLIC_PATHS = new Set(['/api/version', '/api/news', '/api/gmail/push']);",
+      "pr": 0
+    },
+    {
+      "name": "Security module: fetchWithin follows redirects by hand",
+      "file": "cloudflare/feedspark-deck/src/security.js",
+      "pattern": "const res = await fetchFn(url, Object.assign({}, init || {}, { redirect: 'manual' }));",
+      "pr": 0
+    },
+    {
+      "name": "Security: the view-as cookie is Secure + SameSite=Lax",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "max-age=7200;Secure;SameSite=Lax",
+      "pr": 0
+    },
+    {
+      "name": "Security harness: the worker's identity resolver lifted and run against a signed token",
+      "file": "tools/test_security.mjs",
+      "pattern": "const R = new Function('SEC', 'fetch', 'crypto', src)(SEC, fetchStub, { subtle });",
+      "pr": 0
+    },
+    {
+      "name": "Security harness: no secret-shaped string in any tracked file",
+      "file": "tools/test_security.mjs",
+      "pattern": "no secret-shaped string in any of",
+      "pr": 0
+    },
+    {
+      "name": "Security: no outbound fetch follows redirects on its own",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "redirect: 'follow'",
+      "pr": 0,
+      "forbidden": true
     }
   ]
 }

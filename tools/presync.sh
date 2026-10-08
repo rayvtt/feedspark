@@ -140,6 +140,10 @@ echo "── validating: Restock (demand × feed join, the ledger, the lifted 30
 node tools/test_restock.mjs >/dev/null
 echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
 
+echo "── validating: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"
+node tools/test_security.mjs >/dev/null
+echo "   ✓ anonymous → 401 on every non-public lane, the lifted resolver refuses a spoofed header, caps/throttles/fetchWithin hold, no secret in git"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null
