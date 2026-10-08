@@ -99,8 +99,6 @@ window.addEventListener('load',restore);
   .pc.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.35)}
   .pc img,.pc canvas,.pc .ph{width:76px;height:76px;object-fit:cover;border-radius:7px;display:block;background:var(--wash)}
   .pc .l{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
-  .prow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:10px}
-  @media(max-width:900px){.prow{grid-template-columns:minmax(0,1fr)}}
   .lbl{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
   .pinfo b{font-size:14px;font-weight:900}
   .pinfo .m{font-size:12px;color:var(--ink-2);font-weight:700;margin-top:3px}
@@ -109,12 +107,20 @@ window.addEventListener('load',restore);
   .slot img,.slot canvas{width:100%;height:100%;object-fit:cover;display:block}
   .slot.on{border-color:var(--orange)}
   .slot i{position:absolute;left:3px;bottom:3px;font-style:normal;font-size:9.5px;font-weight:900;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:0 4px}
-  .ptab{width:100%;border-collapse:collapse;font-size:12.5px}
-  .ptab td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
-  .ptab td:first-child{font-weight:800;white-space:nowrap}
-  .ptab select{height:30px;font-size:12px;padding:0 24px 0 8px;max-width:180px}
   .dgal{display:flex;gap:6px;flex-wrap:wrap}
 
+  /* previews — the design controls ride beside them (Ray, 8 Oct 2026: "the overlay design section should be on the
+     left-hand side of the platform previews; otherwise I have to scroll up and down just to change things") */
+  .pv-split{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+  .pv-rail{position:sticky;top:calc(var(--tbh,64px) + 12px);max-height:calc(100vh - var(--tbh,64px) - 24px);overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--wash);min-width:0}
+  .pv-rail .seg{max-width:100%}
+  .pv-main{min-width:0}
+  .pnr{border-top:1px solid var(--line);padding:7px 0}
+  .pnr b{display:block;font-size:12px;font-weight:900;margin-bottom:4px}
+  .pnr .s{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .pnr .s.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pnr select{height:30px;font-size:12px;padding:0 22px 0 7px;width:100%;min-width:0;background-position:calc(100% - 13px) 13px,calc(100% - 8px) 13px}
+  @media(max-width:1000px){.pv-split{grid-template-columns:minmax(0,1fr)}.pv-rail{position:static;max-height:none}}
   /* previews */
   .pv-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
   .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start}
@@ -252,7 +258,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .fb-rx{border-top-color:#3A3B3C}
   [data-theme=dark] .cta{background:#3A3B3C;color:#E4E6EB}
   [data-theme=dark] .st-cta span{background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(4px)}
-  @media(max-width:760px){.ptab select{max-width:112px}.ptab td{padding:5px 3px}.pv-grid{grid-template-columns:minmax(0,1fr)}.mock{max-width:340px;margin:0 auto;width:100%}.seg{overflow-x:auto;max-width:100%}.ctxg{position:static}}
+  @media(max-width:760px){.pv-grid{grid-template-columns:minmax(0,1fr)}.mock{max-width:340px;margin:0 auto;width:100%}.seg{overflow-x:auto;max-width:100%}.ctxg{position:static}}
 </style>
 </head>
 <body>
@@ -283,35 +289,32 @@ window.addEventListener('load',restore);
   <div class="foldbar"><button class="btn sm" id="fold-all" type="button">⊖ Fold all</button></div>
 
   <section class="card" id="sec-prod" data-fold>
-    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Product &amp; image</span><span class="fl" id="fl-prod">Which product, which picture on which network, which overlay</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Product</span><span class="fl" id="fl-prod">Which product to design on</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
     <div class="fbody">
       <div class="lbl">Products to design on</div>
       <div class="strip" id="strip"><div class="note">Pick a brand, or open the demo products.</div></div>
-      <div class="prow">
-        <div>
-          <div class="pinfo" id="pinfo"></div>
-          <div class="lbl">Image source</div>
-          <span class="seg" id="imgmode" role="group" aria-label="Image source"><button type="button" data-m="same" class="on">Same image everywhere</button><button type="button" data-m="per">A picture per network</button></span>
-          <div class="lbl" id="slots-l">The product’s images</div>
-          <div class="slots" id="slots"></div>
-          <p class="note" id="slots-n">Click a picture to use it on every network.</p>
-        </div>
-        <div>
-          <div class="lbl">Overlay design <span class="sb">from /overlays</span></div>
-          <div class="dgal" id="dgal"></div>
-          <div class="lbl">Tagline on the image</div>
-          <div class="chips"><span class="seg" id="tagpos" role="group" aria-label="Tagline position"><button type="button" data-p="b" class="on">Bottom</button><button type="button" data-p="t">Top</button><button type="button" data-p="off">Off</button></span>
-            <span class="seg" id="tagsty" role="group" aria-label="Tagline colour"><button type="button" data-s="dark" class="on">Dark</button><button type="button" data-s="orange">Orange</button><button type="button" data-s="light">Light</button><button type="button" data-s="blue">Blue</button></span></div>
-          <div class="lbl">Per network</div>
-          <div style="overflow-x:auto"><table class="ptab" id="ptab"></table></div>
-        </div>
-      </div>
+      <div class="pinfo" id="pinfo" style="margin-top:6px"></div>
     </div>
   </section>
 
   <section class="card" id="sec-prev" data-fold>
     <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Platform previews</span><span class="fl" id="fl-prev">The same ad on every network, side by side</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
     <div class="fbody">
+      <div class="pv-split">
+      <aside class="pv-rail" id="pv-rail" aria-label="Design controls">
+        <div class="lbl" style="margin-top:0">Picture</div>
+        <span class="seg" id="imgmode" role="group" aria-label="Image source"><button type="button" data-m="same" class="on">Same everywhere</button><button type="button" data-m="per">Per network</button></span>
+        <div class="slots" id="slots" style="margin-top:8px"></div>
+        <p class="note" id="slots-n">Click a picture to use it on every network.</p>
+        <div class="lbl">Overlay design <span class="sb">from /overlays</span></div>
+        <div class="dgal" id="dgal"></div>
+        <div class="lbl">Tagline on the image</div>
+        <div class="chips"><span class="seg" id="tagpos" role="group" aria-label="Tagline position"><button type="button" data-p="b" class="on">Bottom</button><button type="button" data-p="t">Top</button><button type="button" data-p="off">Off</button></span>
+          <span class="seg" id="tagsty" role="group" aria-label="Tagline colour"><button type="button" data-s="dark" class="on">Dark</button><button type="button" data-s="orange">Orange</button><button type="button" data-s="light">Light</button><button type="button" data-s="blue">Blue</button></span></div>
+        <div class="lbl">Per network <span class="note" style="margin:0;text-transform:none;letter-spacing:0">picture · overlay · button</span></div>
+        <div id="ptab"></div>
+      </aside>
+      <div class="pv-main">
       <div class="pv-tools">
         <div class="chips" id="plats"></div>
         <label class="chip" title="Hatch the area each network’s own buttons and captions cover"><input type="checkbox" id="safe" style="margin:0"> Safe zones</label>
@@ -321,6 +324,8 @@ window.addEventListener('load',restore);
       <p class="note" id="moment" style="margin:0 0 10px"></p>
       <div class="pv-grid" id="pv"></div>
       <p class="note">Safe zones and text limits are the commonly published figures, a guide to confirm in each network’s own Ads Manager preview — the networks move them.</p>
+      </div>
+      </div>
     </div>
   </section>
 
@@ -690,16 +695,16 @@ window.addEventListener('load',restore);
     $('#slots-n').textContent = per ? 'Each network takes the picture chosen for it in the table — or one you upload.' : 'Click a picture to use it on every network.' + (S.imgUrls.length < 2 ? ' This product carries one image only.' : '');
     var b = S.row ? titleOf(S.row) : '', r = S.res || {};
     $('#pinfo').innerHTML = S.row ? '<b>' + esc(b || '(no title)') + '</b><div class="m">' + esc(S.pid ? 'ID ' + S.pid : '') + (r.price_now && r.price_now.text ? ' · ' + esc(r.price_now.text) : '') + (r.price_was && r.price_was.text ? ' <s>' + esc(r.price_was.text.replace(/^was /, '')) + '</s>' : '') + (r.sale_pct && r.sale_pct.ok ? ' · ' + esc(r.sale_pct.text) : '') + ' <span class="sb ' + (S.demo ? 'demo' : 'feed') + '">' + (S.demo ? 'demo' : 'feed') + '</span></div>' : '';
-    renderPtab(); fl('prod', S.row ? (S.pid || 'product') + ' · ' + (per ? 'a picture per network' : 'one picture everywhere') + ' · ' + designName(S.setup.design) : '');
+    renderPtab(); fl('prod', S.row ? (S.pid || 'product') + ' · ' + (titleOf(S.row) || '') : '');
   }
   function designName(id) { var d = STU.designById(id || 'clean'); return d ? d.name : 'No overlay'; }
   function renderPtab() {
     var per = S.setup.imgMode === 'per';
-    var dOpts = function (sel) { return '<option value="">Same as all</option>' + STU.DESIGNS.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join(''); };
+    var dOpts = function (sel) { return '<option value="">Same overlay</option>' + STU.DESIGNS.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join(''); };
     $('#ptab').innerHTML = SOC.PLATFORMS.map(function (p) {
       var c = platCfg(p.id), ctas = p.ctas.map(function (t) { return '<option' + (c.cta === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('');
-      var imgSel = per ? '<select class="fld" data-pimg="' + p.id + '" aria-label="Image on ' + esc(p.name) + '">' + S.imgUrls.map(function (u, i) { return '<option value="' + i + '"' + (c.img === i ? ' selected' : '') + '>' + (i ? 'Image +' + i : 'Main image') + '</option>'; }).join('') + '<option value="up"' + (S.up[p.id] ? ' selected' : '') + '>Upload…</option></select>' : '<span class="note" style="margin:0">same image</span>';
-      return '<tr><td>' + esc(p.short) + '</td><td>' + imgSel + '</td><td><select class="fld" data-pdes="' + p.id + '" aria-label="Overlay on ' + esc(p.name) + '">' + dOpts(c.design) + '</select></td><td><select class="fld" data-pcta="' + p.id + '" aria-label="Button on ' + esc(p.name) + '"><option value="">Schedule</option>' + ctas + '</select></td></tr>';
+      var imgSel = per ? '<select class="fld" data-pimg="' + p.id + '" aria-label="Image on ' + esc(p.name) + '">' + S.imgUrls.map(function (u, i) { return '<option value="' + i + '"' + (c.img === i ? ' selected' : '') + '>' + (i ? 'Image +' + i : 'Main image') + '</option>'; }).join('') + '<option value="up"' + (S.up[p.id] ? ' selected' : '') + '>Upload…</option></select>' : '';
+      return '<div class="pnr"><b>' + esc(p.short) + '</b><div class="s' + (per ? '' : ' two') + '">' + imgSel + '<select class="fld" data-pdes="' + p.id + '" aria-label="Overlay on ' + esc(p.name) + '">' + dOpts(c.design) + '</select><select class="fld" data-pcta="' + p.id + '" aria-label="Button on ' + esc(p.name) + '"><option value="">Scheduled button</option>' + ctas + '</select></div></div>';
     }).join('');
   }
   function renderDesigns() {
@@ -1141,6 +1146,8 @@ window.addEventListener('load',restore);
   });
   document.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.pc')) { e.preventDefault(); pick(+e.target.getAttribute('data-k')); } });
 
+  function tbh() { var tb = document.querySelector('.topbar'); if (tb) document.documentElement.style.setProperty('--tbh', Math.round(tb.getBoundingClientRect().height) + 'px'); }
+  tbh(); window.addEventListener('resize', tbh); window.addEventListener('load', tbh); setTimeout(tbh, 1500);
   try { S.plats = JSON.parse(recall('fcc-soc-plats') || '{}') || {}; } catch (e) { S.plats = {}; }
   loadEngines().then(boot).catch(function (e) { setState('The module’s engines did not load (' + ((e && e.message) || e) + ') — hard-refresh the page.', 'warn'); foldInit(); });
 })();

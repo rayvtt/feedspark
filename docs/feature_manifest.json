@@ -14698,6 +14698,12 @@
       "file": "tools/check_darkmode.js",
       "pattern": "const SOCIAL_STUB = require('./social_stub.js').stubLines();",
       "pr": 0
+    },
+    {
+      "name": "Social DPA: the design controls ride beside the previews (sticky left rail)",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "<aside class=\"pv-rail\" id=\"pv-rail\" aria-label=\"Design controls\">",
+      "pr": 0
     }
   ]
 }
