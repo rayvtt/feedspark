@@ -12406,13 +12406,37 @@
     {
       "name": "Services & Pricer: Tier 2 leaves nothing missing on the example product (contracted / completed in the Tier 2 delivery)",
       "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "var t2all=PV.opt==='go+ar'",
+      "pattern": "var t2all=T23&&!had&&!on",
       "pr": 0
     },
     {
       "name": "Worker: /api/pricer/examples — pre-loaded example products per client (KV pricerex:<client>)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "async function pricerExamplesRoute(",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the optimisation bank — every optimisation's tier + what it gives; new ones added; packageQuote reads it",
+      "file": "docs/pricer_engine.js",
+      "pattern": "function bankOf(bank)",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the Optimisation bank section (Management edits tiers, phrases, adds/removes)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function renderBank(",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: Tier 3 on the preview switch + 'What this tier gives' strip",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "['go+ar+rf','Tier 3 · AI-Refresher']",
+      "pr": 0
+    },
+    {
+      "name": "Pricer store: pricerbank — Management-written optimisation bank",
+      "file": "cloudflare/feedspark-deck/src/pricerstore.js",
+      "pattern": "export function sanitizeBankPut(",
       "pr": 0
     }
   ]

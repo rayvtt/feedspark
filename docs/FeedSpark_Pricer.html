@@ -368,6 +368,10 @@ window.addEventListener('load',restore);
   .pv-pt{font-weight:900;font-size:13px;line-height:1.3}
   .pv-pid{font-size:11px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
   .pv-ex{font-size:11px;font-weight:800;color:var(--muted);margin-top:3px}
+  .pv-gv{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:6px 0 2px;font-size:11.5px}
+  .pv-gvl{font-weight:900;text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;color:var(--muted);margin-right:2px}
+  .pv-gc{border:1px solid var(--line);border-radius:100px;padding:2px 9px;background:var(--paper);font-weight:700;color:var(--ink-2)}
+  .pv-gc.all{color:var(--good);border-color:var(--good)}.pv-gc.svc{border-style:dashed}.pv-gc.rf{color:var(--orange-ink)}
   .pv-pre{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0 2px;font-size:12px}
   .pv-sw{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px 4px;background:var(--paper)}
   .pv-sw button{font:inherit;font-weight:900;border:0;background:transparent;color:var(--ink);min-width:30px;min-height:30px;cursor:pointer;border-radius:6px}
@@ -494,6 +498,20 @@ window.addEventListener('load',restore);
   .tseg button:first-child{border-left:0}
   .tseg button.on{background:var(--navy);color:#fff}
   .tst-l{display:block;margin-top:2px}
+  .bk-sum{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:4px 0 8px;font-size:12px}
+  .bk-n{font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:2px 9px;background:var(--paper)}
+  .bk-t td{vertical-align:middle}.bk-l .bk-m{display:block;font-size:11px;margin-top:1px}
+  .bk-g{width:100%;min-width:260px}.bk-p{white-space:nowrap;font-size:12px}.bk-np{color:var(--risk);font-weight:800}
+  .bk-tag{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--orange-ink);border:1px solid var(--line);border-radius:100px;padding:0 6px}
+  .bk-tag.mv{color:var(--navy)}
+  .bk-seg{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;background:var(--paper)}
+  .bk-seg button{font:inherit;font-size:11.5px;font-weight:800;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink-2);padding:0 10px;min-height:30px;cursor:pointer}
+  .bk-seg button:first-child{border-left:0}.bk-seg button:disabled{cursor:default}
+  .bk-seg button.on{background:var(--navy);color:#fff}.bk-seg button.on.t-off{background:var(--muted)}
+  .bk-new{margin-top:10px}.bk-new summary{cursor:pointer;font-weight:800;color:var(--orange-ink)}
+  .bk-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 12px;margin:8px 0;align-items:end}
+  .bk-f label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:800;color:var(--ink-2)}.bk-f .wide{grid-column:1/-1}
+  .tk-c.svc{border-style:dashed}
   .rf-cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin:6px 0}.rf-cols .tog{display:flex}
   .cu-sm{display:block;font-size:11.5px;color:var(--ink-2);margin:2px 0 3px}
   .tk-c.rf-c b{color:var(--orange-ink)}
@@ -728,6 +746,14 @@ window.addEventListener('load',restore);
     <h3>How the change is delivered</h3>
     <div class="rc-scroll"><table class="rc rm-plan"><thead><tr><th class="num">#</th><th>Step</th><th>Who</th></tr></thead><tbody id="rm-plan"></tbody></table></div>
   </div>
+</div></section>
+
+<section id="svc-bank" data-m-digest="optimisation bank"><div class="wrap">
+  <h2>Optimisation bank — what each tier carries</h2>
+  <p class="sub">Every optimisation FeedSpark sells, the tier it sits in and what it gives. Move one, add one or switch one off and every tier card, the preview, the projection and the client copy follow.</p>
+  <div id="bk-sum" class="bk-sum"></div>
+  <div class="rc-scroll"><table class="rc bk-t"><thead><tr><th>Optimisation</th><th>What it gives</th><th>Tier</th><th>Price</th><th></th></tr></thead><tbody id="bk-body"></tbody></table></div>
+  <div id="bk-add"></div>
 </div></section>
 
 <section id="svc-rates"><div class="wrap">
@@ -1673,8 +1699,8 @@ function storeLabel(name,k){
   if(name==='rollout')return 'Rollout · '+k;
   return k.replace(/^_[gc]\|/,'').replace('|',' · ');
 }
-var OPS=mkStore('ops'),PRICE=mkStore('price'),COST=mkStore('cost'),PROPS=mkStore('proposals'),ROLL=mkStore('rollout'),RMAP=mkStore('roadmap');
-var STORES={ops:OPS,price:PRICE,cost:COST,proposals:PROPS,rollout:ROLL,roadmap:RMAP};
+var OPS=mkStore('ops'),PRICE=mkStore('price'),COST=mkStore('cost'),PROPS=mkStore('proposals'),ROLL=mkStore('rollout'),RMAP=mkStore('roadmap'),BANK=mkStore('bank');
+var STORES={ops:OPS,price:PRICE,cost:COST,proposals:PROPS,rollout:ROLL,roadmap:RMAP,bank:BANK};
 function svSaveState(){
   var bad=Object.keys(STORES).map(function(k){return STORES[k]}).filter(function(S){return /^⚠/.test(S.state)})[0];
   var el=$('#rc-state');if(el)el.textContent=bad?bad.state:((OPS.state||PRICE.state||COST.state)||'');
@@ -1746,7 +1772,7 @@ function svBuild(){
   if(!list.length)return;
   var contracted={};list.forEach(function(x){contracted[x.mkt]=E.contractedFrom(AIQS,c,x.mkt)});
   var spec={client:c,markets:list.map(function(x){return {mkt:x.mkt,audit:x.audit,lang:SV.lang[x.mkt]||E.langOf(x.mkt)}}),
-    rates:composed(),aimRates:aimRaw(),aimSources:SV.aimSources||undefined,lineOpts:SV.lineOpts,roadmap:RMAP.data,actuals:ACTUALS,
+    rates:composed(),aimRates:aimRaw(),aimSources:SV.aimSources||undefined,lineOpts:SV.lineOpts,roadmap:RMAP.data,bank:BANK.data,actuals:ACTUALS,
     contracted:contracted,targets:SV.targets,opts:popts()};
   ['go','go+ar','go+ar+rf','ar'].forEach(function(o){PQ[o]=E.packageQuote(Object.assign({},spec,{option:o}),LG)});
 }
@@ -1759,7 +1785,7 @@ function svRender(){if(SVR||!SV.boot)return;SVR=setTimeout(function(){SVR=null;s
 function svRenderNow(){
   if(!E||!LG||!SV.boot)return;
   var parts=[['build',svBuild],['hero',renderHero],['steps',renderSteps],['tiers',renderTiers],['cust',renderCust],['debrief',renderDebrief],
-    ['rollout',renderRollout],['roadmap',renderRoadmap],['rates',renderRateCard],['saved',renderSaved2],
+    ['rollout',renderRollout],['roadmap',renderRoadmap],['bank',renderBank],['rates',renderRateCard],['saved',renderSaved2],
     // the custom quote reads the SAME composed card that ⧉ Copy quote and 💾 Save re-read — a store load, a rate-card
     // edit, a Management block-£ change or the 90 s poll redraws it too, so the screen never disagrees with the copy
     ['cq',function(){renderCatalog();renderQuote()}]];
@@ -1991,20 +2017,24 @@ function tierCard(o){
       +(m.air&&m.air.now!=null?'<span class="pj-ai" title="AI-readiness today">AI '+m.air.now+'</span>':'')
       +(m.lead?'':' <span class="est est-ratio" title="Same language as the lead market — generated copy re-used at the re-use rate">re-use ×'+m.w+'</span>')+'</div>'}).join('')+'</div>';
   // 2 — what they get, one chip per line: a number and a few words
-  var get=q.lines.filter(function(l){return TK_GET[l.key]&&['priced','unpriced','unknown','coming'].indexOf(l.status)>=0});
+  var get=q.lines.filter(function(l){return (TK_GET[l.key]||l.custom)&&['priced','unpriced','unknown','coming'].indexOf(l.status)>=0});
+  // the bank's services this tier adds (stock range completion, restock alerts …) — chips of what it gives
+  var own={go:'go','go+ar':'ar','go+ar+rf':'rf',ar:'ar'}[o],svc=(q.extras||[]).filter(function(x){return x.pkg===own});
+  var svcH=svc.map(function(x){return '<span class="tk-c svc st-'+x.status+'" title="'+esc(x.label+(x.why?' — '+x.why:'')+(x.status==='priced'?' · '+GBP(x.monthly)+' a month':x.status==='coming'?' · coming — included when live':' · included'))+'">'+esc(x.gives||x.label)+(x.status==='coming'?' <i>coming</i>':'')+'</span>'}).join('');
   // the bundle names Tier 1 once rather than repeating its chips, then lists what it adds
   var inT1=o==='go+ar'&&get.some(function(l){return l.pkg==='go'});
   if(inT1)get=get.filter(function(l){return l.pkg!=='go'});
   // Tier 3 names Tier 2 once, then lists what the refresh adds: the fields, how often, what it reads
   var F=q.refresh;
-  if(o==='go+ar+rf'){get=[];
+  if(o==='go+ar+rf'){get=get.filter(function(l){return l.pkg==='rf'});
     h+='<div class="tk-get rf-get"><span class="tk-c tk-all" title="Every Tier 2 line is in this tier — see the breakdown">✓ Everything in Tier 2, plus</span>'
       +(F&&F.status!=='off'?'<span class="tk-c rf-c" title="'+esc(F.fields.map(function(f){return f.label+' — '+f.why}).join('\n'))+'"><b>↻ '+esc(F.cadLabel)+'</b> '+esc(F.fields.map(function(f){return f.label}).join(' · '))+'</span>'
         +'<span class="tk-c rf-c" title="What each refresh is read against"><b>'+F.signals.length+'</b> signal'+(F.signals.length===1?'':'s')+(F.share<100?' · '+F.share+'% of products':'')+'</span>'
-        :'<span class="tk-c st-unknown">no field ticked — open ⚙ Customise</span>')+'</div>'}
-  if(get.length||inT1)h+='<div class="tk-get">'+(inT1?'<span class="tk-c tk-all" title="Every Tier 1 line is in this bundle — see the breakdown">✓ Everything in Tier 1, plus</span>':'')+get.map(function(l){var n=l.pricedNeed&&l.status==='priced'?l.pricedNeed.n:(l.need&&l.need.n);
+        :'<span class="tk-c st-unknown">no field ticked — open ⚙ Customise</span>')+getChips(get)+svcH+'</div>';get=[];svcH=''}
+  function getChips(G){return G.map(function(l){var n=l.pricedNeed&&l.status==='priced'?l.pricedNeed.n:(l.need&&l.need.n);
     var tag=l.status==='unpriced'?'£ tbc':l.status==='unknown'?'to size':l.status==='coming'?'coming':'';
-    return '<span class="tk-c st-'+l.status+'" title="'+esc(l.label+(l.reason?' — '+l.reason:''))+'"><b>'+(n!=null&&l.status!=='unknown'?fmt(Math.round(n)):'—')+'</b> '+esc(TK_GET[l.key])+(tag?' <i>'+tag+'</i>':'')+'</span>'}).join('')+'</div>';
+    return '<span class="tk-c st-'+l.status+'" title="'+esc(l.label+(l.gives?' — '+l.gives:'')+(l.reason?' — '+l.reason:''))+'"><b>'+(n!=null&&l.status!=='unknown'?fmt(Math.round(n)):'—')+'</b> '+esc(TK_GET[l.key]||l.label)+(tag?' <i>'+tag+'</i>':'')+'</span>'}).join('')}
+  if(get.length||inT1||svcH)h+='<div class="tk-get">'+(inT1?'<span class="tk-c tk-all" title="Every Tier 1 line is in this bundle — see the breakdown">✓ Everything in Tier 1, plus</span>':'')+getChips(get)+svcH+'</div>';
   // 3 — what it costs: two numbers, ex VAT
   var oo=q.oneOff,mo=q.monthly,sz=sized(q),T=q.tests||{n:0,status:'off'};
   var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">+ test package '+T.n+' tests '+GBP(T.price)+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
@@ -2365,19 +2395,22 @@ function pvExVal(v,k){
 }
 function renderPreview(){
   var host=$('#svc-prev');if(!host)return;
-  var A=SV.audits||[],q1=PQ.go,q2=PQ['go+ar'];
+  var A=SV.audits||[],q1=PQ.go,q2=PQ['go+ar'],q3=PQ['go+ar+rf']||q2;
   if(!A.length||!q1||!q2){host.hidden=true;return}
   if(PV.mkt>=A.length)PV.mkt=0;
   var a=A[PV.mkt].audit,at=(a.golden&&a.golden.attrs)||null;
   if(!at){host.hidden=true;return}
   host.hidden=false;
   var pm=function(q){return (q.perMarket||[]).filter(function(m){return m.mkt===a.mkt})[0]||{}};
-  var p1=pm(q1).projected||{},p2=pm(q2).projected||{};
-  var f1={},f2={};(p1.fixed||[]).forEach(function(k){f1[k]=1});(p2.fixed||[]).forEach(function(k){f2[k]=1});
+  var p1=pm(q1).projected||{},p2=pm(q2).projected||{},p3=pm(q3).projected||{};
+  var f1={},f2={},f3={};(p1.fixed||[]).forEach(function(k){f1[k]=1});(p2.fixed||[]).forEach(function(k){f2[k]=1});(p3.fixed||[]).forEach(function(k){f3[k]=1});
+  // Tier 3 is Tier 2 plus whatever the bank puts in it, and the AI-Refresher keeps these fields fresh
+  var RF={keywords:'keywords',question_and_answer:'qa',product_highlight:'highlights',description:'desc'},rfOn={};
+  ((q3&&q3.refresh&&q3.refresh.status!=='off'&&q3.refresh.fields)||[]).forEach(function(f){rfOn[f.id]=1});
   if(!host.firstChild){
     host.innerHTML='<div class="pv-h"><h3>What changes in the feed</h3><span class="pv-seg" role="group" aria-label="Show the catalogue">'
-      +[['now','Today'],['go','Tier 1 · Google-ready'],['go+ar','Tier 2 · AI-ready']].map(function(x){return '<button type="button" data-pv="'+x[0]+'" aria-pressed="false">'+esc(x[1])+'</button>'}).join('')
-      +'</span><span class="pv-mk"></span></div><div class="pv-pre"></div><div class="pv-k"></div>'
+      +[['now','Today'],['go','Tier 1 · Google-ready'],['go+ar','Tier 2 · AI-ready'],['go+ar+rf','Tier 3 · AI-Refresher']].map(function(x){return '<button type="button" data-pv="'+x[0]+'" aria-pressed="false">'+esc(x[1])+'</button>'}).join('')
+      +'</span><span class="pv-mk"></span></div><div class="pv-pre"></div><div class="pv-k"></div><div class="pv-gv"></div>'
       +'<div class="pv-body"><div class="pv-prod"></div><div class="pv-g"></div></div>'
       +'<p class="pv-n">Five of the client\'s own products (those with the most gaps — ‹ › steps through them; ⟳ Prepare examples keeps them ready for a client meeting), and the share of the catalogue carrying each attribute. The bars and the score move only with the lines an option prices; on the product, Tier 2 leaves nothing missing. The values shown under a tier are an example for this product — built from its own feed row, or written by Spark AI from its image and row when connected — and ASPL and the AM review every value before it reaches the feed; identifiers, sizes and prices are never generated.</p>';
     host.addEventListener('click',function(e){
@@ -2389,15 +2422,16 @@ function renderPreview(){
   if(SV.mode!=='file'&&a.client&&!EXS_LOAD[a.client])exLoad(a.client);
   host.querySelector('.pv-mk').innerHTML=A.length>1?'<select class="fld sm" data-pvm aria-label="Market">'+A.map(function(x,i){return '<option value="'+i+'"'+(i===PV.mkt?' selected':'')+'>'+esc(String(x.audit.mkt).toUpperCase())+'</option>'}).join('')+'</select>':esc(String(a.mkt).toUpperCase());
   host.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-pv')===PV.opt?'true':'false')});
-  var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:{},gapT={},g1={};
-  ((PV.opt==='go'?p1:p2).blockers||[]).forEach(function(b){gapT[b.key]=b.tag});
+  var T3=PV.opt==='go+ar+rf',T23=PV.opt==='go+ar'||T3;
+  var fill=PV.opt==='go'?f1:PV.opt==='go+ar'?f2:T3?f3:{},gapT={},g1={};
+  ((PV.opt==='go'?p1:T3?p3:p2).blockers||[]).forEach(function(b){gapT[b.key]=b.tag});
   (p1.blockers||[]).forEach(function(b){g1[b.key]=b.tag});
   // in this option but not yet priced/sized: the product card still shows what it writes; the bars and score stay on what is priced
   var TBC=/price to follow|to be sized/;
   function inT1(k){return !!f1[k]||TBC.test(g1[k]||'')}
   var GT={'client to supply':'client\'s own data','in Tier 2':'Tier 2 fills it','in Tier 1':'Tier 1 fills it','price to follow':'in option · price to follow',
     'to be sized':'in option · to be sized','coming':'coming — included when live','already contracted':'already contracted','not in this quote':'not in this quote'};
-  function who(k,now){return fill[k]?(f1[k]?'filled by Tier 1':'filled by Tier 2'):now>=99?'already complete':f1[k]?'Tier 1 fills it':f2[k]?'Tier 2 fills it':(GT[gapT[k]]||gapT[k]||'client\'s own data')}
+  function who(k,now){return fill[k]?(f1[k]?'filled by Tier 1':f2[k]?'filled by Tier 2':'filled by Tier 3'):now>=99?'already complete':f1[k]?'Tier 1 fills it':f2[k]?'Tier 2 fills it':(GT[gapT[k]]||gapT[k]||'client\'s own data')}
   function cls(k,tag){return f1[k]||/Tier 1|in option/.test(tag)?' t1':(f2[k]||/Tier 2/.test(tag)?' t2':'')}
   var key=a.client+'|'+a.mkt,PL=pvList(a),nP=PL?PL.list.length:0;
   if(nP&&PV.pi>=nP)PV.pi=nP-1;
@@ -2434,18 +2468,18 @@ function renderPreview(){
       // TIER 2 LEAVES NOTHING MISSING on the example (Ray, 8 Oct 2026: "all missing have to be filled when Tier 2
       // AI-ready is selected"): a gap no priced line closes is still filled here — by the Spark AI work already
       // contracted, or in the Tier 2 delivery — and says which; the bars and the score stay on what is priced
-      var t2all=PV.opt==='go+ar'&&!had&&!on,contr=t2all&&/already contracted/.test(gapT[k]||tag||'');
+      var t2all=T23&&!had&&!on,contr=t2all&&/already contracted/.test(gapT[k]||tag||'');
       if(t2all)on=true;
-      var fv=r.querySelector('.fv'),fs=r.querySelector('.fs'),tier=t2all?'T2':inT1(k)?'T1':'T2',how=PV_HOW[k]||'by FeedSpark';
+      var fv=r.querySelector('.fv'),fs=r.querySelector('.fs'),tier=t2all?'T2':inT1(k)?'T1':(f2[k]||!T3)?'T2':'T3',how=PV_HOW[k]||'by FeedSpark',rfk=T3&&RF[k]&&rfOn[RF[k]];
       var gen=on&&PV_GEN.indexOf(k)>=0&&(!had||PV_REWRITE[k]),ai=gen&&EX&&EX.st==='ok'?pvExVal(EX.v,k):null,ex=ai||(gen?pvExVal(DER,k):null);
       if(!ex&&t2all&&PV_FALL[k])ex={s:PV_FALL[k],t:PV_FALL[k]+' — Google\'s value for a product that names no '+pvLabel(k).toLowerCase()};
       if(ex){fv.textContent=ex.s;fv.className='fv ex';fv.title=(ai?'Spark AI example':'Built from this product\'s own data'+(DER._why&&DER._why[k]?' — '+DER._why[k]:''))+'\n\n'+ex.t+(had?'\n\nToday: '+val:'')}
       else if(on&&!had){fv.textContent=how;fv.className='fv how';fv.title=''}
       else{fv.textContent=had?val:'missing';fv.className='fv'+(had?'':' miss');fv.title=had?val:''}
-      fs.textContent=contr?'✓ contracted':on?'✦ '+tier+(tbc?' · £ tbc':''):(had?'':tag);
+      fs.textContent=(contr?'✓ contracted':on?'✦ '+tier+(tbc?' · £ tbc':''):(had?'':tag))+(rfk?' ↻':'');
       fs.title=contr?'filled by the Spark AI work already contracted — '+how
         :t2all?'completed in the Tier 2 delivery for this product — '+how+' (no separate priced line: '+(GT[gapT[k]]||'the catalogue already carries it')+')'
-        :on?(had&&PV_REWRITE[k]?'optimised — ':'filled — ')+how+(ai?' · Spark AI example':ex?' · example from this product\'s data':'')+(tbc?' · in this option, '+gapT[k]+' — not yet counted in the score':''):(had?'as supplied':tag);
+        :on?(rfk?'kept fresh by the AI-Refresher ('+q3.refresh.cadLabel.toLowerCase()+') · ':'')+(had&&PV_REWRITE[k]?'optimised — ':'filled — ')+how+(ai?' · Spark AI example':ex?' · example from this product\'s data':'')+(tbc?' · in this option, '+gapT[k]+' — not yet counted in the score':''):(had?'as supplied':tag);
       var was=r.getAttribute('data-on');r.setAttribute('data-on',on?'1':'0');
       r.className='pv-fr'+(on?' on':'')+(had?'':' gap')+cls(k,on?(tier==='T1'?'Tier 1':'Tier 2'):tag);
       r.style.transitionDelay=(i*30)+'ms';
@@ -2476,7 +2510,17 @@ function renderPreview(){
     prev[k]=v;
   });
   PV.last=prev;
-  var sc=PV.opt==='go'?p1.after:PV.opt==='go+ar'?p2.after:a.golden.score;
+  var sc=PV.opt==='go'?p1.after:PV.opt==='go+ar'?p2.after:T3?p3.after:a.golden.score;
+  // WHAT THIS TIER GIVES — the bank's phrases for the tier on screen (Ray, 8 Oct 2026: "Highlights +4 fields · details
+  // + 5-8 fields · Stock RC% · Restock …"), the tier's own items after one "everything in the tier below" chip
+  var gv=host.querySelector('.pv-gv'),qo=PV.opt==='now'?null:PQ[PV.opt];
+  if(!qo){gv.innerHTML='';gv.hidden=true}else{
+    var ownT={go:'go','go+ar':'ar','go+ar+rf':'rf'}[PV.opt],G=(qo.gives||[]).filter(function(x){return x.pkg===ownT&&x.gives});
+    var F3=T3&&q3.refresh&&q3.refresh.status!=='off'?q3.refresh:null;
+    gv.hidden=false;
+    gv.innerHTML='<span class="pv-gvl">What '+esc(E.TIER_NAME[ownT])+' gives</span>'+(PV.opt!=='go'?'<span class="pv-gc all">✓ Everything in '+(T3?'Tier 2':'Tier 1')+'</span>':'')
+      +G.map(function(x){return '<span class="pv-gc'+(x.kind==='service'?' svc':'')+'" title="'+esc(x.label)+'">'+esc(x.gives)+'</span>'}).join('')
+      +(F3?'<span class="pv-gc rf">↻ '+esc(F3.fields.map(function(f){return f.label}).join(' · '))+' refreshed '+esc(F3.cadLabel.toLowerCase())+'</span>':'')}
   var k=host.querySelector('.pv-k');
   if(!k.firstChild)k.innerHTML='<div>Golden Score<b class="pv-s" data-v=""></b></div><div>Attributes at 99%+<b class="pv-full" data-v=""></b></div><div>Filled by this option<b class="pv-add" data-v=""></b></div>';
   pvTween(k.querySelector('.pv-s'),sc,1);
@@ -2490,8 +2534,9 @@ function renderCust(){
   var src=(PQ['go+ar']&&PQ['go+ar'].conv&&PQ['go+ar'].conv.sources)||E.aimDefaultSources(SV.audits.map(function(x){return x.audit}));
   var blocked=SV.audits.some(function(x){return x.audit.pdp==='blocked'}),h=hoursOf(curClient());
   function sel(id,val,opts){return '<select class="fld" data-c="'+id+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(val)?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>'}
-  var lines=E.PKG_LINES.filter(function(d){return d.key!=='client'}).map(function(d){var lo=SV.lineOpts[d.key]||{};
-    return '<div class="cu-l"><label class="tog"><input type="checkbox" data-lon="'+d.key+'"'+(lo.on===false?'':' checked')+'> '+esc(d.label.replace(/ —.*$/,''))+' <span class="nm">'+(d.pkg==='go'?'T1':'T2')+'</span></label>'
+  var lines=E.bankOf(BANK.data).filter(function(d){return d.kind==='feed'&&d.pkg!=='off'}).map(function(d){var lo=SV.lineOpts[d.key]||{};
+    d.grain=d.builtin?(E.PKG_LINES.filter(function(x){return x.key===d.key})[0]||{}).grain:d.grain;
+    return '<div class="cu-l"><label class="tog"><input type="checkbox" data-lon="'+d.key+'"'+(lo.on===false?'':' checked')+'> '+esc(d.label.replace(/ —.*$/,''))+' <span class="nm">'+(E.TIER_NAME[d.pkg]||'').replace('Tier ','T')+'</span></label>'
       +(d.grain==='parent'||d.grain==='sku'?'<select class="fld sm" data-lsc="'+d.key+'"><option value="need"'+(lo.scope==='all'?'':' selected')+'>products needing it</option><option value="all"'+(lo.scope==='all'?' selected':'')+'>every product</option></select>':'')+'</div>'}).join('');
   var routes=E.AIM_ATTRS.map(function(a){var cur=src[a.id]||'off';
     return '<div class="cu-l"><span>'+esc(a.name)+'</span><select class="fld sm" data-route="'+a.id+'">'+['off'].concat(a.routes).map(function(r){return '<option value="'+r+'"'+(r===cur?' selected':'')+'>'+esc(r==='ai'?'Spark AI':E.AIM_ROUTE_LABEL[r]||r)+'</option>'}).join('')+'</select></div>'}).join('');
@@ -2538,6 +2583,54 @@ function rfCust(){
       return '<label class="tog"><input type="checkbox" data-rfs="'+x.id+'"'+((r.signals||[]).indexOf(x.id)>=0?' checked':'')+'> '+esc(x.label)+'</label>'}).join('')+'</div></div>'
     +'<p class="cu-n">'+esc(E.REFRESH_WHAT?E.REFRESH_WHAT.charAt(0).toUpperCase()+E.REFRESH_WHAT.slice(1):'')+'</p>'
     +'<p class="cu-n">Each refresh is priced at '+(pct!=null?pct+'%':'—')+' of each field\'s generation price'+(own?'':' (draft)')+' — set by Management. A quarterly refresh counts a third of its price in the monthly total.</p>';
+}
+
+/* ---- the OPTIMISATION BANK (Ray, 8 Oct 2026: "a bank of different optimisation to be allocated flexibly between tiers,
+   let's document them all in a section within Pricer; when added / removed / changed between tiers it should be reflected
+   in the audit + pricing quote"). One row per optimisation — built-in package lines, the team's own, and services that write
+   no feed field — with its tier, the phrase a Head of Marketing reads and its price. Management edits it (the store refuses
+   anyone else); every other signin reads it. Each edit re-builds every quote from the same bank. */
+function bankEdit(){return MGMT&&!BANK.denied}
+function bankSlug(s){return 'x_'+String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,30)}
+function bankPut(k,patch){
+  var cur=BANK.data[k],v=Object.assign({},cur&&typeof cur==='object'?cur:{},patch);delete v.by;delete v.at;delete v.del;
+  BANK.set(k,v);svRender();
+}
+function renderBank(){
+  var host=$('#bk-body'),sec=$('#svc-bank');if(!host||busy(sec))return;
+  var B=E.bankOf(BANK.data),ed=bankEdit(),ORD={go:0,ar:1,rf:2,off:3};
+  B.sort(function(a,b){return (ORD[a.pkg]-ORD[b.pkg])||((a.custom?1:0)-(b.custom?1:0))});
+  var n={go:0,ar:0,rf:0,off:0};B.forEach(function(b){n[b.pkg]++});
+  $('#bk-sum').innerHTML=['go','ar','rf','off'].map(function(t){return '<span class="bk-n t-'+t+'"><b>'+n[t]+'</b> '+(t==='off'?'switched off':esc(E.TIER_NAME[t]))+(t==='rf'?' + the AI-Refresher':'')+'</span>'}).join('')
+    +'<span class="nm">'+(ed?'Management — your changes save for the whole team.':BANK.denied?'Read-only — the bank is not in your access.':'Read-only — Management sets the tiers (the pricer-cost grant).')+'</span>';
+  host.innerHTML=B.map(function(b){
+    var seg='<span class="bk-seg" role="group" aria-label="Tier for '+esc(b.label)+'">'+E.BANK_TIERS.map(function(t){var on=b.pkg===t;
+      return '<button type="button" data-bk="'+esc(b.key)+'" data-bkt="'+t+'" class="'+(on?'on t-'+t:'')+'" aria-pressed="'+(on?'true':'false')+'"'+(ed?'':' disabled')+'>'+(t==='off'?'Off':E.TIER_NAME[t].replace('Tier ','T'))+'</button>'}).join('')+'</span>';
+    var pr=b.builtin?'<span class="nm">rate card</span>':[b.unit!=null?GBP(b.unit)+'/product':'',b.setupH!=null?b.setupH+'h set-up':'',b.monthly!=null?GBP(b.monthly)+'/mo':''].filter(Boolean).join(' · ')
+      ||(b.kind==='service'?'<span class="nm">included — no charge set</span>':'<span class="bk-np">not priced</span>');
+    var meta=b.why||(b.fields&&b.fields.length?'fills '+b.fields.join(', '):'');
+    return '<tr data-bkrow="'+esc(b.key)+'"><td class="bk-l"><b>'+esc(b.label.replace(/ —.*$/,''))+'</b>'
+      +(b.custom?' <span class="bk-tag">'+(b.kind==='service'?'service':'new')+'</span>':'')+(b.moved?' <span class="bk-tag mv" title="Moved from '+esc(E.TIER_NAME[b.defPkg])+'">moved</span>':'')
+      +(b.custom&&b.status!=='live'?' <span class="bk-tag">'+esc(b.status)+'</span>':'')+(meta?'<span class="nm bk-m">'+esc(meta)+'</span>':'')+'</td>'
+      +'<td>'+(ed?'<input class="fld sm bk-g" type="text" data-bkg="'+esc(b.key)+'" value="'+esc(b.gives)+'" maxlength="90" aria-label="What '+esc(b.label)+' gives">':esc(b.gives))+'</td>'
+      +'<td>'+seg+'</td><td class="bk-p">'+pr+'</td>'
+      +'<td>'+(b.custom&&ed?'<button type="button" class="lnk" data-bkdel="'+esc(b.key)+'">Remove</button>':'')+'</td></tr>'}).join('');
+  var add=$('#bk-add');
+  if(!ed){add.innerHTML='';return}
+  if(add.firstChild&&busy(add))return;
+  add.innerHTML='<details class="bk-new"><summary>＋ Add an optimisation</summary><div class="bk-f">'
+    +'<label>Name<input class="fld" id="bkn-label" maxlength="60" placeholder="e.g. Size chart links"></label>'
+    +'<label>Kind<select class="fld" id="bkn-kind"><option value="feed">Fills feed fields</option><option value="service">A service (no feed field)</option></select></label>'
+    +'<label>Tier<select class="fld" id="bkn-pkg"><option value="go">Tier 1</option><option value="ar" selected>Tier 2</option><option value="rf">Tier 3</option><option value="off">Off</option></select></label>'
+    +'<label>What it gives<input class="fld" id="bkn-gives" maxlength="90" placeholder="e.g. a size chart on every product"></label>'
+    +'<label>Feed fields it fills<input class="fld" id="bkn-fields" placeholder="e.g. document_link"></label>'
+    +'<label>£ a product<input class="fld" id="bkn-unit" type="number" min="0" step="0.01"></label>'
+    +'<label>Set-up hours<input class="fld" id="bkn-setup" type="number" min="0" step="0.5"></label>'
+    +'<label>£ a month<input class="fld" id="bkn-mon" type="number" min="0" step="10"></label>'
+    +'<label>Status<select class="fld" id="bkn-status"><option value="live">Live</option><option value="pilot">Pilot</option><option value="building">Building</option><option value="planned">Planned</option></select></label>'
+    +'<label class="wide">Why (shown in the tooltip)<input class="fld" id="bkn-why" maxlength="200"></label>'
+    +'<button type="button" class="btn" data-bkadd="1">＋ Add to the bank</button><span class="nm" id="bkn-msg"></span></div>'
+    +'<p class="nm">A feed optimisation is priced like generation (its £ a product × the products its fields leave empty × the volume factor) plus its set-up hours; a service adds its £ a month. Leave the price empty and it reads "not priced" — never £0.</p></details>';
 }
 
 /* ---- 3. the debrief kit ---- */
@@ -3005,6 +3098,21 @@ function wire(){
   // the test-package segmented control (a button, so a click — guarded on its own data attribute)
   $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-tests]');if(!b)return;
     var n=+b.getAttribute('data-tests');SV.popts.tests=(E.TEST_COUNTS||[2,3,4]).indexOf(n)>=0?n:0;svRender()});
+  // the optimisation bank — tier buttons, the phrase, remove, add (Management only; the store refuses anyone else)
+  $('#svc-bank').addEventListener('click',function(e){if(!bankEdit())return;
+    var t=e.target.closest('button[data-bkt]');if(t){bankPut(t.getAttribute('data-bk'),{pkg:t.getAttribute('data-bkt')});return}
+    var d=e.target.closest('[data-bkdel]');if(d){var k=d.getAttribute('data-bkdel');if(E.BANK_SEED[k])BANK.set(k,{del:true});else BANK.set(k,null);svRender();return}
+    if(e.target.closest('[data-bkadd]')){
+      var v=function(id){var x=$('#'+id);return x?x.value.trim():''},label=v('bkn-label'),k=bankSlug(label),msg=$('#bkn-msg');
+      if(!label||k.length<4){msg.textContent='Give it a name first';return}
+      if(E.bankOf(BANK.data).some(function(b){return b.key===k})){msg.textContent='That name is already in the bank';return}
+      var rec={label:label,kind:v('bkn-kind')||'feed',pkg:v('bkn-pkg')||'ar',status:v('bkn-status')||'live'};
+      if(v('bkn-gives'))rec.gives=v('bkn-gives');if(v('bkn-why'))rec.why=v('bkn-why');
+      if(rec.kind==='feed'){var f=v('bkn-fields').toLowerCase().split(/[\s,]+/).filter(function(x){return /^[a-z_]{2,40}$/.test(x)}).slice(0,6);if(f.length)rec.fields=f}
+      ['unit','setup','mon'].forEach(function(id,i){var x=v('bkn-'+id);if(x!=='')rec[['unit','setupH','monthly'][i]]=+x});
+      BANK.set(k,rec);$('#bk-add').innerHTML='';svRender();return}
+  });
+  $('#svc-bank').addEventListener('change',function(e){var g=e.target.closest('input[data-bkg]');if(!g||!bankEdit())return;bankPut(g.getAttribute('data-bkg'),{gives:g.value.trim()});g.blur()});
   // the AI-Refresher segmented controls (cadence, share) — each guarded on its own data attribute
   $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-rfcad],button[data-rfshare]');if(!b)return;
     var r=rfState();
@@ -3096,7 +3204,7 @@ function wire(){
    comes back — a store with an edit still waiting to be saved keeps its own copy (load() skips it) */
 function poll(){
   if(document.hidden||!SV.boot)return;
-  Promise.all([OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),MGMT?COST.load():null]).then(svRender);
+  Promise.all([OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),BANK.load(),MGMT?COST.load():null]).then(svRender);
 }
 setInterval(poll,90000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)poll()});
@@ -3145,7 +3253,7 @@ function boot(){
       j('/api/hours').then(function(d){HRS=(d&&d.clients)||{}}),
       j('/api/schedule?lite=1').then(function(d){CAD=(d&&d.cadence)||[]}),
       j('/api/labels/askdraft').then(function(d){ASKTO=(d&&d.cfg&&d.cfg.to)||{}}),
-      OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),
+      OPS.load(),PRICE.load(),PROPS.load(),ROLL.load(),RMAP.load(),BANK.load(),
       MGMT?COST.load().then(function(){if(COST.denied)MGMT=false}):null,
       PZLOAD.lg().then(function(m){LG=m})
     ]);

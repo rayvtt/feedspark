@@ -120,6 +120,22 @@ none); the bars and the Golden Score still move only with priced lines.
 
 ---
 
+**The optimisation bank** (Ray, 8 Oct 2026: *"a bank of different optimisation to be allocated flexibly between tiers
+… when added / removed / changed between tiers it should be reflected in the audit + pricing quote"*). One registry,
+the **Optimisation bank** section on the page, KV `pricerbank` (`/api/pricer/bank`, house-wide, Management-written):
+every built-in package line with its tier (T1 / T2 / T3 / Off) and the phrase a Head of Marketing reads ("+4
+highlights per product", "+5–8 product details per product" …); optimisations the team adds (`x_<slug>`: the feed
+fields they fill, £ a product, set-up hours, £ a month, a delivery status — no price reads "not priced", never £0;
+planned / building reads coming); and **services** that write no feed field — Stock range completion ("Stock RC%")
+and Restock alerts are seeded into Tier 2, "included" until Management sets a monthly £. `packageQuote` reads the
+bank for every option (`bankOf`, `inOption` — a tier carries every tier below it), so a move shows on the tier cards,
+the preview (Today / Tier 1 / Tier 2 / **Tier 3**, with a "What <tier> gives" strip and ↻ on refreshed fields), the
+projection and its gap tags ("in Tier 3"), the quote, ⚙ Customise's line list and the client copy at once. A team-added
+feed line is priced like generation over the products its fields leave empty; services are out of both sides of the
+margin.
+
+---
+
 ## 4. Saving, options and buy-in
 
 **💾 Save as proposal** stores every shown tier as an **option** of ONE proposal (`prop {id, n, label}`), each

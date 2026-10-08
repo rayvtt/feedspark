@@ -246,6 +246,8 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
         costGet: (window.__pzPuts || []).length };
     });
     ok('the Management 🔒 tab is absent and the sell £ is read-only', !r.shown && r.mgmt === false && !r.unitEd, r);
+    ok('the Optimisation bank is read-only for an AM: tier buttons disabled, no add form, it says Management sets the tiers',
+      await p.evaluate(() => Array.from(document.querySelectorAll('#bk-body button[data-bkt]')).every((x) => x.disabled) && document.querySelectorAll('#bk-body tr').length === 12 && !document.querySelector('#bk-add details') && /Management sets the tiers/.test(document.querySelector('#bk-sum').textContent)));
     ok('no console error for the AM signin', !errs.filter((e) => !/403/.test(e)).length, errs.slice(0, 3));
     await ctx.close(); try { fs.unlinkSync(tmp); } catch (e) {}
   }
@@ -267,7 +269,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the tiers read Tier 1 · Google-ready and Tier 2 · AI-ready, each with its sub-label', /^Tier 1 · Google-ready/.test(names[0]) && /eligible \+ everything Google recommends/.test(names[0]) && /^Tier 2 · AI-ready/.test(names[1]) && /the bundle/.test(names[1]), names);
     // the card reads in a glance: score bar, what you get, two prices — the working folded under See the breakdown
     const bite = await p.evaluate(() => { const t = document.querySelector('.tier[data-opt="go+ar"]'); const d = t.querySelector('.tier-more');
-      d.open = false; const h = t.getBoundingClientRect().height; const chips = Array.from(t.querySelectorAll('.tk-get .tk-c')).map((c) => c.textContent);
+      d.open = false; const h = t.getBoundingClientRect().height; const chips = Array.from(t.querySelectorAll('.tk-get .tk-c:not(.svc)')).map((c) => c.textContent);
       return { h, chips, bars: t.querySelectorAll('.proj .tk-bar').length, folded: !d.open && !!d.querySelector('table.lines') && !!d.querySelector('.rates-l'), mv: t.querySelectorAll('.money .mv').length,
         words: t.innerText.replace(d.innerText, '').split(/\s+/).filter(Boolean).length }; });
     ok('a tier card leads with a score bar, what-you-get chips and two prices, the line table and rates folded under See the breakdown', bite.bars >= 1 && bite.chips.length >= 4 && /^✓ Everything in Tier 1/.test(bite.chips[0]) && bite.chips.slice(1).every((c) => /^(—|[\d,]+) /.test(c)) && bite.folded && bite.mv === 2 && bite.words < 120, bite);
@@ -279,6 +281,39 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('Tier 3 · AI-Refresher is drawn after Tier 2: "Everything in Tier 2, plus" the refresh chips, the one-off unchanged, the refresh inside the monthly',
       t3 && /^Tier 3 · AI-Refresher/.test(t3.name) && t3.n === '3' && /^✓ Everything in Tier 2/.test(t3.chips[0]) && /Monthly/.test(t3.chips[1]) && /Keywords/.test(t3.chips[1])
       && t3.o3 === t3.o2 && Math.abs(t3.m3 - t3.m2 - t3.F.monthlyEq) < 0.01 && /AI-Refresher/.test(t3.money) && /Read against/.test(t3.bd), t3);
+    // D — the optimisation bank: every optimisation, its tier, what it gives — moved / added and every quote follows
+    const bk0 = await p.evaluate(() => ({ rows: document.querySelectorAll('#bk-body tr').length, seg: document.querySelectorAll('#svc-prev [data-pv]').length,
+      hl: (document.querySelector('#bk-body tr[data-bkrow="highlights"] .bk-g') || {}).value, svc: !!document.querySelector('#bk-body tr[data-bkrow="x_stock_rc"]'),
+      t2svc: Array.from(document.querySelectorAll('.tier[data-opt="go+ar"] .tk-c.svc')).map((x) => x.textContent) }));
+    ok('the Optimisation bank lists every optimisation (10 package lines + the two seeded services) with what each gives', bk0.rows === 12 && bk0.hl === '+4 highlights per product' && bk0.svc, bk0);
+    ok('the Tier 2 card carries the seeded services as what-it-gives chips (Stock RC%, Restock)', bk0.t2svc.some((t) => /Stock RC%/.test(t)) && bk0.t2svc.some((t) => /Restock/.test(t)), bk0.t2svc);
+    ok('the preview switch offers Today · Tier 1 · Tier 2 · Tier 3', bk0.seg === 4);
+    await p.click('#svc-prev [data-pv="go+ar+rf"]'); await p.waitForTimeout(500);
+    const pv3 = await p.evaluate(() => ({ gv: (document.querySelector('#svc-prev .pv-gv') || {}).textContent || '', rf: Array.from(document.querySelectorAll('#svc-prev .pv-fr .fs')).filter((x) => / ↻$/.test(x.textContent)).length,
+      miss: document.querySelectorAll('#svc-prev .pv-fr .fv.miss').length }));
+    ok('Tier 3 in the preview: "What Tier 3 gives" with the refresh, the refreshed fields marked ↻, nothing missing', /What Tier 3 gives/.test(pv3.gv) && /Everything in Tier 2/.test(pv3.gv) && /refreshed monthly/.test(pv3.gv) && pv3.rf >= 2 && pv3.miss === 0, pv3);
+    await p.click('#svc-prev [data-pv="go+ar"]'); await p.waitForTimeout(400);
+    const gv2 = await p.evaluate(() => document.querySelector('#svc-prev .pv-gv').textContent);
+    ok('Tier 2 in the preview lists what it gives — +4 highlights, +5–8 details, Stock RC%, Restock', /\+4 highlights/.test(gv2) && /\+5–8 product details/.test(gv2) && /Stock RC%/.test(gv2) && /Restock/.test(gv2), gv2);
+    const t1a = await p.evaluate(() => window.__PZX.PQ.go.oneOff.total);
+    await p.click('#bk-body tr[data-bkrow="highlights"] button[data-bkt="go"]');
+    await p.waitForFunction(() => (window.__pzPuts || []).some((x) => x.name === 'bank'), null, { timeout: 5000 }).catch(() => {});
+    await p.waitForTimeout(300);
+    const mv = await p.evaluate(() => ({ put: (window.__pzPuts || []).filter((x) => x.name === 'bank').pop(), t1: window.__PZX.PQ.go.lines.some((l) => l.key === 'highlights' && l.status === 'priced'),
+      tot: window.__PZX.PQ.go.oneOff.total, chip: Array.from(document.querySelectorAll('.tier[data-opt="go"] .tk-c')).some((c) => /products with highlights/.test(c.textContent)),
+      moved: !!document.querySelector('#bk-body tr[data-bkrow="highlights"] .bk-tag.mv') }));
+    ok('moving Highlights to Tier 1 in the bank saves it and puts it on the Tier 1 quote, card and price', mv.put && mv.put.body.highlights && mv.put.body.highlights.pkg === 'go' && mv.t1 && mv.tot > t1a && mv.chip && mv.moved, { t1: mv.t1, tot: mv.tot, t1a, chip: mv.chip, moved: mv.moved });
+    await p.click('#bk-body tr[data-bkrow="highlights"] button[data-bkt="ar"]'); await p.waitForTimeout(300);
+    await p.click('#bk-add summary');
+    await p.fill('#bkn-label', 'Size chart links'); await p.fill('#bkn-fields', 'document_link'); await p.fill('#bkn-gives', 'a size chart on every product');
+    await p.selectOption('#bkn-pkg', 'rf');
+    await p.click('#bk-add [data-bkadd]'); await p.waitForTimeout(400);
+    const nw = await p.evaluate(() => ({ row: !!document.querySelector('#bk-body tr[data-bkrow="x_size_chart_links"]'), q3: (window.__PZX.PQ['go+ar+rf'].lines.filter((l) => l.key === 'x_size_chart_links')[0] || {}).status,
+      q2: window.__PZX.PQ['go+ar'].lines.some((l) => l.key === 'x_size_chart_links'), chip: Array.from(document.querySelectorAll('.tier[data-opt="go+ar+rf"] .tk-c')).some((c) => /Size chart links/.test(c.textContent) && /£ tbc/.test(c.textContent)) }));
+    ok('＋ Add an optimisation (Tier 3, no price yet): it joins the bank and the Tier 3 quote as "£ tbc" — never £0 — and stays off Tier 2', nw.row && nw.q3 === 'unpriced' && !nw.q2 && nw.chip, nw);
+    await p.click('#bk-body tr[data-bkrow="x_size_chart_links"] [data-bkdel]'); await p.waitForTimeout(300);
+    if (process.env.PZ_SHOTS) await (await p.$('#svc-bank')).screenshot({ path: process.env.PZ_SHOTS + '/bank.png' });
+    ok('Remove takes it out of the bank and the quote', await p.evaluate(() => !document.querySelector('#bk-body tr[data-bkrow="x_size_chart_links"]') && !window.__PZX.PQ['go+ar+rf'].lines.some((l) => l.key === 'x_size_chart_links')));
     // 16 — the client contact
     ok('the debrief opens with Northwind\'s remembered contact', (await p.inputValue('#db-to')) === 'buyer@northwind.invalid');
     // 21 — an edited email survives a Customise change, and says the figures moved
