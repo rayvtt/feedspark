@@ -4496,9 +4496,45 @@ window.addEventListener('load',restore);
     });
   }
   // one picked card, as the client file carries it: no control, no id, no click-to-filter, no FCC link
-  function catxClean(card, vlabel) {
+  /* THE PICTURES THE SCAN FLAGGED, IN THE FILE (Ray, 8 Oct 2026: "images of the scanned should be screenshot to add in report
+     too - just keep 10 small images"): the Image pixels card's "To look at" tiles are buttons onto the client's CDN, which the
+     clean pass removes — so the first CATX_THUMBS are fetched through our own /api/catalog/img (same origin, so a canvas may
+     read them), drawn at CATX_THUMB_PX and embedded as small JPEG data URIs: the file carries the picture itself, never a call
+     out to a host, and a picture that cannot be read is left out rather than drawn as a broken frame */
+  var CATX_THUMBS = 10, CATX_THUMB_PX = 160;
+  function catxThumbs(w, card) {
+    var tiles = Array.prototype.slice.call(card.querySelectorAll('.pixlook [data-px-open]'), 0, CATX_THUMBS);
+    if (!tiles.length) return Promise.resolve(null);
+    var q = new URLSearchParams(w.location.search), base = '/api/catalog/img?client=' + encodeURIComponent(q.get('client') || '') + '&market=' + encodeURIComponent(q.get('market') || '');
+    return Promise.all(tiles.map(function (t) {
+      var im = t.querySelector('img'), b = t.querySelector('b'), u = im && im.getAttribute('src');
+      var tip = (t.getAttribute('title') || '').replace(/^\S+\s*·\s*/, '');
+      if (!u) return null;
+      return w.fetch(base + '&url=' + encodeURIComponent(u)).then(function (r) { return r.ok ? r.blob() : null; }).then(function (bl) {
+        if (!bl) return null;
+        return createImageBitmap(bl).then(function (bm) {
+          var k = Math.min(1, CATX_THUMB_PX / Math.max(bm.width, bm.height)), cv = document.createElement('canvas');
+          cv.width = Math.max(1, Math.round(bm.width * k)); cv.height = Math.max(1, Math.round(bm.height * k));
+          var x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(bm, 0, 0, cv.width, cv.height);
+          if (bm.close) bm.close();
+          return { src: cv.toDataURL('image/jpeg', 0.72), lab: b ? b.textContent : '', sev: b ? b.className : '', tip: tip };
+        });
+      }).catch(function () { return null; });
+    })).then(function (a) { return a.filter(Boolean); });
+  }
+  function catxClean(card, vlabel, thumbs) {
     var c = card.cloneNode(true);
     c.removeAttribute('hidden'); c.style.order = ''; c.classList.remove('grx-on');
+    var pl = c.querySelector('.pixlook');
+    if (pl) {
+      var all = pl.querySelectorAll('[data-px-open]').length, ph = pl.parentNode && pl.parentNode.querySelector('.pixh');
+      if (thumbs && thumbs.length) {
+        pl.innerHTML = thumbs.map(function (t) {
+          return '<span class="pxt" title="' + esc(t.tip) + '"><img src="' + t.src + '" alt="' + esc(t.lab) + '"><b class="' + esc(t.sev) + '">' + esc(t.lab) + '</b></span>';
+        }).join('');
+        if (ph && all > thumbs.length) ph.appendChild(document.createTextNode(' · ' + thumbs.length + ' shown'));
+      } else if (ph) { ph.appendChild(document.createTextNode(' · pictures not embedded')); }
+    }
     Array.prototype.forEach.call(c.querySelectorAll('.grx,select,button,input,textarea,.pixctl,a.btn'), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
     var h = c.querySelector('.chead h3');
     if (h && vlabel && h.textContent.toLowerCase().indexOf(vlabel.toLowerCase()) < 0) h.appendChild(document.createTextNode(' · ' + vlabel));
@@ -4542,6 +4578,10 @@ window.addEventListener('load',restore);
          read in the client's window at the client's width, so a ten-row ROAS list or the stock matrix with its legend can run
          past the 340px every card keeps — the card stays square and its body scrolls inside it */
       '.mod>div:last-child{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:thin;scrollbar-color:#C9CDD3 transparent;padding-right:2px}' +
+      '.pixlook .pxt{border:1px solid #E6E6E6;border-radius:10px;background:#F7F7F5;aspect-ratio:1;position:relative;overflow:hidden;display:block}' +
+      '.pixlook .pxt img{width:100%;height:100%;object-fit:contain;display:block}' +
+      '.pixlook .pxt b{position:absolute;left:3px;bottom:3px;font-size:10px;font-weight:800;padding:1px 4px;border-radius:5px;background:#fff;color:#333;max-width:calc(100% - 6px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.pixlook .pxt b.fail{color:#C0392B}' +
       '.mod>div:last-child::-webkit-scrollbar{width:6px}.mod>div:last-child::-webkit-scrollbar-thumb{background:#C9CDD3;border-radius:6px}</style></head>' +
       '<body><main class="wrap"><div class="ins mods">' + cards.join('') + '</div></main><\/body><\/html>';
   }
@@ -4584,8 +4624,10 @@ window.addEventListener('load',restore);
         if (tell) tell(i + 1, picks.length);
         return catxWait(function () { var e = card.querySelector('.empty2'); return !(e && CATX_BUSY.test(e.textContent)); }, until).then(function () {
           var o = v && sel.options[sel.selectedIndex];
-          out.push(catxClean(card, o ? o.text.trim() : ''));
-          return step(i + 1);
+          return (mod === 'pix' ? catxThumbs(w, card) : Promise.resolve(null)).then(function (th) {
+            out.push(catxClean(card, o ? o.text.trim() : '', th));
+            return step(i + 1);
+          });
         });
         });
       };
