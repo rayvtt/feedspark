@@ -483,6 +483,15 @@ window.addEventListener('load',restore);
   .at-bar.dep-tgt,.at-nm.dep-mg[data-deptip]{cursor:pointer}
   .at-nm.dep-mg[data-deptip]:hover,.at-nm.dep-mg[aria-expanded=true]{color:var(--orange-deep)}
   .at-bar.dep-tgt:hover,.at-bar.dep-tgt:focus-visible,.at-bar.dep-tgt[aria-expanded=true]{outline:2px solid var(--orange);outline-offset:2px}
+  /* the ⬇ HTML lock dialog (8 Oct 2026) */
+  .lock-scrim{position:fixed;inset:0;z-index:300;background:rgba(15,18,24,.42);display:grid;place-items:center;padding:16px}
+  .lock-box{width:min(460px,100%);background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,.25);padding:20px 22px}
+  .lock-box h3{margin:0 0 6px;font-size:16px;font-weight:900}
+  .lock-sub{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .lock-l{display:block;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .lock-in{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .lock-src{margin:7px 0 0;font-size:12px;color:var(--muted);line-height:1.45;min-height:17px}.lock-src b{color:var(--ink)}
+  .lock-act{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
   .dptip{position:fixed;z-index:90;background:#171A21;color:#E8EAEF;border:1px solid #2C3039;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:10px 12px;font-size:11.5px;font-weight:700;pointer-events:none;min-width:260px;max-width:min(360px,calc(100vw - 16px));display:none}
   .dptip.pin{pointer-events:auto}
   body.pdf .dptip{display:none!important}
@@ -4563,11 +4572,147 @@ window.addEventListener('load',restore);
   }
   function buildHtml(k, cx) {
     var r = exportDoc(k, cx, false); if (!r) return;
-    var blob = new Blob([r.html], { type: 'text/html' });
+    // the harnesses read the plain document; a person always gets the locked file
+    if (window.__grPlainExport) return saveHtml(r.html, pdfFilename(r.p, r.s, 'html'));
+    lockDialog(r);
+  }
+  function saveHtml(html, name) {
+    var blob = new Blob([html], { type: 'text/html' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = pdfFilename(r.p, r.s, 'html');
+    a.download = name;
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  /* ---------------- ⬇ HTML, LOCKED TO THE CLIENT (Ray, 8 Oct 2026: "Shall we make the HTML download a bit more secure, so it
+     will need the client email address to open the HTML to view it"; chosen: the WHOLE client domain, encrypted, plus any
+     @feedspark.com). The report inside the file is encrypted with AES-GCM under a random key; that key is wrapped once per
+     allowed domain under a key PBKDF2 derives from the domain, so the file holds ciphertext and wrapped keys — no address,
+     no domain. Typing an email at an allowed domain decrypts it in the browser; nothing is sent anywhere. Honest limit:
+     the lock is the DOMAIN, so anyone who types an address at the client's domain opens it — it stops a forwarded file
+     being read at another company, not a determined guess. The domains come from /api/golden/readers (the dossier and the
+     senders on the client's own tickets) and the AM confirms them here; an edit is remembered per brand on this device. */
+  var LOCK_ITER = 200000;
+  function lockB64(buf) { var s = '', b = new Uint8Array(buf); for (var i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+  function lockKey(dom, salt, iter) {
+    return crypto.subtle.importKey('raw', new TextEncoder().encode('fs-golden-lock:' + dom), 'PBKDF2', false, ['deriveKey']).then(function (base) {
+      return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    });
+  }
+  function lockDoms(list) {
+    var out = [];
+    String(list || '').split(/[\s,;]+/).forEach(function (x) {
+      var d = x.trim().toLowerCase().replace(/^.*@/, '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[\/?#].*$/, '').replace(/\.$/, '');
+      if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) && out.indexOf(d) < 0) out.push(d);
+    });
+    return out;
+  }
+  function lockFile(html, doms, title) {
+    var ck, raw, iv = crypto.getRandomValues(new Uint8Array(12));
+    return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']).then(function (key) {
+      ck = key; return crypto.subtle.exportKey('raw', key);
+    }).then(function (r) {
+      raw = r; return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, ck, new TextEncoder().encode(html));
+    }).then(function (ct) {
+      return Promise.all(doms.map(function (d) {
+        var salt = crypto.getRandomValues(new Uint8Array(16)), wiv = crypto.getRandomValues(new Uint8Array(12));
+        return lockKey(d, salt, LOCK_ITER).then(function (kek) { return crypto.subtle.encrypt({ name: 'AES-GCM', iv: wiv }, kek, raw); })
+          .then(function (w) { return { s: lockB64(salt), v: lockB64(wiv), w: lockB64(w) }; });
+      })).then(function (slots) {
+        slots.sort(function () { return Math.random() - 0.5; });   // the order says nothing about which slot is whose
+        return lockShell({ i: LOCK_ITER, iv: lockB64(iv), ct: lockB64(ct), k: slots }, title);
+      });
+    });
+  }
+  // the opener, run INSIDE the downloaded file: no fetch, no address sent anywhere
+  function lockOpen() {
+    var L = window.__FS_LOCK, f = document.getElementById('lk-f'), msg = document.getElementById('lk-m'), btn = document.getElementById('lk-b');
+    function un(b64) { var s = atob(b64), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+    function cands(email) {
+      var d = String(email || '').trim().toLowerCase().replace(/^.*@/, '').replace(/\.$/, ''), p = d.split('.'), out = [];
+      for (var i = 0; i <= p.length - 2; i++) out.push(p.slice(i).join('.'));
+      return /@/.test(String(email)) && p.length >= 2 ? out : [];
+    }
+    function tryOne(dom, slot) {
+      return crypto.subtle.importKey('raw', new TextEncoder().encode('fs-golden-lock:' + dom), 'PBKDF2', false, ['deriveKey']).then(function (base) {
+        return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: un(slot.s), iterations: L.i, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      }).then(function (kek) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: un(slot.v) }, kek, un(slot.w)); });
+    }
+    if (!(window.crypto && crypto.subtle)) { msg.textContent = 'This browser cannot open locked reports — try Chrome, Edge, Safari or Firefox.'; btn.disabled = true; return; }
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var cs = cands(document.getElementById('lk-e').value);
+      if (!cs.length) { msg.textContent = 'Enter your full work email address.'; return; }
+      btn.disabled = true; msg.textContent = 'Opening…';
+      var tries = []; cs.forEach(function (d) { L.k.forEach(function (sl) { tries.push([d, sl]); }); });
+      (function next(i) {
+        if (i >= tries.length) { btn.disabled = false; msg.textContent = 'This report is only available to its client team and FeedSpark. Check the address and try again.'; return; }
+        tryOne(tries[i][0], tries[i][1]).then(function (raw) {
+          return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']).then(function (ck) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: un(L.iv) }, ck, un(L.ct)); });
+        }).then(function (pt) {
+          var html = new TextDecoder().decode(pt);
+          document.open(); document.write(html); document.close();
+        }, function () { next(i + 1); });
+      })(0);
+    });
+  }
+  function lockShell(data, title) {
+    var esc2 = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc2(title) + '<\/title>' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">' +
+      '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F7F7F5;color:#333;font-family:Lato,system-ui,-apple-system,Segoe UI,sans-serif}' +
+      '.lk{box-sizing:border-box;width:min(420px,calc(100vw - 32px));background:#fff;border:1px solid #E6E6E6;border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);padding:26px 26px 22px}' +
+      '.wm{font-size:20px;font-weight:900;letter-spacing:-.01em}.wm b{color:#F5A623}h1{font-size:16px;font-weight:900;margin:14px 0 4px}p{font-size:13px;line-height:1.5;color:#6b7280;margin:0 0 14px}' +
+      'label{display:block;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#8a94a0;margin-bottom:6px}' +
+      'input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #D7DBE0;border-radius:9px}input:focus{outline:2px solid #F5A623;outline-offset:1px}' +
+      'button{margin-top:12px;width:100%;font:inherit;font-size:14px;font-weight:900;color:#fff;background:#ED6F0B;border:0;border-radius:9px;padding:11px;cursor:pointer}button:disabled{opacity:.6;cursor:default}' +
+      '#lk-m{min-height:18px;margin:10px 0 0;font-size:12.5px;color:#C0392B}.ft{margin-top:16px;font-size:11px;color:#8a94a0}<\/style><\/head>' +
+      '<body><form class="lk" id="lk-f" autocomplete="on"><div class="wm">Feed<b>Spark</b></div><h1>' + esc2(title) + '<\/h1>' +
+      '<p>This report is locked to its client team. Enter your work email address to open it — nothing is sent anywhere, it opens on this device.<\/p>' +
+      '<label for="lk-e">Work email<\/label><input id="lk-e" type="email" name="email" autocomplete="email" required placeholder="name@company.com">' +
+      '<button id="lk-b" type="submit">Open the report<\/button><p id="lk-m" role="status"><\/p><div class="ft">FeedSpark · Private &amp; Confidential<\/div><\/form>' +
+      '<scr' + 'ipt>window.__FS_LOCK=' + JSON.stringify(data) + ';(' + lockOpen.toString() + ')();<\/scr' + 'ipt><\/body><\/html>';
+  }
+  function lockGet(client) { try { return (JSON.parse(localStorage.getItem('gr-lock') || '{}') || {})[client] || null; } catch (e) { return null; } }
+  function lockPut(client, v) { try { var m = JSON.parse(localStorage.getItem('gr-lock') || '{}') || {}; m[client] = v; localStorage.setItem('gr-lock', JSON.stringify(m)); } catch (e) {} }
+  function lockDialog(r) {
+    var client = r.p.client, title = 'Golden Record — ' + dispClient(client) + ' ' + r.p.mkt.toUpperCase();
+    var old = document.getElementById('lock-dlg'); if (old) old.parentNode.removeChild(old);
+    var dlg = document.createElement('div'); dlg.id = 'lock-dlg'; dlg.className = 'lock-scrim';
+    dlg.innerHTML = '<div class="lock-box" role="dialog" aria-modal="true" aria-labelledby="lock-h"><h3 id="lock-h">🔒 Lock this report to the client</h3>' +
+      '<p class="lock-sub">The file opens only for an email address at these domains — and any @feedspark.com. It is encrypted; no address is stored in it.</p>' +
+      '<label class="lock-l" for="lock-in">Client domains</label><input id="lock-in" class="lock-in" placeholder="client.co.uk" autocomplete="off">' +
+      '<div class="lock-src" id="lock-src">Reading the client’s domain…</div>' +
+      '<div class="lock-act"><button class="btn" type="button" id="lock-no">Cancel</button><button class="btn pri" type="button" id="lock-go">⬇ Download locked HTML</button></div></div>';
+    document.body.appendChild(dlg);
+    var inp = dlg.querySelector('#lock-in'), src = dlg.querySelector('#lock-src'), go = dlg.querySelector('#lock-go');
+    var close = function () { if (dlg.parentNode) dlg.parentNode.removeChild(dlg); document.removeEventListener('keydown', onKey); };
+    var onKey = function (e) { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    dlg.querySelector('#lock-no').onclick = close;
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) close(); });
+    var saved = lockGet(client);
+    fetch('/api/golden/readers?client=' + encodeURIComponent(client)).then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) {
+      var doms = (j && j.domains) || [];
+      var guess = doms.some(function (d) { return d.src === 'guess'; });
+      if (!inp.value) inp.value = saved ? saved.join(', ') : doms.map(function (d) { return d.d; }).join(', ');
+      src.innerHTML = saved ? 'As you set it last time on this device.' + (doms.length ? ' Found: ' + doms.map(function (d) { return esc(d.d); }).join(', ') + '.' : '')
+        : !doms.length ? '<b>No client domain found</b> — type it (e.g. the domain the client emails from).'
+        : guess ? '<b>A guess — check it:</b> the busiest outside sender on the client’s tickets.' :
+        'From ' + doms.map(function (d) { return d.src === 'dossier' ? 'the brand dossier' : fmt(d.n) + ' ticket message' + (d.n === 1 ? '' : 's'); }).join(' and ') + '.';
+      inp.focus();
+    });
+    go.onclick = function () {
+      var doms = lockDoms(inp.value).filter(function (d) { return d !== 'feedspark.com'; });
+      if (!doms.length) { src.innerHTML = '<b>Add the client’s domain</b> — without one only FeedSpark could open the file.'; inp.focus(); return; }
+      if (!(window.crypto && crypto.subtle)) { src.textContent = 'This browser cannot encrypt the file.'; return; }
+      go.disabled = true; go.textContent = 'Encrypting…';
+      lockPut(client, doms);
+      lockFile(r.html, doms.concat(['feedspark.com']), title).then(function (shell) {
+        saveHtml(shell, pdfFilename(r.p, r.s, 'html'));
+        close();
+      }, function () { go.disabled = false; go.textContent = '⬇ Download locked HTML'; src.textContent = 'The file could not be encrypted — try again.'; });
+    };
   }
   // THE ONE CLIENT DOCUMENT both downloads are made of: ⬇ HTML saves it as a file, ⬇ PDF renders it onto paper (paper=true
   // opens every fold and lets the Catalogue cards grow, since paper cannot scroll or click)

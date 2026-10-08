@@ -193,6 +193,7 @@ const READ = () => {
   });
   ok('in the print layout every folded section paints its body', pr.open, pr.shut);
   ok('…and no fold control is on the page', !pr.chev && !pr.all, pr);
+  await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
   const [download] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), page.click('#det-html')]);
   const tmp = path.join(os.tmpdir(), 'grfold-' + Date.now() + '.html');
   await download.saveAs(tmp);

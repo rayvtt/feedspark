@@ -1372,6 +1372,37 @@ what html2canvas is handed (the export document, not the live page; folds; no po
 frame cleared), and with `GRPDF_LIBS=<dir>` runs the REAL html2canvas + jsPDF (`GRPDF_SHOT` keeps the page image);
 `tools/check_grcatx.js` with `GRPDF_LIBS` proves the picked cards are drawn into the PDF.
 
+### 9.12f ⬇ HTML locked to the client (8 Oct 2026)
+
+Ray: *"Shall we make the HTML download a bit more secure, so it will need the client email address to open the
+HTML to view it - the email addresses associated with alias hobbycraft@feedspark.com (Same for other clients)"*;
+chosen in session: the WHOLE client domain, encrypted, and any @feedspark.com so the AM can check it.
+
+- **Where the domain comes from.** The Task Manager's client master holds only the team alias
+  (`client_email: hobbycraft@feedspark.com`); the client's real addresses are the senders on the tickets that alias
+  receives, which the worker already keeps (`tmtick:<client>`, the sender on each row). `src/htmllock.js` ›
+  `lockDomains` reads, strongest first: the brand dossier's own `dom`; a sender domain named after the brand
+  (jane@hobbycraft.co.uk → hobbycraft); failing both, the busiest outside sender, marked a GUESS. FeedSpark's own
+  domains, free mail and agencies' domains are never proposed. `GET /api/golden/readers?client=` serves it,
+  scoped per signin; nothing is stored or committed.
+- **The dialog.** ⬇ HTML opens "Lock this report to the client": the proposed domains (editable, several allowed),
+  where they came from (dossier · N ticket messages · a guess — check it · none found — type it), and the reminder
+  that any @feedspark.com opens it too. An empty list is refused; an edit is remembered per brand on this device
+  (`gr-lock`); Esc cancels.
+- **The file.** The report is encrypted with AES-GCM under a random key; that key is wrapped once per allowed
+  domain under a key PBKDF2-SHA-256 (200,000 rounds) derives from the domain, the slots shuffled. The file carries
+  the ciphertext, the wrapped keys and a small opener — no address, no domain, none of the report's text. Typing an
+  email tries its domain and each parent (jane@uk.reiss.com → uk.reiss.com, reiss.com); the right one decrypts in
+  the browser and replaces the page with the report. Nothing is sent anywhere.
+- **The honest limit.** The lock is the domain, and the domain is on the report's own name: anyone who types an
+  address at the client's domain opens it. It stops a forwarded file being read at another company; it is not
+  protection against a determined guess. The PDF is not locked.
+- **The harnesses** read the plain document through `window.__grPlainExport` (setting it only changes your own
+  download). `tools/check_grlock.js` drives the real dialog, downloads, then opens the file and types addresses —
+  the client domain, a subdomain, a second listed domain and FeedSpark open it; another domain and a look-alike do
+  not; the file holds no domain or report text. `tools/test_htmllock.mjs` pins the domain reading on sender shapes
+  from the real queues, the route and the page wiring.
+
 ### 9.12d Every scorecard section folds (7 Oct 2026)
 
 Ray, over a screenshot of the "Two scores, two questions" card: *"make these boxes collapsible as

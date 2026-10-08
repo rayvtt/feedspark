@@ -353,6 +353,7 @@ const QUALITY = {
     }));
     ok('the served page carries the Tachyon copilot, the Feed Chat bubble, the heatmap and the reconciliation band (so their absence below is a removal, not a no-op)',
       seen.tky && seen.chat && seen.heat && seen.rec, seen);
+    await pageW.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
     const [download] = await Promise.all([
       pageW.waitForEvent('download'),
       pageW.click('#det-html'),

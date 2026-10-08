@@ -139,6 +139,7 @@ const QUALITY = {
 
   // the client HTML: the decision is in the file, the button is not
   {
+    await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
     const [download] = await Promise.all([page.waitForEvent('download'), page.click('#det-html')]);
     const tmp = path.join(os.tmpdir(), 'grwaive-' + Date.now() + '.html');
     await download.saveAs(tmp);

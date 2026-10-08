@@ -63,6 +63,7 @@ import * as BSG from "./buildsuggest.js";
 // module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
 // and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
 import * as TB from "./taskbook.js";
+import { lockDomains } from "./htmllock.js";
 import * as OUT from "./outcomes.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
@@ -6043,6 +6044,22 @@ async function goldenRoutes(env, request, url) {
 
   // the feed's score history (Ray, 24 Sep 2026) — readings, scan days, analyses; the page
   // re-scores every reading against the brand's current profile
+  // WHO CAN OPEN THE ⬇ HTML (8 Oct 2026): the client's domain, read off the dossier and the senders on the client's own
+  // tickets (src/htmllock.js) — the page encrypts the file to it and to @feedspark.com. Scoped like every client read.
+  if (path === '/api/golden/readers' && request.method === 'GET') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (!clientMatch(acc.clients, client)) return json({ error: 'not in your scope' }, 403);
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data || {};
+    const fk = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const dk = Object.keys(dossier).filter((n) => n === client || fk(n) === fk(client))[0];
+    const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {} };
+    const tn = Object.keys(idx.clients || {}).filter((n) => n === client || fk(n) === fk(client))[0];
+    const q = tn ? await env.EDITS.get('tmtick:' + tn, 'json') : null;
+    const senders = ((q && q.rows) || []).map((r) => r && r[7]).filter(Boolean);
+    return json(Object.assign({ client: client }, lockDomains(client, dk && dossier[dk] ? dossier[dk].dom : '', senders)));
+  }
+
   if (path === '/api/golden/history' && request.method === 'GET') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     const hist = await env.EDITS.get('goldenhist:' + client + ':' + mkt, 'json');
