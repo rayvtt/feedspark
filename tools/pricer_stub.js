@@ -104,6 +104,8 @@ function stores(opts) {
       othorn00002: opt('SVC200001-2', 'Thornfield', 2, 'Tier 2 · AI-ready', 'go+ar', 4120, 260, true, { sentAt: { t: NOW - 2 * DAY, by: 'Ray', via: 'manual' } }),
     },
     rollout: { Thornfield: { debriefAt: { t: NOW - 6 * DAY, by: 'Ray' }, next: 'Confirm Tier 1 start date', nextDue: '2026-10-01', am: 'Ray' } },
+    // the optimisation bank when a run asks for one (else the engine's seeds: stock range completion + restock alerts in Tier 2)
+    bank: opts.bank || {},
   };
 }
 function build(opts) {

@@ -120,7 +120,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       const q = o === 'now' ? null : window.__PZX.PQ[o];
       return { full: rows.filter((r) => r.querySelector('.pv-v').textContent === '100%').length, pop: rows.filter((r) => r.classList.contains('pop')).length,
         score: document.querySelector('#svc-prev .pv-s').textContent, want: q ? q.perMarket[0].projected.after : window.__PZX.SV.audits[0].audit.golden.score,
-        fixed: q ? q.perMarket[0].projected.fixed.length : 0, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), on: document.querySelectorAll('#svc-prev .pv-fr.on').length, invented: Array.from(document.querySelectorAll('#svc-prev .pv-fr.on .fs')).every((x) => /^(✦ T[12]( · £ tbc)?|✓ contracted)$/.test(x.textContent) && /^(filled|optimised|completed in the Tier 2 delivery) /.test(x.title)), ex: Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }])), h: document.querySelector('#svc-prev .pv-body').getBoundingClientRect().height, calls: (window.__pzClaude || []).length, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv'), dial: (() => { const d = document.querySelector('#svc-prev .pv-k .pv-dial'), fg = d && d.querySelector('.dial-fg'); if (!fg) return null; const r = d.getBoundingClientRect(); return { arc: parseFloat(fg.style.strokeDasharray) / 326.7 * 100, cls: fg.getAttribute('class'), stroke: getComputedStyle(fg).stroke, w: r.width, num: d.contains(document.querySelector('#svc-prev .pv-s')), label: d.getAttribute('aria-label') }; })() }; }, opt); };
+        fixed: q ? q.perMarket[0].projected.fixed.length : 0, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), on: document.querySelectorAll('#svc-prev .pv-fr.on:not(.pv-sv)').length, invented: Array.from(document.querySelectorAll('#svc-prev .pv-fr.on:not(.pv-sv) .fs')).every((x) => /^(✦ T[12]( · £ tbc)?|✓ contracted)$/.test(x.textContent) && /^(filled|optimised|completed in the Tier 2 delivery) /.test(x.title)), ex: Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on:not(.pv-sv)')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }])), h: document.querySelector('#svc-prev .pv-body').getBoundingClientRect().height, calls: (window.__pzClaude || []).length, img: !!document.querySelector('#svc-prev .pv-img img[src^="http"]'), pressed: document.querySelector('#svc-prev [aria-pressed="true"]').getAttribute('data-pv'), dial: (() => { const d = document.querySelector('#svc-prev .pv-k .pv-dial'), fg = d && d.querySelector('.dial-fg'); if (!fg) return null; const r = d.getBoundingClientRect(); return { arc: parseFloat(fg.style.strokeDasharray) / 326.7 * 100, cls: fg.getAttribute('class'), stroke: getComputedStyle(fg).stroke, w: r.width, num: d.contains(document.querySelector('#svc-prev .pv-s')), label: d.getAttribute('aria-label') }; })() }; }, opt); };
     const v0 = await pv('now'), v1 = await pv('go'), v2 = await pv('go+ar');
     // the Golden Score is /golden's ring, not a bare number (Ray, 8 Oct 2026: "if it's score, mirror the circle score from golden score module")
     const bandOf = (v) => v >= 95 ? 'b-g' : v >= 85 ? 'b-y' : v >= 70 ? 'b-o' : 'b-r';
@@ -134,7 +134,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('fields built in FeedHero show HOW, never a generated value; no size is ever generated', (!v2.ex.popularity_rank || /how/.test(v2.ex.popularity_rank.c)) && (!v2.ex.size || !/ex/.test(v2.ex.size.c)), [v2.ex.popularity_rank, v2.ex.size]);
     // without the Claude connection every brand still sees real values, built from its own product row
     const off = await p.evaluate(() => { const X = window.__PZX, P = [].concat(X.LIVE['Northwind|gb'].ps)[0]; X.pv().ex[P.id] = { st: 'off' }; X.preview();
-      const rows = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }]));
+      const rows = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on:not(.pv-sv)')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }]));
       const d = X.derive({ id: 'x', title: 'Northwind Wide Leg Trousers', brand: 'Northwind', description: 'Wide leg trousers in a soft crepe. 95% Polyester, 5% Elastane. Machine wash.', product_type: 'Women > Clothing > Trousers', product_detail: '<g:section_name>Care</g:section_name><g:attribute_name>Washing</g:attribute_name><g:attribute_value>Machine wash</g:attribute_value>' }, 'gb');
       const img = document.querySelector('#svc-prev .pv-img img'), ib = img.getBoundingClientRect();
       return { rows, d, line: document.querySelector('#svc-prev .pv-ex').getAttribute('data-note'), imgW: ib.width, fit: getComputedStyle(img).objectFit, nat: img.naturalWidth && Math.abs(ib.width / ib.height - img.naturalWidth / img.naturalHeight) < 0.02 }; });
@@ -250,6 +250,8 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     }));
     const s0 = await st();
     ok('every section heading carries a ▸ Show / ▾ Hide toggle', s0.length >= 10 && s0.every((x) => x.tog), s0.filter((x) => !x.tog).map((x) => x.id));
+    const tiles = await p.evaluate(() => [...document.querySelectorAll('h2.sec-h')].map((h) => ({ desc: !!h.querySelector('.sec-desc'), tt: !!h.querySelector('.sec-tt'), floating: [...h.parentNode.querySelectorAll(':scope > .sec-body > p.sub')].filter((x) => getComputedStyle(x).display !== 'none' && x === x.parentNode.firstElementChild).length })));
+    ok('every section head is a tile — a title and one line of what is inside, no explainer floating under it', tiles.length >= 10 && tiles.every((t) => t.tt && t.desc && !t.floating), tiles);
     ok('a fresh device opens Audit and Proposal, every other section folded (Debrief kit included)',
       s0.filter((x) => x.open).map((x) => x.id).join() === 'svc-audit,svc-prop' && s0.every((x) => (x.aria === 'true') === x.open), s0.map((x) => x.id + ':' + x.open));
     await p.click('#svc-debrief .sec-tog'); await p.waitForTimeout(200);
@@ -271,6 +273,27 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     fs.unlinkSync(tmp);
   }
 
+  console.log('\nThe bank in the audit — every optimisation the bank places in a tier has its own row');
+  {
+    const bank = { x_img_type: { label: 'Image type', kind: 'service', pkg: 'rf', gives: 'Spark AI detects image type for email + social DPAs', by: 'Ray', at: Date.now() },
+      x_aivis: { label: 'AI visibility report', kind: 'service', pkg: 'rf', gives: 'intent data refreshed from the Spark AI visibility report', by: 'Ray', at: Date.now() } };
+    const { p, ctx, errs, tmp } = await open(b, HTML, 1440, { delay: 50, me: OWNER, bank, query: '?client=Northwind&market=gb' });
+    await p.waitForSelector('#svc-prev .pv-r', { timeout: 15000 }); await p.waitForTimeout(900);
+    const read = async (opt) => { await p.click('#svc-prev [data-pv="' + opt + '"]'); await p.waitForTimeout(600); return p.evaluate(() => {
+      const card = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-sv')).map((r) => [r.getAttribute('data-b'), { on: r.classList.contains('on'), fs: r.querySelector('.fs').textContent, fv: r.querySelector('.fv').textContent }]));
+      const cov = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-svr')).map((r) => [r.getAttribute('data-b'), { v: r.querySelector('.pv-v').textContent, c: r.querySelector('.pv-c').textContent, lb: r.querySelector('.lb').textContent }]));
+      return { card, cov }; }); };
+    const now = await read('now'), t2 = await read('go+ar'), t3 = await read('go+ar+rf');
+    const keys = ['x_stock_rc', 'x_restock', 'x_img_type', 'x_aivis'];
+    ok('the two Tier 2 services and both Tier 3 items each have a row on the product card and in the coverage column', keys.every((k) => t3.card[k] && t3.cov[k]), { card: Object.keys(t3.card), cov: Object.keys(t3.cov) });
+    ok('the coverage rows read the bank\'s own names', t3.cov.x_img_type && t3.cov.x_img_type.lb === 'Image type' && t3.cov.x_aivis.lb === 'AI visibility report' && /Stock range completion/.test(t3.cov.x_stock_rc.lb), t3.cov);
+    ok('today nothing runs: every row off, the coverage says not running today', keys.every((k) => !now.card[k].on && now.cov[k].v === '—' && /not running today/.test(now.cov[k].c)), now);
+    ok('Tier 2 runs its two services and says Tier 3 adds the other two', t2.card.x_stock_rc.on && t2.card.x_restock.on && t2.card.x_stock_rc.fs === '✦ T2' && !t2.card.x_img_type.on && /Tier 3 adds it/.test(t2.cov.x_aivis.c), t2);
+    ok('Tier 3 carries all four — Tier 2\'s services marked T2, its own marked T3', keys.every((k) => t3.card[k].on && t3.cov[k].v === '✓') && t3.card.x_img_type.fs === '✦ T3' && t3.card.x_restock.fs === '✦ T2' && /run by Tier 3/.test(t3.cov.x_aivis.c), t3);
+    ok('a bank row shows what the bank says it gives', /email \+ social DPAs/.test(t3.card.x_img_type.fv), t3.card.x_img_type);
+    ok('no console error with a bank on the audit', !errs.length, errs.slice(0, 3));
+    await ctx.close(); try { fs.unlinkSync(tmp); } catch (e) {}
+  }
   console.log('\nA signin without the pricer-cost grant');
   {
     const { p, ctx, errs, tmp } = await open(b, HTML, 1440, { delay: 50, me: AM, costDenied: true });

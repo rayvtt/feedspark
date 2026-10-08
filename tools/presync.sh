@@ -391,6 +391,10 @@ echo "── validating: the Design studio paints, exports and refuses honestly"
 node tools/check_ovstudio.js >/dev/null
 echo "   ✓ real script tags, same-origin canvas, no overlay text off the picture"
 
+echo "── validating: /overlays — the estate folds, above the live panel and not beside it"
+node tools/check_ovfold.js >/dev/null
+echo "   ✓ stacked, folded on a fresh device, every folded card keeps its line"
+
 echo "── validating: text modules (every served engine bundles as a string)"
 node tools/check_textmodules.js >/dev/null
 echo "   ✓ no served engine can bundle as code and serve an empty body"

@@ -11719,6 +11719,13 @@
     {"name": "Overlay studio: the PNG filename keeps the market's channel (gb and gb-fb must not collide)", "file": "docs/FeedSpark_Overlays.html", "pattern": "the RAW market, not mktLbl", "pr": 0},
     {"name": "Overlay studio: the Google Ads window is a 7/30-day control, allowlisted, 7 by default", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const CAT_ADS_PERIODS", "pr": 0},
     {"name": "Overlay studio: changing the Ads window drops the figures rather than relabelling them", "file": "docs/FeedSpark_Overlays.html", "pattern": "press Add Google Ads to read it", "pr": 0},
+    {"name": "Overlays: the Overlay estate is stacked ABOVE the live panel — the side-by-side pair is gone", "file": "docs/FeedSpark_Overlays.html", "pattern": "no need side by side", "pr": 0},
+    {"name": "Overlays: every section folds (the standing rule) — one fold rule, one head class", "file": "docs/FeedSpark_Overlays.html", "pattern": ".card.folded>:not(.fhd)", "pr": 0},
+    {"name": "Overlays: the estate is FOLDED on a fresh device, the rest open", "file": "docs/FeedSpark_Overlays.html", "pattern": "FOLD_OPEN={estate:0", "pr": 0},
+    {"name": "Overlays: the folded estate keeps the feeds never scanned — a fold can never hide the finding", "file": "docs/FeedSpark_Overlays.html", "pattern": "never scanned':'')", "pr": 0},
+    {"name": "Overlays: the fold is this device's preference, never shared state", "file": "docs/FeedSpark_Overlays.html", "pattern": "fcc-ovl-fold", "pr": 0},
+    {"name": "Overlays: the fold tripwire runs in presync", "file": "tools/presync.sh", "pattern": "node tools/check_ovfold.js", "pr": 0},
+    {"name": "Overlays: the fold tripwire carries a negative control", "file": "tools/check_ovfold.js", "pattern": "negative control", "pr": 0},
     {
       "name": "Golden score history: the three scores share one calendar",
       "file": "docs/FeedSpark_GoldenRecord.html",
@@ -12638,6 +12645,27 @@
       "name": "Golden PDF check: the AI-readiness ring is an SVG arc, never a conic-gradient",
       "file": "tools/check_grpdf.js",
       "pattern": "the AI-readiness ring is an SVG arc with a literal colour",
+      "name": "Services & Pricer: every section head is a tile — title, one line of what is inside, round chevron (no floating sentence)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "h2.sec-h{display:flex;align-items:center",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the section's floating explainer becomes the tile line's tooltip",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "sub.classList.add('sec-sub-x')",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: every bank item placed in a tier is a row in the What-changes audit (card + coverage), marked with its tier",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvBank(){return E.bankOf(BANK.data).filter(function(b){return b.custom&&b.pkg!=='off'})}",
+      "pr": 0
+    },
+    {
+      "name": "Pricer check: the bank in the audit — Tier 2 services + Tier 3 items each have a row, on in the right tiers",
+      "file": "tools/check_pricer.js",
+      "pattern": "the two Tier 2 services and both Tier 3 items each have a row on the product card and in the coverage column",
       "pr": 0
     }
   ]
