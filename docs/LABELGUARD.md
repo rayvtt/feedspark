@@ -1444,6 +1444,47 @@ locked one opened with a client address, inspects what the PDF is drawn from, re
 `GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
 (invisible characters in the file).
 
+### 9.12j Custom labels, customised by the AM for each brand (8 Oct 2026)
+
+Ray asked for this, looking at Superdry GB's card: *"the data could be sitting somewhere else that is
+not technically in a custom label … make this custom-labels section customizable for the account
+manager to flag what makes sense for this client specifically. Especially with descriptive custom
+labels, which will be saved going forward. For example, with Superdry GB, the missing custom labels
+would be bestsellers, margin, lifecycle, and seasons."*
+
+**✎ Customise for <Brand>** on the card opens two kinds of choice. The automated reading stays the
+default until an AM changes it.
+
+- **What a slot is for.** Each slot is either read from its own values (Auto · the reading) or set to
+  one of the six strategies, descriptive, or no strategy. Setting a slot overrides the reading only
+  on a slot the feed actually carries. The reading stays visible inside the select.
+- **How each strategy stands for this client:**
+  - **Expected:** the default.
+  - **Priority:** a red badge on the card, and a high-priority card in Next on the action plan.
+  - **Carried in another field:** counts as carried, with no label behind it. It never adds to reach
+    or dynamism, which are measured on labels.
+  - **Not relevant:** leaves the denominator. The score is (carried weight ÷ (100 − ruled-out weight))
+    × 60, and diversity counts against the strategies still expected. It is never listed as a gap.
+
+**Where it is stored.** Choices save for the whole team as they are made. They go in shared state
+namespace `clstrat`, keyed by the brand (`'self'`), and are scoped per sign-in like every other
+namespace. Anyone opening the brand next reads the same choices, and the card says
+"Set for <Brand> by the team · when". `labelguard.js cleanClCfg` checks every stored value: known
+slots 0–4, known kinds, and the three states only.
+
+**What else changed:**
+- **A KPI signal inside a descriptive label is named.** Superdry's CL1 carries jackets *and* "Zombie",
+  so that row shows "also performance · Zombie" (`clLabelKind` `also`, at 5% of the label's products
+  or more). The AM can then set the slot. It is never counted on its own.
+- **FULL / SALE reads as a promotion label.**
+- **↺ Back to the automated reading** drops every choice for the brand.
+
+**Where the controls appear.** The controls (`.cl-am`) are hidden in demo mode and removed from both
+downloads. The client document shows the result, not the editor. **Harness:**
+
+- `tools/test_clstrategy.mjs` (74) covers the rules on a Superdry-shaped fixture with invented counts.
+- `tools/check_grcl.js` covers the editor, the save, the plan, the download, a reopen and demo mode.
+
 ### 9.12h The action plan at the foot of both downloads, and one client per file (8 Oct 2026)
 
 Ray: *"since it is an audit, so an action plan must be created and recommended to client after the

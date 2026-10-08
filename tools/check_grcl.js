@@ -62,13 +62,14 @@ const LABELS = {
   custom_label_4: { present: false } };
 const REFL = JSON.parse(JSON.stringify(LABELS)); REFL.custom_label_0.values = [['Best Sellers', 400], ['Zombies', 300]];
 
-async function open(browser, withLabels) {
+async function open(browser, withLabels, clMap) {
   const errs = [];
   const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
   page.on('pageerror', (e) => errs.push(e.message));
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
-  await page.addInitScript(({ ATTRS, QUALITY, COV, LABELS, REFL, withLabels }) => {
+  await page.addInitScript(({ ATTRS, QUALITY, COV, LABELS, REFL, withLabels, clMap }) => {
+    window.__clstate = clMap || {}; window.__clputs = [];
     try { localStorage.removeItem('gr-tfold'); } catch (e) {}
     const NOW = Date.now(), cov = {}, attrs = {};
     ATTRS.forEach((k) => { const c = k in COV ? COV[k] : 100; cov[k] = c; attrs[k] = c == null ? { present: false } : { present: true, filled: c * 10, cov: c }; });
@@ -84,9 +85,11 @@ async function open(browser, withLabels) {
         ? { snapshot: { v: 1, t: NOW, client: 'Reiss', market: 'gb', rows: 1000, labels: LABELS }, baseline: { t: NOW - 7 * 864e5, rows: 1000, labels: REFL }, daily: null }
         : { snapshot: null, baseline: null, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
+      if (u.includes('/api/state') && (!opts || !opts.method || opts.method === 'GET')) return j({ clstrat: window.__clstate });
+      if (u.includes('/api/state') && opts && opts.method === 'PUT') { const b = JSON.parse(opts.body); window.__clputs.push(b); window.__clstate = b.clstrat; return j({ clstrat: window.__clstate }); }
       return j({});
     };
-  }, { ATTRS, QUALITY, COV, LABELS, REFL, withLabels });
+  }, { ATTRS, QUALITY, COV, LABELS, REFL, withLabels, clMap });
   await page.goto(PAGE);
   await page.waitForSelector('#det-html', { timeout: 15000 });
   await page.waitForFunction(() => { const t = document.getElementById('cl-tier'); return t && !/Reading the custom labels/.test(t.textContent); }, null, { timeout: 15000 });
@@ -157,6 +160,67 @@ async function open(browser, withLabels) {
   await out.close(); fs.unlinkSync(tmp);
   ok('no page errors', errs.length === 0, errs);
   await page.close();
+
+  console.log('-- the AM customises it for the brand (Ray: "customizable for the account manager … saved going forward")');
+  {
+    const o = await open(browser, true);
+    const pg = o.page;
+    const before = await pg.evaluate(() => +document.querySelector('#cl-tier .cl-score').textContent);
+    ok('closed, the card shows no editing controls', await pg.evaluate(() => !document.querySelector('#cl-tier select')));
+    await pg.click('#cl-ed');
+    await pg.waitForSelector('[data-clstrat="margin"]');
+    ok('✎ Customise opens a choice per slot the feed carries and per strategy', await pg.evaluate(() =>
+      document.querySelectorAll('[data-clslot]').length === 4 && document.querySelectorAll('[data-clstrat]').length === 6));
+    await pg.selectOption('[data-clslot="3"]', 'life');
+    // the AM says CL2's High / Medium / Low is not margin here, and that margin lives in another field
+    await pg.selectOption('[data-clslot="2"]', 'merch');
+    await pg.selectOption('[data-clstrat="margin"]', 'elsewhere');
+    await pg.selectOption('[data-clstrat="price"]', 'na');
+    await pg.selectOption('[data-clstrat="promo"]', 'need');
+    await pg.waitForTimeout(300);
+    if (process.env.GRCL_SHOT2) await (await pg.$('#cl-tier')).screenshot({ path: process.env.GRCL_SHOT2 });
+    const put = await pg.evaluate(() => window.__clputs[window.__clputs.length - 1]);
+    const rec = put && put.clstrat && put.clstrat.Reiss;
+    ok('every choice is saved for the team, under the brand, in shared state', rec && rec.slots['3'] === 'life' && rec.slots['2'] === 'merch' && rec.strat.margin === 'elsewhere' && rec.strat.price === 'na' && rec.strat.promo === 'need', put);
+    const v = await pg.evaluate(() => {
+      const t = document.getElementById('cl-tier'), tile = (k) => t.querySelector('.cl-st[data-cl="' + k + '"]');
+      return { score: +t.querySelector('.cl-score').textContent, na: tile('price').className, el: tile('margin').className, pri: tile('promo').className,
+        priTxt: tile('promo').textContent, note: (t.querySelector('.cl-set-note') || {}).textContent || '' };
+    });
+    ok('the score re-reads the brand: lifecycle counted, margin carried elsewhere, price out of the denominator', v.score > before, { before, after: v.score });
+    ok('the tiles say so — not relevant, carried elsewhere, priority', /\bna\b/.test(v.na) && /\belse\b/.test(v.el) && /\bpri\b/.test(v.pri) && /Priority/.test(v.priTxt), v);
+    await pg.click('#cl-ed');
+    const shut = await pg.evaluate(() => ({ sel: !!document.querySelector('#cl-tier select'), chip: (document.querySelectorAll('#cl-tier .cl-slot')[3].querySelector('.cl-kind') || {}).textContent || '', note: (document.querySelector('#cl-tier .cl-set-note') || {}).textContent || '' }));
+    ok('✓ Done closes the editor; CL3 reads as set, with the brand named', !shut.sel && /Lifecycle/.test(shut.chip) && /Set for Reiss/.test(shut.note), shut);
+    // the action plan carries the priority, not the strategy ruled out
+    await pg.evaluate(() => {
+      window.__html = null; window.__grPlainExport = true;
+      const real = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = function (b) { b.text().then((t) => { window.__html = t; }); return real(b); };
+      HTMLAnchorElement.prototype.click = function () {};
+    });
+    await pg.click('#det-html');
+    await pg.waitForFunction(() => window.__html !== null, null, { timeout: 15000 });
+    const html = await pg.evaluate(() => window.__html);
+    ok('the download carries no editing control', !/<(button|select|p)[^>]*class="[^"]*cl-am|data-clstrat=|data-clslot=|Customise for/.test(html), (html.match(/.{60}(cl-am|data-clstrat=|Customise for).{60}/) || [])[0]);
+    const tmp = path.join(os.tmpdir(), 'grcl2_' + process.pid + '.html'); fs.writeFileSync(tmp, html);
+    const out = await browser.newPage(); await out.goto('file://' + tmp); await out.waitForTimeout(250);
+    const cards = await out.evaluate(() => Array.from(document.querySelectorAll('#print-plan .ap-tk')).filter((c) => /Custom labels/.test(c.querySelector('.ap-f').textContent))
+      .map((c) => ({ t: c.querySelector('.ap-t').textContent, hi: !!c.querySelector('.ap-pri.hi') })));
+    ok('the plan carries the priority the AM set (promotion), marked high', cards.some((c) => /promotion label/.test(c.t) && c.hi), cards);
+    ok('…and nothing for the strategy ruled out or carried elsewhere', !cards.some((c) => /margin|price band/i.test(c.t)), cards);
+    await out.close(); fs.unlinkSync(tmp);
+    // a colleague opening the brand reads the same call
+    const saved = await pg.evaluate(() => window.__clstate);
+    await pg.close();
+    const o2 = await open(browser, true, saved);
+    const v2 = await o2.page.evaluate(() => { const t = document.getElementById('cl-tier'); return { na: t.querySelector('.cl-st[data-cl="price"]').className, chip: t.querySelectorAll('.cl-slot')[3].querySelector('.cl-kind').textContent }; });
+    ok('opened again (another person, another device), the brand reads the same choices', /\bna\b/.test(v2.na) && /Lifecycle/.test(v2.chip), v2);
+    await o2.page.evaluate(() => { document.body.classList.add('demo'); });
+    ok('demo mode hides the customise control', await o2.page.evaluate(() => getComputedStyle(document.getElementById('cl-ed')).display === 'none'));
+    ok('no page errors', o.errs.length === 0 && o2.errs.length === 0, o.errs.concat(o2.errs));
+    await o2.page.close();
+  }
 
   console.log('-- a feed Label Guard has not read');
   const b = await open(browser, false);

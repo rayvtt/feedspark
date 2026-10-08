@@ -2802,7 +2802,7 @@ const CL_RX = [
   ['margin', /margin|profit|\bgp\b|\bgm\b|mark[\s_-]?up|\bcogs\b/i],
   ['perf', /best[\s_-]?sell|top[\s_-]?sell|\bbs\b|\bhero\b|\bstars?\b|winner|zombie|sleeper|low[\s_-]?perf|high[\s_-]?perf|under[\s_-]?perf|over[\s_-]?perf|poor[\s_-]?perf|\bperformer|\broas\b|\bpoas\b|\bcvr\b|\bctr\b|convert|conversion|no[\s_-]?sales|zero[\s_-]?sales|\bsales?[\s_-]?(velocity|rank|tier)|top[\s_-]?\d+|\bclicks?\b|impression|traffic|potential|\bwasted?\b|spend(er|ing)?\b|\bcpa\b|\bbudget[\s_-]?drain/i],
   ['price', /price[\s_-]?(band|point|range|tier|bracket)|[£$€]\s?\d|\d+\s?[£$€]|\b\d+\s?(-|–|to)\s?\d+\b(?!\s?%)|\bunder\s?\d|\bover\s?\d|\b\d+\s?\+$|\bpremium\b|\bbudget\b|\bentry[\s_-]?(level|price)|\bluxury\b|\bvalue\b|\bhigh[\s_-]?price|\blow[\s_-]?price|\baov\b/i],
-  ['promo', /\bsale\b|on[\s_-]?sale|black[\s_-]?friday|cyber|christmas|xmas|\bpromo|\boffer|discount|voucher|%\s?off|\bbfcm\b|campaign|\bdeals?\b|\boutlet\b|bundle|\bgwp\b|gift[\s_-]?with/i],
+  ['promo', /^full$|^full[\s_-]?price$|\bsale\b|on[\s_-]?sale|black[\s_-]?friday|cyber|christmas|xmas|\bpromo|\boffer|discount|voucher|%\s?off|\bbfcm\b|campaign|\bdeals?\b|\boutlet\b|bundle|\bgwp\b|gift[\s_-]?with/i],
   ['life', /new[\s_-]?in|\bnew\b|newness|\bseason|\b(ss|aw|fw|sp|su|au|wi)[\s_-]?\d{2}\b|\b(spring|summer|autumn|fall|winter)\b|carry[\s_-]?over|\bcore\b|continuity|\bnos\b|never[\s_-]?out|clearance|end[\s_-]?of[\s_-]?line|\beol\b|discontinu|full[\s_-]?price|mark[\s_-]?down|\bfp\b|\bmd\b|launch|pre[\s_-]?order|\bevergreen|\bperennial|\bage(d)?\b|\bdays?\b|\bweeks?\b/i],
 ];
 const CL_LEVEL = /^(?:very[\s_-]?)?(?:high|hi|medium|med|mid|middle|low|lo|top|bottom|a|b|c|tier[\s_-]?[1-5abc])(?:[\s_-]?(?:margin|tier))?$/i;
@@ -2844,8 +2844,40 @@ export function clLabelKind(lbl, name) {
   if (lv && lv >= bn && lv >= pc) { best = nmKind || 'margin'; bn = lv + (named[best] || 0); inferred = !nmKind; }
   else if (pc && pc >= bn) { best = nmKind || 'stock'; bn = pc + (named[best] || 0); inferred = !nmKind; }
   const share = Math.round(bn / read * 1000) / 10;
-  if (!best || share < 50) return { kind: 'unclear', share, segs, mix, why: 'no single strategy covers half of the labelled products — the values mix several' };
-  return { kind: best, share, segs, mix, inferred };
+  // a KPI signal the label carries beside its main kind (Superdry's CL1: jackets AND "Zombie") — named so
+  // the AM can see it and decide, never counted on its own
+  const also = [];
+  for (const k of CL_KPI) {
+    if (k === best || !named[k]) continue;
+    const sh = Math.round(named[k] / read * 1000) / 10;
+    if (sh >= 5) {
+      let v = ''; for (const [vv] of lbl.values) if (clValueKind(vv) === k) { v = String(vv).trim(); break; }
+      also.push({ k, share: sh, v });
+    }
+  }
+  if (!best || share < 50) return { kind: 'unclear', share, segs, mix, also, why: 'no single strategy covers half of the labelled products — the values mix several' };
+  return { kind: best, share, segs, mix, inferred, also };
+}
+
+/* WHAT THE AM SETS FOR A BRAND (Ray, 8 Oct 2026: "the data could be sitting somewhere else that is not
+   technically in a custom label … make this custom-labels section customizable for the account manager to
+   flag what makes sense for this client specifically. Especially with descriptive custom labels, which will
+   be saved going forward. For example, with Superdry GB, the missing custom labels would be bestsellers,
+   margin, lifecycle, and seasons"). Two things only, both checked here so a stored record can never carry
+   anything else: what a SLOT is for (overrides the reading of its values), and how each KPI STRATEGY stands
+   for this client — 'need' (a priority), 'elsewhere' (carried in another field, so it counts), 'na' (not
+   relevant, out of the score). Nothing set = the automated reading, exactly as before. */
+export const CL_STATES = ['need', 'elsewhere', 'na'];
+export function cleanClCfg(c) {
+  const out = { slots: {}, strat: {} };
+  if (!c || typeof c !== 'object') return out;
+  const sl = c.slots && typeof c.slots === 'object' ? c.slots : {};
+  for (let i = 0; i < 5; i++) { const k = sl[i] != null ? sl[i] : sl[String(i)]; if (k && (CL_KINDS[k] || k === 'none')) out.slots[i] = k; }
+  const st = c.strat && typeof c.strat === 'object' ? c.strat : {};
+  for (const k of CL_KPI) if (CL_STATES.indexOf(st[k]) >= 0) out.strat[k] = st[k];
+  if (c.by) out.by = String(c.by).slice(0, 80);
+  if (c.at) out.at = +c.at || 0;
+  return out;
 }
 
 // how much of a label moved between two readings: the share of its products that changed
@@ -2873,23 +2905,34 @@ export const CL_MOVE_PP = 0.5;   // a KPI label that moved under half a percent 
                         and the card says so — never a zero for a reading nobody took.
    snap = the Label Guard snapshot; ref = an older snapshot of the same feed (the known-good or
    yesterday's), or null. */
-export function clStrategy(snap, ref) {
+export function clStrategy(snap, ref, cfgIn) {
   if (!snap || !snap.labels) return null;
+  const cfg = cleanClCfg(cfgIn);
   const rows = snap.rows || 0;
   const slots = LABEL_KEYS.map((k, i) => {
     const l = snap.labels[k] || { present: false };
     const c = clLabelKind(l, k);
-    const kpi = CL_KPI.indexOf(c.kind) >= 0;
+    // the AM's word on what this slot is for beats the reading of its values — on a slot the feed carries
+    const set = l.present && cfg.slots[i] ? cfg.slots[i] : null;
+    const kind = set ? (set === 'none' ? 'unclear' : set) : c.kind;
+    const kpi = CL_KPI.indexOf(kind) >= 0;
     const moved = kpi && ref && ref.labels && ref.t && ref.t < snap.t ? clMoved(l, ref.labels[k]) : null;
     return { k, n: i, present: !!l.present, cov: l.present ? (l.cov || 0) : 0, filled: l.filled || 0, distinct: l.distinct || 0,
-      top: (l.values || []).slice(0, 6), kind: c.kind, inferred: !!c.inferred, share: c.share, segs: c.segs, why: c.why || '', kpi, moved };
+      top: (l.values || []).slice(0, 6), kind, auto: c.kind, set: !!set, inferred: !set && !!c.inferred, share: c.share, segs: c.segs,
+      also: set ? [] : (c.also || []), why: set ? '' : (c.why || ''), kpi, moved };
   });
   const kinds = {};
   for (const s of slots) if (s.kpi) (kinds[s.kind] = kinds[s.kind] || []).push(s.n);
+  const na = CL_KPI.filter((k) => cfg.strat[k] === 'na' && !kinds[k]);
+  const elsewhere = CL_KPI.filter((k) => cfg.strat[k] === 'elsewhere' && !kinds[k]);
   const have = Object.keys(kinds);
-  const wsum = have.reduce((a, k) => a + CL_KINDS[k].w, 0);
-  const pStrat = Math.round(wsum / 100 * 60 * 10) / 10;
-  const pDiv = have.length >= 3 ? 15 : have.length * 5;
+  const carried = have.concat(elsewhere);
+  const wsum = carried.reduce((a, k) => a + CL_KINDS[k].w, 0);
+  const wout = na.reduce((a, k) => a + CL_KINDS[k].w, 0);
+  // a strategy the AM rules out for this client leaves the denominator, never counts as a gap
+  const pStrat = wout >= 100 ? 60 : Math.round(wsum / (100 - wout) * 60 * 10) / 10;
+  const divNeed = Math.max(1, Math.min(3, CL_KPI.length - na.length));
+  const pDiv = Math.round(Math.min(1, carried.length / divNeed) * 15 * 10) / 10;
   const kpiSlots = slots.filter((s) => s.kpi);
   const reach = kpiSlots.length ? kpiSlots.reduce((a, s) => a + Math.min(100, s.cov), 0) / kpiSlots.length : 0;
   const pReach = Math.round(reach / 100 * 10 * 10) / 10;
@@ -2898,13 +2941,17 @@ export function clStrategy(snap, ref) {
   const pDyn = dyn == null ? null : Math.round(dyn * 15 * 10) / 10;
   const raw = pStrat + pDiv + pReach + (pDyn || 0);
   const score = Math.round((dyn == null ? raw / 85 * 100 : raw) * 10) / 10;
-  const missing = CL_KPI.filter((k) => !kinds[k] && CL_KINDS[k].w >= 10);
+  const open = CL_KPI.filter((k) => !kinds[k] && elsewhere.indexOf(k) < 0 && na.indexOf(k) < 0);
+  const priority = open.filter((k) => cfg.strat[k] === 'need');
+  const missing = open.filter((k) => cfg.strat[k] === 'need' || CL_KINDS[k].w >= 10);
   const spare = slots.filter((s) => !s.present || s.kind === 'empty').map((s) => s.n);
   const descr = slots.filter((s) => s.kind === 'merch' || s.kind === 'unclear').map((s) => s.n);
   const dup = []; for (const k of have) if (kinds[k].length > 1) dup.push(k);
+  const custom = Object.keys(cfg.slots).length + Object.keys(cfg.strat).length > 0;
   return { score, rows, t: snap.t, refT: ref && ref.t && ref.t < snap.t ? ref.t : null,
     parts: { strat: pStrat, div: pDiv, reach: pReach, dyn: pDyn }, reach: Math.round(reach * 10) / 10,
-    slots, kinds, have, missing, spare, descr, dup, verdict: clVerdict(score, have.length) };
+    slots, kinds, have, carried, elsewhere, na, missing, priority, spare, descr, dup, cfg, custom,
+    verdict: clVerdict(score, carried.length) };
 }
 
 export function clVerdict(score, n) {
