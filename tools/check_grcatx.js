@@ -232,6 +232,17 @@ ${STUBS.stubLines()}
   const nar = await inner.evaluate(() => ({ h: document.documentElement.scrollHeight, vw: innerWidth }));
   const fh = await out.$eval('#print-catx iframe', (f) => Math.round(f.getBoundingClientRect().height));
   ok('…and at a narrower window the same frame still holds the whole grid', nar.h <= fh + 2, { frame: fh, content: nar.h, vw: nar.vw });
+  // a card that runs longer than its square SCROLLS, it is never cut (Ray, 8 Oct 2026: "html downloads on golden score has
+  // visual cropping issue on some of the customised module - i like the balance square sizes so maybe make it scrollable?")
+  const sc = await inner.evaluate(() => {
+    const mods = Array.from(document.querySelectorAll('.mod')), b = (m) => m.querySelector(':scope>div:last-child');
+    const reach = mods.every((m) => { const e = b(m), cs = getComputedStyle(e); return e.scrollHeight <= e.clientHeight + 1 || /auto|scroll/.test(cs.overflowY); });
+    const m = mods[0], e = b(m), tall = document.createElement('div'); tall.style.cssText = 'height:700px;flex:none'; tall.className = 'probe-tall'; e.appendChild(tall);
+    const h = Math.round(m.getBoundingClientRect().height); e.scrollTop = 1e6;
+    const r = { reach, h, heights: mods.map((x) => Math.round(x.getBoundingClientRect().height)), scrolled: e.scrollTop > 0, end: Math.abs(e.scrollTop + e.clientHeight - e.scrollHeight) <= 2, inside: e.getBoundingClientRect().bottom <= m.getBoundingClientRect().bottom + 1 };
+    tall.remove(); e.scrollTop = 0; return r;
+  });
+  ok('a card whose content runs past its square keeps the square and scrolls to the end inside it, never cropped', sc.reach && sc.h === 340 && sc.heights.every((v) => v === 340) && sc.scrolled && sc.end && sc.inside, sc);
   await out.setViewportSize({ width: 1200, height: 1000 });
   if (SHOT) {
     if (process.env.GRCATX_KEEP) fs.copyFileSync(tmp, path.join(SHOT, 'grcatx_export.html'));

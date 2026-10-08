@@ -176,8 +176,13 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
   ok('a window longer than the record never claims the days it did not see', !a.kpis.some((x) => /^Over 90 days/i.test(x)), a.kpis);
   ok('content quality and AI-readiness ride along as analysed',
     a.kpis.some((x) => /Content quality 80\.5 ▲ \+8\.1/i.test(x)) && a.kpis.some((x) => /AI-readiness 58 ▲ \+3/i.test(x)), a.kpis);
-  ok('the change log lists the latest six, newest first — score moves and analyses together', a.logRows.length === 6 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]) &&
-    a.logRows.some((x) => /Content quality · AI-readiness/.test(x) && /by hand/.test(x) && /80\.5/.test(x)), a.logRows.slice(0, 3));
+  ok('the change log lists the latest six, newest first — score moves and analyses together', a.logRows.length >= 6 && a.logRows.length <= 12 && /Golden Score/.test(a.logRows[0]) && /g:description ▲ \+4pp/.test(a.logRows[0]) &&
+    a.logRows.some((x) => /Content quality/.test(x) && /by hand/.test(x) && /80\.5/.test(x)), a.logRows.slice(0, 3));
+  // Ray, 8 Oct 2026: "Content Quality in 1 row and AI Readiness in 1 row, unit changes each individual row"
+  const cqI = a.logRows.findIndex((x) => /Content quality/.test(x) && /by hand/.test(x) && /80\.5/.test(x));
+  ok('an analysis is two rows — Content quality in one, AI-readiness in the next — each with its own score and change, never paired in one cell',
+    !a.logRows.some((x) => /Content quality/.test(x) && /AI-readiness/.test(x)) && cqI >= 0 && /AI-readiness/.test(a.logRows[cqI + 1] || '') && /58/.test(a.logRows[cqI + 1] || '') &&
+    /([▲▼] [+−][\d.]+|±0) analysed/.test(a.logRows[cqI]) && /([▲▼] [+−][\d.]+|±0) analysed/.test(a.logRows[cqI + 1]), a.logRows.slice(cqI, cqI + 2));
   ok('…with the deduction named by the attribute that moved — and marked as run by hand', a.logRows.some((x) => /by hand/.test(x) && /g:color ▼ −10pp/.test(x)), a.logRows);
   ok('…and the rest one click away', /Show all 10 changes/.test(a.more || ''), a.more);
   ok('the header counts both: score changes and analyses', /6 score changes · 3 analyses in view/.test(await page.$eval('#hs-tier .hs-since', (e) => e.textContent)));
@@ -281,7 +286,7 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
       log: t ? t.querySelectorAll('.hs-log tbody tr').length : 0 };
   });
   // Show all was pressed above, and the file keeps the log as it was on screen
-  ok('the download carries the history — the three lines, the bars and the change log', x.has && x.lines === 3 && x.bars > 0 && x.log === 10, x);
+  ok('the download carries the history — the three lines, the bars and the change log', x.has && x.lines === 3 && x.bars > 0 && x.log === 13, x); // ten changes, three of them analyses — two rows each
   ok('…the range as a plain chip, no button a script would have to answer', x.buttons === 0 && x.rng === 'SPAN:90 days', x);
   ok('…and none of the hover furniture', x.hits === 0 && !x.tip, x);
   fs.unlinkSync(tmp);

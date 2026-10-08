@@ -354,6 +354,16 @@ window.addEventListener('load',restore);
   .pv-mk{margin-left:auto}
   .pv-k{display:flex;flex-wrap:wrap;gap:6px 22px;margin:8px 0 4px;font-size:12.5px;color:var(--muted)}
   .pv-k b{display:inline-block;margin-left:6px;font-size:18px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+  /* the Golden Score as /golden draws it (Ray, 8 Oct 2026: "if it's score, mirror the circle score from golden score module"):
+     the same ring — r52 on a 120 box, an 11 stroke, round cap from twelve o'clock, the wash track — in the same four audit bands */
+  .pv-k{align-items:center}
+  .pv-kd{display:inline-flex;align-items:center;gap:10px}
+  .pv-dial{width:80px;height:80px;flex:none}
+  .pv-dial .dial-bg{fill:none;stroke:var(--wash);stroke-width:11}
+  .pv-dial .dial-fg{fill:none;stroke:var(--muted);stroke-width:11;stroke-linecap:round;transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dasharray .7s cubic-bezier(.22,.61,.36,1),stroke .3s}
+  .pv-dial .dial-fg.b-g{stroke:var(--good)}.pv-dial .dial-fg.b-y{stroke:#F5A623}.pv-dial .dial-fg.b-o{stroke:#ED6F0B}.pv-dial .dial-fg.b-r{stroke:var(--risk)}
+  .pv-dial text{font-family:inherit;font-size:28px;font-weight:900;fill:var(--ink);font-variant-numeric:tabular-nums}
+  @media(prefers-reduced-motion:reduce){.pv-dial .dial-fg{transition:none}}
   .pv-body{display:grid;grid-template-columns:minmax(0,660px) minmax(0,1fr);gap:18px;align-items:start;margin-top:6px}
   @media(max-width:1180px){.pv-body{grid-template-columns:minmax(0,1fr)}}
   .pv-g{display:flex;flex-direction:column}
@@ -2377,6 +2387,9 @@ function pvTween(el,to,dec){if(!el)return;var from=parseFloat(el.getAttribute('d
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(isNaN(from)||reduce){el.textContent=(+to).toFixed(dec);return}
   var t0=performance.now(),D=700;(function st(t){var k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(st)})(t0)}
+function pvDial(svg,v){if(!svg)return;var C=326.7,x=v==null||isNaN(v)?0:Math.max(0,Math.min(100,v)),fg=svg.querySelector('.dial-fg');
+  fg.style.strokeDasharray=(Math.round(C*x)/100)+' '+C;fg.setAttribute('class','dial-fg '+band(v));
+  svg.setAttribute('aria-label','Golden Score '+(v==null?'not available':(+v).toFixed(1)))}
 function pvVal(P,k){
   if(!P)return '';
   if(k==='product_highlight')return P.hl?P.hl+' highlight'+(P.hl===1?'':'s')+(P.hlv&&P.hlv.length?': '+P.hlv.join(' · '):''):'';
@@ -2524,12 +2537,12 @@ function renderPreview(){
       +G.map(function(x){return '<span class="pv-gc'+(x.kind==='service'?' svc':'')+'" title="'+esc(x.label)+'">'+esc(x.gives)+'</span>'}).join('')
       +(F3?'<span class="pv-gc rf">↻ '+esc(F3.fields.map(function(f){return f.label}).join(' · '))+' refreshed '+esc(F3.cadLabel.toLowerCase())+'</span>':'')}
   var k=host.querySelector('.pv-k');
-  if(!k.firstChild)k.innerHTML='<div>Golden Score<b class="pv-s" data-v=""></b></div><div>Attributes at 99%+<b class="pv-full" data-v=""></b></div><div>Filled by this option<b class="pv-add" data-v=""></b></div><div class="pv-dynw" hidden>Dynamic fields<b class="pv-dyn" data-v=""></b></div>';
+  if(!k.firstChild)k.innerHTML='<div class="pv-kd"><svg class="pv-dial" viewBox="0 0 120 120" role="img" aria-label="Golden Score"><circle class="dial-bg" cx="60" cy="60" r="52"/><circle class="dial-fg" cx="60" cy="60" r="52" style="stroke-dasharray:0 326.7"/><text class="pv-s" x="60" y="70" text-anchor="middle" data-v=""></text></svg>Golden Score</div><div>Attributes at 99%+<b class="pv-full" data-v=""></b></div><div>Filled by this option<b class="pv-add" data-v=""></b></div><div class="pv-dynw" hidden>Dynamic fields<b class="pv-dyn" data-v=""></b></div>';
   // DYNAMIC FIELDS (Ray, 8 Oct 2026): the fields Tier 3 · AI-Intel Refresher keeps refreshing — 3 by default, up to 6
   var dynW=k.querySelector('.pv-dynw'),dynF=T3&&q3.refresh&&q3.refresh.status!=='off'?q3.refresh.fields:[];
   dynW.hidden=!T3;
   if(T3){pvTween(k.querySelector('.pv-dyn'),dynF.length,0);dynW.title=dynF.length?dynF.map(function(f){return f.label}).join(' · ')+' — refreshed '+q3.refresh.cadLabel.toLowerCase():'No field ticked — ⚙ Customise'}
-  pvTween(k.querySelector('.pv-s'),sc,1);
+  pvTween(k.querySelector('.pv-s'),sc,1);pvDial(k.querySelector('.pv-dial'),sc);
   pvTween(k.querySelector('.pv-full'),full,0);
   pvTween(k.querySelector('.pv-add'),Object.keys(fill).length,0);
   k.querySelector('.pv-full').setAttribute('title','of '+tot+' attributes measured');
