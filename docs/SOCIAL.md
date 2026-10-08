@@ -25,14 +25,54 @@ tagline, headline, primary text and button say at a given moment.
 | `tools/check_social.js` | Playwright tripwire on the real page (presync) |
 | `tools/social_stub.js` | engines + empty roster for check_mobile / check_darkmode / check_social |
 
-## Layout
+## Layout — the ad studio
 
-The design controls — picture (same everywhere / per network + the product's images), overlay design,
-tagline position and colour, and the per-network picture · overlay · button — sit in a **sticky rail on
-the left of the platform previews** (Ray, 8 Oct 2026: "the overlay design section should be on the
-left-hand side of the platform previews; otherwise I have to scroll up and down just to change things").
-The rail stays under the topbar while the previews scroll, scrolls inside itself when taller than the
-screen, and stacks above the previews under 1000px.
+Two sections: the **product** strip, and the **ad studio** — every control in ONE panel on the left, the six
+previews on the right (Ray, 8 Oct 2026: "the dynamic schedule should also sit within the platform reviews.
+Within the left panel you can navigate between picture, dynamic schedule, AI fields … optimization ideas,
+and see that directly on the preview rather than scrolling up and down … feel free to extend it
+horizontally"). The panel is a vertical tab strip with one pane at a time:
+
+| Tab | Holds |
+|---|---|
+| 🖼 Picture | same picture everywhere / per network, the product's images, the overlay design, the tagline's place and colour, per-network picture · overlay · button |
+| 🏷 Brand | the name and logo the ads carry (below) |
+| ⏱ Schedule | the moment the previews show (date, hour, weather, temperature, shopper, the product's numbers), the rules, and what the ad says right now |
+| 📅 Week | the week at a glance (a cell sets the moment) |
+| ✎ Fields | each field's default, the tokens, each network's limits |
+| 💡 Ideas | the twelve ready-made rules (adding one opens the Schedule tab) |
+| ⓘ Data | where each figure comes from and how it ships |
+
+The panel stays under the topbar while the previews scroll. Its **width is per tab** (a week grid needs
+more room than a picture picker) — a drag on its right edge sets it, a double-click resets it, arrow keys
+on the edge step it — and the device remembers the tab and each width (`fcc-soc-tab`, `fcc-soc-railw`).
+The page's column widens to 1,800px on a big screen. An old link to a section (`#sec-sched`, `#sec-how` …)
+or a tab name (`#week`) opens that tab. Under 1000px the panel stacks above the previews with the tabs as
+a scrolling row.
+
+## The brand's face — its own logo on every ad
+
+Ray: "ensure also client's logo is as how they are — get it from their actual meta & ig & partner
+platforms". `GET /api/social/logo?client=&market=&net=&h=` (worker; reader in `src/sociallogo.js`) reads:
+
+* **fb** — the Facebook page picture (`graph.facebook.com/<page>/picture`, public, no token). Eight
+  brands are seeded with a page each was checked against on 8 Oct 2026 (`FB_PAGES` in the engine).
+* **tt** / **pin** — the TikTok / Pinterest profile page's avatar, with the account's OWN name and
+  verified mark.
+* **site** — the brand website's own icon (apple-touch-icon first), off the feed's product host.
+* **Instagram has no public read** (every profile endpoint answers require_login) — the Instagram
+  placements carry the brand logo, the mark the brand runs on its Facebook page; or upload one.
+
+A handle can belong to somebody else — checked live that day, TikTok `@reiss` is "ÇATLI" and Pinterest
+`superdry` is "Dry Super". So a **guessed handle is never read for a picture**: TikTok and Pinterest show
+their own avatar only after an AM has pressed *Look up*, seen the name, and said *This is us*; until then
+they carry the brand logo. The logo source is chosen on the tab (Facebook · Website · Upload · Initial);
+an upload is downscaled to 160px in the browser. The choices are saved with the brand's schedule (shared
+state `socialdpa`, `ident`), checked by `cleanIdent`. No open proxy: the handle is the only input, put
+into a fixed URL; every hop goes through `SEC.fetchWithin` against each network's own hosts
+(`*.fbcdn.net`, `*.tiktokcdn*.com`, `i.pinimg.com`, the brand's own domain); only an image comes back,
+never SVG, ≤2 MB; what was found is cached a day in KV `soclogo:<net>:<handle>`. Demo products carry
+the demo brand's initial. The Facebook ad prints the product link's own domain, never a guessed one.
 
 ## What it reads
 

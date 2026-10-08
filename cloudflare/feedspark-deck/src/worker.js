@@ -71,6 +71,7 @@ import * as OUT from "./outcomes.js";
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
+import * as SOCLOGO from "./sociallogo.js";
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, HL_BUCKETS, cleanPop } from "./labelguard.js";
@@ -2935,6 +2936,60 @@ async function route(request, env, ctx) {
       await env.EDITS.put(key, JSON.stringify(merged));
       logActivity(ctx, env, request, 'catalog-pixels', client + ' ' + mkt + ' ' + Object.keys(clean.r).length);
       return json({ ok: true, n: Object.keys(merged.r).length, t: merged.t });
+    }
+    // SOCIAL DPA — the brand's own picture for the ad previews (docs/SOCIAL.md › The brand's face). A Facebook
+    // page picture, a TikTok / Pinterest avatar, or the brand website's own icon; the handle is the only input,
+    // checked and placed into a fixed URL, every hop allow-listed (SOCLOGO.pageAllowed / imgAllowed). ?info=1
+    // answers what was found — the account's OWN name and verified mark, so a namesake is caught before use.
+    if (path === '/api/social/logo' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!(acc.owner || clientMatch(acc.clients, client))) return json({ ok: false, error: 'out of scope' }, 403);
+      const net = url.searchParams.get('net') || '';
+      if (SOCLOGO.NETS.indexOf(net) < 0) return json({ ok: false, error: 'net must be fb, tt, pin or site' }, 400);
+      let h = '', siteHost = '';
+      if (net === 'site') {
+        const src = await feedSourceFor(env, client, url.searchParams.get('market'));
+        if (src) siteHost = await pdpHostFor(env, client, mktOf(url.searchParams.get('market')), src);
+        if (!siteHost) return json({ ok: false, error: 'no website known for this brand — its feed carries no product links' }, 404);
+        h = siteHost;
+      } else {
+        h = url.searchParams.get('h') || '';
+        if (!SOCLOGO.HANDLE_RE.test(h)) return json({ ok: false, error: 'bad handle' }, 400);
+      }
+      const ck = 'soclogo:' + net + ':' + h.toLowerCase();
+      let rec = url.searchParams.get('fresh') ? null : await env.EDITS.get(ck, 'json');
+      if (!rec) {
+        const ua = net === 'fb' ? PDP_SCAN_UA : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+        const purl = SOCLOGO.profileUrl(net, h, siteHost);
+        try {
+          const fw = await SEC.fetchWithin(fetch, purl, (u) => SOCLOGO.pageAllowed(net, u, siteHost), { headers: { 'user-agent': ua, accept: net === 'fb' ? 'application/json' : 'text/html' } });
+          if (fw.blocked) rec = { none: 'the profile redirected to ' + (fw.host || 'somewhere') + ' — not read' };
+          else if (!fw.res.ok || !fw.res.body) { try { await fw.res.body.cancel(); } catch (e) {} rec = { none: 'HTTP ' + fw.res.status + ' reading the profile' }; }
+          else {
+            const body = await readHead(fw.res, net === 'pin' ? 2400 * 1024 : net === 'tt' ? 1200 * 1024 : 256 * 1024);
+            if (net === 'site') { const icons = SOCLOGO.siteIcons(body, fw.url).filter((u) => SOCLOGO.imgAllowed('site', u, siteHost)); rec = icons.length ? { img: icons[0], alt: icons.slice(1), name: siteHost } : { none: 'the website names no icon' }; }
+            else rec = SOCLOGO.parseProfile(net, h, body);
+          }
+        } catch (e) { rec = { none: 'the profile could not be read' }; }
+        rec.t = Date.now();
+        try { await env.EDITS.put(ck, JSON.stringify(rec), { expirationTtl: rec.none ? 3600 : 86400 }); } catch (e) {}
+      }
+      if (url.searchParams.get('info')) return json({ ok: !rec.none, net, h, name: rec.name || '', verified: !!rec.verified, why: rec.none || '', t: rec.t });
+      if (rec.none) return json({ ok: false, error: rec.none }, 404);
+      for (const img of [rec.img].concat(rec.alt || [])) {
+        const ctl = new AbortController(), timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 10000);
+        try {
+          const fw = await SEC.fetchWithin(fetch, img, (u) => SOCLOGO.imgAllowed(net, u, siteHost), { signal: ctl.signal, headers: { 'user-agent': PDP_SCAN_UA, accept: 'image/avif,image/webp,image/*;q=0.9' } });
+          clearTimeout(timer);
+          if (fw.blocked) continue;
+          const up = fw.res, ct = String(up.headers.get('content-type') || '').toLowerCase(), len = +(up.headers.get('content-length') || 0);
+          if (!up.ok || !up.body || !/^image\//.test(ct) || /svg/.test(ct) || len > SOCLOGO.LOGO_MAX_BYTES) { try { await up.body.cancel(); } catch (e) {} continue; }
+          return new Response(up.body, { headers: { 'content-type': ct.split(';')[0], 'x-content-type-options': 'nosniff', 'cache-control': 'private, max-age=86400' } });
+        } catch (e) { clearTimeout(timer); }
+      }
+      return json({ ok: false, error: 'the picture could not be fetched' }, 502);
     }
     if (path.startsWith('/api/catalog/') && request.method === 'GET') {
       const acc = await accessOf(env, request);

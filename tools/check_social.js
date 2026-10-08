@@ -40,8 +40,14 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   t('six demo products in the strip, each with a picture', (await p.$$eval('#strip .pc img', (a) => a.filter((i) => i.naturalWidth > 0).length)) === 6);
 
   const folds = await p.$$eval('section[data-fold]', (a) => a.map((c) => c.classList.contains('folded')));
-  t('a fresh device opens the first two sections only (product + previews)', folds.join() === 'false,false,true,true,true,true,true', folds);
-  for (const id of ['sec-sched', 'sec-week']) await p.click('#' + id + ' .fhd');
+  t('two sections — the product and the ad studio — both open on a fresh device', folds.join() === 'false,false', folds);
+  t('the studio panel opens on Picture', (await p.getAttribute('#rt-pic', 'aria-selected')) === 'true' && !(await p.$eval('#rp-pic', (e) => e.hidden)) && (await p.$eval('#rp-sched', (e) => e.hidden)));
+  const w0 = await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width);
+  await p.click('#rt-sched'); await p.waitForTimeout(200);
+  const w1 = await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width);
+  t('the schedule opens IN the panel and the panel widens for it', !(await p.$eval('#rp-sched', (e) => e.hidden)) && (await p.$eval('#rp-pic', (e) => e.hidden)) && w1 > w0 + 60, { w0, w1 });
+  const both = await p.evaluate(() => { const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.top < innerHeight && r.bottom > 0; }; return { hour: vis(document.getElementById('cx-hour')), rule: vis(document.querySelector('#rules .rule')), fb: vis(document.querySelector('[data-mock="fb_feed"]')) }; });
+  t('the moment, the first rule AND the Facebook preview are on screen together — no scrolling between them', both.hour && both.rule && both.fb, both);
 
   console.log('· six networks, side by side, each painting the product');
   const mocks = await p.$$eval('#pv .mock', (a) => a.map((m) => m.getAttribute('data-mock')));
@@ -73,6 +79,7 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   await p.click('#cx-aud [data-aud="prospect"]'); await p.waitForTimeout(200);
 
   console.log('· safe zones, pictures per network, overlay designs');
+  await p.click('#rt-pic'); await p.waitForTimeout(150);
   t('safe zones hidden until asked for', !(await p.$eval('[data-mock="ig_story"] .safe-h', (e) => getComputedStyle(e).display !== 'none')));
   await p.check('#safe');
   t('…and hatched on Stories when ticked', await p.$eval('[data-mock="ig_story"] .safe-h', (e) => getComputedStyle(e).display !== 'none'));
@@ -97,19 +104,32 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   await p.click('#dgal [data-d="pill-badge"]'); await p.waitForTimeout(200);
   await p.evaluate(() => window.scrollTo(0, 0));
 
-  console.log('· ideas, the week, the folds');
-  await p.click('#sec-ideas .fhd'); await p.waitForTimeout(150);
+  console.log('· ideas, the week, the tabs, the folds');
+  await p.click('#rt-ideas'); await p.waitForTimeout(150);
   const nRules = await p.$$eval('#rules .rule', (a) => a.length);
   await p.click('[data-idea="rain"]'); await p.waitForTimeout(300);
+  t('adding an idea takes you to the schedule tab', (await p.getAttribute('#rt-sched', 'aria-selected')) === 'true');
   await p.click('#cx-wx [data-wx="rain"]'); await p.waitForTimeout(300);
   t('an idea joins the schedule at the TOP and wins on a rainy moment', (await p.$$eval('#rules .rule', (a) => a.length)) === nRules + 1 && /Made for rainy days/.test(await p.evaluate(nowTag)), await p.evaluate(nowTag));
+  await p.click('#rt-week'); await p.waitForTimeout(150);
   t('the week grid: 7 days × 5 dayparts', (await p.$$eval('#wk .c', (a) => a.length)) === 35);
   await p.click('#wk .c[data-wd="1"][data-wh="9"]'); await p.waitForTimeout(300);
   t('a week cell sets the moment (Monday 09:00)', /Monday 09:00/.test(await p.textContent('#moment')));
 
-  t('a section head opens its section', !(await p.$eval('#sec-ideas', (e) => e.classList.contains('folded'))) && (await p.$eval('#sec-ideas .fhd', (e) => e.getAttribute('aria-expanded'))) === 'true');
+  // the grip: drag the panel wider on the Week tab, and the device keeps that width for that tab
+  const gb = await p.$eval('#rgrip', (e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  const wk0 = await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width);
+  await p.mouse.move(gb.x, gb.y); await p.mouse.down(); await p.mouse.move(gb.x + 80, gb.y, { steps: 5 }); await p.mouse.up(); await p.waitForTimeout(150);
+  const wk1 = await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width);
+  t('dragging the panel’s edge widens it', wk1 > wk0 + 50, { wk0, wk1 });
+  await p.click('#sec-prod .fhd'); await p.waitForTimeout(100);
   await p.reload(); await p.waitForTimeout(1800);
-  t('…and the device remembers it', !(await p.$eval('#sec-ideas', (e) => e.classList.contains('folded'))));
+  t('…and after a reload the device keeps the tab, its width and the folded section', (await p.getAttribute('#rt-week', 'aria-selected')) === 'true' && Math.abs((await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width)) - wk1) < 3 && (await p.$eval('#sec-prod', (e) => e.classList.contains('folded'))));
+  await p.dblclick('#rgrip'); await p.waitForTimeout(100);
+  t('a double-click on the edge puts the tab’s width back', Math.abs((await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width)) - wk0) < 3);
+  await p.keyboard.press('Tab'); await p.focus('#rt-week'); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(100);
+  t('arrow keys walk the tabs (Week → Fields)', (await p.getAttribute('#rt-fields', 'aria-selected')) === 'true');
+  await p.click('#sec-prod .fhd'); await p.waitForTimeout(100);
   await p.click('#fold-all'); await p.waitForTimeout(150);
   t('Fold all folds every section and the button offers the way back', (await p.$$eval('section[data-fold]', (a) => a.every((c) => c.classList.contains('folded')))) && /Open all/.test(await p.textContent('#fold-all')));
   await p.click('#fold-all'); await p.waitForTimeout(400);
@@ -117,6 +137,64 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   console.log('· exports');
   const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 5000 }).catch(() => null), p.click('[data-png="ig_story"]')]);
   t('⬇ PNG downloads the creative, named for the network', !!dl && /ig_story\.png$/.test(dl.suggestedFilename()), dl && dl.suggestedFilename());
+
+  console.log('· a real brand: its own logo on every network, read from its own pages');
+  {
+    const http = require('http');
+    const ORANGE = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGN4m8+NFTEMLQkASlVZwTa/HD0AAAAASUVORK5CYII=', 'base64');
+    const NAVY = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGOQs+oiCTGMahjVMHw1AAC7R+IB7fUXEAAAAABJRU5ErkJggg==', 'base64');
+    const csv = 'id,title,brand,price,sale_price,image_link,link\n'
+      + ['NW-1,Northwind Trail Runner Navy,Northwind,72.00 GBP,57.60 GBP', 'NW-2,Northwind Rain Jacket Olive,Northwind,120.00 GBP,', 'NW-3,Northwind Court Trainer White,Northwind,85.00 GBP,']
+        .map((r, i) => r + ',https://img.northwind.example/p' + i + '.png,https://www.northwind-shop.example/p/' + i).join('\n') + '\n';
+    const logos = [];
+    const page = html;   // the page with fcc.css inlined, served from an http origin so <img> requests reach this server
+    const srv = http.createServer((req, res) => {
+      const u = new URL(req.url, 'http://x'), send = (code, type, body) => { res.writeHead(code, { 'content-type': type }); res.end(body); };
+      const eng = { '/social/engine.js': 'social_engine.js', '/overlays/studio.js': 'overlay_studio_engine.js', '/overlays/engine.js': 'overlay_engine.js', '/feedlab/engine.js': 'feedlab_engine.js' }[u.pathname];
+      if (eng) return send(200, 'application/javascript', fs.readFileSync(path.join(D, eng)));
+      if (u.pathname === '/social') return send(200, 'text/html', page);
+      if (u.pathname === '/api/feed/clients') return send(200, 'application/json', JSON.stringify({ clients: { Northwind: { wired: ['gb-fb'] } } }));
+      if (u.pathname === '/api/feed/proxy') return send(200, 'text/csv', csv);
+      if (u.pathname === '/api/catalog/img') return send(200, 'image/png', NAVY);
+      if (u.pathname === '/api/state') { if (req.method === 'PUT') { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => send(200, 'application/json', b)); return; } return send(200, 'application/json', '{"socialdpa":{}}'); }
+      if (u.pathname === '/api/social/logo') {
+        logos.push(u.search);
+        if (u.searchParams.get('info')) {
+          const n = u.searchParams.get('net'), h = u.searchParams.get('h');
+          return send(200, 'application/json', JSON.stringify(n === 'tt' ? { ok: true, name: h === 'northwind' ? 'Somebody Else' : 'Northwind', verified: h !== 'northwind' } : { ok: true, name: '', verified: false }));
+        }
+        return send(200, 'image/png', ORANGE);
+      }
+      send(404, 'application/json', '{"ok":false}');
+    });
+    await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+    const base = 'http://127.0.0.1:' + srv.address().port;
+    const bc = await b.newContext({ viewport: { width: 1440, height: 900 } });
+    const r = await bc.newPage(); const rerr = []; r.on('pageerror', (e) => rerr.push(e.message));
+    await r.goto(base + '/social?brand=Northwind&market=gb-fb'); await r.waitForTimeout(2500);
+    t('the brand opens on its live feed sample', /products sampled from the live feed/.test(await r.textContent('#mstate')) && !rerr.length, [await r.textContent('#mstate'), rerr]);
+    const avs = await r.$$eval('#pv .mock .av img.av-img', (a) => a.map((i) => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })));
+    t('every network’s avatar is the brand’s logo picture, not a letter (a brand with no Facebook page reads its website icon)', avs.length >= 6 && avs.every((a) => a.ok && /net=site/.test(a.src)), avs);
+    t('the Facebook ad prints the product link’s own domain, not a guessed one', /northwind-shop\.example/.test(await r.textContent('[data-mock="fb_feed"] .fb-bot .d')));
+    await r.click('#rt-brand'); await r.waitForTimeout(200);
+    await r.fill('[data-idf="fb"]', 'northwindhq'); await r.waitForTimeout(700);
+    await r.click('[data-lsrc="fb"]'); await r.waitForTimeout(400);
+    const fbAv = await r.$eval('[data-mock="ig_feed"] .av img', (i) => i.getAttribute('src'));
+    t('a Facebook page typed in becomes the logo on Instagram too (Instagram has no public read)', /net=fb&h=northwindhq/.test(fbAv), fbAv);
+    t('TikTok keeps the brand logo while its handle is only a guess', /net=fb/.test(await r.$eval('[data-mock="tiktok"] .av img', (i) => i.getAttribute('src'))));
+    await r.click('[data-look="tt"]'); await r.waitForTimeout(500);
+    t('looking up the guessed TikTok handle shows whose account it really is', /Somebody Else/.test(await r.textContent('#idn')) && /net=fb/.test(await r.$eval('[data-mock="tiktok"] .av img', (i) => i.getAttribute('src'))));
+    await r.fill('[data-idf="tt"]', 'northwindofficial'); await r.waitForTimeout(700);
+    await r.click('[data-look="tt"]'); await r.waitForTimeout(500);
+    t('…the real handle reads as the brand, verified', /Northwind/.test(await r.textContent('#idn .look')) && /verified/.test(await r.textContent('#idn .look')));
+    await r.click('[data-own="tt"]'); await r.waitForTimeout(500);
+    const ttAv = await r.$eval('[data-mock="tiktok"] .av img', (i) => i.getAttribute('src'));
+    t('“This is us” puts TikTok’s own avatar on the TikTok ad', /net=tt&h=northwindofficial/.test(ttAv), ttAv);
+    t('…and the TikTok ad names the handle', /@northwindofficial/.test(await r.textContent('[data-mock="tiktok"]')));
+    await r.reload(); await r.waitForTimeout(2500);
+    t('the brand’s logo choices are saved with its schedule (a reload keeps them)', /net=tt&h=northwindofficial/.test(await r.$eval('[data-mock="tiktok"] .av img', (i) => i.getAttribute('src'))) && /net=fb&h=northwindhq/.test(await r.$eval('[data-mock="fb_feed"] .av img', (i) => i.getAttribute('src'))));
+    await bc.close(); srv.close();
+  }
 
   console.log('· the phone');
   const ph = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
