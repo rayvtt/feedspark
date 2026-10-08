@@ -465,10 +465,13 @@ window.addEventListener('load',restore);
   /* POPULATION card — the PT depth table's row format (label · bar · %), inline (Ray, 18 Sep
      2026: "the table breakdown for highlight population (1, 2, 3, 4, 5, >5)") */
   /* depth rows (Ray, 7 Oct 2026): images / highlights / details per product, broken down 0 … 6+ */
-  .dep-card{margin:2px 0 10px;padding:9px 13px;background:var(--wash);border:1px solid var(--line);border-radius:10px;max-width:720px}
+  .dep-card{margin:2px 0 10px;padding:9px 13px;background:var(--wash);border:1px solid var(--line);border-radius:10px;max-width:820px}
   .dep-bar{display:flex;height:10px;border-radius:100px;overflow:hidden;background:#E3E6EB}
   .dep-bar i{display:block;height:100%}
-  .dep-leg{display:flex;flex-wrap:wrap;gap:4px 13px;margin-top:7px;font-size:11px;font-weight:700;color:var(--muted)}
+  .dep-leg{display:flex;flex-wrap:nowrap;gap:4px 10px;margin-top:7px;font-size:10.5px;font-weight:700;color:var(--muted);overflow-x:auto;scrollbar-width:none}
+  .dep-leg::-webkit-scrollbar{display:none}.dep-leg span{white-space:nowrap;flex:0 0 auto}
+  .dep-more{margin-top:5px}.dep-more summary{cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);list-style:revert}
+  .dep-more summary:hover{color:var(--ink)}
   .dep-leg span{white-space:nowrap}
   .dep-leg span.dep-full{color:var(--ink)}
   .dep-leg b{color:var(--ink)}
@@ -1138,8 +1141,10 @@ window.addEventListener('load',restore);
         : 'Full credit at <b>' + x.tg + '+</b> details that describe the product — Google reads them on its AI surfaces; it asks for no repeats of other attributes and no promotion.' +
           (a.names && a.names.length ? '<br>Carried today: ' + a.names.slice(0, 8).map(function (n) { return esc(n[0]) + ' <b>' + fmt(n[1]) + '</b>'; }).join(' · ') : '') +
           '<br>Examples by product type — ' + esc(DEP_FACETS);
+    // the explanation folds away behind one line (Ray, 8 Oct 2026: "these texts should sit in expandable — the coloured
+    // segments should stay on the same line"); the summary keeps the one number that matters, full credit at N+
     return '<div class="dep-card" data-dep="' + esc(x.k) + '"><div class="dep-bar">' + segs + '</div><div class="dep-leg">' + leg + '</div>' +
-      '<div class="dep-foot">' + foot + '</div></div>';
+      '<details class="dep-more"><summary>How it’s scored · full credit at ' + (x.k === 'hl_depth' ? 4 : x.tg) + '+</summary><div class="dep-foot">' + foot + '</div></details></div>';
   }
   function goldenScore(attrs, prof) {
     if (!attrs) return null;
@@ -3773,6 +3778,8 @@ window.addEventListener('load',restore);
   }
   function preparePdf() {
     document.body.classList.add('pdf');
+    // the paper copy carries the depth cards' explanations open; restorePdf folds back only what this opened
+    document.querySelectorAll('details.dep-more:not([open])').forEach(function (d) { d.open = true; d.setAttribute('data-pdfopen', '1'); });
     // a header condensed by scrolling would print a shrunken dial — the document is the page
     // at rest, whatever the reader happened to be scrolled to
     var gs = $('gr-sticky'); if (gs) gs.className = 'gr-sticky';
@@ -3786,6 +3793,7 @@ window.addEventListener('load',restore);
   }
   function restorePdf() {
     document.body.classList.remove('pdf');
+    document.querySelectorAll('details.dep-more[data-pdfopen]').forEach(function (d) { d.open = false; d.removeAttribute('data-pdfopen'); });
     var el = document.getElementById('pdf-page'); if (el) el.parentNode.removeChild(el);
   }
   // a bare Ctrl+P gets the same single-page document as the ⬇ PDF button

@@ -1090,6 +1090,12 @@ score, → Brief opening a keyword brief).
 
 ### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
 
+> **Card layout (8 Oct 2026, Ray: "these texts should sit in expandable — the coloured segments should stay on the
+> same line").** Each depth card is the bar, ONE line of legend chips (0 … 6+, never wrapping; it pans on a phone)
+> and a fold, *How it's scored · full credit at N+*, holding the explanation, what the feed carries today and the
+> examples by product type. The PDF / print copy opens every fold (`preparePdf`), the ⬇ HTML keeps them as native
+> `<details>` a client can open. Pinned in `tools/check_grdepth.js`.
+
 Ray: *"this golden score will be the entire new base … image population … at least four plus …
 100% score … product details … separated from product highlight … please give me more scoring logic
 and let me approve if it should be in the golden score or not."* He approved five changes:

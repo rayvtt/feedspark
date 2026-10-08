@@ -12438,6 +12438,12 @@
       "file": "cloudflare/feedspark-deck/src/pricerstore.js",
       "pattern": "export function sanitizeBankPut(",
       "pr": 0
+    },
+    {
+      "name": "Golden Record: depth card explanation folds behind 'How it's scored · full credit at N+'; legend on one line",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<details class=\"dep-more\">",
+      "pr": 0
     }
   ]
 }
