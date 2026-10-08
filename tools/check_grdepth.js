@@ -117,22 +117,35 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       /replaces g:additional_image_link in the score \(filled is not full\)/.test(img.tip) &&
       /4,100 care lines \(washing, cleaning\) are not counted/.test(det.tip) && /900 lines repeat another attribute/.test(det.tip), [img.tip, det.tip]);
     ok('each depth row carries its breakdown card, 0 … 6+', img.card === 'img_depth' && hl.card === 'hl_depth' && det.card === 'detail_depth');
-    const card = await page.$eval('.dep-card[data-dep="img_depth"]', (c) => ({
-      segs: Array.from(c.querySelectorAll('.dep-bar i')).reduce((s, i) => s + parseFloat(i.style.width), 0),
-      leg: Array.from(c.querySelectorAll('.dep-leg span')).map((s) => s.textContent.trim()),
-      full: Array.from(c.querySelectorAll('.dep-leg span.dep-full')).length, foot: c.querySelector('.dep-foot').textContent }));
-    ok('the card\'s bar is the whole catalogue and its legend names every bucket', Math.abs(card.segs - 100) < 0.2 &&
-      card.leg.join(' | ') === '0 images 2% | 1 image 3.1% | 2 images 4.6% | 3 images 8% | 4 images 31.3% | 5 images 29% | 6+ images 22%', card);
-    ok('…the buckets at full credit are marked, and the foot says whose standard it is', card.full === 3 && /FeedSpark’s standard/.test(card.foot), card);
-    const dc = await page.$eval('.dep-card[data-dep="detail_depth"] .dep-foot', (f) => f.textContent);
-    ok('the details card names what the feed carries today and gives examples by product type',
+    // the breakdown is /ptypes' pop-up depth card (Ray, 8 Oct 2026: "these bar charts of tier population should be a pop up
+    // chart followed the design from Product Type"): rows of label · bar · share, opened from the row's own bar
+    const onScreen = await page.$$eval('.dep-card', (cs) => cs.filter((c) => getComputedStyle(c).display !== 'none').length);
+    ok('on screen no breakdown card sits under the rows — the inline copy is the documents\' only', onScreen === 0, onScreen);
+    const tipOf = () => page.evaluate(() => { const t = document.querySelector('.dptip'); if (!t || getComputedStyle(t).display === 'none') return null; const r = t.getBoundingClientRect();
+      return { h4: t.querySelector('h4').textContent, rows: Array.from(t.querySelectorAll('.pr')).map((x) => x.querySelector('.pl').textContent + ' ' + x.querySelector('.pv').textContent),
+        hi: t.querySelectorAll('.pr.hi').length, widths: Array.from(t.querySelectorAll('.pr .pb i')).map((i) => parseFloat(i.style.width)), foot: Array.from(t.querySelectorAll('.pf')).map((f) => f.textContent).join(' | '),
+        bg: getComputedStyle(t).backgroundColor, l: r.left, r: r.right, t: r.top, b: r.bottom, vw: innerWidth, vh: innerHeight, pin: t.classList.contains('pin') }; });
+    await page.hover('.at-bar[data-deptip="img_depth"]'); await page.waitForTimeout(60);
+    const card = await tipOf();
+    ok('hovering the images bar opens the pop-up: one row per bucket, label · bar · share, in Product Type Guard\'s dark card', card && /^Images per product · SKU-weighted$/i.test(card.h4) && card.bg === 'rgb(23, 26, 33)' &&
+      card.rows.join(' | ') === '0 images 2% | 1 image 3.1% | 2 images 4.6% | 3 images 8% | 4 images 31.3% | 5 images 29% | 6+ images 22%' && card.widths.join() === '2,3.1,4.6,8,31.3,29,22', card);
+    ok('…the buckets at full credit stand out, the foot reads the average and whose standard it is, and it sits on screen', card.hi === 3 && /4\.6 images per product · 82\.3% carry 4\+/.test(card.foot) && /FeedSpark’s standard/.test(card.foot) &&
+      card.l >= 0 && card.r <= card.vw && card.t >= 0 && card.b <= card.vh, card);
+    await page.hover('.at-bar[data-deptip="detail_depth"]'); await page.waitForTimeout(60);
+    const dc = (await tipOf() || {}).foot || '';
+    ok('the details pop-up names what the feed carries today and gives examples by product type',
       /Carried today: sleeve length 3,100 · neckline 2,900 · fit 2,400 · fastening 600/.test(dc) && /dresses: dress length/.test(dc), dc);
-    // the explanation folds; the coloured legend holds one line (Ray, 8 Oct 2026)
-    const fold = await page.$$eval('.dep-card', (cs) => cs.map((c) => { const sp = Array.from(c.querySelectorAll('.dep-leg span')); const lg = c.querySelector('.dep-leg');
-      return { k: c.getAttribute('data-dep'), oneLine: sp.every((x) => Math.abs(x.offsetTop - sp[0].offsetTop) < 2), fits: lg.scrollWidth <= lg.clientWidth + 1, sw: lg.scrollWidth, cw: lg.clientWidth,
-        closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' }; }));
-    ok('each depth card keeps its coloured legend on ONE line, fitting the card, with the explanation folded behind "How it\'s scored · full credit at N+"',
-      fold.length === 3 && fold.every((f) => f.oneLine && f.fits && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
+    await page.mouse.move(5, 5); await page.waitForTimeout(60);
+    const gone = await tipOf();
+    await page.click('.at-bar[data-deptip="hl_depth"]'); await page.mouse.move(5, 5); await page.waitForTimeout(60);
+    const pinned = await tipOf();
+    await page.keyboard.press('Escape'); await page.waitForTimeout(30);
+    const esc = await tipOf();
+    ok('moving away closes it; a tap pins it (a phone has no hover) and Esc closes the pinned card', gone === null && pinned && pinned.pin && /Highlights per product/i.test(pinned.h4) && pinned.hi === 3 && esc === null, { gone, pinned: !!pinned, esc });
+    const fold = await page.$$eval('.dep-card', (cs) => cs.map((c) => ({ k: c.getAttribute('data-dep'), rows: c.querySelectorAll('.pr').length,
+      closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' })));
+    ok('the documents\' copy is the same rows, with the explanation folded behind "How it\'s scored · full credit at N+"',
+      fold.length === 3 && fold.every((f) => f.rows === 7 && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
     const pres = await Promise.all(['additional_image_link', 'product_highlight', 'product_detail'].map((k) => row(page, k)));
     ok('the presence rows stay (is it in the feed at all?) but say the depth row scores instead',
       pres.every((r) => r && r.byDepth && /^g:/.test(r.nm)), pres.map((r) => r && r.nm));
@@ -191,9 +204,10 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     const xp = await browser.newPage({ viewport: { width: 1200, height: 900 } });
     await xp.setContent(html.replace(/<link[^>]+fonts[^>]*>/g, ''));
     const xr = await xp.evaluate(() => ({ cards: Array.from(document.querySelectorAll('.dep-card')).filter((c) => c.offsetHeight > 0).map((c) => c.getAttribute('data-dep')),
-      rows: Array.from(document.querySelectorAll('.dep-nm')).map((n) => n.textContent), acts: document.querySelectorAll('[data-ask],[data-brief]').length }));
+      rows: Array.from(document.querySelectorAll('.dep-nm')).map((n) => n.textContent), acts: document.querySelectorAll('[data-ask],[data-brief]').length,
+      hooks: document.querySelectorAll('[data-deptip],.dptip').length, prs: Array.from(document.querySelectorAll('.dep-card')).map((c) => c.querySelectorAll('.pr').length) }));
     ok('the client\'s ⬇ HTML shows the three depth rows and their cards, with no AM buttons',
-      xr.cards.join() === 'img_depth,hl_depth,detail_depth' && xr.rows.length === 3 && xr.acts === 0, xr);
+      xr.cards.join() === 'img_depth,hl_depth,detail_depth' && xr.rows.length === 3 && xr.acts === 0 && xr.hooks === 0 && xr.prs.every((n) => n === 7), xr);
     await xp.close();
     await page.evaluate(() => document.body.classList.add('pdf'));
     const pv = await page.$$eval('.dep-card', (cs) => cs.filter((c) => getComputedStyle(c).display !== 'none' && c.offsetHeight > 0).length);
@@ -269,8 +283,14 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
   console.log('── on a phone');
   {
     const page = await open('Reiss', attrsWith(true), { width: 390, height: 844 });
-    const ov = await page.$$eval('.dep-card', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; }));
-    ok('the depth cards fit a 390px screen', ov.length === 3 && ov.every((x) => x[0] >= 0 && x[1] <= 390), ov);
+    const ov = [];
+    for (const k of ['img_depth', 'hl_depth', 'detail_depth']) {
+      await page.$eval('.at-bar[data-deptip="' + k + '"]', (e) => e.scrollIntoView({ block: 'center' }));
+      await page.$eval('.at-bar[data-deptip="' + k + '"]', (e) => e.click());   // a tap is a click to the page — the same handler pins it
+      await page.waitForTimeout(60);
+      ov.push(await page.evaluate(() => { const t = document.querySelector('.dptip'); if (!t || getComputedStyle(t).display === 'none') return null; const r = t.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom)]; }));
+    }
+    ok('on a 390px screen a tap opens each depth pop-up, inside the screen', ov.length === 3 && ov.every((x) => x && x[0] >= 0 && x[1] <= 390 && x[2] >= 0 && x[3] <= 844), ov);
     await page.close();
   }
 
