@@ -92,6 +92,18 @@ floor). Its price is Management's (`_g|test2`, `_g|test3`, `_g|test4` in `pricer
 it reads the DRAFT default (£800 / £1,140 / £1,440 a month) and the proposal is not client-safe. The client email,
 ⧉ Options and the talk track name it when it is on.
 
+**Tier 3 · AI-Refresher** (`go+ar+rf` — Ray, 8 Oct 2026: *"a tier-three product of AI-ready datasets, such as data
+fields like Q&A, keywords … refreshed on a monthly or quarterly basis, depending on the marketing event / customer
+questions / AI-visibility monitor / customer reviews"*). Tier 2's lines unchanged (one-off identical, the bundle % is
+Tier 2's), plus a recurring refresh: the ticked fields (Keywords · Q&A · Product highlights by default, Descriptions
+optional) regenerated over 25 / 50 / 100% of the catalogue each refresh, read against the ticked signals (marketing
+calendar moments · customer questions & search terms · AI-visibility monitor · customer reviews). Price per field =
+`_g|rfPct` (Management, DRAFT 50% until set — the guard holds the figure back) × that field's own generation price
+(Q&A at Spark AI's per-field rate) × the catalogue × β. A quarterly refresh is charged a quarter at a time and counted
+as a third of it in the monthly total, so the options compare on one footing. Not costed yet (out of both sides of
+the margin, like test packages); an unsized feed reads "not sized", never £0. Settings live in ⚙ Customise and travel
+with the saved option (`opts.popts.refresh`); `?pkg=t3` highlights the card.
+
 ---
 
 ## 4. Saving, options and buy-in
@@ -173,5 +185,7 @@ ASPL, London AM and the team each have a short list (below); the "Next" and "Lat
 6. **Team** to confirm delivery status per line × industry and `alwayson|*` in the roadmap grid — an unconfirmed
    line stays a blocker on client copy.
 7. **Grant `pricer-cost`** to whoever in Management should see cost and margin (👥 Access panel, an opt-in chip).
+8. **AI-Refresher price:** confirm `_g|rfPct` (draft 50% of each field's generation price, per refresh) and the
+   default fields (Keywords · Q&A · Highlights).
 8. **The Gmail Drafts bridge** does not carry a CC yet: ↗ Open in Gmail does. Adding it means the next
    `tools/gmail_push.gs` paste (a follow-up).

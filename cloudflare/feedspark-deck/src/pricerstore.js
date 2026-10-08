@@ -66,7 +66,8 @@ export const PKG_LINE_KEYS = ['title', 'keywords', 'ptype', 'gpc', 'attr_ai', 'a
   'highlights', 'details', 'desc', 'conv'];
 export const ROADMAP_KEYS = PKG_LINE_KEYS.concat(['alwayson']);
 export const ROADMAP_STATUS = ['live', 'pilot', 'building', 'planned'];
-export const PROPOSAL_OPTIONS = ['go', 'go+ar', 'ar'];
+// go+ar+rf = Tier 3 · AI-Refresher (Tier 2 plus the AI-ready fields refreshed monthly or quarterly)
+export const PROPOSAL_OPTIONS = ['go', 'go+ar', 'go+ar+rf', 'ar'];
 
 // the six stores: KV key, who reads / writes, how entries map onto a client (sharedstate rules),
 // and the most keys one PUT may carry
@@ -103,6 +104,8 @@ export const PRICE_G_FIELDS = {
   blockGBP: num(1, 10000, 2), blockH: num(1, 24, 2), tiers: { t: 'tiers' },
   bundlePct: num(0, 50, 2), reusePct: num(0, 100, 2), floorMonthly: num(0, 100000, 2), pkgVersion: str(20),
   test2: num(0, 100000, 2), test3: num(0, 100000, 2), test4: num(0, 100000, 2),
+  // AI-Refresher: a refresh costs this % of each field's generation price (Tier 3)
+  rfPct: num(0, 100, 2),
 };
 // pricercost: `_c|<field>` only
 export const COST_FIELDS = {
@@ -338,7 +341,7 @@ function cleanSnapshot(v, ctx) {
   if (!(Number.isInteger(n) && n >= 1 && n <= 6)) return { ok: false, why: 'prop.n must be an option number from 1 to 6' };
   const label = cleanStr(v.prop.label == null ? '' : v.prop.label, 60, 'prop.label');
   if (!label.ok) return label;
-  if (PROPOSAL_OPTIONS.indexOf(v.option) < 0) return { ok: false, why: 'option must be go, go+ar or ar' };
+  if (PROPOSAL_OPTIONS.indexOf(v.option) < 0) return { ok: false, why: 'option must be go, go+ar, go+ar+rf or ar' };
   const pkgVersion = cleanStr(v.pkgVersion == null ? '' : v.pkgVersion, 20, 'pkgVersion');
   if (!pkgVersion.ok) return pkgVersion;
   for (const f of ['audit', 'rates', 'pq']) { if (!isObj(v[f])) return { ok: false, why: f + ' must be an object (the snapshot the page renders)' }; }

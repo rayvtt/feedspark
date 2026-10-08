@@ -488,6 +488,10 @@ window.addEventListener('load',restore);
   .tseg button:first-child{border-left:0}
   .tseg button.on{background:var(--navy);color:#fff}
   .tst-l{display:block;margin-top:2px}
+  .rf-cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin:6px 0}.rf-cols .tog{display:flex}
+  .cu-sm{display:block;font-size:11.5px;color:var(--ink-2);margin:2px 0 3px}
+  .tk-c.rf-c b{color:var(--orange-ink)}
+  @media (max-width:760px){.rf-cols{grid-template-columns:1fr}}
   .cust h4.cu-h2{margin-top:14px}
   /* 3 · the debrief kit */
   .db-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
@@ -1590,7 +1594,7 @@ var SV={client:'',mode:lsGet('fcc-svc-src','live'),mkts:[],allMkts:[],lang:{},ty
 // set for one client (retainer hours, monitoring absorbed, a test package, a language group …) reprices the next
 function custDefaults(){
   SV.lineOpts={};SV.aimSources=null;SV.targets={hlTarget:6,descTarget:500,ptMinDepth:3};
-  SV.popts={absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false,tests:0};
+  SV.popts={absorbMonitoring:false,retainerH:0,newBasis:'measured',includeContracted:false,mechanism:'monthly',offerAr:false,tests:0,refresh:{cadence:'monthly',share:100}};
   SV.hlSrc={desc:true,feed:true,pdp:false,reviews:false};
 }
 custDefaults();
@@ -1723,7 +1727,11 @@ function fileAudit(){
   var F=SV.file;if(!F||!F.res)return null;
   return E.auditMerge(null,{pc:F.res.pc,nc:F.res.nc,xc:F.res.xc,qs:F.res.qs,src:'file',industry:F.industry,client:F.name||'Prospect',mkt:F.mkt,PR:PROF},LG,AR,F.t);
 }
-function popts(){var o={};Object.keys(SV.popts).forEach(function(k){o[k]=SV.popts[k]});return o}
+// the refresh's field / signal lists are filled from the engine the first time they are read (custDefaults runs before it loads)
+function rfState(){var r=SV.popts.refresh=SV.popts.refresh||{cadence:'monthly',share:100};
+  if(!Array.isArray(r.fields))r.fields=(E&&E.REFRESH_DEFAULT_FIELDS||[]).slice();
+  if(!Array.isArray(r.signals))r.signals=(E&&E.REFRESH_SIGNALS||[]).map(function(x){return x.id});return r}
+function popts(){if(E)rfState();var o={};Object.keys(SV.popts).forEach(function(k){o[k]=SV.popts[k]});if(o.refresh)o.refresh=JSON.parse(JSON.stringify(o.refresh));return o}
 function svBuild(){
   var c=curClient(),list=[];
   if(SV.mode==='file'){var fa=fileAudit();if(fa)list=[{mkt:fa.mkt,audit:fa}]}
@@ -1734,10 +1742,10 @@ function svBuild(){
   var spec={client:c,markets:list.map(function(x){return {mkt:x.mkt,audit:x.audit,lang:SV.lang[x.mkt]||E.langOf(x.mkt)}}),
     rates:composed(),aimRates:aimRaw(),aimSources:SV.aimSources||undefined,lineOpts:SV.lineOpts,roadmap:RMAP.data,actuals:ACTUALS,
     contracted:contracted,targets:SV.targets,opts:popts()};
-  ['go','go+ar','ar'].forEach(function(o){PQ[o]=E.packageQuote(Object.assign({},spec,{option:o}),LG)});
+  ['go','go+ar','go+ar+rf','ar'].forEach(function(o){PQ[o]=E.packageQuote(Object.assign({},spec,{option:o}),LG)});
 }
 function arEligible(){var g=PQ.go;return !!g&&(SV.popts.offerAr||(g.perMarket.length>0&&g.perMarket.every(function(m){return m.projected&&m.projected.met})))}
-function shownOpts(){return PQ.go?(['go','go+ar'].concat(arEligible()?['ar']:[])):[]}
+function shownOpts(){return PQ.go?(['go','go+ar'].concat(PQ['go+ar+rf']?['go+ar+rf']:[],arEligible()?['ar']:[])):[]}
 
 /* ---- render: throttled, every section from the same build; a section being typed in is left alone ---- */
 var SVR=null;
@@ -1883,7 +1891,7 @@ function renderSteps(){
       +L.map(function(x){return '<div class="stp-m"><span class="mk">'+esc(x.mkt.toUpperCase())+'</span><span class="mv">'+s[2](x.audit,x.mkt)+'</span></div>'}).join('')+'</li>'});
   // 8 — the packages, in one line each
   h.push('<li class="stp-i"><div class="stp-h"><span class="sn">8</span><div><h4>Packages</h4><div class="stp-s">priced on the products that need each line</div></div></div>'
-    +shownOpts().map(function(o){var q=PQ[o];return '<div class="stp-m"><span class="mk">'+(o==='go'?'T1':o==='go+ar'?'T2':'AR')+'</span><span class="mv">'+headline(q)+'</span></div>'}).join('')+'</li>');
+    +shownOpts().map(function(o){var q=PQ[o];return '<div class="stp-m"><span class="mk">'+(o==='go'?'T1':o==='go+ar'?'T2':o==='go+ar+rf'?'T3':'AR')+'</span><span class="mv">'+headline(q)+'</span></div>'}).join('')+'</li>');
   host.innerHTML=h.join('');
 }
 // does any priced line put money on the option? — when none does, its £0 is a GAP (nothing could be sized or
@@ -1964,7 +1972,7 @@ function tkBar(now,after){
 }
 function tierCard(o){
   var q=PQ[o],safe=q.clientSafe;
-  var nShown=o==='go'?'1':o==='go+ar'?'2':'A';
+  var nShown=o==='go'?'1':o==='go+ar'?'2':o==='go+ar+rf'?'3':'A';
   var h='<div class="tier'+(SV.hlPkg===o?' hl':'')+'" data-opt="'+esc(o)+'" data-oneoff="'+q.oneOff.total+'" data-monthly="'+q.monthly.total+'" data-safe="'+(safe?1:0)+'">';
   h+='<div class="tier-h"><span class="tier-n">'+nShown+'</span><h3>'+esc(q.label)+((q.sub||E.OPTION_SUB&&E.OPTION_SUB[o])?'<span class="tier-sub">'+esc(q.sub||E.OPTION_SUB[o])+'</span>':'')+'</h3>'
     +(safe?'<span class="pill good" title="No blocker stands behind any figure — client copy shows the numbers">client-safe</span>'
@@ -1981,6 +1989,13 @@ function tierCard(o){
   // the bundle names Tier 1 once rather than repeating its chips, then lists what it adds
   var inT1=o==='go+ar'&&get.some(function(l){return l.pkg==='go'});
   if(inT1)get=get.filter(function(l){return l.pkg!=='go'});
+  // Tier 3 names Tier 2 once, then lists what the refresh adds: the fields, how often, what it reads
+  var F=q.refresh;
+  if(o==='go+ar+rf'){get=[];
+    h+='<div class="tk-get rf-get"><span class="tk-c tk-all" title="Every Tier 2 line is in this tier — see the breakdown">✓ Everything in Tier 2, plus</span>'
+      +(F&&F.status!=='off'?'<span class="tk-c rf-c" title="'+esc(F.fields.map(function(f){return f.label+' — '+f.why}).join('\n'))+'"><b>↻ '+esc(F.cadLabel)+'</b> '+esc(F.fields.map(function(f){return f.label}).join(' · '))+'</span>'
+        +'<span class="tk-c rf-c" title="What each refresh is read against"><b>'+F.signals.length+'</b> signal'+(F.signals.length===1?'':'s')+(F.share<100?' · '+F.share+'% of products':'')+'</span>'
+        :'<span class="tk-c st-unknown">no field ticked — open ⚙ Customise</span>')+'</div>'}
   if(get.length||inT1)h+='<div class="tk-get">'+(inT1?'<span class="tk-c tk-all" title="Every Tier 1 line is in this bundle — see the breakdown">✓ Everything in Tier 1, plus</span>':'')+get.map(function(l){var n=l.pricedNeed&&l.status==='priced'?l.pricedNeed.n:(l.need&&l.need.n);
     var tag=l.status==='unpriced'?'£ tbc':l.status==='unknown'?'to size':l.status==='coming'?'coming':'';
     return '<span class="tk-c st-'+l.status+'" title="'+esc(l.label+(l.reason?' — '+l.reason:''))+'"><b>'+(n!=null&&l.status!=='unknown'?fmt(Math.round(n)):'—')+'</b> '+esc(TK_GET[l.key])+(tag?' <i>'+tag+'</i>':'')+'</span>'}).join('')+'</div>';
@@ -1988,6 +2003,9 @@ function tierCard(o){
   var oo=q.oneOff,mo=q.monthly,sz=sized(q),T=q.tests||{n:0,status:'off'};
   var tLine=!T.n?'':T.status==='priced'?'<span class="tst-l">+ test package '+T.n+' tests '+GBP(T.price)+(T.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
     :'<span class="tst-l">+ test package '+T.n+' tests — <span class="nm">price not set</span></span>';
+  var rLine=!F||F.status==='off'?'':F.status==='priced'?'<span class="tst-l rf-l">incl. AI-Refresher '+GBP(F.perRefresh)+' '+esc(F.per)+(F.cadence==='quarterly'?' (≈'+GBP(F.monthlyEq)+'/mo)':'')+(F.draft?' <span class="est est-bound" title="Draft price — Management confirms it in the rate card">draft</span>':'')+'</span>'
+    :'<span class="tst-l rf-l">+ AI-Refresher — <span class="nm">'+(F.status==='unknown'?'not sized':'price not set')+'</span></span>';
+  if(rLine)tLine=(tLine?tLine+'<br>':'')+rLine;
   var noSz='<div class="mv nm">not sized — see the breakdown</div>';
   h+='<div class="money"><div class="mb"><div class="ml">One-off · ex VAT</div>'+(sz?'<div class="mv">'+GBP(oo.total)+'</div><div class="mx">set-up + content, paid once</div>':noSz)+'</div>'
     +'<div class="mb"><div class="ml">Monthly · ex VAT</div>'+(sz?'<div class="mv">'+GBP(mo.total)+'</div><div class="mx">upkeep + every new product'+(tLine?'<br>'+tLine:'')+'</div>':noSz+(tLine?'<div class="mx">'+tLine+'</div>':''))+'</div></div>';
@@ -2011,6 +2029,11 @@ function tierCard(o){
     +(sz?'One-off: set-up '+oo.blocks+' × '+GBP(oo.blockGBP)+' = '+GBP(oo.blockCost)+' ('+fmt(Math.round(oo.H*10)/10)+'h'+(oo.retainerH?' − '+oo.retainerH+'h retainer':'')+') · generation '+GBP(oo.gen)+(oo.bundleDisc?' − bundle '+GBP(oo.bundleDisc):'')+(oo.conv?' · Spark AI set-up '+GBP(oo.conv):'')
       +'<br>Monthly: monitoring '+(mo.absorbed?'absorbed':GBP(mo.monCost)+' ('+mo.monH+'h)')+' · new products '+(mo.overlapMkts&&mo.overlapMkts.length&&mo.overlapMkts.length===q.perMarket.length?'covered — '+esc(mo.overlap):GBP(mo.gen)+(mo.floorApplied?' → floor '+GBP(mo.floor):'')+(mo.overlap?' · '+esc(mo.overlap):''))+(mo.conv?' · Spark AI '+GBP(mo.conv)+'/mo':'')
       :'no line could be sized or priced yet')+'</div>';
+  if(F&&F.status!=='off')h+='<div class="tk-sub">AI-Refresher · '+esc(F.cadLabel.toLowerCase())+'</div><div class="mx tk-bd rf-bd">'
+    +(F.status==='priced'?F.fields.map(function(f){return esc(f.label)+' '+GBP(f.perProduct)+' a product ('+F.pct+'% of '+GBP(f.unit)+')'}).join(' · ')
+      +'<br>'+(F.products!=null?fmt(F.products)+' products':'')+' a refresh × volume factor = '+GBP(F.perRefresh)+' '+esc(F.per)+(F.cadence==='quarterly'?' → '+GBP(F.monthlyEq)+' a month in the monthly total':'')
+      :F.status==='unknown'?'not sized — count the feed first':'a field has no generation price yet')
+    +'<br>Read against: '+esc(F.signals.map(function(id){var x=(E.REFRESH_SIGNALS||[]).filter(function(z){return z.id===id})[0];return x?x.label:id}).join(' · ')||'no signal ticked')+'</div>';
   h+='<div class="rates-l">'+esc(oo.rateLabel)+(q.conv?' · conversational '+esc(q.conv.rateLabel)+(q.conv.rangeLabel?', '+esc(q.conv.rangeLabel):''):'')+' · volume factor β '+q.beta.toFixed(3)+'</div>';
   h+='<div class="mx">'+(newN>0?'About '+fmt(newN)+' new products a month (at least — products still live). ':'')+(ao.live?'New products are picked up on arrival.':'Today: '+esc({weekly:'a weekly',fortnightly:'a fortnightly',monthly:'a monthly'}[ao.mechanism]||'a monthly')+' ASPL run the AM picks · target: on arrival once routing ships')+'</div>';
   h+='<div class="rc-scroll"><table class="lines"><thead><tr><th>Line</th><th>Products needing it</th><th class="num">£ one-off</th><th>Status</th><th></th></tr></thead><tbody>'
@@ -2395,7 +2418,24 @@ function renderCust(){
       +'<p class="cu-n">'+esc(E.TEST_WHAT?E.TEST_WHAT.charAt(0).toUpperCase()+E.TEST_WHAT.slice(1):'')+'</p>'
       +'<p class="cu-n">'+(E.TEST_COUNTS||[2,3,4]).map(function(n){var R=composed().g,v=R.tests&&R.tests[n],src=R.src.tests&&R.tests?R.src.tests[n]:'unset';
         return n+' tests '+(v==null?'not priced':GBP(v)+'/mo'+(src==='ops'?'':' (draft)'))}).join(' · ')+' — set by Management.</p>'
+      +rfCust()
       +'<button type="button" class="btn" data-act="custreset">↺ Reset</button></div>';
+}
+
+// Tier 3 · AI-Refresher: how often, which fields, what each refresh reads, how much of the catalogue
+function rfCust(){
+  var r=rfState(),g=composed().g,pct=g.rfPct,own=g.src&&g.src.rfPct==='ops';
+  return '<h4 class="cu-h2">Tier 3 · AI-Refresher</h4>'
+    +'<div class="cu-l"><span>Refresh</span><span class="tseg" role="group" aria-label="AI-Refresher — how often">'+Object.keys(E.REFRESH_CADENCE||{}).map(function(k){var on=r.cadence===k;
+      return '<button type="button" data-rfcad="'+k+'" class="'+(on?'on':'')+'" aria-pressed="'+(on?'true':'false')+'">'+esc(E.REFRESH_CADENCE[k].label)+'</button>'}).join('')+'</span></div>'
+    +'<div class="cu-l"><span>Products each refresh</span><span class="tseg" role="group" aria-label="AI-Refresher — share of the catalogue">'+(E.REFRESH_SHARES||[]).map(function(n){var on=+r.share===n;
+      return '<button type="button" data-rfshare="'+n+'" class="'+(on?'on':'')+'" aria-pressed="'+(on?'true':'false')+'">'+n+'%</button>'}).join('')+'</span></div>'
+    +'<div class="rf-cols"><div><b class="cu-sm">Fields refreshed</b>'+(E.REFRESH_FIELDS||[]).map(function(f){
+      return '<label class="tog" title="'+esc(f.why)+'"><input type="checkbox" data-rff="'+f.id+'"'+((r.fields||[]).indexOf(f.id)>=0?' checked':'')+'> '+esc(f.label)+'</label>'}).join('')+'</div>'
+    +'<div><b class="cu-sm">Read against</b>'+(E.REFRESH_SIGNALS||[]).map(function(x){
+      return '<label class="tog"><input type="checkbox" data-rfs="'+x.id+'"'+((r.signals||[]).indexOf(x.id)>=0?' checked':'')+'> '+esc(x.label)+'</label>'}).join('')+'</div></div>'
+    +'<p class="cu-n">'+esc(E.REFRESH_WHAT?E.REFRESH_WHAT.charAt(0).toUpperCase()+E.REFRESH_WHAT.slice(1):'')+'</p>'
+    +'<p class="cu-n">Each refresh is priced at '+(pct!=null?pct+'%':'—')+' of each field\'s generation price'+(own?'':' (draft)')+' — set by Management. A quarterly refresh counts a third of its price in the monthly total.</p>';
 }
 
 /* ---- 3. the debrief kit ---- */
@@ -2628,6 +2668,10 @@ function renderRateCard(){
     gh+='<div class="gsec"><b>Test packages (£ a month, ex VAT)</b>'+(E.TEST_COUNTS||[2,3,4]).map(function(n){var own=gts[n]==='ops';
       return '<label class="gfld" title="'+esc(own?stampT(gtb[n],'ops'):'draft default '+(gt[n]!=null?'£'+gt[n]:'')+' — not yet confirmed')+'"><span>'+n+' tests a month £</span><input class="fld sm" type="number" min="0" step="10" data-gs="price" data-k="_g|test'+n+'" value="'+(own?esc(gt[n]):'')+'" placeholder="'+(gt[n]!=null?'draft '+gt[n]:'not set')+'"></label>'}).join('')
       +'<span class="nm">'+esc(E.TEST_WHAT?E.TEST_WHAT.charAt(0).toUpperCase()+E.TEST_WHAT.slice(1):'')+'</span></div>';
+    // Tier 3 · AI-Refresher: a refresh costs this share of each field's generation price; unset = the draft default
+    var rOwn=g.src.rfPct==='ops';
+    gh+='<div class="gsec"><b>Tier 3 · AI-Refresher</b><label class="gfld" title="'+esc(rOwn?stampT(g.by.rfPct,'ops'):'draft default '+(E.REFRESH_PCT_DEFAULT!=null?E.REFRESH_PCT_DEFAULT+'%':'')+' — not yet confirmed')+'"><span>Refresh % of generation price</span><input class="fld sm" type="number" min="0" max="100" step="5" data-gs="price" data-k="_g|rfPct" value="'+(rOwn?esc(g.rfPct):'')+'" placeholder="draft '+(E.REFRESH_PCT_DEFAULT!=null?E.REFRESH_PCT_DEFAULT:'')+'"></label>'
+      +'<span class="nm">A refresh re-generates the ticked fields on a share of the catalogue; quarterly counts a third of its price a month.</span></div>';
     var cv=function(k){var x=COST.data['_c|'+k];return x&&typeof x==='object'?x.v:x},cs=function(k){var x=COST.data['_c|'+k];return x&&typeof x==='object'?{by:x.by,at:x.at}:null};
     gh+='<div class="gsec"><b>Cost (Management only — never sent to an AM signin)</b>'
       +gIn('cost','_c|rateAspl','ASPL cost £ / h',cv('rateAspl'),cs('rateAspl'),cv('rateAspl')!=null?'ops':'unset',1)+gIn('cost','_c|rateAm','London AM cost £ / h',cv('rateAm'),cs('rateAm'),cv('rateAm')!=null?'ops':'unset',1)
@@ -2769,7 +2813,7 @@ function loadOption(q){
   if(q.client!==SV.client&&SV.mode!=='file')svLoadClient(q.client,q.markets||[]);
   custDefaults();SV.lang={};
   if(o.targets)SV.targets=Object.assign({},SV.targets,o.targets);
-  if(o.popts)Object.keys(o.popts).forEach(function(k){SV.popts[k]=o.popts[k]});
+  if(o.popts)Object.keys(o.popts).forEach(function(k){SV.popts[k]=o.popts[k]&&typeof o.popts[k]==='object'?JSON.parse(JSON.stringify(o.popts[k])):o.popts[k]});
   if(o.lineOpts)SV.lineOpts=JSON.parse(JSON.stringify(o.lineOpts));
   if(o.lang)Object.keys(o.lang).forEach(function(k){SV.lang[k]=o.lang[k]});
   if(o.hlSrc)SV.hlSrc=Object.assign({},SV.hlSrc,o.hlSrc);
@@ -2859,12 +2903,20 @@ function wire(){
   // the test-package segmented control (a button, so a click — guarded on its own data attribute)
   $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-tests]');if(!b)return;
     var n=+b.getAttribute('data-tests');SV.popts.tests=(E.TEST_COUNTS||[2,3,4]).indexOf(n)>=0?n:0;svRender()});
+  // the AI-Refresher segmented controls (cadence, share) — each guarded on its own data attribute
+  $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-rfcad],button[data-rfshare]');if(!b)return;
+    var r=rfState();
+    if(b.hasAttribute('data-rfcad')){var k=b.getAttribute('data-rfcad');if(E.REFRESH_CADENCE&&E.REFRESH_CADENCE[k])r.cadence=k}
+    else{var n=+b.getAttribute('data-rfshare');if((E.REFRESH_SHARES||[]).indexOf(n)>=0)r.share=n}
+    svRender()});
   $('#svc-cust').addEventListener('change',function(e){var t=e.target;
     if(t.hasAttribute('data-lon')){var k=t.getAttribute('data-lon'),lo=SV.lineOpts[k]=SV.lineOpts[k]||{};lo.on=t.checked}
     else if(t.hasAttribute('data-lsc')){var k2=t.getAttribute('data-lsc');(SV.lineOpts[k2]=SV.lineOpts[k2]||{}).scope=t.value}
     else if(t.hasAttribute('data-route')){var cur=(PQ['go+ar']&&PQ['go+ar'].conv&&PQ['go+ar'].conv.sources)||E.aimDefaultSources(SV.audits.map(function(x){return x.audit}));
       SV.aimSources=Object.assign({},cur,SV.aimSources||{});SV.aimSources[t.getAttribute('data-route')]=t.value}
     else if(t.hasAttribute('data-hl')){SV.hlSrc[t.getAttribute('data-hl')]=t.checked}
+    else if(t.hasAttribute('data-rff')||t.hasAttribute('data-rfs')){var r=rfState(),key=t.hasAttribute('data-rff')?'fields':'signals',
+      id=t.getAttribute(key==='fields'?'data-rff':'data-rfs'),L=(r[key]||[]).filter(function(x){return x!==id});if(t.checked)L.push(id);r[key]=L}
     else if(t.hasAttribute('data-cb')){SV.popts[t.getAttribute('data-cb')]=t.checked}
     else if(t.hasAttribute('data-c')){var f=t.getAttribute('data-c');
       if(f in SV.targets)SV.targets[f]=+t.value;else if(f==='retainerH')SV.popts.retainerH=Math.max(0,+t.value||0);else SV.popts[f]=t.value}
@@ -3001,10 +3053,10 @@ function boot(){
     $('#svc-fmkt').innerHTML=Object.keys(E.MKT_LANG).map(function(m){return '<option value="'+m+'"'+(m==='gb'?' selected':'')+'>'+m.toUpperCase()+'</option>'}).join('');
     // ?pkg=go+ar reads back as "go ar" (a '+' in a query string is a space) — both spellings, and t1 / t2 / ar, land
     var list=clientList(),pre=qp('client'),mk=qp('market').toLowerCase().split(',').filter(Boolean),pkg=qp('pkg').trim().toLowerCase().replace(/\s+/g,'+');
-    pkg={t1:'go',t2:'go+ar',tier1:'go',tier2:'go+ar'}[pkg]||pkg;
+    pkg={t1:'go',t2:'go+ar',t3:'go+ar+rf',tier1:'go',tier2:'go+ar',tier3:'go+ar+rf',refresher:'go+ar+rf'}[pkg]||pkg;
     $('#brand').innerHTML=list.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
     var c=list.indexOf(pre)>=0?pre:(list.indexOf(lsGet('fcc-svc-client',''))>=0?lsGet('fcc-svc-client',''):(list.filter(function(x){return marketsOf(x).length})[0]||list[0]||''));
-    if(['go','go+ar','ar'].indexOf(pkg)>=0)SV.hlPkg=pkg;
+    if(['go','go+ar','go+ar+rf','ar'].indexOf(pkg)>=0)SV.hlPkg=pkg;
     SV.boot=true;wire();
     if(c)svLoadClient(c,mk);else svRender();
     if(SV.hlPkg)setTimeout(function(){var t=document.querySelector('.tier[data-opt="'+SV.hlPkg+'"]');if(t)t.scrollIntoView({block:'center'})},600);

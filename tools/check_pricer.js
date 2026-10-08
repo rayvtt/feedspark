@@ -178,7 +178,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       return { n: fresh.length, ids: fresh.map((r) => r.prop.id), refs: fresh.map((r) => r.ref), opts: fresh.map((r) => r.option), safe: fresh.map((r) => r.clientSafe),
         groups: document.querySelectorAll('#sp-list .pg').length, keep: Object.keys(put).indexOf('onorth00001') >= 0 };
     });
-    ok('💾 Save as proposal writes every shown tier under ONE proposal id, with SVC references', saved.n === 2 && saved.ids[0] === saved.ids[1] && saved.refs.every((r) => /^SVC\d{6}(-\d+)?$/.test(r)) && saved.opts.join() === 'go,go+ar', saved);
+    ok('💾 Save as proposal writes every shown tier (Tier 1, 2 and 3) under ONE proposal id, with SVC references', saved.n === 3 && saved.ids.every((x) => x === saved.ids[0]) && saved.refs.every((r) => /^SVC\d{6}(-\d+)?$/.test(r)) && saved.opts.join() === 'go,go+ar,go+ar+rf', saved);
     ok('the save keeps every existing option (a whole-map save never drops one) and the list shows the new proposal', saved.keep && saved.groups >= 2, saved);
     // the rate card: Management is there for the owner
     const mg = await p.evaluate(() => { const b2 = document.querySelector('#rc-tabs button[data-tab="mgmt"]'); return b2 && !b2.hidden && getComputedStyle(b2).display !== 'none'; });
@@ -232,6 +232,14 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       return { h, chips, bars: t.querySelectorAll('.proj .tk-bar').length, folded: !d.open && !!d.querySelector('table.lines') && !!d.querySelector('.rates-l'), mv: t.querySelectorAll('.money .mv').length,
         words: t.innerText.replace(d.innerText, '').split(/\s+/).filter(Boolean).length }; });
     ok('a tier card leads with a score bar, what-you-get chips and two prices, the line table and rates folded under See the breakdown', bite.bars >= 1 && bite.chips.length >= 4 && /^✓ Everything in Tier 1/.test(bite.chips[0]) && bite.chips.slice(1).every((c) => /^(—|[\d,]+) /.test(c)) && bite.folded && bite.mv === 2 && bite.words < 120, bite);
+    // C — Tier 3 · AI-Refresher: Tier 2 plus the AI-ready fields refreshed monthly or quarterly
+    const t3 = await p.evaluate(() => { const t = document.querySelector('.tier[data-opt="go+ar+rf"]'), X = window.__PZX.PQ; if (!t) return null; const q = X['go+ar+rf'];
+      return { name: t.querySelector('h3').innerText, n: t.querySelector('.tier-n').textContent, chips: Array.from(t.querySelectorAll('.tk-get .tk-c')).map((c) => c.textContent),
+        money: t.querySelector('.money').innerText, F: q.refresh, m2: X['go+ar'].monthly.total, m3: q.monthly.total, o2: X['go+ar'].oneOff.total, o3: q.oneOff.total,
+        bd: (t.querySelector('.rf-bd') || {}).textContent || '' }; });
+    ok('Tier 3 · AI-Refresher is drawn after Tier 2: "Everything in Tier 2, plus" the refresh chips, the one-off unchanged, the refresh inside the monthly',
+      t3 && /^Tier 3 · AI-Refresher/.test(t3.name) && t3.n === '3' && /^✓ Everything in Tier 2/.test(t3.chips[0]) && /Monthly/.test(t3.chips[1]) && /Keywords/.test(t3.chips[1])
+      && t3.o3 === t3.o2 && Math.abs(t3.m3 - t3.m2 - t3.F.monthlyEq) < 0.01 && /AI-Refresher/.test(t3.money) && /Read against/.test(t3.bd), t3);
     // 16 — the client contact
     ok('the debrief opens with Northwind\'s remembered contact', (await p.inputValue('#db-to')) === 'buyer@northwind.invalid');
     // 21 — an edited email survives a Customise change, and says the figures moved
@@ -269,12 +277,26 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     await p.evaluate(() => { const b2 = document.querySelector('#rc-tabs button[data-tab="mgmt"]'); b2.click(); });
     await p.waitForSelector('#rc-g input[data-k="_g|test3"]');
     ok('the Management tab carries the three test-package prices, the draft shown as a placeholder', await p.evaluate(() => ['2', '3', '4'].every((n) => !!document.querySelector('#rc-g input[data-k="_g|test' + n + '"]')) && (document.querySelector('#rc-g input[data-k="_g|test3"]') || {}).placeholder === 'draft 1140' && (document.querySelector('#rc-g input[data-k="_g|test3"]') || {}).value === ''));
+    ok('the Management tab carries the AI-Refresher % — the draft 50 shown as a placeholder', await p.evaluate(() => { const x = document.querySelector('#rc-g input[data-k="_g|rfPct"]'); return !!x && x.placeholder === 'draft 50' && x.value === ''; }));
     await p.fill('#rc-g input[data-k="_g|test3"]', '999');
     await p.press('#rc-g input[data-k="_g|test3"]', 'Tab');
     await p.waitForFunction(() => window.__PZX.PQ.go.tests.price === 999, null, { timeout: 5000 }).catch(() => {});
     const tB2 = await p.evaluate(() => ({ t: window.__PZX.PQ.go.tests || {}, put: (window.__pzPuts || []).filter((x) => x.name === 'price').pop() }));
     ok('Management\'s £999 for 3 tests is saved to _g|test3 and priced without the draft flag', tB2.t.price === 999 && !tB2.t.draft && tB2.put && tB2.put.body['_g|test3'] && tB2.put.body['_g|test3'].v === 999, tB2.t);
     await p.click('#svc-cust button[data-tests="0"]');
+    // C — the AI-Refresher controls: quarterly counts a third a month; a field left out comes off the price; Management's % cell
+    const rf0 = await p.evaluate(() => window.__PZX.PQ['go+ar+rf'].refresh);
+    await p.click('#svc-cust button[data-rfcad="quarterly"]');
+    await p.waitForTimeout(250);
+    const rfQ = await p.evaluate(() => ({ F: window.__PZX.PQ['go+ar+rf'].refresh, on: document.querySelector('#svc-cust button[data-rfcad="quarterly"]').getAttribute('aria-pressed'), money: document.querySelector('.tier[data-opt="go+ar+rf"] .money').innerText }));
+    ok('Customise → Quarterly: the same refresh, counted as a third of it a month', rfQ.F.cadence === 'quarterly' && rfQ.on === 'true' && (rf0.status !== 'priced' || (Math.abs(rfQ.F.perRefresh - rf0.perRefresh) < 0.01 && Math.abs(rfQ.F.monthlyEq - rf0.perRefresh / 3) < 0.02 && /a quarter/.test(rfQ.money))), { rf0, rfQ });
+    await p.uncheck('#svc-cust input[data-rff="qa"]');
+    await p.waitForTimeout(250);
+    const rfF = await p.evaluate(() => window.__PZX.PQ['go+ar+rf'].refresh);
+    ok('unticking Q&A takes it off the refresh', rfF.fields.map((f) => f.id).indexOf('qa') < 0 && rfF.fields.length === rf0.fields.length - 1, rfF.fields.map((f) => f.id));
+    await p.click('#svc-cust button[data-rfcad="monthly"]');
+    await p.check('#svc-cust input[data-rff="qa"]');
+    await p.waitForTimeout(150);
     // 25 — ↺ Reset covers the highlight sources
     await p.check('#svc-cust input[data-hl="reviews"]');
     await p.waitForTimeout(150);
