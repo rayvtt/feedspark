@@ -12609,6 +12609,18 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "sub.classList.add('sec-sub-x')",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: every bank item placed in a tier is a row in the What-changes audit (card + coverage), marked with its tier",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function pvBank(){return E.bankOf(BANK.data).filter(function(b){return b.custom&&b.pkg!=='off'})}",
+      "pr": 0
+    },
+    {
+      "name": "Pricer check: the bank in the audit — Tier 2 services + Tier 3 items each have a row, on in the right tiers",
+      "file": "tools/check_pricer.js",
+      "pattern": "the two Tier 2 services and both Tier 3 items each have a row on the product card and in the coverage column",
+      "pr": 0
     }
   ]
 }

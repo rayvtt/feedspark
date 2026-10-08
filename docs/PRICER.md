@@ -232,3 +232,17 @@ ASPL, London AM and the team each have a short list (below); the "Next" and "Lat
    default fields (Keywords · Q&A · Highlights).
 8. **The Gmail Drafts bridge** does not carry a CC yet: ↗ Open in Gmail does. Adding it means the next
    `tools/gmail_push.gs` paste (a follow-up).
+
+
+### Section heads and the bank in the audit (8 Oct 2026)
+
+- **Every section head is a tile** (Ray: "redesign section tab so it looks better … i dont think these free floating
+  sentences"): a white tile with the title, one quiet line saying what is inside and a round chevron at the right; the
+  whole tile is the toggle. The section's longer explainer, which used to float under the heading, is that line's
+  tooltip. On a phone the tile keeps its frame and drops the line.
+- **The bank shows in the audit** (Ray: "add stock range completion, restock alerts, image type, AI visibility report
+  on Tier 3 too (if it's added mentioned in bank, it should show in this audit)"): every optimisation the team added to
+  the bank and placed in a tier is a row under **FeedSpark services** on the product card and in the coverage column of
+  *What changes in the feed*. Today none run; each tier switches on its own items and the tiers below it, marked
+  ✦ T2 / ✦ T3 ("run by Tier 3"), and a tier that does not carry one says which tier adds it. A service writes no feed
+  field, so its row says what it does instead of drawing a share of products.
