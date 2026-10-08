@@ -469,6 +469,11 @@ if node tools/test_labelguard.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ Label Guard harness FAILED — see node tools/test_labelguard.mjs"; FAIL=1
 fi
+if node tools/test_clstrategy.mjs >/dev/null 2>&1; then
+  echo "   ✓ custom label strategy: values read as KPI strategies, four stated parts, dynamism never a zero"
+else
+  echo "   ✗ custom label strategy harness FAILED — see node tools/test_clstrategy.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3z/7: text modules (every served engine bundles as a string)"
 if node tools/check_textmodules.js >/dev/null 2>&1; then

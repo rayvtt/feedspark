@@ -114,23 +114,31 @@ const QUALITY = {
     const after = (a, b) => { const x = document.getElementById(a), y = document.getElementById(b); return !!(x && y && (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING)); };
     const kp = pp ? Array.from(pp.querySelectorAll('.ap-k div')).map((d) => d.innerText.replace(/\s+/g, ' ')) : [];
     return { has: !!pp && pp.innerHTML.length > 0, shown: pp && getComputedStyle(pp).display !== 'none', lanes, kp,
-      flow: pp ? Array.from(pp.querySelectorAll('.ap-flow .st')).map((e) => e.innerText) : [],
+      flow: pp ? pp.querySelectorAll('.ap-flow').length : -1, more: pp ? pp.querySelectorAll('.ap-more').length : -1,
+      note: pp ? pp.querySelectorAll('.pm-note').length : -1,
       last: after('print-mkts', 'print-plan') && after('print-plan', 'print-foot') };
   });
   ok('the plan is in the file and shows, after every market\'s scores and before the footer', r.has && r.shown && r.last, { has: r.has, shown: r.shown, last: r.last });
-  ok('it reads as Workflow: the stage path from agreed to confirmed on the next scan', r.flow.length === 5 && /Agreed/.test(r.flow[0]) && /Confirmed/.test(r.flow[4]), r.flow);
-  ok('three lanes — Now this week · Next within 30 days · Then this quarter', r.lanes.length === 3 && /Now/.test(r.lanes[0].h) && /Next/.test(r.lanes[1].h) && /Then/.test(r.lanes[2].h), r.lanes.map((l) => l.h));
-  const now = (r.lanes[0] || { cards: [] }).cards, next = (r.lanes[1] || { cards: [] }).cards, then = (r.lanes[2] || { cards: [] }).cards;
-  const price = now.find((c) => c.f === 'g:price'), gtin = now.find((c) => c.f === 'g:gtin'), title = now.find((c) => c.f === 'g:title');
-  ok('Now: the required field short of the spec, owned by the client, with the points it is worth', price && /Your team/.test(price.own) && /^\+\d/.test(price.gain), price);
-  ok('Now: the missing identifiers — the client\'s to send, never generated', gtin && /Your team/.test(gtin.own) && /GTIN/.test(gtin.t), gtin);
-  ok('Now: the content rule Google states as a requirement, FeedSpark\'s to fix', title && /FeedSpark/.test(title.own) && /capital letters/.test(title.t), title);
-  const mat = next.find((c) => c.f === 'g:material');
-  ok('Next: the recommended field worth points, FeedSpark\'s', mat && /FeedSpark/.test(mat.own) && /^\+\d/.test(mat.gain), mat);
-  ok('Then: the conversational attributes and the weakest AI-readiness area', then.some((c) => /conversational attributes/i.test(c.t)) && then.some((c) => /taxonomy depth \(41/.test(c.t)), then.map((c) => c.t));
-  ok('a field already at full coverage is never an action', !now.concat(next).some((c) => c.f === 'g:pattern' || c.f === 'g:sale_price'), next.map((c) => c.f));
+  // the next quarter, month by month (Ray, 8 Oct 2026: "divide into months into the next quarter … adding all actions … remove
+  // the progress status"): the three calendar months after this one, every action on the board, no status strip, no footnote
+  const MN = [1, 2, 3].map((i) => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + i, 1).toLocaleDateString('en-GB', { month: 'long' }); });
+  ok('no workflow status strip, no "+N more", no footnote', r.flow === 0 && r.more === 0 && r.note === 0, { flow: r.flow, more: r.more, note: r.note });
+  ok('three lanes — the next three calendar months (' + MN.join(' / ') + ')', r.lanes.length === 3 && r.lanes.every((l, i) => l.h.indexOf(MN[i]) === 0), r.lanes.map((l) => l.h));
+  const all = r.lanes.flatMap((l) => l.cards), m1 = (r.lanes[0] || { cards: [] }).cards;
+  const tot = +((r.kp[0] || '').match(/\d+/) || [0])[0];
+  ok('every action is on the board — the lanes add up to the Actions figure', all.length === tot && all.length >= 6, { cards: all.length, kpi: tot });
+  const ix = (f) => all.findIndex(f);
+  const price = all.find((c) => c.f === 'g:price'), gtin = all.find((c) => c.f === 'g:gtin'), title = all.find((c) => c.f === 'g:title');
+  ok('the required field short of the spec, owned by the client, with the points it is worth — in the first month', price && m1.indexOf(price) >= 0 && /Your team/.test(price.own) && /^\+\d/.test(price.gain), price);
+  ok('the missing identifiers — the client\'s to send, never generated', gtin && /Your team/.test(gtin.own) && /GTIN/.test(gtin.t), gtin);
+  ok('the content rule Google states as a requirement, FeedSpark\'s to fix', title && /FeedSpark/.test(title.own) && /capital letters/.test(title.t), title);
+  const mat = all.find((c) => c.f === 'g:material');
+  ok('the recommended field worth points, FeedSpark\'s, after the requirements', mat && /FeedSpark/.test(mat.own) && /^\+\d/.test(mat.gain) && ix((c) => c === mat) > ix((c) => c === title), mat);
+  const conv = ix((c) => /conversational attributes/i.test(c.t)), tax = ix((c) => /taxonomy depth \(41/.test(c.t));
+  ok('the AI-readiness work comes last — conversational attributes and the weakest area', conv > ix((c) => c === mat) && tax > ix((c) => c === mat), all.map((c) => c.t));
+  ok('a field already at full coverage is never an action', !all.some((c) => c.f === 'g:pattern' || c.f === 'g:sale_price'), all.map((c) => c.f));
   const proj = (r.kp[3] || '').match(/([\d.]+)\s*→\s*([\d.]+)/);
-  ok('the KPI band states the Golden Score now and after Now + Next — a projection higher than today', proj && +proj[2] > +proj[1], r.kp);
+  ok('the KPI band states the Golden Score now and after the quarter — a projection higher than today', proj && +proj[2] > +proj[1], r.kp);
   if (process.env.GRPLAN_SHOT) await (await out.$('#print-plan')).screenshot({ path: process.env.GRPLAN_SHOT });
   await out.setViewportSize({ width: 390, height: 844 });
   await out.waitForTimeout(150);
@@ -155,6 +163,6 @@ const QUALITY = {
 
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
-  console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden action plan: read off the audit, Workflow\'s lanes, at the foot of both downloads — and no other brand named');
+  console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden action plan: read off the audit, the next quarter month by month, at the foot of both downloads — and no other brand named');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

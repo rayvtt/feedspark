@@ -2762,3 +2762,154 @@ export function qualityAskEmail(client, mkt, r) {
       + '\n\nBest regards,\nRay',
   };
 }
+
+/* ---------------- custom-label STRATEGY (Ray, 8 Oct 2026) --------------------------------
+   "within Golden Score, bring in custom labels as well. The custom label strategy must be
+   diverse, dynamic, and KPI-oriented … values that mimic strategies such as bestsellers inside
+   PMax campaigns, stock-related metrics like percentage or range completion, and margin-related
+   labels that indicate high, medium, or low … scan the custom label values to understand what
+   they represent, identify the strategy type, and score against it."
+
+   The feed never says what a label is FOR, so each one is read off its own VALUES — the words
+   the team typed into it — weighted by how many products carry each value. Six KPI strategies
+   a bidding team acts on, plus the descriptive "merchandising" kind (a label that repeats the
+   category, gender or brand: useful for structure, but it moves no bid on its own). A label is
+   the kind its products mostly carry (>= half of the recognised SKUs); nothing recognisable =
+   'unclear', said so, never guessed. NOT part of goldenScore and NOT AI-readiness: Google never
+   shows a custom label to a shopper (answer 6324473) — this scores the CAMPAIGN strategy the
+   labels make possible, which is a separate question with its own score. */
+export const CL_KINDS = {
+  perf:   { label: 'Performance', kpi: 'ROAS and sales velocity — bid up winners, starve zombies', w: 30,
+            eg: 'Best sellers · Zombies · High / low ROAS', who: 'fs', how: 'a FeedHero rule fed from Google Ads data, refreshed daily' },
+  stock:  { label: 'Stock & range completion', kpi: 'stop paying for clicks on broken size runs', w: 25,
+            eg: 'RC 80%+ · Low stock · Broken sizes', who: 'fs', how: 'a FeedHero rule reading stock from the master feed' },
+  margin: { label: 'Margin', kpi: 'profit per sale, not just revenue', w: 20,
+            eg: 'High · Medium · Low margin', who: 'you', how: 'your team shares margin bands (a sheet by product or category); we map them into the label' },
+  price:  { label: 'Price band', kpi: 'basket value and bid caps by price point', w: 10,
+            eg: '£0–50 · £50–100 · £100+', who: 'fs', how: 'a FeedHero rule on g:price' },
+  life:   { label: 'Lifecycle & season', kpi: 'newness and sell-through', w: 10,
+            eg: 'New in · Core · Carryover · Clearance', who: 'fs', how: 'a FeedHero rule on first-seen date and season' },
+  promo:  { label: 'Promotion', kpi: 'campaign and sale sell-through', w: 5,
+            eg: 'Sale · Black Friday · Full price', who: 'fs', how: 'a FeedHero rule on sale price or a campaign list' },
+  merch:  { label: 'Merchandising (descriptive)', kpi: 'structure only — repeats data the feed already carries', w: 0, eg: 'Category · Gender · Brand' },
+};
+export const CL_KPI = ['perf', 'stock', 'margin', 'price', 'life', 'promo'];
+
+const CL_NONE = /^(?:#?n\/?a|null|none|nil|undefined|-+|0|false|true|\.|\?|tbc|tbd|blank|empty|other|others|misc|default)$/i;
+const CL_RX = [
+  // order matters: a stock word inside a performance phrase ("hero sizes") is stock
+  ['stock', /\brc\b|\brc\s?\d|range[\s_-]?complet|low[\s_-]?stock|in[\s_-]?stock|out[\s_-]?of[\s_-]?stock|\boos\b|broken[\s_-]?(size|run)|size[\s_-]?run|hero[\s_-]?size|\bstock|inventor|\bqty\b|quantit|units?[\s_-]?(left|avail)|availab|\bfull[\s_-]?size|sizes?[\s_-]?(left|avail|missing)|\d+\s?%\s?(rc|complete|stock)/i],
+  ['margin', /margin|profit|\bgp\b|\bgm\b|mark[\s_-]?up|\bcogs\b/i],
+  ['perf', /best[\s_-]?sell|top[\s_-]?sell|\bbs\b|\bhero\b|\bstars?\b|winner|zombie|sleeper|low[\s_-]?perf|high[\s_-]?perf|under[\s_-]?perf|over[\s_-]?perf|poor[\s_-]?perf|\bperformer|\broas\b|\bpoas\b|\bcvr\b|\bctr\b|convert|conversion|no[\s_-]?sales|zero[\s_-]?sales|\bsales?[\s_-]?(velocity|rank|tier)|top[\s_-]?\d+|\bclicks?\b|impression|traffic|potential|\bwasted?\b|spend(er|ing)?\b|\bcpa\b|\bbudget[\s_-]?drain/i],
+  ['price', /price[\s_-]?(band|point|range|tier|bracket)|[£$€]\s?\d|\d+\s?[£$€]|\b\d+\s?(-|–|to)\s?\d+\b(?!\s?%)|\bunder\s?\d|\bover\s?\d|\b\d+\s?\+$|\bpremium\b|\bbudget\b|\bentry[\s_-]?(level|price)|\bluxury\b|\bvalue\b|\bhigh[\s_-]?price|\blow[\s_-]?price|\baov\b/i],
+  ['promo', /\bsale\b|on[\s_-]?sale|black[\s_-]?friday|cyber|christmas|xmas|\bpromo|\boffer|discount|voucher|%\s?off|\bbfcm\b|campaign|\bdeals?\b|\boutlet\b|bundle|\bgwp\b|gift[\s_-]?with/i],
+  ['life', /new[\s_-]?in|\bnew\b|newness|\bseason|\b(ss|aw|fw|sp|su|au|wi)[\s_-]?\d{2}\b|\b(spring|summer|autumn|fall|winter)\b|carry[\s_-]?over|\bcore\b|continuity|\bnos\b|never[\s_-]?out|clearance|end[\s_-]?of[\s_-]?line|\beol\b|discontinu|full[\s_-]?price|mark[\s_-]?down|\bfp\b|\bmd\b|launch|pre[\s_-]?order|\bevergreen|\bperennial|\bage(d)?\b|\bdays?\b|\bweeks?\b/i],
+];
+const CL_LEVEL = /^(?:very[\s_-]?)?(?:high|hi|medium|med|mid|middle|low|lo|top|bottom|a|b|c|tier[\s_-]?[1-5abc])(?:[\s_-]?(?:margin|tier))?$/i;
+const CL_PCT = /^\s*[<>≤≥]?\s*\d{1,3}(?:\.\d+)?\s?%?\s*(?:(?:-|–|to)\s*\d{1,3}(?:\.\d+)?\s?%)?\s*$/;
+
+// one value → its kind ('none' = an id, a placeholder or a bare flag that names nothing)
+export function clValueKind(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || CL_NONE.test(s)) return 'none';
+  if (/^[0-9a-f]{20,}$/i.test(s.replace(/[\s-]/g, ''))) return 'none';   // a hash, not a segment
+  for (const [k, rx] of CL_RX) if (rx.test(s)) return k;
+  if (CL_LEVEL.test(s)) return 'level';     // high / medium / low with no word naming WHAT is high
+  if (CL_PCT.test(s) && /%/.test(s)) return 'pct';   // a percentage with no word naming it
+  if (/^\d+$/.test(s)) return 'none';       // a bare number is a code, not a strategy anyone can read
+  return 'merch';
+}
+
+// one label → { kind, inferred, share (of labelled SKUs the kind covers), segs, mix }
+export function clLabelKind(lbl, name) {
+  if (!lbl || !lbl.present || !(lbl.values || []).length) return { kind: 'empty', share: 0, segs: 0, mix: {} };
+  const mix = {}; let tot = 0, none = 0, segs = 0;
+  for (const [v, n] of lbl.values) {
+    const k = clValueKind(v); mix[k] = (mix[k] || 0) + n; tot += n;
+    if (k === 'none') none += n; else segs++;
+  }
+  const read = tot - none;
+  if (!read) return { kind: 'unclear', share: 0, segs: 0, mix, why: 'the values are ids, codes or placeholders — nothing names a strategy' };
+  // a column NAMED for its strategy (some feeds name the column, not the values) decides the levels
+  const nm = String(name || '');
+  const nmKind = /margin|profit/i.test(nm) ? 'margin' : /stock|rc|range/i.test(nm) ? 'stock' : /perf|roas|best/i.test(nm) ? 'perf' : null;
+  // bare levels and bare percentages are read by what they almost always mean in a Shopping feed
+  // — margin bands and range completion — and SAID to be inferred
+  const lv = mix.level || 0, pc = mix.pct || 0;
+  const named = {};
+  for (const k of Object.keys(mix)) if (k !== 'none' && k !== 'level' && k !== 'pct') named[k] = mix[k];
+  let best = null, bn = 0;
+  for (const k of Object.keys(named)) if (named[k] > bn) { best = k; bn = named[k]; }
+  let inferred = false;
+  if (lv && lv >= bn && lv >= pc) { best = nmKind || 'margin'; bn = lv + (named[best] || 0); inferred = !nmKind; }
+  else if (pc && pc >= bn) { best = nmKind || 'stock'; bn = pc + (named[best] || 0); inferred = !nmKind; }
+  const share = Math.round(bn / read * 1000) / 10;
+  if (!best || share < 50) return { kind: 'unclear', share, segs, mix, why: 'no single strategy covers half of the labelled products — the values mix several' };
+  return { kind: best, share, segs, mix, inferred };
+}
+
+// how much of a label moved between two readings: the share of its products that changed
+// segment (a lower bound — two counts cannot say WHICH products moved). null = not measurable.
+export function clMoved(now, ref) {
+  if (!now || !now.present || !ref || !ref.present) return null;
+  const a = {}, b = {};
+  for (const [v, n] of now.values || []) a[String(v).trim().toLowerCase()] = (a[String(v).trim().toLowerCase()] || 0) + n;
+  for (const [v, n] of ref.values || []) b[String(v).trim().toLowerCase()] = (b[String(v).trim().toLowerCase()] || 0) + n;
+  let d = 0; const keys = new Set(Object.keys(a).concat(Object.keys(b)));
+  for (const k of keys) d += Math.abs((a[k] || 0) - (b[k] || 0));
+  const base = Math.max(now.filled || 0, ref.filled || 0);
+  return base ? Math.round(d / 2 / base * 1000) / 10 : null;
+}
+
+export const CL_MOVE_PP = 0.5;   // a KPI label that moved under half a percent of its products since the reference is static
+
+/* The strategy score. Four parts, each stated on the card:
+     strategies (60)  — which KPI strategies the five labels carry, weighted by what they move
+                        (performance 30 · stock 25 · margin 20 · price 10 · lifecycle 10 · promotion 5)
+     diversity  (15)  — how many DIFFERENT KPI strategies (1 → 5, 2 → 10, 3+ → 15)
+     reach      (10)  — the average coverage of the KPI labels (a performance label on 5% is a pilot)
+     dynamism   (15)  — the share of KPI labels whose segments moved since the reference reading;
+                        with no older reading it is NOT MEASURED and the other 85 are scaled to 100,
+                        and the card says so — never a zero for a reading nobody took.
+   snap = the Label Guard snapshot; ref = an older snapshot of the same feed (the known-good or
+   yesterday's), or null. */
+export function clStrategy(snap, ref) {
+  if (!snap || !snap.labels) return null;
+  const rows = snap.rows || 0;
+  const slots = LABEL_KEYS.map((k, i) => {
+    const l = snap.labels[k] || { present: false };
+    const c = clLabelKind(l, k);
+    const kpi = CL_KPI.indexOf(c.kind) >= 0;
+    const moved = kpi && ref && ref.labels && ref.t && ref.t < snap.t ? clMoved(l, ref.labels[k]) : null;
+    return { k, n: i, present: !!l.present, cov: l.present ? (l.cov || 0) : 0, filled: l.filled || 0, distinct: l.distinct || 0,
+      top: (l.values || []).slice(0, 6), kind: c.kind, inferred: !!c.inferred, share: c.share, segs: c.segs, why: c.why || '', kpi, moved };
+  });
+  const kinds = {};
+  for (const s of slots) if (s.kpi) (kinds[s.kind] = kinds[s.kind] || []).push(s.n);
+  const have = Object.keys(kinds);
+  const wsum = have.reduce((a, k) => a + CL_KINDS[k].w, 0);
+  const pStrat = Math.round(wsum / 100 * 60 * 10) / 10;
+  const pDiv = have.length >= 3 ? 15 : have.length * 5;
+  const kpiSlots = slots.filter((s) => s.kpi);
+  const reach = kpiSlots.length ? kpiSlots.reduce((a, s) => a + Math.min(100, s.cov), 0) / kpiSlots.length : 0;
+  const pReach = Math.round(reach / 100 * 10 * 10) / 10;
+  const measured = kpiSlots.filter((s) => s.moved != null);
+  const dyn = measured.length ? measured.filter((s) => s.moved >= CL_MOVE_PP).length / measured.length : null;
+  const pDyn = dyn == null ? null : Math.round(dyn * 15 * 10) / 10;
+  const raw = pStrat + pDiv + pReach + (pDyn || 0);
+  const score = Math.round((dyn == null ? raw / 85 * 100 : raw) * 10) / 10;
+  const missing = CL_KPI.filter((k) => !kinds[k] && CL_KINDS[k].w >= 10);
+  const spare = slots.filter((s) => !s.present || s.kind === 'empty').map((s) => s.n);
+  const descr = slots.filter((s) => s.kind === 'merch' || s.kind === 'unclear').map((s) => s.n);
+  const dup = []; for (const k of have) if (kinds[k].length > 1) dup.push(k);
+  return { score, rows, t: snap.t, refT: ref && ref.t && ref.t < snap.t ? ref.t : null,
+    parts: { strat: pStrat, div: pDiv, reach: pReach, dyn: pDyn }, reach: Math.round(reach * 10) / 10,
+    slots, kinds, have, missing, spare, descr, dup, verdict: clVerdict(score, have.length) };
+}
+
+export function clVerdict(score, n) {
+  if (!n) return { band: 'poor', pill: 'No KPI strategy', line: 'None of the five labels carries a bidding signal — PMax can split by them, but nothing in them says which products earn or lose money.' };
+  if (score >= 85) return { band: 'good', pill: 'KPI-driven', line: 'The labels carry the signals a bidding team acts on, and they move as the business does.' };
+  if (score >= 60) return { band: 'mid', pill: 'Partly KPI-driven', line: 'Some labels carry a bidding signal; the gaps below are the ones that move budget most.' };
+  return { band: 'poor', pill: 'Mostly descriptive', line: 'The labels mostly describe the product rather than how it performs, sells through or earns — campaign splits by them cannot follow the KPIs.' };
+}

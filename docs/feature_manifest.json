@@ -14872,6 +14872,60 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grplan.js",
       "pr": 0
+    },
+    {
+      "name": "Custom label strategy engine: clStrategy scores the labels in four stated parts (Ray 8 Oct 2026: 'diverse, dynamic, and KPI-oriented … identify the strategy type, and score against it')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function clStrategy(",
+      "pr": 0
+    },
+    {
+      "name": "Custom label strategy engine: each value read as a KPI strategy",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function clValueKind(",
+      "pr": 0
+    },
+    {
+      "name": "Custom label strategy: dynamism is not measured without an earlier reading — never a zero",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "raw / 85 * 100",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the custom label strategy section on the scorecard",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function clSection(",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the section folds and keeps its score folded",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "key === 'cl' ? t.querySelector('.cl-score')",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: the strategies the labels do not carry",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "f: 'Custom labels'",
+      "pr": 0
+    },
+    {
+      "name": "presync: custom label strategy tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grcl.js",
+      "pr": 0
+    },
+    {
+      "name": "qa_gate: custom label strategy engine",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_clstrategy.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Golden action plan: the next quarter, month by month — every action, no status strip (Ray 8 Oct 2026: 'divide into months into the next quarter … remove the progress status')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "the next quarter, month by month, read off this audit",
+      "pr": 0
     }
   ]
 }

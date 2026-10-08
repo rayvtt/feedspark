@@ -280,6 +280,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Label Guard engine (/labels /ptypes /golden)"
   node tools/test_labelguard.mjs >/dev/null || {
     echo "✗ Label Guard harness failed — see node tools/test_labelguard.mjs"; exit 1; }
+  echo "── validating: custom label strategy engine (Golden Score's label section)"
+  node tools/test_clstrategy.mjs >/dev/null || {
+    echo "✗ custom label strategy harness failed — see node tools/test_clstrategy.mjs"; exit 1; }
   echo "── validating: Golden Record PDF (one sheet, scorecard + content quality, findings intact)"
   NODE_PATH=$(npm root -g) node tools/check_grpdf.js || {
     echo "✗ Golden Record PDF tripwire failed — the client scorecard lost a column, a section, or its single-sheet sizing"; exit 1; }
@@ -307,6 +310,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record downloads are inert — nothing runs, calls home, or hides words from the reader (poisoned feed values)"
   NODE_PATH=$(npm root -g) node tools/check_grsafe.js || {
     echo "✗ Golden Record download-safety tripwire failed — a handler, script URL, foreign request, comment or invisible character reached the PDF/HTML, or the PDF gained a text layer or action"; exit 1; }
+  echo "── validating: Golden Record custom label strategy (the section, its fold, the download, the plan's label cards)"
+  NODE_PATH=$(npm root -g) node tools/check_grcl.js || {
+    echo "✗ Golden Record custom-label tripwire failed — a slot misread, a part unstated, the fold, the download or the plan's label cards regressed"; exit 1; }
   echo "── validating: Golden Record action plan — Workflow's lanes at the foot of both downloads, read off the audit, no other brand named"
   NODE_PATH=$(npm root -g) node tools/check_grplan.js || {
     echo "✗ Golden Record action-plan tripwire failed — the plan left the downloads, misread the audit, lost a lane, or another brand reached a client document"; exit 1; }
