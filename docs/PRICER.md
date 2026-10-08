@@ -92,7 +92,7 @@ floor). Its price is Management's (`_g|test2`, `_g|test3`, `_g|test4` in `pricer
 it reads the DRAFT default (£800 / £1,140 / £1,440 a month) and the proposal is not client-safe. The client email,
 ⧉ Options and the talk track name it when it is on.
 
-**Tier 3 · AI-Refresher** (`go+ar+rf` — Ray, 8 Oct 2026: *"a tier-three product of AI-ready datasets, such as data
+**Tier 3 · AI-Intel Refresher** (`go+ar+rf` — Ray, 8 Oct 2026: *"a tier-three product of AI-ready datasets, such as data
 fields like Q&A, keywords … refreshed on a monthly or quarterly basis, depending on the marketing event / customer
 questions / AI-visibility monitor / customer reviews"*). Tier 2's lines unchanged (one-off identical, the bundle % is
 Tier 2's), plus a recurring refresh: the ticked fields (Keywords · Q&A · Product highlights by default, Descriptions
@@ -103,6 +103,10 @@ calendar moments · customer questions & search terms · AI-visibility monitor �
 as a third of it in the monthly total, so the options compare on one footing. Not costed yet (out of both sides of
 the margin, like test packages); an unsized feed reads "not sized", never £0. Settings live in ⚙ Customise and travel
 with the saved option (`opts.popts.refresh`); `?pkg=t3` highlights the card.
+Renamed **Tier 3 · AI-Intel Refresher** (Ray, 8 Oct 2026). The refreshed fields are its **Dynamic fields** — 3 by
+default (Keywords · Q&A · Highlights), up to 6 with Descriptions, Titles and Product details — counted in the preview's
+KPI row when Tier 3 is on screen. The preview card carries no explanatory note or footnote any more: where an example
+value comes from is the product image's tooltip.
 
 ---
 
@@ -215,7 +219,7 @@ ASPL, London AM and the team each have a short list (below); the "Next" and "Lat
 6. **Team** to confirm delivery status per line × industry and `alwayson|*` in the roadmap grid — an unconfirmed
    line stays a blocker on client copy.
 7. **Grant `pricer-cost`** to whoever in Management should see cost and margin (👥 Access panel, an opt-in chip).
-8. **AI-Refresher price:** confirm `_g|rfPct` (draft 50% of each field's generation price, per refresh) and the
+8. **AI-Intel Refresher price:** confirm `_g|rfPct` (draft 50% of each field's generation price, per refresh) and the
    default fields (Keywords · Q&A · Highlights).
 8. **The Gmail Drafts bridge** does not carry a CC yet: ↗ Open in Gmail does. Adding it means the next
    `tools/gmail_push.gs` paste (a follow-up).

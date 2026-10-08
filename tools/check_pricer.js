@@ -131,7 +131,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       const rows = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }]));
       const d = X.derive({ id: 'x', title: 'Northwind Wide Leg Trousers', brand: 'Northwind', description: 'Wide leg trousers in a soft crepe. 95% Polyester, 5% Elastane. Machine wash.', product_type: 'Women > Clothing > Trousers', product_detail: '<g:section_name>Care</g:section_name><g:attribute_name>Washing</g:attribute_name><g:attribute_value>Machine wash</g:attribute_value>' }, 'gb');
       const img = document.querySelector('#svc-prev .pv-img img'), ib = img.getBoundingClientRect();
-      return { rows, d, line: document.querySelector('#svc-prev .pv-ex').textContent, imgW: ib.width, fit: getComputedStyle(img).objectFit, nat: img.naturalWidth && Math.abs(ib.width / ib.height - img.naturalWidth / img.naturalHeight) < 0.02 }; });
+      return { rows, d, line: document.querySelector('#svc-prev .pv-ex').getAttribute('data-note'), imgW: ib.width, fit: getComputedStyle(img).objectFit, nat: img.naturalWidth && Math.abs(ib.width / ib.height - img.naturalWidth / img.naturalHeight) < 0.02 }; });
     ok('with no Claude connection the tier still shows actual values built from the product row — 10+ keyword strings, a pattern, a MASK title with the brand', off.rows.keywords && /^1\d strings: /.test(off.rows.keywords.v) && off.rows.pattern && /ex/.test(off.rows.pattern.c) && /^Northwind /.test(off.rows.title.v) && /own data/.test(off.line), [off.rows.keywords, off.rows.pattern, off.line]);
     ok('the data-built example reads the row honestly: plain when no pattern is named, the largest share of the composition as material, product_detail XML as section: attribute: value, size system from the market', off.d.pattern === 'Plain' && off.d.material === 'Polyester' && off.d.product_detail[0] === 'Care: Washing: Machine wash' && off.d.size_system === 'UK' && off.d.gender === 'female' && off.d.keywords.length >= 10 && !('size' in off.d) && !('gtin' in off.d), off.d);
     if (vp === 1440) ok('the product image is large and never cropped — drawn at its own aspect, contain', off.imgW >= 150 && off.fit === 'contain' && off.nat, [off.imgW, off.fit, off.nat]);
@@ -273,14 +273,14 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
       return { h, chips, bars: t.querySelectorAll('.proj .tk-bar').length, folded: !d.open && !!d.querySelector('table.lines') && !!d.querySelector('.rates-l'), mv: t.querySelectorAll('.money .mv').length,
         words: t.innerText.replace(d.innerText, '').split(/\s+/).filter(Boolean).length }; });
     ok('a tier card leads with a score bar, what-you-get chips and two prices, the line table and rates folded under See the breakdown', bite.bars >= 1 && bite.chips.length >= 4 && /^✓ Everything in Tier 1/.test(bite.chips[0]) && bite.chips.slice(1).every((c) => /^(—|[\d,]+) /.test(c)) && bite.folded && bite.mv === 2 && bite.words < 120, bite);
-    // C — Tier 3 · AI-Refresher: Tier 2 plus the AI-ready fields refreshed monthly or quarterly
+    // C — Tier 3 · AI-Intel Refresher: Tier 2 plus the AI-ready fields refreshed monthly or quarterly
     const t3 = await p.evaluate(() => { const t = document.querySelector('.tier[data-opt="go+ar+rf"]'), X = window.__PZX.PQ; if (!t) return null; const q = X['go+ar+rf'];
       return { name: t.querySelector('h3').innerText, n: t.querySelector('.tier-n').textContent, chips: Array.from(t.querySelectorAll('.tk-get .tk-c')).map((c) => c.textContent),
         money: t.querySelector('.money').innerText, F: q.refresh, m2: X['go+ar'].monthly.total, m3: q.monthly.total, o2: X['go+ar'].oneOff.total, o3: q.oneOff.total,
         bd: (t.querySelector('.rf-bd') || {}).textContent || '' }; });
-    ok('Tier 3 · AI-Refresher is drawn after Tier 2: "Everything in Tier 2, plus" the refresh chips, the one-off unchanged, the refresh inside the monthly',
-      t3 && /^Tier 3 · AI-Refresher/.test(t3.name) && t3.n === '3' && /^✓ Everything in Tier 2/.test(t3.chips[0]) && /Monthly/.test(t3.chips[1]) && /Keywords/.test(t3.chips[1])
-      && t3.o3 === t3.o2 && Math.abs(t3.m3 - t3.m2 - t3.F.monthlyEq) < 0.01 && /AI-Refresher/.test(t3.money) && /Read against/.test(t3.bd), t3);
+    ok('Tier 3 · AI-Intel Refresher is drawn after Tier 2: "Everything in Tier 2, plus" the refresh chips, the one-off unchanged, the refresh inside the monthly',
+      t3 && /^Tier 3 · AI-Intel Refresher/.test(t3.name) && t3.n === '3' && /^✓ Everything in Tier 2/.test(t3.chips[0]) && /Monthly/.test(t3.chips[1]) && /Keywords/.test(t3.chips[1])
+      && t3.o3 === t3.o2 && Math.abs(t3.m3 - t3.m2 - t3.F.monthlyEq) < 0.01 && /AI-Intel Refresher/.test(t3.money) && /Read against/.test(t3.bd), t3);
     // D — the optimisation bank: every optimisation, its tier, what it gives — moved / added and every quote follows
     const bk0 = await p.evaluate(() => ({ rows: document.querySelectorAll('#bk-body tr').length, seg: document.querySelectorAll('#svc-prev [data-pv]').length,
       hl: (document.querySelector('#bk-body tr[data-bkrow="highlights"] .bk-g') || {}).value, svc: !!document.querySelector('#bk-body tr[data-bkrow="x_stock_rc"]'),
@@ -290,10 +290,15 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the preview switch offers Today · Tier 1 · Tier 2 · Tier 3', bk0.seg === 4);
     await p.click('#svc-prev [data-pv="go+ar+rf"]'); await p.waitForTimeout(500);
     const pv3 = await p.evaluate(() => ({ gv: (document.querySelector('#svc-prev .pv-gv') || {}).textContent || '', rf: Array.from(document.querySelectorAll('#svc-prev .pv-fr .fs')).filter((x) => / ↻$/.test(x.textContent)).length,
+      dyn: (() => { const w = document.querySelector('#svc-prev .pv-dynw'); return w && !w.hidden ? { n: w.querySelector('.pv-dyn').textContent, t: w.title } : null; })(),
+      seg: (document.querySelector('#svc-prev [data-pv="go+ar+rf"]') || {}).textContent, texts: !!document.querySelector('#svc-prev .pv-n') || !!(document.querySelector('#svc-prev .pv-ex') || {}).textContent,
       miss: document.querySelectorAll('#svc-prev .pv-fr .fv.miss').length }));
+    ok('Tier 3 is named AI-Intel Refresher and counts its Dynamic fields (3 by default: keywords · Q&A · highlights); the note and footnote texts are gone',
+      pv3.seg === 'Tier 3 · AI-Intel Refresher' && pv3.dyn && pv3.dyn.n === '3' && /Keywords · Q&A · Product highlights/.test(pv3.dyn.t) && !pv3.texts, { seg: pv3.seg, dyn: pv3.dyn, texts: pv3.texts });
     ok('Tier 3 in the preview: "What Tier 3 gives" with the refresh, the refreshed fields marked ↻, nothing missing', /What Tier 3 gives/.test(pv3.gv) && /Everything in Tier 2/.test(pv3.gv) && /refreshed monthly/.test(pv3.gv) && pv3.rf >= 2 && pv3.miss === 0, pv3);
     await p.click('#svc-prev [data-pv="go+ar"]'); await p.waitForTimeout(400);
     const gv2 = await p.evaluate(() => document.querySelector('#svc-prev .pv-gv').textContent);
+    ok('Dynamic fields shows only on Tier 3', await p.evaluate(() => document.querySelector('#svc-prev .pv-dynw').hidden));
     ok('Tier 2 in the preview lists what it gives — +4 highlights, +5–8 details, Stock RC%, Restock', /\+4 highlights/.test(gv2) && /\+5–8 product details/.test(gv2) && /Stock RC%/.test(gv2) && /Restock/.test(gv2), gv2);
     const t1a = await p.evaluate(() => window.__PZX.PQ.go.oneOff.total);
     await p.click('#bk-body tr[data-bkrow="highlights"] button[data-bkt="go"]');
@@ -351,14 +356,14 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     await p.evaluate(() => { const b2 = document.querySelector('#rc-tabs button[data-tab="mgmt"]'); b2.click(); });
     await p.waitForSelector('#rc-g input[data-k="_g|test3"]');
     ok('the Management tab carries the three test-package prices, the draft shown as a placeholder', await p.evaluate(() => ['2', '3', '4'].every((n) => !!document.querySelector('#rc-g input[data-k="_g|test' + n + '"]')) && (document.querySelector('#rc-g input[data-k="_g|test3"]') || {}).placeholder === 'draft 1140' && (document.querySelector('#rc-g input[data-k="_g|test3"]') || {}).value === ''));
-    ok('the Management tab carries the AI-Refresher % — the draft 50 shown as a placeholder', await p.evaluate(() => { const x = document.querySelector('#rc-g input[data-k="_g|rfPct"]'); return !!x && x.placeholder === 'draft 50' && x.value === ''; }));
+    ok('the Management tab carries the AI-Intel Refresher % — the draft 50 shown as a placeholder', await p.evaluate(() => { const x = document.querySelector('#rc-g input[data-k="_g|rfPct"]'); return !!x && x.placeholder === 'draft 50' && x.value === ''; }));
     await p.fill('#rc-g input[data-k="_g|test3"]', '999');
     await p.press('#rc-g input[data-k="_g|test3"]', 'Tab');
     await p.waitForFunction(() => window.__PZX.PQ.go.tests.price === 999, null, { timeout: 5000 }).catch(() => {});
     const tB2 = await p.evaluate(() => ({ t: window.__PZX.PQ.go.tests || {}, put: (window.__pzPuts || []).filter((x) => x.name === 'price').pop() }));
     ok('Management\'s £999 for 3 tests is saved to _g|test3 and priced without the draft flag', tB2.t.price === 999 && !tB2.t.draft && tB2.put && tB2.put.body['_g|test3'] && tB2.put.body['_g|test3'].v === 999, tB2.t);
     await p.click('#svc-cust button[data-tests="0"]');
-    // C — the AI-Refresher controls: quarterly counts a third a month; a field left out comes off the price; Management's % cell
+    // C — the AI-Intel Refresher controls: quarterly counts a third a month; a field left out comes off the price; Management's % cell
     const rf0 = await p.evaluate(() => window.__PZX.PQ['go+ar+rf'].refresh);
     await p.click('#svc-cust button[data-rfcad="quarterly"]');
     await p.waitForTimeout(250);
