@@ -999,6 +999,53 @@ const r2 = (x) => Math.round(x * 100) / 100;
   ok(cm3.proposal.monthlyMargin === cm0.proposal.monthlyMargin && cm3.proposal.excluded.indexOf('tests') >= 0, 'B: the package is out of both sides of the monthly margin');
   deq(E.contractedFrom({ x: Object.assign({}, sn, { mkt: 'gb', chosen: { t: 1 } }) }, 'Northwind', 'gb'), { lines: {}, conv: {}, bundle: null }, 'B: contractedFrom ignores a test package');
 }
+// ADDITION C — Tier 3 · AI-Refresher (Ray, 8 Oct 2026): Tier 2 + the AI-ready fields refreshed monthly or quarterly
+{
+  const Rd = E.composeRates({});
+  ok(Rd.g.rfPct === E.REFRESH_PCT_DEFAULT && Rd.g.src.rfPct === 'default', 'C: unset refresh % reads the DRAFT default');
+  const stR = cleanStores(); stR.price['_g|rfPct'] = { v: 40, by: 'm', at: 1 };
+  const RCr = E.composeRates(stR);
+  ok(RCr.g.rfPct === 40 && RCr.g.src.rfPct === 'ops', 'C: Management\'s _g|rfPct wins');
+  const spec = (R, opt, refresh) => Object.assign({ markets: [{ mkt: 'gb', audit: AC }] }, base10, { rates: R, option: opt, opts: refresh ? { refresh } : {} });
+  const q2 = E.packageQuote(spec(RCr, 'go+ar'), LG);
+  const q3 = E.packageQuote(spec(RCr, 'go+ar+rf', { cadence: 'monthly', share: 100, fields: ['keywords', 'qa'], signals: ['events', 'reviews'] }), LG);
+  eq(q3.option, 'go+ar+rf', 'C: go+ar+rf is an option'); eq(q3.label, 'Tier 3 · AI-Refresher', 'C: …named Tier 3 · AI-Refresher');
+  eq(q2.refresh, null, 'C: Tier 2 carries no refresh');
+  deq(q3.lines.map((l) => l.key + ':' + l.status + ':' + l.gen), q2.lines.map((l) => l.key + ':' + l.status + ':' + l.gen), 'C: Tier 3 carries every Tier 2 line, unchanged');
+  ok(q3.oneOff.total === q2.oneOff.total && q3.oneOff.bundleDisc === q2.oneOff.bundleDisc, 'C: the refresh adds nothing one-off, and the bundle % is Tier 2\'s');
+  const F = q3.refresh;
+  ok(F.status === 'priced' && F.fields.length === 2 && F.cadence === 'monthly' && F.share === 100 && J(F.signals) === J(['events', 'reviews']), 'C: refresh priced — two fields, monthly, the ticked signals');
+  const kw = F.fields.filter((f) => f.id === 'keywords')[0];
+  near(kw.perProduct, Math.round(RCr.rows.keywords.unit * 40) / 100, 'C: a field\'s refresh price = 40% of its generation unit', 1e-9);
+  near(kw.gbp, Math.round(kw.perProduct * q3.beta * q3.Pbeta * 100) / 100, 'C: …× the catalogue × β, like generation', 0.011);
+  near(F.perRefresh, F.fields.reduce((a, f) => a + f.gbp, 0), 'C: the refresh price sums its fields', 0.011);
+  near(q3.monthly.total, q2.monthly.total + F.monthlyEq, 'C: the monthly total carries the refresh', 1e-6); eq(q3.monthly.refresh, F.monthlyEq, 'C: monthly.refresh');
+  const qq = E.packageQuote(spec(RCr, 'go+ar+rf', { cadence: 'quarterly', share: 100, fields: ['keywords', 'qa'], signals: [] }), LG);
+  near(qq.refresh.perRefresh, F.perRefresh, 'C: quarterly is the same refresh, less often', 1e-6);
+  near(qq.refresh.monthlyEq, Math.round(F.perRefresh / 3 * 100) / 100, 'C: …counted as a third of it a month', 0.011);
+  const qh = E.packageQuote(spec(RCr, 'go+ar+rf', { cadence: 'monthly', share: 50, fields: ['keywords', 'qa'] }), LG);
+  near(qh.refresh.perRefresh, F.perRefresh / 2, 'C: 50% of products costs half', 0.03);
+  ok(q3.clientSafe === q2.clientSafe, 'C: a confirmed refresh % adds no blocker');
+  const qd = E.packageQuote(spec(RC, 'go+ar+rf'), LG);
+  ok(qd.refresh.draft && qd.blockers.some((b) => b.code === 'draft-refresh'), 'C: a DRAFT refresh % blocks — "AI-Refresher price not confirmed — Management"');
+  deq(qd.refresh.fields.map((f) => f.id), E.REFRESH_DEFAULT_FIELDS, 'C: no fields set → the default fields (keywords, Q&A, highlights)');
+  const qo = E.packageQuote(spec(RCr, 'go+ar+rf', { fields: [] }), LG);
+  ok(qo.refresh.status === 'off' && qo.monthly.refresh === 0 && Math.abs(qo.monthly.total - q2.monthly.total) < 1e-6, 'C: no field ticked → off, nothing on the monthly');
+  const qu = E.packageQuote({ markets: [{ mkt: 'gb', audit: Object.assign({}, AC, { P: null, S: null }) }], rates: RCr, option: 'go+ar+rf', opts: {} }, LG);
+  ok(qu.refresh.status === 'unknown' && qu.monthly.refresh === 0 && qu.blockers.some((b) => b.line === 'refresh' && /not sized/.test(b.why)), 'C: an unsized feed → not sized, never a zero price');
+  const body = E.proposalText(q3, { guard: false }).body;
+  ok(/· AI-Refresher: Keywords, Q&A refreshed monthly, read against marketing calendar moments, customer reviews — £[\d,.]+ a month/.test(body), 'C: client copy names the fields, cadence, signals and price');
+  ok(body.indexOf('· AI-Refresher: ' + E.REFRESH_WHAT) >= 0, 'C: …and what a refresh IS, once, under HOW WE WOULD DO IT');
+  ok(/AI-Refresher: .* — \[£ to confirm — Ray\] a month/.test(E.proposalText(qd, {}).body), 'C: guarded while the % is a draft');
+  ok(/\(counted as £[\d,.]+ a month\)/.test(E.proposalText(qq, { guard: false }).body), 'C: a quarterly refresh says what it counts a month');
+  const ot = E.optionsText([{ client: 'Northwind', pq: q3, clientSafe: true }]);
+  ok(/Includes: .*AI-Refresher \(monthly\)/.test(ot) && /   AI-Refresher: /.test(ot), 'C: optionsText lists and prices it');
+  const sn = JSON.parse(J(E.snapshotOption(q3, [AC], RCr, null, { t: NOW })));
+  ok(sn.pq.refresh.perRefresh === F.perRefresh && sn.rates.g.rfPct === 40 && sn.option === 'go+ar+rf', 'C: the snapshot keeps the refresh and its frozen %');
+  const costsC = { '_c|rateAspl': { v: 30 }, '_c|rateAm': { v: 40 }, '_c|gbpPerMTok': { v: 2 }, '_c|ohPct': { v: 20 }, '_c|marginPct': { v: 40 } };
+  const cm2 = E.costModel(RCr, costsC, {}, q2), cm3 = E.costModel(RCr, costsC, {}, q3);
+  ok(cm3.proposal.monthlyMargin === cm2.proposal.monthlyMargin && cm3.proposal.excluded.indexOf('refresh') >= 0, 'C: the refresh is out of both sides of the monthly margin');
+}
 // ADDITION A — the tier names in client copy
 {
   const tx = E.proposalText([PQt, PQall], { guard: false }).body;

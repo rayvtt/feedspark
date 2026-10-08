@@ -12384,6 +12384,18 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "details class=\"tier-more\"",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: Tier 3 · AI-Refresher — the AI-ready fields refreshed monthly or quarterly against the signals the AM ticks",
+      "file": "docs/pricer_engine.js",
+      "pattern": "var REFRESH_FIELDS = [",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the AI-Refresher controls in ⚙ Customise (cadence, share, fields, signals)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "function rfCust(",
+      "pr": 0
     }
   ]
 }

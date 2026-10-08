@@ -622,9 +622,35 @@
   // Tier 1 is Google-ready, Tier 2 is the AI-ready BUNDLE (Tier 1 + AI Readiness, set-up rounded
   // once, the bundle % on generation), and AI Readiness alone is the odd one out. OPTION_SUB is
   // the one-line descriptor the page and the client copy print under the name.
-  var OPTION_LABEL = { go: 'Tier 1 · Google-ready', 'go+ar': 'Tier 2 · AI-ready', ar: 'AI-ready only' };
+  var OPTION_LABEL = { go: 'Tier 1 · Google-ready', 'go+ar': 'Tier 2 · AI-ready', 'go+ar+rf': 'Tier 3 · AI-Refresher', ar: 'AI-ready only' };
   var OPTION_SUB = { go: 'Google Optimise — eligible + everything Google recommends',
-    'go+ar': 'Google-ready + AI Readiness — the bundle', ar: 'AI Readiness without Tier 1' };
+    'go+ar': 'Google-ready + AI Readiness — the bundle', 'go+ar+rf': 'AI-ready + the AI data kept fresh, monthly or quarterly',
+    ar: 'AI Readiness without Tier 1' };
+
+  // AI-REFRESHER (Ray, 8 Oct 2026: "a tier-three product of AI-ready datasets, such as data fields like
+  // Q&A, keywords … refreshed on a monthly or quarterly basis, depending on the marketing event /
+  // customer questions / AI-visibility monitor / customer reviews"). Tier 3 is Tier 2 PLUS a recurring
+  // refresh of the AI-ready fields: each refresh regenerates the ticked fields over the share of the
+  // catalogue it covers, read against the signals the AM ticks. Priced at a share of each field's own
+  // generation price (`_g|rfPct`, Management-owned; DRAFT until set — the guard holds the figure back),
+  // β applied like generation, never touched by the bundle % or the monthly floor. A quarterly
+  // refresh is charged a quarter at a time and carried into the monthly total as a third of it, so
+  // two options always compare on the same footing.
+  var REFRESH_FIELDS = [
+    { id: 'keywords', label: 'Keywords', row: 'keywords', why: 'search phrases re-cut to what shoppers ask now' },
+    { id: 'qa', label: 'Q&A', aim: true, why: 'the questions customers and AI surfaces are asking now' },
+    { id: 'highlights', label: 'Product highlights', row: 'highlights', why: 'benefits re-ranked by what reviews and search reward' },
+    { id: 'desc', label: 'Descriptions', row: 'desc_gen', why: 'copy refreshed for the season and the moment' }];
+  var REFRESH_DEFAULT_FIELDS = ['keywords', 'qa', 'highlights'];
+  var REFRESH_SIGNALS = [
+    { id: 'events', label: 'Marketing calendar moments' },
+    { id: 'questions', label: 'Customer questions & search terms' },
+    { id: 'aivis', label: 'AI-visibility monitor' },
+    { id: 'reviews', label: 'Customer reviews' }];
+  var REFRESH_CADENCE = { monthly: { label: 'Monthly', per: 'a month', perMonth: 1 }, quarterly: { label: 'Quarterly', per: 'a quarter', perMonth: 1 / 3 } };
+  var REFRESH_SHARES = [25, 50, 100];
+  var REFRESH_PCT_DEFAULT = 50;
+  var REFRESH_WHAT = 'the AI-ready fields are regenerated on a schedule against what changed — the marketing calendar, the questions customers ask, what AI answer engines say about the brand and what reviews reward — so the data an AI shopping surface reads never goes stale.';
 
   // TEST PACKAGES — a monthly add-on to any option: N tests a month, each changing ONE thing on a
   // set of products against a control. The prices are Management's price-store cells
@@ -912,6 +938,10 @@
       else if (TEST_DEFAULTS[n] != null) { g.tests[n] = TEST_DEFAULTS[n]; g.src.tests[n] = 'default'; g.by.tests[n] = null; }
       else { g.tests[n] = null; g.src.tests[n] = 'unset'; g.by.tests[n] = null; }
     });
+    // AI-Refresher price: a refresh costs this % of each field's generation price. Unset reads the
+    // DRAFT default; the guard holds it back until Management confirms it
+    var rfv = numOr(sv(price['_g|rfPct']));
+    if (rfv != null && rfv >= 0) gset('rfPct', rfv, 'ops', stampOf(price['_g|rfPct'])); else gset('rfPct', REFRESH_PCT_DEFAULT, 'default');
     return { rows: rows, g: g, draft: draft };
   }
 
@@ -1438,7 +1468,9 @@
      blocker. */
   function packageQuote(spec, LG) {
     spec = spec || {};
-    var option = (spec.option === 'ar' || spec.option === 'go+ar') ? spec.option : 'go';
+    var option = (spec.option === 'ar' || spec.option === 'go+ar' || spec.option === 'go+ar+rf') ? spec.option : 'go';
+    // Tier 3 carries every Tier 2 line; `core` is the option its lines are read under
+    var core = option === 'go+ar+rf' ? 'go+ar' : option;
     var R = spec.rates || composeRates({}), g = R.g || {}, opts = spec.opts || {}, tg = targetsOf(spec.targets);
     var aimR = aimRatesOf(spec.aimRates), buffer = aimR.buffer;
     var blockGBP = numOr(g.blockGBP) || DEFAULTS.blockGBP, blockH = numOr(g.blockH) || DEFAULTS.blockHours;
@@ -1493,7 +1525,7 @@
     }
     var priced = {}, conv = null;   // key -> line, for the monthly and the projection; the Spark AI build
     PKG_LINES.forEach(function (def) {
-      if (!(option === 'go+ar' || def.pkg === (option === 'ar' ? 'ar' : 'go'))) return;
+      if (!(core === 'go+ar' || def.pkg === (core === 'ar' ? 'ar' : 'go'))) return;
       var lo = lineOpts[def.key] || {}, on = lo.on !== false, scope = lo.scope === 'all' ? 'all' : 'need';
       var row = def.row ? (R.rows || {})[def.row] || null : null;
       var rm = roadmapStatus(spec.roadmap, def.key, industry, spec.actuals);
@@ -1704,7 +1736,7 @@
     var blockCost = round2(blocks * blockGBP);
     var genSum = 0; lines.forEach(function (l) { if (l.status === 'priced') genSum += l.gen || 0; });
     genSum = round2(genSum);
-    var bundleDisc = option === 'go+ar' ? round2((numOr(g.bundlePct) || 0) / 100 * genSum) : 0;
+    var bundleDisc = core === 'go+ar' ? round2((numOr(g.bundlePct) || 0) / 100 * genSum) : 0;
     var convSetup = conv ? conv.setup : 0, convMonthly = conv ? conv.monthly : 0;
     // two hourly rates can sit in one proposal (the Pricer block for set-up, Spark AI's own for the
     // conversational lines) — each carries its label, so neither is ever a silent rate
@@ -1756,11 +1788,43 @@
       }
     }
     var testsGBP = tests.status === 'priced' ? tests.price : 0;
+    // AI-REFRESHER — Tier 3 only: the ticked fields regenerated over a share of the catalogue each refresh
+    var refresh = null;
+    if (option === 'go+ar+rf') {
+      var ro = opts.refresh || {};
+      var cad = REFRESH_CADENCE[ro.cadence] ? ro.cadence : 'monthly';
+      var share = REFRESH_SHARES.indexOf(+ro.share) >= 0 ? +ro.share : 100;
+      var fIds = Array.isArray(ro.fields) ? ro.fields.filter(function (f) { return REFRESH_FIELDS.some(function (x) { return x.id === f; }); }) : REFRESH_DEFAULT_FIELDS.slice();
+      var sigs = Array.isArray(ro.signals) ? ro.signals.filter(function (f) { return REFRESH_SIGNALS.some(function (x) { return x.id === f; }); }) : REFRESH_SIGNALS.map(function (x) { return x.id; });
+      var pct = numOr(g.rfPct), pctDraft = !(g.src && g.src.rfPct === 'ops');
+      var wP = 0, sized = mk.length > 0 && mk.every(function (m) { return m.Pm != null && m.Pm > 0; });
+      mk.forEach(function (m) { wP += m.w * (m.Pm || 0); });
+      var prods = Math.round(wP * share / 100), fac = Pbeta > 0 ? TU / Pbeta : 1;
+      var fl = fIds.map(function (id) {
+        var d = REFRESH_FIELDS.filter(function (x) { return x.id === id; })[0];
+        var unit = d.aim ? numOr(aimR.aiPerField) : numOr(((R.rows || {})[d.row] || {}).unit);
+        var per = unit != null && pct != null ? round2(unit * pct / 100) : null;
+        return { id: id, label: d.label, why: d.why, unit: unit, perProduct: per,
+          gbp: per != null && sized ? round2(per * fac * wP * share / 100) : null };
+      });
+      refresh = { cadence: cad, cadLabel: REFRESH_CADENCE[cad].label, per: REFRESH_CADENCE[cad].per, share: share, products: sized ? prods : null,
+        fields: fl, signals: sigs, pct: pct, draft: pctDraft, status: 'priced', perRefresh: null, monthlyEq: 0 };
+      if (!fl.length) { refresh.status = 'off'; }
+      else if (!sized) { refresh.status = 'unknown'; block('unknown', 'AI-Refresher not sized — count the feed first', { line: 'refresh' }); }
+      else if (fl.some(function (f) { return f.perProduct == null; })) { refresh.status = 'unpriced'; block('unpriced', 'AI-Refresher: a field has no price — Management', { line: 'refresh' }); }
+      else {
+        var pr = 0; fl.forEach(function (f) { pr += f.gbp; });
+        refresh.perRefresh = round2(pr);
+        refresh.monthlyEq = round2(pr * REFRESH_CADENCE[cad].perMonth);
+        if (pctDraft) block('draft-refresh', 'AI-Refresher price not confirmed — Management', { line: 'refresh', draft: true });
+      }
+    }
+    var refreshGBP = refresh && refresh.status === 'priced' ? refresh.monthlyEq : 0;
     var monthly = { monH: monH, monBlocks: monBlocks, monCost: monCost, absorbed: absorbed, gen: monthlyGen, floor: floor,
       floorApplied: genCharged > monthlyGen,
       overlap: overlaps.length ? overlaps.map(function (o) { return (mk.length > 1 ? o.mkt.toUpperCase() + ' ' : '') + 'overlaps ' + o.ref + ' monthly bundle'; }).join(' · ') : null,
       overlapMkts: overlaps.map(function (o) { return o.mkt; }),
-      conv: round2(convMonthly), tests: testsGBP, total: round2(monCost + genCharged + convMonthly + testsGBP) };
+      conv: round2(convMonthly), tests: testsGBP, refresh: refreshGBP, total: round2(monCost + genCharged + convMonthly + testsGBP + refreshGBP) };
 
     // the projection: the Golden Score once the option's priced lines land, under the brand's profile
     // which line closes a Golden Record attribute (null: nobody's but the client's)
@@ -1778,7 +1842,7 @@
       var lk = ownerOf(key);
       if (!lk) return 'client to supply';
       var d = LINE_BY[lk];
-      if (!(option === 'go+ar' || d.pkg === (option === 'ar' ? 'ar' : 'go'))) return d.pkg === 'ar' ? 'in Tier 2' : 'in Tier 1';
+      if (!(core === 'go+ar' || d.pkg === (core === 'ar' ? 'ar' : 'go'))) return d.pkg === 'ar' ? 'in Tier 2' : 'in Tier 1';
       var L = lines.filter(function (l) { return l.key === lk; })[0];
       if (!L) return 'not in this quote';
       if (lk === 'conv' && !incC) {
@@ -1837,7 +1901,7 @@
     var alwaysOn = roadmapStatus(spec.roadmap, 'alwayson', industry, null);
     return { v: 1, client: spec.client || '', option: option, label: OPTION_LABEL[option], sub: OPTION_SUB[option], pkgVersion: g.pkgVersion || null, targets: tg,
       beta: beta, Pbeta: Pbeta, reuse: reuse, reuseUnset: reuseUnset, nLang: nLang,
-      lines: lines, perMarket: perMarket, conv: conv, oneOff: oneOff, monthly: monthly, tests: tests, sla: sla,
+      lines: lines, perMarket: perMarket, conv: conv, oneOff: oneOff, monthly: monthly, tests: tests, refresh: refresh, sla: sla,
       unknown: unknown, unpriced: unpriced, coming: coming, estimated: estimated, blockers: blockers,
       clientSafe: blockers.length === 0, draftRates: draftRates,
       alwaysOn: { status: alwaysOn.status, live: alwaysOn.status === 'live', mechanism: opts.mechanism || 'monthly' } };
@@ -1922,14 +1986,15 @@
       } else why.push('cost rates — ' + MG);
       // a test package is not costed (its labour is not on the rate card) — out of both sides,
       // like Spark AI
-      var testsSell = pq.monthly.tests || 0;
-      var monSell = pq.monthly.total - pq.monthly.conv - testsSell;
+      var testsSell = pq.monthly.tests || 0, refreshSell = pq.monthly.refresh || 0;
+      var monSell = pq.monthly.total - pq.monthly.conv - testsSell - refreshSell;
       if (testsSell) why.push('test packages are not costed — left out of both sides');
+      if (refreshSell) why.push('the AI-Refresher is not costed yet — left out of both sides');
       proposal = { genCost: genCost, genMargin: genCost != null && net > 0 ? 1 - genCost / net : null,
         setupCost: setupCost, setupMargin: setupCost != null && pq.oneOff.blockCost > 0 ? 1 - setupCost / pq.oneOff.blockCost : null,
         setupNote: 'retainer hours still cost — they are in the set-up cost even when the block is absorbed',
         monthlyCost: monthlyCost, monthlyMargin: monthlyCost != null && monSell > 0 ? 1 - monthlyCost / monSell : null,
-        excluded: testsSell ? ['conv', 'tests'] : ['conv'], why: why.concat(['Spark AI lines are not costed — left out of both sides']) };
+        excluded: ['conv'].concat(testsSell ? ['tests'] : [], refreshSell ? ['refresh'] : []), why: why.concat(['Spark AI lines are not costed — left out of both sides']) };
     }
     return { rows: rows, proposal: proposal, inputs: c };
   }
@@ -1996,7 +2061,7 @@
       rates: { rows: rrows, g: { blockGBP: gg.blockGBP, blockH: gg.blockH,
         tiers: (gg.tiers || []).map(function (t) { return { upTo: t.upTo === Infinity ? null : t.upTo, x: t.x }; }),
         bundlePct: gg.bundlePct, reusePct: gg.reusePct, floorMonthly: gg.floorMonthly, pkgVersion: gg.pkgVersion, ruleH: gg.ruleH, langSetupH: gg.langSetupH,
-        tests: gg.tests ? { 2: gg.tests[2], 3: gg.tests[3], 4: gg.tests[4] } : null },
+        tests: gg.tests ? { 2: gg.tests[2], 3: gg.tests[3], 4: gg.tests[4] } : null, rfPct: gg.rfPct == null ? null : gg.rfPct },
         aim: aimRatesOf(aimRates) },
       opts: ctx.opts || {}, aimSources: (pq.conv ? pq.conv.sources : ctx.aimSources) || {},
       pq: pqc, clientSafe: !!pq.clientSafe, blockers: (pq.blockers || []).slice(), hist: [{ s: 'Saved', t: now, by: by }] };
@@ -2041,6 +2106,15 @@
     if (!T || !T.n) return null;
     return 'Test package: ' + T.n + ' tests a month — ' + (T.status === 'priced' ? M(T.price) + ' a month (' + M(T.perTest) + ' a test)' : 'price to follow');
   }
+  // the AI-Refresher in one line: what is refreshed, how often, against what, and its price
+  function refreshText(F, M) {
+    if (!F || F.status === 'off') return null;
+    var sig = (F.signals || []).map(function (id) { var x = REFRESH_SIGNALS.filter(function (s) { return s.id === id; })[0]; return x ? x.label.toLowerCase() : id; });
+    var t = 'AI-Refresher: ' + (F.fields || []).map(function (f) { return f.label; }).join(', ') + ' refreshed ' + F.cadLabel.toLowerCase()
+      + (F.share < 100 ? ' on ' + F.share + '% of the catalogue' : '') + (sig.length ? ', read against ' + sig.join(', ') : '') + ' — ';
+    if (F.status !== 'priced') return t + 'price to follow';
+    return t + M(F.perRefresh) + ' ' + F.per + (F.cadence === 'quarterly' ? ' (counted as ' + M(F.monthlyEq) + ' a month)' : '');
+  }
   function optionBlock(op, idx, M, guarded) {
     var q = pqOf(op) || {}, L = [];
     L.push('OPTION ' + (op && op.prop && op.prop.n ? op.prop.n : idx + 1) + ' · ' + (q.label || ''));
@@ -2054,6 +2128,8 @@
     }
     var tt = testsText(q.tests, M);
     if (tt) L.push('· ' + tt);
+    var rt = refreshText(q.refresh, M);
+    if (rt) L.push('· ' + rt);
     L.push('One-off: ' + M(q.oneOff.total) + ' ex VAT');
     L.push('Monthly: ' + M(q.monthly.total) + ' ex VAT');
     // every new product, priced PER MARKET (a re-used language costs less there); a market whose
@@ -2150,11 +2226,13 @@
     var hasConv = list.some(function (op) { return (pqOf(op) || {}).conv; });
     var hasGpc = list.some(function (op) { return ((pqOf(op) || {}).lines || []).some(function (l) { return l.key === 'gpc' && l.status === 'priced'; }); });
     var hasTests = list.some(function (op) { var T = (pqOf(op) || {}).tests; return T && T.n; });
-    if (hasConv || hasGpc || hasTests) {
+    var hasRefresh = list.some(function (op) { var F = (pqOf(op) || {}).refresh; return F && F.status !== 'off'; });
+    if (hasConv || hasGpc || hasTests || hasRefresh) {
       B.push('HOW WE WOULD DO IT');
       if (hasGpc) B.push('· Google product category is Google\'s own fixed taxonomy — we map each product to it, we never invent categories.');
       if (hasConv) B.push('· Conversational attributes go to Google through a supplemental data source, so your main feed stays untouched.');
       if (hasTests) B.push('· Test package: ' + TEST_WHAT);
+      if (hasRefresh) B.push('· AI-Refresher: ' + REFRESH_WHAT);
       B.push('');
     }
     B.push('All figures are ex VAT.');
@@ -2203,11 +2281,14 @@
       var q = pqOf(op) || {}, M = function (n) { return guard && !safeOf(op) ? GUARD_TXT : fmtGBP(round2(+n || 0)); };
       var inc = (q.lines || []).filter(function (l) { return l.status === 'priced'; }).map(function (l) { return l.label.replace(/ —.*$/, ''); });
       if (q.tests && q.tests.n) inc.push('Test package (' + q.tests.n + ' tests a month)');
+      if (q.refresh && q.refresh.status !== 'off') inc.push('AI-Refresher (' + q.refresh.cadLabel.toLowerCase() + ')');
       var sub = q.sub || OPTION_SUB[q.option];
       L.push((op.prop && op.prop.n ? op.prop.n : i + 1) + '. ' + (op.prop && op.prop.label ? op.prop.label : q.label) + (sub ? ' (' + sub + ')' : ''));
       L.push('   Includes: ' + (inc.length ? inc.join(', ') : 'nothing priced yet'));
       var tt = testsText(q.tests, M);
       if (tt) L.push('   ' + tt);
+      var rt = refreshText(q.refresh, M);
+      if (rt) L.push('   ' + rt);
       L.push('   One-off ' + M(q.oneOff ? q.oneOff.total : 0) + ' · monthly ' + M(q.monthly ? q.monthly.total : 0));
       L.push('');
     });
@@ -2353,6 +2434,8 @@
     aimDefaultSources: aimDefaultSources, langOf: langOf, targetsOf: targetsOf, profileForIndustry: profileForIndustry,
     TITLE_BITS: TITLE_BITS, GPC_BITS: GPC_BITS, DESC_B: DESC_B, HKEYS: HKEYS, OPTION_LABEL: OPTION_LABEL, OPTION_SUB: OPTION_SUB, GUARD_TXT: GUARD_TXT,
     TEST_COUNTS: TEST_COUNTS, TEST_DEFAULTS: TEST_DEFAULTS, TEST_WHAT: TEST_WHAT,
+    REFRESH_FIELDS: REFRESH_FIELDS, REFRESH_DEFAULT_FIELDS: REFRESH_DEFAULT_FIELDS, REFRESH_SIGNALS: REFRESH_SIGNALS, REFRESH_CADENCE: REFRESH_CADENCE,
+    REFRESH_SHARES: REFRESH_SHARES, REFRESH_PCT_DEFAULT: REFRESH_PCT_DEFAULT, REFRESH_WHAT: REFRESH_WHAT, refreshText: refreshText,
     needCollector: needCollector, composeRates: composeRates, auditStored: auditStored, auditMerge: auditMerge, needsOf: needsOf,
     contractedFrom: contractedFrom, roadmapStatus: roadmapStatus, ROADMAP_SEED: ROADMAP_SEED, packageQuote: packageQuote,
     costModel: costModel, proposalRef: proposalRef, snapshotOption: snapshotOption, proposalText: proposalText, optionsText: optionsText,
