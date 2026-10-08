@@ -106,6 +106,20 @@ with the saved option (`opts.popts.refresh`); `?pkg=t3` highlights the card.
 
 ---
 
+**Five example products, prepared ahead** (Ray, 8 Oct 2026: *"pre-loaded population for 5 products examples per
+brands ahead to run this audit live with client — and ideally all missing have to be filled when Tier 2 AI-ready is
+selected"*). The live read keeps the FIVE products with the most gaps (one per item group / title stem); ‹ › steps
+through them. **⟳ Prepare examples** keeps this market's five with their example values (Spark AI's when connected,
+else built from the row) in KV `pricerex:<client>` via `/api/pricer/examples` (GET ?client=, PUT one market; Pricer
+gate + client scope; product data in KV only). **Prepare every brand** does each brand's lead market (GB first) in
+turn, skipping one prepared in the last 14 days. A prepared market opens at once — in Stored mode too — with no feed
+read and no Spark AI call, the chip reading "✓ pre-loaded <date> · <who>". On the product card **Tier 2 leaves
+nothing missing**: a gap no priced line closes is filled by the Spark AI work already contracted ("✓ contracted") or
+in the Tier 2 delivery (tooltip says so, Google's own value — unisex / adult / regular — where the product names
+none); the bars and the Golden Score still move only with priced lines.
+
+---
+
 ## 4. Saving, options and buy-in
 
 **💾 Save as proposal** stores every shown tier as an **option** of ONE proposal (`prop {id, n, label}`), each

@@ -656,6 +656,7 @@ async function route(request, env, ctx) {
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger',
+        '/api/pricer/examples': 'pricer-examples',
         '/api/pricer/ops': 'pricer-ops', '/api/pricer/price': 'pricer-price', '/api/pricer/cost': 'pricer-cost',
         '/api/pricer/proposals': 'pricer-prop', '/api/pricer/rollout': 'pricer-roll', '/api/pricer/roadmap': 'pricer-map' };
       if (ACT[path]) {
@@ -4739,6 +4740,7 @@ async function tachyonRatesRoute(request, env) {
    ACT logs each write (pricer-ops … pricer-map) from the activity map at the top of route(). */
 async function pricerRoute(request, env, path) {
   const name = path.slice('/api/pricer/'.length);
+  if (name === 'examples') return pricerExamplesRoute(request, env);
   const S = Object.prototype.hasOwnProperty.call(PSTORE.PRICER_STORES, name) ? PSTORE.PRICER_STORES[name] : null;
   if (!S) return json({ ok: false, error: 'unknown pricer store' }, 404);
   if (request.method !== 'GET' && request.method !== 'PUT') return json({ ok: false, error: 'method not allowed' }, 405);
@@ -4781,6 +4783,37 @@ async function pricerRoute(request, env, path) {
   // of a colleague's newer keys must never push the writer's own refusal off the end
   if (r.rejected.length) out._rejected = r.rejected.slice(0, S.maxKeys * 2);
   return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
+}
+
+/* PRE-LOADED EXAMPLES — /api/pricer/examples (Ray, 8 Oct 2026: "pre-loaded population for 5 products examples per
+   brands ahead to run this audit live with client"). GET ?client= → that client's markets; PUT {client, mkt,
+   products} replaces ONE market (src/pricerstore.js cleanExamples). Same gate as every Pricer store (owner or the
+   `pricer` grant) and the signin's client scope; KV `pricerex:<client>`, product data in KV only. */
+async function pricerExamplesRoute(request, env) {
+  const acc = await accessOf(env, request);
+  if (!acc.owner && !moduleAllowed(acc.modules, 'pricer')) return json({ ok: false, error: 'the Pricer is not in your access' }, 403);
+  const inScope = (c) => acc.owner || !acc.clients || clientMatch(acc.clients, c);
+  if (request.method === 'GET') {
+    const client = PSTORE.cleanClient(new URL(request.url).searchParams.get('client') || '');
+    if (!client) return json({ ok: false, error: 'client is required' }, 400);
+    if (!inScope(client)) return json({ ok: false, error: 'that client is outside your access' }, 403);
+    const rec = (await env.EDITS.get('pricerex:' + client, 'json')) || { mkts: {} };
+    return json({ ok: true, client, mkts: rec.mkts || {} });
+  }
+  if (request.method !== 'PUT') return json({ ok: false, error: 'method not allowed' }, 405);
+  let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+  const client = PSTORE.cleanClient(body && body.client);
+  const mkt = body && typeof body.mkt === 'string' && /^[a-z]{2,8}$/.test(body.mkt) ? body.mkt : null;
+  if (!client || !mkt) return json({ ok: false, error: 'client and a Google market are required' }, 400);
+  if (!inScope(client)) return json({ ok: false, error: 'that client is outside your access' }, 403);
+  const c = PSTORE.cleanExamples(body);
+  if (!c.ok) return json({ ok: false, error: c.why }, 400);
+  const key = 'pricerex:' + client;
+  const rec = (await env.EDITS.get(key, 'json')) || { mkts: {} };
+  rec.mkts = rec.mkts || {};
+  rec.mkts[mkt] = { t: Date.now(), by: acc.name || displayName(acc.email) || 'someone', products: c.v };
+  await env.EDITS.put(key, JSON.stringify(rec));
+  return json({ ok: true, client, mkt, rec: rec.mkts[mkt] });
 }
 
 /* ================= Label Guard: custom-label monitoring (docs/LABELGUARD.md) =================
