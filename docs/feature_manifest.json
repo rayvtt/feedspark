@@ -12386,13 +12386,13 @@
       "pr": 0
     },
     {
-      "name": "Services & Pricer: Tier 3 · AI-Refresher — the AI-ready fields refreshed monthly or quarterly against the signals the AM ticks",
+      "name": "Services & Pricer: Tier 3 · AI-Intel Refresher — the AI-ready fields refreshed monthly or quarterly against the signals the AM ticks",
       "file": "docs/pricer_engine.js",
       "pattern": "var REFRESH_FIELDS = [",
       "pr": 0
     },
     {
-      "name": "Services & Pricer: the AI-Refresher controls in ⚙ Customise (cadence, share, fields, signals)",
+      "name": "Services & Pricer: the AI-Intel Refresher controls in ⚙ Customise (cadence, share, fields, signals)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "function rfCust(",
       "pr": 0
@@ -12430,7 +12430,7 @@
     {
       "name": "Services & Pricer: Tier 3 on the preview switch + 'What this tier gives' strip",
       "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "['go+ar+rf','Tier 3 · AI-Refresher']",
+      "pattern": "['go+ar+rf','Tier 3 · AI-Intel Refresher']",
       "pr": 0
     },
     {
@@ -12443,6 +12443,12 @@
       "name": "Golden Record: depth card explanation folds behind 'How it's scored · full credit at N+'; legend on one line",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "<details class=\"dep-more\">",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: Tier 3 · AI-Intel Refresher counts its Dynamic fields in the preview KPI row (3 to 6)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "Dynamic fields<b class=\"pv-dyn\"",
       "pr": 0
     }
   ]

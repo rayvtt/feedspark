@@ -66,7 +66,7 @@ export const PKG_LINE_KEYS = ['title', 'keywords', 'ptype', 'gpc', 'attr_ai', 'a
   'highlights', 'details', 'desc', 'conv'];
 export const ROADMAP_KEYS = PKG_LINE_KEYS.concat(['alwayson']);
 export const ROADMAP_STATUS = ['live', 'pilot', 'building', 'planned'];
-// go+ar+rf = Tier 3 · AI-Refresher (Tier 2 plus the AI-ready fields refreshed monthly or quarterly)
+// go+ar+rf = Tier 3 · AI-Intel Refresher (Tier 2 plus the AI-ready fields refreshed monthly or quarterly)
 export const PROPOSAL_OPTIONS = ['go', 'go+ar', 'go+ar+rf', 'ar'];
 
 // the six stores: KV key, who reads / writes, how entries map onto a client (sharedstate rules),
@@ -107,7 +107,7 @@ export const PRICE_G_FIELDS = {
   blockGBP: num(1, 10000, 2), blockH: num(1, 24, 2), tiers: { t: 'tiers' },
   bundlePct: num(0, 50, 2), reusePct: num(0, 100, 2), floorMonthly: num(0, 100000, 2), pkgVersion: str(20),
   test2: num(0, 100000, 2), test3: num(0, 100000, 2), test4: num(0, 100000, 2),
-  // AI-Refresher: a refresh costs this % of each field's generation price (Tier 3)
+  // AI-Intel Refresher: a refresh costs this % of each field's generation price (Tier 3)
   rfPct: num(0, 100, 2),
 };
 // pricercost: `_c|<field>` only

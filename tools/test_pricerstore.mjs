@@ -336,8 +336,8 @@ console.log('· the test-package prices: _g|test2 / test3 / test4 on the price s
   t('the test prices are price-store cells, never ops or cost', P.cellSpec('ops', '_g|test2') === null && P.cellSpec('cost', '_c|test2') === null && !!P.cellSpec('price', '_g|test4'));
 }
 
-// ---- Tier 3 · AI-Refresher (Ray, 8 Oct 2026) ------------------------------------------------------------------------------------
-console.log('· AI-Refresher: _g|rfPct on the price store, and a Tier 3 option saves');
+// ---- Tier 3 · AI-Intel Refresher (Ray, 8 Oct 2026) ------------------------------------------------------------------------------------
+console.log('· AI-Intel Refresher: _g|rfPct on the price store, and a Tier 3 option saves');
 {
   const r = P.sanitizeCellPut('price', { '_g|rfPct': 40, 'title_gen|rfPct': 1 }, {}, ctx);
   t('the refresh % lands on the price store, stamped by the server', (r.data['_g|rfPct'] || {}).v === 40 && (r.data['_g|rfPct'] || {}).by === 'Steven');
@@ -345,7 +345,7 @@ console.log('· AI-Refresher: _g|rfPct on the price store, and a Tier 3 option s
     r.rejected.some((x) => x.k === 'title_gen|rfPct') && P.sanitizeCellPut('price', { '_g|rfPct': 101 }, {}, ctx).rejected.length === 1 && P.sanitizeCellPut('price', { '_g|rfPct': -1 }, {}, ctx).rejected.length === 1);
   t('the refresh % is Management\'s (price), never ops or cost', P.cellSpec('ops', '_g|rfPct') === null && P.cellSpec('cost', '_c|rfPct') === null);
   t('go+ar+rf is a proposal option', P.PROPOSAL_OPTIONS.indexOf('go+ar+rf') >= 0);
-  const t3 = P.cleanOption(OPT({ option: 'go+ar+rf', prop: { id: 'ppab13', n: 3, label: 'Tier 3 · AI-Refresher' }, opts: { popts: { refresh: { cadence: 'quarterly', share: 50, fields: ['qa'], signals: ['reviews'] } } } }), undefined, ctx);
+  const t3 = P.cleanOption(OPT({ option: 'go+ar+rf', prop: { id: 'ppab13', n: 3, label: 'Tier 3 · AI-Intel Refresher' }, opts: { popts: { refresh: { cadence: 'quarterly', share: 50, fields: ['qa'], signals: ['reviews'] } } } }), undefined, ctx);
   t('…and a Tier 3 option saves with its refresh settings', t3.ok && t3.v.option === 'go+ar+rf' && t3.v.opts.popts.refresh.cadence === 'quarterly', t3.why);
 }
 
