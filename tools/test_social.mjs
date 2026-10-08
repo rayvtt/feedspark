@@ -176,15 +176,15 @@ t('…the fold toggle sits inside the heading, so the phone skim view leaves it 
 t('the shared demo images are never handed one onload each (a second caller would steal the first)', /im\.decode\(\)/.test(PG) && !/im\.onload = function \(\) \{ res\(im\); \}; im\.onerror/.test(PG));
 {
   const rail = PG.slice(PG.indexOf('<aside class="pv-rail"'), PG.indexOf('</aside>')), prod = PG.slice(PG.indexOf('id="sec-prod"'), PG.indexOf('id="sec-prev"'));
-  const tabs = ['pic', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
-  t('the studio panel: seven tabs, each with its pane INSIDE the rail', tabs.every((k) => PG.indexOf('id="rt-' + k + '"') >= 0 && rail.indexOf('id="rp-' + k + '"') >= 0) && PG.indexOf('<aside class="pv-rail"') > PG.indexOf('id="sec-prev"'));
+  const tabs = ['pic', 'design', 'brand', 'sched', 'week', 'fields', 'ideas', 'data'];
+  t('the studio panel: eight tabs, each with its pane INSIDE the rail', tabs.every((k) => PG.indexOf('id="rt-' + k + '"') >= 0 && rail.indexOf('id="rp-' + k + '"') >= 0) && PG.indexOf('<aside class="pv-rail"') > PG.indexOf('id="sec-prev"'));
   const pane = (k) => { const a = rail.indexOf('id="rp-' + k + '"'), b = rail.indexOf('<div class="rpane"', a + 10); return rail.slice(a, b < 0 ? rail.length : b); };
   t('each control lives in its tab: picture + overlay, schedule + moment, week, fields, ideas, data', ['id="imgmode"', 'id="dgal"', 'id="ptab"'].every((x) => pane('pic').indexOf(x) >= 0)
     && ['id="rules"', 'id="cx-date"', 'id="cx-views"', 'id="now"'].every((x) => pane('sched').indexOf(x) >= 0) && pane('week').indexOf('id="wk"') >= 0
     && pane('fields').indexOf('id="defs"') >= 0 && pane('ideas').indexOf('id="ideas"') >= 0 && pane('data').indexOf('id="datatab"') >= 0 && pane('brand').indexOf('id="idn"') >= 0);
   t('…and none of them is left behind in the product section', ['id="dgal"', 'id="imgmode"', 'id="ptab"', 'id="rules"'].every((x) => prod.indexOf(x) < 0));
   t('the panel is sticky under the topbar, whatever height the topbar takes; it stacks under 1000px', /\.pv-railw\{position:sticky;top:calc\(var\(--tbh/.test(PG) && /setProperty\('--tbh'/.test(PG) && /@media\(max-width:1000px\)\{\.pv-split\{grid-template-columns:minmax\(0,1fr\)!important\}\.pv-railw\{position:static/.test(PG));
-  t('its width is per tab, dragged on its edge and kept on this device', /var RAILW0 = \{ pic: \d+, brand: \d+, sched: \d+, week: \d+/.test(PG) && /fcc-soc-railw/.test(PG) && /id="rgrip" role="separator"/.test(PG) && /fcc-soc-tab/.test(PG));
+  t('its width is per tab, dragged on its edge and kept on this device', /var RAILW0 = \{ pic: \d+, design: \d+, brand: \d+, sched: \d+, week: \d+/.test(PG) && /fcc-soc-railw/.test(PG) && /id="rgrip" role="separator"/.test(PG) && /fcc-soc-tab/.test(PG));
   t('an old link to a section opens its tab', /'sec-sched': 'sched'/.test(PG) && /'sec-how': 'data'/.test(PG));
 }
 t('every network can take its own picture, or an upload', /data-pimg/.test(PG) && /Upload…/.test(PG) && /imgMode === 'per'/.test(PG));
@@ -223,6 +223,39 @@ console.log('· the brand’s own face');
   t('the website’s icons, best first, SVG skipped, favicon last', LOGO.siteIcons('<link rel="icon" type="image/svg+xml" href="/a.svg"><link rel="icon" sizes="32x32" href="/f32.png"><link rel="apple-touch-icon" href="/t.png">', 'https://www.reiss.com/').join() === 'https://www.reiss.com/t.png,https://www.reiss.com/f32.png,https://www.reiss.com/favicon.ico');
   t('the route: scoped per signin, every hop allow-listed, no redirect:follow, an image only (never SVG)', /path === '\/api\/social\/logo'/.test(WK) && /clientMatch\(acc\.clients, client\)\)\) return json\(\{ ok: false, error: 'out of scope' \}, 403\)/.test(WK)
     && /SEC\.fetchWithin\(fetch, purl, \(u\) => SOCLOGO\.pageAllowed/.test(WK) && /SEC\.fetchWithin\(fetch, img, \(u\) => SOCLOGO\.imgAllowed/.test(WK) && /\/svg\/\.test\(ct\) \|\| len > SOCLOGO\.LOGO_MAX_BYTES/.test(WK));
+}
+
+console.log('· 🎨 the brand’s own overlay design');
+{
+  const raw = { id: 'c_ab12', name: '  Hot  ', zones: [
+    { at: 'tl', as: 'bar', fact: 'sale_pct', size: 'xl', bg: '#ff0000' },        // a bar cannot sit in a corner → pill
+    { at: 'b', as: 'band', fact: 'text', text: 'Only {stock} left' },
+    { at: 'frame', as: 'frame', fg: '#F5A623' }, { at: 'frame', as: 'frame' },     // one frame at most
+    { at: 'zz', as: 'pill', fact: 'sale_pct' }, { at: 'tr', as: 'pill', fact: 'text', text: '   ' },
+    { at: 'tr', as: 'pill', fact: 'evil<script>' }] };
+  const d = SOC.cleanCustom(raw, STU.FACTS);
+  t('a stored design is checked: shapes fit their place, one frame, colours #RRGGBB, empty words / unknown facts / places dropped', d.name === 'Hot' && d.zones.length === 3 && d.zones[0].as === 'pill' && d.zones[0].size === 'md' && d.zones[0].bg === '#FF0000' && d.zones[2].as === 'frame', d);
+  t('…a bad id is no design at all', !SOC.cleanCustom({ id: 'x', zones: [] }) && !SOC.cleanCustom({ id: 'c_<b>', zones: [] }));
+  t('…at most four elements, at most twelve designs, no repeated id', SOC.cleanCustom({ id: 'c_aa', zones: Array(9).fill({ at: 'tl', as: 'pill', fact: 'sale_pct' }) }).zones.length === SOC.CD_MAX
+    && SOC.cleanCustoms(Array(20).fill(0).map((_, i) => ({ id: 'c_n' + i, zones: [] }))).length === SOC.CD_KEEP && SOC.cleanCustoms([{ id: 'c_aa', zones: [] }, { id: 'c_aa', zones: [] }]).length === 1);
+  t('…and the schedule keeps them', SOC.cleanSetup({ custom: [raw] }).custom[0].zones.length === 3);
+  const st = SOC.cdStudio(d);
+  t('it becomes the studio’s own design shape (so it paints exactly like the fourteen)', st.family === 'custom' && st.maps === 'image_process_engine' && st.zones[1].fact === '__c1' && !('text' in st.zones[1]));
+  const comp = STU.compose(st, Object.assign({}, { sale_pct: { ok: true, text: '20% OFF' } }, SOC.cdResolve(d, { stock: 6 }, {})), {});
+  t('own words carry the schedule’s fields: “Only {stock} left” → “Only 6 left”', comp.zones.some((z) => z.text === 'Only 6 left'), comp.zones);
+  const comp2 = STU.compose(st, Object.assign({}, { sale_pct: { ok: true, text: '20% OFF' } }, SOC.cdResolve(d, { stock: 60 }, {})), {});
+  t('…a figure that would read as nonsense stands the element down, with the reason (60 in stock is not scarcity)', !comp2.zones.some((z) => /Only/.test(z.text)) && comp2.dropped.length === 1 && /25|scarc|stock/i.test(comp2.dropped[0].why), comp2.dropped);
+  const L = STU.layout(comp, 400, 400);
+  t('…and it lays out inside the picture', L.boxes.every((b) => b.x >= 0 && b.y >= 0 && b.x + b.w <= 400 + 0.5 && b.y + b.h <= 400 + 0.5));
+  const rec = SOC.cdRecipe(d, (k) => k + ' (feed)');
+  t('the recipe says each element in words, tokens kept as tokens', rec.length === 3 && /Top left: Pill/.test(rec[0]) && /“Only \{stock\} left”/.test(rec[1]) && /frame/.test(rec[2]), rec);
+  const fr = SOC.cdFrom(STU.designById('price-tag'), 'c_pt');
+  t('start from a studio design: its elements copied, editable', fr.zones.length === 2 && fr.zones[1].strike === true && SOC.cleanCustom(fr, STU.FACTS).zones.length === 2, fr);
+  t('a brand-new design has something on screen at once', SOC.cdBlank('c_zz', 0).zones.length === 1 && /^c_[a-z0-9]+$/.test(SOC.cdNewId()));
+  t('the page: a 🎨 Design tab, own designs in the gallery + every per-network select, drawn through cdStudio/cdResolve', /id="rt-design"/.test(PG) && /id="rp-design"/.test(PG) && /data-cdgo="1"/.test(PG) && /optgroup label="Your designs"/.test(PG)
+    && /function dsgById\(id\)/.test(PG) && /SOC\.cdResolve\(cust, facts\(\), S\.ctx\)/.test(PG) && !/d = STU\.designById\(dId\)/.test(PG));
+  t('…leaving a text box never redraws the editor (the click that left it would land on nothing)', /words are saved as they are typed; leaving the box must not redraw the editor/.test(PG));
+  t('…and it says plainly it is a preview + a recipe until built in the image creator', /A design here is a preview and a recipe/.test(PG));
 }
 
 console.log('· wiring');

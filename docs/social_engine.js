@@ -412,6 +412,81 @@
     return Object.keys(o).length ? o : null;
   }
 
+  // ---------------------------------------------------------------- THE BRAND'S OWN OVERLAY DESIGNS
+  // Ray, 8 Oct 2026: "is there a way to also have a design tool to generate overlay (Simple) for them?" —
+  // then "where's the design feature". A design is the Overlays studio's own shape (declarative ZONES the
+  // studio's compose + layout already draw), so a design made here paints exactly like the fourteen
+  // built in, inside each network's safe zone, and reads as a recipe for the image-creator engine.
+  // Simple by construction: up to four elements, a fixed set of places, the shapes that make sense in
+  // each place, three sizes, two colours. An element says either one of the feed's facts (the studio's
+  // own — % off, price, low stock …) or the AM's OWN WORDS, which may carry the schedule's {tokens}; a
+  // token the product lacks stands the element down, the same honesty rule as every tagline.
+  var CD_AT = { tl: 'Top left', tr: 'Top right', bl: 'Bottom left', br: 'Bottom right', t: 'Top band', b: 'Bottom band', frame: 'Frame' };
+  var CD_SHAPES = { corner: ['pill', 'flash', 'ribbon', 'burst', 'tag'], band: ['bar', 'band', 'strip'], frame: ['frame'] };
+  var CD_SHAPE_NAME = { pill: 'Pill', flash: 'Corner flash', ribbon: 'Ribbon', burst: 'Starburst', tag: 'Price tag', bar: 'Bar', band: 'Band', strip: 'Strip', frame: 'Frame' };
+  var CD_MAX = 4, CD_KEEP = 12, CD_TEXT_MAX = 40;
+  var HEX_RE = /^#[0-9A-Fa-f]{6}$/, CD_ID_RE = /^c_[a-z0-9]{2,24}$/;
+  function cdGroup(at) { return at === 'frame' ? 'frame' : (at === 't' || at === 'b') ? 'band' : 'corner'; }
+  function cdShapesFor(at) { return CD_SHAPES[cdGroup(at)].slice(); }
+  // one element, checked: a place, a shape that place can carry, a fact OR own words, size, colours
+  function cleanZone(z, facts) {
+    if (!z || typeof z !== 'object' || !CD_AT[z.at]) return null;
+    var o = { at: z.at, as: cdShapesFor(z.at).indexOf(z.as) >= 0 ? z.as : cdShapesFor(z.at)[0] };
+    if (o.as !== 'frame') {
+      if (z.fact === 'text') { var t = s0(z.text).replace(/\s+/g, ' ').trim().slice(0, CD_TEXT_MAX); if (!t) return null; o.fact = 'text'; o.text = t; }
+      else if (z.fact && /^[a-z_]{2,20}$/.test(z.fact) && (!facts || facts[z.fact])) o.fact = z.fact;
+      else return null;
+      o.size = ['sm', 'md', 'lg'].indexOf(z.size) >= 0 ? z.size : 'md';
+      o.bg = HEX_RE.test(s0(z.bg)) ? z.bg.toUpperCase() : '#ED6F0B';
+      if (z.strike) o.strike = true;
+    }
+    o.fg = HEX_RE.test(s0(z.fg)) ? z.fg.toUpperCase() : '#FFFFFF';
+    return o;
+  }
+  function cleanCustom(d, facts) {
+    if (!d || typeof d !== 'object' || !CD_ID_RE.test(s0(d.id))) return null;
+    var zones = (Array.isArray(d.zones) ? d.zones : []).map(function (z) { return cleanZone(z, facts); }).filter(Boolean).slice(0, CD_MAX);
+    // one frame at most: two frames are one frame drawn twice
+    var fr = 0; zones = zones.filter(function (z) { return z.as !== 'frame' || !fr++; });
+    return { id: d.id, name: s0(d.name).replace(/\s+/g, ' ').trim().slice(0, 40) || 'Untitled design', zones: zones };
+  }
+  function cleanCustoms(list, facts) {
+    var seen = {};
+    return (Array.isArray(list) ? list : []).map(function (d) { return cleanCustom(d, facts); })
+      .filter(function (d) { if (!d || seen[d.id]) return false; seen[d.id] = 1; return true; }).slice(0, CD_KEEP);
+  }
+  function cdNewId(now) { return 'c_' + (+(now || Date.now())).toString(36) + Math.floor(Math.random() * 1296).toString(36); }
+  // a brand-new design: one orange pill saying the discount — something on screen the moment it is made
+  function cdBlank(id, n) { return { id: id, name: 'My design' + (n ? ' ' + n : ''), zones: [{ at: 'tl', as: 'pill', fact: 'sale_pct', size: 'md', fg: '#FFFFFF', bg: '#ED6F0B' }] }; }
+  // start from a studio design: its corner/band/frame zones copied (a two-up split is a picture, not an element)
+  function cdFrom(studio, id) {
+    var zs = ((studio && studio.zones) || []).filter(function (z) { return CD_AT[z.at] && z.as !== 'split'; })
+      .map(function (z) { return { at: z.at, as: z.as, fact: z.fact, size: z.size, fg: z.fg, bg: z.bg, strike: z.strike }; });
+    return { id: id, name: s0(studio && studio.name).slice(0, 30) + ' (mine)', zones: zs.slice(0, CD_MAX) };
+  }
+  // the studio's own shape. Own-words zones read a fact named __cN that the page resolves per product
+  // through fill(), so the studio's compose drops one the product cannot say — and says why.
+  function cdStudio(d) {
+    return { id: d.id, name: d.name, family: 'custom', maps: 'image_process_engine', blurb: 'Your own design',
+      zones: d.zones.map(function (z, i) { var o = {}; for (var k in z) if (k !== 'text') o[k] = z[k]; if (z.fact === 'text') o.fact = '__c' + i; return o; }) };
+  }
+  // the words each own-words zone says on THIS product (tokens filled, or stood down with the reason)
+  function cdResolve(d, facts, ctx) {
+    var out = {};
+    d.zones.forEach(function (z, i) { if (z.fact !== 'text') return; var r = fill(z.text, facts, ctx); out['__c' + i] = { ok: r.ok, text: r.text, why: r.why || '' }; });
+    return out;
+  }
+  // the design in words, for the image-creator brief: each element's place, shape, size, colours and
+  // what it says — a fact as its feed token, own words as written (their {tokens} stay tokens)
+  function cdRecipe(d, factLabel) {
+    return d.zones.map(function (z, i) {
+      var what = z.as === 'frame' ? 'a ' + z.fg + ' frame round the picture'
+        : (CD_SHAPE_NAME[z.as] || z.as) + ', ' + ({ sm: 'small', md: 'medium', lg: 'large' }[z.size]) + ', ' + z.fg + ' on ' + z.bg + (z.strike ? ', struck through' : '')
+          + ' — ' + (z.fact === 'text' ? '“' + z.text + '”' : (factLabel ? factLabel(z.fact) : z.fact));
+      return (i + 1) + '. ' + CD_AT[z.at] + ': ' + what;
+    });
+  }
+
   var DEFAULTS = { tagline: '', headline: '{title}', primary: 'Shop {title} from {brand} — {price}.', cta: 'Shop now' };
   // the opening schedule: three taglines that take turns across a week (the weekend offer, live
   // interest in the evening, 30-day proof the rest of the time) and a retargeting button + copy —
@@ -461,6 +536,7 @@
     if (s.imgMode) o.imgMode = s.imgMode === 'per' ? 'per' : 'same';
     if (s.img0 != null) o.img0 = clamp(s.img0, 0, 10);
     var id = cleanIdent(s.ident); if (id) o.ident = id;
+    if (Array.isArray(s.custom)) { var cs = cleanCustoms(s.custom); if (cs.length) o.custom = cs; }
     return o;
   }
 
@@ -497,6 +573,8 @@
     weekGrid: weekGrid, weekVariety: weekVariety, ideaById: ideaById, ruleFromIdea: ruleFromIdea,
     FB_PAGES: FB_PAGES, fbPageFor: fbPageFor, identFor: identFor, cleanIdent: cleanIdent, HANDLE_RE: HANDLE_RE,
     brandLogo: brandLogo, avatarFor: avatarFor, handleFor: handleFor,
+    CD_AT: CD_AT, CD_SHAPE_NAME: CD_SHAPE_NAME, CD_MAX: CD_MAX, CD_KEEP: CD_KEEP, cdShapesFor: cdShapesFor, cleanZone: cleanZone, cleanCustom: cleanCustom, cleanCustoms: cleanCustoms,
+    cdNewId: cdNewId, cdBlank: cdBlank, cdFrom: cdFrom, cdStudio: cdStudio, cdResolve: cdResolve, cdRecipe: cdRecipe,
     defaultSetup: defaultSetup, cleanSetup: cleanSetup, cleanCond: cleanCond, briefLines: briefLines, compact: compact,
   };
 }));
