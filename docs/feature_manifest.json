@@ -14802,7 +14802,6 @@
       "pr": 0
     },
     {
-<<<<<<< HEAD
       "name": "Social DPA: a \ud83c\udfa8 Design tab to make the brand's own overlay",
       "file": "docs/FeedSpark_Social.html",
       "pattern": "<button type=\"button\" role=\"tab\" class=\"rtab\" id=\"rt-design\" data-tab=\"design\"",
@@ -14836,7 +14835,9 @@
       "name": "Social DPA: the design tripwire",
       "file": "tools/check_social.js",
       "pattern": "design your own overlay",
-=======
+      "pr": 0
+    },
+    {
       "name": "Golden action plan: planBuild reads the audit into Now / Next / Then (Ray 8 Oct 2026: 'an action plan must be created and recommended to client after the audit')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function planBuild(",
@@ -14870,7 +14871,6 @@
       "name": "presync: Golden action-plan tripwire",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grplan.js",
->>>>>>> origin/main
       "pr": 0
     }
   ]
