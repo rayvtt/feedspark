@@ -250,6 +250,8 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     }));
     const s0 = await st();
     ok('every section heading carries a ▸ Show / ▾ Hide toggle', s0.length >= 10 && s0.every((x) => x.tog), s0.filter((x) => !x.tog).map((x) => x.id));
+    const tiles = await p.evaluate(() => [...document.querySelectorAll('h2.sec-h')].map((h) => ({ desc: !!h.querySelector('.sec-desc'), tt: !!h.querySelector('.sec-tt'), floating: [...h.parentNode.querySelectorAll(':scope > .sec-body > p.sub')].filter((x) => getComputedStyle(x).display !== 'none' && x === x.parentNode.firstElementChild).length })));
+    ok('every section head is a tile — a title and one line of what is inside, no explainer floating under it', tiles.length >= 10 && tiles.every((t) => t.tt && t.desc && !t.floating), tiles);
     ok('a fresh device opens Audit and Proposal, every other section folded (Debrief kit included)',
       s0.filter((x) => x.open).map((x) => x.id).join() === 'svc-audit,svc-prop' && s0.every((x) => (x.aria === 'true') === x.open), s0.map((x) => x.id + ':' + x.open));
     await p.click('#svc-debrief .sec-tog'); await p.waitForTimeout(200);

@@ -12597,6 +12597,18 @@
       "file": "docs/FeedSpark_Design.html",
       "pattern": "<b>Every section folds</b>",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: every section head is a tile — title, one line of what is inside, round chevron (no floating sentence)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "h2.sec-h{display:flex;align-items:center",
+      "pr": 0
+    },
+    {
+      "name": "Services & Pricer: the section's floating explainer becomes the tile line's tooltip",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "sub.classList.add('sec-sub-x')",
+      "pr": 0
     }
   ]
 }
