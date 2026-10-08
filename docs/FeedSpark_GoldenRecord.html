@@ -479,7 +479,8 @@ window.addEventListener('load',restore);
   body:not(.pdf) .dep-card{display:none}
   .dep-card{max-width:560px;margin:2px 0 10px}
   .dep-card .pl{width:120px}
-  .at-bar.dep-tgt{cursor:pointer}
+  .at-bar.dep-tgt,.at-nm.dep-mg[data-deptip]{cursor:pointer}
+  .at-nm.dep-mg[data-deptip]:hover,.at-nm.dep-mg[aria-expanded=true]{color:var(--orange-deep)}
   .at-bar.dep-tgt:hover,.at-bar.dep-tgt:focus-visible,.at-bar.dep-tgt[aria-expanded=true]{outline:2px solid var(--orange);outline-offset:2px}
   .dptip{position:fixed;z-index:90;background:#171A21;color:#E8EAEF;border:1px solid #2C3039;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:10px 12px;font-size:11.5px;font-weight:700;pointer-events:none;min-width:260px;max-width:min(360px,calc(100vw - 16px));display:none}
   .dptip.pin{pointer-events:auto}
@@ -743,6 +744,12 @@ window.addEventListener('load',restore);
   body.xhtml summary.xd-sum .qz-nm::before{content:"\25b8";display:inline-block;width:13px;
     color:var(--muted);font-weight:900}
   body.xhtml details.xd-q[open]>summary .qz-nm::before{content:"\25be"}
+  /* ⬇ PDF (body.xpaper): the same document on paper — nothing on paper unfolds, so no fold chevron and no "how it's scored"
+     chip that cannot open; every row keeps its alignment (the chevron's width stays) */
+  body.xpaper details.xd>summary,body.xpaper details.xd-q>summary.xd-sum{cursor:default}
+  body.xpaper details.xd>summary::after{content:none}
+  body.xpaper summary.xd-sum .qz-nm::before{visibility:hidden}
+  body.xpaper details.xd-chip:not([open]){display:none}
   body.xhtml details.xd-q>.xd-b{padding:0}
   body.xhtml .xd-wrap{margin:0 0 10px}
   body.pdf #sec-detail{border-top:none;padding:0}
@@ -808,7 +815,7 @@ window.addEventListener('load',restore);
   .catx-f{display:block;width:100%;height:420px;border:0;background:transparent}
   #print-catx{display:none}
   body.pdf #catx{display:none!important}
-  body.xhtml #print-catx{display:block;margin-top:16px}
+  body.xhtml #print-catx{display:block;margin-top:16px;padding:0 20px}   /* on the column the scorecard and all-markets card read on — it hung off the page edge */
   #print-catx .pm-h{margin-bottom:8px}
   #print-catx iframe{display:block;width:100%;border:0;background:transparent}
   /* --- the page's own ≤900px rules, put back to their DESKTOP form. The print viewport is
@@ -1077,6 +1084,11 @@ window.addEventListener('load',restore);
   ];
   // the depth twin that replaces each presence attribute in the score when it was measured
   var DEPTH_OF = {}; SPEC.forEach(function (x) { if (x.of) DEPTH_OF[x.of] = x.k; });
+  // ONE ROW PER FIELD (Ray, 8 Oct 2026: "merge - highlight per product > into g:product_highlight, same for details too - and
+  // the pop up table happen when hover those merged fields instead"): where the scan counted them per product, the
+  // g:product_highlight and g:product_detail rows ARE the depth reading — named as the field, scored on how many each product
+  // carries, the breakdown on hover; a scan that could not count them shows the plain filled-or-not row instead
+  var DEP_MERGE = { product_highlight: 1, product_detail: 1 };
   // the category each scoped attribute is asked of — mirrors GPC_SCOPE[k].what in the engine
   var GPC_WHAT = { color: 'clothing & accessories', gender: 'clothing & accessories', age_group: 'clothing & accessories',
     size: 'clothing & shoes', material: 'clothing & accessories', pattern: 'clothing & accessories' };
@@ -1125,7 +1137,7 @@ window.addEventListener('load',restore);
         (a.dup ? '; ' + fmt(a.dup) + ' lines repeat another attribute (colour, size, brand, price …) or each other, so they are not counted' : '') +
         (a.bad ? '; ' + fmt(a.bad) + ' lines carry no name or value' : '');
     }
-    return w + ' · replaces g:' + x.of + ' in the score (filled is not full)';
+    return w + (DEP_MERGE[x.of] ? ' · scored on how many each product carries, not on whether the field is filled' : ' · replaces g:' + x.of + ' in the score (filled is not full)');
   }
   var DEP_KEYS = ['0', '1', '2', '3', '4', '5', '6+'];
   function depCol(b, tg) {
@@ -2464,10 +2476,13 @@ window.addEventListener('load',restore);
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
+        var mg = !!(x.of && DEP_MERGE[x.of]);   // a depth reading that takes its field's own row
+        if (DEP_MERGE[x.k] && s.attrs[DEPTH_OF[x.k]]) return;   // …so the filled-or-not row gives way to it
+        if (mg && nm) return;                                  // not counted on this scan: the field's plain row scores
         // its depth twin was measured: this presence row stays (is it in the feed at all?) but the twin scores
         var repl = DEPTH_OF[x.k] && s.attrs[DEPTH_OF[x.k]] ? SPEC.filter(function (y) { return y.k === DEPTH_OF[x.k]; })[0] : null;
         var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + (x.of ? ' dep-row' : '') + (repl ? ' dep-by-row' : '') + '">' +
-          (x.of ? '<span class="at-nm dep-nm" title="' + esc(x.n) + '">' + esc(x.lbl) +
+          (x.of ? '<span class="at-nm dep-nm' + (mg ? ' dep-mg' : '') + '"' + (mg && a.dist ? ' data-deptip="' + esc(x.k) + '"' : ' title="' + esc(mg ? 'g:' + x.of + ' — scored on how many ' + x.many + ' each product carries. ' + x.n : x.n) + '"') + '>' + (mg ? '<i>g:</i>' + esc(x.of) : esc(x.lbl)) +
             (x.h ? '<span class="fs-std" title="FeedSpark’s standard — ' + x.tg + ' or more ' + esc(x.many) + ' per product is full credit; Google sets no number">FeedSpark</span>'
               : '<span class="fs-std g-std" title="Google’s own recommendation (answer 9216100): 4–6 highlights per product">Google 4–6</span>')
           : x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
@@ -2511,7 +2526,7 @@ window.addEventListener('load',restore);
             esc(x.kw ? kwNote(a) : (x.of ? depNote(x, a) : (basis ? basis + ' — ' + x.n : x.n))) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of && !mg ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
@@ -2527,7 +2542,7 @@ window.addEventListener('load',restore);
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
-          (x.t === 'req' || x.of ? '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
+          (x.t === 'req' || (x.of && !mg) ? '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' : '<button class="abtn" data-pdp="' + esc(mg ? x.of : x.k) + '" title="Sample product pages blank in g:' + esc(mg ? x.of : x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
         if (x.of && a.present) h += depCard(x, a);   // how many each product carries, 0 … 6+
       });
@@ -4285,41 +4300,88 @@ window.addEventListener('load',restore);
     ]).catch(function (e) { PDF_LIBS = null; throw e; });   // a transient CDN miss is retried next click, not remembered forever
     return PDF_LIBS;
   }
+  /* ⬇ PDF IS THE ⬇ HTML ON PAPER (Ray, 8 Oct 2026: "can the PDF download format be adapted to latest update and ensure design
+     is consistent?"): the PDF used to rasterise the live page under body.pdf — an older layout that had drifted from the HTML
+     file (which follows the interface: the wash page, the header band with its dial, the pop-up cards, the all-markets table,
+     the Catalogue modules). Now both are ONE document: exportDoc builds it, the PDF keeps the file's own folds, lays it out in an
+     offscreen frame at the file's own width, draws the Catalogue frame into an image in place (a canvas cannot see inside a
+     frame), and rasterises the whole thing onto one continuous sheet. The live page is never touched. The print dialog stays
+     the fallback when the libraries cannot load, and a bare Ctrl+P still prints the page's own body.pdf layout. */
+  var PDF_W = 1220;   // the file's .wrap column (1180) + its padding — the width the ⬇ HTML is designed at
+  function pdfFrame(html) {
+    return new Promise(function (res, rej) {
+      var f = document.createElement('iframe');
+      f.setAttribute('sandbox', 'allow-same-origin');
+      f.setAttribute('aria-hidden', 'true');
+      f.className = 'pdf-render';
+      f.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + PDF_W + 'px;height:1200px;border:0;visibility:hidden';
+      var done = false, ok = function () { if (done) return; done = true; res(f); };
+      f.onload = function () { setTimeout(ok, 60); };
+      setTimeout(function () { if (!done) { done = true; if (f.contentDocument && f.contentDocument.body) res(f); else rej(new Error('frame never loaded')); } }, 8000);
+      f.srcdoc = html;
+      document.body.appendChild(f);
+    });
+  }
+  function pdfFonts(d) {
+    if (!d.fonts) return Promise.resolve();
+    return Promise.all(['400', '700', '900'].map(function (w) { return d.fonts.load(w + ' 16px Lato').catch(function () {}); }))
+      .then(function () { return d.fonts.ready; });
+  }
+  // the Catalogue section is a frame of its own — wait for it, size it to its content, draw it into an image in its place
+  function pdfInlineFrames(d) {
+    var frames = Array.prototype.slice.call(d.querySelectorAll('#print-catx iframe'));
+    return Promise.all(frames.map(function (f) {
+      return new Promise(function (res) {
+        var go = function () {
+          var id = null; try { id = f.contentDocument; } catch (e) {}
+          if (!id || !id.documentElement) return res();
+          pdfFonts(id).then(function () {
+            var h = id.documentElement.scrollHeight; f.style.height = h + 'px';
+            return window.html2canvas(id.documentElement, { scale: 2, backgroundColor: null, useCORS: true, windowWidth: f.clientWidth || PDF_W, height: h, windowHeight: h });
+          }).then(function (cv) {
+            var img = d.createElement('img');
+            img.src = cv.toDataURL('image/png'); img.alt = f.getAttribute('title') || 'Catalogue dashboard';
+            img.style.cssText = 'display:block;width:100%;height:' + f.style.height;
+            f.parentNode.replaceChild(img, f); res();
+          }).catch(function () { res(); });
+        };
+        var rd = null; try { rd = f.contentDocument && f.contentDocument.readyState; } catch (e) {}
+        if (rd === 'complete' && f.contentDocument.body && f.contentDocument.body.childNodes.length) go();
+        else { f.addEventListener('load', go); setTimeout(go, 5000); }
+      });
+    }));
+  }
   function exportPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    fillPrint(k, p, s);
-    var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '';
+    var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '', frame = null;
+    var done = function () { if (frame && frame.parentNode) frame.parentNode.removeChild(frame); frame = null; if (btn) { btn.disabled = false; btn.textContent = oldTxt; } };
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
-    loadPdfLibs().then(function () {
-      preparePdf();
-      document.body.classList.add('pdfshot');           // full-resolution for the capture, see CSS
-      return new Promise(function (res) { requestAnimationFrame(function () { requestAnimationFrame(res); }); });
-    }).then(function () {
-      // html2canvas measures text with its OWN font-loading state, separate from the browser's
-      // live layout — capturing before the Lato webfont finishes loading races the two apart
-      // and words run together with no space between them (a real bug caught in QA: the bold
-      // 900-weight headings, hidden until preparePdf()/pdfshot reveal them, hadn't even
-      // triggered their OWN font fetch yet by the time a bare document.fonts.ready resolved —
-      // it only reflects fonts already requested). Force every weight this page actually uses.
-      if (!document.fonts) return null;
-      return Promise.all(['400', '700', '900'].map(function (w) { return document.fonts.load(w + ' 16px Lato'); }))
-        .then(function () { return document.fonts.ready; });
-    }).then(function () {
-      return window.html2canvas(document.body, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    var picks = catxPicks();
+    var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
+    (picks.length ? catxCapture(k, picks, tell).catch(function () { return null; }) : Promise.resolve(null)).then(function (cx) {
+      if (btn) btn.textContent = 'Preparing PDF…';
+      var r = exportDoc(k, cx, true);
+      if (!r) throw new Error('nothing to export');
+      return loadPdfLibs().then(function () { return pdfFrame(r.html); });
+    }).then(function (f) {
+      frame = f;
+      var fd = f.contentDocument;
+      return pdfFonts(fd).then(function () { return pdfInlineFrames(fd); }).then(function () {
+        var h = Math.max(fd.documentElement.scrollHeight, fd.body.scrollHeight);
+        f.style.height = h + 'px';
+        var bg = getComputedStyle(fd.body).backgroundColor || '#ffffff';
+        return window.html2canvas(fd.body, { scale: 2, backgroundColor: bg, useCORS: true, windowWidth: PDF_W, width: PDF_W, height: h, windowHeight: h });
+      });
     }).then(function (canvas) {
-      document.body.classList.remove('pdfshot');
-      restorePdf();
       var wMM = 210, hMM = Math.round((wMM * canvas.height / canvas.width) * 10) / 10;
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ unit: 'mm', format: [wMM, hMM] });
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, wMM, hMM);
       pdf.save(pdfFilename(p, s, 'pdf'));
-      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+      done();
     }).catch(function () {
-      document.body.classList.remove('pdfshot');
-      restorePdf();
-      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+      done();
       printPdf(k);   // the CDN was unreachable — the print dialog still gets the client a PDF
     });
   }
@@ -4487,7 +4549,17 @@ window.addEventListener('load',restore);
     catxCapture(k, picks, tell).then(function (cx) { done(); buildHtml(k, cx); }, function () { done(); buildHtml(k, null); });
   }
   function buildHtml(k, cx) {
-    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var r = exportDoc(k, cx, false); if (!r) return;
+    var blob = new Blob([r.html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = pdfFilename(r.p, r.s, 'html');
+    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+  // THE ONE CLIENT DOCUMENT both downloads are made of: ⬇ HTML saves it as a file, ⬇ PDF renders it onto paper (paper=true
+  // opens every fold and lets the Catalogue cards grow, since paper cannot scroll or click)
+  function exportDoc(k, cx, paper) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return null;
     var p = parts(k), s = d.snapshot;
     /* open every content-quality row first: a closed row's detail is never rendered, so without
        this the download would carry chevrons over nothing. The reader can still fold them. */
@@ -4508,15 +4580,31 @@ window.addEventListener('load',restore);
     if (cx) { var ft = doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
     title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    if (paper) {
+      // the folds stand as the ⬇ HTML opens them (each section's method open, attributes and pillars folded on their score
+      // and worst rule — fully open it ran past four A4 lengths and printed every finding twice); paper cannot unfold, so the
+      // depth explanations, short and otherwise unreachable, print open as they always have
+      Array.prototype.forEach.call(doc.querySelectorAll('details.dep-more'), function (el) { el.setAttribute('open', ''); });
+      // …and a fold left closed keeps only its summary line: html2canvas paints a closed <details>' body anyway, straight over
+      // the section below (found in the first real render), and on paper a closed fold can never be opened
+      Array.prototype.forEach.call(doc.querySelectorAll('details:not([open])'), function (el) {
+        Array.prototype.slice.call(el.childNodes).forEach(function (n) { if (!(n.nodeType === 1 && n.tagName === 'SUMMARY')) el.removeChild(n); });
+      });
+      doc.querySelector('body').classList.add('xpaper');
+      var cf = doc.querySelector('#print-catx iframe');
+      if (cf) {
+        // the parent reads the frame to draw it (still no scripts in it), and its cards grow to their content — the cards in
+        // a row stretch to the tallest, so the squares stay even, and nothing is cut where a reader cannot scroll
+        cf.setAttribute('sandbox', 'allow-same-origin');
+        cf.setAttribute('srcdoc', String(cf.getAttribute('srcdoc')).replace('</head>', '<style>.mod,.mod[hidden]{height:auto!important;min-height:340px!important}' +
+          '.mod>div:last-child{overflow:visible!important}</style></head>'));
+      }
+    }
     var html = '<!doctype html>\n' + doc.outerHTML;
-    var blob = new Blob([html], { type: 'text/html' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = pdfFilename(p, s, 'html');
-    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
     // and put the page back exactly as it was
     Object.keys(was).forEach(function (kk) { if (was[kk]) QOPEN[kk] = true; else delete QOPEN[kk]; });
     renderDetail(k);
+    return { html: html, p: p, s: s };
   }
 
   /* ---------------- CSV export ---------------- */

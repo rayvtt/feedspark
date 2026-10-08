@@ -271,7 +271,15 @@ const QUALITY = {
     // own rendering, which a fidelity check does separately against the real thing.
     await page.evaluate(() => {
       window.__pdfSaved = null;
-      window.html2canvas = () => Promise.resolve({ width: 960, height: 1200, toDataURL: () => 'data:image/jpeg;base64,AAAA' });
+      // the capture records WHAT it was handed: the PDF is the ⬇ HTML document on paper (Ray, 8 Oct 2026: "can the PDF
+      // download format be adapted to latest update and ensure design is consistent?"), never the live page
+      window.__h2c = [];
+      window.html2canvas = (el) => { const d = el.ownerDocument;
+        window.__h2c.push({ live: d === document, cls: d.body.className, closed: d.querySelectorAll('details:not([open])').length, det: d.querySelectorAll('details').length, depClosed: d.querySelectorAll('details.dep-more:not([open])').length, bodies: Array.from(d.querySelectorAll('details:not([open])')).filter((x) => Array.from(x.childNodes).some((n) => !(n.nodeType === 1 && n.tagName === 'SUMMARY'))).length, methOpen: d.querySelectorAll('details[open]').length,
+          head: !!d.querySelector('#print-head .ph-brand, #print-head *'), dial: !!d.querySelector('svg.dial'), scripts: d.querySelectorAll('script').length,
+          tip: d.querySelectorAll('.dptip,[data-deptip]').length, chrome: !!d.querySelector('.topbar:not([hidden])') && getComputedStyle(d.querySelector('.topbar')).display !== 'none',
+          bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth });
+        return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
       window.jspdf = { jsPDF: function (opts) { this.opts = opts; this.addImage = () => {}; this.save = (name) => { window.__pdfSaved = name; }; } };
     });
     await page.click('#det-pdf');
@@ -286,6 +294,36 @@ const QUALITY = {
     ok('the capture classes are removed once the download completes — no lingering print state', !r.stillCapturing);
     ok('the app is back to normal immediately (no waiting on window.print’s afterprint)', r.chromeBack);
     ok('the button label is restored', r.btnRestored === '⬇ PDF', r.btnRestored);
+    const cap = await page.evaluate(() => ({ calls: window.__h2c, frames: document.querySelectorAll('iframe.pdf-render').length }));
+    const c0 = (cap.calls || [])[0] || {};
+    ok('the PDF is rasterised from the ⬇ HTML document, laid out apart from the live page — the same body classes, the header band with its dial, no script',
+      cap.calls.length === 1 && c0.live === false && /\bxhtml\b/.test(c0.cls) && /\bxpaper\b/.test(c0.cls) && c0.dial && c0.scripts === 0 && !c0.chrome && c0.w === 1220, c0);
+    ok('…its folds stand as the ⬇ HTML opens them — section methods open, attributes folded on their score — the depth explanations open, and the pop-up never travels',
+      c0.det > 0 && c0.closed > 0 && c0.methOpen > 0 && c0.depClosed === 0 && c0.tip === 0, c0);
+    ok('…and a fold left closed carries only its summary line (html2canvas would paint a closed fold\'s body over the next section)', c0.closed > 0 && c0.bodies === 0, c0);
+    ok('…on the file\'s own wash page, and the render frame is cleared away after the save', c0.bg === 'rgb(247, 247, 245)' && cap.frames === 0, [c0.bg, cap.frames]);
+  }
+
+  // OPT-IN: the REAL libraries (GRPDF_LIBS=<dir holding html2canvas.min.js + jspdf.umd.min.js>), so a session can look at
+  // the page jsPDF is handed (GRPDF_SHOT=<file.jpg>) — CI and most sandboxes cannot reach the CDN
+  if (process.env.GRPDF_LIBS) {
+    console.log('\n-- the real render (GRPDF_LIBS) --');
+    const pr = await browser.newPage({ viewport: { width: 1360, height: 950 } });
+    await arm(pr);
+    await pr.route('**/html2canvas.min.js', (r) => r.fulfill({ path: path.join(process.env.GRPDF_LIBS, 'html2canvas.min.js'), contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } }));
+    await pr.route('**/jspdf.umd.min.js', (r) => r.fulfill({ path: path.join(process.env.GRPDF_LIBS, 'jspdf.umd.min.js'), contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } }));
+    await pr.addInitScript(() => { window.__printed = false; window.print = function () { window.__printed = true; };
+      const iv = setInterval(() => { if (window.jspdf && window.jspdf.jsPDF && !window.jspdf.__w) { const J = window.jspdf.jsPDF; window.jspdf.__w = 1;
+        window.jspdf.jsPDF = function (o) { const j = new J(o); const add = j.addImage.bind(j); j.addImage = function (u) { window.__img = u; window.__fmt = o.format; return add.apply(null, arguments); };
+          j.save = function (n) { window.__pdfSaved = n; }; return j; }; clearInterval(iv); } }, 20); });
+    await pr.goto(PAGE_W);
+    await pr.waitForTimeout(1500);
+    await pr.click('#det-pdf');
+    await pr.waitForFunction(() => window.__pdfSaved || window.__printed, null, { timeout: 60000 }).catch(() => {});
+    const rr = await pr.evaluate(() => ({ saved: window.__pdfSaved, printed: window.__printed, fmt: window.__fmt, len: (window.__img || '').length }));
+    ok('the real libraries save a one-page PDF of the document (no print-dialog fallback)', !!rr.saved && !rr.printed && rr.fmt && rr.fmt[0] === 210 && rr.len > 20000, rr);
+    if (process.env.GRPDF_SHOT && rr.len) { const b64 = (await pr.evaluate(() => window.__img)).split(',')[1]; fs.writeFileSync(process.env.GRPDF_SHOT, Buffer.from(b64, 'base64')); }
+    await pr.close();
   }
 
   console.log('\n-- ⬇ HTML: the same document, self-contained, zero dialog --');

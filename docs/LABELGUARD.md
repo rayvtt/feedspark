@@ -1090,6 +1090,13 @@ score, → Brief opening a keyword brief).
 
 ### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
 
+> **One row per field (8 Oct 2026, Ray: "merge - highlight per product > into g:product_highlight, same for details
+> too - and the pop up table happen when hover those merged fields instead").** Where the scan counted them per
+> product, the g:product_highlight and g:product_detail rows ARE the depth reading (`DEP_MERGE`): named as the field,
+> scored on how many each product carries, the breakdown on hover over the name or the bar, the field's own 🔎 PDP
+> action kept. A scan that could not count them shows the plain filled-or-not row, with no "not measured" twin
+> beside it. Images per product stays its own row — it counts the main image too, so it is not g:additional_image_link.
+>
 > **A pop-up chart, not a card under every row (8 Oct 2026, Ray: "these bar charts of tier population should be a pop
 > up chart followed the design from Product Type (it's easier to see and cleaner)").** On screen the breakdown opens
 > from the depth row's own bar — hover or focus shows it, a tap pins it (a phone has no hover), Esc or a click
@@ -1339,6 +1346,31 @@ reading but never writing the device's preferences), ticking two measures of one
 the three picks in order, a chart in each, no control or hook, the stylesheet, one row, no inner scroll at
 two window widths), the frame put back, ✕ and Clear all, a saved set exported with the frame closed, and a
 signin without the Catalogue.
+
+### 9.12e ⬇ PDF is the ⬇ HTML on paper (8 Oct 2026)
+
+Ray: *"can the PDF download format be adapted to latest update and ensure design is consistent?"* The PDF
+used to rasterise the live page under `body.pdf`, an older layout that had drifted from the ⬇ HTML (which
+follows the interface: the wash page, the header band with its dial, the pop-up cards, the all-markets table,
+the Catalogue modules). Now both are ONE document. `exportDoc(k, cx, paper)` builds it — ⬇ HTML saves it, ⬇ PDF:
+
+- keeps the file's own folds (each section's method open, attributes and pillars folded on their score and worst
+  rule — fully open ran past four A4 lengths and printed every finding twice), opens the depth explanations, and
+  strips a closed fold to its summary line, because html2canvas paints a closed `<details>`' body anyway, straight
+  over the next section (found in the first real render);
+- drops what cannot work on paper (`body.xpaper`): fold chevrons, the "how it's scored" chips that cannot open;
+- lays the document out in an offscreen frame at the file's own width (`PDF_W` 1220), waits for Lato, draws the
+  Catalogue frame into an image in place (a canvas cannot see inside a frame — the frame is opened
+  `allow-same-origin`, still with no scripts, and its cards grow to their content: a row stretches to its tallest,
+  so the squares stay even and nothing is cut where nobody can scroll), and rasterises the whole thing onto one
+  continuous 210mm sheet. The live page is never touched; the render frame is removed after the save.
+
+The Catalogue modules now travel in the PDF too (they did not before). The print dialog stays the fallback when
+the libraries cannot load, and a bare Ctrl+P still prints the page's own `body.pdf` layout. The Catalogue section
+sits on the scorecard's column in both files (it hung off the page edge). Harness: `tools/check_grpdf.js` asserts
+what html2canvas is handed (the export document, not the live page; folds; no pop-up hooks; the wash page; the
+frame cleared), and with `GRPDF_LIBS=<dir>` runs the REAL html2canvas + jsPDF (`GRPDF_SHOT` keeps the page image);
+`tools/check_grcatx.js` with `GRPDF_LIBS` proves the picked cards are drawn into the PDF.
 
 ### 9.12d Every scorecard section folds (7 Oct 2026)
 

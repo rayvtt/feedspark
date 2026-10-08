@@ -12531,6 +12531,69 @@
       "pr": 0
     },
     {
+      "name": "Golden ⬇ PDF is the ⬇ HTML document on paper (exportDoc, offscreen render frame)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function exportDoc(k, cx, paper)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ PDF draws the picked Catalogue frame into an image in place",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pdfInlineFrames(d)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ PDF strips a closed fold to its summary (html2canvas paints closed details)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "a fold left closed keeps only its summary line",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ PDF: no chevrons or unopenable chips on paper",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.xpaper details.xd-chip:not([open]){display:none}",
+      "pr": 0
+    },
+    {
+      "name": "Golden export: the Catalogue section sits on the scorecard's column",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.xhtml #print-catx{display:block;margin-top:16px;padding:0 20px}",
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF check: html2canvas is handed the export document, never the live page",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the PDF is rasterised from the ⬇ HTML document",
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF check: opt-in real html2canvas + jsPDF render (GRPDF_LIBS)",
+      "file": "tools/check_grpdf.js",
+      "pattern": "process.env.GRPDF_LIBS",
+      "pr": 0
+    },
+    {
+      "name": "Golden catx check: the picked cards reach the PDF (GRPDF_LIBS)",
+      "file": "tools/check_grcatx.js",
+      "pattern": "⬇ PDF draws the picked Catalogue cards into the document",
+      "pr": 0
+    },
+    {
+      "name": "Golden: g:product_highlight / g:product_detail ARE their depth rows when measured (DEP_MERGE)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var DEP_MERGE = { product_highlight: 1, product_detail: 1 };",
+      "pr": 0
+    },
+    {
+      "name": "Golden depth check: highlights and details merged into their field rows, pop-up on the name",
+      "file": "tools/check_grdepth.js",
+      "pattern": "hovering the merged field\\'s NAME opens its breakdown too",
+      "pr": 0
+    },
+    {
+      "name": "Golden all-markets check reads the table in the PDF's export document",
+      "file": "tools/check_grmkts.js",
+      "pattern": "the one-click PDF captures the document WITH the all-markets table on it",
       "name": "Services & Pricer: every section folds (heading toggle, Open all / Fold all, Audit + Proposal open on a fresh device)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "var SEC_WRAP={'svc-audit':'au'",
