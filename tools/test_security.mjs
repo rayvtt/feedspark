@@ -38,6 +38,23 @@ console.log('· the identity gate');
   t('a refused API call gets JSON, a refused page gets a plain sign-in page naming Access', d.json && d.body.code === 'no_identity' && !dp.json && /Cloudflare Access/.test(dp.body));
 }
 
+console.log('· the directory gate — only personnel created in Workflow → 👥 Individual access');
+{
+  const dir = { 'steven@feedspark.com': { name: 'Steven' }, 'radostina@feedspark.com': { name: 'Radostina', clients: ['House of Bruar'] } };
+  const owner = 'ray@feedspark.com';
+  t('the owner always passes, row or no row', SEC.dirGate('ray@feedspark.com', owner, dir, {}).owner === true && SEC.dirGate('RAY@feedspark.com', owner, {}, {}).ok);
+  t('a signin with a directory row passes', SEC.dirGate('steven@feedspark.com', owner, dir, {}).listed === true && SEC.dirGate('Radostina@FeedSpark.com', owner, dir, {}).ok);
+  t('a signin that passed Access but has NO row → 403 (the full-house default is gone)', (() => { const g = SEC.dirGate('newhire@feedspark.com', owner, dir, {}); return !g.ok && g.status === 403; })());
+  t('a client-team alias address without a row is refused too — a row is the only door', !SEC.dirGate('houseofbruar@feedspark.com', owner, dir, {}).ok);
+  t('a service token has no row and is refused', !SEC.dirGate('service:abcdefghijkl', owner, dir, {}).ok);
+  t('unknown is still a 401, never a 403', SEC.dirGate('unknown', owner, dir, {}).status === 401);
+  t('an empty / missing directory lets only the owner in', !SEC.dirGate('steven@feedspark.com', owner, null, {}).ok && SEC.dirGate(owner, owner, null, {}).ok);
+  t('a prototype key is not a row', !SEC.dirGate('constructor', owner, {}, {}).ok && !SEC.dirGate('__proto__', owner, {}, {}).ok);
+  t('ALLOW_UNLISTED=1 is the only escape hatch', SEC.dirGate('newhire@feedspark.com', owner, dir, { ALLOW_UNLISTED: '1' }).unlisted === true && !SEC.dirGate('newhire@feedspark.com', owner, dir, { ALLOW_UNLISTED: 'yes' }).ok);
+  const d = SEC.deniedBody('/api/briefs', 'not_listed'), dp = SEC.deniedBody('/workflow', 'not_listed');
+  t('the refusal names the fix — the owner adds the row in Workflow → 👥 Individual access', d.json && d.body.code === 'not_listed' && /Individual access/.test(d.body.error) && !dp.json && /Individual access/.test(dp.body));
+}
+
 console.log('· body caps');
 {
   t('a GET is never capped', SEC.bodyGate('/api/briefs', 'GET', '999999999').ok);
@@ -161,6 +178,7 @@ console.log('· the worker\'s wiring');
   const fetchBlock = WK.slice(WK.indexOf('async fetch(request, env, ctx) {'), WK.indexOf('async scheduled(event, env, ctx)'));
   const idx = (s) => fetchBlock.indexOf(s);
   t('fetch() resolves the identity, stashes it, and runs the gate BEFORE route()', idx('resolveIdentity(request, env, path)') > 0 && idx('IDENT.set(request, ident)') > idx('resolveIdentity(') && idx('SEC.idGate(') > idx('IDENT.set(') && idx('await route(request, env, ctx)') > idx('SEC.idGate('));
+  t('the directory gate runs after the identity gate, before the body cap, reading accessdir with the git seed as the fallback', idx("env.EDITS.get('accessdir', 'json')) || ACCESS_SEED") > idx('SEC.idGate(') && idx('SEC.dirGate(ident, ownerEmail(env), dir, env)') < idx('SEC.bodyGate(') && idx("SEC.deniedBody(path, 'not_listed')") > 0 && /if \(!gate\.public\) \{/.test(fetchBlock));
   t('the body cap and the money-route throttle also run before route()', idx('SEC.bodyGate(') > 0 && idx('SEC.bodyGate(') < idx('await route(') && idx('SEC.MONEY_PATHS.has(path)') < idx('await route(') && /429/.test(fetchBlock));
   t('every answer out of fetch() goes through secHeaders with the request origin', (fetchBlock.match(/secHeaders\(/g) || []).length >= 4 && !/return (json|new Response)\([^;]*;\s*$/m.test(fetchBlock.replace(/secHeaders\([\s\S]*?\);/g, '')));
   t('who() reads the stashed identity first', /function who\(request\) \{\s*const stashed = IDENT\.get\(request\);\s*if \(stashed\) return stashed;/.test(WK));
@@ -209,7 +227,7 @@ console.log('· the repository');
   t('wrangler.toml [vars] carries configuration only (OWNER_EMAIL) — every credential is a Worker secret', /OWNER_EMAIL/.test(vars) && !/KEY|TOKEN|SECRET|PASS/i.test(vars));
   const gi = fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8');
   t('.dev.vars and ops/reports/ are ignored', /\.dev\.vars/.test(gi) && /ops\/reports\//.test(gi));
-  t('docs/SECURITY.md is the register and names every control here', (() => { const d = fs.existsSync(path.join(ROOT, 'docs/SECURITY.md')) ? fs.readFileSync(path.join(ROOT, 'docs/SECURITY.md'), 'utf8') : ''; return /ACCESS_AUD/.test(d) && /ALLOW_ANONYMOUS/.test(d) && /fetchWithin/.test(d) && /push-fail/.test(d) && /Preview URLs/i.test(d); })());
+  t('docs/SECURITY.md is the register and names every control here', (() => { const d = fs.existsSync(path.join(ROOT, 'docs/SECURITY.md')) ? fs.readFileSync(path.join(ROOT, 'docs/SECURITY.md'), 'utf8') : ''; return /ACCESS_AUD/.test(d) && /ALLOW_ANONYMOUS/.test(d) && /ALLOW_UNLISTED/.test(d) && /fetchWithin/.test(d) && /push-fail/.test(d) && /Preview URLs/i.test(d); })());
 }
 
 console.log(fail ? `✗ ${fail} failed, ${pass} passed` : `✓ ${pass} passed`);

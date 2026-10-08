@@ -14506,6 +14506,24 @@
       "pattern": "redirect: 'follow'",
       "pr": 0,
       "forbidden": true
+    },
+    {
+      "name": "Security: the directory gate — only a row in Workflow's 👥 Individual access passes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const dg = SEC.dirGate(ident, ownerEmail(env), dir, env);",
+      "pr": 0
+    },
+    {
+      "name": "Security module: dirGate refuses an unlisted signin (no full-house default)",
+      "file": "cloudflare/feedspark-deck/src/security.js",
+      "pattern": "return { ok: false, status: 403, reason: 'not in the access directory' };",
+      "pr": 0
+    },
+    {
+      "name": "Security harness: the directory gate",
+      "file": "tools/test_security.mjs",
+      "pattern": "a signin that passed Access but has NO row",
+      "pr": 0
     }
   ]
 }
