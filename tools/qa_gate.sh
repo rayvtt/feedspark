@@ -195,6 +195,13 @@ else
   echo "   ✗ audit-bands harness FAILED — see node tools/test_bands.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: Golden Record ⬇ HTML lock (who can open it)"
+if node tools/test_htmllock.mjs >/dev/null 2>&1; then
+  echo "   ✓ the client domain off the dossier + ticket senders, never an agency or FeedSpark"
+else
+  echo "   ✗ HTML-lock harness FAILED — see node tools/test_htmllock.mjs"; FAIL=1
+fi
+
 echo "── qa-gate: Golden Record score history (one reading per real move, re-scored to today's profile)"
 if node tools/test_goldenhist.mjs >/dev/null 2>&1; then
   echo "   ✓ identical scans write nothing, drift is caught, gaps stay gaps, the page reads moves as the engine records them"

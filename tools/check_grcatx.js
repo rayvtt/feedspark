@@ -112,6 +112,7 @@ ${STUBS.stubLines()}
       URL.createObjectURL = function (bl) { bl.text().then((t) => { window.__html = t; }); return real(bl); };
       HTMLAnchorElement.prototype.click = function () {};
     });
+    await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
     await page.click('#det-html');
     await page.waitForFunction(() => window.__html !== null, null, { timeout: 60000 });
     return page.evaluate(() => window.__html);

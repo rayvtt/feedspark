@@ -115,6 +115,8 @@ jobs:
 
       - name: Audit colour bands harness (one legend on /golden, /feedlab, the dossier, the Playbook rail)
         run: node tools/test_bands.mjs
+      - name: Golden Record HTML lock harness (who can open it — the client domain off the dossier + ticket senders)
+        run: node tools/test_htmllock.mjs
       - name: Golden Record score history harness (one reading per real move, re-scored to today's profile)
         run: node tools/test_goldenhist.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)

@@ -269,6 +269,7 @@ const DAILY = { day: iso(T(0)), t: T(0) - 3 * 3600e3, feeds: 49, quality: 47, ke
     URL.createObjectURL = function (bl) { bl.text().then((t) => { window.__html = t; }); return real(bl); };
     HTMLAnchorElement.prototype.click = function () {};
   });
+  await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
   await page.click('#det-html');
   await page.waitForFunction(() => window.__html !== null, null, { timeout: 15000 });
   const html = await page.evaluate(() => window.__html);

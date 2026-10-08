@@ -12667,6 +12667,42 @@
       "file": "tools/check_pricer.js",
       "pattern": "the two Tier 2 services and both Tier 3 items each have a row on the product card and in the coverage column",
       "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML is encrypted to the client domain + feedspark.com (AES-GCM, PBKDF2 per domain)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function lockFile(html, doms, title)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML lock dialog proposes the client domain from /api/golden/readers",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "fetch('/api/golden/readers?client=' + encodeURIComponent(client))",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML opener decrypts in the browser and sends nothing",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function lockOpen()",
+      "pr": 0
+    },
+    {
+      "name": "Worker: /api/golden/readers reads the client domain off the dossier + ticket senders, scoped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/golden/readers'",
+      "pr": 0
+    },
+    {
+      "name": "Lock engine: lockDomains — dossier, then a sender domain named after the brand, then a marked guess",
+      "file": "cloudflare/feedspark-deck/src/htmllock.js",
+      "pattern": "export function lockDomains(client, dossierDom, senders)",
+      "pr": 0
+    },
+    {
+      "name": "Golden lock check: the client domain, a subdomain and FeedSpark open the file; others do not; no text leaks",
+      "file": "tools/check_grlock.js",
+      "pattern": "the file carries ciphertext only — no domain, no address, none of the scorecard",
+      "pr": 0
     }
   ]
 }

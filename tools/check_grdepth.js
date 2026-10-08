@@ -205,6 +205,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     ok('the CSV names the depth rows in words with their depth score', /^images_per_product,feedspark_standard,9408,91\.5,9600/.test(line('images_per_product')) &&
       /^highlights_per_product,recommended,8448,78,9600/.test(line('highlights_per_product')) && /^details_per_product,feedspark_standard,6720,41\.3,/.test(line('details_per_product')),
       [line('images_per_product'), line('highlights_per_product'), line('details_per_product')]);
+    await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
     await page.click('#det-html');
     await page.waitForFunction(() => window.__blobs.length > 1);
     const html = await page.evaluate(() => window.__blobs[1]);

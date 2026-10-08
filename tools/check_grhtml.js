@@ -134,6 +134,7 @@ const QUALITY = {
     URL.createObjectURL = function (b) { b.text().then((t) => { window.__html = t; }); return real(b); };
     HTMLAnchorElement.prototype.click = function () {};
   });
+  await page.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
   await page.click('#det-html');
   await page.waitForFunction(() => window.__html !== null, null, { timeout: 15000 });
   const html = await page.evaluate(() => window.__html);
