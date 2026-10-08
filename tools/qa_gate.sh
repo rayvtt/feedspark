@@ -419,6 +419,13 @@ else
   echo "   ✗ Restock harness FAILED — see node tools/test_restock.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6f/7: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"
+if node tools/test_security.mjs >/dev/null 2>&1; then
+  echo "   ✓ anonymous → 401 on every non-public lane, the lifted resolver refuses a spoofed header, caps/throttles/fetchWithin hold, no secret in git"
+else
+  echo "   ✗ Security harness FAILED — see node tools/test_security.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"

@@ -5012,7 +5012,7 @@ aside.ck[hidden]{display:none}
       d.querySelector('.acl-del').onclick=function(){ d.remove(); };
       d.querySelector('.acl-view').onclick=function(){ var em=(d.querySelector('.acl-em').value||'').trim().toLowerCase();
         if(em.indexOf('@')<1){ toast('Enter their email first'); return; }
-        document.cookie='fcc-viewas='+encodeURIComponent(em)+';path=/;max-age=7200';
+        document.cookie='fcc-viewas='+encodeURIComponent(em)+';path=/;max-age=7200;Secure;SameSite=Lax';
         location.reload(); };
       // module access — absent row.modules = every module (unrestricted); an array = exactly those
       var md=document.createElement('div'); md.className='acl-mod';
