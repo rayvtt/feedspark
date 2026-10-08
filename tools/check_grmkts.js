@@ -170,7 +170,8 @@ const QUALITY = {
     document.getElementById('print-mkts').innerHTML = '';
     window.__cap = null;
     window.html2canvas = function (node) {
-      const el = document.getElementById('print-mkts');
+      // the PDF is the ⬇ HTML document on paper (8 Oct 2026) — the table is read where the capture reads it, in that document
+      const el = node.ownerDocument.getElementById('print-mkts');
       window.__cap = { shown: getComputedStyle(el).display !== 'none', rows: el.querySelectorAll('.pm-t tbody tr').length };
       const c = document.createElement('canvas'); c.width = 20; c.height = 40; return Promise.resolve(c);
     };
@@ -179,7 +180,7 @@ const QUALITY = {
   await page.click('#det-pdf');
   await page.waitForFunction(() => window.__saved === true, null, { timeout: 8000 }).catch(() => {});
   const cap = await page.evaluate(() => window.__cap);
-  ok('the one-click PDF captures the page WITH the all-markets table on it', cap && cap.shown && cap.rows === 4, cap);
+  ok('the one-click PDF captures the document WITH the all-markets table on it', cap && cap.shown && cap.rows === 4, cap);
 
   console.log('── ⬇ HTML');
   await page.evaluate(() => {
