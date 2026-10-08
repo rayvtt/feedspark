@@ -196,21 +196,58 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const wantSale = prods.filter((p, i) => fx[i].onSale).length;
     ok('the matrix: "Sale price · structured" lists every sale the master stated under another column', seg === wantSale && await view() === wantSale, { seg, page: await view(), want: wantSale });
 
-    console.log('· the dashboard — eighteen modules of one size and Image pixels across the row, evenly spaced, each one a filter');
+    console.log('· the dashboard — twenty modules of one size (Product type depth two wide) and Image pixels across the row, evenly spaced, each one a filter');
     await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
     await pg.waitForTimeout(250);
     const grid = await pg.evaluate(() => {
       const ms = Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).map((m) => { const r = m.getBoundingClientRect(); return { id: m.dataset.mod, t: Math.round(r.top), h: Math.round(r.height), l: Math.round(r.left), w: Math.round(r.width) }; });
       const rows = {}; ms.forEach((m) => { (rows[m.t] = rows[m.t] || []).push(m); });
       const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
-      const one = ms.filter((m) => m.id !== 'pix'), px = ms.filter((m) => m.id === 'pix')[0] || null, ins = document.getElementById('ins').getBoundingClientRect();
+      const one = ms.filter((m) => m.id !== 'pix' && m.id !== 'ptd'), px = ms.filter((m) => m.id === 'pix')[0] || null, ins = document.getElementById('ins').getBoundingClientRect();
       return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(one.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size,
-        px: px && { w: px.w, full: Math.abs(px.w - Math.round(ins.width)) <= 2 } };
+        px: px && { w: px.w, full: Math.abs(px.w - Math.round(ins.width)) <= 2 },
+        ptd2: (function () { const p = ms.filter((m) => m.id === 'ptd')[0], o = one[0]; return !!(p && o && p.w > o.w * 2); })() };
     });
-    ok('nineteen modules, every one the same height; the eighteen one width', grid.n === 19 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('twenty-one modules, every one the same height; the nineteen single cards one width', grid.n === 21 && grid.hs === 1 && grid.ws === 1, grid);
     ok('Image pixels spans the whole row', grid.px && grid.px.full, grid.px);
-    ok('three to a row at 1440px — six even rows of three and the Image pixels row, no hole', grid.rows.length === 7 && grid.rows.filter((r) => r === 3).length === 6 && grid.rows.filter((r) => r === 1).length === 1, grid.rows);
+    ok('three to a row at 1440px — seven full rows (Product type depth two wide beside one card) and the Image pixels row, no hole',
+      grid.rows.length === 8 && grid.rows.filter((r) => r === 3).length === 6 && grid.rows.filter((r) => r === 2).length === 1 && grid.rows.filter((r) => r === 1).length === 1 && grid.ptd2, grid.rows);
     ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
+    // CUSTOM LABELS + PRODUCT TYPE DEPTH (Ray, 8 Oct 2026: "add custom label values overview in the customisable module in golden
+    // record report as well" · "product type breakdown as well especially the depth table as modularised component") — read
+    // against counts made here, off the same synthetic feed through the engine in node
+    const plainV = (v) => String(Array.isArray(v) ? v[0] : (v == null ? '' : v)).trim();
+    const clN = (k, val) => prods.filter((p) => plainV(p.f['custom_label_' + k]).toLowerCase() === val.toLowerCase()).length;
+    const clCard = await pg.evaluate(() => Array.from(document.querySelectorAll('#cl-body .cl-r')).map((r) => ({ h: r.querySelector('.cl-h').textContent.replace(/\s+/g, ' ').trim(), segs: r.querySelectorAll('.cl-bar i:not(.rest)').length })));
+    const cl1Pct = Math.round(clN(1, 'Clearance') / prods.length * 100);
+    ok('Custom labels: all five labels, each with its share carrying one and how many values — an absent label says so', clCard.length === 5 &&
+      /^CL0 ?100% carry one · 2 values$/.test(clCard[0].h) && clCard[0].segs === 2 && new RegExp('^CL1 ?' + cl1Pct + '% carry one · 1 value$').test(clCard[1].h) &&
+      clCard.slice(2).every((c) => /^CL[2-4] ?not in the feed$/.test(c.h) && c.segs === 0), { clCard, cl1Pct });
+    await pg.evaluate(() => { const el = document.querySelector('#cl-body [data-f="mix:custom_label_0:new in"]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    await pg.waitForTimeout(300);
+    ok('…a value\'s segment lists exactly its products', await view() === clN(0, 'New In') && clN(0, 'New In') > 0, { page: await view(), want: clN(0, 'New In') });
+    await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
+    await pg.waitForTimeout(250);
+    const ptOf = (p) => plainV(p.f.product_type), ptDep = (p) => { const v = ptOf(p); if (!v) return 'none'; let a = v.split(/\s*(?:>|›|»)\s*/).filter(Boolean); if (a.length < 2 && v.indexOf('/') >= 0) a = v.split(/\s*\/\s*/).filter(Boolean); const n = a.length || 1; return n >= 6 ? '6+' : String(n); };
+    const dW = {}; prods.forEach((p) => { const b = ptDep(p); dW[b] = (dW[b] || 0) + 1; });
+    const ptd = await pg.evaluate(() => ({ rows: Array.from(document.querySelectorAll('#ptd-body .pr')).map((r) => [r.getAttribute('data-f'), parseFloat(r.querySelector('.pv').textContent)]),
+      hi: Array.from(document.querySelectorAll('#ptd-body .pr.hi')).map((r) => r.getAttribute('data-f')), paths: Array.from(document.querySelectorAll('#ptd-body .pp')).map((r) => [r.getAttribute('data-f'), r.querySelector('.pc').textContent]),
+      foot: document.querySelector('#ptd-body .ptd-f:last-child').textContent, wide: document.getElementById('m-ptd').getBoundingClientRect().width }));
+    ok('Product type depth: 1 … 6+ levels in Product Type Guard\'s rows (3–5 emphasised), each share matching a count made here, with the 5-level standard named',
+      ptd.rows.map((r) => r[0]).join() === 'ptd:1,ptd:2,ptd:3,ptd:4,ptd:5,ptd:6+' && ptd.hi.join() === 'ptd:3,ptd:4,ptd:5' &&
+      ptd.rows.every((r) => Math.abs(r[1] - Math.round((dW[r[0].slice(4)] || 0) / prods.length * 1000) / 10) < 0.06) && /industry standard is 30–40%/.test(ptd.foot), { ptd, dW });
+    const bigB = Object.keys(dW).filter((b) => b !== 'none').sort((a, b) => dW[b] - dW[a])[0];
+    await pg.evaluate((b) => { document.querySelector('#ptd-body [data-f="ptd:' + b + '"]').dispatchEvent(new MouseEvent('click', { bubbles: true })); }, bigB);
+    await pg.waitForTimeout(300);
+    ok('…a depth row lists exactly the products at that depth', await view() === dW[bigB], { page: await view(), want: dW[bigB], b: bigB });
+    await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
+    await pg.waitForTimeout(250);
+    const p0 = ptd.paths[0], wantP = prods.filter((p) => ptOf(p).toLowerCase() === p0[0].slice(4)).length;
+    await pg.evaluate((f) => { document.querySelector('#ptd-body [data-f="' + f + '"]').dispatchEvent(new MouseEvent('click', { bubbles: true })); }, p0[0]);
+    await pg.waitForTimeout(300);
+    ok('…the biggest paths list their products, and the count beside each is that many', await view() === wantP && +p0[1].replace(/,/g, '') === wantP && wantP > 0, { page: await view(), want: wantP, p0 });
+    await pg.evaluate(() => { const S = window.__FCCCatalogue.state(); if (S.facet) document.querySelector('#facet button').click(); });
+    await pg.waitForTimeout(250);
     const pb = await pg.evaluate(() => { const el = document.querySelector('#price-body [data-k]'); el.dispatchEvent(new MouseEvent('click', { bubbles: true })); const S = window.__FCCCatalogue.state(); return { lo: S.facet && S.facet.lo, hi: S.facet && S.facet.hi, k: S.facet && S.facet.k }; });
     await pg.waitForTimeout(300);
     const wantPb = prods.filter((p, i) => { const v = fx[i].onSale ? fx[i].sale : fx[i].price; return v != null && v >= pb.lo && (pb.hi == null || v < pb.hi); }).length;
@@ -334,7 +371,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
     await pg.waitForTimeout(200);
     const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
-    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /18 of 19/.test(hid.note), hid);
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /20 of 21/.test(hid.note), hid);
     await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
     await pg.waitForTimeout(200);
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
@@ -343,7 +380,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // 👔 Procurement view: nine modules, the commercial six first, the operational ones put away — and off again restores all
     await pg.click('#proc-b'); await pg.waitForTimeout(300);
     const pv = await pg.evaluate(() => ({ shown: Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden && getComputedStyle(m).display !== 'none').sort((a, b) => (+a.style.order) - (+b.style.order)).map((m) => m.dataset.mod), on: document.getElementById('proc-b').getAttribute('aria-pressed'), note: document.getElementById('mods-s').textContent }));
-    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 19/.test(pv.note), pv);
+    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 21/.test(pv.note), pv);
     // optimised vs not: FeedHero's own cut of Google Ads, re-added in node
     const lr = DATA.live.Title_optimisation_status.rows.filter((r) => !/unlisted/i.test(r.category));
     const side = (r) => (/non/i.test(r.category) ? 'n' : 'o'), acc = { o: { s: 0, r: 0, sp: 0 }, n: { s: 0, r: 0, sp: 0 } };
@@ -376,7 +413,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('Fee check: per product and against Ads revenue are the typed fee over this catalogue and this market', fee.o['Per product, a month'] === gbp(2500 / prods.length) && fee.o['vs Google Ads revenue'] === fpc(2500 / rev) && fee.o['Costs more by'] === gbp(700 * 12), fee);
     ok('…and the fees stay on this device (fcc-cat-fee), never a request', JSON.parse(fee.saved || '{}').a === 2500);
     await pg.click('#proc-b'); await pg.waitForTimeout(250);
-    ok('turning the view off brings all nineteen back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 19 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
+    ok('turning the view off brings all twenty-one back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 21 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
 

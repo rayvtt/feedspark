@@ -1365,7 +1365,7 @@ the Catalogue modules). Now both are ONE document. `exportDoc(k, cx, paper)` bui
   so the squares stay even and nothing is cut where nobody can scroll), and rasterises the whole thing onto one
   continuous 210mm sheet. The live page is never touched; the render frame is removed after the save.
 
-The Catalogue modules now travel in the PDF too (they did not before). The print dialog stays the fallback when
+The AI-readiness ring is an SVG arc with literal colours (it was a CSS `conic-gradient`, which html2canvas cannot paint, so the PDF printed a grey disc — Ray, 8 Oct 2026). The Catalogue modules now travel in the PDF too (they did not before). The print dialog stays the fallback when
 the libraries cannot load, and a bare Ctrl+P still prints the page's own `body.pdf` layout. The Catalogue section
 sits on the scorecard's column in both files (it hung off the page edge). Harness: `tools/check_grpdf.js` asserts
 what html2canvas is handed (the export document, not the live page; folds; no pop-up hooks; the wash page; the

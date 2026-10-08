@@ -11652,7 +11652,7 @@
     {"name": "Catalogue pixels: a posted scan carries the 256-bit fingerprint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (!bg || !/^[0-9a-f]{64}$/.test(String(a[9] || ''))) continue;", "pr": 0},
     {"name": "Catalogue pixels: the module is registered", "file": "docs/FeedSpark_Catalog.html", "pattern": "['pix', 'Image pixels']", "pr": 0},
     {"name": "Catalogue pixels: the module spans its row so the grid stays even", "file": "docs/FeedSpark_Catalog.html", "pattern": ".mod[data-mod=\"pix\"]{grid-column:1/-1}", "pr": 0},
-    {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix') return passModFacet(F, i, x);", "pr": 0},
+    {"name": "Catalogue pixels: a bucket is a table filter", "file": "docs/FeedSpark_Catalog.html", "pattern": "F.k === 'avail' || F.k === 'pix' || F.k === 'ptd' || F.k === 'ptp') return passModFacet(F, i, x);", "pr": 0},
     {"name": "Catalogue pixels: the page reads pixels from its own origin", "file": "docs/FeedSpark_Catalog.html", "pattern": "return fetch('/api/catalog/img' + mq() + '&url=' + encodeURIComponent(u), sig())", "pr": 0},
     {"name": "Stock levers: FOUR levers for every brand — range completion, hero sizes, stock quantity threshold, stock-based exclusion (Ray, 7 Oct 2026: \"every client should have these stock levers\")", "file": "docs/stocklevers_engine.js", "pattern": "{ k: 'thresh', label: 'Stock quantity threshold', short: 'Stock threshold', kind: 'units', op: '<', unit: 'units', mech: ['threshold'],", "pr": 603},
     {"name": "Stock levers: the stored `units` lever IS the stock-based exclusion — read as it everywhere", "file": "docs/stocklevers_engine.js", "pattern": "var LEGACY = { units: 'excl' };", "pr": 603},
@@ -12606,6 +12606,45 @@
       "pr": 0
     },
     {
+      "name": "Catalogue: Custom labels module — all five labels, coverage, values, biggest values as a stacked bar",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function renderCl()",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: Product type depth module — PT Guard's 1…6+ depth rows + biggest paths, two columns wide",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": ".mod[data-mod=\"ptd\"]{grid-column:span 2}",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: product type depth and path facets",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "if (F.k === 'ptd') return ptDepth(i) === F.b;",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the two-wide Product type depth card never asks for more columns than the file has",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.mod[data-mod=\"ptd\"]{grid-column:span ' + Math.min(2, cards.length)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue check: Custom labels and Product type depth against an independent tally",
+      "file": "tools/check_catalog.js",
+      "pattern": "Product type depth: 1 … 6+ levels in Product Type Guard",
+      "pr": 0
+    },
+    {
+      "name": "Golden AI-readiness ring is an SVG arc with literal colours (html2canvas cannot paint conic-gradient)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function airRingSvg(score, col)",
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF check: the AI-readiness ring is an SVG arc, never a conic-gradient",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the AI-readiness ring is an SVG arc with a literal colour",
       "name": "Services & Pricer: every section head is a tile — title, one line of what is inside, round chevron (no floating sentence)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "h2.sec-h{display:flex;align-items:center",

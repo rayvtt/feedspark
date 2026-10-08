@@ -424,6 +424,28 @@ Harness:
 - `tools/test_catalog.mjs` runs the engine on synthetic pictures: a packshot, a studio sweep, a knee crop, a scene, a colour backdrop, alpha, every check, the fingerprints, scan findings and pack/unpack. It also lifts the worker's host learning, allow-list, clean and merge.
 - `tools/check_catalog.js` scans the Northwind stub in the browser and checks every bucket against an independent count, the filter, the gallery order and the inspector.
 
+## Custom labels + Product type depth — two more modules (8 Oct 2026)
+
+Ray: *"add custom label values overview in the customisable module in golden record report as well"* and
+*"product type breakdown as well especially the depth table as modularised component"*. Both read the feed
+already in the page and, being ordinary modules, are pickable in the Golden Record's ⬇ HTML / ⬇ PDF.
+
+- **Custom labels** (`cl`) — all five at once: per label the share of products carrying a value, how many
+  values it splits into, and its four biggest values as one stacked bar (the rest grey, the empty track = no
+  value). A segment or a key chip lists its products (the Catalogue-mix facet `mix:custom_label_N:<value>`);
+  an absent label says *not in the feed*. Label Guard keeps the drop-off monitoring.
+- **Product type depth** (`ptd`, two columns wide) — Product Type Guard's depth card: the share of products at
+  each depth of their primary `g:product_type` path, 1 … 6+ levels, in /ptypes' row format and colour ramp
+  (3–5 emphasised), the average, the products carrying none, and the 5-level share against the 30–40%
+  standard; beside it the biggest full paths with their counts. Depth is read as /ptypes reads it (chevron
+  levels; a slash path where no chevron is used). A depth row (`ptd:<b>`) and a path (`ptp:<path>`) are
+  table filters.
+
+The grid packs densely, so 19 single cards + the two-wide Product type depth fill seven rows of three (Image
+pixels keeps its own row). In the Golden export the two-wide card never asks for more columns than the file has.
+Harness: `tools/check_catalog.js` (counts against an independent tally, the click-to-filter, the grid) +
+`tools/test_catalog.mjs`.
+
 ## Embedded in the Golden Record (`?embed=mods`, 7 Oct 2026)
 
 /golden frames this page for one market so the AM can pick modules for the Golden Record's ⬇ HTML (see
