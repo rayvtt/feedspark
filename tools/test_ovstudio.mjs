@@ -393,6 +393,96 @@ t('an unknown design is refused, not drawn', () => {
   assert.equal(c.ok, false);
 });
 
+/* ------------------------------------------- the two-up is two pictures (8 Oct 2026) */
+const TWO_HEAD = ['id', 'title', 'price', 'sale_price', 'image_link', 'additional_image_link', 'availability'];
+const twoRow = (i, add) => ({ id: 'T' + i, title: 'Reiss Petite Corduroy Wide Leg Trousers',
+  price: '168.00 GBP', sale_price: i % 2 ? '118.00 GBP' : '', availability: 'in stock',
+  image_link: 'https://xcdn.example.com/' + i + '_a.jpg', additional_image_link: add });
+// half the catalogue carries a genuine second shot; a quarter repeats the packshot; a quarter carries none
+const TWO = Array.from({ length: 20 }, (_, i) => twoRow(i,
+  i % 4 === 2 ? 'https://xcdn.example.com/' + i + '_a.jpg' : i % 4 === 3 ? '' : 'https://xcdn.example.com/' + i + '_b.jpg,https://xcdn.example.com/' + i + '_c.jpg'));
+const ONE_HEAD = ['id', 'title', 'price', 'image_link', 'availability'];
+const ONE = [{ id: 'O1', title: 'One picture only', price: '20.00 GBP',
+  image_link: 'https://xcdn.example.com/only.jpg', availability: 'in stock' }];
+
+t('a repeatable image column is read as a list of URLs, deduped, in order', () => {
+  assert.deepEqual(S.imgUrls('https://a/1.jpg,https://a/2.jpg'), ['https://a/1.jpg', 'https://a/2.jpg']);
+  assert.deepEqual(S.imgUrls('https://a/1.jpg https://a/2.jpg'), ['https://a/1.jpg', 'https://a/2.jpg']);
+  assert.deepEqual(S.imgUrls('https://a/1.jpg | https://a/1.jpg'), ['https://a/1.jpg'], 'the same picture twice is one picture');
+  assert.deepEqual(S.imgUrls('not a url'), [], 'anything that is not an http URL is not an image');
+  assert.deepEqual(S.imgUrls(''), []);
+});
+t('the second picture is the first additional image that is NOT the main one', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  const si = S.secondImage(TWO[0], s.slots, TWO[0].image_link);
+  assert.equal(si.url, 'https://xcdn.example.com/0_b.jpg');
+  assert.equal(si.n, 2, 'both additional images are counted');
+  assert.equal(si.why, '');
+});
+t('an additional image that repeats the packshot is NOT a second picture, and says so', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  const si = S.secondImage(TWO[2], s.slots, TWO[2].image_link);   // additional == main
+  assert.equal(si.url, '');
+  assert.match(si.why, /is the same picture as its main image/);
+});
+t('a product with no additional image, and a feed with no such column, each say which it is', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  assert.match(S.secondImage(TWO[3], s.slots, TWO[3].image_link).why, /this product carries no/);
+  const one = S.summon(ONE_HEAD, ONE);
+  assert.match(S.secondImage(ONE[0], one.slots, ONE[0].image_link).why, /this feed carries no second image column/);
+});
+t('the second-image fact is measured PER PRODUCT, not by how full the column is', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  const f = s.facts.second_image;
+  assert.equal(f.state, 'ready');
+  assert.equal(Math.round(f.cov * 100), 50, 'the column is 75% full but only half the products carry a DIFFERENT picture');
+  assert.match(f.why, /10 of the 20 products read/);
+  const one = S.summon(ONE_HEAD, ONE);
+  assert.equal(one.facts.second_image.state, 'none', 'a feed with no additional_image_link column cannot carry a two-up');
+  assert.ok(S.readiness(one).gaps.some((g) => g.id === 'second_image'), 'and it is reported as a gap, never as ready');
+});
+t('the two-up is built from image_link AND additional_image_link', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  const r = S.resolveFacts(TWO[0], s, null, null);
+  assert.equal(r.second_image.ok, true);
+  assert.equal(r.second_image.raw, 'https://xcdn.example.com/0_b.jpg');
+  const c = S.compose('split', r);
+  const iz = c.zones.filter((z) => z.as === 'split')[0];
+  assert.ok(iz, 'the split design carries an image zone');
+  assert.equal(iz.fact, 'second_image');
+  assert.equal(iz.raw, 'https://xcdn.example.com/0_b.jpg');
+  assert.ok(c.drew >= 1, 'an image zone counts as drawn even though it carries no text');
+  const rec = S.recipeFor(c, { client: 'Reiss', market: 'gb' });
+  const left = rec.params.filter((p) => p.k === 'img_url_left')[0];
+  const right = rec.params.filter((p) => p.k === 'img_url_right')[0];
+  assert.equal(left.v, '{image_link}');
+  assert.equal(right.v, '{additional_image_link}');
+  assert.match(right.note, /the first of 2 this product carries/);
+});
+t('the second picture is judged against the picture the page is PAINTING, not a composite URL', () => {
+  // on a feed already carrying an overlay, image_link is a composite and the page paints the source
+  // decoded out of it. An additional image that repeats THAT source is not a second picture, and
+  // judging it against the composite URL would have let it through.
+  const comp = 'https://dashboard.feedspark.com/image-creator/monsoon-mix-meta/image_process_products_lifestyle.php'
+    + '?img_url_left=https://c/9_a.jpg&img_url_right=https://c/9_b.jpg&img_ver=1';
+  const row = { id: 'C9', title: 'Composite already live', price: '100.00 GBP', availability: 'in stock',
+    image_link: comp, additional_image_link: 'https://c/9_a.jpg' };
+  const s = S.summon(TWO_HEAD, TWO.concat([row]));
+  assert.equal(S.resolveFacts(row, s, null, null).second_image.ok, true,
+    'against the raw composite URL the repeat looks like a second picture');
+  const r = S.resolveFacts(row, s, null, null, { mainImg: 'https://c/9_a.jpg' });
+  assert.equal(r.second_image.ok, false);
+  assert.match(r.second_image.why, /same picture as its main image/);
+});
+t('a product with no distinct second picture DROPS the two-up rather than drawing the packshot twice', () => {
+  const s = S.summon(TWO_HEAD, TWO);
+  const c = S.compose('split', S.resolveFacts(TWO[2], s, null, null));
+  assert.equal(c.zones.filter((z) => z.as === 'split').length, 0, 'the image zone is gone, never filled with the main image');
+  const d = c.dropped.filter((x) => x.fact === 'second_image')[0];
+  assert.ok(d, 'the drop is reported');
+  assert.match(d.why, /same picture as its main image/);
+});
+
 /* ------------------------------------------------------------------ geometry */
 const allFacts = () => { const o = {}; S.FACT_IDS.forEach((f) => { o[f] = { id: f, ok: true, text: S.FACTS[f].ex, raw: 1, why: '', src: S.FACTS[f].src }; }); return o; };
 t('NO zone ever leaves the image, on every design at every aspect ratio', () => {
@@ -515,7 +605,7 @@ t('readiness splits ready from thin from gaps and counts them in words', () => {
   const rd = S.readiness(s);
   assert.ok(rd.ready.length > 0 && rd.thin.length > 0 && rd.gaps.length > 0);
   assert.equal(rd.ready.length + rd.thin.length + rd.gaps.length, S.FACT_IDS.length, 'every fact is in exactly one bucket');
-  assert.match(rd.verdict, /of 14 messages this feed can carry/);
+  assert.match(rd.verdict, new RegExp('of ' + S.FACT_IDS.length + ' messages this feed can carry'));
   assert.match(rd.verdict, /on a thin share of the catalogue/);
   assert.equal(rd.masterOnly.length, 2, 'both scarcity messages need the field passing through');
   assert.match(rd.verdict, /needing a field passed through from the master/);

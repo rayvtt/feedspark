@@ -14369,6 +14369,54 @@
       "pr": 0
     },
     {
+      "name": "Overlay studio: the two-up is TWO pictures — image_link beside the product's own additional_image_link (Ray, 8 Oct 2026: 'should be templated by 2 images image_url and additiona_image_link')",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "function secondImage",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the second picture is the first additional image that is NOT the main one — a repeat is no second picture",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "is the same picture as its main image",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the second-image fact is measured PER PRODUCT, not by how full the column is",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "def.rowOk === 'function'",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the split design's image zone names its fact, so compose drops it when the product cannot carry it",
+      "file": "docs/overlay_studio_engine.js",
+      "pattern": "as: 'split', fact: 'second_image'",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the painter never falls back to the packshot — the two-up is drawn only when the second picture really loaded",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "&&!!ST.img2",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: more samples to demo on — a SPREAD of products, best first, never random (Ray, 8 Oct 2026: 'allow more samples to be demo pls')",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "function stSamples",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the sample strip carries a product that cannot take the two-up, so the honest drop is on screen",
+      "file": "tools/check_ovstudio.js",
+      "pattern": "the strip spreads across what each product can carry",
+      "pr": 0
+    },
+    {
+      "name": "Overlay studio: the tripwire measures the two halves and the seam, so one picture drawn twice fails",
+      "file": "tools/check_ovstudio.js",
+      "pattern": "const splitRead",
+      "pr": 0
+    },
+    {
       "name": "Security: the identity gate runs in fetch() before route()",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const gate = SEC.idGate(path, request.method, ident, env);",

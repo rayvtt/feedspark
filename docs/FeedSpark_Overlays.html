@@ -276,6 +276,18 @@ window.addEventListener('load',restore);
 .st-box input{border:0;outline:0;font:inherit;font-size:13px;color:var(--ink);background:transparent;flex:1;min-width:0;padding:5px 2px}
 .st-state{font-size:12px;color:var(--ink-2);min-height:16px}
 .st-wrap{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:16px;align-items:start;margin-top:14px}
+/* SAMPLES TO DEMO ON (Ray, 8 Oct 2026: "allow more samples to be demo pls") — the products this
+   feed offers that give every design something to say, so a client walkthrough is not one product */
+.st-samp{margin-bottom:12px}
+.st-samp .sh{font-size:11.5px;color:var(--ink-2);font-weight:700;margin-bottom:6px}
+.st-samp .sr{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.st-samp .sc{flex:none;width:72px;cursor:pointer;border:1px solid var(--line);border-radius:8px;background:#fff;padding:4px;text-align:center;transition:border-color .12s,box-shadow .12s}
+.st-samp .sc:hover{border-color:var(--orange)}
+.st-samp .sc.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.25)}
+.st-samp .sc img{width:100%;height:58px;object-fit:contain;background:#fff;border-radius:4px;display:block}
+.st-samp .sc .ph{height:58px;border:1px dashed var(--line);border-radius:4px}
+.st-samp .sc .sl{font-size:9.5px;color:var(--ink-2);margin-top:3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-samp .sc .tp{font-size:9px;font-weight:800;letter-spacing:.3px;color:var(--orange-ink)}
 .st-prod{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;background:var(--wash);padding:10px;margin-bottom:14px}
 .st-prod img{width:76px;height:76px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px;flex:none}
 .st-prod .pn{font-size:13px;font-weight:700;line-height:1.35}
@@ -335,6 +347,8 @@ table.st-rt td.nt{color:var(--ink-2)}
 [data-theme=dark] .st-box,[data-theme=dark] .st-box input{background:#20242E;color:var(--ink)}
 [data-theme=dark] .st-card,[data-theme=dark] .st-pan,[data-theme=dark] .st-wb{background:var(--paper);border-color:var(--line)}
 [data-theme=dark] .st-prod{background:#20242E}
+[data-theme=dark] .st-samp .sc{background:#20242E}
+[data-theme=dark] .st-samp .sc img{background:#2A2F3A}
 [data-theme=dark] .st-ed input[type=text]{background:#20242E;color:var(--ink);border-color:var(--line)}
 [data-theme=dark] .st-url,[data-theme=dark] .st-gap{background:#20242E}
 [data-theme=dark] .st-card canvas,[data-theme=dark] .st-wb canvas{background:#15171D}
@@ -403,11 +417,12 @@ table.st-rt td.nt{color:var(--ink-2)}
     </div>
     <div class="st-bar">
       <div class="st-box"><span aria-hidden="true">🔍</span><input id="st-q" type="search" placeholder="Pick a product to design on — ID or title" autocomplete="off" aria-label="Pick a product by ID or title"><button class="btn sm pri" id="st-go" type="button">Find</button></div>
-      <button class="btn sm" id="st-rand" type="button" title="Take a product from this feed that carries a discount, so every design has something to say">🎲 A product on offer</button>
+      <button class="btn sm" id="st-rand" type="button" title="Move to the next sample — the products this feed offers that give every design something to say">🎲 Another product</button>
     </div>
     <div class="st-state" id="st-state">Pick a client and market above, then read the feed's fields.</div>
     <div class="st-wrap" id="st-wrap" hidden>
       <div>
+        <div class="st-samp" id="st-samp" hidden></div>
         <div class="st-prod" id="st-prod" hidden></div>
         <div class="st-gal" id="st-gal"></div>
         <div class="st-wb" id="st-wb" hidden></div>
@@ -939,7 +954,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   var ST_ROWS=500, ST_GAL=480, ST_BIG=1000;
   var ST={client:'',mkt:'',hdr:null,rows:[],sum:null,ads:null,adsCov:null,adsWin:'',adsNote:'',
           adsShort:'',adsPer:'7_days',mqty:null,mval:null,mfile:'',pid:'',row:null,res:null,design:'',text:{},
-          img:null,img2:null,imgWhy:'',imgSrc:'',busy:false,read:false};
+          img:null,img2:null,img2Why:'',img2N:0,imgWhy:'',imgSrc:'',samp:null,sampKey:'',busy:false,read:false};
   /* the studio's state line is also the line its folded card keeps, so the fold says whether the
      fields have been read and which product is on the easel rather than reading as an empty row */
   var stState=function(t){ var e=$('#st-state'); if(e)e.textContent=t||''; fsum('studio',t||''); };
@@ -1049,7 +1064,7 @@ table.st-rt td.nt{color:var(--ink-2)}
     if(ST.busy)return Promise.resolve();
     if(!CLIENT||!MKT){ stState('Pick a client and market above first.'); return Promise.resolve(); }
     ST.busy=true; $('#st-read').disabled=true;
-    ST.client=CLIENT; ST.mkt=MKT; ST.ads=null; ST.adsCov=null; ST.adsWin=''; ST.adsShort=''; ST.adsNote=''; ST.mqty=null; ST.mval=null;
+    ST.client=CLIENT; ST.mkt=MKT; ST.samp=null; ST.sampKey=''; ST.ads=null; ST.adsCov=null; ST.adsWin=''; ST.adsShort=''; ST.adsNote=''; ST.mqty=null; ST.mval=null;
     var who=ST.client+' '+mktLbl(ST.mkt);
     stState(who+' — reading a sample of the live feed…');
     return stStream(ST.client,ST.mkt,function(n){ stState(who+' — '+fmt(n)+' products read…'); })
@@ -1070,21 +1085,68 @@ table.st-rt td.nt{color:var(--ink-2)}
   }
   ST.cols=function(){ return ST.hdr?ST.hdr.length:0; };
 
-  /* pick a product worth designing on: one that carries a discount, so every design has
-     something to say; failing that, the first product with an image */
+  /* SAMPLES TO DEMO ON (Ray, 8 Oct 2026: "allow more samples to be demo pls") — one product was
+     never enough to walk a client through fourteen designs, and whichever one the studio happened
+     to land on decided which designs had anything to say. The strip offers SAMP_N of them, each
+     judged on what it can carry: a discount AND a distinct second image (every design, the two-up
+     included), a discount only, a second image only, or a readable picture and nothing else. The
+     BEST leads — so the studio still opens on a product the whole set fits — but the strip is a
+     SPREAD, not a top-twelve: twelve products of one shape demo one shape, while a strip carrying
+     each kind lets the two-up, the sale flash and the control each land on a product that suits
+     them, and shows the honest drop on one that does not. Ranked, never random — a reshuffle that
+     can hand you a worse product than the one on screen is not a demo tool. */
+  var SAMP_N=12;
+  function stSamples(){
+    if(!ST.sum)return [];
+    if(ST.samp&&ST.sampKey===ST.client+'|'+ST.mkt)return ST.samp;
+    var bk=[[],[],[],[]],seen={},n=0;
+    for(var i=0;i<ST.rows.length&&n<SAMP_N*4;i++){
+      var r=ST.rows[i],src=srcImage(r); if(!src.url)continue;
+      var id=stIdOf(r); if(id&&seen[id])continue; if(id)seen[id]=1;
+      var rr=STU.resolveFacts(r,ST.sum,null,null,{mainImg:src.url});
+      var sale=!!rr.sale_pct.ok, two=!!src.second, k=(sale&&two)?0:sale?1:two?2:3;
+      if(bk[k].length>=SAMP_N)continue;
+      bk[k].push({row:r,id:id,src:src,sale:sale,two:two,rank:k,
+        why:(sale&&two)?'offer · two images':sale?'on offer':two?'two images':'image only'});
+      n++;
+    }
+    var out=bk[0].slice(0,Math.ceil(SAMP_N/2)),at=[out.length,0,0,0];
+    for(var pass=0;out.length<SAMP_N&&pass<SAMP_N*2;pass++){
+      var took=false;
+      for(var k2=1;k2<4&&out.length<SAMP_N;k2++){ if(at[k2]<bk[k2].length){ out.push(bk[k2][at[k2]++]); took=true; } }
+      if(!took)break;
+    }
+    for(var k3=0;k3<4&&out.length<SAMP_N;k3++){ while(at[k3]<bk[k3].length&&out.length<SAMP_N)out.push(bk[k3][at[k3]++]); }
+    ST.samp=out.slice(0,SAMP_N); ST.sampKey=ST.client+'|'+ST.mkt;
+    return ST.samp;
+  }
+  function stSampStrip(){
+    var e=$('#st-samp'); if(!e)return;
+    var ss=stSamples();
+    if(ss.length<2){ e.hidden=true; e.innerHTML=''; return; }
+    var nTwo=ss.filter(function(x){return x.two}).length, nSale=ss.filter(function(x){return x.sale}).length;
+    e.hidden=false;
+    e.innerHTML='<div class="sh">'+fmt(ss.length)+' products to design on \u2014 '+fmt(nSale)+' on offer, '
+      +fmt(nTwo)+' carrying a second image for the two-up. Click one.</div><div class="sr">'
+      +ss.map(function(x,i){
+        var on=ST.pid&&x.id===ST.pid;
+        return '<div class="sc'+(on?' on':'')+'" data-st-s="'+i+'" tabindex="0" role="button" title="'+esc((x.id||'')+' \u00b7 '+x.why)+'" aria-label="Design on '+esc(x.id||('product '+(i+1)))+'">'
+          +'<img src="/api/catalog/img?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt)+'&url='+encodeURIComponent(x.src.url)+'" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;ph&quot;></div>\'">'
+          +'<div class="tp">'+esc(x.two?'2 images':x.sale?'offer':'\u00a0')+'</div>'
+          +'<div class="sl">'+esc(x.id||('#'+(i+1)))+'</div></div>';
+      }).join('')+'</div>';
+  }
+  /* pick a product worth designing on: the best sample, so every design has something to say;
+     ⟳ Another product walks the strip rather than re-picking the same best one */
   function stAuto(force){
     if(!ST.sum)return Promise.resolve();
-    var best=null,any=null;
-    for(var i=0;i<ST.rows.length;i++){
-      var r=ST.rows[i]; if(!srcImage(r).url)continue;
-      if(!any)any=r;
-      var rr=STU.resolveFacts(r,ST.sum,null,null);
-      if(rr.sale_pct.ok){ best=r; break; }
-    }
-    var pickRow=best||any;
-    if(!pickRow){ stState(stMsg()+' — no product in the sample carries a readable image.'); return Promise.resolve(); }
+    var ss=stSamples();
+    if(!ss.length){ stState(stMsg()+' — no product in the sample carries a readable image.'); return Promise.resolve(); }
     if(!force&&ST.row)return Promise.resolve();
-    return stPick(pickRow,best?'':'no product in the sample carries a discount, so the sale designs have nothing to say on it');
+    var at=0;
+    if(force&&ST.pid){ for(var i=0;i<ss.length;i++){ if(ss[i].id===ST.pid){ at=(i+1)%ss.length; break; } } }
+    var pick=ss[at];
+    return stPick(pick.row,pick.sale?'':'this product carries no discount, so the sale designs have nothing to say on it');
   }
   var stMsg=function(){ return ST.client+' '+mktLbl(ST.mkt); };
 
@@ -1109,12 +1171,17 @@ table.st-rt td.nt{color:var(--ink-2)}
       }
       if(got.length){
         why='the source image behind the '+((cls&&cls.label)||'overlay')+' already live on this feed';
-        if(got.length>1)second=got[1];
         u=got[0];
       }
+      /* the live composite's OWN right-hand source is deliberately not taken as the second picture:
+         the recipe emits {additional_image_link}, so previewing with a URL that is not in that
+         column would show a composition the template cannot reproduce on any other product. */
     }
-    if(!second){ var b3=ST.sum&&ST.sum.slots.image2; var v3=b3&&b3.col?String(row[b3.col]||'').split(/[,|]\s*(?=https?:)/)[0].trim():''; if(v3&&v3!==u)second=v3; }
-    return {url:u,why:why,second:second};
+    /* the SECOND picture is the engine's own read (STU.secondImage) — a cell can carry several
+       additional images and one that repeats the packshot is not a second picture at all */
+    var sn=0,sWhy='';
+    if(ST.sum){ var si=STU.secondImage(row,ST.sum.slots,u); second=si.url; sn=si.n; sWhy=si.why; }
+    return {url:u,why:why,second:second,secondN:sn,secondWhy:sWhy};
   }
   function stLoadImg(url){
     return new Promise(function(res){
@@ -1128,26 +1195,31 @@ table.st-rt td.nt{color:var(--ink-2)}
 
   /* ---------- pick a product ---------- */
   function stPick(row,note){
-    ST.row=row; ST.text={}; ST.img=null; ST.img2=null;
+    ST.row=row; ST.text={}; ST.img=null; ST.img2=null; ST.img2Why=''; ST.img2N=0;
     var src=srcImage(row);
     ST.pid=stIdOf(row); ST.imgSrc=src.url; ST.imgWhy=src.why;
+    ST.img2Why=src.secondWhy||''; ST.img2N=src.secondN||0;
     stState(stMsg()+' — reading '+(ST.pid||'this product')+'…');
     return stMasterRow(ST.pid)
       .then(function(){ ST.res=stResolve(); return stLoadImg(src.url); })
       .then(function(g){ ST.img=g.img; ST.imgWhy=g.why||src.why;
         if(!src.second)return null;
-        return stLoadImg(src.second).then(function(g2){ ST.img2=g2.img; }); })
+        /* a second image whose PIXELS do not load is not a second image either: the two-up has to
+           say so rather than fall back to the packshot, which would draw one picture twice */
+        return stLoadImg(src.second).then(function(g2){ ST.img2=g2.img; if(!g2.img)ST.img2Why=g2.why||'the second image could not be read'; }); })
       .then(function(){
         var rd=STU.readiness(ST.sum);
         stState(stMsg()+' — '+ST.cols()+' columns, '+fmt(ST.rows.length)+' products read. '+rd.verdict+(note?' · '+note:'')+'.');
-        stProd(); stGallery(); stRail();
+        stProd(); stSampStrip(); stGallery(); stRail();
         if(ST.design)stWb(ST.design);
       });
   }
   function stResolve(){
     var a=ST.ads?ST.ads[String(ST.pid).toLowerCase()]:null;
     if(a)a={clicks:a.clicks,impr:a.impr,conv:a.conv,cost:a.cost,value:a.value,window:ST.adsShort||ST.adsWin};
-    return STU.resolveFacts(ST.row,ST.sum,a||null,ST.mval!=null?{qty:ST.mval}:null);
+    /* mainImg = the picture the page is PAINTING (ST.imgSrc, decoded out of any live composite),
+       so the engine judges the second image against the same half the reader is looking at */
+    return STU.resolveFacts(ST.row,ST.sum,a||null,ST.mval!=null?{qty:ST.mval}:null,{mainImg:ST.imgSrc});
   }
   function stProd(){
     var e=$('#st-prod'); if(!e)return;
@@ -1263,9 +1335,13 @@ table.st-rt td.nt{color:var(--ink-2)}
     cv.width=W; cv.height=H;
     var g=cv.getContext('2d'); if(!g)return c;
     g.clearRect(0,0,W,H);
-    var isSplit=c.zones.some(function(z){return z.as==='split'});
+    /* THE TWO-UP IS TWO PICTURES (Ray, 8 Oct 2026): image_link on the left, the product's own
+       additional_image_link on the right. The zone is dropped by compose when the product has no
+       distinct second image, and it is drawn only when that picture really loaded — falling back to
+       the packshot drew the same trousers twice and called it a composition. */
+    var isSplit=c.zones.some(function(z){return z.as==='split'})&&!!ST.img2;
     if(img){
-      if(isSplit){ drawFit(g,img,0,0,W/2,H); drawFit(g,ST.img2||img,W/2,0,W/2,H);
+      if(isSplit){ drawFit(g,img,0,0,W/2,H); drawFit(g,ST.img2,W/2,0,W/2,H);
         g.strokeStyle='#fff'; g.lineWidth=Math.max(2,W/240); g.beginPath(); g.moveTo(W/2,0); g.lineTo(W/2,H); g.stroke(); }
       else drawFit(g,img,0,0,W,H);
     } else plate(g,W,H);
@@ -1304,7 +1380,16 @@ table.st-rt td.nt{color:var(--ink-2)}
     if(!c||!c.ok)return '';
     if(c.empty)return '<b>Nothing to say on this product</b> — '+esc(c.dropped.map(function(x){return x.label.toLowerCase()+': '+x.why}).join('; '));
     var bits=[];
-    if(c.dropped.length)bits.push('dropped '+esc(c.dropped.map(function(x){return x.label.toLowerCase()}).join(', ')));
+    /* a dropped IMAGE zone carries the finding, so it names its reason rather than just its label:
+       "dropped second image" tells a reader nothing about why the two-up is not drawn */
+    var dImg=c.dropped.filter(function(x){return x.fact==='second_image'})[0];
+    if(dImg)bits.push('<b>no second image</b> \u2014 '+esc(dImg.why));
+    /* the feed named a second picture but its PIXELS never arrived, so the two-up is not drawn —
+       a card that said nothing here would show a single image with no explanation */
+    else if(!ST.img2&&ST.img2Why&&c.zones.some(function(z){return z.as==='split'}))
+      bits.push('<b>no second image</b> \u2014 '+esc(ST.img2Why));
+    var dRest=c.dropped.filter(function(x){return x.fact!=='second_image'});
+    if(dRest.length)bits.push('dropped '+esc(dRest.map(function(x){return x.label.toLowerCase()}).join(', ')));
     if(d.missing&&d.missing.length)bits.push('needs '+esc(d.missing.join(', ').toLowerCase()));
     if(!bits.length)bits.push(esc(d.blurb));
     return bits.join(' · ');
@@ -1496,20 +1581,25 @@ table.st-rt td.nt{color:var(--ink-2)}
     stState('Window changed to the '+this.value.replace(/_/g,' ')+' — press Add Google Ads to read it.');
   });
   document.addEventListener('click',function(e){
+    var sc=e.target.closest&&e.target.closest('[data-st-s]');
+    if(sc){ var ss=stSamples(),x=ss[+sc.getAttribute('data-st-s')]; if(x)stPick(x.row,x.sale?'':'this product carries no discount, so the sale designs have nothing to say on it'); return; }
     var c=e.target.closest&&e.target.closest('[data-st-d]');
     if(c){ stWb(c.getAttribute('data-st-d')); stGallery();
       var wb=$('#st-wb'); if(wb)wb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   });
   document.addEventListener('keydown',function(e){
     if(e.key!=='Enter'&&e.key!==' ')return;
-    var c=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('[data-st-d]');
+    var a=document.activeElement&&document.activeElement.closest?document.activeElement:null;
+    var sc=a&&a.closest('[data-st-s]');
+    if(sc){ e.preventDefault(); var ss=stSamples(),x=ss[+sc.getAttribute('data-st-s')]; if(x)stPick(x.row,''); return; }
+    var c=a&&a.closest('[data-st-d]');
     if(c){ e.preventDefault(); stWb(c.getAttribute('data-st-d')); stGallery(); }
   });
   /* the studio follows the page's client/market, and never keeps a stale feed's fields */
   window.addEventListener('fcc-ovl-feed',function(){
     if(!ST.read)return;
     if(ST.client===CLIENT&&ST.mkt===MKT)return;
-    ST.read=false; ST.sum=null; ST.row=null; ST.res=null; ST.design=''; ST.text={}; ST.img=null; ST.img2=null;
+    ST.read=false; ST.sum=null; ST.row=null; ST.res=null; ST.design=''; ST.text={}; ST.img=null; ST.img2=null; ST.samp=null; ST.sampKey='';
     $('#st-wrap').hidden=true; var wb=$('#st-wb'); if(wb)wb.hidden=true;
     stState('Showing '+CLIENT+' '+mktLbl(MKT)+' — read this feed’s fields to design on it.');
   });
