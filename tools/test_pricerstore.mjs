@@ -366,6 +366,34 @@ const J = JSON.stringify;
     /if \(name === 'examples'\) return pricerExamplesRoute\(request, env\);/.test(W) && /async function pricerExamplesRoute/.test(W) && /moduleAllowed\(acc\.modules, 'pricer'\)/.test(W.split('async function pricerExamplesRoute')[1].slice(0, 400)) && /'pricerex:' \+ client/.test(W) && /clientMatch\(acc\.clients, c\)/.test(W.split('async function pricerExamplesRoute')[1].slice(0, 600)));
 }
 
+// ---- the optimisation bank (Ray, 8 Oct 2026) ------------------------------------------------------------------------------------
+console.log('· the optimisation bank: pricerbank, Management-written, one entry per optimisation');
+{
+  const S = P.PRICER_STORES.bank;
+  t('the bank is its own house-wide store, read by every Pricer signin, written by Management', S && S.kv === 'pricerbank' && S.scope === null && S.mgmtWrite === true && S.mgmtRead === false);
+  const r = P.sanitizePut('bank', {
+    highlights: { pkg: 'go', gives: '+4 highlights per product' },
+    keywords: { pkg: 'tier9' },
+    title: { pkg: 'go', unit: 5 },
+    client: { pkg: 'go' },
+    x_size_chart: { label: 'Size chart links', kind: 'feed', pkg: 'ar', fields: ['document_link'], unit: '0.05', setupH: 2, status: 'pilot', gives: 'a size chart on every product' },
+    x_nameless: { pkg: 'ar' },
+    x_stock_rc: { del: true },
+    x_mine: { del: true },
+    x_restock: { monthly: 150 },
+  }, {}, Object.assign({}, ctx, { base: 0 }));
+  const d = r.data, why = (k) => (r.rejected.filter((x) => x.k === k)[0] || {}).why || '';
+  t('a package line moves tier and rewords what it gives, stamped by the server', d.highlights && d.highlights.pkg === 'go' && d.highlights.gives === '+4 highlights per product' && d.highlights.by === 'Steven');
+  t('an unknown tier, a price on a package line and "client to supply" are refused', /pkg must be/.test(why('keywords')) && /only carries its tier/.test(why('title')) && /unknown key/.test(why('client')));
+  t('a new optimisation lands with its fields, price, status and phrase (numbers read as numbers)', d.x_size_chart && d.x_size_chart.unit === 0.05 && d.x_size_chart.setupH === 2 && d.x_size_chart.status === 'pilot' && J(d.x_size_chart.fields) === J(['document_link']));
+  t('a new optimisation needs a name; only a seed is removed with del', /needs a name/.test(why('x_nameless')) && d.x_stock_rc && d.x_stock_rc.del === true && /only a seeded/.test(why('x_mine')));
+  t('a seeded service takes a monthly £ without restating its name', d.x_restock && d.x_restock.monthly === 150);
+  const W = fs.readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  t('ACT logs bank writes', /'\/api\/pricer\/bank': 'pricer-bank'/.test(W));
+  const ER = createRequire(import.meta.url)('../docs/pricer_engine.js');
+  t('the store\'s tiers, seeds and built-in keys are the engine\'s', J(P.BANK_TIERS) === J(ER.BANK_TIERS) && J(P.BANK_SEEDS) === J(Object.keys(ER.BANK_SEED)));
+}
+
 // ---- the ladder rounding (found by the review's route probe) ---------------------------------------------------------------
 console.log('· the volume ladder rises as STORED, not as typed');
 {
@@ -701,13 +729,13 @@ console.log('· wiring in worker.js');
   t('route() hands every /api/pricer/* path to pricerRoute', /if \(path\.startsWith\('\/api\/pricer\/'\)\) return pricerRoute\(request, env, path\);/.test(WK));
   t('pricerstore + the rule-level scoping pair are imported', /import \* as PSTORE from "\.\/pricerstore\.js";/.test(WK) && /scopeViewBy, scopeIncomingBy \} from "\.\/sharedstate\.js";/.test(WK));
   const act = /const ACT = \{([\s\S]*?)\};/.exec(WK);
-  const want = { ops: 'pricer-ops', price: 'pricer-price', cost: 'pricer-cost', proposals: 'pricer-prop', rollout: 'pricer-roll', roadmap: 'pricer-map' };
+  const want = { ops: 'pricer-ops', price: 'pricer-price', cost: 'pricer-cost', proposals: 'pricer-prop', rollout: 'pricer-roll', roadmap: 'pricer-map', bank: 'pricer-bank' };
   t('ACT logs every store write (pricer-ops … pricer-map)', !!act && Object.keys(want).every((s) => act[1].indexOf("'/api/pricer/" + s + "': '" + want[s] + "'") >= 0));
-  t('ACT covers exactly the six stores the module serves', JSON.stringify(Object.keys(P.PRICER_STORES).sort()) === JSON.stringify(Object.keys(want).sort()));
+  t('ACT covers exactly the seven stores the module serves (the six + the optimisation bank)', JSON.stringify(Object.keys(P.PRICER_STORES).sort()) === JSON.stringify(Object.keys(want).sort()));
   const body = liftF('pricerRoute', 'async ');
   const gate = body.indexOf("moduleAllowed(acc.modules, 'pricer')"), mg = body.indexOf("moduleAllowed(acc.modules, 'pricer-cost')"), kv = body.indexOf('env.EDITS.get(S.kv');
   t('the pricer gate, then the Management gate, both precede the store read', gate > 0 && mg > gate && kv > mg);
-  t('the KV keys are the six the spec names', JSON.stringify(Object.values(P.PRICER_STORES).map((s) => s.kv)) === JSON.stringify(['pricerops', 'pricerprice', 'pricercost', 'pricerprop', 'svcroll', 'svcmap']));
+  t('the KV keys are the six the spec names + the optimisation bank', JSON.stringify(Object.values(P.PRICER_STORES).map((s) => s.kv)) === JSON.stringify(['pricerops', 'pricerprice', 'pricercost', 'pricerprop', 'svcroll', 'svcmap', 'pricerbank']));
   t('scoping rules: proposals by the record\'s client, rollout by the key, the rest house-wide',
     P.PRICER_STORES.proposals.scope === 'field' && P.PRICER_STORES.rollout.scope === 'self' && ['ops', 'price', 'cost', 'roadmap'].every((s) => P.PRICER_STORES[s].scope === null));
   t('no client figure or name in the store module (synthetic names live in this harness only)', !/Northwind|Reiss|Superdry|Schuh|Monsoon/.test(PS));

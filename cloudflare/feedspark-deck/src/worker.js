@@ -657,6 +657,7 @@ async function route(request, env, ctx) {
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger',
         '/api/pricer/examples': 'pricer-examples',
+        '/api/pricer/bank': 'pricer-bank',
         '/api/pricer/ops': 'pricer-ops', '/api/pricer/price': 'pricer-price', '/api/pricer/cost': 'pricer-cost',
         '/api/pricer/proposals': 'pricer-prop', '/api/pricer/rollout': 'pricer-roll', '/api/pricer/roadmap': 'pricer-map' };
       if (ACT[path]) {

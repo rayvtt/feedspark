@@ -1046,6 +1046,53 @@ const r2 = (x) => Math.round(x * 100) / 100;
   const cm2 = E.costModel(RCr, costsC, {}, q2), cm3 = E.costModel(RCr, costsC, {}, q3);
   ok(cm3.proposal.monthlyMargin === cm2.proposal.monthlyMargin && cm3.proposal.excluded.indexOf('refresh') >= 0, 'C: the refresh is out of both sides of the monthly margin');
 }
+// ADDITION D — the optimisation bank (Ray, 8 Oct 2026): every optimisation allocated to a tier, new ones added
+{
+  const stR = cleanStores(); const RCb = E.composeRates(stR);
+  const spec = (opt, bank) => Object.assign({ markets: [{ mkt: 'gb', audit: AC }] }, base10, { rates: RCb, option: opt, bank });
+  const B0 = E.bankOf({});
+  ok(B0.filter((b) => b.builtin).length === E.PKG_LINES.length - 1 && !B0.some((b) => b.key === 'client'), 'D: the bank lists every built-in line (never "client to supply")');
+  ok(B0.filter((b) => b.builtin).every((b) => b.pkg === E.PKG_LINES.filter((d) => d.key === b.key)[0].pkg && !b.moved && b.gives), 'D: …each at its own tier, with a "what it gives" phrase');
+  ok(B0.some((b) => b.key === 'x_stock_rc' && b.kind === 'service' && b.pkg === 'ar') && B0.some((b) => b.key === 'x_restock' && b.pkg === 'ar'), 'D: Stock range completion and Restock alerts are seeded into Tier 2 as services');
+  ok(E.inOption('go+ar+rf', 'rf') && E.inOption('go+ar+rf', 'go') && !E.inOption('go+ar', 'rf') && !E.inOption('go', 'ar') && E.inOption('ar', 'ar') && !E.inOption('ar', 'go') && !E.inOption('go+ar+rf', 'off'), 'D: a tier carries every tier below it; off is never offered');
+  const q1 = E.packageQuote(spec('go', {}), LG), q2 = E.packageQuote(spec('go+ar', {}), LG);
+  // move highlights DOWN to Tier 1
+  const q1h = E.packageQuote(spec('go', { highlights: { pkg: 'go' } }), LG), q2h = E.packageQuote(spec('go+ar', { highlights: { pkg: 'go' } }), LG);
+  const hl1 = q1h.lines.filter((l) => l.key === 'highlights')[0];
+  ok(!q1.lines.some((l) => l.key === 'highlights') && hl1 && hl1.status === 'priced' && hl1.pkg === 'go', 'D: moving Highlights to Tier 1 puts it on the Tier 1 quote, priced');
+  ok(q1h.oneOff.total > q1.oneOff.total && Math.abs(q2h.oneOff.total - q2.oneOff.total) < 0.01, 'D: …Tier 1 costs more, Tier 2 (which already had it) the same');
+  const pj = (bank) => E.packageQuote(Object.assign({ markets: [{ mkt: 'gb', audit: AP }] }, base10, { rates: RCb, option: 'go', bank }), LG).perMarket[0].projected;
+  const pjA = pj({}), pjB = pj({ highlights: { pkg: 'go' } });
+  ok(pjB.fixed.indexOf('product_highlight') >= 0 && pjA.fixed.indexOf('product_highlight') < 0 && pjB.after > pjA.after, 'D: …and the Tier 1 projection now fills product_highlight — the Golden Score rises', [pjA.after, pjB.after]);
+  // switch keywords OFF
+  const q1k = E.packageQuote(spec('go', { keywords: { pkg: 'off' } }), LG);
+  ok(!q1k.lines.some((l) => l.key === 'keywords') && q1k.oneOff.total <= q1.oneOff.total, 'D: an optimisation set to off leaves every quote');
+  // move details to Tier 3
+  const q2d = E.packageQuote(spec('go+ar', { details: { pkg: 'rf' } }), LG), q3d = E.packageQuote(spec('go+ar+rf', { details: { pkg: 'rf' } }), LG);
+  ok(!q2d.lines.some((l) => l.key === 'details') && q3d.lines.some((l) => l.key === 'details' && l.status === 'priced'), 'D: Product details moved to Tier 3 leaves Tier 2 and lands on Tier 3');
+  const gap = (q2d.perMarket[0].projected.blockers || []).filter((b) => b.key === 'product_detail')[0];
+  ok(!gap || gap.tag === 'in Tier 3', 'D: …and Tier 2\'s gap list says "in Tier 3"', gap);
+  // a NEW feed optimisation, priced per product
+  const bankN = { x_size_chart: { label: 'Size chart links', kind: 'feed', pkg: 'ar', fields: ['document_link'], unit: 0.05, setupH: 2, gives: 'a size chart on every product' } };
+  const qn = E.packageQuote(spec('go+ar', bankN), LG), ln = qn.lines.filter((l) => l.key === 'x_size_chart')[0];
+  ok(ln && ln.custom && ln.status === 'priced' && ln.gen > 0 && ln.setupH === 2 && ln.gives === 'a size chart on every product', 'D: a team-added optimisation is a priced line on its tier — £ a product × its need × β, plus its set-up hours', ln);
+  ok(qn.oneOff.total > q2.oneOff.total && !E.packageQuote(spec('go', bankN), LG).lines.some((l) => l.key === 'x_size_chart'), 'D: …it raises Tier 2 and stays off Tier 1');
+  const qu = E.packageQuote(spec('go+ar', { x_new: { label: 'Something new', kind: 'feed', pkg: 'ar', fields: [] } }), LG);
+  ok(qu.lines.some((l) => l.key === 'x_new' && l.status === 'unpriced') && qu.blockers.some((b) => b.line === 'x_new'), 'D: a new optimisation with no price is "not priced", blocked — never £0');
+  const qc = E.packageQuote(spec('go+ar', { x_soon: { label: 'Coming thing', kind: 'feed', pkg: 'ar', unit: 0.1, status: 'planned' } }), LG);
+  ok(qc.lines.some((l) => l.key === 'x_soon' && l.status === 'coming'), 'D: a planned optimisation reads coming — included when live');
+  // services
+  ok(q2.extras.length === 2 && q2.extras.every((x) => x.status === 'included') && q2.monthly.extras === 0 && !q1.extras.length, 'D: the seeded services ride Tier 2 as "included" (no charge until Management sets one), not Tier 1');
+  const qs = E.packageQuote(spec('go+ar', { x_restock: { monthly: 150 } }), LG);
+  ok(qs.extras.some((x) => x.key === 'x_restock' && x.status === 'priced' && x.monthly === 150) && Math.abs(qs.monthly.total - q2.monthly.total - 150) < 0.01 && qs.monthly.extras === 150, 'D: a service given a monthly £ adds it to the monthly total');
+  ok(!E.packageQuote(spec('go+ar', { x_stock_rc: { del: true } }), LG).extras.some((x) => x.key === 'x_stock_rc'), 'D: a seed the team removed is gone');
+  ok(J(q2.gives.map((x) => x.key)).indexOf('highlights') >= 0 && q2.gives.some((x) => x.key === 'x_stock_rc' && /Stock RC%/.test(x.gives)), 'D: pq.gives lists what the tier gives, services included');
+  const body = E.proposalText(qs, { guard: false }).body;
+  ok(/· Restock alerts — .*: £150(\.00)? a month/.test(body) && /· Stock range completion — Stock RC%/.test(body), 'D: the client email lists the services and their price');
+  ok(/Includes: .*Restock alerts \(£150(\.00)? a month\)/.test(E.optionsText([{ client: 'Northwind', pq: qs, clientSafe: true }], { guard: false })), 'D: optionsText lists them');
+  const costsD = { '_c|rateAspl': { v: 30 }, '_c|rateAm': { v: 40 }, '_c|gbpPerMTok': { v: 2 }, '_c|ohPct': { v: 20 }, '_c|marginPct': { v: 40 } };
+  ok(E.costModel(RCb, costsD, {}, qs).proposal.excluded.indexOf('extras') >= 0, 'D: services are out of both sides of the margin');
+}
 // ADDITION A — the tier names in client copy
 {
   const tx = E.proposalText([PQt, PQall], { guard: false }).body;
