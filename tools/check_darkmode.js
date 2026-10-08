@@ -55,6 +55,9 @@ const AIVIS_STUB = require('./aivis_stub.js').stubLines();
 // /restock streams a feed and FeedHero's 30-day Ads read, and keeps a ledger — tools/restock_stub.js hands over a SYNTHETIC
 // set (behind a guard on the page's file name) so the KPI band, the split, the category bars and the three views render
 const RESTOCK_STUB = require('./restock_stub.js').stubLines();
+// /social reads a feed, Google Ads and four engines — tools/social_stub.js hands over the engines and an empty roster
+// (behind a guard on the page's file name), so the page opens on the demo products it draws itself
+const SOCIAL_STUB = require('./social_stub.js').stubLines();
 // /pricer reads the Golden Record stores, streams a feed and keeps six /api/pricer/* stores — tools/pricer_stub.js hands over a
 // SYNTHETIC book (behind a guard on the page's file name) so the audit stepper, the tier cards, the debrief kit and the rate card render
 const PRICER_STUB = require('./pricer_stub.js').stubLines();
@@ -69,6 +72,7 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
 ${CATALOG_STUB}
 ${AIVIS_STUB}
 ${RESTOCK_STUB}
+${SOCIAL_STUB}
 ${PRICER_STUB}
 ${ROAS_STUB}
 ${RULES_STUB}

@@ -139,6 +139,9 @@ echo "   ✓ domain classes, names in order, branded + no-answer rules, share of
 echo "── validating: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
 node tools/test_restock.mjs >/dev/null
 echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
+echo "── validating: Social DPA (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)"
+node tools/test_social.mjs >/dev/null
+echo "   ✓ six networks, text limits, button mapping, tokens stand down when missing/too small, conditions, first-match-wins, week grid, sanitiser, brief, routes, registries hold"
 
 echo "── validating: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"
 node tools/test_security.mjs >/dev/null
@@ -363,6 +366,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Restock, driven (the join on the page, the KPIs against an independent count, the views, the ledger observation, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_restock.js || {
     echo "✗ restock tripwire failed — the join, a KPI, a view, the sort, the ledger observation or the phone layout regressed"; exit 1; }
+  echo "── validating: Social DPA, driven (six networks paint the product, the schedule moves the words, safe zones, a picture per network, folds, PNG, the phone)"
+  NODE_PATH=$(npm root -g) node tools/check_social.js || {
+    echo "✗ social DPA tripwire failed — a preview, the schedule, a stood-down rule, the safe zones, a per-network picture, the folds or the phone regressed"; exit 1; }
   echo "── validating: Services & Pricer, driven (stored paint → live exact, tiers, the guard, the proposal save, the Management gate, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_pricer.js || {
     echo "✗ pricer tripwire failed — the audit lanes, a tier card, the client-safe guard, the proposal save, the Management gate or the phone layout regressed"; exit 1; }

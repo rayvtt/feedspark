@@ -144,6 +144,14 @@ import RESTOCK_ENGINE_SRC from "../../../docs/restock_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
+// /social (Ray, 8 Oct 2026: "a new feature module for all social DPA optimization, especially Meta, Instagram,
+// Pinterest, or TikTok … a preview of how it would look on each platform, side by side … fields can be dynamically
+// scheduled based on the day, weather, customer behavior, or analytics"): one product as a dynamic ad on every
+// network, the Overlays studio's painter inside each network's safe zone, and a rule schedule over the ad's fields.
+// The page reads the feed + the Catalogue's Ads lane; the platforms, tokens and rules are docs/social_engine.js,
+// served verbatim at /social/engine.js (node-tested). The schedule is shared state ns `socialdpa` (src/sharedstate.js).
+import SOCIAL_PAGE from "../../../docs/FeedSpark_Social.html";
+import SOCIAL_ENGINE_SRC from "../../../docs/social_engine.js";
 // Playbook — the AM meeting copilot. It is no longer a page of its own (Ray, 16 Sep 2026:
 // "Delete the separate playbook module and incorporate it into the workflow as the right-hand
 // panel"): the crawl below still serves /api/playbook, but the surface is Workflow's right rail.
@@ -369,6 +377,7 @@ const PAGES = {
   '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
   '/restock':     { html: RESTOCK_PAGE, slug: 'restock' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
+  '/social':      { html: SOCIAL_PAGE, slug: 'social' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
@@ -1696,6 +1705,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/social/engine.js' && request.method === 'GET') {
+      return new Response(SOCIAL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/studio.js' && request.method === 'GET') {
       return new Response(OVERLAY_STUDIO_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });

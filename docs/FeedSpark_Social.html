@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Social DPA</title>
+<meta name="description" content="Social DPA — one product as a dynamic ad on Facebook, Instagram, Pinterest and TikTok, side by side, with an image overlay and a schedule of dynamic fields">
+<link rel="stylesheet" href="/design/fcc.css">
+<style>
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1360px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  .hero{position:relative;overflow:hidden;isolation:isolate;padding:30px 0 20px}
+  .hero::before{content:'';position:absolute;inset:-40% -20% auto -20%;height:180%;z-index:-1;pointer-events:none;
+    background:radial-gradient(38% 46% at 18% 22%,rgba(245,166,35,.20),transparent 70%),radial-gradient(34% 42% at 82% 8%,rgba(37,99,235,.12),transparent 72%),radial-gradient(30% 38% at 62% 88%,rgba(26,54,93,.07),transparent 70%);
+    animation:heroAurora 26s ease-in-out infinite alternate}
+  @keyframes heroAurora{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}100%{transform:translate3d(2%,-1%,0) scale(1.04)}}
+  .hero::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;z-index:1;pointer-events:none;
+    background:linear-gradient(90deg,transparent 0 18%,var(--orange) 34%,var(--orange-deep) 50%,var(--orange) 66%,transparent 82% 100%);background-size:220% 100%;opacity:.85;animation:heroEdge 7.5s linear infinite}
+  @keyframes heroEdge{from{background-position:120% 0}to{background-position:-120% 0}}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:40px;font-weight:900;margin:8px 0 6px;letter-spacing:-.025em}
+  h1 small{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:0;vertical-align:middle;margin-left:8px}
+  .hero p.sub{color:var(--ink-2);font-size:14px;max-width:880px;margin:0 0 14px}
+  .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fld{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  select.fld{padding-right:28px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+  .btn{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn:disabled{opacity:.55;cursor:default}
+  .btn.sm{height:30px;font-size:12px;padding:0 10px}
+  .seg{display:inline-flex;height:36px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:nowrap}
+  .seg button{font:inherit;font-size:12.5px;font-weight:800;border:none;background:transparent;color:var(--muted);padding:0 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .seg button.on{background:var(--paper);color:var(--orange-deep);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{font:inherit;font-size:12px;font-weight:800;height:28px;padding:0 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .chip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .chip.on{background:rgba(245,166,35,.16);border-color:var(--orange);color:var(--orange-ink)}
+  .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
+  .status{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status .pip{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good)}
+  .status .pip.off{background:var(--muted)}.status .pip.warn{background:var(--orange-deep)}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-body{fill:var(--ink-2)}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}.rk-flame{fill:var(--orange)}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange)}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:28px}.ctl{gap:8px}.hero{padding:24px 0 18px}}
+  @media(prefers-reduced-motion:reduce){.hero::before,.hero::after{animation:none!important}}
+
+  body{font-size:14px}
+  .card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(135deg,rgba(245,166,35,.55),rgba(37,99,235,.28) 55%,rgba(230,230,230,.6)) border-box;border:1px solid transparent;border-radius:16px;box-shadow:var(--shadow);padding:0;margin:16px 0;min-width:0}
+  /* EVERY SECTION FOLDS (Ray's standing rule, 8 Oct 2026): the head is a TILE — title, one quiet
+     line, a round chevron — and the whole tile is the toggle */
+  .fhd{display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;border:none;background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border-radius:16px}
+  .fhd .tt{flex:1;min-width:0}
+  .fhw{margin:0;font-size:inherit;font-weight:inherit}
+  .fhd .t3{display:block;font-size:16px;font-weight:900;letter-spacing:-.01em}
+  .fhd .fl{display:block;font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .fhd .chev{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);transition:transform .2s}
+  .fhd[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .fhd:hover .chev{border-color:var(--orange);color:var(--orange-deep)}
+  .fbody{padding:0 18px 18px}
+  .card.folded .fbody{display:none}
+  .foldbar{display:flex;justify-content:flex-end;gap:8px;margin:14px 0 -4px}
+  .note{font-size:12px;color:var(--muted);font-weight:700;margin-top:8px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px}
+  .sb{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:100px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .sb.feed{border-color:var(--good);color:var(--good)}.sb.ads{border-color:var(--info);color:var(--info)}
+  .sb.demo,.sb.ctx{border-style:dashed;border-color:var(--orange);color:var(--orange-ink)}.sb.master{border-color:#7a5bd1;color:#7a5bd1}
+
+  /* product strip */
+  .strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
+  .pc{flex:none;width:86px;border:1px solid var(--line);border-radius:10px;padding:4px;cursor:pointer;background:var(--paper);text-align:center}
+  .pc.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.35)}
+  .pc img,.pc canvas,.pc .ph{width:76px;height:76px;object-fit:cover;border-radius:7px;display:block;background:var(--wash)}
+  .pc .l{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .prow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:10px}
+  @media(max-width:900px){.prow{grid-template-columns:minmax(0,1fr)}}
+  .lbl{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+  .pinfo b{font-size:14px;font-weight:900}
+  .pinfo .m{font-size:12px;color:var(--ink-2);font-weight:700;margin-top:3px}
+  .slots{display:flex;gap:6px;flex-wrap:wrap}
+  .slot{width:58px;height:58px;border-radius:8px;border:2px solid var(--line);overflow:hidden;cursor:pointer;position:relative;background:var(--wash);padding:0}
+  .slot img,.slot canvas{width:100%;height:100%;object-fit:cover;display:block}
+  .slot.on{border-color:var(--orange)}
+  .slot i{position:absolute;left:3px;bottom:3px;font-style:normal;font-size:9.5px;font-weight:900;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:0 4px}
+  .ptab{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ptab td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
+  .ptab td:first-child{font-weight:800;white-space:nowrap}
+  .ptab select{height:30px;font-size:12px;padding:0 24px 0 8px;max-width:180px}
+  .dgal{display:flex;gap:6px;flex-wrap:wrap}
+
+  /* previews */
+  .pv-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start}
+  .mock{min-width:0}
+  .mock-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .mock-h .sp{flex:1}
+  .mock-h .net{width:8px;height:8px;border-radius:50%}
+  .net.meta{background:#2563EB}.net.pinterest{background:#D7263D}.net.tiktok{background:#14161C}[data-theme=dark] .net.tiktok{background:#e6e6e6}
+  .dev{border-radius:18px;overflow:hidden;background:#fff;color:#14161C;box-shadow:0 6px 22px rgba(0,0,0,.14);border:1px solid #e3e3e3;position:relative;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .dev.dark{background:#000;color:#fff;border-color:#222}
+  .cw{position:relative;line-height:0}
+  .cw canvas{width:100%;height:auto;display:block}
+  .safe-h{position:absolute;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(215,38,61,.28) 0 6px,rgba(215,38,61,.08) 6px 12px);display:none}
+  .show-safe .safe-h{display:block}
+  .safe-r{position:absolute;pointer-events:none;border:1.5px dashed rgba(37,99,235,.85);display:none}
+  .show-safe .safe-r{display:block}
+  .fb-top{display:flex;align-items:center;gap:8px;padding:10px 12px 6px}
+  .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#F5A623,#ED6F0B);color:#fff;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .who{font-size:12.5px;font-weight:800;line-height:1.2}
+  .who small{display:block;font-size:10.5px;font-weight:600;color:#65676b}
+  .dev.dark .who small{color:rgba(255,255,255,.75)}
+  .ptx{font-size:12.5px;line-height:1.35;padding:0 12px 8px}
+  .ptx .more{color:#65676b;font-weight:700}
+  .fb-bot{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f0f2f5}
+  .fb-bot .tx{flex:1;min-width:0}
+  .fb-bot .d{font-size:10px;color:#65676b;text-transform:uppercase;letter-spacing:.03em}
+  .fb-bot .h{font-size:13px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fb-bot .p{font-size:11.5px;color:#65676b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cta{font:inherit;font-size:12px;font-weight:800;border:none;border-radius:6px;padding:7px 11px;background:#e4e6eb;color:#14161C;white-space:nowrap;flex:none;cursor:default}
+  .fb-rx{display:flex;justify-content:space-around;font-size:11.5px;font-weight:700;color:#65676b;padding:7px 0;border-top:1px solid #e4e6eb}
+  .ig-cta{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font-size:12.5px;font-weight:800;background:#2563EB;color:#fff}
+  .ig-ic{display:flex;gap:12px;padding:8px 12px 2px;font-size:16px}
+  .ig-cap{font-size:12px;line-height:1.35;padding:2px 12px 10px}
+  .ov{position:absolute;left:0;right:0;line-height:1.3}
+  .ov.top{top:0;padding:8px 10px 18px;background:linear-gradient(rgba(0,0,0,.6),transparent)}
+  .ov.bot{bottom:0;padding:24px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+  .prog{height:2.5px;border-radius:2px;background:rgba(255,255,255,.45);margin-bottom:8px;overflow:hidden}
+  .prog i{display:block;height:100%;width:38%;background:#fff}
+  .ov .who{color:#fff}
+  .st-h{font-size:13px;font-weight:800;color:#fff;margin-bottom:6px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .st-cta{display:flex;flex-direction:column;align-items:center;gap:1px;color:#fff;font-size:12px;font-weight:800}
+  .st-cta span{background:#fff;color:#14161C;border-radius:100px;padding:6px 14px}
+  .rail{position:absolute;right:8px;bottom:30%;display:flex;flex-direction:column;gap:14px;align-items:center;color:#fff;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .rail small{display:block;font-size:9px;font-weight:700;text-align:center}
+  .rl-cap{font-size:11.5px;color:#fff;margin:4px 0 6px;max-width:80%;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .tt-cta{display:block;text-align:center;background:#FE2C55;color:#fff;font-size:12.5px;font-weight:800;border-radius:4px;padding:8px}
+  .rl-cta{display:block;text-align:center;background:rgba(255,255,255,.22);color:#fff;font-size:12px;font-weight:800;border-radius:6px;padding:7px;backdrop-filter:blur(4px)}
+  .pin{padding:8px}
+  .pin .cw canvas{border-radius:16px}
+  .pin-t{font-size:13px;font-weight:800;line-height:1.25;margin:7px 4px 2px}
+  .pin-p{font-size:12.5px;font-weight:800;margin:0 4px}
+  .pin-by{font-size:11px;color:#65676b;margin:2px 4px 4px}
+  .meter{font-size:11px;font-weight:700;color:var(--muted);margin-top:7px;line-height:1.5}
+  .meter .w{color:var(--orange-ink)}.meter .b{color:var(--risk)}
+  .mock-f{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+
+  /* schedule */
+  .sched{display:grid;grid-template-columns:minmax(0,7fr) minmax(280px,4fr);gap:18px;align-items:start}
+  @media(max-width:1000px){.sched{grid-template-columns:minmax(0,1fr)}}
+  .rule{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--paper);border-left:4px solid var(--rc,var(--line))}
+  .rule.win{box-shadow:0 0 0 2px rgba(21,128,61,.25)}
+  .rule.off{opacity:.55}
+  .rule-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .rule-h input.nm{flex:1;min-width:140px;font:inherit;font-size:13px;font-weight:900;border:1px solid transparent;background:transparent;color:var(--ink);border-radius:6px;padding:3px 6px}
+  .rule-h input.nm:hover,.rule-h input.nm:focus{border-color:var(--line)}
+  .rule select,.rule input.tp,.ctxg select,.ctxg input{font:inherit;font-size:12.5px;font-weight:700;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 8px}
+  .rule input.tp{width:100%;margin-top:7px}
+  .conds{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+  .cond{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;border:1px solid var(--line);border-radius:100px;padding:2px 4px 2px 9px;background:var(--wash)}
+  .cond button{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px;line-height:1}
+  .cond.ed{border-radius:10px;padding:5px 8px;flex-wrap:wrap}
+  .cond.ed input{width:58px;height:26px}.cond.ed input[type=date]{width:auto}
+  .tg{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--muted);height:24px;padding:0 6px;cursor:pointer}
+  .tg.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .stt{font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:100px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+  .stt.win{border-color:var(--good);color:var(--good);background:rgba(21,128,61,.08)}
+  .stt.refused{border-color:var(--orange);color:var(--orange-ink);background:rgba(245,166,35,.12)}
+  .stt.shadowed{border-style:dashed}
+  .why{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:5px}
+  .ib{border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;flex:none}
+  .ib:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .ctxg{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--wash);position:sticky;top:80px}
+  .ctxg .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+  .ctxg .r>span:first-child{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:78px;flex:none}
+  .ctxg input[type=range]{flex:1;min-width:120px;height:auto;padding:0}
+  .now{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .now .f{font-size:12px;margin:4px 0;display:flex;gap:6px;align-items:baseline}
+  .now .f b{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:78px;flex:none}
+  .tok{font:inherit;font-size:11px;font-weight:800;border:1px dashed var(--line);border-radius:6px;background:var(--paper);color:var(--ink-2);height:24px;padding:0 7px;cursor:pointer}
+  .tok:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .defs{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;align-items:center}
+  .defs input,.defs select{font:inherit;font-size:13px;font-weight:700;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 10px;width:100%}
+  .defs label{font-size:12px;font-weight:900;color:var(--ink-2)}
+  @media(max-width:620px){.defs{grid-template-columns:minmax(0,1fr)}}
+
+  /* week */
+  .wk{display:grid;grid-template-columns:92px repeat(5,minmax(110px,1fr));gap:4px;min-width:680px}
+  .wk-wrap{overflow-x:auto}
+  .wk .hd{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:4px}
+  .wk .dn{font-size:12px;font-weight:900;padding:8px 4px}
+  .wk .c{font:inherit;text-align:left;font-size:11.5px;font-weight:700;border:1px solid var(--line);border-left:4px solid var(--rc,var(--line));border-radius:8px;padding:6px 7px;background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:46px;line-height:1.3}
+  .wk .c.def{border-left-style:dashed}
+  .wk .c.on{box-shadow:0 0 0 2px var(--orange)}
+  .wk .c small{display:block;font-size:10px;color:var(--muted);font-weight:800;margin-top:2px}
+  .wk-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--muted);margin-top:10px}
+  .wk-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* ideas */
+  .ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .idea{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--paper);display:flex;flex-direction:column;gap:5px}
+  .idea b{font-size:13px;font-weight:900}
+  .idea .v{font-size:12px;font-weight:800;color:var(--orange-ink)}
+  .idea .bl{font-size:12px;color:var(--ink-2);font-weight:600}
+  .idea .nd{font-size:11px;color:var(--muted);font-weight:700}
+  .idea .ft{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:4px}
+  .idea .ft .sp{flex:1;font-size:11px;font-weight:800}
+  .ok{color:var(--good)}.no{color:var(--orange-ink)}
+  table.dt{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.dt th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px;border-bottom:1px solid var(--line)}
+  table.dt td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .how ol{margin:6px 0 0 18px;padding:0;font-size:12.5px;color:var(--ink-2)}
+  .how li{margin:5px 0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#14161C;color:#fff;font-size:13px;font-weight:800;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80}
+  .toast.on{opacity:1;transform:translateX(-50%)}
+  [data-theme=dark] .topbar{background:rgba(20,22,28,.9)}
+  [data-theme=dark] .card{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+  [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
+  [hidden]{display:none!important}
+  /* the previews follow the theme the way the networks' own apps do: each one's dark mode, never a white phone in a dark page */
+  [data-theme=dark] .dev{background:#18191A;color:#E4E6EB;border-color:#2F3031;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+  [data-theme=dark] .dev.dark{background:#000}
+  [data-theme=dark] .fb-bot{background:#242526}
+  [data-theme=dark] .fb-bot .d,[data-theme=dark] .fb-bot .p,[data-theme=dark] .who small,[data-theme=dark] .ptx .more,[data-theme=dark] .pin-by,[data-theme=dark] .fb-rx{color:#B0B3B8}
+  [data-theme=dark] .fb-rx{border-top-color:#3A3B3C}
+  [data-theme=dark] .cta{background:#3A3B3C;color:#E4E6EB}
+  [data-theme=dark] .st-cta span{background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(4px)}
+  @media(max-width:760px){.ptab select{max-width:112px}.ptab td{padding:5px 3px}.pv-grid{grid-template-columns:minmax(0,1fr)}.mock{max-width:340px;margin:0 auto;width:100%}.seg{overflow-x:auto;max-width:100%}.ctxg{position:static}}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.4 16.2h3.2L12 20.4Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">Social DPA · Meta · Instagram · Pinterest · TikTok</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/social" class="tbm on" data-lbl="Social DPA" title="Social DPA — one product as a dynamic ad on Meta, Instagram, Pinterest and TikTok" aria-label="Social DPA"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 18.5h3"/><path d="M12 14.2l-2.4-2.3a1.55 1.55 0 0 1 2.4-1.95 1.55 1.55 0 0 1 2.4 1.95z"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roas" class="tbm" data-lbl="ROAS" title="ROAS — ad spend return (FeedHero / Google Ads, working name)" aria-label="ROAS"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 7h5v5"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/restock" class="tbm" data-lbl="Restock" title="Restock — demanded in Google Ads, not buyable" aria-label="Restock"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v8.5"/><path d="M8.5 7.5 12 11l3.5-3.5"/><path d="M3.5 11.5v6.5l8.5 4 8.5-4v-6.5"/><path d="M3.5 11.5 12 15.5l8.5-4"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Social catalogue ads</div>
+  <h1>Social DPA<small>one product, every network, side by side</small></h1>
+  <p class="sub" data-instr>Pick a product from the live feed and see it as a dynamic product ad on Facebook, Instagram (Feed, Stories, Reels), Pinterest and TikTok at once — with a FeedSpark image overlay inside each network’s safe zone, and a schedule that decides what the tagline, headline, primary text and button say by day, hour, weather, shopper behaviour and the product’s own numbers. Every figure says where it came from: the feed, Google Ads, or a demo value typed for the preview.</p>
+  <div class="ctl">
+    <select class="fld" id="brand" aria-label="Brand"><option value="">Pick a brand</option></select>
+    <button class="btn" id="demo" type="button" title="A synthetic product set — for a demo with no client data on screen">🎭 Demo products</button>
+    <button class="btn" id="ads" type="button" title="Read FeedHero’s Google Ads report for the last 30 days, product by product — the real clicks and conversions behind the social-proof taglines">⚡ Google Ads · 30 days</button>
+    <button class="btn" id="copy" type="button" title="The schedule in words — for a FeedHero rule or a client email">⧉ Copy schedule</button>
+    <button class="btn" id="brief" type="button" title="Brief the schedule into Workflow (Intake → Project Plan)">→ Brief</button>
+  </div>
+  <div class="chips" id="mkts" style="margin-top:10px"></div>
+  <div class="status"><span class="pip off" id="pip"></span><span id="mstate">Loading…</span></div>
+</div></header>
+
+<main class="wrap">
+  <div class="foldbar"><button class="btn sm" id="fold-all" type="button">⊖ Fold all</button></div>
+
+  <section class="card" id="sec-prod" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Product &amp; image</span><span class="fl" id="fl-prod">Which product, which picture on which network, which overlay</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div class="lbl">Products to design on</div>
+      <div class="strip" id="strip"><div class="note">Pick a brand, or open the demo products.</div></div>
+      <div class="prow">
+        <div>
+          <div class="pinfo" id="pinfo"></div>
+          <div class="lbl">Image source</div>
+          <span class="seg" id="imgmode" role="group" aria-label="Image source"><button type="button" data-m="same" class="on">Same image everywhere</button><button type="button" data-m="per">A picture per network</button></span>
+          <div class="lbl" id="slots-l">The product’s images</div>
+          <div class="slots" id="slots"></div>
+          <p class="note" id="slots-n">Click a picture to use it on every network.</p>
+        </div>
+        <div>
+          <div class="lbl">Overlay design <span class="sb">from /overlays</span></div>
+          <div class="dgal" id="dgal"></div>
+          <div class="lbl">Tagline on the image</div>
+          <div class="chips"><span class="seg" id="tagpos" role="group" aria-label="Tagline position"><button type="button" data-p="b" class="on">Bottom</button><button type="button" data-p="t">Top</button><button type="button" data-p="off">Off</button></span>
+            <span class="seg" id="tagsty" role="group" aria-label="Tagline colour"><button type="button" data-s="dark" class="on">Dark</button><button type="button" data-s="orange">Orange</button><button type="button" data-s="light">Light</button><button type="button" data-s="blue">Blue</button></span></div>
+          <div class="lbl">Per network</div>
+          <div style="overflow-x:auto"><table class="ptab" id="ptab"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="sec-prev" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="true"><span class="tt"><span class="t3">Platform previews</span><span class="fl" id="fl-prev">The same ad on every network, side by side</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div class="pv-tools">
+        <div class="chips" id="plats"></div>
+        <label class="chip" title="Hatch the area each network’s own buttons and captions cover"><input type="checkbox" id="safe" style="margin:0"> Safe zones</label>
+        <span class="seg" id="fbr" role="group" aria-label="Facebook feed shape"><button type="button" data-fr="1:1" class="on">FB 1:1</button><button type="button" data-fr="4:5">FB 4:5</button></span>
+        <button class="btn sm" id="play" type="button" title="Walk the week — every day and daypart, the previews following the schedule">▶ Play the week</button>
+      </div>
+      <p class="note" id="moment" style="margin:0 0 10px"></p>
+      <div class="pv-grid" id="pv"></div>
+      <p class="note">Safe zones and text limits are the commonly published figures, a guide to confirm in each network’s own Ads Manager preview — the networks move them.</p>
+    </div>
+  </section>
+
+  <section class="card" id="sec-sched" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Dynamic schedule</span><span class="fl" id="fl-sched">Rules that decide what the ad says, and the moment to test them on</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div class="sched">
+        <div>
+          <div class="chips" style="margin-bottom:10px"><select class="fld" id="addcond-field" aria-label="Field for a new rule" style="height:32px"><option value="tagline">Image tagline</option><option value="headline">Headline</option><option value="primary">Primary text</option><option value="cta">Button</option></select>
+            <button class="btn sm" id="addrule" type="button">＋ Rule</button><button class="btn sm" id="reset" type="button" title="Back to FeedSpark’s opening schedule">↺ Default schedule</button><span class="note" id="savest" style="margin:0"></span></div>
+          <div id="rules"></div>
+          <p class="note">Rules run top to bottom and the first one that matches sets its field. A rule naming a figure the product does not have, or one too small to read as proof, stands down and the next rule applies.</p>
+        </div>
+        <div class="ctxg" id="ctx">
+          <div class="lbl" style="margin-top:0">The moment</div>
+          <div class="r"><span>Date</span><input type="date" id="cx-date" aria-label="Date"><button class="btn sm" id="cx-now" type="button">Now</button></div>
+          <div class="r"><span>Hour</span><input type="range" id="cx-hour" min="0" max="23" step="1" aria-label="Hour"><b id="cx-hl" class="mono"></b></div>
+          <div class="r"><span>Weather</span><div class="chips" id="cx-wx"></div></div>
+          <div class="r"><span>Temp °C</span><input type="number" id="cx-temp" min="-30" max="45" style="width:80px" aria-label="Temperature"><span class="sb ctx">simulated</span></div>
+          <div class="r"><span>Shopper</span><div class="chips" id="cx-aud"></div></div>
+          <div class="lbl">This product’s numbers</div>
+          <div class="r"><span>Clicks 30d</span><input type="number" id="cx-clicks" min="0" style="width:90px" aria-label="Clicks in 30 days"><span class="sb" id="src-clicks">demo</span></div>
+          <div class="r"><span>Bought 30d</span><input type="number" id="cx-bought" min="0" style="width:90px" aria-label="Bought in 30 days"><span class="sb" id="src-bought">demo</span></div>
+          <div class="r"><span>Viewed 24h</span><input type="number" id="cx-views" min="0" style="width:90px" aria-label="Viewed in 24 hours"><span class="sb demo" title="The FCC does not read 24-hour product views — wire the Meta pixel’s ViewContent or GA4 to make it real">demo</span></div>
+          <div class="r"><span>Stock</span><input type="number" id="cx-stock" min="0" style="width:90px" aria-label="Units in stock"><span class="sb" id="src-stock">demo</span></div>
+          <div class="now" id="now"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="sec-week" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">The week at a glance</span><span class="fl" id="fl-week">What one field says each day and daypart</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div class="chips" style="margin-bottom:10px"><span class="seg" id="wkf" role="group" aria-label="Field"><button type="button" data-f="tagline" class="on">Tagline</button><button type="button" data-f="headline">Headline</button><button type="button" data-f="primary">Primary text</button><button type="button" data-f="cta">Button</button></span><span class="note" id="wk-n" style="margin:0"></span></div>
+      <div class="wk-wrap"><div class="wk" id="wk"></div></div>
+      <div class="wk-leg" id="wk-leg"></div>
+    </div>
+  </section>
+
+  <section class="card" id="sec-fields" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Ad fields &amp; defaults</span><span class="fl" id="fl-fields">What every field says when no rule applies</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div class="defs" id="defs">
+        <label for="d-headline">Headline</label><input id="d-headline" data-def="headline">
+        <label for="d-primary">Primary text</label><input id="d-primary" data-def="primary">
+        <label for="d-tagline">Image tagline</label><input id="d-tagline" data-def="tagline" placeholder="(none unless a rule sets one)">
+        <label for="d-cta">Button</label><select id="d-cta" data-def="cta"><option>Shop now</option><option>Buy now</option><option>Order now</option><option>Get offer</option><option>Learn more</option><option>See more</option></select>
+      </div>
+      <div class="lbl">Fields to insert <span class="note" style="margin:0;text-transform:none;letter-spacing:0">— into the last text box you clicked</span></div>
+      <div class="chips" id="toks"></div>
+      <div class="lbl">On each network</div>
+      <div style="overflow-x:auto"><table class="dt" id="limits"></table></div>
+    </div>
+  </section>
+
+  <section class="card" id="sec-ideas" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Optimisation ideas</span><span class="fl" id="fl-ideas">Ready-made rules to drop into the schedule</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody"><div class="ideas" id="ideas"></div></div>
+  </section>
+
+  <section class="card how" id="sec-how" data-fold>
+    <h3 class="fhw"><button class="fhd" type="button" aria-expanded="false"><span class="tt"><span class="t3">Where each figure comes from, and how it ships</span><span class="fl">The data behind every field, and the route into each network</span></span><span class="chev" aria-hidden="true">▾</span></button></h3>
+    <div class="fbody">
+      <div style="overflow-x:auto"><table class="dt" id="datatab"></table></div>
+      <ol data-instr>
+        <li><b>The product</b> — title, brand, price, the sale price and the pictures — is a sample of the live output feed, read through the same field summoner the Overlay design studio uses, so a price pair is resolved by value, not by column name.</li>
+        <li><b>Clicks and conversions over 30 days</b> are FeedHero’s Google Ads report, product by product — the only per-product demand the FCC reads today. A Meta catalogue market reads its Google market’s report.</li>
+        <li><b>Views in the last 24 hours, the weather and the shopper’s audience</b> are not read by the FCC. They are typed here for the preview and marked demo / simulated. In production they come from the Meta pixel (ViewContent) or GA4, a weather source per market, and the network’s own retargeting audiences.</li>
+        <li><b>Headline and primary text</b> map onto Meta’s own catalogue keywords where Meta has one ({{product.name}}, {{product.current_price}} …); any other field is written into the feed by a FeedHero rule on the schedule and lands at the next catalogue fetch.</li>
+        <li><b>The image tagline</b> is a text parameter on FeedSpark’s image-creator URL — the same engine the Overlays module reads off live feeds — re-rendered whenever the schedule changes what it says.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>Source: the live output feed · FeedHero Google Ads (30 days) · demo values where marked</span></div></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function n0(v) { return v == null || v === '' || isNaN(v) ? '—' : Number(v).toLocaleString('en-GB'); }
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('on'); }, 2600); }
+  function remember(k, v) { try { if (v != null && v !== '') localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+  function recall(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function mmyy() { var d = new Date(); return ('0' + (d.getMonth() + 1)).slice(-2) + String(d.getFullYear()).slice(2); }
+  function copyText(text) {
+    function fall() { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); toast('Copied'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('Copied'); }, fall); else fall();
+  }
+  function api(u, opts) {
+    return fetch(u, Object.assign({ credentials: 'same-origin' }, opts || {}))
+      .then(function (r) { return r.json().then(function (j) { j.__s = r.status; return j; }, function () { return { ok: false, error: 'HTTP ' + r.status, __s: r.status }; }); })
+      .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+  }
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  // ---- engines: fetched + run, so a browser tripwire can hand them over from a stub ----
+  var FA = null, STU = null, SOC = null, OVL = null;
+  function loadEngines() {
+    var need = [['/social/engine.js', 'FeedSocial', 1], ['/overlays/studio.js', 'FeedOverlayStudio', 1], ['/feedlab/engine.js', 'FeedAudit', 0], ['/overlays/engine.js', 'Overlay', 0]];
+    return Promise.all(need.map(function (n) {
+      if (window[n[1]]) return window[n[1]];
+      return fetch(n[0]).then(function (r) { if (!r.ok) throw new Error(n[0] + ' unavailable'); return r.text(); })
+        .then(function (s) { if (!s) throw new Error(n[0] + ' is empty'); (new Function(s))(); return window[n[1]] || null; })
+        .catch(function (e) { if (n[2]) throw e; return null; });
+    })).then(function (a) { SOC = a[0]; STU = a[1]; FA = a[2]; OVL = a[3]; if (!SOC || !STU) throw new Error('engines not ready'); });
+  }
+
+  // ---- state ----
+  var Q = new URLSearchParams(location.search);
+  var S = {
+    roster: {}, brand: '', mkt: '', demo: false, hdr: null, rows: [], sum: null, samp: [], pid: '', row: null, res: null,
+    imgs: [], imgUrls: [], ads: null, adsWin: '', adsSt: 'idle', setup: null, setupKey: '', stateMap: {}, stateBase: 0,
+    plats: {}, safe: false, fbr: '1:1', wkf: 'tagline', ctx: null, nums: {}, up: {}, lastInput: null, playing: 0,
+  };
+  window.__FCCSocial = { state: function () { return S; } };
+  var RC = ['#2563EB', '#ED6F0B', '#1BAF7A', '#7A5BD1', '#D7263D', '#0F8B8D', '#B8860B', '#5C6B7A'];
+  var TAGSTY = { dark: { fg: '#FFFFFF', bg: '#14161C' }, orange: { fg: '#FFFFFF', bg: '#ED6F0B' }, light: { fg: '#14161C', bg: '#FFFFFF' }, blue: { fg: '#FFFFFF', bg: '#2563EB' } };
+
+  // ---- the demo set: products DRAWN here, so a demo never puts a client's picture on screen ----
+  var DEMO_KINDS = [
+    { k: 'shoe', title: 'Northwind Trail Runner — Recycled Mesh, Navy', brand: 'Northwind', price: '72.00 GBP', sale: '57.60 GBP', col: '#1E3A8A', acc: '#F5A623' },
+    { k: 'jacket', title: 'Northwind Harbour Rain Jacket — Waterproof, Olive', brand: 'Northwind', price: '120.00 GBP', sale: '', col: '#55691F', acc: '#E8E2C8' },
+    { k: 'bag', title: 'Atelier Market Tote — Organic Canvas, Sand', brand: 'Atelier', price: '38.00 GBP', sale: '30.40 GBP', col: '#C9A66B', acc: '#5B3E22' },
+    { k: 'bottle', title: 'Linden Daily Joint Care — 60 Tablets', brand: 'Linden', price: '24.99 GBP', sale: '19.99 GBP', col: '#2E7D6B', acc: '#FFFFFF' },
+    { k: 'shoe', title: 'Northwind City Court Trainer — Leather, White', brand: 'Northwind', price: '85.00 GBP', sale: '', col: '#E9E9E4', acc: '#D7263D' },
+    { k: 'jacket', title: 'Harbour Quilted Gilet — Recycled Fill, Black', brand: 'Harbour', price: '65.00 GBP', sale: '45.50 GBP', col: '#22252B', acc: '#ED6F0B' },
+  ];
+  var DEMO_NUMS = [{ clicks30: 1267, bought30: 55, views24: 312, stock: 6 }, { clicks30: 840, bought30: 31, views24: 145, stock: 40 }, { clicks30: 96, bought30: 4, views24: 38, stock: 9 },
+    { clicks30: 2310, bought30: 188, views24: 520, stock: 120 }, { clicks30: 410, bought30: 12, views24: 61, stock: 3 }, { clicks30: 55, bought30: 1, views24: 7, stock: 18 }];
+  var DEMO_IMG = {};
+  function drawProduct(g, k, col, acc, cx, cy, s) {
+    g.save(); g.translate(cx, cy); g.scale(s, s); g.lineJoin = 'round'; g.lineCap = 'round';
+    if (k === 'shoe') {
+      g.fillStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.ellipse(0, 120, 300, 26, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#F7F7F5'; g.beginPath(); g.moveTo(-290, 70); g.quadraticCurveTo(-300, 112, -250, 112); g.lineTo(270, 112); g.quadraticCurveTo(318, 108, 300, 64); g.closePath(); g.fill();
+      g.strokeStyle = '#d9d9d4'; g.lineWidth = 6; g.stroke();
+      g.fillStyle = col; g.beginPath(); g.moveTo(-280, 72); g.quadraticCurveTo(-290, -10, -200, -40); g.quadraticCurveTo(-120, -70, -60, -120); g.quadraticCurveTo(0, -150, 60, -110);
+      g.quadraticCurveTo(150, -40, 230, -10); g.quadraticCurveTo(300, 10, 298, 66); g.closePath(); g.fill();
+      g.strokeStyle = acc; g.lineWidth = 20; g.beginPath(); g.moveTo(-170, 40); g.quadraticCurveTo(20, -40, 220, 40); g.stroke();
+      g.strokeStyle = '#fff'; g.lineWidth = 7; for (var i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-40 + i * 28, -100 + i * 14); g.lineTo(-10 + i * 28, -72 + i * 14); g.stroke(); }
+    } else if (k === 'jacket') {
+      g.fillStyle = col; g.beginPath(); g.moveTo(-110, -230); g.lineTo(-230, -170); g.lineTo(-300, 140); g.lineTo(-230, 160); g.lineTo(-180, -20); g.lineTo(-170, 250);
+      g.lineTo(170, 250); g.lineTo(180, -20); g.lineTo(230, 160); g.lineTo(300, 140); g.lineTo(230, -170); g.lineTo(110, -230); g.quadraticCurveTo(0, -180, -110, -230); g.closePath(); g.fill();
+      g.strokeStyle = acc; g.lineWidth = 9; g.beginPath(); g.moveTo(0, -190); g.lineTo(0, 250); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 6; for (var j = 0; j < 5; j++) { g.beginPath(); g.moveTo(-165, -110 + j * 72); g.lineTo(165, -110 + j * 72); g.stroke(); }
+      g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.moveTo(-110, -230); g.quadraticCurveTo(0, -150, 110, -230); g.quadraticCurveTo(0, -200, -110, -230); g.fill();
+    } else if (k === 'bag') {
+      g.strokeStyle = acc; g.lineWidth = 18; g.beginPath(); g.arc(-80, -110, 70, Math.PI, 0); g.stroke(); g.beginPath(); g.arc(80, -110, 70, Math.PI, 0); g.stroke();
+      g.fillStyle = col; g.beginPath(); g.moveTo(-230, -110); g.lineTo(230, -110); g.lineTo(260, 250); g.lineTo(-260, 250); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(-230, -110, 460, 36);
+      g.fillStyle = acc; g.font = '900 54px Lato,system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('MARKET', 0, 90);
+    } else {
+      g.fillStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.ellipse(0, 260, 170, 22, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#2b2b2b'; g.fillRect(-90, -290, 180, 70);
+      g.fillStyle = col; g.beginPath(); g.moveTo(-150, -200); g.quadraticCurveTo(-150, -230, -110, -230); g.lineTo(110, -230); g.quadraticCurveTo(150, -230, 150, -200); g.lineTo(150, 240); g.quadraticCurveTo(150, 262, 120, 262); g.lineTo(-120, 262); g.quadraticCurveTo(-150, 262, -150, 240); g.closePath(); g.fill();
+      g.fillStyle = acc; g.fillRect(-150, -60, 300, 170);
+      g.fillStyle = col; g.font = '900 46px Lato,system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('DAILY', 0, 20); g.font = '700 26px Lato,system-ui,sans-serif'; g.fillText('60 tablets', 0, 70);
+    }
+    g.restore();
+  }
+  function demoShot(i, shot) {
+    var key = i + ':' + shot; if (DEMO_IMG[key]) return DEMO_IMG[key];
+    var d = DEMO_KINDS[i], W = 1000, H = shot === 1 ? 1250 : 1000;
+    var c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
+    if (shot === 1) {
+      var gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#F6E7D2'); gr.addColorStop(0.62, '#EBC9A4'); gr.addColorStop(0.62, '#B98A62'); gr.addColorStop(1, '#8E6646'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.arc(780, 210, 120, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(80,60,40,.25)'; g.fillRect(90, 260, 18, 520); g.beginPath(); g.ellipse(99, 250, 70, 110, 0, 0, Math.PI * 2); g.fill();
+      drawProduct(g, d.k, d.col, d.acc, W / 2, H * 0.6, 1.05);
+    } else if (shot === 2) {
+      g.fillStyle = '#EFEFEC'; g.fillRect(0, 0, W, H);
+      drawProduct(g, d.k, d.col, d.acc, W * 0.42, H * 0.6, 2.3);
+    } else {
+      g.fillStyle = '#F4F4F2'; g.fillRect(0, 0, W, H);
+      drawProduct(g, d.k, d.col, d.acc, W / 2, H / 2 + 20, 1.2);
+    }
+    var im = new Image(); im.src = c.toDataURL('image/png'); DEMO_IMG[key] = im;
+    return im;
+  }
+  function demoRows() {
+    return DEMO_KINDS.map(function (d, i) {
+      return { id: 'NW-' + (1001 + i), title: d.title, brand: d.brand, price: d.price, sale_price: d.sale || '', color: (d.title.split(', ').pop() || ''),
+        image_link: 'demo:' + i + ':0', additional_image_link: 'demo:' + i + ':1,demo:' + i + ':2' };
+    });
+  }
+
+  // ---- roster + boot ----
+  function boot() {
+    S.setup = SOC.defaultSetup();
+    initCtx(); renderStatic();
+    api('/api/feed/clients').then(function (d) {
+      var cl = (d && d.clients) || {};
+      Object.keys(cl).forEach(function (c) { var ms = []; (cl[c].wired || []).concat(cl[c].attached || []).forEach(function (m) { if (ms.indexOf(m) < 0) ms.push(m); }); if (ms.length) S.roster[c] = ms; });
+      var names = Object.keys(S.roster).sort();
+      $('#brand').innerHTML = '<option value="">' + (names.length ? 'Pick a brand' : 'No live feeds — demo only') + '</option>' + names.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      var want = Q.get('brand') || recall('fcc-soc-brand');
+      if (Q.get('demo') === '1' || !want || !S.roster[want]) { openDemo(); return; }
+      S.brand = want; $('#brand').value = want; pickMkt(Q.get('market') || recall('fcc-soc-mkt')); loadBrand();
+    });
+  }
+  function isFb(m) { return /-fb$/.test(m); }
+  function mktLbl(m) { return isFb(m) ? m.replace(/-fb$/, '').toUpperCase() + ' · Meta' : String(m).toUpperCase() + ' · Google'; }
+  function pickMkt(want) {
+    var ms = S.roster[S.brand] || [];
+    // a Meta catalogue feed is the one a social DPA actually runs on — prefer it
+    S.mkt = ms.indexOf(want) >= 0 ? want : (ms.filter(isFb)[0] || ms[0] || '');
+  }
+  function renderMkts() {
+    var ms = S.demo ? [] : (S.roster[S.brand] || []).slice().sort(function (a, b) { if (isFb(a) !== isFb(b)) return isFb(a) ? -1 : 1; return a.localeCompare(b); });
+    $('#mkts').innerHTML = ms.map(function (m) { return '<button type="button" class="chip' + (m === S.mkt ? ' on' : '') + '" data-m="' + esc(m) + '">' + esc(mktLbl(m)) + '</button>'; }).join('');
+  }
+  function setState(t, pip) { $('#mstate').textContent = t; $('#pip').className = 'pip ' + (pip || 'off'); }
+
+  function openDemo() {
+    S.demo = true; S.brand = ''; S.mkt = ''; $('#brand').value = ''; $('#demo').classList.add('on');
+    S.rows = demoRows(); S.hdr = Object.keys(S.rows[0]); S.sum = STU.summon(S.hdr, S.rows, {}); S.ads = null; S.adsSt = 'idle';
+    renderMkts(); loadSetup('Demo');
+    setState('Demo products — drawn here, every figure a demo value. Pick a brand to design on its live feed.', 'warn');
+    buildSamples(); pick(0);
+  }
+  function loadBrand() {
+    S.demo = false; $('#demo').classList.remove('on'); S.ads = null; S.adsSt = 'idle'; S.samp = []; S.row = null;
+    remember('fcc-soc-brand', S.brand); remember('fcc-soc-mkt', S.mkt);
+    history.replaceState(null, '', location.pathname + '?brand=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt));
+    renderMkts(); loadSetup(S.brand);
+    if (!FA) { setState('The feed parser did not load — showing the demo products instead.', 'warn'); return openDemo(); }
+    var who = S.brand + ' ' + mktLbl(S.mkt);
+    setState(who + ' — reading a sample of the live feed…', 'warn');
+    stream(S.brand, S.mkt, function (n) { setState(who + ' — ' + n0(n) + ' products read…', 'warn'); }).then(function (d) {
+      if (!d.rows.length) throw new Error('the feed read back no products');
+      S.hdr = d.hdr; S.rows = d.rows; S.sum = STU.summon(S.hdr, S.rows, {});
+      buildSamples();
+      if (!S.samp.length) throw new Error('no product in the sample carries a readable image');
+      setState(who + ' — ' + n0(S.rows.length) + ' products sampled from the live feed. Press ⚡ Google Ads for the real 30-day clicks.', '');
+      pick(0);
+    }).catch(function (e) { setState(who + ' — could not read this feed (' + ((e && e.message) || e) + '). Showing the demo products.', 'warn'); openDemo(); });
+  }
+  function stream(client, mkt, onProg) {
+    var CAP = 400;
+    return new Promise(function (res, rej) {
+      var hdr = null, rows = [], parser = null, n = 0, reader = null, done = false;
+      var finish = function () { if (done) return; done = true; try { if (reader) reader.cancel(); } catch (e) {} res({ hdr: hdr || [], rows: rows }); };
+      var onRow = function (r, h) {
+        if (!hdr) { hdr = r.map(function (x) { return String(x == null ? '' : x); }); return; }
+        if (h && h.length && h.length !== hdr.length) hdr = h.map(function (x) { return String(x == null ? '' : x); });
+        if (rows.length < CAP) { var o = {}; for (var i = 0; i < hdr.length; i++) { var v = r[i]; if (v != null && String(v).trim() !== '') o[hdr[i]] = String(v).trim(); } rows.push(o); }
+        if (++n % 100 === 0 && onProg) onProg(n);
+      };
+      fetch('/api/feed/proxy?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt)).then(function (resp) {
+        if (!resp.ok || !resp.body) return resp.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || ('the feed proxy said ' + resp.status)); });
+        reader = resp.body.getReader(); var dec = new TextDecoder();
+        function step() { return reader.read().then(function (x) {
+          if (done) return;
+          if (x.done) { if (parser) { parser.push(dec.decode()); parser.end(); } return finish(); }
+          var chunk = dec.decode(x.value, { stream: true });
+          if (!parser) { if (!chunk.trim()) return step(); parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow); }
+          parser.push(chunk);
+          if (rows.length >= CAP && hdr && hdr.length) return finish();
+          return step(); }); }
+        return step();
+      }).catch(function (e) { if (!done) rej(e); });
+    });
+  }
+
+  // ---- products ----
+  function idOf(r) { var b = S.sum && S.sum.slots.id; if (b && b.col) return String(r[b.col] || ''); return String(r.id || ''); }
+  function titleOf(r) { var b = S.sum && S.sum.slots.title; return b && b.col ? String(r[b.col] || '') : ''; }
+  function brandOf(r) { var b = S.sum && S.sum.slots.brand; return b && b.col ? String(r[b.col] || '') : ''; }
+  // every picture a product carries: the main one (the source behind any overlay already live), then
+  // each additional image that is not a repeat of it
+  function imageList(r) {
+    var b = S.sum.slots.image, u = b && b.col ? String(r[b.col] || '').trim() : '', out = [], why = '';
+    if (u && OVL && OVL.isOverlayUrl && OVL.isOverlayUrl(u)) {
+      var cls = OVL.classifyOverlay(u); if (cls && cls.sources && cls.sources.length) { u = cls.sources[0]; why = 'the source image behind the overlay already live on this feed'; }
+    }
+    if (u) out.push(u);
+    var b2 = S.sum.slots.image2;
+    if (b2 && b2.col) STU.imgUrls(r[b2.col]).forEach(function (x) { if (out.indexOf(x) < 0 && out.length < 6) out.push(x); });
+    if (S.demo) { out = []; var m = String(r.image_link).split(':'); for (var i = 0; i < 3; i++) out.push('demo:' + m[1] + ':' + i); }
+    return { urls: out, why: why };
+  }
+  function buildSamples() {
+    var out = [], seen = {};
+    for (var i = 0; i < S.rows.length && out.length < 12; i++) {
+      var r = S.rows[i], L = imageList(r); if (!L.urls.length) continue;
+      var id = idOf(r); if (id && seen[id]) continue; if (id) seen[id] = 1;
+      var rr = STU.resolveFacts(r, S.sum, null, null, { mainImg: L.urls[0] });
+      out.push({ row: r, id: id, urls: L.urls, sale: !!rr.sale_pct.ok, i: i });
+    }
+    // products on offer lead — they are the ones every design has something to say about
+    out.sort(function (a, b) { return (b.sale - a.sale) || ((b.urls.length > 1) - (a.urls.length > 1)) || a.i - b.i; });
+    S.samp = out;
+    $('#strip').innerHTML = out.map(function (x, k) {
+      return '<div class="pc" data-k="' + k + '" tabindex="0" role="button" aria-label="Design on ' + esc(x.id || 'product ' + (k + 1)) + '" title="' + esc(titleOf(x.row)) + '">' + thumb(x.urls[0]) + '<div class="l">' + esc(x.sale ? 'on offer' : (x.urls.length > 1 ? x.urls.length + ' images' : x.id || '')) + '</div></div>';
+    }).join('') || '<div class="note">No product in the sample carries a readable image.</div>';
+  }
+  function imgSrc(u) {
+    if (/^demo:/.test(u)) { var m = u.split(':'); return demoShot(+m[1], +m[2]).src; }
+    return '/api/catalog/img?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt) + '&url=' + encodeURIComponent(u);
+  }
+  function thumb(u) { return '<img src="' + esc(imgSrc(u)) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;ph&quot;></div>\'">'; }
+  function loadImg(u) {
+    return new Promise(function (res) {
+      if (!u) return res(null);
+      // the demo pictures are SHARED Image objects (the strip and the slots show the same ones), so a
+      // second caller must never replace the first one's onload — decode() answers every caller
+      if (/^demo:/.test(u)) { var m = u.split(':'), im = demoShot(+m[1], +m[2]); if (im.complete && im.naturalWidth) return res(im);
+        if (im.decode) return im.decode().then(function () { res(im); }, function () { res(im.naturalWidth ? im : null); });
+        im.addEventListener('load', function () { res(im); }); im.addEventListener('error', function () { res(null); }); return; }
+      var i2 = new Image(); i2.onload = function () { res(i2); }; i2.onerror = function () { res(null); }; i2.src = imgSrc(u);
+    });
+  }
+  function pick(k) {
+    var x = S.samp[k]; if (!x) { render(); return; }
+    S.row = x.row; S.pid = x.id; S.imgUrls = x.urls; S.imgs = []; S.up = {};
+    $$('#strip .pc').forEach(function (e) { e.classList.toggle('on', +e.getAttribute('data-k') === k); });
+    S.res = STU.resolveFacts(S.row, S.sum, null, null, { mainImg: x.urls[0] });
+    seedNums(k);
+    Promise.all(x.urls.map(loadImg)).then(function (ims) { S.imgs = ims; renderSlots(); render(); });
+    renderSlots(); render();
+  }
+  // the product's own numbers for the schedule: Google Ads where it was read, demo where it was not
+  function seedNums(k) {
+    var src = { clicks30: 'demo', bought30: 'demo', views24: 'demo', stock: 'demo' }, v = {};
+    if (S.demo) { v = Object.assign({}, DEMO_NUMS[k % DEMO_NUMS.length]); }
+    else {
+      var a = S.ads ? S.ads[String(S.pid).toLowerCase()] : null;
+      if (S.ads) { v.clicks30 = a ? a.clicks : 0; v.bought30 = a ? Math.round(a.conv) : 0; src.clicks30 = src.bought30 = 'ads'; }
+      var q = S.res && S.res.units && S.res.units.raw; if (q != null) { v.stock = q; src.stock = 'feed'; }
+    }
+    S.nums = v; S.numSrc = src;
+    $('#cx-clicks').value = v.clicks30 != null ? v.clicks30 : ''; $('#cx-bought').value = v.bought30 != null ? v.bought30 : '';
+    $('#cx-views').value = v.views24 != null ? v.views24 : ''; $('#cx-stock').value = v.stock != null ? v.stock : '';
+    ['clicks', 'bought', 'stock'].forEach(function (n) { var s = src[n === 'clicks' ? 'clicks30' : n === 'bought' ? 'bought30' : 'stock'], e = $('#src-' + n); e.className = 'sb ' + s; e.textContent = s === 'ads' ? 'Google Ads' : s; });
+  }
+  function facts() {
+    var r = S.res || {}, f = { __src: Object.assign({}, S.numSrc || {}) };
+    f.title = S.row ? titleOf(S.row) : ''; f.brand = S.row ? brandOf(S.row) : '';
+    f.price = r.price_now && r.price_now.text || ''; f.was = r.price_was && r.price_was.text ? r.price_was.text.replace(/^was /, '') : '';
+    f.pct = r.sale_pct && r.sale_pct.raw != null ? r.sale_pct.raw : null;
+    f.save = r.sale_amt && r.sale_amt.text ? r.sale_amt.text.replace(/ OFF$/, '') : '';
+    f.colour = r.colour && r.colour.text || '';
+    var num = function (id) { var v = $(id).value; return v === '' ? null : +v; };
+    f.clicks30 = num('#cx-clicks'); f.bought30 = num('#cx-bought'); f.views24 = num('#cx-views'); f.stock = num('#cx-stock');
+    if (S.demo) { ['title', 'brand', 'price', 'was', 'pct', 'save', 'colour'].forEach(function (k) { f.__src[k] = 'demo'; }); }
+    // a number the AM typed over the read figure is a demo figure from then on
+    [['clicks30', '#cx-clicks'], ['bought30', '#cx-bought'], ['stock', '#cx-stock']].forEach(function (p) { var was = S.nums[p[0]] == null ? null : +S.nums[p[0]]; if (was !== f[p[0]]) f.__src[p[0]] = 'demo'; });
+    return f;
+  }
+
+  // ---- slots + per-network table ----
+  function platCfg(pid) { var p = (S.setup.plat = S.setup.plat || {}); return (p[pid] = p[pid] || { img: 0, design: '', cta: '', off: false }); }
+  function renderSlots() {
+    var per = S.setup.imgMode === 'per';
+    $$('#imgmode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === (per ? 'per' : 'same')); });
+    var cur = per ? -1 : (S.setup.img0 || 0);
+    $('#slots').innerHTML = S.imgUrls.map(function (u, i) {
+      return '<button type="button" class="slot' + (i === cur ? ' on' : '') + '" data-i="' + i + '" aria-label="Image ' + (i + 1) + '" title="' + (i ? 'additional_image_link ' + i : 'image_link') + '">' + thumb(u) + '<i>' + (i ? '+' + i : 'main') + '</i></button>';
+    }).join('');
+    $('#slots-n').textContent = per ? 'Each network takes the picture chosen for it in the table — or one you upload.' : 'Click a picture to use it on every network.' + (S.imgUrls.length < 2 ? ' This product carries one image only.' : '');
+    var b = S.row ? titleOf(S.row) : '', r = S.res || {};
+    $('#pinfo').innerHTML = S.row ? '<b>' + esc(b || '(no title)') + '</b><div class="m">' + esc(S.pid ? 'ID ' + S.pid : '') + (r.price_now && r.price_now.text ? ' · ' + esc(r.price_now.text) : '') + (r.price_was && r.price_was.text ? ' <s>' + esc(r.price_was.text.replace(/^was /, '')) + '</s>' : '') + (r.sale_pct && r.sale_pct.ok ? ' · ' + esc(r.sale_pct.text) : '') + ' <span class="sb ' + (S.demo ? 'demo' : 'feed') + '">' + (S.demo ? 'demo' : 'feed') + '</span></div>' : '';
+    renderPtab(); fl('prod', S.row ? (S.pid || 'product') + ' · ' + (per ? 'a picture per network' : 'one picture everywhere') + ' · ' + designName(S.setup.design) : '');
+  }
+  function designName(id) { var d = STU.designById(id || 'clean'); return d ? d.name : 'No overlay'; }
+  function renderPtab() {
+    var per = S.setup.imgMode === 'per';
+    var dOpts = function (sel) { return '<option value="">Same as all</option>' + STU.DESIGNS.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join(''); };
+    $('#ptab').innerHTML = SOC.PLATFORMS.map(function (p) {
+      var c = platCfg(p.id), ctas = p.ctas.map(function (t) { return '<option' + (c.cta === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('');
+      var imgSel = per ? '<select class="fld" data-pimg="' + p.id + '" aria-label="Image on ' + esc(p.name) + '">' + S.imgUrls.map(function (u, i) { return '<option value="' + i + '"' + (c.img === i ? ' selected' : '') + '>' + (i ? 'Image +' + i : 'Main image') + '</option>'; }).join('') + '<option value="up"' + (S.up[p.id] ? ' selected' : '') + '>Upload…</option></select>' : '<span class="note" style="margin:0">same image</span>';
+      return '<tr><td>' + esc(p.short) + '</td><td>' + imgSel + '</td><td><select class="fld" data-pdes="' + p.id + '" aria-label="Overlay on ' + esc(p.name) + '">' + dOpts(c.design) + '</select></td><td><select class="fld" data-pcta="' + p.id + '" aria-label="Button on ' + esc(p.name) + '"><option value="">Schedule</option>' + ctas + '</select></td></tr>';
+    }).join('');
+  }
+  function renderDesigns() {
+    $('#dgal').innerHTML = STU.DESIGNS.map(function (d) { return '<button type="button" class="chip' + ((S.setup.design || 'clean') === d.id ? ' on' : '') + '" data-d="' + d.id + '" title="' + esc(d.blurb) + '">' + esc(d.name) + '</button>'; }).join('');
+    $$('#tagpos button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-p') === (S.setup.tagPos || 'b')); });
+    $$('#tagsty button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-s') === (S.setup.tagStyle || 'dark')); });
+  }
+
+  // ---- paint (the overlay studio's painter, inside each network's safe zone) ----
+  function rrect(g, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r); g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h); g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r); g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath(); }
+  function label(g, b, cx, cy, align) {
+    g.fillStyle = b.fg || '#fff'; g.font = '800 ' + b.fs + 'px Lato,system-ui,sans-serif'; g.textAlign = align || 'center'; g.textBaseline = 'middle';
+    var t = String(b.text), lim = b.maxW || b.w;
+    if (lim > 0 && g.measureText(t).width > lim) { while (t.length > 1 && g.measureText(t + '…').width > lim) t = t.slice(0, -1); t = t.replace(/[\s–—(,]+$/, '') + '…'; }
+    g.fillText(t, cx, cy);
+    if (b.strike) { var w = g.measureText(t).width, x0 = align === 'left' ? cx : (align === 'right' ? cx - w : cx - w / 2); g.strokeStyle = b.fg || '#fff'; g.lineWidth = Math.max(1, b.fs * 0.07); g.beginPath(); g.moveTo(x0, cy + b.fs * 0.04); g.lineTo(x0 + w, cy + b.fs * 0.04); g.stroke(); }
+  }
+  function paint(g, b, W, H) {
+    if (b.as === 'split') return;
+    if (b.as === 'frame') { g.strokeStyle = b.fg || '#F5A623'; g.lineWidth = b.inset; g.strokeRect(b.inset / 2, b.inset / 2, W - b.inset, H - b.inset); return; }
+    if (!b.text) return;
+    var cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    if (b.as === 'flash') {
+      var sz = Math.max(b.w, b.h) * 1.9, tl = b.at === 'tl' || b.at === 'bl', top = b.at === 'tl' || b.at === 'tr', ox = tl ? 0 : W, oy = top ? 0 : H;
+      g.save(); g.fillStyle = b.bg || '#ED6F0B'; g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + (tl ? sz : -sz), oy); g.lineTo(ox, oy + (top ? sz : -sz)); g.closePath(); g.fill();
+      g.translate(ox + (tl ? sz * 0.33 : -sz * 0.33), oy + (top ? sz * 0.33 : -sz * 0.33)); g.rotate((tl === top ? -45 : 45) * Math.PI / 180); label(g, b, 0, 0, 'center'); g.restore(); return;
+    }
+    if (b.as === 'ribbon') {
+      var rw = W * 1.1, rh = b.h, right = b.at === 'tr' || b.at === 'br', top2 = b.at === 'tl' || b.at === 'tr', ax = right ? W - b.w * 0.9 : b.w * 0.9, ay = top2 ? b.h * 1.5 : H - b.h * 1.5;
+      g.save(); g.beginPath(); g.rect(0, 0, W, H); g.clip(); g.translate(ax, ay); g.rotate(((right === top2) ? 45 : -45) * Math.PI / 180); g.fillStyle = b.bg || '#F5A623'; g.fillRect(-rw / 2, -rh / 2, rw, rh); label(g, b, 0, 0, 'center'); g.restore(); return;
+    }
+    if (b.as === 'burst') {
+      var R = Math.max(b.w, b.h) * 0.78, pts = 12; g.save(); g.translate(cx, cy); g.fillStyle = b.bg || '#D7263D'; g.beginPath();
+      for (var i = 0; i < pts * 2; i++) { var rr2 = i % 2 ? R * 0.74 : R, an = (i / (pts * 2)) * Math.PI * 2 - Math.PI / 2; g[i ? 'lineTo' : 'moveTo'](Math.cos(an) * rr2, Math.sin(an) * rr2); }
+      g.closePath(); g.fill(); label(g, b, 0, 0, 'center'); g.restore(); return;
+    }
+    if (b.as === 'tag') { g.fillStyle = b.bg || '#333'; rrect(g, b.x, b.y, b.w, b.h, b.h * 0.28); g.fill(); g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(b.x + b.h * 0.34, cy, Math.max(2, b.fs * 0.11), 0, Math.PI * 2); g.fill(); label(g, b, b.x + b.h * 0.34 + b.fs * 0.42, cy, 'left'); return; }
+    if (b.as === 'pill') { g.fillStyle = b.bg || '#ED6F0B'; rrect(g, b.x, b.y, b.w, b.h, b.h / 2); g.fill(); if (/^#?f{3,}/i.test(String(b.bg || ''))) { g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 1; g.stroke(); } label(g, b, cx, cy, 'center'); return; }
+    g.fillStyle = b.bg || '#333'; g.fillRect(b.x, b.y, b.w, b.h); label(g, b, cx, cy, 'center');
+  }
+  function drawFit(g, img, x, y, w, h) { var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; if (!iw || !ih) return; var s = Math.min(w / iw, h / ih), dw = iw * s, dh = ih * s; g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); }
+  function drawCover(g, img, x, y, w, h) { var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; if (!iw || !ih) return; var s = Math.max(w / iw, h / ih), dw = iw * s, dh = ih * s; g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); }
+  function plate(g, W, H) { g.fillStyle = '#E9E9E6'; g.fillRect(0, 0, W, H); g.fillStyle = '#B9B9B2'; g.font = '700 ' + Math.round(W * 0.04) + 'px Lato,system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('product image', W / 2, H / 2); }
+  function imageFor(pid) {
+    if (S.setup.imgMode === 'per') { if (S.up[pid]) return S.up[pid]; var i = platCfg(pid).img || 0; return S.imgs[i] || S.imgs[0] || null; }
+    return S.imgs[S.setup.img0 || 0] || S.imgs[0] || null;
+  }
+  function secondFor(main) { for (var i = 0; i < S.imgs.length; i++) if (S.imgs[i] && S.imgs[i] !== main) return S.imgs[i]; return null; }
+  function drawCreative(cv, pid, W, fields) {
+    var p = SOC.platformById(pid), ratio = pid === 'fb_feed' && S.fbr === '4:5' ? [4, 5] : p.ratio;
+    var H = Math.round(W * ratio[1] / ratio[0]); cv.width = W; cv.height = H;
+    var g = cv.getContext('2d'); if (!g) return null;
+    var img = imageFor(pid), sr = SOC.safeRect(pid, W, H);
+    var dId = platCfg(pid).design || S.setup.design || 'clean', d = STU.designById(dId) || STU.designById('clean');
+    var isSplit = d.zones.some(function (z) { return z.as === 'split'; }), img2 = isSplit && img ? secondFor(img) : null;
+    if (!img) plate(g, W, H);
+    else if (p.fit === 'pad') {
+      // a catalogue packshot in a 9:16 placement: the picture fitted in the safe area over a soft
+      // wash of itself, which is what the networks' own dynamic templates do with a square image
+      g.save(); try { g.filter = 'blur(28px)'; } catch (e) {} drawCover(g, img, -40, -40, W + 80, H + 80); g.restore();
+      g.fillStyle = 'rgba(255,255,255,.42)'; g.fillRect(0, 0, W, H);
+      if (img2) { drawFit(g, img, sr.x, sr.y, sr.w / 2, sr.h); drawFit(g, img2, sr.x + sr.w / 2, sr.y, sr.w / 2, sr.h); }
+      else drawFit(g, img, sr.x, sr.y + sr.h * 0.04, sr.w, sr.h * 0.92);
+    } else if (img2) { drawCover(g, img, 0, 0, W / 2, H); drawCover(g, img2, W / 2, 0, W / 2, H); g.strokeStyle = '#fff'; g.lineWidth = Math.max(2, W / 240); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); }
+    else drawCover(g, img, 0, 0, W, H);
+    // the design's zones + the scheduled tagline, laid out by the studio's own geometry inside the
+    // rectangle the network leaves alone
+    var res = Object.assign({}, S.res || {});
+    var tag = fields && fields.tagline ? fields.tagline.text : '', pos = S.setup.tagPos || 'b', sty = TAGSTY[S.setup.tagStyle || 'dark'];
+    var dz = d.zones.slice();
+    if (tag && pos !== 'off') { dz.push({ at: pos, as: 'bar', fact: '__tag', size: 'sm', fg: sty.fg, bg: sty.bg }); res.__tag = { ok: true, text: tag }; }
+    if (img2) res.second_image = { ok: true, text: '', raw: 'x', img: true };
+    var comp = STU.compose({ id: d.id, name: d.name, family: d.family, maps: d.maps, zones: dz }, res, {});
+    var L = STU.layout(comp, sr.w, sr.h);
+    g.save(); g.translate(sr.x, sr.y); L.boxes.forEach(function (b) { paint(g, b, sr.w, sr.h); }); g.restore();
+    return { comp: comp, W: W, H: H, sr: sr, ratio: ratio };
+  }
+
+  // ---- previews ----
+  function fieldsFor(pid, base) {
+    var c = platCfg(pid), f = JSON.parse(JSON.stringify(base));
+    if (c.cta) f.cta = { text: c.cta, rule: 'Set for this network', srcs: {} };
+    return f;
+  }
+  function cut(pid, field, text) { return SOC.fitField(pid, field, text); }
+  function initial(s) { return esc(String(s || 'B').trim().charAt(0).toUpperCase() || 'B'); }
+  function mockHtml(p, F, info) {
+    var brand = (facts().brand || S.brand || 'Brand'), dom = (brand.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'brand') + '.com';
+    var h = cut(p.id, 'headline', F.headline.text), pr = cut(p.id, 'primary', F.primary.text), cta = SOC.ctaFor(p.id, F.cta.text || 'Shop now');
+    var price = (S.res && S.res.price_now && S.res.price_now.text) || '', was = (S.res && S.res.price_was && S.res.price_was.text || '').replace(/^was /, '');
+    var priceLine = price ? esc(price) + (was ? ' <s>' + esc(was) + '</s>' : '') : '';
+    var cw = '<div class="cw"><canvas data-pid="' + p.id + '"></canvas>' + safeHatch(p, info) + '%OV%</div>';
+    var more = function (x) { return esc(x.text).replace(/…$/, '') + (x.cut ? '<span class="more">… more</span>' : ''); };
+    var body = '';
+    if (p.id === 'fb_feed') {
+      body = '<div class="dev"><div class="fb-top"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(brand) + '<small>Sponsored · 🌐</small></div></div><div class="ptx">' + more(pr) + '</div>' + cw.replace('%OV%', '')
+        + '<div class="fb-bot"><div class="tx"><div class="d">' + esc(dom) + '</div><div class="h">' + esc(h.text) + '</div><div class="p">' + priceLine + '</div></div><span class="cta">' + esc(cta.text) + '</span></div><div class="fb-rx"><span>👍 Like</span><span>💬 Comment</span><span>↗ Share</span></div></div>';
+    } else if (p.id === 'ig_feed') {
+      body = '<div class="dev"><div class="fb-top"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div>' + cw.replace('%OV%', '')
+        + '<div class="ig-cta"><span>' + esc(cta.text) + '</span><span>›</span></div><div class="ig-ic"><span>♡</span><span>💬</span><span>✈</span></div><div class="ig-cap"><b>' + esc(dom.replace('.com', '')) + '</b> ' + more(pr) + '</div></div>';
+    } else if (p.id === 'ig_story') {
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="ov top"><div class="prog"><i></i></div><div class="fb-top" style="padding:0"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div></div><div class="ov bot"><div class="st-h">' + esc(h.text) + (priceLine ? ' · ' + priceLine : '') + '</div><div class="st-cta">⌃<span>' + esc(cta.text) + '</span></div></div>') + '</div>';
+    } else if (p.id === 'ig_reels') {
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail"><span>♡<small>2.1k</small></span><span>💬<small>84</small></span><span>✈</span><span>⋯</span></div><div class="ov bot"><div class="fb-top" style="padding:0"><span class="av">' + initial(brand) + '</span><div class="who">' + esc(dom.replace('.com', '')) + '<small>Sponsored</small></div></div><div class="rl-cap">' + more(pr) + '</div><span class="rl-cta">' + esc(cta.text) + ' ›</span></div>') + '</div>';
+    } else if (p.id === 'pinterest') {
+      body = '<div class="dev pin">' + cw.replace('%OV%', '') + '<div class="pin-t">' + esc(h.text) + '</div>' + (priceLine ? '<div class="pin-p">' + priceLine + '</div>' : '') + '<div class="pin-by">Promoted by <b>' + esc(brand) + '</b> · ' + esc(cta.text) + '</div></div>';
+    } else {
+      body = '<div class="dev dark">' + cw.replace('%OV%', '<div class="rail"><span class="av" style="width:34px;height:34px">' + initial(brand) + '</span><span>♥<small>12k</small></span><span>💬<small>320</small></span><span>↗</span></div><div class="ov bot"><div class="who" style="color:#fff">@' + esc(dom.replace('.com', '')) + '</div><div class="rl-cap">' + more(pr) + '</div><div style="font-size:10.5px;color:rgba(255,255,255,.8);margin-bottom:6px">Sponsored' + (priceLine ? ' · ' + priceLine : '') + '</div><span class="tt-cta">' + esc(cta.text) + '</span></div>') + '</div>';
+    }
+    // the meter: what each field shows here, and what the network does to it
+    var m = [];
+    if (p.fields.headline) m.push('Headline ' + h.len + '/' + h.shown + (h.over ? ' <span class="b">over ' + h.max + '</span>' : h.cut ? ' <span class="w">cut</span>' : ''));
+    else m.push('<span class="w">no headline slot</span>');
+    if (p.fields.primary) m.push('Text ' + pr.len + '/' + pr.shown + (pr.over ? ' <span class="b">over ' + pr.max + '</span>' : pr.cut ? ' <span class="w">cut</span>' : ''));
+    if (!cta.same) m.push('<span class="w" title="' + esc(cta.why) + '">button → ' + esc(cta.text) + '</span>');
+    if (info && info.comp && info.comp.dropped.length) m.push('<span class="w" title="' + esc(info.comp.dropped.map(function (x) { return x.label + ': ' + x.why; }).join(' · ')) + '">overlay: ' + info.comp.dropped.length + ' dropped</span>');
+    var src = F.tagline && F.tagline.text ? ' · tagline: ' + esc(F.tagline.rule || 'default') : '';
+    return body + '<div class="meter">' + m.join(' · ') + src + '</div>';
+  }
+  function safeHatch(p, info) {
+    var s = p.safe; if (!s.t && !s.b && !s.l && !s.r) return '';
+    var pc = function (v) { return (v * 100).toFixed(2) + '%'; };
+    return '<div class="safe-h" style="left:0;right:0;top:0;height:' + pc(s.t) + '"></div><div class="safe-h" style="left:0;right:0;bottom:0;height:' + pc(s.b) + '"></div>'
+      + '<div class="safe-h" style="left:0;top:' + pc(s.t) + ';bottom:' + pc(s.b) + ';width:' + pc(s.l) + '"></div><div class="safe-h" style="right:0;top:' + pc(s.t) + ';bottom:' + pc(s.b) + ';width:' + pc(s.r) + '"></div>'
+      + '<div class="safe-r" style="left:' + pc(s.l) + ';right:' + pc(s.r) + ';top:' + pc(s.t) + ';bottom:' + pc(s.b) + '"></div>';
+  }
+  var PX = 720;
+  function renderPreviews(F0) {
+    var on = SOC.PLATFORMS.filter(function (p) { return S.plats[p.id] !== false; });
+    $('#pv').classList.toggle('show-safe', S.safe);
+    $('#pv').innerHTML = on.map(function (p) {
+      return '<div class="mock" data-mock="' + p.id + '"><div class="mock-h"><span class="net ' + p.net + '"></span><span>' + esc(p.name) + '</span><span class="sp"></span><span>' + (p.id === 'fb_feed' ? S.fbr : p.ratio.join(':')) + '</span></div><div class="mbody"></div>'
+        + '<div class="mock-f"><button class="btn sm" type="button" data-png="' + p.id + '" title="The creative as an image — the picture with its overlay">⬇ PNG</button><a class="btn sm" href="' + esc(p.guide) + '" target="_blank" rel="noopener" title="The network’s own specs">↗ Specs</a></div></div>';
+    }).join('') || '<div class="note">Switch a network on above.</div>';
+    on.forEach(function (p) {
+      var el = $('[data-mock="' + p.id + '"] .mbody'), F = fieldsFor(p.id, F0);
+      var tmp = document.createElement('canvas'), info = S.row ? drawCreative(tmp, p.id, PX, F) : null;
+      el.innerHTML = mockHtml(p, F, info);
+      var cv = el.querySelector('canvas');
+      if (info) { cv.width = tmp.width; cv.height = tmp.height; cv.getContext('2d').drawImage(tmp, 0, 0); }
+      else { var r = p.id === 'fb_feed' && S.fbr === '4:5' ? [4, 5] : p.ratio; cv.width = 400; cv.height = Math.round(400 * r[1] / r[0]); plate(cv.getContext('2d'), cv.width, cv.height); }
+    });
+    $('#plats').innerHTML = SOC.PLATFORMS.map(function (p) { return '<button type="button" class="chip' + (S.plats[p.id] !== false ? ' on' : '') + '" data-pl="' + p.id + '"><span class="net ' + p.net + '" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>' + esc(p.short) + '</button>'; }).join('');
+    fl('prev', on.length + ' of ' + SOC.PLATFORMS.length + ' networks · ' + designName(S.setup.design) + (F0.tagline.text ? ' · “' + F0.tagline.text + '”' : ''));
+  }
+
+  // ---- the moment (context) ----
+  function iso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function initCtx() { var d = new Date(); S.ctx = { date: iso(d), day: d.getDay(), dom: d.getDate(), hour: d.getHours(), weather: 'sun', temp: 14, audience: 'prospect' }; }
+  function ctxFromDate(v) { var p = String(v).split('-'); if (p.length !== 3) return; var d = new Date(+p[0], +p[1] - 1, +p[2]); S.ctx.date = v; S.ctx.day = d.getDay(); S.ctx.dom = d.getDate(); }
+  function renderCtx() {
+    $('#cx-date').value = S.ctx.date; $('#cx-hour').value = S.ctx.hour; $('#cx-hl').textContent = ('0' + S.ctx.hour).slice(-2) + ':00 · ' + SOC.DAYS[S.ctx.day].slice(0, 3);
+    $('#cx-temp').value = S.ctx.temp;
+    $('#cx-wx').innerHTML = Object.keys(SOC.WEATHER).map(function (w) { return '<button type="button" class="tg' + (S.ctx.weather === w ? ' on' : '') + '" data-wx="' + w + '">' + esc(SOC.WEATHER[w]) + '</button>'; }).join('');
+    $('#cx-aud').innerHTML = Object.keys(SOC.AUDIENCE).map(function (a) { return '<button type="button" class="tg' + (S.ctx.audience === a ? ' on' : '') + '" data-aud="' + a + '">' + esc(SOC.AUDIENCE[a]) + '</button>'; }).join('');
+  }
+
+  // ---- the schedule ----
+  var COND_NEW = { day: { k: 'day', v: [5, 6, 0] }, hours: { k: 'hours', from: 17, to: 22 }, dom: { k: 'dom', from: 25, to: 28 }, dates: { k: 'dates', from: '', to: '' },
+    weather: { k: 'weather', v: ['rain'] }, temp: { k: 'temp', op: '<=', v: 5 }, audience: { k: 'audience', v: ['carted'] }, metric: { k: 'metric', m: 'clicks30', op: '>=', v: 100 } };
+  var COND_NAME = { day: 'Day of week', hours: 'Hours', dom: 'Day of month', dates: 'Date range', weather: 'Weather', temp: 'Temperature', audience: 'Shopper', metric: 'Product number' };
+  var OPEN_COND = null;
+  function condEditor(c, ri, ci) {
+    var a = 'data-r="' + ri + '" data-c="' + ci + '"', h = '';
+    if (c.k === 'day') h = [1, 2, 3, 4, 5, 6, 0].map(function (d) { return '<button type="button" class="tg' + (c.v.indexOf(d) >= 0 ? ' on' : '') + '" ' + a + ' data-tday="' + d + '">' + SOC.DAYS[d].slice(0, 2) + '</button>'; }).join('');
+    else if (c.k === 'hours' || c.k === 'dom') h = 'from <input type="number" ' + a + ' data-cf="from" value="' + c.from + '"> to <input type="number" ' + a + ' data-cf="to" value="' + c.to + '">';
+    else if (c.k === 'dates') h = '<input type="date" ' + a + ' data-cf="from" value="' + esc(c.from) + '"> → <input type="date" ' + a + ' data-cf="to" value="' + esc(c.to) + '">';
+    else if (c.k === 'weather') h = Object.keys(SOC.WEATHER).map(function (w) { return '<button type="button" class="tg' + (c.v.indexOf(w) >= 0 ? ' on' : '') + '" ' + a + ' data-tv="' + w + '">' + SOC.WEATHER[w] + '</button>'; }).join('');
+    else if (c.k === 'audience') h = Object.keys(SOC.AUDIENCE).map(function (w) { return '<button type="button" class="tg' + (c.v.indexOf(w) >= 0 ? ' on' : '') + '" ' + a + ' data-tv="' + w + '">' + SOC.AUDIENCE[w] + '</button>'; }).join('');
+    else if (c.k === 'temp') h = '<select ' + a + ' data-cf="op"><option' + (c.op === '<=' ? ' selected' : '') + '>&lt;=</option><option' + (c.op === '>=' ? ' selected' : '') + '>&gt;=</option></select> <input type="number" ' + a + ' data-cf="v" value="' + c.v + '">°';
+    else if (c.k === 'metric') h = '<select ' + a + ' data-cf="m">' + Object.keys(SOC.TOKENS).filter(function (k) { return SOC.TOKENS[k].num && k !== 'temp'; }).map(function (k) { return '<option value="' + k + '"' + (c.m === k ? ' selected' : '') + '>' + esc(SOC.TOKENS[k].label) + '</option>'; }).join('') + '</select> <select ' + a + ' data-cf="op"><option' + (c.op === '>=' ? ' selected' : '') + '>&gt;=</option><option' + (c.op === '<=' ? ' selected' : '') + '>&lt;=</option></select> <input type="number" ' + a + ' data-cf="v" value="' + c.v + '">';
+    return '<span class="cond ed">' + esc(COND_NAME[c.k]) + ': ' + h + ' <button type="button" ' + a + ' data-cdone="1" title="Done">✓</button><button type="button" ' + a + ' data-cdel="1" title="Remove">✕</button></span>';
+  }
+  function renderRules(ev) {
+    var tr = {}; ev.trace.forEach(function (t) { tr[t.id] = t; });
+    $('#rules').innerHTML = S.setup.rules.map(function (r, i) {
+      var t = tr[r.id] || {}, st = t.state || '';
+      var conds = r.when.map(function (c, ci) {
+        if (OPEN_COND === r.id + ':' + ci) return condEditor(c, i, ci);
+        return '<span class="cond"><span data-r="' + i + '" data-c="' + ci + '" data-cedit="1" style="cursor:pointer" title="Edit">' + esc(SOC.condLabel(c) || COND_NAME[c.k]) + '</span><button type="button" data-r="' + i + '" data-c="' + ci + '" data-cdel="1" title="Remove" aria-label="Remove condition">✕</button></span>';
+      }).join('');
+      var lbl = { win: 'showing now', refused: 'stood down', shadowed: 'matched — earlier rule wins', nomatch: 'not now', off: 'off' }[st] || '';
+      return '<div class="rule ' + (st === 'win' ? 'win' : '') + (r.on ? '' : ' off') + '" style="--rc:' + RC[i % RC.length] + '">'
+        + '<div class="rule-h"><input type="checkbox" data-r="' + i + '" data-on="1"' + (r.on ? ' checked' : '') + ' aria-label="Rule on"><input class="nm" data-r="' + i + '" data-nm="1" value="' + esc(r.name) + '" aria-label="Rule name">'
+        + '<select data-r="' + i + '" data-fld="1" aria-label="Field">' + SOC.FIELDS.map(function (f) { return '<option value="' + f + '"' + (r.field === f ? ' selected' : '') + '>' + esc(SOC.FIELD_LABEL[f]) + '</option>'; }).join('') + '</select>'
+        + (lbl ? '<span class="stt ' + st + '">' + esc(lbl) + '</span>' : '')
+        + '<button class="ib" type="button" data-r="' + i + '" data-mv="-1" title="Higher priority" aria-label="Move up">↑</button><button class="ib" type="button" data-r="' + i + '" data-mv="1" title="Lower priority" aria-label="Move down">↓</button><button class="ib" type="button" data-r="' + i + '" data-del="1" title="Delete rule" aria-label="Delete rule">✕</button></div>'
+        + (r.field === 'cta' ? '<select class="tp" data-r="' + i + '" data-val="1" style="width:auto;margin-top:7px" aria-label="Button">' + ['Shop now', 'Buy now', 'Order now', 'Get offer', 'Learn more', 'See more'].map(function (c) { return '<option' + (r.value === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select>'
+          : '<input class="tp" data-r="' + i + '" data-val="1" value="' + esc(r.value) + '" aria-label="What it says">')
+        + '<div class="conds">' + (conds || '<span class="note" style="margin:0">always</span>') + '<select data-r="' + i + '" data-addc="1" aria-label="Add a condition" style="height:26px;font-size:11.5px"><option value="">＋ condition</option>' + Object.keys(COND_NAME).map(function (k) { return '<option value="' + k + '">' + COND_NAME[k] + '</option>'; }).join('') + '</select></div>'
+        + (t.why && st !== 'win' && st !== 'off' ? '<div class="why">' + esc(t.why) + '</div>' : st === 'win' ? '<div class="why ok">“' + esc(t.text) + '”</div>' : '')
+        + '</div>';
+    }).join('') || '<div class="note">No rules — every field shows its default.</div>';
+    var nw = ev.trace.filter(function (t) { return t.state === 'win'; }).length;
+    fl('sched', S.setup.rules.filter(function (r) { return r.on; }).length + ' rules on · ' + nw + ' showing now · ' + SOC.DAYS[S.ctx.day] + ' ' + ('0' + S.ctx.hour).slice(-2) + ':00');
+  }
+  function renderNow(ev, f) {
+    var srcB = function (srcs) { return Object.keys(srcs || {}).map(function (k) { var s = srcs[k]; return '<span class="sb ' + esc(s) + '" title="{' + esc(k) + '}">' + esc(s === 'ads' ? 'Google Ads' : s) + '</span>'; }).join(' '); };
+    $('#now').innerHTML = '<div class="lbl" style="margin-top:0">The ad says, right now</div>' + SOC.FIELDS.map(function (k) {
+      var x = ev.fields[k] || {}; return '<div class="f"><b>' + esc(SOC.FIELD_LABEL[k]) + '</b><span>' + (x.text ? esc(x.text) : '<span class="note" style="margin:0">—</span>') + ' <span class="note" style="margin:0">· ' + esc(x.rule || 'nothing') + '</span> ' + srcB(x.srcs) + '</span></div>';
+    }).join('');
+    $('#moment').innerHTML = esc(SOC.DAYS[S.ctx.day] + ' ' + ('0' + S.ctx.hour).slice(-2) + ':00 · ' + SOC.WEATHER[S.ctx.weather] + ', ' + S.ctx.temp + '° · ' + SOC.AUDIENCE[S.ctx.audience]) + ' <span class="sb ctx">simulated moment</span> — change it in Dynamic schedule, or ▶ Play the week.';
+  }
+  function renderWeek(f) {
+    var grid = SOC.weekGrid(S.setup, f, S.ctx, S.wkf), rIdx = {};
+    S.setup.rules.forEach(function (r, i) { rIdx[r.id] = i; });
+    var h = '<div class="hd"></div>' + SOC.DAYPARTS.map(function (p) { return '<div class="hd">' + esc(p.name) + ' <span style="opacity:.7">' + ('0' + p.at).slice(-2) + ':00</span></div>'; }).join('');
+    grid.forEach(function (row) {
+      h += '<div class="dn">' + esc(row.name.slice(0, 3)) + '</div>' + row.cells.map(function (c) {
+        var col = c.id && rIdx[c.id] != null ? RC[rIdx[c.id] % RC.length] : 'var(--line)', on = row.day === S.ctx.day && c.hour === S.ctx.hour;
+        return '<button type="button" class="c' + (c.def ? ' def' : '') + (on ? ' on' : '') + '" style="--rc:' + col + '" data-wd="' + row.day + '" data-wh="' + c.hour + '">' + (c.text ? esc(c.text) : '<span style="opacity:.6">—</span>') + '<small>' + esc(c.rule || 'nothing') + '</small></button>';
+      }).join('');
+    });
+    $('#wk').innerHTML = h;
+    var v = SOC.weekVariety(grid);
+    $('#wk-n').textContent = v + ' different ' + SOC.FIELD_LABEL[S.wkf].toLowerCase() + (v === 1 ? '' : 's') + ' across the week · the other parts of the moment held as set';
+    $('#wk-leg').innerHTML = S.setup.rules.filter(function (r) { return r.field === S.wkf; }).map(function (r) { return '<span><i style="background:' + RC[rIdx[r.id] % RC.length] + '"></i>' + esc(r.name) + '</span>'; }).join('') + '<span><i style="background:var(--line)"></i>Default</span>';
+    fl('week', v + ' ' + SOC.FIELD_LABEL[S.wkf].toLowerCase() + (v === 1 ? '' : 's') + ' in a week');
+  }
+  function renderIdeas(f) {
+    $('#ideas').innerHTML = SOC.IDEAS.map(function (d) {
+      var test = d.field === 'cta' ? { ok: true } : SOC.fill(d.value, f, S.ctx), has = S.setup.rules.some(function (r) { return r.idea === d.id; });
+      return '<div class="idea"><b>' + esc(d.name) + '</b><span class="v">' + esc(SOC.FIELD_LABEL[d.field]) + ': “' + esc(d.value) + '”</span><span class="bl">' + esc(d.blurb) + '</span><span class="nd">When: ' + esc(d.when.map(SOC.condLabel).join(' and ') || 'always') + ' · needs ' + esc(d.needs) + '</span>'
+        + '<div class="ft"><span class="sp ' + (test.ok ? 'ok' : 'no') + '" title="' + esc(test.why || '') + '">' + (test.ok ? '✓ this product can carry it' : '✕ ' + esc(test.why || 'not on this product')) + '</span><button class="btn sm" type="button" data-idea="' + d.id + '">' + (has ? '＋ Again' : '＋ Add') + '</button></div></div>';
+    }).join('');
+    fl('ideas', SOC.IDEAS.length + ' ideas · ' + SOC.IDEAS.filter(function (d) { return d.field === 'cta' || SOC.fill(d.value, f, S.ctx).ok; }).length + ' fit this product');
+  }
+  function renderFieldsTab(F) {
+    $$('[data-def]').forEach(function (e) { if (document.activeElement !== e) e.value = S.setup.defaults[e.getAttribute('data-def')] || ''; });
+    $('#toks').innerHTML = Object.keys(SOC.TOKENS).map(function (k) { return '<button type="button" class="tok" data-tok="' + k + '" title="' + esc(SOC.TOKENS[k].label + ' · ' + SOC.TOKENS[k].src) + '">{' + k + '}</button>'; }).join('');
+    var rows = SOC.PLATFORMS.map(function (p) {
+      var h = cut(p.id, 'headline', F.headline.text), pr = cut(p.id, 'primary', F.primary.text);
+      var cell = function (x) { return !x.has ? '<span class="note" style="margin:0">no slot</span>' : x.len + ' of ' + x.shown + ' shown · ' + x.max + ' max' + (x.over ? ' <b class="no">over</b>' : x.cut ? ' <span class="no">cut</span>' : ' <span class="ok">✓</span>'); };
+      var c = SOC.ctaFor(p.id, F.cta.text || 'Shop now');
+      return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + cell(h) + '</td><td>' + cell(pr) + '</td><td>' + esc(c.text) + (c.same ? '' : ' <span class="no" title="' + esc(c.why) + '">mapped</span>') + '</td><td>' + (p.safe.t || p.safe.b ? Math.round(p.safe.t * 100) + '% top · ' + Math.round(p.safe.b * 100) + '% bottom' + (p.safe.r ? ' · ' + Math.round(p.safe.r * 100) + '% right' : '') : 'full frame') + '</td><td>' + (p.tokens ? 'native catalogue keywords' : 'feed field via FeedHero') + '</td></tr>';
+    }).join('');
+    $('#limits').innerHTML = '<thead><tr><th>Network</th><th>Headline</th><th>Primary text</th><th>Button</th><th>Safe zone (guide)</th><th>Dynamic text</th></tr></thead><tbody>' + rows + '</tbody>';
+    fl('fields', 'Headline “' + S.setup.defaults.headline + '” · button ' + S.setup.defaults.cta);
+  }
+  function renderData(f) {
+    $('#datatab').innerHTML = '<thead><tr><th>Field</th><th>This product</th><th>Source</th><th>Meta keyword</th></tr></thead><tbody>' + Object.keys(SOC.TOKENS).map(function (k) {
+      var T = SOC.TOKENS[k], v = SOC.tokenValue(k, f, S.ctx), s = (f.__src && f.__src[k]) || T.src;
+      return '<tr><td class="mono">{' + k + '}</td><td>' + (v.ok ? esc(v.text) : '<span class="note" style="margin:0">' + esc(v.why) + '</span>') + '</td><td><span class="sb ' + esc(s) + '">' + esc(s === 'ads' ? 'Google Ads' : s) + '</span></td><td class="mono">' + esc(T.meta || '— via a feed field') + '</td></tr>';
+    }).join('') + '</tbody>';
+  }
+  function fl(id, t) { var e = $('#fl-' + id); if (e && t) e.textContent = t; }
+
+  function render() {
+    if (!SOC || !S.setup) return;
+    var f = facts(), ev = SOC.evaluate(S.setup, f, S.ctx);
+    S.lastEval = ev;
+    renderCtx(); renderDesigns(); renderRules(ev); renderNow(ev, f); renderPreviews(ev.fields); renderWeek(f); renderIdeas(f); renderFieldsTab(ev.fields); renderData(f);
+  }
+  function renderStatic() { foldInit(); }
+
+  // ---- the shared store: one schedule per brand, the team's (shared-state ns socialdpa) ----
+  var SAVE_T = 0;
+  function loadSetup(key) {
+    S.setupKey = key; S.setup = SOC.defaultSetup();
+    try { var loc = JSON.parse(recall('fcc-soc-setup:' + key) || 'null'); if (loc) S.setup = SOC.cleanSetup(loc); } catch (e) {}
+    renderSlots(); render();
+    if (key === 'Demo') return;
+    api('/api/state?ns=socialdpa').then(function (d) {
+      if (!d || !d.socialdpa) return;
+      S.stateMap = d.socialdpa || {}; S.stateBase = Date.now();
+      if (S.setupKey === key && S.stateMap[key]) { S.setup = SOC.cleanSetup(S.stateMap[key]); renderSlots(); render(); $('#savest').textContent = 'the team’s saved schedule for ' + key; }
+    });
+  }
+  function save() {
+    var key = S.setupKey; if (!key) return;
+    remember('fcc-soc-setup:' + key, JSON.stringify(S.setup));
+    if (key === 'Demo') { $('#savest').textContent = 'demo schedule — kept on this device'; return; }
+    clearTimeout(SAVE_T); $('#savest').textContent = 'saving…';
+    SAVE_T = setTimeout(function () {
+      var m = Object.assign({}, S.stateMap); m[key] = S.setup;
+      api('/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(S.stateBase || 0) }, body: JSON.stringify({ socialdpa: m }) }).then(function (d) {
+        if (d && d.socialdpa) { S.stateMap = d.socialdpa; S.stateBase = Date.now(); $('#savest').textContent = '✓ saved for the team'; }
+        else $('#savest').textContent = '⚠ not saved to the team yet — kept on this device';
+      });
+    }, 700);
+  }
+  function changed() { save(); render(); }
+
+  // ---- folds: every section, remembered per device; a fresh device opens the first two ----
+  var FOLD_K = 'fcc-soc-fold', FOLD = {};
+  function foldInit() {
+    try { FOLD = JSON.parse(recall(FOLD_K) || '{}') || {}; } catch (e) { FOLD = {}; }
+    $$('section[data-fold]').forEach(function (c, i) {
+      var open = Object.prototype.hasOwnProperty.call(FOLD, c.id) ? !!FOLD[c.id] : i < 2;
+      if (location.hash === '#' + c.id) open = true;
+      foldSet(c, open, false);
+      c.querySelector('.fhd').addEventListener('click', function () { foldSet(c, c.classList.contains('folded'), true); });
+    });
+    foldBar();
+  }
+  function foldSet(c, open, keep) {
+    c.classList.toggle('folded', !open); c.querySelector('.fhd').setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (keep) { FOLD[c.id] = open ? 1 : 0; remember(FOLD_K, JSON.stringify(FOLD)); }
+    foldBar();
+  }
+  function foldBar() { var any = $$('section[data-fold]').some(function (c) { return !c.classList.contains('folded'); }); $('#fold-all').textContent = any ? '⊖ Fold all' : '⊕ Open all'; }
+  function openSec(id) { var c = $('#' + id); if (c && c.classList.contains('folded')) foldSet(c, true, false); }
+
+  // ---- Google Ads, 30 days (FeedHero's per-product read, a chunk a call) ----
+  function loadAds() {
+    if (S.demo || !S.brand) return toast('Pick a brand — the demo products carry demo figures');
+    if (S.adsSt === 'busy') return;
+    var gm = S.mkt.replace(/-fb$/, ''), tries = 0, who = S.brand + ' ' + gm.toUpperCase();
+    if ((S.roster[S.brand] || []).indexOf(gm) < 0) return toast(S.brand + ' has no Google market wired for ' + gm.toUpperCase() + ' — Google Ads cannot be read for it');
+    S.adsSt = 'busy'; $('#ads').disabled = true; setState(who + ' — reading 30 days of Google Ads, product by product…', 'warn');
+    function step() {
+      return api('/api/catalog/ads?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(gm) + '&period=30_days').then(function (j) {
+        if (j.__s === 202) { if (++tries > 20) throw new Error('FeedHero is still preparing the report — try again in a minute'); return wait(4000).then(step); }
+        if (!j.ok) throw new Error(j.error || 'Google Ads unavailable');
+        if (j.missing) throw new Error(j.note || 'Google Ads returned no traffic for this account');
+        if (!j.done) { if (++tries > 80) throw new Error('the read did not finish'); setState(who + ' — ' + n0(j.got) + ' of ' + n0(j.total) + ' products read…', 'warn'); return step(); }
+        return j;
+      });
+    }
+    step().then(function (j) {
+      var map = {}; Object.keys(j.rows || {}).forEach(function (k) { var a = j.rows[k] || []; map[String(k).toLowerCase()] = { impr: +a[0] || 0, clicks: +a[1] || 0, conv: +a[3] || 0 }; });
+      S.ads = map; S.adsWin = j.range || '30 days'; S.adsSt = 'done';
+      var hit = S.samp.filter(function (x) { return map[String(x.id).toLowerCase()]; }).length;
+      setState(who + ' — Google Ads read (' + S.adsWin + '): ' + hit + ' of ' + S.samp.length + ' sampled products carry traffic.', '');
+      var k = 0; S.samp.forEach(function (x, i) { if (x.id === S.pid) k = i; }); seedNums(k); render();
+    }).catch(function (e) { S.adsSt = 'idle'; setState(who + ' — ' + ((e && e.message) || e), 'warn'); })
+      .then(function () { $('#ads').disabled = false; });
+  }
+
+  // ---- play the week ----
+  function play() {
+    if (S.playing) { clearInterval(S.playing); S.playing = 0; $('#play').textContent = '▶ Play the week'; return; }
+    var seq = []; [1, 2, 3, 4, 5, 6, 0].forEach(function (d) { SOC.DAYPARTS.forEach(function (p) { seq.push([d, p.at]); }); });
+    var i = 0, base = S.ctx.date;
+    $('#play').textContent = '⏸ Stop';
+    var tick = function () {
+      if (i >= seq.length) { clearInterval(S.playing); S.playing = 0; $('#play').textContent = '▶ Play the week'; return; }
+      S.ctx.day = seq[i][0]; S.ctx.hour = seq[i][1]; i++; render();
+    };
+    tick(); S.playing = setInterval(tick, window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches ? 1800 : 1100);
+    void base;
+  }
+
+  // ---- events ----
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button,[data-cedit],.pc');
+    if (!t) return;
+    if (t.matches('.pc')) return pick(+t.getAttribute('data-k'));
+    if (t.id === 'demo') return openDemo();
+    if (t.id === 'ads') return loadAds();
+    if (t.id === 'play') return play();
+    if (t.id === 'fold-all') { var any = $$('section[data-fold]').some(function (c) { return !c.classList.contains('folded'); }); $$('section[data-fold]').forEach(function (c) { foldSet(c, !any, true); }); return; }
+    if (t.id === 'cx-now') { initCtx(); return render(); }
+    if (t.id === 'reset') { if (!confirm('Replace this schedule with FeedSpark’s opening one?')) return; var keep = S.setup; S.setup = SOC.defaultSetup(); ['plat', 'design', 'tagPos', 'tagStyle', 'imgMode', 'img0'].forEach(function (k) { if (keep[k] != null) S.setup[k] = keep[k]; }); return changed(); }
+    if (t.id === 'addrule') { var fld = $('#addcond-field').value; S.setup.rules.push({ id: 'r' + Date.now().toString(36), name: 'New ' + SOC.FIELD_LABEL[fld].toLowerCase() + ' rule', field: fld, value: fld === 'cta' ? 'Shop now' : '', when: [], on: true }); return changed(); }
+    if (t.id === 'copy') { return copyText(SOC.briefLines(S.setup, { client: S.demo ? 'Demo' : S.brand, market: S.mkt }).join('\n')); }
+    if (t.id === 'brief') {
+      if (S.demo || !S.brand) return toast('Pick a brand to brief — the demo schedule belongs to no client');
+      var lines = SOC.briefLines(S.setup, { client: S.brand, market: S.mkt });
+      lines.push('', 'Networks: ' + SOC.PLATFORMS.filter(function (p) { return S.plats[p.id] !== false; }).map(function (p) { return p.name; }).join(', ') + ' · overlay: ' + designName(S.setup.design), 'FCC /social?brand=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt));
+      location.href = '/workflow?brief=' + b64url({ client: S.brand, task: 'Social DPA - Dynamic schedule - ' + S.brand + ' ' + S.mkt.toUpperCase() + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') });
+      return;
+    }
+    if (t.hasAttribute('data-m') && t.closest('#mkts')) { S.mkt = t.getAttribute('data-m'); return loadBrand(); }
+    if (t.hasAttribute('data-m') && t.closest('#imgmode')) { S.setup.imgMode = t.getAttribute('data-m'); renderSlots(); return changed(); }
+    if (t.hasAttribute('data-i') && t.closest('#slots')) { if (S.setup.imgMode === 'per') { S.setup.imgMode = 'same'; } S.setup.img0 = +t.getAttribute('data-i'); renderSlots(); return changed(); }
+    if (t.hasAttribute('data-d')) { S.setup.design = t.getAttribute('data-d'); renderSlots(); return changed(); }
+    if (t.hasAttribute('data-p') && t.closest('#tagpos')) { S.setup.tagPos = t.getAttribute('data-p'); return changed(); }
+    if (t.hasAttribute('data-s') && t.closest('#tagsty')) { S.setup.tagStyle = t.getAttribute('data-s'); return changed(); }
+    if (t.hasAttribute('data-pl')) { var pl = t.getAttribute('data-pl'); S.plats[pl] = S.plats[pl] === false; remember('fcc-soc-plats', JSON.stringify(S.plats)); return render(); }
+    if (t.closest('#fbr')) { S.fbr = t.getAttribute('data-fr'); $$('#fbr button').forEach(function (b) { b.classList.toggle('on', b === t); }); return render(); }
+    if (t.closest('#wkf')) { S.wkf = t.getAttribute('data-f'); $$('#wkf button').forEach(function (b) { b.classList.toggle('on', b === t); }); return render(); }
+    if (t.hasAttribute('data-wd')) { S.ctx.day = +t.getAttribute('data-wd'); S.ctx.hour = +t.getAttribute('data-wh'); openSec('sec-prev'); return render(); }
+    if (t.hasAttribute('data-wx')) { S.ctx.weather = t.getAttribute('data-wx'); return render(); }
+    if (t.hasAttribute('data-aud')) { S.ctx.audience = t.getAttribute('data-aud'); return render(); }
+    if (t.hasAttribute('data-idea')) { var d = SOC.ideaById(t.getAttribute('data-idea')); S.setup.rules.unshift(SOC.ruleFromIdea(d, 'r' + Date.now().toString(36))); openSec('sec-sched'); toast('Added at the top — it outranks the rules below it'); return changed(); }
+    if (t.hasAttribute('data-tok')) {
+      var inp = S.lastInput; if (!inp || !document.body.contains(inp)) { inp = $('#d-headline'); }
+      var tok = '{' + t.getAttribute('data-tok') + '}', s0 = inp.selectionStart != null ? inp.selectionStart : inp.value.length;
+      inp.value = inp.value.slice(0, s0) + tok + inp.value.slice(inp.selectionEnd != null ? inp.selectionEnd : s0); inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); return;
+    }
+    if (t.hasAttribute('data-png')) {
+      var pid = t.getAttribute('data-png'), cv = $('[data-mock="' + pid + '"] canvas');
+      try { var a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'social_' + (S.demo ? 'demo' : S.brand.replace(/\W+/g, '_') + '_' + S.mkt) + '_' + (S.pid || 'product') + '_' + pid + '.png'; document.body.appendChild(a); a.click(); a.remove(); }
+      catch (err) { toast('This image’s pixels cannot be exported — its host is not one the image proxy serves'); }
+      return;
+    }
+    var ri = t.getAttribute('data-r'); if (ri == null) return;
+    var r = S.setup.rules[+ri]; if (!r) return;
+    var ci = +t.getAttribute('data-c');
+    if (t.hasAttribute('data-mv')) { var j = +ri + (+t.getAttribute('data-mv')); if (j < 0 || j >= S.setup.rules.length) return; S.setup.rules.splice(+ri, 1); S.setup.rules.splice(j, 0, r); return changed(); }
+    if (t.hasAttribute('data-del')) { S.setup.rules.splice(+ri, 1); return changed(); }
+    if (t.hasAttribute('data-cdel')) { r.when.splice(ci, 1); OPEN_COND = null; return changed(); }
+    if (t.hasAttribute('data-cedit')) { OPEN_COND = r.id + ':' + ci; return render(); }
+    if (t.hasAttribute('data-cdone')) { OPEN_COND = null; return render(); }
+    if (t.hasAttribute('data-tday')) { var c = r.when[ci], dd = +t.getAttribute('data-tday'), x = c.v.indexOf(dd); if (x >= 0) c.v.splice(x, 1); else c.v.push(dd); return changed(); }
+    if (t.hasAttribute('data-tv')) { var c2 = r.when[ci], v = t.getAttribute('data-tv'), y = c2.v.indexOf(v); if (y >= 0) c2.v.splice(y, 1); else c2.v.push(v); return changed(); }
+  });
+  document.addEventListener('focusin', function (e) { if (e.target.matches('[data-def],input.tp')) S.lastInput = e.target; });
+  var IT = 0;
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.matches('[data-def]')) { S.setup.defaults[t.getAttribute('data-def')] = t.value; clearTimeout(IT); IT = setTimeout(changed, 250); return; }
+    if (t.id === 'cx-hour') { S.ctx.hour = +t.value; return render(); }
+    if (t.id === 'cx-temp') { S.ctx.temp = t.value === '' ? '' : +t.value; return render(); }
+    if (/^cx-(clicks|bought|views|stock)$/.test(t.id)) { clearTimeout(IT); IT = setTimeout(render, 200); return; }
+    var ri = t.getAttribute('data-r'); if (ri == null) return; var r = S.setup.rules[+ri]; if (!r) return;
+    if (t.hasAttribute('data-nm')) { r.name = t.value; clearTimeout(IT); IT = setTimeout(function () { save(); renderWeek(facts()); }, 400); return; }
+    if (t.hasAttribute('data-val') && t.tagName === 'INPUT') {
+      r.value = t.value; clearTimeout(IT);
+      // re-render everything but the list being typed in, so the caret never jumps
+      IT = setTimeout(function () { save(); var f = facts(), ev = SOC.evaluate(S.setup, f, S.ctx); renderNow(ev, f); renderPreviews(ev.fields); renderWeek(f); }, 250); return;
+    }
+    if (t.hasAttribute('data-cf')) { var c = r.when[+t.getAttribute('data-c')], k = t.getAttribute('data-cf'); c[k] = (k === 'm' || k === 'op' || c.k === 'dates') ? t.value : +t.value; clearTimeout(IT); IT = setTimeout(function () { save(); var f = facts(), ev = SOC.evaluate(S.setup, f, S.ctx); renderNow(ev, f); renderPreviews(ev.fields); renderWeek(f); }, 300); }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'brand') { if (!t.value) return openDemo(); S.brand = t.value; pickMkt(''); return loadBrand(); }
+    if (t.id === 'cx-date') { ctxFromDate(t.value); return render(); }
+    if (t.id === 'safe') { S.safe = t.checked; $('#pv').classList.toggle('show-safe', S.safe); return; }
+    if (t.id === 'd-cta') { S.setup.defaults.cta = t.value; return changed(); }
+    if (t.hasAttribute('data-pimg')) {
+      var pid = t.getAttribute('data-pimg');
+      if (t.value === 'up') {
+        var f = document.createElement('input'); f.type = 'file'; f.accept = 'image/*';
+        f.onchange = function () { var file = f.files && f.files[0]; if (!file) return; var im = new Image(); im.onload = function () { S.up[pid] = im; render(); toast('Your picture is on ' + SOC.platformById(pid).name + ' — for this session only'); }; im.src = URL.createObjectURL(file); };
+        f.click(); return;
+      }
+      delete S.up[pid]; platCfg(pid).img = +t.value; return changed();
+    }
+    if (t.hasAttribute('data-pdes')) { platCfg(t.getAttribute('data-pdes')).design = t.value; return changed(); }
+    if (t.hasAttribute('data-pcta')) { platCfg(t.getAttribute('data-pcta')).cta = t.value; return changed(); }
+    var ri = t.getAttribute('data-r'); if (ri == null) return; var r = S.setup.rules[+ri]; if (!r) return;
+    if (t.hasAttribute('data-on')) { r.on = t.checked; return changed(); }
+    if (t.hasAttribute('data-fld')) { r.field = t.value; if (t.value === 'cta') r.value = 'Shop now'; return changed(); }
+    if (t.hasAttribute('data-val') && t.tagName === 'SELECT') { r.value = t.value; return changed(); }
+    if (t.hasAttribute('data-addc') && t.value) { var nc = JSON.parse(JSON.stringify(COND_NEW[t.value])); if (nc.k === 'dates') { nc.from = S.ctx.date; nc.to = S.ctx.date; } r.when.push(nc); OPEN_COND = r.id + ':' + (r.when.length - 1); return changed(); }
+    if (t.hasAttribute('data-cf')) { changed(); }
+  });
+  document.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.pc')) { e.preventDefault(); pick(+e.target.getAttribute('data-k')); } });
+
+  try { S.plats = JSON.parse(recall('fcc-soc-plats') || '{}') || {}; } catch (e) { S.plats = {}; }
+  loadEngines().then(boot).catch(function (e) { setState('The module’s engines did not load (' + ((e && e.message) || e) + ') — hard-refresh the page.', 'warn'); foldInit(); });
+})();
+</script>
+</body>
+</html>

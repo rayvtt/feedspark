@@ -53,6 +53,7 @@ export const MODULES = [
   { slug: 'aivis', label: 'AI visibility', path: '/aivis' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
   { slug: 'images', label: 'Image library', path: '/images' },
+  { slug: 'social', label: 'Social DPA', path: '/social' },
   { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },
   { slug: 'schedule', label: 'Scheduled work', path: '/schedule' },
   { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
