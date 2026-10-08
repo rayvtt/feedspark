@@ -275,7 +275,7 @@ const QUALITY = {
       // download format be adapted to latest update and ensure design is consistent?"), never the live page
       window.__h2c = [];
       window.html2canvas = (el) => { const d = el.ownerDocument;
-        window.__h2c.push({ live: d === document, cls: d.body.className, closed: d.querySelectorAll('details:not([open])').length, det: d.querySelectorAll('details').length, depClosed: d.querySelectorAll('details.dep-more:not([open])').length, bodies: Array.from(d.querySelectorAll('details:not([open])')).filter((x) => Array.from(x.childNodes).some((n) => !(n.nodeType === 1 && n.tagName === 'SUMMARY'))).length, methOpen: d.querySelectorAll('details[open]').length,
+        window.__h2c.push({ live: d === document, cls: d.body.className, closed: d.querySelectorAll('details:not([open])').length, det: d.querySelectorAll('details').length, depClosed: d.querySelectorAll('.dep-card,.dep-hov').length, bodies: Array.from(d.querySelectorAll('details:not([open])')).filter((x) => Array.from(x.childNodes).some((n) => !(n.nodeType === 1 && n.tagName === 'SUMMARY'))).length, methOpen: d.querySelectorAll('details[open]').length,
           head: !!d.querySelector('#print-head .ph-brand, #print-head *'), dial: !!d.querySelector('svg.dial'), scripts: d.querySelectorAll('script').length,
           tip: d.querySelectorAll('.dptip,[data-deptip]').length, chrome: !!d.querySelector('.topbar:not([hidden])') && getComputedStyle(d.querySelector('.topbar')).display !== 'none',
           bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth,
