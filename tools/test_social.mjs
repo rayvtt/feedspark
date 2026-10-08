@@ -173,6 +173,12 @@ t('the schedule is the TEAM’s: shared state ns socialdpa, with a device mirror
 t('every section folds: a tile per section, Fold all, per-device memory', (PG.match(/<section class="card[^"]*" id="sec-[a-z]+" data-fold>/g) || []).length === 7 && /id="fold-all"/.test(PG) && /fcc-soc-fold/.test(PG));
 t('…the fold toggle sits inside the heading, so the phone skim view leaves it to the page', (PG.match(/<h3 class="fhw"><button class="fhd" type="button" aria-expanded=/g) || []).length === 7);
 t('the shared demo images are never handed one onload each (a second caller would steal the first)', /im\.decode\(\)/.test(PG) && !/im\.onload = function \(\) \{ res\(im\); \}; im\.onerror/.test(PG));
+{
+  const rail = PG.slice(PG.indexOf('<aside class="pv-rail"'), PG.indexOf('</aside>')), prod = PG.slice(PG.indexOf('id="sec-prod"'), PG.indexOf('id="sec-prev"'));
+  t('the design controls sit in a rail INSIDE the previews section: picture, overlay design, tagline, per network', ['id="imgmode"', 'id="slots"', 'id="dgal"', 'id="tagpos"', 'id="tagsty"', 'id="ptab"'].every((x) => rail.indexOf(x) >= 0) && PG.indexOf('<aside class="pv-rail"') > PG.indexOf('id="sec-prev"'));
+  t('…and none of them is left behind in the product section', ['id="dgal"', 'id="imgmode"', 'id="ptab"'].every((x) => prod.indexOf(x) < 0));
+  t('the rail is sticky under the topbar, whatever height the topbar takes; it stacks under 1000px', /\.pv-rail\{position:sticky;top:calc\(var\(--tbh/.test(PG) && /setProperty\('--tbh'/.test(PG) && /@media\(max-width:1000px\)\{\.pv-split\{grid-template-columns:minmax\(0,1fr\)\}\.pv-rail\{position:static/.test(PG));
+}
 t('every network can take its own picture, or an upload', /data-pimg/.test(PG) && /Upload…/.test(PG) && /imgMode === 'per'/.test(PG));
 t('→ Brief carries the schedule into Workflow (cat technical)', /Social DPA - Dynamic schedule - /.test(PG) && /cat: 'technical'/.test(PG));
 t('the overlay designs are the studio’s own (one catalogue, no copy)', /STU\.DESIGNS\.map/.test(PG) && !/var DESIGNS\s*=/.test(PG));

@@ -25,6 +25,15 @@ tagline, headline, primary text and button say at a given moment.
 | `tools/check_social.js` | Playwright tripwire on the real page (presync) |
 | `tools/social_stub.js` | engines + empty roster for check_mobile / check_darkmode / check_social |
 
+## Layout
+
+The design controls — picture (same everywhere / per network + the product's images), overlay design,
+tagline position and colour, and the per-network picture · overlay · button — sit in a **sticky rail on
+the left of the platform previews** (Ray, 8 Oct 2026: "the overlay design section should be on the
+left-hand side of the platform previews; otherwise I have to scroll up and down just to change things").
+The rail stays under the topbar while the previews scroll, scrolls inside itself when taller than the
+screen, and stacks above the previews under 1000px.
+
 ## What it reads
 
 * **The product** — a 400-row sample of the live output feed (`/api/feed/proxy`, Feed Lab parser),

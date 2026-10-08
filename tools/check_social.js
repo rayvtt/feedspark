@@ -86,6 +86,17 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   const pill = await p.evaluate(`(() => { const c = document.querySelector('[data-mock="fb_feed"] canvas'), g = c.getContext('2d'); const d = g.getImageData(Math.round(c.width * 0.08), Math.round(c.height * 0.06), 1, 1).data; return [d[0], d[1], d[2]]; })()`);
   t('the Pill badge design paints its orange “20% OFF” in the corner', pill[0] > 200 && pill[1] > 80 && pill[1] < 140 && pill[2] < 60, pill);
 
+  console.log('· the design controls ride beside the previews');
+  const geo = await p.evaluate(() => { const r = document.getElementById('pv-rail').getBoundingClientRect(), m = document.querySelector('[data-mock="fb_feed"]').getBoundingClientRect(); return { rr: r.right, ml: m.left, rt: r.top, mt: m.top }; });
+  t('the rail is to the LEFT of the previews, level with them', geo.rr <= geo.ml && Math.abs(geo.rt - geo.mt) < 80, geo);
+  await p.evaluate(() => { const m = document.querySelector('[data-mock="ig_reels"]'); window.scrollTo(0, m.getBoundingClientRect().top + scrollY - 120); }); await p.waitForTimeout(300);
+  const inView = await p.evaluate(() => { const d = document.querySelector('#dgal [data-d="burst"]').getBoundingClientRect(), tb = document.querySelector('.topbar').getBoundingClientRect().bottom, m = document.querySelector('[data-mock="ig_reels"]').getBoundingClientRect(); return { dt: d.top, db: d.bottom, tb, vh: innerHeight, mt: m.top }; });
+  t('scrolled down to the Reels preview, the overlay designs are still on screen beside it', inView.dt >= inView.tb && inView.db <= inView.vh && inView.mt < inView.vh, inView);
+  await p.click('#dgal [data-d="burst"]'); await p.waitForTimeout(300);
+  t('…and a design picked from there repaints the preview without scrolling', /Starburst/.test(await p.textContent('#fl-prev')));
+  await p.click('#dgal [data-d="pill-badge"]'); await p.waitForTimeout(200);
+  await p.evaluate(() => window.scrollTo(0, 0));
+
   console.log('· ideas, the week, the folds');
   await p.click('#sec-ideas .fhd'); await p.waitForTimeout(150);
   const nRules = await p.$$eval('#rules .rule', (a) => a.length);
@@ -111,6 +122,7 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   const ph = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const q = await ph.newPage(); await q.addInitScript(STUB); await q.goto('file://' + tmp); await q.waitForTimeout(2200);
   t('no sideways scroll at 390px', (await q.evaluate(() => document.documentElement.scrollWidth)) <= 391, await q.evaluate(() => document.documentElement.scrollWidth));
+  t('on the phone the controls stack ABOVE the previews (no rail squeezing them)', await q.evaluate(() => document.getElementById('pv-rail').getBoundingClientRect().bottom <= document.querySelector('[data-mock="fb_feed"]').getBoundingClientRect().top && getComputedStyle(document.getElementById('pv-rail')).position === 'static'));
   t('the previews stack one a row and still paint', (await q.$$eval('#pv .mock', (a) => a.length)) === 6 && (await q.evaluate('(' + SIG + ')(\'[data-mock="ig_reels"] canvas\')')).navy > 0.01);
 
   await b.close();
