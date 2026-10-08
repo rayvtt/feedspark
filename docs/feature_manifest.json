@@ -12627,6 +12627,18 @@
       "file": "tools/check_catalog.js",
       "pattern": "Product type depth: 1 … 6+ levels in Product Type Guard",
       "pr": 0
+    },
+    {
+      "name": "Golden AI-readiness ring is an SVG arc with literal colours (html2canvas cannot paint conic-gradient)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function airRingSvg(score, col)",
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF check: the AI-readiness ring is an SVG arc, never a conic-gradient",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the AI-readiness ring is an SVG arc with a literal colour",
+      "pr": 0
     }
   ]
 }

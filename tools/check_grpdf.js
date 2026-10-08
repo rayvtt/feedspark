@@ -278,7 +278,8 @@ const QUALITY = {
         window.__h2c.push({ live: d === document, cls: d.body.className, closed: d.querySelectorAll('details:not([open])').length, det: d.querySelectorAll('details').length, depClosed: d.querySelectorAll('details.dep-more:not([open])').length, bodies: Array.from(d.querySelectorAll('details:not([open])')).filter((x) => Array.from(x.childNodes).some((n) => !(n.nodeType === 1 && n.tagName === 'SUMMARY'))).length, methOpen: d.querySelectorAll('details[open]').length,
           head: !!d.querySelector('#print-head .ph-brand, #print-head *'), dial: !!d.querySelector('svg.dial'), scripts: d.querySelectorAll('script').length,
           tip: d.querySelectorAll('.dptip,[data-deptip]').length, chrome: !!d.querySelector('.topbar:not([hidden])') && getComputedStyle(d.querySelector('.topbar')).display !== 'none',
-          bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth });
+          bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth,
+          ring: (() => { const c = d.querySelector('.big-ring svg.br-svg circle:last-child'); return c ? { dash: c.getAttribute('stroke-dasharray'), stroke: c.getAttribute('stroke'), bg: getComputedStyle(d.querySelector('.big-ring')).backgroundImage } : null; })() });
         return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
       window.jspdf = { jsPDF: function (opts) { this.opts = opts; this.addImage = () => {}; this.save = (name) => { window.__pdfSaved = name; }; } };
     });
@@ -301,6 +302,11 @@ const QUALITY = {
     ok('…its folds stand as the ⬇ HTML opens them — section methods open, attributes folded on their score — the depth explanations open, and the pop-up never travels',
       c0.det > 0 && c0.closed > 0 && c0.methOpen > 0 && c0.depClosed === 0 && c0.tip === 0, c0);
     ok('…and a fold left closed carries only its summary line (html2canvas would paint a closed fold\'s body over the next section)', c0.closed > 0 && c0.bodies === 0, c0);
+    // Ray, 8 Oct 2026: "downloaded PDF still have this issue of this AI readiness circle" — a conic-gradient, which html2canvas
+    // cannot paint, printed a grey disc; the ring is an SVG arc now, its colour a literal (a serialised SVG has no CSS variables)
+    ok('the AI-readiness ring is an SVG arc with a literal colour — never a conic-gradient the rasteriser cannot paint',
+      c0.ring && /^[\d.]+ 433\.54$/.test(c0.ring.dash) && Math.abs(parseFloat(c0.ring.dash) - 433.54 * 0.76) < 0.5 && !/var\(/.test(c0.ring.stroke) && c0.ring.bg === 'none' &&
+      !/conic-gradient\(/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'docs', 'FeedSpark_GoldenRecord.html'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')), c0.ring);
     ok('…on the file\'s own wash page, and the render frame is cleared away after the save', c0.bg === 'rgb(247, 247, 245)' && cap.frames === 0, [c0.bg, cap.frames]);
   }
 
