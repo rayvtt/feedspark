@@ -6548,9 +6548,9 @@
       "min": 1
     },
     {
-      "name": "Golden Record: the AI-Readiness method names conversational attributes as the heaviest pillar and custom labels as not scored — in plain words (Ray, 8 Oct 2026: 'too AI')",
+      "name": "Golden Record: the AI-Readiness method — plain words, conversational heaviest; the custom-labels and same-as-Feed-Lab lines removed (Ray, 8 Oct 2026: 'remove these 2 sentences')",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "Custom labels are not scored. Google does not show them to shoppers",
+      "pattern": "the custom-labels and same-as-Feed-Lab lines are gone",
       "min": 1
     },
     {
@@ -12750,6 +12750,18 @@
       "name": "presync: the download-safety tripwire runs",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grsafe.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden score history: the chart never grows past its drawn size, so its labels match the page text at any window (Ray, 8 Oct 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".hs-svg{width:100%;max-width:1000px;height:auto;display:block}",
+      "pr": 0
+    },
+    {
+      "name": "Golden content quality: no verdict sentence under the score (Ray, 8 Oct 2026: 'remove this text')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "no verdict sentence under the score",
       "pr": 0
     }
   ]

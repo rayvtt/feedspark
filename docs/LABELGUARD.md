@@ -1113,6 +1113,10 @@ score, → Brief opening a keyword brief).
 > how normal marketing head is writing").** The "How it is put together" bullets for content quality and AI readiness
 > now read as a marketing head would write them: what the score checks, what counts most and why, the bands, and
 > today's figures. The client copy keeps the weights as an order in words; the AM's screen still shows the ×factors.
+> Two lines then went altogether (same day, "remove these 2 sentences"): AI readiness no longer says custom labels are not
+> scored or that it is the same reading as Feed Lab. The content-quality verdict sentence under the score went too ("remove
+> this text"), since the pill and the rows already say it. The score-history chart is capped at the 1000px it is drawn at
+> (`.hs-svg{max-width:1000px}`), so on a wide window its labels stay the size of the page text.
 >
 > **Card layout (8 Oct 2026, Ray: "these texts should sit in expandable — the coloured segments should stay on the
 > same line").** Each depth card is the bar, ONE line of legend chips (0 … 6+, never wrapping; it pans on a phone)

@@ -256,7 +256,10 @@ window.addEventListener('load',restore);
   .hs-leg i.ln{height:3px;width:16px;border-radius:2px;background:var(--ink-2);vertical-align:3px}
   .hs-leg i.dot{width:5px;height:5px;border-radius:50%;background:var(--muted);vertical-align:1px}
   .hs-zone{position:relative}
-  .hs-svg{width:100%;height:auto;display:block}
+  /* drawn on a 1000-unit canvas: it shrinks with a narrow window and never grows past the size it was drawn at, so its
+     11px labels stay the size of the page's own text at any window or zoom (Ray, 8 Oct 2026: "make this barchart correspond
+     nicely when enlarge or delarge a tab view of the html — it looks exceptionally larger than rest of body") */
+  .hs-svg{width:100%;max-width:1000px;height:auto;display:block}
   .hs-svg text{font-size:11px;fill:var(--muted);font-weight:700;font-family:Lato,system-ui,sans-serif}
   .hs-svg text.v{fill:var(--ink);font-weight:900;font-size:12px}
   .hs-svg text.pl{fill:var(--ink-2);font-weight:900;font-size:10px;letter-spacing:.05em}
@@ -3223,10 +3226,8 @@ window.addEventListener('load',restore);
     }
     h += '<div class="qz-head"><span class="qz-score" style="color:' + scoreCol(q.score) + '">' + q.score + '</span>' +
       '<span class="qz-of">Content quality<br>/ 100</span>' +
-      '<span class="qz-pill ' + q.verdict.band + '">' + esc(q.verdict.pill) + '</span></div>' +
-      '<p class="qz-line">' + esc(q.verdict.line) +
-      (q.fails ? ' <b>' + q.fails + ' stated requirement' + (q.fails === 1 ? '' : 's') + '</b> broken across the free-text attributes.' : '') +
-      '</p>';
+      '<span class="qz-pill ' + q.verdict.band + '">' + esc(q.verdict.pill) + '</span></div>';
+    // no verdict sentence under the score (Ray, 8 Oct 2026: "remove this text") — the pill and the rows below say it
     if (QUAL[k].late && QUAL[k].late.length) {
       h += '<p class="qz-line" style="color:var(--orange-deep)">Not measured this run: <b>g:' +
         QUAL[k].late.map(esc).join('</b>, <b>g:') + '</b> — the column debuts deeper in the feed than the' +
@@ -3648,11 +3649,9 @@ window.addEventListener('load',restore);
           'The score combines eight areas, weighted by how much each matters: ' + a.pillars.map(function (p) { return p.label + (cc ? '' : ' ×' + p.weight); }).join(', ') + '.',
           cc ? 'Conversational attributes count the most. They are the fields Google built for AI shopping, so a feed without them cannot reach Agentic-ready.'
              : 'Conversational attributes count ×2.4 — enough that, without them, every other area together tops out at 79, one point short of Agentic-ready.',
-          'Four tiers: Foundational (under 40), Structured (40–59), Enriched (60–79) and Agentic-ready (80 and above).',
-          'Custom labels are not scored. Google does not show them to shoppers — they organise campaigns, so they say nothing about AI readiness. Label Guard tracks them.',
-          'This is the same reading as Feed Lab, taken from the live feed at the same time as the content-quality check above. Open any area to see what it measures and where each threshold comes from.']) +
-        scSrc([['Google · custom_label (answer 6324473): “won’t be shown to customers”', G_ANS + '6324473'],
-          ['Google · conversational attributes (answer 17085370): for “AI-driven surfaces, like AI Mode in Search”', G_ANS + '17085370']]));
+          // the custom-labels and same-as-Feed-Lab lines are gone (Ray, 8 Oct 2026: "remove these 2 sentences")
+          'Four tiers: Foundational (under 40), Structured (40–59), Enriched (60–79) and Agentic-ready (80 and above).']) +
+        scSrc([['Google · conversational attributes (answer 17085370): for “AI-driven surfaces, like AI Mode in Search”', G_ANS + '17085370']]));
       return;
     }
     var p = null; a.pillars.forEach(function (x) { if (x.key === key) p = x; });
