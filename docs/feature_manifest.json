@@ -12444,6 +12444,18 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "<details class=\"dep-more\">",
       "pr": 0
+    },
+    {
+      "name": "Golden page: a row missing an action keeps its slot, so Ask / Brief / PDP line up down every tier",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".abtn.ab-gap{visibility:hidden;pointer-events:none}",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the depth tripwire measures the action columns line up",
+      "file": "tools/check_grdepth.js",
+      "pattern": "every row\\'s buttons line up",
+      "pr": 0
     }
   ]
 }

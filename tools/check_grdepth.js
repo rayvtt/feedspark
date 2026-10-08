@@ -129,13 +129,23 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       /Carried today: sleeve length 3,100 · neckline 2,900 · fit 2,400 · fastening 600/.test(dc) && /dresses: dress length/.test(dc), dc);
     // the explanation folds; the coloured legend holds one line (Ray, 8 Oct 2026)
     const fold = await page.$$eval('.dep-card', (cs) => cs.map((c) => { const sp = Array.from(c.querySelectorAll('.dep-leg span')); const lg = c.querySelector('.dep-leg');
-      return { k: c.getAttribute('data-dep'), oneLine: sp.every((x) => Math.abs(x.offsetTop - sp[0].offsetTop) < 2), fits: lg.scrollWidth <= lg.clientWidth + 1,
+      return { k: c.getAttribute('data-dep'), oneLine: sp.every((x) => Math.abs(x.offsetTop - sp[0].offsetTop) < 2), fits: lg.scrollWidth <= lg.clientWidth + 1, sw: lg.scrollWidth, cw: lg.clientWidth,
         closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' }; }));
     ok('each depth card keeps its coloured legend on ONE line, fitting the card, with the explanation folded behind "How it\'s scored · full credit at N+"',
       fold.length === 3 && fold.every((f) => f.oneLine && f.fits && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
     const pres = await Promise.all(['additional_image_link', 'product_highlight', 'product_detail'].map((k) => row(page, k)));
     ok('the presence rows stay (is it in the feed at all?) but say the depth row scores instead',
       pres.every((r) => r && r.byDepth && /^g:/.test(r.nm)), pres.map((r) => r && r.nm));
+    // Ray, 8 Oct 2026: "make sure button spacing and type is the same as rest of other attributes" — a row
+    // missing an action keeps its slot, so every → Brief / ✉ Ask client sits in ONE column down the tiers
+    const cols = await page.evaluate(() => {
+      const xs = (sel) => Array.from(document.querySelectorAll('.at-row ' + sel)).filter((b) => b.offsetWidth).map((b) => Math.round(b.getBoundingClientRect().left));
+      const font = (sel) => Array.from(document.querySelectorAll('.at-row ' + sel)).map((b) => { const c = getComputedStyle(b); return c.fontSize + '/' + c.fontWeight + '/' + c.paddingLeft; });
+      return { brief: [...new Set(xs('[data-brief]'))], ask: [...new Set(xs('[data-ask]'))], pdp: [...new Set(xs('[data-pdp]'))], type: [...new Set(font('[data-brief], [data-ask], [data-pdp]'))],
+        gap: Array.from(document.querySelectorAll('.ab-gap')).every((g) => getComputedStyle(g).visibility === 'hidden' && !g.matches('[data-ask],[data-brief],[data-pdp]')) };
+    });
+    ok('every row\'s buttons line up — one column each for ✉ Ask client, → Brief and 🔎 PDP, in one type and padding',
+      cols.brief.length === 1 && cols.ask.length === 1 && cols.pdp.length <= 1 && cols.type.length === 1 && cols.gap, cols);
     ok('depth rows: ✉ Ask client + → Brief, no PDP scan (a product page holds one product, not a count)',
       [img, hl, det].every((r) => r.ask && r.brief && !r.pdp));
     const d = await dial(page), e = LG.goldenScore(attrs, LG.profileFor('Reiss', {})).score;

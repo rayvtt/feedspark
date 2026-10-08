@@ -183,6 +183,9 @@ window.addEventListener('load',restore);
   @media(max-width:900px){.at-row{grid-template-columns:minmax(92px,1.1fr) minmax(0,1fr) 44px 60px;gap:8px}.at-note,.at-act{display:none}
     .at-miss{max-width:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 7px}.at-delta{font-size:10.5px}}
   .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+  /* a row without one of the three actions keeps its slot (an invisible copy of the same button), so
+     ✉ Ask client · → Brief · 🔎 PDP sit in the same columns down every tier (Ray, 8 Oct 2026) */
+  .abtn.ab-gap{visibility:hidden;pointer-events:none}
   .abtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:10.5px;font-weight:800;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
   .abtn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .abtn.asked{border-color:var(--good);color:var(--good)}
@@ -468,14 +471,14 @@ window.addEventListener('load',restore);
   .dep-card{margin:2px 0 10px;padding:9px 13px;background:var(--wash);border:1px solid var(--line);border-radius:10px;max-width:820px}
   .dep-bar{display:flex;height:10px;border-radius:100px;overflow:hidden;background:#E3E6EB}
   .dep-bar i{display:block;height:100%}
-  .dep-leg{display:flex;flex-wrap:nowrap;gap:4px 10px;margin-top:7px;font-size:10.5px;font-weight:700;color:var(--muted);overflow-x:auto;scrollbar-width:none}
+  .dep-leg{display:flex;flex-wrap:nowrap;gap:4px 8px;margin-top:7px;font-size:10px;font-weight:700;color:var(--muted);overflow-x:auto;scrollbar-width:none}
   .dep-leg::-webkit-scrollbar{display:none}.dep-leg span{white-space:nowrap;flex:0 0 auto}
   .dep-more{margin-top:5px}.dep-more summary{cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);list-style:revert}
   .dep-more summary:hover{color:var(--ink)}
   .dep-leg span{white-space:nowrap}
   .dep-leg span.dep-full{color:var(--ink)}
   .dep-leg b{color:var(--ink)}
-  .dep-leg .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .dep-leg .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:-1px}
   .dep-foot{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.55}
   .dep-foot b{color:var(--ink)}
   .fs-std.g-std{background:#E8F0FE;color:#1A56C4;border-color:#C9D9F8}
@@ -2451,7 +2454,7 @@ window.addEventListener('load',restore);
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         if (na) { h += row + '<span class="at-act"></span></div>'; return; }   // nothing to ask a client for
         if (x.kw) {   // FeedSpark's own work: nothing to ask the client, nothing for a product page to hold
-          h += row + '<span class="at-act"><button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button></span></div>';
+          h += row + '<span class="at-act">' + '<span class="abtn ab-gap" aria-hidden="true">✉ Ask client</span>' + '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled keyword brief in Workflow — it also files as an Intake task">→ Brief</button>' + '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' + '</span></div>';
           return;
         }
         row += '<span class="at-act">' +
@@ -2460,7 +2463,7 @@ window.addEventListener('load',restore);
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
-          (x.t === 'req' || x.of ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
+          (x.t === 'req' || x.of ? '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
         if (x.of && a.present) h += depCard(x, a);   // how many each product carries, 0 … 6+
       });
