@@ -1444,6 +1444,48 @@ locked one opened with a client address, inspects what the PDF is drawn from, re
 `GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
 (invisible characters in the file).
 
+### 9.12h The action plan at the foot of both downloads, and one client per file (8 Oct 2026)
+
+Ray: *"since it is an audit, so an action plan must be created and recommended to client after the
+audit is completed. At the bottom of the downloaded report, include an action plan in a workflow
+style, designed from the workflow module."* And: *"dont ever mention competitor brand in the report
+(just mention industry)."*
+
+**The plan is read off the audit, never written by a model.** `planBuild(attrs, prof, qd, ai)`
+turns the same readings the scorecard prints into three lanes, which are Workflow's own:
+
+- **Now · this week**: a required attribute under 99%, the GTIN/MPN pair under 90%, an apparel
+  "required in cases" field under 90% that moves the score by 0.3 points or more, and the worst
+  content-quality FAIL rule (one that breaks on 1% or more of products).
+- **Next · within 30 days**: recommended attributes, and depth rows, that move the score by 0.3 or
+  more, plus content-quality warnings that cost 2 or more points.
+- **Then · this quarter**: the conversational attributes not yet live, and the two weakest
+  AI-readiness pillars under 60 (conversational excluded, because it is already its own card).
+
+Each card's gain is `goldenScore` run again with that one field at 100%. The KPI strip projects
+the score with every Now and Next field done. A field the client owns (identifiers, price,
+availability, link, image and so on, in `PLAN_CLIENT`) is tagged **Your team**; the rest are
+tagged **FeedSpark**, and identifiers are never invented. Each lane caps its cards (5 / 5 / 4) and
+says how many more are in the scorecard above. An empty lane says the feed meets the spec there.
+
+`#print-plan` is filled by `fillPrint`, so the PDF, the ⬇ HTML and Ctrl+P all carry it. It comes
+after the all-markets table, and the AM's picked Catalogue cards now sit before it, so the plan
+closes the document. It is never shown on screen.
+
+**One client per file.** `exportDoc` removes every section except the scorecard, and every
+`<select>`, before any other pass. The estate scorecard, the alerts and the scan-brand picker are
+hidden in print, but they were still *in* the file, and they name other brands. The verdict's
+benchmark line names the industry and its best score, never the brand that holds it, on screen
+too. Harness `tools/check_grplan.js` (Playwright, presync) checks the following:
+
+- the plan is not shown on screen;
+- it sits in the right place in both exits;
+- the lanes are right on a fixture built to put known actions in each one;
+- the gains and owners are correct;
+- the projection is above the current score;
+- the board is one column on a phone;
+- neither download names another brand.
+
 ### 9.12d Every scorecard section folds (7 Oct 2026)
 
 Ray, over a screenshot of the "Two scores, two questions" card: *"make these boxes collapsible as

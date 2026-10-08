@@ -52,8 +52,9 @@ const ENGINE_LG = path.resolve(__dirname, '..', 'docs', 'labelguard_engine.js');
 const ENGINE_FA = path.resolve(__dirname, '..', 'docs', 'feedlab_engine.js');
 const A4 = 297;                 // mm
 // the collapsed scorecard — four spec tiers + content quality + AI-readiness — must stay
-// inside roughly two and a half A4 lengths on its single sheet (Ray: "one or two pages")
-const MAX_A4 = 2.4;
+// inside roughly two and a half A4 lengths on its single sheet (Ray: "one or two pages");
+// since 8 Oct 2026 the action plan closes the document (one board, ~0.3 A4), hence 2.8
+const MAX_A4 = 2.8;
 
 let fail = 0;
 const ok = (name, cond, extra) => {
