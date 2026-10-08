@@ -307,6 +307,48 @@ ${STUBS.stubLines()}
   ok('a saved set applies to the next market: the export opens the Catalogue itself and waits for it', d2 && d2.join(' | ') === 'Content depth · Keyword slots | Availability', { d2, ms: Date.now() - t0 });
   await ctx.close();
 
+  // THE PICTURES THE SCAN FLAGGED, IN THE FILE (Ray, 8 Oct 2026: "images of the scanned should be screenshot to add in report
+  // too - just keep 10 small images"): the Image pixels card's tiles are buttons onto a CDN the file must never call, so the
+  // export embeds the first ten as small JPEGs read through our own /api/catalog/img
+  console.log('── Image pixels: ten small pictures embedded in the file');
+  ({ page, ctx } = await open({ picks: [{ k: 'pix', l: 'Image pixels' }] }));
+  await page.click('#catx-load');
+  let pf = null;
+  for (let i = 0; i < 60 && !pf; i++) { pf = frameOf(page); if (!pf) await page.waitForTimeout(250); }
+  await pf.waitForFunction(() => window.__FCCCatalogue && window.__FCCCatalogue.state().prods.length > 0, null, { timeout: 45000 });
+  await pf.evaluate(() => { const s = document.getElementById('pix-n'); s.value = '100'; document.getElementById('pix-go').click(); });
+  await pf.waitForFunction(() => document.querySelectorAll('.mod[data-mod="pix"] .pixlook [data-px-open]').length > 0, null, { timeout: 60000 }).catch(() => {});
+  const tilesOnScreen = await pf.evaluate(() => document.querySelectorAll('.mod[data-mod="pix"] .pixlook [data-px-open]').length);
+  ok('the scan flags pictures to look at on the Catalogue card', tilesOnScreen > 0, tilesOnScreen);
+  const htmlP = await grabHtml(page);
+  const pv = await page.evaluate((h) => {
+    const doc = new DOMParser().parseFromString(h, 'text/html'), f = doc.querySelector('#print-catx iframe');
+    const inner = f ? new DOMParser().parseFromString(f.getAttribute('srcdoc'), 'text/html') : null;
+    const imgs = inner ? Array.from(inner.querySelectorAll('.pixlook img')) : [];
+    return {
+      n: imgs.length, data: imgs.every((i) => /^data:image\/jpeg;base64,/.test(i.getAttribute('src') || '')),
+      small: imgs.every((i) => (i.getAttribute('src') || '').length < 40000),
+      labels: inner ? Array.from(inner.querySelectorAll('.pixlook .pxt b')).filter((b) => b.textContent.trim()).length : 0,
+      buttons: inner ? inner.querySelectorAll('.pixlook button,[data-px-open]').length : -1,
+      http: inner ? Array.from(inner.querySelectorAll('img')).filter((i) => /^https?:/.test(i.getAttribute('src') || '')).length : -1,
+      head: inner ? (inner.querySelector('.pixh') || {}).textContent || '' : '',
+    };
+  }, htmlP);
+  ok('the file carries the flagged pictures — at most ten, each a small embedded JPEG with its problem named',
+    pv.n > 0 && pv.n === Math.min(10, tilesOnScreen) && pv.data && pv.small && pv.labels === pv.n, pv);
+  ok('…as pictures, not buttons, and never a call out to an image host', pv.buttons === 0 && pv.http === 0, pv);
+  ok('…its heading saying how many are shown when the scan flagged more', tilesOnScreen <= 10 || /10 shown/.test(pv.head), pv.head);
+  const tmpP = path.join(os.tmpdir(), 'grcatx_pix_' + process.pid + '.html');
+  fs.writeFileSync(tmpP, htmlP);
+  const outP = await browser.newPage({ viewport: { width: 1200, height: 1000 } });
+  await outP.goto('file://' + tmpP); await outP.waitForTimeout(800);
+  const innerP = outP.frames().find((f) => f !== outP.mainFrame());
+  const drawn = innerP ? await innerP.evaluate(() => Array.from(document.querySelectorAll('.pixlook img')).filter((i) => i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 20).length) : 0;
+  ok('…and every one of them draws in the downloaded file', drawn === pv.n, { drawn, n: pv.n });
+  if (SHOT) { await outP.waitForTimeout(1500); await (await outP.$('#print-catx')).screenshot({ path: path.join(SHOT, 'grcatx_pix.png') }); }
+  fs.unlinkSync(tmpP); await outP.close();
+  await ctx.close();
+
   console.log('── a signin without the Catalogue');
   ({ page, ctx } = await open({ catSrc: '/denied' }));
   await page.click('#catx-load');

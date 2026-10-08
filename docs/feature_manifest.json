@@ -14974,6 +14974,24 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "var pr = (cl.priority || []).indexOf(kd) >= 0;",
       "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: Image pixels' flagged pictures embedded as ten small JPEGs",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var CATX_THUMBS = 10, CATX_THUMB_PX = 160;",
+      "pr": 0
+    },
+    {
+      "name": "Golden ⬇ HTML: the pixel card's thumbnails read through our own image proxy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "mod === 'pix' ? catxThumbs(w, card)",
+      "pr": 0
+    },
+    {
+      "name": "check_grcatx: ten embedded pictures draw in the downloaded file",
+      "file": "tools/check_grcatx.js",
+      "pattern": "every one of them draws in the downloaded file",
+      "pr": 0
     }
   ]
 }

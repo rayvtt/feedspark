@@ -1359,6 +1359,8 @@ the three picks in order, a chart in each, no control or hook, the stylesheet, o
 two window widths), the frame put back, ✕ and Clear all, a saved set exported with the frame closed, and a
 signin without the Catalogue.
 
+**The pictures the scan flagged travel in the file** (Ray, 8 Oct 2026: "images of the scanned should be screenshot to add in report too - just keep 10 small images"). The Image pixels card's *To look at* tiles are buttons onto the client's image CDN, which the clean pass removes and a downloaded file must never call. When `pix` is picked, `catxThumbs` reads the first `CATX_THUMBS` (10) tiles' pictures through our own `/api/catalog/img` (same origin, so a canvas may read them), draws each at `CATX_THUMB_PX` (160px longest side, white behind) and embeds it as a small JPEG data URI with the tile's problem label (*Too small*, *Colour bg* …). `scrubExport` already lets `data:image/jpeg` through and nothing else. A picture that cannot be read is left out, never drawn as a broken frame; the heading says "· 10 shown" when the scan flagged more, or "· pictures not embedded" when none could be read. Harness: `tools/check_grcatx.js` scans in the framed Catalogue, then asserts at most ten pictures, each an embedded JPEG under 40 KB with its label, no button and no http image left, and every one of them drawing in the downloaded file.
+
 ### 9.12e ⬇ PDF is the ⬇ HTML on paper (8 Oct 2026)
 
 Ray: *"can the PDF download format be adapted to latest update and ensure design is consistent?"* The PDF
