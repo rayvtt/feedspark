@@ -591,6 +591,10 @@ window.addEventListener('load',restore);
   .po-a{display:flex;gap:6px;flex-wrap:wrap}
   .sec-tog{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;margin-left:8px;vertical-align:3px}
   .sec-tog:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .sec-allbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .sec-all{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;min-height:30px}
+  .sec-all:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .sec-body[hidden]{display:none!important}
   @media(max-width:760px){
     .svc-stage{margin-left:0;width:100%}
     .money{grid-template-columns:1fr}
@@ -1593,7 +1597,31 @@ $('#pz-volume').addEventListener('input',function(){VOL_MANUAL=true});
 /* ---------------- collapsed sections (Roadmap, the custom quote, AI briefs) ----------------
    the heading carries its own ▸ Show toggle — the skim view on a phone hands a tap to it */
 var SECS=lsGet('fcc-pz-sec',{});
-function secOpen(k){return !!SECS[k]}
+// EVERY SECTION FOLDS (Ray, 8 Oct 2026: "make Debrief Kit collapsible pls, actually, every section collapsible"): each
+// section's heading carries the same ▸ Show / ▾ Hide the Roadmap, Custom quote and AI briefs always had, its body wrapped
+// once at load (no node is rebuilt, so every id the renderers reach for still answers). Audit and Proposal open on a fresh
+// device, the rest folded; what a person opens or folds is remembered per device (fcc-pz-sec), never shared state.
+var SEC_WRAP={'svc-audit':'au','svc-prop':'pq','svc-debrief':'db','svc-rollout':'ro','svc-bank':'bk','svc-rates':'rc','svc-saved':'sv'};
+var SEC_DEF={au:1,pq:1};
+Object.keys(SEC_WRAP).forEach(function(id){
+  var sec=document.getElementById(id),w=sec&&sec.querySelector('.wrap'),h=w&&w.querySelector('h2');
+  if(!h||h.parentNode!==w||h.querySelector('.sec-tog'))return;
+  var k=SEC_WRAP[id],b=document.createElement('button');
+  b.type='button';b.className='sec-tog';b.setAttribute('data-sec',k);b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','sec-'+k);b.textContent='▸ Show';
+  h.appendChild(b);
+  var body=document.createElement('div');body.className='sec-body';body.id='sec-'+k;
+  while(h.nextSibling)body.appendChild(h.nextSibling);
+  w.appendChild(body);
+});
+// ⊕ Open all / ⊖ Fold all, under the hero's controls
+(function(){var hw=document.querySelector('.hero .wrap');if(!hw)return;var d=document.createElement('div');d.className='sec-allbar';
+  d.innerHTML='<button type="button" class="sec-all" data-secall="1">⊕ Open all sections</button><button type="button" class="sec-all" data-secall="0">⊖ Fold all sections</button>';
+  hw.appendChild(d);
+  d.addEventListener('click',function(e){var b=e.target.closest('[data-secall]');if(!b)return;var on=b.getAttribute('data-secall')==='1';
+    $$('.sec-tog').forEach(function(t){SECS[t.getAttribute('data-sec')]=on?1:0});lsSet('fcc-pz-sec',SECS);secApply();if(on)svRender()})})();
+// a jump to a section opens it first
+function secReveal(k){if(!secOpen(k))secSet(k,true)}
+function secOpen(k){return SECS[k]!=null?!!SECS[k]:!!SEC_DEF[k]}
 function secSet(k,on){SECS[k]=on?1:0;lsSet('fcc-pz-sec',SECS);secApply()}
 function secApply(){
   $$('.sec-tog').forEach(function(b){var k=b.getAttribute('data-sec'),on=secOpen(k),body=document.getElementById('sec-'+k);
@@ -3073,14 +3101,14 @@ function wire(){
     var act=a.getAttribute('data-act');
     if(act==='golive'){SV.mode='live';lsSet('fcc-svc-src','live');svKick();svRender();return}
     if(act==='file'){SV.mode='file';lsSet('fcc-svc-src','file');svRender();window.scrollTo({top:0,behavior:'smooth'});return}
-    if(act==='tab'){SV.tab=a.getAttribute('data-tab');lsSet('fcc-svc-tab',SV.tab);svRender();var r=$('#svc-rates');if(r)r.scrollIntoView({block:'start'});return}
+    if(act==='tab'){SV.tab=a.getAttribute('data-tab');lsSet('fcc-svc-tab',SV.tab);secReveal('rc');svRender();var r=$('#svc-rates');if(r)r.scrollIntoView({block:'start'});return}
     if(act==='custreset'){custDefaults();svRender();return}
     if(act==='cancelmode'){SV.version=null;SV.addTo=null;svRender();return}
     if(a.hasAttribute('data-load')){svLoadClient(a.getAttribute('data-load'));window.scrollTo({top:0,behavior:'smooth'});return}
     var sp=a.getAttribute('data-sp');
     if(sp){var id=a.getAttribute('data-id'),now=Date.now(),q=PROPS.data[id];
       if(sp==='add'){var pid=a.getAttribute('data-pid'),first=propFirst(pid);
-        if(first){var fl=toLaneOf(first);if(!fl)svLoadClient(first.client,first.markets);SV.addTo=pid;SV.version=null;svRender();if(!fl)$('#svc-prop').scrollIntoView({block:'start'})}return}
+        if(first){var fl=toLaneOf(first);if(!fl)svLoadClient(first.client,first.markets);SV.addTo=pid;SV.version=null;secReveal('pq');svRender();if(!fl)$('#svc-prop').scrollIntoView({block:'start'})}return}
       if(!q)return;
       if(sp==='chosen'){var on=!q.chosen,upd={};
         // choosing un-chooses the siblings — one save, so the pipeline never counts two choices
@@ -3089,7 +3117,7 @@ function wire(){
         PROPS.setMany(upd);return}
       if(sp==='sent'){if(!q.clientSafe)return;propPatch(id,function(n){n.sentAt={t:now,via:'manual'}});return}
       if(sp==='declined'){propPatch(id,function(n){if(n.declined)delete n.declined;else n.declined={t:now}});return}
-      if(sp==='version'){var fv=toLaneOf(q);loadOption(q);SV.version=id;SV.addTo=null;svRender();if(!fv)$('#svc-prop').scrollIntoView({block:'start'});return}
+      if(sp==='version'){var fv=toLaneOf(q);loadOption(q);SV.version=id;SV.addTo=null;secReveal('pq');svRender();if(!fv)$('#svc-prop').scrollIntoView({block:'start'});return}
       if(sp==='del'){if(!confirm('Delete option '+q.ref+'? It leaves the pipeline.'))return;propPatch(id,function(n){n.deleted={t:now}});return}
       return}
     var ro=a.getAttribute('data-ro');
@@ -3099,7 +3127,7 @@ function wire(){
   $('#pq-copy').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;var t=E.proposalText(o.map(function(k){return PQ[k]}),{tone:SV.tone,guard:true,from:meName()});copyText(t.subject+'\n\n'+t.body,'copied — client copy (guarded while figures are to confirm)')});
   $('#pq-opts').addEventListener('click',function(){var o=shownOpts();if(!o.length)return;copyText(E.optionsText(o.map(function(k){return PQ[k]}),{guard:true}),'copied — every option, side by side')});
   $('#pq-save').addEventListener('click',saveProposal);
-  $('#pq-debrief').addEventListener('click',function(){if(SV.dbSrc!=='build'||SV.dbEdited){if(!dbReplaceOk())return;SV.dbSrc='build';SV.dbEdited=false;svRenderNow()}$('#svc-debrief').scrollIntoView({block:'start'})});
+  $('#pq-debrief').addEventListener('click',function(){if(SV.dbSrc!=='build'||SV.dbEdited){if(!dbReplaceOk())return;SV.dbSrc='build';SV.dbEdited=false;svRenderNow()}secReveal('db');$('#svc-debrief').scrollIntoView({block:'start'})});
   $('#pq-cust').addEventListener('click',function(){var h=$('#svc-cust'),on=h.hidden;h.hidden=!on;this.setAttribute('aria-expanded',on?'true':'false');if(on)renderCust()});
   // the test-package segmented control (a button, so a click — guarded on its own data attribute)
   $('#svc-cust').addEventListener('click',function(e){var b=e.target.closest('button[data-tests]');if(!b)return;
@@ -3275,7 +3303,7 @@ function boot(){
     if(['go','go+ar','go+ar+rf','ar'].indexOf(pkg)>=0)SV.hlPkg=pkg;
     SV.boot=true;wire();
     if(c)svLoadClient(c,mk);else svRender();
-    if(SV.hlPkg)setTimeout(function(){var t=document.querySelector('.tier[data-opt="'+SV.hlPkg+'"]');if(t)t.scrollIntoView({block:'center'})},600);
+    if(SV.hlPkg){secReveal('pq');setTimeout(function(){var t=document.querySelector('.tier[data-opt="'+SV.hlPkg+'"]');if(t)t.scrollIntoView({block:'center'})},600)}
   }).catch(function(e){
     $('#svc-tiers').innerHTML='<div class="empty">The services audit could not start ('+esc((e&&e.message)||e)+') — hard-refresh to pick up the latest deploy.</div>';
   });

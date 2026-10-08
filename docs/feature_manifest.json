@@ -12462,6 +12462,18 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "Dynamic fields<b class=\"pv-dyn\"",
       "pr": 0
+    },
+    {
+      "name": "Services & Pricer: every section folds (heading toggle, Open all / Fold all, Audit + Proposal open on a fresh device)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "var SEC_WRAP={'svc-audit':'au'",
+      "pr": 0
+    },
+    {
+      "name": "Design guidelines: UX rule — every section folds",
+      "file": "docs/FeedSpark_Design.html",
+      "pattern": "<b>Every section folds</b>",
+      "pr": 0
     }
   ]
 }
