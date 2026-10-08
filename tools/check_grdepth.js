@@ -127,6 +127,12 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     const dc = await page.$eval('.dep-card[data-dep="detail_depth"] .dep-foot', (f) => f.textContent);
     ok('the details card names what the feed carries today and gives examples by product type',
       /Carried today: sleeve length 3,100 · neckline 2,900 · fit 2,400 · fastening 600/.test(dc) && /dresses: dress length/.test(dc), dc);
+    // the explanation folds; the coloured legend holds one line (Ray, 8 Oct 2026)
+    const fold = await page.$$eval('.dep-card', (cs) => cs.map((c) => { const sp = Array.from(c.querySelectorAll('.dep-leg span')); const lg = c.querySelector('.dep-leg');
+      return { k: c.getAttribute('data-dep'), oneLine: sp.every((x) => Math.abs(x.offsetTop - sp[0].offsetTop) < 2), fits: lg.scrollWidth <= lg.clientWidth + 1,
+        closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' }; }));
+    ok('each depth card keeps its coloured legend on ONE line, fitting the card, with the explanation folded behind "How it\'s scored · full credit at N+"',
+      fold.length === 3 && fold.every((f) => f.oneLine && f.fits && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
     const pres = await Promise.all(['additional_image_link', 'product_highlight', 'product_detail'].map((k) => row(page, k)));
     ok('the presence rows stay (is it in the feed at all?) but say the depth row scores instead',
       pres.every((r) => r && r.byDepth && /^g:/.test(r.nm)), pres.map((r) => r && r.nm));
@@ -181,6 +187,8 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     await xp.close();
     await page.evaluate(() => document.body.classList.add('pdf'));
     const pv = await page.$$eval('.dep-card', (cs) => cs.filter((c) => getComputedStyle(c).display !== 'none' && c.offsetHeight > 0).length);
+    const pdfOpen = await page.evaluate(() => { const ds = Array.from(document.querySelectorAll('details.dep-more')); ds.forEach((d) => { d.open = true; }); return ds.length; });
+    ok('…and a paper copy can carry every explanation open (preparePdf opens the folds)', pdfOpen === 3 && /details\.dep-more:not\(\[open\]\)/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'docs', 'FeedSpark_GoldenRecord.html'), 'utf8')));
     ok('…and the PDF layout prints the cards', pv === 3, pv);
     await page.close();
   }
