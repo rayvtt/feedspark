@@ -419,6 +419,13 @@ else
   echo "   ✗ Restock harness FAILED — see node tools/test_restock.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6e2/7: Social DPA (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)"
+if node tools/test_social.mjs >/dev/null 2>&1; then
+  echo "   ✓ six networks, text limits, button mapping, tokens stand down when missing/too small, conditions, first-match-wins, week grid, sanitiser, brief, routes, registries hold"
+else
+  echo "   ✗ Social DPA harness FAILED — see node tools/test_social.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h6f/7: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"
 if node tools/test_security.mjs >/dev/null 2>&1; then
   echo "   ✓ anonymous → 401 on every non-public lane, the lifted resolver refuses a spoofed header, caps/throttles/fetchWithin hold, no secret in git"

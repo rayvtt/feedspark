@@ -73,6 +73,11 @@ export const STATE_NS = {
   // A tag that meant Urgent on one person's screen and something else on another's would make
   // every number built on it meaningless.  'tags' -> [def], 'rules' -> [rule]
   tmtagdef:    null,
+  // SOCIAL DPA SCHEDULES (Ray, 8 Oct 2026: "these fields can be dynamically scheduled based on the
+  // day, weather, customer behavior, or analytics"). The schedule an AM builds for a brand on /social
+  // — its rules, defaults, overlay and per-network choices — is the TEAM's plan for that account, not
+  // one screen's: whoever opens the brand next must see the same schedule.  client -> setup
+  socialdpa:   'self',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

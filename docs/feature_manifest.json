@@ -14506,6 +14506,108 @@
       "pattern": "redirect: 'follow'",
       "pr": 0,
       "forbidden": true
+    },
+    {
+      "name": "Social DPA: the page is served",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/social':      { html: SOCIAL_PAGE, slug: 'social' },",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the engine is served verbatim",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/social/engine.js' && request.method === 'GET')",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a grantable module",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "{ slug: 'social', label: 'Social DPA', path: '/social' }",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: on the migration board",
+      "file": "cloudflare/feedspark-deck/src/migration.js",
+      "pattern": "{ p: '/social', n: 'Social DPA', w: 3, m: '2026-12' }",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the migration board's page twin",
+      "file": "docs/FeedSpark_Transformation.html",
+      "pattern": "{p:'/social',n:'Social DPA',w:3,m:'2026-12',",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the schedule is shared state",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "socialdpa:   'self',",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: six placements",
+      "file": "docs/social_engine.js",
+      "pattern": "{ id: 'tiktok', net: 'tiktok', name: 'TikTok'",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a missing figure stands a rule down",
+      "file": "docs/social_engine.js",
+      "pattern": "return { ok: !missing.length && !!text, text: missing.length ? '' : text",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: a figure too small to be proof is refused",
+      "file": "docs/social_engine.js",
+      "pattern": "a shopper would read as proof",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the overlay is laid out inside the safe zone",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "var L = STU.layout(comp, sr.w, sr.h);",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: views in 24 hours are a demo figure",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "wire the Meta pixel’s ViewContent or GA4 to make it real",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: shared demo images are decoded, never one onload each",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "if (im.decode) return im.decode().then(",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the harness runs in qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_social.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the tripwire runs in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_social.js",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the harness runs in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "run: node tools/test_social.mjs",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the stub feeds the phone tripwire",
+      "file": "tools/check_mobile.js",
+      "pattern": "const SOCIAL_STUB = require('./social_stub.js').stubLines();",
+      "pr": 0
+    },
+    {
+      "name": "Social DPA: the stub feeds the dark-mode tripwire",
+      "file": "tools/check_darkmode.js",
+      "pattern": "const SOCIAL_STUB = require('./social_stub.js').stubLines();",
+      "pr": 0
     }
   ]
 }

@@ -115,11 +115,11 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/kwcal'] === 'kwcal', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 22 && MODULES.every((m) => m.slug && m.label), 'twenty-two grantable modules, each {slug,label}');
+ok(MODULES.length === 23 && MODULES.every((m) => m.slug && m.label), 'twenty-three grantable modules, each {slug,label}');
 ok(MODULES.filter((m) => !m.path).map((m) => m.slug).join(',') === 'pricer-cost', 'every module has a page path except the pricer-cost grant (a grant without a page)');
 ok(!Object.prototype.hasOwnProperty.call(MODULE_PATHS, 'undefined') && Object.keys(MODULE_PATHS).every((p) => p.charAt(0) === '/'),
   'MODULE_PATHS carries only real routes — a path-less grant never writes MODULE_PATHS["undefined"]');
-ok(Object.keys(MODULE_PATHS).length === 21, 'twenty-one module pages behind the page gate');
+ok(Object.keys(MODULE_PATHS).length === 22, 'twenty-two module pages behind the page gate');
 ok(MODULES.some((m) => m.slug === 'catalog' && m.path === '/catalog'), 'the Catalogue is a grantable module, its slug the path (MODGATE reads the slug off the link)');
 // the AI transformation roadmap is a MANAGEMENT page: opt-in, never inherited by an unrestricted signin
 ok(OPT_IN_MODULES.join(',') === 'transformation,pricer-cost', 'two opt-in modules: the transformation roadmap and the Pricer cost grant');

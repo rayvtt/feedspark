@@ -91,6 +91,8 @@ jobs:
         run: node tools/test_aivis.mjs
       - name: Restock harness (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)
         run: node tools/test_restock.mjs
+      - name: Social DPA harness (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)
+        run: node tools/test_social.mjs
       - name: Security harness (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)
         run: node tools/test_security.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
