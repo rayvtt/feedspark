@@ -12570,6 +12570,24 @@
       "file": "tools/check_grcatx.js",
       "pattern": "⬇ PDF draws the picked Catalogue cards into the document",
       "pr": 0
+    },
+    {
+      "name": "Golden: g:product_highlight / g:product_detail ARE their depth rows when measured (DEP_MERGE)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var DEP_MERGE = { product_highlight: 1, product_detail: 1 };",
+      "pr": 0
+    },
+    {
+      "name": "Golden depth check: highlights and details merged into their field rows, pop-up on the name",
+      "file": "tools/check_grdepth.js",
+      "pattern": "hovering the merged field\\'s NAME opens its breakdown too",
+      "pr": 0
+    },
+    {
+      "name": "Golden all-markets check reads the table in the PDF's export document",
+      "file": "tools/check_grmkts.js",
+      "pattern": "the one-click PDF captures the document WITH the all-markets table on it",
+      "pr": 0
     }
   ]
 }

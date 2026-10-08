@@ -479,7 +479,8 @@ window.addEventListener('load',restore);
   body:not(.pdf) .dep-card{display:none}
   .dep-card{max-width:560px;margin:2px 0 10px}
   .dep-card .pl{width:120px}
-  .at-bar.dep-tgt{cursor:pointer}
+  .at-bar.dep-tgt,.at-nm.dep-mg[data-deptip]{cursor:pointer}
+  .at-nm.dep-mg[data-deptip]:hover,.at-nm.dep-mg[aria-expanded=true]{color:var(--orange-deep)}
   .at-bar.dep-tgt:hover,.at-bar.dep-tgt:focus-visible,.at-bar.dep-tgt[aria-expanded=true]{outline:2px solid var(--orange);outline-offset:2px}
   .dptip{position:fixed;z-index:90;background:#171A21;color:#E8EAEF;border:1px solid #2C3039;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:10px 12px;font-size:11.5px;font-weight:700;pointer-events:none;min-width:260px;max-width:min(360px,calc(100vw - 16px));display:none}
   .dptip.pin{pointer-events:auto}
@@ -1083,6 +1084,11 @@ window.addEventListener('load',restore);
   ];
   // the depth twin that replaces each presence attribute in the score when it was measured
   var DEPTH_OF = {}; SPEC.forEach(function (x) { if (x.of) DEPTH_OF[x.of] = x.k; });
+  // ONE ROW PER FIELD (Ray, 8 Oct 2026: "merge - highlight per product > into g:product_highlight, same for details too - and
+  // the pop up table happen when hover those merged fields instead"): where the scan counted them per product, the
+  // g:product_highlight and g:product_detail rows ARE the depth reading — named as the field, scored on how many each product
+  // carries, the breakdown on hover; a scan that could not count them shows the plain filled-or-not row instead
+  var DEP_MERGE = { product_highlight: 1, product_detail: 1 };
   // the category each scoped attribute is asked of — mirrors GPC_SCOPE[k].what in the engine
   var GPC_WHAT = { color: 'clothing & accessories', gender: 'clothing & accessories', age_group: 'clothing & accessories',
     size: 'clothing & shoes', material: 'clothing & accessories', pattern: 'clothing & accessories' };
@@ -1131,7 +1137,7 @@ window.addEventListener('load',restore);
         (a.dup ? '; ' + fmt(a.dup) + ' lines repeat another attribute (colour, size, brand, price …) or each other, so they are not counted' : '') +
         (a.bad ? '; ' + fmt(a.bad) + ' lines carry no name or value' : '');
     }
-    return w + ' · replaces g:' + x.of + ' in the score (filled is not full)';
+    return w + (DEP_MERGE[x.of] ? ' · scored on how many each product carries, not on whether the field is filled' : ' · replaces g:' + x.of + ' in the score (filled is not full)');
   }
   var DEP_KEYS = ['0', '1', '2', '3', '4', '5', '6+'];
   function depCol(b, tg) {
@@ -2470,10 +2476,13 @@ window.addEventListener('load',restore);
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || (x.d ? null : { present: false })) : null;
         var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
         var gs = GPC_WHAT[x.k], na = !!a.na;
+        var mg = !!(x.of && DEP_MERGE[x.of]);   // a depth reading that takes its field's own row
+        if (DEP_MERGE[x.k] && s.attrs[DEPTH_OF[x.k]]) return;   // …so the filled-or-not row gives way to it
+        if (mg && nm) return;                                  // not counted on this scan: the field's plain row scores
         // its depth twin was measured: this presence row stays (is it in the feed at all?) but the twin scores
         var repl = DEPTH_OF[x.k] && s.attrs[DEPTH_OF[x.k]] ? SPEC.filter(function (y) { return y.k === DEPTH_OF[x.k]; })[0] : null;
         var row = '<div class="at-row' + (a.present && !na ? '' : ' missing') + (isWav || na ? ' waived' : '') + (x.of ? ' dep-row' : '') + (repl ? ' dep-by-row' : '') + '">' +
-          (x.of ? '<span class="at-nm dep-nm" title="' + esc(x.n) + '">' + esc(x.lbl) +
+          (x.of ? '<span class="at-nm dep-nm' + (mg ? ' dep-mg' : '') + '"' + (mg && a.dist ? ' data-deptip="' + esc(x.k) + '"' : ' title="' + esc(mg ? 'g:' + x.of + ' — scored on how many ' + x.many + ' each product carries. ' + x.n : x.n) + '"') + '>' + (mg ? '<i>g:</i>' + esc(x.of) : esc(x.lbl)) +
             (x.h ? '<span class="fs-std" title="FeedSpark’s standard — ' + x.tg + ' or more ' + esc(x.many) + ' per product is full credit; Google sets no number">FeedSpark</span>'
               : '<span class="fs-std g-std" title="Google’s own recommendation (answer 9216100): 4–6 highlights per product">Google 4–6</span>')
           : x.h ? '<span class="at-nm" title="Keyword strings in g:product_type 2–10 — FeedSpark keyword injection, not a Google specification attribute">' + esc(x.k) +
@@ -2517,7 +2526,7 @@ window.addEventListener('load',restore);
             esc(x.kw ? kwNote(a) : (x.of ? depNote(x, a) : (basis ? basis + ' — ' + x.n : x.n))) + '</span>';
         } else {
           var hard = x.t === 'req' || isExp || !!(a.scope && a.scope.n && x.t === 'cond');
-          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">' + (x.kw ? 'no keyword slots' : (x.of && !mg ? 'no g:' + esc(x.of) : 'not in feed')) + '</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc((basis ? 'needed on ' + basis.slice(3) + ' — ' : '') + x.n) + '">' + esc(basis ? 'needed on ' + basis.slice(3) + ' — ' + x.n : x.n) + '</span>';
         }
@@ -2533,7 +2542,7 @@ window.addEventListener('load',restore);
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
-          (x.t === 'req' || x.of ? '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
+          (x.t === 'req' || (x.of && !mg) ? '<span class="abtn ab-gap" aria-hidden="true">🔎 PDP</span>' : '<button class="abtn" data-pdp="' + esc(mg ? x.of : x.k) + '" title="Sample product pages blank in g:' + esc(mg ? x.of : x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
         if (x.of && a.present) h += depCard(x, a);   // how many each product carries, 0 … 6+
       });

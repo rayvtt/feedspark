@@ -1090,6 +1090,13 @@ score, → Brief opening a keyword brief).
 
 ### 9.15 Depth in the score — images, highlights and details per product (7 Oct 2026)
 
+> **One row per field (8 Oct 2026, Ray: "merge - highlight per product > into g:product_highlight, same for details
+> too - and the pop up table happen when hover those merged fields instead").** Where the scan counted them per
+> product, the g:product_highlight and g:product_detail rows ARE the depth reading (`DEP_MERGE`): named as the field,
+> scored on how many each product carries, the breakdown on hover over the name or the bar, the field's own 🔎 PDP
+> action kept. A scan that could not count them shows the plain filled-or-not row, with no "not measured" twin
+> beside it. Images per product stays its own row — it counts the main image too, so it is not g:additional_image_link.
+>
 > **A pop-up chart, not a card under every row (8 Oct 2026, Ray: "these bar charts of tier population should be a pop
 > up chart followed the design from Product Type (it's easier to see and cleaner)").** On screen the breakdown opens
 > from the depth row's own bar — hover or focus shows it, a tap pins it (a phone has no hover), Esc or a click

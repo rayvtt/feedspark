@@ -101,9 +101,11 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
   {
     const attrs = attrsWith(true);
     const page = await open('Reiss', attrs);
-    const img = await row(page, 'images per product'), hl = await row(page, 'highlights per product'), det = await row(page, 'details per product');
-    ok('the three depth rows sit in the Recommended tier, named in words, never as a g: key',
-      [img, hl, det].every((r) => r && /Recommended/i.test(r.tier) && !/^g:/.test(r.nm)), [img, hl, det].map((r) => r && r.nm));
+    const img = await row(page, 'images per product'), hl = await row(page, 'product_highlight'), det = await row(page, 'product_detail');
+    // Ray, 8 Oct 2026: "merge - highlight per product > into g:product_highlight, same for details too"
+    ok('images per product is its own row in words; highlights and details ARE their fields\' rows (g:product_highlight, g:product_detail) — one row each, all in Recommended',
+      [img, hl, det].every((r) => r && /Recommended/i.test(r.tier)) && !/^g:/.test(img.nm) && /^g:product_highlight/.test(hl.nm) && /^g:product_detail/.test(det.nm) &&
+      (await page.$$eval('.at-row .at-nm', (ns) => ns.filter((n) => /^(g:)?product_highlight|^highlights per product|^(g:)?product_detail|^details per product/.test(n.textContent)).length)) === 2, [img, hl, det].map((r) => r && r.nm));
     ok('images and details are badged FeedSpark (our number), highlights Google 4–6 (Google\'s)',
       img && img.badges.join() === 'FeedSpark' && det && det.badges.join() === 'FeedSpark' && hl && hl.badges.join() === 'Google 4–6', [img, hl, det].map((r) => r && r.badges));
     ok('images per product is ★ for a Fashion brand (the approved default)', img && img.star);
@@ -146,9 +148,14 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       closed: !!c.querySelector('details.dep-more:not([open]) .dep-foot'), sum: (c.querySelector('details.dep-more summary') || {}).textContent || '' })));
     ok('the documents\' copy is the same rows, with the explanation folded behind "How it\'s scored · full credit at N+"',
       fold.length === 3 && fold.every((f) => f.rows === 7 && f.closed && /How it’s scored · full credit at \d\+/.test(f.sum)), fold);
-    const pres = await Promise.all(['additional_image_link', 'product_highlight', 'product_detail'].map((k) => row(page, k)));
-    ok('the presence rows stay (is it in the feed at all?) but say the depth row scores instead',
-      pres.every((r) => r && r.byDepth && /^g:/.test(r.nm)), pres.map((r) => r && r.nm));
+    const pres = await row(page, 'additional_image_link');
+    ok('additional_image_link keeps its presence row (images per product counts the main image too) and says the depth row scores instead',
+      pres && pres.byDepth && /^g:/.test(pres.nm), pres && pres.nm);
+    ok('the merged rows carry no "scored by depth" chip — they ARE the depth reading — and keep their PDP action for the field', !hl.byDepth && !det.byDepth && hl.pdp && det.pdp, [hl, det]);
+    await page.hover('.at-row .at-nm[data-deptip="hl_depth"]'); await page.waitForTimeout(60);
+    const nmTip = await tipOf();
+    await page.mouse.move(5, 5); await page.waitForTimeout(60);
+    ok('hovering the merged field\'s NAME opens its breakdown too', nmTip && /Highlights per product/i.test(nmTip.h4) && nmTip.rows.length === 7, nmTip);
     // Ray, 8 Oct 2026: "make sure button spacing and type is the same as rest of other attributes" — a row
     // missing an action keeps its slot, so every → Brief / ✉ Ask client sits in ONE column down the tiers
     const cols = await page.evaluate(() => {
@@ -159,8 +166,8 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     });
     ok('every row\'s buttons line up — one column each for ✉ Ask client, → Brief and 🔎 PDP, in one type and padding',
       cols.brief.length === 1 && cols.ask.length === 1 && cols.pdp.length <= 1 && cols.type.length === 1 && cols.gap, cols);
-    ok('depth rows: ✉ Ask client + → Brief, no PDP scan (a product page holds one product, not a count)',
-      [img, hl, det].every((r) => r.ask && r.brief && !r.pdp));
+    ok('images per product: ✉ Ask client + → Brief, no PDP scan; the merged field rows keep the field\'s PDP scan (a product page can hold the missing highlights / details)',
+      [img, hl, det].every((r) => r.ask && r.brief) && !img.pdp && hl.pdp && det.pdp);
     const d = await dial(page), e = LG.goldenScore(attrs, LG.profileFor('Reiss', {})).score;
     ok('the dial is the engine\'s score — depth in, the presence rows it replaces out', d === e, [d, e]);
     const noDep = LG.goldenScore(attrsWith(false), LG.profileFor('Reiss', {})).score;
@@ -224,6 +231,8 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     const img = await row(page, 'images per product'), ail = await row(page, 'additional_image_link');
     ok('the depth row says NOT MEASURED, and that the presence row scores until the next XML scan',
       img && /not measured/i.test(img.miss) && /g:additional_image_link scores until the next XML scan/.test(img.note) && !img.card, img);
+    const hlR = await row(page, 'product_highlight'), dtN = await page.$$eval('.at-row .at-nm', (ns) => ns.filter((n) => /per product/.test(n.textContent) && !/images/.test(n.textContent)).length);
+    ok('a merged field not counted on this scan is its plain row — filled or not, no "not measured" twin beside it', hlR && !hlR.miss && /%$/.test(hlR.cov) && dtN === 0, [hlR, dtN]);
     ok('…with nothing to act on', img && !img.ask && !img.brief && !img.pdp);
     ok('the presence row scores as it always did — no "scored by depth" chip', ail && !ail.byDepth && ail.cov === '98%', ail);
     const d = await dial(page), e = LG.goldenScore(attrs, LG.profileFor('Reiss', {})).score;
