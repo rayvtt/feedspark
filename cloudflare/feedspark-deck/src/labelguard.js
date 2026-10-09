@@ -2960,3 +2960,184 @@ export function clVerdict(score, n) {
   if (score >= 60) return { band: 'mid', pill: 'Partly KPI-driven', line: 'Some labels carry a bidding signal; the gaps below are the ones that move budget most.' };
   return { band: 'poor', pill: 'Mostly descriptive', line: 'The labels mostly describe the product rather than how it performs, sells through or earns — campaign splits by them cannot follow the KPIs.' };
 }
+
+/* ---------------- META CATALOGUE AUDIT (Ray, 9 Oct 2026: "in golden record - let's also add in Meta audit as well
+   (areas such as Title for Meta should be < 60 characters) - Imagery (if there's overlay being used on Meta feed) divide a
+   new section just on Meta alone"). The Golden Record reads the GOOGLE feed; a brand's Meta catalogue (the wired
+   `<mkt>-fb` feed) is a different file with a different reader, so it is audited on its OWN terms and scored apart — never
+   folded into the dial. The rules quote Meta's catalogue field reference
+   (developers.facebook.com/docs/marketing-api/catalog/reference/, read 9 Oct 2026); the one house rule is named as one:
+   titles under 60 characters is FeedSpark's standard for Meta (Meta's own words: "Character limit: 200, but we recommend
+   a maximum of 65 to avoid longer titles being cut off"). Imagery: whether the catalogue's main image is a FeedSpark
+   overlay (read off the URL — the Overlays module's own classifier when the page hands it in) is REPORTED, never scored:
+   an overlay is a service, not a fault. Streamed in the browser like content quality; the worker keeps the aggregate. */
+export const META_REQ = ['id', 'title', 'description', 'availability', 'condition', 'price', 'link', 'image_link', 'brand'];
+export const META_OPT = ['sale_price', 'item_group_id', 'additional_image_link', 'google_product_category', 'fb_product_category', 'product_type', 'color', 'size', 'gender', 'age_group', 'material'];
+export const META_TITLE_HOUSE = 60;   // FeedSpark's standard (Ray)
+export const META_TITLE_REC = 65;     // Meta's own recommendation
+export const META_SRC = 'https://developers.facebook.com/docs/marketing-api/catalog/reference/';
+const META_AVAIL = ['in stock', 'out of stock'];
+const META_COND = ['new', 'refurbished', 'used'];
+const META_PRICE_RE = /^\d+(?:\.\d{1,2})?\s[A-Z]{3}$/;
+const META_FIELD_ALIASES = { additional_image_link: ['additional_image_link(1)'], product_type: ['product_type(1)'] };
+// one rule = one sentence a client can read; sev fail = Meta's stated requirement, warn = its stated guidance; house = ours
+export const META_RULES = [
+  { id: 't-house', area: 'title', sev: 'warn', house: true, label: 'Title longer than 60 characters', why: 'FeedSpark’s standard for Meta: under 60 so the headline is never cut on feed, Stories or Reels placements. Meta itself recommends 65 at most.' },
+  { id: 't-max', area: 'title', sev: 'fail', label: 'Title over Meta’s 200-character limit', why: '“Character limit: 200” — Meta’s catalogue reference.' },
+  { id: 't-caps', area: 'title', sev: 'warn', label: 'Title written in capitals for emphasis', why: 'Shouted words read as an advert, not a product name; Meta asks for a specific, relevant title.' },
+  { id: 't-promo', area: 'title', sev: 'warn', label: 'Promotional wording in the title', why: 'Sale or offer words belong in the ad and the sale_price field — a title names the product.' },
+  { id: 'd-max', area: 'desc', sev: 'fail', label: 'Description over 9,999 characters', why: '“Max character limit: 9999” — Meta’s catalogue reference.' },
+  { id: 'd-html', area: 'desc', sev: 'warn', label: 'Description carries HTML', why: '“Use plain text (not HTML)” — Meta’s catalogue reference.' },
+  { id: 'd-link', area: 'desc', sev: 'warn', label: 'Description carries a link', why: 'Meta: don’t “include any links” in the description.' },
+  { id: 'd-caps', area: 'desc', sev: 'warn', label: 'Description in capital letters', why: 'Meta: “don’t enter text in all capital letters”.' },
+  { id: 'd-same', area: 'desc', sev: 'warn', label: 'Description is the title again', why: '“The description should be different than the title.”' },
+  { id: 'v-avail', area: 'values', sev: 'fail', label: 'Availability not “in stock” or “out of stock”', why: 'The two values Meta supports.' },
+  { id: 'v-cond', area: 'values', sev: 'fail', label: 'Condition not new / refurbished / used', why: 'The three values Meta supports.' },
+  { id: 'v-price', area: 'values', sev: 'fail', label: 'Price not “9.99 GBP”', why: 'A number, a space, the ISO 4217 code — a period for decimals, no currency symbol.' },
+  { id: 'v-sale', area: 'values', sev: 'fail', label: 'Sale price not below the price', why: '“Must be less than the full price.”' },
+  { id: 'v-id', area: 'values', sev: 'fail', label: 'ID repeated or over 100 characters', why: '“If there are multiple instances of the same ID, we ignore all instances.”' },
+  { id: 'v-brand', area: 'values', sev: 'fail', label: 'Brand over 100 characters', why: '“Max characters: 100”.' },
+  { id: 'i-link', area: 'img', sev: 'fail', label: 'Main image is not a web address', why: 'image_link must be a URL to a JPEG or PNG of at least 500 × 500 pixels.' },
+  { id: 'i-more', area: 'img', sev: 'warn', label: 'More than 20 additional images', why: 'Meta takes “up to 20 additional images”.' },
+  { id: 'l-link', area: 'values', sev: 'fail', label: 'Product link is not an http(s) address', why: 'The link “must begin with http:// or https://”.' },
+];
+const META_RULE = {}; META_RULES.forEach((r) => { META_RULE[r.id] = r; });
+export const META_AREAS = [
+  { k: 'req', label: 'Required fields', w: 3 },
+  { k: 'title', label: 'Titles', w: 2 },
+  { k: 'desc', label: 'Descriptions', w: 1 },
+  { k: 'values', label: 'Values Meta reads', w: 1 },
+  { k: 'img', label: 'Imagery', w: 1 },
+];
+function metaCols(header) {
+  const norm = (header || []).map(normHeader), out = {};
+  META_REQ.concat(META_OPT).forEach((k) => {
+    let i = norm.indexOf(k);
+    if (i < 0 && META_FIELD_ALIASES[k]) for (const a of META_FIELD_ALIASES[k]) { i = norm.indexOf(a); if (i >= 0) break; }
+    out[k] = i;
+  });
+  // repeated additional images: every (n) column after the first
+  out._more = [];
+  norm.forEach((h, i) => { if (/^additional_image_link\(\d+\)$/.test(h) && i !== out.additional_image_link) out._more.push(i); });
+  return out;
+}
+function metaImgs(v) { return String(v || '').split(/\s*(?:\|\|\||[,;|]|\s)\s*/).filter((u) => /^https?:\/\//i.test(u)); }
+function metaNum(v) { const m = /^\s*([\d.]+)/.exec(String(v || '')); return m ? parseFloat(m[1]) : NaN; }
+/* opts: { classify(url) → {label, family}|null } — the Overlays module's classifyOverlay when the page has it */
+export function metaStream(opts) {
+  const o = opts || {};
+  let cols = null, rows = 0;
+  const filled = {}, hits = {}, ex = {}, ids = new Map(), ov = {};
+  let ovN = 0, imgSum = 0, noMore = 0, tLen = 0, tN = 0;
+  META_RULES.forEach((r) => { hits[r.id] = 0; ex[r.id] = []; });
+  const hit = (id, pid, v) => { hits[id]++; if (ex[id].length < 4) ex[id].push({ id: String(pid || '').slice(0, 60), v: String(v == null ? '' : v).slice(0, 140) }); };
+  const val = (r, k) => { const i = cols[k]; return i >= 0 && r[i] != null ? String(r[i]).trim() : ''; };
+  const host = /^https?:\/\/([a-z0-9-]+\.)?(feedspark|feed5)\.com(\/|$)/i;
+  return {
+    onRow(r, liveHeader) {
+      if (!cols) { cols = metaCols(r); return; }
+      if (liveHeader && liveHeader.length) { const g = metaCols(liveHeader); Object.keys(g).forEach((k) => { if (k === '_more' || !(cols[k] >= 0)) cols[k] = g[k]; }); }
+      rows++;
+      META_REQ.concat(META_OPT).forEach((k) => { if (val(r, k)) filled[k] = (filled[k] || 0) + 1; });
+      const id = val(r, 'id'), ti = val(r, 'title'), de = val(r, 'description'), br = val(r, 'brand');
+      if (id) { ids.set(id, (ids.get(id) || 0) + 1); if (id.length > 100) hit('v-id', id, id); }
+      if (ti) {
+        tLen += ti.length; tN++;
+        if (ti.length > META_TITLE_HOUSE) hit('t-house', id, ti);
+        if (ti.length > 200) hit('t-max', id, ti);
+        if (shoutyCaps(stripBrand(ti, br))) hit('t-caps', id, ti);
+        if (PROMO_RE.test(ti)) hit('t-promo', id, ti);
+      }
+      if (de) {
+        if (de.length > 9999) hit('d-max', id, de.slice(0, 80) + '…');
+        if (HTML_RE.test(de)) hit('d-html', id, de);
+        if (URL_RE.test(de)) hit('d-link', id, de);
+        const dl = de.replace(/[^A-Za-z]/g, '');
+        if (dl.length >= 12 && dl === dl.toUpperCase()) hit('d-caps', id, de);
+        if (ti && normVal(de) === normVal(ti)) hit('d-same', id, de);
+      }
+      const av = val(r, 'availability'); if (av && META_AVAIL.indexOf(av.toLowerCase().replace(/_/g, ' ')) < 0) hit('v-avail', id, av);
+      const co = val(r, 'condition'); if (co && META_COND.indexOf(co.toLowerCase()) < 0) hit('v-cond', id, co);
+      const pr = val(r, 'price'); if (pr && !META_PRICE_RE.test(pr)) hit('v-price', id, pr);
+      const sp = val(r, 'sale_price'); if (sp && pr) { const a = metaNum(sp), b = metaNum(pr); if (!(a < b)) hit('v-sale', id, sp + ' vs ' + pr); }
+      if (br && br.length > 100) hit('v-brand', id, br);
+      const ln = val(r, 'link'); if (ln && !/^https?:\/\//i.test(ln)) hit('l-link', id, ln);
+      const im = val(r, 'image_link');
+      if (im) {
+        if (!/^https?:\/\//i.test(im)) hit('i-link', id, im);
+        else if (host.test(im)) {
+          ovN++;
+          let c = null; try { c = o.classify ? o.classify(im) : null; } catch (e) { c = null; }
+          const lb = (c && c.label) || 'FeedSpark overlay';
+          const t = ov[lb] || (ov[lb] = { label: lb, family: (c && c.family) || '', n: 0, eg: [] });
+          t.n++; if (t.eg.length < 3) t.eg.push({ id: String(id).slice(0, 60), url: im.slice(0, 600) });
+        }
+      }
+      const more = [];
+      if (cols.additional_image_link >= 0) metaImgs(r[cols.additional_image_link]).forEach((u) => more.push(u));
+      (cols._more || []).forEach((i) => metaImgs(r[i]).forEach((u) => more.push(u)));
+      const uniq = more.filter((u, i) => u !== im && more.indexOf(u) === i);
+      imgSum += uniq.length; if (!uniq.length) noMore++;
+      if (uniq.length > 20) hit('i-more', id, uniq.length + ' additional images');
+    },
+    rows() { return rows; },
+    finish() {
+      if (!cols || !rows) throw new Error('the Meta feed produced no rows');
+      ids.forEach((n, k) => { if (n > 1) { hits['v-id'] += n; if (ex['v-id'].length < 4) ex['v-id'].push({ id: k.slice(0, 60), v: '×' + n }); } });
+      const fields = {};
+      META_REQ.concat(META_OPT).forEach((k) => { fields[k] = { col: cols[k] >= 0, n: filled[k] || 0 }; });
+      const rules = {};
+      META_RULES.forEach((r) => { if (hits[r.id]) rules[r.id] = { n: Math.min(hits[r.id], rows), ex: ex[r.id] }; });
+      const types = Object.keys(ov).map((k) => ov[k]).sort((a, b) => b.n - a.n).slice(0, 8);
+      return { v: 1, t: Date.now(), client: o.client || '', market: o.market || '', rows, fields, rules,
+        title: { avg: tN ? Math.round((tLen / tN) * 10) / 10 : null },
+        img: { overlay: ovN, types, avgMore: Math.round((imgSum / rows) * 10) / 10, noMore } };
+    },
+  };
+}
+const META_SEVW = { fail: 1, warn: 0.4 };
+// the reading, scored: five areas each out of 100, weighted 3/2/1/1/1 — its OWN score, never the Golden dial's
+export function metaScore(m) {
+  if (!m || !m.rows) return null;
+  const pct = (n) => Math.round((Math.min(n, m.rows) / m.rows) * 1000) / 10;
+  const req = META_REQ.map((k) => { const f = (m.fields && m.fields[k]) || {}; return { k, col: !!f.col, cov: f.col ? pct(f.n || 0) : 0 }; });
+  const broken = META_RULES.filter((r) => m.rules && m.rules[r.id]).map((r) => {
+    const x = m.rules[r.id], p = pct(x.n);
+    return { id: r.id, area: r.area, sev: r.sev, house: !!r.house, label: r.label, why: r.why, n: x.n, pct: p, cost: Math.round(p * META_SEVW[r.sev] * 10) / 10, ex: x.ex || [] };
+  }).sort((a, b) => b.cost - a.cost);
+  const areas = META_AREAS.map((a) => {
+    let s;
+    if (a.k === 'req') s = req.reduce((t, x) => t + x.cov, 0) / req.length;
+    else s = Math.max(0, 100 - broken.filter((b) => b.area === a.k).reduce((t, b) => t + b.pct * META_SEVW[b.sev], 0));
+    return { k: a.k, label: a.label, w: a.w, score: Math.round(s * 10) / 10 };
+  });
+  const wt = areas.reduce((t, a) => t + a.w, 0);
+  const score = Math.round((areas.reduce((t, a) => t + a.score * a.w, 0) / wt) * 10) / 10;
+  const img = m.img || {};
+  return { score, areas, req, broken, rows: m.rows, t: m.t,
+    title: { avg: m.title && m.title.avg, over: (broken.filter((b) => b.id === 't-house')[0] || { pct: 0 }).pct },
+    overlay: { n: img.overlay || 0, pct: pct(img.overlay || 0), types: img.types || [] },
+    more: { avg: img.avgMore, none: img.noMore || 0 } };
+}
+// what the worker keeps of a pushed reading: known fields and rule ids only, numbers clamped, strings cut
+export function cleanMeta(b) {
+  if (!b || typeof b !== 'object') return null;
+  const rows = Math.max(0, Math.min(5e6, parseInt(b.rows, 10) || 0));
+  if (!rows) return null;
+  const cl = (n) => Math.max(0, Math.min(rows, parseInt(n, 10) || 0));
+  const s = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const fields = {};
+  META_REQ.concat(META_OPT).forEach((k) => { const f = b.fields && b.fields[k]; fields[k] = { col: !!(f && f.col), n: f ? cl(f.n) : 0 }; });
+  const rules = {};
+  Object.keys(b.rules || {}).forEach((id) => {
+    if (!META_RULE[id]) return;
+    const x = b.rules[id] || {};
+    rules[id] = { n: cl(x.n), ex: (Array.isArray(x.ex) ? x.ex : []).slice(0, 4).map((e) => ({ id: s(e && e.id, 60), v: s(e && e.v, 140) })) };
+  });
+  const img = b.img || {};
+  const types = (Array.isArray(img.types) ? img.types : []).slice(0, 8).map((t) => ({ label: s(t && t.label, 80), family: s(t && t.family, 40), n: cl(t && t.n),
+    eg: (Array.isArray(t && t.eg) ? t.eg : []).slice(0, 3).map((e) => ({ id: s(e && e.id, 60), url: /^https:\/\//i.test(String(e && e.url)) ? s(e.url, 600) : '' })) }));
+  const avg = parseFloat(b.title && b.title.avg);
+  return { v: 1, t: Date.now(), rows, fields, rules, title: { avg: isFinite(avg) ? Math.max(0, Math.min(5000, Math.round(avg * 10) / 10)) : null },
+    img: { overlay: cl(img.overlay), types, avgMore: Math.max(0, Math.min(100, Math.round((parseFloat(img.avgMore) || 0) * 10) / 10)), noMore: cl(img.noMore) } };
+}

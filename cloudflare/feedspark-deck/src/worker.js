@@ -74,7 +74,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 import * as SOCLOGO from "./sociallogo.js";
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -699,7 +699,7 @@ async function route(request, env, ctx) {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
-        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality', '/api/golden/meta': 'golden-meta',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger',
         '/api/pricer/examples': 'pricer-examples',
         '/api/pricer/bank': 'pricer-bank',
@@ -6401,6 +6401,31 @@ async function goldenRoutes(env, request, url) {
     if (packed.length > 250000) return json({ error: 'sample too large' }, 413);
     await env.EDITS.put('goldenpdp:' + client + ':' + mkt, packed);
     return json({ ok: true, t: rec.t });
+  }
+
+  /* ---- Meta catalogue audit (docs/LABELGUARD.md §9.12k): the brand's Meta feed for this market (`<mkt>-fb`) read on
+     Meta's own terms. The page asks with the GOOGLE market it is on; the reading is stored under the Meta feed's key. The
+     browser streams the feed (labelguard metaStream) — only the aggregate lands here, checked whole by cleanMeta. */
+  if (path === '/api/golden/meta') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const fb = mkt + '-fb';
+    if (request.method === 'GET') {
+      const roster = await feedRoster(env);
+      const wired = roster.some((f) => f.client === client && String(f.mkt || '') === fb && f.src && (f.src.id || f.src.xml));
+      const m = await env.EDITS.get('goldenmeta:' + client + ':' + fb, 'json');
+      return json({ meta: m || null, wired, market: fb });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const rec = cleanMeta(b);
+      if (!rec) return json({ error: 'no rows in the reading' }, 400);
+      const packed = JSON.stringify(rec);
+      if (packed.length > 200000) return json({ error: 'reading too large' }, 413);
+      await env.EDITS.put('goldenmeta:' + client + ':' + fb, packed);
+      const sc = metaScore(rec);
+      return json({ ok: true, t: rec.t, score: sc ? sc.score : null });
+    }
+    return json({ error: 'method' }, 405);
   }
 
   /* ---- Content quality (docs/LABELGUARD.md §9.6): how GOOD the free-text attributes are,

@@ -15022,6 +15022,48 @@
       "file": "tools/check_grcatx.js",
       "pattern": "every one of them draws in the downloaded file",
       "pr": 0
+    },
+    {
+      "name": "Golden: Meta catalogue engine (metaStream, Meta's rules + FeedSpark's 60-character title)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const META_TITLE_HOUSE = 60;",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the Meta audit is scored on its own (metaScore) and cleaned for the worker (cleanMeta)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function cleanMeta(b) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden: /api/golden/meta stores the Meta reading under the -fb feed's key",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'goldenmeta:' + client + ':' + fb",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the Meta catalogue section on the scorecard",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "h += metaSection(k);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the action plan reads the Meta score",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var pl = planBuild(s.attrs, prof, qd, ai, clr, mtr);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the Meta controls never reach a download",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'#mt-run', '#mt-msg', '#mt-scan', '.mt-act'",
+      "pr": 0
+    },
+    {
+      "name": "presync runs the Meta tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grmeta.js",
+      "pr": 0
     }
   ]
 }
