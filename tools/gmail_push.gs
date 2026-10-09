@@ -137,7 +137,13 @@ function pushInbox() {
   // would drop them — a third targeted search captures them for the worker's results archive
   // (KV kwresults → brand dossier). The worker's subject parser is the precise gate; these
   // need the result body, so they push the long snippet like call notes do.
+  // …AND THE TITLE LINE IS NOT ALWAYS THE SUBJECT (Ray, 9 Oct 2026, on the Knit Zip Cardigan
+  // read-out): its subject was 'Fwd: Knit Zip Cardigan - KW Feed Insertion' and the line naming
+  // brand, market and batch sat in the BODY, so a subject-scoped search never found it at all.
+  // A second search reads the WHOLE message (Gmail searches subject + body without a qualifier);
+  // both are kept because the subject search is proven and the two dedupe on message id.
   var kwr = GmailApp.search('newer_than:2d subject:("x feedspark" keyword)', 0, 15);
+  var kwrBody = GmailApp.search('newer_than:2d "x feedspark" ("keyword optimisation" OR "keyword optimization")', 0, 15);
   var out = [], seen = {};
   var collect = function (t) {
     t.getMessages().forEach(function (m) {
@@ -147,12 +153,16 @@ function pushInbox() {
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
       var subj = m.getSubject() || '', from = m.getFrom() || '';
       var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript|notes(\s+from)?\s*[::]?\s*[“"]/i.test(subj) || /(gemini|meet)[a-z.\-]*@google\.com/i.test(from);
-      var isKwr = /x\s*feed\s*spark/i.test(subj) && /keyword\s*optimi[sz]ation/i.test(subj);
+      // the long body is what the result parser reads, so the gate looks where the title line
+      // may actually be — the subject, else the head of the body (same rule as the worker's)
+      var head = (m.getPlainBody() || '').slice(0, 1500);
+      var hasKwr = function (t) { return /x\s*feed\s*spark/i.test(t) && /keyword\s*optimi[sz]ation/i.test(t); };
+      var isKwr = hasKwr(subj) || hasKwr(head);
       out.push({ id: id, from: from, to: m.getTo(), cc: m.getCc(), subject: subj,
         snippet: (m.getPlainBody() || '').slice(0, (isNotes || isKwr) ? 9000 : 500), date: when });
     });
   };
-  threads.forEach(collect); notes.forEach(collect); kwr.forEach(collect);
+  threads.forEach(collect); notes.forEach(collect); kwr.forEach(collect); kwrBody.forEach(collect);
   if (!out.length) { console.log('FCC inbox: nothing new'); return; }
   var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
     headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ inbox: out }), muteHttpExceptions: true });

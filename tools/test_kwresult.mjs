@@ -8,7 +8,7 @@
 // NOTE: no real specimen from Dino has been captured yet — every fixture below is synthetic,
 // modelled on the subject shape in CLAUDE.md. Re-run and re-tighten against the first real email.
 import { readFileSync } from 'node:fs';
-import { parseKwResult, kwVerdict } from '../cloudflare/feedspark-deck/src/briefmatch.js';
+import { parseKwResult, kwVerdict, kwWindow } from '../cloudflare/feedspark-deck/src/briefmatch.js';
 
 let pass = 0, fail = 0;
 const ok = (name, cond, got) => {
@@ -16,6 +16,84 @@ const ok = (name, cond, got) => {
   else { fail++; console.log('  ✗ ' + name + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
 const mail = (subject, body) => ({ subject, snippet: body || '' });
+
+/* ---- THE REAL SPECIMEN (Ray, 9 Oct 2026) -------------------------------------------------
+   Dino's Knit Zip Cardigan read-out, to superdry@feedspark.com with Ray copied, reproduced as
+   the screenshot shows it. Its SUBJECT names no brand, no market and no "Keyword Optimisation";
+   the title line is the fifth line of the BODY, in curly quotes. This email was dropped by the
+   Gmail search, by the Apps Script's own gate and by this parser — three times, each enough. */
+const SUPERDRY_SUBJ = 'Fwd: Knit Zip Cardigan - KW Feed Insertion';
+const SUPERDRY_BODY = [
+  'Hi Everyone,', '',
+  'I hope you are well', '',
+  '\u201c Superdry GB x Feedspark - Zip Knit Cardigan - Keyword Optimisation \u201d', '',
+  'Please find below the results of the Keywords Optimisation Test,', '',
+  'The Keywords Optimisation Test was about embedding Keywords in your feeds.', '',
+  'Here\u2019s a summary of the key details:', '',
+  '  *   Batch Size: 14 Products',
+  '  *   Campaign Duration: 2 Weeks (Sep 24, 2026 to Oct 07, 2026)',
+  '  *   Attached: Include all products', '',
+  'Batch impact results for Superdry GB',
+  '14 / 14 Active/ Products in Test',
+  '0 SKU In Other Batch',
+  '14 Days active',
+  '218% Total uplift',
+  '7,202 Estimated monthly impression uplift',
+  '146 Estimated monthly clicks uplift', '',
+  'The optimised SKUs results:', '',
+  '  *   Impressions: 218.39% Increase',
+  '  *   Clicks: 62.96% Increase',
+].join('\n');
+
+console.log('\n-- the title line in the BODY, not the subject (the real Superdry specimen) --');
+{
+  const r = parseKwResult(mail(SUPERDRY_SUBJ, SUPERDRY_BODY));
+  ok('the read-out is parsed at all (it was dropped entirely)', !!r);
+  ok('brand read off the body line', r && r.brand === 'Superdry', r && r.brand);
+  ok('market read off the body line', r && r.mkt === 'gb', r && r.mkt);
+  ok('the batch name is the period', r && r.period === 'Zip Knit Cardigan', r && r.period);
+  ok('and it says the title came from the body', r && r.src === 'body', r && r.src);
+  ok('both stated figures are captured',
+    r && r.metrics.filter((t) => /218\.39|62\.96/.test(t)).length === 2, r && r.metrics);
+  ok('a read-out of two increases reads positive', r && r.verdict === 'positive', r && r.verdict);
+  ok('the raw body is archived whole', r && /Batch Size: 14 Products/.test(r.raw));
+}
+{
+  // the subject still wins where it carries the line — nothing already working moves
+  const r = parseKwResult(mail('Schuh GB x Feedspark - Aug I - Keyword Optimisation',
+    '\u201c Reiss DE x Feedspark - Denim - Keyword Optimisation \u201d\nImpressions: 4% Increase'));
+  ok('a subject that names the batch still wins over the body', r && r.brand === 'Schuh', r && r.brand);
+  ok('…and is recorded as having come from the subject', r && r.src === 'subject', r && r.src);
+}
+{
+  // an OLD result quoted deep in a forwarded thread must not re-date today's email
+  const deep = 'Thanks, noted.\n' + 'x\n'.repeat(400)
+    + '\u201c Monsoon GB x Feedspark - Aug I - Keyword Optimisation \u201d';
+  ok('a title line far down a forwarded thread is not read', parseKwResult(mail('Re: catch-up', deep)) === null);
+  const prose = 'We discussed how the Superdry GB x Feedspark - Aug I - Keyword Optimisation batch went, '
+    + 'and agreed to look again next week once the second cohort has had a fortnight to settle down properly.';
+  ok('a prose sentence running into the phrase is not a title line', parseKwResult(mail('Call notes', prose)) === null);
+  ok('an ordinary email is still refused', parseKwResult(mail('Lunch tomorrow?', 'see you at one')) === null);
+}
+
+console.log('\n-- the window the email states, never one inferred --');
+{
+  const r = parseKwResult(mail(SUPERDRY_SUBJ, SUPERDRY_BODY));
+  const d = (t) => new Date(t).toISOString().slice(0, 10);
+  ok('the campaign window is read off the email\u2019s own words',
+    r && r.win && d(r.win.a) === '2026-09-24' && d(r.win.b) === '2026-10-07',
+    r && r.win && [d(r.win.a), d(r.win.b)]);
+  ok('a read-out stating no window claims none',
+    !parseKwResult(mail('Schuh GB x Feedspark - Aug I - Keyword Optimisation', 'Clicks: 4% Increase')).win);
+  ok('24 Sep 2026 reads the same as Sep 24, 2026',
+    JSON.stringify(kwWindow('Campaign Duration: 2 Weeks (24 Sep 2026 - 07 Oct 2026)'))
+    === JSON.stringify(kwWindow('Campaign Duration: 2 Weeks (Sep 24, 2026 to Oct 07, 2026)')));
+  ok('a backwards window is refused', kwWindow('Campaign Duration: (Oct 07, 2026 to Sep 24, 2026)') === null);
+  ok('a year-long window is a misread, not a campaign',
+    kwWindow('Campaign Duration: (Jan 01, 2026 to Dec 31, 2026)') === null);
+  ok('an unreadable duration line claims nothing',
+    kwWindow('Campaign Duration: 2 Weeks (about a fortnight)') === null);
+}
 
 console.log('\n-- subject shape --');
 {

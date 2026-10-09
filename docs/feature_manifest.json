@@ -10221,6 +10221,30 @@
       "pr": 558
     },
     {
+      "name": "Keyword results: the title line is read off the BODY head when the subject does not carry it (Ray, 9 Oct 2026 — Dino's Knit Zip Cardigan read-out was dropped by every rung of the lane)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "function kwTitle(msg) {",
+      "pr": 0
+    },
+    {
+      "name": "Keyword results: the campaign window is read off the email's own words, never inferred from a batch-named period",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "export function kwWindow(body) {",
+      "pr": 0
+    },
+    {
+      "name": "Keyword results: the Gmail push searches the whole message, not only the subject, and ships the long body when the title line is in it",
+      "file": "tools/gmail_push.gs",
+      "pattern": "var kwrBody = GmailApp.search(",
+      "pr": 0
+    },
+    {
+      "name": "Keyword Calendar: a result that stated its own campaign window is tied on that window, not on its period token",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "if(r&&r.win&&r.win.a&&r.win.b&&r.win.b>r.win.a){",
+      "pr": 0
+    },
+    {
       "name": "Golden Record: /api/golden/estate re-scores every feed under the brand's CURRENT scoring profile before serving it, so the Playbook rail and the dossier quote the number /golden shows (Ray, 8 Oct 2026: \"why the hell is this not dynamic\")",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const g = goldenScore(attrsFromCov(f.cov, f.sc, f.rows), pf);",

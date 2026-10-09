@@ -136,6 +136,7 @@ BRIEFS.f = { id: 'f', client: 'Reiss', kw: 'coats', task: 'another', status: 'do
 is('newest stamped ticket wins', wfFor('Reiss', coats)?.id, 'f');
 
 // ---------- the result window ----------
+const W2 = (r) => { const w = api.periodWin(r); return w && [new Date(w.a).toISOString().slice(0, 10), new Date(w.b).toISOString().slice(0, 10), w.label]; };
 const W = (p, when) => { const w = api.periodWin({ period: p, when }); return w && [new Date(w.a).toISOString().slice(0, 10), new Date(w.b).toISOString().slice(0, 10), w.label]; };
 is('1st half of a month', W('Aug I', Date.UTC(2026, 7, 20)), ['2026-08-01', '2026-08-15', 'Aug 2026 · 1st half']);
 is('2nd half of a month', W('Aug II', Date.UTC(2026, 7, 31)), ['2026-08-16', '2026-08-31', 'Aug 2026 · 2nd half']);
@@ -143,6 +144,20 @@ is('whole month when no numeral', W('Sep', Date.UTC(2026, 8, 30)), ['2026-09-01'
 is('February respects the month length', W('Feb II', Date.UTC(2026, 1, 27)), ['2026-02-16', '2026-02-28', 'Feb 2026 · 2nd half']);
 is('a December batch reported in January keeps its year', W('Dec II', Date.UTC(2027, 0, 6)), ['2026-12-16', '2026-12-31', 'Dec 2026 · 2nd half']);
 is('an unparseable period is no window', api.periodWin({ period: 'whenever', when: Date.now() }), null);
+/* A BATCH read-out is named for its theme, not its fortnight (Ray, 9 Oct 2026, the Knit Zip
+   Cardigan result), so its period parses to nothing — but the email STATES its campaign window
+   and the worker reads it off those words, so the board ties the round to the optimisations
+   that really went live inside it rather than to none at all. */
+is('a batch-named period on its own ties to nothing',
+  api.periodWin({ period: 'Zip Knit Cardigan', when: Date.UTC(2026, 9, 8) }), null);
+is('…but the window the email stated is used verbatim',
+  W2({ period: 'Zip Knit Cardigan', win: { a: Date.UTC(2026, 8, 24), b: Date.UTC(2026, 9, 7, 23, 59, 59) } }),
+  ['2026-09-24', '2026-10-07', '24 Sep – 7 Oct 2026']);
+is('a stated window beats the period token, so the two can never disagree',
+  W2({ period: 'Aug I', when: Date.UTC(2026, 7, 20), win: { a: Date.UTC(2026, 8, 24), b: Date.UTC(2026, 9, 7, 23, 59, 59) } })[0],
+  '2026-09-24');
+is('a malformed stated window falls back to the period token',
+  W2({ period: 'Aug I', when: Date.UTC(2026, 7, 20), win: { a: 5, b: 5 } })[0], '2026-08-01');
 
 // ---------- the join ----------
 KWRES = { Reiss: [
