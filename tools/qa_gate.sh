@@ -474,6 +474,11 @@ if node tools/test_clstrategy.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ custom label strategy harness FAILED — see node tools/test_clstrategy.mjs"; FAIL=1
 fi
+if node tools/test_metaaudit.mjs >/dev/null 2>&1; then
+  echo "   ✓ Meta catalogue audit: Meta's rules + the 60-character title, the overlay read, the worker's clean copy"
+else
+  echo "   ✗ Meta catalogue audit harness FAILED — see node tools/test_metaaudit.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3z/7: text modules (every served engine bundles as a string)"
 if node tools/check_textmodules.js >/dev/null 2>&1; then

@@ -1446,6 +1446,47 @@ locked one opened with a client address, inspects what the PDF is drawn from, re
 `GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
 (invisible characters in the file).
 
+### 9.12k The Meta catalogue, on Meta's terms (9 Oct 2026)
+
+Ray: *"in golden record - let's also add in Meta audit as well (areas such as Title for Meta should be < 60 characters) -
+Imagery (if there's overlay being used on Meta feed) divide a new section just on Meta alone."*
+
+The Golden Record reads the **Google** feed. A brand's Meta catalogue is the wired `<mkt>-fb` feed — a different file read by
+a different platform — so it gets its own section on the scorecard (`#mt-tier`, after the custom labels) and its **own
+score**, never folded into the dial, content quality or AI-readiness.
+
+- **The read.** `⚡ Analyse Meta feed` streams `/api/feed/proxy?market=<mkt>-fb` in the browser through the Feed Lab
+  parser and `labelguard.js › metaStream`, the same shape as content quality (the worker never parses a feed). The
+  aggregate goes to `PUT /api/golden/meta?client=&market=<google mkt>` and is stored as `goldenmeta:<client>:<mkt>-fb`
+  after `cleanMeta` (known fields and rule ids only, counts clamped to the rows read, example image addresses https only).
+  `GET` returns the reading plus whether a Meta feed is wired at all; a market with none says so and offers no button.
+- **The rules** quote Meta's catalogue field reference (developers.facebook.com/docs/marketing-api/catalog/reference/,
+  read 9 Oct 2026). Requirements (fail): the nine required fields (`id title description availability condition price
+  link image_link brand`), title over 200, description over 9,999, availability other than in stock / out of stock,
+  condition other than new / refurbished / used, price not `9.99 GBP`, a sale price not below the price, an ID repeated
+  (Meta ignores every instance) or over 100, brand over 100, links and image links that are not http(s). Guidance (warn):
+  HTML, links or capitals in a description, a description that repeats the title, capitals or promotional wording in a
+  title, more than 20 additional images.
+- **The house rule is named as ours:** titles **under 60 characters** is FeedSpark's standard for Meta — Meta allows 200
+  and recommends 65 at most. The Titles card leads with the share under 60 and the average length.
+- **Imagery:** whether each main image is a FeedSpark overlay is read off the URL with the Image Overlays engine's own
+  `classifyOverlay` (`/overlays/engine.js`; the FeedSpark image host alone when it cannot load) — the share, each overlay
+  type and its count, with a link into Image Overlays. An overlay is **reported, never scored**: it is a service, not a
+  fault. Additional images per product and products with none are stated; Meta's 500 × 500 minimum is quoted (pixel
+  size is the Catalogue's Image pixels module, not read here).
+- **The score:** five areas out of 100 — Required fields (mean coverage of the nine) ×3, Titles ×2, Descriptions,
+  Values Meta reads, Imagery ×1 each; a rule costs its share of products × 1.0 (requirement) or 0.4 (guidance). Bands:
+  90+ Meta-ready, 75–89 gaps to close, under 75 spec issues.
+- **Every broken rule** is a native `<details>` row — Meta requirement / Meta guidance / FeedSpark standard, the share and
+  count, Meta's own wording, four example products. It folds like every section, the folded header keeping the score.
+- **The downloads** carry the section; `#mt-run`, the progress band and the Image Overlays link are removed. **The action
+  plan** adds Meta cards: the required fields short of 99% and every requirement broken on 1%+ (Now), titles over 60 on
+  10%+ of products and guidance costing 2+ (Next).
+- Harnesses: `tools/test_metaaudit.mjs` (32 — every rule on its own product, the overlay through the real Overlays
+  engine, the score, cleanMeta, wiring; qa_gate/presync/validate) and `tools/check_grmeta.js` (Playwright, presync — a
+  synthetic 40-product Meta XML streamed by the real page, every figure against a count the harness makes, the PUT, fold,
+  reload off the stored reading, the download and plan, a market with no Meta feed).
+
 ### 9.12j Custom labels, customised by the AM for each brand (8 Oct 2026)
 
 Ray asked for this, looking at Superdry GB's card: *"the data could be sitting somewhere else that is

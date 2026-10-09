@@ -629,6 +629,42 @@ window.addEventListener('load',restore);
   .qz-hit span{font-weight:700;color:var(--muted);font-size:10.5px}
   /* the scan's own progress — a real bar, because the read takes as long as the feed takes */
   .qz-scan{display:none;margin:12px 0 2px}
+  /* Meta catalogue (§9.12k) */
+  .mt-badge{background:#E7F0FD!important;color:#1D4ED8!important}
+  .mt-line{flex:1 1 260px;margin:0}
+  .mt-areas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0}
+  .mt-area{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;font-size:11.5px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .mt-area .mt-al{grid-column:1/-1;font-weight:700;color:var(--muted)}
+  .mt-area .qz-bar{width:100%}
+  .mt-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 12px}
+  .mt-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel);display:flex;flex-direction:column;gap:5px}
+  .mt-ch{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .mt-big{font-size:14px}.mt-big b{font-size:22px;font-weight:900;margin-right:4px}
+  .mt-sub{font-size:12px;color:var(--ink)}
+  .mt-note{font-size:11.5px;color:var(--muted)}
+  .mt-ov{display:flex;flex-wrap:wrap;gap:6px}
+  .mt-ot{font-size:11px;border:1px solid #BFD3F6;background:#E7F0FD;color:#1D4ED8;border-radius:100px;padding:2px 9px}
+  .mt-card .mt-act{align-self:flex-start;margin-top:4px;font-size:11.5px}
+  .mt-req{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+  .mt-rh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+  .mt-f{font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 8px;background:var(--panel)}
+  .mt-f i{font-style:normal;font-weight:800;margin-left:3px}
+  .mt-f i.b-green{color:var(--good)}.mt-f i.b-yellow{color:#B7791F}.mt-f i.b-orange{color:var(--orange-deep)}.mt-f i.b-red{color:var(--risk)}
+  .mt-f.miss{border-color:#F5C4C0;background:#FDEBEA}
+  .mt-rules{display:flex;flex-direction:column;gap:6px}
+  .mt-rule{border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .mt-rule summary{display:grid;grid-template-columns:130px 1fr 56px 110px;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;font-size:12.5px;list-style:none}
+  .mt-rule summary::-webkit-details-marker{display:none}
+  .mt-rp{font-weight:900;text-align:right}.mt-rn{color:var(--muted);text-align:right;font-size:11.5px}
+  .mt-sev{font-size:10px;font-weight:900;border-radius:100px;padding:2px 8px;text-align:center;white-space:nowrap}
+  .mt-sev.mt-rq{background:#FDEBEA;color:var(--risk)}
+  .mt-sev.mt-gd{background:#FDF3E3;color:var(--orange-deep)}
+  .mt-sev.mt-fs{background:#E7F0FD;color:#1D4ED8}
+  .mt-rd{padding:0 12px 10px;font-size:12px}.mt-rd p{margin:0 0 6px;color:var(--muted)}
+  .mt-rd ul{margin:0;padding-left:16px}.mt-rd li{margin:2px 0;word-break:break-word}
+  .mt-src{font-size:11px;color:var(--muted);margin:10px 0 0}
+  @media (max-width:900px){.mt-areas{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-cards{grid-template-columns:1fr}.mt-rule summary{grid-template-columns:1fr auto}.mt-rule .mt-rl{grid-column:1/-1;order:-1}}
+  body.pdf .mt-areas{grid-template-columns:repeat(5,minmax(0,1fr))}body.pdf .mt-cards{grid-template-columns:1fr 1fr}body.pdf .mt-rule summary{grid-template-columns:130px 1fr 56px 110px}body.pdf .mt-rule .mt-rl{grid-column:auto;order:0}
   .qz-scan.on{display:block}
   .qz-pbar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
   .qz-pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--orange-deep));
@@ -677,6 +713,11 @@ window.addEventListener('load',restore);
   body.demo .qz-act{display:none!important}
   @media(max-width:900px){.qz-row{grid-template-columns:130px 46px 1fr}.qz-worst,.qz-act{display:none}
     .qz-rule{grid-template-columns:92px 1fr}.qz-hit{display:none}}
+  [data-theme=dark] .mt-badge{background:#13233F!important;color:#9CC0F5!important}
+  [data-theme=dark] .mt-ot,[data-theme=dark] .mt-sev.mt-fs{background:#13233F;border-color:#25406B;color:#9CC0F5}
+  [data-theme=dark] .mt-sev.mt-rq{background:#2A1414;color:#F1707A}
+  [data-theme=dark] .mt-sev.mt-gd{background:#2A1D0C;color:#F0A35E}
+  [data-theme=dark] .mt-f.miss{background:#2A1414;border-color:#5A2626}
   [data-theme=dark] .qz-pill.good{background:#12281A;border-color:#1E4429}
   [data-theme=dark] .qz-pill.mid{background:#2A2114;border-color:#4A3A1C}
   [data-theme=dark] .qz-pill.poor{background:#2A1614;border-color:#4A2320}
@@ -1782,6 +1823,8 @@ window.addEventListener('load',restore);
         if (HIST[k] === undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
         // the custom labels as Label Guard last read them (non-blocking; the strategy section fills in when it lands)
         if (CL[k] === undefined) Promise.all([loadCL(k), loadClCfg()]).then(function () { if (SEL === k) renderDetail(k); });
+        // the Meta catalogue's last audit + whether a Meta feed is wired at all (non-blocking)
+        if (META[k] === undefined) loadMeta(k).then(function () { if (SEL === k && !MTRUN) renderDetail(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -2478,7 +2521,7 @@ window.addEventListener('load',restore);
       var f = tfIs(key), name = (h.querySelector('h4') || {}).textContent || 'this section';
       t.classList.toggle('folded', f);
       // a section whose headline number lives in its body carries it into the header while folded
-      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : (key === 'cl' ? t.querySelector('.cl-score') : null));
+      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : (key === 'cl' ? t.querySelector('.cl-score') : (key === 'meta' ? t.querySelector('.mt-score') : null)));
       if (src && !sum) { sum = document.createElement('span'); sum.className = 'tf-sum'; var h4 = h.querySelector('h4'); h.insertBefore(sum, h4 ? h4.nextSibling : null); }
       if (sum) { sum.textContent = src ? src.textContent + (key === 'air' ? '/100' : '') : ''; sum.style.color = src ? src.style.color : ''; sum.hidden = !f || !src; }
       b.setAttribute('aria-expanded', f ? 'false' : 'true');
@@ -2654,11 +2697,13 @@ window.addEventListener('load',restore);
     h += airSection(k);          // and the AI-Readiness ladder under that
     h += reconcileSection(k);    // and where those two readings of the same field disagree
     h += clSection(k);           // and what the custom labels let a campaign bid on
+    h += metaSection(k);         // and the brand's Meta catalogue, read on Meta's own terms
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
     histWire(k);
     clWire(k);
+    metaWire(k);
     tfApply();
   }
 
@@ -3982,6 +4027,149 @@ window.addEventListener('load',restore);
     });
     var rs = $('cl-reset'); if (rs) rs.onclick = function () { if (!confirm('Drop every custom-label choice for ' + dispClient(p.client) + '?')) return; clSave(p.client, { slots: {}, strat: {} }, done); renderDetail(k); };
   }
+  /* ---- META CATALOGUE (Ray, 9 Oct 2026: "in golden record - let's also add in Meta audit as well (areas such as Title
+     for Meta should be < 60 characters) - Imagery (if there's overlay being used on Meta feed) divide a new section just on
+     Meta alone"). The brand's Meta feed for this market (the wired `<mkt>-fb`) streamed in the browser through labelguard's
+     metaStream — Meta's own catalogue rules plus FeedSpark's 60-character title standard, named as ours — and stored per
+     feed (/api/golden/meta). Its OWN score: never the dial, never content quality. The overlay read uses the Image Overlays
+     module's classifier (/overlays/engine.js) when it loads, the FeedSpark image host alone when it does not. */
+  var META = {};          // key -> { meta, wired, market } | null (asked, the API failed)
+  var MTRUN = false;      // an analysis is streaming (a re-render must not wipe its bar)
+  function loadMeta(k) {
+    var p = parts(k);
+    return fetch(API + '/api/golden/meta?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { META[k] = j ? { meta: j.meta || null, wired: !!j.wired, market: j.market || (p.mkt + '-fb') } : null; })
+      .catch(function () { META[k] = null; });
+  }
+  function loadOV() {
+    if (window.Overlay && window.Overlay.classifyOverlay) return Promise.resolve(window.Overlay);
+    return fetch('/overlays/engine.js').then(function (r) { if (!r.ok) throw new Error('no overlay engine'); return r.text(); })
+      .then(function (s) { (new Function(s))(); return window.Overlay || null; })
+      .catch(function () { return null; });   // the FeedSpark image host alone still says an overlay is there
+  }
+  function metaRun(k, onState) {
+    var p = parts(k), fb = p.mkt + '-fb', t0 = Date.now();
+    var tell = function (ph, got, total, rows) { if (onState) onState({ phase: ph, got: got || 0, total: total || 0, rows: rows || 0, t0: t0 }); };
+    tell('connect');
+    return Promise.all([loadFA(), loadLG(), loadOV()]).then(function (a) {
+      var FA = a[0], LG = a[1], OV = a[2];
+      var ms = LG.metaStream({ client: p.client, market: fb, classify: OV ? OV.classifyOverlay : null });
+      var parser = null, got = 0, total = 0, last = 0;
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(fb))
+        .then(function (res) {
+          if (!res.ok || !res.body) throw new Error('Meta feed fetch failed (HTTP ' + res.status + ')');
+          total = (res.headers && parseInt(res.headers.get('x-feed-bytes') || '', 10)) || 0;
+          var rd = res.body.getReader(), dec = new TextDecoder();
+          function pump() {
+            return rd.read().then(function (x) {
+              if (x.done) { if (parser) { parser.push(dec.decode()); parser.end(); } return; }
+              var chunk = dec.decode(x.value, { stream: true });
+              if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(ms.onRow) : FA.createParser(ms.onRow);
+              got += x.value.length;
+              var now = Date.now(); if (now - last > 180) { last = now; tell('read', got, total, ms.rows()); }
+              parser.push(chunk);
+              return pump();
+            });
+          }
+          return pump();
+        })
+        .then(function () {
+          tell('score', got, total || got, ms.rows());
+          var rec = ms.finish();
+          tell('save', got, total || got, rec.rows);
+          return fetch(API + '/api/golden/meta?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
+            { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rec) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d && d.error) throw new Error(d.error);
+              META[k] = { meta: rec, wired: true, market: fb };
+              return rec;
+            });
+        });
+    });
+  }
+  var MT_SEV = { fail: ['Meta requirement', 'mt-rq'], warn: ['Meta guidance', 'mt-gd'], house: ['FeedSpark standard', 'mt-fs'] };
+  function metaVerdict(sc) {
+    if (sc >= 90) return { band: 'good', pill: 'Meta-ready', line: 'The catalogue meets Meta’s field rules — what is left is polish.' };
+    if (sc >= 75) return { band: 'mid', pill: 'Gaps to close', line: 'The catalogue uploads, but titles, values or fields below cost reach on Meta placements.' };
+    return { band: 'poor', pill: 'Spec issues', line: 'Fields Meta requires are missing or formatted in a way Meta can reject — fix these first.' };
+  }
+  function metaSection(k) {
+    var m = META[k], p = parts(k), brand = dispClient(p.client), fbm = (p.mkt + '-fb').toUpperCase();
+    var rec = m && m.meta, sc = rec && LGQ && LGQ.metaScore ? LGQ.metaScore(rec) : null;
+    var h = '<div class="tier" data-tf="meta" id="mt-tier"><div class="tier-h">' +
+      '<span class="tbadge rec mt-badge">Meta</span>' +
+      '<h4>Your Meta catalogue, on Meta’s terms</h4>' +
+      '<span class="qz-meta">' + (rec ? '<span>' + fmt(rec.rows) + ' products in ' + esc(fbm) + ' · read ' + ago(rec.t) + '</span>' : '') +
+      (m && m.wired ? '<button class="btn" id="mt-run" title="Stream the ' + esc(fbm) + ' Meta feed in your browser and check every product against Meta’s catalogue rules">' + (rec ? '⟳ Re-analyse' : '⚡ Analyse Meta feed') + '</button>' : '') +
+      '<span class="scanmsg" id="mt-msg"></span></span></div>' +
+      '<div class="qz-scan" id="mt-scan"><div class="qz-pbar"><i id="mt-pfill"></i></div><div class="qz-pmeta"><span id="mt-ptxt"></span><span class="qz-peta" id="mt-peta"></span></div></div>';
+    if (m === undefined) return h + '<p class="qz-empty">Looking for a Meta feed for ' + esc(brand) + ' ' + esc(p.mkt.toUpperCase()) + '…</p></div>';
+    if (m === null) return h + '<p class="qz-empty">Could not read the Meta audit — reload to try again.</p></div>';
+    if (!m.wired && !rec) return h + '<p class="qz-empty">No Meta catalogue is wired for ' + esc(brand) + ' ' + esc(p.mkt.toUpperCase()) + ' — once its ' + esc(fbm) + ' feed is added to the feed map, this section reads it.</p></div>';
+    if (!sc) return h + '<p class="qz-empty">Not analysed yet. <b>⚡ Analyse Meta feed</b> streams the ' + esc(fbm) + ' catalogue in your browser and checks every product against Meta’s own field rules — titles, descriptions, the values Meta reads and the imagery, including whether a FeedSpark overlay is on the pictures.</p></div>';
+    var v = metaVerdict(sc.score);
+    h += '<div class="qz-head"><span class="qz-score mt-score" style="color:' + scoreCol(sc.score) + '">' + sc.score + '</span>' +
+      '<span class="qz-of">Meta catalogue<br>/ 100</span><span class="qz-pill ' + v.band + '">' + esc(v.pill) + '</span>' +
+      '<span class="qz-line mt-line">' + esc(v.line) + '</span></div>';
+    // the five areas, each out of 100
+    h += '<div class="mt-areas">' + sc.areas.map(function (a) {
+      return '<div class="mt-area" title="' + esc(a.label + ' — ' + a.score + ' / 100, weighted ×' + a.w + ' in the Meta score') + '"><span class="mt-al">' + esc(a.label) + '</span>' +
+        '<span class="qz-bar"><i class="b-' + auditBand(a.score) + '" style="width:' + Math.max(1.5, Math.min(100, a.score)) + '%"></i></span><b>' + a.score + '</b></div>';
+    }).join('') + '</div>';
+    // titles: Ray's 60-character standard, read first
+    var over = sc.title.over || 0;
+    h += '<div class="mt-cards"><div class="mt-card"><div class="mt-ch">Titles</div>' +
+      '<div class="mt-big"><b style="color:' + (over ? scoreCol(100 - over) : 'var(--good)') + '">' + (100 - over) + '%</b> under 60 characters</div>' +
+      '<div class="mt-sub">' + (sc.title.avg != null ? 'Average ' + sc.title.avg + ' characters · ' : '') + (over ? fmt(Math.round(sc.rows * over / 100)) + ' products over — the headline is cut on feed, Stories and Reels' : 'every title fits Meta’s placements') + '</div>' +
+      '<div class="mt-note">FeedSpark’s standard for Meta is under 60; Meta allows 200 and recommends 65 at most.</div></div>';
+    // imagery: is a FeedSpark overlay on the Meta pictures, and which
+    var ov = sc.overlay;
+    h += '<div class="mt-card"><div class="mt-ch">Imagery</div>' +
+      (ov.n ? '<div class="mt-big"><b>' + ov.pct + '%</b> carry a FeedSpark overlay</div>' +
+        '<div class="mt-sub">' + fmt(ov.n) + ' of ' + fmt(sc.rows) + ' main images are composed by FeedSpark’s image service</div>' +
+        '<div class="mt-ov">' + ov.types.map(function (t) { return '<span class="mt-ot" title="' + esc(t.family ? 'Engine: ' + t.family : 'FeedSpark image host') + '"><b>' + esc(t.label) + '</b> ' + fmt(t.n) + '</span>'; }).join('') + '</div>'
+        : '<div class="mt-big"><b>No overlay</b> on the Meta images</div><div class="mt-sub">Every main image is the client’s own picture — a dynamic overlay (price, offer, social proof) is a service FeedSpark can add.</div>') +
+      '<div class="mt-note">' + (sc.more.avg != null ? 'Additional images: ' + sc.more.avg + ' per product on average' + (sc.more.none ? ' · ' + fmt(sc.more.none) + ' products carry none' : '') + '. ' : '') +
+      'Meta asks for JPEG or PNG at least 500 × 500 pixels, up to 20 more images per product.</div>' +
+      (ov.n ? '<a class="btn mt-act" href="/overlays?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt + '-fb') + '">Open in Image Overlays ↗</a>' : '') + '</div></div>';
+    // the nine fields Meta requires
+    h += '<div class="mt-req"><span class="mt-rh">Fields Meta requires</span>' + sc.req.map(function (f) {
+      return '<span class="mt-f' + (f.col ? '' : ' miss') + '" title="' + esc(f.col ? f.cov + '% of products carry ' + f.k : f.k + ' is not in the Meta feed — products may not upload') + '"><b>' + esc(f.k) + '</b> ' +
+        (f.col ? '<i class="b-' + auditBand(f.cov) + '">' + f.cov + '%</i>' : '<i class="b-red">not in feed</i>') + '</span>';
+    }).join('') + '</div>';
+    // every rule broken, worst first — the wording is Meta's own
+    if (sc.broken.length) {
+      h += '<div class="mt-rules">' + sc.broken.map(function (b) {
+        var sv = MT_SEV[b.house ? 'house' : b.sev];
+        var exs = (b.ex || []).map(function (e) { return '<li><code>' + esc(maskText(e.id)) + '</code> ' + esc(maskText(e.v)) + '</li>'; }).join('');
+        return '<details class="mt-rule"><summary><span class="mt-sev ' + sv[1] + '">' + sv[0] + '</span><span class="mt-rl">' + esc(b.label) + '</span>' +
+          '<span class="mt-rp">' + b.pct + '%</span><span class="mt-rn">' + fmt(b.n) + (b.n === 1 ? ' product' : ' products') + '</span></summary>' +
+          '<div class="mt-rd"><p>' + esc(b.why) + '</p>' + (exs ? '<ul>' + exs + '</ul>' : '') + '</div></details>';
+      }).join('') + '</div>';
+    } else h += '<p class="qz-line">Every product passes every Meta rule checked.</p>';
+    h += '<p class="mt-src">Rules from Meta’s catalogue field reference (<span>developers.facebook.com/docs/marketing-api/catalog/reference</span>); the 60-character title is FeedSpark’s own standard. Scored on its own — never part of the Golden Score.</p>';
+    return h + '</div>';
+  }
+  function metaWire(k) {
+    var b = $('mt-run'); if (!b) return;
+    b.onclick = function (ev) {
+      ev.stopPropagation();
+      if (MTRUN) return;
+      MTRUN = true; b.disabled = true;
+      var scanEl = $('mt-scan'); if (scanEl) scanEl.classList.add('on');
+      metaRun(k, function (st) {
+        var f = $('mt-pfill'), t = $('mt-ptxt'), e = $('mt-peta');
+        var pc = st.total ? Math.min(100, st.got / st.total * 100) : 0;
+        if (f) { f.style.width = (st.total ? pc : 100) + '%'; f.parentNode.classList.toggle('indet', !st.total); }
+        if (t) t.textContent = st.phase === 'connect' ? 'Connecting to the Meta feed…' : st.phase === 'save' ? 'Saving the audit…' :
+          (st.total ? Math.round(pc) + '% · ' : '') + (st.got / 1048576).toFixed(1) + ' MB' + (st.total ? ' of ' + (st.total / 1048576).toFixed(1) + ' MB' : ' · size not declared') + ' · ' + fmt(st.rows) + ' products read';
+        if (e) { var el = (Date.now() - st.t0) / 1000; e.textContent = st.total && pc > 2 && el > 1.5 ? '~' + Math.max(1, Math.round(el * (100 - pc) / pc)) + 's left' : ''; }
+      }).then(function () { MTRUN = false; if (SEL === k) renderDetail(k); })
+        .catch(function (er) { MTRUN = false; b.disabled = false; if (scanEl) scanEl.classList.remove('on'); var mm = $('mt-msg'); if (mm) mm.textContent = '⚠ ' + (er && er.message || 'the Meta feed could not be read'); });
+    };
+  }
   function reconcileSection(k) {
     var qd = QUAL[k], a = qd && qd.ai;
     if (!a || !a.total || !LGQ) return '';
@@ -4238,7 +4426,7 @@ window.addEventListener('load',restore);
      says so rather than padding a lane. Lanes are Workflow's pipeline: Now (this week) · Next (30 days) · Then (this quarter). */
   var PLAN_CLIENT = { id: 1, title: 1, description: 1, link: 1, image_link: 1, availability: 1, price: 1, brand: 1, gtin: 1, mpn: 1,
     condition: 1, item_group_id: 1, sale_price: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
-  function planBuild(attrs, prof, qd, ai, cl) {
+  function planBuild(attrs, prof, qd, ai, cl, mt) {
     var base = goldenScore(attrs, prof), out = { now: [], next: [], then: [], base: base, proj: base };
     if (base == null) return out;
     var full = function (a, ks) {
@@ -4305,10 +4493,22 @@ window.addEventListener('load',restore);
         if (pr || kd === 'perf' || kd === 'stock') clNext.push(a); else thenAct.push(a);
       });
     }
+    // the Meta catalogue (metaScore — its own score, never the dial's): what Meta rejects first, then the title standard
+    var mNow = [], mNext = [];
+    if (mt) {
+      var gaps = mt.req.filter(function (f) { return f.cov < 99; });
+      if (gaps.length) mNow.push({ lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', t: 'Complete the fields Meta requires — ' + gaps.map(function (f) { return f.k; }).join(', '),
+        w: gaps.map(function (f) { return f.k + (f.col ? ' on ' + f.cov + '%' : ' not in the feed'); }).join(' · ') + ' of the Meta catalogue. Meta: products missing a required field “may not upload”.' });
+      mt.broken.forEach(function (b) {
+        if (b.sev === 'fail' && b.pct >= 1) mNow.push({ lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: fix ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
+        else if (b.id === 't-house' && b.pct >= 10) mNext.push({ lane: 'next', pri: b.pct >= 40 ? 'hi' : '', f: 'Meta', own: 'fs', q: b.cost, t: 'Shorten Meta titles to under 60 characters', w: b.pct + '% of products (' + fmt(b.n) + ') run over — the headline is cut on feed, Stories and Reels.' });
+        else if (b.sev === 'warn' && b.id !== 't-house' && b.cost >= 2) mNext.push({ lane: 'next', pri: '', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
+      });
+    }
     var byGain = function (x, y) { return (y.g || 0) - (x.g || 0); };
     var byCost = function (x, y) { return (y.q || 0) - (x.q || 0); };
-    out.now = attrAct.filter(function (x) { return x.lane === 'now'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'now'; }).sort(byCost));
-    out.next = attrAct.filter(function (x) { return x.lane === 'next'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'next'; }).sort(byCost)).concat(clNext);
+    out.now = attrAct.filter(function (x) { return x.lane === 'now'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'now'; }).sort(byCost)).concat(mNow);
+    out.next = attrAct.filter(function (x) { return x.lane === 'next'; }).sort(byGain).concat(qAct.filter(function (x) { return x.lane === 'next'; }).sort(byCost)).concat(mNext.sort(byCost)).concat(clNext);
     out.then = thenAct;
     // the projection: every field action in Now + Next landed on every product, one re-score
     var ks = []; out.now.concat(out.next).forEach(function (x) { (x.ks || []).forEach(function (k) { if (ks.indexOf(k) < 0) ks.push(k); }); });
@@ -4322,7 +4522,9 @@ window.addEventListener('load',restore);
     var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
     var clr = null;
     try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
-    var pl = planBuild(s.attrs, prof, qd, ai, clr);
+    var mtr = null;
+    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
+    var pl = planBuild(s.attrs, prof, qd, ai, clr, mtr);
     if (pl.base == null) return '';
     // THE NEXT QUARTER, MONTH BY MONTH (Ray, 8 Oct 2026: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all
     // actions …) — also remove the progress status, it might be confusing"): every action, none folded behind "+N more", read in
@@ -4929,7 +5131,7 @@ window.addEventListener('load',restore);
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
-     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am',
+     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am', '#mt-run', '#mt-msg', '#mt-scan', '.mt-act',
      '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the
