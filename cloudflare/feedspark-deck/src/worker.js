@@ -1346,7 +1346,11 @@ async function route(request, env, ctx) {
               kwres.push({ id: m.id, client: kwClient, via: exK.via || '', mkt: kw.mkt,
                 period: kw.period, when: m.date || Date.now(), from: String(m.from || '').slice(0, 120),
                 subject: String(m.subject || '').slice(0, 160), metrics: kw.metrics, raw: kw.raw,
-                verdict: kw.verdict, good: kw.good, bad: kw.bad });
+                verdict: kw.verdict, good: kw.good, bad: kw.bad,
+                // where the title line was read, and the window the email STATED (never inferred):
+                // the Keyword Calendar ties a round to the moments that went live inside it, and a
+                // batch-named period ("Zip Knit Cardigan") parses to no fortnight on its own
+                src: kw.src || 'subject', win: kw.win || undefined });
               haveKw[m.id] = 1; kwAdded++;
             }
             // Ray's ask (9 Sep): a result must ALSO surface in Email Triage, not only inside the

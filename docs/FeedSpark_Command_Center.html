@@ -2856,7 +2856,7 @@ window.addEventListener('load',restore);
       var items=(d&&d.results)||[];
       var head='<div class="dz-mat-h"><b>📈 Optimisation results</b><span class="n">'+(items.length?(items.length+' archived'):'none')+'</span></div>';
       if(!items.length){
-        box.innerHTML=head+'<div class="dz-mat-e">None captured yet — scheduled keyword-optimisation result emails (“'+esc(name)+' GB x Feedspark - … - Keyword Optimisation”) archive here automatically.</div>';
+        box.innerHTML=head+'<div class="dz-mat-e">None captured yet — keyword-optimisation result emails archive here automatically, whether the line “'+esc(name)+' GB x Feedspark - … - Keyword Optimisation” is the subject or the first line of the note.</div>';
         return;
       }
       var groups={},order=[];
@@ -2866,10 +2866,13 @@ window.addEventListener('load',restore);
         body+='<div class="dz-mat-g">'+esc(g)+' · '+groups[g].length+' update'+(groups[g].length===1?'':'s')+'</div>';
         groups[g].forEach(function(k){
           var dt=k.when?new Date(k.when).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+          // the campaign window where the email stated one — a batch name alone does not say when it ran
+          var ws=''; if(k.win&&k.win.a&&k.win.b>k.win.a){ var f=function(t){return new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'});};
+            ws=' · ran '+f(k.win.a)+'–'+f(k.win.b); }
           var mline=(k.metrics&&k.metrics.length)?esc(k.metrics[0])+(k.metrics.length>1?' · +'+(k.metrics.length-1)+' more':''):'no % lines detected — open for the raw email';
           body+='<div class="dz-mat-i dz-kwr-i" data-kid="'+esc(k.id)+'" style="cursor:pointer" title="Click to open the extracted result lines + raw email">'
             +'<span class="ic">'+(k.verdict==='negative'?'📉':k.verdict==='mixed'?'📊':'📈')+'</span>'
-            +'<span class="tx"><span class="tt">'+esc(k.period||'')+(k.mkt?' · '+esc(k.mkt.toUpperCase()):'')+(dt?' · '+dt:'')+kwVerdictPill(k)+'</span>'
+            +'<span class="tx"><span class="tt">'+esc(k.period||'')+(k.mkt?' · '+esc(k.mkt.toUpperCase()):'')+esc(ws)+(dt?' · '+dt:'')+kwVerdictPill(k)+'</span>'
             +'<span class="mt">'+mline+'</span>'
             +'<span class="mt dz-kwr-raw" hidden>'+(k.metrics&&k.metrics.length?k.metrics.map(function(x){return '▸ '+esc(x);}).join('<br>')+'<br>':'')
             +'<span style="opacity:.75">'+esc(String(k.raw||'').slice(0,1200))+'</span></span></span></div>';

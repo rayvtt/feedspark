@@ -137,7 +137,13 @@ function pushInbox() {
   // would drop them — a third targeted search captures them for the worker's results archive
   // (KV kwresults → brand dossier). The worker's subject parser is the precise gate; these
   // need the result body, so they push the long snippet like call notes do.
+  // …AND THE TITLE LINE IS NOT ALWAYS THE SUBJECT (Ray, 9 Oct 2026, on the Knit Zip Cardigan
+  // read-out): its subject was 'Fwd: Knit Zip Cardigan - KW Feed Insertion' and the line naming
+  // brand, market and batch sat in the BODY, so a subject-scoped search never found it at all.
+  // A second search reads the WHOLE message (Gmail searches subject + body without a qualifier);
+  // both are kept because the subject search is proven and the two dedupe on message id.
   var kwr = GmailApp.search('newer_than:2d subject:("x feedspark" keyword)', 0, 15);
+  var kwrBody = GmailApp.search('newer_than:2d "x feedspark" ("keyword optimisation" OR "keyword optimization")', 0, 15);
   var out = [], seen = {};
   var collect = function (t) {
     t.getMessages().forEach(function (m) {
@@ -147,12 +153,16 @@ function pushInbox() {
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
       var subj = m.getSubject() || '', from = m.getFrom() || '';
       var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript|notes(\s+from)?\s*[::]?\s*[“"]/i.test(subj) || /(gemini|meet)[a-z.\-]*@google\.com/i.test(from);
-      var isKwr = /x\s*feed\s*spark/i.test(subj) && /keyword\s*optimi[sz]ation/i.test(subj);
+      // the long body is what the result parser reads, so the gate looks where the title line
+      // may actually be — the subject, else the head of the body (same rule as the worker's)
+      var head = (m.getPlainBody() || '').slice(0, 1500);
+      var hasKwr = function (t) { return /x\s*feed\s*spark/i.test(t) && /keyword\s*optimi[sz]ation/i.test(t); };
+      var isKwr = hasKwr(subj) || hasKwr(head);
       out.push({ id: id, from: from, to: m.getTo(), cc: m.getCc(), subject: subj,
         snippet: (m.getPlainBody() || '').slice(0, (isNotes || isKwr) ? 9000 : 500), date: when });
     });
   };
-  threads.forEach(collect); notes.forEach(collect); kwr.forEach(collect);
+  threads.forEach(collect); notes.forEach(collect); kwr.forEach(collect); kwrBody.forEach(collect);
   if (!out.length) { console.log('FCC inbox: nothing new'); return; }
   var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
     headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ inbox: out }), muteHttpExceptions: true });
@@ -310,9 +320,11 @@ var KWR_TIME_BUDGET_MS = 4 * 60 * 1000;  // stop well inside the 6-minute execut
 var KWR_BACKFILL_PROP  = 'KWR_BACKFILL_OFFSET';
 
 function kwBackfillQuery() {
-  // Same shape the live capture uses, plus the date floor. The worker's subject parser is
-  // still the precise gate — this only has to be narrow enough not to sweep the whole mailbox.
-  return 'subject:("x feedspark" keyword) after:' + KWR_BACKFILL_FROM;
+  // Searches the WHOLE MESSAGE, not just the subject. Dino's read-outs do not all carry the
+  // identifying line in the subject — "Fwd: Knit Zip Cardigan - KW Feed Insertion" names it on the
+  // fifth line of the body — and a subject-scoped sweep never found those at all. The worker's
+  // parser is still the precise gate; this only has to be narrow enough not to sweep the mailbox.
+  return '"x feedspark" ("keyword optimisation" OR "keyword optimization") after:' + KWR_BACKFILL_FROM;
 }
 
 function backfillKwResults() {
@@ -328,8 +340,13 @@ function backfillKwResults() {
     threads.forEach(function (t) {
       t.getMessages().forEach(function (m) {
         var subj = m.getSubject() || '';
-        // mirror the worker's gate so we never ship it mail it will only discard
-        if (!/x\s*feed\s*spark/i.test(subj) || !/keyword\s*optimi[sz]ation/i.test(subj)) return;
+        // mirror the worker's gate so we never ship it mail it will only discard — read the
+        // SUBJECT then the body head, because kwTitle reads the title line from either
+        var bhead = (m.getPlainBody() || '').slice(0, 1500);
+        var kwrOk = function (t) {
+          return /x\s*feed\s*spark/i.test(t) && /keyword\s*optimi[sz]ation/i.test(t);
+        };
+        if (!kwrOk(subj) && !kwrOk(bhead)) return;
         out.push({ id: m.getId(), from: m.getFrom(), to: m.getTo(), cc: m.getCc(), subject: subj,
           // 4000 is ample: the worker archives 2500 chars of body and reads metric lines from
           // the head. Halving the live 9000 keeps a 25-thread payload comfortably small.

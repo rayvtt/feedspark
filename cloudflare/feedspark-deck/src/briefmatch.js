@@ -697,9 +697,83 @@ export function kwVerdict(metrics) {
   return { verdict: good ? 'positive' : 'negative', good, bad };
 }
 
-export function parseKwResult(msg) {
-  const m = KWR_SUBJ_RE.exec(String((msg && msg.subject) || ''));
+/* THE TITLE LINE IS NOT ALWAYS THE SUBJECT (Ray, 9 Oct 2026, on Dino's Knit Zip Cardigan
+   read-out to superdry@feedspark.com with Ray copied: "this test result … is not recorded
+   anywhere in FCC").
+
+   Its subject is "Fwd: Knit Zip Cardigan - KW Feed Insertion" — the line that names the brand,
+   the market and the batch is the FIRST LINE OF THE BODY: “ Superdry GB x Feedspark - Zip Knit
+   Cardigan - Keyword Optimisation ”. Every rung of the lane read the SUBJECT alone, so the
+   result was dropped three times over, each one enough on its own: the Apps Script's Gmail
+   search is subject-scoped and never found the mail, its local gate would not have sent the
+   long body if it had, and this parser refused it.
+
+   The body is read only at its HEAD — a title line sits at the top of the note, while a long
+   forwarded thread further down may carry an OLDER result's title, which would file last
+   month's figures under today's date. The subject still wins when it carries the line, so
+   nothing already working changes, and `src` records which one answered: a reader who can see
+   the title came from the body can check it. */
+const KWR_BODY_LINES = 14, KWR_BODY_CHARS = 1500, KWR_BRAND_MAX = 60;
+// a decorative line is still a title line: “ … ” / " … " / * … * and stray leading bullets
+function kwStrip(line) {
+  return String(line || '').replace(/\s+/g, ' ').trim()
+    .replace(/^[\s*>•·\-–—]+/, '').replace(/[“”"'‘’«»\s]+$/, '').replace(/^[“”"'‘’«»\s]+/, '').trim();
+}
+function kwTitle(msg) {
+  const subj = String((msg && msg.subject) || '');
+  const ms = KWR_SUBJ_RE.exec(subj);
+  if (ms) return { m: ms, src: 'subject' };
+  const head = String((msg && msg.snippet) || '').slice(0, KWR_BODY_CHARS);
+  let n = 0;
+  for (const raw of head.split(/\r?\n/)) {
+    const t = kwStrip(raw);
+    if (!t) continue;
+    if (++n > KWR_BODY_LINES) break;
+    if (t.length > 200) continue;                       // a paragraph is not a title line
+    const mb = KWR_SUBJ_RE.exec(t);
+    // A TITLE LINE *IS* THE LINE. A sentence that runs into the phrase ("We discussed how the
+    // Superdry GB x Feedspark - Aug I - Keyword Optimisation batch went, and agreed …") would
+    // otherwise file a result off a chat message, and the brand it reads is the clause before
+    // it — "We discussed how the Superdry GB". So the match must REACH THE END of the line,
+    // bar closing punctuation, and the brand must still read as a name rather than a clause.
+    if (mb && mb[1].trim().length <= KWR_BRAND_MAX
+        && /^[\s.:;!,”"'’»)\]-]*$/.test(t.slice(mb.index + mb[0].length))) return { m: mb, src: 'body' };
+  }
+  return null;
+}
+
+/* THE EMAIL STATES ITS OWN WINDOW, so nothing has to be inferred from the period token.
+   This read-out's period is "Zip Knit Cardigan" — a BATCH name, not "Aug I" — so KWCal's
+   periodWin parses nothing from it and the round would tie to no optimisation on the board.
+   The body says "Campaign Duration: 2 Weeks (Sep 24, 2026 to Oct 07, 2026)", so the window is
+   read from the email's own words; where it states none, nothing is guessed. */
+const KWR_WIN_RE = /campaign\s*duration[^(\n]*\(([^)]{6,80})\)/i;
+const KWR_MONS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+function kwDate(s) {
+  const t = String(s || '').trim();
+  let m = /^([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/i.exec(t);   // Sep 24, 2026
+  if (!m) { const d = /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})$/i.exec(t); // 24 Sep 2026
+    if (d) m = [d[0], d[2], d[1], d[3]]; }
   if (!m) return null;
+  const mo = KWR_MONS[m[1].toLowerCase()]; if (mo == null) return null;
+  const day = parseInt(m[2], 10), y = parseInt(m[3], 10);
+  if (!(day >= 1 && day <= 31) || !(y >= 2000 && y <= 2100)) return null;
+  return { y, mo, day };
+}
+export function kwWindow(body) {
+  const m = KWR_WIN_RE.exec(String(body || '')); if (!m) return null;
+  const parts = m[1].split(/\s+(?:to|until|–|—|-)\s+/i);
+  if (parts.length !== 2) return null;
+  const a = kwDate(parts[0]), b = kwDate(parts[1]); if (!a || !b) return null;
+  const A = Date.UTC(a.y, a.mo, a.day), B = Date.UTC(b.y, b.mo, b.day, 23, 59, 59);
+  if (!(B > A) || B - A > 200 * 86400000) return null;   // a year-long "campaign" is a misread
+  return { a: A, b: B };
+}
+
+export function parseKwResult(msg) {
+  const hit = kwTitle(msg);
+  if (!hit) return null;
+  const m = hit.m;
   let brand = m[1].trim(), period = m[2].trim(), mkt = '';
   const mk = KWR_MKT_RE.exec(brand);
   if (mk) { mkt = mk[1].toLowerCase(); brand = brand.slice(0, mk.index).trim(); }
@@ -717,6 +791,7 @@ export function parseKwResult(msg) {
     }
   }
   const v = kwVerdict(metrics);
+  const win = kwWindow(body);
   return { brand, period: period.slice(0, 40), mkt, metrics, raw: body.slice(0, 2500),
-           verdict: v.verdict, good: v.good, bad: v.bad };
+           verdict: v.verdict, good: v.good, bad: v.bad, src: hit.src, win: win || undefined };
 }
