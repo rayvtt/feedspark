@@ -851,11 +851,61 @@ window.addEventListener('load',restore);
   body.pdf #sec-detail{border-top:none;padding:0}
   body.pdf #sec-detail .wrap{max-width:none;padding:0}
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
-  body.pdf #print-head{display:block;margin:0 0 14px;border-bottom:3px solid #ED6F0B;padding-bottom:10px}
-  body.pdf #print-head .ph-brand{font-size:19px;font-weight:900}
-  body.pdf #print-head .ph-brand span{color:#ED6F0B}
-  body.pdf #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
-  body.pdf #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
+  body.pdf #print-head{display:block;margin:0 0 18px}
+  body.pdf .gr-sticky{display:none!important}   /* the executive summary IS the client documents' header */
+  .ah{background:#fff;border:1px solid #E6E6E6;border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px -18px rgba(0,0,0,.22);overflow:hidden;color:#333;font-family:Lato,system-ui,sans-serif}
+  .ah-mast{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 36px;border-bottom:1px solid #EFEFEF}
+  .ah-brand{font-size:17px;font-weight:900;letter-spacing:-.01em;color:#1f1f1f}
+  .ah-brand span{color:#ED6F0B}
+  .ah-ed{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a94a0}
+  .ah-ed i{width:4px;height:4px;border-radius:50%;background:#F5A623}
+  .ah-body{padding:34px 36px 4px}
+  .ah-kick{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#ED6F0B;padding-bottom:7px;border-bottom:3px solid #F5A623}
+  .ah-h1{margin:16px 0 12px;max-width:1040px;font-size:38px;line-height:1.1;font-weight:900;letter-spacing:-.025em;color:#1f1f1f}
+  .ah-dek{margin:0;font-size:17px;line-height:1.5;color:#5b6470;max-width:780px}
+  .ah-by{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-top:20px;padding-top:14px;border-top:1px solid #EFEFEF;font-size:12px;color:#6b7280}
+  .ah-by>span{display:inline-flex;align-items:center;gap:6px}
+  .ah-by b{color:#1f1f1f}
+  .ah-av{width:26px;height:26px;border-radius:50%;background:#1f1f1f;color:#F5A623;font-size:10px;font-weight:900;justify-content:center;letter-spacing:.04em}
+  .ah-fig{margin:22px 0 0;padding:0}
+  .ah-hero{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;padding:28px 36px;background:linear-gradient(135deg,#FFF6E8 0%,#FFFBF4 45%,#F7F7F5 100%);border-top:1px solid #F3E6CF;border-bottom:1px solid #EFEFEF}
+  .ah-ring{position:relative;background:#fff;border-radius:50%;padding:12px;box-shadow:0 8px 24px -14px rgba(237,111,11,.45)}
+  .ah-ring svg{display:block}
+  .ah-side{min-width:0}
+  .ah-sh{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#1f1f1f;margin-bottom:38px}
+  .ah-scale{position:relative}
+  .ah-track{position:relative;height:10px;border-radius:5px;background:#ECECEC;margin:0 6px 46px}
+  .ah-track>i{position:absolute;top:0;bottom:0;opacity:.85}
+  .ah-track>i:first-child{border-radius:5px 0 0 5px}
+  .ah-track>i:nth-child(4){border-radius:0 5px 5px 0}
+  .ah-m{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid #1f1f1f;box-sizing:border-box}
+  .ah-m.me{width:20px;height:20px;margin:-10px 0 0 -10px;background:#1f1f1f;border-color:#fff;box-shadow:0 0 0 2px #1f1f1f}
+  .ah-m.tg{width:3px;height:24px;margin:-12px 0 0 -1.5px;border:none;border-radius:2px;background:#1f1f1f}
+  .ah-m.av{border-color:#6b7280}
+  .ah-m.pj{border-color:#ED6F0B;border-style:dashed}
+  .ah-ml{position:absolute;transform:translateX(-50%);white-space:nowrap;font-size:10.5px;line-height:1.25;color:#6b7280;text-align:center}
+  .ah-ml b{display:block;font-size:14px;font-weight:900;color:#1f1f1f}
+  .ah-ml.me b{font-size:16px}
+  .ah-ml.pj b{color:#ED6F0B}
+  .ah-ml.up{bottom:22px}
+  .ah-ml.dn{top:20px}
+  .ah-ml.dn2{top:52px}
+  .ah-ml.r{transform:translateX(-100%);text-align:right}
+  .ah-ml.l{transform:none;text-align:left}
+  .ah-minis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:40px}
+  .ah-mini{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #EFE7DA;border-radius:12px;padding:10px 12px;min-width:0}
+  .ah-mini svg{flex:none;display:block}
+  .ah-mn{font-size:12px;font-weight:900;color:#1f1f1f}
+  .ah-ms{font-size:10.5px;line-height:1.35;color:#6b7280;margin-top:2px}
+  .ah-fig figcaption{padding:12px 36px 16px;font-size:10.5px;line-height:1.5;color:#9aa1a9;font-style:italic}
+  /* the ⬇ HTML opened on a narrow screen: the ring sits above the scale, the small rings stack;
+     the PDF (1220px) and Ctrl+P (body.pdf without xhtml) keep the desktop grid */
+  @media(max-width:820px){body.xhtml:not(.xpaper) .ah-hero{grid-template-columns:1fr;justify-items:center;gap:24px;padding:22px 20px}
+    body.xhtml:not(.xpaper) .ah-side{width:100%}
+    body.xhtml:not(.xpaper) .ah-minis{grid-template-columns:1fr}
+    body.xhtml:not(.xpaper) .ah-body,body.xhtml:not(.xpaper) .ah-mast{padding-left:20px;padding-right:20px}
+    body.xhtml:not(.xpaper) .ah-h1{font-size:28px}
+    body.xhtml:not(.xpaper) .ah-dek{font-size:15px}}
   body.pdf #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
   /* ALL MARKETS, AT THE FOOT OF THE CLIENT DOCUMENT (Ray, 7 Oct 2026: "For multi-market clients,
      when you download the HTML or report card, at bottom there should be an overview of all the
@@ -4296,7 +4346,8 @@ window.addEventListener('load',restore);
   var PX_MM = 25.4 / 96;                           // CSS px -> mm at the 96dpi print scale
   // one sheet up to three A4 lengths; past that the document paginates as ordinary A4
   // rather than becoming a metre-long strip nobody can print (Ray: "one or two pages").
-  var PG_MAX = 3 * 297;
+  // 3.5 since 9 Oct 2026: the executive summary opens the document (~0.3 A4) on top of the action plan
+  var PG_MAX = 3.5 * 297;
   function pdfPage(mm) {
     var el = document.getElementById('pdf-page');
     if (!el) { el = document.createElement('style'); el.id = 'pdf-page'; document.head.appendChild(el); }
@@ -4329,15 +4380,124 @@ window.addEventListener('load',restore);
   });
   window.addEventListener('afterprint', restorePdf);
 
-  // both exports (⬇ PDF, ⬇ HTML) share the SAME branded header — one place states what the
-  // client sees at the top of either document
-  function pdfHead(p, s) {
+  /* THE ARTICLE HEADER — both exports (⬇ PDF, ⬇ HTML, Ctrl+P) open on it (Ray, 9 Oct 2026, over the report's intro: "redesign
+     this section of the report intro abit more aesthetics and refined - taking McKinsey style report", then "its no graphic
+     enough … keep everything from Score history but just the top of the report should be more structured and designed more
+     beautifully (think of article header)"). It replaces the AM's header band (dial, Δ toggle, verdict — body.pdf hides
+     .gr-sticky, the ⬇ HTML removes it) with a magazine opener: a masthead, a kicker, a short headline that states the finding,
+     a standfirst, a byline, and a HERO FIGURE — the score ring, a 0–100 scale placing this feed against the industry average,
+     the score after the action plan and the 99.9 target on the audit legend's own bands, and three small rings (content
+     quality, AI-readiness, required attributes). EVERY NUMBER IS READ OFF THE REPORT BELOW IT — goldenScore (the dial),
+     the content-quality headline, the AI-readiness ring, planBuild (the projection the action plan prints) and indBench,
+     NAMED BY INDUSTRY, never by brand; a score nobody measured is drawn empty and says so, never as a zero. Colours are
+     literal (cssLit) because html2canvas paints an inline SVG by serialising it. Score history and everything after it are
+     untouched. */
+  function execSummary(k, p, s) {
+    var prof = profileForC(p.client), score = goldenScore(s.attrs, prof);
     var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    var score = goldenScore(s.attrs, profileForC(p.client));
-    return '<div class="ph-brand">Feed<span>Spark</span></div>' +
-      '<div class="ph-title">Golden Record scorecard — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google Shopping)</div>' +
-      '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
-      (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
+    var issue = new Date(s.t).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    var brand = dispClient(p.client), mk = p.mkt.toUpperCase(), ind = industryOfC(p.client);
+    var qd = null, ai = null, clr = null, mtr = null;
+    try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
+    ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
+    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
+    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
+    var pl = score == null ? null : planBuild(s.attrs, prof, qd, ai, clr, mtr);
+    var bench = indBench(ind), an = aiCount(s.attrs);
+    var req = SPEC.filter(function (x) { return x.t === 'req'; });
+    var reqGone = req.filter(function (x) { return !(s.attrs[x.k] || {}).present; }).map(function (x) { return 'g:' + x.k; });
+    var reqThin = req.filter(function (x) { var a = s.attrs[x.k] || {}; return a.present && a.cov < 99; }).map(function (x) { return 'g:' + x.k; });
+    var reqOk = req.length - reqGone.length - reqThin.length;
+    var r1 = function (v) { return Math.round(v * 10) / 10; };
+    var NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
+    var list = function (a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; };
+    var lifts = pl ? pl.now.concat(pl.next).filter(function (a) { return a.g > 0; }).sort(function (x, y) { return y.g - x.g; }) : [];
+    var top = [], seen = {};
+    lifts.forEach(function (a) { if (top.length < 2 && !seen[a.f]) { seen[a.f] = 1; top.push(a); } });
+    var proj = pl && pl.proj != null && score != null && pl.proj > score ? r1(pl.proj) : null;
+    // THE HEADLINE — short, the finding; the STANDFIRST — the sentence under it
+    var h1, dek;
+    if (score == null) { h1 = brand + ' ' + mk + ', read but not yet scored'; dek = 'The feed carries no attribute this scorecard can score yet.'; }
+    else if (reqGone.length) {
+      h1 = NUM[reqGone.length].charAt(0).toUpperCase() + NUM[reqGone.length].slice(1) + ' required attribute' + (reqGone.length === 1 ? '' : 's') + ' missing from ' + brand + ' ' + mk;
+      dek = (reqGone.length <= 3 ? list(reqGone) + (reqGone.length === 1 ? ' is' : ' are') : 'They are') + ' not in the feed, and Google does not show a product without ' + (reqGone.length === 1 ? 'it' : 'them') + '. Completing them comes before every other optimisation.';
+    } else if (score >= 95) {
+      h1 = brand + ' ' + mk + ' is at Golden Record standard';
+      dek = 'Every required attribute is on the feed and the Golden Score reads ' + score + ' against a 99.9 target' + (top.length ? '; the last points sit in ' + list(top.map(function (a) { return a.f; })) + '.' : '.');
+    } else {
+      h1 = brand + ' ' + mk + ' is ' + r1(99.9 - score) + ' points from a Golden Record';
+      dek = (reqThin.length ? 'Every required attribute is in the feed, but ' + (reqThin.length <= 3 ? list(reqThin) : NUM[reqThin.length] + ' of the ' + NUM[req.length]) + (reqThin.length === 1 ? ' is' : ' are') + ' not yet on every product. '
+        : 'Every attribute Google requires is on every product. ') +
+        (top.length ? 'Completing ' + list(top.map(function (a) { return a.f; })) + ' moves the score most' + (proj != null ? ', and the action plan takes it to ' + proj + '.' : '.') : '');
+    }
+    var L = function (v) { return esc(cssLit(v)); };
+    var INK = '#1f1f1f', TRACK = '#ECECEC';
+    // the score ring — the dial, drawn for paper
+    var ring = function (v, size, sw, col, label, cap) {
+      var r = (size - sw) / 2, C = 2 * Math.PI * r, has = v != null && !isNaN(v), pct = has ? Math.max(0, Math.min(100, +v)) : 0;
+      return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="' + esc(label) + '">' +
+        '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + TRACK + '" stroke-width="' + sw + '"/>' +
+        (has ? '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' +
+          (C * pct / 100).toFixed(2) + ' ' + C.toFixed(2) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/>' : '') +
+        (cap || '') + '</svg>';
+    };
+    var big = score == null ? '' : (function () {
+      var S = 188, sw = 14, r = (S - sw) / 2, a = 2 * Math.PI * 0.999 - Math.PI / 2;   // the 99.9 target tick
+      var tx1 = S / 2 + (r - sw / 2 - 3) * Math.cos(a), ty1 = S / 2 + (r - sw / 2 - 3) * Math.sin(a), tx2 = S / 2 + (r + sw / 2 + 3) * Math.cos(a), ty2 = S / 2 + (r + sw / 2 + 3) * Math.sin(a);
+      return ring(score, S, sw, L(scoreCol(score)), 'Golden Score ' + score + ' of 100',
+        '<line x1="' + tx1.toFixed(1) + '" y1="' + ty1.toFixed(1) + '" x2="' + tx2.toFixed(1) + '" y2="' + ty2.toFixed(1) + '" stroke="' + INK + '" stroke-width="2"/>' +
+        '<text x="' + S / 2 + '" y="' + (S / 2 + 6) + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="900" font-size="46" fill="' + INK + '">' + score + '</text>' +
+        '<text x="' + S / 2 + '" y="' + (S / 2 + 30) + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="700" font-size="11" letter-spacing="1.6" fill="#8a94a0">GOLDEN SCORE</text>');
+    })();
+    // the scale — 0 to 100 on the audit legend's bands, each marker labelled, labels kept apart in two lanes
+    var scale = '';
+    if (score != null) {
+      var lo = 50, pos = function (v) { return Math.max(0, Math.min(100, (Math.max(lo, v) - lo) / (100 - lo) * 100)); };
+      var bands = [[lo, 70, scoreCol(60)], [70, 85, scoreCol(80)], [85, 95, scoreCol(90)], [95, 100, scoreCol(99)]].map(function (b) {
+        return '<i style="left:' + pos(b[0]) + '%;width:' + (pos(b[1]) - pos(b[0])) + '%;background:' + L(b[2]) + '"></i>';
+      }).join('');
+      var mk2 = [{ v: score, l: 'This feed', n: score, c: 'me' }, { v: 99.9, l: 'Golden Record target', n: '99.9', c: 'tg' }];
+      if (bench) mk2.push({ v: bench.avg, l: ind + ' average', n: bench.avg, c: 'av' });
+      if (proj != null) mk2.push({ v: proj, l: 'After the action plan', n: proj, c: 'pj' });
+      var lanes = { up: [], dn: [] }, G = 22;
+      mk2.forEach(function (m) {
+        var p = pos(m.v), fits = function (ln) { return lanes[ln].every(function (q) { return Math.abs(q - p) >= G; }); };
+        m.p = p; m.lane = m.c === 'me' || m.c === 'tg' ? (fits('up') ? 'up' : 'dn') : (fits('dn') ? 'dn' : (fits('up') ? 'up' : 'dn2'));
+        (lanes[m.lane] || (lanes[m.lane] = [])).push(p);
+      });
+      scale = '<div class="ah-scale"><div class="ah-sh">Where the feed stands</div><div class="ah-track">' + bands +
+        mk2.map(function (m) {
+          var al = m.p > 84 ? ' r' : (m.p < 12 ? ' l' : '');
+          return '<span class="ah-m ' + m.c + '" style="left:' + m.p + '%"></span>' +
+            '<span class="ah-ml ' + m.lane + al + ' ' + m.c + '" style="left:' + m.p + '%"><b>' + esc(String(m.n)) + '</b>' + esc(m.l) + '</span>';
+        }).join('') + '</div></div>';
+    }
+    // three small rings — the other readings in the report
+    var mini = function (v, max, col, lbl, sub, txt) {
+      var has = v != null;
+      return '<div class="ah-mini">' + ring(has ? v / max * 100 : null, 64, 7, col, lbl + (has ? ' ' + v : ' not measured'),
+        '<text x="32" y="37" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="900" font-size="' + (has ? (txt ? 15 : 17) : 15) + '" fill="' + (has ? INK : '#9aa1a9') + '">' + (has ? (txt || v) : '—') + '</text>') +
+        '<div><div class="ah-mn">' + esc(lbl) + '</div><div class="ah-ms">' + sub + '</div></div></div>';
+    };
+    var tierWord = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
+    var q = qd && qd.score != null ? qd.score : null;
+    var minis = mini(q, 100, q == null ? TRACK : L(scoreCol(q)), 'Content quality', q == null ? 'Not analysed yet' : 'What the text fields say, against Google’s rules') +
+      mini(ai ? ai.total : null, 100, ai ? L(airCol(ai.total)) : TRACK, 'AI-readiness', ai ? 'Tier ' + ai.tier + ' of 4 · ' + esc(tierWord(ai.tier)) + ' · ' + an.n + ' of ' + an.of + ' conversational attributes' : 'Not analysed yet') +
+      mini(reqOk, req.length, L(reqOk === req.length ? 'var(--good)' : (reqGone.length ? 'var(--risk)' : '#ED6F0B')), 'Required attributes',
+        reqOk + ' of ' + req.length + ' complete on every product', reqOk + '/' + req.length);
+    var ic = function (d) { return '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="' + d + '" fill="none" stroke="#ED6F0B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'; };
+    var IC_CAL = 'M2.5 4h11v9.5h-11zM2.5 7h11M5.5 2.5v3M10.5 2.5v3', IC_BOX = 'M2.5 5 8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5 8 7.5l5.5-2.5M8 7.5v6', IC_BAL = 'M8 2.5v11M4 13.5h8M3 5h10M3 5l-1.5 4h3zM13 5l-1.5 4h3z';
+    return '<header class="ah">' +
+      '<div class="ah-mast"><div class="ah-brand">Feed<span>Spark</span></div><div class="ah-ed">Golden Record audit<i></i>' + esc(issue) + '</div></div>' +
+      '<div class="ah-body"><div class="ah-kick">Google Shopping · ' + esc(ind) + ' · ' + esc(brand) + ' ' + esc(mk) + '</div>' +
+      '<h1 class="ah-h1">' + esc(h1) + '</h1>' +
+      '<p class="ah-dek">' + esc(dek) + '</p>' +
+      '<div class="ah-by"><span class="ah-av">FS</span><span><b>FeedSpark</b> feed audit</span>' +
+      '<span>' + ic(IC_CAL) + 'Scanned ' + esc(when) + '</span><span>' + ic(IC_BOX) + fmt(s.rows) + ' products</span><span>' + ic(IC_BAL) + esc(ind) + ' best-practice profile</span></div></div>' +
+      '<figure class="ah-fig"><div class="ah-hero"><div class="ah-ring">' + big + '</div><div class="ah-side">' + scale + '<div class="ah-minis">' + minis + '</div></div></div>' +
+      '<figcaption>Fig. 1 — The Golden Score is attribute completeness against Google’s product data specification, weighted by how much Google asks of each field; the tick on the ring and the scale is the 99.9 Golden Record target.' +
+      (proj != null ? ' “After the action plan” re-runs the score with the plan at the foot of this report landed on every product — an estimate, not a promise.' : '') + '</figcaption></figure>' +
+      '</header>';
   }
   /* ALL MARKETS, AT THE FOOT OF BOTH CLIENT DOCUMENTS (Ray, 7 Oct 2026: "For multi-market
      clients, when you download the HTML or report card, at bottom there should be an overview of
@@ -4870,7 +5030,7 @@ window.addEventListener('load',restore);
     catxSync(); catxHead(SEL);
   };
   function fillPrint(k, p, s) {
-    $('print-head').innerHTML = pdfHead(p, s);
+    $('print-head').innerHTML = execSummary(k, p, s);
     var pm = $('print-mkts'); if (pm) pm.innerHTML = mktOverview(k, s);
     var pp = $('print-plan'); if (pp) pp.innerHTML = planHtml(k, s);
   }
@@ -5131,7 +5291,7 @@ window.addEventListener('load',restore);
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
-     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am', '#mt-run', '#mt-msg', '#mt-scan', '.mt-act',
+     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am', '#mt-run', '#mt-msg', '#mt-scan', '.mt-act', '.gr-sticky',
      '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the

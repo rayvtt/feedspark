@@ -5673,9 +5673,9 @@
       "min": 1
     },
     {
-      "name": "Golden Record PDF: a document past three A4 lengths paginates as ordinary A4 instead of becoming a metre-long sheet",
+      "name": "Golden Record PDF: a document past three and a half A4 lengths paginates as ordinary A4 instead of becoming a metre-long sheet",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "var PG_MAX = 3 * 297",
+      "pattern": "var PG_MAX = 3.5 * 297",
       "min": 1
     },
     {
@@ -15063,6 +15063,37 @@
       "name": "presync runs the Meta tripwire",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grmeta.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden: client documents open on an article header (headline, standfirst, byline, score ring + scale + rings)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function execSummary(k, p, s)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the article header replaces the AM header band in client docs",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .gr-sticky{display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Golden: fillPrint writes the article header",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "$('print-head').innerHTML = execSummary(k, p, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the old one-line branded header is retired",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pdfHead(",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF tripwire: the file opens on the article header",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the file opens on an article header",
       "pr": 0
     }
   ]

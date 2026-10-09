@@ -1446,6 +1446,35 @@ locked one opened with a client address, inspects what the PDF is drawn from, re
 `GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
 (invisible characters in the file).
 
+### 9.12l The article header that opens both downloads (9 Oct 2026)
+
+Ray, over the report's intro: "redesign this section of the report intro abit more aesthetics and refined - taking
+McKinsey style report", then, of a text-led first cut: "its no graphic enough and keep everything from Score history
+but jsut the top of the report should be more structured and designed more beautifully (think of artciel header)".
+
+The client documents (⬇ PDF, ⬇ HTML, a bare Ctrl+P) open on `execSummary(k, p, s)` in `#print-head`, written by
+`fillPrint`; the AM's header band (`.gr-sticky` — dial, Δ toggle, profile chip, verdict) is hidden in `body.pdf` and
+**removed** from the ⬇ HTML. Score history and everything after it are unchanged, and so is the page on screen.
+
+- **Masthead** — FeedSpark, "Golden Record audit · <month year>".
+- **Kicker** — Google Shopping · industry · brand market, underlined in orange.
+- **Headline** — the finding, short: "<Brand> <MKT> is N points from a Golden Record", "… is at Golden Record standard",
+  or "N required attributes missing from …".
+- **Standfirst** — the sentence under it: the required attributes, the two fields that move the score most, the
+  score after the action plan.
+- **Byline** — FeedSpark feed audit · scanned date · products · the industry best-practice profile.
+- **Hero figure** (warm wash band) — the Golden Score ring with the 99.9 tick; "Where the feed stands", a 50–100 scale
+  on the audit legend's bands marking this feed, the industry average (named by industry, never a brand), the score
+  after the action plan and the 99.9 target, labels in two lanes so none overlaps; three small rings — content
+  quality, AI-readiness (tier, conversational n of 6) and required attributes n/7; a "Fig. 1" caption.
+
+Every number is read off the report below it (`goldenScore`, the content-quality headline, the AI-readiness ring,
+`planBuild`, `indBench`); a score nobody measured is an empty ring reading "—". SVG colours are literal (`cssLit`)
+for html2canvas. On a narrow screen the ⬇ HTML stacks the ring above the scale. The single sheet now runs to 3.5 A4
+lengths before paginating (`PG_MAX`), the tripwire's bound to 3.2. Harness: `tools/check_grpdf.js` (band removed;
+masthead/kicker/headline/standfirst/byline; ring, ≥3 scale marks, three rings on one row, caption; no scale label
+overlaps another or leaves the card).
+
 ### 9.12k The Meta catalogue, on Meta's terms (9 Oct 2026)
 
 Ray: *"in golden record - let's also add in Meta audit as well (areas such as Title for Meta should be < 60 characters) -
