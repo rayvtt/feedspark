@@ -320,9 +320,11 @@ var KWR_TIME_BUDGET_MS = 4 * 60 * 1000;  // stop well inside the 6-minute execut
 var KWR_BACKFILL_PROP  = 'KWR_BACKFILL_OFFSET';
 
 function kwBackfillQuery() {
-  // Same shape the live capture uses, plus the date floor. The worker's subject parser is
-  // still the precise gate — this only has to be narrow enough not to sweep the whole mailbox.
-  return 'subject:("x feedspark" keyword) after:' + KWR_BACKFILL_FROM;
+  // Searches the WHOLE MESSAGE, not just the subject. Dino's read-outs do not all carry the
+  // identifying line in the subject — "Fwd: Knit Zip Cardigan - KW Feed Insertion" names it on the
+  // fifth line of the body — and a subject-scoped sweep never found those at all. The worker's
+  // parser is still the precise gate; this only has to be narrow enough not to sweep the mailbox.
+  return '"x feedspark" ("keyword optimisation" OR "keyword optimization") after:' + KWR_BACKFILL_FROM;
 }
 
 function backfillKwResults() {
@@ -338,8 +340,13 @@ function backfillKwResults() {
     threads.forEach(function (t) {
       t.getMessages().forEach(function (m) {
         var subj = m.getSubject() || '';
-        // mirror the worker's gate so we never ship it mail it will only discard
-        if (!/x\s*feed\s*spark/i.test(subj) || !/keyword\s*optimi[sz]ation/i.test(subj)) return;
+        // mirror the worker's gate so we never ship it mail it will only discard — read the
+        // SUBJECT then the body head, because kwTitle reads the title line from either
+        var bhead = (m.getPlainBody() || '').slice(0, 1500);
+        var kwrOk = function (t) {
+          return /x\s*feed\s*spark/i.test(t) && /keyword\s*optimi[sz]ation/i.test(t);
+        };
+        if (!kwrOk(subj) && !kwrOk(bhead)) return;
         out.push({ id: m.getId(), from: m.getFrom(), to: m.getTo(), cc: m.getCc(), subject: subj,
           // 4000 is ample: the worker archives 2500 chars of body and reads metric lines from
           // the head. Halving the live 9000 keeps a 25-thread payload comfortably small.

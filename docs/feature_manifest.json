@@ -10239,6 +10239,12 @@
       "pr": 0
     },
     {
+      "name": "Keyword results: the one-off history sweep reads the whole message too, so a body-titled read-out is recoverable",
+      "file": "tools/gmail_push.gs",
+      "pattern": "'\"x feedspark\" (\"keyword optimisation\" OR \"keyword optimization\") after:' + KWR_BACKFILL_FROM;",
+      "pr": 0
+    },
+    {
       "name": "Keyword Calendar: a result that stated its own campaign window is tied on that window, not on its period token",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "if(r&&r.win&&r.win.a&&r.win.b&&r.win.b>r.win.a){",

@@ -175,5 +175,25 @@ console.log('\n-- backfill guards (source-level) --');
   ok('triage queue cap left alone at 120', /stored\.slice\(0, 120\)/.test(src));
 }
 
+// The Apps Script decides what ever reaches the worker, so a parser that reads a body title
+// line is worth nothing while BOTH Gmail lanes search `subject:` only. Source-level, since a
+// .gs file is not importable: these pin that each lane searches the whole message and gates on
+// the subject OR the body head, the way kwTitle reads it.
+console.log('\n-- the Apps Script’s two lanes (source-level) --');
+{
+  const gs = readFileSync(new URL('./gmail_push.gs', import.meta.url), 'utf8');
+  const bq = /function kwBackfillQuery\(\)[\s\S]*?\n}/.exec(gs);
+  ok('the backfill lane is present', !!bq);
+  ok('…and searches the whole message, not subject:', !!bq && !/subject:/.test(bq[0]), bq && bq[0].slice(-120));
+  ok('…still floored on the backfill date', !!bq && /KWR_BACKFILL_FROM/.test(bq[0]));
+  const bf = /function backfillKwResults\(\)[\s\S]*?\n}/.exec(gs);
+  ok('the per-message gate reads the body head too', !!bf && /getPlainBody\(\)[\s\S]*?slice\(0, 1500\)/.test(bf[0]));
+  ok('…gating on subject OR body, never subject alone', !!bf && /kwrOk\(subj\) && !kwrOk\(bhead\)/.test(bf[0]));
+  // the live lane, pinned alongside it so the pair can never drift apart again
+  ok('the live capture searches the body as well', /GmailApp\.search\('newer_than:2d "x feedspark"/.test(gs));
+  ok('…and its own gate reads the body head', /var isKwr = hasKwr\(subj\) \|\| hasKwr\(head\)/.test(gs));
+  ok('both body searches are collected', /kwrBody\.forEach\(collect\)/.test(gs));
+}
+
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
 process.exit(fail ? 1 : 0);
