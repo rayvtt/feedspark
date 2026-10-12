@@ -54,8 +54,8 @@ const A4 = 297;                 // mm
 // the collapsed scorecard — four spec tiers + content quality + AI-readiness — must stay
 // inside roughly two and a half A4 lengths on its single sheet (Ray: "one or two pages");
 // since 8 Oct 2026 the action plan closes the document (one board, ~0.3 A4), and since 9 Oct 2026
-// the article header opens it (~0.4 A4) — hence 3.2, under the page's 3.5-length single sheet
-const MAX_A4 = 3.2;
+// the cover opens it (~0.5 A4) — hence 3.3, under the page's 3.5-length single sheet
+const MAX_A4 = 3.3;
 
 let fail = 0;
 const ok = (name, cond, extra) => {
@@ -278,7 +278,7 @@ const QUALITY = {
       window.__h2c = [];
       window.html2canvas = (el) => { const d = el.ownerDocument;
         window.__h2c.push({ live: d === document, cls: d.body.className, closed: d.querySelectorAll('details:not([open])').length, det: d.querySelectorAll('details').length, depClosed: d.querySelectorAll('.dep-card,.dep-hov').length, bodies: Array.from(d.querySelectorAll('details:not([open])')).filter((x) => Array.from(x.childNodes).some((n) => !(n.nodeType === 1 && n.tagName === 'SUMMARY'))).length, methOpen: d.querySelectorAll('details[open]').length,
-          head: !!d.querySelector('#print-head .ah-h1'), dial: !!d.querySelector('#print-head .ah-ring svg') && !d.querySelector('.gr-sticky'), scripts: d.querySelectorAll('script').length,
+          head: !!d.querySelector('#print-head .cv-h1'), dial: !!d.querySelector('#print-head .cv-ring svg') && !d.querySelector('.gr-sticky'), scripts: d.querySelectorAll('script').length,
           tip: d.querySelectorAll('.dptip,[data-deptip]').length, chrome: !!d.querySelector('.topbar:not([hidden])') && getComputedStyle(d.querySelector('.topbar')).display !== 'none',
           bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth,
           ring: (() => { const c = d.querySelector('.big-ring svg.br-svg circle:last-child'); return c ? { dash: c.getAttribute('stroke-dasharray'), stroke: c.getAttribute('stroke'), bg: getComputedStyle(d.querySelector('.big-ring')).backgroundImage } : null; })() });
@@ -299,7 +299,7 @@ const QUALITY = {
     ok('the button label is restored', r.btnRestored === '⬇ PDF', r.btnRestored);
     const cap = await page.evaluate(() => ({ calls: window.__h2c, frames: document.querySelectorAll('iframe.pdf-render').length }));
     const c0 = (cap.calls || [])[0] || {};
-    ok('the PDF is rasterised from the ⬇ HTML document, laid out apart from the live page — the same body classes, the article header and its score ring in place of the AM\'s header band, no script',
+    ok('the PDF is rasterised from the ⬇ HTML document, laid out apart from the live page — the same body classes, the cover and its score ring in place of the AM\'s header band, no script',
       cap.calls.length === 1 && c0.live === false && /\bxhtml\b/.test(c0.cls) && /\bxpaper\b/.test(c0.cls) && c0.dial && c0.scripts === 0 && !c0.chrome && c0.w === 1220, c0);
     ok('…its folds stand as the ⬇ HTML opens them — section methods open, attributes folded on their score — the depth explanations open, and the pop-up never travels',
       c0.det > 0 && c0.closed > 0 && c0.methOpen > 0 && c0.depClosed === 0 && c0.tip === 0, c0);
@@ -392,16 +392,13 @@ const QUALITY = {
         bodyBg: getComputedStyle(document.body).backgroundColor, wash,
         cardBg: q('.xd-wrap details.xd') ? getComputedStyle(q('.xd-wrap details.xd')).backgroundColor : null,
         sticky: document.querySelectorAll('.gr-sticky, .refseg, .gr-verdict').length,
-        eh: (() => { const h = q('#print-head .ah'); if (!h) return null; const r = h.getBoundingClientRect();
-          const box = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
-          const lbl = Array.from(document.querySelectorAll('.ah-ml')).map(box);
-          const hit = lbl.some((a, i) => lbl.some((b, j) => j > i && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1));
-          const track = q('.ah-track') ? box(q('.ah-track')) : null;
-          return { title: (q('.ah-h1') || {}).textContent || '', h1: fs(q('.ah-h1')), dek: ((q('.ah-dek') || {}).textContent || '').length,
-            kick: !!q('.ah-kick'), by: !!q('.ah-by'), ring: !!q('.ah-ring svg text'), marks: document.querySelectorAll('.ah-track .ah-m').length,
-            minis: document.querySelectorAll('.ah-minis .ah-mini svg').length,
-            miniRow: new Set(Array.from(document.querySelectorAll('.ah-mini')).map((k) => Math.round(k.getBoundingClientRect().top))).size,
-            hit, inside: lbl.every((a) => a.l >= r.left - 1 && a.r <= r.right + 1), cap: /Fig\. 1/.test((q('.ah-fig figcaption') || {}).textContent || ''),
+        eh: (() => { const h = q('#print-head .cv'); if (!h) return null; const r = h.getBoundingClientRect();
+          const mid = (e) => { if (!e) return null; const b = e.getBoundingClientRect(); return Math.round(b.left + b.width / 2 - (r.left + r.width / 2)); };
+          return { title: (q('.cv-h1') || {}).textContent || '', logo: fs(q('.cv-logo')), h1: fs(q('.cv-h1')), dek: ((q('.cv-dek') || {}).textContent || '').length,
+            photo: !!q('.cv-photo'), photoH: q('.cv-photo') ? q('.cv-photo').getBoundingClientRect().height : 0, ring: !!q('.cv-ring svg text'),
+            minis: document.querySelectorAll('.cv-minis .cv-mini svg').length,
+            miniRow: new Set(Array.from(document.querySelectorAll('.cv-mini')).map((k) => Math.round(k.getBoundingClientRect().top))).size,
+            centred: [mid(q('.cv-logo')), mid(q('.cv-h1')), mid(q('.cv-scores'))], foot: /Private/.test((q('.cv-foot') || {}).textContent || ''),
             bg: getComputedStyle(h).backgroundColor, w: r.width }; })(),
         dead: document.querySelectorAll('#pdp-last, #prof-edit').length,
       };
@@ -422,11 +419,12 @@ const QUALITY = {
     // the source open it instead
     ok('the AM\'s header band — dial, Δ reference, verdict — is removed from the file, not hidden; the PDP-sample and profile buttons too',
       type.sticky === 0 && type.dead === 0, type);
-    ok('the file opens on an article header: masthead, kicker, a headline stating the finding, a standfirst and a byline, on a white card',
-      type.eh && type.eh.kick && type.eh.by && type.eh.title.length > 15 && !/^Golden Record scorecard/.test(type.eh.title) && parseFloat(type.eh.h1) >= 34 && type.eh.dek > 40 && type.eh.bg === 'rgb(255, 255, 255)', type.eh);
-    ok('…a hero figure: the score ring, the scale with this feed, the industry, the plan and the target marked, three small rings on one row, a caption',
-      type.eh && type.eh.ring && type.eh.marks >= 3 && type.eh.minis === 3 && type.eh.miniRow === 1 && type.eh.cap, type.eh);
-    ok('…and no label on the scale sits on another, or runs off the card', type.eh && !type.eh.hit && type.eh.inside, type.eh);
+    // THE COVER (Ray, 12 Oct 2026: "it should have a cover photo; the FeedSpark logo should be bigger. This section should be
+    // centered … this section should be interpreted as a cover")
+    ok('the file opens on a cover: a photo band, the FeedSpark wordmark large, the brand · market as the title, the finding, a footer — on white',
+      type.eh && type.eh.photo && type.eh.photoH >= 150 && parseFloat(type.eh.logo) >= 40 && parseFloat(type.eh.h1) >= 36 && /·/.test(type.eh.title) && type.eh.dek > 15 && type.eh.foot && type.eh.bg === 'rgb(255, 255, 255)', type.eh);
+    ok('…centred: wordmark, title and scores sit on the cover\'s own centre line', type.eh && type.eh.centred.every((d) => d != null && Math.abs(d) <= 2), type.eh && type.eh.centred);
+    ok('…the score ring with three small rings on one row', type.eh && type.eh.ring && type.eh.minis === 3 && type.eh.miniRow === 1, type.eh);
     ok('…and the benchmark is named by industry, never by a brand', type.eh && !/\(.*(Superdry|Schuh|Monsoon)/.test(type.eh.title), type.eh);
     fs.unlinkSync(tmp);
     ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());

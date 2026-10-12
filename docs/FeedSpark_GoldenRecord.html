@@ -68,6 +68,7 @@ window.addEventListener('load',restore);
   .scan-sel:disabled{opacity:.55}
   .scan-skip{font-size:11.5px;font-weight:700;color:var(--muted);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer}
   .est-hd .est-scan{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
+  .est-hd .est-dl{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
   .est-card.collapsed .est-hd{margin-bottom:-6px}
   .est-hd h3{margin:0;font-size:16px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -853,59 +854,36 @@ window.addEventListener('load',restore);
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
   body.pdf #print-head{display:block;margin:0 0 18px}
   body.pdf .gr-sticky{display:none!important}   /* the executive summary IS the client documents' header */
-  .ah{background:#fff;border:1px solid #E6E6E6;border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px -18px rgba(0,0,0,.22);overflow:hidden;color:#333;font-family:Lato,system-ui,sans-serif}
-  .ah-mast{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 36px;border-bottom:1px solid #EFEFEF}
-  .ah-brand{font-size:17px;font-weight:900;letter-spacing:-.01em;color:#1f1f1f}
-  .ah-brand span{color:#ED6F0B}
-  .ah-ed{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a94a0}
-  .ah-ed i{width:4px;height:4px;border-radius:50%;background:#F5A623}
-  .ah-body{padding:34px 36px 4px}
-  .ah-kick{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#ED6F0B;padding-bottom:7px;border-bottom:3px solid #F5A623}
-  .ah-h1{margin:16px 0 12px;max-width:1040px;font-size:38px;line-height:1.1;font-weight:900;letter-spacing:-.025em;color:#1f1f1f}
-  .ah-dek{margin:0;font-size:17px;line-height:1.5;color:#5b6470;max-width:780px}
-  .ah-by{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-top:20px;padding-top:14px;border-top:1px solid #EFEFEF;font-size:12px;color:#6b7280}
-  .ah-by>span{display:inline-flex;align-items:center;gap:6px}
-  .ah-by b{color:#1f1f1f}
-  .ah-av{width:26px;height:26px;border-radius:50%;background:#1f1f1f;color:#F5A623;font-size:10px;font-weight:900;justify-content:center;letter-spacing:.04em}
-  .ah-fig{margin:22px 0 0;padding:0}
-  .ah-hero{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;padding:28px 36px;background:linear-gradient(135deg,#FFF6E8 0%,#FFFBF4 45%,#F7F7F5 100%);border-top:1px solid #F3E6CF;border-bottom:1px solid #EFEFEF}
-  .ah-ring{position:relative;background:#fff;border-radius:50%;padding:12px;box-shadow:0 8px 24px -14px rgba(237,111,11,.45)}
-  .ah-ring svg{display:block}
-  .ah-side{min-width:0}
-  .ah-sh{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#1f1f1f;margin-bottom:38px}
-  .ah-scale{position:relative}
-  .ah-track{position:relative;height:10px;border-radius:5px;background:#ECECEC;margin:0 6px 46px}
-  .ah-track>i{position:absolute;top:0;bottom:0;opacity:.85}
-  .ah-track>i:first-child{border-radius:5px 0 0 5px}
-  .ah-track>i:nth-child(4){border-radius:0 5px 5px 0}
-  .ah-m{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid #1f1f1f;box-sizing:border-box}
-  .ah-m.me{width:20px;height:20px;margin:-10px 0 0 -10px;background:#1f1f1f;border-color:#fff;box-shadow:0 0 0 2px #1f1f1f}
-  .ah-m.tg{width:3px;height:24px;margin:-12px 0 0 -1.5px;border:none;border-radius:2px;background:#1f1f1f}
-  .ah-m.av{border-color:#6b7280}
-  .ah-m.pj{border-color:#ED6F0B;border-style:dashed}
-  .ah-ml{position:absolute;transform:translateX(-50%);white-space:nowrap;font-size:10.5px;line-height:1.25;color:#6b7280;text-align:center}
-  .ah-ml b{display:block;font-size:14px;font-weight:900;color:#1f1f1f}
-  .ah-ml.me b{font-size:16px}
-  .ah-ml.pj b{color:#ED6F0B}
-  .ah-ml.up{bottom:22px}
-  .ah-ml.dn{top:20px}
-  .ah-ml.dn2{top:52px}
-  .ah-ml.r{transform:translateX(-100%);text-align:right}
-  .ah-ml.l{transform:none;text-align:left}
-  .ah-minis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:40px}
-  .ah-mini{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #EFE7DA;border-radius:12px;padding:10px 12px;min-width:0}
-  .ah-mini svg{flex:none;display:block}
-  .ah-mn{font-size:12px;font-weight:900;color:#1f1f1f}
-  .ah-ms{font-size:10.5px;line-height:1.35;color:#6b7280;margin-top:2px}
-  .ah-fig figcaption{padding:12px 36px 16px;font-size:10.5px;line-height:1.5;color:#9aa1a9;font-style:italic}
-  /* the ⬇ HTML opened on a narrow screen: the ring sits above the scale, the small rings stack;
-     the PDF (1220px) and Ctrl+P (body.pdf without xhtml) keep the desktop grid */
-  @media(max-width:820px){body.xhtml:not(.xpaper) .ah-hero{grid-template-columns:1fr;justify-items:center;gap:24px;padding:22px 20px}
-    body.xhtml:not(.xpaper) .ah-side{width:100%}
-    body.xhtml:not(.xpaper) .ah-minis{grid-template-columns:1fr}
-    body.xhtml:not(.xpaper) .ah-body,body.xhtml:not(.xpaper) .ah-mast{padding-left:20px;padding-right:20px}
-    body.xhtml:not(.xpaper) .ah-h1{font-size:28px}
-    body.xhtml:not(.xpaper) .ah-dek{font-size:15px}}
+  .cv{background:#fff;border:1px solid #E6E6E6;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 40px -22px rgba(0,0,0,.28);overflow:hidden;color:#333;font-family:Lato,system-ui,sans-serif;text-align:center}
+  .cv-photo{display:flex;height:300px;background:#F7F7F5;overflow:hidden}
+  .cv-photo img{flex:1;min-width:0;height:100%;object-fit:cover;display:block;border-right:3px solid #fff}
+  .cv-photo img:last-child{border-right:0}
+  .cv-art svg{width:100%;height:100%;display:block}
+  .cv-body{padding:34px 40px 26px;display:flex;flex-direction:column;align-items:center}
+  .cv-logo{font-size:44px;font-weight:900;letter-spacing:-.02em;color:#1f1f1f;line-height:1}
+  .cv-logo span{color:#ED6F0B}
+  .cv-kick{margin-top:18px;font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#ED6F0B}
+  .cv-h1{margin:10px 0 0;font-size:42px;line-height:1.1;font-weight:900;letter-spacing:-.02em;color:#1f1f1f}
+  .cv-h1 span{color:#F5A623}
+  .cv-dek{margin:12px auto 0;max-width:720px;font-size:17px;line-height:1.5;color:#5b6470}
+  .cv-meta{margin-top:10px;font-size:12px;font-weight:700;color:#8a94a0}
+  .cv-scores{display:flex;align-items:center;justify-content:center;gap:44px;margin:28px 0 6px;flex-wrap:wrap}
+  .cv-ring svg{display:block}
+  .cv-minis{display:flex;gap:30px}
+  .cv-mini{display:flex;flex-direction:column;align-items:center;width:130px}
+  .cv-mini svg{display:block}
+  .cv-mn{margin-top:8px;font-size:12.5px;font-weight:900;color:#1f1f1f}
+  .cv-ms{font-size:10.5px;line-height:1.35;color:#8a94a0;margin-top:2px}
+  .cv-bench{margin-top:16px;font-size:12px;color:#6b7280}
+  .cv-bench b{color:#1f1f1f}
+  .cv-foot{margin-top:22px;padding-top:14px;border-top:1px solid #EFEFEF;width:100%;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9aa1a9}
+  /* the ⬇ HTML opened on a narrow screen: a shorter photo, the rings stacked; the PDF (1220px) and Ctrl+P keep the cover */
+  @media(max-width:820px){body.xhtml:not(.xpaper) .cv-photo{height:180px}
+    body.xhtml:not(.xpaper) .cv-body{padding:24px 18px 20px}
+    body.xhtml:not(.xpaper) .cv-logo{font-size:34px}
+    body.xhtml:not(.xpaper) .cv-h1{font-size:30px}
+    body.xhtml:not(.xpaper) .cv-minis{gap:10px}
+    body.xhtml:not(.xpaper) .cv-mini{width:100px}}
   body.pdf #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
   /* ALL MARKETS, AT THE FOOT OF THE CLIENT DOCUMENT (Ray, 7 Oct 2026: "For multi-market clients,
      when you download the HTML or report card, at bottom there should be an overview of all the
@@ -1171,6 +1149,7 @@ window.addEventListener('load',restore);
     <span class="scan-ctl"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
+    <button class="btn" id="pfx-all" title="Every brand and every market in one interactive HTML file — the same view as a brand card's ⬇ HTML, the markets named with their brand; CSV inside">⬇ Whole portfolio</button>
     <select class="scan-sel" id="scan-brand" aria-label="Brands to scan" title="What to scan — every brand, one brand, or (with a brand picked) one market"></select><select class="scan-sel" id="scan-mkt" aria-label="Markets to scan" title="Pick a brand first, then every market of it or one"></select><label class="scan-skip" title="Leave out feeds already read in the last 20 hours — off, every feed in the scope is read now"><input type="checkbox" id="scan-skip"> skip feeds read in the last 20 h</label><button class="btn" id="scan-stop" hidden title="Finish the feed in hand, then stop">⏹ Stop</button><button class="btn pri" id="scan-all" title="Read every feed in the scope now — FeedHero XML feeds stream live in this browser, sheet feeds through the server">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — the score is each
   feed’s weighted attribute completeness (required ×3 · conditional ×2 · recommended ×1). FeedSpark’s Golden
@@ -1722,7 +1701,7 @@ window.addEventListener('load',restore);
         (sum.req ? '<span class="est-flag crit">' + sum.req + ' req</span>' : '') +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(dispClient(c)) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(dispClient(c)) + '">⚡</button>' + '</div>';
+        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(dispClient(c)) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(dispClient(c)) + '">⚡</button>' + '<button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(dispClient(c)) + ' in one interactive HTML file — each market’s scores and every attribute’s coverage, any attribute compared across markets; CSV inside. The client report is ⬇ PDF / ⬇ HTML on the scorecard.">⬇ HTML</button>' + '</div>';
       if (!collapsed) {
         byClient[c].forEach(function (f) {
           var k = keyOf(f.client, f.mkt), st = statusOf(f);
@@ -1759,8 +1738,365 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('.est-scan'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); scanBrand(el.getAttribute('data-scanb')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.est-dl'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); grxExport([el.getAttribute('data-dl')], el); };
+    });
     collapseAllBtn();
   }
+  /* PFX:START — ⬇ EVERY MARKET IN ONE FILE (Ray, 12 Oct 2026: "Can you allow downloads across the whole
+     portfolio, similar to the way the custom label is being set up for Golden Records and PT Cards, please?").
+     Label Guard's ⬇ HTML · all markets (lgxHtml, §5c) as a SHARED block: this text, between PFX:START and
+     PFX:END, is byte-identical on /ptypes and /golden (tools/check_pfx.js holds them equal) and each page only
+     builds the RECORD it hands it. One self-contained file — the data embedded, PFX_APP serialised with
+     .toString() so it is parsed code checked as part of this page, no fetch, nothing of the FCC: Across markets
+     (the page's own headline figures per market, a row click opens the market) · Compare side by side, built by
+     the reader (rows grouped, the markets ticked — All / Clear — values / share, every row / in every market /
+     missing somewhere, any column sorted incl. the spread, ⤓ CSV of exactly that view, the view in the address)
+     · market tabs (the market's figures, its bars, its alerts and every row with its Δ where the page has a
+     reference) · the same 🔍 filter across all of it · ⤓ CSV of one market or all · 🖨 Print. A brand file or
+     the whole estate (the market named with its brand). A value is escaped on the way in and the data cannot
+     close its own script block. */
+  var PFX_CSS = '@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");' +
+    ':root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;--muted:#8a94a0;--line:#E6E6E6;--wash:#F7F7F5;--good:#15803D;--risk:#C0392B;--shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06)}' +
+    '*{box-sizing:border-box}body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5;font-size:13px}' +
+    '.wrap{max-width:1720px;margin:0 auto;padding:0 24px}h1{margin:0;font-size:26px;font-weight:900}h2{margin:0;font-size:16px;font-weight:900}' +
+    '.hd{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:26px 0 12px}.hd .k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)}' +
+    '.hd .sub{margin:4px 0 0;color:var(--muted);font-weight:700;font-size:12px}.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lede{margin:0 0 14px;color:var(--ink-2);font-size:13.5px;max-width:960px}' +
+    '.btn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:12px;font-weight:800;border-radius:9px;padding:7px 12px;cursor:pointer}.btn:hover{border-color:var(--orange);color:var(--orange-deep)}.btn[disabled]{opacity:.5;cursor:default}' +
+    '.q{font:inherit;font-size:12px;font-weight:700;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);width:200px}.q:focus{outline:none;border-color:var(--orange)}' +
+    '.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}.ch{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}.ch .n{color:var(--muted);font-weight:700;font-size:12px}' +
+    '.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:4px 11px;font:inherit;font-size:11.5px;font-weight:800;color:var(--ink-2);cursor:pointer}' +
+    '.chip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}.chip.off{color:var(--muted);border-style:dashed}.chip[disabled]{opacity:.45;cursor:default}.chip .fl{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:5px;vertical-align:middle}.fl.crit{background:var(--risk)}.fl.warn{background:var(--orange)}' +
+    '.tw{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px}th{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}' +
+    'td{padding:5px 8px;border-bottom:1px solid #F0F0F0;vertical-align:middle;font-variant-numeric:tabular-nums}.r{text-align:right}th.s{cursor:pointer}th.s:hover{color:var(--orange-deep)}td.v{font-weight:700;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}td.g{color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap}' +
+    '.ov tbody tr{cursor:pointer}.ov tbody tr:hover td{background:#FFF8EE}.ov tr.cur td{background:#FDF3E3}' +
+    '.b{font-weight:900;border-radius:6px;padding:1px 7px;display:inline-block;min-width:46px;text-align:right}.b.green{background:#E3F4E9;color:var(--good)}.b.yellow{background:#FEF6E4;color:#9A6200}.b.orange{background:#FDEEDF;color:var(--orange-ink)}.b.red{background:#FDEBEA;color:var(--risk)}' +
+    '.up{color:var(--good);font-weight:800}.down{color:var(--risk);font-weight:800}.muted{color:var(--muted)}tr.gone td{color:var(--risk);text-decoration:line-through}tr.gone td.r{text-decoration:none}' +
+    '.shbar{display:block;height:6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:40px}.shbar i{display:block;height:100%;background:var(--orange);border-radius:100px}' +
+    '.more{font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:6px 4px 1px;display:inline-block}' +
+    '.mh{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}.mh .st{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);font-weight:700}.mh .st b{color:var(--ink)}' +
+    '.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 12px}.kt{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kt .l{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.kt .v{font-size:22px;font-weight:900;line-height:1.2}.kt .s{font-size:11px;color:var(--muted);font-weight:700}' +
+    '.al{margin:6px 0 4px;padding:0;list-style:none}.al li{font-size:12px;font-weight:700;padding:4px 0}.al .sev{display:inline-block;font-size:9.5px;font-weight:900;text-transform:uppercase;border-radius:100px;padding:1px 7px;margin-right:7px}.al .sev.crit{background:#FDEBEA;color:var(--risk)}.al .sev.warn{background:#FDF3E3;color:var(--orange-deep)}' +
+    '.pop{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 12px;max-width:560px}.pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}' +
+    '.pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}.pop .pr.hi{color:var(--ink);font-weight:900}.pop .pl{width:96px;flex:none}.pop .pb{flex:1;height:7px;border-radius:100px;background:#E3E6EB;overflow:hidden}.pop .pb i{display:block;height:100%;border-radius:100px}.pop .pv{width:50px;text-align:right;flex:none}.pop .pf{margin-top:7px;color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.55}.pop .pf b{color:var(--ink)}' +
+    '.cmpctl{display:grid;gap:8px;margin:2px 0 12px;padding:10px 12px;background:var(--wash);border:1px solid var(--line);border-radius:12px}.cr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:58px}' +
+    '.lnk{border:0;background:none;font:inherit;font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:2px 4px}.lnk:hover{text-decoration:underline}' +
+    '.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}.seg button{border:0;border-right:1px solid var(--line);background:none;font:inherit;font-size:11.5px;font-weight:800;color:var(--ink-2);padding:5px 10px;cursor:pointer}.seg button:last-child{border-right:0}.seg button.on{background:var(--orange-deep);color:#fff}' +
+    '.cr .btn{margin-left:auto}.csum{font-size:12px;font-weight:700;color:var(--ink-2);margin:0 0 8px}.csum b{color:var(--ink)}th small{display:block;font-size:9.5px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--muted)}td.sp{font-weight:800}' +
+    '.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.foot{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:700;padding:10px 0 26px}' +
+    '@media(max-width:600px){.wrap{padding:0 14px}.tools{margin-left:0}}@media print{.tools,.tabs,.more,.chips,.cmpctl{display:none}.card{box-shadow:none;break-inside:avoid}body{background:#fff}}';
+  /* the script inside the file — reads only window.PFX; no fetch, no FCC */
+  function PFX_APP() {
+    var D = window.PFX;
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-GB'); }
+    function dstr(t) { return t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+    // the one audit legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)
+    function band(v) { return v == null ? '' : v >= 95 ? 'green' : v >= 85 ? 'yellow' : v >= 70 ? 'orange' : 'red'; }
+    function cell(c, v) {
+      if (v == null || v === '') return '<span class="muted">—</span>';
+      if (c.t === 'score' || c.t === 'pct') return '<span class="b ' + band(+v) + '">' + v + (c.t === 'pct' ? '%' : '') + '</span>';
+      if (c.t === 'num') return fmt(v);
+      if (c.t === 'share') return v + '%';
+      if (c.t === 'date') return dstr(v);
+      return esc(v);
+    }
+    var scanned = D.markets.filter(function (m) { return m.scanned; });
+    var S = { tab: scanned.length ? D.markets.indexOf(scanned[0]) : -1, q: '', sort: { col: D.mx.hasN ? 'n' : 'p', dir: -1 }, more: {}, cmpAll: false,
+      sel: scanned.map(function (m) { return D.markets.indexOf(m); }), grp: 'all', show: D.mx.hasN ? 'both' : 'p', rows: 'all', csort: { col: 'avg', dir: -1 } };
+    (function readHash() {
+      String(location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+        var p = kv.split('='), k = p[0], v = decodeURIComponent(p[1] || '');
+        if (k === 'm') S.sel = v.split(',').filter(function (x) { return x !== ''; }).map(Number).filter(function (i) { return D.markets[i] && D.markets[i].scanned; });
+        else if (k === 'g') S.grp = v;
+        else if (k === 'show' && /^(n|p|both)$/.test(v)) S.show = v;
+        else if (k === 'rows' && /^(all|every|gap)$/.test(v)) S.rows = v;
+        else if (k === 'sort' && /^(v|avg|spread|m\d+)~-?1$/.test(v)) S.csort = { col: v.split('~')[0], dir: +v.split('~')[1] };
+      });
+    })();
+    function writeHash() { try { history.replaceState(null, '', '#m=' + S.sel.join(',') + '&g=' + encodeURIComponent(S.grp) + '&show=' + S.show + '&rows=' + S.rows + '&sort=' + S.csort.col + '~' + S.csort.dir); } catch (e) {} }
+    function qm(v) { return !S.q || String(v).toLowerCase().indexOf(S.q.toLowerCase()) >= 0; }
+    function head() {
+      var n = D.markets.length;
+      return '<header class="hd"><div><div class="k">' + esc(D.kicker) + '</div><h1>' + esc(D.title) + '</h1>' +
+        '<p class="sub">' + n + ' market' + (n === 1 ? '' : 's') + ' · ' + scanned.length + ' scanned' + (D.refMode ? ' · Δ vs ' + esc(D.refMode) + ' (dated per market)' : '') + ' · file made ' + dstr(D.made) + '</p></div>' +
+        '<div class="tools"><input class="q" id="q" placeholder="🔍 filter ' + esc(D.mx.many) + '" value="' + esc(S.q) + '">' +
+        '<button class="btn" id="csv1">⤓ CSV · this market</button><button class="btn" id="csv0">⤓ CSV · all markets</button><button class="btn" id="prn">🖨 Print</button></div></header>' +
+        (D.lede ? '<p class="lede">' + esc(D.lede) + '</p>' : '');
+    }
+    function overview() {
+      var h = '<section class="card" id="ov"><div class="ch"><h2>Across markets</h2><span class="n">click a market to open it</span></div><div class="tw"><table class="ov"><thead><tr><th>Market</th>';
+      D.ov.forEach(function (c) { h += '<th' + (c.t === 'text' || c.t === 'date' ? '' : ' class="r"') + '>' + esc(c.l) + '</th>'; });
+      h += '<th>Flags</th></tr></thead><tbody>';
+      D.markets.forEach(function (m, mi) {
+        h += '<tr data-mi="' + mi + '"' + (mi === S.tab ? ' class="cur"' : '') + '><td><b>' + esc(m.code) + '</b></td>';
+        if (!m.scanned) { h += '<td colspan="' + (D.ov.length + 1) + '" class="muted">not scanned yet</td></tr>'; return; }
+        D.ov.forEach(function (c) { h += '<td' + (c.t === 'text' || c.t === 'date' ? '' : ' class="r"') + '>' + cell(c, m.ov[c.k]) + '</td>'; });
+        h += '<td>' + (m.crit ? '<span class="down">' + m.crit + ' crit</span> ' : '') + (m.warn ? '<span style="color:var(--orange-deep);font-weight:800">' + m.warn + ' warn</span>' : '') + (!m.crit && !m.warn ? '<span class="up">✓</span>' : '') + '</td></tr>';
+      });
+      var av = D.ov.filter(function (c) { return c.t === 'score' || c.t === 'pct' || c.t === 'share' || c.sum || c.avg; });
+      if (scanned.length > 1 && av.length) {
+        h += '<tr><td><b>' + (D.multi ? 'Estate' : 'All markets') + '</b></td>';
+        D.ov.forEach(function (c) {
+          var vs = scanned.map(function (m) { return m.ov[c.k]; }).filter(function (v) { return v != null && v !== '' && !isNaN(v); });
+          var v = !vs.length || av.indexOf(c) < 0 ? null : c.sum ? vs.reduce(function (s, x) { return s + +x; }, 0) : Math.round(vs.reduce(function (s, x) { return s + +x; }, 0) / vs.length * 10) / 10;
+          h += '<td' + (c.t === 'text' || c.t === 'date' ? '' : ' class="r"') + '>' + (v == null ? '' : cell(c, v) + (!c.sum && vs.length < scanned.length ? ' <span class="muted">of ' + vs.length + '</span>' : '')) + '</td>';
+        });
+        h += '<td class="muted">' + (av.some(function (c) { return !c.sum; }) ? 'averages' : '') + '</td></tr>';
+      }
+      return h + '</tbody></table></div></section>';
+    }
+    // compare: a row per key, a column per market picked, keyed by each market's POSITION in the file
+    function cmpModel() {
+      var sel = S.sel.filter(function (mi) { return D.markets[mi] && D.markets[mi].scanned; }).sort(function (a, b) { return a - b; });
+      var byK = {}, keys = [];
+      sel.forEach(function (mi) {
+        (D.markets[mi].list || []).forEach(function (r) {
+          if (r.gone || r.p == null) return;
+          if (S.grp !== 'all' && r.g !== S.grp) return;
+          if (!byK[r.k]) { byK[r.k] = { k: r.k, g: r.g, per: {}, pct: {}, tot: 0 }; keys.push(byK[r.k]); }
+          byK[r.k].per[mi] = r.n; byK[r.k].pct[mi] = r.p; byK[r.k].tot += r.n || 0;
+        });
+      });
+      keys.forEach(function (o) {
+        var ps = sel.map(function (mi) { return o.pct[mi] != null ? o.pct[mi] : 0; });
+        o.inN = sel.filter(function (mi) { return o.pct[mi] != null; }).length;
+        o.avg = Math.round(ps.reduce(function (s, x) { return s + x; }, 0) / (ps.length || 1) * 10) / 10;
+        o.spread = ps.length > 1 ? Math.round((Math.max.apply(null, ps) - Math.min.apply(null, ps)) * 10) / 10 : 0;
+      });
+      return { sel: sel, keys: keys };
+    }
+    function cmpRows(M) {
+      var st = S.csort;
+      var rows = M.keys.filter(function (o) { return qm(o.k) && (S.rows === 'all' || (S.rows === 'every' ? o.inN === M.sel.length : o.inN < M.sel.length)); });
+      var key = function (o) { if (st.col === 'avg') return o.avg; if (st.col === 'spread') return o.spread; var mi = +st.col.slice(1), v = S.show === 'n' ? o.per[mi] : o.pct[mi]; return v == null ? -1 : v; };
+      rows.sort(function (a, b) { var d = st.col === 'v' ? String(a.k).toLowerCase().localeCompare(String(b.k).toLowerCase()) : key(a) - key(b); return (d * st.dir) || (b.avg - a.avg) || String(a.k).localeCompare(String(b.k)); });
+      return rows;
+    }
+    function compare() {
+      var h = '<section class="card" id="cmp"><div class="ch"><h2>Compare markets side by side</h2><span class="n">' + esc(D.mx.hint) + '</span></div>';
+      if (scanned.length < 2) return h + '<p class="csum">' + (scanned.length ? 'One market scanned — nothing to compare yet.' : 'No market scanned yet.') + '</p></section>';
+      h += '<div class="cmpctl">';
+      if (D.mx.groups && D.mx.groups.length > 1) {
+        h += '<div class="cr"><span class="cl">' + esc(D.mx.gl) + '</span><div class="chips"><button class="chip' + (S.grp === 'all' ? ' on' : '') + '" data-grp="all">All</button>';
+        D.mx.groups.forEach(function (g) { h += '<button class="chip' + (S.grp === g ? ' on' : '') + '" data-grp="' + esc(g) + '">' + esc(g) + '</button>'; });
+        h += '</div></div>';
+      }
+      h += '<div class="cr"><span class="cl">Markets</span><div class="chips">';
+      D.markets.forEach(function (m, mi) {
+        var on = S.sel.indexOf(mi) >= 0;
+        h += '<button class="chip' + (!m.scanned ? '' : on ? ' on' : ' off') + '" data-cm="' + mi + '"' + (m.scanned ? ' aria-pressed="' + on + '"' : ' disabled title="not scanned yet"') + '>' + esc(m.code) + '</button>';
+      });
+      h += '</div><span><button class="lnk" data-cq="all">All</button>·<button class="lnk" data-cq="none">Clear</button></span></div><div class="cr">';
+      if (D.mx.hasN) {
+        h += '<span class="cl">Show</span><div class="seg">';
+        [['n', 'SKUs'], ['p', 'Share'], ['both', 'Both']].forEach(function (o) { h += '<button data-show="' + o[0] + '"' + (S.show === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>'; });
+        h += '</div>';
+      }
+      h += '<span class="cl">Rows</span><div class="seg">';
+      [['all', 'Every ' + D.mx.one], ['every', 'In every market'], ['gap', 'Missing somewhere']].forEach(function (o) { h += '<button data-rows="' + o[0] + '"' + (S.rows === o[0] ? ' class="on"' : '') + '>' + esc(o[1]) + '</button>'; });
+      h += '</div><button class="btn" id="cmp-csv">⤓ CSV · this comparison</button></div></div>';
+      var M = cmpModel();
+      if (!M.sel.length) return h + '<p class="csum">Pick at least one market above.</p></section>';
+      var rows = cmpRows(M), lim = (S.q || S.cmpAll) ? rows.length : 30;
+      var every = M.keys.filter(function (o) { return o.inN === M.sel.length; }).length;
+      h += '<p class="csum"><b>' + fmt(M.keys.length) + '</b> ' + esc(D.mx.many) + (S.grp !== 'all' ? ' in <b>' + esc(S.grp) + '</b>' : '') + ' across <b>' + M.sel.length + '</b> market' + (M.sel.length === 1 ? '' : 's') +
+        ' · <b>' + fmt(every) + '</b> in every one · <b>' + fmt(M.keys.length - every) + '</b> missing from at least one</p>';
+      var st = S.csort, sh = function (col, lbl, cls, sub) { return '<th class="s' + (cls ? ' ' + cls : '') + '" data-cs="' + col + '">' + lbl + (st.col === col ? (st.dir < 0 ? ' ▼' : ' ▲') : '') + (sub || '') + '</th>'; };
+      h += '<div class="tw"><table><thead><tr>' + sh('v', esc(D.mx.lbl)) + (D.mx.groups ? '<th>' + esc(D.mx.gl) + '</th>' : '');
+      M.sel.forEach(function (mi) { h += sh('m' + mi, esc(D.markets[mi].code), 'r'); });
+      h += sh('avg', 'Average', 'r', '<small>' + esc(D.mx.unit) + '</small>') + (M.sel.length > 1 ? sh('spread', 'Spread', 'r', '<small>widest gap</small>') : '') + '</tr></thead><tbody>';
+      if (!rows.length) h += '<tr><td colspan="' + (M.sel.length + 4) + '" class="muted">' + (S.q ? 'nothing matches “' + esc(S.q) + '”' : 'nothing to show') + '</td></tr>';
+      rows.slice(0, lim).forEach(function (r) {
+        h += '<tr><td class="v" title="' + esc(r.k) + '">' + esc(r.k) + '</td>' + (D.mx.groups ? '<td class="g">' + esc(r.g) + '</td>' : '');
+        M.sel.forEach(function (mi) {
+          var p = r.pct[mi], n = r.per[mi];
+          if (p == null) { h += '<td class="r"><span class="muted">—</span></td>'; return; }
+          var pc = D.mx.hasN ? p + '%' : '<span class="b ' + band(p) + '">' + p + '%</span>';
+          h += '<td class="r">' + (S.show === 'n' ? fmt(n) : S.show === 'both' && D.mx.hasN ? fmt(n) + ' <span class="muted">' + p + '%</span>' : pc) + '</td>';
+        });
+        h += '<td class="r"><b>' + r.avg + '%</b></td>' + (M.sel.length > 1 ? '<td class="r sp">' + r.spread + 'pp</td>' : '') + '</tr>';
+      });
+      h += '</tbody></table></div>';
+      if (rows.length > lim) h += '<span class="more" id="cmp-more">show all ' + rows.length + ' ▾</span>';
+      return h + '</section>';
+    }
+    function dl(name, text) {
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' })); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    }
+    function q2(s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; }
+    var stem = D.file + '_' + new Date().toISOString().slice(0, 10);
+    function cmpCsv() {
+      var M = cmpModel(), rows = cmpRows(M), out = [[D.mx.lbl].concat(D.mx.groups ? [D.mx.gl] : []).concat(M.sel.map(function (mi) { return D.markets[mi].code + (D.mx.hasN ? '_skus' : '_pct'); }))
+        .concat(D.mx.hasN ? M.sel.map(function (mi) { return D.markets[mi].code + '_pct'; }) : []).concat(['average_pct', 'spread_pp', 'in_markets']).map(q2).join(',')];
+      rows.forEach(function (r) {
+        var line = [q2(r.k)].concat(D.mx.groups ? [q2(r.g)] : []);
+        M.sel.forEach(function (mi) { line.push(D.mx.hasN ? (r.per[mi] == null ? '' : r.per[mi]) : (r.pct[mi] == null ? '' : r.pct[mi])); });
+        if (D.mx.hasN) M.sel.forEach(function (mi) { line.push(r.pct[mi] == null ? '' : r.pct[mi]); });
+        line.push(r.avg, r.spread, r.inN + '/' + M.sel.length);
+        out.push(line.join(','));
+      });
+      dl(stem + '_compare.csv', out.join('\n'));
+    }
+    function csv(all) {
+      var ms = all ? scanned : (S.tab >= 0 ? [D.markets[S.tab]] : []);
+      var out = [['market'].concat(D.mx.groups ? [D.mx.gl] : []).concat([D.mx.lbl]).concat(D.mx.hasN ? ['skus'] : []).concat([D.mx.unit, 'reference', 'was', 'delta']).map(q2).join(',')];
+      ms.forEach(function (m) {
+        (m.list || []).forEach(function (r) {
+          out.push([q2(m.code)].concat(D.mx.groups ? [q2(r.g)] : []).concat([q2(r.k)]).concat(D.mx.hasN ? [r.n == null ? '' : r.n] : [])
+            .concat([r.p == null ? '' : r.p, q2(m.ref ? m.ref.kind : ''), r.was == null ? '' : r.was, r.was == null ? '' : (D.mx.hasN ? (r.n || 0) - r.was : '')]).join(','));
+        });
+      });
+      dl(stem + '_' + (all ? 'all-markets' : String(ms[0] ? ms[0].code : '').toLowerCase().replace(/\W+/g, '-')) + '.csv', out.join('\n'));
+    }
+    function tabs() {
+      var h = '<div class="tabs" id="tabs">';
+      D.markets.forEach(function (m, mi) {
+        h += '<button class="chip' + (mi === S.tab ? ' on' : '') + '" data-tab="' + mi + '"' + (m.scanned ? '' : ' disabled title="not scanned yet"') + '>' + esc(m.code) +
+          (m.crit ? '<span class="fl crit"></span>' : (m.warn ? '<span class="fl warn"></span>' : '')) + '</button>';
+      });
+      return h + '</div>';
+    }
+    function bars(c) {
+      var h = '<div class="pop"><h4>' + esc(c.h) + '</h4>';
+      c.rows.forEach(function (b) { h += '<div class="pr' + (b.hi ? ' hi' : '') + '"><span class="pl">' + esc(b.l) + '</span><span class="pb"><i style="width:' + Math.max(0, Math.min(100, b.p)) + '%;background:' + esc(b.c || '#F5A623') + '"></i></span><span class="pv">' + b.p + '%</span></div>'; });
+      return h + (c.foot ? '<div class="pf">' + esc(c.foot) + '</div>' : '') + '</div>';
+    }
+    function market(m, mi) {
+      var h = '<section class="card" id="mk"><div class="mh"><h2>' + esc(m.code) + '</h2><span class="st"><span><b>' + fmt(m.rows) + '</b> products</span><span>scanned <b>' + dstr(m.t) + '</b></span>' +
+        (m.ref ? '<span>Δ vs <b>' + esc(m.ref.kind) + '</b> (' + dstr(m.ref.t) + ')</span>' : '') + '</span></div>';
+      if (m.kpis && m.kpis.length) {
+        h += '<div class="kp">';
+        m.kpis.forEach(function (k) { h += '<div class="kt"><div class="l">' + esc(k.l) + '</div><div class="v"' + (k.b ? ' style="color:' + { green: '#15803D', yellow: '#B07A00', orange: '#ED6F0B', red: '#C0392B' }[band(k.b)] + '"' : '') + '>' + esc(k.v) + '</div>' + (k.s ? '<div class="s">' + esc(k.s) + '</div>' : '') + '</div>'; });
+        h += '</div>';
+      }
+      if (m.alerts && m.alerts.length) { h += '<ul class="al">'; m.alerts.forEach(function (a) { h += '<li><span class="sev ' + esc(a.sev) + '">' + esc(a.sev) + '</span>' + esc(a.msg) + '</li>'; }); h += '</ul>'; }
+      (m.cards || []).forEach(function (c) { h += bars(c); });
+      var st = S.sort, arr = function (c) { return st.col === c ? (st.dir < 0 ? ' ▼' : ' ▲') : ''; };
+      var rows = (m.list || []).filter(function (r) { return qm(r.k) || (r.g && qm(r.g)); });
+      var dk = function (r) { return r.was == null ? (D.mx.hasN ? r.n : r.p) || 0 : (D.mx.hasN ? (r.n || 0) - r.was : 0); };
+      rows.sort(function (a, b) {
+        var d = st.col === 'v' ? String(a.k).toLowerCase().localeCompare(String(b.k).toLowerCase()) : st.col === 'd' ? dk(a) - dk(b) : st.col === 'n' ? (a.n || 0) - (b.n || 0) : (a.p == null ? -1 : a.p) - (b.p == null ? -1 : b.p);
+        return (d * st.dir) || ((b.n || 0) - (a.n || 0)) || ((b.p || 0) - (a.p || 0));
+      });
+      var lim = (S.q || S.more[mi]) ? rows.length : 40, hasD = !!m.ref && D.mx.hasN;
+      h += '<div class="tw"><table><thead><tr><th class="s" data-s="v">' + esc(D.mx.lbl) + arr('v') + '</th>' + (D.mx.groups ? '<th>' + esc(D.mx.gl) + '</th>' : '') +
+        (D.mx.hasN ? '<th class="r s" data-s="n">SKUs' + arr('n') + '</th>' : '') + '<th class="r s" data-s="p">' + esc(D.mx.unit) + arr('p') + '</th>' + (hasD ? '<th class="r s" data-s="d">Δ' + arr('d') + '</th>' : '') + '<th></th></tr></thead><tbody>';
+      if (!rows.length) h += '<tr><td colspan="6" class="muted">' + (S.q ? 'nothing matches “' + esc(S.q) + '”' : 'nothing read') + '</td></tr>';
+      rows.slice(0, lim).forEach(function (r) {
+        var delta = '';
+        if (hasD) { if (r.gone) delta = '<span class="down">gone</span>'; else if (r.was == null) delta = '<span class="up">new</span>'; else { var dn = (r.n || 0) - r.was; delta = dn === 0 ? '<span class="muted">=</span>' : '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '+' : '') + fmt(dn) + '</span>'; } }
+        h += '<tr' + (r.gone ? ' class="gone"' : '') + '><td class="v" title="' + esc(r.k) + '">' + esc(r.k) + '</td>' + (D.mx.groups ? '<td class="g">' + esc(r.g) + '</td>' : '') +
+          (D.mx.hasN ? '<td class="r">' + (r.gone ? '<b>GONE</b>' : fmt(r.n)) + '</td>' : '') +
+          '<td class="r">' + (r.p == null ? '<span class="muted">' + esc(r.note || '—') + '</span>' : D.mx.hasN ? r.p + '%' : '<span class="b ' + band(r.p) + '">' + r.p + '%</span>') + '</td>' +
+          (hasD ? '<td class="r">' + delta + '</td>' : '') + '<td><span class="shbar"><i style="width:' + Math.max(r.p ? 2 : 0, Math.min(100, D.mx.hasN ? (r.p || 0) / (m.maxP || 100) * 100 : (r.p || 0))) + '%"></i></span></td></tr>';
+      });
+      h += '</tbody></table></div>';
+      if (rows.length > lim) h += '<span class="more" data-more="' + mi + '">show all ' + rows.length + ' ▾</span>';
+      return h + '</section>';
+    }
+    function foot() { return '<div class="foot"><span>FeedSpark · Private &amp; Confidential</span><span>' + esc(D.kicker) + ' · ' + esc(D.title) + '</span></div>'; }
+    function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+    function paint() {
+      $('cmp').outerHTML = compare(); $('tabs').outerHTML = tabs();
+      $('mk').outerHTML = S.tab >= 0 ? market(D.markets[S.tab], S.tab) : '<section id="mk"></section>';
+      all('#ov tbody tr[data-mi]').forEach(function (tr) { tr.classList.toggle('cur', +tr.getAttribute('data-mi') === S.tab); });
+      $('csv1').disabled = S.tab < 0; writeHash(); wire();
+    }
+    function wire() {
+      all('[data-tab]').forEach(function (b) { b.onclick = function () { if (b.disabled) return; S.tab = +b.getAttribute('data-tab'); paint(); }; });
+      all('#ov tbody tr[data-mi]').forEach(function (tr) { tr.onclick = function () { var mi = +tr.getAttribute('data-mi'); if (!D.markets[mi].scanned) return; S.tab = mi; paint(); $('mk').scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
+      all('[data-grp]').forEach(function (b) { b.onclick = function () { S.grp = b.getAttribute('data-grp'); S.cmpAll = false; paint(); }; });
+      all('[data-cm]').forEach(function (b) { b.onclick = function () { if (b.disabled) return; var mi = +b.getAttribute('data-cm'), at = S.sel.indexOf(mi); if (at >= 0) S.sel.splice(at, 1); else S.sel.push(mi); paint(); }; });
+      all('[data-cq]').forEach(function (b) { b.onclick = function () { S.sel = b.getAttribute('data-cq') === 'none' ? [] : scanned.map(function (m) { return D.markets.indexOf(m); }); paint(); }; });
+      all('[data-show]').forEach(function (b) { b.onclick = function () { S.show = b.getAttribute('data-show'); paint(); }; });
+      all('[data-rows]').forEach(function (b) { b.onclick = function () { S.rows = b.getAttribute('data-rows'); S.cmpAll = false; paint(); }; });
+      all('#cmp th[data-cs]').forEach(function (th) { th.onclick = function () { var c = th.getAttribute('data-cs'), st = S.csort; S.csort = st.col === c ? { col: c, dir: -st.dir } : { col: c, dir: c === 'v' ? 1 : -1 }; paint(); }; });
+      all('#mk th[data-s]').forEach(function (th) { th.onclick = function () { var c = th.getAttribute('data-s'), st = S.sort; S.sort = st.col === c ? { col: c, dir: -st.dir } : { col: c, dir: c === 'v' ? 1 : -1 }; paint(); }; });
+      all('[data-more]').forEach(function (el) { el.onclick = function () { S.more[el.getAttribute('data-more')] = true; paint(); }; });
+      var cm = $('cmp-more'); if (cm) cm.onclick = function () { S.cmpAll = true; paint(); };
+      var cc = $('cmp-csv'); if (cc) cc.onclick = cmpCsv;
+    }
+    $('app').innerHTML = head() + overview() + compare() + tabs() + (S.tab >= 0 ? market(D.markets[S.tab], S.tab) : '<section id="mk"></section>') + foot();
+    wire(); $('csv1').disabled = S.tab < 0;
+    var q = $('q');
+    q.oninput = function () { clearTimeout(q.__t); q.__t = setTimeout(function () { S.q = q.value.trim(); paint(); }, 140); };
+    $('csv0').onclick = function () { csv(true); };
+    $('csv1').onclick = function () { csv(false); };
+    $('prn').onclick = function () { window.print(); };
+  }
+  function pfxHtml(rec) {
+    var data = JSON.stringify(rec).replace(/<\//g, '<\\/').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');   // the data can never close its own block
+    var esc2 = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    // every closing tag ESCAPED — the worker injects its widgets at the FIRST closing body tag of the served page
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + esc2(rec.title + ' · ' + rec.kicker) + '</title><style>' + PFX_CSS + '<\/style></head><body><div class="wrap" id="app"></div>' +
+      '<script>window.PFX=' + data + ';<\/script><script>(' + PFX_APP.toString() + ')();<\/script><\/body><\/html>';
+  }
+  function pfxSave(rec) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([pfxHtml(rec)], { type: 'text/html' }));
+    a.download = rec.file + '_' + new Date().toISOString().slice(0, 10) + '.html';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+  /* PFX:END */
+  /* ⬇ EVERY MARKET OF A BRAND, OR THE WHOLE PORTFOLIO, IN ONE FILE (Ray, 12 Oct 2026). The record handed
+     to the shared PFX block — read off the estate index this page already holds (no fetch): per market
+     the Golden Score re-scored under the brand's CURRENT profile (rescoreEstate, as the cards show it),
+     content quality, AI-readiness with its tier, the required attributes missing, and every attribute's
+     coverage grouped by Google's tier, so the comparison lines one attribute up across markets. A market
+     never scanned is listed as such; an attribute not measured on its scan says so, never a zero. This is
+     the AM's working file — the client report is still ⬇ PDF / ⬇ HTML on the scorecard. */
+  var GRX_TIER = { req: 'Required', cond: 'Required in cases', rec: 'Recommended', ai: 'Conversational AI' };
+  function grxMarket(f, multi) {
+    var m = { code: (multi ? dispClient(f.client) + ' · ' : '') + String(f.mkt).toUpperCase(), scanned: !!(f.t && f.cov), crit: f.nCrit || 0, warn: f.nWarn || 0,
+      alerts: ((ESTATE.alerts[keyOf(f.client, f.mkt)] || {}).alerts || []).filter(function (a) { return a.sev !== 'info'; }).map(function (a) { return { sev: a.sev, msg: a.msg || '' }; }) };
+    if (!m.scanned) return m;
+    var prof = profileForC(f.client), wav = (prof && prof.waived) || [];
+    var at = attrsFromCov(f.cov, f.sc, f.rows), list = [], tiers = {};
+    SPEC.forEach(function (x) {
+      var a = at[x.k], nm = x.lbl ? x.lbl.charAt(0).toUpperCase() + x.lbl.slice(1) : 'g:' + x.k, r = { k: nm, g: GRX_TIER[x.t] || x.t };
+      if (!a) { if (x.d) { r.p = null; r.note = 'not measured'; } else r.p = 0; }
+      else if (a.na) { r.p = null; r.note = 'not applicable'; }
+      else r.p = a.present ? Math.round(a.cov * 10) / 10 : 0;
+      if (x.t !== 'req' && wav.indexOf(x.k) >= 0) { r.note = 'waived for ' + prof.industry; }
+      list.push(r);
+      if (r.p != null && !(x.t !== 'req' && wav.indexOf(x.k) >= 0)) { var t = tiers[r.g] = tiers[r.g] || { s: 0, n: 0 }; t.s += r.p; t.n++; }
+    });
+    var req = SPEC.filter(function (x) { return x.t === 'req'; }), reqOk = req.filter(function (x) { var a = at[x.k]; return a && a.present && a.cov >= 99; }).length;
+    var tw = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
+    m.rows = f.rows; m.t = f.t; m.list = list;
+    m.ov = { score: f.score, q: f.q, air: f.air ? f.air + (f.airTier ? ' · ' + tw(f.airTier) : '') : null, rows: f.rows,
+      req: (f.reqMissing || []).length ? (f.reqMissing || []).join(', ') : 'none', t: f.t };
+    m.kpis = [{ l: 'Golden Score', v: f.score != null ? f.score : '—', b: f.score, s: 'attribute completeness · target 99.9' },
+      { l: 'Content quality', v: f.q != null ? f.q : '—', b: f.q, s: f.q != null ? 'what the text fields say' : 'not analysed yet' },
+      { l: 'AI-readiness', v: f.air ? f.air : '—', s: f.air && f.airTier ? 'Tier ' + f.airTier + ' of 4 · ' + tw(f.airTier) : 'not analysed yet' },
+      { l: 'Required attributes', v: reqOk + ' of ' + req.length, b: reqOk === req.length ? 100 : (f.reqMissing || []).length ? 0 : 80, s: 'complete on every product' }];
+    m.cards = [{ h: 'Average fill by Google’s tier', rows: ['Required', 'Required in cases', 'Recommended', 'Conversational AI'].filter(function (g) { return tiers[g]; }).map(function (g) {
+      var v = Math.round(tiers[g].s / tiers[g].n * 10) / 10; return { l: g === 'Required in cases' ? 'In cases' : g === 'Conversational AI' ? 'AI six' : g, p: v, c: cssLit(scoreCol(v)), hi: g === 'Required' }; }),
+      foot: 'The average of each tier’s attribute coverage on this scan — the score itself weighs them 3 / 2 / 1, the AI six apart.' }];
+    return m;
+  }
+  function grxExport(clients, btn) {
+    rescoreEstate();
+    var multi = clients.length > 1;
+    var feeds = feedList().filter(function (f) { return clients.indexOf(f.client) >= 0; })
+      .sort(function (a, b) { return String(dispClient(a.client)).localeCompare(String(dispClient(b.client))) || String(a.mkt).localeCompare(String(b.mkt)); });
+    if (!feeds.length) return;
+    var title = multi ? 'Every brand' : dispClient(clients[0]);
+    pfxSave({ kicker: 'Golden Record · every market', title: title, made: Date.now(), multi: multi,
+      file: 'goldenrecord_' + (multi ? 'portfolio' : String(title).replace(/\W+/g, '')) + '_all-markets',
+      lede: 'The Golden Score is each feed’s attribute completeness against Google’s product data specification, scored on the brand’s industry best-practice profile — the target is 99.9. Content quality reads what the text fields say; AI-readiness how ready the feed is for AI shopping surfaces.',
+      ov: [{ k: 'score', l: 'Golden Score', t: 'score' }, { k: 'q', l: 'Content quality', t: 'score' }, { k: 'air', l: 'AI-readiness', t: 'text' },
+        { k: 'rows', l: 'Products', t: 'num', sum: true }, { k: 'req', l: 'Required missing', t: 'text' }, { k: 't', l: 'Scanned', t: 'date' }],
+      mx: { lbl: 'Attribute', one: 'attribute', many: 'attributes', unit: 'coverage', hasN: false, gl: 'Tier', hint: 'an attribute per row, a column per market — coverage of each market’s products',
+        groups: ['Required', 'Required in cases', 'Recommended', 'Conversational AI'] },
+      markets: feeds.map(function (f) { return grxMarket(f, multi); }) });
+    if (btn) { var t0 = btn.textContent; btn.textContent = '✓ saved'; setTimeout(function () { btn.textContent = t0; }, 1600); }
+  }
+  (function () { var b = $('pfx-all'); if (b) b.onclick = function () { var cs = {}; feedList().forEach(function (f) { cs[f.client] = 1; }); grxExport(Object.keys(cs).sort(), b); }; })();
+
   var collapseAllEl = $('collapse-all');
   if (collapseAllEl) collapseAllEl.onclick = function () {
     var clients = Object.keys(byClientCache);
@@ -4380,18 +4716,60 @@ window.addEventListener('load',restore);
   });
   window.addEventListener('afterprint', restorePdf);
 
-  /* THE ARTICLE HEADER — both exports (⬇ PDF, ⬇ HTML, Ctrl+P) open on it (Ray, 9 Oct 2026, over the report's intro: "redesign
-     this section of the report intro abit more aesthetics and refined - taking McKinsey style report", then "its no graphic
-     enough … keep everything from Score history but just the top of the report should be more structured and designed more
-     beautifully (think of article header)"). It replaces the AM's header band (dial, Δ toggle, verdict — body.pdf hides
-     .gr-sticky, the ⬇ HTML removes it) with a magazine opener: a masthead, a kicker, a short headline that states the finding,
-     a standfirst, a byline, and a HERO FIGURE — the score ring, a 0–100 scale placing this feed against the industry average,
-     the score after the action plan and the 99.9 target on the audit legend's own bands, and three small rings (content
-     quality, AI-readiness, required attributes). EVERY NUMBER IS READ OFF THE REPORT BELOW IT — goldenScore (the dial),
-     the content-quality headline, the AI-readiness ring, planBuild (the projection the action plan prints) and indBench,
-     NAMED BY INDUSTRY, never by brand; a score nobody measured is drawn empty and says so, never as a zero. Colours are
-     literal (cssLit) because html2canvas paints an inline SVG by serialising it. Score history and everything after it are
-     untouched. */
+  /* THE COVER — both exports (⬇ PDF, ⬇ HTML, Ctrl+P) open on it (Ray, 9 Oct 2026: "redesign this section of the report intro
+     … taking McKinsey style report" → "its no graphic enough … think of article header" → 12 Oct 2026, over the same box: "it
+     should have a cover photo; the FeedSpark logo should be bigger. This section should be centered … Think of the quarterly
+     or strategy review deck … this section should be interpreted as a cover"). It replaces ONLY that box — the old branded
+     lines and the AM's header band (dial, Δ toggle, verdict; body.pdf hides .gr-sticky, the ⬇ HTML removes it); Score history
+     and everything after it are untouched. A cover, centred: the client's OWN product photography across the top (coverPrep
+     reads the first images off the live feed through the host-allowlisted /api/catalog/img proxy and embeds them as small
+     JPEGs — never a call out from the file; a FeedSpark gradient when the feed cannot be read, and always in demo mode,
+     where a client's pictures would name the brand), the FeedSpark wordmark large, the report's title, the finding in one
+     line, the scan it was read off, then the score ring with the three other readings as small rings and the industry
+     average. Every figure is read off the report below it (goldenScore, the content-quality headline, the AI-readiness ring,
+     planBuild's projection, indBench named by INDUSTRY, never by brand); a score nobody measured is an empty ring and a dash. */
+  var COVER = {};   // k -> [data-URL JPEGs] off the feed's own images ([] = tried, none)
+  var COVER_N = 5, COVER_PX = 360;
+  function coverPrep(k) {
+    if (DEMO) return Promise.resolve([]);
+    if (COVER[k]) return Promise.resolve(COVER[k]);
+    var p = parts(k), q = 'client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt);
+    var work = fetch('/api/feed/proxy?' + q).then(function (res) {
+      if (!res || !res.ok || !res.body || !res.body.getReader) return [];
+      var rd = res.body.getReader(), dec = new TextDecoder(), buf = '', urls = [], seen = {};
+      var re = /<g:image_link>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\]\s]+)/g;
+      var pump = function () {
+        return rd.read().then(function (r) {
+          if (!r.done) buf += dec.decode(r.value, { stream: true });
+          var m; re.lastIndex = 0; urls = [];
+          while ((m = re.exec(buf)) && urls.length < 12) { var u = m[1].replace(/&amp;/g, '&'); if (!seen[u]) { seen[u] = 1; urls.push(u); } else urls.push(u); }
+          urls = urls.filter(function (u, i) { return urls.indexOf(u) === i; });
+          if (r.done || urls.length >= 12 || buf.length > 600000) { try { rd.cancel(); } catch (e) {} return urls; }
+          return pump();
+        });
+      };
+      return pump();
+    }).then(function (urls) {
+      return Promise.all(urls.map(function (u) {
+        return fetch('/api/catalog/img?' + q + '&url=' + encodeURIComponent(u)).then(function (r) { return r.ok ? r.blob() : null; }).then(function (bl) {
+          if (!bl || !window.createImageBitmap) return null;
+          return createImageBitmap(bl).then(function (bm) {
+            var side = Math.min(bm.width, bm.height), k2 = COVER_PX / side, cv = document.createElement('canvas');
+            cv.width = COVER_PX; cv.height = Math.round(COVER_PX * 1.25);
+            var x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height);
+            var w = bm.width * Math.max(k2, cv.height / bm.height), h = bm.height * Math.max(k2, cv.height / bm.height);
+            x.drawImage(bm, (cv.width - w) / 2, (cv.height - h) / 2, w, h);
+            if (bm.close) bm.close();
+            return cv.toDataURL('image/jpeg', 0.78);
+          });
+        }).catch(function () { return null; });
+      })).then(function (a) { return a.filter(Boolean).slice(0, COVER_N); });
+    }).catch(function () { return []; });
+    // a cover never holds a download up for long: whatever arrived in 7s is the cover
+    return Promise.race([work, new Promise(function (r) { setTimeout(function () { r(null); }, 7000); })]).then(function (a) {
+      if (a) COVER[k] = a; return a || [];
+    });
+  }
   function execSummary(k, p, s) {
     var prof = profileForC(p.client), score = goldenScore(s.attrs, prof);
     var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -4411,92 +4789,55 @@ window.addEventListener('load',restore);
     var r1 = function (v) { return Math.round(v * 10) / 10; };
     var NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
     var list = function (a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; };
-    var lifts = pl ? pl.now.concat(pl.next).filter(function (a) { return a.g > 0; }).sort(function (x, y) { return y.g - x.g; }) : [];
-    var top = [], seen = {};
-    lifts.forEach(function (a) { if (top.length < 2 && !seen[a.f]) { seen[a.f] = 1; top.push(a); } });
     var proj = pl && pl.proj != null && score != null && pl.proj > score ? r1(pl.proj) : null;
-    // THE HEADLINE — short, the finding; the STANDFIRST — the sentence under it
-    var h1, dek;
-    if (score == null) { h1 = brand + ' ' + mk + ', read but not yet scored'; dek = 'The feed carries no attribute this scorecard can score yet.'; }
-    else if (reqGone.length) {
-      h1 = NUM[reqGone.length].charAt(0).toUpperCase() + NUM[reqGone.length].slice(1) + ' required attribute' + (reqGone.length === 1 ? '' : 's') + ' missing from ' + brand + ' ' + mk;
-      dek = (reqGone.length <= 3 ? list(reqGone) + (reqGone.length === 1 ? ' is' : ' are') : 'They are') + ' not in the feed, and Google does not show a product without ' + (reqGone.length === 1 ? 'it' : 'them') + '. Completing them comes before every other optimisation.';
-    } else if (score >= 95) {
-      h1 = brand + ' ' + mk + ' is at Golden Record standard';
-      dek = 'Every required attribute is on the feed and the Golden Score reads ' + score + ' against a 99.9 target' + (top.length ? '; the last points sit in ' + list(top.map(function (a) { return a.f; })) + '.' : '.');
-    } else {
-      h1 = brand + ' ' + mk + ' is ' + r1(99.9 - score) + ' points from a Golden Record';
-      dek = (reqThin.length ? 'Every required attribute is in the feed, but ' + (reqThin.length <= 3 ? list(reqThin) : NUM[reqThin.length] + ' of the ' + NUM[req.length]) + (reqThin.length === 1 ? ' is' : ' are') + ' not yet on every product. '
-        : 'Every attribute Google requires is on every product. ') +
-        (top.length ? 'Completing ' + list(top.map(function (a) { return a.f; })) + ' moves the score most' + (proj != null ? ', and the action plan takes it to ' + proj + '.' : '.') : '');
-    }
+    // the finding, one line under the title
+    var dek;
+    if (score == null) dek = 'The feed was read, but carries no attribute this scorecard can score yet.';
+    else if (reqGone.length) dek = (reqGone.length <= 3 ? list(reqGone) : NUM[reqGone.length] + ' required attributes') + (reqGone.length === 1 ? ' is' : ' are') + ' missing from the feed — Google does not show a product without ' + (reqGone.length === 1 ? 'it' : 'them') + '.';
+    else if (score >= 95) dek = 'At Golden Record standard — ' + score + ' against a 99.9 target.';
+    else dek = r1(99.9 - score) + ' points from a Golden Record' + (proj != null ? ' — the action plan in this report takes it to ' + proj + '.' : '.');
     var L = function (v) { return esc(cssLit(v)); };
     var INK = '#1f1f1f', TRACK = '#ECECEC';
-    // the score ring — the dial, drawn for paper
     var ring = function (v, size, sw, col, label, cap) {
       var r = (size - sw) / 2, C = 2 * Math.PI * r, has = v != null && !isNaN(v), pct = has ? Math.max(0, Math.min(100, +v)) : 0;
       return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="' + esc(label) + '">' +
         '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + TRACK + '" stroke-width="' + sw + '"/>' +
         (has ? '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' +
-          (C * pct / 100).toFixed(2) + ' ' + C.toFixed(2) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/>' : '') +
-        (cap || '') + '</svg>';
+          (C * pct / 100).toFixed(2) + ' ' + C.toFixed(2) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/>' : '') + (cap || '') + '</svg>';
     };
-    var big = score == null ? '' : (function () {
-      var S = 188, sw = 14, r = (S - sw) / 2, a = 2 * Math.PI * 0.999 - Math.PI / 2;   // the 99.9 target tick
-      var tx1 = S / 2 + (r - sw / 2 - 3) * Math.cos(a), ty1 = S / 2 + (r - sw / 2 - 3) * Math.sin(a), tx2 = S / 2 + (r + sw / 2 + 3) * Math.cos(a), ty2 = S / 2 + (r + sw / 2 + 3) * Math.sin(a);
-      return ring(score, S, sw, L(scoreCol(score)), 'Golden Score ' + score + ' of 100',
-        '<line x1="' + tx1.toFixed(1) + '" y1="' + ty1.toFixed(1) + '" x2="' + tx2.toFixed(1) + '" y2="' + ty2.toFixed(1) + '" stroke="' + INK + '" stroke-width="2"/>' +
-        '<text x="' + S / 2 + '" y="' + (S / 2 + 6) + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="900" font-size="46" fill="' + INK + '">' + score + '</text>' +
-        '<text x="' + S / 2 + '" y="' + (S / 2 + 30) + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="700" font-size="11" letter-spacing="1.6" fill="#8a94a0">GOLDEN SCORE</text>');
+    var T = function (x, y, size, w, fill, txt, ls) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="' + w + '" font-size="' + size + '"' + (ls ? ' letter-spacing="' + ls + '"' : '') + ' fill="' + fill + '">' + txt + '</text>'; };
+    var big = (function () {
+      var S = 200, sw = 15, r = (S - sw) / 2, a = 2 * Math.PI * 0.999 - Math.PI / 2;   // the 99.9 target tick
+      var tick = score == null ? '' : '<line x1="' + (S / 2 + (r - sw / 2 - 3) * Math.cos(a)).toFixed(1) + '" y1="' + (S / 2 + (r - sw / 2 - 3) * Math.sin(a)).toFixed(1) +
+        '" x2="' + (S / 2 + (r + sw / 2 + 3) * Math.cos(a)).toFixed(1) + '" y2="' + (S / 2 + (r + sw / 2 + 3) * Math.sin(a)).toFixed(1) + '" stroke="' + INK + '" stroke-width="2"/>';
+      return ring(score, S, sw, score == null ? TRACK : L(scoreCol(score)), 'Golden Score ' + (score == null ? 'not scored' : score + ' of 100'),
+        tick + T(S / 2, S / 2 + 8, 52, 900, INK, score == null ? '—' : score) + T(S / 2, S / 2 + 34, 11, 700, '#8a94a0', 'GOLDEN SCORE', 1.8));
     })();
-    // the scale — 0 to 100 on the audit legend's bands, each marker labelled, labels kept apart in two lanes
-    var scale = '';
-    if (score != null) {
-      var lo = 50, pos = function (v) { return Math.max(0, Math.min(100, (Math.max(lo, v) - lo) / (100 - lo) * 100)); };
-      var bands = [[lo, 70, scoreCol(60)], [70, 85, scoreCol(80)], [85, 95, scoreCol(90)], [95, 100, scoreCol(99)]].map(function (b) {
-        return '<i style="left:' + pos(b[0]) + '%;width:' + (pos(b[1]) - pos(b[0])) + '%;background:' + L(b[2]) + '"></i>';
-      }).join('');
-      var mk2 = [{ v: score, l: 'This feed', n: score, c: 'me' }, { v: 99.9, l: 'Golden Record target', n: '99.9', c: 'tg' }];
-      if (bench) mk2.push({ v: bench.avg, l: ind + ' average', n: bench.avg, c: 'av' });
-      if (proj != null) mk2.push({ v: proj, l: 'After the action plan', n: proj, c: 'pj' });
-      var lanes = { up: [], dn: [] }, G = 22;
-      mk2.forEach(function (m) {
-        var p = pos(m.v), fits = function (ln) { return lanes[ln].every(function (q) { return Math.abs(q - p) >= G; }); };
-        m.p = p; m.lane = m.c === 'me' || m.c === 'tg' ? (fits('up') ? 'up' : 'dn') : (fits('dn') ? 'dn' : (fits('up') ? 'up' : 'dn2'));
-        (lanes[m.lane] || (lanes[m.lane] = [])).push(p);
-      });
-      scale = '<div class="ah-scale"><div class="ah-sh">Where the feed stands</div><div class="ah-track">' + bands +
-        mk2.map(function (m) {
-          var al = m.p > 84 ? ' r' : (m.p < 12 ? ' l' : '');
-          return '<span class="ah-m ' + m.c + '" style="left:' + m.p + '%"></span>' +
-            '<span class="ah-ml ' + m.lane + al + ' ' + m.c + '" style="left:' + m.p + '%"><b>' + esc(String(m.n)) + '</b>' + esc(m.l) + '</span>';
-        }).join('') + '</div></div>';
-    }
-    // three small rings — the other readings in the report
+    var tierWord = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
     var mini = function (v, max, col, lbl, sub, txt) {
       var has = v != null;
-      return '<div class="ah-mini">' + ring(has ? v / max * 100 : null, 64, 7, col, lbl + (has ? ' ' + v : ' not measured'),
-        '<text x="32" y="37" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="900" font-size="' + (has ? (txt ? 15 : 17) : 15) + '" fill="' + (has ? INK : '#9aa1a9') + '">' + (has ? (txt || v) : '—') + '</text>') +
-        '<div><div class="ah-mn">' + esc(lbl) + '</div><div class="ah-ms">' + sub + '</div></div></div>';
+      return '<div class="cv-mini">' + ring(has ? v / max * 100 : null, 76, 8, col, lbl + (has ? ' ' + (txt || v) : ' not measured'),
+        T(38, 43, has ? (txt ? 16 : 19) : 16, 900, has ? INK : '#9aa1a9', has ? (txt || v) : '—')) +
+        '<div class="cv-mn">' + esc(lbl) + '</div><div class="cv-ms">' + sub + '</div></div>';
     };
-    var tierWord = function (t) { var x = LADDER.filter(function (l) { return l.t === t; })[0]; return x ? x.l : ''; };
     var q = qd && qd.score != null ? qd.score : null;
-    var minis = mini(q, 100, q == null ? TRACK : L(scoreCol(q)), 'Content quality', q == null ? 'Not analysed yet' : 'What the text fields say, against Google’s rules') +
-      mini(ai ? ai.total : null, 100, ai ? L(airCol(ai.total)) : TRACK, 'AI-readiness', ai ? 'Tier ' + ai.tier + ' of 4 · ' + esc(tierWord(ai.tier)) + ' · ' + an.n + ' of ' + an.of + ' conversational attributes' : 'Not analysed yet') +
-      mini(reqOk, req.length, L(reqOk === req.length ? 'var(--good)' : (reqGone.length ? 'var(--risk)' : '#ED6F0B')), 'Required attributes',
-        reqOk + ' of ' + req.length + ' complete on every product', reqOk + '/' + req.length);
-    var ic = function (d) { return '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="' + d + '" fill="none" stroke="#ED6F0B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'; };
-    var IC_CAL = 'M2.5 4h11v9.5h-11zM2.5 7h11M5.5 2.5v3M10.5 2.5v3', IC_BOX = 'M2.5 5 8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5 8 7.5l5.5-2.5M8 7.5v6', IC_BAL = 'M8 2.5v11M4 13.5h8M3 5h10M3 5l-1.5 4h3zM13 5l-1.5 4h3z';
-    return '<header class="ah">' +
-      '<div class="ah-mast"><div class="ah-brand">Feed<span>Spark</span></div><div class="ah-ed">Golden Record audit<i></i>' + esc(issue) + '</div></div>' +
-      '<div class="ah-body"><div class="ah-kick">Google Shopping · ' + esc(ind) + ' · ' + esc(brand) + ' ' + esc(mk) + '</div>' +
-      '<h1 class="ah-h1">' + esc(h1) + '</h1>' +
-      '<p class="ah-dek">' + esc(dek) + '</p>' +
-      '<div class="ah-by"><span class="ah-av">FS</span><span><b>FeedSpark</b> feed audit</span>' +
-      '<span>' + ic(IC_CAL) + 'Scanned ' + esc(when) + '</span><span>' + ic(IC_BOX) + fmt(s.rows) + ' products</span><span>' + ic(IC_BAL) + esc(ind) + ' best-practice profile</span></div></div>' +
-      '<figure class="ah-fig"><div class="ah-hero"><div class="ah-ring">' + big + '</div><div class="ah-side">' + scale + '<div class="ah-minis">' + minis + '</div></div></div>' +
-      '<figcaption>Fig. 1 — The Golden Score is attribute completeness against Google’s product data specification, weighted by how much Google asks of each field; the tick on the ring and the scale is the 99.9 Golden Record target.' +
-      (proj != null ? ' “After the action plan” re-runs the score with the plan at the foot of this report landed on every product — an estimate, not a promise.' : '') + '</figcaption></figure>' +
+    var minis = mini(q, 100, q == null ? TRACK : L(scoreCol(q)), 'Content quality', q == null ? 'not analysed yet' : 'what the text fields say') +
+      mini(ai ? ai.total : null, 100, ai ? L(airCol(ai.total)) : TRACK, 'AI-readiness', ai ? 'Tier ' + ai.tier + ' · ' + esc(tierWord(ai.tier)) : 'not analysed yet') +
+      mini(reqOk, req.length, L(reqOk === req.length ? 'var(--good)' : (reqGone.length ? 'var(--risk)' : '#ED6F0B')), 'Required attributes', 'complete on every product', reqOk + '/' + req.length);
+    var pics = (!DEMO && COVER[k]) || [];
+    var photo = pics.length
+      ? '<div class="cv-photo cv-n' + pics.length + '">' + pics.map(function (u) { return '<img src="' + u + '" alt="">'; }).join('') + '</div>'
+      : '<div class="cv-photo cv-art" aria-hidden="true"><svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="cvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5A623"/><stop offset="1" stop-color="#ED6F0B"/></linearGradient></defs>' +
+        '<rect width="1200" height="300" fill="url(#cvg)"/><g fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2"><circle cx="980" cy="60" r="190"/><circle cx="980" cy="60" r="130"/><circle cx="220" cy="300" r="170"/><circle cx="220" cy="300" r="110"/></g></svg></div>';
+    return '<header class="cv">' + photo +
+      '<div class="cv-body"><div class="cv-logo">Feed<span>Spark</span></div>' +
+      '<div class="cv-kick">Golden Record audit · Google Shopping</div>' +
+      '<h1 class="cv-h1">' + esc(brand) + ' <span>·</span> ' + esc(mk) + '</h1>' +
+      '<p class="cv-dek">' + esc(dek) + '</p>' +
+      '<div class="cv-meta">Scanned ' + esc(when) + ' · ' + fmt(s.rows) + ' products · ' + esc(ind) + ' best-practice profile</div>' +
+      '<div class="cv-scores"><div class="cv-ring">' + big + '</div><div class="cv-minis">' + minis + '</div></div>' +
+      (bench && score != null ? '<div class="cv-bench">' + esc(ind) + ' average across ' + bench.n + ' feeds FeedSpark scores: <b>' + bench.avg + '</b>' + (proj != null ? ' · after the action plan: <b>' + proj + '</b>' : '') + ' · Golden Record target <b>99.9</b></div>' : '') +
+      '<div class="cv-foot">Prepared by FeedSpark · ' + esc(issue) + ' · Private &amp; Confidential</div></div>' +
       '</header>';
   }
   /* ALL MARKETS, AT THE FOOT OF BOTH CLIENT DOCUMENTS (Ray, 7 Oct 2026: "For multi-market
@@ -5146,6 +5487,9 @@ window.addEventListener('load',restore);
     var picks = catxPicks();
     var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
     (picks.length ? catxCapture(k, picks, tell).catch(function () { return null; }) : Promise.resolve(null)).then(function (cx) {
+      if (btn) btn.textContent = 'Preparing the cover…';
+      return coverPrep(k).then(function () { return cx; });
+    }).then(function (cx) {
       if (btn) btn.textContent = 'Preparing PDF…';
       var r = exportDoc(k, cx, true);
       if (!r) throw new Error('nothing to export');
@@ -5327,12 +5671,13 @@ window.addEventListener('load',restore);
   function exportHtml(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var picks = catxPicks();
-    if (!picks.length) return buildHtml(k, null);
+    // the cover's photographs first — a cover already read (or a demo / unreadable feed) is instant
+    if (!picks.length) { if (COVER[k] || DEMO) return buildHtml(k, null); return coverPrep(k).then(function () { buildHtml(k, null); }); }
     var btn = $('det-html'), old = btn ? btn.textContent : '';
     var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
     if (btn) { btn.disabled = true; btn.textContent = 'Reading the Catalogue…'; }
     var done = function () { if (btn) { btn.disabled = false; btn.textContent = old; } };
-    catxCapture(k, picks, tell).then(function (cx) { done(); buildHtml(k, cx); }, function () { done(); buildHtml(k, null); });
+    catxCapture(k, picks, tell).then(function (cx) { return coverPrep(k).then(function () { done(); buildHtml(k, cx); }); }, function () { done(); buildHtml(k, null); });
   }
   function buildHtml(k, cx) {
     var r = exportDoc(k, cx, false); if (!r) return;
