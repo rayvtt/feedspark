@@ -319,6 +319,12 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record Meta catalogue (streamed, every rule counted, imagery, fold, download, plan)"
   NODE_PATH=$(npm root -g) node tools/check_grmeta.js || {
     echo "✗ Golden Record Meta tripwire failed — the Meta section misread the catalogue, lost its fold, reached the download with a control, or left the plan"; exit 1; }
+  echo "── validating: Golden Record cover — centred, the client's own pictures embedded, the gradient when unreadable or in demo"
+  NODE_PATH=$(npm root -g) node tools/check_grcover.js || {
+    echo "✗ Golden Record cover tripwire failed — the photo band, its embedding, the fallback or the demo rule regressed"; exit 1; }
+  echo "── validating: every market in one file — /ptypes + /golden per brand, the whole portfolio on all three guard pages"
+  NODE_PATH=$(npm root -g) node tools/check_pfx.js || {
+    echo "✗ every-market download tripwire failed — the shared block drifted, a button went, or a file misread its markets"; exit 1; }
   echo "── validating: Golden Record action plan — Workflow's lanes at the foot of both downloads, read off the audit, no other brand named"
   NODE_PATH=$(npm root -g) node tools/check_grplan.js || {
     echo "✗ Golden Record action-plan tripwire failed — the plan left the downloads, misread the audit, lost a lane, or another brand reached a client document"; exit 1; }

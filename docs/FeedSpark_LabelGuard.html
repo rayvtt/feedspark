@@ -344,6 +344,7 @@ window.addEventListener('load',restore);
     <span class="scan-ctl"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
+    <button class="btn" id="pfx-all" title="Every brand and every market in one interactive HTML file — the same view as a brand card's ⬇ HTML, the markets named with their brand; CSV inside">⬇ Whole portfolio</button>
     <select class="scan-sel" id="scan-brand" aria-label="Brands to scan" title="What to scan — every brand, one brand, or (with a brand picked) one market"></select><select class="scan-sel" id="scan-mkt" aria-label="Markets to scan" title="Pick a brand first, then every market of it or one"></select><label class="scan-skip" title="Leave out feeds already read in the last 20 hours — off, every feed in the scope is read now"><input type="checkbox" id="scan-skip"> skip feeds read in the last 20 h</label><button class="btn" id="scan-stop" hidden title="Finish the feed in hand, then stop">⏹ Stop</button><button class="btn pri" id="scan-all" title="Read every feed in the scope now — FeedHero XML feeds stream live in this browser, sheet feeds through the server">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub">Every wired feed (master map ∪ dossier-attached), per market — two channel sets:
   <span class="chip-ch chip-g">G</span> <b>Google Shopping</b> and <span class="chip-ch chip-fb">f</span> <b>Facebook</b>
@@ -617,6 +618,7 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('.est-dl'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); brandExport(el.getAttribute('data-dl'), el); };
     });
+    if ($('pfx-all')) $('pfx-all').onclick = function () { brandExport('*', $('pfx-all')); };
     collapseAllBtn();
   }
   (function () {
@@ -1528,7 +1530,7 @@ window.addEventListener('load',restore);
   function lgxRecord(client, feeds) {
     var markets = feeds.map(function (f) {
       var k = keyOf(f.client, f.mkt), d = CACHE[k];
-      var m = { mkt: f.mkt, code: mktBase(f.mkt).toUpperCase(), ch: chOf(f.mkt), status: statusOf(f), nCrit: f.nCrit || 0, nWarn: f.nWarn || 0,
+      var m = { mkt: f.mkt, code: (client === '*' ? dispClient(f.client) + ' · ' : '') + mktBase(f.mkt).toUpperCase(), ch: chOf(f.mkt), status: statusOf(f), nCrit: f.nCrit || 0, nWarn: f.nWarn || 0,
         alerts: ((ESTATE.alerts[k] || {}).alerts || []).filter(function (a) { return a.sev !== 'info'; })
           .map(function (a) { return { sev: a.sev, msg: maskText(a.msg || '') }; }) };
       if (!d || !d.snapshot) { m.scanned = false; return m; }
@@ -1545,7 +1547,7 @@ window.addEventListener('load',restore);
       });
       return m;
     });
-    return { brand: dispClient(client), made: Date.now(), refMode: REFMODE === 'base' ? 'last known-good' : 'yesterday', markets: markets };
+    return { brand: client === '*' ? 'Every brand' : dispClient(client), made: Date.now(), refMode: REFMODE === 'base' ? 'last known-good' : 'yesterday', markets: markets };
   }
   var LGX_CSS = '@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");' +
     ':root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;--muted:#8a94a0;--line:#E6E6E6;--wash:#F7F7F5;--good:#15803D;--risk:#C0392B;--shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06)}' +
@@ -1906,24 +1908,29 @@ window.addEventListener('load',restore);
       // 21 Sep 2026 (tools/check_inline_scripts.js parses the page as served and pins it)
       '<script>window.LGX=' + data + ';<\/script><script>(' + LGX_APP.toString() + ')();<\/script><\/body><\/html>';
   }
+  // client '*' = the WHOLE PORTFOLIO in one file (Ray, 12 Oct 2026: "allow downloads across the whole portfolio") —
+  // every brand's markets, each named with its brand, fetched six at a time
   function brandExport(client, btn) {
-    var feeds = feedList().filter(function (f) { return f.client === client; });
-    feeds.sort(function (a, b) { return (chOf(a.mkt) === 'fb' ? 1 : 0) - (chOf(b.mkt) === 'fb' ? 1 : 0) || mktBase(a.mkt).localeCompare(mktBase(b.mkt)); });
+    var feeds = feedList().filter(function (f) { return client === '*' || f.client === client; });
+    feeds.sort(function (a, b) { return (client === '*' ? String(dispClient(a.client)).localeCompare(String(dispClient(b.client))) : 0) || (chOf(a.mkt) === 'fb' ? 1 : 0) - (chOf(b.mkt) === 'fb' ? 1 : 0) || mktBase(a.mkt).localeCompare(mktBase(b.mkt)); });
     if (!feeds.length) return;
     // every market this page does not already hold — scanned ones only; a never-scanned market has no snapshot to fetch
     var need = feeds.filter(function (f) { var d = CACHE[keyOf(f.client, f.mkt)]; return f.t && !(d && d.snapshot); });
     var label = btn ? btn.textContent : '', done = 0;
     if (btn) { btn.disabled = true; btn.textContent = need.length ? '⬇ 0/' + need.length + '…' : '⬇ building…'; }
-    Promise.all(need.map(function (f) {
-      var k = keyOf(f.client, f.mkt);
+    var at = 0, one = function () {
+      if (at >= need.length) return Promise.resolve();
+      var f = need[at++], k = keyOf(f.client, f.mkt);
       return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt))
         .then(function (r) { return r.json(); }).then(function (d) { if (d && d.snapshot) CACHE[k] = d; }).catch(function () {})
-        .then(function () { done++; if (btn) btn.textContent = '⬇ ' + done + '/' + need.length + '…'; });
-    })).then(function () {
+        .then(function () { done++; if (btn) btn.textContent = '⬇ ' + done + '/' + need.length + '…'; return one(); });
+    };
+    var pool = []; for (var pi = 0; pi < 6; pi++) pool.push(one());
+    Promise.all(pool).then(function () {
       var rec = lgxRecord(client, feeds);
       var blob = new Blob([lgxHtml(rec)], { type: 'text/html' });
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = 'labelguard_' + rec.brand.replace(/\W+/g, '') + '_all-markets_' + new Date().toISOString().slice(0, 10) + '.html';
+      a.download = 'labelguard_' + (client === '*' ? 'portfolio' : rec.brand.replace(/\W+/g, '')) + '_all-markets_' + new Date().toISOString().slice(0, 10) + '.html';
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
       if (btn) { btn.disabled = false; btn.textContent = label; }
     });

@@ -5673,9 +5673,9 @@
       "min": 1
     },
     {
-      "name": "Golden Record PDF: a document past three A4 lengths paginates as ordinary A4 instead of becoming a metre-long sheet",
+      "name": "Golden Record PDF: a document past three and a half A4 lengths paginates as ordinary A4 instead of becoming a metre-long sheet",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "var PG_MAX = 3 * 297",
+      "pattern": "var PG_MAX = 3.5 * 297",
       "min": 1
     },
     {
@@ -15063,6 +15063,121 @@
       "name": "presync runs the Meta tripwire",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grmeta.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden: client documents open on a centred cover (photo band, large wordmark, title, score ring + small rings)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function execSummary(k, p, s)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the cover replaces the AM header band in client docs",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .gr-sticky{display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Golden: fillPrint writes the cover",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "$('print-head').innerHTML = execSummary(k, p, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the old one-line branded header is retired",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pdfHead(",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Golden PDF tripwire: the file opens on the cover",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the file opens on a cover",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover: the client's own pictures, read off the feed and embedded",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function coverPrep(k)",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover: both downloads wait for the cover's pictures",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return coverPrep(k).then(function () { return cx; });",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grcover.js",
+      "pr": 0
+    },
+    {
+      "name": "PT Guard: every market of a brand in one file (shared PFX block)",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function ptxExport(clients, btn)",
+      "pr": 0
+    },
+    {
+      "name": "PT Guard: ⬇ HTML on every brand card",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "ptxExport([el.getAttribute('data-dl')], el)",
+      "pr": 0
+    },
+    {
+      "name": "PT Guard: ⬇ HTML · all markets in the dissection header",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "$('det-html').onclick = function () { ptxExport([parts(k).client]",
+      "pr": 0
+    },
+    {
+      "name": "PT Guard: ⬇ Whole portfolio",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "id=\"pfx-all\"",
+      "pr": 0
+    },
+    {
+      "name": "PT Guard: the shared every-market file block",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "/* PFX:END */",
+      "pr": 0
+    },
+    {
+      "name": "Golden: every market of a brand in one file (shared PFX block)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function grxExport(clients, btn)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: ⬇ HTML on every brand card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "grxExport([el.getAttribute('data-dl')], el)",
+      "pr": 0
+    },
+    {
+      "name": "Golden: ⬇ Whole portfolio",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "id=\"pfx-all\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the shared every-market file block",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "/* PFX:END */",
+      "pr": 0
+    },
+    {
+      "name": "Label Guard: ⬇ Whole portfolio — every brand's markets in one file",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "brandExport('*', $('pfx-all'))",
+      "pr": 0
+    },
+    {
+      "name": "every-market download tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_pfx.js",
       "pr": 0
     }
   ]

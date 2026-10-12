@@ -307,6 +307,30 @@ to industry "Retail" until added to the map. NOTE: this anonymises Ray's own log
 for live demos — it is NOT a client-accessible URL; that would need its own Cloudflare Access
 policy and a server-side masking layer (deliberately out of scope).
 
+### 5e. Every market in one file — PT Guard + Golden Record, and the whole portfolio (12 Oct 2026)
+
+Ray: "Can you allow downloads across the whole portfolio, similar to the way the custom label is being set up for Golden
+Records and PT Cards, please?" Label Guard's ⬇ HTML · all markets (§5c) now has its siblings:
+
+- **/ptypes** — ⬇ HTML on every brand card and ⬇ HTML · all markets in the dissection header: per market the
+  product_type coverage, paths, the SKU-weighted depth profile against the 30–40% five-level standard, the alerts and
+  every primary path with SKUs, share and Δ vs the page's reference (a gone path struck through); paths grouped by top
+  level. Snapshots the page does not hold are fetched six at a time; a never-scanned market is listed as such.
+- **/golden** — ⬇ HTML on every brand card: read off the estate index the page already holds (no fetch) — the Golden
+  Score as the cards show it (re-scored under the brand's current profile), content quality, AI-readiness with its tier,
+  required attributes missing, the fill by Google's tier as bars, and every attribute's coverage grouped by tier (an
+  unmeasured attribute says so, never a zero). This is the AM's working file; the client report stays ⬇ PDF / ⬇ HTML on
+  the scorecard.
+- **⬇ Whole portfolio** in the estate header of /labels, /ptypes and /golden — every brand's markets in one file, each
+  named with its brand, plus an Estate row.
+
+ONE block (`PFX_CSS` + `PFX_APP` + `pfxHtml`/`pfxSave`, between `PFX:START` and `PFX:END`) is byte-identical on /ptypes
+and /golden; each page only builds the record. Inside the file: Across markets (+ an all-markets/estate row), Compare
+side by side BUILT BY THE READER (group chips, markets ticked, SKUs / share / both, every row / in every market / missing
+somewhere, any column sorted incl. the spread, ⤓ CSV of that view, the view in the address), market tabs (figures,
+bars, alerts, every row), one 🔍 filter, ⤓ CSV this market / all markets, 🖨 Print. No fetch, nothing of the FCC; the
+data cannot close its own script block. Harness `tools/check_pfx.js` (presync).
+
 ### 5d. Scan scope — all brands, one brand, one market (7 Oct 2026)
 
 Ray, over a /labels "Done — 0 scanned, 73 fresh (skipped)": *"allow scan per brand (all markets) /
@@ -1445,6 +1469,36 @@ Harness `tools/check_grsafe.js` (presync) poisons the quoted values (markup, a s
 locked one opened with a client address, inspects what the PDF is drawn from, reads the real PDF bytes with
 `GRPDF_LIBS`, and lifts `scrubExport` onto a crafted document. With the scrub switched off, three checks fail
 (invisible characters in the file).
+
+### 9.12l The cover that opens both downloads (9 → 12 Oct 2026)
+
+Ray, over the report's top box (the branded lines + the AM's header band): "redesign this section of the report intro
+… McKinsey style report", then "its no graphic enough … think of article header", then on 12 Oct 2026: "only the
+section in the red box should be redesigned. It should have a cover photo; the FeedSpark logo should be bigger. This
+section should be centered … Think of the quarterly or strategy review deck … this section should be interpreted as a
+cover."
+
+`execSummary(k, p, s)` writes a COVER into `#print-head` (via `fillPrint`, so ⬇ PDF, ⬇ HTML and Ctrl+P share it). The
+AM's band (`.gr-sticky`: dial, Δ toggle, profile chip, verdict) is hidden in `body.pdf` and removed from the ⬇ HTML.
+Score history and everything after it are untouched, and so is the page on screen.
+
+- **Cover photo** — the client's OWN product pictures: `coverPrep(k)` streams the head of the live feed through
+  `/api/feed/proxy`, takes the first distinct `g:image_link` values, reads them through the host-allowlisted
+  `/api/catalog/img` proxy and embeds up to five as small JPEGs (360 px, 4:5 crop) — the file never calls out. Both
+  downloads wait for it (7 s at most); a feed that cannot be read gets a FeedSpark orange gradient, and demo mode ALWAYS
+  does (a client's pictures would name the brand) and never asks for them.
+- **Centred**: the FeedSpark wordmark at 44 px, the kicker, the brand · market as the title, the finding in one line
+  (required attributes missing / at standard / N points from a Golden Record + where the action plan takes it), the scan
+  it was read off, the Golden Score ring (99.9 tick) with content quality, AI-readiness and required n/7 as small rings,
+  the industry average (named by industry, never a brand), and a "Prepared by FeedSpark · <month> · Private &
+  Confidential" foot.
+
+Every figure is read off the report below it (`goldenScore`, the content-quality headline, the AI-readiness ring,
+`planBuild`, `indBench`); a score nobody measured is an empty ring and a dash. The single sheet runs to 3.5 A4 lengths
+before paginating (`PG_MAX`). Harnesses: `tools/check_grpdf.js` (band removed; photo band, wordmark ≥ 40 px, title,
+finding, foot on white; wordmark/title/scores on the cover's centre line; ring + three small rings on one row) and
+`tools/check_grcover.js` (five embedded JPEGs off the feed's own images, a repeat asked once, no feed URL in the file,
+the gradient on an unreadable feed and in demo, Score history after the cover).
 
 ### 9.12k The Meta catalogue, on Meta's terms (9 Oct 2026)
 
