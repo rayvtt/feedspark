@@ -807,7 +807,7 @@ window.addEventListener('load',restore);
   body.xhtml{background:var(--wash)!important;width:auto;max-width:none}
   body.xhtml #sec-detail{padding:24px 0 36px}
   body.xhtml #sec-detail .wrap{max-width:1180px;padding:0 28px}
-  body.xhtml #print-head,body.xhtml #print-foot{max-width:1180px;margin-left:auto;margin-right:auto;padding-left:28px;padding-right:28px;box-sizing:border-box}
+  body.xhtml #print-foot{max-width:1180px;margin-left:auto;margin-right:auto;padding-left:28px;padding-right:28px;box-sizing:border-box}
   body.xhtml #print-head{margin-top:22px}
   /* the header band sits flush in the panel card exactly as on screen (the panel pads 18px 20px) */
   body.xhtml .gr-sticky{background:#fff;padding:18px 20px 0!important;margin:-18px -20px 0!important;border-radius:12px 12px 0 0}
@@ -862,6 +862,9 @@ window.addEventListener('load',restore);
   .cv-body{padding:34px 40px 26px;display:flex;flex-direction:column;align-items:center}
   .cv-logo{font-size:44px;font-weight:900;letter-spacing:-.02em;color:#1f1f1f;line-height:1}
   .cv-logo span{color:#ED6F0B}
+  .cv-lock{display:flex;align-items:center;justify-content:center;gap:26px}
+  .cv-x{width:1px;height:58px;background:#E0E0E0}
+  .cv-client{display:block;max-height:72px;max-width:240px;width:auto;height:auto;object-fit:contain;border-radius:10px}
   .cv-kick{margin-top:18px;font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#ED6F0B}
   .cv-h1{margin:10px 0 0;font-size:42px;line-height:1.1;font-weight:900;letter-spacing:-.02em;color:#1f1f1f}
   .cv-h1 span{color:#F5A623}
@@ -881,6 +884,8 @@ window.addEventListener('load',restore);
   @media(max-width:820px){body.xhtml:not(.xpaper) .cv-photo{height:180px}
     body.xhtml:not(.xpaper) .cv-body{padding:24px 18px 20px}
     body.xhtml:not(.xpaper) .cv-logo{font-size:34px}
+    body.xhtml:not(.xpaper) .cv-lock{gap:16px}
+    body.xhtml:not(.xpaper) .cv-client{max-height:52px;max-width:160px}
     body.xhtml:not(.xpaper) .cv-h1{font-size:30px}
     body.xhtml:not(.xpaper) .cv-minis{gap:10px}
     body.xhtml:not(.xpaper) .cv-mini{width:100px}}
@@ -4730,9 +4735,50 @@ window.addEventListener('load',restore);
      planBuild's projection, indBench named by INDUSTRY, never by brand); a score nobody measured is an empty ring and a dash. */
   var COVER = {};   // k -> [data-URL JPEGs] off the feed's own images ([] = tried, none)
   var COVER_N = 5, COVER_PX = 360;
+  /* THE CLIENT'S OWN LOGO on the cover (Ray, 12 Oct 2026: "can you bring in clients logo too ?"). Not guessed and
+     not a new lane: the brand's face is the one the team already set up in Social DPA (shared state ns socialdpa →
+     ident — the logo they uploaded, or the Facebook page / website they confirmed), read through the SAME scoped,
+     allow-listed /api/social/logo route; with no identity saved, the brand website's own icon (read off the feed's
+     product links), and only when it is big enough not to print as a blur. An identity set to "Initial" is a choice
+     not to show a picture and is honoured. Embedded as a PNG data URL, so the file never calls out for it; never in
+     demo mode, where the logo would name the brand. Nothing found = the FeedSpark wordmark alone, never a guess. */
+  var COVER_LOGO = {};   // k -> data-URL PNG, or '' = tried, none
+  function logoPrep(k) {
+    if (DEMO) return Promise.resolve('');
+    if (COVER_LOGO[k] != null) return Promise.resolve(COVER_LOGO[k]);
+    var p = parts(k), q = 'client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt);
+    var toPng = function (bl, min) {
+      if (!bl || !/^image\//.test(bl.type || 'image/') || /svg/.test(bl.type || '') || !window.createImageBitmap) return null;
+      return createImageBitmap(bl).then(function (bm) {
+        if (Math.max(bm.width, bm.height) < min) { if (bm.close) bm.close(); return null; }
+        var H = 160, w = Math.min(480, Math.round(bm.width * H / bm.height)), h = Math.round(bm.height * w / bm.width);
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(bm, 0, 0, w, h); if (bm.close) bm.close();
+        return cv.toDataURL('image/png');
+      });
+    };
+    var one = function (net, h, min) {
+      return fetch('/api/social/logo?' + q + '&net=' + net + (h ? '&h=' + encodeURIComponent(h) : '')).then(function (r) {
+        return r && r.ok ? r.blob() : null;
+      }).then(function (bl) { return toPng(bl, min); }).catch(function () { return null; });
+    };
+    var work = fetch('/api/state?ns=socialdpa').then(function (r) { return r && r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (d) {
+      var st = d && d.socialdpa && d.socialdpa[p.client], id = (st && st.ident) || {};
+      if (id.src === 'initial') return '';
+      if (id.src === 'upload' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(id.logo || '')) return id.logo;
+      var tries = [];
+      if (id.src === 'site') tries.push(['site', '', 48]);
+      if (id.fb) tries.push(['fb', id.fb, 48]);
+      if (id.src !== 'site') tries.push(['site', '', 120]);   // unconfirmed: the website's icon only when it is big
+      var go = function (i) { return i >= tries.length ? Promise.resolve('') : one(tries[i][0], tries[i][1], tries[i][2]).then(function (u) { return u || go(i + 1); }); };
+      return go(0);
+    });
+    return work.then(function (u) { COVER_LOGO[k] = u || ''; return COVER_LOGO[k]; }, function () { COVER_LOGO[k] = ''; return ''; });
+  }
   function coverPrep(k) {
     if (DEMO) return Promise.resolve([]);
-    if (COVER[k]) return Promise.resolve(COVER[k]);
+    var lg = logoPrep(k);
+    if (COVER[k]) return Promise.race([lg, new Promise(function (r) { setTimeout(r, 7000); })]).then(function () { return COVER[k]; });
     var p = parts(k), q = 'client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt);
     var work = fetch('/api/feed/proxy?' + q).then(function (res) {
       if (!res || !res.ok || !res.body || !res.body.getReader) return [];
@@ -4766,7 +4812,7 @@ window.addEventListener('load',restore);
       })).then(function (a) { return a.filter(Boolean).slice(0, COVER_N); });
     }).catch(function () { return []; });
     // a cover never holds a download up for long: whatever arrived in 7s is the cover
-    return Promise.race([work, new Promise(function (r) { setTimeout(function () { r(null); }, 7000); })]).then(function (a) {
+    return Promise.race([Promise.all([work, lg]).then(function (x) { return x[0]; }), new Promise(function (r) { setTimeout(function () { r(null); }, 7000); })]).then(function (a) {
       if (a) COVER[k] = a; return a || [];
     });
   }
@@ -4824,13 +4870,14 @@ window.addEventListener('load',restore);
     var minis = mini(q, 100, q == null ? TRACK : L(scoreCol(q)), 'Content quality', q == null ? 'not analysed yet' : 'what the text fields say') +
       mini(ai ? ai.total : null, 100, ai ? L(airCol(ai.total)) : TRACK, 'AI-readiness', ai ? 'Tier ' + ai.tier + ' · ' + esc(tierWord(ai.tier)) : 'not analysed yet') +
       mini(reqOk, req.length, L(reqOk === req.length ? 'var(--good)' : (reqGone.length ? 'var(--risk)' : '#ED6F0B')), 'Required attributes', 'complete on every product', reqOk + '/' + req.length);
-    var pics = (!DEMO && COVER[k]) || [];
+    var pics = (!DEMO && COVER[k]) || [], logo = (!DEMO && COVER_LOGO[k]) || '';
     var photo = pics.length
       ? '<div class="cv-photo cv-n' + pics.length + '">' + pics.map(function (u) { return '<img src="' + u + '" alt="">'; }).join('') + '</div>'
       : '<div class="cv-photo cv-art" aria-hidden="true"><svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="cvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5A623"/><stop offset="1" stop-color="#ED6F0B"/></linearGradient></defs>' +
         '<rect width="1200" height="300" fill="url(#cvg)"/><g fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2"><circle cx="980" cy="60" r="190"/><circle cx="980" cy="60" r="130"/><circle cx="220" cy="300" r="170"/><circle cx="220" cy="300" r="110"/></g></svg></div>';
     return '<header class="cv">' + photo +
-      '<div class="cv-body"><div class="cv-logo">Feed<span>Spark</span></div>' +
+      '<div class="cv-body"><div class="cv-lock"><div class="cv-logo">Feed<span>Spark</span></div>' +
+      (logo ? '<span class="cv-x" aria-hidden="true"></span><img class="cv-client" src="' + logo + '" alt="' + esc(brand) + '">' : '') + '</div>' +
       '<div class="cv-kick">Golden Record audit · Google Shopping</div>' +
       '<h1 class="cv-h1">' + esc(brand) + ' <span>·</span> ' + esc(mk) + '</h1>' +
       '<p class="cv-dek">' + esc(dek) + '</p>' +

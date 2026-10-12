@@ -14832,7 +14832,7 @@
       "pr": 0
     },
     {
-      "name": "Social DPA: a \ud83c\udfa8 Design tab to make the brand's own overlay",
+      "name": "Social DPA: a 🎨 Design tab to make the brand's own overlay",
       "file": "docs/FeedSpark_Social.html",
       "pattern": "<button type=\"button\" role=\"tab\" class=\"rtab\" id=\"rt-design\" data-tab=\"design\"",
       "pr": 0
@@ -15178,6 +15178,24 @@
       "name": "every-market download tripwire in presync",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_pfx.js",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover: the client's own logo from the Social DPA identity, embedded",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function logoPrep(k)",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover: FeedSpark × client logo lockup",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "class=\"cv-lock\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden cover: HTML export cover not double-padded (spans the panel)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.xhtml #print-foot{max-width:1180px",
       "pr": 0
     }
   ]
