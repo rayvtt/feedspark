@@ -1493,11 +1493,22 @@ Score history and everything after it are untouched, and so is the page on scree
   the industry average (named by industry, never a brand), and a "Prepared by FeedSpark · <month> · Private &
   Confidential" foot.
 
+- **The client's logo beside FeedSpark's** (Ray, 12 Oct 2026: "can you bring in clients logo too ? - keep the cover
+  expand width but content centered"): `logoPrep(k)` reads the brand face the team already set up in Social DPA
+  (shared state ns `socialdpa` → `ident`): an uploaded logo is used as it is; a confirmed Facebook page (or the website,
+  when that is the chosen source) is read through the same scoped, allow-listed `/api/social/logo`; with no identity
+  saved, the brand website's own icon, only when it is at least 120 px (a favicon scaled up prints as a blur); `Initial`
+  is a choice not to show a picture and is honoured. Embedded as a PNG data URL (≤160 px tall), set as a
+  `FeedSpark | logo` lockup (`.cv-lock`); never in demo mode; nothing found = the wordmark alone, never a guess.
+- **Full width, centred content**: the ⬇ HTML used to re-pad `#print-head` inside a `.wrap` that already had its own
+  column, so the cover sat 28–1152 px against a 0–1220 px scorecard — off-centre. The cover's edges are now the
+  scorecard card's edges at every width, and its content is centred on it.
+
 Every figure is read off the report below it (`goldenScore`, the content-quality headline, the AI-readiness ring,
 `planBuild`, `indBench`); a score nobody measured is an empty ring and a dash. The single sheet runs to 3.5 A4 lengths
 before paginating (`PG_MAX`). Harnesses: `tools/check_grpdf.js` (band removed; photo band, wordmark ≥ 40 px, title,
 finding, foot on white; wordmark/title/scores on the cover's centre line; ring + three small rings on one row) and
-`tools/check_grcover.js` (five embedded JPEGs off the feed's own images, a repeat asked once, no feed URL in the file,
+`tools/check_grcover.js` (five embedded JPEGs off the feed's own images, a repeat asked once, no feed URL in the file; the logo from each identity source, none in demo, the cover's edges = the scorecard's at 1220 and 1440 px;
 the gradient on an unreadable feed and in demo, Score history after the cover).
 
 ### 9.12k The Meta catalogue, on Meta's terms (9 Oct 2026)

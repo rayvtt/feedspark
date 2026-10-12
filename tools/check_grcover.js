@@ -57,6 +57,14 @@ const ATTRS = ['id', 'title', 'description', 'link', 'image_link', 'availability
           const x = c.getContext('2d'); x.fillStyle = COLS[(src.match(/\/(\w)\.jpg$/) || [])[1]] || '#999'; x.fillRect(0, 0, 400, 500);
           return new Promise((res) => c.toBlob((b) => res(new Response(b, { status: 200, headers: { 'content-type': 'image/png' } })), 'image/png'));
         }
+        if (u.includes('/api/state?ns=socialdpa')) { window.__state = (window.__state || 0) + 1; return j({ socialdpa: opts.ident ? { Reiss: { ident: opts.ident } } : {} }); }
+        if (u.includes('/api/social/logo')) {
+          const net = (u.match(/[?&]net=(\w+)/) || [])[1]; (window.__logo = window.__logo || []).push(net);
+          if (opts.noLogo || (opts.smallSite && net === 'site')) { const c = document.createElement('canvas'); c.width = 32; c.height = 32; c.getContext('2d').fillRect(0, 0, 32, 32);
+            return opts.noLogo ? Promise.resolve(new Response('{}', { status: 404 })) : new Promise((res) => c.toBlob((b) => res(new Response(b, { status: 200, headers: { 'content-type': 'image/png' } })), 'image/png')); }
+          const c = document.createElement('canvas'); c.width = 300; c.height = 300; const x = c.getContext('2d'); x.fillStyle = net === 'fb' ? '#111111' : '#2563eb'; x.fillRect(0, 0, 300, 300);
+          return new Promise((res) => c.toBlob((b) => res(new Response(b, { status: 200, headers: { 'content-type': 'image/png' } })), 'image/png'));
+        }
         if (u.includes('/api/golden/estate')) return j({ feeds, alerts: {} });
         if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
         if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
@@ -75,7 +83,7 @@ const ATTRS = ['id', 'title', 'description', 'link', 'image_link', 'availability
     });
     await page.click('#det-html');
     await page.waitForFunction(() => window.__html !== null, null, { timeout: 20000 });
-    const html = await page.evaluate(() => window.__html), asked = await page.evaluate(() => window.__img);
+    const html = await page.evaluate(() => window.__html), asked = await page.evaluate(() => window.__img), logoAsk = await page.evaluate(() => window.__logo || []);
     await page.close();
     const out = await browser.newPage({ viewport: { width: 1220, height: 1000 } });
     await out.setContent(html); await out.waitForTimeout(300);
@@ -84,10 +92,19 @@ const ATTRS = ['id', 'title', 'description', 'link', 'image_link', 'availability
       const imgs = Array.from(document.querySelectorAll('#print-head .cv-photo img'));
       const after = cv ? (() => { let n = document.querySelector('.hist, #hist-tier, .tier'); return n ? n.getBoundingClientRect().top >= cv.getBoundingClientRect().bottom : null; })() : null;
       return { cover: !!cv, n: imgs.length, srcs: imgs.map((i) => i.getAttribute('src').slice(0, 23)), loaded: imgs.every((i) => i.naturalWidth > 0),
-        art: !!q('#print-head .cv-art'), title: (q('.cv-h1') || {}).textContent, after };
+        art: !!q('#print-head .cv-art'), title: (q('.cv-h1') || {}).textContent, after,
+        logo: (() => { const l = q('.cv-client'); return l ? { src: l.getAttribute('src').slice(0, 22), w: l.naturalWidth, h: l.getBoundingClientRect().height, alt: l.alt } : null; })(),
+        wordmark: !!q('.cv-lock .cv-logo'),
+        geo: (() => { const c = cv.getBoundingClientRect(), nx = document.querySelector('#det-panel'), n = nx ? nx.getBoundingClientRect() : null,
+          lk = q('.cv-lock').getBoundingClientRect(), h1 = q('.cv-h1').getBoundingClientRect(), sc = q('.cv-scores').getBoundingClientRect();
+          const mid = c.left + c.width / 2, ctr = (b) => Math.abs(b.left + b.width / 2 - mid);
+          return { cl: c.left, cr: c.right, nl: n && n.left, nr: n && n.right, off: Math.max(ctr(lk), ctr(h1), ctr(sc)) }; })() };
     });
+    await out.setViewportSize({ width: 1440, height: 1000 }); await out.waitForTimeout(150);
+    r.wide = await out.evaluate(() => { const c = document.querySelector('#print-head .cv'), n = document.querySelector('#det-panel'); if (!c || !n) return null;
+      const a = c.getBoundingClientRect(), b = n.getBoundingClientRect(); return { cl: a.left, cr: a.right, nl: b.left, nr: b.right, mid: Math.abs(a.left + a.right - 1440) / 2 }; });
     await out.close();
-    return { r, asked, html };
+    return { r, asked, html, logoAsk };
   };
 
   console.log('── the client\'s own pictures');
@@ -99,6 +116,24 @@ const ATTRS = ['id', 'title', 'description', 'link', 'image_link', 'availability
   ok('the title is the brand · market', /Reiss\s*·\s*GB/.test(r.title || ''), r.title);
   ok('Score history and the scorecard follow the cover', r.after === true, r);
 
+  ok('no Social DPA identity: the brand website\'s own icon, big enough, sits beside the FeedSpark wordmark as an embedded PNG', r.logo && r.wordmark && r.logo.src === 'data:image/png;base64,' && r.logo.h > 40 && r.logo.alt === 'Reiss', r.logo);
+  ok('the cover spans the report column — its edges are the scorecard card\'s edges (1220px)', r.geo && r.geo.nl != null && Math.abs(r.geo.cl - r.geo.nl) <= 1 && Math.abs(r.geo.cr - r.geo.nr) <= 1, r.geo);
+  ok('…and at a 1440px window too, centred on the page', r.wide && Math.abs(r.wide.cl - r.wide.nl) <= 1 && Math.abs(r.wide.cr - r.wide.nr) <= 1 && r.wide.mid <= 1, r.wide);
+  ok('…and the lockup, title and scores are centred on it', r.geo && r.geo.off <= 2, r.geo);
+
+  console.log('── the brand face the team set up in Social DPA');
+  let x = await run({ ident: { fb: 'reiss', src: 'fb' } });
+  ok('a confirmed Facebook page is the logo, asked for first', x.r.logo && x.logoAsk[0] === 'fb', { logo: x.r.logo, ask: x.logoAsk });
+  const up = (() => { const b = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'); return 'data:image/png;base64,' + b.toString('base64'); })();
+  x = await run({ ident: { src: 'upload', logo: up } });
+  ok('an uploaded logo is used as it is — no network read', x.r.logo && x.logoAsk.length === 0 && x.html.includes(up), { logo: x.r.logo, ask: x.logoAsk });
+  x = await run({ ident: { src: 'initial', fb: 'reiss' } });
+  ok('"Initial" is a choice not to show a picture — honoured, nothing read', !x.r.logo && x.r.wordmark && x.logoAsk.length === 0, { logo: x.r.logo, ask: x.logoAsk });
+  x = await run({ smallSite: true });
+  ok('an unconfirmed website icon too small to print sharply is left off — the wordmark alone', !x.r.logo && x.r.wordmark, x.r.logo);
+  x = await run({ noLogo: true });
+  ok('no logo anywhere: the wordmark alone, the cover still built', !x.r.logo && x.r.wordmark && x.r.cover, x.r);
+
   console.log('── a feed that cannot be read');
   ({ r } = await run({ noFeed: true }));
   ok('the FeedSpark gradient stands in — never an empty band', r.cover && r.n === 0 && r.art, r);
@@ -106,6 +141,7 @@ const ATTRS = ['id', 'title', 'description', 'link', 'image_link', 'availability
   console.log('── demo mode');
   ({ r, asked } = await run({ demo: true }));
   ok('demo mode never shows a client’s pictures (they would name the brand) and never asks for them', r.cover && r.n === 0 && r.art && asked.length === 0, { r, asked });
+  ok('…nor the client’s logo', !r.logo, r.logo);
 
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
