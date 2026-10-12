@@ -447,7 +447,7 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
 - **Numbered keyword slots excluded by design**: keyword fields live in slots 2+ —
   `product_type(2)`/`_2`/`|||2` and up — and `normHeader` keeps them distinct so they can
   never match. The **primary** column resolves under both estate conventions: bare
-  `g:product_type` (YuMOVE, HoB) or **slot 1** `g:product_type(1)` (Reiss, Superdry, Schuh,
+  `g:product_type` (YuMOVE) or **slot 1** `g:product_type(1)` (Reiss, Superdry, Schuh,
   American Golf) via a key alias in `findCols`; bare wins if both exist.
 - **Zero extra scan slots**: `runLabelScan` captures PT during the same pass (shared header
   probe + counts query, one extra group-by ≈ +1 subrequest per Google feed) into its own
@@ -817,7 +817,7 @@ copy `labelguard.js` to `docs/labelguard_engine.js` if Google ships a new taxono
 
 **Where it is measured.** Per product, so only the full-read lanes carry it: the 4×-daily XML
 agent and the in-browser ↻ rescan (`xmlCollector` → `gpcScopeCounter` → `applyGpcScope`). The
-gviz sweep counts columns, not products, so a sheet-backed feed (House of Bruar) keeps the
+gviz sweep counts columns, not products, so a sheet-backed feed keeps the
 whole-catalogue reading until its FeedHero XML is wired. The estate index keeps the scoped
 coverage plus `sc` (the in-scope counts) through `goldenCovIndex`, so the page's re-score and the
 Playbook read the same basis; `diffCoverage` never compares a scoped reading with a
@@ -973,8 +973,8 @@ ledger's own time). One on the ledger from earlier the same day — a forced dis
 run on the day the schedule moved — read the feeds before they refreshed, which is exactly the
 reading the noon run exists to replace, so it does not stand in for it.
 
-The script reads every wired Google Shopping feed once: 49 today, never a `-fb` Meta feed. XML
-feeds stream from FeedHero. House of Bruar's three sheet feeds come through Google's public CSV
+The script reads every wired Google Shopping feed once, never a `-fb` Meta feed. XML
+feeds stream from FeedHero; a sheet-backed feed comes through Google's public CSV
 export, the same source the feed proxy reads. Off that one stream it pushes:
 
 | Push | What it carries | Where it lands |

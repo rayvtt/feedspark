@@ -36,7 +36,7 @@ const W = ['instr_collapse.html', 'presence_widget.html', 'hours_widget.html', '
 
 // three accounts, one of them multi-word — a name with a space is the case that has to be quoted
 // back into the query or the view lands on the wrong rows
-const CLIENTS = ['Reiss', 'Superdry', 'House of Bruar'];
+const CLIENTS = ['Reiss', 'Superdry', 'American Golf'];
 const TITLES = ['Keyword optimisation', 'GMC disapproval fix', 'Title optimisation', 'Client call', 'Category mapping'];
 const rows = [];
 let i = 0;
@@ -220,13 +220,13 @@ const shape = () => ({
     moved.dim === built.dim && moved.dim2 === built.dim2 && moved.form === built.form && moved.meas === built.meas, moved);
   ok('and the chart really is drawn from the other account\'s rows now', moved.n !== built.n && moved.n !== '0', { was: built.n, now: moved.n });
 
-  // a name with a space has to come back QUOTED or `client:House of Bruar` reads as three terms
-  await p.selectOption('#cacct', 'House of Bruar');
+  // a name with a space has to come back QUOTED or `client:American Golf` reads as two terms
+  await p.selectOption('#cacct', 'American Golf');
   await p.waitForTimeout(400);
-  const hob = await p.evaluate(shape);
-  ok('a multi-word account is quoted back into the query', hob.q === 'client:"House of Bruar" bill:no', hob.q);
-  ok('and it really matches — not zero rows', hob.n !== '0', hob);
-  ok('and the picker reads it back as that account', hob.acct === 'House of Bruar', hob.acct);
+  const ag = await p.evaluate(shape);
+  ok('a multi-word account is quoted back into the query', ag.q === 'client:"American Golf" bill:no', ag.q);
+  ok('and it really matches — not zero rows', ag.n !== '0', ag);
+  ok('and the picker reads it back as that account', ag.acct === 'American Golf', ag.acct);
 
   // ---- change the shape, then restore the view ONTO THE ACCOUNT ON SCREEN ---------------------
   await p.selectOption('#cacct', 'Reiss');

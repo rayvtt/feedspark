@@ -40,12 +40,12 @@ console.log('· the identity gate');
 
 console.log('· the directory gate — only personnel created in Workflow → 👥 Individual access');
 {
-  const dir = { 'steven@feedspark.com': { name: 'Steven' }, 'radostina@feedspark.com': { name: 'Radostina', clients: ['House of Bruar'] } };
+  const dir = { 'steven@feedspark.com': { name: 'Steven' }, 'radostina@feedspark.com': { name: 'Radostina', clients: ['Reiss'] } };
   const owner = 'ray@feedspark.com';
   t('the owner always passes, row or no row', SEC.dirGate('ray@feedspark.com', owner, dir, {}).owner === true && SEC.dirGate('RAY@feedspark.com', owner, {}, {}).ok);
   t('a signin with a directory row passes', SEC.dirGate('steven@feedspark.com', owner, dir, {}).listed === true && SEC.dirGate('Radostina@FeedSpark.com', owner, dir, {}).ok);
   t('a signin that passed Access but has NO row → 403 (the full-house default is gone)', (() => { const g = SEC.dirGate('newhire@feedspark.com', owner, dir, {}); return !g.ok && g.status === 403; })());
-  t('a client-team alias address without a row is refused too — a row is the only door', !SEC.dirGate('houseofbruar@feedspark.com', owner, dir, {}).ok);
+  t('a client-team alias address without a row is refused too — a row is the only door', !SEC.dirGate('americangolf@feedspark.com', owner, dir, {}).ok);
   t('a service token has no row and is refused', !SEC.dirGate('service:abcdefghijkl', owner, dir, {}).ok);
   t('unknown is still a 401, never a 403', SEC.dirGate('unknown', owner, dir, {}).status === 401);
   t('an empty / missing directory lets only the owner in', !SEC.dirGate('steven@feedspark.com', owner, null, {}).ok && SEC.dirGate(owner, owner, null, {}).ok);

@@ -44,12 +44,12 @@ const NAMES = [
   [/Reiss/g, 'Atelier'], [/reiss/g, 'atelier'],
   [/Accessorize/g, 'Linden Accessories'], [/Monsoon/g, 'Linden'],
   [/YuMOVE|YuMove/g, 'Pawsome'], [/Lintbells/g, 'Pawsome'], [/Hobbycraft/g, 'Craftwell'],
-  [/American Golf/g, 'Fairway'], [/House of Bruar/g, 'Glen House'], [/Est[ée]e Lauder/g, 'Lumen Beauty'],
+  [/American Golf/g, 'Fairway'], [/Est[ée]e Lauder/g, 'Lumen Beauty'],
   // the demo catalogue singularises its leaf by dropping a trailing s — readable for a tripwire, not on a website
   [/Dresse\b/g, 'Dress'], [/Scarve\b/g, 'Scarf'],
 ];
 const ren = (s) => NAMES.reduce((t, [a, b]) => t.replace(a, b), s);
-const CLIENTS = /\b(Superdry|Reiss|Schuh|Monsoon|Accessorize|YuMOVE|YuMove|Lintbells|Hobbycraft|American Golf|House of Bruar|Est[ée]e Lauder|ELC)\b/;
+const CLIENTS = /\b(Superdry|Reiss|Schuh|Monsoon|Accessorize|YuMOVE|YuMove|Lintbells|Hobbycraft|American Golf|Est[ée]e Lauder|ELC)\b/;
 
 const FCC_CSS = (() => { const s = fs.readFileSync(path.join(D, 'FeedSpark_Design.html'), 'utf8'); const a = s.indexOf('/* FCC-DESIGN:START */'), b = s.indexOf('/* FCC-DESIGN:END */'); return s.slice(a, b + '/* FCC-DESIGN:END */'.length); })();
 function pageFile(name) {

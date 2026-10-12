@@ -428,11 +428,11 @@ console.log('· sharedstate: scopeViewBy / scopeIncomingBy — identical to the 
     return out;
   }
   // the test_sharedstate fixtures, widened to every scoping shape
-  const OWNED = ['House of Bruar'];
+  const OWNED = ['American Golf'];
   const FX = {
-    key: { cur: { 'House of Bruar|Titles': 'Done', 'Reiss|Coats': 'Open', 'Schuh|Denim': 'Briefed' }, inc: { 'House of Bruar|Titles': 'Briefed', 'Reiss|Coats': 'Done', 'houseofbruar|New': 'Open' } },
-    self: { cur: { 'House of Bruar': 1, Schuh: 1, Reiss: { state: 'hold' } }, inc: { Reiss: 1, 'House of Bruar': { state: 'continue' } } },
-    field: { cur: { r1: { client: 'Monsoon', task: 'T' }, r2: { client: 'House of Bruar', task: 'U' }, r3: { task: 'no client' } }, inc: { r2: { client: 'House of Bruar', task: 'U2' }, r4: { client: 'Reiss' }, r5: { client: 'House of Bruar' } } },
+    key: { cur: { 'American Golf|Titles': 'Done', 'Reiss|Coats': 'Open', 'Schuh|Denim': 'Briefed' }, inc: { 'American Golf|Titles': 'Briefed', 'Reiss|Coats': 'Done', 'americangolf|New': 'Open' } },
+    self: { cur: { 'American Golf': 1, Schuh: 1, Reiss: { state: 'hold' } }, inc: { Reiss: 1, 'American Golf': { state: 'continue' } } },
+    field: { cur: { r1: { client: 'Monsoon', task: 'T' }, r2: { client: 'American Golf', task: 'U' }, r3: { task: 'no client' } }, inc: { r2: { client: 'American Golf', task: 'U2' }, r4: { client: 'Reiss' }, r5: { client: 'American Golf' } } },
     none: { cur: { 'a@b.com': 'Reiss' }, inc: { 'c@d.com': 'Schuh' } },
   };
   const js = JSON.stringify;

@@ -58,7 +58,7 @@
         "Shopify"
       ],
       "what": "Merchant Center emails on 22 Sep told merchants their Shopify store had been matched to their Merchant Center account, 'enabling native checkout on Google AI Mode and Gemini', with eligible products included automatically. Shopify's help page confirms direct checkout is active by default for US stores selling to US customers, carries no fees beyond payment processing, excludes subscriptions and bundles, and is turned off under Sales channels › Agentic.",
-      "sowhat": "The Buy button reads Merchant Center price and availability, so a mismatch becomes a failed order rather than a disapproval — feed freshness is now a checkout issue. US stores on Shopify only: check Reiss US, Superdry US and House of Bruar US before saying anything either way."
+      "sowhat": "The Buy button reads Merchant Center price and availability, so a mismatch becomes a failed order rather than a disapproval — feed freshness is now a checkout issue. US stores on Shopify only: check Reiss US and Superdry US before saying anything either way."
     },
     {
       "title": "Merchant API now takes product reviews data sources",

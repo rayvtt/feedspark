@@ -133,7 +133,7 @@ function keysOf(constName) {
   return out;
 }
 const roster = Array.from(new Set([].concat(keysOf('DEFAULT_FEEDS'), keysOf('PLAN_SHEETS'), Object.keys(LG.INDUSTRY), ['Visual K', 'Compare & Contrast Q/A Ltd', 'Short Title Co'])));
-ok(roster.length >= 18 && roster.indexOf('Schuh') >= 0 && roster.indexOf('House of Bruar') >= 0, 'roster read from DEFAULT_FEEDS ∪ PLAN_SHEETS ∪ INDUSTRY (' + roster.length + ' names)');
+ok(roster.length >= 17 && roster.indexOf('Schuh') >= 0 && roster.indexOf('American Golf') >= 0, 'roster read from DEFAULT_FEEDS ∪ PLAN_SHEETS ∪ INDUSTRY (' + roster.length + ' names)');
 let briefBad = [];
 E.PKG_LINES.forEach((l) => roster.forEach((c) => ['gb', 'de', ''].forEach((m) => {
   const t = E.briefTask(l, c, m, l.label, 'SVC123456');

@@ -391,8 +391,7 @@
     'accessorize': ["Claire's", 'Oliver Bonas', 'Pandora', 'Radley', 'Fossil', 'Joules', 'Next'],
     'yumove': ['Seraquin', 'Cosequin', 'Synoquin', 'Pooch & Mutt', 'Protexin', 'Nutramax'],
     'hobbycraft': ['The Range', 'Wool Warehouse', 'Create and Craft', 'Cass Art', 'Dunelm', 'Michaels'],
-    'americangolf': ['Golf Support', 'Scottsdale Golf', 'Online Golf', 'Clubhouse Golf', 'Golfbidder'],
-    'houseofbruar': ['Johnstons of Elgin', 'Barbour', 'Brora', 'Cordings', 'Schöffel', 'Really Wild']
+    'americangolf': ['Golf Support', 'Scottsdale Golf', 'Online Golf', 'Clubhouse Golf', 'Golfbidder']
   };
   function compSeed(client) { return (COMP_SEEDS[slug(client)] || []).map(function (n) { return { n: n }; }); }
 

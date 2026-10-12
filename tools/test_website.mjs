@@ -30,7 +30,7 @@ ok(LEAD.indexOf('href="/website"') >= 0, 'the Leadership hub links to it');
 ok((PAGE.match(/<\/body>/g) || []).length === 1, 'exactly one </body> — the worker injects the editor at the first one');
 
 console.log('\nNothing private on a public-site layout');
-const CLIENTS = ['Reiss', 'Schuh', 'Superdry', 'Monsoon', 'Accessorize', 'YuMOVE', 'YuMove', 'Lintbells', 'Hobbycraft', 'American Golf', 'House of Bruar', 'Estée Lauder', 'Estee Lauder', 'ELC'];
+const CLIENTS = ['Reiss', 'Schuh', 'Superdry', 'Monsoon', 'Accessorize', 'YuMOVE', 'YuMove', 'Lintbells', 'Hobbycraft', 'American Golf', 'Estée Lauder', 'Estee Lauder', 'ELC'];
 const hit = CLIENTS.filter((c) => new RegExp('\\b' + c + '\\b').test(PAGE));
 ok(hit.length === 0, 'no client from the active book is named (case studies are by sector until the client signs off)' + (hit.length ? ' — found ' + hit.join(', ') : ''));
 ok(!/60,577|3,521,473|239,829|Reiss GB/.test(PAGE), 'no figure from the FeedHero screen recording — the renderings carry invented data');

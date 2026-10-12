@@ -269,7 +269,7 @@ function views(E, tag) {
   eq(L('brand:Reiss keyword'), { rest: 'keyword', was: ['Reiss'] },
     tag + ': brand: is the same field and is lifted too');
   eq(L('BRAND:Reiss'), { rest: '', was: ['Reiss'] }, tag + ': the field name is case-blind');
-  eq(L('client:"House of Bruar" keyword'), { rest: 'keyword', was: ['House of Bruar'] },
+  eq(L('client:"American Golf" keyword'), { rest: 'keyword', was: ['American Golf'] },
     tag + ': a quoted multi-word account is lifted as one name');
   eq(L('keyword "client call"'), { rest: 'keyword "client call"', was: [] },
     tag + ': a quoted phrase that merely CONTAINS the word client is text, not an account');
@@ -291,14 +291,14 @@ function views(E, tag) {
   eq(E.withClient('cat:opt', 'Reiss'), 'client:Reiss cat:opt', tag + ': the account leads the query');
   eq(E.withClient('', 'Reiss'), 'client:Reiss', tag + ': an account on its own');
   eq(E.withClient('cat:opt', ''), 'cat:opt', tag + ': no account means no term — every account');
-  eq(E.withClient('cat:opt', 'House of Bruar'), 'client:"House of Bruar" cat:opt',
+  eq(E.withClient('cat:opt', 'American Golf'), 'client:"American Golf" cat:opt',
     tag + ': a name with a space is quoted, or the grammar reads it as three terms');
   eq(E.withClient('', 'Monsoon, Accessorize'), 'client:"Monsoon, Accessorize"',
     tag + ': a name with a comma is quoted, or the grammar reads it as a LIST of accounts');
 
   // --- a round trip is lossless, which is what makes a view portable ---------------------------
   for (const [q, c] of [['client:Superdry cat:opt', 'Reiss'], ['bill:no min:2', 'Schuh'],
-    ['client:"House of Bruar" keyword', 'House of Bruar'], ['cat:tech', '']]) {
+    ['client:"American Golf" keyword', 'American Golf'], ['cat:tech', '']]) {
     const back = E.withClient(L(q).rest, c);
     eq(E.accountPick(back).v, c, tag + `: "${q}" re-pointed at "${c}" reads back as that account`);
     eq(L(back).rest, L(q).rest, tag + `: "${q}" re-pointed keeps every other term`);

@@ -797,7 +797,7 @@
     {
       "name": "worker: master feed-market map imported (16 feeds x 9 brands)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "House of Bruar",
+      "pattern": "American Golf",
       "min": 2,
       "pr": 163
     },
@@ -1159,7 +1159,7 @@
       "name": "worker: remaining sheet-backed -fb feeds (post Meta-XML migration, 9 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "-fb': { id:",
-      "min": 7,
+      "min": 5,
       "pr": 292
     },
     {
@@ -1979,7 +1979,7 @@
       "pr": 260
     },
     {
-      "name": "briefmatch: client abbreviation ladder (HoB/ELC)",
+      "name": "briefmatch: client abbreviation ladder (ELC)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "CLIENT_ABBREV",
       "min": 2,
@@ -2398,10 +2398,10 @@
       "pr": 279
     },
     {
-      "name": "access: Radostina -> House of Bruar seed",
+      "name": "access: git seed directory, in effect until the owner first saves",
       "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "radostina@feedspark.com",
-      "min": 1,
+      "pattern": "ACCESS_SEED",
+      "min": 2,
       "pr": 279
     },
     {

@@ -98,7 +98,7 @@ t('no tree = only the branded questions', E.suggestQueries([], ctx, A.MARKETS.gb
 console.log('· cost — only where the billing is published');
 t('Claude at list price + $10 per 1,000 searches', E.costOf('claude', { i: 20000, o: 1500, ws: 2 }, 'claude-opus-5-5') === 0.13);
 t('every other surface: no guessed price', E.costOf('chatgpt', { i: 1, o: 1 }) === null && E.costOf('aio', null) === null);
-t('starter competitor lists exist for the roster brands, as plain names', E.compSeed('House of Bruar').length > 3 && E.compSeed('Unknown Co').length === 0);
+t('starter competitor lists exist for the roster brands, as plain names', E.compSeed('American Golf').length > 3 && E.compSeed('Unknown Co').length === 0);
 
 console.log('· the asking half — request shapes');
 const SECRET = 'sk-test-7f3a9c';

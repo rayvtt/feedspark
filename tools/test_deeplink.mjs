@@ -83,7 +83,7 @@ console.log('\n-- the guards honour it --');
   ok(n + ': estate cards carry their client', /est-card[^"]*" data-client="/.test(src));
   ok(n + ': it reads ?client=', /\[\?&\]client=\(\[\^&\]\+\)/.test(src));
   ok(n + ': it scrolls to the brand', /scrollIntoView/.test(src));
-  ok(n + ': the name is folded, so "House of Bruar" matches',
+  ok(n + ': the name is folded, so "American Golf" matches',
      /replace\(\/\[\^a-z0-9\]\/g,''\)/.test(src));
   // a guard page that HIDES feeds is how a real alert goes unseen
   ok(n + ': nothing is hidden — it marks and scrolls', !/display:none[\s\S]{0,40}est-card/.test(src));

@@ -32,9 +32,9 @@ const ok = (m, c) => { if (c) { pass++; console.log('  ✓ ' + m); } else { fail
 /* an estate shaped like the real one: nine brands, five of them Ray's, three Steven's and one the
    Task Manager has never named an AM for */
 const EST = [['Reiss', 3], ['Superdry', 2], ['Schuh', 2], ['Monsoon', 1], ['Accessorize', 1],
-  ['YuMOVE', 1], ['Hobbycraft', 1], ['American Golf', 1], ['House of Bruar', 1]];
+  ['YuMOVE', 1], ['Hobbycraft', 1], ['American Golf', 1], ['No AM Co', 1]];
 const AM = { Reiss: 'Ray', Superdry: 'Ray', Monsoon: 'Ray', Accessorize: 'Ray', Hobbycraft: 'Ray',
-  Schuh: 'Steven', YuMOVE: 'Steven', 'American Golf': 'Steven' };   // House of Bruar: none
+  Schuh: 'Steven', YuMOVE: 'Steven', 'American Golf': 'Steven' };   // 'No AM Co': none
 const MINE = Object.keys(AM).filter((b) => AM[b] === 'Ray').sort();
 const ALL = EST.map((e) => e[0]).sort();
 
@@ -105,7 +105,7 @@ const read = (p) => p.evaluate(() => {
     ok('only the accounts the Task Manager says are yours — ' + a.opts.join(', '),
       JSON.stringify(a.opts) === JSON.stringify(MINE));
     ok('a colleague’s account is not listed', a.opts.indexOf('Schuh') < 0 && a.opts.indexOf('YuMOVE') < 0);
-    ok('nor one the Task Manager has never named an AM for', a.opts.indexOf('House of Bruar') < 0);
+    ok('nor one the Task Manager has never named an AM for', a.opts.indexOf('No AM Co') < 0);
     ok('and the subtitle COUNTS what is hidden rather than dropping it silently — "'
       + (a.sub.split('·').pop() || '').trim() + '"',
       /your 5 of 9 accounts/.test(a.sub) && a.btn === 'show all');

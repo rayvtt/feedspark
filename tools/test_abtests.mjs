@@ -111,7 +111,7 @@ ok('accents/spacing fold in the brand match',
      === 'AB Test Archive Estee Lauder');
 ok('single archive still resolves without a client', resolveAbTab(['AB Test Archive']) === 'AB Test Archive');
 ok('client key folds case, accents and punctuation',
-   abClientKey('Estée Lauder') === 'esteelauder' && abClientKey('House of Bruar') === 'houseofbruar');
+   abClientKey('Estée Lauder') === 'esteelauder' && abClientKey('American Golf') === 'americangolf');
 
 console.log('\n-- unsigned prose keeps its direction --');
 ok('"-17.67% lowered" is negative', extractMetrics(JAN1).impressions === -17.67, extractMetrics(JAN1));

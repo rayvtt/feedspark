@@ -16,7 +16,7 @@ let pass = 0, fail = 0;
 const ok = (c, l) => { if (c) { pass++; console.log('  ✓ ' + l); } else { fail++; console.log('  ✗ FAIL: ' + l); } };
 
 // the wired-estate roster (what DEFAULT_FEEDS contributes even with an empty dossier)
-const ESTATE = ['Reiss', 'Schuh', 'YuMOVE', 'Monsoon', 'Accessorize', 'Hobbycraft', 'Superdry', 'House of Bruar', 'American Golf'];
+const ESTATE = ['Reiss', 'Schuh', 'YuMOVE', 'Monsoon', 'Accessorize', 'Hobbycraft', 'Superdry', 'American Golf', 'Estée Lauder'];
 const DOMS = {};
 
 // ---- Ray's specimen: subject IS the meeting name, no notes marker in it ----
@@ -47,12 +47,12 @@ ok(detectClientEx({ subject: 'Monsoon x cate.com x Fispar', snippet: '' }, {}, [
 
 // ---- classic form keeps working: quoted title carries the brand ----
 const CLASSIC = {
-  id: 'm-hob-1', from: 'Gemini <gemini-noreply@google.com>', to: 'ray@feedspark.com',
-  subject: 'Notes by Gemini: “HoB x Gains x FS - Meta overlay”',
+  id: 'm-elc-1', from: 'Gemini <gemini-noreply@google.com>', to: 'ray@feedspark.com',
+  subject: 'Notes by Gemini: “ELC x Gains x FS - Meta overlay”',
   snippet: 'Notes by Gemini\n\nSuggested next steps\n* Steven to re-run the Meta catalogue diagnostic.\n\nThis content was auto-generated on 9 Sep 2026.',
 };
 const g2 = parseGeminiNotes(CLASSIC);
-ok(g2 && ladder(CLASSIC, g2, ESTATE).client === 'House of Bruar', 'quoted-title form still attributes (HoB abbreviation)');
+ok(g2 && ladder(CLASSIC, g2, ESTATE).client === 'Estée Lauder', 'quoted-title form still attributes (ELC abbreviation)');
 
 // ---- an action-line brand still beats the subject brand ----
 const act = detectClientEx({ subject: 'Reiss to confirm the DE feed cutover date', snippet: '' }, DOMS, ESTATE);

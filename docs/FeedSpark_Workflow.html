@@ -1402,7 +1402,7 @@ aside.ck[hidden]{display:none}
 <!-- 👥 Individual access (owner-only; the button mounts only for the account owner) -->
 <div class="scrim" id="acl-scrim"><div class="modal acl-modal" role="dialog" aria-modal="true" aria-label="Individual access">
   <div class="acl-head"><div><h3>👥 Individual access</h3>
-    <div class="mc">Two controls per person. <b>Clients</b> scope their <b>Workflow</b> to those accounts only — briefs, plan tasks, captured emails and call actions filter server-side for their signin (client-team aliases like <b>houseofbruar@feedspark.com</b> need no setup). <b>Modules</b> pick exactly which parts of the FCC they can open: leave every module on for full access, or select a subset — the rest are hidden from their menu and blocked if they navigate straight to them. Everyone unassigned keeps the full view; the landing page always stays reachable; Leadership &amp; Activity stay owner-only.</div></div>
+    <div class="mc">Two controls per person. <b>Clients</b> scope their <b>Workflow</b> to those accounts only — briefs, plan tasks, captured emails and call actions filter server-side for their signin (client-team aliases like <b>schuh@feedspark.com</b> need no setup). <b>Modules</b> pick exactly which parts of the FCC they can open: leave every module on for full access, or select a subset — the rest are hidden from their menu and blocked if they navigate straight to them. Everyone unassigned keeps the full view; the landing page always stays reachable; Leadership &amp; Activity stay owner-only.</div></div>
     <button class="x" id="acl-x" type="button" aria-label="Close">×</button></div>
   <div class="acl-rows" id="acl-rows"></div>
   <div class="acl-foot">
@@ -1428,11 +1428,11 @@ aside.ck[hidden]{display:none}
   var PT=window.PLANTASKS||{};
   // full book roster (editable): every brand can be briefed, not just those with a live plan.
   var ALL_BRANDS=['Reiss','AllSaints','Schuh','Superdry','Accessorize','Monsoon','Hobbycraft','YuMOVE',
-    'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','House of Bruar','American Golf','Ryobi'];
+    'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','American Golf','Ryobi'];
   var BKEY='fcc-wf-brands';
   // a saved roster UNIONS with the defaults, never replaces them: the old early-return meant a
   // roster snapshotted before a client was onboarded hid that client forever — adoptCalls then
-  // silently skipped its call actions (Ray's 26 Aug report: HoB rows in Intake, plan sheet empty)
+  // silently skipped its call actions on a newly-onboarded brand (Ray's 26 Aug report)
   function loadBrands(){ var saved=[]; try{var s=JSON.parse(localStorage.getItem(BKEY)); if(s&&s.length)saved=s;}catch(e){}
     return Array.from(new Set(saved.concat(ALL_BRANDS,Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
   var CLIENTS=loadBrands();
@@ -1440,7 +1440,7 @@ aside.ck[hidden]{display:none}
   // ---- individual access (Ray, Aug 2026): a scoped signin works ONE client's Workflow ----
   // The worker is the gate — /api/briefs, /api/gmail/intake, dismiss, calls and techam all
   // come back pre-filtered to the signin's assigned clients (directory row or client-team
-  // alias like houseofbruar@feedspark.com). This mirrors that server truth in the chrome:
+  // alias like schuh@feedspark.com). This mirrors that server truth in the chrome:
   // plan rows filtered, the client roster locked, a 🔒 badge naming the scope. SCOPE=null
   // (owner / unassigned) = today's full house.
   var SCOPE=null, ACCESS_ME=null;
@@ -1595,7 +1595,7 @@ aside.ck[hidden]{display:none}
   // 3-letter brand abbreviations for the dense board cards (fallback: initials / first 3)
   var ABBR={'Reiss':'REI','AllSaints':'ALS','Schuh':'SCH','Superdry':'SUP','Accessorize':'ACC','Monsoon':'MON',
     'Hobbycraft':'HBC','YuMOVE':'YUM','Estée Lauder':'ELC','Bobbi Brown':'BBR','Benefit':'BEN','Jo Malone':'JML',
-    'Clinique':'CLQ','MAC':'MAC','Craghoppers':'CRG','Regatta':'REG','Dare2b':'D2B','House of Bruar':'HOB',
+    'Clinique':'CLQ','MAC':'MAC','Craghoppers':'CRG','Regatta':'REG','Dare2b':'D2B',
     'American Golf':'AMG','Ryobi':'RYO'};
   function abbr(c){ if(ABBR[c])return ABBR[c]; var w=String(c||'').trim().split(/\s+/);
     return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
@@ -1687,8 +1687,7 @@ aside.ck[hidden]{display:none}
     'Benefit':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
     'Clinique':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
     'MAC':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
-    'Jo Malone':'1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
-    'House of Bruar':'1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA'
+    'Jo Malone':'1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc'
   };
   // ---- Account Manager per client — the AM filter groups tasks by who runs the account ----
   // Onboarding hook: give a newly-wired client its AM here; anything unset defaults to Ray.

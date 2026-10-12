@@ -128,7 +128,7 @@ export function gvizUrl(id, gid, tq) {
 // keys defaults to the custom labels; pass e.g. LABEL_KEYS.concat(PT_KEYS) to also
 // resolve product_type in the same probe.
 // The primary product_type ships under TWO header conventions across the estate:
-// bare `g:product_type` (YuMOVE, HoB) or slot 1 of the numbered family —
+// bare `g:product_type` (YuMOVE) or slot 1 of the numbered family —
 // `g:product_type(1)` (Reiss/Superdry/Schuh/American Golf). Keyword slots start
 // at 2, so slot 1 is always the real category tree; it aliases onto the same key.
 const KEY_ALIASES = { product_type: ['product_type(1)'] };
@@ -1455,7 +1455,7 @@ export function xmlCollector(meta) {
    Google requires them everywhere. Defaults below mirror Google's own spec conditions;
    per-industry and per-brand overrides live in KV `goldenprofiles`. */
 export const INDUSTRY = { 'Reiss': 'Fashion', 'Superdry': 'Fashion', 'Monsoon': 'Fashion',
-  'Accessorize': 'Fashion', 'House of Bruar': 'Fashion', 'Visual K': 'Fashion',
+  'Accessorize': 'Fashion', 'Visual K': 'Fashion',
   'Schuh': 'Footwear', 'YuMOVE': 'Pet Care', 'American Golf': 'Sporting Goods',
   'Hobbycraft': 'Arts & Crafts', 'Ryobi': 'Tools & DIY',
   'Estée Lauder': 'Beauty', 'Bobbi Brown': 'Beauty', 'Benefit': 'Beauty', 'Clinique': 'Beauty', 'MAC': 'Beauty', 'Jo Malone': 'Beauty' };

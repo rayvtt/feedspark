@@ -431,7 +431,6 @@ const PLAN_SHEETS = {
   'Clinique': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
   'MAC': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
   'Jo Malone': '1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
-  'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
 
 // THE PLAN ROSTER IS THIS MAP — the one Workflow itself reads — with the dossier's pasted links
@@ -521,13 +520,6 @@ const DEFAULT_FEEDS = {
     'de-fb': { id: '1yWEyXdDWkJh1723db9QeAixrLmBDHAqhFvGupWYeEwk', gid: '0' },
     'fr-fb': { id: '1gd8SZxhDdQhTBDawtZCymKIZ8GnuVcMsVua6GawUulk', gid: '0' },
     'nl-fb': { id: '1uNKYA9hhKwPyh_V6vBsOb7yCo-DOaQxrvvOexv7-Yqw', gid: '0' },
-  },
-  'House of Bruar': {
-    gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' },
-    us: { id: '1Wa5FQgn3mX_iMMG2nT85gmnR28hgVFPkbY1qlV0lJZM', gid: '0' },
-    eu: { id: '1e3tETDX_0oGTgPXr5weI-h1DjwRoVDPJikqW9vvyTJQ', gid: '0' },
-    'gb-fb': { id: '1XSH6lWe2qiG-58GUKHOw4CQQCzkPF_kv2tKQwIyrU1k', gid: '0' },
-    'us-fb': { id: '1smKCDoMZnC1tvffeaCAHymfvEhFvPsFuvyhZxxgpV7Y', gid: '0' },  // no CL3 column in the Meta feed
   },
   'American Golf': { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml' } },
   Reiss: {
@@ -4795,7 +4787,7 @@ const MODGATE = '<script>(function(){try{var m=window.__FCCMOD;if(!Array.isArray
   + 'var links=document.querySelectorAll(".tb-modules a.tbm");for(var j=0;j<links.length;j++){var h=links[j].getAttribute("href")||"";if(h==="/"||h==="")continue;var slug=h.replace(/[?#].*$/,"").replace(/^\\//,"");if(!ok[slug])links[j].style.display="none";}'
   + '}catch(e){}})();</script>';
 // the caller's Workflow scope: owner -> full house; directory row (KV accessdir, git seed
-// until first save) or client-team alias (houseofbruar@ -> House of Bruar) -> that client's
+// until first save) or client-team alias (schuh@ -> Schuh) -> that client's
 // view; anyone else -> full house. Two KV reads, only on the routes that scope.
 async function accessOf(env, request) {
   const email = who(request);
@@ -6476,7 +6468,7 @@ function uniq(a) { const m = {}; return a.filter((x) => (m[x] ? false : (m[x] = 
 // tokens a translation must carry verbatim — mirrors docs/i18n_engine.js KEEP (test pins parity)
 const I18N_KEEP = ['FeedSpark', 'FeedHero', 'Tachyon', 'Feed Lab', 'Feed Chat', 'Label Guard', 'PT Guard', 'Golden Record', 'Playbook',
   'Reiss', 'Schuh', 'Superdry', 'Accessorize', 'Monsoon', 'Hobbycraft', 'YuMOVE', 'Ryobi', 'Benefit Cosmetics', 'Clinique', 'MAC',
-  'AllSaints', 'Estee Lauder', 'Estée Lauder', 'Bobbi Brown', 'Jo Malone', 'American Golf', 'House of Bruar',
+  'AllSaints', 'Estee Lauder', 'Estée Lauder', 'Bobbi Brown', 'Jo Malone', 'American Golf',
   'Google', 'Meta', 'Facebook', 'Pinterest', 'Shopify', 'PMax', 'PMAX', 'Merchant Center', 'Gmail', 'Cloudflare', 'Akamai',
   'ChatGPT', 'Perplexity', 'Gemini', 'Klaviyo', 'GMC', 'CTR', 'CVR', 'ROAS', 'CPC', 'SKU', 'SKUs', 'GTIN', 'MPN', 'GPC', 'PDP', 'ASPL', 'TechAM', 'KV', 'XML', 'CSV', 'PDF', 'AM', 'AMs'];
 const I18N_KEEP_RE = new RegExp('(^|[^A-Za-z])(' + I18N_KEEP.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![A-Za-z])', 'g');

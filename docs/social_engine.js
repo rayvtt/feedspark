@@ -345,7 +345,7 @@
   // across all their social accounts — so the Facebook page is where the avatar comes from. Each page below
   // was resolved and LOOKED AT on 8 Oct 2026 (the picture is the brand's own mark, not a namesake's):
   // Accessorize's current crown sits on AccessorizeUK, not on 'accessorize' (an old campaign graphic).
-  // A brand with no page here (House of Bruar resolved none) falls back to its website's own icon, then to an
+  // A brand with no page here falls back to its website's own icon, then to an
   // upload; nothing is guessed into a logo.
   var FB_PAGES = { 'Monsoon': 'monsoonuk', 'Accessorize': 'AccessorizeUK', 'Superdry': 'superdry', 'Reiss': 'reiss',
     'Schuh': 'schuhshoes', 'YuMOVE': 'yumove', 'Hobbycraft': 'hobbycraftuk', 'American Golf': 'americangolf' };

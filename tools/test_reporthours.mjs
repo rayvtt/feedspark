@@ -144,7 +144,7 @@ console.log('\n-- brand names: the reports database spells them its own way --')
 ok('Jomalone matches Jo Malone', brandKey('Jomalone') === brandKey('Jo Malone'));
 ok('YuMove matches YuMOVE', brandKey('YuMove') === brandKey('YuMOVE'));
 ok('accents fold', brandKey('Estée Lauder') === brandKey('Estee Lauder'));
-ok('House of Bruar folds', brandKey('House of Bruar') === 'houseofbruar');
+ok('American Golf folds', brandKey('American Golf') === 'americangolf');
 ok('two different brands do NOT collide', brandKey('Monsoon') !== brandKey('Accessorize'));
 
 console.log('\n-- the page carries the same fold, and the same categories --');

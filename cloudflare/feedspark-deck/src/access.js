@@ -7,24 +7,21 @@
  *             directory (the Workflow 👥 Access panel → PUT /api/access).
  *   scoped    a signin with assigned clients — via a directory row, OR the client-team
  *             alias auto-rule: an email whose local part IS a client name sees that client
- *             (houseofbruar@feedspark.com → House of Bruar, schuh@ → Schuh) with zero
- *             config. Their Workflow (briefs, email intake, call actions, triage) is
- *             filtered SERVER-SIDE to those clients; other modules stay open to them.
+ *             (schuh@feedspark.com → Schuh) with zero config. Their Workflow (briefs,
+ *             email intake, call actions, triage) is filtered SERVER-SIDE to those
+ *             clients; other modules stay open to them.
  *   open      everyone else behind Access (unassigned staff): today's full view. Scoping
  *             only ever narrows — a wrong or stale directory row can't widen anything.
  *
  * The directory lives in KV `accessdir` (owner-edited, replaces the git seed once saved).
- * Matching is slug-based (case + accent + punctuation folded) so 'House of Bruar',
- * 'houseofbruar' and 'Estée Lauder'/'esteelauder' all line up.
+ * Matching is slug-based (case + accent + punctuation folded) so 'Estée Lauder' and
+ * 'esteelauder' line up.
  */
 
-// git seed: in effect until the owner first saves the panel. Radostina co-manages
-// House of Bruar with Ray — her row works for whichever address she signs in with
-// alongside the houseofbruar@ alias the auto-rule already covers. Andrew (aroxo staff)
-// is seeded as a listed, unrestricted signin so he shows up in the 👥 panel for the owner
+// git seed: in effect until the owner first saves the panel. Andrew (aroxo staff) is
+// seeded as a listed, unrestricted signin so he shows up in the 👥 panel for the owner
 // to dial his module access down (no clients/modules field = full house + all modules).
 export const ACCESS_SEED = {
-  'radostina@feedspark.com': { name: 'Radostina', clients: ['House of Bruar'] },
   'andrew@aroxo.com': { name: 'Andrew' },
 };
 
@@ -88,7 +85,7 @@ export function moduleAllowed(modules, slug) {
   return modules.indexOf(slug) >= 0;
 }
 
-// 'Estée Lauder' -> 'esteelauder', 'House of Bruar' -> 'houseofbruar'
+// 'Estée Lauder' -> 'esteelauder'
 export function clientSlug(name) {
   return String(name || '').toLowerCase().normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');

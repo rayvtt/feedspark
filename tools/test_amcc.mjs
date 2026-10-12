@@ -21,7 +21,7 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✓ ' + m); } else { fail
 /* ---------- 1. the resolver ---------- */
 console.log('\n── an AM name becomes an address, or nothing');
 const DIR = {
-  'radostina@feedspark.com': { name: 'Radostina', clients: ['House of Bruar'] },
+  'radostina@feedspark.com': { name: 'Radostina', clients: ['American Golf'] },
   'andrew@aroxo.com': { name: 'Andrew' },
 };
 const KNOWN = ['ray@feedspark.com', 'steven@feedspark.com'];
@@ -37,7 +37,7 @@ ok(res('Andrew') === 'andrew@aroxo.com',
 ok(res('Tech-am') === null, 'a team alias with no address on file resolves to nothing');
 ok(res('Michel') === null, 'and so does an AM the FCC has never seen');
 ok(res('') === null && res(null) === null && res(undefined) === null, 'empty in, nothing out');
-ok(amEmail('Radostina', {}) === 'radostina@feedspark.com', 'with no dir passed it falls back to the git seed');
+ok(amEmail('Andrew', {}) === 'andrew@aroxo.com', 'with no dir passed it falls back to the git seed');
 ok(amEmail('Ray', { dir: {}, known: [] }) === null,
   'nothing is invented when neither source knows the name');
 
