@@ -129,6 +129,20 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   t('a double-click on the edge puts the tab’s width back', Math.abs((await p.$eval('#pv-railw', (e) => e.getBoundingClientRect().width)) - wk0) < 3);
   await p.keyboard.press('Tab'); await p.focus('#rt-week'); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(100);
   t('arrow keys walk the tabs (Week → Fields)', (await p.getAttribute('#rt-fields', 'aria-selected')) === 'true');
+  {
+    const tk = await p.evaluate(() => ({
+      groups: Array.from(document.querySelectorAll('#toks .tok-gl')).map((e) => e.textContent),
+      toks: Array.from(document.querySelectorAll('#toks .tok')).map((e) => ({ k: e.getAttribute('data-tok'), off: e.classList.contains('off'), tip: e.title })),
+      n: (document.querySelector('#toks-n') || {}).textContent || '', src: (document.querySelector('#toks .tok-src') || {}).textContent || '' }));
+    const get = (k) => tk.toks.find((x) => x.k === k) || {};
+    t('the Fields tab offers the Meta catalogue fields, grouped', ['Product', 'Price & offer', 'Catalogue', 'Custom labels', 'Performance', 'The moment'].every((g) => tk.groups.indexOf(g) >= 0) && ['desc', 'type', 'dept', 'material', 'avail', 'cl0', 'cl4', 'retailer_id'].every((k) => tk.toks.some((x) => x.k === k)), tk.groups);
+    t('…each chip says what this product carries — a field it lacks is dimmed, never hidden', !get('type').off && /Footwear|Trainers|Coats|Bags|Supplements/.test(get('type').tip) && get('cl4').off && /not measured/.test(get('cl4').tip) && /\d+ of \d+ carried/.test(tk.n), { type: get('type'), cl4: get('cl4'), n: tk.n });
+    t('…a Meta tag is named where Meta has one', /\{\{product\.custom_label_0\}\}/.test(get('cl0').tip));
+    await p.fill('#d-primary', '{dept} · {type} · {cl0}'); await p.waitForTimeout(300);
+    const fbText = await p.evaluate(() => (document.querySelector('[data-mock="fb"]') || document.body).textContent);
+    t('a catalogue field fills an ad line on the preview', /(Footwear|Clothing|Accessories|Health) · (Trainers|Coats & Jackets|Tote Bags|Joint Care) · (On sale|Full price)/.test(fbText), fbText.slice(0, 300));
+    await p.fill('#d-primary', ''); await p.waitForTimeout(200);
+  }
   await p.click('#sec-prod .fhd'); await p.waitForTimeout(100);
   await p.click('#fold-all'); await p.waitForTimeout(150);
   t('Fold all folds every section and the button offers the way back', (await p.$$eval('section[data-fold]', (a) => a.every((c) => c.classList.contains('folded')))) && /Open all/.test(await p.textContent('#fold-all')));

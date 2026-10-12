@@ -15197,6 +15197,30 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "body.xhtml #print-foot{max-width:1180px",
       "pr": 0
+    },
+    {
+      "name": "Social: Meta catalogue fields read off the Meta feed's own columns",
+      "file": "docs/social_engine.js",
+      "pattern": "function metaFacts(row)",
+      "pr": 0
+    },
+    {
+      "name": "Social: custom labels reach Meta as its own template tags",
+      "file": "docs/social_engine.js",
+      "pattern": "{{product.custom_label_4}}",
+      "pr": 0
+    },
+    {
+      "name": "Social: Fields tab grouped chips naming the feed",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "function renderToks()",
+      "pr": 0
+    },
+    {
+      "name": "Social: a Google market offers its Meta twin's fields",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "data-tofb",
+      "pr": 0
     }
   ]
 }

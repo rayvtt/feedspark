@@ -139,6 +139,69 @@
     weather:  { label: 'Weather',          src: 'ctx' },
     temp:     { label: 'Temperature',      src: 'ctx', num: true },
   };
+  // THE META CATALOGUE'S OWN FIELDS (Ray, 12 Oct 2026: "can you bringing in more fields to populate pls - also,
+  // fields from Meta feeds not Google feed"). A social DPA runs on the Meta catalogue, so these are read off
+  // the Meta feed's own columns, named as Meta's catalogue field reference names them — a column the feed does
+  // not carry is a field this product does not have, never a guess. `cols` are the column names accepted
+  // (namespace and case set aside: g:product_type, product_type and PRODUCT_TYPE are one); `fx` shapes the
+  // value for an ad line (the leaf of a category path, a readable availability word, plain text from HTML).
+  var META_FIELDS = [
+    { k: 'desc',    label: 'Description',            g: 'Product', cols: ['description'], fx: 'text', meta: '{{product.description}}' },
+    { k: 'short',   label: 'Short description',      g: 'Product', cols: ['short_description'], fx: 'text' },
+    { k: 'size',    label: 'Size',                   g: 'Product', cols: ['size'] },
+    { k: 'material',label: 'Material',               g: 'Product', cols: ['material'] },
+    { k: 'pattern', label: 'Pattern',                g: 'Product', cols: ['pattern'] },
+    { k: 'gender',  label: 'Gender',                 g: 'Product', cols: ['gender'], fx: 'word' },
+    { k: 'age',     label: 'Age group',              g: 'Product', cols: ['age_group'], fx: 'word' },
+    { k: 'condition', label: 'Condition',            g: 'Product', cols: ['condition'], fx: 'word' },
+    { k: 'avail',   label: 'Availability',           g: 'Product', cols: ['availability'], fx: 'avail' },
+    { k: 'type',    label: 'Product type',           g: 'Catalogue', cols: ['product_type'], fx: 'leaf' },
+    { k: 'dept',    label: 'Department',             g: 'Catalogue', cols: ['product_type'], fx: 'root' },
+    { k: 'gpc',     label: 'Google product category', g: 'Catalogue', cols: ['google_product_category'], fx: 'leaf' },
+    { k: 'fbcat',   label: 'Facebook product category', g: 'Catalogue', cols: ['fb_product_category'], fx: 'leaf' },
+    { k: 'site',    label: 'Website',                g: 'Catalogue', cols: ['link', 'url'], fx: 'host' },
+    { k: 'retailer_id', label: 'Product ID',         g: 'Catalogue', cols: ['id', 'retailer_id'], meta: '{{product.retailer_id}}' },
+    { k: 'cl0',     label: 'Custom label 0',         g: 'Custom labels', cols: ['custom_label_0'], meta: '{{product.custom_label_0}}' },
+    { k: 'cl1',     label: 'Custom label 1',         g: 'Custom labels', cols: ['custom_label_1'], meta: '{{product.custom_label_1}}' },
+    { k: 'cl2',     label: 'Custom label 2',         g: 'Custom labels', cols: ['custom_label_2'], meta: '{{product.custom_label_2}}' },
+    { k: 'cl3',     label: 'Custom label 3',         g: 'Custom labels', cols: ['custom_label_3'], meta: '{{product.custom_label_3}}' },
+    { k: 'cl4',     label: 'Custom label 4',         g: 'Custom labels', cols: ['custom_label_4'], meta: '{{product.custom_label_4}}' },
+  ];
+  // Meta's own template tags where Meta documents one (Marketing API › Advantage+ catalog ads › "Use data feed
+  // file data in your template": brand, current_price, description, name, price, retailer_id, url,
+  // custom_label_0–4) — the rest reach an ad through a feed field FeedHero writes.
+  META_FIELDS.forEach(function (m) { TOKENS[m.k] = { label: m.label, src: 'feed', g: m.g, col: m.cols[0] }; if (m.meta) TOKENS[m.k].meta = m.meta; });
+  // the group each token is offered under on the Fields tab
+  var TOKEN_GROUPS = ['Product', 'Price & offer', 'Catalogue', 'Custom labels', 'Performance', 'The moment'];
+  var TG = { title: 'Product', brand: 'Product', colour: 'Product', price: 'Price & offer', was: 'Price & offer', pct: 'Price & offer', save: 'Price & offer',
+    stock: 'Performance', clicks30: 'Performance', bought30: 'Performance', views24: 'Performance', day: 'The moment', weather: 'The moment', temp: 'The moment' };
+  Object.keys(TG).forEach(function (k) { if (TOKENS[k]) TOKENS[k].g = TG[k]; });
+  function colKey(c) { return s0(c).toLowerCase().replace(/\(\d+\)$/, '').replace(/^[a-z]+:/, '').replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, ''); }
+  var AVAIL_WORD = { 'in stock': 'In stock', in_stock: 'In stock', 'out of stock': 'Out of stock', out_of_stock: 'Out of stock', preorder: 'Pre-order', 'pre-order': 'Pre-order',
+    'available for order': 'Available to order', available_for_order: 'Available to order', backorder: 'Back-order', discontinued: 'Discontinued' };
+  function shapeVal(fx, v) {
+    v = s0(v).trim(); if (!v) return '';
+    if (fx === 'text') return v.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+    if (fx === 'leaf' || fx === 'root') { var parts = v.split(/\s*(?:>|›|\|)\s*/).filter(Boolean); if (!parts.length) return ''; return fx === 'leaf' ? parts[parts.length - 1] : parts[0]; }
+    if (fx === 'word') { var w = v.replace(/_/g, ' ').toLowerCase(); return w.charAt(0).toUpperCase() + w.slice(1); }
+    if (fx === 'avail') return AVAIL_WORD[v.toLowerCase()] || '';
+    if (fx === 'host') { var m = /^https?:\/\/(?:www\.)?([^\/?#]+)/i.exec(v); return m ? m[1].toLowerCase() : ''; }
+    return v;
+  }
+  // the Meta catalogue fields one product carries, read off its row: {k: value} + __col {k: the column read}
+  function metaFacts(row) {
+    var out = { __col: {} }; if (!row || typeof row !== 'object') return out;
+    var byKey = {};
+    Object.keys(row).forEach(function (c) { var k = colKey(c); if (k && byKey[k] == null && s0(row[c]).trim() !== '') byKey[k] = c; });
+    META_FIELDS.forEach(function (m) {
+      for (var i = 0; i < m.cols.length; i++) {
+        var c = byKey[m.cols[i]]; if (c == null) continue;
+        var v = shapeVal(m.fx, row[c]); if (!v) continue;
+        out[m.k] = v; out.__col[m.k] = c; return;
+      }
+    });
+    return out;
+  }
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var WEATHER = { sun: 'sunny', rain: 'rainy', cold: 'cold', hot: 'hot', snow: 'snowy', wind: 'windy' };
   var AUDIENCE = { prospect: 'New prospect', viewed: 'Viewed, not bought', carted: 'Added to basket', bought: 'Past buyer' };
@@ -566,6 +629,7 @@
 
   return {
     VERSION: VERSION, PLATFORMS: PLATFORMS, FIELDS: FIELDS, FIELD_LABEL: FIELD_LABEL, TOKENS: TOKENS, DAYS: DAYS,
+    META_FIELDS: META_FIELDS, TOKEN_GROUPS: TOKEN_GROUPS, metaFacts: metaFacts, colKey: colKey,
     WEATHER: WEATHER, AUDIENCE: AUDIENCE, DAYPARTS: DAYPARTS, IDEAS: IDEAS, DEFAULTS: DEFAULTS,
     platformById: platformById, frame: frame, safeRect: safeRect, fitField: fitField, ctaFor: ctaFor,
     tokenValue: tokenValue, fill: fill, tokensIn: tokensIn, metaTemplate: metaTemplate,

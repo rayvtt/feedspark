@@ -274,5 +274,28 @@ t('the stub feeds the phone + dark tripwires', /require\('\.\/social_stub\.js'\)
 t('the harness runs in qa_gate, presync and CI', /node tools\/test_social\.mjs/.test(read('tools/qa_gate.sh')) && /node tools\/test_social\.mjs/.test(read('tools/presync.sh')) && /run: node tools\/test_social\.mjs/.test(read('.github/workflows/validate.yml')));
 t('the browser tripwire runs in presync', /node tools\/check_social\.js/.test(read('tools/presync.sh')));
 
+console.log('── the Meta catalogue fields');
+{
+  const row = { 'g:id': 'MS-1', description: '<p>Soft&nbsp;<b>wool</b> &amp; silk</p>', 'g:product_type': 'Women > Dresses > Maxi Dresses', availability: 'in stock',
+    link: 'https://www.monsoon.co.uk/p/1', custom_label_0: 'Bestseller', custom_label_3: '', gender: 'female', age_group: 'adult', 'g:google_product_category': 'Apparel & Accessories > Clothing > Dresses',
+    fb_product_category: 'clothing & accessories > clothing > dresses', size: '12', material: 'Wool', pattern: 'Plain', condition: 'new', short_description: 'A wool maxi' };
+  const f = SOC.metaFacts(row);
+  t('every Meta field is read off its own column, namespace and case set aside', f.retailer_id === 'MS-1' && f.type === 'Maxi Dresses' && f.dept === 'Women' && f.gpc === 'Dresses' && f.fbcat === 'dresses' && f.size === '12' && f.material === 'Wool' && f.pattern === 'Plain' && f.short === 'A wool maxi', f);
+  t('a description is plain text, HTML and entities gone', f.desc === 'Soft wool & silk', f.desc);
+  t('words read as an ad would print them', f.gender === 'Female' && f.age === 'Adult' && f.condition === 'New' && f.avail === 'In stock' && f.site === 'monsoon.co.uk', f);
+  t('an empty column is a field the product does not have — never a blank in the ad', f.cl3 === undefined && f.cl0 === 'Bestseller' && SOC.fill('{cl3} deal', f, {}).ok === false);
+  t('an availability word nobody recognises is not printed', SOC.metaFacts({ availability: 'maybe' }).avail === undefined);
+  t('the column each field came from is named', f.__col.type === 'g:product_type' && f.__col.retailer_id === 'g:id');
+  t('every Meta field is a token in a named group', SOC.META_FIELDS.every((m) => SOC.TOKENS[m.k] && SOC.TOKEN_GROUPS.indexOf(SOC.TOKENS[m.k].g) >= 0) && Object.keys(SOC.TOKENS).every((k) => SOC.TOKEN_GROUPS.indexOf(SOC.TOKENS[k].g) >= 0));
+  // Meta's own tags: Marketing API › Advantage+ catalog ads › "Use data feed file data in your template"
+  const META_TAGS = ['brand', 'current_price', 'description', 'name', 'price', 'retailer_id', 'url', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4'];
+  const used = Object.keys(SOC.TOKENS).map((k) => SOC.TOKENS[k].meta).filter(Boolean).map((m) => m.replace(/^\{\{product\.|\}\}$/g, ''));
+  t('a token carries a Meta tag only where Meta documents one', used.every((m) => META_TAGS.indexOf(m) >= 0), used);
+  t('the custom labels and description reach Meta as its own tags', SOC.TOKENS.cl0.meta === '{{product.custom_label_0}}' && SOC.TOKENS.cl4.meta === '{{product.custom_label_4}}' && SOC.TOKENS.desc.meta === '{{product.description}}');
+  t('a template of catalogue fields fills', SOC.fill('{dept} · {type} in {material}', f, {}).text === 'Women · Maxi Dresses in Wool');
+  t('the page reads the fields off the row and names the feed they came from', /SOC\.metaFacts\(S\.row\)/.test(PG) && /function feedWord\(\)/.test(PG) && /data-tofb/.test(PG));
+  t('a remembered Google market reads its Meta twin when one is wired', /want && !isFb\(want\) && ms\.indexOf\(want \+ '-fb'\) >= 0/.test(PG));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

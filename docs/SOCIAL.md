@@ -115,6 +115,36 @@ the demo brand's initial. The Facebook ad prints the product link's own domain, 
 * **🎭 Demo products** — six products drawn by the page itself (no client picture, every figure demo).
   The page opens on them when no brand is picked or the feed can't be read.
 
+## The Meta catalogue's own fields (12 Oct 2026)
+
+Ray: "can you bringing in more fields to populate pls - also, fields from Meta feeds not Google feed".
+
+- **20 more fields**, each read off the Meta feed's own column (`social_engine.js` › `META_FIELDS` / `metaFacts`). The
+  column names follow Meta's catalogue field reference; namespace and case are set aside, so `g:product_type` and
+  `product_type` are one column.
+  - Product: description (plain text, HTML gone), short description, size, material, pattern, gender, age group,
+    condition, availability (a word Meta's vocabulary carries, else nothing).
+  - Catalogue: product type (leaf), department (first level), Google / Facebook product category (leaf), website,
+    product ID.
+  - Custom labels: 0–4.
+- **What the ad would be set up with.** A token carries a Meta template tag only where Meta documents one
+  (Marketing API › Advantage+ catalog ads › "Use data feed file data in your template": brand, current_price,
+  description, name, price, retailer_id, url, custom_label_0–4). Everything else reaches an ad through a feed field
+  FeedHero writes, and the Data tab says so. `test_social` holds the list to Meta's twelve.
+- **On the Fields tab:**
+  - Chips are grouped (Product · Price & offer · Catalogue · Custom labels · Performance · The moment).
+  - Each chip's tooltip carries this product's value, the column it came from and the Meta tag.
+  - A field the product lacks is dimmed, never hidden. A rule using it stands down on that product.
+  - A count reads "N of M carried by this product".
+- **From the Meta feed, not the Google feed:**
+  - The source line names the feed the fields are read from.
+  - On a Google market, the line says so in orange and offers **Read the Meta feed** when the market has a Meta
+    twin wired. If it has none, the line says that instead.
+  - A remembered Google market opens on its Meta twin.
+  - The Data tab names the feed and column behind every value.
+- Harness: `tools/test_social.mjs` (147) + `tools/check_social.js` (the grouped chips, dimmed fields, the Meta tag,
+  a catalogue field filling a preview line).
+
 ## The schedule
 
 Rules run **top to bottom, first match wins per field**. A rule = field (tagline / headline / primary
