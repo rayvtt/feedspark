@@ -2,7 +2,7 @@
 
 Reference `.pptx` files that govern how every new FeedSpark deck is built. **All deck output
 is PowerPoint (`.pptx`) — HTML decks are no longer an output option** (Ray, Aug 2026). A
-deck request ("intro for Hobbycraft new agency", "Q2–Q3 review for House of Bruar") is built
+deck request ("intro for Hobbycraft new agency", "Q2–Q3 review for Schuh") is built
 by referencing the files in this folder, not from scratch.
 
 ## The core template

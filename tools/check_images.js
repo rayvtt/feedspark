@@ -32,7 +32,7 @@ const FEEDS = [
   { client: 'Monsoon', mkt: 'gb', kind: 'xml', scan: idxOf(MON) },
   { client: 'Superdry', mkt: 'gb', kind: 'xml', scan: idxOf(SUP) },
   { client: 'Reiss', mkt: 'gb', kind: 'xml' },
-  { client: 'House of Bruar', mkt: 'gb-fb', kind: 'sheet' },
+  { client: 'Hobbycraft', mkt: 'gb-fb', kind: 'sheet' },
 ];
 let TAGS = { v: 1, tok: { '01': { tag: 'packshot', by: 'manual', t: Date.now() } }, img: {} };
 const puts = [], pushes = [], claudeCalls = [];

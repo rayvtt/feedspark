@@ -32,9 +32,9 @@ is('an unknown namespace can never become a KV key', isStateNs('../secrets'), fa
 is('…but a real one can', isStateNs('taskowner'), true);
 
 // ---------- a scoped signin's view ----------
-const OWNED = ['House of Bruar'];
-const status = { 'House of Bruar|Titles': 'Done', 'Reiss|Coats': 'Open', 'Schuh|Denim': 'Briefed' };
-is('a scoped AM sees only their client', Object.keys(scopeStateView('taskstatus', status, OWNED, clientMatch)), ['House of Bruar|Titles']);
+const OWNED = ['American Golf'];
+const status = { 'American Golf|Titles': 'Done', 'Reiss|Coats': 'Open', 'Schuh|Denim': 'Briefed' };
+is('a scoped AM sees only their client', Object.keys(scopeStateView('taskstatus', status, OWNED, clientMatch)), ['American Golf|Titles']);
 is('the owner (no scope) sees everything', Object.keys(scopeStateView('taskstatus', status, null, clientMatch)).length, 3);
 is('house-wide config is never filtered',
   scopeStateView('senderbrand', { 'a@b.com': 'Reiss' }, OWNED, clientMatch), { 'a@b.com': 'Reiss' });
@@ -42,32 +42,32 @@ is('house-wide config is never filtered',
 // ---------- the trap: a partial view saved whole ----------
 // the scoped AM edits their own row and saves the map they can see — two keys they never saw
 // must survive, or one AM's save silently deletes the rest of the board
-const theirSave = { 'House of Bruar|Titles': 'Briefed' };
+const theirSave = { 'American Golf|Titles': 'Briefed' };
 const merged = scopeStateIncoming('taskstatus', status, theirSave, OWNED, clientMatch);
-is('their own edit lands', merged['House of Bruar|Titles'], 'Briefed');
-is('every foreign entry is re-injected', Object.keys(merged).sort(), ['House of Bruar|Titles', 'Reiss|Coats', 'Schuh|Denim']);
+is('their own edit lands', merged['American Golf|Titles'], 'Briefed');
+is('every foreign entry is re-injected', Object.keys(merged).sort(), ['American Golf|Titles', 'Reiss|Coats', 'Schuh|Denim']);
 
 // and through the real merge, with absence-deletion armed (a live X-Sync-Base)
 const now = Date.now();
 let envx = liftEnvelope(null, now);
 envx = mergeIntoEnvelope(envx, status, 0, now - 1000, {});
 envx = mergeIntoEnvelope(envx, merged, now, now, {});
-is('after the KV merge the board is intact', Object.keys(envx.data).sort(), ['House of Bruar|Titles', 'Reiss|Coats', 'Schuh|Denim']);
-is('and carries their change', envx.data['House of Bruar|Titles'], 'Briefed');
+is('after the KV merge the board is intact', Object.keys(envx.data).sort(), ['American Golf|Titles', 'Reiss|Coats', 'Schuh|Denim']);
+is('and carries their change', envx.data['American Golf|Titles'], 'Briefed');
 
 // the SAME save WITHOUT the re-injection is the bug this guards against
 let bad = liftEnvelope(null, now);
 bad = mergeIntoEnvelope(bad, status, 0, now - 1000, {});
 bad = mergeIntoEnvelope(bad, theirSave, now, now, {});
-is('un-scoped, that save would have wiped the rest', Object.keys(bad.data), ['House of Bruar|Titles']);
+is('un-scoped, that save would have wiped the rest', Object.keys(bad.data), ['American Golf|Titles']);
 
 // a scoped AM cannot write into another client, however they spell the key
-const sneaky = { 'House of Bruar|Titles': 'Done', 'Reiss|Coats': 'Done' };
+const sneaky = { 'American Golf|Titles': 'Done', 'Reiss|Coats': 'Done' };
 const guarded = scopeStateIncoming('taskstatus', status, sneaky, OWNED, clientMatch);
 is('a foreign key in their payload is ignored, not applied', guarded['Reiss|Coats'], 'Open');
 
 // deletion still works INSIDE their own scope
-const dropped = scopeStateIncoming('hidden', { 'House of Bruar|A': 1, 'Reiss|B': 1 }, {}, OWNED, clientMatch);
+const dropped = scopeStateIncoming('hidden', { 'American Golf|A': 1, 'Reiss|B': 1 }, {}, OWNED, clientMatch);
 is('they can clear their own entry', Object.keys(dropped), ['Reiss|B']);
 
 // ---------- every namespace is classified ----------

@@ -56,7 +56,7 @@ def clean(c):
 
 def norm(c):
     u=re.sub(r"\s+"," ",(c or "").strip().upper())
-    m={"MON":"Monsoon","ACC":"Accessorize","HOB":"House of Bruar","ALLSAINTS":"AllSaints","ALL SAINTS":"AllSaints",
+    m={"MON":"Monsoon","ACC":"Accessorize","ALLSAINTS":"AllSaints","ALL SAINTS":"AllSaints",
        "AMERICAN GOL":"American Golf","ESTEE":"Estée Lauder","ELC":"Estée Lauder","YUMOVE":"YuMOVE","JOMALONE":"Jo Malone"}
     return m.get(u, (c or "").strip().title())
 

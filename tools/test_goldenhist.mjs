@@ -322,8 +322,12 @@ console.log('── the agent runs once a day, from 12:00 London (moved from 09:
   ok('the agent gates on runDone, never on the worker\'s bare same-day flag', /const done = runDone\(st\.last, clock\);\n    if \(!shouldRun\(clock, done, FORCE\)\) \{/.test(read('tools/golden_daily.mjs')) && !/st\.done/.test(read('tools/golden_daily.mjs')));
   const feeds = A.googleFeeds(read('cloudflare/feedspark-deck/src/worker.js'));
   ok('every wired Google Shopping feed, never a Meta one', feeds.length >= 40 && !feeds.some((f) => /-fb$/.test(f.mkt)), feeds.length);
-  ok('sheet-backed ones read Google\'s public CSV export, as the feed proxy does', feeds.filter((f) => f.kind === 'sheet').every((f) => /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[^/]+\/export\?format=csv&gid=/.test(f.url)) && feeds.some((f) => f.kind === 'sheet'));
-  ok('a client name with a space is read whole', feeds.some((f) => f.client === 'House of Bruar'));
+  // every feed in the roster today is FeedHero XML — exercise the sheet-URL rule on a synthetic
+  // DEFAULT_FEEDS shape rather than depending on a live sheet-backed feed existing
+  const sheetSrc = "const DEFAULT_FEEDS = {\n  'Example Co': {\n    gb: { id: '1abc', gid: '42' },\n  },\n};";
+  const sheetFeeds = A.googleFeeds(sheetSrc);
+  ok('sheet-backed ones read Google\'s public CSV export, as the feed proxy does', sheetFeeds.length === 1 && sheetFeeds[0].kind === 'sheet' && /^https:\/\/docs\.google\.com\/spreadsheets\/d\/1abc\/export\?format=csv&gid=42$/.test(sheetFeeds[0].url));
+  ok('a client name with a space is read whole', feeds.some((f) => f.client === 'American Golf'));
   const wf = read('.github/workflows/golden-daily.yml');
   ok('the workflow fires at :07/:37 past 11:00-14:00 UTC — off the hour, where GitHub drops the most — and lets the script decide', /cron: '7,37 11,12,13,14 \* \* \*'/.test(wf) && !/cron: '0 /.test(wf) && /node tools\/golden_daily\.mjs/.test(wf) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(wf));
   ok('a one-feed dispatch never marks the day done', /if \(!ONLY\) await post\(\{ goldendaily: \{ day: clock\.day, finish: true,/.test(read('tools/golden_daily.mjs')));

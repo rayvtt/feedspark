@@ -77,7 +77,7 @@ ok('"Harvey Nichols - GB - EN" ignores the language', parseClient('Harvey Nichol
 ok('"Bonmarche - UK" → gb', parseClient('Bonmarche - UK').mkt === 'gb');
 ok('"[merged] Benefit Cosmetics - GB" flags merged', parseClient('[merged] Benefit Cosmetics - GB').merged === true && parseClient('[merged] Benefit Cosmetics - GB').name === 'Benefit Cosmetics');
 ok('"Dr.Jart+ - UK (ELC)"', parseClient('Dr.Jart+ - UK (ELC)').name === 'Dr.Jart+' && parseClient('Dr.Jart+ - UK (ELC)').group === 'ELC');
-const ROSTER = ['Reiss', 'AllSaints', 'Schuh', 'Superdry', 'Accessorize', 'Monsoon', 'Hobbycraft', 'YuMOVE', 'Estée Lauder', 'Bobbi Brown', 'Benefit', 'Jo Malone', 'Clinique', 'MAC', 'Craghoppers', 'Regatta', 'Dare2b', 'House of Bruar', 'American Golf', 'Ryobi'];
+const ROSTER = ['Reiss', 'AllSaints', 'Schuh', 'Superdry', 'Accessorize', 'Monsoon', 'Hobbycraft', 'YuMOVE', 'Estée Lauder', 'Bobbi Brown', 'Benefit', 'Jo Malone', 'Clinique', 'MAC', 'Craghoppers', 'Regatta', 'Dare2b', 'American Golf', 'Ryobi'];
 ok('YuMove → YuMOVE (case)', resolveBrand('YuMove', ROSTER) === 'YuMOVE');
 ok('Estee Lauder → Estée Lauder (accent)', resolveBrand('Estee Lauder', ROSTER) === 'Estée Lauder');
 ok('All Saints → AllSaints (space)', resolveBrand('All Saints', ROSTER) === 'AllSaints');

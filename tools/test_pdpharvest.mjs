@@ -128,13 +128,13 @@ const wsrc = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', 
 const lift = (name) => { const i = wsrc.indexOf('function ' + name + '('); const j = wsrc.indexOf('\nfunction ', i + 10); const k = wsrc.indexOf('\nasync function ', i + 10); const end = Math.min(j < 0 ? 1e12 : j, k < 0 ? 1e12 : k); return wsrc.slice(i, end); };
 const W = new Function(lift('pdpHostOf') + '\n' + lift('pdpHostAllowed') + '\n' + lift('pdpLinkHostFromHead') + '\nreturn { hostOf: pdpHostOf, hostAllowed: pdpHostAllowed, linkHostFromFeedHead: pdpLinkHostFromHead };')();
 const XMLHEAD = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel><title>Reiss GB</title><link>https://www.reiss.com</link><item><g:id>SV1</g:id><g:title>Coat</g:title><g:link><![CDATA[https://www.reiss.com/style/SV131275/Y76182?utm=a&b=c]]></g:link></item>';
-const CSVHEAD = 'id,title,link,price\n"HB1","Tweed jacket, brown","https://www.houseofbruar.com/mens/jackets/hb1","£299"\n';
+const CSVHEAD = 'id,title,link,price\n"EX1","Tweed jacket, brown","https://www.example-retailer.com/mens/jackets/ex1","£299"\n';
 [['hostOf', ['https://www.reiss.com/style/SV1', 'HTTP://Www.Reiss.com:443/x', 'not a url', '']],
   ['linkHostFromFeedHead', [XMLHEAD, CSVHEAD, '<rss><channel><link>https://shop.example.com</link></channel>', 'garbage']]].forEach(([fn, cases]) => cases.forEach((c) => {
     t(fn + ' parity: ' + JSON.stringify(String(c).slice(0, 40)) + ' → ' + JSON.stringify(P[fn](c)), P[fn](c) === W[fn](c), 'worker gave ' + JSON.stringify(W[fn](c)));
   }));
 t('XML head → the first item\'s g:link host (CDATA + query tolerated)', P.linkHostFromFeedHead(XMLHEAD) === 'www.reiss.com');
-t('CSV head → the link column of the first row (quoted comma-bearing cells)', P.linkHostFromFeedHead(CSVHEAD) === 'www.houseofbruar.com');
+t('CSV head → the link column of the first row (quoted comma-bearing cells)', P.linkHostFromFeedHead(CSVHEAD) === 'www.example-retailer.com');
 [['https://www.reiss.com/style/x', 'www.reiss.com', true], ['https://reiss.com/style/x', 'www.reiss.com', true], ['https://www.reiss.com/x', 'reiss.com', true],
   ['https://www.reiss.com.evil.io/x', 'www.reiss.com', false], ['https://m.reiss.com/x', 'www.reiss.com', false], ['https://evil.io/?u=https://www.reiss.com', 'www.reiss.com', false],
   ['javascript:alert(1)', 'www.reiss.com', false], ['', 'www.reiss.com', false], ['https://www.reiss.com/x', '', false]].forEach(([u, h, exp]) => {

@@ -13,43 +13,41 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from '../cloudflare
 let passed = 0, failed = 0;
 function ok(c, l) { if (c) { passed++; console.log('  ✓ ' + l); } else { failed++; console.log('  ✗ FAIL: ' + l); } }
 
-const NAMES = ['House of Bruar', 'Reiss', 'Schuh', 'Estée Lauder', 'YuMOVE'];
+const NAMES = ['American Golf', 'Reiss', 'Schuh', 'Estée Lauder', 'YuMOVE'];
 
 /* ---- resolution: who gets which view ---- */
-ok(clientSlug('Estée Lauder') === 'esteelauder' && clientSlug('House of Bruar') === 'houseofbruar', 'slug folds case, accents and punctuation');
-ok(aliasClient('HouseOfBruar@feedspark.com', NAMES) === 'House of Bruar', 'client-team alias auto-rule (case-insensitive)');
+ok(clientSlug('Estée Lauder') === 'esteelauder' && clientSlug('American Golf') === 'americangolf', 'slug folds case, accents and punctuation');
+ok(aliasClient('AmericanGolf@feedspark.com', NAMES) === 'American Golf', 'client-team alias auto-rule (case-insensitive)');
 ok(aliasClient('esteelauder@feedspark.com', NAMES) === 'Estée Lauder', 'alias rule survives the accent fold');
 ok(aliasClient('radostina@feedspark.com', NAMES) === null, 'a personal signin is not an alias');
-const rado = resolveAccess('radostina@feedspark.com', false, null, NAMES);
-ok(!rado.owner && rado.clients && rado.clients[0] === 'House of Bruar', 'seed: Radostina -> House of Bruar (until the owner saves)');
 ok(resolveAccess('ray@feedspark.com', true, null, NAMES).clients === null, 'owner: full house');
 ok(resolveAccess('steven@feedspark.com', false, null, NAMES).clients === null, 'unassigned signin: full house (scoping only narrows)');
 const dirOver = { 'radostina@feedspark.com': { name: 'Rado', clients: ['Reiss'] } };
-ok(resolveAccess('radostina@feedspark.com', false, dirOver, NAMES).clients[0] === 'Reiss', 'a stored directory replaces the git seed');
-ok(resolveAccess('houseofbruar@feedspark.com', false, dirOver, NAMES).clients[0] === 'House of Bruar', 'alias rule still works alongside a stored directory');
-ok(ACCESS_SEED['radostina@feedspark.com'].clients[0] === 'House of Bruar', 'the seed itself names House of Bruar');
+ok(resolveAccess('radostina@feedspark.com', false, dirOver, NAMES).clients[0] === 'Reiss', 'a stored directory scopes a signin');
+ok(resolveAccess('americangolf@feedspark.com', false, dirOver, NAMES).clients[0] === 'American Golf', 'alias rule still works alongside a stored directory');
+ok(ACCESS_SEED['andrew@aroxo.com'].name === 'Andrew', 'the git seed names Andrew (full house, unrestricted until tuned)');
 
 /* ---- view + row filters ---- */
-const HOB = ['House of Bruar'];
+const AG = ['American Golf'];
 const BRIEFS = {
-  b1: { client: 'House of Bruar', task: 'Rewrite titles' },
+  b1: { client: 'American Golf', task: 'Rewrite titles' },
   b2: { client: 'Reiss', task: 'Roundel overlay' },
-  b3: { client: 'houseofbruar', task: 'Slug-form client name' },
+  b3: { client: 'americangolf', task: 'Slug-form client name' },
 };
-const view = scopeBriefsView(BRIEFS, HOB);
+const view = scopeBriefsView(BRIEFS, AG);
 ok(Object.keys(view).sort().join(',') === 'b1,b3', 'briefs view: their clients only (slug-matched)');
-ok(clientMatch(null, 'Reiss') === true && clientMatch(HOB, '') === false, 'null scope sees all; empty client never matches a real scope');
-const rows = scopeRows([{ client: 'House of Bruar', s: 'o' }, { client: 'Reiss' }, { task: 'no client' }], HOB);
-ok(rows.length === 1 && rows[0].client === 'House of Bruar', 'intake/call rows: theirs only; unattributed stays owner-side');
+ok(clientMatch(null, 'Reiss') === true && clientMatch(AG, '') === false, 'null scope sees all; empty client never matches a real scope');
+const rows = scopeRows([{ client: 'American Golf', s: 'o' }, { client: 'Reiss' }, { task: 'no client' }], AG);
+ok(rows.length === 1 && rows[0].client === 'American Golf', 'intake/call rows: theirs only; unattributed stays owner-side');
 ok(scopeRows([{ client: 'Reiss' }], null).length === 1, 'null scope passes rows through untouched');
 
 /* ---- THE trap: scoped PUT against the delete-by-absence store, end to end ---- */
-// stored board: 2 HoB briefs + 2 foreign; writer read at base=1000 (has seen everything)
+// stored board: 2 American Golf briefs + 2 foreign; writer read at base=1000 (has seen everything)
 const now0 = 1000;
 let envx = liftEnvelope(null, now0);
 envx = mergeIntoEnvelope(envx, {
-  h1: { client: 'House of Bruar', task: 'a', status: 'intake' },
-  h2: { client: 'House of Bruar', task: 'b', status: 'briefed' },
+  h1: { client: 'American Golf', task: 'a', status: 'intake' },
+  h2: { client: 'American Golf', task: 'b', status: 'briefed' },
   r1: { client: 'Reiss', task: 'x', status: 'intake' },
   s1: { client: 'Schuh', task: 'y', status: 'done' },
 }, 0, now0, {});
@@ -57,11 +55,11 @@ const base = 2000;
 // Radostina's board only ever held h1+h2. She edits h1, deletes h2, tries to add a Reiss
 // brief (out of scope) and to hijack r1 (stored foreign) — all in one whole-map PUT.
 const body = {
-  h1: { client: 'House of Bruar', task: 'a', status: 'briefed' },
+  h1: { client: 'American Golf', task: 'a', status: 'briefed' },
   nR: { client: 'Reiss', task: 'smuggled', status: 'intake' },
   r1: { client: 'Reiss', task: 'hijacked', status: 'done' },
 };
-const inc = scopeBriefsIncoming(envx.data, body, HOB);
+const inc = scopeBriefsIncoming(envx.data, body, AG);
 const merged = mergeIntoEnvelope(envx, inc, base, 3000, {});
 const out = envelopeToClient(merged, {});
 ok(out.r1 && out.r1.task === 'x' && out.s1 && out.s1.task === 'y', 'foreign briefs SURVIVE a scoped whole-map save (the tombstone trap)');
@@ -72,15 +70,15 @@ ok(out.r1.status === 'intake', 'a stored foreign brief cannot be edited from a s
 const asOwner = scopeBriefsView(merged.data, null);
 ok(Object.keys(asOwner).length === 3, 'the owner still sees the whole board after the scoped save');
 // second save, nothing changed client-side: nothing new deleted
-const merged2 = mergeIntoEnvelope(merged, scopeBriefsIncoming(merged.data, { h1: out.h1 }, HOB), 4000, 5000, {});
+const merged2 = mergeIntoEnvelope(merged, scopeBriefsIncoming(merged.data, { h1: out.h1 }, AG), 4000, 5000, {});
 ok(merged2.data.r1 && merged2.data.s1, 'idempotent: a repeat scoped save keeps the board intact');
 
 /* ---- a brief moved out of scope stays put ---- */
-const inc2 = scopeBriefsIncoming(merged.data, { h1: { client: 'Reiss', task: 'a', status: 'briefed' } }, HOB);
-ok(inc2.h1 && inc2.h1.client === 'House of Bruar', 'reassigning your brief to a foreign client is a no-op (kept as stored)');
+const inc2 = scopeBriefsIncoming(merged.data, { h1: { client: 'Reiss', task: 'a', status: 'briefed' } }, AG);
+ok(inc2.h1 && inc2.h1.client === 'American Golf', 'reassigning your brief to a foreign client is a no-op (kept as stored)');
 
 /* ---- directory sanitizer ---- */
-const dir = sanitizeDir({ ' Rado@FeedSpark.com ': { name: 'Radostina', clients: ['House of Bruar', '', 42] },
+const dir = sanitizeDir({ ' Rado@FeedSpark.com ': { name: 'Radostina', clients: ['American Golf', '', 42] },
   'notanemail': { clients: ['X'] }, _junk: { clients: ['Y'] } });
 ok(Object.keys(dir).length === 1 && dir['rado@feedspark.com'] && dir['rado@feedspark.com'].clients.length === 2,
   'sanitizer: emails lowercased/trimmed, junk rows dropped, clients coerced to strings');
@@ -98,7 +96,7 @@ ok(viewAsEmail('xfcc-viewas=a@b.com', OWN) === null, 'view-as: name must match e
 ok(moduleAllowed(null, 'labels') === true && moduleAllowed(undefined, 'labels') === true, 'modules null/absent = all granted (owner or unconfigured)');
 ok(moduleAllowed(['labels', 'kwcal'], 'labels') === true && moduleAllowed(['labels', 'kwcal'], 'aiquote') === false, 'a module list is exact membership');
 ok(moduleAllowed([], 'labels') === false, 'empty module list locks every module');
-const NAMES2 = ['House of Bruar', 'Reiss', 'Schuh'];
+const NAMES2 = ['American Golf', 'Reiss', 'Schuh'];
 const andrew = resolveAccess('andrew@aroxo.com', false, null, NAMES2);
 ok(andrew.clients === null && andrew.modules === null && andrew.name === 'Andrew', 'seed: Andrew is listed, full house, all modules (unrestricted until tuned in the panel)');
 const dirMod = { 'sam@feedspark.com': { name: 'Sam', modules: ['feedlab', 'kwcal'] },

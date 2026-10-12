@@ -274,7 +274,7 @@ export function detectClientEx(msg, clientDoms, clientNames) {
     if (nm.length >= 4 && ftext.includes(nm)) return { client: name, via: 'brand mention' };
   }
   // 7. known in-house abbreviations, exact words only — real call titles use them
-  //    ("HoB x Gains x FS - Meta overlay" → House of Bruar). Only fires when the full
+  //    ("ELC x Gains x FS - Meta overlay" → Estée Lauder). Only fires when the full
   //    name is actually on the roster.
   for (const ab of Object.keys(CLIENT_ABBREV)) {
     const full = CLIENT_ABBREV[ab];
@@ -282,7 +282,7 @@ export function detectClientEx(msg, clientDoms, clientNames) {
   }
   return { client: '', via: '' };
 }
-const CLIENT_ABBREV = { hob: 'House of Bruar', elc: 'Estée Lauder' };
+const CLIENT_ABBREV = { elc: 'Estée Lauder' };
 export function detectClient(msg, clientDoms, clientNames) { return detectClientEx(msg, clientDoms, clientNames).client; }
 
 // msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
@@ -310,8 +310,8 @@ export function classifyInbound(msg, clientDoms, opts) {
 // ---- Gemini / Meet call-notes parser: the automatic "Notes by Gemini" (and Meet transcript)
 // emails that land after a client call carry the meeting's action items — parse them into
 // {call, when, actions:[{owner, task}]} so the Workflow can file each action as an Intake row
-// with a 📞 Call source (Ray's ask). TIGHTENED AGAINST A REAL SPECIMEN (HoB x Gains x FS,
-// 21 Aug 2026): sender `Gemini <gemini-notes@google.com>`, subject `Notes: “<title>” Mon DD,
+// with a 📞 Call source (Ray's ask). TIGHTENED AGAINST A REAL SPECIMEN (a client x agency
+// call, 21 Aug 2026): sender `Gemini <gemini-notes@google.com>`, subject `Notes: “<title>” Mon DD,
 // YYYY`, a Suggested-next-steps section whose items are `[Full Name] Task Title: detail…`
 // wrapping across lines, closed by an `[image: …]` footer block. The earlier synthetic shapes
 // (Notes-by-Gemini subjects, bullets, "Ray to share…" owner-pattern lines) are kept — tenant

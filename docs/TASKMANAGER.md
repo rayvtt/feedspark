@@ -768,7 +768,7 @@ Five judgement calls, each of which could have gone wrong quietly:
    re-pointed. The clause comes out whole, and what it was travels with the view as `was` — named on
    the card ("saved from Superdry, account left out") and in the save confirmation, so nothing is
    dropped silently.
-2. **A name with a space or a comma is quoted back in.** `client:House of Bruar` reads as three
+2. **A name with a space or a comma is quoted back in.** `client:American Golf` reads as two
    terms and `client:Monsoon, Accessorize` reads as a *list* of accounts — either way the view lands
    on the wrong rows.
 3. **The picker follows the query, wherever the query came from** — a typed `client:`, a preset chip,
@@ -791,7 +791,7 @@ states and the shelf, against both copies. The other half — whether the contro
 restored view really lands on the account *on screen* — cannot be reached by reading source, so
 `tools/check_tmviews.js` (presync) drives the real page in Chromium: it builds a reading on Superdry,
 saves it, reads the stored record back to prove it carries no account, points it at Reiss and at
-House of Bruar and checks the chart is drawn from *those* rows, changes the shape, restores the view
+American Golf and checks the chart is drawn from *those* rows, changes the shape, restores the view
 and asserts it comes back onto Reiss with no trace of Superdry. Three of its assertions fail the
 moment `packView` stops lifting; four more fail if the picker stops following the query.
 

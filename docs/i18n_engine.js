@@ -36,7 +36,7 @@
   // tokens that are never language: product / client / platform names, attribute keys
   var KEEP = ['FeedSpark', 'FeedHero', 'Tachyon', 'Feed Lab', 'Feed Chat', 'Label Guard', 'PT Guard', 'Golden Record', 'Playbook',
     'Reiss', 'Schuh', 'Superdry', 'Accessorize', 'Monsoon', 'Hobbycraft', 'YuMOVE', 'Ryobi', 'Benefit Cosmetics', 'Clinique', 'MAC',
-    'AllSaints', 'Estee Lauder', 'Estée Lauder', 'Bobbi Brown', 'Jo Malone', 'American Golf', 'House of Bruar',
+    'AllSaints', 'Estee Lauder', 'Estée Lauder', 'Bobbi Brown', 'Jo Malone', 'American Golf',
     'Google', 'Meta', 'Facebook', 'Pinterest', 'Shopify', 'PMax', 'PMAX', 'Merchant Center', 'Gmail', 'Cloudflare', 'Akamai',
     'ChatGPT', 'Perplexity', 'Gemini', 'Klaviyo', 'GMC', 'CTR', 'CVR', 'ROAS', 'CPC', 'SKU', 'SKUs', 'GTIN', 'MPN', 'GPC', 'PDP', 'ASPL', 'TechAM', 'KV', 'XML', 'CSV', 'PDF', 'AM', 'AMs'];
   // whole-word matches only: 'Meta' must not claim 'metadata', 'MAC' must not claim 'MACHINE'

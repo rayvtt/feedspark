@@ -41,16 +41,16 @@ const labels = { custom_label_0: lbl(), custom_label_1: lbl(), custom_label_2: l
 // depth: 4000@4-level, 3000@5-level, 2000@2-level, 1000@1-level -> pct {1:10,2:20,3:0,4:40,5:30,6+:0}, avg 3.6, skus 10000
 const pt = { present: true, filled: 10000, cov: 98.9, distinct: 4, truncated: false, values: [['Womens > Shoes > Trainers > Canvas', 4000], ['Mens > Boots > Chelsea Boots > Leather > Formal', 3000], ['Kids > Shoes', 2000], ['Womens', 1000]] };
 const idx = (client, mkt, extra) => Object.assign({ client, mkt, t: NOW, rows: 22235, cov: { custom_label_0: 95, custom_label_1: 95, custom_label_2: 95, custom_label_3: null, custom_label_4: 95, product_type: 98.9 }, present: 4, nCrit: 0, nWarn: 1, status: 'warn', baseT: NOW }, extra || {});
-const feeds = { 'Schuh|gb': idx('Schuh', 'gb', { depth: { pct: { '1': 0, '2': 0.1, '3': 11.6, '4': 50.8, '5': 36.9, '6+': 0.6 }, avg: 4.3, skus: 21020 } }), 'Schuh|de': idx('Schuh', 'de'), 'House of Bruar|gb': idx('House of Bruar', 'gb'), 'Reiss|gb': idx('Reiss', 'gb', { nCrit: 1, status: 'crit' }) };
+const feeds = { 'Schuh|gb': idx('Schuh', 'gb', { depth: { pct: { '1': 0, '2': 0.1, '3': 11.6, '4': 50.8, '5': 36.9, '6+': 0.6 }, avg: 4.3, skus: 21020 } }), 'Schuh|de': idx('Schuh', 'de'), 'American Golf|gb': idx('American Golf', 'gb'), 'Reiss|gb': idx('Reiss', 'gb', { nCrit: 1, status: 'crit' }) };
 const snapOf = (kind, hob) => {
-  const s = { v: 1, t: NOW, client: hob ? 'House of Bruar' : 'Schuh', market: 'gb', rows: 22235, labels: kind === 'pt' ? { product_type: pt } : labels };
+  const s = { v: 1, t: NOW, client: hob ? 'American Golf' : 'Schuh', market: 'gb', rows: 22235, labels: kind === 'pt' ? { product_type: pt } : labels };
   if (!hob) { if (kind === 'pt') s.ptPop = ptPop; else s.labelPop = lblPop; }
   return s;
 };
 const initFor = (kind) => 'window.__D=' + JSON.stringify({ kind, feeds, snap: snapOf(kind, false), hob: snapOf(kind, true) }) + ';' +
   "window.fetch=function(url){var u=String(url),D=window.__D;var j=function(o){return Promise.resolve(new Response(JSON.stringify(o),{status:200,headers:{'content-type':'application/json'}}))};" +
   "if(u.indexOf('/estate')>=0)return j({feeds:D.feeds,alerts:{}});" +
-  "if(u.indexOf('/snapshot')>=0){var s=/House/.test(decodeURIComponent(u))?D.hob:D.snap;return j({snapshot:s,baseline:s,daily:null})}" +
+  "if(u.indexOf('/snapshot')>=0){var s=/American/.test(decodeURIComponent(u))?D.hob:D.snap;return j({snapshot:s,baseline:s,daily:null})}" +
   "if(u.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:0,warn:0,pt:{crit:0,warn:0},gr:{crit:0,warn:0},clients:{}});" +
   "if(u.indexOf('/askdraft')>=0)return j({cfg:{to:{}},asked:{}});return j({});};";
 
@@ -120,7 +120,7 @@ const initFor = (kind) => 'window.__D=' + JSON.stringify({ kind, feeds, snap: sn
     // labels: sheet-backed → honest note, never an empty table (labelPop is XML-only).
     // ptypes: depth reads the value/count pivot every scan carries, so a sheet-backed feed
     // gets the SAME full card — no fallback needed, unlike the per-SKU population it replaced.
-    await page.evaluate(() => document.querySelector('.est-mkt[data-k="House of Bruar|gb"]').click());
+    await page.evaluate(() => document.querySelector('.est-mkt[data-k="American Golf|gb"]').click());
     await page.waitForTimeout(700);
     if (kind === 'lbl') {
       ok('a sheet-backed feed (no per-SKU read) says so instead of drawing an empty table',

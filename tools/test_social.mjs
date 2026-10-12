@@ -195,7 +195,7 @@ console.log('· the brand’s own face');
 {
   const id = SOC.identFor('Monsoon', {});
   t('a brand with a vetted Facebook page reads its logo from it', id.fb === 'monsoonuk' && id.src === 'fb' && SOC.brandLogo(id).net === 'fb');
-  t('a brand with none falls back to its website icon, never a guessed page', SOC.identFor('House of Bruar', {}).src === 'site' && SOC.identFor('House of Bruar', {}).fb === '');
+  t('a brand with none falls back to its website icon, never a guessed page', SOC.identFor('Visual K', {}).src === 'site' && SOC.identFor('Visual K', {}).fb === '');
   t('Instagram always carries the brand logo (no public read)', SOC.avatarFor(id, 'ig_feed').net === 'fb' && SOC.avatarFor(id, 'ig_story').net === 'fb');
   t('a GUESSED TikTok / Pinterest handle is never read for a picture', SOC.avatarFor(id, 'tiktok').net === 'fb' && SOC.avatarFor(SOC.identFor('Reiss', { tt: 'reiss' }), 'tiktok').net === 'fb');
   t('…only one an AM confirmed as the brand’s', SOC.avatarFor(SOC.identFor('Reiss', { tt: 'reissofficial', ttOk: true }), 'tiktok').h === 'reissofficial' && SOC.avatarFor(SOC.identFor('Monsoon', { pin: 'monsoonuk', pinOk: true }), 'pinterest').net === 'pin');
