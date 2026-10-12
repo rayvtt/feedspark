@@ -280,6 +280,12 @@ window.addEventListener('load',restore);
   .now .f b{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:78px;flex:none}
   .tok{font:inherit;font-size:11px;font-weight:800;border:1px dashed var(--line);border-radius:6px;background:var(--paper);color:var(--ink-2);height:24px;padding:0 7px;cursor:pointer}
   .tok:hover{border-color:var(--orange);color:var(--orange-deep)}
+  #toks{display:block}
+  .tok-src{font-size:12px;color:var(--ink-2);margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tok-src.warn{color:var(--orange-deep)}
+  .tok-g{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
+  .tok-gl{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:96px}
+  .tok.off{opacity:.45;border-style:dotted}
   .defs{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;align-items:center}
   .defs input,.defs select{font:inherit;font-size:13px;font-weight:700;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 10px;width:100%}
   .defs label{font-size:12px;font-weight:900;color:var(--ink-2)}
@@ -466,7 +472,7 @@ window.addEventListener('load',restore);
         <label for="d-tagline">Image tagline</label><input id="d-tagline" data-def="tagline" placeholder="(none unless a rule sets one)">
         <label for="d-cta">Button</label><select id="d-cta" data-def="cta"><option>Shop now</option><option>Buy now</option><option>Order now</option><option>Get offer</option><option>Learn more</option><option>See more</option></select>
       </div>
-      <div class="lbl">Fields to insert <span class="note" style="margin:0;text-transform:none;letter-spacing:0">— into the last text box you clicked</span></div>
+      <div class="lbl">Fields to insert <span class="note" style="margin:0;text-transform:none;letter-spacing:0">— into the last text box you clicked · <span id="toks-n"></span></span></div>
       <div class="chips" id="toks"></div>
       <div class="lbl">On each network</div>
       <div style="overflow-x:auto"><table class="dt" id="limits"></table></div>
@@ -617,7 +623,11 @@ window.addEventListener('load',restore);
   }
   function demoRows() {
     return DEMO_KINDS.map(function (d, i) {
+      var DT = { shoe: 'Footwear > Trainers', jacket: 'Clothing > Coats & Jackets', bag: 'Accessories > Bags > Tote Bags', bottle: 'Health > Supplements > Joint Care' }[d.k] || '';
       return { id: 'NW-' + (1001 + i), title: d.title, brand: d.brand, price: d.price, sale_price: d.sale || '', color: (d.title.split(', ').pop() || ''),
+        description: d.title.split(' — ')[0] + ' — made to last, designed for every day.', product_type: DT, availability: 'in stock', condition: 'new',
+        gender: d.k === 'bottle' || d.k === 'bag' ? '' : 'unisex', material: (/—\s*([^,]+),/.exec(d.title) || [])[1] || '',
+        custom_label_0: d.sale ? 'On sale' : 'Full price', custom_label_1: i % 2 ? 'Bestseller' : 'New in', link: 'https://www.example.com/p/' + (1001 + i),
         image_link: 'demo:' + i + ':0', additional_image_link: 'demo:' + i + ':1,demo:' + i + ':2' };
     });
   }
@@ -641,8 +651,12 @@ window.addEventListener('load',restore);
   function pickMkt(want) {
     var ms = S.roster[S.brand] || [];
     // a Meta catalogue feed is the one a social DPA actually runs on — prefer it
+    if (want && !isFb(want) && ms.indexOf(want + '-fb') >= 0) want = want + '-fb';
     S.mkt = ms.indexOf(want) >= 0 ? want : (ms.filter(isFb)[0] || ms[0] || '');
   }
+  // the Meta catalogue feed of the market on screen, when one is wired (the fields' proper source)
+  function fbTwin() { var ms = S.roster[S.brand] || []; return !S.demo && S.mkt && !isFb(S.mkt) && ms.indexOf(S.mkt + '-fb') >= 0 ? S.mkt + '-fb' : ''; }
+  function feedWord() { return S.demo ? 'demo' : isFb(S.mkt) ? 'Meta feed' : 'Google feed'; }
   function renderMkts() {
     var ms = S.demo ? [] : (S.roster[S.brand] || []).slice().sort(function (a, b) { if (isFb(a) !== isFb(b)) return isFb(a) ? -1 : 1; return a.localeCompare(b); });
     $('#mkts').innerHTML = ms.map(function (m) { return '<button type="button" class="chip' + (m === S.mkt ? ' on' : '') + '" data-m="' + esc(m) + '">' + esc(mktLbl(m)) + '</button>'; }).join('');
@@ -778,6 +792,9 @@ window.addEventListener('load',restore);
     f.pct = r.sale_pct && r.sale_pct.raw != null ? r.sale_pct.raw : null;
     f.save = r.sale_amt && r.sale_amt.text ? r.sale_amt.text.replace(/ OFF$/, '') : '';
     f.colour = r.colour && r.colour.text || '';
+    var mf = SOC.metaFacts ? SOC.metaFacts(S.row) : {};
+    SOC.META_FIELDS.forEach(function (m) { if (mf[m.k] != null) f[m.k] = mf[m.k]; if (S.demo) f.__src[m.k] = 'demo'; });
+    f.__col = mf.__col || {};
     var num = function (id) { var v = $(id).value; return v === '' ? null : +v; };
     f.clicks30 = num('#cx-clicks'); f.bought30 = num('#cx-bought'); f.views24 = num('#cx-views'); f.stock = num('#cx-stock');
     if (S.demo) { ['title', 'brand', 'price', 'was', 'pct', 'save', 'colour'].forEach(function (k) { f.__src[k] = 'demo'; }); }
@@ -1052,7 +1069,7 @@ window.addEventListener('load',restore);
   }
   function renderFieldsTab(F) {
     $$('[data-def]').forEach(function (e) { if (document.activeElement !== e) e.value = S.setup.defaults[e.getAttribute('data-def')] || ''; });
-    $('#toks').innerHTML = Object.keys(SOC.TOKENS).map(function (k) { return '<button type="button" class="tok" data-tok="' + k + '" title="' + esc(SOC.TOKENS[k].label + ' · ' + SOC.TOKENS[k].src) + '">{' + k + '}</button>'; }).join('');
+    renderToks();
     var rows = SOC.PLATFORMS.map(function (p) {
       var h = cut(p.id, 'headline', F.headline.text), pr = cut(p.id, 'primary', F.primary.text);
       var cell = function (x) { return !x.has ? '<span class="note" style="margin:0">no slot</span>' : x.len + ' of ' + x.shown + ' shown · ' + x.max + ' max' + (x.over ? ' <b class="no">over</b>' : x.cut ? ' <span class="no">cut</span>' : ' <span class="ok">✓</span>'); };
@@ -1062,10 +1079,30 @@ window.addEventListener('load',restore);
     $('#limits').innerHTML = '<thead><tr><th>Network</th><th>Headline</th><th>Primary text</th><th>Button</th><th>Safe zone (guide)</th><th>Dynamic text</th></tr></thead><tbody>' + rows + '</tbody>';
     fl('fields', 'Headline “' + S.setup.defaults.headline + '” · button ' + S.setup.defaults.cta);
   }
+  // every field, grouped, each saying whether THIS product carries it — a dimmed chip still inserts (the rule
+  // stands down on a product without it), and the source line names the feed the fields are read from
+  function renderToks() {
+    var f = facts(), tw = fbTwin(), have = 0, n = 0;
+    var src = S.demo ? 'Demo products — fields are demo values.'
+      : isFb(S.mkt) ? 'Read from ' + S.brand + ' ' + mktLbl(S.mkt) + ' — the catalogue the ad runs on.'
+      : tw ? '⚠ Read from the Google feed. ' + S.brand + ' ' + mktLbl(tw) + ' is wired — '
+      : '⚠ Read from the Google feed — no Meta feed is wired for ' + S.brand + ' ' + String(S.mkt).toUpperCase() + '.';
+    var html = '<div class="tok-src' + (!S.demo && !isFb(S.mkt) ? ' warn' : '') + '">' + esc(src) + (tw ? ' <button type="button" class="btn sm" data-tofb="' + esc(tw) + '">Read the Meta feed</button>' : '') + '</div>';
+    SOC.TOKEN_GROUPS.forEach(function (g) {
+      var ks = Object.keys(SOC.TOKENS).filter(function (k) { return (SOC.TOKENS[k].g || 'Product') === g; }); if (!ks.length) return;
+      html += '<div class="tok-g"><span class="tok-gl">' + esc(g) + '</span>' + ks.map(function (k) {
+        var T = SOC.TOKENS[k], v = SOC.tokenValue(k, f, S.ctx); n++; if (v.ok) have++;
+        var tip = T.label + (v.ok ? ' — this product: “' + (v.text.length > 80 ? v.text.slice(0, 79) + '…' : v.text) + '”' : ' — ' + v.why) + (f.__col && f.__col[k] ? ' · column ' + f.__col[k] : '') + (T.meta ? ' · Meta tag ' + T.meta : '');
+        return '<button type="button" class="tok' + (v.ok ? '' : ' off') + '" data-tok="' + k + '" title="' + esc(tip) + '">{' + k + '}</button>';
+      }).join('') + '</div>';
+    });
+    $('#toks').innerHTML = html;
+    $('#toks-n').textContent = have + ' of ' + n + ' carried by this product';
+  }
   function renderData(f) {
     $('#datatab').innerHTML = '<thead><tr><th>Field</th><th>This product</th><th>Source</th><th>Meta keyword</th></tr></thead><tbody>' + Object.keys(SOC.TOKENS).map(function (k) {
       var T = SOC.TOKENS[k], v = SOC.tokenValue(k, f, S.ctx), s = (f.__src && f.__src[k]) || T.src;
-      return '<tr><td class="mono">{' + k + '}</td><td>' + (v.ok ? esc(v.text) : '<span class="note" style="margin:0">' + esc(v.why) + '</span>') + '</td><td><span class="sb ' + esc(s) + '">' + esc(s === 'ads' ? 'Google Ads' : s) + '</span></td><td class="mono">' + esc(T.meta || '— via a feed field') + '</td></tr>';
+      return '<tr><td class="mono">{' + k + '}</td><td>' + (v.ok ? esc(v.text) : '<span class="note" style="margin:0">' + esc(v.why) + '</span>') + '</td><td><span class="sb ' + esc(s) + '">' + esc(s === 'ads' ? 'Google Ads' : s === 'feed' ? feedWord() : s) + '</span>' + (f.__col && f.__col[k] ? ' <span class="note mono" style="margin:0">' + esc(f.__col[k]) + '</span>' : '') + '</td><td class="mono">' + esc(T.meta || '— via a feed field') + '</td></tr>';
     }).join('') + '</tbody>';
   }
   function fl(id, t) { var e = $('#fl-' + id); if (e && t) e.textContent = t; }
@@ -1408,6 +1445,7 @@ window.addEventListener('load',restore);
     if (t.hasAttribute('data-wx')) { S.ctx.weather = t.getAttribute('data-wx'); return render(); }
     if (t.hasAttribute('data-aud')) { S.ctx.audience = t.getAttribute('data-aud'); return render(); }
     if (t.hasAttribute('data-idea')) { var d = SOC.ideaById(t.getAttribute('data-idea')); S.setup.rules.unshift(SOC.ruleFromIdea(d, 'r' + Date.now().toString(36))); openSec('sec-sched'); toast('Added at the top — it outranks the rules below it'); return changed(); }
+    if (t.hasAttribute('data-tofb')) { S.mkt = t.getAttribute('data-tofb'); return loadBrand(); }
     if (t.hasAttribute('data-tok')) {
       var inp = S.lastInput; if (!inp || !document.body.contains(inp)) { inp = $('#d-headline'); }
       var tok = '{' + t.getAttribute('data-tok') + '}', s0 = inp.selectionStart != null ? inp.selectionStart : inp.value.length;
