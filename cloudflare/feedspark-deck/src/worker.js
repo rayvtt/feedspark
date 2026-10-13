@@ -72,6 +72,7 @@ import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.js
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import * as SOCLOGO from "./sociallogo.js";
+import * as RET from "./retired.js";   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
@@ -614,7 +615,9 @@ async function feedRoster(env) {
     });
   } catch (e) {}
   const out = [];
+  const gone = await retiredSetOf(env);
   for (const c of Object.keys(clients).sort()) {
+    if (RET.isRetired(gone, c)) continue;
     const mkts = await feedMarketsFor(env, c);
     for (const mk of Object.keys(mkts).sort()) out.push({ client: c, mkt: mk, src: mkts[mk] });
   }
@@ -708,6 +711,34 @@ async function route(request, env, ctx) {
     }
 
     // the activity feed itself — restricted to the account owner, enforced server-side
+    /* RETIRED CLIENTS (Ray, 13 Oct 2026: "why i still see House of Bruar in these modules"). A client
+       taken out of the code lingers in what the worker STORED and in the live sources it pulls, so
+       retiring one is data: the owner names it here, every store is purged once, and the Task
+       Manager / Scheduled-work lanes skip it from then on. The name is kept in KV, never in git.
+       GET = the list · POST {name} = retire + purge (re-runnable: a second POST purges again) ·
+       POST {name, undo:true} = take it off the list (purged data is not restored — the next scan
+       or pull writes it afresh). */
+    if (path === '/api/retired' && (request.method === 'GET' || request.method === 'POST')) {
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
+      let list = RET.cleanList(await env.EDITS.get(RET.RETIRED_KEY, 'json'));
+      if (request.method === 'GET') return json({ ok: true, list });
+      let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const name = String((b && b.name) || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+      if (!RET.foldName(name)) return json({ ok: false, error: 'name a client' }, 400);
+      const now = Date.now();
+      if (b.undo) {
+        list = list.filter((x) => RET.foldName(x.n) !== RET.foldName(name));
+        await env.EDITS.put(RET.RETIRED_KEY, JSON.stringify(list));
+        logActivity(ctx, env, request, 'client-unretire', name);
+        return json({ ok: true, list });
+      }
+      if (!list.some((x) => RET.foldName(x.n) === RET.foldName(name))) list.push({ n: name, by: who(request), at: now });
+      list = RET.cleanList(list);
+      await env.EDITS.put(RET.RETIRED_KEY, JSON.stringify(list));
+      const purged = await purgeRetired(env, RET.retiredSet([{ n: name }]), now);
+      logActivity(ctx, env, request, 'client-retire', name + ' ' + JSON.stringify(purged));
+      return json({ ok: true, list, purged });
+    }
     if (path === '/api/activity' && request.method === 'GET') {
       if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       const days = Math.min(90, Math.max(1, +(url.searchParams.get('days') || 14) || 14));
@@ -2448,6 +2479,8 @@ async function route(request, env, ctx) {
       roster = Array.from(new Set(roster.filter(Boolean)));
       const { tabs, source, at, sa } = await scheduleTabs(env, refresh, ctx, request);
       const parsed = parseWorkbook(tabs, roster, schedIso(new Date()));
+      const gone = await retiredSetOf(env);
+      if (gone.size) parsed.rows = parsed.rows.filter((r) => !(RET.isRetired(gone, r.b) || RET.isRetired(gone, r.c)));
       const rows = (acc.owner || !acc.clients) ? parsed.rows : parsed.rows.filter((r) => r.b && clientMatch(acc.clients, r.b));
       const cadence = buildCadence(rows);
       const brands = brandSummary(cadence);
@@ -4182,9 +4215,11 @@ async function tmStore(env, brands, opts) {
   opts = opts || {};
   const results = [];
   const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+  const gone = await retiredSetOf(env);
   let changed = 0;
   for (const c of (Array.isArray(brands) ? brands : []).slice(0, 40)) {
     const client = String((c && c.client) || '').slice(0, 60).trim();
+    if (RET.isRetired(gone, client)) { results.push({ client, retired: true }); continue; }
     if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) { results.push({ client, error: 'bad client' }); continue; }
     const nn = (v) => Math.round((+v || 0) * 100) / 100;
     const markets = Array.isArray(c.markets) ? c.markets.slice(0, 60).map((m) => ({ market: String(m.market || '').slice(0, 24), allowance: nn(m.allowance), used: nn(m.used), balance: nn(m.balance), health: String(m.health || '').slice(0, 16) || null })) : [];
@@ -4220,7 +4255,9 @@ async function tmPull(env, opts) {
   const mcp = tmMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
   try {
     try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }   // a server without a handshake still answers tools/call
-    const rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'live' }));
+    const gone = await retiredSetOf(env);
+    const rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'live' }))
+      .filter((r) => !(r && (RET.isRetired(gone, r.client_name) || RET.isRetired(gone, r.group_name))));
     if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
     const by = aggregateClientList(rows);
     const brands = Object.values(by).map((b) => Object.assign({}, b, { updated: now }));
@@ -4285,7 +4322,7 @@ async function tmBookPull(env, opts) {
     let rows = opts.clientRows;
     if (!rows) rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'all' }));
     if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
-    const roster = TB.rosterOf(rows);
+    const roster = RET.stripRoster(TB.rosterOf(rows), await retiredSetOf(env));
     idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
     const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
     let trailDirty = 0;
@@ -4762,6 +4799,25 @@ async function rulesPull(env, opts) {
   }
 }
 
+// the retired clients as a Set of folded names — read once per call site, never cached across
+// requests, so a Retire takes effect on the very next read
+async function retiredSetOf(env) {
+  try { return RET.retiredSet(await env.EDITS.get(RET.RETIRED_KEY, 'json')); } catch (e) { return new Set(); }
+}
+// run the purge over every store a retired client can sit in; returns { store: removed }
+async function purgeRetired(env, set, now) {
+  const report = {};
+  if (!set || !set.size) return report;
+  for (const st of RET.PURGE_STORES) {
+    let v; try { v = await env.EDITS.get(st.key, 'json'); } catch (e) { continue; }
+    if (v == null) continue;
+    let r;
+    if (st.kind === 'envelope') r = RET.tombstoneEnvelope(liftEnvelope(v, now), set, st.by, now);
+    else r = RET.purgeValue(st, v, set, now);
+    if (r.n) { try { await env.EDITS.put(st.key, JSON.stringify(r.out)); report[st.key] = r.n; } catch (e) { report[st.key] = 'write failed'; } }
+  }
+  return report;
+}
 function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
 // the "you are previewing" strip appended to owner-only 403 pages while view-as is active
 function viewAsExitHtml(env, request) {

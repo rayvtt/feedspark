@@ -141,6 +141,7 @@ node tools/test_restock.mjs >/dev/null
 echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
 echo "── validating: Social DPA (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)"
 node tools/test_social.mjs >/dev/null
+node tools/test_retired.mjs >/dev/null || { echo "✗ retired-clients harness failed"; exit 1; }
 echo "   ✓ six networks, text limits, button mapping, tokens stand down when missing/too small, conditions, first-match-wins, week grid, sanitiser, brief, routes, registries hold"
 
 echo "── validating: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"

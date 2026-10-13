@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import * as M from '../cloudflare/feedspark-deck/src/taskbook.js';
 import * as TMM from '../cloudflare/feedspark-deck/src/tmmcp.js';
+import * as RET from '../cloudflare/feedspark-deck/src/retired.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
@@ -1026,7 +1027,7 @@ function liftFn(name) {
   if (end < 0) throw new Error(name + ': no end');
   return WK.slice(m.index, end + 3);
 }
-const W = new Function('TMM', 'TB', liftFn('tmMcp') + liftFn('tmBookPull') + '\nreturn { tmBookPull };')(TMM, M);
+const W = new Function('TMM', 'TB', 'RET', liftFn('retiredSetOf') + liftFn('tmMcp') + liftFn('tmBookPull') + '\nreturn { tmBookPull };')(TMM, M, RET);
 
 function fakeKV(init) {
   const store = new Map();
