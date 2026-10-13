@@ -15221,6 +15221,30 @@
       "file": "docs/FeedSpark_Social.html",
       "pattern": "data-tofb",
       "pr": 0
+    },
+    {
+      "name": "Retired clients: owner-only /api/retired route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/retired'",
+      "pr": 0
+    },
+    {
+      "name": "Retired clients: purge over every stored index",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function purgeRetired(env, set, now)",
+      "pr": 0
+    },
+    {
+      "name": "Retired clients: TM book reads no retired market",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "RET.stripRoster(TB.rosterOf(rows)",
+      "pr": 0
+    },
+    {
+      "name": "Retired clients: Leadership Retire control",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "id=\"retired\"",
+      "pr": 0
     }
   ]
 }

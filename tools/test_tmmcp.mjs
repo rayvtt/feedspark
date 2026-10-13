@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import * as TMM from '../cloudflare/feedspark-deck/src/tmmcp.js';
 import { aggregateClientList } from '../cloudflare/feedspark-deck/src/tmparse.js';
+import * as RET from '../cloudflare/feedspark-deck/src/retired.js';
 const read = (p) => fs.readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const WK = read('cloudflare/feedspark-deck/src/worker.js'), WF = read('docs/FeedSpark_Workflow.html'), LEAD = read('docs/FeedSpark_Leadership.html'), TOML = read('wrangler.toml');
 let pass = 0, fail = 0;
@@ -120,7 +121,7 @@ function lift(name) {
   const end = WK.indexOf('\n}\n', m.index); if (end < 0) throw new Error(name + ': no end');
   return WK.slice(m.index, end + 3);
 }
-const W = new Function('TMM', 'aggregateClientList', 'liftEnvelope', lift('tmMcp') + lift('tmStore') + lift('tmPull') + '\nreturn { tmMcp, tmStore, tmPull };')(TMM, aggregateClientList, (stored) => ({ data: stored || {} }));
+const W = new Function('TMM', 'aggregateClientList', 'liftEnvelope', 'RET', lift('retiredSetOf') + lift('tmMcp') + lift('tmStore') + lift('tmPull') + '\nreturn { tmMcp, tmStore, tmPull };')(TMM, aggregateClientList, (stored) => ({ data: stored || {} }), RET);
 function fakeKV(init) { const store = new Map(); Object.keys(init || {}).forEach((k) => store.set(k, typeof init[k] === 'string' ? init[k] : J(init[k]))); const puts = []; return { store, puts, async get(k, type) { const v = store.get(k); if (v == null) return null; return type === 'json' ? JSON.parse(v) : v; }, async put(k, v) { store.set(k, typeof v === 'string' ? v : J(v)); puts.push(k); } }; }
 const TOKEN = 'test-token-123'; let MODE = 'bearer', FAIL500 = false; const hits = [];
 const server = http.createServer((req, res) => {

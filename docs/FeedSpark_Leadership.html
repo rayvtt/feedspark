@@ -325,7 +325,73 @@ window.addEventListener('load',restore);
     <p class="sub">An at-risk score per account — blending feed health, open backlog, parked work, retainer utilisation and your sentiment read — each with the play to save it. Set the sentiment; the rest is live from the plans.</p>
     <div class="rd-grid" id="rd-grid"></div>
   </section>
+
+  <section id="retired">
+    <h2>Retired clients</h2>
+    <p class="sub" data-no-collapse>A client off the FCC is purged from every stored index, the dossier and the brief pipeline, and the Task Manager and Scheduled-work pulls skip it from then on.</p>
+    <form class="rt-form" id="rt-form" autocomplete="off"><input id="rt-name" type="text" maxlength="60" placeholder="Client name, as the FCC shows it" aria-label="Client to retire"><button type="submit" class="rt-btn">Retire &amp; purge</button></form>
+    <div class="rt-out" id="rt-out" role="status"></div>
+    <ul class="rt-list" id="rt-list"></ul>
+  </section>
 </main>
+<style>
+  .rt-form{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+  .rt-form input{flex:1 1 260px;min-width:0;font:inherit;font-size:14px;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+  .rt-btn,.rt-undo,.rt-again{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .rt-btn{background:var(--orange,#F5A623);border-color:transparent;color:#1f1f1f}
+  .rt-out{font-size:13px;color:var(--ink-2);min-height:18px}
+  .rt-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+  .rt-list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+  .rt-list li b{font-weight:900}
+  .rt-list li .m{font-size:12px;color:var(--ink-2);flex:1 1 auto}
+  .rt-list li button{height:30px}
+</style>
+<script>
+/* RETIRED CLIENTS (Ray, 13 Oct 2026: "why i still see House of Bruar in these modules"). Taking a client
+   out of the code leaves what the worker already stored, and the Task Manager / Scheduled-work sources
+   keep naming it — so retiring is an owner action on DATA: POST /api/retired purges every store once and
+   the live pulls skip the name after. ⟳ Purge again re-runs it; ↩ Undo only takes it off the list. */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  if (!$('rt-form')) return;
+  var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var NAMES = { labelidx: 'Label Guard', ptypeidx: 'Product types', goldenidx: 'Golden Record', voldobidx: 'Product volume', overlayidx: 'Overlays', imageidx: 'Images', feedavail: 'Stock availability', labelalerts: 'label alerts', ptypealerts: 'product-type alerts', goldenalerts: 'Golden alerts', tmidx: 'Task Manager hours', tmtrail: 'hours trail', schedskip: 'Scheduled work', tmbookidx: 'Task Manager book', clients: 'brand dossier', briefs: 'brief pipeline' };
+  function said(p) {
+    var k = Object.keys(p || {});
+    if (!k.length) return 'nothing stored was left to remove';
+    return 'removed from ' + k.map(function (x) { return (NAMES[x] || x) + (typeof p[x] === 'number' ? ' (' + p[x] + ')' : ' — ' + p[x]); }).join(', ');
+  }
+  function draw(list) {
+    $('rt-list').innerHTML = (list || []).map(function (x) {
+      return '<li><b>' + esc(x.n) + '</b><span class="m">' + (x.at ? 'retired ' + new Date(x.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + (x.by ? ' · ' + esc(x.by) : '') + '</span>'
+        + '<button type="button" class="rt-again" data-again="' + esc(x.n) + '" title="Run the purge again — for anything a stale screen or an old pull wrote back">⟳ Purge again</button>'
+        + '<button type="button" class="rt-undo" data-undo="' + esc(x.n) + '" title="Take it off the list; the next scan or pull may list it again — nothing purged is restored">↩ Undo</button></li>';
+    }).join('') || '<li><span class="m">No client retired.</span></li>';
+  }
+  function call(body) {
+    return fetch('/api/retired', { method: body ? 'POST' : 'GET', headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+  }
+  function retire(name) {
+    $('rt-out').textContent = 'Retiring ' + name + '…';
+    return call({ name: name }).then(function (j) { draw(j.list); $('rt-out').textContent = name + ' — ' + said(j.purged) + '. Reload any open module to see it gone.'; })
+      .catch(function (e) { $('rt-out').textContent = 'Could not retire ' + name + ': ' + e.message; });
+  }
+  $('rt-form').addEventListener('submit', function (e) {
+    e.preventDefault(); var n = $('rt-name').value.replace(/\s+/g, ' ').trim(); if (!n) return;
+    if (!confirm('Retire ' + n + '? Its stored scans, hours, dossier record and briefs are removed from the FCC. This cannot be undone.')) return;
+    retire(n).then(function () { $('rt-name').value = ''; });
+  });
+  $('rt-list').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.hasAttribute('data-again')) return retire(t.getAttribute('data-again'));
+    if (t.hasAttribute('data-undo')) { var n = t.getAttribute('data-undo');
+      call({ name: n, undo: true }).then(function (j) { draw(j.list); $('rt-out').textContent = n + ' is off the list — its next scan or pull may list it again.'; })
+        .catch(function (err) { $('rt-out').textContent = 'Could not undo: ' + err.message; }); }
+  });
+  call().then(function (j) { draw(j.list); }).catch(function () { $('rt-out').textContent = 'The retired list could not be read.'; draw([]); });
+})();
+</script>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Leadership view · live from the project plans</div></div>
 

@@ -426,6 +426,13 @@ else
   echo "   ✗ Social DPA harness FAILED — see node tools/test_social.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: retired clients (the list, the purge over every store, the live lanes skip it)"
+if node tools/test_retired.mjs >/dev/null 2>&1; then
+  echo "   ✓ list folding, every store shape, the lifted purge (idempotent), TM / schedule / roster filters hold"
+else
+  echo "   ✗ Retired-clients harness FAILED — see node tools/test_retired.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h6f/7: Security (identity gate, verified Access JWT, body caps, push brake, money throttles, redirect-checked fetch, repo sweep)"
 if node tools/test_security.mjs >/dev/null 2>&1; then
   echo "   ✓ anonymous → 401 on every non-public lane, the lifted resolver refuses a spoofed header, caps/throttles/fetchWithin hold, no secret in git"
