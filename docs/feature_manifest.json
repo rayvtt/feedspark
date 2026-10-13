@@ -216,13 +216,13 @@
       "name": "Workflow: \u2709 Find the email thread searches Gmail for the brief's own REF, not its subject words",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function threadRefQuery(b){ return String((b&&b.id)||''); }",
-      "pr": 0
+      "pr": 655
     },
     {
       "name": "Workflow: the Gmail thread resolver tries the ref before the task's words",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "encodeURIComponent('\"ibfref:'+b.id+'\"')",
-      "pr": 0
+      "pr": 655
     },
     {
       "name": "Workflow: modal thread deep-link upgrade",
