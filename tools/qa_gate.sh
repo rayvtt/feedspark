@@ -147,6 +147,12 @@ else
   echo "   ✗ intake-table harness FAILED — see node tools/test_wfintake.mjs"; FAIL=1
 fi
 
+if node tools/test_threadref.mjs >/dev/null 2>&1; then
+  echo "   ✓ thread link: the brief's REF is the Gmail query, words only as a last resort"
+else
+  echo "   ✗ thread-ref harness FAILED — see node tools/test_threadref.mjs"; FAIL=1
+fi
+
 if node tools/test_playbook_panel.mjs >/dev/null 2>&1; then
   echo "   ✓ landing vs stalling vs not-doing hold, 10–20% highlights, the retired module stays retired"
 else

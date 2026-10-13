@@ -3613,7 +3613,7 @@ aside.ck[hidden]{display:none}
     dupsOf(b.id).forEach(function(d){ xl.push('<span class="xl xl-dup" data-dup="'+esc(d)+'" style="cursor:pointer" title="Duplicate ticket collapsed onto this one — click to open it (delete it there if it holds nothing you need)">👥 duplicate: '+esc(d)+'</span>'); });
     if(BRIEF_DUP[b.id]) xl.push('<span class="xl xl-dup" data-dup="'+esc(BRIEF_DUP[b.id])+'" style="cursor:pointer;color:var(--orange-ink)" title="This ticket is collapsed as a duplicate — the task shows everywhere under the primary. Click to open the primary">👥 duplicate of '+esc(BRIEF_DUP[b.id])+' — click to open</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
-    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
+    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadRefQuery(b)||threadQuery(b))+'" title="Searches Gmail for '+esc(b.id)+' — the brief’s own reference, carried in the subject of the brief and every reply on it">✉ Find the email thread</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(taskDisp(b.task))+'</h3>'
         +'<div class="mc" data-hrs="'+esc(b.client)+'">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
@@ -3695,9 +3695,19 @@ aside.ck[hidden]{display:none}
       resolveThread(b,function(g){ if(g)apply(g); else if(ch)ch.title='No original thread found yet (Gmail lookup empty) — this opens a fresh chase addressed to the ASPL list.'; });
     })();
   }
-  // Gmail-proof thread query: Gmail tokenises away punctuation, so hyphenated tokens like the
-  // brief ID collapse to date-looking numbers. Real WORDS match reliably — search the sent
-  // brief's subject for the client + the task's words (punctuation stripped, first 8 words).
+  // THE REF IS THE QUERY (Ray, 13 Oct 2026: "find email in thread option should search gmail box
+  // with REF - automatically rather than email name"). This searched the brief's SUBJECT WORDS on
+  // a belief that Gmail tokenises a hyphenated ref into date-looking fragments — Ray disproved it
+  // in his own mailbox: REIS-20260929-01 typed into Gmail returns the thread, the ref highlighted
+  // in the subject, because every [FS Brief] carries [ibfref:<REF>] and every reply keeps it.
+  // Searching words instead found a thread by RESEMBLANCE, so a brand's sibling briefs ("Keywords
+  // Optimisation - …") answered to each other's links; the ref names one ticket and nothing else.
+  // UNQUOTED deliberately: that is the exact string Ray typed and saw work, and this link has no
+  // second chance — whatever Gmail returns is what he reads. threadRefQuery is the ONE builder, so
+  // the link and the server resolver can never search two different things.
+  function threadRefQuery(b){ return String((b&&b.id)||''); }
+  // the subject-words search survives as the LAST resort in the resolver's ladder, for a brief
+  // raised before refs or one whose ref never reached the mail.
   function threadQuery(b){ var w=String(b.task||'').replace(/[^a-z0-9À-ɏ]+/gi,' ').trim().split(/\s+/).slice(0,8).join(' ');
     return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
   // ---- reply scanning (Ray, 11 Sep 2026: "have the tracking of each thread give clear dates
@@ -4055,7 +4065,9 @@ aside.ck[hidden]{display:none}
   function resolveThread(b,cb){
     if(!b||!b.code){ cb(null); return; }
     if(b.gthread&&b.gthread.id){ cb(b.gthread); return; }
-    fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"'))
+    // ref first: the server tries each query in order and falls through on an empty answer, so the
+    // tightest token leads (ibfref can only appear in FCC brief mail) and the words come last.
+    fetch('/api/gmail/thread?q='+encodeURIComponent('"ibfref:'+b.id+'"')+'&q='+encodeURIComponent(threadRefQuery(b))+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"')+'&q='+encodeURIComponent(threadQuery(b)))
       .then(function(r){return r.json();}).then(function(d){
         if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); cb(b.gthread); }
         else cb(null);

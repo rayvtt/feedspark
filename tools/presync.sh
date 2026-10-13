@@ -203,6 +203,10 @@ NODE_PATH=$(npm root -g) node tools/test_wfintake.mjs >/dev/null
 echo "   ✓ every <col> is still a table column, Brief renders the width it declares"
 echo "   ✓ and a cut cell names what it hides — measured at 1131px and 1500px"
 
+echo "── validating: ✉ Find the email thread searches Gmail for the brief's REF"
+NODE_PATH=$(npm root -g) node tools/test_threadref.mjs >/dev/null
+echo "   ✓ the link and the server resolver both lead with the ref, never the task's words"
+
 echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null
 echo "   ✓ the AM's name resolves to a real address or none — never a guessed one"
