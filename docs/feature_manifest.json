@@ -12050,6 +12050,24 @@
       "pr": 0
     },
     {
+      "name": "KWCal: a seed's scope reaches a board that already had events",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function upgradeSeeds()",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the seed upgrade never overwrites a scope an AM set",
+      "file": "tools/test_kwcal_tie.mjs",
+      "pattern": "a scope the AM set is left alone",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the upgrade rendered on a stored Schuh board with no scopes",
+      "file": "tools/check_kwcal_scopes.js",
+      "pattern": "every unscoped stored moment took the seed",
+      "pr": 0
+    },
+    {
       "name": "KWCal: a theme left unscoped names the reason on its own card",
       "file": "tools/test_kwcal_tie.mjs",
       "pattern": "every moment still unscoped names the reason",
@@ -15421,7 +15439,7 @@
       "pr": 0
     },
     {
-      "name": "Workflow: \u2192 Brief there raises the CALENDAR's own payload, so no second task is created",
+      "name": "Workflow: → Brief there raises the CALENDAR's own payload, so no second task is created",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCBrief(E.briefPayload(",
       "pr": 0
@@ -15445,9 +15463,6 @@
       "pr": 0
     },
     {
-      "name": "KWCal: an engine that does not load reads as a sentence, never a TypeError (the empty-200 failure)",
-      "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "did not load, so the board cannot resolve",
       "name": "Golden demo: opening a brand names it (masked/DEMO_OPEN)",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function masked(c) { return DEMO && !DEMO_OPEN.has(c); }",
@@ -15580,7 +15595,7 @@
       "pr": 0
     },
     {
-      "name": "Test Lab: \u2192 Brief raises a test brief through the one composer entry",
+      "name": "Test Lab: → Brief raises a test brief through the one composer entry",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCBrief({client:brand,task:p.brief.task,cat:p.brief.cat,source:'plan',scope:p.brief.scope});",
       "pr": 0

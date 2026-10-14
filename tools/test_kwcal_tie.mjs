@@ -803,6 +803,63 @@ ROSTER = null;
   is('raising it in Workflow takes it off the to-brief list', after.some((r) => r.id === 'm1'), false);
 }
 
+/* ---- the seed reaching a board that already has events (Ray, 14 Oct 2026: "i dont see products
+   being selected in scopes for Schuh btw"). applySeeds writes a seed only onto an EMPTY board, so
+   a scope added to the seed after a brand's KV record existed could never land. upgradeSeeds fills
+   it field by field, and the rule that matters is what it must NOT do. Lifted by name, run against
+   the page's own SEED. ---- */
+{
+  const up = new Function('SEED', 'STORE', liftDecl('SEED') + '\n' + lift('upgradeSeeds')
+    + '\nreturn {n:upgradeSeeds(),STORE:STORE};');
+  const SEEDO = new Function(liftDecl('SEED') + '\nreturn SEED;')();
+  const seedOf = (b, id) => (SEEDO[b].events || []).find((e) => e.id === id);
+  const scoped = (SEEDO.Schuh.events || []).filter((e) => e.pts && e.pts.length);
+  const bare = (b) => ({ [b]: { events: (SEEDO[b].events || []).map((e) => ({
+    id: e.id, name: 'x', lane: e.lane, date: e.date, terms: ['x'] })) } });
+
+  let st = bare('Schuh');
+  let r = up(SEEDO, st);
+  is('every scoped Schuh moment takes the seed’s paths', r.STORE.Schuh.events
+    .filter((e) => e.pts && e.pts.length).length, scoped.length);
+  is('…exactly the seed’s paths', JSON.stringify(r.STORE.Schuh.events
+    .find((e) => e.id === scoped[0].id).pts), JSON.stringify(scoped[0].pts));
+  is('…and a brand-wide moment is marked brand-wide', r.STORE.Schuh.events
+    .filter((e) => e.brandwide).length, (SEEDO.Schuh.events || []).filter((e) => e.brandwide).length);
+  is('a second pass writes nothing', up(SEEDO, r.STORE).n, 0);
+
+  // what it must never do: touch a scope, or any wording, the board already carries
+  st = bare('Schuh');
+  const one = st.Schuh.events.find((e) => e.id === scoped[0].id);
+  one.pts = ['Mine > Own']; one.name = 'Renamed by the AM'; one.date = '2027-03-01';
+  const kept = st.Schuh.events.find((e) => e.id === scoped[1].id); kept.txsm = { gb: { qs: [{ q: 'x', n: 2 }] } };
+  const wide = st.Schuh.events.find((e) => e.id === scoped[2].id); wide.brandwide = 1;
+  r = up(SEEDO, st);
+  const ev = r.STORE.Schuh.events.reduce((a, e) => (a[e.id] = e, a), {});
+  is('a scope the AM set is left alone', JSON.stringify(ev[scoped[0].id].pts), JSON.stringify(['Mine > Own']));
+  is('…a text filter counts as a scope too', ev[scoped[1].id].pts, undefined);
+  is('…so does brand-wide', ev[scoped[2].id].pts, undefined);
+  is('a rename on the board survives', ev[scoped[0].id].name, 'Renamed by the AM');
+  is('…and a re-date', ev[scoped[0].id].date, '2027-03-01');
+
+  // the note follows only where it is the seed's own note with more added to it
+  st = bare('Schuh');
+  const sd = seedOf('Schuh', scoped[0].id);
+  st.Schuh.events.find((e) => e.id === scoped[0].id).note = 'Something the AM wrote';
+  st.Schuh.events.find((e) => e.id === scoped[1].id).note = (seedOf('Schuh', scoped[1].id).note || '').slice(0, 20);
+  r = up(SEEDO, st);
+  const ev2 = r.STORE.Schuh.events.reduce((a, e) => (a[e.id] = e, a), {});
+  is('a note somebody else wrote is never overwritten', ev2[scoped[0].id].note, 'Something the AM wrote');
+  is('…but the seed’s own note, with the scope line added, is taken',
+    ev2[scoped[1].id].note, seedOf('Schuh', scoped[1].id).note);
+  is('…and an empty note takes the seed’s', (up(SEEDO, bare('Schuh')).STORE.Schuh.events
+    .find((e) => e.id === scoped[0].id).note || '').indexOf(sd.note), 0);
+
+  // an empty board is applySeeds' job, not this one — and a moment the seed never had is left be
+  is('an empty board is left to applySeeds', up(SEEDO, { Schuh: { events: [] } }).n, 0);
+  is('a moment the seed does not carry is untouched',
+    up(SEEDO, { Schuh: { events: [{ id: 'sch_am_own', name: 'AM’s own', lane: 'sale', date: '2026-12-01' }] } }).n, 0);
+}
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }
 console.log('PASS');
