@@ -5142,7 +5142,9 @@ window.addEventListener('load',restore);
      pay on every visit to /golden. Each card in the frame gets an "In ⬇ HTML" tick; a card with a measure (Content depth,
      Catalogue mix, ROAS by, Optimised vs not) is ticked PER MEASURE, so images per product and highlights per product can
      both go in. THREE RULES: nothing is ticked until the AM ticks it (the download carries no Catalogue module by default);
-     the picks are the AM's per device (gr-catx) and outlive the market, so a set chosen once applies to the next brand; and
+     the picks are saved PER BRAND for the team (Ray, 14 Oct 2026: "this catalogue dashboard report module should be saved for
+     each individual brand") — shared state ns grcatx, keyed by the brand, mirrored on the device (gr-catx-b) so the card
+     paints before the store answers; every market of a brand carries its brand's set, another brand starts empty; and
      the download carries each module as the Catalogue drew it at that moment — markup and the Catalogue's own stylesheet in
      a script-free frame of its own, so neither page's CSS can restyle the other's — with a measure that is still reading
      waited for, never captured half-drawn. The PDF does not carry them: it is a picture of this page, and a frame is not. */
@@ -5150,10 +5152,37 @@ window.addEventListener('load',restore);
   var CATX = { k: null, f: null, w: null, p: null, timer: null };
   var CATX_BUSY = /reading|waiting|joining|tracing|loading|preparing|scanning/i;
   var CATX_MAXH = 860;
-  function catxPicks() {
-    try { var v = JSON.parse(localStorage.getItem('gr-catx') || '[]'); return Array.isArray(v) ? v.filter(function (x) { return x && typeof x.k === 'string' && typeof x.l === 'string'; }) : []; } catch (e) { return []; }
+  var CXS = { map: null, base: 0, p: null };
+  function catxOk(v) { return Array.isArray(v) ? v.filter(function (x) { return x && typeof x.k === 'string' && typeof x.l === 'string'; }).slice(0, 30) : []; }
+  function catxMap() {
+    if (CXS.map) return CXS.map;
+    try { var m = JSON.parse(localStorage.getItem('gr-catx-b') || '{}'); CXS.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { CXS.map = {}; }
+    return CXS.map;
   }
-  function catxSave(a) { try { localStorage.setItem('gr-catx', JSON.stringify(a)); } catch (e) {} }
+  function catxMirror() { try { localStorage.setItem('gr-catx-b', JSON.stringify(CXS.map || {})); } catch (e) {} }
+  function loadCatx() {
+    if (CXS.p) return CXS.p;
+    CXS.p = fetch(API + '/api/state?ns=grcatx').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.grcatx) { CXS.map = j.grcatx; CXS.base = Date.now(); catxMirror(); } })
+      .catch(function () {});
+    return CXS.p;
+  }
+  // the brand a set belongs to: the market named, else the Catalogue framed, else the scorecard open
+  function catxBrand(k) { var key = k || CATX.k || SEL; return key ? parts(key).client : ''; }
+  function catxPicks(k) {
+    var c = catxBrand(k), e = c && catxMap()[c];
+    return catxOk(e && e.picks);
+  }
+  function catxSave(a, k) {
+    var c = catxBrand(k); if (!c) return;
+    var m = Object.assign({}, catxMap());
+    if (a.length) m[c] = { picks: catxOk(a), at: Date.now() }; else delete m[c];
+    CXS.map = m; catxMirror();   // the screen follows the pick at once; the store confirms behind it
+    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(CXS.base || 0) }, body: JSON.stringify({ grcatx: m }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.grcatx) { CXS.map = j.grcatx; CXS.base = Date.now(); catxMirror(); } })
+      .catch(function () {});
+  }
   function catxHas(key) { return catxPicks().some(function (x) { return x.k === key; }); }
   // a card's MEASURE select — Image pixels' "how many to scan" count is a control, not a measure
   function catxSel(card) { return card.querySelector('.chead select.agg:not(#pix-n)'); }
@@ -5171,14 +5200,15 @@ window.addEventListener('load',restore);
     var el = $('catx'); if (!el) return;
     if (!k) { el.hidden = true; return; }
     el.hidden = false;
-    var p = parts(k), n = catxPicks().length, live = CATX.k === k && CATX.f;
-    $('catx-sub').textContent = n ? n + ' module' + (n === 1 ? '' : 's') + ' from the Catalogue added to the end of ⬇ HTML'
-      : 'Tick a Catalogue module to add it to the end of ⬇ HTML — none is, so the download carries none.';
+    if (!CXS.p) loadCatx().then(function () { if (SEL === k) { catxSync(); catxHead(k); } });
+    var p = parts(k), n = catxPicks(k).length, live = CATX.k === k && CATX.f;
+    $('catx-sub').textContent = n ? n + ' module' + (n === 1 ? '' : 's') + ' from the Catalogue added to the end of ⬇ HTML · saved for ' + dispClient(p.client)
+      : 'Tick a Catalogue module to add it to the end of ⬇ HTML for ' + dispClient(p.client) + ' — none is, so the download carries none.';
     if (CATX.k === k && CATX.miss && CATX.miss.length) $('catx-sub').textContent += ' · Left out of the last download, not on this market’s Catalogue: ' + CATX.miss.join(', ') + '.';
     var b = $('catx-load');
     b.hidden = !!live && !CATX.fail;
     b.textContent = 'Show the Catalogue dashboard for ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
-    var picks = catxPicks();
+    var picks = catxPicks(k);
     $('catx-picks').innerHTML = picks.length ? '<span>In ⬇ HTML:</span>' + picks.map(function (x, i) {
       return '<span class="catx-chip">' + esc(x.l) + '<button type="button" data-catx-rm="' + i + '" aria-label="Leave ' + esc(x.l) + ' out of the HTML" title="Leave it out of the HTML">✕</button></span>';
     }).join('') + '<button type="button" class="catx-clear" id="catx-clear">Clear all</button>' : '';
@@ -5439,8 +5469,8 @@ window.addEventListener('load',restore);
   $('catx-load').onclick = function () { if (!SEL) return; if (CATX.fail) catxDrop(); catxLoad(SEL).then(function () { catxHead(SEL); }); };
   $('catx-picks').onclick = function (e) {
     var rm = e.target.closest('[data-catx-rm]');
-    if (rm) { var a = catxPicks(); a.splice(+rm.getAttribute('data-catx-rm'), 1); catxSave(a); }
-    else if (e.target.closest('#catx-clear')) catxSave([]);
+    if (rm) { var a = catxPicks(SEL); a.splice(+rm.getAttribute('data-catx-rm'), 1); catxSave(a, SEL); }
+    else if (e.target.closest('#catx-clear')) catxSave([], SEL);
     else return;
     catxSync(); catxHead(SEL);
   };
@@ -5558,7 +5588,7 @@ window.addEventListener('load',restore);
     var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '', frame = null;
     var done = function () { if (frame && frame.parentNode) frame.parentNode.removeChild(frame); frame = null; if (btn) { btn.disabled = false; btn.textContent = oldTxt; } };
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
-    var picks = catxPicks();
+    var picks = catxPicks(k);
     var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
     (picks.length ? catxCapture(k, picks, tell).catch(function () { return null; }) : Promise.resolve(null)).then(function (cx) {
       if (btn) btn.textContent = 'Preparing the cover…';
@@ -5744,7 +5774,7 @@ window.addEventListener('load',restore);
      build the file with them at the end; with none picked the file is built at once, exactly as before */
   function exportHtml(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
-    var picks = catxPicks();
+    var picks = catxPicks(k);
     // the cover's photographs first — a cover already read (or a demo / unreadable feed) is instant
     if (!picks.length) { if (COVER[k] || masked(parts(k).client)) return buildHtml(k, null); return coverPrep(k).then(function () { buildHtml(k, null); }); }
     var btn = $('det-html'), old = btn ? btn.textContent : '';

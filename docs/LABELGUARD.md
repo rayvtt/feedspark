@@ -1371,8 +1371,10 @@ the HTML, and AM can also have the option of not including it if it's not needed
   depth, Catalogue mix, ROAS by, Optimised vs not) is ticked per measure, so images per product and
   highlights per product are two picks. Image pixels' scan-count select is a control, not a measure.
   The picks are chips on the card, each with ✕, plus *Clear all*.
-- **Nothing is carried until something is ticked.** The picks live per device (`gr-catx`) and outlive the
-  market, so a set chosen once applies to the next brand.
+- **Nothing is carried until something is ticked.** The picks are saved PER BRAND for the team
+  (Ray, 14 Oct 2026: "this catalogue dashboard report module should be saved for each individual brand") —
+  shared state ns `grcatx` keyed by the brand, mirrored on the device (`gr-catx-b`) so the card paints before the
+  store answers. Every market of a brand carries its set; another brand starts with none.
 - **The export.** ⬇ HTML reads each pick in order: it sets the measure, waits for the card to finish
   reading (and for a measure list that is only built once the feed is read), and copies the card as drawn,
   with every control, link, id, click hook and "click to list" tooltip removed. The cards go into a
