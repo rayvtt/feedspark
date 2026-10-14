@@ -12044,6 +12044,18 @@
       "pr": 0
     },
     {
+      "name": "KWCal: Reiss / Accessorize / Schuh themes scoped to their own product types",
+      "file": "tools/check_kwcal_scopes.js",
+      "pattern": "every scoped card reads the sum of its own paths",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a theme left unscoped names the reason on its own card",
+      "file": "tools/test_kwcal_tie.mjs",
+      "pattern": "every moment still unscoped names the reason",
+      "pr": 0
+    },
+    {
       "name": "KWCal: Monsoon seasonal themes seeded (10, two a work month, Oct 2026 → Feb 2027)",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "Monsoon:{events:[",

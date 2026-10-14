@@ -1,0 +1,2696 @@
+{
+ "source": "FeedHero XML \u2014 Schuh GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-10-14",
+ "note": "Primary g:product_type only \u2014 the FIRST value on each item; the repeated values after it are the numbered keyword slots, counted separately below and never as category paths. KEYWORD SATURATION USES THE ENGINE\u2019S OWN RULE (labelguard.js kwValueKind): a 24+ character hex id or a spreadsheet placeholder in a keyword slot is NOT a keyword \u2014 Reiss and Schuh write a 32-character hex id into slot 2 on nearly every product, so \"any slot filled\" reads ~100% against the real figure here. \"products\" counts distinct g:item_group_id; \"skus\" counts feed rows. This census is deliberately INDEPENDENT of the KWCal seed: the harness checks every seeded path resolves HERE, so a mis-spelled path matches nothing real rather than matching itself.",
+ "totals": {
+  "products": 5791,
+  "skus": 22344,
+  "product_type_paths": 536
+ },
+ "keyword_saturation": {
+  "skus_carrying_at_least_one_keyword_slot": 7950,
+  "skus_carrying_none": 14394
+ },
+ "product_types": {
+  "Accessories > Bag Charms > Dr. Martens": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Bag Charms > New Era": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Converse": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > DICKIES": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Fjallraven": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Hype": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Accessories > Bags & Backpacks > Backpacks > JANSPORT": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > New Balance": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Nike": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 0
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Oakley": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > RAINS": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > Vans": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Backpacks > adidas": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Accessories > Bags & Backpacks > Backpacks > schuh": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Barbour": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Crocs": {
+   "skus": 5,
+   "products": 5,
+   "unkeyworded": 2
+  },
+  "Accessories > Bags & Backpacks > Bags > DICKIES": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Dr. Martens": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Accessories > Bags & Backpacks > Bags > Hype": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > New Era": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Nike": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Oakley": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > PUMA": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > RAINS": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > SIMMI": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Bags & Backpacks > Bags > Steve Madden": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 5
+  },
+  "Accessories > Bags & Backpacks > Bags > adidas": {
+   "skus": 7,
+   "products": 7,
+   "unkeyworded": 3
+  },
+  "Accessories > Bags & Backpacks > Bags > schuh": {
+   "skus": 17,
+   "products": 17,
+   "unkeyworded": 7
+  },
+  "Accessories > Caps & Hats > Caps > Barbour": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Caps > DICKIES": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Caps & Hats > Caps > ED HARDY": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 4
+  },
+  "Accessories > Caps & Hats > Caps > GOORIN BROS": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Accessories > Caps & Hats > Caps > KANGOL": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Caps > New Balance": {
+   "skus": 7,
+   "products": 7,
+   "unkeyworded": 6
+  },
+  "Accessories > Caps & Hats > Caps > New Era": {
+   "skus": 34,
+   "products": 34,
+   "unkeyworded": 25
+  },
+  "Accessories > Caps & Hats > Caps > Nike": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Accessories > Caps & Hats > Caps > Oakley": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Caps & Hats > Caps > PICA PICA": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Caps > Polo Ralph Lauren": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Accessories > Caps & Hats > Caps > UMBRO": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Caps > Von Dutch": {
+   "skus": 18,
+   "products": 18,
+   "unkeyworded": 12
+  },
+  "Accessories > Caps & Hats > Caps > adidas": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Hats > Barbour": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 3
+  },
+  "Accessories > Caps & Hats > Hats > CK Jeans": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Caps & Hats > Hats > DICKIES": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Caps & Hats > Hats > KANGOL": {
+   "skus": 10,
+   "products": 6,
+   "unkeyworded": 6
+  },
+  "Accessories > Caps & Hats > Hats > Kangol": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Caps & Hats > Hats > New Balance": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Hats > New Era": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Caps & Hats > Hats > Oakley": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Caps & Hats > Hats > UGG": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Accessories > Caps & Hats > Hats > Umbro": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Caps & Hats > Hats > Von Dutch": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Caps & Hats > Hats > adidas": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Accessories > Jibbitz Charms > Crocs": {
+   "skus": 34,
+   "products": 34,
+   "unkeyworded": 23
+  },
+  "Accessories > Laces > Crep Protect": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 0
+  },
+  "Accessories > Laces > Synch Bands": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Accessories > Miscellaneous > New Era": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Scarves > Fila": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Scarves > Umbro": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Shoe Accessories > Crocs": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Shoe Accessories > adidas": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Accessories > Shoe Care > CHERRY BLOSSOM": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Accessories > Shoe Care > Crep Protect": {
+   "skus": 14,
+   "products": 13,
+   "unkeyworded": 3
+  },
+  "Accessories > Shoe Care > Dr. Martens": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Accessories > Shoe Care > Timberland": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Accessories > Shoe Care > UGG": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Shoe Care > schuh": {
+   "skus": 7,
+   "products": 7,
+   "unkeyworded": 2
+  },
+  "Accessories > Socks > ASICS": {
+   "skus": 9,
+   "products": 4,
+   "unkeyworded": 7
+  },
+  "Accessories > Socks > BIRKENSTOCK": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Accessories > Socks > Birkenstock": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Accessories > Socks > Converse": {
+   "skus": 8,
+   "products": 4,
+   "unkeyworded": 8
+  },
+  "Accessories > Socks > Dr. Martens": {
+   "skus": 20,
+   "products": 11,
+   "unkeyworded": 12
+  },
+  "Accessories > Socks > HUNTER BOOTS": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Socks > New Balance": {
+   "skus": 101,
+   "products": 46,
+   "unkeyworded": 66
+  },
+  "Accessories > Socks > Nike": {
+   "skus": 135,
+   "products": 77,
+   "unkeyworded": 63
+  },
+  "Accessories > Socks > Oakley": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Accessories > Socks > PUMA": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Accessories > Socks > Polo Ralph Lauren": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Accessories > Socks > UGG": {
+   "skus": 14,
+   "products": 14,
+   "unkeyworded": 11
+  },
+  "Accessories > Socks > Umbro": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Accessories > Socks > Vans": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Accessories > Socks > adidas": {
+   "skus": 113,
+   "products": 43,
+   "unkeyworded": 66
+  },
+  "Accessories > Socks > schuh": {
+   "skus": 10,
+   "products": 4,
+   "unkeyworded": 7
+  },
+  "Accessories > Sunglasses > AIRE": {
+   "skus": 10,
+   "products": 10,
+   "unkeyworded": 4
+  },
+  "Accessories > Sunglasses > LE SPECS": {
+   "skus": 16,
+   "products": 16,
+   "unkeyworded": 8
+  },
+  "Accessories > Sunglasses > Oakley": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Accessories > Sunglasses > Quay": {
+   "skus": 12,
+   "products": 12,
+   "unkeyworded": 8
+  },
+  "Accessories > Sunglasses > Ray-Ban": {
+   "skus": 9,
+   "products": 9,
+   "unkeyworded": 4
+  },
+  "Accessories > Wallets > Dr. Martens": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Boys > Boots > Timberland": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Boys > Boots > schuh": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Babies > Boys > Sandals > BIRKENSTOCK": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Boys > Sandals > Crocs": {
+   "skus": 17,
+   "products": 5,
+   "unkeyworded": 14
+  },
+  "Babies > Boys > Sandals > JUJU JELLIES": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Boys > Sandals > Nike": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 9
+  },
+  "Babies > Boys > Sandals > Teva": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Babies > Boys > Sandals > schuh": {
+   "skus": 9,
+   "products": 4,
+   "unkeyworded": 1
+  },
+  "Babies > Boys > Shoes > Dr. Martens": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Boys > Shoes > Kickers": {
+   "skus": 33,
+   "products": 6,
+   "unkeyworded": 16
+  },
+  "Babies > Boys > Trainers > BOSS": {
+   "skus": 30,
+   "products": 6,
+   "unkeyworded": 21
+  },
+  "Babies > Boys > Trainers > Converse": {
+   "skus": 24,
+   "products": 9,
+   "unkeyworded": 20
+  },
+  "Babies > Boys > Trainers > Gola": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Babies > Boys > Trainers > New Balance": {
+   "skus": 58,
+   "products": 18,
+   "unkeyworded": 26
+  },
+  "Babies > Boys > Trainers > Nike": {
+   "skus": 101,
+   "products": 30,
+   "unkeyworded": 69
+  },
+  "Babies > Boys > Trainers > Nike Jordan": {
+   "skus": 32,
+   "products": 7,
+   "unkeyworded": 20
+  },
+  "Babies > Boys > Trainers > Saucony": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Babies > Boys > Trainers > Vans": {
+   "skus": 18,
+   "products": 8,
+   "unkeyworded": 12
+  },
+  "Babies > Boys > Trainers > adidas": {
+   "skus": 31,
+   "products": 7,
+   "unkeyworded": 24
+  },
+  "Babies > Boys > Trainers > schuh": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Babies > Boys > Wellies > Igor": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 7
+  },
+  "Babies > Girls > Boots > Dr. Martens": {
+   "skus": 35,
+   "products": 9,
+   "unkeyworded": 28
+  },
+  "Babies > Girls > Boots > HUNTER BOOTS": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Girls > Boots > Kickers": {
+   "skus": 17,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Babies > Girls > Boots > UGG": {
+   "skus": 14,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Babies > Girls > Boots > schuh": {
+   "skus": 38,
+   "products": 12,
+   "unkeyworded": 35
+  },
+  "Babies > Girls > Sandals > Crocs": {
+   "skus": 130,
+   "products": 28,
+   "unkeyworded": 90
+  },
+  "Babies > Girls > Sandals > Dr. Martens": {
+   "skus": 11,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Babies > Girls > Sandals > Igor": {
+   "skus": 25,
+   "products": 4,
+   "unkeyworded": 1
+  },
+  "Babies > Girls > Sandals > JUJU JELLIES": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Babies > Girls > Sandals > Nike": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Babies > Girls > Sandals > Teva": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Babies > Girls > Sandals > UGG": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Girls > Sandals > schuh": {
+   "skus": 18,
+   "products": 6,
+   "unkeyworded": 1
+  },
+  "Babies > Girls > Shoes > Dr. Martens": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Babies > Girls > Shoes > Geox": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Babies > Girls > Shoes > Kickers": {
+   "skus": 29,
+   "products": 5,
+   "unkeyworded": 23
+  },
+  "Babies > Girls > Shoes > schuh": {
+   "skus": 20,
+   "products": 4,
+   "unkeyworded": 14
+  },
+  "Babies > Girls > Slippers > schuh": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Babies > Girls > Trainers > Converse": {
+   "skus": 104,
+   "products": 21,
+   "unkeyworded": 36
+  },
+  "Babies > Girls > Trainers > New Balance": {
+   "skus": 75,
+   "products": 16,
+   "unkeyworded": 35
+  },
+  "Babies > Girls > Trainers > Nike": {
+   "skus": 197,
+   "products": 38,
+   "unkeyworded": 105
+  },
+  "Babies > Girls > Trainers > Nike Jordan": {
+   "skus": 29,
+   "products": 6,
+   "unkeyworded": 12
+  },
+  "Babies > Girls > Trainers > Vans": {
+   "skus": 48,
+   "products": 12,
+   "unkeyworded": 36
+  },
+  "Babies > Girls > Trainers > adidas": {
+   "skus": 134,
+   "products": 25,
+   "unkeyworded": 107
+  },
+  "Babies > Girls > Trainers > schuh": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Babies > Girls > Wellies > HUNTER BOOTS": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Girls > Wellies > Igor": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 7
+  },
+  "Babies > Unisex > Boots > Dr. Martens": {
+   "skus": 11,
+   "products": 3,
+   "unkeyworded": 1
+  },
+  "Babies > Unisex > Boots > HUNTER BOOTS": {
+   "skus": 16,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Babies > Unisex > Boots > Kickers": {
+   "skus": 14,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Babies > Unisex > Boots > Timberland": {
+   "skus": 20,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Babies > Unisex > Boots > UGG": {
+   "skus": 17,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Babies > Unisex > Sandals > Crocs": {
+   "skus": 33,
+   "products": 9,
+   "unkeyworded": 6
+  },
+  "Babies > Unisex > Sandals > Dr. Martens": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Babies > Unisex > Sandals > Nike": {
+   "skus": 26,
+   "products": 6,
+   "unkeyworded": 5
+  },
+  "Babies > Unisex > Shoes > Kickers": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Babies > Unisex > Slippers > UGG": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Babies > Unisex > Trainers > Converse": {
+   "skus": 88,
+   "products": 12,
+   "unkeyworded": 16
+  },
+  "Babies > Unisex > Trainers > New Balance": {
+   "skus": 8,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Babies > Unisex > Trainers > Nike": {
+   "skus": 42,
+   "products": 18,
+   "unkeyworded": 15
+  },
+  "Babies > Unisex > Trainers > Nike Jordan": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Babies > Unisex > Trainers > Vans": {
+   "skus": 21,
+   "products": 5,
+   "unkeyworded": 1
+  },
+  "Babies > Unisex > Trainers > adidas": {
+   "skus": 26,
+   "products": 13,
+   "unkeyworded": 20
+  },
+  "Kids > Boys > Boots > Dr. Martens": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 9
+  },
+  "Kids > Boys > Boots > schuh": {
+   "skus": 23,
+   "products": 5,
+   "unkeyworded": 23
+  },
+  "Kids > Boys > Loafers > schuh": {
+   "skus": 23,
+   "products": 5,
+   "unkeyworded": 8
+  },
+  "Kids > Boys > Sandals > BIRKENSTOCK": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Kids > Boys > Sandals > Crocs": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Kids > Boys > Sandals > Havaianas": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Kids > Boys > Sandals > JUJU JELLIES": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Boys > Sandals > Nike": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Kids > Boys > Sandals > Teva": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Kids > Boys > Sandals > schuh": {
+   "skus": 18,
+   "products": 6,
+   "unkeyworded": 0
+  },
+  "Kids > Boys > Shoes > Dr. Martens": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Kids > Boys > Shoes > Geox": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Boys > Shoes > Kickers": {
+   "skus": 7,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Kids > Boys > Shoes > schuh": {
+   "skus": 53,
+   "products": 14,
+   "unkeyworded": 34
+  },
+  "Kids > Boys > Trainers > BOSS": {
+   "skus": 33,
+   "products": 11,
+   "unkeyworded": 19
+  },
+  "Kids > Boys > Trainers > Converse": {
+   "skus": 19,
+   "products": 7,
+   "unkeyworded": 14
+  },
+  "Kids > Boys > Trainers > Gola": {
+   "skus": 6,
+   "products": 5,
+   "unkeyworded": 5
+  },
+  "Kids > Boys > Trainers > New Balance": {
+   "skus": 92,
+   "products": 25,
+   "unkeyworded": 57
+  },
+  "Kids > Boys > Trainers > Nike": {
+   "skus": 64,
+   "products": 25,
+   "unkeyworded": 47
+  },
+  "Kids > Boys > Trainers > Nike Jordan": {
+   "skus": 35,
+   "products": 7,
+   "unkeyworded": 30
+  },
+  "Kids > Boys > Trainers > PUMA": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Kids > Boys > Trainers > Saucony": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Kids > Boys > Trainers > Vans": {
+   "skus": 30,
+   "products": 9,
+   "unkeyworded": 22
+  },
+  "Kids > Boys > Trainers > adidas": {
+   "skus": 35,
+   "products": 10,
+   "unkeyworded": 26
+  },
+  "Kids > Boys > Trainers > schuh": {
+   "skus": 23,
+   "products": 5,
+   "unkeyworded": 23
+  },
+  "Kids > Girls > Ballerina Pumps > schuh": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Kids > Girls > Boots > Dr. Martens": {
+   "skus": 81,
+   "products": 21,
+   "unkeyworded": 64
+  },
+  "Kids > Girls > Boots > Hunter": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Kids > Girls > Boots > Kickers": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Boots > UGG": {
+   "skus": 16,
+   "products": 4,
+   "unkeyworded": 15
+  },
+  "Kids > Girls > Boots > schuh": {
+   "skus": 108,
+   "products": 32,
+   "unkeyworded": 99
+  },
+  "Kids > Girls > Girls > Girls Youth > adidas": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Kids > Girls > Loafers > Dr. Martens": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Girls > Loafers > Geox": {
+   "skus": 19,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Kids > Girls > Loafers > Kickers": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Kids > Girls > Loafers > schuh": {
+   "skus": 64,
+   "products": 19,
+   "unkeyworded": 58
+  },
+  "Kids > Girls > Sandals > BIRKENSTOCK": {
+   "skus": 26,
+   "products": 7,
+   "unkeyworded": 6
+  },
+  "Kids > Girls > Sandals > Crocs": {
+   "skus": 101,
+   "products": 30,
+   "unkeyworded": 75
+  },
+  "Kids > Girls > Sandals > Dr. Martens": {
+   "skus": 18,
+   "products": 4,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Sandals > Havaianas": {
+   "skus": 9,
+   "products": 5,
+   "unkeyworded": 4
+  },
+  "Kids > Girls > Sandals > Igor": {
+   "skus": 9,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Kids > Girls > Sandals > JUJU JELLIES": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Sandals > Nike": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Sandals > UGG": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Kids > Girls > Sandals > schuh": {
+   "skus": 83,
+   "products": 27,
+   "unkeyworded": 15
+  },
+  "Kids > Girls > Shoes > Dr. Martens": {
+   "skus": 45,
+   "products": 10,
+   "unkeyworded": 17
+  },
+  "Kids > Girls > Shoes > Flats > Dr. Martens": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Shoes > Geox": {
+   "skus": 39,
+   "products": 12,
+   "unkeyworded": 24
+  },
+  "Kids > Girls > Shoes > Kickers": {
+   "skus": 50,
+   "products": 16,
+   "unkeyworded": 31
+  },
+  "Kids > Girls > Shoes > Lelli Kelly": {
+   "skus": 40,
+   "products": 6,
+   "unkeyworded": 33
+  },
+  "Kids > Girls > Shoes > schuh": {
+   "skus": 90,
+   "products": 24,
+   "unkeyworded": 66
+  },
+  "Kids > Girls > Slippers > Crocs": {
+   "skus": 16,
+   "products": 4,
+   "unkeyworded": 16
+  },
+  "Kids > Girls > Slippers > UGG": {
+   "skus": 20,
+   "products": 6,
+   "unkeyworded": 19
+  },
+  "Kids > Girls > Trainers > ASICS": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Kids > Girls > Trainers > Converse": {
+   "skus": 127,
+   "products": 37,
+   "unkeyworded": 74
+  },
+  "Kids > Girls > Trainers > Lelli Kelly": {
+   "skus": 53,
+   "products": 9,
+   "unkeyworded": 22
+  },
+  "Kids > Girls > Trainers > New Balance": {
+   "skus": 143,
+   "products": 38,
+   "unkeyworded": 93
+  },
+  "Kids > Girls > Trainers > Nike": {
+   "skus": 190,
+   "products": 50,
+   "unkeyworded": 99
+  },
+  "Kids > Girls > Trainers > Nike Jordan": {
+   "skus": 21,
+   "products": 9,
+   "unkeyworded": 12
+  },
+  "Kids > Girls > Trainers > PUMA": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Kids > Girls > Trainers > Saucony": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 12
+  },
+  "Kids > Girls > Trainers > Vans": {
+   "skus": 55,
+   "products": 14,
+   "unkeyworded": 44
+  },
+  "Kids > Girls > Trainers > adidas": {
+   "skus": 245,
+   "products": 80,
+   "unkeyworded": 184
+  },
+  "Kids > Girls > Trainers > schuh": {
+   "skus": 24,
+   "products": 8,
+   "unkeyworded": 19
+  },
+  "Kids > Girls > Womens > Flats > Dr. Martens": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Girls > Womens > Shoes > Flats > Dr. Martens": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Girls > Womens > Trainers > New Balance": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Unisex > Boots > Dr. Martens": {
+   "skus": 14,
+   "products": 4,
+   "unkeyworded": 3
+  },
+  "Kids > Unisex > Boots > HUNTER BOOTS": {
+   "skus": 9,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Kids > Unisex > Boots > Kickers": {
+   "skus": 10,
+   "products": 4,
+   "unkeyworded": 0
+  },
+  "Kids > Unisex > Boots > Timberland": {
+   "skus": 11,
+   "products": 5,
+   "unkeyworded": 3
+  },
+  "Kids > Unisex > Boots > UGG": {
+   "skus": 73,
+   "products": 18,
+   "unkeyworded": 53
+  },
+  "Kids > Unisex > Clothing > Beanie > New Balance": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Kids > Unisex > Clothing > Beanie > UGG": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Clothing > Beanie > adidas": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Clothing > Bodysuit > Nike": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Clothing > Caps > New Balance": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Kids > Unisex > Clothing > Caps > New Era": {
+   "skus": 12,
+   "products": 8,
+   "unkeyworded": 3
+  },
+  "Kids > Unisex > Clothing > Caps > Nike": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Kids > Unisex > Clothing > Caps > adidas": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Kids > Unisex > Sandals > BIRKENSTOCK": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Kids > Unisex > Sandals > Crocs": {
+   "skus": 153,
+   "products": 40,
+   "unkeyworded": 67
+  },
+  "Kids > Unisex > Sandals > Dr. Martens": {
+   "skus": 13,
+   "products": 4,
+   "unkeyworded": 3
+  },
+  "Kids > Unisex > Sandals > Igor": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Sandals > Nike": {
+   "skus": 46,
+   "products": 12,
+   "unkeyworded": 20
+  },
+  "Kids > Unisex > Sandals > Teva": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Unisex > Sandals > UGG": {
+   "skus": 31,
+   "products": 8,
+   "unkeyworded": 29
+  },
+  "Kids > Unisex > Shoe Laces > Synch bands": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Unisex > Shoes > Kickers": {
+   "skus": 17,
+   "products": 8,
+   "unkeyworded": 7
+  },
+  "Kids > Unisex > Shoes > Synch bands": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Unisex > Shoes > UGG": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Kids > Unisex > Slippers > Crocs": {
+   "skus": 41,
+   "products": 9,
+   "unkeyworded": 31
+  },
+  "Kids > Unisex > Slippers > UGG": {
+   "skus": 62,
+   "products": 16,
+   "unkeyworded": 53
+  },
+  "Kids > Unisex > Trainers > ASICS": {
+   "skus": 15,
+   "products": 4,
+   "unkeyworded": 10
+  },
+  "Kids > Unisex > Trainers > Converse": {
+   "skus": 131,
+   "products": 32,
+   "unkeyworded": 79
+  },
+  "Kids > Unisex > Trainers > New Balance": {
+   "skus": 337,
+   "products": 89,
+   "unkeyworded": 229
+  },
+  "Kids > Unisex > Trainers > Nike": {
+   "skus": 600,
+   "products": 133,
+   "unkeyworded": 395
+  },
+  "Kids > Unisex > Trainers > Nike Jordan": {
+   "skus": 34,
+   "products": 8,
+   "unkeyworded": 30
+  },
+  "Kids > Unisex > Trainers > PUMA": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Trainers > Saucony": {
+   "skus": 20,
+   "products": 4,
+   "unkeyworded": 19
+  },
+  "Kids > Unisex > Trainers > UGG": {
+   "skus": 15,
+   "products": 4,
+   "unkeyworded": 15
+  },
+  "Kids > Unisex > Trainers > Vans": {
+   "skus": 118,
+   "products": 28,
+   "unkeyworded": 93
+  },
+  "Kids > Unisex > Trainers > adidas": {
+   "skus": 317,
+   "products": 70,
+   "unkeyworded": 251
+  },
+  "Kids > Unisex > Unisex > Clothing > T-Shirts > Nike": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Unisex > Wellies > Igor": {
+   "skus": 14,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Kids > Unisex > Wellington Boots > HUNTER BOOTS": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Mens > Boots > BIRKENSTOCK": {
+   "skus": 15,
+   "products": 3,
+   "unkeyworded": 14
+  },
+  "Mens > Boots > BLUNDSTONE": {
+   "skus": 29,
+   "products": 5,
+   "unkeyworded": 28
+  },
+  "Mens > Boots > Barbour": {
+   "skus": 80,
+   "products": 15,
+   "unkeyworded": 75
+  },
+  "Mens > Boots > Base London": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Boots > CAT": {
+   "skus": 24,
+   "products": 4,
+   "unkeyworded": 23
+  },
+  "Mens > Boots > Clarks": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Mens > Boots > Clarks Originals": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Mens > Boots > Dr. Martens": {
+   "skus": 90,
+   "products": 19,
+   "unkeyworded": 60
+  },
+  "Mens > Boots > HUNTER BOOTS": {
+   "skus": 24,
+   "products": 4,
+   "unkeyworded": 16
+  },
+  "Mens > Boots > KLEMAN": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Mens > Boots > Kickers": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Mens > Boots > Kickers Classics": {
+   "skus": 22,
+   "products": 7,
+   "unkeyworded": 19
+  },
+  "Mens > Boots > Lacoste": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Mens > Boots > NEW ROCK": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Mens > Boots > Oakley": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Mens > Boots > Red Wing": {
+   "skus": 15,
+   "products": 4,
+   "unkeyworded": 15
+  },
+  "Mens > Boots > SOREL": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Mens > Boots > Timberland": {
+   "skus": 123,
+   "products": 24,
+   "unkeyworded": 89
+  },
+  "Mens > Boots > UGG": {
+   "skus": 43,
+   "products": 8,
+   "unkeyworded": 38
+  },
+  "Mens > Boots > Vagabond Shoemakers": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 13
+  },
+  "Mens > Boots > Wellington Boots > Barbour": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Boots > schuh": {
+   "skus": 105,
+   "products": 23,
+   "unkeyworded": 100
+  },
+  "Mens > Flip Flops > Havaianas": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Mens > Loafers > Barbour": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Mens > Loafers > Clarks": {
+   "skus": 17,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Mens > Loafers > Dr. Martens": {
+   "skus": 18,
+   "products": 5,
+   "unkeyworded": 14
+  },
+  "Mens > Loafers > KLEMAN": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Loafers > NEW ROCK": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Mens > Loafers > Timberland": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Mens > Loafers > UGG": {
+   "skus": 13,
+   "products": 2,
+   "unkeyworded": 13
+  },
+  "Mens > Loafers > Vagabond Shoemakers": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Mens > Loafers > schuh": {
+   "skus": 136,
+   "products": 31,
+   "unkeyworded": 93
+  },
+  "Mens > Sandals > BIRKENSTOCK": {
+   "skus": 186,
+   "products": 39,
+   "unkeyworded": 94
+  },
+  "Mens > Sandals > Barbour": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Clarks": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Clarks Originals": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Crocs": {
+   "skus": 185,
+   "products": 39,
+   "unkeyworded": 99
+  },
+  "Mens > Sandals > Dr. Martens": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Mens > Sandals > Havaianas": {
+   "skus": 18,
+   "products": 9,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > JUJU JELLIES": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Mens > Sandals > KEEN": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Mens > Sandals > Lacoste": {
+   "skus": 8,
+   "products": 5,
+   "unkeyworded": 5
+  },
+  "Mens > Sandals > Nike": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Mens > Sandals > Oakley": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Reef": {
+   "skus": 13,
+   "products": 5,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > TABI": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Teva": {
+   "skus": 7,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > Timberland": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Mens > Sandals > UGG": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Mens > Sandals > XERO": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > adidas": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Sandals > schuh": {
+   "skus": 13,
+   "products": 5,
+   "unkeyworded": 1
+  },
+  "Mens > Shoes > BIRKENSTOCK": {
+   "skus": 78,
+   "products": 17,
+   "unkeyworded": 43
+  },
+  "Mens > Shoes > Barbour": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Mens > Shoes > Clarks": {
+   "skus": 13,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Mens > Shoes > Clarks Originals": {
+   "skus": 68,
+   "products": 14,
+   "unkeyworded": 56
+  },
+  "Mens > Shoes > Dr. Martens": {
+   "skus": 68,
+   "products": 16,
+   "unkeyworded": 50
+  },
+  "Mens > Shoes > HEYDUDE": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Mens > Shoes > KLEMAN": {
+   "skus": 48,
+   "products": 12,
+   "unkeyworded": 30
+  },
+  "Mens > Shoes > Kickers": {
+   "skus": 33,
+   "products": 5,
+   "unkeyworded": 23
+  },
+  "Mens > Shoes > Kickers Classics": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Mens > Shoes > NEW ROCK": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Mens > Shoes > Red Wing": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Mens > Shoes > SOREL": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Mens > Shoes > SPERRY": {
+   "skus": 22,
+   "products": 4,
+   "unkeyworded": 21
+  },
+  "Mens > Shoes > TABI": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Shoes > TOMS": {
+   "skus": 19,
+   "products": 8,
+   "unkeyworded": 1
+  },
+  "Mens > Shoes > Timberland": {
+   "skus": 77,
+   "products": 16,
+   "unkeyworded": 57
+  },
+  "Mens > Shoes > UGG": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 7
+  },
+  "Mens > Shoes > UNDERGROUND": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Mens > Shoes > Vagabond Shoemakers": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Mens > Shoes > schuh": {
+   "skus": 143,
+   "products": 30,
+   "unkeyworded": 113
+  },
+  "Mens > Slippers > Crocs": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Mens > Slippers > UGG": {
+   "skus": 98,
+   "products": 17,
+   "unkeyworded": 69
+  },
+  "Mens > Trainers > ALOHAS": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Mens > Trainers > ASICS": {
+   "skus": 38,
+   "products": 9,
+   "unkeyworded": 30
+  },
+  "Mens > Trainers > Asics Gel": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Trainers > BOSS": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Mens > Trainers > CARIUMA": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Mens > Trainers > CRUYFF": {
+   "skus": 65,
+   "products": 20,
+   "unkeyworded": 36
+  },
+  "Mens > Trainers > Converse": {
+   "skus": 225,
+   "products": 53,
+   "unkeyworded": 125
+  },
+  "Mens > Trainers > DC": {
+   "skus": 142,
+   "products": 31,
+   "unkeyworded": 90
+  },
+  "Mens > Trainers > EA7 Emporio Armani": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Mens > Trainers > East Pacific Trade": {
+   "skus": 14,
+   "products": 6,
+   "unkeyworded": 14
+  },
+  "Mens > Trainers > Etnies": {
+   "skus": 119,
+   "products": 33,
+   "unkeyworded": 80
+  },
+  "Mens > Trainers > FLOWER MOUNTAIN": {
+   "skus": 30,
+   "products": 7,
+   "unkeyworded": 29
+  },
+  "Mens > Trainers > Gola": {
+   "skus": 22,
+   "products": 10,
+   "unkeyworded": 21
+  },
+  "Mens > Trainers > HOFF": {
+   "skus": 73,
+   "products": 18,
+   "unkeyworded": 57
+  },
+  "Mens > Trainers > HUGO": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Mens > Trainers > Hi Trainers > Converse": {
+   "skus": 49,
+   "products": 7,
+   "unkeyworded": 1
+  },
+  "Mens > Trainers > KEEN": {
+   "skus": 33,
+   "products": 7,
+   "unkeyworded": 33
+  },
+  "Mens > Trainers > Kickers": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Mens > Trainers > Lacoste": {
+   "skus": 129,
+   "products": 32,
+   "unkeyworded": 107
+  },
+  "Mens > Trainers > Mercer": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 9
+  },
+  "Mens > Trainers > Merrell": {
+   "skus": 77,
+   "products": 26,
+   "unkeyworded": 50
+  },
+  "Mens > Trainers > New Balance": {
+   "skus": 465,
+   "products": 97,
+   "unkeyworded": 285
+  },
+  "Mens > Trainers > Nike": {
+   "skus": 630,
+   "products": 137,
+   "unkeyworded": 358
+  },
+  "Mens > Trainers > Nike Jordan": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Mens > Trainers > OSIRIS": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Mens > Trainers > Oakley": {
+   "skus": 57,
+   "products": 11,
+   "unkeyworded": 22
+  },
+  "Mens > Trainers > PUMA": {
+   "skus": 141,
+   "products": 31,
+   "unkeyworded": 90
+  },
+  "Mens > Trainers > Polo Ralph Lauren": {
+   "skus": 147,
+   "products": 44,
+   "unkeyworded": 91
+  },
+  "Mens > Trainers > Reebok": {
+   "skus": 87,
+   "products": 21,
+   "unkeyworded": 22
+  },
+  "Mens > Trainers > SOREL": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 12
+  },
+  "Mens > Trainers > Saucony": {
+   "skus": 77,
+   "products": 17,
+   "unkeyworded": 54
+  },
+  "Mens > Trainers > Steve Madden": {
+   "skus": 23,
+   "products": 4,
+   "unkeyworded": 0
+  },
+  "Mens > Trainers > Teva": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Mens > Trainers > Timberland": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Mens > Trainers > Tommy Hilfiger": {
+   "skus": 45,
+   "products": 12,
+   "unkeyworded": 39
+  },
+  "Mens > Trainers > Tommy Jeans": {
+   "skus": 6,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Mens > Trainers > UGG": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 14
+  },
+  "Mens > Trainers > UMBRO": {
+   "skus": 12,
+   "products": 5,
+   "unkeyworded": 4
+  },
+  "Mens > Trainers > VEJA": {
+   "skus": 81,
+   "products": 21,
+   "unkeyworded": 69
+  },
+  "Mens > Trainers > Vagabond Shoemakers": {
+   "skus": 12,
+   "products": 3,
+   "unkeyworded": 12
+  },
+  "Mens > Trainers > Vans": {
+   "skus": 220,
+   "products": 53,
+   "unkeyworded": 125
+  },
+  "Mens > Trainers > adidas": {
+   "skus": 289,
+   "products": 55,
+   "unkeyworded": 202
+  },
+  "Mens > Trainers > east pacific trade": {
+   "skus": 23,
+   "products": 8,
+   "unkeyworded": 5
+  },
+  "Mens > Trainers > schuh": {
+   "skus": 70,
+   "products": 17,
+   "unkeyworded": 47
+  },
+  "Mens > Trainers > victoria": {
+   "skus": 13,
+   "products": 6,
+   "unkeyworded": 13
+  },
+  "Unisex > Sandals > Crocs": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Unisex > Shoes > Flats > Kickers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Unisex > Shoes > Geox": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womens > Boots > Azalea Wang": {
+   "skus": 120,
+   "products": 26,
+   "unkeyworded": 109
+  },
+  "Womens > Boots > BIRKENSTOCK": {
+   "skus": 16,
+   "products": 6,
+   "unkeyworded": 15
+  },
+  "Womens > Boots > BLUNDSTONE": {
+   "skus": 11,
+   "products": 3,
+   "unkeyworded": 11
+  },
+  "Womens > Boots > Barbour": {
+   "skus": 74,
+   "products": 16,
+   "unkeyworded": 67
+  },
+  "Womens > Boots > Blowfish Malibu": {
+   "skus": 66,
+   "products": 16,
+   "unkeyworded": 66
+  },
+  "Womens > Boots > Buffalo London": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Womens > Boots > CAMPER": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 14
+  },
+  "Womens > Boots > Crocs": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womens > Boots > Dr. Martens": {
+   "skus": 200,
+   "products": 53,
+   "unkeyworded": 149
+  },
+  "Womens > Boots > Fly London": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womens > Boots > HUNTER BOOTS": {
+   "skus": 68,
+   "products": 16,
+   "unkeyworded": 64
+  },
+  "Womens > Boots > JEFFREY CAMPBELL": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Womens > Boots > JUJU JELLIES": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 8
+  },
+  "Womens > Boots > Kickers": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Womens > Boots > Kickers Classics": {
+   "skus": 19,
+   "products": 5,
+   "unkeyworded": 12
+  },
+  "Womens > Boots > MOU": {
+   "skus": 19,
+   "products": 4,
+   "unkeyworded": 16
+  },
+  "Womens > Boots > NEW ROCK": {
+   "skus": 39,
+   "products": 8,
+   "unkeyworded": 37
+  },
+  "Womens > Boots > PAJAR": {
+   "skus": 15,
+   "products": 5,
+   "unkeyworded": 15
+  },
+  "Womens > Boots > SIMMI": {
+   "skus": 75,
+   "products": 18,
+   "unkeyworded": 67
+  },
+  "Womens > Boots > SOREL": {
+   "skus": 21,
+   "products": 8,
+   "unkeyworded": 18
+  },
+  "Womens > Boots > Steve Madden": {
+   "skus": 23,
+   "products": 7,
+   "unkeyworded": 22
+  },
+  "Womens > Boots > TOMS": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Boots > Timberland": {
+   "skus": 68,
+   "products": 14,
+   "unkeyworded": 40
+  },
+  "Womens > Boots > UGG": {
+   "skus": 104,
+   "products": 24,
+   "unkeyworded": 94
+  },
+  "Womens > Boots > UNDERGROUND": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Boots > Vagabond Shoemakers": {
+   "skus": 85,
+   "products": 19,
+   "unkeyworded": 82
+  },
+  "Womens > Boots > Wellington Boots > Barbour": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 7
+  },
+  "Womens > Boots > schuh": {
+   "skus": 428,
+   "products": 104,
+   "unkeyworded": 400
+  },
+  "Womens > Flats > BIBI LOU": {
+   "skus": 19,
+   "products": 6,
+   "unkeyworded": 18
+  },
+  "Womens > Flats > Bibi Lou": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Flats > Buffalo London": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Womens > Flats > CAMPER": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Womens > Flats > Clarks": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Flats > Clarks Originals": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Flats > Dr. Martens": {
+   "skus": 24,
+   "products": 9,
+   "unkeyworded": 17
+  },
+  "Womens > Flats > JUJU JELLIES": {
+   "skus": 18,
+   "products": 7,
+   "unkeyworded": 3
+  },
+  "Womens > Flats > Kickers": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Womens > Flats > SPERRY": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Flats > Steve Madden": {
+   "skus": 18,
+   "products": 4,
+   "unkeyworded": 18
+  },
+  "Womens > Flats > TABI": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Flats > Timberland": {
+   "skus": 11,
+   "products": 5,
+   "unkeyworded": 10
+  },
+  "Womens > Flats > Vagabond Shoemakers": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womens > Flats > schuh": {
+   "skus": 73,
+   "products": 23,
+   "unkeyworded": 50
+  },
+  "Womens > Flip Flops > adidas": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womens > High Heels > CAMPER": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 12
+  },
+  "Womens > High Heels > SIMMI": {
+   "skus": 10,
+   "products": 7,
+   "unkeyworded": 1
+  },
+  "Womens > High Heels > Steve Madden": {
+   "skus": 30,
+   "products": 7,
+   "unkeyworded": 30
+  },
+  "Womens > High Heels > schuh": {
+   "skus": 206,
+   "products": 45,
+   "unkeyworded": 111
+  },
+  "Womens > Loafers > BIBI LOU": {
+   "skus": 44,
+   "products": 8,
+   "unkeyworded": 28
+  },
+  "Womens > Loafers > CAMPER": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womens > Loafers > Dr. Martens": {
+   "skus": 14,
+   "products": 4,
+   "unkeyworded": 9
+  },
+  "Womens > Loafers > NEW ROCK": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womens > Loafers > SIMMI": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Womens > Loafers > Steve Madden": {
+   "skus": 30,
+   "products": 5,
+   "unkeyworded": 28
+  },
+  "Womens > Loafers > Vagabond Shoemakers": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 14
+  },
+  "Womens > Loafers > schuh": {
+   "skus": 103,
+   "products": 26,
+   "unkeyworded": 74
+  },
+  "Womens > Low Heels > schuh": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Womens > Sandals > Azalea Wang": {
+   "skus": 33,
+   "products": 9,
+   "unkeyworded": 21
+  },
+  "Womens > Sandals > BIBI LOU": {
+   "skus": 33,
+   "products": 7,
+   "unkeyworded": 6
+  },
+  "Womens > Sandals > BIRKENSTOCK": {
+   "skus": 383,
+   "products": 97,
+   "unkeyworded": 207
+  },
+  "Womens > Sandals > Barbour": {
+   "skus": 15,
+   "products": 4,
+   "unkeyworded": 1
+  },
+  "Womens > Sandals > Bibi Lou": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Sandals > Blowfish Malibu": {
+   "skus": 31,
+   "products": 9,
+   "unkeyworded": 1
+  },
+  "Womens > Sandals > CAMPER": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > Clarks": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > Crocs": {
+   "skus": 288,
+   "products": 78,
+   "unkeyworded": 208
+  },
+  "Womens > Sandals > Dr. Martens": {
+   "skus": 140,
+   "products": 34,
+   "unkeyworded": 92
+  },
+  "Womens > Sandals > FLOWER MOUNTAIN": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > Havaianas": {
+   "skus": 48,
+   "products": 25,
+   "unkeyworded": 8
+  },
+  "Womens > Sandals > JUJU JELLIES": {
+   "skus": 23,
+   "products": 7,
+   "unkeyworded": 3
+  },
+  "Womens > Sandals > KEEN": {
+   "skus": 17,
+   "products": 5,
+   "unkeyworded": 10
+  },
+  "Womens > Sandals > Nike": {
+   "skus": 22,
+   "products": 7,
+   "unkeyworded": 2
+  },
+  "Womens > Sandals > Reef": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > SIMMI": {
+   "skus": 23,
+   "products": 6,
+   "unkeyworded": 8
+  },
+  "Womens > Sandals > Steve Madden": {
+   "skus": 53,
+   "products": 12,
+   "unkeyworded": 23
+  },
+  "Womens > Sandals > TABI": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > TOMS": {
+   "skus": 20,
+   "products": 8,
+   "unkeyworded": 6
+  },
+  "Womens > Sandals > Teva": {
+   "skus": 22,
+   "products": 14,
+   "unkeyworded": 5
+  },
+  "Womens > Sandals > Timberland": {
+   "skus": 13,
+   "products": 4,
+   "unkeyworded": 0
+  },
+  "Womens > Sandals > UGG": {
+   "skus": 57,
+   "products": 16,
+   "unkeyworded": 24
+  },
+  "Womens > Sandals > Vagabond Shoemakers": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Womens > Sandals > XERO": {
+   "skus": 7,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Womens > Sandals > adidas": {
+   "skus": 4,
+   "products": 3,
+   "unkeyworded": 1
+  },
+  "Womens > Sandals > schuh": {
+   "skus": 322,
+   "products": 79,
+   "unkeyworded": 193
+  },
+  "Womens > Shoes > Azalea Wang": {
+   "skus": 22,
+   "products": 5,
+   "unkeyworded": 16
+  },
+  "Womens > Shoes > BIBI LOU": {
+   "skus": 13,
+   "products": 5,
+   "unkeyworded": 8
+  },
+  "Womens > Shoes > BIRKENSTOCK": {
+   "skus": 28,
+   "products": 7,
+   "unkeyworded": 17
+  },
+  "Womens > Shoes > BLUNDSTONE": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Womens > Shoes > Buffalo London": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Womens > Shoes > CAMPER": {
+   "skus": 25,
+   "products": 8,
+   "unkeyworded": 20
+  },
+  "Womens > Shoes > Clarks": {
+   "skus": 26,
+   "products": 8,
+   "unkeyworded": 23
+  },
+  "Womens > Shoes > Clarks Originals": {
+   "skus": 66,
+   "products": 12,
+   "unkeyworded": 49
+  },
+  "Womens > Shoes > Crocs": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Shoes > Dr. Martens": {
+   "skus": 80,
+   "products": 23,
+   "unkeyworded": 68
+  },
+  "Womens > Shoes > Flats > Clarks": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Womens > Shoes > Flats > Dr. Martens": {
+   "skus": 19,
+   "products": 5,
+   "unkeyworded": 3
+  },
+  "Womens > Shoes > Flats > Kickers": {
+   "skus": 24,
+   "products": 5,
+   "unkeyworded": 7
+  },
+  "Womens > Shoes > Flats > TOMS": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womens > Shoes > G.H. BASS": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Shoes > JUJU JELLIES": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womens > Shoes > KLEMAN": {
+   "skus": 20,
+   "products": 5,
+   "unkeyworded": 7
+  },
+  "Womens > Shoes > Kickers": {
+   "skus": 32,
+   "products": 7,
+   "unkeyworded": 16
+  },
+  "Womens > Shoes > Kickers Classics": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Shoes > NEW ROCK": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Womens > Shoes > SOREL": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Womens > Shoes > SPERRY": {
+   "skus": 23,
+   "products": 4,
+   "unkeyworded": 21
+  },
+  "Womens > Shoes > Steve Madden": {
+   "skus": 24,
+   "products": 5,
+   "unkeyworded": 12
+  },
+  "Womens > Shoes > TABI": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womens > Shoes > TOMS": {
+   "skus": 25,
+   "products": 8,
+   "unkeyworded": 4
+  },
+  "Womens > Shoes > Timberland": {
+   "skus": 48,
+   "products": 11,
+   "unkeyworded": 38
+  },
+  "Womens > Shoes > UNDERGROUND": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 10
+  },
+  "Womens > Shoes > Vagabond Shoemakers": {
+   "skus": 40,
+   "products": 10,
+   "unkeyworded": 29
+  },
+  "Womens > Shoes > schuh": {
+   "skus": 179,
+   "products": 38,
+   "unkeyworded": 145
+  },
+  "Womens > Slippers > Crocs": {
+   "skus": 15,
+   "products": 3,
+   "unkeyworded": 11
+  },
+  "Womens > Slippers > MOU": {
+   "skus": 24,
+   "products": 4,
+   "unkeyworded": 24
+  },
+  "Womens > Slippers > UGG": {
+   "skus": 156,
+   "products": 29,
+   "unkeyworded": 114
+  },
+  "Womens > Trainers > ALOHAS": {
+   "skus": 54,
+   "products": 13,
+   "unkeyworded": 12
+  },
+  "Womens > Trainers > ASICS": {
+   "skus": 116,
+   "products": 30,
+   "unkeyworded": 75
+  },
+  "Womens > Trainers > Buffalo London": {
+   "skus": 16,
+   "products": 4,
+   "unkeyworded": 6
+  },
+  "Womens > Trainers > CK Jeans": {
+   "skus": 14,
+   "products": 5,
+   "unkeyworded": 1
+  },
+  "Womens > Trainers > Clarks Originals": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Womens > Trainers > Converse": {
+   "skus": 637,
+   "products": 157,
+   "unkeyworded": 305
+  },
+  "Womens > Trainers > DC": {
+   "skus": 34,
+   "products": 9,
+   "unkeyworded": 24
+  },
+  "Womens > Trainers > Etnies": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Womens > Trainers > FLOWER MOUNTAIN": {
+   "skus": 50,
+   "products": 13,
+   "unkeyworded": 45
+  },
+  "Womens > Trainers > Gola": {
+   "skus": 88,
+   "products": 28,
+   "unkeyworded": 80
+  },
+  "Womens > Trainers > HEYDUDE": {
+   "skus": 22,
+   "products": 6,
+   "unkeyworded": 22
+  },
+  "Womens > Trainers > HOFF": {
+   "skus": 105,
+   "products": 31,
+   "unkeyworded": 81
+  },
+  "Womens > Trainers > Hi Trainers > Converse": {
+   "skus": 43,
+   "products": 6,
+   "unkeyworded": 3
+  },
+  "Womens > Trainers > KEEN": {
+   "skus": 40,
+   "products": 10,
+   "unkeyworded": 33
+  },
+  "Womens > Trainers > Kickers": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Trainers > Lacoste": {
+   "skus": 15,
+   "products": 5,
+   "unkeyworded": 15
+  },
+  "Womens > Trainers > Mercer": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Womens > Trainers > Merrell": {
+   "skus": 39,
+   "products": 13,
+   "unkeyworded": 27
+  },
+  "Womens > Trainers > New Balance": {
+   "skus": 778,
+   "products": 162,
+   "unkeyworded": 488
+  },
+  "Womens > Trainers > Nike": {
+   "skus": 716,
+   "products": 166,
+   "unkeyworded": 465
+  },
+  "Womens > Trainers > Nike Jordan": {
+   "skus": 14,
+   "products": 5,
+   "unkeyworded": 1
+  },
+  "Womens > Trainers > OSIRIS": {
+   "skus": 12,
+   "products": 5,
+   "unkeyworded": 11
+  },
+  "Womens > Trainers > PUMA": {
+   "skus": 326,
+   "products": 92,
+   "unkeyworded": 222
+  },
+  "Womens > Trainers > Reebok": {
+   "skus": 175,
+   "products": 37,
+   "unkeyworded": 84
+  },
+  "Womens > Trainers > SOREL": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Womens > Trainers > Saucony": {
+   "skus": 131,
+   "products": 24,
+   "unkeyworded": 101
+  },
+  "Womens > Trainers > Steve Madden": {
+   "skus": 135,
+   "products": 28,
+   "unkeyworded": 66
+  },
+  "Womens > Trainers > Superga": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Trainers > Teva": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 18
+  },
+  "Womens > Trainers > UGG": {
+   "skus": 53,
+   "products": 11,
+   "unkeyworded": 45
+  },
+  "Womens > Trainers > UMBRO": {
+   "skus": 50,
+   "products": 13,
+   "unkeyworded": 14
+  },
+  "Womens > Trainers > VEJA": {
+   "skus": 151,
+   "products": 31,
+   "unkeyworded": 125
+  },
+  "Womens > Trainers > Vagabond Shoemakers": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womens > Trainers > Vans": {
+   "skus": 417,
+   "products": 93,
+   "unkeyworded": 267
+  },
+  "Womens > Trainers > adidas": {
+   "skus": 541,
+   "products": 140,
+   "unkeyworded": 387
+  },
+  "Womens > Trainers > east pacific trade": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 8
+  },
+  "Womens > Trainers > schuh": {
+   "skus": 87,
+   "products": 21,
+   "unkeyworded": 38
+  },
+  "Womens > Trainers > victoria": {
+   "skus": 98,
+   "products": 34,
+   "unkeyworded": 74
+  }
+ }
+}

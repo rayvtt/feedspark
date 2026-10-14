@@ -1,0 +1,2771 @@
+{
+ "source": "FeedHero XML \u2014 Reiss GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-10-14",
+ "note": "Primary g:product_type only \u2014 the FIRST value on each item; the repeated values after it are the numbered keyword slots, counted separately below and never as category paths. KEYWORD SATURATION USES THE ENGINE\u2019S OWN RULE (labelguard.js kwValueKind): a 24+ character hex id or a spreadsheet placeholder in a keyword slot is NOT a keyword \u2014 Reiss and Schuh write a 32-character hex id into slot 2 on nearly every product, so \"any slot filled\" reads ~100% against the real figure here. \"products\" counts distinct g:item_group_id; \"skus\" counts feed rows. This census is deliberately INDEPENDENT of the KWCal seed: the harness checks every seeded path resolves HERE, so a mis-spelled path matches nothing real rather than matching itself.",
+ "totals": {
+  "products": 4154,
+  "skus": 22927,
+  "product_type_paths": 551
+ },
+ "keyword_saturation": {
+  "skus_carrying_at_least_one_keyword_slot": 4698,
+  "skus_carrying_none": 18229
+ },
+ "product_types": {
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Blazers": {
+   "skus": 19,
+   "products": 7,
+   "unkeyworded": 11
+  },
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Suit Blazers": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Blazers > Tuxedo Blazers": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 13
+  },
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Coats": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Coats > Overcoats": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Boys > Clothing & Apparel > Jackets & Coats > Jackets > Tuxedo Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Knitwear > Jumpers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Knitwear > Sweatshirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Pants & Trousers > Trousers > Chinos": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Shirts": {
+   "skus": 8,
+   "products": 6,
+   "unkeyworded": 8
+  },
+  "Children > Boys > Clothing & Apparel > Shirts > Button-Through Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Shirts > Linen Shirts": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Boys > Clothing & Apparel > Shirts > Oxford Shirts": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Children > Boys > Clothing & Apparel > Shirts > Polo Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Boys > Clothing & Apparel > Shirts > Short-Sleeve Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Boys > Clothing & Apparel > Shorts": {
+   "skus": 5,
+   "products": 4,
+   "unkeyworded": 3
+  },
+  "Children > Boys > Clothing & Apparel > Suits & Tailoring > Waistcoats": {
+   "skus": 11,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Children > Boys > Clothing & Apparel > Tops > T-Shirts": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Dresses": {
+   "skus": 45,
+   "products": 24,
+   "unkeyworded": 45
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Collared Dresses": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Knitted Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Midi Dresses": {
+   "skus": 12,
+   "products": 7,
+   "unkeyworded": 12
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Shift Dresses": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 3
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Skater Dresses": {
+   "skus": 7,
+   "products": 3,
+   "unkeyworded": 7
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Skirt Dresses": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Sleeveless Dresses": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Children > Girls > Clothing & Apparel > Dresses > Swing Dresses": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Children > Girls > Clothing & Apparel > Jackets & Coats > Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Girls > Clothing & Apparel > Knitwear > Jumpers": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Pants & Trousers > Trousers > Suit Trousers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Trousers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Shirts": {
+   "skus": 6,
+   "products": 4,
+   "unkeyworded": 6
+  },
+  "Children > Girls > Clothing & Apparel > Shirts > Crochet Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Shirts > Cuban Collar Shirts": {
+   "skus": 5,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Children > Girls > Clothing & Apparel > Shorts": {
+   "skus": 7,
+   "products": 5,
+   "unkeyworded": 6
+  },
+  "Children > Girls > Clothing & Apparel > Shorts > Drawstring Shorts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Shorts > Shorts Sets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Skirts > Midi Skirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Skirts > Mini Skirts": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing & Apparel > Swimwear > Bikini Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Tops > Knit Tops": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing & Apparel > Tops > Salopettes": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Girls > Clothing > Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Clothing > Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Girls > Footwear > Flats & Casuals > Ballet Pumps": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Accessories > Bags & Backpacks > Shoulder Bags": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Accessories > Scarves": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Accessories > Scarves > Kaftans": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses": {
+   "skus": 22,
+   "products": 14,
+   "unkeyworded": 22
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Collared Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Jersey Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Knitted Dresses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Midi Dresses": {
+   "skus": 10,
+   "products": 5,
+   "unkeyworded": 10
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Pleated Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Shift Dresses": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Shirt Dresses": {
+   "skus": 8,
+   "products": 4,
+   "unkeyworded": 8
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Skater Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Skirt Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Sleeveless Dresses": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 10
+  },
+  "Children > Unisex > Clothing & Apparel > Dresses > Swing Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Blazers": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 9
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Suit Blazers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Blazers > Tuxedo Blazers": {
+   "skus": 13,
+   "products": 4,
+   "unkeyworded": 12
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Coats > Duffle Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Coats > Puffer Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Coats > Trench Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Bomber Jackets": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 10
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Denim Jackets": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Fleece Jackets": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Hooded Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Puffer Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Quilted Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Track Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Trucker Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Utility Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Varsity Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Zip-Front Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Zip-Through Jackets": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Unisex > Clothing & Apparel > Jumpsuits & Playsuits > Jumpsuits": {
+   "skus": 11,
+   "products": 3,
+   "unkeyworded": 11
+  },
+  "Children > Unisex > Clothing & Apparel > Jumpsuits & Playsuits > Playsuits": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Cardigans": {
+   "skus": 11,
+   "products": 6,
+   "unkeyworded": 10
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Hoodies": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Jumpers": {
+   "skus": 7,
+   "products": 6,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Jumpers > Crew-Neck Jumpers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Jumpers > Funnel-Neck Jumpers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Jumpers > Knitted Jumpers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Jumpers > Polo Jumpers": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Children > Unisex > Clothing & Apparel > Knitwear > Sweatshirts": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Nightwear & Loungewear > Sleepsuits": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers": {
+   "skus": 17,
+   "products": 8,
+   "unkeyworded": 16
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Cuffed Joggers": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Joggers": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Trousers": {
+   "skus": 6,
+   "products": 4,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Jeans": {
+   "skus": 6,
+   "products": 4,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Joggers": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 7
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Leggings": {
+   "skus": 9,
+   "products": 3,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Jeans": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts": {
+   "skus": 23,
+   "products": 12,
+   "unkeyworded": 23
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Blouses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Button-Through Shirts": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 8
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Cuban Collar Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Half-Zip Polo Shirts": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Knitted Shirts": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Overshirts": {
+   "skus": 4,
+   "products": 3,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Clothing & Apparel > Shirts > Polo Shirts": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Clothing & Apparel > Shorts": {
+   "skus": 41,
+   "products": 19,
+   "unkeyworded": 40
+  },
+  "Children > Unisex > Clothing & Apparel > Shorts > Bermuda Shorts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Shorts > Drawstring Shorts": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Children > Unisex > Clothing & Apparel > Shorts > Shorts Sets": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Shorts > Tailored Shorts": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Skirts": {
+   "skus": 16,
+   "products": 6,
+   "unkeyworded": 15
+  },
+  "Children > Unisex > Clothing & Apparel > Skirts > Midi Skirts": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Skirts > Skorts": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Swimwear > Bikini Sets": {
+   "skus": 5,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Children > Unisex > Clothing & Apparel > Swimwear > Swimsuits": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Babydoll Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Crop Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Peplum Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Polo Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Roll-Neck Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Sleeveless Tops": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > T-Shirts": {
+   "skus": 17,
+   "products": 8,
+   "unkeyworded": 17
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Tie-Back Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Children > Unisex > Clothing & Apparel > Tops > Vest Tops": {
+   "skus": 4,
+   "products": 3,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Clothing > Tops": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Children > Unisex > Footwear > Boots": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Children > Unisex > Footwear > Loafers": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Children > Unisex > Footwear > Sandals": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Trousers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Bags & Backpacks > Bags": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Bags & Backpacks > Tote Bags": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Bags & Handbags > Backpacks": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Menswear > Accessories > Bags & Handbags > Holdalls & Travel Bags": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Menswear > Accessories > Bags & Wallets > Briefcases": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Bags & Wallets > Wash Bags": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Belts": {
+   "skus": 60,
+   "products": 9,
+   "unkeyworded": 23
+  },
+  "Menswear > Accessories > Belts > Leather Belts": {
+   "skus": 36,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Belts > Suede Belts": {
+   "skus": 12,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Cufflinks": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Formal Accessories > Cufflinks": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Menswear > Accessories > Formal Accessories > Cummerbunds": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Formal Accessories > Pocket Squares": {
+   "skus": 24,
+   "products": 12,
+   "unkeyworded": 14
+  },
+  "Menswear > Accessories > Formal Accessories > Ties": {
+   "skus": 66,
+   "products": 40,
+   "unkeyworded": 55
+  },
+  "Menswear > Accessories > Formal Accessories > Ties > Bow Ties": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Menswear > Accessories > Formal Accessories > Ties > Ties Bars": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Gloves": {
+   "skus": 39,
+   "products": 9,
+   "unkeyworded": 21
+  },
+  "Menswear > Accessories > Gloves > Touchscreen Gloves": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Handbags > Cardholders": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Hats": {
+   "skus": 4,
+   "products": 3,
+   "unkeyworded": 4
+  },
+  "Menswear > Accessories > Hats > Baseball Caps": {
+   "skus": 15,
+   "products": 12,
+   "unkeyworded": 15
+  },
+  "Menswear > Accessories > Hats > Baseball Hats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Accessories > Hats > Beanies": {
+   "skus": 10,
+   "products": 4,
+   "unkeyworded": 10
+  },
+  "Menswear > Accessories > Hats > Bucket Hats": {
+   "skus": 10,
+   "products": 6,
+   "unkeyworded": 9
+  },
+  "Menswear > Accessories > Other Accessories > Coin Trays": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Other Accessories > Wallets": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Menswear > Accessories > Perfumes": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Scarves": {
+   "skus": 21,
+   "products": 13,
+   "unkeyworded": 20
+  },
+  "Menswear > Accessories > Scarves > Cashmere Scarves": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Scarves > Wool Scarves": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Shoes": {
+   "skus": 15,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Menswear > Accessories > Socks": {
+   "skus": 40,
+   "products": 11,
+   "unkeyworded": 40
+  },
+  "Menswear > Accessories > Socks & Hosiery > Socks": {
+   "skus": 36,
+   "products": 6,
+   "unkeyworded": 13
+  },
+  "Menswear > Accessories > Sunglasses": {
+   "skus": 17,
+   "products": 9,
+   "unkeyworded": 16
+  },
+  "Menswear > Accessories > Sunglasses > Round Sunglasses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Accessories > Underwear": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Menswear > Clothing & Apparel > Jacket & Coats > Gilets & Waistcoats > Gilets": {
+   "skus": 48,
+   "products": 7,
+   "unkeyworded": 44
+  },
+  "Menswear > Clothing & Apparel > Jacket & Coats > Gilets & Waistcoats > Puffer Gilets": {
+   "skus": 33,
+   "products": 6,
+   "unkeyworded": 32
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers": {
+   "skus": 61,
+   "products": 24,
+   "unkeyworded": 52
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Double-Breasted Blazers": {
+   "skus": 66,
+   "products": 18,
+   "unkeyworded": 62
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Double-Breasted Suit Blazers": {
+   "skus": 30,
+   "products": 7,
+   "unkeyworded": 27
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Blazers": {
+   "skus": 186,
+   "products": 32,
+   "unkeyworded": 177
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Suit Blazers": {
+   "skus": 115,
+   "products": 19,
+   "unkeyworded": 107
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Suit Blazers": {
+   "skus": 75,
+   "products": 24,
+   "unkeyworded": 70
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Blazers > Tailored-Fit Blazers": {
+   "skus": 27,
+   "products": 6,
+   "unkeyworded": 27
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats": {
+   "skus": 46,
+   "products": 6,
+   "unkeyworded": 46
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats > Duffle Coats": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats > Overcoats": {
+   "skus": 132,
+   "products": 22,
+   "unkeyworded": 119
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats > Raincoats": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats > Single-Breasted Coats": {
+   "skus": 18,
+   "products": 1,
+   "unkeyworded": 18
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Coats > Trench Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets": {
+   "skus": 137,
+   "products": 28,
+   "unkeyworded": 117
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Biker Jackets": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Bomber Jackets": {
+   "skus": 89,
+   "products": 14,
+   "unkeyworded": 76
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Button Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Button-Through Jackets": {
+   "skus": 14,
+   "products": 3,
+   "unkeyworded": 8
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Denim Jackets": {
+   "skus": 20,
+   "products": 5,
+   "unkeyworded": 19
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Field Jackets": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Fleece Jackets": {
+   "skus": 19,
+   "products": 4,
+   "unkeyworded": 19
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Fleece-Collar Jackets": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Funnel-Neck Jackets": {
+   "skus": 31,
+   "products": 3,
+   "unkeyworded": 19
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Harrington Jackets": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 18
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Herringbone Jackets": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Hooded Jackets": {
+   "skus": 29,
+   "products": 3,
+   "unkeyworded": 29
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Hybrid Jackets": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Knitted Jackets": {
+   "skus": 18,
+   "products": 1,
+   "unkeyworded": 18
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Leather Jackets": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Puffer Jackets": {
+   "skus": 23,
+   "products": 6,
+   "unkeyworded": 23
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Quilted Jackets": {
+   "skus": 40,
+   "products": 5,
+   "unkeyworded": 40
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Safari Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Single-Breasted Suit Jackets": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Suede Jackets": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Suit Jackets": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Track Jackets": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Trucker Jackets": {
+   "skus": 31,
+   "products": 6,
+   "unkeyworded": 12
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Tuxedo Jackets": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Varsity Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Worker Jackets": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Menswear > Clothing & Apparel > Jackets & Coats > Jackets > Zip-Through Jackets": {
+   "skus": 91,
+   "products": 13,
+   "unkeyworded": 66
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Button-Through Cardigans": {
+   "skus": 16,
+   "products": 4,
+   "unkeyworded": 15
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Cardigans": {
+   "skus": 129,
+   "products": 21,
+   "unkeyworded": 68
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Half-Zip Polo Sweatshirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Hoodies": {
+   "skus": 128,
+   "products": 19,
+   "unkeyworded": 90
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers": {
+   "skus": 242,
+   "products": 40,
+   "unkeyworded": 110
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Cable-Knit Jumpers": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Crew-Neck Jumpers": {
+   "skus": 107,
+   "products": 10,
+   "unkeyworded": 63
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Funnel-Neck Jumpers": {
+   "skus": 19,
+   "products": 3,
+   "unkeyworded": 7
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Half-Button Jumpers": {
+   "skus": 35,
+   "products": 4,
+   "unkeyworded": 29
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Half-Zip Polo Jumpers": {
+   "skus": 18,
+   "products": 3,
+   "unkeyworded": 18
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Knitted Jumpers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Open-Collar Jumpers": {
+   "skus": 21,
+   "products": 4,
+   "unkeyworded": 15
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Polo Jumpers": {
+   "skus": 140,
+   "products": 25,
+   "unkeyworded": 105
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > Roll-Neck Jumpers": {
+   "skus": 26,
+   "products": 4,
+   "unkeyworded": 7
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Jumpers > V-Neck Jumpers": {
+   "skus": 68,
+   "products": 5,
+   "unkeyworded": 13
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Sweatshirts": {
+   "skus": 118,
+   "products": 16,
+   "unkeyworded": 117
+  },
+  "Menswear > Clothing & Apparel > Knitwear > Zip-Through Hoodies": {
+   "skus": 15,
+   "products": 3,
+   "unkeyworded": 14
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers": {
+   "skus": 271,
+   "products": 55,
+   "unkeyworded": 264
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Barrel-Leg Jeans": {
+   "skus": 12,
+   "products": 1,
+   "unkeyworded": 12
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Belted Trousers": {
+   "skus": 32,
+   "products": 2,
+   "unkeyworded": 32
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Cargo Trousers": {
+   "skus": 20,
+   "products": 6,
+   "unkeyworded": 19
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Carpenter Jeans": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Chinos": {
+   "skus": 97,
+   "products": 3,
+   "unkeyworded": 97
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Cuffed Joggers": {
+   "skus": 63,
+   "products": 9,
+   "unkeyworded": 55
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Joggers": {
+   "skus": 31,
+   "products": 8,
+   "unkeyworded": 26
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Trousers": {
+   "skus": 213,
+   "products": 20,
+   "unkeyworded": 207
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Jeans": {
+   "skus": 164,
+   "products": 22,
+   "unkeyworded": 158
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Joggers": {
+   "skus": 101,
+   "products": 20,
+   "unkeyworded": 83
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Linen Trousers": {
+   "skus": 10,
+   "products": 1,
+   "unkeyworded": 10
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Pintuck Trousers": {
+   "skus": 14,
+   "products": 1,
+   "unkeyworded": 14
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Slim-Fit Jeans": {
+   "skus": 300,
+   "products": 8,
+   "unkeyworded": 285
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Straight-Leg Jeans": {
+   "skus": 170,
+   "products": 13,
+   "unkeyworded": 165
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Straight-Leg Joggers": {
+   "skus": 42,
+   "products": 2,
+   "unkeyworded": 42
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Suit Trousers": {
+   "skus": 275,
+   "products": 64,
+   "unkeyworded": 264
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Tuxedo Trousers": {
+   "skus": 15,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Joggers": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Trousers": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 5
+  },
+  "Menswear > Clothing & Apparel > Shirts": {
+   "skus": 682,
+   "products": 141,
+   "unkeyworded": 644
+  },
+  "Menswear > Clothing & Apparel > Shirts > Button-Through Shirts": {
+   "skus": 77,
+   "products": 13,
+   "unkeyworded": 55
+  },
+  "Menswear > Clothing & Apparel > Shirts > Crochet Shirts": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Menswear > Clothing & Apparel > Shirts > Cuban Collar Shirts": {
+   "skus": 8,
+   "products": 6,
+   "unkeyworded": 7
+  },
+  "Menswear > Clothing & Apparel > Shirts > Half-Zip Polo Shirts": {
+   "skus": 41,
+   "products": 10,
+   "unkeyworded": 39
+  },
+  "Menswear > Clothing & Apparel > Shirts > Knitted Shirts": {
+   "skus": 31,
+   "products": 8,
+   "unkeyworded": 30
+  },
+  "Menswear > Clothing & Apparel > Shirts > Long-Sleeve Shirts": {
+   "skus": 75,
+   "products": 13,
+   "unkeyworded": 70
+  },
+  "Menswear > Clothing & Apparel > Shirts > Overshirts": {
+   "skus": 410,
+   "products": 64,
+   "unkeyworded": 399
+  },
+  "Menswear > Clothing & Apparel > Shirts > Oversized Shirts": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Shirts > Oxford Shirts": {
+   "skus": 17,
+   "products": 1,
+   "unkeyworded": 16
+  },
+  "Menswear > Clothing & Apparel > Shirts > Polo Shirts": {
+   "skus": 352,
+   "products": 62,
+   "unkeyworded": 244
+  },
+  "Menswear > Clothing & Apparel > Shirts > Regular-Fit Shirts": {
+   "skus": 88,
+   "products": 12,
+   "unkeyworded": 84
+  },
+  "Menswear > Clothing & Apparel > Shirts > Short-Sleeve Shirts": {
+   "skus": 82,
+   "products": 9,
+   "unkeyworded": 77
+  },
+  "Menswear > Clothing & Apparel > Shirts > Slim-Fit Shirts": {
+   "skus": 28,
+   "products": 4,
+   "unkeyworded": 26
+  },
+  "Menswear > Clothing & Apparel > Shorts": {
+   "skus": 170,
+   "products": 30,
+   "unkeyworded": 167
+  },
+  "Menswear > Clothing & Apparel > Shorts > Drawstring Shorts": {
+   "skus": 182,
+   "products": 38,
+   "unkeyworded": 178
+  },
+  "Menswear > Clothing & Apparel > Suits & Tailoring > Tailored Waistcoats": {
+   "skus": 8,
+   "products": 1,
+   "unkeyworded": 8
+  },
+  "Menswear > Clothing & Apparel > Suits & Tailoring > Waistcoats": {
+   "skus": 21,
+   "products": 9,
+   "unkeyworded": 18
+  },
+  "Menswear > Clothing & Apparel > Swimwear > Swim Shorts": {
+   "skus": 82,
+   "products": 20,
+   "unkeyworded": 76
+  },
+  "Menswear > Clothing & Apparel > Top > Track Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Clothing & Apparel > Tops > Funnel-Neck Vests": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Menswear > Clothing & Apparel > Tops > Henley Tops": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 12
+  },
+  "Menswear > Clothing & Apparel > Tops > Polo Tops": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Menswear > Clothing & Apparel > Tops > Round-Neck Vests": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Menswear > Clothing & Apparel > Tops > T-Shirts": {
+   "skus": 592,
+   "products": 79,
+   "unkeyworded": 540
+  },
+  "Menswear > Clothing & Apparel > Tops > V-Neck Vests": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Menswear > Clothing & Apparel > Tops > Vest Tops": {
+   "skus": 47,
+   "products": 8,
+   "unkeyworded": 45
+  },
+  "Menswear > Clothing > Shirts > Polo Shirts": {
+   "skus": 47,
+   "products": 6,
+   "unkeyworded": 45
+  },
+  "Menswear > Clothing > Tops": {
+   "skus": 15,
+   "products": 3,
+   "unkeyworded": 15
+  },
+  "Menswear > Footwear > Boots": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Flats & Casuals > Boat Shoes": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Flats & Casuals > Mules": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Formal Shoes > Derby Shoes": {
+   "skus": 10,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Formal Shoes > Lace-Up Shoes": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Formal Shoes > Monk Strap Shoes": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Formal Shoes > Oxford Shoes": {
+   "skus": 23,
+   "products": 3,
+   "unkeyworded": 6
+  },
+  "Menswear > Footwear > Loafers": {
+   "skus": 53,
+   "products": 8,
+   "unkeyworded": 7
+  },
+  "Menswear > Footwear > Loafers > Penny Loafers": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Menswear > Footwear > Sandals": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Menswear > Footwear > Trainers": {
+   "skus": 131,
+   "products": 16,
+   "unkeyworded": 24
+  },
+  "Menswear > Footwear > Trainers > Low-Top Trainers": {
+   "skus": 35,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Menswear > Menswear > Menswear > Polo Shirts": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Unisex > Clothing & Apparel > Jackets & Coats > Jackets > Fleece Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Unisex > Clothing & Apparel > Jumpsuits & Playsuits > Jumpsuits": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Unisex > Clothing & Apparel > Knitwear > Hoodies": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Unisex > Clothing & Apparel > Pants & Trousers > Trousers > Suit Trousers": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 7
+  },
+  "Unisex > Clothing & Apparel > Tops > T-Shirts": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Unisex > Footwear > Heels > Heeled Mules": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Unisex > Footwear > Sandals": {
+   "skus": 25,
+   "products": 6,
+   "unkeyworded": 8
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Bags": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Bowling Bags": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Clutch Bags": {
+   "skus": 16,
+   "products": 14,
+   "unkeyworded": 9
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Crossbody Bags": {
+   "skus": 10,
+   "products": 9,
+   "unkeyworded": 4
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Pouch Bags": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Shoulder Bags": {
+   "skus": 8,
+   "products": 8,
+   "unkeyworded": 5
+  },
+  "Womenswear > Accessories > Bags & Backpacks > Tote Bags": {
+   "skus": 14,
+   "products": 12,
+   "unkeyworded": 10
+  },
+  "Womenswear > Accessories > Belts": {
+   "skus": 129,
+   "products": 29,
+   "unkeyworded": 8
+  },
+  "Womenswear > Accessories > Belts > Leather Belts": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Belts > Oval-Buckle Belts": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Belts > Square-Buckle Belts": {
+   "skus": 20,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Womenswear > Accessories > Formal Accessories > Cuffs": {
+   "skus": 8,
+   "products": 5,
+   "unkeyworded": 7
+  },
+  "Womenswear > Accessories > Gloves": {
+   "skus": 24,
+   "products": 10,
+   "unkeyworded": 23
+  },
+  "Womenswear > Accessories > Hair Accessories": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Hats": {
+   "skus": 15,
+   "products": 11,
+   "unkeyworded": 14
+  },
+  "Womenswear > Accessories > Hats > Baseball Caps": {
+   "skus": 11,
+   "products": 8,
+   "unkeyworded": 11
+  },
+  "Womenswear > Accessories > Hats > Beanies": {
+   "skus": 11,
+   "products": 6,
+   "unkeyworded": 11
+  },
+  "Womenswear > Accessories > Hats > Bucket Hats": {
+   "skus": 8,
+   "products": 5,
+   "unkeyworded": 8
+  },
+  "Womenswear > Accessories > Hats > Fedora Hats": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womenswear > Accessories > Hats > Sun Hats": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Accessories > Jewellery > Bangles": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Accessories > Jewellery > Bracelets": {
+   "skus": 6,
+   "products": 5,
+   "unkeyworded": 5
+  },
+  "Womenswear > Accessories > Jewellery > Chokers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Jewellery > Crystal Cuffs": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Accessories > Jewellery > Earrings": {
+   "skus": 17,
+   "products": 15,
+   "unkeyworded": 16
+  },
+  "Womenswear > Accessories > Jewellery > Necklaces": {
+   "skus": 12,
+   "products": 10,
+   "unkeyworded": 10
+  },
+  "Womenswear > Accessories > Jewellery > Sculpted Cuffs": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Accessories > Other Accessories > Wallets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Accessories > Scarves": {
+   "skus": 37,
+   "products": 14,
+   "unkeyworded": 36
+  },
+  "Womenswear > Accessories > Scarves > Cashmere Scarves": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Accessories > Socks": {
+   "skus": 22,
+   "products": 9,
+   "unkeyworded": 22
+  },
+  "Womenswear > Accessories > Socks & Hosiery > Loafer Socks": {
+   "skus": 8,
+   "products": 3,
+   "unkeyworded": 8
+  },
+  "Womenswear > Accessories > Socks & Hosiery > Socks": {
+   "skus": 7,
+   "products": 4,
+   "unkeyworded": 6
+  },
+  "Womenswear > Accessories > Sunglasses": {
+   "skus": 13,
+   "products": 11,
+   "unkeyworded": 12
+  },
+  "Womenswear > Accessories > Sunglasses > Cat Eye Sunglasses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Accessories > Underwear > Briefs": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Dresses": {
+   "skus": 45,
+   "products": 16,
+   "unkeyworded": 28
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Babydoll Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Bodycon Dresses": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 7
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Bodycon Maxi Dresses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Bodycon Midi Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Bow Dresses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Cape Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Halter-Neck Dresses": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Jersey Dresses": {
+   "skus": 13,
+   "products": 5,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Knitted Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Lace-Trim Dresses": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Maxi Dresses": {
+   "skus": 540,
+   "products": 113,
+   "unkeyworded": 207
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Midi Dresses": {
+   "skus": 1049,
+   "products": 206,
+   "unkeyworded": 508
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Mini Dresses": {
+   "skus": 462,
+   "products": 102,
+   "unkeyworded": 386
+  },
+  "Womenswear > Clothing & Apparel > Dresses > One-Shoulder Maxi Dresses": {
+   "skus": 10,
+   "products": 1,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Dresses > One-Shoulder Midi Dresses": {
+   "skus": 14,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Open-Back Dresses": {
+   "skus": 12,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Printed Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Shift Dresses": {
+   "skus": 20,
+   "products": 6,
+   "unkeyworded": 18
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Shirt Dresses": {
+   "skus": 46,
+   "products": 13,
+   "unkeyworded": 27
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Skater Dresses": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Sleeveless Dresses": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Slip Dresses": {
+   "skus": 17,
+   "products": 8,
+   "unkeyworded": 9
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Swing Dresses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Tipped Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Dresses > Velvet Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Jacket & Coats > Gilets & Waistcoats > Gilets": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers": {
+   "skus": 90,
+   "products": 14,
+   "unkeyworded": 89
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Double-Breasted Blazers": {
+   "skus": 212,
+   "products": 22,
+   "unkeyworded": 207
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Double-Breasted Suit Blazers": {
+   "skus": 88,
+   "products": 10,
+   "unkeyworded": 86
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Blazers": {
+   "skus": 119,
+   "products": 6,
+   "unkeyworded": 119
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Single-Breasted Suit Blazers": {
+   "skus": 120,
+   "products": 9,
+   "unkeyworded": 118
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Suit Blazers": {
+   "skus": 136,
+   "products": 9,
+   "unkeyworded": 130
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Blazers > Tuxedo Blazers": {
+   "skus": 37,
+   "products": 2,
+   "unkeyworded": 37
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats": {
+   "skus": 132,
+   "products": 13,
+   "unkeyworded": 86
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Belted Coats": {
+   "skus": 18,
+   "products": 2,
+   "unkeyworded": 16
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Blindseam Coats": {
+   "skus": 67,
+   "products": 10,
+   "unkeyworded": 58
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Double-Breasted Coats": {
+   "skus": 69,
+   "products": 6,
+   "unkeyworded": 69
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Mid-Length Coats": {
+   "skus": 34,
+   "products": 2,
+   "unkeyworded": 27
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Puffer Coats": {
+   "skus": 54,
+   "products": 4,
+   "unkeyworded": 53
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Short Coats": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Single-Breasted Coats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Coats > Trench Coats": {
+   "skus": 68,
+   "products": 8,
+   "unkeyworded": 60
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets": {
+   "skus": 189,
+   "products": 17,
+   "unkeyworded": 67
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Belted Jackets": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Biker Jackets": {
+   "skus": 40,
+   "products": 6,
+   "unkeyworded": 5
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Bomber Jackets": {
+   "skus": 111,
+   "products": 14,
+   "unkeyworded": 63
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Cropped Jackets": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Denim Jackets": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 12
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Double-Breasted Suit Jackets": {
+   "skus": 8,
+   "products": 2,
+   "unkeyworded": 8
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Funnel-Neck Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Leather Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Single-Breasted Suit Jackets": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 8
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Suede Jackets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Suit Jackets": {
+   "skus": 33,
+   "products": 3,
+   "unkeyworded": 31
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Technical Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Trucker Jackets": {
+   "skus": 67,
+   "products": 9,
+   "unkeyworded": 28
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Tuxedo Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Utility Jackets": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Jackets & Coats > Jackets > Varsity Jackets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Jumpsuits & Playsuits > Jumpsuits": {
+   "skus": 506,
+   "products": 96,
+   "unkeyworded": 476
+  },
+  "Womenswear > Clothing & Apparel > Jumpsuits & Playsuits > Playsuits": {
+   "skus": 81,
+   "products": 16,
+   "unkeyworded": 71
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Button-Through Cardigans": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Cardigans": {
+   "skus": 92,
+   "products": 21,
+   "unkeyworded": 27
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Cropped Cardigans": {
+   "skus": 6,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Cropped Sweatshirts": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Hoodies": {
+   "skus": 10,
+   "products": 3,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers": {
+   "skus": 169,
+   "products": 29,
+   "unkeyworded": 71
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Collared Jumpers": {
+   "skus": 11,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Crew-Neck Jumpers": {
+   "skus": 48,
+   "products": 4,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Cropped Jumpers": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Draped Jumpers": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Funnel-Neck Jumpers": {
+   "skus": 20,
+   "products": 3,
+   "unkeyworded": 5
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Half-Button Jumpers": {
+   "skus": 30,
+   "products": 5,
+   "unkeyworded": 26
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Knitted Jumpers": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 9
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Open-Collar Jumpers": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Polo Jumpers": {
+   "skus": 13,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > Roll-Neck Jumpers": {
+   "skus": 50,
+   "products": 7,
+   "unkeyworded": 29
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Jumpers > V-Neck Jumpers": {
+   "skus": 104,
+   "products": 10,
+   "unkeyworded": 52
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Sweatshirts": {
+   "skus": 102,
+   "products": 21,
+   "unkeyworded": 95
+  },
+  "Womenswear > Clothing & Apparel > Knitwear > Zip-Through Hoodies": {
+   "skus": 10,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Nightwear & Loungewear > Pyjamas": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers": {
+   "skus": 974,
+   "products": 92,
+   "unkeyworded": 849
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Barrel-Leg Jeans": {
+   "skus": 66,
+   "products": 2,
+   "unkeyworded": 66
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Barrel-Leg Trousers": {
+   "skus": 100,
+   "products": 5,
+   "unkeyworded": 100
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Belted Trousers": {
+   "skus": 63,
+   "products": 1,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Bootleg Jeans": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Cargo Trousers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Joggers": {
+   "skus": 32,
+   "products": 3,
+   "unkeyworded": 30
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Drawstring Trousers": {
+   "skus": 159,
+   "products": 6,
+   "unkeyworded": 159
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Flared Trousers": {
+   "skus": 174,
+   "products": 23,
+   "unkeyworded": 51
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Jeans": {
+   "skus": 392,
+   "products": 48,
+   "unkeyworded": 373
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Joggers": {
+   "skus": 44,
+   "products": 8,
+   "unkeyworded": 44
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Leggings": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Mid-Rise Jeans": {
+   "skus": 94,
+   "products": 2,
+   "unkeyworded": 94
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Pintuck Trousers": {
+   "skus": 11,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Straight-Leg Jeans": {
+   "skus": 270,
+   "products": 9,
+   "unkeyworded": 249
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Straight-Leg Trousers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Suit Trousers": {
+   "skus": 644,
+   "products": 42,
+   "unkeyworded": 581
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Tuxedo Trousers": {
+   "skus": 115,
+   "products": 4,
+   "unkeyworded": 115
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Jeans": {
+   "skus": 178,
+   "products": 10,
+   "unkeyworded": 178
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Joggers": {
+   "skus": 168,
+   "products": 19,
+   "unkeyworded": 162
+  },
+  "Womenswear > Clothing & Apparel > Pants & Trousers > Trousers > Wide-Leg Trousers": {
+   "skus": 651,
+   "products": 55,
+   "unkeyworded": 507
+  },
+  "Womenswear > Clothing & Apparel > Shirts": {
+   "skus": 238,
+   "products": 40,
+   "unkeyworded": 231
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Blouses": {
+   "skus": 331,
+   "products": 57,
+   "unkeyworded": 325
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Button-Through Shirts": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 7
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Knitted Shirts": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Long-Sleeve Shirts": {
+   "skus": 72,
+   "products": 8,
+   "unkeyworded": 68
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Overshirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Oxford Shirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Polo Shirts": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Shirts > Short-Sleeve Shirts": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womenswear > Clothing & Apparel > Shorts": {
+   "skus": 154,
+   "products": 39,
+   "unkeyworded": 144
+  },
+  "Womenswear > Clothing & Apparel > Shorts > Belted Shorts": {
+   "skus": 14,
+   "products": 5,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Shorts > Bermuda Shorts": {
+   "skus": 11,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Shorts > Drawstring Shorts": {
+   "skus": 21,
+   "products": 8,
+   "unkeyworded": 20
+  },
+  "Womenswear > Clothing & Apparel > Shorts > Sweat Shorts": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Shorts > Tailored Shorts": {
+   "skus": 37,
+   "products": 13,
+   "unkeyworded": 36
+  },
+  "Womenswear > Clothing & Apparel > Skirts": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Beach Skirts": {
+   "skus": 16,
+   "products": 2,
+   "unkeyworded": 16
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Maxi Skirts": {
+   "skus": 25,
+   "products": 8,
+   "unkeyworded": 25
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Midi Skirts": {
+   "skus": 138,
+   "products": 32,
+   "unkeyworded": 135
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Mini Skirts": {
+   "skus": 134,
+   "products": 29,
+   "unkeyworded": 98
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Pencil Skirts": {
+   "skus": 57,
+   "products": 8,
+   "unkeyworded": 35
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Skorts": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Skirts > Suits Skirts": {
+   "skus": 28,
+   "products": 1,
+   "unkeyworded": 25
+  },
+  "Womenswear > Clothing & Apparel > Suits & Tailoring > Tailored Waistcoats": {
+   "skus": 49,
+   "products": 11,
+   "unkeyworded": 48
+  },
+  "Womenswear > Clothing & Apparel > Suits & Tailoring > Waistcoats": {
+   "skus": 56,
+   "products": 15,
+   "unkeyworded": 49
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Beach Dresses": {
+   "skus": 26,
+   "products": 5,
+   "unkeyworded": 26
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Bikini Bottoms": {
+   "skus": 242,
+   "products": 79,
+   "unkeyworded": 214
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Bikini Briefs": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Bikini Tops": {
+   "skus": 210,
+   "products": 57,
+   "unkeyworded": 198
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Cover-Up Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Cover-Ups": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Sarongs": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Swimsuits": {
+   "skus": 100,
+   "products": 29,
+   "unkeyworded": 92
+  },
+  "Womenswear > Clothing & Apparel > Swimwear > Tankini Bikinis": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Tops > Applique Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Asymmetric Knit Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Tops > Babydoll Tops": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Tops > Balloon-Sleeve Tops": {
+   "skus": 11,
+   "products": 2,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Tops > Bandeau Tops": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Bardot Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Bodysuits": {
+   "skus": 13,
+   "products": 10,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Tops > Bow-Sleeve Tops": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Tops > Bustier Tops": {
+   "skus": 20,
+   "products": 4,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Tops > Cami Tops": {
+   "skus": 91,
+   "products": 15,
+   "unkeyworded": 84
+  },
+  "Womenswear > Clothing & Apparel > Tops > Cowl-Neck Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Tops > Crew-Neck Tops": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Tops > Crop Tops": {
+   "skus": 24,
+   "products": 5,
+   "unkeyworded": 22
+  },
+  "Womenswear > Clothing & Apparel > Tops > Cropped Tops": {
+   "skus": 14,
+   "products": 7,
+   "unkeyworded": 14
+  },
+  "Womenswear > Clothing & Apparel > Tops > Drapped Tops": {
+   "skus": 13,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Womenswear > Clothing & Apparel > Tops > Embroidery Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Funnel-Neck Tops": {
+   "skus": 40,
+   "products": 7,
+   "unkeyworded": 30
+  },
+  "Womenswear > Clothing & Apparel > Tops > Funnel-Neck Vests": {
+   "skus": 49,
+   "products": 4,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Tops > Half-Button Tops": {
+   "skus": 11,
+   "products": 3,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Tops > Halter Neck Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Womenswear > Clothing & Apparel > Tops > Halterneck Vests": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Henley Tops": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Tops > High-Neck Tops": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womenswear > Clothing & Apparel > Tops > Hooded Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Jersey Tops": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Knit Tops": {
+   "skus": 87,
+   "products": 20,
+   "unkeyworded": 20
+  },
+  "Womenswear > Clothing & Apparel > Tops > Long-Sleeve Tops": {
+   "skus": 63,
+   "products": 14,
+   "unkeyworded": 55
+  },
+  "Womenswear > Clothing & Apparel > Tops > Off-Shoulder Tops": {
+   "skus": 27,
+   "products": 4,
+   "unkeyworded": 26
+  },
+  "Womenswear > Clothing & Apparel > Tops > Off-The-Shoulder Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Tops > One-Shoulder Tops": {
+   "skus": 8,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Tops > Peplum Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Tops > Polo Tops": {
+   "skus": 40,
+   "products": 8,
+   "unkeyworded": 22
+  },
+  "Womenswear > Clothing & Apparel > Tops > Puffball Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Rib-Cuff Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Roll-Neck Tops": {
+   "skus": 20,
+   "products": 2,
+   "unkeyworded": 20
+  },
+  "Womenswear > Clothing & Apparel > Tops > Ruched Tops": {
+   "skus": 21,
+   "products": 2,
+   "unkeyworded": 20
+  },
+  "Womenswear > Clothing & Apparel > Tops > Scarf-Neck Tops": {
+   "skus": 12,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Womenswear > Clothing & Apparel > Tops > Scoop-Back Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Shell Tops": {
+   "skus": 13,
+   "products": 3,
+   "unkeyworded": 13
+  },
+  "Womenswear > Clothing & Apparel > Tops > Short-Sleeve Tops": {
+   "skus": 35,
+   "products": 7,
+   "unkeyworded": 22
+  },
+  "Womenswear > Clothing & Apparel > Tops > Silk-Blend Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Clothing & Apparel > Tops > Sleeveless Tops": {
+   "skus": 208,
+   "products": 31,
+   "unkeyworded": 201
+  },
+  "Womenswear > Clothing & Apparel > Tops > Sports Bras": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing & Apparel > Tops > Sports Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Stitch Tops": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Strapless Tops": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Womenswear > Clothing & Apparel > Tops > Swing Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > T-Shirts": {
+   "skus": 130,
+   "products": 29,
+   "unkeyworded": 99
+  },
+  "Womenswear > Clothing & Apparel > Tops > Tank Tops": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Textured Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Tie-Back Tops": {
+   "skus": 7,
+   "products": 1,
+   "unkeyworded": 7
+  },
+  "Womenswear > Clothing & Apparel > Tops > Tie-Front Tops": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > Trim Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > Tunic Tops": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Clothing & Apparel > Tops > V-Neck Tops": {
+   "skus": 6,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Womenswear > Clothing & Apparel > Tops > V-Neck Vests": {
+   "skus": 39,
+   "products": 5,
+   "unkeyworded": 27
+  },
+  "Womenswear > Clothing & Apparel > Tops > Vest Tops": {
+   "skus": 233,
+   "products": 64,
+   "unkeyworded": 135
+  },
+  "Womenswear > Clothing & Apparel > Underwear & Lingerie > Thongs": {
+   "skus": 5,
+   "products": 3,
+   "unkeyworded": 4
+  },
+  "Womenswear > Clothing > Tops": {
+   "skus": 206,
+   "products": 35,
+   "unkeyworded": 194
+  },
+  "Womenswear > Footwear > Boots": {
+   "skus": 86,
+   "products": 14,
+   "unkeyworded": 60
+  },
+  "Womenswear > Footwear > Boots > Ankle Boots": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Footwear > Flats & Casuals > Ballerina-Strap Flats": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Womenswear > Footwear > Flats & Casuals > Ballet Flats": {
+   "skus": 13,
+   "products": 6,
+   "unkeyworded": 2
+  },
+  "Womenswear > Footwear > Flats & Casuals > Boat Shoes": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Footwear > Flats & Casuals > Mules": {
+   "skus": 9,
+   "products": 2,
+   "unkeyworded": 9
+  },
+  "Womenswear > Footwear > Flats & Casuals > Slip-On Mules": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Footwear > Heels": {
+   "skus": 5,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Womenswear > Footwear > Heels > Ballerina Shoes": {
+   "skus": 7,
+   "products": 4,
+   "unkeyworded": 5
+  },
+  "Womenswear > Footwear > Heels > Court Shoes": {
+   "skus": 134,
+   "products": 19,
+   "unkeyworded": 125
+  },
+  "Womenswear > Footwear > Heels > Heeled Mules": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Footwear > Loafers": {
+   "skus": 31,
+   "products": 7,
+   "unkeyworded": 6
+  },
+  "Womenswear > Footwear > Sandals": {
+   "skus": 109,
+   "products": 25,
+   "unkeyworded": 48
+  },
+  "Womenswear > Footwear > Sandals > Slip-On Sandals": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Footwear > Trainers": {
+   "skus": 15,
+   "products": 4,
+   "unkeyworded": 11
+  },
+  "Womenswear > Footwear > Trainers > Low-Top Trainers": {
+   "skus": 26,
+   "products": 2,
+   "unkeyworded": 12
+  },
+  "Womenswear > Women > Accessories > Underwear": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Women > Clothing > Dresses > Mini Dresses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Womenswear > Tights": {
+   "skus": 4,
+   "products": 2,
+   "unkeyworded": 4
+  },
+  "Womenswear > Womenswear > Womenswear > Beauty Gift Sets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Womenswear > Womenswear > Gloves": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Womenswear > Womenswear > Womenswear > Jumpers": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Womenswear > Womenswear > Womenswear > Scarves": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Womenswear > Womenswear > Womenswear > Tights": {
+   "skus": 12,
+   "products": 2,
+   "unkeyworded": 12
+  }
+ }
+}
