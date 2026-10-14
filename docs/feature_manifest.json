@@ -15599,6 +15599,18 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCBrief({client:brand,task:p.brief.task,cat:p.brief.cat,source:'plan',scope:p.brief.scope});",
       "pr": 0
+    },
+    {
+      "name": "Golden catx: picks saved per brand (grcatx)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function catxPicks(k) {",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: grcatx namespace",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "grcatx:      'self',",
+      "pr": 0
     }
   ]
 }
