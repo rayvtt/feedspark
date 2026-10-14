@@ -10,6 +10,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const { installEngineRoutes } = require('./engine_routes.js');
 const ROOT = path.join(__dirname, '..');
 const D = path.join(ROOT, 'docs');
 const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
@@ -101,6 +102,7 @@ const AUDIT = `(() => {
   let fail = 0;
   for (const f of PAGES) {
     const ctx = await b.newContext({ viewport: { width: 1400, height: 900 }, colorScheme: 'dark' });
+    await installEngineRoutes(ctx);   // pages that load a worker-served engine die without it
     const p = await ctx.newPage(); await p.addInitScript(STUB);
     const src = fs.readFileSync(path.join(D, f), 'utf8');
     const html = withFccCss(src.indexOf('</body>') >= 0 ? src.replace('</body>', WIDGETS + '\n</body>') : src + '\n' + WIDGETS);

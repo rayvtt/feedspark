@@ -206,6 +206,7 @@ import OVERLAY_STUDIO_SRC from "../../../docs/overlay_studio_engine.js";
 // lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
 import IMAGES_PAGE from "../../../docs/FeedSpark_Images.html";
 import IMAGE_ENGINE_SRC from "../../../docs/image_engine.js";
+import KWCAL_ENGINE_SRC from "../../../docs/kwcal_engine.js";
 // /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
 // year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
 import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
@@ -1710,6 +1711,11 @@ async function route(request, env, ctx) {
     }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    // the Keyword Calendar's tie + brief payload — Workflow loads the SAME file, so the board
+    // and the calendar can never disagree about what has been briefed (Ray, 14 Oct 2026)
+    if (path === '/kwcal/engine.js' && request.method === 'GET') {
+      return new Response(KWCAL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -3677,23 +3683,28 @@ async function route(request, env, ctx) {
       const out = {};
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        // THE SAME BRAND SET THE CRON WARM USES (PLAN_SHEETS + the KV overrides). Reading the git
+        // map alone here would let a brand wired by override onto a shared workbook be counted by
+        // the warm and not by this route — and a parse and a split disagreeing about who shares a
+        // sheet is how a row goes to the wrong board.
+        const fullMap = await planSheetMap(env);
         const seen = {};
         for (const brand of Object.keys(sheets)) {
           const id = sheets[brand]; if (!id) continue;
-          if (seen[id]) { out[brand] = splitPlanCache(seen[id], brand, brandsOnSheet(PLAN_SHEETS, id)); continue; }
+          if (seen[id]) { out[brand] = splitPlanCache(seen[id], brand, brandsOnSheet(fullMap, id)); continue; }
           const ck = 'planlive:' + id;
           let cached = force ? null : await env.EDITS.get(ck, 'json');
           if (!cached) {
             const g = await fetchGrid(id, tab, token); // values + background colours (to skip filled separator rows)
             if (g.error) { out[brand] = { error: g.error, tasks: [] }; seen[id] = out[brand]; continue; }
-            cached = { tasks: parsePlanRows(g.values, g.bg, brandsOnSheet(PLAN_SHEETS, id)), updated: Date.now() };
+            cached = { tasks: parsePlanRows(g.values, g.bg, brandsOnSheet(fullMap, id)), updated: Date.now() };
             try { await env.EDITS.put(ck, JSON.stringify(cached), { expirationTtl: 300 }); } catch (e) {}
           }
           // A SHARED WORKBOOK IS SPLIT AT SERVE TIME, not in the cache: planlive:<id> stays the
           // whole parse because the Playbook, the cron warm and the due-today reminder all read
           // it by sheet id. Only this brand's rows go to this brand's board.
           seen[id] = cached;
-          out[brand] = splitPlanCache(cached, brand, brandsOnSheet(PLAN_SHEETS, id));
+          out[brand] = splitPlanCache(cached, brand, brandsOnSheet(fullMap, id));
         }
         return json({ connected: true, brands: out, wired });
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }

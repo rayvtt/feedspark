@@ -136,12 +136,14 @@ ok(/function parsePlanRows\(values, bg, brands\)/.test(W), 'parsePlanRows takes 
 ok(/const br = rowBrands\(row, tcol, brands\);/.test(W), 'and reads each row’s brand column');
 ok(/if \(br\.length && br\.length < \(brands \|\| \[\]\)\.length\) rec\.br = br;/.test(W),
   'storing it only when it NARROWS — a cell naming every brand is joint, so the cache stays small');
-ok(/parsePlanRows\(g\.values, g\.bg, brandsOnSheet\(PLAN_SHEETS, id\)\)/.test(W), '/api/plan/live parses with them');
+ok(/const fullMap = await planSheetMap\(env\);/.test(W),
+  '/api/plan/live resolves the brand set from the SAME map the cron warm uses (git + the KV overrides)');
+ok(/parsePlanRows\(g\.values, g\.bg, brandsOnSheet\(fullMap, id\)\)/.test(W), '/api/plan/live parses with them');
 ok(/parsePlanRows\(g\.values, g\.bg, brandsOnSheet\(sheets, id\)\)/.test(W), 'so does the cron warm');
 // THE PRE-FIX LINE, VERBATIM: both brands were handed the identical array
 ok(!/out\[brand\] = seen\[id\];/.test(W),
   'the shared serve `out[brand] = seen[id]` is GONE — this is the assertion that fails on the old worker');
-ok(/out\[brand\] = splitPlanCache\(cached, brand, brandsOnSheet\(PLAN_SHEETS, id\)\)/.test(W),
+ok(/out\[brand\] = splitPlanCache\(cached, brand, brandsOnSheet\(fullMap, id\)\)/.test(W),
   'a brand is served its own rows on the first read');
 ok(/if \(seen\[id\]\) \{ out\[brand\] = splitPlanCache\(seen\[id\]/.test(W),
   'and on the SECOND brand of the same workbook, which is the whole point');

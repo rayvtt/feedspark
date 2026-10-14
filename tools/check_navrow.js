@@ -44,6 +44,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { installEngineRoutes } = require('./engine_routes.js');
 const os = require('os');
 const http = require('http');
 
@@ -102,6 +103,7 @@ const minus = (h) => CANON.filter((x) => x !== h);
   // a page as a viewer sees it; `layout` = a saved ▦ layout on the device (fcc-nav-layout)
   const open = async (file, w, h, layout) => {
     const p = await browser.newPage({ viewport: { width: w || 1280, height: h || 800 } });
+    await installEngineRoutes(p);   // pages that load a worker-served engine die without it
     // on a MONDAY the Command Center opens its Monday catch-up panel over the page (by design) — mark today's seen
     await p.addInitScript((lo) => {
       try { localStorage.setItem('mc-' + new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()), '1'); } catch (e) {}

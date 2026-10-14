@@ -367,6 +367,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: KWCal Superdry board — sixteen focus themes, and a seeded scope that reports itself honestly"
   NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs || {
     echo "✗ KWCal Superdry tripwire failed — a seeded path is not in the live feed, a note quotes a count its scope cannot support, or a set scope reads as absent"; exit 1; }
+  echo "── validating: Workflow — the keyword calendar's briefing actions, centralised on the board"
+  NODE_PATH=$(npm root -g) node tools/check_kwdue.js || {
+    echo "✗ KWCal→Workflow tripwire failed — a briefed moment was offered again (a duplicate ticket), → Brief stopped raising the calendar's own payload, or the moment id is no longer stamped"; exit 1; }
   echo "── validating: KWCal — a moment's name and date are editable on its card"
   NODE_PATH=$(npm root -g) node tools/check_kwcal_edit.js || {
     echo "✗ KWCal edit tripwire failed — the name or date control is unreachable on a card, a re-dated moment did not move month, or a refused value was dropped in silence"; exit 1; }

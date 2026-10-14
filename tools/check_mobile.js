@@ -17,6 +17,7 @@
  * Lives in presync (like the dark tripwire); CI has no browsers. */
 'use strict';
 const fs = require('fs'), path = require('path'), os = require('os');
+const { installEngineRoutes } = require('./engine_routes.js');
 let chromium, devices; try { ({ chromium, devices } = require('playwright')); } catch (e) { console.log('· playwright not installed — mobile tripwire skipped'); process.exit(0); }
 const ROOT = path.join(__dirname, '..'), D = path.join(ROOT, 'docs');
 const SHOTS = process.argv.indexOf('--shots') >= 0 ? process.argv[process.argv.indexOf('--shots') + 1] : null;
@@ -140,6 +141,7 @@ const COLLECT = `(() => {
     const res = {};
     for (const mode of ['desk', 'mob']) {
       const ctx = await b.newContext(mode === 'desk' ? { viewport: { width: 1400, height: 900 } } : { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } });
+      await installEngineRoutes(ctx);   // pages that load a worker-served engine die without it
       const p = await ctx.newPage(); await p.addInitScript(STUB);
       try { await p.goto('file://' + tmp, { timeout: 20000 }); await p.waitForTimeout(mode === 'mob' ? 1500 : 900); } catch (e) {}
       let skim = null;

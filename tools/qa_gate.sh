@@ -296,6 +296,12 @@ else
   echo "   ✗ KWCal Superdry harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_superdry.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
+  echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
+else
+  echo "   ✗ KWCal→Workflow briefing band FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwdue.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwcal_edit.js >/dev/null 2>&1; then
   echo "   ✓ a moment's name and date are editable on its card, and a bad date is refused out loud"
 else
