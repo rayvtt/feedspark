@@ -182,6 +182,18 @@ async function open(browser, withLabels, clMap) {
     const put = await pg.evaluate(() => window.__clputs[window.__clputs.length - 1]);
     const rec = put && put.clstrat && put.clstrat.Reiss;
     ok('every choice is saved for the team, under the brand, in shared state', rec && rec.slots['3'] === 'life' && rec.slots['2'] === 'merch' && rec.strat.margin === 'elsewhere' && rec.strat.price === 'na' && rec.strat.promo === 'need', put);
+    // static or dynamic, a button per KPI label (Ray, 14 Oct 2026: "this is a button - either static / dynamic")
+    const dy0 = await pg.evaluate(() => Array.from(document.querySelectorAll('[data-cldyn]')).map((b) => ({ n: b.getAttribute('data-cldyn'), t: b.textContent, tag: b.tagName })));
+    ok('in Customise every KPI label carries a static / dynamic button', dy0.length >= 1 && dy0.every((b) => b.tag === 'BUTTON' && /static|dynamic/.test(b.t)), dy0);
+    const dn = dy0[0] && dy0[0].n, was = dy0[0] && dy0[0].t;
+    await pg.click('[data-cldyn="' + dn + '"]'); await pg.waitForTimeout(250);
+    const dput = await pg.evaluate(() => window.__clputs[window.__clputs.length - 1]);
+    const dy1 = await pg.evaluate((n) => { const b = document.querySelector('[data-cldyn="' + n + '"]'); return b ? b.textContent : null; }, dn);
+    ok('…a click flips it and saves the word for the team', dput && dput.clstrat.Reiss.dyn[dn] === (/dynamic/.test(was) ? 'static' : 'dynamic') && dy1 !== was && /static|dynamic/.test(dy1), { dput, was, dy1 });
+    const dpart = await pg.evaluate(() => (Array.from(document.querySelectorAll('#cl-tier .cl-parts span')).find((x) => /Dynamism/.test(x.textContent)) || {}).textContent || '');
+    ok('…and Dynamism is scored off the word, even with no earlier reading', /Dynamism\s*[\d.]+\/15/.test(dpart), dpart);
+    await pg.click('[data-cldyn="' + dn + '"]'); await pg.waitForTimeout(250);
+    ok('…a second click flips it back', (await pg.evaluate((n) => document.querySelector('[data-cldyn="' + n + '"]').textContent, dn)) === was);
     const v = await pg.evaluate(() => {
       const t = document.getElementById('cl-tier'), tile = (k) => t.querySelector('.cl-st[data-cl="' + k + '"]');
       return { score: +t.querySelector('.cl-score').textContent, na: tile('price').className, el: tile('margin').className, pri: tile('promo').className,
@@ -191,6 +203,7 @@ async function open(browser, withLabels, clMap) {
     ok('the tiles say so — not relevant, carried elsewhere, priority', /\bna\b/.test(v.na) && /\belse\b/.test(v.el) && /\bpri\b/.test(v.pri) && /Priority/.test(v.priTxt), v);
     await pg.click('#cl-ed');
     const shut = await pg.evaluate(() => ({ sel: !!document.querySelector('#cl-tier select'), chip: (document.querySelectorAll('#cl-tier .cl-slot')[3].querySelector('.cl-kind') || {}).textContent || '', note: (document.querySelector('#cl-tier .cl-set-note') || {}).textContent || '' }));
+    ok('closed, no static / dynamic button is left on the card', await pg.evaluate(() => !document.querySelector('#cl-tier [data-cldyn]')));
     ok('✓ Done closes the editor; CL3 reads as set, with the brand named', !shut.sel && /Lifecycle/.test(shut.chip) && /Set for Reiss/.test(shut.note), shut);
     // the action plan carries the priority, not the strategy ruled out
     await pg.evaluate(() => {

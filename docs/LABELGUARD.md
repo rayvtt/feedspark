@@ -1596,12 +1596,16 @@ slots 0–4, known kinds, and the three states only.
   so that row shows "also performance · Zombie" (`clLabelKind` `also`, at 5% of the label's products
   or more). The AM can then set the slot. It is never counted on its own.
 - **FULL / SALE reads as a promotion label.**
+- **Static or dynamic is a button** (Ray, 14 Oct 2026: "when edited custom label for client this is a
+  button - either static / dynamic"). In Customise, every KPI label's last cell is a toggle saved as
+  `dyn[slot]`. The AM's word beats the reading in Dynamism, and it scores even with no earlier reading of the
+  feed. Outside the editor a word set by the team reads as set, with the reading in the tooltip.
 - **↺ Back to the automated reading** drops every choice for the brand.
 
 **Where the controls appear.** The controls (`.cl-am`) are hidden in demo mode and removed from both
 downloads. The client document shows the result, not the editor. **Harness:**
 
-- `tools/test_clstrategy.mjs` (74) covers the rules on a Superdry-shaped fixture with invented counts.
+- `tools/test_clstrategy.mjs` (80) covers the rules on a Superdry-shaped fixture with invented counts.
 - `tools/check_grcl.js` covers the editor, the save, the plan, the download, a reopen and demo mode.
 
 ### 9.12h The action plan at the foot of both downloads, and one client per file (8 Oct 2026)
