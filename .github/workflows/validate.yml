@@ -118,6 +118,8 @@ jobs:
         run: node tools/test_schedule.mjs
       - name: Plan-brand harness (one workbook, two brands — column B says whose work it is)
         run: node tools/test_planbrand.mjs
+      - name: Plan-append harness (where a task lands, and a refused write that says so)
+        run: node tools/test_planappend.mjs
       - name: Work-volumes harness (every workstream bucketed by month)
         run: node tools/test_volumes.mjs
       - name: Retainer-hours harness (how delivered hours are classified for the one-pager pie)

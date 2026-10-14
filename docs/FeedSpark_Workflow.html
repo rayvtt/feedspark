@@ -2533,6 +2533,30 @@ aside.ck[hidden]{display:none}
     });
     if(n)toast('📞 '+n+' call action'+(n===1?'':'s')+' written into the plan');
   }
+  /* A PLAN WRITE THAT FAILS SAYS SO, AND KEEPS SAYING SO (Ray, 14 Oct 2026: "actions added by
+     call / gemini - is not added in Project Plan btw"). The row reached Intake, the sheet append
+     was refused, and the only word about it was a toast that had already faded — so the three
+     call actions read as filed while the client's plan never heard of them. Like bfWarn for an
+     unsaved brief: once a write has actually been REFUSED this session, the banner stays up
+     while any row is still unconfirmed, names one of them, and carries the sheet's own reason.
+     It is never raised by a write merely IN FLIGHT — only by one that came back wrong. */
+  var _planFail='', _planWarnEl=null;
+  function planUnsynced(){ var out=[];
+    MANUAL.forEach(function(m){ if(!m||m.w||!m.client||!m.task)return;
+      if(!PLANSHEET[m.client]||DELETED[m.client+'|'+m.task])return; out.push(m); });
+    return out; }
+  function planWarn(){
+    var rows=_planFail?planUnsynced():[];
+    if(!rows.length){ if(_planWarnEl){ _planWarnEl.remove(); _planWarnEl=null; } return; }
+    if(!_planWarnEl){ _planWarnEl=document.createElement('div');
+      _planWarnEl.style.cssText='position:fixed;left:50%;bottom:62px;transform:translateX(-50%);background:#8A2A1B;'
+        +'color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:800;font-size:13px;max-width:min(680px,92vw);'
+        +'box-shadow:0 8px 24px rgba(0,0,0,.25)';
+      document.body.appendChild(_planWarnEl); }
+    _planWarnEl.textContent='⚠ '+rows.length+' task'+(rows.length===1?'':'s')+' not written to the project plan — e.g. '
+      +rows[0].client+': “'+String(rows[0].task).slice(0,60)+'”'+(_planFail?(' · '+_planFail):'')+'. Retrying…';
+    _planWarnEl.title=rows.map(function(m){ return m.client+' — '+m.task; }).join('\n'); }
+  function planWriteFailed(err){ _planFail=String(err||'write failed').slice(0,120); planWarn(); }
   // client|task rows whose plan-sheet write has already been attempted this session — set by
   // adoptIntoPlan's own write and by resyncPlanWrites, cleared when that write fails, so one
   // row is never sent twice at once and a failure is never stranded for the session.
@@ -2556,9 +2580,9 @@ aside.ck[hidden]{display:none}
       _planTried[client+'|'+task]=1;                 // this write is in flight — the resync pass must not send the same row alongside it
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else delete _planTried[client+'|'+task]; })
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else { delete _planTried[client+'|'+task]; planWriteFailed((d&&d.error)||'write failed'); } })
         .catch(function(){ delete _planTried[client+'|'+task];   // hand it back to the resync pass rather than stranding it for the session
-          toast('Saved locally — plan write failed (check the SA has Editor access)'); });
+          planWriteFailed('network'); toast('Saved locally — plan write failed (check the SA has Editor access)'); });
     } else toast('Added to '+client+' locally · no plan sheet linked to write back');
     return true; }
   // w:1 on a MANUAL row = its sheet append CONFIRMED ok. A row without it is an optimistic local
@@ -2598,10 +2622,10 @@ aside.ck[hidden]{display:none}
     Object.keys(by).forEach(function(c){ var rows=by[c];
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:PLANSHEET[c],client:c,tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
-        .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok)return;
-          rows.forEach(function(m){ m.w=1; }); saveManual();
+        .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed((d&&d.error)||'write failed'); return; }
+          rows.forEach(function(m){ m.w=1; }); saveManual(); planWarn();
           if(d.appended)toast('⟲ '+d.appended+' unsynced task'+(d.appended===1?'':'s')+' written to '+c+'’s plan'); })
-        .catch(function(){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); }); }); }
+        .catch(function(){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed('network'); }); }); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   // the page keeps MANUAL as an array; the shared store keys it per row so two people adding
   // different rows at once both survive the merge (an array would be last-writer-wins)

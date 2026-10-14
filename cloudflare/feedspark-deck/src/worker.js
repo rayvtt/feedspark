@@ -7031,8 +7031,9 @@ async function renamePlanTask(env, id, tab, match, value) {
 async function appendPlanRows(env, id, tab, rows, client) {
   try {
     const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-    let realTab = await resolveTab(id, tab, token);
-    if (!realTab) return tabAmbiguous(id, tab);
+    const info = await resolveTabInfo(id, tab, token);
+    if (!info) return tabAmbiguous(id, tab);
+    let realTab = info.title;
     let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
     let rd = await rr.json();
     if (rd.error) return { ok: false, error: rd.error.message };
@@ -7073,17 +7074,28 @@ async function appendPlanRows(env, id, tab, rows, client) {
       const tk = r.brandToken != null ? String(r.brandToken) : brandTok;
       if (bc >= 0 && tk) a[bc] = tk;
       return a; });
-    // find the LAST row that has any content and write directly below it — the values:append
-    // API mis-detects the table on multi-block plan layouts and drops rows at the top.
-    let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
-    const startRow = lastRow + 2; // 1-based row just after the last content row
+    // Write directly below the plan's own last task — the values:append API mis-detects the table
+    // on multi-block plan layouts and drops rows at the top. planAppendRow picks the row.
+    const place = planAppendRow(grid, tc, values.length);
+    const startRow = place.startRow;
+    // MAKE ROOM FIRST. values.update does not grow a sheet, so a range ending past the last grid
+    // row is refused rather than appended. Add exactly the rows needed (plus a little slack, so
+    // the next few writes do not each pay for a batchUpdate) before asking for that range.
+    const need = startRow + values.length - 1;
+    if (info.rowCount && need > info.rowCount && info.sheetId != null) {
+      const gr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + ':batchUpdate', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+        body: JSON.stringify({ requests: [{ appendDimension: { sheetId: info.sheetId, dimension: 'ROWS', length: (need - info.rowCount) + 50 } }] }) });
+      const gd = await gr.json();
+      if (gd.error) return { ok: false, error: permHint(gd.error.message || 'could not add rows to ' + (realTab || 'the tab')) };
+    }
     const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
     const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
       method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
     const wd = await wr.json();
     if (wd.error) return { ok: false, error: permHint(wd.error.message) };
     try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null };
+    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null, anchor: place.anchor };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
 
@@ -7143,21 +7155,52 @@ async function readScheduleSheet(env) {
     return { ok: true, tabs };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
-async function resolveTab(id, tab, token) {
+// The same tab-name matching resolveTab has always done, but carrying the tab's sheetId and its
+// ROW COUNT as well — read in the one metadata call either answer needs. A write has to know how
+// many rows the grid actually has: values.update never grows a sheet, so a range one row past the
+// end is refused outright rather than appended (see planAppendRow).
+async function resolveTabInfo(id, tab, token) {
   try {
-    const d = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title', { headers: { Authorization: 'Bearer ' + token } })).json();
-    const titles = ((d && d.sheets) || []).map(x => x.properties.title);
-    if (!titles.length || titles.indexOf(tab) >= 0) return tab;
-    const ci = titles.find(t => t.toLowerCase() === String(tab).toLowerCase());
-    if (ci) return ci;
-    const byPlan = titles.find(t => /plan/i.test(t));
-    if (byPlan) return byPlan;
+    const d = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties(sheetId,title,gridProperties(rowCount))', { headers: { Authorization: 'Bearer ' + token } })).json();
+    const props = ((d && d.sheets) || []).map(x => x && x.properties).filter(x => x && x.title);
+    if (!props.length) return { title: tab, sheetId: null, rowCount: 0 };
+    let p = props.find(x => x.title === tab)
+      || props.find(x => x.title.toLowerCase() === String(tab).toLowerCase())
+      || props.find(x => /plan/i.test(x.title));
     // Several tabs, none named/keyworded like the one asked for: guessing tab #1 here is how a
     // write can silently land on an unrelated tab nobody looks at (Reiss: a briefed task never
     // appeared in Project Plan because the workbook has more than one plan-shaped tab and this
     // fallback picked blind). Only auto-pick when there is truly no ambiguity — a single tab.
-    return titles.length === 1 ? titles[0] : null;
-  } catch (e) { return tab; }
+    if (!p && props.length === 1) p = props[0];
+    if (!p) return null;
+    return { title: p.title, sheetId: p.sheetId == null ? null : p.sheetId, rowCount: ((p.gridProperties || {}).rowCount) || 0 };
+  } catch (e) { return { title: tab, sheetId: null, rowCount: 0 }; }
+}
+async function resolveTab(id, tab, token) { const i = await resolveTabInfo(id, tab, token); return i ? i.title : null; }
+// WHERE APPENDED ROWS GO. Anchor on the last row carrying a TASK, not on the last row carrying
+// ANYTHING (Ray, 14 Oct 2026: "actions added by call / gemini - is not added in Project Plan
+// btw"). The Monsoon + Accessorize workbook's last task sits on row 515 and its very LAST GRID
+// ROW, 891, holds a lone "Open" in the status column with 375 empty rows between them — so
+// "immediately after the last content row" meant row 892, one row PAST THE END OF THE GRID, and
+// values.update refuses a range outside the grid ("exceeds grid limits"). Every task raised for
+// either brand failed that way and said nothing: a parsed call action, + Add task, a Golden
+// Record fix, a briefed ticket. Row 892 was also the wrong PLACE — 376 rows below the plan is
+// somewhere nobody scrolls, which reads as not written either way.
+// Stepping back to the last task is only safe into space that is REALLY empty, so the rows it
+// would fill are checked cell by cell first; anything sitting there and the write falls back to
+// after the last content row, which never overwrites what it cannot see.
+function planAppendRow(grid, taskCol, n) {
+  const rows = grid || [], tc = taskCol >= 0 ? taskCol : 0, want = Math.max(1, n || 1);
+  const used = r => (rows[r] || []).some(x => String(x == null ? '' : x).trim() !== '');
+  let lastAny = -1, lastTask = -1;
+  for (let r = 0; r < rows.length; r++) {
+    if (used(r)) lastAny = r;
+    if (String((rows[r] || [])[tc] == null ? '' : (rows[r] || [])[tc]).trim() !== '') lastTask = r;
+  }
+  const after = lastAny + 2;                                  // 1-based row just after the last content row
+  if (lastTask < 0 || lastTask >= lastAny) return { startRow: after, anchor: 'content' };
+  for (let r = lastTask + 1; r <= lastTask + want; r++) if (used(r)) return { startRow: after, anchor: 'content' };
+  return { startRow: lastTask + 2, anchor: 'task' };
 }
 function tabAmbiguous(id, tab) { return { ok: false, error: 'Could not find a single "' + tab + '"-like tab in this sheet (' + id + ') — it has several tabs and none match by name or contain "plan". Rename the intended tab to include "Plan", or the write risks landing on the wrong one.' }; }
 function permHint(m) { return /permission|forbidden/i.test(String(m)) ? (m + ' — the service account can read but not write: open the sheet\u2019s Share dialog and change its access from Viewer to Editor') : m; }
