@@ -321,6 +321,12 @@ else
   echo "   ✗ KWCal scope harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwcal_scopes.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_wfboot.js >/dev/null 2>&1; then
+  echo "   ✓ the Workflow board opens inside its blocking budget, and keeps the filter across a reload"
+else
+  echo "   ✗ Workflow boot harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_wfboot.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else
