@@ -213,6 +213,36 @@
       "pr": 77
     },
     {
+      "name": "worker: a shared project plan is split per brand at serve time (Monsoon + Accessorize)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "out[brand] = splitPlanCache(cached, brand, brandsOnSheet(fullMap, id))",
+      "pr": 0
+    },
+    {
+      "name": "worker: the plan parse reads each row's brand column",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const br = rowBrands(row, tcol, brands);",
+      "pr": 0
+    },
+    {
+      "name": "worker: a plan row raised for one brand of a shared workbook is stamped into the brand column",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const brandTok = appendToken(client, sheetBrands);",
+      "pr": 0
+    },
+    {
+      "name": "worker: the append dedupe is brand-aware on a shared workbook",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "rowCovered(have, k, tk)",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the board says when a plan row is one brand's only",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "only:(Array.isArray(t.br)&&t.br.length===1)?t.br[0]:''",
+      "pr": 0
+    },
+    {
       "name": "Workflow: a brief's due date is written onto the Intake row it was raised from",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function briefDueToRow(b,dueIso){",
