@@ -355,6 +355,85 @@ export function compSummary(reads, brand, domain) {
   return { total, queries: (reads || []).map((r) => ({ q: r.q, n: r.n })), merchants: list, us, them, signals };
 }
 
+// ---- Google Ads Auction Insights — the competitor read that needs no API (Ray, 14 Oct 2026: "is there a
+// way to bypass the competitor mapping without API?" → "i think Google Ads Auction insight") ----------------
+// The AM downloads the Auction Insights report from the Google Ads UI (Shopping campaigns: Display URL
+// domain · Impression share · Overlap rate · Outranking share; Search adds Position above / Top of page /
+// Abs. top of page) as CSV or Excel; the page reads the file into rows (docs/xlsx_engine.js readFile) and
+// PUTs the rows here. The report's own figures, never re-derived: "< 10%" is kept as a floor (lt), "--" is
+// null, a fraction from an Excel cell (0.4523) is the same 45.23%. A segmented export (a Campaign / Ad group
+// column) is folded per domain, the strongest figure kept and the count said.
+export const AUC_MAX_ROWS = 400;   // rows the page may send — a report lists tens of domains, never hundreds
+const AUC_COLS = [
+  ['d', /display url domain|domain/i], ['is', /impression share|impr\.? share/i], ['ov', /overlap rate/i],
+  ['or', /outranking share/i], ['pa', /position above rate/i], ['top', /top of page rate/i], ['atop', /abs\.? top of page/i],
+];
+export function aucPct(v) {
+  if (v == null || v === '') return { v: null };
+  if (typeof v === 'number') return isFinite(v) ? { v: Math.round((v <= 1 ? v * 100 : v) * 100) / 100 } : { v: null };
+  const s = String(v).trim();
+  if (!s || /^-+$/.test(s) || /^n\/?a$/i.test(s)) return { v: null };
+  const m = /^(<|>)?\s*([\d.,]+)\s*%?$/.exec(s.replace(/\s/g, ''));
+  if (!m) return { v: null };
+  const n = parseFloat(m[2].replace(/,/g, '')); if (!isFinite(n)) return { v: null };
+  return m[1] === '<' ? { v: n, lt: true } : m[1] === '>' ? { v: n, gt: true } : { v: Math.round(n * 100) / 100 };
+}
+export function parseAuction(rows) {
+  const R = Array.isArray(rows) ? rows : [];
+  let head = -1, map = null;
+  for (let i = 0; i < Math.min(R.length, 30); i++) {
+    const r = Array.isArray(R[i]) ? R[i] : []; const m = {};
+    r.forEach((c, j) => { const t = String(c == null ? '' : c); AUC_COLS.forEach(([k, re]) => { if (map === null && m[k] == null && re.test(t)) m[k] = j; }); });
+    if (m.d != null && m.is != null) { head = i; map = m; break; }
+  }
+  if (head < 0) return { ok: false, error: 'no Auction Insights header — the file needs a "Display URL domain" column beside "Impression share"' };
+  let range = '';
+  for (let i = 0; i < head; i++) { const t = (R[i] || []).map((c) => String(c == null ? '' : c)).join(' ').trim(); if (/\d{4}/.test(t) && /[-–]/.test(t)) range = t.slice(0, 80); }
+  const segCol = (R[head] || []).findIndex((c) => /^(campaign|ad group|device|day|week|month)/i.test(String(c || '')));
+  const by = {}, order = [];
+  for (let i = head + 1; i < R.length; i++) {
+    const r = R[i]; if (!Array.isArray(r)) continue;
+    const dRaw = String(r[map.d] == null ? '' : r[map.d]).trim(); if (!dRaw || /^total/i.test(dRaw)) continue;
+    const you = /^you$/i.test(dRaw);
+    const d = you ? 'You' : dRaw.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').slice(0, 120);
+    const e = by[d] || (by[d] = { d, you, n: 0 }); if (!by[d].n) order.push(d); e.n++;
+    ['is', 'ov', 'or', 'pa', 'top', 'atop'].forEach((k) => {
+      if (map[k] == null) return; const p = aucPct(r[map[k]]);
+      if (p.v == null) return;
+      if (e[k] == null || p.v > e[k]) { e[k] = p.v; if (p.lt) e[k + 'Lt'] = true; else delete e[k + 'Lt']; }
+    });
+  }
+  const list = order.map((d) => by[d]);
+  if (!list.length) return { ok: false, error: 'the header was found but no domain rows followed it' };
+  const you = list.find((x) => x.you) || null;
+  const comps = list.filter((x) => !x.you).sort((a, b) => (b.is || 0) - (a.is || 0));
+  return { ok: true, range, segmented: segCol >= 0, you, comps: comps.slice(0, 60), cols: Object.keys(map).filter((k) => k !== 'd') };
+}
+export function cleanAuction(v) {
+  if (!v || typeof v !== 'object' || !Array.isArray(v.comps)) return null;
+  const num = (x) => (typeof x === 'number' && isFinite(x) ? Math.max(0, Math.min(100, x)) : null);
+  const row = (r) => { if (!r || !r.d) return null; const o = { d: String(r.d).slice(0, 120), you: !!r.you, n: Math.max(1, Math.round(+r.n) || 1) };
+    ['is', 'ov', 'or', 'pa', 'top', 'atop'].forEach((k) => { const n = num(r[k]); if (n != null) { o[k] = n; if (r[k + 'Lt']) o[k + 'Lt'] = true; } }); return o; };
+  return { v: 1, at: +v.at || 0, mkt: String(v.mkt || '').slice(0, 12), range: String(v.range || '').slice(0, 80), segmented: !!v.segmented,
+    you: v.you ? row(v.you) : null, comps: v.comps.slice(0, 60).map(row).filter(Boolean), by: String(v.by || '').slice(0, 80) };
+}
+/* the signals an Auction Insights read promotes — ads outcomes, so they name the tests that move eligibility
+   (keywords, titles) and bidding (performance labels), never a creative test the report cannot see */
+export function auctionSignals(a) {
+  const out = [];
+  if (!a || !a.comps || !a.comps.length) return out;
+  const top = a.comps[0], you = a.you;
+  const yi = you && typeof you.is === 'number' ? you.is : null;
+  if (yi != null && typeof top.is === 'number' && top.is > yi + 5) {
+    out.push({ k: 'kw_theme', why: top.d + ' wins ' + top.is + '% impression share against your ' + yi + '% (Auction Insights' + (a.range ? ', ' + a.range : '') + ') — eligibility is what keywords lift' });
+    out.push({ k: 'title_mask', why: top.d + ' is in ' + top.is + '% of the auctions you could enter, you in ' + yi + '% — richer titles match more of them' });
+  }
+  const outranked = a.comps.filter((c) => typeof c.or === 'number' && c.or < 40 && typeof c.ov === 'number' && c.ov >= 20);
+  if (outranked.length) out.push({ k: 'cl_perf', why: 'you outrank ' + outranked.slice(0, 3).map((c) => c.d + ' only ' + c.or + '%').join(', ') + ' of the time where you both show — a performance-tier label lets the campaign bid the heroes apart' });
+  if (yi != null && yi < 20 && a.comps.length >= 3) out.push({ k: 'sale_badge', why: 'your impression share is ' + yi + '% among ' + a.comps.length + ' competitors — a price-drop badge earns the auctions a bid cannot' });
+  return out;
+}
+
 // ---- the proposals -------------------------------------------------------------------------------------------
 const MMYY = (ms) => { const d = new Date(ms); return String(d.getMonth() + 1).padStart(2, '0') + String(d.getFullYear()).slice(2); };
 const MON = (ms) => new Date(ms).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });

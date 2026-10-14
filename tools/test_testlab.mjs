@@ -116,6 +116,28 @@ t('readiness reads the feeds: no Meta feed, no second image, conversational attr
 t('the counts add up over every test', PB.counts.ready + PB.counts.blocked + PB.counts.briefed + PB.counts.ran === TL.TESTS.length);
 t('a brand with no evidence in the book still gets three ready proposals resting on the platform pages', PB.top.length === 3 && PB.top.every((p) => p.status === 'ready' && p.src));
 
+console.log('── Auction Insights — the report as Google Ads downloads it, no API');
+// the Shopping-campaign shape: a title line, the date range, the header, "You", competitors, "< 10%" and "--"
+const AUC = [['Auction insights report'], ['1 Oct 2026 - 14 Oct 2026'], [],
+  ['Display URL domain', 'Impression share', 'Overlap rate', 'Outranking share'],
+  ['You', '23.40%', '--', '--'], ['harbour.example', '45.10%', '60.00%', '31.20%'], ['www.atelier.example', '< 10%', '12.00%', '70.00%'], ['Total', '--', '--', '--']];
+let a = TL.parseAuction(AUC);
+t('the header is found under the title lines, the range read off the line before it', a.ok && a.range === '1 Oct 2026 - 14 Oct 2026' && !a.segmented && a.cols.join() === 'is,ov,or');
+t('You is apart; competitors sorted by impression share; www./scheme stripped, lower-cased; Total skipped', a.you.you && a.you.is === 23.4 && a.comps.map((c) => c.d).join() === 'harbour.example,atelier.example' && a.comps.length === 2);
+t('"< 10%" is kept as a floor, never 10; "--" is null, never 0', a.comps[1].is === 10 && a.comps[1].isLt === true && a.you.ov == null && a.comps[0].ov === 60);
+const AUCX = [['Campaign', 'Display URL domain', 'Impression share', 'Overlap rate', 'Outranking share', 'Position above rate', 'Top of page rate', 'Abs. top of page rate'],
+  ['Shopping - GB', 'You', 0.31, '', '', '', 0.9, 0.42], ['Shopping - GB', 'harbour.example', 0.52, 0.61, 0.3, 0.55, 0.8, 0.3], ['PMax - GB', 'harbour.example', 0.2, 0.3, 0.6, 0.2, 0.5, 0.1], ['PMax - GB', 'linden.example', 0.08, 0.2, 0.9, 0.1, 0.3, 0.05]];
+a = TL.parseAuction(AUCX);
+t('an Excel export: fractions read as the same percentages; a Campaign column folds rows per domain keeping the strongest figure and the count; the Search columns ride along', a.ok && a.segmented && a.you.is === 31 && a.you.top === 90 && a.comps[0].d === 'harbour.example' && a.comps[0].n === 2 && a.comps[0].is === 52 && a.comps[0].or === 60 && a.comps[1].is === 8 && a.cols.join() === 'is,ov,or,pa,top,atop');
+t('a file with no Auction Insights header is refused with the fix, never read as empty data', TL.parseAuction([['Campaign', 'Clicks', 'Cost'], ['x', 1, 2]]).ok === false && /Display URL domain/.test(TL.parseAuction([['a']]).error) && TL.parseAuction(null).ok === false && TL.parseAuction([['Display URL domain', 'Impression share']]).ok === false);
+t('aucPct: a number ≤1 is a fraction, 45.23 is a percentage, "1,234%" never, "> 90%" a ceiling', TL.aucPct(0.4523).v === 45.23 && TL.aucPct(45.23).v === 45.23 && TL.aucPct('45.23%').v === 45.23 && TL.aucPct('> 90%').gt === true && TL.aucPct('n/a').v === null && TL.aucPct('').v === null);
+const rec = TL.cleanAuction(Object.assign({}, TL.parseAuction(AUC), { at: NOW, mkt: 'gb', by: 'ray@feedspark.com' }));
+t('cleanAuction keeps the shape, clamps to 0–100, and a second pass changes nothing', rec && rec.v === 1 && rec.at === NOW && rec.mkt === 'gb' && rec.comps.length === 2 && rec.comps[1].isLt === true && JSON.stringify(TL.cleanAuction(rec)) === JSON.stringify(rec) && TL.cleanAuction({ comps: [{ d: 'x', is: 140 }] }).comps[0].is === 100 && TL.cleanAuction(null) === null && TL.cleanAuction({}) === null);
+const sg = TL.auctionSignals(rec), sgk = sg.map((x) => x.k);
+t('the signals name tests that move ELIGIBILITY and BIDDING — a leader 5+ points ahead on impression share promotes keywords + titles, being outranked under 40% where you overlap promotes a performance label, a share under 20% among 3+ promotes the sale badge', sgk.indexOf('kw_theme') >= 0 && sgk.indexOf('title_mask') >= 0 && sgk.indexOf('cl_perf') >= 0 && sgk.indexOf('sale_badge') < 0 && sg.every((x) => /\d/.test(x.why)) && /harbour\.example wins 45\.1%/.test(sg[0].why));
+t('no signal where the report says nothing: no comps, or You ahead', TL.auctionSignals(null).length === 0 && TL.auctionSignals({ you: { is: 60 }, comps: [{ d: 'a', is: 20, ov: 50, or: 80 }] }).length === 0);
+t('the signals are keys of real tests, so a proposal can wear them', sgk.every((k) => TL.TESTS.some((x) => x.k === k)));
+
 console.log('── the routes, lifted out of worker.js against a stub KV + a stub SerpApi');
 function lift(startMark) {
   const start = WK.indexOf(startMark);
@@ -125,9 +147,10 @@ function lift(startMark) {
 }
 const b1 = lift("  if (path === '/api/testlab' && request.method === 'GET') {");
 const b2 = lift("  if (path === '/api/compwatch' && (request.method === 'GET' || request.method === 'POST')) {");
-t('both route blocks are found', b1.length > 500 && b2.length > 500);
+const b3 = lift("  if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {");
+t('all three route blocks are found', b1.length > 500 && b2.length > 500 && b3.length > 500);
 const AsyncFn = Object.getPrototypeOf(async function () {}).constructor;
-const routeFn = new AsyncFn('path', 'url', 'request', 'env', 'ctx', 'accessOf', 'clientMatch', 'clientSlug', 'moduleAllowed', 'feedRoster', 'json', 'logActivity', 'TL', 'AIVIS', 'RET', 'retiredSetOf', 'PLAN_SHEETS', 'industryOf', 'liftEnvelope', 'lgKey', 'mktOf', 'fetch', b1 + '\n' + b2 + '\nreturn null;');
+const routeFn = new AsyncFn('path', 'url', 'request', 'env', 'ctx', 'accessOf', 'clientMatch', 'clientSlug', 'moduleAllowed', 'feedRoster', 'json', 'logActivity', 'TL', 'AIVIS', 'RET', 'retiredSetOf', 'PLAN_SHEETS', 'industryOf', 'liftEnvelope', 'lgKey', 'mktOf', 'fetch', b1 + '\n' + b3 + '\n' + b2 + '\nreturn null;');
 function kvStub() {
   const m = new Map();
   return { m, async get(k, type) { const v = m.get(k); if (v == null) return null; return type === 'json' ? JSON.parse(v) : v; }, async put(k, v) { m.set(k, v); }, async delete(k) { m.delete(k); } };
@@ -191,8 +214,37 @@ d = await res.json();
 t('the test lab now carries the market’s read and its signals, and the proposals wear them', d.comp.markets.gb && d.comp.markets.gb.n === 18 && d.comp.signals.length > 0 && d.top.concat(d.rest).some((p) => /^Competitors: /.test(p.ev)));
 t('the money throttle covers the read: /api/compwatch is a money path with its own limit', SEC.MONEY_PATHS.has('/api/compwatch') && SEC.THROTTLES['/api/compwatch'].limit === 40);
 
+console.log('── the Auction Insights upload, lifted');
+res = await call('PUT', '/api/compwatch/auction', { client: 'Northwind', market: 'de', rows: AUC });
+d = await res.json();
+const storedA = JSON.parse(KV.m.get('compauction:Northwind:de') || 'null');
+t('PUT stores the checked record under compauction:<client>:<mkt>, stamps who and when, logs it, answers the record + its signals', d.ok && d.auction.comps.length === 2 && storedA && storedA.v === 1 && storedA.at > 0 && storedA.mkt === 'de' && storedA.range === '1 Oct 2026 - 14 Oct 2026' && d.signals.length >= 2 && logs.some((l) => /^compauction-upload Northwind DE · 2 competitors/.test(l)));
+t('the stored record is the figures only — never the file’s rows or a raw cell', !/Auction insights report/.test(KV.m.get('compauction:Northwind:de')) && !/Total/.test(KV.m.get('compauction:Northwind:de')));
+res = await call('PUT', '/api/compwatch/auction', { client: 'Northwind', market: 'de', rows: [['Campaign', 'Clicks'], ['x', 2]] });
+d = await res.json();
+t('a file with no Auction Insights header is refused with the fix, the stored report untouched', res.status === 400 && /Display URL domain/.test(d.error) && KV.m.get('compauction:Northwind:de') === JSON.stringify(storedA));
+res = await call('PUT', '/api/compwatch/auction', { client: 'Northwind', market: 'de', rows: [] });
+t('no rows is refused', res.status === 400);
+res = await call('PUT', '/api/compwatch/auction', { client: 'Northwind', market: 'gb-fb', rows: AUC });
+t('a Meta market is refused — it is a Google Ads report', res.status === 400);
+res = await call('PUT', '/api/compwatch/auction', { client: 'Northwind', market: 'de', rows: AUC }, { owner: false, clients: null, modules: ['feedlab'] });
+t('writing needs the Workflow module', res.status === 403);
+res = await call('PUT', '/api/compwatch/auction', { client: 'Harbour', market: 'gb', rows: AUC }, { owner: false, clients: ['Northwind'], modules: null });
+t('scope: a client outside the signin’s scope is refused', res.status === 403);
+res = await call('GET', '/api/compwatch/auction?client=Northwind&market=de');
+d = await res.json();
+t('GET serves the stored report', d.ok && d.auction && d.auction.comps[0].d === 'harbour.example');
+res = await call('GET', '/api/testlab?client=Northwind');
+d = await res.json();
+t('the test lab carries the report on its market, WITHOUT a Shopping read, with its signals marked as the auction’s; the proposals wear them', d.comp.markets.de && !d.comp.markets.de.summary && d.comp.markets.de.auction.comps.length === 2 && d.comp.markets.de.auction.signals.length >= 2 && d.comp.signals.some((x) => x.src === 'auction' && x.mkt === 'de') && d.comp.signals.some((x) => x.src === 'shopping' && x.mkt === 'gb') && d.top.concat(d.rest).some((p) => p.k === 'cl_perf' && /^Competitors: /.test(p.ev)));
+res = await call('DELETE', '/api/compwatch/auction?client=Northwind&market=de');
+d = await res.json();
+t('DELETE forgets it, and the lab no longer carries it', d.ok && d.auction === null && !KV.m.has('compauction:Northwind:de') && (await (await call('GET', '/api/testlab?client=Northwind')).json()).comp.markets.de === null);
+t('no money is spent on an upload: the auction route is not a money path', !SEC.MONEY_PATHS.has('/api/compwatch/auction'));
+
 console.log('── wiring');
 t('the worker imports the engine and serves both routes', /import \* as TL from "\.\/testlab\.js"/.test(WK) && /path === '\/api\/testlab'/.test(WK) && /path === '\/api\/compwatch'/.test(WK));
+t('the rail uploads the Auction Insights report through the xlsx engine loaded on first use, PUTs rows only, draws the report and lets it be forgotten', /fetch\('\/api\/compwatch\/auction',\{method:'PUT'/.test(WF) && /sc\.src='\/xlsx\/engine\.js'/.test(WF) && /function secAuction\(m,a\)/.test(WF) && /data-au-x=/.test(WF) && /utf-16le/.test(WF) && /id="ck-au-file"/.test(WF));
 t('the Playbook rail draws the section after the Top 3 and wires it', /secActions\(BRAND\)\+secTests\(BRAND\)\)/.test(WF) && /wireTests\(BRAND\)/.test(WF) && /id="ck-tl"/.test(WF) && /fetch\('\/api\/testlab\?client='/.test(WF) && /fetch\('\/api\/compwatch'/.test(WF));
 t('→ Brief raises the brief through the ONE composer entry, as a test', /window\.FCCBrief\(\{client:brand,task:p\.brief\.task,cat:p\.brief\.cat,source:'plan',scope:p\.brief\.scope\}\)/.test(WF));
 t('cold archives are warmed once per session through the archive route, never guessed', /fetch\('\/api\/abtests\?client='\+encodeURIComponent\(b\)\)/.test(WF) && /TLWARM\[b\]=1/.test(WF));

@@ -40,7 +40,10 @@ const TLD = { ok: true, client: 'Northwind', industry: 'Fashion',
     merchants: [{ m: 'Atelier', n: 40, share: 33.3, top3: 5, queries: 3, sale: 45, rated: 60, typeFirst: 70, priceMed: 55, lenMed: 62, img: 'https://x/a' }, { m: 'Harbour', n: 30, share: 25, top3: 2, queries: 2, sale: 10, rated: 0, typeFirst: 40, priceMed: 70, lenMed: 50, img: '' }],
     us: { n: 6, share: 5, top3: 0, posMed: 14, sale: 0, rated: 0, typeFirst: 20, priceMed: 89, lenMed: 38, thumbs: [{ img: 'https://x/us1', t: 'Northwind Midi Dress', q: 'womens dresses' }] },
     them: { n: 114, sale: 35, rated: 48, typeFirst: 62, priceMed: 60, lenMed: 58, thumbs: [{ img: 'https://x/t1', m: 'Atelier', t: 'Pleated midi dress', q: 'womens dresses', sale: true, p: 55 }, { img: 'https://x/t2', m: 'Harbour', t: 'Wrap dress', q: 'womens dresses', sale: false, p: 70 }] },
-    signals: [{ k: 'sale_badge', why: 'competitors badge a sale on 35% of their Shopping results; you on 0%' }] } }, de: null },
+    signals: [{ k: 'sale_badge', why: 'competitors badge a sale on 35% of their Shopping results; you on 0%' }] },
+    auction: { v: 1, at: Date.now() - 7200000, mkt: 'gb', range: '1 Oct 2026 - 14 Oct 2026', segmented: false, you: { d: 'You', you: true, n: 1, is: 23.4 },
+      comps: [{ d: 'harbour.example', you: false, n: 1, is: 45.1, ov: 60, or: 31.2 }, { d: 'atelier.example', you: false, n: 1, is: 10, isLt: true, ov: 12, or: 70 }],
+      signals: [{ k: 'kw_theme', why: 'harbour.example wins 45.1% impression share against your 23.4% (Auction Insights, 1 Oct 2026 - 14 Oct 2026) — eligibility is what keywords lift' }] } }, de: null },
     signals: [{ mkt: 'gb', k: 'sale_badge', why: 'competitors badge a sale on 35% of their Shopping results; you on 0%' }],
     meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } },
   feeds: [{ mkt: 'gb', fb: true, scanned: true }, { mkt: 'de', fb: false, scanned: false }] };
@@ -50,6 +53,8 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
   + "var j=function(x){return Promise.resolve(new Response(JSON.stringify(x),{status:200,headers:{'content-type':'application/json'}}))};"
   + "if(/engine\\.js/.test(u))return real(u,o);"
   + "if(u.indexOf('/api/compwatch')>=0&&o&&o.method==='POST'){window.__posts.push(JSON.parse(o.body));return j({ok:true,fresh:true});}"
+  + "if(u.indexOf('/api/compwatch/auction')>=0&&o&&o.method==='PUT'){window.__puts=window.__puts||[];window.__puts.push(JSON.parse(o.body));return j({ok:true,auction:{comps:[{d:'harbour.example'},{d:'atelier.example'}]},signals:[]});}"
+  + "if(u.indexOf('/api/compwatch/auction')>=0&&o&&o.method==='DELETE'){window.__dels=(window.__dels||0)+1;return j({ok:true,auction:null});}"
   + "if(u.indexOf('/api/testlab')>=0){window.__tlhits=(window.__tlhits||0)+1;return j(" + JSON.stringify(TLD) + ");}"
   + "if(u.indexOf('/api/playbook')>=0)return j(" + JSON.stringify(PLAYBOOK) + ");"
   + "if(u.indexOf('/api/golden/estate')>=0)return j({ok:true,feeds:{}});"
@@ -112,7 +117,7 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
     us: (n.querySelector('.ck-cwm .nm.us') || { textContent: '' }).textContent.trim(),
     usLine: (n.querySelector('.ck-cwm .nm.us') ? n.querySelector('.ck-cwm .nm.us').parentNode.textContent : '').replace(/\s+/g, ' ').trim(),
     thumbs: n.querySelectorAll('.ck-thumbs a').length, ours: n.querySelectorAll('.ck-thumbs a.us').length, sale: n.querySelectorAll('.ck-thumbs .s').length,
-    sig: [...n.querySelectorAll('.ck-sig')].map((e) => e.textContent.trim()),
+    sig: [...n.querySelectorAll('.ck-sig')].filter((e) => !e.closest('.ck-au')).map((e) => e.textContent.trim()),
     read: n.querySelectorAll('[data-cw]').length, notYet: /not read yet/.test(n.textContent), meta: /Meta Ad Library/.test(n.textContent),
     bars: [...n.querySelectorAll('.ck-tlbar i')].map((i) => i.style.width),
   }));
@@ -122,6 +127,37 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
   ok('the signal names the test and the figures behind it', cw.sig.length === 1 && /test sale badge/.test(cw.sig[0]) && /35%/.test(cw.sig[0]), cw.sig);
   ok('an unread market offers ⚡ Read now; a read one offers ⟳', cw.read === 2 && cw.notYet);
   ok('Meta is stated as not readable, with why', cw.meta);
+
+  console.log('\n3b) Auction Insights — the report drawn as uploaded, and uploaded through the real file input');
+  const au = await page.$eval('#ck-tl .ck-cw', (n) => {
+    const blocks = [...n.querySelectorAll('.ck-au')];
+    const gb = blocks[0], de = blocks[1];
+    return { blocks: blocks.length, head: gb.querySelector('.ck-cwm').textContent.replace(/\s+/g, ' ').trim(),
+      rows: [...gb.querySelectorAll('.ck-cwm')].slice(1).map((r) => r.textContent.replace(/\s+/g, ' ').trim()),
+      youFirst: gb.querySelectorAll('.ck-cwm')[1].classList.contains('you'), lt: !!gb.querySelector('.lt'),
+      bars: [...gb.querySelectorAll('.ck-tlbar i')].map((i) => i.style.width), sig: [...gb.querySelectorAll('.ck-sig')].map((e) => e.textContent.trim()),
+      deHead: de.textContent.replace(/\s+/g, ' ').trim(), upBtn: !!de.querySelector('[data-au="de"]'), replBtn: !!gb.querySelector('[data-au="gb"]'), forget: !!gb.querySelector('[data-au-x="gb"]'),
+      input: (() => { const i = document.querySelector('#ck-au-file'); return i ? { type: i.type, hidden: getComputedStyle(i).display === 'none' } : null; })() };
+  });
+  ok('one block per market: GB carries the report with its range and upload date; DE says no report uploaded with ⇪ Upload', au.blocks === 2 && /1 Oct 2026 - 14 Oct 2026/.test(au.head) && /uploaded/.test(au.head) && /no report uploaded/.test(au.deHead) && au.upBtn, au);
+  ok('You first, then the domains by impression share, each a bar; "< 10%" drawn as the floor it is', au.youFirst && /^You.*23\.4%/.test(au.rows[0]) && /harbour\.example.*45\.1%.*overlap 60%.*you outrank 31\.2%/.test(au.rows[1]) && /atelier\.example.*<10%/.test(au.rows[2]) && au.lt && au.bars[0] === '23%' && au.bars[1] === '45%', au.rows);
+  ok('the auction signal names the test and the figures; ⇪ Replace and ✕ offered on a read market', au.sig.length === 1 && /test kw theme/.test(au.sig[0]) && /45\.1%/.test(au.sig[0]) && au.replBtn && au.forget, au.sig);
+  ok('the file input is a real file control, hidden until the button opens it', au.input && au.input.type === 'file' && au.input.hidden, au.input);
+  const csv = path.join(require('os').tmpdir(), 'fcc-auction-' + process.pid + '.csv');
+  require('fs').writeFileSync(csv, '\ufeffAuction insights report\n1 Oct 2026 - 14 Oct 2026\n\nDisplay URL domain,Impression share,Overlap rate,Outranking share\nYou,23.40%,--,--\nharbour.example,45.10%,60.00%,31.20%\n"www.atelier.example",< 10%,12.00%,70.00%\nTotal,--,--,--\n');
+  const hitsBefore = await page.evaluate(() => window.__tlhits || 0);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#ck-tl [data-au="de"]')]);
+  await chooser.setFiles(csv);
+  await page.waitForTimeout(2500);
+  const up = await page.evaluate(() => ({ puts: window.__puts || [], hits: window.__tlhits || 0 }));
+  if (process.env.AU_DEBUG) console.log('DEBUG', JSON.stringify({ errs, hitsBefore, hits: up.hits }));
+  try { require('fs').unlinkSync(csv); } catch (e) {}
+  ok('⇪ Upload opens the file chooser; the file is read in the browser into ROWS and PUT once for the brand and market — the blank line dropped, the quoted domain unquoted', up.puts.length === 1 && up.puts[0].client === 'Northwind' && up.puts[0].market === 'de' && up.puts[0].rows.length === 7 && up.puts[0].rows[2][0] === 'Display URL domain' && up.puts[0].rows[5][0] === 'www.atelier.example' && up.puts[0].rows[5][1] === '< 10%', up.puts[0] && { n: up.puts[0].rows.length, r5: up.puts[0].rows[5] });
+  ok('the lab is re-read after the upload', up.hits > hitsBefore, up);
+  page.once('dialog', (d) => d.accept());
+  await page.click('#ck-tl [data-au-x="gb"]');
+  await page.waitForTimeout(600);
+  ok('✕ asks, then DELETEs the stored report', (await page.evaluate(() => window.__dels || 0)) === 1);
 
   console.log('\n4) ⚡ Read now POSTs the market and re-reads the lab');
   const before = await page.evaluate(() => window.__tlhits || 0);
