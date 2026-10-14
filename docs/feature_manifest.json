@@ -12044,6 +12044,36 @@
       "pr": 0
     },
     {
+      "name": "KWCal: Monsoon seasonal themes seeded (10, two a work month, Oct 2026 → Feb 2027)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Monsoon:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Monsoon lanes renamed — kidswear is its own lane",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Monsoon:{campaign:'Seasonal focus'",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the Monsoon board is held to an INDEPENDENT census of the live GB feed",
+      "file": "tools/test_kwcal_monsoon.mjs",
+      "pattern": "monsoon_gb_product_types_2026-10-14.json",
+      "pr": 0
+    },
+    {
+      "name": "Workflow to-brief band: a brief-by more than 20 days past leaves the view",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "stale>0&&inDays<-stale",
+      "pr": 0
+    },
+    {
+      "name": "Workflow to-brief band: what the 20-day window dropped is named, not silently gone",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "kwd-stale",
+      "pr": 0
+    },
+    {
       "name": "KWCal: Superdry focus themes seeded (16, Oct 2026 → Jan 2027)",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "Superdry:{events:[",
