@@ -1257,6 +1257,42 @@ function applySeeds(){
     if(!STORE[c]||!(STORE[c].events||[]).length){ STORE[c]=JSON.parse(JSON.stringify(SEED[c])); }
   });
 }
+/* ---- A SEED REACHES A BOARD THAT ALREADY EXISTS (Ray, 14 Oct 2026, on the Schuh scopes shipped
+   that morning: "i dont see products being selected in scopes for Schuh btw"). applySeeds writes a
+   brand's seed ONLY when KV holds no events for it — right, since a seed must never overwrite the
+   board the team has been working. But Schuh was seeded 22 Sep, Reiss since v1 and Accessorize on
+   11 Sep, so every one of them HAS a KV record, and a scope added to the seed afterwards could
+   never reach the live board: the work shipped and nothing changed on screen. (Monsoon's board was
+   new, which is why its ten scopes appeared and these did not — and why every harness, stubbing an
+   empty /api/kwcal, proved the seed rather than the migration.)
+   So the seed upgrades a stored moment, field by field, and ONLY where the board has nothing of
+   its own to lose: a stored moment matched BY ID whose scope is empty in every form (pts, a
+   per-market pts, a text filter, an attribute condition, brand-wide) takes the seed's scope. A
+   moment an AM has scoped is never touched, and neither is its name, date, lane or terms — those
+   are edited on the card and the board is the authority on them. The note follows only when it is
+   the seed's own note with more added to it (which is what a scope line is), never over wording
+   somebody else wrote. One pass on boot, before the first render, saved once and idempotent — on
+   the second load every moment already carries its scope and nothing is written. ---- */
+function upgradeSeeds(){
+  var n=0;
+  Object.keys(SEED).forEach(function(c){
+    var st=STORE[c]; if(!st||!Array.isArray(st.events)||!st.events.length)return;   // applySeeds owns an empty board
+    var seed={}; (SEED[c].events||[]).forEach(function(e){ if(e.id)seed[String(e.id)]=e; });
+    st.events.forEach(function(e){
+      var s=seed[String(e.id||'')]; if(!s)return;
+      var mine=!!(e.brandwide||(e.pts&&e.pts.length)||(e.ptsm&&Object.keys(e.ptsm).length)
+                 ||(e.txsm&&Object.keys(e.txsm).length)||(e.cndm&&Object.keys(e.cndm).length));
+      if(mine)return;
+      var took=0;
+      if(s.pts&&s.pts.length){ e.pts=s.pts.slice(); took=1; }
+      if(s.brandwide&&!e.brandwide){ e.brandwide=1; took=1; }
+      if(!took)return;
+      if(s.note&&(!e.note||s.note.indexOf(e.note)===0))e.note=s.note;
+      n++;
+    });
+  });
+  return n;
+}
 function schedDate(e){ return KWE.schedDate(e); }
 function dLbl(e){ return KWE.dLbl(e); }
 /* THE CARD SAYS WHICH DATE IS WHICH (Ray, 14 Oct 2026: "due date doesn't fit with month card").
@@ -3043,7 +3079,7 @@ $('#import').addEventListener('click',function(){ if(CLIENT==='*'){err('Open a b
 function save(){ if(saveT)clearTimeout(saveT); saveT=setTimeout(function(){
   fetch('/api/kwcal',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(STORE)})
     .then(function(r){ BASE=+r.headers.get('X-Sync-Base')||BASE; return r.json(); })
-    .then(function(m){ if(m&&typeof m==='object'&&!m.ok){ STORE=m; applySeeds(); if(!editMode)render(); } })
+    .then(function(m){ if(m&&typeof m==='object'&&!m.ok){ STORE=m; applySeeds(); upgradeSeeds(); if(!editMode)render(); } })
     .catch(function(){});
 },600); }
 function syncNote(){ $('#syncstate').textContent='shared board · saves sync to the team'; }
@@ -3105,6 +3141,7 @@ function boot(){
     STORE=res[0]&&typeof res[0]==='object'?res[0]:{};
     if(rehomeImports())save();   // before applySeeds — a repaired brand already has its events
     applySeeds();
+    if(upgradeSeeds())save();    // a scope added to the seed after a board existed
     var roster={}; Object.keys((res[1]&&res[1].clients)||{}).forEach(function(k){roster[k]=1});
     Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')roster[k]=1; });
     var names=Object.keys(roster).sort();

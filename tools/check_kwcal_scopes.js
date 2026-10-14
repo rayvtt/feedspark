@@ -142,6 +142,58 @@ const INIT = "window.fetch=function(url){var u=String(url);"
     bad.slice(0, 3).map((m) => m.id + ' → ' + byId[m.id] + ' want '
       + m.pts.reduce((a, pp) => a + (cen[pp] ? cen[pp].skus : 0), 0)));
 
+  /* 4) THE BOARD THAT ALREADY EXISTS (Ray, 14 Oct 2026: "i dont see products being selected in
+     scopes for Schuh btw"). Every check above loads against an EMPTY /api/kwcal, so applySeeds
+     writes the whole seed and the scopes are there by construction — which is why all of them
+     passed on a live board that had none. Schuh's KV record has held events since 22 Sep, so the
+     real state is a stored moment with the seed's id and NO scope: upgradeSeeds has to fill it,
+     and a moment somebody has scoped by hand has to survive untouched. */
+  console.log('\n4) a scope added to the seed reaches a board that already had events');
+  const mine = sch[0].id, keep = ['Mens > Trainers > Nike'];
+  const pre = { Schuh: {
+    ptidx: { gb: { map: Object.assign({}, map, { 'Mens > Trainers > Nike': 123 }), __total: 22344,
+      sat: { n: 7950, cols: 1, v: 2 }, t: Date.now() } },
+    events: sch.map((m, i) => {
+      const e = { id: m.id, name: 'M' + i, lane: 'studio',
+        date: '2026-11-' + String((i % 27) + 1).padStart(2, '0'), terms: ['x'] };
+      if (m.id === mine) e.pts = keep;              // an AM's own scope — never overwritten
+      return e;                                      // every other moment: no scope at all
+    }) } };
+  let put = null;
+  const p3 = await ctx.newPage();
+  const errs3 = []; p3.on('pageerror', (e) => errs3.push(e.message));
+  await p3.addInitScript({ content: INIT.replace("if(u.indexOf('/api/kwcal')>=0)return j({});",
+    "if(u.indexOf('/api/kwcal')>=0){if((arguments[1]||{}).method==='PUT'){window.__put=arguments[1].body;return j({ok:1})}return j("
+    + JSON.stringify(pre) + ")}") });
+  await p3.goto('file://' + path.join(D, 'FeedSpark_KWCal.html') + '?client=Schuh');
+  await p3.waitForTimeout(1800);
+  ok('no page error', errs3.length === 0, errs3.slice(0, 2));
+  const up = await p3.$$eval('.scope', (n) => n.map((b) => ({
+    id: b.getAttribute('data-scope'), txt: b.textContent.trim(), cls: b.className })));
+  const upById = Object.fromEntries(up.map((b) => [b.id, b.txt]));
+  ok('no card reads "Set scope"', !up.some((b) => /\bunset\b/.test(b.cls)),
+    up.filter((b) => /\bunset\b/.test(b.cls)).slice(0, 3).map((b) => b.id));
+  const idx = pre.Schuh.ptidx.gb.map;   // the fixture's own index, Nike override included
+  const miss = sch.filter((m) => m.id !== mine).filter((m) => {
+    const want = m.pts.reduce((a, pp) => a + (idx[pp] || 0), 0);
+    return upById[m.id] !== want.toLocaleString('en-GB') + ' products' && upById[m.id] !== want + ' products';
+  });
+  ok('every unscoped stored moment took the seed’s scope', miss.length === 0,
+    miss.slice(0, 3).map((m) => m.id + ' → ' + upById[m.id]));
+  ok('a scope the AM set by hand is left exactly as it was', upById[mine] === '123 products',
+    { id: mine, got: upById[mine] });
+  put = await p3.evaluate(() => window.__put || null);
+  ok('the upgrade is saved to the team, not left on this screen', !!put && /pts/.test(put));
+  const saved = put ? JSON.parse(put) : null;
+  if (saved) {
+    const ev = (saved.Schuh.events || []).reduce((a, e) => (a[e.id] = e, a), {});
+    ok('…and the saved record carries the AM’s own scope untouched',
+      JSON.stringify((ev[mine] || {}).pts) === JSON.stringify(keep), (ev[mine] || {}).pts);
+    const other = sch.find((m) => m.id !== mine);
+    ok('…and the seed’s scope on the rest',
+      JSON.stringify((ev[other.id] || {}).pts) === JSON.stringify(other.pts), (ev[other.id] || {}).pts);
+  }
+
   await browser.close();
   console.log(fail ? '\nFAIL ' + fail : '\nPASS');
   process.exit(fail ? 1 : 0);
