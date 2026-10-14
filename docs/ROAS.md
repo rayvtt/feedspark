@@ -14,7 +14,7 @@ Live at `/roas`. Module slug `roas` (grantable in the 👥 Access panel like eve
   and FeedHero's own Strong / Steady / Weak / Losing band.
 - **Scope** — FeedHero's `client_list` carries 112 clients, most of them not FeedSpark's.
   `ROAS_ROSTER` (`src/roas.js`) is the seven brands Ray named — Superdry, Reiss, Schuh, Monsoon,
-  Accessorize, YuMOVE, Hobbycraft — resolved to FeedHero's own `cmpid` per market (57 markets).
+  Accessorize, YuMOVE, Hobbycraft — resolved to FeedHero's own `cmpid` per market (56 markets — Monsoon IE left the roster 14 Oct 2026: Ray, "Monsoon IE doesnt exist > remove").
   A cmpid outside the map is never pulled, stored or shown.
 - **Auth** — Worker secret `ROAS_MCP_TOKEN` (`Authorization: Bearer`; `ROAS_MCP_AUTH` names another
   header, `ROAS_MCP_URL` overrides the endpoint). Set by Ray in the Cloudflare dashboard, 24 Sep 2026.

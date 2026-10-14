@@ -17,7 +17,7 @@ Live at `/rules` and `/stock`. Module slugs `rules` and `stock` (grantable in th
   missing*). Active rules only, **in the order they run**.
 - **Same server, same token as ROAS** — the worker reuses `roasMcp` and `ROAS_MCP_TOKEN`; there is no
   second FeedHero credential.
-- **Scope** — `ROAS_ROSTER` (the seven brands, 57 markets). Only rows whose `cmpid` IS the market
+- **Scope** — `ROAS_ROSTER` (the seven brands, 56 markets). Only rows whose `cmpid` IS the market
   being read are kept, so FeedHero's company filter (which matches by id *or* name) can never let a
   client outside the roster in.
 - **Nothing in git** — KV only: `rules:<cmpid>` (the full normalised list), `rulesidx` (one entry per
@@ -129,7 +129,7 @@ never a second scan. **It is found by the FeedHero company id, never by the mark
 `Superdry|befr`, `Reiss|gb-fb` — while the roster names the market `GB` / `BE-FR`, and the first cut
 of this route looked up `Reiss|GB` and found nothing on any market. Every FeedHero output lives at
 `/output_feeds/<cc>/<cmpid>/<hash>/<file>` (the Catalogue's `catCmpid` reads the same), and a Meta feed
-sits under its Google market's cmpid, so one id names both; 45 of the 57 roster markets have a wired
+sits under its Google market's cmpid, so one id names both; 45 of the 56 roster markets have a wired
 Google feed, 16 a Meta one, and the rest say "no feed wired" rather than borrow another market's. `adsBasis(roasEntry, feed)` takes the feed's `{n, t}`
 as a second argument and returns `null` — no basis at all — when either read is missing; `stockView`
 threads it through as `feedIdx` (the `voldobidx` entry). A rule's own `impacted`/`of` figures were
@@ -421,7 +421,7 @@ to two levels. There was no tier 2 or tier 3 to offer. The tree the FCC calls PT
 feed's: `g:product_type` slot 1, the path Product Type Guard reads.
 
 **Census shape 3.** Before each master, the agent streams that market's Google Shopping feed (the wired
-FeedHero XML — 45 of the 57 roster markets have one) into `treeIndex`: each product's path by `g:id`, by
+FeedHero XML — 45 of the 56 roster markets have one) into `treeIndex`: each product's path by `g:id`, by
 original id and by item group, paths only. The census then places every master row on that tree:
 
 1. by product id (the column carrying the feed's ids, found on the first 4,000 rows as the Catalogue
