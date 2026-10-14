@@ -498,6 +498,13 @@ else
   echo "   ✗ plan-brand harness FAILED — see node tools/test_planbrand.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3i3/7: where an appended task lands (and that a refused write says so)"
+if node tools/test_planappend.mjs >/dev/null 2>&1; then
+  echo "   ✓ anchored on the last task, the grid grown when short, a failed write never silent"
+else
+  echo "   ✗ plan-append harness FAILED — see node tools/test_planappend.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3j/7: work volumes (every workstream bucketed by month)"
 if node tools/test_volumes.mjs >/dev/null 2>&1; then
   echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"

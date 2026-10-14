@@ -161,6 +161,10 @@ echo "── validating: one project plan, two brands (Monsoon + Accessorize, co
 node tools/test_planbrand.mjs >/dev/null
 echo "   ✓ brand column read, blank = both, per-brand serve + the sheet stamp hold"
 
+echo "── validating: where an appended task lands in a project plan"
+node tools/test_planappend.mjs >/dev/null
+echo "   ✓ last-task anchor, the grid grown when short, a refused write stays on screen"
+
 echo "── validating: work volumes (every workstream bucketed by month)"
 node tools/test_volumes.mjs >/dev/null
 echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"

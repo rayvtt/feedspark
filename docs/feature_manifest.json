@@ -15484,6 +15484,36 @@
       "pr": 0
     },
     {
+      "name": "Plan append: the rows land under the plan's last TASK, not past a stray cell",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const place = planAppendRow(grid, tc, values.length);",
+      "pr": 0
+    },
+    {
+      "name": "Plan append: the grid is grown when the rows it needs do not exist yet",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "appendDimension: { sheetId: info.sheetId, dimension: 'ROWS'",
+      "pr": 0
+    },
+    {
+      "name": "Plan append: one metadata read carries the tab's sheetId and row count",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function resolveTabInfo(id, tab, token)",
+      "pr": 0
+    },
+    {
+      "name": "Plan write: a refused append stays on screen until the row lands",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function planWriteFailed(err){ _planFail=String(err||'write failed')",
+      "pr": 0
+    },
+    {
+      "name": "Plan write: the resync pass raises the warning instead of returning in silence",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!d||!d.ok){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed(",
+      "pr": 0
+    },
+    {
       "name": "Keep: the board filter is written on every render",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "keepFilter();   // the filter in force is the filter the next load opens on",
