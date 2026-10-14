@@ -2869,12 +2869,18 @@ export function clLabelKind(lbl, name) {
    relevant, out of the score). Nothing set = the automated reading, exactly as before. */
 export const CL_STATES = ['need', 'elsewhere', 'na'];
 export function cleanClCfg(c) {
-  const out = { slots: {}, strat: {} };
+  const out = { slots: {}, strat: {}, dyn: {} };
   if (!c || typeof c !== 'object') return out;
   const sl = c.slots && typeof c.slots === 'object' ? c.slots : {};
   for (let i = 0; i < 5; i++) { const k = sl[i] != null ? sl[i] : sl[String(i)]; if (k && (CL_KINDS[k] || k === 'none')) out.slots[i] = k; }
   const st = c.strat && typeof c.strat === 'object' ? c.strat : {};
   for (const k of CL_KPI) if (CL_STATES.indexOf(st[k]) >= 0) out.strat[k] = st[k];
+  // STATIC OR DYNAMIC, SAID BY THE AM (Ray, 14 Oct 2026: "when edited custom label for client this is a button - either
+  // static / dynamic"): whether a label is refreshed as the business moves is something the team KNOWS (the rule that
+  // writes it runs daily, or it was set once), while the reading can only see it after two scans — so the AM's word
+  // stands in for the measurement, slot by slot.
+  const dy = c.dyn && typeof c.dyn === 'object' ? c.dyn : {};
+  for (let i = 0; i < 5; i++) { const v = dy[i] != null ? dy[i] : dy[String(i)]; if (v === 'static' || v === 'dynamic') out.dyn[i] = v; }
   if (c.by) out.by = String(c.by).slice(0, 80);
   if (c.at) out.at = +c.at || 0;
   return out;
@@ -2917,9 +2923,12 @@ export function clStrategy(snap, ref, cfgIn) {
     const kind = set ? (set === 'none' ? 'unclear' : set) : c.kind;
     const kpi = CL_KPI.indexOf(kind) >= 0;
     const moved = kpi && ref && ref.labels && ref.t && ref.t < snap.t ? clMoved(l, ref.labels[k]) : null;
+    const dynSet = kpi && l.present && cfg.dyn[i] ? cfg.dyn[i] : null;
+    // dynamic? the AM's word first, else the reading (null = neither — no earlier reading and nobody said)
+    const dynamic = dynSet ? dynSet === 'dynamic' : moved == null ? null : moved >= CL_MOVE_PP;
     return { k, n: i, present: !!l.present, cov: l.present ? (l.cov || 0) : 0, filled: l.filled || 0, distinct: l.distinct || 0,
       top: (l.values || []).slice(0, 6), kind, auto: c.kind, set: !!set, inferred: !set && !!c.inferred, share: c.share, segs: c.segs,
-      also: set ? [] : (c.also || []), why: set ? '' : (c.why || ''), kpi, moved };
+      also: set ? [] : (c.also || []), why: set ? '' : (c.why || ''), kpi, moved, dynSet, dynamic };
   });
   const kinds = {};
   for (const s of slots) if (s.kpi) (kinds[s.kind] = kinds[s.kind] || []).push(s.n);
@@ -2936,8 +2945,8 @@ export function clStrategy(snap, ref, cfgIn) {
   const kpiSlots = slots.filter((s) => s.kpi);
   const reach = kpiSlots.length ? kpiSlots.reduce((a, s) => a + Math.min(100, s.cov), 0) / kpiSlots.length : 0;
   const pReach = Math.round(reach / 100 * 10 * 10) / 10;
-  const measured = kpiSlots.filter((s) => s.moved != null);
-  const dyn = measured.length ? measured.filter((s) => s.moved >= CL_MOVE_PP).length / measured.length : null;
+  const measured = kpiSlots.filter((s) => s.dynamic != null);
+  const dyn = measured.length ? measured.filter((s) => s.dynamic).length / measured.length : null;
   const pDyn = dyn == null ? null : Math.round(dyn * 15 * 10) / 10;
   const raw = pStrat + pDiv + pReach + (pDyn || 0);
   const score = Math.round((dyn == null ? raw / 85 * 100 : raw) * 10) / 10;
@@ -2947,7 +2956,7 @@ export function clStrategy(snap, ref, cfgIn) {
   const spare = slots.filter((s) => !s.present || s.kind === 'empty').map((s) => s.n);
   const descr = slots.filter((s) => s.kind === 'merch' || s.kind === 'unclear').map((s) => s.n);
   const dup = []; for (const k of have) if (kinds[k].length > 1) dup.push(k);
-  const custom = Object.keys(cfg.slots).length + Object.keys(cfg.strat).length > 0;
+  const custom = Object.keys(cfg.slots).length + Object.keys(cfg.strat).length + Object.keys(cfg.dyn).length > 0;
   return { score, rows, t: snap.t, refT: ref && ref.t && ref.t < snap.t ? ref.t : null,
     parts: { strat: pStrat, div: pDiv, reach: pReach, dyn: pDyn }, reach: Math.round(reach * 10) / 10,
     slots, kinds, have, carried, elsewhere, na, missing, priority, spare, descr, dup, cfg, custom,

@@ -94,8 +94,18 @@ ok('the record says it was customised', a.custom === true && LG.clStrategy(sd, n
 ok('a slot set on a label the feed does not carry is ignored', LG.clStrategy(sd, null, { slots: { 4: 'margin' } }).slots[4].kind === 'empty');
 ok('"none" marks a slot as no strategy', LG.clStrategy(sd, null, { slots: { 0: 'none' } }).slots[0].kind === 'unclear');
 const cc = LG.cleanClCfg({ slots: { 0: 'perf', 1: 'bogus', 9: 'margin', '2': 'stock' }, strat: { perf: 'need', margin: 'x', merch: 'na', stock: 'elsewhere' }, by: 'a@b', at: 5, extra: 1 });
-ok('a stored record carries only known slots, kinds and states', JSON.stringify(cc) === JSON.stringify({ slots: { 0: 'perf', 2: 'stock' }, strat: { perf: 'need', stock: 'elsewhere' }, by: 'a@b', at: 5 }), cc);
+ok('a stored record carries only known slots, kinds and states', JSON.stringify(cc) === JSON.stringify({ slots: { 0: 'perf', 2: 'stock' }, strat: { perf: 'need', stock: 'elsewhere' }, dyn: {}, by: 'a@b', at: 5 }), cc);
 ok('no record = the automated reading, exactly', JSON.stringify(LG.clStrategy(snap, ref, null).parts) === JSON.stringify(LG.clStrategy(snap, ref).parts));
+console.log('── static or dynamic, said by the AM (Ray, 14 Oct 2026: "this is a button - either static / dynamic")');
+ok('a stored dyn keeps only static / dynamic on slots 0–4', JSON.stringify(LG.cleanClCfg({ dyn: { 0: 'dynamic', 1: 'static', 2: 'often', 7: 'dynamic' } }).dyn) === JSON.stringify({ 0: 'dynamic', 1: 'static' }));
+let dz = LG.clStrategy(snap, null, { dyn: { 0: 'dynamic', 1: 'static', 2: 'dynamic' } });
+ok('with no earlier reading the AM\'s word measures dynamism: 2 of 3 KPI labels dynamic → 10 of 15', dz.parts.dyn === 10, dz.parts);
+ok('…each slot names the word it carries', dz.slots[0].dynSet === 'dynamic' && dz.slots[1].dynSet === 'static' && dz.slots[0].dynamic === true && dz.slots[1].dynamic === false);
+ok('…and the record says it was customised', dz.custom === true);
+dz = LG.clStrategy(snap, ref, { dyn: { 0: 'static', 1: 'dynamic' } });
+ok('the AM\'s word beats the reading: CL0 moved but is set static, CL1 static but set dynamic → 1 of 3 still → 5 of 15', dz.parts.dyn === 5 && dz.slots[0].dynamic === false && dz.slots[1].dynamic === true, dz.parts);
+dz = LG.clStrategy(snap, null, { dyn: { 3: 'dynamic', 4: 'dynamic' } });
+ok('a word on a descriptive or missing slot counts for nothing', dz.parts.dyn === null && dz.slots[3].dynSet === null && dz.slots[4].dynSet === null, dz.parts);
 
 console.log(fail ? '\n✗ custom label strategy: ' + fail + ' failed, ' + pass + ' passed' : '\n✓ custom label strategy: ' + pass + ' passed');
 process.exit(fail ? 1 : 0);
