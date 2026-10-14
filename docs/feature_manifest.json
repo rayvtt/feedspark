@@ -213,6 +213,18 @@
       "pr": 77
     },
     {
+      "name": "Workflow: a brief's due date is written onto the Intake row it was raised from",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function briefDueToRow(b,dueIso){",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the brief save calls the due sync",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "persist(); briefDueToRow(b,o.f.dueIso); renderAll();",
+      "pr": 0
+    },
+    {
       "name": "Workflow: \u2709 Find the email thread searches Gmail for the brief's own REF, not its subject words",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function threadRefQuery(b){ return String((b&&b.id)||''); }",
