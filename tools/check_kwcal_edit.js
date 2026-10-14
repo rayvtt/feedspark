@@ -56,7 +56,8 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
   // every assertion it breaks, not only the first
   const monthOf = async (id) => { const c = await cardOf(id); return c ? c.evaluate((n) => n.closest('.mo-sec').querySelector('.mo-nm').textContent.trim()) : null; };
   const nameOf = async (id) => (await txt('.rc[data-kw="' + id + '"] .rt') || '').replace(/[×⛓]/g, '').trim() || null;
-  const dateOf = async (id) => { const t = await txt('.rc[data-kw="' + id + '"] .rd'); return t === null ? null : t.split('·')[0].trim(); };
+  const strip = (t) => t.replace(/^live\s+/, '').trim();
+  const dateOf = async (id) => { const t = await txt('.rc[data-kw="' + id + '"] .rd'); return t === null ? null : strip(t.split('·')[0]); };
   const errShown = () => page.$eval('#kw-error', (n) => n.classList.contains('on'));
   const txt = async (sel) => { const el = await page.$(sel); return el ? (await el.textContent()).trim() : null; };
   const tap = async (sel) => { const el = await page.$(sel); if (!el) { fail++; console.log('   ✗ no control ' + sel); return false; } await el.click(); await page.waitForTimeout(450); return true; };
@@ -74,7 +75,7 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
   // the reason this had to be an affordance rather than "click the card": a click on the name used
   // to land on the card and open a two-prompt editor only if it missed every other button
   ok('the rename control carries the name', (await txt('[data-rename="x_one"]')) === 'Cable knit sweaters');
-  ok('the date control carries the date as the card reads it', (await txt('[data-date="x_one"]')) === '5 Nov');
+  ok('the date control carries the date as the card reads it', strip(await txt('[data-date="x_one"]')) === '5 Nov');
 
   console.log('\n3) renaming');
   answers = ['Chunky knit jumpers'];
@@ -99,7 +100,7 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
   answers = ['w/c 2026-12-07'];
   await tap('[data-date="x_two"]');
   ok('the prefix is kept', (await dateOf('x_two')) === 'w/c 7 Dec', await dateOf('x_two'));
-  ok('the control offers it back with its prefix', (await txt('[data-date="x_two"]')) === 'w/c 7 Dec');
+  ok('the control offers it back with its prefix', strip(await txt('[data-date="x_two"]')) === 'w/c 7 Dec');
   answers = ['2026-12-07'];                        // typing it bare clears the prefix — what you type is what it reads
   await tap('[data-date="x_two"]');
   ok('typing it bare clears the prefix', (await dateOf('x_two')) === '7 Dec', await dateOf('x_two'));
@@ -115,14 +116,43 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
     ok('and the date is unchanged', (await dateOf('x_two')) === keep, await dateOf('x_two'));
   }
 
-  console.log('\n7) the edits are saved, not only drawn');
+  console.log('\n7) the card says WHICH date it shows, so it cannot contradict its column');
+  // Ray, 14 Oct 2026: "due date doesn't fit with month card" — a moment going live 21 Jan sits in
+  // the DECEMBER column, because the board files work by the month the brief is due. True, and
+  // nowhere on the card.
+  const rd = async (id) => (await txt('.rc[data-kw="' + id + '"] .rd')) || '';
+  ok('a moment whose live month differs from its column names both',
+    /live\s*21 Jan/.test(await rd('x_one')) && /brief\s*31 Dec/.test(await rd('x_one')), await rd('x_one'));
+  ok('…and the column it names is the one it sits in', /DEC/i.test(await monthOf('x_one')), await monthOf('x_one'));
+  answers = ['2026-12-28'];                      // briefs 7 Dec — one month, so one date
+  await tap('[data-date="x_one"]');
+  ok('where the two months agree it stays one short date', !/brief/.test(await rd('x_one')) && /28 Dec/.test(await rd('x_one')), await rd('x_one'));
+  ok('and the board says what a month IS, once, above it',
+    /brief is due/i.test(await page.$eval('#road', (n) => n.textContent)));
+
+  console.log('\n8) ＋ Add never drops what a person typed');
+  const before = (await page.$$('.rc[data-kw]')).length;
+  // a date in UK order is how anyone here writes one; the old handler returned on it, after three
+  // answered prompts, with no moment and no message — "event created being lost"
+  answers = ['Spring drop', 'campaign', '20/11/2026', '2026-11-20', 'jeans'];
+  await page.click('#add'); await page.waitForTimeout(700);
+  ok('a UK-order date is refused and asked again, not thrown away', answers.length === 0, answers);
+  ok('…and the corrected moment is created', (await page.$$('.rc[data-kw]')).length === before + 1);
+  ok('…carrying the name that was typed before the typo',
+    (await page.$$eval('.rc .rt', (n) => n.map((x) => x.textContent))).some((t) => /Spring drop/.test(t)));
+  const mid = (await page.$$('.rc[data-kw]')).length;
+  answers = ['Doomed', 'campaign', null];        // cancel is still cancel
+  await page.click('#add'); await page.waitForTimeout(600);
+  ok('cancelling the date creates nothing', (await page.$$('.rc[data-kw]')).length === mid);
+
+  console.log('\n9) the edits are saved, not only drawn');
   await page.waitForTimeout(1600);
   const puts = await page.evaluate(() => window.__puts.slice());
   const last = puts.length ? JSON.parse(puts[puts.length - 1]) : null;
   const ev = last && (last.Northwind.events || []).find((x) => x.id === 'x_one');
   ok('a PUT reached /api/kwcal', puts.length > 0);
   ok('carrying the new name', !!ev && ev.name === 'Chunky knit jumpers', ev && ev.name);
-  ok('carrying the new date', !!ev && ev.date === '2027-01-21', ev && ev.date);
+  ok('carrying the date it was last given', !!ev && ev.date === '2026-12-28', ev && ev.date);
 
   await browser.close();
   console.log(fail ? '\nFAIL ' + fail : '\nPASS');
