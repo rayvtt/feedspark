@@ -225,7 +225,7 @@
       "pr": 657
     },
     {
-      "name": "Workflow: \u2709 Find the email thread searches Gmail for the brief's own REF, not its subject words",
+      "name": "Workflow: ✉ Find the email thread searches Gmail for the brief's own REF, not its subject words",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function threadRefQuery(b){ return String((b&&b.id)||''); }",
       "pr": 655
@@ -15376,6 +15376,15 @@
       "name": "KWCal: an engine that does not load reads as a sentence, never a TypeError (the empty-200 failure)",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "did not load, so the board cannot resolve",
+      "name": "Golden demo: opening a brand names it (masked/DEMO_OPEN)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function masked(c) { return DEMO && !DEMO_OPEN.has(c); }",
+      "pr": 0
+    },
+    {
+      "name": "Golden demo: a fresh demo starts with nothing named",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (DEMO) { DEMO_OPEN = new Set(); saveDemoOpen(); }",
       "pr": 0
     }
   ]

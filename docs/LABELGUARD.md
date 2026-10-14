@@ -307,6 +307,15 @@ to industry "Retail" until added to the map. NOTE: this anonymises Ray's own log
 for live demos — it is NOT a client-accessible URL; that would need its own Cloudflare Access
 policy and a server-side masking layer (deliberately out of scope).
 
+**Demo reveal on `/golden`** (Ray, 14 Oct 2026: "when a brand is popped down, the name of the brand
+starts appearing because I want to show the clients that this is actually the brand"): in demo every
+estate card starts FOLDED under its alias; opening one names that brand on its card, its scorecard,
+its cover and its downloads, folding masks it again, and every brand still folded keeps its alias
+(`masked(c)` behind `dispClient` / `maskText`). The demo's fold is its own session set
+(`gr-demo-open`), emptied each time demo is switched on, so a share always starts with nothing named;
+Expand all / Collapse all act on it; the AM's own `gr-collapse` layout is never touched. Tripwire
+`tools/check_grreveal.js` (presync).
+
 ### 5e. Every market in one file — PT Guard + Golden Record, and the whole portfolio (12 Oct 2026)
 
 Ray: "Can you allow downloads across the whole portfolio, similar to the way the custom label is being set up for Golden
