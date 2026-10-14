@@ -397,3 +397,21 @@ breakdown. **⧉ Copy talking points** lifts all three lines for an agenda or an
 
 Harness: `tools/test_playbook_panel.mjs` — the ranking across kinds, the count/sentence/chip
 agreement, absent-vs-thin, the conditional wording, and that nothing is padded to three.
+
+## 🧪 Test this month — the Test Lab (Ray, 14 Oct 2026)
+
+*"the playbook and the workflow should be a bit smarter … more proactive information about
+testing proposals, with specifics … 'How about we test A/B testing image position this month?'
+because I have seen other brands achieve a certain uplift over the last three months … consider
+competitors … on Google Shopping and Meta … super innovative in testing, because the current top
+three actions are based only on existing data, which isn't aggressive enough for our clients."*
+
+The Top 3 actions read this account's own data; the section under them reads the **whole book**
+and the **competition**. Three specific A/B test proposals per account, each a question with the
+evidence (a named peer's recorded uplift in the last three months, or *first in the book*), the
+line to say, the design (field · split · duration · metric) and → Brief as a Testing brief; the rest
+of the library folds behind *N more ideas* with what unblocks each. Under it, who shows on Google
+Shopping for the brand's own category queries, where we sit, their pictures beside ours, and the
+signals that promote specific tests. Engine `src/testlab.js`, routes `/api/testlab` +
+`/api/compwatch`, harness `tools/test_testlab.mjs` + `tools/check_testlab.js`. The full account:
+[`docs/TESTLAB.md`](./TESTLAB.md).

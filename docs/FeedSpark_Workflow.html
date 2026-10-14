@@ -1085,6 +1085,35 @@ aside.ck[hidden]{display:none}
 .ck-pill.p1{color:#fff;background:#C0392B}
 .ck-pill.p2{color:#B1550A;background:rgba(245,166,35,.2)}
 .ck-pill.p3{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
+/* TEST LAB (Ray, 14 Oct 2026): the same row grammar as the Top 3 — a surface pill, a name — with the
+   evidence from the BOOK, the line to say, the design, and the competitor read under it. */
+.ck-pill.tg{color:#1A5E3A;background:rgba(21,128,61,.14)}
+.ck-pill.tm{color:#1F4FA3;background:rgba(37,99,235,.14)}
+.ck-pill.tb{color:#5B3FA3;background:rgba(124,58,237,.14)}
+.ck-how{font-size:10.5px;line-height:1.45;color:var(--muted,#8a94a0)}
+.ck-how b{color:var(--ink-2,#4a4a4a);font-weight:800}
+.ck-first{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--orange-deep,#ED6F0B);border-radius:100px;padding:1px 6px;margin-left:5px;vertical-align:1px}
+.ck-tlmore{margin:4px 0 0;padding:0;list-style:none}
+.ck-tlmore li{display:flex;gap:6px;align-items:baseline;font-size:10.5px;padding:3px 0 3px 5px;border-bottom:1px dotted var(--line,#E6E6E6);color:var(--ink-2,#4a4a4a)}
+.ck-tlmore li .st{flex:none;font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:1px 6px;border-radius:100px;background:var(--wash,#F7F7F5);color:var(--muted,#8a94a0)}
+.ck-tlmore li .st.ready{color:#1A5E3A;background:rgba(21,128,61,.14)}
+.ck-tlmore li .why{color:var(--muted,#8a94a0);font-style:italic}
+.ck-cw{border-top:1px dashed var(--line,#E6E6E6);margin-top:8px;padding-top:8px}
+.ck-cw .ck-lbl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ck-cwm{display:flex;align-items:center;gap:6px;font-size:10.5px;padding:2px 0 2px 5px}
+.ck-cwm .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.ck-cwm .nm.us{color:var(--orange-deep,#ED6F0B)}
+.ck-tlbar{flex:none;width:52px;height:6px;border-radius:4px;background:var(--wash,#F7F7F5);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
+.ck-tlbar i{display:block;height:100%;background:var(--navy,#1A365D)}
+.ck-cwm .num{flex:none;min-width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted,#8a94a0);font-weight:700}
+.ck-cwm .tag{flex:none;font-size:9px;font-weight:800;color:var(--muted,#8a94a0)}
+.ck-thumbs{display:flex;gap:4px;flex-wrap:wrap;margin:5px 0 4px 5px}
+.ck-thumbs a{display:block;width:46px;height:46px;border-radius:6px;overflow:hidden;border:1px solid var(--line,#E6E6E6);background:var(--wash,#F7F7F5);position:relative}
+.ck-thumbs a.us{border-color:var(--orange,#F5A623);box-shadow:0 0 0 1px var(--orange,#F5A623)}
+.ck-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.ck-thumbs a .s{position:absolute;left:0;bottom:0;right:0;font-size:8px;font-weight:900;color:#fff;background:rgba(192,57,43,.9);text-align:center;letter-spacing:.04em}
+.ck-sig{font-size:10.5px;color:var(--ink-2,#4a4a4a);padding:1px 0 1px 5px}
+.ck-sig b{color:var(--orange-deep,#ED6F0B)}
 .ck-raiserow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 0 7px 5px;margin:-1px 0 5px}
 .ck-why{flex:1 1 100%;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
 .ck-brief.go{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);font-weight:800}
@@ -6700,6 +6729,129 @@ aside.ck[hidden]{display:none}
   }
   var ACTSAY=[],ACTLIST=[];
 
+  /* ---- TEST LAB (Ray, 14 Oct 2026) ----------------------------------------------------------
+     "the playbook and the workflow should be a bit smarter … more proactive information about
+      testing proposals, with specifics … 'How about we test A/B testing image position this
+      month?' because I have seen other brands achieve a certain uplift over the last three
+      months … consider competitors … on Google Shopping and Meta … super innovative in testing,
+      because the current top three actions are based only on existing data, which isn't
+      aggressive enough for our clients."
+     The engine is the worker's src/testlab.js (/api/testlab): a library of named A/B tests, the
+     WHOLE book's archive + keyword rounds read into one evidence table by test family, the
+     brand's feeds read for what each test needs, and the competitor Shopping read's signals.
+     This rail only draws it — and keeps every figure exactly as the route said it. */
+  var TLD={},TLBUSY={},TLWARM={},TLMORE={};
+  function tlSurf(s){ return s==='meta'?'<span class="ck-pill tm" title="Meta">M</span>':s==='google'?'<span class="ck-pill tg" title="Google Shopping">G</span>':'<span class="ck-pill tb" title="Google Shopping + Meta">G+M</span>'; }
+  function loadTests(brand,force){
+    if(!brand||TLBUSY[brand])return;
+    if(!force&&TLD[brand]&&Date.now()-(TLD[brand].got||0)<600000)return;
+    TLBUSY[brand]=true;
+    fetch('/api/testlab?client='+encodeURIComponent(brand)).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok){ TLD[brand]={err:(d&&d.error)||'could not read',got:Date.now()}; return; }
+      d.got=Date.now(); TLD[brand]=d;
+      /* an archive nobody has opened is not an empty archive: warm the cold brands ONCE per
+         session (the archive route caches six hours) and re-ask, so the evidence table reads the
+         whole book rather than whichever dossiers happened to be opened this week */
+      var cold=(d.cold||[]).filter(function(b){return !TLWARM[b];}).slice(0,8);
+      if(cold.length){
+        cold.forEach(function(b){TLWARM[b]=1;});
+        Promise.all(cold.map(function(b){ return fetch('/api/abtests?client='+encodeURIComponent(b)).then(function(r){return r.json();}).catch(function(){}); }))
+          .then(function(){ TLBUSY[brand]=false; loadTests(brand,true); });
+        return;
+      }
+    }).catch(function(){ TLD[brand]={err:'could not read',got:Date.now()}; }).then(function(){ TLBUSY[brand]=false; if(BRAND===brand)render(); });
+  }
+  function tlWhen(ms){ return ms?new Date(ms).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):''; }
+  function secTests(brand){
+    var d=TLD[brand];
+    var h='<section class="ck-s ck-act ck-tl" id="ck-tl"><h4>🧪 Test this month<span class="n">';
+    if(!d){ loadTests(brand); return h+'reading the book…</span></h4><p class="ck-h">Specific A/B tests, ranked by what the whole book has already proved and what competitors do on Shopping — not by this account’s own data alone.</p></section>'; }
+    if(d.err){ return h+'</span></h4><p class="ck-h">Could not read the test lab — '+esc(d.err)+'.</p></section>'; }
+    var top=d.top||[],rest=d.rest||[],c=d.counts||{};
+    h+=(top.length?top.length+' proposal'+(top.length===1?'':'s'):'nothing ready')+(rest.length?' · '+rest.length+' more':'')+'</span></h4>';
+    h+='<p class="ck-h">Specific A/B tests, ranked by what the whole book has already proved and what competitors do on Shopping — not by this account’s own data alone. A test this account ran in the last six months is not re-proposed; one nobody in the book has run is marked first.</p>';
+    if(!d.book||!d.book.length)h+='<p class="ck-h">No brand’s A/B archive has been read yet'+(d.cold&&d.cold.length?' — warming '+d.cold.length+' now':'')+', so every proposal rests on the platform documentation until the archives land.</p>';
+    TLSAY=[]; TLLIST=top;
+    h+=top.map(function(p,i){
+      TLSAY.push((i+1)+'. '+p.title+'\n   '+p.ev+'\n   '+p.how+' · measure '+p.metric+'\n   Say: '+p.say);
+      return row('',tlSurf(p.surf)+'<span class="nm">'+esc(p.title)+(p.first?'<span class="ck-first">first in the book</span>':'')+'</span>')
+        +'<div class="ck-actrow"><span class="ck-ev">'+esc(p.ev)+'</span>'
+        +'<span class="ck-say">“'+esc(p.say)+'”</span>'
+        +'<span class="ck-how"><b>'+esc(p.field)+'</b> · '+esc(p.how)+' · <b>Measure:</b> '+esc(p.metric)+'</span>'
+        +'<span class="ck-actbtn"><button type="button" class="ck-brief go" data-tl="'+i+'">→ Brief this test</button></span></div>';
+    }).join('');
+    if(!top.length&&rest.length)h+='<p class="ck-h">Every ready test was run in the last six months or is already briefed — the list below says what unblocks the rest.</p>';
+    h+='<div class="ck-actfoot">'+(top.length?'<button type="button" class="ck-brief" id="ck-tl-copy">⧉ Copy proposals</button> ':'')
+      +(rest.length?'<button type="button" class="ck-brief" id="ck-tl-more" aria-expanded="'+(TLMORE[brand]?'true':'false')+'">'+(TLMORE[brand]?'▾ Fewer':'▸ '+rest.length+' more ideas')+'</button>':'')+'</div>';
+    if(rest.length&&TLMORE[brand]){
+      h+='<ul class="ck-tlmore">'+rest.map(function(p){
+        var st=p.status==='ready'?'<span class="st ready">ready</span>':p.status==='blocked'?'<span class="st">not yet</span>':p.status==='briefed'?'<span class="st">briefed</span>':'<span class="st">ran '+esc(tlWhen(p.ranAt))+'</span>';
+        var why=p.status==='blocked'?' <span class="why">'+esc(p.ready.why)+'</span>':p.status==='briefed'?' <span class="why">'+esc(p.briefedAs||'')+'</span>':p.ev&&p.status==='ready'?' <span class="why">'+esc(p.ev)+'</span>':'';
+        return '<li>'+tlSurf(p.surf)+st+'<span>'+esc(p.n)+why+'</span></li>';
+      }).join('')+'</ul>';
+    }
+    h+=secComp(brand,d);
+    h+='</section>';
+    return h;
+  }
+  var TLSAY=[],TLLIST=[];
+  /* the competitor read: who shows on Google Shopping for the brand's own category queries, how
+     they title, whether they badge a sale, where our price sits — and their pictures beside ours */
+  function secComp(brand,d){
+    var cw=d.comp||{},mk=Object.keys(cw.markets||{});
+    var h='<div class="ck-cw"><div class="ck-lbl">👀 Competitors on Google Shopping'+(cw.on?'':' <span class="ck-chip" title="SERPAPI_KEY is not set on the worker">not connected</span>')+'</div>';
+    if(!mk.length)h+='<p class="ck-h">No Google Shopping market wired for this brand.</p>';
+    mk.forEach(function(m){
+      var r=cw.markets[m];
+      h+='<div class="ck-cwm"><span class="nm">'+esc(m.toUpperCase())+'</span>';
+      if(!r){ h+='<span class="tag">not read yet</span>'+(cw.on?'<button type="button" class="ck-brief go" data-cw="'+esc(m)+'">⚡ Read now</button>':'')+'</div>'; return; }
+      var sm=r.summary||{},us=sm.us||{},th=sm.them||{};
+      h+='<span class="tag">read '+esc(tlWhen(r.at))+' · '+esc(String(r.n))+' results · '+(sm.queries||[]).length+' queries</span>'+(cw.on?'<button type="button" class="ck-brief" data-cw="'+esc(m)+'" title="Read again (one SerpApi search per query)">⟳</button>':'')+'</div>';
+      (sm.merchants||[]).slice(0,5).forEach(function(x){
+        h+='<div class="ck-cwm"><span class="nm" title="'+esc(x.m)+' · '+x.n+' results · top-3 '+x.top3+' times · sale badge '+x.sale+'% · stars '+x.rated+'% · product type first '+x.typeFirst+'%">'+esc(x.m)+'</span>'
+          +'<span class="ck-tlbar"><i style="width:'+Math.min(100,Math.round(x.share*2))+'%"></i></span><span class="num">'+x.share+'%</span>'
+          +'<span class="tag">'+(x.sale?'sale '+x.sale+'% · ':'')+(x.rated?'★ '+x.rated+'%':'')+'</span></div>';
+      });
+      h+='<div class="ck-cwm"><span class="nm us">'+esc(brand)+'</span><span class="ck-tlbar"><i style="width:'+Math.min(100,Math.round((us.share||0)*2))+'%;background:var(--orange-deep,#ED6F0B)"></i></span><span class="num">'+(us.share||0)+'%</span>'
+        +'<span class="tag">'+(us.n?(us.sale?'sale '+us.sale+'% · ':'')+(us.rated?'★ '+us.rated+'% · ':'')+'median position '+(us.posMed||'–'):'not in the results')+'</span></div>';
+      var th2=(th.thumbs||[]).slice(0,8),ut=(us.thumbs||[]).slice(0,4);
+      if(th2.length||ut.length){
+        h+='<div class="ck-thumbs">'+th2.map(function(t){ return '<a href="#" tabindex="-1" title="'+esc(t.m+' · '+t.t+(t.p!=null?' · '+t.p:''))+'"><img src="'+esc(t.img)+'" alt="" loading="lazy">'+(t.sale?'<span class="s">SALE</span>':'')+'</a>'; }).join('')
+          +ut.map(function(t){ return '<a href="#" tabindex="-1" class="us" title="'+esc(brand+' · '+t.t)+'"><img src="'+esc(t.img)+'" alt="" loading="lazy"></a>'; }).join('')+'</div>';
+      }
+      (sm.signals||[]).forEach(function(sg){ h+='<div class="ck-sig"><b>→ test '+esc(sg.k.replace(/_/g,' '))+':</b> '+esc(sg.why)+'</div>'; });
+    });
+    h+='<p class="ck-h">'+esc((cw.meta&&cw.meta.why)||'')+'</p></div>';
+    return h;
+  }
+  function wireTests(brand){
+    var body=$('#ck-r-body'); if(!body)return;
+    Array.prototype.forEach.call(body.querySelectorAll('[data-tl]'),function(b){
+      b.onclick=function(){
+        var p=TLLIST[+b.getAttribute('data-tl')]; if(!p||!window.FCCBrief)return;
+        window.FCCBrief({client:brand,task:p.brief.task,cat:p.brief.cat,source:'plan',scope:p.brief.scope});
+      };
+    });
+    Array.prototype.forEach.call(body.querySelectorAll('[data-cw]'),function(b){
+      b.onclick=function(){
+        var m=b.getAttribute('data-cw'); b.disabled=true; b.textContent='reading…';
+        fetch('/api/compwatch',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({client:brand,market:m,force:true})})
+          .then(function(r){return r.json();}).then(function(d){
+            if(!d||!d.ok){ toast&&toast((d&&d.error)||'Shopping read failed'); b.disabled=false; b.textContent='⚡ Read now'; return; }
+            loadTests(brand,true);
+          }).catch(function(){ b.disabled=false; b.textContent='⚡ Read now'; });
+      };
+    });
+    var c=$('#ck-tl-copy');
+    if(c)c.onclick=function(){
+      var t=brand+' — tests to propose this month\n\n'+TLSAY.join('\n\n');
+      try{ navigator.clipboard.writeText(t); c.textContent='⧉ Copied'; setTimeout(function(){c.textContent='⧉ Copy proposals';},1400); }
+      catch(e){ toast&&toast('Copy failed'); }
+    };
+    var mo=$('#ck-tl-more');
+    if(mo)mo.onclick=function(){ TLMORE[brand]=!TLMORE[brand]; render(); };
+  }
+
   /* which panel the right rail is showing. On the device, like every other panel toggle. */
   var RTAB='review';
   try{ var rt=localStorage.getItem('fcc-ck-tab'); if(rt==='review'||rt==='volume')RTAB=rt; }catch(e){}
@@ -6721,8 +6873,8 @@ aside.ck[hidden]{display:none}
     // the volume panel is the SAME data the review section carries, given the whole rail — every
     // scanned market's breakdown open, nothing to scroll past to reach it
     body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true)
-      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
-    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap();
+      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND)+secTests(BRAND));
+    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap(); wireTests(BRAND);
     if(RTAB==='volume')openAllMix(BRAND);
     subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);

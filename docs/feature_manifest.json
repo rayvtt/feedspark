@@ -15512,6 +15512,48 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "<select id=\"ck-brand\" data-no-keep aria-label=\"Account to review\"></select>",
       "pr": 0
+    },
+    {
+      "name": "Test Lab: the engine is its own module",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "export function proposeTests(brand, ctx, ev, opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: one of the three is a first for the book",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "if (top.length === TL_TOP && !top.some((p) => p.first)) {",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: a client brief names the industry, never a peer brand",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "L.push('Evidence: a ' + (best.industry || 'FeedSpark') + ' account saw +'",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: the worker serves /api/testlab",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/testlab' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: the competitor read is a money route",
+      "file": "cloudflare/feedspark-deck/src/security.js",
+      "pattern": "'/api/compwatch': { limit: 40, windowS: 600 },",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: the rail draws the section after the Top 3",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "secActions(BRAND)+secTests(BRAND));",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: \u2192 Brief raises a test brief through the one composer entry",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCBrief({client:brand,task:p.brief.task,cat:p.brief.cat,source:'plan',scope:p.brief.scope});",
+      "pr": 0
     }
   ]
 }

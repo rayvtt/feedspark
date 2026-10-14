@@ -110,8 +110,9 @@ export const THROTTLES = {
   '/api/claude': { limit: 120, windowS: 600 },
   '/api/aivis/ask': { limit: 300, windowS: 600 },
   '/api/i18n': { limit: 60, windowS: 600 },
+  '/api/compwatch': { limit: 40, windowS: 600 },   // a POST is COMP_QUERIES SerpApi searches
 };
-export const MONEY_PATHS = new Set(['/api/claude', '/api/aivis/ask', '/api/i18n']);
+export const MONEY_PATHS = new Set(['/api/claude', '/api/aivis/ask', '/api/i18n', '/api/compwatch']);
 
 export function throttleKey(bucket, subject) {
   return 'rl:' + String(bucket).replace(/[^a-z0-9/_-]/gi, '_').slice(0, 40) + ':' + String(subject || 'none').replace(/[^a-z0-9.:_@-]/gi, '_').slice(0, 80);
