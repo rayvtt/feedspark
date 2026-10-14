@@ -1,0 +1,159 @@
+<!-- FCC-KEEP — the pick you made is the pick you come back to. Injected worker-side on APP pages
+     only (never client decks).
+
+     Ray, 14 Oct 2026: "after refreshing the page or tab, the pre-filter pre-selected option is not
+     saved and continues to be persisted. For example, on workflow, if I selected Monsoon on the
+     playbook, after refreshing the page it returned to where it was before. I want it to stay on
+     Monsoon even after refresh. Apply this methodology across everything else."
+
+     Half the module pages already remembered their brand (Restock, Stock, Rules, Social, AI
+     Visibility, Feed Lab, Volume, KWCal, AI Quote) and the other half did not (ROAS, Catalogue,
+     Overlays, Images, Schedule, Deck Generator, Feed Chat …), each with its own key and its own
+     rule — which is how a reader learns that the FCC "sometimes" forgets. This layer makes it ONE
+     rule on every page: a pick a PERSON makes in a page-level picker is written to this device,
+     and the next load of the same page replays it the way the person made it — the control is
+     set and its own change/click fires, so the page runs exactly the code a hand pick runs.
+     Nothing is re-implemented per page and the page's own code is untouched.
+
+     WHAT IS REMEMBERED (and nothing else):
+       · every <select id> at page level — the brand / client / market / window / view pickers.
+         NOT a select inside a form, a modal, a dialog, a table row or a chat log: those are inputs
+         to an action (the brief composer's client, a row's status), not a view of the page.
+         data-no-keep on the control or an ancestor opts a control out; a page that persists a
+         control itself marks it so, so there is ONE writer per control.
+       · the market chips: a click on a button[data-mkt] — the shape the module pages share — and
+         the period chips button[data-win]. A chip is remembered WITH the brand it was picked under
+         and replayed only under that brand: Reiss DE is not a market of Monsoon.
+
+     WHAT WINS: a link. A query string naming a brand / client / market on the URL the page was
+     opened with (?brand= ?client= ?market= ?mkt=) IS the state, so nothing is replayed over it —
+     the deep links from the dossier, the guards and the calendar land where they say. The landing
+     URL is read off the navigation entry, not location.search, because several pages strip their
+     query with replaceState before this script runs.
+
+     HOW IT REPLAYS: the pickers fill asynchronously (the roster comes from a fetch), so a
+     remembered value is applied the moment an option / chip carrying it EXISTS — once per control
+     per load, inside a 20-second window, through a debounced MutationObserver; a value the page no
+     longer offers (a brand that left the roster) is simply never applied, and the next hand pick
+     replaces it. Replayed events are untrusted, so they are never re-recorded as a pick.
+
+     PER DEVICE, NEVER SHARED STATE: localStorage fcc-keep:<path> — what one screen was looking
+     at is not a team fact (CLAUDE.md "WHAT STAYS ON THE DEVICE"). The Workflow board's filter and
+     the Playbook's account are persisted by that page itself (fcc-it-state / fcc-ck-brand) because
+     they are not plain controls — see docs/REMEMBER.md. -->
+<script>(function(){
+if(window.__fccKeep)return;
+/* FCC-KEEP:ENGINE-START — pure rules, lifted by tools/test_keep.mjs */
+var KEEP={
+  /* the URL the page was OPENED with — several pages replaceState their query away before this
+     script runs, and a replayed pick over a deep link is the wrong page */
+  landing:function(){
+    try{ var e=performance.getEntriesByType&&performance.getEntriesByType('navigation');
+      if(e&&e[0]&&e[0].name)return String(e[0].name); }catch(x){}
+    return String(location.href||'');
+  },
+  /* a query naming WHAT to show is the state; a pb=1 / embed= / view= is not */
+  linked:function(url){
+    var q=String(url||'').split('#')[0].split('?')[1]||'';
+    return /(^|&)(brand|client|market|mkt|b|c|m)=[^&]/i.test(q);
+  },
+  key:function(path){ var p=String(path||'/').replace(/\/+$/,'')||'/'; return 'fcc-keep:'+p; },
+  /* a select is kept when it is a page-level picker: an id, single-valued, not an input to an
+     action (form / modal / dialog / table / chat) and not opted out */
+  SKIP:'form,table,[role=dialog],.modal,.modal-card,.scrim,.m-sec,.chat,.chat-log,#log,.msgs,[contenteditable],[data-no-keep]',
+  keepsSelect:function(el){
+    if(!el||el.tagName!=='SELECT'||!el.id||el.multiple)return false;
+    if(el.closest&&el.closest(KEEP.SKIP))return false;
+    return true;
+  },
+  keepsChip:function(el){
+    if(!el||!el.getAttribute)return false;
+    if(!el.hasAttribute('data-mkt')&&!el.hasAttribute('data-win'))return false;
+    if(el.closest&&el.closest(KEEP.SKIP))return false;
+    return true;
+  },
+  chipKey:function(el){
+    var host=el.closest&&el.closest('[id]'), attr=el.hasAttribute('data-mkt')?'mkt':'win';
+    return 'chip:'+attr+':'+(host?host.id:'');
+  },
+  /* a chip is remembered with the brand it was picked under; the page's brand picker is its
+     first page-level select named brand / client (or the first kept select at all) */
+  brandSel:function(root){
+    var s=(root||document).querySelector('select#brand,select#client,select#brand-sel,select#client-sel');
+    if(!s){ var all=(root||document).querySelectorAll('select[id]'); for(var i=0;i<all.length;i++)if(KEEP.keepsSelect(all[i])){s=all[i];break;} }
+    return s&&KEEP.keepsSelect(s)?s:null;
+  },
+  brandOf:function(root){ var s=KEEP.brandSel(root); return s?String(s.value||''):''; },
+  /* which remembered entries can be applied to the DOM as it stands: {k, el, v} per entry, or
+     nothing yet for a value no option / chip carries */
+  due:function(root,map,done){
+    var out=[];
+    Object.keys(map||{}).forEach(function(k){
+      if(done[k])return; var rec=map[k]; if(!rec||typeof rec!=='object')return;
+      if(k.indexOf('sel:')===0){
+        var el=root.getElementById?root.getElementById(k.slice(4)):root.querySelector('#'+k.slice(4));
+        if(!el||!KEEP.keepsSelect(el))return;
+        var has=false; for(var i=0;i<el.options.length;i++)if(el.options[i].value===rec.v){has=true;break;}
+        if(!has)return;
+        out.push({k:k,el:el,v:rec.v,same:el.value===rec.v});
+      } else if(k.indexOf('chip:')===0){
+        var parts=k.split(':'), attr=parts[1], host=parts[2];
+        var scope=host?(root.getElementById?root.getElementById(host):root.querySelector('#'+host)):root;
+        if(!scope)return;
+        if(rec.b!=null&&rec.b!==KEEP.brandOf(root))return;   // another brand's market
+        var sel='button[data-'+attr+'],[role=button][data-'+attr+'],.chip[data-'+attr+']';
+        var chips=scope.querySelectorAll(sel), el=null;
+        for(var j=0;j<chips.length;j++)if(chips[j].getAttribute('data-'+attr)===rec.v&&KEEP.keepsChip(chips[j])){el=chips[j];break;}
+        if(!el)return;
+        var on=el.classList.contains('on')||el.getAttribute('aria-pressed')==='true'||el.getAttribute('aria-selected')==='true';
+        out.push({k:k,el:el,v:rec.v,same:on});
+      }
+    });
+    return out;
+  }
+};
+/* FCC-KEEP:ENGINE-END */
+window.__fccKeep=KEEP;
+if(typeof document==='undefined'||!document.body)return;
+if(document.body.getAttribute('data-keep')==='off')return;
+var KEY=KEEP.key(location.pathname), MAP={}, DONE={}, LINKED=KEEP.linked(KEEP.landing()), T0=Date.now();
+try{ MAP=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ MAP={}; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(MAP)); }catch(e){} }
+function record(k,v,b){ MAP[k]={v:v,t:Date.now()}; if(b!=null)MAP[k].b=b; DONE[k]=1; save(); }
+/* a pick a PERSON makes: trusted events only, so a replay never records itself */
+document.addEventListener('change',function(e){
+  if(!e.isTrusted)return; var el=e.target;
+  if(!KEEP.keepsSelect(el))return;
+  record('sel:'+el.id,String(el.value||''));
+},true);
+document.addEventListener('click',function(e){
+  if(!e.isTrusted)return; var t=e.target&&e.target.closest?e.target.closest('[data-mkt],[data-win]'):null;
+  if(!t||!KEEP.keepsChip(t))return;
+  var attr=t.hasAttribute('data-mkt')?'mkt':'win', b=attr==='mkt'?KEEP.brandOf(document):null;
+  record(KEEP.chipKey(t),String(t.getAttribute('data-'+attr)||''),b);
+  /* a market picked under a brand CONFIRMS that brand — a page opened by a link lands on the
+     link's brand without any change event, and the person working on it is the pick */
+  if(b){ var bs=KEEP.brandSel(document); if(bs)record('sel:'+bs.id,b); }
+},true);
+if(LINKED)return;   // the link IS the state — record from here on, replay nothing
+var pending=false;
+function apply(){
+  pending=false;
+  if(Date.now()-T0>20000)return;
+  KEEP.due(document,MAP,DONE).forEach(function(d){
+    DONE[d.k]=1;
+    if(d.same)return;
+    if(d.k.indexOf('sel:')===0){
+      d.el.value=d.v;
+      try{ d.el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+    } else {
+      try{ d.el.click(); }catch(e){}
+    }
+  });
+}
+function schedule(){ if(pending)return; pending=true; setTimeout(apply,40); }
+schedule();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);
+window.addEventListener('load',schedule);
+try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-selected']}); }catch(e){}
+})();</script>

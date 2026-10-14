@@ -396,7 +396,7 @@ ok(/function filterToClient\(name\)\{[\s\S]{0,420}itState\.clients=\[name\]/.tes
   'and it writes the SAME itState.clients the chips and the \u25be menu write');
 ok(/if\(!allIntake\(\)\.some\(function\(r\)\{ return r\.client===name; \}\)\)return false;/.test(WF),
   'a brand the board does not carry is refused, not silently self-cleaned by the filter control');
-ok(/sel\.addEventListener\('change',function\(\)\{ BRAND=sel\.value; render\(\); syncBoard\(\); \}\)/.test(WF),
+ok(/sel\.addEventListener\('change',function\(\)\{ BRAND=sel\.value; keepBrand\(\); render\(\); syncBoard\(\); \}\)/.test(WF),
   'only a REAL pick propagates — opening the rail must not re-filter the board behind the reader');
 ok(/NOBOARD\)parts\.push\('not on the board'\)/.test(WF),
   'and when the board cannot follow, the panel says so');

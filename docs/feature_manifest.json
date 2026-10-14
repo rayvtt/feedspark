@@ -6824,7 +6824,7 @@
     {
       "name": "Cockpit: only a real pick propagates — opening the rail never re-filters the board",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "BRAND=sel.value; render(); syncBoard();",
+      "pattern": "BRAND=sel.value; keepBrand(); render(); syncBoard();",
       "min": 1,
       "pr": 425
     },
@@ -15385,6 +15385,60 @@
       "name": "Golden demo: a fresh demo starts with nothing named",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "if (DEMO) { DEMO_OPEN = new Set(); saveDemoOpen(); }",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the shared layer replays a page-level picker on this device",
+      "file": "docs/keep_widget.html",
+      "pattern": "/* FCC-KEEP:ENGINE-START",
+      "pr": 0
+    },
+    {
+      "name": "Keep: a change is recorded only when a person made it",
+      "file": "docs/keep_widget.html",
+      "pattern": "if(!e.isTrusted)return; var el=e.target;",
+      "pr": 0
+    },
+    {
+      "name": "Keep: a link naming the state wins over the memory",
+      "file": "docs/keep_widget.html",
+      "pattern": "if(LINKED)return;   // the link IS the state",
+      "pr": 0
+    },
+    {
+      "name": "Keep: a market picked under a brand confirms that brand",
+      "file": "docs/keep_widget.html",
+      "pattern": "if(b){ var bs=KEEP.brandSel(document); if(bs)record('sel:'+bs.id,b); }",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the worker injects the layer on app pages",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "+ '\\n' + NAVROWW + '\\n' + HOURSW + '\\n' + KEEPW + '\\n' + TOUCHW + '\\n' + MIGW",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the Workflow board filter survives a refresh",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var IT_KEEP='fcc-it-state';",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the board filter is written on every render",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "keepFilter();   // the filter in force is the filter the next load opens on",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the Playbook account survives a refresh",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!BRAND){ var kb=keptBrand(); if(kb&&v.all.indexOf(kb)>=0){ BRAND=kb;",
+      "pr": 0
+    },
+    {
+      "name": "Keep: the Playbook's own select opts out of the shared layer (one writer)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "<select id=\"ck-brand\" data-no-keep aria-label=\"Account to review\"></select>",
       "pr": 0
     }
   ]

@@ -167,6 +167,8 @@ jobs:
         run: node tools/test_shipped.mjs
       - name: Instructions-collapse harness (one ⓘ per card, stable key, the marked lines)
         run: node tools/test_instr.mjs
+      - name: Remembered-picks harness (page-level pickers survive a refresh, a link wins, one writer per control)
+        run: node tools/test_keep.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js
