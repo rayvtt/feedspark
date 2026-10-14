@@ -1636,7 +1636,23 @@ says how many more are in the scorecard above. An empty lane says the feed meets
 
 `#print-plan` is filled by `fillPrint`, so the PDF, the ⬇ HTML and Ctrl+P all carry it. It comes
 after the all-markets table, and the AM's picked Catalogue cards now sit before it, so the plan
-closes the document. It is never shown on screen.
+closes the document.
+
+**On screen since 14 Oct 2026, and editable** (Ray: "can you surface the action plan in the golden record module and make
+each tasks editable/ movable on each month as well"). The plan is now the last section of the scorecard (`#ap-tier`,
+`planSection`), folding like the rest. An AM can move a task to another month (drag it, or ‹ ›), reorder it inside a
+month (drag), reword it or change who owns it (✎), take it out (✕, listed under "taken out" with ↩ Put back), or add a
+task of the team's own (＋ Add a task to <month>). ONE model draws both: `planModel` lays the audit's actions over the
+edits, and `#print-plan` (the client's copy) and the board are rendered from it, so the ⬇ PDF / ⬇ HTML close on exactly
+the plan on screen, without a control. The edits are the TEAM's: shared state ns `grplan`, key `<client>|<mkt>` ('key'
+scope), value `{it: {id: {m, i, t, w, own, del, c}}, at}`, mirrored on the device as `gr-plan-b`. An audit action is
+keyed by what it is about (`a:<attr>`, `q:<attr>`, `ai:<pillar>`, `cl:<kind>`, `m:<rule>`), never by its wording, so a
+rescan that changes its numbers keeps its month and edits; an action the audit stops raising leaves the plan. A wording
+edit stores only what differs from the audit (↺ The audit's wording undoes it); ↺ Back to the audit's plan drops every
+edit for the market. The "now → after the quarter" projection re-runs over the fields the plan keeps (`projOf`). A month
+that has slid into the past lands on the first month shown; one past the window on the last. A half-typed edit survives a
+re-render. Controls hidden in demo; the board is removed from both downloads. Harness `tools/check_grplanedit.js`
+(Playwright, presync).
 
 **One client per file.** `exportDoc` removes every section except the scorecard, and every
 `<select>`, before any other pass. The estate scorecard, the alerts and the scan-brand picker are
@@ -1644,7 +1660,7 @@ hidden in print, but they were still *in* the file, and they name other brands. 
 benchmark line names the industry and its best score, never the brand that holds it, on screen
 too. Harness `tools/check_grplan.js` (Playwright, presync) checks the following:
 
-- the plan is not shown on screen;
+- `#print-plan` itself is not shown on screen (the board is `#ap-tier`);
 - it sits in the right place in both exits;
 - the lanes are right on a fixture built to put known actions in each one;
 - the gains and owners are correct;

@@ -299,7 +299,7 @@ ${STUBS.stubLines()}
   ok('…and the file then carries no Catalogue section at all', html0.indexOf('id="print-catx"') < 0 && html0.indexOf('id="catx"') < 0);
   await ctx.close();
 
-  console.log('── the brand's saved set, exported straight away (frame not open)');
+  console.log('── the brand\'s saved set, exported straight away (frame not open)');
   ({ page, ctx } = await open({ picks: [{ k: 'depth:kw', l: 'Content depth · Keyword slots' }, { k: 'avail', l: 'Availability' }] }));
   const t0 = Date.now();
   const html2 = await grabHtml(page);
