@@ -478,6 +478,13 @@ else
   echo "   ✗ schedule harness FAILED — see node tools/test_schedule.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3i2/7: one project plan, two brands (Monsoon + Accessorize, column B)"
+if node tools/test_planbrand.mjs >/dev/null 2>&1; then
+  echo "   ✓ the brand column is read, a blank cell is both brands, the split + the stamp hold"
+else
+  echo "   ✗ plan-brand harness FAILED — see node tools/test_planbrand.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3j/7: work volumes (every workstream bucketed by month)"
 if node tools/test_volumes.mjs >/dev/null 2>&1; then
   echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"

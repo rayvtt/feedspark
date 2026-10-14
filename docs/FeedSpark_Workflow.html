@@ -672,6 +672,8 @@ window.addEventListener('load',restore);
     display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}   /* a chip clipped mid-character reads as a broken chip; an ellipsis reads as a long name — the full one is in the title */
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
+  /* a shared project plan: this row is marked for ONE of the brands in the workbook */
+  .itbl .src-only{color:var(--orange-deep);background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.42)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
   .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
@@ -2343,7 +2345,7 @@ aside.ck[hidden]{display:none}
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(s?bucketOf(s):(t.b||'open'));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
         var ow=owo[k]!=null?owo[k]:(t.o||'—');
-        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),csrc:CSRC[k]||null,s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
+        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),csrc:CSRC[k]||null,s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd,only:(Array.isArray(t.br)&&t.br.length===1)?t.br[0]:''}); });
     });
     _planCache=out; return out; }
 
@@ -2408,7 +2410,7 @@ aside.ck[hidden]{display:none}
     MANUAL.push({client:client,task:name,owner:owner,status:'Open',due:due}); saveManual();
     toast('↻ '+REC_LBL[r.every]+' — next occurrence created, due '+due);
     var id=PLANSHEET[client];
-    if(id){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
+    if(id){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
       .then(function(x){return x.json();}).then(function(d){ if(d&&d.ok){ markWritten(client,name); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } }).catch(function(){}); } }
   function recMenu(btn,t){
     var old=document.getElementById('rec-menu'); if(old)old.remove();
@@ -2549,7 +2551,7 @@ aside.ck[hidden]{display:none}
     if(id){ toast('Adding to '+client+'’s plan…');
       _planTried[client+'|'+task]=1;                 // this write is in flight — the resync pass must not send the same row alongside it
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
+          body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else delete _planTried[client+'|'+task]; })
         .catch(function(){ delete _planTried[client+'|'+task];   // hand it back to the resync pass rather than stranding it for the session
           toast('Saved locally — plan write failed (check the SA has Editor access)'); });
@@ -2591,7 +2593,7 @@ aside.ck[hidden]{display:none}
     saveManual();
     Object.keys(by).forEach(function(c){ var rows=by[c];
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({id:PLANSHEET[c],tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
+          body:JSON.stringify({id:PLANSHEET[c],client:c,tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
         .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok)return;
           rows.forEach(function(m){ m.w=1; }); saveManual();
           if(d.appended)toast('⟲ '+d.appended+' unsynced task'+(d.appended===1?'':'s')+' written to '+c+'’s plan'); })
@@ -2668,7 +2670,7 @@ aside.ck[hidden]{display:none}
     renderAll(); ti.focus();
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
-      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } })
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
@@ -2747,7 +2749,7 @@ aside.ck[hidden]{display:none}
     var oldId=PLANSHEET[oc], newId=PLANSHEET[nc];
     if(oldId){ fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:oldId,tab:'Project Plan',tasks:[t.task]})})
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok&&d.deleted)toast('✓ Removed from '+oc+'’s plan'); }).catch(function(){}); }
-    if(newId){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
+    if(newId){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,client:nc,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
       .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(nc,t.task); if(LIVE[nc])setTimeout(function(){fetchLive(true);},800); } })
       .catch(function(){ toast('Moved locally — plan write failed (check the SA has Editor access)'); }); }
     else toast('Moved to '+nc+' · no plan sheet linked to write back');
@@ -2898,6 +2900,9 @@ aside.ck[hidden]{display:none}
       var feedL=t.cat?(CAT_LBL[t.cat]||t.cat):'';
       var feed=t.cat?('<span class="feed-tag" title="'+esc(feedL)+'">'+esc(feedL)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'.'+(t.client==='—'?' No client detected — double-click the client cell to file it into a plan':'')+'">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
+      // the brand column of a shared workbook (Monsoon + Accessorize share one): say when a row
+      // is one brand's only, so an unmarked row reading as both is a statement and not a guess.
+      if(t.only)src+=' <span class="src-tag src-only" title="Marked for '+esc(t.only)+' only in the shared project plan’s brand column — every other row in this plan is both brands’ work">'+esc(t.only)+' only</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
