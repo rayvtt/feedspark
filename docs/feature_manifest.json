@@ -4152,7 +4152,7 @@
     {
       "name": "KWCal: an empty brand still renders its six months (the hint sits above the board, it does not replace it)",
       "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "var hint=E.length?'':",
+      "pattern": "hint+=E.length?'':",
       "pr": 359,
       "min": 1
     },
@@ -12041,6 +12041,54 @@
       "name": "KWCal: the Scopes-to-set KPI excludes a theme that carries a scope",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "!hasScope(e,evMkt(CLIENT,e))",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a moment's NAME is editable on its own card (not only by clicking past every button)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "data-rename=\"'+esc(e.id)+'\"",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a moment's DATE is editable on its own card",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "data-date=\"'+esc(e.id)+'\"",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: ONE writer each for a moment's name and date (the card and editEvent cannot disagree)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function setDate(e,v)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a date the calendar does not have is refused, not rolled into a different real day",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "d.toISOString().slice(0,10)!==v",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the name/date edit tripwire runs the real page",
+      "file": "tools/check_kwcal_edit.js",
+      "pattern": "it left the month it was in",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: ＋ Add re-asks for a refused date instead of dropping three answered prompts",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "sug=date; if(setDate(draft,date))break;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a card names WHICH date it shows when its live month differs from its column",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function splitMon(e)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the board says once that its months are when the brief is due",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Months are when the <b>brief is due</b>",
       "pr": 0
     },
     {

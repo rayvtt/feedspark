@@ -61,7 +61,9 @@ ok('the board is on Superdry', (await page.$eval('#brand', (s) => s.value)) === 
 const cards = await page.$$eval('[data-scope]', (n) => n.map((x) => x.getAttribute('data-scope')));
 ok('sixteen themes render, one card each', cards.length === 16 && new Set(cards).size === 16, cards.length);
 ok('…and they are the sd_ themes, not another brand’s', cards.every((c) => c.startsWith('sd_')), cards.slice(0, 3));
-const months = await page.$$eval('.road > *', (n) => n.length);
+// the MONTH SECTIONS, not every child — the board also carries its own explanatory line, and
+// "> *" would just as happily count a stray div as a month
+const months = await page.$$eval('.road > .mo-sec', (n) => n.length);
 ok('the plan opens on its six-month window', months === 6, months);
 
 console.log('\n2) a scope that is SET but not yet measurable says so');

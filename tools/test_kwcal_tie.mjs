@@ -611,6 +611,40 @@ is('a rename cannot break it', wfFor('Reiss', R.silk)?.id, 's9');
 delete R.silk.wf; R.silk.name = 'Silk';
 ROSTER = null;
 
+/* ── a moment's NAME and DATE, edited by hand (Ray, 14 Oct 2026) ──────────────────────────────
+ * tools/check_kwcal_edit.js drives the affordance on a real card; these are the two writers'
+ * own rules, which are pure and which a rendered test can only sample. setName and setDate are
+ * the ONE writer each — the card buttons and editEvent() (the only way to reach a moment sitting
+ * outside the window, which has no card) both go through them, so neither path can validate
+ * differently from the other. Both must REFUSE rather than drop: the editor they replace kept
+ * the old value in silence on anything its regex did not like. */
+{
+  const said = [];
+  const sandbox = { err: (m) => said.push(m) };
+  const fn = new Function('S', lift('setName') + '\n' + lift('setDate') + '\n' + lift('dEdit')
+    + '\nvar err=S.err;\nreturn {setName:setName,setDate:setDate,dEdit:dEdit};')(sandbox);
+
+  const E = () => ({ name: 'Winter intent', date: '2026-11-05' });
+  let e = E();
+  is('a name is taken, trimmed', (fn.setName(e, '  Chunky knits  '), e.name), 'Chunky knits');
+  is('an empty name is refused', fn.setName(e, '   '), false);
+  is('…and the old name stands', e.name, 'Chunky knits');
+  is('…out loud, never in silence', said.length > 0, true);
+
+  e = E();
+  is('an ISO date is taken', (fn.setDate(e, '2027-01-21'), e.date), '2027-01-21');
+  is('a w/c prefix is the flag, never part of the date', (fn.setDate(e, 'w/c 2026-12-07'), [e.date, e.wc]).join('|'), '2026-12-07|1');
+  is('…and reads back as it was typed', fn.dEdit(e), 'w/c 2026-12-07');
+  is('typing it bare clears the prefix', (fn.setDate(e, '2026-12-07'), e.wc), undefined);
+  // 2026-02-31 passes any shape test AND new Date() rolls it to 3 March rather than reporting it
+  // invalid — so the day is round-tripped. Without this, a typo became a different real date.
+  is('a day the calendar does not have is refused', fn.setDate(e, '2026-02-31'), false);
+  is('…and the date stands', e.date, '2026-12-07');
+  is('prose is refused', fn.setDate(e, 'next tuesday'), false);
+  is('a UK-order date is refused rather than read backwards', fn.setDate(e, '07/12/2026'), false);
+  is('…and the date still stands', e.date, '2026-12-07');
+}
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }
 console.log('PASS');

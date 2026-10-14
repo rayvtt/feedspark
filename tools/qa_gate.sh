@@ -296,6 +296,12 @@ else
   echo "   ✗ KWCal Superdry harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_superdry.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_kwcal_edit.js >/dev/null 2>&1; then
+  echo "   ✓ a moment's name and date are editable on its card, and a bad date is refused out loud"
+else
+  echo "   ✗ KWCal name/date edit FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwcal_edit.js"; FAIL=1
+fi
+
 if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
   echo "   ✓ KWCal KPI band partitions every stage; -fb markets never reach the chips"
 else
