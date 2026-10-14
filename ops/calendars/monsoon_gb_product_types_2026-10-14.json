@@ -1,0 +1,647 @@
+{
+ "source": "FeedHero XML \u2014 Monsoon GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-10-14",
+ "feed_generated": "2026-10-14 06:46:03",
+ "note": "Primary g:product_type only \u2014 the FIRST value on each item. The repeated g:product_type values that follow it are the numbered keyword slots and are counted separately (keyword_saturation below), never as category paths. \"products\" counts distinct g:item_group_id; \"skus\" counts feed rows. This census is deliberately INDEPENDENT of the KWCal seed: the harness builds its index from the seed\u2019s own paths and checks each one resolves here, so a mis-spelled path matches nothing real rather than matching itself.",
+ "totals": {
+  "products": 1593,
+  "skus": 9930,
+  "product_type_paths": 126
+ },
+ "keyword_saturation": {
+  "skus_carrying_at_least_one_keyword_slot": 485,
+  "skus_carrying_none": 9445
+ },
+ "product_types": {
+  "Children > Alice Bands": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Children > Beauty": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Children > Bracelets": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Children > Cardigans": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Children > Clothing > Blouses & Shirts > Blouses": {
+   "products": 2,
+   "skus": 12,
+   "unkeyworded": 12
+  },
+  "Children > Clothing > Blouses & Shirts > Shirts": {
+   "products": 9,
+   "skus": 62,
+   "unkeyworded": 62
+  },
+  "Children > Clothing > Cardigans & Jumpers > Cardigans": {
+   "products": 32,
+   "skus": 272,
+   "unkeyworded": 261
+  },
+  "Children > Clothing > Cardigans & Jumpers > Jumpers": {
+   "products": 23,
+   "skus": 160,
+   "unkeyworded": 154
+  },
+  "Children > Clothing > Coats & Jackets > Coats": {
+   "products": 53,
+   "skus": 330,
+   "unkeyworded": 315
+  },
+  "Children > Clothing > Coats & Jackets > Jackets": {
+   "products": 21,
+   "skus": 141,
+   "unkeyworded": 138
+  },
+  "Children > Clothing > Dresses": {
+   "products": 117,
+   "skus": 891,
+   "unkeyworded": 880
+  },
+  "Children > Clothing > Dresses > Floral Dresses": {
+   "products": 60,
+   "skus": 374,
+   "unkeyworded": 359
+  },
+  "Children > Clothing > Dresses > Flower Dresses": {
+   "products": 3,
+   "skus": 15,
+   "unkeyworded": 15
+  },
+  "Children > Clothing > Dresses > Jumpsuits & Playsuits": {
+   "products": 11,
+   "skus": 87,
+   "unkeyworded": 86
+  },
+  "Children > Clothing > Dresses > Knitted Dresses": {
+   "products": 8,
+   "skus": 49,
+   "unkeyworded": 49
+  },
+  "Children > Clothing > Dresses > Maxi Dresses": {
+   "products": 5,
+   "skus": 35,
+   "unkeyworded": 34
+  },
+  "Children > Clothing > Dresses > Prom Dresses": {
+   "products": 13,
+   "skus": 176,
+   "unkeyworded": 172
+  },
+  "Children > Clothing > Dresses > Ruffle Dresses": {
+   "products": 15,
+   "skus": 149,
+   "unkeyworded": 142
+  },
+  "Children > Clothing > Nightwear": {
+   "products": 19,
+   "skus": 108,
+   "unkeyworded": 108
+  },
+  "Children > Clothing > Nightwear > Pyjamas": {
+   "products": 1,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Children > Clothing > Suits": {
+   "products": 4,
+   "skus": 38,
+   "unkeyworded": 32
+  },
+  "Children > Clothing > Suits > Four Piece Suits": {
+   "products": 3,
+   "skus": 19,
+   "unkeyworded": 19
+  },
+  "Children > Clothing > Suits > Three Piece Suits": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Children > Clothing > Swimwear & Beachwear": {
+   "products": 10,
+   "skus": 46,
+   "unkeyworded": 43
+  },
+  "Children > Clothing > Tops & T-Shirts > T-Shirts": {
+   "products": 7,
+   "skus": 32,
+   "unkeyworded": 32
+  },
+  "Children > Clothing > Tops & T-Shirts > Tops": {
+   "products": 57,
+   "skus": 347,
+   "unkeyworded": 340
+  },
+  "Children > Clothing > Tops & T-Shirts > Tops > Hoodies": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Children > Clothing > Trousers & Skirts > Leggings": {
+   "products": 10,
+   "skus": 53,
+   "unkeyworded": 53
+  },
+  "Children > Clothing > Trousers & Skirts > Shorts": {
+   "products": 4,
+   "skus": 21,
+   "unkeyworded": 21
+  },
+  "Children > Clothing > Trousers & Skirts > Skirts": {
+   "products": 21,
+   "skus": 129,
+   "unkeyworded": 124
+  },
+  "Children > Clothing > Trousers & Skirts > Trousers": {
+   "products": 22,
+   "skus": 144,
+   "unkeyworded": 140
+  },
+  "Children > Coats": {
+   "products": 2,
+   "skus": 11,
+   "unkeyworded": 10
+  },
+  "Children > Hair Clips": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Children > Hair Garlands": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Children > Hats": {
+   "products": 1,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Children > Heeled Shoes": {
+   "products": 14,
+   "skus": 185,
+   "unkeyworded": 176
+  },
+  "Children > Hoodies": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Children > Jewellery Sets": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Children > Jumpers": {
+   "products": 2,
+   "skus": 11,
+   "unkeyworded": 11
+  },
+  "Children > Onesie": {
+   "products": 3,
+   "skus": 21,
+   "unkeyworded": 21
+  },
+  "Children > Onesies": {
+   "products": 2,
+   "skus": 14,
+   "unkeyworded": 14
+  },
+  "Children > PJ Sets": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Children > Pyjamas": {
+   "products": 15,
+   "skus": 112,
+   "unkeyworded": 109
+  },
+  "Children > Shoes": {
+   "products": 2,
+   "skus": 25,
+   "unkeyworded": 25
+  },
+  "Children > Shoes & Accessories > Accessories": {
+   "products": 3,
+   "skus": 10,
+   "unkeyworded": 10
+  },
+  "Children > Shoes & Accessories > Accessories > Cover Ups": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Children > Shoes & Accessories > Accessories > Gloves": {
+   "products": 28,
+   "skus": 56,
+   "unkeyworded": 48
+  },
+  "Children > Shoes & Accessories > Accessories > Hair Accessories": {
+   "products": 56,
+   "skus": 212,
+   "unkeyworded": 206
+  },
+  "Children > Shoes & Accessories > Accessories > Home Accessories": {
+   "products": 3,
+   "skus": 13,
+   "unkeyworded": 13
+  },
+  "Children > Shoes & Accessories > Accessories > Jewellery": {
+   "products": 15,
+   "skus": 50,
+   "unkeyworded": 47
+  },
+  "Children > Shoes & Accessories > Accessories > Scarves": {
+   "products": 6,
+   "skus": 9,
+   "unkeyworded": 8
+  },
+  "Children > Shoes & Accessories > Accessories > Socks": {
+   "products": 9,
+   "skus": 35,
+   "unkeyworded": 29
+  },
+  "Children > Shoes & Accessories > Accessories > Sunglasses": {
+   "products": 3,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Children > Shoes & Accessories > Accessories > Tights": {
+   "products": 35,
+   "skus": 188,
+   "unkeyworded": 178
+  },
+  "Children > Shoes & Accessories > Accessories > Toys & Stationery": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Children > Shoes & Accessories > Bags": {
+   "products": 27,
+   "skus": 82,
+   "unkeyworded": 72
+  },
+  "Children > Shoes & Accessories > Bags > Backpacks": {
+   "products": 3,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Children > Shoes & Accessories > Bags > Handbags": {
+   "products": 11,
+   "skus": 18,
+   "unkeyworded": 15
+  },
+  "Children > Shoes & Accessories > Hair Accessories > Hairbands": {
+   "products": 7,
+   "skus": 9,
+   "unkeyworded": 9
+  },
+  "Children > Shoes & Accessories > Hats": {
+   "products": 36,
+   "skus": 70,
+   "unkeyworded": 70
+  },
+  "Children > Shoes & Accessories > Shoes": {
+   "products": 50,
+   "skus": 516,
+   "unkeyworded": 494
+  },
+  "Children > Shoes & Accessories > Shoes > Boots": {
+   "products": 19,
+   "skus": 225,
+   "unkeyworded": 222
+  },
+  "Children > Shoes & Accessories > Shoes > Heels": {
+   "products": 19,
+   "skus": 238,
+   "unkeyworded": 228
+  },
+  "Children > Shoes & Accessories > Shoes > Sandals": {
+   "products": 4,
+   "skus": 25,
+   "unkeyworded": 24
+  },
+  "Children > Shoes & Accessories > Shoes > Slippers": {
+   "products": 12,
+   "skus": 63,
+   "unkeyworded": 63
+  },
+  "Children > Skorts": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Children > Suits": {
+   "products": 1,
+   "skus": 14,
+   "unkeyworded": 14
+  },
+  "Children > Walkers": {
+   "products": 1,
+   "skus": 15,
+   "unkeyworded": 15
+  },
+  "Womens > Ballet Pumps": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Womens > Bobble Hats": {
+   "products": 1,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Womens > Clothing > Blouses & Shirts > Blouses": {
+   "products": 43,
+   "skus": 204,
+   "unkeyworded": 178
+  },
+  "Womens > Clothing > Blouses & Shirts > Shirts": {
+   "products": 33,
+   "skus": 155,
+   "unkeyworded": 153
+  },
+  "Womens > Clothing > Cardigans & Jumpers > Cardigans": {
+   "products": 27,
+   "skus": 143,
+   "unkeyworded": 142
+  },
+  "Womens > Clothing > Cardigans & Jumpers > Jumpers": {
+   "products": 39,
+   "skus": 206,
+   "unkeyworded": 202
+  },
+  "Womens > Clothing > Coats & Jackets > Coats": {
+   "products": 19,
+   "skus": 103,
+   "unkeyworded": 102
+  },
+  "Womens > Clothing > Coats & Jackets > Jackets": {
+   "products": 44,
+   "skus": 248,
+   "unkeyworded": 239
+  },
+  "Womens > Clothing > Coats & Jackets > Raincoats": {
+   "products": 1,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Womens > Clothing > Dresses": {
+   "products": 18,
+   "skus": 100,
+   "unkeyworded": 98
+  },
+  "Womens > Clothing > Dresses > Beach Dresses": {
+   "products": 21,
+   "skus": 76,
+   "unkeyworded": 62
+  },
+  "Womens > Clothing > Dresses > Denim Dresses": {
+   "products": 1,
+   "skus": 9,
+   "unkeyworded": 7
+  },
+  "Womens > Clothing > Dresses > Floral Dresses": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 8
+  },
+  "Womens > Clothing > Dresses > Jumpsuits & Playsuits": {
+   "products": 14,
+   "skus": 56,
+   "unkeyworded": 52
+  },
+  "Womens > Clothing > Dresses > Knitted Dresses": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Womens > Clothing > Dresses > Maxi Dresses": {
+   "products": 25,
+   "skus": 133,
+   "unkeyworded": 115
+  },
+  "Womens > Clothing > Dresses > Midi Dresses": {
+   "products": 121,
+   "skus": 773,
+   "unkeyworded": 703
+  },
+  "Womens > Clothing > Dresses > Ruffle Dresses": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Womens > Clothing > Dresses > Wrap Dresses": {
+   "products": 4,
+   "skus": 24,
+   "unkeyworded": 23
+  },
+  "Womens > Clothing > Swimwear & Beachwear": {
+   "products": 9,
+   "skus": 103,
+   "unkeyworded": 82
+  },
+  "Womens > Clothing > Tops & T-Shirts > T-Shirts": {
+   "products": 2,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Womens > Clothing > Tops & T-Shirts > Tops": {
+   "products": 76,
+   "skus": 375,
+   "unkeyworded": 359
+  },
+  "Womens > Clothing > Trousers & Skirts > Shorts": {
+   "products": 3,
+   "skus": 20,
+   "unkeyworded": 20
+  },
+  "Womens > Clothing > Trousers & Skirts > Skirts": {
+   "products": 39,
+   "skus": 290,
+   "unkeyworded": 280
+  },
+  "Womens > Clothing > Trousers & Skirts > Trousers": {
+   "products": 63,
+   "skus": 418,
+   "unkeyworded": 400
+  },
+  "Womens > Faux Fur Scarf": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Womens > Jumpers": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Womens > Loafers": {
+   "products": 2,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Womens > Mary Jane Heels": {
+   "products": 1,
+   "skus": 12,
+   "unkeyworded": 11
+  },
+  "Womens > Mid-Calf Boots": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 5
+  },
+  "Womens > Mules": {
+   "products": 2,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Womens > PJ Sets": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Womens > Sandals": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Womens > Shoes": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Womens > Shoes & Accessories > Accessories": {
+   "products": 4,
+   "skus": 9,
+   "unkeyworded": 8
+  },
+  "Womens > Shoes & Accessories > Accessories > Gloves": {
+   "products": 4,
+   "skus": 7,
+   "unkeyworded": 6
+  },
+  "Womens > Shoes & Accessories > Accessories > Jewellery": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Womens > Shoes & Accessories > Accessories > Ponchos": {
+   "products": 3,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Womens > Shoes & Accessories > Accessories > Scarves": {
+   "products": 17,
+   "skus": 51,
+   "unkeyworded": 50
+  },
+  "Womens > Shoes & Accessories > Accessories > Sunglasses": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Womens > Shoes & Accessories > Bags": {
+   "products": 9,
+   "skus": 15,
+   "unkeyworded": 13
+  },
+  "Womens > Shoes & Accessories > Bags > Handbags": {
+   "products": 15,
+   "skus": 22,
+   "unkeyworded": 16
+  },
+  "Womens > Shoes & Accessories > Hats": {
+   "products": 8,
+   "skus": 11,
+   "unkeyworded": 10
+  },
+  "Womens > Shoes & Accessories > Shoes": {
+   "products": 10,
+   "skus": 51,
+   "unkeyworded": 37
+  },
+  "Womens > Shoes & Accessories > Shoes > Boots": {
+   "products": 12,
+   "skus": 79,
+   "unkeyworded": 70
+  },
+  "Womens > Shoes & Accessories > Shoes > Flats": {
+   "products": 1,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Womens > Shoes & Accessories > Shoes > Flip Flops": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Womens > Shoes & Accessories > Shoes > Heels": {
+   "products": 2,
+   "skus": 9,
+   "unkeyworded": 8
+  },
+  "Womens > Shoes & Accessories > Shoes > Loafers": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Womens > Shoes & Accessories > Shoes > Mary Jane Heels": {
+   "products": 1,
+   "skus": 12,
+   "unkeyworded": 12
+  },
+  "Womens > Shoes & Accessories > Shoes > Mule Loafers": {
+   "products": 1,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Womens > Shoes & Accessories > Shoes > Platform Heels": {
+   "products": 6,
+   "skus": 35,
+   "unkeyworded": 23
+  },
+  "Womens > Shoes & Accessories > Shoes > Sandals": {
+   "products": 11,
+   "skus": 50,
+   "unkeyworded": 43
+  },
+  "Womens > Shoes & Accessories > Shoes > Slingback Heels": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Womens > Shoes & Accessories > Shoes > Slippers": {
+   "products": 2,
+   "skus": 8,
+   "unkeyworded": 7
+  },
+  "Womens > Shoes & Accessories > Shoes > Toe Heels": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Womens > Sling Backs": {
+   "products": 3,
+   "skus": 18,
+   "unkeyworded": 17
+  },
+  "Womens > Smock Dresses": {
+   "products": 1,
+   "skus": 9,
+   "unkeyworded": 9
+  }
+ }
+}

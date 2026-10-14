@@ -86,6 +86,9 @@ window.addEventListener('load',restore);
     font-size:11.5px;font-weight:900;padding:4px 9px;cursor:pointer}
   .kwd-go:hover{background:var(--orange-deep)}
   .kwd-none{font-size:12px;font-weight:700;color:var(--muted);padding:4px 8px}
+  .kwd-stale{font-size:11.5px;color:var(--muted);padding:2px 8px 4px}
+  .kwd-stale:empty{display:none}
+  .kwd-stale a{color:var(--orange);font-weight:700}
   @media(max-width:760px){
     .kwd-row{flex-wrap:wrap;gap:4px 8px}
     .kwd-nm{flex:1 1 100%;order:3}
@@ -1302,6 +1305,7 @@ aside.ck[hidden]{display:none}
       <span class="sw-sub" id="kwd-sub"></span>
       <a class="sw-more" href="/kwcal">Open the calendar →</a></div>
     <div class="kwd-rows" id="kwd-rows"></div>
+    <div class="kwd-stale" id="kwd-stale"></div>
   </div>
 
   <!-- FCC-SCHEDWORK: scheduled work sits outside Intake — the strip below is a read-only hand-off -->
@@ -6980,7 +6984,9 @@ aside.ck[hidden]{display:none}
     var all=E.dueList(STORE,BRIEFS||{},{days:KWD_DAYS});
     // follow the board: one client selected in Intake points the band at them. A filter that
     // leaves nothing is reported as that, never as "nothing to brief".
+    var dropped=all.stale||0;
     if(SCOPE&&SCOPE.length)all=all.filter(function(r){ return SCOPE.indexOf(r.client)>=0; });
+    all.stale=dropped;                   // the filter narrows the rows, never the count of what the window dropped
     return all;
   }
   function render(){
@@ -6993,6 +6999,13 @@ aside.ck[hidden]{display:none}
       ? rs.length+' to brief'+(late?' · '+late+' overdue':'')+(soon?' · '+soon+' within a week':'')
         +(SCOPE&&SCOPE.length===1?' · '+SCOPE[0]:'')
       : (SCOPE&&SCOPE.length?'Nothing to brief for '+SCOPE.join(', ')+'.':'Every scheduled optimisation is briefed.');
+    // What the 20-day window dropped is NAMED, never silently gone: those moments are still on
+    // the calendar and a re-date brings them straight back into this band.
+    var stale=rs.stale||0;
+    $('#kwd-stale').innerHTML = stale
+      ? esc(stale+' moment'+(stale===1?'':'s')+' more than '+E.STALE_DAYS+' days past their brief-by are not listed \u2014 their window has gone. ')
+        +'<a href="/kwcal">Re-date them on the calendar</a> to brief them.'
+      : '';
     $('#kwd-rows').innerHTML = rs.length ? rs.slice(0,14).map(function(r,i){
       var cls=r.overdue?' late':(r.inDays<=7?' soon':'');
       var scope = r.brandwide ? 'whole catalogue'

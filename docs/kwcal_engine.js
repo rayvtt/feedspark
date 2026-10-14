@@ -28,6 +28,7 @@
   'use strict';
 
   var LEAD_DAYS = 21;              // keyword optimisation lands ~3 weeks before the moment
+  var STALE_DAYS = 20;             // a brief-by this far past is a wrong date, not a late task
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   function fmt(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
@@ -189,8 +190,16 @@
     var now=opts.now?new Date(opts.now):new Date();
     var today=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
     var horizon=opts.days==null?60:+opts.days;      // how far ahead to look; null/0- = everything
+    // ...and how far BEHIND. Ray, 14 Oct 2026, over a band led by five Accessorize moments
+    // 41-63 days late: "only backdated the task for anything less than 20 days late ... anything
+    // else above that should just be removed from this view". A moment whose brief-by went past
+    // weeks ago is not a nag, it is a DATE that is wrong: its window has gone, so briefing it
+    // today would land work after the moment it was for. It leaves the band (the calendar still
+    // holds it, and re-dating it there brings it back); the count of what was dropped rides on
+    // the result so the band can say so rather than quietly shortening.
+    var stale=opts.stale==null?STALE_DAYS:+opts.stale;
     var only=opts.clients&&opts.clients.length?opts.clients:null;
-    var rows=[];
+    var rows=[], nStale=0;
     Object.keys(store||{}).forEach(function(brand){
       if(brand.charAt(0)==='_')return;
       if(only&&only.indexOf(brand)<0)return;
@@ -201,6 +210,7 @@
         var bd=schedDate(e), by=Date.UTC(bd.getUTCFullYear(),bd.getUTCMonth(),bd.getUTCDate());
         var inDays=Math.round((by-today)/86400000);
         if(horizon>0&&inDays>horizon)return;         // beyond the window the AM is working to
+        if(stale>0&&inDays<-stale){ nStale++; return; }  // its window has gone — re-date it, don't brief it
         var mkt=evMkt(e,opts.mkt||'gb');
         var v=volOf(store,brand,e,mkt);
         rows.push({ client:brand, id:e.id, name:e.name, mkt:mkt, lane:e.lane||'',
@@ -211,10 +221,11 @@
       });
     });
     rows.sort(function(a,b){ return a.inDays-b.inDays || String(a.client).localeCompare(b.client); });
+    rows.stale=nStale;
     return rows;
   }
 
-  return { LEAD_DAYS:LEAD_DAYS, MON:MON, fmt:fmt, normTask:normTask,
+  return { LEAD_DAYS:LEAD_DAYS, STALE_DAYS:STALE_DAYS, MON:MON, fmt:fmt, normTask:normTask,
     schedDate:schedDate, dLbl:dLbl, bLbl:bLbl,
     evsOf:evsOf, ptidxFor:ptidxFor, evMkt:evMkt, ptsOf:ptsOf, txOf:txOf, cndOf:cndOf,
     hasScope:hasScope, volOf:volOf, kwHours:kwHours, kwTask:kwTask, briefPayload:briefPayload,

@@ -31,7 +31,10 @@ const KW = {
     { id: 'n2', name: 'Winter outerwear', date: soon(26), terms: ['puffer'] },                           // due in 5 days
     { id: 'n3', name: 'Already briefed',  date: soon(30) } ],
     ptidx: { gb: { map: { 'Jumpers': 400 }, __total: 1000, sat: { n: 300 } } } },
-  Harbour: { events: [ { id: 'h1', name: 'Spring drop', date: soon(28), brandwide: 1 } ],
+  // Ray, 14 Oct 2026: a brief-by weeks past is a wrong date, not a late task — this one is
+  // 46 days past and must leave the band, named rather than silently dropped.
+  Harbour: { events: [ { id: 'h1', name: 'Spring drop', date: soon(28), brandwide: 1 },
+    { id: 'h2', name: 'Window long gone', date: soon(-25) } ],
     ptidx: { gb: { map: {}, __total: 500, sat: { n: 100 } } } }
 };
 KW.Northwind.events[0].ptsm = { gb: ['Jumpers'] };
@@ -64,7 +67,8 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
       who: r.querySelector('.kwd-who').textContent.trim(),
       name: r.querySelector('.kwd-nm').textContent.trim(),
       scope: r.querySelector('.kwd-sc').textContent.trim(),
-      late: r.classList.contains('late'), soon: r.classList.contains('soon') }))
+      late: r.classList.contains('late'), soon: r.classList.contains('soon') })),
+    stale: (n.querySelector('#kwd-stale') || { textContent: '' }).textContent.trim()
   }));
 
   console.log('\n1) the calendar’s unbriefed moments are ON the Workflow board');
@@ -79,6 +83,10 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   ok('the overdue one leads', /late/.test(b.rows[0].when), b.rows[0]);
   ok('…and is marked as overdue', b.rows[0].late);
   ok('the summary counts them', /3 to brief/.test(b.sub) && /overdue/.test(b.sub), b.sub);
+  ok('a moment more than 20 days past its brief-by is NOT listed',
+    !b.rows.some((r) => /Window long gone/.test(r.name)), b.rows.map((r) => r.name));
+  ok('…and the band says so, with the way back', /1 moment more than 20 days past/.test(b.stale)
+    && /Re-date them on the calendar/.test(b.stale), b.stale);
 
   console.log('\n2) each row carries what you need to decide, not a number it does not have');
   const fest = b.rows.find((r) => /Festive/.test(r.name));

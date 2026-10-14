@@ -1083,6 +1083,84 @@ Superdry:{events:[
   {id:'sd_fit', name:'Fit vocabulary — oversized, relaxed, baggy', lane:'studio', date:'2027-02-15',
    note:'"relaxed" is in 302 titles and "oversized" in 108, but NEITHER appears in any product_type — fit is described in the copy and is invisible to the listing-group structure, so it cannot be bid on. "female oversized hoodie" (1,600/mo) and "baggy jeans female" (1,900) return no hits. Set this one with the picker’s TEXT filters rather than product types: fit cuts across every category, so a product-type scope would either miss most of it or swallow the catalogue.',
    terms:['oversized','relaxed fit','baggy','boxy','cropped']}
+]},
+/* ---- MONSOON — FEEDSPARK'S OWN PLAN, NO CLIENT CALENDAR (Ray, 14 Oct 2026: "the client,
+   especially Monsoon, won't have the marketing calendar … auto-generate a keyword calendar
+   targeting two themes per month for Monsoon from now until February 2027 … focus on the
+   seasonality of the product, since they sell dresses and catalogs, and also auto-select the
+   product"). Ten themes, TWO per work month, Oct 2026 → Feb 2027, derived from one live read of
+   the wired Monsoon GB Shopping XML on 14 Oct 2026: 9,930 SKUs / 1,593 products / 126 primary
+   g:product_type paths. Census: ops/calendars/monsoon_gb_product_types_2026-10-14.json.
+   THE FINDING, and it is the same one twice. (1) KEYWORDS ARE ESSENTIALLY ABSENT — 9,445 of
+   9,930 SKUs (95.1%) carry no extra g:product_type at all, so every theme here is first-pass work
+   rather than a refinement. (2) THE TITLES DESCRIBE THE GARMENT AND NEVER THE OCCASION: "occasion"
+   is in ZERO of 9,930 titles on an occasionwear brand, and so are "wedding guest", "formal",
+   "partywear", "holiday", "mother", "new year", "thermal" and "cosy"; "festive" and "flower girl"
+   are in one each, "gift" in five, "beach" in six, "winter" in fourteen, "spring" in three,
+   "summer" in two. What IS stated is fabric and cut — "velvet" 1,324, "embellished" 1,273,
+   "midi" 1,134, "party" 885, "sequin" 670, "lace" 603. The whole plan is the same move: put the
+   occasion and the season into a feed that only says what a thing is made of.
+   THE CATALOGUE IS TWO SHOPS: Children's is the larger half (the biggest single path is
+   Children > Clothing > Dresses, 891 SKUs, ahead of Womens Midi Dresses at 773), so four of the
+   ten themes are kidswear or carry it, which is not how this account is usually briefed.
+   SCOPE IS SEEDED, GB ONLY — each theme carries the exact primary paths read out of that feed,
+   so a theme arrives measurable; switching the board to another market shows NO scope rather than
+   a borrowed one. Each note quotes the count ITS OWN scope resolves to, never the category total.
+   The scope reads "sync to measure" until someone runs ⟳ Sync product types on Monsoon GB.
+   DATES: `date` is LIVE-BY and the board buckets a moment by its BRIEF-BY (live − 21 days), so the
+   two-a-month Ray asked for is two per WORK month — briefs 16/27 Oct, 6/20 Nov, 8/22 Dec, 5/19 Jan,
+   3/17 Feb, nothing born overdue, and each theme goes live in its own season (party 6 Nov, gifting
+   11 Dec, the sale 29 Dec, the holiday shop 12 Jan, wedding guest 9 Feb, Mother's Day 24 Feb for
+   Mothering Sunday on 7 Mar 2027).
+   LANES are renamed for display (LANE_NAMES): Seasonal focus / Kidswear / Occasion & events /
+   Promotion — this is a work plan, not a marketing calendar.
+   NOT SEEDED, deliberately: the product-type splits this read turned up (Children > Heeled Shoes
+   beside Children > Shoes & Accessories > Shoes > Heels; Children > Onesie / Onesies;
+   Children > Suits / Children > Clothing > Suits; Children > Shoes / Children > Shoes &
+   Accessories > Shoes). PMAX listing groups key on the exact value, so those are a Product Type
+   Guard job — but a scope CONTAINING a split carries both spellings or it drops products.
+   Record: ops/calendars/Monsoon_seasonal_themes_ingest.md ---- */
+Monsoon:{events:[
+  {id:"mon_party", name:"Party & occasion dresses", lane:"campaign", date:"2026-11-06",
+   note:"THE finding on this feed, and it is the brand’s own category: \"occasion\" appears in ZERO of 9,930 GB titles, \"partywear\" in none and \"formal\" in none — while the copy is rich in fabric and cut (\"velvet\" 1,324 titles, \"embellished\" 1,273, \"midi\" 1,134, \"sequin\" 670, \"lace\" 603). Monsoon titles say what a dress is MADE of; they rarely say what it is FOR, which is how this shopper searches. \"party\" is in 885 titles, so the vocabulary is half there. Live 6 Nov, briefed mid-October — party-dress demand climbs through November and is spent by mid-December. Scope: 5 product-type paths — 182 products / 1,086 SKUs, 991 of those SKUs still carrying no keyword.",
+   terms:["party dress", "occasion dress", "sequin dress", "velvet dress", "christmas party"],
+   pts:["Womens > Clothing > Dresses > Midi Dresses", "Womens > Clothing > Dresses > Maxi Dresses", "Womens > Clothing > Dresses", "Womens > Clothing > Dresses > Wrap Dresses", "Womens > Clothing > Dresses > Jumpsuits & Playsuits"]},
+  {id:"mon_girlsocc", name:"Girls’ party & occasionwear", lane:"location", date:"2026-11-17",
+   note:"Kidswear is the larger half of this catalogue and the one the titles serve worst: \"flower girl\" is in ONE title and \"bridesmaid\" in 13, against 176 real Prom Dresses rows and a whole Floral/Ruffle dress tree. The occasion words a parent searches — girls party dress, flower girl, bridesmaid — are almost entirely absent. Two product-type branches carry the same shoes (Children > Heeled Shoes and Children > Shoes & Accessories > Shoes > Heels), so both are in scope or the scope silently drops half of them; the split itself is a Product Type Guard job, not a keyword theme. Scope: 6 product-type paths — 238 products / 2,013 SKUs, 1,957 of those SKUs still carrying no keyword.",
+   terms:["girls party dress", "flower girl", "bridesmaid dress", "girls occasion", "party shoes"],
+   pts:["Children > Clothing > Dresses", "Children > Clothing > Dresses > Floral Dresses", "Children > Clothing > Dresses > Prom Dresses", "Children > Clothing > Dresses > Ruffle Dresses", "Children > Heeled Shoes", "Children > Shoes & Accessories > Shoes > Heels"]},
+  {id:"mon_outerwear", name:"Winter coats & outerwear", lane:"campaign", date:"2026-11-27",
+   note:"\"winter\" is in 14 of 9,930 titles (0.1%), \"puffer\" in 3, \"thermal\" and \"cosy\" in none — against 162 titles already saying \"padded\", so the warmth vocabulary exists in the feed and stops one word short of what is searched. Children’s coats are the bigger side of this scope, which is the opposite of how the category is usually briefed. Scope: 4 product-type paths — 137 products / 822 SKUs, 794 of those SKUs still carrying no keyword.",
+   terms:["winter coat", "padded coat", "puffer jacket", "wool coat", "girls coat"],
+   pts:["Womens > Clothing > Coats & Jackets > Jackets", "Womens > Clothing > Coats & Jackets > Coats", "Children > Clothing > Coats & Jackets > Coats", "Children > Clothing > Coats & Jackets > Jackets"]},
+  {id:"mon_gifting", name:"Festive gifting — accessories, bags & jewellery", lane:"studio", date:"2026-12-11",
+   note:"\"gift\" is in 5 titles of 9,930 and \"christmas\" in 319, almost all of them on dresses rather than on the small accessories that actually sell as gifts. This is the lowest-priced, highest-volume corner of the catalogue and the one a gifting search should land on. The scope is small per path and wide across them — nine paths for 214 products — so the win is coverage, not depth. Scope: 9 product-type paths — 214 products / 576 SKUs, 537 of those SKUs still carrying no keyword.",
+   terms:["christmas gift", "gifts for her", "stocking filler", "hair accessories", "girls jewellery"],
+   pts:["Children > Shoes & Accessories > Accessories > Hair Accessories", "Children > Shoes & Accessories > Bags", "Children > Shoes & Accessories > Hats", "Children > Shoes & Accessories > Accessories > Gloves", "Children > Shoes & Accessories > Accessories > Jewellery", "Womens > Shoes & Accessories > Accessories > Scarves", "Womens > Shoes & Accessories > Bags > Handbags", "Womens > Shoes & Accessories > Bags", "Children > Shoes & Accessories > Bags > Handbags"]},
+  {id:"mon_knitsale", name:"Winter sale — knitwear & cardigans", lane:"sale", date:"2026-12-29",
+   note:"Live 29 Dec, into the Boxing Day sale. \"knit\" is in 312 titles, \"cardigan\" in 419 and \"jumper\" in 365, so the nouns are stated — what is missing is the qualifier a shopper types (cable knit, chunky, jumper dress). Knitted Dresses sit under Children > Clothing > Dresses in the tree, not under knitwear, so they are scoped here deliberately: the sale shops them as knitwear. Scope: 5 product-type paths — 129 products / 830 SKUs, 808 of those SKUs still carrying no keyword.",
+   terms:["knitted dress", "cable knit cardigan", "jumper dress", "girls cardigan", "winter sale"],
+   pts:["Womens > Clothing > Cardigans & Jumpers > Jumpers", "Womens > Clothing > Cardigans & Jumpers > Cardigans", "Children > Clothing > Cardigans & Jumpers > Cardigans", "Children > Clothing > Cardigans & Jumpers > Jumpers", "Children > Clothing > Dresses > Knitted Dresses"]},
+  {id:"mon_holiday", name:"Holiday shop — swimwear & beachwear", lane:"campaign", date:"2027-01-12",
+   note:"January is when the holiday is booked, and the feed says almost nothing about it: \"holiday\" is in ZERO titles and \"beach\" in 6, against a Beach Dresses product type of its own and 124 titles carrying \"swim\". The smallest scope on this board (40 products) and the clearest gap — three paths, no competition for the words inside them. Scope: 3 product-type paths — 40 products / 225 SKUs, 187 of those SKUs still carrying no keyword.",
+   terms:["holiday shop", "swimsuit", "beach dress", "kaftan", "girls swimwear"],
+   pts:["Womens > Clothing > Swimwear & Beachwear", "Children > Clothing > Swimwear & Beachwear", "Womens > Clothing > Dresses > Beach Dresses"]},
+  {id:"mon_springlayers", name:"Spring layers — blouses, tops & shirts", lane:"campaign", date:"2027-01-26",
+   note:"\"spring\" is in 3 titles and \"summer\" in 2 — the season turns in the shop and never in the copy. Tops and blouses are the second-largest womenswear block after dresses and carry none of the new-season language. Briefed in January so the words are live as the range lands. Scope: 5 product-type paths — 218 products / 1,143 SKUs, 1,092 of those SKUs still carrying no keyword.",
+   terms:["spring blouse", "floral blouse", "linen shirt", "girls top", "new season"],
+   pts:["Womens > Clothing > Tops & T-Shirts > Tops", "Womens > Clothing > Blouses & Shirts > Blouses", "Womens > Clothing > Blouses & Shirts > Shirts", "Children > Clothing > Tops & T-Shirts > Tops", "Children > Clothing > Blouses & Shirts > Shirts"]},
+  {id:"mon_weddingguest", name:"Wedding guest & occasion", lane:"studio", date:"2027-02-09",
+   note:"\"wedding guest\" is in ZERO titles and \"mother\" in none, on a brand this phrase is bought for. Wedding-guest search starts in February for a summer wedding, which is why this is briefed in January rather than in spring. It shares most of its dresses with the November party theme ON PURPOSE — same products, a different question, and the keyword slots hold both; the shoes are here and not there because a guest outfit is searched as an outfit. Scope: 7 product-type paths — 198 products / 1,165 SKUs, 1,051 of those SKUs still carrying no keyword.",
+   terms:["wedding guest dress", "mother of the bride", "occasion wear", "guest outfit", "heeled sandals"],
+   pts:["Womens > Clothing > Dresses > Midi Dresses", "Womens > Clothing > Dresses > Maxi Dresses", "Womens > Clothing > Dresses", "Womens > Clothing > Dresses > Jumpsuits & Playsuits", "Womens > Shoes & Accessories > Shoes > Sandals", "Womens > Shoes & Accessories > Shoes > Platform Heels", "Womens > Sling Backs"]},
+  {id:"mon_mothers", name:"Mother’s Day gifting", lane:"studio", date:"2027-02-24",
+   note:"Mothering Sunday 2027 falls on 7 March, so this goes live 24 February — about two weeks of run-up, which is where the gifting searches sit. \"mother\" is in ZERO titles and \"gift\" in 5. The scope is deliberately the giftable end of womenswear (scarves, bags, a cardigan, a dress) rather than the whole catalogue: a gift search that lands on a £180 occasion dress is a bounce. Scope: 5 product-type paths — 86 products / 331 SKUs, 319 of those SKUs still carrying no keyword.",
+   terms:["mothers day gift", "gifts for mum", "scarf gift", "handbag gift", "mothers day dress"],
+   pts:["Womens > Shoes & Accessories > Accessories > Scarves", "Womens > Shoes & Accessories > Bags > Handbags", "Womens > Shoes & Accessories > Bags", "Womens > Clothing > Dresses", "Womens > Clothing > Cardigans & Jumpers > Cardigans"]},
+  {id:"mon_communion", name:"Flower girl, communion & spring occasion", lane:"location", date:"2027-03-10",
+   note:"The spring children’s occasion season — communions through May, weddings from April. \"communion\" is already in 37 titles, which is the proof the demand is real and the coverage partial; \"flower girl\" is in one and \"page boy\" in none. Boys’ suits are in scope because a page-boy search is the other half of the same event and the Suits branch is only 57 rows, so it is never briefed on its own. Scope: 6 product-type paths — 87 products / 647 SKUs, 621 of those SKUs still carrying no keyword.",
+   terms:["communion dress", "flower girl dress", "boys suit", "page boy", "girls occasion shoes"],
+   pts:["Children > Clothing > Dresses > Flower Dresses", "Children > Clothing > Dresses > Prom Dresses", "Children > Clothing > Dresses > Floral Dresses", "Children > Clothing > Suits", "Children > Clothing > Suits > Four Piece Suits", "Children > Shoes & Accessories > Shoes > Sandals"]},
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
@@ -2290,7 +2368,10 @@ var LANE_LGND={campaign:['lc','Campaign'],location:['ll','Location'],studio:['ls
 var LANE_NAMES={Schuh:{campaign:'Schuh campaign',studio:'Brand launch',location:'Search peak',sale:'Promotion'},
   // Superdry's board is FeedSpark's own optimisation plan, not a client marketing calendar, so the
   // lane says what KIND of work a theme is rather than which marketing stream it came from.
-  Superdry:{campaign:'Seasonal focus',studio:'Vocabulary gap',location:'Catalogue sweep',sale:'Promotion'}};
+  Superdry:{campaign:'Seasonal focus',studio:'Vocabulary gap',location:'Catalogue sweep',sale:'Promotion'},
+  // Monsoon's board is FeedSpark's own plan too — and its kidswear half is big enough to be its
+  // own lane rather than a note on a card.
+  Monsoon:{campaign:'Seasonal focus',studio:'Occasion & events',location:'Kidswear',sale:'Promotion'}};
 function laneName(k){ var m=LANE_NAMES[CLIENT]; return (m&&m[k])||(LANE_LGND[k]?LANE_LGND[k][1]:''); }
 function renderLegend(E){   // one line, instead of a lane word repeated on every card
   var el=$('#lgnd'); if(!el)return;

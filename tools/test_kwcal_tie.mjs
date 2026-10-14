@@ -691,6 +691,26 @@ ROSTER = null;
   is('an overdue brief leads the list', late[0].id, 'm1');
   is('…and is marked overdue', late[0].overdue, true);
 
+  // Ray, 14 Oct 2026: "only backdated the task for anything less than 20 days late ... anything
+  // else above that should just be removed from this view" — a brief-by weeks past is a wrong
+  // date, not a late task, and briefing it today lands work after the moment it was for.
+  const stale = { Acme: { events: [
+      { id: 's1', name: 'Nine days late', date: '2026-11-01' },       // brief-by 11 Oct
+      { id: 's2', name: 'Twenty days late', date: '2026-10-21' },     // brief-by 30 Sep — the edge, kept
+      { id: 's3', name: 'Forty-one days late', date: '2026-09-30' },  // brief-by 9 Sep
+      { id: 's4', name: 'Sixty-three days late', date: '2026-09-08' } ] } };
+  const win = KWE.dueList(stale, {}, { now: '2026-10-20' });
+  is('a moment nine days past its brief-by is still offered', win.some((r) => r.id === 's1'), true);
+  is('…and one exactly twenty days past is kept', win.some((r) => r.id === 's2'), true);
+  is('a moment whose window went weeks ago is not listed', win.map((r) => r.id).sort(), ['s1', 's2']);
+  is('…and the band is told how many were dropped, never silently shortened', win.stale, 2);
+  is('the cap is stated once, as the engine’s own figure', KWE.STALE_DAYS, 20);
+  is('…and can be lifted for a caller that wants the whole backlog',
+    KWE.dueList(stale, {}, { now: '2026-10-20', stale: 0 }).length, 4);
+  // the band must READ the count, or the removal is silent on the only screen it happens on
+  is('Workflow’s band names what the window dropped', /kwd-stale[\s\S]{0,600}STALE_DAYS/.test(wf), true);
+  is('…and the client filter never narrows that count', /all\.stale\s*=\s*dropped/.test(wf), true);
+
   // the payload a Workflow row raises IS the payload the card raises — same task, same stamp
   const e1 = store.Acme.events[0];
   const pay = KWE.briefPayload(store, 'Acme', e1, 'gb');
