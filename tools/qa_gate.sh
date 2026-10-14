@@ -103,6 +103,13 @@ else
   echo "   ✗ instructions-collapse harness FAILED — see node tools/test_instr.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2f/7: remembered picks (the brand / market / filter you set survives a refresh)"
+if node tools/test_keep.mjs >/dev/null 2>&1; then
+  echo "   ✓ page-level pickers only, a link wins, a market under its brand, one writer per control"
+else
+  echo "   ✗ remembered-picks harness FAILED — see node tools/test_keep.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d2c/7: Excel exports (the XLSX writer + the Task Manager's three tabs)"
 if node tools/test_xlsx.mjs >/dev/null 2>&1; then
   echo "   ✓ the ZIP parts, typed cells, absent-is-absent and the three tab exports hold"

@@ -181,6 +181,10 @@ echo "── validating: the ⓘ collapse (explainer prose behind one icon per c
 node tools/test_instr.mjs >/dev/null
 echo "   ✓ one toggle per card, a stable key, the marked lines across the modules"
 
+echo "── validating: remembered picks (the brand / market / filter you set survives a refresh)"
+node tools/test_keep.mjs >/dev/null
+echo "   ✓ page-level pickers only, a link wins, a market under its brand, one writer per control"
+
 echo "── validating: Excel exports (XLSX container, typed cells, the three tab exports)"
 node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"
@@ -286,6 +290,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
+  echo "── validating: remembered picks, rendered (a reload lands on the brand, market, period and board filter a person set)"
+  NODE_PATH=$(npm root -g) node tools/check_keep.js || {
+    echo "✗ remembered-picks tripwire failed — a refresh no longer lands on the pick a person made, or replays over a deep link"; exit 1; }
   echo "── validating: the module row (one row below the bar, nothing lost, nothing denied on it)"
   NODE_PATH=$(npm root -g) node tools/check_navrow.js || {
     echo "✗ module-row tripwire failed — the menu wrapped, lost a module into neither the row nor More, or put one this signin may not open on screen"; exit 1; }

@@ -228,6 +228,10 @@ import MOBILEW from "../../../docs/mobile_widget.html";
 // the skim view — its second half (Ray, 18 Sep 2026: "only necessary information for AM to make decisions while using mobile phone … a lot of collapse and expand")
 import DIGESTW from "../../../docs/digest_widget.html";
 import HOURSW from "../../../docs/hours_widget.html";
+// FCC-KEEP: the pick you made is the pick you come back to (Ray, 14 Oct 2026: "I want it to stay on
+// Monsoon even after refresh … apply this methodology across everything else") — replays every
+// page-level picker on this device; injected on app pages only, never decks
+import KEEPW from "../../../docs/keep_widget.html";
 // the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
 import SHIPPEDW from "../../../docs/shipped_widget.html";
@@ -3977,7 +3981,7 @@ async function route(request, env, ctx) {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
-          + '\n' + NAVROWW + '\n' + HOURSW + '\n' + TOUCHW + '\n' + MIGW
+          + '\n' + NAVROWW + '\n' + HOURSW + '\n' + KEEPW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)

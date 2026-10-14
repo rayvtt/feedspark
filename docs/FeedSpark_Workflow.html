@@ -1248,7 +1248,7 @@ aside.ck[hidden]{display:none}
       <button type="button" class="it-multi-btn" id="it-status-btn" aria-haspopup="true" aria-expanded="false">All statuses ▾</button>
       <div class="it-multi-menu" id="it-status-menu" role="group" aria-label="Filter by status (multi-select)" hidden></div>
     </div>
-    <select id="it-window" aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email unaffected)">
+    <select id="it-window" data-no-keep aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email unaffected)">
       <option value="2m">Plan: latest 2 months</option><option value="3m">Plan: latest 3 months</option>
       <option value="4m">Plan: latest 4 months</option><option value="">Plan: all history</option>
     </select>
@@ -1408,7 +1408,7 @@ aside.ck[hidden]{display:none}
 </aside>
 <aside class="ck ck-r" id="ck-r" hidden aria-label="Playbook — account review">
   <div class="ck-head"><span class="ck-t">🧭 Playbook</span>
-    <select id="ck-brand" aria-label="Account to review"></select>
+    <select id="ck-brand" data-no-keep aria-label="Account to review"></select>
     <button class="ck-x" id="ck-tune-open" type="button" aria-label="Tune the strategy categories" title="⚙ Tune the strategy categories — shared with the team" style="margin-left:0">⚙</button>
     <button class="ck-x" id="ck-r-x" type="button" aria-label="Close the playbook" title="Close">✕</button></div>
   <div class="ck-sub" id="ck-sub">Loading the account…</div>
@@ -2700,6 +2700,22 @@ aside.ck[hidden]{display:none}
      the exact failure Ray has reported twice. The window moves once that is found and fixed. */
   var IT_DEF={statuses:['open','progress','briefed'],window:'2m',sort:'dsort',dir:-1};
   var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:IT_DEF.statuses.slice(),window:IT_DEF.window,sort:IT_DEF.sort,dir:IT_DEF.dir,showHidden:false,showArchived:false,overdue:false};   // multi-select: empty array = all
+  /* THE FILTER SURVIVES A REFRESH (Ray, 14 Oct 2026: "after refreshing the page or tab, the
+     pre-filter pre-selected option is not saved … if I selected Monsoon on the playbook, after
+     refreshing the page it returned to where it was before. I want it to stay on Monsoon"): the
+     board opened on IT_DEF every load, so every chip, window and search a person set was gone on
+     F5 — and the Playbook follows the board's client, so the rail went with it. The filter set is
+     written to THIS DEVICE on every render (fcc-it-state, the same shape the saved views keep) and
+     read back here, before the first render; a ?client= / ?f= / ?q= deep link below still wins,
+     since it runs after this and overwrites what it names. Per device, never shared state — what
+     one screen is filtered to is not a team fact. */
+  var IT_KEEP='fcc-it-state';
+  (function(){ try{ var f=JSON.parse(localStorage.getItem(IT_KEEP)||'null'); if(!f||typeof f!=='object')return;
+    ['srcs','statuses','clients','ams','owners'].forEach(function(k){ if(Array.isArray(f[k]))itState[k]=f[k].filter(function(x){return typeof x==='string';}); });
+    if(typeof f.window==='string')itState.window=f.window; if(typeof f.q==='string')itState.q=f.q.slice(0,120);
+    itState.showHidden=!!f.showHidden; itState.showArchived=!!f.showArchived; itState.overdue=!!f.overdue;
+  }catch(e){} })();
+  function keepFilter(){ try{ localStorage.setItem(IT_KEEP,JSON.stringify(captureFilter())); }catch(e){} }
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
   var tlState={scope:[],flags:[],weeks:6};
@@ -2888,6 +2904,7 @@ aside.ck[hidden]{display:none}
       renderIntake(); }; });
   }
   function renderIntake(){
+    keepFilter();   // the filter in force is the filter the next load opens on
     var body=document.getElementById('it-body'); if(!body)return;
     ensureClientFilter();
     renderClientChips();
@@ -3400,6 +3417,7 @@ aside.ck[hidden]{display:none}
   // status filter · select-all · bulk actions · live refresh · add-test
   (function(){
     var wsel=document.getElementById('it-window'); if(wsel){ wsel.value=itState.window; wsel.addEventListener('change',function(){ itState.window=this.value; renderIntake(); }); }
+    var qbox=document.getElementById('it-search'); if(qbox&&itState.q&&!qbox.value)qbox.value=itState.q;   // a remembered search is shown, not just applied
     var all=document.getElementById('it-all'); if(all)all.onchange=function(){ var on=all.checked; intakeFiltered().forEach(function(t){ if(on)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; }); renderIntake(); };
     var bb=document.getElementById('bulk-brief'); if(bb)bb.onclick=function(){ bulkBriefDraft(false); };
     var bs=document.getElementById('bulk-split'); if(bs)bs.onclick=function(){ bulkBriefDraft(true); };
@@ -6748,6 +6766,9 @@ aside.ck[hidden]{display:none}
      and a wrap-up is the one thing here with a same-day clock on it. The picker therefore MARKS
      the accounts with a call waiting. The option's value stays the bare brand name, because
      fillBrands round-trips BRAND through it and a decorated value would stop matching the roster. */
+  var CK_KEEP='fcc-ck-brand';   // per device, never shared state
+  function keptBrand(){ try{ return localStorage.getItem(CK_KEEP)||''; }catch(e){ return ''; } }
+  function keepBrand(){ try{ if(BRAND)localStorage.setItem(CK_KEEP,BRAND); }catch(e){} }
   function wrapPending(brand){
     var g=wrapCalls(window.FCCCalls?window.FCCCalls():[],brand,WRAP,Date.now());
     return wrapDue(g).due.length;
@@ -6760,6 +6781,10 @@ aside.ck[hidden]{display:none}
        even when it is not yours — the rail follows the board, and silently jumping to another
        brand would answer a question nobody asked */
     if(BRAND&&rs.indexOf(BRAND)<0&&v.all.indexOf(BRAND)>=0)rs=rs.concat([BRAND]).sort();
+    /* the account picked last time on this device opens again (Ray, 14 Oct 2026: "I want it to
+       stay on Monsoon even after refresh") — only while nothing has chosen one yet, and only when
+       the roster still carries it; a brand that left the roster is never forced back */
+    if(!BRAND){ var kb=keptBrand(); if(kb&&v.all.indexOf(kb)>=0){ BRAND=kb; if(rs.indexOf(kb)<0)rs=rs.concat([kb]).sort(); } }
     if(!BRAND||rs.indexOf(BRAND)<0)BRAND=rs[0];
     sel.innerHTML=rs.map(function(b){
       var n=wrapPending(b);
@@ -6840,7 +6865,7 @@ aside.ck[hidden]{display:none}
   function go(){
     ingestBaked();
     var sel=$('#ck-brand');
-    if(sel)sel.addEventListener('change',function(){ BRAND=sel.value; render(); syncBoard(); });
+    if(sel)sel.addEventListener('change',function(){ BRAND=sel.value; keepBrand(); render(); syncBoard(); });
     var tb=$('#ck-tabs');
     if(tb)Array.prototype.forEach.call(tb.querySelectorAll('[data-tab]'),function(b){
       b.onclick=function(){ setTab(b.getAttribute('data-tab')); };
@@ -6887,7 +6912,7 @@ aside.ck[hidden]{display:none}
     document.addEventListener('fcc-clients',function(e){
       var cs=(e.detail&&e.detail.clients)||[];
       // the board moved: follow it, and clear any stale "not on the board" — it plainly is
-      if(cs.length===1&&cs[0]!==BRAND){ BRAND=cs[0]; NOBOARD=false; fillBrands(); render(); }
+      if(cs.length===1&&cs[0]!==BRAND){ BRAND=cs[0]; NOBOARD=false; keepBrand(); fillBrands(); render(); }
     });
     /* the retainer read-out is docked, so a dot click lands in the left rail — open it */
     /* THE TWO RAILS ARE INDEPENDENT (Ray, 17 Sep 2026: "2 panels button should be independent of
@@ -6930,7 +6955,7 @@ aside.ck[hidden]{display:none}
     pullTax();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
-  window.FCCPlaybook={open:function(b,tab){if(b)BRAND=b;if(tab)RTAB=(tab==='volume')?'volume':'review';openRail('r',true);fillBrands();setTab(RTAB);},
+  window.FCCPlaybook={open:function(b,tab){if(b){BRAND=b;keepBrand();}if(tab)RTAB=(tab==='volume')?'volume':'review';openRail('r',true);fillBrands();setTab(RTAB);},
     engine:{classify:pbClassify,cats:pbCats,index:pbIndex,practice:pbPractice,band:pbBand,arrivals:pbArrivals,weak:pbWeak}};
 })();
 </script>
