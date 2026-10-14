@@ -1,0 +1,681 @@
+{
+ "source": "FeedHero XML \u2014 Accessorize GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-10-14",
+ "note": "Primary g:product_type only \u2014 the FIRST value on each item; the repeated values after it are the numbered keyword slots, counted separately below and never as category paths. KEYWORD SATURATION USES THE ENGINE\u2019S OWN RULE (labelguard.js kwValueKind): a 24+ character hex id or a spreadsheet placeholder in a keyword slot is NOT a keyword \u2014 Reiss and Schuh write a 32-character hex id into slot 2 on nearly every product, so \"any slot filled\" reads ~100% against the real figure here. \"products\" counts distinct g:item_group_id; \"skus\" counts feed rows. This census is deliberately INDEPENDENT of the KWCal seed: the harness checks every seeded path resolves HERE, so a mis-spelled path matches nothing real rather than matching itself.",
+ "totals": {
+  "products": 2545,
+  "skus": 4569,
+  "product_type_paths": 133
+ },
+ "keyword_saturation": {
+  "skus_carrying_at_least_one_keyword_slot": 1761,
+  "skus_carrying_none": 2808
+ },
+ "product_types": {
+  "(none)": {
+   "skus": 4,
+   "products": 4,
+   "unkeyworded": 4
+  },
+  "Bangles": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Bath & Body": {
+   "skus": 10,
+   "products": 10,
+   "unkeyworded": 9
+  },
+  "Bracelets": {
+   "skus": 2,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Brooches": {
+   "skus": 11,
+   "products": 7,
+   "unkeyworded": 11
+  },
+  "Chains": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Christmas > Christmas Decoration > Hanging Decoration": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 6
+  },
+  "Christmas > Christmas Jewellery > Earrings": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Christmas decorations": {
+   "skus": 61,
+   "products": 61,
+   "unkeyworded": 57
+  },
+  "Clips & slides": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Clothing > Jackets & Coats > Waistcoats": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Clothing > Jumpers & Cardigans > Cardigans": {
+   "skus": 12,
+   "products": 4,
+   "unkeyworded": 12
+  },
+  "Clothing > Loungewear > Pyjamas": {
+   "skus": 47,
+   "products": 8,
+   "unkeyworded": 29
+  },
+  "Clothing > Shirts & Tops > Shirts": {
+   "skus": 3,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Clothing > Trousers & Jeans > Jeans": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Dresses": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "Earrings": {
+   "skus": 5,
+   "products": 5,
+   "unkeyworded": 1
+  },
+  "Fans": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Girls stationery": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Gloves": {
+   "skus": 10,
+   "products": 6,
+   "unkeyworded": 10
+  },
+  "Hair ponies": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Handbags & Purses > Bags > Backpacks": {
+   "skus": 23,
+   "products": 16,
+   "unkeyworded": 8
+  },
+  "Handbags & Purses > Bags > Clutch Bags": {
+   "skus": 23,
+   "products": 19,
+   "unkeyworded": 13
+  },
+  "Handbags & Purses > Bags > Cross Body Bags": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Handbags & Purses > Bags > Day Bags": {
+   "skus": 258,
+   "products": 168,
+   "unkeyworded": 159
+  },
+  "Handbags & Purses > Bags > Hand Bags": {
+   "skus": 62,
+   "products": 40,
+   "unkeyworded": 46
+  },
+  "Handbags & Purses > Bags > Shopper Bags": {
+   "skus": 16,
+   "products": 14,
+   "unkeyworded": 11
+  },
+  "Handbags & Purses > Bags > Tote Bags": {
+   "skus": 37,
+   "products": 30,
+   "unkeyworded": 19
+  },
+  "Handbags & Purses > Bags > Wallets": {
+   "skus": 51,
+   "products": 31,
+   "unkeyworded": 43
+  },
+  "Handbags & Purses > Purses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Handbags & Purses > Purses > Cardholders": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Handbags & Purses > Purses > Coin Purses": {
+   "skus": 26,
+   "products": 12,
+   "unkeyworded": 21
+  },
+  "Handbags & Purses > Purses > Leather Purses": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Handbags & Purses > Purses > Push-Lock Purses": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Handbags & Purses > Purses > Zip Purses": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Hoodie": {
+   "skus": 10,
+   "products": 2,
+   "unkeyworded": 10
+  },
+  "Jewellery > Semi-Fine Jewellery > Bangles": {
+   "skus": 19,
+   "products": 11,
+   "unkeyworded": 6
+  },
+  "Jewellery > Semi-Fine Jewellery > Belly Chains": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Jewellery > Semi-FineJewellery > Anklets": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 0
+  },
+  "Jewellery > Semi-FineJewellery > Bracelets": {
+   "skus": 9,
+   "products": 8,
+   "unkeyworded": 1
+  },
+  "Jewellery > Semi-FineJewellery > Bracelets > Initial Bracelets": {
+   "skus": 16,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Jewellery > Semi-FineJewellery > Earrings": {
+   "skus": 11,
+   "products": 11,
+   "unkeyworded": 2
+  },
+  "Jewellery > Semi-FineJewellery > Earrings > Hoop Earrings": {
+   "skus": 25,
+   "products": 22,
+   "unkeyworded": 2
+  },
+  "Jewellery > Semi-FineJewellery > Healing Stones": {
+   "skus": 7,
+   "products": 4,
+   "unkeyworded": 2
+  },
+  "Jewellery > Semi-FineJewellery > Necklaces": {
+   "skus": 34,
+   "products": 21,
+   "unkeyworded": 13
+  },
+  "Jewellery > Semi-FineJewellery > Necklaces > Initial Pendant Necklaces": {
+   "skus": 11,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Jewellery > Semi-FineJewellery > Sterling Silver": {
+   "skus": 166,
+   "products": 100,
+   "unkeyworded": 3
+  },
+  "Jewellery > Semi-FineJewellery > Z Edition": {
+   "skus": 382,
+   "products": 195,
+   "unkeyworded": 65
+  },
+  "Jewellery box": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Jumpers": {
+   "skus": 24,
+   "products": 8,
+   "unkeyworded": 24
+  },
+  "Kaftans": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Keyrings": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Loafers": {
+   "skus": 6,
+   "products": 1,
+   "unkeyworded": 6
+  },
+  "Notebook & journals": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Notebooks": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Patches": {
+   "skus": 10,
+   "products": 10,
+   "unkeyworded": 10
+  },
+  "Phone Charms": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Purses": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 3
+  },
+  "Shoes & Accessories > Accessories > Accessories Bundles": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Accessories > Advent Calendars": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Accessories > Bath & Beauty": {
+   "skus": 16,
+   "products": 16,
+   "unkeyworded": 13
+  },
+  "Shoes & Accessories > Accessories > Beaded Coasters": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Belts": {
+   "skus": 50,
+   "products": 15,
+   "unkeyworded": 40
+  },
+  "Shoes & Accessories > Accessories > Christmas Tree Decorations": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 6
+  },
+  "Shoes & Accessories > Accessories > Coasters": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Accessories > Combs": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Shoes & Accessories > Accessories > Crochet Kits": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Foldable Fans": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Glasses Chain": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Gloves": {
+   "skus": 95,
+   "products": 43,
+   "unkeyworded": 85
+  },
+  "Shoes & Accessories > Accessories > Hair Accessories": {
+   "skus": 165,
+   "products": 162,
+   "unkeyworded": 6
+  },
+  "Shoes & Accessories > Accessories > Hair Accessories > French Pins": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Shoes & Accessories > Accessories > Hair Bands": {
+   "skus": 53,
+   "products": 52,
+   "unkeyworded": 43
+  },
+  "Shoes & Accessories > Accessories > Hair Clips": {
+   "skus": 65,
+   "products": 65,
+   "unkeyworded": 56
+  },
+  "Shoes & Accessories > Accessories > Hats": {
+   "skus": 111,
+   "products": 81,
+   "unkeyworded": 83
+  },
+  "Shoes & Accessories > Accessories > Head Bands": {
+   "skus": 48,
+   "products": 44,
+   "unkeyworded": 35
+  },
+  "Shoes & Accessories > Accessories > Keyrings": {
+   "skus": 21,
+   "products": 6,
+   "unkeyworded": 19
+  },
+  "Shoes & Accessories > Accessories > Mittens": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Shoes & Accessories > Accessories > Phone Accessories": {
+   "skus": 19,
+   "products": 11,
+   "unkeyworded": 18
+  },
+  "Shoes & Accessories > Accessories > Phone Charms": {
+   "skus": 6,
+   "products": 6,
+   "unkeyworded": 6
+  },
+  "Shoes & Accessories > Accessories > Phone Grips": {
+   "skus": 3,
+   "products": 3,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Accessories > Phone Straps": {
+   "skus": 25,
+   "products": 25,
+   "unkeyworded": 20
+  },
+  "Shoes & Accessories > Accessories > Photo Frames": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Accessories > Piercing Lotions": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Shoes & Accessories > Accessories > Ponchos": {
+   "skus": 11,
+   "products": 8,
+   "unkeyworded": 8
+  },
+  "Shoes & Accessories > Accessories > Scarves": {
+   "skus": 96,
+   "products": 77,
+   "unkeyworded": 7
+  },
+  "Shoes & Accessories > Accessories > Socks": {
+   "skus": 104,
+   "products": 70,
+   "unkeyworded": 15
+  },
+  "Shoes & Accessories > Accessories > Stationery": {
+   "skus": 115,
+   "products": 74,
+   "unkeyworded": 90
+  },
+  "Shoes & Accessories > Accessories > Stationery > Highlighters": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Stationery > Notepads": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Accessories > Sunglasses": {
+   "skus": 40,
+   "products": 39,
+   "unkeyworded": 16
+  },
+  "Shoes & Accessories > Accessories > Tights": {
+   "skus": 12,
+   "products": 11,
+   "unkeyworded": 10
+  },
+  "Shoes & Accessories > Accessories > Umbrellas": {
+   "skus": 13,
+   "products": 13,
+   "unkeyworded": 7
+  },
+  "Shoes & Accessories > Jewellery > Anklets": {
+   "skus": 9,
+   "products": 9,
+   "unkeyworded": 5
+  },
+  "Shoes & Accessories > Jewellery > Body Jewellery": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Jewellery > Bracelets": {
+   "skus": 65,
+   "products": 60,
+   "unkeyworded": 43
+  },
+  "Shoes & Accessories > Jewellery > Brooches": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Jewellery > Chokers": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 2
+  },
+  "Shoes & Accessories > Jewellery > Earrings": {
+   "skus": 327,
+   "products": 306,
+   "unkeyworded": 241
+  },
+  "Shoes & Accessories > Jewellery > Earrings > Hoop Earrings": {
+   "skus": 11,
+   "products": 11,
+   "unkeyworded": 10
+  },
+  "Shoes & Accessories > Jewellery > Jewellery Box": {
+   "skus": 47,
+   "products": 11,
+   "unkeyworded": 42
+  },
+  "Shoes & Accessories > Jewellery > Jewellery Sets": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Shoes & Accessories > Jewellery > Necklaces": {
+   "skus": 227,
+   "products": 116,
+   "unkeyworded": 156
+  },
+  "Shoes & Accessories > Jewellery > Necklaces > Pendant Necklaces": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 0
+  },
+  "Shoes & Accessories > Jewellery > Rings": {
+   "skus": 154,
+   "products": 50,
+   "unkeyworded": 116
+  },
+  "Shoes & Accessories > Lingerie > Bras": {
+   "skus": 10,
+   "products": 1,
+   "unkeyworded": 9
+  },
+  "Shoes & Accessories > Lingerie > Briefs": {
+   "skus": 20,
+   "products": 4,
+   "unkeyworded": 20
+  },
+  "Shoes & Accessories > Lingerie > Pyjamas": {
+   "skus": 2,
+   "products": 2,
+   "unkeyworded": 1
+  },
+  "Shoes & Accessories > Lingerie > Slippers": {
+   "skus": 42,
+   "products": 10,
+   "unkeyworded": 32
+  },
+  "Shoes & Accessories > Shoes > Boots": {
+   "skus": 17,
+   "products": 3,
+   "unkeyworded": 17
+  },
+  "Shoes & Accessories > Shoes > Clogs": {
+   "skus": 9,
+   "products": 1,
+   "unkeyworded": 9
+  },
+  "Shoes & Accessories > Shoes > Flats": {
+   "skus": 72,
+   "products": 12,
+   "unkeyworded": 56
+  },
+  "Shoes & Accessories > Shoes > Flip Flops": {
+   "skus": 36,
+   "products": 12,
+   "unkeyworded": 28
+  },
+  "Shoes & Accessories > Shoes > Sandals": {
+   "skus": 30,
+   "products": 10,
+   "unkeyworded": 24
+  },
+  "Shoes & Accessories > Shoes > Slippers": {
+   "skus": 17,
+   "products": 5,
+   "unkeyworded": 15
+  },
+  "Slipper boot": {
+   "skus": 3,
+   "products": 1,
+   "unkeyworded": 3
+  },
+  "Stickers": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Studs": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "SummerShop > Summer Clothing > Bikinis": {
+   "skus": 418,
+   "products": 72,
+   "unkeyworded": 357
+  },
+  "SummerShop > Summer Clothing > Coverups": {
+   "skus": 128,
+   "products": 32,
+   "unkeyworded": 78
+  },
+  "SummerShop > Summer Clothing > Coverups > Cover Up Dresses": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "SummerShop > Summer Clothing > Coverups > Cover Ups Shirts": {
+   "skus": 7,
+   "products": 2,
+   "unkeyworded": 7
+  },
+  "SummerShop > Summer Clothing > Dresses": {
+   "skus": 90,
+   "products": 25,
+   "unkeyworded": 80
+  },
+  "SummerShop > Summer Clothing > Jumpsuits": {
+   "skus": 5,
+   "products": 1,
+   "unkeyworded": 5
+  },
+  "SummerShop > Summer Clothing > Kaftans": {
+   "skus": 23,
+   "products": 9,
+   "unkeyworded": 18
+  },
+  "SummerShop > Summer Clothing > Swimwear": {
+   "skus": 187,
+   "products": 37,
+   "unkeyworded": 157
+  },
+  "SummerShop > Summer Clothing > Trousers": {
+   "skus": 4,
+   "products": 1,
+   "unkeyworded": 0
+  },
+  "Sunglasses cases": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "Swimsuits": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "T-shirts": {
+   "skus": 24,
+   "products": 3,
+   "unkeyworded": 9
+  },
+  "Tops": {
+   "skus": 23,
+   "products": 6,
+   "unkeyworded": 22
+  },
+  "Wristlet": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  },
+  "bag strap": {
+   "skus": 1,
+   "products": 1,
+   "unkeyworded": 1
+  }
+ }
+}

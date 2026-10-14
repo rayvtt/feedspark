@@ -309,6 +309,12 @@ else
   echo "   ✗ KWCal Monsoon harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_monsoon.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_kwcal_scopes.js >/dev/null 2>&1; then
+  echo "   ✓ every seeded keyword theme’s product scope renders, and resolves to its own paths"
+else
+  echo "   ✗ KWCal scope harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwcal_scopes.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else

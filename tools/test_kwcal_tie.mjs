@@ -234,7 +234,10 @@ is('P2 · 4 – 31 Oct', per('2026-10-04', '2026-10-31'), 5);
 is('P3 · 1 – 28 Nov', per('2026-11-01', '2026-11-28'), 5);
 // the workbook's key-dates row is carried over from 2024 — a moment whose date we moved, or that
 // the client has not confirmed, must say so on the card or the caveat is lost
-is('the corrected / unconfirmed dates carry their reason', ACC.filter((e) => e.note).map((e) => e.id).sort(),
+// NOTE the test is the CAVEAT, not the presence of a note: since 14 Oct 2026 most moments carry a
+// note stating their product scope, so "has a note" stopped meaning "has a date reason".
+const dateCaveat = (e) => /Date NOT confirmed|Date corrected|Moved off the/.test(e.note || '');
+is('the corrected / unconfirmed dates carry their reason', ACC.filter(dateCaveat).map((e) => e.id).sort(),
   ['acc_country', 'acc_halloween', 'acc_sparkle', 'acc_xmaslaunch']);
 
 // ---------- YuMOVE: a PRICING calendar, not a product one ----------
@@ -710,6 +713,84 @@ ROSTER = null;
   // the band must READ the count, or the removal is silent on the only screen it happens on
   is('Workflow’s band names what the window dropped', /kwd-stale[\s\S]{0,600}STALE_DAYS/.test(wf), true);
   is('…and the client filter never narrows that count', /all\.stale\s*=\s*dropped/.test(wf), true);
+
+  /* ---- EVERY SEEDED SCOPE IS A PATH THE LIVE FEED REALLY SENDS (Ray, 14 Oct 2026: "can you
+     scope up by choosing products on clients product type on all the keywords themes?").
+     Reiss, Accessorize and Schuh carried 64 moments with no product scope; 51 now carry the exact
+     primary g:product_type paths read off their own GB feed. The check cannot come from the seed:
+     each brand's census is an INDEPENDENT read committed under ops/calendars/, so a mis-spelled
+     path matches nothing real rather than matching its own mis-spelling. ---- */
+  const CENSUS = { Reiss: 'reiss', Accessorize: 'accessorize', Schuh: 'schuh', Monsoon: 'monsoon' };
+  const seedSrc = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_KWCal.html'), 'utf8');
+  const seedBlk = seedSrc.slice(seedSrc.indexOf('var SEED={'), seedSrc.indexOf('\n]}};', seedSrc.indexOf('var SEED={')));
+  const brandSeg = (b) => {
+    const at = seedBlk.indexOf(b + ':{events:[');
+    if (at < 0) return '';
+    const rest = seedBlk.slice(at + b.length + 10);
+    const nxt = /\w[\w ]*:\{events:\[/.exec(rest);
+    return nxt ? rest.slice(0, nxt.index) : rest;
+  };
+  const momentsOf = (seg) => {
+    const out = [];
+    const re = /\{id:["']([a-z0-9_]+)["']/g; let m;   // Monsoon's seed quotes its ids with "
+
+    while ((m = re.exec(seg))) {
+      // brace-match this moment so a pts: block can never be read off its neighbour
+      let d = 0, q = null, j = m.index;
+      for (; j < seg.length; j++) {
+        const c = seg[j];
+        if (q) { if (c === '\\') { j++; continue; } if (c === q) q = null; continue; }
+        if (c === "'" || c === '"') q = c;
+        else if (c === '{') d++;
+        else if (c === '}' && --d === 0) break;
+      }
+      out.push({ id: m[1], src: seg.slice(m.index, j + 1) });
+    }
+    return out;
+  };
+  const ptsIn = (src) => {
+    const m = /pts:\[([\s\S]*?)\]\}/.exec(src);
+    return m ? JSON.parse('[' + m[1] + ']') : null;
+  };
+  let strays = [], seeded = 0, scopedN = 0, unscoped = [];
+  Object.keys(CENSUS).forEach((brand) => {
+    const cen = JSON.parse(fs.readFileSync(path.join(root, 'ops', 'calendars',
+      CENSUS[brand] + '_gb_product_types_2026-10-14.json'), 'utf8')).product_types;
+    momentsOf(brandSeg(brand)).forEach((mo) => {
+      const pts = ptsIn(mo.src);
+      if (!pts) { if (!/brandwide:1/.test(mo.src)) unscoped.push(brand + '/' + mo.id); return; }
+      scopedN++;
+      pts.forEach((pt) => { seeded++; if (!cen[pt]) strays.push(brand + '/' + mo.id + ' → ' + pt); });
+      // a scope that resolves to nothing is a scope that is not set
+      const n = pts.reduce((a, pt) => a + (cen[pt] ? cen[pt].skus : 0), 0);
+      if (!n) strays.push(brand + '/' + mo.id + ' → resolves to 0 SKUs');
+    });
+  });
+  is('every seeded path exists in its brand\u2019s own live-feed census', strays.slice(0, 6), []);
+  is('\u2026across all four seeded brands, and there are a lot of them',
+    { enough: seeded > 1400, moments: scopedN }, { enough: true, moments: 61 });
+  // and a moment left without one SAYS WHY — a card reading "no scope yet" with no reason is an
+  // oversight; these are decisions (a material, a collection, an arrival cohort, an unnamed line list)
+  const noReason = [];
+  Object.keys(CENSUS).forEach((brand) => {
+    momentsOf(brandSeg(brand)).forEach((mo) => {
+      if (ptsIn(mo.src) || /brandwide:1/.test(mo.src)) return;
+      if (!/(Deliberately unscoped|deliberately left unscoped)/.test(mo.src)) noReason.push(brand + '/' + mo.id);
+    });
+  });
+  is('every moment still unscoped names the reason on its own card', noReason, []);
+  is('\u2026and that is the small minority of them', unscoped.length, 13);
+  // Schuh's tree puts the BRAND at its leaf (Womens > Trainers > Nike), which is why a brand
+  // launch scopes by product type at all — and why a scope must never cross into a rival's rows
+  const schuh = momentsOf(brandSeg('Schuh'));
+  const nike = ptsIn(schuh.find((m) => m.id === 'sch_nikekids').src);
+  is('a brand launch scopes to that brand\u2019s own paths', nike.every((p) => /> (Nike|Nike Jordan)$/.test(p)), true);
+  is('\u2026and a kids launch never reaches the adult tree',
+    nike.every((p) => /^(Kids|Babies) > /.test(p)), true, nike.slice(0, 3));
+  // a split spelling in the tree is carried whole or the scope silently drops products
+  const reissCoats = ptsIn(momentsOf(brandSeg('Reiss')).find((m) => m.id === 'coats').src);
+  is('a scope over a split product-type spelling carries both',
+    reissCoats.some((p) => /Jackets & Coats/.test(p)) && reissCoats.some((p) => /[^s] & Coats/.test(p)), true);
 
   // the payload a Workflow row raises IS the payload the card raises — same task, same stamp
   const e1 = store.Acme.events[0];
