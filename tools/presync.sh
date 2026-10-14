@@ -330,6 +330,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record cover — centred, the client's own pictures embedded, the gradient when unreadable or in demo"
   NODE_PATH=$(npm root -g) node tools/check_grcover.js || {
     echo "✗ Golden Record cover tripwire failed — the photo band, its embedding, the fallback or the demo rule regressed"; exit 1; }
+  echo "── validating: Golden Record demo reveal — opening a brand names it, folding masks it, the AM's layout untouched"
+  NODE_PATH=$(npm root -g) node tools/check_grreveal.js || {
+    echo "✗ Golden Record demo-reveal tripwire failed — a folded brand was named, an opened one stayed masked, or the demo touched gr-collapse"; exit 1; }
   echo "── validating: every market in one file — /ptypes + /golden per brand, the whole portfolio on all three guard pages"
   NODE_PATH=$(npm root -g) node tools/check_pfx.js || {
     echo "✗ every-market download tripwire failed — the shared block drifted, a button went, or a file misread its markets"; exit 1; }
