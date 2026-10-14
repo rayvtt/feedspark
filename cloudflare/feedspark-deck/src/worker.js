@@ -26,6 +26,7 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming, scopeViewBy, scopeIncomingBy } from "./sharedstate.js";
+import { brandsOnSheet, brandToken, rowBrands, splitPlanCache, appendToken, rowCovered, noteRow } from "./planbrand.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
 const AB_SHAPE = 4;   // bump when parseAbTests grows a field the page reads, the served order
@@ -1645,7 +1646,7 @@ async function route(request, env, ctx) {
       let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
       const task = String((b && b.task) || '').replace(/\s+/g, ' ').trim().slice(0, 200);
       if (!/^AI Field Quote — QT\d{6} — /.test(task)) return json({ ok: false, error: 'task must carry the AI Field Quote title shape' }, 400);
-      const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+      const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }], client);
       if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
       return json(Object.assign({ task }, r));
     }
@@ -2268,7 +2269,7 @@ async function route(request, env, ctx) {
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
       const batch = INGEST_BATCHES[String(body.key || '')];
       if (!batch) return json({ ok: false, error: 'unknown batch "' + String(body.key || '') + '"' }, 404);
-      const r = await appendPlanRows(env, batch.id, batch.tab || 'Project Plan', batch.rows || []);
+      const r = await appendPlanRows(env, batch.id, batch.tab || 'Project Plan', batch.rows || [], batch.client || '');
       if (r.ok) {
         const done = (await env.EDITS.get('ingestdone', 'json')) || {};
         done[String(body.key)] = { at: Date.now(), appended: r.appended, skipped: r.skipped || 0,
@@ -3686,19 +3687,28 @@ async function route(request, env, ctx) {
       const out = {};
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        // THE SAME BRAND SET THE CRON WARM USES (PLAN_SHEETS + the KV overrides). Reading the git
+        // map alone here would let a brand wired by override onto a shared workbook be counted by
+        // the warm and not by this route — and a parse and a split disagreeing about who shares a
+        // sheet is how a row goes to the wrong board.
+        const fullMap = await planSheetMap(env);
         const seen = {};
         for (const brand of Object.keys(sheets)) {
           const id = sheets[brand]; if (!id) continue;
-          if (seen[id]) { out[brand] = seen[id]; continue; }
+          if (seen[id]) { out[brand] = splitPlanCache(seen[id], brand, brandsOnSheet(fullMap, id)); continue; }
           const ck = 'planlive:' + id;
           let cached = force ? null : await env.EDITS.get(ck, 'json');
           if (!cached) {
             const g = await fetchGrid(id, tab, token); // values + background colours (to skip filled separator rows)
             if (g.error) { out[brand] = { error: g.error, tasks: [] }; seen[id] = out[brand]; continue; }
-            cached = { tasks: parsePlanRows(g.values, g.bg), updated: Date.now() };
+            cached = { tasks: parsePlanRows(g.values, g.bg, brandsOnSheet(fullMap, id)), updated: Date.now() };
             try { await env.EDITS.put(ck, JSON.stringify(cached), { expirationTtl: 300 }); } catch (e) {}
           }
-          out[brand] = cached; seen[id] = cached;
+          // A SHARED WORKBOOK IS SPLIT AT SERVE TIME, not in the cache: planlive:<id> stays the
+          // whole parse because the Playbook, the cron warm and the due-today reminder all read
+          // it by sheet id. Only this brand's rows go to this brand's board.
+          seen[id] = cached;
+          out[brand] = splitPlanCache(cached, brand, brandsOnSheet(fullMap, id));
         }
         return json({ connected: true, brands: out, wired });
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }
@@ -3725,8 +3735,17 @@ async function route(request, env, ctx) {
         let cached = idCache[id];
         if (cached === undefined) { cached = await env.EDITS.get('planlive:' + id, 'json'); idCache[id] = cached || null; }
         if (!cached || !Array.isArray(cached.tasks)) { out[b] = { tasks: [], cold: true }; continue; }
-        const tasks = cached.tasks.slice(0, 1500).map((t) => ({ t: t.t, o: t.o, b: t.b, d: t.d }));
-        out[b] = Object.assign({ tasks, updated: cached.updated || 0 }, idCount[id] > 1 ? { shared: 1 } : {});
+        // a shared workbook: the brand gets its OWN rows (the joint ones plus the ones marked
+        // for it), so "not on this account" can never be answered off a sibling brand's work.
+        const own = splitPlanCache(cached, b, brandsOnSheet(PLAN_SHEETS, id)) || cached;
+        const tasks = own.tasks.slice(0, 1500).map((t) => ({ t: t.t, o: t.o, b: t.b, d: t.d }));
+        // `shared` tells the Playbook this brand's live read IS the merged plan, so it should
+        // prefer its own baked per-brand split. Now that a marked row is filtered out upstream,
+        // that only holds where the sheet marked NOTHING — a genuinely split read is this brand's
+        // own work and current, so it wins, which is why the flag follows the narrowing and not
+        // merely the fact that two brands share a workbook.
+        const merged = idCount[id] > 1 && own.tasks.length === cached.tasks.length;
+        out[b] = Object.assign({ tasks, updated: cached.updated || 0 }, merged ? { shared: 1 } : {});
       }
       return json({ ok: true, owner: !!acc.owner, scoped: !!acc.clients, brands: out, generated: Date.now() });
     }
@@ -3808,7 +3827,10 @@ async function route(request, env, ctx) {
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
       const id = body.id, tab = body.tab || 'Project Plan', rows = body.rows || [];
       if (!id || !rows.length) return json({ ok: false, error: 'missing id / rows' }, 400);
-      return json(await appendPlanRows(env, id, tab, rows));
+      // `client` is what tells a shared workbook (Monsoon + Accessorize) which brand's row this
+      // is. The page groups its writes per client and names it; an older page that does not is
+      // written exactly as before — joint, which is the default either way.
+      return json(await appendPlanRows(env, id, tab, rows, String(body.client || '')));
     }
 
     // ---- task ingestion (no-admin path): lets a trusted automation — a Claude Code session
@@ -3866,7 +3888,7 @@ async function route(request, env, ctx) {
         due: (t && t.due) ? String(t.due).slice(0, 20) : '',
       })).filter((r) => r.task !== prefix);
       if (!rows.length) return json({ ok: false, error: 'no task text on any row' }, 400);
-      const r = await appendPlanRows(env, id, 'Project Plan', rows);
+      const r = await appendPlanRows(env, id, 'Project Plan', rows, client);
       logActivity(ctx, env, request, 'tasks-ingest', client + ': ' + rows.length + (r.ok ? ' added' : ' failed — ' + r.error));
       return json({ ...r, client });
     }
@@ -4047,7 +4069,7 @@ async function scheduledRun(event, env, ctx) {
         try {
           const g = await fetchGrid(id, 'Project Plan', token);
           if (g.error) continue;
-          const tasks = parsePlanRows(g.values, g.bg);
+          const tasks = parsePlanRows(g.values, g.bg, brandsOnSheet(sheets, id));
           warmed[id] = tasks;
           await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks, updated: Date.now() }), { expirationTtl: 5400 });
         } catch (e) {}
@@ -5927,7 +5949,7 @@ async function productTypeRoutes(env, request, url) {
     if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
     const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
     const task = 'PT Depth Optimisation (3-4-5 level granularity) - ' + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
-    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }], client);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));
   }
@@ -6392,7 +6414,7 @@ async function goldenRoutes(env, request, url) {
     const dep = ATTR_SPEC.find((s) => s.key === attr && s.of);
     const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : (attr === 'keywords' ? 'Keywords Optimisation - Catalogue coverage - '
       : (dep ? 'Golden Record Fix - ' + dep.label.charAt(0).toUpperCase() + dep.label.slice(1) + ' - ' : 'Golden Record Fix - g:' + attr + ' - '))) + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
-    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }], client);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));
   }
@@ -7000,7 +7022,12 @@ async function renamePlanTask(env, id, tab, match, value) {
 // Shared by /api/sheets/append (human, via the Workflow's own "+ Add task" row) and
 // /api/tasks/ingest (a trusted automation, key-gated) — one write path so both land rows
 // identically instead of two implementations quietly drifting apart.
-async function appendPlanRows(env, id, tab, rows) {
+// `client` names the brand the rows were raised FOR. It matters only on a workbook two brands
+// share (Monsoon + Accessorize, the ELC group): a task raised for ONE of them is stamped with
+// that brand's token in the sheet's brand column so the board can tell them apart, and a task
+// for both is left blank, because blank already means both (Ray, 14 Oct 2026). Omit it and the
+// write is exactly what it was.
+async function appendPlanRows(env, id, tab, rows, client) {
   try {
     const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
     let realTab = await resolveTab(id, tab, token);
@@ -7012,18 +7039,39 @@ async function appendPlanRows(env, id, tab, rows) {
     const c = resolveCols(grid);
     const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
     const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
+    // the brand column of a shared workbook: the column immediately left of the task text, which
+    // is column B on every plan tab wired here. No brand column on a one-brand sheet.
+    const sheetBrands = brandsOnSheet(PLAN_SHEETS, id);
+    const brandTok = appendToken(client, sheetBrands);
+    const bc = (sheetBrands.length > 1 && tc > 0) ? tc - 1 : -1;
     const width = Math.max(tc, oc, sc, dc, 0) + 1;
     // IDEMPOTENT: skip rows whose task text already sits in the tab's task column (normalised
     // match). The page re-sends any row a lost/failed response left unconfirmed (resyncPlanWrites),
     // so a retried append must land zero duplicates — a lost response is indistinguishable from a
     // lost write on the client side, and only the sheet itself knows which one happened.
+    // ON A SHARED WORKBOOK A ROW'S IDENTITY IS ITS TASK TEXT **AND WHOSE WORK IT IS**: Monsoon
+    // and Accessorize each legitimately carry "BTS keywords optimisation" (rows 381/382 of the
+    // live sheet), so a text-only guard would skip the second brand's copy for ever. An existing
+    // row naming NO brand covers every brand and does cover this one; an existing one-brand row
+    // does not cover a joint row — swallowing that would silently drop the other brand's half,
+    // and a duplicate left showing twice is visible and one click to merge.
     const normAppendKey = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-    const have = new Set(); for (const g of grid) { const v = normAppendKey((g || [])[tc]); if (v) have.add(v); }
-    const fresh = rows.filter(r => { const k = normAppendKey(r.task); if (!k || have.has(k)) return false; have.add(k); return true; });
+    const have = {};
+    for (const g of grid) {
+      const v = normAppendKey((g || [])[tc]); if (!v) continue;
+      const rb = bc >= 0 ? rowBrands(g, tc, sheetBrands) : [];
+      noteRow(have, v, rb.length === 1 ? brandToken(rb[0], sheetBrands) : '');
+    }
+    const fresh = rows.filter(r => { const k = normAppendKey(r.task); if (!k) return false;
+      const tk = r.brandToken != null ? String(r.brandToken) : brandTok;
+      if (rowCovered(have, k, tk)) return false; noteRow(have, k, tk); return true; });
     const skipped = rows.length - fresh.length;
-    const colsOut = { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null };
-    if (!fresh.length) return { ok: true, appended: 0, skipped, tab: realTab || '(first sheet)', atRow: null, cols: colsOut };
-    const values = fresh.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+    const colsOut = { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null, brand: bc >= 0 ? colLetter(bc) : null };
+    if (!fresh.length) return { ok: true, appended: 0, skipped, tab: realTab || '(first sheet)', atRow: null, cols: colsOut, brand: brandTok || null };
+    const values = fresh.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due;
+      const tk = r.brandToken != null ? String(r.brandToken) : brandTok;
+      if (bc >= 0 && tk) a[bc] = tk;
+      return a; });
     // find the LAST row that has any content and write directly below it — the values:append
     // API mis-detects the table on multi-block plan layouts and drops rows at the top.
     let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
@@ -7034,7 +7082,7 @@ async function appendPlanRows(env, id, tab, rows) {
     const wd = await wr.json();
     if (wd.error) return { ok: false, error: permHint(wd.error.message) };
     try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut };
+    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
 
@@ -7137,7 +7185,12 @@ async function fetchGrid(id, tab, token) {
   }
   return { values, bg, title: (sheet && sheet.properties && sheet.properties.title) || '' };
 }
-function parsePlanRows(values, bg) {
+// `brands` = every brand PLAN_SHEETS wires to this workbook (Monsoon + Accessorize share one;
+// the ELC group share another). With two or more, each row's brand column is read so the board
+// can show one brand its own work — see src/planbrand.js. With one brand, or none passed, there
+// is nothing to tell apart and no row is ever attributed, so the parse is byte-for-byte what it
+// has always been.
+function parsePlanRows(values, bg, brands) {
   const c = resolveCols(values), out = [];
   const start = c.headerRow >= 0 ? c.headerRow + 1 : 0;
   const haveBg = Array.isArray(bg) && bg.length > 0;
@@ -7164,7 +7217,12 @@ function parsePlanRows(values, bg) {
     const owner = rc.ownerCol >= 0 ? String(row[rc.ownerCol] || '').trim() : '';
     const rawDue = rc.dueCol >= 0 ? String(row[rc.dueCol] || '').trim() : '';
     // date = the row's Due column if the plan has one, else the current month-section
-    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: rawDue || curMonth, row: r + 1 });
+    const rec = { t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: rawDue || curMonth, row: r + 1 };
+    // whose work it is, read from the columns LEFT of the task text; absent = both brands' (Ray's
+    // default), which is why an older cache with no `br` anywhere reads exactly as it did before.
+    const br = rowBrands(row, tcol, brands);
+    if (br.length && br.length < (brands || []).length) rec.br = br;
+    out.push(rec);
   }
   return out;
 }
