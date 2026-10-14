@@ -147,7 +147,25 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   ok('the briefed moment is gone from the band', !after.rows.some((r) => /Festive/.test(r.name)), after.rows.map((r) => r.name));
   ok('…and the others remain', after.rows.length === 2, after.rows.map((r) => r.name));
 
-  console.log('\n6) the phone');
+  console.log('\n6) the calendar fails HONESTLY if its engine does not load');
+  // the worker once served an EMPTY 200 for an engine and the page simply died (docs/IMAGES.md).
+  // The calendar now depends on one, so that failure must read as a sentence, not a TypeError.
+  {
+    const c2 = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await c2.route('**/kwcal/engine.js', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+    await c2.addInitScript({ content: "window.fetch=function(u){u=String(u);var j=function(x){return Promise.resolve(new Response(JSON.stringify(x),{status:200,headers:{'content-type':'application/json'}}))};if(u.indexOf('/api/feed/clients')>=0)return j({clients:{Northwind:{markets:['gb']}}});if(u.indexOf('/api/kwcal')>=0)return j({Northwind:{events:[{id:'a',name:'X',date:'2026-12-01'}]}});return j({});};" });
+    const p2 = await c2.newPage();
+    const e2 = []; p2.on('pageerror', (e) => e2.push(e.message));
+    await p2.goto('file://' + path.join(D, 'FeedSpark_KWCal.html'));
+    await p2.waitForTimeout(1200);
+    ok('an empty engine throws nothing', e2.length === 0, e2.slice(0, 2));
+    ok('…and the board says what is wrong', await p2.$eval('#kw-error', (n) => n.classList.contains('on')));
+    ok('…naming the file, so it is actionable',
+      /kwcal\/engine\.js/.test(await p2.$eval('#kw-error-msg', (n) => n.textContent)));
+    await c2.close();
+  }
+
+  console.log('\n7) the phone');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
   const of = await page.evaluate(() => {

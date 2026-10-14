@@ -15371,6 +15371,12 @@
       "file": "tools/engine_routes.js",
       "pattern": "function engineMap()",
       "pr": 0
+    },
+    {
+      "name": "KWCal: an engine that does not load reads as a sentence, never a TypeError (the empty-200 failure)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "did not load, so the board cannot resolve",
+      "pr": 0
     }
   ]
 }

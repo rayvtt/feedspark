@@ -1264,6 +1264,24 @@ function briefLink(e){ return briefLinkFor(CLIENT,e); }
  * about whether a moment has been briefed (which is how a second ticket would get raised).
  * Below are adapters at the names this page already used, so no call site changed. ---- */
 var KWE=window.FeedKwCal;
+/* If /kwcal/engine.js did not load, every render throws on the first tie — a cryptic failure for
+   a cause that has shipped before on this codebase (the worker served an EMPTY 200 for an engine
+   and the page simply died). Say what is wrong instead, once, and leave the page standing. */
+if(!KWE){ var ef=document.getElementById('kw-error');
+  if(ef){ var em=document.getElementById('kw-error-msg');
+    if(em)em.textContent='The keyword-calendar engine (/kwcal/engine.js) did not load, so the board cannot resolve which optimisations are briefed. Reload; if it persists, tell Claude Code — the worker is not serving it.';
+    ef.classList.add('on'); }
+  KWE={ normTask:function(x){return String(x||'').toLowerCase().trim()},
+    schedDate:function(e){var d=new Date(e.date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-21);return d},
+    dLbl:function(e){return String(e&&e.date||'')}, bLbl:function(e){return ''},
+    ptidxFor:function(){return null}, evMkt:function(e,f){return (e&&e.mkt)||f||'gb'},
+    ptsOf:function(){return []}, txOf:function(){return null}, cndOf:function(){return null},
+    hasScope:function(){return false}, volOf:function(){return null}, kwHours:function(){return 0},
+    kwTask:function(b,e){return String(e&&e.name||'')}, taskWords:function(){return []},
+    sigWords:function(){return []}, nameScore:function(){return 0}, isKwTicket:function(){return false},
+    tieBuild:function(){return {map:{},loose:[]}}, briefPayload:function(b,c,e){return {client:c,task:String(e&&e.name||''),cat:'keyword',scope:'',kw:e&&e.id}},
+    dueList:function(){return []}, fmt:function(n){return String(n)} };
+}
 function normTask(s){ return KWE.normTask(s); }
 function kwTask(brand,e){ return KWE.kwTask(brand,e,evMkt(brand,e)); }
 /* ---- A TICKET FILED UNDER THE WRONG BRAND (Ray, 15 Sep 2026: "Steve has used the marketing
