@@ -76,21 +76,26 @@ const schedDate = (e) => { const d = new Date(e.date + 'T12:00:00Z'); d.setUTCDa
 // the tie is resolved for the WHOLE brand in one pass, so the resolver needs the brand's moments.
 // ROSTER supplies them; with none set a query resolves against just the moment being asked about.
 let ROSTER = null;
+// docs/kwcal_engine.js is where the tie and the brief payload live since 14 Oct 2026 (Workflow
+// loads the same file). The page keeps adapters at the old names, so lifting them still works —
+// they just need the engine handed in, and the assertions below now cover BOTH halves at once.
+const KWE = (await import('../docs/kwcal_engine.js')).default;
 const body = [liftVar('MONI'), liftDecl('TASK_STOP'), liftLine('WFC'),
   lift('normTask'), lift('kwTask'), lift('taskWords'), lift('sigWords'), lift('nameScore'),
   lift('wfReset'), lift('wfBuild'), lift('wfAll'), lift('wfFor'), lift('wfHow'),
   lift('isKwTicket'), lift('looseKw'), lift('periodWin'),
   lift('ticketRes'), lift('roundRes'), lift('resFor')].join('\n');
-const api = new Function('MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR', 'getEvs',
+const api = new Function('KWE', 'MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR', 'getEvs',
   `${body}
    var BRIEFS, KWRES;
+   var CLIENT=null, MKT='gb';   // the board's own pin; absent here, so every moment reads its own market
    var evsOf = getEvs;
    return { wfFor:function(b,e){ BRIEFS=getB(); wfReset(); return wfFor(b,e); },
             wfHow:function(b,e){ BRIEFS=getB(); wfReset(); return wfHow(b,e); },
             looseKw:function(b){ BRIEFS=getB(); wfReset(); return looseKw(b); },
             resFor:function(b,e){ BRIEFS=getB(); KWRES=getR(); wfReset(); return resFor(b,e); },
             periodWin:periodWin, kwTask:kwTask, normTask:normTask };`
-)(MON, LEAD_DAYS, evMkt, schedDate, () => BRIEFS, () => KWRES,
+)(KWE, MON, LEAD_DAYS, evMkt, schedDate, () => BRIEFS, () => KWRES,
   (brand) => ROSTER || (QUERY ? [QUERY] : []));
 let QUERY = null;
 
@@ -413,7 +418,7 @@ is('the loungewear scope carries the singular "Trouser" branch as well as "Trous
  * run ⟳ Sync product types a seeded scope read "No product scope yet" on the card and counted in
  * the "Scopes to set" KPI. An unread index is not a zero — the same rule the rest of the FCC
  * follows. ONE reader, so the card and the KPI can never disagree. */
-const hasScope = new Function(`${lift('ptsOf')} ${lift('txOf')} ${lift('cndOf')} ${lift('hasScope')} return hasScope;`)();
+const hasScope = new Function('KWE', `${lift('ptsOf')} ${lift('txOf')} ${lift('cndOf')} ${lift('hasScope')} return hasScope;`)(KWE);
 is('a seeded GB product-type scope counts as scoped', hasScope({ pts: ['Men > Clothing > Jumpers > Cable Knit Jumper'] }, 'gb'), true);
 is('…and legacy pts is GB only, as ptsOf has always had it', hasScope({ pts: ['Men > Clothing > Jumpers > Cable Knit Jumper'] }, 'de'), false);
 is('a per-market scope counts for its own market', hasScope({ ptsm: { de: ['x > y > z'] } }, 'de'), true);
@@ -643,6 +648,58 @@ ROSTER = null;
   is('prose is refused', fn.setDate(e, 'next tuesday'), false);
   is('a UK-order date is refused rather than read backwards', fn.setDate(e, '07/12/2026'), false);
   is('…and the date still stands', e.date, '2026-12-07');
+}
+
+/* ── ONE implementation, two surfaces (Ray, 14 Oct 2026) ─────────────────────────────────────
+ * Workflow lists the moments still to be briefed and raises them from there, so the tie and the
+ * brief payload moved into docs/kwcal_engine.js and BOTH pages call in. The danger is somebody
+ * re-inlining a copy into either page "to avoid the dependency" — then the board and the board's
+ * own to-brief list disagree about what is briefed, and the second ticket Ray asked us never to
+ * raise gets raised. So: the page must DELEGATE, and the engine must be what Workflow loads. */
+{
+  const wf = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_Workflow.html'), 'utf8');
+  is('the calendar loads the shared engine', /<script src="\/kwcal\/engine\.js"/.test(src), true);
+  is('…and Workflow loads the SAME one', /\/kwcal\/engine\.js/.test(wf), true);
+  is('the calendar\u2019s tie is the engine\u2019s', /function wfBuild\(brand\)\{ return KWE\.tieBuild\(/.test(src), true);
+  is('…and so is its brief payload', /KWE\.briefPayload\(/.test(src), true);
+  // the worker has to SERVE it, or both pages load an empty 200 and define nothing — a failure
+  // that has shipped before on this codebase (docs/IMAGES.md)
+  const w = fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+  is('the worker serves the engine', /path === '\/kwcal\/engine\.js'/.test(w), true);
+  is('…from a real Text-module import', /import KWCAL_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/kwcal_engine\.js"/.test(w), true);
+
+  // dueList is what Workflow renders: every moment with NO ticket, soonest brief first
+  const store = { Acme: { events: [
+      { id: 'm1', name: 'Festive knitwear', date: '2026-11-05', terms: ['christmas jumper'] },
+      { id: 'm2', name: 'Black Friday', date: '2026-11-20', brandwide: 1 },
+      { id: 'm3', name: 'Already briefed', date: '2026-11-25' },
+      { id: 'm4', name: 'Far future', date: '2027-06-01' } ],
+    ptidx: { gb: { map: {}, __total: 1000, sat: { n: 300 } } } },
+    _meta: { events: [{ id: 'x', name: 'never', date: '2026-11-01' }] } };
+  const briefs = { t1: { id: 't1', client: 'Acme', kw: 'm3', task: 'anything', status: 'briefed' } };
+  const due = KWE.dueList(store, briefs, { now: '2026-10-14' });
+  is('a moment with a ticket is never offered again', due.some((r) => r.id === 'm3'), false);
+  is('a moment beyond the window is not nagged about', due.some((r) => r.id === 'm4'), false);
+  is('the rest are listed, soonest brief first', due.map((r) => r.id), ['m1', 'm2']);
+  is('each row carries the date its brief is due', due[0].briefBy, '2026-10-15');
+  is('…and the day it goes live', due[0].live, '2026-11-05');
+  is('a brand-wide moment counts as scoped', due[1].brandwide && due[1].scoped, true);
+  is('an unscoped moment says so rather than reading as zero', due[0].scoped, false);
+  is('a reserved key is never read as a brand', due.some((r) => r.client === '_meta'), false);
+  // overdue leads, and it is named as overdue rather than as a negative number of days
+  const late = KWE.dueList(store, {}, { now: '2026-10-20' });
+  is('an overdue brief leads the list', late[0].id, 'm1');
+  is('…and is marked overdue', late[0].overdue, true);
+
+  // the payload a Workflow row raises IS the payload the card raises — same task, same stamp
+  const e1 = store.Acme.events[0];
+  const pay = KWE.briefPayload(store, 'Acme', e1, 'gb');
+  is('the brief carries the moment id, which is what stops a second ticket', pay.kw, 'm1');
+  is('…the house task name', pay.task, 'Keywords Optimisation - Festive knitwear - Marketing Planner - 1126');
+  is('…and the keyword category', pay.cat, 'keyword');
+  // and once that brief exists, the moment leaves the list — the loop Ray asked for
+  const after = KWE.dueList(store, { n1: { id: 'n1', client: 'Acme', kw: 'm1', task: pay.task } }, { now: '2026-10-14' });
+  is('raising it in Workflow takes it off the to-brief list', after.some((r) => r.id === 'm1'), false);
 }
 
 console.log(`\n${pass} passed, ${fails.length} failed`);

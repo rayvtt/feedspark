@@ -69,6 +69,29 @@ window.addEventListener('load',restore);
   .sw-chip.r b{color:var(--risk)}
   .sw-chip .m{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
   .sw-band .sw-more{font-size:12px;font-weight:800;color:var(--navy);text-decoration:none;white-space:nowrap;margin-left:auto}
+  /* the to-brief list: one line per moment — when it is due, what it is, what it covers, and
+     the one action. Two lines on a phone, never a horizontal scroll. */
+  .kwd-rows{display:flex;flex-direction:column;gap:1px}
+  .kwd-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;
+    font-size:12.5px;font-weight:700;color:var(--ink)}
+  .kwd-row:nth-child(odd){background:var(--wash)}
+  .kwd-when{flex:none;width:92px;font-weight:900;font-variant-numeric:tabular-nums}
+  .kwd-row.late .kwd-when{color:var(--bad)}
+  .kwd-row.soon .kwd-when{color:var(--orange-deep)}
+  .kwd-who{flex:none;width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+  .kwd-nm{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kwd-nm i{font-style:normal;font-weight:700;color:var(--muted)}
+  .kwd-sc{flex:none;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .kwd-go{flex:none;border:none;border-radius:5px;background:var(--orange);color:#fff;
+    font-size:11.5px;font-weight:900;padding:4px 9px;cursor:pointer}
+  .kwd-go:hover{background:var(--orange-deep)}
+  .kwd-none{font-size:12px;font-weight:700;color:var(--muted);padding:4px 8px}
+  @media(max-width:760px){
+    .kwd-row{flex-wrap:wrap;gap:4px 8px}
+    .kwd-nm{flex:1 1 100%;order:3}
+    .kwd-sc{order:4}
+    .kwd-go{order:5;margin-left:auto}
+  }
   [data-theme=dark] .sw-chip{background:#20242E;border-color:var(--line);color:var(--ink-2)}
   /* CLIENT VIEW (Ray, 16 Sep 2026: "sometimes I use this module to have a walkthrough with the
      client on the call … slightly anonymous to clients — private and confidential — while still
@@ -1270,6 +1293,17 @@ aside.ck[hidden]{display:none}
     </tr></tfoot>
   </table></div>
 
+  <!-- FCC-KWDUE: the Keyword Calendar's moments that still need briefing, actionable HERE
+       (Ray, 14 Oct 2026: "each theme requires briefing action, so bring the briefing action into
+       the workflows as well … so the account manager can remember when to brief rather than flip
+       to the keyword calendar module. So centralize every action on the workflow module") -->
+  <div class="panel sw-band kwd-band" id="kwd-band" hidden>
+    <div class="sw-head"><span class="sw-t">🗓 Keyword calendar — to brief</span>
+      <span class="sw-sub" id="kwd-sub"></span>
+      <a class="sw-more" href="/kwcal">Open the calendar →</a></div>
+    <div class="kwd-rows" id="kwd-rows"></div>
+  </div>
+
   <!-- FCC-SCHEDWORK: scheduled work sits outside Intake — the strip below is a read-only hand-off -->
   <div class="panel sw-band" id="sw-band" hidden>
     <div class="sw-head"><span class="sw-t">⏭ Scheduled work</span><span class="sw-sub" id="sw-sub"></span>
@@ -1799,7 +1833,11 @@ aside.ck[hidden]{display:none}
    * reconnect, and says what actually happened. */
   var _bfT=null, _bfBack=2000, BRIEFS_DIRTY=0, _bfWarn=null;
   function persist(){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
-    BRIEFS_DIRTY=Date.now(); bfPush(); }
+    BRIEFS_DIRTY=Date.now(); bfPush();
+    // a brief just changed: the keyword-calendar band reads the SAME store to decide what still
+    // needs briefing, so it must hear about it now rather than on its next poll — a row left
+    // showing for a moment that has just been briefed is an invitation to raise it twice
+    try{ document.dispatchEvent(new CustomEvent('fcc-briefs')); }catch(e){} }
   function bfPush(delay){ if(_bfT)clearTimeout(_bfT); _bfT=setTimeout(function(){ _bfT=null;
     var stamp=0;
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BRIEFS_BASE)},body:JSON.stringify(BRIEFS)})
@@ -6885,5 +6923,135 @@ aside.ck[hidden]{display:none}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
   window.FCCPlaybook={open:function(b,tab){if(b)BRAND=b;if(tab)RTAB=(tab==='volume')?'volume':'review';openRail('r',true);fillBrands();setTab(RTAB);},
     engine:{classify:pbClassify,cats:pbCats,index:pbIndex,practice:pbPractice,band:pbBand,arrivals:pbArrivals,weak:pbWeak}};
+})();
+</script>
+
+<!-- the Keyword Calendar's own engine: the tie and the brief payload, the SAME file /kwcal loads,
+     so this band and that board can never disagree about what has been briefed -->
+<script src="/kwcal/engine.js" onerror="window.__kwdFail=1"></script>
+<script>
+/* ================= FCC-KWDUE — the keyword calendar's briefing actions, here ==================
+
+   Ray, 14 Oct 2026: "Based on the keyword calendar, each theme requires briefing action, so bring
+   the briefing action into the workflows as well, based on the data needed to brief. In this way,
+   the account manager can remember when to brief rather than flip to the keyword calendar module.
+   So centralize every action on the workflow module. - when hitting brief, button in Workflow,
+   that action is flipped back into the keyword calendar module and then saved in the brief
+   workflow as usual. Do not duplicate the task."
+
+   WHAT THIS IS NOT: a second list of work. Every row here is a moment on the calendar that has NO
+   ticket yet, read through the calendar's OWN tie (docs/kwcal_engine.js, which /kwcal loads too).
+   The moment a ticket exists — raised here, raised there, or raised by hand in Workflow by a
+   colleague — the row is gone, because the tie finds it. That is the whole of "do not duplicate
+   the task": there is one record of the work, the ticket, and two places that can start it.
+
+   AND THE BRIEF IS THE CALENDAR'S BRIEF. → Brief does not build its own payload; it calls the
+   engine's briefPayload, the same function the card's own → Brief link calls, so the task name,
+   the scope lines, the themes and — critically — the `kw` stamp are identical. The stamp is what
+   flips it back: the saved ticket carries the moment's id, so the calendar reads it as briefed
+   and tracks its stage for life, even if the moment is later renamed.
+
+   From there it is an ordinary brief: window.FCCBrief is the page's own composer, the same entry
+   the Playbook rail and every /workflow?brief= deep link use, so it saves into the pipeline and
+   files its Intake row exactly as a brief raised any other way. Nothing here writes a task.
+
+   THREE honesty rules, because this is the list an AM works to:
+     · a moment already briefed is never offered — the tie, not a guess at wording;
+     · a moment whose scope nobody has set still appears (it needs briefing MORE, not less), and
+       says so rather than printing a product count it does not have;
+     · the band is silent when there is nothing to brief, rather than claiming an empty success.
+================================================================================================= */
+(function(){
+  var KWD_DAYS=60;                       // how far ahead an AM plans; beyond that it is not a nag
+  var STORE=null, BRIEFS=null, PICK=null, SCOPE=null;
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function eng(){ return window.FeedKwCal||null; }
+
+  function whenLbl(r){
+    if(r.overdue)return r.inDays===-1?'1 day late':(-r.inDays)+' days late';
+    if(r.inDays===0)return 'today';
+    if(r.inDays===1)return 'tomorrow';
+    return 'in '+r.inDays+' days';
+  }
+  function rows(){
+    var E=eng(); if(!E||!STORE)return [];
+    var all=E.dueList(STORE,BRIEFS||{},{days:KWD_DAYS});
+    // follow the board: one client selected in Intake points the band at them. A filter that
+    // leaves nothing is reported as that, never as "nothing to brief".
+    if(SCOPE&&SCOPE.length)all=all.filter(function(r){ return SCOPE.indexOf(r.client)>=0; });
+    return all;
+  }
+  function render(){
+    var band=$('#kwd-band'); if(!band)return;
+    var E=eng();
+    if(!E||!STORE){ band.hidden=true; return; }          // nothing read yet — never an empty claim
+    var rs=rows(), late=0, soon=0;
+    rs.forEach(function(r){ if(r.overdue)late++; else if(r.inDays<=7)soon++; });
+    $('#kwd-sub').textContent = rs.length
+      ? rs.length+' to brief'+(late?' · '+late+' overdue':'')+(soon?' · '+soon+' within a week':'')
+        +(SCOPE&&SCOPE.length===1?' · '+SCOPE[0]:'')
+      : (SCOPE&&SCOPE.length?'Nothing to brief for '+SCOPE.join(', ')+'.':'Every scheduled optimisation is briefed.');
+    $('#kwd-rows').innerHTML = rs.length ? rs.slice(0,14).map(function(r,i){
+      var cls=r.overdue?' late':(r.inDays<=7?' soon':'');
+      var scope = r.brandwide ? 'whole catalogue'
+        : (r.vol!=null ? E.fmt(r.vol)+' products'
+        : (r.scoped ? 'scope set · not measured' : 'no scope yet'));
+      var themes=(r.terms||[]).slice(0,3).join(', ');
+      return '<div class="kwd-row'+cls+'">'
+        +'<span class="kwd-when" title="'+esc('Brief due '+r.briefLbl+' — it goes live '+r.liveLbl)+'">'+esc(whenLbl(r))+'</span>'
+        +'<span class="kwd-who" title="'+esc(r.client)+'">'+esc(r.client)+(r.mkt&&r.mkt!=='gb'?' · '+esc(r.mkt.toUpperCase()):'')+'</span>'
+        +'<span class="kwd-nm" title="'+esc(r.name+(themes?' — '+themes:''))+'">'+esc(r.name)
+        +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
+        +'<span class="kwd-sc" title="'+esc(r.scoped?'Scope set on the calendar':'No product scope set yet — brief it anyway, or set the scope on the calendar first')+'">'+esc(scope)+'</span>'
+        +'<button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">→ Brief</button>'
+        +'</div>';
+    }).join('')+(rs.length>14?'<div class="kwd-none">+'+(rs.length-14)+' more on the calendar</div>':'')
+      : '<div class="kwd-none">'+esc(SCOPE&&SCOPE.length?'Nothing waiting on a brief here.':'Nothing waiting on a brief.')+'</div>';
+    band.hidden=false;
+    $('#kwd-rows').__rows=rs;
+  }
+  // ONE entry into the composer — the page's own, exactly as the calendar's deep link uses it.
+  // The payload is the ENGINE's, so this brief and a brief raised on the card are the same brief.
+  function raise(r){
+    var E=eng(); if(!E||!STORE||!window.FCCBrief)return;
+    var rec=STORE[r.client]||{}, ev=(rec.events||[]).filter(function(x){ return x.id===r.id; })[0];
+    if(!ev)return;
+    window.FCCBrief(E.briefPayload(STORE,r.client,ev,r.mkt));
+  }
+  function wire(){
+    var host=$('#kwd-rows'); if(!host)return;
+    host.addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-kwd]'); if(!b)return;
+      var rs=host.__rows||[]; var r=rs[+b.getAttribute('data-kwd')]; if(r)raise(r);
+    });
+    // the board's client filter points the band, the same event the Scheduled-work band follows
+    document.addEventListener('fcc-clients',function(e){
+      SCOPE=((e.detail&&e.detail.clients)||[]).slice(); render();
+    });
+    // a brief saved anywhere on this page can have been one of these — re-read so the row goes
+    document.addEventListener('fcc-briefs',function(){ pull(true); });
+  }
+  function pull(briefsOnly){
+    var jobs=[fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return null})];
+    if(!briefsOnly)jobs.push(fetch('/api/kwcal').then(function(r){return r.json()}).catch(function(){return null}));
+    return Promise.all(jobs).then(function(res){
+      if(res[0]&&typeof res[0]==='object'&&!res[0].error)BRIEFS=res[0];
+      if(!briefsOnly&&res[1]&&typeof res[1]==='object'&&!res[1].ok)STORE=res[1];
+      render();
+    }).catch(function(){});
+  }
+  function go(){
+    if(!document.getElementById('kwd-band'))return;
+    wire();
+    pull(false);
+    // the ticket may be raised by a colleague; re-read on tab-visible and every two minutes,
+    // the cadence the rest of this page's live reads use
+    setInterval(function(){ if(!document.hidden)pull(false); },120000);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden)pull(true); });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
+  window.FCCKwDue={render:render,rows:rows};
 })();
 </script>

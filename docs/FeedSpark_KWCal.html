@@ -721,6 +721,7 @@ window.addEventListener('load',restore);
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="syncstate"></span></div></div>
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
+<script src="/kwcal/engine.js" onerror="window.__engineFail=1"></script>
 <script>
 (function(){
 'use strict';
@@ -1101,15 +1102,15 @@ function applySeeds(){
     if(!STORE[c]||!(STORE[c].events||[]).length){ STORE[c]=JSON.parse(JSON.stringify(SEED[c])); }
   });
 }
-function schedDate(e){ var d=new Date(e.date+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-LEAD_DAYS); return d; }
-function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
+function schedDate(e){ return KWE.schedDate(e); }
+function dLbl(e){ return KWE.dLbl(e); }
 /* THE CARD SAYS WHICH DATE IS WHICH (Ray, 14 Oct 2026: "due date doesn't fit with month card").
  * A moment going live on 21 Jan sits in the DECEMBER column, because the board is a WORK schedule
  * and files every moment by the month its brief is due (live minus LEAD_DAYS) — right, and
  * nowhere on the card. So a reader saw "21 Jan" under "DEC '26" and read a bug. The date now says
  * which date it is whenever the two months differ; where they agree it stays the one short date it
  * always was, because repeating the same month twice is noise, not clarity. */
-function bLbl(e){ var d=schedDate(e); return d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
+function bLbl(e){ return KWE.bLbl(e); }
 function splitMon(e){ var l=new Date(e.date+'T12:00:00Z'), b=schedDate(e);
   return l.getUTCMonth()!==b.getUTCMonth()||l.getUTCFullYear()!==b.getUTCFullYear(); }
 
@@ -1254,12 +1255,35 @@ function briefLink(e){ return briefLinkFor(CLIENT,e); }
  * market change and a re-brief. The two weaker rungs only exist for tickets raised before the
  * stamp shipped: the regenerated house task name, then the moment name ENDING its segment —
  * never bare containment, which let "Coats" capture "Coats & Jackets". */
-function normTask(s){ return String(s||'').toLowerCase().replace(/[‐-―−]/g,'-').replace(/\s+/g,' ').trim(); }
-function kwTask(brand,e){ // the house task-name format — details live in the brief SCOPE, not the title
-  var bmkt=evMkt(brand,e), d=new Date(e.date+'T12:00:00Z');
-  var mmyy=('0'+(d.getUTCMonth()+1)).slice(-2)+String(d.getUTCFullYear()).slice(2);
-  return 'Keywords Optimisation - '+e.name+' - Marketing Planner - '+mmyy+(bmkt!=='gb'?' - '+bmkt.toUpperCase():'');
+/* ---- ONE IMPLEMENTATION, TWO SURFACES (Ray, 14 Oct 2026: "centralize every action on the
+ * workflow module … Do not duplicate the task"). Workflow now lists the moments still to be
+ * briefed and raises them from there, so the tie (which ticket belongs to which moment) and
+ * the brief payload had to stop living only here: they are in docs/kwcal_engine.js, served at
+ * /kwcal/engine.js, and BOTH pages call in. Not a copy checked for drift — one implementation
+ * with two callers, so there is nothing to drift, and the two surfaces can never disagree
+ * about whether a moment has been briefed (which is how a second ticket would get raised).
+ * Below are adapters at the names this page already used, so no call site changed. ---- */
+var KWE=window.FeedKwCal;
+/* If /kwcal/engine.js did not load, every render throws on the first tie — a cryptic failure for
+   a cause that has shipped before on this codebase (the worker served an EMPTY 200 for an engine
+   and the page simply died). Say what is wrong instead, once, and leave the page standing. */
+if(!KWE){ var ef=document.getElementById('kw-error');
+  if(ef){ var em=document.getElementById('kw-error-msg');
+    if(em)em.textContent='The keyword-calendar engine (/kwcal/engine.js) did not load, so the board cannot resolve which optimisations are briefed. Reload; if it persists, tell Claude Code — the worker is not serving it.';
+    ef.classList.add('on'); }
+  KWE={ normTask:function(x){return String(x||'').toLowerCase().trim()},
+    schedDate:function(e){var d=new Date(e.date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-21);return d},
+    dLbl:function(e){return String(e&&e.date||'')}, bLbl:function(e){return ''},
+    ptidxFor:function(){return null}, evMkt:function(e,f){return (e&&e.mkt)||f||'gb'},
+    ptsOf:function(){return []}, txOf:function(){return null}, cndOf:function(){return null},
+    hasScope:function(){return false}, volOf:function(){return null}, kwHours:function(){return 0},
+    kwTask:function(b,e){return String(e&&e.name||'')}, taskWords:function(){return []},
+    sigWords:function(){return []}, nameScore:function(){return 0}, isKwTicket:function(){return false},
+    tieBuild:function(){return {map:{},loose:[]}}, briefPayload:function(b,c,e){return {client:c,task:String(e&&e.name||''),cat:'keyword',scope:'',kw:e&&e.id}},
+    dueList:function(){return []}, fmt:function(n){return String(n)} };
 }
+function normTask(s){ return KWE.normTask(s); }
+function kwTask(brand,e){ return KWE.kwTask(brand,e,evMkt(brand,e)); }
 /* ---- A TICKET FILED UNDER THE WRONG BRAND (Ray, 15 Sep 2026: "Steve has used the marketing
  * keyword calendar to brief … two themes … which is not captured on my keyword calendar").
  * The composer's client is a <select> whose roster is rebuilt asynchronously. When the brand a
@@ -1309,77 +1333,23 @@ function refileBrief(brand,e,b){
 var TASK_STOP={the:1,and:1,a:1,an:1,of:1,for:1,to:1,in:1,on:1,at:1,with:1,from:1,
   keyword:1,keywords:1,kw:1,optimisation:1,optimization:1,optimise:1,optimize:1,ai:1,opt:1,
   marketing:1,planner:1,calendar:1,brief:1,briefing:1,task:1,feed:1,test:1,update:1,new:1,fix:1};
-function taskWords(s){ return normTask(s).split(/[^a-z0-9]+/).filter(Boolean); }
-function sigWords(s,drop){   // the words that actually IDENTIFY something — filler, the brand's own
-  var out=[], seen={};       // name and bare date tokens (0926) carry no signal on either side
-  taskWords(s).forEach(function(w){ if(w.length<3||/^\d+$/.test(w)||TASK_STOP[w]||(drop&&drop[w])||seen[w])return;
-    seen[w]=1; out.push(w); });
-  return out;
-}
+function taskWords(s){ return KWE.taskWords(s); }
+function sigWords(s,drop){ return KWE.sigWords(s,drop); }
 /* How well a moment and a ticket name the SAME thing — both directions, or a short moment name
    wins everything: "Coats" is 100% present in a ticket called "Coats & Jackets", so coverage of
    the moment alone would let Coats steal that ticket from Coats & Jackets. Weighing how much of
    the TICKET the moment accounts for puts it back where it belongs. */
-function nameScore(mw,tw){
-  if(!mw.length||!tw.length)return 0;
-  var set={}; tw.forEach(function(w){ set[w]=1; });
-  var hit=0; mw.forEach(function(w){ if(set[w])hit++; });
-  if(!hit)return 0;
-  var mom=hit/mw.length, tick=hit/tw.length;
-  return 2*mom*tick/(mom+tick);
-}
+function nameScore(mw,tw){ return KWE.nameScore(mw,tw); }
 var WFC={};   // one resolution pass per brand per render — render() resets it
 function wfReset(){ WFC={}; }
-function wfBuild(brand){
-  var E=evsOf(brand), mine=[], out={}, taken={}, done={};
-  Object.keys(BRIEFS||{}).forEach(function(k){ var b=BRIEFS[k]; if(b&&b.client===brand&&b.id)mine.push(b); });
-  mine.sort(function(a,b){ return (b.updated||b.created||0)-(a.updated||a.created||0); });   // newest ticket wins a contest
-  function newer(a,b){ return (!a||(b.updated||b.created||0)>(a.updated||a.created||0))?b:a; }
-  function assign(e,b,how){ out[e.id]={b:b,how:how}; taken[b.id]=1; done[e.id]=1; }
-
-  // 0 — linked BY HAND: decisive, and it survives any rename on either side
-  E.forEach(function(e){ if(!e.wf)return;
-    for(var i=0;i<mine.length;i++) if(mine[i].id===e.wf&&!taken[mine[i].id]){ assign(e,mine[i],'linked'); return; } });
-
-  // 1-3 — the calendar's own evidence, strongest first, every moment before the next rung
-  [['kw',   function(e,b){ return b.kw&&String(b.kw)===String(e.id); }],
-   ['task', function(e,b){ return normTask(b.task)===normTask(kwTask(brand,e)); }],
-   ['name', function(e,b){ var tk=normTask(b.task),
-       p1=normTask('Keywords Optimisation - '+e.name), p2=normTask('AI Keyword Optimisation - '+e.name);
-       return tk===p1||tk===p2||tk.indexOf(p1+' - ')===0||tk.indexOf(p2+' - ')===0; }]
-  ].forEach(function(rung){
-    E.forEach(function(e){ if(done[e.id])return; var best=null;
-      mine.forEach(function(b){ if(taken[b.id])return; if(rung[1](e,b))best=newer(best,b); });
-      if(best)assign(e,best,rung[0]); });
-  });
-
-  // 4 — the WORDS of a ticket someone raised by hand, one brief at a time, newest first.
-  // A ticket that doesn't read as keyword work must name the moment OUTRIGHT (every identifying
-  // word), so a "Feed Fix - …" or a Golden Record ticket can never drift onto a moment on the
-  // strength of one shared word. A keyword ticket needs half the moment's words, and a strict win.
-  var drop={}; taskWords(brand).forEach(function(w){ drop[w]=1; });
-  var sig={}; E.forEach(function(e){ sig[e.id]=sigWords(e.name,drop); });
-  var near={};
-  mine.forEach(function(b){ if(taken[b.id])return;
-    var tw=sigWords(b.task,drop);
-    var top=null, topS=0, second=0;
-    E.forEach(function(e){ if(done[e.id])return;
-      var sc=nameScore(sig[e.id]||[],tw);
-      if(sc>topS){ second=topS; topS=sc; top=e; } else if(sc>second) second=sc; });
-    near[b.id]=topS;
-    var floor=isKwTicket(b)?0.5:1;
-    if(top&&topS>=floor&&topS>second) assign(top,b,'words'); });
-
-  return { map:out, loose:mine.filter(function(b){ return !taken[b.id]; })
-    .map(function(b){ return {b:b, near:near[b.id]||0}; }) };
-}
+function wfBuild(brand){ return KWE.tieBuild(evsOf(brand),BRIEFS,brand,brand===CLIENT?MKT:'gb'); }
 function wfAll(brand){ if(!WFC[brand])WFC[brand]=wfBuild(brand); return WFC[brand]; }
 function wfFor(brand,e){ var r=wfAll(brand).map[e&&e.id]; return r?r.b:null; }
 function wfHow(brand,e){ var r=wfAll(brand).map[e&&e.id]; return r?r.how:''; }
 var HOWL={linked:'linked to this moment by hand',kw:'raised from this moment',
   task:'matched on the house task name',name:'matched on the moment name',
   words:'matched on the ticket wording — a colleague raised it in Workflow'};
-function isKwTicket(b){ return String(b.cat||'')==='keyword'||/keyword|optimis|optimiz/i.test(String(b.task||'')); }
+function isKwTicket(b){ return KWE.isKwTicket(b); }
 // tickets on this brand that no moment claimed — keyword work, or anything that ALMOST matched a
 // moment (a near miss is exactly the case a human needs to see: the wording didn't quite land)
 function looseKw(brand){ return wfAll(brand).loose
@@ -1639,16 +1609,16 @@ document.addEventListener('keydown',function(ev){ if(ev.key==='Escape')popClose(
 function findEvIn(brand,id){ var E=(STORE[brand]||{}).events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
 function ptidx(){ var r=rec(); return (r.ptidx&&r.ptidx[curMkt()])||null; }
 function curMkt(){ return MKT; }
-function ptidxFor(brand,mkt){ var r=STORE[brand]||{}; return (r.ptidx&&r.ptidx[mkt||'gb'])||null; }
-function evMkt(brand,e){ return e.mkt||(brand===CLIENT?MKT:'gb'); } // pinned market wins; else the board's
-function ptsOf(e,mkt){ if(e.ptsm&&e.ptsm[mkt])return e.ptsm[mkt]; if(mkt==='gb')return e.pts||[]; return []; } // legacy pts = gb
+function ptidxFor(brand,mkt){ return KWE.ptidxFor(STORE,brand,mkt); }
+function evMkt(brand,e){ return KWE.evMkt(e,brand===CLIENT?MKT:'gb'); } // pinned market wins; else the board's
+function ptsOf(e,mkt){ return KWE.ptsOf(e,mkt); } // legacy pts = gb
 
 /* ---- free-text scope filters (title + description) — combinable with PT selection ---- */
 // per event per market: e.txsm[mkt]={qs:[{q,n}],uni} — n = SKUs matching the term,
 // uni = UNIQUE SKUs matching (selected PTs ∪ terms), so combined totals never double-count.
 var SKUC=window.__skucache=window.__skucache||{}; // in-memory per-SKU [pt, searchable text] per brand|mkt
 var CACHING={};
-function txOf(e,mkt){ var t=e.txsm&&e.txsm[mkt]; return (t&&t.qs&&t.qs.length)?t:null; }
+function txOf(e,mkt){ return KWE.txOf(e,mkt); }
 function txWords(q){ return String(q).toLowerCase().split(/\s+/).filter(Boolean); }
 function txHit(x,ws){ for(var i=0;i<ws.length;i++)if(x.indexOf(ws[i])<0)return false; return true; }
 function skuCache(brand,mkt){ var c=SKUC[brand+'|'+mkt]; return c&&c.rows?c.rows:null; }
@@ -1662,7 +1632,7 @@ function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts 
   return {ns:ns,uni:uni,unsat:unsat};
 }
 /* ---- attribute step-filter: conditions AND-narrow the PT∪text selection (row[3] = per-attr values) ---- */
-function cndOf(e,mkt){ var c=e.cndm&&e.cndm[mkt]; return (c&&c.conds&&c.conds.length)?c:null; }
+function cndOf(e,mkt){ return KWE.cndOf(e,mkt); }
 function condSat(row,conds){ var a=row[3]||[]; // AND across conditions, OR across each condition's values
   for(var c=0;c<conds.length;c++){ var ci=KW_ATTRS.indexOf(conds[c].attr); if(ci<0)continue;
     if((conds[c].vals||[]).indexOf(a[ci]||'')<0)return false; } return true; }
@@ -1739,26 +1709,13 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
     return step();
   }).catch(function(){ (CACHING[key]||[]).forEach(function(f){f(false)}); delete CACHING[key]; });
 }
-function volOf(brand,e){ // exact PT counts per market (+ text-filter union), brand-wide for sale windows
-  var mkt=evMkt(brand,e);
-  var idx=ptidxFor(brand,mkt); if(!idx)return null;
-  if(e.brandwide)return {vol:idx.__total||0,pct:100,wide:1};
-  var ps=ptsOf(e,mkt), tx=txOf(e,mkt), cnd=cndOf(e,mkt);
-  if(!ps.length&&!tx&&!cnd)return {unset:1};
-  var v;
-  if(cnd){ v=(cnd.uni!=null)?cnd.uni:0; } // conditions present → picker stored the full (PT∪text) AND conds count
-  else { v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
-    if(tx)v=(tx.uni!=null)?tx.uni:v+tx.qs.reduce(function(s,q){return s+(q.n||0)},0); }
-  var o={vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
-  if(tx)o.tx=tx.qs.length; if(ps.length)o.npts=ps.length; if(cnd)o.cnd=cnd.conds.length;
-  return o;
-}
+function volOf(brand,e){ return KWE.volOf(STORE,brand,e,evMkt(brand,e)); }
 /* A SCOPE CAN BE SET AND NOT YET MEASURABLE. volOf needs the market's product-type index, which
  * only exists once somebody has run ⟳ Sync product types, and it returns null without one — so a
  * scope that IS set (a seeded one, or any scope on a brand nobody has synced) read "No product
  * scope yet" on the card and counted in the "Scopes to set" KPI. Those are the one thing it is
  * not. ONE reader for both surfaces so they can never disagree; an unread index is never a zero. */
-function hasScope(e,mkt){ return !!(ptsOf(e,mkt).length || txOf(e,mkt) || cndOf(e,mkt)); }
+function hasScope(e,mkt){ return KWE.hasScope(e,mkt); }
 function scopeBtn(brand,e){
   var v=volOf(brand,e), pmkt=evMkt(brand,e), psb=ptsOf(e,pmkt), txb=txOf(e,pmkt), cnb=cndOf(e,pmkt), idxT=ptidxFor(brand,pmkt);
   if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — the whole '
@@ -1961,41 +1918,15 @@ function renderClical(){
     box.addEventListener('drop',function(ev){ ev.preventDefault(); box.classList.remove('drop'); attachCalFile(ev.dataTransfer.files&&ev.dataTransfer.files[0]); }); }
 }
 function briefLinkFor(brand,e){
-  var v=volOf(brand,e)||{}, bmkt=evMkt(brand,e), ps=ptsOf(e,bmkt), idx=ptidxFor(brand,bmkt);
-  var task=kwTask(brand,e);
-  var lines=['Moment: '+e.name+' — lands '+dLbl(e)+' ('+bmkt.toUpperCase()+') · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()],
-    'Keyword themes: '+((e.terms||[]).join(', ')||'TBC')];
-  var tx=txOf(e,bmkt);
-  if(e.brandwide){ lines.push('Categories: brand-wide — whole '+bmkt.toUpperCase()+' catalogue'+(v.vol?' ('+fmt(v.vol)+' SKUs)':'')); }
-  else if(ps.length||tx){
-    if(ps.length){ lines.push('Categories in scope:');
-      ps.forEach(function(pt){ lines.push('  • '+pt+(idx?' — '+fmt(idx.map[pt]||0)+' SKUs':'')); }); }
-    if(tx){ lines.push('Text filters (title/description contains):');
-      tx.qs.forEach(function(q){ lines.push('  • “'+q.q+'” — '+(q.n!=null?fmt(q.n)+' SKUs':'count pending sync')); }); }
-    if(v&&v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs'+(ps.length&&tx?' unique':'')+' ('+v.pct+'% of the live feed)');
-  } else lines.push('Categories: TBC — set the scope on the Keyword Calendar');
-  var sat=idx&&idx.sat, sm=e.satm&&e.satm[bmkt];
-  if(sat&&idx.__total){
-    var cur=Math.round(sat.n/idx.__total*1000)/10;
-    var sl='Keyword saturation ('+bmkt.toUpperCase()+'): '+cur+'% of the live feed already keyworded (g:product_type2–10)';
-    if(e.brandwide){ var rem=idx.__total-sat.n; if(rem>0)sl+=' — brand-wide window: '+fmt(rem)+' SKUs to take the brand to 100%'; }
-    else if(sm&&sm.unsat!=null){
-      if(!sm.unsat)sl+=' — every in-scope SKU already carries keywords';
-      else sl+=' — '+fmt(sm.unsat)+' in-scope SKUs still to keyword; landing this brief lifts the brand to ~'+(Math.round((sat.n+sm.unsat)/idx.__total*1000)/10)+'%'; }
-    lines.push(sl);
-  }
-  // kw = the moment's id: the composer stamps it on the saved brief so this calendar tracks
-  // THAT ticket for life — the tie can't be broken by renaming the moment
-  return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n'),kw:e.id});
+  // the payload is the ENGINE's, so a brief raised from the Workflow band is the same brief,
+  // word for word, as one raised from this card — same task name, same scope, same kw stamp
+  return '/workflow?brief='+b64url(KWE.briefPayload(STORE,brand,e,evMkt(brand,e)));
 }
 /* ---------------- hours & resourcing (Ray, 10 Sep 2026) ----------------
  * Keyword-generation rule of thumb: 500→4h · 1500→6h · 4000→8h · 10000→10h.
  * Linear-interpolate between the anchors; ≤500 = the 4h minimum batch; above 10k
  * extend at the final segment's marginal rate. Products = volOf() per market. */
-function kwHours(n){ n=Math.max(0,Math.round(+n||0)); if(!n)return 0; if(n<=500)return 4;
-  var p=[[500,4],[1500,6],[4000,8],[10000,10]],i;
-  for(i=1;i<p.length;i++){ if(n<=p[i][0]){ var a=p[i-1],b=p[i]; return a[1]+(n-a[0])/(b[0]-a[0])*(b[1]-a[1]); } }
-  var L=p[p.length-1],P=p[p.length-2],rate=(L[1]-P[1])/(L[0]-P[0]); return L[1]+(n-L[0])*rate; }
+function kwHours(n){ return KWE.kwHours(n); }
 function h1(h){ return (Math.round(h*2)/2).toFixed(1); } // nearest half-hour
 function kwown(){ var r=rec(); if(!r.kwown)r.kwown={}; return r.kwown; }
 /* ---- resourcing band (Ray, 11 Sep 2026: "hours and resourcing could be displayed more
