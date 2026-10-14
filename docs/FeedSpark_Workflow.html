@@ -2243,7 +2243,7 @@ aside.ck[hidden]{display:none}
     // exactly like the email path. adoptIntoPlan self-guards against duplicates, so a brief
     // raised FROM an intake row (lk found) or an edit of an existing brief never double-writes.
     if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
-    BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
+    BRIEFS[id]=b; window.__editId=null; persist(); briefDueToRow(b,o.f.dueIso); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
     if(window.__emailIds&&window.__emailIds.length){ decideMany(window.__emailIds,'briefed'); window.__emailIds=null; window.__emailId=null; }
     else if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
@@ -2252,6 +2252,31 @@ aside.ck[hidden]{display:none}
     // "Brief saved to pipeline" — and the brief email went out on the strength of it
     toast((existing?'Brief updated':'Brief saved')+' — syncing to the pipeline…');
     var _tid=id; bfConfirm(_tid,existing); };
+  // THE BRIEF'S DUE DATE IS THE TASK'S DUE DATE (Ray, 14 Oct 2026, over a Superdry Intake row
+  // reading "Aug 26" after he briefed it for the 19th: "Due Date in brief doesn't save here
+  // (this should be due 19/10)"). The composer PREFILLS from the intake row (bg-due, "brief
+  // inherits the intake due date") and the brief then kept the AM's date entirely to itself —
+  // b.due went into the subject's ibfdue token and the ledger while the row it was raised from
+  // kept the plan's own date, which on this row was a MONTH SECTION (1 Aug 2026), i.e. not a
+  // deadline at all. So the one date a reader trusts — the Due column they sort and chase on —
+  // was the only place the decision never landed. The due reached the row ONLY where the brief
+  // CREATED it (adoptIntoPlan on the email and module-deep-link paths), never where it was
+  // raised FROM a row, which is the ordinary case.
+  // It goes through setDue, the one writer: the shared taskdue overlay, the Project-Plan
+  // write-back and the undo record, exactly as goLive() already re-dates a linked row when a
+  // test starts its run.
+  // TWO RULES. A brief with NO due leaves the row alone — clearing a date is not a statement
+  // that the task has no deadline, and a blank written into the plan would destroy the date on
+  // the strength of an absence. And a due that did not MOVE writes nothing, so re-saving a
+  // brief never re-sends a sheet write or stacks an undo entry (the prefill means an untouched
+  // composer always matches the row).
+  function briefDueToRow(b,dueIso){
+    if(!b||!b.taskKey||!dueIso)return false;
+    var row=null; allIntake().forEach(function(x){ if(!row&&(x.client+'|'+x.task)===b.taskKey)row=x; });
+    if(!row)return false;
+    var cur=taskDate(row), curIso=cur?(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())):'';
+    if(curIso===dueIso)return false;
+    setDue(row,dueIso); return true; }
   function bfConfirm(id,existing){   // tell the truth once the server has actually taken it
     var t0=Date.now();
     (function chk(){
