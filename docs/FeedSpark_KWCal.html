@@ -186,6 +186,9 @@ window.addEventListener('load',restore);
   .rc .rt-ed:hover{color:var(--orange-deep)}
   .rc .rd{font-size:10.5px;color:var(--muted);font-weight:700;margin:3px 0 7px;line-height:1.5}
   .rc .bdue{font-weight:700;opacity:.72}
+  /* each half of the meta on its own line — three items at most, so neither ever wraps */
+  .rc .rd-l{display:block}
+  .rc .rd-m{margin-top:1px}
   .rc .ra{display:flex;gap:5px;align-items:center}
   .rc .del{position:absolute;top:4px;right:5px;border:none;background:none;color:var(--muted);
     font-weight:900;cursor:pointer;font-size:13px;padding:1px 3px;border-radius:6px;opacity:0}
@@ -2142,9 +2145,16 @@ function renderPdfDoc(){
   if(CLIENT==='*'){ pdfNote('Open a brand’s board to export its keyword calendar — the all-brands overview is internal.'); return; }
   var E=evs();
   if(!E.length){ pdfNote('No marketing moments captured for '+CLIENT+' yet.'); return; }
+  /* THE CLIENT DOCUMENT IS DATED BY THE LIVE DATE (Ray, 14 Oct 2026: "PDF to show dates by Live
+   * Date pls"). It was plotting schedDate — the day the BRIEF is due — while its own legend said
+   * "each date is when that optimisation goes live": two statements about one number, one of them
+   * wrong, and the wrong one is the number a client reads (Festive knitwear printed on 15 Oct
+   * when it goes live on 5 Nov). The board is a work schedule and rightly files by brief-by; this
+   * is the client's copy and the client's question is when it lands. Only the GRID and its agenda
+   * move — the result tie, the KPI band and every on-screen surface still read schedDate. */
   var byMon={};
-  E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth();
-    (byMon[k]=byMon[k]||[]).push({e:e,day:sd.getUTCDate()}); });
+  E.forEach(function(e){ var ld=new Date(e.date+'T12:00:00Z'), k=ld.getUTCFullYear()*12+ld.getUTCMonth();
+    (byMon[k]=byMon[k]||[]).push({e:e,day:ld.getUTCDate()}); });
   var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
   mons.forEach(function(k){ byMon[k].sort(function(a,b){return a.day-b.day}); });
 
@@ -2212,7 +2222,7 @@ function renderPdfDoc(){
     +'<span><i class="sw s-sched"></i>Scheduled</span><span><i class="sw s-prog"></i>In progress</span>'
     +'<span><i class="sw s-live"></i>Live</span><span><i class="sw s-done"></i>Complete</span>'
     +(resIn?'<span>Result: <b style="color:#15803D">▲</b> positive <b style="color:#B1550A">◆</b> mixed <b style="color:#C0392B">▼</b> negative</span>':'')
-    +'<span class="ln">Each date is when that optimisation goes <b>live</b> — '+LEAD_DAYS+' days ahead of the marketing moment it supports. '
+    +'<span class="ln">Each date is the day that optimisation goes <b>live</b>; it is briefed '+LEAD_DAYS+' days earlier. '
     +'Figures are products in the live '+esc(mk)+' feed; sale windows cover the whole catalogue.</span></div>';
 
   h+='<div class="pd-foot"><span>FeedSpark · Private &amp; Confidential</span>'
@@ -2408,7 +2418,14 @@ function render(){
             :esc(e.name))
           +(editMode&&e.wf?'<button class="del ul" style="opacity:1" data-unlink="'+esc(e.id)+'" title="Unlink the ticket tied to this moment by hand">⛓</button>':'')
           +(editMode?'<button class="del" style="opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
-          +'<div class="rd">'+(function(){
+          /* TWO SHORT LINES, NOT ONE LONG RUN (Ray, 14 Oct 2026, over the board: "ensure text fits
+           * well on each theme pls - too clutterd atm"). The card's meta had grown to five items
+           * strung on middots — live date · brief date · market · scope · hours · themes — and in
+           * a 250px column that wraps mid-run, so a card read as a paragraph of grey. The facts
+           * are unchanged; they are split where they already divide in meaning: WHEN it happens,
+           * then WHAT IT IS — dates on one line, the measures under them. Each line is three
+           * items at most, which is what fits. */
+          +'<div class="rd"><span class="rd-l">'+(function(){
             var sp=splitMon(e), lab=sp?('live '+dLbl(e)):dLbl(e);
             var tip=sp?('Goes live '+dLbl(e)+' \u2014 the brief is due '+bLbl(e)+', '+LEAD_DAYS+' days earlier, which is the month this card sits in')
                       :('Goes live '+dLbl(e)+' \u2014 brief due '+bLbl(e));
@@ -2417,9 +2434,11 @@ function render(){
               :'<span title="'+esc(tip)+'">'+esc(lab)+'</span>';
             // only where the two months differ, or the column contradicts the card with nothing said
             return d+(sp?' · <span class="bdue" title="'+esc('This card sits in '+MON[schedDate(e).getUTCMonth()]+' because that is when the brief is due')+'">brief '+esc(bLbl(e))+'</span>':'');
-          })()+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
-          +' · '+scopeBtn(CLIENT,e)+(hh?' · '+h1(hh)+'h':'')
-          +(tms?' · <button type="button" class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+' — click to edit">✦'+tms+'</button>':'')
+          })()+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')+'</span>'
+          +'<span class="rd-l rd-m">'+[scopeBtn(CLIENT,e)]
+            .concat(hh?[h1(hh)+'h']:[])
+            .concat(tms?['<button type="button" class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+' — click to edit">✦'+tms+'</button>']:[])
+            .join(' · ')+'</span>'
           +'</div>'
           +'<div class="ra">'+stChip(CLIENT,e,wf,st)
           +(rr?'<button type="button" class="rchip '+esc(rr.verdict||'unknown')+'" data-res="'+esc(e.id)+'" title="Result reported for the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' round — click for the metric lines">📈</button>':'')

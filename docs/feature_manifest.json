@@ -12092,6 +12092,18 @@
       "pr": 0
     },
     {
+      "name": "KWCal: the card's meta is two short lines, not one run-on that wraps",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": ".rc .rd-l{display:block}",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the CLIENT PDF is dated by the live date, never the brief date",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var ld=new Date(e.date+'T12:00:00Z'), k=ld.getUTCFullYear()",
+      "pr": 0
+    },
+    {
       "name": "KWCal: Superdry GB product-type census (independent check on every seeded path)",
       "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json",
       "pattern": "distinct_primary_paths",
