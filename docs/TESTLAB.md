@@ -83,6 +83,44 @@ the market's own `gl`/`hl`):
 No signal under ten competitor rows. **Meta**: ad creatives are not readable without a Meta Ad
 Library token (EU ads only under the DSA) — the rail says so, and nothing is mocked up.
 
+## 3b. Auction Insights — the competitor read with no API
+
+Ray, 14 Oct 2026: *"is there a way to bypass the competitor mapping without API?"* → *"i think Google
+Ads Auction insight"*. The Shopping read above spends SerpApi credit; the Auction Insights report
+costs nothing and is Google's own statement of who you bid against.
+
+- The AM downloads the report from the Google Ads UI (a Shopping or Performance Max campaign →
+  Auction insights → download, CSV or Excel) and drops it on **⇪ Upload** beside the market on the
+  rail. The file is read **in the browser** (`/xlsx/engine.js`, loaded on first use: `.xlsx` through
+  its reader, a CSV through its CSV reader, a tab-separated or UTF-16 export decoded by its
+  byte-order mark) and only the ROWS reach the worker — `PUT /api/compwatch/auction {client,
+  market, rows}` (≤400 rows, cells cut at 200 characters).
+- `parseAuction` finds the header (Display URL domain beside Impression share — the Shopping shape;
+  Search's Position above / Top of page / Abs. top of page columns ride along when present), reads
+  the date range off the line before it, folds a segmented export (a Campaign / Ad group / Device
+  column) per domain keeping the strongest figure and the row count, keeps **You** apart and sorts
+  the competitors by impression share. **The report's own figures, never re-derived**: `< 10%` is
+  kept as the floor it is (`isLt`) and drawn as `<10%`; `--` is null, never 0; an Excel cell holding
+  `0.4523` is the same 45.23%. A file with no Auction Insights header is refused with the fix, never
+  read as empty data.
+- `cleanAuction` checks the record whole (0–100, ≤60 domains) on the way into KV
+  `compauction:<client>:<mkt>` (120-day TTL), stamped by whom and when; `GET` serves it, `DELETE`
+  forgets it (✕ on the rail). Writing needs the Workflow grant and the client scope; no money is
+  spent, so no throttle.
+- `auctionSignals` promotes the tests that move what the report measures — **eligibility and
+  bidding**, never a creative test the report cannot see:
+
+| the report says | → test |
+|---|---|
+| the leading domain is 5+ points ahead of you on impression share | Seasonal keyword injection, MASK title structure |
+| you outrank a domain under 40% of the time where you overlap 20%+ | Performance-tier custom label |
+| your impression share is under 20% among 3+ competitors | Sale price with strike-through |
+
+`/api/testlab` carries the report on its market (`comp.markets[m].auction`, with or without a
+Shopping read beside it) and unions its signals into `comp.signals` marked `src: 'auction'`, so the
+proposals wear them like the Shopping read's. The rail draws You first, then the domains by
+impression share on a bar each, overlap and outranking beside them, the range and the upload date.
+
 ## The ranking — aggressive by design, honest by design
 
 `proposeTests(brand, ctx, ev)` scores every test:
@@ -126,6 +164,7 @@ the Project Plan like every other brief.
 | `GET /api/testlab?client=` | scoped per signin; the three, the rest, the counts, the evidence by family, the book (brands with an archive read), the cold brands, the brand's feeds, the competitor block |
 | `GET /api/compwatch?client=&market=` | the stored read + its summary |
 | `POST /api/compwatch` | `{client, market, force}` — read it now (money route) |
+| `GET\|PUT\|DELETE /api/compwatch/auction` | the uploaded Auction Insights report per market: stored / `{client, market, rows}` from the downloaded file / forget it |
 
 ## Harness
 
@@ -134,9 +173,14 @@ the Project Plan like every other brief.
   window; the competitor normalisation (a second pass through `cleanRead` changes nothing), the
   summary and the signals; the ranking rules; industry-not-peer in the brief; both routes lifted
   out of `worker.js` against a stub KV and a stub SerpApi (scope, the grant, no key, no snapshot,
-  the day cache, force, Meta refused, nothing of the key or the raw page stored); the wiring.
+  the day cache, force, Meta refused, nothing of the key or the raw page stored); the Auction
+  Insights parser on Google's own export shapes (title + range lines, `< 10%`, `--`, a segmented
+  Excel export with fractions), the sanitiser's idempotence, the signals, the upload route (scope,
+  grant, a file with no header refused, nothing of the file stored, DELETE); the wiring.
   Every fixture is invented — Northwind, Harbour, Linden.
 - `tools/check_testlab.js` (Playwright, presync): the real Workflow rail — the three with their
   evidence, line and design; the badge; the surface pills; the folded rest with its states; the
   competitor block (merchants, our line, pictures, the signal, ⚡ Read now → one POST + a re-read);
+  the Auction Insights block drawn from a stored report and a real CSV dropped on ⇪ Upload through
+  the page's own file input — read into rows in the browser, one PUT, a re-read, ✕ → DELETE;
   → Brief filling the composer as a test naming the industry, never the peer; the phone.

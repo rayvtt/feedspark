@@ -6275,14 +6275,17 @@ async function goldenRoutes(env, request, url) {
       .map((b) => String(b.task || ''));
     // competitor reads already stored for the brand's Google markets; signals union across them
     const reads = await Promise.all(feeds.map((f) => env.EDITS.get('compwatch:' + brand + ':' + f.mkt, 'json').catch(() => null)));
+    // and the Auction Insights the AM uploaded (no API): the report's own competitors by impression share
+    const aucs = await Promise.all(feeds.map((f) => env.EDITS.get('compauction:' + brand + ':' + f.mkt, 'json').catch(() => null)));
     const comp = { on: !!env.SERPAPI_KEY, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
     const seenSig = {};
+    const addSig = (mkt, src, sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt, src }, sg)); } };
     feeds.forEach((f, i) => {
-      const r = TL.cleanRead(reads[i]);
-      if (!r || !r.reads.length) { comp.markets[f.mkt] = null; return; }
-      const sm = TL.compSummary(r.reads, brand, domain);
-      comp.markets[f.mkt] = { at: r.at, n: r.n, summary: sm };
-      sm.signals.forEach((sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt: f.mkt }, sg)); } });
+      const r = TL.cleanRead(reads[i]), a = TL.cleanAuction(aucs[i]);
+      const m = {};
+      if (r && r.reads.length) { const sm = TL.compSummary(r.reads, brand, domain); Object.assign(m, { at: r.at, n: r.n, summary: sm }); sm.signals.forEach((sg) => addSig(f.mkt, 'shopping', sg)); }
+      if (a) { m.auction = Object.assign({}, a, { signals: TL.auctionSignals(a) }); m.auction.signals.forEach((sg) => addSig(f.mkt, 'auction', sg)); }
+      comp.markets[f.mkt] = Object.keys(m).length ? m : null;
     });
     const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));
     const ctx = { industry: industryOf(brand), feeds, archive: own ? own.tests : [], kw: kwAll.filter((r) => clientSlug(String(r.brand || '')) === clientSlug(who0)), briefs, comp };
@@ -6291,6 +6294,39 @@ async function goldenRoutes(env, request, url) {
     return json({ ok: true, at: now, client: brand, industry: ctx.industry, top: res.top, rest: res.rest, counts: res.counts,
       evidence: evOut, book: book.map((b) => ({ brand: b.brand, n: b.tests.length })), cold, ownArchive: !!own, comp,
       feeds: feeds.map((f) => ({ mkt: f.mkt, fb: f.fb, scanned: !!f.cov })) });
+  }
+
+  // ---- AUCTION INSIGHTS, NO API (Ray, 14 Oct 2026, on the competitor read: "is there a way to
+  // bypass the competitor mapping without API?" → "i think Google Ads Auction insight"): the AM
+  // downloads the report from the Google Ads UI, the page reads the file into rows and PUTs them
+  // here; TL.parseAuction reads the report's own figures (never re-derived), cleanAuction checks
+  // the record whole, KV compauction:<client>:<mkt>. GET = stored, DELETE = forget it. A write is
+  // the Workflow grant + client scope; no money is spent, so no throttle.
+  if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {
+    let body = {};
+    if (request.method === 'PUT') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
+    const client = String((request.method === 'PUT' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
+    const mkt = mktOf(request.method === 'PUT' ? body.market : url.searchParams.get('market'));
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'Auction Insights is a Google Ads report — pick the Google market' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = await feedRoster(env);
+    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
+    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
+    const key = 'compauction:' + feed.client + ':' + mkt;
+    if (request.method === 'GET') return json({ ok: true, client: feed.client, market: mkt, auction: TL.cleanAuction(await env.EDITS.get(key, 'json')) });
+    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
+    if (request.method === 'DELETE') { await env.EDITS.delete(key); logActivity(ctx, env, request, 'compauction-clear', feed.client + ' ' + mkt.toUpperCase()); return json({ ok: true, client: feed.client, market: mkt, auction: null }); }
+    const rows = Array.isArray(body.rows) ? body.rows.slice(0, TL.AUC_MAX_ROWS) : [];
+    if (!rows.length) return json({ ok: false, error: 'no rows — the file read as empty' }, 400);
+    const parsed = TL.parseAuction(rows.map((r) => (Array.isArray(r) ? r.slice(0, 16).map((c) => (typeof c === 'number' ? c : String(c == null ? '' : c).slice(0, 200))) : [])));
+    if (!parsed.ok) return json({ ok: false, error: parsed.error }, 400);
+    const rec = TL.cleanAuction(Object.assign({}, parsed, { at: Date.now(), mkt, by: String(acc.email || acc.who || '').slice(0, 80) }));
+    if (!rec || !rec.comps.length) return json({ ok: false, error: 'the report names no competitor domain' }, 400);
+    await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 120 * 86400 });
+    logActivity(ctx, env, request, 'compauction-upload', feed.client + ' ' + mkt.toUpperCase() + ' · ' + rec.comps.length + ' competitors' + (rec.range ? ' · ' + rec.range : ''));
+    return json({ ok: true, client: feed.client, market: mkt, auction: rec, signals: TL.auctionSignals(rec) });
   }
 
   // ---- the competitor Shopping read: GET = what is stored, POST = read it now (SerpApi, the key AI

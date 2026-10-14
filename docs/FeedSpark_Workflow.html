@@ -1115,6 +1115,10 @@ aside.ck[hidden]{display:none}
 .ck-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .ck-thumbs a .s{position:absolute;left:0;bottom:0;right:0;font-size:8px;font-weight:900;color:#fff;background:rgba(192,57,43,.9);text-align:center;letter-spacing:.04em}
 .ck-sig{font-size:10.5px;color:var(--ink-2,#4a4a4a);padding:1px 0 1px 5px}
+.ck-au{margin:4px 0 2px;padding:4px 0 2px 5px;border-top:1px dashed var(--line,#E6E6E6)}
+.ck-au .ck-cwm.you .nm{color:var(--orange-deep,#ED6F0B)}
+.ck-au .lt{color:var(--muted,#8a94a0);font-weight:400}
+#ck-au-file{display:none}
 .ck-sig b{color:var(--orange-deep,#ED6F0B)}
 .ck-raiserow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 0 7px 5px;margin:-1px 0 5px}
 .ck-why{flex:1 1 100%;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
@@ -6854,6 +6858,8 @@ aside.ck[hidden]{display:none}
      brand's feeds read for what each test needs, and the competitor Shopping read's signals.
      This rail only draws it — and keeps every figure exactly as the route said it. */
   var TLD={},TLBUSY={},TLWARM={},TLMORE={};
+  /* the composer's toast lives in another script block — the rail says its own word the same way */
+  function tlSay(m){ var t=document.createElement('div'); t.className='ck-toast'; t.textContent=m; t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;z-index:9999;max-width:90vw'; document.body.appendChild(t); setTimeout(function(){ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(function(){ t.remove(); },320); },2400); }
   function tlSurf(s){ return s==='meta'?'<span class="ck-pill tm" title="Meta">M</span>':s==='google'?'<span class="ck-pill tg" title="Google Shopping">G</span>':'<span class="ck-pill tb" title="Google Shopping + Meta">G+M</span>'; }
   function loadTests(brand,force){
     if(!brand||TLBUSY[brand])return;
@@ -6917,7 +6923,7 @@ aside.ck[hidden]{display:none}
     mk.forEach(function(m){
       var r=cw.markets[m];
       h+='<div class="ck-cwm"><span class="nm">'+esc(m.toUpperCase())+'</span>';
-      if(!r){ h+='<span class="tag">not read yet</span>'+(cw.on?'<button type="button" class="ck-brief go" data-cw="'+esc(m)+'">⚡ Read now</button>':'')+'</div>'; return; }
+      if(!r||!r.summary){ h+='<span class="tag">not read yet</span>'+(cw.on?'<button type="button" class="ck-brief go" data-cw="'+esc(m)+'">⚡ Read now</button>':'')+'</div>'+secAuction(m,r&&r.auction); return; }
       var sm=r.summary||{},us=sm.us||{},th=sm.them||{};
       h+='<span class="tag">read '+esc(tlWhen(r.at))+' · '+esc(String(r.n))+' results · '+(sm.queries||[]).length+' queries</span>'+(cw.on?'<button type="button" class="ck-brief" data-cw="'+esc(m)+'" title="Read again (one SerpApi search per query)">⟳</button>':'')+'</div>';
       (sm.merchants||[]).slice(0,5).forEach(function(x){
@@ -6933,9 +6939,57 @@ aside.ck[hidden]{display:none}
           +ut.map(function(t){ return '<a href="#" tabindex="-1" class="us" title="'+esc(brand+' · '+t.t)+'"><img src="'+esc(t.img)+'" alt="" loading="lazy"></a>'; }).join('')+'</div>';
       }
       (sm.signals||[]).forEach(function(sg){ h+='<div class="ck-sig"><b>→ test '+esc(sg.k.replace(/_/g,' '))+':</b> '+esc(sg.why)+'</div>'; });
+      h+=secAuction(m,r.auction);
     });
+    h+='<input type="file" id="ck-au-file" accept=".csv,.tsv,.txt,.xlsx" aria-hidden="true" tabindex="-1">';
     h+='<p class="ck-h">'+esc((cw.meta&&cw.meta.why)||'')+'</p></div>';
     return h;
+  }
+  /* AUCTION INSIGHTS, NO API (Ray, 14 Oct 2026: "is there a way to bypass the competitor mapping
+     without API?" → "i think Google Ads Auction insight"): the AM downloads the report from the
+     Google Ads UI (Shopping campaign → Auction insights → download) and drops the file here; the
+     worker keeps the report's own figures — impression share, overlap, outranking — never re-derived.
+     "< 10%" is drawn as the floor it is. The signals it raises ride the proposals above. */
+  function secAuction(m,a){
+    var h='<div class="ck-au"><div class="ck-cwm"><span class="nm">📊 Auction Insights'+(a?'':' <span class="tag">no report uploaded</span>')+'</span>';
+    if(a)h+='<span class="tag">'+esc(a.range||'')+(a.range?' · ':'')+'uploaded '+esc(tlWhen(a.at))+(a.segmented?' · folded per domain':'')+'</span>';
+    h+='<button type="button" class="ck-brief'+(a?'':' go')+'" data-au="'+esc(m)+'" title="Upload the Auction Insights report from Google Ads (CSV or Excel) — no API needed">⇪ '+(a?'Replace':'Upload')+'</button>'
+      +(a?'<button type="button" class="ck-brief" data-au-x="'+esc(m)+'" title="Forget this report">✕</button>':'')+'</div>';
+    if(!a)return h+'</div>';
+    var pct=function(r,k){ return typeof r[k]==='number'?(r[k+'Lt']?'<span class="lt">&lt;</span>':'')+r[k]+'%':'–'; };
+    var rows=(a.you?[a.you]:[]).concat(a.comps||[]).slice(0,7);
+    rows.forEach(function(x){
+      var tag=[]; if(typeof x.ov==='number')tag.push('overlap '+pct(x,'ov')); if(typeof x.or==='number')tag.push('you outrank '+pct(x,'or')); if(typeof x.top==='number')tag.push('top of page '+pct(x,'top'));
+      h+='<div class="ck-cwm'+(x.you?' you':'')+'"><span class="nm" title="'+esc(x.d)+(x.n>1?' · '+x.n+' rows folded':'')+'">'+esc(x.you?'You':x.d)+'</span>'
+        +'<span class="ck-tlbar"><i style="width:'+Math.min(100,Math.round(x.is||0))+'%'+(x.you?';background:var(--orange-deep,#ED6F0B)':'')+'"></i></span><span class="num" title="Impression share">'+pct(x,'is')+'</span>'
+        +'<span class="tag">'+tag.join(' · ')+'</span></div>';
+    });
+    if((a.comps||[]).length>6)h+='<div class="ck-cwm"><span class="tag">+ '+((a.comps||[]).length-6)+' more domains in the report</span></div>';
+    (a.signals||[]).forEach(function(sg){ h+='<div class="ck-sig"><b>→ test '+esc(sg.k.replace(/_/g,' '))+':</b> '+esc(sg.why)+'</div>'; });
+    return h+'</div>';
+  }
+  /* the file → rows, in the browser: .xlsx through the xlsx engine (loaded on first use), a CSV
+     through its reader, a tab-separated export split on tabs, a UTF-16 export (older Google Ads
+     downloads) decoded by its byte-order mark — the worker only ever sees rows */
+  var XLSXLOAD=null;
+  function ensureXlsx(){
+    if(window.FeedXlsx)return Promise.resolve();
+    if(XLSXLOAD)return XLSXLOAD;
+    XLSXLOAD=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='/xlsx/engine.js'; sc.onload=function(){ window.FeedXlsx?res():rej(new Error('xlsx engine empty')); }; sc.onerror=function(){ XLSXLOAD=null; rej(new Error('xlsx engine unreachable')); }; document.head.appendChild(sc); });
+    return XLSXLOAD;
+  }
+  function auRows(file){
+    return ensureXlsx().then(function(){
+      if(/\.xlsx$/i.test(file.name||''))return file.arrayBuffer().then(window.FeedXlsx.readXlsx);
+      return file.arrayBuffer().then(function(buf){
+        var u=new Uint8Array(buf),enc='utf-8';
+        if(u.length>1&&u[0]===0xFF&&u[1]===0xFE)enc='utf-16le'; else if(u.length>1&&u[0]===0xFE&&u[1]===0xFF)enc='utf-16be';
+        var text=new TextDecoder(enc).decode(buf).replace(/^\ufeff/,'');
+        var head=text.split(/\r?\n/).filter(function(l){return l.trim();}).slice(0,6).join('\n');
+        if(/\t/.test(head)&&!/,/.test(head))return text.split(/\r?\n/).map(function(l){return l.split('\t');});
+        return window.FeedXlsx.readCsv(text);
+      });
+    });
   }
   function wireTests(brand){
     var body=$('#ck-r-body'); if(!body)return;
@@ -6950,16 +7004,37 @@ aside.ck[hidden]{display:none}
         var m=b.getAttribute('data-cw'); b.disabled=true; b.textContent='reading…';
         fetch('/api/compwatch',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({client:brand,market:m,force:true})})
           .then(function(r){return r.json();}).then(function(d){
-            if(!d||!d.ok){ toast&&toast((d&&d.error)||'Shopping read failed'); b.disabled=false; b.textContent='⚡ Read now'; return; }
+            if(!d||!d.ok){ tlSay((d&&d.error)||'Shopping read failed'); b.disabled=false; b.textContent='⚡ Read now'; return; }
             loadTests(brand,true);
           }).catch(function(){ b.disabled=false; b.textContent='⚡ Read now'; });
+      };
+    });
+    var fi=$('#ck-au-file'),AUMKT=null;
+    Array.prototype.forEach.call(body.querySelectorAll('[data-au]'),function(b){
+      b.onclick=function(){ if(!fi)return; AUMKT=b.getAttribute('data-au'); fi.value=''; fi.click(); };
+    });
+    if(fi)fi.onchange=function(){
+      var f=fi.files&&fi.files[0],m=AUMKT; if(!f||!m)return;
+      var b=body.querySelector('[data-au="'+m+'"]'); if(b){ b.disabled=true; b.textContent='reading…'; }
+      auRows(f).then(function(rows){
+        rows=(rows||[]).filter(function(r){return r&&r.some(function(c){return String(c==null?'':c).trim();});}).slice(0,400);
+        return fetch('/api/compwatch/auction',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({client:brand,market:m,rows:rows})}).then(function(r){return r.json();});
+      }).then(function(d){
+        if(!d||!d.ok){ tlSay((d&&d.error)||'Auction Insights upload failed'); if(b){ b.disabled=false; b.textContent='⇪ Upload'; } return; }
+        tlSay('Auction Insights read — '+((d.auction&&d.auction.comps)||[]).length+' competitors'); loadTests(brand,true);
+      }).catch(function(e){ tlSay('Could not read the file — '+((e&&e.message)||e)); if(b){ b.disabled=false; b.textContent='⇪ Upload'; } });
+    };
+    Array.prototype.forEach.call(body.querySelectorAll('[data-au-x]'),function(b){
+      b.onclick=function(){
+        var m=b.getAttribute('data-au-x'); if(!confirm('Forget the Auction Insights report for '+brand+' '+m.toUpperCase()+'?'))return;
+        fetch('/api/compwatch/auction?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(m),{method:'DELETE'}).then(function(r){return r.json();}).then(function(){ loadTests(brand,true); }).catch(function(){ tlSay('Could not forget it'); });
       };
     });
     var c=$('#ck-tl-copy');
     if(c)c.onclick=function(){
       var t=brand+' — tests to propose this month\n\n'+TLSAY.join('\n\n');
       try{ navigator.clipboard.writeText(t); c.textContent='⧉ Copied'; setTimeout(function(){c.textContent='⧉ Copy proposals';},1400); }
-      catch(e){ toast&&toast('Copy failed'); }
+      catch(e){ tlSay('Copy failed'); }
     };
     var mo=$('#ck-tl-more');
     if(mo)mo.onclick=function(){ TLMORE[brand]=!TLMORE[brand]; render(); };

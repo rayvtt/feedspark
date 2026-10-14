@@ -15665,6 +15665,24 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "itState.clients=itState.clients.filter(function(c){ return set[c]||!PLAN_SEEN[c]; });",
       "pr": 0
+    },
+    {
+      "name": "Test Lab: Auction Insights read off the report's own figures, never re-derived",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "export function parseAuction(rows) {",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: the Auction Insights upload route (no API, no money)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {",
+      "pr": 0
+    },
+    {
+      "name": "Test Lab: the rail reads the Auction Insights file in the browser and sends rows only",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fetch('/api/compwatch/auction',{method:'PUT'",
+      "pr": 0
     }
   ]
 }
