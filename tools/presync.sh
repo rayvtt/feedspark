@@ -273,6 +273,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: one team, one board (two real browsers on the same pipeline)"
   NODE_PATH=$(npm root -g) node tools/test_teamsync.mjs || {
     echo "✗ team-sync tests failed — this is the class of bug where one person's briefs, intake rows or plan writes stay invisible to everyone else"; exit 1; }
+  echo "── validating: a brief's due date lands on the task it was raised from"
+  NODE_PATH=$(npm root -g) node tools/check_briefdue.js || {
+    echo "✗ brief-due tripwire failed — the date an AM sets in the composer must reach the Intake row, the team's store and the Project Plan"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
