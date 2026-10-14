@@ -71,6 +71,17 @@ t('the Scheduled-work route drops the client by brand AND by its sheet name', /R
 t('the feed roster never lists a retired client', /if \(RET\.isRetired\(gone, c\)\) continue;/.test(WK));
 t('Leadership carries the owner’s Retire control, confirming before it runs', /id="retired"/.test(LP) && /fetch\('\/api\/retired'/.test(LP) && /confirm\('Retire '/.test(LP));
 t('no client name is written into the code to do it', !/retiredSetOf[\s\S]{0,400}'[A-Z][a-z]+ of [A-Z]/.test(WK) && !/RETIRED_SEED/.test(read('cloudflare/feedspark-deck/src/retired.js')));
+console.log('── a market that does not exist (Ray, 14 Oct 2026: "Monsoon IE doesnt exist > remove")');
+t('the gone list names the market with its client, folded like a client name', RET.marketGone('Monsoon', 'IE') && RET.marketGone('MONSOON', 'ie') && !RET.marketGone('Monsoon', 'GB') && !RET.marketGone('Schuh', 'IE') && !RET.marketGone('', 'IE'));
+const ieRow = { client_id: 422, client_name: 'Monsoon', group_name: 'Mon', country: 'IE', market_name: 'Monsoon - IE (Mon)', market_flag: 0, allowance: 0, used_hours: 0, balance: -1, balance_health: 'negative' };
+const gbRow = Object.assign({}, ieRow, { client_id: 404, country: 'GB', market_name: 'Monsoon - GB (Mon)', allowance: 27, used_hours: 8.5, balance: 8.75, balance_health: 'warning' });
+t('a Task Manager row for it is dropped by client + country, its sibling market kept', RET.rowGone(ieRow) && !RET.rowGone(gbRow) && !RET.rowGone(null) && !RET.rowGone({ client_name: 'Monsoon' }));
+t('stripGoneRows leaves the rest of the list untouched', JSON.stringify(RET.stripGoneRows([ieRow, gbRow, null])) === JSON.stringify([gbRow, null]));
+t('the hours pull drops it before the brand rollup (its balance -1 alone painted the badge negative)', /RET\.isRetired\(gone, r\.group_name\) \|\| RET\.rowGone\(r\)\)\)\);\n\s*if \(!rows\.length\)[^\n]*\n\s*const by = aggregateClientList\(rows\);/.test(WK));
+t('the book pull strips it before the roster is built', /rows = RET\.stripGoneRows\(rows\);[\s\S]{0,200}const roster = RET\.stripRoster\(TB\.rosterOf\(rows\)/.test(WK));
+t('the ROAS roster no longer names it', !/monsoon_ie/.test(read('cloudflare/feedspark-deck/src/roas.js')));
+t('the baked hours record no longer carries it', !/"client":"Monsoon","market":"IE"/.test(read('docs/reports_hours.json')) && !/"Monsoon":\{"am":"[^"]*","markets":\[[^\]]*"m":"IE"/.test(read('docs/FeedSpark_Command_Center.html')));
+
 t('the harness runs in qa_gate, presync and CI', /node tools\/test_retired\.mjs/.test(read('tools/qa_gate.sh')) && /node tools\/test_retired\.mjs/.test(read('tools/presync.sh')) && /node tools\/test_retired\.mjs/.test(read('.github/workflows/validate.yml')));
 
 console.log(`\n${pass} passed, ${fail} failed`);

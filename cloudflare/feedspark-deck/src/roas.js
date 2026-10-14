@@ -77,7 +77,7 @@ export const ROAS_ROSTER = {
     { market: 'IE', cmpid: 'schuhie' },
   ],
   Monsoon: [
-    { market: 'GB', cmpid: 'monsoon_uk' }, { market: 'IE', cmpid: 'monsoon_ie' },
+    { market: 'GB', cmpid: 'monsoon_uk' },   // no IE — Ray, 14 Oct 2026: "Monsoon IE doesnt exist > remove"
   ],
   Accessorize: [{ market: 'GB', cmpid: 'accessorize_uk' }],
   YuMOVE: [{ market: 'GB', cmpid: 'yumove_uk' }],
@@ -89,7 +89,7 @@ export const ROAS_PROTOCOL = '2025-06-18';
 export const ROAS_CRON = '10,40 * * * *';   // mirrored in wrangler.toml [triggers] and worker.js -> scheduled()
 // clients per firing. Each market now costs THREE MCP calls (one per window) + four KV ops, and a
 // firing has ~50 subrequests on the plan the worker runs on: 5 x 7 + init + status = ~40. The
-// 57-market roster turns over roughly every 6 hours — still several times faster than FeedHero's
+// 56-market roster turns over roughly every 6 hours — still several times faster than FeedHero's
 // own figures move (about once a day).
 export const ROAS_PULLS = 5;
 export const ROAS_KEEP_CATS = 200;        // category rows kept on the DEFAULT window (Superdry GB alone has 425; 200 by spend covers every branch the table drills)

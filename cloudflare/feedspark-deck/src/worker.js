@@ -4019,7 +4019,7 @@ async function scheduledRun(event, env, ctx) {
       return;
     }
     // ROAS sync — its OWN firing (a different MCP server, FeedHero's own) so it never competes
-    // with the TM pull's subrequest budget. 6 clients off the 57-market roster, stalest first —
+    // with the TM pull's subrequest budget. 6 clients off the 56-market roster, stalest first —
     // the whole roster turns over roughly every 5 hours, well inside the ~daily refresh the
     // source data itself carries.
     // RULES take the :40 half of this firing while any roster market's rules are older than a day
@@ -4289,7 +4289,7 @@ async function tmPull(env, opts) {
     try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }   // a server without a handshake still answers tools/call
     const gone = await retiredSetOf(env);
     const rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'live' }))
-      .filter((r) => !(r && (RET.isRetired(gone, r.client_name) || RET.isRetired(gone, r.group_name))));
+      .filter((r) => !(r && (RET.isRetired(gone, r.client_name) || RET.isRetired(gone, r.group_name) || RET.rowGone(r))));
     if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
     const by = aggregateClientList(rows);
     const brands = Object.values(by).map((b) => Object.assign({}, b, { updated: now }));
@@ -4353,6 +4353,7 @@ async function tmBookPull(env, opts) {
     if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
     let rows = opts.clientRows;
     if (!rows) rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'all' }));
+    rows = RET.stripGoneRows(rows);   // a market that does not exist (GONE_MARKETS) is never read into the book
     if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
     const roster = RET.stripRoster(TB.rosterOf(rows), await retiredSetOf(env));
     idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;

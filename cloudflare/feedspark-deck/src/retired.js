@@ -42,6 +42,26 @@ export function retiredSet(list) {
 }
 export function isRetired(set, name) { return !!(set && set.size && name != null && set.has(foldName(name))); }
 
+// A MARKET THAT DOES NOT EXIST (Ray, 14 Oct 2026: "Monsoon IE doesnt exist > remove"). The Task
+// Manager's client list still carries "Monsoon - IE" (market 422, created Nov 2020: no block, no
+// hours, balance -1 — which on its own painted Monsoon's hours badge "negative" and listed a
+// second market on every hours read-out), and the ROAS roster named it too. A CLIENT is retired
+// as data (the list above); a market a source lists that the business does not have is a
+// correction of that source, so it is written ONCE, here, and both Task Manager pull lanes read
+// it before anything is stored — the roster, the book, the hours and the trail never see it.
+// Keys are "<client>|<market>", folded like a client name.
+export const GONE_MARKETS = ['Monsoon|IE'];
+const GONE = new Set(GONE_MARKETS.map((k) => k.split('|').map(foldName).join('|')));
+export function marketGone(client, market) { return GONE.has(foldName(client) + '|' + foldName(market)); }
+// a get_client_list row names its market in `country` ("IE") and its client in client_name / group_name
+export function rowGone(r) {
+  if (!r) return false;
+  const m = r.country || '';
+  if (!m) return false;
+  return marketGone(r.client_name, m) || marketGone(r.group_name, m);
+}
+export function stripGoneRows(rows) { return (Array.isArray(rows) ? rows : []).filter((r) => !rowGone(r)); }
+
 // a map keyed "client|mkt" (or "client") → the same map without the retired clients' keys
 export function stripKeyed(obj, set) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { out: obj, n: 0 };

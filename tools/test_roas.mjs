@@ -127,7 +127,7 @@ console.log('· a market with NO Total row (live bug, 23 Sep 2026 — Ray: "ROAS
 // else — no .spend, no .revenue. brandRollup's market sort read c.spend.n straight off that record
 // and threw, which the worker never caught: GET /api/roas 500'd, the page's fetch failed to parse
 // JSON, and the table showed "ROAS data is unavailable" for every brand although the sync itself
-// (roasPull writing roasidx) had succeeded for all 57 markets — a write-side success masking a
+// (roasPull writing roasidx) had succeeded for all 56 markets — a write-side success masking a
 // read-side crash. A record missing .spend must never reach here in practice (roasStore's fix),
 // but brandRollup stays defensive regardless — a shape it cannot control must never crash the read.
 const noTotalRow = { client: 'Reiss', market: 'IL', cmpid: 'reiss_il', updated: 500 };
