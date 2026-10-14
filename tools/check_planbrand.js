@@ -83,8 +83,12 @@ const server = http.createServer(async (q, r) => {
       const txt = (tr.textContent || '');
       if (txt.indexOf(bn) < 0) continue;
       const task = (tr.querySelector('.c-task') || tds[1]).textContent.trim();
-      const only = [...tr.querySelectorAll('.src-only')].map(x => x.textContent.trim());
-      out.push({ task: task, only: only });
+      // Ray took the per-row brand chip off Intake on 14 Oct 2026 ("really laggy … let's jst
+      // remove it on Intake"), so the fact rides the source cell's own tooltip now. The fact is
+      // what this harness is about; the chip never was.
+      const src = tr.querySelector('td[data-col="source"]');
+      const only = ((src && src.getAttribute('title')) || '').replace(/^Marked for /, '').replace(/ only .*$/, '');
+      out.push({ task: task, only: only ? [only + ' only'] : [] });
     }
     return out;
   }, brand);
@@ -110,7 +114,7 @@ const server = http.createServer(async (q, r) => {
      !has(mon, 'PMAX restructure'), mon.map(r => r.task));
   const monBts = mon.filter(r => r.task.indexOf('BTS keywords') >= 0);
   ok('carries ONE BTS row, not both brands’ copies of the same wording', monBts.length === 1, monBts);
-  ok('and says the Image Cycler row is Monsoon’s only',
+  ok('and still says the Image Cycler row is Monsoon’s only \u2014 in the source cell\u2019s tooltip',
      (mon.find(r => r.task.indexOf('Image Cycler') >= 0) || {}).only + '' === 'Monsoon only',
      mon.find(r => r.task.indexOf('Image Cycler') >= 0));
   ok('while a joint row claims no brand',

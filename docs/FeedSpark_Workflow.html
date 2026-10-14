@@ -676,7 +676,6 @@ window.addEventListener('load',restore);
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   /* a shared project plan: this row is marked for ONE of the brands in the workbook */
-  .itbl .src-only{color:var(--orange-deep);background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.42)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
   .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
@@ -705,6 +704,9 @@ window.addEventListener('load',restore);
   .it-hidden-tog:hover{border-color:var(--navy);color:var(--navy)}
   .it-hidden-tog.on{border-style:solid;border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
   .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
+  .it-more{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--muted);padding:9px 2px 0}
+  .it-more .btn{font-size:12px;padding:5px 11px}
+  .it-more-why{font-weight:600}
   .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
   /* live sync bar */
   .live-bar{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-size:12.5px;color:var(--muted);font-weight:600}
@@ -1310,7 +1312,7 @@ aside.ck[hidden]{display:none}
   <div class="it-scroll"><table class="itbl" id="itbl">
     <colgroup><col class="ic-cb"><col class="ic-client"><col class="ic-feed"><col class="ic-task"><col class="ic-owner"><col class="ic-due"><col class="ic-status"><col class="ic-source"><col class="ic-act"></colgroup>
     <thead><tr>
-      <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select all shown"></th>
+      <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select every task this filter matches" title="Select every task this filter matches — including any beyond the rows drawn below"></th>
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
       <th data-k="owner">Owner</th><th data-k="dsort">Due</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
     </tr></thead><tbody id="it-body"></tbody>
@@ -1326,6 +1328,7 @@ aside.ck[hidden]{display:none}
       <td class="c-act"><button class="af-add" id="af-save" type="button">Add</button><button class="del-btn" id="af-cancel" type="button" title="Cancel">✕</button></td>
     </tr></tfoot>
   </table></div>
+  <div class="it-more" id="it-more" hidden></div>
 
   <!-- FCC-KWDUE: the Keyword Calendar's moments that still need briefing, actionable HERE
        (Ray, 14 Oct 2026: "each theme requires briefing action, so bring the briefing action into
@@ -1495,6 +1498,10 @@ aside.ck[hidden]{display:none}
 <script>
 (function(){
   var PT=window.PLANTASKS||{};
+  // every brand whose plan has actually been READ this session — the only brands a client filter
+  // may be pruned against (see the client filter's options()). Declared here because planTasks()
+  // writes it long before the filter is built.
+  var PLAN_SEEN={};
   // full book roster (editable): every brand can be briefed, not just those with a live plan.
   var ALL_BRANDS=['Reiss','AllSaints','Schuh','Superdry','Accessorize','Monsoon','Hobbycraft','YuMOVE',
     'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','American Golf','Ryobi'];
@@ -2370,6 +2377,7 @@ aside.ck[hidden]{display:none}
     CLIENTS.forEach(function(c){
       var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
       var isLive=!!(live&&live.length), list=isLive?live:snap;
+      if(isLive||snap.length)PLAN_SEEN[c]=1;   // this brand's plan has been read — it may be pruned from a filter
       var newSet=(isLive&&LIVE[c].newSet)||{};
       list.forEach(function(t){ var orig=t.t, task=ren[c+'|'+orig]||orig, k=c+'|'+task, ovv=ov[k];   // apply any local rename first
         // the STATUS STRING is authoritative for the bucket — a pre-computed b from an older
@@ -2383,7 +2391,14 @@ aside.ck[hidden]{display:none}
     _planCache=out; return out; }
 
   // ---- fuzzy task matching (ATRT vs plan can be worded differently) ----
-  function normTask(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+  // The dup map compares every open ticket against every row of its brand, so one task's wording
+  // is normalised hundreds of times a render. Same answer every time, so it is kept (bounded —
+  // a board can rename rows all day and the map must not grow without end).
+  var _nt={}, _ntN=0;
+  function normTask(s){ var k=String(s||''); var v=_nt[k];
+    if(v===undefined){ v=k.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      if(_ntN>4000){ _nt={}; _ntN=0; } _nt[k]=v; _ntN++; }
+    return v; }
   function taskDice(a,b){ var A=normTask(a).split(' ').filter(function(w){return w.length>2;}), B=normTask(b).split(' ').filter(function(w){return w.length>2;});
     if(A.length<3||B.length<3)return 0; var sb={}; B.forEach(function(w){sb[w]=1;}); var i=0; A.forEach(function(w){if(sb[w])i++;}); return 2*i/(A.length+B.length); }
   function sameTask(a,b){ var na=normTask(a), nb=normTask(b); if(!na||!nb)return false; if(na===nb)return true;
@@ -2763,6 +2778,8 @@ aside.ck[hidden]{display:none}
      since it runs after this and overwrites what it names. Per device, never shared state — what
      one screen is filtered to is not a team fact. */
   var IT_KEEP='fcc-it-state';
+  var IT_CAP=150, IT_SHOWALL=false;
+  try{ IT_SHOWALL=localStorage.getItem('fcc-it-showall')==='1'; }catch(e){}
   (function(){ try{ var f=JSON.parse(localStorage.getItem(IT_KEEP)||'null'); if(!f||typeof f!=='object')return;
     ['srcs','statuses','clients','ams','owners'].forEach(function(k){ if(Array.isArray(f[k]))itState[k]=f[k].filter(function(x){return typeof x==='string';}); });
     if(typeof f.window==='string')itState.window=f.window; if(typeof f.q==='string')itState.q=f.q.slice(0,120);
@@ -2840,19 +2857,41 @@ aside.ck[hidden]{display:none}
   // where that flips depends on the rendered width, never on a character count. So it is MEASURED:
   // a box whose content is taller than the box it is in carries the full task in its title, and one
   // that shows everything carries none, leaving the cell's own "double-click to edit" hint to show.
+  // THIS WAS THE HEAVIEST THING THE PAGE DID (14 Oct 2026, Ray: "'Wait or kill the tab'"). On a
+  // 967-row board it measured ~2,900 boxes — 6.7s of blocked main thread in a CPU profile — and
+  // then did it all again a few milliseconds later when the next boot fetch re-rendered. Two
+  // things fixed it and neither is in this function: the board now paints a PAGE of rows rather
+  // than the whole book, and a render asks for ONE reading per frame (tkClipSoon below) instead
+  // of one per render. What changed HERE is hygiene, measured honestly as a small win: every box
+  // is read before any title is written (a title write does not dirty layout, so this was never
+  // the thrash it looks like — but one read loop is still the right shape), and innerText became
+  // textContent, because reading innerText DOES force layout and a tooltip only needs the text.
+  // The rule itself is untouched: a box taller than its clamp carries the full task, one that
+  // shows everything carries none.
   function tkClip(){ var b=document.getElementById('it-body'); if(!b)return;
-    b.querySelectorAll('.tk-w').forEach(function(w){
-      if(w.scrollHeight>w.clientHeight+1){ if(!w.title)w.title=(w.innerText||'').trim(); }
-      else if(w.title)w.removeAttribute('title'); });
+    var W=b.querySelectorAll('.tk-w'), cut=[], i;
+    for(i=0;i<W.length;i++)cut.push(W[i].scrollHeight>W[i].clientHeight+1);          // read
+    for(i=0;i<W.length;i++){ var w=W[i];                                             // write
+      if(cut[i]){ if(!w.title)w.title=(w.textContent||'').trim(); }
+      else if(w.title)w.removeAttribute('title'); }
     // The same rule sideways. Owner is free text — "Ray/ Michelle / Assembly" is one cell's worth
     // of people, and no column width fixes that — so a cut one names them in full. The cell's own
     // edit hint rides along rather than being replaced: both matter and only one tooltip can show.
-    b.querySelectorAll('.c-client,.c-owner').forEach(function(td){
+    var C=b.querySelectorAll('.c-client,.c-owner'), over=[];
+    for(i=0;i<C.length;i++)over.push(C[i].scrollWidth>C[i].clientWidth+1);           // read
+    for(i=0;i<C.length;i++){ var td=C[i];                                            // write
       var hint=td.getAttribute('data-hint');
       if(hint==null){ hint=td.getAttribute('title')||''; td.setAttribute('data-hint',hint); }
-      var full=td.getAttribute('data-hrs')||(td.innerText||'').trim();
-      if(td.scrollWidth>td.clientWidth+1)td.title=full+(hint?(' — '+hint):'');
-      else if(hint)td.title=hint; else td.removeAttribute('title'); }); }
+      var full=td.getAttribute('data-hrs')||(td.textContent||'').trim();
+      if(over[i])td.title=full+(hint?(' \u2014 '+hint):'');
+      else if(hint)td.title=hint; else td.removeAttribute('title'); } }
+  // ONE READING PER FRAME. Boot renders the board several times in quick succession (the plan
+  // lands, then the briefs, then the shared state), and each render measured every box again —
+  // work thrown away by the next render a few milliseconds later. Coalescing to the next frame
+  // measures the board the reader actually ends up looking at, once.
+  var _tkF=0;
+  function tkClipSoon(){ if(_tkF)return;
+    _tkF=(window.requestAnimationFrame||function(f){ return setTimeout(f,16); })(function(){ _tkF=0; tkClip(); }); }
   // the cut-off point moves with the window, so the reading is retaken when the window changes
   (function(){ var t=null; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(tkClip,160); }); })();
   function startTaskEdit(td,t){ if(!td||!t)return; if(td.querySelector('.tk-in'))return;
@@ -2917,9 +2956,16 @@ aside.ck[hidden]{display:none}
     } else { toast(iso?'Due updated':'Due cleared'); }
     renderAll();
   }
+  // Date.toLocaleDateString builds a whole formatter on every call. The board draws one date per
+  // row and the timeline two per card, so a full board was constructing thousands of them (0.8s
+  // in the profile). Intl.DateTimeFormat is the same answer from one reusable object.
+  var FMT={}; function dfmt(o){ var k=JSON.stringify(o);
+    return FMT[k]||(FMT[k]=new Intl.DateTimeFormat('en-GB',o)); }
+  var F_MONYR={month:'short',year:'2-digit'}, F_DAYMON={day:'numeric',month:'short'},
+      F_FULL={day:'numeric',month:'short',year:'numeric'};
   function dueDisplay(t){ var d=taskDate(t); if(!d)return '—';
-    return d.getDate()===1 ? d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})   // month-section
-                           : d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }  // specific date
+    return d.getDate()===1 ? dfmt(F_MONYR).format(d)   // month-section
+                           : dfmt(F_DAYMON).format(d); }  // specific date
   function rowKey(t){ return t.client+'|'+t.task; }
   function intakeFiltered(){ var allow=allowedMonths();
     return allIntake().filter(function(r){
@@ -2968,6 +3014,18 @@ aside.ck[hidden]{display:none}
       tog.classList.toggle('on',!!itState.overdue);
       tog.setAttribute('aria-pressed',itState.overdue?'true':'false'); })();
     var f=intakeFiltered();
+    /* A PAGE OF ROWS, NOT THE WHOLE BOOK (Ray, 14 Oct 2026: "workflow start having issue with
+       loading and it does flag message such as 'Wait or kill the tab'"). Intake drew EVERY row it
+       had — a book of ~970 rows is ~37,000 nodes, each with a status <select>, four buttons and
+       its chips, and then every one of them is measured by tkClip. Measured in Chromium on a
+       realistic book: 9.7s of blocked main thread, one task of it 5.3s, which is exactly what puts
+       the browser's unresponsive dialog on screen. The cap is a DISPLAY cap and says so: the count
+       beside the search still reads the real total, the footer names what is not drawn, and one
+       click draws the rest (this device, never shared state). Filters, sort, the timeline, the
+       grid, bulk selection and every KPI still run on the WHOLE set — only the painting is
+       capped, so a number on this page can never be the capped number. */
+    var fAll=f, capped=0;
+    if(!IT_SHOWALL && f.length>IT_CAP){ capped=f.length-IT_CAP; f=f.slice(0,IT_CAP); }
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
@@ -2976,7 +3034,11 @@ aside.ck[hidden]{display:none}
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'.'+(t.client==='—'?' No client detected — double-click the client cell to file it into a plan':'')+'">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       // the brand column of a shared workbook (Monsoon + Accessorize share one): say when a row
       // is one brand's only, so an unmarked row reading as both is a statement and not a guess.
-      if(t.only)src+=' <span class="src-tag src-only" title="Marked for '+esc(t.only)+' only in the shared project plan’s brand column — every other row in this plan is both brands’ work">'+esc(t.only)+' only</span>';
+      // THE BRAND CHIP LEFT THE ROW (Ray, 14 Oct 2026: "these individual button for single task on
+      // MON or ACC really laggy and let's jst remove it on Intake"). The FACT is unchanged and
+      // still decides what each brand's board carries — a row marked for one brand reaches only
+      // that brand — it just no longer draws a second chip in every source cell of a shared
+      // workbook. It rides the source tag's own tooltip instead, which costs no node at all.
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
@@ -2996,7 +3058,7 @@ aside.ck[hidden]{display:none}
         +((t.source==='plan'||t.source==='atrt'||t.source==='call')
            ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
-        +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act">'
+        +stat+'<td data-r="'+i+'" data-col="source"'+(t.only?(' title="Marked for '+esc(t.only)+' only in the shared project plan\u2019s brand column \u2014 every other row in this plan is both brands\u2019 work"'):'')+'>'+src+'</td><td class="c-act">'
         +(t.source!=='email'&&t.source!=='call'?'<button class="rec-btn'+(rec?' on':'')+'" data-i="'+i+'" title="'+(rec?('Repeats — '+REC_LBL[rec.every].toLowerCase()+'. The next occurrence is created when this one is marked Done'):'Repeat this task — weekly / monthly / every 3 months')+'">⟳</button>':'')
         +'<button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
@@ -3030,7 +3092,7 @@ aside.ck[hidden]{display:none}
       sel.onchange=function(){ if(sel.value&&sel.value!==t.client)setTaskClient(t,sel.value); else renderIntake(); };
       sel.onblur=function(){ setTimeout(renderIntake,120); };
     }; });
-    tkClip();
+    tkClipSoon();
     body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
     body.querySelectorAll('.cl-rm').forEach(function(x){ x.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
       x.onclick=function(e){ e.stopPropagation(); var c=x.getAttribute('data-c');
@@ -3064,7 +3126,21 @@ aside.ck[hidden]{display:none}
           gridSettle();
         } });
     });
-    var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    var n=document.getElementById('it-n'); if(n)n.textContent=fAll.length+' task'+(fAll.length===1?'':'s')
+      +(capped?(' \u00b7 '+f.length+' shown'):'');
+    (function(){ var m=document.getElementById('it-more'); if(!m)return;
+      if(!capped && fAll.length<=IT_CAP){ m.hidden=true; return; }   // a board that fits says nothing
+      m.hidden=false;
+      m.innerHTML = capped
+        ? ('Showing the first '+f.length+' of '+fAll.length+' tasks \u2014 '
+           +'<button type="button" class="btn" id="it-more-go">Show all '+fAll.length+'</button>'
+           +' <span class="it-more-why">Narrow the filter above and the whole list fits.</span>')
+        : ('All '+fAll.length+' tasks drawn \u2014 '
+           +'<button type="button" class="btn" id="it-more-go">Show the first '+IT_CAP+' again</button>'
+           +' <span class="it-more-why">A long board is slower to draw and to scroll.</span>');
+      var g=document.getElementById('it-more-go'); if(g)g.onclick=function(){
+        IT_SHOWALL=!IT_SHOWALL; try{ localStorage.setItem('fcc-it-showall',IT_SHOWALL?'1':''); }catch(e){}
+        renderIntake(); }; })();
     var at=document.getElementById('it-arch-tog'); if(at){ var ac=archivedInView();
       if(ac===0){ itState.showArchived=false; at.hidden=true; }
       else { at.hidden=false; at.classList.toggle('on',itState.showArchived);
@@ -3330,8 +3406,19 @@ aside.ck[hidden]{display:none}
     clear:function(){ itState.statuses=[]; } });
   var buildClientFilter=setupMulti({ btn:'it-client-btn', menu:'it-client-menu', wrap:'it-client-wrap',
     allLabel:'All clients', noun:'clients', one:function(v){ return v; },
+    /* A REMEMBERED BRAND IS NOT DROPPED BEFORE ITS ROWS ARRIVE (Ray, 14 Oct 2026: "button the
+       survives the after the refresh doesnt really work"). This list self-cleans — a client whose
+       every task is gone drops out of the filter — and that is right, but it ran on the FIRST
+       render too, before /api/plan/live had answered. So on a reload the board was briefly empty
+       of Monsoon's rows, Monsoon was pruned out of the filter as "a client with no tasks", and
+       the very next renderIntake wrote that pruned set back over the remembered one: the pick was
+       destroyed by the page's own boot, not by anything the person did. A brand is now pruned only
+       once the board has actually SEEN it (PLAN_SEEN, which every plan read adds to) — so a
+       client that genuinely empties still drops, and one that simply has not loaded yet is kept
+       and comes back the moment its rows land. */
     options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[r.client]=1; });   // a client with no remaining (non-deleted) task drops out of the filter
-      itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+      itState.clients=itState.clients.filter(function(c){ return set[c]||!PLAN_SEEN[c]; });
+      return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
     selected:function(){ return itState.clients; },
     toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
     clear:function(){ itState.clients=[]; },
@@ -3567,10 +3654,12 @@ aside.ck[hidden]{display:none}
   // collapses (only one side has sole words); two that each carry their own subject never do.
   // Deliberately conservative — a duplicate left showing twice is visible and one click to
   // merge, whereas a wrongly collapsed ticket is work that silently ceases to exist.
-  function soleWords(a,b){
-    var A={},B={};
-    normTask(a).split(' ').forEach(function(w){ if(w.length>2)A[w.replace(/s$/,'')]=1; });
-    normTask(b).split(' ').forEach(function(w){ if(w.length>2)B[w.replace(/s$/,'')]=1; });
+  var _sw={}, _swN=0;
+  function wordSet(t){ var k=String(t||''); var v=_sw[k];
+    if(v===undefined){ v={}; normTask(k).split(' ').forEach(function(w){ if(w.length>2)v[w.replace(/s$/,'')]=1; });
+      if(_swN>4000){ _sw={}; _swN=0; } _sw[k]=v; _swN++; }
+    return v; }
+  function soleWords(a,b){ var A=wordSet(a), B=wordSet(b);
     return [Object.keys(A).filter(function(w){ return !B[w]; }),
             Object.keys(B).filter(function(w){ return !A[w]; })]; }
   function sameWork(a,b){ var na=normTask(a), nb=normTask(b);
@@ -4362,10 +4451,10 @@ aside.ck[hidden]{display:none}
     function card(e){ var off=Math.round((e.d-t0)/86400000);
       var lab=abbr(e.client)+' · '+e.task;
       var fk=flagKey(e);
-      var tip=e.client+' · '+e.task+'\n'+e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · AM '+e.am
+      var tip=e.client+' · '+e.task+'\n'+dfmt(F_FULL).format(e.d)+' · AM '+e.am
         +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\n'+flagLabel(fk)+' · not briefed yet');
       var style=e.brief&&e.kind==='brief'?(' style="border-left-color:'+(STAGE_COLOR[e.brief.status]||'#8a94a0')+'"'):'';
-      var day=off<0?(Math.abs(off)+'d late'):e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      var day=off<0?(Math.abs(off)+'d late'):dfmt(F_DAYMON).format(e.d);
       var who=e.owner&&e.owner!=='—'?e.owner:e.am;
       return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+style+' data-k="'+esc(e.key)+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')
         +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span>'

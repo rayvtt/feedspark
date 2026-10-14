@@ -178,8 +178,11 @@ appends.forEach((a, i) => ok(/client:\s*(client|c|nc)\s*,/.test(a),
   'write ' + (i + 1) + ' names the client it is filing for'));
 ok(/only:\(Array\.isArray\(t\.br\)&&t\.br\.length===1\)\?t\.br\[0\]:''/.test(P),
   'planTasks carries whether the row is one brand’s only');
-ok(/src-only/.test(P) && /only<\/span>/.test(P), 'and the row says so on the board');
-ok(/\.itbl \.src-only\{/.test(P), 'with its own chip style, not colour alone');
+// Ray took the chip off Intake on 14 Oct 2026 ("really laggy … let's jst remove it on Intake").
+// The FACT stays — it rides the source cell's own tooltip, which costs no node — so what is
+// pinned here is that the board still SAYS whose row it is, and that the chip is really gone.
+ok(/Marked for '\+esc\(t\.only\)\+' only/.test(P), 'and the row still says so, in the source cell\u2019s tooltip');
+ok(!/src-only/.test(P), 'with no per-row chip drawn for it any more');
 
 /* ---------- 9. nothing of the client’s plan is in git ---------- */
 console.log('\n── no client data committed');
