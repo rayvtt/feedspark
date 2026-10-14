@@ -73,7 +73,8 @@ import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.js
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import * as SOCLOGO from "./sociallogo.js";
-import * as RET from "./retired.js";   // retired clients: a list in KV, purged from every store (src/retired.js)
+import * as RET from "./retired.js";
+import * as TL from "./testlab.js";   // Test Lab: the Playbook's test proposals + the competitor Shopping read (src/testlab.js)   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
@@ -6223,6 +6224,117 @@ async function goldenRoutes(env, request, url) {
     });
     const out = OUT.brandOutcomes(feeds, months, { results });
     return json(Object.assign({ ok: true, at: Date.now(), client: who, scale }, out));
+  }
+
+  // ---- TEST LAB (Ray, 14 Oct 2026: "more proactive information about testing proposals, with
+  // specifics … other brands achieve a certain uplift over the last three months … consider
+  // competitors … on Google Shopping and Meta … super innovative in testing"). The engine is
+  // src/testlab.js; this route only gathers the stores: every brand's A/B archive cache (the
+  // evidence table reads the WHOLE book — a brand whose archive was never opened is named as
+  // cold so the page can warm it), the keyword-result rounds, the brand's own feeds' readiness
+  // (goldenidx / overlayidx / voldobidx / the wired Meta feeds), its open test briefs and the
+  // competitor Shopping reads already stored. Scoped per signin like /api/outcomes.
+  if (path === '/api/testlab' && request.method === 'GET') {
+    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
+    const now = Date.now(), gone = await retiredSetOf(env);
+    const roster = (await feedRoster(env)).filter((f) => !RET.isRetired(gone, f.client));
+    const brandSet = {};
+    Object.keys(PLAN_SHEETS).forEach((b) => { if (PLAN_SHEETS[b] && !RET.isRetired(gone, b)) brandSet[b] = 1; });
+    roster.forEach((f) => { brandSet[f.client] = 1; });
+    const brands = Object.keys(brandSet).sort();
+    const abs = await Promise.all(brands.map((b) => env.EDITS.get('abtests:' + b, 'json').catch(() => null)));
+    const book = [], cold = [];
+    brands.forEach((b, i) => {
+      const a = abs[i];
+      if (a && a.ok && Array.isArray(a.tests)) book.push({ brand: b, industry: industryOf(b), tests: a.tests });
+      else if (PLAN_SHEETS[b]) cold.push(b);   // an archive nobody has read yet is not an empty archive
+    });
+    const kwAll = ((await env.EDITS.get('kwresults', 'json')) || []).map((r) => Object.assign({}, r, { brand: r.client || r.brand, industry: industryOf(r.client || r.brand) }));
+    const ev = TL.evidenceBook(book, kwAll, now);
+    const [gidx, oidx, vdx, dossierEnv, briefsEnv] = await Promise.all([
+      env.EDITS.get('goldenidx', 'json'), env.EDITS.get('overlayidx', 'json'), env.EDITS.get('voldobidx', 'json'),
+      env.EDITS.get('clients', 'json'), env.EDITS.get('briefs', 'json')]);
+    const mine = roster.filter((f) => clientSlug(f.client) === clientSlug(who0));
+    const brand = mine.length ? mine[0].client : who0;
+    const months3 = [0, 1, 2].map((i) => { const d = new Date(now); d.setUTCMonth(d.getUTCMonth() - i); return d.toISOString().slice(0, 7); });
+    const feeds = mine.filter((f) => !/-fb$/.test(f.mkt)).map((f) => {
+      const g = (gidx || {})[lgKey(f.client, f.mkt)] || {}, fb = mine.some((x) => x.mkt === f.mkt + '-fb');
+      const o = (oidx || {})[lgKey(f.client, f.mkt + '-fb')] || null, v = (vdx || {})[lgKey(f.client, f.mkt)] || null;
+      const arrivals = v && v.m ? months3.reduce((a, m) => a + (+v.m[m] || 0), 0) : 0;
+      return { mkt: f.mkt, fb, cov: g.cov || null, rows: +g.rows || 0, ai: g.ai && typeof g.ai === 'object' ? (+g.ai.n || 0) : (+g.ai || 0),
+        ovlFb: !!(o && o.ovl > 0), lang: AIVIS.mktMeta(f.mkt).lang, arrivals };
+    });
+    const dossier = liftEnvelope(dossierEnv, now).data || {};
+    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(who0));
+    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
+    const briefs = Object.values(liftEnvelope(briefsEnv, now).data || {})
+      .filter((b) => b && clientSlug(String(b.client || '')) === clientSlug(who0) && (b.cat === 'test' || /^A\/B Test/i.test(String(b.task || ''))) && !/^(done|confirmed|closed)$/i.test(String(b.stage || b.status || '')))
+      .map((b) => String(b.task || ''));
+    // competitor reads already stored for the brand's Google markets; signals union across them
+    const reads = await Promise.all(feeds.map((f) => env.EDITS.get('compwatch:' + brand + ':' + f.mkt, 'json').catch(() => null)));
+    const comp = { on: !!env.SERPAPI_KEY, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
+    const seenSig = {};
+    feeds.forEach((f, i) => {
+      const r = TL.cleanRead(reads[i]);
+      if (!r || !r.reads.length) { comp.markets[f.mkt] = null; return; }
+      const sm = TL.compSummary(r.reads, brand, domain);
+      comp.markets[f.mkt] = { at: r.at, n: r.n, summary: sm };
+      sm.signals.forEach((sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt: f.mkt }, sg)); } });
+    });
+    const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));
+    const ctx = { industry: industryOf(brand), feeds, archive: own ? own.tests : [], kw: kwAll.filter((r) => clientSlug(String(r.brand || '')) === clientSlug(who0)), briefs, comp };
+    const res = TL.proposeTests(brand, ctx, ev, { now });
+    const evOut = {}; Object.keys(ev).forEach((k) => { evOut[k] = { n: ev[k].n, wins: ev[k].wins, recent: ev[k].recent.length, best: ev[k].best }; });
+    return json({ ok: true, at: now, client: brand, industry: ctx.industry, top: res.top, rest: res.rest, counts: res.counts,
+      evidence: evOut, book: book.map((b) => ({ brand: b.brand, n: b.tests.length })), cold, ownArchive: !!own, comp,
+      feeds: feeds.map((f) => ({ mkt: f.mkt, fb: f.fb, scanned: !!f.cov })) });
+  }
+
+  // ---- the competitor Shopping read: GET = what is stored, POST = read it now (SerpApi, the key AI
+  // Visibility uses; one read per market per day unless forced — each read is COMP_QUERIES searches)
+  if (path === '/api/compwatch' && (request.method === 'GET' || request.method === 'POST')) {
+    let body = {};
+    if (request.method === 'POST') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
+    const client = String((request.method === 'POST' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
+    const mkt = mktOf(request.method === 'POST' ? body.market : url.searchParams.get('market'));
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'a Meta catalogue has no Shopping results — pick the Google market' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = await feedRoster(env);
+    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
+    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
+    const key = 'compwatch:' + feed.client + ':' + mkt;
+    const stored = TL.cleanRead(await env.EDITS.get(key, 'json'));
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data || {};
+    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(client));
+    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
+    const answer = (r, fresh) => json({ ok: true, on: !!env.SERPAPI_KEY, client: feed.client, market: mkt, fresh: !!fresh, read: r,
+      summary: r && r.reads.length ? TL.compSummary(r.reads, feed.client, domain) : null });
+    if (request.method === 'GET') return answer(stored, false);
+    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
+    if (!env.SERPAPI_KEY) return json({ ok: false, on: false, error: 'SERPAPI_KEY is not set on the worker — the Shopping read is not connected' });
+    if (stored && stored.at && Date.now() - stored.at < TL.COMP_TTL_MS && !body.force) return answer(stored, false);
+    const snap = await env.EDITS.get('ptype:' + feed.client + ':' + mkt, 'json');
+    const pt = snap && snap.labels && snap.labels.product_type && Array.isArray(snap.labels.product_type.values) ? snap.labels.product_type.values : [];
+    const qs = TL.compQueries(pt, TL.COMP_QUERIES);
+    if (!qs.length) return json({ ok: false, error: 'no product-type snapshot for ' + feed.client + ' ' + mkt.toUpperCase() + ' — scan the feed on Product Type Guard first' }, 409);
+    const meta = AIVIS.mktMeta(mkt);
+    const reads = [];
+    for (const q of qs) {
+      try {
+        const r = await fetch(AIVIS.serpUrl('google_shopping', { q: q.q, gl: meta.gl, hl: meta.hl, num: TL.COMP_ROWS, no_cache: 'true' }, env));
+        if (!r.ok) { reads.push({ q: q.q, n: 0, rows: [], err: 'SerpApi ' + r.status }); continue; }
+        reads.push(TL.normShopping(await r.json(), q.q));
+      } catch (e) { reads.push({ q: q.q, n: 0, rows: [], err: String((e && e.message) || e).slice(0, 120) }); }
+    }
+    const rec = TL.cleanRead({ at: Date.now(), mkt, reads });
+    if (rec && rec.n) await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 60 * 86400 });
+    logActivity(ctx, env, request, 'compwatch-read', feed.client + ' ' + mkt.toUpperCase() + ' · ' + qs.length + ' queries · ' + (rec ? rec.n : 0) + ' rows');
+    return answer(rec && rec.n ? rec : stored, !!(rec && rec.n));
   }
 
   if (path === '/api/golden/portfolio' && request.method === 'GET') {

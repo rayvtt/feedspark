@@ -309,6 +309,12 @@ else
   echo "   ✗ KWCal Monsoon harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_monsoon.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_testlab.js >/dev/null 2>&1; then
+  echo "   ✓ the Playbook’s Test Lab section renders its proposals, competitors and → Brief on the real rail"
+else
+  echo "   ✗ Test Lab tripwire FAILED — see NODE_PATH=\$(npm root -g) node tools/check_testlab.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwcal_scopes.js >/dev/null 2>&1; then
   echo "   ✓ every seeded keyword theme’s product scope renders, and resolves to its own paths"
 else
@@ -440,6 +446,13 @@ if node tools/test_catalog.mjs >/dev/null 2>&1; then
   echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
 else
   echo "   ✗ Catalogue harness FAILED — see node tools/test_catalog.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h6c2/7: Test Lab (library, book-wide evidence, competitor Shopping read, lifted routes)"
+if node tools/test_testlab.mjs >/dev/null 2>&1; then
+  echo "   ✓ families, recorded uplifts only, the window, the ranking rules, industry-not-peer briefs, the competitor signals, scope + throttle hold"
+else
+  echo "   ✗ Test Lab harness FAILED — see node tools/test_testlab.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3h6d/7: AI visibility (reading engine, surface adapters vs stub answers, the lifted /api/aivis route)"
