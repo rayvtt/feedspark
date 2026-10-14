@@ -12032,6 +12032,36 @@
       "pr": 0
     },
     {
+      "name": "KWCal: a moment's NAME is editable on its own card (not only by clicking past every button)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "data-rename=\"'+esc(e.id)+'\"",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a moment's DATE is editable on its own card",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "data-date=\"'+esc(e.id)+'\"",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: ONE writer each for a moment's name and date (the card and editEvent cannot disagree)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function setDate(e,v)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a date the calendar does not have is refused, not rolled into a different real day",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "d.toISOString().slice(0,10)!==v",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the name/date edit tripwire runs the real page",
+      "file": "tools/check_kwcal_edit.js",
+      "pattern": "it left the month it was in",
+      "pr": 0
+    },
+    {
       "name": "KWCal: Superdry GB product-type census (independent check on every seeded path)",
       "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json",
       "pattern": "distinct_primary_paths",

@@ -179,6 +179,11 @@ window.addEventListener('load',restore);
   .rc.lane-sale{border-left-color:var(--good)}
   .rc.lane-studio{border-left-color:var(--muted)}
   .rc .rt{font-size:13px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+  /* in edit mode the title IS the rename control — it keeps the title's own type so the card
+     does not change shape, and takes the dotted underline every editable chip on this card wears */
+  .rc .rt-ed{font:inherit;color:inherit;background:none;border:none;padding:0;text-align:left;
+    cursor:pointer;border-bottom:1px dotted var(--line)}
+  .rc .rt-ed:hover{color:var(--orange-deep)}
   .rc .rd{font-size:10.5px;color:var(--muted);font-weight:700;margin:3px 0 7px;line-height:1.5}
   .rc .ra{display:flex;gap:5px;align-items:center}
   .rc .del{position:absolute;top:4px;right:5px;border:none;background:none;color:var(--muted);
@@ -1094,6 +1099,33 @@ function applySeeds(){
 }
 function schedDate(e){ var d=new Date(e.date+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-LEAD_DAYS); return d; }
 function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
+
+/* ---- A MOMENT'S NAME AND DATE ARE EDITED ON THE CARD (Ray, 14 Oct 2026: "can you also allow
+ * date & name of event to be manually editable too"). They already were — editEvent() has asked
+ * for both since v1 — but it was reachable ONLY by clicking a card in edit mode, and EVERY
+ * informative part of a card is already a button (scope, ✦ themes, the state chip, the owner
+ * initials, → Brief), so a click aimed at the name or the date landed on a sub-handler and the
+ * editor never opened. It read as not editable because, in practice, it was not. So the name and
+ * the date each get their OWN affordance in edit mode, one click = one field, in the card's own
+ * chip idiom; the whole-card fallback stays for the padding.
+ * setName / setDate are the ONE writer each — the card buttons and editEvent() (still the only
+ * way to reach a moment sitting outside the window, which has no card) go through them, so the
+ * two paths can never validate differently. Both REFUSE OUT LOUD rather than dropping what was
+ * typed: the old editor tested /^\d{4}-\d{2}-\d{2}$/ and, on anything else, silently kept the
+ * old date while its own prompt invited "w/c …" — a value typed, accepted by the dialog and
+ * thrown away with nothing on screen. The w/c prefix is now part of what you type and what you
+ * read back (it is e.wc, never inside e.date), so the card says exactly what you wrote; and the
+ * date is round-tripped, because 2026-02-31 passes any regex and Date rolls it to 3 March. ---- */
+function dEdit(e){ return (e.wc?'w/c ':'')+e.date; }            // the value as the card reads it
+function setName(e,v){ v=String(v==null?'':v).trim();
+  if(!v){ err('A moment needs a name — nothing changed.'); return false; }
+  e.name=v; return true; }
+function setDate(e,v){ v=String(v==null?'':v).trim();
+  var wc=/^w\/c\s+/i.test(v); if(wc)v=v.replace(/^w\/c\s+/i,'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){ err('“'+v+'” is not a date — use YYYY-MM-DD (or “w/c YYYY-MM-DD” for a week commencing). Nothing changed.'); return false; }
+  var d=new Date(v+'T12:00:00Z');                                 // a real day, not just the shape of one
+  if(isNaN(d)||d.toISOString().slice(0,10)!==v){ err('There is no '+v+' in the calendar — nothing changed.'); return false; }
+  e.date=v; if(wc)e.wc=1; else delete e.wc; return true; }
 
 /* ---------------- KPIs + calendar render ---------------- */
 function kpis(){
@@ -2359,10 +2391,14 @@ function render(){
         var tms=(e.terms||[]).length;
         return '<div class="rc lane-'+esc(lk)+'" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"'
           +' title="'+esc((laneLbl(e.lane)||'')+(e.note?' · '+e.note:'')+' — drag to another month')+'">'
-          +'<div class="rt">'+esc(e.name)
+          +'<div class="rt">'+(editMode
+            ?'<button type="button" class="rt-ed" data-rename="'+esc(e.id)+'" title="Rename this moment">'+esc(e.name)+'</button>'
+            :esc(e.name))
           +(editMode&&e.wf?'<button class="del ul" style="opacity:1" data-unlink="'+esc(e.id)+'" title="Unlink the ticket tied to this moment by hand">⛓</button>':'')
           +(editMode?'<button class="del" style="opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
-          +'<div class="rd">'+esc(dLbl(e))+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
+          +'<div class="rd">'+(editMode
+            ?'<button type="button" class="themes" data-date="'+esc(e.id)+'" title="Change this moment\u2019s date \u2014 the board files it by the month the BRIEF is due, '+LEAD_DAYS+' days before it goes live">'+esc(dLbl(e))+'</button>'
+            :esc(dLbl(e)))+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
           +' · '+scopeBtn(CLIENT,e)+(hh?' · '+h1(hh)+'h':'')
           +(tms?' · <button type="button" class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+' — click to edit">✦'+tms+'</button>':'')
           +'</div>'
@@ -2793,6 +2829,15 @@ $('#road').addEventListener('click',function(ev){
   if(tEd){ var e2=findEv(tEd.getAttribute('data-terms')); if(!e2)return;
     var v=prompt('Keyword themes for "'+e2.name+'" (comma-separated — used for the brief AND the live-feed match):',(e2.terms||[]).join(', '));
     if(v===null)return; e2.terms=v.split(',').map(function(x){return x.trim()}).filter(Boolean); save(); render(); return; }
+  var rn=t.closest('[data-rename]');
+  if(rn){ var en=findEv(rn.getAttribute('data-rename')); if(!en)return;
+    var nv=prompt('Moment name:',en.name); if(nv===null)return; hideErr();
+    if(setName(en,nv)){ save(); render(); } return; }
+  var dt=t.closest('[data-date]');
+  if(dt){ var ed=findEv(dt.getAttribute('data-date')); if(!ed)return;
+    var dv=prompt('Date this moment goes LIVE (YYYY-MM-DD, or “w/c YYYY-MM-DD”).\n\nThe board files it under the month its brief is due — '+LEAD_DAYS+' days earlier.',dEdit(ed));
+    if(dv===null)return; hideErr();
+    if(setDate(ed,dv)){ save(); render(); $('#mstate').textContent=ed.name+' → '+dLbl(ed); } return; }
   var del=t.closest('[data-del]');
   if(del){ var e3=findEv(del.getAttribute('data-del')); if(!e3)return;
     if(!confirm('Remove "'+e3.name+'" and its scheduled optimisation?'))return;
@@ -2815,8 +2860,10 @@ $('#road').addEventListener('drop',function(ev){ var s=ev.target.closest('.mo-se
 function findEv(id){ var E=rec().events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
 function editEvent(e){
   if(!e)return;
-  var name=prompt('Moment name:',e.name); if(name===null)return; if(name.trim())e.name=name.trim();
-  var date=prompt('Date (YYYY-MM-DD; prefix is kept if it’s a w/c):',e.date); if(date!==null&&/^\d{4}-\d{2}-\d{2}$/.test(date.trim()))e.date=date.trim();
+  var name=prompt('Moment name:',e.name); if(name===null)return;
+  var ok=setName(e,name); if(!ok)return;
+  var date=prompt('Date this moment goes LIVE (YYYY-MM-DD, or “w/c YYYY-MM-DD”):',dEdit(e)); if(date===null){ save(); render(); return; }
+  setDate(e,date);
   save(); render();
 }
 $('#add').addEventListener('click',function(){
