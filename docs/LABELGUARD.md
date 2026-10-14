@@ -1371,8 +1371,10 @@ the HTML, and AM can also have the option of not including it if it's not needed
   depth, Catalogue mix, ROAS by, Optimised vs not) is ticked per measure, so images per product and
   highlights per product are two picks. Image pixels' scan-count select is a control, not a measure.
   The picks are chips on the card, each with ✕, plus *Clear all*.
-- **Nothing is carried until something is ticked.** The picks live per device (`gr-catx`) and outlive the
-  market, so a set chosen once applies to the next brand.
+- **Nothing is carried until something is ticked.** The picks are saved PER BRAND for the team
+  (Ray, 14 Oct 2026: "this catalogue dashboard report module should be saved for each individual brand") —
+  shared state ns `grcatx` keyed by the brand, mirrored on the device (`gr-catx-b`) so the card paints before the
+  store answers. Every market of a brand carries its set; another brand starts with none.
 - **The export.** ⬇ HTML reads each pick in order: it sets the measure, waits for the card to finish
   reading (and for a measure list that is only built once the feed is read), and copies the card as drawn,
   with every control, link, id, click hook and "click to list" tooltip removed. The cards go into a
@@ -1594,12 +1596,16 @@ slots 0–4, known kinds, and the three states only.
   so that row shows "also performance · Zombie" (`clLabelKind` `also`, at 5% of the label's products
   or more). The AM can then set the slot. It is never counted on its own.
 - **FULL / SALE reads as a promotion label.**
+- **Static or dynamic is a button** (Ray, 14 Oct 2026: "when edited custom label for client this is a
+  button - either static / dynamic"). In Customise, every KPI label's last cell is a toggle saved as
+  `dyn[slot]`. The AM's word beats the reading in Dynamism, and it scores even with no earlier reading of the
+  feed. Outside the editor a word set by the team reads as set, with the reading in the tooltip.
 - **↺ Back to the automated reading** drops every choice for the brand.
 
 **Where the controls appear.** The controls (`.cl-am`) are hidden in demo mode and removed from both
 downloads. The client document shows the result, not the editor. **Harness:**
 
-- `tools/test_clstrategy.mjs` (74) covers the rules on a Superdry-shaped fixture with invented counts.
+- `tools/test_clstrategy.mjs` (80) covers the rules on a Superdry-shaped fixture with invented counts.
 - `tools/check_grcl.js` covers the editor, the save, the plan, the download, a reopen and demo mode.
 
 ### 9.12h The action plan at the foot of both downloads, and one client per file (8 Oct 2026)

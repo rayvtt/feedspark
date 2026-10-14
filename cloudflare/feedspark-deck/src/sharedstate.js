@@ -84,6 +84,10 @@ export const STATE_NS = {
   // a priority, carried in another field, or not relevant — is a judgement about the ACCOUNT, so it is the
   // team's, not one screen's.  client -> {slots:{n:kind}, strat:{kind:state}, by, at}
   clstrat:     'self',
+  // THE CATALOGUE MODULES IN A BRAND'S GOLDEN RECORD ⬇ HTML (Ray, 14 Oct 2026: "this catalogue dashboard report
+  // module should be saved for each individual brand"). Which Catalogue cards close a client's report is a choice
+  // about that ACCOUNT's report, so the team reads the same set.  client -> {picks:[{k,l}], at}
+  grcatx:      'self',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

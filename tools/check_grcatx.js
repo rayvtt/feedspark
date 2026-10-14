@@ -71,12 +71,13 @@ ${STUBS.stubLines()}
     const ctx = await browser.newContext({ viewport: { width: 1360, height: 950 } });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => errs.push(e.message));
-    await page.addInitScript(({ CLIENT, MKT, picks, prefs, catSrc }) => {
+    await page.addInitScript(({ CLIENT, MKT, picks, picksFor, prefs, catSrc }) => {
       if (/\/golden/.test(location.pathname)) {
         try {
           localStorage.clear();
           Object.keys(prefs || {}).forEach((k) => localStorage.setItem(k, JSON.stringify(prefs[k])));
-          if (picks) localStorage.setItem('gr-catx', JSON.stringify(picks));
+          // the picks are saved PER BRAND (Ray, 14 Oct 2026) — the device mirror of shared state ns grcatx
+          if (picks) localStorage.setItem('gr-catx-b', JSON.stringify({ [picksFor || CLIENT]: { picks, at: 1 } }));
         } catch (e) {}
         if (catSrc) window.__grCatSrc = catSrc;
         else window.__grCatSrc = '/FeedSpark_Catalog.html';
@@ -94,10 +95,11 @@ ${STUBS.stubLines()}
           if (u.includes('/api/golden/alertcfg')) return j({ on: false, to: '' });
           if (u.includes('/api/golden/history')) return j({ hist: null });
           if (u.includes('/api/golden/quality')) return j({ quality: null });
+          if (u.includes('/api/state') && o && o.method === 'PUT') { (window.__cxPuts = window.__cxPuts || []).push(JSON.parse(o.body)); return j({}); }
           return j({});
         };
       }
-    }, { CLIENT, MKT, picks: opts.picks || null, prefs: opts.prefs || null, catSrc: opts.catSrc || null });
+    }, { CLIENT, MKT, picks: opts.picks || null, picksFor: opts.picksFor || null, prefs: opts.prefs || null, catSrc: opts.catSrc || null });
     await page.addInitScript(STUB);
     await page.goto(BASE + '/golden#' + encodeURIComponent(CLIENT + '|' + MKT));
     await page.waitForSelector('#catx:not([hidden])', { timeout: 10000 }).catch(() => {});
@@ -170,7 +172,7 @@ ${STUBS.stubLines()}
   ok('switching the measure shows ITS tick — highlights are not yet picked', hlBefore === false, hlBefore);
   await tick('depth');
   await tick('price');
-  const picks = await page.evaluate(() => JSON.parse(localStorage.getItem('gr-catx') || '[]'));
+  const picks = await page.evaluate((C) => ((JSON.parse(localStorage.getItem('gr-catx-b') || '{}')[C] || {}).picks || []), CLIENT);
   ok('three picks: content depth twice (images, highlights) and price bands',
     picks.map((x) => x.k).join(',') === 'depth:imgs,depth:hl,price', picks);
   ok('…each named as the AM sees it', picks.map((x) => x.l).join(' / ') === 'Content depth · Images per product / Content depth · Highlights per product / Price bands', picks.map((x) => x.l));
@@ -178,7 +180,9 @@ ${STUBS.stubLines()}
   ok('back on images per product, its tick reads ticked', await fr.evaluate(() => document.querySelector('.mod[data-mod="depth"] .grx input').checked));
   const chips = await page.evaluate(() => Array.from(document.querySelectorAll('#catx-picks .catx-chip')).map((c) => c.textContent.replace('✕', '').trim()));
   ok('the card lists the picks as chips, each with its own ✕', chips.length === 3 && /Highlights per product/.test(chips[1]), chips);
-  ok('…and its line counts them', /^3 modules from the Catalogue added to the end of ⬇ HTML$/.test(await page.$eval('#catx-sub', (e) => e.textContent)));
+  const put = await page.evaluate(() => (window.__cxPuts || []).slice(-1)[0]);
+  ok('…saved for the TEAM under this brand (shared state ns grcatx)', put && put.grcatx && put.grcatx[CLIENT] && put.grcatx[CLIENT].picks.length === 3, put);
+  ok('…and its line counts them and names the brand', /^3 modules from the Catalogue added to the end of ⬇ HTML · saved for /.test(await page.$eval('#catx-sub', (e) => e.textContent)));
   await setDepth('tlen'); await page.waitForTimeout(150);   // the AM leaves the frame on another measure
   if (SHOT) await (await page.$('#catx')).screenshot({ path: path.join(SHOT, 'grcatx_card.png') });
 
@@ -287,15 +291,15 @@ ${STUBS.stubLines()}
 
   console.log('── leaving a pick out, and leaving them all out');
   await page.click('#catx-picks [data-catx-rm="2"]');
-  ok('✕ on a chip drops that pick — and its tick in the frame', (await page.evaluate(() => JSON.parse(localStorage.getItem('gr-catx')).length)) === 2
+  ok('✕ on a chip drops that pick — and its tick in the frame', (await page.evaluate((C) => ((JSON.parse(localStorage.getItem('gr-catx-b') || '{}')[C] || {}).picks || []).length, CLIENT)) === 2
     && await fr.evaluate(() => !document.querySelector('.mod[data-mod="price"] .grx input').checked));
   await page.click('#catx-clear');
-  ok('Clear all leaves the download with no Catalogue module', (await page.evaluate(() => JSON.parse(localStorage.getItem('gr-catx')).length)) === 0);
+  ok('Clear all leaves the download with no Catalogue module', (await page.evaluate((C) => ((JSON.parse(localStorage.getItem('gr-catx-b') || '{}')[C] || {}).picks || []).length, CLIENT)) === 0);
   const html0 = await grabHtml(page);
   ok('…and the file then carries no Catalogue section at all', html0.indexOf('id="print-catx"') < 0 && html0.indexOf('id="catx"') < 0);
   await ctx.close();
 
-  console.log('── picks made on another market, exported straight away (frame not open)');
+  console.log('── the brand's saved set, exported straight away (frame not open)');
   ({ page, ctx } = await open({ picks: [{ k: 'depth:kw', l: 'Content depth · Keyword slots' }, { k: 'avail', l: 'Availability' }] }));
   const t0 = Date.now();
   const html2 = await grabHtml(page);
@@ -304,7 +308,15 @@ ${STUBS.stubLines()}
     const inner = f ? new DOMParser().parseFromString(f.getAttribute('srcdoc'), 'text/html') : null;
     return inner ? Array.from(inner.querySelectorAll('.mod .chead h3')).map((x) => x.textContent.trim()) : null;
   }, html2);
-  ok('a saved set applies to the next market: the export opens the Catalogue itself and waits for it', d2 && d2.join(' | ') === 'Content depth · Keyword slots | Availability', { d2, ms: Date.now() - t0 });
+  ok('the brand\'s saved set applies: the export opens the Catalogue itself and waits for it', d2 && d2.join(' | ') === 'Content depth · Keyword slots | Availability', { d2, ms: Date.now() - t0 });
+  await ctx.close();
+
+  console.log('── another brand\'s set never reaches this brand\'s report');
+  ({ page, ctx } = await open({ picks: [{ k: 'avail', l: 'Availability' }], picksFor: 'Another Brand' }));
+  ok('a brand with no set of its own lists none', (await page.$$eval('#catx-picks .catx-chip', (x) => x.length)) === 0
+    && /none is/.test(await page.$eval('#catx-sub', (e) => e.textContent)));
+  const htmlO = await grabHtml(page);
+  ok('…and its download carries no Catalogue section', htmlO.indexOf('id="print-catx"') < 0);
   await ctx.close();
 
   // THE PICTURES THE SCAN FLAGGED, IN THE FILE (Ray, 8 Oct 2026: "images of the scanned should be screenshot to add in report

@@ -15601,6 +15601,30 @@
       "pr": 0
     },
     {
+      "name": "Golden catx: picks saved per brand (grcatx)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function catxPicks(k) {",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: grcatx namespace",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "grcatx:      'self',",
+      "pr": 0
+    },
+    {
+      "name": "Custom labels: static/dynamic button per KPI slot",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "data-cldyn=\"",
+      "pr": 0
+    },
+    {
+      "name": "Custom labels: the AM's static/dynamic word scores dynamism",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "const dynamic = dynSet ? dynSet === 'dynamic' :",
+      "pr": 0
+    },
+    {
       "name": "Test Lab: Auction Insights read off the report's own figures, never re-derived",
       "file": "cloudflare/feedspark-deck/src/testlab.js",
       "pattern": "export function parseAuction(rows) {",
