@@ -205,6 +205,7 @@ import OVERLAY_STUDIO_SRC from "../../../docs/overlay_studio_engine.js";
 // lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
 import IMAGES_PAGE from "../../../docs/FeedSpark_Images.html";
 import IMAGE_ENGINE_SRC from "../../../docs/image_engine.js";
+import KWCAL_ENGINE_SRC from "../../../docs/kwcal_engine.js";
 // /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
 // year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
 import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
@@ -1709,6 +1710,11 @@ async function route(request, env, ctx) {
     }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    // the Keyword Calendar's tie + brief payload — Workflow loads the SAME file, so the board
+    // and the calendar can never disagree about what has been briefed (Ray, 14 Oct 2026)
+    if (path === '/kwcal/engine.js' && request.method === 'GET') {
+      return new Response(KWCAL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });

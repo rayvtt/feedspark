@@ -1383,9 +1383,9 @@
     },
     {
       "name": "KWCal: market-based board (chips, per-market ptsm scopes) + crawl-suggest word bags",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "ptsm",
-      "min": 4,
+      "min": 1,
       "pr": 218
     },
     {
@@ -1411,7 +1411,7 @@
     },
     {
       "name": "KWCal: house task-name format + rich scope payload",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "Marketing Planner",
       "min": 1,
       "pr": 220
@@ -1494,9 +1494,9 @@
     },
     {
       "name": "KWCal: saturation audit — always-on KPI + brief lift lines",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "Keyword saturation",
-      "min": 2,
+      "min": 1,
       "pr": 224
     },
     {
@@ -3627,7 +3627,7 @@
     },
     {
       "name": "kwcal: the → Brief deep-link carries the moment id",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "kw:e.id",
       "min": 1,
       "pr": 343
@@ -4907,21 +4907,21 @@
     },
     {
       "name": "KWCal: a ticket a colleague raised BY HAND in Workflow ties on its wording — the rung below the calendar's own evidence",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "var floor=isKwTicket(b)?0.5:1;",
       "pr": 376,
       "min": 1
     },
     {
       "name": "KWCal: the name match scores BOTH directions, so a short moment name can't steal a ticket that names a longer one ('Coats' vs 'Coats & Jackets')",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "return 2*mom*tick/(mom+tick);",
       "pr": 376,
       "min": 1
     },
     {
       "name": "KWCal: a ticket two moments fit EQUALLY is claimed by neither — ambiguity is surfaced, never guessed",
-      "file": "docs/FeedSpark_KWCal.html",
+      "file": "docs/kwcal_engine.js",
       "pattern": "if(top&&topS>=floor&&topS>second) assign(top,b,'words');",
       "pr": 376,
       "min": 1
@@ -15328,6 +15328,48 @@
       "name": "Retired clients: Leadership Retire control",
       "file": "docs/FeedSpark_Leadership.html",
       "pattern": "id=\"retired\"",
+      "pr": 0
+    },
+    {
+      "name": "KWCal+Workflow: ONE tie and ONE brief payload, shared by both surfaces (never a second copy)",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function tieBuild(events,briefs,brand,mkt)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the page delegates the tie to the shared engine rather than holding its own",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "return KWE.tieBuild(",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the keyword calendar's moments still to be briefed are actionable on the board",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "FCC-KWDUE",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: \u2192 Brief there raises the CALENDAR's own payload, so no second task is created",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCBrief(E.briefPayload(",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a saved brief tells the to-brief band at once, so a briefed row cannot be raised twice",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "new CustomEvent('fcc-briefs')",
+      "pr": 0
+    },
+    {
+      "name": "Worker: the keyword-calendar engine is served to both pages",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/kwcal/engine.js'",
+      "pr": 0
+    },
+    {
+      "name": "Harnesses: served engines are routed from the worker's own map, never a hand-kept list",
+      "file": "tools/engine_routes.js",
+      "pattern": "function engineMap()",
       "pr": 0
     }
   ]

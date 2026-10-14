@@ -83,6 +83,8 @@ is('one reader for the client word', (kw.match(/function cstOf\(/g) || []).lengt
 is('and both PDF call sites go through it', (kw.match(/cstOf\(/g) || []).length >= 3, true);
 
 // ---------- and the document actually draws it ----------
+const req0 = createRequire(import.meta.url);
+const { installEngineRoutes } = req0('./engine_routes.js');
 const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modules', 'x'));
 let chromium;
 try { ({ chromium } = req('playwright')); } catch { console.log('\n· playwright unavailable — DOM half skipped'); done(); }
@@ -114,6 +116,8 @@ const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM 
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await ctx.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+// /kwcal/engine.js is served by the worker; from file:// it 404s and the board never boots
+await installEngineRoutes(ctx);
 await ctx.addInitScript({ content: INIT });
 await page.goto('file://' + path.join(root, 'docs', 'FeedSpark_KWCal.html'));
 await page.waitForTimeout(1500);

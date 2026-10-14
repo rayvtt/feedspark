@@ -14,6 +14,7 @@
  * Run: node tools/check_kwcal_edit.js        (skips cleanly where Playwright is unavailable)
  */
 const path = require('path');
+const { installEngineRoutes } = require('./engine_routes.js');
 let chromium;
 try { ({ chromium } = require('playwright')); } catch { console.log('· playwright unavailable — skipped'); process.exit(0); }
 const D = path.resolve(__dirname, '..', 'docs');
@@ -42,6 +43,9 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  // the page loads its tie from /kwcal/engine.js, which the WORKER serves — from file:// that
+  // path 404s and the board never boots, so the harness serves it the way the worker does
+  await installEngineRoutes(ctx);
   await ctx.addInitScript({ content: INIT });
   await page.goto('file://' + path.join(D, 'FeedSpark_KWCal.html'));
   await page.waitForTimeout(900);
