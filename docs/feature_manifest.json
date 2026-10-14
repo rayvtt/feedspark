@@ -15683,6 +15683,48 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "fetch('/api/compwatch/auction',{method:'PUT'",
       "pr": 0
+    },
+    {
+      "name": "Golden: the action plan is a scorecard section on screen",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "h += planSection(k, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: one plan model draws the board and the client copy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var M = planModel(k, pl), p = parts(k);",
+      "pr": 0
+    },
+    {
+      "name": "Golden: plan edits saved per brand x market in shared state grplan",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body: JSON.stringify({ grplan: m })",
+      "pr": 0
+    },
+    {
+      "name": "Golden: plan tasks drag between months",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "t.ondrop = function (e) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden: the editable board is removed from the downloads",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'#ap-tier',   /* the AM's editable action-plan board",
+      "pr": 0
+    },
+    {
+      "name": "Golden: projection follows the plan the AM keeps",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "out.projOf = function (list)",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: grplan namespace (key scope)",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "grplan:      'key',",
+      "pr": 0
     }
   ]
 }

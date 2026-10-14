@@ -964,6 +964,28 @@ window.addEventListener('load',restore);
   .ap-more{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0 4px}
   .ap-none{font-size:11.5px;color:var(--muted);font-style:italic;text-align:center;padding:10px 4px}
   @media (max-width:760px){body.xhtml .ap-board{grid-template-columns:1fr}body.xhtml .ap-k{grid-template-columns:repeat(2,1fr)}}
+  /* the action plan ON SCREEN (#ap-tier): the print board's own cards plus the AM's controls; never in a download */
+  body.pdf #ap-tier{display:none!important}
+  body.demo .ap-ctl,body.demo .ap-add,body.demo #ap-reset,body.demo .ap-rem,body.demo .ap-tag{display:none!important}
+  #ap-tier .ap-tk{background:var(--paper)}
+  #ap-tier .ap-lh .ct{background:var(--paper)}
+  .ap-dr{cursor:grab}.ap-dr.ap-drag{opacity:.45}
+  .ap-lane.ap-over{outline:2px dashed var(--orange);outline-offset:-2px}
+  .ap-ctl{display:inline-flex;gap:2px;margin-left:auto}
+  .ap-gain+.ap-tag,.ap-gain+.ap-ctl,.ap-tag+.ap-ctl{margin-left:4px}
+  .ap-ctl button{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:6px;min-width:22px;height:22px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;padding:0 5px;line-height:1}
+  .ap-ctl button:hover{border-color:var(--orange-deep);color:var(--orange-deep)}
+  .ap-tag{font-size:9.5px;font-weight:800;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:0 6px}
+  .ap-add{border:1px dashed var(--line);background:transparent;color:var(--muted);border-radius:9px;padding:7px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+  .ap-add:hover{border-color:var(--orange-deep);color:var(--orange-deep)}
+  .ap-form{display:flex;flex-direction:column;gap:6px}
+  .ap-form label{display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .ap-form input,.ap-form textarea,.ap-form select{font:inherit;font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:5px 7px}
+  .ap-fb{display:flex;gap:6px;flex-wrap:wrap}
+  .ap-rem{margin-top:10px;font-size:12px}.ap-rem summary{cursor:pointer;font-weight:800;color:var(--muted)}
+  .ap-rrow{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:4px 0;border-top:1px solid var(--line)}
+  .ap-foot{margin:10px 0 0;font-size:11.5px;color:var(--muted)}
+  @media (max-width:760px){#ap-tier .ap-board{grid-template-columns:1fr}#ap-tier .ap-k{grid-template-columns:repeat(2,1fr)}}
   /* THE CATALOGUE'S MODULES, PICKED FOR THE ⬇ HTML (Ray, 7 Oct 2026) — see catxLoad(). On screen only: the PDF and the
      HTML never carry this card (the HTML carries the picked modules themselves, in #print-catx). */
   .catx{margin-top:16px}
@@ -3119,12 +3141,14 @@ window.addEventListener('load',restore);
     h += reconcileSection(k);    // and where those two readings of the same field disagree
     h += clSection(k);           // and what the custom labels let a campaign bid on
     h += metaSection(k);         // and the brand's Meta catalogue, read on Meta's own terms
+    h += planSection(k, s);      // and what to do about all of it — the action plan, editable
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
     histWire(k);
     clWire(k);
     metaWire(k);
+    planWire(k);
     tfApply();
   }
 
@@ -5029,7 +5053,7 @@ window.addEventListener('load',restore);
     var seen = {}, attrAct = [];
     // identifiers: one action, the pair Google reads as one fact
     var gt = attrs.gtin || {}, mp = attrs.mpn || {}, idc = Math.max(covOf(gt), covOf(mp));
-    if (idc < 90) { var gi = gain(['gtin']); attrAct.push({ lane: 'now', pri: 'ur', f: 'g:gtin', own: 'you', g: gi, ks: ['gtin'],
+    if (idc < 90) { var gi = gain(['gtin']); attrAct.push({ id: 'a:gtin', lane: 'now', pri: 'ur', f: 'g:gtin', own: 'you', g: gi, ks: ['gtin'],
       t: 'Send a GTIN (or an MPN) for every product',
       w: (idc ? 'Only ' + idc + '% carry one today' : 'No product carries one today') + ' — Google matches products to its Shopping Graph on the identifier; we never generate one.' }); }
     SPEC.forEach(function (x) {
@@ -5042,11 +5066,11 @@ window.addEventListener('load',restore);
       var c = covOf(a), g = gain([x.k]), own = PLAN_CLIENT[x.k] ? 'you' : 'fs';
       var nm = name(x), w = x.of ? (a.present ? 'Today ' + (a.avg != null ? a.avg + ' per product on average' : c + '% of full credit') + ' — full credit at ' + x.tg + ' or more.' : 'Not carried today — full credit at ' + x.tg + ' or more.')
         : (c ? c + '% of products carry it today.' : 'No product carries it today.');
-      if (x.t === 'req' && c < 99) attrAct.push({ lane: 'now', pri: 'ur', f: nm, own: own, g: g, ks: [x.k], t: 'Complete ' + nm + ' on every product', w: w + ' Google requires it — a product without it is not shown.' });
+      if (x.t === 'req' && c < 99) attrAct.push({ id: 'a:' + x.k, lane: 'now', pri: 'ur', f: nm, own: own, g: g, ks: [x.k], t: 'Complete ' + nm + ' on every product', w: w + ' Google requires it — a product without it is not shown.' });
       else if (x.t === 'cond' && c < 90 && (a.present || exp.indexOf(x.k) >= 0 || (a.scope && a.scope.n > 0)) && g >= 0.3)
-        attrAct.push({ lane: 'now', pri: 'hi', f: nm, own: own, g: g, ks: [x.k], t: 'Fill ' + nm + (a.scope && a.scope.n ? ' on the products Google asks it of' : ' on every product'), w: w + ' ' + (x.n ? x.n.charAt(0).toUpperCase() + x.n.slice(1) + '.' : '') });
+        attrAct.push({ id: 'a:' + x.k, lane: 'now', pri: 'hi', f: nm, own: own, g: g, ks: [x.k], t: 'Fill ' + nm + (a.scope && a.scope.n ? ' on the products Google asks it of' : ' on every product'), w: w + ' ' + (x.n ? x.n.charAt(0).toUpperCase() + x.n.slice(1) + '.' : '') });
       else if (x.t === 'rec' && g >= 0.3)
-        attrAct.push({ lane: 'next', pri: g >= 1 ? 'hi' : '', f: nm, own: own, g: g, ks: [x.k], t: (x.of ? 'Add more ' + x.many + ' per product' : 'Fill ' + nm), w: w });
+        attrAct.push({ id: 'a:' + x.k, lane: 'next', pri: g >= 1 ? 'hi' : '', f: nm, own: own, g: g, ks: [x.k], t: (x.of ? 'Add more ' + x.many + ' per product' : 'Fill ' + nm), w: w });
       seen[x.k] = 1;
     });
     // content quality: the requirement each field breaks most (Now), the best practice costing most (Next)
@@ -5054,19 +5078,19 @@ window.addEventListener('load',restore);
     ((qd && qd.parts) || []).forEach(function (p) {
       var f = (p.broken || []).filter(function (b) { return b.sev === 'fail' && b.pct >= 1; })[0];
       var wv = (p.broken || []).filter(function (b) { return b.sev !== 'fail' && b.cost >= 2; })[0];
-      if (f) qAct.push({ lane: 'now', pri: 'ur', f: 'g:' + p.key, own: 'fs', q: f.cost, t: 'Fix g:' + p.key + ' — ' + f.label.charAt(0).toLowerCase() + f.label.slice(1),
+      if (f) qAct.push({ id: 'q:' + p.key, lane: 'now', pri: 'ur', f: 'g:' + p.key, own: 'fs', q: f.cost, t: 'Fix g:' + p.key + ' — ' + f.label.charAt(0).toLowerCase() + f.label.slice(1),
         w: f.pct + '% of products (' + fmt(f.n) + ') break a rule Google states as a requirement.' });
-      else if (wv) qAct.push({ lane: 'next', pri: '', f: 'g:' + p.key, own: 'fs', q: wv.cost, t: 'Improve g:' + p.key + ' — ' + wv.label.charAt(0).toLowerCase() + wv.label.slice(1),
+      else if (wv) qAct.push({ id: 'q:' + p.key, lane: 'next', pri: '', f: 'g:' + p.key, own: 'fs', q: wv.cost, t: 'Improve g:' + p.key + ' — ' + wv.label.charAt(0).toLowerCase() + wv.label.slice(1),
         w: wv.pct + '% of products (' + fmt(wv.n) + ') miss Google’s best practice here.' });
     });
     // AI-readiness: the conversational six, then the weakest areas
     var thenAct = [], an = aiCount(attrs);
-    if (an.n < an.of) thenAct.push({ lane: 'then', pri: an.n ? '' : 'hi', f: 'AI', own: 'fs',
+    if (an.n < an.of) thenAct.push({ id: 'ai:conv', lane: 'then', pri: an.n ? '' : 'hi', f: 'AI', own: 'fs',
       t: an.n ? 'Extend the conversational attributes (' + an.n + ' of ' + an.of + ' live)' : 'Start the conversational attributes Google built for AI Mode',
       w: 'Questions and answers, related products, variant names — sent through a supplemental feed, they are what AI shopping surfaces read first.' });
     if (ai && ai.pillars) ai.pillars.filter(function (p) { return p.key !== 'conv' && p.score < 60; })
       .sort(function (x, y) { return x.score - y.score; }).slice(0, 2).forEach(function (p) {
-        thenAct.push({ lane: 'then', pri: '', f: 'AI', own: 'fs', t: 'Lift ' + p.label.charAt(0).toLowerCase() + p.label.slice(1) + ' (' + p.score + ' / 100)',
+        thenAct.push({ id: 'ai:' + p.key, lane: 'then', pri: '', f: 'AI', own: 'fs', t: 'Lift ' + p.label.charAt(0).toLowerCase() + p.label.slice(1) + ' (' + p.score + ' / 100)',
           w: 'The weakest area of AI readiness on this feed — the scorecard above shows what it reads.' }); });
     // custom-label strategy: the KPI signals the labels do not carry yet (clStrategy — its own score, never the dial's)
     var clNext = [];
@@ -5076,7 +5100,7 @@ window.addEventListener('load',restore);
         var S = LGQ.CL_KINDS[kd];
         var pr = (cl.priority || []).indexOf(kd) >= 0;   // the AM flagged it for this client
         if (!pr && kd !== 'perf' && kd !== 'stock' && kd !== 'margin' && cl.have.length >= 3 && !free.length) return;   // diverse already, and no slot to spare
-        var a = { pri: pr || kd === 'perf' ? 'hi' : '', f: 'Custom labels', own: S.who === 'you' ? 'you' : 'fs',
+        var a = { id: 'cl:' + kd, pri: pr || kd === 'perf' ? 'hi' : '', f: 'Custom labels', own: S.who === 'you' ? 'you' : 'fs',
           t: 'Add a ' + S.label.toLowerCase() + ' label' + slot(), w: 'So campaigns can bid on ' + S.kpi.split(' — ')[0].toLowerCase() + ' — e.g. ' + S.eg + '. ' + S.how.charAt(0).toUpperCase() + S.how.slice(1) + '.' };
         if (pr || kd === 'perf' || kd === 'stock') clNext.push(a); else thenAct.push(a);
       });
@@ -5085,12 +5109,12 @@ window.addEventListener('load',restore);
     var mNow = [], mNext = [];
     if (mt) {
       var gaps = mt.req.filter(function (f) { return f.cov < 99; });
-      if (gaps.length) mNow.push({ lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', t: 'Complete the fields Meta requires — ' + gaps.map(function (f) { return f.k; }).join(', '),
+      if (gaps.length) mNow.push({ id: 'm:req', lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', t: 'Complete the fields Meta requires — ' + gaps.map(function (f) { return f.k; }).join(', '),
         w: gaps.map(function (f) { return f.k + (f.col ? ' on ' + f.cov + '%' : ' not in the feed'); }).join(' · ') + ' of the Meta catalogue. Meta: products missing a required field “may not upload”.' });
       mt.broken.forEach(function (b) {
-        if (b.sev === 'fail' && b.pct >= 1) mNow.push({ lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: fix ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
-        else if (b.id === 't-house' && b.pct >= 10) mNext.push({ lane: 'next', pri: b.pct >= 40 ? 'hi' : '', f: 'Meta', own: 'fs', q: b.cost, t: 'Shorten Meta titles to under 60 characters', w: b.pct + '% of products (' + fmt(b.n) + ') run over — the headline is cut on feed, Stories and Reels.' });
-        else if (b.sev === 'warn' && b.id !== 't-house' && b.cost >= 2) mNext.push({ lane: 'next', pri: '', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
+        if (b.sev === 'fail' && b.pct >= 1) mNow.push({ id: 'm:' + b.id, lane: 'now', pri: 'ur', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: fix ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
+        else if (b.id === 't-house' && b.pct >= 10) mNext.push({ id: 'm:' + b.id, lane: 'next', pri: b.pct >= 40 ? 'hi' : '', f: 'Meta', own: 'fs', q: b.cost, t: 'Shorten Meta titles to under 60 characters', w: b.pct + '% of products (' + fmt(b.n) + ') run over — the headline is cut on feed, Stories and Reels.' });
+        else if (b.sev === 'warn' && b.id !== 't-house' && b.cost >= 2) mNext.push({ id: 'm:' + b.id, lane: 'next', pri: '', f: 'Meta', own: 'fs', q: b.cost, t: 'Meta: ' + b.label.charAt(0).toLowerCase() + b.label.slice(1), w: b.pct + '% of the Meta catalogue (' + fmt(b.n) + ' products). ' + b.why });
       });
     }
     var byGain = function (x, y) { return (y.g || 0) - (x.g || 0); };
@@ -5101,10 +5125,57 @@ window.addEventListener('load',restore);
     // the projection: every field action in Now + Next landed on every product, one re-score
     var ks = []; out.now.concat(out.next).forEach(function (x) { (x.ks || []).forEach(function (k) { if (ks.indexOf(k) < 0) ks.push(k); }); });
     out.proj = ks.length ? goldenScore(full(attrs, ks), prof) : base;
+    // the same projection over whatever set of fields the AM's edited plan keeps (planModel)
+    out.projOf = function (list) { return list.length ? goldenScore(full(attrs, list), prof) : base; };
     return out;
   }
-  function planHtml(k, s) {
-    var d = CACHE[k]; if (!d || !s || !s.attrs) return '';
+  /* THE PLAN ON SCREEN, EDITABLE AND MOVABLE (Ray, 14 Oct 2026: "can you surface the action plan in the golden record
+     module and make each tasks editable/ movable on each month as well"). The plan was print-only — read off the audit
+     into the PDF / ⬇ HTML and never seen until the file opened. It now sits on the scorecard as its own section, and an
+     AM can reword a task, change who owns it, move it to another month (drag, or ‹ ›), reorder it inside a month, take it
+     out of the plan or add one of their own. ONE MODEL, TWO RENDERS: planModel lays the audit's actions over the AM's
+     edits, and BOTH the board here and the client's copy (#print-plan) are drawn from it — so the download says exactly
+     what the board says. THREE RULES: the edits are the TEAM's, saved per brand × market in shared state ns grplan
+     (key "<client>|<mkt>", the 'key' scope, mirrored on the device as gr-plan-b so the board paints before the store
+     answers); an audit action is keyed by WHAT it is about (a:<attr> / q:<attr> / ai:<pillar> / cl:<kind> / m:<rule>),
+     never by its wording, so a rescan that moves its numbers keeps its month, its order and its edits — and an action the
+     audit no longer raises (the field was fixed) simply leaves the plan with its edits unused; and the projection
+     "Golden Score now → after the quarter" is re-run over the fields the plan KEEPS, so taking a task out lowers it.
+     A month the plan stored that has slid into the past lands on the first month shown, one past the window on the last. */
+  var PLST = { map: null, base: 0, p: null };
+  var APX = { edit: null, add: null, drag: null, msg: '' };
+  function planStMap() {
+    if (PLST.map) return PLST.map;
+    try { var m = JSON.parse(localStorage.getItem('gr-plan-b') || '{}'); PLST.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { PLST.map = {}; }
+    return PLST.map;
+  }
+  function planMirror() { try { localStorage.setItem('gr-plan-b', JSON.stringify(PLST.map || {})); } catch (e) {} }
+  function loadPlanSt() {
+    if (PLST.p) return PLST.p;
+    PLST.p = fetch(API + '/api/state?ns=grplan').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.grplan) { PLST.map = j.grplan; PLST.base = Date.now(); planMirror(); } })
+      .catch(function () {});
+    return PLST.p;
+  }
+  function planKey(k) { var p = parts(k); return p.client + '|' + p.mkt; }
+  function planOv(k) { var e = planStMap()[planKey(k)]; return e && e.it && typeof e.it === 'object' ? e.it : {}; }
+  function planPut(k, it) {
+    var m = Object.assign({}, planStMap()), key = planKey(k);
+    if (Object.keys(it).length) m[key] = { it: it, at: Date.now() }; else delete m[key];
+    PLST.map = m; planMirror();   // the board follows the edit at once; the store confirms behind it
+    APX.msg = 'Saving for the team…';
+    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(PLST.base || 0) }, body: JSON.stringify({ grplan: m }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var ok = !!(j && j.grplan); if (ok) { PLST.map = j.grplan; PLST.base = Date.now(); planMirror(); }
+        APX.msg = ok ? '✓ Saved for the team' : '⚠ Not saved to the team yet — kept on this device; check the connection';
+        var el = $('ap-msg'); if (el) el.textContent = APX.msg;
+      })
+      .catch(function () { APX.msg = '⚠ Not saved to the team yet — kept on this device; check the connection'; var el = $('ap-msg'); if (el) el.textContent = APX.msg; });
+  }
+  // the audit's own inputs for this market — the same reads the scorecard draws
+  function planCtx(k, s) {
+    var d = CACHE[k]; if (!d || !s || !s.attrs) return null;
     var p = parts(k), prof = profileForC(p.client), qd = null;
     try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
     var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
@@ -5113,36 +5184,202 @@ window.addEventListener('load',restore);
     var mtr = null;
     try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
     var pl = planBuild(s.attrs, prof, qd, ai, clr, mtr);
-    if (pl.base == null) return '';
-    // THE NEXT QUARTER, MONTH BY MONTH (Ray, 8 Oct 2026: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all
-    // actions …) — also remove the progress status, it might be confusing"): every action, none folded behind "+N more", read in
-    // priority order (Now's requirements first, Next by the points they move, then the AI-readiness work) and spread over the
-    // three calendar months after this one so each month carries a share of the plan — the first month the work that moves most.
-    var all = pl.now.concat(pl.next, pl.then), nM = 3, now = new Date(), months = [];
+    return pl;
+  }
+  function planYm(d) { return d.getFullYear() + '-' + (d.getMonth() < 9 ? '0' : '') + (d.getMonth() + 1); }
+  // THE NEXT QUARTER, MONTH BY MONTH (Ray, 8 Oct 2026: "divide into months into the next quarter (Nov/ Dec/ Jan) (adding all
+  // actions …) — also remove the progress status, it might be confusing"): every action, none folded behind "+N more", read in
+  // priority order (Now's requirements first, Next by the points they move, then the AI-readiness work) and spread over the
+  // three calendar months after this one so each month carries a share of the plan — the first month the work that moves most.
+  // The AM's edits are laid over that default.
+  function planModel(k, pl, now) {
+    var it = planOv(k), nM = 3, months = [];
+    now = now || new Date();
     for (var mi = 1; mi <= nM; mi++) {
       var md = new Date(now.getFullYear(), now.getMonth() + mi, 1);
-      months.push({ name: md.toLocaleDateString('en-GB', { month: 'long' }), yr: md.getFullYear(), list: [] });
+      months.push({ key: planYm(md), name: md.toLocaleDateString('en-GB', { month: 'long' }), yr: md.getFullYear(), list: [] });
     }
-    var per = Math.ceil(all.length / nM) || 1;
-    all.forEach(function (x, i) { months[Math.min(nM - 1, Math.floor(i / per))].list.push(x); });
-    var cols = ['var(--orange-deep)', 'var(--orange)', '#7C3AED'];
-    var card = function (a) {
-      return '<div class="ap-tk"><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
-        '<span class="ap-own' + (a.own === 'you' ? ' you' : '') + '">' + (a.own === 'you' ? 'Your team' : 'FeedSpark') + '</span>' +
-        (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') + '</div>' +
-        '<div class="ap-t">' + esc(a.t) + '</div><div class="ap-w">' + esc(a.w) + '</div></div>';
+    var mIdx = function (m) {
+      for (var i = 0; i < nM; i++) if (months[i].key === m) return i;
+      return m < months[0].key ? 0 : nM - 1;
     };
-    var board = months.map(function (M, i) {
-      return '<div class="ap-lane"><div class="ap-lh"><i style="background:' + cols[i] + '"></i>' + esc(M.name) + ' <span class="wh">· ' + M.yr + '</span><span class="ct">' + M.list.length + '</span></div>' +
-        (M.list.length ? M.list.map(card).join('') : '<div class="ap-none">Nothing planned this month — the feed meets the spec here.</div>') + '</div>';
-    }).join('');
-    var you = all.filter(function (a) { return a.own === 'you'; }).length;
+    var auto = pl.now.concat(pl.next, pl.then), per = Math.ceil(auto.length / nM) || 1, items = [], removed = [], seen = {};
+    auto.forEach(function (a, i) {
+      if (!a.id || seen[a.id]) a = Object.assign({}, a, { id: (a.id || 'x') + ':' + i });
+      seen[a.id] = 1;
+      var o = it[a.id] || {}, x = Object.assign({}, a);
+      x.orig = { t: a.t, w: a.w, own: a.own };
+      if (typeof o.t === 'string' && o.t) x.t = o.t;
+      if (typeof o.w === 'string') x.w = o.w;
+      if (o.own === 'you' || o.own === 'fs') x.own = o.own;
+      x.ed = x.t !== a.t || x.w !== a.w || x.own !== a.own;
+      x.mi = typeof o.m === 'string' ? mIdx(o.m) : Math.min(nM - 1, Math.floor(i / per));
+      x.ord = typeof o.i === 'number' ? o.i : i;
+      if (o.del) removed.push(x); else items.push(x);
+    });
+    Object.keys(it).forEach(function (id) {
+      var o = it[id]; if (!o || !o.c || id.indexOf('c:') !== 0 || typeof o.t !== 'string' || !o.t) return;
+      items.push({ id: id, c: 1, t: o.t, w: typeof o.w === 'string' ? o.w : '', own: o.own === 'you' ? 'you' : 'fs', f: 'Added', pri: '',
+        mi: mIdx(typeof o.m === 'string' ? o.m : months[0].key), ord: typeof o.i === 'number' ? o.i : 999 });
+    });
+    items.sort(function (x, y) { return x.ord - y.ord; });
+    items.forEach(function (x) { months[x.mi].list.push(x); });
+    var ks = []; items.forEach(function (x) { (x.ks || []).forEach(function (f) { if (ks.indexOf(f) < 0) ks.push(f); }); });
+    return { months: months, items: items, removed: removed, base: pl.base, proj: pl.projOf ? pl.projOf(ks) : pl.proj, edited: Object.keys(it).length > 0 };
+  }
+  var AP_COLS = ['var(--orange-deep)', 'var(--orange)', '#7C3AED'];
+  function planCard(a, ed) {
+    var ctl = '';
+    if (ed) {
+      ctl = '<span class="ap-ctl">' +
+        (a.mi > 0 ? '<button type="button" data-apmv="' + esc(a.id) + '" data-d="-1" title="Move to ' + esc(ed.months[a.mi - 1].name) + '" aria-label="Move to ' + esc(ed.months[a.mi - 1].name) + '">‹</button>' : '') +
+        (a.mi < ed.months.length - 1 ? '<button type="button" data-apmv="' + esc(a.id) + '" data-d="1" title="Move to ' + esc(ed.months[a.mi + 1].name) + '" aria-label="Move to ' + esc(ed.months[a.mi + 1].name) + '">›</button>' : '') +
+        '<button type="button" data-aped="' + esc(a.id) + '" title="Edit this task" aria-label="Edit this task">✎</button>' +
+        '<button type="button" data-apdel="' + esc(a.id) + '" title="Take it out of the plan" aria-label="Take it out of the plan">✕</button></span>';
+      if (APX.edit === a.id) return '<div class="ap-tk ap-editing" data-apid="' + esc(a.id) + '">' + planForm(a) + '</div>';
+    }
+    return '<div class="ap-tk' + (ed ? ' ap-dr' : '') + '"' + (ed ? ' draggable="true" data-apid="' + esc(a.id) + '"' : '') + '><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
+      '<span class="ap-own' + (a.own === 'you' ? ' you' : '') + '">' + (a.own === 'you' ? 'Your team' : 'FeedSpark') + '</span>' +
+      (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') +
+      (ed && (a.ed || a.c) ? '<span class="ap-tag" title="' + (a.c ? 'Added by the team' : 'Reworded by the team — the audit wrote: ' + esc(a.orig.t)) + '">' + (a.c ? 'added' : 'edited') + '</span>' : '') +
+      ctl + '</div>' +
+      '<div class="ap-t">' + esc(a.t) + '</div>' + (a.w ? '<div class="ap-w">' + esc(a.w) + '</div>' : '') + '</div>';
+  }
+  function planForm(a) {
+    var v = a || { t: '', w: '', own: 'fs' }, dk = a ? a.id : 'add';
+    if (APX.draft && APX.draft.key === dk) v = APX.draft.v;   // a re-render mid-edit (a reading landing) keeps what was typed
+    return '<div class="ap-form"><label>Task<input type="text" class="ap-in-t" maxlength="160" value="' + esc(v.t) + '"></label>' +
+      '<label>Why / detail<textarea class="ap-in-w" rows="3" maxlength="600">' + esc(v.w) + '</textarea></label>' +
+      '<label>Who<select class="ap-in-o"><option value="fs"' + (v.own !== 'you' ? ' selected' : '') + '>FeedSpark</option><option value="you"' + (v.own === 'you' ? ' selected' : '') + '>Your team (the client)</option></select></label>' +
+      '<div class="ap-fb"><button type="button" class="btn ap-save" data-apsave="' + esc(a ? a.id : '') + '">Save</button>' +
+      (a && a.ed && !a.c ? '<button type="button" class="btn ap-orig" data-aporig="' + esc(a.id) + '" title="Back to: ' + esc(a.orig.t) + '">↺ The audit’s wording</button>' : '') +
+      '<button type="button" class="btn ap-cancel" data-apcancel="1">Cancel</button></div></div>';
+  }
+  function planKpis(M) {
+    var all = M.items, you = all.filter(function (a) { return a.own === 'you'; }).length;
     var kpi = function (v, l) { return '<div><b>' + v + '</b><span>' + l + '</span></div>'; };
+    return '<div class="ap-k">' + kpi(all.length, 'Actions') + kpi(M.months[0].list.length, 'In ' + esc(M.months[0].name)) + kpi(you, 'Need your team') +
+      kpi(M.base + (M.proj != null && M.proj > M.base ? ' <small>→ ' + M.proj + '</small>' : ''), 'Golden Score now → after the quarter') + '</div>';
+  }
+  function planBoard(M, ed) {
+    return '<div class="ap-board">' + M.months.map(function (Mo, i) {
+      return '<div class="ap-lane" data-apm="' + i + '"><div class="ap-lh"><i style="background:' + AP_COLS[i] + '"></i>' + esc(Mo.name) + ' <span class="wh">· ' + Mo.yr + '</span><span class="ct">' + Mo.list.length + '</span></div>' +
+        (Mo.list.length ? Mo.list.map(function (a) { return planCard(a, ed); }).join('') : '<div class="ap-none">' + (ed ? 'Nothing planned this month — drag a task here, or add one.' : 'Nothing planned this month — the feed meets the spec here.') + '</div>') +
+        (ed ? (APX.add === i ? '<div class="ap-tk ap-editing">' + planForm(null) + '</div>' : '<button type="button" class="ap-add" data-apadd="' + i + '">＋ Add a task to ' + esc(Mo.name) + '</button>') : '') +
+        '</div>';
+    }).join('') + '</div>';
+  }
+  // the client's copy (#print-plan): the SAME model, drawn without a control
+  function planHtml(k, s) {
+    var pl = planCtx(k, s); if (!pl || pl.base == null) return '';
+    var M = planModel(k, pl), p = parts(k);
     return '<div class="pm"><div class="pm-h"><h3>Action plan — ' + esc(dispClient(p.client)) + ' ' + esc(p.mkt.toUpperCase()) + '</h3>' +
       '<span class="pm-sub">the next quarter, month by month, read off this audit</span></div>' +
-      '<div class="ap-k">' + kpi(all.length, 'Actions') + kpi(months[0].list.length, 'In ' + esc(months[0].name)) + kpi(you, 'Need your team') +
-        kpi(pl.base + (pl.proj != null && pl.proj > pl.base ? ' <small>→ ' + pl.proj + '</small>' : ''), 'Golden Score now → after the quarter') + '</div>' +
-      '<div class="ap-board">' + board + '</div></div>';
+      planKpis(M) + planBoard(M, null) + '</div>';
+  }
+  // the AM's board, a section of the scorecard (folds with the rest; left out of every download — the file carries #print-plan)
+  function planSection(k, s) {
+    var pl = planCtx(k, s); if (!pl || pl.base == null) return '';
+    if (!PLST.p) loadPlanSt().then(function () { if (SEL === k) renderDetail(k); });
+    var M = planModel(k, pl), p = parts(k), brand = dispClient(p.client);
+    APX.M = M; APX.k = k;
+    var rem = M.removed.length ? '<details class="ap-rem"><summary>' + M.removed.length + ' task' + (M.removed.length === 1 ? '' : 's') + ' taken out of the plan</summary>' +
+      M.removed.map(function (a) { return '<div class="ap-rrow"><span>' + esc(a.t) + '</span><button type="button" class="btn" data-apback="' + esc(a.id) + '">↩ Put back</button></div>'; }).join('') + '</details>' : '';
+    return '<div class="tier" data-tf="plan" id="ap-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#FEF3E2;color:#B1550A">Action plan</span>' +
+      '<h4>What to do next — the next quarter, month by month</h4>' +
+      '<span class="qz-meta"><span id="ap-msg">' + esc(APX.msg || ('Drag a task to another month or reorder it · ✎ to reword · saved for ' + brand + ' ' + p.mkt.toUpperCase() + ' for the team')) + '</span>' +
+      (M.edited ? '<button type="button" class="btn ap-am" id="ap-reset" title="Drop every edit and go back to the plan the audit reads">↺ Back to the audit’s plan</button>' : '') + '</span></div>' +
+      planKpis(M) + planBoard(M, M) + rem +
+      '<p class="ap-foot">This is the plan the client’s ⬇ PDF and ⬇ HTML close on — as it reads here.</p></div>';
+  }
+  function planWire(k) {
+    var t = $('ap-tier'); if (!t || !APX.M) return;
+    var M = APX.M, ov = function () { return JSON.parse(JSON.stringify(planOv(k))); };
+    var find = function (id) { return M.items.concat(M.removed).filter(function (a) { return a.id === id; })[0]; };
+    var redraw = function () { if (SEL === k) renderDetail(k); };
+    // place `id` in month `mi` at position `at` (end when omitted) and renumber that month so the order holds
+    var place = function (it, id, mi, at) {
+      var ids = M.months[mi].list.map(function (a) { return a.id; }).filter(function (x) { return x !== id; });
+      if (at == null || at > ids.length) at = ids.length;
+      ids.splice(at, 0, id);
+      ids.forEach(function (x, i) { var o = it[x] || {}; o.m = M.months[mi].key; o.i = i; if (x.indexOf('c:') === 0) o.c = 1; it[x] = o; });
+    };
+    var formVals = function (root) {
+      return { t: (root.querySelector('.ap-in-t').value || '').trim().slice(0, 160), w: (root.querySelector('.ap-in-w').value || '').trim().slice(0, 600),
+        own: root.querySelector('.ap-in-o').value === 'you' ? 'you' : 'fs' };
+    };
+    t.onclick = function (e) {
+      var b = e.target.closest && e.target.closest('button'); if (!b || !t.contains(b)) return;
+      var it, id, a;
+      if ((id = b.getAttribute('data-apmv'))) {
+        a = find(id); if (!a) return; it = ov();
+        var to = Math.max(0, Math.min(M.months.length - 1, a.mi + Number(b.getAttribute('data-d'))));
+        place(it, id, to); planPut(k, it); redraw();
+      } else if ((id = b.getAttribute('data-aped'))) { APX.edit = id; APX.add = null; redraw(); var f = $('ap-tier').querySelector('.ap-in-t'); if (f) f.focus();
+      } else if ((id = b.getAttribute('data-apdel'))) {
+        it = ov();
+        if (id.indexOf('c:') === 0) delete it[id]; else { it[id] = it[id] || {}; it[id].del = 1; }
+        planPut(k, it); redraw();
+      } else if ((id = b.getAttribute('data-apback'))) {
+        it = ov(); if (it[id]) { delete it[id].del; if (!Object.keys(it[id]).length) delete it[id]; }
+        planPut(k, it); redraw();
+      } else if (b.hasAttribute('data-apadd')) { APX.add = Number(b.getAttribute('data-apadd')); APX.edit = null; redraw(); var g = $('ap-tier').querySelector('.ap-in-t'); if (g) g.focus();
+      } else if (b.hasAttribute('data-apcancel')) { APX.add = APX.edit = APX.draft = null; redraw();
+      } else if ((id = b.getAttribute('data-aporig'))) {
+        it = ov(); if (it[id]) { delete it[id].t; delete it[id].w; delete it[id].own; if (!Object.keys(it[id]).length) delete it[id]; }
+        APX.edit = APX.draft = null; planPut(k, it); redraw();
+      } else if (b.hasAttribute('data-apsave')) {
+        var v = formVals(b.closest('.ap-form')); if (!v.t) { b.closest('.ap-form').querySelector('.ap-in-t').focus(); return; }
+        it = ov(); id = b.getAttribute('data-apsave');
+        if (!id) {   // a task of the team's own
+          var nid = 'c:' + Date.now().toString(36);
+          it[nid] = { c: 1, t: v.t, w: v.w, own: v.own };
+          place(it, nid, APX.add);
+        } else if (id.indexOf('c:') === 0) { it[id] = Object.assign(it[id] || { c: 1 }, { t: v.t, w: v.w, own: v.own });
+        } else {
+          a = find(id); var o = it[id] || {};
+          if (v.t !== a.orig.t) o.t = v.t; else delete o.t;
+          if (v.w !== a.orig.w) o.w = v.w; else delete o.w;
+          if (v.own !== a.orig.own) o.own = v.own; else delete o.own;
+          if (Object.keys(o).length) it[id] = o; else delete it[id];
+        }
+        APX.add = APX.edit = APX.draft = null; planPut(k, it); redraw();
+      } else if (b.id === 'ap-reset') {
+        if (!confirm('Drop every edit to the ' + dispClient(parts(k).client) + ' ' + parts(k).mkt.toUpperCase() + ' plan and go back to the plan the audit reads?')) return;
+        APX.add = APX.edit = APX.draft = null; planPut(k, {}); redraw();
+      }
+    };
+    t.oninput = function (e) {
+      var f = e.target.closest && e.target.closest('.ap-form'); if (!f) return;
+      APX.draft = { key: APX.edit || 'add', v: formVals(f) };
+    };
+    t.onkeydown = function (e) { if (e.key === 'Escape' && (APX.edit || APX.add != null)) { APX.add = APX.edit = APX.draft = null; redraw(); } };
+    // drag: a card onto a month (or between two cards in it)
+    t.ondragstart = function (e) {
+      var c = e.target.closest && e.target.closest('.ap-dr'); if (!c) return;
+      APX.drag = c.getAttribute('data-apid'); c.classList.add('ap-drag');
+      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', APX.drag); } catch (x) {}
+    };
+    t.ondragend = function () { APX.drag = null; Array.prototype.forEach.call(t.querySelectorAll('.ap-drag,.ap-over'), function (el) { el.classList.remove('ap-drag', 'ap-over'); }); };
+    var spot = function (lane, y) {
+      var cards = Array.prototype.filter.call(lane.querySelectorAll('.ap-dr'), function (c) { return c.getAttribute('data-apid') !== APX.drag; });
+      for (var i = 0; i < cards.length; i++) { var r = cards[i].getBoundingClientRect(); if (y < r.top + r.height / 2) return i; }
+      return cards.length;
+    };
+    t.ondragover = function (e) {
+      var lane = APX.drag && e.target.closest && e.target.closest('.ap-lane'); if (!lane) return;
+      e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (x) {}
+      Array.prototype.forEach.call(t.querySelectorAll('.ap-over'), function (el) { if (el !== lane) el.classList.remove('ap-over'); });
+      lane.classList.add('ap-over');
+    };
+    t.ondrop = function (e) {
+      var lane = APX.drag && e.target.closest && e.target.closest('.ap-lane'); if (!lane) return;
+      e.preventDefault();
+      var id = APX.drag, it = ov(); APX.drag = null;
+      place(it, id, Number(lane.getAttribute('data-apm')), spot(lane, e.clientY));
+      planPut(k, it); redraw();
+    };
   }
   /* ---------------- THE CATALOGUE'S MODULES, AT THE END OF THE ⬇ HTML (Ray, 7 Oct 2026: "within Golden Score record, at
      bottom, pull in modules dashboard from Catalogue (module) also, and Leave AM to actually select which module of the
@@ -5769,6 +6006,7 @@ window.addEventListener('load',restore);
      '.tfold', '#tf-all', '.tf-sum',
      /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
         weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
+     '#ap-tier',   /* the AM's editable action-plan board — the client copy is #print-plan */
      /* the live Catalogue picker card (its frame points at the FCC) — the picked modules travel as #print-catx */
      '#catx',
      '.pillar .pf2', '.heat-card', '#rec-tier'].forEach(function (sel) {

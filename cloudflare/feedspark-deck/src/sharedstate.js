@@ -88,6 +88,11 @@ export const STATE_NS = {
   // module should be saved for each individual brand"). Which Catalogue cards close a client's report is a choice
   // about that ACCOUNT's report, so the team reads the same set.  client -> {picks:[{k,l}], at}
   grcatx:      'self',
+  // A MARKET'S ACTION PLAN, AS THE TEAM EDITED IT (Ray, 14 Oct 2026: "surface the action plan in the golden record
+  // module and make each tasks editable/ movable on each month as well"). The audit writes the plan; the AM rewords
+  // a task, moves it to another month, takes it out or adds one — and the client's ⬇ PDF / ⬇ HTML close on that
+  // plan, so it is the account's plan, not one screen's.  "<client>|<mkt>" -> {it:{id:{m,i,t,w,own,del,c}}, at}
+  grplan:      'key',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }
