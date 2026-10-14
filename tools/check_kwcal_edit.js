@@ -145,7 +145,51 @@ const INIT = "window.__puts=[];window.fetch=function(url,opt){var u=String(url);
   await page.click('#add'); await page.waitForTimeout(600);
   ok('cancelling the date creates nothing', (await page.$$('.rc[data-kw]')).length === mid);
 
-  console.log('\n9) the edits are saved, not only drawn');
+  console.log('\n9) the meta fits the card — measured, at two real widths');
+  // Ray, 14 Oct 2026: "ensure text fits well on each theme pls - too clutterd atm". The card's
+  // meta had grown to five items on one middot run, which wraps mid-run in a 250px column and
+  // reads as a paragraph of grey. Measured, not eyeballed: a .rd line taller than one line-height
+  // has wrapped.
+  for (const w of [1440, 1100]) {
+    await page.setViewportSize({ width: w, height: 1100 });
+    await page.waitForTimeout(350);
+    const m = await page.$$eval('.rc[data-kw]', (n) => n.map((c) => ({
+      t: c.querySelector('.rt').textContent.replace(/[×⛓]/g, '').trim(),
+      lines: [...c.querySelectorAll('.rd-l')].map((el) => el.getClientRects().length),
+      meta: (() => { const el = c.querySelector('.rd'); return Math.round(el.offsetHeight / parseFloat(getComputedStyle(el).lineHeight)); })(),
+      over: c.scrollWidth > c.clientWidth + 1
+    })));
+    ok(w + 'px — each half of the meta lays out on exactly one line',
+      m.length > 0 && m.every((x) => x.lines.length === 2 && x.lines.every((n) => n === 1)),
+      m.filter((x) => x.lines.some((n) => n !== 1)).slice(0, 3));
+    ok(w + 'px — …and the two sit on their own rows, never run together',
+      m.every((x) => x.meta === 2), m.filter((x) => x.meta !== 2).slice(0, 3));
+    ok(w + 'px — no card overflows its column sideways', m.every((x) => !x.over));
+  }
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.waitForTimeout(300);
+
+  console.log('\n10) the client PDF is dated by the LIVE date');
+  // Ray, 14 Oct 2026: "PDF to show dates by Live Date pls". It plotted schedDate — the day the
+  // BRIEF is due — under a legend reading "each date is when that optimisation goes live": two
+  // statements about one number, and the wrong one is what a client reads. x_two goes live
+  // 7 Dec and briefs 16 Nov, so the two dates fall in different months and a grid built on the
+  // wrong one lands in the wrong month entirely.
+  const pdf = await page.$eval('#pdf-doc', (n) => {
+    const months = [...n.querySelectorAll('.pd-mh b')].map((m) => m.textContent.trim());
+    const ag = [...n.querySelectorAll('.pd-ag')].map((r) => ({
+      d: (r.querySelector('.ad') || {}).textContent, n: (r.querySelector('.an') || {}).textContent,
+      mon: (r.closest('.pd-m').querySelector('.pd-mh b') || {}).textContent }));
+    return { months, ag, legend: (n.querySelector('.pd-legend .ln') || {}).textContent || '' };
+  });
+  const row = pdf.ag.find((r) => /Winter intent/.test(r.n || ''));
+  ok('the agenda dates a moment by the day it goes live, not the day it briefs',
+    !!row && String(row.d).trim() === '7', row);
+  ok('…so it prints under the month it goes live in',
+    !!row && String(row.mon).trim() === 'December 2026', row && row.mon);
+  ok('and the legend says exactly that', /goes .?live/i.test(pdf.legend) && /briefed 21 days earlier/i.test(pdf.legend), pdf.legend.slice(0, 120));
+
+  console.log(`\n11) the edits are saved, not only drawn`);
   await page.waitForTimeout(1600);
   const puts = await page.evaluate(() => window.__puts.slice());
   const last = puts.length ? JSON.parse(puts[puts.length - 1]) : null;
