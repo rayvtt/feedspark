@@ -294,6 +294,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: one project plan, two brands (Monsoon + Accessorize on the board)"
   NODE_PATH=$(npm root -g) node tools/check_planbrand.js || {
     echo "✗ plan-brand tripwire failed — a shared workbook must show each brand its own work, say when a row is one brand's only, and name the brand on every plan write"; exit 1; }
+  echo "── validating: the Workflow board opens without blocking the tab"
+  NODE_PATH=$(npm root -g) node tools/check_wfboot.js || {
+    echo "✗ Workflow boot tripwire failed — the board must open inside its blocking budget, paint a page of rows while still naming the real total, and keep the brand filter across a reload"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }

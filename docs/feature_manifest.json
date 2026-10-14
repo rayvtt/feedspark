@@ -15625,6 +15625,48 @@
       "pr": 0
     },
     {
+      "name": "Workflow boot: the board paints a page of rows, not the whole book",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!IT_SHOWALL && f.length>IT_CAP){ capped=f.length-IT_CAP; f=f.slice(0,IT_CAP); }",
+      "pr": 0
+    },
+    {
+      "name": "Workflow boot: the count beside the search still names every task, not the painted ones",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "n.textContent=fAll.length+' task'",
+      "pr": 0
+    },
+    {
+      "name": "Workflow boot: the task boxes are measured once per frame, not once per render",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function tkClipSoon(){ if(_tkF)return;",
+      "pr": 0
+    },
+    {
+      "name": "Workflow boot: tkClip reads every box before it writes any title",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "for(i=0;i<W.length;i++)cut.push(W[i].scrollHeight>W[i].clientHeight+1);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow boot: one reusable date formatter, not one per row",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "return FMT[k]||(FMT[k]=new Intl.DateTimeFormat('en-GB',o));",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the per-row brand chip is gone from Intake, the fact rides the source cell's tooltip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "(t.only?(' title=\"Marked for '+esc(t.only)+' only in the shared project plan",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a remembered brand filter is not pruned before its rows arrive",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "itState.clients=itState.clients.filter(function(c){ return set[c]||!PLAN_SEEN[c]; });",
+      "pr": 0
+    },
+    {
       "name": "Test Lab: Auction Insights read off the report's own figures, never re-derived",
       "file": "cloudflare/feedspark-deck/src/testlab.js",
       "pattern": "export function parseAuction(rows) {",

@@ -69,8 +69,14 @@ ok(/#itbl tbody tr\{height:calc\(2 \* 1\.35em \+ 17px\)\}/.test(html),
 ok(!/^\s*\.itbl tbody tr\{height:/m.test(html),
   'scoped to #itbl — the Brief ledger and the tests table share the .itbl class and Ray asked for the Intake');
 ok(/function tkClip\(\)/.test(html), 'tkClip() exists');
-ok(/scrollHeight>w\.clientHeight/.test(html),
+ok(/scrollHeight>W\[i\]\.clientHeight/.test(html),
   'and it decides by MEASURING the box, never by a character count — where a task is cut moves with the window');
+// 14 Oct 2026: it read a box, wrote its title, read the next — and on a 967-row board that was the
+// heaviest thing the page did. Every box is still measured; the reads just all happen first.
+ok(/for\(i=0;i<W\.length;i\+\+\)cut\.push\(/.test(html) && /for\(i=0;i<W\.length;i\+\+\)\{ var w=W\[i\];/.test(html),
+  'reading every box before writing any title — one layout, not one per row');
+ok(/function tkClipSoon\(\)/.test(html) && /\n    tkClipSoon\(\);/.test(html),
+  'and a render asks for ONE reading per frame, not one per render');
 ok(/tkClip\(\);/.test(html) && /addEventListener\('resize'[\s\S]{0,120}?tkClip/.test(html),
   'it runs on every render and again when the window changes');
 
