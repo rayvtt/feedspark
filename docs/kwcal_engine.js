@@ -39,6 +39,19 @@
   function schedDate(e){ var d=new Date(e.date+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-LEAD_DAYS); return d; }
   function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
   function bLbl(e){ var d=schedDate(e); return d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
+  /* A TICKET CARRIES ITS OWN DUE DATE (Ray, 15 Oct 2026: "when writting brief - changes due date
+     is not reflected btw - this ticket should be 1610 instead of the default 2610"). The composer
+     proposes a date off the moment and the AM changes it; that date is what reaches ASPL in the
+     subject's ibfdue token and what the Intake row then shows — so a briefed row that prints the
+     moment's live date is showing the figure the AM overrode. Workflow stores it DD/MM/YYYY. */
+  function dueIso(b){ var m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String((b&&b.due)||'').trim());
+    if(!m)return ''; var d=+m[1], mo=+m[2], y=+m[3];
+    if(mo<1||mo>12||d<1||d>31)return '';                       // a day the calendar does not have
+    var t=new Date(Date.UTC(y,mo-1,d,12));
+    if(t.getUTCDate()!==d||t.getUTCMonth()!==mo-1)return '';    // 31/02 is not a date, never rolled
+    return t.toISOString().slice(0,10); }
+  function dueLbl(iso){ if(!iso)return ''; var d=new Date(iso+'T12:00:00Z');
+    return d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
 
   /* ---- the store. A record is STORE[brand] = {events:[…], ptidx:{mkt:{map,__total,sat}}}. ---- */
   function recOf(store,brand){ return (store&&store[brand])||{}; }
@@ -265,6 +278,7 @@
         rows.push({ client:brand, id:e.id, name:e.name, mkt:evMkt(e,opts.mkt||'gb'),
           live:e.date, liveLbl:dLbl(e), briefBy:schedDate(e).toISOString().slice(0,10), briefLbl:bLbl(e),
           ticket:b.id, task:b.task||'', by:b.by||'', how:hit.how,
+          due:dueIso(b), dueLbl:dueLbl(dueIso(b)),   // what the AM set; '' when the ticket carries none
           stage:st, court:COURT[st]||'', order:ord<0?STAGE_ORDER.length:ord,
           done:st==='done'||st==='confirmed', terms:(e.terms||[]).slice() });
       });
@@ -280,6 +294,6 @@
     evsOf:evsOf, ptidxFor:ptidxFor, evMkt:evMkt, ptsOf:ptsOf, txOf:txOf, cndOf:cndOf,
     hasScope:hasScope, volOf:volOf, kwHours:kwHours, kwTask:kwTask, briefPayload:briefPayload,
     taskWords:taskWords, sigWords:sigWords, nameScore:nameScore, isKwTicket:isKwTicket,
-    tieBuild:tieBuild, dueList:dueList, briefedList:briefedList,
+    tieBuild:tieBuild, dueList:dueList, briefedList:briefedList, dueIso:dueIso, dueLbl:dueLbl,
     COURT:COURT, STAGE_ORDER:STAGE_ORDER };
 }));

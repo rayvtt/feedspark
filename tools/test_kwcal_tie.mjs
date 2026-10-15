@@ -759,6 +759,27 @@ ROSTER = null;
   is('a client filter narrows it the same way',
     KWE.briefedList(bstore, bbriefs, { clients: ['Nobody'] }).length, 0);
 
+  /* ---- A TICKET'S OWN DUE DATE (Ray, 15 Oct 2026: "when writting brief - changes due date is
+     not reflected btw - this ticket should be 1610 instead of the default 2610"). ---- */
+  is('a ticket’s due date is read off the record the composer writes (DD/MM/YYYY)',
+    KWE.dueIso({ due: '16/10/2026' }), '2026-10-16');
+  is('…and printed the way the band prints a date', KWE.dueLbl('2026-10-16'), '16 Oct');
+  is('a ticket with no due date reads as none, never as today', KWE.dueIso({}), '');
+  is('…and a day the calendar does not have is refused, never rolled into another real day',
+    [KWE.dueIso({ due: '31/02/2026' }), KWE.dueIso({ due: '20/11/26' }), KWE.dueIso({ due: 'next week' })],
+    ['', '', '']);
+  {
+    const dstore = { Acme: { events: [{ id: 'd1', name: 'Vans x SZA', date: '2026-10-26' }] } };
+    const row = KWE.briefedList(dstore,
+      { z: { id: 'SCH-1', client: 'Acme', kw: 'd1', due: '16/10/2026', status: 'intake' } }, {})[0];
+    is('the row carries the date the AM set, not the moment’s own', row.dueLbl, '16 Oct');
+    is('…and the moment’s live date is still there beside it', row.liveLbl, '26 Oct');
+    is('a ticket with no due date of its own carries none, so the row can fall back honestly',
+      KWE.briefedList(dstore, { z: { id: 'S', client: 'Acme', kw: 'd1', status: 'intake' } })[0].dueLbl, '');
+  }
+  is('the band prints the ticket’s date and says so', /r\.dueLbl\s*\n?\s*\?\s*'Due '/.test(wf)
+    && /esc\(r\.dueLbl\|\|r\.liveLbl\)/.test(wf), true);
+
   // and the band must RENDER it, with Workflow's own stage words and no second → Brief
   is('Workflow’s band reads the briefed half', /briefedList\(STORE/.test(wf), true);
   is('…in Workflow’s own stage vocabulary, not a copy', /window\.FCCStages/.test(wf), true);

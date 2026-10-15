@@ -15793,6 +15793,26 @@
       "pattern": "the Brief button is Intake"
     },
     {
+      "name": "KWCal band: the button column lines up with Intake's (Ray, 15 Oct 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "#kwd-band{--bandpad:"
+    },
+    {
+      "name": "KWCal band: that alignment is measured against Intake's own column",
+      "file": "tools/check_kwdue.js",
+      "pattern": "with INTAKE"
+    },
+    {
+      "name": "KWCal band: a briefed row shows the ticket's own due date, not the moment's",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function dueIso"
+    },
+    {
+      "name": "KWCal band: the due date is rendered and read",
+      "file": "tools/check_kwdue.js",
+      "pattern": "a briefed row shows the date the AM set"
+    },
+    {
       "name": "KWCal band: the two halves partition the moments",
       "file": "tools/test_kwcal_tie.mjs",
       "pattern": "no moment is in both lists"
@@ -15805,7 +15825,7 @@
     {
       "name": "Golden ✎ Edit report: the all-brands template applies in both downloads",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "applyTextEdits(doc, rpEdits(k), rpTpl())",
+      "pattern": "applyTextEdits(doc, rpEdits(k), rpTpl()",
       "pr": 0
     },
     {
@@ -15824,6 +15844,24 @@
       "name": "Shared state: grtextall is house-wide",
       "file": "cloudflare/feedspark-deck/src/sharedstate.js",
       "pattern": "grtextall:   null",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: a template line carries no figure, no other brand, no lone word",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function rpTplWhy(o, t)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: template lines stored with {brand}/{market} and filled per report",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "u.el.textContent = rpFill(words[g], ctx)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: ⚠ Tidy template brings set-aside lines home",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "$('rped-tidy').onclick",
       "pr": 0
     },
     {

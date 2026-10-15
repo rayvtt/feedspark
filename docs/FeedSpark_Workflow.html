@@ -71,8 +71,23 @@ window.addEventListener('load',restore);
   .sw-band .sw-more{font-size:12px;font-weight:800;color:var(--navy);text-decoration:none;white-space:nowrap;margin-left:auto}
   /* the to-brief list: one line per moment — when it is due, what it is, what it covers, and
      the one action. Two lines on a phone, never a horizontal scroll. */
-  .kwd-rows{display:flex;flex-direction:column;gap:1px}
-  .kwd-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;
+  /* THE BUTTON COLUMN LINES UP WITH INTAKE'S (Ray, 15 Oct 2026: "why no vertically straight ?" —
+     a red stroke down the right edge, the band's Brief buttons 18px inside the Brief column of the
+     table directly above). The two are built differently: the Intake table is its OWN edge-to-edge
+     card (.it-scroll) whose last cell insets its button by 8px, while this band is a .panel with
+     15px of padding, so its rows end 15px short and the button lands 18px left of the column a
+     reader is comparing it against. The row STRIP therefore bleeds back out to the panel's own
+     inner edge and insets its button by the table cell's 8px — one variable, so a change to the
+     band's padding can never knock the column out again — while the left padding adds that
+     padding back so every word on a row stays exactly where it was. */
+  /* ONE number: the band's own side padding AND the bleed that undoes it. Set on the id, because
+     .panel's 18px is declared later than .sw-band's 15px and wins — reading 15 here would have
+     left the column 3px out, which is exactly the kind of near-miss this rule exists to stop. */
+  #kwd-band{--bandpad:18px;padding-left:var(--bandpad);padding-right:var(--bandpad)}
+  .kwd-rows{display:flex;flex-direction:column;gap:1px;
+    margin-left:calc(var(--bandpad) * -1);margin-right:calc(var(--bandpad) * -1)}
+  .kwd-row{display:flex;align-items:center;gap:10px;border-radius:6px;
+    padding:6px 8px 6px calc(var(--bandpad) + 8px);
     font-size:12.5px;font-weight:700;color:var(--ink)}
   .kwd-row:nth-child(odd){background:var(--wash)}
   .kwd-when{flex:none;width:92px;font-weight:900;font-variant-numeric:tabular-nums}
@@ -84,6 +99,8 @@ window.addEventListener('load',restore);
   .kwd-sc{flex:none;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   /* the band's Brief button IS Intake's (Ray, 15 Oct 2026: "can brief button have the same design
      as intake") — ONE declaration for both, so the two can never drift apart again */
+  .kwd-go,.kwd-tk{min-width:72px}   /* one button column: 'Brief' and 'Ticket ↗' occupy the same
+     width, so the scope figure and the court beside them start on one line down the band too */
   .kwd-go{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;
     justify-content:center;font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;
     border-radius:100px;border:1px solid var(--orange);background:var(--paper);
@@ -7648,7 +7665,14 @@ aside.ck[hidden]{display:none}
       var sm=SM[r.stage]||{}, lbl=sm.label||r.stage, col=sm.col||'#8a94a0';
       var themes=(r.terms||[]).slice(0,3).join(', ');
       return '<div class="kwd-row kwd-b">'
-        +'<span class="kwd-when" title="'+esc('Brief was due '+r.briefLbl+' \u2014 it goes live '+r.liveLbl)+'">'+esc(r.liveLbl)+'</span>'
+        // THE TICKET'S OWN DUE DATE, not the moment's (Ray, 15 Oct 2026). The composer proposes
+        // a date and the AM changes it — that is the date on the Intake row and in the ASPL
+        // subject, so printing the calendar's live date here showed the figure he overrode.
+        // A ticket carrying no due date of its own still reads the moment's, and says which.
+        +'<span class="kwd-when" title="'+esc(r.dueLbl
+            ? 'Due '+r.dueLbl+' \u2014 the date on the ticket \u00b7 the moment goes live '+r.liveLbl
+            : 'No due date on the ticket \u2014 showing when the moment goes live, '+r.liveLbl)
+          +'">'+esc(r.dueLbl||r.liveLbl)+'</span>'
         +'<span class="kwd-who" title="'+esc(r.client)+'">'+esc(r.client)+(r.mkt&&r.mkt!=='gb'?' \u00b7 '+esc(r.mkt.toUpperCase()):'')+'</span>'
         +'<span class="kwd-nm" title="'+esc(r.name+(themes?' \u2014 '+themes:''))+'">'+esc(r.name)
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
