@@ -267,6 +267,65 @@ const QUALITY = {
   ok('↺ Reset template empties the house-wide store', tp.length === 0, tp);
   await page.click('#rped-x');
 
+  console.log('-- a template made from one brand\'s edits never carries that brand, a figure or a lone word (Ray, 15 Oct 2026)');
+  const goBrand = async (b) => {
+    await page.evaluate(() => { localStorage.removeItem('gr-textall-b'); localStorage.removeItem('gr-text-b'); });
+    await page.goto(PAGE.replace('Reiss%7Cgb', b + '%7Cgb')); await page.reload();
+    await page.waitForSelector('#det-edit', { timeout: 15000 }); await page.waitForTimeout(700);
+  };
+  const plain = (h) => h.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  await goBrand('Reiss');
+  f = await openEd();
+  const rv = await f.evaluate(() => {
+    const t = (e) => e.textContent.trim();
+    const u = Array.from(document.querySelectorAll('[data-ek]'));
+    return { fig: t(u.find((e) => e instanceof SVGElement && /^\d+(\.\d+)?$/.test(t(e))) || { textContent: '' }),
+      lead: t(document.querySelector('#print-plan .pm-sub')) };
+  });
+  await page.click('#rped-x');
+  // the store as the first cut of the template wrote it when Monsoon's edits were promoted: literal lines, one of them good
+  const OLD = { a1: { o: 'Required', t: 'Monsoon label', at: 1 }, a2: { o: rv.fig, t: '77.7', at: 1 },
+    a3: { o: 'Action plan — Monsoon GB', t: 'Monsoon GB — our plan', at: 1 }, a4: { o: rv.lead, t: 'Monsoon wrote this lead', at: 1 },
+    a5: { o: 'Golden Record audit · Google Shopping', t: 'Feed health review · Google Shopping', at: 1 } };
+  await page.evaluate((m) => { window.__tpl = m; sessionStorage.setItem('__tplstore', JSON.stringify(m)); }, OLD);
+  await goBrand('Reiss');
+  html = plain(await grabHtml());
+  ok('a stored line naming another brand is never applied (Reiss\'s file names no Monsoon)', !/Monsoon/.test(html), (html.match(/.{30}Monsoon.{30}/) || [])[0]);
+  ok('…nor a figure (Reiss keeps its own ' + rv.fig + ')', !!rv.fig && html.includes(rv.fig) && !html.includes('77.7'));
+  ok('…nor a lone word', !html.includes('Monsoon label'));
+  ok('…while a good line still serves every brand', html.includes('Feed health review · Google Shopping'));
+  await goBrand('Monsoon');
+  f = await openEd();
+  const tidyOn = await page.evaluate(() => !document.getElementById('rped-tidy').hidden);
+  const msgT = await page.textContent('#rped-msg');
+  ok('the editor names the lines set aside and offers to tidy them', tidyOn && /4 template lines set aside/.test(msgT), msgT);
+  page.once('dialog', (d) => d.accept());
+  await page.click('#rped-tidy');
+  await page.waitForTimeout(1500);
+  tp = await page.evaluate(() => Object.values(window.__tpl).map((x) => x.t));
+  let mon = await page.evaluate(() => ((window.__store['Monsoon|gb'] || {}).e || []).map((x) => x.t));
+  ok('tidy leaves only the line that serves every brand in the template', tp.length === 1 && tp[0] === 'Feed health review · Google Shopping', tp);
+  ok('…and keeps the Monsoon lines found in this report as Monsoon\'s own edits', mon.includes('Monsoon GB — our plan') && mon.includes('Monsoon label'), mon);
+  console.log('-- promoting now generalises the brand and keeps the rest home');
+  f = await frame();
+  await f.waitForSelector('[data-ek]', { timeout: 15000, state: 'attached' });
+  page.once('dialog', (d) => d.accept());
+  await page.click('#rped-promote');
+  await page.waitForTimeout(1500);
+  tp = await page.evaluate(() => Object.values(window.__tpl));
+  mon = await page.evaluate(() => ((window.__store['Monsoon|gb'] || {}).e || []).map((x) => x.t));
+  ok('the brand-named heading goes in as {brand} {market}', tp.some((x) => x.o === 'Action plan — {brand} {market}' && x.t === '{brand} {market} — our plan' && x.b === 'Monsoon'), tp);
+  ok('…the lone word stays on Monsoon\'s report', mon.includes('Monsoon label') && !tp.some((x) => /Monsoon/.test(x.t + x.o)), { mon, tp });
+  await page.click('#rped-x');
+  await goBrand('Superdry');
+  html = plain(await grabHtml());
+  ok('Superdry\'s file reads the heading as its own — "Superdry GB — our plan" — and never Monsoon', html.includes('Superdry GB — our plan') && !/Monsoon/.test(html), (html.match(/.{20}our plan.{10}/) || [])[0]);
+  page.once('dialog', (d) => d.accept());
+  f = await openEd();
+  await page.click('#rped-treset');
+  await page.waitForTimeout(700);
+  await page.click('#rped-x');
+
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
   console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden client report: edited in place, saved for the team, carried by ⬇ HTML and ⬇ PDF');
