@@ -122,6 +122,16 @@ const QUALITY = {
   });
   ok('every piece of text in the report is editable — words beside layout and inside charts included', cov.all > 50 && cov.n === 0, cov);
   ok('…the action plan is in it, as the downloads carry it', /Action plan — Reiss GB/.test(st0.plan) && st0.task.length > 5, st0);
+  // opening the editor must not flatten the document: a unit holding a <b>, a <br> or a nested span keeps it (Ray, 15 Oct 2026:
+  // "template broke when try to edit" — every unit was written back as plain text, so the tier ladder read "TIER 1Foundational< 40")
+  const shape = await page.evaluate(() => {
+    const f = document.getElementById('rped-f'), fd = f.contentDocument;
+    const src = new DOMParser().parseFromString(f.srcdoc, 'text/html');
+    const inFrame = fd.body.querySelectorAll('*').length - fd.body.querySelectorAll('[data-tw]').length;
+    const nested = Array.from(fd.querySelectorAll('[data-ek]')).filter((e) => e.children.length && !e.children[0].hasAttribute('data-tw')).length;
+    return { src: src.body.querySelectorAll('*').length, inFrame, nested };
+  });
+  ok('opening the editor keeps every element of the document — nothing flattened to plain text', shape.src > 100 && shape.inFrame === shape.src && shape.nested > 0, shape);
 
   console.log('-- reword a heading and a task');
   await f.evaluate(() => { document.querySelector('#print-plan h3').setAttribute('data-t', '1'); document.querySelector('#print-plan .ap-t').setAttribute('data-t', '2'); });

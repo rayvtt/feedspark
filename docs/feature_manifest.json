@@ -15965,6 +15965,7 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
       "pr": 0
-    }
+    },
+    {"name": "Golden ✎ Edit report never flattens a unit's markup on open", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "el.__h = el.innerHTML", "pr": 0}
   ]
 }
