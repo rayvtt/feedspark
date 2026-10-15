@@ -111,10 +111,11 @@ honest no: its filenames are opaque `upload<19 digits>` hashes, over a hundred n
 and `learnable:false` already refuses it rather than offering a vocabulary nobody could tag.
 
 **Refused lane 1 — the image FIELD is not the grouping.** "Slot 5 is always the lifestyle shot"
-is the shortcut everyone reaches for, and it is false here: the dominance of one shot type within
-one image field measured 0%, 0%, 75% and 100% across the estate, and Superdry's two fields are
-*pixel-identical* on the products that carry both. So a field is **reported on**, never used to
-decide a type. Recorded in the engine's own header and pinned by the harness, so a later session
+is the shortcut everyone reaches for, and it is false here: the share of images sitting in a field
+where one code holds 90%+ measured **0% on Monsoon, 0% on Accessorize, 75% on Schuh** — and where
+it *is* clean (Reiss 100%) the code already names it, so the field adds nothing. On Superdry, the
+one feed that needs a free grouping, its two fields are **pixel-identical** (light background,
+fill ~99%, sharpness ~1,120 on both). So a field is **reported on**, never used to decide a type. Recorded in the engine's own header and pinned by the harness, so a later session
 cannot quietly re-add it.
 
 **Refused lane 2 — pixels do not name a shot type.** On these catalogues every main image reads
@@ -136,13 +137,13 @@ was reached (`LANES`):
 A model-named code that the audit found **mixed** has its confidence capped and is never reported
 as named.
 
-### The audit — does a code's own pictures agree?
+### The audit — do a code's own pictures agree?
 
 The gap in "one tag over four thousand images" was that nothing ever checked the images under a
 code actually look alike. ⚡ **Audit the shot codes** samples up to eight of each code's own
 pictures through `/api/catalog/img` (same origin, so a canvas can read them), runs each through
 the Image-pixels engine and reduces it to a signature — background / fill band / busyness band
-(`sigOf`). `codeAudit` then returns one of four states:
+(`sigOf`). `codeAudit` then returns one of three states:
 
 - **consistent** — ≥75% of the sample shares one signature and ≥80% one background
 - **mixed** — it does not, with the split named and the worst offender linked
