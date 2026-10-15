@@ -16151,6 +16151,10 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "node tools/check_confirmdone.js",
       "pr": 0
-    }
+    },
+    {"name": "Headlines: Space Grotesk on every h1–h3 of every app page", "file": "docs/headfont_widget.html", "pattern": "h1,h2,h3{font-family:var(--font-head)", "pr": 0},
+    {"name": "Headlines: the layer is injected on every app page", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "html = inject(html, HEADFONTW + '\\n' + INSTR", "pr": 0},
+    {"name": "Headlines: --font-head is a design token in /design/fcc.css", "file": "docs/FeedSpark_Design.html", "pattern": "--font-head:'Space Grotesk'", "pr": 0},
+    {"name": "Headlines: the Golden PDF waits for the headline face", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "16px \"Space Grotesk\"", "pr": 0}
   ]
 }

@@ -239,6 +239,7 @@ import HOURSW from "../../../docs/hours_widget.html";
 // Monsoon even after refresh … apply this methodology across everything else") — replays every
 // page-level picker on this device; injected on app pages only, never decks
 import KEEPW from "../../../docs/keep_widget.html";
+import HEADFONTW from "../../../docs/headfont_widget.html";
 // the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
 import SHIPPEDW from "../../../docs/shipped_widget.html";
@@ -4025,7 +4026,7 @@ async function route(request, env, ctx) {
             { status: 403, headers: { 'content-type': 'text/html;charset=utf-8', ...CORS } });
         }
         const modList = acc.owner ? null : (acc.modules || null);
-        html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
+        html = inject(html, HEADFONTW + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
           + '\n' + NAVROWW + '\n' + HOURSW + '\n' + KEEPW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
