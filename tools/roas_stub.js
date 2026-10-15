@@ -14,12 +14,14 @@ function total(cmpid, cur, sp, rv, cv, ck, im, sk, zb, band) {
 function build() {
   const DAYS = 10, day0 = Date.UTC(2026, 8, 14);
   const mk = (cmpid, client, market, cur, sp, rv, cv, ck, im, sk, zb, band, seed) => {
-    const w = (f) => total(cmpid, cur, +(sp * f).toFixed(2), +(rv * f).toFixed(2), +(cv * f).toFixed(2), Math.round(ck * f), Math.round(im * f), sk, zb, band);
-    const wins = { w7: w(0.25), w30: w(1), w90: w(2.8) };
+    // the 7-day window runs a little hotter than the 90-day one (rf) so the short-run-vs-long-run story has a gap to read
+    const w = (f, rf) => total(cmpid, cur, +(sp * f).toFixed(2), +(rv * f * (rf || 1)).toFixed(2), +(cv * f).toFixed(2), Math.round(ck * f), Math.round(im * f), sk, zb, band);
+    const wins = { w7: w(0.25, 1.08), w30: w(1), w90: w(2.8, 0.95) };
     const spark = [];
     for (let i = 0; i < DAYS; i++) {
-      const wob = 1 + 0.2 * Math.sin((i + seed) / 3);
-      const pt = (f) => [+(sp * f * wob).toFixed(2), +(rv * f * wob).toFixed(2), +(cv * f * wob).toFixed(2), Math.round(ck * f * wob), Math.round(im * f * wob), sk, zb];
+      // spend and revenue wobble on DIFFERENT curves, so the daily ROAS reading moves (momentum + consistency have something to read)
+      const wob = 1 + 0.2 * Math.sin((i + seed) / 3), wsp = 1 + 0.1 * Math.cos((i + seed) / 2);
+      const pt = (f) => [+(sp * f * wsp).toFixed(2), +(rv * f * wob).toFixed(2), +(cv * f * wob).toFixed(2), Math.round(ck * f * wob), Math.round(im * f * wob), sk, zb];
       spark.push({ d: new Date(day0 + i * 86400000).toISOString().slice(0, 10), cur, w7: pt(0.25), w30: pt(1), w90: pt(2.8) });
     }
     return Object.assign({ client, market, cmpid, updated: day0 + (DAYS - 1) * 86400000, day: spark[DAYS - 1].d, cur }, wins.w30, wins, { spark });

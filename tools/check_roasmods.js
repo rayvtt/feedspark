@@ -95,16 +95,17 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
 (async () => {
   const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
-  console.log('· eight modules, one card size, even rows');
+  console.log('· eighteen modules, one card size, every row full');
   {
     const { ctx, p, errs } = await open(browser);
     const b = await boxes(p);
-    ok('eight modules on the page, in the default order', b.map((x) => x.k).join(',') === 'trend,movers,bands,split,ladder,cost,zombie,fresh', b.map((x) => x.k));
+    ok('eighteen modules on the page, in the default order — the eight, then the ten brand-on-brand stories', b.map((x) => x.k).join(',') === 'trend,movers,bands,split,ladder,cost,zombie,fresh,bandmix,funnel,concentration,scale,momentum,horizon,breakeven,attention,persku,steady', b.map((x) => x.k));
     const hs = new Set(b.map((x) => x.h));
     ok('every card is the same height', hs.size === 1, [...hs]);
     const rows = {}; b.forEach((x) => { (rows[x.y] = rows[x.y] || []).push(x); });
     const rs = Object.keys(rows).sort((a, c) => a - c).map((y) => rows[y]);
-    ok('three even rows at 1440px — Trend spans two columns beside Movers, then three and three', rs.length === 3 && rs[0].length === 2 && rs[1].length === 3 && rs[2].length === 3, rs.map((r) => r.map((x) => x.k)));
+    const WIDE = { trend: 2, bandmix: 2, concentration: 2 };
+    ok('seven rows at 1440px, every one of them FULL (three columns of width — a wide card counts two), no hole', rs.length === 7 && rs.every((r) => r.reduce((a, x) => a + (WIDE[x.k] || 1), 0) === 3), rs.map((r) => r.map((x) => x.k)));
     const tr = b.find((x) => x.k === 'trend'), mv = b.find((x) => x.k === 'movers');
     ok('…Trend is two cards wide (its width ≈ two cards + the gap)', Math.abs(tr.w - (2 * mv.w + 14)) <= 2, [tr.w, mv.w]);
     const fit = await p.evaluate(() => { const mb = document.querySelector('#tr-card .mbody').getBoundingClientRect(); const pn = Array.from(document.querySelectorAll('#tr-panels .tr-panel')); const last = pn[pn.length - 1].getBoundingClientRect(); return { n: pn.length, bottom: Math.round(last.bottom), mb: Math.round(mb.bottom) }; });
@@ -152,7 +153,7 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     await p.uncheck('#mods-p [data-mod-on="zombie"]'); await p.waitForTimeout(150);
     let b = await boxes(p);
     ok('an unticked module is not painted', !b.find((x) => x.k === 'zombie').painted, b.find((x) => x.k === 'zombie'));
-    ok('…and the bar says how many are shown', /7 of 8 modules shown/.test(await p.evaluate(() => document.getElementById('mods-s').textContent)));
+    ok('…and the bar says how many are shown', /17 of 18 modules shown/.test(await p.evaluate(() => document.getElementById('mods-s').textContent)));
     await p.click('#mods-p [data-mv="ladder"][data-d="-1"]'); await p.waitForTimeout(150);
     b = await boxes(p);
     const vis = b.filter((x) => x.painted).sort((a, c) => a.y - c.y || a.x - c.x).map((x) => x.k);
@@ -163,11 +164,82 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     ok('the choice survives a reload (this device)', !b.find((x) => x.k === 'zombie').painted && vis2.indexOf('ladder') < vis2.indexOf('split'), vis2);
     await p.click('#mods-b'); await p.waitForTimeout(100); await p.click('#mods-p [data-mreset]'); await p.waitForTimeout(150);
     b = await boxes(p);
-    ok('Reset puts every module back in the default order', b.every((x) => x.painted) && b.slice().sort((a, c) => a.y - c.y || a.x - c.x).map((x) => x.k).join(',') === 'trend,movers,bands,split,ladder,cost,zombie,fresh', b.map((x) => x.k + (x.painted ? '' : '(hidden)')));
+    ok('Reset puts every module back in the default order', b.every((x) => x.painted) && b.slice().sort((a, c) => a.y - c.y || a.x - c.x).map((x) => x.k).join(',') === 'trend,movers,bands,split,ladder,cost,zombie,fresh,bandmix,funnel,concentration,scale,momentum,horizon,breakeven,attention,persku,steady', b.map((x) => x.k + (x.painted ? '' : '(hidden)')));
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
   }
 
+
+  console.log('· brand on brand — ten stories, each against a count made HERE (Ray, 15 Oct 2026)');
+  {
+    // on All brands every group is a BRAND: the £ book has one £ market per brand, so a brand's figure is its market's
+    const fmtP = (n, d) => n.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
+    const fmtM = (n, d) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const G = gbp.map((m) => { const t = m[W]; return { n: m.client, sp: sp(m), rv: rv(m), cv: t.conv, ck: t.clicks, im: t.impr, sk: t.skus, band: t.band, m }; });
+    const TI = G.reduce((a, g) => a + g.im, 0);
+    const { ctx, p, errs } = await open(browser);
+    let r = await rowsOf(p, 'bandmix');
+    ok('Band mix: each brand\'s share of spend in Strong + Steady, and in Losing', G.every((g) => r.some((t) => t.indexOf(g.n) === 0 && t.indexOf((g.band === 'Strong' || g.band === 'Steady' ? '100%' : '0%') + 'Strong + Steady · 0% Losing') >= 0)), r);
+    const segs = await p.evaluate(() => Array.from(document.querySelectorAll('#m-bandmix-b .hb')).map((h) => Array.from(h.querySelectorAll('.stk i')).map((i) => i.className + ':' + i.style.width)));
+    ok('…drawn as ONE stacked bar per brand, a segment per band it carries, in the band\'s own colour', segs.length === G.length && segs.every((x) => x.length === 1 && /^sb-(strong|weak):100(\.00)?%$/.test(x[0])), segs);
+    r = await rowsOf(p, 'funnel');
+    const fun = G.map((g) => ({ n: g.n, cr: g.cv / g.ck * 100, ctr: g.ck / g.im * 100 })).sort((a, b) => b.cr - a.cr);
+    ok('Funnel: conversion rate with CTR beside it, best conversion rate first', fun.every((f, i) => r[i].indexOf(f.n) === 0 && r[i].indexOf(fmtP(f.cr, 2) + 'CTR ' + fmtP(f.ctr, 2)) >= 0), r);
+    r = await rowsOf(p, 'scale');
+    const med = (() => { const v = G.map((g) => g.sp).sort((a, b) => a - b); return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2; })();
+    const blend = TR / TS * 100;
+    const quad = (g) => (g.sp >= med ? 'Big' : 'Small') + ' & ' + (g.rv / g.sp * 100 >= blend ? 'strong' : 'weak');
+    ok('Scale vs return: each brand in its quadrant against the MEDIAN spend and the BLENDED ROAS, biggest spender first', G.slice().sort((a, b) => b.sp - a.sp).every((g, i) => r[i].indexOf(g.n) === 0 && r[i].indexOf(quad(g)) >= 0 && r[i].indexOf(pct1(g.sp / TS * 100) + ' of spend') >= 0), r);
+    ok('…and the legend states both references', await p.evaluate(() => /median £/.test(document.querySelector('#m-scale-b .mleg').textContent) && /blended \d/.test(document.querySelector('#m-scale-b .mleg').textContent)));
+    r = await rowsOf(p, 'breakeven');
+    const be = G.map((g) => ({ n: g.n, be: g.sp / g.rv * 100 })).sort((a, b) => a.be - b.be);
+    ok('Break-even margin: spend ÷ revenue per brand, lowest first', be.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf(fmtP(x.be, 1)) >= 0), r);
+    r = await rowsOf(p, 'attention');
+    const cpm = G.map((g) => ({ n: g.n, cpm: g.sp / g.im * 1000, sim: g.im / TI * 100 })).sort((a, b) => a.cpm - b.cpm);
+    ok('Cost of attention: spend per 1,000 impressions, cheapest first, with the impression share beside it', cpm.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf(fmtM(x.cpm, 2)) >= 0 && r[i].indexOf('impr. ' + pct1(x.sim)) >= 0), r);
+    r = await rowsOf(p, 'persku');
+    const ps = G.map((g) => ({ n: g.n, rps: g.rv / g.sk, sps: g.sp / g.sk })).sort((a, b) => b.rps - a.rps);
+    ok('Per advertised SKU: revenue and spend per SKU that saw traffic, most revenue per SKU first', ps.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf(fmtM(x.rps, 2) + fmtM(x.sps, 2) + ' spent') >= 0), r);
+    ok('…and the foot says the SKUs are those that saw ad traffic, not the catalogue', /not the catalogue/.test(await p.evaluate(() => document.getElementById('m-persku-f').textContent)));
+    r = await rowsOf(p, 'horizon');
+    const hz = G.map((g) => ({ n: g.n, r7: g.m.w7.revenue.n / g.m.w7.spend.n * 100, r90: g.m.w90.revenue.n / g.m.w90.spend.n * 100 })).sort((a, b) => (b.r7 - b.r90) - (a.r7 - a.r90));
+    ok('Short run vs long run: the 7-day ROAS against the 90-day, heating up first — whatever period the page is on', hz.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf('heating up' + fmtP(x.r7, 0) + ' vs ' + fmtP(x.r90, 0)) >= 0), r);
+    // momentum + consistency read the SPARK: the trailing 30-day ROAS as read each day, latest against ≤7 days earlier
+    const roasOf = (pt) => pt[1] / pt[0] * 100;
+    const dayN = (d) => Math.round(Date.parse(d) / 86400000);
+    const mom = G.map((g) => { const sp_ = g.m.spark; const last = sp_[sp_.length - 1]; const tgt = dayN(last.d) - 7; let prev = null; for (const e of sp_) { if (dayN(e.d) <= tgt) prev = e; else break; }
+      const now = roasOf(last[W]), was = roasOf(prev[W]); return { n: g.n, d: (now - was) / Math.abs(was) * 100, now, was }; }).sort((a, b) => b.d - a.d);
+    r = await rowsOf(p, 'momentum');
+    ok('Momentum: ROAS now against the reading 7 days earlier, per brand, rising first', mom.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf((x.d > 0 ? '▲ +' : '▼ −') + fmtP(Math.abs(x.d), 1) + fmtP(x.was, 0) + ' → ' + fmtP(x.now, 0)) >= 0), [r, mom]);
+    const cv = G.map((g) => { const v = g.m.spark.map((e) => roasOf(e[W])); const mean = v.reduce((a, b) => a + b, 0) / v.length; const sd = Math.sqrt(v.reduce((a, b) => a + (b - mean) * (b - mean), 0) / v.length); return { n: g.n, cv: sd / mean * 100, lo: Math.min(...v), hi: Math.max(...v) }; }).sort((a, b) => a.cv - b.cv);
+    r = await rowsOf(p, 'steady');
+    ok('Consistency: the day-to-day swing (sd ÷ mean) of that daily ROAS, steadiest first, the range beside it', cv.every((x, i) => r[i].indexOf(x.n) === 0 && r[i].indexOf('±' + fmtP(x.cv, 1) + 'ROAS ' + fmtP(x.lo, 0) + ' – ' + fmtP(x.hi, 0)) >= 0), [r, cv]);
+    r = await rowsOf(p, 'concentration');
+    ok('Market concentration on a one-market brand: 100% on its one market, ≈1 effective market', r.length === G.length && r.every((t) => /100%GB · ≈1\.0 effective/.test(t)), r);
+
+    console.log('  · a story leads somewhere, and follows the brand once one is picked');
+    await p.click('#m-scale-b .hb'); await p.waitForTimeout(300);
+    const picked = await p.evaluate(() => document.getElementById('brand').value);
+    ok('clicking a brand on a story opens that brand (the biggest spender led the Scale card)', picked === G.slice().sort((a, b) => b.sp - a.sp)[0].n, picked);
+    r = await rowsOf(p, 'funnel');
+    ok('…and every story now compares that brand\'s MARKETS, not brands', r.length === D.book.markets.filter((m) => m.client === picked && m.cur === '£').length && /by market/.test(await p.evaluate(() => document.getElementById('m-funnel-f').textContent)), r);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    // the LONGER book gives Superdry thirteen £ markets: concentration has a spread to read, and a full-read rule to honour
+    const { ctx, p, errs } = await open(browser, { book: BIG });
+    const sd = BIG.markets.filter((m) => m.client === 'Superdry' && m.cur === '£').map((m) => ({ n: m.market, rv: m[W].revenue.n })).sort((a, b) => b.rv - a.rv);
+    const T = sd.reduce((a, m) => a + m.rv, 0), hh = sd.reduce((a, m) => a + (m.rv / T) * (m.rv / T), 0);
+    const r = await rowsOf(p, 'concentration');
+    const row = r.find((t) => t.indexOf('Superdry') === 0);
+    ok('a thirteen-market brand: its biggest market\'s share and the effective market count (1 ÷ Σ share²), counted here', row && row.indexOf(sd.length + ' markets') >= 0 && row.indexOf((Math.round(sd[0].rv / T * 100)) + '%' + sd[0].n + ' · ≈' + (Math.round(1 / hh * 10) / 10).toLocaleString('en-GB', { minimumFractionDigits: 1 }) + ' effective') >= 0, [row, sd[0], 1 / hh]);
+    const segN = await p.evaluate(() => Array.from(document.querySelectorAll('#m-concentration-b .hb')).find((h) => /^Superdry/.test(h.textContent.trim())).querySelectorAll('.stk i').length);
+    ok('…its bar carries six market segments and one for the rest', segN === 7, segN);
+    ok('…and the most concentrated brand leads', r[0].indexOf('Schuh') === 0, r[0]);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
   console.log('· exports — a module as CSV or PNG, the screen as Excel or PDF');
   {
     const { ctx, p, errs } = await open(browser, { book: BIG });
@@ -195,7 +267,7 @@ async function download(p, click) { const [d] = await Promise.all([p.waitForEven
     ok('⬇ Export → Excel saves a workbook', /^roas_all_w30_GBP\.xlsx$/.test(f.name) && f.buf.slice(0, 2).toString() === 'PK', f.name);
     const wb = f.buf.toString('latin1');
     const names = (wb.match(/<sheet name="[^"]+"/g) || []).map((s) => s.slice(13, -1));
-    ok('…a tab each: About, Scorecards, every module shown, the table', JSON.stringify(names) === JSON.stringify(['About', 'Scorecards', 'Trend', 'Movers', 'ROAS bands', 'Spend vs revenue share', 'ROAS by market', 'Cost per conversion', 'Zombie SKUs', 'Data freshness', 'Performance']), names);
+    ok('…a tab each: About, Scorecards, every module shown, the table', JSON.stringify(names) === JSON.stringify(['About', 'Scorecards', 'Trend', 'Movers', 'ROAS bands', 'Spend vs revenue share', 'ROAS by market', 'Cost per conversion', 'Zombie SKUs', 'Data freshness', 'Band mix', 'Funnel', 'Market concentration', 'Scale vs return', 'Momentum', 'Short run vs long run', 'Break-even margin', 'Cost of attention', 'Per advertised SKU', 'Consistency', 'Performance']), names);
     ok('…figures written as typed numbers, not text', /<c r="C2" s="\d+"><v>[\d.]+<\/v><\/c>/.test(wb));
     ok('…the table tab carries its brands', /Superdry/.test(wb) && /Schuh/.test(wb));
 
