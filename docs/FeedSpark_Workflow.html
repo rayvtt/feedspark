@@ -2456,7 +2456,7 @@ aside.ck[hidden]{display:none}
     if(!b.by){ var me=meName(); if(me)b.by=me; }
     if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
-    if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
+    if(o.f.source==='email'){ adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1); b.taskKey=o.f.client+'|'+o.f.task; }
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
     // module deep-links (KWCal/Feed Lab/Pricer) generate task families sharing a prefix ('AI
@@ -2469,7 +2469,8 @@ aside.ck[hidden]{display:none}
     // plan row: the brief IS the task's birth — create the Intake row + Project-Plan write-back,
     // exactly like the email path. adoptIntoPlan self-guards against duplicates, so a brief
     // raised FROM an intake row (lk found) or an edit of an existing brief never double-writes.
-    if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
+    if(!lk && !existing && o.f.source!=='email'){ adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
+      b.taskKey=o.f.client+'|'+o.f.task; }   // the brief IS this row's birth, so it knows its key — the stamp below needs one to find it
     BRIEFS[id]=b; window.__editId=null; persist(); briefDueToRow(b,o.f.dueIso); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
     if(window.__emailIds&&window.__emailIds.length){ decideMany(window.__emailIds,'briefed'); window.__emailIds=null; window.__emailId=null; }
@@ -2497,13 +2498,42 @@ aside.ck[hidden]{display:none}
   // the strength of an absence. And a due that did not MOVE writes nothing, so re-saving a
   // brief never re-sends a sheet write or stacks an undo entry (the prefill means an untouched
   // composer always matches the row).
-  function briefDueToRow(b,dueIso){
-    if(!b||!b.taskKey||!dueIso)return false;
-    var row=null; allIntake().forEach(function(x){ if(!row&&(x.client+'|'+x.task)===b.taskKey)row=x; });
-    if(!row)return false;
-    var cur=taskDate(row), curIso=cur?(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())):'';
-    if(curIso===dueIso)return false;
-    setDue(row,dueIso); return true; }
+  /* AND AN INTERNAL BRIEF IS AN ASPL TASK (Ray, 15 Oct 2026, over two briefed Reiss rows whose
+     Owner column read a dash: "btw when using brief to send to Internal briefing - obviously
+     that's an ASPL task"), WITH THE DUE DATE THAT WAS BRIEFED ("why due date is also not
+     recorded properly" — the same rows read "Oct 26", which is a MONTH SECTION, not a deadline).
+     Both facts are decided in the composer and both used to stay there. One pass carries them
+     onto the row through the SAME writers an AM uses — setDue (the taskdue overlay + the
+     Project-Plan write-back) and setOwner (taskowner + the sheet) — so they survive the live
+     sheet re-read, which is where the due had been getting lost: a module deep-link files its
+     plan row through the WORKER with no due, so the brief's own date only ever lived on the
+     optimistic MANUAL row and the next live pull replaced it with the sheet's month section.
+     THREE RULES. A brief with no due leaves the date alone — clearing a date is not a statement
+     that the task has no deadline. An owner somebody has already named is NEVER overwritten:
+     ASPL fills a dash, it does not take a task off Steven. And the owner is stamped ONCE per
+     brief (b.stmp), so an AM who hands the row back to themselves is not corrected on the next
+     render.
+     IT IS RETRIED, because the row is usually not on the board yet when the brief is saved —
+     the worker's write lands and the live pull follows about a second later. The stamp waits in
+     PEND_STAMP and reconcileBriefTasks, which already runs on every render once the plan is
+     live, applies it the moment the row appears. The pending entry is dropped BEFORE the
+     writers run, since each of them renders. */
+  var PEND_STAMP={};
+  function briefRowFor(b){ if(!b||!b.taskKey)return null; var row=null;
+    allIntake().forEach(function(x){ if(!row&&rowKey(x)===b.taskKey)row=x; }); return row; }
+  function noOwner(v){ return !String(v==null?'':v).replace(/[\u2014\u2013\-\s]/g,''); }
+  function briefStampRow(b,dueIso){ if(!b||!b.id)return false;
+    PEND_STAMP[b.id]=dueIso||''; return applyBriefStamp(b); }
+  function applyBriefStamp(b){
+    if(!b||!b.id||!Object.prototype.hasOwnProperty.call(PEND_STAMP,b.id))return false;
+    var row=briefRowFor(b); if(!row)return false;
+    var dueIso=PEND_STAMP[b.id]; delete PEND_STAMP[b.id];   // before the writers — each renders
+    var did=false;
+    if(dueIso){ var cur=taskDate(row), curIso=cur?(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())):'';
+      if(curIso!==dueIso){ setDue(row,dueIso); did=true; row=briefRowFor(b)||row; } }
+    if(!b.stmp){ b.stmp=1; if(noOwner(row.owner)){ setOwner(row,'ASPL'); did=true; } }
+    return did; }
+  function briefDueToRow(b,dueIso){ return briefStampRow(b,dueIso); }
   function bfConfirm(id,existing){   // tell the truth once the server has actually taken it
     var t0=Date.now();
     (function chk(){
@@ -4473,6 +4503,7 @@ aside.ck[hidden]{display:none}
     var made=0, pend=[];
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
       if(!b||!b.client||!b.task||isDup(b))return;
+      if(applyBriefStamp(b))pend.push(b);                   // the due + ASPL owner this brief decided, once its row exists
       if(b.status==='confirmed')return;                     // closed work needs no plan row
       if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
       if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
@@ -4489,7 +4520,33 @@ aside.ck[hidden]{display:none}
     });
     if(pend.length){ persist();
       if(made){ toast('⟲ '+made+' briefed ticket'+(made===1?'':'s')+' had no task in the plan — filed into Intake');
-        renderAll(); } } }
+        renderAll(); } }
+    asplBackfill(); }
+  /* The rule above only reaches briefs raised from now on, and Ray was looking at rows briefed
+     weeks ago whose Owner column reads a dash — the ones that prompted it. A briefed row with
+     nobody on it IS an ASPL task, whenever it was raised, so this fills those in ONCE per device
+     and never again (b.stmp, the same stamp the live path sets). It never overwrites an owner
+     somebody named, never touches a confirmed ticket, and writes through gridWrite — the batch
+     cell writer, so the whole pass is ONE render and one sheet write per row rather than a
+     refetch each. Capped per pass so a large book cannot fire hundreds of writes in one go; the
+     rest go on the next open, and the toast says so. */
+  var _asplDone=false, ASPL_CAP=40;
+  function asplBackfill(){
+    if(_asplDone||!LIVE_CONN)return; _asplDone=true;
+    var rows=[], more=0, byKey={};
+    allIntake().forEach(function(r){ byKey[rowKey(r)]=r; });
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||b.stmp||b.status==='confirmed'||isDup(b)||!b.taskKey)return;
+      if(!inScopeClient(b.client))return;
+      var r=byKey[b.taskKey]; if(!r||r.source!=='plan'||!noOwner(r.owner))return;
+      if(rows.length>=ASPL_CAP){ more++; return; }
+      b.stmp=1; rows.push(r); });
+    if(!rows.length)return;
+    _rec=[]; rows.forEach(function(r){ gridWrite(r,'owner','ASPL'); });
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;   // one undo entry for the whole pass, like a paste
+    persist(); renderAll();
+    toast('👥 '+rows.length+' briefed task'+(rows.length===1?'':'s')+' had no owner — set to ASPL'
+      +(more?(' · '+more+' more on the next open'):'')); }
 
   // ---- ticket journey: every handoff with how long each stage held the ball ----
   function journeyHtml(b){ var h=(b.hist&&b.hist.length)?b.hist:[{s:b.status,t:b.created||b.updated||Date.now()}];

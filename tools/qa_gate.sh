@@ -339,6 +339,12 @@ else
   echo "   ✗ lingering-warning harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_nolinger.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_briefstamp.js >/dev/null 2>&1; then
+  echo "   ✓ briefing a task records ASPL as its owner and the due date that was briefed"
+else
+  echo "   ✗ brief-stamp harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_briefstamp.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else
