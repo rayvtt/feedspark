@@ -136,6 +136,13 @@
     var mom=hit/mw.length, tick=hit/tw.length;
     return 2*mom*tick/(mom+tick);
   }
+  /* ---- WHOSE COURT a pipeline stage sits in. This lived in FeedSpark_KWCal.html alone; the
+     Workflow band answers the same question about the same tickets, and two copies of a
+     stage map is how one surface starts calling a stage the other has never heard of. The
+     calendar keeps its own name for it (var COURTM = KWE.COURT) so no call site there moved. ---- */
+  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',
+    running:'AM',analysis:'AM',confirmed:''};
+
   function isKwTicket(b){ return String(b.cat||'')==='keyword'||/keyword|optimis|optimiz/i.test(String(b.task||'')); }
 
   function tieBuild(events,briefs,brand,mkt){
@@ -225,10 +232,54 @@
     return rows;
   }
 
+  /* ---- AND WHAT HAS BEEN BRIEFED, with where it has got to (Ray, 15 Oct 2026: "with keywords
+     calendar, also shown the briefed events (and status)"). The band listed only what still
+     needs raising, which is right for an action list and leaves an AM no way to see that the
+     rest of the month IS under way without opening the calendar.
+
+     This is the OTHER HALF of the same tie — the moments tieBuild DID claim — so it can never
+     disagree with the to-brief list above it: a moment appears in exactly one of the two, and
+     the instant a ticket exists it moves across. Still no second record of the work: a row here
+     is a TICKET that already exists, so it offers a link to it and never a brief button.
+
+     The stage is the ticket's own, as Workflow holds it, and the court is the one map above —
+     the calendar's chip reads the same two words off the same record. Sorted by how far along
+     the work is (earliest stage first, so what is waiting on somebody leads), then by brief-by.
+     No staleness window: a brief raised two months ago is not a wrong date, it is work. ---- */
+  var STAGE_ORDER=['intake','briefed','progress','blocked','running','analysis','done','confirmed'];
+  function briefedList(store,briefs,opts){
+    opts=opts||{};
+    var only=opts.clients&&opts.clients.length?opts.clients:null;
+    var rows=[];
+    Object.keys(store||{}).forEach(function(brand){
+      if(brand.charAt(0)==='_')return;
+      if(only&&only.indexOf(brand)<0)return;
+      var E=evsOf(store,brand); if(!E.length)return;
+      var tie=tieBuild(E,briefs,brand,opts.mkt);
+      E.forEach(function(e){
+        var hit=tie.map[e.id]; if(!hit||!hit.b)return;
+        // a brief carries its stage on b.status (b.st is the legacy name the calendar's own
+        // stOf still falls back to) — reading b.stage badged every row "undefined" once before
+        var b=hit.b, st=String(b.status||b.st||'intake');
+        var ord=STAGE_ORDER.indexOf(st);
+        rows.push({ client:brand, id:e.id, name:e.name, mkt:evMkt(e,opts.mkt||'gb'),
+          live:e.date, liveLbl:dLbl(e), briefBy:schedDate(e).toISOString().slice(0,10), briefLbl:bLbl(e),
+          ticket:b.id, task:b.task||'', by:b.by||'', how:hit.how,
+          stage:st, court:COURT[st]||'', order:ord<0?STAGE_ORDER.length:ord,
+          done:st==='done'||st==='confirmed', terms:(e.terms||[]).slice() });
+      });
+    });
+    rows.sort(function(a,b){ return a.order-b.order
+      || String(a.briefBy).localeCompare(String(b.briefBy))
+      || String(a.client).localeCompare(String(b.client)); });
+    return rows;
+  }
+
   return { LEAD_DAYS:LEAD_DAYS, STALE_DAYS:STALE_DAYS, MON:MON, fmt:fmt, normTask:normTask,
     schedDate:schedDate, dLbl:dLbl, bLbl:bLbl,
     evsOf:evsOf, ptidxFor:ptidxFor, evMkt:evMkt, ptsOf:ptsOf, txOf:txOf, cndOf:cndOf,
     hasScope:hasScope, volOf:volOf, kwHours:kwHours, kwTask:kwTask, briefPayload:briefPayload,
     taskWords:taskWords, sigWords:sigWords, nameScore:nameScore, isKwTicket:isKwTicket,
-    tieBuild:tieBuild, dueList:dueList };
+    tieBuild:tieBuild, dueList:dueList, briefedList:briefedList,
+    COURT:COURT, STAGE_ORDER:STAGE_ORDER };
 }));
