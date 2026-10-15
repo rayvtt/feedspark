@@ -68,6 +68,26 @@ A feed with no `item_group_id` cannot count styles and the button says so.
 - Every section folds (`fcc-bd-fold`; a fresh device opens Breakdown + Pivot), ⊕ Open all / ⊖ Fold all, a `#hash`
   opens its section.
 
+## 📖 Guidebook — how to read a feed (Ray, 15 Oct 2026)
+
+A button in the hero, beside ⊕ / ⊖. Hover opens it (keyboard focus too); a click pins it; Esc, ✕ or a click
+outside closes it; under 760px it is a bottom sheet. It holds the breakdowns worth showing a client — each
+recipe a pivot (rows × columns), what to look for in it, the action it leads to and the KPI that action moves:
+
+| Group | Recipes |
+|---|---|
+| Spend efficiency | price bands × category · custom label 0 × category · availability × category |
+| Visibility | title length × category · product type depth (tier 3) · keyword strings (product_type, all slots) · brand gaps |
+| Conversion & AI readiness | apparel attributes · highlights per product · material · images per product |
+| Commercial mix | on sale × category · brand × availability |
+| Governance | Google against Meta · the same view every month |
+
+Three views worth saving close it (bidding readiness, search coverage, AI readiness). **▶ Try it** sets the
+pivot on the feed in front of you through `B.resolve`, so a field another feed names differently is still
+found; a field the feed does not carry is NAMED in a toast and never set. Category = `g:product_type`, read
+to tier 1. The panel is moved onto `<body>` on first open — the hero clips its overflow and its entrance
+animation makes it the containing block of anything fixed inside it. It names no client and no currency.
+
 ## Harnesses
 
 - `tools/test_breakdown.mjs` (qa_gate / presync / validate) — the engine through the REAL Feed Lab parsers, every

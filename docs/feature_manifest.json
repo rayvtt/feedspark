@@ -16075,6 +16075,12 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function gbTry(key) {",
+      "pr": 0
+    },
+    {
       "name": "Golden ✎ Edit report never flattens a unit's markup on open",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "el.__h = el.innerHTML",

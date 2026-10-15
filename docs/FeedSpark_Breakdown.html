@@ -202,6 +202,26 @@ window.addEventListener('load',restore);
   [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] .ph .ib{background:#20242E}
+  /* 📖 Guidebook — hover the button (or focus / tap to pin) */
+  .gbw{position:relative;display:inline-flex}
+  .gb[hidden]{display:none!important}
+  .gb{position:fixed;top:0;left:0;z-index:300;width:min(620px,calc(100vw - 32px));max-height:min(72vh,680px);overflow:auto;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px 12px;text-align:left;font-size:12.5px;line-height:1.5}
+  .gb.pin{border-color:var(--orange)}
+  .gb .gbh{display:flex;align-items:baseline;gap:8px;margin:0 0 4px}
+  .gb .gbh b{font-size:15px;font-weight:900}
+  .gb .gbh .cnt{margin-left:auto}
+  .gb .gbx{height:28px;width:28px;padding:0;justify-content:center;font-size:12px}
+  .gb .gbi{margin:0 0 10px;color:var(--ink-2)}
+  .gb h4{margin:12px 0 6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)}
+  .gb .gr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
+  .gb .gr .gt{font-weight:800}
+  .gb .gr .gp{grid-column:1;color:var(--ink-2)}
+  .gb .gr .gp i{font-style:normal;color:var(--ink-3,#777)}
+  .gb .gr .gtry{grid-column:2;grid-row:1 / span 3;align-self:center;height:28px;font-size:12px;padding:0 10px}
+  .gb .gr .gk{grid-column:1;font-size:11.5px;color:var(--ink-2)}
+  .gb .gr .gk b{color:var(--ink)}
+  .gb .gfoot{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink-2);font-size:11.5px}
+  @media(max-width:760px){.gb{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:78vh;border-radius:16px 16px 0 0}.gb .gr{grid-template-columns:1fr}.gb .gr .gtry{grid-column:1;grid-row:auto;justify-self:start;margin-top:4px}}
   @media(max-width:760px){.pane,.pane.sized{min-width:0;width:100%!important;flex-basis:100%}.pane .rz{display:none}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
   @media(prefers-reduced-motion:reduce){.prog.ind i{animation:none}}
 </style>
@@ -256,6 +276,8 @@ window.addEventListener('load',restore);
       <button type="button" data-u="sku" class="on" title="Count every product (SKU) the feed sends">Products</button>
       <button type="button" data-u="group" title="Count each item group (style) once — a style carrying a value in any of its sizes counts once">Styles</button></span>
     <button class="btn" id="reload" type="button" title="Read this feed again, now">⟳ Re-read feed</button>
+    <span class="gbw" id="gbw"><button class="btn" id="gbtn" type="button" aria-expanded="false" aria-controls="gb" aria-haspopup="dialog" title="How to read a feed — the breakdowns worth showing a client, and what each one moves">📖 Guidebook</button>
+      <div class="gb" id="gb" role="dialog" aria-label="Guidebook — how to read the data" hidden data-no-collapse data-no-digest></div></span>
     <button class="btn" id="openall" type="button">⊕ Open all</button>
     <button class="btn" id="foldall" type="button">⊖ Fold all</button>
   </div>
@@ -778,6 +800,144 @@ window.addEventListener('load',restore);
   document.addEventListener('keydown', function (e) {
     if (e.key === '/' && !/input|select|textarea/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); reveal('sec-panes'); $('#q').focus(); }
   });
+
+  // ---- 📖 Guidebook: what to pivot, what to look for, what it moves (Ray, 15 Oct 2026) --------------------------------
+  // Each recipe is a pivot (rows × columns) plus what to look for and the business number it moves. ▶ Try it sets the
+  // pivot through B.resolve, so a field another feed names differently is still found, and one this feed does not carry
+  // is NAMED rather than silently skipped. Nothing here names a client; it is how to read any feed.
+  var PT1 = { f: 'g:product_type', m: 'tier', k: 1 }, PT2 = { f: 'g:product_type', m: 'tier', k: 2 };
+  var GUIDE = [
+    { h: 'Spend efficiency — where the budget goes', it: [
+      { t: 'Price bands by category', r: { f: 'g:price', m: 'num' }, c: PT1,
+        look: 'Which categories hold the expensive products, and how much of the catalogue sits in the cheapest band.',
+        act: 'A price-tier custom label so Performance Max can bid high-value products apart.', kpi: 'ROAS · AOV' },
+      { t: 'Custom label 0 by category', r: { f: 'g:custom_label_0', m: 'raw' }, c: PT1,
+        look: '(blank) rows are products no listing group can bid on separately; one value on everything is a label that splits nothing.',
+        act: 'Fill the label from performance or stock (best sellers, zombies, range completion).', kpi: 'ROAS · wasted spend' },
+      { t: 'Availability by category', r: { f: 'g:availability', m: 'raw' }, c: PT1,
+        look: 'Categories with a high out-of-stock share still in the feed.',
+        act: 'Stock thresholds or range-completion rules so ads stop paying for clicks on products nobody can buy.', kpi: 'Wasted clicks · conversion rate' }
+    ] },
+    { h: 'Visibility — will the product be found', it: [
+      { t: 'Title length by category', r: { f: 'g:title', m: 'len' }, c: PT1,
+        look: 'Titles under 30 characters (too thin to match a search) or over 150 (Google cuts them).',
+        act: 'Title optimisation to the 70–150 window, brand + product + key attribute first.', kpi: 'Impressions · CTR' },
+      { t: 'Product type depth', r: { f: 'g:product_type', m: 'tier', k: 3 }, c: null,
+        look: '(blank) at tier 3 = paths that stop at one or two levels.',
+        act: 'Deepen the category tree — the industry standard puts 30–40% of products at five levels.', kpi: 'Listing-group granularity · relevance' },
+      { t: 'Keyword strings per product', r: { f: 'g:product_type*', m: 'raw' }, c: PT1,
+        look: 'Categories where the product type carries no extra keyword phrases at all.',
+        act: 'A keyword optimisation brief for the categories with the most demand.', kpi: 'Search coverage · impressions' },
+      { t: 'Brand and GTIN gaps', r: { f: 'g:brand', m: 'raw' }, c: { f: 'g:availability', m: 'raw' },
+        look: 'A large (blank) brand row, or one brand value on everything.',
+        act: 'Ask the client for the missing identifiers — Google ranks products it can match to a brand and GTIN.', kpi: 'Impressions · disapprovals' }
+    ] },
+    { h: 'Conversion and AI readiness — will the shopper choose it', it: [
+      { t: 'Apparel attributes', r: { f: 'g:color', m: 'raw' }, c: { f: 'g:gender', m: 'raw' },
+        look: '(blank) colour, gender, size or age group on clothing — Google requires them there.',
+        act: 'Populate from the master, the title or the product page.', kpi: 'Disapprovals · filter visibility' },
+      { t: 'Highlights per product', r: { f: 'g:product_highlight*', m: 'raw' }, c: PT1,
+        look: 'Categories with no highlights, or one or two where Google recommends four to six.',
+        act: 'Spark AI highlight generation for the gaps.', kpi: 'AI-surface visibility · conversion' },
+      { t: 'Material and pattern', r: { f: 'g:material', m: 'raw' }, c: PT1,
+        look: 'Whether the fields that answer “what is it made of” are filled at all.',
+        act: 'Read material from the composition line or the product page.', kpi: 'AI answers · filter visibility' },
+      { t: 'Images per product', r: { f: 'g:additional_image_link*', m: 'raw' }, c: PT1,
+        look: 'Categories that send one picture where shoppers expect several.',
+        act: 'Map the extra images the client already has into the feed.', kpi: 'CTR · conversion' }
+    ] },
+    { h: 'Commercial mix — what the catalogue is', it: [
+      { t: 'On sale by category', r: { f: 'g:sale_price', m: 'num' }, c: PT1,
+        look: 'How much of each category is discounted ((blank) = full price).',
+        act: 'A promotion label so sale products are bid and reported apart.', kpi: 'Margin · ROAS' },
+      { t: 'Brand by availability', r: { f: 'g:brand', m: 'raw' }, c: { f: 'g:availability', m: 'raw' },
+        look: 'Which brands carry the out-of-stock weight.',
+        act: 'Raise the supply gap with the client; hold back spend on brands that cannot be bought.', kpi: 'Wasted spend' }
+    ] },
+    { h: 'Governance — keeping it right', it: [
+      { t: 'Google against Meta', r: PT1, c: null,
+        look: 'Open the same view on the Google market and the -fb one: a field full on one and empty on the other.',
+        act: 'Bring the weaker channel up to the other — same products, same data.', kpi: 'Consistency across channels' },
+      { t: 'The same view every month', r: null, c: null,
+        look: '★ Save view keeps the shape, never the brand, so last month\'s view opens on this month\'s feed.',
+        act: 'Show the client the same table moving — the clearest proof the work landed.', kpi: 'Retention' }
+    ] }
+  ];
+  var VIEWS3 = [['Bidding readiness', 0, 1], ['Search coverage', 1, 0], ['AI readiness', 2, 1]];
+  function gbSpec(sp) { if (!sp) return null; return { f: sp.f, m: sp.m || 'raw', k: sp.k || 0 }; }
+  // the recipe's own words — written without the engine, which may still be loading when the button is hovered
+  var GB_MODE = { len: 'length bands', num: 'number bands', list: 'split lists' };
+  function gbName(sp) { var n = sp.f.replace(/^(g|c|fs):/i, '').replace(/\*$/, ' · all slots'); return n + (sp.m === 'tier' ? ' · tier ' + (sp.k || 1) : GB_MODE[sp.m] ? ' · ' + GB_MODE[sp.m] : ''); }
+  function renderGuide() {
+    var n = 0, html = '<div class="gbh"><b>📖 Guidebook</b><span class="cnt">how to read a feed</span><button class="btn gbx" type="button" data-gbx aria-label="Close the guidebook">✕</button></div>'
+      + '<p class="gbi">Each recipe is a pivot — rows × columns — what to look for in it, and the number it moves for the client. ▶ Try it sets the pivot on this feed.</p>';
+    GUIDE.forEach(function (g, gi) {
+      html += '<h4>' + esc(g.h) + '</h4>';
+      g.it.forEach(function (r, ri) {
+        n++;
+        var how = r.r ? gbName(r.r) + (r.c ? ' × ' + gbName(r.c) : '') : '';
+        html += '<div class="gr"><span class="gt">' + esc(r.t) + (how ? ' <i class="cnt">· ' + esc(how) + '</i>' : '') + '</span>'
+          + (r.r ? '<button class="btn gtry" type="button" data-gb="' + gi + '.' + ri + '">▶ Try it</button>' : '')
+          + '<span class="gp"><i>Look for</i> ' + esc(r.look) + '</span>'
+          + '<span class="gk"><i>Then</i> ' + esc(r.act) + ' <b>Moves: ' + esc(r.kpi) + '</b></span></div>';
+      });
+    });
+    html += '<div class="gfoot"><b>Three views worth saving:</b> ' + VIEWS3.map(function (v) {
+      return '<button class="btn gtry" type="button" data-gb="' + v[1] + '.' + v[2] + '" style="margin:4px 4px 0 0">' + esc(v[0]) + '</button>';
+    }).join('') + '<br>A share is of the products the table counts; a product with several values is counted in each. A (blank) row is a gap, never a zero.</div>';
+    $('#gb').innerHTML = html;
+    return n;
+  }
+  var GB = { pin: false, t: 0, quiet: false };
+  function gbOpen(on, pin) {
+    clearTimeout(GB.t);
+    var el = $('#gb');
+    if (on && !el.innerHTML) renderGuide();
+    el.hidden = !on; GB.pin = !!(on && pin); el.classList.toggle('pin', GB.pin);
+    if (on) gbPlace();
+    $('#gbtn').setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+  // the panel lives on <body>: the hero clips its overflow and its entrance animation makes it the containing block of
+  // anything fixed inside it, so a panel left there is cut off on a desktop and is no bottom sheet on a phone
+  function gbPlace() {
+    var el = $('#gb'); if (el.hidden) return;
+    if (el.parentNode !== document.body) document.body.appendChild(el);
+    if (innerWidth <= 760) { el.style.top = el.style.left = el.style.maxHeight = ''; return; }
+    var b = $('#gbtn').getBoundingClientRect(), w = el.offsetWidth, top = b.bottom + 8;
+    el.style.left = Math.max(16, Math.min(b.left, innerWidth - w - 16)) + 'px';
+    el.style.top = top + 'px';
+    el.style.maxHeight = Math.max(200, Math.min(680, innerHeight - top - 16)) + 'px';
+  }
+  function gbTry(key) {
+    var ix = key.split('.'), r = GUIDE[+ix[0]] && GUIDE[+ix[0]].it[+ix[1]];
+    if (!r || !r.r) return;
+    if (!S.st) { toast('Pick a brand and a market first — the guidebook sets the pivot on the feed in front of you'); return; }
+    var fix = function (sp) {
+      var x = B.resolve(S.st, gbSpec(sp)); if (!x) return null;
+      x = { f: x.f, m: x.m, k: x.k };
+      if (x.m === 'tier') x.k = Math.max(1, Math.min(x.k || 1, B.maxTier(S.st, x.f) || 1));
+      return x;
+    };
+    var rs = fix(r.r), cs = r.c ? fix(r.c) : null;
+    var miss = [!rs && r.r, r.c && !cs && r.c].filter(Boolean).map(function (sp) { return sp.f.replace(/^(g|c|fs):/i, '').replace(/\*$/, ''); });
+    if (!rs) { toast('This feed does not carry ' + miss.join(' or ') + ' — nothing to break down'); return; }
+    S.L.pivot.r = rs; S.L.pivot.c = cs; saveLayout(); renderPivotCtl(); renderPivot();
+    gbOpen(false); reveal('sec-pivot');
+    toast('Pivot: ' + r.t + (miss.length ? ' — this feed does not carry ' + miss.join(', ') + ', so the columns are left empty' : ''));
+  }
+  (function () {
+    var w = $('#gbw'), canHover = window.matchMedia && matchMedia('(hover:hover)').matches;
+    w.addEventListener('mouseenter', function () { if (!canHover) return; clearTimeout(GB.t); GB.t = setTimeout(function () { if ($('#gb').hidden) gbOpen(true, false); }, 120); });
+    var leave = function () { if (!canHover) return; clearTimeout(GB.t); if (!GB.pin) GB.t = setTimeout(function () { gbOpen(false); }, 260); };
+    w.addEventListener('mouseleave', leave); $('#gb').addEventListener('mouseleave', leave);
+    $('#gb').addEventListener('mouseenter', function () { clearTimeout(GB.t); });
+    window.addEventListener('scroll', gbPlace, { passive: true }); window.addEventListener('resize', gbPlace);
+    $('#gbtn').addEventListener('click', function () { var el = $('#gb'); if (!el.hidden && GB.pin) gbOpen(false); else gbOpen(true, true); });
+    $('#gbtn').addEventListener('focus', function () { if (GB.quiet) { GB.quiet = false; return; } if ($('#gb').hidden && $('#gbtn').matches(':focus-visible')) gbOpen(true, false); }); // keyboard focus only — a tap's focus would open it under the finger and its click would land outside
+    $('#gb').addEventListener('click', function (e) { if (e.target.closest('[data-gbx]')) { gbOpen(false); return; } var b = e.target.closest('[data-gb]'); if (b) gbTry(b.getAttribute('data-gb')); });
+    document.addEventListener('click', function (e) { if (!$('#gb').hidden && !w.contains(e.target) && !$('#gb').contains(e.target)) gbOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#gb').hidden) { gbOpen(false); GB.quiet = true; $('#gbtn').focus({ preventScroll: true }); GB.quiet = false; } }, true);
+  })();
 
   // ---- saved views: the shape, never the brand (fcc-bd-views, this device) --------------------------------------------
   function views() { return get('fcc-bd-views', {}); }
