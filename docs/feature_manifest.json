@@ -15793,6 +15793,26 @@
       "pattern": "the Brief button is Intake"
     },
     {
+      "name": "KWCal band: the button column lines up with Intake's (Ray, 15 Oct 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "#kwd-band{--bandpad:"
+    },
+    {
+      "name": "KWCal band: that alignment is measured against Intake's own column",
+      "file": "tools/check_kwdue.js",
+      "pattern": "with INTAKE"
+    },
+    {
+      "name": "KWCal band: a briefed row shows the ticket's own due date, not the moment's",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function dueIso"
+    },
+    {
+      "name": "KWCal band: the due date is rendered and read",
+      "file": "tools/check_kwdue.js",
+      "pattern": "a briefed row shows the date the AM set"
+    },
+    {
       "name": "KWCal band: the two halves partition the moments",
       "file": "tools/test_kwcal_tie.mjs",
       "pattern": "no moment is in both lists"
