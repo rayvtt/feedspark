@@ -15805,7 +15805,7 @@
     {
       "name": "Golden ✎ Edit report: the all-brands template applies in both downloads",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "applyTextEdits(doc, rpEdits(k), rpTpl())",
+      "pattern": "applyTextEdits(doc, rpEdits(k), rpTpl()",
       "pr": 0
     },
     {
@@ -15824,6 +15824,24 @@
       "name": "Shared state: grtextall is house-wide",
       "file": "cloudflare/feedspark-deck/src/sharedstate.js",
       "pattern": "grtextall:   null",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: a template line carries no figure, no other brand, no lone word",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function rpTplWhy(o, t)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: template lines stored with {brand}/{market} and filled per report",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "u.el.textContent = rpFill(words[g], ctx)",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: ⚠ Tidy template brings set-aside lines home",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "$('rped-tidy').onclick",
       "pr": 0
     }
   ]

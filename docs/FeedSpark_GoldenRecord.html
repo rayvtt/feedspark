@@ -6272,7 +6272,7 @@ window.addEventListener('load',restore);
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
     // the AM's own wording, laid over the audit's — HERE, so both exits count occurrences on the same document (✎ Edit report)
-    if (!raw) applyTextEdits(doc, rpEdits(k), rpTpl());
+    if (!raw) applyTextEdits(doc, rpEdits(k), rpTpl(), rpCtx(p));
     // the picked Catalogue modules close the document, after every market's scores and before the footer
     if (cx) { var ft = doc.querySelector('#print-plan') || doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
@@ -6383,11 +6383,59 @@ window.addEventListener('load',restore);
       .then(function (j) { var ok = !!(j && j.grtextall); if (ok) { RPA.map = j.grtextall; RPA.base = Date.now(); rpTplMirror(); } if (then) then(ok); })
       .catch(function () { if (then) then(false); });
   }
-  // the template as {original wording: new wording}
+  /* WHAT A TEMPLATE LINE MAY BE (Ray, 15 Oct 2026, after making Monsoon's report the template: "issues happen - check").
+     Promoting one report's edits put three kinds of line into the house-wide store that must never travel: a sentence that
+     NAMES a brand (Reiss's file read "Monsoon wrote this sentence" — one client per file), a FIGURE (a chart's "91.8 → 77"
+     rewrote that number in every brand's report) and a WORD OR TWO ("Required" → every heading of that name, everywhere).
+     So a line is stored GENERALISED — the report's own brand and market become {brand} / {market} on the way in and the
+     reading brand's on the way out, which is what lets "Action plan — Monsoon GB" serve Reiss as "Action plan — Reiss GB" —
+     and it is a template line only when it carries no figure, is at least three words, and names no other brand. Anything
+     else stays on the report it was written on; a stored line that breaks the rule is SET ASIDE (never applied) and the
+     editor offers to tidy it. */
+  var RP_MINW = 3;
+  function rpEsc(x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function rpCtx(p) { return { client: p.client, brand: dispClient(p.client), mkt: String(p.mkt || '').toUpperCase() }; }
+  function rpGen(text, ctx) {
+    var s = String(text || ''); if (!ctx) return s;
+    [ctx.brand, ctx.client].forEach(function (b) {
+      if (b) s = s.replace(new RegExp('(^|[^A-Za-z0-9])' + rpEsc(b) + '(?=$|[^A-Za-z0-9])', 'gi'), '$1{brand}');
+    });
+    if (ctx.mkt) s = s.replace(new RegExp('\\b' + rpEsc(ctx.mkt) + '\\b', 'g'), '{market}');
+    return s;
+  }
+  function rpFill(text, ctx) { return String(text || '').replace(/\{brand\}/g, ctx ? ctx.brand : '').replace(/\{market\}/g, ctx ? ctx.mkt : ''); }
+  function rpBrands() {
+    var seen = {}, out = [];
+    Object.keys((ESTATE && ESTATE.feeds) || {}).forEach(function (key) {
+      var c = (ESTATE.feeds[key] && ESTATE.feeds[key].client) || key.split('|')[0];
+      [c, ALIAS[c]].forEach(function (n) { if (n && !seen[n.toLowerCase()]) { seen[n.toLowerCase()] = 1; out.push(n); } });
+    });
+    return out;
+  }
+  // '' when a (generalised) line may serve every brand, else the reason it may not
+  function rpTplWhy(o, t) {
+    if (/\d/.test(o) || /\d/.test(t)) return 'it carries a figure';
+    var words = String(o).replace(/\{brand\}|\{market\}/g, ' ').split(/\s+/).filter(function (w) { return /[A-Za-z]{2}/.test(w); });
+    var toks = (String(o).match(/\{brand\}|\{market\}/g) || []).length;   // the brand and market say WHICH report — they count
+    if (words.length < 2 || words.length + toks < RP_MINW) return 'a word or two is not the same sentence in every report';
+    var both = (o + ' ' + t).toLowerCase(), hit = '';
+    rpBrands().some(function (b) {
+      if (new RegExp('(^|[^a-z0-9])' + rpEsc(b.toLowerCase()) + '($|[^a-z0-9])').test(both)) { hit = b; return true; }
+      return false;
+    });
+    return hit ? 'it names ' + hit : '';
+  }
+  // the template as {generalised original: generalised new wording} — only the lines that may serve every brand
   function rpTplWords(m) {
     var out = {}; m = m || {};
-    Object.keys(m).forEach(function (h) { var x = m[h]; if (x && typeof x.o === 'string' && typeof x.t === 'string' && x.o) out[x.o] = x.t; });
+    Object.keys(m).forEach(function (h) { var x = m[h]; if (x && typeof x.o === 'string' && typeof x.t === 'string' && x.o && !rpTplWhy(x.o, x.t)) out[x.o] = x.t; });
     return out;
+  }
+  // the stored lines that break the rule (written before it, or by an older page) — never applied
+  function rpTplAside(m) {
+    m = m || {};
+    return Object.keys(m).filter(function (h) { var x = m[h]; return x && typeof x.o === 'string' && typeof x.t === 'string' && x.o && rpTplWhy(x.o, x.t); })
+      .map(function (h) { return { h: h, o: m[h].o, t: m[h].t, why: rpTplWhy(m[h].o, m[h].t) }; });
   }
   function rpMap() {
     if (RPT.map) return RPT.map;
@@ -6417,7 +6465,7 @@ window.addEventListener('load',restore);
   }
   // lay the stored edits over a document — this report's own first, then the all-brands template on every unit they left
   // alone; returns how many found their sentence and which did not
-  function applyTextEdits(doc, edits, tpl) {
+  function applyTextEdits(doc, edits, tpl, ctx) {
     var res = { done: 0, miss: [], tpl: 0 }, words = rpTplWords(tpl), hasT = Object.keys(words).length;
     if ((!edits || !edits.length) && !hasT) return res;
     var seen = {}, idx = {}, list = [];
@@ -6432,7 +6480,8 @@ window.addEventListener('load',restore);
     });
     list.forEach(function (u) {
       if (u.el.__rpDone) { delete u.el.__rpDone; return; }
-      if (hasT && Object.prototype.hasOwnProperty.call(words, u.o)) { u.el.textContent = words[u.o]; res.tpl++; }
+      var g = rpGen(u.o, ctx);
+      if (hasT && Object.prototype.hasOwnProperty.call(words, g)) { u.el.textContent = rpFill(words[g], ctx); res.tpl++; }
     });
     return res;
   }
@@ -6455,13 +6504,14 @@ window.addEventListener('load',restore);
   function rpScope() { try { return localStorage.getItem('gr-text-scope') === 'all' ? 'all' : 'one'; } catch (e) { return 'one'; } }
   function buildRpEd(k, r) {
     closeRpEd();
-    var p = r.p, name = dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    var p = r.p, name = dispClient(p.client) + ' ' + p.mkt.toUpperCase(), ctx = rpCtx(p);
     var m = document.createElement('div'); m.id = 'rped'; m.className = 'rped'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Edit the client report');
     m.innerHTML = '<div class="rped-bar"><div class="rped-t"><b>✎ Edit the client report</b> <span>' + esc(name) + '</span></div>' +
       '<div class="rped-scope" role="group" aria-label="Where an edit is saved"><button type="button" id="rped-one" data-sc="one">This report · ' + esc(name) + '</button>' +
       '<button type="button" id="rped-all" data-sc="all" title="Save what you type as the template: the same words change in every brand\'s ⬇ PDF and ⬇ HTML">All brands · template</button></div>' +
       '<div class="rped-msg" id="rped-msg"></div>' +
-      '<div class="rped-act"><button class="btn" type="button" id="rped-promote" title="Move every edit made to ' + esc(name) + ' into the all-brands template">⇪ Make these the template</button>' +
+      '<div class="rped-act"><button class="btn" type="button" id="rped-tidy" hidden title="Template lines that cannot serve every brand — they name a brand, carry a figure or are a word or two">⚠ Tidy template</button>' +
+      '<button class="btn" type="button" id="rped-promote" title="Move every edit made to ' + esc(name) + ' into the all-brands template">⇪ Make these the template</button>' +
       '<button class="btn" type="button" id="rped-reset" title="Drop every edit made to ' + esc(name) + ' only">↺ Reset this report</button>' +
       '<button class="btn" type="button" id="rped-treset" title="Drop the all-brands template — every brand\'s downloads go back to the audit\'s wording">↺ Reset template</button>' +
       '<button class="btn" type="button" id="rped-pdf">⬇ PDF</button><button class="btn pri" type="button" id="rped-html">⬇ HTML</button>' +
@@ -6473,24 +6523,27 @@ window.addEventListener('load',restore);
     document.addEventListener('keydown', rpKeydown);
     var f = $('rped-f'), msgEl = $('rped-msg');
     var edits = rpEdits(k).slice(), tpl = Object.assign({}, rpTpl()), units = [], timer = null, saving = 0, dirty = { one: 0, all: 0 };
-    var scope = rpScope();
+    var scope = rpScope(), stick = '';
     var say = function (t) { if (msgEl) msgEl.textContent = t; };
     var tplN = function () { return Object.keys(rpTplWords(tpl)).length; };
+    var asideN = function () { return rpTplAside(tpl).length; };
     var status = function (extra) {
       var n = edits.length, miss = edits.filter(function (x) { return x._miss; }).length, tn = tplN(), used = units.filter(function (el) { return el.classList.contains('ek-tpl'); }).length;
       say((n ? n + ' edit' + (n === 1 ? '' : 's') + ' to this report' : 'No edits to this report') +
         ' · ' + (tn ? tn + ' template edit' + (tn === 1 ? '' : 's') + ' for all brands' + (used ? ' (' + used + ' in this report)' : ' (none in this report)') : 'no template yet') +
-        (miss ? ' · ' + miss + ' no longer match the report (the audit has changed that text since)' : '') + (extra ? ' · ' + extra : ''));
+        (miss ? ' · ' + miss + ' no longer match the report (the audit has changed that text since)' : '') +
+        (asideN() ? ' · ⚠ ' + asideN() + ' template line' + (asideN() === 1 ? '' : 's') + ' set aside — they cannot serve every brand' : '') + (stick ? ' · ' + stick : '') + (extra ? ' · ' + extra : ''));
+      var td = $('rped-tidy'); if (td) td.hidden = !asideN();
     };
     var paintScope = function () {
       m.classList.toggle('tplmode', scope === 'all');
       $('rped-one').setAttribute('aria-pressed', String(scope === 'one'));
       $('rped-all').setAttribute('aria-pressed', String(scope === 'all'));
       $('rped-help').textContent = scope === 'all'
-        ? 'Template mode — what you type changes those exact words in EVERY brand\'s ⬇ PDF and ⬇ HTML, for the team. Use it for wording that does not name the brand: headings, method lines, the plan\'s lead. Blue lines come from the template.'
+        ? 'Template mode — what you type changes those exact words in EVERY brand\'s ⬇ PDF and ⬇ HTML, for the team. The report\'s own brand and market are read as each report\'s own, so "Action plan — ' + name + '" serves every brand. A line carrying a figure, naming another brand or only a word or two stays on this report. Blue lines come from the template.'
         : 'Click any text in the report and type — headings, findings, the action plan, the cover. Edits here are saved for ' + name + ' only, for the team, and go into both downloads. Blue lines come from the all-brands template.';
     };
-    var tplFor = function (o) { var w = rpTplWords(tpl); return Object.prototype.hasOwnProperty.call(w, o) ? w[o] : null; };
+    var tplFor = function (o) { var w = rpTplWords(tpl), g = rpGen(o, ctx); return Object.prototype.hasOwnProperty.call(w, g) ? rpFill(w[g], ctx) : null; };
     var mine = function (el) { return edits.some(function (x) { return x.o === el.__o && x.n === el.__n; }); };
     // one unit as the downloads will draw it: its own edit, else the template, else the audit
     var paint = function (el) {
@@ -6547,14 +6600,19 @@ window.addEventListener('load',restore);
         var t = rpNorm(el.textContent).slice(0, 2000), had = mine(el);
         edits = edits.filter(function (x) { return !(x.o === el.__o && x.n === el.__n); });
         if (had) dirty.one = 1;
-        if (scope === 'all') {
-          // the template: this wording, everywhere it appears — in this report and every other brand's
-          var h = rpHash(el.__o);
-          if (t !== el.__o) tpl[h] = { o: el.__o, t: t, at: Date.now() }; else delete tpl[h];
+        var go = rpGen(el.__o, ctx), gt = rpGen(t, ctx), why = scope === 'all' && t !== el.__o ? rpTplWhy(go, gt) : '';
+        if (scope === 'all' && !why) {
+          // the template: this wording, everywhere it appears — in this report and every other brand's, the brand and market
+          // read as {brand} / {market} so each report gets its own
+          var h = rpHash(go);
+          if (t !== el.__o) tpl[h] = { o: go, t: gt, at: Date.now(), b: p.client }; else delete tpl[h];
           dirty.all = 1;
           el.classList.toggle('ek-tpl', t !== el.__o); el.classList.remove('ek-on');
-          units.forEach(function (u) { if (u !== el && u.__o === el.__o && !mine(u)) paint(u); });
+          units.forEach(function (u) { if (u !== el && rpGen(u.__o, ctx) === go && !mine(u)) paint(u); });
+          stick = ''; status();
         } else {
+          // this report only — and a template edit that cannot serve every brand lands here, saying why
+          if (why) stick = 'kept on ' + name + ' only — ' + why;
           var base = tplFor(el.__o); if (base == null) base = el.__o;
           if (t !== base) { edits.push({ o: el.__o, n: el.__n, t: t }); dirty.one = 1; }
           el.classList.toggle('ek-on', t !== base); el.classList.toggle('ek-tpl', t === base && base !== el.__o);
@@ -6591,10 +6649,41 @@ window.addEventListener('load',restore);
     $('rped-promote').onclick = function () {
       var live = edits.filter(function (x) { return !x._miss; });
       if (!live.length) return;
-      if (!confirm('Make the ' + live.length + ' edit' + (live.length === 1 ? '' : 's') + ' to ' + name + ' the template for every brand? Wherever those exact words appear in another brand\'s report, they change too.')) return;
+      var go = [], stay = [];
+      live.forEach(function (x) { var o = rpGen(x.o, ctx), t = rpGen(x.t, ctx); (rpTplWhy(o, t) ? stay : go).push({ x: x, o: o, t: t }); });
+      if (!go.length) { alert('None of the ' + live.length + ' edits to ' + name + ' can serve every brand — each names a brand, carries a figure or is a word or two. They stay on this report.'); return; }
+      if (!confirm('Make ' + go.length + ' of the ' + live.length + ' edits to ' + name + ' the template for every brand? ' +
+        'The brand and market in them read as each report\'s own.' +
+        (stay.length ? ' ' + stay.length + ' stay on this report only — they name a brand, carry a figure or are a word or two.' : ''))) return;
       clearTimeout(timer); timer = null;
-      live.forEach(function (x) { tpl[rpHash(x.o)] = { o: x.o, t: x.t, at: Date.now() }; });
-      edits = edits.filter(function (x) { return x._miss; });
+      go.forEach(function (g) { tpl[rpHash(g.o)] = { o: g.o, t: g.t, at: Date.now(), b: p.client }; });
+      var moved = go.map(function (g) { return g.x; });
+      edits = edits.filter(function (x) { return moved.indexOf(x) < 0; });
+      dirty.one = 1; dirty.all = 1;
+      flush(function () { buildRpEd(k, r); });
+    };
+    // the lines already stored that cannot serve every brand: the ones this report carries come home as its own edits, the
+    // rest leave the template (they were never applied)
+    $('rped-tidy').onclick = function () {
+      var aside = rpTplAside(tpl); if (!aside.length) return;
+      var add = [], kept = {};
+      units.forEach(function (el) {
+        var n = el.__n, o = el.__o, g = rpGen(o, ctx);
+        aside.forEach(function (a) {
+          if (a.o !== o && a.o !== g) return;
+          var t = a.o === g ? rpFill(a.t, ctx) : a.t;
+          if (t === o || edits.some(function (x) { return x.o === o && x.n === n; }) || add.some(function (x) { return x.o === o && x.n === n; })) return;
+          add.push({ o: o, n: n, t: t }); kept[a.h] = 1;
+        });
+      });
+      var gone = aside.length - Object.keys(kept).length;
+      if (!confirm(aside.length + ' template line' + (aside.length === 1 ? '' : 's') + ' cannot serve every brand (' +
+        aside.slice(0, 3).map(function (a) { return '“' + a.o.slice(0, 40) + '” — ' + a.why; }).join('; ') + (aside.length > 3 ? '; …' : '') + '). ' +
+        (add.length ? add.length + ' found in this report stay on ' + name + ' as its own edits. ' : '') +
+        (gone ? gone + ' not in this report leave the template.' : '') + ' Tidy now?')) return;
+      clearTimeout(timer); timer = null;
+      edits = edits.concat(add);
+      aside.forEach(function (a) { delete tpl[a.h]; });
       dirty.one = 1; dirty.all = 1;
       flush(function () { buildRpEd(k, r); });
     };
