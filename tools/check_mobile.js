@@ -153,6 +153,22 @@ const COLLECT = `(() => {
         await p.evaluate('window.FCCDigest && FCCDigest.expandAll({ silent: true, caps: true })').catch(() => {});
         await p.waitForTimeout(500);
       }
+      /* …and the page's OWN folds, on both screens. Every FCC page folds its sections now (Ray's
+       * standing rule), and the skim view deliberately stands down for a page that does — so from
+       * 15 Oct 2026 the digest's expandAll reaches none of them. The parity rule below asks
+       * whether the phone carries the desktop's FEATURE SET, not whether the two open at the same
+       * length (a fresh phone opening shorter is the on-the-go rule working), so both passes are
+       * opened out the same way before anything is counted. Opening only ever reveals, so this
+       * cannot mask a control that is missing. */
+      await p.evaluate(`(() => { for (let pass = 0; pass < 4; pass++) {
+        const shut = [...document.querySelectorAll('[aria-expanded="false"]')].filter((el) => {
+          const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+          return !el.closest('.scrim,[role=dialog],.modal,#tb-modules,.topbar-in');
+        });
+        if (!shut.length) break;
+        shut.forEach((el) => { try { el.click(); } catch (e) {} });
+      } })()`).catch(() => {});
+      await p.waitForTimeout(400);
       res[mode] = await p.evaluate(COLLECT).catch((e) => ({ err: String(e).slice(0, 100) }));
       if (mode === 'mob') { res.mob.skim = skim; if (SHOTS) { try { await p.screenshot({ path: path.join(SHOTS, name + '_full.png'), fullPage: true, clip: { x: 0, y: 0, width: 390, height: Math.min(3000, res.mob.sh || 3000) } }); } catch (e) {} } }
       await ctx.close();

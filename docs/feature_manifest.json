@@ -15863,6 +15863,60 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "$('rped-tidy').onclick",
       "pr": 0
+    },
+    {
+      "name": "Workflow: every section is a box with a tile head",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "<section class=\"wsec\" id=\"ws-intake\">",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the fold engine is the one writer for all seven sections",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var WS_KEYS=['intake','tl','bp','bl','sla','tests','wk'];",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a fresh desktop opens the board, a fresh phone folds everything",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var WS_OPEN0=(window.innerWidth||1440)<760?{}:{intake:1,tl:1};",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a folded head still carries what its own render found",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function wsSum(k,html)",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a folded body takes no height",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".wsec.folded>.wsb{display:none!important}",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a #hash or an in-page jump opens the folded section it points at",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "wsHash(); window.addEventListener('hashchange',wsHash);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: Focus mode opens the Timeline before filling the screen",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(on)wsSet('tl',true,false);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the fold is the one open/closed state — the old ▸ Show pills are gone",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!wsOpen('bl'))return;",
+      "pr": 0
+    },
+    {
+      "name": "Workflow fold tripwire is wired into qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/check_wffold.js",
+      "pr": 0
     }
   ]
 }

@@ -160,6 +160,11 @@ const Ray = await user(); const R2 = await user();
 await raise(S.p, 'Reiss', GIFT); await S.p.waitForTimeout(800);
 await R2.p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
 ok(await till(() => R2.p.evaluate(() => document.body.innerText.indexOf('Gifting') >= 0), true) === true, 'it appears without a reload');
+/* …and it is VISIBLE, not merely in the DOM: the board's sections fold since 15 Oct 2026, and a
+ * colleague's brief reaches an open board through the TIMELINE, so this is also the assertion
+ * that fails if the fresh-device default ever folds the Timeline away. */
+ok(await R2.p.evaluate(() => { const s = document.getElementById('ws-tl');
+  return !!s && !s.classList.contains('folded'); }) === true, 'on a section a fresh device has open');
 
 console.log('\n[3] A save the server refuses is NEVER reported as saved');
 await setFail(true);
@@ -258,7 +263,7 @@ ok(inIntake === true, 'and it has a real row in the Intake table');
 // anchored to the same Intake row at dice >= .45 and collapsed into one, so the reconcile
 // skipped it and it never rendered as its own record anywhere
 const dupMark = await Ray10.p.evaluate(() => {
-  const t = document.getElementById('bl-tog'); if (t) t.click();
+  const t = document.getElementById('wsc-bl'); if (t) t.click();   // the ledger section's fold chevron
   return [...document.querySelectorAll('#bl-rows tr')].map(r => ({
     task: (r.querySelectorAll('td')[2] || {}).textContent || '',
     dup: !!r.querySelector('td span[title^="Collapsed duplicate"]') }));
@@ -285,7 +290,7 @@ ok((await sheet(REISS_SHEET)).appends >= appendsBefore, 'sanity: the sheet stub 
 
 console.log('\n[12] The ledger names the owner on a brief raised before `by` existed');
 const led = await Ray11.p.evaluate(() => {
-  const t = document.getElementById('bl-tog'); if (t) t.click();
+  const t = document.getElementById('wsc-bl'); if (t) t.click();   // the ledger section's fold chevron
   const rows = [...document.querySelectorAll('#bl-rows tr')];
   return rows.map(r => { const c = r.querySelectorAll('td');
     return { task: (c[2] || {}).textContent || '', by: ((c[3] || {}).textContent || '').trim(),

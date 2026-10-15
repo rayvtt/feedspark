@@ -297,6 +297,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: the Workflow board opens without blocking the tab"
   NODE_PATH=$(npm root -g) node tools/check_wfboot.js || {
     echo "✗ Workflow boot tripwire failed — the board must open inside its blocking budget, paint a page of rows while still naming the real total, and keep the brand filter across a reload"; exit 1; }
+  echo "── validating: every Workflow section is a box that folds"
+  NODE_PATH=$(npm root -g) node tools/check_wffold.js || {
+    echo "✗ Workflow fold tripwire failed — each section must be one card with a tile head, a fresh device must open the board and fold the tail, every folded head must still carry what its own render found, and the choice must survive a reload"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
