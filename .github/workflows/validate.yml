@@ -65,6 +65,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/check_nolinger.js
       - name: Workflow — briefing a task records ASPL as its owner and the due date briefed
         run: NODE_PATH=$(npm root -g) node tools/check_briefstamp.js
+      - name: Workflow — a ticket moved to Client confirmed closes its task in Intake
+        run: NODE_PATH=$(npm root -g) node tools/check_confirmdone.js
       - name: Workflow — the calendar's moments to brief, raised without a duplicate task
         run: NODE_PATH=$(npm root -g) node tools/check_kwdue.js
       - name: Workflow — the Playbook's Test Lab section (proposals, competitors, → Brief as a test)

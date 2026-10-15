@@ -352,6 +352,12 @@ else
   echo "   ✗ brief-stamp harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_briefstamp.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_confirmdone.js >/dev/null 2>&1; then
+  echo "   ✓ a ticket moved to Client confirmed closes its task in Intake"
+else
+  echo "   ✗ confirm-done harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_confirmdone.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else
