@@ -18,6 +18,9 @@
  */
 import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../docs/FeedSpark_KWCal.html', import.meta.url), 'utf8');
+// the stage→court map moved into the shared engine (Workflow's to-brief band reads it too),
+// so the vocabulary is lifted from there and the page is checked to be reading it, not copying
+const engine = readFileSync(new URL('../docs/kwcal_engine.js', import.meta.url), 'utf8');
 
 let pass = 0; const fails = [];
 const is = (name, got, want) => {
@@ -28,8 +31,10 @@ const is = (name, got, want) => {
 const ok = (name, cond) => is(name, !!cond, true);
 
 // ---------- the stage vocabulary the board can actually produce ----------
-const courtm = /var COURTM=\{([^}]*)\}/.exec(html);
-ok('COURTM found', courtm);
+const courtm = /var COURT=\{([^}]*)\}/.exec(engine);
+ok('COURT found, in the engine', courtm);
+ok('…and the page reads it rather than keeping a second copy',
+  /var COURTM=KWE\.COURT;/.test(html));
 const STAGES = courtm[1].split(',').map((p) => p.split(':')[0].trim()).filter(Boolean);
 ok('COURTM names the stages this test knows about',
   ['intake', 'briefed', 'progress', 'blocked', 'done', 'running', 'analysis', 'confirmed']

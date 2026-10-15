@@ -34,11 +34,18 @@ const KW = {
   // Ray, 14 Oct 2026: a brief-by weeks past is a wrong date, not a late task — this one is
   // 46 days past and must leave the band, named rather than silently dropped.
   Harbour: { events: [ { id: 'h1', name: 'Spring drop', date: soon(28), brandwide: 1 },
-    { id: 'h2', name: 'Window long gone', date: soon(-25) } ],
+    { id: 'h2', name: 'Window long gone', date: soon(-25) },
+    { id: 'h3', name: 'Done one', date: soon(10) },
+    { id: 'h4', name: 'Blocked one', date: soon(12) } ],
     ptidx: { gb: { map: {}, __total: 500, sat: { n: 100 } } } }
 };
 KW.Northwind.events[0].ptsm = { gb: ['Jumpers'] };
-const BRIEFS = { t9: { id: 't9', client: 'Northwind', kw: 'n3', task: 'Keywords Optimisation - Already briefed', status: 'briefed', created: 1 } };
+const BRIEFS = {
+  t9: { id: 't9', client: 'Northwind', kw: 'n3', task: 'Keywords Optimisation - Already briefed', status: 'briefed', created: 1, by: 'Steven' },
+  // Ray, 15 Oct 2026: the briefed half, with its status — a blocked one, which the fold's own
+  // summary has to name, and a finished one, which must not be counted as still moving
+  t8: { id: 't8', client: 'Harbour', kw: 'h4', task: 'Keywords Optimisation - Blocked one', status: 'blocked', created: 1 },
+  t7: { id: 't7', client: 'Harbour', kw: 'h3', task: 'Keywords Optimisation - Done one', status: 'confirmed', created: 1 } };
 
 const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=function(u,o){u=String(u);"
   + "var j=function(x){return Promise.resolve(new Response(JSON.stringify(x),{status:200,headers:{'content-type':'application/json'}}))};"
@@ -62,7 +69,8 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
 
   const band = async () => page.$eval('#kwd-band', (n) => ({
     hidden: n.hidden, sub: n.querySelector('#kwd-sub').textContent,
-    rows: [...n.querySelectorAll('.kwd-row')].map((r) => ({
+    // the to-brief rows ONLY — the briefed group below shares the row class
+    rows: [...n.querySelectorAll('#kwd-rows .kwd-row')].map((r) => ({
       when: r.querySelector('.kwd-when').textContent.trim(),
       who: r.querySelector('.kwd-who').textContent.trim(),
       name: r.querySelector('.kwd-nm').textContent.trim(),
@@ -97,6 +105,59 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   const wint = b.rows.find((r) => /Winter/.test(r.name));
   ok('an unscoped moment is still listed, and says it has no scope', wint.scope === 'no scope yet', wint.scope);
   ok('…and names its brand', wint.who === 'Northwind', wint.who);
+
+  console.log('\n2b) …and what IS briefed, with where it has got to');
+  // Ray, 15 Oct 2026: "with keywords calendar, also shown the briefed events (and status)"
+  const done = async () => page.$eval('#kwd-done', (n) => ({
+    hidden: n.hidden,
+    open: n.querySelector('#kwd-dh').getAttribute('aria-expanded') === 'true',
+    sum: n.querySelector('#kwd-dsum').textContent.trim(),
+    bodyShown: !n.querySelector('#kwd-drows').hidden,
+    rows: [...n.querySelectorAll('#kwd-drows .kwd-row')].map((r) => ({
+      name: r.querySelector('.kwd-nm').textContent.trim(),
+      stage: (r.querySelector('.kwd-st') || {}).textContent,
+      court: (r.querySelector('.kwd-ct') || {}).textContent,
+      hasBrief: !!r.querySelector('.kwd-go'),
+      ticket: !!r.querySelector('.kwd-tk') })) }));
+  let d = await done();
+  ok('the briefed group is shown', !d.hidden);
+  ok('a fresh device finds it folded — the actionable rows keep the top', !d.open && !d.bodyShown, d);
+  ok('…but its summary already counts them', /3 briefed/.test(d.sum), d.sum);
+  ok('…names what is still moving', /2 still moving/.test(d.sum), d.sum);
+  ok('…and never hides a blocked ticket behind the fold', /1 blocked/.test(d.sum), d.sum);
+  await page.click('#kwd-dh');
+  await page.waitForTimeout(250);
+  d = await done();
+  ok('it opens', d.open && d.bodyShown && d.rows.length === 3, d.rows.map((r) => r.name));
+  ok('every row is a moment that HAS a ticket', d.rows.every((r) => r.ticket), d.rows);
+  ok('…and none offers a second → Brief', !d.rows.some((r) => r.hasBrief), d.rows);
+  // pipeline order, earliest stage first — the finished work sinks to the bottom
+  ok('the least-advanced leads and the finished sinks',
+    d.rows.map((r) => r.name).join('|') === 'Already briefed|Blocked one|Done one', d.rows.map((r) => r.name));
+  ok('each row carries the stage in Workflow’s OWN words, not the raw key',
+    d.rows.map((r) => r.stage).join('|') === 'Briefed to ASPL|Blocked|Client confirmed',
+    d.rows.map((r) => r.stage));
+  ok('…and whose court it sits in',
+    d.rows.map((r) => r.court).join('|') === 'ASPL|AM|', d.rows.map((r) => r.court));
+  // no moment in both halves — the two lists are one tie read twice
+  {
+    const b2 = await band();
+    const both = d.rows.filter((r) => b2.rows.some((x) => x.name === r.name));
+    ok('no moment is in both halves of the band', both.length === 0, both);
+  }
+  // a briefed row opens the ticket on THIS page rather than linking to the page we are on
+  await page.evaluate(() => { window.__tk = null; const r = window.FCCTicket; window.FCCTicket = (id) => { window.__tk = id; r && 0; }; });
+  await page.click('#kwd-drows .kwd-row:has-text("Blocked one") .kwd-tk');
+  await page.waitForTimeout(200);
+  ok('clicking it opens its own ticket', (await page.evaluate(() => window.__tk)) === 't8',
+    await page.evaluate(() => window.__tk));
+  // the fold is this device's, and it survives a reload
+  await page.reload();
+  await page.waitForTimeout(2000);
+  ok('the fold is remembered on this device', (await done()).open);
+  await page.click('#kwd-dh');
+  await page.waitForTimeout(200);
+  ok('…and folding it again sticks', !(await done()).open);
 
   console.log('\n3) → Brief raises the CALENDAR’s brief, through the page’s own composer');
   await page.click('.kwd-row:has-text("Festive") .kwd-go');

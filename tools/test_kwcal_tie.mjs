@@ -714,6 +714,59 @@ ROSTER = null;
   is('Workflow’s band names what the window dropped', /kwd-stale[\s\S]{0,600}STALE_DAYS/.test(wf), true);
   is('…and the client filter never narrows that count', /all\.stale\s*=\s*dropped/.test(wf), true);
 
+  /* ---- THE BRIEFED HALF (Ray, 15 Oct 2026: "with keywords calendar, also shown the briefed
+     events (and status)"). The two lists are one tie read twice, so a moment is in exactly one
+     of them and crosses over the instant its ticket exists — that is what keeps the band from
+     becoming a second record of the work. ---- */
+  const bstore = { Acme: { events: [
+      { id: 'b1', name: 'Festive knitwear', date: '2026-11-05', terms: ['christmas jumper'] },
+      { id: 'b2', name: 'Black Friday', date: '2026-11-20' },
+      { id: 'b3', name: 'Winter sale', date: '2026-12-10' },
+      { id: 'b4', name: 'Nobody has briefed this', date: '2026-11-28' } ] } };
+  const bbriefs = {
+    t1: { id: 'REIS-1', client: 'Acme', kw: 'b1', task: 'Keywords Optimisation - Festive', status: 'confirmed', by: 'Steven' },
+    t2: { id: 'REIS-2', client: 'Acme', kw: 'b2', task: 'Keywords Optimisation - BF', status: 'blocked' },
+    t3: { id: 'REIS-3', client: 'Acme', kw: 'b3', task: 'Keywords Optimisation - Sale', status: 'running' },
+    t4: { id: 'OTHR-1', client: 'Other brand', kw: 'b4', task: 'Keywords Optimisation - theirs', status: 'briefed' } };
+  const bl = KWE.briefedList(bstore, bbriefs, {});
+  is('every moment with a ticket is listed', bl.map((r) => r.id).sort(), ['b1', 'b2', 'b3']);
+  is('…and one with none is not — it belongs to the to-brief list', bl.some((r) => r.id === 'b4'), false);
+  is('another brand’s ticket can never claim a moment here', bl.some((r) => r.ticket === 'OTHR-1'), false);
+  // the two halves PARTITION the moments: no moment in both, none in neither
+  const bdue = KWE.dueList(bstore, bbriefs, { now: '2026-10-14', stale: 0, days: 0 });
+  is('no moment is in both lists', bdue.filter((d) => bl.some((x) => x.id === d.id)).length, 0);
+  is('…and none falls between them',
+    bdue.length + bl.length, bstore.Acme.events.length);
+  // the stage is the ticket's own word, read where a brief really carries it
+  is('the stage is read off b.status, the field a brief carries',
+    ['b1', 'b2', 'b3'].map((id) => bl.filter((r) => r.id === id)[0].stage),
+    ['confirmed', 'blocked', 'running']);
+  is('a brief on the legacy b.st still reads',
+    KWE.briefedList(bstore, { z: { id: 'Z', client: 'Acme', kw: 'b1', st: 'progress' } }, {})[0].stage, 'progress');
+  is('a ticket with no stage at all reads as intake, never undefined',
+    KWE.briefedList(bstore, { z: { id: 'Z', client: 'Acme', kw: 'b1' } }, {})[0].stage, 'intake');
+  // whose court — one map, the calendar's own, now in the engine
+  is('each row carries whose court it sits in', bl.filter((r) => r.id === 'b2')[0].court, 'AM');
+  is('…off the engine’s one COURT map', KWE.COURT.briefed, 'ASPL');
+  is('…which the calendar reads rather than keeping a second copy',
+    /var COURTM\s*=\s*KWE\.COURT;/.test(fs.readFileSync(path.join(root, 'docs', 'FeedSpark_KWCal.html'), 'utf8')), true);
+  is('a finished stage is marked done, so the band can count what is still moving',
+    bl.filter((r) => r.done).map((r) => r.id), ['b1']);
+  // earliest stage first: what is waiting on somebody leads, finished work sinks
+  is('the least-advanced ticket leads', bl.map((r) => r.stage), ['blocked', 'running', 'confirmed']);
+  is('the ticket and who raised it travel with the row',
+    [bl[2].ticket, bl[2].by], ['REIS-1', 'Steven']);
+  is('a client filter narrows it the same way',
+    KWE.briefedList(bstore, bbriefs, { clients: ['Nobody'] }).length, 0);
+
+  // and the band must RENDER it, with Workflow's own stage words and no second → Brief
+  is('Workflow’s band reads the briefed half', /briefedList\(STORE/.test(wf), true);
+  is('…in Workflow’s own stage vocabulary, not a copy', /window\.FCCStages/.test(wf), true);
+  is('…and a briefed row opens its ticket instead of offering a second brief',
+    /data-kwt[\s\S]{0,400}window\.FCCTicket/.test(wf), true);
+  is('the fold’s summary names a blocked ticket, so folding can never hide one',
+    /blocked[\s\S]{0,120}parts\.push/.test(wf), true);
+
   /* ---- EVERY SEEDED SCOPE IS A PATH THE LIVE FEED REALLY SENDS (Ray, 14 Oct 2026: "can you
      scope up by choosing products on clients product type on all the keywords themes?").
      Reiss, Accessorize and Schuh carried 64 moments with no product scope; 51 now carry the exact

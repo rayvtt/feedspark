@@ -15725,6 +15725,36 @@
       "file": "cloudflare/feedspark-deck/src/sharedstate.js",
       "pattern": "grplan:      'key',",
       "pr": 0
+    },
+    {
+      "name": "KWCal band: the briefed moments, with their stage (Ray, 15 Oct 2026)",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function briefedList"
+    },
+    {
+      "name": "KWCal band: whose court — ONE map in the engine, the calendar reads it",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var COURTM=KWE.COURT;"
+    },
+    {
+      "name": "KWCal band: a briefed row opens its ticket, never offers a second brief",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCTicket"
+    },
+    {
+      "name": "KWCal band: the stage is Workflow's own word, not a second copy",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCStages"
+    },
+    {
+      "name": "KWCal band: the briefed half is rendered and read",
+      "file": "tools/check_kwdue.js",
+      "pattern": "what IS briefed, with where it has got to"
+    },
+    {
+      "name": "KWCal band: the two halves partition the moments",
+      "file": "tools/test_kwcal_tie.mjs",
+      "pattern": "no moment is in both lists"
     }
   ]
 }
