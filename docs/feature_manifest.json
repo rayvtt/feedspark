@@ -9912,6 +9912,84 @@
       "pr": 558
     },
     {
+      "name": "Image types: a mixed shot code is audited, never counted as named",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "function codeAudit",
+      "pr": 687
+    },
+    {
+      "name": "Image types: every verdict names the lane it rests on",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "function resolveType",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the per-image lane is counted once, never twice with its code",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "function handCounts",
+      "pr": 687
+    },
+    {
+      "name": "Image types: reliability is measured against a person's own corrections, with its sample size",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "function gradeLanes",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the image FIELD is not the grouping — measured, refused, recorded",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "THE IMAGE FIELD IS NOT THE GROUPING",
+      "pr": 687
+    },
+    {
+      "name": "Image types: pixels audit a code's consistency, they never name a shot type",
+      "file": "docs/imagetype_engine.js",
+      "pattern": "PIXELS DO NOT NAME A SHOT TYPE",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the engine is served to the page as a string, not bundled as a module",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/images/types.js",
+      "pr": 687
+    },
+    {
+      "name": "Image types: a pushed audit is checked whole before it is stored",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function sanitizeImageAudit",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the audit is stored per client x market, apart from the capture",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'imgaudit:' + client",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the page loads the engine through its own script tag",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "/images/types.js",
+      "pr": 687
+    },
+    {
+      "name": "Image types: the audit samples a code's own pictures in the browser",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "function auditRun",
+      "pr": 687
+    },
+    {
+      "name": "Images: every section folds, remembered per device",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "fcc-img-fold",
+      "pr": 687
+    },
+    {
+      "name": "Images: a jump into a folded section opens it, on a cold load and on hashchange",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "function foldHash",
+      "pr": 687
+    },
+    {
       "name": "ROAS: worker pulls the FeedHero_reports MCP itself (its own secret, its own cron firing)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "ROAS_MCP_TOKEN not set",

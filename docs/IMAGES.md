@@ -96,6 +96,90 @@ not being used as a fixed position in the shot list (Monsoon's `01` is a packsho
 an on-model shot on dresses). The card carries a quiet chip saying so, with the reasoning in its
 tooltip, so nobody tags four thousand images on trust.
 
+## Can the image type be named for every image field of every client?
+
+Ray asked that directly (15 Oct 2026: *"Inside the image library module, can I rely on you to
+identify the image type for every image field for each of our clients? Can you build an engine?"*).
+It is a question about **footing**, so it was answered by measurement on the live GB feeds before
+anything was designed — 380 of their real photographs read pixel by pixel — and two obvious
+shortcuts died on the way.
+
+**The filename lane holds, on four of five brands.** Reiss 7 codes name 15,853 images, Schuh 6
+name 14,608, Monsoon 11 name 11,856, Accessorize 11 name 13,277 — every one of them 100% of the
+images the feed carries. Six to eleven decisions name a brand's whole library. Superdry is the
+honest no: its filenames are opaque `upload<19 digits>` hashes, over a hundred near-unique codes,
+and `learnable:false` already refuses it rather than offering a vocabulary nobody could tag.
+
+**Refused lane 1 — the image FIELD is not the grouping.** "Slot 5 is always the lifestyle shot"
+is the shortcut everyone reaches for, and it is false here: the dominance of one shot type within
+one image field measured 0%, 0%, 75% and 100% across the estate, and Superdry's two fields are
+*pixel-identical* on the products that carry both. So a field is **reported on**, never used to
+decide a type. Recorded in the engine's own header and pinned by the harness, so a later session
+cannot quietly re-add it.
+
+**Refused lane 2 — pixels do not name a shot type.** On these catalogues every main image reads
+`bg=light` with fill 98–100: studio-consistent, which is good feed hygiene and useless as a
+discriminator. Pixels were given the job they *can* do instead (below).
+
+### The ladder — every verdict names the lane it rests on
+
+`resolveType` answers in one of four ways, strongest first, and the answer always carries *how* it
+was reached (`LANES`):
+
+| Lane | Rests on |
+|---|---|
+| `decided` | a person named this image, or its shot code |
+| `named` | a model looked at this code's own images and named the shot |
+| `shot` | a model looked at this photograph itself |
+| *(none)* | nothing yet — with `need: 'code'` or `need: 'image'` saying which read would settle it |
+
+A model-named code that the audit found **mixed** has its confidence capped and is never reported
+as named.
+
+### The audit — does a code's own pictures agree?
+
+The gap in "one tag over four thousand images" was that nothing ever checked the images under a
+code actually look alike. ⚡ **Audit the shot codes** samples up to eight of each code's own
+pictures through `/api/catalog/img` (same origin, so a canvas can read them), runs each through
+the Image-pixels engine and reduces it to a signature — background / fill band / busyness band
+(`sigOf`). `codeAudit` then returns one of four states:
+
+- **consistent** — ≥75% of the sample shares one signature and ≥80% one background
+- **mixed** — it does not, with the split named and the worst offender linked
+- **thin** — fewer than four readable images; stated as thin, never as consistent
+
+**A mixed code is never counted as named.** That is the central claim of the whole section and the
+one thing a harness has to prove, so `tools/check_imagetypes.js` carries a **negative control**:
+it serves the same page with the mixed gate stripped out and requires the count to jump (700 named,
+0 mixed) — if the gate ever stopped working, the check above it would start passing for the wrong
+reason.
+
+### What the page reports
+
+- **Per image field** (`fieldReport`): images, named, %, how many are held back as mixed, how many
+  a person decided by hand, which codes reach that field, the tag mix and the lane split.
+- **Per client** (`clientReport`): the same, plus the **route** that will actually name this
+  brand's library — `codes` (name the codes, the cheap path), `per-image` (nothing but per-image
+  reads will do it) or `scan` (nothing is read yet) — with the reason in words.
+- **The naming plan** (`namingPlan`): biggest-first steps, each quoting the images it would name,
+  so the work is ordered by what it buys.
+- **The grade** (`gradeLanes`): agreement where a person has corrected a model-named code,
+  carrying its own sample size — under ten corrections it reads as *a floor, not a verdict*,
+  because a reliability figure nobody can check is a figure nobody should trust.
+- **Across the estate** (`estateRoll`): every client × market with its images, named share and
+  route; a feed nobody has scanned says so rather than reading 0%.
+
+The per-image lane is counted **once** (`handCounts`): an override on an image whose code is
+already named does not add that image a second time — without that rule an unpatterned feed like
+Superdry would have read 0% forever however many images were named by hand.
+
+### Every section folds
+
+`/images` follows the standing rule — each card's head is one button (chevron · title · a line
+that survives the fold), ⊕/⊖ for all of them, the choice kept per device (`fcc-img-fold`), and a
+`#hash` opens the card it names. A same-page fragment navigation never re-creates the document, so
+`foldHash()` runs on the cold load **and** on `hashchange`.
+
 ## Storage
 
 | Key | What |
@@ -104,6 +188,7 @@ tooltip, so nobody tags four thousand images on trust.
 | `imagehist:<client>:<mkt>` | counts per scan (≤120) |
 | `imageidx` | one-read estate index for the board |
 | `imgtags:<client>` | the tag store: taxonomy + one rule per code + per-image overrides |
+| `imgaudit:<client>:<mkt>` | one entry per shot code: its audit state, sample size, the split it found and the worst offender |
 
 The capture rides only **confirmed** scans (`applyPushedSnapshot`) — a half-read feed would
 otherwise fake an image drop-off. Tags live apart from the capture so they survive every rescan.
@@ -116,6 +201,8 @@ GET  /images/engine.js           the engine, served verbatim
 GET  /api/images                 estate roster ∪ scanned index (never-scanned feeds listed honestly)
 GET  /api/images?client=&market= one feed's capture + history + the brand's tags
 GET|PUT /api/images/tags?client= the tag store (PUT merges per key; `clear` removes a rule)
+GET|PUT /api/images/audit?client=&market=  the shot-code audit (PUT merges per code; checked whole before it is stored)
+GET  /images/types.js            the type engine, served verbatim
 POST /api/images/scanpush?client=&market=   the page's ⚡ live scan posts its computed capture
 ```
 
@@ -148,3 +235,19 @@ its summary.
 `<script src>` tags fetch both engines, so the serving path is exercised rather than stubbed —
 the gap that let the empty-body bug reach the live site. Point `IMG_FIXTURES` at a directory
 holding `probe_monsoon_gb.xml` + `probe_superdry_gb.xml`; without them it skips.
+
+`node tools/test_imagetypes.mjs` — 109 assertions over `docs/imagetype_engine.js` on fixtures
+shaped like the real estate (invented values and brands): the signature bands, the audit's four
+states, the ladder's precedence, the field and client reports, the route choice, the plan, the
+grade's sample-size wording, the estate roll, the per-image lane and its no-double-count rule —
+plus a **refusals** block asserting the lane list is exactly `decided,named,shot` and that both
+refused lanes are still recorded in the engine's header. Wired into `qa_gate.sh`, `presync.sh`
+and `validate.yml`.
+
+`tools/check_imagetypes.js` (presync) drives the real page over a local HTTP origin — not
+`file://`, because an opaque origin taints the canvas and would test a different program from the
+one that ships — against a synthetic Northwind (3 codes, 3 fields, one of them mixed) and Atelier
+(no codes at all). It reads every field row off the **paint** against counts the test makes
+itself, proves naming a mixed code adds none of its images, measures the unpatterned feed's
+per-image cost, checks the fresh-device fold defaults, the `#hash`, 390px and zero console
+errors — and carries the negative control described above.

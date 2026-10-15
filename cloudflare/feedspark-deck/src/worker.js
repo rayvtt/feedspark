@@ -212,6 +212,7 @@ import OVERLAY_STUDIO_SRC from "../../../docs/overlay_studio_engine.js";
 // lands on every image that carries that token. AI or manual tagging, never per-image drudgery.
 import IMAGES_PAGE from "../../../docs/FeedSpark_Images.html";
 import IMAGE_ENGINE_SRC from "../../../docs/image_engine.js";
+import IMAGETYPE_ENGINE_SRC from "../../../docs/imagetype_engine.js";
 import KWCAL_ENGINE_SRC from "../../../docs/kwcal_engine.js";
 // /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
 // year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
@@ -703,7 +704,7 @@ async function route(request, env, ctx) {
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
-        '/api/images/scanpush': 'image-scan-live', '/api/images/tags': 'image-tags-save',
+        '/api/images/scanpush': 'image-scan-live', '/api/images/tags': 'image-tags-save', '/api/images/audit': 'image-code-audit',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -1731,6 +1732,9 @@ async function route(request, env, ctx) {
     if (path === '/images/engine.js' && request.method === 'GET') {
       return new Response(IMAGE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/images/types.js' && request.method === 'GET') {
+      return new Response(IMAGETYPE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/stock/engine.js' && request.method === 'GET') {
       return new Response(HEROSIZE_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2312,8 +2316,9 @@ async function route(request, env, ctx) {
         const snap = await env.EDITS.get('image:' + client + ':' + mkt, 'json');
         const hist = (await env.EDITS.get('imagehist:' + client + ':' + mkt, 'json')) || [];
         const tags = (await env.EDITS.get('imgtags:' + client, 'json')) || null;
+        const audit = (await env.EDITS.get('imgaudit:' + client + ':' + mkt, 'json')) || null;
         return json({ ok: true, client, market: mkt, kind: src && src.xml ? 'xml' : (src && src.id ? 'sheet' : null),
-          snap: snap || null, hist, tags });
+          snap: snap || null, hist, tags, audit });
       }
       const roster = await feedRoster(env);
       const idx = (await env.EDITS.get('imageidx', 'json')) || {};
@@ -2343,6 +2348,25 @@ async function route(request, env, ctx) {
       });
       await env.EDITS.put(K, JSON.stringify(merged));
       return json({ ok: true, client, tags: merged });
+    }
+    // the audit store: one verdict per shot code per FEED (a code can hold one kind of
+    // shot on GB and another on DE, so unlike the tags this is keyed per market), merged
+    // per key so auditing one code never drops another's verdict
+    if (path === '/api/images/audit' && (request.method === 'GET' || request.method === 'PUT')) {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const K = 'imgaudit:' + client + ':' + mkt;
+      if (request.method === 'GET') return json({ ok: true, client, market: mkt, audit: (await env.EDITS.get(K, 'json')) || null });
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const incoming = sanitizeImageAudit(body && body.audit);
+      if (!incoming) return json({ ok: false, error: 'bad audit' }, 400);
+      const cur = (await env.EDITS.get(K, 'json')) || {};
+      const merged = Object.assign({}, cur, incoming);
+      await env.EDITS.put(K, JSON.stringify(merged));
+      return json({ ok: true, client, market: mkt, audit: merged });
     }
     // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab
     // parser + the image collector (the agent's exact code, served at /images/engine.js)
@@ -5352,6 +5376,32 @@ function sanitizeImageTags(raw) {
     id: str(t && t.id, 40), label: str(t && t.label, 60), hint: str(t && t.hint, 160) })).filter((t) => t.id && t.label) : null;
   return Object.assign({ v: 1, t: Date.now(), tok: map(raw.tok, 400, 60), img: map(raw.img, 2000, 100) },
     tax ? { tax } : {});
+}
+
+/* ---- the shot-code AUDIT store (Ray, 15 Oct 2026: "can I rely on you to identify the
+ * image type for every image field") -----------------------------------------------
+ * A code's tag rests on the assumption that every image carrying it is the same kind of
+ * photograph. The page tests that assumption in the browser — it reads a sample of the
+ * code's OWN images through /api/catalog/img and docs/pixel_engine.js — and posts the
+ * verdict here. Nothing but the verdict is stored: a state, the signature split and one
+ * example URL, never the pixels and never a tag (a tag is a decision, an audit is a
+ * check on one, and the two are kept apart on purpose). */
+function sanitizeImageAudit(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const STATES = { consistent: 1, mixed: 1, thin: 1 };
+  const out = {};
+  Object.entries(raw).slice(0, 400).forEach(([k, a]) => {
+    if (!a || typeof a !== 'object' || !STATES[a.state]) return;
+    const split = Array.isArray(a.split) ? a.split.slice(0, 12).map((x) => ({
+      sig: str(x && x.sig, 40), n: Math.max(0, Math.round(+(x && x.n) || 0)),
+      share: Math.max(0, Math.min(100, Math.round(+(x && x.share) || 0))) })).filter((x) => x.sig) : [];
+    out[str(k, 60)] = { state: a.state, n: Math.max(0, Math.min(500, Math.round(+a.n || 0))),
+      why: str(a.why, 240), split,
+      worst: /^https?:\/\//i.test(String(a.worst || '')) ? str(a.worst, 500) : null,
+      t: Date.now() };
+  });
+  return Object.keys(out).length ? out : null;
 }
 
 // ---- /overlays module store (Ray, 10 Sep 2026: "render the type of overlay that is

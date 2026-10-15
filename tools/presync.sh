@@ -59,6 +59,10 @@ echo "── validating: image library engine (shot tokens + collector)"
 node tools/test_images.mjs >/dev/null
 echo "   ✓ shot codes read off the image URLs; unpatterned feeds refused"
 
+echo "── validating: image type engine (naming lanes + the shot-code audit)"
+node tools/test_imagetypes.mjs >/dev/null
+echo "   ✓ a mixed code is never counted as named; the per-image lane is counted once"
+
 echo "── validating: overlay design studio engine (summoner + designs + layout)"
 node tools/test_ovstudio.mjs >/dev/null
 echo "   ✓ price pair read by value; coverage stated; a missing fact is reported not invented"
@@ -498,6 +502,10 @@ fi
 echo "── validating: the /images page loads its engines through its own script tags"
 node tools/check_images.js >/dev/null
 echo "   ✓ real script-tag path exercised (skips without IMG_FIXTURES)"
+
+echo "── validating: the /images type section reports its own footing"
+node tools/check_imagetypes.js >/dev/null
+echo "   ✓ every field row read off the paint; the mixed-code gate proved by a negative control"
 
 echo "── validating: the Design studio paints, exports and refuses honestly"
 node tools/check_ovstudio.js >/dev/null

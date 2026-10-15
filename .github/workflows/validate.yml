@@ -39,6 +39,8 @@ jobs:
         run: node tools/check_textmodules.js
       - name: Image library engine unit tests (shot tokens off the URL + collector)
         run: node tools/test_images.mjs
+      - name: Image type engine (naming lanes, shot-code audit, per-field report)
+        run: node tools/test_imagetypes.mjs
       - name: Overlay design studio engine (field summoner, designs, layout geometry)
         run: node tools/test_ovstudio.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
