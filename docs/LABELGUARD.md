@@ -1651,7 +1651,20 @@ rescan that changes its numbers keeps its month and edits; an action the audit s
 edit stores only what differs from the audit (↺ The audit's wording undoes it); ↺ Back to the audit's plan drops every
 edit for the market. The "now → after the quarter" projection re-runs over the fields the plan keeps (`projOf`). A month
 that has slid into the past lands on the first month shown; one past the window on the last. A half-typed edit survives a
-re-render. Controls hidden in demo; the board is removed from both downloads. Harness `tools/check_grplanedit.js`
+re-render.
+
+**✎ Edit report — every word of the client document, editable** (Ray, 15 Oct 2026: "can you build an interface where i
+can edit text on the report pdf or html as format pls?" → "all text should be editable"). A button beside ⬇ PDF /
+⬇ HTML opens the client document itself (`exportDoc(k, null, false, raw)`, the one both downloads are made of) full
+screen in a frame, every word editable in place: a block of plain words is one unit, a word loose beside layout is
+wrapped in a span of its own, and the words inside a chart or score ring (SVG text) are edited on click. The bar carries
+↺ Reset edits, ⬇ PDF and ⬇ HTML. An edit is stored as WHAT IT REPLACES — `{o: the audit's text, n: which occurrence,
+t: the new wording}` — in shared state ns `grtext` (`"<client>|<mkt>"`, 'key' scope, device mirror `gr-text-b`), and
+`applyTextEdits` lays the edits over the document inside `exportDoc` after the method disclosures are built and before
+the paper pass and the Catalogue cards, so both exits count occurrences on the same document. `textUnits` is the one
+walk the editor and both exits use. A rescan that changes a sentence leaves its edit unmatched rather than pasting old
+wording over new figures; the editor names how many no longer match. Text only; `scrubExport` still runs after. Hidden
+in demo. Harness `tools/check_grtext.js` (Playwright, presync). Controls hidden in demo; the board is removed from both downloads. Harness `tools/check_grplanedit.js`
 (Playwright, presync).
 
 **One client per file.** `exportDoc` removes every section except the scorecard, and every

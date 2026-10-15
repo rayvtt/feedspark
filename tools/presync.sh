@@ -366,6 +366,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record action plan ON SCREEN — moved, reworded, taken out, added, dragged; saved for the team; the download follows"
   NODE_PATH=$(npm root -g) node tools/check_grplanedit.js || {
     echo "✗ Golden Record editable-plan tripwire failed — a move, an edit or a drag did not land, did not reach the team store, or the download no longer matches the board"; exit 1; }
+  echo "── validating: Golden Record ✎ Edit report — every word editable, saved for the team, carried by ⬇ HTML and ⬇ PDF"
+  NODE_PATH=$(npm root -g) node tools/check_grtext.js || {
+    echo "✗ Golden Record report-editor tripwire failed — text not editable, an edit not saved, or a download no longer carries it"; exit 1; }
   echo "── validating: Golden Record ⬇ HTML — the Catalogue modules the AM picked (framed Catalogue, per-measure ticks, the file)"
   NODE_PATH=$(npm root -g) node tools/check_grcatx.js || {
     echo "✗ Golden Record Catalogue-modules tripwire failed — the framed Catalogue, a tick, the picked cards in the HTML or the device's own Catalogue preferences regressed"; exit 1; }

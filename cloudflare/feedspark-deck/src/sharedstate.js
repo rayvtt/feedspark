@@ -93,6 +93,10 @@ export const STATE_NS = {
   // a task, moves it to another month, takes it out or adds one — and the client's ⬇ PDF / ⬇ HTML close on that
   // plan, so it is the account's plan, not one screen's.  "<client>|<mkt>" -> {it:{id:{m,i,t,w,own,del,c}}, at}
   grplan:      'key',
+  // THE CLIENT REPORT'S WORDING, AS THE TEAM EDITED IT (Ray, 15 Oct 2026: "can you build an interface where i can edit text
+  // on the report pdf or html"). Each edit says what it replaces — the audit's text and which occurrence — and the new
+  // wording; both downloads lay them over the document.  "<client>|<mkt>" -> {e:[{o,n,t}], at}
+  grtext:      'key',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }
