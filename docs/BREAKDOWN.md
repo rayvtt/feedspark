@@ -55,7 +55,9 @@ A feed with no `item_group_id` cannot count styles and the button says so.
   🔍 finds a value in every table.
 - **Pivot** — Rows × Columns, each any field and reading; Count · % of row · % of column · % of total; top 25/50/100/
   all rows (the rest counted, never dropped); columns past the twelfth fold into one **Other** column that keeps its
-  count; a cell click filters the page to its row and column; ⤓ CSV.
+  count; a cell click filters the page to its row and column; ⤓ CSV carries EVERY row and EVERY column — the
+  Other fold and the top-N cut are for the screen only.
+- A pane is as wide as its longest value, up to the row; a value longer than that wraps, never cut short.
 - **Every field in this feed** — how full each field is, what it reads as, how many values, a sample, and
   ＋ Break down / Rows / Columns.
 - **Saved views** — a view is the fields and how they are read, **never the brand**, so one view opens on any feed;
