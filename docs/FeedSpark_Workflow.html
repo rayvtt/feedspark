@@ -1884,7 +1884,8 @@ aside.ck[hidden]{display:none}
   // every stage change goes through here so the handoff history (b.hist) stays complete
   function setStage(b,stage){ if(!b||b.status===stage)return;
     (b.hist=(b.hist&&b.hist.length)?b.hist:[{s:b.status||'intake',t:b.created||Date.now()}]).push({s:stage,t:Date.now()});
-    b.status=stage; b.updated=Date.now(); }
+    b.status=stage; b.updated=Date.now();
+    if(stage==='confirmed')confirmDone(b); }   // the task the client just signed off is Done — wherever the stage was moved
   function courtOf(b){ return COURT[b.status]||''; }
   // ASPL says the work is finished. For an ordinary brief that IS the end of their lane; for a
   // test / keyword optimisation the change now goes live and RUNS, so the ticket records the
@@ -2539,6 +2540,71 @@ aside.ck[hidden]{display:none}
     if(!b.stmp){ b.stmp=1; if(noOwner(row.owner)){ setOwner(row,'ASPL'); did=true; } }
     return did; }
   function briefDueToRow(b,dueIso){ return briefStampRow(b,dueIso); }
+
+  /* ---- A CONFIRMED TICKET CLOSES ITS TASK (Ray, 15 Oct 2026: "When a ticket's status is
+     changed to client confirm anywhere, the corresponding task in InTake should be updated to
+     Done accordingly"). STAGE_STATUS has said confirmed -> Done since the reconcile was written,
+     but it was only ever read where a plan row was CREATED — so a ticket that reached Client
+     confirmed afterwards left its Intake row reading whatever it last said (In Progress,
+     Briefed) and the plan sheet with it: the AM signs the work off in the pipeline and the
+     board still lists it as open work. setStage is the ONE writer every surface goes through —
+     the modal's stage buttons, the board drag onto the Client confirmed column, the ✓ Client
+     confirmed draft, the pasted-update router and the SLA sweep — so the close rides it and
+     "anywhere" needs no second list of call sites that the next surface could miss.
+     It writes through writeStatus, the SAME two-way writer an AM's own status change uses
+     (shared taskstatus overlay + the Project-Plan write-back), so the row reads the same to
+     everyone and the sheet hears about it once.
+     FOUR RULES: it is RETRIED, because the row is often not on the board at the moment the
+     stage moves (a ticket confirmed from a deep link, or before the live plan read lands) — the
+     ticket waits in PEND_DONE and reconcileBriefTasks, which already runs on every render once
+     the plan is live, closes it the moment the row appears; a row ALREADY in the done bucket is
+     left alone, so nothing is re-written and no toast claims a write nobody needed; it is
+     stamped ONCE per ticket (b.cstmp), so an AM who deliberately re-opens the row afterwards is
+     not corrected on the next render; and a scoped signin never writes another book's row. */
+  var PEND_DONE={};
+  function rowForBrief(b){ if(!b)return null;
+    return briefRowFor(b)||((b.client&&b.task)?briefRow(b):null); }
+  function confirmDone(b){ if(!b||!b.id||b.cstmp)return false;
+    PEND_DONE[b.id]=1; return applyConfirmDone(b); }
+  function applyConfirmDone(b){
+    if(!b||!b.id||!PEND_DONE[b.id])return false;
+    if(b.status!=='confirmed'){ delete PEND_DONE[b.id]; return false; }   // moved on again before its row appeared
+    if(!inScopeClient(b.client)){ delete PEND_DONE[b.id]; return false; }
+    var row=rowForBrief(b); if(!row)return false;                         // not on the board yet — wait for it
+    delete PEND_DONE[b.id]; b.cstmp=1;                                    // before the writer: it renders
+    if(bucketOf(row.s||'')==='done')return true;                          // already closed — say nothing, write nothing
+    recPush({client:row.client,task:row.task,source:row.source,key:'status',prev:(row.s||'')});
+    if(row.source==='plan')writeStatus(row.client,row.task,'Done');
+    else { saveStatus(row.client,row.task,'Done');
+      toast('✓ Client confirmed — '+String(row.task).slice(0,46)+' marked Done'); }
+    return true; }
+  /* The rule above reaches every confirmation from now on; these are the tickets ALREADY sitting
+     at Client confirmed over a task the board still lists as open — the same complaint, a day
+     older. Filled in ONCE per device (b.cstmp, the stamp the live path sets) through gridWrite,
+     the batch cell writer, so the whole pass is one render and one sheet write per row; capped
+     so a large book cannot fire hundreds of writes in one go, with the rest named for the next
+     open. A row somebody has already closed is never touched, and neither is another book's. */
+  var _cdDone=false, CDONE_CAP=40;
+  function confirmBackfill(){
+    // the once-per-device flag is only spent on a pass that could SEE the pipeline: the first
+    // reconcile can run with the plan live and the brief store still in flight, and spending it
+    // there would leave the historic rows for the next open with nothing saying so
+    if(_cdDone||!LIVE_CONN||!Object.keys(BRIEFS).length)return; _cdDone=true;
+    var rows=[], more=0, byKey={};
+    allIntake().forEach(function(r){ byKey[rowKey(r)]=r; });
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||b.cstmp||b.status!=='confirmed'||isDup(b)||!b.client||!b.task)return;
+      if(!inScopeClient(b.client))return;
+      var r=(b.taskKey&&byKey[b.taskKey])||briefRow(b);
+      if(!r||r.source!=='plan'||bucketOf(r.s||'')==='done')return;
+      if(rows.length>=CDONE_CAP){ more++; return; }
+      b.cstmp=1; rows.push(r); });
+    if(!rows.length)return;
+    _rec=[]; rows.forEach(function(r){ gridWrite(r,'status','Done'); });
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;   // one undo entry for the whole pass, like a paste
+    persist(); renderAll();
+    toast('✓ '+rows.length+' confirmed ticket'+(rows.length===1?'':'s')+' still had an open task — closed'
+      +(more?(' · '+more+' more on the next open'):'')); }
   function bfConfirm(id,existing){   // tell the truth once the server has actually taken it
     var t0=Date.now();
     (function chk(){
@@ -4509,6 +4575,7 @@ aside.ck[hidden]{display:none}
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
       if(!b||!b.client||!b.task||isDup(b))return;
       if(applyBriefStamp(b))pend.push(b);                   // the due + ASPL owner this brief decided, once its row exists
+      if(applyConfirmDone(b))pend.push(b);                  // a confirmation made before its row was on the board
       if(b.status==='confirmed')return;                     // closed work needs no plan row
       if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
       if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
@@ -4526,7 +4593,7 @@ aside.ck[hidden]{display:none}
     if(pend.length){ persist();
       if(made){ toast('⟲ '+made+' briefed ticket'+(made===1?'':'s')+' had no task in the plan — filed into Intake');
         renderAll(); } }
-    asplBackfill(); }
+    asplBackfill(); confirmBackfill(); }
   /* The rule above only reaches briefs raised from now on, and Ray was looking at rows briefed
      weeks ago whose Owner column reads a dash — the ones that prompted it. A briefed row with
      nobody on it IS an ASPL task, whenever it was raised, so this fills those in ONCE per device

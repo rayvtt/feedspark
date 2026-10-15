@@ -313,6 +313,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: briefing a task records its owner and its due date"
   NODE_PATH=$(npm root -g) node tools/check_briefstamp.js || {
     echo "✗ brief-stamp tripwire failed — an internal brief is an ASPL task and carries the due date it was briefed for onto its own Intake row, without taking a task off somebody who already owns it"; exit 1; }
+  echo "── validating: a confirmed ticket closes its task"
+  NODE_PATH=$(npm root -g) node tools/check_confirmdone.js || {
+    echo "✗ confirm-done tripwire failed — a ticket moved to Client confirmed, wherever its stage was moved, closes its Intake task and tells the plan sheet; a task already closed is not re-written and an AM who re-opens it is not corrected"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }

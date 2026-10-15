@@ -16038,12 +16038,42 @@
       "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
       "pr": 0
     },
-    {"name": "Golden ✎ Edit report never flattens a unit's markup on open", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "el.__h = el.innerHTML", "pr": 0},
-    {"name": "Breakdown: the column store — a dictionary per column, one Uint32 per product", "file": "docs/breakdown_engine.js", "pattern": "var c = { name: name, dict: new Map([['', 0]]), vals: [''], ids: new Uint32Array(S.cap) };", "pr": 0},
-    {"name": "Breakdown: a table is never filtered by its own selection", "file": "docs/FeedSpark_Breakdown.html", "pattern": "function maskExcept(spec)", "pr": 0},
-    {"name": "Breakdown: the parser's header row is never counted as a product", "file": "docs/FeedSpark_Breakdown.html", "pattern": "if (!hdr) { hdr = h || row; return; }", "pr": 0},
-    {"name": "Breakdown: the roster lists Google AND Meta markets, scoped", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "meta: /-fb$/.test(r.mkt)", "pr": 0},
-    {"name": "Breakdown: every section folds, a fresh device opens the first two", "file": "docs/FeedSpark_Breakdown.html", "pattern": "var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };", "pr": 0},
+    {
+      "name": "Golden ✎ Edit report never flattens a unit's markup on open",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "el.__h = el.innerHTML",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the column store — a dictionary per column, one Uint32 per product",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "var c = { name: name, dict: new Map([['', 0]]), vals: [''], ids: new Uint32Array(S.cap) };",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: a table is never filtered by its own selection",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function maskExcept(spec)",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the parser's header row is never counted as a product",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "if (!hdr) { hdr = h || row; return; }",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the roster lists Google AND Meta markets, scoped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "meta: /-fb$/.test(r.mkt)",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: every section folds, a fresh device opens the first two",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };",
+      "pr": 0
+    },
     {
       "name": "Golden ✎ Edit report never flattens a unit's markup on open",
       "file": "docs/FeedSpark_GoldenRecord.html",
@@ -16090,6 +16120,36 @@
       "name": "Workflow: the band's button COLUMN is fixed, the button is Intake's own size",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": ".kwd-act{flex:none;width:78px",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: Client confirmed closes the task, on the one writer every surface uses",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(stage==='confirmed')confirmDone(b);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the close is retried until its row is on the board",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(applyConfirmDone(b))pend.push(b);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a task already closed is never re-written by a confirmation",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(bucketOf(row.s||'')==='done')return true;",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: tickets already at Client confirmed are closed once per device",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function confirmBackfill(){",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the confirm-done tripwire runs in validate",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "node tools/check_confirmdone.js",
       "pr": 0
     },
     {"name": "Headlines: Space Grotesk on every h1–h3 of every app page", "file": "docs/headfont_widget.html", "pattern": "h1,h2,h3{font-family:var(--font-head)", "pr": 0},
