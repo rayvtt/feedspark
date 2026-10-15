@@ -5822,7 +5822,8 @@ window.addEventListener('load',restore);
   }
   function pdfFonts(d) {
     if (!d.fonts) return Promise.resolve();
-    return Promise.all(['400', '700', '900'].map(function (w) { return d.fonts.load(w + ' 16px Lato').catch(function () {}); }))
+    return Promise.all(['400', '700', '900'].map(function (w) { return d.fonts.load(w + ' 16px Lato').catch(function () {}); })
+      .concat(['400', '700'].map(function (w) { return d.fonts.load(w + ' 16px "Space Grotesk"').catch(function () {}); })))
       .then(function () { return d.fonts.ready; });
   }
   // the Catalogue section is a frame of its own — wait for it, size it to its content, draw it into an image in its place
