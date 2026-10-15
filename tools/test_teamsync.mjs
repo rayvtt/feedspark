@@ -171,7 +171,15 @@ await setFail(true);
 const before3 = Object.keys(await briefs()).length;
 await raise(S.p, 'Reiss', 'Keywords Optimisation - Tailoring - Marketing Planner - 1126');
 await S.p.waitForTimeout(2500);
-ok(await S.p.evaluate(() => [...document.querySelectorAll('div')].some(d => /not saved to the pipeline yet/i.test(d.textContent || ''))), 'the board says it is not saved and is retrying');
+/* Since 15 Oct 2026 this is said on the PIPELINE'S OWN HEAD LINE, not in a fixed band across
+ * the board (Ray: "warning like this never linger !") — a folded head still carries it, and it
+ * goes the instant the save lands. */
+ok(await S.p.evaluate(() => { const e = document.getElementById('wss-bp');
+  return !!e && /not saved to the pipeline yet/i.test(e.textContent || ''); }),
+  'the pipeline\'s head line says it is not saved yet');
+ok(await S.p.evaluate(() => ![...document.querySelectorAll('body > div')].some(d =>
+  getComputedStyle(d).position === 'fixed' && /not saved to the pipeline/i.test(d.textContent || ''))),
+  'and nothing is left lying over the board to say it');
 ok(!(await S.p.evaluate(() => [...document.querySelectorAll('div')].some(d => /saved to pipeline · /i.test(d.textContent || '')))), 'and never claims it landed');
 ok(Object.keys(await briefs()).length === before3, 'the server really does not have it');
 

@@ -99,8 +99,10 @@ window.addEventListener('load',restore);
   .kwd-sc{flex:none;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   /* the band's Brief button IS Intake's (Ray, 15 Oct 2026: "can brief button have the same design
      as intake") — ONE declaration for both, so the two can never drift apart again */
-  .kwd-go,.kwd-tk{min-width:72px}   /* one button column: 'Brief' and 'Ticket ↗' occupy the same
-     width, so the scope figure and the court beside them start on one line down the band too */
+  .kwd-go,.kwd-tk{width:78px}   /* one button column: 'Brief' and 'Ticket ↗' occupy the same
+     width, so the scope figure and the court beside them start on one line down the band too.
+     A FIXED width, not a floor — 'Ticket ↗' is wider than 72px and simply grew past it, which
+     left the two halves 5px out and the columns before them with it. */
   .kwd-go{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;
     justify-content:center;font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;
     border-radius:100px;border:1px solid var(--orange);background:var(--paper);
@@ -914,7 +916,13 @@ window.addEventListener('load',restore);
      measures it there). The card's border is the table's frame. */
   .wsec>.wsb>.it-scroll{margin-left:-18px;margin-right:-18px;border-left:0;border-right:0;border-radius:0;box-shadow:none}
   .wsec>.wsb>.it-scroll:last-child{margin-bottom:-18px;border-bottom:0;border-radius:0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px)}
-  @media(max-width:760px){ .wsec>.wsb>.it-scroll{margin-left:-13px;margin-right:-13px} .wsec>.wsb>.it-scroll:last-child{margin-bottom:-14px} }
+  /* The table runs to the card's own edge, so the bands under it do too — otherwise the Keyword
+     calendar's → Brief column sits 18px inside Intake's Brief column directly above it, which is
+     the misalignment Ray drew a red stroke down on 15 Oct 2026 ("why no vertically straight ?").
+     Off the SAME padding as the table's own bleed, so the two can never disagree. */
+  .wsec>.wsb>.panel.sw-band{margin-left:-18px;margin-right:-18px;border-left:0;border-right:0;border-radius:0}
+  @media(max-width:760px){ .wsec>.wsb>.it-scroll{margin-left:-13px;margin-right:-13px} .wsec>.wsb>.it-scroll:last-child{margin-bottom:-14px}
+    .wsec>.wsb>.panel.sw-band{margin-left:-13px;margin-right:-13px} }
   @media(max-width:760px){ .wsh{padding:12px 13px;font-size:16px} .wsb{padding:0 13px 14px} }
   .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
@@ -2015,7 +2023,7 @@ aside.ck[hidden]{display:none}
    * that person's localStorage only, with the brief email already sent — the team's single
    * record of the work, invisible to the team. The save now RETRIES with backoff, flushes on
    * reconnect, and says what actually happened. */
-  var _bfT=null, _bfBack=2000, BRIEFS_DIRTY=0, _bfWarn=null;
+  var _bfT=null, _bfBack=2000, BRIEFS_DIRTY=0, _bfWarn=false;
   function persist(){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
     BRIEFS_DIRTY=Date.now(); bfPush();
     // a brief just changed: the keyword-calendar band reads the SAME store to decide what still
@@ -2068,17 +2076,14 @@ aside.ck[hidden]{display:none}
     }
     return out;
   }
-  // an unsaved brief is never left to a toast nobody re-reads — it stays on screen until it lands
-  function bfWarn(on){
-    if(!on){ if(_bfWarn){ _bfWarn.remove(); _bfWarn=null; } return; }
-    if(_bfWarn)return;
-    _bfWarn=document.createElement('div');
-    _bfWarn.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#8A2A1B;'
-      +'color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:800;font-size:13px;'
-      +'box-shadow:0 8px 24px rgba(0,0,0,.25)';
-    _bfWarn.textContent='⚠ Brief not saved to the pipeline yet — still on this device. Retrying…';
-    document.body.appendChild(_bfWarn);
-  }
+  /* An unsaved brief is never left to a toast nobody re-reads — but it is not left as a red band
+     lying across the page either (Ray, 15 Oct 2026: "warning like this never linger !"). A fixed
+     banner that stays up until a background retry lands is a warning nobody can put down: it
+     covers the board, it outlives the moment it was about, and a colour that is always on screen
+     stops meaning anything. The FACT keeps its place — the pipeline's OWN head line, which no
+     fold can hide and every render rewrites — so it is still on screen while the save is still
+     out, and it is gone the instant the save lands. */
+  function bfWarn(on){ _bfWarn=!!on; if(typeof renderBpTog==='function')renderBpTog(); }
   /* And the board has to SEE a colleague's ticket. Workflow read /api/briefs once, at boot, and
      never again — so a brief Steven raised at 09:00 was simply not on a board opened at 08:30.
      (KWCal already polls; the board that OWNS the pipeline did not.) */
@@ -2719,30 +2724,56 @@ aside.ck[hidden]{display:none}
     });
     if(n)toast('📞 '+n+' call action'+(n===1?'':'s')+' written into the plan');
   }
-  /* A PLAN WRITE THAT FAILS SAYS SO, AND KEEPS SAYING SO (Ray, 14 Oct 2026: "actions added by
-     call / gemini - is not added in Project Plan btw"). The row reached Intake, the sheet append
-     was refused, and the only word about it was a toast that had already faded — so the three
-     call actions read as filed while the client's plan never heard of them. Like bfWarn for an
-     unsaved brief: once a write has actually been REFUSED this session, the banner stays up
-     while any row is still unconfirmed, names one of them, and carries the sheet's own reason.
-     It is never raised by a write merely IN FLIGHT — only by one that came back wrong. */
-  var _planFail='', _planWarnEl=null;
+  /* A PLAN WRITE THAT FAILS SAYS SO — ON INTAKE'S OWN HEAD LINE, NOT IN A BAND ACROSS THE PAGE
+     (Ray, 15 Oct 2026, over the dark-red floating banner: "i dont want this message to show",
+     then "warning like this never linger !"). The 14 Oct rule stands — a refused write is never
+     silent — but what it shipped was a fixed band reading "Retrying…", and the refusal Ray
+     screenshotted can NEVER succeed: five ELC brands share one workbook whose tabs carry no
+     "Plan"-like name, so every write for them is refused for good. A permanent red alarm about
+     something nobody is retrying is how a colour stops meaning anything (the New-products
+     lesson), and it was wrong twice over — the band held ONE global reason and the FIRST
+     unsynced row from any brand, so ELC's sheet error was printed against an Accessorize task.
+     So: the count rides Intake's head line (quiet, never hidden by a fold, every brand with its
+     own sheet's reason in the tooltip), a reason is kept PER CLIENT and never read against
+     another brand's row, and a refusal that can never succeed STOPS being re-sent instead of
+     costing a subrequest every poll — the rows stay in Intake and the line says plainly that it
+     is the sheet, not the FCC, that has to change. */
+  var PLAN_FAIL={}, PLAN_DEAD={};
+  // A refusal this workbook will give every time: no plan-shaped tab, no sheet wired, a bad id,
+  // or a service account with read-only access. Re-sending can only fail again, so the row is
+  // left alone until somebody fixes the sheet — and is never described as being retried.
+  function planFatal(e){ return /-like tab|no_plan_sheet|bad_sheet_id|not_found|no Project Plan sheet|permission|forbidden|viewer|exceeds grid/i.test(String(e||'')); }
   function planUnsynced(){ var out=[];
     MANUAL.forEach(function(m){ if(!m||m.w||!m.client||!m.task)return;
       if(!PLANSHEET[m.client]||DELETED[m.client+'|'+m.task])return; out.push(m); });
     return out; }
-  function planWarn(){
-    var rows=_planFail?planUnsynced():[];
-    if(!rows.length){ if(_planWarnEl){ _planWarnEl.remove(); _planWarnEl=null; } return; }
-    if(!_planWarnEl){ _planWarnEl=document.createElement('div');
-      _planWarnEl.style.cssText='position:fixed;left:50%;bottom:62px;transform:translateX(-50%);background:#8A2A1B;'
-        +'color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:800;font-size:13px;max-width:min(680px,92vw);'
-        +'box-shadow:0 8px 24px rgba(0,0,0,.25)';
-      document.body.appendChild(_planWarnEl); }
-    _planWarnEl.textContent='⚠ '+rows.length+' task'+(rows.length===1?'':'s')+' not written to the project plan — e.g. '
-      +rows[0].client+': “'+String(rows[0].task).slice(0,60)+'”'+(_planFail?(' · '+_planFail):'')+'. Retrying…';
-    _planWarnEl.title=rows.map(function(m){ return m.client+' — '+m.task; }).join('\n'); }
-  function planWriteFailed(err){ _planFail=String(err||'write failed').slice(0,120); planWarn(); }
+  // What the head line says: how many rows the sheet never took, which brands, and in the
+  // tooltip each brand's own reason with its tasks named. Only a client actually REFUSED this
+  // session counts — a write merely in flight is not a failure.
+  function planNote(){
+    var rows=planUnsynced().filter(function(m){ return !!PLAN_FAIL[m.client]; });
+    if(!rows.length)return null;
+    var by={}; rows.forEach(function(m){ (by[m.client]=by[m.client]||[]).push(m.task); });
+    var cl=Object.keys(by).sort();
+    return { n:rows.length, clients:cl,
+      dead:cl.every(function(c){ return PLAN_DEAD[c]; }),
+      tip:cl.map(function(c){ var t=by[c];
+        return c+' — '+t.length+' task'+(t.length===1?'':'s')+' the sheet did not take\n'+PLAN_FAIL[c]
+          +'\n  \u00b7 '+t.slice(0,6).join('\n  \u00b7 ')+(t.length>6?('\n  \u00b7 +'+(t.length-6)+' more'):''); }).join('\n\n') }; }
+  // Intake's head line carries a placeholder span, so a write that comes back wrong updates the
+  // line on its own rather than waiting for the next full render.
+  function planNoteFill(){ var el=document.getElementById('plan-note'); if(!el)return;
+    var p=planNote();
+    if(!p){ el.textContent=''; el.removeAttribute('title'); return; }
+    el.textContent=' \u00b7 '+p.n+' not written to '
+      +(p.clients.length===1?(p.clients[0]+'\u2019s plan'):(p.clients.length+' clients\u2019 plans'))
+      +(p.dead?' \u00b7 the sheet has to change':'');
+    el.title=p.tip; }
+  function planWarn(){ planNoteFill(); }
+  function planWriteFailed(client,err){ var e=String(err||'write failed').slice(0,160);
+    if(client){ PLAN_FAIL[client]=e; if(planFatal(e))PLAN_DEAD[client]=1; }
+    planWarn(); }
+  function planWriteOk(client){ delete PLAN_FAIL[client]; delete PLAN_DEAD[client]; }
   // client|task rows whose plan-sheet write has already been attempted this session — set by
   // adoptIntoPlan's own write and by resyncPlanWrites, cleared when that write fails, so one
   // row is never sent twice at once and a failure is never stranded for the session.
@@ -2766,9 +2797,11 @@ aside.ck[hidden]{display:none}
       _planTried[client+'|'+task]=1;                 // this write is in flight — the resync pass must not send the same row alongside it
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else { delete _planTried[client+'|'+task]; planWriteFailed((d&&d.error)||'write failed'); } })
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):(client+'’s sheet refused it · saved here — see the Intake heading')); if(d&&d.ok){ markWritten(client,task); planWriteOk(client); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else { var ae=(d&&d.error)||'write failed';
+          if(!planFatal(ae))delete _planTried[client+'|'+task];   // a refusal this workbook will repeat is not handed back to the retry pass
+          planWriteFailed(client,ae); } })
         .catch(function(){ delete _planTried[client+'|'+task];   // hand it back to the resync pass rather than stranding it for the session
-          planWriteFailed('network'); toast('Saved locally — plan write failed (check the SA has Editor access)'); });
+          planWriteFailed(client,'network'); toast('Saved locally — plan write failed (check the SA has Editor access)'); });
     } else toast('Added to '+client+' locally · no plan sheet linked to write back');
     return true; }
   // w:1 on a MANUAL row = its sheet append CONFIRMED ok. A row without it is an optimistic local
@@ -2808,10 +2841,12 @@ aside.ck[hidden]{display:none}
     Object.keys(by).forEach(function(c){ var rows=by[c];
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:PLANSHEET[c],client:c,tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
-        .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed((d&&d.error)||'write failed'); return; }
-          rows.forEach(function(m){ m.w=1; }); saveManual(); planWarn();
+        .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ var re=(d&&d.error)||'write failed';
+            if(!planFatal(re))rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; });
+            planWriteFailed(c,re); return; }
+          rows.forEach(function(m){ m.w=1; }); saveManual(); planWriteOk(c); planWarn();
           if(d.appended)toast('⟲ '+d.appended+' unsynced task'+(d.appended===1?'':'s')+' written to '+c+'’s plan'); })
-        .catch(function(){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed('network'); }); }); }
+        .catch(function(){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed(c,'network'); }); }); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   // the page keeps MANUAL as an array; the shared store keys it per row so two people adding
   // different rows at once both survive the merge (an array would be last-writer-wins)
@@ -2885,8 +2920,12 @@ aside.ck[hidden]{display:none}
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } })
-        .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):(client+'’s sheet refused it · saved here — see the Intake heading')); if(d&&d.ok){ markWritten(client,task); planWriteOk(client); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); }
+          // ＋ Add task's own refusal used to be a toast and nothing else — the row stayed in
+          // Intake unwritten with the only word about it already faded. Same reporting as every
+          // other way a task reaches a plan.
+          else planWriteFailed(client,(d&&d.error)||'write failed'); })
+        .catch(function(){ planWriteFailed(client,'network'); toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   /* THE VIEW THE BOARD OPENS ON (Ray, 29 Sep 2026: "default view is (plan: all history)
@@ -3164,8 +3203,10 @@ aside.ck[hidden]{display:none}
      folded head can never hide a finding, because every head carries the line its own render
      writes (wsSum) — the count, the overdue, what is over SLA. A jump INTO a folded section
      (a #hash, Focus mode, a link) opens it for the visit without rewriting the choice.
-     The two live warnings this page raises (bfWarn, planWarn) are fixed-position bands on the
-     body, not section children, so no fold can swallow one. */
+     That line is also where the page's two live warnings live since 15 Oct 2026 (Ray: "warning
+     like this never linger !") — an unsaved brief on the pipeline's head, a refused plan write
+     on Intake's — so neither is a band lying across the board, and a fold cannot swallow one
+     because a folded head still carries the line its own render wrote. */
   var WS_KEYS=['intake','tl','bp','bl','sla','tests','wk'];
   /* A fresh device opens THE BOARD — Intake and the Timeline — and folds the tail behind it.
      Both, not Intake alone: a brief a colleague raises reaches an open board through the
@@ -3367,7 +3408,9 @@ aside.ck[hidden]{display:none}
     (function(){ var was=itState.overdue; itState.overdue=true; var ov=intakeFiltered().length; itState.overdue=was;
       wsSum('intake',fAll.length+' task'+(fAll.length===1?'':'s')+' in this filter'
         +(ov?(' \u00b7 '+wsWarn(ov+' overdue')):'')
-        +(capped?(' \u00b7 first '+f.length+' drawn'):'')); })();
+        +(capped?(' \u00b7 first '+f.length+' drawn'):'')
+        +'<span id="plan-note"></span>');   // a plan write refused this session names itself here, never in a band
+      planNoteFill(); })();
     (function(){ var m=document.getElementById('it-more'); if(!m)return;
       if(!capped && fAll.length<=IT_CAP){ m.hidden=true; return; }   // a board that fits says nothing
       m.hidden=false;
@@ -5069,9 +5112,12 @@ aside.ck[hidden]{display:none}
     var live=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){ return b&&b.status!=='confirmed'&&!isDup(b); });
     var aspl=live.filter(function(b){ return b.status==='briefed'||b.status==='progress'; }).length;
-    wsSum('bp',!live.length?'Nothing in motion — every brief is signed off'
+    wsSum('bp',(!live.length?'Nothing in motion — every brief is signed off'
       :(live.length+' brief'+(live.length===1?'':'s')+' in motion'
-        +(aspl?(' \u00b7 '+aspl+' with ASPL'):''))); }
+        +(aspl?(' \u00b7 '+aspl+' with ASPL'):'')))
+      +(_bfWarn?(' \u00b7 '+wsWarn('not saved to the pipeline yet')):''));
+    var e=document.getElementById('wss-bp');
+    if(e)e.title=_bfWarn?'A brief is still only on this device — the save was refused and is being retried. Leave the tab open.':''; }
   function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); renderLedger(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot

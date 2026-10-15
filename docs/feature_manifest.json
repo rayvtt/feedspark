@@ -15529,18 +15529,6 @@
       "pr": 0
     },
     {
-      "name": "Plan write: a refused append stays on screen until the row lands",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "function planWriteFailed(err){ _planFail=String(err||'write failed')",
-      "pr": 0
-    },
-    {
-      "name": "Plan write: the resync pass raises the warning instead of returning in silence",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "if(!d||!d.ok){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); planWriteFailed(",
-      "pr": 0
-    },
-    {
       "name": "Keep: the board filter is written on every render",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "keepFilter();   // the filter in force is the filter the next load opens on",
@@ -15916,6 +15904,66 @@
       "name": "Workflow fold tripwire is wired into qa_gate",
       "file": "tools/qa_gate.sh",
       "pattern": "tools/check_wffold.js",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a refused plan write is reported on Intake's own head line, never as a band",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function planNoteFill(){ var el=document.getElementById('plan-note');",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: each brand's sheet reason is kept apart — never read against another brand's row",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PLAN_FAIL={}, PLAN_DEAD={};",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a refusal the workbook will repeat is not handed back to the retry pass",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!planFatal(ae))delete _planTried[client+'|'+task];",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the resync pass reports a refusal under the client it was for",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "planWriteFailed(c,re); return; }",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: an unsaved brief is a flag the pipeline's head line reads, not a fixed band",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function bfWarn(on){ _bfWarn=!!on; if(typeof renderBpTog==='function')renderBpTog(); }",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: + Add task's own refusal is reported like every other plan write",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "else planWriteFailed(client,(d&&d.error)||'write failed'); })",
+      "pr": 0
+    },
+    {
+      "name": "Lingering-warning tripwire is wired into qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/check_nolinger.js",
+      "pr": 0
+    },
+    {
+      "name": "Lingering-warning tripwire is wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_nolinger.js",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the band's button column is a FIXED width, so both halves start on one line",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".kwd-go,.kwd-tk{width:78px}",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: a band inside a section card runs to the card's own edge, like the table above it",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
       "pr": 0
     }
   ]

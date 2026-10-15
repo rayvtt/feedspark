@@ -59,6 +59,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/check_wfboot.js
       - name: Workflow — every section is a box that folds (tile heads, the tail folded, a line that survives every fold)
         run: NODE_PATH=$(npm root -g) node tools/check_wffold.js
+      - name: Workflow — a refused write is reported on its head line, never as a band that lingers
+        run: NODE_PATH=$(npm root -g) node tools/check_nolinger.js
       - name: Workflow — the calendar's moments to brief, raised without a duplicate task
         run: NODE_PATH=$(npm root -g) node tools/check_kwdue.js
       - name: Workflow — the Playbook's Test Lab section (proposals, competitors, → Brief as a test)
