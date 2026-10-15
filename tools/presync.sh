@@ -303,6 +303,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: a warning never lingers across the board"
   NODE_PATH=$(npm root -g) node tools/check_nolinger.js || {
     echo "✗ lingering-warning tripwire failed — a refused plan write or brief save belongs on its section's own head line, with each brand's own reason, sent once when the sheet will only refuse it again, and never as a fixed band across the work"; exit 1; }
+  echo "── validating: briefing a task records its owner and its due date"
+  NODE_PATH=$(npm root -g) node tools/check_briefstamp.js || {
+    echo "✗ brief-stamp tripwire failed — an internal brief is an ASPL task and carries the due date it was briefed for onto its own Intake row, without taking a task off somebody who already owns it"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }

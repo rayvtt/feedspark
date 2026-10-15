@@ -15965,6 +15965,42 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
       "pr": 0
+    },
+    {
+      "name": "Workflow: an internal brief stamps ASPL onto a row nobody owns",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(noOwner(row.owner)){ setOwner(row,'ASPL');",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the brief's due date is written onto its row, retried until the row exists",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PEND_STAMP={};",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the stamp is retried on every reconcile pass",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(applyBriefStamp(b))pend.push(b);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: rows briefed before the rule are given ASPL once per device",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function asplBackfill(){",
+      "pr": 0
+    },
+    {
+      "name": "Brief-stamp tripwire is wired into qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/check_briefstamp.js",
+      "pr": 0
+    },
+    {
+      "name": "Brief-stamp tripwire is wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_briefstamp.js",
+      "pr": 0
     }
   ]
 }
