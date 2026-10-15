@@ -283,7 +283,8 @@
   function cross(S, rs, cs, m, opts) {
     opts = opts || {};
     var RR = reader(S, rs), RC = reader(S, cs); if (!RR || !RC) return null;
-    var maxC = opts.maxC || 12, maxR = opts.maxR || 25;
+    // 0 = no limit (every column / every row); absent = the screen's defaults
+    var maxC = opts.maxC == null ? 12 : opts.maxC, maxR = opts.maxR == null ? 25 : opts.maxR;
     var rowTot = new Map(), colTot = new Map(), cell = new Map(), tot = 0;
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
@@ -301,7 +302,7 @@
     sortRows(cols, cm === 'len' || cm === 'num' ? 'o' : 'n', cm === 'len' || cm === 'num' ? 1 : -1);
     var rows = []; rowTot.forEach(function (n, v) { rows.push({ v: v, n: n, o: bandOrder(rm, v) }); });
     sortRows(rows, rm === 'len' || rm === 'num' ? 'o' : 'n', rm === 'len' || rm === 'num' ? 1 : -1);
-    var shown = cols.slice(0, maxC), other = cols.slice(maxC);
+    var shown = maxC > 0 ? cols.slice(0, maxC) : cols, other = maxC > 0 ? cols.slice(maxC) : [];
     var otherN = other.reduce(function (s, c) { return s + c.n; }, 0);
     var outCols = shown.map(function (c) { return { v: c.v, n: c.n }; });
     if (other.length) outCols.push({ v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) });

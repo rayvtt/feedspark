@@ -125,7 +125,26 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     await pg.click('#pv tbody tr >> nth=0 >> td.c >> nth=0'); await pg.waitForTimeout(120);
     const fl = await pg.evaluate(() => window.__FCCBreakdown.state().filters.map((f) => f.spec.f + '=' + f.vals.join('|')));
     ok('clicking a cell filters the page to its row and column', fl.length === 2 && fl[0] === 'g:product_type=' + pv.rows[0][0] && fl[1] === 'g:availability=' + pv.heads[0], fl);
-    await pg.click('#fclear');
+    await pg.click('#fclear'); await pg.waitForTimeout(100);
+
+    console.log('· the pivot CSV carries every column the screen folds into Other');
+    const IDS = new Set(ITEMS.map((it) => tag(it, 'g:id'))).size;
+    await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'g:id'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+    await pg.waitForTimeout(150);
+    const scrOther = await pg.evaluate(() => /Other \(/.test(document.querySelector('#pv table thead').textContent));
+    ok('the screen folds the columns past twelve into Other', IDS > 12 && scrOther, [IDS, scrOther]);
+    const [pdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+    const pcsv = fs.readFileSync(await pdl.path(), 'utf8').replace(/^\uFEFF/, '');
+    const head = pcsv.split(/\r\n/)[0].split(',');
+    const pRows = pcsv.split(/\r\n/).filter((l) => l && !/^(Column total|Read|Note),/.test(l)).length - 1;
+    ok('…the CSV has one column per id and no Other', !/Other \(/.test(pcsv) && head.length === IDS + 2, [head.length, IDS]);
+    ok('…and every row of the row field', pRows === Object.keys(PT2).length, [pRows, Object.keys(PT2).length]);
+    await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'g:availability'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+    await pg.waitForTimeout(120);
+
+    console.log('· a pane is as wide as its longest value');
+    const fit = await pg.evaluate(() => Array.from(document.querySelectorAll('#panes .pane:not(.add) td.v')).every((td) => td.scrollWidth <= td.clientWidth + 1 && getComputedStyle(td).textOverflow !== 'ellipsis'));
+    ok('no value in a pane is cut short', fit);
 
     console.log('· Styles counts each item group once');
     await pg.click('#unit [data-u="group"]'); await pg.waitForTimeout(120);

@@ -120,8 +120,9 @@ window.addEventListener('load',restore);
   .fbar .sum{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
   .fbar .sum b{font-weight:900}
   /* the panes: one card size, as many across as fit */
-  .panes{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;align-items:start}
-  .pane{border:1px solid var(--line);border-radius:12px;padding:10px 12px 8px;background:var(--paper);min-width:0}
+  /* a pane is as wide as its longest value (Ray, 15 Oct 2026: "adjust each table width to see full length of value"), up to the row; past that a value wraps, never cut */
+  .panes{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+  .pane{border:1px solid var(--line);border-radius:12px;padding:10px 12px 8px;background:var(--paper);flex:1 1 auto;width:fit-content;min-width:330px;max-width:100%;box-sizing:border-box}
   .ph{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .ph .fld{height:32px;font-size:12.5px;min-width:0;max-width:100%}
   .ph .fld.f{flex:1 1 150px}
@@ -131,13 +132,13 @@ window.addEventListener('load',restore);
   .pm b{color:var(--ink-2);font-weight:900}
   .pm .warn{color:var(--orange-deep)}
   .pt-wrap{max-height:430px;overflow:auto;border-top:1px solid var(--line)}
-  table.pt{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.pt{width:100%;border-collapse:collapse;table-layout:auto}
   table.pt th{position:sticky;top:0;z-index:1;background:var(--paper);font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 6px;cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid var(--line)}
   table.pt th:hover,table.pt th.on{color:var(--orange-deep)}
   table.pt th.on::after{content:' ▾'}table.pt th.on.asc::after{content:' ▴'}
-  table.pt th.c-n{width:76px;text-align:right}table.pt th.c-s{width:120px}
+  table.pt th.c-n{width:76px;min-width:76px;text-align:right}table.pt th.c-s{width:120px;min-width:120px}
   table.pt td{font-size:12.5px;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
-  table.pt td.v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:var(--ink)}
+  table.pt td.v{white-space:normal;overflow-wrap:anywhere;font-weight:700;color:var(--ink)}
   table.pt td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   table.pt tr{cursor:pointer}
   table.pt tbody tr:hover td{background:var(--wash)}
@@ -195,7 +196,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] .ph .ib{background:#20242E}
-  @media(max-width:760px){.panes{grid-template-columns:minmax(0,1fr)}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
+  @media(max-width:760px){.pane{min-width:0;width:100%;flex-basis:100%}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
   @media(prefers-reduced-motion:reduce){.prog.ind i{animation:none}}
 </style>
 <style>/* FCC-THEME */
@@ -783,9 +784,12 @@ window.addEventListener('load',restore);
   };
   $('#pv-csv').onclick = function () {
     if (!PV) return;
-    var rows = [[B.specName(S.st, PV.rs) + (PV.cs ? ' \\ ' + B.specName(S.st, PV.cs) : '')].concat(PV.cols.map(function (c) { return c.v; })).concat(['Row total'])];
-    PV.rows.forEach(function (r) { rows.push([r.v].concat(r.cells).concat([r.n])); });
-    if (PV.cs) rows.push(['Column total'].concat(PV.cols.map(function (c) { return c.n; })).concat([PV.total]));
+    // the download carries EVERY row and EVERY column — the screen's "Other (N more)" fold is a reading aid, not data
+    // (Ray, 15 Oct 2026: "when downloaded - the grouped 'Other' is expanded in all fields")
+    var X = PV.cs ? Object.assign({ rs: PV.rs, cs: PV.cs }, B.cross(S.st, PV.rs, PV.cs, S.filters.length ? B.mask(S.st, S.filters) : null, { maxR: 0, maxC: 0 })) : PV;
+    var rows = [[B.specName(S.st, X.rs) + (X.cs ? ' \\ ' + B.specName(S.st, X.cs) : '')].concat(X.cols.map(function (c) { return c.v; })).concat(['Row total'])];
+    X.rows.forEach(function (r) { rows.push([r.v].concat(r.cells).concat([r.n])); });
+    if (X.cs) rows.push(['Column total'].concat(X.cols.map(function (c) { return c.n; })).concat([X.total]));
     rows.push([]); rows.push(['Read', filterLine()]);
     download(fname('pivot'), B.csv(rows));
   };
