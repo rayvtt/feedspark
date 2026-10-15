@@ -188,6 +188,33 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:1 sec-how:1');
     await pg.click('#sec-how .fhd');
 
+    console.log('· 📖 Guidebook');
+    const gbVis = () => pg.evaluate(() => { const g = document.getElementById('gb'); const r = g.getBoundingClientRect(); return { open: !g.hidden && r.height > 0, pin: g.classList.contains('pin'), n: g.querySelectorAll('.gr').length, tries: g.querySelectorAll('[data-gb]').length, inView: r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, exp: document.getElementById('gbtn').getAttribute('aria-expanded') }; });
+    await pg.evaluate(() => scrollTo(0, 0));
+    ok('the guidebook is not painted at rest', !(await gbVis()).open);
+    await pg.hover('#gbtn'); await pg.waitForTimeout(250);
+    let g = await gbVis();
+    ok('hovering 📖 Guidebook opens it', g.open && g.exp === 'true', g);
+    ok('…every recipe is in it, each but the habits with a ▶ Try it', g.n === 15 && g.tries >= 13, g);
+    ok('…and it fits the window', g.inView, g);
+    await pg.mouse.move(5, 700); await pg.waitForTimeout(400);
+    ok('moving away closes it', !(await gbVis()).open);
+    await pg.click('#gbtn'); await pg.mouse.move(5, 700); await pg.waitForTimeout(400);
+    g = await gbVis();
+    ok('a click pins it — moving away leaves it open', g.open && g.pin, g);
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(50);
+    ok('Esc closes it', !(await gbVis()).open);
+    await pg.click('#gbtn');
+    await pg.click('#gb [data-gb="0.0"]'); await pg.waitForTimeout(150);
+    const gpv = await pg.evaluate(() => { const P = window.__FCCBreakdown.state().L.pivot; return { r: P.r, c: P.c, gb: document.getElementById('gb').hidden, fold: document.getElementById('sec-pivot').classList.contains('folded') }; });
+    ok('▶ Try it sets the pivot — price bands × product type tier 1', gpv.r && gpv.r.f === 'g:price' && gpv.r.m === 'num' && gpv.c && gpv.c.f === 'g:product_type' && gpv.c.m === 'tier' && gpv.c.k === 1, gpv);
+    ok('…closes the guidebook and opens the pivot', gpv.gb && !gpv.fold, gpv);
+    await pg.click('#gbtn');
+    await pg.click('#gb [data-gb="2.2"]'); await pg.waitForTimeout(150);
+    const miss = await pg.evaluate(() => ({ r: window.__FCCBreakdown.state().L.pivot.r, t: document.getElementById('toast').textContent }));
+    ok('a field the feed does not carry is named, the pivot left as it was', miss.r.f === 'g:price' && /does not carry material/.test(miss.t), miss);
+    await pg.keyboard.press('Escape');
+
     console.log('· saved view, reload, another market');
     await pg.click('#vsave'); await pg.waitForTimeout(100);
     await pg.reload(); await ready(pg); await pg.waitForTimeout(150);
@@ -212,6 +239,9 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const w = await pp.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth, cols: getComputedStyle(document.getElementById('panes')).gridTemplateColumns.split(' ').length }));
     ok('nothing scrolls sideways at 390px', w.sw <= w.iw + 1, w);
     ok('…the panes stack one a row', w.cols === 1, w);
+    await pp.tap('#gbtn'); await pp.waitForTimeout(150);
+    const sh = await pp.evaluate(() => { const r = document.getElementById('gb').getBoundingClientRect(); return { open: !document.getElementById('gb').hidden, l: r.left, rr: r.right, b: r.bottom, iw: innerWidth, ih: innerHeight }; });
+    ok('…the guidebook opens as a bottom sheet on a tap', sh.open && sh.l <= 1 && sh.rr >= sh.iw - 1 && Math.abs(sh.b - sh.ih) <= 2, sh);
     ok('…no page error on the phone', perr.length === 0, perr);
     await ph.close();
   } finally { await b.close(); }

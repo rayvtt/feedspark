@@ -178,6 +178,14 @@ console.log('· the page');
   t('the state hook for the harness, the deep link, the per-device memory', /window\.__FCCBreakdown = \{ state: function \(\) \{ return S; \} \};/.test(PG) && /Q\.get\('brand'\)/.test(PG) && /fcc-bd-brand/.test(PG));
   t('a multi-valued table says its shares add to more than 100%', /counted in each value/.test(PG) && /can add to more than the total/.test(PG));
   t('the explainers collapse behind ⓘ (data-instr)', (PG.match(/data-instr/g) || []).length >= 2);
+  {
+    const gb = /var GUIDE = \[([\s\S]*?)\n  \];/.exec(PG);
+    const rec = gb ? (gb[1].match(/\{ t: '/g) || []).length : 0;
+    t('📖 Guidebook: a hover button in the hero, fifteen recipes in five groups, each with what to look for, the action and the KPI it moves', /id="gbtn"[^>]*aria-controls="gb"/.test(PG) && rec === 15 && gb && (gb[1].match(/ h: '/g) || []).length === 5 && (gb[1].match(/look: '/g) || []).length === 15 && (gb[1].match(/kpi: '/g) || []).length === 15, rec);
+    t('…▶ Try it resolves every field through the engine and NAMES one the feed lacks, never sets a field that is not there', /function gbTry\(key\)/.test(PG) && /B\.resolve\(S\.st, gbSpec\(sp\)\)/.test(PG) && /does not carry/.test(PG));
+    t('…the panel lives on <body> (the hero clips it and its animation would trap a fixed sheet), a tap\'s focus never opens it', /document\.body\.appendChild\(el\)/.test(PG) && /matches\(':focus-visible'\)/.test(PG));
+    t('…the guidebook names no client and no currency', gb && !/£|€|\$\d/.test(gb[1]) && !/Reiss|Schuh|Superdry|Monsoon|Accessorize|YuMOVE|Hobbycraft/i.test(gb[1]));
+  }
   t('no literal </body> inside the script (the worker injects at the first one)', PG.indexOf('</body>') === PG.lastIndexOf('</body>'));
 }
 
