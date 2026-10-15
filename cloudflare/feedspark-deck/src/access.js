@@ -47,6 +47,7 @@ export const MODULES = [
   { slug: 'stock', label: 'Stock management', path: '/stock' },
   { slug: 'catalog', label: 'Catalogue', path: '/catalog' },
   { slug: 'restock', label: 'Restock', path: '/restock' },
+  { slug: 'breakdown', label: 'Field breakdown', path: '/breakdown' },
   { slug: 'aivis', label: 'AI visibility', path: '/aivis' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
   { slug: 'images', label: 'Image library', path: '/images' },

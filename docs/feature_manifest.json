@@ -15966,6 +15966,12 @@
       "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
       "pr": 0
     },
+    {"name": "Golden ✎ Edit report never flattens a unit's markup on open", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "el.__h = el.innerHTML", "pr": 0},
+    {"name": "Breakdown: the column store — a dictionary per column, one Uint32 per product", "file": "docs/breakdown_engine.js", "pattern": "var c = { name: name, dict: new Map([['', 0]]), vals: [''], ids: new Uint32Array(S.cap) };", "pr": 0},
+    {"name": "Breakdown: a table is never filtered by its own selection", "file": "docs/FeedSpark_Breakdown.html", "pattern": "function maskExcept(spec)", "pr": 0},
+    {"name": "Breakdown: the parser's header row is never counted as a product", "file": "docs/FeedSpark_Breakdown.html", "pattern": "if (!hdr) { hdr = h || row; return; }", "pr": 0},
+    {"name": "Breakdown: the roster lists Google AND Meta markets, scoped", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "meta: /-fb$/.test(r.mkt)", "pr": 0},
+    {"name": "Breakdown: every section folds, a fresh device opens the first two", "file": "docs/FeedSpark_Breakdown.html", "pattern": "var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };", "pr": 0},
     {
       "name": "Golden ✎ Edit report never flattens a unit's markup on open",
       "file": "docs/FeedSpark_GoldenRecord.html",
