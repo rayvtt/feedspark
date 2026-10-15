@@ -123,6 +123,8 @@ t('every cell is the products carrying both', cell('Womens > Clothing', 'in stoc
 t('row and column totals add up to the products read', X.total === 4 && X.rows.reduce((s, x) => s + x.n, 0) === 4 && X.cols.reduce((s, x) => s + x.n, 0) === 4);
 X = B.cross(S, { f: 'g:brand' }, { f: 'g:id' }, null, { maxC: 2 });
 t('columns past maxC fold into ONE Other column that keeps its count and names its members', X.cols.length === 3 && X.cols[2].other && X.cols[2].n === 2 && X.cols[2].members.length === 2 && X.rows.every((row) => row.cells.reduce((a, b) => a + b, 0) === row.n), X.cols);
+X = B.cross(S, { f: 'g:brand' }, { f: 'g:id' }, null, { maxC: 0, maxR: 0 });
+t('maxC 0 / maxR 0 = every column and every row, no Other fold (the pivot CSV reads this)', X.cols.length === 4 && !X.cols.some((c) => c.other) && X.rowsHidden === 0, X.cols);
 X = B.cross(S, { f: 'g:id' }, { f: 'g:brand' }, null, { maxR: 2 });
 t('rows past maxR are cut and counted (rowsHidden), never dropped silently', X.rows.length === 2 && X.rowsAll === 4 && X.rowsHidden === 2);
 X = B.cross(S, { f: 'g:product_highlight*' }, { f: 'g:brand' });
