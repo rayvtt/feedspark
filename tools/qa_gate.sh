@@ -480,6 +480,12 @@ else
   echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6f/7: Field breakdown (the column store, every reading, filters, the cross-tab, wiring)"
+if node tools/test_breakdown.mjs >/dev/null 2>&1; then
+  echo "   ✓ Field breakdown harness green"
+else
+  echo "   ✗ Field breakdown harness FAILED — see node tools/test_breakdown.mjs"; FAIL=1
+fi
 echo "── qa-gate 3h6e/7: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
 if node tools/test_restock.mjs >/dev/null 2>&1; then
   echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"

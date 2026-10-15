@@ -43,6 +43,9 @@ const AIVIS_STUB = require('./aivis_stub.js').stubLines();
 // /restock streams a feed and FeedHero's 30-day Ads read, and keeps a ledger — tools/restock_stub.js hands over a SYNTHETIC
 // set (behind a guard on the page's file name) so the KPI band, the split, the category bars and the three views render
 const RESTOCK_STUB = require('./restock_stub.js').stubLines();
+// /breakdown streams a feed and pivots it — tools/breakdown_stub.js hands over the synthetic Northwind feed (behind a guard on
+// the page's file name) so the panes, the pivot and the fields catalogue render
+const BREAKDOWN_STUB = require('./breakdown_stub.js').stubLines();
 // /social reads a feed, Google Ads and four engines — tools/social_stub.js hands over the engines and an empty roster
 // (behind a guard on the page's file name), so the page opens on the demo products it draws itself
 const SOCIAL_STUB = require('./social_stub.js').stubLines();
@@ -86,6 +89,7 @@ const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,s
 ${CATALOG_STUB}
 ${AIVIS_STUB}
 ${RESTOCK_STUB}
+${BREAKDOWN_STUB}
 ${SOCIAL_STUB}
 ${PRICER_STUB}
 ${ROAS_STUB}

@@ -145,6 +145,11 @@ import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
 // The join runs in the page (docs/restock_engine.js, served verbatim at /restock/engine.js, node-tested).
 import RESTOCK_PAGE from "../../../docs/FeedSpark_Restock.html";
 import RESTOCK_ENGINE_SRC from "../../../docs/restock_engine.js";
+// /breakdown (Ray, 15 Oct 2026: "a custom 'breakdown' fields module to breakdown in pivot with any fields in any
+// feeds"): Label Guard's value · SKUs · share table and a cross-tab, for ANY field of ANY wired feed. The feed streams
+// through /api/feed/proxy and is read in the page (docs/breakdown_engine.js, served verbatim at /breakdown/engine.js).
+import BREAKDOWN_PAGE from "../../../docs/FeedSpark_Breakdown.html";
+import BREAKDOWN_ENGINE_SRC from "../../../docs/breakdown_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -385,6 +390,7 @@ const PAGES = {
   '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
   '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
   '/restock':     { html: RESTOCK_PAGE, slug: 'restock' },
+  '/breakdown':   { html: BREAKDOWN_PAGE, slug: 'breakdown' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/social':      { html: SOCIAL_PAGE, slug: 'social' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
@@ -1740,6 +1746,9 @@ async function route(request, env, ctx) {
     if (path === '/aivis/engine.js' && request.method === 'GET') {
       return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/breakdown/engine.js' && request.method === 'GET') {
+      return new Response(BREAKDOWN_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/restock/engine.js' && request.method === 'GET') {
       return new Response(RESTOCK_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -2897,6 +2906,17 @@ async function route(request, env, ctx) {
     //   GET /api/restock/ads?client=&market=[&fresh] → the 30-day read, a chunk a call: 202 preparing · done:false → call again · done:true carries the rows
     //   GET /api/restock/ledger?client=&market=      → the market's ledger + its summary (tracking began …)
     //   PUT /api/restock/ledger?client=&market=      → the page's observation {oos, gone, back, n, feedN} merged in; the ledger comes back
+    // FIELD BREAKDOWN roster: every client × market this signin may open, Google AND Meta (a Meta catalogue is a feed
+    // like any other here — the module pivots fields, it prices nothing). The feed itself streams through
+    // /api/feed/proxy; nothing is stored.
+    if (path === '/api/breakdown/roster' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const out = {};
+      (await feedRoster(env)).filter((r) => acc.owner || clientMatch(acc.clients, r.client)).forEach((r) => {
+        (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, kind: r.src && r.src.xml ? 'xml' : 'sheet', meta: /-fb$/.test(r.mkt) });
+      });
+      return json({ ok: true, clients: out });
+    }
     if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {
       const acc = await accessOf(env, request);
       const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
