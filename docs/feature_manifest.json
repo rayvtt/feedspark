@@ -2111,25 +2111,11 @@
       "min": 2
     },
     {
-      "name": "FeedChat bubble: floating-chat widget present",
-      "file": "docs/feedchat_widget.html",
-      "pattern": "FCC-FEEDCHAT-BUBBLE",
-      "min": 1,
-      "pr": 268
-    },
-    {
-      "name": "FeedChat bubble: 3 window sizes (S/M/L)",
-      "file": "docs/feedchat_widget.html",
-      "pattern": "fcp-sz",
-      "min": 4,
-      "pr": 268
-    },
-    {
-      "name": "worker: feedchat bubble injected on app pages",
+      "name": "Feed Chat bubble REMOVED (Ray, 15 Oct 2026: \"delete the Feed Chat icon entirely from FCC\") — never injected again (must stay gone)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "FEEDCHATW",
-      "min": 2,
-      "pr": 268
+      "pattern": "feedchat_widget.html",
+      "forbidden": true,
+      "pr": 0
     },
     {
       "name": "FeedChat page: chrome-less ?embed=1 mode for the bubble",

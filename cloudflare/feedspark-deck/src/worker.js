@@ -100,7 +100,6 @@ import WEBSITE_PAGE from "../../../docs/FeedSpark_Website.html";
 import PRESENCEW from "../../../docs/presence_widget.html";
 // FCC-FEEDCHAT-BUBBLE: Feed Chat as an ambient chatbot — floating bubble bottom-right on every
 // app page; the panel hovers over the current page (embedded /feedchat?embed=1, URL unchanged).
-import FEEDCHATW from "../../../docs/feedchat_widget.html";
 import VIEWASW from "../../../docs/viewas_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
@@ -4026,7 +4025,7 @@ async function route(request, env, ctx) {
             { status: 403, headers: { 'content-type': 'text/html;charset=utf-8', ...CORS } });
         }
         const modList = acc.owner ? null : (acc.modules || null);
-        html = inject(html, HEADFONTW + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
+        html = inject(html, HEADFONTW + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + VIEWASW + '\n' + APPSW
           + '\n' + NAVROWW + '\n' + HOURSW + '\n' + KEEPW + '\n' + TOUCHW + '\n' + MIGW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
