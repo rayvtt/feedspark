@@ -41,7 +41,7 @@ const KW = {
 };
 KW.Northwind.events[0].ptsm = { gb: ['Jumpers'] };
 const BRIEFS = {
-  t9: { id: 't9', client: 'Northwind', kw: 'n3', task: 'Keywords Optimisation - Already briefed', status: 'briefed', created: 1, by: 'Steven' },
+  t9: { id: 't9', client: 'Northwind', kw: 'n3', task: 'Keywords Optimisation - Already briefed', status: 'briefed', created: 1, by: 'Steven', due: '16/10/2026' },
   // Ray, 15 Oct 2026: the briefed half, with its status — a blocked one, which the fold's own
   // summary has to name, and a finished one, which must not be counted as still moving
   t8: { id: 't8', client: 'Harbour', kw: 'h4', task: 'Keywords Optimisation - Blocked one', status: 'blocked', created: 1 },
@@ -130,6 +130,33 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
     ok('…and it reads the same word', pair.kw && pair.kw.t === 'Brief', pair.kw && pair.kw.t);
   }
 
+  console.log('\n2a2) the button column runs vertically straight');
+  // Ray, 15 Oct 2026: "why no vertically straight ?" — a red stroke down the right edge, the
+  // band's buttons sitting 18px inside the Brief column of the Intake table directly above.
+  {
+    await page.click('#kwd-dh');            // open the briefed half so both kinds are on screen
+    await page.waitForTimeout(250);
+    const E = await page.evaluate(() => {
+      const r = (s) => [...document.querySelectorAll(s)]
+        .map((e) => { const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.right)]; });
+      return { intake: r('.itbl tbody .brief-btn'), go: r('#kwd-rows .kwd-go'),
+        tk: r('#kwd-drows .kwd-tk'), sc: r('#kwd-rows .kwd-sc'), ct: r('#kwd-drows .kwd-ct') };
+    });
+    const one = (rows, i) => rows.length && rows.every((x) => x[i] === rows[0][i]);
+    ok('every to-brief button shares one right edge', one(E.go, 1), E.go);
+    ok('…and so does every Ticket button', one(E.tk, 1), E.tk);
+    ok('the two halves share it with each other',
+      E.go.length && E.tk.length && E.go[0][1] === E.tk[0][1], [E.go[0], E.tk[0]]);
+    ok('…and with INTAKE’s Brief column above them',
+      E.intake.length && E.go[0][1] === E.intake[0][1], [E.go[0] && E.go[0][1], E.intake[0] && E.intake[0][1]]);
+    ok('the buttons are one column, so both halves start on one line',
+      E.go[0][0] === E.tk[0][0], [E.go[0][0], E.tk[0][0]]);
+    ok('…which lines the column before them up too',
+      E.sc.length && E.ct.length && E.sc[0][1] === E.ct[0][1], [E.sc[0], E.ct[0]]);
+    await page.click('#kwd-dh');            // leave it as the next section expects to find it
+    await page.waitForTimeout(200);
+  }
+
   console.log('\n2b) …and what IS briefed, with where it has got to');
   // Ray, 15 Oct 2026: "with keywords calendar, also shown the briefed events (and status)"
   const done = async () => page.$eval('#kwd-done', (n) => ({
@@ -182,6 +209,26 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   await page.click('#kwd-dh');
   await page.waitForTimeout(200);
   ok('…and folding it again sticks', !(await done()).open);
+
+  console.log('\n2c) a briefed row shows the date the AM set');
+  // Ray, 15 Oct 2026: "changes due date is not reflected btw - this ticket should be 1610"
+  {
+    await page.click('#kwd-dh');
+    await page.waitForTimeout(250);
+    const d = await page.evaluate(() => [...document.querySelectorAll('#kwd-drows .kwd-row')]
+      .map((r) => ({ n: r.querySelector('.kwd-nm').textContent.trim(),
+        when: r.querySelector('.kwd-when').textContent.trim(),
+        tip: r.querySelector('.kwd-when').getAttribute('title') || '' })));
+    const set = d.find((x) => /Already briefed/.test(x.n));
+    ok('the row reads the ticket’s own due date', set && set.when === '16 Oct', set);
+    ok('…and says it is the ticket’s, with the moment’s live date beside it',
+      set && /the date on the ticket/.test(set.tip) && /goes live/.test(set.tip), set && set.tip);
+    const none = d.find((x) => /Done one|Blocked one/.test(x.n));
+    ok('a ticket with no due date of its own falls back to the moment, and says so',
+      none && /showing when the moment goes live/.test(none.tip), none);
+    await page.click('#kwd-dh');
+    await page.waitForTimeout(200);
+  }
 
   console.log('\n3) → Brief raises the CALENDAR’s brief, through the page’s own composer');
   await page.click('#kwd-rows .kwd-row:has-text("Festive") .kwd-go');
