@@ -908,7 +908,13 @@ window.addEventListener('load',restore);
   .wsec .tl-wrap{border:0;box-shadow:none;background:none;padding:0;border-radius:0}
   .wsec>.wsb>.panel{box-shadow:none}
   .wsec .wk-panel{border:0;box-shadow:none;padding:0}
-  .wsec>.wsb>.it-scroll:first-child{margin-top:2px}
+  /* a grid IS the section's content, so it runs to the card's own inner edge rather than losing
+     36px of column width to a second frame inside the first — the board is read at 1131px and
+     Task is the column that pays for anything taken off the width (tools/test_wfintake.mjs
+     measures it there). The card's border is the table's frame. */
+  .wsec>.wsb>.it-scroll{margin-left:-18px;margin-right:-18px;border-left:0;border-right:0;border-radius:0;box-shadow:none}
+  .wsec>.wsb>.it-scroll:last-child{margin-bottom:-18px;border-bottom:0;border-radius:0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px)}
+  @media(max-width:760px){ .wsec>.wsb>.it-scroll{margin-left:-13px;margin-right:-13px} .wsec>.wsb>.it-scroll:last-child{margin-bottom:-14px} }
   @media(max-width:760px){ .wsh{padding:12px 13px;font-size:16px} .wsb{padding:0 13px 14px} }
   .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
