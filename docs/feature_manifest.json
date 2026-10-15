@@ -15955,12 +15955,6 @@
       "pr": 0
     },
     {
-      "name": "Workflow: the band's button column is a FIXED width, so both halves start on one line",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": ".kwd-go,.kwd-tk{width:78px}",
-      "pr": 0
-    },
-    {
       "name": "Workflow: a band inside a section card runs to the card's own edge, like the table above it",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": ".wsec>.wsb>.panel.sw-band{margin-left:-18px",
@@ -16012,6 +16006,12 @@
       "name": "Brief-stamp tripwire is wired into presync",
       "file": "tools/presync.sh",
       "pattern": "tools/check_briefstamp.js",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the band's button COLUMN is fixed, the button is Intake's own size",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".kwd-act{flex:none;width:78px",
       "pr": 0
     }
   ]

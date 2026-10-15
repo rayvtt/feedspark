@@ -99,10 +99,16 @@ window.addEventListener('load',restore);
   .kwd-sc{flex:none;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   /* the band's Brief button IS Intake's (Ray, 15 Oct 2026: "can brief button have the same design
      as intake") — ONE declaration for both, so the two can never drift apart again */
-  .kwd-go,.kwd-tk{width:78px}   /* one button column: 'Brief' and 'Ticket ↗' occupy the same
-     width, so the scope figure and the court beside them start on one line down the band too.
-     A FIXED width, not a floor — 'Ticket ↗' is wider than 72px and simply grew past it, which
-     left the two halves 5px out and the columns before them with it. */
+  /* ONE BUTTON COLUMN, BUT THE BUTTON IS INTAKE'S OWN SIZE (Ray, 15 Oct 2026: "brief button
+     between keywords calendar and Intake size broken again"). Making the BUTTONS a fixed 78px
+     lined the two halves up and the columns before them — and in doing it blew the → Brief
+     button out to 78px against the 55px one sitting in Intake's Brief column directly below,
+     so the thing the earlier ask was about ("can brief button have the same design as intake")
+     stopped being true. The CELL is the fixed column and the button is natural width inside it,
+     right-aligned: the right edges still run straight down into Intake's, the scope figure and
+     the court still start on one line, and the button is the one declaration Intake's is. */
+  .kwd-act{flex:none;width:78px;display:flex;justify-content:flex-end}
+  .kwd-go,.kwd-tk{flex:none}
   .kwd-go{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;
     justify-content:center;font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;
     border-radius:100px;border:1px solid var(--orange);background:var(--paper);
@@ -130,8 +136,7 @@ window.addEventListener('load',restore);
     .kwd-row{flex-wrap:wrap;gap:4px 8px}
     .kwd-nm{flex:1 1 100%;order:3}
     .kwd-sc{order:4}
-    .kwd-go{order:5;margin-left:auto}
-    .kwd-tk{order:5;margin-left:auto}
+    .kwd-act{order:5;margin-left:auto;width:auto}   /* on a phone the row wraps, so the column reserves nothing */
     .kwd-ct{width:auto}
   }
   [data-theme=dark] .sw-chip{background:#20242E;border-color:var(--line);color:var(--ink-2)}
@@ -7745,7 +7750,7 @@ aside.ck[hidden]{display:none}
         +'<span class="kwd-nm" title="'+esc(r.name+(themes?' — '+themes:''))+'">'+esc(r.name)
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
         +'<span class="kwd-sc" title="'+esc(r.scoped?'Scope set on the calendar':'No product scope set yet — brief it anyway, or set the scope on the calendar first')+'">'+esc(scope)+'</span>'
-        +'<button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">Brief</button>'
+        +'<span class="kwd-act"><button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">Brief</button></span>'
         +'</div>';
     }).join('')+(rs.length>14?'<div class="kwd-none">+'+(rs.length-14)+' more on the calendar</div>':'')
       : '<div class="kwd-none">'+esc(SCOPE&&SCOPE.length?'Nothing waiting on a brief here.':'Nothing waiting on a brief.')+'</div>';
@@ -7787,7 +7792,7 @@ aside.ck[hidden]{display:none}
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
         +'<span class="kwd-st" style="background:'+esc(col)+'" title="'+esc('Ticket '+r.ticket+(r.task?' \u2014 '+r.task:'')+(r.by?' \u00b7 briefed by '+r.by:''))+'">'+esc(lbl)+'</span>'
         +'<span class="kwd-ct" title="'+esc(r.court?r.court+'\u2019s court':'Nobody is waiting on this one')+'">'+esc(r.court||'')+'</span>'
-        +'<button type="button" class="kwd-tk" data-kwt="'+i+'" title="'+esc('Open ticket '+r.ticket)+'">Ticket \u2197</button>'
+        +'<span class="kwd-act"><button type="button" class="kwd-tk" data-kwt="'+i+'" title="'+esc('Open ticket '+r.ticket)+'">Ticket \u2197</button></span>'
         +'</div>';
     }).join('')+(br.length>14?'<div class="kwd-none">+'+(br.length-14)+' more on the calendar</div>':'');
     body.__rows=br;
