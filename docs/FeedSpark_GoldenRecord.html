@@ -964,6 +964,15 @@ window.addEventListener('load',restore);
   .ap-more{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0 4px}
   .ap-none{font-size:11.5px;color:var(--muted);font-style:italic;text-align:center;padding:10px 4px}
   @media (max-width:760px){body.xhtml .ap-board{grid-template-columns:1fr}body.xhtml .ap-k{grid-template-columns:repeat(2,1fr)}}
+  /* ✎ Edit report: the client document full screen, every line of text editable */
+  body.demo #det-edit{display:none!important}
+  .rped{position:fixed;inset:0;z-index:9600;background:var(--wash,#F7F7F5);display:flex;flex-direction:column}
+  .rped-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:var(--paper,#fff);border-bottom:1px solid var(--line,#E6E6E6);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .rped-t{font-size:14px;color:var(--ink,#333)}.rped-t span{color:var(--muted,#6b7280);font-weight:700;margin-left:4px}
+  .rped-msg{flex:1;min-width:160px;font-size:12px;font-weight:700;color:var(--muted,#6b7280)}
+  .rped-act{display:flex;gap:6px;flex-wrap:wrap}
+  .rped-help{padding:6px 16px;font-size:12px;color:var(--ink-2,#555);background:rgba(245,166,35,.08);border-bottom:1px solid var(--line,#E6E6E6)}
+  .rped-f{flex:1;width:100%;border:0;background:#fff}
   /* the action plan ON SCREEN (#ap-tier): the print board's own cards plus the AM's controls; never in a download */
   body.pdf #ap-tier{display:none!important}
   body.demo .ap-ctl,body.demo .ap-add,body.demo #ap-reset,body.demo .ap-rem,body.demo .ap-tag{display:none!important}
@@ -3008,6 +3017,7 @@ window.addEventListener('load',restore);
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
       '<button class="btn" id="det-pdf" title="One-click client-ready PDF of this scorecard — downloads directly, no print dialog">⬇ PDF</button>' +
       '<button class="btn" id="det-html" title="The same client-facing document as a self-contained HTML file — opens in any browser, no FCC login">⬇ HTML</button>' +
+      '<button class="btn" id="det-edit" title="Open the client report and change any of its text before it goes — saved for the team, used by ⬇ PDF and ⬇ HTML">✎ Edit report</button>' +
       '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
       '<button class="btn" id="det-pdp" title="Sample this feed\'s product pages and see which Golden Record gaps the site itself can fill">🔎 Scan PDPs</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
@@ -3395,6 +3405,8 @@ window.addEventListener('load',restore);
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
     if ($('det-pdf')) $('det-pdf').onclick = function () { exportPdf(k); };
     if ($('det-html')) $('det-html').onclick = function () { exportHtml(k); };
+    if ($('det-edit')) $('det-edit').onclick = function () { openRpEd(k); };
+    if (!RPT.p) loadRpText();
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -6223,7 +6235,7 @@ window.addEventListener('load',restore);
     }
     drop.forEach(function (c) { c.parentNode.removeChild(c); });
   }
-  function exportDoc(k, cx, paper) {
+  function exportDoc(k, cx, paper, raw) {
     var d = CACHE[k]; if (!d || !d.snapshot) return null;
     var p = parts(k), s = d.snapshot;
     /* open every content-quality row first: a closed row's detail is never rendered, so without
@@ -6254,6 +6266,8 @@ window.addEventListener('load',restore);
       ['data-deptip', 'tabindex', 'role', 'aria-expanded', 'aria-label'].forEach(function (a) { el.removeAttribute(a); }); el.classList.remove('dep-tgt'); });
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
+    // the AM's own wording, laid over the audit's — HERE, so both exits count occurrences on the same document (✎ Edit report)
+    if (!raw) applyTextEdits(doc, rpEdits(k));
     // the picked Catalogue modules close the document, after every market's scores and before the footer
     if (cx) { var ft = doc.querySelector('#print-plan') || doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
@@ -6282,6 +6296,204 @@ window.addEventListener('load',restore);
     Object.keys(was).forEach(function (kk) { if (was[kk]) QOPEN[kk] = true; else delete QOPEN[kk]; });
     renderDetail(k);
     return { html: html, p: p, s: s };
+  }
+
+  /* ---------------- ✎ EDIT THE CLIENT REPORT BEFORE IT GOES (Ray, 15 Oct 2026: "can you build an interface where i can edit
+     text on the report pdf or html as format pls?"). The report is READ off the audit, so until now the only way to change a
+     sentence a client reads was to change the code that writes it. ✎ Edit report opens the client document itself — the
+     same exportDoc both downloads are made of — full screen, every line of text editable in place, and ⬇ PDF / ⬇ HTML from
+     the same bar. ONE RULE MAKES IT HOLD: an edit is stored as WHAT IT REPLACES, not where it sat — {o: the text as the audit
+     wrote it, n: which occurrence of that text, t: the new wording} — and laid over the document at one point inside
+     exportDoc (after the method disclosures are built, before the paper pass strips closed folds or the Catalogue cards
+     arrive, so the occurrence count is the same on both exits). A rescan that changes a sentence's numbers leaves that edit
+     unmatched rather than pasting yesterday's wording over today's figures; the editor counts those and names them. The
+     edits are the TEAM's (shared state ns grtext, 'key' scope, "<client>|<mkt>", device mirror gr-text-b) because the
+     report is the account's. Text only: a unit is the smallest block whose content is plain words (inline bold/italic/links
+     inside it are flattened when edited), never a chart, picture or frame; scrubExport still runs after, so nothing typed
+     here can act in the file. Hidden in demo (the edits key on the real wording). Harness: tools/check_grtext.js */
+  var RPT = { map: null, base: 0, p: null };
+  var RP_PHRASING = { B: 1, STRONG: 1, I: 1, EM: 1, SPAN: 1, SMALL: 1, A: 1, CODE: 1, SUP: 1, SUB: 1, BR: 1, U: 1, MARK: 1, ABBR: 1, TIME: 1, Q: 1, S: 1, DEL: 1, INS: 1 };
+  var RP_SKIP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, TITLE: 1, TEXTAREA: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, TEMPLATE: 1, CANVAS: 1 };
+  function rpNorm(t) { return String(t == null ? '' : t).replace(/\s+/g, ' ').trim(); }
+  // the editable units of a document, in document order — the SAME rule for the editor and both exits
+  function textUnits(doc) {
+    var body = doc.body || (doc.querySelector && doc.querySelector('body')); if (!body) return [];
+    var own = body.ownerDocument, out = [];
+    var phrasingOnly = function (el) {
+      var all = el.getElementsByTagName('*');
+      for (var i = 0; i < all.length; i++) if (!RP_PHRASING[all[i].tagName.toUpperCase()]) return false;
+      return true;
+    };
+    (function walk(el) {
+      var kids = Array.prototype.slice.call(el.childNodes);
+      // EVERY word is editable (Ray, 15 Oct 2026: "all text should be editable"): a block of plain words is one unit; a word
+      // standing loose beside layout (a card's own label next to its chart) is wrapped in a span of its own so it is one too;
+      // the words drawn inside a chart or a score ring (SVG text) are units of their own. The wrapping is the SAME on every
+      // pass — the editor, ⬇ HTML and ⬇ PDF all walk this function — so the occurrence count never disagrees.
+      var mixed = !phrasingOnly(el) || RP_SKIP[el.tagName.toUpperCase()];
+      kids.forEach(function (c) {
+        if (c.nodeType === 3) {
+          if (mixed && el !== body && /\S/.test(c.nodeValue) && !RP_SKIP[el.tagName.toUpperCase()]) {
+            var w = own.createElement('span'); w.setAttribute('data-tw', ''); el.insertBefore(w, c); w.appendChild(c); out.push(w);
+          }
+          return;
+        }
+        if (c.nodeType !== 1) return;
+        var tg = c.tagName.toUpperCase();
+        if (c.id === 'print-catx') return;
+        if (tg === 'SVG') { Array.prototype.forEach.call(c.querySelectorAll('text'), function (t) { if (rpNorm(t.textContent)) out.push(t); }); return; }
+        if (RP_SKIP[tg]) return;
+        if (rpNorm(c.textContent) && phrasingOnly(c)) { out.push(c); return; }
+        walk(c);
+      });
+    })(body);
+    return out;
+  }
+  function rpKey(k) { var p = parts(k); return p.client + '|' + p.mkt; }
+  function rpMap() {
+    if (RPT.map) return RPT.map;
+    try { var m = JSON.parse(localStorage.getItem('gr-text-b') || '{}'); RPT.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { RPT.map = {}; }
+    return RPT.map;
+  }
+  function rpMirror() { try { localStorage.setItem('gr-text-b', JSON.stringify(RPT.map || {})); } catch (e) {} }
+  function loadRpText() {
+    if (RPT.p) return RPT.p;
+    RPT.p = fetch(API + '/api/state?ns=grtext').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.grtext) { RPT.map = j.grtext; RPT.base = Date.now(); rpMirror(); } })
+      .catch(function () {});
+    return RPT.p;
+  }
+  function rpEdits(k) {
+    var e = rpMap()[rpKey(k)];
+    return e && Array.isArray(e.e) ? e.e.filter(function (x) { return x && typeof x.o === 'string' && typeof x.t === 'string' && x.n >= 0; }) : [];
+  }
+  function rpPut(k, list, then) {
+    var m = Object.assign({}, rpMap()), key = rpKey(k);
+    if (list.length) m[key] = { e: list.slice(0, 400), at: Date.now() }; else delete m[key];
+    RPT.map = m; rpMirror();
+    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(RPT.base || 0) }, body: JSON.stringify({ grtext: m }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { var ok = !!(j && j.grtext); if (ok) { RPT.map = j.grtext; RPT.base = Date.now(); rpMirror(); } if (then) then(ok); })
+      .catch(function () { if (then) then(false); });
+  }
+  // lay the stored edits over a document; returns how many found their sentence and which did not
+  function applyTextEdits(doc, edits) {
+    var res = { done: 0, miss: [] }; if (!edits || !edits.length) return res;
+    var seen = {}, idx = {};
+    textUnits(doc).forEach(function (el) {
+      var o = rpNorm(el.textContent), n = seen[o] = (seen[o] == null ? 0 : seen[o] + 1);
+      idx[o + '\u0001' + n] = el;
+    });
+    edits.forEach(function (x) {
+      var el = idx[x.o + '\u0001' + x.n];
+      if (!el) { res.miss.push(x); return; }
+      el.textContent = x.t; res.done++;
+    });
+    return res;
+  }
+  function closeRpEd() {
+    var m = $('rped'); if (m && m.parentNode) m.parentNode.removeChild(m);
+    document.removeEventListener('keydown', rpKeydown);
+    document.documentElement.style.overflow = '';
+  }
+  function rpKeydown(e) { if (e.key === 'Escape') closeRpEd(); }
+  function openRpEd(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var btn = $('det-edit'), old = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    Promise.all([loadRpText(), (COVER[k] || masked(parts(k).client)) ? null : coverPrep(k)]).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = old; }
+      var r = exportDoc(k, null, false, true); if (!r) return;
+      buildRpEd(k, r);
+    }, function () { if (btn) { btn.disabled = false; btn.textContent = old; } });
+  }
+  function buildRpEd(k, r) {
+    closeRpEd();
+    var p = r.p, name = dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    var m = document.createElement('div'); m.id = 'rped'; m.className = 'rped'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Edit the client report');
+    m.innerHTML = '<div class="rped-bar"><div class="rped-t"><b>✎ Edit the client report</b> <span>' + esc(name) + '</span></div>' +
+      '<div class="rped-msg" id="rped-msg"></div>' +
+      '<div class="rped-act"><button class="btn" type="button" id="rped-reset" title="Drop every edit for ' + esc(name) + ' and go back to the wording the audit writes">↺ Reset edits</button>' +
+      '<button class="btn" type="button" id="rped-pdf">⬇ PDF</button><button class="btn pri" type="button" id="rped-html">⬇ HTML</button>' +
+      '<button class="btn" type="button" id="rped-x" aria-label="Close the editor">✕</button></div></div>' +
+      '<div class="rped-help">Click any text in the report and type — headings, findings, the action plan, the cover. Every edit is saved for ' + esc(name) + ' for the team and goes into both downloads.</div>' +
+      '<iframe class="rped-f" id="rped-f" title="The client report, editable"></iframe>';
+    document.body.appendChild(m);
+    document.documentElement.style.overflow = 'hidden';
+    document.addEventListener('keydown', rpKeydown);
+    var f = $('rped-f'), msgEl = $('rped-msg');
+    var edits = rpEdits(k).slice(), units = [], timer = null, saving = 0;
+    var say = function (t) { if (msgEl) msgEl.textContent = t; };
+    var status = function (extra) {
+      var n = edits.length, miss = edits.filter(function (x) { return x._miss; }).length;
+      say((n ? n + ' edit' + (n === 1 ? '' : 's') + ' saved for the team' : 'No edits yet — the report reads as the audit wrote it') +
+        (miss ? ' · ' + miss + ' no longer match the report (the audit has changed that text since)' : '') + (extra ? ' · ' + extra : ''));
+    };
+    var save = function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        saving++; say('Saving…');
+        rpPut(k, edits.map(function (x) { return { o: x.o, n: x.n, t: x.t }; }), function (ok) { saving--; status(ok ? '' : '⚠ not saved to the team yet — kept on this device'); });
+      }, 700);
+    };
+    f.addEventListener('load', function () {
+      var fd = f.contentDocument; if (!fd || !fd.body) return;
+      var st = fd.createElement('style');
+      st.textContent = '[data-ek]{outline:1px dashed transparent;outline-offset:2px;border-radius:2px;cursor:text}' +
+        '[data-ek]:hover{outline-color:rgba(237,111,11,.55)}[data-ek]:focus{outline:2px solid #ED6F0B;background:rgba(245,166,35,.08)}' +
+        '[data-ek].ek-on{box-shadow:inset 0 -2px 0 rgba(245,166,35,.85)}a[data-ek]{pointer-events:auto}' +
+        'text[data-ek]:hover{fill:#ED6F0B}text[data-ek].ek-on{text-decoration:underline}';
+      fd.head.appendChild(st);
+      Array.prototype.forEach.call(fd.querySelectorAll('details'), function (dt) { dt.setAttribute('open', ''); });
+      var seen = {};
+      units = textUnits(fd);
+      units.forEach(function (el, i) {
+        var o = rpNorm(el.textContent), n = seen[o] = (seen[o] == null ? 0 : seen[o] + 1);
+        el.setAttribute('data-ek', i); el.__o = o; el.__n = n;
+        if (el.namespaceURI === 'http://www.w3.org/2000/svg') { el.style.cursor = 'text'; return; }   // chart words: edited on click (below)
+        el.setAttribute('contenteditable', 'plaintext-only');
+        if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true');
+        el.setAttribute('spellcheck', 'true');
+      });
+      // the stored wording, laid over as the downloads will lay it
+      var byKey = {}; units.forEach(function (el) { byKey[el.__o + '\u0001' + el.__n] = el; });
+      edits.forEach(function (x) { var el = byKey[x.o + '\u0001' + x.n]; if (el) { el.textContent = x.t; el.classList.add('ek-on'); x._miss = false; } else x._miss = true; });
+      // a click in a summary edits its text rather than folding the section; a link is text here, not a way out
+      fd.addEventListener('click', function (e) {
+        var t = e.target; if (!t.closest) return;
+        if ((t.closest('summary') || t.closest('a')) && t.closest('[data-ek]')) e.preventDefault();
+        var sv = t.closest('text[data-ek]');   // a word drawn inside a chart or a score ring cannot take a caret — ask for it
+        if (sv) {
+          var v = prompt('Edit this text in the chart:', sv.textContent);
+          if (v != null) { sv.textContent = v; sv.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+      }, true);
+      fd.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeRpEd(); else if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-ek]')) e.preventDefault(); });
+      fd.addEventListener('input', function (e) {
+        var el = e.target.closest && e.target.closest('[data-ek]'); if (!el) return;
+        var t = rpNorm(el.textContent).slice(0, 2000), hit = null;
+        edits = edits.filter(function (x) { if (x.o === el.__o && x.n === el.__n) { hit = x; return false; } return true; });
+        if (t !== el.__o) { edits.push({ o: el.__o, n: el.__n, t: t }); el.classList.add('ek-on'); } else el.classList.remove('ek-on');
+        save();
+      });
+      status();
+    });
+    f.srcdoc = r.html;
+    var flushThen = function (fn) {
+      if (!timer && !saving) return fn();
+      clearTimeout(timer); timer = null;
+      say('Saving…');
+      rpPut(k, edits.map(function (x) { return { o: x.o, n: x.n, t: x.t }; }), function () { fn(); });
+    };
+    $('rped-x').onclick = closeRpEd;
+    $('rped-html').onclick = function () { flushThen(function () { closeRpEd(); exportHtml(k); }); };
+    $('rped-pdf').onclick = function () { flushThen(function () { closeRpEd(); exportPdf(k); }); };
+    $('rped-reset').onclick = function () {
+      if (!edits.length) return;
+      if (!confirm('Drop every edit to the ' + name + ' report and go back to the wording the audit writes?')) return;
+      clearTimeout(timer); timer = null; edits = [];
+      rpPut(k, [], function () { buildRpEd(k, r); });
+    };
   }
 
   /* ---------------- CSV export ---------------- */

@@ -14431,7 +14431,7 @@
     {
       "name": "Golden ⬇ PDF is the ⬇ HTML document on paper (exportDoc, offscreen render frame)",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "function exportDoc(k, cx, paper)",
+      "pattern": "function exportDoc(k, cx, paper",
       "pr": 0
     },
     {
@@ -15724,6 +15724,42 @@
       "name": "Shared state: grplan namespace (key scope)",
       "file": "cloudflare/feedspark-deck/src/sharedstate.js",
       "pattern": "grplan:      'key',",
+      "pr": 0
+    },
+    {
+      "name": "Golden: ✎ Edit report button beside the downloads",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "id=\"det-edit\"",
+      "pr": 0
+    },
+    {
+      "name": "Golden: one text-unit walk for the editor and both exits",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function textUnits(doc) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden: stored report edits laid over both downloads inside exportDoc",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (!raw) applyTextEdits(doc, rpEdits(k));",
+      "pr": 0
+    },
+    {
+      "name": "Golden: report edits saved for the team in shared state grtext",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body: JSON.stringify({ grtext: m })",
+      "pr": 0
+    },
+    {
+      "name": "Golden: words inside charts are editable too",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var sv = t.closest('text[data-ek]');",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: grtext namespace (key scope)",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "grtext:      'key',",
       "pr": 0
     }
   ]
