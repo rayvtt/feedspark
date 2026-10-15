@@ -184,6 +184,42 @@ PNG and PDF rasterise with html2canvas + jsPDF from cdnjs under the same SRI has
 `/kwcal` pin; an unreachable CDN falls back to the print dialog for the PDF and says so for a PNG,
 never remembered as a permanent failure. Nothing leaves the browser: every file is built on the page.
 
+## 4b′. Brand on brand — ten more stories (15 Oct 2026)
+
+Ray, over a screenshot of the six comparison modules: *"Roas module > design 10 more interesting data
+stories when comparing brand on brand"*. Ten more modules on the same grid, the same book, the same
+rules — **no second fetch, one currency, one period** — each told at the level the screen compares:
+every brand against every brand on All brands, every market against every market once a brand is
+picked (the Spend-vs-revenue rule). **One grouping serves all ten** (`groups()`): the chosen
+currency's markets rolled up per brand (or per market), every figure a *ratio of sums*, never an
+average of brand figures.
+
+| Story | What it answers | The figure |
+|---|---|---|
+| Band mix (wide) | how much of each one's spend FeedHero calls Strong / Steady / Weak / Losing | one stacked bar per brand, Strong + Steady as the headline, Losing beside it; the book's own mix in the foot |
+| Funnel | who turns impressions into clicks, and clicks into orders | CTR and conversion rate as two bars, best conversion rate first; the blended pair in the foot |
+| Market concentration (wide) | how much of a brand's revenue rides on its biggest market | each market's share as a stacked bar (six, then the rest), the top market's share, and the *effective* number of markets = 1 ÷ Σ share² (one dominant market reads ≈1); with a brand picked, each market's share and the cumulative |
+| Scale vs return | who is big and who is strong | spend share as the bar, ROAS as the figure, a quadrant tag against the MEDIAN spend and the BLENDED ROAS of the groups on screen — both stated in the legend |
+| Momentum | whose ROAS is rising | the trailing-window ROAS as read today against the reading ≤7 days earlier, per brand, off the sparks; a zero reads *level*, never ▲ +0.0% |
+| Short run vs long run | heating up or cooling off | the 7-day ROAS against the 90-day, from markets read on BOTH, whatever period the page is on |
+| Break-even margin | the product margin the ads need | spend ÷ revenue, lowest first, the book's figure as a dashed line — a product margin under it loses money on its ads |
+| Cost of attention | who buys attention cheaply | spend per 1,000 impressions, cheapest first, impression share against spend share as two bars |
+| Per advertised SKU | what each product that saw traffic earned and cost | revenue and spend per SKU — the SKUs are FeedHero's ad-traffic SKUs, not the catalogue, and the foot says so |
+| Consistency | how steady the ROAS reads day to day | sd ÷ mean of the daily trailing-ROAS reading over the last 30 readings (at least 5, else *too few readings*), steadiest first, the range beside it |
+
+**Honesty rules, each pinned.** A day of a brand's history counts only when EVERY market of the brand
+was read that day (half a brand would read as a collapse). A figure that cannot be read — no revenue,
+no clicks, no SKU count, not read on both windows, too few readings — is said in words, never printed
+as 0. Nothing crosses a currency. A row click opens the brand (or finds the market in the table). Each
+story has one model feeding its card, CSV and Excel tab like the eight before it, is in ⊞ Modules, and
+rides every export. Eighteen cards now fill seven rows at 1440px (two of the new ones are two columns
+wide, placed where they keep every row full).
+
+Harness: `tools/check_roasmods.js` renders every story against counts made in the test (and on the
+longer book, a thirteen-market brand's concentration); `tools/test_roas.mjs` pins the grouping, the
+full-read rule, the thresholds and the stub's diverging spend/revenue curves (without them every daily
+ROAS was flat and the two history stories had nothing to read).
+
 ## 4c. ◐ Heat — a colour scale per column, trough to peak (30 Sep 2026)
 
 Ray: *"can you allow option to highlight column cells color in gradiant to find peak and trough too,

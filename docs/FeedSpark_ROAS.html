@@ -173,6 +173,15 @@ window.addEventListener('load',restore);
   .mleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
   .mleg .rl{display:inline-block;width:0;height:11px;border-left:2px dashed var(--ink-2);opacity:.6;margin-right:5px;vertical-align:-2px}
   .gap{font-size:11px;font-weight:900;margin-left:6px}.gap.up{color:var(--good)}.gap.dn{color:var(--risk)}
+  /* brand-on-brand stories: a stacked share bar, a quadrant tag, a legend swatch per band */
+  .stk{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--wash)}
+  .stk i{display:block;height:100%;min-width:0}
+  .stk i+i{border-left:1px solid var(--paper)}
+  .sb-strong{background:#15803D}.sb-steady{background:#2563EB}.sb-weak{background:#ED6F0B}.sb-losing{background:#C0392B}.sb-none{background:var(--line)}
+  [data-theme=dark] .sb-strong{background:#48D07E}[data-theme=dark] .sb-steady{background:#7BA4F0}[data-theme=dark] .sb-weak{background:#F0A44E}[data-theme=dark] .sb-losing{background:#F1707A}
+  .qd{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;padding:1px 6px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-left:5px;vertical-align:1px}
+  .qd.q-bs{color:var(--good);border-color:var(--good)}.qd.q-bw{color:var(--risk);border-color:var(--risk)}.qd.q-ss{color:var(--vin);border-color:var(--vin)}
+  .hb .v .up{color:var(--good)}.hb .v .dn{color:var(--risk)}
   .xcap{font-size:11px;font-weight:800;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px solid var(--line)}
   .xhead{padding:6px 2px 10px}.xhead b{font-size:18px;font-weight:900}.xhead span{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--tip);color:#fff;font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -399,6 +408,66 @@ window.addEventListener('load',restore);
     <div class="chead"><div><h3>Data freshness</h3><div class="ch" id="m-fresh-ch">How recently each market on the roster was read.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="fresh" aria-haspopup="true" aria-expanded="false" aria-label="Export Data freshness" title="Export Data freshness — PNG image or CSV data">⬇</button></span></div></div>
     <div class="mbody" id="m-fresh-b"></div>
     <div class="mfoot" id="m-fresh-f"></div>
+  </section>
+
+  <section class="card mod wide" id="m-bandmix" data-mod="bandmix">
+    <div class="chead"><div><h3>Band mix</h3><div class="ch" id="m-bandmix-ch">How much of each one’s spend sits in each of FeedHero’s bands.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="bandmix" aria-haspopup="true" aria-expanded="false" aria-label="Export Band mix" title="Export Band mix — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-bandmix-b"></div>
+    <div class="mfoot" id="m-bandmix-f"></div>
+  </section>
+
+  <section class="card mod" id="m-funnel" data-mod="funnel">
+    <div class="chead"><div><h3>Funnel</h3><div class="ch" id="m-funnel-ch">Attention to orders: who turns impressions into clicks, and clicks into conversions.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="funnel" aria-haspopup="true" aria-expanded="false" aria-label="Export Funnel" title="Export Funnel — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-funnel-b"></div>
+    <div class="mfoot" id="m-funnel-f"></div>
+  </section>
+
+  <section class="card mod wide" id="m-concentration" data-mod="concentration">
+    <div class="chead"><div><h3>Market concentration</h3><div class="ch" id="m-concentration-ch">How much of each brand’s revenue rides on its biggest market.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="concentration" aria-haspopup="true" aria-expanded="false" aria-label="Export Market concentration" title="Export Market concentration — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-concentration-b"></div>
+    <div class="mfoot" id="m-concentration-f"></div>
+  </section>
+
+  <section class="card mod" id="m-scale" data-mod="scale">
+    <div class="chead"><div><h3>Scale vs return</h3><div class="ch" id="m-scale-ch">Who is big, who is strong — spend against ROAS, in four quadrants.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="scale" aria-haspopup="true" aria-expanded="false" aria-label="Export Scale vs return" title="Export Scale vs return — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-scale-b"></div>
+    <div class="mfoot" id="m-scale-f"></div>
+  </section>
+
+  <section class="card mod" id="m-momentum" data-mod="momentum">
+    <div class="chead"><div><h3>Momentum</h3><div class="ch" id="m-momentum-ch">Whose ROAS is rising or falling against the reading 7 days earlier.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="momentum" aria-haspopup="true" aria-expanded="false" aria-label="Export Momentum" title="Export Momentum — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-momentum-b"></div>
+    <div class="mfoot" id="m-momentum-f"></div>
+  </section>
+
+  <section class="card mod" id="m-horizon" data-mod="horizon">
+    <div class="chead"><div><h3>Short run vs long run</h3><div class="ch" id="m-horizon-ch">The last 7 days against the last 90: heating up or cooling off.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="horizon" aria-haspopup="true" aria-expanded="false" aria-label="Export Short run vs long run" title="Export Short run vs long run — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-horizon-b"></div>
+    <div class="mfoot" id="m-horizon-f"></div>
+  </section>
+
+  <section class="card mod" id="m-breakeven" data-mod="breakeven">
+    <div class="chead"><div><h3>Break-even margin</h3><div class="ch" id="m-breakeven-ch">The product margin each one needs for its ads to pay for themselves.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="breakeven" aria-haspopup="true" aria-expanded="false" aria-label="Export Break-even margin" title="Export Break-even margin — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-breakeven-b"></div>
+    <div class="mfoot" id="m-breakeven-f"></div>
+  </section>
+
+  <section class="card mod" id="m-attention" data-mod="attention">
+    <div class="chead"><div><h3>Cost of attention</h3><div class="ch" id="m-attention-ch">What a thousand impressions cost, and who buys more of them per pound.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="attention" aria-haspopup="true" aria-expanded="false" aria-label="Export Cost of attention" title="Export Cost of attention — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-attention-b"></div>
+    <div class="mfoot" id="m-attention-f"></div>
+  </section>
+
+  <section class="card mod" id="m-persku" data-mod="persku">
+    <div class="chead"><div><h3>Per advertised SKU</h3><div class="ch" id="m-persku-ch">Spend and revenue per product that saw ad traffic.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="persku" aria-haspopup="true" aria-expanded="false" aria-label="Export Per advertised SKU" title="Export Per advertised SKU — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-persku-b"></div>
+    <div class="mfoot" id="m-persku-f"></div>
+  </section>
+
+  <section class="card mod" id="m-steady" data-mod="steady">
+    <div class="chead"><div><h3>Consistency</h3><div class="ch" id="m-steady-ch">How steady each one’s ROAS reads from day to day.</div></div><span class="sp"></span><div class="tools"><span class="rel"><button class="btn xs xb" type="button" data-x="steady" aria-haspopup="true" aria-expanded="false" aria-label="Export Consistency" title="Export Consistency — PNG image or CSV data">⬇</button></span></div></div>
+    <div class="mbody" id="m-steady-b"></div>
+    <div class="mfoot" id="m-steady-f"></div>
   </section>
   </div>
 
@@ -860,7 +929,7 @@ window.addEventListener('load',restore);
      Every module reads the book /api/roas already served: no second fetch, no figure the table does not already hold.
      THE CURRENCY RULE HOLDS: every money module runs on the selected currency's markets only, like the scorecards;
      Data freshness is the one module that is not money, so it covers the whole roster in scope and says so. */
-  var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness']];
+  var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness'],['bandmix','Band mix',1],['funnel','Funnel'],['concentration','Market concentration',1],['scale','Scale vs return'],['momentum','Momentum'],['horizon','Short run vs long run'],['breakeven','Break-even margin'],['attention','Cost of attention'],['persku','Per advertised SKU'],['steady','Consistency']];
   var MODN={}; MODS.forEach(function(x){ MODN[x[0]]=x[1]; });
   function modState(){ var m=null; try{ m=JSON.parse(LS('fcc-roas-mods')||'null'); }catch(e){} m=m||{};
     var ord=(m.order||[]).filter(function(k){ return MODN[k]; }); MODS.forEach(function(x){ if(ord.indexOf(x[0])<0)ord.push(x[0]); }); return {order:ord,off:m.off||{}}; }
@@ -949,7 +1018,106 @@ window.addEventListener('load',restore);
       .map(function(r){ return {client:r.client,market:r.market,dir:r.dRv>0?'Rising':r.dRv<0?'Falling':'Flat',dRv:r.dRv,rv:r.rv,sp:r.sp,roas:r.roas,band:r.band||''}; });
     return {money:1,rows:rows,cols:[{k:'client',l:'Brand'},{k:'market',l:'Market'},{k:'dir',l:'Direction'},{k:'dRv',l:'Revenue vs '+BACK+' days earlier',t:'pct'},{k:'rv',l:'Revenue',t:'num'},{k:'sp',l:'Spend',t:'num'},{k:'roas',l:'ROAS',t:'pct'},{k:'band',l:'Band'}]};
   }
-  var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh};
+  /* ---- BRAND ON BRAND — ten more stories (Ray, 15 Oct 2026: "design 10 more interesting data stories when comparing brand on brand") ----
+     Each is told at the level the screen compares: every brand against every brand on All brands, every market against every
+     market once a brand is picked (the Spend-vs-revenue rule), and ONE grouping serves all ten — the same markets, the same
+     currency, the same period as every money module above. Every figure is a ratio of sums the book already holds; nothing is
+     averaged across brands, nothing crosses a currency, and a figure that cannot be read (no revenue, no SKU count, too few
+     readings) is said in words rather than printed as 0. */
+  function groups(){
+    var ms=curMkts(), by={}, lvl=S.brand?'market':'brand';
+    ms.forEach(function(m){ var t=m[S.win], k=lvl==='brand'?m.client:m.market, sp=nOf(t.spend)||0;
+      var g=by[k]||(by[k]={name:k,client:m.client,cmpid:lvl==='market'?m.cmpid:'',n:0,sp:0,rv:0,cv:0,ck:0,im:0,sk:0,zbSk:0,zbW:0,bands:{},mk:[]});
+      g.n++; g.sp+=sp; g.rv+=nOf(t.revenue)||0; g.cv+=t.conv||0; g.ck+=t.clicks||0; g.im+=t.impr||0; g.sk+=t.skus||0;
+      if(t.zombiePct!=null&&t.skus){ g.zbSk+=t.skus; g.zbW+=t.zombiePct*t.skus; }
+      var b=t.band||'none'; g.bands[b]=(g.bands[b]||0)+sp; g.mk.push(m); });
+    var rows=Object.keys(by).map(function(k){ var g=by[k];
+      g.roas=g.sp>0?g.rv/g.sp*100:null; g.ctr=g.im>0?g.ck/g.im*100:null; g.cr=g.ck>0?g.cv/g.ck*100:null; g.cpa=g.cv>0?g.sp/g.cv:null; g.cpm=g.im>0?g.sp/g.im*1000:null; return g; });
+    var TS=0, TR=0, TI=0, TK=0, TC=0; rows.forEach(function(g){ TS+=g.sp; TR+=g.rv; TI+=g.im; TK+=g.ck; TC+=g.cv; });
+    return {lvl:lvl,rows:rows,TS:TS,TR:TR,TI:TI,TK:TK,TC:TC};
+  }
+  // a group's daily series off its markets' sparks, for the chosen window — a day counts only when EVERY market of the group
+  // carries a point (a day read for half a brand is half a brand, and would read as a collapse)
+  function gDays(g){
+    var days={}; g.mk.forEach(function(m){ (m.spark||[]).forEach(function(e){ var p=e&&e[S.win]; if(!Array.isArray(p))return; var d=days[e.d]||(days[e.d]={d:e.d,sp:0,rv:0,n:0}); d.sp+=p[0]||0; d.rv+=p[1]||0; d.n++; }); });
+    return Object.keys(days).sort().map(function(d){return days[d]}).filter(function(d){ return d.n===g.n; }).map(function(d){ d.roas=d.sp>0?d.rv/d.sp*100:null; return d; });
+  }
+  function median(a){ var v=a.filter(function(x){return x!=null}).sort(function(x,y){return x-y}); if(!v.length)return null; var h=v.length/2; return v.length%2?v[Math.floor(h)]:(v[h-1]+v[h])/2; }
+  function gCols(lvl){ return [{k:'name',l:lvl==='brand'?'Brand':'Market'},{k:'n',l:'Markets read',t:'int'}]; }
+  function gAttr(x,g){ return x.lvl==='brand'?' data-split-go="'+esc(g.name)+'" data-client="'+esc(g.client)+'" data-cmpid=""':' data-mk-go="'+esc(g.cmpid)+'" data-client="'+esc(g.client)+'"'; }
+  function gTip(x){ return x.lvl==='brand'?' — click to open the brand':' — click to find it in the table'; }
+  function sgn(n,d,unit){ return n==null?'—':(n>0?'+':n<0?'−':'')+fmtN(Math.abs(n),d)+(unit||''); }
+  function dirCls(n,eps){ return n==null||Math.abs(n)<(eps||0)?'':(n>0?'up':'dn'); }
+  var BANDK=['Strong','Steady','Weak','Losing','none'];
+  function mBandmix(){
+    var x=groups(); var rows=x.rows.map(function(g){ var o={name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,sp:g.sp}; BANDK.forEach(function(b){ o['s_'+b]=g.sp>0?(g.bands[b]||0)/g.sp*100:null; }); o.healthy=g.sp>0?((g.bands.Strong||0)+(g.bands.Steady||0))/g.sp*100:null; return o; })
+      .sort(function(a,b){ return (b.healthy==null?-1:b.healthy)-(a.healthy==null?-1:a.healthy); });
+    var book={}; BANDK.forEach(function(b){ book[b]=x.TS>0?x.rows.reduce(function(a,g){return a+(g.bands[b]||0)},0)/x.TS*100:null; });
+    return {money:1,lvl:x.lvl,rows:rows,book:book,TS:x.TS,cols:gCols(x.lvl).concat([{k:'sp',l:'Spend',t:'num'},{k:'s_Strong',l:'Strong (share of spend)',t:'pct'},{k:'s_Steady',l:'Steady',t:'pct'},{k:'s_Weak',l:'Weak',t:'pct'},{k:'s_Losing',l:'Losing',t:'pct'},{k:'s_none',l:'No ad activity',t:'pct'},{k:'healthy',l:'Strong + Steady',t:'pct'}])};
+  }
+  function mFunnel(){
+    var x=groups(); var rows=x.rows.map(function(g){ return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,im:g.im,ck:g.ck,cv:g.cv,ctr:g.ctr,cr:g.cr,ic:g.im>0?g.cv/g.im*100:null}; })
+      .sort(function(a,b){ return (b.cr==null?-1:b.cr)-(a.cr==null?-1:a.cr); });
+    return {lvl:x.lvl,rows:rows,ctr:x.TI>0?x.TK/x.TI*100:null,cr:x.TK>0?x.TC/x.TK*100:null,cols:gCols(x.lvl).concat([{k:'im',l:'Impressions',t:'int'},{k:'ck',l:'Clicks',t:'int'},{k:'cv',l:'Conversions',t:'num'},{k:'ctr',l:'CTR',t:'pct'},{k:'cr',l:'Conv. rate',t:'pct'},{k:'ic',l:'Conversions per 100 impressions',t:'pct'}])};
+  }
+  function mConc(){
+    var x=groups(), rows;
+    if(x.lvl==='brand'){
+      rows=x.rows.map(function(g){ var mk=g.mk.map(function(m){ return {name:m.market,cmpid:m.cmpid,rv:nOf(m[S.win].revenue)||0}; }).sort(function(a,b){return b.rv-a.rv});
+        var hh=0; mk.forEach(function(m){ m.share=g.rv>0?m.rv/g.rv*100:null; if(m.share!=null)hh+=(m.share/100)*(m.share/100); });
+        return {name:g.name,client:g.client,cmpid:'',n:g.n,rv:g.rv,top:mk[0]?mk[0].name:'',topShare:mk[0]?mk[0].share:null,eff:hh>0?1/hh:null,mk:mk}; })
+        .sort(function(a,b){ return (b.topShare==null?-1:b.topShare)-(a.topShare==null?-1:a.topShare); });
+    } else {
+      var T=x.TR, cum=0; rows=x.rows.slice().sort(function(a,b){return b.rv-a.rv}).map(function(g){ var sh=T>0?g.rv/T*100:null; cum+=sh||0; return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,rv:g.rv,top:g.name,topShare:sh,eff:null,cum:cum,mk:[]}; });
+    }
+    return {money:1,lvl:x.lvl,rows:rows,TR:x.TR,cols:gCols(x.lvl).concat([{k:'rv',l:'Revenue',t:'num'},{k:'top',l:x.lvl==='brand'?'Biggest market':'Market'},{k:'topShare',l:x.lvl==='brand'?'Its share of the brand’s revenue':'Share of the brand’s revenue',t:'pct'},{k:'eff',l:'Effective number of markets',t:'num'}])};
+  }
+  function mScale(){
+    var x=groups(), med=median(x.rows.map(function(g){return g.sp})), blend=x.TS>0?x.TR/x.TS*100:null;
+    var rows=x.rows.map(function(g){ var big=med!=null&&g.sp>=med, strong=blend!=null&&g.roas!=null&&g.roas>=blend;
+      return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,sp:g.sp,share:x.TS>0?g.sp/x.TS*100:null,rv:g.rv,roas:g.roas,big:big,strong:strong,q:g.roas==null?'No spend':(big?'Big':'Small')+' & '+(strong?'strong':'weak'),qk:g.roas==null?'':(big?'b':'s')+(strong?'s':'w')}; })
+      .sort(function(a,b){ return b.sp-a.sp; });
+    return {money:1,lvl:x.lvl,rows:rows,med:med,blend:blend,cols:gCols(x.lvl).concat([{k:'q',l:'Quadrant'},{k:'sp',l:'Spend',t:'num'},{k:'share',l:'Share of spend',t:'pct'},{k:'roas',l:'ROAS',t:'pct'},{k:'rv',l:'Revenue',t:'num'}])};
+  }
+  function mMomentum(){
+    var x=groups(); var rows=x.rows.map(function(g){ var ser=gDays(g), last=ser[ser.length-1]||null, prev=backPt(ser);
+      var now=last?last.roas:null, was=prev?prev.roas:null, d=(now!=null&&was!=null&&was!==0)?(now-was)/Math.abs(was)*100:null;
+      return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,now:now,was:was,pts:now!=null&&was!=null?now-was:null,d:d,dRv:(last&&prev&&prev.rv)?(last.rv-prev.rv)/Math.abs(prev.rv)*100:null,from:prev?prev.d:'',to:last?last.d:'',days:ser.length}; })
+      .sort(function(a,b){ return (b.d==null?-Infinity:b.d)-(a.d==null?-Infinity:a.d); });
+    return {lvl:x.lvl,rows:rows,cols:gCols(x.lvl).concat([{k:'now',l:'ROAS now (trailing '+winLbl()+')',t:'pct'},{k:'was',l:'ROAS '+BACK+' days earlier',t:'pct'},{k:'pts',l:'Change (points)',t:'num'},{k:'d',l:'Change',t:'pct'},{k:'dRv',l:'Revenue change',t:'pct'},{k:'from',l:'Earlier reading'},{k:'to',l:'Latest reading'}])};
+  }
+  function mHorizon(){
+    var x=groups(); var rows=x.rows.map(function(g){ var s7=0,r7=0,s90=0,r90=0,n=0; g.mk.forEach(function(m){ if(!m.w7||!m.w90)return; n++; s7+=nOf(m.w7.spend)||0; r7+=nOf(m.w7.revenue)||0; s90+=nOf(m.w90.spend)||0; r90+=nOf(m.w90.revenue)||0; });
+      var a=s7>0?r7/s7*100:null, b=s90>0?r90/s90*100:null; return {name:g.name,client:g.client,cmpid:g.cmpid,n:n,of:g.n,r7:a,r90:b,gap:(a!=null&&b!=null)?a-b:null,rel:(a!=null&&b)?(a-b)/b*100:null,sp7:s7,sp90:s90}; })
+      .sort(function(a,b){ return (b.gap==null?-Infinity:b.gap)-(a.gap==null?-Infinity:a.gap); });
+    return {lvl:x.lvl,rows:rows,cols:gCols(x.lvl).concat([{k:'r7',l:'ROAS last 7 days',t:'pct'},{k:'r90',l:'ROAS last 90 days',t:'pct'},{k:'gap',l:'7-day minus 90-day (points)',t:'num'},{k:'rel',l:'7-day against 90-day',t:'pct'}])};
+  }
+  function mBreakeven(){
+    var x=groups(); var rows=x.rows.map(function(g){ return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,be:g.rv>0?g.sp/g.rv*100:null,roas:g.roas,sp:g.sp,rv:g.rv}; })
+      .sort(function(a,b){ return (a.be==null?Infinity:a.be)-(b.be==null?Infinity:b.be); });
+    return {money:1,lvl:x.lvl,rows:rows,blend:x.TR>0?x.TS/x.TR*100:null,cols:gCols(x.lvl).concat([{k:'be',l:'Break-even margin (spend ÷ revenue)',t:'pct'},{k:'roas',l:'ROAS',t:'pct'},{k:'sp',l:'Spend',t:'num'},{k:'rv',l:'Revenue',t:'num'}])};
+  }
+  function mAttention(){
+    var x=groups(); var rows=x.rows.map(function(g){ return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,cpm:g.cpm,im:g.im,sim:x.TI>0?g.im/x.TI*100:null,ssp:x.TS>0?g.sp/x.TS*100:null,sp:g.sp}; })
+      .sort(function(a,b){ return (a.cpm==null?Infinity:a.cpm)-(b.cpm==null?Infinity:b.cpm); });
+    return {money:1,lvl:x.lvl,rows:rows,blend:x.TI>0?x.TS/x.TI*1000:null,cols:gCols(x.lvl).concat([{k:'cpm',l:'Cost per 1,000 impressions',t:'num'},{k:'im',l:'Impressions',t:'int'},{k:'sim',l:'Share of impressions',t:'pct'},{k:'ssp',l:'Share of spend',t:'pct'},{k:'sp',l:'Spend',t:'num'}])};
+  }
+  function mPerSku(){
+    var x=groups(); var rows=x.rows.map(function(g){ return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,sk:g.sk,rps:g.sk>0?g.rv/g.sk:null,sps:g.sk>0?g.sp/g.sk:null,sp:g.sp,rv:g.rv}; })
+      .sort(function(a,b){ return (b.rps==null?-Infinity:b.rps)-(a.rps==null?-Infinity:a.rps); });
+    var SK=0; x.rows.forEach(function(g){ SK+=g.sk; });
+    return {money:1,lvl:x.lvl,rows:rows,SK:SK,rps:SK>0?x.TR/SK:null,sps:SK>0?x.TS/SK:null,cols:gCols(x.lvl).concat([{k:'sk',l:'SKUs with ad traffic',t:'int'},{k:'rps',l:'Revenue per SKU',t:'num'},{k:'sps',l:'Spend per SKU',t:'num'},{k:'rv',l:'Revenue',t:'num'},{k:'sp',l:'Spend',t:'num'}])};
+  }
+  var STEADY_MIN=5, STEADY_PTS=30;
+  function mSteady(){
+    var x=groups(); var rows=x.rows.map(function(g){ var v=gDays(g).map(function(d){return d.roas}).filter(function(r){return r!=null}).slice(-STEADY_PTS), n=v.length;
+      if(n<STEADY_MIN)return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,days:n,cv:null,mean:null,lo:null,hi:null};
+      var mean=v.reduce(function(a,b){return a+b},0)/n, sd=Math.sqrt(v.reduce(function(a,b){return a+(b-mean)*(b-mean)},0)/n);
+      return {name:g.name,client:g.client,cmpid:g.cmpid,n:g.n,days:n,cv:mean>0?sd/mean*100:null,mean:mean,lo:Math.min.apply(null,v),hi:Math.max.apply(null,v)}; })
+      .sort(function(a,b){ return (a.cv==null?Infinity:a.cv)-(b.cv==null?Infinity:b.cv); });
+    return {lvl:x.lvl,rows:rows,cols:gCols(x.lvl).concat([{k:'days',l:'Daily readings',t:'int'},{k:'cv',l:'Day-to-day swing (sd ÷ mean)',t:'pct'},{k:'mean',l:'Mean ROAS',t:'pct'},{k:'lo',l:'Lowest ROAS read',t:'pct'},{k:'hi',l:'Highest ROAS read',t:'pct'}])};
+  }
+  var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh,bandmix:mBandmix,funnel:mFunnel,concentration:mConc,scale:mScale,momentum:mMomentum,horizon:mHorizon,breakeven:mBreakeven,attention:mAttention,persku:mPerSku,steady:mSteady};
 
   /* ---- the draws ---- */
   function dBands(){
@@ -1002,7 +1170,98 @@ window.addEventListener('load',restore);
       +(stale.length?'<div class="hb" style="grid-template-columns:1fr"><div class="nm" style="white-space:normal"><small style="margin:0">Stale or never read: '+esc(stale.slice(0,12).map(function(r){return r.name}).join(', '))+(stale.length>12?' +'+(stale.length-12)+' more':'')+'</small></div></div>':'');
     $('#m-fresh-f').innerHTML='<span>'+T+' roster market'+(T===1?'':'s')+' · every currency (not money)</span><span>the sync turns the roster over ~every 6 h</span>';
   }
-  function renderMods(){ [dBands,dSplit,dLadder,dCost,dZombie,dFresh].forEach(function(f){ try{ f(); }catch(e){ if(window.console)console.error(e); } }); Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; }); }
+
+  /* ---- the brand-on-brand draws ---- */
+  function gNone(k,x){ if(!x.rows.length){ none(k,'<b>No '+esc(S.cur||'')+' market read for this period.</b>'); return true; } return false; }
+  function gRow(x,g,inner,tip){ return '<div class="hb go"'+gAttr(x,g)+' title="'+esc(g.name)+(tip?' — '+tip:'')+gTip(x)+'">'+inner+'</div>'; }
+  function stk(parts){ return '<div class="stk">'+parts.filter(function(p){return p.w>0}).map(function(p){ return '<i class="'+(p.cls||'')+'" style="width:'+p.w.toFixed(2)+'%'+(p.style||'')+'" title="'+esc(p.t||'')+'"></i>'; }).join('')+'</div>'; }
+  function dBandmix(){
+    var x=mBandmix(); if(gNone('bandmix',x))return;
+    var cls={Strong:'sb-strong',Steady:'sb-steady',Weak:'sb-weak',Losing:'sb-losing',none:'sb-none'}, lbl={none:'No ad activity'};
+    $('#m-bandmix-b').innerHTML='<div class="mleg">'+BANDK.map(function(b){ return '<span><i class="'+cls[b]+'"></i>'+esc(lbl[b]||b)+'</span>'; }).join('')+'</div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b><small>'+esc(fmtM(S.cur,r.sp,0))+'</small></div>'+stk(BANDK.map(function(b){ return {w:r['s_'+b]||0,cls:cls[b],t:(lbl[b]||b)+' '+fmtP(r['s_'+b],1)+' of its spend'}; }))
+        +'<div class="v">'+(r.healthy==null?'<span class="dim">no spend</span>':esc(fmtP(r.healthy,0))+'<small>Strong + Steady · '+esc(fmtP(r.s_Losing||0,0))+' Losing</small>')+'</div>', BANDK.map(function(b){ return (lbl[b]||b)+' '+fmtP(r['s_'+b]||0,1); }).join(', ')); }).join('');
+    $('#m-bandmix-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+'</span><span>the book: '+esc(fmtP(x.book.Strong||0,0))+' Strong · '+esc(fmtP(x.book.Losing||0,0))+' Losing · healthiest first</span>';
+  }
+  function dFunnel(){
+    var x=mFunnel(); if(gNone('funnel',x))return; var pair=PAIR();
+    var mc=Math.max.apply(null,x.rows.map(function(r){return r.ctr||0}))||1, mr=Math.max.apply(null,x.rows.map(function(r){return r.cr||0}))||1;
+    $('#m-funnel-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>CTR (clicks ÷ impressions)</span><span><i style="background:'+pair[1]+'"></i>Conv. rate (conversions ÷ clicks)</span></div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div><div class="trk2">'+trk(r.ctr==null?null:r.ctr/mc*100,'')+trk(r.cr==null?null:r.cr/mr*100,'sp')+'</div>'
+        +'<div class="v">'+(r.cr==null?'<span class="dim">no clicks</span>':esc(fmtP(r.cr,2))+'<small>CTR '+esc(fmtP(r.ctr,2))+'</small>')+'</div>', fmtN(r.im)+' impressions → '+fmtN(r.ck)+' clicks → '+fmtN(r.cv,0)+' conversions'); }).join('');
+    $('#m-funnel-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+' · best conversion rate first</span><span>blended CTR '+esc(fmtP(x.ctr,2))+' · conv. rate '+esc(fmtP(x.cr,2))+'</span>';
+  }
+  function dConc(){
+    var x=mConc(); if(gNone('concentration',x))return; var pair=PAIR();
+    if(x.lvl==='brand'){
+      $('#m-concentration-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>each market’s share of the brand’s revenue, biggest first</span></div>'
+        +x.rows.map(function(r){ var segs=r.mk.slice(0,6).map(function(m,i){ return {w:m.share||0,style:';background:'+pair[0]+';opacity:'+(0.95-i*0.13).toFixed(2),t:m.name+' '+fmtP(m.share,1)}; }); var rest=r.mk.slice(6).reduce(function(a,m){return a+(m.share||0)},0); if(rest>0)segs.push({w:rest,cls:'sb-none',t:(r.mk.length-6)+' more markets '+fmtP(rest,1)});
+          return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b><small>'+r.n+' market'+(r.n===1?'':'s')+'</small></div>'+stk(segs)
+            +'<div class="v">'+(r.topShare==null?'<span class="dim">no revenue</span>':esc(fmtP(r.topShare,0))+'<small>'+esc(r.top)+(r.eff!=null?' · ≈'+fmtN(r.eff,1)+' effective':'')+'</small>')+'</div>', r.mk.slice(0,4).map(function(m){return m.name+' '+fmtP(m.share,1)}).join(', ')); }).join('');
+      $('#m-concentration-f').innerHTML='<span>by brand · '+curNote()+' · most concentrated first</span><span>effective markets = 1 ÷ the sum of squared shares (one dominant market reads ≈1)</span>';
+    } else {
+      $('#m-concentration-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>share of '+esc(S.brand)+'’s '+esc(S.cur||'')+' revenue</span></div>'
+        +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.topShare,'')+'<div class="v">'+(r.topShare==null?'<span class="dim">no revenue</span>':esc(fmtP(r.topShare,1))+'<small>cumulative '+esc(fmtP(r.cum,0))+'</small>')+'</div>', fmtM(S.cur,r.rv,0)); }).join('');
+      $('#m-concentration-f').innerHTML='<span>by market · '+curNote()+' · biggest first</span><span>'+esc(fmtM(S.cur,x.TR,0))+' revenue across '+x.rows.length+' market'+(x.rows.length===1?'':'s')+'</span>';
+    }
+  }
+  function dScale(){
+    var x=mScale(); if(gNone('scale',x))return;
+    var qn={}; x.rows.forEach(function(r){ qn[r.q]=(qn[r.q]||0)+1; });
+    $('#m-scale-b').innerHTML='<div class="mleg"><span>big = spend at or above the median '+esc(fmtM(S.cur,x.med,0))+'</span><span>strong = ROAS at or above the blended '+esc(fmtP(x.blend))+'</span></div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.share,'sp')
+        +'<div class="v">'+(r.roas==null?'<span class="dim">no spend</span>':esc(fmtP(r.roas))+'<small><span class="qd q-'+r.qk+'">'+esc(r.q)+'</span> '+esc(fmtP(r.share,1))+' of spend</small>')+'</div>', fmtM(S.cur,r.sp,0)+' spend · ROAS '+fmtP(r.roas)); }).join('');
+    $('#m-scale-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+' · biggest spender first</span><span>'+Object.keys(qn).map(function(q){ return qn[q]+' '+q.toLowerCase(); }).join(' · ')+'</span>';
+  }
+  function dMomentum(){
+    var x=mMomentum(); if(gNone('momentum',x))return;
+    var mx=Math.max.apply(null,x.rows.map(function(r){return Math.abs(r.d||0)}))||1, any=x.rows.some(function(r){return r.d!=null});
+    $('#m-momentum-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[0]+'"></i>ROAS up</span><span><i style="background:'+PAIR()[1]+'"></i>ROAS down</span><span>against the reading '+BACK+' days earlier</span></div>'
+      +x.rows.map(function(r){ var c=dirCls(r.d,0.5); return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.d==null?null:Math.abs(r.d)/mx*100,c==='dn'?'sp':'')
+        +'<div class="v">'+(r.d==null?'<span class="dim">'+(r.days<2?'no history yet':'no reading '+BACK+' days back')+'</span>':'<span class="'+c+'">'+(c==='up'?'▲ ':c==='dn'?'▼ ':'level ')+esc(sgn(r.d,1,'%'))+'</span><small>'+esc(fmtP(r.was))+' → '+esc(fmtP(r.now))+'</small>')+'</div>', r.d==null?'':'read '+r.from+' → '+r.to+(r.dRv!=null?' · revenue '+sgn(r.dRv,1,'%'):'')); }).join('');
+    $('#m-momentum-f').innerHTML='<span>by '+x.lvl+' · trailing '+esc(winLbl())+' as read each day · rising first</span><span>'+(any?'a day counts only when every market of the '+x.lvl+' was read that day':'history accrues from the first sync')+'</span>';
+  }
+  function dHorizon(){
+    var x=mHorizon(); if(gNone('horizon',x))return; var pair=PAIR();
+    var mx=Math.max.apply(null,x.rows.map(function(r){return Math.max(r.r7||0,r.r90||0)}))||1;
+    $('#m-horizon-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>ROAS · last 7 days</span><span><i style="background:'+pair[1]+'"></i>ROAS · last 90 days</span></div>'
+      +x.rows.map(function(r){ var c=dirCls(r.gap,1); return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b>'+(r.n<r.of?'<small>'+r.n+' of '+r.of+' read on both</small>':'')+'</div><div class="trk2">'+trk(r.r7==null?null:r.r7/mx*100,'')+trk(r.r90==null?null:r.r90/mx*100,'sp')+'</div>'
+        +'<div class="v">'+(r.gap==null?'<span class="dim">'+(r.n?'no spend':'not read on both')+'</span>':'<span class="'+c+'">'+(c==='up'?'▲ heating up':c==='dn'?'▼ cooling off':'level')+'</span><small>'+esc(fmtP(r.r7))+' vs '+esc(fmtP(r.r90))+' · '+esc(sgn(r.gap,0,' pts'))+'</small>')+'</div>', r.gap==null?'':'7-day ROAS '+fmtP(r.r7)+' against 90-day '+fmtP(r.r90)); }).join('');
+    $('#m-horizon-f').innerHTML='<span>by '+x.lvl+' · '+esc(S.cur||'')+' markets · 7 against 90 days, whatever the period above</span><span>heating up first</span>';
+  }
+  function dBreakeven(){
+    var x=mBreakeven(); if(gNone('breakeven',x))return;
+    var mx=Math.max.apply(null,x.rows.map(function(r){return r.be||0}).concat([x.blend||0]))||1, rp=x.blend!=null?x.blend/mx*100:null;
+    $('#m-breakeven-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[1]+'"></i>margin needed (spend ÷ revenue)</span>'+(x.blend!=null?'<span><span class="rl"></span>the book '+esc(fmtP(x.blend,1))+'</span>':'')+'</div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.be==null?null:r.be/mx*100,'sp',rp)
+        +'<div class="v">'+(r.be==null?'<span class="dim">no revenue</span>':esc(fmtP(r.be,1))+'<small>ROAS '+esc(fmtP(r.roas))+'</small>')+'</div>', r.be==null?'':'the ads pay for themselves above a '+fmtP(r.be,1)+' product margin'); }).join('');
+    $('#m-breakeven-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+' · lowest bar first</span><span>a product margin under the figure loses money on its ads</span>';
+  }
+  function dAttention(){
+    var x=mAttention(); if(gNone('attention',x))return; var pair=PAIR();
+    var mx=Math.max.apply(null,x.rows.map(function(r){return Math.max(r.sim||0,r.ssp||0)}))||1;
+    $('#m-attention-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>share of impressions</span><span><i style="background:'+pair[1]+'"></i>share of spend</span></div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div><div class="trk2">'+trk(r.sim==null?null:r.sim/mx*100,'')+trk(r.ssp==null?null:r.ssp/mx*100,'sp')+'</div>'
+        +'<div class="v">'+(r.cpm==null?'<span class="dim">no impressions</span>':esc(fmtM(S.cur,r.cpm,2))+'<small>per 1,000 · impr. '+esc(fmtP(r.sim,1))+' · spend '+esc(fmtP(r.ssp,1))+'</small>')+'</div>', fmtN(r.im)+' impressions for '+fmtM(S.cur,r.sp,0)); }).join('');
+    $('#m-attention-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+' · cheapest attention first</span><span>blended '+esc(fmtM(S.cur,x.blend,2))+' per 1,000 impressions</span>';
+  }
+  function dPerSku(){
+    var x=mPerSku(); if(gNone('persku',x))return; var pair=PAIR();
+    var mr=Math.max.apply(null,x.rows.map(function(r){return r.rps||0}))||1, ms=Math.max.apply(null,x.rows.map(function(r){return r.sps||0}))||1;
+    $('#m-persku-b').innerHTML='<div class="mleg"><span><i style="background:'+pair[0]+'"></i>revenue per SKU</span><span><i style="background:'+pair[1]+'"></i>spend per SKU</span></div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div><div class="trk2">'+trk(r.rps==null?null:r.rps/mr*100,'')+trk(r.sps==null?null:r.sps/ms*100,'sp')+'</div>'
+        +'<div class="v">'+(r.rps==null?'<span class="dim">no SKU count</span>':esc(fmtM(S.cur,r.rps,2))+'<small>'+esc(fmtM(S.cur,r.sps,2))+' spent · '+fmtN(r.sk)+' SKUs</small>')+'</div>', fmtN(r.sk)+' SKUs saw ad traffic this period'); }).join('');
+    $('#m-persku-f').innerHTML='<span>by '+x.lvl+' · '+curNote()+' · most revenue per SKU first</span><span>'+(x.SK?'the book: '+esc(fmtM(S.cur,x.rps,2))+' revenue · '+esc(fmtM(S.cur,x.sps,2))+' spend per SKU':'no SKU count')+' — SKUs that saw ad traffic, not the catalogue</span>';
+  }
+  function dSteady(){
+    var x=mSteady(); if(gNone('steady',x))return;
+    var mx=Math.max.apply(null,x.rows.map(function(r){return r.cv||0}))||1;
+    $('#m-steady-b').innerHTML='<div class="mleg"><span><i style="background:'+PAIR()[1]+'"></i>day-to-day swing of the trailing ROAS (a longer bar = less steady)</span></div>'
+      +x.rows.map(function(r){ return gRow(x,r,'<div class="nm"><b>'+esc(r.name)+'</b></div>'+trk(r.cv==null?null:r.cv/mx*100,'sp')
+        +'<div class="v">'+(r.cv==null?'<span class="dim">too few readings ('+r.days+')</span>':'±'+esc(fmtP(r.cv,1))+'<small>ROAS '+esc(fmtP(r.lo))+' – '+esc(fmtP(r.hi))+' · '+r.days+' readings</small>')+'</div>', r.cv==null?r.days+' readings — needs '+STEADY_MIN+' days with every market read':'mean ROAS '+fmtP(r.mean)+' over the last '+r.days+' readings'); }).join('');
+    $('#m-steady-f').innerHTML='<span>by '+x.lvl+' · trailing '+esc(winLbl())+' as read each day · steadiest first</span><span>sd ÷ mean over the last '+STEADY_PTS+' readings, at least '+STEADY_MIN+'</span>';
+  }
+  function renderMods(){ [dBands,dSplit,dLadder,dCost,dZombie,dFresh,dBandmix,dFunnel,dConc,dScale,dMomentum,dHorizon,dBreakeven,dAttention,dPerSku,dSteady].forEach(function(f){ try{ f(); }catch(e){ if(window.console)console.error(e); } }); Array.prototype.forEach.call(document.querySelectorAll('.mod>.chead .ch'),function(c){ c.title=c.textContent; }); }
 
   /* ================= EXPORTS =================
      A module leaves as a PNG (the card as drawn, captioned with its scope, for a deck) or a CSV (its model — every row,
@@ -1107,7 +1366,7 @@ window.addEventListener('load',restore);
 
   /* ================= render all ================= */
   function renderAll(){
-    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; ['bands','split','ladder','cost','zombie','fresh'].forEach(function(k){ none(k,'<b>ROAS data is unavailable</b> — this needs the live worker.'); }); renderTable(); return; }
+    if(!DATA){ status(null); $('#pip').className='pip bad'; $('#mstate').textContent='ROAS data is unavailable — this needs the live worker.'; $('#sc-row').innerHTML=''; $('#tr-panels').innerHTML=''; $('#mv').innerHTML=''; ['bands','split','ladder','cost','zombie','fresh','bandmix','funnel','concentration','scale','momentum','horizon','breakeven','attention','persku','steady'].forEach(function(k){ none(k,'<b>ROAS data is unavailable</b> — this needs the live worker.'); }); renderTable(); return; }
     status(DATA.status); pickCur(); renderBrands(); renderWin(); renderCur(); scopeLine(); renderScorecards(); renderTrend(); renderMovers(); renderMods(); renderBands(); renderCols(); renderTable(); renderViews();
     try{ history.replaceState(null,'',linkOf()); }catch(e){}
   }

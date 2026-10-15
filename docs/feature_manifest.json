@@ -12074,9 +12074,9 @@
       "pr": 0
     },
     {
-      "name": "ROAS modular: the eight modules in one list",
+      "name": "ROAS modular: the eight original modules lead the one list (the brand-on-brand ten follow)",
       "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness']];",
+      "pattern": "var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness'],",
       "pr": 0
     },
     {
@@ -12094,7 +12094,7 @@
     {
       "name": "ROAS modular: one model feeds card, CSV and Excel tab",
       "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh};",
+      "pattern": "var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh,",
       "pr": 0
     },
     {
@@ -16155,6 +16155,30 @@
     {"name": "Headlines: Space Grotesk on every h1–h3 of every app page", "file": "docs/headfont_widget.html", "pattern": "h1,h2,h3{font-family:var(--font-head)", "pr": 0},
     {"name": "Headlines: the layer is injected on every app page", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "html = inject(html, HEADFONTW + '\\n' + INSTR", "pr": 0},
     {"name": "Headlines: --font-head is a design token in /design/fcc.css", "file": "docs/FeedSpark_Design.html", "pattern": "--font-head:'Space Grotesk'", "pr": 0},
-    {"name": "Headlines: the Golden PDF waits for the headline face", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "16px \"Space Grotesk\"", "pr": 0}
+    {"name": "Headlines: the Golden PDF waits for the headline face", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "16px \"Space Grotesk\"", "pr": 0},
+    {
+      "name": "ROAS: brand on brand — ONE grouping (brands on All brands, markets once a brand is picked) serves the ten stories",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "function groups(){",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: brand on brand — a day of a brand's history counts only when every market of the brand was read",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": ".filter(function(d){ return d.n===g.n; })",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: brand on brand — the ten stories registered as modules (card + CSV + Excel tab + ⊞ Modules)",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": "['bandmix','Band mix',1],['funnel','Funnel'],['concentration','Market concentration',1],['scale','Scale vs return'],['momentum','Momentum'],['horizon','Short run vs long run'],['breakeven','Break-even margin'],['attention','Cost of attention'],['persku','Per advertised SKU'],['steady','Consistency']",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: brand on brand — the rendered stories are checked against counts made in the harness",
+      "file": "tools/check_roasmods.js",
+      "pattern": "brand on brand — ten stories, each against a count made HERE",
+      "pr": 0
+    }
   ]
 }
