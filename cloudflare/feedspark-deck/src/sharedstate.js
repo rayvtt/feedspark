@@ -97,6 +97,7 @@ export const STATE_NS = {
   // on the report pdf or html"). Each edit says what it replaces — the audit's text and which occurrence — and the new
   // wording; both downloads lay them over the document.  "<client>|<mkt>" -> {e:[{o,n,t}], at}
   grtext:      'key',
+  grtextall:   null,     // Golden ✎ Edit report — the ALL-BRANDS template: hash -> {o, t, at}
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

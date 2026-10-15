@@ -15741,7 +15741,7 @@
     {
       "name": "Golden: stored report edits laid over both downloads inside exportDoc",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "if (!raw) applyTextEdits(doc, rpEdits(k));",
+      "pattern": "if (!raw) applyTextEdits(doc, rpEdits(k)",
       "pr": 0
     },
     {
@@ -15801,6 +15801,30 @@
       "name": "Workflow intake: the clip reading is retaken once the webfont lands",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "document.fonts.ready.then(function(){ tkClipSoon"
+    },
+    {
+      "name": "Golden ✎ Edit report: the all-brands template applies in both downloads",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "applyTextEdits(doc, rpEdits(k), rpTpl())",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: the template is its own house-wide store",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body: JSON.stringify({ grtextall: m })",
+      "pr": 0
+    },
+    {
+      "name": "Golden ✎ Edit report: the scope switch (this report / all brands)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "id=\"rped-all\" data-sc=\"all\"",
+      "pr": 0
+    },
+    {
+      "name": "Shared state: grtextall is house-wide",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "grtextall:   null",
+      "pr": 0
     }
   ]
 }

@@ -973,6 +973,10 @@ window.addEventListener('load',restore);
   .rped-act{display:flex;gap:6px;flex-wrap:wrap}
   .rped-help{padding:6px 16px;font-size:12px;color:var(--ink-2,#555);background:rgba(245,166,35,.08);border-bottom:1px solid var(--line,#E6E6E6)}
   .rped-f{flex:1;width:100%;border:0;background:#fff}
+  .rped-scope{display:inline-flex;border:1px solid var(--line,#E6E6E6);border-radius:999px;overflow:hidden;background:var(--paper,#fff)}
+  .rped-scope button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:700;padding:6px 12px;color:var(--muted,#6b7280);cursor:pointer}
+  .rped-scope button[aria-pressed="true"]{background:var(--orange,#F5A623);color:#222}
+  .rped.tplmode .rped-help{background:rgba(37,99,235,.08)}
   /* the action plan ON SCREEN (#ap-tier): the print board's own cards plus the AM's controls; never in a download */
   body.pdf #ap-tier{display:none!important}
   body.demo .ap-ctl,body.demo .ap-add,body.demo #ap-reset,body.demo .ap-rem,body.demo .ap-tag{display:none!important}
@@ -3407,6 +3411,7 @@ window.addEventListener('load',restore);
     if ($('det-html')) $('det-html').onclick = function () { exportHtml(k); };
     if ($('det-edit')) $('det-edit').onclick = function () { openRpEd(k); };
     if (!RPT.p) loadRpText();
+    if (!RPA.p) loadRpTpl();
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -6267,7 +6272,7 @@ window.addEventListener('load',restore);
     doc.querySelector('body').className = 'pdf pdfshot xhtml';
     try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
     // the AM's own wording, laid over the audit's — HERE, so both exits count occurrences on the same document (✎ Edit report)
-    if (!raw) applyTextEdits(doc, rpEdits(k));
+    if (!raw) applyTextEdits(doc, rpEdits(k), rpTpl());
     // the picked Catalogue modules close the document, after every market's scores and before the footer
     if (cx) { var ft = doc.querySelector('#print-plan') || doc.querySelector('#print-foot'); if (ft && ft.parentNode) ft.parentNode.insertBefore(catxSection(p, cx), ft); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
@@ -6350,6 +6355,40 @@ window.addEventListener('load',restore);
     return out;
   }
   function rpKey(k) { var p = parts(k); return p.client + '|' + p.mkt; }
+  /* THE TEMPLATE — ALL BRANDS (Ray, 15 Oct 2026: "the edit then be saved as template for all brands downloads as well"): a
+     second store, HOUSE-WIDE (shared state ns grtextall, scope null, device mirror gr-textall-b), keyed by the wording it
+     replaces — a short hash of the audit's text, one entry per sentence {o, t, at}, so two people rewording two different
+     sentences both survive the merge. A template edit applies to EVERY brand's ⬇ PDF and ⬇ HTML wherever those exact words
+     appear (every occurrence, not one): it is for the wording that does not name a brand — a heading, a method line, the
+     plan's lead. A report's own edit (grtext) always wins over the template on that report. */
+  var RPA = { map: null, base: 0, p: null };
+  function rpHash(t) { var h = 5381; for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) >>> 0; return 't' + h.toString(36) + t.length.toString(36); }
+  function rpTpl() {
+    if (RPA.map) return RPA.map;
+    try { var m = JSON.parse(localStorage.getItem('gr-textall-b') || '{}'); RPA.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { RPA.map = {}; }
+    return RPA.map;
+  }
+  function rpTplMirror() { try { localStorage.setItem('gr-textall-b', JSON.stringify(RPA.map || {})); } catch (e) {} }
+  function loadRpTpl() {
+    if (RPA.p) return RPA.p;
+    RPA.p = fetch(API + '/api/state?ns=grtextall').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.grtextall) { RPA.map = j.grtextall; RPA.base = Date.now(); rpTplMirror(); } })
+      .catch(function () {});
+    return RPA.p;
+  }
+  function rpTplPut(m, then) {
+    RPA.map = m; rpTplMirror();
+    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(RPA.base || 0) }, body: JSON.stringify({ grtextall: m }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { var ok = !!(j && j.grtextall); if (ok) { RPA.map = j.grtextall; RPA.base = Date.now(); rpTplMirror(); } if (then) then(ok); })
+      .catch(function () { if (then) then(false); });
+  }
+  // the template as {original wording: new wording}
+  function rpTplWords(m) {
+    var out = {}; m = m || {};
+    Object.keys(m).forEach(function (h) { var x = m[h]; if (x && typeof x.o === 'string' && typeof x.t === 'string' && x.o) out[x.o] = x.t; });
+    return out;
+  }
   function rpMap() {
     if (RPT.map) return RPT.map;
     try { var m = JSON.parse(localStorage.getItem('gr-text-b') || '{}'); RPT.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { RPT.map = {}; }
@@ -6376,18 +6415,24 @@ window.addEventListener('load',restore);
       .then(function (j) { var ok = !!(j && j.grtext); if (ok) { RPT.map = j.grtext; RPT.base = Date.now(); rpMirror(); } if (then) then(ok); })
       .catch(function () { if (then) then(false); });
   }
-  // lay the stored edits over a document; returns how many found their sentence and which did not
-  function applyTextEdits(doc, edits) {
-    var res = { done: 0, miss: [] }; if (!edits || !edits.length) return res;
-    var seen = {}, idx = {};
+  // lay the stored edits over a document — this report's own first, then the all-brands template on every unit they left
+  // alone; returns how many found their sentence and which did not
+  function applyTextEdits(doc, edits, tpl) {
+    var res = { done: 0, miss: [], tpl: 0 }, words = rpTplWords(tpl), hasT = Object.keys(words).length;
+    if ((!edits || !edits.length) && !hasT) return res;
+    var seen = {}, idx = {}, list = [];
     textUnits(doc).forEach(function (el) {
       var o = rpNorm(el.textContent), n = seen[o] = (seen[o] == null ? 0 : seen[o] + 1);
-      idx[o + '\u0001' + n] = el;
+      idx[o + '\u0001' + n] = el; list.push({ el: el, o: o });
     });
-    edits.forEach(function (x) {
+    (edits || []).forEach(function (x) {
       var el = idx[x.o + '\u0001' + x.n];
       if (!el) { res.miss.push(x); return; }
-      el.textContent = x.t; res.done++;
+      el.textContent = x.t; el.__rpDone = 1; res.done++;
+    });
+    list.forEach(function (u) {
+      if (u.el.__rpDone) { delete u.el.__rpDone; return; }
+      if (hasT && Object.prototype.hasOwnProperty.call(words, u.o)) { u.el.textContent = words[u.o]; res.tpl++; }
     });
     return res;
   }
@@ -6401,48 +6446,75 @@ window.addEventListener('load',restore);
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var btn = $('det-edit'), old = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
-    Promise.all([loadRpText(), (COVER[k] || masked(parts(k).client)) ? null : coverPrep(k)]).then(function () {
+    Promise.all([loadRpText(), loadRpTpl(), (COVER[k] || masked(parts(k).client)) ? null : coverPrep(k)]).then(function () {
       if (btn) { btn.disabled = false; btn.textContent = old; }
       var r = exportDoc(k, null, false, true); if (!r) return;
       buildRpEd(k, r);
     }, function () { if (btn) { btn.disabled = false; btn.textContent = old; } });
   }
+  function rpScope() { try { return localStorage.getItem('gr-text-scope') === 'all' ? 'all' : 'one'; } catch (e) { return 'one'; } }
   function buildRpEd(k, r) {
     closeRpEd();
     var p = r.p, name = dispClient(p.client) + ' ' + p.mkt.toUpperCase();
     var m = document.createElement('div'); m.id = 'rped'; m.className = 'rped'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Edit the client report');
     m.innerHTML = '<div class="rped-bar"><div class="rped-t"><b>✎ Edit the client report</b> <span>' + esc(name) + '</span></div>' +
+      '<div class="rped-scope" role="group" aria-label="Where an edit is saved"><button type="button" id="rped-one" data-sc="one">This report · ' + esc(name) + '</button>' +
+      '<button type="button" id="rped-all" data-sc="all" title="Save what you type as the template: the same words change in every brand\'s ⬇ PDF and ⬇ HTML">All brands · template</button></div>' +
       '<div class="rped-msg" id="rped-msg"></div>' +
-      '<div class="rped-act"><button class="btn" type="button" id="rped-reset" title="Drop every edit for ' + esc(name) + ' and go back to the wording the audit writes">↺ Reset edits</button>' +
+      '<div class="rped-act"><button class="btn" type="button" id="rped-promote" title="Move every edit made to ' + esc(name) + ' into the all-brands template">⇪ Make these the template</button>' +
+      '<button class="btn" type="button" id="rped-reset" title="Drop every edit made to ' + esc(name) + ' only">↺ Reset this report</button>' +
+      '<button class="btn" type="button" id="rped-treset" title="Drop the all-brands template — every brand\'s downloads go back to the audit\'s wording">↺ Reset template</button>' +
       '<button class="btn" type="button" id="rped-pdf">⬇ PDF</button><button class="btn pri" type="button" id="rped-html">⬇ HTML</button>' +
       '<button class="btn" type="button" id="rped-x" aria-label="Close the editor">✕</button></div></div>' +
-      '<div class="rped-help">Click any text in the report and type — headings, findings, the action plan, the cover. Every edit is saved for ' + esc(name) + ' for the team and goes into both downloads.</div>' +
+      '<div class="rped-help" id="rped-help"></div>' +
       '<iframe class="rped-f" id="rped-f" title="The client report, editable"></iframe>';
     document.body.appendChild(m);
     document.documentElement.style.overflow = 'hidden';
     document.addEventListener('keydown', rpKeydown);
     var f = $('rped-f'), msgEl = $('rped-msg');
-    var edits = rpEdits(k).slice(), units = [], timer = null, saving = 0;
+    var edits = rpEdits(k).slice(), tpl = Object.assign({}, rpTpl()), units = [], timer = null, saving = 0, dirty = { one: 0, all: 0 };
+    var scope = rpScope();
     var say = function (t) { if (msgEl) msgEl.textContent = t; };
+    var tplN = function () { return Object.keys(rpTplWords(tpl)).length; };
     var status = function (extra) {
-      var n = edits.length, miss = edits.filter(function (x) { return x._miss; }).length;
-      say((n ? n + ' edit' + (n === 1 ? '' : 's') + ' saved for the team' : 'No edits yet — the report reads as the audit wrote it') +
+      var n = edits.length, miss = edits.filter(function (x) { return x._miss; }).length, tn = tplN(), used = units.filter(function (el) { return el.classList.contains('ek-tpl'); }).length;
+      say((n ? n + ' edit' + (n === 1 ? '' : 's') + ' to this report' : 'No edits to this report') +
+        ' · ' + (tn ? tn + ' template edit' + (tn === 1 ? '' : 's') + ' for all brands' + (used ? ' (' + used + ' in this report)' : ' (none in this report)') : 'no template yet') +
         (miss ? ' · ' + miss + ' no longer match the report (the audit has changed that text since)' : '') + (extra ? ' · ' + extra : ''));
     };
-    var save = function () {
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        saving++; say('Saving…');
-        rpPut(k, edits.map(function (x) { return { o: x.o, n: x.n, t: x.t }; }), function (ok) { saving--; status(ok ? '' : '⚠ not saved to the team yet — kept on this device'); });
-      }, 700);
+    var paintScope = function () {
+      m.classList.toggle('tplmode', scope === 'all');
+      $('rped-one').setAttribute('aria-pressed', String(scope === 'one'));
+      $('rped-all').setAttribute('aria-pressed', String(scope === 'all'));
+      $('rped-help').textContent = scope === 'all'
+        ? 'Template mode — what you type changes those exact words in EVERY brand\'s ⬇ PDF and ⬇ HTML, for the team. Use it for wording that does not name the brand: headings, method lines, the plan\'s lead. Blue lines come from the template.'
+        : 'Click any text in the report and type — headings, findings, the action plan, the cover. Edits here are saved for ' + name + ' only, for the team, and go into both downloads. Blue lines come from the all-brands template.';
     };
+    var tplFor = function (o) { var w = rpTplWords(tpl); return Object.prototype.hasOwnProperty.call(w, o) ? w[o] : null; };
+    var mine = function (el) { return edits.some(function (x) { return x.o === el.__o && x.n === el.__n; }); };
+    // one unit as the downloads will draw it: its own edit, else the template, else the audit
+    var paint = function (el) {
+      var own = null; edits.forEach(function (x) { if (x.o === el.__o && x.n === el.__n) own = x; });
+      var t = tplFor(el.__o);
+      if (own) { el.textContent = own.t; } else if (t != null) { el.textContent = t; } else { el.textContent = el.__o; }
+      el.classList.toggle('ek-on', !!own); el.classList.toggle('ek-tpl', !own && t != null);
+    };
+    var flush = function (then) {
+      var jobs = [];
+      if (dirty.one) { dirty.one = 0; jobs.push(new Promise(function (res) { rpPut(k, edits.map(function (x) { return { o: x.o, n: x.n, t: x.t }; }), res); })); }
+      if (dirty.all) { dirty.all = 0; jobs.push(new Promise(function (res) { rpTplPut(Object.assign({}, tpl), function (ok) { if (ok) tpl = Object.assign({}, RPA.map); res(ok); }); })); }
+      if (!jobs.length) { if (then) then(true); return; }
+      saving++; say('Saving…');
+      Promise.all(jobs).then(function (oks) { saving--; var ok = oks.every(Boolean); status(ok ? '' : '⚠ not saved to the team yet — kept on this device'); if (then) then(ok); });
+    };
+    var save = function () { clearTimeout(timer); timer = setTimeout(function () { timer = null; flush(); }, 700); };
     f.addEventListener('load', function () {
       var fd = f.contentDocument; if (!fd || !fd.body) return;
       var st = fd.createElement('style');
       st.textContent = '[data-ek]{outline:1px dashed transparent;outline-offset:2px;border-radius:2px;cursor:text}' +
         '[data-ek]:hover{outline-color:rgba(237,111,11,.55)}[data-ek]:focus{outline:2px solid #ED6F0B;background:rgba(245,166,35,.08)}' +
-        '[data-ek].ek-on{box-shadow:inset 0 -2px 0 rgba(245,166,35,.85)}a[data-ek]{pointer-events:auto}' +
-        'text[data-ek]:hover{fill:#ED6F0B}text[data-ek].ek-on{text-decoration:underline}';
+        '[data-ek].ek-on{box-shadow:inset 0 -2px 0 rgba(245,166,35,.85)}[data-ek].ek-tpl{box-shadow:inset 0 -2px 0 rgba(37,99,235,.75)}a[data-ek]{pointer-events:auto}' +
+        'text[data-ek]:hover{fill:#ED6F0B}text[data-ek].ek-on,text[data-ek].ek-tpl{text-decoration:underline}';
       fd.head.appendChild(st);
       Array.prototype.forEach.call(fd.querySelectorAll('details'), function (dt) { dt.setAttribute('open', ''); });
       var seen = {};
@@ -6457,7 +6529,8 @@ window.addEventListener('load',restore);
       });
       // the stored wording, laid over as the downloads will lay it
       var byKey = {}; units.forEach(function (el) { byKey[el.__o + '\u0001' + el.__n] = el; });
-      edits.forEach(function (x) { var el = byKey[x.o + '\u0001' + x.n]; if (el) { el.textContent = x.t; el.classList.add('ek-on'); x._miss = false; } else x._miss = true; });
+      edits.forEach(function (x) { x._miss = !byKey[x.o + '\u0001' + x.n]; });
+      units.forEach(paint);
       // a click in a summary edits its text rather than folding the section; a link is text here, not a way out
       fd.addEventListener('click', function (e) {
         var t = e.target; if (!t.closest) return;
@@ -6471,28 +6544,59 @@ window.addEventListener('load',restore);
       fd.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeRpEd(); else if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-ek]')) e.preventDefault(); });
       fd.addEventListener('input', function (e) {
         var el = e.target.closest && e.target.closest('[data-ek]'); if (!el) return;
-        var t = rpNorm(el.textContent).slice(0, 2000), hit = null;
-        edits = edits.filter(function (x) { if (x.o === el.__o && x.n === el.__n) { hit = x; return false; } return true; });
-        if (t !== el.__o) { edits.push({ o: el.__o, n: el.__n, t: t }); el.classList.add('ek-on'); } else el.classList.remove('ek-on');
+        var t = rpNorm(el.textContent).slice(0, 2000), had = mine(el);
+        edits = edits.filter(function (x) { return !(x.o === el.__o && x.n === el.__n); });
+        if (had) dirty.one = 1;
+        if (scope === 'all') {
+          // the template: this wording, everywhere it appears — in this report and every other brand's
+          var h = rpHash(el.__o);
+          if (t !== el.__o) tpl[h] = { o: el.__o, t: t, at: Date.now() }; else delete tpl[h];
+          dirty.all = 1;
+          el.classList.toggle('ek-tpl', t !== el.__o); el.classList.remove('ek-on');
+          units.forEach(function (u) { if (u !== el && u.__o === el.__o && !mine(u)) paint(u); });
+        } else {
+          var base = tplFor(el.__o); if (base == null) base = el.__o;
+          if (t !== base) { edits.push({ o: el.__o, n: el.__n, t: t }); dirty.one = 1; }
+          el.classList.toggle('ek-on', t !== base); el.classList.toggle('ek-tpl', t === base && base !== el.__o);
+        }
         save();
       });
       status();
     });
     f.srcdoc = r.html;
+    paintScope();
+    Array.prototype.forEach.call(m.querySelectorAll('.rped-scope button'), function (b) {
+      b.onclick = function () { scope = b.getAttribute('data-sc'); try { localStorage.setItem('gr-text-scope', scope); } catch (e) {} paintScope(); };
+    });
     var flushThen = function (fn) {
-      if (!timer && !saving) return fn();
       clearTimeout(timer); timer = null;
-      say('Saving…');
-      rpPut(k, edits.map(function (x) { return { o: x.o, n: x.n, t: x.t }; }), function () { fn(); });
+      if (!dirty.one && !dirty.all && !saving) return fn();
+      flush(function () { fn(); });
     };
     $('rped-x').onclick = closeRpEd;
     $('rped-html').onclick = function () { flushThen(function () { closeRpEd(); exportHtml(k); }); };
     $('rped-pdf').onclick = function () { flushThen(function () { closeRpEd(); exportPdf(k); }); };
     $('rped-reset').onclick = function () {
       if (!edits.length) return;
-      if (!confirm('Drop every edit to the ' + name + ' report and go back to the wording the audit writes?')) return;
-      clearTimeout(timer); timer = null; edits = [];
-      rpPut(k, [], function () { buildRpEd(k, r); });
+      if (!confirm('Drop every edit made to the ' + name + ' report? (The all-brands template stays.)')) return;
+      clearTimeout(timer); timer = null; edits = []; dirty.one = 1;
+      flush(function () { buildRpEd(k, r); });
+    };
+    $('rped-treset').onclick = function () {
+      if (!tplN()) return;
+      if (!confirm('Drop the all-brands template? Every brand\'s ⬇ PDF and ⬇ HTML goes back to the audit\'s wording (each report\'s own edits stay).')) return;
+      clearTimeout(timer); timer = null; tpl = {}; dirty.all = 1;
+      flush(function () { buildRpEd(k, r); });
+    };
+    $('rped-promote').onclick = function () {
+      var live = edits.filter(function (x) { return !x._miss; });
+      if (!live.length) return;
+      if (!confirm('Make the ' + live.length + ' edit' + (live.length === 1 ? '' : 's') + ' to ' + name + ' the template for every brand? Wherever those exact words appear in another brand\'s report, they change too.')) return;
+      clearTimeout(timer); timer = null;
+      live.forEach(function (x) { tpl[rpHash(x.o)] = { o: x.o, t: x.t, at: Date.now() }; });
+      edits = edits.filter(function (x) { return x._miss; });
+      dirty.one = 1; dirty.all = 1;
+      flush(function () { buildRpEd(k, r); });
     };
   }
 

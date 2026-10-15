@@ -64,6 +64,7 @@ const QUALITY = {
       'Monsoon|gb': { client: 'Monsoon', mkt: 'gb', status: 'ok', t: NOW, rows: 800, score: 85, ai: { n: 0, of: 6 }, cov: peerCov, reqMissing: [] },
     };
     window.__store = JSON.parse(sessionStorage.getItem('__tstore') || '{}'); window.__puts = [];
+    window.__tpl = JSON.parse(sessionStorage.getItem('__tplstore') || '{}');
     const real = window.fetch.bind(window);
     window.fetch = (url, opts) => {
       const u = String(url), j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
@@ -72,9 +73,12 @@ const QUALITY = {
       if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
       if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
+      if (u.includes('/api/state?ns=grtextall')) return j({ grtextall: JSON.parse(JSON.stringify(window.__tpl)) });
       if (u.includes('/api/state?ns=grtext')) { window.__gets = (window.__gets || 0) + 1; return j({ grtext: JSON.parse(JSON.stringify(window.__store)) }); }
       if (u.endsWith('/api/state') && opts && opts.method === 'PUT') {
-        const b = JSON.parse(opts.body); if (b.grtext) { window.__store = b.grtext; window.__puts.push(b.grtext); sessionStorage.setItem('__tstore', JSON.stringify(b.grtext)); return j({ grtext: b.grtext }); }
+        const b = JSON.parse(opts.body);
+        if (b.grtextall) { window.__tpl = b.grtextall; sessionStorage.setItem('__tplstore', JSON.stringify(b.grtextall)); return j({ grtextall: b.grtextall }); }
+        if (b.grtext) { window.__store = b.grtext; window.__puts.push(b.grtext); sessionStorage.setItem('__tstore', JSON.stringify(b.grtext)); return j({ grtext: b.grtext }); }
       }
       return j({});
     };
@@ -127,7 +131,7 @@ const QUALITY = {
   let ed = await store();
   ok('both edits reach the team store under Reiss|gb, each saying what it replaced', ed.length === 2 && ed.some((x) => x.o === st0.plan.trim() && x.t === 'Your plan for the next quarter') && ed.some((x) => x.o === st0.task.trim() && x.t === 'Send GTINs for the spring range first'), ed);
   const msg = await page.textContent('#rped-msg');
-  ok('the bar says how many edits are saved', /2 edits saved for the team/.test(msg), msg);
+  ok('the bar says how many edits are saved', /2 edits to this report/.test(msg), msg);
   const marked = await f.evaluate(() => document.querySelectorAll('.ek-on').length);
   ok('the edited lines are marked in the editor', marked === 2, marked);
 
@@ -200,6 +204,67 @@ const QUALITY = {
   const st2 = await f.evaluate(() => ({ plan: document.querySelector('#print-plan h3').textContent, on: document.querySelectorAll('.ek-on').length }));
   ed = await store();
   ok('↺ clears the store and the report reads as the audit wrote it', !ed.length && st2.on === 0 && /Action plan — Reiss GB/.test(st2.plan), { ed, st2 });
+  await page.click('#rped-x');
+
+  console.log('-- the template: one edit, every brand');
+  const grabHtml = async () => {
+    await page.evaluate(() => {
+      window.__html = null; window.__grPlainExport = true;
+      const real = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = function (b) { b.text().then((t) => { window.__html = t; }); return real(b); };
+      HTMLAnchorElement.prototype.click = function () {};
+    });
+    await page.click('#det-html');
+    await page.waitForFunction(() => window.__html !== null, null, { timeout: 15000 });
+    return page.evaluate(() => window.__html);
+  };
+  f = await openEd();
+  const lead0 = await f.evaluate(() => document.querySelector('#print-plan .pm-sub').textContent.trim());
+  await page.click('#rped-all');
+  const help = await page.textContent('#rped-help');
+  ok('the scope switch puts the editor in template mode and says what that means', /every brand/i.test(help) && (await page.getAttribute('#rped-all', 'aria-pressed')) === 'true', help);
+  await typeInto(f, '#print-plan .pm-sub', 'Our plan for you, month by month');
+  await page.waitForTimeout(1300);
+  let tp = await page.evaluate(() => Object.values(window.__tpl));
+  ok('a template edit reaches the house-wide store, saying what it replaces', tp.length === 1 && tp[0].o === lead0 && tp[0].t === 'Our plan for you, month by month', tp);
+  ok('…and nothing lands in this report\'s own edits', !(await store()).length);
+  ok('the bar counts the template', /1 template edit for all brands/.test(await page.textContent('#rped-msg')), await page.textContent('#rped-msg'));
+  // a report's own edit beats the template on that report
+  await page.click('#rped-one');
+  await f.evaluate(() => document.querySelector('#print-plan h3').setAttribute('data-t', '3'));
+  await typeInto(f, '[data-t="3"]', 'Reiss only heading');
+  await page.waitForTimeout(1300);
+  ed = await store();
+  ok('in "This report" mode the edit stays with Reiss GB', ed.length === 1 && ed[0].t === 'Reiss only heading', ed);
+  await page.click('#rped-x');
+  html = await grabHtml();
+  ok('Reiss\'s ⬇ HTML carries the template line and its own heading', html.includes('Our plan for you, month by month') && html.includes('Reiss only heading') && !html.includes(lead0), null);
+  // another brand: the template applies, Reiss's own edit does not
+  await page.evaluate(() => { localStorage.removeItem('gr-textall-b'); localStorage.removeItem('gr-text-b'); });
+  await page.goto(PAGE.replace('Reiss%7Cgb', 'Superdry%7Cgb'));
+  await page.reload();
+  await page.waitForSelector('#det-edit', { timeout: 15000 });
+  await page.waitForTimeout(700);
+  html = await grabHtml();
+  ok('Superdry\'s ⬇ HTML reads the template line too', html.includes('Our plan for you, month by month') && !html.includes(lead0), null);
+  ok('…and never Reiss\'s own edit', !html.includes('Reiss only heading'));
+  await page.evaluate(() => {
+    window.__cap = null; window.__pdfdone = false;
+    window.html2canvas = (el) => { const d = el.ownerDocument; if (d !== document && !window.__cap) window.__cap = d.body.textContent;
+      return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
+    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdone = true; }; } };
+  });
+  await page.click('#det-pdf');
+  await page.waitForFunction(() => window.__pdfdone === true, null, { timeout: 20000 }).catch(() => {});
+  ok('…and so does Superdry\'s ⬇ PDF', (await page.evaluate(() => window.__cap || '')).includes('Our plan for you, month by month'));
+  f = await openEd();
+  const sd = await f.evaluate(() => ({ lead: document.querySelector('#print-plan .pm-sub').textContent, blue: document.querySelectorAll('.ek-tpl').length }));
+  ok('the Superdry editor shows the template line, marked as the template\'s', sd.lead === 'Our plan for you, month by month' && sd.blue >= 1, sd);
+  page.once('dialog', (d) => d.accept());
+  await page.click('#rped-treset');
+  await page.waitForTimeout(700);
+  tp = await page.evaluate(() => Object.keys(window.__tpl));
+  ok('↺ Reset template empties the house-wide store', tp.length === 0, tp);
   await page.click('#rped-x');
 
   ok('no page errors', errs.length === 0, errs);
