@@ -1,0 +1,36 @@
+<!-- FCC-HEADFONT — section headlines in a technical face. Injected worker-side on APP pages only
+     (never client decks).
+
+     Ray, 15 Oct 2026, over Workflow's seven section tiles: "ok let's change the Headlines font -
+     across the FCC - let's use more technical / optimisation font for section headline".
+
+     ONE RULE FOR EVERY PAGE: every h1 / h2 / h3 — the page title, the section tiles, the card
+     titles — is set in Space Grotesk (400 / 700 only, the same two-weight discipline the brand
+     keeps for Lato; a 900 heading draws at 700, never synthesised). Body copy, tables, controls,
+     figures and the quiet line BESIDE a title stay Lato: the headline is the technical voice, the
+     reading is not. No page names a heading's font itself (checked: none sets font-family on
+     h1–h3), so this rule, injected after each page's own <style>, wins without !important.
+
+     WHAT STAYS LATO INSIDE A HEADING: the summary a fold keeps (.fsum, .wss, .tf-sum …), a
+     <small> sub-title, chips / pills / badges / hints, the ⓘ and its pop-up, code, and every
+     form control — anything whose class says it is a sum, sub, chip, pill, badge, hint, meta,
+     count, pop or btn. The title-carrying buttons a fold is built from (.fold, .fhd, .sec-tog)
+     inherit the heading's face, since the title text lives inside them.
+
+     The token is --font-head (also in /design/fcc.css), so a later change of face is one line.
+     The face is requested on load so a one-click PDF export never rasterises a heading in the
+     fallback before the font arrives. -->
+<style id="fcc-headfont">
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
+:root{--font-head:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif;--font-body:Lato,system-ui,-apple-system,'Segoe UI',sans-serif}
+h1,h2,h3{font-family:var(--font-head);letter-spacing:-.015em}
+:is(h1,h2,h3) :is(button.fold,button.fhd,button.sec-tog){font-family:inherit;letter-spacing:inherit}
+:is(h1,h2,h3) :is(small,code,input,select,textarea,.info-btn,.info-pop,.wss,.tier-sub,.own,.own-chip,.ck,.ihn,.hint,
+  [class*="sum"],[class*="sub"],[class*="chip"],[class*="pill"],[class*="badge"],[class*="hint"],[class*="meta"],
+  [class*="count"],[class*="pop"],[class*="btn"]){font-family:var(--font-body);letter-spacing:normal}
+</style>
+<script>
+(function(){
+  try{ if(document.fonts&&document.fonts.load){ document.fonts.load('700 16px "Space Grotesk"'); document.fonts.load('400 16px "Space Grotesk"'); } }catch(e){}
+})();
+</script>

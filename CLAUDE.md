@@ -76,7 +76,7 @@ Proprietary tools:
 Source: Reiss–Dentsu introduction PDF (Mar 2026). This is the governing design reference — only use elements, colours, and fonts from this PDF.
 
 - **Colours:** Orange `#F5A623` (primary), deep orange `#ED6F0B`, charcoal `#333333` (body text), white `#FFFFFF` backgrounds, light grey `#F5F5F5` / `#F7F7F5` card backgrounds
-- **Typography:** Lato (Google Fonts)
+- **Typography:** Lato (Google Fonts) for reading; **section headlines (h1–h3) in Space Grotesk 400/700** across every FCC app page (Ray, 15 Oct 2026: "let's use more technical / optimisation font for section headline") — injected by `docs/headfont_widget.html`, token `--font-head` in `/design/fcc.css`; the summary line beside a title, chips, controls and body copy stay Lato
 - **Cards:** White with `#E6E6E6` borders and drop shadows
 - **Footer:** "FeedSpark · Private & Confidential" left-aligned, page number right-aligned
 - **Prohibited:** No FeedSpark logo, no page number circles, no random decorative lines in slide bodies. Orange accents only where purposeful. Clean white backgrounds throughout.
