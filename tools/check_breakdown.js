@@ -29,7 +29,7 @@ const STUBS = require('./breakdown_stub.js');
 const PAGE = fs.readFileSync(path.join(D, 'FeedSpark_Breakdown.html'), 'utf8');
 const FCC_CSS = (() => { const s = fs.readFileSync(path.join(D, 'FeedSpark_Design.html'), 'utf8'); const a = s.indexOf('/* FCC-DESIGN:START */'), b = s.indexOf('/* FCC-DESIGN:END */'); return s.slice(a, b + '/* FCC-DESIGN:END */'.length); })();
 const HTML = PAGE.split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const SERVED = HTML.replace('</body>', WIDGETS + '\n</body>');
 const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
@@ -192,6 +192,9 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const gbVis = () => pg.evaluate(() => { const g = document.getElementById('gb'); const r = g.getBoundingClientRect(); return { open: !g.hidden && r.height > 0, pin: g.classList.contains('pin'), n: g.querySelectorAll('.gr').length, tries: g.querySelectorAll('[data-gb]').length, inView: r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, exp: document.getElementById('gbtn').getAttribute('aria-expanded') }; });
     await pg.evaluate(() => scrollTo(0, 0));
     ok('the guidebook is not painted at rest', !(await gbVis()).open);
+    const fab = await pg.evaluate(() => { const r = document.getElementById('gbtn').getBoundingClientRect(); return { r: innerWidth - r.right, b: innerHeight - r.bottom, pos: getComputedStyle(document.getElementById('gbw')).position, inHero: !!document.querySelector('.hero #gbtn'), chat: !!document.getElementById('fcc-fcb') }; });
+    ok('📖 Guidebook sits in the bottom-right corner (the one the Feed Chat bubble held), not in the hero', fab.pos === 'fixed' && fab.r >= 0 && fab.r <= 30 && fab.b >= 0 && fab.b <= 30 && !fab.inHero, fab);
+    ok('…and no Feed Chat bubble is on the page', !fab.chat, fab);
     await pg.hover('#gbtn'); await pg.waitForTimeout(250);
     let g = await gbVis();
     ok('hovering 📖 Guidebook opens it', g.open && g.exp === 'true', g);
@@ -239,6 +242,10 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const w = await pp.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth, cols: getComputedStyle(document.getElementById('panes')).gridTemplateColumns.split(' ').length }));
     ok('nothing scrolls sideways at 390px', w.sw <= w.iw + 1, w);
     ok('…the panes stack one a row', w.cols === 1, w);
+    const pfab = await pp.evaluate(() => { const r = document.getElementById('gbtn').getBoundingClientRect(), bar = document.getElementById('tb-modules'); const br = bar ? bar.getBoundingClientRect() : null; return { b: r.bottom, barTop: br && getComputedStyle(bar).position === 'fixed' ? br.top : innerHeight, r: innerWidth - r.right }; });
+    ok('…the guidebook button rides above the phone bar, in the corner', pfab.b <= pfab.barTop + 1 && pfab.r <= 30, pfab);
+    const shipOv = await pp.evaluate(() => { const h = document.getElementById('fcc-ship-h'); if (!h) return false; const a = h.getBoundingClientRect(), g = document.getElementById('gbtn').getBoundingClientRect(); return !(a.bottom <= g.top || g.bottom <= a.top || a.right <= g.left || g.right <= a.left); });
+    ok('…and clear of the Shipped panel handle that shares that corner on a phone', !shipOv);
     await pp.tap('#gbtn'); await pp.waitForTimeout(150);
     const sh = await pp.evaluate(() => { const r = document.getElementById('gb').getBoundingClientRect(); return { open: !document.getElementById('gb').hidden, l: r.left, rr: r.right, b: r.bottom, iw: innerWidth, ih: innerHeight }; });
     ok('…the guidebook opens as a bottom sheet on a tap', sh.open && sh.l <= 1 && sh.rr >= sh.iw - 1 && Math.abs(sh.b - sh.ih) <= 2, sh);
