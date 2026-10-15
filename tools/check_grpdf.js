@@ -35,7 +35,7 @@ const D = path.resolve(__dirname, '..', 'docs');
 // export clones the live DOM, so what those layers leave behind is exactly what a client
 // receives; a check that renders the bare file never sees it (Ray, 18 Sep 2026: "remove the
 // element that sends code or feedback to Claude. I'm sending this to my clients").
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html',
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html',
   'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'tachyon_widget.html']
   .filter((f) => fs.existsSync(path.join(D, f)))
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
@@ -350,11 +350,11 @@ const QUALITY = {
       mk('de-bar', '✎ Edit'); mk('de-stalepanel', 'A note on your saved edits');
     });
     const seen = await pageW.evaluate(() => ({
-      tky: !!document.getElementById('tky-fab'), chat: !!document.getElementById('fcc-fcb'),
+      tky: !!document.getElementById('tky-fab'), 
       heat: !!document.querySelector('#air-tier .heat-card'), rec: !!document.querySelector('#rec-tier'),
     }));
-    ok('the served page carries the Tachyon copilot, the Feed Chat bubble, the heatmap and the reconciliation band (so their absence below is a removal, not a no-op)',
-      seen.tky && seen.chat && seen.heat && seen.rec, seen);
+    ok('the served page carries the Tachyon copilot, the heatmap and the reconciliation band (so their absence below is a removal, not a no-op)',
+      seen.tky && seen.heat && seen.rec, seen);
     await pageW.evaluate(() => { window.__grPlainExport = true; });   // the plain document — tools/check_grlock.js drives the locked file
     const [download] = await Promise.all([
       pageW.waitForEvent('download'),

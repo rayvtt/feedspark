@@ -70,7 +70,7 @@ A feed with no `item_group_id` cannot count styles and the button says so.
 
 ## 📖 Guidebook — how to read a feed (Ray, 15 Oct 2026)
 
-A button in the hero, beside ⊕ / ⊖. Hover opens it (keyboard focus too); a click pins it; Esc, ✕ or a click
+A floating button in the bottom-right corner — the one the Feed Chat bubble held until it was removed from the FCC (Ray, 15 Oct 2026); on a phone it rides above the module bar and the Shipped handle. Hover opens it (keyboard focus too); a click pins it; Esc, ✕ or a click
 outside closes it; under 760px it is a bottom sheet. It holds the breakdowns worth showing a client — each
 recipe a pivot (rows × columns), what to look for in it, the action it leads to and the KPI that action moves:
 

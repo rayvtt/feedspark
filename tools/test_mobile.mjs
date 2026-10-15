@@ -18,7 +18,6 @@ t('every bar item shows its label (the desktop tooltip text) under the icon', /#
 t('the desktop collapse toggle collapses the bar too (mirror), the ▦ sheet still lists every module', /:root\.nav-collapsed #tb-modules\{display:none!important\}/.test(css) && /All modules/.test(W));
 t('the topbar drops its backdrop blur on phones (it would become the containing block of the fixed bar + sheets)', /\.topbar\{backdrop-filter:none!important/.test(css));
 t('the ▦ menu, presence popover, view-as pill and customizer become bottom sheets above the bar', /#fcc-apps-menu\{position:fixed!important/.test(css) && /\.pz-pop\{left:8px!important/.test(css) && /#fcc-viewas\{top:auto!important/.test(css) && /#fcc-navcz\{width:100%!important/.test(css));
-t('the Feed Chat bubble rides above the bar', /#fcc-fcb\{bottom:calc\(var\(--fcc-bar\)/.test(css));
 t('body reserves the bar height (safe-area aware)', /body\{padding-bottom:calc\(var\(--fcc-bar\) \+ env\(safe-area-inset-bottom/.test(css));
 console.log('· mirror — nothing a page hid under a max-width rule stays hidden');
 t('Golden Record per-attribute actions + notes are shown', /\.at-act\{display:flex!important/.test(css) && /\.at-note\{display:block!important/.test(css));

@@ -36,7 +36,7 @@ const FCC_CSS = (() => { const s = fs.readFileSync(path.join(D, 'FeedSpark_Desig
 const HTML = PAGE.split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
 // the phone pass meets the page AS SERVED: the worker injects these layers (the phone bottom bar, the
 // skim view …), and without them a 390px topbar is the old 600px icon column sitting over the table
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const SERVED = HTML + '\n' + WIDGETS;
 const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};

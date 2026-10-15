@@ -203,7 +203,13 @@ window.addEventListener('load',restore);
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] .ph .ib{background:#20242E}
   /* 📖 Guidebook — hover the button (or focus / tap to pin) */
-  .gbw{position:relative;display:inline-flex}
+  .gbw{position:fixed;right:18px;bottom:18px;z-index:64;display:inline-flex}
+  .gbfab{font:inherit;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:24px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-size:14px;box-shadow:0 8px 24px rgba(237,111,11,.35),0 2px 6px rgba(0,0,0,.12);transition:transform .15s,box-shadow .15s}
+  .gbfab span{font-size:18px;line-height:1}
+  .gbfab b{font-weight:900;letter-spacing:.01em}
+  .gbfab:hover,.gbfab[aria-expanded="true"]{transform:translateY(-2px);box-shadow:0 12px 30px rgba(237,111,11,.42),0 2px 6px rgba(0,0,0,.14)}
+  .gbfab:focus-visible{outline:3px solid var(--ink,#333);outline-offset:3px}
+  @media (prefers-reduced-motion: reduce){.gbfab{transition:none}.gbfab:hover,.gbfab[aria-expanded="true"]{transform:none}}
   .gb[hidden]{display:none!important}
   .gb{position:fixed;top:0;left:0;z-index:300;width:min(620px,calc(100vw - 32px));max-height:min(72vh,680px);overflow:auto;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px 12px;text-align:left;font-size:12.5px;line-height:1.5}
   .gb.pin{border-color:var(--orange)}
@@ -221,7 +227,7 @@ window.addEventListener('load',restore);
   .gb .gr .gk{grid-column:1;font-size:11.5px;color:var(--ink-2)}
   .gb .gr .gk b{color:var(--ink)}
   .gb .gfoot{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink-2);font-size:11.5px}
-  @media(max-width:760px){.gb{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:78vh;border-radius:16px 16px 0 0}.gb .gr{grid-template-columns:1fr}.gb .gr .gtry{grid-column:1;grid-row:auto;justify-self:start;margin-top:4px}}
+  @media(max-width:760px){.gbw{right:12px;bottom:calc(var(--fcc-bar,0px) + 62px + env(safe-area-inset-bottom,0px))}.gbfab{height:44px;padding:0 14px 0 12px}.gb{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:78vh;border-radius:16px 16px 0 0}.gb .gr{grid-template-columns:1fr}.gb .gr .gtry{grid-column:1;grid-row:auto;justify-self:start;margin-top:4px}}
   @media(max-width:760px){.pane,.pane.sized{min-width:0;width:100%!important;flex-basis:100%}.pane .rz{display:none}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
   @media(prefers-reduced-motion:reduce){.prog.ind i{animation:none}}
 </style>
@@ -276,8 +282,6 @@ window.addEventListener('load',restore);
       <button type="button" data-u="sku" class="on" title="Count every product (SKU) the feed sends">Products</button>
       <button type="button" data-u="group" title="Count each item group (style) once — a style carrying a value in any of its sizes counts once">Styles</button></span>
     <button class="btn" id="reload" type="button" title="Read this feed again, now">⟳ Re-read feed</button>
-    <span class="gbw" id="gbw"><button class="btn" id="gbtn" type="button" aria-expanded="false" aria-controls="gb" aria-haspopup="dialog" title="How to read a feed — the breakdowns worth showing a client, and what each one moves">📖 Guidebook</button>
-      <div class="gb" id="gb" role="dialog" aria-label="Guidebook — how to read the data" hidden data-no-collapse data-no-digest></div></span>
     <button class="btn" id="openall" type="button">⊕ Open all</button>
     <button class="btn" id="foldall" type="button">⊖ Fold all</button>
   </div>
@@ -340,6 +344,9 @@ window.addEventListener('load',restore);
   </section>
 </main>
 
+<!-- 📖 Guidebook: the floating corner the Feed Chat bubble used to hold (Ray, 15 Oct 2026) -->
+<span class="gbw" id="gbw"><button class="gbfab" id="gbtn" type="button" aria-expanded="false" aria-controls="gb" aria-haspopup="dialog" title="Guidebook — how to read a feed: the breakdowns worth showing a client, and what each one moves"><span aria-hidden="true">📖</span><b>Guidebook</b></button>
+  <div class="gb" id="gb" role="dialog" aria-label="Guidebook — how to read the data" hidden data-no-collapse data-no-digest></div></span>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>Source: the live output feed, read in this browser</span></div></div>
 
@@ -903,10 +910,11 @@ window.addEventListener('load',restore);
     var el = $('#gb'); if (el.hidden) return;
     if (el.parentNode !== document.body) document.body.appendChild(el);
     if (innerWidth <= 760) { el.style.top = el.style.left = el.style.maxHeight = ''; return; }
-    var b = $('#gbtn').getBoundingClientRect(), w = el.offsetWidth, top = b.bottom + 8;
-    el.style.left = Math.max(16, Math.min(b.left, innerWidth - w - 16)) + 'px';
-    el.style.top = top + 'px';
-    el.style.maxHeight = Math.max(200, Math.min(680, innerHeight - top - 16)) + 'px';
+    // it rises out of the corner button: right edges aligned, bottom 10px above it, never taller than the room above
+    var b = $('#gbtn').getBoundingClientRect(), w = el.offsetWidth, room = b.top - 10 - 16;
+    el.style.maxHeight = Math.max(200, Math.min(680, room)) + 'px';
+    el.style.left = Math.max(16, Math.min(b.right - w, innerWidth - w - 16)) + 'px';
+    el.style.top = Math.max(16, b.top - 10 - el.offsetHeight) + 'px';
   }
   function gbTry(key) {
     var ix = key.split('.'), r = GUIDE[+ix[0]] && GUIDE[+ix[0]].it[+ix[1]];
