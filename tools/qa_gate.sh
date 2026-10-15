@@ -333,6 +333,12 @@ else
   echo "   ✗ Workflow fold harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_wffold.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_nolinger.js >/dev/null 2>&1; then
+  echo "   ✓ a refused plan write or brief save is reported on its section's head line, never as a band that lingers"
+else
+  echo "   ✗ lingering-warning harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_nolinger.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else

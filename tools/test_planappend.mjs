@@ -109,24 +109,54 @@ ok(/if \(gd\.error\) return \{ ok: false, error: permHint/.test(ap),
 ok(/anchor: place\.anchor/.test(ap), 'the answer says which anchor it used');
 
 /* ---------- 4. the page stops calling a refused write a filed task ---------- */
-console.log('\n── a failed write says so, and keeps saying so');
-const pageFns = ['planUnsynced', 'planWarn', 'planWriteFailed', 'adoptIntoPlan', 'resyncPlanWrites']
+/* The fact is still on screen. What changed on 15 Oct 2026 is WHERE: Ray, over the dark-red
+   floating banner, "i dont want this message to show" and then "warning like this never linger !"
+   — so the count rides Intake's own head line (quiet, re-written by every render, un-hideable by
+   a fold) and never a fixed band. Two things the band got wrong are pinned here too: it held ONE
+   global reason against the FIRST unsynced row of any brand (ELC's sheet error printed against
+   an Accessorize task), and it said "Retrying…" about a refusal that can never succeed. */
+console.log('\n── a failed write says so on Intake\'s head line, and never lingers as a band');
+const pageFns = ['planUnsynced', 'planNote', 'planNoteFill', 'planWarn', 'planWriteFailed', 'planFatal', 'adoptIntoPlan', 'resyncPlanWrites']
   .map((n) => liftFrom(P, n, 'FeedSpark_Workflow.html')).join('\n');
-ok(/function planWarn\(/.test(pageFns), 'the board has a standing warning for unwritten plan rows');
-ok(/_planFail\?planUnsynced\(\):\[\]/.test(pageFns),
-  'it is raised only once a write has actually been refused — never by one still in flight');
+ok(/function planNote\(/.test(pageFns), 'the board still reports unwritten plan rows');
+ok(/PLAN_FAIL\[m\.client\]/.test(pageFns),
+  'raised only for a client whose write has actually been REFUSED — never by one still in flight');
 ok(/m\.w\|\|!m\.client\|\|!m\.task/.test(pageFns), 'it counts the rows the sheet never confirmed');
 ok(/DELETED\[m\.client\+'\|'\+m\.task\]/.test(pageFns), 'a deleted row is not counted as unwritten');
-ok(/rows\[0\]\.client\+': /.test(pageFns), 'and it NAMES one of them, so the gap is identifiable');
+ok(/PLAN_FAIL\[c\]/.test(pageFns) && /t\.slice\(0,6\)/.test(pageFns),
+  'and names every brand with ITS OWN sheet reason and its tasks, never one reason over another brand\'s row');
+ok(/p\.dead\?' \\u00b7 the sheet has to change'/.test(pageFns),
+  'a refusal that can never succeed says the sheet has to change — it never claims to be retrying');
+ok(!/_planWarnEl/.test(P), 'the floating plan band is gone from the page');
+ok(!/Brief not saved to the pipeline yet/.test(P), 'and so is the floating unsaved-brief band');
+ok(!/background:#8A2A1B/.test(P), 'no dark-red fixed banner is left anywhere on the board');
+ok(/<span id="plan-note">/.test(liftFrom(P, 'renderIntake', 'FeedSpark_Workflow.html')),
+  'Intake\'s head line carries the slot the note is written into');
+ok(/function bfWarn\(on\)\{ _bfWarn=!!on; if\(typeof renderBpTog==='function'\)renderBpTog\(\); \}/.test(P),
+  'an unsaved brief is a flag the pipeline\'s head line reads, not a band');
+ok(/_bfWarn\?\(' \\u00b7 '\+wsWarn\('not saved to the pipeline yet'\)\)/.test(liftFrom(P, 'renderBpTog', 'FeedSpark_Workflow.html')),
+  'and that line says so while the save is still out');
 const adopt = liftFrom(P, 'adoptIntoPlan', 'FeedSpark_Workflow.html');
-ok(/planWriteFailed\(\(d&&d\.error\)\|\|'write failed'\)/.test(adopt), 'a refused append raises it');
-ok(/planWriteFailed\('network'\)/.test(adopt), 'so does a lost one');
-ok(/markWritten\(client,task\); planWarn\(\)/.test(adopt), 'a confirmed write clears it');
+ok(/planWriteFailed\(client,ae\)/.test(adopt), 'a refused append raises it, against the client it was for');
+ok(/planWriteFailed\(client,'network'\)/.test(adopt), 'so does a lost one');
+ok(/if\(!planFatal\(ae\)\)delete _planTried/.test(adopt),
+  'a refusal the workbook will repeat is NOT handed back to the retry pass');
+ok(/planWriteOk\(client\); planWarn\(\)/.test(adopt), 'a confirmed write clears it');
 const resync = liftFrom(P, 'resyncPlanWrites', 'FeedSpark_Workflow.html');
-ok(/if\(!d\|\|!d\.ok\)\{ rows\.forEach\(function\(m\)\{ delete _planTried/.test(resync),
-  'the resync pass hands a refused row back for another attempt');
-ok(/planWriteFailed/.test(resync), 'and raises the warning rather than returning in silence');
-ok(/saveManual\(\); planWarn\(\)/.test(resync), 'a successful resync takes it down');
+ok(/if\(!planFatal\(re\)\)rows\.forEach\(function\(m\)\{ delete _planTried/.test(resync),
+  'the resync pass hands a refused row back only when another attempt could work');
+ok(/planWriteFailed\(c,re\)/.test(resync), 'and reports it under that client rather than returning in silence');
+ok(/planWriteOk\(c\); planWarn\(\)/.test(resync), 'a successful resync takes it down');
+/* The classifier, run: the real refusal off Ray's screenshot against the ones worth retrying. */
+const planFatal = new Function(liftFrom(P, 'planFatal', 'FeedSpark_Workflow.html') + '\nreturn planFatal;')();
+ok(planFatal('Could not find a single "Project Plan"-like tab in this sheet (1KWrB4Ip…) — it has several tabs')
+  === true, 'a workbook with no Plan-like tab is a permanent refusal');
+ok(planFatal('no_plan_sheet') === true && planFatal('bad_sheet_id') === true,
+  'so is no sheet wired, and a bad id');
+ok(planFatal('The caller does not have permission') === true,
+  'so is a service account that can read but not write');
+ok(planFatal('network') === false && planFatal('write failed') === false && planFatal('backendError') === false,
+  'a transient failure is still retried');
 
 /* ---------- 5. the real appendPlanRows, run against a fake Sheets API ---------- */
 /* The two halves above are each pinned on their own; this runs the function itself over the live
