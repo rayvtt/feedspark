@@ -67,6 +67,19 @@ window.addEventListener('load',restore);
   .card h3{margin:0 0 2px;font-size:16.5px;font-weight:900}
   .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:12px}
   .chead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  /* EVERY SECTION FOLDS (the standing rule) — the title is the toggle, the line it keeps
+     says what is inside, and the choice is this device's (localStorage fcc-img-fold). */
+  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
+  .card h3 .fold:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+  .card h3 .fold .fch{flex:none;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;background:var(--wash);color:var(--muted);transition:transform .15s ease}
+  .card h3 .fold .fch::before{content:'';width:5px;height:5px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(45deg)}
+  .card h3 .fold:hover .fch{color:var(--ink);background:var(--line)}
+  .card.folded h3 .fold .fch{transform:rotate(-90deg)}
+  .card h3 .fold .fsum{display:none;font-size:12.5px;font-weight:700;letter-spacing:0;color:var(--muted)}
+  .card.folded h3 .fold .fsum:not(:empty){display:inline}
+  .card.folded{padding-top:12px;padding-bottom:12px}
+  .card.folded>.fhd{margin-bottom:0}
+  .card.folded>:not(.fhd),.card.folded>.fhd .ch,.card.folded>.fhd .tools,.card.folded>.fhd .instr-tgl{display:none!important}
   .chead .spacer{flex:1}
   .empty{padding:26px 10px;text-align:center;color:var(--muted);font-size:13.5px;font-weight:700}
   .empty b{color:var(--ink-2)}
@@ -367,6 +380,7 @@ table.est td.feed{min-width:110px}
     <span class="spacer" style="flex:1"></span>
     <button class="btn pri" id="scan1" type="button" title="Stream this feed now in the browser and read every image URL (the 4×-daily monitor also captures it)">⚡ Scan this feed live</button>
     <button class="btn" id="aiall" type="button" title="Let Tachyon look at a sample of each untagged shot code and name the shot type">✦ AI tag every shot code</button>
+    <button class="btn" id="fold-all" type="button" data-to="fold" title="Fold or open every section — this device remembers each one as you leave it">⊖ Collapse all</button>
     <span class="mstate" id="mstate"></span>
   </div>
   <div class="kpis" id="kpis"></div>
@@ -374,10 +388,10 @@ table.est td.feed{min-width:110px}
 
 <main class="wrap">
   <div class="card" id="detail">
-    <div class="chead">
-      <div><h3 id="det-title">Shot codes</h3><div class="ch" id="det-sub">Pick a client and market to see how its images are organised.</div></div>
+    <div class="fhd chead">
+      <div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span><span id="det-title">Shot codes</span><span class="fsum"></span></button></h3><div class="ch" id="det-sub">Pick a client and market to see how its images are organised.</div></div>
       <span class="spacer"></span>
-      <div id="det-chips" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
+      <div class="tools" id="det-chips" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
     <div id="verdict"></div>
     <div id="coverage"></div>
@@ -385,23 +399,43 @@ table.est td.feed{min-width:110px}
     <div class="empty" id="det-empty" hidden></div>
   </div>
 
+  <div class="card" id="types">
+    <div class="fhd chead">
+      <div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span><span id="ty-title">Image type — every field</span><span class="fsum"></span></button></h3><div class="ch" id="ty-sub">What each image field of this feed is named as, how that name was arrived at, and what it would take to name the rest.</div></div>
+      <span class="spacer"></span>
+      <button class="btn sm tools" id="tyaudit" type="button" title="Read a sample of each shot code’s own images and check they really are the same kind of photograph">⚡ Audit the shot codes</button>
+    </div>
+    <div id="ty-head"></div>
+    <table class="est" id="tytbl"><thead><tr><th>Image field</th><th class="num">Images</th><th class="num">Named</th><th>Mostly</th><th>How</th><th>Shot codes</th></tr></thead><tbody></tbody></table>
+    <div id="ty-audit"></div>
+    <div id="ty-plan"></div>
+    <div id="ty-grade"></div>
+    <div class="empty" id="ty-empty" hidden></div>
+  </div>
+
+  <div class="card" id="tyest">
+    <div class="fhd chead"><div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Named across the estate<span class="fsum"></span></button></h3><div class="ch">Every wired feed — how much of its imagery is named, and which feeds have no shot code to name it with.</div></div></div>
+    <table class="est" id="tyesttbl"><thead><tr><th>Feed</th><th class="num">Images</th><th class="num">Named</th><th>Route</th><th>Codes</th></tr></thead><tbody></tbody></table>
+    <div id="tyest-foot"></div>
+  </div>
+
   <div class="duo">
-    <div class="card">
-      <h3>Media estate</h3>
-      <div class="ch">Every wired feed — how deep its imagery runs, and how much of it is tagged.</div>
+    <div class="card" id="estate">
+      <div class="fhd"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Media estate<span class="fsum"></span></button></h3>
+      <div class="ch">Every wired feed — how deep its imagery runs, and how much of it is tagged.</div></div>
       <table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Images</th><th>Per product</th><th>Shot codes</th><th class="tags">Tagged</th><th class="num">Scanned</th></tr></thead><tbody></tbody></table>
       <div class="empty" id="est-empty" hidden></div>
     </div>
     <div>
-      <div class="card">
-        <h3>Find a product</h3>
-        <div class="ch">Product ID or title — see every image that product carries, and what each one is tagged as.</div>
+      <div class="card" id="findp">
+        <div class="fhd"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Find a product<span class="fsum"></span></button></h3>
+        <div class="ch">Product ID or title — see every image that product carries, and what each one is tagged as.</div></div>
         <div class="psbox"><span class="psi">🔎</span><input id="psq" type="search" placeholder="Product ID or title…" aria-label="Search for a product by ID or title"><button class="btn sm" id="psgo" type="button">Search</button></div>
         <div class="psstate" id="psstate"></div>
         <div id="psout"></div>
       </div>
       <div class="card" id="taxcard">
-        <div class="chead"><div><h3>Shot taxonomy</h3><div class="ch">The vocabulary the tags come from — rename it to match how this client briefs its studio.</div></div><span class="spacer"></span><button class="btn sm" id="taxtgl" type="button">⚙ Edit</button></div>
+        <div class="fhd chead"><div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Shot taxonomy<span class="fsum"></span></button></h3><div class="ch">The vocabulary the tags come from — rename it to match how this client briefs its studio.</div></div><span class="spacer"></span><button class="btn sm tools" id="taxtgl" type="button">⚙ Edit</button></div>
         <div id="taxview"></div>
         <div id="taxedit" hidden></div>
       </div>
@@ -409,8 +443,8 @@ table.est td.feed{min-width:110px}
   </div>
 
   <div class="card meth" id="meth">
-    <h3>How the images are read and tagged</h3>
-    <div class="ch">The quick breakdown behind every figure on this page.</div>
+    <div class="fhd"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>How the images are read and tagged<span class="fsum"></span></button></h3>
+    <div class="ch">The quick breakdown behind every figure on this page.</div></div>
     <ol>
       <li><b>Every feed scan reads the whole media estate.</b> The 4×-daily monitor (and ⚡ Scan live here) streams the feed and collects each product's <code>image_link</code> plus every <code>additional_image_link</code> slot, up to ten.</li>
       <li><b>The URL says which shot it is.</b> Within one product, all the images share a long common stem — the SKU, the CDN path, the size suffix. Mask the stem and what is left is the <b>shot code</b>: Monsoon's <code>01</code> / <code>21</code> / <code>22</code>, Schuh's <code>m1</code> / <code>m4</code> / <code>m8</code>, Reiss's trailing <code>2</code>…<code>5</code>. Nothing is hardcoded per brand — a retailer we have never scanned yields its own codes on the first pass.</li>
@@ -435,6 +469,7 @@ table.est td.feed{min-width:110px}
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
 <script src="/images/engine.js" onerror="window.__imgEngineFail=1"></script>
+<script src="/images/types.js" onerror="window.__typeEngineFail=1"></script>
 
 <script>
 (function(){
@@ -500,7 +535,9 @@ table.est td.feed{min-width:110px}
     var c=CLIENT,m=MKT;
     return fetch('/api/images?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m))
       .then(function(r){return r.json()})
-      .then(function(d){ if(c!==CLIENT||m!==MKT)return; DATA=d&&d.ok?d:null; TAGS=(d&&d.tags)||null; render(); })
+      .then(function(d){ if(c!==CLIENT||m!==MKT)return; DATA=d&&d.ok?d:null; TAGS=(d&&d.tags)||null; AUDIT=(d&&d.audit)||null;
+        if(CLIENT)ESTTAGS[CLIENT]=TAGS||{v:1,tok:{},img:{}};
+        render(); tyEstateTags().then(function(got){ if(got)renderTyEstate(); }); })
       .catch(function(){ if(c===CLIENT&&m===MKT){ DATA=null; render(); } });
   }
   function setState(t,spin){ $('#mstate').innerHTML=(spin?'<span class="spin"></span>':'')+esc(t||''); }
@@ -509,7 +546,7 @@ table.est td.feed{min-width:110px}
   /* ================================================================
    * Render
    * ================================================================ */
-  function render(){ renderKpis(); renderDetail(); renderEstate(); renderTax(); }
+  function render(){ renderKpis(); renderDetail(); renderTypes(); renderEstate(); renderTyEstate(); renderTax(); }
 
   function capOf(){ return DATA&&DATA.snap?DATA.snap:null; }
   // every image the capture accounts for that carries a tag today
@@ -543,7 +580,7 @@ table.est td.feed{min-width:110px}
     var box=$('#tokens'),vd=$('#verdict'),cvb=$('#coverage'),emp=$('#det-empty');
     if(!cap){ box.innerHTML=''; vd.innerHTML=''; cvb.innerHTML=''; emp.hidden=false;
       emp.innerHTML=CLIENT?('<b>'+esc(CLIENT)+' '+esc(mktLbl(MKT))+'</b> has not been scanned for images yet.<br>Press ⚡ Scan this feed live to read it now — the 4×-daily monitor picks it up on its next pass either way.')
-        :'Pick a client to begin.'; $('#det-sub').textContent=''; return; }
+        :'Pick a client to begin.'; $('#det-sub').textContent=''; fsum('detail',CLIENT?(CLIENT+' \u00b7 not scanned yet'):''); return; }
     emp.hidden=true;
     $('#det-sub').innerHTML=fmt(cap.imgs)+' images across '+fmt(cap.withImg)+' products · '
       +(cap.addlSlots+1)+' image slot'+(cap.addlSlots===0?'':'s')+' in use of a possible 11 · '
@@ -554,6 +591,9 @@ table.est td.feed{min-width:110px}
     vd.innerHTML=cap.learnable
       ? '<span class="verdict ok" title="A shot code is the fragment of the image URL that changes between one product’s own photographs. These ones repeat across the catalogue, so tagging them tags everything.">✓ Readable shot codes — <b>'+kept+'</b> codes account for '+cover+'% of every image<span class="vn">· tag them once and '+fmtK(Math.round(cap.imgs*cover/100))+' images are named</span></span>'
       : '<span class="verdict no" title="The filenames carry no repeating fragment — usually an opaque hash per image. There is nothing to group by, so tags have to be applied to individual images or to a product’s slot position.">⚠ Unpatterned filenames — the best grouping explains only '+cover+'% of images<span class="vn">· this feed tags per image, not per code</span></span>';
+
+    // the line this card keeps when it is folded: an unpatterned feed is a finding, so it survives the fold
+    fsum('detail',(cap.tokKept||0)+' codes \u00b7 '+fmt(cap.imgs)+' images'+(cap.learnable?'':' \u00b7 unpatterned'));
 
     // tag coverage bar
     var cv=coverage(),segs=[],leg=[],i=0;
@@ -628,6 +668,9 @@ table.est td.feed{min-width:110px}
 
   function renderEstate(){
     var tb=$('#esttbl').querySelector('tbody');
+    // the line this card keeps when it is folded: the estate in a few words
+    (function(){ var sc=FEEDS.filter(function(f){return f.scan}), im=0; sc.forEach(function(f){ im+=f.scan.imgs||0; });
+      fsum('estate',FEEDS.length+' feeds \u00b7 '+fmt(im)+' images'+(FEEDS.length-sc.length?' \u00b7 '+(FEEDS.length-sc.length)+' not scanned':'')); })();
     if(!FEEDS.length){ tb.innerHTML=''; $('#est-empty').hidden=false; $('#est-empty').textContent='No feeds wired yet.'; return; }
     $('#est-empty').hidden=true;
     tb.innerHTML=FEEDS.map(function(f){
@@ -655,6 +698,7 @@ table.est td.feed{min-width:110px}
   /* ---------- taxonomy ---------- */
   function renderTax(){
     var t=taxonomy(),cv=coverage();
+    fsum('taxcard',t.length+' shot types'+(TAGS&&TAGS.tax?' \u00b7 edited for this client':' \u00b7 the default vocabulary'));
     $('#taxview').hidden=TAXEDIT; $('#taxedit').hidden=!TAXEDIT;
     $('#taxtgl').textContent=TAXEDIT?'✓ Done':'⚙ Edit';
     if(!TAXEDIT){
@@ -691,6 +735,219 @@ table.est td.feed{min-width:110px}
       .then(function(r){return r.json()})
       .then(function(d){ if(d&&d.ok&&d.tags){ TAGS=d.tags; paint(); } })
       .catch(function(){ setState('Tag saved on screen but not to the server — this needs the live worker.'); });
+  }
+
+  /* ================================================================
+   * IMAGE TYPE — every field, and how much of it we can stand behind
+   * (Ray, 15 Oct 2026: "can I rely on you to identify the image type for every image
+   * field for each of our clients? Can you build an engine?")
+   *
+   * The engine is docs/imagetype_engine.js, served at /images/types.js, and the whole
+   * point of this section is that it reports its OWN footing: which lane named each
+   * field, which shot codes its own pictures disagree with, and what naming the rest
+   * would take. Nothing here guesses a type from a field position or from the pixels —
+   * both were measured across the estate and refused (the engine's header records the
+   * figures).
+   * ================================================================ */
+  var AUDIT=null;                 // shot code -> the audit verdict, per FEED (a code can differ per market)
+  var ESTTAGS={};                 // client -> its tag store, for the estate roll only
+  var AUDBUSY=false, AUDSTOP=false;
+  var TYFOLD=null;
+  function TY(){ return window.FeedImageTypes||null; }
+
+  /* ---- the pixel reader: the SAME engine /catalog uses, loaded on first use ----
+   * The image is fetched through /api/catalog/img so the canvas is same-origin and its
+   * pixels can actually be read; a host the proxy refuses simply yields no reading, and
+   * a code with no readings reads "thin" rather than "consistent". */
+  var PIXP=null;
+  function loadPixels(){
+    if(window.FeedPixels)return Promise.resolve(true);
+    if(PIXP)return PIXP;
+    PIXP=new Promise(function(res){
+      var sc=document.createElement('script'); sc.src='/catalog/pixels.js';
+      sc.onload=function(){ res(!!window.FeedPixels); }; sc.onerror=function(){ PIXP=null; res(false); };
+      document.head.appendChild(sc);
+    });
+    return PIXP;
+  }
+  function readPixels(url){
+    return new Promise(function(res){
+      var P=window.FeedPixels; if(!P)return res({err:'the pixel engine did not load'});
+      var proxied='/api/catalog/img?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'&url='+encodeURIComponent(url);
+      var im=new Image(), done=false;
+      var fin=function(v){ if(done)return; done=true; res(v); };
+      var to=setTimeout(function(){ fin({err:'timed out'}); },15000);
+      im.onload=function(){
+        clearTimeout(to);
+        try{
+          var sz=P.sampleSize(im.naturalWidth,im.naturalHeight);
+          var cv=document.createElement('canvas'); cv.width=sz[0]; cv.height=sz[1];
+          var g=cv.getContext('2d',{willReadFrequently:true});
+          g.drawImage(im,0,0,sz[0],sz[1]);
+          fin(P.analyse(g.getImageData(0,0,sz[0],sz[1]).data,sz[0],sz[1],{w:im.naturalWidth,h:im.naturalHeight}));
+        }catch(e){ fin({err:'the pixels could not be read'}); }
+      };
+      im.onerror=function(){ clearTimeout(to); fin({err:'the image could not be fetched'}); };
+      im.src=proxied;
+    });
+  }
+  var AUD_SAMPLES=8;              // per code — four is the floor the engine audits on, eight gives it room
+
+  /* ---- ⚡ Audit the shot codes ------------------------------------------------
+   * One pass over this feed's codes: read a sample of each code's OWN images and ask
+   * whether they are the same kind of photograph. Writes verdicts only — never a tag.
+   */
+  function auditRun(){
+    var T=TY(), cap=capOf();
+    if(!T){ setState('The type engine did not load — hard-refresh the page.'); return; }
+    if(!cap){ setState('Scan this feed first.'); return; }
+    if(AUDBUSY){ AUDSTOP=true; return; }
+    var codes=(cap.tokens||[]).filter(function(t){ return !t.weak&&t.samples&&t.samples.length; });
+    if(!codes.length){ setState('This feed has no repeating shot code to audit — its images are named one at a time.'); return; }
+    AUDBUSY=true; AUDSTOP=false; $('#tyaudit').textContent='■ Stop';
+    loadPixels().then(function(ok){
+      if(!ok){ AUDBUSY=false; $('#tyaudit').textContent='⚡ Audit the shot codes';
+        setState('The pixel engine did not load, so the codes cannot be checked.'); return; }
+      var i=0, out={}, read=0;
+      var next=function(){
+        if(AUDSTOP||i>=codes.length){
+          AUDBUSY=false; $('#tyaudit').textContent='⚡ Audit the shot codes';
+          AUDIT=Object.assign(AUDIT||{},out);
+          renderTypes();
+          var mixed=Object.keys(out).filter(function(k){ return out[k].state==='mixed'; }).length;
+          setState((AUDSTOP?'Stopped — ':'Done — ')+Object.keys(out).length+' shot code'+(Object.keys(out).length===1?'':'s')+' checked on '+fmt(read)+' images'
+            +(mixed?' · '+mixed+' hold more than one kind of shot':' · all consistent')+'.');
+          if(!Object.keys(out).length)return;
+          return fetch('/api/images/audit?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT),
+            {method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({audit:out})})
+            .then(function(r){return r.json()})
+            .then(function(d){ if(d&&d.ok&&d.audit){ AUDIT=d.audit; renderTypes(); } })
+            .catch(function(){ setState('Checked on screen but not saved to the server — this needs the live worker.'); });
+        }
+        var t=codes[i++];
+        setState('Reading shot code '+t.tok+' — '+i+' of '+codes.length+'…',true);
+        var pick=t.samples.slice(0,AUD_SAMPLES);
+        return Promise.all(pick.map(function(s){ return readPixels(s.url).then(function(r){ read++; return {url:s.url,r:r}; }); }))
+          .then(function(reads){ out[t.tok]=T.codeAudit(reads); return next(); });
+      };
+      return next();
+    });
+  }
+
+  /* ---- the section ------------------------------------------------------------- */
+  function tyLaneWord(l){ var L=(TY()&&TY().LANES)||[]; for(var i=0;i<L.length;i++)if(L[i].id===l)return L[i].label; return l; }
+  function renderTypes(){
+    var T=TY(), cap=capOf(), host=$('#types');
+    if(!host)return;
+    var tb=$('#tytbl').querySelector('tbody');
+    if(!T){ $('#ty-empty').hidden=false; $('#ty-empty').textContent='The type engine did not load — hard-refresh the page.'; tb.innerHTML=''; return; }
+    if(!cap){ $('#ty-empty').hidden=false;
+      $('#ty-empty').textContent=CLIENT?(CLIENT+' '+mktLbl(MKT)+' has not been scanned yet — ⚡ Scan this feed live and every image field is read.'):'Pick a client and market.';
+      tb.innerHTML=''; $('#ty-head').innerHTML=''; $('#ty-audit').innerHTML=''; $('#ty-plan').innerHTML=''; $('#ty-grade').innerHTML=''; fsum('types',''); return; }
+    $('#ty-empty').hidden=true;
+    var aud=AUDIT||{}, rep=T.clientReport(cap,TAGS,aud), rows=T.fieldReport(cap,TAGS,aud), plan=T.namingPlan(cap,TAGS,aud), grade=T.gradeLanes(cap,TAGS);
+
+    /* the headline: the share named, and WHY it is what it is */
+    $('#ty-head').innerHTML='<div class="cov" style="gap:10px;align-items:center;flex-wrap:wrap">'
+      +'<span class="bar" style="width:220px"><i class="'+(rep.pct>=99.5?'':'part')+'" style="width:'+Math.min(100,rep.pct)+'%"></i></span>'
+      +'<b>'+rep.pct+'%</b> of '+fmt(rep.imgs)+' images named'
+      +(rep.mixed?' · <span class="ago" title="These images carry a shot code whose own pictures disagree, so its one tag is not safe for all of them.">'+fmt(rep.mixed)+' not safely</span>':'')
+      +'</div><div class="ch">'+esc(rep.why)+'.</div>';
+
+    /* every image field, which is the question itself */
+    tb.innerHTML=rows.map(function(r){
+      var lanes=Object.keys(r.lanes).sort(function(a,b){return r.lanes[b]-r.lanes[a]});
+      return '<tr><td class="feed"><code>'+esc(r.field)+'</code></td>'
+        +'<td class="num">'+fmt(r.imgs)+'</td>'
+        +'<td class="num"><span class="cov"><span class="bar"><i class="'+(r.pct>=99.5?'':'part')+'" style="width:'+Math.min(100,r.pct)+'%"></i></span>'+r.pct+'%</span>'
+        +(r.mixed?'<div class="ago" title="named by a code whose own images disagree">'+fmt(r.mixed)+' unsafe</div>':'')+'</td>'
+        +'<td>'+(r.top?esc(taxLabel(r.top)):'<span class="ago">nothing named yet</span>')+'</td>'
+        +'<td>'+(lanes.length?lanes.map(function(l){ return '<span class="chip" title="'+esc(((TY().LANES.filter(function(x){return x.id===l})[0])||{}).rests||'')+'">'+esc(tyLaneWord(l))+' '+fmt(r.lanes[l])+'</span>'; }).join(' ')
+          :'<span class="ago">—</span>')+'</td>'
+        +'<td class="ago">'+(r.codes.length?esc(r.codes.slice(0,4).map(function(c){return c.tok}).join(', '))+(r.codes.length>4?' +'+(r.codes.length-4):''):'—')+'</td></tr>';
+    }).join('');
+
+    /* the audit — the one thing that makes a code's tag worth trusting */
+    var codes=(cap.tokens||[]).filter(function(t){ return !t.weak; });
+    var mixedList=codes.filter(function(t){ return aud[t.tok]&&aud[t.tok].state==='mixed'; });
+    var consist=codes.filter(function(t){ return aud[t.tok]&&aud[t.tok].state==='consistent'; }).length;
+    var unaud=codes.filter(function(t){ return !aud[t.tok]||aud[t.tok].state==='thin'; }).length;
+    $('#ty-audit').innerHTML='<h4 style="margin:16px 0 4px;font-size:13px">Do the shot codes hold one kind of shot?</h4>'
+      +'<div class="ch">A code’s tag says every image carrying it is the same photograph. ⚡ Audit reads a sample of each code’s own images and checks that — the pixels never name a type, they only agree or disagree.</div>'
+      +(consist+mixedList.length?'<div class="cov" style="gap:10px;margin-top:6px"><span class="chip gg">'+consist+' consistent</span>'
+        +(mixedList.length?'<span class="chip fb" title="Its own images disagree — one tag is not safe for all of them.">'+mixedList.length+' mixed</span>':'')
+        +(unaud?'<span class="chip">'+unaud+' not checked</span>':'')+'</div>':'<div class="ch"><b>Not checked yet</b> — '+codes.length+' shot code'+(codes.length===1?'':'s')+' on this feed.</div>')
+      +(mixedList.length?'<ul style="margin:8px 0 0;padding-left:18px;font-size:12px">'+mixedList.slice(0,6).map(function(t){
+        var a=aud[t.tok];
+        return '<li><code>'+esc(t.tok)+'</code> — '+fmt(t.n)+' images · '+esc(a.why)
+          +(a.worst?' · <a href="'+esc(a.worst)+'" target="_blank" rel="noopener">look at one that does not fit</a>':'')+'</li>';
+      }).join('')+'</ul>':'');
+
+    /* what it would take to name the rest */
+    $('#ty-plan').innerHTML=plan.steps.length
+      ? '<h4 style="margin:16px 0 4px;font-size:13px">To name the rest</h4>'
+        +'<ul style="margin:0;padding-left:18px;font-size:12px">'+plan.steps.slice(0,8).map(function(st){
+          var line=st.kind==='code'?('Name shot code <code>'+esc(st.tok)+'</code> \u2014 '+fmt(st.imgs)+' image'+(st.imgs===1?'':'s')+' named by one decision')
+            :st.kind==='mixed'?('Split the mixed codes \u2014 '+fmt(st.imgs)+' images carry a code whose own pictures disagree')
+            :(fmt(st.imgs)+' images with no code to group them \u2014 one model read each');
+          return '<li>'+line+'</li>'; }).join('')
+        +(plan.steps.length>8?'<li class="ago">+'+(plan.steps.length-8)+' more</li>':'')+'</ul>'
+      : '<div class="ch" style="margin-top:12px"><b>'+esc(plan.why||'Nothing left to name.')+'</b></div>';
+
+    /* and the honest answer to "can I rely on it" */
+    $('#ty-grade').innerHTML='<h4 style="margin:16px 0 4px;font-size:13px">How often the model’s verdict stood</h4>'
+      +'<div class="ch">'+(grade.pct==null?'':'<b>'+grade.pct+'%</b> — ')+esc(grade.why)+'.'
+      +(grade.cases.length?' Corrected: '+grade.cases.slice(0,4).map(function(c){ return esc(taxLabel(c.model))+' → '+esc(taxLabel(c.person)); }).join('; ')+'.':'')
+      +' Every correction a person makes is kept, so this figure is measured on '+esc(CLIENT)+' rather than claimed.</div>';
+
+    fsum('types',rep.pct+'% of '+fmt(rep.imgs)+' images named'+(rep.mixed?' · '+fmt(rep.mixed)+' not safely':'')
+      +(mixedList.length?' · '+mixedList.length+' mixed code'+(mixedList.length===1?'':'s'):'')
+      +(plan.left?' · '+fmt(plan.left)+' to name':''));
+  }
+
+  /* ---- the estate: every client, which is the other half of the question --------
+   * The route is a fact the index already carries (a feed with a readable convention is
+   * named code by code; one without can only be named image by image). The NAMED share
+   * needs that brand's tag store, so it is fetched per client — once — and a brand whose
+   * store has not arrived yet reads as such rather than as zero. */
+  function tyEstateTags(){
+    var want={}, need=[];
+    FEEDS.forEach(function(f){ if(f.scan)want[f.client]=1; });
+    Object.keys(want).forEach(function(c){ if(!(c in ESTTAGS)){ ESTTAGS[c]=null; need.push(c); } });
+    if(!need.length)return Promise.resolve(false);
+    return Promise.all(need.slice(0,24).map(function(c){
+      return fetch('/api/images/tags?client='+encodeURIComponent(c)).then(function(r){return r.json()})
+        .then(function(d){ ESTTAGS[c]=(d&&d.tags)||{v:1,tok:{},img:{}}; }).catch(function(){ delete ESTTAGS[c]; });
+    })).then(function(){ return true; });
+  }
+  function renderTyEstate(){
+    var T=TY(), tb=$('#tyesttbl')&&$('#tyesttbl').querySelector('tbody');
+    if(!T||!tb)return;
+    var roll=T.estateRoll(FEEDS.map(function(f){
+      var s=f.scan;
+      return { client:f.client, mkt:f.mkt, kind:f.kind,
+        // the index keeps the top codes with their counts, which is what a named share needs
+        cap: s?{ imgs:s.imgs, learnable:s.learnable, slots:s.slots||[], tokens:(s.tops||[]).map(function(t){ return {tok:t.tok,n:t.n,slots:{},samples:[]}; }) }:null,
+        tags: ESTTAGS[f.client]||null, audits:{} };
+    }));
+    tb.innerHTML=roll.feeds.map(function(r){
+      var known=ESTTAGS[r.client]!=null;
+      return '<tr class="row'+(r.client===CLIENT&&r.mkt===MKT?' sel':'')+'" data-feed="'+esc(r.client)+'|'+esc(r.mkt)+'">'
+        +'<td class="feed">'+esc(r.client)+' <span class="chip '+(isFb(r.mkt)?'fb':'gg')+'">'+esc(mktLbl(r.mkt))+'</span></td>'
+        +'<td class="num">'+(r.scanned?fmt(r.imgs):'<span class="ago">not scanned</span>')+'</td>'
+        +'<td class="num">'+(!r.scanned?'—':!known?'<span class="ago" title="This brand’s tag store has not been read yet.">tags not read</span>'
+          :'<span class="cov"><span class="bar"><i class="'+(r.pct>=99.5?'':'part')+'" style="width:'+Math.min(100,r.pct)+'%"></i></span>'+r.pct+'%</span>')+'</td>'
+        +'<td>'+(!r.scanned?'<span class="ago">scan it first</span>'
+          :r.route==='codes'?'<span class="chip gg" title="A readable shot code groups this feed — naming the codes names every image.">by shot code</span>'
+          :'<span class="chip fb" title="No readable shot code in these filenames — nothing groups the images for free, so each one has to be read on its own.">image by image</span>')+'</td>'
+        +'<td class="ago">'+(r.scanned?r.codes:'—')+'</td></tr>';
+    }).join('');
+    $('#tyest-foot').innerHTML='<div class="ch" style="margin-top:8px">'
+      +fmt(roll.named)+' of '+fmt(roll.imgs)+' images named across the scanned estate ('+roll.pct+'%).'
+      +(roll.noRoute?' <b>'+roll.noRoute+' feed'+(roll.noRoute===1?'':'s')+'</b> have no shot code to name them with — those are the ones that cost a read per image.':'')
+      +(roll.unscanned?' '+roll.unscanned+' never scanned.':'')+'</div>';
+    fsum('tyest',fmt(roll.named)+' of '+fmt(roll.imgs)+' named'+(roll.noRoute?' · '+roll.noRoute+' with no shot code':'')
+      +(roll.unscanned?' · '+roll.unscanned+' not scanned':''));
   }
 
   /* ---------- ✦ AI tagging: the sample is what the model actually looks at ---------- */
@@ -943,7 +1200,56 @@ table.est td.feed{min-width:110px}
   $('#verstate').textContent='engine '+((window.FeedImages&&window.FeedImages.VERSION)||'—');
   $('#meth-note').innerHTML='Shot codes are read from the image URLs on every scan — nothing is stored about a client’s images beyond the counts, the codes and up to '
     +((window.FeedImages&&window.FeedImages.TOK_SAMPLES)||24)+' example URLs per code. Tags are saved against the client, so every one of its markets inherits them.';
+  /* ---------- every section folds (the standing rule) ----------
+     A fresh device opens the OVERVIEW — the shot codes and what every image field is
+     named as — and folds the rest; after that the device keeps whatever a person left
+     open. A folded head never hides a finding: each one carries the line its own
+     renderer writes (fsum), so a mixed code or an unnamed field is still on screen. */
+  var FOLD_KEY='fcc-img-fold', FOLD_OPEN={detail:1,types:1,tyest:0,estate:0,findp:0,taxcard:0,meth:0}, FOLD={};
+  try{ FOLD=JSON.parse(localStorage.getItem(FOLD_KEY)||'{}')||{}; }catch(e){ FOLD={}; }
+  function foldCards(){ return Array.prototype.slice.call(document.querySelectorAll('main .card')).filter(function(c){ return !!c.querySelector(':scope > .fhd .fold'); }); }
+  function foldIs(c){ return Object.prototype.hasOwnProperty.call(FOLD,c.id)?!!FOLD[c.id]:!!FOLD_OPEN[c.id]; }
+  function foldBar(){
+    var b=$('#fold-all'); if(!b)return;
+    var any=foldCards().some(function(c){ return c.classList.contains('folded'); });
+    b.textContent=any?'⊕ Expand all':'⊖ Collapse all'; b.setAttribute('data-to',any?'open':'fold');
+  }
+  function foldSet(c,open,keep){
+    if(!c)return;
+    c.classList.toggle('folded',!open);
+    var b=c.querySelector(':scope > .fhd .fold'); if(b)b.setAttribute('aria-expanded',open?'true':'false');
+    if(keep){ FOLD[c.id]=open?1:0; try{ localStorage.setItem(FOLD_KEY,JSON.stringify(FOLD)); }catch(e){} }
+    foldBar();
+  }
+  /* the line a folded card keeps: what its own renderer found, in a few words */
+  function fsum(id,txt){ var e=document.querySelector('#'+id+' > .fhd .fsum'); if(e)e.textContent=txt?'· '+txt:''; }
+  /* a link, a hash or a search opens the card it lands in — for THIS visit, never rewriting the choice */
+  function foldOpen(el){ var c=el&&el.closest?el.closest('.card.folded'):null; if(c)foldSet(c,true,false); return c; }
+  foldCards().forEach(function(c){
+    foldSet(c,foldIs(c),false);
+    c.querySelector(':scope > .fhd .fold').addEventListener('click',function(){ foldSet(c,c.classList.contains('folded'),true); });
+  });
+  var fa=$('#fold-all');
+  if(fa)fa.addEventListener('click',function(){ var open=this.getAttribute('data-to')==='open'; foldCards().forEach(function(c){ foldSet(c,open,true); }); });
+  /* a #hash opens the card it names — on a cold load AND on hashchange, since a link from
+     one part of this page to another is a FRAGMENT navigation that never re-creates the
+     document, so the boot above would never run for it */
+  function foldHash(scroll){
+    var h=location.hash&&location.hash.length>1?decodeURIComponent(location.hash.slice(1)):'';
+    if(!h)return;
+    var el=document.getElementById(h); if(!el)return;
+    foldOpen(el);
+    if(scroll)setTimeout(function(){ try{ el.scrollIntoView({block:'start'}); }catch(e){} },60);
+  }
+  foldHash(true);
+  window.addEventListener('hashchange',function(){ foldHash(true); });
+  ['psgo','taxtgl','tyaudit'].forEach(function(id){ var el=$('#'+id); if(el)el.addEventListener('click',function(){ foldOpen(el); }); });
+  fsum('meth','5 steps, from the image field to the tag');
+  $('#tyaudit').addEventListener('click',auditRun);
+
+  fsum('findp','search by product ID or title');
   loadEstate(false);
-  window.__imgPage={ get state(){ return {FEEDS:FEEDS,CLIENT:CLIENT,MKT:MKT,DATA:DATA,TAGS:TAGS}; }, render:render, load:load, loadEstate:loadEstate, aiTag:aiTag };
+  window.__imgPage={ get state(){ return {FEEDS:FEEDS,CLIENT:CLIENT,MKT:MKT,DATA:DATA,TAGS:TAGS}; }, render:render, load:load, loadEstate:loadEstate, aiTag:aiTag, auditRun:auditRun,
+    get types(){ var T=TY(),c=capOf(); return T&&c?{head:T.clientReport(c,TAGS,AUDIT||{}),fields:T.fieldReport(c,TAGS,AUDIT||{}),plan:T.namingPlan(c,TAGS,AUDIT||{}),grade:T.gradeLanes(c,TAGS)}:null; } };
 })();
 </script>

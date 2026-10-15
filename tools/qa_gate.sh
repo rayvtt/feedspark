@@ -271,6 +271,13 @@ else
   echo "   ✗ image harness FAILED — see node tools/test_images.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e2b/7: image type engine (which lane names a shot, and whether it holds)"
+if node tools/test_imagetypes.mjs >/dev/null 2>&1; then
+  echo "   ✓ a mixed shot code is never counted as named; every verdict names its lane"
+else
+  echo "   ✗ image type harness FAILED — see node tools/test_imagetypes.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e3/7: overlay design studio (field summoner, design catalogue, layout)"
 if node tools/test_ovstudio.mjs >/dev/null 2>&1; then
   echo "   ✓ the price pair is read by value; a fact not in the feed is reported, never invented"
