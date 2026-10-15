@@ -1547,8 +1547,10 @@ function looseKw(brand){ return wfAll(brand).loose
   .filter(function(x){ return isKwTicket(x.b)||x.near>0; })
   .map(function(x){ return x.b; }); }
 // which team holds the ball at each pipeline stage — the Workflow board's own map, so the
-// calendar answers "whose court is this in?" without opening Workflow
-var COURTM={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',running:'AM',analysis:'AM',confirmed:''};
+// calendar answers "whose court is this in?" without opening Workflow. It lives in the ENGINE
+// now (Workflow's to-brief band answers the same question about the same tickets), read here
+// under the name every call site on this page already uses.
+var COURTM=KWE.COURT;
 // a one-word name gives one letter, which collides constantly across a small team — take two
 function ownIni(nm){
   var parts=String(nm||'').split(/[\s/_-]+/).filter(Boolean);
