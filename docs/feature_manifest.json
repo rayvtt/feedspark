@@ -15788,9 +15788,19 @@
       "pattern": "what IS briefed, with where it has got to"
     },
     {
+      "name": "KWCal band: the Brief button is Intake's own (Ray, 15 Oct 2026)",
+      "file": "tools/check_kwdue.js",
+      "pattern": "the Brief button is Intake"
+    },
+    {
       "name": "KWCal band: the two halves partition the moments",
       "file": "tools/test_kwcal_tie.mjs",
       "pattern": "no moment is in both lists"
+    },
+    {
+      "name": "Workflow intake: the clip reading is retaken once the webfont lands",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "document.fonts.ready.then(function(){ tkClipSoon"
     }
   ]
 }

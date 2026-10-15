@@ -82,9 +82,13 @@ window.addEventListener('load',restore);
   .kwd-nm{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .kwd-nm i{font-style:normal;font-weight:700;color:var(--muted)}
   .kwd-sc{flex:none;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
-  .kwd-go{flex:none;border:none;border-radius:5px;background:var(--orange);color:#fff;
-    font-size:11.5px;font-weight:900;padding:4px 9px;cursor:pointer}
-  .kwd-go:hover{background:var(--orange-deep)}
+  /* the band's Brief button IS Intake's (Ray, 15 Oct 2026: "can brief button have the same design
+     as intake") — ONE declaration for both, so the two can never drift apart again */
+  .kwd-go{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;
+    justify-content:center;font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;
+    border-radius:100px;border:1px solid var(--orange);background:var(--paper);
+    color:var(--orange-ink);cursor:pointer}
+  .kwd-go:hover{background:var(--orange);color:#fff}
   .kwd-none{font-size:12px;font-weight:700;color:var(--muted);padding:4px 8px}
   .kwd-stale{font-size:11.5px;color:var(--muted);padding:2px 8px 4px}
   .kwd-stale:empty{display:none}
@@ -98,8 +102,9 @@ window.addEventListener('load',restore);
   .kwd-st{flex:none;border-radius:5px;padding:2px 7px;color:#fff;font-size:11px;font-weight:900;
     white-space:nowrap}
   .kwd-ct{flex:none;width:52px;font-size:11px;font-weight:700;color:var(--muted)}
-  .kwd-tk{flex:none;border:1px solid var(--line);border-radius:5px;background:var(--card);color:var(--ink);
-    font:inherit;font-size:11.5px;font-weight:700;padding:3px 8px;cursor:pointer}
+  .kwd-tk{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;
+    justify-content:center;border:1px solid var(--line);border-radius:100px;background:var(--paper);
+    color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;padding:5px 11px;cursor:pointer}
   .kwd-tk:hover{border-color:var(--orange);color:var(--orange-deep)}
   .kwd-stale a{color:var(--orange);font-weight:700}
   @media(max-width:760px){
@@ -2922,6 +2927,13 @@ aside.ck[hidden]{display:none}
     _tkF=(window.requestAnimationFrame||function(f){ return setTimeout(f,16); })(function(){ _tkF=0; tkClip(); }); }
   // the cut-off point moves with the window, so the reading is retaken when the window changes
   (function(){ var t=null; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(tkClip,160); }); })();
+  // …AND WHEN THE TYPE ARRIVES. A box is measured against the font in it, and the first render
+  // happens in the fallback face while Lato is still loading — so a task that clears two lines in
+  // Lato can be read as clipped in the fallback, take a tooltip, and keep it once the real face
+  // lands and the text fits. The reading is retaken once the document's fonts are ready (the
+  // write loop already REMOVES a title from a box that shows everything, so nothing else moved).
+  // This is what tools/test_wfintake.mjs's 'a task shown in full promises nothing' was catching.
+  try{ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){ tkClipSoon(); }); }catch(e){}
   function startTaskEdit(td,t){ if(!td||!t)return; if(td.querySelector('.tk-in'))return;
     var open=gridBody&&gridBody.querySelector('.tk-in');
     if(open&&open.__cancel){ open.__cancel(); td=taskTdFor(t); if(!td)return; }   // one editor at a time — cancelling re-renders, so re-find our cell
@@ -7441,7 +7453,7 @@ aside.ck[hidden]{display:none}
         +'<span class="kwd-nm" title="'+esc(r.name+(themes?' — '+themes:''))+'">'+esc(r.name)
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
         +'<span class="kwd-sc" title="'+esc(r.scoped?'Scope set on the calendar':'No product scope set yet — brief it anyway, or set the scope on the calendar first')+'">'+esc(scope)+'</span>'
-        +'<button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">→ Brief</button>'
+        +'<button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">Brief</button>'
         +'</div>';
     }).join('')+(rs.length>14?'<div class="kwd-none">+'+(rs.length-14)+' more on the calendar</div>':'')
       : '<div class="kwd-none">'+esc(SCOPE&&SCOPE.length?'Nothing waiting on a brief here.':'Nothing waiting on a brief.')+'</div>';
