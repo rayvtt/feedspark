@@ -43,7 +43,7 @@ window.addEventListener('load',restore);
   /* shape */
   --radius:14px;--radius-s:9px;--gutter:22px;--wrap:1320px;
   --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);
-  --font:Lato,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif;
   --font-head:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 :root[data-theme=dark]{color-scheme:dark;
@@ -56,8 +56,9 @@ window.addEventListener('load',restore);
 body{margin:0;font-family:var(--font);color:var(--ink);background:var(--wash);line-height:1.5;font-size:14px}
 a{color:var(--orange-ink)}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter)}
-/* type — Lato 400 / 700 / 900 for reading; headlines (h1–h3) in Space Grotesk 400 / 700, the
-   technical voice (Ray, 15 Oct 2026). Never a 500 or 600 — it would be synthesised. */
+/* type — Space Grotesk 400 / 700 for everything, headlines (h1–h3) and reading alike, the
+   technical voice (Ray, 15 Oct 2026: the headlines first, then "change the body text to match");
+   Lato is the fallback. A 900 draws at 700. Never a 500 or 600 — it would be synthesised. */
 h1,h2,h3{font-family:var(--font-head)}
 h1{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em;line-height:1.15}
 h2{font-size:19px;font-weight:900;margin:0 0 4px;letter-spacing:-.005em}
@@ -282,16 +283,16 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 </section>
 
 <section class="blk" id="type">
-  <div class="blk-h"><div class="grow"><h2>Type</h2><p>Headlines in Space Grotesk, everything else in Lato.</p></div></div>
+  <div class="blk-h"><div class="grow"><h2>Type</h2><p>Space Grotesk throughout — headlines and body alike; Lato is the fallback.</p></div></div>
   <div class="type-rows">
     <div class="tr"><span class="tk">h1 · Space Grotesk 30 / 700</span><div style="font-family:var(--font-head);font-size:30px;font-weight:700;letter-spacing:-.015em">Golden Record — Reiss GB</div></div>
     <div class="tr"><span class="tk">h2 · Space Grotesk 19 / 700</span><div style="font-family:var(--font-head);font-size:19px;font-weight:700;letter-spacing:-.015em">Where the hours went</div></div>
     <div class="tr"><span class="tk">KPI · 26 / 900</span><div class="num" style="font-size:26px;font-weight:900">88.6%</div></div>
     <div class="tr"><span class="tk">eyebrow · 12 / 900 · +.1em</span><div class="eyebrow">Private &amp; Confidential</div></div>
-    <div class="tr"><span class="tk">body · 14 / 400 · 1.5</span><div>Every product scored against Google’s own wording for the attribute.</div></div>
+    <div class="tr"><span class="tk">body · Space Grotesk 14 / 400 · 1.5</span><div>Every product scored against Google’s own wording for the attribute.</div></div>
     <div class="tr"><span class="tk">label · 11.5 / 800 caps</span><div class="label">Products in scope</div></div>
   </div>
-  <p class="note">h1, h2 and h3 use <code>var(--font-head)</code> — Space Grotesk 400 / 700, the technical voice of a section title; the quiet line beside a title, body copy, tables and controls stay Lato. Numbers are tabular and right-aligned, with the same decimals down a column (1.00, 0.50) so the points line up. No 500 or 600 weights: the browser would synthesise them.</p>
+  <p class="note">h1, h2 and h3 use <code>var(--font-head)</code> and everything else <code>var(--font)</code> — both Space Grotesk 400 / 700 since 15 Oct 2026, the technical voice of a section title carried into the reading; Lato is the fallback while the face loads. Headlines track −.015em, body copy tracks normally. Numbers are tabular and right-aligned, with the same decimals down a column (1.00, 0.50) so the points line up. No 500 or 600 weights: the browser would synthesise them.</p>
 </section>
 
 <section class="blk" id="components">

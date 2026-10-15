@@ -16162,6 +16162,9 @@
     {"name": "Headlines: the layer is injected on every app page", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "html = inject(html, HEADFONTW + '\\n' + INSTR", "pr": 0},
     {"name": "Headlines: --font-head is a design token in /design/fcc.css", "file": "docs/FeedSpark_Design.html", "pattern": "--font-head:'Space Grotesk'", "pr": 0},
     {"name": "Headlines: the Golden PDF waits for the headline face", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "16px \"Space Grotesk\"", "pr": 0},
+    {"name": "Body type: Space Grotesk on body copy, tables and controls of every app page (Ray, 15 Oct 2026: match the body text to the headline face)", "file": "docs/headfont_widget.html", "pattern": "body,button,input,select,textarea{font-family:var(--font-body)}", "pr": 0},
+    {"name": "Body type: --font-body is Space Grotesk, Lato the fallback", "file": "docs/headfont_widget.html", "pattern": "--font-body:'Space Grotesk',Lato", "pr": 0},
+    {"name": "Body type: --font in /design/fcc.css is Space Grotesk too", "file": "docs/FeedSpark_Design.html", "pattern": "--font:'Space Grotesk',Lato", "pr": 0},
     {
       "name": "ROAS: brand on brand — ONE grouping (brands on All brands, markets once a brand is picked) serves the ten stories",
       "file": "docs/FeedSpark_ROAS.html",

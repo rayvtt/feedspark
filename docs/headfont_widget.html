@@ -1,4 +1,4 @@
-<!-- FCC-HEADFONT — section headlines in a technical face. Injected worker-side on APP pages only
+<!-- FCC-HEADFONT — the FCC's type in a technical face. Injected worker-side on APP pages only
      (never client decks).
 
      Ray, 15 Oct 2026, over Workflow's seven section tiles: "ok let's change the Headlines font -
@@ -17,12 +17,25 @@
      count, pop or btn. The title-carrying buttons a fold is built from (.fold, .fhd, .sec-tog)
      inherit the heading's face, since the title text lives inside them.
 
-     The token is --font-head (also in /design/fcc.css), so a later change of face is one line.
-     The face is requested on load so a one-click PDF export never rasterises a heading in the
-     fallback before the font arrives. -->
+     AND THE BODY FOLLOWS (Ray, 15 Oct 2026, the same afternoon: "maybe change the body text to
+     match the theme of the new section title font too ?"): --font-body is Space Grotesk as well,
+     so body copy, tables, controls, chips, the quiet line beside a title and the figures read in
+     the one face the headline set. Every app page names Lato on its own `body` rule, so the body
+     rule below — same specificity, injected AFTER the page's <style> — wins without !important;
+     buttons and form fields are named too because the UA gives them their own face. What stays
+     as it is: code, pre and every monospace reading (a class rule naming ui-monospace beats a bare
+     element rule), SVG text a page sets by id, and client decks, which are never injected. The two
+     exclusions above still hold their purpose — a chip inside a heading keeps normal tracking and
+     the body weight, it just shares the face now. Two weights, 400 / 700: a 900 figure draws at
+     700 (the heaviest the face has, never synthesised).
+
+     The tokens are --font-head / --font-body (also --font in /design/fcc.css), so a later change
+     of face is one line. Both faces are requested on load so a one-click PDF export never
+     rasterises in the fallback before the font arrives. -->
 <style id="fcc-headfont">
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
-:root{--font-head:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif;--font-body:Lato,system-ui,-apple-system,'Segoe UI',sans-serif}
+:root{--font-head:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif;--font-body:'Space Grotesk',Lato,system-ui,-apple-system,'Segoe UI',sans-serif}
+body,button,input,select,textarea{font-family:var(--font-body)}
 h1,h2,h3{font-family:var(--font-head);letter-spacing:-.015em}
 :is(h1,h2,h3) :is(button.fold,button.fhd,button.sec-tog){font-family:inherit;letter-spacing:inherit}
 :is(h1,h2,h3) :is(small,code,input,select,textarea,.info-btn,.info-pop,.wss,.tier-sub,.own,.own-chip,.ck,.ihn,.hint,
