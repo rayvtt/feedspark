@@ -58,6 +58,8 @@ A feed with no `item_group_id` cannot count styles and the button says so.
   count; a cell click filters the page to its row and column; ⤓ CSV carries EVERY row and EVERY column — the
   Other fold and the top-N cut are for the screen only.
 - A pane is as wide as its longest value, up to the row; a value longer than that wraps, never cut short.
+  Its width is also the reader's to set: drag the handle on its right edge (← → step 20px), double-click or Enter
+  gives it back its own width; kept per device with the layout (`w` on the pane in `fcc-bd-layout`).
 - **Every field in this feed** — how full each field is, what it reads as, how many values, a sample, and
   ＋ Break down / Rows / Columns.
 - **Saved views** — a view is the fields and how they are read, **never the brand**, so one view opens on any feed;
