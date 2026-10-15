@@ -15967,6 +15967,12 @@
       "pr": 0
     },
     {
+      "name": "Golden ✎ Edit report never flattens a unit's markup on open",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "el.__h = el.innerHTML",
+      "pr": 0
+    },
+    {
       "name": "Workflow: an internal brief stamps ASPL onto a row nobody owns",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "if(noOwner(row.owner)){ setOwner(row,'ASPL');",
