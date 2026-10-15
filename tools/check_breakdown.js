@@ -146,6 +146,26 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const fit = await pg.evaluate(() => Array.from(document.querySelectorAll('#panes .pane:not(.add) td.v')).every((td) => td.scrollWidth <= td.clientWidth + 1 && getComputedStyle(td).textOverflow !== 'ellipsis'));
     ok('no value in a pane is cut short', fit);
 
+    console.log('· a pane\'s width is dragged');
+    const pw = (i) => pg.evaluate((i) => Math.round(document.querySelectorAll('#panes .pane:not(.add)')[i].getBoundingClientRect().width), i);
+    const w0 = await pw(2);
+    await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded();
+    const hb = await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').boundingBox();
+    await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down();
+    await pg.mouse.move(hb.x + hb.width / 2 + 160, hb.y + hb.height / 2, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(120);
+    const w1 = await pw(2);
+    ok('dragging the edge widens the table by the distance dragged', Math.abs(w1 - (w0 + 160)) <= 4, [w0, w1]);
+    const sw = await pg.evaluate(() => JSON.parse(localStorage.getItem('fcc-bd-layout')).panes[2].w);
+    ok('…and the width is kept with this device\'s layout', Math.abs(sw - w1) <= 2, [sw, w1]);
+    await pg.focus('#panes .pane:not(.add) >> nth=2 >> .rz'); await pg.keyboard.press('ArrowLeft'); await pg.waitForTimeout(80);
+    ok('← steps it 20px narrower', Math.abs((await pw(2)) - (w1 - 20)) <= 2, await pw(2));
+    await pg.reload(); await ready(pg); await pg.waitForTimeout(150);
+    ok('the dragged width survives a reload', Math.abs((await pw(2)) - (w1 - 20)) <= 2, await pw(2));
+    await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded();
+    await pg.dblclick('#panes .pane:not(.add) >> nth=2 >> .rz'); await pg.waitForTimeout(100);
+    const back = await pg.evaluate(() => ({ w: JSON.parse(localStorage.getItem('fcc-bd-layout')).panes[2].w, sized: document.querySelectorAll('#panes .pane:not(.add)')[2].classList.contains('sized') }));
+    ok('double-click gives the table its own width back', back.w === undefined && !back.sized, back);
+
     console.log('· Styles counts each item group once');
     await pg.click('#unit [data-u="group"]'); await pg.waitForTimeout(120);
     const tot = await pg.evaluate(() => document.querySelectorAll('#panes .pane:not(.add)')[1].querySelector('.pm').textContent);
