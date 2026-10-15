@@ -6549,7 +6549,11 @@ window.addEventListener('load',restore);
     var paint = function (el) {
       var own = null; edits.forEach(function (x) { if (x.o === el.__o && x.n === el.__n) own = x; });
       var t = tplFor(el.__o);
-      if (own) { el.textContent = own.t; } else if (t != null) { el.textContent = t; } else { el.textContent = el.__o; }
+      // write only what an edit changes: an untouched unit keeps its own markup (a <b>, a <br>, a nested span) — flattening
+      // every unit to its text on open ran the tier ladder and the score rings together; a removed edit puts the markup back
+      if (own) { el.textContent = own.t; el.__set = true; }
+      else if (t != null) { el.textContent = t; el.__set = true; }
+      else if (el.__set) { el.innerHTML = el.__h; el.__set = false; }
       el.classList.toggle('ek-on', !!own); el.classList.toggle('ek-tpl', !own && t != null);
     };
     var flush = function (then) {
@@ -6574,7 +6578,7 @@ window.addEventListener('load',restore);
       units = textUnits(fd);
       units.forEach(function (el, i) {
         var o = rpNorm(el.textContent), n = seen[o] = (seen[o] == null ? 0 : seen[o] + 1);
-        el.setAttribute('data-ek', i); el.__o = o; el.__n = n;
+        el.setAttribute('data-ek', i); el.__o = o; el.__n = n; el.__h = el.innerHTML; el.__set = false;
         if (el.namespaceURI === 'http://www.w3.org/2000/svg') { el.style.cursor = 'text'; return; }   // chart words: edited on click (below)
         el.setAttribute('contenteditable', 'plaintext-only');
         if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true');
@@ -6598,6 +6602,7 @@ window.addEventListener('load',restore);
       fd.addEventListener('input', function (e) {
         var el = e.target.closest && e.target.closest('[data-ek]'); if (!el) return;
         var t = rpNorm(el.textContent).slice(0, 2000), had = mine(el);
+        el.__set = true;   // typed into: its markup is now whatever the caret left
         edits = edits.filter(function (x) { return !(x.o === el.__o && x.n === el.__n); });
         if (had) dirty.one = 1;
         var go = rpGen(el.__o, ctx), gt = rpGen(t, ctx), why = scope === 'all' && t !== el.__o ? rpTplWhy(go, gt) : '';
