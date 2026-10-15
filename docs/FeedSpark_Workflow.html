@@ -858,6 +858,41 @@ window.addEventListener('load',restore);
   .sec-tog{font:inherit;font-size:11px;font-weight:800;margin-left:10px;padding:4px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;vertical-align:middle;text-transform:none;letter-spacing:0}
   .sec-tog:hover{border-color:var(--orange);color:var(--orange-deep)}
   .sec-tog[aria-expanded=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* ---- WSEC: EVERY SECTION IS A BOX, AND EVERY BOX FOLDS -------------------------------------
+     Ray, 15 Oct 2026: "can we make all sections of Workflow collapsible ? and also redesign boxes
+     pls - i dont like floating text". Each of the seven sections was a bare <h2> on the page wash
+     with its controls, bars and tables floating loose under it — no box, no edge, and (bar two)
+     no way to put it away. Each is now ONE card whose head is a TILE in the standing shape the
+     rest of the FCC uses (/pricer, /stock, /golden): the title, ONE quiet line saying what is
+     inside, and a round chevron at the right, the whole tile the toggle. The long explainer keeps
+     its ⓘ rather than being poured into a tooltip — it is several sentences with its own emphasis,
+     and a title= attribute would truncate it and lose the keyboard. */
+  .ws-bar{display:flex;justify-content:flex-end;margin:22px 0 -6px}
+  .wsec{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:16px 0;min-width:0}
+  .wsh{margin:0;padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;cursor:pointer;border-radius:var(--radius) var(--radius) 0 0;font-size:18px}
+  .wsh:hover{background:var(--wash)}
+  .wst{font-weight:900;letter-spacing:-.01em}
+  /* the line a fold keeps: what the section found, in a few words — never a bare count */
+  .wss{flex:1;min-width:140px;font-size:12.5px;font-weight:700;letter-spacing:0;color:var(--muted)}
+  .wss:empty{min-width:0}
+  .wss .wsw{color:var(--orange-deep);font-weight:800}
+  .wsc{flex:none;margin-left:auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;display:inline-grid;place-items:center;padding:0;transition:transform .15s ease,color .15s ease,border-color .15s ease}
+  .wsc::before{content:'';width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(45deg)}
+  .wsh:hover .wsc{color:var(--ink);border-color:var(--orange)}
+  .wsc:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .wsec.folded .wsc{transform:rotate(-90deg)}
+  .wsec.folded .wsh{border-radius:var(--radius)}
+  .wsb{padding:0 18px 18px}
+  .wsec.folded>.wsb{display:none!important}
+  @media (prefers-reduced-motion:reduce){.wsc{transition:none}}
+  /* nothing inside a card draws a second frame around itself — the card is the frame */
+  .wsec .tl-sec{width:auto;margin-left:0;padding:0}
+  .wsec .tl-wrap{border:0;box-shadow:none;background:none;padding:0;border-radius:0}
+  .wsec>.wsb>.panel{box-shadow:none}
+  .wsec .wk-panel{border:0;box-shadow:none;padding:0}
+  .wsec>.wsb>.it-scroll:first-child{margin-top:2px}
+  @media(max-width:760px){ .wsh{padding:12px 13px;font-size:16px} .wsb{padding:0 13px 14px} }
   .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .tl-focus-btn[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -1288,9 +1323,16 @@ aside.ck[hidden]{display:none}
   .ck-body{padding:12px 14px 92px}
 }
 </style>
-  <h2>Intake — every task, live<button class="info-btn" type="button" aria-label="How Intake works">i</button>
+  <div class="ws-bar"><button type="button" class="sec-tog" id="ws-all"></button></div>
+  <section class="wsec" id="ws-intake">
+  <h2 class="wsh">
+    <span class="wst">Intake — every task, live</span>
+    <button class="info-btn" type="button" aria-label="How Intake works">i</button>
     <div class="info-pop">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</div>
+    <span class="wss" id="wss-intake"></span>
+    <button type="button" class="wsc" id="wsc-intake" aria-expanded="true" aria-controls="wsb-intake" aria-label="Fold or open this section"></button>
   </h2>
+  <div class="wsb" id="wsb-intake">
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div id="ingest-banner" hidden></div>
   <div class="it-ctl">
@@ -1388,10 +1430,18 @@ aside.ck[hidden]{display:none}
       <div class="sw-foot" id="sw-foot"></div>
     </div>
   </div>
+  </div>
+  </section>
 
-  <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
+  <section class="wsec" id="ws-tl">
+  <h2 class="wsh">
+    <span class="wst">Timeline — every dated task</span>
+    <button class="info-btn" type="button" aria-label="How Timeline works">i</button>
     <div class="info-pop">The Intake above, re-plotted by date — plus each test's analysis date. It runs on the <b>same filters as Intake</b>: source, status, brand, AM, search and plan window all apply here too (the brand / AM / search controls in this bar are those same filters, kept in reach for Focus mode — change them in either place). Every card carries a colour-coded <b>status flag</b> — ticket stages for briefed work, plan status for the rest — and the <b>legend</b> filters by one click (click again to clear). <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Briefed cards open the ticket; un-briefed ones open the row as an <b>edit pop-up</b> writing back to the project plan. <b>⛶ Focus</b> (or <b>F</b>) fills the screen; <b>Esc</b> leaves.</div>
+    <span class="wss" id="wss-tl"></span>
+    <button type="button" class="wsc" id="wsc-tl" aria-expanded="true" aria-controls="wsb-tl" aria-label="Fold or open this section"></button>
   </h2>
+  <div class="wsb" id="wsb-tl">
   <section class="tl-sec" id="tl-sec">
   <div class="it-ctl">
     <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
@@ -1417,49 +1467,85 @@ aside.ck[hidden]{display:none}
   <div class="tl-legend" id="tl-legend"></div>
   <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
   </section>
+  </div>
+  </section>
 
-  <h2>Brief pipeline<button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
-    <div class="info-pop">Every brief from send to sign-off. <b>Collapsed by default</b> — the Timeline above already shows these briefs by date; expand for what it doesn't have: the <b>court cards</b> (which of the three teams holds the ball — click one to spotlight its tickets), the drag-between-lanes board, and the <b>paste router</b> (drop any reply in and it finds the right ticket by <code>[ibfcode]</code>, brief ID or task wording, logs it, and moves the stage).</div>
-    <button type="button" class="sec-tog" id="bp-tog" aria-expanded="false" aria-controls="bp-body">▸ Show</button>
+  <section class="wsec" id="ws-bp">
+  <h2 class="wsh">
+    <span class="wst">Brief pipeline</span>
+    <button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
+    <div class="info-pop">Every brief from send to sign-off. Folded by default — the Timeline above already shows these briefs by date; expand for what it doesn't have: the <b>court cards</b> (which of the three teams holds the ball — click one to spotlight its tickets), the drag-between-lanes board, and the <b>paste router</b> (drop any reply in and it finds the right ticket by <code>[ibfcode]</code>, brief ID or task wording, logs it, and moves the stage).</div>
+    <span class="wss" id="wss-bp"></span>
+    <button type="button" class="wsc" id="wsc-bp" aria-expanded="true" aria-controls="bp-body" aria-label="Fold or open this section"></button>
   </h2>
-  <div id="bp-body" hidden>
+  <div class="wsb" id="bp-body">
   <div class="courts" id="courts"></div>
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
   <div class="board" id="board"></div>
   </div>
+  </section>
 
-  <h2>Brief ledger<button class="info-btn" type="button" aria-label="How the Brief ledger works">i</button>
+  <section class="wsec" id="ws-bl">
+  <h2 class="wsh">
+    <span class="wst">Brief ledger</span>
+    <button class="info-btn" type="button" aria-label="How the Brief ledger works">i</button>
     <div class="info-pop">Every brief ever sent from the Workflow — including confirmed (closed) ones and collapsed duplicates — newest first. The 🧪 read-out travels with each brief's title once its result is recorded. Click a row to open the ticket.</div>
-    <button type="button" class="sec-tog" id="bl-tog" aria-expanded="false" aria-controls="bl-body">▸ Show</button>
+    <span class="wss" id="wss-bl"></span>
+    <button type="button" class="wsc" id="wsc-bl" aria-expanded="true" aria-controls="bl-body" aria-label="Fold or open this section"></button>
   </h2>
-  <div id="bl-body" hidden>
+  <div class="wsb" id="bl-body">
     <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL, stage, read-out…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span><button type="button" class="btn" id="bl-relabel" style="margin-left:auto;font-size:12px;padding:6px 11px" title="Re-read every reply on every brief and correct the stage — a pickup (“we will do the needful”) means In progress, only a confirmed completion means Done.">⟳ Re-read replies</button></div>
     <div class="it-scroll" style="max-height:56vh"><table class="itbl" id="bltbl">
       <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
       <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="by">Briefed by</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th><th data-k="tmh" class="num" title="Hours the Task Manager has booked against this ticket, matched on its [ibfref:] token — billable + non-billable">⏱ Hours</th></tr></thead>
       <tbody id="bl-rows"></tbody></table></div>
   </div>
+  </section>
 
-  <h2>ASPL SLA &amp; turnaround<button class="info-btn" type="button" aria-label="How SLA &amp; turnaround works">i</button>
+  <section class="wsec" id="ws-sla">
+  <h2 class="wsh">
+    <span class="wst">ASPL SLA &amp; turnaround</span>
+    <button class="info-btn" type="button" aria-label="How SLA &amp; turnaround works">i</button>
     <div class="info-pop">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without its analysis</b> — with the right action one click away. The analysis SLAs below set how long each brief type runs before its analysis is triggered.</div>
+    <span class="wss" id="wss-sla"></span>
+    <button type="button" class="wsc" id="wsc-sla" aria-expanded="true" aria-controls="wsb-sla" aria-label="Fold or open this section"></button>
   </h2>
+  <div class="wsb" id="wsb-sla">
   <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
+  </div>
+  </section>
 
-  <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
+  <section class="wsec" id="ws-tests">
+  <h2 class="wsh">
+    <span class="wst">Test &amp; experiment register</span>
+    <button class="info-btn" type="button" aria-label="How the test register works">i</button>
     <div class="info-pop">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</div>
+    <span class="wss" id="wss-tests"></span>
+    <button type="button" class="wsc" id="wsc-tests" aria-expanded="true" aria-controls="wsb-tests" aria-label="Fold or open this section"></button>
   </h2>
+  <div class="wsb" id="wsb-tests">
   <div class="tst-head"><button class="btn sm navy" id="test-add">＋ Add test</button></div>
   <div class="it-scroll"><table class="itbl tstbl">
     <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Analysis</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
     <tbody id="tests-body"></tbody></table></div>
+  </div>
+  </section>
 
-  <h2>Team workload<button class="info-btn" type="button" aria-label="How Team workload works">i</button>
+  <section class="wsec" id="ws-wk">
+  <h2 class="wsh">
+    <span class="wst">Team workload</span>
+    <button class="info-btn" type="button" aria-label="How Team workload works">i</button>
     <div class="info-pop">Open + in-progress plan tasks by account executive. The longest bars are your bottlenecks — rebalance before they slip.</div>
+    <span class="wss" id="wss-wk"></span>
+    <button type="button" class="wsc" id="wsc-wk" aria-expanded="true" aria-controls="wsb-wk" aria-label="Fold or open this section"></button>
   </h2>
+  <div class="wsb" id="wsb-wk">
   <div class="panel wk-panel"><div id="wk-grid"></div></div>
+  </div>
+  </section>
 
 </main>
 
@@ -3042,6 +3128,93 @@ aside.ck[hidden]{display:none}
       var c=b.getAttribute('data-c'), i=itState.clients.indexOf(c); if(i>=0)itState.clients.splice(i,1);
       renderIntake(); }; });
   }
+  /* ---- WSEC — EVERY SECTION IS A BOX THAT FOLDS -------------------------------------------
+     Ray, 15 Oct 2026: "can we make all sections of Workflow collapsible ? and also redesign boxes
+     pls - i dont like floating text". Each section's head is ONE TILE (chevron at the right, the
+     whole tile the toggle) and the body folds behind it, the standing shape /pricer, /stock and
+     /golden already use. Two of the seven already folded behind their own ▸ Show pill with their
+     own stores (fcc-bp-open / fcc-bl-open) — those pills are gone and this is the ONE writer for
+     all seven, seeded from those keys so nobody's existing choice is thrown away.
+     THREE RULES the rest of the FCC follows and this keeps: a fresh device opens the BOARD and
+     folds the tail (the point of the ask is "too many at once"); what a person folds or opens by
+     hand is THIS DEVICE'S (never shared state — it describes one screen, not the work); and a
+     folded head can never hide a finding, because every head carries the line its own render
+     writes (wsSum) — the count, the overdue, what is over SLA. A jump INTO a folded section
+     (a #hash, Focus mode, a link) opens it for the visit without rewriting the choice.
+     The two live warnings this page raises (bfWarn, planWarn) are fixed-position bands on the
+     body, not section children, so no fold can swallow one. */
+  var WS_KEYS=['intake','tl','bp','bl','sla','tests','wk'];
+  /* A fresh device opens THE BOARD — Intake and the Timeline — and folds the tail behind it.
+     Both, not Intake alone: a brief a colleague raises reaches an open board through the
+     Timeline (and the pipeline), never through Intake, which carries plan rows and the emails
+     you briefed — so opening Intake alone would have made Steven's new ticket invisible on a
+     board that is sitting right there, which is the thing the brief-durability work exists to
+     prevent. The tail — pipeline, ledger, SLA, tests, workload — is what "too many at once"
+     was about, and each of their heads still carries what it found.
+     ON A PHONE a device that has never chosen gets every section folded, which is exactly what
+     the skim view (docs/digest_widget.html) used to do for this page before these folds existed
+     — it now stands down, because an [aria-expanded] heading is the page's own. Keeping the
+     desktop default on a 390px screen would have handed the phone a 4.1-screen page where it
+     used to open at 1.3, which is the opposite of Ray's on-the-go rule. Read ONCE at boot, and
+     only for a key nobody has chosen. */
+  var WS_OPEN0=(window.innerWidth||1440)<760?{}:{intake:1,tl:1};
+  var WS_FKEY='fcc-wf-fold', WSF={};
+  try{ WSF=JSON.parse(localStorage.getItem(WS_FKEY)||'{}')||{}; }catch(e){ WSF={}; }
+  (function(){ var legacy={bp:'fcc-bp-open',bl:'fcc-bl-open'};   // carry the old per-section choice over
+    Object.keys(legacy).forEach(function(k){ if(Object.prototype.hasOwnProperty.call(WSF,k))return;
+      try{ var v=localStorage.getItem(legacy[k]); if(v!=null)WSF[k]=(v==='1')?1:0; }catch(e){} }); })();
+  function wsEl(k){ return document.getElementById('ws-'+k); }
+  function wsOpen(k){ return Object.prototype.hasOwnProperty.call(WSF,k)?!!WSF[k]:!!WS_OPEN0[k]; }
+  function wsBar(){ var b=document.getElementById('ws-all'); if(!b)return;
+    var any=WS_KEYS.some(function(k){ var e=wsEl(k); return e&&e.classList.contains('folded'); });
+    b.textContent=any?'⊕ Open all':'⊖ Fold all'; b.setAttribute('data-to',any?'open':'fold');
+    b.title=any?'Open every section':'Fold every section — each head keeps the line its own render wrote'; }
+  function wsPaint(k){ var e=wsEl(k); if(!e)return; var open=wsOpen(k);
+    e.classList.toggle('folded',!open);
+    var c=document.getElementById('wsc-'+k);
+    if(c){ c.setAttribute('aria-expanded',open?'true':'false');
+      c.title=open?'Fold this section':'Open this section'; } }
+  // what a section needs re-rendered when it opens — the ledger does not build its rows while folded
+  var WS_AFTER={ bl:function(){ renderLedger(); } };
+  function wsSet(k,open,keep){ if(WS_KEYS.indexOf(k)<0)return;
+    var was=wsOpen(k);
+    if(keep){ WSF[k]=open?1:0; try{ localStorage.setItem(WS_FKEY,JSON.stringify(WSF)); }catch(e){} }
+    else { WSF[k]=open?1:0; }                 // for the visit; a keep writes it down as well
+    wsPaint(k); wsBar();
+    if(open&&!was&&WS_AFTER[k])WS_AFTER[k](); }
+  // the line a fold keeps. Called by each section's OWN render, so it can never claim a number
+  // the section does not hold; `wsw` marks the part that is a finding rather than a count.
+  function wsSum(k,html){ var e=document.getElementById('wss-'+k); if(e)e.innerHTML=html||''; }
+  function wsWarn(s){ return '<span class="wsw">'+s+'</span>'; }
+  // open the section an element sits in — a hash, a link, Focus mode asked for it
+  function wsOpenFor(el){ var e=el&&el.closest?el.closest('section.wsec'):null;
+    if(!e||!e.classList.contains('folded'))return e;
+    var k=String(e.id||'').replace(/^ws-/,''); if(k)wsSet(k,true,false); return e; }
+  (function(){
+    WS_KEYS.forEach(wsPaint); wsBar();
+    // the whole tile toggles, but it never swallows its own controls (the ⓘ, and anything a
+    // section puts in its head) — the same rule /golden's section folds follow.
+    document.addEventListener('click',function(e){
+      var c=e.target.closest&&e.target.closest('.wsc');
+      var h=c?null:(e.target.closest&&e.target.closest('.wsh'));
+      if(!c&&!h)return;
+      if(h&&e.target.closest('button,a,input,select,textarea,label,.info-pop'))return;
+      var sec=(c||h).closest('section.wsec'); if(!sec)return;
+      var k=String(sec.id||'').replace(/^ws-/,''); if(!k)return;
+      wsSet(k,sec.classList.contains('folded'),true); });
+    var all=document.getElementById('ws-all');
+    if(all)all.addEventListener('click',function(){ var open=this.getAttribute('data-to')==='open';
+      WS_KEYS.forEach(function(k){ wsSet(k,open,true); }); });
+    /* a #hash opens the section it names, or the one it sits in, and goes there. On BOOT and on
+       hashchange both: a link from one part of this page to another is a FRAGMENT navigation, so
+       the document is never re-created and a boot-only read would leave the reader staring at a
+       folded head having asked for something inside it. */
+    function wsHash(){ var id=location.hash&&location.hash.length>1?decodeURIComponent(location.hash.slice(1)):'';
+      if(!id)return; var el=document.getElementById(id); if(!el)return; wsOpenFor(el);
+      setTimeout(function(){ try{ el.scrollIntoView({block:'start'}); }catch(e){} },80); }
+    wsHash(); window.addEventListener('hashchange',wsHash);
+  })();
+
   function renderIntake(){
     keepFilter();   // the filter in force is the filter the next load opens on
     var body=document.getElementById('it-body'); if(!body)return;
@@ -3168,6 +3341,10 @@ aside.ck[hidden]{display:none}
     });
     var n=document.getElementById('it-n'); if(n)n.textContent=fAll.length+' task'+(fAll.length===1?'':'s')
       +(capped?(' \u00b7 '+f.length+' shown'):'');
+    (function(){ var was=itState.overdue; itState.overdue=true; var ov=intakeFiltered().length; itState.overdue=was;
+      wsSum('intake',fAll.length+' task'+(fAll.length===1?'':'s')+' in this filter'
+        +(ov?(' \u00b7 '+wsWarn(ov+' overdue')):'')
+        +(capped?(' \u00b7 first '+f.length+' drawn'):'')); })();
     (function(){ var m=document.getElementById('it-more'); if(!m)return;
       if(!capped && fAll.length<=IT_CAP){ m.hidden=true; return; }   // a board that fits says nothing
       m.hidden=false;
@@ -3529,6 +3706,7 @@ aside.ck[hidden]{display:none}
   function tlScrollbar(){ var w=window.innerWidth-document.documentElement.clientWidth;
     document.documentElement.style.setProperty('--sbw',(w>0?w:0)+'px'); }
   function tlFocus(on){ var b=document.getElementById('tl-focus'); if(!b)return;
+    if(on)wsSet('tl',true,false);   // a folded body is display:none — Focus would fill the screen with nothing
     document.body.classList.toggle('tl-focus',on);
     b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'✕ Exit':'⛶ Focus';
     if(on)document.getElementById('tl-sec').scrollTop=0; else tlScrollbar();
@@ -4389,6 +4567,10 @@ aside.ck[hidden]{display:none}
         else if(b.status==='analysis'&&ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting analysis '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
+    (function(){ var ct={}; items.forEach(function(it){ ct[it.c]=(ct[it.c]||0)+1; });
+      wsSum('sla',!items.length?'Nothing over SLA in any court'
+        :(wsWarn(items.length+' over SLA')+' \u00b7 '
+          +Object.keys(ct).map(function(c){ return ct[c]+' with '+(c==='AM'?'the AM':c==='Client'?'the client':c); }).join(' \u00b7 '))); })();
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;
       return '<div class="stall-row esc" data-id="'+esc(b.id)+'"><span class="crtchip '+it.cls+'">'+it.c+'</span>'
         +'<span class="stall-c">'+esc(b.client)+'</span><span class="stall-t" title="'+esc(b.task)+'">'+esc(b.task)+'</span>'
@@ -4521,6 +4703,9 @@ aside.ck[hidden]{display:none}
     html+='<div class="tl-week tl-later"><div class="tl-wh">Later <span class="tl-wn">'+later.length+'</span></div>'+
       (later.length? later.slice(0,40).map(card).join('')+(later.length>40?'<div class="tl-empty">+'+(later.length-40)+' more — widen the horizon</div>':'') : '<div class="tl-empty">—</div>')+'</div>';
     host.innerHTML=html;
+    wsSum('tl',evs.length+' dated task'+(evs.length===1?'':'s')
+      +(over.length?(' \u00b7 '+wsWarn(over.length+' overdue')):'')+' \u00b7 '+shown+' in the next '+WEEKS+'w'
+      +(later.length?(' \u00b7 '+later.length+' later'):''));
     var n=document.getElementById('tl-n');
     if(n)n.textContent=(tlState.flags.length?evs.length+' of '+scoped.length+' (flag-filtered)':evs.length+' dated task'+(evs.length===1?'':'s'))+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
     // briefed → open the ticket; un-briefed → edit the Intake row in a pop-up, in place.
@@ -4613,6 +4798,10 @@ aside.ck[hidden]{display:none}
     Object.keys(PT).forEach(function(c){ var p=PT[c]; ((p&&p.latest)||[]).forEach(function(t){ if(t.c==='test'&&t.b!=='done'){ seed.push({client:c,name:t.t.slice(0,70),hypo:'',skus:'',start:'',readout:'',status:'running',result:''}); } }); });
     return seed; }
   function renderTests(){ var host=document.getElementById('tests-body'); if(!host)return;
+    (function(){ var due=TESTS.filter(function(t){ return t.readout&&!t.result&&isoDate(t.readout)<=today(); }).length;
+      wsSum('tests',!TESTS.length?'No tests on the register yet'
+        :(TESTS.length+' test'+(TESTS.length===1?'':'s')
+          +(due?(' \u00b7 '+wsWarn(due+' awaiting analysis')):''))); })();
     if(!TESTS.length){ host.innerHTML='<tr><td colspan="7" class="it-empty">No tests yet — add one, or they seed from your test-category plan tasks.</td></tr>'; return; }
     host.innerHTML=TESTS.map(function(t,i){ var days=t.readout?Math.round((isoDate(t.readout)-today())/86400000):null;
       var rocls=(days!=null&&!t.result)?(days<0?'over':days<=7?'soon':''):'';
@@ -4644,6 +4833,9 @@ aside.ck[hidden]{display:none}
     var names=Object.keys(by).sort(function(a,b){ return (by[b].open+by[b].prog)-(by[a].open+by[a].prog); });
     var extra=names.length>12?names.length-12:0; names=names.slice(0,12);
     var max=1; names.forEach(function(n){ max=Math.max(max,by[n].open+by[n].prog); });
+    (function(){ var who=Object.keys(by).length;
+      wsSum('wk',!who?'No open tasks assigned'
+        :(tasks.length+' open task'+(tasks.length===1?'':'s')+' across '+who+' owner'+(who===1?'':'s'))); })();
     host.innerHTML= (names.length? names.map(function(n){ var w=by[n], tot=w.open+w.prog, pct=Math.round(tot/max*100), nb=Object.keys(w.brands).length;
       return '<div class="wk-row"><span class="wk-name">'+esc(n)+'</span>'
         +'<span class="wk-bar"><span class="wk-fill" style="width:'+pct+'%"></span></span>'
@@ -4744,7 +4936,8 @@ aside.ck[hidden]{display:none}
   // folded section still says whether there's anything behind it; state sticks per device.
   // ---- Brief ledger: the flat register of every brief ever sent (closed + duplicates included) ----
   var blState={q:'',sort:'created',dir:-1};
-  var BL_OPEN=false; try{ BL_OPEN=localStorage.getItem('fcc-bl-open')==='1'; }catch(e){}
+  /* BL_OPEN retired — the section's own fold (wsOpen('bl')) is the one state, seeded from
+     fcc-bl-open so a person's existing choice carried over. */
   // SELF-HEALING CONTROLS (Ray, 10 Sep 2026, third report: "the brief ledger search bar
   // still not working"). Saved edit patches are applied as el.innerHTML=<saved html>, so
   // editing the ledger's HEADING in Edit mode silently deletes the ▸ Show/▾ Hide button
@@ -4754,13 +4947,6 @@ aside.ck[hidden]{display:none}
   // removed instead of giving up, so the ledger can never be stranded again.
   function blEnsureUI(){
     var wrap=document.getElementById('bl-body');
-    var tog=document.getElementById('bl-tog');
-    if(!tog&&wrap){
-      var h=wrap.previousElementSibling;
-      while(h&&!/^H[1-4]$/.test(h.tagName))h=h.previousElementSibling;
-      if(h){ tog=document.createElement('button'); tog.type='button'; tog.className='sec-tog';
-        tog.id='bl-tog'; tog.setAttribute('aria-controls','bl-body'); h.appendChild(tog); }
-    }
     var inp=document.getElementById('bl-search')||(wrap?wrap.querySelector('.bl-bar input'):null);
     if(!inp&&wrap){
       var bar=wrap.querySelector('.bl-bar');
@@ -4772,18 +4958,13 @@ aside.ck[hidden]{display:none}
       if(!bar.querySelector('#bl-n')){ var n=document.createElement('span'); n.className='it-n'; n.id='bl-n'; bar.appendChild(n); }
     }
     if(inp&&!inp.id)inp.id='bl-search';
-    return { tog: tog, inp: inp, wrap: wrap };
+    return { inp: inp, wrap: wrap };
   }
   function renderLedger(){ var body=document.getElementById('bl-rows'); if(!body)return;
-    var ui=blEnsureUI(), tog=ui.tog;
+    blEnsureUI();
     var all=Object.keys(BRIEFS).map(function(id){return BRIEFS[id];}).filter(function(b){return b&&b.id;});
-    if(!tog)BL_OPEN=true;   // nothing left to re-open it with — never strand the ledger hidden
-    if(ui.wrap)ui.wrap.hidden=!BL_OPEN;
-    if(tog){
-      tog.textContent=BL_OPEN?'▾ Hide':('▸ Show — '+all.length+' brief'+(all.length===1?'':'s')+' ever sent');
-      tog.setAttribute('aria-expanded',BL_OPEN?'true':'false');
-    }
-    if(!BL_OPEN)return;
+    wsSum('bl',all.length+' brief'+(all.length===1?'':'s')+' ever sent');
+    if(!wsOpen('bl'))return;   // the rows are not built behind a folded head
     // the haystack covers EVERYTHING visible in a row (Ray, 10 Sep 2026: "search in Brief
     // Ledger is not filtered") — stage label, read-out, owner incl. the derived ASPL, and
     // both date columns, so anything an AM can read on screen is searchable.
@@ -4844,16 +5025,6 @@ aside.ck[hidden]{display:none}
     if(el)blState.q=String(el.value||'').trim().toLowerCase();
     return blState.q;
   }
-  // the pipeline section's toggle is nested in its heading too — same patch hazard
-  function bpTogEl(){
-    var t=document.getElementById('bp-tog'), wrap=document.getElementById('bp-body');
-    if(t||!wrap)return t;
-    var h=wrap.previousElementSibling;
-    while(h&&!/^H[1-4]$/.test(h.tagName))h=h.previousElementSibling;
-    if(!h)return null;
-    t=document.createElement('button'); t.type='button'; t.className='sec-tog'; t.id='bp-tog';
-    t.setAttribute('aria-controls','bp-body'); h.appendChild(t); return t;
-  }
   // DELEGATED wiring (Ray, 10 Sep 2026): the live page can replace these nodes after load
   // (saved edit overlays re-write blocks in place), which silently dropped listeners bound
   // to the original elements — the search box then typed into the void. Document-level
@@ -4867,22 +5038,17 @@ aside.ck[hidden]{display:none}
     document.addEventListener('click',function(e){
       var rl=e.target.closest&&e.target.closest('#bl-relabel');
       if(rl){ relabelLedger({quiet:false}); return; }
-      var tog=e.target.closest&&e.target.closest('#bl-tog');
-      if(tog){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e2){} renderLedger(); return; }
       var th=e.target.closest&&e.target.closest('#bltbl thead th[data-k]');
       if(th){ var k=th.getAttribute('data-k'); if(blState.sort===k)blState.dir*=-1; else {blState.sort=k;blState.dir=(k==='created'?-1:1);} renderLedger(); } });
   })();
-  var BP_OPEN=false; try{ BP_OPEN=localStorage.getItem('fcc-bp-open')==='1'; }catch(e){}
-  function renderBpTog(){ var body=document.getElementById('bp-body'); if(!body)return;
-    var b=bpTogEl(); if(!b)BP_OPEN=true;
-    body.hidden=!BP_OPEN;
-    if(!b)return;
-    var n=Object.keys(BRIEFS).filter(function(k){ return BRIEFS[k]&&BRIEFS[k].status!=='confirmed'; }).length;
-    b.textContent=BP_OPEN?'▾ Hide':('▸ Show'+(n?' — '+n+' brief'+(n===1?'':'s')+' in motion':''));
-    b.setAttribute('aria-expanded',BP_OPEN?'true':'false'); }
-  // delegated, so a toggle rebuilt after an edit patch wiped it still works
-  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('#bp-tog'); if(!b)return;
-    BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e2){} renderBpTog(); });
+  // the pipeline's head line: how much is in motion, and whose court it is sitting in
+  function renderBpTog(){
+    var live=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
+      .filter(function(b){ return b&&b.status!=='confirmed'&&!isDup(b); });
+    var aspl=live.filter(function(b){ return b.status==='briefed'||b.status==='progress'; }).length;
+    wsSum('bp',!live.length?'Nothing in motion — every brief is signed off'
+      :(live.length+' brief'+(live.length===1?'':'s')+' in motion'
+        +(aspl?(' \u00b7 '+aspl+' with ASPL'):''))); }
   function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); renderLedger(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot

@@ -327,6 +327,12 @@ else
   echo "   ✗ Workflow boot harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_wfboot.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_wffold.js >/dev/null 2>&1; then
+  echo "   ✓ every Workflow section is a box that folds, and no fold hides what its head found"
+else
+  echo "   ✗ Workflow fold harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_wffold.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_kwdue.js >/dev/null 2>&1; then
   echo "   ✓ Workflow lists the calendar's moments still to brief, and → Brief raises the calendar's own brief"
 else

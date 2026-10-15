@@ -148,7 +148,8 @@ if (chromium) {
     const p = await ctx.newPage();
     await p.goto(new URL('../docs/FeedSpark_Workflow.html', import.meta.url).href + '?pb=1');
     await p.waitForTimeout(1800);
-    try { await p.locator('#bl-tog').click({ timeout: 4000 }); await p.waitForTimeout(500);
+    /* the ledger's old ▸ Show pill is the section's own fold chevron since 15 Oct 2026 */
+    try { await p.locator('#wsc-bl').click({ timeout: 4000 }); await p.waitForTimeout(500);
           await p.locator('#bl-rows tr').first().click({ force: true, timeout: 4000 }); } catch (e) {}
     await p.waitForTimeout(600);
     const g = await p.evaluate(() => {
