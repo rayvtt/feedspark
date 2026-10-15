@@ -106,6 +106,30 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   ok('an unscoped moment is still listed, and says it has no scope', wint.scope === 'no scope yet', wint.scope);
   ok('…and names its brand', wint.who === 'Northwind', wint.who);
 
+  console.log('\n2a) the Brief button is Intake’s Brief button');
+  // Ray, 15 Oct 2026: "can brief button have the same design as intake" — measured off the PAINT,
+  // against Intake's own button on the same page, so a copied rule that later drifts fails here
+  {
+    const pair = await page.evaluate(() => {
+      const pick = (el) => { if (!el) return null; const c = getComputedStyle(el);
+        return { r: c.borderTopLeftRadius, bw: c.borderTopWidth, bc: c.borderTopColor,
+          bg: c.backgroundColor, col: c.color, fs: c.fontSize, fw: c.fontWeight,
+          h: Math.round(el.getBoundingClientRect().height), t: el.textContent.trim() }; };
+      return { kw: pick(document.querySelector('#kwd-rows .kwd-go')),
+        it: pick(document.querySelector('.itbl .brief-btn')) };
+    });
+    ok('Intake’s own button is on the page to compare with', !!pair.it, pair);
+    const same = (k) => pair.kw && pair.it && pair.kw[k] === pair.it[k];
+    ok('same pill radius', same('r'), pair.kw && [pair.kw.r, pair.it && pair.it.r]);
+    ok('same outline, not a filled block', same('bw') && same('bc'),
+      pair.kw && [pair.kw.bw + ' ' + pair.kw.bc, pair.it && pair.it.bw + ' ' + pair.it.bc]);
+    ok('same background and ink', same('bg') && same('col'),
+      pair.kw && [pair.kw.bg + ' ' + pair.kw.col, pair.it && pair.it.bg + ' ' + pair.it.col]);
+    ok('same type', same('fs') && same('fw'), pair.kw && [pair.kw.fs + '/' + pair.kw.fw]);
+    ok('same height', same('h'), pair.kw && [pair.kw.h, pair.it && pair.it.h]);
+    ok('…and it reads the same word', pair.kw && pair.kw.t === 'Brief', pair.kw && pair.kw.t);
+  }
+
   console.log('\n2b) …and what IS briefed, with where it has got to');
   // Ray, 15 Oct 2026: "with keywords calendar, also shown the briefed events (and status)"
   const done = async () => page.$eval('#kwd-done', (n) => ({
@@ -160,7 +184,7 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   ok('…and folding it again sticks', !(await done()).open);
 
   console.log('\n3) → Brief raises the CALENDAR’s brief, through the page’s own composer');
-  await page.click('.kwd-row:has-text("Festive") .kwd-go');
+  await page.click('#kwd-rows .kwd-row:has-text("Festive") .kwd-go');
   await page.waitForTimeout(900);
   const comp = await page.evaluate(() => {
     const t = document.querySelector('#bg-task'), c = document.querySelector('#bg-client'),
