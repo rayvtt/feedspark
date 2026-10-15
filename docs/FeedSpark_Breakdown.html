@@ -122,7 +122,13 @@ window.addEventListener('load',restore);
   /* the panes: one card size, as many across as fit */
   /* a pane is as wide as its longest value (Ray, 15 Oct 2026: "adjust each table width to see full length of value"), up to the row; past that a value wraps, never cut */
   .panes{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
-  .pane{border:1px solid var(--line);border-radius:12px;padding:10px 12px 8px;background:var(--paper);flex:1 1 auto;width:fit-content;min-width:330px;max-width:100%;box-sizing:border-box}
+  .pane{border:1px solid var(--line);border-radius:12px;padding:10px 12px 8px;background:var(--paper);flex:1 1 auto;width:fit-content;min-width:330px;max-width:100%;box-sizing:border-box;position:relative}
+  /* a pane's width is the reader's to drag (Ray, 15 Oct 2026: "table width - make it drag and changeable"): the edge handle sets it, double-click / Enter gives the auto width back, arrows step 20px; kept per device with the layout */
+  .pane.sized{flex:0 0 auto;min-width:260px}
+  .pane .rz{position:absolute;top:10px;bottom:10px;right:-7px;width:12px;cursor:ew-resize;touch-action:none;z-index:2;border-radius:6px;outline:none}
+  .pane .rz::after{content:'';position:absolute;top:50%;left:4px;width:4px;height:36px;margin-top:-18px;border-radius:3px;background:var(--line);transition:background .12s}
+  .pane:hover .rz::after,.pane .rz:focus-visible::after,.pane .rz.on::after{background:var(--orange)}
+  body.bd-rz,body.bd-rz *{cursor:ew-resize!important;user-select:none!important}
   .ph{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .ph .fld{height:32px;font-size:12.5px;min-width:0;max-width:100%}
   .ph .fld.f{flex:1 1 150px}
@@ -196,7 +202,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] .ph .ib{background:#20242E}
-  @media(max-width:760px){.pane{min-width:0;width:100%;flex-basis:100%}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
+  @media(max-width:760px){.pane,.pane.sized{min-width:0;width:100%!important;flex-basis:100%}.pane .rz{display:none}.q{min-width:0;width:100%;flex:1 1 100%}.fbar{position:static}.fchip span{max-width:220px}.pvc .grp{flex:1 1 100%}.ph .ib{width:36px;height:36px}table.fd td.smp{display:none}table.fd th.smp{display:none}}
   @media(prefers-reduced-motion:reduce){.prog.ind i{animation:none}}
 </style>
 <style>/* FCC-THEME */
@@ -584,8 +590,10 @@ window.addEventListener('load',restore);
           + '<td><div class="sb"><span class="bar"><i style="width:' + (mx ? Math.min(100, r.n / mx * 100) : 0).toFixed(1) + '%"></i></span><span class="p">' + pc(r.share) + '</span></div></td></tr>';
       }).join('') || '<tr><td colspan="3"><div class="none">' + (q ? 'No value matches “' + esc(S.q) + '”.' : 'No products.') + '</div></td></tr>';
       var foot = rows.length > PANE_CAP ? '<div class="pf"><span>' + (all ? 'All ' + n0(rows.length) + ' shown' : 'Top ' + PANE_CAP + ' of ' + n0(rows.length)) + '</span><button class="btn" type="button" data-all="' + i + '">' + (all ? 'Show top ' + PANE_CAP : 'Show all ' + n0(rows.length)) + '</button></div>' : '';
-      return '<div class="pane" data-k="' + esc(skey(spec)) + '">' + head + '<div class="pm">' + meta + '</div><div class="pt-wrap"><table class="pt"><thead><tr>'
-        + th('v', 'Value') + th('n', unit === 'group' ? 'Styles' : 'Products', 'c-n') + th('share', 'Share', 'c-s') + '</tr></thead><tbody>' + body + '</tbody></table></div>' + foot + '</div>';
+      var w = +sp.w || 0;
+      return '<div class="pane' + (w ? ' sized' : '') + '" data-k="' + esc(skey(spec)) + '"' + (w ? ' style="width:' + w + 'px"' : '') + '>' + head + '<div class="pm">' + meta + '</div><div class="pt-wrap"><table class="pt"><thead><tr>'
+        + th('v', 'Value') + th('n', unit === 'group' ? 'Styles' : 'Products', 'c-n') + th('share', 'Share', 'c-s') + '</tr></thead><tbody>' + body + '</tbody></table></div>' + foot
+        + '<div class="rz" role="separator" aria-orientation="vertical" tabindex="0" data-rz="' + i + '" title="Drag to set this table\'s width · double-click to fit its values" aria-label="Table width — drag or use the arrow keys; Enter fits its values"></div></div>';
     }).join('');
     box.innerHTML = html + '<div class="pane add"><button class="btn" type="button" id="addpane">＋ Add a field</button></div>';
     var ln = S.L.panes.length + ' field' + (S.L.panes.length === 1 ? '' : 's') + ' broken down' + (S.filters.length ? ' · <span class="hot">' + S.filters.length + ' filter' + (S.filters.length === 1 ? '' : 's') + ' on</span>' : '');
@@ -597,6 +605,7 @@ window.addEventListener('load',restore);
     var i = +ph.getAttribute('data-pi'), sp = readSpec(ph);
     if (e.target.classList.contains('f') && sp) { var meta = fieldMeta(sp.f); sp.m = meta && meta.kind === 'path' ? 'tier' : 'raw'; sp.k = sp.m === 'tier' ? Math.min(2, B.maxTier(S.st, sp.f)) : 0; }
     if (!sp) return;
+    if (S.L.panes[i] && S.L.panes[i].w) sp.w = S.L.panes[i].w;
     S.L.panes[i] = sp; saveLayout(); renderPanes();
   });
   $('#panes').addEventListener('click', function (e) {
@@ -612,6 +621,38 @@ window.addEventListener('load',restore);
       renderPanes(); return;
     }
     var tr = t.closest('tr[data-v]'); if (tr) { var sp3 = B.resolve(S.st, S.L.panes[paneIdx(tr)]); if (sp3) toggleValue(sp3, tr.getAttribute('data-v')); }
+  });
+  // ---- drag a pane's width --------------------------------------------------------------------------------------------
+  var RZ_MIN = 260;
+  function rzMax() { return Math.max(RZ_MIN, $('#panes').clientWidth); }
+  function setW(i, w) {
+    if (!S.L.panes[i]) return;
+    if (w == null) delete S.L.panes[i].w; else S.L.panes[i].w = Math.round(Math.max(RZ_MIN, Math.min(rzMax(), w)));
+    saveLayout(); renderPanes();
+  }
+  $('#panes').addEventListener('pointerdown', function (e) {
+    var h = e.target.closest('.rz'); if (!h || e.button !== 0) return;
+    e.preventDefault();
+    var pane = h.closest('.pane'), i = +h.getAttribute('data-rz'), x0 = e.clientX, w0 = pane.getBoundingClientRect().width, w = w0;
+    h.classList.add('on'); document.body.classList.add('bd-rz'); try { h.setPointerCapture(e.pointerId); } catch (x) {}
+    pane.classList.add('sized');
+    function mv(ev) { w = Math.max(RZ_MIN, Math.min(rzMax(), w0 + ev.clientX - x0)); pane.style.width = w + 'px'; }
+    function up() {
+      h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+      document.body.classList.remove('bd-rz');
+      h.classList.remove('on');
+      // a click that did not move is not a resize — touching nothing keeps the node, so a double-click still lands
+      if (Math.abs(w - w0) < 2) { if (!S.L.panes[i].w) pane.classList.remove('sized'); return; }
+      setW(i, w);
+    }
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  });
+  $('#panes').addEventListener('dblclick', function (e) { var h = e.target.closest('.rz'); if (h) setW(+h.getAttribute('data-rz'), null); });
+  $('#panes').addEventListener('keydown', function (e) {
+    var h = e.target.closest('.rz'); if (!h) return;
+    var i = +h.getAttribute('data-rz'), w = h.closest('.pane').getBoundingClientRect().width;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setW(i, w + (e.key === 'ArrowRight' ? 20 : -20)); var n = $('#panes [data-rz="' + i + '"]'); if (n) n.focus(); }
+    else if (e.key === 'Enter') { e.preventDefault(); setW(i, null); var n2 = $('#panes [data-rz="' + i + '"]'); if (n2) n2.focus(); }
   });
   function addField(f) {
     if (!f || !S.st) return;
