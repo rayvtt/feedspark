@@ -140,7 +140,8 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
       const r = (s) => [...document.querySelectorAll(s)]
         .map((e) => { const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.right)]; });
       return { intake: r('.itbl tbody .brief-btn'), go: r('#kwd-rows .kwd-go'),
-        tk: r('#kwd-drows .kwd-tk'), sc: r('#kwd-rows .kwd-sc'), ct: r('#kwd-drows .kwd-ct') };
+        tk: r('#kwd-drows .kwd-tk'), sc: r('#kwd-rows .kwd-sc'), ct: r('#kwd-drows .kwd-ct'),
+        cellA: r('#kwd-rows .kwd-act'), cellB: r('#kwd-drows .kwd-act') };
     });
     const one = (rows, i) => rows.length && rows.every((x) => x[i] === rows[0][i]);
     ok('every to-brief button shares one right edge', one(E.go, 1), E.go);
@@ -149,8 +150,17 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
       E.go.length && E.tk.length && E.go[0][1] === E.tk[0][1], [E.go[0], E.tk[0]]);
     ok('…and with INTAKE’s Brief column above them',
       E.intake.length && E.go[0][1] === E.intake[0][1], [E.go[0] && E.go[0][1], E.intake[0] && E.intake[0][1]]);
-    ok('the buttons are one column, so both halves start on one line',
-      E.go[0][0] === E.tk[0][0], [E.go[0][0], E.tk[0][0]]);
+    /* Ray, 15 Oct 2026: "brief button between keywords calendar and Intake size broken again".
+       The COLUMN is what is fixed, not the button — so both halves still start on one line and
+       the scope figure and the court beside them line up, while → Brief is the same button
+       Intake draws rather than a stretched one above it. */
+    ok('the button is the SIZE Intake draws — not stretched to fill its column',
+      E.go[0][1] - E.go[0][0] === E.intake[0][1] - E.intake[0][0],
+      [E.go[0][1] - E.go[0][0], E.intake[0][1] - E.intake[0][0]]);
+    ok('…and sits exactly where Intake’s does',
+      E.go[0][0] === E.intake[0][0], [E.go[0][0], E.intake[0][0]]);
+    ok('the button column is one column, so both halves start on one line',
+      E.cellA.length && E.cellB.length && E.cellA[0][0] === E.cellB[0][0], [E.cellA[0], E.cellB[0]]);
     ok('…which lines the column before them up too',
       E.sc.length && E.ct.length && E.sc[0][1] === E.ct[0][1], [E.sc[0], E.ct[0]]);
     await page.click('#kwd-dh');            // leave it as the next section expects to find it
