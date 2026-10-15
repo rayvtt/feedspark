@@ -217,5 +217,29 @@ ok(grow && grow.body.requests[0].appendDimension.length === (518 - 517) + 50,
   '— by what it needs plus a little slack', grow && grow.body.requests[0].appendDimension.length);
 ok(r2.out.ok === true && r2.out.atRow === 516, 'and the write then lands where it meant to', r2.out);
 
+/* ---------------------------------------------------------------- 5. a confirmed ticket closes
+   its task (Ray, 15 Oct 2026: "When a ticket's status is changed to client confirm anywhere, the
+   corresponding task in InTake should be updated to Done accordingly"). The behaviour is driven
+   in a browser by tools/check_confirmdone.js; these pin the WIRING, which is what a later change
+   would quietly undo: the close rides setStage, so every surface is covered by construction. */
+console.log('\n── a confirmed ticket closes its task');
+ok(/b\.status=stage; b\.updated=Date\.now\(\);\s*\n\s*if\(stage==='confirmed'\)confirmDone\(b\);/.test(P),
+  'the close rides setStage — the one writer every surface goes through');
+ok(/if\(applyConfirmDone\(b\)\)pend\.push\(b\);/.test(P),
+  'and it is retried from the pass that runs on every render once the plan is live');
+ok(P.indexOf('if(applyConfirmDone(b))pend.push(b);') < P.indexOf("if(b.status==='confirmed')return;"),
+  '— before the reconcile drops a confirmed ticket, or it would never be reached');
+ok(/asplBackfill\(\); confirmBackfill\(\); \}/.test(P), 'the tickets already confirmed are filled in too');
+const AC = P.slice(P.indexOf('function applyConfirmDone('), P.indexOf('var _cdDone'));
+ok(/b\.cstmp=1;/.test(AC) && /if\(!b\|\|!b\.id\|\|b\.cstmp\)return false;/.test(P),
+  'stamped once per ticket, so an AM who re-opens the row is not corrected');
+ok(/bucketOf\(row\.s\|\|''\)==='done'\)return true;/.test(AC), 'a task already closed is not re-written');
+ok(/inScopeClient\(b\.client\)/.test(AC), 'a scoped signin never writes another book\'s row');
+ok(/delete PEND_DONE\[b\.id\]; b\.cstmp=1;/.test(AC),
+  'the pending entry is dropped BEFORE the writer, since the writer renders');
+ok(/writeStatus\(row\.client,row\.task,'Done'\)/.test(AC),
+  'it writes through writeStatus — the same two-way writer an AM\'s own change uses');
+ok(/STAGE_STATUS=\{[^}]*confirmed:'Done'/.test(P), 'and confirmed still maps to Done where a row is created');
+
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' assertions passed');
 process.exit(fail ? 1 : 0);
