@@ -261,7 +261,7 @@ window.addEventListener('load',restore);
      11px labels stay the size of the page's own text at any window or zoom (Ray, 8 Oct 2026: "make this barchart correspond
      nicely when enlarge or delarge a tab view of the html — it looks exceptionally larger than rest of body") */
   .hs-svg{width:100%;max-width:1000px;height:auto;display:block}
-  .hs-svg text{font-size:11px;fill:var(--muted);font-weight:700;font-family:Lato,system-ui,sans-serif}
+  .hs-svg text{font-size:11px;fill:var(--muted);font-weight:700;font-family:var(--font-body,Lato),system-ui,sans-serif}
   .hs-svg text.v{fill:var(--ink);font-weight:900;font-size:12px}
   .hs-svg text.pl{fill:var(--ink-2);font-weight:900;font-size:10px;letter-spacing:.05em}
   .hs-svg .grid{stroke:var(--line);stroke-width:1}
@@ -621,7 +621,7 @@ window.addEventListener('load',restore);
   .qz-egs{display:block;margin-top:4px}
   .qz-cap{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.6;margin-bottom:2px}
   .qz-vc{margin-left:7px;padding:0 6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);
-    font-family:Lato,system-ui,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+    font-family:var(--font-body,Lato),system-ui,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
   .qz-grp{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
     padding:7px 9px;margin-top:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.5}
   .qz-grp b{color:var(--orange-deep);font-weight:900;margin-right:6px;font-family:inherit}
@@ -857,7 +857,7 @@ window.addEventListener('load',restore);
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
   body.pdf #print-head{display:block;margin:0 0 18px}
   body.pdf .gr-sticky{display:none!important}   /* the executive summary IS the client documents' header */
-  .cv{background:#fff;border:1px solid #E6E6E6;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 40px -22px rgba(0,0,0,.28);overflow:hidden;color:#333;font-family:Lato,system-ui,sans-serif;text-align:center}
+  .cv{background:#fff;border:1px solid #E6E6E6;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 40px -22px rgba(0,0,0,.28);overflow:hidden;color:#333;font-family:var(--font-body,Lato),system-ui,sans-serif;text-align:center}
   .cv-photo{display:flex;height:300px;background:#F7F7F5;overflow:hidden}
   .cv-photo img{flex:1;min-width:0;height:100%;object-fit:cover;display:block;border-right:3px solid #fff}
   .cv-photo img:last-child{border-right:0}
@@ -998,6 +998,18 @@ window.addEventListener('load',restore);
   .ap-rem{margin-top:10px;font-size:12px}.ap-rem summary{cursor:pointer;font-weight:800;color:var(--muted)}
   .ap-rrow{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:4px 0;border-top:1px solid var(--line)}
   .ap-foot{margin:10px 0 0;font-size:11.5px;color:var(--muted)}
+  .ap-own.sp{background:linear-gradient(90deg,#FEF3E2,#F3E8FF);color:#7C3AED;border-color:#D8B4FE}
+  .ap-wf{margin-top:6px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .ap-wf a{color:#2F6FB0;text-decoration:none;border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--paper)}
+  .ap-wf a span{color:var(--muted);font-weight:700}
+  .ap-wf.ok a{color:#15803D;border-color:#15803D}
+  .ap-wf[data-st="blocked"] a{color:#C0392B;border-color:#C0392B}
+  .ap-wf.wait>span{color:var(--muted)}
+  .ap-br{border:1px dashed var(--orange-deep);background:transparent;color:var(--orange-deep);border-radius:100px;padding:2px 9px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+  .ap-br:hover{background:var(--orange-deep);color:#fff}
+  .ap-wfl{margin:8px 0;font-size:12px;font-weight:700;color:var(--muted)}
+  .ap-closed{margin-top:10px;font-size:12px}.ap-ch{font-weight:800;color:#15803D;margin-bottom:2px}
+  body.demo .ap-wf,body.demo .ap-wfl,body.demo .ap-closed{display:none!important}
   @media (max-width:760px){#ap-tier .ap-board{grid-template-columns:1fr}#ap-tier .ap-k{grid-template-columns:repeat(2,1fr)}}
   /* THE CATALOGUE'S MODULES, PICKED FOR THE ⬇ HTML (Ray, 7 Oct 2026) — see catxLoad(). On screen only: the PDF and the
      HTML never carry this card (the HTML carries the picked modules themselves, in #print-catx). */
@@ -4932,7 +4944,7 @@ window.addEventListener('load',restore);
         (has ? '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' +
           (C * pct / 100).toFixed(2) + ' ' + C.toFixed(2) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/>' : '') + (cap || '') + '</svg>';
     };
-    var T = function (x, y, size, w, fill, txt, ls) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-family="Lato,system-ui,sans-serif" font-weight="' + w + '" font-size="' + size + '"' + (ls ? ' letter-spacing="' + ls + '"' : '') + ' fill="' + fill + '">' + txt + '</text>'; };
+    var T = function (x, y, size, w, fill, txt, ls) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" style="font-family:var(--font-body,Lato),system-ui,sans-serif" font-weight="' + w + '" font-size="' + size + '"' + (ls ? ' letter-spacing="' + ls + '"' : '') + ' fill="' + fill + '">' + txt + '</text>'; };
     var big = (function () {
       var S = 200, sw = 15, r = (S - sw) / 2, a = 2 * Math.PI * 0.999 - Math.PI / 2;   // the 99.9 target tick
       var tick = score == null ? '' : '<line x1="' + (S / 2 + (r - sw / 2 - 3) * Math.cos(a)).toFixed(1) + '" y1="' + (S / 2 + (r - sw / 2 - 3) * Math.sin(a)).toFixed(1) +
@@ -5161,6 +5173,73 @@ window.addEventListener('load',restore);
      A month the plan stored that has slid into the past lands on the first month shown, one past the window on the last. */
   var PLST = { map: null, base: 0, p: null };
   var APX = { edit: null, add: null, drag: null, msg: '' };
+  /* EACH TASK BRIEFED INTO WORKFLOW, AND READ BACK ON THE NEXT AUDIT (Ray, 16 Oct 2026: "within the Golden Record action
+     plan, allow each task to be added in Intake/ Workflow and therefore be tracked within the Golden Record audit (that each
+     of these task has been taken cared/ noticed of) from the next time the audit is ran again (obviously once briefed from
+     Golden Record action plan, the process mirror the Intake process)"). → Brief opens Workflow's OWN composer through the
+     same /workflow?brief= door every module uses, so from there it is an ordinary brief — the composer saves it into the
+     pipeline and files its Intake row exactly as any other; nothing here writes a task. THE TIE is the task's own key,
+     "<client>|<mkt>|<plan id>", carried on the deep link as `gp` and stamped on the saved ticket (b.gp, the KWCal `kw`
+     rule) — a plan id is keyed on WHAT the action is about, never its wording, so a rescan, a reword or a move to another
+     month never breaks it. The board records the briefing on the plan item too (`br` {at, task, t}) so a ticket that has
+     not reached the pipeline yet (the composer was closed unsaved) reads "not in the pipeline yet" with → Brief again, never
+     a silent nothing. FROM THEN ON THE AUDIT READS IT BACK: each card carries the ticket's stage in WORKFLOW'S OWN WORDS
+     (GP_STAGE — tools/test_grplanbrief.mjs holds it equal to Workflow's STAGES) and whose court it is in, a ticket at Done —
+     ASPL or beyond reads ✓ taken care of, and an action the next audit no longer raises (the field was fixed) leaves the
+     lanes for "Closed since it was briefed" rather than vanishing — the record that it was noticed and dealt with. On screen
+     only: the client's copy (#print-plan) draws the plan without a ticket in it. */
+  var GP_STAGE = { intake: 'Intake', briefed: 'Briefed to ASPL', progress: 'In progress', blocked: 'Blocked', done: 'Done — ASPL',
+    running: 'Test running ⏱', analysis: 'Analysis 🧪', confirmed: 'Client confirmed' };
+  var GP_COURT = { intake: 'AM', briefed: 'ASPL', progress: 'ASPL', blocked: 'AM', done: 'Client', running: 'AM', analysis: 'AM', confirmed: '' };
+  var GP_DONE = { done: 1, running: 1, analysis: 1, confirmed: 1 };
+  var GPB = { map: null, p: null, at: 0 };
+  function loadGpBriefs(force) {
+    if (GPB.p && !force) return GPB.p;
+    GPB.p = fetch(API + '/api/briefs').then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && typeof j === 'object' && !j.error) { GPB.map = j; GPB.at = Date.now(); } })
+      .catch(function () {});
+    return GPB.p;
+  }
+  // back from Workflow (the tab regains focus): re-read the pipeline so the card shows the ticket just saved
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible' || !GPB.p || Date.now() - GPB.at < 20000) return;
+    loadGpBriefs(true).then(function () { if (SEL && $('ap-tier')) renderDetail(SEL); });
+  });
+  function gpKey(k, id) { return planKey(k) + '|' + id; }
+  function gpStage(b) { var st = b && (b.status || b.st); return st && GP_STAGE[st] ? st : (st ? 'progress' : 'intake'); }
+  // the ticket a plan task was briefed as: the stamped key first, then the exact task name the board recorded; newest wins
+  function gpTicket(k, id, br) {
+    var m = GPB.map; if (!m) return null;
+    var key = gpKey(k, id), cl = parts(k).client, best = null, how = '';
+    Object.keys(m).forEach(function (bid) {
+      var b = m[bid]; if (!b || typeof b !== 'object' || b._deleted) return;
+      var h = b.gp === key ? 'id' : (br && br.task && b.task === br.task && b.client === cl ? 'task' : '');
+      if (!h) return;
+      if (!best || (h === 'id' && how !== 'id') || (h === how && (b.updated || b.created || 0) > (best.updated || best.created || 0))) { best = b; how = h; }
+    });
+    if (!best) return null;
+    var st = gpStage(best);
+    return { id: best.id || '', st: st, word: GP_STAGE[st], court: GP_COURT[st] || '', done: !!GP_DONE[st], how: how, task: best.task || '' };
+  }
+  function gpTask(k, a) {
+    var p = parts(k), dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    var t = String(a.t || '').replace(/\s+/g, ' ').trim(); if (t.length > 90) t = t.slice(0, 89).replace(/\s+\S*$/, '') + '…';
+    return 'Golden Record Plan - ' + t + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy;
+  }
+  function gpPayload(k, a, M) {
+    var p = parts(k), mo = M && M.months[a.mi];
+    var lines = [
+      'Action: ' + a.t,
+      a.w ? 'Why: ' + a.w : '',
+      'Area: ' + (a.f || 'Golden Record'),
+      'Owner: ' + (a.own === 'you' ? 'the client’s team (FeedSpark to chase / support)' : 'FeedSpark'),
+      mo ? 'Planned for: ' + mo.name + ' ' + mo.yr : '',
+      a.g > 0 ? 'Projected Golden Score gain: +' + a.g + ' pts (goldenScore re-run with the field on every product — a projection)' : '',
+      'Source: Golden Record action plan (/golden) — the next audit reads this ticket\'s stage back onto the task',
+    ].filter(Boolean);
+    var cat = a.id === 'a:keywords' ? 'keyword' : (a.id === 'a:img_depth' || a.id === 'a:image_link' ? 'image' : 'technical');
+    return { client: p.client, task: gpTask(k, a), cat: cat, scope: lines.join('\n'), gp: gpKey(k, a.id) };
+  }
   function planStMap() {
     if (PLST.map) return PLST.map;
     try { var m = JSON.parse(localStorage.getItem('gr-plan-b') || '{}'); PLST.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { PLST.map = {}; }
@@ -5181,7 +5260,7 @@ window.addEventListener('load',restore);
     if (Object.keys(it).length) m[key] = { it: it, at: Date.now() }; else delete m[key];
     PLST.map = m; planMirror();   // the board follows the edit at once; the store confirms behind it
     APX.msg = 'Saving for the team…';
-    fetch(API + '/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(PLST.base || 0) }, body: JSON.stringify({ grplan: m }) })
+    return fetch(API + '/api/state', { method: 'PUT', keepalive: true, headers: { 'content-type': 'application/json', 'X-Sync-Base': String(PLST.base || 0) }, body: JSON.stringify({ grplan: m }) })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         var ok = !!(j && j.grplan); if (ok) { PLST.map = j.grplan; PLST.base = Date.now(); planMirror(); }
@@ -5232,17 +5311,24 @@ window.addEventListener('load',restore);
       x.ed = x.t !== a.t || x.w !== a.w || x.own !== a.own;
       x.mi = typeof o.m === 'string' ? mIdx(o.m) : Math.min(nM - 1, Math.floor(i / per));
       x.ord = typeof o.i === 'number' ? o.i : i;
+      if (o.br && typeof o.br === 'object') x.br = o.br;
       if (o.del) removed.push(x); else items.push(x);
     });
     Object.keys(it).forEach(function (id) {
       var o = it[id]; if (!o || !o.c || id.indexOf('c:') !== 0 || typeof o.t !== 'string' || !o.t) return;
       items.push({ id: id, c: 1, t: o.t, w: typeof o.w === 'string' ? o.w : '', own: o.own === 'you' ? 'you' : 'fs', f: 'Added', pri: '',
-        mi: mIdx(typeof o.m === 'string' ? o.m : months[0].key), ord: typeof o.i === 'number' ? o.i : 999 });
+        mi: mIdx(typeof o.m === 'string' ? o.m : months[0].key), ord: typeof o.i === 'number' ? o.i : 999, br: o.br && typeof o.br === 'object' ? o.br : null });
+    });
+    // briefed audit actions this audit no longer raises: the field was dealt with — kept as the record, never silently dropped
+    var closed = [];
+    Object.keys(it).forEach(function (id) {
+      var o = it[id]; if (!o || !o.br || typeof o.br !== 'object' || id.indexOf('c:') === 0 || seen[id]) return;
+      closed.push({ id: id, t: typeof o.br.t === 'string' && o.br.t ? o.br.t : id, br: o.br });
     });
     items.sort(function (x, y) { return x.ord - y.ord; });
     items.forEach(function (x) { months[x.mi].list.push(x); });
     var ks = []; items.forEach(function (x) { (x.ks || []).forEach(function (f) { if (ks.indexOf(f) < 0) ks.push(f); }); });
-    return { months: months, items: items, removed: removed, base: pl.base, proj: pl.projOf ? pl.projOf(ks) : pl.proj, edited: Object.keys(it).length > 0 };
+    return { months: months, items: items, removed: removed, closed: closed, base: pl.base, proj: pl.projOf ? pl.projOf(ks) : pl.proj, edited: Object.keys(it).length > 0 };
   }
   var AP_COLS = ['var(--orange-deep)', 'var(--orange)', '#7C3AED'];
   function planCard(a, ed) {
@@ -5256,11 +5342,34 @@ window.addEventListener('load',restore);
       if (APX.edit === a.id) return '<div class="ap-tk ap-editing" data-apid="' + esc(a.id) + '">' + planForm(a) + '</div>';
     }
     return '<div class="ap-tk' + (ed ? ' ap-dr' : '') + '"' + (ed ? ' draggable="true" data-apid="' + esc(a.id) + '"' : '') + '><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
-      '<span class="ap-own' + (a.own === 'you' ? ' you' : '') + '">' + (a.own === 'you' ? 'Your team' : 'FeedSpark') + '</span>' +
+      (a.own === 'you' ? '<span class="ap-own you">Your team</span>' : planSpark(a) ? '<span class="ap-own sp" title="Delivered by FeedSpark with SparkAI — our AI enrichment generates this from the product data and imagery">✦ SparkAI</span>' : '<span class="ap-own">FeedSpark</span>') +
       (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') +
       (ed && (a.ed || a.c) ? '<span class="ap-tag" title="' + (a.c ? 'Added by the team' : 'Reworded by the team — the audit wrote: ' + esc(a.orig.t)) + '">' + (a.c ? 'added' : 'edited') + '</span>' : '') +
       ctl + '</div>' +
-      '<div class="ap-t">' + esc(a.t) + '</div>' + (a.w ? '<div class="ap-w">' + esc(a.w) + '</div>' : '') + '</div>';
+      '<div class="ap-t">' + esc(a.t) + '</div>' + (a.w ? '<div class="ap-w">' + esc(a.w) + '</div>' : '') + (ed ? gpChip(a) : '') + '</div>';
+  }
+  // the task's place in Workflow: its ticket's stage, or the way in
+  function gpChip(a) {
+    var tk = gpTicket(APX.k, a.id, a.br);
+    if (tk) return '<div class="ap-wf' + (tk.done ? ' ok' : '') + '" data-st="' + esc(tk.st) + '">' +
+      '<a href="/workflow" title="' + esc('Ticket ' + tk.id + ' — ' + tk.task + (tk.how === 'task' ? ' (matched on its task name)' : '')) + '">' +
+      (tk.done ? '✓ Taken care of · ' : '🎫 ') + esc(tk.word) + (tk.court ? ' <span>· with ' + esc(tk.court) + '</span>' : '') + '</a></div>';
+    if (a.br) return '<div class="ap-wf wait"><span title="' + esc('Briefed ' + new Date(a.br.at || 0).toLocaleDateString('en-GB') + ' as “' + (a.br.task || '') + '”') + '">' +
+      (GPB.map ? 'Briefed — not in the pipeline yet' : 'Briefed — reading the pipeline…') + '</span>' +
+      (GPB.map ? '<button type="button" class="ap-br" data-apbr="' + esc(a.id) + '" title="Open the Workflow composer again for this task">→ Brief again</button>' : '') + '</div>';
+    return '<div class="ap-wf none"><button type="button" class="ap-br" data-apbr="' + esc(a.id) + '" title="Brief this task in Workflow — it files into Intake, and the next audit reads its stage back here">→ Brief in Workflow</button></div>';
+  }
+  /* SPARKAI, NAMED ON THE CARD (Ray, 16 Oct 2026: "we potentially could highlight any action would require SparkAI — replaced
+     where instead of FeedSpark roundel"): an action FeedSpark delivers by GENERATING content — titles, descriptions, highlights,
+     product details, keywords, material / pattern read off the imagery, the conversational attributes and the AI-readiness areas
+     built from those — carries ✦ SparkAI where the FeedSpark pill was. Never on an identifier, a price, the GPC (Google's fixed
+     taxonomy, mapped not generated), a mapping fix or a custom label, and never on a task the client's team owns. */
+  var SPARK_AI = { title: 1, description: 1, product_highlight: 1, hl_depth: 1, product_detail: 1, detail_depth: 1, keywords: 1, material: 1, pattern: 1,
+    conv: 1, titles: 1, descriptions: 1, detail: 1, attributes: 1 };
+  function planSpark(a) {
+    if (!a || a.own === 'you' || a.c || !a.id) return false;
+    var m = /^(a|q|ai):([a-z_]+)/.exec(a.id);
+    return !!(m && SPARK_AI[m[2]] && !(m[1] === 'q' && m[2] === 'color'));
   }
   function planForm(a) {
     var v = a || { t: '', w: '', own: 'fs' }, dk = a ? a.id : 'add';
@@ -5298,16 +5407,24 @@ window.addEventListener('load',restore);
   function planSection(k, s) {
     var pl = planCtx(k, s); if (!pl || pl.base == null) return '';
     if (!PLST.p) loadPlanSt().then(function () { if (SEL === k) renderDetail(k); });
+    if (!GPB.p) loadGpBriefs().then(function () { if (SEL === k) renderDetail(k); });
     var M = planModel(k, pl), p = parts(k), brand = dispClient(p.client);
     APX.M = M; APX.k = k;
     var rem = M.removed.length ? '<details class="ap-rem"><summary>' + M.removed.length + ' task' + (M.removed.length === 1 ? '' : 's') + ' taken out of the plan</summary>' +
       M.removed.map(function (a) { return '<div class="ap-rrow"><span>' + esc(a.t) + '</span><button type="button" class="btn" data-apback="' + esc(a.id) + '">↩ Put back</button></div>'; }).join('') + '</details>' : '';
+    var nb = 0, nd = 0;
+    M.items.forEach(function (a) { var tk = gpTicket(k, a.id, a.br); if (tk || a.br) nb++; if (tk && tk.done) nd++; });
+    var cls = M.closed.length ? '<div class="ap-closed"><div class="ap-ch">✓ Closed since it was briefed — this audit no longer raises ' + (M.closed.length === 1 ? 'it' : 'them') + '</div>' +
+      M.closed.map(function (c) { var tk = gpTicket(k, c.id, c.br);
+        return '<div class="ap-rrow"><span>' + esc(c.t) + '</span><span class="ap-wf ok"><a href="/workflow">' + (tk ? esc(tk.word) : 'ticket not found') + '</a></span></div>'; }).join('') + '</div>' : '';
+    var wfl = '<div class="ap-wfl">' + (nb ? nb + ' of ' + M.items.length + ' task' + (M.items.length === 1 ? '' : 's') + ' in Workflow · ' + nd + ' taken care of' : 'No task briefed yet — → Brief in Workflow on a card files it into Intake, and the next audit reads its stage back here') +
+      (M.closed.length ? ' · ' + M.closed.length + ' closed since briefed' : '') + '</div>';
     return '<div class="tier" data-tf="plan" id="ap-tier"><div class="tier-h">' +
       '<span class="tbadge rec" style="background:#FEF3E2;color:#B1550A">Action plan</span>' +
       '<h4>What to do next — the next quarter, month by month</h4>' +
       '<span class="qz-meta"><span id="ap-msg">' + esc(APX.msg || ('Drag a task to another month or reorder it · ✎ to reword · saved for ' + brand + ' ' + p.mkt.toUpperCase() + ' for the team')) + '</span>' +
       (M.edited ? '<button type="button" class="btn ap-am" id="ap-reset" title="Drop every edit and go back to the plan the audit reads">↺ Back to the audit’s plan</button>' : '') + '</span></div>' +
-      planKpis(M) + planBoard(M, M) + rem +
+      planKpis(M) + wfl + planBoard(M, M) + cls + rem +
       '<p class="ap-foot">This is the plan the client’s ⬇ PDF and ⬇ HTML close on — as it reads here.</p></div>';
   }
   function planWire(k) {
@@ -5329,6 +5446,17 @@ window.addEventListener('load',restore);
     t.onclick = function (e) {
       var b = e.target.closest && e.target.closest('button'); if (!b || !t.contains(b)) return;
       var it, id, a;
+      if ((id = b.getAttribute('data-apbr'))) {
+        a = find(id); if (!a) return; it = ov();
+        var pay = gpPayload(k, a, M), o = it[id] || {};
+        o.br = { at: Date.now(), task: pay.task, t: String(a.t).slice(0, 160) };
+        if (id.indexOf('c:') === 0) o.c = 1;
+        it[id] = o; b.disabled = true; b.textContent = 'Opening Workflow…';
+        var go = function () { location.href = '/workflow?brief=' + b64url(pay); };
+        var done = false, once = function () { if (!done) { done = true; go(); } };
+        planPut(k, it).then(once, once); setTimeout(once, 1500);   // the stamp reaches the team before the page leaves
+        return;
+      }
       if ((id = b.getAttribute('data-apmv'))) {
         a = find(id); if (!a) return; it = ov();
         var to = Math.max(0, Math.min(M.months.length - 1, a.mi + Number(b.getAttribute('data-d'))));
@@ -5364,7 +5492,9 @@ window.addEventListener('load',restore);
         APX.add = APX.edit = APX.draft = null; planPut(k, it); redraw();
       } else if (b.id === 'ap-reset') {
         if (!confirm('Drop every edit to the ' + dispClient(parts(k).client) + ' ' + parts(k).mkt.toUpperCase() + ' plan and go back to the plan the audit reads?')) return;
-        APX.add = APX.edit = APX.draft = null; planPut(k, {}); redraw();
+        var keep = {}, cur = ov();
+        Object.keys(cur).forEach(function (x) { if (cur[x] && cur[x].br && x.indexOf('c:') !== 0) keep[x] = { br: cur[x].br }; });   // a briefing is a record, not an edit
+        APX.add = APX.edit = APX.draft = null; planPut(k, keep); redraw();
       }
     };
     t.oninput = function (e) {
