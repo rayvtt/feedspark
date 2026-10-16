@@ -579,7 +579,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   function render(){
     var f=feedOf(CLIENT,MKT), snap=DATA&&DATA.snap, kind=(DATA&&DATA.kind)||(f&&f.kind);
     var title=CLIENT?(CLIENT+' · '+mktLbl(MKT)):'Live overlays';
-    $('#det-title').textContent='Live overlays — '+title;
+    $('#det-title').textContent=CLIENT?('Live overlays — '+title):title;
     $('#det-chips').innerHTML=CLIENT?('<span class="chip '+(isFb(MKT)?'fb':'gg')+'">'+(isFb(MKT)?'Meta catalogue':'Google Shopping')+'</span>'
       +(snap?'<span class="chip '+(snap.ovl?'live':'off')+'">'+(snap.ovl?'Overlay service on':'No overlay live')+'</span>':'')):'';
     document.querySelectorAll('#esttbl tr.row').forEach(function(tr){ tr.classList.toggle('sel',tr.getAttribute('data-feed')===CLIENT+'|'+MKT); });

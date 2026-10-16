@@ -3593,10 +3593,52 @@
       "min": 1
     },
     {
-      "name": "AI Quote: section helper text hidden behind ⓘ per heading (fcc-aiq-help)",
+      "name": "AI Quote: the page's OWN per-heading i toggle is RETIRED (16 Oct 2026 design tidy) — the shared ⓘ collapse is the one control (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "var HK='fcc-aiq-help'",
-      "pr": 340,
+      "pattern": "className='hbtn'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the bundle-price toggle is a £ glyph, not a second ⓘ",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "aria-label=\"Show or hide the bundle price\"",
+      "pr": 0,
+      "min": 2
+    },
+    {
+      "name": "Instr collapse: a solo ⓘ spans a grid parent's row, never a column",
+      "file": "docs/instr_collapse.html",
+      "pattern": "grid-column:1/-1;justify-self:start",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "ROAS: a module subtitle wraps to two lines, never cut mid-sentence",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Catalogue: a module subtitle wraps to two lines, never cut mid-sentence",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the methodology card folds closed; the KPI sub-line wraps",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "<details class=\"meth-fold\">",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Overlays: no client picked = one title, never 'Live overlays — Live overlays'",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "textContent=CLIENT?('Live overlays — '+title):title",
+      "pr": 0,
       "min": 1
     },
     {

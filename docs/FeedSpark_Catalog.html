@@ -124,7 +124,7 @@ window.addEventListener('load',restore);
   .mod>.chead{flex:none;min-height:46px;flex-wrap:nowrap}
   .mod>.chead .sp{min-width:0}
   .mod>.chead .agg{flex:none;max-width:48%}
-  .mod>.chead .ch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;line-height:1.35}
   .mod>div:last-child{flex:1;min-height:0;display:flex;flex-direction:column}
   .mod>div:last-child>.cfoot{margin-top:auto;padding-top:6px}
   .mod .stack{margin-top:6px}
