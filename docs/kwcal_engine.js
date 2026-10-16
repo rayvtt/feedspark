@@ -64,6 +64,31 @@
   function ptsOf(e,mkt){ if(e.ptsm&&e.ptsm[mkt])return e.ptsm[mkt]; if(mkt==='gb')return e.pts||[]; return []; }
   function txOf(e,mkt){ var t=e.txsm&&e.txsm[mkt]; return (t&&t.qs&&t.qs.length)?t:null; }
   function cndOf(e,mkt){ var c=e.cndm&&e.cndm[mkt]; return (c&&c.conds&&c.conds.length)?c:null; }
+  /* A CONDITION EITHER LAYERS ONTO WHAT IS ABOVE IT OR STANDS ON ITS OWN (Ray, 16 Oct 2026:
+     "This shouldn't be a condition based on the previous condition, but should continue to have a
+     separate future. So either conditional layers conditions or a separate condition"). Every
+     condition AND-narrowed whatever came before it, so a condition could only ever take products
+     away — the Accessorize Halloween moment's colour condition could not contribute the black and
+     orange products the text filter had missed. A condition now carries `join`: 'and' narrows the
+     chain above it (the old behaviour, and what a stored condition with no join reads as, so no
+     saved scope's count moves), 'or' STARTS A NEW CHAIN that stands alone. The scope is the UNION
+     of the chains: chain 0 is (PT ∪ text) narrowed by its own conditions, and every later chain is
+     the whole catalogue narrowed by its own. A chain with neither a base nor a condition is not a
+     chain — it would be the whole catalogue and swallow every other. */
+  function condChains(conds,hasBase){
+    var out=[{base:!!hasBase,conds:[]}], i;
+    for(i=0;i<(conds||[]).length;i++){
+      var c=conds[i];
+      if(c&&c.join==='or')out.push({base:false,conds:[c]});
+      else out[out.length-1].conds.push(c);
+    }
+    // chain indices stay as written (condChainOf lines up with them); a chain with neither a base
+    // nor a condition is marked dead rather than dropped
+    for(i=0;i<out.length;i++)out[i].live=!!(out[i].base||out[i].conds.length);
+    return out;
+  }
+  function condChainOf(conds,i){ // which chain the condition at index i belongs to (0 = the PT/text chain)
+    var n=0,k; for(k=0;k<=i&&k<(conds||[]).length;k++){ if(conds[k]&&conds[k].join==='or')n++; } return n; }
   // a scope can be SET and not yet measurable — volOf needs the market's product-type index and
   // returns null without one; an unread index is never a zero
   function hasScope(e,mkt){ return !!(ptsOf(e,mkt).length || txOf(e,mkt) || cndOf(e,mkt)); }
@@ -105,14 +130,17 @@
     var v=volOf(store,brand,e,bmkt)||{}, ps=ptsOf(e,bmkt), idx=ptidxFor(store,brand,bmkt);
     var lines=['Moment: '+e.name+' — lands '+dLbl(e)+' ('+bmkt.toUpperCase()+') · brief by '+bLbl(e),
       'Keyword themes: '+((e.terms||[]).join(', ')||'TBC')];
-    var tx=txOf(e,bmkt);
+    var tx=txOf(e,bmkt), cn=cndOf(e,bmkt);
     if(e.brandwide){ lines.push('Categories: brand-wide — whole '+bmkt.toUpperCase()+' catalogue'+(v.vol?' ('+fmt(v.vol)+' SKUs)':'')); }
-    else if(ps.length||tx){
+    else if(ps.length||tx||cn){
       if(ps.length){ lines.push('Categories in scope:');
         ps.forEach(function(pt){ lines.push('  • '+pt+(idx?' — '+fmt(idx.map[pt]||0)+' SKUs':'')); }); }
       if(tx){ lines.push('Text filters (title/description contains):');
         tx.qs.forEach(function(q){ lines.push('  • “'+q.q+'” — '+(q.n!=null?fmt(q.n)+' SKUs':'count pending sync')); }); }
-      if(v&&v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs'+(ps.length&&tx?' unique':'')+' ('+v.pct+'% of the live feed)');
+      if(cn){ lines.push('Attribute conditions:');
+        cn.conds.forEach(function(c,ci){ lines.push('  • '+((ci&&c.join==='or')?'OR (its own set) ':(ci?'AND ':''))
+          +c.attr+' = '+((c.vals||[]).join(', ')||'TBC')); }); }
+      if(v&&v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs'+((ps.length?1:0)+(tx?1:0)+(cn?1:0)>1?' unique':'')+' ('+v.pct+'% of the live feed)');
     } else lines.push('Categories: TBC — set the scope on the Keyword Calendar');
     var sat=idx&&idx.sat, sm=e.satm&&e.satm[bmkt];
     if(sat&&idx.__total){
@@ -292,6 +320,7 @@
   return { LEAD_DAYS:LEAD_DAYS, STALE_DAYS:STALE_DAYS, MON:MON, fmt:fmt, normTask:normTask,
     schedDate:schedDate, dLbl:dLbl, bLbl:bLbl,
     evsOf:evsOf, ptidxFor:ptidxFor, evMkt:evMkt, ptsOf:ptsOf, txOf:txOf, cndOf:cndOf,
+    condChains:condChains, condChainOf:condChainOf,
     hasScope:hasScope, volOf:volOf, kwHours:kwHours, kwTask:kwTask, briefPayload:briefPayload,
     taskWords:taskWords, sigWords:sigWords, nameScore:nameScore, isKwTicket:isKwTicket,
     tieBuild:tieBuild, dueList:dueList, briefedList:briefedList, dueIso:dueIso, dueLbl:dueLbl,
