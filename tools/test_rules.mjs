@@ -351,6 +351,7 @@ console.log('· availability, master → feed — the join, both counters, the a
   const WIRED = []; Object.keys(FEEDS).forEach((c) => Object.keys(FEEDS[c]).forEach((m) => { const s = FEEDS[c][m]; if (s && s.xml) WIRED.push({ client: c, mkt: m, url: s.xml }); }));
   const FK = R.feedKeys(WIRED), ROSTER = ROAS.rosterList();
   t('feedKeys: a roster market finds its Google AND Meta feed by the FeedHero company id', JSON.stringify(FK.reiss_gb) === JSON.stringify({ g: 'Reiss|gb', fb: 'Reiss|gb-fb' }) && FK.reiss_ie_pla.g === 'Reiss|ie' && FK.superdry_befr.g === 'Superdry|befr' && FK.schuh_uk_1.g === 'Schuh|gb' && FK.fs_new_hobbycraft.g === 'Hobbycraft|gb');
+  t('feedKeys: a channel folder with underscores (fb_lang_feed) still yields its company id — Superdry DE/FR/NL Meta, 16 Oct 2026', FK.superdry_de && FK.superdry_de.fb === 'Superdry|de-fb' && FK.superdry_nl.fb === 'Superdry|nl-fb' && FK.fs_new_hobbycraft.fb === 'Hobbycraft|gb-fb');
   t('feedKeys: most of the roster is wired (a market with no feed says so — never a guessed one)', ROSTER.filter((m) => FK[m.cmpid] && FK[m.cmpid].g).length >= 40 && !FK.superdry_it);
   t('THE BUG IT REPLACES: the roster label never names a scan-index key (Reiss|GB vs Reiss|gb, Superdry|BE-FR vs Superdry|befr)', ROSTER.every((m) => !WIRED.some((w) => w.client + '|' + w.mkt === m.client + '|' + m.market)));
   const catCmpid = new Function(liftFn(WK, 'catCmpid') + '\nreturn catCmpid;')();

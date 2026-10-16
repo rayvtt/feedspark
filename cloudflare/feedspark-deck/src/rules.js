@@ -679,13 +679,13 @@ export function stockView(r, roasEntry, feedIdx, avail) {
 // The scan indexes (voldobidx, feedavail) key a feed as it is WIRED — 'Reiss|gb', 'Superdry|befr',
 // 'Reiss|gb-fb' — while the roster names a market its own way ('GB', 'BE-FR'), so a label is never
 // matched to a label (the first cut of the SKU denominator did, and 'Reiss|GB' found nothing). Every
-// FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file> — the same read as the Catalogue's
+// FeedHero output lives at /output_feeds/<cc>/<cmpid>/<hash>/<file> (<cc> may carry underscores: fb_lang_feed, fb_tsv, pinterest_gb_xml) — the same read as the Catalogue's
 // catCmpid — and a Meta (-fb) feed sits under its Google market's cmpid, so one company id names both.
 // list = [{client, mkt, url}] (the wired XML feeds) -> { cmpid: { g: 'Client|mkt', fb: 'Client|mkt-fb' } }
 export function feedKeys(list) {
   const out = {};
   (list || []).forEach((f) => {
-    const m = f && f.url ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(f.url)) : null;
+    const m = f && f.url ? /\/output_feeds\/[a-z0-9_]+\/([a-z0-9_]+)\//i.exec(String(f.url)) : null;
     if (!m || !f.client || !f.mkt) return;
     const cmpid = m[1].toLowerCase(), ch = /-fb$/i.test(String(f.mkt)) ? 'fb' : 'g';
     const e = out[cmpid] || (out[cmpid] = {});
