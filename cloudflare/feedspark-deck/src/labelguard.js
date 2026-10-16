@@ -1265,8 +1265,22 @@ export function goldenCovIndex(attrs) {
    Rows are aggregated INSIDE the parser callback — counts + value maps only, so a 125MB
    feed costs MBs — and the finish() assembly replicates scanFeed's countsRow/posOf/attrPos
    algorithm exactly. Alongside the snapshot it captures the /volume module's SKU id set
-   ("id|category" lines, category = first chevron level of the primary product_type). */
+   ("id|category" lines, category = first chevron level of the primary product_type).
+   MORE THAN THE CATEGORY (Ray, 16 Oct 2026, over /volume's Category movers: "can we breakdown new
+   arrivals movers further more by more fields on feeds? (PT/ color/ gender etc)"): the line is
+   "id|<cat>\t<pt level 2>\t<pt level 3>\t<brand>\t<colour>\t<gender>\t<age group>\t<avail>" — the
+   category first, as before (the worker's parse reads what follows the LAST '|' and splits on
+   tabs), then VOL_DIMS in order. Each is ONE fact per product, cleaned of | tab and newline and
+   capped at 40 characters; the deeper product_type levels are stored as the level ALONE (the
+   worker rebuilds "cat > l2 > l3"), availability as the stock word's bucket. A line without tabs is
+   a capture from before this shipped, which the worker counts as "not recorded", never as blank. */
 export const VOLCAP = 40000;   // id-set cap — beyond it the capture is TRUNCATED (volume records rows only)
+// the facts a moved product is attributed to, after its top-level category — order is the wire order
+export const VOL_DIMS = [
+  ['pt2', 'Product type · tier 2'], ['pt3', 'Product type · tier 3'], ['brand', 'Brand'],
+  ['color', 'Colour'], ['gender', 'Gender'], ['age', 'Age group'], ['avail', 'Availability']
+];
+export const VOL_DIM_CAP = 40;
 // NEW-PRODUCT ARRIVALS (Ray, 15 Sep 2026): c:fs_date_of_birth is FeedHero's stamp of the day a
 // product ID first appeared in the feed. The collector histograms it per month (YYYY-MM) for
 // every Google Shopping feed — SURVIVORS ONLY (products still in the feed today), so recent months
@@ -1295,6 +1309,7 @@ export function xmlCollector(meta) {
   let dobCol = -1; const dob = { n: 0, bad: 0, m: {}, min: null, max: null };
   // availability, counted per product on BOTH channels (Google and Meta) — /stock's master → feed ratio
   let avCol = -1; const av = { in: 0, out: 0, pre: 0, none: 0, other: 0 }; const avOw = {}; let avOwN = 0;
+  let dimCols = { brand: -1, color: -1, gender: -1, age_group: -1 };   // the movers' extra facts (VOL_DIMS)
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
   const gsc = gpcScopeCounter(() => attrCols);   // the category scope, counted per product
@@ -1323,7 +1338,9 @@ export function xmlCollector(meta) {
       depT.img_depth.src = ac.image_link >= 0; depT.hl_depth.src = dHl.length > 0; depT.detail_depth.src = dDet.length > 0;
     }
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
-    { const ac = findAttrCols(header).availability; avCol = ac == null ? -1 : ac; }
+    { const ac = findAttrCols(header); avCol = ac.availability == null ? -1 : ac.availability;
+      dimCols = { brand: ac.brand == null ? -1 : ac.brand, color: ac.color == null ? -1 : ac.color,
+        gender: ac.gender == null ? -1 : ac.gender, age_group: ac.age_group == null ? -1 : ac.age_group }; }
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
     if (wantPT) {
       attrCols = findAttrCols(header);
@@ -1385,7 +1402,13 @@ export function xmlCollector(meta) {
       }
       if (vids.length < VOLCAP) {
         const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
-        vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
+        const lv = pv.split('>').map((x) => x.trim());
+        const dv = (i) => i >= 0 ? String(r[i] == null ? '' : r[i]).replace(/[|\t\n\r]+/g, ' ').trim().slice(0, VOL_DIM_CAP) : '';
+        const avw = avCol >= 0 ? String(r[avCol] == null ? '' : r[avCol]).trim() : '';
+        vids.push(idv.replace(/[|\t\n]/g, ' ') + '|' + lv[0].replace(/[|\t]/g, ' ').slice(0, 60)
+          + '\t' + (lv[1] || '').replace(/[|\t]/g, ' ').slice(0, VOL_DIM_CAP) + '\t' + (lv[2] || '').replace(/[|\t]/g, ' ').slice(0, VOL_DIM_CAP)
+          + '\t' + dv(dimCols.brand) + '\t' + dv(dimCols.color) + '\t' + dv(dimCols.gender) + '\t' + dv(dimCols.age_group)
+          + '\t' + (avw ? availBucket(avw) : ''));
       } else volTrunc = true;
       if (dobCol >= 0) {
         const s = String(r[dobCol] == null ? '' : r[dobCol]).trim();

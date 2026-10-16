@@ -528,6 +528,10 @@ echo "── validating: /overlays — the estate folds, above the live panel an
 node tools/check_ovfold.js >/dev/null
 echo "   ✓ stacked, folded on a fresh device, every folded card keeps its line"
 
+echo "── validating: /volume — the movers break down by more than the category"
+node tools/check_volmovers.js >/dev/null
+echo "   ✓ a chip per dimension, the brand table summed independently, an uncarried dimension said in words"
+
 echo "── validating: text modules (every served engine bundles as a string)"
 node tools/check_textmodules.js >/dev/null
 echo "   ✓ no served engine can bundle as code and serve an empty body"

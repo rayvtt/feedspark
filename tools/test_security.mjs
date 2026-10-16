@@ -61,6 +61,7 @@ console.log('· body caps');
   t('a 4 MB default on a PUT', SEC.bodyCapFor('/api/briefs') === 4 * 1024 * 1024 && SEC.bodyGate('/api/briefs', 'PUT', String(4 * 1024 * 1024)).ok && !SEC.bodyGate('/api/briefs', 'PUT', String(4 * 1024 * 1024 + 1)).ok);
   t('the refusal is a 413 carrying the cap and the size', (() => { const g = SEC.bodyGate('/api/state', 'POST', '9000000'); return g.status === 413 && g.cap === 4194304 && g.size === 9000000; })());
   t('the materials bank takes 26 MB, the push lane 48 MB', SEC.bodyCapFor('/api/materials') === 26 * 1024 * 1024 && SEC.bodyCapFor('/api/gmail/push') === 48 * 1024 * 1024 && SEC.bodyGate('/api/gmail/push', 'POST', String(40 * 1024 * 1024)).ok);
+  t('the live rescan lane takes 12 MB — one feed\'s id set now carries the movers\' seven facts', SEC.bodyCapFor('/api/labels/scanpush') === 12 * 1024 * 1024 && SEC.bodyGate('/api/labels/scanpush', 'POST', String(10 * 1024 * 1024)).ok && !SEC.bodyGate('/api/labels/scanpush', 'POST', String(13 * 1024 * 1024)).ok);
   t('an undeclared length passes and is marked so (Cloudflare bounds the request at 100 MB)', SEC.bodyGate('/api/briefs', 'PUT', null).undeclared === true && SEC.bodyGate('/api/briefs', 'PUT', 'abc').ok);
 }
 

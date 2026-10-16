@@ -71,7 +71,9 @@ export function dirGate(identity, ownerEmail, dir, env) {
 // bank takes client decks (its own route already refuses over 24 MB); the push lane carries the
 // xml-scan agent's batches of 8 feed snapshots with their id sets (several MB each).
 export const BODY_CAP_DEFAULT = 4 * 1024 * 1024;
-export const BODY_CAPS = { '/api/materials': 26 * 1024 * 1024, '/api/gmail/push': 48 * 1024 * 1024 };
+// /api/labels/scanpush carries ONE feed's snapshot + its id set — since 16 Oct 2026 every id line
+// carries the movers' seven facts (~90 bytes a product), so a 40k-SKU feed is ~4 MB on its own
+export const BODY_CAPS = { '/api/materials': 26 * 1024 * 1024, '/api/gmail/push': 48 * 1024 * 1024, '/api/labels/scanpush': 12 * 1024 * 1024 };
 
 export function bodyCapFor(path) {
   return BODY_CAPS[String(path || '')] || BODY_CAP_DEFAULT;
