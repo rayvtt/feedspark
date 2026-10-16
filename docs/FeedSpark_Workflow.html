@@ -2461,6 +2461,7 @@ aside.ck[hidden]{display:none}
     // Access identity, stamped once at creation and never rewritten by a later editor.
     if(!b.by){ var me=meName(); if(me)b.by=me; }
     if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
+    if(window.__gpId){ b.gp=window.__gpId; window.__gpId=null; }   // Golden Record action-plan tie: the audit reads this ticket's stage back onto its task
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email'){ adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1); b.taskKey=o.f.client+'|'+o.f.task; }
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
@@ -3958,6 +3959,7 @@ aside.ck[hidden]{display:none}
   })();
   function prefill(t){
     window.__editId=null; PINNED_CLIENT=null;   // a fresh draft inherits no pin; the deep link re-pins after
+    window.__gpId=null;      // Golden Record plan tie: same rule as the calendar's
     window.__kwId=null;      // Keyword-Calendar tie: cleared here so only the deep link that
                              // just opened this composer can stamp one onto the saved brief
     window.__emailId=null; window.__emailIds=null;   // the email-triage opener re-sets these after calling prefill
@@ -5303,6 +5305,8 @@ aside.ck[hidden]{display:none}
       // Keyword Calendar: carry the moment's id onto the brief so the calendar's status chip
       // tracks THIS ticket for life — renaming the moment can never break the tie (Ray, 11 Sep 2026)
       if(j.kw)window.__kwId=String(j.kw).slice(0,60);
+      // Golden Record action plan: the task's own key, so the next audit run reads this ticket's stage back onto it
+      if(j.gp)window.__gpId=String(j.gp).slice(0,160);
       pinClient(j.client||null);   // …and the brand it names can never be swapped for another
     },450);
   }

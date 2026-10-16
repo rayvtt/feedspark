@@ -131,9 +131,9 @@ const QUALITY = {
   const price = all.find((c) => c.f === 'g:price'), gtin = all.find((c) => c.f === 'g:gtin'), title = all.find((c) => c.f === 'g:title');
   ok('the required field short of the spec, owned by the client, with the points it is worth — in the first month', price && m1.indexOf(price) >= 0 && /Your team/.test(price.own) && /^\+\d/.test(price.gain), price);
   ok('the missing identifiers — the client\'s to send, never generated', gtin && /Your team/.test(gtin.own) && /GTIN/.test(gtin.t), gtin);
-  ok('the content rule Google states as a requirement, FeedSpark\'s to fix', title && /FeedSpark/.test(title.own) && /capital letters/.test(title.t), title);
+  ok('the content rule Google states as a requirement, FeedSpark\'s to fix (✦ SparkAI rewrites it)', title && /SparkAI/.test(title.own) && /capital letters/.test(title.t), title);
   const mat = all.find((c) => c.f === 'g:material');
-  ok('the recommended field worth points, FeedSpark\'s, after the requirements', mat && /FeedSpark/.test(mat.own) && /^\+\d/.test(mat.gain) && ix((c) => c === mat) > ix((c) => c === title), mat);
+  ok('the recommended field worth points, FeedSpark\'s (✦ SparkAI generates it), after the requirements', mat && /SparkAI/.test(mat.own) && /^\+\d/.test(mat.gain) && ix((c) => c === mat) > ix((c) => c === title), mat);
   const conv = ix((c) => /conversational attributes/i.test(c.t)), tax = ix((c) => /taxonomy depth \(41/.test(c.t));
   ok('the AI-readiness work comes last — conversational attributes and the weakest area', conv > ix((c) => c === mat) && tax > ix((c) => c === mat), all.map((c) => c.t));
   ok('a field already at full coverage is never an action', !all.some((c) => c.f === 'g:pattern' || c.f === 'g:sale_price'), all.map((c) => c.f));

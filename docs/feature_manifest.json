@@ -16293,6 +16293,14 @@
       "file": "tools/check_kwcal_cond.js",
       "pattern": "a separate condition ADDS its own products",
       "pr": 0
-    }
-  ]
+    },
+    {"name": "Golden plan: each task briefs into Workflow with its own key", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "gp: gpKey(k, a.id)", "pr": 0},
+    {"name": "Golden plan: the ticket's stage read back onto the task", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function gpTicket(k, id, br)", "pr": 0},
+    {"name": "Golden plan: closed since briefed — an action the audit no longer raises stays on record", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "Closed since it was briefed", "pr": 0},
+    {"name": "Golden plan: ↺ keeps the briefing record", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "a briefing is a record, not an edit", "pr": 0},
+    {"name": "Workflow: the composer stamps the Golden Record plan tie", "file": "docs/FeedSpark_Workflow.html", "pattern": "if(window.__gpId){ b.gp=window.__gpId; window.__gpId=null; }", "pr": 0},
+    {"name": "Golden plan → Workflow tripwire in presync", "file": "tools/presync.sh", "pattern": "node tools/check_grplanbrief.js", "pr": 0},
+    {"name": "Golden plan: ✦ SparkAI replaces the FeedSpark pill on what SparkAI generates", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function planSpark(a)", "pr": 0},
+    {"name": "Golden cover: the body text follows the body face, never a hard-coded Lato", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "color:#333;font-family:var(--font-body,Lato),system-ui,sans-serif;text-align:cen", "pr": 0}
+]
 }
