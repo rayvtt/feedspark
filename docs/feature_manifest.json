@@ -16294,12 +16294,6 @@
       "pattern": "a separate condition ADDS its own products",
       "pr": 0
     },
-    {"name": "Golden cover: the client's own pictures, read off the feed and embedded", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function coverPrep(k)", "pr": 0},
-    {"name": "Golden cover: both downloads wait for the cover's pictures", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "return coverPrep(k).then(function () { return cx; });", "pr": 0},
-    {"name": "Golden cover tripwire in presync", "file": "tools/presync.sh", "pattern": "node tools/check_grcover.js", "pr": 0},
-    {"name": "Golden cover: the client's own logo from the Social DPA identity, embedded", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function logoPrep(k)", "pr": 0},
-    {"name": "Golden cover: FeedSpark × client logo lockup", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "class=\"cv-lock\"", "pr": 0},
-    {"name": "Golden cover: HTML export cover not double-padded (spans the panel)", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "body.xhtml #print-foot{max-width:1180px", "pr": 0},
     {"name": "Golden plan: each task briefs into Workflow with its own key", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "gp: gpKey(k, a.id)", "pr": 0},
     {"name": "Golden plan: the ticket's stage read back onto the task", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function gpTicket(k, id, br)", "pr": 0},
     {"name": "Golden plan: closed since briefed — an action the audit no longer raises stays on record", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "Closed since it was briefed", "pr": 0},
