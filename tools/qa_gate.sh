@@ -409,6 +409,13 @@ else
   echo "   ✗ Services & Pricer harness FAILED — see node tools/test_pricer.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h0/7: DSV scan — a FeedHero TSV/CSV feed reads like its XML (Meta TSV, # lines, quotes, override refused)"
+if node tools/test_dsv.mjs >/dev/null 2>&1; then
+  echo "   ✓ delimited reader, comma files unchanged, TSV = XML snapshot, override feed refused, wiring"
+else
+  echo "   ✗ DSV scan harness FAILED — see node tools/test_dsv.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h/7: Golden Record PDP harvest (page extraction + host allowlist + sampler)"
 if node tools/test_pdpharvest.mjs >/dev/null 2>&1; then
   echo "   ✓ details-text rules, variant-only identifiers, evidence-gated AI merge + the proxy allowlist hold"

@@ -1210,17 +1210,60 @@
       "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
     },
     {
-      "name": "worker: remaining sheet-backed -fb feeds (post Meta-XML migration, 9 Sep 2026; Hobbycraft gb-fb + Superdry de/fr/nl-fb moved to FeedHero XML 16 Oct 2026 when their sheets answered gviz 410 — only Superdry ie-fb is left, FeedHero has no XML Meta feed for it)",
+      "name": "worker: NO sheet-backed -fb feed left (16 Oct 2026: the last five Meta sheets answered gviz 410 — Hobbycraft gb-fb moved to its FeedHero XML, Superdry ie/de/fr/nl-fb to their FeedHero TSVs, read by the DSV scan); was a min-5 marker from PR #292",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "-fb': { id:",
-      "min": 1,
+      "forbidden": true,
       "pr": 292
     },
     {
-      "name": "worker: Superdry de/fr/nl-fb read FeedHero's own language Meta feeds (fb_lang_feed), not the dead sheets",
+      "name": "worker: Superdry ie/de/fr/nl-fb read FeedHero's Facebook TSVs (the fb_lang_feed XMLs are override feeds)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "output_feeds/fb_lang_feed/superdry_",
-      "min": 3,
+      "pattern": "output_feeds/fb_tsv/superdry_",
+      "min": 4,
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: xmlRef accepts a FeedHero .tsv/.csv/.txt file",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "\\.(?:xml|tsv|csv|txt)$/i.test(String(u || '').trim())",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: createParser reads any delimited file (Meta TSV # lines, delimiter by presence)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "function dsvDelim(line)",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: createFeedParser + isOverrideFeed exported",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "createFeedParser: createFeedParser, isOverrideFeed: isOverrideFeed",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: the xml-scan agent reads XML or DSV and refuses an override feed",
+      "file": "tools/xml_scan.mjs",
+      "pattern": "FA.isOverrideFeed(head)",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: Label Guard's live rescan reads XML or DSV",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "(a[0].createFeedParser || a[0].createXmlParser)(onRow)",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: the harness runs in qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_dsv.mjs",
+      "pr": 0
+    },
+    {
+      "name": "DSV scan: no market wired to a language override feed",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "output_feeds/fb_lang_feed/",
+      "forbidden": true,
       "pr": 0
     },
     {

@@ -552,13 +552,15 @@ console.log('· image pixels — the worker (no open proxy, the store)');
 {
   const liftF = (name) => { const a = WK.indexOf('function ' + name + '('); const b = WK.indexOf('\n}\n', a); if (a < 0 || b < 0) throw new Error('cannot lift ' + name); return WK.slice(a, b + 2); };
   const consts = WK.slice(WK.indexOf('const CAT_IMG_FS_HOSTS'), WK.indexOf('function catImgKey('));
-  const I = new Function(consts + liftF('catImgHostOf') + liftF('pdpSplitCsv') + liftF('catImgHostsFromHead') + liftF('catImgAllowed') + liftF('catImgClean') + liftF('catImgMerge') + 'return { catImgHostsFromHead, catImgAllowed, catImgClean, catImgMerge, CAT_IMG_KEEP };')();
+  const I = new Function(consts + liftF('catImgHostOf') + liftF('dsvHead') + liftF('catImgHostsFromHead') + liftF('catImgAllowed') + liftF('catImgClean') + liftF('catImgMerge') + 'return { catImgHostsFromHead, catImgAllowed, catImgClean, catImgMerge, CAT_IMG_KEEP };')();
   const xml = '<rss><channel><item><g:image_link><![CDATA[https://cdn.shop.example/a.jpg]]></g:image_link><g:additional_image_link>https://img2.shop.example/b.jpg</g:additional_image_link></item>'
     + '<item><g:image_link>https://lia.feedspark.com/x.php?template_hash=t&amp;img_url=https%3A%2F%2Fsrc.shop.example%2Fc.jpg</g:image_link></item></channel></rss>';
   const hx = I.catImgHostsFromHead(xml);
   t('image hosts are learned from the feed head: image_link, additional_image_link, CDATA and an overlay\'s img_url source', ['cdn.shop.example', 'img2.shop.example', 'lia.feedspark.com', 'src.shop.example'].every((h) => hx.indexOf(h) >= 0));
   const hc = I.catImgHostsFromHead('id,title,image_link\n1,"A, B",https://www.cdn.sheet.example/1.jpg\n');
   t('… and from a CSV sheet\'s image column (a quoted comma does not shift it; www. folded)', hc.length === 1 && hc[0] === 'cdn.sheet.example');
+  const ht = I.catImgHostsFromHead('# ref_application_id 1\n# ref_asset_id 2\nid\ttitle\timage_link\n1\t"A\tB"\thttps://cdn.tsv.example/1.jpg\n');
+  t('… and from a FeedHero Meta TSV: the # metadata lines skipped, a quoted tab does not shift the column', ht.length === 1 && ht[0] === 'cdn.tsv.example');
   t('a learned host is allowed; a FeedSpark overlay host is allowed; anything else is refused', I.catImgAllowed('https://cdn.shop.example/z.jpg', hx) && I.catImgAllowed('https://dashboard.feedspark.com/i.php', []) && !I.catImgAllowed('https://evil.example/z.jpg', hx) && !I.catImgAllowed('http://169.254.169.254/latest', hx) && !I.catImgAllowed('file:///etc/passwd', hx));
   const H64 = 'ab'.repeat(32);
   const cl = I.catImgClean({ r: { 'https://a.example/1.jpg': [1200, 1200, 1e5, 'JPEG', 'white', '#ffffff', 80, 0, 900, H64, 64, '#1e285a'], 'https://a.example/2.jpg': [0, 0, 0, '', 'err', 'HTTP 404'],
