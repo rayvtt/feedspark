@@ -3974,7 +3974,7 @@ aside.ck[hidden]{display:none}
     var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(CAT_LBL[cat]?cat:'');
     var pd=taskDate(t);
     if(pd){ document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
-      window.__bsAuto='from the intake row — your date, kept'; }
+      window.__bsAuto=t.dk&&!t.d?'from the module — the date the work goes live':'from the intake row — your date, kept'; }
     else bsPropose();                   // no AM date -> propose the first week with free capacity
     fillAttach(t);
     renderCtx(t);
@@ -3983,7 +3983,7 @@ aside.ck[hidden]{display:none}
     if(t.scope)document.getElementById('bg-scope').value=t.scope;
     refreshPreview();
     openBrief();
-    toast('Composer prefilled from the row'+(pd?' · due pulled from the intake row':' — set the due date')
+    toast('Composer prefilled from the row'+(pd?(t.dk&&!t.d?' · due = when it goes live':' · due pulled from the intake row'):' — set the due date')
       +' — fill the scope and save');
   }
   // ---- attach an intake row to an EXISTING ticket instead of drafting a new brief ----
@@ -5300,7 +5300,12 @@ aside.ck[hidden]{display:none}
     if(!j||!j.task)return;
     if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
     window.__fromLink=1;   // module deep-link: the tie to plan rows must be EXACT, never fuzzy
-    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',scope:j.scope?String(j.scope).slice(0,2000):''});
+    // a module that KNOWS when the work is due says so (the keyword calendar's live-by date) —
+    // without it the composer proposes a free-capacity week, which on a dated moment is a date
+    // contradicting the brief's own scope line
+    var jd=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String((j&&j.due)||''));
+    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',scope:j.scope?String(j.scope).slice(0,2000):'',
+      dk:jd?[+jd[1],+jd[2],+jd[3]]:null});
       window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
       // Keyword Calendar: carry the moment's id onto the brief so the calendar's status chip
       // tracks THIS ticket for life — renaming the moment can never break the tie (Ray, 11 Sep 2026)
