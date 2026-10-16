@@ -185,6 +185,7 @@ console.log('· the page');
     t('…▶ Try it resolves every field through the engine and NAMES one the feed lacks, never sets a field that is not there', /function gbTry\(key\)/.test(PG) && /B\.resolve\(S\.st, gbSpec\(sp\)\)/.test(PG) && /does not carry/.test(PG));
     t('…the panel lives on <body> (the hero clips it and its animation would trap a fixed sheet), a tap\'s focus never opens it', /document\.body\.appendChild\(el\)/.test(PG) && /matches\(':focus-visible'\)/.test(PG));
     t('…it is a floating corner button, not a hero control, and the Feed Chat bubble is gone from the FCC', /<span class="gbw" id="gbw"><button class="gbfab" id="gbtn"/.test(PG) && /\.gbw\{position:fixed;right:18px;bottom:18px/.test(PG) && !/<header class="hero">[\s\S]*id="gbtn"[\s\S]*<\/header>/.test(PG) && !/feedchat_widget|FEEDCHATW/.test(read('cloudflare/feedspark-deck/src/worker.js')));
+    t('…▶ Try it puts the field with MORE values on the rows (Ray, 16 Oct 2026), counted on the feed, a tie keeping the recipe\'s order', /var nr = gbCount\(rs\), nc = gbCount\(cs\); if \(nc > nr\)/.test(PG) && /function gbCount\(sp\) \{ var P = S\.st && B\.pivot\(S\.st, sp, null/.test(PG) && /rows and columns turned/.test(PG));
     t('…the guidebook names no client and no currency', gb && !/£|€|\$\d/.test(gb[1]) && !/Reiss|Schuh|Superdry|Monsoon|Accessorize|YuMOVE|Hobbycraft/i.test(gb[1]));
   }
   t('no literal </body> inside the script (the worker injects at the first one)', PG.indexOf('</body>') === PG.lastIndexOf('</body>'));

@@ -85,7 +85,12 @@ recipe a pivot (rows × columns), what to look for in it, the action it leads to
 Three views worth saving close it (bidding readiness, search coverage, AI readiness). **▶ Try it** sets the
 pivot on the feed in front of you through `B.resolve`, so a field another feed names differently is still
 found; a field the feed does not carry is NAMED in a toast and never set. Category = `g:product_type`, read
-to tier 1. The panel is moved onto `<body>` on first open — the hero clips its overflow and its entrance
+to tier 1. **The field with more values goes on the rows** (Ray, 16 Oct 2026: "fields with more values on row
+<> less on column"): a recipe is written rows × columns, but which field carries more distinct values is a
+fact about the feed in front of you, so ▶ Try it counts both (the pivot's own rows, blank included) and puts
+the longer list down the page — two availability words across forty categories reads as a tall table, never
+one the reader scrolls sideways. A tie keeps the recipe's own order; a recipe with no column field has nothing
+to turn; the toast says when it turned them and the two counts. The panel is moved onto `<body>` on first open — the hero clips its overflow and its entrance
 animation makes it the containing block of anything fixed inside it. It names no client and no currency.
 
 ## Harnesses

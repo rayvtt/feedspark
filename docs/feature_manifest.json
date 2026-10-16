@@ -3635,6 +3635,13 @@
       "min": 1
     },
     {
+      "name": "Breakdown guidebook: ▶ Try it puts the field with more values on the rows (Ray, 16 Oct 2026)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "var nr = gbCount(rs), nc = gbCount(cs); if (nc > nr)",
+      "pr": 0,
+      "min": 1
+    },
+    {
       "name": "Overlays: no client picked = one title, never 'Live overlays — Live overlays'",
       "file": "docs/FeedSpark_Overlays.html",
       "pattern": "textContent=CLIENT?('Live overlays — '+title):title",
