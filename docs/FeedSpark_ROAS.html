@@ -147,7 +147,7 @@ window.addEventListener('load',restore);
   .mod.wide{grid-column:span 2}
   .mod>.chead{flex:none;flex-wrap:nowrap;margin-bottom:6px}
   .mod>.chead>div:first-child{min-width:0}
-  .mod>.chead .ch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+  .mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;line-height:1.35;margin-bottom:0}
   .mod .mbody{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
   .mod .mfoot{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;padding-top:7px;margin-top:6px;border-top:1px dashed var(--line);display:flex;gap:10px;flex-wrap:wrap}
   .btn.xs{height:28px;padding:0 9px;font-size:12.5px;border-radius:8px}

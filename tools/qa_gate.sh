@@ -328,6 +328,12 @@ else
   echo "   ✗ KWCal scope harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwcal_scopes.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_kwcal_cond.js >/dev/null 2>&1; then
+  echo "   ✓ a scope condition either narrows what is above it or stands on its own"
+else
+  echo "   ✗ KWCal condition harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_kwcal_cond.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_wfboot.js >/dev/null 2>&1; then
   echo "   ✓ the Workflow board opens inside its blocking budget, and keeps the filter across a reload"
 else

@@ -37,14 +37,20 @@
      tripwire kept flipping between 132 and 133 desktop controls on /kwcal. A card that already
      carries its toggle keeps it, and each pass re-applies the group's state — because a card
      that re-renders replaces these elements, and a new node without the class would come back
-     visible. -->
+     visible.
+
+     A SOLO ⓘ NEVER TAKES A COLUMN (16 Oct 2026, the design tidy): where a card has no heading the
+     toggle is inserted BEFORE the explainer, and when that parent is a grid (KWCal's month roadmap)
+     the button became a grid item — one 20px dot filling a 250px column while the month cards
+     started a column late. It now spans the whole row and sits at its start, so a grid parent
+     reads exactly as a block one. -->
 <style>
 .instr-tgl{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:7px;padding:0;
   border:1px solid var(--line,#E6E6E6);border-radius:100px;background:transparent;color:var(--muted,#8a94a0);
   font:inherit;font-size:11.5px;font-weight:700;line-height:1;cursor:pointer;vertical-align:2px;flex:none}
 .instr-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
 .instr-tgl.on{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);background:rgba(245,166,35,.12)}
-.instr-tgl.instr-solo{margin:0 0 8px}
+.instr-tgl.instr-solo{margin:0 0 8px;grid-column:1/-1;justify-self:start;align-self:start}
 .instr-hide{display:none!important}
 [data-theme=dark] .instr-tgl{border-color:var(--line,#2C3039)}
 </style>

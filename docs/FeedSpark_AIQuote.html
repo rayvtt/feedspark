@@ -298,10 +298,6 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .card .ch{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 12px}
   /* section helper text is HIDDEN by default (Ray, 11 Sep 2026: "long text from each section can be
      hide") — an ⓘ on every heading reveals it; the choice is remembered per section */
-  .card>.ch,.hero p.sub{display:none} .card.help>.ch,.hero.help p.sub{display:block}
-  .hbtn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-size:11px;font-weight:900;cursor:pointer;margin-left:7px;vertical-align:middle;padding:0}
-  .hbtn.on,.hbtn:hover{border-color:var(--orange);color:var(--orange-ink)} [data-theme=dark] .hbtn{background:#20242E}
-  .hero h1 .hbtn{width:22px;height:22px;font-size:12px}
   .scope-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .qp{font:inherit;font-size:12.5px;font-weight:900;padding:7px 13px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
   .qp:hover{border-color:var(--orange);color:var(--orange-deep)}
@@ -526,7 +522,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   #upd-card.upd-moved{display:none}
   .aim-bh{display:flex;align-items:center;gap:6px;margin:0 0 7px} .aim-bh h4{margin:0}
   #aim-upd:empty{display:none} #aim-upd{margin:2px 0 10px}
-  .upd-binfo{margin-left:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:12px;cursor:pointer;vertical-align:middle;padding:0}
+  .upd-binfo{margin-left:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:12px;font-weight:700;line-height:1;cursor:pointer;vertical-align:middle;padding:0}
   .upd-binfo.on{border-color:var(--orange,#F5A623);color:var(--ink)}
   .upd-box .upd-on{margin:10px 0 0;align-items:flex-start} .upd-box .upd-on .cbx{margin-top:2px}
   .upd-box.upd-tickonly{border:0;background:transparent;padding:0} .upd-box.upd-tickonly .upd-on{margin:0}
@@ -838,7 +834,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   </div>
 
   <div class="card" id="upd-card" data-tp="ai aim">
-    <h3>Monthly update — new products <button type="button" class="upd-binfo" aria-expanded="false" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">ⓘ</button></h3>
+    <h3>Monthly update — new products <button type="button" class="upd-binfo" aria-expanded="false" aria-label="Show or hide the bundle price" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">£</button></h3>
     <div class="ch"><b>Key message:</b> every new product is updated the month it lands — no waiting for a quarterly catch-up. Priced as a monthly bundle by expected new SKUs per month (minimum £100 a month), sized from the feed's own arrivals history so the forecast pulls straight into the quote.</div>
     <div id="upd-body"></div>
   </div>
@@ -855,7 +851,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
          into the ids below - which is the split aimRefresh() already worked to. -->
     <div class="aim-note">The scrape charge covers <b>every</b> scraped field &mdash; one full pass over the catalogue, then the new products after that. We do not re-scrape every product every day, so a second scraped field adds configuration time and nothing monthly.</div>
     <div class="aim-foot">
-      <div class="aim-box"><div class="aim-bh"><h4>New products a month</h4><button type="button" class="upd-binfo" aria-expanded="false" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">ⓘ</button></div>
+      <div class="aim-box"><div class="aim-bh"><h4>New products a month</h4><button type="button" class="upd-binfo" aria-expanded="false" aria-label="Show or hide the bundle price" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">£</button></div>
         <div id="aim-chart"></div>
         <div id="aim-upd"></div>
         <div class="aim-r"><span class="aim-lbl">Catalogue in scope</span><b id="aim-u">&mdash;</b></div>
@@ -979,16 +975,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     CAT.forEach(function(it){ CMAP[it.id]=it; if(!seen[it.grp]){seen[it.grp]=1;GROUPS.push(it.grp);} });
   }
 
-  /* ⓘ helpers: every card heading (and the hero) gets a toggle for its long helper text — hidden
-     by default, remembered per section in localStorage (fcc-aiq-help) */
-  (function(){ var HK='fcc-aiq-help', st={}; try{ st=JSON.parse(localStorage.getItem(HK)||'{}')||{}; }catch(e){ st={}; }
-    function wire(box,head,key){ if(!box||!head)return; var b=document.createElement('button'); b.type='button'; b.className='hbtn'; b.textContent='i'; b.title='Show / hide the notes for this section';
-      b.setAttribute('aria-label','Toggle the notes for this section'); head.appendChild(b);
-      function paint(){ var on=!!st[key]; box.classList.toggle('help',on); b.classList.toggle('on',on); b.setAttribute('aria-expanded',on?'true':'false'); }
-      b.addEventListener('click',function(){ st[key]=!st[key]; try{ localStorage.setItem(HK,JSON.stringify(st)); }catch(e){} paint(); }); paint(); }
-    document.querySelectorAll('.card').forEach(function(card){ var h=card.querySelector(':scope > h3'), ch=card.querySelector(':scope > .ch'); if(h&&ch)wire(card,h,(h.textContent||'').trim().slice(0,40)); });
-    var hero=document.querySelector('.hero'); if(hero&&hero.querySelector('p.sub'))wire(hero,hero.querySelector('h1'),'hero');
-  })();
+  /* The page's own per-heading `i` toggle (fcc-aiq-help, PR #340) is GONE (16 Oct 2026, the design
+     tidy): the injected ⓘ collapse (docs/instr_collapse.html) already folds every multi-sentence
+     .ch behind one toggle on the heading, so each card wore two round buttons doing the same job
+     from two stores. One control, the shared one. */
   var CLIENT='', MKT='gb', MKTLIST=['gb'], IDX={}, BASE=0, CACHING={};
   var STORE={};   // {<brand>:{mkt,scope,pts,fields,setup,vat,valid,updated}, ratecard:{fields:{id:{rate}}}}
   var SHOWP=false; try{SHOWP=localStorage.getItem('fcc-aiq-showp')==='1'}catch(e){}

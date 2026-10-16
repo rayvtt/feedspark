@@ -3593,10 +3593,52 @@
       "min": 1
     },
     {
-      "name": "AI Quote: section helper text hidden behind ⓘ per heading (fcc-aiq-help)",
+      "name": "AI Quote: the page's OWN per-heading i toggle is RETIRED (16 Oct 2026 design tidy) — the shared ⓘ collapse is the one control (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "var HK='fcc-aiq-help'",
-      "pr": 340,
+      "pattern": "className='hbtn'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the bundle-price toggle is a £ glyph, not a second ⓘ",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "aria-label=\"Show or hide the bundle price\"",
+      "pr": 0,
+      "min": 2
+    },
+    {
+      "name": "Instr collapse: a solo ⓘ spans a grid parent's row, never a column",
+      "file": "docs/instr_collapse.html",
+      "pattern": "grid-column:1/-1;justify-self:start",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "ROAS: a module subtitle wraps to two lines, never cut mid-sentence",
+      "file": "docs/FeedSpark_ROAS.html",
+      "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Catalogue: a module subtitle wraps to two lines, never cut mid-sentence",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the methodology card folds closed; the KPI sub-line wraps",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "<details class=\"meth-fold\">",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "Overlays: no client picked = one title, never 'Live overlays — Live overlays'",
+      "file": "docs/FeedSpark_Overlays.html",
+      "pattern": "textContent=CLIENT?('Live overlays — '+title):title",
+      "pr": 0,
       "min": 1
     },
     {
@@ -16144,13 +16186,48 @@
       "pattern": "node tools/check_confirmdone.js",
       "pr": 0
     },
-    {"name": "Headlines: Space Grotesk on every h1–h3 of every app page", "file": "docs/headfont_widget.html", "pattern": "h1,h2,h3{font-family:var(--font-head)", "pr": 0},
-    {"name": "Headlines: the layer is injected on every app page", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "html = inject(html, HEADFONTW + '\\n' + INSTR", "pr": 0},
-    {"name": "Headlines: --font-head is a design token in /design/fcc.css", "file": "docs/FeedSpark_Design.html", "pattern": "--font-head:'Space Grotesk'", "pr": 0},
-    {"name": "Headlines: the Golden PDF waits for the headline face", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "16px \"Space Grotesk\"", "pr": 0},
-    {"name": "Body type: Space Grotesk on body copy, tables and controls of every app page (Ray, 15 Oct 2026: match the body text to the headline face)", "file": "docs/headfont_widget.html", "pattern": "body,button,input,select,textarea{font-family:var(--font-body)}", "pr": 0},
-    {"name": "Body type: --font-body is Space Grotesk, Lato the fallback", "file": "docs/headfont_widget.html", "pattern": "--font-body:'Space Grotesk',Lato", "pr": 0},
-    {"name": "Body type: --font in /design/fcc.css is Space Grotesk too", "file": "docs/FeedSpark_Design.html", "pattern": "--font:'Space Grotesk',Lato", "pr": 0},
+    {
+      "name": "Headlines: Space Grotesk on every h1–h3 of every app page",
+      "file": "docs/headfont_widget.html",
+      "pattern": "h1,h2,h3{font-family:var(--font-head)",
+      "pr": 0
+    },
+    {
+      "name": "Headlines: the layer is injected on every app page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "html = inject(html, HEADFONTW + '\\n' + INSTR",
+      "pr": 0
+    },
+    {
+      "name": "Headlines: --font-head is a design token in /design/fcc.css",
+      "file": "docs/FeedSpark_Design.html",
+      "pattern": "--font-head:'Space Grotesk'",
+      "pr": 0
+    },
+    {
+      "name": "Headlines: the Golden PDF waits for the headline face",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "16px \"Space Grotesk\"",
+      "pr": 0
+    },
+    {
+      "name": "Body type: Space Grotesk on body copy, tables and controls of every app page (Ray, 15 Oct 2026: match the body text to the headline face)",
+      "file": "docs/headfont_widget.html",
+      "pattern": "body,button,input,select,textarea{font-family:var(--font-body)}",
+      "pr": 0
+    },
+    {
+      "name": "Body type: --font-body is Space Grotesk, Lato the fallback",
+      "file": "docs/headfont_widget.html",
+      "pattern": "--font-body:'Space Grotesk',Lato",
+      "pr": 0
+    },
+    {
+      "name": "Body type: --font in /design/fcc.css is Space Grotesk too",
+      "file": "docs/FeedSpark_Design.html",
+      "pattern": "--font:'Space Grotesk',Lato",
+      "pr": 0
+    },
     {
       "name": "ROAS: brand on brand — ONE grouping (brands on All brands, markets once a brand is picked) serves the ten stories",
       "file": "docs/FeedSpark_ROAS.html",
@@ -16175,6 +16252,54 @@
       "pattern": "brand on brand — ten stories, each against a count made HERE",
       "pr": 0
     },
+    {
+      "name": "KWCal: a condition layers onto the chain above it, or starts a new one (the scope is the union)",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function condChains",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: chain indices stay as written, so a condition is counted inside its OWN chain",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "function condChainOf",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: scopeCount is the UNION of the condition chains, not one AND-narrowed set",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "union of the chains",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: ＋ Separate condition — read against the catalogue, adding its own products",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "cnd-addor",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the ⋂/⊕ toggle — narrows what is above it, or stands on its own",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "data-cndjoin",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the in-progress condition is counted in the chain it will land in",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function buildChain",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the picker harness — both add buttons, the toggle, the count moving, the kind surviving the save",
+      "file": "tools/check_kwcal_cond.js",
+      "pattern": "a separate condition ADDS its own products",
+      "pr": 0
+    },
+    {"name": "Golden cover: the client's own pictures, read off the feed and embedded", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function coverPrep(k)", "pr": 0},
+    {"name": "Golden cover: both downloads wait for the cover's pictures", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "return coverPrep(k).then(function () { return cx; });", "pr": 0},
+    {"name": "Golden cover tripwire in presync", "file": "tools/presync.sh", "pattern": "node tools/check_grcover.js", "pr": 0},
+    {"name": "Golden cover: the client's own logo from the Social DPA identity, embedded", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function logoPrep(k)", "pr": 0},
+    {"name": "Golden cover: FeedSpark × client logo lockup", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "class=\"cv-lock\"", "pr": 0},
+    {"name": "Golden cover: HTML export cover not double-padded (spans the panel)", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "body.xhtml #print-foot{max-width:1180px", "pr": 0},
     {"name": "Golden plan: each task briefs into Workflow with its own key", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "gp: gpKey(k, a.id)", "pr": 0},
     {"name": "Golden plan: the ticket's stage read back onto the task", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function gpTicket(k, id, br)", "pr": 0},
     {"name": "Golden plan: closed since briefed — an action the audit no longer raises stays on record", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "Closed since it was briefed", "pr": 0},

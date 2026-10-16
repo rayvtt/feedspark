@@ -66,7 +66,7 @@ window.addEventListener('load',restore);
   .kpi .n{font-size:26px;font-weight:900;line-height:1;white-space:nowrap}
   .kpi .n small{font-size:13px;color:var(--muted);font-weight:800}
   .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
-  .kpi .d{font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kpi .d{font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px;line-height:1.3;overflow-wrap:anywhere}
   .kpi.bil .n{color:var(--bil)}.kpi.nbil .n{color:var(--nbil)}.kpi.risk .n{color:var(--risk)}
   /* search */
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin:12px 0}
@@ -303,6 +303,9 @@ window.addEventListener('load',restore);
   /* methodology */
   .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
   .meth li{margin:7px 0}.meth b{color:var(--ink)}
+  .meth-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.meth-fold>summary::-webkit-details-marker{display:none}
+  .meth-fold>summary::after{content:'';width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);margin-left:auto;transition:transform .15s}.meth-fold[open]>summary::after{transform:rotate(45deg)}
+  .meth-sum{font-size:12.5px;color:var(--muted);font-weight:400}
   .meth code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--wash);padding:1px 5px;border-radius:5px}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
   .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -775,8 +778,8 @@ window.addEventListener('load',restore);
     <div class="tscroll" id="pbody"></div>
   </section>
 
-  <section class="card meth">
-    <h3 style="margin:0 0 4px;font-size:16px;font-weight:900">Where these numbers come from</h3>
+  <section class="card meth" data-no-digest><details class="meth-fold">
+    <summary><h3 style="margin:0;font-size:16px;font-weight:900;display:inline">Where these numbers come from</h3><span class="meth-sum">eight notes on the source, the window and what is never merged</span></summary>
     <ol>
       <li><b>The worker reads the FeedSpark reports database itself.</b> Its :15 and :45 cron speaks the
         reports MCP directly and keeps what it reads in KV — no agent, no export, no manual push. This
@@ -809,7 +812,7 @@ window.addEventListener('load',restore);
         whose last message predates the window is out of scope for every client alike.</li>
       <li><b>What has not been read is absent, not zero.</b> The line at the top says how many markets the
         book holds and how stale the oldest read is, and the coverage drawer lists them one by one.</li>
-    </ol>
+    </ol></details>
   </section>
 </main>
 

@@ -1824,32 +1824,48 @@ function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts 
     if(hit){ uni++; if(!rows[i][2])unsat++; } }
   return {ns:ns,uni:uni,unsat:unsat};
 }
-/* ---- attribute step-filter: conditions AND-narrow the PT∪text selection (row[3] = per-attr values) ---- */
+/* ---- attribute conditions: a condition LAYERS onto the chain above it (join 'and') or STANDS ON
+   ITS OWN (join 'or'), and the scope is the UNION of the chains — see condChains in the engine.
+   Chain 0 is (PT ∪ text, or the whole catalogue when neither is set) narrowed by its own
+   conditions; every later chain is the whole catalogue narrowed by its own. row[3] = per-attr
+   values. ---- */
 function cndOf(e,mkt){ return KWE.cndOf(e,mkt); }
 function condSat(row,conds){ var a=row[3]||[]; // AND across conditions, OR across each condition's values
   for(var c=0;c<conds.length;c++){ var ci=KW_ATTRS.indexOf(conds[c].attr); if(ci<0)continue;
     if((conds[c].vals||[]).indexOf(a[ci]||'')<0)return false; } return true; }
-function scopeCount(brand,mkt,pts,qs,conds){ // combined: (PT∪text, or all if none) AND all conds → unique count
+function scopeCount(brand,mkt,pts,qs,conds){ // union of the chains → unique count; ns[] = per-term hits in chain 0
   var rows=skuCache(brand,mkt); if(!rows)return null;
   var sset={}; (pts||[]).forEach(function(p){sset[p]=1});
   var wss=(qs||[]).map(txWords), ns=(qs||[]).map(function(){return 0});
-  var base=((pts&&pts.length)||(qs&&qs.length)), cds=conds||[], uni=0, unsat=0;
-  for(var i=0;i<rows.length;i++){ var row=rows[i];
-    if(cds.length&&!condSat(row,cds))continue;
-    var hit=base?(sset[row[0]]?1:0):1;
-    for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){ns[t]++;hit=1;} }
+  var base=!!((pts&&pts.length)||(qs&&qs.length));
+  var chains=KWE.condChains(conds||[],base), uni=0, unsat=0;
+  for(var i=0;i<rows.length;i++){ var row=rows[i], hit=0;
+    for(var k=0;k<chains.length;k++){ var ch=chains[k]; if(!ch.live)continue;
+      if(ch.conds.length&&!condSat(row,ch.conds))continue;
+      if(ch.base){ if(sset[row[0]]){hit=1;}
+        for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){ns[t]++;hit=1;} } }
+      else if(!base&&k===0){ hit=1; }   // no PT and no text: chain 0 is the whole catalogue, narrowed
+      else hit=1;
+      if(hit&&!ch.base)break; }
     if(hit){ uni++; if(!row[2])unsat++; } }
   return {ns:ns,uni:uni,unsat:unsat}; }
 function attrsPresent(rows){ return KW_ATTRS.filter(function(a){ var ai=KW_ATTRS.indexOf(a);
   for(var i=0;i<rows.length;i++)if((rows[i][3]||[])[ai])return true; return false; }); }
-function attrIndex(rows,attr,pts,qs,conds){ // value→count for one attribute, over the rows the OTHER filters already keep
+function attrIndex(rows,attr,pts,qs,conds,chain){ // value→count for one attribute, over the rows ITS OWN CHAIN keeps
   var ai=KW_ATTRS.indexOf(attr); if(ai<0)return {};
   var sset={}; (pts||[]).forEach(function(p){sset[p]=1}); var wss=(qs||[]).map(txWords);
-  var base=((pts&&pts.length)||(qs&&qs.length)), other=(conds||[]).filter(function(c){return c.attr!==attr}), m={};
+  var base=!!((pts&&pts.length)||(qs&&qs.length));
+  var chains=KWE.condChains(conds||[],base);
+  // a condition is counted within the chain it belongs to — a SEPARATE condition is read against the
+  // whole catalogue, never against the chain above it, or its own values would be narrowed by filters
+  // it is not part of (which is exactly the thing it was added to escape)
+  var ch=(chain!=null&&chains[chain])?chains[chain]:(chains[0]||{base:base,conds:[]});
+  var other=(ch.conds||[]).filter(function(c){return c.attr!==attr}), m={};
   for(var i=0;i<rows.length;i++){ var row=rows[i];
     if(other.length&&!condSat(row,other))continue;
-    var hit=base?(sset[row[0]]?1:0):1; if(!hit)for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){hit=1;break;} }
-    if(!hit)continue;
+    if(ch.base){ var hit=sset[row[0]]?1:0;
+      if(!hit)for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){hit=1;break;} }
+      if(!hit)continue; }
     var v=(row[3]||[])[ai]||''; if(!v)continue; m[v]=(m[v]||0)+1; }
   return m; }
 /* WHAT COUNTS AS A KEYWORD (Ray, 30 Sep 2026, bringing keywords into the Golden Score): a FILLED slot
@@ -1917,7 +1933,7 @@ function scopeBtn(brand,e){
     // the card shows the NUMBER; the PT/text/condition breakdown stays in the tooltip
     var tip=psb.map(function(pt){return pt+(idxT?' ('+fmt(idxT.map[pt]||0)+')':'')})
       .concat((txb?txb.qs:[]).map(function(q){return 'text “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'}))
-      .concat((cnb?cnb.conds:[]).map(function(c){return (KW_ATTR_LBL[c.attr]||c.attr)+': '+(c.vals||[]).join('/')})).join(' · ');
+      .concat((cnb?cnb.conds:[]).map(function(c,ci){return (ci&&c.join==='or'?'or ':'')+(KW_ATTR_LBL[c.attr]||c.attr)+': '+(c.vals||[]).join('/')})).join(' · ');
     return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip||'in scope')
       +' — '+v.pct+'% of the live feed · click to edit">'+fmt(v.vol)+' products</button>';
   }
@@ -2622,7 +2638,7 @@ function ptOpen(e){
     +      '<input class="pt-q" id="tx-q" type="search" placeholder="e.g. denim — Enter adds it" style="font-size:12px;padding:7px 10px">'
     +      '<div id="tx-quick" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>'
     +      '<div class="pt-sel" id="tx-sel" style="margin-top:6px"></div><div class="pt-sub" id="tx-state" hidden style="margin:5px 0 0"></div></div>'
-    +    '<div class="pt-sec"><div class="pt-selh">Attribute conditions — each AND-narrows</div>'
+    +    '<div class="pt-sec"><div class="pt-selh">Attribute conditions</div>'
     +      '<div class="pt-sel" id="cnd-sel"></div><div id="cnd-build" style="margin-top:5px"></div></div>'
     +  '</div>'
     +'</div>'
@@ -2715,20 +2731,43 @@ function ptOpen(e){
   function recount(){ txn={}; uniN=null; unsatN=null;
     if(txs.length||sel.length||conds.length){ var tc=scopeCount(CLIENT,pmkt,sel,txs,conds);
       if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); uniN=tc.uni; unsatN=tc.unsat; } } }
-  function paintCnd(){ // attribute step-filter: active-condition chips + the add/attr/value builder
+  // the in-progress condition, placed in the chain it will land in, so its value list is counted
+  // against that chain and nothing else (a separate condition reads the whole catalogue)
+  function buildConds(){ return abuild&&abuild.attr
+    ? conds.concat([{attr:abuild.attr,vals:[],join:abuild.join}]) : conds; }
+  function buildChain(){ var a=buildConds(); return KWE.condChainOf(a,a.length-1); }
+  function paintCnd(){ // attribute conditions: one chip per condition, named by the chain it is in
     var cs=d.querySelector('#cnd-sel'), cb=d.querySelector('#cnd-build'), rowsC=skuCache(CLIENT,pmkt);
     cs.innerHTML=conds.map(function(c,ci){
-      return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(KW_ATTR_LBL[c.attr]||c.attr)+': '+esc((c.vals||[]).join(', '))+'</span>'
-        +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center"><button type="button" data-cndrm="'+ci+'">×</button></span></span>'; }).join('')
+      // ci 0 can never be a chain of its own above nothing — the first condition narrows the PT/text
+      // scope or, with neither set, the catalogue; from the second on, a condition says which it is
+      var sep=(c.join==='or'), lead=ci===0?'':(sep?'OR ':'AND ');
+      return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+        +(lead?'<b style="color:var(--orange-ink)">'+lead+'</b>':'')
+        +esc(KW_ATTR_LBL[c.attr]||c.attr)+': '+esc((c.vals||[]).join(', '))+'</span>'
+        +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center">'
+        +(ci?'<button type="button" data-cndjoin="'+ci+'" title="'+(sep
+             ?'Its own set — these products are added to the scope. Click to make it narrow the condition above instead.'
+             :'Narrows the condition above it. Click to make it a separate condition, contributing its own products.')
+           +'">'+(sep?'⊕':'⋂')+'</button>':'')
+        +'<button type="button" data-cndrm="'+ci+'">×</button></span></span>'; }).join('')
       ||'<span class="pt-sub">no conditions yet — narrow by gender, age, material…</span>';
-    if(!abuild){ cb.innerHTML='<button type="button" class="btn" id="cnd-add" style="padding:4px 11px;font-size:11.5px"'+(rowsC?'':' disabled title="streaming the feed…"')+'>＋ Add condition</button>'; return; }
+    if(conds.length)cs.insertAdjacentHTML('beforeend','<span class="pt-sub" style="display:block;margin-top:4px">'
+      +(conds.some(function(c){return c.join==='or'})
+        ? '⋂ narrows what is above it · ⊕ stands on its own — its products are added'
+        : 'each narrows what is above it — ⊕ on a chip makes it a separate condition instead')+'</span>');
+    if(!abuild){ cb.innerHTML='<button type="button" class="btn" id="cnd-add" style="padding:4px 11px;font-size:11.5px"'+(rowsC?'':' disabled title="streaming the feed…"')+'>＋ Narrow further</button>'
+      +(conds.length?'<button type="button" class="btn" id="cnd-addor" style="padding:4px 11px;font-size:11.5px;margin-left:5px"'+(rowsC?'':' disabled title="streaming the feed…"')+' title="A condition of its own, read against the whole catalogue — its products are added to the scope rather than taken out of it">＋ Separate condition</button>':'');
+      return; }
     if(!abuild.attr){ var present=rowsC?attrsPresent(rowsC):[];
-      cb.innerHTML='<div class="pt-sub">Attribute to narrow on:</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">'
+      cb.innerHTML='<div class="pt-sub">'+(abuild.join==='or'?'Separate condition — attribute:':'Attribute to narrow on:')+'</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">'
         +present.map(function(a){return '<button type="button" class="btn" style="padding:3px 10px;font-size:11px" data-cndattr="'+esc(a)+'">'+esc(KW_ATTR_LBL[a]||a)+'</button>'}).join('')
         +'</div>'+(present.length?'':'<span class="pt-sub">no attribute columns found in this feed</span>')
         +'<div style="margin-top:6px"><button type="button" class="btn" id="cnd-cancel" style="padding:3px 9px;font-size:11px">cancel</button></div>'; return; }
-    var many=Object.keys(attrIndex(rowsC,abuild.attr,sel,txs,conds)).length>14;
-    cb.innerHTML='<div class="pt-sub">'+esc(KW_ATTR_LBL[abuild.attr]||abuild.attr)+' — tick values (within the current scope):</div>'
+    var bch=buildChain();
+    var many=Object.keys(attrIndex(rowsC,abuild.attr,sel,txs,buildConds(),bch)).length>14;
+    cb.innerHTML='<div class="pt-sub">'+esc(KW_ATTR_LBL[abuild.attr]||abuild.attr)+' — tick values ('
+      +(abuild.join==='or'?'across the whole catalogue':'within the current scope')+'):</div>'
       +(many?'<input class="pt-q" id="cnd-q" type="search" placeholder="filter values…" value="'+esc(abuild.q||'')+'">':'')
       +'<div class="pt-list" id="cnd-vlist"></div>'
       +'<div style="margin-top:6px;display:flex;gap:6px"><button type="button" class="btn pri" id="cnd-commit" style="padding:3px 10px;font-size:11px"></button>'
@@ -2737,7 +2776,7 @@ function ptOpen(e){
   }
   function refreshVals(){ // fills #cnd-vlist + the commit button WITHOUT rebuilding the filter input (keeps focus)
     if(!abuild||!abuild.attr)return; var rowsC=skuCache(CLIENT,pmkt); if(!rowsC)return;
-    var vi=attrIndex(rowsC,abuild.attr,sel,txs,conds), vkeys=Object.keys(vi).sort(function(a,b){return vi[b]-vi[a]});
+    var vi=attrIndex(rowsC,abuild.attr,sel,txs,buildConds(),buildChain()), vkeys=Object.keys(vi).sort(function(a,b){return vi[b]-vi[a]});
     var q=(abuild.q||'').toLowerCase(), shown=vkeys.filter(function(v){return !q||v.indexOf(q)>=0}).slice(0,60);
     var vl=d.querySelector('#cnd-vlist'); if(vl)vl.innerHTML=shown.map(function(v){ var on=abuild.vals.indexOf(v)>=0;
         return '<div class="pt-row'+(on?' on':'')+'" data-cndval="'+esc(v)+'"><span class="bx">'+(on?'☑':'☐')+'</span>'
@@ -2777,12 +2816,24 @@ function ptOpen(e){
     if(trm){ var ti=txs.indexOf(trm.getAttribute('data-txrm')); if(ti>=0)txs.splice(ti,1); recount(); paint(); return; }
     var tq=ev.target.closest('[data-txq]');
     if(tq){ addTerm(tq.getAttribute('data-txq')); return; }
-    var cadd=ev.target.closest('#cnd-add'); if(cadd){ abuild={attr:null,vals:[],q:''}; paintCnd(); return; }
-    var cattr=ev.target.closest('[data-cndattr]'); if(cattr){ abuild={attr:cattr.getAttribute('data-cndattr'),vals:[],q:''}; paintCnd(); return; }
+    var cadd=ev.target.closest('#cnd-add'); if(cadd){ abuild={attr:null,vals:[],q:'',join:'and'}; paintCnd(); return; }
+    var caddor=ev.target.closest('#cnd-addor'); if(caddor){ abuild={attr:null,vals:[],q:'',join:'or'}; paintCnd(); return; }
+    var cjoin=ev.target.closest('[data-cndjoin]');   // ⋂ narrows the chain above · ⊕ stands on its own
+    if(cjoin){ var ji=+cjoin.getAttribute('data-cndjoin'); if(conds[ji]){ conds[ji].join=(conds[ji].join==='or')?'and':'or'; recount(); paint(); } return; }
+    var cattr=ev.target.closest('[data-cndattr]'); if(cattr){ abuild={attr:cattr.getAttribute('data-cndattr'),vals:[],q:'',join:(abuild&&abuild.join)||'and'}; paintCnd(); return; }
     var cval=ev.target.closest('[data-cndval]'); if(cval&&abuild){ var cv=cval.getAttribute('data-cndval'), vj=abuild.vals.indexOf(cv); if(vj>=0)abuild.vals.splice(vj,1); else abuild.vals.push(cv); refreshVals(); return; }
-    var ccommit=ev.target.closest('#cnd-commit'); if(ccommit&&abuild&&abuild.attr&&abuild.vals.length){ conds=conds.filter(function(c){return c.attr!==abuild.attr}); conds.push({attr:abuild.attr,vals:abuild.vals.slice()}); abuild=null; recount(); paint(); return; }
+    var ccommit=ev.target.closest('#cnd-commit'); if(ccommit&&abuild&&abuild.attr&&abuild.vals.length){
+      // one condition per attribute PER CHAIN — the same attribute can legitimately appear in two
+      // chains (black in the narrowing chain, orange in a separate one), so only the chain this one
+      // joins is deduped
+      var tgt=(abuild.join==='or')?-1:KWE.condChainOf(conds,conds.length-1);
+      conds=conds.filter(function(c,i){ return !(c.attr===abuild.attr&&tgt>=0&&KWE.condChainOf(conds,i)===tgt); });
+      conds.push({attr:abuild.attr,vals:abuild.vals.slice(),join:abuild.join==='or'?'or':'and'});
+      abuild=null; recount(); paint(); return; }
     var ccancel=ev.target.closest('#cnd-cancel'); if(ccancel){ abuild=null; paintCnd(); return; }
-    var crm=ev.target.closest('[data-cndrm]'); if(crm){ conds.splice(+crm.getAttribute('data-cndrm'),1); recount(); paint(); return; }
+    var crm=ev.target.closest('[data-cndrm]'); if(crm){ conds.splice(+crm.getAttribute('data-cndrm'),1);
+      if(conds.length&&conds[0].join==='or')conds[0].join='and';   // the first condition has nothing above it to be separate from
+      recount(); paint(); return; }
     if(ev.target.id==='pt-sug'){ var bgs=idx.bags||{}, before=sel.length;
       (e.terms||[]).forEach(function(t){ var lt=String(t).toLowerCase();
         keys.forEach(function(k){ if(sel.indexOf(k)>=0)return;
@@ -2806,7 +2857,7 @@ function ptOpen(e){
       var oldc=(e.cndm&&e.cndm[pmkt])||{};
       if(!conds.length){ if(e.cndm)delete e.cndm[pmkt]; }
       else{ e.cndm=e.cndm||{};
-        e.cndm[pmkt]={conds:conds.map(function(c){return {attr:c.attr,vals:c.vals.slice()}}),
+        e.cndm[pmkt]={conds:conds.map(function(c){return {attr:c.attr,vals:c.vals.slice(),join:c.join==='or'?'or':'and'}}),
           uni:hasC?uniN:(oldc.uni!=null?oldc.uni:null), unsat:hasC?unsatN:(oldc.unsat!=null?oldc.unsat:null)}; }
       // saturation lift for this scope (how many in-scope SKUs still lack g:product_type2+ keywords)
       if(hasC&&unsatN!=null){ e.satm=e.satm||{}; e.satm[pmkt]={unsat:unsatN}; }
