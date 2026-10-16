@@ -16308,6 +16308,7 @@
     {"name": "Workflow: the composer stamps the Golden Record plan tie", "file": "docs/FeedSpark_Workflow.html", "pattern": "if(window.__gpId){ b.gp=window.__gpId; window.__gpId=null; }", "pr": 0},
     {"name": "Golden plan → Workflow tripwire in presync", "file": "tools/presync.sh", "pattern": "node tools/check_grplanbrief.js", "pr": 0},
     {"name": "Golden plan: ✦ SparkAI replaces the FeedSpark pill on what SparkAI generates", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function planSpark(a)", "pr": 0},
-    {"name": "Golden cover: the body text follows the body face, never a hard-coded Lato", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "color:#333;font-family:var(--font-body,Lato),system-ui,sans-serif;text-align:cen", "pr": 0}
+    {"name": "Golden cover: the body text follows the body face, never a hard-coded Lato", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "color:#333;font-family:var(--font-body,Lato),system-ui,sans-serif;text-align:cen", "pr": 0},
+    {"name": "Golden plan: FeedSpark ↔ SparkAI swapped by hand on the pill", "file": "docs/FeedSpark_GoldenRecord.html", "pattern": "function ownPill(a, ed)", "pr": 0}
 ]
 }
