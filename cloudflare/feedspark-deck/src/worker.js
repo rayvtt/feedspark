@@ -517,7 +517,7 @@ const DEFAULT_FEEDS = {
   },
   Hobbycraft: {
     gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/fs_new_hobbycraft/8517dae4ffbc651f5e3765a6bf39e578/latest.xml' },
-    'gb-fb': { id: '1R1ES_XtA1r6NAqROkyr_lWb3cuy3_AQDJ4b5MTJ_2A8', gid: '0' },
+    'gb-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb/fs_new_hobbycraft/53682062a27d847ed406e1361adca0fa/latest-fb.xml' },  // FeedHero 'Facebook' (16 Oct 2026: the old sheet answered gviz 410)
   },
   Superdry: {
     gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_gb/b91629af3ebd82676817c3ddee95b591/superdry_gb_gb_output.xml' },
@@ -531,10 +531,10 @@ const DEFAULT_FEEDS = {
     es: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_es/b7687bb2913f6e6deb310421ebb8d76d/superdry_es_gb_output.xml' },
     us: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_us/90b8bebfae4c7f43b1fe6dea56081da1/superdry_us_gb_output.xml' },
     'gb-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/superdry_gb/2d98a671028d410b7572d2bb3c78a0ca/superdry_gb_fb_output.xml' },
-    'ie-fb': { id: '1TmZknTdwYUkw7gbpLzfUNEUC66GS4cwOoGlB4M4aBgM', gid: '0' },
-    'de-fb': { id: '1yWEyXdDWkJh1723db9QeAixrLmBDHAqhFvGupWYeEwk', gid: '0' },
-    'fr-fb': { id: '1gd8SZxhDdQhTBDawtZCymKIZ8GnuVcMsVua6GawUulk', gid: '0' },
-    'nl-fb': { id: '1uNKYA9hhKwPyh_V6vBsOb7yCo-DOaQxrvvOexv7-Yqw', gid: '0' },
+    'ie-fb': { id: '1TmZknTdwYUkw7gbpLzfUNEUC66GS4cwOoGlB4M4aBgM', gid: '0' },  // sheet answers gviz 410 (16 Oct 2026); FeedHero has only a 'Facebook TSV' for superdry_ie — needs an XML Meta feed set up before it can move
+    'de-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_lang_feed/superdry_de/ceeba1fb6c9d159d9b4239b03553bad4/superdry_de_fb_lang_feed_output.xml' },  // FeedHero 'Facebook German' (16 Oct 2026: the old sheet answered gviz 410)
+    'fr-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_lang_feed/superdry_fr/a75c5fbeda769a556bb1613a6406b5cf/superdry_fr_fb_lang_feed_output.xml' },  // FeedHero 'Facebook French'
+    'nl-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb_lang_feed/superdry_nl/2b8a9374a9c38bdb5c58f832f6ef2231/superdry_nl_fb_lang_feed_output.xml' },  // FeedHero 'Facebook Netherlands'
   },
   'American Golf': { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml' } },
   Reiss: {
@@ -4616,7 +4616,7 @@ function catImgMerge(prev, clean) {
   return { v: 1, t, r: R, at: A };
 }
 function catCmpid(src) {
-  const m = src && src.xml ? /\/output_feeds\/[a-z]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
+  const m = src && src.xml ? /\/output_feeds\/[a-z0-9_]+\/([a-z0-9_]+)\//i.exec(String(src.xml)) : null;
   return m ? m[1].toLowerCase() : null;
 }
 // every wired FeedHero output as {client, mkt, url} — the list RULES.feedKeys joins a roster market to its
