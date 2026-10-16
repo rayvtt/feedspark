@@ -979,6 +979,60 @@ window.addEventListener('load',restore);
   .rped.tplmode .rped-help{background:rgba(37,99,235,.08)}
   /* the action plan ON SCREEN (#ap-tier): the print board's own cards plus the AM's controls; never in a download */
   body.pdf #ap-tier{display:none!important}
+  /* SCORE A GROUP OF PRODUCTS (#sg-tier) — screen only */
+  body.pdf #sg-tier{display:none!important}
+  #sg-tier .sg-bar,#sg-tier .sg-split{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+  #sg-tier .sg-lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  #sg-tier .sg-chip{display:inline-flex;align-items:center;gap:5px;background:#FEF3C7;color:#78350F;border-radius:99px;padding:3px 4px 3px 10px;font-size:12px;font-weight:700}
+  #sg-tier .sg-chip i{font-style:normal;font-weight:400;opacity:.75}
+  #sg-tier .sg-chip button{border:0;background:rgba(0,0,0,.08);border-radius:99px;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;color:inherit}
+  #sg-tier .sg-allp{font-size:12.5px;font-weight:700}
+  #sg-tier .sg-add{display:inline-flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  #sg-tier select{font:inherit;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper,#fff);color:inherit;max-width:260px}
+  #sg-tier .sg-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--wash,#F7F7F5)}
+  #sg-tier .sg-hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  #sg-tier .sg-vs{font-size:12px;color:var(--ink-2)}
+  #sg-tier .sg-act{margin-left:auto}
+  #sg-tier .sg-d{font-weight:700;font-size:11.5px;color:var(--muted)}
+  #sg-tier .sg-d.up{color:var(--good)} #sg-tier .sg-d.dn{color:var(--risk)}
+  #sg-tier .sg-small{font-style:normal;font-size:10.5px;font-weight:700;color:var(--orange-deep)}
+  #sg-tier .sg-tbl{display:grid;font-size:12.5px}
+  #sg-tier .sg-tr{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(150px,1.2fr) 90px 60px;gap:10px;align-items:center;padding:6px 4px;border-top:1px solid var(--line)}
+  #sg-tier .sg-sp .sg-tr{grid-template-columns:minmax(150px,1.4fr) 90px minmax(150px,1.1fr) 80px minmax(170px,1.4fr)}
+  #sg-tier .sg-th{border-top:0;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  #sg-tier .sg-f{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #sg-tier .sg-c{display:flex;align-items:center;gap:8px}
+  #sg-tier .sg-c b{font-variant-numeric:tabular-nums;min-width:44px}
+  #sg-tier .sg-bar2{flex:1;height:7px;border-radius:99px;background:var(--line);overflow:hidden;max-width:160px}
+  #sg-tier .sg-bar2 i{display:block;height:100%;border-radius:99px}
+  #sg-tier .sg-w,#sg-tier .sg-n{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  #sg-tier .sg-lift{font-weight:700;color:var(--good);font-variant-numeric:tabular-nums}
+  #sg-tier .sg-wk{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #sg-tier .sg-wk i{font-style:normal;font-weight:700;color:var(--good)}
+  #sg-tier .sg-row{cursor:pointer}
+  #sg-tier .sg-row:hover{background:var(--wash,#F7F7F5)}
+  #sg-tier .sg-more{margin-top:8px}
+  #sg-tier .sg-note{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+  #sg-tier .sg-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  #sg-tier .sg-seg button{border:0;background:transparent;font:inherit;font-size:11.5px;padding:5px 10px;cursor:pointer;color:inherit}
+  #sg-tier .sg-seg button.on{background:var(--ink,#333);color:#fff}
+  body.demo #sg-brief{display:none!important}
+  #sg-tier .abtn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  #sg-tier .sg-act{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .gr-scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper,#fff);font-size:12px}
+  .gr-scope.on{border-color:#F5A623;background:#FFFBEB}
+  .gr-scope .sg-lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .gr-scope .gs-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .gr-scope .gs-seg button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;color:inherit}
+  .gr-scope .gs-seg button.on{background:var(--ink,#333);color:#fff;cursor:default}
+  .gr-scope .gs-what{color:var(--ink-2)}
+  .grp-chip{display:inline-block;background:#FEF3C7;color:#78350F;border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700}
+  .cv-grp{display:inline-block;margin:8px auto 0;padding:4px 14px;border-radius:99px;background:#FEF3C7;color:#78350F;font-weight:700;font-size:13px}
+  body.pdf .gr-scope{display:none!important}
+  /* group mode: the actions that write are the catalogue's — never offered over a group's numbers */
+  #det-panel.grp-on #det-ack,#det-panel.grp-on #det-scan,#det-panel.grp-on #det-pdp,#det-panel.grp-on #pdp-last,
+  #det-panel.grp-on .at-act,#det-panel.grp-on .qz-act,#det-panel.grp-on #qz-run,#det-panel.grp-on .qz-na{display:none!important}
+  @media (max-width:760px){#sg-tier .sg-add{margin-left:0}#sg-tier .sg-tbl{overflow-x:auto}#sg-tier .sg-tr{min-width:560px}}
   body.demo .ap-ctl,body.demo .ap-add,body.demo #ap-reset,body.demo .ap-rem,body.demo .ap-tag{display:none!important}
   #ap-tier .ap-tk{background:var(--paper)}
   #ap-tier .ap-lh .ct{background:var(--paper)}
@@ -2284,6 +2338,7 @@ window.addEventListener('load',restore);
     fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
       .then(function (r) { return r.json(); })
       .then(function (d) {
+        grpDrop(k);   // a fresh load is the catalogue's — any group read is out of date
         CACHE[k] = d;
         if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
         else renderDetail(k);
@@ -2364,6 +2419,7 @@ window.addEventListener('load',restore);
       return fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (r) { return r.json(); })
         .then(function (full) {
+          var gx = grpDrop(k); if (gx) QUAL[k] = gx.realQ;   // a scan is the catalogue's
           CACHE[k] = full;
           delete CL[k]; loadCL(k);   // the same scan re-read the custom labels
           // a scan can add a reading to the history — re-read it when this feed's card is in play
@@ -2991,7 +3047,7 @@ window.addEventListener('load',restore);
       var f = tfIs(key), name = (h.querySelector('h4') || {}).textContent || 'this section';
       t.classList.toggle('folded', f);
       // a section whose headline number lives in its body carries it into the header while folded
-      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : (key === 'cl' ? t.querySelector('.cl-score') : (key === 'meta' ? t.querySelector('.mt-score') : null)));
+      var sum = h.querySelector('.tf-sum'), src = key === 'qual' ? t.querySelector('.qz-score') : (key === 'air' ? t.querySelector('.big-ring .bn') : (key === 'cl' ? t.querySelector('.cl-score') : (key === 'meta' ? t.querySelector('.mt-score') : (key === 'seg' ? t.querySelector('.sg-score') : null))));
       if (src && !sum) { sum = document.createElement('span'); sum.className = 'tf-sum'; var h4 = h.querySelector('h4'); h.insertBefore(sum, h4 ? h4.nextSibling : null); }
       if (sum) { sum.textContent = src ? src.textContent + (key === 'air' ? '/100' : '') : ''; sum.style.color = src ? src.style.color : ''; sum.hidden = !f || !src; }
       b.setAttribute('aria-expanded', f ? 'false' : 'true');
@@ -3024,8 +3080,8 @@ window.addEventListener('load',restore);
     var d = CACHE[k]; if (!d) return;
     rescoreEstate();   // benchmarks below read the estate scores — keep them profile-true
     var p = parts(k);
-    var s = d.snapshot;
-    var rf = refFor(d), ref = rf.ref, refLbl = rf.isDaily ? 'yesterday' : 'known-good';
+    var s = d.snapshot, G = s && s.grp;   // G = the scorecard is on a group of products (grpEnter)
+    var rf = refFor(d), ref = rf.ref, refLbl = G ? 'the entire catalogue' : (rf.isDaily ? 'yesterday' : 'known-good');
     // the scorecard header stays with you down the page (Ray, 16 Sep 2026: "when using the
     // Golden Score card and scrolling down to review the feed scorecard, make sure this section
     // stays frozen when scrolling down"); grStick() condenses it once it pins.
@@ -3051,11 +3107,12 @@ window.addEventListener('load',restore);
     var apMiss = condMiss.filter(function (x) { return x.a; });
     h += '<div class="gr-top">' + dial(score) +
       '<div class="gr-info">' +
-      '<div class="det-stats"><b>' + fmt(s.rows) + '</b> rows · scanned <b>' + ago(s.t) + '</b>' +
+      '<div class="det-stats">' + (G ? '<b>' + fmt(s.rows) + '</b> of ' + fmt(G.total) + ' products · read live <b>' + ago(s.t) + '</b>' +
+        '<span class="grp-chip" title="Every Δ on this scorecard reads this group against the entire catalogue, from the same read of the feed">Δ vs entire catalogue</span>' : '<b>' + fmt(s.rows) + '</b> rows · scanned <b>' + ago(s.t) + '</b>' +
       '<span class="refseg" title="Which reference the Δ column reads — estate alerts always fire vs last known-good">' +
       '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : '') + (d.daily ? '' : ' disabled title="No yesterday capture yet — it lands automatically on the first scan of each day"') + '>Δ vs yesterday</button>' +
       '<button id="ref-base"' + (!rf.isDaily ? ' class="on"' : '') + '>Δ vs known-good</button></span>' +
-      (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') +
+      (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '')) +
       (d.pdp && d.pdp.matrix ? '<button class="btn" id="pdp-last" style="padding:3px 9px;font-size:10.5px" title="Open the last PDP recovery sample for this feed">🔎 PDP sample · ' + fmt(d.pdp.ok) + ' pages · ' + ago(d.pdp.t) + '</button>' : '') +
       '<span class="prof-chip" title="Attributes marked ★ are scored for this brand — the ' + esc(prof.industry) + ' best-practice profile (industry defaults + any brand override)">⚖ ' + esc(prof.industry) + ' best practice</span>' +
       '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button>' +
@@ -3071,10 +3128,11 @@ window.addEventListener('load',restore);
       (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() +
       // the benchmark names the INDUSTRY, never another brand (Ray, 8 Oct 2026: "dont ever mention competitor brand in the
       // report (just mention industry)") — this line is on the screen a client is shown and in both downloads
-      (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' feeds): average <b>' + bench.avg + '</b> · best in the industry <b>' + bench.best.score + '</b>.' : '') + '</p>' +
+      (bench && !G ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' feeds): average <b>' + bench.avg + '</b> · best in the industry <b>' + bench.best.score + '</b>.' : '') + '</p>' +
       '</div></div></div>';    // …gr-info · gr-top · gr-sticky
     h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
-    h += histSection(k, s);   // the score over time — improvement and deduction, day by day
+    h += grpBar(k);           // which products every number below is read from — the catalogue or a group
+    if (!G) h += histSection(k, s);   // the score over time — improvement and deduction, day by day (the catalogue's)
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
@@ -3164,19 +3222,25 @@ window.addEventListener('load',restore);
       });
       h += '</div>';
     });
+    h += segSection(k);          // and the same score for any group of products (filter by fields)
     h += qualitySection(k, s);   // Ray's content-quality read, below the four spec tiers
     h += airSection(k);          // and the AI-Readiness ladder under that
     h += reconcileSection(k);    // and where those two readings of the same field disagree
-    h += clSection(k);           // and what the custom labels let a campaign bid on
-    h += metaSection(k);         // and the brand's Meta catalogue, read on Meta's own terms
-    h += planSection(k, s);      // and what to do about all of it — the action plan, editable
+    if (!G) {   // the catalogue's own readings — a group carries none of them (grpEnter)
+      h += clSection(k);           // and what the custom labels let a campaign bid on
+      h += metaSection(k);         // and the brand's Meta catalogue, read on Meta's own terms
+      h += planSection(k, s);      // and what to do about all of it — the action plan, editable
+    }
     $('det-panel').innerHTML = h;
+    $('det-panel').classList.toggle('grp-on', !!G);
     airAnimate();
     wire(k, s);
     histWire(k);
     clWire(k);
     metaWire(k);
     planWire(k);
+    segWire(k);
+    grpWire(k);
     tfApply();
   }
 
@@ -3798,7 +3862,7 @@ window.addEventListener('load',restore);
             .then(function (r) { return r.json(); })
             .then(function (d) {
               if (d && d.error) throw new Error(d.error);
-              QUAL[k] = snap;
+              if (GRP[k]) GRP[k].realQ = snap; else QUAL[k] = snap;
               // the analysis is now a point in the feed's history — refresh the card in place
               if (HIST[k] !== undefined) loadHistory(k).then(function () { if (SEL === k) histRedraw(k); });
               // mirror onto the estate row exactly what the worker just wrote to goldenidx,
@@ -3813,6 +3877,427 @@ window.addEventListener('load',restore);
         });
     });
   }
+  /* ---- SCORE BY SEGMENT (Ray, 16 Oct 2026: "within Golden Record - is there a way to dissect the
+     Golden Score based on a group of products ? (filter by fields?)"). The dial is a whole-feed
+     reading — the scan keeps coverage per attribute, never per product — so a group of products
+     has no score of its own until the feed is read again. ⚡ Read the feed streams this market's
+     live feed ONCE in the browser and keeps the rows in memory (nothing stored, nothing sent);
+     a group is then scored by handing JUST ITS ROWS to labelguard's own xmlCollector — the code
+     the scan runs — and the page's goldenScore under the brand's current profile, the dial's own
+     call. So a segment is measured exactly the way the dial is: GPC category scope, depth twins,
+     keyword strings, ★ and waived fields all included, and "All products" read this way is the
+     dial's reading of the same feed. Filters AND across fields and OR within one; Split by breaks
+     the group shown into its values, each scored on its own. Screen only — never in a download. */
+  var SEG = {};          // k -> { st: 'read'|'ready'|'err', header, rows, dims, t, got, err, cache }
+  var SEGF = {};         // k -> { dim: [value, …] } — the filters, reset with the feed
+  var SEGX = {};         // k -> { all: show every attribute }
+  var SEGU = (function () {   // this device's split + sort (never shared state)
+    try { var v = JSON.parse(localStorage.getItem('gr-seg') || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; }
+  })();
+  function segSave() { try { localStorage.setItem('gr-seg', JSON.stringify(SEGU)); } catch (e) {} }
+  var SEG_SMALL = 20;    // under this many products a segment's score is a small sample, and says so
+  var SEG_SPLIT_MAX = 15;
+  var SEG_DIMS = [
+    { k: 'pt1', n: 'Product type · tier 1', col: 'product_type', tier: 1 },
+    { k: 'pt2', n: 'Product type · tier 2', col: 'product_type', tier: 2 },
+    { k: 'pt3', n: 'Product type · tier 3', col: 'product_type', tier: 3 },
+    { k: 'gpc1', n: 'Google category · tier 1', col: 'google_product_category', tier: 1 },
+    { k: 'gpc2', n: 'Google category · tier 2', col: 'google_product_category', tier: 2 },
+    { k: 'brand', n: 'Brand', col: 'brand' },
+    { k: 'gender', n: 'Gender', col: 'gender' },
+    { k: 'age_group', n: 'Age group', col: 'age_group' },
+    { k: 'color', n: 'Colour', col: 'color' },
+    { k: 'material', n: 'Material', col: 'material' },
+    { k: 'condition', n: 'Condition', col: 'condition' },
+    { k: 'avail', n: 'Availability', col: 'availability' },
+    { k: 'ptype', n: 'Price type', col: 'price' },
+    { k: 'born', n: 'First seen', col: 'fs_date_of_birth' },
+    { k: 'custom_label_0', n: 'Custom label 0', col: 'custom_label_0' },
+    { k: 'custom_label_1', n: 'Custom label 1', col: 'custom_label_1' },
+    { k: 'custom_label_2', n: 'Custom label 2', col: 'custom_label_2' },
+    { k: 'custom_label_3', n: 'Custom label 3', col: 'custom_label_3' },
+    { k: 'custom_label_4', n: 'Custom label 4', col: 'custom_label_4' }
+  ];
+  var SEG_BLANK = '(blank)';
+  function segDimOf(k) { return SEG_DIMS.filter(function (d) { return d.k === k; })[0]; }
+  // one product's value for a dimension — the words the group is named by
+  function segTier(v, n) {
+    var p = String(v).split(/\s*>\s*/).filter(Boolean);
+    return p.length ? p.slice(0, n).join(' > ') : '';
+  }
+  function segPrice(v) { var m = /-?\d+(?:[.,]\d+)?/.exec(String(v == null ? '' : v).replace(/,(?=\d{3}\b)/g, '')); return m ? parseFloat(m[0].replace(',', '.')) : NaN; }
+  var SEG_AVAIL = { instock: 'In stock', outofstock: 'Out of stock', preorder: 'Pre-order', backorder: 'Backorder', availablefororder: 'Available for order' };
+  function segVal(d, r, ci, now) {
+    var raw = ci.main >= 0 ? String(r[ci.main] == null ? '' : r[ci.main]).trim() : '';
+    if (d.k === 'ptype') {
+      var pr = segPrice(raw), sp = ci.sale >= 0 ? segPrice(r[ci.sale]) : NaN;
+      return !isNaN(sp) && sp > 0 && !isNaN(pr) && sp < pr ? 'On sale' : 'Full price';
+    }
+    if (d.k === 'born') {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+      if (!m) return '(not dated)';
+      var days = (now - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 864e5;
+      return days <= 30 ? 'Last 30 days' : days <= 90 ? '31–90 days ago' : days <= 365 ? '91–365 days ago' : 'Over a year ago';
+    }
+    if (!raw) return SEG_BLANK;
+    if (d.tier) return segTier(raw, d.tier) || SEG_BLANK;
+    if (d.k === 'avail') { var w = raw.toLowerCase().replace(/[\s_-]+/g, ''); return SEG_AVAIL[w] || raw.toLowerCase(); }
+    return raw.slice(0, 80);
+  }
+  // every dimension the feed carries a column for, indexed once: a code per product + its words
+  function segIndex(k, LG, header, rows) {
+    var ac = LG.findAttrCols(header), lc = LG.findCols(header, LG.LABEL_KEYS).labels;
+    var dob = LG.findCols(header, [LG.DOB_KEY || 'fs_date_of_birth']).labels[LG.DOB_KEY || 'fs_date_of_birth'];
+    var colOf = function (c) { var i = c in lc ? lc[c] : (c === 'fs_date_of_birth' ? dob : ac[c]); return i == null ? -1 : i; };
+    var now = Date.now(), client = parts(k).client, out = [];
+    SEG_DIMS.forEach(function (d) {
+      if (d.k === 'brand' && masked(client)) return;   // demo mode: the brand column would name the client
+      var ci = { main: colOf(d.col), sale: d.k === 'ptype' ? colOf('sale_price') : -1 };
+      if (ci.main < 0) return;
+      var codes = new Uint32Array(rows.length), vals = [], cnt = [], at = {};
+      for (var i = 0; i < rows.length; i++) {
+        var v = segVal(d, rows[i], ci, now), key = v.toLowerCase(), c = at[key];
+        if (c == null) { c = at[key] = vals.length; vals.push(v); cnt.push(0); }
+        codes[i] = c; cnt[c]++;
+      }
+      if (vals.length < 2 && d.k !== 'ptype') return;   // one value for everything splits nothing
+      out.push({ k: d.k, n: d.n, codes: codes, vals: vals, cnt: cnt });
+    });
+    return out;
+  }
+  function segRead(k) {
+    var p = parts(k), st = SEG[k] = { st: 'read', got: 0, t: Date.now(), cache: {} };
+    segRedraw(k);
+    return Promise.all([loadFA(), loadLG()]).then(function (a) {
+      var FA = a[0], LG = a[1], header = null, rows = [], last = 0;
+      var parser = (FA.createFeedParser || FA.createXmlParser)(function (r, live) {
+        if (!header) { header = r.slice(); return; }
+        if (live && live.length !== header.length) header = live.slice();
+        rows.push(r);
+      });
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+        .then(function (res) {
+          if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+          st.total = (res.headers && parseInt(res.headers.get('x-feed-bytes') || '', 10)) || 0;
+          var rd = res.body.getReader(), dec = new TextDecoder();
+          function pump() {
+            return rd.read().then(function (x) {
+              if (x.done) { parser.push(dec.decode()); parser.end(); return; }
+              st.got += x.value.length; st.n = rows.length;
+              parser.push(dec.decode(x.value, { stream: true }));
+              var now = Date.now();
+              if (now - last > 250) { last = now; segProgress(k); }
+              return pump();
+            });
+          }
+          return pump();
+        })
+        .then(function () {
+          if (SEG[k] !== st) return;   // a newer read replaced this one
+          if (!header || !rows.length) throw new Error('no products in the feed');
+          st.header = header; st.rows = rows; st.LG = LG; st.FA = FA;
+          st.dims = segIndex(k, LG, header, rows);
+          st.st = 'ready'; st.t = Date.now();
+          SEGF[k] = {};
+          segRedraw(k);
+        });
+    }).catch(function (e) {
+      if (SEG[k] !== st) return;
+      st.st = 'err'; st.err = (e && e.message) || 'read failed';
+      segRedraw(k);
+    });
+  }
+  // the rows a filter set lets through: AND across dimensions, OR within one
+  function segMask(st, f) {
+    var tests = Object.keys(f || {}).filter(function (dk) { return f[dk] && f[dk].length; }).map(function (dk) {
+      var d = st.dims.filter(function (x) { return x.k === dk; })[0];
+      if (!d) return null;
+      var ok = {}; f[dk].forEach(function (v) { var c = d.vals.indexOf(v); if (c >= 0) ok[c] = 1; });
+      return { codes: d.codes, ok: ok };
+    }).filter(Boolean);
+    var out = [];
+    for (var i = 0; i < st.rows.length; i++) {
+      var pass = true;
+      for (var j = 0; j < tests.length; j++) if (!tests[j].ok[tests[j].codes[i]]) { pass = false; break; }
+      if (pass) out.push(i);
+    }
+    return out;
+  }
+  // a group of rows, scored the scan's way: its own collector, the dial's own goldenScore
+  function segScore(k, st, idx, key) {
+    if (key && st.cache[key]) return st.cache[key];
+    var p = parts(k), col = st.LG.xmlCollector({ client: p.client, market: p.mkt });
+    col.onRow(st.header);
+    for (var i = 0; i < idx.length; i++) col.onRow(st.rows[idx[i]]);
+    var snap = col.finish().snap, attrs = snap.attrs || {};
+    var res = { n: snap.rows, attrs: attrs, score: goldenScore(attrs, profileForC(p.client)) };
+    if (key) st.cache[key] = res;
+    return res;
+  }
+  // what each counted attribute is worth to this group: the score re-run with it on every product
+  // (the action plan's own projection), so the list says where the group's points are going
+  function segLifts(attrs, prof, base) {
+    var exp = prof.expected || [], wav = prof.waived || [], out = [];
+    SPEC.forEach(function (s) {
+      if (s.k === 'mpn') return;   // one identifier row — gtin and mpn are scored as the best of the two
+      var a = attrs[s.k];
+      if (s.d && !a) return;
+      if (DEPTH_OF[s.k] && attrs[DEPTH_OF[s.k]]) return;
+      a = a || { present: false };
+      if (a.na) return;
+      if (s.t !== 'req' && wav.indexOf(s.k) >= 0) return;
+      if (s.t === 'ai' && exp.indexOf(s.k) < 0) return;
+      if (s.t === 'cond' && !a.present && exp.indexOf(s.k) < 0 && !(a.scope && a.scope.n > 0)) return;
+      var b = {}; Object.keys(attrs).forEach(function (x) { b[x] = attrs[x]; });
+      var full = function (x) { var o = {}, src = b[x] || {}; Object.keys(src).forEach(function (y) { o[y] = src[y]; }); o.present = true; o.cov = 100; b[x] = o; };
+      full(s.k); if (s.k === 'gtin') full('mpn');
+      var cov = a.present ? a.cov : null;
+      if (s.k === 'gtin') { var m = attrs.mpn; if (m && m.present && (cov == null || m.cov > cov)) cov = m.cov; }
+      var lift = Math.round((goldenScore(b, prof) - base) * 10) / 10;
+      if (lift > 0.05) out.push({ k: s.k, s: s, cov: cov, lift: lift });
+    });
+    return out.sort(function (x, y) { return y.lift - x.lift; });
+  }
+  function segName(s) { return s.k === 'gtin' ? 'g:gtin / g:mpn' : (s.lbl ? s.lbl.charAt(0).toUpperCase() + s.lbl.slice(1) : 'g:' + s.k); }
+  function segDesc(st, f) {
+    var bits = Object.keys(f || {}).filter(function (dk) { return f[dk] && f[dk].length; }).map(function (dk) {
+      var d = st.dims.filter(function (x) { return x.k === dk; })[0];
+      return (d ? d.n : dk) + ': ' + f[dk].join(' or ');
+    });
+    return bits.length ? bits.join(' · ') : 'All products';
+  }
+  function segFsig(f) { return JSON.stringify(Object.keys(f || {}).sort().map(function (dk) { return [dk, (f[dk] || []).slice().sort()]; }).filter(function (x) { return x[1].length; })); }
+  function segProgress(k) {
+    var st = SEG[k], el = $('sg-prog'); if (!st || !el) return;
+    el.textContent = 'Reading the feed… ' + (st.got / 1048576).toFixed(1) + ' MB' +
+      (st.total ? ' of ' + (st.total / 1048576).toFixed(1) + ' MB' : '') + ' · ' + fmt(st.n || 0) + ' products';
+  }
+  function segSection(k) {
+    var st = SEG[k], p = parts(k), brand = dispClient(p.client);
+    var h = '<div class="tier" data-tf="seg" id="sg-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#FEF3C7;color:#92400E">Live dissect</span>' +
+      '<h4>Dissect the score by any group of products</h4>' +
+      '<span class="qz-meta">' +
+      (st && st.st === 'ready' ? '<span>' + fmt(st.rows.length) + ' products read ' + ago(st.t) + '</span>' : '') +
+      '<button class="btn" id="sg-run"' + (st && st.st === 'read' ? ' disabled' : '') + '>' +
+      (st && st.st === 'ready' ? '⟳ Re-read' : '⚡ Read the feed') + '</button></span></div>';
+    if (!st) return h + '<p class="qz-empty">A live dissection, not a tracker: pick products by any field — a product type, a brand, a custom label, on sale or not — and see their own Golden Score beside the whole feed\'s.' +
+      ' <b>⚡ Read the feed</b> reads ' + esc(brand) + ' ' + esc(p.mkt.toUpperCase()) + ' in your browser; nothing is stored.</p></div>';
+    if (st.st === 'read') return h + '<p class="qz-empty" id="sg-prog">Reading the feed…</p></div>';
+    if (st.st === 'err') return h + '<p class="qz-empty" style="color:var(--risk)">Could not read the feed: ' + esc(st.err) + '</p></div>';
+    if (!st.dims.length) return h + '<p class="qz-empty">This feed carries no field to group its products by.</p></div>';
+    var f = SEGF[k] || (SEGF[k] = {}), prof = profileForC(p.client);
+    var all = segScore(k, st, st.rows.map(function (_, i) { return i; }), '[]');
+    var sig = segFsig(f), idx = sig === '[]' ? null : segMask(st, f);
+    var grp = idx ? segScore(k, st, idx, sig) : all;
+    // ---- the filter bar
+    var chips = Object.keys(f).filter(function (dk) { return f[dk] && f[dk].length; }).map(function (dk) {
+      var d = segDimOf(dk);
+      return f[dk].map(function (v) {
+        return '<span class="sg-chip"><i>' + esc(d ? d.n : dk) + '</i> ' + esc(v) +
+          '<button data-sgrm="' + esc(dk) + '" data-sgv="' + esc(v) + '" title="Take this filter off" aria-label="Remove ' + esc(v) + '">✕</button></span>';
+      }).join('');
+    }).join('');
+    var addDim = SEGX[k] && SEGX[k].dim && st.dims.some(function (d) { return d.k === SEGX[k].dim; }) ? SEGX[k].dim : st.dims[0].k;
+    var dsel = st.dims.map(function (d) { return '<option value="' + esc(d.k) + '"' + (d.k === addDim ? ' selected' : '') + '>' + esc(d.n) + '</option>'; }).join('');
+    var ad = st.dims.filter(function (d) { return d.k === addDim; })[0];
+    // the value list counts what the OTHER filters leave, the spreadsheet rule
+    var others = {}; Object.keys(f).forEach(function (dk) { if (dk !== addDim) others[dk] = f[dk]; });
+    var cnt = ad.vals.map(function () { return 0; }), oi = segFsig(others) === '[]' ? null : segMask(st, others);
+    if (oi) oi.forEach(function (i) { cnt[ad.codes[i]]++; }); else ad.cnt.forEach(function (c, i) { cnt[i] = c; });
+    var picked = f[addDim] || [];
+    var vorder = ad.vals.map(function (v, i) { return i; }).filter(function (i) { return cnt[i] > 0 && picked.indexOf(ad.vals[i]) < 0; })
+      .sort(function (a, b) { return cnt[b] - cnt[a]; }).slice(0, 300);
+    var vsel = '<option value="">Pick a value…</option>' + vorder.map(function (i) {
+      return '<option value="' + esc(ad.vals[i]) + '">' + esc(ad.vals[i]) + ' · ' + fmt(cnt[i]) + '</option>';
+    }).join('');
+    h += '<div class="sg-bar"><span class="sg-lbl">Group</span>' + (chips || '<span class="sg-allp">All products</span>') +
+      '<span class="sg-add"><select id="sg-dim" data-no-keep aria-label="Field to filter by">' + dsel + '</select>' +
+      '<select id="sg-val" data-no-keep aria-label="Value to filter by">' + vsel + '</select></span>' +
+      (chips ? '<button class="btn" id="sg-clear">Clear</button>' : '') + '</div>';
+    // ---- the group's own score
+    var base = grp.score, d0 = grp.score != null && all.score != null ? Math.round((grp.score - all.score) * 10) / 10 : null;
+    var lifts = grp.n ? segLifts(grp.attrs, prof, base) : [];
+    h += '<div class="sg-card"><div class="sg-hd">' +
+      '<span class="qz-score sg-score" style="color:' + scoreCol(base) + '">' + (grp.n ? base : '—') + '</span>' +
+      '<span class="qz-of">Golden Score<br>of this group</span>' +
+      '<span class="sg-vs">' + fmt(grp.n) + ' of ' + fmt(all.n) + ' products' +
+      (idx && grp.n ? ' · whole feed <b>' + all.score + '</b>' + (d0 ? ' <span class="sg-d ' + (d0 < 0 ? 'dn' : 'up') + '">' + (d0 > 0 ? '▲' : '▼') + Math.abs(d0) + '</span>' : ' <span class="sg-d">level</span>') : '') +
+      (grp.n && grp.n < SEG_SMALL ? ' · <span class="sg-small" title="Under ' + SEG_SMALL + ' products, one product moves the score a long way">small group</span>' : '') +
+      '</span>' +
+      (grp.n ? '<span class="sg-act">' +
+        (idx ? (GRP[k] && GRP[k].sig === sig ? '<button class="abtn on" data-grp="all" title="The scorecard above is on this group — put it back on the entire catalogue">↩ Entire catalogue</button>'
+          : '<button class="abtn pri" data-grp="apply" title="Score the whole scorecard above on this group — the downloads then carry just these products">▶ Score the scorecard on this group</button>') : '') +
+        (lifts.length ? '<button class="abtn" id="sg-brief" title="Open a prefilled brief in Workflow for this group\'s weakest field">→ Brief this group</button>' : '') + '</span>' : '') +
+      '</div>';
+    if (!grp.n) h += '<p class="qz-empty">No product matches every filter — take one off.</p>';
+    else if (!lifts.length) h += '<p class="qz-empty">Every field this group is scored on is already complete.</p>';
+    else {
+      var show = SEGX[k] && SEGX[k].all ? lifts : lifts.slice(0, 8);
+      h += '<div class="sg-tbl" role="table"><div class="sg-tr sg-th" role="row"><span>Field</span><span>This group</span><span>' + (idx ? 'Whole feed' : '') + '</span><span title="How many points this group gains with the field complete on every product">Worth</span></div>' +
+        show.map(function (L) {
+          var wa = all.attrs[L.s.k], wc = wa && wa.present && !wa.na ? wa.cov : null;
+          if (L.s.k === 'gtin') { var wm = all.attrs.mpn; if (wm && wm.present && (wc == null || wm.cov > wc)) wc = wm.cov; }
+          return '<div class="sg-tr" role="row"><span class="sg-f" title="' + esc(L.s.n) + '">' + esc(segName(L.s)) + '</span>' +
+            '<span class="sg-c"><span class="sg-bar2"><i class="' + qualBand(L.cov == null ? 0 : L.cov) + '" style="width:' + Math.max(1.5, L.cov || 0) + '%"></i></span>' +
+            '<b>' + (L.cov == null ? 'not in feed' : L.cov + '%') + '</b></span>' +
+            '<span class="sg-w">' + (idx ? (wc == null ? 'not in feed' : wc + '%') : '') + '</span>' +
+            '<span class="sg-lift">+' + L.lift + '</span></div>';
+        }).join('') + '</div>' +
+        (lifts.length > 8 ? '<button class="btn sg-more" id="sg-all">' + (SEGX[k] && SEGX[k].all ? 'Show the top 8' : 'Show all ' + lifts.length) + '</button>' : '');
+    }
+    h += '</div>';
+    // ---- split the group by a field
+    var sp = SEGU.split && st.dims.some(function (d) { return d.k === SEGU.split; }) ? SEGU.split : '';
+    h += '<div class="sg-split"><span class="sg-lbl">Split by</span><select id="sg-sp" data-no-keep aria-label="Split this group by"><option value="">— choose a field —</option>' +
+      st.dims.map(function (d) { return '<option value="' + esc(d.k) + '"' + (d.k === sp ? ' selected' : '') + '>' + esc(d.n) + '</option>'; }).join('') + '</select>' +
+      (sp ? '<span class="sg-seg"><button data-sgsort="worst"' + (SEGU.sort !== 'size' ? ' class="on"' : '') + '>Worst first</button><button data-sgsort="size"' + (SEGU.sort === 'size' ? ' class="on"' : '') + '>Biggest first</button></span>' : '') + '</div>';
+    if (sp && grp.n) {
+      var sd = st.dims.filter(function (d) { return d.k === sp; })[0], gi = idx || st.rows.map(function (_, i) { return i; });
+      var by = {};
+      gi.forEach(function (i) { var c = sd.codes[i]; (by[c] || (by[c] = [])).push(i); });
+      var groups = Object.keys(by).map(function (c) { return { v: sd.vals[c], idx: by[c] }; }).sort(function (a, b) { return b.idx.length - a.idx.length; });
+      var top = groups.slice(0, SEG_SPLIT_MAX), rest = groups.slice(SEG_SPLIT_MAX);
+      var res = top.map(function (g) {
+        var r = segScore(k, st, g.idx, sig + '|' + sp + '=' + g.v), L = r.n ? segLifts(r.attrs, prof, r.score)[0] : null;
+        return { v: g.v, n: r.n, score: r.score, worst: L };
+      });
+      if (SEGU.sort !== 'size') res.sort(function (a, b) { return (a.score == null ? 999 : a.score) - (b.score == null ? 999 : b.score) || b.n - a.n; });
+      h += '<div class="sg-tbl sg-sp" role="table"><div class="sg-tr sg-th" role="row"><span>' + esc(sd.n) + '</span><span>Products</span><span>Golden Score</span><span>Δ vs group</span><span>Weakest field</span></div>' +
+        res.map(function (r) {
+          var dd = r.score != null && base != null ? Math.round((r.score - base) * 10) / 10 : null;
+          return '<div class="sg-tr sg-row" role="row" data-sgadd="' + esc(sp) + '" data-sgv="' + esc(r.v) + '" title="Filter to ' + esc(r.v) + '">' +
+            '<span class="sg-f">' + esc(r.v) + '</span>' +
+            '<span class="sg-n">' + fmt(r.n) + (r.n < SEG_SMALL ? ' <i class="sg-small">small</i>' : '') + '</span>' +
+            '<span class="sg-c"><span class="sg-bar2"><i class="' + qualBand(r.score) + '" style="width:' + Math.max(1.5, r.score || 0) + '%"></i></span><b style="color:' + scoreCol(r.score) + '">' + (r.score == null ? '—' : r.score) + '</b></span>' +
+            '<span class="sg-d ' + (dd == null || dd === 0 ? '' : dd < 0 ? 'dn' : 'up') + '">' + (dd == null ? '—' : dd === 0 ? 'level' : (dd > 0 ? '▲' : '▼') + Math.abs(dd)) + '</span>' +
+            '<span class="sg-wk">' + (r.worst ? esc(segName(r.worst.s)) + ' · ' + (r.worst.cov == null ? 'not in feed' : r.worst.cov + '%') + ' <i>+' + r.worst.lift + '</i>' : 'complete') + '</span></div>';
+        }).join('') + '</div>' +
+        (rest.length ? '<p class="sg-note">' + fmt(rest.length) + ' smaller value' + (rest.length === 1 ? '' : 's') + ' not listed (' +
+          fmt(rest.reduce(function (s, g) { return s + g.idx.length; }, 0)) + ' products) — filter to one to score it.</p>' : '');
+    }
+    return h + '</div>';
+  }
+  function segRedraw(k) {
+    var t = $('sg-tier'); if (!t || SEL !== k) return;
+    var w = document.createElement('div'); w.innerHTML = segSection(k);
+    t.parentNode.replaceChild(w.firstChild, t);
+    var sb = document.querySelector('#det-panel .gr-scope');   // the scorecard's scope line follows the group picked here
+    if (sb) { var w2 = document.createElement('div'); w2.innerHTML = grpBar(k); sb.parentNode.replaceChild(w2.firstChild, sb); }
+    segWire(k); grpWire(k); tfApply();
+  }
+  function segWire(k) {
+    var t = $('sg-tier'); if (!t) return;
+    var run = $('sg-run'); if (run) run.onclick = function () { segRead(k); };
+    var st = SEG[k]; if (!st || st.st !== 'ready') return;
+    var f = SEGF[k] || (SEGF[k] = {}), x = SEGX[k] || (SEGX[k] = {});
+    var dim = $('sg-dim'); if (dim) dim.onchange = function () { x.dim = dim.value; segRedraw(k); };
+    var val = $('sg-val'); if (val) val.onchange = function () {
+      if (!val.value) return;
+      var dk = dim.value; (f[dk] || (f[dk] = [])).push(val.value); x.dim = dk; segRedraw(k);
+    };
+    var cl = $('sg-clear'); if (cl) cl.onclick = function () { SEGF[k] = {}; segRedraw(k); };
+    var al = $('sg-all'); if (al) al.onclick = function () { x.all = !x.all; segRedraw(k); };
+    var sp = $('sg-sp'); if (sp) sp.onchange = function () { SEGU.split = sp.value; segSave(); segRedraw(k); };
+    var br = $('sg-brief'); if (br) br.onclick = function () { segBrief(k); };
+    t.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-sgrm],[data-sgsort],[data-sgadd]'); if (!b) return;
+      if (b.hasAttribute('data-sgrm')) {
+        var dk = b.getAttribute('data-sgrm'), v = b.getAttribute('data-sgv');
+        f[dk] = (f[dk] || []).filter(function (y) { return y !== v; }); segRedraw(k);
+      } else if (b.hasAttribute('data-sgsort')) { SEGU.sort = b.getAttribute('data-sgsort'); segSave(); segRedraw(k); }
+      else {   // a split row narrows the group to that value
+        var dk2 = b.getAttribute('data-sgadd'), v2 = b.getAttribute('data-sgv');
+        f[dk2] = [v2]; x.dim = dk2; segRedraw(k);
+        var tt = $('sg-tier'); if (tt) tt.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+  /* THE WHOLE SCORECARD ON A GROUP (Ray, 16 Oct 2026: "it could be a modularised section as part of Score card - can be
+     either downloaded specifically just for the selected group of products or entire catalogue in general"): ▶ Score the
+     scorecard on this group swaps the market's scorecard onto the group — the dial, the four spec tiers, content quality,
+     AI-readiness, the two-scores band and the action plan are all re-read off the group's own rows (labelguard's
+     xmlCollector + qualityStream, the scan's and the Analyse button's own code), every Δ reads against the entire
+     catalogue from the same read, and ⬇ PDF / ⬇ HTML / ⬇ CSV carry the group, named on the cover. What a group cannot
+     answer leaves the screen while it is on: the score history and the Meta audit are the catalogue's, the custom-label
+     strategy is the catalogue's, and every action that WRITES (accept as known-good, rescan, analyse, ask the client,
+     brief a field, the plan board) is the catalogue's too. ↩ Entire catalogue puts the stored scorecard back; a fresh
+     load or scan of the market leaves group mode on its own, since the rows it was read off are no longer current. */
+  var GRP = {};          // k -> { real: the stored CACHE entry, realQ: the stored QUAL reading, desc, n, total, sig }
+  function grpOn(k) { return !!GRP[k]; }
+  function grpDrop(k) { if (GRP[k]) { var g = GRP[k]; delete GRP[k]; return g; } return null; }
+  function grpEnter(k) {
+    var st = SEG[k]; if (!st || st.st !== 'ready') return;
+    var p = parts(k), f = SEGF[k] || {}, sig = segFsig(f); if (sig === '[]') return;
+    var idx = segMask(st, f); if (!idx.length) return;
+    var prof = profileForC(p.client);
+    var all = segScore(k, st, st.rows.map(function (_, i) { return i; }), '[]');
+    var grp = segScore(k, st, idx, sig);
+    var qs = st.LG.qualityStream({ FA: st.FA, client: p.client, market: p.mkt, audCap: AUD_CAP, expected: prof.expected, waived: prof.waived });
+    qs.onRow(st.header);
+    for (var i = 0; i < idx.length; i++) qs.onRow(st.rows[idx[i]]);
+    var qsnap = null; try { qsnap = qs.finish(); } catch (e) { qsnap = null; }
+    var g = grpDrop(k) || { real: CACHE[k], realQ: QUAL[k] };
+    var desc = segDesc(st, f), G = { desc: desc, n: grp.n, total: all.n, sig: sig };
+    g.desc = desc; g.n = grp.n; g.total = all.n; g.sig = sig;
+    var real = g.real || {}, rs = real.snapshot || { client: p.client, market: p.mkt };
+    var snap = Object.assign({}, rs, { attrs: grp.attrs, rows: grp.n, t: st.t, grp: G });
+    CACHE[k] = Object.assign({}, real, { snapshot: snap, baseline: { attrs: all.attrs, t: st.t }, daily: null, pdp: null });
+    QUAL[k] = qsnap ? Object.assign(qsnap, { grp: G }) : null;
+    GRP[k] = g;
+    renderDetail(k);
+    var top = $('det-panel'); if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function grpExit(k) {
+    var g = grpDrop(k); if (!g) return;
+    CACHE[k] = g.real; QUAL[k] = g.realQ;
+    renderDetail(k);
+  }
+  // the scope line at the head of the scorecard: which products every number below is read from
+  function grpBar(k) {
+    var g = GRP[k], st = SEG[k], f = SEGF[k] || {}, can = st && st.st === 'ready' && segFsig(f) !== '[]';
+    if (g) return '<div class="gr-scope on"><span class="sg-lbl">Products scored</span>' +
+      '<span class="gs-seg"><button data-grp="all">Entire catalogue</button><button class="on" aria-pressed="true">This group</button></span>' +
+      '<span class="gs-what"><b>' + esc(g.desc) + '</b> · ' + fmt(g.n) + ' of ' + fmt(g.total) + ' products · every Δ reads against the entire catalogue · the downloads carry this group</span>' +
+      (can && segFsig(f) !== g.sig ? '<button class="btn" data-grp="apply" title="The group below has changed — score the scorecard on it">▶ Score the new group</button>' : '') + '</div>';
+    return '<div class="gr-scope"><span class="sg-lbl">Products scored</span>' +
+      '<span class="gs-seg"><button class="on" aria-pressed="true">Entire catalogue</button>' +
+      '<button data-grp="' + (can ? 'apply' : 'pick') + '" title="' + (can ? 'Score the whole scorecard on the group picked below' : 'Pick a group of products in “Dissect the score” below') + '">This group</button></span>' +
+      '<span class="gs-what">' + (can ? 'Group ready: <b>' + esc(segDesc(st, f)) + '</b>' : 'Every product in the feed') + '</span></div>';
+  }
+  function grpWire(k) {
+    var p = $('det-panel'); if (!p) return;
+    Array.prototype.forEach.call(p.querySelectorAll('[data-grp]'), function (b) {
+      b.onclick = function () {
+        var a = b.getAttribute('data-grp');
+        if (a === 'all') grpExit(k);
+        else if (a === 'apply') grpEnter(k);
+        else { var t = $('sg-tier'); if (t) { if (t.classList.contains('folded')) { TFOLD.seg = 0; tfSave(); tfApply(); } t.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+      };
+    });
+  }
+  // the group's brief: its weakest fields, the group named in words, into Workflow's own composer
+  function segBrief(k) {
+    var st = SEG[k]; if (!st || st.st !== 'ready') return;
+    var p = parts(k), f = SEGF[k] || {}, sig = segFsig(f), prof = profileForC(p.client);
+    var all = segScore(k, st, st.rows.map(function (_, i) { return i; }), '[]');
+    var grp = sig === '[]' ? all : segScore(k, st, segMask(st, f), sig);
+    var lifts = segLifts(grp.attrs, prof, grp.score); if (!lifts.length) return;
+    var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2), top = lifts[0];
+    var desc = segDesc(st, f);
+    var lines = [
+      'Group: ' + desc + ' (' + fmt(grp.n) + ' of ' + fmt(all.n) + ' products)',
+      'Golden Score of the group: ' + grp.score + ' — whole feed ' + all.score,
+      'Fields to fix, most points first:'
+    ].concat(lifts.slice(0, 5).map(function (L) {
+      return '· ' + segName(L.s) + ' — ' + (L.cov == null ? 'not in the feed' : L.cov + '% of the group') + ' · worth +' + L.lift + ' pts to the group';
+    })).concat(['Source: Golden Record › Dissect the score (/golden) — read from the live feed ' + new Date(st.t).toLocaleDateString('en-GB')]);
+    var cat = top.k === 'keywords' ? 'keyword' : (top.k === 'img_depth' || top.k === 'image_link' || top.k === 'additional_image_link' ? 'image' : 'technical');
+    location.href = '/workflow?brief=' + b64url({ client: p.client,
+      task: 'Golden Record Fix - ' + segName(top.s) + ' - ' + desc.slice(0, 80) + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+      cat: cat, scope: lines.join('\n') });
+  }
+
   function qualBand(s) { return 'b-' + auditBand(s); }
 
   function qualitySection(k, s) {
@@ -4919,8 +5404,8 @@ window.addEventListener('load',restore);
     var qd = null, ai = null, clr = null, mtr = null;
     try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
     ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
-    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
-    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
+    try { if (LGQ && LGQ.clStrategy && CL[k] && !(s && s.grp)) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
+    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta && !(s && s.grp)) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
     var pl = score == null ? null : planBuild(s.attrs, prof, qd, ai, clr, mtr);
     var bench = indBench(ind), an = aiCount(s.attrs);
     var req = SPEC.filter(function (x) { return x.t === 'req'; });
@@ -4973,12 +5458,13 @@ window.addEventListener('load',restore);
     return '<header class="cv">' + photo +
       '<div class="cv-body"><div class="cv-lock"><div class="cv-logo">Feed<span>Spark</span></div>' +
       (logo ? '<span class="cv-x" aria-hidden="true"></span><img class="cv-client" src="' + logo + '" alt="' + esc(brand) + '">' : '') + '</div>' +
-      '<div class="cv-kick">Golden Record audit · Google Shopping</div>' +
+      '<div class="cv-kick">Golden Record audit · Google Shopping' + (s.grp ? ' · a group of products' : '') + '</div>' +
       '<h1 class="cv-h1">' + esc(brand) + ' <span>·</span> ' + esc(mk) + '</h1>' +
       '<p class="cv-dek">' + esc(dek) + '</p>' +
-      '<div class="cv-meta">Scanned ' + esc(when) + ' · ' + fmt(s.rows) + ' products · ' + esc(ind) + ' best-practice profile</div>' +
+      (s.grp ? '<div class="cv-grp">' + esc(s.grp.desc) + ' — ' + fmt(s.grp.n) + ' of ' + fmt(s.grp.total) + ' products</div>' : '') +
+      '<div class="cv-meta">' + (s.grp ? 'Read ' : 'Scanned ') + esc(when) + ' · ' + fmt(s.rows) + ' products · ' + esc(ind) + ' best-practice profile</div>' +
       '<div class="cv-scores"><div class="cv-ring">' + big + '</div><div class="cv-minis">' + minis + '</div></div>' +
-      (bench && score != null ? '<div class="cv-bench">' + esc(ind) + ' average across ' + bench.n + ' feeds FeedSpark scores: <b>' + bench.avg + '</b>' + (proj != null ? ' · after the action plan: <b>' + proj + '</b>' : '') + ' · Golden Record target <b>99.9</b></div>' : '') +
+      (bench && score != null && !s.grp ? '<div class="cv-bench">' + esc(ind) + ' average across ' + bench.n + ' feeds FeedSpark scores: <b>' + bench.avg + '</b>' + (proj != null ? ' · after the action plan: <b>' + proj + '</b>' : '') + ' · Golden Record target <b>99.9</b></div>' : '') +
       '<div class="cv-foot">Prepared by FeedSpark · ' + esc(issue) + ' · Private &amp; Confidential</div></div>' +
       '</header>';
   }
@@ -4994,6 +5480,7 @@ window.addEventListener('load',restore);
      score, stating how many when that is not all of them. A single-market brand gets nothing —
      the document above already IS its only market. */
   function mktOverview(k, s) {
+    if (s && s.grp) return '';   // a group report is about one market's products — the all-markets table is the catalogue's
     var p = parts(k);
     rescoreEstate();
     var rows = feedList().filter(function (f) { return f.client === p.client; });
@@ -5278,9 +5765,9 @@ window.addEventListener('load',restore);
     try { if (LGQ && QUAL[k]) qd = LGQ.qualityScore(QUAL[k], prof); } catch (e) {}
     var ai = QUAL[k] && QUAL[k].ai && QUAL[k].ai.total ? QUAL[k].ai : null;
     var clr = null;
-    try { if (LGQ && LGQ.clStrategy && CL[k]) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
+    try { if (LGQ && LGQ.clStrategy && CL[k] && !(s && s.grp)) clr = LGQ.clStrategy(CL[k].snap, CL[k].ref, clCfgFor(p.client)); } catch (e) {}
     var mtr = null;
-    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
+    try { if (LGQ && LGQ.metaScore && META[k] && META[k].meta && !(s && s.grp)) mtr = LGQ.metaScore(META[k].meta); } catch (e) {}
     var pl = planBuild(s.attrs, prof, qd, ai, clr, mtr);
     return pl;
   }
@@ -5898,7 +6385,8 @@ window.addEventListener('load',restore);
     var pp = $('print-plan'); if (pp) pp.innerHTML = planHtml(k, s);
   }
   function pdfFilename(p, s, ext) {
-    return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
+    return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() +
+      (s.grp ? '_' + s.grp.desc.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) : '') + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
   }
   // the OLD path (browser print, native dialog) — kept for a bare Ctrl+P (beforeprint above)
   // and as the fallback ⬇ PDF itself falls back to when the CDN libraries can't be reached
@@ -6007,7 +6495,7 @@ window.addEventListener('load',restore);
     var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '', frame = null;
     var done = function () { if (frame && frame.parentNode) frame.parentNode.removeChild(frame); frame = null; if (btn) { btn.disabled = false; btn.textContent = oldTxt; } };
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
-    var picks = catxPicks(k);
+    var picks = GRP[k] ? [] : catxPicks(k);   // a group report carries no catalogue-wide modules
     var tell = function (i, n) { if (btn) btn.textContent = 'Reading the Catalogue… ' + i + ' of ' + n; };
     (picks.length ? catxCapture(k, picks, tell).catch(function () { return null; }) : Promise.resolve(null)).then(function (cx) {
       if (btn) btn.textContent = 'Preparing the cover…';
@@ -6158,7 +6646,7 @@ window.addEventListener('load',restore);
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
-     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am', '#mt-run', '#mt-msg', '#mt-scan', '.mt-act', '.gr-sticky',
+     '.at-act', '.det-actions', '#pdp-last', '#prof-edit', '.cl-am', '#mt-run', '#mt-msg', '#mt-scan', '.mt-act', '.gr-sticky', '.gr-scope',
      '.hs.hs-empty', '.hs-tip', '.hs-more', '.hs-svg .hit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the
@@ -6175,6 +6663,7 @@ window.addEventListener('load',restore);
      '.tfold', '#tf-all', '.tf-sum',
      /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
         weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
+     '#sg-tier',   /* Score a group of products — an AM tool, read from the live feed, never in a client file */
      '#ap-tier',   /* the AM's editable action-plan board — the client copy is #print-plan */
      /* the live Catalogue picker card (its frame points at the FCC) — the picked modules travel as #print-catx */
      '#catx',
@@ -6194,7 +6683,7 @@ window.addEventListener('load',restore);
      build the file with them at the end; with none picked the file is built at once, exactly as before */
   function exportHtml(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
-    var picks = catxPicks(k);
+    var picks = GRP[k] ? [] : catxPicks(k);   // a group report carries no catalogue-wide modules
     // the cover's photographs first — a cover already read (or a demo / unreadable feed) is instant
     if (!picks.length) { if (COVER[k] || masked(parts(k).client)) return buildHtml(k, null); return coverPrep(k).then(function () { buildHtml(k, null); }); }
     var btn = $('det-html'), old = btn ? btn.textContent : '';

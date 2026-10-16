@@ -2288,3 +2288,41 @@ American Golf (HTTP 200, 0.3–1.7 s). Blocked by bot walls: Reiss (Akamai), Sch
 (Cloudflare) — those need the client to allowlist the scanner; the page says so on an all-blocked
 run. Phase 2 (not built): full-catalogue harvest on the GitHub Actions agent lane.
 
+
+
+### 9.12m Live dissect — the Golden Score for any group of products (16 Oct 2026)
+
+Ray: *"is there a way to dissect the Golden Score based on a group of products ? (filter by fields?)"* — then
+*"it could be a modularised section as part of Score card - can be either downloaded specifically just for the
+selected group of products or entire catalogue"* and *"its almost a live dissect tool rather than a tracker"*.
+
+**Why it needs a live read.** The dial is computed from per-attribute coverage over the whole feed; the scan never
+keeps a reading per product, so a group has no score until the rows are read again. **⚡ Read the feed** streams
+the market's feed once in the browser (`/api/feed/proxy`, the Feed Lab parser) and holds the rows in memory.
+Nothing is stored or sent — it is a dissection, not a tracker.
+
+**How a group is scored.** Its rows go through labelguard's own `xmlCollector` (the scan's code) and the page's
+`goldenScore` under the brand's current profile (the dial's call). GPC category scope, depth twins, keyword
+strings, ★ and waived fields therefore behave exactly as on the dial, and *All products* is the dial's reading of
+the same feed.
+
+**Filters.** Product type tier 1–3, Google category tier 1–2, brand (left out in demo mode), gender, age group,
+colour, material, condition, availability, price type (on sale / full price), first seen, custom labels 0–4.
+AND across fields, OR within one; each value list is counted from what the other filters leave.
+
+**What the section shows.** The group's score beside the whole feed's; every counted field ranked by what it is
+**worth** to the group (the score re-run with that field complete — the action plan's projection); **Split by**
+any field (top 15 values each scored, worst or biggest first, the rest counted, a row click narrows to it; under
+20 products is marked *small*); **→ Brief this group**.
+
+**The whole scorecard on a group.** *Products scored · Entire catalogue | This group* at the head of the scorecard
+(`grpEnter` / `grpExit`). On a group, the dial, the spec tiers, content quality and AI-readiness (`qualityStream`
+over the group's rows), the two-scores band and the action plan read the group, and every Δ reads against the
+entire catalogue from the same read. The score history, custom labels, Meta audit, plan board, Catalogue modules
+and every write action are the catalogue's and leave the screen. ⬇ PDF / ⬇ HTML / ⬇ CSV carry the group: the
+cover names it, the file name carries it, and the all-markets table is dropped. A fresh load or scan of the market
+leaves group mode, since the rows were read before it.
+
+Harness `tools/check_grseg.js` (presync): an invented 40-product feed, every score the page prints checked
+against the same rows pushed through the engine in node; filter, split, group mode, the group ⬇ HTML, the way
+back, 390px.

@@ -16450,6 +16450,48 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "dk:jd?[+jd[1],+jd[2],+jd[3]]:null",
       "pr": 0
+    },
+    {
+      "name": "Golden Record: a group of products is scored by labelguard's own collector + the dial's goldenScore",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var snap = col.finish().snap, attrs = snap.attrs || {};",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: the whole scorecard can be put on a group (grpEnter) and back",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function grpEnter(k) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: group mode drops the catalogue-only sections",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (!G) h += histSection(k, s);",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: a fresh load or scan leaves group mode",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "grpDrop(k);   // a fresh load is the catalogue's",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: the group report names the group on its cover",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'<div class=\"cv-grp\">'",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: the dissect section and scope line never reach a download",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'#sg-tier',   /* Score a group of products",
+      "pr": 0
+    },
+    {
+      "name": "Presync runs the Golden Record dissect tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grseg.js",
+      "pr": 0
     }
   ]
 }
