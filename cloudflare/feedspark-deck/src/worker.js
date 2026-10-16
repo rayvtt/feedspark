@@ -5269,10 +5269,37 @@ async function volTrack(env, client, mkt, rows, vol) {
     const was = parse(base.ids || ''), now = parse(vol.ids);
     let nIn = 0, nOut = 0; const cat = {};
     const bump = (c, k) => { const key = c || 'Uncategorised'; (cat[key] = cat[key] || { c: key, in: 0, out: 0 })[k]++; };
-    for (const [id, c] of now) if (!was.has(id)) { nIn++; bump(c, 'in'); }
-    for (const [id, c] of was) if (!now.has(id)) { nOut++; bump(c, 'out'); }
-    const cats = Object.values(cat).sort((a, b) => (b.in + b.out) - (a.in + a.out)).slice(0, 12);
+    // MORE THAN THE CATEGORY (Ray, 16 Oct 2026: "breakdown new arrivals movers further more by more
+    // fields on feeds — PT / color / gender etc"): what follows the id's last '|' is the category and,
+    // tab-separated, the VOL_DIMS facts (labelguard.js) — pt level 2, pt level 3, brand, colour,
+    // gender, age group, availability. Each moved product is counted once per dimension; a blank fact
+    // is "(not stated)" ONLY on a dimension the feed states on some product (a feed with no colour
+    // column never shows a colour table), and a line with NO tab is a capture from before this
+    // shipped — counted as NOT RECORDED (dnr), never as blank, since the two are different findings.
+    const DIMK = ['pt2', 'pt3', 'brand', 'color', 'gender', 'age', 'avail'];
+    const dim = {}, dany = {}; const dnr = { in: 0, out: 0 };
+    const AVW = { in: 'In stock', out: 'Out of stock', pre: 'Pre-order', none: 'Not stated', other: 'Other word' };
+    const dbump = (v, k) => {
+      const i = v.indexOf('\t'); if (i < 0) { dnr[k]++; return v; }
+      const f = v.split('\t'), c = f[0];
+      const vals = { pt2: f[1] ? c + ' > ' + f[1] : '', pt3: f[1] && f[2] ? c + ' > ' + f[1] + ' > ' + f[2] : '',
+        brand: f[3] || '', color: f[4] || '', gender: f[5] || '', age: f[6] || '', avail: f[7] ? (AVW[f[7]] || f[7]) : '' };
+      for (const d of DIMK) {
+        const raw = vals[d]; if (raw) dany[d] = true;
+        const key = raw || '(not stated)';
+        const t = dim[d] = dim[d] || {};
+        (t[key] = t[key] || { c: key, in: 0, out: 0 })[k]++;
+      }
+      return c;
+    };
+    for (const [id, v] of now) if (!was.has(id)) { nIn++; bump(dbump(v, 'in'), 'in'); }
+    for (const [id, v] of was) if (!now.has(id)) { nOut++; bump(dbump(v, 'out'), 'out'); }
+    const top = (o) => Object.values(o).sort((a, b) => (b.in + b.out) - (a.in + a.out)).slice(0, 12);
+    const cats = top(cat);
+    const dims = {}; for (const d of DIMK) if (dany[d]) dims[d] = top(dim[d]);
     const entry = { d: today, rows, in: nIn, out: nOut, cats };
+    if (Object.keys(dims).length) entry.dims = dims;
+    if (dnr.in || dnr.out) entry.dnr = dnr;
     if (last && last.d === today) hist[hist.length - 1] = entry; else hist.push(entry);
   } else {
     // first-ever capture (no previous-day close yet) or a truncated set: keep today's row

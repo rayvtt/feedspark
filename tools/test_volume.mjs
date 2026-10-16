@@ -70,6 +70,51 @@ at('2026-09-14T02:15:00Z');
 await volTrack(env, 'Acc', 'gb', 8, set([1, 2, 3, 4, 7, 8, 9, 10]));
 ok(last().d === '2026-09-14' && last().in === undefined, 'the day after a truncated close: no baseline to trust → rows-only, no invented churn');
 
+// ---- MORE THAN THE CATEGORY (Ray, 16 Oct 2026): the facts after the category, tab-separated ----
+// line = id|cat\tpt2\tpt3\tbrand\tcolour\tgender\tage\tavail  (the collector's wire shape)
+const dl = (id, c, f) => id + '|' + c + '\t' + (f || []).join('\t');
+const dset = (lines) => ({ ids: lines.join('\n'), trunc: false });
+// the day-14 close is the OLD shape (no tabs): what leaves it is "not recorded", never blank
+at('2026-09-15T02:15:00Z');
+await volTrack(env, 'Acc', 'gb', 6, dset([
+  dl(1, 'Bags', ['Totes', 'Leather', 'Northwind', 'Black', 'female', 'adult', 'in']),
+  dl(2, 'Bags', ['Totes', '', 'Northwind', 'Tan', 'female', 'adult', 'in']),
+  dl(11, 'Hats', ['Caps', '', 'Harbour', 'Black', 'unisex', 'adult', 'in']),      // new
+  dl(12, 'Hats', ['Caps', '', 'Harbour', '', 'unisex', 'kids', 'out']),           // new, no colour stated
+  dl(13, 'Scarves', ['', '', '', '', '', '', '']),                                  // new, nothing but a category
+  dl(14, 'Bags', ['Totes', 'Leather', 'Northwind', 'Black', 'female', 'adult', 'pre']),
+]));
+{
+  const e = last(), d = e.dims || {};
+  const row = (k, c) => (d[k] || []).find((x) => x.c === c);
+  ok(e.in === 4 && e.dnr && e.dnr.out === 6 && e.dnr.in === 0, 'day 15: 4 in; the 6 ids that left the old-shape close are counted NOT RECORDED, not blank — ' + JSON.stringify(e.dnr));
+  ok(row('pt2', 'Hats > Caps') && row('pt2', 'Hats > Caps').in === 2 && row('pt2', 'Bags > Totes').in === 1, 'product type tier 2 is the category joined to level 2 (Hats > Caps +2, Bags > Totes +1)');
+  ok(row('pt3', 'Bags > Totes > Leather') && row('pt3', 'Bags > Totes > Leather').in === 1 && row('pt3', '(not stated)').in === 3, 'tier 3 only where the path has three levels; the rest read (not stated)');
+  ok(row('brand', 'Harbour').in === 2 && row('brand', 'Northwind').in === 1 && row('brand', '(not stated)').in === 1, 'brand counts each moved product once; a blank is (not stated) on a dimension the feed does state');
+  ok(row('color', 'Black').in === 2 && row('color', '(not stated)').in === 2, 'colour: Black +2, two with no colour stated');
+  ok(row('avail', 'In stock').in === 1 && row('avail', 'Out of stock').in === 1 && row('avail', 'Pre-order').in === 1, 'availability reads in words off the bucket (In stock / Out of stock / Pre-order)');
+  ok(e.cats.find((x) => x.c === 'Hats').in === 2 && e.cats.find((x) => x.c === 'Bags').out === 6, 'the category table still reads as before (Hats +2, Bags −6 off the old-shape close)');
+  ok(JSON.stringify(Object.keys(d).sort()) === JSON.stringify(['age', 'avail', 'brand', 'color', 'gender', 'pt2', 'pt3']), 'every dimension the feed states is present — ' + Object.keys(d).join(','));
+}
+// a feed that states NO colour on any product never gets a colour table — and a day with no tabs
+// at all (an old-shape capture on both sides) carries no dims and no dnr beyond what moved
+at('2026-09-16T02:15:00Z');
+await volTrack(env, 'Acc', 'gb', 7, dset([
+  dl(1, 'Bags', ['Totes', 'Leather', 'Northwind', '', 'female', 'adult', 'in']),
+  dl(2, 'Bags', ['Totes', '', 'Northwind', '', 'female', 'adult', 'in']),
+  dl(11, 'Hats', ['Caps', '', 'Harbour', '', 'unisex', 'adult', 'in']),
+  dl(12, 'Hats', ['Caps', '', 'Harbour', '', 'unisex', 'kids', 'out']),
+  dl(13, 'Scarves', ['', '', '', '', '', '', '']),
+  dl(14, 'Bags', ['Totes', 'Leather', 'Northwind', '', 'female', 'adult', 'pre']),
+  dl(15, 'Belts', ['', '', 'Linden', '', 'male', 'adult', 'in']),
+]));
+{
+  const e = last(), d = e.dims || {};
+  ok(e.in === 1 && e.out === 0 && !e.dnr, 'day 16: one product in against a close that carried the facts — nothing not recorded');
+  ok(!d.color && !d.pt2 && !d.pt3, 'the moved product states no colour and no deeper type → no colour / tier table at all (never an empty one) — ' + Object.keys(d).join(','));
+  ok(d.brand && d.brand[0].c === 'Linden' && d.brand[0].in === 1 && d.gender[0].c === 'male', 'brand and gender tables carry the one mover');
+}
+
 // ---- guards ----
 ok((await volTrack(env, 'Acc', 'gb', 8, null)) === null, 'no vol payload → no-op');
 ok(hist().length <= 60, 'history capped');

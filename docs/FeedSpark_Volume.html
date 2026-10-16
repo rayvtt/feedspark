@@ -89,6 +89,8 @@ window.addEventListener('load',restore);
   .cat-bar{display:inline-block;height:8px;border-radius:3px;vertical-align:middle}
   .cat-bar.in{background:var(--vin)}.cat-bar.out{background:var(--vout)}
   .cat-cell{white-space:nowrap}
+  .dimrow{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .dimrow .btn{padding:4px 10px;font-size:12px}
   .net-pos{color:var(--vin)}.net-neg{color:var(--vout)}
   .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
   .meth li{margin:7px 0}
@@ -195,8 +197,10 @@ window.addEventListener('load',restore);
     <div class="card">
       <h3 id="cats-title">Category movers</h3>
       <div class="ch" id="cats-sub">Which categories the movement came from — top movers across the window.</div>
-      <div style="overflow-x:auto"><table class="vt" id="cattbl"><thead><tr><th>Category</th><th class="num">In</th><th class="num" style="width:120px"></th><th class="num">Out</th><th class="num">Net</th></tr></thead><tbody></tbody></table></div>
+      <div class="dimrow" id="dimrow" role="tablist" aria-label="Break the movement down by"></div>
+      <div style="overflow-x:auto"><table class="vt" id="cattbl"><thead><tr><th id="cats-col">Category</th><th class="num">In</th><th class="num" style="width:120px"></th><th class="num">Out</th><th class="num">Net</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="cats-empty" hidden></div>
+      <div class="note" id="cats-nr" hidden></div>
     </div>
     <div class="card">
       <h3>Total live SKUs</h3>
@@ -246,7 +250,7 @@ window.addEventListener('load',restore);
       <li><b>4×-daily live scans.</b> The monitor fetches every wired FeedHero XML feed four times a day (02:15, 08:15, 14:15, 20:15 UTC) — the same pass that powers Label Guard, PT Guard and Golden Record.</li>
       <li><b>Every SKU is fingerprinted.</b> Each scan captures the feed's full set of product IDs, each tagged with its top-level category (the first level of the primary <code>g:product_type</code>).</li>
       <li><b>Days are compared close-to-close.</b> Yesterday's <b>closing</b> set is the baseline for the whole of today: every scan compares today's latest set against it — IDs that appeared = <b>new in</b>; IDs that vanished = <b>dropped out</b> — so today's bar builds through the day and settles at the last scan. Intraday flapping never double-counts.</li>
-      <li><b>Categories explain the movement.</b> Every in/out is attributed to its category, and the top movers are stored per day — so "Reiss had 300 in and 900 out" breaks down into the collections that drove it.</li>
+      <li><b>Categories explain the movement — and so do six more fields.</b> Every in/out is attributed to its top-level category, and since 16 Oct 2026 to its product type at tiers 2 and 3, its brand, colour, gender, age group and availability as well; the top twelve movers per field are stored per day, so "Reiss had 300 in and 900 out" breaks down into the collections, brands and colours that drove it. A field the feed does not carry never shows a table.</li>
       <li><b>History accrues forward.</b> Up to 60 days of daily movement is retained per feed. Tracking started 9 Sep 2026 — bars fill in from the first midnight after each feed's first scan; a catastrophic feed reading is quarantined by the guards' two-strike check before it can fake a movement spike.</li>
       <li><b>Arrivals come from the feed's own first-seen dates.</b> FeedHero stamps every product with <code>fs:date_of_birth</code> — the day its ID first appeared in the feed. Counting the products still in the feed by that month gives new products per month, quarter and year with no dependence on when monitoring started; the forecast is the plain run-rate of a <i>year</i> of complete months ÷ 12 (× 3 for a quarter, × 12 for a year), never a fitted curve — a year averages out the seasonal bursts a three-month read would extrapolate; where a feed has been scanned for less than a year the figure is divided by the months there actually are and says so. The 3-month average sits beside it in the estate table, because a recent burst is worth seeing even though it is not what the year is priced on. <b>Survivors only:</b> a month counts what is still live today, so recent months are complete and older months are lower bounds. Shopping feeds only — Meta feeds mirror the same products.</li>
     </ol>
@@ -549,19 +553,58 @@ window.addEventListener('load',restore);
     tb.innerHTML=rowsH||'<tr><td colspan="5" class="empty">No days recorded yet.</td></tr>';
   }
 
+  /* MORE THAN THE CATEGORY (Ray, 16 Oct 2026: "can we breakdown new arrivals movers further more by
+     more fields on feeds? (PT/ color/ gender etc)"): the day's entry carries `cats` (the top-level
+     category, as since launch) and, from the scans after this shipped, `dims` — the same in/out
+     table per product-type tier 2 and 3, brand, colour, gender, age group and availability (the
+     worker's volTrack, off labelguard.js VOL_DIMS). ONE renderer reads whichever table the chip
+     names; the pick is this device's (fcc-vol-dim). A dimension absent from every day in the
+     window is said in words — a feed with no colour column never gets an empty colour table, and a
+     window of days captured before the facts were recorded says so rather than reading as zero. */
+  var DIMS=[['cat','Category','Which categories the movement came from'],['pt2','Product type · tier 2','Which second-level product types the movement came from'],
+    ['pt3','Product type · tier 3','Which third-level product types the movement came from'],['brand','Brand','Which brands the movement came from'],
+    ['color','Colour','Which colours the movement came from'],['gender','Gender','Which genders the movement came from'],
+    ['age','Age group','Which age groups the movement came from'],['avail','Availability','What the moved products said about stock']];
+  var DIM='cat'; try{ var dk=localStorage.getItem('fcc-vol-dim'); if(dk&&DIMS.some(function(d){return d[0]===dk}))DIM=dk; }catch(e){}
+  function dimOf(k){ for(var i=0;i<DIMS.length;i++)if(DIMS[i][0]===k)return DIMS[i]; return DIMS[0]; }
+  function dimRows(e,k){ if(!e)return null; if(k==='cat')return e.cats||null; return (e.dims&&e.dims[k])||null; }
+  function drawDimRow(have){
+    var row=$('#dimrow'); if(!row)return;
+    row.innerHTML=DIMS.map(function(d){
+      var has=have.some(function(x){return !!dimRows(x.e,d[0])});
+      return '<button type="button" class="btn rng'+(DIM===d[0]?' on':'')+'" role="tab" aria-selected="'+(DIM===d[0]?'true':'false')+'" data-dim="'+d[0]+'"'
+        +(has?'':' title="not recorded on any day in this window"')+(has?'':' style="opacity:.55"')+'>'+esc(d[1])+'</button>';
+    }).join('');
+  }
+  $('#dimrow').addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('[data-dim]'); if(!b)return;
+    DIM=b.getAttribute('data-dim'); try{ localStorage.setItem('fcc-vol-dim',DIM); }catch(e2){}
+    render();
+  });
   function drawCats(have){
-    var tb=$('#cattbl tbody'),title=$('#cats-title'),sub=$('#cats-sub'),empty=$('#cats-empty');
+    var tb=$('#cattbl tbody'),title=$('#cats-title'),sub=$('#cats-sub'),empty=$('#cats-empty'),nr=$('#cats-nr');
+    var D=dimOf(DIM),label=D[1],what=D[2];
+    $('#cats-col').textContent=label;
+    drawDimRow(have);
     var src=have;
-    if(SELDAY){ src=have.filter(function(x){return x.d===SELDAY}); title.textContent='Category movers · '+dayLbl(SELDAY);
-      sub.textContent='The categories behind this day’s movement — click the bar again to go back to the whole window.'; }
-    else { title.textContent='Category movers';
-      sub.textContent='Which categories the movement came from — top movers across the window.'; }
-    var agg={};
-    src.forEach(function(x){ (x.e.cats||[]).forEach(function(c){
-      var e=agg[c.c]=agg[c.c]||{c:c.c,in:0,out:0}; e.in+=c.in||0; e.out+=c.out||0; }); });
+    if(SELDAY){ src=have.filter(function(x){return x.d===SELDAY}); title.textContent=label+' movers · '+dayLbl(SELDAY);
+      sub.textContent=what+' on this day — click the bar again to go back to the whole window.'; }
+    else { title.textContent=label+' movers';
+      sub.textContent=what+' — top movers across the window.'; }
+    var agg={},carried=0,dnrIn=0,dnrOut=0;
+    src.forEach(function(x){ var rows=dimRows(x.e,DIM); if(rows)carried++; (rows||[]).forEach(function(c){
+      var e=agg[c.c]=agg[c.c]||{c:c.c,in:0,out:0}; e.in+=c.in||0; e.out+=c.out||0; });
+      if(x.e&&x.e.dnr){ dnrIn+=x.e.dnr.in||0; dnrOut+=x.e.dnr.out||0; } });
     var cats=Object.keys(agg).map(function(k){return agg[k]}).sort(function(a,b){return (b.in+b.out)-(a.in+a.out)}).slice(0,12);
+    nr.hidden=true; nr.textContent='';
+    if(DIM!=='cat'&&(dnrIn||dnrOut)&&src.length){ nr.hidden=false;
+      nr.textContent=fmt(dnrIn+dnrOut)+' moved products on these days were captured before this breakdown shipped (16 Oct 2026) and are not attributed by '+label.toLowerCase()+'.'; }
     if(!cats.length){ tb.innerHTML=''; document.querySelector('#cattbl').style.display='none';
-      empty.hidden=false; empty.textContent='Category movers appear once daily movement is recorded.'; return; }
+      empty.hidden=false;
+      empty.textContent=DIM==='cat'?'Category movers appear once daily movement is recorded.'
+        :(src.length?'No '+label.toLowerCase()+' recorded on these days — the breakdown by '+label.toLowerCase()+' is captured on every scan since 16 Oct 2026, and only where the feed carries the field.'
+        :label+' movers appear once daily movement is recorded.');
+      return; }
     document.querySelector('#cattbl').style.display=''; empty.hidden=true;
     var mx=1; cats.forEach(function(c){mx=Math.max(mx,c.in,c.out)});
     tb.innerHTML=cats.map(function(c){
