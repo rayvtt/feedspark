@@ -934,6 +934,81 @@ ROSTER = null;
     up(SEEDO, { Schuh: { events: [{ id: 'sch_am_own', name: 'AM’s own', lane: 'sale', date: '2026-12-01' }] } }).n, 0);
 }
 
+
+/* ---- A CONDITION EITHER LAYERS OR STANDS ON ITS OWN (Ray, 16 Oct 2026: "This shouldn't be a
+   condition based on the previous condition, but should continue to have a separate future. So
+   either conditional layers conditions or a separate condition"). The chain rule lives in the
+   engine; the counting lives on the page, so both are lifted and run over one invented feed. ---- */
+{
+  const SKUC = {};
+  const scope = new Function('KWE', 'SKUC',
+    `${liftDecl('KW_ATTRS')}
+     ${lift('txWords')} ${lift('txHit')}
+     function skuCache(b,m){ var c=SKUC[b+'|'+m]; return c&&c.rows?c.rows:null; }
+     ${lift('condSat')} ${lift('scopeCount')} ${lift('attrsPresent')} ${lift('attrIndex')}
+     return { scopeCount:scopeCount, attrIndex:attrIndex, condSat:condSat };`)(KWE, SKUC);
+
+  // row = [primary product_type, title+description, keyworded?, per-attr values in KW_ATTRS order]
+  // colour sits at index 3 of KW_ATTRS (gender, age_group, material, color, …)
+  const row = (pt, txt, col) => [pt, txt, 0, ['', '', '', col, '', '', '', '', '']];
+  SKUC['Accessorize|gb'] = { rows: [
+    row('Jewellery', 'halloween skull necklace', 'black'),      // the text filter finds it
+    row('Jewellery', 'halloween pumpkin ring', 'orange'),       // text + colour
+    row('Bags', 'everyday tote', 'black'),                      // colour only
+    row('Bags', 'everyday tote', 'navy'),                       // neither
+    row('Scarves', 'halloween wrap', 'navy'),                   // text only
+  ] };
+  const txq = ['halloween'], COL = { attr: 'color', vals: ['black', 'orange'] };
+
+  is('the text filter alone finds three', scope.scopeCount('Accessorize', 'gb', [], txq, []).uni, 3);
+  is('a condition that NARROWS takes products away',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL, join: 'and' }]).uni, 2);
+  is('…and a stored condition with no join reads as narrowing, so no saved scope moves',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL }]).uni, 2);
+  is('a SEPARATE condition adds its own products instead',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL, join: 'or' }]).uni, 4);
+  is('…which is the union, never the whole catalogue',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL, join: 'or' }]).uni < 5, true);
+  is('the text filter’s own count is unchanged by a separate condition',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL, join: 'or' }]).ns[0], 3);
+
+  // a separate condition can itself be layered on
+  const sep2 = [{ ...COL, join: 'or' }, { attr: 'gender', vals: ['x'], join: 'and' }];
+  is('a condition layered onto a separate one narrows THAT chain, not the text filter',
+    scope.scopeCount('Accessorize', 'gb', [], txq, sep2).uni, 3);
+
+  // with no PT and no text, the first condition is read against the catalogue
+  is('a condition with no base is the catalogue, narrowed',
+    scope.scopeCount('Accessorize', 'gb', [], [], [{ ...COL }]).uni, 3);
+
+  // the value list a separate condition is built from is the catalogue, not the chain above it
+  const rows = SKUC['Accessorize|gb'].rows;
+  is('a narrowing condition counts its values inside the scope',
+    scope.attrIndex(rows, 'color', [], txq, [{ attr: 'color', vals: [], join: 'and' }], 0).navy, 1);
+  is('…a separate one counts them across the catalogue',
+    scope.attrIndex(rows, 'color', [], txq, [{ attr: 'color', vals: [], join: 'or' }], 1).navy, 2);
+
+  // the chain rule itself
+  const ch = KWE.condChains([{ attr: 'a' }, { attr: 'b', join: 'or' }, { attr: 'c' }], true);
+  is('a chain starts at an OR and runs to the next one', ch.length, 2);
+  is('…chain 0 keeps the PT/text base', ch[0].base, true);
+  is('…a later chain never does', ch[1].base, false);
+  is('…and carries the conditions layered onto it', ch[1].conds.length, 2);
+  is('a leading OR leaves chain 0 with nothing to do',
+    KWE.condChains([{ attr: 'b', join: 'or' }], false)[0].live, false);
+  is('chain indices line up with condChainOf',
+    [0, 1, 2].map((i) => KWE.condChainOf([{ attr: 'a' }, { attr: 'b', join: 'or' }, { attr: 'c' }], i)).join(','),
+    '0,1,1');
+
+  // the brief says which kind each condition is — a reader cannot see a chip
+  const bp = KWE.briefPayload({ Accessorize: { events: [], ptidx: { gb: { map: { Jewellery: 2 }, __total: 5 } } } },
+    'Accessorize', { id: 'x', name: 'Halloween', date: '2026-10-25', terms: ['halloween'],
+      cndm: { gb: { conds: [{ attr: 'color', vals: ['black'], join: 'and' },
+                            { attr: 'material', vals: ['felt'], join: 'or' }], uni: 4 } } }, 'gb');
+  is('the brief lists the conditions', bp.scope.indexOf('• color = black') > 0, true);
+  is('…and a separate one as its own set', bp.scope.indexOf('OR (its own set) material = felt') > 0, true);
+}
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }
 console.log('PASS');
