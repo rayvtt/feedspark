@@ -7,6 +7,8 @@
  * code (findCols/snapshotFromParts/findAttrCols/attrsFromCounts/TH), never a reimplementation —
  * and pushes batches to the worker's /api/gmail/push {xmlscan} handler, which runs the
  * shared processScanSnapshot: identical baselines, day references, drop alerts, acks,
+ * (A wired URL may also be a DELIMITED file — FeedHero hands some Meta catalogues out only as
+ * a TSV; FeedAudit.createFeedParser reads either, Ray 16 Oct 2026.)
  * two-strike emails and badges as the sheet sweep. A feed the agent cannot fetch is
  * reported as {err} so the worker indexes it unreachable (fetch-fail warn), same as gviz.
  *
@@ -63,13 +65,21 @@ async function snapshotFeed(feed) {
   const col = xmlCollector({ client: feed.client, market: feed.mkt });
   const ovc = OV.overlayCollector({ client: feed.client, market: feed.mkt });
   const imc = IM.imageCollector({ client: feed.client, market: feed.mkt });
-  const parser = FA.createXmlParser((r, h) => { col.onRow(r, h); ovc.onRow(r, h); imc.onRow(r, h); });
+  // XML or a delimited file (a Meta TSV, 16 Oct 2026) — the first byte decides; the collectors are
+  // format-blind (columns resolve by name). The header is kept to refuse a language override feed.
+  let head = null;
+  const parser = FA.createFeedParser((r, h) => { if (!head) head = h || r; col.onRow(r, h); ovc.onRow(r, h); imc.onRow(r, h); });
   const res = await fetch(feed.url);
   if (!res.ok || !res.body) throw new Error('fetch-fail: HTTP ' + res.status);
   const dec = new TextDecoder();
   for await (const chunk of res.body) parser.push(dec.decode(chunk, { stream: true }));
   parser.push(dec.decode()); parser.end();
+  // a Meta LANGUAGE OVERRIDE feed (id + 'override' + translated text) is not a catalogue: scanned as
+  // one, every label, price and stock word would read as gone. Report it as unreadable, naming why,
+  // so the wrong wiring surfaces as an alert instead of a wiped baseline.
+  if (FA.isOverrideFeed(head)) throw new Error('language override feed (id + override + text only) — wire the full catalogue feed');
   const out = col.finish();
+  out.fmt = parser.kind() === 'xml' ? 'xml' : 'dsv';
   try { out.ovl = ovc.finish(); } catch (e) { out.ovl = null; }   // overlay capture never blocks the guard snapshot
   try { out.img = imc.finish(); } catch (e) { out.img = null; }   // nor does the image-library capture
   return out;
@@ -89,16 +99,16 @@ async function post(entries) {
 
 let feeds = wiredXmlFeeds();
 if (ONLY) feeds = feeds.filter((f) => (f.client + '|' + f.mkt) === ONLY);
-console.log('· ' + feeds.length + ' wired XML feed(s) to scan');
+console.log('· ' + feeds.length + ' wired FeedHero feed(s) to scan (XML or delimited)');
 const entries = [];
 let i = 0;
 const workers = Array.from({ length: 3 }, async () => {
   while (i < feeds.length) {
     const f = feeds[i++];
     try {
-      const { snap, vol, ovl, img } = await snapshotFeed(f);
+      const { snap, vol, ovl, img, fmt } = await snapshotFeed(f);
       entries.push({ client: f.client, mkt: f.mkt, snap, vol, ovl, img });
-      console.log('✓ ' + f.client + ' ' + f.mkt + ' — ' + snap.rows + ' rows · '
+      console.log('✓ ' + f.client + ' ' + f.mkt + ' — ' + snap.rows + ' rows' + (fmt === 'dsv' ? ' (DSV)' : '') + ' · '
         + (vol.ids ? vol.ids.split('\n').length : 0) + ' ids' + (vol.trunc ? ' (truncated)' : '')
         + (ovl && ovl.ovl ? ' · ' + ovl.ovl + ' overlays (' + ovl.types.map((t) => t.label).join(', ') + ')' : '')
         + (img && img.imgs ? ' · ' + img.imgs + ' images, ' + img.tokens.length + ' shot codes'

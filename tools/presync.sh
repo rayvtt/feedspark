@@ -90,6 +90,10 @@ echo "── validating: Services & Pricer engine (needs per parent, the package
 node tools/test_pricer.mjs >/dev/null
 echo "   ✓ v1 quote maths unchanged, exact needs, stored bounds, packageQuote, the Spark AI twin, costModel + the guard hold"
 
+echo "── validating: DSV scan (a FeedHero TSV/CSV feed reads like its XML)"
+node tools/test_dsv.mjs >/dev/null
+echo "   ✓ delimited reader, comma files unchanged, TSV = XML snapshot, override feed refused, wiring"
+
 echo "── validating: Golden Record PDP harvest (extraction + allowlist + sampler)"
 node tools/test_pdpharvest.mjs >/dev/null
 echo "   ✓ details-text rules, variant-only identifiers + the proxy allowlist hold"

@@ -87,10 +87,41 @@ sets visually: **Google green** `#34A853` chips (G) vs **Facebook blue** `#1877F
 Google rows first within each client card; digests and the report name the channel
 ("Visual K · GB · Facebook"). Note: `-fb` markets also appear in Feed Lab's selector (shared
 roster) — harmless, its audit simply scores the Meta feed against Google heuristics.
-**Sheet-backed `-fb` feeds only:** a FeedHero-hosted **XML** source (`{xml}`, ad-hoc attach) is
-Feed Lab-only — gviz cannot query XML, so Label Guard skips it with a
-clear diagnostic. To label-monitor a Facebook feed, attach it as a link-shared Google Sheet
-export under `<mkt>-fb`.
+*(Superseded — kept for history: "Sheet-backed `-fb` feeds only … gviz cannot query XML". Since
+9 Sep 2026 the xml-scan agent reads FeedHero files directly; since 16 Oct 2026 no Meta feed is
+sheet-backed at all.)*
+
+### 2c. Any feed format — XML or a delimited file (DSV, 16 Oct 2026)
+
+Ray: *"Superdry NL meta feed currently is in DSV format, so I think the current label scan is not
+read properly … add scanning DSV as a skill needed for this label scan so it scans multiple
+formats of the feed."* FeedHero hands some Meta catalogues out **only** as a tab-separated file:
+Superdry IE has no XML Meta feed, and DE/FR/NL's XML (`fb_lang_feed`) is Meta's **language override
+feed** — `id` + `override` + translated title/description and nothing else. Scanned as a catalogue,
+an override feed reads every label, price and stock word as gone.
+
+- **A wired `{xml}` source means "a FeedHero-hosted file".** `xmlRef` accepts `.xml`, `.tsv`, `.csv`
+  and `.txt` on `*.feedhero.net` (the key keeps its name — dozens of readers key on it). The feed
+  proxy passes `text/tab-separated-values` / csv / plain upstreams as well as XML, never HTML.
+- **One reader decides the format** — `FeedAudit.createFeedParser` (docs/feedlab_engine.js §1a):
+  a file opening with `<` is XML, anything else delimited. `FeedAudit.createParser` now reads
+  ANY delimited file: leading `#` metadata lines skipped (Meta's TSV opens with
+  `# ref_application_id …` / `# ref_asset_id …`), the delimiter chosen by **presence** in the header
+  line — tab, comma, pipe, semicolon — never by count (a Google Sheets header full of `|||N` pipes
+  stays a comma file), and in a tab file quotes are honoured only when a **closed** quoted cell
+  appears (Meta quotes every text cell; an unquoted `"Boss" style tee` must not swallow the file).
+  A comma file reads exactly as before, so every page that already fell back to `createParser`
+  for "not XML" reads a TSV with no change.
+- **Who uses it:** the 4x-daily xml-scan agent, and the /labels, /ptypes and /golden live
+  rescans. The collectors (`xmlCollector`, overlays, images) resolve columns by name, so they
+  are format-blind — the harness proves a TSV and the same products in XML give the identical
+  snapshot.
+- **An override feed is refused**, not scanned: `FeedAudit.isOverrideFeed(header)` (an `override`
+  column with no price and no availability). The agent reports the feed unreachable naming why;
+  the /labels live rescan says so. Wire the full catalogue instead.
+- Live 16 Oct 2026: Superdry IE/DE/FR/NL-fb read 6,807 / 6,352 / 6,418 / 6,398 rows — FeedHero's
+  own product counts — with all five custom labels.
+- Harness `tools/test_dsv.mjs` (qa_gate / presync / validate).
 
 ## 3. What raises an alert (thresholds in `labelguard.js` `TH`)
 

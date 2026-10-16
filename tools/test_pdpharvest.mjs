@@ -126,15 +126,18 @@ t('null / undefined html is safe', Object.keys(P.extract(null, '', null).attrs).
 console.log('· F7 host allowlist (engine + worker copy in step)');
 const wsrc = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
 const lift = (name) => { const i = wsrc.indexOf('function ' + name + '('); const j = wsrc.indexOf('\nfunction ', i + 10); const k = wsrc.indexOf('\nasync function ', i + 10); const end = Math.min(j < 0 ? 1e12 : j, k < 0 ? 1e12 : k); return wsrc.slice(i, end); };
-const W = new Function(lift('pdpHostOf') + '\n' + lift('pdpHostAllowed') + '\n' + lift('pdpLinkHostFromHead') + '\nreturn { hostOf: pdpHostOf, hostAllowed: pdpHostAllowed, linkHostFromFeedHead: pdpLinkHostFromHead };')();
+const W = new Function(lift('pdpHostOf') + '\n' + lift('pdpHostAllowed') + '\n' + lift('dsvHead') + '\n' + lift('pdpLinkHostFromHead') + '\nreturn { hostOf: pdpHostOf, hostAllowed: pdpHostAllowed, linkHostFromFeedHead: pdpLinkHostFromHead };')();
 const XMLHEAD = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel><title>Reiss GB</title><link>https://www.reiss.com</link><item><g:id>SV1</g:id><g:title>Coat</g:title><g:link><![CDATA[https://www.reiss.com/style/SV131275/Y76182?utm=a&b=c]]></g:link></item>';
 const CSVHEAD = 'id,title,link,price\n"EX1","Tweed jacket, brown","https://www.example-retailer.com/mens/jackets/ex1","£299"\n';
+// a Meta TSV as FeedHero serves it (16 Oct 2026): '#' metadata lines, an unquoted header, quoted text cells
+const TSVHEAD = '# ref_application_id 1\n# ref_asset_id 2\nid\ttitle\tdescription\tlink\n275819\t"Logo T-shirt - White"\t"Slim, fitted\tcut"\thttps://www.example-retailer.com/nl/p/275819\n';
 [['hostOf', ['https://www.reiss.com/style/SV1', 'HTTP://Www.Reiss.com:443/x', 'not a url', '']],
-  ['linkHostFromFeedHead', [XMLHEAD, CSVHEAD, '<rss><channel><link>https://shop.example.com</link></channel>', 'garbage']]].forEach(([fn, cases]) => cases.forEach((c) => {
+  ['linkHostFromFeedHead', [XMLHEAD, CSVHEAD, TSVHEAD, '<rss><channel><link>https://shop.example.com</link></channel>', 'garbage']]].forEach(([fn, cases]) => cases.forEach((c) => {
     t(fn + ' parity: ' + JSON.stringify(String(c).slice(0, 40)) + ' → ' + JSON.stringify(P[fn](c)), P[fn](c) === W[fn](c), 'worker gave ' + JSON.stringify(W[fn](c)));
   }));
 t('XML head → the first item\'s g:link host (CDATA + query tolerated)', P.linkHostFromFeedHead(XMLHEAD) === 'www.reiss.com');
 t('CSV head → the link column of the first row (quoted comma-bearing cells)', P.linkHostFromFeedHead(CSVHEAD) === 'www.example-retailer.com');
+t('TSV head → the link column past Meta\'s # metadata lines (a quoted cell holding a tab does not shift it)', P.linkHostFromFeedHead(TSVHEAD) === 'www.example-retailer.com' && W.linkHostFromFeedHead(TSVHEAD) === 'www.example-retailer.com');
 [['https://www.reiss.com/style/x', 'www.reiss.com', true], ['https://reiss.com/style/x', 'www.reiss.com', true], ['https://www.reiss.com/x', 'reiss.com', true],
   ['https://www.reiss.com.evil.io/x', 'www.reiss.com', false], ['https://m.reiss.com/x', 'www.reiss.com', false], ['https://evil.io/?u=https://www.reiss.com', 'www.reiss.com', false],
   ['javascript:alert(1)', 'www.reiss.com', false], ['', 'www.reiss.com', false], ['https://www.reiss.com/x', '', false]].forEach(([u, h, exp]) => {

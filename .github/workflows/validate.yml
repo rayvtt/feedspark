@@ -91,6 +91,8 @@ jobs:
         run: node tools/test_pricerstore.mjs
       - name: Brief recovery harness (the brief email rebuilds a missing ticket)
         run: node tools/test_briefrecover.mjs
+      - name: DSV scan harness (a FeedHero TSV/CSV feed reads like its XML)
+        run: node tools/test_dsv.mjs
       - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)
         run: node tools/test_pdpharvest.mjs
       - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)

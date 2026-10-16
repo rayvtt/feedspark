@@ -1237,7 +1237,7 @@ window.addEventListener('load',restore);
   function xmlStreamOnce(client, mkt, onState) {
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
       var col = a[1].xmlCollector({ client: client, market: mkt });
-      var parser = a[0].createXmlParser(col.onRow);
+      var parser = (a[0].createFeedParser || a[0].createXmlParser)(col.onRow);   // XML or a delimited file — the first byte decides
       return fetch('/api/feed/proxy?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt))
         .then(function (res) {
           if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
