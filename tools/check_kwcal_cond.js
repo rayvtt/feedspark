@@ -78,8 +78,10 @@ const footNum = async (page) => {
   ok('the text filter alone finds 3', await footNum(page) === 3, await page.textContent('#pt-tot'));
 
   console.log('\n2) a condition can narrow, or stand on its own');
-  ok('only "Narrow further" is offered with no condition yet',
-    await page.isVisible('#cnd-add') && !(await page.isVisible('#cnd-addor')));
+  // Ray's own case: a text filter is on, no condition yet, and the colour condition he wants is
+  // separate from THAT — so the choice has to be there before a second condition exists
+  ok('with a text filter on, a separate condition is offered straight away',
+    await page.isVisible('#cnd-add') && await page.isVisible('#cnd-addor'));
   await page.click('#cnd-add');
   await page.click('[data-cndattr="color"]');
   await page.waitForTimeout(200);
@@ -89,10 +91,17 @@ const footNum = async (page) => {
   await page.waitForTimeout(300);
   ok('a narrowing condition takes products away — 3 → 2', await footNum(page) === 2, await page.textContent('#pt-tot'));
 
-  // the first condition has nothing above it to be separate from, so it carries no toggle;
-  // from the second on, every condition says which kind it is
-  ok('the first condition carries no ⋂/⊕ toggle', (await page.$$('[data-cndjoin]')).length === 0);
-  ok('…and a separate condition can now be added', await page.isVisible('#cnd-addor'));
+  ok('the first condition carries the toggle too — the text filter is what it is separate from',
+    (await page.$$('[data-cndjoin]')).length === 1 && !!(await page.$('[data-cndjoin="0"]')));
+
+  // flipping the FIRST condition alone: 3 (the text filter) ∪ 3 (black or orange) = 4
+  await page.click('[data-cndjoin="0"]');
+  await page.waitForTimeout(300);
+  ok('the first condition made separate adds its own products — 2 → 4',
+    await footNum(page) === 4, await page.textContent('#pt-tot'));
+  await page.click('[data-cndjoin="0"]');
+  await page.waitForTimeout(300);
+  ok('…and back to narrowing — 2', await footNum(page) === 2, await page.textContent('#pt-tot'));
 
   await page.click('#cnd-addor');
   await page.click('[data-cndattr="material"]').catch(() => {});
@@ -130,8 +139,7 @@ const footNum = async (page) => {
   const chips = await page.textContent('#cnd-sel');
   ok('reopened, both conditions are still there', (chips.match(/Colour:/g) || []).length === 2, chips);
   ok('…the second is still a separate one', /OR/.test(chips), chips);
-  ok('…and the toggle is on it, not on the first',
-    (await page.$$('[data-cndjoin]')).length === 1 && !!(await page.$('[data-cndjoin="1"]')));
+  ok('…and both carry a toggle', (await page.$$('[data-cndjoin]')).length === 2);
   await page.keyboard.press('Escape');
 
   ok('no page error through all of it', errs.length === 0, errs.slice(0, 3));

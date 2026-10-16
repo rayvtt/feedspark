@@ -2738,26 +2738,31 @@ function ptOpen(e){
   function buildChain(){ var a=buildConds(); return KWE.condChainOf(a,a.length-1); }
   function paintCnd(){ // attribute conditions: one chip per condition, named by the chain it is in
     var cs=d.querySelector('#cnd-sel'), cb=d.querySelector('#cnd-build'), rowsC=skuCache(CLIENT,pmkt);
+    // THE FIRST CONDITION CAN STAND ON ITS OWN TOO, as long as there is something for it to stand
+    // apart FROM — a product-type pick or a text filter. That is Ray's own case (a "halloween" text
+    // filter and a colour condition beside it), and gating the choice on a SECOND condition meant
+    // the one scope that needed it could never ask for it. With no PT and no text there is no chain
+    // above, so the first condition simply reads the catalogue and the choice is not offered.
+    var cBase=!!(sel.length||txs.length);
     cs.innerHTML=conds.map(function(c,ci){
-      // ci 0 can never be a chain of its own above nothing — the first condition narrows the PT/text
-      // scope or, with neither set, the catalogue; from the second on, a condition says which it is
-      var sep=(c.join==='or'), lead=ci===0?'':(sep?'OR ':'AND ');
+      var canSep=(ci>0||cBase), sep=(c.join==='or'&&canSep);
+      var lead=!canSep?'':(sep?'OR ':'AND ');
       return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
         +(lead?'<b style="color:var(--orange-ink)">'+lead+'</b>':'')
         +esc(KW_ATTR_LBL[c.attr]||c.attr)+': '+esc((c.vals||[]).join(', '))+'</span>'
         +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center">'
-        +(ci?'<button type="button" data-cndjoin="'+ci+'" title="'+(sep
-             ?'Its own set — these products are added to the scope. Click to make it narrow the condition above instead.'
-             :'Narrows the condition above it. Click to make it a separate condition, contributing its own products.')
+        +(canSep?'<button type="button" data-cndjoin="'+ci+'" title="'+(sep
+             ?'Its own set — these products are added to the scope. Click to make it narrow '+(ci?'the condition above':'the picks and text filters')+' instead.'
+             :'Narrows '+(ci?'the condition above it':'the product types and text filters')+'. Click to make it a separate condition, contributing its own products.')
            +'">'+(sep?'⊕':'⋂')+'</button>':'')
         +'<button type="button" data-cndrm="'+ci+'">×</button></span></span>'; }).join('')
       ||'<span class="pt-sub">no conditions yet — narrow by gender, age, material…</span>';
     if(conds.length)cs.insertAdjacentHTML('beforeend','<span class="pt-sub" style="display:block;margin-top:4px">'
-      +(conds.some(function(c){return c.join==='or'})
+      +(conds.some(function(c,ci){return c.join==='or'&&(ci>0||cBase)})
         ? '⋂ narrows what is above it · ⊕ stands on its own — its products are added'
         : 'each narrows what is above it — ⊕ on a chip makes it a separate condition instead')+'</span>');
     if(!abuild){ cb.innerHTML='<button type="button" class="btn" id="cnd-add" style="padding:4px 11px;font-size:11.5px"'+(rowsC?'':' disabled title="streaming the feed…"')+'>＋ Narrow further</button>'
-      +(conds.length?'<button type="button" class="btn" id="cnd-addor" style="padding:4px 11px;font-size:11.5px;margin-left:5px"'+(rowsC?'':' disabled title="streaming the feed…"')+' title="A condition of its own, read against the whole catalogue — its products are added to the scope rather than taken out of it">＋ Separate condition</button>':'');
+      +((conds.length||cBase)?'<button type="button" class="btn" id="cnd-addor" style="padding:4px 11px;font-size:11.5px;margin-left:5px"'+(rowsC?'':' disabled title="streaming the feed…"')+' title="A condition of its own, read against the whole catalogue — its products are added to the scope rather than taken out of it">＋ Separate condition</button>':'');
       return; }
     if(!abuild.attr){ var present=rowsC?attrsPresent(rowsC):[];
       cb.innerHTML='<div class="pt-sub">'+(abuild.join==='or'?'Separate condition — attribute:':'Attribute to narrow on:')+'</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">'
@@ -2832,7 +2837,8 @@ function ptOpen(e){
       abuild=null; recount(); paint(); return; }
     var ccancel=ev.target.closest('#cnd-cancel'); if(ccancel){ abuild=null; paintCnd(); return; }
     var crm=ev.target.closest('[data-cndrm]'); if(crm){ conds.splice(+crm.getAttribute('data-cndrm'),1);
-      if(conds.length&&conds[0].join==='or')conds[0].join='and';   // the first condition has nothing above it to be separate from
+      // only where there is nothing left above it — a PT pick or a text filter is something to be separate from
+      if(conds.length&&conds[0].join==='or'&&!sel.length&&!txs.length)conds[0].join='and';
       recount(); paint(); return; }
     if(ev.target.id==='pt-sug'){ var bgs=idx.bags||{}, before=sel.length;
       (e.terms||[]).forEach(function(t){ var lt=String(t).toLowerCase();
