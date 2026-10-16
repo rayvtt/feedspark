@@ -998,6 +998,8 @@ window.addEventListener('load',restore);
   .ap-rem{margin-top:10px;font-size:12px}.ap-rem summary{cursor:pointer;font-weight:800;color:var(--muted)}
   .ap-rrow{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:4px 0;border-top:1px solid var(--line)}
   .ap-foot{margin:10px 0 0;font-size:11.5px;color:var(--muted)}
+  .ap-ownb{font:inherit;font-size:10px;font-weight:800;cursor:pointer}.ap-ownb:hover{border-color:var(--orange-deep)}
+  body.demo .ap-ownb{pointer-events:none}
   .ap-own.sp{background:linear-gradient(90deg,#FEF3E2,#F3E8FF);color:#7C3AED;border-color:#D8B4FE}
   .ap-wf{margin-top:6px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .ap-wf a{color:#2F6FB0;text-decoration:none;border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--paper)}
@@ -5232,7 +5234,7 @@ window.addEventListener('load',restore);
       'Action: ' + a.t,
       a.w ? 'Why: ' + a.w : '',
       'Area: ' + (a.f || 'Golden Record'),
-      'Owner: ' + (a.own === 'you' ? 'the client’s team (FeedSpark to chase / support)' : 'FeedSpark'),
+      'Owner: ' + (a.own === 'you' ? 'the client’s team (FeedSpark to chase / support)' : a.own === 'sp' ? 'FeedSpark — SparkAI generates it' : 'FeedSpark'),
       mo ? 'Planned for: ' + mo.name + ' ' + mo.yr : '',
       a.g > 0 ? 'Projected Golden Score gain: +' + a.g + ' pts (goldenScore re-run with the field on every product — a projection)' : '',
       'Source: Golden Record action plan (/golden) — the next audit reads this ticket\'s stage back onto the task',
@@ -5304,10 +5306,11 @@ window.addEventListener('load',restore);
       if (!a.id || seen[a.id]) a = Object.assign({}, a, { id: (a.id || 'x') + ':' + i });
       seen[a.id] = 1;
       var o = it[a.id] || {}, x = Object.assign({}, a);
+      if (planSpark(a)) a = Object.assign({}, a, { own: 'sp' }), x.own = 'sp';
       x.orig = { t: a.t, w: a.w, own: a.own };
       if (typeof o.t === 'string' && o.t) x.t = o.t;
       if (typeof o.w === 'string') x.w = o.w;
-      if (o.own === 'you' || o.own === 'fs') x.own = o.own;
+      if (o.own === 'you' || o.own === 'fs' || o.own === 'sp') x.own = o.own;   // the team's word beats the audit's: FeedSpark ↔ SparkAI swap by hand
       x.ed = x.t !== a.t || x.w !== a.w || x.own !== a.own;
       x.mi = typeof o.m === 'string' ? mIdx(o.m) : Math.min(nM - 1, Math.floor(i / per));
       x.ord = typeof o.i === 'number' ? o.i : i;
@@ -5316,7 +5319,7 @@ window.addEventListener('load',restore);
     });
     Object.keys(it).forEach(function (id) {
       var o = it[id]; if (!o || !o.c || id.indexOf('c:') !== 0 || typeof o.t !== 'string' || !o.t) return;
-      items.push({ id: id, c: 1, t: o.t, w: typeof o.w === 'string' ? o.w : '', own: o.own === 'you' ? 'you' : 'fs', f: 'Added', pri: '',
+      items.push({ id: id, c: 1, t: o.t, w: typeof o.w === 'string' ? o.w : '', own: o.own === 'you' || o.own === 'sp' ? o.own : 'fs', f: 'Added', pri: '',
         mi: mIdx(typeof o.m === 'string' ? o.m : months[0].key), ord: typeof o.i === 'number' ? o.i : 999, br: o.br && typeof o.br === 'object' ? o.br : null });
     });
     // briefed audit actions this audit no longer raises: the field was dealt with — kept as the record, never silently dropped
@@ -5342,7 +5345,7 @@ window.addEventListener('load',restore);
       if (APX.edit === a.id) return '<div class="ap-tk ap-editing" data-apid="' + esc(a.id) + '">' + planForm(a) + '</div>';
     }
     return '<div class="ap-tk' + (ed ? ' ap-dr' : '') + '"' + (ed ? ' draggable="true" data-apid="' + esc(a.id) + '"' : '') + '><div class="ap-m"><span class="ap-pri' + (a.pri ? ' ' + a.pri : '') + '"></span><span class="ap-f">' + esc(a.f) + '</span>' +
-      (a.own === 'you' ? '<span class="ap-own you">Your team</span>' : planSpark(a) ? '<span class="ap-own sp" title="Delivered by FeedSpark with SparkAI — our AI enrichment generates this from the product data and imagery">✦ SparkAI</span>' : '<span class="ap-own">FeedSpark</span>') +
+      ownPill(a, ed) +
       (a.g > 0 ? '<span class="ap-gain" title="Golden Score re-run with this field on every product — a projection">+' + a.g + ' pts</span>' : '') +
       (ed && (a.ed || a.c) ? '<span class="ap-tag" title="' + (a.c ? 'Added by the team' : 'Reworded by the team — the audit wrote: ' + esc(a.orig.t)) + '">' + (a.c ? 'added' : 'edited') + '</span>' : '') +
       ctl + '</div>' +
@@ -5366,6 +5369,17 @@ window.addEventListener('load',restore);
      taxonomy, mapped not generated), a mapping fix or a custom label, and never on a task the client's team owns. */
   var SPARK_AI = { title: 1, description: 1, product_highlight: 1, hl_depth: 1, product_detail: 1, detail_depth: 1, keywords: 1, material: 1, pattern: 1,
     conv: 1, titles: 1, descriptions: 1, detail: 1, attributes: 1 };
+  /* WHO DELIVERS IT, AND THE TEAM CAN SAY OTHERWISE (Ray, 16 Oct 2026: "SparkAI & FeedSpark can be interchanged pls (manually
+     change)"): the audit suggests ✦ SparkAI on what it generates, but which one a task is is the team's call — on the board the pill
+     is a button that swaps FeedSpark ↔ SparkAI in one click (stored as the task's `own`, like any other edit; the audit's own
+     choice back = no edit stored), and ✎ offers all three. Your team stays your team: the pill swap never moves a client task. */
+  function ownPill(a, ed) {
+    if (a.own === 'you') return '<span class="ap-own you">Your team</span>';
+    var sp = a.own === 'sp', lbl = sp ? '✦ SparkAI' : 'FeedSpark';
+    var tip = sp ? 'Delivered by FeedSpark with SparkAI — our AI enrichment generates this from the product data and imagery' : 'Delivered by the FeedSpark team';
+    if (!ed) return '<span class="ap-own' + (sp ? ' sp' : '') + '" title="' + tip + '">' + lbl + '</span>';
+    return '<button type="button" class="ap-own ap-ownb' + (sp ? ' sp' : '') + '" data-apown="' + esc(a.id) + '" title="' + tip + ' — click to change to ' + (sp ? 'FeedSpark' : '✦ SparkAI') + '" aria-label="Delivered by ' + (sp ? 'SparkAI' : 'FeedSpark') + ' — click to change to ' + (sp ? 'FeedSpark' : 'SparkAI') + '">' + lbl + '</button>';
+  }
   function planSpark(a) {
     if (!a || a.own === 'you' || a.c || !a.id) return false;
     var m = /^(a|q|ai):([a-z_]+)/.exec(a.id);
@@ -5376,7 +5390,7 @@ window.addEventListener('load',restore);
     if (APX.draft && APX.draft.key === dk) v = APX.draft.v;   // a re-render mid-edit (a reading landing) keeps what was typed
     return '<div class="ap-form"><label>Task<input type="text" class="ap-in-t" maxlength="160" value="' + esc(v.t) + '"></label>' +
       '<label>Why / detail<textarea class="ap-in-w" rows="3" maxlength="600">' + esc(v.w) + '</textarea></label>' +
-      '<label>Who<select class="ap-in-o"><option value="fs"' + (v.own !== 'you' ? ' selected' : '') + '>FeedSpark</option><option value="you"' + (v.own === 'you' ? ' selected' : '') + '>Your team (the client)</option></select></label>' +
+      '<label>Who<select class="ap-in-o"><option value="fs"' + (v.own !== 'you' && v.own !== 'sp' ? ' selected' : '') + '>FeedSpark</option><option value="sp"' + (v.own === 'sp' ? ' selected' : '') + '>✦ SparkAI</option><option value="you"' + (v.own === 'you' ? ' selected' : '') + '>Your team (the client)</option></select></label>' +
       '<div class="ap-fb"><button type="button" class="btn ap-save" data-apsave="' + esc(a ? a.id : '') + '">Save</button>' +
       (a && a.ed && !a.c ? '<button type="button" class="btn ap-orig" data-aporig="' + esc(a.id) + '" title="Back to: ' + esc(a.orig.t) + '">↺ The audit’s wording</button>' : '') +
       '<button type="button" class="btn ap-cancel" data-apcancel="1">Cancel</button></div></div>';
@@ -5441,11 +5455,18 @@ window.addEventListener('load',restore);
     };
     var formVals = function (root) {
       return { t: (root.querySelector('.ap-in-t').value || '').trim().slice(0, 160), w: (root.querySelector('.ap-in-w').value || '').trim().slice(0, 600),
-        own: root.querySelector('.ap-in-o').value === 'you' ? 'you' : 'fs' };
+        own: (function (o) { return o === 'you' || o === 'sp' ? o : 'fs'; })(root.querySelector('.ap-in-o').value) };
     };
     t.onclick = function (e) {
       var b = e.target.closest && e.target.closest('button'); if (!b || !t.contains(b)) return;
       var it, id, a;
+      if ((id = b.getAttribute('data-apown'))) {
+        a = find(id); if (!a || a.own === 'you') return; it = ov();
+        var nw = a.own === 'sp' ? 'fs' : 'sp', oo = it[id] || {};
+        if (id.indexOf('c:') === 0) { oo.c = 1; oo.own = nw; it[id] = oo; }
+        else { if (a.orig && nw === a.orig.own) delete oo.own; else oo.own = nw; if (Object.keys(oo).length) it[id] = oo; else delete it[id]; }
+        planPut(k, it); redraw(); return;
+      }
       if ((id = b.getAttribute('data-apbr'))) {
         a = find(id); if (!a) return; it = ov();
         var pay = gpPayload(k, a, M), o = it[id] || {};

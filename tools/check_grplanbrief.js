@@ -177,6 +177,25 @@ const QUALITY = {
   ok('the identifier stays the client\'s team, never SparkAI', /Your team/.test(pill('a:gtin') || ''), pills);
   ok('the conversational attributes read ✦ SparkAI', /SparkAI/.test(pill('ai:conv') || ''), pills);
   ok('…and nothing that is not generated wears it', pills.every((x) => !/SparkAI/.test(x.own) || /^(a|q|ai):(title|description|product_highlight|hl_depth|product_detail|detail_depth|keywords|material|pattern|conv|titles|descriptions|detail|attributes)$/.test(x.id)), pills);
+  console.log('-- SparkAI and FeedSpark swap by hand (Ray, 16 Oct 2026)');
+  const ownOf = () => page.evaluate(() => { const o = {}; document.querySelectorAll('#ap-tier .ap-tk[data-apid]').forEach((c) => { o[c.getAttribute('data-apid')] = ((c.querySelector('.ap-own') || {}).innerText || '').trim(); }); return o; });
+  const isBtn = await page.evaluate(() => { const b = document.querySelector('#ap-tier .ap-tk[data-apid="a:material"] .ap-own'); return b && b.tagName; });
+  ok('on the board the pill is a button', isBtn === 'BUTTON', isBtn);
+  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await page.waitForTimeout(200);
+  let ow = await ownOf(); let sv = (await it())['a:material'] || {};
+  ok('one click turns a SparkAI task into FeedSpark, saved for the team', ow['a:material'] === 'FeedSpark' && sv.own === 'fs', { ow: ow['a:material'], sv });
+  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await page.waitForTimeout(200);
+  ow = await ownOf(); sv = (await it())['a:material'] || {};
+  ok('a second click puts the audit\'s own SparkAI back, storing no edit', /SparkAI/.test(ow['a:material']) && sv.own === undefined, { ow: ow['a:material'], sv });
+  const fsId = Object.keys(ow).find((id) => ow[id] === 'FeedSpark');
+  if (fsId) { await page.click('#ap-tier .ap-tk[data-apid="' + fsId + '"] [data-apown]'); await page.waitForTimeout(200); ow = await ownOf(); }
+  ok('a FeedSpark task can be made ✦ SparkAI', fsId && /SparkAI/.test(ow[fsId]) && ((await it())[fsId] || {}).own === 'sp', { fsId, now: fsId && ow[fsId] });
+  ok('the client\'s own task offers no swap', await page.evaluate(() => !document.querySelector('#ap-tier .ap-tk[data-apid="a:gtin"] [data-apown]')));
+  await page.click('#ap-tier .ap-tk[data-apid="a:gtin"] [data-aped]');
+  const opts = await page.evaluate(() => Array.from(document.querySelectorAll('#ap-tier .ap-in-o option')).map((o) => o.value));
+  ok('✎ offers all three — FeedSpark, SparkAI, your team', JSON.stringify(opts) === '["fs","sp","you"]', opts);
+  await page.click('#ap-tier [data-apcancel]');
+
   const cvRule = (gr.match(/\.cv\{[^}]*\}/) || [''])[0];
   ok('the cover follows the body face (no hard-coded Lato on .cv or the ring text)', /font-family:var\(--font-body,Lato\)/.test(cvRule) && !/text-anchor="middle" font-family="Lato/.test(gr), cvRule);
 
