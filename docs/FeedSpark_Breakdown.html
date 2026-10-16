@@ -812,6 +812,13 @@ window.addEventListener('load',restore);
   // Each recipe is a pivot (rows × columns) plus what to look for and the business number it moves. ▶ Try it sets the
   // pivot through B.resolve, so a field another feed names differently is still found, and one this feed does not carry
   // is NAMED rather than silently skipped. Nothing here names a client; it is how to read any feed.
+  // THE FIELD WITH MORE VALUES GOES DOWN THE PAGE (Ray, 16 Oct 2026: "logic for guidebook pre-set — fields with more
+  // values on row <> less on column"): a recipe is written rows × columns, but which of its two fields carries more
+  // distinct values is a fact about THIS feed, not the recipe — a brand with two availability words and forty
+  // categories reads as a tall thin table one way and a wide one the reader scrolls sideways the other. ▶ Try it
+  // counts both on the feed (the pivot's own rows, blank included, since that is what the table draws) and puts the
+  // longer list on rows; a tie keeps the recipe's own order, and a recipe with no column field has nothing to turn.
+  // The toast says when it turned them and why.
   var PT1 = { f: 'g:product_type', m: 'tier', k: 1 }, PT2 = { f: 'g:product_type', m: 'tier', k: 2 };
   var GUIDE = [
     { h: 'Spend efficiency — where the budget goes', it: [
@@ -871,13 +878,15 @@ window.addEventListener('load',restore);
     ] }
   ];
   var VIEWS3 = [['Bidding readiness', 0, 1], ['Search coverage', 1, 0], ['AI readiness', 2, 1]];
+  // how many rows a field would draw on this feed — the pivot's own count, blank included, nothing filtered
+  function gbCount(sp) { var P = S.st && B.pivot(S.st, sp, null, { unit: 'sku' }); return P ? P.rows.length : 0; }
   function gbSpec(sp) { if (!sp) return null; return { f: sp.f, m: sp.m || 'raw', k: sp.k || 0 }; }
   // the recipe's own words — written without the engine, which may still be loading when the button is hovered
   var GB_MODE = { len: 'length bands', num: 'number bands', list: 'split lists' };
   function gbName(sp) { var n = sp.f.replace(/^(g|c|fs):/i, '').replace(/\*$/, ' · all slots'); return n + (sp.m === 'tier' ? ' · tier ' + (sp.k || 1) : GB_MODE[sp.m] ? ' · ' + GB_MODE[sp.m] : ''); }
   function renderGuide() {
     var n = 0, html = '<div class="gbh"><b>📖 Guidebook</b><span class="cnt">how to read a feed</span><button class="btn gbx" type="button" data-gbx aria-label="Close the guidebook">✕</button></div>'
-      + '<p class="gbi">Each recipe is a pivot — rows × columns — what to look for in it, and the number it moves for the client. ▶ Try it sets the pivot on this feed.</p>';
+      + '<p class="gbi">Each recipe is a pivot — rows × columns — what to look for in it, and the number it moves for the client. ▶ Try it sets the pivot on this feed, with whichever field carries more values on the rows.</p>';
     GUIDE.forEach(function (g, gi) {
       html += '<h4>' + esc(g.h) + '</h4>';
       g.it.forEach(function (r, ri) {
@@ -929,9 +938,13 @@ window.addEventListener('load',restore);
     var rs = fix(r.r), cs = r.c ? fix(r.c) : null;
     var miss = [!rs && r.r, r.c && !cs && r.c].filter(Boolean).map(function (sp) { return sp.f.replace(/^(g|c|fs):/i, '').replace(/\*$/, ''); });
     if (!rs) { toast('This feed does not carry ' + miss.join(' or ') + ' — nothing to break down'); return; }
+    var turned = null;
+    if (rs && cs) { var nr = gbCount(rs), nc = gbCount(cs); if (nc > nr) { var t2 = rs; rs = cs; cs = t2; turned = { r: nc, c: nr }; } }
     S.L.pivot.r = rs; S.L.pivot.c = cs; saveLayout(); renderPivotCtl(); renderPivot();
     gbOpen(false); reveal('sec-pivot');
-    toast('Pivot: ' + r.t + (miss.length ? ' — this feed does not carry ' + miss.join(', ') + ', so the columns are left empty' : ''));
+    toast('Pivot: ' + r.t
+      + (turned ? ' — rows and columns turned: ' + B.specName(S.st, rs) + ' carries more values (' + turned.r + ' against ' + turned.c + '), so it runs down the page' : '')
+      + (miss.length ? ' — this feed does not carry ' + miss.join(', ') + ', so the columns are left empty' : ''));
   }
   (function () {
     var w = $('#gbw'), canHover = window.matchMedia && matchMedia('(hover:hover)').matches;

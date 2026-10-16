@@ -212,10 +212,21 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const gpv = await pg.evaluate(() => { const P = window.__FCCBreakdown.state().L.pivot; return { r: P.r, c: P.c, gb: document.getElementById('gb').hidden, fold: document.getElementById('sec-pivot').classList.contains('folded') }; });
     ok('▶ Try it sets the pivot — price bands × product type tier 1', gpv.r && gpv.r.f === 'g:price' && gpv.r.m === 'num' && gpv.c && gpv.c.f === 'g:product_type' && gpv.c.m === 'tier' && gpv.c.k === 1, gpv);
     ok('…closes the guidebook and opens the pivot', gpv.gb && !gpv.fold, gpv);
+    // the field with MORE values goes on the rows (Ray, 16 Oct 2026): the recipe is written custom_label_0 × product
+    // type, but on this feed the label carries 2 values and tier 1 of the type 3 — so the type runs down the page.
+    // Counted here independently of the page, off the engine on the same store.
+    await pg.click('#gbtn'); await pg.click('#gb [data-gb="0.1"]'); await pg.waitForTimeout(150);
+    const gpt = await pg.evaluate(() => {
+      const st = window.__FCCBreakdown.state(), B = window.FeedBreakdown, P = st.L.pivot;
+      const n = (f, m, k) => B.pivot(st.st, B.resolve(st.st, { f, m, k: k || 0 }), null, { unit: 'sku' }).rows.length;
+      return { r: P.r, c: P.c, nl: n('g:custom_label_0', 'raw'), np: n('g:product_type', 'tier', 1), toast: (document.querySelector('.toast, #toast') || {}).textContent || '' };
+    });
+    ok('▶ Try it on custom label 0 × category turns the pivot — the type carries more values, so it runs down the page', gpt.np > gpt.nl && gpt.r && gpt.r.f === 'g:product_type' && gpt.r.m === 'tier' && gpt.c && gpt.c.f === 'g:custom_label_0', gpt);
+    ok('…and the toast says so, with both counts', /rows and columns turned/.test(gpt.toast) && gpt.toast.indexOf(gpt.np + ' against ' + gpt.nl) >= 0, gpt.toast);
     await pg.click('#gbtn');
     await pg.click('#gb [data-gb="2.2"]'); await pg.waitForTimeout(150);
     const miss = await pg.evaluate(() => ({ r: window.__FCCBreakdown.state().L.pivot.r, t: document.getElementById('toast').textContent }));
-    ok('a field the feed does not carry is named, the pivot left as it was', miss.r.f === 'g:price' && /does not carry material/.test(miss.t), miss);
+    ok('a field the feed does not carry is named, the pivot left as it was', miss.r.f === gpt.r.f && miss.r.k === gpt.r.k && /does not carry material/.test(miss.t), miss);
     await pg.keyboard.press('Escape');
 
     console.log('· saved view, reload, another market');
