@@ -415,6 +415,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: KWCal seeded scopes — Reiss, Accessorize and Schuh themes scoped to real product types"
   NODE_PATH=$(npm root -g) node tools/check_kwcal_scopes.js || {
     echo "✗ KWCal scope tripwire failed — a set scope reads as absent, a seeded path is not in the brand’s census, or a scope sums to the wrong products"; exit 1; }
+  echo "── validating: KWCal scope conditions — a condition narrows, or stands on its own"
+  NODE_PATH=$(npm root -g) node tools/check_kwcal_cond.js || {
+    echo "✗ KWCal condition tripwire failed — a condition can only narrow again, the ⋂/⊕ toggle is gone, or the kind did not survive the save"; exit 1; }
   echo "── validating: Workflow — the keyword calendar's briefing actions, centralised on the board"
   NODE_PATH=$(npm root -g) node tools/check_kwdue.js || {
     echo "✗ KWCal→Workflow tripwire failed — a briefed moment was offered again (a duplicate ticket), → Brief stopped raising the calendar's own payload, or the moment id is no longer stamped"; exit 1; }
