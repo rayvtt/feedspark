@@ -385,6 +385,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record action plan ON SCREEN — moved, reworded, taken out, added, dragged; saved for the team; the download follows"
   NODE_PATH=$(npm root -g) node tools/check_grplanedit.js || {
     echo "✗ Golden Record editable-plan tripwire failed — a move, an edit or a drag did not land, did not reach the team store, or the download no longer matches the board"; exit 1; }
+  echo "── validating: Golden Record action plan → Workflow — each task briefed through the composer, stamped, read back on the next audit"
+  NODE_PATH=$(npm root -g) node tools/check_grplanbrief.js || {
+    echo "✗ Golden Record plan-brief tripwire failed — → Brief lost its tie, the stamp did not reach the team, the ticket's stage is not read back, or a ticket reached the client copy"; exit 1; }
   echo "── validating: Golden Record ✎ Edit report — every word editable, saved for the team, carried by ⬇ HTML and ⬇ PDF"
   NODE_PATH=$(npm root -g) node tools/check_grtext.js || {
     echo "✗ Golden Record report-editor tripwire failed — text not editable, an edit not saved, or a download no longer carries it"; exit 1; }
