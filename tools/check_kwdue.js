@@ -246,8 +246,9 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   const comp = await page.evaluate(() => {
     const t = document.querySelector('#bg-task'), c = document.querySelector('#bg-client'),
       s = document.querySelector('#bg-scope'), k = document.querySelector('#bg-cat');
+    const dd = document.querySelector('#bg-due');
     return { task: t && t.value, client: c && c.value, scope: s && s.value, cat: k && k.value,
-      kw: window.__kwId || null, open: !!document.querySelector('.bg-wrap,.scrim.on') };
+      due: dd && dd.value, kw: window.__kwId || null, open: !!document.querySelector('.bg-wrap,.scrim.on') };
   });
   ok('the composer opened', comp.open || !!comp.task, comp);
   ok('on the moment’s own brand', comp.client === 'Northwind', comp.client);
@@ -260,17 +261,24 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
   // THE FLIP BACK: the moment's id rides the brief, which is what makes the calendar read it as
   // briefed for life and what stops this band ever offering it again
   ok('the moment id is stamped on the brief being composed', comp.kw === 'n1', comp.kw);
+  // THE DUE DATE IS THE DAY IT GOES LIVE, never the composer's own capacity guess — a brief whose
+  // scope line reads "lands 8 Nov" over a due date of 28/10 contradicts itself on screen
+  {
+    const live = await page.evaluate((kw) => (kw.Northwind.events.find((e) => /Festive/.test(e.name)) || {}).date, KW);
+    ok('the due date is the moment’s own live-by date', comp.due === live, { due: comp.due, live: live });
+  }
 
   console.log('\n4) the same brief, whichever surface raised it');
   const pair = await page.evaluate((kw) => {
     const E = window.FeedKwCal;
     const ev = kw.Northwind.events[0];
     const a = E.briefPayload(kw, 'Northwind', ev, 'gb');
-    return { task: a.task, kw: a.kw, cat: a.cat, scope: a.scope };
+    return { task: a.task, kw: a.kw, cat: a.cat, scope: a.scope, due: a.due };
   }, KW);
   ok('the composer was filled from the engine’s own payload, not a second builder',
     pair.task === comp.task && pair.cat === comp.cat && pair.kw === comp.kw
     && String(comp.scope).trim() === String(pair.scope).trim(), { built: pair.task, composed: comp.task });
+  ok('…including the due date it carries', pair.due === comp.due, { built: pair.due, composed: comp.due });
 
   console.log('\n5) a brief that lands takes its moment off the list — no second ticket');
   await page.evaluate(() => {

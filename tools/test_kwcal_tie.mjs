@@ -989,6 +989,14 @@ ROSTER = null;
     scope.attrIndex(rows, 'color', [], txq, [{ attr: 'color', vals: [], join: 'or' }], 1).navy, 2);
 
   // the chain rule itself
+  // A FIRST CONDITION IS SEPARATE FROM THE PT/TEXT SCOPE (Ray, 16 Oct 2026: "i dont see separate
+  // condition option btw" — on a scope whose only other part was a text filter)
+  is('the first condition alone can stand apart from the text filter',
+    scope.scopeCount('Accessorize', 'gb', [], txq, [{ ...COL, join: 'or' }]).uni, 4);
+  is('…and chain 0 keeps the text filter with no condition on it',
+    KWE.condChains([{ attr: 'color', join: 'or' }], true).map((c) => c.base + ':' + c.conds.length + ':' + c.live).join(' | '),
+    'true:0:true | false:1:true');
+
   const ch = KWE.condChains([{ attr: 'a' }, { attr: 'b', join: 'or' }, { attr: 'c' }], true);
   is('a chain starts at an OR and runs to the next one', ch.length, 2);
   is('…chain 0 keeps the PT/text base', ch[0].base, true);
@@ -999,6 +1007,17 @@ ROSTER = null;
   is('chain indices line up with condChainOf',
     [0, 1, 2].map((i) => KWE.condChainOf([{ attr: 'a' }, { attr: 'b', join: 'or' }, { attr: 'c' }], i)).join(','),
     '0,1,1');
+
+  // THE BRIEF IS DUE WHEN THE MOMENT GOES LIVE, not when it is briefed
+  {
+    const st = { A: { events: [], ptidx: { gb: { map: {}, __total: 10 } } } };
+    const p1 = KWE.briefPayload(st, 'A', { id: 'x', name: 'Sparkle', date: '2026-11-08', terms: ['a'] }, 'gb');
+    is('the payload carries the live-by date as the due date', p1.due, '2026-11-08');
+    is('…which is NOT the brief-by date the board files it under',
+      p1.due === p1.scope.match(/brief by [^\n]*/)[0], false);
+    const p2 = KWE.briefPayload(st, 'A', { id: 'y', name: 'No date', date: 'next week', terms: [] }, 'gb');
+    is('a moment with no readable date carries no due at all', p2.due === undefined, true);
+  }
 
   // the brief says which kind each condition is — a reader cannot see a chip
   const bp = KWE.briefPayload({ Accessorize: { events: [], ptidx: { gb: { map: { Jewellery: 2 }, __total: 5 } } } },

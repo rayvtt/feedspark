@@ -152,7 +152,17 @@
         else sl+=' — '+fmt(sm.unsat)+' in-scope SKUs still to keyword; landing this brief lifts the brand to ~'+(Math.round((sat.n+sm.unsat)/idx.__total*1000)/10)+'%'; }
       lines.push(sl);
     }
-    return {client:brand,task:kwTask(brand,e,bmkt),cat:'keyword',scope:lines.join('\n'),kw:e.id};
+    /* THE TICKET IS DUE WHEN THE OPTIMISATION GOES LIVE (Ray, 16 Oct 2026, over an Accessorize
+       Sparkle Season brief reading 28/10 under a scope line saying "lands 8 Nov": "the due date in
+       briefing tab don't correspond with 'lands date' btw - this should be 08/11"). The payload
+       carried no due at all, so the composer fell through to its own capacity proposal — a date
+       with nothing to do with the moment, sitting under the moment's own date in the scope. `date`
+       IS the live-by day, so it travels with the brief; the board still FILES the work by brief-by
+       (date − LEAD_DAYS), which is a different question and unchanged. */
+    var dd=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(e.date||''));
+    var o={client:brand,task:kwTask(brand,e,bmkt),cat:'keyword',scope:lines.join('\n'),kw:e.id};
+    if(dd)o.due=e.date;
+    return o;
   }
 
   /* ---- THE TIE: which Workflow ticket belongs to which moment. Resolved strongest-evidence
