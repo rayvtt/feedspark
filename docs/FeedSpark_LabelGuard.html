@@ -868,14 +868,19 @@ window.addEventListener('load',restore);
   function xmlStreamOnce(client, mkt, onState) {
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
       var col = a[1].xmlCollector({ client: client, market: mkt });
-      var parser = a[0].createXmlParser(col.onRow);
+      var head = null, onRow = function (r, h) { if (!head) head = h || r; col.onRow(r, h); };
+      // XML or a delimited file (a FeedHero Meta TSV, 16 Oct 2026) — the first byte decides
+      var parser = (a[0].createFeedParser || a[0].createXmlParser)(onRow);
       return fetch('/api/feed/proxy?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt))
         .then(function (res) {
           if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
           var rd = res.body.getReader(), dec = new TextDecoder(), got = 0, next = 0;
           function pump() {
             return rd.read().then(function (x) {
-              if (x.done) { parser.push(dec.decode()); parser.end(); return col.finish(); }
+              if (x.done) { parser.push(dec.decode()); parser.end();
+                // a Meta LANGUAGE OVERRIDE feed is not a catalogue — refuse it rather than post every label as gone
+                if (a[0].isOverrideFeed && a[0].isOverrideFeed(head)) throw new Error('this is a language override feed (id + override + text only), not the catalogue — wire the full feed');
+                return col.finish(); }
               got += x.value.length;
               if (onState && got > next) { next = got + 4 * 1048576; onState('streaming the live XML — ' + (got / 1048576).toFixed(1) + ' MB…'); }
               parser.push(dec.decode(x.value, { stream: true }));

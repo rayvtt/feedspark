@@ -114,23 +114,26 @@
       var m = /<(?:g:)?link>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/i.exec(scope) || /<(?:g:)?link>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/i.exec(text);
       return m ? hostOf(decode(m[1])) : '';
     }
-    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    // a sheet CSV or a delimited FeedHero file (a Meta TSV opens with '#' metadata lines) — the worker's dsvHead rule:
+    // '#' and blank lines skipped, the delimiter read off the header by PRESENCE (tab, comma, pipe, semicolon)
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim() && l.charAt(0) !== '#'; });
     if (lines.length < 2) return '';
-    var head = splitCsv(lines[0]).map(normKey), li = head.indexOf('link');
+    var h0 = lines[0], d = h0.indexOf('\t') >= 0 ? '\t' : h0.indexOf(',') >= 0 ? ',' : h0.indexOf('|') >= 0 ? '|' : h0.indexOf(';') >= 0 ? ';' : ',';
+    var head = splitCsv(h0, d).map(normKey), li = head.indexOf('link');
     if (li < 0) return '';
     for (var i = 1; i < Math.min(lines.length, 40); i++) {
-      var cells = splitCsv(lines[i]); var h = hostOf(cells[li] || '');
+      var cells = splitCsv(lines[i], d); var h = hostOf(cells[li] || '');
       if (h) return h;
     }
     return '';
   }
-  function splitCsv(line) {   // light single-line RFC-4180 split (feed heads only)
-    var out = [], cur = '', q = false;
+  function splitCsv(line, d) {   // light single-line RFC-4180 split (feed heads only); d = the delimiter, comma by default
+    var out = [], cur = '', q = false; d = d || ',';
     for (var i = 0; i < line.length; i++) {
       var c = line.charAt(i);
       if (q) { if (c === '"') { if (line.charAt(i + 1) === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
-      else if (c === '"') q = true;
-      else if (c === ',') { out.push(cur); cur = ''; }
+      else if (c === '"' && cur === '') q = true;
+      else if (c === d) { out.push(cur); cur = ''; }
       else cur += c;
     }
     out.push(cur);

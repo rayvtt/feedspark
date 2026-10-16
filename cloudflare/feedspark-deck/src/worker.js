@@ -531,10 +531,13 @@ const DEFAULT_FEEDS = {
     es: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_es/b7687bb2913f6e6deb310421ebb8d76d/superdry_es_gb_output.xml' },
     us: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_us/90b8bebfae4c7f43b1fe6dea56081da1/superdry_us_gb_output.xml' },
     'gb-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/superdry_gb/2d98a671028d410b7572d2bb3c78a0ca/superdry_gb_fb_output.xml' },
-    'ie-fb': { id: '1TmZknTdwYUkw7gbpLzfUNEUC66GS4cwOoGlB4M4aBgM', gid: '0' },  // sheet answers gviz 410 (16 Oct 2026); FeedHero has only a 'Facebook TSV' for superdry_ie — needs an XML Meta feed set up before it can move
-    'de-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_lang_feed/superdry_de/ceeba1fb6c9d159d9b4239b03553bad4/superdry_de_fb_lang_feed_output.xml' },  // FeedHero 'Facebook German' (16 Oct 2026: the old sheet answered gviz 410)
-    'fr-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_lang_feed/superdry_fr/a75c5fbeda769a556bb1613a6406b5cf/superdry_fr_fb_lang_feed_output.xml' },  // FeedHero 'Facebook French'
-    'nl-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb_lang_feed/superdry_nl/2b8a9374a9c38bdb5c58f832f6ef2231/superdry_nl_fb_lang_feed_output.xml' },  // FeedHero 'Facebook Netherlands'
+    // Superdry's non-GB Meta catalogues are FeedHero 'Facebook TSV' files (16 Oct 2026: the sheets answered gviz 410).
+    // NOT the 'Facebook German/French/Netherlands' fb_lang_feed XMLs — those are Meta LANGUAGE OVERRIDE feeds (id +
+    // override + translated text only), which scan as a catalogue with every label gone; the agent now refuses one.
+    'ie-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_tsv/superdry_ie/3fa5090804acd27f091be19031f07ba6/superdry_ie_fb_tsv_output.tsv' },
+    'de-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_tsv/superdry_de/eb9803a536590b1854ab3ab60023da25/superdry_de_fb_tsv_output.tsv' },
+    'fr-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_tsv/superdry_fr/1d91616b1594ade0c45276aa6b46be43/superdry_fr_fb_tsv_output.tsv' },
+    'nl-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb_tsv/superdry_nl/3c5c1a8c47d6f80048f7a0c5cd23309a/superdry_nl_fb_tsv_output.tsv' },
   },
   'American Golf': { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml' } },
   Reiss: {
@@ -590,11 +593,29 @@ const sheetRef = (u) => {
   const g = /[#?&]gid=(\d+)/.exec(String(u));
   return { id: m[1], gid: (g && g[1]) || '0' };
 };
-// FeedHero-hosted XML product feeds (Meta/FB channel) — realtime company-public data. The
-// host is allowlisted so the feed proxy can never be pointed at arbitrary URLs; a source is
-// either a sheet {id,gid} or an {xml} URL, and feedRef() resolves a pasted URL to whichever.
-const xmlRef = (u) => (/^https:\/\/(?:[a-z0-9-]+\.)?feedhero\.net\/[^\s"'<>]+\.xml$/i.test(String(u || '').trim())
+// FeedHero-hosted product feeds — realtime company-public data. The host is allowlisted so the
+// feed proxy can never be pointed at arbitrary URLs; a source is either a sheet {id,gid} or an
+// {xml} URL, and feedRef() resolves a pasted URL to whichever. The key is still called `xml` (dozens
+// of readers key on it) but since 16 Oct 2026 it means "a FeedHero-hosted FILE": XML, or a DELIMITED
+// file (.tsv / .csv / .txt) — FeedHero hands some Meta catalogues out only as a TSV (Superdry IE), and
+// every reader of the stream (FeedAudit.createFeedParser / createParser) decides the format itself.
+const xmlRef = (u) => (/^https:\/\/(?:[a-z0-9-]+\.)?feedhero\.net\/[^\s"'<>]+\.(?:xml|tsv|csv|txt)$/i.test(String(u || '').trim())
   ? { xml: String(u).trim() } : null);
+// the head of a DELIMITED feed as {header, rows}: leading '#' metadata lines (Meta's TSV) and blank lines
+// skipped, the delimiter read off the header line by PRESENCE — tab, comma, pipe, semicolon — the same rule
+// as FeedAudit.dsvDelim, so a sheet export's 'product_type|||2' header stays a comma file
+function dsvHead(text, maxRows) {
+  const lines = String(text || '').split(/\r?\n/).filter((l) => l.trim() && l.charAt(0) !== '#');
+  if (lines.length < 2) return null;
+  const h = lines[0], d = h.indexOf('\t') >= 0 ? '\t' : h.indexOf(',') >= 0 ? ',' : h.indexOf('|') >= 0 ? '|' : h.indexOf(';') >= 0 ? ';' : ',';
+  const split = (line) => { const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) { const c = line[i];
+      if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+      else if (c === '"' && cur === '') q = true; else if (c === d) { out.push(cur); cur = ''; } else cur += c; }
+    out.push(cur); return out; };
+  return { header: split(h).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase()),
+    rows: lines.slice(1, 1 + (maxRows || 60)).map(split) };
+}
 const feedRef = (u) => sheetRef(u) || xmlRef(u);
 const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every attached market
   const out = {};
@@ -1838,8 +1859,10 @@ async function route(request, env, ctx) {
         // sniffs XML vs CSV from the first bytes, so one proxy serves both
         const upx = await fetch(src.xml);
         const ctx2 = upx.headers.get('content-type') || '';
-        if (!upx.ok || !upx.body || !/xml|rss|octet-stream/i.test(ctx2)) {
-          return json({ error: 'feed XML fetch failed (' + upx.status + ', ' + (ctx2.split(';')[0] || 'no type') + ')' }, 502);
+        // XML, or a DELIMITED file (FeedHero serves a Meta TSV as text/tab-separated-values) — never HTML
+        const dsv = /tab-separated|csv|text\/plain/i.test(ctx2);
+        if (!upx.ok || !upx.body || !(dsv || /xml|rss|octet-stream/i.test(ctx2))) {
+          return json({ error: 'feed fetch failed (' + upx.status + ', ' + (ctx2.split(';')[0] || 'no type') + ')' }, 502);
         }
         // How long is this read? The Golden Record content-quality scan draws a real progress
         // bar (Ray, 16 Sep 2026), which needs the size up front. FeedHero serves these
@@ -1847,7 +1870,7 @@ async function route(request, env, ctx) {
         // never as content-length, which would truncate a decoded stream (the CSV lane below
         // records that lesson) — and only when the upstream was not encoded, so the number
         // always counts the same bytes the browser reads.
-        const xh = { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'no-store' };
+        const xh = { 'content-type': (dsv ? 'text/plain' : 'application/xml') + '; charset=utf-8', 'cache-control': 'no-store' };
         const xlen = upx.headers.get('content-length') || '';
         if (!upx.headers.get('content-encoding') && /^\d+$/.test(xlen)) xh['x-feed-bytes'] = xlen;
         return new Response(upx.body, { headers: xh });
@@ -4527,20 +4550,14 @@ function catImgHostsFromHead(text) {
     const re = /<(?:g:)?(?:image_link|additional_image_link)>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/gi; let m;
     while ((m = re.exec(text))) add(m[1]);
   } else {
-    const lines = text.split(/\r?\n/).filter((l) => l.trim()).slice(0, 60);
-    if (lines.length > 1) {
-      const head = pdpSplitCsv(lines[0]).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase());
-      const cols = head.map((k, i) => (/^(image_link|additional_image_link)/.test(k) ? i : -1)).filter((i) => i >= 0);
-      for (let i = 1; i < lines.length; i++) { const c = pdpSplitCsv(lines[i]); cols.forEach((j) => String(c[j] || '').split(/[,|]\s*(?=https?:)/).forEach(add)); }
+    const dh = dsvHead(text, 59);   // a sheet CSV or a FeedHero TSV — '#' lines skipped, delimiter read off the header
+    if (dh) {
+      const cols = dh.header.map((k, i) => (/^(image_link|additional_image_link)/.test(k) ? i : -1)).filter((i) => i >= 0);
+      for (const c of dh.rows) cols.forEach((j) => String(c[j] || '').split(/[,|]\s*(?=https?:)/).forEach(add));
     }
   }
   return Object.keys(out).sort((a, b) => out[b] - out[a]).slice(0, 12);
 }
-function pdpSplitCsv(line) { const out = []; let cur = '', q = false;
-  for (let i = 0; i < line.length; i++) { const c = line[i];
-    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
-    else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; }
-  out.push(cur); return out; }
 async function catImgHosts(env, client, mkt, src, fresh) {
   const ck = 'imghost:' + client + ':' + mkt;
   // a cached list is used as it is; a FRESH read is allowed at most once an hour, so a host the feed truly does
@@ -6840,17 +6857,11 @@ function pdpLinkHostFromHead(text) {
     const m = re.exec(scope) || re.exec(text);
     return m ? pdpHostOf(dec(m[1])) : '';
   }
-  const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return '';
-  const split = (line) => { const out = []; let cur = '', q = false;
-    for (let i = 0; i < line.length; i++) { const c = line[i];
-      if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
-      else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; }
-    out.push(cur); return out; };
-  const head = split(lines[0]).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase());
-  const li = head.indexOf('link');
+  const dh = dsvHead(text, 39);   // a sheet CSV or a FeedHero TSV
+  if (!dh) return '';
+  const li = dh.header.indexOf('link');
   if (li < 0) return '';
-  for (let i = 1; i < Math.min(lines.length, 40); i++) { const h = pdpHostOf(split(lines[i])[li] || ''); if (h) return h; }
+  for (const r of dh.rows) { const h = pdpHostOf(r[li] || ''); if (h) return h; }
   return '';
 }
 // read at most `cap` bytes of a response body then cancel it (the feed head is enough)

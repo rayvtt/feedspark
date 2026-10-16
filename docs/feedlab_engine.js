@@ -5,6 +5,10 @@
  *
  * API (contract v1 — see docs/FEEDLAB.md + scratchpad feedlab_contract.md):
  *   FeedAudit.createParser(onRow) -> {push(chunk), end()}   incremental RFC-4180 CSV
+ *   FeedAudit.createParser(onRow, opts?) also reads TSV / pipe / semicolon files and skips
+ *                                       leading '#' metadata lines (Meta's TSV) — §1a
+ *   FeedAudit.createFeedParser(onRow) -> XML or delimited, decided by the first byte
+ *   FeedAudit.isOverrideFeed(header) -> a Meta language override feed, not a catalogue
  *   FeedAudit.createXmlParser(onRow) -> {push(chunk), end()}   incremental RSS 2.0 XML
  *                                       (Meta/FB product feeds) — same onRow contract
  *   FeedAudit.normKey(rawHeader)  -> canonical column key
@@ -24,7 +28,8 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.4.0';   // 1.4.0: every pillar vetted against the published specs (Google / OpenAI); product_type
+  var VERSION = '1.5.0';   // 1.5.0: createParser reads any delimited file (TSV, pipe, semicolon; Meta's '#' metadata lines) — createFeedParser picks XML or DSV
+                           // 1.4.0: every pillar vetted against the published specs (Google / OpenAI); product_type
                            //        depth = the primary path's chevron depth, the SAME read as content quality;
                            //        a bare first column is slot one (XML feeds no longer lose it); per-pillar `reads`
                            // 1.3.0: XML header = sampled union padded to slot 10 (was first-item-only — dropped keyword slots)
@@ -40,7 +45,7 @@
    * end(), fully blank lines skipped, trailing row without newline
    * emitted by end().
    * ================================================================ */
-  function createParser(onRow) {
+  function coreParser(onRow, D, quotes) {
     var field = '';      // accumulated current field (across chunks)
     var row = [];        // accumulated current record
     var inQ = false;     // inside a quoted field
@@ -76,11 +81,11 @@
           field += chunk.slice(seg, i); endField(); endRow(); i++; seg = i; continue;
         }
         skipLF = false;
-        if (c === 44) {                    // comma
+        if (c === D) {                     // the delimiter (comma unless the file says otherwise)
           field += chunk.slice(seg, i); endField(); i++; seg = i;
         } else if (c === 13) {             // CR -> row end, swallow next LF
           field += chunk.slice(seg, i); endField(); endRow(); skipLF = true; i++; seg = i;
-        } else if (c === 34 && field === '' && seg === i) {
+        } else if (quotes && c === 34 && field === '' && seg === i) {
           inQ = true; i++; seg = i;        // quote at field start opens quoting
         } else {
           i++;                             // ordinary char (incl. bare " mid-field)
@@ -96,6 +101,125 @@
     }
 
     return { push: push, end: end };
+  }
+
+  /* ================================================================
+   * 1a. DELIMITED FILES OF ANY KIND — DSV (Ray, 16 Oct 2026: "Superdry NL meta feed
+   *     currently is in DSV format, so I think the current label scan is not read
+   *     properly … add scanning DSV … so it scans multiple formats of the feed")
+   * ----------------------------------------------------------------
+   * FeedHero hands some Meta catalogues out ONLY as a tab-separated file (Superdry IE has no
+   * XML Meta feed at all; DE/FR/NL's XML is the LANGUAGE OVERRIDE feed — id + translated
+   * title/description and nothing else), so a comma-only reader cannot scan them. A Meta TSV
+   * opens with '# ref_application_id …' / '# ref_asset_id …' lines (Meta: a line starting
+   * with # is a comment), then an UNQUOTED header, then rows whose text cells ARE quoted.
+   *
+   * createParser(onRow, opts) now reads the file to decide, so every page that already falls
+   * back to it for "not XML" scans a TSV without a line changed:
+   *   - leading blank lines and '#' metadata lines BEFORE the header are skipped (counted);
+   *   - the delimiter is read off the header line by PRESENCE, in this order: tab, comma,
+   *     pipe, semicolon. Never by count: a Google Sheets export carries headers like
+   *     'product_type|||2', whose pipes outnumber its commas, and must stay a comma file;
+   *   - quotes are honoured for comma/pipe/semicolon always (as before), and for a TAB file
+   *     only when the first 64 KB holds a CLOSED quoted cell ("…" then a tab or the line end) — an unquoted TSV cell may
+   *     legitimately begin with a quote mark (the Catalogue's sniff learned this), while
+   *     Meta's TSV quotes every text cell and would otherwise keep the quotes and split a
+   *     description holding a tab;
+   *   - opts.delim forces a delimiter (opts.quotes false turns quoting off) — no sniff.
+   * The rows come out exactly as before: a comma file is byte-for-byte the old read.
+   * parser.format() reports what was decided ({delim, quotes, comments}) once it is known.
+   * ================================================================ */
+  var DSV_SNIFF = 65536;
+  function dsvDelim(line) {
+    line = String(line || '');
+    if (line.indexOf('\t') >= 0) return '\t';
+    if (line.indexOf(',') >= 0) return ',';
+    if (line.indexOf('|') >= 0) return '|';
+    if (line.indexOf(';') >= 0) return ';';
+    return ',';
+  }
+  function createParser(onRow, opts) {
+    opts = opts || {};
+    if (opts.delim) {
+      var fx = coreParser(onRow, String(opts.delim).charCodeAt(0), opts.quotes !== false);
+      fx.format = function () { return { delim: String(opts.delim), quotes: opts.quotes !== false, comments: 0 }; };
+      return fx;
+    }
+    var pre = '', core = null, fmt = null, first = true;
+    function decide(final) {
+      var t = pre, at = 0, comments = 0;
+      // skip leading blank and '#' lines — only whole lines, so wait for each one's newline
+      for (;;) {
+        var nl = t.indexOf('\n', at);
+        var line = (nl < 0 ? t.slice(at) : t.slice(at, nl)).replace(/\r$/, '');
+        if (nl < 0 && !final) return false;          // the line is not complete yet
+        if (line.trim() === '' || line.charAt(0) === '#') {
+          if (line.charAt(0) === '#') comments++;
+          if (nl < 0) { at = t.length; break; }
+          at = nl + 1; continue;
+        }
+        break;
+      }
+      var body = t.slice(at), hnl = body.indexOf('\n');
+      if (hnl < 0 && !final) return false;           // the header is not complete yet
+      var header = (hnl < 0 ? body : body.slice(0, hnl)).replace(/\r$/, '');
+      var D = dsvDelim(header), quotes = true;
+      if (D === '\t') {
+        var data = hnl < 0 ? '' : body.slice(hnl + 1);
+        if (data.length < DSV_SNIFF && !final) return false;   // read a little data before choosing
+        // a CLOSED quoted cell — a quote, its text, a quote, then a tab or the end of the line — not merely
+        // a cell opening with a quote mark (an unquoted '"Boss" style tee' must not switch quoting on)
+        quotes = /(^|\t)"(?:[^"\n]|"")*"(?=\t|\r?$)/m.test(data.slice(0, DSV_SNIFF));
+      }
+      fmt = { delim: D, quotes: quotes, comments: comments };
+      core = coreParser(onRow, D.charCodeAt(0), quotes);
+      pre = '';
+      if (body) core.push(body);
+      return true;
+    }
+    function push(chunk) {
+      chunk = String(chunk);
+      if (first && chunk) { first = false; if (chunk.charCodeAt(0) === 0xFEFF) chunk = chunk.slice(1); }
+      if (core) { core.push(chunk); return; }
+      pre += chunk;
+      decide(false);
+    }
+    function end() {
+      if (!core) { if (!pre) return; decide(true); }
+      if (core) core.end();
+    }
+    return { push: push, end: end, format: function () { return fmt; } };
+  }
+
+  /* ONE ENTRY FOR "read this feed, whatever it is": the first non-blank character decides —
+   * '<' is an XML/RSS feed, anything else a delimited file. The xml-scan agent and the guard
+   * pages' live rescans use this so a wired FeedHero URL can be either. parser.kind() says
+   * which ('xml' | 'dsv'), null until the first text arrives. */
+  function createFeedParser(onRow, opts) {
+    var inner = null, kind = null;
+    function push(chunk) {
+      chunk = String(chunk);
+      if (!inner) {
+        var t = chunk.replace(/^\uFEFF/, '');
+        if (!t.trim()) return;                        // nothing to judge yet
+        kind = /^\s*</.test(t) ? 'xml' : 'dsv';
+        inner = kind === 'xml' ? createXmlParser(onRow) : createParser(onRow, opts);
+        chunk = t;
+      }
+      inner.push(chunk);
+    }
+    function end() { if (inner) inner.end(); }
+    return { push: push, end: end, kind: function () { return kind; },
+      format: function () { return inner && inner.format ? inner.format() : (kind === 'xml' ? { xml: true } : null); } };
+  }
+
+  /* A META LANGUAGE/COUNTRY OVERRIDE FEED IS NOT A CATALOGUE. It carries id + 'override'
+   * (the locale) + the translated text and nothing else, so scanned as a catalogue every
+   * label, price and stock word would read as gone. True when the header has an 'override'
+   * column and neither a price nor an availability column. */
+  function isOverrideFeed(header) {
+    var k = (header || []).map(function (h) { return normKey(h); });
+    return k.indexOf('override') >= 0 && k.indexOf('price') < 0 && k.indexOf('availability') < 0;
   }
 
   /* ================================================================
@@ -1143,7 +1267,7 @@
     };
   }
 
-  return { VERSION: VERSION, createParser: createParser, createXmlParser: createXmlParser, normKey: normKey, audit: audit,
+  return { VERSION: VERSION, createParser: createParser, createXmlParser: createXmlParser, createFeedParser: createFeedParser, isOverrideFeed: isOverrideFeed, dsvDelim: dsvDelim, normKey: normKey, audit: audit,
     // the scoring basis the pop-ups render, and the shared reads the harness checks for
     // parity with labelguard.js (pathDepth verbatim, GPC_LEAF2 identical)
     BASIS: BASIS, pathDepth: pathDepth, GPC_LEAF2: Object.keys(GPC_LEAF2) };
