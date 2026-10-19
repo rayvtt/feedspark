@@ -788,6 +788,44 @@ ROSTER = null;
   is('the fold’s summary names a blocked ticket, so folding can never hide one',
     /blocked[\s\S]{0,120}parts\.push/.test(wf), true);
 
+  /* ---- HOW MANY PRODUCTS, ON THE BRIEFED ROWS TOO (Ray, 15 Oct 2026: "In the brief section of
+     the key work calendar, please also keep the number of products, along with status and who is
+     handling it"). Read by the SAME volOf/hasScope the to-brief half uses, so one moment cannot
+     read two different figures either side of being briefed. ---- */
+  {
+    const sstore = { Acme: { ptidx: { gb: { map: { Jumpers: 400, Coats: 90 }, __total: 1000 } },
+      events: [
+        { id: 'p1', name: 'Scoped', date: '2026-11-05', ptsm: { gb: ['Jumpers', 'Coats'] } },
+        { id: 'p2', name: 'Whole shop', date: '2026-11-06', brandwide: 1 },
+        { id: 'p3', name: 'Unscoped', date: '2026-11-07' }] } };
+    const sb = { a: { id: 'A', client: 'Acme', kw: 'p1', status: 'running' },
+      b: { id: 'B', client: 'Acme', kw: 'p2', status: 'briefed' },
+      c: { id: 'C', client: 'Acme', kw: 'p3', status: 'blocked' } };
+    const by = {}; KWE.briefedList(sstore, sb, {}).forEach((r) => { by[r.id] = r; });
+    is('a briefed row carries the products its own scope resolves to', by.p1.vol, 490);
+    is('…the same figure the to-brief half reads for that scope',
+      KWE.dueList({ Acme: { ptidx: sstore.Acme.ptidx, events: [sstore.Acme.events[0]] } }, {},
+        { now: '2026-10-14', stale: 0, days: 0 })[0].vol, by.p1.vol);
+    is('…and the hours that go with it', by.p1.hours, KWE.kwHours(490));
+    is('a brand-wide moment is marked brand-wide, so the band never prints a count for it',
+      [by.p2.brandwide, by.p2.scoped], [true, true]);
+    is('an unscoped one reads as unscoped, never as zero products',
+      [by.p3.scoped, by.p3.vol], [false, null]);
+    {
+      const unsynced = KWE.briefedList({ Acme: { events: [{ id: 'p1', name: 'Scoped',
+        date: '2026-11-05', ptsm: { gb: ['Jumpers'] } }] } },
+        { a: { id: 'A', client: 'Acme', kw: 'p1' } }, {})[0];
+      is('a scope nobody has synced yet is unmeasured, never 0 products',
+        [unsynced.scoped, unsynced.vol], [true, null]);
+    }
+    is('the status and the court are still on the row beside it',
+      [by.p3.stage, by.p3.court], ['blocked', 'AM']);
+    // ONE builder on the page, or the two halves can word the same scope differently
+    is('the band builds the cell once for both halves',
+      (wf.match(/function scopeCell\(/g) || []).length === 1
+        && /\+scopeCell\(E,r,false\)/.test(wf) && /\+scopeCell\(E,r,true\)/.test(wf), true);
+  }
+
   /* ---- EVERY SEEDED SCOPE IS A PATH THE LIVE FEED REALLY SENDS (Ray, 14 Oct 2026: "can you
      scope up by choosing products on clients product type on all the keywords themes?").
      Reiss, Accessorize and Schuh carried 64 moments with no product scope; 51 now carry the exact
