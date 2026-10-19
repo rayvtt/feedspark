@@ -191,6 +191,16 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'roas'); await pg.waitForTimeout(200);
       const ro = await pg.evaluate(() => ({ off: document.getElementById('pv-show').classList.contains('off'), rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'); return [t[0].textContent, t[t.length - 2].textContent, t[t.length - 1].textContent]; }) }));
       ok('ROAS is conversion value ÷ spend from each group’s own sums, with the spend beside it, and never a share', ro.off && ro.rows.every(([v, r, s2]) => (SP[v] > 0 ? Math.abs(parseFloat(r.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : r === '—') && Math.abs(money(s2) - SP[v]) < 0.6), [ro, SP, VAL]);
+      await pg.selectOption('#pv-lay', 'n'); await pg.waitForTimeout(200);
+      const lyr = await pg.evaluate(() => ({ note: document.getElementById('pv-note').textContent, cells: document.querySelectorAll('#pv tbody td.c .pl').length, rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 2]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl .plt') || {}).textContent]; }) }));
+      ok('a second reading LAYERS into the same table — ROAS shaded, products counted under it in every cell and row total', /reads two things/.test(lyr.note) && lyr.cells > lyr.rows.length && lyr.rows.every(([v, r, l]) => l === NP[v] + (NP[v] === 1 ? ' product' : ' products') && (SP[v] > 0 ? Math.abs(parseFloat(r.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : r === '—')), [lyr, NP]);
+      const lyw = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody td.tot .pl i')).map((i) => parseFloat(i.style.width)));
+      ok('…its blue bar is on the layer\'s OWN scale (the biggest group fills it)', Math.max(...lyw) === 100 && lyw.every((w) => w >= 0 && w <= 100), lyw);
+      await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.selectOption('#pv-lay', 'roas'); await pg.waitForTimeout(200);
+      const lyr2 = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl .plt') || {}).textContent]; }));
+      ok('…and the other way round: products counted, ROAS layered from each group\'s own sums', lyr2.every(([v, n, l]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : !l || /^— ROAS/.test(l))), lyr2);
+      if (process.env.BD_SHOT3) await pg.locator('#pv').screenshot({ path: process.env.BD_SHOT3 });
+      await pg.selectOption('#pv-meas', 'roas'); await pg.selectOption('#pv-lay', ''); await pg.waitForTimeout(150);
       const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
       const csv = fs.readFileSync(await cdl.path(), 'utf8');
       ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);

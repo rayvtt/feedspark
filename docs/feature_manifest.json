@@ -16242,6 +16242,18 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: a second reading layered in every pivot cell",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function layCell(nL, nL2, mxL) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the engine sums the layer on the same rows and columns",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function gbTry(key) {",

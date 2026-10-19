@@ -290,9 +290,14 @@
     var g = !w && opts.unit === 'group' ? groupCol(S) : -1, gids = g >= 0 ? S.cols[g].ids : null;
     var cnt = new Map(), sets = g >= 0 ? new Map() : null, tot = 0, totSet = g >= 0 ? new Set() : null, multiRows = 0;
     var pc_ = w ? new Map() : null, c2 = w2 ? new Map() : null, totP = 0, tot2 = 0;
+    // opts.lw / opts.lw2: a SECOND reading LAYERED on the first (Ray, 19 Oct 2026: "see 2 data points together …
+    // volume of product (in count) and ROAS") — 1 = count products, else a weight per product; lw2 makes it a ratio
+    var lw = opts.lw === 1 ? function () { return 1; } : typeof opts.lw === 'function' ? opts.lw : null, lw2 = lw && typeof opts.lw2 === 'function' ? opts.lw2 : null;
+    var cL = lw ? new Map() : null, cL2 = lw2 ? new Map() : null, totL = 0, totL2 = 0;
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
       var a = R.of(r); if (!a.length) a = [BLANK]; else if (a.length > 1) multiRows++;
+      if (lw) { var y = lw(r), y2 = lw2 ? lw2(r) : 0; totL += y; totL2 += y2; for (var jl = 0; jl < a.length; jl++) { cL.set(a[jl], (cL.get(a[jl]) || 0) + y); if (lw2) cL2.set(a[jl], (cL2.get(a[jl]) || 0) + y2); } }
       var unitKey = gids ? (gids[r] ? 'g' + gids[r] : 'r' + r) : null;
       var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
       if (totSet) totSet.add(unitKey); else tot += x;
@@ -309,12 +314,14 @@
     cnt.forEach(function (n, v) {
       var o = { v: v, n: n, share: tot ? n / tot : 0, o: bandOrder(mode, v) };
       if (w) { o.p = pc_.get(v) || 0; if (w2) o.n2 = c2.get(v) || 0; }
+      if (lw) { o.nL = cL.get(v) || 0; if (lw2) o.nL2 = cL2.get(v) || 0; }
       rows.push(o);
     });
     sortRows(rows, isBand(mode) ? 'o' : 'n', isBand(mode) ? 1 : -1);
     var blank = cnt.get(BLANK) || 0;
     var res = { rows: rows, total: tot, distinct: rows.filter(function (x) { return x.n > 0; }).length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
     if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }
     return res;
   }
   // k: 'v' value (A→Z, numbers in number order) · 'n' count · 'share' · 'o' band order; blank always last
@@ -347,11 +354,23 @@
     var w = typeof opts.w === 'function' ? opts.w : null, w2 = w && typeof opts.w2 === 'function' ? opts.w2 : null;
     var rowTot = new Map(), colTot = new Map(), cell = new Map(), tot = 0;
     var rowP = new Map(), colP = new Map(), row2 = new Map(), col2 = new Map(), cell2 = new Map(), totP = 0, tot2 = 0;
+    // the LAYER (as in pivot): a second reading summed per cell, row, column and total, on the SAME rows and columns
+    var lw = opts.lw === 1 ? function () { return 1; } : typeof opts.lw === 'function' ? opts.lw : null, lw2 = lw && typeof opts.lw2 === 'function' ? opts.lw2 : null;
+    var cellL = new Map(), cellL2 = new Map(), rowL = new Map(), rowL2 = new Map(), colL = new Map(), colL2 = new Map(), totL = 0, totL2 = 0;
+    var addL = function (M, k1, k2, v) { var mm = M.get(k1); if (!mm) { mm = new Map(); M.set(k1, mm); } mm.set(k2, (mm.get(k2) || 0) + v); };
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
       var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
       tot += x; totP++; tot2 += x2;
       var a = RR.of(r), b = RC.of(r); if (!a.length) a = [BLANK]; if (!b.length) b = [BLANK];
+      if (lw) {
+        var y = lw(r), y2 = lw2 ? lw2(r) : 0; totL += y; totL2 += y2;
+        for (var la = 0; la < a.length; la++) {
+          rowL.set(a[la], (rowL.get(a[la]) || 0) + y); if (lw2) rowL2.set(a[la], (rowL2.get(a[la]) || 0) + y2);
+          for (var lb = 0; lb < b.length; lb++) { addL(cellL, a[la], b[lb], y); if (lw2) addL(cellL2, a[la], b[lb], y2); }
+        }
+        for (var lc = 0; lc < b.length; lc++) { colL.set(b[lc], (colL.get(b[lc]) || 0) + y); if (lw2) colL2.set(b[lc], (colL2.get(b[lc]) || 0) + y2); }
+      }
       for (var i = 0; i < a.length; i++) {
         rowTot.set(a[i], (rowTot.get(a[i]) || 0) + x);
         rowP.set(a[i], (rowP.get(a[i]) || 0) + 1);
@@ -379,10 +398,11 @@
     var shown = maxC > 0 ? cols.slice(0, maxC) : cols, other = maxC > 0 ? cols.slice(maxC) : [];
     var otherN = other.reduce(function (s, c) { return s + c.n; }, 0);
     var sumOf = function (M, list) { return list.reduce(function (s, c) { return s + (M.get(c.v) || 0); }, 0); };
-    var outCols = shown.map(function (c) { var o = { v: c.v, n: c.n }; if (w) { o.p = colP.get(c.v) || 0; if (w2) o.n2 = col2.get(c.v) || 0; } return o; });
+    var outCols = shown.map(function (c) { var o = { v: c.v, n: c.n }; if (w) { o.p = colP.get(c.v) || 0; if (w2) o.n2 = col2.get(c.v) || 0; } if (lw) { o.nL = colL.get(c.v) || 0; if (lw2) o.nL2 = colL2.get(c.v) || 0; } return o; });
     if (other.length) {
       var oc = { v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) };
       if (w) { oc.p = sumOf(colP, other); if (w2) oc.n2 = sumOf(col2, other); }
+      if (lw) { oc.nL = sumOf(colL, other); if (lw2) oc.nL2 = sumOf(colL2, other); }
       outCols.push(oc);
     }
     var cut = maxR > 0 ? rows.slice(0, maxR) : rows;
@@ -398,10 +418,17 @@
           if (other.length) out.cells2.push(sumOf(m2, other));
         }
       }
+      if (lw) {
+        var mL = cellL.get(rw.v) || new Map(), mL2 = cellL2.get(rw.v) || new Map();
+        out.nL = rowL.get(rw.v) || 0; out.cellsL = shown.map(function (c) { return mL.get(c.v) || 0; });
+        if (other.length) out.cellsL.push(sumOf(mL, other));
+        if (lw2) { out.nL2 = rowL2.get(rw.v) || 0; out.cellsL2 = shown.map(function (c) { return mL2.get(c.v) || 0; }); if (other.length) out.cellsL2.push(sumOf(mL2, other)); }
+      }
       return out;
     });
     var res = { rows: outRows, cols: outCols, total: tot, rowsAll: rows.length, rowsHidden: rows.length - cut.length, multi: RR.multi || RC.multi };
     if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }
     return res;
   }
 
