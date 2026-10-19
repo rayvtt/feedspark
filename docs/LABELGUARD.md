@@ -2339,3 +2339,25 @@ that moved (a move under half a point is not named), the rule whose breaking-pro
 (tooltip: Google's own rule wording, before → after), and a row summary — *N fields moved · N product values now
 pass*. An analysis recorded before this keeps its plain line and says the detail starts with the next analysis;
 nothing is reconstructed. Harness `tools/test_qamoved.mjs` (qa_gate/presync/validate).
+
+### 9.11b Changes across your portfolio (19 Oct 2026)
+
+Ray: *"monitor the changes on my entire account's portfolio … on a weekly basis, how many brands I have worked on, how
+many fields I worked on … just for the account manager."* Section 02 on /golden reads every Google Shopping feed's
+score history over one calendar week (Monday start) — `GET /api/golden/changes?wk=0..12` or `?from=&to=`.
+
+- **Engine** `histWindow(hist, profile, {from, to, live})` (labelguard.js): the Golden Score's base is the last
+  reading *before* the week and its close the last reading *in* it, scored under the brand's current profile; the
+  fields are `histMoved` kept to a presence flip or `HIST_MOVE_PP`. Content quality and AI-readiness read the same
+  way; `qaFieldMoves` names each field whose score moved ≥ 0.5 with the product values fixed / flagged (off the rule
+  counts each analysis has kept since §9.11a — an older analysis gives its move and says it cannot name fields).
+  `weekRange(today, back)` is the calendar.
+- **Honesty:** a feed first read inside the week is *new*, never counted as a week of work; two readings on
+  different bases are never compared; a week with no reading is no change, never a zero.
+- **Route:** shares `goldenFeedList` with `/api/golden/portfolio` — the same feeds, scope and AM (the Task Manager's
+  name for the account).
+- **Page:** AM select (opens on the signin's own accounts when the Task Manager names them, else All accounts),
+  week select (this week … 8 weeks ago, last 4 weeks), five counts, one row per changed brand expanding to its
+  markets and their field chips, quiet brands named, a market click opens its scorecard. Folds (`gr-pc-fold`), picks
+  per device, hidden in demo mode.
+- **Harness:** `tools/test_pcchanges.mjs` + `tools/check_pcchanges.js`.

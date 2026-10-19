@@ -396,7 +396,10 @@ console.log('── the portfolio view: every feed day by day, off the same engi
   ok('Leadership\'s series and the Score history card read every day identically (all three scores)', diffs.length === 0, diffs.slice(0, 5));
 
   const wk = read('cloudflare/feedspark-deck/src/worker.js');
-  const route = wk.slice(wk.indexOf("if (path === '/api/golden/portfolio'"), wk.indexOf("if (path === '/api/golden/alertcfg')"));
+  // the feed list, scope and AM live in goldenFeedList, shared with /api/golden/changes — read as part of the route
+  const route = wk.slice(wk.indexOf("if (path === '/api/golden/portfolio'"), wk.indexOf("if (path === '/api/golden/alertcfg')")) +
+    (/await goldenFeedList\(env, acc\)/.test(wk.slice(wk.indexOf("if (path === '/api/golden/portfolio'"), wk.indexOf("if (path === '/api/golden/alertcfg')")))
+      ? wk.slice(wk.indexOf('async function goldenFeedList('), wk.indexOf('async function feedRoster(')) : '');
   ok('one route serves the whole book, through the engine, under each brand\'s current profile',
     route.length > 0 && /histSeries\(hists\[i\], pf, \{ days, today, live \}\)/.test(route) && /profileFor\(f\.client, overrides\)/.test(route));
   ok('…closed by the estate index\'s own reading', /const live = x && x\.cov && x\.t \? \{ t: x\.t, rows: x\.rows, cov: x\.cov, sc: x\.sc \} : null;/.test(route));
