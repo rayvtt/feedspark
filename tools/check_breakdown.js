@@ -147,9 +147,9 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       const now = new Date(), refQ = now.getUTCFullYear() * 4 + Math.floor(now.getUTCMonth() / 3), QN = (i) => 'Q' + (i % 4 + 1) + ' ' + Math.floor(i / 4);
       const want = {};
       ITEMS.forEach((it) => { const m = /<c:fs_date_of_birth[^>]*>\s*(\d{4})-(\d{2})/.exec(it); if (!m) return; const i = +m[1] * 4 + Math.floor((+m[2] - 1) / 3), back = refQ - i;
-        const v = back < 0 ? QN(i) + ' · ahead' : back === 0 ? QN(i) + ' · this quarter' : back === 1 ? QN(i) + ' · last quarter' : back < 8 ? QN(i) : 'Before ' + QN(refQ - 7); want[v] = (want[v] || 0) + 1; });
+        const v = back < 8 ? QN(i) : 'Before ' + QN(refQ - 7); want[v] = (want[v] || 0) + 1; });
       { let deep = -1; Object.keys(want).forEach((v) => { if (/^Before /.test(v)) deep = 7; const r = /^Q(\d) (\d{4})/.exec(v); if (r) deep = Math.max(deep, refQ - (+r[2] * 4 + +r[1] - 1)); });
-        for (let k = 0; k <= Math.min(deep, 7); k++) { const i = refQ - k, v = k === 0 ? QN(i) + ' · this quarter' : k === 1 ? QN(i) + ' · last quarter' : QN(i); if (!(v in want)) want[v] = 0; } }
+        for (let k = 0; k <= Math.min(deep, 7); k++) { const i = refQ - k, v = QN(i); if (!(v in want)) want[v] = 0; } }
       const grp = await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'), g = s.querySelector('optgroup'); return g && g.label + '|' + Array.from(g.querySelectorAll('option')).map((o) => o.value).join(); });
       ok('the column picker opens on a Newness group carrying the feed\'s first-seen date', grp === 'Newness · by quarter|c:fs_date_of_birth', grp);
       await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'c:fs_date_of_birth'; s.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -157,6 +157,8 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       const q = await pg.evaluate(() => ({ m: document.querySelector('#pv-c select.m').value, heads: Array.from(document.querySelectorAll('#pv table thead th')).slice(1, -1).map((th) => th.textContent), tot: Array.from(document.querySelectorAll('#pv table tfoot td.c')).map((td) => +td.textContent.replace(/[^0-9]/g, '') || 0) }));
       const order = Object.keys(want).sort((x, y) => { const k = (v) => { const r = /(Before )?Q(\d) (\d{4})/.exec(v); return (r[1] ? 1e6 : 0) - (+r[3] * 4 + +r[2]); }; return k(x) - k(y); });
       ok('picking the date reads it by quarter, newest first, every quarter counted independently', q.m === 'qtr' && q.heads.join('|') === order.join('|') && q.heads.every((h, j) => q.tot[j] === want[h]), [q, want]);
+      const qf = await pg.evaluate(() => { const w = document.getElementById('pv'), ths = Array.from(w.querySelectorAll('thead th')); return { sw: w.scrollWidth, cw: w.clientWidth, n: ths.length, cut: ths.filter((th) => th.scrollWidth > th.clientWidth + 1).map((th) => th.textContent) }; });
+      ok('…with ' + q.heads.length + ' quarter columns the pivot still fits the card at 1440px, every heading whole', qf.sw <= qf.cw + 1 && !qf.cut.length && qf.n === q.heads.length + 2, qf);
       await pg.evaluate(() => { const r = document.querySelector('#pv-r select.f'); r.value = 'c:fs_date_of_birth'; r.dispatchEvent(new Event('change', { bubbles: true })); });
       await pg.waitForTimeout(150);
       const qr = await pg.evaluate(() => ({ m: document.querySelector('#pv-r select.m').value, rows: Array.from(document.querySelectorAll('#pv tbody tr td.rh')).map((td) => td.textContent) }));
@@ -192,9 +194,35 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
       const csv = fs.readFileSync(await cdl.path(), 'utf8');
       ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);
+      const sv = await pg.evaluate(() => ({ head: (document.querySelector('#pv3 .sv3h b') || {}).textContent, by: (document.getElementById('sv3-by') || {}).value,
+        rows: Array.from(document.querySelectorAll('#pv3 .sv3r')).map((r) => { const b = r.querySelectorAll('.b'); return [r.querySelector('.nm').textContent, b[0].textContent, b[1].textContent, r.querySelector('.ro em').textContent, b[0].querySelector('i').getBoundingClientRect().width, b[1].querySelector('i').getBoundingClientRect().width]; }) }));
+      const live = Object.keys(SP).filter((v) => SP[v] || VAL[v]);
+      ok('spend, conversion value and ROAS sit together under the pivot, one row per segment of the rows field', sv.head === 'Spend · conversion value · ROAS' && sv.by === 'r' && sv.rows.length === Math.min(15, live.length), [sv.head, sv.by, sv.rows.length, live.length]);
+      ok('…each row\'s spend, value and ROAS are its own products\' sums, counted independently', sv.rows.every(([v, s1, v1, r]) => Math.abs(money(s1) - SP[v]) < 0.6 && Math.abs(money(v1) - VAL[v]) < 0.6 && (SP[v] > 0 ? Math.abs(parseFloat(r.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : r === '—')), [sv.rows, SP, VAL]);
+      ok('…biggest spend first, and the two money bars on ONE scale (a bigger figure is a longer bar)', sv.rows.every((r, i) => !i || money(sv.rows[i - 1][1]) >= money(r[1])) && sv.rows.every(([, s1, v1, , ws, wv]) => (money(s1) - money(v1)) * (ws - wv) >= -1), sv.rows);
+      await pg.selectOption('#sv3-sort', 'ro'); await pg.waitForTimeout(120);
+      const svr = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv3 .sv3r .ro em')).map((e) => e.textContent));
+      ok('…sorted by ROAS on request, a segment with no spend last', svr.every((t, i) => !i || (t === '—' ? true : svr[i - 1] !== '—' && parseFloat(svr[i - 1].replace(/,/g, '')) >= parseFloat(t.replace(/,/g, '')))), svr);
+      await pg.selectOption('#sv3-sort', 'sp');
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.waitForTimeout(150);
       const back = await pg.evaluate(() => ({ hidden: document.getElementById('pv-ads').hidden, last: Array.from(document.querySelectorAll('#pv table thead th')).pop().textContent }));
       ok('…and back on Products the table counts again', back.hidden && back.last === 'Row total', back);
+    }
+
+    console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');
+    {
+      const fit = await pg.evaluate(() => { const w = document.getElementById('pv'), ths = Array.from(w.querySelectorAll('thead th')); return { sw: w.scrollWidth, cw: w.clientWidth, n: ths.length, grips: w.querySelectorAll('thead .crz').length, cut: ths.some((th) => th.scrollWidth > th.clientWidth + 1) }; });
+      ok('no sideways scroll at 1440px, every heading whole (wrapped, never cut), a grip on every column', fit.sw <= fit.cw + 1 && !fit.cut && fit.grips === fit.n && fit.n > 3, fit);
+      const quarters = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv thead th')).map((th) => th.textContent).join('|'));
+      ok('…a quarter is named by itself, never "this quarter" or "last quarter"', !/this quarter|last quarter|· ahead/.test(quarters), quarters);
+      const g = pg.locator('#pv thead th.tot .crz').first(), bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
+      await pg.mouse.move(bb.x + 4, bb.y + 8); await pg.mouse.down(); await pg.mouse.move(bb.x + 64, bb.y + 8, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(150);
+      const after = await pg.evaluate(() => ({ w: document.querySelector('#pv thead th.tot').getBoundingClientRect().width, saved: (JSON.parse(localStorage.getItem('fcc-bd-layout') || '{}').pivot || {}).w, sw: document.getElementById('pv').scrollWidth, cw: document.getElementById('pv').clientWidth }));
+      ok('dragging a column\'s grip widens it, remembered on the device by what the column is', after.w > w0 + 40 && after.saved && after.saved.tot > w0 + 40, [w0, after]);
+      ok('…and the table still fits the card', after.sw <= after.cw + 1, after);
+      await pg.dblclick('#pv thead th.tot .crz'); await pg.waitForTimeout(150);
+      const reset = await pg.evaluate(() => ({ w: document.querySelector('#pv thead th.tot').getBoundingClientRect().width, saved: (JSON.parse(localStorage.getItem('fcc-bd-layout') || '{}').pivot || {}).w }));
+      ok('…a double-click puts it back', Math.abs(reset.w - w0) < 3 && !(reset.saved && reset.saved.tot), [w0, reset]);
     }
 
     console.log('· a pane is as wide as its longest value');

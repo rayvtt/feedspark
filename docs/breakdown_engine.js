@@ -183,10 +183,7 @@
   function qtrBand(v, ref) {
     var d = dateOf(v); if (!d) return NO_DATE;
     var i = qIdx(d.y, d.m), back = ref - i;
-    if (back < 0) return qName(i) + ' · ahead';
-    if (back === 0) return qName(i) + ' · this quarter';
-    if (back === 1) return qName(i) + ' · last quarter';
-    if (back < QTR_BACK) return qName(i);
+    if (back < QTR_BACK) return qName(i);           // a quarter is named by itself — ahead, this one and the last read as any other
     return 'Before ' + qName(ref - QTR_BACK + 1);
   }
   // a quarter nothing arrived in is a real zero, not a missing row: the ladder runs unbroken from THIS quarter back to the

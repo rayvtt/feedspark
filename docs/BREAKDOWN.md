@@ -35,7 +35,7 @@ path, a number, a date, a link, a list, free text, one value per product, or val
 | Length bands | text, values | 1–30 · 31–70 · 71–150 · 151–500 · 501+ characters |
 | Number bands | numbers | 0–10 · 10–25 · 25–50 · 50–100 · 100–250 · 250–500 · 500–1000 · 1000+ (`not a number` said) |
 | Split lists | lists, values, text | splits on `|||`, `|`, `;`, `, ` |
-| Newness by quarter | dates (`fs_date_of_birth`) | the calendar quarter a product first appeared in, newest first: `Q4 2026 · this quarter`, `Q3 2026 · last quarter`, then six more quarters, the rest in one `Before …` band; a quarter nothing arrived in is a 0 on an unbroken ladder; an unreadable date is said |
+| Newness by quarter | dates (`fs_date_of_birth`) | the calendar quarter a product first appeared in, newest first: `Q4 2026`, `Q3 2026`, then six more quarters, the rest in one `Before …` band; a quarter nothing arrived in is a 0 on an unbroken ladder; an unreadable date is said |
 
 **Four rules**, because these tables go in front of clients:
 
@@ -137,3 +137,12 @@ animation makes it the containing block of anything fixed inside it. It names no
   - `tools/check_breakdown.js`: every row total against a count made in the test from the stub's synthetic Ads rows,
     the out-of-feed id kept apart, % of total, ROAS and the CSV.
 
+
+## Columns that fit, widths you set, and spend · value · ROAS together (19 Oct 2026)
+
+Ray: "remove notion of this quarter and last quarter - make column always fit - also, allow width adjustment too across Pivot", then "can I see spend, conversion value, and ROAS together on one dashboard? … keep it as a bar chart on a specific segment".
+
+- A quarter is named by itself (`Q4 2026`), never "this quarter" / "last quarter" / "ahead" — the ladder and its order are unchanged.
+- The pivot is a fixed-layout table at 100% of its card: the columns share the width, a heading WRAPS rather than being cut, so at 1440px nothing scrolls sideways (a phone still pans — 64px a column is the floor).
+- Every column heading carries a grip: drag it to set that column's width, double-click or Enter for the default, ← → step 20px. Widths are remembered on this device by what the column IS (`rh`, `tot`, `ps`, `c:<value>`) in `fcc-bd-layout` › `pivot.w` (60 kept), so a value's column keeps its width when it comes back.
+- **Spend · conversion value · ROAS** sits under the pivot: one row per value of the pivot's rows field (or its columns field, `by`), spend and conversion value as two bars on ONE money scale, ROAS (conversion value ÷ spend from that segment's own sums) on its own scale with the whole selection's ROAS marked. Sort by spend / value / ROAS, top 15 then Show all, a row click filters the page. It reads the same 30-day Google Ads join as the Measure picker; before Ads is read it offers ⚡ Read Google Ads. Segments with no spend and no value are counted, not drawn.

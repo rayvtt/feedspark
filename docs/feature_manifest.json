@@ -16208,7 +16208,7 @@
     {
       "name": "Breakdown: newness by quarter — a date reads as the quarter it falls in, newest first",
       "file": "docs/breakdown_engine.js",
-      "pattern": "if (back === 0) return qName(i) + ' · this quarter';",
+      "pattern": "if (back < QTR_BACK) return qName(i);           // a quarter is named by itself",
       "pr": 0
     },
     {
@@ -16221,6 +16221,24 @@
       "name": "Breakdown: newness leads every field picker and a date opens by quarter on panes + both pivot sides",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "<optgroup label=\"Newness · by quarter\">",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: pivot columns fit the card (fixed layout, headings wrap)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "table.pv{border-collapse:separate;border-spacing:0;font-size:12.5px;width:100%;table-layout:fixed}",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: drag a pivot column's width, remembered per device",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function setCW(k, w) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: spend \u00b7 conversion value \u00b7 ROAS together, one row per segment",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function renderSv3() {",
       "pr": 0
     },
     {
