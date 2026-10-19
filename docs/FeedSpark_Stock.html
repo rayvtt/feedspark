@@ -87,7 +87,7 @@ window.addEventListener('load',restore);
   .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin:0}
   /* EVERY CARD FOLDS (Ray, 7 Oct 2026: "each module info on Stock Management is collapsible pls - too many at once"): the
      title is one button — chevron, title and, folded, the line that survives the fold — and a folded card is that one row */
-  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
+  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:flex;width:100%;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
   .card h3 .fold:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
   .card h3 .fold .fch{flex:none;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;background:var(--wash);color:var(--muted);transition:transform .15s ease}
   .card h3 .fold .fch::before{content:'';width:5px;height:5px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(45deg)}
