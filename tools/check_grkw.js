@@ -101,7 +101,7 @@ const KW = { present: true, filled: 5229, cov: 22.3, slots: 9, strings: 181970, 
     const without = LG.goldenScore(attrsWith(undefined), prof).score;
     ok('…and keywords at 22% cost it points (it is in the mix)', e < without, [e, without]);
     // → Brief opens a keyword brief in the keyword task family
-    const nav = new Promise((res) => page.on('request', (rq) => { if (/brief=/.test(rq.url())) res(rq.url()); }));
+    const nav = new Promise((res) => page.context().on('request', (rq) => { if (/brief=/.test(rq.url())) res(rq.url()); })); // a brief opens Workflow in a NEW tab
     await page.click('.at-row [data-brief="keywords"]');
     const url = await Promise.race([nav, new Promise((res) => setTimeout(() => res(null), 3000))]);
     let b = null;

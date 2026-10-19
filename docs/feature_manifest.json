@@ -16673,49 +16673,49 @@
       "name": "Golden: a brief opens Workflow in a new tab",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function wfTab(u)",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Stock: lever brief reserves its tab before the save",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "var tab = wfTabLater();",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "AI Quote: → Intake brief opens in a new tab",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "var tab=wfTabLater();",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Catalogue: a brief opens Workflow in a new tab",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "function wfTab(u)",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Restock: a brief opens Workflow in a new tab",
       "file": "docs/FeedSpark_Restock.html",
       "pattern": "wfTab('/workflow?brief=' + b64url(",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Social: a brief opens Workflow in a new tab",
       "file": "docs/FeedSpark_Social.html",
       "pattern": "function wfTab(u)",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Golden plan tripwire: brief opens a new tab",
       "file": "tools/check_grplanbrief.js",
       "pattern": "opens Workflow in a NEW tab",
-      "pr": 712
+      "pr": 713
     },
     {
       "name": "Stock levers tripwire: brief opens a new tab",
       "file": "tools/check_stocklevers.js",
       "pattern": "opens Workflow in a NEW tab and leaves /stock where it was",
-      "pr": 712
+      "pr": 713
     }
   ]
 }
