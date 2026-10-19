@@ -369,6 +369,140 @@ window.addEventListener('load',restore);
   .tag-hold{background:#F4F4F2;color:var(--muted);border-color:var(--line)}
   /* dossier: portfolio band — Activity · Health · Audit + suggestions (async, cross-module) */
   .dz-port{margin:16px 0 4px}
+  /* ===== BRAND OVERVIEW (FCC-DZ-OVERVIEW) — a dark call-out, four KPI tiles with their own
+     trend, the delivery grid, and a right column of attention + live work. Tokens only, so dark
+     mode follows; the hero is dark in both themes on purpose. */
+  .dz-detail{container-type:inline-size}
+  .dz-foldbar{display:flex;justify-content:flex-end;margin:14px 0 6px}
+  .dz-foldall{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:5px 12px;font:800 11.5px Lato,sans-serif;cursor:pointer}
+  .dz-sec{margin:0 0 12px}
+  .dz-sech{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;color:var(--ink);font-family:inherit}
+  .dz-sech:hover{border-color:#d4d4d4}
+  .dz-sect{display:flex;flex-direction:column;min-width:0;flex:1}
+  .dz-sect b{font-size:13.5px;font-weight:900}
+  .dz-sect small{font-size:11.5px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dz-chev{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;font-size:12px;color:var(--ink-2);transition:transform .2s;flex:none}
+  .dz-sec.folded .dz-chev{transform:rotate(-90deg)}
+  .dz-sec.folded>.dz-secb{display:none}
+  .dz-secb{padding-top:12px}
+  .ov-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+  .ov{display:flex;flex-direction:column;gap:12px}
+  .ov-ey{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .ov-ey b{color:var(--ink);font-weight:900}
+  .ov-hero{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;background:#1C1F24;color:#fff;border-radius:18px;padding:22px 22px 20px;box-shadow:0 10px 30px rgba(16,24,40,.18)}
+  .ov-hey{color:#A9B0BA}
+  .ov-hl h4{margin:8px 0 6px;font-size:21px;line-height:1.25;font-weight:900;letter-spacing:-.01em;color:#fff}
+  .ov-hl p{margin:0;font-size:13px;line-height:1.55;color:#C9CED6}
+  .ov-hst{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+  .ov-hst span{display:flex;flex-direction:column;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#A9B0BA}
+  .ov-hst b{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.01em;text-transform:none}
+  .ov-hb{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .ov-btn{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:800;text-decoration:none}
+  .ov-btn:hover{text-decoration:none;background:rgba(255,255,255,.08)}
+  .ov-btn.pri{background:#fff;color:#1C1F24;border-color:#fff}
+  .ov-hrl{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .ov-hr{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:8px 10px;color:#fff;text-decoration:none;min-width:0}
+  a.ov-hr:hover{background:rgba(255,255,255,.11);text-decoration:none}
+  .ov-hrt{flex:1;min-width:0;font-size:12.5px;font-weight:700;line-height:1.35}
+  .ov-hrt small{display:block;color:#A9B0BA;font-size:10.5px;font-weight:700;margin-top:1px}
+  .ov-hrv{font-size:15px;font-weight:900;color:var(--orange)}
+  .ov-arr{color:var(--orange);font-weight:900}
+  .ov-pri{flex:none;font-size:10px;font-weight:900;border-radius:6px;padding:2px 6px;background:rgba(255,255,255,.12);color:#fff}
+  .ov-pri.p1{background:#C0392B}.ov-pri.p2{background:var(--orange-deep)}
+  .ov-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .ov-kpi,.ov-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  .ov-kpi{padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .ov-kv{display:flex;align-items:flex-end;gap:4px;min-height:40px}
+  .ov-kv b{font-size:30px;line-height:1;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .ov-kv>span:not(.ov-spk){font-size:12px;font-weight:800;color:var(--muted);margin-bottom:3px}
+  .ov-spk{margin-left:auto;display:flex;align-items:flex-end;gap:2px;height:28px;width:64px;flex:none}
+  .ov-spk i{flex:1;background:#D3D7DD;border-radius:2px 2px 0 0;min-width:2px}
+  .ov-spk i.last{background:var(--orange)}
+  .ov-spk.none{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px);height:2px;align-self:center;opacity:.8}
+  .ov-kf{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px;line-height:1.35}
+  .ov-dot{width:7px;height:7px;border-radius:50%;background:#C9CDD4;flex:none}
+  .ov-dot.g{background:#15803D}.ov-dot.y{background:#F5A623}.ov-dot.a{background:#ED6F0B}.ov-dot.r{background:#C0392B}
+  .ov-mid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;align-items:start}
+  .ov-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .ov-card{padding:14px 15px;min-width:0;position:relative}
+  .ov-ch{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+  .ov-ch h5{margin:3px 0 0;font-size:14px;font-weight:900;color:var(--ink)}
+  .ov-cnt{min-width:22px;height:22px;border-radius:999px;background:#C0392B;color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;padding:0 6px}
+  .ov-cnt.z{background:var(--wash-2);color:var(--ink-2)}
+  .ov-gwrap{overflow-x:auto;padding-top:14px}
+  .ov-grid{display:grid;grid-template-columns:repeat(var(--n),minmax(30px,1fr));gap:6px;min-width:calc(var(--n) * 36px)}
+  .ov-gc{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;border-radius:8px;padding:3px 0}
+  .ov-gc.now{background:rgba(245,166,35,.10);box-shadow:inset 0 0 0 1px rgba(245,166,35,.55)}
+  .ov-now{position:absolute;top:-14px;font-size:9px;font-weight:900;letter-spacing:.12em;color:var(--orange-deep)}
+  .ov-gsq{display:grid;grid-template-columns:1fr;gap:3px}
+  .ov-gsq i{display:block;width:13px;height:13px;border-radius:3px;background:var(--wash-2)}
+  .ov-gsq i.e{background:transparent;box-shadow:inset 0 0 0 1px var(--line);opacity:.45}
+  .ov-gsq i.d{background:#2B2F36}.ov-gsq i.o{background:#C9CED6}.ov-gsq i.c{background:var(--orange)}
+  .ov-gsq i[data-t]{cursor:default}.ov-gsq i[data-t]:hover{outline:2px solid var(--orange-deep);outline-offset:1px}
+  .ov-gl{font-size:9.5px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .ov-gleg{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px;font-size:11px;font-weight:700;color:var(--ink-2)}
+  .ov-gleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .ov-gleg i.d{background:#2B2F36}.ov-gleg i.o{background:#C9CED6}.ov-gleg i.c{background:var(--orange)}
+  .ov-gunit{margin-left:auto;color:var(--muted)}
+  .ov-gfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);margin-top:10px;padding-top:9px}
+  .ov-more{font-size:12px;font-weight:800;white-space:nowrap}
+  .ov-gempty,.ov-none{font-size:12.5px;color:var(--muted);font-weight:700;padding:6px 0}
+  .ov-tip{position:absolute;z-index:5;background:#1C1F24;color:#fff;font-size:11px;font-weight:700;padding:5px 8px;border-radius:7px;white-space:nowrap;pointer-events:none;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+  .ov-tip[hidden]{display:none}
+  .ov-ar,.ov-lr{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line);min-width:0}
+  .ov-ch+.ov-ar,.ov-ch+.ov-lr{border-top:0;padding-top:2px}
+  .ov-aic{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:13px;background:var(--wash-2)}
+  .ov-aic.r{background:rgba(192,57,43,.12);color:#C0392B}.ov-aic.a{background:rgba(237,111,11,.12);color:var(--orange-deep)}
+  .ov-art{flex:1;min-width:0;font-size:12px;line-height:1.35;color:var(--ink-2)}
+  .ov-art b{color:var(--ink);font-weight:800}
+  .ov-art b.good{color:#15803D}.ov-art b.mid{color:#B7791F}.ov-art b.warn{color:var(--orange-deep)}.ov-art b.bad{color:#C0392B}
+  .ov-art small{display:block;color:var(--muted);font-size:10.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ov-lr .ov-art b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ov-abtn{flex:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:800;color:var(--ink);background:var(--paper)}
+  .ov-abtn:hover{text-decoration:none;border-color:var(--orange)}
+  .ov-av2{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:900;display:grid;place-items:center}
+  .ov-prog{flex:none;display:flex;gap:2px}
+  .ov-prog i{width:5px;height:5px;border-radius:50%;background:var(--line)}
+  .ov-prog i.on{background:var(--orange-deep)}.ov-prog i.bk{background:#C0392B}
+  .ov-mk{flex:none;width:34px;font-size:11px;font-weight:900;color:var(--ink)}
+  .ov-bar{flex:none;width:70px;height:6px;border-radius:99px;background:var(--wash-2);overflow:hidden;display:block}
+  .ov-bar i{display:block;height:100%;background:#2563EB;border-radius:99px}
+  .ov-av{flex:none;width:24px;text-align:right;font-size:11.5px;font-weight:900}
+  .ov-av.muted{color:var(--muted)}
+  .ov-sfoot{font-size:10.5px;color:var(--muted);font-weight:700;border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+  .ov-bot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+  .ov-bot.one{grid-template-columns:1fr}
+  .ov-lane{display:grid;grid-template-columns:110px 1fr 38px 44px;align-items:center;gap:8px;padding:4px 0;font-size:12px;font-weight:700;color:var(--ink-2)}
+  .ov-lane .ov-bar{width:auto}
+  .ov-lane .ov-bar i{background:var(--orange)}
+  .ov-lane b{text-align:right;color:var(--ink)}
+  .ov-lane small{color:var(--muted);font-size:10.5px;text-align:right}
+  .ov-ld{opacity:.7}
+  @container (max-width:640px){ .ov-hero{grid-template-columns:1fr} .ov-mid,.ov-bot{grid-template-columns:1fr} }
+  @container (max-width:560px){ .ov-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .ov-kv{flex-wrap:wrap} .ov-spk{order:3;width:100%;margin-left:0;height:20px} }
+  @media (max-width:760px){ .dz-head{flex-wrap:wrap} .dz-head-r{flex-wrap:wrap;justify-content:flex-start} .ov-kv b{font-size:26px} .ov-hl h4{font-size:18px} .ov-lane{grid-template-columns:90px 1fr 34px 40px} .dz-sect small{white-space:normal} }
+  :root[data-theme=dark] .ov-gsq i.d,:root[data-theme=dark] .ov-gleg i.d{background:#E6E8EB}
+  :root[data-theme=dark] .ov-gsq i.o,:root[data-theme=dark] .ov-gleg i.o{background:#4A5059}
+  :root[data-theme=dark] .ov-spk i{background:#4A5059}
+  :root[data-theme=dark] .ov-hero{background:#24282E;border:1px solid #343940}
+  :root[data-theme=dark] .ov-bar i{background:#4C82E0}
+  :root[data-theme=dark] .ov-bar{background:#343940}
+  :root[data-theme=dark] .ov-lane .ov-bar i{background:var(--orange)}
+  .ov-hero a.ov-hr,.ov-hero a.ov-btn,.ov-hero a.ov-hr:hover{color:#fff}
+  .ov-hero a.ov-btn.pri{color:#1C1F24}
+  .ov a.ov-abtn{color:var(--ink)}
+  /* the client copy the ⬇ PDF rasterises: forced light tokens whatever the AM's theme */
+  .ov-print{--ink:#333333;--ink-2:#5b6470;--muted:#8a94a0;--line:#E6E6E6;--paper:#ffffff;--wash:#F7F7F5;--wash-2:#F1F1EE;
+    --orange:#F5A623;--orange-deep:#ED6F0B;--shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);
+    background:#F7F7F5;color:#333;font-family:Lato,sans-serif;padding:36px 40px 26px;container-type:inline-size}
+  .ov-print .ov-gsq i.d,.ov-print .ov-gleg i.d{background:#2B2F36}.ov-print .ov-gsq i.o,.ov-print .ov-gleg i.o{background:#C9CED6}
+  .ov-print .ov-spk i{background:#D3D7DD}.ov-print .ov-spk i.last{background:#F5A623}.ov-print .ov-bar{background:#F1F1EE}.ov-print .ov-bar i{background:#2563EB}.ov-print .ov-lane .ov-bar i{background:#F5A623}
+  .ov-bot.one .ov-lane{grid-template-columns:170px 1fr 44px 50px}
+  .ov-print .ov-hero{background:#1C1F24;border:0}
+  .ovp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}
+  .ovp-head h2{margin:6px 0 2px;font-size:30px;font-weight:900;letter-spacing:-.02em;color:#333}
+  .ovp-sub{font-size:13px;font-weight:700;color:#5b6470}
+  .ovp-foot{display:flex;justify-content:space-between;margin-top:18px;padding-top:12px;border-top:1px solid #E6E6E6;font-size:11px;font-weight:700;color:#8a94a0}
   .dzp-load{font-size:12.5px;font-weight:700;color:var(--muted);padding:8px 2px}
   .dzp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
   .dzp-card{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
@@ -1142,6 +1276,7 @@ window.addEventListener('load',restore);
     portLoad(name,function(mkts){
       if(token!==PORTREQ||cur!==name)return;
       var h2=detail.querySelector('#dz-port'); if(h2)h2.innerHTML=portHtml(name,mkts);
+      ovFill(name,portModel(name,mkts));
     });
   }
   /* ===== BRAND ONE-PAGER (Ray, 16 Sep 2026) ==========================================
@@ -2563,6 +2698,300 @@ window.addEventListener('load',restore);
     if(PT[name]) return planScore(name,PT[name]);
     return '<div class="nextstep"><span class="ns-badge">New</span> No project plan linked yet — the score appears once this brand\u2019s plan is linked in the dossier (✎ Edit dossier → Link project plan) and synced.</div>';
   }
+  /* ===== BRAND OVERVIEW (Ray, 19 Oct 2026) ===============================================
+     "redesign the brand dossier into a better-looking, more visual, interactive overview for
+      clients, so it can be exported as a single PDF showing the current progress … rearrange
+      and elevate the information, creating a dynamic overview of clients."
+     The reference was a modern operations dashboard: a dark call-out card that says what to do
+     next, four KPI tiles each carrying its own small trend, one big grid where every square is a
+     unit of work, and a right-hand column of what needs attention and what is live right now.
+     Nothing here is a new number — every figure is read from the same stores the rest of the
+     dossier reads (PT plan record, /api/briefs, the guard alerts, the Feed Lab audits, the
+     Golden Record estate, the hours widget), so the overview and the detail can never disagree.
+     TWO VOICES from ONE builder: the AM's screen (next moves, links, hours, overdue) and the
+     client copy the ⬇ PDF renders (opSafe wording, no module names, no hours, no overdue list).
+     A reading that has not been taken prints "—" and says so; never an invented zero.
+     FCC-DZ-OVERVIEW */
+  var OV_STAGES=['intake','briefed','progress','done','running','analysis','confirmed'];
+  var OV_CSTAGE={intake:'Scheduled',briefed:'Scheduled',progress:'In progress',blocked:'In progress',
+    done:'Delivered',running:'Live test',analysis:'Reading results',confirmed:'Complete'};
+  var OV_MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function ovTasks(name){ var p=PT[name]; if(!p)return [];
+    var tasks=planItems(p), ov=shStatus();
+    tasks.forEach(function(t){ var v=ov[name+'|'+t.t]; if(v){t.s=v;t.b=bucketOf(v);} });
+    return tasks; }
+  // a mini vertical-bar trend, the KPI tile's own small chart; the LAST bar takes the accent
+  function ovSpark(vals,label){
+    var v=(vals||[]).filter(function(x){return typeof x==='number'&&isFinite(x);});
+    if(v.length<2) return '<span class="ov-spk none" aria-hidden="true"></span>';
+    var max=Math.max.apply(null,v)||1;
+    return '<span class="ov-spk" role="img" aria-label="'+esc(label||'trend')+'">'+v.map(function(x,i){
+      var h=Math.max(8,Math.round(x/max*100));
+      return '<i class="'+(i===v.length-1?'last':'')+'" style="height:'+h+'%"></i>'; }).join('')+'</span>';
+  }
+  function ovKpi(o){
+    return '<div class="ov-kpi"><div class="ov-ey">'+esc(o.ey)+'</div>'
+      +'<div class="ov-kv"><b>'+(o.v==null?'—':esc(o.v))+'</b>'+(o.u&&o.v!=null?'<span>'+esc(o.u)+'</span>':'')+ovSpark(o.spark,o.ey)+'</div>'
+      +'<div class="ov-kf"><i class="ov-dot '+(o.dot||'')+'"></i>'+o.foot+'</div></div>';
+  }
+  /* THE DELIVERY GRID — every square one plan task, one column per month, the reference's
+     coverage grid read as delivery. Done is solid, scheduled is grey, and an outstanding task
+     whose month has PASSED is amber ("carried over") — a section month gone by is a fact the
+     plan states; it is not called overdue, which needs the due column. A month with more tasks
+     than fit is drawn at N tasks a square and the legend says so. */
+  function ovGrid(p,client){
+    var v=(p&&p.vol)||[];
+    if(!v.length) return '<div class="ov-gempty">No dated plan sections yet — the grid fills once the project plan carries month sections.</div>';
+    var byMonth=p.volkind==='month';
+    var now=new Date(), nowL=OV_MO[now.getMonth()]+' '+String(now.getFullYear()).slice(2);
+    var nowIdx=-1; if(byMonth)v.forEach(function(x,i){ if(x.l===nowL)nowIdx=i; });
+    var past=function(l){ if(!byMonth)return false; var m=/^([A-Za-z]{3}) (\d{2})$/.exec(l||''); if(!m)return false;
+      var mo=OV_MO.indexOf(m[1]), y=2000+(+m[2]); return (y*12+mo)<(now.getFullYear()*12+now.getMonth()); };
+    var max=1; v.forEach(function(x){ if(x.d+x.o>max)max=x.d+x.o; });
+    var ROWS=Math.min(14,max), unit=Math.max(1,Math.ceil(max/ROWS)); ROWS=Math.ceil(max/unit);
+    var peak=v.reduce(function(a,x){ return (!a||x.d+x.o>a.d+a.o)?x:a; },null);
+    var cols=v.map(function(x,i){
+      var dN=Math.ceil(x.d/unit), oN=Math.ceil(x.o/unit), carried=past(x.l);
+      var sq='';
+      for(var k=0;k<ROWS;k++){
+        var cls='e', t='';
+        if(k<dN){ cls='d'; t=x.l+' · delivered · '+x.d+' task'+(x.d===1?'':'s'); }
+        else if(k<dN+oN){ cls=carried?'c':'o'; t=x.l+' · '+(carried?'carried over':'scheduled')+' · '+x.o+' task'+(x.o===1?'':'s'); }
+        sq='<i class="'+cls+'"'+(t?' data-t="'+esc(t)+'"':'')+'></i>'+sq;
+      }
+      return '<div class="ov-gc'+(i===nowIdx?' now':'')+'">'+(i===nowIdx?'<span class="ov-now">NOW</span>':'')
+        +'<div class="ov-gsq">'+sq+'</div><span class="ov-gl">'+esc(x.l)+'</span></div>'; }).join('');
+    var tot=v.reduce(function(s,x){return s+x.d+x.o;},0), dn=v.reduce(function(s,x){return s+x.d;},0);
+    return '<div class="ov-gwrap"><div class="ov-grid" style="--n:'+v.length+'">'+cols+'</div></div>'
+      +'<div class="ov-gleg"><span><i class="d"></i>Delivered</span><span><i class="o"></i>Scheduled</span>'
+      +(byMonth?'<span><i class="c"></i>Carried over</span>':'')
+      +'<span class="ov-gunit">each square = '+unit+' task'+(unit===1?'':'s')+'</span></div>'
+      +'<div class="ov-gfoot"><span class="ov-ey">PEAK <b>'+esc(peak.l)+'</b> · '+(peak.d+peak.o)+' tasks · '+dn+' of '+tot+' delivered in view</span>'
+      +(client?'':'<a class="ov-more" href="/workflow?client='+encodeURIComponent(p.__name||'')+'">Open Workflow ›</a>')+'</div>';
+  }
+  function ovProg(st){
+    var i=OV_STAGES.indexOf(st==='blocked'?'progress':st), out='';
+    for(var k=0;k<OV_STAGES.length;k++) out+='<i class="'+(k<=i?(st==='blocked'?'bk':'on'):'')+'"></i>';
+    return '<span class="ov-prog" title="'+(i<0?'Not yet briefed':'Stage '+(i+1)+' of '+OV_STAGES.length)+'">'+out+'</span>';
+  }
+  function ovInit(s){ s=String(s||'').trim(); if(!s)return '·';
+    var w=s.split(/[\s@._-]+/).filter(Boolean); return ((w[0]||'')[0]+((w[1]||'')[0]||'')).toUpperCase(); }
+  function ovHtml(name,M,client){
+    var p=PT[name]||null, b=B[name]||{};
+    if(p)p.__name=name;
+    var tasks=ovTasks(name), LW=liveWork(name,tasks);
+    var od=(p&&p.over)||0, pct=(p&&p.total)?Math.round(p.done/p.total*100):null;
+    var lanes=[], worst=null;
+    if(p)CORDER.forEach(function(c){ var cc=p.cats&&p.cats[c]; if(!cc||!cc.total)return;
+      var lp=Math.round(cc.done/cc.total*100); lanes.push({c:c,l:CLBL[c]||c,cl:OPCLBL[c]||CLBL[c]||c,done:cc.done,total:cc.total,pct:lp});
+      // account = QBRs and admin — never the lane a client is told is the next focus
+      if(c!=='account'&&cc.total>=2&&lp<100&&(!worst||lp<worst.pct))worst={l:CLBL[c]||c,cl:OPCLBL[c]||c,pct:lp,done:cc.done,total:cc.total}; });
+    var gr=grRows(name), grS=gr.filter(function(r){return r.score!=null;});
+    var grA=grAvg(gr,'score'), grQ=grAvg(gr,'q');
+    var audL=M?M.audL:[], audS=audL.filter(function(a){return a.score!=null;});
+    var satAvg=(M&&M.satL.length)?Math.round(M.satL.reduce(function(s,x){return s+x.pct;},0)/M.satL.length):null;
+    var avg=planAvg();
+    /* ---- hero ---- */
+    var heroL, heroH, heroS, heroGo=(!client&&M&&M.sug&&M.sug[0])||null;
+    var nar=[];
+    if(p)nar.push(fmtN(p.done)+' of '+fmtN(p.total)+' optimisation tasks delivered across '+lanes.length+' lane'+(lanes.length===1?'':'s'));
+    if(LW.tests.length)nar.push(LW.tests.length+' test'+(LW.tests.length===1?'':'s')+' live');
+    if(LW.flight.length)nar.push(LW.flight.length+' piece'+(LW.flight.length===1?'':'s')+' of work in flight');
+    if(grA!=null)nar.push('Golden Record '+grA+'/100');
+    heroS=nar.length?nar.join(' · ')+'.':'No project plan linked yet — link it in ✎ Edit dossier and the overview fills itself.';
+    if(client){
+      heroL='Programme overview · '+fmtDate(new Date());
+      heroH=pct!=null?(pct+'% of the feed programme delivered'+(worst?' — '+worst.cl.toLowerCase()+' is the next focus.':'.')):'Your feed programme, at a glance.';
+    }else{
+      heroL='Account status'+(M?' · '+M.bandL+' '+M.h+'/100':'');
+      var top=M&&M.sug&&M.sug[0];
+      heroH=top?top.t:(worst?worst.l+' is the lane to close — '+worst.done+' of '+worst.total+' done.':'Every optimisation lane is moving — keep the testing cadence going.');
+    }
+    var heroR;
+    if(client){
+      heroR='<div class="ov-ey ov-hey">Where the work is</div>'+(lanes.length?lanes.filter(function(l){return l.c!=='account';}).sort(function(a,b){return b.total-a.total;}).slice(0,5).map(function(l){
+        return '<div class="ov-hr"><span class="ov-hrt">'+esc(l.cl)+'<small>'+l.done+' of '+l.total+' delivered</small></span>'
+          +'<span class="ov-hrv">'+l.pct+'%</span></div>'; }).join(''):'<div class="ov-hr"><span class="ov-hrt">No plan lanes yet</span></div>');
+    }else{
+      var sg=(M&&M.sug)||[];
+      // the headline IS the first move, so the list carries the next ones rather than repeating it
+      var sgR=sg.slice(1,5);
+      heroR='<div class="ov-ey ov-hey">'+(sgR.length?'Then':'Suggested next moves')+'</div>'+(sgR.length?sgR.map(function(s){
+        return '<a class="ov-hr" href="'+esc(s.l)+'"><span class="ov-pri p'+s.p+'">P'+s.p+'</span><span class="ov-hrt">'+esc(s.t)+'<small>'+esc(s.ll)+'</small></span><span class="ov-arr">→</span></a>'; }).join('')
+        :(M?'<div class="ov-hr"><span class="ov-pri p3">✓</span><span class="ov-hrt">'+(sg.length?'That is the only open move — the rest of the board is clean.':'Nothing urgent — the board is clean.')+'</span></div>':'<div class="ov-hr ov-ld"><span class="ov-hrt">Reading the modules…</span></div>'));
+    }
+    var hero='<div class="ov-hero"><div class="ov-hl"><div class="ov-ey ov-hey">'+esc(heroL)+'</div>'
+      +'<h4>'+esc(heroH)+'</h4><p>'+esc(heroS)+'</p>'
+      +'<div class="ov-hst"><span><b>'+LW.tests.length+'</b>tests live</span><span><b>'+LW.flight.length+'</b>in flight</span>'
+        +'<span><b>'+(gr.length||audL.length||portMkts(name).length)+'</b>market'+((gr.length||audL.length||portMkts(name).length)===1?'':'s')+'</span>'
+        +(p?'<span><b>'+fmtN(p.done)+'</b>delivered</span>':'')+'</div>'
+      +(client?'':'<div class="ov-hb">'+(heroGo?'<a class="ov-btn pri" href="'+esc(heroGo.l)+'">Open '+esc(heroGo.ll)+'</a>':'')
+        +'<a class="ov-btn'+(heroGo?'':' pri')+'" href="/workflow?client='+encodeURIComponent(name)+'">Workflow</a>'
+        +'<a class="ov-btn" href="/golden?client='+encodeURIComponent(name)+'">Golden Record</a></div>')
+      +'</div><div class="ov-hrl">'+heroR+'</div></div>';
+    /* ---- KPI tiles ---- */
+    var vs=(p&&avg)?((p.score>=avg?'▲ ':'▼ ')+Math.abs(p.score-avg)+' vs portfolio average'):'scored from the project plan';
+    var k1=ovKpi({ey:'Feed optimisation',v:p?p.score:null,u:'/100',spark:lanes.map(function(l){return l.pct;}),
+      dot:p?(p.score>=66?'g':p.score>=40?'a':'r'):'',foot:p?(client?'completion across every optimisation lane':esc(vs)):'no project plan linked'});
+    var vd=(p&&p.vol)||[];
+    var k2=ovKpi({ey:'Delivered',v:pct,u:'%',spark:vd.map(function(x){return x.d;}),dot:pct==null?'':(pct>=80?'g':pct>=50?'a':'r'),
+      foot:p?(fmtN(p.done)+' of '+fmtN(p.total)+' tasks'+(M&&M.done1?' · '+fmtN(M.done1)+' in the last 30 days':'')):'no plan record'});
+    var k3=ovKpi({ey:'Golden Record',v:grA,u:'/100',spark:grS.map(function(r){return r.score;}),dot:grA==null?'':({good:'g',mid:'y',warn:'a',bad:'r'})[grBand(grA)]||'',
+      foot:grA==null?'not scanned yet':((grQ!=null?'content quality '+grQ+' · ':'')+grS.length+' of '+gr.length+' market'+(gr.length===1?'':'s')+' scanned')});
+    var k4=ovKpi({ey:'AI readiness',v:M?M.avgA:null,u:'/100',spark:audS.map(function(a){return a.score;}),
+      dot:(M&&M.avgA!=null)?(M.avgA>=80?'g':M.avgA>=60?'a':'r'):'',
+      foot:!M?'reading the feed audits…':(audL.length?(audS.length+' of '+audL.length+' market'+(audL.length===1?'':'s')+' read'+(satAvg!=null?' · '+satAvg+'% keyworded':'')):'no feed markets wired')});
+    var kpis='<div class="ov-kpis">'+k1+k2+k3+k4+'</div>';
+    /* ---- the grid ---- */
+    var grid='<div class="ov-card ov-gcard"><div class="ov-ch"><div><div class="ov-ey">Delivery by month</div>'
+      +'<h5>Every square is one plan task</h5></div>'
+      +(p?'<span class="ov-chip">'+fmtN(p.total)+' tracked</span>':'')+'</div>'+ovGrid(p,client)+'<div class="ov-tip" hidden></div></div>';
+    /* ---- side column ---- */
+    var side='';
+    if(client){
+      var mrows=(gr.length?gr:audL.map(function(a){return {m:a.m,score:null,q:null};})).slice(0,8).map(function(r){
+        var a=null; audL.forEach(function(x){ if(x.m===r.m)a=x.score; });
+        var gb=grBand(r.score);
+        return '<div class="ov-ar"><span class="ov-mk">'+esc(String(r.m).toUpperCase())+'</span>'
+          +'<span class="ov-art">'+(r.score!=null?'<b class="'+gb+'">'+r.score+'</b> record':'not scanned')+(r.q!=null?' · <b class="'+grBand(r.q)+'">'+r.q+'</b> content':'')+'</span>'
+          +(a!=null?'<span class="ov-bar"><i style="width:'+a+'%"></i></span><span class="ov-av">'+a+'</span>':'<span class="ov-av muted">—</span>')+'</div>'; }).join('');
+      side+='<div class="ov-card"><div class="ov-ch"><div><div class="ov-ey">Feed health</div><h5>By market</h5></div></div>'
+        +(mrows||'<div class="ov-none">No market scanned yet.</div>')
+        +'<div class="ov-sfoot">record = attribute completeness · bar = AI readiness, out of 100</div></div>';
+    }else{
+      var att=[], C=encodeURIComponent(name);
+      if(od)att.push({ic:'⏰',t:od+' overdue task'+(od===1?'':'s'),s:'past due and not done — chase or reschedule',a:'Chase',l:'/workflow?client='+C+'&f=overdue',sev:'r'});
+      if(M&&M.crit)att.push({ic:'⚠',t:M.crit+' critical guard alert'+(M.crit===1?'':'s'),s:'PMAX listing groups key on these values',a:'Review',l:'/labels?client='+C,sev:'r'});
+      else if(M&&M.warn)att.push({ic:'⚠',t:M.warn+' guard warning'+(M.warn===1?'':'s'),s:'review before they turn critical',a:'Review',l:'/labels?client='+C,sev:'a'});
+      var W=window.FCCHours, hr=W&&W.rec?W.rec(name):null, hst=hr&&hr.rec?W.state(hr.rec):'none';
+      if(hst==='over'||hst==='held'||hst==='tight'){ var HS=HRS_ST[hst]||{};
+        att.push({ic:'⏱',t:'Retainer '+(HS.l||hst).toLowerCase(),s:hrsN(hr.rec.balance)+'h balance · '+hrsN(hr.rec.used)+'h used of '+hrsN(hr.rec.allowance)+'h',a:'Hours',l:'/tasks?q='+encodeURIComponent('client:'+name),sev:hst==='tight'?'a':'r'}); }
+      var reqN=gr.reduce(function(s,r){return s+(r.req||0);},0);
+      if(reqN)att.push({ic:'◎',t:reqN+' required attribute'+(reqN===1?'':'s')+' missing',s:'Golden Record — products risk disapproval',a:'Fix',l:'/golden?client='+C,sev:'r'});
+      var uns=audL.filter(function(a){return a.score==null;}).length;
+      if(uns)att.push({ic:'⚡',t:uns+' market'+(uns===1?'':'s')+' never scanned',s:'run Feed Lab once for a baseline',a:'Scan',l:'/feedlab?client='+C,sev:'a'});
+      side+='<div class="ov-card"><div class="ov-ch"><div><div class="ov-ey">Needs attention</div><h5>'+(att.length?'Act on these':'Nothing needs you')+'</h5></div>'
+        +'<span class="ov-cnt'+(att.length?'':' z')+'">'+att.length+'</span></div>'
+        +(att.length?att.map(function(x){ return '<div class="ov-ar"><span class="ov-aic '+x.sev+'">'+x.ic+'</span><span class="ov-art"><b>'+esc(x.t)+'</b><small>'+esc(x.s)+'</small></span>'
+          +'<a class="ov-abtn" href="'+esc(x.l)+'">'+esc(x.a)+'</a></div>'; }).join('')
+          :'<div class="ov-none">'+(M?'Clean board — no overdue tasks, alerts or gaps.':'Reading the modules…')+'</div>')+'</div>';
+    }
+    var live=LW.items.slice(0,5);
+    side+='<div class="ov-card"><div class="ov-ch"><div><div class="ov-ey">Live work</div><h5>'+(LW.tests.length?LW.tests.length+' test'+(LW.tests.length===1?'':'s')+' running':'In the pipeline')+'</h5></div>'
+      +'<span class="ov-cnt z">'+LW.items.length+'</span></div>'
+      +(live.length?live.map(function(r){
+        var lbl=client?(OV_CSTAGE[r.st]||opSafe(r.lbl)):r.lbl;
+        return '<div class="ov-lr"><span class="ov-av2" style="background:'+r.col+'">'+esc(client?(WF_TEST[r.st]?'▶':'•'):ovInit(r.by||r.lbl))+'</span>'
+          +'<span class="ov-art"><b>'+esc(client?opSafe(r.t):r.t)+'</b><small>'+esc(lbl)+(!client&&r.court?' · ball with '+r.court:'')+'</small></span>'
+          +ovProg(r.st)+'</div>'; }).join('')
+        :'<div class="ov-none">Nothing live right now.</div>')
+      +(LW.items.length>live.length?'<div class="ov-sfoot">+'+(LW.items.length-live.length)+' more in '+(client?'the pipeline':'Workflow')+'</div>':'')+'</div>';
+    var mid='<div class="ov-mid">'+grid+'<div class="ov-side">'+side+'</div></div>';
+    /* ---- lanes + markets ---- */
+    var lanesH='<div class="ov-card"><div class="ov-ch"><div><div class="ov-ey">Optimisation lanes</div><h5>Share of each lane delivered</h5></div></div>'
+      +(lanes.length?lanes.map(function(l){ return '<div class="ov-lane"><span>'+esc(client?l.cl:l.l)+'</span><span class="ov-bar"><i style="width:'+l.pct+'%"></i></span><b>'+l.pct+'%</b><small>'+l.done+'/'+l.total+'</small></div>'; }).join('')
+        :'<div class="ov-none">No project plan linked yet.</div>')
+      +(p?'<div class="ov-sfoot">'+fmtN(p.total)+' tasks · '+fmtN(p.done)+' done · '+fmtN(p.open)+' open'+(p.hold?' · '+p.hold+' parked':'')+(p.updated?' · plan '+esc(p.updated):'')+'</div>':'')+'</div>';
+    var mk2='';
+    if(!client){
+      var rows2=(gr.length?gr:audL.map(function(a){return {m:a.m,score:null,q:null};})).slice(0,8);
+      mk2='<div class="ov-card"><div class="ov-ch"><div><div class="ov-ey">Markets</div><h5>Record · content · AI readiness</h5></div>'
+        +(gr.length>8?'<span class="ov-chip">+'+(gr.length-8)+' more</span>':'')+'</div>'
+        +(rows2.length?rows2.map(function(r){ var a=null; audL.forEach(function(x){ if(x.m===r.m)a=x.score; });
+          return '<div class="ov-ar"><span class="ov-mk">'+esc(String(r.m).toUpperCase())+'</span>'
+            +'<span class="ov-art">'+(r.score!=null?'<b class="'+grBand(r.score)+'">'+r.score+'</b> record':'not scanned')+(r.q!=null?' · <b class="'+grBand(r.q)+'">'+r.q+'</b> content':'')+'</span>'
+            +(a!=null?'<span class="ov-bar"><i style="width:'+a+'%"></i></span><span class="ov-av">'+a+'</span>':'<span class="ov-av muted">—</span>')+'</div>'; }).join('')
+          :'<div class="ov-none">No feed markets wired.</div>')+'</div>';
+    }
+    var bot='<div class="ov-bot'+(client?' one':'')+'">'+lanesH+mk2+'</div>';
+    return '<div class="ov" data-no-collapse>'+hero+kpis+mid+bot+'</div>';
+  }
+  function fmtDate(d){ return d.getDate()+' '+OV_MO[d.getMonth()]+' '+d.getFullYear(); }
+  function ovFill(name,M){ var h=detail.querySelector('#dz-ov'); if(h&&cur===name)h.innerHTML=ovHtml(name,M||null,false); }
+  // the grid's hover card — one delegated handler, never a listener per square
+  function ovTip(e){
+    var sq=e.target&&e.target.closest?e.target.closest('.ov-gsq i[data-t]'):null;
+    var card=e.target&&e.target.closest?e.target.closest('.ov-gcard'):null, tip=card&&card.querySelector('.ov-tip');
+    document.querySelectorAll('.ov-tip').forEach(function(t){ if(t!==tip)t.hidden=true; });
+    if(!tip)return;
+    if(!sq){ tip.hidden=true; return; }
+    var r=card.getBoundingClientRect(), s=sq.getBoundingClientRect();
+    tip.textContent=sq.getAttribute('data-t'); tip.hidden=false;
+    var x=s.left-r.left+s.width/2, w=tip.offsetWidth;
+    tip.style.left=Math.max(4,Math.min(r.width-w-4,x-w/2))+'px'; tip.style.top=(s.top-r.top-tip.offsetHeight-6)+'px';
+  }
+  detail.addEventListener('mouseover',ovTip);
+  detail.addEventListener('mouseleave',function(){ document.querySelectorAll('.ov-tip').forEach(function(t){t.hidden=true;}); });
+  /* ---- the dossier's own sections fold (the standing rule): the overview opens, the working
+     detail starts folded on a fresh device, the choice is this device's, exports print open ---- */
+  var DZFOLD={}; try{ DZFOLD=JSON.parse(localStorage.getItem('fcc-dz-fold')||'{}')||{}; }catch(e){}
+  var DZFOLD_DEF={ov:true,detail:false};
+  function dzOpen(k){ return DZFOLD[k]!=null?!!DZFOLD[k]:!!DZFOLD_DEF[k]; }
+  function dzSec(k,title,line,body){
+    var o=dzOpen(k);
+    return '<div class="dz-sec'+(o?'':' folded')+'" data-sec="'+k+'"><button type="button" class="dz-sech" aria-expanded="'+o+'">'
+      +'<span class="dz-sect"><b>'+esc(title)+'</b><small>'+esc(line)+'</small></span><span class="dz-chev" aria-hidden="true">▾</span></button>'
+      +'<div class="dz-secb">'+body+'</div></div>';
+  }
+  function dzSet(sec,o){ sec.classList.toggle('folded',!o); var h=sec.querySelector('.dz-sech'); if(h)h.setAttribute('aria-expanded',String(o));
+    DZFOLD[sec.getAttribute('data-sec')]=o; try{ localStorage.setItem('fcc-dz-fold',JSON.stringify(DZFOLD)); }catch(e){} }
+  detail.addEventListener('click',function(e){
+    var h=e.target&&e.target.closest?e.target.closest('.dz-sech'):null;
+    if(h){ var s=h.parentNode; dzSet(s,s.classList.contains('folded')); return; }
+    var all=e.target&&e.target.closest?e.target.closest('.dz-foldall'):null;
+    if(all){ var open=all.getAttribute('data-o')==='1';
+      detail.querySelectorAll('.dz-sec').forEach(function(s){ dzSet(s,open); }); dzFoldBtn(); }
+  });
+  function dzFoldBtn(){ var b=detail.querySelector('.dz-foldall'); if(!b)return;
+    var anyShut=!!detail.querySelector('.dz-sec.folded');
+    b.setAttribute('data-o',anyShut?'1':'0'); b.textContent=anyShut?'⊕ Open all':'⊖ Fold all'; }
+  /* ---- ⬇ PDF: the CLIENT copy of the overview, one continuous sheet, no dialog ---- */
+  function ovLib(src,ok,sri){ return new Promise(function(res,rej){ if(ok())return res();
+    var el=document.createElement('script'); el.src=src; if(sri){el.integrity=sri; el.crossOrigin='anonymous';}
+    el.onload=function(){ ok()?res():rej(new Error('lib')); }; el.onerror=function(){ rej(new Error('lib')); }; document.head.appendChild(el); }); }
+  function ovDoc(name,M){
+    var b=B[name]||{}, mk=portMkts(name);
+    return '<div class="ovp-head"><div><div class="ov-ey">FeedSpark · client overview</div><h2>'+esc(name)+'</h2>'
+      +'<div class="ovp-sub">'+esc([b.cat,b.mk||(mk.length?mk.map(function(m){return m.toUpperCase();}).join(' · '):'')].filter(Boolean).join(' · '))+'</div></div>'
+      +'<span class="ov-chip">As of '+fmtDate(new Date())+'</span></div>'
+      +ovHtml(name,M,true)
+      +'<div class="ovp-foot"><span>FeedSpark · Private &amp; Confidential</span><span>1</span></div>';
+  }
+  function ovPdf(name){
+    var btn=detail.querySelector('.dz-pdfb'); if(btn){ btn.disabled=true; btn.textContent='Preparing…'; }
+    function done(){ if(btn){ btn.disabled=false; btn.textContent='⬇ PDF'; } }
+    portLoad(name,function(mkts){
+      var M=portModel(name,mkts), W=1120;
+      var host=document.createElement('div'); host.className='ov-print'; host.id='ov-print';
+      host.style.cssText='position:fixed;left:-12000px;top:0;width:'+W+'px';
+      host.innerHTML=ovDoc(name,M); document.body.appendChild(host);
+      var file=name.replace(/[^A-Za-z0-9]+/g,'_')+'_FeedSpark_Overview_'+new Date().toISOString().slice(0,10)+'.pdf';
+      var fonts=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+      Promise.all([fonts,
+        ovLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',function(){return !!window.html2canvas;},'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='),
+        ovLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF);},'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==')])
+      .then(function(){ return window.html2canvas(host,{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:W,width:W}); })
+      .then(function(cv){
+        var PW=297, PH=Math.round(PW*cv.height/cv.width*100)/100;
+        var pdf=new window.jspdf.jsPDF({orientation:PH>PW?'portrait':'landscape',unit:'mm',format:[PW,PH]});
+        pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,PW,PH);
+        pdf.save(file);
+      })
+      .catch(function(){ ovPrint(host.innerHTML,name); })
+      .then(function(){ host.remove(); done(); });
+    });
+  }
+  // the fallback when the CDN cannot be reached: the same document in its own window, printed
+  function ovPrint(html,name){
+    var css=Array.prototype.map.call(document.querySelectorAll('style'),function(s){return s.textContent;}).join('\n');
+    var w=window.open('','_blank'); if(!w)return;
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(name)+' — FeedSpark overview<\/title>'
+      +'<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet"><style>'+css+'<\/style><\/head>'
+      +'<body style="margin:0;background:#fff"><div class="ov-print" style="width:1120px;margin:0 auto">'+html+'</div>'
+      +'<script>setTimeout(function(){print()},600)<\/script><\/body><\/html>');
+    w.document.close();
+  }
+  window.__fccOverview={html:ovHtml,doc:ovDoc,grid:ovGrid,spark:ovSpark};
   function render(name){
     cur=name; var b=B[name]||{}, p=PT[name];
     var tasks = p ? planItems(p) : [];
@@ -2597,9 +3026,11 @@ window.addEventListener('load',restore);
       :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3 data-hrs="'+esc(name)+'">'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
-      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the one-pager as a presentation — the same document, the same figures, paced for a client call">🎬 Present</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
-      +scorePanel(name)
-      +portShell()
+      +'<div class="dz-head-r"><span class="ov-chip dz-asof" title="The overview reads every module live — this is when">As of '+fmtDate(new Date())+'</span><button class="lnk dz-pdfb" type="button" title="Download the client copy of this overview as ONE PDF page — progress, delivery, live work and feed health in client words, no internal notes">⬇ PDF</button><button class="lnk dz-showb" type="button" title="Play the one-pager as a presentation — the same document, the same figures, paced for a client call">🎬 Present</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
+      +'<div class="dz-foldbar"><button type="button" class="dz-foldall" data-o="1">⊕ Open all</button></div>'
+      +dzSec('ov','Overview','progress, delivery, what needs attention and what is live — the page the ⬇ PDF prints','<div id="dz-ov">'+ovHtml(name,null,false)+'</div>')
+      +dzSec('detail','Working detail','activity · health · hours · AI readiness · Golden Record · live list · materials',
+      portShell()
       +'<div class="dz-metrics"><span class="chip"><b>'+(p?p.open:tasks.length)+'</b> active</span>'
         +(p?'<span class="chip done"><b>'+p.done+'</b> done</span>':'')
         +(od?'<span class="chip od-badge danger" title="Past due and not Done — the Workflow board\u2019s overdue rule"><b>'+od+'</b> overdue</span>':'')
@@ -2607,7 +3038,7 @@ window.addEventListener('load',restore);
       +testsHtml
       +'<div class="dz-mat" id="dz-mat"></div>'
       +'<div class="dz-mat" id="dz-kwr"></div>'
-      +'<div class="dz-mat" id="dz-ab"></div>'
+      +'<div class="dz-mat" id="dz-ab"></div>')
       +'<div class="dz-foot">'+planCtl+deckCtl+feedCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     loadMats(name);
@@ -2616,6 +3047,9 @@ window.addEventListener('load',restore);
     portFill(name);
     var opb=detail.querySelector('.dz-opb');
     if(opb)opb.onclick=function(){ openOnePager(name); };
+    var pdb=detail.querySelector('.dz-pdfb');
+    if(pdb)pdb.onclick=function(){ ovPdf(name); };
+    dzFoldBtn();
     var shb=detail.querySelector('.dz-showb');
     if(shb)shb.onclick=function(){ showOpen(name); };
     if(editMode){

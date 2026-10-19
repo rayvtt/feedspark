@@ -421,6 +421,23 @@ approval is not a gate; the only reason to hold a merge is 🔥 overlap sequenci
 After merge: verify LIVE per the rule above, then restart the branch from latest main.
 Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
+### Brand dossier — the client overview (Oct 2026)
+Ray, 19 Oct 2026: "redesign the brand dossier into a better-looking, more visual, interactive overview
+for clients, so it can be exported as a single PDF showing the current progress" (reference: a modern
+ops dashboard — dark call-out, KPI tiles with their own trend, one big grid, an attention column). Each
+dossier card now opens on **Overview** (`#dz-ov`, `ovHtml(name,M,client)`, marker FCC-DZ-OVERVIEW): a
+dark hero (the top suggested move as the headline + the next ones, or for the client "N% of the feed
+programme delivered — <lane> is the next focus"), four KPI tiles with mini bar trends (feed-optimisation
+score, delivered %, Golden Record, AI readiness), the **delivery grid** (every square one plan task, one
+column per plan month, delivered / scheduled / carried over, NOW column, hover card), **Needs attention**
+(overdue, guard alerts, retainer tight/negative, required gaps, unscanned markets — each with its action)
++ **Live work** (liveWork tickets with 7-dot stage progress), optimisation lanes + markets. Every figure
+comes from the stores the band already reads; `portFill` refills it. The old score panel is gone; the
+portfolio band, chips, live list and materials sit under **Working detail**, folded on a fresh device
+(`fcc-dz-fold`, ⊕ Open all / ⊖ Fold all). **⬇ PDF** = the CLIENT copy (`ovDoc`: opSafe wording, no
+module names, links, hours, overdue or staff) rasterised with html2canvas + jsPDF (SRI, cdnjs) to ONE
+continuous sheet, print-window fallback without the CDN. Harness `tools/check_dzoverview.js` (presync).
+
 ### Brand dossier — portfolio band (Aug 2026)
 Each dossier card opens with an async **portfolio band** (`dz-port`, filled by `portFill`):
 **Activity** (PLANTASKS record — total/open/done-30d/overdue + briefs in flight from `/api/briefs`
