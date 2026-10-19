@@ -1,0 +1,3946 @@
+{
+ "source": "FeedHero XML — Hobbycraft GB Google Shopping output feed (the feed wired in DEFAULT_FEEDS)",
+ "read_on": "2026-10-19",
+ "note": "Primary g:product_type only — the FIRST value on each item. The repeated g:product_type values that follow it are the numbered keyword slots and are counted separately (keyword_saturation below), never as category paths; a slot is counted as a keyword only through labelguard.js kwValueKind, so the 32-character hex id FeedHero writes into slot 2 is never read as one. \"products\" counts distinct g:item_group_id; \"skus\" counts feed rows. This census is deliberately INDEPENDENT of the KWCal seed: the harness builds its index from the seed’s own paths and checks each one resolves here, so a mis-spelled path matches nothing real rather than matching itself.",
+ "totals": {
+  "products": 17509,
+  "skus": 25483,
+  "product_type_paths": 786
+ },
+ "keyword_saturation": {
+  "skus_carrying_at_least_one_keyword_slot": 12660,
+  "skus_carrying_none": 12823
+ },
+ "product_types": {
+  "3a0bd74e064b090e39c27c0b5d0cd19a": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Acrylic Pouring": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Acrylic Pouring > Accessories": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Acrylic Pouring > Acrylic Pouring Sets": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Art Kits": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Art Storage": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Art Storage > Caddies & Boxes": {
+   "products": 18,
+   "skus": 23,
+   "unkeyworded": 6
+  },
+  "Art Supplies > Art Storage > Carry Cases & Portfolios": {
+   "products": 37,
+   "skus": 41,
+   "unkeyworded": 23
+  },
+  "Art Supplies > Artist Paint > Acrylic": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Artist Paint > Acrylic > Acrylic Paint": {
+   "products": 90,
+   "skus": 438,
+   "unkeyworded": 165
+  },
+  "Art Supplies > Artist Paint > Acrylic > Acrylic Paint Pens": {
+   "products": 33,
+   "skus": 76,
+   "unkeyworded": 45
+  },
+  "Art Supplies > Artist Paint > Acrylic > Acrylic Paint Sets": {
+   "products": 19,
+   "skus": 23,
+   "unkeyworded": 18
+  },
+  "Art Supplies > Artist Paint > Airbrushing": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Artist Paint > Oil > Oil Paint": {
+   "products": 15,
+   "skus": 89,
+   "unkeyworded": 19
+  },
+  "Art Supplies > Artist Paint > Oil > Oil Paint Sets": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Art Supplies > Artist Paint > Spray Paint": {
+   "products": 2,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Artist Paint > Spray Paint > Enamel Spray Paint": {
+   "products": 35,
+   "skus": 38,
+   "unkeyworded": 32
+  },
+  "Art Supplies > Artist Paint > Spray Paint > Gloss Spray Paint": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Artist Paint > Spray Paint > Sealers & Primers": {
+   "products": 11,
+   "skus": 13,
+   "unkeyworded": 8
+  },
+  "Art Supplies > Artist Paint > Watercolour": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Artist Paint > Watercolour > Gouache": {
+   "products": 12,
+   "skus": 27,
+   "unkeyworded": 12
+  },
+  "Art Supplies > Artist Paint > Watercolour > Watercolour Paint": {
+   "products": 43,
+   "skus": 241,
+   "unkeyworded": 38
+  },
+  "Art Supplies > Artist Paint > Watercolour > Watercolour Sets": {
+   "products": 14,
+   "skus": 19,
+   "unkeyworded": 19
+  },
+  "Art Supplies > Artist Paintbrushes": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Artist Paintbrushes > Acrylic Paintbrushes": {
+   "products": 123,
+   "skus": 123,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Artist Paintbrushes > Oil Paintbrushes": {
+   "products": 57,
+   "skus": 57,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Artist Paintbrushes > Paintbrush Sets": {
+   "products": 43,
+   "skus": 47,
+   "unkeyworded": 6
+  },
+  "Art Supplies > Artist Paintbrushes > Watercolour Paintbrushes": {
+   "products": 56,
+   "skus": 56,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Canvas": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Canvas > Box Canvas": {
+   "products": 43,
+   "skus": 43,
+   "unkeyworded": 30
+  },
+  "Art Supplies > Canvas > Canvas Panels": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 9
+  },
+  "Art Supplies > Canvas > Stretched Canvas": {
+   "products": 63,
+   "skus": 67,
+   "unkeyworded": 43
+  },
+  "Art Supplies > Drawing": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Drawing > Charcoal": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Drawing > Drawing Accessories": {
+   "products": 38,
+   "skus": 38,
+   "unkeyworded": 20
+  },
+  "Art Supplies > Drawing > Drawing Ink": {
+   "products": 8,
+   "skus": 76,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Drawing > Drawing Pencils > Colouring Pencils": {
+   "products": 40,
+   "skus": 50,
+   "unkeyworded": 25
+  },
+  "Art Supplies > Drawing > Drawing Pencils > Graphite Pencils": {
+   "products": 35,
+   "skus": 35,
+   "unkeyworded": 8
+  },
+  "Art Supplies > Drawing > Drawing Pencils > Mechanical Pencils": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Drawing > Drawing Pencils > Watercolour Pencils": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Drawing > Drawing Pens": {
+   "products": 21,
+   "skus": 25,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Drawing > Drawing Pens > Brush Pens": {
+   "products": 13,
+   "skus": 15,
+   "unkeyworded": 7
+  },
+  "Art Supplies > Drawing > Drawing Pens > Calligraphy Pens": {
+   "products": 17,
+   "skus": 18,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Drawing > Drawing Pens > Chalk Pens": {
+   "products": 7,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Drawing > Drawing Pens > Fine Liner Pens": {
+   "products": 31,
+   "skus": 33,
+   "unkeyworded": 21
+  },
+  "Art Supplies > Drawing > Drawing Pens > Gel Pens": {
+   "products": 9,
+   "skus": 11,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Drawing > Drawing Pens > Graphic Marker Pens": {
+   "products": 13,
+   "skus": 31,
+   "unkeyworded": 20
+  },
+  "Art Supplies > Drawing > Drawing Pens > Marker Pens": {
+   "products": 8,
+   "skus": 11,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Drawing > Drawing Pens > Metallic Pens": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Drawing > Drawing Pens > Pen Sets": {
+   "products": 11,
+   "skus": 16,
+   "unkeyworded": 13
+  },
+  "Art Supplies > Drawing > Pastels": {
+   "products": 15,
+   "skus": 16,
+   "unkeyworded": 8
+  },
+  "Art Supplies > Easels & Desks": {
+   "products": 22,
+   "skus": 24,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Easels & Desks > Floor Easels": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Featured in Art Supplies > Art Kits": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Art Supplies > Painting Accessories": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 10
+  },
+  "Art Supplies > Painting Accessories > Paintbrush Pots & Stands": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Painting Accessories > Painting Mediums": {
+   "products": 61,
+   "skus": 67,
+   "unkeyworded": 6
+  },
+  "Art Supplies > Painting Accessories > Painting Mediums > Acrylic Mediums": {
+   "products": 14,
+   "skus": 20,
+   "unkeyworded": 13
+  },
+  "Art Supplies > Painting Accessories > Painting Mediums > Oil Mediums": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Art Supplies > Painting Accessories > Painting Mediums > Watercolour Mediums": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Painting Accessories > Palette Knives": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 9
+  },
+  "Art Supplies > Painting Accessories > Palettes": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Painting Accessories > Sponges": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 8
+  },
+  "Art Supplies > Printmaking": {
+   "products": 46,
+   "skus": 80,
+   "unkeyworded": 43
+  },
+  "Art Supplies > Printmaking > Lino Printing": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Printmaking > Lino Printing > Lino Printing Accessories": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 5
+  },
+  "Art Supplies > Printmaking > Lino Printing > Lino Printing Ink": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Printmaking > Screen Printing": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Printmaking > Screen Printing > Screen Printing Ink": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Sketchbooks & Pads": {
+   "products": 54,
+   "skus": 59,
+   "unkeyworded": 24
+  },
+  "Art Supplies > Sketchbooks & Pads > Acrylic Paper & Pads": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Sketchbooks & Pads > By Size > A3": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Sketchbooks & Pads > By Size > A4": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Art Supplies > Sketchbooks & Pads > Cartridge Paper & Pads": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Art Supplies > Sketchbooks & Pads > Mixed Media Paper & Pads": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 11
+  },
+  "Art Supplies > Sketchbooks & Pads > Sketchbooks": {
+   "products": 70,
+   "skus": 71,
+   "unkeyworded": 32
+  },
+  "Art Supplies > Sketchbooks & Pads > Tracing Paper & Pads": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Art Supplies > Sketchbooks & Pads > Watercolour Paper & Pads": {
+   "products": 73,
+   "skus": 74,
+   "unkeyworded": 31
+  },
+  "Baking & Kitchen > Baking > Baking Ingredients": {
+   "products": 49,
+   "skus": 55,
+   "unkeyworded": 14
+  },
+  "Baking & Kitchen > Baking > Baking Ingredients > Flavouring & Extracts": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Baking & Kitchen > Baking > Baking Kits": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Baking > Baking Tins & Trays": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Baking > Baking Tins & Trays > Baking Trays": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Baking > Baking Tins & Trays > Novelty Tins": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 4
+  },
+  "Baking & Kitchen > Baking > Baking Tins & Trays > Round Tins": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 3
+  },
+  "Baking & Kitchen > Baking > Baking Tins & Trays > Square & Rectangle Tins": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 4
+  },
+  "Baking & Kitchen > Baking > Cookie Cutters": {
+   "products": 16,
+   "skus": 21,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Baking > Cupcake & Muffin Cases": {
+   "products": 20,
+   "skus": 33,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Baking > Kitchenware & Utensils": {
+   "products": 59,
+   "skus": 60,
+   "unkeyworded": 43
+  },
+  "Baking & Kitchen > Cake Decorating": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Cake Decorating > Cake Candles": {
+   "products": 40,
+   "skus": 61,
+   "unkeyworded": 4
+  },
+  "Baking & Kitchen > Cake Decorating > Cake Toppers": {
+   "products": 39,
+   "skus": 45,
+   "unkeyworded": 8
+  },
+  "Baking & Kitchen > Cake Decorating > Cake Toppers > Birthday Cake Toppers": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 5
+  },
+  "Baking & Kitchen > Cake Decorating > Cake Toppers > Flower Cake Toppers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Cake Decorating > Cake Toppers > Wedding Cake Toppers": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Baking & Kitchen > Cake Decorating > Decorating Tools": {
+   "products": 65,
+   "skus": 67,
+   "unkeyworded": 10
+  },
+  "Baking & Kitchen > Cake Decorating > Edible Glitter & Sprinkles": {
+   "products": 56,
+   "skus": 89,
+   "unkeyworded": 47
+  },
+  "Baking & Kitchen > Cake Decorating > Food Colouring": {
+   "products": 7,
+   "skus": 74,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Cake Decorating > Icing": {
+   "products": 37,
+   "skus": 71,
+   "unkeyworded": 13
+  },
+  "Baking & Kitchen > Cake Decorating > Icing > Buttercream & Frosting": {
+   "products": 3,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Cake Decorating > Icing > Fondant Icing": {
+   "products": 9,
+   "skus": 39,
+   "unkeyworded": 12
+  },
+  "Baking & Kitchen > Cake Decorating > Icing Pens & Food Paint": {
+   "products": 11,
+   "skus": 29,
+   "unkeyworded": 2
+  },
+  "Baking & Kitchen > Cake Decorating > Piping Bags & Nozzles": {
+   "products": 54,
+   "skus": 54,
+   "unkeyworded": 4
+  },
+  "Baking & Kitchen > Cake Presentation & Storage > Cake Boards": {
+   "products": 29,
+   "skus": 57,
+   "unkeyworded": 19
+  },
+  "Baking & Kitchen > Cake Presentation & Storage > Cake Boxes": {
+   "products": 26,
+   "skus": 28,
+   "unkeyworded": 11
+  },
+  "Baking & Kitchen > Cake Presentation & Storage > Cake Stands": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Chocolate & Candy Making > Candy Melts": {
+   "products": 6,
+   "skus": 15,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Chocolate & Candy Making > Chocolate & Candy Making Tools": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 1
+  },
+  "Baking & Kitchen > Chocolate & Candy Making > Sweet Bags & Wrappers": {
+   "products": 16,
+   "skus": 24,
+   "unkeyworded": 9
+  },
+  "Baking & Kitchen > Chocolate & Candy Making > Sweet Moulds": {
+   "products": 24,
+   "skus": 24,
+   "unkeyworded": 4
+  },
+  "Baking & Kitchen > Kids Baking": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Preserve & Jam Making": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 2
+  },
+  "Baking & Kitchen > Preserve & Jam Making > Glass Jars": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Baking & Kitchen > Preserve & Jam Making > Jar Toppers, Labels & Gift Tags": {
+   "products": 6,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Brand > Celebrate": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Brand > Faber-Castell": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Brand > PME Arts & Crafts": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Brand > Renshaw": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Brand > We R Makers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Christmas > Advent Calendars": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 14
+  },
+  "Christmas > Christmas Baking": {
+   "products": 19,
+   "skus": 20,
+   "unkeyworded": 20
+  },
+  "Christmas > Christmas Crafts": {
+   "products": 3,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Christmas > Christmas Crafts > Christmas Card Making": {
+   "products": 102,
+   "skus": 133,
+   "unkeyworded": 82
+  },
+  "Christmas > Christmas Crafts > Christmas Card Making > Stickers & Toppers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Christmas > Christmas Crafts > Christmas Craft Kits": {
+   "products": 28,
+   "skus": 30,
+   "unkeyworded": 24
+  },
+  "Christmas > Christmas Crafts > Christmas Eve Boxes": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Christmas > Christmas Crafts > Christmas Flower Arranging": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 8
+  },
+  "Christmas > Christmas Crafts > Christmas Knitting & Crochet > Yarn": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Christmas > Christmas Crafts > Christmas Sewing": {
+   "products": 12,
+   "skus": 26,
+   "unkeyworded": 14
+  },
+  "Christmas > Christmas Crafts > Christmas Sewing > Ribbon": {
+   "products": 17,
+   "skus": 36,
+   "unkeyworded": 36
+  },
+  "Christmas > Christmas Crafts for Kids": {
+   "products": 110,
+   "skus": 110,
+   "unkeyworded": 97
+  },
+  "Christmas > Christmas Decorations": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Christmas > Christmas Decorations > Blank Decorations": {
+   "products": 29,
+   "skus": 29,
+   "unkeyworded": 20
+  },
+  "Christmas > Christmas Decorations > Christmas Party Decorations": {
+   "products": 21,
+   "skus": 23,
+   "unkeyworded": 18
+  },
+  "Christmas > Christmas Decorations > Christmas Stockings": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 5
+  },
+  "Christmas > Christmas Decorations > Christmas Tree Decorations": {
+   "products": 109,
+   "skus": 110,
+   "unkeyworded": 95
+  },
+  "Christmas > Christmas Decorations > Fillable Tree Decorations": {
+   "products": 23,
+   "skus": 24,
+   "unkeyworded": 19
+  },
+  "Christmas > Christmas Decorations > Ready-Made Christmas Decorations": {
+   "products": 74,
+   "skus": 78,
+   "unkeyworded": 65
+  },
+  "Christmas > Christmas Gift Wrapping > Gift Bags": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Christmas > Christmas Gift Wrapping > Gift Boxes": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Christmas > Christmas Jigsaw Puzzles": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 11
+  },
+  "Christmas > Wreaths & Garlands": {
+   "products": 23,
+   "skus": 24,
+   "unkeyworded": 17
+  },
+  "Craft Essentials > Blanks & Bases": {
+   "products": 21,
+   "skus": 21,
+   "unkeyworded": 10
+  },
+  "Craft Essentials > Blanks & Bases > Ceramic Blanks": {
+   "products": 30,
+   "skus": 30,
+   "unkeyworded": 17
+  },
+  "Craft Essentials > Blanks & Bases > Fabric Blanks": {
+   "products": 33,
+   "skus": 40,
+   "unkeyworded": 20
+  },
+  "Craft Essentials > Blanks & Bases > Glass Blanks": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Blanks & Bases > Metal Letters & Shapes": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Craft Essentials > Blanks & Bases > Paper Mache Blanks": {
+   "products": 72,
+   "skus": 105,
+   "unkeyworded": 36
+  },
+  "Craft Essentials > Blanks & Bases > Paper Mache Blanks > Paper Mache Boxes": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Blanks & Bases > Paper Mache Blanks > Paper Mache Letters & Numbers": {
+   "products": 60,
+   "skus": 60,
+   "unkeyworded": 57
+  },
+  "Craft Essentials > Blanks & Bases > Wooden & MDF Blanks": {
+   "products": 73,
+   "skus": 73,
+   "unkeyworded": 48
+  },
+  "Craft Essentials > Blanks & Bases > Wooden & MDF Blanks > Wooden Boxes": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 12
+  },
+  "Craft Essentials > Blanks & Bases > Wooden Letters & Numbers": {
+   "products": 19,
+   "skus": 19,
+   "unkeyworded": 14
+  },
+  "Craft Essentials > Blanks & Bases > Wooden Letters & Numbers > Wooden Letters": {
+   "products": 135,
+   "skus": 135,
+   "unkeyworded": 90
+  },
+  "Craft Essentials > Blanks & Bases > Wooden Letters & Numbers > Wooden Numbers": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 13
+  },
+  "Craft Essentials > Craft Finishes": {
+   "products": 22,
+   "skus": 26,
+   "unkeyworded": 18
+  },
+  "Craft Essentials > Craft Lamps": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Craft Essentials > Craft Lamps > Daylight Lamps": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Craft Essentials > Craft Lamps > Floor Lamps": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Craft Essentials > Craft Lamps > Handsfree Lights": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 8
+  },
+  "Craft Essentials > Craft Lamps > Light Boxes": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Craft Essentials > Craft Lamps > Magnifying Lamps": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 10
+  },
+  "Craft Essentials > Craft Lamps > Table Lamps": {
+   "products": 13,
+   "skus": 14,
+   "unkeyworded": 9
+  },
+  "Craft Essentials > Craft Paint": {
+   "products": 153,
+   "skus": 193,
+   "unkeyworded": 23
+  },
+  "Craft Essentials > Craft Paint > Acrylic Craft Paint": {
+   "products": 36,
+   "skus": 40,
+   "unkeyworded": 14
+  },
+  "Craft Essentials > Craft Paint > Craft Spray Paint": {
+   "products": 32,
+   "skus": 73,
+   "unkeyworded": 20
+  },
+  "Craft Essentials > Craft Paint > Glass Paint": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Craft Essentials > Craft Paint > Metallic Paint": {
+   "products": 1,
+   "skus": 10,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Craft Tools": {
+   "products": 34,
+   "skus": 34,
+   "unkeyworded": 20
+  },
+  "Craft Essentials > Craft Tools > Craft Paintbrushes": {
+   "products": 18,
+   "skus": 19,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Craft Tools > Cutting Mats": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Craft Essentials > Craft Tools > Lap Trays": {
+   "products": 7,
+   "skus": 10,
+   "unkeyworded": 4
+  },
+  "Craft Essentials > Craft Tools > Magnifiers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Craft Tools > Scissors & Cutters": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Craft Tools > Scissors & Cutting Tools": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Craft Essentials > Craft Tools > Stencils": {
+   "products": 20,
+   "skus": 59,
+   "unkeyworded": 37
+  },
+  "Craft Essentials > Craft Tools > Tweezers & Pliers": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Crafting Materials > Decoupage Paper": {
+   "products": 12,
+   "skus": 25,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Crafting Materials > Metal Flakes": {
+   "products": 4,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Craft Essentials > Crafting Materials > Paper": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Craft Essentials > Crafting Materials > Pebbles & Sand": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 5
+  },
+  "Craft Essentials > Crafting Materials > Sticky Back Plastic & Vinyl": {
+   "products": 16,
+   "skus": 27,
+   "unkeyworded": 10
+  },
+  "Craft Essentials > Glues & Adhesives": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Craft Essentials > Glues & Adhesives > Craft Magnets": {
+   "products": 23,
+   "skus": 23,
+   "unkeyworded": 18
+  },
+  "Craft Essentials > Glues & Adhesives > Glue Guns & Hot Melt Glue": {
+   "products": 22,
+   "skus": 23,
+   "unkeyworded": 5
+  },
+  "Craft Essentials > Glues & Adhesives > Glue Sticks & Pens": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Glues & Adhesives > Masking & Paper Tape": {
+   "products": 9,
+   "skus": 11,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Glues & Adhesives > Masking Tape": {
+   "products": 6,
+   "skus": 7,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Glues & Adhesives > PVA Glue": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 7
+  },
+  "Craft Essentials > Glues & Adhesives > PVA, Glue Sticks & Pens": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Glues & Adhesives > Specialist Craft Glues": {
+   "products": 54,
+   "skus": 58,
+   "unkeyworded": 20
+  },
+  "Craft Essentials > Glues & Adhesives > Sticky Pads & Glue Dots": {
+   "products": 24,
+   "skus": 24,
+   "unkeyworded": 9
+  },
+  "Craft Essentials > Glues & Adhesives > Sticky Tape": {
+   "products": 50,
+   "skus": 64,
+   "unkeyworded": 26
+  },
+  "Craft Essentials > Packaging Supplies": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Craft Essentials > Stationery": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Craft Essentials > Stationery > Acetate Sheets": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Stationery > Batteries": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Stationery > Blank Notebooks": {
+   "products": 56,
+   "skus": 69,
+   "unkeyworded": 48
+  },
+  "Craft Essentials > Stationery > Desktop Accessories": {
+   "products": 38,
+   "skus": 38,
+   "unkeyworded": 18
+  },
+  "Craft Essentials > Stationery > Diaries & Calendars": {
+   "products": 24,
+   "skus": 24,
+   "unkeyworded": 15
+  },
+  "Craft Essentials > Stationery > Files & Ringbinders": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 4
+  },
+  "Craft Essentials > Stationery > Notice Boards & Whiteboards": {
+   "products": 16,
+   "skus": 17,
+   "unkeyworded": 6
+  },
+  "Craft Essentials > Stationery > Packaging Supplies": {
+   "products": 30,
+   "skus": 32,
+   "unkeyworded": 13
+  },
+  "Craft Essentials > Stationery > Pencils": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 5
+  },
+  "Craft Essentials > Stationery > Pens": {
+   "products": 47,
+   "skus": 76,
+   "unkeyworded": 39
+  },
+  "Craft Essentials > Stationery > Pens & Pencils": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Craft Essentials > Stationery > Stationery Sets": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 6
+  },
+  "Digital Crafting > Cricut": {
+   "products": 7,
+   "skus": 8,
+   "unkeyworded": 0
+  },
+  "Digital Crafting > Digital Crafting Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Digital Crafting > Digital Crafting Machines": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Digital Crafting > Digital Crafting Machines > Cricut Explore": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Digital Crafting > Digital Crafting Machines > Cricut Joy": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Digital Crafting > Digital Crafting Machines > Cricut Joy Xtra": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Digital Crafting > Digital Crafting Machines > Cricut Maker": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 8
+  },
+  "Digital Crafting > Digital Crafting Machines > Cricut StickerPix": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Digital Crafting > Digital Crafting Materials": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Digital Crafting > Digital Crafting Materials > Cricut Infusible Ink": {
+   "products": 11,
+   "skus": 12,
+   "unkeyworded": 8
+  },
+  "Digital Crafting > Digital Crafting Materials > Cricut Smart Materials": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Digital Crafting > Digital Crafting Materials > Paper & Card": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Digital Crafting > Digital Crafting Materials > Speciality Materials": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 5
+  },
+  "Digital Crafting > Digital Crafting Materials > Transfer Foils": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Digital Crafting > Digital Crafting Materials > Transfer Tape": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 6
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl": {
+   "products": 10,
+   "skus": 13,
+   "unkeyworded": 3
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl > Cricut Smart Vinyl": {
+   "products": 54,
+   "skus": 56,
+   "unkeyworded": 38
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl > Glitter Vinyl": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 9
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl > Iron-On": {
+   "products": 97,
+   "skus": 153,
+   "unkeyworded": 114
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl > Permanent Vinyl": {
+   "products": 45,
+   "skus": 67,
+   "unkeyworded": 50
+  },
+  "Digital Crafting > Digital Crafting Materials > Vinyl > Removable Vinyl": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 8
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Accessories for Cricut Joy": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Blades & Wheels": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 5
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Light Boxes": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Mats": {
+   "products": 28,
+   "skus": 28,
+   "unkeyworded": 7
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Pens": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 15
+  },
+  "Digital Crafting > Digital Crafting Tools & Accessories > Tools": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 2
+  },
+  "Digital Crafting > Heat Presses": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 1
+  },
+  "Digital Crafting > Heat Presses > Cricut EasyPress": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Digital Crafting > Sublimation": {
+   "products": 18,
+   "skus": 23,
+   "unkeyworded": 22
+  },
+  "Digital Crafting > We R Memory Keepers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Easter > Easter Baking > Easter Cake Decorating": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Easter > Easter Decorations > Easter Flowers": {
+   "products": 2,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Gifts > Kids' Gifts": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Gifts > Models, Puzzles & Games": {
+   "products": 48,
+   "skus": 48,
+   "unkeyworded": 19
+  },
+  "Gifts > Sewing Gifts": {
+   "products": 2,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Halloween": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Halloween & Autumn > Autumn > Autumn Flowers": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Halloween > Boo Boxes": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween & Autumn Fabric": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Bags & Buckets": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 5
+  },
+  "Halloween > Halloween Baking": {
+   "products": 13,
+   "skus": 14,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Blanks": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Decorations": {
+   "products": 65,
+   "skus": 65,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Kids' Crafts": {
+   "products": 34,
+   "skus": 38,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Kids' Crafts > Halloween Kids Stickers": {
+   "products": 29,
+   "skus": 30,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Kids' Crafts > Halloween Kids' Kits": {
+   "products": 28,
+   "skus": 30,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Party": {
+   "products": 57,
+   "skus": 58,
+   "unkeyworded": 0
+  },
+  "Halloween > Halloween Potion Bottles & Jars": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 0
+  },
+  "Halloween > Pumpkins > Blank Pumpkins": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 0
+  },
+  "Halloween > Pumpkins > Decorative Pumpkins": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Halloween > Pumpkins > Plush Pumpkins": {
+   "products": 57,
+   "skus": 57,
+   "unkeyworded": 0
+  },
+  "Hobbies & Games > Art & Craft Kits": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 9
+  },
+  "Hobbies & Games > Candle Making > Candle Making Kits": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Clay & Modelling": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies & Games > Clay & Modelling > Air Drying Clay": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Hobbies & Games > Clay & Modelling > Modelling Tools & Accessories": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Hobbies & Games > Clay & Modelling > Polymer Clay": {
+   "products": 3,
+   "skus": 28,
+   "unkeyworded": 28
+  },
+  "Hobbies & Games > Collectible Models": {
+   "products": 106,
+   "skus": 106,
+   "unkeyworded": 92
+  },
+  "Hobbies & Games > Craft Books": {
+   "products": 33,
+   "skus": 33,
+   "unkeyworded": 33
+  },
+  "Hobbies & Games > Craft Books > Art Books": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 8
+  },
+  "Hobbies & Games > Craft Books > Colouring Books": {
+   "products": 33,
+   "skus": 33,
+   "unkeyworded": 31
+  },
+  "Hobbies & Games > Craft Books > Hobbies & Games Books": {
+   "products": 33,
+   "skus": 33,
+   "unkeyworded": 33
+  },
+  "Hobbies & Games > Craft Books > Kids' Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies & Games > Craft Books > Knitting & Crochet Books": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 19
+  },
+  "Hobbies & Games > Craft Books > Papercraft Books": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Hobbies & Games > Craft Books > Sewing & Stitching Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Doll's Houses > Doll's House Accessories": {
+   "products": 96,
+   "skus": 100,
+   "unkeyworded": 99
+  },
+  "Hobbies & Games > Doll's Houses > Doll's House Furniture": {
+   "products": 34,
+   "skus": 34,
+   "unkeyworded": 34
+  },
+  "Hobbies & Games > Doll's Houses > Doll's House Kits": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 5
+  },
+  "Hobbies & Games > Games": {
+   "products": 66,
+   "skus": 66,
+   "unkeyworded": 51
+  },
+  "Hobbies & Games > Games > Board Games": {
+   "products": 151,
+   "skus": 151,
+   "unkeyworded": 126
+  },
+  "Hobbies & Games > Games > Tabletop Role Playing Games": {
+   "products": 40,
+   "skus": 40,
+   "unkeyworded": 38
+  },
+  "Hobbies & Games > Games > Trading Cards": {
+   "products": 41,
+   "skus": 41,
+   "unkeyworded": 32
+  },
+  "Hobbies & Games > Games > Trading Cards > Disney Trading Cards": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Hobbies & Games > Games > Trading Cards > Magic The Gathering": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 3
+  },
+  "Hobbies & Games > Games > Trading Cards > Trading Card Storage": {
+   "products": 49,
+   "skus": 58,
+   "unkeyworded": 53
+  },
+  "Hobbies & Games > Jewellery Making": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Hobbies & Games > Jewellery Making > Beads": {
+   "products": 54,
+   "skus": 81,
+   "unkeyworded": 81
+  },
+  "Hobbies & Games > Jewellery Making > Charms & Pendants": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 14
+  },
+  "Hobbies & Games > Jewellery Making > Findings": {
+   "products": 75,
+   "skus": 75,
+   "unkeyworded": 75
+  },
+  "Hobbies & Games > Jewellery Making > Jewellery Making Kits": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Jewellery Making > Jewellery Making Storage": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Jewellery Making > Jewellery Making Tools": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 10
+  },
+  "Hobbies & Games > Jewellery Making > Threading & Wire": {
+   "products": 58,
+   "skus": 67,
+   "unkeyworded": 67
+  },
+  "Hobbies & Games > Jigsaw Puzzles": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 19
+  },
+  "Hobbies & Games > Jigsaw Puzzles > 1000-Piece Puzzles": {
+   "products": 121,
+   "skus": 121,
+   "unkeyworded": 116
+  },
+  "Hobbies & Games > Jigsaw Puzzles > 500-Piece Puzzles": {
+   "products": 27,
+   "skus": 27,
+   "unkeyworded": 24
+  },
+  "Hobbies & Games > Jigsaw Puzzles > Animals & Wildlife Puzzles": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Jigsaw Puzzles > Disney Puzzles": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Hobbies & Games > Jigsaw Puzzles > Landscapes & Scenery Puzzles": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Hobbies & Games > Jigsaw Puzzles > Nostalgic Puzzles": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Jigsaw Puzzles > Puzzle Accessories & Storage": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Hobbies & Games > Model Making Kits > Brick Building Sets For Adults": {
+   "products": 63,
+   "skus": 63,
+   "unkeyworded": 45
+  },
+  "Hobbies & Games > Model Making Kits > Characters & Figures": {
+   "products": 285,
+   "skus": 285,
+   "unkeyworded": 227
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits": {
+   "products": 25,
+   "skus": 25,
+   "unkeyworded": 23
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits > Aircraft": {
+   "products": 114,
+   "skus": 114,
+   "unkeyworded": 110
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits > Cars & Bikes": {
+   "products": 61,
+   "skus": 61,
+   "unkeyworded": 56
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits > Ships": {
+   "products": 25,
+   "skus": 25,
+   "unkeyworded": 22
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits > Star Wars": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 10
+  },
+  "Hobbies & Games > Model Making Kits > Plastic Model Kits > Tanks & Soldiers": {
+   "products": 25,
+   "skus": 25,
+   "unkeyworded": 24
+  },
+  "Hobbies & Games > Model Making Kits > Remote Control Models": {
+   "products": 99,
+   "skus": 99,
+   "unkeyworded": 98
+  },
+  "Hobbies & Games > Model Making Kits > Wooden Model Kits": {
+   "products": 59,
+   "skus": 59,
+   "unkeyworded": 56
+  },
+  "Hobbies & Games > Model Making Tools & Accessories": {
+   "products": 29,
+   "skus": 29,
+   "unkeyworded": 27
+  },
+  "Hobbies & Games > Model Making Tools & Accessories > Model Display Cases": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Model Making Tools & Accessories > Model Making Tools": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 13
+  },
+  "Hobbies & Games > Model Making Tools & Accessories > Model Paints & Varnishes": {
+   "products": 236,
+   "skus": 297,
+   "unkeyworded": 289
+  },
+  "Hobbies & Games > Model Making Tools & Accessories > Model Scenery": {
+   "products": 15,
+   "skus": 24,
+   "unkeyworded": 24
+  },
+  "Hobbies & Games > Model Making Tools & Accessories > Woodworking > Woodworking Tools": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies & Games > Mosaic Making": {
+   "products": 4,
+   "skus": 7,
+   "unkeyworded": 7
+  },
+  "Hobbies & Games > Paint by Numbers": {
+   "products": 4,
+   "skus": 14,
+   "unkeyworded": 14
+  },
+  "Hobbies & Games > Resin": {
+   "products": 20,
+   "skus": 29,
+   "unkeyworded": 29
+  },
+  "Hobbies & Games > Soap Making": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 22
+  },
+  "Hobbies > Art & Craft Kits": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 9
+  },
+  "Hobbies > Candle Making": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Hobbies > Candle Making > Candle Making Kits": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Hobbies > Candle Making > Candle Making Moulds & Tins": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 3
+  },
+  "Hobbies > Candle Making > Dyes & Fragrances": {
+   "products": 3,
+   "skus": 18,
+   "unkeyworded": 17
+  },
+  "Hobbies > Candle Making > Wax Flakes & Pellets": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Hobbies > Candle Making > Wicks & Wick Holders": {
+   "products": 17,
+   "skus": 17,
+   "unkeyworded": 14
+  },
+  "Hobbies > Clay & Modelling > Air Drying Clay": {
+   "products": 16,
+   "skus": 26,
+   "unkeyworded": 17
+  },
+  "Hobbies > Clay & Modelling > Modelling Tools & Accessories": {
+   "products": 25,
+   "skus": 25,
+   "unkeyworded": 11
+  },
+  "Hobbies > Clay & Modelling > Plaster of Paris": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Hobbies > Clay & Modelling > Polymer Clay": {
+   "products": 11,
+   "skus": 69,
+   "unkeyworded": 36
+  },
+  "Hobbies > Craft Books": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Hobbies > Craft Books > Art Books": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Hobbies > Craft Books > Colouring Books": {
+   "products": 9,
+   "skus": 10,
+   "unkeyworded": 3
+  },
+  "Hobbies > Craft Books > Kids Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Craft Books > Knitting & Crochet Books": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Hobbies > Craft Books > Papercraft Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies > Craft Books > Sewing & Stitching Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies > Diamond Painting": {
+   "products": 57,
+   "skus": 122,
+   "unkeyworded": 111
+  },
+  "Hobbies > Featured in Hobbies > Craft Books > Art Books": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 7
+  },
+  "Hobbies > Featured in Hobbies > Craft Books > Colouring Books": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 3
+  },
+  "Hobbies > Featured in Hobbies > Craft Books > Knitting & Crochet Books": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Hobbies > Featured in Hobbies > Craft Books > Papercraft Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Featured in Hobbies > Craft Books > Sewing & Stitching Books": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 0
+  },
+  "Hobbies > Flower Arranging": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers": {
+   "products": 35,
+   "skus": 56,
+   "unkeyworded": 33
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Bouquets": {
+   "products": 28,
+   "skus": 50,
+   "unkeyworded": 31
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Daisies": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Garlands": {
+   "products": 7,
+   "skus": 9,
+   "unkeyworded": 3
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Grasses & Foliage": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 15
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Loose Petals & Leaves": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Hobbies > Flower Arranging > Artificial Flowers > Roses": {
+   "products": 24,
+   "skus": 33,
+   "unkeyworded": 23
+  },
+  "Hobbies > Flower Arranging > Floral Foam": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Flower Arranging > Flower Arranging Tools": {
+   "products": 42,
+   "skus": 49,
+   "unkeyworded": 13
+  },
+  "Hobbies > Flower Arranging > Pots, Planters & Buckets": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Hobbies > Flower Arranging > Terrarium Supplies": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Hobbies > Flower Arranging > Wreath Making": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 7
+  },
+  "Hobbies > Flower Arranging > Wreath Making > Wreath Making Accessories": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Hobbies > Flower Arranging > Wreath Making > Wreaths": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Hobbies > Jewellery Making > Beads": {
+   "products": 13,
+   "skus": 15,
+   "unkeyworded": 11
+  },
+  "Hobbies > Jewellery Making > Findings": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Hobbies > Jewellery Making > Jewellery Making Kits": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 4
+  },
+  "Hobbies > Jewellery Making > Jewellery Making Storage": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 8
+  },
+  "Hobbies > Jewellery Making > Jewellery Making Tools": {
+   "products": 18,
+   "skus": 18,
+   "unkeyworded": 5
+  },
+  "Hobbies > Jigsaw Puzzles": {
+   "products": 29,
+   "skus": 29,
+   "unkeyworded": 3
+  },
+  "Hobbies > Jigsaw Puzzles > 1000-Piece Puzzles": {
+   "products": 64,
+   "skus": 64,
+   "unkeyworded": 17
+  },
+  "Hobbies > Jigsaw Puzzles > 500-Piece Puzzles": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Hobbies > Jigsaw Puzzles > Animals & Wildlife Puzzles": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Hobbies > Jigsaw Puzzles > Landscapes & Scenery Puzzles": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Jigsaw Puzzles > Nostalgic Puzzles": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Hobbies > Jigsaw Puzzles > Puzzle Accessories & Storage": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Hobbies > Macramé": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Model Making": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Hobbies > Model Making > Characters & Figures": {
+   "products": 76,
+   "skus": 76,
+   "unkeyworded": 52
+  },
+  "Hobbies > Model Making > Model Airbrushing": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 5
+  },
+  "Hobbies > Model Making > Model Making Tools": {
+   "products": 197,
+   "skus": 197,
+   "unkeyworded": 107
+  },
+  "Hobbies > Model Making > Model Paints & Varnishes": {
+   "products": 331,
+   "skus": 476,
+   "unkeyworded": 259
+  },
+  "Hobbies > Model Making > Model Scenery": {
+   "products": 68,
+   "skus": 72,
+   "unkeyworded": 60
+  },
+  "Hobbies > Model Making > Plastic Model Kits": {
+   "products": 102,
+   "skus": 103,
+   "unkeyworded": 21
+  },
+  "Hobbies > Model Making > Plastic Model Kits > Aircraft": {
+   "products": 187,
+   "skus": 187,
+   "unkeyworded": 122
+  },
+  "Hobbies > Model Making > Plastic Model Kits > Cars & Bikes": {
+   "products": 86,
+   "skus": 86,
+   "unkeyworded": 58
+  },
+  "Hobbies > Model Making > Plastic Model Kits > Ships": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 8
+  },
+  "Hobbies > Model Making > Plastic Model Kits > Star Wars": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Hobbies > Model Making > Plastic Model Kits > Tanks & Soldiers": {
+   "products": 45,
+   "skus": 45,
+   "unkeyworded": 26
+  },
+  "Hobbies > Model Making > Woodworking > Wood": {
+   "products": 62,
+   "skus": 62,
+   "unkeyworded": 4
+  },
+  "Hobbies > Model Making > Woodworking > Woodworking Tools": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Hobbies > Mosaic Making": {
+   "products": 11,
+   "skus": 14,
+   "unkeyworded": 4
+  },
+  "Hobbies > Pyrography": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Hobbies > Resin": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Hobbies > Soap Making": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Craft Desks": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Home & Storage > Flower Arranging > Artificial Flowers": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 13
+  },
+  "Home & Storage > Flower Arranging > Artificial Flowers > Bouquets": {
+   "products": 5,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Home & Storage > Flower Arranging > Floral Foam": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Flower Arranging > Flower Arranging Tools": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 5
+  },
+  "Home & Storage > Flower Arranging > Wreath Making": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Flower Arranging > Wreath Making > Wreath Making Accessories": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frame Mounting & Hanging > Foam Board": {
+   "products": 8,
+   "skus": 12,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Frame Mounting & Hanging > Frame Mounts": {
+   "products": 20,
+   "skus": 24,
+   "unkeyworded": 7
+  },
+  "Home & Storage > Frame Mounting & Hanging > Framing & Picture Hanging Tools": {
+   "products": 61,
+   "skus": 62,
+   "unkeyworded": 12
+  },
+  "Home & Storage > Frames": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Frames > Box Frames": {
+   "products": 31,
+   "skus": 33,
+   "unkeyworded": 12
+  },
+  "Home & Storage > Frames > Clip Frames": {
+   "products": 18,
+   "skus": 18,
+   "unkeyworded": 0
+  },
+  "Home & Storage > Frames > Frames by Colour": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Home & Storage > Frames > Frames by Colour > Black Frames": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frames > Frames by Colour > Gold Frames": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frames > Frames by Colour > Silver Frames": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Home & Storage > Frames > Frames by Colour > White Frames": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frames > Frames by Size > 7 x 5 Inch Frames": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frames > Frames by Size > Square Frames": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 8
+  },
+  "Home & Storage > Frames > Multi-Aperture Frames": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 6
+  },
+  "Home & Storage > Frames > Novelty Frames": {
+   "products": 2,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Frames > Plastic Frames": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 2
+  },
+  "Home & Storage > Frames > Wooden Frames": {
+   "products": 50,
+   "skus": 52,
+   "unkeyworded": 27
+  },
+  "Home & Storage > Frames > Wooden Frames > A4 Wooden Frames": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Home Décor": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Home & Storage > Home Décor > Candle Holders": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Home Décor > Candles & Tealights": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 2
+  },
+  "Home & Storage > Home Décor > Decorative Trees": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Home & Storage > Home Décor > Glass Jars": {
+   "products": 43,
+   "skus": 43,
+   "unkeyworded": 7
+  },
+  "Home & Storage > Home Décor > Hanging Decorations": {
+   "products": 21,
+   "skus": 22,
+   "unkeyworded": 9
+  },
+  "Home & Storage > Home Décor > Lanterns & Birdcages": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Home & Storage > Home Décor > Signs": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Home Décor > String Lights": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 3
+  },
+  "Home & Storage > Home Décor > Vases & Bottles": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 5
+  },
+  "Home & Storage > Storage": {
+   "products": 21,
+   "skus": 23,
+   "unkeyworded": 14
+  },
+  "Home & Storage > Storage > Boxes & Baskets": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Home & Storage > Storage > Craft Bags": {
+   "products": 6,
+   "skus": 9,
+   "unkeyworded": 7
+  },
+  "Home & Storage > Storage > Desktop & Table Storage": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Home & Storage > Storage > Plastic Storage Boxes": {
+   "products": 40,
+   "skus": 40,
+   "unkeyworded": 29
+  },
+  "Home & Storage > Storage > Plastic Storage Boxes > Large Storage Boxes": {
+   "products": 24,
+   "skus": 24,
+   "unkeyworded": 9
+  },
+  "Home & Storage > Storage > Plastic Storage Boxes > Small Storage Boxes": {
+   "products": 24,
+   "skus": 24,
+   "unkeyworded": 15
+  },
+  "Home & Storage > Storage > Plastic Storage Boxes > Trays & Dividers": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Home & Storage > Storage > Trolleys & Drawer Units": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 3
+  },
+  "Home & Storage > Storage > Trolleys & Drawer Units > Rolling Drawers": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 3
+  },
+  "Home & Storage > Storage > Trolleys & Drawer Units > Trolleys & Accessories": {
+   "products": 3,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Storage > Wicker Baskets & Hampers": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 4
+  },
+  "Home & Storage > Storage > Wooden Boxes & Crates": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Kids >  Craft Kits >  Sewing & Knitting Kits": {
+   "products": 34,
+   "skus": 49,
+   "unkeyworded": 29
+  },
+  "Kids > Featured in Kids > Kids' Books": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 4
+  },
+  "Kids > Kids' Craft Kits": {
+   "products": 14,
+   "skus": 16,
+   "unkeyworded": 10
+  },
+  "Kids > Kids' Craft Kits > Ages 3-4 Years": {
+   "products": 28,
+   "skus": 28,
+   "unkeyworded": 8
+  },
+  "Kids > Kids' Craft Kits > Ages 5-7 Years": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 3
+  },
+  "Kids > Kids' Craft Kits > Fashion Kits": {
+   "products": 69,
+   "skus": 70,
+   "unkeyworded": 40
+  },
+  "Kids > Kids' Craft Kits > Kids' Jewellery Kits": {
+   "products": 30,
+   "skus": 30,
+   "unkeyworded": 19
+  },
+  "Kids > Kids' Craft Kits > Kids' Papercraft Kits": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Kids > Kids' Craft Kits > Kids' Sewing & Knitting Kits": {
+   "products": 7,
+   "skus": 10,
+   "unkeyworded": 10
+  },
+  "Kids > Kids' Craft Kits > Model Making Kits": {
+   "products": 91,
+   "skus": 91,
+   "unkeyworded": 44
+  },
+  "Kids > Kids' Craft Kits > Mosaic & Sequin Kits": {
+   "products": 76,
+   "skus": 100,
+   "unkeyworded": 86
+  },
+  "Kids > Kids' Craft Kits > Picture Beads": {
+   "products": 74,
+   "skus": 87,
+   "unkeyworded": 51
+  },
+  "Kids > Kids' Craft Kits > Pocket Money Kits": {
+   "products": 33,
+   "skus": 47,
+   "unkeyworded": 21
+  },
+  "Kids > Kids' Craft Kits > Pom Pom Kits": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Kids > Kids' Craft Kits > Science & Nature Kits": {
+   "products": 68,
+   "skus": 68,
+   "unkeyworded": 14
+  },
+  "Kids > Kids' Craft Kits > Science & Nature Kits > Nature & Gardening Kits": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 4
+  },
+  "Kids > Kids' Craft Kits > Science & Nature Kits > Robotics Kits": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Kids' Craft Kits > Science & Nature Kits > Science Kits": {
+   "products": 28,
+   "skus": 28,
+   "unkeyworded": 15
+  },
+  "Kids > Kids' Craft Kits > Scratch Art": {
+   "products": 13,
+   "skus": 27,
+   "unkeyworded": 20
+  },
+  "Kids > Kids' Craft Supplies": {
+   "products": 15,
+   "skus": 25,
+   "unkeyworded": 20
+  },
+  "Kids > Kids' Craft Supplies > Biodegradeable Glitter": {
+   "products": 4,
+   "skus": 32,
+   "unkeyworded": 14
+  },
+  "Kids > Kids' Craft Supplies > Feathers": {
+   "products": 13,
+   "skus": 33,
+   "unkeyworded": 0
+  },
+  "Kids > Kids' Craft Supplies > Felt Sheets": {
+   "products": 8,
+   "skus": 37,
+   "unkeyworded": 4
+  },
+  "Kids > Kids' Craft Supplies > Foam Sheets & Shapes": {
+   "products": 24,
+   "skus": 77,
+   "unkeyworded": 32
+  },
+  "Kids > Kids' Craft Supplies > Googly Eyes": {
+   "products": 16,
+   "skus": 17,
+   "unkeyworded": 16
+  },
+  "Kids > Kids' Craft Supplies > Kids' Clay & Dough": {
+   "products": 43,
+   "skus": 64,
+   "unkeyworded": 40
+  },
+  "Kids > Kids' Craft Supplies > Kids' Craft Beads": {
+   "products": 76,
+   "skus": 82,
+   "unkeyworded": 75
+  },
+  "Kids > Kids' Craft Supplies > Kids' Craft Blanks & Bases": {
+   "products": 48,
+   "skus": 50,
+   "unkeyworded": 4
+  },
+  "Kids > Kids' Craft Supplies > Kids' Craft Blanks & Bases > Kids' Wood Crafts": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Kids > Kids' Craft Supplies > Kids' Glue": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Kids > Kids' Craft Supplies > Kids' Paper & Card": {
+   "products": 29,
+   "skus": 43,
+   "unkeyworded": 6
+  },
+  "Kids > Kids' Craft Supplies > Kids' Stickers": {
+   "products": 52,
+   "skus": 111,
+   "unkeyworded": 75
+  },
+  "Kids > Kids' Craft Supplies > Pipe Cleaners": {
+   "products": 15,
+   "skus": 35,
+   "unkeyworded": 14
+  },
+  "Kids > Kids' Craft Supplies > Pom Poms": {
+   "products": 17,
+   "skus": 41,
+   "unkeyworded": 21
+  },
+  "Kids > Kids' Craft Supplies > Tissue & Crepe Paper": {
+   "products": 5,
+   "skus": 18,
+   "unkeyworded": 15
+  },
+  "Kids > Kids' Dressing Up": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Kids > Kids' Dressing Up > Face Painting": {
+   "products": 27,
+   "skus": 77,
+   "unkeyworded": 30
+  },
+  "Kids > Kids' Dressing Up > Masks & Headwear": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Kids > Kids' Indoor Activities": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Kids > Kids' Painting & Colouring": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 3
+  },
+  "Kids > Kids' Painting & Colouring > Colouring Pens & Pencils": {
+   "products": 80,
+   "skus": 81,
+   "unkeyworded": 28
+  },
+  "Kids > Kids' Painting & Colouring > Crayons & Chalk": {
+   "products": 31,
+   "skus": 32,
+   "unkeyworded": 18
+  },
+  "Kids > Kids' Painting & Colouring > Kids' Colouring Books": {
+   "products": 30,
+   "skus": 44,
+   "unkeyworded": 29
+  },
+  "Kids > Kids' Painting & Colouring > Kids' Easels": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Kids > Kids' Painting & Colouring > Kids' Paint": {
+   "products": 47,
+   "skus": 95,
+   "unkeyworded": 21
+  },
+  "Kids > Kids' Painting & Colouring > Kids' Paint Brushes": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 3
+  },
+  "Kids > Kids' Painting & Colouring > Kids' Stationery": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 18
+  },
+  "Kids > Kids' Painting & Colouring > Paint by Numbers": {
+   "products": 10,
+   "skus": 31,
+   "unkeyworded": 27
+  },
+  "Kids > Kids' Painting & Colouring > Painting Kits": {
+   "products": 30,
+   "skus": 36,
+   "unkeyworded": 17
+  },
+  "Kids > Kids' Painting & Colouring > Stamps & Stencils": {
+   "products": 18,
+   "skus": 18,
+   "unkeyworded": 5
+  },
+  "Kids > Kids' Storage": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Kids > Paint Your Own": {
+   "products": 3,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Kids > Paint Your Own > Ceramics": {
+   "products": 62,
+   "skus": 63,
+   "unkeyworded": 9
+  },
+  "Kids > Paint Your Own > Colour-in Canvases": {
+   "products": 2,
+   "skus": 24,
+   "unkeyworded": 13
+  },
+  "Kids > Paint Your Own > Suncatchers": {
+   "products": 67,
+   "skus": 77,
+   "unkeyworded": 54
+  },
+  "Kids > Paint Your Own > Wooden Kits": {
+   "products": 11,
+   "skus": 27,
+   "unkeyworded": 24
+  },
+  "Kids > Slime Making": {
+   "products": 31,
+   "skus": 36,
+   "unkeyworded": 27
+  },
+  "Kids > Tents & Dens": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 3
+  },
+  "Kids > Toys & Games": {
+   "products": 84,
+   "skus": 84,
+   "unkeyworded": 64
+  },
+  "Kids > Toys & Games > Activity Books": {
+   "products": 48,
+   "skus": 63,
+   "unkeyworded": 39
+  },
+  "Kids > Toys & Games > Colour-in Playhouses": {
+   "products": 17,
+   "skus": 17,
+   "unkeyworded": 7
+  },
+  "Kids > Toys & Games > Construction Kits": {
+   "products": 135,
+   "skus": 136,
+   "unkeyworded": 126
+  },
+  "Kids > Toys & Games > Kids' Games & Puzzles": {
+   "products": 86,
+   "skus": 88,
+   "unkeyworded": 61
+  },
+  "Kids > Toys & Games > Kids' Sensory Play": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 9
+  },
+  "Kids > Toys & Games > Outdoor Activities": {
+   "products": 32,
+   "skus": 32,
+   "unkeyworded": 23
+  },
+  "Kids > Toys & Games > Outdoor Activities > Bubbles": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 13
+  },
+  "Kids > Toys & Games > Plush Toys": {
+   "products": 54,
+   "skus": 54,
+   "unkeyworded": 47
+  },
+  "Kids > Toys & Games > Preschool Toys": {
+   "products": 37,
+   "skus": 37,
+   "unkeyworded": 31
+  },
+  "Kids > Toys & Games > Puppets": {
+   "products": 13,
+   "skus": 34,
+   "unkeyworded": 20
+  },
+  "Knitting & Crochet > Amigurumi": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Amigurumi & Toys": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 5
+  },
+  "Knitting & Crochet > Crochet Patterns > Baby & Kids > Accessories": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Baby & Kids > Baby Blankets": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Baby & Kids > Baby Clothing": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Crochet Patterns > Baby & Kids > Jumpers & Cardigans": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 2
+  },
+  "Knitting & Crochet > Crochet Patterns > Clothing": {
+   "products": 18,
+   "skus": 18,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Clothing > Cardigans": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 3
+  },
+  "Knitting & Crochet > Crochet Patterns > Clothing > Jumpers": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 5
+  },
+  "Knitting & Crochet > Crochet Patterns > Hats": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Homewares": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Homewares > Baskets & Bags": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Crochet Patterns > Homewares > Crochet Blankets": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 2
+  },
+  "Knitting & Crochet > Crochet Patterns > Homewares > Cushions": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Crochet Patterns > Shawls": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Featured in Knitting & Crochet > Knitting & Crochet Books": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 10
+  },
+  "Knitting & Crochet > Knitting & Crochet Books": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting & Crochet Kits > Crochet Kits": {
+   "products": 20,
+   "skus": 28,
+   "unkeyworded": 19
+  },
+  "Knitting & Crochet > Knitting & Crochet Kits > Knitting Kits": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 4
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Crochet Hooks": {
+   "products": 51,
+   "skus": 51,
+   "unkeyworded": 39
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting & Crochet Accessories": {
+   "products": 48,
+   "skus": 48,
+   "unkeyworded": 26
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting & Crochet Storage": {
+   "products": 18,
+   "skus": 19,
+   "unkeyworded": 5
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting Looms": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting Needles": {
+   "products": 86,
+   "skus": 86,
+   "unkeyworded": 28
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting Needles > Cable Needles": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Knitting Needles > Circular Knitting Needles": {
+   "products": 20,
+   "skus": 20,
+   "unkeyworded": 19
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Pom Pom Makers": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting & Crochet Tools > Yarn Bowls": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Knitting & Crochet > Knitting Machines": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting Patterns": {
+   "products": 29,
+   "skus": 34,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids": {
+   "products": 21,
+   "skus": 21,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids > Blankets": {
+   "products": 30,
+   "skus": 30,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids > Hats, Mittens & Bootees": {
+   "products": 39,
+   "skus": 39,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids > Jackets": {
+   "products": 30,
+   "skus": 30,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids > Jumpers & Cardigans": {
+   "products": 184,
+   "skus": 184,
+   "unkeyworded": 4
+  },
+  "Knitting & Crochet > Knitting Patterns > Baby & Kids > Soft Toys": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Bags": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Hats, Scarves & Gloves": {
+   "products": 35,
+   "skus": 35,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Jackets & Cardigans": {
+   "products": 112,
+   "skus": 116,
+   "unkeyworded": 12
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Jumpers & Sweaters": {
+   "products": 102,
+   "skus": 102,
+   "unkeyworded": 16
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Shawls & Ponchos": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Socks": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Clothing > Tops": {
+   "products": 27,
+   "skus": 27,
+   "unkeyworded": 7
+  },
+  "Knitting & Crochet > Knitting Patterns > Homewares > Blankets & Throws": {
+   "products": 21,
+   "skus": 21,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Knitting Patterns > Homewares > Cushions": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Knitting Patterns > Homewares > Home Accessories": {
+   "products": 14,
+   "skus": 14,
+   "unkeyworded": 0
+  },
+  "Knitting & Crochet > Latch Hook": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Knitting & Crochet > Macramé": {
+   "products": 12,
+   "skus": 23,
+   "unkeyworded": 8
+  },
+  "Knitting & Crochet > Macramé > Macramé Dowels": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Macramé > Macramé Kits": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Macramé > Macramé Patterns": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 2
+  },
+  "Knitting & Crochet > Punch Needle > Punch Needle Accessories": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Punch Needle > Punch Needle Kits": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Knitting & Crochet > Weaving Looms": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 4
+  },
+  "Knitting & Crochet > Yarn": {
+   "products": 6,
+   "skus": 21,
+   "unkeyworded": 3
+  },
+  "Knitting & Crochet > Yarn > 4 Ply Yarn": {
+   "products": 6,
+   "skus": 38,
+   "unkeyworded": 27
+  },
+  "Knitting & Crochet > Yarn > Acrylic Yarn": {
+   "products": 22,
+   "skus": 128,
+   "unkeyworded": 62
+  },
+  "Knitting & Crochet > Yarn > Aran Yarn": {
+   "products": 18,
+   "skus": 103,
+   "unkeyworded": 95
+  },
+  "Knitting & Crochet > Yarn > Baby Yarn": {
+   "products": 9,
+   "skus": 72,
+   "unkeyworded": 52
+  },
+  "Knitting & Crochet > Yarn > Chunky Yarn": {
+   "products": 28,
+   "skus": 248,
+   "unkeyworded": 218
+  },
+  "Knitting & Crochet > Yarn > Cotton Yarn": {
+   "products": 6,
+   "skus": 81,
+   "unkeyworded": 50
+  },
+  "Knitting & Crochet > Yarn > Crochet Yarn": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Knitting & Crochet > Yarn > Double Knit Yarn": {
+   "products": 54,
+   "skus": 439,
+   "unkeyworded": 293
+  },
+  "Knitting & Crochet > Yarn > Super Chunky Yarn": {
+   "products": 15,
+   "skus": 84,
+   "unkeyworded": 58
+  },
+  "Knitting & Crochet > Yarn > Wool": {
+   "products": 8,
+   "skus": 39,
+   "unkeyworded": 34
+  },
+  "Offers > Subscriptions > Hobbycraft Plus": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Papercraft > Card Making > Card Blanks & Envelopes": {
+   "products": 13,
+   "skus": 42,
+   "unkeyworded": 4
+  },
+  "Papercraft > Card Making > Card Blanks & Envelopes > Aperture Cards": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 1
+  },
+  "Papercraft > Card Making > Card Blanks & Envelopes > Plain Cards": {
+   "products": 36,
+   "skus": 41,
+   "unkeyworded": 28
+  },
+  "Papercraft > Card Making > Card Making Kits": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Papercraft > Card Making > Envelopes & Card Bags": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 8
+  },
+  "Papercraft > Die Cutting": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Papercraft > Die Cutting > Die Cutting Accessories": {
+   "products": 17,
+   "skus": 17,
+   "unkeyworded": 7
+  },
+  "Papercraft > Die Cutting > Die Cutting Dies": {
+   "products": 47,
+   "skus": 75,
+   "unkeyworded": 69
+  },
+  "Papercraft > Die Cutting > Die Cutting Dies > Dies & Stamp Sets": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Papercraft > Die Cutting > Die Cutting Machines": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 4
+  },
+  "Papercraft > Die Cutting > Embossing Folders": {
+   "products": 5,
+   "skus": 6,
+   "unkeyworded": 4
+  },
+  "Papercraft > Foiling Machines & Accessories": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 8
+  },
+  "Papercraft > Paper & Cardstock": {
+   "products": 18,
+   "skus": 36,
+   "unkeyworded": 15
+  },
+  "Papercraft > Paper & Cardstock > By Colour > Black": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Papercraft > Paper & Cardstock > By Colour > White": {
+   "products": 7,
+   "skus": 11,
+   "unkeyworded": 10
+  },
+  "Papercraft > Paper & Cardstock > By Size > 12 x 12 Inches": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Papercraft > Paper & Cardstock > By Size > 6 x 6 Inches": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Papercraft > Paper & Cardstock > By Size > A4": {
+   "products": 43,
+   "skus": 50,
+   "unkeyworded": 37
+  },
+  "Papercraft > Paper & Cardstock > By Size > A5": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Papercraft > Paper & Cardstock > By Size > A6": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Papercraft > Paper & Cardstock > Foil Paper & Cardstock": {
+   "products": 3,
+   "skus": 6,
+   "unkeyworded": 6
+  },
+  "Papercraft > Paper & Cardstock > Glitter Paper & Cardstock": {
+   "products": 1,
+   "skus": 9,
+   "unkeyworded": 9
+  },
+  "Papercraft > Paper & Cardstock > Patterned Paper & Cardstock": {
+   "products": 10,
+   "skus": 19,
+   "unkeyworded": 17
+  },
+  "Papercraft > Paper & Cardstock > Plain Paper & Cardstock": {
+   "products": 6,
+   "skus": 12,
+   "unkeyworded": 12
+  },
+  "Papercraft > Paper & Cardstock > Tissue Paper": {
+   "products": 36,
+   "skus": 78,
+   "unkeyworded": 70
+  },
+  "Papercraft > Papercraft Embellishments > Buttons, Charms & Brads": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Papercraft > Papercraft Embellishments > Card Toppers": {
+   "products": 51,
+   "skus": 88,
+   "unkeyworded": 47
+  },
+  "Papercraft > Papercraft Embellishments > Gems": {
+   "products": 54,
+   "skus": 85,
+   "unkeyworded": 46
+  },
+  "Papercraft > Papercraft Embellishments > Gems > Loose Gems": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Papercraft > Papercraft Embellishments > Gems > Self Adhesive Gems": {
+   "products": 6,
+   "skus": 8,
+   "unkeyworded": 5
+  },
+  "Papercraft > Papercraft Embellishments > Glitter & Sequins": {
+   "products": 11,
+   "skus": 24,
+   "unkeyworded": 0
+  },
+  "Papercraft > Papercraft Embellishments > Letters & Numbers": {
+   "products": 25,
+   "skus": 30,
+   "unkeyworded": 26
+  },
+  "Papercraft > Papercraft Embellishments > Paper Flowers": {
+   "products": 33,
+   "skus": 43,
+   "unkeyworded": 2
+  },
+  "Papercraft > Papercraft Embellishments > Ribbons, Bows & Twine": {
+   "products": 12,
+   "skus": 17,
+   "unkeyworded": 9
+  },
+  "Papercraft > Papercraft Embellishments > Stickers": {
+   "products": 102,
+   "skus": 158,
+   "unkeyworded": 81
+  },
+  "Papercraft > Papercraft Embellishments > Washi Tape": {
+   "products": 4,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Papercraft > Papercraft Embellishments > Wooden Shapes & Pegs": {
+   "products": 24,
+   "skus": 32,
+   "unkeyworded": 15
+  },
+  "Papercraft > Papercraft Glue & Tapes": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 2
+  },
+  "Papercraft > Papercraft Tools": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 9
+  },
+  "Papercraft > Papercraft Tools > Craft Punches": {
+   "products": 20,
+   "skus": 22,
+   "unkeyworded": 18
+  },
+  "Papercraft > Papercraft Tools > Cutting & Scoring Mats": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Papercraft > Papercraft Tools > Scissors, Cutters & Trimmers": {
+   "products": 37,
+   "skus": 37,
+   "unkeyworded": 28
+  },
+  "Papercraft > Papercraft Tools > Scoring & Embossing Tools": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 2
+  },
+  "Papercraft > Papercraft Tools > Seal Stamps & Wax": {
+   "products": 7,
+   "skus": 12,
+   "unkeyworded": 10
+  },
+  "Papercraft > Quilling": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Papercraft > Scrapbooking > Scrapbooking Accessories": {
+   "products": 21,
+   "skus": 21,
+   "unkeyworded": 21
+  },
+  "Papercraft > Scrapbooking > Scrapbooks & Albums": {
+   "products": 29,
+   "skus": 43,
+   "unkeyworded": 31
+  },
+  "Papercraft > Stamping > Clear Stamps": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 8
+  },
+  "Papercraft > Stamping > Embossing Powders": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 0
+  },
+  "Papercraft > Stamping > Ink Pads": {
+   "products": 5,
+   "skus": 18,
+   "unkeyworded": 17
+  },
+  "Papercraft > Stamping > Rubber Stamps": {
+   "products": 31,
+   "skus": 38,
+   "unkeyworded": 25
+  },
+  "Papercraft > Stamping > Stamping Accessories": {
+   "products": 7,
+   "skus": 10,
+   "unkeyworded": 3
+  },
+  "Papercraft > Stamping > Stamping Stencils": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Autumn": {
+   "products": 23,
+   "skus": 30,
+   "unkeyworded": 2
+  },
+  "Party & Occasions > Autumn > Autumn Flowers": {
+   "products": 8,
+   "skus": 9,
+   "unkeyworded": 0
+  },
+  "Party & Occasions > Autumn > Autumn Home Décor": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 0
+  },
+  "Party & Occasions > Autumn > Autumn Wreath Making": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Party & Occasions > Balloons & Accessories": {
+   "products": 6,
+   "skus": 11,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Balloons & Accessories > Balloon Arches": {
+   "products": 4,
+   "skus": 12,
+   "unkeyworded": 8
+  },
+  "Party & Occasions > Balloons & Accessories > Balloon Pumps, Weights & Accessories": {
+   "products": 9,
+   "skus": 17,
+   "unkeyworded": 15
+  },
+  "Party & Occasions > Balloons & Accessories > Birthday Balloons": {
+   "products": 10,
+   "skus": 12,
+   "unkeyworded": 6
+  },
+  "Party & Occasions > Balloons & Accessories > Confetti Balloons": {
+   "products": 8,
+   "skus": 8,
+   "unkeyworded": 6
+  },
+  "Party & Occasions > Balloons & Accessories > Foil Balloons": {
+   "products": 29,
+   "skus": 31,
+   "unkeyworded": 20
+  },
+  "Party & Occasions > Balloons & Accessories > Helium Canisters": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Party & Occasions > Balloons & Accessories > Latex Balloons": {
+   "products": 12,
+   "skus": 34,
+   "unkeyworded": 19
+  },
+  "Party & Occasions > Balloons & Accessories > Letter Balloons": {
+   "products": 105,
+   "skus": 106,
+   "unkeyworded": 4
+  },
+  "Party & Occasions > Balloons & Accessories > Number Balloons": {
+   "products": 53,
+   "skus": 90,
+   "unkeyworded": 53
+  },
+  "Party & Occasions > Cosplay": {
+   "products": 4,
+   "skus": 6,
+   "unkeyworded": 3
+  },
+  "Party & Occasions > Crafting Occasions > Summer": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 0
+  },
+  "Party & Occasions > Crafting Occasions > Thank You Teacher": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Gift Cards": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Gift Wrap": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Party & Occasions > Gift Wrap > Gift Bags": {
+   "products": 36,
+   "skus": 41,
+   "unkeyworded": 37
+  },
+  "Party & Occasions > Gift Wrap > Gift Boxes": {
+   "products": 8,
+   "skus": 9,
+   "unkeyworded": 8
+  },
+  "Party & Occasions > Gift Wrap > Gift Tags": {
+   "products": 20,
+   "skus": 25,
+   "unkeyworded": 12
+  },
+  "Party & Occasions > Gift Wrap > Ribbon & Gift Bows": {
+   "products": 16,
+   "skus": 48,
+   "unkeyworded": 27
+  },
+  "Party & Occasions > Gift Wrap > Wrapping Paper": {
+   "products": 16,
+   "skus": 18,
+   "unkeyworded": 11
+  },
+  "Party & Occasions > Hamper Making": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Hamper Making > Hamper Accessories > Cellophane": {
+   "products": 6,
+   "skus": 6,
+   "unkeyworded": 3
+  },
+  "Party & Occasions > Hamper Making > Hamper Accessories > Shredded Paper": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Party & Occasions > Hamper Making > Hamper Baskets": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 6
+  },
+  "Party & Occasions > Party Supplies > Bunting": {
+   "products": 28,
+   "skus": 36,
+   "unkeyworded": 24
+  },
+  "Party & Occasions > Party Supplies > Party Bags & Fillers": {
+   "products": 27,
+   "skus": 28,
+   "unkeyworded": 13
+  },
+  "Party & Occasions > Party Supplies > Party Decorations": {
+   "products": 12,
+   "skus": 15,
+   "unkeyworded": 11
+  },
+  "Party & Occasions > Party Supplies > Party Tableware": {
+   "products": 3,
+   "skus": 6,
+   "unkeyworded": 2
+  },
+  "Party & Occasions > Party Supplies > Party Tableware > Napkins": {
+   "products": 16,
+   "skus": 24,
+   "unkeyworded": 22
+  },
+  "Party & Occasions > Party Supplies > Party Tableware > Paper Plates": {
+   "products": 18,
+   "skus": 23,
+   "unkeyworded": 21
+  },
+  "Party & Occasions > Party Supplies > Party Tableware > Party Cups & Straws": {
+   "products": 12,
+   "skus": 20,
+   "unkeyworded": 17
+  },
+  "Party & Occasions > Party Supplies > Party Tableware > Table Confetti": {
+   "products": 14,
+   "skus": 22,
+   "unkeyworded": 9
+  },
+  "Party & Occasions > Party Supplies > Party Tableware > Table Coverings": {
+   "products": 4,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Party & Occasions > Party Themes & Occasions > Baby Shower": {
+   "products": 23,
+   "skus": 25,
+   "unkeyworded": 22
+  },
+  "Party & Occasions > Party Themes & Occasions > Birthday Party": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Party & Occasions > Party Themes & Occasions > Pride": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Cross Stitch > Cross Stitch Fabric": {
+   "products": 22,
+   "skus": 26,
+   "unkeyworded": 17
+  },
+  "Sewing > Cross Stitch > Cross Stitch Kits": {
+   "products": 43,
+   "skus": 54,
+   "unkeyworded": 37
+  },
+  "Sewing > Embroidery": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Sewing > Embroidery > Embroidery Kits": {
+   "products": 25,
+   "skus": 41,
+   "unkeyworded": 31
+  },
+  "Sewing > Embroidery > Embroidery Threads": {
+   "products": 28,
+   "skus": 826,
+   "unkeyworded": 43
+  },
+  "Sewing > Embroidery > Hoops & Frames": {
+   "products": 26,
+   "skus": 26,
+   "unkeyworded": 10
+  },
+  "Sewing > Embroidery > Punch Needling": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Sewing > Embroidery > Tapestry Needles": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 0
+  },
+  "Sewing > Fabric": {
+   "products": 8,
+   "skus": 20,
+   "unkeyworded": 15
+  },
+  "Sewing > Fabric > Fabric Themes & Styles > Christmas Fabric": {
+   "products": 23,
+   "skus": 23,
+   "unkeyworded": 23
+  },
+  "Sewing > Fabric > Fabric Themes & Styles > Gingham Fabric": {
+   "products": 2,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Sewing > Fabric > Fabric Themes & Styles > Patterned Fabric": {
+   "products": 1,
+   "skus": 4,
+   "unkeyworded": 4
+  },
+  "Sewing > Fabric > Fabric Themes & Styles > Plain Fabric": {
+   "products": 16,
+   "skus": 78,
+   "unkeyworded": 67
+  },
+  "Sewing > Fabric > Fabric by Material > Cotton Fabric": {
+   "products": 61,
+   "skus": 300,
+   "unkeyworded": 254
+  },
+  "Sewing > Fabric > Fabric by Material > Faux Fur": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Sewing > Fabric > Fabric by Material > Hessian": {
+   "products": 3,
+   "skus": 7,
+   "unkeyworded": 5
+  },
+  "Sewing > Fabric > Fabric by Material > Polyester Fabric": {
+   "products": 92,
+   "skus": 292,
+   "unkeyworded": 235
+  },
+  "Sewing > Fabric > Fabric by Material > Stretch Fabric": {
+   "products": 1,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Sewing > Fabric > Fabric by the Metre": {
+   "products": 25,
+   "skus": 71,
+   "unkeyworded": 57
+  },
+  "Sewing > Fabric > Fat Quarters": {
+   "products": 20,
+   "skus": 30,
+   "unkeyworded": 20
+  },
+  "Sewing > Fabric > Fat Quarters > Fat Quarter Bundles": {
+   "products": 49,
+   "skus": 80,
+   "unkeyworded": 61
+  },
+  "Sewing > Fabric > Fat Quarters > Single Fat Quarters": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Fabric Dyes & Paints": {
+   "products": 14,
+   "skus": 35,
+   "unkeyworded": 4
+  },
+  "Sewing > Fabric Dyes & Paints > Fabric Paints & Pens": {
+   "products": 76,
+   "skus": 82,
+   "unkeyworded": 66
+  },
+  "Sewing > Fabric Dyes & Paints > Tie-Dye": {
+   "products": 2,
+   "skus": 7,
+   "unkeyworded": 3
+  },
+  "Sewing > Featured in Sewing > Sewing Books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Haberdashery": {
+   "products": 8,
+   "skus": 41,
+   "unkeyworded": 37
+  },
+  "Sewing > Haberdashery > Bias Binding & Edging": {
+   "products": 87,
+   "skus": 179,
+   "unkeyworded": 38
+  },
+  "Sewing > Haberdashery > Buttons": {
+   "products": 241,
+   "skus": 537,
+   "unkeyworded": 6
+  },
+  "Sewing > Haberdashery > Fabric Glue": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Sewing > Haberdashery > Fabric Scissors & Shears": {
+   "products": 43,
+   "skus": 46,
+   "unkeyworded": 10
+  },
+  "Sewing > Haberdashery > Hand Sewing Needles": {
+   "products": 50,
+   "skus": 50,
+   "unkeyworded": 1
+  },
+  "Sewing > Haberdashery > Hooks & Fastenings": {
+   "products": 41,
+   "skus": 53,
+   "unkeyworded": 26
+  },
+  "Sewing > Haberdashery > Interfacings": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 7
+  },
+  "Sewing > Haberdashery > Repairs & Alterations": {
+   "products": 39,
+   "skus": 45,
+   "unkeyworded": 0
+  },
+  "Sewing > Haberdashery > Ribbon": {
+   "products": 91,
+   "skus": 335,
+   "unkeyworded": 47
+  },
+  "Sewing > Haberdashery > Ribbon > Grosgrain Ribbon": {
+   "products": 6,
+   "skus": 16,
+   "unkeyworded": 0
+  },
+  "Sewing > Haberdashery > Ribbon > Hessian Ribbon": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Sewing > Haberdashery > Ribbon > Lace Ribbon": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Sewing > Haberdashery > Ribbon > Organza Ribbon": {
+   "products": 2,
+   "skus": 27,
+   "unkeyworded": 26
+  },
+  "Sewing > Haberdashery > Ribbon > Ribbon by Colour": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Haberdashery > Ribbon > Satin Ribbon": {
+   "products": 23,
+   "skus": 276,
+   "unkeyworded": 255
+  },
+  "Sewing > Haberdashery > Sequins": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Sewing > Haberdashery > Sewing Patches": {
+   "products": 81,
+   "skus": 92,
+   "unkeyworded": 48
+  },
+  "Sewing > Haberdashery > Sewing Pins & Clips": {
+   "products": 24,
+   "skus": 26,
+   "unkeyworded": 4
+  },
+  "Sewing > Haberdashery > Sewing Thread": {
+   "products": 32,
+   "skus": 663,
+   "unkeyworded": 117
+  },
+  "Sewing > Haberdashery > Sewing Tools & Accessories": {
+   "products": 84,
+   "skus": 90,
+   "unkeyworded": 29
+  },
+  "Sewing > Haberdashery > Tapes, Cord & Elastics": {
+   "products": 21,
+   "skus": 65,
+   "unkeyworded": 6
+  },
+  "Sewing > Haberdashery > Trims": {
+   "products": 3,
+   "skus": 21,
+   "unkeyworded": 17
+  },
+  "Sewing > Haberdashery > Zips": {
+   "products": 44,
+   "skus": 294,
+   "unkeyworded": 276
+  },
+  "Sewing > Needle Felting": {
+   "products": 2,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Sewing > Needle Felting > Needle Felting Kits": {
+   "products": 19,
+   "skus": 19,
+   "unkeyworded": 15
+  },
+  "Sewing > Needle Felting > Needle Felting Tools": {
+   "products": 12,
+   "skus": 12,
+   "unkeyworded": 5
+  },
+  "Sewing > Needle Felting > Wool Roving": {
+   "products": 2,
+   "skus": 22,
+   "unkeyworded": 6
+  },
+  "Sewing > Quilting > Cushion Making": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Sewing > Quilting > Quilting Fabric": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 5
+  },
+  "Sewing > Quilting > Quilting Tools & Accessories": {
+   "products": 140,
+   "skus": 147,
+   "unkeyworded": 2
+  },
+  "Sewing > Quilting > Quilting Wadding & Batting": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 10
+  },
+  "Sewing > Quilting > Soft Toy Making": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 1
+  },
+  "Sewing > Sewing Kits": {
+   "products": 7,
+   "skus": 8,
+   "unkeyworded": 4
+  },
+  "Sewing > Sewing Machine Accessories": {
+   "products": 26,
+   "skus": 26,
+   "unkeyworded": 9
+  },
+  "Sewing > Sewing Machine Accessories > Bobbins": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Sewing > Sewing Machine Accessories > Sewing Machine Feet": {
+   "products": 22,
+   "skus": 22,
+   "unkeyworded": 16
+  },
+  "Sewing > Sewing Machine Accessories > Sewing Machine Needles": {
+   "products": 34,
+   "skus": 34,
+   "unkeyworded": 11
+  },
+  "Sewing > Sewing Machine Accessories > Sewing Machine Storage": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Sewing > Sewing Machine Accessories > Thread": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Sewing Machines": {
+   "products": 19,
+   "skus": 19,
+   "unkeyworded": 3
+  },
+  "Sewing > Sewing Machines > Computerised Sewing Machines": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 6
+  },
+  "Sewing > Sewing Machines > Embroidery Machines": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Sewing > Sewing Machines > Heavy Duty Sewing Machines": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Sewing > Sewing Machines > Mechanical Sewing Machines": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Sewing > Sewing Machines > Overlockers": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Sewing > Sewing Patterns": {
+   "products": 474,
+   "skus": 482,
+   "unkeyworded": 14
+  },
+  "Sewing > Sewing Patterns > Accessories": {
+   "products": 16,
+   "skus": 16,
+   "unkeyworded": 5
+  },
+  "Sewing > Sewing Patterns > Home Décor": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Sewing > Sewing Patterns > Kids' Sewing Patterns": {
+   "products": 39,
+   "skus": 40,
+   "unkeyworded": 23
+  },
+  "Sewing > Sewing Patterns > Menswear": {
+   "products": 16,
+   "skus": 17,
+   "unkeyworded": 9
+  },
+  "Sewing > Sewing Patterns > Womenswear": {
+   "products": 47,
+   "skus": 48,
+   "unkeyworded": 20
+  },
+  "Sewing > Sewing Patterns > Womenswear > Dresses": {
+   "products": 207,
+   "skus": 209,
+   "unkeyworded": 154
+  },
+  "Sewing > Sewing Patterns > Womenswear > Jackets & Coats": {
+   "products": 57,
+   "skus": 58,
+   "unkeyworded": 51
+  },
+  "Sewing > Sewing Patterns > Womenswear > Night, Lounge & Sportswear": {
+   "products": 11,
+   "skus": 11,
+   "unkeyworded": 6
+  },
+  "Sewing > Sewing Patterns > Womenswear > Skirts": {
+   "products": 44,
+   "skus": 44,
+   "unkeyworded": 38
+  },
+  "Sewing > Sewing Patterns > Womenswear > Tops & Blouses": {
+   "products": 124,
+   "skus": 124,
+   "unkeyworded": 100
+  },
+  "Sewing > Sewing Patterns > Womenswear > Trousers & Shorts": {
+   "products": 26,
+   "skus": 26,
+   "unkeyworded": 21
+  },
+  "Sewing > Sewing Storage": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Sewing > Sewing Storage > Plastic Boxes": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 2
+  },
+  "Sewing > Sewing Storage > Sewing Bags": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  },
+  "Sewing > Sewing Storage > Sewing Boxes": {
+   "products": 19,
+   "skus": 20,
+   "unkeyworded": 1
+  },
+  "Sewing > Sewing Storage > Thread Storage": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Sewing > Soft Toy Making": {
+   "products": 21,
+   "skus": 21,
+   "unkeyworded": 18
+  },
+  "Wedding > DIY Wedding Favours": {
+   "products": 4,
+   "skus": 4,
+   "unkeyworded": 0
+  },
+  "Wedding > Dessert Table Decorations": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Wedding > Hen Party": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Wedding > Hen Party > Hen Party Decorations": {
+   "products": 7,
+   "skus": 7,
+   "unkeyworded": 5
+  },
+  "Wedding > Hen Party > Hen Party Dress-Up": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Confetti": {
+   "products": 10,
+   "skus": 12,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Flowers": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 0
+  },
+  "Wedding > Wedding Stationery": {
+   "products": 9,
+   "skus": 9,
+   "unkeyworded": 4
+  },
+  "Wedding > Wedding Stationery > Guest Books & Card Boxes": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Stationery > Ribbon": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Wedding > Wedding Stationery > Save The Date Cards": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Wedding > Wedding Stationery > Wedding Invitations": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 1
+  },
+  "Wedding > Wedding Stationery > Wedding Planners": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 1
+  },
+  "Wedding > Wedding Table Decorations": {
+   "products": 16,
+   "skus": 17,
+   "unkeyworded": 10
+  },
+  "Wedding > Wedding Table Decorations > Place Cards & Holders": {
+   "products": 12,
+   "skus": 13,
+   "unkeyworded": 3
+  },
+  "Wedding > Wedding Table Decorations > Table Numbers & Holders": {
+   "products": 10,
+   "skus": 13,
+   "unkeyworded": 4
+  },
+  "Wedding > Wedding Table Decorations > Table Runners": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 0
+  },
+  "Wedding > Wedding Table Decorations > Tea Lights & Candle Holders": {
+   "products": 20,
+   "skus": 21,
+   "unkeyworded": 9
+  },
+  "Wedding > Wedding Table Decorations > Vases, Bottles & Jars": {
+   "products": 10,
+   "skus": 10,
+   "unkeyworded": 3
+  },
+  "Wedding > Wedding Table Decorations > Wooden Slices": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 5
+  },
+  "Wedding > Wedding Venue Decorations": {
+   "products": 5,
+   "skus": 5,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Venue Decorations > Hanging Decorations": {
+   "products": 13,
+   "skus": 13,
+   "unkeyworded": 8
+  },
+  "Wedding > Wedding Venue Decorations > Outdoor Decorations": {
+   "products": 2,
+   "skus": 2,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Venue Decorations > String Lights & Candles": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 3
+  },
+  "Wedding > Wedding Venue Decorations > Wedding Arches": {
+   "products": 3,
+   "skus": 3,
+   "unkeyworded": 2
+  },
+  "Wedding > Wedding Venue Decorations > Wedding Photo Booth": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 1
+  },
+  "Wedding > Wedding Venue Decorations > Wedding Signs": {
+   "products": 15,
+   "skus": 15,
+   "unkeyworded": 4
+  },
+  "knitting & crochet > accessories & tools > crochet books": {
+   "products": 1,
+   "skus": 1,
+   "unkeyworded": 0
+  }
+ }
+}

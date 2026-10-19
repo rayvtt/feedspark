@@ -16516,6 +16516,18 @@
       "file": "tools/qa_gate.sh",
       "pattern": "node tools/test_qamoved.mjs",
       "pr": 0
+    },
+    {
+      "name": "KWCal: Hobbycraft's ten generic craft themes are seeded, two a work month",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Hobbycraft:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Hobbycraft's lanes are its own words (Kids is a second shop)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Hobbycraft:{campaign:'Seasonal focus'",
+      "pr": 0
     }
   ]
 }
