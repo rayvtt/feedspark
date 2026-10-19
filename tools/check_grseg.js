@@ -94,6 +94,12 @@ const XML = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" v
   await page.waitForTimeout(600);
   const txt = (sel) => page.evaluate((s) => { const e = document.querySelector(s); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; }, sel);
   const num = async (sel) => parseFloat(await txt(sel));
+  const rowsOf = () => page.evaluate(() => Array.from(document.querySelectorAll('#sg-msp .sg-msr:not([hidden])')).map((r) => ({ v: r.querySelector('.sg-msv').textContent, n: r.querySelector('.sg-msn').textContent, box: !!r.querySelector('input[type=checkbox]'), on: r.querySelector('input').checked })));
+  const tick = async (v) => {
+    if (await page.$eval('#sg-msp', (e) => e.hidden)) await page.click('#sg-msb');
+    await page.click('#sg-msp [data-sgck="' + v.replace(/"/g, '\\"') + '"]');
+    await page.waitForTimeout(150);
+  };
 
   console.log('-- before the feed is read');
   ok('the section is on the scorecard and says what it does', /Dissect the score by any group of products/.test(await txt('#sg-tier')) && /Read the feed/.test(await txt('#sg-tier')));
@@ -108,18 +114,34 @@ const XML = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" v
 
   console.log('-- a filter: product type tier 2 = Mens > Shirts');
   await page.selectOption('#sg-dim', 'pt2');
-  const opts = await page.evaluate(() => Array.from(document.querySelectorAll('#sg-val option')).map((o) => o.textContent));
-  ok('the value list carries both product types with their counts', opts.some((o) => /Mens > Shirts · 20/.test(o)) && opts.some((o) => /Womens > Dresses · 20/.test(o)), opts);
-  await page.selectOption('#sg-val', 'Mens > Shirts');
+  ok('the value picker is a button that opens a list, closed until asked', !!(await page.$('#sg-msb')) && (await page.$eval('#sg-msp', (e) => e.hidden)) === true && /Pick values/.test(await txt('#sg-msb')));
+  await page.click('#sg-msb');
+  const opts = await rowsOf();
+  ok('the list carries a checkbox in front of each value, with its count', opts.length === 2 && opts.every((o) => o.box) && opts.some((o) => o.v === 'Mens > Shirts' && o.n === '20') && opts.some((o) => o.v === 'Womens > Dresses' && o.n === '20'), opts);
+  await tick('Mens > Shirts');
+  ok('one tick applies at once and the list stays open, the ticked value first', (await page.$eval('#sg-msp', (e) => e.hidden)) === false && (await rowsOf())[0].v === 'Mens > Shirts' && (await rowsOf())[0].on === true);
+  ok('the button names the one value picked', /Mens > Shirts/.test(await txt('#sg-msb')), await txt('#sg-msb'));
   ok('the filter shows as a chip', /Mens > Shirts/.test(await txt('#sg-tier .sg-chip')));
   ok('the group scores what the same 20 rows score in node', Math.abs((await num('#sg-tier .sg-score')) - MEN.s) < 0.05, { page: await num('#sg-tier .sg-score'), node: MEN.s });
   ok('…named as 20 of 40 products, against the whole feed', /20 of 40 products/.test(await txt('#sg-tier .sg-vs')) && new RegExp('whole feed ' + ALL.s).test(await txt('#sg-tier .sg-vs')), await txt('#sg-tier .sg-vs'));
   const fields = await page.evaluate(() => Array.from(document.querySelectorAll('#sg-tier .sg-card .sg-tr:not(.sg-th) .sg-f')).map((e) => e.textContent));
   ok('the fields costing the group points lead with the ones the shirts lack (colour, gtin)', fields.slice(0, 3).some((f) => /color|gtin/.test(f)), fields);
+  console.log('-- several values of one field');
+  await tick('Womens > Dresses');
+  ok('a second tick ORs within the field: both product types are all 40 products, scoring the whole feed', /40 of 40 products/.test(await txt('#sg-tier .sg-vs')) && Math.abs((await num('#sg-tier .sg-score')) - ALL.s) < 0.05, await txt('#sg-tier .sg-vs'));
+  ok('…the button counts them and both show as chips', /2 values picked/.test(await txt('#sg-msb')) && (await page.$$('#sg-tier .sg-chip')).length === 2);
+  await tick('Womens > Dresses');
+  ok('un-ticking takes it off again', /20 of 40 products/.test(await txt('#sg-tier .sg-vs')) && (await page.$$('#sg-tier .sg-chip')).length === 1);
+  await page.keyboard.press('Escape');
+  ok('Esc closes the list', (await page.$eval('#sg-msp', (e) => e.hidden)) === true);
+  await page.click('#sg-msb'); await page.click('#sg-tier .sg-card', { position: { x: 5, y: 5 } });
+  ok('a click outside closes it', (await page.$eval('#sg-msp', (e) => e.hidden)) === true);
   ok('a second filter field ANDs: + custom label 0 = Best Sellers leaves nothing (no shirt is a best seller)', await (async () => {
     await page.selectOption('#sg-dim', 'custom_label_0');
-    const o = await page.evaluate(() => Array.from(document.querySelectorAll('#sg-val option')).map((x) => x.textContent));
-    return !o.some((x) => /Best Sellers/.test(x)) && o.some((x) => /Core · 20/.test(x));   // the list counts what the other filters leave
+    await page.click('#sg-msb');
+    const o = await rowsOf();
+    await page.keyboard.press('Escape');
+    return !o.some((x) => /Best Sellers/.test(x.v)) && o.some((x) => x.v === 'Core' && x.n === '20');   // the list counts what the other filters leave
   })());
 
   console.log('-- split by');
@@ -130,7 +152,7 @@ const XML = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" v
   await page.click('#sg-tier .sg-sp .sg-row[data-sgv="Womens > Dresses"]');
   ok('clicking a row narrows the group to it', /Womens > Dresses/.test(await txt('#sg-tier .sg-chip')) && Math.abs((await num('#sg-tier .sg-score')) - WOM.s) < 0.05);
   await page.click('#sg-tier .sg-chip button');
-  await page.selectOption('#sg-dim', 'pt2'); await page.selectOption('#sg-val', 'Mens > Shirts');
+  await page.selectOption('#sg-dim', 'pt2'); await tick('Mens > Shirts'); await page.keyboard.press('Escape');
 
   if (process.env.GRSEG_SHOT) await (await page.$('#sg-tier')).screenshot({ path: process.env.GRSEG_SHOT + '_module.png' });
   console.log('-- ▶ Score the scorecard on this group');

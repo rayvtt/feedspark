@@ -1014,6 +1014,28 @@ window.addEventListener('load',restore);
   #sg-tier .sg-allp{font-size:12.5px;font-weight:700}
   #sg-tier .sg-add{display:inline-flex;gap:6px;margin-left:auto;flex-wrap:wrap}
   #sg-tier select{font:inherit;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper,#fff);color:inherit;max-width:260px}
+  #sg-tier .sg-ms{position:relative;display:inline-block}
+  #sg-tier .sg-msb{font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;justify-content:space-between;min-width:200px;max-width:260px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper,#fff);color:inherit;cursor:pointer;text-align:left}
+  #sg-tier .sg-msb.on{border-color:var(--orange-deep);font-weight:700}
+  #sg-tier .sg-msb[aria-expanded=true]{outline:2px solid var(--orange);outline-offset:1px}
+  #sg-tier .sg-msl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #sg-tier .sg-msp{position:absolute;right:0;top:calc(100% + 4px);z-index:40;width:340px;max-width:calc(100vw - 32px);background:var(--paper,#fff);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.16);padding:8px;display:flex;flex-direction:column;gap:6px}
+  #sg-tier .sg-msp[hidden]{display:none}
+  #sg-tier .sg-msq{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--paper,#fff);color:inherit;width:100%;box-sizing:border-box}
+  #sg-tier .sg-msa{display:flex;gap:6px;align-items:center;font-size:11.5px}
+  #sg-tier .sg-msa button{font:inherit;font-size:11.5px;border:0;background:none;color:var(--orange-deep);font-weight:700;cursor:pointer;padding:2px 4px}
+  #sg-tier .sg-msc{margin-left:auto;color:var(--muted)}
+  #sg-tier .sg-msls{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px 0}
+  #sg-tier .sg-msr{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;font-size:12.5px;cursor:pointer}
+  #sg-tier .sg-msr[hidden]{display:none}
+  #sg-tier .sg-msr:hover{background:var(--wash,#F7F7F5)}
+  #sg-tier .sg-msr.on{font-weight:700}
+  #sg-tier .sg-msr input{margin:0;width:15px;height:15px;accent-color:var(--orange-deep);cursor:pointer}
+  #sg-tier .sg-msv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  #sg-tier .sg-msn{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11.5px}
+  #sg-tier .sg-mse{font-size:12px;color:var(--muted);padding:6px}
+  #sg-tier .sg-mse[hidden]{display:none}
+  #sg-tier .sg-msf{display:flex;justify-content:flex-end}
   #sg-tier .sg-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--wash,#F7F7F5)}
   #sg-tier .sg-hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
   #sg-tier .sg-vs{font-size:12px;color:var(--ink-2)}
@@ -1057,7 +1079,7 @@ window.addEventListener('load',restore);
   /* group mode: the actions that write are the catalogue's — never offered over a group's numbers */
   #det-panel.grp-on #det-ack,#det-panel.grp-on #det-scan,#det-panel.grp-on #det-pdp,#det-panel.grp-on #pdp-last,
   #det-panel.grp-on .at-act,#det-panel.grp-on .qz-act,#det-panel.grp-on #qz-run,#det-panel.grp-on .qz-na{display:none!important}
-  @media (max-width:760px){#sg-tier .sg-add{margin-left:0}#sg-tier .sg-tbl{overflow-x:auto}#sg-tier .sg-tr{min-width:560px}}
+  @media (max-width:760px){#sg-tier .sg-add{margin-left:0}#sg-tier .sg-msp{position:fixed;left:16px;right:16px;top:auto;bottom:16px;width:auto;max-width:none}#sg-tier .sg-msb{min-width:0;max-width:none;flex:1}#sg-tier .sg-tbl{overflow-x:auto}#sg-tier .sg-tr{min-width:560px}}
   body.demo .ap-ctl,body.demo .ap-add,body.demo #ap-reset,body.demo .ap-rem,body.demo .ap-tag{display:none!important}
   #ap-tier .ap-tk{background:var(--paper)}
   #ap-tier .ap-lh .ct{background:var(--paper)}
@@ -4207,14 +4229,34 @@ window.addEventListener('load',restore);
     var cnt = ad.vals.map(function () { return 0; }), oi = segFsig(others) === '[]' ? null : segMask(st, others);
     if (oi) oi.forEach(function (i) { cnt[ad.codes[i]]++; }); else ad.cnt.forEach(function (c, i) { cnt[i] = c; });
     var picked = f[addDim] || [];
-    var vorder = ad.vals.map(function (v, i) { return i; }).filter(function (i) { return cnt[i] > 0 && picked.indexOf(ad.vals[i]) < 0; })
-      .sort(function (a, b) { return cnt[b] - cnt[a]; }).slice(0, 300);
-    var vsel = '<option value="">Pick a value…</option>' + vorder.map(function (i) {
-      return '<option value="' + esc(ad.vals[i]) + '">' + esc(ad.vals[i]) + ' · ' + fmt(cnt[i]) + '</option>';
+    // CHECKBOXES IN FRONT OF THE VALUES (Ray, 19 Oct 2026: "the drop-down pick value, have check boxes in front of the
+    // values … select either multiple or just one value"): a button opening a list — the values this field takes, each
+    // with a checkbox and the products it would leave (counted over the OTHER filters), the ticked ones first. A tick
+    // applies at once and the list stays open, so one value or several are picked the same way. Search when long.
+    var vorder = ad.vals.map(function (v, i) { return i; }).filter(function (i) { return cnt[i] > 0 || picked.indexOf(ad.vals[i]) >= 0; })
+      .sort(function (a, b) {
+        var pa = picked.indexOf(ad.vals[a]) >= 0, pb = picked.indexOf(ad.vals[b]) >= 0;
+        return pa !== pb ? (pa ? -1 : 1) : cnt[b] - cnt[a];
+      });
+    var vmore = Math.max(0, vorder.length - 300); vorder = vorder.slice(0, 300);
+    var msLbl = !picked.length ? 'Pick values…' : (picked.length === 1 ? picked[0] : picked.length + ' values picked');
+    var xo = SEGX[k] || {};
+    var mslist = vorder.map(function (i) {
+      var on = picked.indexOf(ad.vals[i]) >= 0;
+      return '<label class="sg-msr' + (on ? ' on' : '') + '" data-sgq="' + esc(ad.vals[i].toLowerCase()) + '"><input type="checkbox" data-sgck="' + esc(ad.vals[i]) + '"' + (on ? ' checked' : '') + '>' +
+        '<span class="sg-msv" title="' + esc(ad.vals[i]) + '">' + esc(ad.vals[i]) + '</span><span class="sg-msn">' + fmt(cnt[i]) + '</span></label>';
     }).join('');
+    var vsel = '<span class="sg-ms" id="sg-ms"><button type="button" class="sg-msb' + (picked.length ? ' on' : '') + '" id="sg-msb" aria-haspopup="listbox" aria-expanded="' + (xo.open ? 'true' : 'false') + '" title="' + esc(picked.join(', ') || 'Tick one value or several') + '">' +
+      '<span class="sg-msl">' + esc(msLbl) + '</span><span aria-hidden="true">▾</span></button>' +
+      '<div class="sg-msp" id="sg-msp"' + (xo.open ? '' : ' hidden') + '>' +
+      (vorder.length > 8 ? '<input type="search" class="sg-msq" id="sg-msq" placeholder="Search ' + esc(ad.n) + '…" aria-label="Search values" value="' + esc(xo.q || '') + '">' : '') +
+      '<div class="sg-msa"><button type="button" data-sgms="all">Tick all shown</button><button type="button" data-sgms="none">Untick all</button><span class="sg-msc">' + fmt(picked.length) + ' ticked</span></div>' +
+      '<div class="sg-msls" id="sg-msls" tabindex="-1" role="listbox" aria-multiselectable="true" aria-label="' + esc(ad.n) + ' values">' + (mslist || '<span class="sg-mse">No value left by the other filters.</span>') +
+      '<span class="sg-mse" id="sg-mse" hidden>No value matches.</span>' + (vmore ? '<span class="sg-mse">+' + fmt(vmore) + ' smaller values — search to find one</span>' : '') + '</div>' +
+      '<div class="sg-msf"><button type="button" class="btn" data-sgms="done">Done</button></div></div></span>';
     h += '<div class="sg-bar"><span class="sg-lbl">Group</span>' + (chips || '<span class="sg-allp">All products</span>') +
       '<span class="sg-add"><select id="sg-dim" data-no-keep aria-label="Field to filter by">' + dsel + '</select>' +
-      '<select id="sg-val" data-no-keep aria-label="Value to filter by">' + vsel + '</select></span>' +
+      vsel + '</span>' +
       (chips ? '<button class="btn" id="sg-clear">Clear</button>' : '') + '</div>';
     // ---- the group's own score
     var base = grp.score, d0 = grp.score != null && all.score != null ? Math.round((grp.score - all.score) * 10) / 10 : null;
@@ -4292,11 +4334,58 @@ window.addEventListener('load',restore);
     var run = $('sg-run'); if (run) run.onclick = function () { segRead(k); };
     var st = SEG[k]; if (!st || st.st !== 'ready') return;
     var f = SEGF[k] || (SEGF[k] = {}), x = SEGX[k] || (SEGX[k] = {});
-    var dim = $('sg-dim'); if (dim) dim.onchange = function () { x.dim = dim.value; segRedraw(k); };
-    var val = $('sg-val'); if (val) val.onchange = function () {
-      if (!val.value) return;
-      var dk = dim.value; (f[dk] || (f[dk] = [])).push(val.value); x.dim = dk; segRedraw(k);
+    var dim = $('sg-dim'); if (dim) dim.onchange = function () { x.dim = dim.value; x.open = false; x.q = ''; x.scroll = 0; segRedraw(k); };
+    // the value list: a tick applies at once and re-draws with the list kept open, its search and scroll put back
+    var msp = $('sg-msp'), msb = $('sg-msb'), msq = $('sg-msq'), msls = $('sg-msls');
+    var msFilter = function () {
+      if (!msls) return;
+      var q = String((msq && msq.value) || '').trim().toLowerCase(), shown = 0;
+      Array.prototype.forEach.call(msls.querySelectorAll('.sg-msr'), function (r) { var hit = !q || r.getAttribute('data-sgq').indexOf(q) >= 0; r.hidden = !hit; if (hit) shown++; });
+      var e = $('sg-mse'); if (e) e.hidden = !q || shown > 0;
     };
+    var msOpen = function (on) {
+      x.open = !!on; if (!msp) return;
+      msp.hidden = !on; msb.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (on) {
+        msFilter(); if (x.scroll && msls) msls.scrollTop = x.scroll;
+        var fc = x.foc != null && msls ? Array.prototype.filter.call(msls.querySelectorAll('[data-sgck]'), function (c) { return c.getAttribute('data-sgck') === x.foc; })[0] : null;
+        x.foc = null;
+        if (fc) fc.focus({ preventScroll: true }); else if (msq) msq.focus(); else if (msls) msls.focus();
+      }
+      else { x.q = ''; x.scroll = 0; if (msq) msq.value = ''; }
+    };
+    var msSet = function (vals) { x.dim = dim.value; x.scroll = msls ? msls.scrollTop : 0; x.open = true; if (vals.length) f[dim.value] = vals; else delete f[dim.value]; segRedraw(k); };
+    if (msb) msb.onclick = function () { msOpen(msp.hidden); };
+    if (msq) msq.oninput = function () { x.q = msq.value; msFilter(); };
+    if (msp) {
+      msp.onchange = function (ev) {
+        var c = ev.target.closest('[data-sgck]'); if (!c) return;
+        var v = c.getAttribute('data-sgck'), cur = (f[dim.value] || []).slice();
+        x.foc = v;   // the box just ticked keeps the focus through the re-draw, so the keyboard carries on from it
+        msSet(c.checked ? cur.concat(cur.indexOf(v) < 0 ? [v] : []) : cur.filter(function (y) { return y !== v; }));
+      };
+      msp.onclick = function (ev) {
+        var b = ev.target.closest('[data-sgms]'); if (!b) return;
+        var a = b.getAttribute('data-sgms');
+        if (a === 'done') { msOpen(false); msb.focus(); return; }
+        if (a === 'none') { msSet([]); return; }
+        var cur = (f[dim.value] || []).slice();
+        Array.prototype.forEach.call(msls.querySelectorAll('.sg-msr:not([hidden]) [data-sgck]'), function (c) { var v = c.getAttribute('data-sgck'); if (cur.indexOf(v) < 0) cur.push(v); });
+        msSet(cur);
+      };
+      if (x.open) msOpen(true);
+    }
+    if (!document.__sgmsOut) {   // a click outside the open list closes it — one listener for the page's life
+      document.__sgmsOut = true;
+      var msShut = function (refocus) {
+        var p = document.getElementById('sg-msp'); if (!p || p.hidden) return false;
+        var b = document.getElementById('sg-msb'); p.hidden = true; if (b) { b.setAttribute('aria-expanded', 'false'); if (refocus) b.focus(); }
+        Object.keys(SEGX).forEach(function (kk) { if (SEGX[kk]) { SEGX[kk].open = false; SEGX[kk].q = ''; SEGX[kk].scroll = 0; } });
+        return true;
+      };
+      document.addEventListener('mousedown', function (ev) { if (!ev.target.closest('#sg-ms')) msShut(false); });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && msShut(true)) ev.stopPropagation(); }, true);
+    }
     var cl = $('sg-clear'); if (cl) cl.onclick = function () { SEGF[k] = {}; segRedraw(k); };
     var al = $('sg-all'); if (al) al.onclick = function () { x.all = !x.all; segRedraw(k); };
     var sp = $('sg-sp'); if (sp) sp.onchange = function () { SEGU.split = sp.value; segSave(); segRedraw(k); };
