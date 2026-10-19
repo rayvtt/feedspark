@@ -313,12 +313,20 @@
         // stOf still falls back to) — reading b.stage badged every row "undefined" once before
         var b=hit.b, st=String(b.status||b.st||'intake');
         var ord=STAGE_ORDER.indexOf(st);
-        rows.push({ client:brand, id:e.id, name:e.name, mkt:evMkt(e,opts.mkt||'gb'),
+        // HOW MANY PRODUCTS it covers, read by the SAME two readers the to-brief half uses
+        // (Ray, 15 Oct 2026: "please also keep the number of products, along with status and who
+        // is handling it") - so a moment reads the same figure before and after it was briefed,
+        // and an unsynced product-type index still reads as scope-set-not-measured, never 0.
+        var mkt=evMkt(e,opts.mkt||'gb');
+        var v=volOf(store,brand,e,mkt);
+        rows.push({ client:brand, id:e.id, name:e.name, mkt:mkt,
           live:e.date, liveLbl:dLbl(e), briefBy:schedDate(e).toISOString().slice(0,10), briefLbl:bLbl(e),
           ticket:b.id, task:b.task||'', by:b.by||'', how:hit.how,
           due:dueIso(b), dueLbl:dueLbl(dueIso(b)),   // what the AM set; '' when the ticket carries none
           stage:st, court:COURT[st]||'', order:ord<0?STAGE_ORDER.length:ord,
-          done:st==='done'||st==='confirmed', terms:(e.terms||[]).slice() });
+          done:st==='done'||st==='confirmed', terms:(e.terms||[]).slice(),
+          brandwide:!!e.brandwide, scoped:!!e.brandwide||hasScope(e,mkt),
+          vol:(v&&!v.unset)?v.vol:null, hours:(v&&!v.unset)?kwHours(v.vol||0):null });
       });
     });
     rows.sort(function(a,b){ return a.order-b.order
