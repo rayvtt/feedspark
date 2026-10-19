@@ -218,7 +218,7 @@ console.log('── the worker writes it');
   ok('the index carries the last move — rebuilt on a scan, carried by the ack',
     /keepQual\(gidx\[lgKey\(client, mkt\)\]\), gHist \? histIdx\(gHist\) : keepHist\(gidx\[lgKey\(client, mkt\)\]\)\);/.test(wk) &&
     /keepQual\(idx\[lgKey\(client, mkt\)\]\), keepHist\(idx\[lgKey\(client, mkt\)\]\)\);/.test(wk));
-  ok('an analysis joins the history as measured', /const hq = histQa\(await env\.EDITS\.get\(hk, 'json'\), \{ t: rec\.t, q: qs \? qs\.score : null, air: ai \? ai\.total : null/.test(wk));
+  ok('an analysis joins the history as measured', /const hq = histQa\(await env\.EDITS\.get\(hk, 'json'\), (?:Object\.assign\()?\{ t: rec\.t, q: qs \? qs\.score : null, air: ai \? ai\.total : null/.test(wk));
   ok('the page reads it from one route', /path === '\/api\/golden\/history' && request\.method === 'GET'/.test(wk) && /env\.EDITS\.get\('goldenhist:' \+ client \+ ':' \+ mkt, 'json'\)/.test(wk));
   ok('the browser engine copy is the worker\'s engine', read('docs/labelguard_engine.js') === read('cloudflare/feedspark-deck/src/labelguard.js'));
 }
@@ -284,7 +284,7 @@ console.log('── the worker: one writer, and an automatic reading never overr
   ok('an automatic reading is not stored over a hand-run one from the same day',
     /if \(cur && cur\.qSrc === 'm' && cur\.qT && histDay\(cur\.qT\) === histDay\(Date\.now\(\)\)\) \{/.test(fn) && fn.indexOf("cur.qSrc === 'm'") < fn.indexOf("EDITS.put('goldenqual:'"));
   ok('the index says who took the reading, and a scan carries it forward', /idx\[key\]\.qSrc = auto \? 'a' : 'm';/.test(fn) && /const QUAL_KEEP = \['q', 'qFails', 'qT', 'qSrc',/.test(wk));
-  ok('the analysis lands in the history marked by who ran it', /m: !auto \}\);/.test(fn));
+  ok('the analysis lands in the history marked by who ran it', /m: !auto \}(?:\);|, histQaDetail\(qs, ai\)\)\);)/.test(fn));
   ok('every scan button a person presses is a hand-run scan',
     (wk.match(/runLabelScan\(env, client, mkt, \{ manual: true \}\)/g) || []).length === 3 &&
     /applyPushedSnapshot\(env, client, mkt, snap, body\.vol, undefined, undefined, \{ manual: true \}\)/.test(wk));

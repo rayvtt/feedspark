@@ -1861,6 +1861,12 @@ export function histQa(hist, p) {
   if (p.air != null && isFinite(p.air)) pt.air = Math.round(p.air * 10) / 10;
   if (p.tier != null) pt.tier = Math.max(1, Math.min(4, parseInt(p.tier, 10) || 1));
   if (p.m) pt.m = 1;                     // run by hand — it sets its day (histDayPick)
+  // WHY IT MOVED (Ray, 19 Oct 2026: "detail, in the most minimal way possible, why the content quality score has
+  // increased … figure out how many fields have been changed"): the analysis keeps each field's own score and the
+  // products breaking each rule (qa), and each AI-readiness pillar's score (ap) — histQaDetail's shape, checked here
+  const qa = histQaClean(p.qa), ap = histApClean(p.ap);
+  if (qa) pt.qa = qa;
+  if (ap) pt.ap = ap;
   const last = h.q[h.q.length - 1];
   if (last && pt.t <= last.t) return { hist: h, wrote: false };
   const same = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) < 0.1);
@@ -1868,6 +1874,51 @@ export function histQa(hist, p) {
   if (last && same(last.q, pt.q) && same(last.air, pt.air) && (!pt.m || pinned)) return { hist: h, wrote: false };
   h.q.push(pt);
   return { hist: histKeep(h, pt.t), wrote: true };
+}
+// one analysis, reduced to what explains its next move: per content-quality field its score, the products it
+// was read on and the products breaking each rule; per AI-readiness pillar its score. Small on purpose —
+// eight fields × a handful of rules — because it rides every analysis in the history record
+export function histQaDetail(qs, ai) {
+  const out = {};
+  if (qs && qs.parts && qs.parts.length) {
+    const qa = {};
+    for (const p of qs.parts) {
+      const b = {};
+      for (const r of p.broken || []) if (r && r.id && r.n) b[r.id] = Math.round(+r.n) || 0;
+      qa[p.key] = { s: Math.round((+p.score || 0) * 10) / 10, f: Math.round(+p.filled || 0), b };
+    }
+    out.qa = qa;
+  }
+  if (ai && ai.pillars && ai.pillars.length) {
+    const ap = {};
+    for (const p of ai.pillars) if (p && p.key) ap[p.key] = Math.round(+p.score || 0);
+    out.ap = ap;
+  }
+  return out;
+}
+function histQaClean(qa) {
+  if (!qa || typeof qa !== 'object') return null;
+  const out = {}; let n = 0;
+  for (const k of Object.keys(qa)) {
+    if (!qspecOf(k) || n >= 12) continue;
+    const v = qa[k] || {}, s = +v.s;
+    if (!isFinite(s)) continue;
+    const ids = new Set(qspecOf(k).rules.map((r) => r.id)), b = {};
+    for (const id of Object.keys(v.b || {})) { const c = Math.round(+v.b[id]); if (ids.has(id) && isFinite(c) && c > 0) b[id] = c; }
+    out[k] = { s: Math.max(0, Math.min(100, Math.round(s * 10) / 10)), f: Math.max(0, Math.round(+v.f || 0)), b };
+    n++;
+  }
+  return n ? out : null;
+}
+function histApClean(ap) {
+  if (!ap || typeof ap !== 'object') return null;
+  const out = {}; let n = 0;
+  for (const k of Object.keys(ap)) {
+    const v = +ap[k];
+    if (!/^[a-z_]{2,24}$/.test(k) || !isFinite(v) || n >= 10) continue;
+    out[k] = Math.max(0, Math.min(100, Math.round(v))); n++;
+  }
+  return n ? out : null;
 }
 // what the estate index carries so a row can say "▲ +1.8 since 21 Sep" without reading the
 // record: the reading BEFORE the last change (hp) and when that change happened (ht)

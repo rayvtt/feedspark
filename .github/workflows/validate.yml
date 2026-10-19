@@ -163,6 +163,8 @@ jobs:
         run: node tools/test_htmllock.mjs
       - name: Golden Record score history harness (one reading per real move, re-scored to today's profile)
         run: node tools/test_goldenhist.mjs
+      - name: Golden Record — why an analysis moved (fields, rules, products)
+        run: node tools/test_qamoved.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
       - name: Hero KPI harness (project plans are the source; one date rule with Workflow)
