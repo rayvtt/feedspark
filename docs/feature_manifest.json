@@ -16606,6 +16606,24 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "Hobbycraft:{campaign:'Seasonal focus'",
       "pr": 0
+    },
+    {
+      "name": "Golden dissect: values picked with checkboxes",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "id=\"sg-msb\" aria-haspopup=\"listbox\"",
+      "pr": 711
+    },
+    {
+      "name": "Golden dissect: a tick applies and the list stays open",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "x.foc = v;",
+      "pr": 711
+    },
+    {
+      "name": "Golden dissect tripwire ticks two values of one field",
+      "file": "tools/check_grseg.js",
+      "pattern": "a second tick ORs within the field",
+      "pr": 711
     }
   ]
 }
