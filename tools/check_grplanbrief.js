@@ -68,7 +68,7 @@ const QUALITY = {
   let landed = null;
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
-  await page.route((u) => /\/workflow\?brief=/.test(String(u)), (r) => { landed = r.request().url(); r.fulfill({ body: '<html><body>workflow</body></html>', contentType: 'text/html' }); });
+  await ctx.route((u) => /\/workflow\?brief=/.test(String(u)), (r) => { landed = r.request().url(); r.fulfill({ body: '<html><body>workflow</body></html>', contentType: 'text/html' }); });
   await page.addInitScript(({ ATTRS, QUALITY, COV }) => {
     if (location.protocol !== 'file:') return;
     const NOW = Date.now(), cov = {}, attrs = {};
@@ -112,15 +112,24 @@ const QUALITY = {
 
   console.log('-- → Brief');
   const first = r.cards[0];
-  await Promise.all([page.waitForURL(/workflow\?brief=/, { timeout: 8000 }).catch(() => {}), page.click('#ap-tier .ap-tk[data-apid="' + first.id + '"] [data-apbr]')]);
+  // a brief opens Workflow in a NEW TAB and the audit stays where it is (Ray, 19 Oct 2026: "should not change the existing tab")
+  const auditUrl = page.url();
+  const [tab] = await Promise.all([ctx.waitForEvent('page', { timeout: 8000 }).catch(() => null), page.click('#ap-tier .ap-tk[data-apid="' + first.id + '"] [data-apbr]')]);
+  if (tab) await tab.waitForLoadState().catch(() => {});
+  await page.waitForTimeout(300);
+  ok('→ Brief opens Workflow in a NEW tab', !!tab && /\/workflow\?brief=/.test(tab.url()), tab && tab.url());
+  ok('…and leaves the audit tab where it was', page.url() === auditUrl, page.url());
   ok('it opens the Workflow composer through /workflow?brief=', !!landed, landed);
+  const now = await read();
+  ok('…the card on the audit says it is briefed straight away, before any reload', (now.cards.find((x) => x.id === first.id) || {}).wf && /not in the pipeline yet/.test(now.cards.find((x) => x.id === first.id).wf), now.cards.find((x) => x.id === first.id));
+  if (tab) await tab.close();
   let pay = null;
   try { const b = new URL(landed).searchParams.get('brief').replace(/-/g, '+').replace(/_/g, '/'); pay = JSON.parse(Buffer.from(b, 'base64').toString('utf8')); } catch (e) {}
   ok('…the brief names the client, the plan task family, and carries the task\'s own key', pay && pay.client === 'Reiss' && /^Golden Record Plan - .+ - Reiss GB - \d{4}$/.test(pay.task) && pay.gp === 'Reiss|gb|' + first.id, pay);
   ok('…its scope says what to do, why, and where it came from', pay && /^Action: /.test(pay.scope) && /Source: Golden Record action plan/.test(pay.scope), pay && pay.scope);
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem('__store')) || '{}');
   const br = ((stored['Reiss|gb'] || {}).it || {})[first.id];
-  ok('…and the briefing was saved to the team plan BEFORE the page left', br && br.br && br.br.task === (pay && pay.task), br);
+  ok('…and the briefing was saved to the team plan', br && br.br && br.br.task === (pay && pay.task), br);
 
   console.log('-- back on the audit, no ticket in the pipeline yet (the composer was closed unsaved)');
   await open();

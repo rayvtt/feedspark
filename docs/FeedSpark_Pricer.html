@@ -838,7 +838,7 @@ window.addEventListener('load',restore);
       <div class="q-act">
         <button class="btn" id="q-copy" type="button" disabled>⧉ Copy quote</button>
         <button class="btn" id="q-save" type="button" disabled>💾 Save</button>
-        <a class="btn pri" id="q-brief" hidden>→ Brief this</a>
+        <a class="btn pri" id="q-brief" target="_blank" rel="noopener" hidden>→ Brief this</a>
       </div>
       <span class="savedok" id="q-savedok"></span>
     </div>
@@ -2167,7 +2167,7 @@ function tierCard(o){
       return '<tr class="ln st-'+l.status+'" data-line="'+esc(l.key)+'"><td class="ln-l">'+esc(l.label)+(l.reason&&l.status==='priced'?'<span class="ln-r">'+esc(l.reason)+'</span>':'')+'</td>'
         +'<td>'+needCell(l)+'</td><td class="num">'+moneyCell(l,q)+'</td>'
         +'<td><span class="stc stc-'+l.status+'" title="'+esc(l.reason||'')+'">'+esc(ST_LBL[l.status]||l.status)+'</span></td>'
-        +'<td class="ln-a">'+(brief?'<a class="lnk" href="'+briefHref(l,q)+'" title="Brief this line into Workflow">→ Brief</a>':'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+        +'<td class="ln-a">'+(brief?'<a class="lnk" target="_blank" rel="noopener" href="'+briefHref(l,q)+'" title="Brief this line into Workflow">→ Brief</a>':'')+'</td></tr>'}).join('')+'</tbody></table></div>';
   if(gaps.length||T.status==='unpriced')h+='<ul class="fixes">'+gaps.map(function(l){return '<li><b>'+esc(l.label)+'</b> — '+(l.status==='unknown'?'not sized: '+esc((l.need&&l.need.why)||l.reason||''):'not priced')+' · <span class="fx">'+fixOf(l)+'</span></li>'}).join('')
     +(T.status==='unpriced'?'<li><b>Test package ('+T.n+' tests a month)</b> — not priced · <span class="fx">'+fixOf({status:'unpriced'})+'</span></li>':'')+'</ul>';
   if(q.blockers.length){var seen={},bl=q.blockers.filter(function(b){if(seen[b.why])return false;seen[b.why]=1;return true});

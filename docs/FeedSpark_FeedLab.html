@@ -1104,7 +1104,7 @@ function renderRecs(a){
     var dots='';for(var i=0;i<3;i++)dots+='<i'+(i<(+r.impact||0)?' class="on"':'')+'></i>';
     // "→ Brief this" deep-links the Workflow composer; payload is UTF-8-safe base64url
     var bf=r.brief;if(bf&&Object.keys(MKTS).length>1){bf=JSON.parse(JSON.stringify(bf));bf.task=String(bf.task||'').slice(0,180)+' · '+MARKET.toUpperCase();}
-    var go=bf?'<a class="bgo" href="/workflow?brief='+b64url(bf)+'" title="Open the Workflow composer prefilled with this brief">→ Brief this</a>':'';
+    var go=bf?'<a class="bgo" target="_blank" rel="noopener" href="/workflow?brief='+b64url(bf)+'" title="Open the Workflow composer prefilled with this brief">→ Brief this</a>':'';
     return '<div class="rec"><div class="rsvc">'+(r.tachyon?FLAME:'')+esc(r.service||'FeedSpark service')+'</div>'
       +'<div class="rt">'+esc(r.title)+'</div>'
       +'<div class="rdet">'+esc(r.detail||'')+'</div>'

@@ -1674,7 +1674,7 @@ function linkOpen(btn,bid){
 }
 function stChip(brand,e,wf,st){
   if(wf){ var ct=COURTM[st]||'', how=HOWL[wfHow(brand,e)]||'';
-    return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
+    return '<a class="stx '+esc(st)+' wfl" href="/workflow" target="_blank" rel="noopener" title="Live from the Workflow pipeline'
       +(wf.id?' · ticket '+esc(wf.id):'')+(wf.by?' · briefed by '+esc(wf.by):'')+(ct?' · '+esc(ct)+' holds the ball':'')
       +(how?' · '+esc(how):'')
       +' — the stage moves in Workflow, not here">'+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
@@ -1684,7 +1684,7 @@ function stChip(brand,e,wf,st){
       +esc(mis.id)+' — but it saved under '+esc(mis.client)+' instead of '+esc(brand)+', so it never reached this board, '
       +esc(brand)+'’s Intake or its project plan. Click to move the ticket onto '+esc(brand)+'.">⚠ filed under '+esc(mis.client)+'</button>';
   if(isGhost(e,wf))
-    return '<a class="stx ghost" href="'+esc(briefLinkFor(brand,e))+'" title="Marked &quot;'+esc(e.st)
+    return '<a class="stx ghost" target="_blank" rel="noopener" href="'+esc(briefLinkFor(brand,e))+'" title="Marked &quot;'+esc(e.st)
       +'&quot; on this calendar, but NO ticket exists — nothing is in Workflow, nothing in Intake and '
       +'nothing in the project plan, so nobody is carrying it. Click to raise the brief for real.">⚠ not briefed</a>';
   return '<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'" title="Not briefed yet — '
@@ -1769,7 +1769,7 @@ function resPop(btn,brand,e,r){
       :'<div class="pm">No metric lines parsed from the report — open the archive for the full email.</div>')
     +(r.own
       // never the fortnight caveat here: this read-out answers THIS optimisation's own brief
-      ? '<div class="pm" style="margin:8px 0 0">Reported on this optimisation\u2019s own brief thread — these figures are this moment\u2019s, not a batch average. <a href="/workflow" style="color:var(--orange-ink)">Open the ticket</a></div>'
+      ? '<div class="pm" style="margin:8px 0 0">Reported on this optimisation\u2019s own brief thread — these figures are this moment\u2019s, not a batch average. <a href="/workflow" target="_blank" rel="noopener" style="color:var(--orange-ink)">Open the ticket</a></div>'
       : '<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone.</div>');
   document.body.appendChild(d);
   var q=btn.getBoundingClientRect();
@@ -1840,11 +1840,11 @@ function popOpen(btn,brand,e){
     +(wf?' — live from Workflow'+(ct?', '+esc(ct)+'\u2019s court':''):'')+'</div>'
     +(rr?'<div class="pm" style="color:var(--orange-ink)">📈 '+esc(resLbl(rr))+' · '+esc(rr.__w?rr.__w.label:(rr.period||''))+' batch</div>':'')
     +'<div class="pa">'
-    +'<a href="'+briefLinkFor(brand,e)+'">'+(wf?'↻ Re-brief · updates the same ticket':'→ Brief it · into the Workflow pipeline')+'</a>'
-    +'<a href="/workflow?brief='+b64url(chase)+'">⏰ Chase · nudge the owner via Workflow</a>'
+    +'<a target="_blank" rel="noopener" href="'+briefLinkFor(brand,e)+'">'+(wf?'↻ Re-brief · updates the same ticket':'→ Brief it · into the Workflow pipeline')+'</a>'
+    +'<a target="_blank" rel="noopener" href="/workflow?brief='+b64url(chase)+'">⏰ Chase · nudge the owner via Workflow</a>'
     +'<a href="'+mail+'">✉ Ask client · drafted email</a>'
     // the manual chip exists only until a ticket does — after that Workflow owns the stage
-    +(wf?'<a href="/workflow">🎫 Open in Workflow · stage moves there</a>'
+    +(wf?'<a href="/workflow" target="_blank" rel="noopener">🎫 Open in Workflow · stage moves there</a>'
         :'<button type="button" data-adv="'+esc(brand)+'|'+esc(e.id)+'">↻ Advance status ('+esc(st)+' →)</button>')
     +'</div>';
   document.body.appendChild(d);
@@ -2656,7 +2656,7 @@ function render(){
           +'<div class="ra">'+stChip(CLIENT,e,wf,st)
           +(rr?'<button type="button" class="rchip '+esc(rr.verdict||'unknown')+'" data-res="'+esc(e.id)+'" title="Result reported for the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' round — click for the metric lines">📈</button>':'')
           +ownChip(e)
-          +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
+          +'<a class="bgo" target="_blank" rel="noopener" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
       }).join(''):'<div class="mo-empty">drop a theme here</div>')+'</div></section>';
   }).join('');
   renderHours(); renderPdfDoc();
