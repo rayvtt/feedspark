@@ -153,20 +153,20 @@ console.log('· newness by quarter (Ray, 19 Oct 2026: "just do it based on quart
   t('a column of dates reads as a date, and offers newness by quarter', f && f.kind === 'date' && B.modesFor('date').join() === 'raw,qtr' && B.MODE_LBL.qtr === 'Newness by quarter', f && f.kind);
   t('…a date as either shape a feed writes (ISO with or without a time, DD/MM/YYYY); anything else is not one', B.dateOf('2026-08-15T10:00:00').m === 8 && B.dateOf('15/05/2026').m === 5 && B.dateOf('2026-13-01') === null && B.dateOf('soon') === null);
   const r = P(st, { f: 'c:fs_date_of_birth', m: 'qtr' });
-  t('the quarter we are in, then the one before, by the calendar — a timestamp and a UK date land in theirs', r.map['Q4 2026 · this quarter'] === 1 && r.map['Q3 2026 · last quarter'] === 2 && r.map['Q2 2026'] === 2, r.map);
+  t('the quarter we are in, then the one before, by the calendar — a timestamp and a UK date land in theirs', r.map['Q4 2026'] === 1 && r.map['Q3 2026'] === 2 && r.map['Q2 2026'] === 2, r.map);
   t('…' + B.QTR_BACK + ' quarters back, the rest folded into ONE "Before …" band', r.map['Q4 2024'] === undefined && r.map['Before Q1 2025'] === 2, r.map);
-  t('…an unreadable date is named, a blank stays blank, a future date is never called this quarter', r.map[B.NO_DATE] === 1 && r.map[B.BLANK] === 1 && r.map['Q1 2027 · ahead'] === 1, r.map);
-  t('…read newest first, never by count: this quarter leads, Before … then the unreadable, the blank last', r.rows.map((x) => x.v).join('|') === ['Q1 2027 · ahead', 'Q4 2026 · this quarter', 'Q3 2026 · last quarter', 'Q2 2026', 'Q1 2026', 'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025', 'Before Q1 2025', B.NO_DATE, B.BLANK].join('|'), r.rows.map((x) => x.v));
+  t('…an unreadable date is named, a blank stays blank, a future date is never called this quarter', r.map[B.NO_DATE] === 1 && r.map[B.BLANK] === 1 && r.map['Q1 2027'] === 1, r.map);
+  t('…read newest first, never by count: this quarter leads, Before … then the unreadable, the blank last', r.rows.map((x) => x.v).join('|') === ['Q1 2027', 'Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026', 'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025', 'Before Q1 2025', B.NO_DATE, B.BLANK].join('|'), r.rows.map((x) => x.v));
   t('…a quarter nothing arrived in is a ZERO on an unbroken ladder, never a missing row (and not a value in the count)', r.map['Q1 2026'] === 0 && r.map['Q1 2025'] === 0 && r.distinct === 6, [r.map, r.distinct]);
   {
     const s2 = B.createStore(); B.addRow(s2, ['1', '2026-05-01'], ['id', 'd']); B.addRow(s2, ['2', '2026-05-09'], ['id', 'd']); s2.now = Date.UTC(2026, 9, 19);
     const r2 = P(s2, { f: 'd', m: 'qtr' });
-    t('…an empty LATEST quarter still leads the ladder (the quarter we are in, read as 0), and it stops at the oldest one the counts reach', r2.rows.map((x) => x.v + '=' + x.n).join('|') === 'Q4 2026 · this quarter=0|Q3 2026 · last quarter=0|Q2 2026=2', r2.rows.map((x) => x.v + '=' + x.n));
+    t('…an empty LATEST quarter still leads the ladder (the quarter we are in, read as 0), and it stops at the oldest one the counts reach', r2.rows.map((x) => x.v + '=' + x.n).join('|') === 'Q4 2026=0|Q3 2026=0|Q2 2026=2', r2.rows.map((x) => x.v + '=' + x.n));
   }
   const x = B.cross(st, { f: 'c:fs_date_of_birth', m: 'qtr' }, { f: 'g:availability' }, null, {}), y = B.cross(st, { f: 'g:availability' }, { f: 'c:fs_date_of_birth', m: 'qtr' }, null, {});
-  t('…on the pivot\'s rows AND its columns, in the same order', x.rows[1].v === 'Q4 2026 · this quarter' && y.cols[1].v === 'Q4 2026 · this quarter' && x.rows.map((q) => q.v).join() === y.cols.map((q) => q.v).join(), [x.rows.map((q) => q.v), y.cols.map((q) => q.v)]);
+  t('…on the pivot\'s rows AND its columns, in the same order', x.rows[1].v === 'Q4 2026' && y.cols[1].v === 'Q4 2026' && x.rows.map((q) => q.v).join() === y.cols.map((q) => q.v).join(), [x.rows.map((q) => q.v), y.cols.map((q) => q.v)]);
   st.now = Date.UTC(2027, 0, 5);
-  t('…the bands move with the calendar (the cached reading is per quarter, never a stale one)', P(st, { f: 'c:fs_date_of_birth', m: 'qtr' }).map['Q1 2027 · this quarter'] === 1);
+  t('…the bands move with the calendar (the cached reading is per quarter, never a stale one)', P(st, { f: 'c:fs_date_of_birth', m: 'qtr' }).map['Q1 2027'] === 1);
   t('…the name says how it is read', B.specName(st, { f: 'c:fs_date_of_birth', m: 'qtr' }) === 'fs_date_of_birth · newness by quarter', B.specName(st, { f: 'c:fs_date_of_birth', m: 'qtr' }));
   t('the page: a picked date opens on its quarters, newness leads every field picker, one default for panes and both pivot sides', /function defSpec\(f\)/.test(PG) && /mt\.kind === 'date' \? 'qtr'/.test(PG) && /<optgroup label="Newness · by quarter">/.test(PG) && /\$\('#pv-r'\)[^\n]*sp = defSpec\(sp\.f\)/.test(PG) && /\$\('#pv-c'\)[^\n]*sp = defSpec\(sp\.f\)/.test(PG) && /S\.L\.panes\.push\(defSpec\(f\)\)/.test(PG));
 }

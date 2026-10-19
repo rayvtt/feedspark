@@ -165,11 +165,16 @@ window.addEventListener('load',restore);
   .pvc .grp .row{display:flex;gap:6px;flex-wrap:wrap}
   .pvc .fld{height:34px;font-size:12.5px;max-width:100%}
   .tw{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
-  table.pv{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:100%}
-  table.pv th,table.pv td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
-  table.pv thead th{position:sticky;top:0;z-index:2;background:var(--paper);font-size:11px;font-weight:900;color:var(--ink-2);text-align:right;max-width:150px;overflow:hidden;text-overflow:ellipsis;border-bottom:2px solid var(--line)}
+  /* the columns always fit the card: a fixed layout shares the width, a heading wraps rather than being cut, a dragged column keeps its own width */
+  table.pv{border-collapse:separate;border-spacing:0;font-size:12.5px;width:100%;table-layout:fixed}
+  table.pv th,table.pv td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.pv thead th{position:sticky;top:0;z-index:2;background:var(--paper);font-size:11px;font-weight:900;color:var(--ink-2);text-align:right;white-space:normal;overflow-wrap:anywhere;text-overflow:clip;vertical-align:bottom;line-height:1.3;border-bottom:2px solid var(--line)}
   table.pv thead th.rh{text-align:left;left:0;z-index:3}
-  table.pv th.rh,table.pv td.rh{position:sticky;left:0;background:var(--paper);text-align:left;max-width:300px;overflow:hidden;text-overflow:ellipsis;font-weight:800;z-index:1;border-right:1px solid var(--line)}
+  table.pv th.rh,table.pv td.rh{position:sticky;left:0;background:var(--paper);text-align:left;font-weight:800;z-index:1;border-right:1px solid var(--line)}
+  table.pv .crz{position:absolute;top:0;bottom:0;right:0;width:8px;cursor:col-resize;touch-action:none;z-index:4;outline:none}
+  table.pv .crz::after{content:'';position:absolute;top:22%;bottom:22%;right:0;width:2px;border-radius:2px;background:transparent;transition:background .12s}
+  table.pv thead th:hover .crz::after,table.pv .crz:focus-visible::after,table.pv .crz.on::after{background:var(--orange)}
+  body.bd-crz,body.bd-crz *{cursor:col-resize!important;user-select:none}
   table.pv td.c{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;cursor:pointer}
   table.pv td.c.z{color:var(--muted);font-weight:400}
   table.pv td.c:hover{outline:2px solid var(--orange);outline-offset:-2px}
@@ -179,6 +184,31 @@ window.addEventListener('load',restore);
   table.pv td.ps,table.pv th.ps{color:var(--ink-2);font-weight:700}
   table.pv tfoot td{font-weight:900;background:var(--wash);border-top:2px solid var(--line)}
   table.pv tr.blank td.rh{color:var(--muted);font-style:italic}
+  /* spend · conversion value · ROAS together, one row per segment: two bars on ONE money scale, ROAS on its own */
+  .sv3{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .sv3h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:8px}
+  .sv3h b{font-size:13px}
+  .sv3h .fld{height:30px;font-size:12px}
+  .sv3 .lg{display:flex;gap:12px;font-size:11.5px;color:var(--ink-2);font-weight:700;margin-left:auto}
+  .sv3 .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .sv3 .sp{background:var(--chart-1,#2563EB)}.sv3 .vl{background:var(--chart-2,#ED6F0B)}
+  .sv3 .rk{background:var(--ink-2)}
+  .sv3hd,.sv3r{display:grid;grid-template-columns:minmax(120px,26%) minmax(0,1fr) 170px;gap:14px;align-items:center}
+  .sv3hd{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--line)}
+  .sv3r{padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .sv3r:hover{background:var(--wash)}
+  .sv3r .nm{font-size:12.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sv3r.blank .nm{color:var(--muted);font-style:italic}
+  .sv3r .bars{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .sv3 .b{display:flex;align-items:center;gap:6px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-2);min-width:0;white-space:nowrap}
+  .sv3 .b i{display:block;height:8px;border-radius:0 4px 4px 0;min-width:2px;flex:none}
+  .sv3 .ro{position:relative;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
+  .sv3 .ro .tr{position:relative;flex:1;height:8px;background:var(--wash);border-radius:4px}
+  .sv3 .ro .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--ink-2);opacity:.55}
+  .sv3 .ro .tr s{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--orange);text-decoration:none}
+  .sv3 .ro em{font-style:normal;min-width:44px;text-align:right}
+  .sv3 .empty{padding:10px 0}
+  @media(max-width:760px){.sv3hd{display:none}.sv3r{grid-template-columns:1fr;gap:4px}.sv3 .lg{margin-left:0}}
   /* the fields catalogue */
   table.fd{width:100%;border-collapse:collapse;font-size:12.5px}
   table.fd th{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -325,6 +355,7 @@ window.addEventListener('load',restore);
       <p class="note adsl" id="pv-ads" hidden></p>
       <div class="tw" id="pv"><div class="empty">Waiting for the feed…</div></div>
       <p class="note" id="pv-note"></p>
+      <div class="sv3" id="pv3"></div>
     </div>
   </section>
 
@@ -836,8 +867,8 @@ window.addEventListener('load',restore);
     var box = $('#pv'), note = $('#pv-note');
     renderAdsLine();
     PV = pivotData();
-    if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; note.textContent = ''; return; }
-    if (!PV) { box.innerHTML = '<div class="empty">Pick a field for the rows.</div>'; note.textContent = ''; $('#ln-pivot').textContent = 'Any field against any other'; return; }
+    if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; note.textContent = ''; renderSv3(); return; }
+    if (!PV) { box.innerHTML = '<div class="empty">Pick a field for the rows.</div>'; note.textContent = ''; $('#ln-pivot').textContent = 'Any field against any other'; renderSv3(); return; }
     var M = MEAS[meas()], W = PV.weighted, R = W && M.ratio, show = R ? 'n' : S.L.pivot.show;
     var q = S.q.toLowerCase(), rows = q ? PV.rows.filter(function (r) { return r.v.toLowerCase().indexOf(q) >= 0; }) : PV.rows;
     var ratio = function (c, c2) { return c > 0 ? c2 / c : null; };
@@ -847,9 +878,12 @@ window.addEventListener('load',restore);
     var totHd = W ? M.l + (PV.cs ? ' · row total' : '') : PV.cs ? 'Row total' : 'Products';
     var extHd = W ? (R ? '<th class="tot ps" title="The spend ROAS is read against">Spend</th>' : '<th class="tot ps" title="Each row’s share of the products — read beside its share of ' + esc(M.l.toLowerCase()) + '">% of products</th>') : '';
     var ext = function (r) { return !W ? '' : '<td class="tot c ps">' + (R ? money(r.n) : pc(PV.totalP ? r.p / PV.totalP : 0)) + '</td>'; };
-    var h = '<table class="pv"><thead><tr><th class="rh">' + esc(B.specName(S.st, PV.rs)) + (PV.cs ? ' ↓ · ' + esc(B.specName(S.st, PV.cs)) + ' →' : '') + '</th>'
-      + PV.cols.map(function (c, j) { return '<th title="' + esc(c.v) + (c.members ? ' — ' + esc(c.members.slice(0, 20).join(', ')) : '') + '"' + (c.v === B.BLANK ? ' style="font-style:italic"' : '') + ' data-cj="' + j + '">' + esc(c.v) + '</th>'; }).join('')
-      + '<th class="tot">' + esc(totHd) + '</th>' + extHd + '</tr></thead><tbody>';
+    var keys = ['rh'].concat(PV.cols.map(function (c) { return 'c:' + c.v; }), ['tot'], W ? ['ps'] : []), CW = S.L.pivot.w || {};
+    var grip = function (k) { return '<span class="crz" role="separator" aria-orientation="vertical" tabindex="0" data-ck="' + esc(k) + '" title="Drag to set this column’s width · double-click or Enter for the default · ← → step it"></span>'; };
+    var cg = '<colgroup>' + keys.map(function (k) { var w = CW[k]; return '<col data-ck="' + esc(k) + '"' + (w ? ' style="width:' + w + 'px"' : k === 'rh' ? ' style="width:' + (PV.cs ? 22 : 40) + '%"' : '') + '>'; }).join('') + '</colgroup>';
+    var h = '<table class="pv" style="min-width:' + (150 + 64 * (keys.length - 1)) + 'px">' + cg + '<thead><tr><th class="rh">' + esc(B.specName(S.st, PV.rs)) + (PV.cs ? ' ↓ · ' + esc(B.specName(S.st, PV.cs)) + ' →' : '') + grip('rh') + '</th>'
+      + PV.cols.map(function (c, j) { return '<th title="' + esc(c.v) + (c.members ? ' — ' + esc(c.members.slice(0, 20).join(', ')) : '') + '"' + (c.v === B.BLANK ? ' style="font-style:italic"' : '') + ' data-cj="' + j + '">' + esc(c.v) + grip('c:' + c.v) + '</th>'; }).join('')
+      + '<th class="tot">' + esc(totHd) + grip('tot') + '</th>' + (extHd ? extHd.replace('</th>', grip('ps') + '</th>') : '') + '</tr></thead><tbody>';
     h += rows.map(function (r, i) {
       return '<tr class="' + (r.v === B.BLANK ? 'blank' : '') + '"><td class="rh" title="' + esc(r.v) + '">' + esc(r.v) + '</td>'
         + r.cells.map(function (n, j) {
@@ -869,8 +903,110 @@ window.addEventListener('load',restore);
     if (PV.multi) bits.push(W ? 'a product with several values carries its figures into each, so rows and columns can add to more than the total' : 'a product with several values is counted once in each, so rows and columns can add to more than the total');
     note.innerHTML = bits.join(' · ') + '. Click a cell to filter the whole page to it.';
     $('#ln-pivot').textContent = B.specName(S.st, PV.rs) + (PV.cs ? ' × ' + B.specName(S.st, PV.cs) : '') + (W ? ' · ' + M.l : '') + ' · ' + n0(PV.rowsAll || PV.rows.length) + ((PV.rowsAll || PV.rows.length) === 1 ? ' row' : ' rows');
+    renderSv3();
   }
+  // ---- spend, conversion value and ROAS together (Ray, 19 Oct 2026: "can I see spend, conversion value, and ROAS together
+  // on one dashboard? … keep it as a bar chart on a specific segment"): one row per value of the pivot's rows (or columns)
+  // field, spend and conversion value as two bars on ONE money scale so they compare directly, ROAS on its own scale beside
+  // them with the whole selection's ROAS marked — every ROAS a ratio of that segment's own sums, never an average of ratios
+  var SV3_TOP = 15;
+  function sv3Data() {
+    var P3 = S.L.pivot, by = P3.v3by === 'c' && S.L.pivot.c ? 'c' : 'r';
+    var spec = B.resolve(S.st, by === 'c' ? S.L.pivot.c : S.L.pivot.r); if (!spec) return null;
+    var m = S.filters.length ? B.mask(S.st, S.filters) : null, a = S.aj.f.cost, v = S.aj.f.value;
+    var P = B.pivot(S.st, spec, m, { unit: 'sku', w: function (r) { return a[r]; }, w2: function (r) { return v[r]; } });
+    var q = S.q.toLowerCase(), live = [], quiet = 0;
+    P.rows.forEach(function (r) { if (q && r.v.toLowerCase().indexOf(q) < 0) return; if (!r.n && !r.n2) { quiet++; return; } live.push({ v: r.v, sp: r.n, vl: r.n2, p: r.p, ro: r.n > 0 ? r.n2 / r.n : null }); });
+    var k = P3.v3sort || 'sp';
+    live.sort(function (x, y) { var a1 = x[k], b1 = y[k]; if (a1 == null) a1 = -1; if (b1 == null) b1 = -1; return b1 - a1 || x.v.localeCompare(y.v); });
+    return { by: by, spec: spec, rows: live, quiet: quiet, sp: P.total, vl: P.total2, multi: P.multi };
+  }
+  function renderSv3() {
+    var box = $('#pv3'); if (!box) return;
+    if (!S.st || !S.L.pivot.r) { box.innerHTML = ''; return; }
+    var A = S.ads, hd = '<div class="sv3h"><b>Spend · conversion value · ROAS</b>';
+    if (!adsReady()) {
+      var st = !A ? '<button class="btn" type="button" id="sv3-load">⚡ Read Google Ads · last 30 days</button>'
+        : A.st === 'none' ? '<span class="note">No Google Ads for this market.</span>'
+        : A.st === 'error' ? '<span class="note">Google Ads could not be read.</span> <button class="btn" type="button" id="sv3-load">↻ Try again</button>'
+        : '<span class="note">Reading Google Ads…</span>';
+      box.innerHTML = hd + st + '</div>'; return;
+    }
+    var D = sv3Data(); if (!D) { box.innerHTML = ''; return; }
+    var P3 = S.L.pivot, k = P3.v3sort || 'sp', all = !!P3.v3all;
+    var opt = function (val, l, on) { return '<option value="' + val + '"' + (on ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    hd += '<span class="lbl">by</span><select class="fld" id="sv3-by" aria-label="Segment by" data-no-keep>' + opt('r', B.specName(S.st, B.resolve(S.st, S.L.pivot.r)), D.by === 'r') + (S.L.pivot.c && B.resolve(S.st, S.L.pivot.c) ? opt('c', B.specName(S.st, B.resolve(S.st, S.L.pivot.c)), D.by === 'c') : '') + '</select>'
+      + '<span class="lbl">sort</span><select class="fld" id="sv3-sort" aria-label="Sort by" data-no-keep>' + opt('sp', 'Spend', k === 'sp') + opt('vl', 'Conv. value', k === 'vl') + opt('ro', 'ROAS', k === 'ro') + '</select>'
+      + '<span class="lg"><span><i class="sp"></i>Spend</span><span><i class="vl"></i>Conv. value</span><span><i class="rk"></i>ROAS · <span style="color:var(--orange)">|</span> all ' + roasTxt(D.sp > 0 ? D.vl / D.sp : null) + '</span></span></div>';
+    if (!D.rows.length) { box.innerHTML = hd + '<div class="empty">No spend or conversion value on these products in the last 30 days.</div>'; return; }
+    var rows = all ? D.rows : D.rows.slice(0, SV3_TOP), mM = 0, mR = 0;
+    rows.forEach(function (r) { mM = Math.max(mM, r.sp, r.vl); if (r.ro != null) mR = Math.max(mR, r.ro); });
+    var blend = D.sp > 0 ? D.vl / D.sp : null; if (blend != null) mR = Math.max(mR, blend);
+    var w = function (x, mx) { return mx > 0 ? (100 * x / mx).toFixed(1) : 0; };
+    var h = hd + '<div class="sv3hd"><span>' + esc(B.specName(S.st, D.spec)) + '</span><span>Spend · conv. value (one scale)</span><span>ROAS</span></div>'
+      + rows.map(function (r, i) {
+        var tip = r.v + ' — spend ' + money(r.sp) + ' (' + pc(D.sp ? r.sp / D.sp : 0) + ' of all) · conv. value ' + money(r.vl) + ' (' + pc(D.vl ? r.vl / D.vl : 0) + ') · ROAS ' + roasTxt(r.ro) + ' · ' + n0(r.p) + ' products';
+        return '<div class="sv3r' + (r.v === B.BLANK ? ' blank' : '') + '" data-sv="' + i + '" title="' + esc(tip) + '"><span class="nm">' + esc(r.v) + '</span>'
+          + '<span class="bars"><span class="b"><i class="sp" style="width:calc((100% - 86px) * ' + (w(r.sp, mM) / 100) + ')"></i>' + money(r.sp) + '</span>'
+          + '<span class="b"><i class="vl" style="width:calc((100% - 86px) * ' + (w(r.vl, mM) / 100) + ')"></i>' + money(r.vl) + '</span></span>'
+          + '<span class="ro"><span class="tr">' + (r.ro != null ? '<i style="width:' + w(r.ro, mR) + '%"></i>' : '') + (blend != null ? '<s style="left:' + w(blend, mR) + '%" title="ROAS across everything shown: ' + roasTxt(blend) + '"></s>' : '') + '</span><em>' + (r.ro != null ? roasTxt(r.ro) : '—') + '</em></span></div>';
+      }).join('');
+    var bits = [];
+    if (D.rows.length > SV3_TOP) bits.push('<button class="btn" type="button" id="sv3-all">' + (all ? 'Top ' + SV3_TOP + ' only' : 'Show all ' + n0(D.rows.length)) + '</button>');
+    if (D.quiet) bits.push(n0(D.quiet) + ' ' + (D.quiet === 1 ? 'value' : 'values') + ' with no spend and no value not drawn');
+    if (D.multi) bits.push('a product with several values counts in each');
+    bits.push('a ROAS with no spend reads —; click a row to filter the page to it');
+    box.innerHTML = h + '<p class="note">' + bits.join(' · ') + '</p>';
+    box.__rows = rows; box.__spec = D.spec;
+  }
+  $('#pv3').addEventListener('change', function (e) {
+    if (e.target.id === 'sv3-by') S.L.pivot.v3by = e.target.value;
+    else if (e.target.id === 'sv3-sort') S.L.pivot.v3sort = e.target.value; else return;
+    saveLayout(); renderSv3();
+  });
+  $('#pv3').addEventListener('click', function (e) {
+    var box = $('#pv3');
+    if (e.target.closest('#sv3-load')) { loadAds(true); renderSv3(); return; }
+    if (e.target.closest('#sv3-all')) { S.L.pivot.v3all = !S.L.pivot.v3all; saveLayout(); renderSv3(); return; }
+    var r = e.target.closest('[data-sv]'); if (!r || !box.__rows) return;
+    var row = box.__rows[+r.getAttribute('data-sv')]; if (!row) return;
+    setOnly(box.__spec, row.v); renderData(); toast('Filtered to ' + row.v);
+  });
+  // ---- drag a pivot column's width (remembered per device, by what the column IS — a value, the row header, a total) ------
+  var CW_MIN = 48, CW_MAX = 900;
+  function colOf(k) { var cs = $('#pv').querySelectorAll('col[data-ck]'); for (var i = 0; i < cs.length; i++) if (cs[i].getAttribute('data-ck') === k) return cs[i]; return null; }
+  function gripOf(k) { var gs = $('#pv').querySelectorAll('.crz'); for (var i = 0; i < gs.length; i++) if (gs[i].getAttribute('data-ck') === k) return gs[i]; return null; }
+  function setCW(k, w) {
+    var m = Object.assign({}, S.L.pivot.w || {});
+    delete m[k]; if (w != null) m[k] = Math.round(Math.max(CW_MIN, Math.min(CW_MAX, w)));
+    var ks = Object.keys(m); if (ks.length > 60) ks.slice(0, ks.length - 60).forEach(function (x) { delete m[x]; });
+    if (Object.keys(m).length) S.L.pivot.w = m; else delete S.L.pivot.w;
+    saveLayout(); renderPivot();
+  }
+  $('#pv').addEventListener('pointerdown', function (e) {
+    var g = e.target.closest('.crz'); if (!g || e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    var k = g.getAttribute('data-ck'), col = colOf(k), th = g.parentNode, x0 = e.clientX, w0 = th.getBoundingClientRect().width, w = w0;
+    g.classList.add('on'); document.body.classList.add('bd-crz'); try { g.setPointerCapture(e.pointerId); } catch (x) {}
+    function mv(ev) { w = Math.max(CW_MIN, Math.min(CW_MAX, w0 + ev.clientX - x0)); if (col) col.style.width = w + 'px'; }
+    function up() {
+      g.removeEventListener('pointermove', mv); g.removeEventListener('pointerup', up); g.removeEventListener('pointercancel', up);
+      document.body.classList.remove('bd-crz'); g.classList.remove('on');
+      if (Math.abs(w - w0) < 2) return;               // a click that did not move is not a resize
+      setCW(k, w);
+    }
+    g.addEventListener('pointermove', mv); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
+  });
+  $('#pv').addEventListener('dblclick', function (e) { var g = e.target.closest('.crz'); if (g) setCW(g.getAttribute('data-ck'), null); });
+  $('#pv').addEventListener('keydown', function (e) {
+    var g = e.target.closest('.crz'); if (!g) return;
+    var k = g.getAttribute('data-ck'), w = g.parentNode.getBoundingClientRect().width;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setCW(k, w + (e.key === 'ArrowRight' ? 20 : -20)); }
+    else if (e.key === 'Enter') { e.preventDefault(); setCW(k, null); } else return;
+    var n = gripOf(k); if (n) n.focus();
+  });
   $('#pv').addEventListener('click', function (e) {
+    if (e.target.closest('.crz')) return;
     var td = e.target.closest('[data-ci]'); if (!td || !PV) return;
     var p = td.getAttribute('data-ci').split(':'), q = S.q.toLowerCase();
     var rows = q ? PV.rows.filter(function (r) { return r.v.toLowerCase().indexOf(q) >= 0; }) : PV.rows, r = rows[+p[0]]; if (!r) return;
