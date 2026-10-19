@@ -2792,6 +2792,7 @@ window.addEventListener('load',restore);
     var satAvg=(M&&M.satL.length)?Math.round(M.satL.reduce(function(s,x){return s+x.pct;},0)/M.satL.length):null;
     var avg=planAvg();
     /* ---- hero ---- */
+    var mktN=Math.max(grS.length,audS.length);
     var heroL, heroH, heroS, heroGo=(!client&&M&&M.sug&&M.sug[0])||null;
     var nar=[];
     if(p)nar.push(fmtN(p.done)+' of '+fmtN(p.total)+' optimisation tasks delivered across '+lanes.length+' lane'+(lanes.length===1?'':'s'));
@@ -2823,7 +2824,7 @@ window.addEventListener('load',restore);
     var hero='<div class="ov-hero"><div class="ov-hl"><div class="ov-ey ov-hey">'+esc(heroL)+'</div>'
       +'<h4>'+esc(heroH)+'</h4><p>'+esc(heroS)+'</p>'
       +'<div class="ov-hst"><span><b>'+LW.tests.length+'</b>tests live</span><span><b>'+LW.flight.length+'</b>in flight</span>'
-        +'<span><b>'+(gr.length||audL.length||portMkts(name).length)+'</b>market'+((gr.length||audL.length||portMkts(name).length)===1?'':'s')+'</span>'
+        +(mktN?'<span><b>'+mktN+'</b>market'+(mktN===1?'':'s')+' read</span>':'')
         +(p?'<span><b>'+fmtN(p.done)+'</b>delivered</span>':'')+'</div>'
       +(client?'':'<div class="ov-hb">'+(heroGo?'<a class="ov-btn pri" href="'+esc(heroGo.l)+'">Open '+esc(heroGo.ll)+'</a>':'')
         +'<a class="ov-btn'+(heroGo?'':' pri')+'" href="/workflow?client='+encodeURIComponent(name)+'">Workflow</a>'
