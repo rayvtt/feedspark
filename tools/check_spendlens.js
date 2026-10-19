@@ -79,6 +79,7 @@ const INIT = "window.__posts=[];window.__slhits=0;(function(){var real=window.fe
     says: [...n.querySelectorAll('.ck-say')].map((e) => e.textContent.trim()),
     briefs: n.querySelectorAll('[data-sl]').length,
     roasLinks: [...n.querySelectorAll('a[href*="/roas?"]')].map((a) => a.getAttribute('href')),
+    newTab: [...n.querySelectorAll('a[href^="/"]')].map((a) => a.getAttribute('target') + '|' + a.getAttribute('rel')),
     mkts: [...n.querySelectorAll('.ck-cwm')].map((m) => m.textContent.replace(/\s+/g, ' ').trim()),
     reads: n.querySelectorAll('[data-slr]').length,
     bd: (n.querySelector('a[href*="/breakdown"]') || {}).getAttribute ? n.querySelector('a[href*="/breakdown"]').getAttribute('href') : null,
@@ -113,6 +114,9 @@ const INIT = "window.__posts=[];window.__slhits=0;(function(){var real=window.fe
     s.mkts.some((m) => /2 smaller markets not read here: FR, NL/.test(m)), s.mkts);
   ok('…and so are the ones that carried no spend',
     s.mkts.some((m) => /1 market carried no spend in the window/.test(m)), s.mkts);
+  // a link out of the rail throws away the rail, the board's filters and the scroll position
+  ok('every link out of the rail opens a new tab, as its \u2197 says',
+    s.newTab.length >= 3 && s.newTab.every((t) => t === '_blank|noopener'), s.newTab);
   // the Breakdown reads `brand`, not `client` — a link on the wrong parameter lands on whatever
 // feed that device last had open, which is somebody else's account
 ok('the fields FeedHero does not cut are pointed at /breakdown, on its own parameters',

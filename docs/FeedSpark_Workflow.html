@@ -7520,13 +7520,16 @@ aside.ck[hidden]{display:none}
     var byM={}; (d.toRead||[]).forEach(function(t){ (byM[t.market]=byM[t.market]||[]).push(t.agg); });
     SLLIST=top;
     h+=top.map(function(f,i){
+      // EVERY LINK OUT OF THIS RAIL OPENS A NEW TAB (the standing rule, 19 Oct 2026): an
+      // ordinary navigation throws away the rail, the board's client filter and the reader's
+      // place in it, and the ↗ on the link already says a new tab is what happens.
       var g=SL_GLYPH[f.k]||'•';
       return row('',g+' <span class="ck-pill tg" title="'+esc(f.market.toUpperCase()+(f.agg?' · by '+slCut(d,f.agg):''))+'">'+esc(f.market.toUpperCase())+'</span><span class="nm">'+esc(f.head)+'</span>')
         +'<div class="ck-actrow"><span class="ck-ev">'+esc(f.ev)+'</span>'
         +(f.swing?'<span class="ck-say">Moving a tenth of '+esc(f.swing.fromV)+'’s spend ('+esc(slMoney(f.swing.cur,f.swing.mv))+') to '+esc(f.swing.toV)+'’s own return is '+esc(slMoney(f.swing.cur,f.swing.to))+' instead of '+esc(slMoney(f.swing.cur,f.swing.from))+' — arithmetic on two readings, not a forecast.</span>':'')
         +'<span class="ck-how">'+(f.agg?'<b>'+esc(slCut(d,f.agg))+'</b> · ':'')+esc((slTac(d,f.k)||{}).why||'')+'</span>'
         +'<span class="ck-actbtn"><button type="button" class="ck-brief go" data-sl="'+i+'">→ Brief this</button>'
-        +(f.agg?'<a class="ck-brief" href="/roas?brand='+encodeURIComponent(brand)+'&market='+encodeURIComponent(f.market)+'&seg='+encodeURIComponent(f.agg)+'" title="Open this cut in the ROAS module">ROAS ↗</a>':'')
+        +(f.agg?'<a class="ck-brief" href="/roas?brand='+encodeURIComponent(brand)+'&market='+encodeURIComponent(f.market)+'&seg='+encodeURIComponent(f.agg)+'" target="_blank" rel="noopener" title="Open this cut in the ROAS module — a new tab, so the rail and the board stay where they are">ROAS ↗</a>':'')
         +'</span></div>';
     }).join('');
     if(!top.length&&(d.toRead||[]).length)h+='<p class="ck-h">Nothing has been read yet — read a market’s cuts below and the findings land here.</p>';
@@ -7544,7 +7547,7 @@ aside.ck[hidden]{display:none}
     });
     if((d.rest||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.rest||[]).length+' smaller market'+((d.rest||[]).length===1?'':'s')+' not read here: '+(d.rest||[]).map(function(x){return x.toUpperCase();}).join(', '))+'</span></div>';
     if((d.quiet||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.quiet||[]).length+' market'+((d.quiet||[]).length===1?'':'s')+' carried no spend in the window')+'</span></div>';
-    h+='<p class="ck-h">These are the cuts FeedHero reports. For a field it does not cut — pattern, material, size, anything in the feed — the <a href="/breakdown?brand='+encodeURIComponent(brand)+(mk.length?'&market='+encodeURIComponent(mk[0].market):'')+'" class="ck-lnk">Field Breakdown</a> reads the feed itself and pivots spend and ROAS against any of them \u2014 that is where the pattern reading above came from.</p></div>';
+    h+='<p class="ck-h">These are the cuts FeedHero reports. For a field it does not cut — pattern, material, size, anything in the feed — the <a href="/breakdown?brand='+encodeURIComponent(brand)+(mk.length?'&market='+encodeURIComponent(mk[0].market):'')+'" class="ck-lnk" target="_blank" rel="noopener">Field Breakdown</a> reads the feed itself and pivots spend and ROAS against any of them \u2014 that is where the pattern reading above came from.</p></div>';
     if(also.length){
       h+='<div class="ck-actfoot"><button type="button" class="ck-brief" id="ck-sl-more" aria-expanded="'+(SLMORE[brand]?'true':'false')+'">'+(SLMORE[brand]?'▾ Fewer':'▸ '+also.length+' more on other cuts')+'</button></div>';
       if(SLMORE[brand])h+='<ul class="ck-tlmore">'+also.map(function(f){
