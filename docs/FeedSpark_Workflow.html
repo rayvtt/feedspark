@@ -7779,6 +7779,21 @@ aside.ck[hidden]{display:none}
     if(r.inDays===1)return 'tomorrow';
     return 'in '+r.inDays+' days';
   }
+  // HOW MANY PRODUCTS a moment covers — ONE builder for both halves of the band (Ray,
+  // 15 Oct 2026: "please also keep the number of products, along with status and who is handling
+  // it"), off the engine's own reading, so the figure cannot change the moment a moment is
+  // briefed. A scope nobody has measured yet is never printed as a zero.
+  function scopeCell(E,r,briefed){
+    var txt = r.brandwide ? 'whole catalogue'
+      : (r.vol!=null ? E.fmt(r.vol)+' products'
+      : (r.scoped ? 'scope set · not measured' : 'no scope yet'));
+    var tip = r.brandwide ? 'Brand-wide — the whole catalogue'
+      : (r.vol!=null ? 'Products the scope set on the calendar resolves to'
+      : (r.scoped ? 'Scope set on the calendar — sync product types there to measure it'
+      : (briefed ? 'No product scope set on the calendar for this moment'
+                 : 'No product scope set yet — brief it anyway, or set the scope on the calendar first')));
+    return '<span class="kwd-sc" title="'+esc(tip)+'">'+esc(txt)+'</span>';
+  }
   // Workflow's own stage words, read by name rather than copied (the FCCBrief / FCCSolo bridge)
   function stages(){ try{ return (window.FCCStages&&window.FCCStages())||{}; }catch(e){ return {}; } }
   function briefedRows(){
@@ -7816,16 +7831,13 @@ aside.ck[hidden]{display:none}
       : '';
     $('#kwd-rows').innerHTML = rs.length ? rs.slice(0,14).map(function(r,i){
       var cls=r.overdue?' late':(r.inDays<=7?' soon':'');
-      var scope = r.brandwide ? 'whole catalogue'
-        : (r.vol!=null ? E.fmt(r.vol)+' products'
-        : (r.scoped ? 'scope set · not measured' : 'no scope yet'));
       var themes=(r.terms||[]).slice(0,3).join(', ');
       return '<div class="kwd-row'+cls+'">'
         +'<span class="kwd-when" title="'+esc('Brief due '+r.briefLbl+' — it goes live '+r.liveLbl)+'">'+esc(whenLbl(r))+'</span>'
         +'<span class="kwd-who" title="'+esc(r.client)+'">'+esc(r.client)+(r.mkt&&r.mkt!=='gb'?' · '+esc(r.mkt.toUpperCase()):'')+'</span>'
         +'<span class="kwd-nm" title="'+esc(r.name+(themes?' — '+themes:''))+'">'+esc(r.name)
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
-        +'<span class="kwd-sc" title="'+esc(r.scoped?'Scope set on the calendar':'No product scope set yet — brief it anyway, or set the scope on the calendar first')+'">'+esc(scope)+'</span>'
+        +scopeCell(E,r,false)
         +'<span class="kwd-act"><button type="button" class="kwd-go" data-kwd="'+i+'" title="'+esc('Raise the brief for “'+r.name+'” — the calendar picks it up as briefed')+'">Brief</button></span>'
         +'</div>';
     }).join('')+(rs.length>14?'<div class="kwd-none">+'+(rs.length-14)+' more on the calendar</div>':'')
@@ -7866,6 +7878,7 @@ aside.ck[hidden]{display:none}
         +'<span class="kwd-who" title="'+esc(r.client)+'">'+esc(r.client)+(r.mkt&&r.mkt!=='gb'?' \u00b7 '+esc(r.mkt.toUpperCase()):'')+'</span>'
         +'<span class="kwd-nm" title="'+esc(r.name+(themes?' \u2014 '+themes:''))+'">'+esc(r.name)
         +(themes?' <i>'+esc(themes)+'</i>':'')+'</span>'
+        +scopeCell(E,r,true)
         +'<span class="kwd-st" style="background:'+esc(col)+'" title="'+esc('Ticket '+r.ticket+(r.task?' \u2014 '+r.task:'')+(r.by?' \u00b7 briefed by '+r.by:''))+'">'+esc(lbl)+'</span>'
         +'<span class="kwd-ct" title="'+esc(r.court?r.court+'\u2019s court':'Nobody is waiting on this one')+'">'+esc(r.court||'')+'</span>'
         +'<span class="kwd-act"><button type="button" class="kwd-tk" data-kwt="'+i+'" title="'+esc('Open ticket '+r.ticket)+'">Ticket \u2197</button></span>'
