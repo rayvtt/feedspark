@@ -166,6 +166,37 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.waitForTimeout(120);
     }
 
+    console.log('· Google Ads in the pivot: spend per group, against its share of products, and ROAS');
+    {
+      const ADS = STUBS.build().ads, A = {}; Object.keys(ADS).forEach((k) => { A[k.toLowerCase()] = ADS[k]; });
+      const SP = {}, VAL = {}, NP = {}; let tot = 0, totV = 0;
+      ITEMS.forEach((it) => { const r = tier(tag(it, 'g:product_type'), 2), a = A[tag(it, 'g:id').toLowerCase()] || [0, 0, 0, 0, 0];
+        SP[r] = (SP[r] || 0) + a[2]; VAL[r] = (VAL[r] || 0) + a[4]; NP[r] = (NP[r] || 0) + 1; tot += a[2]; totV += a[4]; });
+      const money = (t) => parseFloat(String(t).replace(/[£,\s]/g, ''));
+      await pg.selectOption('#pv-meas', 'cost'); await pg.waitForTimeout(250);
+      const sp = await pg.evaluate(() => ({ line: document.getElementById('pv-ads').textContent, hidden: document.getElementById('pv-ads').hidden,
+        heads: Array.from(document.querySelectorAll('#pv table thead th')).map((th) => th.textContent),
+        rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'); return [t[0].textContent, t[t.length - 2].textContent, t[t.length - 1].textContent]; }),
+        foot: Array.from(document.querySelectorAll('#pv tfoot td')).map((td) => td.textContent) }));
+      ok('picking Spend reads Google Ads and says what it joined, naming the spend on products the feed no longer carries', !sp.hidden && /last 30 days/i.test(sp.line) && /no longer carries/.test(sp.line) && /£9\.50/.test(sp.line), sp.line);
+      ok('…every row total is the 30-day spend of its own products, counted independently (an id is matched case-blind)', sp.rows.length === Object.keys(SP).length && sp.rows.every(([v, t]) => Math.abs(money(t) - SP[v]) < 0.6), [sp.rows, SP]);
+      ok('…the column total is the feed’s spend, never the out-of-feed id', Math.abs(money(sp.foot[sp.foot.length - 2]) - tot) < 0.6, [sp.foot, tot]);
+      ok('…and beside it each row’s share of PRODUCTS, the contrast the spend is read against', sp.heads[sp.heads.length - 1] === '% of products' && sp.rows.every(([v, , p]) => Math.abs(parseFloat(p) - NP[v] / ITEMS.length * 100) < 0.6), sp.rows);
+      await pg.click('#pv-show [data-s="all"]'); await pg.waitForTimeout(150);
+      const share = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'); return [t[0].textContent, t[t.length - 2].textContent]; }));
+      if (process.env.BD_SHOT2) await pg.locator('#sec-pivot').screenshot({ path: process.env.BD_SHOT2 });
+      ok('…% of total turns each row into its share of the spend', share.every(([v, t]) => Math.abs(parseFloat(t) - SP[v] / tot * 100) < 0.6), share);
+      await pg.selectOption('#pv-meas', 'roas'); await pg.waitForTimeout(200);
+      const ro = await pg.evaluate(() => ({ off: document.getElementById('pv-show').classList.contains('off'), rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'); return [t[0].textContent, t[t.length - 2].textContent, t[t.length - 1].textContent]; }) }));
+      ok('ROAS is conversion value ÷ spend from each group’s own sums, with the spend beside it, and never a share', ro.off && ro.rows.every(([v, r, s2]) => (SP[v] > 0 ? Math.abs(parseFloat(r.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : r === '—') && Math.abs(money(s2) - SP[v]) < 0.6), [ro, SP, VAL]);
+      const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+      const csv = fs.readFileSync(await cdl.path(), 'utf8');
+      ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);
+      await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.waitForTimeout(150);
+      const back = await pg.evaluate(() => ({ hidden: document.getElementById('pv-ads').hidden, last: Array.from(document.querySelectorAll('#pv table thead th')).pop().textContent }));
+      ok('…and back on Products the table counts again', back.hidden && back.last === 'Row total', back);
+    }
+
     console.log('· a pane is as wide as its longest value');
     const fit = await pg.evaluate(() => Array.from(document.querySelectorAll('#panes .pane:not(.add) td.v')).every((td) => td.scrollWidth <= td.clientWidth + 1 && getComputedStyle(td).textOverflow !== 'ellipsis'));
     ok('no value in a pane is cut short', fit);

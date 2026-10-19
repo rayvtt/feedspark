@@ -287,25 +287,38 @@
   function pivot(S, spec, m, opts) {
     opts = opts || {};
     var R = reader(S, spec); if (!R) return null;
-    var g = opts.unit === 'group' ? groupCol(S) : -1, gids = g >= 0 ? S.cols[g].ids : null;
+    // opts.w / opts.w2: a WEIGHT per product (Google Ads spend, clicks …) summed instead of counting — a weighted
+    // table counts products (never item groups), and still says how many products each value carries (p)
+    var w = typeof opts.w === 'function' ? opts.w : null, w2 = w && typeof opts.w2 === 'function' ? opts.w2 : null;
+    var g = !w && opts.unit === 'group' ? groupCol(S) : -1, gids = g >= 0 ? S.cols[g].ids : null;
     var cnt = new Map(), sets = g >= 0 ? new Map() : null, tot = 0, totSet = g >= 0 ? new Set() : null, multiRows = 0;
+    var pc_ = w ? new Map() : null, c2 = w2 ? new Map() : null, totP = 0, tot2 = 0;
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
       var a = R.of(r); if (!a.length) a = [BLANK]; else if (a.length > 1) multiRows++;
       var unitKey = gids ? (gids[r] ? 'g' + gids[r] : 'r' + r) : null;
-      if (totSet) totSet.add(unitKey); else tot++;
+      var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
+      if (totSet) totSet.add(unitKey); else tot += x;
+      if (w) { totP++; tot2 += x2; }
       for (var j = 0; j < a.length; j++) {
         if (sets) { var s = sets.get(a[j]); if (!s) { s = new Set(); sets.set(a[j], s); } s.add(unitKey); }
-        else cnt.set(a[j], (cnt.get(a[j]) || 0) + 1);
+        else cnt.set(a[j], (cnt.get(a[j]) || 0) + x);
+        if (w) { pc_.set(a[j], (pc_.get(a[j]) || 0) + 1); if (w2) c2.set(a[j], (c2.get(a[j]) || 0) + x2); }
       }
     }
     if (totSet) { tot = totSet.size; sets.forEach(function (s, v) { cnt.set(v, s.size); }); }
     var rows = [], mode = spec.m || 'raw';
     if (mode === 'qtr') qtrFill(S, cnt);
-    cnt.forEach(function (n, v) { rows.push({ v: v, n: n, share: tot ? n / tot : 0, o: bandOrder(mode, v) }); });
+    cnt.forEach(function (n, v) {
+      var o = { v: v, n: n, share: tot ? n / tot : 0, o: bandOrder(mode, v) };
+      if (w) { o.p = pc_.get(v) || 0; if (w2) o.n2 = c2.get(v) || 0; }
+      rows.push(o);
+    });
     sortRows(rows, isBand(mode) ? 'o' : 'n', isBand(mode) ? 1 : -1);
     var blank = cnt.get(BLANK) || 0;
-    return { rows: rows, total: tot, distinct: rows.filter(function (x) { return x.n > 0; }).length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
+    var res = { rows: rows, total: tot, distinct: rows.filter(function (x) { return x.n > 0; }).length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
+    if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    return res;
   }
   // k: 'v' value (A→Z, numbers in number order) · 'n' count · 'share' · 'o' band order; blank always last
   var COLL = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator('en', { numeric: true, sensitivity: 'base' }) : null;
@@ -332,17 +345,32 @@
     var RR = reader(S, rs), RC = reader(S, cs); if (!RR || !RC) return null;
     // 0 = no limit (every column / every row); absent = the screen's defaults
     var maxC = opts.maxC == null ? 12 : opts.maxC, maxR = opts.maxR == null ? 25 : opts.maxR;
+    // opts.w / opts.w2 as in pivot(): every cell sums the weight (cells) and the second weight (cells2), each row and
+    // column also says how many products it holds (p) — so a share of spend can sit beside a share of products
+    var w = typeof opts.w === 'function' ? opts.w : null, w2 = w && typeof opts.w2 === 'function' ? opts.w2 : null;
     var rowTot = new Map(), colTot = new Map(), cell = new Map(), tot = 0;
+    var rowP = new Map(), colP = new Map(), row2 = new Map(), col2 = new Map(), cell2 = new Map(), totP = 0, tot2 = 0;
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
-      tot++;
+      var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
+      tot += x; totP++; tot2 += x2;
       var a = RR.of(r), b = RC.of(r); if (!a.length) a = [BLANK]; if (!b.length) b = [BLANK];
       for (var i = 0; i < a.length; i++) {
-        rowTot.set(a[i], (rowTot.get(a[i]) || 0) + 1);
+        rowTot.set(a[i], (rowTot.get(a[i]) || 0) + x);
+        rowP.set(a[i], (rowP.get(a[i]) || 0) + 1);
         var row = cell.get(a[i]); if (!row) { row = new Map(); cell.set(a[i], row); }
-        for (var j = 0; j < b.length; j++) row.set(b[j], (row.get(b[j]) || 0) + 1);
+        for (var j = 0; j < b.length; j++) row.set(b[j], (row.get(b[j]) || 0) + x);
+        if (w2) {
+          row2.set(a[i], (row2.get(a[i]) || 0) + x2);
+          var rw2 = cell2.get(a[i]); if (!rw2) { rw2 = new Map(); cell2.set(a[i], rw2); }
+          for (var j3 = 0; j3 < b.length; j3++) rw2.set(b[j3], (rw2.get(b[j3]) || 0) + x2);
+        }
       }
-      for (var j2 = 0; j2 < b.length; j2++) colTot.set(b[j2], (colTot.get(b[j2]) || 0) + 1);
+      for (var j2 = 0; j2 < b.length; j2++) {
+        colTot.set(b[j2], (colTot.get(b[j2]) || 0) + x);
+        colP.set(b[j2], (colP.get(b[j2]) || 0) + 1);
+        if (w2) col2.set(b[j2], (col2.get(b[j2]) || 0) + x2);
+      }
     }
     var rm = rs.m || 'raw', cm = cs.m || 'raw';
     if (rm === 'qtr') qtrFill(S, rowTot);
@@ -353,15 +381,65 @@
     sortRows(rows, isBand(rm) ? 'o' : 'n', isBand(rm) ? 1 : -1);
     var shown = maxC > 0 ? cols.slice(0, maxC) : cols, other = maxC > 0 ? cols.slice(maxC) : [];
     var otherN = other.reduce(function (s, c) { return s + c.n; }, 0);
-    var outCols = shown.map(function (c) { return { v: c.v, n: c.n }; });
-    if (other.length) outCols.push({ v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) });
+    var sumOf = function (M, list) { return list.reduce(function (s, c) { return s + (M.get(c.v) || 0); }, 0); };
+    var outCols = shown.map(function (c) { var o = { v: c.v, n: c.n }; if (w) { o.p = colP.get(c.v) || 0; if (w2) o.n2 = col2.get(c.v) || 0; } return o; });
+    if (other.length) {
+      var oc = { v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) };
+      if (w) { oc.p = sumOf(colP, other); if (w2) oc.n2 = sumOf(col2, other); }
+      outCols.push(oc);
+    }
     var cut = maxR > 0 ? rows.slice(0, maxR) : rows;
     var outRows = cut.map(function (rw) {
       var map = cell.get(rw.v) || new Map(), cells = shown.map(function (c) { return map.get(c.v) || 0; });
       if (other.length) { var o = 0; other.forEach(function (c) { o += map.get(c.v) || 0; }); cells.push(o); }
-      return { v: rw.v, n: rw.n, cells: cells };
+      var out = { v: rw.v, n: rw.n, cells: cells };
+      if (w) {
+        out.p = rowP.get(rw.v) || 0;
+        if (w2) {
+          var m2 = cell2.get(rw.v) || new Map();
+          out.n2 = row2.get(rw.v) || 0; out.cells2 = shown.map(function (c) { return m2.get(c.v) || 0; });
+          if (other.length) out.cells2.push(sumOf(m2, other));
+        }
+      }
+      return out;
     });
-    return { rows: outRows, cols: outCols, total: tot, rowsAll: rows.length, rowsHidden: rows.length - cut.length, multi: RR.multi || RC.multi };
+    var res = { rows: outRows, cols: outCols, total: tot, rowsAll: rows.length, rowsHidden: rows.length - cut.length, multi: RR.multi || RC.multi };
+    if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    return res;
+  }
+
+  // ---- GOOGLE ADS PER PRODUCT: FeedHero's Ads Traffic read ({id: [impr, clicks, cost, conv, value]}) joined onto the
+  // store by product id, CASE-BLIND (Google lower-cases the Ads item id that stands in for a blank one). The join
+  // column is the one carrying more of the report's ids — g:id, else c:fs_data_original_id — never a guess. Spend on
+  // ids the feed does not carry is kept APART (out), never spread over the groups. Weights are per product.
+  var ADS_KEYS = ['impr', 'clicks', 'cost', 'conv', 'value'];
+  function adsJoin(S, rows) {
+    var idx = new Map();
+    Object.keys(rows || {}).forEach(function (k) { idx.set(String(k).trim().toLowerCase(), rows[k]); });
+    var cand = [];
+    S.cols.forEach(function (c, i) { var nm = c.name.replace(/^(g|c|fs):/i, '').toLowerCase(); if (nm === 'id' || nm === 'fs_data_original_id') cand.push(i); });
+    var best = -1, bestN = -1;
+    cand.forEach(function (ci) {
+      var c = S.cols[ci], hit = 0;
+      for (var r = 0; r < S.n; r++) { var v = c.vals[c.ids[r]]; if (v && idx.has(v.toLowerCase())) hit++; }
+      if (hit > bestN) { bestN = hit; best = ci; }
+    });
+    var f = {}; ADS_KEYS.forEach(function (k) { f[k] = new Float64Array(S.n); });
+    var tot = { impr: 0, clicks: 0, cost: 0, conv: 0, value: 0 }, inF = { impr: 0, clicks: 0, cost: 0, conv: 0, value: 0 }, used = new Set(), matched = 0;
+    idx.forEach(function (a) { ADS_KEYS.forEach(function (k, j) { tot[k] += +a[j] || 0; }); });
+    if (best >= 0) {
+      var c = S.cols[best];
+      for (var r = 0; r < S.n; r++) {
+        var v = c.vals[c.ids[r]]; if (!v) continue;
+        var key = v.toLowerCase(), a = idx.get(key); if (!a) continue;
+        matched++;
+        if (used.has(key)) continue;   // two rows one id: the report's figure is counted once, on the first
+        used.add(key);
+        ADS_KEYS.forEach(function (k, j) { var x = +a[j] || 0; f[k][r] = x; inF[k] += x; });
+      }
+    }
+    var out = {}; ADS_KEYS.forEach(function (k) { out[k] = Math.max(0, tot[k] - inF[k]); });
+    return { f: f, col: best >= 0 ? S.cols[best].name : null, ids: idx.size, matched: matched, used: used.size, unmatchedIds: idx.size - used.size, tot: tot, inFeed: inF, out: out };
   }
 
   // ---- the defaults a fresh device opens on: the fields a feed person reaches for first, those this feed carries ----
@@ -406,7 +484,7 @@
 
   return { VERSION: VERSION, BLANK: BLANK, MAXLEN: MAXLEN, MODE_LBL: MODE_LBL, LEN_BANDS: LEN_BANDS, NUM_EDGES: NUM_EDGES,
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
-    fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
+    fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
     defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName };
 });

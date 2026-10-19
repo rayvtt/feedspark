@@ -15,7 +15,13 @@ const CLIENT = CAT.CLIENT, MKT = CAT.MKT;
 function build() {
   const xml = CAT.build().xml;
   const roster = { ok: true, clients: { [CLIENT]: [{ mkt: MKT, kind: 'xml', meta: false }, { mkt: MKT + '-fb', kind: 'xml', meta: true }] } };
-  return { xml, roster };
+  // a SYNTHETIC 30-day Google Ads read, keyed by the stub's own ids (upper-cased, as the report may carry them, so the
+  // case-blind join is exercised) plus one id the feed does not carry — its spend must stay out of every row
+  const ids = [...xml.matchAll(/<g:id>([^<]+)<\/g:id>/g)].map((m) => m[1]);
+  const ads = {};
+  ids.forEach((id, i) => { if (i % 3 === 2) return; ads[id.toUpperCase()] = [100 + i * 10, 5 + i, 12.5 + i * 3, i % 4 === 0 ? 1 : 0, i % 4 === 0 ? 60 + i * 5 : 0]; });
+  ads['NW-GONE-404'] = [40, 4, 9.5, 0, 0];
+  return { xml, roster, ads };
 }
 function stubLines() {
   const d = build();
@@ -25,6 +31,7 @@ function stubLines() {
     + "  if(url.indexOf('/breakdown/engine.js')>=0)" + txt(src('breakdown_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/feedlab/engine.js')>=0)" + txt(src('feedlab_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/api/breakdown/roster')>=0)return j(" + JSON.stringify(d.roster) + ");\n"
+    + "  if(url.indexOf('/api/breakdown/ads')>=0)return j(" + JSON.stringify({ ok: true, done: true, cmpid: '999', period: '30_days', range: 'Last 30 days', cur: 'GBP', got: Object.keys(d.ads).length, total: Object.keys(d.ads).length, rows: d.ads }) + ");\n"
     + "  if(url.indexOf('/api/feed/proxy')>=0){window.__bdReads=(window.__bdReads||[]).concat([url]);" + txt(JSON.stringify(d.xml), 'application/xml', { 'x-feed-bytes': String(Buffer.byteLength(d.xml)) }) + "}\n"
     + " }\n";
 }

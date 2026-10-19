@@ -16188,6 +16188,24 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: Google Ads per product joined by id, out-of-feed spend kept apart",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "function adsJoin(S, rows) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the pivot's Measure picker — spend / value / ROAS beside a share of products",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "<optgroup label=\"Google Ads · last 30 days\">",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: /api/breakdown/ads serves the 30-day Ads Traffic read",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/breakdown/ads' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: newness by quarter — a date reads as the quarter it falls in, newest first",
       "file": "docs/breakdown_engine.js",
       "pattern": "if (back === 0) return qName(i) + ' · this quarter';",
