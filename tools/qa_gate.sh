@@ -229,6 +229,13 @@ else
   echo "   ✗ analysis-moves harness FAILED — see node tools/test_qamoved.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: Golden Record — changes across the portfolio (week by week, per AM)"
+if node tools/test_pcchanges.mjs >/dev/null 2>&1; then
+  echo "   ✓ each feed read over the week; brands, markets and fields counted once"
+else
+  echo "   ✗ portfolio-changes harness FAILED — see node tools/test_pcchanges.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
 if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
   echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"

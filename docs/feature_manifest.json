@@ -16515,7 +16515,61 @@
       "name": "Golden history: analysis moves harness in qa_gate",
       "file": "tools/qa_gate.sh",
       "pattern": "node tools/test_qamoved.mjs",
-      "pr": 0
+      "pr": 707
+    },
+    {
+      "name": "Golden portfolio changes: engine histWindow",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histWindow(hist, profile, opts)",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: engine weekRange",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function weekRange(today, back)",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/golden/changes'",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: shared feed list",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function goldenFeedList(env, acc)",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: section",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<h2>Changes across your portfolio</h2>",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: counts",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pcTotals(feeds)",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: fold memory",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "localStorage.setItem('gr-pc-fold'",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: harness in qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_pcchanges.mjs",
+      "pr": 708
+    },
+    {
+      "name": "Golden portfolio changes: tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_pcchanges.js",
+      "pr": 708
     },
     {
       "name": "KWCal engine: a briefed row carries the products its scope resolves to",
