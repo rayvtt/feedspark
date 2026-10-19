@@ -16596,6 +16596,50 @@
       "pr": 0
     },
     {
+      "name": "CC dossier overview: the client overview (hero · KPI tiles · delivery grid · attention · live work)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "FCC-DZ-OVERVIEW",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: one builder, two voices (AM screen vs client copy)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function ovHtml(name,M,client)",
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: the delivery grid, one square per plan task",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function ovGrid(p,client)",
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: ⬇ PDF one click, client copy, print fallback",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function ovPdf(name)",
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: the overview refills with the portfolio read",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "ovFill(name,portModel(name,mkts));",
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: every dossier section folds, per device",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "fcc-dz-fold",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "CC dossier overview: tripwire wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_dzoverview.js",
+      "pr": 0
+    },
+    {
       "name": "KWCal: Hobbycraft's ten generic craft themes are seeded, two a work month",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "Hobbycraft:{events:[",

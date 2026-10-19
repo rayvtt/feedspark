@@ -505,6 +505,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: the dossier hours breakdown (hover the figure, see the markets it was summed from)"
   NODE_PATH=$(npm root -g) node tools/check_hrssplit.js || {
     echo "✗ hours-breakdown tripwire failed — the card painted at rest, was clipped or covered, lost its rows, or stopped closing"; exit 1; }
+  echo "── validating: the brand overview (dossier front page, folds, the client ⬇ PDF)"
+  NODE_PATH=$(npm root -g) node tools/check_dzoverview.js || {
+    echo "✗ dossier-overview tripwire failed — a tile, the grid count, a fold, the client copy's wording or the one-click PDF regressed"; exit 1; }
   echo "── validating: the Playbook picker lists YOUR accounts (and stands down rather than emptying)"
   NODE_PATH=$(npm root -g) node tools/check_playbook_mine.js || {
     echo "✗ Playbook-picker tripwire failed — the rail stopped filtering to your accounts, emptied the picker when no AM was known, lost the way back to all of them, or no longer narrows when /api/hours lands"; exit 1; }
