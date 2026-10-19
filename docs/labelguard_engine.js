@@ -2095,6 +2095,89 @@ export function histSeries(hist, profile, opts) {
   return out;
 }
 
+/* ---- WHAT CHANGED ACROSS THE PORTFOLIO (Ray, 19 Oct 2026: "monitor the changes on my entire account's portfolio …
+   on a weekly basis, how many brands I have worked on, how many fields I worked on … just for the account manager").
+   One feed's record, read over a window of days [from, to] (YYYY-MM-DD, inclusive): where the Golden Score stood
+   before the window opened and where it closed, which fields moved, and the same for the two analyses. The base is
+   the last reading BEFORE the window (so a move on its first day counts); a feed first read inside the window has no
+   base and says so ('new') rather than reading its whole record as a week's work. Two readings on different bases
+   are never compared. Small moves are noise: a field counts when it appeared, vanished or moved HIST_MOVE_PP. */
+export function qaFieldMoves(a, b, f) {
+  const out = [];
+  const A0 = a && (f === 'q' ? a.qa : a.ap), B0 = b && (f === 'q' ? b.qa : b.ap);
+  if (!A0 || !B0) return out;
+  const keys = Array.from(new Set(Object.keys(A0).concat(Object.keys(B0))));
+  for (const k of keys) {
+    const A = A0[k], B = B0[k];
+    if (f !== 'q') {
+      if (A == null || B == null || Math.abs(B - A) < 1) continue;
+      out.push({ k, from: A, to: B, d: B - A });
+      continue;
+    }
+    if (!A || !B) { out.push({ k, from: A ? A.s : null, to: B ? B.s : null, d: Math.round(((B ? B.s : 0) - (A ? A.s : 0)) * 10) / 10 }); continue; }
+    const d = Math.round((B.s - A.s) * 10) / 10;
+    if (Math.abs(d) < 0.5) continue;
+    let fixed = 0, broke = 0;
+    for (const id of new Set(Object.keys(A.b || {}).concat(Object.keys(B.b || {})))) {
+      const dn = ((A.b || {})[id] || 0) - ((B.b || {})[id] || 0);
+      if (dn > 0) fixed += dn; else broke -= dn;
+    }
+    out.push({ k, from: A.s, to: B.s, d, fixed, broke });
+  }
+  return out.sort((x, y) => Math.abs(y.d) - Math.abs(x.d) || (x.k < y.k ? -1 : 1));
+}
+export function histWindow(hist, profile, opts) {
+  const o = opts || {};
+  const from = String(o.from || ''), to = String(o.to || '');
+  const out = { gs: null, q: null, air: null, scans: 0, hand: 0, changed: false };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) return out;
+  const inW = (t) => { const d = histDay(t); return d >= from && d <= to; };
+  const before = (t) => histDay(t) < from;
+  out.scans = ((hist && hist.s) || []).filter((d) => d >= from && d <= to).length;
+  // Golden Score — the readings
+  const reads = ((hist && hist.r) || []).filter((x) => x && x.cov && x.t).slice().sort((a, b) => a.t - b.t);
+  const live = o.live && o.live.cov && o.live.t ? o.live : null;
+  if (live && (!reads.length || +live.t > reads[reads.length - 1].t)) reads.push(live);
+  const rb = reads.filter((x) => before(x.t)).pop() || null;
+  const rw = reads.filter((x) => inW(x.t));
+  out.hand += rw.filter((x) => x.m).length;
+  if (rw.length) {
+    const end = rw[rw.length - 1];
+    if (!rb) out.gs = { state: 'new', to: histScore(end, profile), fields: [] };
+    else if (histBasis(rb) !== histBasis(end)) out.gs = { state: 'basis', to: histScore(end, profile), fields: [] };
+    else {
+      const fields = histMoved(rb, end).filter((m) => typeof m[1] !== 'number' || typeof m[2] !== 'number' || Math.abs(m[2] - m[1]) >= HIST_MOVE_PP);
+      const a = histScore(rb, profile), b = histScore(end, profile);
+      const d = a != null && b != null ? Math.round((b - a) * 10) / 10 : null;
+      out.gs = { state: fields.length || (d != null && Math.abs(d) >= 0.1) ? 'moved' : 'same', from: a, to: b, d, fields, rows: end.rows || 0 };
+    }
+  }
+  // the two analyses
+  const qa = ((hist && hist.q) || []).filter((x) => x && x.t).slice().sort((a, b) => a.t - b.t);
+  const qw = qa.filter((x) => inW(x.t));
+  out.hand += qw.filter((x) => x.m).length;
+  for (const f of ['q', 'air']) {
+    const L = qa.filter((x) => x[f] != null), W = qw.filter((x) => x[f] != null);
+    if (!W.length) continue;
+    const b0 = L.filter((x) => before(x.t)).pop() || null, end = W[W.length - 1];
+    if (!b0) { out[f] = { state: 'new', to: end[f], fields: [] }; continue; }
+    const d = Math.round((end[f] - b0[f]) * 10) / 10;
+    const fields = qaFieldMoves(b0, end, f);
+    out[f] = { state: fields.length || Math.abs(d) >= 0.5 ? 'moved' : 'same', from: b0[f], to: end[f], d, fields,
+      detail: !!((f === 'q' ? b0.qa : b0.ap) && (f === 'q' ? end.qa : end.ap)) };
+  }
+  out.changed = ['gs', 'q', 'air'].some((k) => out[k] && out[k].state === 'moved');
+  return out;
+}
+// Monday-start calendar weeks, `back` weeks before the one holding `today` (0 = this week, to today)
+export function weekRange(today, back) {
+  const t = /^\d{4}-\d{2}-\d{2}$/.test(String(today || '')) ? today : histDay(Date.now());
+  const dow = (new Date(t + 'T00:00:00Z').getUTCDay() + 6) % 7;
+  const mon = histPlusDays(t, -dow - 7 * Math.max(0, parseInt(back, 10) || 0));
+  const sun = histPlusDays(mon, 6);
+  return { from: mon, to: sun < t ? sun : t };
+}
+
 // The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,
 // not an alarm. cov = current fill % when the column exists, null when it's not in the feed.
 // the depth rows' ask (7 Oct 2026; not PT Guard's depthAskEmail above, which proposes TREE depth) — how many each product carries, not whether the column exists.

@@ -165,6 +165,8 @@ jobs:
         run: node tools/test_goldenhist.mjs
       - name: Golden Record — why an analysis moved (fields, rules, products)
         run: node tools/test_qamoved.mjs
+      - name: Golden Record — changes across the portfolio (week by week, per AM)
+        run: node tools/test_pcchanges.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
       - name: Hero KPI harness (project plans are the source; one date rule with Workflow)

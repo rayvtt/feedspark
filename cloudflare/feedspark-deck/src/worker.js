@@ -77,7 +77,7 @@ import * as RET from "./retired.js";
 import * as TL from "./testlab.js";   // Test Lab: the Playbook's test proposals + the competitor Shopping read (src/testlab.js)   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histQaDetail, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histQaDetail, histIdx, histDay, histSeries, histWindow, weekRange, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -639,6 +639,33 @@ const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every
 };
 const feedSourceFor = async (env, client, market) => (await feedMarketsFor(env, client))[mktOf(market)] || null;
 // every client+market with a live feed (wired ∪ dossier-attached) — the Label Guard roster
+// every Google Shopping feed a signin may see, with its AM (the Task Manager's name for the account) — the ONE list
+// the portfolio trend and the weekly changes both read, so the two can never cover different feeds
+async function goldenFeedList(env, acc) {
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const tm = (await env.EDITS.get('tmidx', 'json')) || {};
+    const tmBy = {};
+    Object.keys(tm).forEach((n) => { if (tm[n] && tm[n].am) tmBy[clientSlug(n)] = String(tm[n].am); });
+    const amOf = (client) => {
+      const s = clientSlug(client);
+      if (tmBy[s]) return tmBy[s];
+      const k = Object.keys(tmBy).filter((x) => x.length >= 4 && s.length >= 4 && (x.indexOf(s) === 0 || s.indexOf(x) === 0));
+      return k.length === 1 ? tmBy[k[0]] : null;   // one unambiguous prefix match, or nobody
+    };
+    const keys = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      keys[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      if (!keys[k] && !/-fb$/.test(k.split('|')[1] || '')) keys[k] = { client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true };
+    });
+    const list = Object.keys(keys).map((k) => keys[k]).filter((f) => !acc.clients || clientMatch(acc.clients, f.client));
+    return { list, idx, overrides, amOf };
+}
+
 async function feedRoster(env) {
   const clients = {};
   Object.keys(DEFAULT_FEEDS).forEach((c) => { clients[c] = 1; });
@@ -6487,31 +6514,35 @@ async function goldenRoutes(env, request, url) {
     return answer(rec && rec.n ? rec : stored, !!(rec && rec.n));
   }
 
+  /* WHAT CHANGED ACROSS THE PORTFOLIO (Ray, 19 Oct 2026: "monitor the changes on my entire account's portfolio …
+     on a weekly basis, how many brands I have worked on, how many fields"): every feed's goldenhist read over one
+     calendar week (Monday start, ?wk=0 this week … 8) or ?from=&to=, through the engine's histWindow under the
+     brand's CURRENT profile. Scoped per signin; nothing is scored on the page. */
+  if (path === '/api/golden/changes' && request.method === 'GET') {
+    const acc = await accessOf(env, request);
+    const today = histDay(Date.now());
+    let from = String(url.searchParams.get('from') || ''), to = String(url.searchParams.get('to') || '');
+    const wk = Math.max(0, Math.min(12, parseInt(url.searchParams.get('wk'), 10) || 0));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) ({ from, to } = weekRange(today, wk));
+    if (to > today) to = today;
+    const { list, idx, overrides, amOf } = await goldenFeedList(env, acc);
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const profs = {};
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profs[f.client] || (profs[f.client] = profileFor(f.client, overrides));
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ client: f.client, mkt: f.mkt, am: amOf(f.client), tracked: !!hists[i] },
+        histWindow(hists[i], pf, { from, to, live }));
+    });
+    return json({ ok: true, at: Date.now(), today, from, to, wk, scoped: !!acc.clients, me: acc.name || displayName(acc.email) || '', feeds });
+  }
+
   if (path === '/api/golden/portfolio' && request.method === 'GET') {
     const want = parseInt(url.searchParams.get('days'), 10);
     const days = [30, 90, 365].indexOf(want) >= 0 ? want : 90;
     const acc = await accessOf(env, request);
-    const roster = await feedRoster(env);
-    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
-    const tm = (await env.EDITS.get('tmidx', 'json')) || {};
-    const tmBy = {};
-    Object.keys(tm).forEach((n) => { if (tm[n] && tm[n].am) tmBy[clientSlug(n)] = String(tm[n].am); });
-    const amOf = (client) => {
-      const s = clientSlug(client);
-      if (tmBy[s]) return tmBy[s];
-      const k = Object.keys(tmBy).filter((x) => x.length >= 4 && s.length >= 4 && (x.indexOf(s) === 0 || s.indexOf(x) === 0));
-      return k.length === 1 ? tmBy[k[0]] : null;   // one unambiguous prefix match, or nobody
-    };
-    const keys = {};
-    for (const f of roster) {
-      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
-      keys[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
-    }
-    Object.keys(idx).forEach((k) => {
-      if (!keys[k] && !/-fb$/.test(k.split('|')[1] || '')) keys[k] = { client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true };
-    });
-    const list = Object.keys(keys).map((k) => keys[k]).filter((f) => !acc.clients || clientMatch(acc.clients, f.client));
+    const { list, idx, overrides, amOf } = await goldenFeedList(env, acc);
     const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
     const profs = {};
     const today = histDay(Date.now());

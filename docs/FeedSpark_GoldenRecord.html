@@ -42,6 +42,31 @@ window.addEventListener('load',restore);
   .hero p{color:var(--ink-2);font-size:15px;max-width:900px;margin:0}
   .hero a{color:var(--orange-deep);font-weight:700}
   .cat{padding:34px 0 6px;border-top:1px solid var(--line)}
+  /* ---- CHANGES ACROSS YOUR PORTFOLIO (#sec-pc) */
+  .pc-h{cursor:pointer;align-items:center}
+  .pc-sum{font-size:12.5px;color:var(--muted);font-weight:700}
+  .pc-ctl{margin-left:auto;display:flex;gap:7px;align-items:center}
+  .pc-chev{display:inline-flex;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);align-items:center;justify-content:center;font-size:12px;color:var(--muted);transition:transform .15s}
+  #sec-pc.pc-fold .pc-chev{transform:rotate(-90deg)}
+  #sec-pc.pc-fold #pc-body{display:none}
+  body.demo #sec-pc{display:none!important}
+  .pc-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+  .pc-kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--wash,#F7F7F5)}
+  .pc-kpi b{display:block;font-size:22px;font-weight:900;line-height:1.1}
+  .pc-kpi span{font-size:11.5px;color:var(--muted);font-weight:700}
+  .pc-brand{border-top:1px solid var(--line);padding:9px 0}
+  .pc-bh{display:flex;gap:10px;align-items:baseline;cursor:pointer;flex-wrap:wrap}
+  .pc-bh b{font-size:14px}
+  .pc-bh .pc-n{font-size:12px;color:var(--muted);font-weight:700}
+  .pc-mk{display:grid;grid-template-columns:70px 1fr;gap:4px 10px;padding:6px 0 6px 18px;font-size:12.5px;cursor:pointer;border-radius:8px}
+  .pc-mk:hover{background:var(--wash,#F7F7F5)}
+  .pc-mk .pc-code{font-weight:900}
+  .pc-line{display:flex;flex-wrap:wrap;gap:5px;align-items:baseline}
+  .pc-line .pc-lbl{font-weight:800;min-width:118px}
+  .pc-chip{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
+  .pc-chip.up{color:var(--good)}.pc-chip.down{color:var(--risk)}
+  .pc-quiet{font-size:12px;color:var(--muted);padding:6px 0 2px}
+  @media (max-width:760px){.pc-kpis{grid-template-columns:repeat(2,1fr)}.pc-ctl{margin-left:0;width:100%}.pc-ctl select{flex:1;min-width:0}.pc-mk{grid-template-columns:1fr;padding-left:8px}.pc-line .pc-lbl{min-width:0;width:100%}}
   .cat-h{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
   .cat-h .k{font-size:12px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:7px;padding:3px 9px}
   .cat-h h2{font-size:22px;font-weight:900;margin:0}
@@ -1255,8 +1280,20 @@ window.addEventListener('load',restore);
   <div class="panel" id="alerts-panel"><span class="muted">Loading…</span></div>
 </div></section>
 
+<section class="cat" id="sec-pc"><div class="wrap">
+  <div class="cat-h pc-h" id="pc-h" role="button" tabindex="0" aria-expanded="true" aria-controls="pc-body" title="Fold or open this section">
+    <span class="k">02</span><h2>Changes across your portfolio</h2><span class="pc-sum" id="pc-sum"></span>
+    <span class="pc-ctl"><select class="scan-sel" id="pc-am" data-no-keep aria-label="Whose accounts"></select><select class="scan-sel" id="pc-wk" data-no-keep aria-label="Which week"></select><span class="pc-chev" aria-hidden="true">▾</span></span></div>
+  <div id="pc-body">
+  <p class="cat-sub">Every brand and market at once, for the week you pick: where each <b>Golden Score</b> stood before the
+  week and where it closed, which fields moved, and the same for <b>content quality</b> and <b>AI-readiness</b>. A market
+  first read this week is shown as new, not as a week's work. Click a market to open its scorecard.</p>
+  <div class="panel" id="pc-panel"><span class="muted">Loading…</span></div>
+  </div>
+</div></section>
+
 <section class="cat"><div class="wrap">
-  <div class="cat-h"><span class="k">02</span><h2>Estate scorecard</h2>
+  <div class="cat-h"><span class="k">03</span><h2>Estate scorecard</h2>
     <span class="scan-ctl"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
@@ -1271,7 +1308,7 @@ window.addEventListener('load',restore);
 
 <section class="cat" id="sec-detail"><div class="wrap">
   <div id="print-head"></div>
-  <div class="cat-h"><span class="k">03</span><h2>Feed scorecard</h2></div>
+  <div class="cat-h"><span class="k">04</span><h2>Feed scorecard</h2></div>
   <p class="cat-sub">The full attribute-by-attribute read: fill bars per attribute, Δ vs yesterday (or vs last
   known-good — flip the toggle), and the spec condition each requirement comes from. “Not in feed” on a
   conditional attribute is a flag to review, not an automatic fault — a pet-supplement feed has no
@@ -7423,6 +7460,160 @@ window.addEventListener('load',restore);
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
+
+  /* ---- CHANGES ACROSS YOUR PORTFOLIO (Ray, 19 Oct 2026: "monitor the changes on my entire account's portfolio … on a
+     weekly basis, how many brands I have worked on, how many fields I worked on … just for the account manager"). The
+     worker reads every feed's score history over one calendar week (GET /api/golden/changes, labelguard histWindow
+     under each brand's current profile); this only counts and draws. A brand counts as changed when any of its
+     markets moved; a market first read this week is NEW, never counted as a week's work. The AM is the Task Manager's
+     name for the account; the pick and the fold are this device's. */
+  var PC = { d: null, am: null, wk: 'w0', open: {} };
+  try { PC.am = localStorage.getItem('gr-pc-am'); PC.wk = localStorage.getItem('gr-pc-wk') || 'w0'; } catch (e) {}
+  function pcDay(d) { return d.toISOString().slice(0, 10); }
+  function pcRange(v) {
+    var t = new Date(pcDay(new Date()) + 'T00:00:00Z'), dow = (t.getUTCDay() + 6) % 7;
+    var back = v === '4w' ? 3 : (parseInt(String(v).slice(1), 10) || 0);
+    var mon = new Date(t); mon.setUTCDate(t.getUTCDate() - dow - 7 * back);
+    var sun = new Date(mon); sun.setUTCDate(mon.getUTCDate() + 6);
+    if (v === '4w' || sun > t) sun = t;
+    return { from: pcDay(mon), to: pcDay(sun) };
+  }
+  function pcShort(d) { var x = new Date(d + 'T00:00:00Z'); return x.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getUTCMonth()]; }
+  function pcWkOpts() {
+    var o = [['w0', 'This week'], ['w1', 'Last week']];
+    for (var i = 2; i <= 8; i++) o.push(['w' + i, i + ' weeks ago']);
+    o.push(['4w', 'Last 4 weeks']);
+    return o.map(function (x) { var r = pcRange(x[0]); return '<option value="' + x[0] + '"' + (x[0] === PC.wk ? ' selected' : '') + '>' + x[1] + ' · ' + pcShort(r.from) + (r.to !== r.from ? ' – ' + pcShort(r.to) : '') + '</option>'; }).join('');
+  }
+  // the fields behind one move, as chips: Golden Score fields are [key, from, to] (hMoveTxt reads them as the score
+  // history does); an analysis field carries its own score and the product values it fixed or flagged
+  function pcChips(m, f, cap) {
+    var list = (m && m.fields) || [], out = [];
+    list.slice(0, cap).forEach(function (x) {
+      var t;
+      if (f === 'gs') t = hMoveTxt(x);
+      else if (x.from == null || x.to == null) t = hMoveTxt({ qa: f, k: x.k, from: x.from, to: x.to });
+      else {
+        var nm = f === 'q' ? 'g:' + x.k : (AIRP_LBL[x.k] || x.k);
+        var nn = x.fixed ? ' (' + fmt(x.fixed) + ' fixed)' : (x.broke ? ' (' + fmt(x.broke) + ' flagged)' : '');
+        t = { t: nm + ' ' + hSigned(x.d) + nn, c: hCls(x.d), tip: nm + ' ' + x.from + ' → ' + x.to + (x.fixed ? ' · ' + fmt(x.fixed) + ' product values now pass' : '') + (x.broke ? ' · ' + fmt(x.broke) + ' newly flagged' : '') };
+      }
+      out.push('<span class="pc-chip ' + t.c + '" title="' + esc(t.tip) + '">' + esc(t.t) + '</span>');
+    });
+    if (list.length > cap) out.push('<span class="pc-chip muted" title="' + esc(list.slice(cap).map(function (x) { return f === 'gs' ? x[0] : x.k; }).join(', ')) + '">+' + (list.length - cap) + ' more</span>');
+    return out.join('');
+  }
+  function pcLine(lbl, m, f) {
+    if (!m) return '';
+    var head;
+    if (m.state === 'new') head = '<span class="muted">first read this week' + (m.to != null ? ' · ' + m.to : '') + '</span>';
+    else if (m.state === 'basis') head = '<span class="muted">measured on a new basis — not compared' + (m.to != null ? ' · now ' + m.to : '') + '</span>';
+    else if (m.state === 'same') return '';
+    else head = (m.from != null ? m.from + ' → ' + m.to + ' ' : '') + (m.d != null ? '<b class="' + hCls(m.d) + '">' + hSigned(m.d) + '</b>' : '') +
+      (m.fields && m.fields.length ? ' <span class="muted">· ' + m.fields.length + ' field' + (m.fields.length === 1 ? '' : 's') + '</span>' : '') +
+      (f !== 'gs' && m.detail === false ? ' <span class="muted">· which fields moved is recorded from the next analysis on</span>' : '');
+    return '<div class="pc-line"><span class="pc-lbl">' + lbl + '</span>' + head + ' ' + pcChips(m, f, 6) + '</div>';
+  }
+  function pcFeeds() {
+    var d = PC.d; if (!d) return [];
+    return d.feeds.filter(function (f) { return !PC.am || PC.am === '*' ? true : (PC.am === '-' ? !f.am : f.am === PC.am); });
+  }
+  // what the week adds up to — over the feeds in view, one count per brand / market / field
+  function pcTotals(feeds) {
+    var brands = {}, bAll = {}, t = { brands: 0, brandsAll: 0, mk: 0, mkAll: feeds.length, gsUp: 0, gsDn: 0, gsF: 0, qF: 0, fixed: 0, aF: 0, fresh: 0, hand: 0 };
+    feeds.forEach(function (f) {
+      bAll[f.client] = 1;
+      t.hand += f.hand || 0;
+      if (['gs', 'q', 'air'].some(function (k) { return f[k] && f[k].state === 'new'; }) && !f.changed) t.fresh++;
+      if (!f.changed) return;
+      brands[f.client] = 1; t.mk++;
+      if (f.gs && f.gs.state === 'moved') { if (f.gs.d > 0) t.gsUp++; else if (f.gs.d < 0) t.gsDn++; t.gsF += (f.gs.fields || []).length; }
+      if (f.q && f.q.state === 'moved') { t.qF += (f.q.fields || []).length; (f.q.fields || []).forEach(function (x) { t.fixed += x.fixed || 0; }); }
+      if (f.air && f.air.state === 'moved') t.aF += (f.air.fields || []).length;
+    });
+    t.brands = Object.keys(brands).length; t.brandsAll = Object.keys(bAll).length;
+    return t;
+  }
+  function pcRender() {
+    var d = PC.d, P = $('pc-panel'); if (!P) return;
+    if (!d) { P.innerHTML = '<span class="muted">Loading…</span>'; return; }
+    var ams = {}; var noAm = false;
+    d.feeds.forEach(function (f) { if (f.am) ams[f.am] = 1; else noAm = true; });
+    var names = Object.keys(ams).sort();
+    if (PC.am == null || (PC.am !== '*' && PC.am !== '-' && !ams[PC.am])) {
+      var me = String(d.me || '').toLowerCase().split(/\s+/)[0];
+      PC.am = names.filter(function (n) { return me && n.toLowerCase().split(/\s+/)[0] === me; })[0] || '*';
+    }
+    $('pc-am').innerHTML = '<option value="*">All accounts</option>' + names.map(function (n) { return '<option value="' + esc(n) + '"' + (n === PC.am ? ' selected' : '') + '>' + esc(n) + '’s accounts</option>'; }).join('') +
+      (noAm ? '<option value="-"' + (PC.am === '-' ? ' selected' : '') + '>No AM on record</option>' : '');
+    $('pc-am').value = PC.am;
+    var feeds = pcFeeds(), t = pcTotals(feeds);
+    var wk = pcShort(d.from) + (d.to !== d.from ? ' – ' + pcShort(d.to) : '');
+    $('pc-sum').textContent = t.brands + ' of ' + t.brandsAll + ' brands · ' + t.mk + ' market' + (t.mk === 1 ? '' : 's') + ' changed · ' + (t.gsF + t.qF) + ' field moves · ' + wk;
+    var kp = function (v, l, tip) { return '<div class="pc-kpi" title="' + esc(tip || '') + '"><b>' + v + '</b><span>' + l + '</span></div>'; };
+    var h = '<div class="pc-kpis">' +
+      kp(t.brands + '<small class="muted" style="font-size:13px"> / ' + t.brandsAll + '</small>', 'brands changed', 'Brands with at least one market whose Golden Score, content quality or AI-readiness moved this week') +
+      kp(t.mk + '<small class="muted" style="font-size:13px"> / ' + t.mkAll + '</small>', 'markets changed', 'Google Shopping markets that moved this week') +
+      kp('<span class="up">▲' + t.gsUp + '</span> <span class="down">▼' + t.gsDn + '</span>', 'Golden Score up / down', 'Markets whose Golden Score closed the week higher / lower than it opened') +
+      kp(fmt(t.gsF), 'feed fields moved', 'Attributes that appeared, left the feed or moved 0.5 points of coverage or more — counted once per market') +
+      kp(fmt(t.qF) + (t.fixed ? '<small class="up" style="font-size:12px"> · ' + fmt(t.fixed) + ' fixed</small>' : ''), 'content fields moved', 'Content-quality fields whose score moved half a point or more, and the product values that now pass their rules') + '</div>';
+    if (!feeds.length) { P.innerHTML = h + '<div class="pc-quiet">No Google Shopping feeds for this pick.</div>'; return; }
+    var by = {};
+    feeds.forEach(function (f) { (by[f.client] = by[f.client] || []).push(f); });
+    var brands = Object.keys(by).map(function (c) {
+      var L = by[c], ch = L.filter(function (f) { return f.changed; });
+      var fields = ch.reduce(function (n, f) { return n + (f.gs && f.gs.state === 'moved' ? f.gs.fields.length : 0) + (f.q && f.q.state === 'moved' ? f.q.fields.length : 0); }, 0);
+      return { c: c, L: L, ch: ch, fields: fields };
+    });
+    var moved = brands.filter(function (b) { return b.ch.length; }).sort(function (a, b) { return b.fields - a.fields || b.ch.length - a.ch.length || (a.c < b.c ? -1 : 1); });
+    var quiet = brands.filter(function (b) { return !b.ch.length; }).sort(function (a, b) { return a.c < b.c ? -1 : 1; });
+    moved.forEach(function (b) {
+      var open = PC.open[b.c] !== false;
+      var ups = b.ch.filter(function (f) { return f.gs && f.gs.d > 0; }).length, dns = b.ch.filter(function (f) { return f.gs && f.gs.d < 0; }).length;
+      h += '<div class="pc-brand"><div class="pc-bh" data-pcb="' + esc(b.c) + '" aria-expanded="' + open + '"><span class="muted">' + (open ? '▾' : '▸') + '</span><b>' + esc(dispClient(b.c)) + '</b>' +
+        '<span class="pc-n">' + b.ch.length + ' of ' + b.L.length + ' market' + (b.L.length === 1 ? '' : 's') + ' changed · ' + b.fields + ' field move' + (b.fields === 1 ? '' : 's') +
+        (ups || dns ? ' · Golden Score <span class="up">▲' + ups + '</span> <span class="down">▼' + dns + '</span>' : '') + '</span></div>';
+      if (open) b.ch.sort(function (x, y) { return x.mkt < y.mkt ? -1 : 1; }).forEach(function (f) {
+        h += '<div class="pc-mk" data-pck="' + esc(f.client + '|' + f.mkt) + '" title="Open the ' + esc(f.mkt.toUpperCase()) + ' scorecard"><span class="pc-code">' + esc(f.mkt.toUpperCase()) + '</span><div>' +
+          pcLine('Golden Score', f.gs, 'gs') + pcLine('Content quality', f.q, 'q') + pcLine('AI-readiness', f.air, 'air') + '</div></div>';
+      });
+      h += '</div>';
+    });
+    if (quiet.length) h += '<div class="pc-quiet">No change this week: ' + quiet.map(function (b) { return esc(dispClient(b.c)); }).join(', ') + (t.fresh ? ' · ' + t.fresh + ' market' + (t.fresh === 1 ? '' : 's') + ' first read this week' : '') + '</div>';
+    if (!moved.length) h += '<div class="pc-quiet">Nothing moved for this pick in ' + wk + ' — no score, field or analysis changed.</div>';
+    P.innerHTML = h;
+  }
+  function pcLoad() {
+    var r = pcRange(PC.wk);
+    return fetch(API + '/api/golden/changes?from=' + r.from + '&to=' + r.to).then(function (x) { return x.json(); }).then(function (d) {
+      if (!d || !d.ok) throw new Error((d && d.error) || 'failed');
+      PC.d = d; pcRender();
+    }).catch(function (e) { var P = $('pc-panel'); if (P) P.innerHTML = '<span class="muted">Couldn’t read the portfolio’s changes (' + esc(e.message || e) + ').</span>'; });
+  }
+  function pcFold(fold, save) {
+    var S = $('sec-pc'); if (!S) return;
+    S.classList.toggle('pc-fold', fold);
+    $('pc-h').setAttribute('aria-expanded', String(!fold));
+    if (save) try { localStorage.setItem('gr-pc-fold', fold ? '1' : '0'); } catch (e) {}
+  }
+  (function pcWire() {
+    if (!$('sec-pc')) return;
+    var f0 = null; try { f0 = localStorage.getItem('gr-pc-fold'); } catch (e) {}
+    pcFold(f0 === '1', false);
+    $('pc-wk').innerHTML = pcWkOpts();
+    $('pc-wk').onchange = function () { PC.wk = this.value; try { localStorage.setItem('gr-pc-wk', PC.wk); } catch (e) {} PC.d = null; pcRender(); pcLoad(); };
+    $('pc-am').onchange = function () { PC.am = this.value; try { localStorage.setItem('gr-pc-am', PC.am); } catch (e) {} pcRender(); };
+    var tg = function (e) { if (e.target.closest('.pc-ctl select')) return; pcFold(!$('sec-pc').classList.contains('pc-fold'), true); };
+    $('pc-h').onclick = tg;
+    $('pc-h').onkeydown = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target === this) { e.preventDefault(); tg(e); } };
+    $('pc-panel').onclick = function (e) {
+      var b = e.target.closest('[data-pcb]');
+      if (b) { var c = b.getAttribute('data-pcb'); PC.open[c] = PC.open[c] === false; pcRender(); return; }
+      var m = e.target.closest('[data-pck]');
+      if (m) { var k = m.getAttribute('data-pck'); if (ESTATE.feeds[k]) { select(k); var sd = $('sec-detail'); if (sd) sd.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+    };
+    pcLoad();
+  })();
   /* ---------------- boot ---------------- */
   function refreshEstate() {
     return fetch(API + '/api/golden/estate').then(function (r) { return r.json(); }).then(function (d) {

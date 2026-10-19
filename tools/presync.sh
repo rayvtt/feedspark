@@ -270,6 +270,9 @@ echo "   ✓ one reading per real move, gaps stay gaps, re-scored to today's pro
 echo "── validating: Golden Record — why an analysis moved"
 node tools/test_qamoved.mjs >/dev/null
 echo "   ✓ each analysis keeps its fields and pillars; the change log names what moved"
+echo "── validating: Golden Record — changes across the portfolio"
+node tools/test_pcchanges.mjs >/dev/null
+echo "   ✓ each feed read over the week; brands, markets and fields counted once"
 
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
@@ -398,6 +401,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record live dissect — any group of products scored the dial's way, the whole scorecard and its downloads on the group"
   NODE_PATH=$(npm root -g) node tools/check_grseg.js || {
     echo "✗ Golden Record dissect tripwire failed — a group scored differently from the collector, the filter let the wrong rows through, or group mode leaked into the catalogue's scorecard or downloads"; exit 1; }
+  echo "── validating: Golden Record changes across the portfolio — counts painted against node, AM + week picks, fold, demo, phone"
+  NODE_PATH=$(npm root -g) node tools/check_pcchanges.js || {
+    echo "✗ Golden Record portfolio-changes tripwire failed — a count differs from the engine's, a pick did not narrow or refetch, or the section does not fold"; exit 1; }
   echo "── validating: Golden Record ✎ Edit report — every word editable, saved for the team, carried by ⬇ HTML and ⬇ PDF"
   NODE_PATH=$(npm root -g) node tools/check_grtext.js || {
     echo "✗ Golden Record report-editor tripwire failed — text not editable, an edit not saved, or a download no longer carries it"; exit 1; }
