@@ -77,7 +77,7 @@ import * as RET from "./retired.js";
 import * as TL from "./testlab.js";   // Test Lab: the Playbook's test proposals + the competitor Shopping read (src/testlab.js)   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenWeak, attrsFromCov, goldenCovIndex, goldenAlertEmail, goldenRecoveryEmail, histReading, histAdd, histSeed, histQa, histQaDetail, histIdx, histDay, histSeries, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, PROFILE_V, PROFILE_DELTA, cleanDepth, cleanMeta, metaScore, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -6214,7 +6214,7 @@ async function storeGoldenQuality(env, client, mkt, b, opts) {
   // a hand-run one marked so it sets its day (histDayPick)
   if (qs || ai) try {
     const hk = 'goldenhist:' + client + ':' + mkt;
-    const hq = histQa(await env.EDITS.get(hk, 'json'), { t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null, m: !auto });
+    const hq = histQa(await env.EDITS.get(hk, 'json'), Object.assign({ t: rec.t, q: qs ? qs.score : null, air: ai ? ai.total : null, tier: ai ? ai.tier : null, m: !auto }, histQaDetail(qs, ai)));
     if (hq.wrote) await env.EDITS.put(hk, JSON.stringify(hq.hist));
   } catch (e) {}
   return { status: 200, body: { ok: true, t: rec.t, score: qs ? qs.score : null, src: auto ? 'auto' : 'manual' } };

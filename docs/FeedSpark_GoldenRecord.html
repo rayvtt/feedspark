@@ -2537,7 +2537,64 @@ window.addEventListener('load',restore);
     return (v > 0 ? '▲ +' + v : '▼ −' + (-v)) + (unit || '');
   }
   function hCls(n) { var v = hDelta(n); return v > 0 ? 'up' : (v < 0 ? 'down' : 'muted'); }
+  /* WHY AN ANALYSIS MOVED (Ray, 19 Oct 2026, over Reiss DK's content quality ▲ +6: "detail, in the most minimal way
+     possible, why the content quality score has increased … figure out how many fields have been changed"): since this
+     shipped every analysis keeps each field's own score and the products breaking each rule (qa) and each AI-readiness
+     pillar's score (ap) — labelguard histQaDetail — so a move is read off the two analyses it compares: the fields that
+     moved, the rule that moved most in each, and the products that now pass it. An analysis from before keeps its plain
+     line; nothing is reconstructed. */
+  var AIRP_LBL = { conversational: 'Conversational', conv: 'Conversational', identity: 'Identity & trust', titles: 'Title anatomy',
+    descriptions: 'Descriptions', attributes: 'Attribute completeness', taxonomy: 'Taxonomy depth', media: 'Media richness',
+    detail: 'Structured detail', agentic: 'Structured detail' };
+  function qaRuleLbl(k, id) {
+    var q = LGQ && LGQ.qspecOf ? LGQ.qspecOf(k) : null;
+    var r = q && q.rules.filter(function (x) { return x.id === id; })[0];
+    return r ? r.label : id;
+  }
+  function qaMoved(a, b, f) {
+    var out = [];
+    if (!a || !b) return out;
+    var A0 = f === 'q' ? a.qa : a.ap, B0 = f === 'q' ? b.qa : b.ap;
+    if (!A0 || !B0) return out;
+    var keys = Object.keys(A0).concat(Object.keys(B0)).filter(function (k, i, arr) { return arr.indexOf(k) === i; });
+    keys.forEach(function (k) {
+      var A = A0[k], B = B0[k];
+      if (f !== 'q') {
+        if (A == null || B == null || Math.abs(B - A) < 1) return;
+        out.push({ qa: f, k: k, from: A, to: B, d: B - A });
+        return;
+      }
+      if (!A || !B) { out.push({ qa: f, k: k, from: A ? A.s : null, to: B ? B.s : null, d: (B ? B.s : 0) - (A ? A.s : 0) }); return; }
+      var d = Math.round((B.s - A.s) * 10) / 10;
+      if (Math.abs(d) < 0.5) return;
+      // the rule whose count of breaking products moved most explains the field's move
+      var best = null;
+      Object.keys(A.b || {}).concat(Object.keys(B.b || {})).forEach(function (id) {
+        var na = (A.b || {})[id] || 0, nb = (B.b || {})[id] || 0;
+        if (na !== nb && (!best || Math.abs(nb - na) > Math.abs(best.b - best.a))) best = { id: id, a: na, b: nb };
+      });
+      out.push({ qa: f, k: k, from: A.s, to: B.s, d: d, rule: best });
+    });
+    return out.sort(function (x, y) { return Math.abs(y.d) - Math.abs(x.d); });
+  }
+  // the summary a row carries: how many fields moved, and how many product values now pass a rule they broke
+  function qaSummary(mv) {
+    var fixed = 0, broke = 0;
+    mv.forEach(function (m) { if (m.rule) { var dn = m.rule.a - m.rule.b; if (dn > 0) fixed += dn; else broke -= dn; } });
+    // one field: its chip already says how many it fixed — the total only adds up across two or more
+    return mv.length + ' field' + (mv.length === 1 ? '' : 's') + ' moved' + (mv.length < 2 ? '' :
+      (fixed ? ' · ' + fmt(fixed) + ' product value' + (fixed === 1 ? '' : 's') + ' now pass' : '') +
+      (broke ? ' · ' + fmt(broke) + ' newly flagged' : ''));
+  }
   function hMoveTxt(m) {
+    if (m && m.qa) {
+      var nm = m.qa === 'q' ? 'g:' + m.k : (AIRP_LBL[m.k] || m.k);
+      if (m.from == null) return { t: nm + ' now analysed', c: 'muted', tip: nm + ' was read for the first time (' + m.to + ')' };
+      if (m.to == null) return { t: nm + ' not analysed', c: 'muted', tip: nm + ' was not in this analysis (was ' + m.from + ')' };
+      var rt = m.rule ? ' · “' + qaRuleLbl(m.k, m.rule.id) + '”: ' + fmt(m.rule.a) + ' → ' + fmt(m.rule.b) + ' products' : '';
+      var nn = m.rule && m.rule.a !== m.rule.b ? ' (' + fmt(Math.abs(m.rule.a - m.rule.b)) + (m.rule.b < m.rule.a ? ' fixed' : ' flagged') + ')' : '';
+      return { t: nm + ' ' + hSigned(m.d) + nn, c: hCls(m.d), tip: nm + ' ' + m.from + ' → ' + m.to + rt };
+    }
     var dx = SPEC.filter(function (y) { return y.k === m[0] && y.lbl; })[0];   // a depth row reads by its name
     var k = dx ? dx.lbl : (m[0] === 'keywords' ? m[0] : 'g:' + m[0]), a = m[1], b = m[2];
     if (typeof a === 'number' && typeof b === 'number') return { t: k + ' ' + hSigned(b - a, 'pp'), c: hCls(b - a), tip: k + ' ' + a + '% → ' + b + '%' };
@@ -2605,7 +2662,7 @@ window.addEventListener('load',restore);
         e.r = close; e.score = val(close);
         if (prev) {
           e.basis = qf ? true : hBasis(prev.r, close);
-          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = qf ? [] : histMoved(prev.r, close); e.vs = prev.d; }
+          if (e.basis) { e.delta = hDelta(e.score - prev.score); e.moved = qf ? qaMoved(prev.r, close, qf) : histMoved(prev.r, close); e.vs = prev.d; }
         }
         prev = e;
       }
@@ -2618,7 +2675,7 @@ window.addEventListener('load',restore);
       list.forEach(function (x) { if (hDay(x.t) < inWin[0].d) before = x; });
       if (before && (qf || hBasis(before, inWin[0].r))) {
         inWin[0].delta = hDelta(inWin[0].score - val(before));
-        inWin[0].moved = qf ? [] : histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
+        inWin[0].moved = qf ? qaMoved(before, inWin[0].r, qf) : histMoved(before, inWin[0].r); inWin[0].vs = hDay(before.t);
       }
     }
     // the change log follows the metric: the score's recorded moves, or the analyses
@@ -2866,9 +2923,16 @@ window.addEventListener('load',restore);
         [['q', 'Content quality'], ['air', 'AI-readiness']].forEach(function (f) {
           if (x.cur[f[0]] == null) return;
           var was = x.prev ? x.prev[f[0]] : null, d = was != null ? x.cur[f[0]] - was : null;
+          // the fields behind the move, when both analyses recorded them (qaMoved)
+          var qm = x.prev ? qaMoved(x.prev, x.cur, f[0]) : [], hasD = x.prev && (f[0] === 'q' ? x.prev.qa && x.cur.qa : x.prev.ap && x.cur.ap);
+          var why = qm.length ? qm.slice(0, 4).map(hMoveTxt).map(function (t) {
+              return '<span class="mv" title="' + esc(t.tip) + '"><span class="' + t.c + '">' + esc(t.t) + '</span></span>';
+            }).join('') + (qm.length > 4 ? '<span class="ms">+' + (qm.length - 4) + ' more</span>' : '') +
+              (f[0] === 'q' ? '<span class="ms"> · ' + esc(qaSummary(qm)) + '</span>' : '')
+            : '<span class="ms">' + aMs + (d && x.prev && !hasD ? ' · which fields moved is recorded from the next analysis on' : '') + '</span>';
           h += '<tr class="hs-an">' + when + '<td>' + f[1] + '</td><td class="n">' + (was != null ? was + ' → ' : '') + x.cur[f[0]] + '</td>' +
             '<td class="n">' + (d == null ? '<span class="muted">—</span>' : '<span class="' + hCls(d) + '">' + hSigned(d) + '</span>') + '</td>' +
-            '<td class="ms">' + aMs + '</td></tr>';
+            '<td>' + why + '</td></tr>';
         });
         return;
       }

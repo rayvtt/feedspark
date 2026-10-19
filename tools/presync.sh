@@ -267,6 +267,9 @@ echo "   ✓ the client domain, never an agency or FeedSpark; a guess is marked;
 echo "── validating: Golden Record score history (engine, worker wiring, the page's twin)"
 node tools/test_goldenhist.mjs >/dev/null
 echo "   ✓ one reading per real move, gaps stay gaps, re-scored to today's profile"
+echo "── validating: Golden Record — why an analysis moved"
+node tools/test_qamoved.mjs >/dev/null
+echo "   ✓ each analysis keeps its fields and pillars; the change log names what moved"
 
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null

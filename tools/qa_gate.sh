@@ -222,6 +222,13 @@ else
   echo "   ✗ score-history harness FAILED — see node tools/test_goldenhist.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: Golden Record — why an analysis moved (fields, rules, products)"
+if node tools/test_qamoved.mjs >/dev/null 2>&1; then
+  echo "   ✓ each analysis keeps its fields and pillars; the change log names what moved"
+else
+  echo "   ✗ analysis-moves harness FAILED — see node tools/test_qamoved.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
 if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
   echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"
