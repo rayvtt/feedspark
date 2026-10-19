@@ -55,6 +55,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/test_kwcal_superdry.mjs
       - name: KWCal Monsoon seasonal themes (two a work month; seeded paths exist in the feed)
         run: NODE_PATH=$(npm root -g) node tools/test_kwcal_monsoon.mjs
+      - name: KWCal Hobbycraft seasonal themes (two a work month; the brand-wide moment says so)
+        run: NODE_PATH=$(npm root -g) node tools/test_kwcal_hobbycraft.mjs
       - name: KWCal seeded scopes (real product types; a set scope never reads as absent)
         run: NODE_PATH=$(npm root -g) node tools/check_kwcal_scopes.js
       - name: KWCal scope conditions (a condition narrows, or stands on its own — the chains)

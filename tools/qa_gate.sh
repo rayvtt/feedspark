@@ -330,6 +330,12 @@ else
   echo "   ✗ KWCal Monsoon harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_monsoon.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_hobbycraft.mjs >/dev/null 2>&1; then
+  echo "   ✓ the Hobbycraft seasonal themes render — two a work month, the brand-wide moment says so"
+else
+  echo "   ✗ KWCal Hobbycraft harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_hobbycraft.mjs"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_testlab.js >/dev/null 2>&1; then
   echo "   ✓ the Playbook’s Test Lab section renders its proposals, competitors and → Brief on the real rail"
 else
