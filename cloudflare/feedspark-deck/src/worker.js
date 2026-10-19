@@ -74,6 +74,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import * as SOCLOGO from "./sociallogo.js";
 import * as RET from "./retired.js";
+import * as SL from "./spendlens.js";   // Spend Lens: where a market's Google Ads money sits against what it returns (src/spendlens.js)
 import * as TL from "./testlab.js";   // Test Lab: the Playbook's test proposals + the competitor Shopping read (src/testlab.js)   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
@@ -6407,6 +6408,87 @@ async function goldenRoutes(env, request, url) {
   // cold so the page can warm it), the keyword-result rounds, the brand's own feeds' readiness
   // (goldenidx / overlayidx / voldobidx / the wired Meta feeds), its open test briefs and the
   // competitor Shopping reads already stored. Scoped per signin like /api/outcomes.
+
+  /* ---- SPEND LENS (Ray, 19 Oct 2026, sending the Field Breakdown pivot for Reiss UK: "can you
+     bring in Playbook - a few interesting RoAS improvement or spend optiimser tactics from field
+     breakdown ? … you can see on RoAS avg: Textured, Striped, Checked, Colourblock has way better
+     ROAS compared to Plain where most Spend is at").
+     The engine is src/spendlens.js; this route only GATHERS. It reads FeedHero's OWN cuts — the
+     same roaslive: records /roas's Segment select writes, so the rail and the ROAS module can
+     never disagree about a value's spend or return — and reads only what is ALREADY STORED: a GET
+     never calls the MCP and never spends, so the panel opens on what is known and NAMES what has
+     not been read rather than reading as an empty account. The POST is the ⚡ that reads one
+     market's missing cuts, writing the same keys so /roas gains them too.
+     Three markets (SL_MARKETS), the spend-ranked ones: Reiss runs 28 and reading every cut of
+     every one of them would be 200+ KV reads for a panel, with the money nowhere near them. */
+  if (path === '/api/spendlens' && (request.method === 'GET' || request.method === 'POST')) {
+    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = ROAS.rosterOf(who0);
+    if (!roster.length) return json({ ok: true, client: who0, on: false, why: 'not on the ROAS roster — no Google Ads report for this account', top: [], also: [], toRead: [], refused: [], markets: [] });
+    const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+    const win = ROAS.ROAS_DEFAULT_WIN;
+    // the markets this account actually spends in, biggest first; one never read carries no spend
+    // and is listed as that rather than ranked at zero
+    // roasidx is keyed by the FeedHero COMPANY ID, never the roster's market label — the lesson
+    // /stock learned the hard way, where a 'Reiss|GB' lookup found nothing on any market
+    const ranked = roster.map((m) => {
+      const t = ROAS.windowTotal(idx[m.cmpid], win);
+      return { market: m.market, cmpid: m.cmpid, spend: (t && t.spend && t.spend.n) || 0, cur: (t && ROAS.rowCur(t)) || null, read: !!t };
+    }).sort((a, b) => b.spend - a.spend);
+    const pick = ranked.filter((m) => m.spend > 0).slice(0, SL.SL_MARKETS);
+    if (request.method === 'POST') {
+      // ⚡ read one market's missing cuts — bounded, through the SAME lane and the SAME keys
+      // /api/roas/live writes, so nothing here is a second copy of that read
+      const mkt = String(url.searchParams.get('market') || '').slice(0, 20);
+      const m = roster.find((x) => x.market === mkt);
+      if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+      if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+      const mcp = roasMcp(env, fetch);
+      let did = 0, failed = null;
+      try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') return json({ ok: false, error: 'unauthorized' }, 502); }
+      for (const agg of SL.SL_CUT_KEYS) {
+        const key = 'roaslive:' + m.cmpid + ':' + agg + ':' + win;
+        const have = await env.EDITS.get(key, 'json');
+        if (have && have.at && Date.now() - have.at < (have.missing ? ROAS.ROAS_SEG_MISSING_TTL : 6 * 3600000)) continue;
+        try {
+          const payload = await mcp.call('roas_dashboard', { company: m.cmpid, period: (ROAS.ROAS_WINDOWS.find((w) => w.k === win) || {}).period, aggregation: agg, page_size: 200, sort: 'spend', order: 'desc' });
+          const split = ROAS.splitClientRows(TMM.rowsOf(payload), 200);
+          await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length }), { expirationTtl: 86400 });
+          did++;
+        } catch (e) {
+          if (ROAS.segMissing(e)) { await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: null, rows: [], n: 0, missing: true }), { expirationTtl: 86400 }); did++; continue; }
+          failed = String((e && e.message) || e).slice(0, 160); break;
+        }
+      }
+      logActivity(ctx, env, request, 'spendlens-read', who0 + ' ' + mkt + ' ' + did);
+      if (failed && !did) return json({ ok: false, error: failed }, 502);
+      return json({ ok: true, client: who0, market: mkt, read: did, failed });
+    }
+    const reads = {}, unl = {};
+    for (const m of pick) {
+      for (const agg of SL.SL_CUT_KEYS) {
+        const r = await env.EDITS.get('roaslive:' + m.cmpid + ':' + agg + ':' + win, 'json');
+        if (r) reads[m.market + '|' + agg] = r;
+      }
+      // the unlisted row is the MARKET's, not a cut's, so it is read once off the market record
+      const rec = await env.EDITS.get('roas:' + m.cmpid, 'json');
+      const w = rec && (rec[win] || (rec.categories ? { categories: rec.categories } : null));
+      const row = ((w && w.categories) || []).find((c) => SL.isUnlisted(c.category));
+      if (row) m.unlisted = { spend: (row.spend && row.spend.n) || 0, rev: (row.revenue && row.revenue.n) || 0, cur: (row.spend && row.spend.cur) || m.cur };
+    }
+    const lens = SL.accountLens(pick, reads);
+    // the brief's words are the ENGINE's, so a brief raised from the rail says what the finding says
+    lens.top.forEach((f) => { f.brief = SL.briefOf(f, who0); });
+    return json(Object.assign({ ok: true, client: who0, on: true, win,
+      markets: pick.map((m) => ({ market: m.market, spend: m.spend, cur: m.cur })),
+      quiet: ranked.filter((m) => m.spend <= 0).map((m) => m.market),
+      rest: ranked.filter((m) => m.spend > 0).slice(SL.SL_MARKETS).map((m) => m.market),
+      mcp: !!env.ROAS_MCP_TOKEN, cuts: SL.SL_CUTS }, lens));
+  }
+
   if (path === '/api/testlab' && request.method === 'GET') {
     const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
     if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
