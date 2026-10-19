@@ -16540,6 +16540,18 @@
       "file": "tools/check_kwdue.js",
       "pattern": "a briefed row carries its product count",
       "pr": 0
+    },
+    {
+      "name": "KWCal: Hobbycraft's ten generic craft themes are seeded, two a work month",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Hobbycraft:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Hobbycraft's lanes are its own words (Kids is a second shop)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Hobbycraft:{campaign:'Seasonal focus'",
+      "pr": 0
     }
   ]
 }
