@@ -23,7 +23,7 @@ late reads blank on the products before it. A 25,000-product feed of 150 columns
 the read is arithmetic over integers.
 
 **What a field reads as** is judged off its values, never its name (a sheet feed's names say nothing): a category
-path, a number, a link, a list, free text, one value per product, or values. A repeated tag
+path, a number, a date, a link, a list, free text, one value per product, or values. NEWNESS (Ray, 19 Oct 2026: "add newness to both columns and rows … just do it based on quarter, from the latest quarter to the previous quarter"): a date column (ISO or DD/MM/YYYY on 80%+ of its values — FeedHero's `fs_date_of_birth`) leads every field picker under **Newness · by quarter** and opens read by quarter on a pane, the pivot's rows or its columns; the quarters count back from the one we are in (UTC), so a band means the same thing all quarter. A repeated tag
 (`g:product_highlight`, `(2)` … `(10)`; the keyword `product_type` slots) also offers ONE **all slots** field.
 
 **Readings** — a view of the column, never a new one:
@@ -35,6 +35,7 @@ path, a number, a link, a list, free text, one value per product, or values. A r
 | Length bands | text, values | 1–30 · 31–70 · 71–150 · 151–500 · 501+ characters |
 | Number bands | numbers | 0–10 · 10–25 · 25–50 · 50–100 · 100–250 · 250–500 · 500–1000 · 1000+ (`not a number` said) |
 | Split lists | lists, values, text | splits on `|||`, `|`, `;`, `, ` |
+| Newness by quarter | dates (`fs_date_of_birth`) | the calendar quarter a product first appeared in, newest first: `Q4 2026 · this quarter`, `Q3 2026 · last quarter`, then six more quarters, the rest in one `Before …` band; a quarter nothing arrived in is a 0 on an unbroken ladder; an unreadable date is said |
 
 **Four rules**, because these tables go in front of clients:
 

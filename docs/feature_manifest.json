@@ -16188,6 +16188,24 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: newness by quarter — a date reads as the quarter it falls in, newest first",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "if (back === 0) return qName(i) + ' · this quarter';",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: newness — an empty quarter is a zero on an unbroken ladder",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "function qtrFill(S, cnt) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: newness leads every field picker and a date opens by quarter on panes + both pivot sides",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "<optgroup label=\"Newness · by quarter\">",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function gbTry(key) {",

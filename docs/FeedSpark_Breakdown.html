@@ -532,11 +532,19 @@ window.addEventListener('load',restore);
 
   // ---- the spec controls: field + how it is read (+ the tier) -------------------------------------------------------
   function fieldMeta(f) { for (var i = 0; i < S.fields.length; i++) if (S.fields[i].f === f) return S.fields[i]; return null; }
+  // the reading a field opens on when it is picked: a path by tier 2, a date by quarter (newness), anything else raw
+  function defSpec(f) {
+    var mt = fieldMeta(f), m = mt && mt.kind === 'path' ? 'tier' : mt && mt.kind === 'date' ? 'qtr' : 'raw';
+    return { f: f, m: m, k: m === 'tier' ? Math.min(2, B.maxTier(S.st, f)) : 0 };
+  }
   function fieldOptions(sel, none) {
-    var one = [], slots = [];
-    S.fields.forEach(function (f) { if (!f.filled && f.f !== sel) return; (f.multi ? slots : one).push(f); });
+    var one = [], slots = [], dates = [];
+    S.fields.forEach(function (f) { if (!f.filled && f.f !== sel) return; (f.multi ? slots : f.kind === 'date' ? dates : one).push(f); });
     var o = function (f) { return '<option value="' + esc(f.f) + '"' + (f.f === sel ? ' selected' : '') + '>' + esc(f.label) + (f.filled ? '' : ' (empty)') + '</option>'; };
+    // NEWNESS leads the list when the feed carries a date (FeedHero's fs_date_of_birth = when the product first arrived)
+    var od = function (f) { return '<option value="' + esc(f.f) + '"' + (f.f === sel ? ' selected' : '') + '>' + esc(/date_of_birth/i.test(f.f) ? 'Newness — first seen (' + f.label + ')' : f.label) + '</option>'; };
     return (none ? '<option value=""' + (sel ? '' : ' selected') + '>— none —</option>' : '')
+      + (dates.length ? '<optgroup label="Newness · by quarter">' + dates.map(od).join('') + '</optgroup>' : '')
       + '<optgroup label="Fields">' + one.map(o).join('') + '</optgroup>'
       + (slots.length ? '<optgroup label="Repeated fields, every slot together">' + slots.map(o).join('') + '</optgroup>' : '');
   }
@@ -632,7 +640,7 @@ window.addEventListener('load',restore);
   $('#panes').addEventListener('change', function (e) {
     var ph = e.target.closest('.ph'); if (!ph) return;
     var i = +ph.getAttribute('data-pi'), sp = readSpec(ph);
-    if (e.target.classList.contains('f') && sp) { var meta = fieldMeta(sp.f); sp.m = meta && meta.kind === 'path' ? 'tier' : 'raw'; sp.k = sp.m === 'tier' ? Math.min(2, B.maxTier(S.st, sp.f)) : 0; }
+    if (e.target.classList.contains('f') && sp) sp = Object.assign(sp, defSpec(sp.f));
     if (!sp) return;
     if (S.L.panes[i] && S.L.panes[i].w) sp.w = S.L.panes[i].w;
     S.L.panes[i] = sp; saveLayout(); renderPanes();
@@ -685,8 +693,7 @@ window.addEventListener('load',restore);
   });
   function addField(f) {
     if (!f || !S.st) return;
-    var meta = fieldMeta(f), m = meta && meta.kind === 'path' ? 'tier' : 'raw';
-    S.L.panes.push({ f: f, m: m, k: m === 'tier' ? Math.min(2, B.maxTier(S.st, f)) : 0 }); saveLayout();
+    S.L.panes.push(defSpec(f)); saveLayout();
     reveal('sec-panes'); renderPanes();
     var last = document.querySelectorAll('#panes .pane:not(.add)'); if (last.length) last[last.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -715,8 +722,8 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('#pv-show [data-s]'), function (b) { b.classList.toggle('on', b.getAttribute('data-s') === P.show); });
     $('#pv-top').value = String(P.top);
   }
-  $('#pv-r').addEventListener('change', function (e) { var sp = readSpec($('#pv-r')); if (e.target.classList.contains('f') && sp) { var mt = fieldMeta(sp.f); sp.m = mt && mt.kind === 'path' ? 'tier' : 'raw'; sp.k = sp.m === 'tier' ? Math.min(2, B.maxTier(S.st, sp.f)) : 0; } S.L.pivot.r = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
-  $('#pv-c').addEventListener('change', function (e) { var sp = readSpec($('#pv-c')); if (e.target.classList.contains('f') && sp) { var mt = fieldMeta(sp.f); sp.m = mt && mt.kind === 'path' ? 'tier' : 'raw'; sp.k = sp.m === 'tier' ? Math.min(2, B.maxTier(S.st, sp.f)) : 0; } S.L.pivot.c = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
+  $('#pv-r').addEventListener('change', function (e) { var sp = readSpec($('#pv-r')); if (e.target.classList.contains('f') && sp) sp = defSpec(sp.f); S.L.pivot.r = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
+  $('#pv-c').addEventListener('change', function (e) { var sp = readSpec($('#pv-c')); if (e.target.classList.contains('f') && sp) sp = defSpec(sp.f); S.L.pivot.c = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
   $('#pv-show').onclick = function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.L.pivot.show = b.getAttribute('data-s'); saveLayout(); renderPivotCtl(); renderPivot(); };
   $('#pv-top').onchange = function () { S.L.pivot.top = +this.value; saveLayout(); renderPivot(); };
   var PV = null;
@@ -775,7 +782,7 @@ window.addEventListener('load',restore);
   });
 
   // ---- the fields catalogue ------------------------------------------------------------------------------------------
-  var KIND_LBL = { path: 'category path', number: 'number', url: 'link', list: 'list', text: 'free text', id: 'one per product', value: 'values', empty: 'empty' };
+  var KIND_LBL = { path: 'category path', number: 'number', url: 'link', list: 'list', text: 'free text', id: 'one per product', value: 'values', date: 'date', empty: 'empty' };
   function renderFields() {
     var tb = $('#fd tbody');
     if (!S.st) { tb.innerHTML = '<tr><td colspan="6"><div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div></td></tr>'; $('#fcnt').textContent = ''; return; }
@@ -797,7 +804,7 @@ window.addEventListener('load',restore);
   $('#fq').oninput = function () { renderFields(); };
   $('#fd').addEventListener('click', function (e) {
     var a = e.target.closest('[data-add]'); if (a) { addField(a.getAttribute('data-add')); return; }
-    var spec = function (f) { var mt = fieldMeta(f), m = mt && mt.kind === 'path' ? 'tier' : 'raw'; return { f: f, m: m, k: m === 'tier' ? Math.min(2, B.maxTier(S.st, f)) : 0 }; };
+    var spec = defSpec;
     var r = e.target.closest('[data-pr]'); if (r) { S.L.pivot.r = spec(r.getAttribute('data-pr')); saveLayout(); renderPivotCtl(); renderPivot(); reveal('sec-pivot'); return; }
     var c = e.target.closest('[data-pc]'); if (c) { S.L.pivot.c = spec(c.getAttribute('data-pc')); saveLayout(); renderPivotCtl(); renderPivot(); reveal('sec-pivot'); }
   });

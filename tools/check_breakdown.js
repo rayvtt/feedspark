@@ -142,6 +142,30 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'g:availability'; s.dispatchEvent(new Event('change', { bubbles: true })); });
     await pg.waitForTimeout(120);
 
+    console.log('· newness by quarter, on the columns and the rows');
+    {
+      const now = new Date(), refQ = now.getUTCFullYear() * 4 + Math.floor(now.getUTCMonth() / 3), QN = (i) => 'Q' + (i % 4 + 1) + ' ' + Math.floor(i / 4);
+      const want = {};
+      ITEMS.forEach((it) => { const m = /<c:fs_date_of_birth[^>]*>\s*(\d{4})-(\d{2})/.exec(it); if (!m) return; const i = +m[1] * 4 + Math.floor((+m[2] - 1) / 3), back = refQ - i;
+        const v = back < 0 ? QN(i) + ' · ahead' : back === 0 ? QN(i) + ' · this quarter' : back === 1 ? QN(i) + ' · last quarter' : back < 8 ? QN(i) : 'Before ' + QN(refQ - 7); want[v] = (want[v] || 0) + 1; });
+      { let deep = -1; Object.keys(want).forEach((v) => { if (/^Before /.test(v)) deep = 7; const r = /^Q(\d) (\d{4})/.exec(v); if (r) deep = Math.max(deep, refQ - (+r[2] * 4 + +r[1] - 1)); });
+        for (let k = 0; k <= Math.min(deep, 7); k++) { const i = refQ - k, v = k === 0 ? QN(i) + ' · this quarter' : k === 1 ? QN(i) + ' · last quarter' : QN(i); if (!(v in want)) want[v] = 0; } }
+      const grp = await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'), g = s.querySelector('optgroup'); return g && g.label + '|' + Array.from(g.querySelectorAll('option')).map((o) => o.value).join(); });
+      ok('the column picker opens on a Newness group carrying the feed\'s first-seen date', grp === 'Newness · by quarter|c:fs_date_of_birth', grp);
+      await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'c:fs_date_of_birth'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+      await pg.waitForTimeout(150);
+      const q = await pg.evaluate(() => ({ m: document.querySelector('#pv-c select.m').value, heads: Array.from(document.querySelectorAll('#pv table thead th')).slice(1, -1).map((th) => th.textContent), tot: Array.from(document.querySelectorAll('#pv table tfoot td.c')).map((td) => +td.textContent.replace(/[^0-9]/g, '') || 0) }));
+      const order = Object.keys(want).sort((x, y) => { const k = (v) => { const r = /(Before )?Q(\d) (\d{4})/.exec(v); return (r[1] ? 1e6 : 0) - (+r[3] * 4 + +r[2]); }; return k(x) - k(y); });
+      ok('picking the date reads it by quarter, newest first, every quarter counted independently', q.m === 'qtr' && q.heads.join('|') === order.join('|') && q.heads.every((h, j) => q.tot[j] === want[h]), [q, want]);
+      await pg.evaluate(() => { const r = document.querySelector('#pv-r select.f'); r.value = 'c:fs_date_of_birth'; r.dispatchEvent(new Event('change', { bubbles: true })); });
+      await pg.waitForTimeout(150);
+      const qr = await pg.evaluate(() => ({ m: document.querySelector('#pv-r select.m').value, rows: Array.from(document.querySelectorAll('#pv tbody tr td.rh')).map((td) => td.textContent) }));
+      ok('…and on the rows, in the same order', qr.m === 'qtr' && qr.rows.join('|') === order.join('|'), [qr, order]);
+      if (process.env.BD_SHOT) await pg.locator('#sec-pivot, #pv').first().screenshot({ path: process.env.BD_SHOT });
+      await pg.evaluate(() => { const r = document.querySelector('#pv-r select.f'); r.value = 'g:product_type'; r.dispatchEvent(new Event('change', { bubbles: true })); const s = document.querySelector('#pv-c select.f'); s.value = 'g:availability'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+      await pg.waitForTimeout(120);
+    }
+
     console.log('· a pane is as wide as its longest value');
     const fit = await pg.evaluate(() => Array.from(document.querySelectorAll('#panes .pane:not(.add) td.v')).every((td) => td.scrollWidth <= td.clientWidth + 1 && getComputedStyle(td).textOverflow !== 'ellipsis'));
     ok('no value in a pane is cut short', fit);
