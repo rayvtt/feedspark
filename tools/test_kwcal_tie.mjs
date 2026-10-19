@@ -832,7 +832,9 @@ ROSTER = null;
      primary g:product_type paths read off their own GB feed. The check cannot come from the seed:
      each brand's census is an INDEPENDENT read committed under ops/calendars/, so a mis-spelled
      path matches nothing real rather than matching its own mis-spelling. ---- */
-  const CENSUS = { Reiss: 'reiss', Accessorize: 'accessorize', Schuh: 'schuh', Monsoon: 'monsoon' };
+  const CENSUS = { Reiss: 'reiss_gb_product_types_2026-10-14', Accessorize: 'accessorize_gb_product_types_2026-10-14',
+    Schuh: 'schuh_gb_product_types_2026-10-14', Monsoon: 'monsoon_gb_product_types_2026-10-14',
+    Hobbycraft: 'hobbycraft_gb_product_types_2026-10-19' };
   const seedSrc = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_KWCal.html'), 'utf8');
   const seedBlk = seedSrc.slice(seedSrc.indexOf('var SEED={'), seedSrc.indexOf('\n]}};', seedSrc.indexOf('var SEED={')));
   const brandSeg = (b) => {
@@ -867,7 +869,7 @@ ROSTER = null;
   let strays = [], seeded = 0, scopedN = 0, unscoped = [];
   Object.keys(CENSUS).forEach((brand) => {
     const cen = JSON.parse(fs.readFileSync(path.join(root, 'ops', 'calendars',
-      CENSUS[brand] + '_gb_product_types_2026-10-14.json'), 'utf8')).product_types;
+      CENSUS[brand] + '.json'), 'utf8')).product_types;
     momentsOf(brandSeg(brand)).forEach((mo) => {
       const pts = ptsIn(mo.src);
       if (!pts) { if (!/brandwide:1/.test(mo.src)) unscoped.push(brand + '/' + mo.id); return; }
@@ -880,7 +882,7 @@ ROSTER = null;
   });
   is('every seeded path exists in its brand\u2019s own live-feed census', strays.slice(0, 6), []);
   is('\u2026across all four seeded brands, and there are a lot of them',
-    { enough: seeded > 1400, moments: scopedN }, { enough: true, moments: 61 });
+    { enough: seeded > 1400, moments: scopedN }, { enough: true, moments: 70 });
   // and a moment left without one SAYS WHY — a card reading "no scope yet" with no reason is an
   // oversight; these are decisions (a material, a collection, an arrival cohort, an unnamed line list)
   const noReason = [];
