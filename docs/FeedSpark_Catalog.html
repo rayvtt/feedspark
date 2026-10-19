@@ -860,6 +860,12 @@ window.addEventListener('load',restore);
   function imgUrl(u) { return String(u || '').trim().replace(/^http:\/\//i, 'https://'); }
   function img(u, cls) { u = imgUrl(u); return u ? '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + esc(u) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">' : ''; }
   function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  /* A BRIEF OPENS WORKFLOW IN A NEW TAB (Ray, 19 Oct 2026: "any brief from a different module … should not change the existing tab. It should open
+     a new tab to lead back to the workflow briefing. Same methodology across the FCC"): this module stays where it is. wfTab opens it now; wfTabLater
+     reserves the tab inside the click (a browser only lets a click open one) for a brief that waits on a save. A blocked tab falls back to this one,
+     so a brief is never lost. */
+  function wfTab(u) { var w = window.open(u, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = u; return w; }
+  function wfTabLater() { var w = window.open('', '_blank'); return function (u) { if (!u) { try { if (w) w.close(); } catch (e) {} return; } if (w && !w.closed) { try { w.opener = null; } catch (e) {} w.location.href = u; } else location.href = u; }; }
   // ONE audit colour legend across the FCC (<70 red · 70–85 orange · 85–95 yellow · 95+ green) — the same function /golden carries
   function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
   var reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -3429,14 +3435,14 @@ window.addEventListener('load',restore);
     var lines = ['Catalogue view: ' + viewLabel(), n0(n) + ' products · ' + S.client + ' ' + mk,
       'Open it: ' + location.origin + '/catalog?client=' + encodeURIComponent(S.client) + '&market=' + encodeURIComponent(S.mkt) + (S.tab !== 'all' ? '&tab=' + S.tab : '') + (S.q ? '&q=' + encodeURIComponent(S.q) : ''),
       '', 'IDs' + (n > 40 ? ' (first 40 of ' + n0(n) + ')' : '') + ':'].concat(ids);
-    location.href = '/workflow?brief=' + b64url({ client: S.client, task: 'Catalogue Fix - ' + viewLabel() + ' - ' + S.client + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') });
+    wfTab('/workflow?brief=' + b64url({ client: S.client, task: 'Catalogue Fix - ' + viewLabel() + ' - ' + S.client + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') }));
   });
   function briefOne() {
     var I = S.insp; if (!I) return;
     var p = S.prods[I.i], f = p.f, mk = S.mkt.toUpperCase();
     var warn = I.lin.filter(function (r) { return r.spec === 'warn' || (r.tier === 'req' && !r.o && r.k !== 'id'); }).map(function (r) { return '- ' + r.l + (r.spec === 'warn' ? ': not in Google’s format' : ': missing'); });
     var lines = ['Product ' + p.id + ' · ' + E.plain(f.title), f.link ? 'Page: ' + f.link : '', 'Completeness ' + (I.cells ? I.cm.before + ' → ' : '') + I.cm.after, '', warn.length ? 'Needs a look:' : 'Review this product.'].concat(warn).filter(function (x) { return x !== ''; });
-    location.href = '/workflow?brief=' + b64url({ client: S.client, task: 'Catalogue Fix - ' + p.id + ' - ' + S.client + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') });
+    wfTab('/workflow?brief=' + b64url({ client: S.client, task: 'Catalogue Fix - ' + p.id + ' - ' + S.client + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') }));
   }
 
   window.__FCCCatalogue = { state: function () { return S; } };

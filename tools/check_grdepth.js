@@ -178,7 +178,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
       /82\.3% of products carry 4 or more images \(4\.6 per product on average\)/.test(ask.body) && /Google allows the main image plus up to ten more/.test(ask.body), ask);
     ok('…and names the plan task in words, the same words the worker files', /Golden Record Fix - Images per product"/.test(ask.hint), ask.hint);
     // → Brief
-    const nav = new Promise((res) => page.on('request', (rq) => { if (/brief=/.test(rq.url())) res(rq.url()); }));
+    const nav = new Promise((res) => page.context().on('request', (rq) => { if (/brief=/.test(rq.url())) res(rq.url()); })); // a brief opens Workflow in a NEW tab
     await page.click('#ask-cancel').catch(() => {});
     await page.click('.at-row [data-brief="detail_depth"]');
     const url = await Promise.race([nav, new Promise((res) => setTimeout(() => res(null), 3000))]);

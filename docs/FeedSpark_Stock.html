@@ -1004,6 +1004,12 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function lvDate(s) { if (!s) return ''; var d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]; }
   function lvWhen(n) { return n > 1 ? 'in ' + n + ' days' : n === 1 ? 'tomorrow' : n === 0 ? 'today' : (-n === 1 ? '1 day late' : -n + ' days late'); }
   function lvB64(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  /* A BRIEF OPENS WORKFLOW IN A NEW TAB (Ray, 19 Oct 2026: "any brief from a different module … should not change the existing tab. It should open
+     a new tab to lead back to the workflow briefing. Same methodology across the FCC"): this module stays where it is. wfTab opens it now; wfTabLater
+     reserves the tab inside the click (a browser only lets a click open one) for a brief that waits on a save. A blocked tab falls back to this one,
+     so a brief is never lost. */
+  function wfTab(u) { var w = window.open(u, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = u; return w; }
+  function wfTabLater() { var w = window.open('', '_blank'); return function (u) { if (!u) { try { if (w) w.close(); } catch (e) {} return; } if (w && !w.closed) { try { w.opener = null; } catch (e) {} w.location.href = u; } else location.href = u; }; }
   function lvCopy(text) {
     function fall() { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); toast('Copied'); }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('Copied'); }, fall); else fall();
@@ -1493,10 +1499,12 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       case 'lv-copyp': if (q) lvCopy(lvSwitchText(q, dir)); break;
       case 'lv-brief': if (q) {
         var scope = lvSwitchText(q, dir), task = 'Stock Levers - ' + (dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + ' - ' + q.name + ' - ' + b + ' - ' + (dir === 'sale' ? q.from : q.to).slice(5, 7) + (dir === 'sale' ? q.from : q.to).slice(2, 4);
-        // a mark that did not land is said before the page leaves — never lost behind the navigation
+        // Workflow opens in a tab of its own, reserved inside this click since the mark is saved first; a mark that did not
+        // land is said before the brief opens, and saying no closes the reserved tab
+        var tab = wfTabLater();
         var go = function (ok) {
-          if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) return;
-          location.href = '/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' });
+          if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) { tab(null); return; }
+          tab('/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' }));
         };
         if (((q[dir] && q[dir].st) || 'planned') === 'planned') lvSetStep(q, dir, 'briefed', true, go); else go();
       } break;

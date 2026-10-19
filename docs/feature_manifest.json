@@ -13055,7 +13055,7 @@
     {
       "name": "Stock levers: → Brief opens the Workflow composer with the switch as the brief",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "location.href = '/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' })",
+      "pattern": "tab('/workflow?brief=' + lvB64({ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' })",
       "pr": 0
     },
     {
@@ -13151,7 +13151,7 @@
     {
       "name": "Stock levers: a brief mark the server refused is said before the page leaves",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) return;",
+      "pattern": "if (ok === false && !confirm('The switch could not be marked briefed. ' + (LV.warn || 'The save failed.') + ' Open the brief anyway?')) { tab(null); return; }",
       "pr": 0
     },
     {
@@ -16668,6 +16668,54 @@
       "file": "tools/check_grseg.js",
       "pattern": "a second tick ORs within the field",
       "pr": 711
+    },
+    {
+      "name": "Golden: a brief opens Workflow in a new tab",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function wfTab(u)",
+      "pr": 714
+    },
+    {
+      "name": "Stock: lever brief reserves its tab before the save",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var tab = wfTabLater();",
+      "pr": 714
+    },
+    {
+      "name": "AI Quote: → Intake brief opens in a new tab",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var tab=wfTabLater();",
+      "pr": 714
+    },
+    {
+      "name": "Catalogue: a brief opens Workflow in a new tab",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function wfTab(u)",
+      "pr": 714
+    },
+    {
+      "name": "Restock: a brief opens Workflow in a new tab",
+      "file": "docs/FeedSpark_Restock.html",
+      "pattern": "wfTab('/workflow?brief=' + b64url(",
+      "pr": 714
+    },
+    {
+      "name": "Social: a brief opens Workflow in a new tab",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "function wfTab(u)",
+      "pr": 714
+    },
+    {
+      "name": "Golden plan tripwire: brief opens a new tab",
+      "file": "tools/check_grplanbrief.js",
+      "pattern": "opens Workflow in a NEW tab",
+      "pr": 714
+    },
+    {
+      "name": "Stock levers tripwire: brief opens a new tab",
+      "file": "tools/check_stocklevers.js",
+      "pattern": "opens Workflow in a NEW tab and leaves /stock where it was",
+      "pr": 714
     }
   ]
 }

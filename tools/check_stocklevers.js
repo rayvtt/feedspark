@@ -85,7 +85,7 @@ async function open(browser, w, h, q, extra, stub) {
   await p.exposeBinding('__putSeen', (src, body) => { try { seen.push(JSON.parse(body)); } catch (e) {} });
   // served from an http origin, so → Brief's navigation to /workflow lands on a page (from file:// it is a missing file,
   // and the navigation throws before anything can be read); every other host is refused
-  await p.route(/^https?:\/\//, (r) => {
+  await ctx.route(/^https?:\/\//, (r) => {
     const u = new URL(r.request().url());
     if (u.host !== 'fcc.test') return r.abort();
     if (u.pathname === '/stock') return r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML });
@@ -270,13 +270,16 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     const txt = await p.evaluate(() => window.__copied);
     ok('⧉ Copy summary is the dashboard in words — the record at its foot', /^Superdry — stock levers, \d{4}-\d{2}-\d{2}/.test(txt) && /• Range completion: BAU 30% · SALE 20% \(band 20–40%\)/.test(txt) && /not read yet — FR/.test(txt) && /Peak sale \(test\)/.test(txt) && /• Recorded:\n    \d{4}-\d{2}-\d{2} — /.test(txt), txt);
     const nPut = seen.length;
-    await Promise.all([p.waitForURL(/\/workflow\?brief=/, { timeout: 8000 }), p.click(per0 + ' .stp[data-dir="bau"] [data-act="lv-brief"]')]);
+    const urlS = p.url();
+    const [tab1] = await Promise.all([ctx.waitForEvent('page', { timeout: 8000 }), p.click(per0 + ' .stp[data-dir="bau"] [data-act="lv-brief"]')]);
+    await tab1.waitForURL(/\/workflow\?brief=/, { timeout: 8000 });
     const briefPut = seen.slice(nPut);
-    const raw = decodeURIComponent(new URL(p.url()).searchParams.get('brief') || '');
+    ok('→ Brief opens Workflow in a NEW tab and leaves /stock where it was', p.url() === urlS, { stock: p.url(), tab: tab1.url() });
+    const raw = decodeURIComponent(new URL(tab1.url()).searchParams.get('brief') || '');
     const brief = JSON.parse(Buffer.from(raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
     ok('→ Brief opens the Workflow composer: the brand, a technical brief from the levers, the switch back to BAU as the scope', brief.client === 'Superdry' && brief.cat === 'technical' && brief.source === 'stock-levers' && /^Stock Levers - Back to BAU - Peak sale \(test\) - Superdry - 1226$/.test(brief.task)
       && /^Back to BAU — Superdry — Peak sale \(test\)/.test(brief.scope) && /Range completion: 20% → 35% — GB/.test(brief.scope) && /Range completion: 20% → 25% — DE/.test(brief.scope) && /Hero sizes: off → on — GB, DE/.test(brief.scope), brief);
-    ok('…the switch marked briefed before the page left', briefPut.some((b) => b['e:Superdry|peak-test'] && b['e:Superdry|peak-test'].bau.st === 'briefed'), briefPut);
+    ok('…the switch marked briefed', briefPut.some((b) => b['e:Superdry|peak-test'] && b['e:Superdry|peak-test'].bau.st === 'briefed'), briefPut);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
@@ -289,7 +292,8 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.click('#lev-plan .lv.ed [data-act="lv-save"]');
     await p.waitForFunction(() => window.__inflight === 1, null, { timeout: 5000 });
     const n2 = seen.length;
-    await Promise.all([p.waitForURL(/\/workflow\?brief=/, { timeout: 8000 }), p.click('.per[data-p="peak-test"] .stp[data-dir="sale"] [data-act="lv-brief"]')]);
+    const [tab2] = await Promise.all([ctx.waitForEvent('page', { timeout: 8000 }), p.click('.per[data-p="peak-test"] .stp[data-dir="sale"] [data-act="lv-brief"]')]);
+    await tab2.waitForURL(/\/workflow\?brief=/, { timeout: 8000 });
     const after = seen.slice(n2);
     ok('…the page waits for that save, sends its OWN mark, and only then leaves', after.some((b) => b['e:Superdry|peak-test'] && b['e:Superdry|peak-test'].sale.st === 'briefed'), after);
     await ctx.close();
