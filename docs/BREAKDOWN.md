@@ -146,3 +146,12 @@ Ray: "remove notion of this quarter and last quarter - make column always fit - 
 - The pivot is a fixed-layout table at 100% of its card: the columns share the width, a heading WRAPS rather than being cut, so at 1440px nothing scrolls sideways (a phone still pans — 64px a column is the floor).
 - Every column heading carries a grip: drag it to set that column's width, double-click or Enter for the default, ← → step 20px. Widths are remembered on this device by what the column IS (`rh`, `tot`, `ps`, `c:<value>`) in `fcc-bd-layout` › `pivot.w` (60 kept), so a value's column keeps its width when it comes back.
 - **Spend · conversion value · ROAS** sits under the pivot: one row per value of the pivot's rows field (or its columns field, `by`), spend and conversion value as two bars on ONE money scale, ROAS (conversion value ÷ spend from that segment's own sums) on its own scale with the whole selection's ROAS marked. Sort by spend / value / ROAS, top 15 then Show all, a row click filters the page. It reads the same 30-day Google Ads join as the Measure picker; before Ads is read it offers ⚡ Read Google Ads. Segments with no spend and no value are counted, not drawn.
+
+## Two readings in one table — the Layer (19 Oct 2026)
+
+Ray: "in the same pivot table … see 2 data points together to compare — within this split — volume of product (in count) and ROAS avg … is there a way to layering 2 data … in the same table?"
+
+- **Layer** beside Measure: Nothing · Products · Spend · Conv. value · ROAS · Clicks · Impressions · Conversions (never the measure itself).
+- Every cell, row total and column total then reads TWO things: the measure as the number (orange shade, as before) and the layer under it in small type with a blue bar on the layer's OWN scale — two readings never share one axis.
+- The engine sums the layer on the SAME rows and columns (`pivot` / `cross` take `opts.lw` — `1` counts products — and `opts.lw2` for a ratio), so a ROAS layer is conversion value ÷ spend from that cell's own products.
+- A Google Ads layer waits for the Ads read (and says so); the CSV carries the layer as a second block; the layer is part of the layout and a ★ view.
