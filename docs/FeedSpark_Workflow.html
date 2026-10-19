@@ -79,7 +79,14 @@ window.addEventListener('load',restore);
      reader is comparing it against. The row STRIP therefore bleeds back out to the panel's own
      inner edge and insets its button by the table cell's 8px — one variable, so a change to the
      band's padding can never knock the column out again — while the left padding adds that
-     padding back so every word on a row stays exactly where it was. */
+     padding back so every word on a row stays exactly where it was.
+     AND THE SCROLLBAR IS PART OF THE TABLE (Ray, 19 Oct 2026: "these buttons across sections are
+     not aligned vertically, which is annoying" — the same red stroke, now through three button
+     columns). .it-scroll scrolls, so where the platform draws a CLASSIC scrollbar its gutter comes
+     out of the table's own content box and carries the Brief column left with it, while this band,
+     which does not scroll, stayed where it was. --kwd-sb is that gutter MEASURED off the Intake
+     scroller itself — 0 on an overlay-scrollbar platform, where nothing moves, which is exactly why
+     the two columns already agreed in a headless browser and not on Ray's screen. */
   /* ONE number: the band's own side padding AND the bleed that undoes it. Set on the id, because
      .panel's 18px is declared later than .sw-band's 15px and wins — reading 15 here would have
      left the column 3px out, which is exactly the kind of near-miss this rule exists to stop. */
@@ -87,7 +94,7 @@ window.addEventListener('load',restore);
   .kwd-rows{display:flex;flex-direction:column;gap:1px;
     margin-left:calc(var(--bandpad) * -1);margin-right:calc(var(--bandpad) * -1)}
   .kwd-row{display:flex;align-items:center;gap:10px;border-radius:6px;
-    padding:6px 8px 6px calc(var(--bandpad) + 8px);
+    padding:6px calc(8px + var(--kwd-sb, 0px)) 6px calc(var(--bandpad) + 8px);
     font-size:12.5px;font-weight:700;color:var(--ink)}
   .kwd-row:nth-child(odd){background:var(--wash)}
   .kwd-when{flex:none;width:92px;font-weight:900;font-variant-numeric:tabular-nums}
@@ -7845,6 +7852,19 @@ aside.ck[hidden]{display:none}
     renderDone();
     band.hidden=false;
     $('#kwd-rows').__rows=rs;
+    align();
+  }
+  // The band's button column is read against INTAKE's, directly above it, so it has to allow for
+  // the gutter Intake's own scrollbar takes out of the table's content box. Measured off that
+  // scroller, never assumed: 0 where the platform overlays its scrollbar, and both halves of the
+  // band move together because one row rule carries it.
+  function align(){
+    var band=$('#kwd-band'); if(!band||band.hidden)return;
+    var t=document.getElementById('itbl'), sc=t&&t.closest?t.closest('.it-scroll'):null;
+    if(!sc)return;
+    var g=sc.offsetWidth-sc.clientWidth;
+    if(!(g>=0))return;                                  // a scroller not laid out yet says nothing
+    band.style.setProperty('--kwd-sb',Math.round(g)+'px');
   }
   // the briefed half — read-only, so every row ends at its ticket and none offers a brief
   function renderDone(){
@@ -7919,6 +7939,13 @@ aside.ck[hidden]{display:none}
     });
     // a brief saved anywhere on this page can have been one of these — re-read so the row goes
     document.addEventListener('fcc-briefs',function(){ pull(true); });
+    // the gutter appears and disappears with the table's own height (a filter, a fold, Show all)
+    // and with the window, so the measurement follows both rather than being taken once at boot
+    var pend=0;
+    var again=function(){ if(pend)return; pend=1; requestAnimationFrame(function(){ pend=0; align(); }); };
+    window.addEventListener('resize',again);
+    var t=document.getElementById('itbl');
+    if(t&&window.ResizeObserver)try{ new ResizeObserver(again).observe(t); }catch(e){}
   }
   function pull(briefsOnly){
     var jobs=[fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return null})];
@@ -7939,6 +7966,6 @@ aside.ck[hidden]{display:none}
     document.addEventListener('visibilitychange',function(){ if(!document.hidden)pull(true); });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
-  window.FCCKwDue={render:render,rows:rows,briefed:briefedRows};
+  window.FCCKwDue={render:render,rows:rows,briefed:briefedRows,align:align};
 })();
 </script>
