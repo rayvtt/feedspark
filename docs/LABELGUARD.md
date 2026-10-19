@@ -2326,3 +2326,16 @@ leaves group mode, since the rows were read before it.
 Harness `tools/check_grseg.js` (presync): an invented 40-product feed, every score the page prints checked
 against the same rows pushed through the engine in node; filter, split, group mode, the group ⬇ HTML, the way
 back, 390px.
+
+
+### 9.11a Why an analysis moved (19 Oct 2026)
+
+Ray, over Reiss DK's content quality ▲ +6: *"detail, in the most minimal way possible, why the content quality score
+has increased … figure out how many fields have been changed."* Every analysis now keeps, in the history record, each
+content-quality field's own score, the products it was read on and the products breaking each rule (`qa`), and each
+AI-readiness pillar's score (`ap`) — `labelguard.js › histQaDetail`, checked by `histQa` (an unknown field or rule is
+refused, figures clamped). The change log and the day hover read a move off the two analyses it compares: the fields
+that moved (a move under half a point is not named), the rule whose breaking-product count moved most in each
+(tooltip: Google's own rule wording, before → after), and a row summary — *N fields moved · N product values now
+pass*. An analysis recorded before this keeps its plain line and says the detail starts with the next analysis;
+nothing is reconstructed. Harness `tools/test_qamoved.mjs` (qa_gate/presync/validate).

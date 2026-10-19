@@ -16492,6 +16492,30 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grseg.js",
       "pr": 0
+    },
+    {
+      "name": "Golden history: each analysis keeps its fields + pillars (histQaDetail)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function histQaDetail(qs, ai) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden history: the worker stores the detail with the analysis",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "histQaDetail(qs, ai)));",
+      "pr": 0
+    },
+    {
+      "name": "Golden history: the change log names the fields behind a content-quality move",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function qaMoved(a, b, f) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden history: analysis moves harness in qa_gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "node tools/test_qamoved.mjs",
+      "pr": 0
     }
   ]
 }
