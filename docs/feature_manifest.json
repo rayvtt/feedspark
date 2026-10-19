@@ -16787,37 +16787,37 @@
       "name": "Spend Lens: the tactics a cut's shape supports",
       "file": "cloudflare/feedspark-deck/src/spendlens.js",
       "pattern": "export function cutFindings",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Spend Lens: money is never blended across a currency",
       "file": "cloudflare/feedspark-deck/src/spendlens.js",
       "pattern": "money is never blended across a currency",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Spend Lens: a laggard is judged against the rest of its field",
       "file": "cloudflare/feedspark-deck/src/spendlens.js",
       "pattern": "A LAGGARD IS JUDGED AGAINST THE REST OF ITS FIELD",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Spend Lens: the route, GET reading only what is stored",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "path === '/api/spendlens'",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Spend Lens: the Playbook rail's section",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function secSpend(",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Spend Lens: an unread cut is named, never read as nothing wrong",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "WHAT HAS NOT BEEN READ IS NAMED",
-      "pr": 718
+      "pr": 719
     },
     {
       "name": "Keyword band: the button column allows for Intake's scrollbar gutter",
