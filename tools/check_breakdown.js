@@ -178,7 +178,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
         heads: Array.from(document.querySelectorAll('#pv table thead th')).map((th) => th.textContent),
         rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'); return [t[0].textContent, t[t.length - 2].textContent, t[t.length - 1].textContent]; }),
         foot: Array.from(document.querySelectorAll('#pv tfoot td')).map((td) => td.textContent) }));
-      ok('picking Spend reads Google Ads and says what it joined, naming the spend on products the feed no longer carries', !sp.hidden && /last 30 days/.test(sp.line) && /no longer carries/.test(sp.line) && /£9\.50/.test(sp.line), sp.line);
+      ok('picking Spend reads Google Ads and says what it joined, naming the spend on products the feed no longer carries', !sp.hidden && /last 30 days/i.test(sp.line) && /no longer carries/.test(sp.line) && /£9\.50/.test(sp.line), sp.line);
       ok('…every row total is the 30-day spend of its own products, counted independently (an id is matched case-blind)', sp.rows.length === Object.keys(SP).length && sp.rows.every(([v, t]) => Math.abs(money(t) - SP[v]) < 0.6), [sp.rows, SP]);
       ok('…the column total is the feed’s spend, never the out-of-feed id', Math.abs(money(sp.foot[sp.foot.length - 2]) - tot) < 0.6, [sp.foot, tot]);
       ok('…and beside it each row’s share of PRODUCTS, the contrast the spend is read against', sp.heads[sp.heads.length - 1] === '% of products' && sp.rows.every(([v, , p]) => Math.abs(parseFloat(p) - NP[v] / ITEMS.length * 100) < 0.6), sp.rows);
