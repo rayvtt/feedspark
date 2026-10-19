@@ -2991,6 +2991,38 @@ async function route(request, env, ctx) {
       });
       return json({ ok: true, clients: out });
     }
+    // FIELD BREAKDOWN × GOOGLE ADS (Ray, 19 Oct 2026: "bring AdWords and ROAS data into these breakdowns … how much
+    // spend in the past 30 days each group of custom labels has received, in contrast with the total spend"): the
+    // SAME 30-day Ads Traffic read the Restock module uses (catAdsRead, one record per company × period), a chunk a
+    // call. A Meta market reads its GOOGLE market's report — Google Ads is the Google feed's, and the page joins it by
+    // product id, so a Meta catalogue's groups get the spend the same products earned in Google Ads, said as such.
+    //   GET /api/breakdown/ads?client=&market=[&fresh] → 202 preparing · done:false → call again · done:true carries the rows
+    if (path === '/api/breakdown/ads' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!(acc.owner || clientMatch(acc.clients, client))) return json({ ok: false, error: 'out of scope' }, 403);
+      const asked = mktOf(url.searchParams.get('market')), gmkt = asked.replace(/-fb$/i, '');
+      const src = await feedSourceFor(env, client, gmkt);
+      if (!src) return json({ ok: false, state: 'no_ads', error: 'no Google Shopping feed wired for this market — Google Ads is read for the Google feed' }, 404);
+      const cmpid = catCmpid(src);
+      if (!cmpid) return json({ ok: false, state: 'no_ads', error: 'this market\'s Google feed is read from a Google Sheet — FeedHero holds no Ads Traffic report for it' }, 404);
+      try {
+        const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), RESTOCK.RESTOCK_PERIOD);
+        if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
+        if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
+        if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
+        const head = { ok: true, cmpid, gmkt, via: gmkt !== asked, period: rec.period, from: rec.from, to: rec.to, range: rec.range, total: rec.total, pages: rec.pages, next: rec.next,
+          got: Object.keys(rec.rows || {}).length, cur: rec.cur, curMix: !!rec.curMix, restarted: !!rec.restarted, cached: !!rec.cached };
+        if (rec.state !== 'ok') return json(Object.assign(head, { done: false }));
+        if (!rec.cached) logActivity(ctx, env, request, 'breakdown-ads', cmpid + ' ' + rec.period + ' ' + head.got);
+        return json(Object.assign(head, { done: true, at: rec.at, rows: rec.rows }));
+      } catch (e) {
+        const msg = String((e && e.message) || e).slice(0, 160);
+        if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
+        return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
+      }
+    }
     if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {
       const acc = await accessOf(env, request);
       const inScope = (c) => acc.owner || clientMatch(acc.clients, c);

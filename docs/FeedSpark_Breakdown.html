@@ -174,6 +174,9 @@ window.addEventListener('load',restore);
   table.pv td.c.z{color:var(--muted);font-weight:400}
   table.pv td.c:hover{outline:2px solid var(--orange);outline-offset:-2px}
   table.pv td.tot,table.pv th.tot{font-weight:900;background:var(--wash)}
+  .adsl{margin:0 0 10px}.adsl .btn{height:26px;padding:0 10px;font-size:11.5px;margin-left:6px}
+  #pv-show.off button{opacity:.45;cursor:not-allowed}
+  table.pv td.ps,table.pv th.ps{color:var(--ink-2);font-weight:700}
   table.pv tfoot td{font-weight:900;background:var(--wash);border-top:2px solid var(--line)}
   table.pv tr.blank td.rh{color:var(--muted);font-style:italic}
   /* the fields catalogue */
@@ -313,11 +316,13 @@ window.addEventListener('load',restore);
       <div class="pvc">
         <div class="grp"><span class="lbl">Rows</span><div class="row" id="pv-r"></div></div>
         <div class="grp"><span class="lbl">Columns</span><div class="row" id="pv-c"></div></div>
+        <div class="grp"><span class="lbl">Measure</span><select class="fld" id="pv-meas" aria-label="Measure" data-no-keep><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div>
         <div class="grp"><span class="lbl">Show</span><span class="seg" id="pv-show" role="group" aria-label="Show">
           <button type="button" data-s="n" class="on">Count</button><button type="button" data-s="row">% of row</button><button type="button" data-s="col">% of column</button><button type="button" data-s="all">% of total</button></span></div>
         <div class="grp"><span class="lbl">Rows shown</span><select class="fld" id="pv-top" aria-label="Rows shown" data-no-keep><option value="25">Top 25</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="0">All</option></select></div>
         <div class="grp"><span class="lbl">&nbsp;</span><button class="btn" id="pv-csv" type="button">⤓ CSV</button></div>
       </div>
+      <p class="note adsl" id="pv-ads" hidden></p>
       <div class="tw" id="pv"><div class="empty">Waiting for the feed…</div></div>
       <p class="note" id="pv-note"></p>
     </div>
@@ -385,7 +390,7 @@ window.addEventListener('load',restore);
   // the LAYOUT (fields + how each is read + the pivot) is this device's and travels between brands — a view is the
   // shape of the question, never the account (the Task Manager's rule); the filters belong to one feed and reset with it
   var Q = new URLSearchParams(location.search);
-  var LAYOUT_DEF = { panes: null, pivot: { r: null, c: null, show: 'n', top: 25 }, unit: 'sku' };
+  var LAYOUT_DEF = { panes: null, pivot: { r: null, c: null, show: 'n', top: 25, meas: 'n' }, unit: 'sku' };
   var S = {
     gen: 0, ctl: null, roster: null, brand: Q.get('brand') || get('fcc-bd-brand', ''), mkt: Q.get('market') || get('fcc-bd-mkt', ''),
     st: null, fields: [], feed: { st: 'idle' }, err: '', q: '', filters: [], paneAll: {}, sort: {},
@@ -462,11 +467,12 @@ window.addEventListener('load',restore);
     var g = ++S.gen;
     if (S.ctl) { try { S.ctl.abort(); } catch (e) {} }
     S.ctl = window.AbortController ? new AbortController() : null;
-    S.st = null; S.fields = []; S.filters = []; S.paneAll = {}; S.err = '';
+    S.st = null; S.fields = []; S.filters = []; S.paneAll = {}; S.err = ''; S.ads = null; S.aj = null;
     put('fcc-bd-brand', S.brand); put('fcc-bd-mkt', S.mkt); setQuery();
     if (!S.brand || !S.mkt) { S.feed = { st: 'idle' }; renderAll(); return; }
     S.feed = { st: 'loading', bytes: 0, total: 0, rows: 0, t0: Date.now() };
     renderAll();
+    if (meas() !== 'n') loadAds();   // the Ads read runs beside the feed's, joined once both are in
     var st = B.createStore();
     fetch('/api/feed/proxy' + mq(), S.ctl ? { signal: S.ctl.signal } : {}).then(function (res) {
       if (g !== S.gen) return;
@@ -497,7 +503,7 @@ window.addEventListener('load',restore);
   function done(g, st) {
     if (g !== S.gen) return;
     S.st = st; S.feed.st = 'done'; S.feed.t1 = Date.now(); S.feed.rows = st.n;
-    S.fields = B.fields(st);
+    S.fields = B.fields(st); joinAds();
     if (!S.L.panes || !S.L.panes.length) { S.L.panes = B.defaultPanes(st, 4); saveLayout(); }
     if (!S.L.pivot.r) {
       var dp = S.L.panes.filter(function (p) { return B.resolve(st, p); });
@@ -721,56 +727,148 @@ window.addEventListener('load',restore);
     $('#pv-c').innerHTML = S.st ? specCtl(B.resolve(S.st, P.c || {}) || null, true) : '';
     Array.prototype.forEach.call(document.querySelectorAll('#pv-show [data-s]'), function (b) { b.classList.toggle('on', b.getAttribute('data-s') === P.show); });
     $('#pv-top').value = String(P.top);
+    $('#pv-meas').value = meas();
+    var cb = document.querySelector('#pv-show [data-s="n"]'); if (cb) cb.textContent = meas() === 'n' ? 'Count' : 'Amount';
+    var rt = !!MEAS[meas()].ratio; $('#pv-show').classList.toggle('off', rt); $('#pv-show').title = rt ? 'ROAS is a ratio — it is shown as itself, never as a share' : '';
   }
   $('#pv-r').addEventListener('change', function (e) { var sp = readSpec($('#pv-r')); if (e.target.classList.contains('f') && sp) sp = defSpec(sp.f); S.L.pivot.r = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
   $('#pv-c').addEventListener('change', function (e) { var sp = readSpec($('#pv-c')); if (e.target.classList.contains('f') && sp) sp = defSpec(sp.f); S.L.pivot.c = sp; saveLayout(); renderPivotCtl(); renderPivot(); });
-  $('#pv-show').onclick = function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.L.pivot.show = b.getAttribute('data-s'); saveLayout(); renderPivotCtl(); renderPivot(); };
+  $('#pv-meas').onchange = function () { S.L.pivot.meas = this.value; saveLayout(); if (this.value !== 'n') loadAds(); renderPivotCtl(); renderPivot(); };
+  $('#pv-show').onclick = function (e) { if (MEAS[meas()].ratio) return toast('ROAS is a ratio — it is shown as itself, never as a share'); var b = e.target.closest('[data-s]'); if (!b) return; S.L.pivot.show = b.getAttribute('data-s'); saveLayout(); renderPivotCtl(); renderPivot(); };
   $('#pv-top').onchange = function () { S.L.pivot.top = +this.value; saveLayout(); renderPivot(); };
   var PV = null;
-  function pivotData() {
+  // ---- MEASURE: products, or GOOGLE ADS PER PRODUCT over the last 30 days (Ray, 19 Oct 2026: "bring AdWords and ROAS
+  // data into these breakdowns … how much spend in the past 30 days each group of custom labels has received, in
+  // contrast with the total spend"). FeedHero's Ads Traffic read is joined onto the feed by product id (B.adsJoin) and
+  // every cell SUMS its products' figures instead of counting them; ROAS is a ratio of two sums (conv. value ÷ spend),
+  // never an average of ratios. Beside a sum sits each group's share of PRODUCTS, so a group taking 30% of the spend
+  // with 10% of the catalogue is read in one line. Spend on ids the feed no longer carries is kept apart, never spread.
+  var MEAS = {
+    n: { l: 'Products' },
+    cost: { l: 'Spend', k: 'cost', money: 1 }, value: { l: 'Conv. value', k: 'value', money: 1 },
+    roas: { l: 'ROAS', k: 'cost', k2: 'value', ratio: 1 },
+    clicks: { l: 'Clicks', k: 'clicks' }, impr: { l: 'Impressions', k: 'impr' }, conv: { l: 'Conversions', k: 'conv', dec: 1 }
+  };
+  function meas() { return MEAS[S.L.pivot.meas] ? S.L.pivot.meas : 'n'; }
+  function adsReady() { return !!(S.ads && S.ads.st === 'ready' && S.aj); }
+  function joinAds() { S.aj = S.st && S.ads && S.ads.st === 'ready' ? B.adsJoin(S.st, S.ads.rows) : null; }
+  function money(v) {
+    var c = S.ads && !S.ads.curMix && /^[A-Z]{3}$/.test(S.ads.cur || '') ? S.ads.cur : '';
+    var d = Math.abs(v) < 100 ? 2 : 0;
+    if (c) { try { return new Intl.NumberFormat('en-GB', { style: 'currency', currency: c, minimumFractionDigits: d, maximumFractionDigits: d }).format(v); } catch (e) {} }
+    return Number(v).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function roasTxt(x) { return x == null || !isFinite(x) ? '—' : Math.round(x * 100).toLocaleString('en-GB') + '%'; }
+  function fmtM(v) { var M = MEAS[meas()]; if (M.money) return money(v); if (M.dec) return (Math.round(v * 10) / 10).toLocaleString('en-GB'); return n0(Math.round(v)); }
+  function loadAds(force) {
+    var g = S.gen;
+    if (!S.brand || !S.mkt) return;
+    if (!force && S.ads && /^(loading|preparing|ready|none)$/.test(S.ads.st)) return;
+    S.ads = { st: 'loading', got: 0, total: 0, tries: 0 }; S.aj = null; renderAdsLine();
+    var step = function (fresh) {
+      if (g !== S.gen) return;
+      fetch('/api/breakdown/ads' + mq() + (fresh ? '&fresh=1' : ''), { credentials: 'same-origin' })
+        .then(function (res) { return res.json().then(function (j) { return { s: res.status, j: j }; }, function () { return { s: res.status, j: {} }; }); })
+        .then(function (o) {
+          if (g !== S.gen) return;
+          var j = o.j || {}, A = S.ads;
+          if (o.s === 202 || j.state === 'preparing') {
+            A.st = 'preparing';
+            if (++A.tries > 30) { A.st = 'error'; A.err = 'FeedHero is still downloading this report from Google Ads — try again in a few minutes'; renderPivot(); return; }
+            renderAdsLine(); setTimeout(function () { step(false); }, 8000); return;
+          }
+          if (j.state === 'no_ads' || j.state === 'no_token') { S.ads = { st: 'none', why: j.error || 'No Google Ads read for this market.' }; renderPivot(); return; }
+          if (!j.ok) { A.st = 'error'; A.err = j.error || ('HTTP ' + o.s); renderPivot(); return; }
+          if (j.missing) { S.ads = { st: 'none', why: 'Google Ads returns no product traffic for this account — FeedHero’s Ads Traffic report is empty.' }; renderPivot(); return; }
+          A.got = j.got || 0; A.total = j.total || 0; A.via = !!j.via; A.gmkt = j.gmkt || '';
+          if (!j.done) { A.st = 'loading'; renderAdsLine(); setTimeout(function () { step(false); }, 60); return; }
+          A.st = 'ready'; A.rows = j.rows || {}; A.cur = j.cur || ''; A.curMix = !!j.curMix; A.at = j.at; A.range = j.range || ''; A.from = j.from; A.to = j.to;
+          joinAds(); renderPivot();
+        })
+        .catch(function (e) { if (g === S.gen) { S.ads.st = 'error'; S.ads.err = String((e && e.message) || e); renderPivot(); } });
+    };
+    step(!!force);
+  }
+  function renderAdsLine() {
+    var el = $('#pv-ads'), A = S.ads;
+    if (meas() === 'n' || !S.brand) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    var h;
+    if (!A || A.st === 'loading') h = 'Reading Google Ads · last 30 days' + (A && A.total ? ' — ' + n0(A.got) + ' of ' + n0(A.total) + ' advertised products' : '') + '… the table counts products until it lands.';
+    else if (A.st === 'preparing') h = 'FeedHero is preparing the 30-day Ads Traffic report from Google Ads — this can take a minute. The table counts products until it lands.';
+    else if (A.st === 'none') h = '<b>No Google Ads for this market.</b> ' + esc(A.why || '') + ' The table counts products.';
+    else if (A.st === 'error') h = '<b>Google Ads could not be read:</b> ' + esc(A.err || '') + ' <button class="btn" type="button" id="ads-retry">↻ Try again</button>';
+    else if (!S.aj) h = 'Google Ads is in — joining it once the feed has finished reading…';
+    else {
+      var J = S.aj;
+      h = 'Google Ads · ' + (A.range ? esc(A.range) : 'last 30 days') + ' · joined by <span class="mono">' + esc(J.col || 'id') + '</span>: '
+        + n0(J.used) + ' of ' + n0(J.ids) + ' advertised products are in this feed'
+        + (J.out.cost > 0 ? ' · <b>' + money(J.out.cost) + '</b> of ' + money(J.tot.cost) + ' spend sits on products this feed no longer carries — in no row' : '')
+        + (A.via ? ' · this is the Meta catalogue: each product carries what it earned in Google Ads (the ' + esc(String(A.gmkt).toUpperCase()) + ' Google feed’s report)' : '')
+        + (A.curMix ? ' · <b>mixed currencies</b> — money is added as reported' : '')
+        + ' <button class="btn" type="button" id="ads-retry" title="Read the 30-day report again">↻</button>';
+    }
+    el.innerHTML = h;
+    var b = $('#ads-retry'); if (b) b.onclick = function () { loadAds(true); };
+  }
+  function pivotData(all) {
     if (!S.st) return null;
     var rs = B.resolve(S.st, S.L.pivot.r || {}); if (!rs) return null;
     var cs = B.resolve(S.st, S.L.pivot.c || {});
     var m = S.filters.length ? B.mask(S.st, S.filters) : null;
+    var M = MEAS[meas()], W = null;
+    if (M.k && adsReady()) { var a = S.aj.f[M.k], b2 = M.k2 ? S.aj.f[M.k2] : null; W = { w: function (r) { return a[r]; } }; if (b2) W.w2 = function (r) { return b2[r]; }; }
     if (!cs) {
-      var P = B.pivot(S.st, rs, m, { unit: 'sku' });
-      return { rs: rs, cs: null, rows: P.rows.map(function (r) { return { v: r.v, n: r.n, cells: [] }; }), cols: [], total: P.total, multi: P.multi };
+      var P = B.pivot(S.st, rs, m, Object.assign({ unit: 'sku' }, W || {}));
+      return { rs: rs, cs: null, weighted: !!W, rows: P.rows.map(function (r) { return { v: r.v, n: r.n, p: r.p, n2: r.n2, cells: [], cells2: [] }; }), cols: [], total: P.total, totalP: P.totalP, total2: P.total2, multi: P.multi };
     }
     var top = +S.L.pivot.top;
-    return Object.assign({ rs: rs, cs: cs }, B.cross(S.st, rs, cs, m, { maxR: top || 0, maxC: 12 }));
+    return Object.assign({ rs: rs, cs: cs, weighted: !!W }, B.cross(S.st, rs, cs, m, Object.assign({ maxR: all ? 0 : top || 0, maxC: all ? 0 : 12 }, W || {})));
   }
   function cellText(n, rowN, colN, total) {
     var s = S.L.pivot.show;
     if (s === 'row') return rowN ? pc(n / rowN) : '—';
     if (s === 'col') return colN ? pc(n / colN) : '—';
     if (s === 'all') return total ? pc(n / total) : '—';
-    return n0(n);
+    return PV && PV.weighted ? fmtM(n) : n0(n);
   }
   function renderPivot() {
     var box = $('#pv'), note = $('#pv-note');
+    renderAdsLine();
     PV = pivotData();
     if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; note.textContent = ''; return; }
     if (!PV) { box.innerHTML = '<div class="empty">Pick a field for the rows.</div>'; note.textContent = ''; $('#ln-pivot').textContent = 'Any field against any other'; return; }
+    var M = MEAS[meas()], W = PV.weighted, R = W && M.ratio, show = R ? 'n' : S.L.pivot.show;
     var q = S.q.toLowerCase(), rows = q ? PV.rows.filter(function (r) { return r.v.toLowerCase().indexOf(q) >= 0; }) : PV.rows;
-    var mx = 0; rows.forEach(function (r) { r.cells.forEach(function (c) { if (c > mx) mx = c; }); });
-    var heat = function (n) { if (!n || !mx) return ''; return ' style="background:rgba(245,166,35,' + (0.06 + 0.5 * n / mx).toFixed(3) + ')"'; };
+    var ratio = function (c, c2) { return c > 0 ? c2 / c : null; };
+    var mx = 0; rows.forEach(function (r) { r.cells.forEach(function (c, j) { var x = R ? ratio(c, r.cells2[j]) : c; if (x != null && x > mx) mx = x; }); });
+    var heat = function (n) { if (!n || !mx) return ''; return ' style="background:rgba(245,166,35,' + (0.06 + 0.5 * Math.min(n, mx) / mx).toFixed(3) + ')"'; };
+    var tot = function (r) { return R ? roasTxt(ratio(r.n, r.n2)) : show === 'all' ? pc(r.n / PV.total) : W ? fmtM(r.n) : n0(r.n); };
+    var totHd = W ? M.l + (PV.cs ? ' · row total' : '') : PV.cs ? 'Row total' : 'Products';
+    var extHd = W ? (R ? '<th class="tot ps" title="The spend ROAS is read against">Spend</th>' : '<th class="tot ps" title="Each row’s share of the products — read beside its share of ' + esc(M.l.toLowerCase()) + '">% of products</th>') : '';
+    var ext = function (r) { return !W ? '' : '<td class="tot c ps">' + (R ? money(r.n) : pc(PV.totalP ? r.p / PV.totalP : 0)) + '</td>'; };
     var h = '<table class="pv"><thead><tr><th class="rh">' + esc(B.specName(S.st, PV.rs)) + (PV.cs ? ' ↓ · ' + esc(B.specName(S.st, PV.cs)) + ' →' : '') + '</th>'
       + PV.cols.map(function (c, j) { return '<th title="' + esc(c.v) + (c.members ? ' — ' + esc(c.members.slice(0, 20).join(', ')) : '') + '"' + (c.v === B.BLANK ? ' style="font-style:italic"' : '') + ' data-cj="' + j + '">' + esc(c.v) + '</th>'; }).join('')
-      + '<th class="tot">' + (PV.cs ? 'Row total' : 'Products') + '</th></tr></thead><tbody>';
+      + '<th class="tot">' + esc(totHd) + '</th>' + extHd + '</tr></thead><tbody>';
     h += rows.map(function (r, i) {
       return '<tr class="' + (r.v === B.BLANK ? 'blank' : '') + '"><td class="rh" title="' + esc(r.v) + '">' + esc(r.v) + '</td>'
-        + r.cells.map(function (n, j) { return '<td class="c' + (n ? '' : ' z') + '"' + heat(n) + ' data-ci="' + i + ':' + j + '">' + (n ? cellText(n, r.n, PV.cols[j].n, PV.total) : '·') + '</td>'; }).join('')
-        + '<td class="tot c" data-ci="' + i + ':r">' + (S.L.pivot.show === 'all' ? pc(r.n / PV.total) : n0(r.n)) + '</td></tr>';
+        + r.cells.map(function (n, j) {
+          if (R) { var c2 = r.cells2[j], x = ratio(n, c2); return '<td class="c' + (n || c2 ? '' : ' z') + '"' + heat(x) + ' data-ci="' + i + ':' + j + '"' + (!n && c2 ? ' title="conversion value with no spend"' : n ? ' title="' + esc(money(c2) + ' ÷ ' + money(n)) + '"' : '') + '>' + (n ? roasTxt(x) : c2 ? '—' : '·') + '</td>'; }
+          return '<td class="c' + (n ? '' : ' z') + '"' + heat(n) + ' data-ci="' + i + ':' + j + '">' + (n ? cellText(n, r.n, PV.cols[j].n, PV.total) : '·') + '</td>';
+        }).join('')
+        + '<td class="tot c" data-ci="' + i + ':r">' + tot(r) + '</td>' + ext(r) + '</tr>';
     }).join('');
     h += '</tbody>';
-    if (PV.cs) h += '<tfoot><tr><td class="rh">Column total</td>' + PV.cols.map(function (c) { return '<td class="c">' + (S.L.pivot.show === 'all' ? pc(c.n / PV.total) : n0(c.n)) + '</td>'; }).join('') + '<td class="c">' + n0(PV.total) + '</td></tr></tfoot>';
+    if (PV.cs) h += '<tfoot><tr><td class="rh">Column total</td>' + PV.cols.map(function (c) { return '<td class="c">' + (R ? roasTxt(ratio(c.n, c.n2)) : show === 'all' ? pc(c.n / PV.total) : W ? fmtM(c.n) : n0(c.n)) + '</td>'; }).join('')
+      + '<td class="c">' + (R ? roasTxt(ratio(PV.total, PV.total2)) : W ? fmtM(PV.total) : n0(PV.total)) + '</td>' + (W ? '<td class="c ps">' + (R ? money(PV.total) : n0(PV.totalP) + ' products') + '</td>' : '') + '</tr></tfoot>';
     box.innerHTML = h + '</table>';
-    var bits = [n0(PV.total) + ' products read'];
+    var bits = [W ? (R ? 'ROAS = conversion value ÷ spend, each cell from its own products’ sums · ' + money(PV.total2) + ' on ' + money(PV.total) + ' spend' : fmtM(PV.total) + ' ' + M.l.toLowerCase() + ' across ' + n0(PV.totalP) + ' products') + ' in Google Ads over the last 30 days' : n0(PV.total) + ' products read'];
+    if (W) bits.push('a product with no ads traffic counts as 0');
     if (PV.rowsHidden) bits.push('the ' + n0(PV.rows.length) + ' biggest of ' + n0(PV.rowsAll) + ' rows shown — pick “All” to see every row');
-    if (PV.cols.length && PV.cols[PV.cols.length - 1].other) bits.push('the columns past the twelfth fold into one Other column, which keeps its count');
-    if (PV.multi) bits.push('a product with several values is counted once in each, so rows and columns can add to more than the total');
+    if (PV.cols.length && PV.cols[PV.cols.length - 1].other) bits.push('the columns past the twelfth fold into one Other column, which keeps its ' + (W ? 'figure' : 'count'));
+    if (PV.multi) bits.push(W ? 'a product with several values carries its figures into each, so rows and columns can add to more than the total' : 'a product with several values is counted once in each, so rows and columns can add to more than the total');
     note.innerHTML = bits.join(' · ') + '. Click a cell to filter the whole page to it.';
-    $('#ln-pivot').textContent = B.specName(S.st, PV.rs) + (PV.cs ? ' × ' + B.specName(S.st, PV.cs) : '') + ' · ' + n0(PV.rowsAll || PV.rows.length) + ((PV.rowsAll || PV.rows.length) === 1 ? ' row' : ' rows');
+    $('#ln-pivot').textContent = B.specName(S.st, PV.rs) + (PV.cs ? ' × ' + B.specName(S.st, PV.cs) : '') + (W ? ' · ' + M.l : '') + ' · ' + n0(PV.rowsAll || PV.rows.length) + ((PV.rowsAll || PV.rows.length) === 1 ? ' row' : ' rows');
   }
   $('#pv').addEventListener('click', function (e) {
     var td = e.target.closest('[data-ci]'); if (!td || !PV) return;
@@ -1015,10 +1113,11 @@ window.addEventListener('load',restore);
     if (!PV) return;
     // the download carries EVERY row and EVERY column — the screen's "Other (N more)" fold is a reading aid, not data
     // (Ray, 15 Oct 2026: "when downloaded - the grouped 'Other' is expanded in all fields")
-    var X = PV.cs ? Object.assign({ rs: PV.rs, cs: PV.cs }, B.cross(S.st, PV.rs, PV.cs, S.filters.length ? B.mask(S.st, S.filters) : null, { maxR: 0, maxC: 0 })) : PV;
-    var rows = [[B.specName(S.st, X.rs) + (X.cs ? ' \\ ' + B.specName(S.st, X.cs) : '')].concat(X.cols.map(function (c) { return c.v; })).concat(['Row total'])];
-    X.rows.forEach(function (r) { rows.push([r.v].concat(r.cells).concat([r.n])); });
-    if (X.cs) rows.push(['Column total'].concat(X.cols.map(function (c) { return c.n; })).concat([X.total]));
+    var X = PV.cs ? pivotData(true) : PV, M = MEAS[meas()], R = X.weighted && M.ratio;
+    var num = function (v) { return Math.round(v * 100) / 100; }, rv = function (c, c2) { return c > 0 ? Math.round(c2 / c * 100) + '%' : ''; };
+    var rows = [[B.specName(S.st, X.rs) + (X.cs ? ' \\ ' + B.specName(S.st, X.cs) : '') + (X.weighted ? ' · ' + M.l + ' (Google Ads, last 30 days' + (M.money && S.ads && S.ads.cur && !S.ads.curMix ? ', ' + S.ads.cur : '') + ')' : '')].concat(X.cols.map(function (c) { return c.v; })).concat(['Row total']).concat(X.weighted ? [R ? 'Spend' : 'Products'] : [])];
+    X.rows.forEach(function (r) { rows.push([r.v].concat(r.cells.map(function (c, j) { return R ? rv(c, r.cells2[j]) : num(c); })).concat([R ? rv(r.n, r.n2) : num(r.n)]).concat(X.weighted ? [R ? num(r.n) : r.p] : [])); });
+    if (X.cs) rows.push(['Column total'].concat(X.cols.map(function (c) { return R ? rv(c.n, c.n2) : num(c.n); })).concat([R ? rv(X.total, X.total2) : num(X.total)]).concat(X.weighted ? [R ? num(X.total) : X.totalP] : []));
     rows.push([]); rows.push(['Read', filterLine()]);
     download(fname('pivot'), B.csv(rows));
   };

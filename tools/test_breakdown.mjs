@@ -171,6 +171,28 @@ console.log('· newness by quarter (Ray, 19 Oct 2026: "just do it based on quart
   t('the page: a picked date opens on its quarters, newness leads every field picker, one default for panes and both pivot sides', /function defSpec\(f\)/.test(PG) && /mt\.kind === 'date' \? 'qtr'/.test(PG) && /<optgroup label="Newness · by quarter">/.test(PG) && /\$\('#pv-r'\)[^\n]*sp = defSpec\(sp\.f\)/.test(PG) && /\$\('#pv-c'\)[^\n]*sp = defSpec\(sp\.f\)/.test(PG) && /S\.L\.panes\.push\(defSpec\(f\)\)/.test(PG));
 }
 
+console.log('· Google Ads in the breakdown (Ray, 19 Oct 2026: "how much spend in the past 30 days each group of custom labels has received, in contrast with the total spend")');
+{
+  // the fixture's ids: A-1 A-2 B-1 C-1; the report carries them in upper case for some, plus an id the feed lacks
+  const ADS = { 'a-1': [100, 10, 40, 2, 160], 'A-2': [50, 5, 20, 0, 0], 'C-1': [10, 1, 15, 1, 45], 'GONE-9': [7, 1, 9, 0, 0] };
+  const J = B.adsJoin(S, ADS);
+  t('the report joins by product id, case-blind, on the column carrying its ids', J.col === 'g:id' && J.used === 3 && J.ids === 4, [J.col, J.used, J.ids]);
+  t('…spend on an id the feed does not carry is kept APART, never spread over the groups', J.out.cost === 9 && J.inFeed.cost === 75 && J.tot.cost === 84, [J.out, J.inFeed, J.tot]);
+  t('…a product with no ads traffic carries 0, never a guess', J.f.cost[2] === 0 && J.f.cost[0] === 40, Array.from(J.f.cost));
+  const w = (r) => J.f.cost[r], w2 = (r) => J.f.value[r];
+  const P = B.pivot(S, { f: 'g:brand' }, null, { w, w2 }), pm = {}; P.rows.forEach((r) => { pm[r.v] = r; });
+  t('a weighted breakdown SUMS spend per value, and still says how many products each carries', P.weighted && P.total === 75 && P.totalP === 4 && pm.Northwind.n === 60 && pm.Northwind.p === 3 && pm['Other Co'].n === 15 && pm['Other Co'].p === 1, P.rows);
+  t('…sorted by the measure, not the count', P.rows[0].v === 'Northwind');
+  t('…ROAS is a ratio of SUMS (value ÷ spend per group), never an average of ratios', pm.Northwind.n2 === 160 && P.total2 === 205 && Math.abs(pm.Northwind.n2 / pm.Northwind.n - 160 / 60) < 1e-9, [pm.Northwind, P.total2]);
+  const X = B.cross(S, { f: 'g:availability' }, { f: 'g:brand' }, null, { w, w2 }), xr = {}; X.rows.forEach((r) => { xr[r.v] = r; });
+  const ci = X.cols.findIndex((c) => c.v === 'Northwind');
+  t('the cross-tab sums a cell, its row and its column the same way; products travel beside', X.total === 75 && X.totalP === 4 && xr['in stock'].n === 55 && xr['in stock'].p === 3 && xr['in stock'].cells[ci] === 40 && xr['in stock'].cells2[ci] === 160 && X.cols[ci].n === 60 && X.cols[ci].n2 === 160, [X.rows, X.cols]);
+  t('…an unweighted read is exactly what it was', B.cross(S, { f: 'g:availability' }, { f: 'g:brand' }, null, {}).total === 4 && !B.cross(S, { f: 'g:availability' }, { f: 'g:brand' }, null, {}).weighted);
+  t('…a weighted read never counts item groups (spend belongs to a product)', B.pivot(S, { f: 'g:brand' }, null, { w, unit: 'group' }).unit === 'sku');
+  t('the worker serves the 30-day read on its own route, scoped, a Meta market reading its Google market\'s report', /path === '\/api\/breakdown\/ads'/.test(WK) && /gmkt = asked\.replace\(\/-fb\$\/i, ''\)/.test(WK) && /catAdsRead\(env, cmpid, !!url\.searchParams\.get\('fresh'\), RESTOCK\.RESTOCK_PERIOD\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"))) && /clientMatch\(acc\.clients, client\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"), WK.indexOf("'/api/breakdown/ads'") + 1200)));
+  t('the page: a Measure picker (Products, then Google Ads · last 30 days), the share of products beside a sum, ROAS never a share, the out-of-feed spend named', /<select class="fld" id="pv-meas"[^>]*data-no-keep>/.test(PG) && /<optgroup label="Google Ads · last 30 days">/.test(PG) && />% of products</.test(PG) && /ROAS is a ratio — it is shown as itself, never as a share/.test(PG) && /no longer carries — in no row/.test(PG) && /fetch\('\/api\/breakdown\/ads'/.test(PG));
+}
+
 console.log('· the worker');
 {
   t('the page and the engine imported, the page routed, the engine served', /import BREAKDOWN_PAGE from "\.\.\/\.\.\/\.\.\/docs\/FeedSpark_Breakdown\.html";/.test(WK) && /import BREAKDOWN_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/breakdown_engine\.js";/.test(WK)

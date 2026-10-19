@@ -103,3 +103,37 @@ animation makes it the containing block of anything fixed inside it. It names no
   (`tools/breakdown_stub.js`), every count against an independent regex count of the XML: the panes, the
   cross-filter, any field, all slots, the pivot and its cell click, Styles, CSV, folds, a saved view, a reload, the
   Meta market, 390px.
+
+## Google Ads in the pivot (Ray, 19 Oct 2026)
+
+> "Is there a way to bring AdWords and ROAS data into these breakdowns as well? For example, it would be interesting to
+> see how much spend in the past 30 days each group of custom labels has received, in contrast with the total spend."
+
+**Measure** beside Show: *Products* (the count) or a Google Ads figure for the last 30 days, which are *Spend*,
+*Conv. value*, *ROAS*, *Clicks*, *Impressions* and *Conversions*.
+
+- **The read.** `GET /api/breakdown/ads?client=&market=` serves the same 30-day Ads Traffic read the Restock module uses
+  (`catAdsRead`, one record per company × period, a chunk a call, 202 while FeedHero prepares it). It is scoped like
+  the roster.
+  - A **Meta** market reads its **Google** market's report. Google Ads belongs to the Google feed, and the page says so.
+- **The join.** `adsJoin` joins on product id, case-blind, on whichever of `g:id` / `c:fs_data_original_id` carries
+  more of the report's ids.
+  - Spend on ids the feed no longer carries is **kept apart**. It is named on the line above the table and is in no row.
+  - A product with no ads traffic counts as 0.
+- **The sums.** `pivot` / `cross` take `opts.w` (and `opts.w2`). Each cell sums its products' figures instead of
+  counting them.
+  - Every row and column also carries `p`, the number of products in it.
+  - A weighted table never counts item groups, because spend belongs to a product.
+  - Rows sort by the measure.
+- **The contrast.** Beside a sum sits **% of products**. With *Show → % of total*, each group reads its share of the
+  spend against its share of the catalogue in one line.
+- **ROAS** is conversion value ÷ spend from each group's own sums, never an average of ratios.
+  - Spend sits beside it.
+  - The % views are switched off, because a ratio is not a share.
+  - A cell with value but no spend reads `—`.
+- The CSV names the measure and currency and keeps the extra column.
+- Harnesses:
+  - `tools/test_breakdown.mjs`: the join, the sums, the ratio and the route.
+  - `tools/check_breakdown.js`: every row total against a count made in the test from the stub's synthetic Ads rows,
+    the out-of-feed id kept apart, % of total, ROAS and the CSV.
+
