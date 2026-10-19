@@ -40,6 +40,11 @@ const KW = {
     ptidx: { gb: { map: {}, __total: 500, sat: { n: 100 } } } }
 };
 KW.Northwind.events[0].ptsm = { gb: ['Jumpers'] };
+// Ray, 15 Oct 2026: "please also keep the number of products" — a BRIEFED moment has to carry
+// its product count too, so the fixture gives the briefed half all three readings: a measured
+// scope (n3), a brand-wide one (h3) and one with no scope at all (h4).
+KW.Northwind.events[2].ptsm = { gb: ['Jumpers'] };
+KW.Harbour.events[2].brandwide = 1;
 const BRIEFS = {
   t9: { id: 't9', client: 'Northwind', kw: 'n3', task: 'Keywords Optimisation - Already briefed', status: 'briefed', created: 1, by: 'Steven', due: '16/10/2026' },
   // Ray, 15 Oct 2026: the briefed half, with its status — a blocked one, which the fold's own
@@ -178,6 +183,8 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
       name: r.querySelector('.kwd-nm').textContent.trim(),
       stage: (r.querySelector('.kwd-st') || {}).textContent,
       court: (r.querySelector('.kwd-ct') || {}).textContent,
+      scope: ((r.querySelector('.kwd-sc') || {}).textContent || '').trim(),
+      scopeTip: (r.querySelector('.kwd-sc') || { getAttribute: () => '' }).getAttribute('title') || '',
       hasBrief: !!r.querySelector('.kwd-go'),
       ticket: !!r.querySelector('.kwd-tk') })) }));
   let d = await done();
@@ -200,6 +207,39 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
     d.rows.map((r) => r.stage));
   ok('…and whose court it sits in',
     d.rows.map((r) => r.court).join('|') === 'ASPL|AM|', d.rows.map((r) => r.court));
+  // THE NUMBER OF PRODUCTS, beside the status and the court (Ray, 15 Oct 2026). Counted here
+  // from the fixture rather than read back off the page, so a figure the engine invents fails.
+  {
+    const want = KW.Northwind.ptidx.gb.map.Jumpers;      // 400
+    const scoped = d.rows.find((r) => /Already briefed/.test(r.name));
+    ok('a briefed row carries its product count', scoped && scoped.scope === want + ' products',
+      scoped && scoped.scope);
+    ok('…and it is the same figure the to-brief half shows for the same scope',
+      scoped && scoped.scope === (await band()).rows.find((r) => /Festive/.test(r.name)).scope,
+      scoped && scoped.scope);
+    const wide = d.rows.find((r) => /Done one/.test(r.name));
+    ok('a brand-wide briefed moment says so, never a count', wide && wide.scope === 'whole catalogue',
+      wide && wide.scope);
+    const bare = d.rows.find((r) => /Blocked one/.test(r.name));
+    ok('an unscoped briefed moment says it has no scope — never 0 products',
+      bare && bare.scope === 'no scope yet', bare && bare.scope);
+    ok('…and its hint does not invite a brief that already exists',
+      bare && !/brief it anyway/.test(bare.scopeTip), bare && bare.scopeTip);
+    ok('the count never replaces the status or the court',
+      d.rows.every((r) => r.scope) && d.rows[0].stage === 'Briefed to ASPL' && d.rows[1].court === 'AM',
+      d.rows.map((r) => [r.scope, r.stage, r.court]));
+    // measured: the cell sits between the name and the stage chip, on the row's one line
+    const geo = await page.evaluate(() => {
+      const r = [...document.querySelectorAll('#kwd-drows .kwd-row')][0];
+      const q = (c) => { const e = r.querySelector(c); if (!e) return null;
+        const b = e.getBoundingClientRect();
+        return { l: Math.round(b.left), mid: Math.round(b.top + b.height / 2) }; };
+      return { nm: q('.kwd-nm'), sc: q('.kwd-sc'), st: q('.kwd-st'), rowH: Math.round(r.getBoundingClientRect().height) };
+    });
+    ok('…and is painted after the name and before the stage, on one line',
+      geo.sc && geo.nm.l < geo.sc.l && geo.sc.l < geo.st.l
+        && Math.abs(geo.sc.mid - geo.st.mid) <= 2 && geo.rowH < 48, geo);
+  }
   // no moment in both halves — the two lists are one tie read twice
   {
     const b2 = await band();

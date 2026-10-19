@@ -16570,6 +16570,30 @@
       "file": "tools/presync.sh",
       "pattern": "node tools/check_pcchanges.js",
       "pr": 708
+    },
+    {
+      "name": "KWCal engine: a briefed row carries the products its scope resolves to",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "vol:(v&&!v.unset)?v.vol:null, hours:(v&&!v.unset)?kwHours(v.vol||0):null });",
+      "pr": 0
+    },
+    {
+      "name": "Workflow band: ONE scope cell builder for both halves",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function scopeCell(E,r,briefed){",
+      "pr": 0
+    },
+    {
+      "name": "Workflow band: the briefed row shows its product count beside the stage",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "+scopeCell(E,r,true)",
+      "pr": 0
+    },
+    {
+      "name": "The band tripwire reads the product count off a briefed row",
+      "file": "tools/check_kwdue.js",
+      "pattern": "a briefed row carries its product count",
+      "pr": 0
     }
   ]
 }
