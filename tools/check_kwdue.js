@@ -168,6 +168,36 @@ const INIT = "window.__puts=[];(function(){var real=window.fetch;window.fetch=fu
       E.cellA.length && E.cellB.length && E.cellA[0][0] === E.cellB[0][0], [E.cellA[0], E.cellB[0]]);
     ok('…which lines the column before them up too',
       E.sc.length && E.ct.length && E.sc[0][1] === E.ct[0][1], [E.sc[0], E.ct[0]]);
+    /* AND THE SCROLLBAR THE TABLE TAKES OUT OF ITS OWN WIDTH (Ray, 19 Oct 2026: "these buttons
+       across sections are not aligned vertically, which is annoying"). Intake scrolls inside
+       .it-scroll; where the platform draws a CLASSIC scrollbar that gutter comes out of the
+       table's content box and carries its Brief column left, while this band — which does not
+       scroll — stays put. A headless browser overlays its scrollbars, so the gutter here is 0 and
+       the columns above already agree; what can be proved on EITHER platform is that the gutter
+       is measured off that scroller and that it really drives both halves of the band. */
+    const G = await page.evaluate(() => {
+      const sc = document.getElementById('itbl').closest('.it-scroll');
+      const band = document.getElementById('kwd-band');
+      const right = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().right) : null; };
+      const before = { go: right('#kwd-rows .kwd-go'), it: right('.itbl tbody .brief-btn') };
+      band.style.setProperty('--kwd-sb', '15px');       // stand in for a classic scrollbar
+      const after = { go: right('#kwd-rows .kwd-go'), tk: right('#kwd-drows .kwd-tk'), it: right('.itbl tbody .brief-btn') };
+      band.style.removeProperty('--kwd-sb');
+      if (window.FCCKwDue && window.FCCKwDue.align) window.FCCKwDue.align();
+      return { gutter: sc.offsetWidth - sc.clientWidth, set: band.style.getPropertyValue('--kwd-sb'),
+        before, after, back: right('#kwd-rows .kwd-go') };
+    });
+    ok('the band carries the gutter Intake’s scroller actually has',
+      G.set === G.gutter + 'px', [G.set, G.gutter]);
+    ok('…and on this platform that gutter is nothing, so nothing moved',
+      G.gutter !== 0 || G.before.go === G.before.it, G);
+    ok('a gutter moves the Brief column left by exactly it',
+      G.after.go === G.before.go - 15, [G.before.go, G.after.go]);
+    ok('…and the Ticket column with it, so the two halves never part',
+      G.after.tk === G.after.go, [G.after.tk, G.after.go]);
+    ok('…while Intake’s own button does not move',
+      G.after.it === G.before.it, [G.before.it, G.after.it]);
+    ok('and the measured value is restored', G.back === G.before.go, [G.back, G.before.go]);
     await page.click('#kwd-dh');            // leave it as the next section expects to find it
     await page.waitForTimeout(200);
   }
