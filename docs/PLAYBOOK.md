@@ -415,3 +415,24 @@ Shopping for the brand's own category queries, where we sit, their pictures besi
 signals that promote specific tests. Engine `src/testlab.js`, routes `/api/testlab` +
 `/api/compwatch`, harness `tools/test_testlab.mjs` + `tools/check_testlab.js`. The full account:
 [`docs/TESTLAB.md`](./TESTLAB.md).
+
+## 💷 Where the spend sits — the Spend Lens (Ray, 19 Oct 2026)
+
+*"can you bring in Playbook - a few interesting RoAS improvement or spend optiimser tactics from
+field breakdown ? - let's take an example of Reiss UK here - (you can see on RoAS avg: Textured,
+Striped, Checked, Colourblock) has way better ROAS compared to Plain where most Spend is at"*
+
+A section between the Top 3 and the Test Lab reading how the account's Google Ads money is split
+across its own catalogue — and naming what is wrong with the split: values returning far more than
+their field on a sliver of the money, the biggest-spending value returning less than the rest of its
+field, spend that returned nothing, and spend on products the feed no longer carries. Each carries
+its evidence in the route's own words, a → Brief through the page's own composer, and a link into
+the cut on `/roas`.
+
+It reads **FeedHero's own cuts** — the same records `/roas`'s Segment select writes — so a `GET`
+spends nothing and opens on what is already stored, naming every cut nobody has read rather than
+reading as an account with nothing wrong with it; ⚡ reads one market's missing cuts. A field
+FeedHero does not cut (`g:pattern` among them) stays the **Field Breakdown**'s to answer, and the
+section says so with a link. Engine `src/spendlens.js`, route `/api/spendlens`, harnesses
+`tools/test_spendlens.mjs` + `tools/check_spendlens.js`. The full account:
+[`docs/SPENDLENS.md`](./SPENDLENS.md).

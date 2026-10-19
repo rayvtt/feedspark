@@ -336,6 +336,11 @@ else
   echo "   ✗ KWCal Hobbycraft harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_hobbycraft.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_spendlens.js >/dev/null 2>&1; then
+  echo "   ✓ Spend Lens tripwire"
+else
+  echo "   ✗ Spend Lens tripwire FAILED — see NODE_PATH=\$(npm root -g) node tools/check_spendlens.js"; FAIL=1
+fi
 if NODE_PATH=$(npm root -g) node tools/check_testlab.js >/dev/null 2>&1; then
   echo "   ✓ the Playbook’s Test Lab section renders its proposals, competitors and → Brief on the real rail"
 else
@@ -519,6 +524,11 @@ else
 fi
 
 echo "── qa-gate 3h6c2/7: Test Lab (library, book-wide evidence, competitor Shopping read, lifted routes)"
+if node tools/test_spendlens.mjs >/dev/null 2>&1; then
+  echo "   ✓ Spend Lens harness"
+else
+  echo "   ✗ Spend Lens harness FAILED — see node tools/test_spendlens.mjs"; FAIL=1
+fi
 if node tools/test_testlab.mjs >/dev/null 2>&1; then
   echo "   ✓ families, recorded uplifts only, the window, the ranking rules, industry-not-peer briefs, the competitor signals, scope + throttle hold"
 else

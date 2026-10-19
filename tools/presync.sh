@@ -142,6 +142,7 @@ echo "   ✓ header keys, the join read off the data, every lineage status, comp
 
 echo "── validating: Test Lab (the test library, the book-wide evidence table, the competitor Shopping read, the lifted /api/testlab + /api/compwatch routes)"
 node tools/test_testlab.mjs >/dev/null || { echo "✗ Test Lab harness failed — see node tools/test_testlab.mjs"; exit 1; }
+node tools/test_spendlens.mjs >/dev/null || { echo "✗ Spend Lens harness failed — see node tools/test_spendlens.mjs"; exit 1; }
 echo "   ✓ families, uplift figures only as recorded, the 3-month window, ran-recently / blocked / briefed out of the three, one first for the book, industry-not-peer in the brief, the competitor signals, scope + money throttle"
 echo "── validating: AI visibility (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)"
 node tools/test_aivis.mjs >/dev/null
@@ -443,6 +444,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Workflow — the keyword calendar's briefing actions, centralised on the board"
   NODE_PATH=$(npm root -g) node tools/check_kwdue.js || {
     echo "✗ KWCal→Workflow tripwire failed — a briefed moment was offered again (a duplicate ticket), → Brief stopped raising the calendar's own payload, or the moment id is no longer stamped"; exit 1; }
+  echo "── validating: Workflow — the Playbook's Spend Lens (where the Google Ads money sits)"
+  NODE_PATH=$(npm root -g) node tools/check_spendlens.js || {
+    echo "✗ Spend Lens tripwire failed — a finding lost its evidence, an unread cut stopped being named, ⚡ no longer reads one market, or → Brief stopped carrying the finding's own words"; exit 1; }
   echo "── validating: Workflow — the Playbook's Test Lab section (proposals, competitors, → Brief as a test)"
   NODE_PATH=$(npm root -g) node tools/check_testlab.js || {
     echo "✗ Test Lab tripwire failed — the proposals, their evidence, the first-for-the-book badge, the competitor block, ⚡ Read now or → Brief regressed on the rendered rail"; exit 1; }
