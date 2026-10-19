@@ -90,19 +90,29 @@
   var NUM_RE = /-?\d+(?:[.,]\d+)?/;
   function numOf(v) { var m = NUM_RE.exec(s0(v)); return m ? parseFloat(m[0].replace(',', '.')) : NaN; }
   function isPath(v) { return /\S\s*>\s*\S/.test(v); }
+  // a calendar date as a feed writes it — 2026-05-22 (FeedHero's fs_date_of_birth, any timestamp after it) or 22/05/2026
+  var DATE_ISO = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/, DATE_UK = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})(?:$|\s)/;
+  function dateOf(v) {
+    var s = s0(v), m = DATE_ISO.exec(s), y, mo, d;
+    if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; } else if ((m = DATE_UK.exec(s))) { y = +m[3]; mo = +m[2]; d = +m[1]; } else return null;
+    if (y < 1990 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    return { y: y, m: mo, d: d };
+  }
   // read a column's character off its distinct values — never off its name, which says nothing in a sheet feed
   function kindOf(c, filled) {
     var vals = c.vals, d = vals.length - 1;
     if (!d) return 'empty';
-    var lim = Math.min(d, 400), path = 0, num = 0, url = 0, list = 0, len = 0;
+    var lim = Math.min(d, 400), path = 0, num = 0, url = 0, list = 0, len = 0, date = 0;
     for (var i = 1; i <= lim; i++) {
       var v = vals[i]; len += v.length;
       if (isPath(v)) path++;
+      if (dateOf(v)) date++;
       if (/^https?:\/\//i.test(v)) url++;
       else if (/^\s*-?\d+(?:[.,]\d+)?(\s*[A-Za-z£$€]{0,4})?\s*$/.test(v) || /^[£$€]\s*\d/.test(v)) num++;
       if (/\|/.test(v) || /;/.test(v)) list++;
     }
     if (url / lim >= 0.8) return 'url';
+    if (date / lim >= 0.8) return 'date';
     if (path / lim >= 0.3) return 'path';
     if (num / lim >= 0.8) return 'number';
     if (list / lim >= 0.3) return 'list';
@@ -147,10 +157,11 @@
     if (kind === 'path') m.push('tier');
     if (kind === 'text' || kind === 'value' || kind === 'id' || kind === 'list') m.push('len');
     if (kind === 'number') m.push('num');
+    if (kind === 'date') m.push('qtr');
     if (kind === 'list' || kind === 'value' || kind === 'text') m.push('list');
     return m;
   }
-  var MODE_LBL = { raw: 'Each value', tier: 'Path to tier', len: 'Length bands', num: 'Number bands', list: 'Split lists' };
+  var MODE_LBL = { raw: 'Each value', tier: 'Path to tier', len: 'Length bands', num: 'Number bands', list: 'Split lists', qtr: 'Newness by quarter' };
 
   // ---- derived readings: a VIEW of the column, cached per (column, mode, tier) --------------------------------------
   var LEN_BANDS = [[1, 30, '1–30 characters'], [31, 70, '31–70 characters'], [71, 150, '71–150 characters'], [151, 500, '151–500 characters'], [501, 1e12, '501+ characters']];
@@ -161,11 +172,44 @@
     for (var i = NUM_EDGES.length - 1; i >= 0; i--) if (x >= NUM_EDGES[i]) return i === NUM_EDGES.length - 1 ? NUM_EDGES[i] + '+' : NUM_EDGES[i] + '–' + NUM_EDGES[i + 1];
     return '0–10';
   }
+  // NEWNESS BY QUARTER: a date read as the calendar quarter it falls in, counted back from the quarter we are in — the
+  // latest quarter first, then the one before, … QTR_BACK quarters, the rest folded into one "Before …" band. Quarters,
+  // not rolling 30/90-day windows (Ray, 19 Oct 2026: "just do it based on quarter, from the latest quarter to the
+  // previous quarter"), so a band means the same thing to everyone reading it on any day of that quarter.
+  var QTR_BACK = 8, NO_DATE = 'no readable date';
+  function qIdx(y, m) { return y * 4 + Math.floor((m - 1) / 3); }
+  function qName(i) { return 'Q' + (i % 4 + 1) + ' ' + Math.floor(i / 4); }
+  function nowQ(S) { var t = new Date(S && S.now != null ? S.now : Date.now()); return qIdx(t.getUTCFullYear(), t.getUTCMonth() + 1); }
+  function qtrBand(v, ref) {
+    var d = dateOf(v); if (!d) return NO_DATE;
+    var i = qIdx(d.y, d.m), back = ref - i;
+    if (back < 0) return qName(i) + ' · ahead';
+    if (back === 0) return qName(i) + ' · this quarter';
+    if (back === 1) return qName(i) + ' · last quarter';
+    if (back < QTR_BACK) return qName(i);
+    return 'Before ' + qName(ref - QTR_BACK + 1);
+  }
+  // a quarter nothing arrived in is a real zero, not a missing row: the ladder runs unbroken from THIS quarter back to the
+  // oldest one the counts reach (all QTR_BACK when anything sits in "Before …"), so an empty latest quarter is seen
+  function qtrFill(S, cnt) {
+    var ref = nowQ(S), deep = -1;
+    cnt.forEach(function (n, v) {
+      if (/^Before /.test(v)) deep = QTR_BACK - 1;
+      var q = /^Q([1-4]) (\d{4})/.exec(v); if (q) { var back = ref - (+q[2] * 4 + (+q[1] - 1)); if (back > deep) deep = back; }
+    });
+    for (var b = 0; b <= Math.min(deep, QTR_BACK - 1); b++) { var lbl = qtrBand((function (i) { var y = Math.floor(i / 4), m = (i % 4) * 3 + 1; return y + '-' + (m < 10 ? '0' : '') + m + '-01'; })(ref - b), ref); if (!cnt.has(lbl)) cnt.set(lbl, 0); }
+  }
   // the natural order of a band — so 10–25 sits after 0–10 rather than wherever its count puts it
+  function isBand(mode) { return mode === 'len' || mode === 'num' || mode === 'qtr'; }
   function bandOrder(mode, v) {
     if (v === BLANK) return 1e9;
     if (mode === 'len') { for (var i = 0; i < LEN_BANDS.length; i++) if (LEN_BANDS[i][2] === v) return i; }
     if (mode === 'num') { var x = parseFloat(v); return isNaN(x) ? (v === 'below 0' ? -1 : 1e8) : x; }
+    if (mode === 'qtr') {   // newest first: a later quarter sorts ahead; "Before …" after every quarter; no date last
+      if (v === NO_DATE) return 1e8;
+      var q = /^(Before )?Q([1-4]) (\d{4})/.exec(v); if (!q) return 1e7;
+      return (q[1] ? 1e6 : 0) - (+q[3] * 4 + (+q[2] - 1));
+    }
     return null;
   }
   function tierOf(v, k) { var p = v.split(/\s*>\s*/); return p.length <= k ? p.join(' > ') : p.slice(0, k).join(' > '); }
@@ -176,7 +220,8 @@
     return out;
   }
   function derive(S, ci, mode, k) {
-    var c = S.cols[ci], key = mode + ':' + (k || 0);
+    var ref = mode === 'qtr' ? nowQ(S) : 0;
+    var c = S.cols[ci], key = mode + ':' + (mode === 'qtr' ? ref : (k || 0));
     c.dv = c.dv || Object.create(null);
     if (c.dv[key]) return c.dv[key];
     var out = new Array(c.vals.length); out[0] = [];
@@ -186,6 +231,7 @@
       else if (mode === 'len') { var L = v.length, b = ''; for (var j = 0; j < LEN_BANDS.length; j++) if (L >= LEN_BANDS[j][0] && L <= LEN_BANDS[j][1]) { b = LEN_BANDS[j][2]; break; } out[i] = [b]; }
       else if (mode === 'num') out[i] = [numBand(numOf(v))];
       else if (mode === 'list') out[i] = splitList(v);
+      else if (mode === 'qtr') out[i] = [qtrBand(v, ref)];
       else out[i] = [v];
     }
     c.dv[key] = out; return out;
@@ -255,10 +301,11 @@
     }
     if (totSet) { tot = totSet.size; sets.forEach(function (s, v) { cnt.set(v, s.size); }); }
     var rows = [], mode = spec.m || 'raw';
+    if (mode === 'qtr') qtrFill(S, cnt);
     cnt.forEach(function (n, v) { rows.push({ v: v, n: n, share: tot ? n / tot : 0, o: bandOrder(mode, v) }); });
-    sortRows(rows, mode === 'len' || mode === 'num' ? 'o' : 'n', mode === 'len' || mode === 'num' ? 1 : -1);
+    sortRows(rows, isBand(mode) ? 'o' : 'n', isBand(mode) ? 1 : -1);
     var blank = cnt.get(BLANK) || 0;
-    return { rows: rows, total: tot, distinct: rows.length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
+    return { rows: rows, total: tot, distinct: rows.filter(function (x) { return x.n > 0; }).length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
   }
   // k: 'v' value (A→Z, numbers in number order) · 'n' count · 'share' · 'o' band order; blank always last
   var COLL = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator('en', { numeric: true, sensitivity: 'base' }) : null;
@@ -298,17 +345,19 @@
       for (var j2 = 0; j2 < b.length; j2++) colTot.set(b[j2], (colTot.get(b[j2]) || 0) + 1);
     }
     var rm = rs.m || 'raw', cm = cs.m || 'raw';
+    if (rm === 'qtr') qtrFill(S, rowTot);
+    if (cm === 'qtr') qtrFill(S, colTot);
     var cols = []; colTot.forEach(function (n, v) { cols.push({ v: v, n: n, o: bandOrder(cm, v) }); });
-    sortRows(cols, cm === 'len' || cm === 'num' ? 'o' : 'n', cm === 'len' || cm === 'num' ? 1 : -1);
+    sortRows(cols, isBand(cm) ? 'o' : 'n', isBand(cm) ? 1 : -1);
     var rows = []; rowTot.forEach(function (n, v) { rows.push({ v: v, n: n, o: bandOrder(rm, v) }); });
-    sortRows(rows, rm === 'len' || rm === 'num' ? 'o' : 'n', rm === 'len' || rm === 'num' ? 1 : -1);
+    sortRows(rows, isBand(rm) ? 'o' : 'n', isBand(rm) ? 1 : -1);
     var shown = maxC > 0 ? cols.slice(0, maxC) : cols, other = maxC > 0 ? cols.slice(maxC) : [];
     var otherN = other.reduce(function (s, c) { return s + c.n; }, 0);
     var outCols = shown.map(function (c) { return { v: c.v, n: c.n }; });
     if (other.length) outCols.push({ v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) });
     var cut = maxR > 0 ? rows.slice(0, maxR) : rows;
     var outRows = cut.map(function (rw) {
-      var map = cell.get(rw.v), cells = shown.map(function (c) { return map.get(c.v) || 0; });
+      var map = cell.get(rw.v) || new Map(), cells = shown.map(function (c) { return map.get(c.v) || 0; });
       if (other.length) { var o = 0; other.forEach(function (c) { o += map.get(c.v) || 0; }); cells.push(o); }
       return { v: rw.v, n: rw.n, cells: cells };
     });
@@ -357,7 +406,7 @@
 
   return { VERSION: VERSION, BLANK: BLANK, MAXLEN: MAXLEN, MODE_LBL: MODE_LBL, LEN_BANDS: LEN_BANDS, NUM_EDGES: NUM_EDGES,
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
-    fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand,
+    fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
     defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName };
 });
