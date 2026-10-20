@@ -207,6 +207,9 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
         blue: (() => { const i = document.querySelector('#pv .pl:not(.pl2) i'); return i ? getComputedStyle(i).backgroundColor : ''; })(),
         foot: (() => { const t = document.querySelectorAll('#pv tfoot td'); const e = t.length && t[t.length - 1].querySelector('.pl2 .plt'); return e ? e.textContent : ''; })() }));
       if (process.env.BD_SHOT3) await pg.locator('#pv').screenshot({ path: process.env.BD_SHOT3 });
+      const pvc = await pg.evaluate(() => { const r = (q) => document.querySelector(q).getBoundingClientRect(); const a = r('#pv-r'), c = r('#pv-c'), m = r('#pv-meas'), l = r('#pv-lay'), l2 = r('#pv-lay2'); return { a, c, m, l, l2 }; });
+      if (process.env.BD_SHOT4) await pg.locator('#sec-pivot .pvc').screenshot({ path: process.env.BD_SHOT4 });
+      ok('the controls read as two boxes — rows over columns on the left, measure and both layers side by side on the right', pvc.c.top > pvc.a.bottom - 1 && Math.abs(pvc.a.left - pvc.c.left) < 2 && pvc.m.left > pvc.a.right && Math.abs(pvc.m.top - pvc.l.top) < 2 && Math.abs(pvc.l.top - pvc.l2.top) < 2 && pvc.l.left > pvc.m.right && pvc.l2.left > pvc.l.right, pvc);
       ok('a THIRD reading layers under the second — products counted, ROAS blue, spend green, every row against its own sums', /reads three things/.test(ly3.note) && ly3.rows.length && ly3.rows.every(([v, n, l, m]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : true) && (SP[v] ? Math.abs(money(m) - SP[v]) < 0.6 : !m)), [ly3, SP]);
       ok('…in its own colour on its own scale, the total row naming the feed\'s spend', ly3.green && ly3.green !== ly3.blue && Math.max(...ly3.bars) === 100 && ly3.foot && Math.abs(money(ly3.foot) - tot) < 0.6, ly3);
       const [l2dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
