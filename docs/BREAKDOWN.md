@@ -155,3 +155,13 @@ Ray: "in the same pivot table … see 2 data points together to compare — with
 - Every cell, row total and column total then reads TWO things: the measure as the number (orange shade, as before) and the layer under it in small type with a blue bar on the layer's OWN scale — two readings never share one axis.
 - The engine sums the layer on the SAME rows and columns (`pivot` / `cross` take `opts.lw` — `1` counts products — and `opts.lw2` for a ratio), so a ROAS layer is conversion value ÷ spend from that cell's own products.
 - A Google Ads layer waits for the Ads read (and says so); the CSV carries the layer as a second block; the layer is part of the layout and a ★ view.
+
+## Layer 2 — three readings at once (Ray, 20 Oct 2026)
+
+"Add another layer (2) in too, in another colour, to compare 3 variables at once." A **Layer 2** picker sits beside
+Layer, with the same choices. Every cell, row total and column total then reads three things: the measure (the number,
+orange shade), Layer under it (blue bar) and Layer 2 under that (green bar, `#1BAF7A` / dark `#199E70` — the third
+validated colour of the Golden Record score-history chart). Each bar is on its own scale. Layer 2 is the same engine
+reading run a second time with its own weights — same rows, same columns, same fold, matched by value — so it is never
+a second rule. A Layer 2 that repeats the measure or Layer stands aside. The CSV carries it as a third block
+("Layer 2 · <reading>"). Remembered per device in `fcc-bd-layout › pivot.lay2`.
