@@ -128,6 +128,23 @@ const initFor = (kind) => 'window.__D=' + JSON.stringify({ kind, feeds, snap: sn
     } else {
       ok('a sheet-backed (gviz) feed still gets the full depth card — depth comes from the category pivot, not a per-SKU-only field',
         await page.evaluate(() => { const p = document.querySelector('.pop'); return !!p && !p.classList.contains('na') && document.querySelectorAll('.pop .pr').length === 6; }));
+      // DEPTH FILTER (Ray, 20 Oct 2026: "allow filter by 1 depth/ 2 depth/ 3 depth to quickly see values")
+      const tbl = () => page.evaluate(() => Array.from(document.querySelectorAll('table.pv tbody tr.rowv td.v')).map((t) => t.textContent));
+      const chips = await page.evaluate(() => Array.from(document.querySelectorAll('#pt-dfil button')).map((b) => b.textContent.replace(/\s+/g, ' ').trim()));
+      ok('depth chips: All + one per depth the feed carries, each with its path count', chips.join('|') === 'All|1-depth 1|2-depth 1|4-depth 1|5-depth 1', chips);
+      await page.evaluate(() => document.querySelector('#pt-dfil button[data-dk="2"]').click()); await page.waitForTimeout(150);
+      ok('picking 2-depth lists only the 2-level paths', (await tbl()).join('|') === 'Kids > Shoes', await tbl());
+      await page.evaluate(() => document.querySelector('#pt-dfil button[data-dk="1"]').click()); await page.waitForTimeout(150);
+      ok('a second depth adds to the filter (1 + 2)', (await tbl()).sort().join('|') === 'Kids > Shoes|Womens', await tbl());
+      ok('the pick is remembered on the device (pt-depth)', JSON.parse(await page.evaluate(() => localStorage.getItem('pt-depth'))).sort().join() === '1,2');
+      await page.evaluate(() => document.querySelector('#pt-dfil button[data-dk=""]').click()); await page.waitForTimeout(150);
+      ok('All clears the filter', (await tbl()).length === 4, await tbl());
+      await page.evaluate(() => document.querySelector('.pop .pr.pk[data-dk="5"]').click()); await page.waitForTimeout(150);
+      ok('a row of the depth card applies the same filter', (await tbl()).join('|') === 'Mens > Boots > Chelsea Boots > Leather > Formal' && await page.evaluate(() => document.querySelector('#pt-dfil button[data-dk="5"]').classList.contains('on')), await tbl());
+      await page.reload(); await page.waitForTimeout(1200);
+      await page.evaluate(() => document.querySelector('.est-mkt[data-k="American Golf|gb"]').click()); await page.waitForTimeout(700);
+      ok('the depth pick survives a reload', (await tbl()).length === 1, await tbl());
+      await page.evaluate(() => { localStorage.removeItem('pt-depth'); });
     }
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
