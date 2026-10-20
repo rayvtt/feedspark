@@ -16260,6 +16260,12 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: pivot controls in two boxes — Dimensions left, Readings right",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "<div class=\"pvb\" role=\"group\" aria-label=\"Readings\">",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function gbTry(key) {",

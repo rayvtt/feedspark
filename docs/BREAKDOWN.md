@@ -165,3 +165,10 @@ validated colour of the Golden Record score-history chart). Each bar is on its o
 reading run a second time with its own weights — same rows, same columns, same fold, matched by value — so it is never
 a second rule. A Layer 2 that repeats the measure or Layer stands aside. The CSV carries it as a third block
 ("Layer 2 · <reading>"). Remembered per device in `fcc-bd-layout › pivot.lay2`.
+
+## The pivot controls, in two boxes (Ray, 20 Oct 2026)
+
+"Rows and columns should stack on each other as dimension — layering fit together in right hand side." The controls
+are two boxes: **Dimensions** (Rows over Columns, each field and its reading on one line) on the left, **Readings**
+(Measure · Layer · Layer 2 side by side, each named with its colour swatch, then Show · Rows shown · ⤓ CSV) on the
+right. Under 1000px the boxes stack; under 520px each control takes its own line. Every id is unchanged.
