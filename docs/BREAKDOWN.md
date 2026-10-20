@@ -172,3 +172,17 @@ a second rule. A Layer 2 that repeats the measure or Layer stands aside. The CSV
 are two boxes: **Dimensions** (Rows over Columns, each field and its reading on one line) on the left, **Readings**
 (Measure · Layer · Layer 2 side by side, each named with its colour swatch, then Show · Rows shown · ⤓ CSV) on the
 right. Under 1000px the boxes stack; under 520px each control takes its own line. Every id is unchanged.
+
+## Split by — what each cell is made of (Ray, 20 Oct 2026)
+
+"Add a layer 3 with fields from feed which only have < 3 unique values — eg % of product in Full / Sale." Not a
+fourth sum: a **Split by** picker beside Layer 2 draws ONE thin strip under every cell, row total and column total
+showing what that cell's products are made of, always adding to 100%, with the share of the part that matters named
+("27% on sale"). Offered: **Price type** first — built from the feed's own price and sale price (on sale = a sale
+price below the price; equal or none = full price; no price = not stated), since no feed carries it — then every
+field with two or three values (availability, gender, condition, a FULL/SALE label…). The named part is "on sale"
+for the price type, else the smaller stated part; it is drawn first in orange, the rest grey, a product with no value
+a hatched part of its own — never dropped. **Split share of** Products or Spend (Google Ads, last 30 days): "38% of
+products on sale, 61% of spend". The tooltip gives every part's count; the CSV carries a "Split · % on sale" block.
+Engine `split` / `splitFields` / `splitReader` read rows and columns exactly as pivot() and cross() do; the folded
+Other column sums its members. Remembered per device in `fcc-bd-layout › pivot.spl / splw`.

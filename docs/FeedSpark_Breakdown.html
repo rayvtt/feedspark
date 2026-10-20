@@ -170,11 +170,24 @@ window.addEventListener('load',restore);
   .pvl .row{display:flex;gap:6px;flex-wrap:nowrap;min-width:0}
   .pvl .row .fld{flex:1 1 0;min-width:0}
   .pvl .row .fld:first-child{flex:1.7 1 0}
-  .pv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .pv3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  /* the SPLIT: what a cell's products are made of, one thin strip that always adds to 100% (never a fourth bar) */
+  table.pv .psp{display:flex;align-items:center;gap:5px;margin-top:4px;font-size:10.5px;font-weight:700;color:var(--ink-2);line-height:1.2}
+  table.pv .psp .pst{flex:1 1 auto;display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--line,#E6E6E6);min-width:24px}
+  table.pv .psp .pst i{display:block;height:100%}
+  table.pv .psp b{flex:0 0 auto;font-weight:700;white-space:nowrap}
+  .spl0,table.pv .psp i.spl0{background:#ED6F0B}.spl1,table.pv .psp i.spl1{background:#8A929C}.spl2,table.pv .psp i.spl2{background:#C3C8CF}
+  .splb,table.pv .psp i.splb{background:repeating-linear-gradient(135deg,#C3C8CF 0 2px,transparent 2px 4px)}
+  [data-theme=dark] .spl0,[data-theme=dark] table.pv .psp i.spl0{background:#C67B28}[data-theme=dark] .spl1,[data-theme=dark] table.pv .psp i.spl1{background:#6B7280}[data-theme=dark] .spl2,[data-theme=dark] table.pv .psp i.spl2{background:#4B5563}
+  .lsw.lsp{width:12px;height:6px;background:linear-gradient(90deg,#ED6F0B 0 45%,#8A929C 45%)}
+  .spk{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;margin:0 3px 0 6px}
   .pv3 .fld{width:100%}
+  .pvc .grp[hidden]{display:none}
+  #pv-splw-g{grid-column:-2/-1}
   .pvo{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:flex-end;margin-top:auto}
   .lsw.l0{background:#F5A623}
   @media(max-width:1000px){.pvc{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:1180px){.pv3{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media(max-width:520px){.pvl{grid-template-columns:minmax(0,1fr);gap:5px}.pvl .row{flex-wrap:wrap}.pv3{grid-template-columns:minmax(0,1fr)}}
   .pvc .grp{display:flex;flex-direction:column;gap:5px;min-width:0}
   .pvc .grp .row{display:flex;gap:6px;flex-wrap:wrap}
@@ -374,7 +387,7 @@ window.addEventListener('load',restore);
           <div class="pvl"><span class="lbl">Columns →</span><div class="row" id="pv-c"></div></div>
         </div>
         <div class="pvb" role="group" aria-label="Readings"><span class="pvh">Readings <em>what every cell shows</em></span>
-          <div class="pv3"><div class="grp"><span class="lbl"><i class="lsw l0"></i>Measure</span><select class="fld" id="pv-meas" aria-label="Measure" data-no-keep><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw"></i>Layer</span><select class="fld" id="pv-lay" aria-label="A second reading layered in every cell" title="A second reading in every cell, under the first — e.g. ROAS shaded, products counted beneath" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw l2"></i>Layer 2</span><select class="fld" id="pv-lay2" aria-label="A third reading layered in every cell" title="A third reading under the second — its own green bar on its own scale, so three readings compare at once" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div></div>
+          <div class="pv3"><div class="grp"><span class="lbl"><i class="lsw l0"></i>Measure</span><select class="fld" id="pv-meas" aria-label="Measure" data-no-keep><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw"></i>Layer</span><select class="fld" id="pv-lay" aria-label="A second reading layered in every cell" title="A second reading in every cell, under the first — e.g. ROAS shaded, products counted beneath" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw l2"></i>Layer 2</span><select class="fld" id="pv-lay2" aria-label="A third reading layered in every cell" title="A third reading under the second — its own green bar on its own scale, so three readings compare at once" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw lsp"></i>Split by</span><select class="fld" id="pv-spl" aria-label="Split every cell by a field of two or three values" title="What each cell’s products are made of — a field with two or three values (e.g. on sale / full price), drawn as one strip that adds to 100%" data-no-keep><option value="">Nothing</option></select></div><div class="grp" id="pv-splw-g" hidden><span class="lbl">Split share of</span><select class="fld" id="pv-splw" aria-label="Split the share of products or of spend" data-no-keep><option value="n">Products</option><option value="cost">Spend · Google Ads</option></select></div></div>
           <div class="pvo"><div class="grp"><span class="lbl">Show</span><span class="seg" id="pv-show" role="group" aria-label="Show">
           <button type="button" data-s="n" class="on">Count</button><button type="button" data-s="row">% of row</button><button type="button" data-s="col">% of column</button><button type="button" data-s="all">% of total</button></span></div><div class="grp"><span class="lbl">Rows shown</span><select class="fld" id="pv-top" aria-label="Rows shown" data-no-keep><option value="25">Top 25</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="0">All</option></select></div><div class="grp"><span class="lbl">&nbsp;</span><button class="btn" id="pv-csv" type="button">⤓ CSV</button></div></div>
         </div>
@@ -448,7 +461,7 @@ window.addEventListener('load',restore);
   // the LAYOUT (fields + how each is read + the pivot) is this device's and travels between brands — a view is the
   // shape of the question, never the account (the Task Manager's rule); the filters belong to one feed and reset with it
   var Q = new URLSearchParams(location.search);
-  var LAYOUT_DEF = { panes: null, pivot: { r: null, c: null, show: 'n', top: 25, meas: 'n', lay: '', lay2: '' }, unit: 'sku' };
+  var LAYOUT_DEF = { panes: null, pivot: { r: null, c: null, show: 'n', top: 25, meas: 'n', lay: '', lay2: '', spl: '', splw: 'n' }, unit: 'sku' };
   var S = {
     gen: 0, ctl: null, roster: null, brand: Q.get('brand') || get('fcc-bd-brand', ''), mkt: Q.get('market') || get('fcc-bd-mkt', ''),
     st: null, fields: [], feed: { st: 'idle' }, err: '', q: '', filters: [], paneAll: {}, sort: {},
@@ -788,6 +801,10 @@ window.addEventListener('load',restore);
     $('#pv-meas').value = meas();
     $('#pv-lay').value = lay();
     $('#pv-lay2').value = lay2();
+    var sf = S.st ? B.splitFields(S.st) : [], sk = spl();
+    $('#pv-spl').innerHTML = '<option value="">Nothing</option>' + sf.map(function (x) { return '<option value="' + esc(x.f) + '"' + (x.f === sk ? ' selected' : '') + ' title="' + esc(x.vals.join(' · ')) + '">' + esc(x.label) + '</option>'; }).join('')
+      + (S.st && !sf.length ? '<option value="" disabled>No field here has two or three values</option>' : '');
+    $('#pv-spl').value = sk; $('#pv-splw-g').hidden = !sk; $('#pv-splw').value = S.L.pivot.splw === 'cost' ? 'cost' : 'n';
     var cb = document.querySelector('#pv-show [data-s="n"]'); if (cb) cb.textContent = meas() === 'n' ? 'Count' : 'Amount';
     var rt = !!MEAS[meas()].ratio; $('#pv-show').classList.toggle('off', rt); $('#pv-show').title = rt ? 'ROAS is a ratio — it is shown as itself, never as a share' : '';
   }
@@ -798,6 +815,8 @@ window.addEventListener('load',restore);
   $('#pv-top').onchange = function () { S.L.pivot.top = +this.value; saveLayout(); renderPivot(); };
   $('#pv-lay').onchange = function () { S.L.pivot.lay = this.value; saveLayout(); if (this.value && this.value !== 'n') loadAds(); renderPivotCtl(); renderPivot(); };
   $('#pv-lay2').onchange = function () { S.L.pivot.lay2 = this.value; saveLayout(); if (this.value && this.value !== 'n') loadAds(); renderPivotCtl(); renderPivot(); };
+  $('#pv-spl').onchange = function () { S.L.pivot.spl = this.value; saveLayout(); renderPivotCtl(); renderPivot(); };
+  $('#pv-splw').onchange = function () { S.L.pivot.splw = this.value; saveLayout(); if (this.value === 'cost') loadAds(); renderPivot(); };
   var PV = null;
   // ---- MEASURE: products, or GOOGLE ADS PER PRODUCT over the last 30 days (Ray, 19 Oct 2026: "bring AdWords and ROAS
   // data into these breakdowns … how much spend in the past 30 days each group of custom labels has received, in
@@ -886,12 +905,41 @@ window.addEventListener('load',restore);
       var P = B.pivot(S.st, rs, m, Object.assign({ unit: 'sku' }, O));
       X = { rs: rs, cs: null, weighted: !!W, layered: !!P.layered, rows: P.rows.map(function (r) { return { v: r.v, n: r.n, p: r.p, n2: r.n2, nL: r.nL, nL2: r.nL2, cells: [], cells2: [], cellsL: [], cellsL2: [] }; }), cols: [], total: P.total, totalP: P.totalP, total2: P.total2, totalL: P.totalL, totalL2: P.totalL2, multi: P.multi };
       if (O2) layer2(X, B.pivot(S.st, rs, m, Object.assign({ unit: 'sku' }, O2)));
+      X.sp = splitOf(rs, null, m);
       return X;
     }
     var top = +S.L.pivot.top, lim = { maxR: all ? 0 : top || 0, maxC: all ? 0 : 12 };
     X = Object.assign({ rs: rs, cs: cs, weighted: !!W }, B.cross(S.st, rs, cs, m, Object.assign({}, lim, O)));
     if (O2) layer2(X, B.cross(S.st, rs, cs, m, Object.assign({}, lim, O2)));
+    X.sp = splitOf(rs, cs, m);
     return X;
+  }
+  // ---- the SPLIT (Ray, 20 Oct 2026: "add a layer 3 with fields from feed which only have < 3 unique values — eg % of
+  // product in Full / Sale"): not a fourth sum but what each cell's products are MADE OF — one strip adding to 100%,
+  // the part a reader asks about (on sale; else the smaller part) in orange and named, the rest grey, a product with no
+  // value a hatched part of its own. Counts products, or splits SPEND when asked and Google Ads has been read.
+  function spl() { var f = S.L.pivot.spl; return f && S.st && B.splitFields(S.st).some(function (x) { return x.f === f; }) ? f : ''; }
+  function splW() { return S.L.pivot.splw === 'cost' && adsReady(); }
+  function splitOf(rs, cs, m) {
+    var f = spl(); if (!f) return null;
+    var w = splW() ? S.aj.f.cost : null;
+    return B.split(S.st, rs, cs, f, m, w ? { w: function (r) { return w[r]; } } : null);
+  }
+  function spSum(sp, map, keys) { var o = sp.vals.map(function () { return 0; }); keys.forEach(function (k) { var a = map[k]; if (a) a.forEach(function (x, i) { o[i] += x; }); }); return o; }
+  function spRow(sp, r) { return sp.row[r.v] || null; }
+  function spCol(sp, c) { return c.members ? spSum(sp, sp.col, c.members) : sp.col[c.v] || null; }
+  function spCellOf(sp, r, c) { return c.members ? spSum(sp, sp.cell, c.members.map(function (v) { return B.splitKey(r.v, v); })) : sp.cell[B.splitKey(r.v, c.v)] || null; }
+  function spName(sp, i) { var v = sp.vals[i]; return v === B.BLANK ? 'not stated' : v; }
+  function spCls(sp, i) { var v = sp.vals[i]; if (v === B.BLANK) return 'splb'; if (i === sp.fi) return 'spl0'; var k = 0; for (var j = 0; j < i; j++) if (j !== sp.fi && sp.vals[j] !== B.BLANK) k++; return 'spl' + Math.min(2, k + 1); }
+  function spOrd(sp) { var o = []; if (sp.fi >= 0) o.push(sp.fi); sp.vals.forEach(function (v, i) { if (i !== sp.fi) o.push(i); }); return o; }
+  function spAmt(sp, x) { return sp.weighted ? money(x) : n0(x); }
+  function spCell(sp, a) {
+    if (!sp || !a) return '';
+    var t = a.reduce(function (s, x) { return s + x; }, 0); if (!t) return '';
+    var fl = sp.fi >= 0 ? a[sp.fi] / t : 0;
+    var od = spOrd(sp), tip = od.map(function (i) { return spName(sp, i) + ' ' + spAmt(sp, a[i]) + ' (' + pc(a[i] / t) + ')'; }).join(' · ');
+    return '<span class="psp" title="' + esc(tip) + '"><span class="pst">' + od.map(function (i) { var x = a[i]; return x ? '<i class="' + spCls(sp, i) + '" style="width:' + (100 * x / t).toFixed(2) + '%"></i>' : ''; }).join('') + '</span>'
+      + (sp.fi >= 0 ? '<b>' + pc(fl) + ' ' + esc(String(sp.flag).toLowerCase()) + '</b>' : '') + '</span>';
   }
   // the SECOND layer (Ray, 20 Oct 2026: "add another layer (2) … in another color to compare 3 variable at once") is the
   // same engine reading run again with the second layer's weights: the measure is the same, so the rows and columns come
@@ -956,6 +1004,7 @@ window.addEventListener('load',restore);
     var LYA = LYR || LY2;
     var LC = function (nL, nL2, nM, nM2) { return (LYR ? layCell(nL || 0, nL2 || 0, mxL) : '') + (LY2 ? layCell(nM || 0, nM2 || 0, mxM, 2) : ''); };
     var LT = function (o, a, b, c, d) { return (LYR ? '<span class="pl"><span class="plt">' + esc(layTxt(o[a] || 0, o[b] || 0)) + '</span></span>' : '') + (LY2 ? '<span class="pl pl2"><span class="plt">' + esc(layTxt(o[c] || 0, o[d] || 0, 2)) + '</span></span>' : ''); };
+    var SP = PV.sp, SPON = !!SP;
     var tot = function (r) { return R ? roasTxt(ratio(r.n, r.n2)) : show === 'all' ? pc(r.n / PV.total) : W ? fmtM(r.n) : n0(r.n); };
     var totHd = W ? M.l + (PV.cs ? ' · row total' : '') : PV.cs ? 'Row total' : 'Products';
     var extHd = W ? (R ? '<th class="tot ps" title="The spend ROAS is read against">Spend</th>' : '<th class="tot ps" title="Each row’s share of the products — read beside its share of ' + esc(M.l.toLowerCase()) + '">% of products</th>') : '';
@@ -969,20 +1018,25 @@ window.addEventListener('load',restore);
     h += rows.map(function (r, i) {
       return '<tr class="' + (r.v === B.BLANK ? 'blank' : '') + '"><td class="rh" title="' + esc(r.v) + '">' + esc(r.v) + '</td>'
         + r.cells.map(function (n, j) {
-          var ly = LYA ? LC((r.cellsL || [])[j], (r.cellsL2 || [])[j], (r.cellsM || [])[j], (r.cellsM2 || [])[j]) : '';
-          if (R) { var c2 = r.cells2[j], x = ratio(n, c2); return '<td class="c' + (n || c2 ? '' : ' z') + (LYA ? ' ly' : '') + '"' + heat(x) + ' data-ci="' + i + ':' + j + '"' + (!n && c2 ? ' title="conversion value with no spend"' : n ? ' title="' + esc(money(c2) + ' ÷ ' + money(n)) + '"' : '') + '>' + (n ? roasTxt(x) : c2 ? '—' : '·') + ly + '</td>'; }
-          return '<td class="c' + (n ? '' : ' z') + (LYA ? ' ly' : '') + '"' + heat(n) + ' data-ci="' + i + ':' + j + '">' + (n ? cellText(n, r.n, PV.cols[j].n, PV.total) : '·') + ly + '</td>';
+          var ly = (LYA ? LC((r.cellsL || [])[j], (r.cellsL2 || [])[j], (r.cellsM || [])[j], (r.cellsM2 || [])[j]) : '') + (SPON ? spCell(SP, spCellOf(SP, r, PV.cols[j])) : '');
+          if (R) { var c2 = r.cells2[j], x = ratio(n, c2); return '<td class="c' + (n || c2 ? '' : ' z') + (LYA || SPON ? ' ly' : '') + '"' + heat(x) + ' data-ci="' + i + ':' + j + '"' + (!n && c2 ? ' title="conversion value with no spend"' : n ? ' title="' + esc(money(c2) + ' ÷ ' + money(n)) + '"' : '') + '>' + (n ? roasTxt(x) : c2 ? '—' : '·') + ly + '</td>'; }
+          return '<td class="c' + (n ? '' : ' z') + (LYA || SPON ? ' ly' : '') + '"' + heat(n) + ' data-ci="' + i + ':' + j + '">' + (n ? cellText(n, r.n, PV.cols[j].n, PV.total) : '·') + ly + '</td>';
         }).join('')
-        + '<td class="tot c' + (LYA ? ' ly' : '') + '" data-ci="' + i + ':r">' + tot(r) + LC(r.nL, r.nL2, r.nM, r.nM2) + '</td>' + ext(r) + '</tr>';
+        + '<td class="tot c' + (LYA || SPON ? ' ly' : '') + '" data-ci="' + i + ':r">' + tot(r) + LC(r.nL, r.nL2, r.nM, r.nM2) + (SPON ? spCell(SP, spRow(SP, r)) : '') + '</td>' + ext(r) + '</tr>';
     }).join('');
     h += '</tbody>';
-    if (PV.cs) h += '<tfoot><tr><td class="rh">Column total</td>' + PV.cols.map(function (c) { return '<td class="c' + (LYA ? ' ly' : '') + '">' + (R ? roasTxt(ratio(c.n, c.n2)) : show === 'all' ? pc(c.n / PV.total) : W ? fmtM(c.n) : n0(c.n)) + LT(c, 'nL', 'nL2', 'nM', 'nM2') + '</td>'; }).join('')
-      + '<td class="c' + (LYA ? ' ly' : '') + '">' + (R ? roasTxt(ratio(PV.total, PV.total2)) : W ? fmtM(PV.total) : n0(PV.total)) + LT(PV, 'totalL', 'totalL2', 'totalM', 'totalM2') + '</td>' + (W ? '<td class="c ps">' + (R ? money(PV.total) : n0(PV.totalP) + ' products') + '</td>' : '') + '</tr></tfoot>';
+    if (PV.cs) h += '<tfoot><tr><td class="rh">Column total</td>' + PV.cols.map(function (c) { return '<td class="c' + (LYA || SPON ? ' ly' : '') + '">' + (R ? roasTxt(ratio(c.n, c.n2)) : show === 'all' ? pc(c.n / PV.total) : W ? fmtM(c.n) : n0(c.n)) + LT(c, 'nL', 'nL2', 'nM', 'nM2') + (SPON ? spCell(SP, spCol(SP, c)) : '') + '</td>'; }).join('')
+      + '<td class="c' + (LYA || SPON ? ' ly' : '') + '">' + (R ? roasTxt(ratio(PV.total, PV.total2)) : W ? fmtM(PV.total) : n0(PV.total)) + LT(PV, 'totalL', 'totalL2', 'totalM', 'totalM2') + (SPON ? spCell(SP, SP.tot) : '') + '</td>' + (W ? '<td class="c ps">' + (R ? money(PV.total) : n0(PV.totalP) + ' products') + '</td>' : '') + '</tr></tfoot>';
     box.innerHTML = h + '</table>';
     var bits = [W ? (R ? 'ROAS = conversion value ÷ spend, each cell from its own products’ sums · ' + money(PV.total2) + ' on ' + money(PV.total) + ' spend' : fmtM(PV.total) + ' ' + M.l.toLowerCase() + ' across ' + n0(PV.totalP) + ' products') + ' in Google Ads over the last 30 days' : n0(PV.total) + ' products read'];
     if (W) bits.push('a product with no ads traffic counts as 0');
     if (LYA) bits.unshift('Every cell reads ' + (LYR && LY2 ? 'three' : 'two') + ' things: ' + (W ? M.l : 'products') + ' (the number, shaded orange)' + (LYR ? (LY2 ? ', ' : ' and ') + layName(1) + ' under it (the blue bar)' : '') + (LY2 ? ' and ' + layName(2) + (LYR ? ' under that' : ' under it') + ' (the green bar)' : '') + ' — each bar on its own scale');
     [1, 2].forEach(function (i) { var k = layK(i); if (k && k !== 'n' && !adsReady()) bits.unshift('the ' + MEAS[k].l + ' layer appears once Google Ads is read'); });
+    if (SPON) {
+      var sfl = B.splitFields(S.st).filter(function (x) { return x.f === SP.f; })[0];
+      bits.unshift('the strip splits each cell’s ' + (SP.weighted ? 'spend' : 'products') + ' by ' + esc(sfl ? sfl.label : SP.f) + ':' + spOrd(SP).map(function (i) { return '<i class="spk ' + spCls(SP, i) + '"></i>' + esc(spName(SP, i)); }).join('') + ' — always 100% of the cell');
+      if (S.L.pivot.splw === 'cost' && !SP.weighted) bits.unshift('the split counts products until Google Ads is read');
+    }
     if (PV.rowsHidden) bits.push('the ' + n0(PV.rows.length) + ' biggest of ' + n0(PV.rowsAll) + ' rows shown — pick “All” to see every row');
     if (PV.cols.length && PV.cols[PV.cols.length - 1].other) bits.push('the columns past the twelfth fold into one Other column, which keeps its ' + (W ? 'figure' : 'count'));
     if (PV.multi) bits.push(W ? 'a product with several values carries its figures into each, so rows and columns can add to more than the total' : 'a product with several values is counted once in each, so rows and columns can add to more than the total');
@@ -1339,6 +1393,12 @@ window.addEventListener('load',restore);
     var rows = [[B.specName(S.st, X.rs) + (X.cs ? ' \\ ' + B.specName(S.st, X.cs) : '') + (X.weighted ? ' · ' + M.l + ' (Google Ads, last 30 days' + (M.money && S.ads && S.ads.cur && !S.ads.curMix ? ', ' + S.ads.cur : '') + ')' : '')].concat(X.cols.map(function (c) { return c.v; })).concat(['Row total']).concat(X.weighted ? [R ? 'Spend' : 'Products'] : [])];
     X.rows.forEach(function (r) { rows.push([r.v].concat(r.cells.map(function (c, j) { return R ? rv(c, r.cells2[j]) : num(c); })).concat([R ? rv(r.n, r.n2) : num(r.n)]).concat(X.weighted ? [R ? num(r.n) : r.p] : [])); });
     if (X.cs) rows.push(['Column total'].concat(X.cols.map(function (c) { return R ? rv(c.n, c.n2) : num(c.n); })).concat([R ? rv(X.total, X.total2) : num(X.total)]).concat(X.weighted ? [R ? num(X.total) : X.totalP] : []));
+    if (X.sp && X.sp.fi >= 0) {
+      var XS = X.sp, sv = function (a) { var t = a ? a.reduce(function (s, x) { return s + x; }, 0) : 0; return t ? Math.round(a[XS.fi] / t * 1000) / 10 + '%' : ''; };
+      rows.push([]); rows.push(['Split · % ' + String(XS.flag).toLowerCase() + ' (of ' + (XS.weighted ? 'spend' : 'products') + ')'].concat(X.cols.map(function (c) { return c.v; })).concat(['Row total']));
+      X.rows.forEach(function (r) { rows.push([r.v].concat(X.cols.map(function (c) { return sv(spCellOf(XS, r, c)); })).concat([sv(spRow(XS, r))])); });
+      if (X.cs) rows.push(['Column total'].concat(X.cols.map(function (c) { return sv(spCol(XS, c)); })).concat([sv(XS.tot)]));
+    }
     [[1, X.layered, 'L'], [2, X.layered2, 'M']].forEach(function (t) {
       var i = t[0], k = layK(i), a = t[2]; if (!t[1] || !k) return;
       var lv = function (x, y) { var v = layVal(x || 0, y || 0, i); return v == null ? '' : MEAS[k].ratio ? Math.round(v * 100) + '%' : num(v); };

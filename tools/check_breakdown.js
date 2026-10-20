@@ -221,6 +221,31 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
       const csv = fs.readFileSync(await cdl.path(), 'utf8');
       ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);
+      // ---- the SPLIT: Price type built from price + sale price, read inside every cell, counted independently here
+      const num = (v) => { const m = /-?\d+(?:[.,]\d+)?/.exec(v || ''); return m ? parseFloat(m[0].replace(',', '.')) : NaN; };
+      const onSale = (it) => { const p = num(tag(it, 'g:price')), q = num(tag(it, 'g:sale_price')); return q > 0 && p > 0 && q < p; };
+      const SALE = {}, SALESP = {}, SC = {}; let saleN = 0;
+      ITEMS.forEach((it) => { const r = tier(tag(it, 'g:product_type'), 2), c = AV(it), a = A[tag(it, 'g:id').toLowerCase()] || [0, 0, 0, 0, 0];
+        if (onSale(it)) { SALE[r] = (SALE[r] || 0) + 1; SALESP[r] = (SALESP[r] || 0) + a[2]; SC[c] = (SC[c] || 0) + 1; saleN++; } });
+      await pg.selectOption('#pv-meas', 'n'); await pg.selectOption('#pv-spl', '@price'); await pg.waitForTimeout(200);
+      const pcT = (x) => { const p = x * 100; return (p >= 10 || p === 0 ? Math.round(p) : Math.round(p * 10) / 10) + '%'; };
+      const spr = await pg.evaluate(() => ({ opts: Array.from(document.querySelectorAll('#pv-spl option')).map((o) => o.value), shown: !document.getElementById('pv-splw-g').hidden,
+        note: document.getElementById('pv-note').textContent,
+        rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1], b = tot.querySelector('.psp b'), ws = Array.from(tot.querySelectorAll('.psp .pst i')).map((i) => parseFloat(i.style.width)); return [t[0].textContent, b ? b.textContent : '', ws]; }),
+        foot: (() => { const t = document.querySelectorAll('#pv tfoot td'); const b = t.length && t[t.length - 1].querySelector('.psp b'); return b ? b.textContent : ''; })(),
+        cells: document.querySelectorAll('#pv tbody td.c .psp').length }));
+      ok('Split by offers Price type first, and a field of many values never', spr.opts[1] === '@price' && !spr.opts.includes('g:color') && spr.shown, spr.opts);
+      ok('every row\'s strip names its share on sale — the products below their full price, counted independently', spr.rows.length && spr.rows.every(([v, b]) => b === pcT((SALE[v] || 0) / NP[v]) + ' on sale'), [spr.rows, SALE, NP]);
+      ok('…each strip adds to 100% of its cell, and the whole is the feed\'s share on sale', spr.rows.every(([, , ws]) => Math.abs(ws.reduce((a, b) => a + b, 0) - 100) < 0.2) && spr.foot === pcT(saleN / ITEMS.length) + ' on sale' && spr.cells > spr.rows.length && /splits each cell’s products by Price type/.test(spr.note), [spr.foot, saleN]);
+      await pg.selectOption('#pv-splw', 'cost'); await pg.waitForTimeout(200);
+      const sps = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), b = t[t.length - 1].querySelector('.psp b'); return [t[0].textContent, b ? b.textContent : '']; }));
+      ok('…and split by SPEND on request: each row\'s share of its spend on sale products', sps.every(([v, b]) => SP[v] ? b === pcT((SALESP[v] || 0) / SP[v]) + ' on sale' : b === ''), [sps, SALESP, SP]);
+      const [sdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+      const scsv = fs.readFileSync(await sdl.path(), 'utf8');
+      ok('…the CSV carries the split as its own block', /\r\nSplit · % on sale \(of spend\),/.test(scsv), scsv.slice(0, 300));
+      if (process.env.BD_SHOT5) { await pg.selectOption('#pv-splw', 'n'); await pg.waitForTimeout(150); await pg.locator('#sec-pivot').screenshot({ path: process.env.BD_SHOT5 }); }
+      await pg.selectOption('#pv-splw', 'n'); await pg.selectOption('#pv-spl', ''); await pg.selectOption('#pv-meas', 'roas'); await pg.waitForTimeout(150);
+      ok('…and Nothing takes the strip away', await pg.evaluate(() => !document.querySelector('#pv .psp') && document.getElementById('pv-splw-g').hidden));
       const sv = await pg.evaluate(() => ({ head: (document.querySelector('#pv3 .sv3h b') || {}).textContent, by: (document.getElementById('sv3-by') || {}).value,
         rows: Array.from(document.querySelectorAll('#pv3 .sv3r')).map((r) => { const b = r.querySelectorAll('.b'); return [r.querySelector('.nm').textContent, b[0].textContent, b[1].textContent, r.querySelector('.ro em').textContent, b[0].querySelector('i').getBoundingClientRect().width, b[1].querySelector('i').getBoundingClientRect().width]; }) }));
       const live = Object.keys(SP).filter((v) => SP[v] || VAL[v]);

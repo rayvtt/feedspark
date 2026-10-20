@@ -16266,6 +16266,18 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: Split by — what each pivot cell is made of (Price type / a 2–3 value field)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function spCell(sp, a) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown engine: split() — parts per cell, Price type built from price + sale price",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "function split(S, rs, cs, f, m, opts) {",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function gbTry(key) {",
