@@ -16848,6 +16848,18 @@
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "#pt-dfil button[data-dk], .pop .pr.pk[data-dk]",
       "pr": 722
+    },
+    {
+      "name": "Stock: the hero-size sheet lists every product type at the tier, one-size types blank",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!x.t.sz.length) return [x.t.k, '', ONE_SIZE_WORD, 'one size only'];",
+      "pr": 0
+    },
+    {
+      "name": "Stock: a blank Hero sizes cell is skipped on import, never read as no hero sizes",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!raw) return;",
+      "pr": 0
     }
   ]
 }

@@ -1169,6 +1169,10 @@
         out.push({ c: k.slice(0, 120), g: g.slice(0, 30), s: sortSizes(uniq), n: n });
         return;
       }
+      // a blank Hero sizes cell is a row nobody filled in (the export's one-size and not-yet-mapped types), not a decision
+      // that the type has none — an explicit "One size" still records that; nothing to read, nothing to import
+      var raw = si >= 0 ? s0(r[si]).trim() : r.slice(ti + 1).filter(function (c, j) { return j + ti + 1 !== gi && j + ti + 1 !== ni && s0(c).trim() !== ''; }).length;
+      if (!raw) return;
       var key = typeKey(k);
       if (seen[key] != null) { out[seen[key]].s = sortSizes(out[seen[key]].s.concat(uniq.filter(function (s) { return out[seen[key]].s.indexOf(s) < 0; }))); return; }
       seen[key] = out.length;
@@ -1179,11 +1183,17 @@
   // the brand's map as a sheet, at the tier on screen (the export is also the template a brand fills in)
   function docRows(store, brand, cen, tier, market) {
     var head = ['Product type', 'Hero sizes', 'Source', 'Sizes made in'];
-    var body = map(store, brand, cen, tier, market).types.filter(function (x) { return x.t.sz.length; }).map(function (x) {
+    // EVERY product type at the tier, the count its chip states (Ray, 20 Oct 2026: "when i hit download sheet with tier 4
+    // filtered, i dont get 156 rows") — a type the master sells in one size only has no run to pick hero sizes from, so it
+    // goes out with its Hero sizes blank and says why; a blank cell is skipped on the way back in (parseDoc), never read
+    // as "no hero sizes"
+    var body = map(store, brand, cen, tier, market).types.map(function (x) {
+      if (!x.t.sz.length) return [x.t.k, '', ONE_SIZE_WORD, 'one size only'];
       return [x.t.k, x.h.s.join(', '), srcWord(x.h), x.t.sz.map(function (z) { return z[0]; }).join(', ')];
     });
     return [head].concat(body);
   }
+  var ONE_SIZE_WORD = 'One size — no hero sizes to pick';
   function srcWord(h) {
     if (!h || !h.src) return 'Not mapped';
     var row = h.doc ? ' (' + h.doc.c + (h.doc.g ? ' · ' + h.doc.g : '') + ')' : '';
