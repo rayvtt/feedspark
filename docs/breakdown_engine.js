@@ -432,6 +432,71 @@
     return res;
   }
 
+  // ---- SPLIT: a field of two or three values read INSIDE every cell (Ray, 20 Oct 2026: "add a layer 3 with fields
+  // from feed which only have < 3 unique values — eg % of product in Full / Sale"). Not a sum like the layers: what
+  // a cell's products are MADE OF, so it always adds to 100% of that cell. A product with no value is its own part
+  // (BLANK), never dropped. '@price' is a field no feed carries: on sale when the sale price is below the price.
+  var PRICE_TYPE = '@price', SALE = 'On sale', FULL = 'Full price', SPLIT_MAX = 3;
+  function colByBare(S, bare) {
+    for (var i = 0; i < S.cols.length; i++) if (S.cols[i].name.replace(/^(g|c|fs):/i, '').toLowerCase() === bare) return i;
+    return -1;
+  }
+  function splitFields(S) {
+    var out = [], pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price');
+    if (pc >= 0 && sc >= 0) out.push({ f: PRICE_TYPE, label: 'Price type', vals: [SALE, FULL], derived: true });
+    fields(S).forEach(function (x) {
+      if (x.multi || !x.filled || x.distinct < 2 || x.distinct > SPLIT_MAX) return;
+      out.push({ f: x.f, label: x.label, vals: S.cols[x.col].vals.slice(1) });
+    });
+    return out;
+  }
+  function splitReader(S, f) {
+    if (f === PRICE_TYPE) {
+      var pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price'); if (pc < 0 || sc < 0) return null;
+      var P = S.cols[pc], Q = S.cols[sc];
+      return function (r) {
+        var p = numOf(P.vals[P.ids[r]]), q = numOf(Q.vals[Q.ids[r]]);
+        if (q > 0 && p > 0 && q < p) return SALE;
+        return p > 0 ? FULL : BLANK;
+      };
+    }
+    var R = reader(S, { f: f, m: 'raw' }); if (!R) return null;
+    return function (r) { var a = R.of(r); return a.length ? a[0] : BLANK; };
+  }
+  // the parts every row × column cell (and every row, column and the whole) is made of: {vals, flag, cell, row, col,
+  // tot} with an array per key in vals' order; opts.w sums a weight (spend) instead of counting products. rs / cs read
+  // exactly as pivot() and cross() read them, so a part lines up with the cell it sits in; cs null = one field.
+  function split(S, rs, cs, f, m, opts) {
+    opts = opts || {};
+    var RR = reader(S, rs), RC = cs ? reader(S, cs) : null, SP = splitReader(S, f); if (!RR || !SP || (cs && !RC)) return null;
+    var w = typeof opts.w === 'function' ? opts.w : null;
+    var by = new Map(), seen = [], cell = new Map(), row = new Map(), col = new Map(), tot = new Map();
+    var add = function (M, k, v, x) { var o = M.get(k); if (!o) { o = new Map(); M.set(k, o); } o.set(v, (o.get(v) || 0) + x); };
+    for (var r = 0; r < S.n; r++) {
+      if (m && !m[r]) continue;
+      var v = SP(r), x = w ? w(r) : 1;
+      if (!by.has(v)) { by.set(v, 0); seen.push(v); }
+      by.set(v, by.get(v) + x); tot.set(v, (tot.get(v) || 0) + x);
+      var a = RR.of(r); if (!a.length) a = [BLANK];
+      var b = RC ? RC.of(r) : null; if (b && !b.length) b = [BLANK];
+      for (var i = 0; i < a.length; i++) {
+        add(row, a[i], v, x);
+        if (b) for (var j = 0; j < b.length; j++) add(cell, a[i] + '\u0001' + b[j], v, x);
+      }
+      if (b) for (var k = 0; k < b.length; k++) add(col, b[k], v, x);
+    }
+    // the parts in a fixed order: by size, the blank last; the FLAG is the part a reader asks about — "on sale" for the
+    // price type, else the smaller of the stated parts (out of stock, the less common gender) — never the blank
+    var vals = seen.filter(function (v) { return v !== BLANK; }).sort(function (p, q) { return by.get(q) - by.get(p); });
+    if (by.has(BLANK)) vals.push(BLANK);
+    var stated = vals.filter(function (v) { return v !== BLANK; });
+    var flag = f === PRICE_TYPE ? SALE : stated.length > 1 ? stated[stated.length - 1] : stated[0] || null;
+    var arr = function (o) { return vals.map(function (v) { return o ? o.get(v) || 0 : 0; }); };
+    var conv = function (M) { var o = Object.create(null); M.forEach(function (mm, k) { o[k] = arr(mm); }); return o; };
+    return { f: f, vals: vals, flag: flag, fi: vals.indexOf(flag), weighted: !!w, tot: arr(tot), row: conv(row), col: conv(col), cell: conv(cell) };
+  }
+  function splitKey(rv, cv) { return rv + '\u0001' + cv; }
+
   // ---- GOOGLE ADS PER PRODUCT: FeedHero's Ads Traffic read ({id: [impr, clicks, cost, conv, value]}) joined onto the
   // store by product id, CASE-BLIND (Google lower-cases the Ads item id that stands in for a blank one). The join
   // column is the one carrying more of the report's ids — g:id, else c:fs_data_original_id — never a guess. Spend on
@@ -510,5 +575,6 @@
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
     fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
-    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName };
+    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName,
+    split: split, splitFields: splitFields, splitReader: splitReader, splitKey: splitKey, PRICE_TYPE: PRICE_TYPE, SALE: SALE, FULL: FULL, SPLIT_MAX: SPLIT_MAX };
 });
