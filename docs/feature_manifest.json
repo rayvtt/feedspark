@@ -16836,6 +16836,18 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "var(--kwd-sb, 0px)",
       "pr": 717
+    },
+    {
+      "name": "PT Guard: the dissection filters by path depth",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function depthBar(rows)",
+      "pr": 722
+    },
+    {
+      "name": "PT Guard: the depth card's rows apply the same depth filter",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "#pt-dfil button[data-dk], .pop .pr.pk[data-dk]",
+      "pr": 722
     }
   ]
 }
