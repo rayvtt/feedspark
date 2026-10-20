@@ -199,8 +199,22 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.selectOption('#pv-lay', 'roas'); await pg.waitForTimeout(200);
       const lyr2 = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl .plt') || {}).textContent]; }));
       ok('…and the other way round: products counted, ROAS layered from each group\'s own sums', lyr2.every(([v, n, l]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : !l || /^— ROAS/.test(l))), lyr2);
+      await pg.selectOption('#pv-lay2', 'cost'); await pg.waitForTimeout(200);
+      const ly3 = await pg.evaluate(() => ({ note: document.getElementById('pv-note').textContent,
+        rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl:not(.pl2) .plt') || {}).textContent, (tot.querySelector('.pl2 .plt') || {}).textContent]; }),
+        bars: Array.from(document.querySelectorAll('#pv tbody td.tot .pl2 i')).map((i) => parseFloat(i.style.width)),
+        green: (() => { const i = document.querySelector('#pv .pl2 i'); return i ? getComputedStyle(i).backgroundColor : ''; })(),
+        blue: (() => { const i = document.querySelector('#pv .pl:not(.pl2) i'); return i ? getComputedStyle(i).backgroundColor : ''; })(),
+        foot: (() => { const t = document.querySelectorAll('#pv tfoot td'); const e = t.length && t[t.length - 1].querySelector('.pl2 .plt'); return e ? e.textContent : ''; })() }));
       if (process.env.BD_SHOT3) await pg.locator('#pv').screenshot({ path: process.env.BD_SHOT3 });
-      await pg.selectOption('#pv-meas', 'roas'); await pg.selectOption('#pv-lay', ''); await pg.waitForTimeout(150);
+      ok('a THIRD reading layers under the second — products counted, ROAS blue, spend green, every row against its own sums', /reads three things/.test(ly3.note) && ly3.rows.length && ly3.rows.every(([v, n, l, m]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : true) && (SP[v] ? Math.abs(money(m) - SP[v]) < 0.6 : !m)), [ly3, SP]);
+      ok('…in its own colour on its own scale, the total row naming the feed\'s spend', ly3.green && ly3.green !== ly3.blue && Math.max(...ly3.bars) === 100 && ly3.foot && Math.abs(money(ly3.foot) - tot) < 0.6, ly3);
+      const [l2dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+      const l2csv = fs.readFileSync(await l2dl.path(), 'utf8');
+      ok('…and the CSV carries both layers, each as its own block', /\r\nLayer · ROAS,/.test(l2csv) && /\r\nLayer 2 · Spend,/.test(l2csv), l2csv.slice(0, 400));
+      await pg.selectOption('#pv-lay', 'cost'); await pg.waitForTimeout(150);
+      ok('…a second layer that repeats the first steps aside rather than drawing one reading twice', await pg.evaluate(() => !document.querySelector('#pv .pl2') && document.getElementById('pv-lay2').value === ''));
+      await pg.selectOption('#pv-meas', 'roas'); await pg.selectOption('#pv-lay', ''); await pg.selectOption('#pv-lay2', ''); await pg.waitForTimeout(150);
       const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
       const csv = fs.readFileSync(await cdl.path(), 'utf8');
       ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);
