@@ -259,18 +259,44 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.waitForTimeout(150);
       const back = await pg.evaluate(() => ({ hidden: document.getElementById('pv-ads').hidden, last: Array.from(document.querySelectorAll('#pv table thead th')).pop().textContent }));
       ok('…and back on Products the table counts again', back.hidden && back.last === 'Row total', back);
-      // ---- the opportunity spotter: with no selection it reads every row and cell; click a cell and it reads just that
+      // ---- the opportunity spotter, inside the pivot: a corner flag on each cell that stands out against the feed, a card on
+      // hover, a ribbon over the table that counts them, lights one kind up and steps through them; a selection reads itself
       await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
       await pg.waitForTimeout(200);
-      const op0 = await pg.evaluate(() => ({ bar: document.getElementById('op-bar').textContent, cards: document.querySelectorAll('#op .opc').length, ln: document.getElementById('ln-opp').textContent }));
-      ok('Opportunities: with no selection every row and cell of the pivot is read against the feed', /No selection — reading every row and cell/.test(op0.bar) && op0.cards >= 1 && /to look at|Nothing stands out/.test(op0.ln), op0);
+      const op0 = await pg.evaluate(() => ({ sec: !!document.getElementById('sec-opp'), bar: document.getElementById('pv-opp').textContent, hidden: document.getElementById('pv-opp').hidden, pips: document.querySelectorAll('#pv td.opx .opp').length, cells: document.querySelectorAll('#pv td.opx').length }));
+      ok('Opportunities live in the pivot: no separate section, a ribbon over the table and a flag on every cell that stands out', !op0.sec && !op0.hidden && op0.pips >= 1 && op0.pips === op0.cells && /opportunit/.test(op0.bar), op0);
+      const pip = pg.locator('#pv td.opx .opp').first();
+      await pip.scrollIntoViewIfNeeded(); await pip.hover(); await pg.waitForTimeout(300);
+      const pop = await pg.evaluate(() => { const P = document.getElementById('oppop'), r = P.getBoundingClientRect(); return { open: !P.hidden, cards: P.querySelectorAll('.opf').length, inView: r.left >= 0 && r.right <= innerWidth + 1, pin: P.getAttribute('data-pin') }; });
+      ok('…hovering a flag opens its card beside the cell, inside the window', pop.open && pop.cards >= 1 && pop.inView && !pop.pin, pop);
+      const flt0 = await pg.evaluate(() => window.__FCCBreakdown.state().filters.length);
+      await pip.click(); await pg.waitForTimeout(150);
+      const pin = await pg.evaluate(() => ({ pin: document.getElementById('oppop').getAttribute('data-pin'), f: window.__FCCBreakdown.state().filters.length }));
+      ok('…clicking a flag pins the card and never filters the page (the cell itself still does)', pin.pin === '1' && pin.f === flt0, pin);
+      await pg.keyboard.press('Escape');
+      ok('…Esc closes it', await pg.evaluate(() => document.getElementById('oppop').hidden));
+      const kinds = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv-opp [data-ok]')).map((b) => b.getAttribute('data-ok')));
+      const k1 = kinds.find((k) => k !== 'all');
+      await pg.click('#pv-opp [data-ok="' + k1 + '"]'); await pg.waitForTimeout(100);
+      const osp = await pg.evaluate((k) => { const box = document.getElementById('pv'), hit = Array.from(box.querySelectorAll('td.hit')); return { spot: box.classList.contains('spot'), hit: hit.length, right: hit.every((td) => td.classList.contains('ok-' + k)), want: box.querySelectorAll('td.ok-' + k).length }; }, k1);
+      ok('…a kind chip lights up exactly the cells carrying that kind and dims the rest', osp.spot && osp.hit >= 1 && osp.right && osp.hit === osp.want, osp);
+      await pg.click('#pv-opp [data-os="1"]'); await pg.waitForTimeout(150);
+      const st = await pg.evaluate(() => ({ pos: document.getElementById('op-pos').textContent, open: !document.getElementById('oppop').hidden, cur: document.querySelectorAll('#pv td.ocur').length }));
+      ok('…Review › steps to the strongest one and opens its card', /^1 of \d+$/.test(st.pos) && st.open && st.cur === 1, st);
+      if (process.env.BD_SHOT6) await pg.locator('#sec-pivot').screenshot({ path: process.env.BD_SHOT6 });
+      await pg.keyboard.press('Escape');
+      await pg.click('#pv-opp [data-ok="' + k1 + '"]'); await pg.waitForTimeout(100);
+      ok('…a second click on the chip turns the spotlight off', await pg.evaluate(() => !document.getElementById('pv').classList.contains('spot')));
       await pg.locator('#pv tbody td.c:not(.z)').first().click(); await pg.waitForTimeout(250);
-      const op1 = await pg.evaluate(() => ({ bar: document.getElementById('op-bar').textContent, cards: Array.from(document.querySelectorAll('#op .opc')).map((c) => [c.dataset.k, c.dataset.f, c.dataset.v, +c.dataset.s, +c.dataset.vn, +c.dataset.n]) }));
-      ok('…click a cell and it reads just that selection', /Reading the selection/.test(op1.bar), op1.bar);
-      // the selection's own products, counted off the stub's XML: the pivot is product_type tier 2 × the columns field
-      const mixes = op1.cards.filter((c) => (c[0] === 'mix' || c[0] === 'gap' || c[0] === 'blank') && c[1] && c[1] !== '@price');
-      ok('…every share on a card is its count over the selection\'s products (a ratio, never rounded into a different number)', op1.cards.length >= 1 && mixes.every(([, , , s, vn, n]) => n >= 5 && Math.abs(s - vn / n) < 1e-9), op1.cards);
-      if (process.env.BD_SHOT6) await pg.locator('#sec-opp').screenshot({ path: process.env.BD_SHOT6 });
+      const op1 = await pg.evaluate(() => ({ bar: document.getElementById('pv-opp').textContent, chips: document.querySelectorAll('#pv-opp [data-on]').length }));
+      ok('…click a cell and the ribbon reads just that selection', /In this selection|Nothing stands out in this selection/.test(op1.bar), op1);
+      if (op1.chips) {
+        await pg.click('#pv-opp [data-on="0"]'); await pg.waitForTimeout(150);
+        const cards = await pg.evaluate(() => Array.from(document.querySelectorAll('#oppop .opf')).map((c) => [c.dataset.k, c.dataset.f, c.dataset.v, +c.dataset.s, +c.dataset.vn, +c.dataset.n]));
+        const mixes = cards.filter((c) => (c[0] === 'mix' || c[0] === 'gap' || c[0] === 'blank') && c[1] && c[1] !== '@price');
+        ok('…a finding chip opens its card, every share its count over the selection\'s products', cards.length === 1 && mixes.every(([, , , s, vn, n]) => n >= 5 && Math.abs(s - vn / n) < 1e-9), cards);
+        await pg.keyboard.press('Escape');
+      }
       await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
       await pg.waitForTimeout(150);
     }
@@ -329,13 +355,13 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
 
     console.log('· folds');
     const fold = () => pg.evaluate(() => Array.from(document.querySelectorAll('section.fs')).map((c) => c.id + ':' + (c.classList.contains('folded') ? 0 : 1)).join(' '));
-    ok('a fresh device opens Breakdown, Pivot and Opportunities, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-opp:1 sec-fields:0 sec-how:0', await fold());
+    ok('a fresh device opens Breakdown and Pivot, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:0 sec-how:0', await fold());
     ok('…a folded body is not painted', await pg.evaluate(() => document.querySelector('#fd').getBoundingClientRect().height === 0));
     ok('…a folded head still says what is inside', /fields carry a value/.test(await pg.textContent('#ln-fields')));
     await pg.click('#sec-pivot .fhd');
     ok('a click on the head folds it', (await fold()).indexOf('sec-pivot:0') >= 0);
     await pg.click('#openall');
-    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-opp:1 sec-fields:1 sec-how:1');
+    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:1 sec-how:1');
     await pg.click('#sec-how .fhd');
 
     console.log('· 📖 Guidebook');
@@ -384,7 +410,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     await pg.reload(); await ready(pg); await pg.waitForTimeout(150);
     const after = await pg.evaluate(() => ({ panes: window.__FCCBreakdown.state().L.panes.map((p) => p.f), fold: Array.from(document.querySelectorAll('section.fs')).map((c) => c.classList.contains('folded') ? 0 : 1).join('') }));
     ok('the fields survive a reload', after.panes.join() === 'g:product_type,g:color,g:brand,g:availability,g:product_highlight*', after.panes);
-    ok('…and so does every fold the person set', after.fold === '11110', after.fold);
+    ok('…and so does every fold the person set', after.fold === '1110', after.fold);
     await pg.click('#mkts [data-mkt="gb-fb"]'); await ready(pg);
     const meta2 = await pg.evaluate(() => ({ reads: window.__bdReads, panes: window.__FCCBreakdown.state().L.panes.length, view: document.querySelector('#views').textContent }));
     ok('the Meta market reads its own feed, and the fields come with it', /market=gb-fb$/.test(meta2.reads[meta2.reads.length - 1]) && meta2.panes === 5, meta2);

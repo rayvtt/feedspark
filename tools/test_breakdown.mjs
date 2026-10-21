@@ -220,8 +220,8 @@ console.log('· the page');
 {
   t('loads the shared stylesheet and the two engines by fetch (so the tripwires can hand them over)', /<link rel="stylesheet" href="\/design\/fcc\.css">/.test(PG) && /\['\/feedlab\/engine\.js', 'FeedAudit'\], \['\/breakdown\/engine\.js', 'FeedBreakdown'\]/.test(PG));
   t('the feed streams through the proxy and the parser\'s header row is never counted', /fetch\('\/api\/feed\/proxy' \+ mq\(\)/.test(PG) && /if \(!hdr\) \{ hdr = h \|\| row; return; \}/.test(PG));
-  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 5 && (PG.match(/<button class="fhd"/g) || []).length === 5
-    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-opp': 1, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
+  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 4 && (PG.match(/<button class="fhd"/g) || []).length === 4
+    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
   t('…⊕ Open all / ⊖ Fold all, and a #hash opens what it names', /id="openall"/.test(PG) && /id="foldall"/.test(PG) && /window\.addEventListener\('hashchange', hashOpen\)/.test(PG));
   t('a table is never filtered by its own selection', /function maskExcept\(spec\)/.test(PG) && /B\.pivot\(S\.st, spec, maskExcept\(spec\)/.test(PG));
   t('a view is the shape, never the brand: the layout per device, views per device, the filters reset with the feed', /put\('fcc-bd-layout', S\.L\)/.test(PG) && /fcc-bd-views/.test(PG) && /S\.st = null; S\.fields = \[\]; S\.filters = \[\];/.test(PG));
@@ -284,8 +284,9 @@ console.log('· the split — what each cell is made of');
     const scan = B.spot(S3, { groups: (r) => ['r\u0001' + S3.cols[1].vals[S3.cols[1].ids[r]]], exclude: ['g:custom_label_1'] });
     t('…with no selection every row is read against the feed, the finding naming its row', scan.found.some((x) => x.g === 'r\u0001Low' && x.k === 'mix' && x.v === 'male'));
   }
-  t('spotter page: an Opportunities section reads the filters (or every pivot row and cell), words B.spot, and briefs in a new tab',
-    /id="sec-opp"/.test(PG) && /function renderOpp\(\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(\);/.test(PG));
+  t('spotter page: the findings live IN the pivot — a flag per cell, a card, a ribbon — never a section of their own; briefs in a new tab',
+    !/id="sec-opp"/.test(PG) && /id="pv-opp"/.test(PG) && /id="oppop"/.test(PG) && /function renderOpp\(rows\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /class="opp" type="button" data-op="/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(rows\);/.test(PG)
+    && /var pip = e\.target\.closest\('\.opp'\); if \(pip\) \{ e\.stopPropagation\(\);/.test(PG));
   t('a field that is not there reads nothing rather than guessing', B.split(S2, { f: 'g:product_type', m: 'raw' }, null, 'g:nope', null) === null);
   t('the page: a Split by picker, its share-of choice, a strip per cell, the CSV block, and the layout default', /id="pv-spl"/.test(PG) && /id="pv-splw"/.test(PG) && /function spCell\(sp, a\)/.test(PG) && /'Split · % '/.test(PG) && /spl: '', splw: 'n'/.test(PG));
 }

@@ -190,9 +190,19 @@ Other column sums its members. Remembered per device in `fcc-bd-layout › pivot
 ## Opportunities — the spotter (Ray, 21 Oct 2026)
 
 "Can we also build an opportunity spotter mechanism when a segment / data table is selected?" — over a pivot where
-Gemini had written "Q3 2026 Low Margin at 46% male … 686% ROAS". A section under the pivot reads **the selection**
-(the page's filters — a clicked cell, a row, a value anywhere) against the whole feed; with no selection it reads
-**every row and cell** of the pivot. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
+Gemini had written "Q3 2026 Low Margin at 46% male … 686% ROAS". It reads **the selection** (the page's filters — a
+clicked cell, a row, a value anywhere) against the whole feed; with no selection it reads **every row and cell** of the
+pivot.
+
+**Inside the pivot, never a section of its own** (Ray, 21 Oct 2026: "I don't like the opportunity sitting on a
+different section … highlight the opportunity within the pivot breakdown"). A cell that stands out carries a **corner
+flag** in its strongest finding's colour (blue = over-indexes, green = scale it / under-funded, orange = fix or trim /
+over-funded, grey = data gap / under-represented); a row's own findings flag its row total. Hovering a flag (or resting
+on the cell) opens its **card** beside the cell — every finding for that cell; a click on the flag pins it (the cell
+itself still filters), Esc / ✕ / outside click close. A **ribbon above the table** counts them ("✦ 25 opportunities in
+5 cells") with a chip per kind that **lights up** only the cells carrying it and dims the rest, and **Review ›** steps
+through them strongest first. With a selection the ribbon reads it instead, one chip per finding, each opening its
+card. A finding on a row the table is not showing is counted, never flagged on the wrong cell. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
 (2–40 values, filled on 30%+: custom labels, gender, colour, price type, product_type tiers, newness by quarter — never
 an id) and returns findings, each COUNTED, never written by a model:
 
@@ -207,5 +217,5 @@ an id) and returns findings, each COUNTED, never written by a model:
 Floors: a group of ≥ 20 products and a value of ≥ 10 on a feed of 1,000+, scaled to 2% (never under 5) on a small one.
 Each card names the group, the figures (share here vs the feed, or ROAS and spend), the action, **⌕ Filter to it** and
 **→ Brief** (Workflow in a new tab, task "Feed Opportunity - <kind> - … - <Brand> <MKT> - MMYY", the evidence in the
-scope). The strongest nine show, at most three per field and five per group. Harness: the spotter block in
+scope). A selection shows its strongest nine; across the pivot every flagged cell shows, at most three per field and five per cell. Harness: the spotter block in
 `tools/test_breakdown.mjs` (an invented feed counted in the test) + `tools/check_breakdown.js` (the rendered cards).
