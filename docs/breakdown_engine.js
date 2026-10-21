@@ -183,10 +183,7 @@
   function qtrBand(v, ref) {
     var d = dateOf(v); if (!d) return NO_DATE;
     var i = qIdx(d.y, d.m), back = ref - i;
-    if (back < 0) return qName(i) + ' · ahead';
-    if (back === 0) return qName(i) + ' · this quarter';
-    if (back === 1) return qName(i) + ' · last quarter';
-    if (back < QTR_BACK) return qName(i);
+    if (back < QTR_BACK) return qName(i);           // a quarter is named by itself — ahead, this one and the last read as any other
     return 'Before ' + qName(ref - QTR_BACK + 1);
   }
   // a quarter nothing arrived in is a real zero, not a missing row: the ladder runs unbroken from THIS quarter back to the
@@ -293,9 +290,14 @@
     var g = !w && opts.unit === 'group' ? groupCol(S) : -1, gids = g >= 0 ? S.cols[g].ids : null;
     var cnt = new Map(), sets = g >= 0 ? new Map() : null, tot = 0, totSet = g >= 0 ? new Set() : null, multiRows = 0;
     var pc_ = w ? new Map() : null, c2 = w2 ? new Map() : null, totP = 0, tot2 = 0;
+    // opts.lw / opts.lw2: a SECOND reading LAYERED on the first (Ray, 19 Oct 2026: "see 2 data points together …
+    // volume of product (in count) and ROAS") — 1 = count products, else a weight per product; lw2 makes it a ratio
+    var lw = opts.lw === 1 ? function () { return 1; } : typeof opts.lw === 'function' ? opts.lw : null, lw2 = lw && typeof opts.lw2 === 'function' ? opts.lw2 : null;
+    var cL = lw ? new Map() : null, cL2 = lw2 ? new Map() : null, totL = 0, totL2 = 0;
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
       var a = R.of(r); if (!a.length) a = [BLANK]; else if (a.length > 1) multiRows++;
+      if (lw) { var y = lw(r), y2 = lw2 ? lw2(r) : 0; totL += y; totL2 += y2; for (var jl = 0; jl < a.length; jl++) { cL.set(a[jl], (cL.get(a[jl]) || 0) + y); if (lw2) cL2.set(a[jl], (cL2.get(a[jl]) || 0) + y2); } }
       var unitKey = gids ? (gids[r] ? 'g' + gids[r] : 'r' + r) : null;
       var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
       if (totSet) totSet.add(unitKey); else tot += x;
@@ -312,12 +314,14 @@
     cnt.forEach(function (n, v) {
       var o = { v: v, n: n, share: tot ? n / tot : 0, o: bandOrder(mode, v) };
       if (w) { o.p = pc_.get(v) || 0; if (w2) o.n2 = c2.get(v) || 0; }
+      if (lw) { o.nL = cL.get(v) || 0; if (lw2) o.nL2 = cL2.get(v) || 0; }
       rows.push(o);
     });
     sortRows(rows, isBand(mode) ? 'o' : 'n', isBand(mode) ? 1 : -1);
     var blank = cnt.get(BLANK) || 0;
     var res = { rows: rows, total: tot, distinct: rows.filter(function (x) { return x.n > 0; }).length - (blank ? 1 : 0), blank: blank, multi: R.multi && multiRows > 0, multiRows: multiRows, unit: g >= 0 ? 'group' : 'sku' };
     if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }
     return res;
   }
   // k: 'v' value (A→Z, numbers in number order) · 'n' count · 'share' · 'o' band order; blank always last
@@ -350,11 +354,23 @@
     var w = typeof opts.w === 'function' ? opts.w : null, w2 = w && typeof opts.w2 === 'function' ? opts.w2 : null;
     var rowTot = new Map(), colTot = new Map(), cell = new Map(), tot = 0;
     var rowP = new Map(), colP = new Map(), row2 = new Map(), col2 = new Map(), cell2 = new Map(), totP = 0, tot2 = 0;
+    // the LAYER (as in pivot): a second reading summed per cell, row, column and total, on the SAME rows and columns
+    var lw = opts.lw === 1 ? function () { return 1; } : typeof opts.lw === 'function' ? opts.lw : null, lw2 = lw && typeof opts.lw2 === 'function' ? opts.lw2 : null;
+    var cellL = new Map(), cellL2 = new Map(), rowL = new Map(), rowL2 = new Map(), colL = new Map(), colL2 = new Map(), totL = 0, totL2 = 0;
+    var addL = function (M, k1, k2, v) { var mm = M.get(k1); if (!mm) { mm = new Map(); M.set(k1, mm); } mm.set(k2, (mm.get(k2) || 0) + v); };
     for (var r = 0; r < S.n; r++) {
       if (m && !m[r]) continue;
       var x = w ? w(r) : 1, x2 = w2 ? w2(r) : 0;
       tot += x; totP++; tot2 += x2;
       var a = RR.of(r), b = RC.of(r); if (!a.length) a = [BLANK]; if (!b.length) b = [BLANK];
+      if (lw) {
+        var y = lw(r), y2 = lw2 ? lw2(r) : 0; totL += y; totL2 += y2;
+        for (var la = 0; la < a.length; la++) {
+          rowL.set(a[la], (rowL.get(a[la]) || 0) + y); if (lw2) rowL2.set(a[la], (rowL2.get(a[la]) || 0) + y2);
+          for (var lb = 0; lb < b.length; lb++) { addL(cellL, a[la], b[lb], y); if (lw2) addL(cellL2, a[la], b[lb], y2); }
+        }
+        for (var lc = 0; lc < b.length; lc++) { colL.set(b[lc], (colL.get(b[lc]) || 0) + y); if (lw2) colL2.set(b[lc], (colL2.get(b[lc]) || 0) + y2); }
+      }
       for (var i = 0; i < a.length; i++) {
         rowTot.set(a[i], (rowTot.get(a[i]) || 0) + x);
         rowP.set(a[i], (rowP.get(a[i]) || 0) + 1);
@@ -382,10 +398,11 @@
     var shown = maxC > 0 ? cols.slice(0, maxC) : cols, other = maxC > 0 ? cols.slice(maxC) : [];
     var otherN = other.reduce(function (s, c) { return s + c.n; }, 0);
     var sumOf = function (M, list) { return list.reduce(function (s, c) { return s + (M.get(c.v) || 0); }, 0); };
-    var outCols = shown.map(function (c) { var o = { v: c.v, n: c.n }; if (w) { o.p = colP.get(c.v) || 0; if (w2) o.n2 = col2.get(c.v) || 0; } return o; });
+    var outCols = shown.map(function (c) { var o = { v: c.v, n: c.n }; if (w) { o.p = colP.get(c.v) || 0; if (w2) o.n2 = col2.get(c.v) || 0; } if (lw) { o.nL = colL.get(c.v) || 0; if (lw2) o.nL2 = colL2.get(c.v) || 0; } return o; });
     if (other.length) {
       var oc = { v: 'Other (' + other.length + ' more)', n: otherN, other: true, members: other.map(function (c) { return c.v; }) };
       if (w) { oc.p = sumOf(colP, other); if (w2) oc.n2 = sumOf(col2, other); }
+      if (lw) { oc.nL = sumOf(colL, other); if (lw2) oc.nL2 = sumOf(colL2, other); }
       outCols.push(oc);
     }
     var cut = maxR > 0 ? rows.slice(0, maxR) : rows;
@@ -401,12 +418,84 @@
           if (other.length) out.cells2.push(sumOf(m2, other));
         }
       }
+      if (lw) {
+        var mL = cellL.get(rw.v) || new Map(), mL2 = cellL2.get(rw.v) || new Map();
+        out.nL = rowL.get(rw.v) || 0; out.cellsL = shown.map(function (c) { return mL.get(c.v) || 0; });
+        if (other.length) out.cellsL.push(sumOf(mL, other));
+        if (lw2) { out.nL2 = rowL2.get(rw.v) || 0; out.cellsL2 = shown.map(function (c) { return mL2.get(c.v) || 0; }); if (other.length) out.cellsL2.push(sumOf(mL2, other)); }
+      }
       return out;
     });
     var res = { rows: outRows, cols: outCols, total: tot, rowsAll: rows.length, rowsHidden: rows.length - cut.length, multi: RR.multi || RC.multi };
     if (w) { res.weighted = true; res.totalP = totP; if (w2) res.total2 = tot2; }
+    if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }
     return res;
   }
+
+  // ---- SPLIT: a field of two or three values read INSIDE every cell (Ray, 20 Oct 2026: "add a layer 3 with fields
+  // from feed which only have < 3 unique values — eg % of product in Full / Sale"). Not a sum like the layers: what
+  // a cell's products are MADE OF, so it always adds to 100% of that cell. A product with no value is its own part
+  // (BLANK), never dropped. '@price' is a field no feed carries: on sale when the sale price is below the price.
+  var PRICE_TYPE = '@price', SALE = 'On sale', FULL = 'Full price', SPLIT_MAX = 3;
+  function colByBare(S, bare) {
+    for (var i = 0; i < S.cols.length; i++) if (S.cols[i].name.replace(/^(g|c|fs):/i, '').toLowerCase() === bare) return i;
+    return -1;
+  }
+  function splitFields(S) {
+    var out = [], pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price');
+    if (pc >= 0 && sc >= 0) out.push({ f: PRICE_TYPE, label: 'Price type', vals: [SALE, FULL], derived: true });
+    fields(S).forEach(function (x) {
+      if (x.multi || !x.filled || x.distinct < 2 || x.distinct > SPLIT_MAX) return;
+      out.push({ f: x.f, label: x.label, vals: S.cols[x.col].vals.slice(1) });
+    });
+    return out;
+  }
+  function splitReader(S, f) {
+    if (f === PRICE_TYPE) {
+      var pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price'); if (pc < 0 || sc < 0) return null;
+      var P = S.cols[pc], Q = S.cols[sc];
+      return function (r) {
+        var p = numOf(P.vals[P.ids[r]]), q = numOf(Q.vals[Q.ids[r]]);
+        if (q > 0 && p > 0 && q < p) return SALE;
+        return p > 0 ? FULL : BLANK;
+      };
+    }
+    var R = reader(S, { f: f, m: 'raw' }); if (!R) return null;
+    return function (r) { var a = R.of(r); return a.length ? a[0] : BLANK; };
+  }
+  // the parts every row × column cell (and every row, column and the whole) is made of: {vals, flag, cell, row, col,
+  // tot} with an array per key in vals' order; opts.w sums a weight (spend) instead of counting products. rs / cs read
+  // exactly as pivot() and cross() read them, so a part lines up with the cell it sits in; cs null = one field.
+  function split(S, rs, cs, f, m, opts) {
+    opts = opts || {};
+    var RR = reader(S, rs), RC = cs ? reader(S, cs) : null, SP = splitReader(S, f); if (!RR || !SP || (cs && !RC)) return null;
+    var w = typeof opts.w === 'function' ? opts.w : null;
+    var by = new Map(), seen = [], cell = new Map(), row = new Map(), col = new Map(), tot = new Map();
+    var add = function (M, k, v, x) { var o = M.get(k); if (!o) { o = new Map(); M.set(k, o); } o.set(v, (o.get(v) || 0) + x); };
+    for (var r = 0; r < S.n; r++) {
+      if (m && !m[r]) continue;
+      var v = SP(r), x = w ? w(r) : 1;
+      if (!by.has(v)) { by.set(v, 0); seen.push(v); }
+      by.set(v, by.get(v) + x); tot.set(v, (tot.get(v) || 0) + x);
+      var a = RR.of(r); if (!a.length) a = [BLANK];
+      var b = RC ? RC.of(r) : null; if (b && !b.length) b = [BLANK];
+      for (var i = 0; i < a.length; i++) {
+        add(row, a[i], v, x);
+        if (b) for (var j = 0; j < b.length; j++) add(cell, a[i] + '\u0001' + b[j], v, x);
+      }
+      if (b) for (var k = 0; k < b.length; k++) add(col, b[k], v, x);
+    }
+    // the parts in a fixed order: by size, the blank last; the FLAG is the part a reader asks about — "on sale" for the
+    // price type, else the smaller of the stated parts (out of stock, the less common gender) — never the blank
+    var vals = seen.filter(function (v) { return v !== BLANK; }).sort(function (p, q) { return by.get(q) - by.get(p); });
+    if (by.has(BLANK)) vals.push(BLANK);
+    var stated = vals.filter(function (v) { return v !== BLANK; });
+    var flag = f === PRICE_TYPE ? SALE : stated.length > 1 ? stated[stated.length - 1] : stated[0] || null;
+    var arr = function (o) { return vals.map(function (v) { return o ? o.get(v) || 0 : 0; }); };
+    var conv = function (M) { var o = Object.create(null); M.forEach(function (mm, k) { o[k] = arr(mm); }); return o; };
+    return { f: f, vals: vals, flag: flag, fi: vals.indexOf(flag), weighted: !!w, tot: arr(tot), row: conv(row), col: conv(col), cell: conv(cell) };
+  }
+  function splitKey(rv, cv) { return rv + '\u0001' + cv; }
 
   // ---- GOOGLE ADS PER PRODUCT: FeedHero's Ads Traffic read ({id: [impr, clicks, cost, conv, value]}) joined onto the
   // store by product id, CASE-BLIND (Google lower-cases the Ads item id that stands in for a blank one). The join
@@ -486,5 +575,6 @@
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
     fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
-    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName };
+    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName,
+    split: split, splitFields: splitFields, splitReader: splitReader, splitKey: splitKey, PRICE_TYPE: PRICE_TYPE, SALE: SALE, FULL: FULL, SPLIT_MAX: SPLIT_MAX };
 });

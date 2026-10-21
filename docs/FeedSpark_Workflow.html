@@ -79,7 +79,14 @@ window.addEventListener('load',restore);
      reader is comparing it against. The row STRIP therefore bleeds back out to the panel's own
      inner edge and insets its button by the table cell's 8px — one variable, so a change to the
      band's padding can never knock the column out again — while the left padding adds that
-     padding back so every word on a row stays exactly where it was. */
+     padding back so every word on a row stays exactly where it was.
+     AND THE SCROLLBAR IS PART OF THE TABLE (Ray, 19 Oct 2026: "these buttons across sections are
+     not aligned vertically, which is annoying" — the same red stroke, now through three button
+     columns). .it-scroll scrolls, so where the platform draws a CLASSIC scrollbar its gutter comes
+     out of the table's own content box and carries the Brief column left with it, while this band,
+     which does not scroll, stayed where it was. --kwd-sb is that gutter MEASURED off the Intake
+     scroller itself — 0 on an overlay-scrollbar platform, where nothing moves, which is exactly why
+     the two columns already agreed in a headless browser and not on Ray's screen. */
   /* ONE number: the band's own side padding AND the bleed that undoes it. Set on the id, because
      .panel's 18px is declared later than .sw-band's 15px and wins — reading 15 here would have
      left the column 3px out, which is exactly the kind of near-miss this rule exists to stop. */
@@ -87,7 +94,7 @@ window.addEventListener('load',restore);
   .kwd-rows{display:flex;flex-direction:column;gap:1px;
     margin-left:calc(var(--bandpad) * -1);margin-right:calc(var(--bandpad) * -1)}
   .kwd-row{display:flex;align-items:center;gap:10px;border-radius:6px;
-    padding:6px 8px 6px calc(var(--bandpad) + 8px);
+    padding:6px calc(8px + var(--kwd-sb, 0px)) 6px calc(var(--bandpad) + 8px);
     font-size:12.5px;font-weight:700;color:var(--ink)}
   .kwd-row:nth-child(odd){background:var(--wash)}
   .kwd-when{flex:none;width:92px;font-weight:900;font-variant-numeric:tabular-nums}
@@ -1192,6 +1199,8 @@ aside.ck[hidden]{display:none}
 .ck-tlmore li .st.ready{color:#1A5E3A;background:rgba(21,128,61,.14)}
 .ck-tlmore li .why{color:var(--muted,#8a94a0);font-style:italic}
 .ck-cw{border-top:1px dashed var(--line,#E6E6E6);margin-top:8px;padding-top:8px}
+.ck-lnk{color:var(--navy,#1A365D);font-weight:800;text-decoration:underline}
+.ck-lnk:hover{color:var(--orange-deep,#ED6F0B)}
 .ck-cw .ck-lbl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .ck-cwm{display:flex;align-items:center;gap:6px;font-size:10.5px;padding:2px 0 2px 5px}
 .ck-cwm .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
@@ -7470,6 +7479,111 @@ aside.ck[hidden]{display:none}
     render();
   }
 
+  /* ---- SPEND LENS (Ray, 19 Oct 2026, sending the Field Breakdown pivot for Reiss UK) ----------
+     "can you bring in Playbook - a few interesting RoAS improvement or spend optiimser tactics
+      from field breakdown ? - let's take an example of Reiss UK here - (you can see on RoAS avg:
+      Textured, Striped, Checked, Colourblock) has way better ROAS compared to Plain where most
+      Spend is at"
+     The shape Ray is pointing at is not about patterns: it is most of the money on the value that
+     returns least, while several values of the same field return far more on very little — a shape
+     readable on ANY cut. The engine is the worker's src/spendlens.js (/api/spendlens), reading
+     FeedHero's OWN cuts, the same records /roas's Segment select writes, so this rail and the ROAS
+     module can never disagree about a value's spend or return. A GET spends nothing and reads only
+     what is already stored: the panel opens on what is known and NAMES what has not been read,
+     rather than reading as an account with nothing wrong with it. ⚡ reads one market's cuts.
+     What FeedHero does not cut — g:pattern among them — stays /breakdown's to answer, and the
+     section says so rather than passing its eight cuts off as the whole feed. */
+  var SLD={},SLBUSY={},SLLIST=[],SLMORE={};
+  function loadSpend(brand,force){
+    if(!brand||SLBUSY[brand])return;
+    if(!force&&SLD[brand]&&Date.now()-(SLD[brand].got||0)<600000)return;
+    SLBUSY[brand]=true;
+    fetch('/api/spendlens?client='+encodeURIComponent(brand)).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok){ SLD[brand]={err:(d&&d.error)||'could not read',got:Date.now()}; return; }
+      d.got=Date.now(); SLD[brand]=d;
+    }).catch(function(){ SLD[brand]={err:'could not read',got:Date.now()}; })
+      .then(function(){ SLBUSY[brand]=false; if(BRAND===brand)render(); });
+  }
+  var SL_GLYPH={starved:'📈',laggard:'💸',dead:'🧊',unlisted:'🚫'};
+  function slMoney(c,n){ return (c||'')+fmt(Math.round(n||0)); }
+  function secSpend(brand){
+    var d=SLD[brand];
+    var h='<section class="ck-s ck-act ck-sl" id="ck-sl"><h4>💷 Where the spend sits<span class="n">';
+    if(!d){ loadSpend(brand); return h+'reading the cuts…</span></h4><p class="ck-h">How this account’s Google Ads money is split across its own catalogue — and which values of a field earn their share of it.</p></section>'; }
+    if(d.err)return h+'</span></h4><p class="ck-h">Could not read the spend lens — '+esc(d.err)+'.</p></section>';
+    if(!d.on)return h+'</span></h4><p class="ck-h">'+esc(d.why||'No Google Ads report for this account.')+'</p></section>';
+    var top=d.top||[],also=d.also||[],mk=d.markets||[];
+    h+=(top.length?top.length+' finding'+(top.length===1?'':'s'):'nothing to move')+(also.length?' · '+also.length+' more':'')+'</span></h4>';
+    h+='<p class="ck-h">Read off FeedHero’s own Google Ads cuts of the last 30 days — the same figures the ROAS module’s Segment view shows. Money is never blended across a currency, every rate is worked out from the rows shown, and a value with too little traffic to judge is counted rather than ranked.</p>';
+    if(!mk.length)h+='<p class="ck-h">No market of this account carries any spend in the last 30 days.</p>';
+    // WHAT HAS NOT BEEN READ IS NAMED — an unread cut is not a cut with nothing in it
+    var byM={}; (d.toRead||[]).forEach(function(t){ (byM[t.market]=byM[t.market]||[]).push(t.agg); });
+    SLLIST=top;
+    h+=top.map(function(f,i){
+      // EVERY LINK OUT OF THIS RAIL OPENS A NEW TAB (the standing rule, 19 Oct 2026): an
+      // ordinary navigation throws away the rail, the board's client filter and the reader's
+      // place in it, and the ↗ on the link already says a new tab is what happens.
+      var g=SL_GLYPH[f.k]||'•';
+      return row('',g+' <span class="ck-pill tg" title="'+esc(f.market.toUpperCase()+(f.agg?' · by '+slCut(d,f.agg):''))+'">'+esc(f.market.toUpperCase())+'</span><span class="nm">'+esc(f.head)+'</span>')
+        +'<div class="ck-actrow"><span class="ck-ev">'+esc(f.ev)+'</span>'
+        +(f.swing?'<span class="ck-say">Moving a tenth of '+esc(f.swing.fromV)+'’s spend ('+esc(slMoney(f.swing.cur,f.swing.mv))+') to '+esc(f.swing.toV)+'’s own return is '+esc(slMoney(f.swing.cur,f.swing.to))+' instead of '+esc(slMoney(f.swing.cur,f.swing.from))+' — arithmetic on two readings, not a forecast.</span>':'')
+        +'<span class="ck-how">'+(f.agg?'<b>'+esc(slCut(d,f.agg))+'</b> · ':'')+esc((slTac(d,f.k)||{}).why||'')+'</span>'
+        +'<span class="ck-actbtn"><button type="button" class="ck-brief go" data-sl="'+i+'">→ Brief this</button>'
+        +(f.agg?'<a class="ck-brief" href="/roas?brand='+encodeURIComponent(brand)+'&market='+encodeURIComponent(f.market)+'&seg='+encodeURIComponent(f.agg)+'" target="_blank" rel="noopener" title="Open this cut in the ROAS module — a new tab, so the rail and the board stay where they are">ROAS ↗</a>':'')
+        +'</span></div>';
+    }).join('');
+    if(!top.length&&(d.toRead||[]).length)h+='<p class="ck-h">Nothing has been read yet — read a market’s cuts below and the findings land here.</p>';
+    // the markets, what each has read, and the one button that reads the rest
+    h+='<div class="ck-cw">';
+    mk.forEach(function(m){
+      var miss=byM[m.market]||[];
+      h+='<div class="ck-cwm"><span class="nm">'+esc(m.market.toUpperCase())+'</span>'
+        +'<span class="tag">'+esc(slMoney(m.cur,m.spend))+' spend · '+(d.cuts.length-miss.length)+' of '+d.cuts.length+' cuts read'+(miss.length?' · not read: '+esc(miss.map(function(a){return slCut(d,a);}).join(', ')):'')+'</span>'
+        +(d.mcp&&miss.length?'<button type="button" class="ck-brief go" data-slr="'+esc(m.market)+'">⚡ Read its cuts</button>':'')
+        +(!d.mcp?'<span class="ck-chip" title="ROAS_MCP_TOKEN is not set on the worker">not connected</span>':'')+'</div>';
+    });
+    (d.refused||[]).slice(0,6).forEach(function(r){
+      h+='<div class="ck-cwm"><span class="tag">'+esc(r.market.toUpperCase()+' · '+slCut(d,r.agg)+' — '+r.why)+'</span></div>';
+    });
+    if((d.rest||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.rest||[]).length+' smaller market'+((d.rest||[]).length===1?'':'s')+' not read here: '+(d.rest||[]).map(function(x){return x.toUpperCase();}).join(', '))+'</span></div>';
+    if((d.quiet||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.quiet||[]).length+' market'+((d.quiet||[]).length===1?'':'s')+' carried no spend in the window')+'</span></div>';
+    h+='<p class="ck-h">These are the cuts FeedHero reports. For a field it does not cut — pattern, material, size, anything in the feed — the <a href="/breakdown?brand='+encodeURIComponent(brand)+(mk.length?'&market='+encodeURIComponent(mk[0].market):'')+'" class="ck-lnk" target="_blank" rel="noopener">Field Breakdown</a> reads the feed itself and pivots spend and ROAS against any of them \u2014 that is where the pattern reading above came from.</p></div>';
+    if(also.length){
+      h+='<div class="ck-actfoot"><button type="button" class="ck-brief" id="ck-sl-more" aria-expanded="'+(SLMORE[brand]?'true':'false')+'">'+(SLMORE[brand]?'▾ Fewer':'▸ '+also.length+' more on other cuts')+'</button></div>';
+      if(SLMORE[brand])h+='<ul class="ck-tlmore">'+also.map(function(f){
+        return '<li><span class="st">'+esc(f.market.toUpperCase())+'</span><span>'+esc(f.head)+' <span class="why">'+esc(f.ev)+'</span></span></li>';
+      }).join('')+'</ul>';
+    }
+    h+='</section>';
+    return h;
+  }
+  function slCut(d,k){ var c=(d.cuts||[]).filter(function(x){return x.k===k;})[0]; return c?c.n:String(k||'').replace(/_/g,' ').toLowerCase(); }
+  function slTac(d,k){ return {starved:{why:'Several values of this field return far more than the field does as a whole, on a sliver of the money.'},
+    laggard:{why:'The biggest-spending value of this field returns less than the field does as a whole.'},
+    dead:{why:'Values carrying real spend and no revenue at all over the window.'},
+    unlisted:{why:'Google Ads is still serving products this market’s feed does not hold.'}}[k]||null; }
+  function wireSpend(brand){
+    var body=$('#ck-r-body'); if(!body)return;
+    Array.prototype.forEach.call(body.querySelectorAll('[data-sl]'),function(b){
+      b.onclick=function(){
+        var f=SLLIST[+b.getAttribute('data-sl')]; if(!f||!window.FCCBrief)return;
+        window.FCCBrief({client:brand,task:f.brief.task,cat:f.brief.cat,source:'plan',scope:f.brief.scope});
+      };
+    });
+    Array.prototype.forEach.call(body.querySelectorAll('[data-slr]'),function(b){
+      b.onclick=function(){
+        var m=b.getAttribute('data-slr'); b.disabled=true; b.textContent='reading…';
+        fetch('/api/spendlens?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(m),{method:'POST'})
+          .then(function(r){return r.json();}).then(function(d){
+            if(!d||!d.ok){ tlSay((d&&d.error)||'could not read the cuts'); b.disabled=false; b.textContent='⚡ Read its cuts'; return; }
+            loadSpend(brand,true);
+          }).catch(function(){ b.disabled=false; b.textContent='⚡ Read its cuts'; });
+      };
+    });
+    var mb=$('#ck-sl-more');
+    if(mb)mb.onclick=function(){ SLMORE[brand]=!SLMORE[brand]; render(); };
+  }
+
   function render(){
     var body=$('#ck-r-body'),sub=$('#ck-sub');
     if(!body)return;
@@ -7477,8 +7591,8 @@ aside.ck[hidden]{display:none}
     // the volume panel is the SAME data the review section carries, given the whole rail — every
     // scanned market's breakdown open, nothing to scroll past to reach it
     body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true)
-      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND)+secTests(BRAND));
-    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap(); wireTests(BRAND);
+      :(secWrap(BRAND)+secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND)+secSpend(BRAND)+secTests(BRAND));
+    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND); wireWrap(); wireSpend(BRAND); wireTests(BRAND);
     if(RTAB==='volume')openAllMix(BRAND);
     subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);
@@ -7845,6 +7959,19 @@ aside.ck[hidden]{display:none}
     renderDone();
     band.hidden=false;
     $('#kwd-rows').__rows=rs;
+    align();
+  }
+  // The band's button column is read against INTAKE's, directly above it, so it has to allow for
+  // the gutter Intake's own scrollbar takes out of the table's content box. Measured off that
+  // scroller, never assumed: 0 where the platform overlays its scrollbar, and both halves of the
+  // band move together because one row rule carries it.
+  function align(){
+    var band=$('#kwd-band'); if(!band||band.hidden)return;
+    var t=document.getElementById('itbl'), sc=t&&t.closest?t.closest('.it-scroll'):null;
+    if(!sc)return;
+    var g=sc.offsetWidth-sc.clientWidth;
+    if(!(g>=0))return;                                  // a scroller not laid out yet says nothing
+    band.style.setProperty('--kwd-sb',Math.round(g)+'px');
   }
   // the briefed half — read-only, so every row ends at its ticket and none offers a brief
   function renderDone(){
@@ -7919,6 +8046,13 @@ aside.ck[hidden]{display:none}
     });
     // a brief saved anywhere on this page can have been one of these — re-read so the row goes
     document.addEventListener('fcc-briefs',function(){ pull(true); });
+    // the gutter appears and disappears with the table's own height (a filter, a fold, Show all)
+    // and with the window, so the measurement follows both rather than being taken once at boot
+    var pend=0;
+    var again=function(){ if(pend)return; pend=1; requestAnimationFrame(function(){ pend=0; align(); }); };
+    window.addEventListener('resize',again);
+    var t=document.getElementById('itbl');
+    if(t&&window.ResizeObserver)try{ new ResizeObserver(again).observe(t); }catch(e){}
   }
   function pull(briefsOnly){
     var jobs=[fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return null})];
@@ -7939,6 +8073,6 @@ aside.ck[hidden]{display:none}
     document.addEventListener('visibilitychange',function(){ if(!document.hidden)pull(true); });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
-  window.FCCKwDue={render:render,rows:rows,briefed:briefedRows};
+  window.FCCKwDue={render:render,rows:rows,briefed:briefedRows,align:align};
 })();
 </script>

@@ -73,6 +73,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/check_confirmdone.js
       - name: Workflow — the calendar's moments to brief, raised without a duplicate task
         run: NODE_PATH=$(npm root -g) node tools/check_kwdue.js
+      - name: Spend Lens — the Playbook's spend findings on the real rail
+        run: NODE_PATH=$(npm root -g) node tools/check_spendlens.js
       - name: Workflow — the Playbook's Test Lab section (proposals, competitors, → Brief as a test)
         run: NODE_PATH=$(npm root -g) node tools/check_testlab.js
       - name: KWCal name/date editing (reachable on a card; a bad date refused, not dropped)
@@ -119,6 +121,8 @@ jobs:
         run: node tools/test_stocklevers.mjs
       - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
         run: node tools/test_catalog.mjs
+      - name: Spend Lens engine (the cut read, the tactics, the lifted route wiring)
+        run: node tools/test_spendlens.mjs
       - name: Test Lab harness (library, book-wide evidence, competitor Shopping read, lifted routes)
         run: node tools/test_testlab.mjs
       - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)

@@ -35,7 +35,7 @@ path, a number, a date, a link, a list, free text, one value per product, or val
 | Length bands | text, values | 1–30 · 31–70 · 71–150 · 151–500 · 501+ characters |
 | Number bands | numbers | 0–10 · 10–25 · 25–50 · 50–100 · 100–250 · 250–500 · 500–1000 · 1000+ (`not a number` said) |
 | Split lists | lists, values, text | splits on `|||`, `|`, `;`, `, ` |
-| Newness by quarter | dates (`fs_date_of_birth`) | the calendar quarter a product first appeared in, newest first: `Q4 2026 · this quarter`, `Q3 2026 · last quarter`, then six more quarters, the rest in one `Before …` band; a quarter nothing arrived in is a 0 on an unbroken ladder; an unreadable date is said |
+| Newness by quarter | dates (`fs_date_of_birth`) | the calendar quarter a product first appeared in, newest first: `Q4 2026`, `Q3 2026`, then six more quarters, the rest in one `Before …` band; a quarter nothing arrived in is a 0 on an unbroken ladder; an unreadable date is said |
 
 **Four rules**, because these tables go in front of clients:
 
@@ -137,3 +137,52 @@ animation makes it the containing block of anything fixed inside it. It names no
   - `tools/check_breakdown.js`: every row total against a count made in the test from the stub's synthetic Ads rows,
     the out-of-feed id kept apart, % of total, ROAS and the CSV.
 
+
+## Columns that fit, widths you set, and spend · value · ROAS together (19 Oct 2026)
+
+Ray: "remove notion of this quarter and last quarter - make column always fit - also, allow width adjustment too across Pivot", then "can I see spend, conversion value, and ROAS together on one dashboard? … keep it as a bar chart on a specific segment".
+
+- A quarter is named by itself (`Q4 2026`), never "this quarter" / "last quarter" / "ahead" — the ladder and its order are unchanged.
+- The pivot is a fixed-layout table at 100% of its card: the columns share the width, a heading WRAPS rather than being cut, so at 1440px nothing scrolls sideways (a phone still pans — 64px a column is the floor).
+- Every column heading carries a grip: drag it to set that column's width, double-click or Enter for the default, ← → step 20px. Widths are remembered on this device by what the column IS (`rh`, `tot`, `ps`, `c:<value>`) in `fcc-bd-layout` › `pivot.w` (60 kept), so a value's column keeps its width when it comes back.
+- **Spend · conversion value · ROAS** sits under the pivot: one row per value of the pivot's rows field (or its columns field, `by`), spend and conversion value as two bars on ONE money scale, ROAS (conversion value ÷ spend from that segment's own sums) on its own scale with the whole selection's ROAS marked. Sort by spend / value / ROAS, top 15 then Show all, a row click filters the page. It reads the same 30-day Google Ads join as the Measure picker; before Ads is read it offers ⚡ Read Google Ads. Segments with no spend and no value are counted, not drawn.
+
+## Two readings in one table — the Layer (19 Oct 2026)
+
+Ray: "in the same pivot table … see 2 data points together to compare — within this split — volume of product (in count) and ROAS avg … is there a way to layering 2 data … in the same table?"
+
+- **Layer** beside Measure: Nothing · Products · Spend · Conv. value · ROAS · Clicks · Impressions · Conversions (never the measure itself).
+- Every cell, row total and column total then reads TWO things: the measure as the number (orange shade, as before) and the layer under it in small type with a blue bar on the layer's OWN scale — two readings never share one axis.
+- The engine sums the layer on the SAME rows and columns (`pivot` / `cross` take `opts.lw` — `1` counts products — and `opts.lw2` for a ratio), so a ROAS layer is conversion value ÷ spend from that cell's own products.
+- A Google Ads layer waits for the Ads read (and says so); the CSV carries the layer as a second block; the layer is part of the layout and a ★ view.
+
+## Layer 2 — three readings at once (Ray, 20 Oct 2026)
+
+"Add another layer (2) in too, in another colour, to compare 3 variables at once." A **Layer 2** picker sits beside
+Layer, with the same choices. Every cell, row total and column total then reads three things: the measure (the number,
+orange shade), Layer under it (blue bar) and Layer 2 under that (green bar, `#1BAF7A` / dark `#199E70` — the third
+validated colour of the Golden Record score-history chart). Each bar is on its own scale. Layer 2 is the same engine
+reading run a second time with its own weights — same rows, same columns, same fold, matched by value — so it is never
+a second rule. A Layer 2 that repeats the measure or Layer stands aside. The CSV carries it as a third block
+("Layer 2 · <reading>"). Remembered per device in `fcc-bd-layout › pivot.lay2`.
+
+## The pivot controls, in two boxes (Ray, 20 Oct 2026)
+
+"Rows and columns should stack on each other as dimension — layering fit together in right hand side." The controls
+are two boxes: **Dimensions** (Rows over Columns, each field and its reading on one line) on the left, **Readings**
+(Measure · Layer · Layer 2 side by side, each named with its colour swatch, then Show · Rows shown · ⤓ CSV) on the
+right. Under 1000px the boxes stack; under 520px each control takes its own line. Every id is unchanged.
+
+## Split by — what each cell is made of (Ray, 20 Oct 2026)
+
+"Add a layer 3 with fields from feed which only have < 3 unique values — eg % of product in Full / Sale." Not a
+fourth sum: a **Split by** picker beside Layer 2 draws ONE thin strip under every cell, row total and column total
+showing what that cell's products are made of, always adding to 100%, with the share of the part that matters named
+("27% on sale"). Offered: **Price type** first — built from the feed's own price and sale price (on sale = a sale
+price below the price; equal or none = full price; no price = not stated), since no feed carries it — then every
+field with two or three values (availability, gender, condition, a FULL/SALE label…). The named part is "on sale"
+for the price type, else the smaller stated part; it is drawn first in orange, the rest grey, a product with no value
+a hatched part of its own — never dropped. **Split share of** Products or Spend (Google Ads, last 30 days): "38% of
+products on sale, 61% of spend". The tooltip gives every part's count; the CSV carries a "Split · % on sale" block.
+Engine `split` / `splitFields` / `splitReader` read rows and columns exactly as pivot() and cross() do; the folded
+Other column sums its members. Remembered per device in `fcc-bd-layout › pivot.spl / splw`.

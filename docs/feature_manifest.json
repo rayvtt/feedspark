@@ -15770,7 +15770,7 @@
     {
       "name": "Test Lab: the rail draws the section after the Top 3",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "secActions(BRAND)+secTests(BRAND));",
+      "pattern": "+secSpend(BRAND)+secTests(BRAND));",
       "pr": 0
     },
     {
@@ -16208,7 +16208,7 @@
     {
       "name": "Breakdown: newness by quarter — a date reads as the quarter it falls in, newest first",
       "file": "docs/breakdown_engine.js",
-      "pattern": "if (back === 0) return qName(i) + ' · this quarter';",
+      "pattern": "if (back < QTR_BACK) return qName(i);           // a quarter is named by itself",
       "pr": 0
     },
     {
@@ -16221,6 +16221,60 @@
       "name": "Breakdown: newness leads every field picker and a date opens by quarter on panes + both pivot sides",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "<optgroup label=\"Newness · by quarter\">",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: pivot columns fit the card (fixed layout, headings wrap)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "table.pv{border-collapse:separate;border-spacing:0;font-size:12.5px;width:100%;table-layout:fixed}",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: drag a pivot column's width, remembered per device",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function setCW(k, w) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: spend \u00b7 conversion value \u00b7 ROAS together, one row per segment",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function renderSv3() {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: a second reading layered in every pivot cell",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function layCell(nL, nL2, mxL, i) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: the engine sums the layer on the same rows and columns",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: a third reading (Layer 2) in every pivot cell, green on its own scale",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function layer2(X, Q) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: pivot controls in two boxes — Dimensions left, Readings right",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "<div class=\"pvb\" role=\"group\" aria-label=\"Readings\">",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown: Split by — what each pivot cell is made of (Price type / a 2–3 value field)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function spCell(sp, a) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown engine: split() — parts per cell, Price type built from price + sale price",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "function split(S, rs, cs, f, m, opts) {",
       "pr": 0
     },
     {
@@ -16752,6 +16806,72 @@
       "file": "tools/check_stocklevers.js",
       "pattern": "opens Workflow in a NEW tab and leaves /stock where it was",
       "pr": 714
+    },
+    {
+      "name": "Spend Lens: the tactics a cut's shape supports",
+      "file": "cloudflare/feedspark-deck/src/spendlens.js",
+      "pattern": "export function cutFindings",
+      "pr": 719
+    },
+    {
+      "name": "Spend Lens: money is never blended across a currency",
+      "file": "cloudflare/feedspark-deck/src/spendlens.js",
+      "pattern": "money is never blended across a currency",
+      "pr": 719
+    },
+    {
+      "name": "Spend Lens: a laggard is judged against the rest of its field",
+      "file": "cloudflare/feedspark-deck/src/spendlens.js",
+      "pattern": "A LAGGARD IS JUDGED AGAINST THE REST OF ITS FIELD",
+      "pr": 719
+    },
+    {
+      "name": "Spend Lens: the route, GET reading only what is stored",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/spendlens'",
+      "pr": 719
+    },
+    {
+      "name": "Spend Lens: the Playbook rail's section",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function secSpend(",
+      "pr": 719
+    },
+    {
+      "name": "Spend Lens: an unread cut is named, never read as nothing wrong",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "WHAT HAS NOT BEEN READ IS NAMED",
+      "pr": 719
+    },
+    {
+      "name": "Keyword band: the button column allows for Intake's scrollbar gutter",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var(--kwd-sb, 0px)",
+      "pr": 717
+    },
+    {
+      "name": "PT Guard: the dissection filters by path depth",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function depthBar(rows)",
+      "pr": 722
+    },
+    {
+      "name": "PT Guard: the depth card's rows apply the same depth filter",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "#pt-dfil button[data-dk], .pop .pr.pk[data-dk]",
+      "pr": 722
+    },
+    {
+      "name": "Stock: the hero-size sheet lists every product type at the tier, one-size types blank",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!x.t.sz.length) return [x.t.k, '', ONE_SIZE_WORD, 'one size only'];",
+      "pr": 0
+    },
+    {
+      "name": "Stock: a blank Hero sizes cell is skipped on import, never read as no hero sizes",
+      "file": "docs/herosize_engine.js",
+      "pattern": "if (!raw) return;",
+      "pr": 0
     }
   ]
 }

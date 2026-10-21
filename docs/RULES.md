@@ -494,6 +494,14 @@ move with the tier. On the card:
 The ⇪ Import matches a document's rows against every tier's types, and ⬇ Sheet exports the tier on
 screen.
 
+**The sheet lists every type at the tier** (Ray, 20 Oct 2026: "when i hit download sheet with tier 4 filtered, i dont
+get 156 rows"). A tier chip counts every product type at that tier, but the card and ⬇ Sheet listed only the types with
+a size run. ⬇ Sheet now lists them all. A type the master sells in one size only has its Hero sizes cell left blank,
+its Source reads "One size — no hero sizes to pick" and its Sizes made in reads "one size only". On import, a blank Hero
+sizes cell is skipped, so a type nobody filled in never becomes a "no hero sizes" decision; "One size" written in the
+cell still records one. The card still lists only the types with a run: the tier chip's and the All chip's tooltips say
+how many are one size only.
+
 ## 3i. Held back from Google, the range-completion line, and the ad spend — one card (`/stock`)
 
 Ray, 1 Oct 2026, over the in-stock card: *"add in how many instock I have been excluded from Masterfeed to
