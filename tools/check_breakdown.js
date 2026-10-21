@@ -272,7 +272,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       ok('…every share on a card is its count over the selection\'s products (a ratio, never rounded into a different number)', op1.cards.length >= 1 && mixes.every(([, , , s, vn, n]) => n >= 5 && Math.abs(s - vn / n) < 1e-9), op1.cards);
       if (process.env.BD_SHOT6) await pg.locator('#sec-opp').screenshot({ path: process.env.BD_SHOT6 });
       await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
-      await pg.waitForTimeout(150); await pg.locator('#pv thead th.tot').first().scrollIntoViewIfNeeded();
+      await pg.waitForTimeout(150);
     }
 
     console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');
@@ -281,7 +281,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       ok('no sideways scroll at 1440px, every heading whole (wrapped, never cut), a grip on every column', fit.sw <= fit.cw + 1 && !fit.cut && fit.grips === fit.n && fit.n > 3, fit);
       const quarters = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv thead th')).map((th) => th.textContent).join('|'));
       ok('…a quarter is named by itself, never "this quarter" or "last quarter"', !/this quarter|last quarter|· ahead/.test(quarters), quarters);
-      const g = pg.locator('#pv thead th.tot .crz').first(), bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
+      const g = pg.locator('#pv thead th.tot .crz').first(); await g.scrollIntoViewIfNeeded(); await pg.waitForTimeout(200); const bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
       await pg.mouse.move(bb.x + 4, bb.y + 8); await pg.mouse.down(); await pg.mouse.move(bb.x + 64, bb.y + 8, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(150);
       const after = await pg.evaluate(() => ({ w: document.querySelector('#pv thead th.tot').getBoundingClientRect().width, saved: (JSON.parse(localStorage.getItem('fcc-bd-layout') || '{}').pivot || {}).w, sw: document.getElementById('pv').scrollWidth, cw: document.getElementById('pv').clientWidth }));
       ok('dragging a column\'s grip widens it, remembered on the device by what the column is', after.w > w0 + 40 && after.saved && after.saved.tot > w0 + 40, [w0, after]);
@@ -299,6 +299,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const pw = (i) => pg.evaluate((i) => Math.round(document.querySelectorAll('#panes .pane:not(.add)')[i].getBoundingClientRect().width), i);
     const w0 = await pw(2);
     await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded();
+    await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded(); await pg.waitForTimeout(200);
     const hb = await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').boundingBox();
     await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down();
     await pg.mouse.move(hb.x + hb.width / 2 + 160, hb.y + hb.height / 2, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(120);
