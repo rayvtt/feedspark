@@ -16184,7 +16184,7 @@
     {
       "name": "Breakdown: every section folds, a fresh device opens the first two",
       "file": "docs/FeedSpark_Breakdown.html",
-      "pattern": "var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };",
+      "pattern": "var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-opp': 1, 'sec-fields': 0, 'sec-how': 0 };",
       "pr": 0
     },
     {
