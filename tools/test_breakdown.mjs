@@ -286,7 +286,8 @@ console.log('· the split — what each cell is made of');
   }
   t('spotter page: the findings live IN the pivot — a flag per cell, a card, a ribbon — never a section of their own; briefs in a new tab',
     !/id="sec-opp"/.test(PG) && /id="pv-opp"/.test(PG) && /id="oppop"/.test(PG) && /function renderOpp\(rows\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /class="opp" type="button" data-op="/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(rows\);/.test(PG)
-    && /var pip = e\.target\.closest\('\.opp'\); if \(pip\) \{ e\.stopPropagation\(\);/.test(PG));
+    && /var pip = e\.target\.closest\('\.opp'\); if \(pip\) \{ e\.stopPropagation\(\);/.test(PG)
+    && /var OP_TOP = 10,/.test(PG) && /if \(kept >= OP_TOP \|\| !cellOf\(x\.g\)\) return;/.test(PG));
   t('a field that is not there reads nothing rather than guessing', B.split(S2, { f: 'g:product_type', m: 'raw' }, null, 'g:nope', null) === null);
   t('the page: a Split by picker, its share-of choice, a strip per cell, the CSV block, and the layout default', /id="pv-spl"/.test(PG) && /id="pv-splw"/.test(PG) && /function spCell\(sp, a\)/.test(PG) && /'Split · % '/.test(PG) && /spl: '', splw: 'n'/.test(PG));
 }

@@ -263,7 +263,8 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       // hover, a ribbon over the table that counts them, lights one kind up and steps through them; a selection reads itself
       await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
       await pg.waitForTimeout(200);
-      const op0 = await pg.evaluate(() => ({ sec: !!document.getElementById('sec-opp'), bar: document.getElementById('pv-opp').textContent, hidden: document.getElementById('pv-opp').hidden, pips: document.querySelectorAll('#pv td.opx .opp').length, cells: document.querySelectorAll('#pv td.opx').length }));
+      const op0 = await pg.evaluate(() => ({ sec: !!document.getElementById('sec-opp'), bar: document.getElementById('pv-opp').textContent, hidden: document.getElementById('pv-opp').hidden, pips: document.querySelectorAll('#pv td.opx .opp').length, cells: document.querySelectorAll('#pv td.opx').length, n: (function () { var m = /Top (\d+)/.exec(document.getElementById('pv-opp').textContent); return m ? +m[1] : null; })() }));
+      ok('…never more than the ten strongest flagged on a view', op0.n != null && op0.n >= 1 && op0.n <= 10 && op0.cells <= op0.n, op0);
       ok('Opportunities live in the pivot: no separate section, a ribbon over the table and a flag on every cell that stands out', !op0.sec && !op0.hidden && op0.pips >= 1 && op0.pips === op0.cells && /opportunit/.test(op0.bar), op0);
       const pip = pg.locator('#pv td.opx .opp').first();
       await pip.scrollIntoViewIfNeeded(); await pip.hover(); await pg.waitForTimeout(300);
