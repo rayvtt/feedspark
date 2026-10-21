@@ -158,9 +158,10 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     // a tap at the far end of a short title's row ("Needs a look") — past its words. Whether that spot is the title's button
     // (the phone layer may stretch it across the row) or the heading beside it (which the skim view hands to the button),
     // the card must end up toggled ONCE, never twice back to where it was
+    // "its words" = the title's own text node, not the folded line's summary beside it (the summary is not the title)
     await p.$eval('#find-card', (c) => c.scrollIntoView({ block: 'center' }));
     await p.waitForTimeout(150);
-    const row = await p.evaluate(() => { const h = document.querySelector('#find-card > .chead h3'), t = h.querySelector('.fold'), hr = h.getBoundingClientRect(), r = document.createRange(); r.selectNodeContents(t); const tr = r.getBoundingClientRect(); return { x: Math.round(hr.right - 8), y: Math.round(hr.top + hr.height / 2), past: Math.round(hr.right - 8 - tr.right), vh: innerHeight }; });
+    const row = await p.evaluate(() => { const h = document.querySelector('#find-card > .chead h3'), t = h.querySelector('.fold'), hr = h.getBoundingClientRect(), r = document.createRange(), w = Array.from(t.childNodes).find((n) => n.nodeType === 3 && n.textContent.trim()); r.selectNodeContents(w || t); const tr = r.getBoundingClientRect(); return { x: Math.round(hr.right - 8), y: Math.round(hr.top + hr.height / 2), past: Math.round(hr.right - 8 - tr.right), vh: innerHeight }; });
     const f0 = await exp('find-card');
     await p.touchscreen.tap(row.x, row.y); await p.waitForTimeout(150);
     const f1 = await exp('find-card');
