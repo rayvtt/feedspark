@@ -224,6 +224,24 @@ window.addEventListener('load',restore);
   table.pv tr.blank td.rh{color:var(--muted);font-style:italic}
   /* spend · conversion value · ROAS together, one row per segment: two bars on ONE money scale, ROAS on its own */
   .sv3{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  /* OPPORTUNITY SPOTTER */
+  .opb{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px;font-size:12.5px;color:var(--ink-2)}
+  .opl{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .opc{border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:12px;padding:12px 14px;background:var(--paper);display:flex;flex-direction:column;gap:6px;min-width:0}
+  .opc.k-gap,.opc.k-blank{border-left-color:#8A929C}.opc.k-scale,.opc.k-fund{border-left-color:#1BAF7A}.opc.k-trim,.opc.k-drain{border-left-color:#ED6F0B}.opc.k-mix{border-left-color:#2563EB}
+  .opk{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .opc h4{margin:0;font-size:14px;line-height:1.35}
+  .opc .ev{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+  .opc .op{font-size:12.5px;line-height:1.45}
+  .opc .op b{color:var(--ink)}
+  .opc .bar2{display:grid;grid-template-columns:62px 1fr 44px;gap:4px 8px;align-items:center;font-size:11.5px;color:var(--muted)}
+  .opc .bar2 span.t{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+  .opc .bar2 span.t i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:#2563EB}
+  .opc .bar2 span.t.bs i{background:#8A929C}
+  .opc .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+  .opc .acts .btn{height:28px;font-size:12px}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .opc .bar2 span.t i{background:#4C82E0}}
+  :root[data-theme="dark"] .opc .bar2 span.t i{background:#4C82E0}
   .sv3h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:8px}
   .sv3h b{font-size:13px}
   .sv3h .fld{height:30px;font-size:12px}
@@ -399,6 +417,15 @@ window.addEventListener('load',restore);
     </div>
   </section>
 
+  <section class="card fs" id="sec-opp">
+    <button class="fhd" type="button" aria-expanded="true" aria-controls="sec-opp"><span class="ft"><b>Opportunities</b><span class="fl" id="ln-opp">What stands out in the selection — counted off the feed</span></span><span class="chev" aria-hidden="true">▾</span></button>
+    <div>
+      <div class="opb" id="op-bar"></div>
+      <div id="op"><div class="empty">Waiting for the feed…</div></div>
+      <p class="note" id="op-note"></p>
+    </div>
+  </section>
+
   <section class="card fs" id="sec-fields">
     <button class="fhd" type="button" aria-expanded="true" aria-controls="sec-fields"><span class="ft"><b>Every field in this feed</b><span class="fl" id="ln-fields">How full each field is and what it holds</span></span><span class="chev" aria-hidden="true">▾</span></button>
     <div>
@@ -479,7 +506,7 @@ window.addEventListener('load',restore);
   function mktLabel(m) { return m.mkt.replace(/-fb$/, '').toUpperCase() + (m.meta ? ' · Meta' : ''); }
 
   // ---- folds (Ray's standing rule): the head is the toggle, the device keeps the choice, a jump opens what it points at
-  var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };
+  var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-opp': 1, 'sec-fields': 0, 'sec-how': 0 };
   var FOLD = get('fcc-bd-fold', {});
   function isOpen(id) { return FOLD[id] == null ? !!FOLD_DEF[id] : !!FOLD[id]; }
   function applyFold(id, open) {
@@ -990,8 +1017,8 @@ window.addEventListener('load',restore);
     var box = $('#pv'), note = $('#pv-note');
     renderAdsLine();
     PV = pivotData();
-    if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; note.textContent = ''; renderSv3(); return; }
-    if (!PV) { box.innerHTML = '<div class="empty">Pick a field for the rows.</div>'; note.textContent = ''; $('#ln-pivot').textContent = 'Any field against any other'; renderSv3(); return; }
+    if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; note.textContent = ''; renderSv3(); renderOpp(); return; }
+    if (!PV) { box.innerHTML = '<div class="empty">Pick a field for the rows.</div>'; note.textContent = ''; $('#ln-pivot').textContent = 'Any field against any other'; renderSv3(); renderOpp(); return; }
     var M = MEAS[meas()], W = PV.weighted, R = W && M.ratio, show = R ? 'n' : S.L.pivot.show;
     var q = S.q.toLowerCase(), rows = q ? PV.rows.filter(function (r) { return r.v.toLowerCase().indexOf(q) >= 0; }) : PV.rows;
     var ratio = function (c, c2) { return c > 0 ? c2 / c : null; };
@@ -1042,7 +1069,7 @@ window.addEventListener('load',restore);
     if (PV.multi) bits.push(W ? 'a product with several values carries its figures into each, so rows and columns can add to more than the total' : 'a product with several values is counted once in each, so rows and columns can add to more than the total');
     note.innerHTML = bits.join(' · ') + '. Click a cell to filter the whole page to it.';
     $('#ln-pivot').textContent = B.specName(S.st, PV.rs) + (PV.cs ? ' × ' + B.specName(S.st, PV.cs) : '') + (W ? ' · ' + M.l : '') + ' · ' + n0(PV.rowsAll || PV.rows.length) + ((PV.rowsAll || PV.rows.length) === 1 ? ' row' : ' rows');
-    renderSv3();
+    renderSv3(); renderOpp();
   }
   // ---- spend, conversion value and ROAS together (Ray, 19 Oct 2026: "can I see spend, conversion value, and ROAS together
   // on one dashboard? … keep it as a bar chart on a specific segment"): one row per value of the pivot's rows (or columns)
@@ -1412,6 +1439,92 @@ window.addEventListener('load',restore);
 
   // ---- render ------------------------------------------------------------------------------------------------------------
   function renderData() { MASKS = {}; renderFilterBar(); renderPanes(); renderPivot(); }
+  // ---- OPPORTUNITY SPOTTER (Ray, 21 Oct 2026: "build an opportunity spotter mechanism when a segment / data table is
+  // selected"): a filter (a cell, a row, a value clicked anywhere) is read against the whole feed; with no filter every row
+  // and cell of the pivot is. B.spot counts it; this only words it — every figure on a card is a count or a ratio of sums.
+  function wfTab(u) { var w = window.open(u, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = u; return w; }
+  function b64url(o) { var s = unescape(encodeURIComponent(JSON.stringify(o))); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function mmyy() { var d = new Date(); return ('0' + (d.getMonth() + 1)).slice(-2) + String(d.getFullYear()).slice(-2); }
+  var OPK = { mix: 'Over-indexes', gap: 'Under-represented', blank: 'Data gap', scale: 'Scale it', trim: 'Fix or trim', fund: 'Under-funded', drain: 'Over-funded' };
+  var OP = null;
+  function oppData() {
+    if (!S.st) return null;
+    var ads = adsReady() ? { cost: S.aj.f.cost, value: S.aj.f.value } : null;
+    if (S.filters.length) {
+      var m = B.mask(S.st, S.filters);
+      return { mode: 'sel', R: B.spot(S.st, { groups: function (r) { return m[r] ? ['sel'] : null; }, ads: ads, exclude: S.filters.map(function (f) { return f.spec.f; }), top: 9 }) };
+    }
+    var rs = B.resolve(S.st, S.L.pivot.r || {}); if (!rs) return null;
+    var cs = B.resolve(S.st, S.L.pivot.c || {}), RR = B.reader(S.st, rs), RC = cs ? B.reader(S.st, cs) : null;
+    var gk = function (r) {
+      var a = RR.of(r); if (!a.length) a = [B.BLANK];
+      var b = RC ? RC.of(r) : null; if (b && !b.length) b = [B.BLANK];
+      var out = a.map(function (v) { return 'r\u0001' + v; });
+      if (b) a.forEach(function (v) { b.forEach(function (w) { out.push('c\u0001' + v + '\u0001' + w); }); });
+      return out;
+    };
+    return { mode: 'scan', rs: rs, cs: cs, R: B.spot(S.st, { groups: gk, ads: ads, exclude: [rs.f, cs && cs.f], top: 9 }) };
+  }
+  function oppGroup(D, g) {
+    if (g === 'sel') return 'this selection';
+    var p = g.split('\u0001'); if (p[0] === 'r') return p[1];
+    return p[1] + ' × ' + p[2];
+  }
+  function oppText(D, x) {
+    var G = oppGroup(D, x.g), V = x.v === B.BLANK ? 'not stated' : x.v, L = x.label, ev = '', op = '', h = '';
+    var pcs = function (a) { return pc(a); };
+    if (x.k === 'mix') { h = pcs(x.s) + ' of ' + G + ' is ' + L + ' · ' + V; ev = 'against ' + pcs(x.b) + ' across the feed — ' + (x.b ? (Math.round(x.s / x.b * 10) / 10) + '× the share' : 'nowhere else') + ' · ' + n0(x.vn) + ' of ' + n0(x.n) + ' products'; op = '<b>Lean in:</b> ' + L + ' · ' + V + ' defines this segment — give it its own custom label or listing group, and write titles, keywords and creative for it rather than for the catalogue average.'; }
+    else if (x.k === 'gap') { h = G + ' carries little ' + L + ' · ' + V; ev = pcs(x.s) + ' here against ' + pcs(x.b) + ' across the feed · ' + n0(x.vn) + ' of ' + n0(x.n) + ' products'; op = '<b>Check the range:</b> either the segment genuinely lacks ' + V + ' (a buying gap worth raising with the client) or the field is filled differently here — confirm before it skews targeting.'; }
+    else if (x.k === 'blank') { h = pcs(x.s) + ' of ' + G + ' has no ' + L; ev = 'against ' + pcs(x.b) + ' blank across the feed · ' + n0(x.vn) + ' products'; op = '<b>Fill the gap:</b> these products drop out of every split, label and filter that reads ' + L + ' — populate it (feed rule, supplemental, or SparkAI) before optimising this segment.'; }
+    else if (x.k === 'scale') { h = L + ' · ' + V + ' earns ' + roasTxt(x.roas) + ' ROAS inside ' + G; ev = 'against ' + roasTxt(x.groas) + ' for the segment, on only ' + pcs(x.sh) + ' of its spend (' + money(x.cost) + ' → ' + money(x.val) + ') · ' + n0(x.vn) + ' products'; op = '<b>Scale it:</b> split ' + V + ' out of this segment (custom label / listing group) so it can carry a higher target and more budget, and prioritise its titles and keywords.'; }
+    else if (x.k === 'trim') { h = L + ' · ' + V + ' drags ' + G + ' at ' + roasTxt(x.roas) + ' ROAS'; ev = 'against ' + roasTxt(x.groas) + ' for the segment, taking ' + pcs(x.sh) + ' of its spend (' + money(x.cost) + ' → ' + money(x.val) + ') · ' + n0(x.vn) + ' products'; op = '<b>Fix or trim:</b> check price, stock and titles on these products first; if the content is sound, label them to bid down rather than let them dilute the segment.'; }
+    else if (x.k === 'fund') { h = G + ' returns ' + roasTxt(x.roas) + ' on ' + pcs(x.ss) + ' of spend'; ev = 'against ' + roasTxt(x.broas) + ' across the feed — it holds ' + pcs(x.ps) + ' of the products and ' + pcs(x.vs) + ' of conversion value (' + money(x.cost) + ' → ' + money(x.val) + ')'; op = '<b>Under-funded:</b> a segment out-earning the account on less than its share of spend — its own custom label and a higher-priority listing group would let it take more budget.'; }
+    else if (x.k === 'drain') { h = G + ' takes ' + pcs(x.ss) + ' of spend at ' + roasTxt(x.roas) + ' ROAS'; ev = 'against ' + roasTxt(x.broas) + ' across the feed — from ' + pcs(x.ps) + ' of the products (' + money(x.cost) + ' → ' + money(x.val) + ')'; op = '<b>Over-funded:</b> more spend than its share of the catalogue for a below-account return — review content quality and stock here, and label it so it can be bid down.'; }
+    return { h: h, ev: ev, op: op, G: G, V: V };
+  }
+  function oppBars(x) {
+    if (x.k !== 'mix' && x.k !== 'gap' && x.k !== 'blank') return '';
+    var row = function (l, v, c) { return '<span>' + esc(l) + '</span><span class="t' + c + '"><i style="width:' + Math.min(100, 100 * v).toFixed(1) + '%"></i></span><span>' + pc(v) + '</span>'; };
+    return '<div class="bar2">' + row('Here', x.s, '') + row('All feed', x.b, ' bs') + '</div>';
+  }
+  function renderOpp() {
+    var box = $('#op'), bar = $('#op-bar'), note = $('#op-note'); if (!box) return;
+    if (!S.st) { box.innerHTML = '<div class="empty">' + (S.brand ? 'Reading the feed…' : 'Pick a brand.') + '</div>'; bar.innerHTML = ''; note.textContent = ''; return; }
+    var sig = [S.gen, S.st.n, JSON.stringify(S.filters), JSON.stringify(S.L.pivot.r || null), JSON.stringify(S.L.pivot.c || null), adsReady() ? 1 : 0].join('|');
+    var D = OP && OP.sig === sig ? OP : oppData(); if (D) D.sig = sig; OP = D;
+    if (!D) { box.innerHTML = '<div class="empty">Pick a field for the pivot’s rows, or click a value anywhere — the spotter reads what stands out.</div>'; bar.innerHTML = ''; note.textContent = ''; $('#ln-opp').textContent = 'What stands out in the selection'; return; }
+    var R = D.R;
+    bar.innerHTML = D.mode === 'sel'
+      ? '<span>Reading <b>the selection</b> (' + S.filters.map(function (f) { return esc(B.specName(S.st, f.spec)) + ' = ' + esc(f.vals.join(' / ')); }).join(' · ') + ') against the whole feed</span>'
+      : '<span>No selection — reading every row' + (D.cs ? ' and cell' : '') + ' of the pivot (' + esc(B.specName(S.st, D.rs)) + (D.cs ? ' × ' + esc(B.specName(S.st, D.cs)) : '') + ') against the whole feed. Click a cell to read just that one.</span>';
+    if (!R.found.length) {
+      box.innerHTML = '<div class="empty">Nothing stands out' + (D.mode === 'sel' ? ' in this selection' : '') + ' — every short field reads within range of the feed' + (adsReady() ? ' and its Google Ads' : '') + '.</div>';
+    } else {
+      box.innerHTML = '<div class="opl">' + R.found.map(function (x, i) {
+        var t = oppText(D, x);
+        return '<div class="opc k-' + x.k + '" data-k="' + x.k + '" data-f="' + esc(x.f || '') + '" data-v="' + esc(x.v == null ? '' : x.v) + '" data-s="' + (x.s != null ? x.s : '') + '" data-vn="' + (x.vn != null ? x.vn : '') + '" data-n="' + x.n + '"><span class="opk">' + esc(OPK[x.k]) + (D.mode === 'scan' ? ' · ' + esc(t.G) : '') + '</span><h4>' + esc(t.h) + '</h4><div class="ev">' + esc(t.ev) + '</div>' + oppBars(x) + '<div class="op">' + t.op + '</div>'
+          + '<div class="acts"><button class="btn" type="button" data-opf="' + i + '" title="Filter the whole page to it">⌕ Filter to it</button><button class="btn" type="button" data-opb="' + i + '" title="Brief this in Workflow (opens a new tab)">→ Brief</button></div></div>';
+      }).join('') + '</div>';
+    }
+    var bits = [n0(R.total) + (R.total === 1 ? ' finding' : ' findings') + ' — the ' + n0(R.found.length) + ' strongest shown', 'read through ' + n0(R.fields.length) + ' short fields (' + esc(R.fields.slice(0, 8).join(', ')) + (R.fields.length > 8 ? ' …' : '') + ')', 'a group under ' + R.min + ' products is never read'];
+    if (!adsReady()) bits.push('scale / trim / funding read once Google Ads is in');
+    note.innerHTML = bits.join(' · ') + '.';
+    $('#ln-opp').textContent = R.found.length ? n0(R.found.length) + ' to look at' + (D.mode === 'sel' ? ' in the selection' : ' across the pivot') : 'Nothing stands out';
+  }
+  $('#op').addEventListener('click', function (e) {
+    var D = OP; if (!D) return;
+    var f = e.target.closest('[data-opf]'), b = e.target.closest('[data-opb]'); if (!f && !b) return;
+    var x = D.R.found[+(f || b).getAttribute(f ? 'data-opf' : 'data-opb')]; if (!x) return;
+    if (f) {
+      if (D.mode === 'scan') { var p = x.g.split('\u0001'); setOnly(D.rs, p[1]); if (p[0] === 'c') setOnly(D.cs, p[2]); }
+      if (x.spec && x.v != null && x.k !== 'gap') setOnly(x.spec, x.v);
+      renderData(); reveal('sec-opp'); toast('Filtered'); return;
+    }
+    var t = oppText(D, x), mk = String(S.mkt || '').toUpperCase();
+    var sel = D.mode === 'sel' ? S.filters.map(function (fl) { return B.specName(S.st, fl.spec) + ' = ' + fl.vals.join(' / '); }).join('; ') : t.G;
+    var lines = ['Opportunity (Field Breakdown): ' + OPK[x.k], 'Segment: ' + sel, 'Finding: ' + t.h, 'Evidence: ' + t.ev, 'Action: ' + t.op.replace(/<[^>]+>/g, ''), 'Counted off the ' + S.brand + ' ' + mk + ' feed' + (adsReady() ? ' and Google Ads (last 30 days)' : '') + ' on ' + new Date().toLocaleDateString('en-GB') + '.'];
+    wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Feed Opportunity - ' + OPK[x.k] + ' - ' + (x.label ? x.label + ' ' + t.V : t.G) + ' - ' + S.brand + ' ' + mk + ' - ' + mmyy(), cat: (x.k === 'blank' ? 'technical' : 'technical'), scope: lines.join('\n') }));
+  });
   function renderAll() { renderStatus(); renderUnit(); renderAddField(); renderViews(); renderPivotCtl(); renderData(); renderFields(); foldBtns(); }
   renderViews();
   boot();

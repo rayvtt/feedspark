@@ -259,6 +259,20 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.waitForTimeout(150);
       const back = await pg.evaluate(() => ({ hidden: document.getElementById('pv-ads').hidden, last: Array.from(document.querySelectorAll('#pv table thead th')).pop().textContent }));
       ok('…and back on Products the table counts again', back.hidden && back.last === 'Row total', back);
+      // ---- the opportunity spotter: with no selection it reads every row and cell; click a cell and it reads just that
+      await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
+      await pg.waitForTimeout(200);
+      const op0 = await pg.evaluate(() => ({ bar: document.getElementById('op-bar').textContent, cards: document.querySelectorAll('#op .opc').length, ln: document.getElementById('ln-opp').textContent }));
+      ok('Opportunities: with no selection every row and cell of the pivot is read against the feed', /No selection — reading every row and cell/.test(op0.bar) && op0.cards >= 1 && /to look at|Nothing stands out/.test(op0.ln), op0);
+      await pg.locator('#pv tbody td.c:not(.z)').first().click(); await pg.waitForTimeout(250);
+      const op1 = await pg.evaluate(() => ({ bar: document.getElementById('op-bar').textContent, cards: Array.from(document.querySelectorAll('#op .opc')).map((c) => [c.dataset.k, c.dataset.f, c.dataset.v, +c.dataset.s, +c.dataset.vn, +c.dataset.n]) }));
+      ok('…click a cell and it reads just that selection', /Reading the selection/.test(op1.bar), op1.bar);
+      // the selection's own products, counted off the stub's XML: the pivot is product_type tier 2 × the columns field
+      const mixes = op1.cards.filter((c) => (c[0] === 'mix' || c[0] === 'gap' || c[0] === 'blank') && c[1] && c[1] !== '@price');
+      ok('…every share on a card is its count over the selection\'s products (a ratio, never rounded into a different number)', op1.cards.length >= 1 && mixes.every(([, , , s, vn, n]) => n >= 5 && Math.abs(s - vn / n) < 1e-9), op1.cards);
+      if (process.env.BD_SHOT6) await pg.locator('#sec-opp').screenshot({ path: process.env.BD_SHOT6 });
+      await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
+      await pg.waitForTimeout(150);
     }
 
     console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');
@@ -267,7 +281,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       ok('no sideways scroll at 1440px, every heading whole (wrapped, never cut), a grip on every column', fit.sw <= fit.cw + 1 && !fit.cut && fit.grips === fit.n && fit.n > 3, fit);
       const quarters = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv thead th')).map((th) => th.textContent).join('|'));
       ok('…a quarter is named by itself, never "this quarter" or "last quarter"', !/this quarter|last quarter|· ahead/.test(quarters), quarters);
-      const g = pg.locator('#pv thead th.tot .crz').first(), bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
+      const g = pg.locator('#pv thead th.tot .crz').first(); await g.scrollIntoViewIfNeeded(); await pg.waitForTimeout(200); const bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
       await pg.mouse.move(bb.x + 4, bb.y + 8); await pg.mouse.down(); await pg.mouse.move(bb.x + 64, bb.y + 8, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(150);
       const after = await pg.evaluate(() => ({ w: document.querySelector('#pv thead th.tot').getBoundingClientRect().width, saved: (JSON.parse(localStorage.getItem('fcc-bd-layout') || '{}').pivot || {}).w, sw: document.getElementById('pv').scrollWidth, cw: document.getElementById('pv').clientWidth }));
       ok('dragging a column\'s grip widens it, remembered on the device by what the column is', after.w > w0 + 40 && after.saved && after.saved.tot > w0 + 40, [w0, after]);
@@ -285,6 +299,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const pw = (i) => pg.evaluate((i) => Math.round(document.querySelectorAll('#panes .pane:not(.add)')[i].getBoundingClientRect().width), i);
     const w0 = await pw(2);
     await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded();
+    await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded(); await pg.waitForTimeout(200);
     const hb = await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').boundingBox();
     await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down();
     await pg.mouse.move(hb.x + hb.width / 2 + 160, hb.y + hb.height / 2, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(120);
@@ -314,13 +329,13 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
 
     console.log('· folds');
     const fold = () => pg.evaluate(() => Array.from(document.querySelectorAll('section.fs')).map((c) => c.id + ':' + (c.classList.contains('folded') ? 0 : 1)).join(' '));
-    ok('a fresh device opens Breakdown and Pivot, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:0 sec-how:0', await fold());
+    ok('a fresh device opens Breakdown, Pivot and Opportunities, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-opp:1 sec-fields:0 sec-how:0', await fold());
     ok('…a folded body is not painted', await pg.evaluate(() => document.querySelector('#fd').getBoundingClientRect().height === 0));
     ok('…a folded head still says what is inside', /fields carry a value/.test(await pg.textContent('#ln-fields')));
     await pg.click('#sec-pivot .fhd');
     ok('a click on the head folds it', (await fold()).indexOf('sec-pivot:0') >= 0);
     await pg.click('#openall');
-    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:1 sec-how:1');
+    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-opp:1 sec-fields:1 sec-how:1');
     await pg.click('#sec-how .fhd');
 
     console.log('· 📖 Guidebook');
@@ -369,7 +384,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     await pg.reload(); await ready(pg); await pg.waitForTimeout(150);
     const after = await pg.evaluate(() => ({ panes: window.__FCCBreakdown.state().L.panes.map((p) => p.f), fold: Array.from(document.querySelectorAll('section.fs')).map((c) => c.classList.contains('folded') ? 0 : 1).join('') }));
     ok('the fields survive a reload', after.panes.join() === 'g:product_type,g:color,g:brand,g:availability,g:product_highlight*', after.panes);
-    ok('…and so does every fold the person set', after.fold === '1110', after.fold);
+    ok('…and so does every fold the person set', after.fold === '11110', after.fold);
     await pg.click('#mkts [data-mkt="gb-fb"]'); await ready(pg);
     const meta2 = await pg.evaluate(() => ({ reads: window.__bdReads, panes: window.__FCCBreakdown.state().L.panes.length, view: document.querySelector('#views').textContent }));
     ok('the Meta market reads its own feed, and the fields come with it', /market=gb-fb$/.test(meta2.reads[meta2.reads.length - 1]) && meta2.panes === 5, meta2);
