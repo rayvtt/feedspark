@@ -1507,7 +1507,7 @@ window.addEventListener('load',restore);
     return '<div class="bar2">' + row('Here', x.s, '') + row('All feed', x.b, ' bs') + '</div>';
   }
   var KCOL = { mix: '#2563EB', gap: '#8A929C', blank: '#8A929C', scale: '#1BAF7A', fund: '#1BAF7A', trim: '#ED6F0B', drain: '#ED6F0B' };
-  var OPORD = ['scale', 'fund', 'mix', 'trim', 'drain', 'blank', 'gap'], OPSPOT = '', OPCUR = -1, OPT = 0, OPA = null;
+  var OP_TOP = 10, OPORD = ['scale', 'fund', 'mix', 'trim', 'drain', 'blank', 'gap'], OPSPOT = '', OPCUR = -1, OPT = 0, OPA = null;
   // each flagged cell keeps its findings; a corner flag in the strongest finding's colour, a card on hover, the ribbon above
   // the table counting them, spotlighting one kind and stepping through them in order of strength
   function renderOpp(rows) {
@@ -1522,12 +1522,17 @@ window.addEventListener('load',restore);
       var ri = {}, cj = {}, byG = {}, gs = [];
       rows.forEach(function (r, i) { ri[r.v] = i; });
       PV.cols.forEach(function (c, j) { if (!c.other) cj[c.v] = j; });
-      F.forEach(function (x, n) { if (!byG[x.g]) { byG[x.g] = []; gs.push(x.g); } byG[x.g].push(n); });
+      // only the OP_TOP strongest findings that land on a cell this table draws — strongest first; a finding on a row
+      // the table is not showing never takes a slot (Ray, 21 Oct 2026: "aggressively filter to only top 7-10 per view")
+      var tdOf = {}, kept = 0;
+      var cellOf = function (g) {
+        if (g in tdOf) return tdOf[g];
+        var p = g.split('\u0001'), i = ri[p[1]], ci = i == null ? null : p[0] === 'r' ? i + ':r' : PV.cs && cj[p[2]] != null ? i + ':' + cj[p[2]] : null;
+        return (tdOf[g] = ci ? box.querySelector('[data-ci="' + ci + '"]') : null);
+      };
+      F.forEach(function (x, n) { if (kept >= OP_TOP || !cellOf(x.g)) return; kept++; if (!byG[x.g]) { byG[x.g] = []; gs.push(x.g); } byG[x.g].push(n); });
       gs.forEach(function (g) {
-        var p = g.split('\u0001'), i = ri[p[1]]; if (i == null) return;
-        var ci = p[0] === 'r' ? i + ':r' : PV.cs && cj[p[2]] != null ? i + ':' + cj[p[2]] : null; if (!ci) return;
-        var td = box.querySelector('[data-ci="' + ci + '"]'); if (!td) return;
-        var xs = byG[g], k0 = F[xs[0]].k, ix = pl.length;
+        var td = tdOf[g], xs = byG[g], k0 = F[xs[0]].k, ix = pl.length;
         td.classList.add('opx', 'k-' + k0); xs.forEach(function (n) { td.classList.add('ok-' + F[n].k); });
         td.insertAdjacentHTML('beforeend', '<button class="opp" type="button" data-op="' + ix + '" aria-label="' + esc(xs.length + (xs.length === 1 ? ' opportunity' : ' opportunities') + ' — ' + oppGroup(D, g)) + '"></button>');
         pl.push({ g: g, xs: xs, td: td, k: k0 });
@@ -1545,7 +1550,8 @@ window.addEventListener('load',restore);
     var cnt = {}; pl.forEach(function (o) { o.xs.forEach(function (n) { var k = F[n].k; cnt[k] = (cnt[k] || 0) + 1; }); });
     if (OPSPOT && OPSPOT !== 'all' && !cnt[OPSPOT]) OPSPOT = '';
     var nf = pl.reduce(function (a, o) { return a + o.xs.length; }, 0);
-    bar.innerHTML = '<button class="och oall" type="button" data-ok="all" aria-pressed="' + (OPSPOT === 'all') + '" title="Light up every flagged cell"><span><b>✦</b> ' + n0(nf) + (nf === 1 ? ' opportunity' : ' opportunities') + ' in ' + n0(pl.length) + (pl.length === 1 ? ' cell' : ' cells') + '</span></button>'
+    bar.innerHTML = '<button class="och oall" type="button" data-ok="all" aria-pressed="' + (OPSPOT === 'all') + '" title="Light up every flagged cell"><span><b>✦</b> Top ' + n0(nf) + (nf === 1 ? ' opportunity' : ' opportunities') + ' in ' + n0(pl.length) + (pl.length === 1 ? ' cell' : ' cells') + '</span></button>'
+      + (D.R.total > nf ? '<span class="omu" title="Every finding is ranked by how far it stands out and how many products it covers; only the strongest ' + OP_TOP + ' on this table are flagged.">of ' + n0(D.R.total) + ' spotted</span>' : '')
       + OPORD.filter(function (k) { return cnt[k]; }).map(function (k) { return '<button class="och k-' + k + '" type="button" data-ok="' + k + '" aria-pressed="' + (OPSPOT === k) + '" title="Light up the cells where something ' + esc(OPK[k].toLowerCase()) + '"><i class="d"></i><span>' + esc(OPK[k]) + ' ' + cnt[k] + '</span></button>'; }).join('')
       + ads + '<span class="ostep"><span id="op-pos">' + (OPCUR >= 0 ? '' : 'hover a ◥ flag, or') + '</span><button class="btn" type="button" data-os="-1" title="The previous opportunity">‹</button><button class="btn" type="button" data-os="1" title="Review them one by one, strongest first">Review ›</button></span>';
     bar.hidden = false; OPCUR = -1; oppSpot();

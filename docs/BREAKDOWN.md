@@ -202,7 +202,7 @@ on the cell) opens its **card** beside the cell — every finding for that cell;
 itself still filters), Esc / ✕ / outside click close. A **ribbon above the table** counts them ("✦ 25 opportunities in
 5 cells") with a chip per kind that **lights up** only the cells carrying it and dims the rest, and **Review ›** steps
 through them strongest first. With a selection the ribbon reads it instead, one chip per finding, each opening its
-card. A finding on a row the table is not showing is counted, never flagged on the wrong cell. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
+card. Only the TEN STRONGEST findings that land on a cell the table draws are flagged (Ray, 21 Oct 2026: "potentially too many opportunities … aggressively filter to only top 7-10 opportunities per view") — ranked by how far each stands out times how many products it covers; the ribbon reads "Top 10 … of N spotted". A finding on a row the table is not showing never takes a slot. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
 (2–40 values, filled on 30%+: custom labels, gender, colour, price type, product_type tiers, newness by quarter — never
 an id) and returns findings, each COUNTED, never written by a model:
 
