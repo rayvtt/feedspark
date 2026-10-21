@@ -186,3 +186,26 @@ a hatched part of its own — never dropped. **Split share of** Products or Spen
 products on sale, 61% of spend". The tooltip gives every part's count; the CSV carries a "Split · % on sale" block.
 Engine `split` / `splitFields` / `splitReader` read rows and columns exactly as pivot() and cross() do; the folded
 Other column sums its members. Remembered per device in `fcc-bd-layout › pivot.spl / splw`.
+
+## Opportunities — the spotter (Ray, 21 Oct 2026)
+
+"Can we also build an opportunity spotter mechanism when a segment / data table is selected?" — over a pivot where
+Gemini had written "Q3 2026 Low Margin at 46% male … 686% ROAS". A section under the pivot reads **the selection**
+(the page's filters — a clicked cell, a row, a value anywhere) against the whole feed; with no selection it reads
+**every row and cell** of the pivot. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
+(2–40 values, filled on 30%+: custom labels, gender, colour, price type, product_type tiers, newness by quarter — never
+an id) and returns findings, each COUNTED, never written by a model:
+
+| Kind | Rule |
+|---|---|
+| Over-indexes | a value's share ≥ 1.5× and ≥ 10 points above the feed's |
+| Under-represented | ≤ half the feed's share and ≥ 15 points below |
+| Data gap | the field is blank on ≥ 25% of the group, twice the feed's blank share |
+| Scale it / Fix or trim | Google Ads: a value earning ≥ 1.3× / ≤ 0.7× the group's ROAS on ≥ 5% / ≥ 10% of its spend |
+| Under-funded / Over-funded | the group's share of spend far from its share of products, at a ROAS ±30% of the feed's |
+
+Floors: a group of ≥ 20 products and a value of ≥ 10 on a feed of 1,000+, scaled to 2% (never under 5) on a small one.
+Each card names the group, the figures (share here vs the feed, or ROAS and spend), the action, **⌕ Filter to it** and
+**→ Brief** (Workflow in a new tab, task "Feed Opportunity - <kind> - … - <Brand> <MKT> - MMYY", the evidence in the
+scope). The strongest nine show, at most three per field and five per group. Harness: the spotter block in
+`tools/test_breakdown.mjs` (an invented feed counted in the test) + `tools/check_breakdown.js` (the rendered cards).

@@ -220,8 +220,8 @@ console.log('· the page');
 {
   t('loads the shared stylesheet and the two engines by fetch (so the tripwires can hand them over)', /<link rel="stylesheet" href="\/design\/fcc\.css">/.test(PG) && /\['\/feedlab\/engine\.js', 'FeedAudit'\], \['\/breakdown\/engine\.js', 'FeedBreakdown'\]/.test(PG));
   t('the feed streams through the proxy and the parser\'s header row is never counted', /fetch\('\/api\/feed\/proxy' \+ mq\(\)/.test(PG) && /if \(!hdr\) \{ hdr = h \|\| row; return; \}/.test(PG));
-  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 4 && (PG.match(/<button class="fhd"/g) || []).length === 4
-    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
+  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 5 && (PG.match(/<button class="fhd"/g) || []).length === 5
+    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-opp': 1, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
   t('…⊕ Open all / ⊖ Fold all, and a #hash opens what it names', /id="openall"/.test(PG) && /id="foldall"/.test(PG) && /window\.addEventListener\('hashchange', hashOpen\)/.test(PG));
   t('a table is never filtered by its own selection', /function maskExcept\(spec\)/.test(PG) && /B\.pivot\(S\.st, spec, maskExcept\(spec\)/.test(PG));
   t('a view is the shape, never the brand: the layout per device, views per device, the filters reset with the feed', /put\('fcc-bd-layout', S\.L\)/.test(PG) && /fcc-bd-views/.test(PG) && /S\.st = null; S\.fields = \[\]; S\.filters = \[\];/.test(PG));
@@ -259,6 +259,33 @@ console.log('· the split — what each cell is made of');
   t('split by a weight (spend) sums it instead of counting products', sw.row.Womens[sw.vals.indexOf(B.SALE)] === 10 && sw.row.Womens[sw.vals.indexOf(B.FULL)] === 5 && sw.weighted, sw);
   const sg = B.split(S2, { f: 'g:availability', m: 'raw' }, null, 'g:gender', null);
   t('on any other field the flag is the SMALLER stated part, never the blank', sg.flag === 'female' || sg.flag === 'male');
+  // ---- the opportunity spotter: an invented 200-product feed where the "Low" label is 60% male against 20% overall
+  {
+    const S3 = B.createStore(), h3 = ['g:id', 'g:custom_label_1', 'g:gender', 'g:color'];
+    for (let i = 0; i < 200; i++) {
+      const low = i < 50, male = low ? i < 30 : i % 5 === 0 && i >= 50 && i < 100 ? true : false;
+      B.addRow(S3, ['p' + i, low ? 'Low' : (i < 125 ? 'High' : 'Mid'), male ? 'male' : 'female', i % 3 === 0 && low ? '' : (i % 2 ? 'black' : 'red')], h3);
+    }
+    const m3 = B.mask(S3, [{ spec: { f: 'g:custom_label_1', m: 'raw' }, vals: ['Low'] }]);
+    const sel = B.spot(S3, { groups: (r) => m3[r] ? ['sel'] : null, exclude: ['g:custom_label_1'] });
+    const mx = sel.found.find((x) => x.k === 'mix' && x.f === 'g:gender' && x.v === 'male');
+    const maleAll = [...Array(200).keys()].filter((i) => i < 30 || (i >= 50 && i < 100 && i % 5 === 0)).length / 200;
+    t('spotter: a value over-represented in the selection is found, with its share here and across the feed counted', !!mx && Math.abs(mx.s - 30 / 50) < 1e-9 && Math.abs(mx.b - maleAll) < 1e-9 && mx.vn === 30, mx);
+    t('…a field the selection defines is never read back as a finding', !sel.found.some((x) => x.f === 'g:custom_label_1'));
+    const bl = sel.found.find((x) => x.k === 'blank' && x.f === 'g:color');
+    t('…a field left blank on a quarter of the selection (and not elsewhere) is a data gap', !!bl && bl.vn === 17, bl);
+    const tiny = B.spot(S3, { groups: (r) => r < 4 ? ['t'] : null });
+    t('…a group under its floor is never read (20 products on a big feed, 2% of a small one, never under 5)', tiny.found.length === 0 && tiny.min === 5 && B.SPOT_MIN === 20);
+    const cost = new Float64Array(200), value = new Float64Array(200);
+    for (let i = 0; i < 200; i++) { cost[i] = 10; value[i] = i < 50 ? (i < 30 ? 80 : 10) : 30; }
+    const ad = B.spot(S3, { groups: (r) => m3[r] ? ['sel'] : null, exclude: ['g:custom_label_1'], ads: { cost, value } });
+    const sc = ad.found.find((x) => x.k === 'scale' && x.v === 'male');
+    t('…with Google Ads, a value earning well above the segment’s ROAS on a slice of its spend reads Scale, its ROAS a ratio of sums', !!sc && Math.abs(sc.roas - 8) < 1e-9 && Math.abs(sc.groas - (30 * 80 + 20 * 10) / 500) < 1e-9, sc);
+    const scan = B.spot(S3, { groups: (r) => ['r\u0001' + S3.cols[1].vals[S3.cols[1].ids[r]]], exclude: ['g:custom_label_1'] });
+    t('…with no selection every row is read against the feed, the finding naming its row', scan.found.some((x) => x.g === 'r\u0001Low' && x.k === 'mix' && x.v === 'male'));
+  }
+  t('spotter page: an Opportunities section reads the filters (or every pivot row and cell), words B.spot, and briefs in a new tab',
+    /id="sec-opp"/.test(PG) && /function renderOpp\(\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(\);/.test(PG));
   t('a field that is not there reads nothing rather than guessing', B.split(S2, { f: 'g:product_type', m: 'raw' }, null, 'g:nope', null) === null);
   t('the page: a Split by picker, its share-of choice, a strip per cell, the CSV block, and the layout default', /id="pv-spl"/.test(PG) && /id="pv-splw"/.test(PG) && /function spCell\(sp, a\)/.test(PG) && /'Split · % '/.test(PG) && /spl: '', splw: 'n'/.test(PG));
 }

@@ -16278,6 +16278,18 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: Opportunities — the spotter reads a selection (or every pivot row and cell) against the feed",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function renderOpp() {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown engine: spot() — over-index, gap, blank, scale/trim, funding, all counted",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "function spot(S, opts) {",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: 📖 Guidebook — the recipes worth showing a client, ▶ Try it sets the pivot",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function gbTry(key) {",
