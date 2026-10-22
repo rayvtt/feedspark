@@ -388,7 +388,7 @@ The section header of /labels, /ptypes and /golden now carries:
 - **skip feeds read in the last 20 h** — OFF by default: every pick is a FORCED read.
 - **⚡ Scan …** — the button names the scope (*Scan whole estate* / *Scan Reiss — 39 markets* /
   *Scan Reiss · DE*); **⏹ Stop** finishes the feed in hand and stops; the scope locks while it runs.
-- **⚡ Scan** on every brand card — that brand, every market.
+- ~~⚡ Scan on every brand card~~ — removed 22 Oct 2026 (Ray: "remove the thunderbolt icon because i can do that with the dropdown already"); pick the brand in the Brand dropdown instead.
 
 Each feed takes the SAME path as the per-feed button: the server scan, and on its XML refusal the
 live stream in the browser (`xmlLiveScan` → `/api/labels/scanpush`), so a held catastrophic
