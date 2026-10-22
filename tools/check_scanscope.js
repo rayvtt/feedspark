@@ -155,13 +155,9 @@ const scans = (r) => r.calls.filter((c) => c.indexOf('scan:') === 0).map((c) => 
     ok('while it runs the scope is locked; ⏹ Stop ends it short of the estate and says how many were not reached',
       midway.bDis && midway.btnDis && scans(r).length < all.length && /not reached/.test(r.msg) && r.stopHidden, [midway, scans(r), r.msg]);
 
-    // ⚡ on a brand card
-    const cardBtn = await page.$('.est-card[data-client="Superdry"] .est-scan');
-    if (cardBtn) {
-      r = await runScan(page, '.est-card[data-client="Superdry"] .est-scan');
-      ok('⚡ on a brand card scans that brand’s markets — and never folds the card', JSON.stringify(scans(r)) === '["Superdry|gb"]' &&
-        await page.evaluate(() => !document.querySelector('.est-card[data-client="Superdry"]').classList.contains('collapsed')), [scans(r), r.msg]);
-    } else ok('each brand card carries ⚡ Scan', false);
+    // no ⚡ on a brand card (Ray, 22 Oct 2026: "remove the thunderbolt icon because i can do that with the dropdown already")
+    ok('no brand card carries its own ⚡ scan button — the Brand / Market pickers are the one way to scope a scan',
+      await page.evaluate(() => document.querySelectorAll('.est-card').length > 0 && !document.querySelector('.est-card .est-scan, .est-card [data-scanb]')));
 
     ok('no page errors', errs.length === 0, errs.slice(0, 3));
     await page.close();

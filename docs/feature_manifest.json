@@ -16902,6 +16902,13 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "if(had[id])return;",
       "pr": 0
+    },
+    {
+      "name": "Guard pages: no per-brand ⚡ scan button on the estate cards (the scope pickers do it)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "est-scan",
+      "forbidden": true,
+      "pr": 730
     }
   ]
 }

@@ -64,7 +64,6 @@ window.addEventListener('load',restore);
   .scan-sel{font:inherit;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--paper,#fff);color:var(--ink);max-width:210px;min-width:0}
   .scan-sel:disabled{opacity:.55}
   .scan-skip{font-size:11.5px;font-weight:700;color:var(--muted);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer}
-  .est-hd .est-scan{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd .est-dl{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
   .est-card.collapsed .est-hd{margin-bottom:-6px}
@@ -687,7 +686,7 @@ window.addEventListener('load',restore);
         '<span>' + sum.n + ' market' + (sum.n === 1 ? '' : 's') + (sum.scanned < sum.n ? ' · ' + sum.scanned + ' scanned' : '') + '</span>' +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(c) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(c) + '">⚡</button>' + '<button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(c) + ' in one interactive HTML file — coverage, depth and every product_type path per market, any path compared across markets; CSV inside">⬇ HTML</button>' + '</div>';
+        '</span>' + '<button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(c) + ' in one interactive HTML file — coverage, depth and every product_type path per market, any path compared across markets; CSV inside">⬇ HTML</button>' + '</div>';
       if (!collapsed) byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
@@ -708,9 +707,6 @@ window.addEventListener('load',restore);
     if (typeof scopeRender === 'function') scopeRender();
     Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
       el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('.est-scan'), function (el) {
-      el.onclick = function (ev) { ev.stopPropagation(); scanBrand(el.getAttribute('data-scanb')); };
     });
     Array.prototype.forEach.call(document.querySelectorAll('.est-dl'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); ptxExport([el.getAttribute('data-dl')], el); };
@@ -1820,7 +1816,6 @@ window.addEventListener('load',restore);
   $('scan-stop').onclick = function () { SCOPE.stop = true; scopeRender(); var m = $('scan-all-msg'); if (m) m.insertAdjacentText('beforeend', ' — stopping after this feed…'); };
   $('scan-all').onclick = scanScope;
   // ⚡ on a brand card: that brand, every market
-  function scanBrand(c) { if (SCOPE.running) return; SCOPE.b = c; SCOPE.m = '*'; scopeRender(); scanScope(); }
   scopeRender();
   function scWhat() { return ''; }   // what one feed's pass reads, on this page
   function scDisp(c) { return c; }
