@@ -748,6 +748,18 @@ var LEAD_DAYS=21; // keyword optimisation lands ~3 weeks before the moment
 /* ---- Reiss seed — transcribed from the brand's shared marketing calendar (Jul–Dec 2026).
    Terms are FeedSpark DRAFT keyword themes per moment; refine them in ✎ Edit calendar. ---- */
 var SEED={Reiss:{events:[
+  /* NEW ARRIVALS — a moment that tracks a ticket somebody already raised (Ray, 22 Oct 2026,
+     forwarding [FS Brief] Reiss · Golden Record Fix - First seen: Last 30 days - Reiss GB - 1026
+     [ibfref:REIS-20261019-02]: "can you add this ticket as a keywords theme in Reiss ? - it's
+     “New Arrivals” and start tracking it"). The work exists and is briefed, so the calendar must
+     not raise a second one — e.wf pins the moment to THAT ticket, the rung that beats every
+     name match, so the board reads its stage off the pipeline for life and the to-brief band in
+     Workflow never offers it. The ticket's own ibfdue (23 Oct) is the BRIEF-BY, so the live-by
+     date is 21 days after it; the board files it by the date the brief was due, which is where
+     an AM looks for it. */
+  {id:'rs_newarrivals', name:'New Arrivals',      lane:'location', date:'2026-11-13', wf:'REIS-20261019-02', late:1,
+   terms:['new arrivals','new in','just in','first seen'],
+   note:"Tracks ticket REIS-20261019-02 — Golden Record Fix · First seen: Last 30 days · Reiss GB, brief due 23 Oct 2026. Deliberately unscoped: new arrivals are an ARRIVAL COHORT read off the feed’s own fs:date_of_birth, not a branch of the category tree KWCal scopes on — set the cohort from the Playbook’s New products panel."},
   {id:'precol', name:'Pre-collection',            lane:'location', date:'2026-07-26', terms:['new arrivals','pre-collection','new in'],
    note:"Deliberately unscoped: a pre-collection is an ARRIVAL COHORT, not a product type — KWCal scopes on the category tree, so set this one from the Playbook’s New products panel (→ Keywords), which reads the feed’s own fs:date_of_birth."},
   {id:'aw26',   name:'AW26 Campaign',             lane:'campaign', date:'2026-09-09', note:'+ Evergreen shoot in store Scope: 152 product-type paths — 840 products / 5,185 SKUs, 3,856 of those SKUs still carrying no keyword.', terms:['autumn','new season','aw26'],
@@ -1358,6 +1370,35 @@ function upgradeSeeds(){
       if(s.note&&(!e.note||s.note.indexOf(e.note)===0))e.note=s.note;
       n++;
     });
+  });
+  return n;
+}
+/* ---- A MOMENT ADDED TO A SEED AFTER THE BOARD EXISTS (Ray, 22 Oct 2026, asking for the New
+   Arrivals theme on Reiss — a board seeded since v1). applySeeds writes only onto an EMPTY board
+   and upgradeSeeds matches BY ID, so a seed moment with a NEW id could reach Monsoon (new board)
+   and never Reiss: the work would ship and nothing would change on screen, the same failure the
+   scope migration fixed in the other direction.
+   TWO rules keep it from undoing somebody's work. A moment migrates ONLY when the seed marks it
+   late:1 — everything else in a seed is there to furnish an empty board and was never meant to
+   arrive later, so a board that has had it and removed it is left as the team left it. And the
+   offer is RECORDED on the brand's own record (st.seeded) rather than inferred from what is on
+   the board, because absent-because-never-offered and absent-because-DELETED are different
+   facts: without the record the second reads as the first and the deletion is undone on every
+   load, for ever. ---- */
+function addSeeds(){
+  var n=0;
+  Object.keys(SEED).forEach(function(c){
+    var st=STORE[c]; if(!st||!Array.isArray(st.events))return;
+    var on={}; st.events.forEach(function(e){ if(e.id)on[String(e.id)]=1; });
+    var offered=(st.seeded||[]).slice(), had={}; offered.forEach(function(id){ had[String(id)]=1; });
+    (SEED[c].events||[]).forEach(function(s){
+      var id=String(s.id||''); if(!id||!s.late)return;
+      if(had[id])return;                      // offered once already — absent now means removed
+      offered.push(id); had[id]=1; n++;
+      if(on[id])return;
+      st.events.push(JSON.parse(JSON.stringify(s)));
+    });
+    if(offered.length!==(st.seeded||[]).length)st.seeded=offered;
   });
   return n;
 }
@@ -3271,6 +3312,7 @@ function boot(){
     if(rehomeImports())save();   // before applySeeds — a repaired brand already has its events
     applySeeds();
     if(upgradeSeeds())save();    // a scope added to the seed after a board existed
+    if(addSeeds())save();        // a moment added to the seed after a board existed
     var roster={}; Object.keys((res[1]&&res[1].clients)||{}).forEach(function(k){roster[k]=1});
     Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')roster[k]=1; });
     var names=Object.keys(roster).sort();

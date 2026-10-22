@@ -194,6 +194,50 @@ const INIT = "window.fetch=function(url){var u=String(url);"
       JSON.stringify((ev[other.id] || {}).pts) === JSON.stringify(other.pts), (ev[other.id] || {}).pts);
   }
 
+  /* ---- 5) a moment added to the seed after the board existed, tracking a ticket already raised
+     (Ray, 22 Oct 2026: "can you add this ticket as a keywords theme in Reiss ? - it's “New
+     Arrivals” and start tracking it"). Two things only a render shows: the moment reaching a
+     board that already has events, and its chip reading the TICKET'S stage rather than a manual
+     one — which is the whole of "start tracking it". ---- */
+  console.log('\n5) a new seed moment lands on an old board and reads its ticket');
+  const rs = moments('Reiss').filter((m) => m.id !== 'rs_newarrivals');
+  const old = { Reiss: { events: rs.map((m, i) => ({ id: m.id, name: 'R' + i, lane: 'campaign',
+    date: '2026-11-' + String((i % 27) + 1).padStart(2, '0'), terms: ['x'] })) } };
+  const TICK = { 'REIS-20261019-02': { id: 'REIS-20261019-02', client: 'Reiss',
+    task: 'Golden Record Fix - First seen: Last 30 days - Reiss GB - 1026', status: 'running' } };
+  const p4 = await ctx.newPage();
+  const errs4 = []; p4.on('pageerror', (e) => errs4.push(e.message));
+  await p4.addInitScript({ content: INIT
+    .replace("if(u.indexOf('/api/kwcal')>=0)return j({});",
+      "if(u.indexOf('/api/kwcal')>=0){if((arguments[1]||{}).method==='PUT'){window.__put=arguments[1].body;return j({ok:1})}return j("
+      + JSON.stringify(old) + ")}")
+    .replace("if(u.indexOf('/api/briefs')>=0)return j({});",
+      "if(u.indexOf('/api/briefs')>=0)return j(" + JSON.stringify(TICK) + ");") });
+  await p4.goto('file://' + path.join(D, 'FeedSpark_KWCal.html') + '?client=Reiss');
+  await p4.waitForTimeout(1800);
+  ok('no page error', errs4.length === 0, errs4.slice(0, 2));
+  const cards = await p4.$$eval('.rc[data-kw]', (n) => n.map((c) => ({
+    id: c.getAttribute('data-kw') || '', txt: c.textContent.replace(/\s+/g, ' ').trim() })));
+  const na = cards.find((c) => c.id === 'rs_newarrivals');
+  ok('the New Arrivals card is on the board', !!na, cards.length + ' cards, none with that id');
+  if (na) {
+    ok('…named as Ray named it', /New Arrivals/.test(na.txt), na.txt.slice(0, 80));
+    // the tie is e.wf, so the chip is the TICKET's stage — not a manual one anybody has to move
+    // the tie is e.wf, so the chip is the TICKET's stage and whose court it is in — not a
+    // manual chip somebody has to remember to move
+    ok('…and its chip reads the ticket’s own stage and court',
+      /running/i.test(na.txt) && /AM/.test(na.txt), na.txt.slice(0, 160));
+    // the ticket's ibfdue is the brief-by; the live date is LEAD_DAYS after it
+    ok('…and the card says both dates', /live 13 Nov/.test(na.txt) && /brief 23 Oct/.test(na.txt),
+      na.txt.slice(0, 120));
+  }
+  const put4 = await p4.evaluate(() => window.__put || null);
+  const rec = put4 ? JSON.parse(put4).Reiss : null;
+  ok('it is saved to the team, not left on this screen',
+    !!rec && (rec.events || []).some((e) => e.id === 'rs_newarrivals'));
+  ok('…with the offer recorded so a deletion can stick',
+    !!rec && (rec.seeded || []).indexOf('rs_newarrivals') >= 0, rec && rec.seeded);
+
   await browser.close();
   console.log(fail ? '\nFAIL ' + fail : '\nPASS');
   process.exit(fail ? 1 : 0);
