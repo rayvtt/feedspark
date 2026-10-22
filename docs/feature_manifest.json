@@ -16236,7 +16236,7 @@
       "pr": 0
     },
     {
-      "name": "Breakdown: spend \u00b7 conversion value \u00b7 ROAS together, one row per segment",
+      "name": "Breakdown: spend · conversion value · ROAS together, one row per segment",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function renderSv3() {",
       "pr": 0
@@ -16883,6 +16883,24 @@
       "name": "Stock: a blank Hero sizes cell is skipped on import, never read as no hero sizes",
       "file": "docs/herosize_engine.js",
       "pattern": "if (!raw) return;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the New Arrivals moment on Reiss, pinned to the ticket Ray forwarded",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "wf:'REIS-20261019-02'",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a seed moment marked late reaches a board that already has events",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function addSeeds(){",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the offer is recorded so an AM's deletion is never undone",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "if(had[id])return;",
       "pr": 0
     }
   ]
