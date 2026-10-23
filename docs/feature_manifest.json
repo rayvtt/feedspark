@@ -16909,6 +16909,24 @@
       "pattern": "est-scan",
       "forbidden": true,
       "pr": 730
+    },
+    {
+      "name": "The rail's own routes are dispatched by name, not buried in a prefix",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "RAIL_PATHS.has(path)",
+      "pr": 720
+    },
+    {
+      "name": "railRoutes: the five paths the Golden Record prefix never reached",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function railRoutes(env, request, url, ctx)",
+      "pr": 720
+    },
+    {
+      "name": "Rail loaders name the status when a route answers HTML, not a reading",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function ckJson(r)",
+      "pr": 720
     }
   ]
 }

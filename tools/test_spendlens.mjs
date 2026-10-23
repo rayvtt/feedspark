@@ -133,6 +133,16 @@ ok('the ROAS index is read by the FeedHero company id, never a roster label',
 ok('it is scoped per signin like every other account route',
   /spendlens[\s\S]{0,900}clientMatch\(acc\.clients, who0\)/.test(wk));
 ok('the brief is the engine’s words', /SL\.briefOf\(f, who0\)/.test(wk));
+// THE ROUTE IS REACHABLE (23 Oct 2026): it shipped inside goldenRoutes(), which route() enters
+// only on `/api/golden/`, so the rail's fetch got the page handler's HTML and the section read
+// "could not read" with nothing failing anywhere else. Its path has to be DISPATCHED, not merely
+// written; tools/check_routes.js reads the whole router the same way.
+ok('route() dispatches it by name — the path is not buried under a prefix it does not match',
+  /RAIL_PATHS = new Set\(\[[^\]]*'\/api\/spendlens'/.test(wk) && /RAIL_PATHS\.has\(path\)[\s\S]{0,120}await railRoutes\(env, request, url, ctx\)/.test(wk));
+ok('…and it lives in railRoutes(), the function that dispatch calls',
+  wk.indexOf('async function railRoutes(') >= 0
+  && wk.indexOf("path === '/api/spendlens'") > wk.indexOf('async function railRoutes(')
+  && wk.indexOf("path === '/api/spendlens'") < wk.indexOf('// ---- UI language helpers'));
 const pg = readFileSync('docs/FeedSpark_Workflow.html', 'utf8');
 ok('the rail draws the section', /function secSpend\(/.test(pg) && /secActions\(BRAND\)\+secSpend\(BRAND\)/.test(pg));
 ok('…and wires it', /wireSpend\(BRAND\)/.test(pg) && /function wireSpend\(/.test(pg));

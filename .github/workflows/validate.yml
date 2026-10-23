@@ -216,6 +216,9 @@ jobs:
       - name: Module-nav parity (the menu stays identical on every app page)
         run: node tools/check_nav.js
 
+      - name: Route reachability (every /api route a sub-router answers is dispatched by route())
+        run: node tools/check_routes.js
+
       - name: Reply classifier in sync (worker briefmatch = Workflow page)
         run: node tools/test_replyclass.mjs
       - name: Read-out extraction (worker + page parity)
