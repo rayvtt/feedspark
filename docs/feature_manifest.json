@@ -12506,12 +12506,6 @@
       "pr": 0
     },
     {
-      "name": "Stock even: a finding is one line until opened",
-      "file": "docs/FeedSpark_Stock.html",
-      "pattern": "'</span></summary><div class=\"fb\"><div class=\"why\">'",
-      "pr": 0
-    },
-    {
       "name": "Stock even: a market's setup summary is one line",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "'<div class=\"toolbar set-top\"><span class=\"why\">' + esc(m.sentence) + '</span>'",
@@ -16951,6 +16945,31 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "best: b ? { industry: b.industry || ''",
       "pr": 732
+    },
+    {
+      "name": "Stock: the rule simulator card — range completion, quantity, sizes in stock, a category block",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"sim-card\">",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the simulator reads the master through the held-back join, keeping every product",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "hbMaster(q, feed, say, E, FA, E.stockRows(feed))",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: the stock-rule simulator, each product counted once in run order",
+      "file": "docs/catalog_engine.js",
+      "pattern": "var SIM_ORDER = ['rc', 'qty', 'sz', 'block'];",
+      "pr": 0
+    },
+    {
+      "name": "Stock: no \"Needs a look\" findings card (Ray, 23 Oct 2026: \"also, remove this\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "id=\"find-card\"",
+      "forbidden": true,
+      "pr": 0
     }
   ]
 }
