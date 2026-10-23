@@ -244,6 +244,14 @@ t('no money is spent on an upload: the auction route is not a money path', !SEC.
 
 console.log('── wiring');
 t('the worker imports the engine and serves both routes', /import \* as TL from "\.\/testlab\.js"/.test(WK) && /path === '\/api\/testlab'/.test(WK) && /path === '\/api\/compwatch'/.test(WK));
+// REACHABLE, not merely written (23 Oct 2026): both routes shipped inside goldenRoutes(), which
+// route() enters only on `/api/golden/` — so the rail's fetch answered HTML and 🧪 Test this month
+// read "could not read the test lab". tools/check_routes.js reads the whole router this way.
+t('route() dispatches all three paths by name',
+  ["'/api/testlab'", "'/api/compwatch'", "'/api/compwatch/auction'"].every((p) => new RegExp('RAIL_PATHS = new Set\\(\\[[^\\]]*' + p.replace(/\//g, '\\/')).test(WK))
+  && /RAIL_PATHS\.has\(path\)[\s\S]{0,120}await railRoutes\(env, request, url, ctx\)/.test(WK));
+t('…and they live in railRoutes(), the function that dispatch calls',
+  WK.indexOf('async function railRoutes(') >= 0 && WK.indexOf("path === '/api/testlab'") > WK.indexOf('async function railRoutes('));
 t('the rail uploads the Auction Insights report through the xlsx engine loaded on first use, PUTs rows only, draws the report and lets it be forgotten', /fetch\('\/api\/compwatch\/auction',\{method:'PUT'/.test(WF) && /sc\.src='\/xlsx\/engine\.js'/.test(WF) && /function secAuction\(m,a\)/.test(WF) && /data-au-x=/.test(WF) && /utf-16le/.test(WF) && /id="ck-au-file"/.test(WF));
 t('the Playbook rail draws the section after the Top 3 (the Spend Lens sits between them) and wires it', /secActions\(BRAND\)\+[A-Za-z()]*\+?secTests\(BRAND\)\)/.test(WF) && /wireTests\(BRAND\)/.test(WF) && /id="ck-tl"/.test(WF) && /fetch\('\/api\/testlab\?client='/.test(WF) && /fetch\('\/api\/compwatch'/.test(WF));
 t('→ Brief raises the brief through the ONE composer entry, as a test', /window\.FCCBrief\(\{client:brand,task:p\.brief\.task,cat:p\.brief\.cat,source:'plan',scope:p\.brief\.scope\}\)/.test(WF));

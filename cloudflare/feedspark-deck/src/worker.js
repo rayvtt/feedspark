@@ -2022,6 +2022,14 @@ async function route(request, env, ctx) {
       if (r) return r;
     }
 
+    // ---- the Playbook rail's own routes, dispatched BY NAME: none of these paths sits under a
+    // prefix another dispatcher owns, so each one is named in RAIL_PATHS or the router cannot
+    // reach it (see railRoutes).
+    if (RAIL_PATHS.has(path)) {
+      const r = await railRoutes(env, request, url, ctx);
+      if (r) return r;
+    }
+
     // ---- AI transformation roadmap: the LIVE status of every milestone, decision, KPI and risk on
     // /migration (KV `transform`, kvmerge per key like the build queue, so Ray, Andy and Matt
     // updating different rows at once all survive). The roadmap ITSELF is git (the page); only what
@@ -6341,292 +6349,6 @@ async function goldenRoutes(env, request, url) {
      the same name the hours badge shows), matched on the folded client name; a brand the Task
      Manager has not reached is named as having no AM on record, never guessed. Scoped per signin
      like every route that lists clients (scoping only narrows). */
-  /* WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to
-     defend feedspark services"). ONE BRAND's outcome month by month, to hang under the Task
-     Manager's hours chart on the SAME calendar — two plots, each on its own axis, never a dual one.
-     Nothing is scored here: labelguard's histSeries produces each market's daily line, re-scored
-     against the brand's CURRENT profile exactly as /golden and Leadership's portfolio trend do, and
-     src/outcomes.js only reduces days to months and markets to a brand. So the figure a buyer is
-     shown is the figure the audit page shows, and a month nobody measured stays a GAP. */
-  if (path === '/api/outcomes' && request.method === 'GET') {
-    const who = String(url.searchParams.get('client') || '').slice(0, 60).trim();
-    if (!who || who.indexOf(':') >= 0 || who.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-    const acc = await accessOf(env, request);
-    if (acc.clients && !clientMatch(acc.clients, who)) return json({ ok: false, error: 'out of scope' }, 403);
-    const months = OUT.monthsBack(String(url.searchParams.get('end') || '').slice(0, 7)
-      || new Date().toISOString().slice(0, 7), url.searchParams.get('months'));
-    // the brand's Google Shopping markets — the roster it is wired for, plus any the index has
-    // reached; -fb is a Meta catalogue and carries none of these readings
-    const roster = await feedRoster(env);
-    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    const want = {};
-    for (const f of roster) {
-      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
-      if (clientSlug(f.client) === clientSlug(who)) want[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
-    }
-    Object.keys(idx).forEach((k) => {
-      const c = k.split('|')[0], m = k.split('|')[1] || 'gb';
-      if (!want[k] && !/-fb$/.test(m) && clientSlug(c) === clientSlug(who)) want[k] = { client: c, mkt: m };
-    });
-    const list = Object.keys(want).map((k) => want[k]);
-    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
-    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
-    const today = histDay(Date.now());
-    // a window is measured in MONTHS; histSeries reads days, so ask it for the whole span + this
-    // month, and let the reducer keep only the months asked for
-    const span = Math.min(365, Math.max(30, months.length * 31 + 31));
-    const feeds = list.map((f, i) => {
-      const x = idx[lgKey(f.client, f.mkt)] || null;
-      const pf = profileFor(f.client, overrides);
-      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
-      return Object.assign({ mkt: f.mkt }, histSeries(hists[i], pf, { days: span, today, live }));
-    }).filter((f) => f.start);
-    const all = (await env.EDITS.get('kwresults', 'json')) || [];
-    const q = clientSlug(who);
-    const results = all.filter((k) => k && clientSlug(String(k.client || '')) === q);
-    /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
-       Procurement prices a service per unit, not per hour, so a row of hours with no scale beside
-       it cannot be argued with. `rows` is the catalogue each market was last SCANNED at — stated as
-       that rather than as "the catalogue", since a market nobody has scanned contributes nothing
-       and the count of scanned markets travels with the figure. */
-    const scale = { markets: list.length, scanned: 0, rows: 0, at: 0 };
-    list.forEach((f) => {
-      const x = idx[lgKey(f.client, f.mkt)];
-      if (!x || !x.rows) return;
-      scale.scanned++; scale.rows += +x.rows || 0;
-      if (x.t && x.t > scale.at) scale.at = x.t;
-    });
-    const out = OUT.brandOutcomes(feeds, months, { results });
-    return json(Object.assign({ ok: true, at: Date.now(), client: who, scale }, out));
-  }
-
-  // ---- TEST LAB (Ray, 14 Oct 2026: "more proactive information about testing proposals, with
-  // specifics … other brands achieve a certain uplift over the last three months … consider
-  // competitors … on Google Shopping and Meta … super innovative in testing"). The engine is
-  // src/testlab.js; this route only gathers the stores: every brand's A/B archive cache (the
-  // evidence table reads the WHOLE book — a brand whose archive was never opened is named as
-  // cold so the page can warm it), the keyword-result rounds, the brand's own feeds' readiness
-  // (goldenidx / overlayidx / voldobidx / the wired Meta feeds), its open test briefs and the
-  // competitor Shopping reads already stored. Scoped per signin like /api/outcomes.
-
-  /* ---- SPEND LENS (Ray, 19 Oct 2026, sending the Field Breakdown pivot for Reiss UK: "can you
-     bring in Playbook - a few interesting RoAS improvement or spend optiimser tactics from field
-     breakdown ? … you can see on RoAS avg: Textured, Striped, Checked, Colourblock has way better
-     ROAS compared to Plain where most Spend is at").
-     The engine is src/spendlens.js; this route only GATHERS. It reads FeedHero's OWN cuts — the
-     same roaslive: records /roas's Segment select writes, so the rail and the ROAS module can
-     never disagree about a value's spend or return — and reads only what is ALREADY STORED: a GET
-     never calls the MCP and never spends, so the panel opens on what is known and NAMES what has
-     not been read rather than reading as an empty account. The POST is the ⚡ that reads one
-     market's missing cuts, writing the same keys so /roas gains them too.
-     Three markets (SL_MARKETS), the spend-ranked ones: Reiss runs 28 and reading every cut of
-     every one of them would be 200+ KV reads for a panel, with the money nowhere near them. */
-  if (path === '/api/spendlens' && (request.method === 'GET' || request.method === 'POST')) {
-    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
-    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-    const acc = await accessOf(env, request);
-    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
-    const roster = ROAS.rosterOf(who0);
-    if (!roster.length) return json({ ok: true, client: who0, on: false, why: 'not on the ROAS roster — no Google Ads report for this account', top: [], also: [], toRead: [], refused: [], markets: [] });
-    const idx = (await env.EDITS.get('roasidx', 'json')) || {};
-    const win = ROAS.ROAS_DEFAULT_WIN;
-    // the markets this account actually spends in, biggest first; one never read carries no spend
-    // and is listed as that rather than ranked at zero
-    // roasidx is keyed by the FeedHero COMPANY ID, never the roster's market label — the lesson
-    // /stock learned the hard way, where a 'Reiss|GB' lookup found nothing on any market
-    const ranked = roster.map((m) => {
-      const t = ROAS.windowTotal(idx[m.cmpid], win);
-      return { market: m.market, cmpid: m.cmpid, spend: (t && t.spend && t.spend.n) || 0, cur: (t && ROAS.rowCur(t)) || null, read: !!t };
-    }).sort((a, b) => b.spend - a.spend);
-    const pick = ranked.filter((m) => m.spend > 0).slice(0, SL.SL_MARKETS);
-    if (request.method === 'POST') {
-      // ⚡ read one market's missing cuts — bounded, through the SAME lane and the SAME keys
-      // /api/roas/live writes, so nothing here is a second copy of that read
-      const mkt = String(url.searchParams.get('market') || '').slice(0, 20);
-      const m = roster.find((x) => x.market === mkt);
-      if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
-      if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
-      const mcp = roasMcp(env, fetch);
-      let did = 0, failed = null;
-      try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') return json({ ok: false, error: 'unauthorized' }, 502); }
-      for (const agg of SL.SL_CUT_KEYS) {
-        const key = 'roaslive:' + m.cmpid + ':' + agg + ':' + win;
-        const have = await env.EDITS.get(key, 'json');
-        if (have && have.at && Date.now() - have.at < (have.missing ? ROAS.ROAS_SEG_MISSING_TTL : 6 * 3600000)) continue;
-        try {
-          const payload = await mcp.call('roas_dashboard', { company: m.cmpid, period: (ROAS.ROAS_WINDOWS.find((w) => w.k === win) || {}).period, aggregation: agg, page_size: 200, sort: 'spend', order: 'desc' });
-          const split = ROAS.splitClientRows(TMM.rowsOf(payload), 200);
-          await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length }), { expirationTtl: 86400 });
-          did++;
-        } catch (e) {
-          if (ROAS.segMissing(e)) { await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: null, rows: [], n: 0, missing: true }), { expirationTtl: 86400 }); did++; continue; }
-          failed = String((e && e.message) || e).slice(0, 160); break;
-        }
-      }
-      logActivity(ctx, env, request, 'spendlens-read', who0 + ' ' + mkt + ' ' + did);
-      if (failed && !did) return json({ ok: false, error: failed }, 502);
-      return json({ ok: true, client: who0, market: mkt, read: did, failed });
-    }
-    const reads = {}, unl = {};
-    for (const m of pick) {
-      for (const agg of SL.SL_CUT_KEYS) {
-        const r = await env.EDITS.get('roaslive:' + m.cmpid + ':' + agg + ':' + win, 'json');
-        if (r) reads[m.market + '|' + agg] = r;
-      }
-      // the unlisted row is the MARKET's, not a cut's, so it is read once off the market record
-      const rec = await env.EDITS.get('roas:' + m.cmpid, 'json');
-      const w = rec && (rec[win] || (rec.categories ? { categories: rec.categories } : null));
-      const row = ((w && w.categories) || []).find((c) => SL.isUnlisted(c.category));
-      if (row) m.unlisted = { spend: (row.spend && row.spend.n) || 0, rev: (row.revenue && row.revenue.n) || 0, cur: (row.spend && row.spend.cur) || m.cur };
-    }
-    const lens = SL.accountLens(pick, reads);
-    // the brief's words are the ENGINE's, so a brief raised from the rail says what the finding says
-    lens.top.forEach((f) => { f.brief = SL.briefOf(f, who0); });
-    return json(Object.assign({ ok: true, client: who0, on: true, win,
-      markets: pick.map((m) => ({ market: m.market, spend: m.spend, cur: m.cur })),
-      quiet: ranked.filter((m) => m.spend <= 0).map((m) => m.market),
-      rest: ranked.filter((m) => m.spend > 0).slice(SL.SL_MARKETS).map((m) => m.market),
-      mcp: !!env.ROAS_MCP_TOKEN, cuts: SL.SL_CUTS }, lens));
-  }
-
-  if (path === '/api/testlab' && request.method === 'GET') {
-    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
-    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-    const acc = await accessOf(env, request);
-    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
-    const now = Date.now(), gone = await retiredSetOf(env);
-    const roster = (await feedRoster(env)).filter((f) => !RET.isRetired(gone, f.client));
-    const brandSet = {};
-    Object.keys(PLAN_SHEETS).forEach((b) => { if (PLAN_SHEETS[b] && !RET.isRetired(gone, b)) brandSet[b] = 1; });
-    roster.forEach((f) => { brandSet[f.client] = 1; });
-    const brands = Object.keys(brandSet).sort();
-    const abs = await Promise.all(brands.map((b) => env.EDITS.get('abtests:' + b, 'json').catch(() => null)));
-    const book = [], cold = [];
-    brands.forEach((b, i) => {
-      const a = abs[i];
-      if (a && a.ok && Array.isArray(a.tests)) book.push({ brand: b, industry: industryOf(b), tests: a.tests });
-      else if (PLAN_SHEETS[b]) cold.push(b);   // an archive nobody has read yet is not an empty archive
-    });
-    const kwAll = ((await env.EDITS.get('kwresults', 'json')) || []).map((r) => Object.assign({}, r, { brand: r.client || r.brand, industry: industryOf(r.client || r.brand) }));
-    const ev = TL.evidenceBook(book, kwAll, now);
-    const [gidx, oidx, vdx, dossierEnv, briefsEnv] = await Promise.all([
-      env.EDITS.get('goldenidx', 'json'), env.EDITS.get('overlayidx', 'json'), env.EDITS.get('voldobidx', 'json'),
-      env.EDITS.get('clients', 'json'), env.EDITS.get('briefs', 'json')]);
-    const mine = roster.filter((f) => clientSlug(f.client) === clientSlug(who0));
-    const brand = mine.length ? mine[0].client : who0;
-    const months3 = [0, 1, 2].map((i) => { const d = new Date(now); d.setUTCMonth(d.getUTCMonth() - i); return d.toISOString().slice(0, 7); });
-    const feeds = mine.filter((f) => !/-fb$/.test(f.mkt)).map((f) => {
-      const g = (gidx || {})[lgKey(f.client, f.mkt)] || {}, fb = mine.some((x) => x.mkt === f.mkt + '-fb');
-      const o = (oidx || {})[lgKey(f.client, f.mkt + '-fb')] || null, v = (vdx || {})[lgKey(f.client, f.mkt)] || null;
-      const arrivals = v && v.m ? months3.reduce((a, m) => a + (+v.m[m] || 0), 0) : 0;
-      return { mkt: f.mkt, fb, cov: g.cov || null, rows: +g.rows || 0, ai: g.ai && typeof g.ai === 'object' ? (+g.ai.n || 0) : (+g.ai || 0),
-        ovlFb: !!(o && o.ovl > 0), lang: AIVIS.mktMeta(f.mkt).lang, arrivals };
-    });
-    const dossier = liftEnvelope(dossierEnv, now).data || {};
-    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(who0));
-    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
-    const briefs = Object.values(liftEnvelope(briefsEnv, now).data || {})
-      .filter((b) => b && clientSlug(String(b.client || '')) === clientSlug(who0) && (b.cat === 'test' || /^A\/B Test/i.test(String(b.task || ''))) && !/^(done|confirmed|closed)$/i.test(String(b.stage || b.status || '')))
-      .map((b) => String(b.task || ''));
-    // competitor reads already stored for the brand's Google markets; signals union across them
-    const reads = await Promise.all(feeds.map((f) => env.EDITS.get('compwatch:' + brand + ':' + f.mkt, 'json').catch(() => null)));
-    // and the Auction Insights the AM uploaded (no API): the report's own competitors by impression share
-    const aucs = await Promise.all(feeds.map((f) => env.EDITS.get('compauction:' + brand + ':' + f.mkt, 'json').catch(() => null)));
-    const comp = { on: !!env.SERPAPI_KEY, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
-    const seenSig = {};
-    const addSig = (mkt, src, sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt, src }, sg)); } };
-    feeds.forEach((f, i) => {
-      const r = TL.cleanRead(reads[i]), a = TL.cleanAuction(aucs[i]);
-      const m = {};
-      if (r && r.reads.length) { const sm = TL.compSummary(r.reads, brand, domain); Object.assign(m, { at: r.at, n: r.n, summary: sm }); sm.signals.forEach((sg) => addSig(f.mkt, 'shopping', sg)); }
-      if (a) { m.auction = Object.assign({}, a, { signals: TL.auctionSignals(a) }); m.auction.signals.forEach((sg) => addSig(f.mkt, 'auction', sg)); }
-      comp.markets[f.mkt] = Object.keys(m).length ? m : null;
-    });
-    const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));
-    const ctx = { industry: industryOf(brand), feeds, archive: own ? own.tests : [], kw: kwAll.filter((r) => clientSlug(String(r.brand || '')) === clientSlug(who0)), briefs, comp };
-    const res = TL.proposeTests(brand, ctx, ev, { now });
-    const evOut = {}; Object.keys(ev).forEach((k) => { evOut[k] = { n: ev[k].n, wins: ev[k].wins, recent: ev[k].recent.length, best: ev[k].best }; });
-    return json({ ok: true, at: now, client: brand, industry: ctx.industry, top: res.top, rest: res.rest, counts: res.counts,
-      evidence: evOut, book: book.map((b) => ({ brand: b.brand, n: b.tests.length })), cold, ownArchive: !!own, comp,
-      feeds: feeds.map((f) => ({ mkt: f.mkt, fb: f.fb, scanned: !!f.cov })) });
-  }
-
-  // ---- AUCTION INSIGHTS, NO API (Ray, 14 Oct 2026, on the competitor read: "is there a way to
-  // bypass the competitor mapping without API?" → "i think Google Ads Auction insight"): the AM
-  // downloads the report from the Google Ads UI, the page reads the file into rows and PUTs them
-  // here; TL.parseAuction reads the report's own figures (never re-derived), cleanAuction checks
-  // the record whole, KV compauction:<client>:<mkt>. GET = stored, DELETE = forget it. A write is
-  // the Workflow grant + client scope; no money is spent, so no throttle.
-  if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {
-    let body = {};
-    if (request.method === 'PUT') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
-    const client = String((request.method === 'PUT' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
-    const mkt = mktOf(request.method === 'PUT' ? body.market : url.searchParams.get('market'));
-    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'Auction Insights is a Google Ads report — pick the Google market' }, 400);
-    const acc = await accessOf(env, request);
-    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
-    const roster = await feedRoster(env);
-    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
-    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
-    const key = 'compauction:' + feed.client + ':' + mkt;
-    if (request.method === 'GET') return json({ ok: true, client: feed.client, market: mkt, auction: TL.cleanAuction(await env.EDITS.get(key, 'json')) });
-    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
-    if (request.method === 'DELETE') { await env.EDITS.delete(key); logActivity(ctx, env, request, 'compauction-clear', feed.client + ' ' + mkt.toUpperCase()); return json({ ok: true, client: feed.client, market: mkt, auction: null }); }
-    const rows = Array.isArray(body.rows) ? body.rows.slice(0, TL.AUC_MAX_ROWS) : [];
-    if (!rows.length) return json({ ok: false, error: 'no rows — the file read as empty' }, 400);
-    const parsed = TL.parseAuction(rows.map((r) => (Array.isArray(r) ? r.slice(0, 16).map((c) => (typeof c === 'number' ? c : String(c == null ? '' : c).slice(0, 200))) : [])));
-    if (!parsed.ok) return json({ ok: false, error: parsed.error }, 400);
-    const rec = TL.cleanAuction(Object.assign({}, parsed, { at: Date.now(), mkt, by: String(acc.email || acc.who || '').slice(0, 80) }));
-    if (!rec || !rec.comps.length) return json({ ok: false, error: 'the report names no competitor domain' }, 400);
-    await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 120 * 86400 });
-    logActivity(ctx, env, request, 'compauction-upload', feed.client + ' ' + mkt.toUpperCase() + ' · ' + rec.comps.length + ' competitors' + (rec.range ? ' · ' + rec.range : ''));
-    return json({ ok: true, client: feed.client, market: mkt, auction: rec, signals: TL.auctionSignals(rec) });
-  }
-
-  // ---- the competitor Shopping read: GET = what is stored, POST = read it now (SerpApi, the key AI
-  // Visibility uses; one read per market per day unless forced — each read is COMP_QUERIES searches)
-  if (path === '/api/compwatch' && (request.method === 'GET' || request.method === 'POST')) {
-    let body = {};
-    if (request.method === 'POST') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
-    const client = String((request.method === 'POST' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
-    const mkt = mktOf(request.method === 'POST' ? body.market : url.searchParams.get('market'));
-    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'a Meta catalogue has no Shopping results — pick the Google market' }, 400);
-    const acc = await accessOf(env, request);
-    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
-    const roster = await feedRoster(env);
-    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
-    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
-    const key = 'compwatch:' + feed.client + ':' + mkt;
-    const stored = TL.cleanRead(await env.EDITS.get(key, 'json'));
-    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data || {};
-    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(client));
-    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
-    const answer = (r, fresh) => json({ ok: true, on: !!env.SERPAPI_KEY, client: feed.client, market: mkt, fresh: !!fresh, read: r,
-      summary: r && r.reads.length ? TL.compSummary(r.reads, feed.client, domain) : null });
-    if (request.method === 'GET') return answer(stored, false);
-    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
-    if (!env.SERPAPI_KEY) return json({ ok: false, on: false, error: 'SERPAPI_KEY is not set on the worker — the Shopping read is not connected' });
-    if (stored && stored.at && Date.now() - stored.at < TL.COMP_TTL_MS && !body.force) return answer(stored, false);
-    const snap = await env.EDITS.get('ptype:' + feed.client + ':' + mkt, 'json');
-    const pt = snap && snap.labels && snap.labels.product_type && Array.isArray(snap.labels.product_type.values) ? snap.labels.product_type.values : [];
-    const qs = TL.compQueries(pt, TL.COMP_QUERIES);
-    if (!qs.length) return json({ ok: false, error: 'no product-type snapshot for ' + feed.client + ' ' + mkt.toUpperCase() + ' — scan the feed on Product Type Guard first' }, 409);
-    const meta = AIVIS.mktMeta(mkt);
-    const reads = [];
-    for (const q of qs) {
-      try {
-        const r = await fetch(AIVIS.serpUrl('google_shopping', { q: q.q, gl: meta.gl, hl: meta.hl, num: TL.COMP_ROWS, no_cache: 'true' }, env));
-        if (!r.ok) { reads.push({ q: q.q, n: 0, rows: [], err: 'SerpApi ' + r.status }); continue; }
-        reads.push(TL.normShopping(await r.json(), q.q));
-      } catch (e) { reads.push({ q: q.q, n: 0, rows: [], err: String((e && e.message) || e).slice(0, 120) }); }
-    }
-    const rec = TL.cleanRead({ at: Date.now(), mkt, reads });
-    if (rec && rec.n) await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 60 * 86400 });
-    logActivity(ctx, env, request, 'compwatch-read', feed.client + ' ' + mkt.toUpperCase() + ' · ' + qs.length + ' queries · ' + (rec ? rec.n : 0) + ' rows');
-    return answer(rec && rec.n ? rec : stored, !!(rec && rec.n));
-  }
 
   /* WHAT CHANGED ACROSS THE PORTFOLIO (Ray, 19 Oct 2026: "monitor the changes on my entire account's portfolio …
      on a weekly basis, how many brands I have worked on, how many fields"): every feed's goldenhist read over one
@@ -6954,6 +6676,309 @@ async function goldenRoutes(env, request, url) {
     delete alertsMap[lgKey(client, mkt)];
     await env.EDITS.put('goldenalerts', JSON.stringify(alertsMap));
     return json({ ok: true, baseT: snap.t });
+  }
+
+  return null;
+}
+
+// ---- THE PLAYBOOK RAIL'S OWN ROUTES, REACHED BY NAME (fixed 23 Oct 2026 — Ray, over the Playbook
+// with 💷 Where the spend sits and 🧪 Test this month both reading "could not read": "these
+// sections of playbook cannot fetch data"). All five answer paths of their OWN, and all five had
+// been written inside goldenRoutes(), which route() enters only on `/api/golden/` — so the router
+// never reached them, the request fell through to the page handler and the rail's fetch got HTML
+// back: r.json() threw and the section said what a failed read says. They are their own function
+// with their own dispatch now, so a sixth sibling joins a list rather than hiding inside a
+// neighbour's prefix, and tools/check_routes.js fails the build on any route the router cannot
+// reach. `ctx` is the worker's execution context (logActivity writes through it) — goldenRoutes
+// never took it, which is the second way the spend lens's ⚡ POST could not have worked.
+const RAIL_PATHS = new Set(['/api/outcomes', '/api/spendlens', '/api/testlab', '/api/compwatch', '/api/compwatch/auction']);
+async function railRoutes(env, request, url, ctx) {
+  const path = url.pathname;
+  /* WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to
+     defend feedspark services"). ONE BRAND's outcome month by month, to hang under the Task
+     Manager's hours chart on the SAME calendar — two plots, each on its own axis, never a dual one.
+     Nothing is scored here: labelguard's histSeries produces each market's daily line, re-scored
+     against the brand's CURRENT profile exactly as /golden and Leadership's portfolio trend do, and
+     src/outcomes.js only reduces days to months and markets to a brand. So the figure a buyer is
+     shown is the figure the audit page shows, and a month nobody measured stays a GAP. */
+  if (path === '/api/outcomes' && request.method === 'GET') {
+    const who = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who || who.indexOf(':') >= 0 || who.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who)) return json({ ok: false, error: 'out of scope' }, 403);
+    const months = OUT.monthsBack(String(url.searchParams.get('end') || '').slice(0, 7)
+      || new Date().toISOString().slice(0, 7), url.searchParams.get('months'));
+    // the brand's Google Shopping markets — the roster it is wired for, plus any the index has
+    // reached; -fb is a Meta catalogue and carries none of these readings
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const want = {};
+    for (const f of roster) {
+      if (!f.src || (!f.src.id && !f.src.xml) || /-fb$/.test(String(f.mkt || ''))) continue;
+      if (clientSlug(f.client) === clientSlug(who)) want[lgKey(f.client, f.mkt)] = { client: f.client, mkt: f.mkt };
+    }
+    Object.keys(idx).forEach((k) => {
+      const c = k.split('|')[0], m = k.split('|')[1] || 'gb';
+      if (!want[k] && !/-fb$/.test(m) && clientSlug(c) === clientSlug(who)) want[k] = { client: c, mkt: m };
+    });
+    const list = Object.keys(want).map((k) => want[k]);
+    const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+    const hists = await Promise.all(list.map((f) => env.EDITS.get('goldenhist:' + f.client + ':' + f.mkt, 'json').catch(() => null)));
+    const today = histDay(Date.now());
+    // a window is measured in MONTHS; histSeries reads days, so ask it for the whole span + this
+    // month, and let the reducer keep only the months asked for
+    const span = Math.min(365, Math.max(30, months.length * 31 + 31));
+    const feeds = list.map((f, i) => {
+      const x = idx[lgKey(f.client, f.mkt)] || null;
+      const pf = profileFor(f.client, overrides);
+      const live = x && x.cov && x.t ? { t: x.t, rows: x.rows, cov: x.cov, sc: x.sc } : null;
+      return Object.assign({ mkt: f.mkt }, histSeries(hists[i], pf, { days: span, today, live }));
+    }).filter((f) => f.start);
+    const all = (await env.EDITS.get('kwresults', 'json')) || [];
+    const q = clientSlug(who);
+    const results = all.filter((k) => k && clientSlug(String(k.client || '')) === q);
+    /* THE DENOMINATOR (Ray, 28 Sep 2026: "886 hours maintained 47k SKUs across 28 markets").
+       Procurement prices a service per unit, not per hour, so a row of hours with no scale beside
+       it cannot be argued with. `rows` is the catalogue each market was last SCANNED at — stated as
+       that rather than as "the catalogue", since a market nobody has scanned contributes nothing
+       and the count of scanned markets travels with the figure. */
+    const scale = { markets: list.length, scanned: 0, rows: 0, at: 0 };
+    list.forEach((f) => {
+      const x = idx[lgKey(f.client, f.mkt)];
+      if (!x || !x.rows) return;
+      scale.scanned++; scale.rows += +x.rows || 0;
+      if (x.t && x.t > scale.at) scale.at = x.t;
+    });
+    const out = OUT.brandOutcomes(feeds, months, { results });
+    return json(Object.assign({ ok: true, at: Date.now(), client: who, scale }, out));
+  }
+
+  // ---- TEST LAB (Ray, 14 Oct 2026: "more proactive information about testing proposals, with
+  // specifics … other brands achieve a certain uplift over the last three months … consider
+  // competitors … on Google Shopping and Meta … super innovative in testing"). The engine is
+  // src/testlab.js; this route only gathers the stores: every brand's A/B archive cache (the
+  // evidence table reads the WHOLE book — a brand whose archive was never opened is named as
+  // cold so the page can warm it), the keyword-result rounds, the brand's own feeds' readiness
+  // (goldenidx / overlayidx / voldobidx / the wired Meta feeds), its open test briefs and the
+  // competitor Shopping reads already stored. Scoped per signin like /api/outcomes.
+
+  /* ---- SPEND LENS (Ray, 19 Oct 2026, sending the Field Breakdown pivot for Reiss UK: "can you
+     bring in Playbook - a few interesting RoAS improvement or spend optiimser tactics from field
+     breakdown ? … you can see on RoAS avg: Textured, Striped, Checked, Colourblock has way better
+     ROAS compared to Plain where most Spend is at").
+     The engine is src/spendlens.js; this route only GATHERS. It reads FeedHero's OWN cuts — the
+     same roaslive: records /roas's Segment select writes, so the rail and the ROAS module can
+     never disagree about a value's spend or return — and reads only what is ALREADY STORED: a GET
+     never calls the MCP and never spends, so the panel opens on what is known and NAMES what has
+     not been read rather than reading as an empty account. The POST is the ⚡ that reads one
+     market's missing cuts, writing the same keys so /roas gains them too.
+     Three markets (SL_MARKETS), the spend-ranked ones: Reiss runs 28 and reading every cut of
+     every one of them would be 200+ KV reads for a panel, with the money nowhere near them. */
+  if (path === '/api/spendlens' && (request.method === 'GET' || request.method === 'POST')) {
+    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = ROAS.rosterOf(who0);
+    if (!roster.length) return json({ ok: true, client: who0, on: false, why: 'not on the ROAS roster — no Google Ads report for this account', top: [], also: [], toRead: [], refused: [], markets: [] });
+    const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+    const win = ROAS.ROAS_DEFAULT_WIN;
+    // the markets this account actually spends in, biggest first; one never read carries no spend
+    // and is listed as that rather than ranked at zero
+    // roasidx is keyed by the FeedHero COMPANY ID, never the roster's market label — the lesson
+    // /stock learned the hard way, where a 'Reiss|GB' lookup found nothing on any market
+    const ranked = roster.map((m) => {
+      const t = ROAS.windowTotal(idx[m.cmpid], win);
+      return { market: m.market, cmpid: m.cmpid, spend: (t && t.spend && t.spend.n) || 0, cur: (t && ROAS.rowCur(t)) || null, read: !!t };
+    }).sort((a, b) => b.spend - a.spend);
+    const pick = ranked.filter((m) => m.spend > 0).slice(0, SL.SL_MARKETS);
+    if (request.method === 'POST') {
+      // ⚡ read one market's missing cuts — bounded, through the SAME lane and the SAME keys
+      // /api/roas/live writes, so nothing here is a second copy of that read
+      const mkt = String(url.searchParams.get('market') || '').slice(0, 20);
+      const m = roster.find((x) => x.market === mkt);
+      if (!m) return json({ ok: false, error: 'not a market on the roster' }, 404);
+      if (!env.ROAS_MCP_TOKEN) return json({ ok: false, error: 'ROAS_MCP_TOKEN not set' }, 503);
+      const mcp = roasMcp(env, fetch);
+      let did = 0, failed = null;
+      try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') return json({ ok: false, error: 'unauthorized' }, 502); }
+      for (const agg of SL.SL_CUT_KEYS) {
+        const key = 'roaslive:' + m.cmpid + ':' + agg + ':' + win;
+        const have = await env.EDITS.get(key, 'json');
+        if (have && have.at && Date.now() - have.at < (have.missing ? ROAS.ROAS_SEG_MISSING_TTL : 6 * 3600000)) continue;
+        try {
+          const payload = await mcp.call('roas_dashboard', { company: m.cmpid, period: (ROAS.ROAS_WINDOWS.find((w) => w.k === win) || {}).period, aggregation: agg, page_size: 200, sort: 'spend', order: 'desc' });
+          const split = ROAS.splitClientRows(TMM.rowsOf(payload), 200);
+          await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: split.total, rows: split.categories, n: split.categories.length }), { expirationTtl: 86400 });
+          did++;
+        } catch (e) {
+          if (ROAS.segMissing(e)) { await env.EDITS.put(key, JSON.stringify({ cmpid: m.cmpid, client: who0, market: m.market, agg, win, at: Date.now(), total: null, rows: [], n: 0, missing: true }), { expirationTtl: 86400 }); did++; continue; }
+          failed = String((e && e.message) || e).slice(0, 160); break;
+        }
+      }
+      logActivity(ctx, env, request, 'spendlens-read', who0 + ' ' + mkt + ' ' + did);
+      if (failed && !did) return json({ ok: false, error: failed }, 502);
+      return json({ ok: true, client: who0, market: mkt, read: did, failed });
+    }
+    const reads = {}, unl = {};
+    for (const m of pick) {
+      for (const agg of SL.SL_CUT_KEYS) {
+        const r = await env.EDITS.get('roaslive:' + m.cmpid + ':' + agg + ':' + win, 'json');
+        if (r) reads[m.market + '|' + agg] = r;
+      }
+      // the unlisted row is the MARKET's, not a cut's, so it is read once off the market record
+      const rec = await env.EDITS.get('roas:' + m.cmpid, 'json');
+      const w = rec && (rec[win] || (rec.categories ? { categories: rec.categories } : null));
+      const row = ((w && w.categories) || []).find((c) => SL.isUnlisted(c.category));
+      if (row) m.unlisted = { spend: (row.spend && row.spend.n) || 0, rev: (row.revenue && row.revenue.n) || 0, cur: (row.spend && row.spend.cur) || m.cur };
+    }
+    const lens = SL.accountLens(pick, reads);
+    // the brief's words are the ENGINE's, so a brief raised from the rail says what the finding says
+    lens.top.forEach((f) => { f.brief = SL.briefOf(f, who0); });
+    return json(Object.assign({ ok: true, client: who0, on: true, win,
+      markets: pick.map((m) => ({ market: m.market, spend: m.spend, cur: m.cur })),
+      quiet: ranked.filter((m) => m.spend <= 0).map((m) => m.market),
+      rest: ranked.filter((m) => m.spend > 0).slice(SL.SL_MARKETS).map((m) => m.market),
+      mcp: !!env.ROAS_MCP_TOKEN, cuts: SL.SL_CUTS }, lens));
+  }
+
+  if (path === '/api/testlab' && request.method === 'GET') {
+    const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who0)) return json({ ok: false, error: 'out of scope' }, 403);
+    const now = Date.now(), gone = await retiredSetOf(env);
+    const roster = (await feedRoster(env)).filter((f) => !RET.isRetired(gone, f.client));
+    const brandSet = {};
+    Object.keys(PLAN_SHEETS).forEach((b) => { if (PLAN_SHEETS[b] && !RET.isRetired(gone, b)) brandSet[b] = 1; });
+    roster.forEach((f) => { brandSet[f.client] = 1; });
+    const brands = Object.keys(brandSet).sort();
+    const abs = await Promise.all(brands.map((b) => env.EDITS.get('abtests:' + b, 'json').catch(() => null)));
+    const book = [], cold = [];
+    brands.forEach((b, i) => {
+      const a = abs[i];
+      if (a && a.ok && Array.isArray(a.tests)) book.push({ brand: b, industry: industryOf(b), tests: a.tests });
+      else if (PLAN_SHEETS[b]) cold.push(b);   // an archive nobody has read yet is not an empty archive
+    });
+    const kwAll = ((await env.EDITS.get('kwresults', 'json')) || []).map((r) => Object.assign({}, r, { brand: r.client || r.brand, industry: industryOf(r.client || r.brand) }));
+    const ev = TL.evidenceBook(book, kwAll, now);
+    const [gidx, oidx, vdx, dossierEnv, briefsEnv] = await Promise.all([
+      env.EDITS.get('goldenidx', 'json'), env.EDITS.get('overlayidx', 'json'), env.EDITS.get('voldobidx', 'json'),
+      env.EDITS.get('clients', 'json'), env.EDITS.get('briefs', 'json')]);
+    const mine = roster.filter((f) => clientSlug(f.client) === clientSlug(who0));
+    const brand = mine.length ? mine[0].client : who0;
+    const months3 = [0, 1, 2].map((i) => { const d = new Date(now); d.setUTCMonth(d.getUTCMonth() - i); return d.toISOString().slice(0, 7); });
+    const feeds = mine.filter((f) => !/-fb$/.test(f.mkt)).map((f) => {
+      const g = (gidx || {})[lgKey(f.client, f.mkt)] || {}, fb = mine.some((x) => x.mkt === f.mkt + '-fb');
+      const o = (oidx || {})[lgKey(f.client, f.mkt + '-fb')] || null, v = (vdx || {})[lgKey(f.client, f.mkt)] || null;
+      const arrivals = v && v.m ? months3.reduce((a, m) => a + (+v.m[m] || 0), 0) : 0;
+      return { mkt: f.mkt, fb, cov: g.cov || null, rows: +g.rows || 0, ai: g.ai && typeof g.ai === 'object' ? (+g.ai.n || 0) : (+g.ai || 0),
+        ovlFb: !!(o && o.ovl > 0), lang: AIVIS.mktMeta(f.mkt).lang, arrivals };
+    });
+    const dossier = liftEnvelope(dossierEnv, now).data || {};
+    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(who0));
+    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
+    const briefs = Object.values(liftEnvelope(briefsEnv, now).data || {})
+      .filter((b) => b && clientSlug(String(b.client || '')) === clientSlug(who0) && (b.cat === 'test' || /^A\/B Test/i.test(String(b.task || ''))) && !/^(done|confirmed|closed)$/i.test(String(b.stage || b.status || '')))
+      .map((b) => String(b.task || ''));
+    // competitor reads already stored for the brand's Google markets; signals union across them
+    const reads = await Promise.all(feeds.map((f) => env.EDITS.get('compwatch:' + brand + ':' + f.mkt, 'json').catch(() => null)));
+    // and the Auction Insights the AM uploaded (no API): the report's own competitors by impression share
+    const aucs = await Promise.all(feeds.map((f) => env.EDITS.get('compauction:' + brand + ':' + f.mkt, 'json').catch(() => null)));
+    const comp = { on: !!env.SERPAPI_KEY, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
+    const seenSig = {};
+    const addSig = (mkt, src, sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt, src }, sg)); } };
+    feeds.forEach((f, i) => {
+      const r = TL.cleanRead(reads[i]), a = TL.cleanAuction(aucs[i]);
+      const m = {};
+      if (r && r.reads.length) { const sm = TL.compSummary(r.reads, brand, domain); Object.assign(m, { at: r.at, n: r.n, summary: sm }); sm.signals.forEach((sg) => addSig(f.mkt, 'shopping', sg)); }
+      if (a) { m.auction = Object.assign({}, a, { signals: TL.auctionSignals(a) }); m.auction.signals.forEach((sg) => addSig(f.mkt, 'auction', sg)); }
+      comp.markets[f.mkt] = Object.keys(m).length ? m : null;
+    });
+    const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));
+    const ctx = { industry: industryOf(brand), feeds, archive: own ? own.tests : [], kw: kwAll.filter((r) => clientSlug(String(r.brand || '')) === clientSlug(who0)), briefs, comp };
+    const res = TL.proposeTests(brand, ctx, ev, { now });
+    const evOut = {}; Object.keys(ev).forEach((k) => { evOut[k] = { n: ev[k].n, wins: ev[k].wins, recent: ev[k].recent.length, best: ev[k].best }; });
+    return json({ ok: true, at: now, client: brand, industry: ctx.industry, top: res.top, rest: res.rest, counts: res.counts,
+      evidence: evOut, book: book.map((b) => ({ brand: b.brand, n: b.tests.length })), cold, ownArchive: !!own, comp,
+      feeds: feeds.map((f) => ({ mkt: f.mkt, fb: f.fb, scanned: !!f.cov })) });
+  }
+
+  // ---- AUCTION INSIGHTS, NO API (Ray, 14 Oct 2026, on the competitor read: "is there a way to
+  // bypass the competitor mapping without API?" → "i think Google Ads Auction insight"): the AM
+  // downloads the report from the Google Ads UI, the page reads the file into rows and PUTs them
+  // here; TL.parseAuction reads the report's own figures (never re-derived), cleanAuction checks
+  // the record whole, KV compauction:<client>:<mkt>. GET = stored, DELETE = forget it. A write is
+  // the Workflow grant + client scope; no money is spent, so no throttle.
+  if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {
+    let body = {};
+    if (request.method === 'PUT') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
+    const client = String((request.method === 'PUT' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
+    const mkt = mktOf(request.method === 'PUT' ? body.market : url.searchParams.get('market'));
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'Auction Insights is a Google Ads report — pick the Google market' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = await feedRoster(env);
+    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
+    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
+    const key = 'compauction:' + feed.client + ':' + mkt;
+    if (request.method === 'GET') return json({ ok: true, client: feed.client, market: mkt, auction: TL.cleanAuction(await env.EDITS.get(key, 'json')) });
+    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
+    if (request.method === 'DELETE') { await env.EDITS.delete(key); logActivity(ctx, env, request, 'compauction-clear', feed.client + ' ' + mkt.toUpperCase()); return json({ ok: true, client: feed.client, market: mkt, auction: null }); }
+    const rows = Array.isArray(body.rows) ? body.rows.slice(0, TL.AUC_MAX_ROWS) : [];
+    if (!rows.length) return json({ ok: false, error: 'no rows — the file read as empty' }, 400);
+    const parsed = TL.parseAuction(rows.map((r) => (Array.isArray(r) ? r.slice(0, 16).map((c) => (typeof c === 'number' ? c : String(c == null ? '' : c).slice(0, 200))) : [])));
+    if (!parsed.ok) return json({ ok: false, error: parsed.error }, 400);
+    const rec = TL.cleanAuction(Object.assign({}, parsed, { at: Date.now(), mkt, by: String(acc.email || acc.who || '').slice(0, 80) }));
+    if (!rec || !rec.comps.length) return json({ ok: false, error: 'the report names no competitor domain' }, 400);
+    await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 120 * 86400 });
+    logActivity(ctx, env, request, 'compauction-upload', feed.client + ' ' + mkt.toUpperCase() + ' · ' + rec.comps.length + ' competitors' + (rec.range ? ' · ' + rec.range : ''));
+    return json({ ok: true, client: feed.client, market: mkt, auction: rec, signals: TL.auctionSignals(rec) });
+  }
+
+  // ---- the competitor Shopping read: GET = what is stored, POST = read it now (SerpApi, the key AI
+  // Visibility uses; one read per market per day unless forced — each read is COMP_QUERIES searches)
+  if (path === '/api/compwatch' && (request.method === 'GET' || request.method === 'POST')) {
+    let body = {};
+    if (request.method === 'POST') { try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); } }
+    const client = String((request.method === 'POST' ? body.client : url.searchParams.get('client')) || '').slice(0, 60).trim();
+    const mkt = mktOf(request.method === 'POST' ? body.market : url.searchParams.get('market'));
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    if (/-fb$/.test(mkt)) return json({ ok: false, error: 'a Meta catalogue has no Shopping results — pick the Google market' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, client)) return json({ ok: false, error: 'out of scope' }, 403);
+    const roster = await feedRoster(env);
+    const feed = roster.find((f) => clientSlug(f.client) === clientSlug(client) && f.mkt === mkt && f.src && (f.src.id || f.src.xml));
+    if (!feed) return json({ ok: false, error: 'no wired Google feed for ' + client + ' ' + mkt.toUpperCase() }, 404);
+    const key = 'compwatch:' + feed.client + ':' + mkt;
+    const stored = TL.cleanRead(await env.EDITS.get(key, 'json'));
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data || {};
+    const dk = Object.keys(dossier).find((n) => clientSlug(n) === clientSlug(client));
+    const domain = dk && dossier[dk] && dossier[dk].dom ? String(dossier[dk].dom) : '';
+    const answer = (r, fresh) => json({ ok: true, on: !!env.SERPAPI_KEY, client: feed.client, market: mkt, fresh: !!fresh, read: r,
+      summary: r && r.reads.length ? TL.compSummary(r.reads, feed.client, domain) : null });
+    if (request.method === 'GET') return answer(stored, false);
+    if (!moduleAllowed(acc.modules, 'workflow')) return json({ ok: false, error: 'the Workflow module is not granted to this signin' }, 403);
+    if (!env.SERPAPI_KEY) return json({ ok: false, on: false, error: 'SERPAPI_KEY is not set on the worker — the Shopping read is not connected' });
+    if (stored && stored.at && Date.now() - stored.at < TL.COMP_TTL_MS && !body.force) return answer(stored, false);
+    const snap = await env.EDITS.get('ptype:' + feed.client + ':' + mkt, 'json');
+    const pt = snap && snap.labels && snap.labels.product_type && Array.isArray(snap.labels.product_type.values) ? snap.labels.product_type.values : [];
+    const qs = TL.compQueries(pt, TL.COMP_QUERIES);
+    if (!qs.length) return json({ ok: false, error: 'no product-type snapshot for ' + feed.client + ' ' + mkt.toUpperCase() + ' — scan the feed on Product Type Guard first' }, 409);
+    const meta = AIVIS.mktMeta(mkt);
+    const reads = [];
+    for (const q of qs) {
+      try {
+        const r = await fetch(AIVIS.serpUrl('google_shopping', { q: q.q, gl: meta.gl, hl: meta.hl, num: TL.COMP_ROWS, no_cache: 'true' }, env));
+        if (!r.ok) { reads.push({ q: q.q, n: 0, rows: [], err: 'SerpApi ' + r.status }); continue; }
+        reads.push(TL.normShopping(await r.json(), q.q));
+      } catch (e) { reads.push({ q: q.q, n: 0, rows: [], err: String((e && e.message) || e).slice(0, 120) }); }
+    }
+    const rec = TL.cleanRead({ at: Date.now(), mkt, reads });
+    if (rec && rec.n) await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 60 * 86400 });
+    logActivity(ctx, env, request, 'compwatch-read', feed.client + ' ' + mkt.toUpperCase() + ' · ' + qs.length + ' queries · ' + (rec ? rec.n : 0) + ' rows');
+    return answer(rec && rec.n ? rec : stored, !!(rec && rec.n));
   }
 
   return null;

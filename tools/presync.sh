@@ -569,6 +569,10 @@ echo "── validating: module-nav parity (the menu stays identical on every pa
 node tools/check_nav.js >/dev/null
 echo "   ✓ nav identical across all app pages"
 
+echo "── validating: route reachability (a route the router never reaches answers HTML)"
+node tools/check_routes.js >/dev/null
+echo "   ✓ every /api route a sub-router answers is dispatched"
+
 echo "── validating: labelguard browser-engine copy (served /labels/engine.js = src)"
 node tools/test_replyclass.mjs >/dev/null
 echo "   ✓ reply classifier agrees across worker + page"

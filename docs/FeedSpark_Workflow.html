@@ -7285,12 +7285,17 @@ aside.ck[hidden]{display:none}
   var TLD={},TLBUSY={},TLWARM={},TLMORE={};
   /* the composer's toast lives in another script block — the rail says its own word the same way */
   function tlSay(m){ var t=document.createElement('div'); t.className='ck-toast'; t.textContent=m; t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;z-index:9999;max-width:90vw'; document.body.appendChild(t); setTimeout(function(){ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(function(){ t.remove(); },320); },2400); }
+  /* A ROUTE THAT ANSWERS HTML SAYS SO (23 Oct 2026 — Ray, over a rail reading "could not read"
+     on both sections: the two routes were unreachable in the worker, so the fetch got the page
+     handler's HTML and r.json() threw an exception whose words named nothing). The status is the
+     one fact that tells a 404 from a 502, so it travels into the section's own sentence. */
+  function ckJson(r){ return r.json().catch(function(){ throw new Error('the server answered ' + r.status + ', not a reading'); }); }
   function tlSurf(s){ return s==='meta'?'<span class="ck-pill tm" title="Meta">M</span>':s==='google'?'<span class="ck-pill tg" title="Google Shopping">G</span>':'<span class="ck-pill tb" title="Google Shopping + Meta">G+M</span>'; }
   function loadTests(brand,force){
     if(!brand||TLBUSY[brand])return;
     if(!force&&TLD[brand]&&Date.now()-(TLD[brand].got||0)<600000)return;
     TLBUSY[brand]=true;
-    fetch('/api/testlab?client='+encodeURIComponent(brand)).then(function(r){return r.json();}).then(function(d){
+    fetch('/api/testlab?client='+encodeURIComponent(brand)).then(ckJson).then(function(d){
       if(!d||!d.ok){ TLD[brand]={err:(d&&d.error)||'could not read',got:Date.now()}; return; }
       d.got=Date.now(); TLD[brand]=d;
       /* an archive nobody has opened is not an empty archive: warm the cold brands ONCE per
@@ -7303,7 +7308,7 @@ aside.ck[hidden]{display:none}
           .then(function(){ TLBUSY[brand]=false; loadTests(brand,true); });
         return;
       }
-    }).catch(function(){ TLD[brand]={err:'could not read',got:Date.now()}; }).then(function(){ TLBUSY[brand]=false; if(BRAND===brand)render(); });
+    }).catch(function(e){ TLD[brand]={err:((e&&e.message)||'could not read'),got:Date.now()}; }).then(function(){ TLBUSY[brand]=false; if(BRAND===brand)render(); });
   }
   function tlWhen(ms){ return ms?new Date(ms).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):''; }
   function secTests(brand){
@@ -7498,10 +7503,10 @@ aside.ck[hidden]{display:none}
     if(!brand||SLBUSY[brand])return;
     if(!force&&SLD[brand]&&Date.now()-(SLD[brand].got||0)<600000)return;
     SLBUSY[brand]=true;
-    fetch('/api/spendlens?client='+encodeURIComponent(brand)).then(function(r){return r.json();}).then(function(d){
+    fetch('/api/spendlens?client='+encodeURIComponent(brand)).then(ckJson).then(function(d){
       if(!d||!d.ok){ SLD[brand]={err:(d&&d.error)||'could not read',got:Date.now()}; return; }
       d.got=Date.now(); SLD[brand]=d;
-    }).catch(function(){ SLD[brand]={err:'could not read',got:Date.now()}; })
+    }).catch(function(e){ SLD[brand]={err:((e&&e.message)||'could not read'),got:Date.now()}; })
       .then(function(){ SLBUSY[brand]=false; if(BRAND===brand)render(); });
   }
   var SL_GLYPH={starved:'📈',laggard:'💸',dead:'🧊',unlisted:'🚫'};
