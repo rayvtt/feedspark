@@ -106,9 +106,14 @@ t('one of the three is a first for the book (nobody has run it), marked as such'
 const ctxH = { industry: 'Fashion', feeds: FEEDS, archive: [], kw: [], briefs: [], comp: null };
 const PH = TL.proposeTests('Linden', ctxH, EV, { now: NOW });
 const img = PH.top.concat(PH.rest).find((p) => p.k === 'img_lifestyle');
-t('a peer’s win is the evidence, named inside the FCC with its figure, market and month — the same-industry peer first', img.evKind === 'peer' && /^Northwind GB \+12\.4% ctr \(/.test(img.ev) && /2 wins across the book/.test(img.ev) && img.peers[0].brand === 'Northwind');
+t('a peer’s win is the evidence — its INDUSTRY, figure and month, never its name, with the same-industry peer first', img.evKind === 'peer' && /^a Fashion account \+12\.4% ctr \(/.test(img.ev) && /2 wins across the book/.test(img.ev) && img.peers[0].industry === 'Fashion' && img.peers[0].pct === 12.4 && img.peers[0].brand === undefined);
 t('the brief a client may read names the INDUSTRY and never the peer brand', /a Fashion account saw \+12\.4% ctr/.test(img.brief.scope) && !/Northwind|Harbour/.test(img.brief.scope) && /Field: g:image_link/.test(img.brief.scope) && /Markets wired: GB, DE/.test(img.brief.scope));
-t('the line to say names the peer (this is the AM’s rail), the figure and the design', /Northwind saw \+12\.4% ctr on lifestyle main image in/.test(img.say) && /We would split/.test(img.say));
+t('the line to say names the industry, the figure and the design', /^A Fashion account saw \+12\.4% ctr on lifestyle main image in/.test(img.say) && /We would split/.test(img.say));
+/* ANONYMISED ON THE RAIL TOO (Ray, 23 Oct 2026: "ok on playbook, some other brand name would need
+   to be annonimize"). The rail is read on the client call and ⧉ Copy proposals lifts these exact
+   strings, so no peer's name may reach any of them — across EVERY proposal, not just the one above. */
+t('no peer brand name reaches any proposal’s evidence, spoken line, peers or brief — the whole set', PH.top.concat(PH.rest).every((p) => !/Northwind|Harbour/.test([p.ev, p.say, p.brief.scope, JSON.stringify(p.peers || [])].join(' '))));
+t('a peer with no industry on record is still not named', TL.peerWord({ industry: '' }) === 'another account in our book' && TL.peerWord({ industry: '' }, { client: true }) === 'a FeedSpark account' && TL.peerWord({ industry: 'Pet Care' }) === 'a Pet Care account');
 t('a same-industry peer win outranks an other-industry one, which outranks an older one, which outranks none', img.score > PH.top.concat(PH.rest).find((p) => p.k === 'hl_six').score && PH.top.concat(PH.rest).find((p) => p.k === 'hl_six').score > PH.top.concat(PH.rest).find((p) => p.k === 'title_mask').score);
 const PB = TL.proposeTests('Linden', { industry: 'Beauty', feeds: [{ mkt: 'gb', fb: false, cov: { additional_image_link: 10 }, ai: 2, lang: 'en' }], archive: [], kw: [], briefs: [], comp: null }, EV, { now: NOW });
 const rb = {}; PB.top.concat(PB.rest).forEach((p) => { rb[p.k] = p; });

@@ -15746,7 +15746,7 @@
     {
       "name": "Test Lab: a client brief names the industry, never a peer brand",
       "file": "cloudflare/feedspark-deck/src/testlab.js",
-      "pattern": "L.push('Evidence: a ' + (best.industry || 'FeedSpark') + ' account saw +'",
+      "pattern": "L.push('Evidence: ' + peerWord(best, { client: true }) + ' saw +'",
       "pr": 0
     },
     {
@@ -16921,6 +16921,30 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function ckJson(r)",
       "pr": 720
+    },
+    {
+      "name": "Test Lab: a peer is an industry, never a name — ONE writer for the rail and the brief",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "export function peerWord(r, opts)",
+      "pr": 732
+    },
+    {
+      "name": "Test Lab: no peer brand on the rail's evidence line",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": "evLine = peerWord(best) + ' +'",
+      "pr": 732
+    },
+    {
+      "name": "Test Lab: the proposal's peers carry the industry and the figure, never the account",
+      "file": "cloudflare/feedspark-deck/src/testlab.js",
+      "pattern": ".slice(0, 3).map(anonPeer)",
+      "pr": 732
+    },
+    {
+      "name": "/api/testlab: the evidence table travels without the peer's name",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "best: b ? { industry: b.industry || ''",
+      "pr": 732
     },
     {
       "name": "Stock: the rule simulator card — range completion, quantity, sizes in stock, a category block",
