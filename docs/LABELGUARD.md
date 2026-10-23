@@ -388,7 +388,7 @@ The section header of /labels, /ptypes and /golden now carries:
 - **skip feeds read in the last 20 h** — OFF by default: every pick is a FORCED read.
 - **⚡ Scan …** — the button names the scope (*Scan whole estate* / *Scan Reiss — 39 markets* /
   *Scan Reiss · DE*); **⏹ Stop** finishes the feed in hand and stops; the scope locks while it runs.
-- **⚡ Scan** on every brand card — that brand, every market.
+- ~~⚡ Scan on every brand card~~ — removed 22 Oct 2026 (Ray: "remove the thunderbolt icon because i can do that with the dropdown already"); pick the brand in the Brand dropdown instead.
 
 Each feed takes the SAME path as the per-feed button: the server scan, and on its XML refusal the
 live stream in the browser (`xmlLiveScan` → `/api/labels/scanpush`), so a held catastrophic
@@ -688,6 +688,17 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   their scan-time score until their next scan.
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
+
+### 8a′. Filter the dissection by depth (20 Oct 2026)
+
+Ray: *"in product type guard module - allow filter by 1 depth/ 2 depth/ 3 depth to quickly see
+values"*. A chip row above the product_type table — **Depth: All · 1-depth · 2-depth … 6+-depth**,
+each chip carrying how many paths sit at that depth (SKUs in its tooltip), only depths the feed
+carries shown. Several can be on at once (1 + 2 = every shallow path); **All** clears it. A row of
+the depth card above is the same control. It combines with 🔍 (both must match), lifts the 30-row
+cap like the search does, and is this device's choice (`localStorage pt-depth`), never shared
+state. Depth = the same `pathDepth` the card counts with (chevrons, `/` as the fallback). ⤓ CSV
+still exports every path. Harness: tools/test_guardcards.mjs.
 
 ### 8a. product_type depth card, and cards that fold (18 Sep 2026; card swapped 22 Sep 2026)
 

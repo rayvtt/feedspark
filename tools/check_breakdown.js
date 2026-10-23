@@ -199,11 +199,53 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.selectOption('#pv-lay', 'roas'); await pg.waitForTimeout(200);
       const lyr2 = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl .plt') || {}).textContent]; }));
       ok('…and the other way round: products counted, ROAS layered from each group\'s own sums', lyr2.every(([v, n, l]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : !l || /^— ROAS/.test(l))), lyr2);
+      await pg.selectOption('#pv-lay2', 'cost'); await pg.waitForTimeout(200);
+      const ly3 = await pg.evaluate(() => ({ note: document.getElementById('pv-note').textContent,
+        rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1]; return [t[0].textContent, tot.firstChild.textContent, (tot.querySelector('.pl:not(.pl2) .plt') || {}).textContent, (tot.querySelector('.pl2 .plt') || {}).textContent]; }),
+        bars: Array.from(document.querySelectorAll('#pv tbody td.tot .pl2 i')).map((i) => parseFloat(i.style.width)),
+        green: (() => { const i = document.querySelector('#pv .pl2 i'); return i ? getComputedStyle(i).backgroundColor : ''; })(),
+        blue: (() => { const i = document.querySelector('#pv .pl:not(.pl2) i'); return i ? getComputedStyle(i).backgroundColor : ''; })(),
+        foot: (() => { const t = document.querySelectorAll('#pv tfoot td'); const e = t.length && t[t.length - 1].querySelector('.pl2 .plt'); return e ? e.textContent : ''; })() }));
       if (process.env.BD_SHOT3) await pg.locator('#pv').screenshot({ path: process.env.BD_SHOT3 });
-      await pg.selectOption('#pv-meas', 'roas'); await pg.selectOption('#pv-lay', ''); await pg.waitForTimeout(150);
+      const pvc = await pg.evaluate(() => { const r = (q) => document.querySelector(q).getBoundingClientRect(); const a = r('#pv-r'), c = r('#pv-c'), m = r('#pv-meas'), l = r('#pv-lay'), l2 = r('#pv-lay2'); return { a, c, m, l, l2 }; });
+      if (process.env.BD_SHOT4) await pg.locator('#sec-pivot .pvc').screenshot({ path: process.env.BD_SHOT4 });
+      ok('the controls read as two boxes — rows over columns on the left, measure and both layers side by side on the right', pvc.c.top > pvc.a.bottom - 1 && Math.abs(pvc.a.left - pvc.c.left) < 2 && pvc.m.left > pvc.a.right && Math.abs(pvc.m.top - pvc.l.top) < 2 && Math.abs(pvc.l.top - pvc.l2.top) < 2 && pvc.l.left > pvc.m.right && pvc.l2.left > pvc.l.right, pvc);
+      ok('a THIRD reading layers under the second — products counted, ROAS blue, spend green, every row against its own sums', /reads three things/.test(ly3.note) && ly3.rows.length && ly3.rows.every(([v, n, l, m]) => +n.replace(/,/g, '') === NP[v] && (SP[v] > 0 ? Math.abs(parseFloat(l.replace(/,/g, '')) - Math.round(VAL[v] / SP[v] * 100)) <= 1 : true) && (SP[v] ? Math.abs(money(m) - SP[v]) < 0.6 : !m)), [ly3, SP]);
+      ok('…in its own colour on its own scale, the total row naming the feed\'s spend', ly3.green && ly3.green !== ly3.blue && Math.max(...ly3.bars) === 100 && ly3.foot && Math.abs(money(ly3.foot) - tot) < 0.6, ly3);
+      const [l2dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+      const l2csv = fs.readFileSync(await l2dl.path(), 'utf8');
+      ok('…and the CSV carries both layers, each as its own block', /\r\nLayer · ROAS,/.test(l2csv) && /\r\nLayer 2 · Spend,/.test(l2csv), l2csv.slice(0, 400));
+      await pg.selectOption('#pv-lay', 'cost'); await pg.waitForTimeout(150);
+      ok('…a second layer that repeats the first steps aside rather than drawing one reading twice', await pg.evaluate(() => !document.querySelector('#pv .pl2') && document.getElementById('pv-lay2').value === ''));
+      await pg.selectOption('#pv-meas', 'roas'); await pg.selectOption('#pv-lay', ''); await pg.selectOption('#pv-lay2', ''); await pg.waitForTimeout(150);
       const [cdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
       const csv = fs.readFileSync(await cdl.path(), 'utf8');
       ok('…the CSV says which measure and keeps the spend column', /ROAS \(Google Ads, last 30 days/.test(csv) && /,Spend\r\n/.test(csv.split('\r\n')[0] + '\r\n'), csv.split('\r\n')[0]);
+      // ---- the SPLIT: Price type built from price + sale price, read inside every cell, counted independently here
+      const num = (v) => { const m = /-?\d+(?:[.,]\d+)?/.exec(v || ''); return m ? parseFloat(m[0].replace(',', '.')) : NaN; };
+      const onSale = (it) => { const p = num(tag(it, 'g:price')), q = num(tag(it, 'g:sale_price')); return q > 0 && p > 0 && q < p; };
+      const SALE = {}, SALESP = {}, SC = {}; let saleN = 0;
+      ITEMS.forEach((it) => { const r = tier(tag(it, 'g:product_type'), 2), c = AV(it), a = A[tag(it, 'g:id').toLowerCase()] || [0, 0, 0, 0, 0];
+        if (onSale(it)) { SALE[r] = (SALE[r] || 0) + 1; SALESP[r] = (SALESP[r] || 0) + a[2]; SC[c] = (SC[c] || 0) + 1; saleN++; } });
+      await pg.selectOption('#pv-meas', 'n'); await pg.selectOption('#pv-spl', '@price'); await pg.waitForTimeout(200);
+      const pcT = (x) => { const p = x * 100; return (p >= 10 || p === 0 ? Math.round(p) : Math.round(p * 10) / 10) + '%'; };
+      const spr = await pg.evaluate(() => ({ opts: Array.from(document.querySelectorAll('#pv-spl option')).map((o) => o.value), shown: !document.getElementById('pv-splw-g').hidden,
+        note: document.getElementById('pv-note').textContent,
+        rows: Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), tot = t[t.length - 1], b = tot.querySelector('.psp b'), ws = Array.from(tot.querySelectorAll('.psp .pst i')).map((i) => parseFloat(i.style.width)); return [t[0].textContent, b ? b.textContent : '', ws]; }),
+        foot: (() => { const t = document.querySelectorAll('#pv tfoot td'); const b = t.length && t[t.length - 1].querySelector('.psp b'); return b ? b.textContent : ''; })(),
+        cells: document.querySelectorAll('#pv tbody td.c .psp').length }));
+      ok('Split by offers Price type first, and a field of many values never', spr.opts[1] === '@price' && !spr.opts.includes('g:color') && spr.shown, spr.opts);
+      ok('every row\'s strip names its share on sale — the products below their full price, counted independently', spr.rows.length && spr.rows.every(([v, b]) => b === pcT((SALE[v] || 0) / NP[v]) + ' on sale'), [spr.rows, SALE, NP]);
+      ok('…each strip adds to 100% of its cell, and the whole is the feed\'s share on sale', spr.rows.every(([, , ws]) => Math.abs(ws.reduce((a, b) => a + b, 0) - 100) < 0.2) && spr.foot === pcT(saleN / ITEMS.length) + ' on sale' && spr.cells > spr.rows.length && /splits each cell’s products by Price type/.test(spr.note), [spr.foot, saleN]);
+      await pg.selectOption('#pv-splw', 'cost'); await pg.waitForTimeout(200);
+      const sps = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv tbody tr')).map((tr) => { const t = tr.querySelectorAll('td'), b = t[t.length - 1].querySelector('.psp b'); return [t[0].textContent, b ? b.textContent : '']; }));
+      ok('…and split by SPEND on request: each row\'s share of its spend on sale products', sps.every(([v, b]) => SP[v] ? b === pcT((SALESP[v] || 0) / SP[v]) + ' on sale' : b === ''), [sps, SALESP, SP]);
+      const [sdl] = await Promise.all([pg.waitForEvent('download'), pg.click('#pv-csv')]);
+      const scsv = fs.readFileSync(await sdl.path(), 'utf8');
+      ok('…the CSV carries the split as its own block', /\r\nSplit · % on sale \(of spend\),/.test(scsv), scsv.slice(0, 300));
+      if (process.env.BD_SHOT5) { await pg.selectOption('#pv-splw', 'n'); await pg.waitForTimeout(150); await pg.locator('#sec-pivot').screenshot({ path: process.env.BD_SHOT5 }); }
+      await pg.selectOption('#pv-splw', 'n'); await pg.selectOption('#pv-spl', ''); await pg.selectOption('#pv-meas', 'roas'); await pg.waitForTimeout(150);
+      ok('…and Nothing takes the strip away', await pg.evaluate(() => !document.querySelector('#pv .psp') && document.getElementById('pv-splw-g').hidden));
       const sv = await pg.evaluate(() => ({ head: (document.querySelector('#pv3 .sv3h b') || {}).textContent, by: (document.getElementById('sv3-by') || {}).value,
         rows: Array.from(document.querySelectorAll('#pv3 .sv3r')).map((r) => { const b = r.querySelectorAll('.b'); return [r.querySelector('.nm').textContent, b[0].textContent, b[1].textContent, r.querySelector('.ro em').textContent, b[0].querySelector('i').getBoundingClientRect().width, b[1].querySelector('i').getBoundingClientRect().width]; }) }));
       const live = Object.keys(SP).filter((v) => SP[v] || VAL[v]);
@@ -217,6 +259,47 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.click('#pv-show [data-s="n"]'); await pg.waitForTimeout(150);
       const back = await pg.evaluate(() => ({ hidden: document.getElementById('pv-ads').hidden, last: Array.from(document.querySelectorAll('#pv table thead th')).pop().textContent }));
       ok('…and back on Products the table counts again', back.hidden && back.last === 'Row total', back);
+      // ---- the opportunity spotter, inside the pivot: a corner flag on each cell that stands out against the feed, a card on
+      // hover, a ribbon over the table that counts them, lights one kind up and steps through them; a selection reads itself
+      await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
+      await pg.waitForTimeout(200);
+      const op0 = await pg.evaluate(() => ({ sec: !!document.getElementById('sec-opp'), bar: document.getElementById('pv-opp').textContent, hidden: document.getElementById('pv-opp').hidden, pips: document.querySelectorAll('#pv td.opx .opp').length, cells: document.querySelectorAll('#pv td.opx').length, n: (function () { var m = /Top (\d+)/.exec(document.getElementById('pv-opp').textContent); return m ? +m[1] : null; })() }));
+      ok('…never more than the ten strongest flagged on a view', op0.n != null && op0.n >= 1 && op0.n <= 10 && op0.cells <= op0.n, op0);
+      ok('Opportunities live in the pivot: no separate section, a ribbon over the table and a flag on every cell that stands out', !op0.sec && !op0.hidden && op0.pips >= 1 && op0.pips === op0.cells && /opportunit/.test(op0.bar), op0);
+      const pip = pg.locator('#pv td.opx .opp').first();
+      await pip.scrollIntoViewIfNeeded(); await pip.hover(); await pg.waitForTimeout(300);
+      const pop = await pg.evaluate(() => { const P = document.getElementById('oppop'), r = P.getBoundingClientRect(); return { open: !P.hidden, cards: P.querySelectorAll('.opf').length, inView: r.left >= 0 && r.right <= innerWidth + 1, pin: P.getAttribute('data-pin') }; });
+      ok('…hovering a flag opens its card beside the cell, inside the window', pop.open && pop.cards >= 1 && pop.inView && !pop.pin, pop);
+      const flt0 = await pg.evaluate(() => window.__FCCBreakdown.state().filters.length);
+      await pip.click(); await pg.waitForTimeout(150);
+      const pin = await pg.evaluate(() => ({ pin: document.getElementById('oppop').getAttribute('data-pin'), f: window.__FCCBreakdown.state().filters.length }));
+      ok('…clicking a flag pins the card and never filters the page (the cell itself still does)', pin.pin === '1' && pin.f === flt0, pin);
+      await pg.keyboard.press('Escape');
+      ok('…Esc closes it', await pg.evaluate(() => document.getElementById('oppop').hidden));
+      const kinds = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv-opp [data-ok]')).map((b) => b.getAttribute('data-ok')));
+      const k1 = kinds.find((k) => k !== 'all');
+      await pg.click('#pv-opp [data-ok="' + k1 + '"]'); await pg.waitForTimeout(100);
+      const osp = await pg.evaluate((k) => { const box = document.getElementById('pv'), hit = Array.from(box.querySelectorAll('td.hit')); return { spot: box.classList.contains('spot'), hit: hit.length, right: hit.every((td) => td.classList.contains('ok-' + k)), want: box.querySelectorAll('td.ok-' + k).length }; }, k1);
+      ok('…a kind chip lights up exactly the cells carrying that kind and dims the rest', osp.spot && osp.hit >= 1 && osp.right && osp.hit === osp.want, osp);
+      await pg.click('#pv-opp [data-os="1"]'); await pg.waitForTimeout(150);
+      const st = await pg.evaluate(() => ({ pos: document.getElementById('op-pos').textContent, open: !document.getElementById('oppop').hidden, cur: document.querySelectorAll('#pv td.ocur').length }));
+      ok('…Review › steps to the strongest one and opens its card', /^1 of \d+$/.test(st.pos) && st.open && st.cur === 1, st);
+      if (process.env.BD_SHOT6) await pg.locator('#sec-pivot').screenshot({ path: process.env.BD_SHOT6 });
+      await pg.keyboard.press('Escape');
+      await pg.click('#pv-opp [data-ok="' + k1 + '"]'); await pg.waitForTimeout(100);
+      ok('…a second click on the chip turns the spotlight off', await pg.evaluate(() => !document.getElementById('pv').classList.contains('spot')));
+      await pg.locator('#pv tbody td.c:not(.z)').first().click(); await pg.waitForTimeout(250);
+      const op1 = await pg.evaluate(() => ({ bar: document.getElementById('pv-opp').textContent, chips: document.querySelectorAll('#pv-opp [data-on]').length }));
+      ok('…click a cell and the ribbon reads just that selection', /In this selection|Nothing stands out in this selection/.test(op1.bar), op1);
+      if (op1.chips) {
+        await pg.click('#pv-opp [data-on="0"]'); await pg.waitForTimeout(150);
+        const cards = await pg.evaluate(() => Array.from(document.querySelectorAll('#oppop .opf')).map((c) => [c.dataset.k, c.dataset.f, c.dataset.v, +c.dataset.s, +c.dataset.vn, +c.dataset.n]));
+        const mixes = cards.filter((c) => (c[0] === 'mix' || c[0] === 'gap' || c[0] === 'blank') && c[1] && c[1] !== '@price');
+        ok('…a finding chip opens its card, every share its count over the selection\'s products', cards.length === 1 && mixes.every(([, , , s, vn, n]) => n >= 5 && Math.abs(s - vn / n) < 1e-9), cards);
+        await pg.keyboard.press('Escape');
+      }
+      await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
+      await pg.waitForTimeout(150);
     }
 
     console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');
@@ -225,7 +308,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       ok('no sideways scroll at 1440px, every heading whole (wrapped, never cut), a grip on every column', fit.sw <= fit.cw + 1 && !fit.cut && fit.grips === fit.n && fit.n > 3, fit);
       const quarters = await pg.evaluate(() => Array.from(document.querySelectorAll('#pv thead th')).map((th) => th.textContent).join('|'));
       ok('…a quarter is named by itself, never "this quarter" or "last quarter"', !/this quarter|last quarter|· ahead/.test(quarters), quarters);
-      const g = pg.locator('#pv thead th.tot .crz').first(), bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
+      const g = pg.locator('#pv thead th.tot .crz').first(); await g.scrollIntoViewIfNeeded(); await pg.waitForTimeout(200); const bb = await g.boundingBox(), w0 = await pg.evaluate(() => document.querySelector('#pv thead th.tot').getBoundingClientRect().width);
       await pg.mouse.move(bb.x + 4, bb.y + 8); await pg.mouse.down(); await pg.mouse.move(bb.x + 64, bb.y + 8, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(150);
       const after = await pg.evaluate(() => ({ w: document.querySelector('#pv thead th.tot').getBoundingClientRect().width, saved: (JSON.parse(localStorage.getItem('fcc-bd-layout') || '{}').pivot || {}).w, sw: document.getElementById('pv').scrollWidth, cw: document.getElementById('pv').clientWidth }));
       ok('dragging a column\'s grip widens it, remembered on the device by what the column is', after.w > w0 + 40 && after.saved && after.saved.tot > w0 + 40, [w0, after]);
@@ -243,6 +326,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const pw = (i) => pg.evaluate((i) => Math.round(document.querySelectorAll('#panes .pane:not(.add)')[i].getBoundingClientRect().width), i);
     const w0 = await pw(2);
     await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded();
+    await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').scrollIntoViewIfNeeded(); await pg.waitForTimeout(200);
     const hb = await pg.locator('#panes .pane:not(.add) >> nth=2 >> .rz').boundingBox();
     await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down();
     await pg.mouse.move(hb.x + hb.width / 2 + 160, hb.y + hb.height / 2, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(120);

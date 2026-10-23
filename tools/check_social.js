@@ -24,6 +24,13 @@ const SIG = `(sel) => { const c = document.querySelector(sel); if (!c) return nu
     if (b > 100 && r < 70 && gg < 90) navy++; h = (h * 31 + (r >> 4) * 7 + (gg >> 4) * 3 + (b >> 4)) >>> 0; n++; } return { W, H, navy: navy / n, h }; }`;
 const setMoment = (date, hour) => `(() => { const d = document.getElementById('cx-date'); d.value = '${date}'; d.dispatchEvent(new Event('change', { bubbles: true }));
   const h = document.getElementById('cx-hour'); h.value = ${hour}; h.dispatchEvent(new Event('input', { bubbles: true })); })()`;
+// the colour a badge is FILLED with near the canvas's top-left corner: the most common colour over a small patch around
+// (8%, 6%), not the one pixel there — that pixel can land on a glyph of the badge's own white text, and where it lands
+// moves with the fallback font (DejaVu's wider letters cover it when Space Grotesk / Lato / Inter are not to hand)
+const FILL = (sel) => `(() => { const c = document.querySelector('${sel} canvas'), g = c.getContext('2d'), W = c.width, H = c.height;
+  const x0 = Math.round(W * 0.06), y0 = Math.round(H * 0.045), w = Math.round(W * 0.05), h = Math.round(H * 0.03), d = g.getImageData(x0, y0, w, h).data;
+  const n = {}; let best = null; for (let i = 0; i < d.length; i += 4) { const k = (d[i] >> 3) + ',' + (d[i + 1] >> 3) + ',' + (d[i + 2] >> 3); n[k] = (n[k] || 0) + 1; if (!best || n[k] > n[best]) best = k; }
+  return best.split(',').map((v) => (+v << 3) + 4); })()`;
 const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f')).find((e) => /Image tagline/.test(e.textContent)); return f ? f.textContent : ''; })()`;
 
 (async () => {
@@ -90,11 +97,13 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   const fbNow = await p.evaluate('(' + SIG + ')(\'[data-mock="fb_feed"] canvas\')');
   t('a picture per network: TikTok takes the lifestyle shot, Facebook keeps the packshot', before.h !== after.h && fbNow.h === tueSig.h, { before: before.h, after: after.h, fb: fbNow.h, tue: tueSig.h });
   await p.click('#dgal [data-d="pill-badge"]'); await p.waitForTimeout(400);
-  const pill = await p.evaluate(`(() => { const c = document.querySelector('[data-mock="fb_feed"] canvas'), g = c.getContext('2d'); const d = g.getImageData(Math.round(c.width * 0.08), Math.round(c.height * 0.06), 1, 1).data; return [d[0], d[1], d[2]]; })()`);
+  const pill = await p.evaluate(FILL('[data-mock="fb_feed"]'));
   t('the Pill badge design paints its orange “20% OFF” in the corner', pill[0] > 200 && pill[1] > 80 && pill[1] < 140 && pill[2] < 60, pill);
 
   console.log('· the design controls ride beside the previews');
-  const geo = await p.evaluate(() => { const r = document.getElementById('pv-rail').getBoundingClientRect(), m = document.querySelector('[data-mock="fb_feed"]').getBoundingClientRect(); return { rr: r.right, ml: m.left, rt: r.top, mt: m.top }; });
+  const geo = await p.evaluate(() => { const r = document.getElementById('pv-rail').getBoundingClientRect(), m = document.querySelector('[data-mock="fb_feed"]').getBoundingClientRect(), c = document.querySelector('.pv-main').getBoundingClientRect(); return { rr: r.right, ml: m.left, rt: r.top, mt: c.top }; });
+  // level = the rail and the previews COLUMN start on one line; the first card sits under the column's own toolbar,
+  // whose height follows the font (the chips wrap to a second row in a wider fallback), so it is not the edge to read
   t('the rail is to the LEFT of the previews, level with them', geo.rr <= geo.ml && Math.abs(geo.rt - geo.mt) < 80, geo);
   await p.evaluate(() => { const m = document.querySelector('[data-mock="ig_reels"]'); window.scrollTo(0, m.getBoundingClientRect().top + scrollY - 120); }); await p.waitForTimeout(300);
   const inView = await p.evaluate(() => { const d = document.querySelector('#dgal [data-d="burst"]').getBoundingClientRect(), tb = document.querySelector('.topbar').getBoundingClientRect().bottom, m = document.querySelector('[data-mock="ig_reels"]').getBoundingClientRect(); return { dt: d.top, db: d.bottom, tb, vh: innerHeight, mt: m.top }; });
@@ -151,7 +160,7 @@ const nowTag = `(() => { const f = Array.from(document.querySelectorAll('#now .f
   console.log('· 🎨 design your own overlay');
   {
     p.on('dialog', (dg) => dg.accept());
-    const px = (sel) => p.evaluate(`(() => { const c = document.querySelector('${sel} canvas'), g = c.getContext('2d'); const d = g.getImageData(Math.round(c.width * 0.08), Math.round(c.height * 0.06), 1, 1).data; return [d[0], d[1], d[2]]; })()`);
+    const px = (sel) => p.evaluate(FILL(sel));
     await p.click('#rt-design'); await p.waitForTimeout(150);
     t('the Design tab opens in the panel beside the previews', !(await p.$eval('#rp-design', (e) => e.hidden)) && (await p.$eval('#pv-rail', (e) => e.getBoundingClientRect().right)) <= (await p.$eval('[data-mock="fb_feed"]', (e) => e.getBoundingClientRect().left)));
     await p.click('[data-cdnew]'); await p.waitForTimeout(400);

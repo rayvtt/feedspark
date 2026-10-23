@@ -64,7 +64,6 @@ window.addEventListener('load',restore);
   .scan-sel{font:inherit;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--paper,#fff);color:var(--ink);max-width:210px;min-width:0}
   .scan-sel:disabled{opacity:.55}
   .scan-skip{font-size:11.5px;font-weight:700;color:var(--muted);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer}
-  .est-hd .est-scan{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd .est-dl{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
   .est-card.collapsed .est-hd{margin-bottom:-6px}
@@ -170,6 +169,17 @@ window.addEventListener('load',restore);
   tr.gone td.v{text-decoration:line-through}
   .shbar{height:6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:26px}
   .shbar i{display:block;height:100%;background:var(--orange);border-radius:100px}
+  .dfil{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0 4px}
+  .dfil .dfl{font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+  .dfil button{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:100px;padding:4px 10px;cursor:pointer;min-height:28px}
+  .dfil button .dn{color:var(--muted);font-weight:700;margin-left:2px}
+  .dfil button.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .dfil button.on .dn{color:#fff;opacity:.85}
+  .pop .pr.pk{cursor:pointer;border-radius:6px;margin:0 -6px;padding:2px 6px}
+  .pop .pr.pk:hover{background:rgba(245,166,35,.12)}
+  .pop .pr.pk.on{background:rgba(237,111,11,.14);color:var(--ink)}
+  [data-theme=dark] .dfil button{background:#20242E;color:var(--ink)}
+  [data-theme=dark] .dfil button.on{background:var(--orange-deep);color:#fff}
   .pv-more{font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:6px 4px 1px;display:inline-block}
   /* cross-label dissection panel (full width under the label row) */
   .xpanel{background:#fff;border:1px solid var(--orange);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
@@ -426,6 +436,30 @@ window.addEventListener('load',restore);
     };
   }
   function qMatch(v) { return !QUERY || String(v).toLowerCase().indexOf(QUERY.toLowerCase()) >= 0; }
+  // DEPTH FILTER (Ray, 20 Oct 2026: "allow filter by 1 depth/ 2 depth/ 3 depth to quickly see values"):
+  // the dissection lists only paths at the picked chevron depths ('1'…'5','6+'; empty = every depth).
+  // A reading preference of this device (localStorage pt-depth), never shared state; it works with
+  // the 🔍 filter (both must match) and lifts the 30-row cap like the search does.
+  var DEPTHS = {};
+  try { (JSON.parse(localStorage.getItem('pt-depth') || '[]') || []).forEach(function (b) { if (['1', '2', '3', '4', '5', '6+'].indexOf(b) >= 0) DEPTHS[b] = 1; }); } catch (e) {}
+  function depthOn() { return Object.keys(DEPTHS).length > 0; }
+  function dBucket(v) { var d = pathDepth(v); return d >= 6 ? '6+' : String(d); }
+  function dMatch(v) { return !depthOn() || !!DEPTHS[dBucket(v)]; }
+  function saveDepths() { try { localStorage.setItem('pt-depth', JSON.stringify(Object.keys(DEPTHS))); } catch (e) {} }
+  function depthBar(rows) {
+    var cnt = {}, sku = {};
+    rows.forEach(function (r) { if (r.gone) return; var b = dBucket(r.v); cnt[b] = (cnt[b] || 0) + 1; sku[b] = (sku[b] || 0) + r.n; });
+    var h = '<div class="dfil" id="pt-dfil" role="group" aria-label="Filter product types by depth"><span class="dfl">Depth</span>' +
+      '<button type="button" data-dk=""' + (depthOn() ? '' : ' class="on" aria-pressed="true"') + ' title="Every depth">All</button>';
+    ['1', '2', '3', '4', '5', '6+'].forEach(function (b) {
+      var n = cnt[b] || 0, on = !!DEPTHS[b];
+      if (!n && !on) return;
+      h += '<button type="button" data-dk="' + b + '"' + (on ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') +
+        ' title="' + fmt(n) + ' path' + (n === 1 ? '' : 's') + ' at ' + b + (b === '1' ? ' level' : ' levels') + ' · ' + fmt(sku[b] || 0) + ' SKUs — click to ' + (on ? 'remove' : 'add') + '">' +
+        b + '-depth <span class="dn">' + fmt(n) + '</span></button>';
+    });
+    return h + '</div>';
+  }
 
   // ---- depth granularity (the "how granular" KPI Google reads off the category tree) ----
   // mirrors the engine's pathDepth/depthProfile: SKU-weighted % per chevron depth
@@ -507,7 +541,7 @@ window.addEventListener('load',restore);
     var h = '<div class="pop"><h4>' + esc(title) + ' · SKU-weighted</h4>';
     keys.forEach(function (b) {
       var pct = pop.pct[b] || 0, hi = o.hi ? o.hi.indexOf(b) >= 0 : false;
-      h += '<div class="pr' + (hi ? ' hi' : '') + '"><span class="pl">' + b + ' ' + (b === '1' ? o.one : o.many) + '</span>' +
+      h += '<div class="pr' + (hi ? ' hi' : '') + (o.pick ? ' pk' + (DEPTHS[b] ? ' on' : '') + '" data-dk="' + b + '" title="Show only the ' + b + '-depth paths in the table below' : '') + '"><span class="pl">' + b + ' ' + (b === '1' ? o.one : o.many) + '</span>' +
         '<span class="pb"><i style="width:' + Math.min(100, pct) + '%;background:' + DCOL[b] + '"></i></span><span class="pv">' + pct + '%</span></div>';
     });
     var all = pop.skus + (pop.zero || 0);
@@ -525,7 +559,7 @@ window.addEventListener('load',restore);
   function ptDepthCard(dp) {
     var std = depthStandard(dp);
     return popCard('product_type depth — category-path granularity', dp, {
-      one: 'level', many: 'levels', hi: ['3', '4', '5'],
+      one: 'level', many: 'levels', hi: ['3', '4', '5'], pick: 1,
       foot: std ? ('<b>' + std.pct5 + '%</b> of product volume sits at 5-level paths — the industry standard is 30–40% · <b>' + std.shallow + '%</b> sits at 1–2 levels')
         : '',
       none: 'No product-type depth data yet — scan the feed.',
@@ -652,7 +686,7 @@ window.addEventListener('load',restore);
         '<span>' + sum.n + ' market' + (sum.n === 1 ? '' : 's') + (sum.scanned < sum.n ? ' · ' + sum.scanned + ' scanned' : '') + '</span>' +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span>' + '<button class="btn est-scan" data-scanb="' + esc(c) + '" title="Scan every market of ' + esc(c) + ' now — FeedHero XML feeds stream live in this browser" aria-label="Scan every market of ' + esc(c) + '">⚡</button>' + '<button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(c) + ' in one interactive HTML file — coverage, depth and every product_type path per market, any path compared across markets; CSV inside">⬇ HTML</button>' + '</div>';
+        '</span>' + '<button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(c) + ' in one interactive HTML file — coverage, depth and every product_type path per market, any path compared across markets; CSV inside">⬇ HTML</button>' + '</div>';
       if (!collapsed) byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
@@ -673,9 +707,6 @@ window.addEventListener('load',restore);
     if (typeof scopeRender === 'function') scopeRender();
     Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
       el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('.est-scan'), function (el) {
-      el.onclick = function (ev) { ev.stopPropagation(); scanBrand(el.getAttribute('data-scanb')); };
     });
     Array.prototype.forEach.call(document.querySelectorAll('.est-dl'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); ptxExport([el.getAttribute('data-dl')], el); };
@@ -1439,18 +1470,21 @@ window.addEventListener('load',restore);
       return { v: pr[0], n: pr[1], was: bm[pr[0]] != null ? bm[pr[0]] : null, gone: false };
     });
     Object.keys(bm).forEach(function (v) { if (!seen[v]) rows.push({ v: v, n: 0, was: bm[v], gone: true }); });
+    var dfh = depthBar(rows);
     if (QUERY) rows = rows.filter(function (r) { return qMatch(r.v); });
+    if (depthOn()) rows = rows.filter(function (r) { return dMatch(r.v); });
     var st = sortState(k);
     rows.sort(rowCmp(st));
     var maxN = rows.length ? Math.max.apply(null, rows.map(function (r) { return Math.max(r.n, r.was || 0); })) : 1;
-    var lim = (QUERY || SHOW_ALL[k]) ? rows.length : 30;
+    var lim = (QUERY || depthOn() || SHOW_ALL[k]) ? rows.length : 30;
+    h += dfh;
     h += '<table class="pv"><thead><tr>' +
       '<th class="s" data-s="v">product type' + sArr(st, 'v') + '</th>' +
       '<th class="r s" data-s="n">skus' + sArr(st, 'n') + '</th>' +
       '<th class="r">share</th>' +
       '<th class="r s" data-s="d">Δ' + sArr(st, 'd') + '</th>' +
       '<th></th></tr></thead><tbody>';
-    if (!rows.length) h += '<tr><td colspan="5" class="muted">' + (QUERY ? 'no product types match “' + esc(QUERY) + '”' : 'no values') + '</td></tr>';
+    if (!rows.length) h += '<tr><td colspan="5" class="muted">' + (QUERY || depthOn() ? 'no product types match' + (QUERY ? ' “' + esc(QUERY) + '”' : '') + (depthOn() ? ' at ' + Object.keys(DEPTHS).sort().join(' / ') + '-depth' : '') : 'no values') + '</td></tr>';
     rows.slice(0, lim).forEach(function (r) {
       var share = s.rows ? Math.round((r.n / s.rows) * 1000) / 10 : 0;
       var delta = '';
@@ -1491,6 +1525,14 @@ window.addEventListener('load',restore);
       REFMODE = 'base'; try { sessionStorage.setItem('pt-ref', 'base'); } catch (e) {} renderDetail(k);
     };
     if ($('pv-more')) $('pv-more').onclick = function () { SHOW_ALL[k] = true; renderDetail(k); };
+    // depth filter: the chip row and the depth card's own rows toggle the same set
+    Array.prototype.forEach.call(document.querySelectorAll('#pt-dfil button[data-dk], .pop .pr.pk[data-dk]'), function (el) {
+      el.onclick = function () {
+        var b = el.getAttribute('data-dk');
+        if (!b) DEPTHS = {}; else if (DEPTHS[b]) delete DEPTHS[b]; else DEPTHS[b] = 1;
+        saveDepths(); renderDetail(k);
+      };
+    });
     // column sorting (product type A-Z / skus / Δ, click again to flip)
     Array.prototype.forEach.call(document.querySelectorAll('table.pv th.s[data-s]'), function (el) {
       el.onclick = function () {
@@ -1774,7 +1816,6 @@ window.addEventListener('load',restore);
   $('scan-stop').onclick = function () { SCOPE.stop = true; scopeRender(); var m = $('scan-all-msg'); if (m) m.insertAdjacentText('beforeend', ' — stopping after this feed…'); };
   $('scan-all').onclick = scanScope;
   // ⚡ on a brand card: that brand, every market
-  function scanBrand(c) { if (SCOPE.running) return; SCOPE.b = c; SCOPE.m = '*'; scopeRender(); scanScope(); }
   scopeRender();
   function scWhat() { return ''; }   // what one feed's pass reads, on this page
   function scDisp(c) { return c; }

@@ -893,7 +893,22 @@ ROSTER = null;
     });
   });
   is('every moment still unscoped names the reason on its own card', noReason, []);
-  is('\u2026and that is the small minority of them', unscoped.length, 13);
+  is('\u2026and that is the small minority of them', unscoped.length, 14);
+
+  // A MOMENT CAN TRACK A TICKET SOMEBODY ALREADY RAISED (Ray, 22 Oct 2026: "can you add this
+  // ticket as a keywords theme in Reiss ? - it's \u201cNew Arrivals\u201d and start tracking it").
+  // e.wf is the rung that beats every name match, so the seed carries the ref itself: the board
+  // reads that ticket's stage and Workflow's to-brief band never offers the moment a second time.
+  {
+    const na = momentsOf(brandSeg('Reiss')).find((m) => m.id === 'rs_newarrivals');
+    is('Reiss carries the New Arrivals moment', !!na, true);
+    is('\u2026pinned to the ticket Ray forwarded, by its ibfref',
+      /wf:'REIS-20261019-02'/.test(na.src), true);
+    // the ticket's own ibfdue is the BRIEF-BY, so the live date is LEAD_DAYS after it
+    const live = /date:'(\d{4}-\d{2}-\d{2})'/.exec(na.src)[1];
+    is('\u2026and files under the month its brief was due, not the month it lands',
+      KWE.schedDate({ date: live }).toISOString().slice(0, 10), '2026-10-23');
+  }
   // Schuh's tree puts the BRAND at its leaf (Womens > Trainers > Nike), which is why a brand
   // launch scopes by product type at all — and why a scope must never cross into a rival's rows
   const schuh = momentsOf(brandSeg('Schuh'));
@@ -915,6 +930,45 @@ ROSTER = null;
   // and once that brief exists, the moment leaves the list — the loop Ray asked for
   const after = KWE.dueList(store, { n1: { id: 'n1', client: 'Acme', kw: 'm1', task: pay.task } }, { now: '2026-10-14' });
   is('raising it in Workflow takes it off the to-brief list', after.some((r) => r.id === 'm1'), false);
+}
+
+/* ---- a moment ADDED to the seed after the board exists (Ray, 22 Oct 2026, asking for New
+   Arrivals on Reiss — a board seeded since v1). upgradeSeeds matches BY ID, so a brand-new id
+   reaches a fresh board and never an old one. addSeeds adds it once, and records the offer on
+   the brand's own record so an AM's deletion is never undone. Lifted by name. ---- */
+{
+  const SEEDO = new Function(liftDecl('SEED') + '\nreturn SEED;')();
+  const add = new Function('SEED', 'STORE',
+    lift('addSeeds') + '\nreturn {n:addSeeds(),STORE:STORE};');
+  const older = () => ({ Reiss: { events: (SEEDO.Reiss.events || [])
+    .filter((e) => e.id !== 'rs_newarrivals')
+    .map((e) => ({ id: e.id, name: e.name, lane: e.lane, date: e.date })) } });
+
+  let st = older();
+  let r = add(SEEDO, st);
+  const got = r.STORE.Reiss.events.find((e) => e.id === 'rs_newarrivals');
+  is('a new seed moment reaches a board that already has events', !!got, true);
+  is('\u2026carrying its ticket link', got.wf, 'REIS-20261019-02');
+  is('\u2026and the offer is recorded against the brand',
+    (r.STORE.Reiss.seeded || []).includes('rs_newarrivals'), true);
+  is('a second pass adds nothing', add(SEEDO, r.STORE).n, 0);
+
+  // the rule that matters: a moment taken OFF the board stays off it
+  st = r.STORE;
+  st.Reiss.events = st.Reiss.events.filter((e) => e.id !== 'rs_newarrivals');
+  const r2 = add(SEEDO, st);
+  is('a moment the AM deleted is never put back',
+    r2.STORE.Reiss.events.some((e) => e.id === 'rs_newarrivals'), false);
+
+  // and the rest of a seed never migrates at all: it is there to furnish an EMPTY board, so a
+  // moment removed from an old board before any record existed is not resurrected on this pass
+  st = older();
+  st.Reiss.events = st.Reiss.events.filter((e) => e.id !== 'precol');
+  r = add(SEEDO, st);
+  is('a seed moment not marked late is never added to an existing board',
+    r.STORE.Reiss.events.some((e) => e.id === 'precol'), false);
+  is('\u2026and only the late one is recorded as offered',
+    r.STORE.Reiss.seeded, ['rs_newarrivals']);
 }
 
 /* ---- the seed reaching a board that already has events (Ray, 14 Oct 2026: "i dont see products

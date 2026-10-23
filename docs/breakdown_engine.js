@@ -432,6 +432,165 @@
     return res;
   }
 
+  // ---- SPLIT: a field of two or three values read INSIDE every cell (Ray, 20 Oct 2026: "add a layer 3 with fields
+  // from feed which only have < 3 unique values — eg % of product in Full / Sale"). Not a sum like the layers: what
+  // a cell's products are MADE OF, so it always adds to 100% of that cell. A product with no value is its own part
+  // (BLANK), never dropped. '@price' is a field no feed carries: on sale when the sale price is below the price.
+  var PRICE_TYPE = '@price', SALE = 'On sale', FULL = 'Full price', SPLIT_MAX = 3;
+  function colByBare(S, bare) {
+    for (var i = 0; i < S.cols.length; i++) if (S.cols[i].name.replace(/^(g|c|fs):/i, '').toLowerCase() === bare) return i;
+    return -1;
+  }
+  function splitFields(S) {
+    var out = [], pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price');
+    if (pc >= 0 && sc >= 0) out.push({ f: PRICE_TYPE, label: 'Price type', vals: [SALE, FULL], derived: true });
+    fields(S).forEach(function (x) {
+      if (x.multi || !x.filled || x.distinct < 2 || x.distinct > SPLIT_MAX) return;
+      out.push({ f: x.f, label: x.label, vals: S.cols[x.col].vals.slice(1) });
+    });
+    return out;
+  }
+  function splitReader(S, f) {
+    if (f === PRICE_TYPE) {
+      var pc = colByBare(S, 'price'), sc = colByBare(S, 'sale_price'); if (pc < 0 || sc < 0) return null;
+      var P = S.cols[pc], Q = S.cols[sc];
+      return function (r) {
+        var p = numOf(P.vals[P.ids[r]]), q = numOf(Q.vals[Q.ids[r]]);
+        if (q > 0 && p > 0 && q < p) return SALE;
+        return p > 0 ? FULL : BLANK;
+      };
+    }
+    var R = reader(S, { f: f, m: 'raw' }); if (!R) return null;
+    return function (r) { var a = R.of(r); return a.length ? a[0] : BLANK; };
+  }
+  // the parts every row × column cell (and every row, column and the whole) is made of: {vals, flag, cell, row, col,
+  // tot} with an array per key in vals' order; opts.w sums a weight (spend) instead of counting products. rs / cs read
+  // exactly as pivot() and cross() read them, so a part lines up with the cell it sits in; cs null = one field.
+  function split(S, rs, cs, f, m, opts) {
+    opts = opts || {};
+    var RR = reader(S, rs), RC = cs ? reader(S, cs) : null, SP = splitReader(S, f); if (!RR || !SP || (cs && !RC)) return null;
+    var w = typeof opts.w === 'function' ? opts.w : null;
+    var by = new Map(), seen = [], cell = new Map(), row = new Map(), col = new Map(), tot = new Map();
+    var add = function (M, k, v, x) { var o = M.get(k); if (!o) { o = new Map(); M.set(k, o); } o.set(v, (o.get(v) || 0) + x); };
+    for (var r = 0; r < S.n; r++) {
+      if (m && !m[r]) continue;
+      var v = SP(r), x = w ? w(r) : 1;
+      if (!by.has(v)) { by.set(v, 0); seen.push(v); }
+      by.set(v, by.get(v) + x); tot.set(v, (tot.get(v) || 0) + x);
+      var a = RR.of(r); if (!a.length) a = [BLANK];
+      var b = RC ? RC.of(r) : null; if (b && !b.length) b = [BLANK];
+      for (var i = 0; i < a.length; i++) {
+        add(row, a[i], v, x);
+        if (b) for (var j = 0; j < b.length; j++) add(cell, a[i] + '\u0001' + b[j], v, x);
+      }
+      if (b) for (var k = 0; k < b.length; k++) add(col, b[k], v, x);
+    }
+    // the parts in a fixed order: by size, the blank last; the FLAG is the part a reader asks about — "on sale" for the
+    // price type, else the smaller of the stated parts (out of stock, the less common gender) — never the blank
+    var vals = seen.filter(function (v) { return v !== BLANK; }).sort(function (p, q) { return by.get(q) - by.get(p); });
+    if (by.has(BLANK)) vals.push(BLANK);
+    var stated = vals.filter(function (v) { return v !== BLANK; });
+    var flag = f === PRICE_TYPE ? SALE : stated.length > 1 ? stated[stated.length - 1] : stated[0] || null;
+    var arr = function (o) { return vals.map(function (v) { return o ? o.get(v) || 0 : 0; }); };
+    var conv = function (M) { var o = Object.create(null); M.forEach(function (mm, k) { o[k] = arr(mm); }); return o; };
+    return { f: f, vals: vals, flag: flag, fi: vals.indexOf(flag), weighted: !!w, tot: arr(tot), row: conv(row), col: conv(col), cell: conv(cell) };
+  }
+  function splitKey(rv, cv) { return rv + '\u0001' + cv; }
+
+  // ---- OPPORTUNITY SPOTTER (Ray, 21 Oct 2026: "build an opportunity spotter mechanism when a segment / data table is
+  // selected … highlighting" — over a pivot where Gemini had written "Q3 2026 Low Margin at 46% male … £13,385 conv. value,
+  // 686% ROAS"). Every finding is COUNTED off the feed (and Google Ads, when read) — no model writes a number. A GROUP is
+  // a selection (the page's filters), or each row / cell of the pivot; it is read against a BASELINE (the whole feed, or
+  // the products the filters leave) through every short field (2–40 values: gender, custom labels, price type, the first
+  // tiers of product_type, newness by quarter …). Five kinds, each with its own floor so a small group never shouts:
+  //   mix   — a value is over-represented in the group (share ≥ 1.5× and ≥ 10 points above the baseline, ≥ 10 products*)
+  //   gap   — the group is missing a value the baseline carries (≤ half the share, ≥ 15 points below)
+  //   blank — a field the baseline fills is empty on ≥ 25% of the group (twice the baseline's blank share)
+  //   scale / trim — with Google Ads: a value inside the group earning ≥ 1.3× / ≤ 0.7× the group's ROAS on ≥ 5% / ≥ 10%
+  //           of its spend; and the group itself taking a share of spend far from its share of products
+  // * the floors: a group ≥ 20 products and a value ≥ 10 on a feed of 1,000+; on a smaller feed a group ≥ 2% of it (≥ 5).
+  // A finding names its group, field, value and figures; the page words it and offers the filter and the brief.
+  var SPOT_MAXV = 40, SPOT_MIN = 20;
+  function spotFields(S, exclude) {
+    var ex = Object.create(null); (exclude || []).forEach(function (f) { if (f) ex[String(f).replace(/\*$/, '')] = 1; });
+    var out = [];
+    splitFields(S).forEach(function (x) { if (x.f === PRICE_TYPE) out.push({ f: PRICE_TYPE, label: x.label, rd: splitReader(S, PRICE_TYPE), spec: null }); });
+    fields(S).forEach(function (x) {
+      if (x.multi || ex[x.f] || x.fill < 0.3) return;
+      if (/^(?:(?:g|c|fs):)?(?:id|item_?group_?id|gtin|mpn|fs_data_original_id|link|image_link)$/i.test(x.f)) return;
+      var spec = null;
+      if (x.kind === 'value' && x.distinct >= 2 && x.distinct <= SPOT_MAXV) spec = { f: x.f, m: 'raw' };
+      else if (x.kind === 'path') { var t1 = pivot(S, { f: x.f, m: 'tier', k: 1 }, null); spec = { f: x.f, m: 'tier', k: t1 && t1.rows.length > 2 ? 1 : 2 }; }
+      else if (x.kind === 'date') spec = { f: x.f, m: 'qtr' };
+      if (!spec) return;
+      var R = reader(S, spec); if (!R) return;
+      out.push({ f: x.f, label: x.kind === 'date' ? 'Newness' : x.label, spec: spec, rd: function (r) { var a = R.of(r); return a.length ? a[0] : BLANK; } });
+    });
+    return out;
+  }
+  // opts: groups(r) → keys of the groups product r sits in · base (mask) · ads {cost, value} · exclude [field] · top
+  function spot(S, opts) {
+    opts = opts || {};
+    var gk = opts.groups, base = opts.base || null, ads = opts.ads || null; if (!gk) return { groups: [], found: [] };
+    var F = spotFields(S, opts.exclude), nf = F.length;
+    // the floors scale DOWN on a small feed (a group is ≥ 2% of it) and never above SPOT_MIN on a big one
+    var MIN = opts.min || Math.min(SPOT_MIN, Math.max(5, Math.round(S.n * 0.02))), VF = Math.max(3, Math.round(MIN / 2));
+    var codes = F.map(function () { return new Int32Array(S.n); }), dict = F.map(function () { return []; }), dIdx = F.map(function () { return new Map(); });
+    for (var r = 0; r < S.n; r++) for (var i = 0; i < nf; i++) {
+      var v = F[i].rd(r), c = dIdx[i].get(v); if (c == null) { c = dict[i].length; dict[i].push(v); dIdx[i].set(v, c); } codes[i][r] = c;
+    }
+    var mk = function () { return { n: 0, cost: 0, val: 0, by: F.map(function () { return new Map(); }) }; };
+    var B0 = mk(), G = new Map();
+    var add = function (A, r) {
+      var c = ads ? ads.cost[r] : 0, v = ads ? ads.value[r] : 0; A.n++; A.cost += c; A.val += v;
+      for (var i = 0; i < nf; i++) { var k = codes[i][r], o = A.by[i].get(k); if (!o) { o = [0, 0, 0]; A.by[i].set(k, o); } o[0]++; o[1] += c; o[2] += v; }
+    };
+    for (var r2 = 0; r2 < S.n; r2++) {
+      if (base && !base[r2]) continue;
+      add(B0, r2);
+      var ks = gk(r2); if (!ks) continue;
+      for (var j = 0; j < ks.length; j++) { var A = G.get(ks[j]); if (!A) { A = mk(); G.set(ks[j], A); } add(A, r2); }
+    }
+    var found = [], bRoas = B0.cost > 0 ? B0.val / B0.cost : null;
+    G.forEach(function (A, key) {
+      if (A.n < MIN || A.n >= B0.n) return;
+      var gRoas = A.cost > 0 ? A.val / A.cost : null, own = [];
+      if (ads && B0.cost > 0 && A.cost > 0) {
+        var ps = A.n / B0.n, ss = A.cost / B0.cost, vs = A.val / (B0.val || 1);
+        if (gRoas != null && bRoas && gRoas >= 1.3 * bRoas && ss < ps * 0.8 && A.cost >= 0.01 * B0.cost) own.push({ k: 'fund', g: key, n: A.n, ps: ps, ss: ss, vs: vs, roas: gRoas, broas: bRoas, cost: A.cost, val: A.val, score: (gRoas / bRoas) * Math.sqrt(A.n) * (ps - ss + 0.05) * 8 });
+        if (gRoas != null && bRoas && gRoas <= 0.7 * bRoas && ss > ps * 1.2 && ss >= 0.03) own.push({ k: 'drain', g: key, n: A.n, ps: ps, ss: ss, vs: vs, roas: gRoas, broas: bRoas, cost: A.cost, val: A.val, score: (bRoas / Math.max(gRoas, 0.05)) * (ss - ps + 0.05) * Math.sqrt(A.n) * 8 });
+      }
+      own.forEach(function (x) { found.push(x); });
+      for (var i = 0; i < nf; i++) {
+        var by = A.by[i], bb = B0.by[i];
+        bb.forEach(function (bo, code) {
+          var v = dict[i][code], go = by.get(code) || [0, 0, 0], s = go[0] / A.n, b = bo[0] / B0.n;
+          var common = { g: key, f: F[i].f, label: F[i].label, spec: F[i].spec, v: v, n: A.n, vn: go[0], s: s, b: b };
+          if (v === BLANK) {
+            if (s >= 0.25 && s >= 2 * b && go[0] >= VF) found.push(Object.assign({ k: 'blank', score: (s - b) * Math.sqrt(go[0]) }, common));
+            return;
+          }
+          if (go[0] >= VF && s - b >= 0.10 && (b === 0 || s / b >= 1.5)) found.push(Object.assign({ k: 'mix', score: (s - b) * Math.sqrt(go[0]) * Math.min(3, b ? s / b : 3) }, common));
+          else if (b >= 0.15 && b - s >= 0.15 && s <= b / 2 && bo[0] - go[0] >= VF) found.push(Object.assign({ k: 'gap', score: (b - s) * Math.sqrt(A.n) * 0.8 }, common));
+          if (ads && gRoas != null && A.cost > 0 && go[1] > 0) {
+            var r3 = go[2] / go[1], sh = go[1] / A.cost, x = Object.assign({ cost: go[1], val: go[2], roas: r3, groas: gRoas, sh: sh }, common);
+            if (r3 >= 1.3 * gRoas && sh >= 0.05 && sh <= 0.6 && go[0] >= Math.min(5, VF)) found.push(Object.assign(x, { k: 'scale', score: (r3 / gRoas - 1) * Math.sqrt(go[0]) * (1 - sh) * 2 }));
+            else if (r3 <= 0.7 * gRoas && sh >= 0.10 && go[0] >= Math.min(5, VF)) found.push(Object.assign(x, { k: 'trim', score: (1 - r3 / gRoas) * Math.sqrt(go[0]) * sh * 4 }));
+          }
+        });
+      }
+    });
+    found.sort(function (a, z) { return z.score - a.score; });
+    // keep it readable: at most 3 findings per group × field, 5 per group, the top N overall
+    var top = opts.top || 8, per = Object.create(null), perG = Object.create(null), out = [];
+    for (var q = 0; q < found.length && out.length < top; q++) {
+      var x2 = found[q], k1 = x2.g + '\u0001' + (x2.f || x2.k), k2 = x2.g;
+      if ((per[k1] || 0) >= 3 || (perG[k2] || 0) >= 5) continue;
+      per[k1] = (per[k1] || 0) + 1; perG[k2] = (perG[k2] || 0) + 1; out.push(x2);
+    }
+    return { found: out, total: found.length, min: MIN, base: { n: B0.n, cost: B0.cost, val: B0.val, roas: bRoas }, fields: F.map(function (x) { return x.label; }), groups: G.size };
+  }
+
   // ---- GOOGLE ADS PER PRODUCT: FeedHero's Ads Traffic read ({id: [impr, clicks, cost, conv, value]}) joined onto the
   // store by product id, CASE-BLIND (Google lower-cases the Ads item id that stands in for a blank one). The join
   // column is the one carrying more of the report's ids — g:id, else c:fs_data_original_id — never a guess. Spend on
@@ -510,5 +669,7 @@
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
     fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
-    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName };
+    defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName,
+    spot: spot, spotFields: spotFields, SPOT_MIN: SPOT_MIN,
+    split: split, splitFields: splitFields, splitReader: splitReader, splitKey: splitKey, PRICE_TYPE: PRICE_TYPE, SALE: SALE, FULL: FULL, SPLIT_MAX: SPLIT_MAX };
 });

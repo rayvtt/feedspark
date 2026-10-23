@@ -362,6 +362,14 @@ t('or one size per cell after the type', D2.layout === 'cells' && eq(D2.rows[0].
 const DOCROWS = H.docRows(ST, 'Acme', { types: [TT] });
 t('the export: product type, hero sizes, source, sizes made in — the file the import reads back', eq(DOCROWS[0], ['Product type', 'Hero sizes', 'Source', 'Sizes made in']) && DOCROWS[1][1] === '8, 10, 12' && DOCROWS[1][2] === 'Brand document'
   && eq(H.parseDoc(DOCROWS).rows[0].s, ['8', '10', '12']));
+// Ray, 20 Oct 2026: "when i hit download sheet with tier 4 filtered, i dont get 156 rows" — the chip counts every type at
+// the tier and the sheet listed only the sized ones; now every type goes out, a one-size type with its Hero sizes blank
+const ONE = Object.assign(ty('Women > Bags', 'women', ['8']), { sz: [] });
+const DR1 = H.docRows(ST, 'Acme', { types: [TT, ONE] });
+t('the sheet lists EVERY product type, the one-size ones blank and saying why', DR1.length === 3 && DR1.some((r) => r[0] === 'Women > Bags' && r[1] === '' && /^One size/.test(r[2]) && r[3] === 'one size only'));
+t('every tier: the sheet carries exactly the types the tier chip counts', H.tiers(CT).every((x) => H.docRows(ST3, 'Acme', CT, x.t).length - 1 === x.types));
+t('a blank Hero sizes cell is skipped on import — never read as "no hero sizes"', H.parseDoc(DR1).rows.length === 1 && H.parseDoc(DR1).rows[0].k === 'Women > Dresses'
+  && H.parseDoc([['Product type', 'Hero sizes'], ['Bags', 'One Size'], ['Belts', '']]).rows.length === 1);
 const XB = H.exampleFromBrand({ 'm:Acme|men > t-shirts': { k: 'Men > T-Shirts', s: ['M', 'L'], fw: 0 }, 'm:Acme|women > hoodies and sweatshirts': { k: 'Women > Hoodies and Sweatshirts', s: ['10', '12'] } }, 'Acme');
 t('a brand’s own entries become an example another brand follows by the SAME leaf (any separator)', eq(H.fromExample(XB, ty('Mens > T Shirts', 'men', ['S', 'M', 'L', 'XL'])).s, ['M', 'L'])
   && eq(H.fromExample(XB, ty('Women > Hoodies & Sweatshirts', 'women', ['8', '10', '12'])).s, ['10', '12']));

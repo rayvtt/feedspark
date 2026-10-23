@@ -242,6 +242,55 @@ console.log('· the page');
   t('no literal </body> inside the script (the worker injects at the first one)', PG.indexOf('</body>') === PG.lastIndexOf('</body>'));
 }
 
+console.log('· the split — what each cell is made of');
+{
+  const it = (id, pt, av, price, sale, g) => '<item><g:id>' + id + '</g:id><g:product_type>' + pt + '</g:product_type><g:availability>' + av + '</g:availability>' + (price ? '<g:price>' + price + ' GBP</g:price>' : '') + (sale ? '<g:sale_price>' + sale + ' GBP</g:sale_price>' : '') + '<g:gender>' + g + '</g:gender><g:color>C' + id + '</g:color></item>';
+  const X2 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>' + it('A', 'Womens', 'in stock', '100.00', '60.00', 'female') + it('B', 'Womens', 'in stock', '50.00', '50.00', 'female') + it('C', 'Mens', 'out of stock', '30.00', '', 'male') + it('D', 'Mens', 'in stock', '', '', 'male') + '</channel></rss>';
+  const S2 = storeOf(X2), SF = B.splitFields(S2), sfo = (f) => SF.find((x) => x.f === f);
+  t('Price type is offered first, built from price and sale price (no feed carries it)', SF[0] && SF[0].f === B.PRICE_TYPE && SF[0].derived);
+  t('a field of two or three values is offered; one of more values is not', !!sfo('g:availability') && !!sfo('g:gender') && !sfo('g:color') && !sfo('g:id'));
+  const sp = B.split(S2, { f: 'g:product_type', m: 'raw' }, { f: 'g:availability', m: 'raw' }, B.PRICE_TYPE, null);
+  const at = (a, v) => a[sp.vals.indexOf(v)] || 0;
+  t('on sale = a sale price BELOW the price; equal is full price; no price at all is not stated', at(sp.tot, B.SALE) === 1 && at(sp.tot, B.FULL) === 2 && at(sp.tot, B.BLANK) === 1, sp);
+  t('…the flag is "on sale" and the blank part sits last', sp.flag === B.SALE && sp.vals[sp.vals.length - 1] === B.BLANK);
+  t('each row, column and cell is made of its own products — and adds to what it holds', at(sp.row.Womens, B.SALE) === 1 && at(sp.row.Womens, B.FULL) === 1 && at(sp.row.Mens, B.FULL) === 1 && at(sp.row.Mens, B.BLANK) === 1
+    && at(sp.col['out of stock'], B.FULL) === 1 && at(sp.cell[B.splitKey('Mens', 'in stock')], B.BLANK) === 1 && sp.cell[B.splitKey('Womens', 'out of stock')] === undefined, sp);
+  const sw = B.split(S2, { f: 'g:product_type', m: 'raw' }, null, B.PRICE_TYPE, null, { w: (r) => [10, 5, 2, 1][r] });
+  t('split by a weight (spend) sums it instead of counting products', sw.row.Womens[sw.vals.indexOf(B.SALE)] === 10 && sw.row.Womens[sw.vals.indexOf(B.FULL)] === 5 && sw.weighted, sw);
+  const sg = B.split(S2, { f: 'g:availability', m: 'raw' }, null, 'g:gender', null);
+  t('on any other field the flag is the SMALLER stated part, never the blank', sg.flag === 'female' || sg.flag === 'male');
+  // ---- the opportunity spotter: an invented 200-product feed where the "Low" label is 60% male against 20% overall
+  {
+    const S3 = B.createStore(), h3 = ['g:id', 'g:custom_label_1', 'g:gender', 'g:color'];
+    for (let i = 0; i < 200; i++) {
+      const low = i < 50, male = low ? i < 30 : i % 5 === 0 && i >= 50 && i < 100 ? true : false;
+      B.addRow(S3, ['p' + i, low ? 'Low' : (i < 125 ? 'High' : 'Mid'), male ? 'male' : 'female', i % 3 === 0 && low ? '' : (i % 2 ? 'black' : 'red')], h3);
+    }
+    const m3 = B.mask(S3, [{ spec: { f: 'g:custom_label_1', m: 'raw' }, vals: ['Low'] }]);
+    const sel = B.spot(S3, { groups: (r) => m3[r] ? ['sel'] : null, exclude: ['g:custom_label_1'] });
+    const mx = sel.found.find((x) => x.k === 'mix' && x.f === 'g:gender' && x.v === 'male');
+    const maleAll = [...Array(200).keys()].filter((i) => i < 30 || (i >= 50 && i < 100 && i % 5 === 0)).length / 200;
+    t('spotter: a value over-represented in the selection is found, with its share here and across the feed counted', !!mx && Math.abs(mx.s - 30 / 50) < 1e-9 && Math.abs(mx.b - maleAll) < 1e-9 && mx.vn === 30, mx);
+    t('…a field the selection defines is never read back as a finding', !sel.found.some((x) => x.f === 'g:custom_label_1'));
+    const bl = sel.found.find((x) => x.k === 'blank' && x.f === 'g:color');
+    t('…a field left blank on a quarter of the selection (and not elsewhere) is a data gap', !!bl && bl.vn === 17, bl);
+    const tiny = B.spot(S3, { groups: (r) => r < 4 ? ['t'] : null });
+    t('…a group under its floor is never read (20 products on a big feed, 2% of a small one, never under 5)', tiny.found.length === 0 && tiny.min === 5 && B.SPOT_MIN === 20);
+    const cost = new Float64Array(200), value = new Float64Array(200);
+    for (let i = 0; i < 200; i++) { cost[i] = 10; value[i] = i < 50 ? (i < 30 ? 80 : 10) : 30; }
+    const ad = B.spot(S3, { groups: (r) => m3[r] ? ['sel'] : null, exclude: ['g:custom_label_1'], ads: { cost, value } });
+    const sc = ad.found.find((x) => x.k === 'scale' && x.v === 'male');
+    t('…with Google Ads, a value earning well above the segment’s ROAS on a slice of its spend reads Scale, its ROAS a ratio of sums', !!sc && Math.abs(sc.roas - 8) < 1e-9 && Math.abs(sc.groas - (30 * 80 + 20 * 10) / 500) < 1e-9, sc);
+    const scan = B.spot(S3, { groups: (r) => ['r\u0001' + S3.cols[1].vals[S3.cols[1].ids[r]]], exclude: ['g:custom_label_1'] });
+    t('…with no selection every row is read against the feed, the finding naming its row', scan.found.some((x) => x.g === 'r\u0001Low' && x.k === 'mix' && x.v === 'male'));
+  }
+  t('spotter page: the findings live IN the pivot — a flag per cell, a card, a ribbon — never a section of their own; briefs in a new tab',
+    !/id="sec-opp"/.test(PG) && /id="pv-opp"/.test(PG) && /id="oppop"/.test(PG) && /function renderOpp\(rows\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /class="opp" type="button" data-op="/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(rows\);/.test(PG)
+    && /var pip = e\.target\.closest\('\.opp'\); if \(pip\) \{ e\.stopPropagation\(\);/.test(PG)
+    && /var OP_TOP = 10,/.test(PG) && /if \(kept >= OP_TOP \|\| !cellOf\(x\.g\)\) return;/.test(PG));
+  t('a field that is not there reads nothing rather than guessing', B.split(S2, { f: 'g:product_type', m: 'raw' }, null, 'g:nope', null) === null);
+  t('the page: a Split by picker, its share-of choice, a strip per cell, the CSV block, and the layout default', /id="pv-spl"/.test(PG) && /id="pv-splw"/.test(PG) && /function spCell\(sp, a\)/.test(PG) && /'Split · % '/.test(PG) && /spl: '', splw: 'n'/.test(PG));
+}
 console.log('· the gates, the stub, nothing of a client\'s');
 {
   const QA = read('tools/qa_gate.sh'), PS = read('tools/presync.sh'), VY = read('.github/workflows/validate.yml'), CM = read('tools/check_mobile.js'), CD = read('tools/check_darkmode.js'), STUB = read('tools/breakdown_stub.js');

@@ -155,3 +155,67 @@ Ray: "in the same pivot table … see 2 data points together to compare — with
 - Every cell, row total and column total then reads TWO things: the measure as the number (orange shade, as before) and the layer under it in small type with a blue bar on the layer's OWN scale — two readings never share one axis.
 - The engine sums the layer on the SAME rows and columns (`pivot` / `cross` take `opts.lw` — `1` counts products — and `opts.lw2` for a ratio), so a ROAS layer is conversion value ÷ spend from that cell's own products.
 - A Google Ads layer waits for the Ads read (and says so); the CSV carries the layer as a second block; the layer is part of the layout and a ★ view.
+
+## Layer 2 — three readings at once (Ray, 20 Oct 2026)
+
+"Add another layer (2) in too, in another colour, to compare 3 variables at once." A **Layer 2** picker sits beside
+Layer, with the same choices. Every cell, row total and column total then reads three things: the measure (the number,
+orange shade), Layer under it (blue bar) and Layer 2 under that (green bar, `#1BAF7A` / dark `#199E70` — the third
+validated colour of the Golden Record score-history chart). Each bar is on its own scale. Layer 2 is the same engine
+reading run a second time with its own weights — same rows, same columns, same fold, matched by value — so it is never
+a second rule. A Layer 2 that repeats the measure or Layer stands aside. The CSV carries it as a third block
+("Layer 2 · <reading>"). Remembered per device in `fcc-bd-layout › pivot.lay2`.
+
+## The pivot controls, in two boxes (Ray, 20 Oct 2026)
+
+"Rows and columns should stack on each other as dimension — layering fit together in right hand side." The controls
+are two boxes: **Dimensions** (Rows over Columns, each field and its reading on one line) on the left, **Readings**
+(Measure · Layer · Layer 2 side by side, each named with its colour swatch, then Show · Rows shown · ⤓ CSV) on the
+right. Under 1000px the boxes stack; under 520px each control takes its own line. Every id is unchanged.
+
+## Split by — what each cell is made of (Ray, 20 Oct 2026)
+
+"Add a layer 3 with fields from feed which only have < 3 unique values — eg % of product in Full / Sale." Not a
+fourth sum: a **Split by** picker beside Layer 2 draws ONE thin strip under every cell, row total and column total
+showing what that cell's products are made of, always adding to 100%, with the share of the part that matters named
+("27% on sale"). Offered: **Price type** first — built from the feed's own price and sale price (on sale = a sale
+price below the price; equal or none = full price; no price = not stated), since no feed carries it — then every
+field with two or three values (availability, gender, condition, a FULL/SALE label…). The named part is "on sale"
+for the price type, else the smaller stated part; it is drawn first in orange, the rest grey, a product with no value
+a hatched part of its own — never dropped. **Split share of** Products or Spend (Google Ads, last 30 days): "38% of
+products on sale, 61% of spend". The tooltip gives every part's count; the CSV carries a "Split · % on sale" block.
+Engine `split` / `splitFields` / `splitReader` read rows and columns exactly as pivot() and cross() do; the folded
+Other column sums its members. Remembered per device in `fcc-bd-layout › pivot.spl / splw`.
+
+## Opportunities — the spotter (Ray, 21 Oct 2026)
+
+"Can we also build an opportunity spotter mechanism when a segment / data table is selected?" — over a pivot where
+Gemini had written "Q3 2026 Low Margin at 46% male … 686% ROAS". It reads **the selection** (the page's filters — a
+clicked cell, a row, a value anywhere) against the whole feed; with no selection it reads **every row and cell** of the
+pivot.
+
+**Inside the pivot, never a section of its own** (Ray, 21 Oct 2026: "I don't like the opportunity sitting on a
+different section … highlight the opportunity within the pivot breakdown"). A cell that stands out carries a **corner
+flag** in its strongest finding's colour (blue = over-indexes, green = scale it / under-funded, orange = fix or trim /
+over-funded, grey = data gap / under-represented); a row's own findings flag its row total. Hovering a flag (or resting
+on the cell) opens its **card** beside the cell — every finding for that cell; a click on the flag pins it (the cell
+itself still filters), Esc / ✕ / outside click close. A **ribbon above the table** counts them ("✦ 25 opportunities in
+5 cells") with a chip per kind that **lights up** only the cells carrying it and dims the rest, and **Review ›** steps
+through them strongest first. With a selection the ribbon reads it instead, one chip per finding, each opening its
+card. Only the TEN STRONGEST findings that land on a cell the table draws are flagged (Ray, 21 Oct 2026: "potentially too many opportunities … aggressively filter to only top 7-10 opportunities per view") — ranked by how far each stands out times how many products it covers; the ribbon reads "Top 10 … of N spotted". A finding on a row the table is not showing never takes a slot. Engine `spot(S, {groups, base, ads, exclude, top})` reads every short field
+(2–40 values, filled on 30%+: custom labels, gender, colour, price type, product_type tiers, newness by quarter — never
+an id) and returns findings, each COUNTED, never written by a model:
+
+| Kind | Rule |
+|---|---|
+| Over-indexes | a value's share ≥ 1.5× and ≥ 10 points above the feed's |
+| Under-represented | ≤ half the feed's share and ≥ 15 points below |
+| Data gap | the field is blank on ≥ 25% of the group, twice the feed's blank share |
+| Scale it / Fix or trim | Google Ads: a value earning ≥ 1.3× / ≤ 0.7× the group's ROAS on ≥ 5% / ≥ 10% of its spend |
+| Under-funded / Over-funded | the group's share of spend far from its share of products, at a ROAS ±30% of the feed's |
+
+Floors: a group of ≥ 20 products and a value of ≥ 10 on a feed of 1,000+, scaled to 2% (never under 5) on a small one.
+Each card names the group, the figures (share here vs the feed, or ROAS and spend), the action, **⌕ Filter to it** and
+**→ Brief** (Workflow in a new tab, task "Feed Opportunity - <kind> - … - <Brand> <MKT> - MMYY", the evidence in the
+scope). A selection shows its strongest nine; across the pivot every flagged cell shows, at most three per field and five per cell. Harness: the spotter block in
+`tools/test_breakdown.mjs` (an invented feed counted in the test) + `tools/check_breakdown.js` (the rendered cards).

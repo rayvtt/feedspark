@@ -87,7 +87,7 @@ window.addEventListener('load',restore);
   .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin:0}
   /* EVERY CARD FOLDS (Ray, 7 Oct 2026: "each module info on Stock Management is collapsible pls - too many at once"): the
      title is one button — chevron, title and, folded, the line that survives the fold — and a folded card is that one row */
-  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
+  .card h3 .fold{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-align:left;cursor:pointer;display:flex;width:100%;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;border-radius:6px}
   .card h3 .fold:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
   .card h3 .fold .fch{flex:none;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;background:var(--wash);color:var(--muted);transition:transform .15s ease}
   .card h3 .fold .fch::before{content:'';width:5px;height:5px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(45deg)}
@@ -2371,9 +2371,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (HM.docOpen && HS.docOf(HM.store, b)) hmGuideRow();
     $('#hm-tw2').hidden = ts.length < 2;
     $('#hm-tiers').innerHTML = ts.map(function (x) {
-      return '<button type="button" data-tier="' + x.t + '" class="' + (x.t === tier ? 'on' : '') + '" aria-pressed="' + (x.t === tier) + '" title="' + esc('Tier ' + x.t + ' · ' + n0(x.types) + ' product types' + (x.ex ? ' · e.g. ' + x.ex.replace(/ > /g, ' › ') : '')) + '">Tier ' + x.t + ' <span class="k">' + n0(x.types) + '</span></button>';
+      return '<button type="button" data-tier="' + x.t + '" class="' + (x.t === tier ? 'on' : '') + '" aria-pressed="' + (x.t === tier) + '" title="' + esc('Tier ' + x.t + ' · ' + n0(x.types) + ' product types' + (x.sized < x.types ? ' (' + n0(x.sized) + ' with a size run, ' + n0(x.types - x.sized) + ' one size only — the sheet lists all ' + n0(x.types) + ')' : '') + (x.ex ? ' · e.g. ' + x.ex.replace(/ > /g, ' › ') : '')) + '">Tier ' + x.t + ' <span class="k">' + n0(x.types) + '</span></button>';
     }).join('');
-    var rows = mp.types.filter(function (x) { return x.t.sz.length; });
+    var rows = mp.types.filter(function (x) { return x.t.sz.length; }), oneSz = mp.types.length - rows.length;
     var low = rows.filter(function (x) { return x.m.rows && hmPc(x.m.in, x.m.rows) < 70; }).length, unm = rows.filter(function (x) { return !x.h.s.length && !x.h.own; }).length;
     // the document's rows that don't fit this market's types — no size made here, sizes for only part of the run, no sizes yet
     var dfit = function (x) { return !!(x.h.doc && (x.h.miss || x.h.open || x.h.part != null)) || !!x.h.docMiss; };
@@ -2385,8 +2385,8 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       '<div class="it" title="' + esc('The ' + (d.market || '') + ' master as FeedHero last imported it · ' + n0(cen.groups) + ' styles') + '"><b>' + esc(d.market || '') + ' master</b><span>read ' + since(cen.t) + '</span></div>'
     ].join('');
     bar.hidden = false; empty.hidden = true; tw.hidden = false;
-    var F = [['', 'All', rows.length], ['none', 'Not mapped', unm], ['low', 'Hero stock under 70%', low]].concat(nfit || HM.f === 'fit' ? [['fit', 'Document doesn’t fit', nfit]] : []);
-    $('#hm-f').innerHTML = F.map(function (f) { return '<button class="chip' + (HM.f === f[0] ? ' on' : '') + '" type="button" data-hf="' + f[0] + '">' + esc(f[1]) + ' <span class="k">' + f[2] + '</span></button>'; }).join('');
+    var F = [['', 'All', rows.length, oneSz ? rows.length + ' with a size run are listed here; ' + oneSz + ' one size only are not (⬇ Sheet lists all ' + mp.types.length + ')' : ''], ['none', 'Not mapped', unm], ['low', 'Hero stock under 70%', low]].concat(nfit || HM.f === 'fit' ? [['fit', 'Document doesn’t fit', nfit]] : []);
+    $('#hm-f').innerHTML = F.map(function (f) { return '<button class="chip' + (HM.f === f[0] ? ' on' : '') + '" type="button" data-hf="' + f[0] + '"' + (f[3] ? ' title="' + esc(f[3]) + '"' : '') + '>' + esc(f[1]) + ' <span class="k">' + f[2] + '</span></button>'; }).join('');
     var q = HM.q.toLowerCase();
     var shown = rows.filter(function (x) {
       if (q && x.t.k.toLowerCase().indexOf(q) < 0) return false;
