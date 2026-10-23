@@ -13,8 +13,11 @@
  *   1. A SPECIFIC TEST — the library below is twenty-odd named A/B tests, each with the field it
  *      moves, the split, the metric, the duration and the platform page the idea rests on.
  *   2. WHAT THE BOOK HAS PROVED — every brand's A/B test archive and every keyword-result round is
- *      read into one evidence table by test FAMILY, so a proposal to Monsoon can say "Reiss GB saw
- *      +12.4% CTR on this in August" (named inside the FCC; a client brief names the industry).
+ *      read into one evidence table by test FAMILY, so a proposal to Monsoon can say "a Footwear
+ *      account saw +12.4% CTR on this in August". The peer is an INDUSTRY and never a name, on the
+ *      rail as well as in the brief (Ray, 23 Oct 2026: "ok on playbook, some other brand name would
+ *      need to be annonimize") — the rail is open ON the client call, so its screen is as public as
+ *      the document; peerWord() is the one writer, so the two can never drift.
  *      A figure is only ever one the archive recorded — nothing here invents an uplift.
  *   3. WHAT COMPETITORS ARE DOING — a read of the Google Shopping results for the brand's own
  *      category queries (SerpApi, the same key AI Visibility uses): which merchants show, how
@@ -438,6 +441,23 @@ export function auctionSignals(a) {
 const MMYY = (ms) => { const d = new Date(ms); return String(d.getMonth() + 1).padStart(2, '0') + String(d.getFullYear()).slice(2); };
 const MON = (ms) => new Date(ms).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 export function surfWord(s) { return s === 'meta' ? 'Meta' : s === 'google' ? 'Google Shopping' : 'Google Shopping + Meta'; }
+/* A PEER IS AN INDUSTRY, NEVER A NAME — ON THE RAIL AS WELL AS IN THE BRIEF (Ray, 23 Oct 2026,
+   over the Playbook: "ok on playbook, some other brand name would need to be annonimize"). The
+   brief body has named the industry since 8 Oct because a client reads it; the rail is open ON the
+   client call, so its screen — and ⧉ Copy proposals, which lifts these very strings — is as public
+   as the document. ONE writer serves both surfaces, so they can never drift apart again, and the
+   evidence keeps everything that argues the case (the figure, the metric, the month, the industry)
+   and loses only the one word that identifies another client.
+   Nothing here hides the account's OWN result: every list `best` comes from filters this brand out,
+   and the line about this brand still reads "You". */
+export function peerWord(r, opts) {
+  const i = String((r && r.industry) || '').trim();
+  if (i) return 'a ' + i + ' account';
+  return (opts && opts.client) ? 'a FeedSpark account' : 'another account in our book';
+}
+const capt = (s) => String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1);
+/* what a proposal may carry about a peer: the argument, never the account */
+const anonPeer = (r) => ({ industry: String((r && r.industry) || ''), pct: r.pct, metric: r.metric, when: r.when });
 /* brand: name · ctx: { industry, feeds, archive (this brand's tests), kw (this brand's rounds),
    briefs (open test tickets' task names), comp: {signals:[]} } · ev: evidenceBook() output */
 export function proposeTests(brand, ctx, ev, opts) {
@@ -465,7 +485,7 @@ export function proposeTests(brand, ctx, ev, opts) {
     else if (first) { score += 22; evKind = 'first'; }
     else { score += 8; evKind = 'none'; }
     const best = (same[0] || peers[0] || older[0]) || null;
-    if (best) evLine = best.brand + (best.mkt ? ' ' + best.mkt : '') + ' +' + best.pct + '% ' + best.metric + (best.when ? ' (' + MON(best.when) + ')' : '')
+    if (best) evLine = peerWord(best) + ' +' + best.pct + '% ' + best.metric + (best.when ? ' (' + MON(best.when) + ')' : '')
       + (e.recent.length > 1 ? ' · ' + e.recent.length + ' wins across the book in 3 months' : (evKind === 'book' ? ' · older than 3 months' : ''));
     else evLine = first ? 'no FeedSpark result yet — this would be the book’s first, which is the point' : (e.n + ' run' + (e.n === 1 ? '' : 's') + ' in the book, no recorded uplift yet');
     if (sig[t.k]) { score += 20; evLine = 'Competitors: ' + sig[t.k] + ' · ' + (best ? evLine : (first ? 'no FeedSpark result yet — a first for the book' : evLine)); if (evKind === 'none' || evKind === 'first') evKind = 'comp'; }
@@ -476,7 +496,7 @@ export function proposeTests(brand, ctx, ev, opts) {
     const scope = briefScope(t, best, first, ind, sig[t.k], ctx);
     return { k: t.k, n: t.n, surf: t.surf, field: t.field, hyp: t.hyp, how: t.how, metric: t.metric, src: t.src,
       title: 'How about we A/B test ' + t.n.toLowerCase().replace(/^“/, '“') + ' this month?',
-      ev: evLine, evKind, first, peers: (same.length ? same : peers).slice(0, 3), ready: rd, status, score,
+      ev: evLine, evKind, first, peers: (same.length ? same : peers).slice(0, 3).map(anonPeer), ready: rd, status, score,
       ranAt: mine || 0, briefedAs: briefed[t.k] || null, say,
       brief: { cat: 'test', task: 'A/B Test - ' + t.n + ' - ' + brand + ' - ' + MMYY(now), scope } };
   });
@@ -497,7 +517,7 @@ function sayLine(brand, t, best, first, ind, sig, rd) {
   const on = surfWord(t.surf);
   let s = '';
   if (sig) s += 'On ' + on + ' ' + sig + '. ';
-  if (best) s += (best.brand === brand ? 'You' : best.brand) + ' saw +' + best.pct + '% ' + best.metric + ' on ' + t.n.toLowerCase() + (best.when ? ' in ' + MON(best.when) : '') + '. ';
+  if (best) s += (best.brand === brand ? 'You' : capt(peerWord(best))) + ' saw +' + best.pct + '% ' + best.metric + ' on ' + t.n.toLowerCase() + (best.when ? ' in ' + MON(best.when) : '') + '. ';
   else if (first) s += 'Nobody in our book has tested ' + t.n.toLowerCase() + ' yet — ' + brand + ' would be first. ';
   s += t.hyp + ' ' + t.how.replace(/^Split/, 'We would split').replace(/^Two product sets/, 'We would run two product sets').replace(/^Overlay/, 'We would overlay').replace(/^Label/, 'We would label').replace(/^Submit/, 'We would submit').replace(/^Top/, 'We would take the top').replace(/^One/, 'We would take one').replace(/^Lines/, 'We would take the lines').replace(/^Sale lines/, 'We would take the sale lines').replace(/^Products/, 'We would take the products').replace(/^Styles/, 'We would take the styles').replace(/^Item groups/, 'We would take the item groups');
   if (!rd.ok) s += ' (Not yet: ' + rd.why + '.)';
@@ -507,7 +527,7 @@ function sayLine(brand, t, best, first, ind, sig, rd) {
 function briefScope(t, best, first, ind, sig, ctx) {
   const L = ['Test: ' + t.n + ' (' + surfWord(t.surf) + ')', 'Field: ' + t.field, 'Hypothesis: ' + t.hyp, 'Design: ' + t.how, 'Primary metric: ' + t.metric,
     'Success: the test side beats control on the primary metric at 95% confidence; losers revert, winners roll out to the whole catalogue.'];
-  if (best) L.push('Evidence: a ' + (best.industry || 'FeedSpark') + ' account saw +' + best.pct + '% ' + best.metric + (best.when ? ' (' + MON(best.when) + ')' : '') + ' on the same test.');
+  if (best) L.push('Evidence: ' + peerWord(best, { client: true }) + ' saw +' + best.pct + '% ' + best.metric + (best.when ? ' (' + MON(best.when) + ')' : '') + ' on the same test.');
   else if (first) L.push('Evidence: a first for FeedSpark — no prior result; the hypothesis rests on ' + t.src + '.');
   if (sig) L.push('Competitor read (Google Shopping): ' + sig + '.');
   L.push('Source: ' + t.src);

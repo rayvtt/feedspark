@@ -45,10 +45,36 @@ test family:
 - a win inside `TL_WINDOW_DAYS` (92 — "the last three months") is **recent**, the rest **older**;
   a run that did not win is counted as a run so "nobody has tried this" stays true.
 
-So a proposal to one brand reads *"Reiss GB +12.4% CTR (Aug 2026) · 2 wins across the book in 3
-months"*. The rail names the peer — it is the AM's tool. The **brief** (a document a client may
-read) names the industry: *"a Fashion account saw +12.4% CTR"* — Ray's rule from the Golden
-Record documents, never a peer brand in client copy.
+So a proposal to one brand reads *"a Footwear account +12.4% CTR (Aug 2026) · 2 wins across the
+book in 3 months"*.
+
+### A peer is an industry, never a name — on the rail as well as in the brief
+
+Ray, 23 Oct 2026, over the Playbook: *"ok on playbook, some other brand name would need to be
+annonimize"*. The brief body had named the industry since 8 Oct because a client reads it, while
+the rail named the brand outright as an AM tool — but the rail is open **on** the client call, and
+⧉ Copy proposals lifts those exact strings into an email, so its screen is as public as the
+document.
+
+`peerWord(r, opts)` is the ONE writer for both surfaces, so they can never drift apart again:
+
+| what is on record | the rail | client copy (the brief) |
+|---|---|---|
+| the peer's industry | `a Fashion account` | `a Fashion account` |
+| no industry | `another account in our book` | `a FeedSpark account` |
+
+The evidence keeps everything that argues the case — the figure, the metric, the month, the
+industry — and loses only the one word that identifies another client. The **market** goes with
+the name: a brand + market pair narrows it to a single account. The account's own result still
+reads *"You"*, and `best` is always a peer anyway (every list it comes from filters this brand
+out). `/api/testlab` carries no peer name either: `peers` and `evidence[].best` are industry +
+figure, `book` is industries, and only `cold` still names brands, because that is the list the
+page warms **by name** through `/api/abtests`.
+
+The **competitor** block is a different fact and keeps its names — those are the client's own
+rivals off the public Google Shopping results and off their own Auction Insights report, which is
+the whole point of reading them. The Review tab's "Not on this account" rows were already counts
+only (*"N other accounts in the book run it"*); the peer it sorts on is never printed.
 
 A brand whose archive nobody has opened is not an empty archive: the route names it **cold**, and
 the rail warms it once per session through `/api/abtests?client=` and re-reads, so the evidence

@@ -6898,9 +6898,15 @@ async function railRoutes(env, request, url, ctx) {
     const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));
     const ctx = { industry: industryOf(brand), feeds, archive: own ? own.tests : [], kw: kwAll.filter((r) => clientSlug(String(r.brand || '')) === clientSlug(who0)), briefs, comp };
     const res = TL.proposeTests(brand, ctx, ev, { now });
-    const evOut = {}; Object.keys(ev).forEach((k) => { evOut[k] = { n: ev[k].n, wins: ev[k].wins, recent: ev[k].recent.length, best: ev[k].best }; });
+    /* the evidence table travels WITHOUT the peer's name (Ray, 23 Oct 2026: "some other brand name
+       would need to be annonimize") — the rail argues from the figure and the industry, so the one
+       word that identifies another client never leaves the worker. `cold` still names the brands,
+       because that is the list the page warms by name through /api/abtests. */
+    const evOut = {}; Object.keys(ev).forEach((k) => { const b = ev[k].best;
+      evOut[k] = { n: ev[k].n, wins: ev[k].wins, recent: ev[k].recent.length,
+        best: b ? { industry: b.industry || '', pct: b.pct, metric: b.metric, when: b.when } : null }; });
     return json({ ok: true, at: now, client: brand, industry: ctx.industry, top: res.top, rest: res.rest, counts: res.counts,
-      evidence: evOut, book: book.map((b) => ({ brand: b.brand, n: b.tests.length })), cold, ownArchive: !!own, comp,
+      evidence: evOut, book: book.map((b) => ({ industry: industryOf(b.brand), n: b.tests.length })), cold, ownArchive: !!own, comp,
       feeds: feeds.map((f) => ({ mkt: f.mkt, fb: f.fb, scanned: !!f.cov })) });
   }
 
