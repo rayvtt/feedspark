@@ -216,9 +216,9 @@ t('each page lights its own icon only', /href="\/rules" class="tbm on"/.test(RP)
 });
 t('Rules: the market drill reads ONE market off /api/rules?client=&market=', /api\('\/api\/rules\?client=' \+ encodeURIComponent\(client\) \+ '&market='/.test(RP));
 t('Rules: family bars, findings by severity, the markets table, the 30-day log', /id="fams"/.test(RP) && /id="sevs"/.test(RP) && /id="mk-table"/.test(RP) && /id="recent"/.test(RP));
-t('Stock: coverage matrix, findings, cut-offs, each market\'s setup', /id="cov"/.test(SP) && /id="finds"/.test(SP) && /id="cuts"/.test(SP) && /id="setups"/.test(SP) && /api\('\/api\/rules\/stock'/.test(SP));
+t('Stock: coverage matrix, cut-offs, each market\'s setup — and no findings card (Ray, 23 Oct 2026: "also, remove this")', /id="cov"/.test(SP) && !/id="finds"/.test(SP) && !/id="find-card"/.test(SP) && /id="cuts"/.test(SP) && /id="setups"/.test(SP) && /api\('\/api\/rules\/stock'/.test(SP));
 t('Stock: a cut-off is shown as what the NAME states', /name states/.test(SP) && /read from the name/i.test(SP));
-t('Stock: hero sizes get their own runs table, reading heroRuns and filtering like the cut-offs table', /id="heroes"/.test(SP) && /function renderHeroes\(\) \{/.test(SP) && /S\.d && S\.d\.heroRuns/.test(SP) && /renderCov\(\); renderHeroes\(\); renderHmap\(\); renderFinds\(\)/.test(SP));
+t('Stock: hero sizes get their own runs table, reading heroRuns and filtering like the cut-offs table', /id="heroes"/.test(SP) && /function renderHeroes\(\) \{/.test(SP) && /S\.d && S\.d\.heroRuns/.test(SP) && /renderCov\(\); renderSim\(\); renderHeroes\(\); renderHmap\(\); renderCuts\(\)/.test(SP));
 t('Stock: hero sizes have their own runs card and their own column in the coverage matrix (the KPI band that also counted them is gone — Ray, 6 Oct 2026)', /function renderHeroes\(\)/.test(SP) && /\(x\.k === 'hero' \? heroIcon\(\) : ''\) \+ esc\(x\.label\)/.test(SP) && !/'Markets with hero sizes'/.test(SP));
 t('Stock: the hero-size glyph is ONE function, shown only where the mechanism itself shows up — a tag, a column header, a filter chip, the runs table (never a wall of icons on every row)', (() => {
   const uses = (SP.match(/heroIcon\(\)/g) || []).length;
@@ -245,8 +245,8 @@ t('Rules: a button on every rule surface — the market\'s rule list, its chains
   /<b>' \+ esc\(r\.n\) \+ '<\/b> ' \+ fhA\(d\.cmpid, r\.n, r\.t\)/.test(RP) && /fhA\(d\.cmpid, r\.n, r\.t\) \+ '<\/li>'/.test(RP) && /fhA\(d\.cmpid, null, c\.t, 'All '/.test(RP)
   && /fhA\(r\.cmpid \|\| f\.cmpid, r\.n, r\.t\)/.test(RP) && /fhA\(f\.cmpid, null, x\.t\)/.test(RP) && /fhA\(x\.m\.cmpid, x\.r\.n, x\.r\.t\)/.test(RP) && /fhA\(m\.cmpid\)/.test(RP) && /\$\('#d-fhw'\)\.innerHTML = fhA\(d\.cmpid, null, null,/.test(RP));
 t('Rules: a click on the pop-out is the browser\'s — the clickable row under it never also opens', /if \(e\.target\.closest\('a\.fh'\)\) return;[^\n]*\n\s*var o = e\.target\.closest\('\[data-open\]'\);/.test(RP));
-t('Stock: a button on every stock rule — the setup tables, the cut-offs table, the findings, and each market\'s whole list',
-  /<b>' \+ esc\(r\.n\) \+ '<\/b> ' \+ fhA\(m\.cmpid, r\.n, r\.t\)/.test(SP) && /esc\(c\.rule\) \+ ' ' \+ fhA\(c\.cmpid, c\.rule, c\.t\)/.test(SP) && /fhA\(r\.cmpid \|\| f\.cmpid, r\.n, r\.t\)/.test(SP) && /fhA\(m\.cmpid, null, null, 'All rules in FeedHero'\)/.test(SP));
+t('Stock: a button on every stock rule — the setup tables, the cut-offs table and each market\'s whole list',
+  /<b>' \+ esc\(r\.n\) \+ '<\/b> ' \+ fhA\(m\.cmpid, r\.n, r\.t\)/.test(SP) && /esc\(c\.rule\) \+ ' ' \+ fhA\(c\.cmpid, c\.rule, c\.t\)/.test(SP) && /fhA\(m\.cmpid, null, null, 'All rules in FeedHero'\)/.test(SP));
 {
   const cuts = R.stockCutoffs(brand), cf = R.stockFindings(brand, NOW).filter((f) => f.k === 'cutoff')[0];
   t('a cut-off row carries the target field its link narrows on', cuts.every((c) => c.t && c.cmpid));
@@ -518,7 +518,7 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
     && (SP.match(/<section class="card" id="[a-z-]+"/g) || []).length >= 9 && /var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = \{ 'cov-card': 1, 'lev-card': 1 \}, FOLD = \{\};/.test(SP)
     && /if \(keep\) \{ FOLD\[c\.id\] = open \? 1 : 0; remember\(FOLD_KEY, JSON\.stringify\(FOLD\)\); \}/.test(SP) && /function foldOpen\(el\) \{ var c = el && el\.closest \? el\.closest\('section\.card\.folded'\) : null; if \(c\) foldSet\(c, true, false\); return c; \}/.test(SP)
     && /\.card\.folded>:not\(\.chead\),\.card\.folded>\.chead \.ch,\.card\.folded>\.chead \.tools,\.card\.folded>\.chead \.instr-tgl\{display:none!important\}/.test(SP));
-  t('page: …every card writes the line it keeps when folded', ['cov-card', 'lev-card', 'av-card', 'hero-card', 'hmap-card', 'find-card', 'cut-card', 'setup-card', 'how-card'].every((id) => SP.indexOf("fsum('" + id + "'") > 0));
+  t('page: …every card writes the line it keeps when folded', ['cov-card', 'lev-card', 'av-card', 'sim-card', 'hero-card', 'hmap-card', 'cut-card', 'setup-card', 'how-card'].every((id) => SP.indexOf("fsum('" + id + "'") > 0));
   t('page: ONE card — the ad-spend card is gone, its rule-by-rule detail lives in the in-stock card', !/id="sv-card"/.test(SP) && /<section class="card" id="av-card">[\s\S]*?id="av-csv"[\s\S]*?<details class="sv-rest sv-rules" id="sv-rules">[\s\S]*?id="sv-t"[\s\S]*?id="sv-rest"[\s\S]*?<\/section>/.test(SP));
   t('page: the scenario and period switches live in the forecast panel ONLY (Ray, 7 Oct 2026, crossing them out on the card: "these button doesnt apply/ make sense"); the column head names the forecast shown', !/<section class="card" id="av-card">[\s\S]*?id="sv-(scn|per)"[\s\S]*?<\/section>/.test(SP)
     && /\$\('#svp-bd'\)\.addEventListener\('click', svCtl\);/.test(SP) && /th\.innerHTML = 'Ad spend kept off<span class="thp">' \+ esc\(scnName\(SV\.pct\)\.toLowerCase\(\)\) \+ ' ' \+ SV\.pct \+ '% · ' \+ esc\(svPer\(\)\) \+ '<\/span>';/.test(SP));

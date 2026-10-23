@@ -589,5 +589,38 @@ const tracked = (() => { try { return require('node:child_process').execSync('gi
 t('no master file, zip or feed dump is committed', !tracked.some((f) => /(_master|master_feed)[^/]*\.(zip|csv|tsv|txt|xml|xlsx)$/i.test(f) || /catalog[^/]*\.(zip|xml)$/i.test(f)));
 t('no FeedHero import URL (with its hash) is written into the code', !/import_feeds\/[a-z0-9_]+\/[0-9a-f]{16,}/.test(WK + PG + read('docs/catalog_engine.js')));
 
+// ---- the stock-rule simulator (Ray, 23 Oct 2026: "create a range‑completion emulation … Add stock quantity, a category block")
+{
+  const fi = E.feedIndex();
+  fi.onRow(['g:id', 'g:availability', 'g:product_type']);
+  [['a1', 'in stock', 'Women > Tops > Tees'], ['a2', 'in stock', 'Women > Tops > Tees'], ['b1', 'out of stock', 'Men > Coats']].forEach((r) => fi.onRow(r));
+  const feed = fi.finish();
+  t('feedIndex keeps each product\'s place in the feed\'s PT tree', feed.pt.get('a1') === 'Women > Tops > Tees' && feed.pt.get('b1') === 'Men > Coats');
+  const sr = E.stockRows(feed);
+  sr.onRow(['id', 'title', 'size', 'item_group_id', 'availability', 'quantity', 'product_type', 'brand']);
+  [['a1', 'Tee', 'S', 'A', 'in stock', '5', 'x', 'Nw'], ['a2', 'Tee', 'M', 'A', 'in stock', '1', 'x', 'Nw'], ['a3', 'Tee', 'L', 'A', 'out of stock', '0', 'x', 'Nw'],
+    ['b1', 'Coat', 'S', 'B', 'in stock', '9', 'Coats', 'Nw'], ['b2', 'Coat', 'M', 'B', 'out of stock', '0', 'Coats', 'Nw'], ['b3', 'Coat', 'L', 'B', 'out of stock', '0', 'Coats', 'Nw'],
+    ['c1', 'Bag', '', '', 'in stock', '', 'Bags', 'Ot']].forEach((r) => sr.onRow(r));
+  const D = sr.finish();
+  t('stockRows reads every master product, joined to the feed', D.ok && D.n === 7 && D.join && D.styles === 2);
+  t('…a product the feed never sends takes its style\'s place in the tree, else the master\'s own type', D.rows.c[2] === 'Women > Tops > Tees' && D.rows.c[5] === 'Men > Coats' && D.rows.c[6] === 'Bags' && D.cat.master === 1);
+  const r1 = E.simulate(D, { rc: { v: 50 } });
+  t('range completion under 50%: the coat style (1 of 3 sizes) is held back, the tee style (2 of 3) is not', r1.inStock === 4 && r1.held === 1 && r1.take.rc === 1);
+  t('…a product with no style is never held back by range completion, and is counted as such', r1.noStyle === 1);
+  t('…today: of 4 in stock read against the feed, 2 are not live (b1 sent out, c1 absent) — 1 stays held, 1 comes back', r1.today.held === 2 && r1.today.both === 1 && r1.today.released === 1 && r1.today.newly === 0);
+  const r2 = E.simulate(D, { rc: { v: 50 }, qty: { v: 2 }, block: { f: 'c1', v: ['Women'] } });
+  t('rules run range completion → quantity → block, each product counted once', r2.held === 3 && r2.take.rc === 1 && r2.take.qty === 1 && r2.take.block === 1 && r2.own.block === 2 && r2.own.qty === 1);
+  t('…a product with no quantity stated is never held back by quantity', r2.qtyUnread === 1);
+  t('a rule switched off holds nothing back', E.simulate(D, { rc: { on: false, v: 90 } }).held === 0);
+  t('sizes in stock: a style with fewer than 2 sizes in stock goes whole', E.simulate(D, { sz: { v: 2 } }).take.sz === 1);
+  const sw = E.simSweep(D, { qty: { v: 2 } }, 25);
+  t('the sweep counts every range-completion line, the other rules as set', JSON.stringify(sw.map((x) => x.held)) === '[1,1,2,3,3]');
+  t('simValues lists a block\'s values biggest first', JSON.stringify(E.simValues(D, 'c1')) === '[["Women",2],["Bags",1],["Men",1]]');
+  t('simHeld lists the products held back, with the rule and the style\'s range completion', E.simHeld(D, { rc: { v: 50 } }).map((h) => h.id + ':' + h.by + ':' + h.rc).join() === 'b1:rc:33.3');
+  const nf = E.stockRows(null); nf.onRow(['id', 'availability', 'item_group_id']); nf.onRow(['x', 'in stock', 'G']);
+  const ND = nf.finish();
+  t('with no feed it still simulates, and says it was not joined', ND.ok && !ND.join && ND.joinWhy === 'nofeed' && E.simulate(ND, { rc: { v: 50 } }).today === null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

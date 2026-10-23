@@ -143,20 +143,9 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     const guideNote = await p.evaluate(() => { const g = document.getElementById('hm-guide'); return { lines: g.querySelectorAll('.ex-note').length, tip: (g.querySelector('#hm-ex') || {}).title || '' }; });
     ok('the example\'s note is the follow select\'s tooltip, not a line of prose', guideNote.lines === 0 && /starting point/i.test(guideNote.tip), guideNote);
 
-    console.log('· needs a look — one line each until opened');
-    const fd = await p.evaluate(() => Array.from(document.querySelectorAll('#finds .fd')).map((d) => {
-      const tt = d.querySelector('summary .tt').getBoundingClientRect(), why = d.querySelector('.why');
-      // a closed <details> keeps its content laid out but unpainted (content-visibility), so a box height proves nothing
-      return { x: tt.left, open: d.open, why: !!why && why.checkVisibility(), inSummary: !!d.querySelector('summary .why') };
-    }));
-    ok('the stub has findings', fd.length >= 5, fd.length);
-    ok('closed, a finding paints no reason (badge · title · where only)', fd.every((f) => !f.open && !f.why && !f.inSummary), fd);
-    ok('every title starts at one x, whatever the badge says', same(fd.map((f) => f.x)), fd.map((f) => Math.round(f.x)));
-    await p.click('#finds .fd summary');
-    const opened = await p.evaluate(() => { const d = document.querySelector('#finds .fd'); const w = d.querySelector('.why'); return { open: d.open, why: !!w && w.checkVisibility() && w.getBoundingClientRect().height > 0, rules: d.querySelectorAll('.rl li').length }; });
-    ok('opening one shows its reason with its rules', opened.open && opened.why && opened.rules > 0, opened);
-    const hh = await p.evaluate(() => ['find-card', 'cut-card'].map((id) => document.getElementById(id).getBoundingClientRect().height));
-    ok('the findings and cut-offs cards stand one height', same(hh, 1), hh);
+    console.log('· needs a look is gone (Ray, 23 Oct 2026: "also, remove this")');
+    const gone = await p.evaluate(() => ({ card: !!document.getElementById('find-card'), list: !!document.getElementById('finds'), word: /Needs a look/.test(document.querySelector('main').textContent) }));
+    ok('no findings card on /stock — the cut-offs card stands on its own row', !gone.card && !gone.list && !gone.word, gone);
 
     console.log('· each market\'s setup — a one-line summary');
     const su = await p.evaluate(() => Array.from(document.querySelectorAll('#setups > details')).map((d) => ({ h: d.querySelector('summary').getBoundingClientRect().height, why: !!d.querySelector('summary .why'), body: !!d.querySelector(':scope > .set-top .why'), fh: !!d.querySelector(':scope > .set-top a.fh') })));

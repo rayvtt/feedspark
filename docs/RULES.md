@@ -1020,6 +1020,71 @@ build({ many: true })`, for the grouped view); `tools/check_stockfold.js` (Playw
 person uses it, desktop and phone; fails on the page before); `tools/test_rules.mjs` (cards in order, every card a fold
 button and a folded line).
 
+## 3p. Simulate the stock rules — and "Needs a look" removed (`/stock`)
+
+Ray, 23 Oct 2026: *"Within the stock module, create a range‑completion emulation. For example, if the manager drags between
+range completions of 5 %, 10 %, 15 % or 20 % (or any other percentage), simulate the amount of product that would be excluded.
+Add stock quantity, a category block, or any other element—almost like a volume simulation of all the stock rules. - also,
+remove this"* (an arrow on the "Needs a look" card).
+
+**What it is.** A card right after *In stock — master feed → output feeds*. A market is picked, then **⚡ Read products** reads
+its master and its Google feed **in the browser**. It uses the same path as the held-back ⬇ List, so FeedHero's URL never
+reaches the page. Every product is kept in that tab only. Nothing is stored, and no FeedHero rule changes. Four rules then
+move freely, and every move re-counts at once.
+
+| Rule | Holds back an in-stock product when… | Control |
+|---|---|---|
+| Range completion | its style's sizes in stock ÷ sizes made (read off the master) is under X% | slider 1–100, presets 5 · 10 · 15 · 20 · 25 · 30 · 40 · 50, **today ≈N%** (the market's measured line, §3i), any typed value |
+| Stock quantity | the master states fewer than N units | slider + presets 1 · 2 · 3 · 5 · 10; refused with a reason when the master states no quantity |
+| Sizes in stock | its style has fewer than N sizes in stock | slider + presets 1–5 |
+| Category block | its value is ticked | Category tier 1 / 2 / 3 (the **Google feed's** PT tree), brand or gender; values listed with their in-stock counts |
+
+**Counted once, in run order.** The rules run range completion → quantity → sizes → block (`SIM_ORDER`). A product counts
+against the **first** rule that holds it back, so the rows of the rule table add up to the total. Beside each rule, *On its
+own* says what it would hold back if it were the only rule.
+
+**The rules refuse what they cannot judge.** A product with no quantity stated is never held back by quantity. A product with
+no style is never held back by range completion or sizes. Each table row names how many such products there are.
+
+**Against today.** Every in-stock product joined to the Google feed is compared with what the feed carries live now:
+
+- what these rules would hold back against what is held back today;
+- how many live products would go;
+- how many held-back products would come back.
+
+**The sweep.** A bar per 5% from 0 to 100 shows the held-back total at that range-completion line, with the other rules as
+set. Today's measured line is drawn dashed, and clicking a bar sets the line.
+
+**Also on the card:**
+
+- a table by category (tier 1 / 2 / 3), with the share of each held back;
+- ⬇ CSV of every product held back: id, title, size, style, quantity, category, the rule, the style's range completion, and
+  its state in the feed today.
+
+**Remembered per device.** The rules are kept in localStorage `fcc-stock-sim`: on/off, values and the category tier. A block's
+ticked values belong to the read, so they start empty.
+
+**Where a product's category comes from.** It is the Google feed's `g:product_type` for the product's own id. If the feed has
+no entry for that id, the category of another product in the same style is used, and failing that the master's own type.
+The footnote says how many products came from each source.
+
+**Engine.** `docs/catalog_engine.js` holds:
+
+- `stockRows(feed?)`: one pass over the master, compact column arrays, the held-back join;
+- `simulate`, `simSweep`, `simHeld`, `simValues`;
+- `feedIndex` now also keeps each product's PT (`pt`).
+
+**Needs a look is gone.** The findings card, its severity filter and its rendering are removed from `/stock`; a forbidden
+manifest marker keeps them out. The cut-offs card now stands on its own row. `/rules` keeps its own findings.
+
+**Harness.**
+
+- `tools/check_stocksim.js` (Playwright, presync) drives the real page on an invented master and feed (44 styles × 10 sizes,
+  every range completion from 0 to 100%). It checks each preset, a dragged slider, a sweep click, quantity + block stacked in
+  run order, the rule table's sum and *on its own*, the comparison with today, the category tiers, the CSV, the remembered
+  rules and the phone. Every count is checked against a tally made in the test, never against the engine.
+- The engine block in `tools/test_catalog.mjs`.
+
 ## 4. Findings
 
 Every finding names the market and the rules.

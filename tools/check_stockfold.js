@@ -15,7 +15,6 @@
  *   · ⊕ Expand all / ⊖ Collapse all does every card and always names the action still available
  *   · a deep link to a stock control (?mech=) opens the market setups; a #hash opens the card it names; a click on a
  *     coverage cell opens the setups at that market — none of them rewrites what the device chose
- *   · side by side, a folded card does not stretch to its open neighbour
  *   · on a phone the same fold: the skim view leaves these headings to the page, a tap on the title — or anywhere on its
  *     row — toggles exactly once, and nothing scrolls sideways
  *
@@ -34,7 +33,7 @@ const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'apps_widget.htm
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const PAGE = fs.readFileSync(process.env.STOCK_PAGE || path.join(D, 'FeedSpark_Stock.html'), 'utf8').split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
 const HTML = PAGE.indexOf('</body>') >= 0 ? PAGE.replace('</body>', WIDGETS + '</body>') : PAGE + '\n' + WIDGETS;
-const CARDS = ['cov-card', 'lev-card', 'av-card', 'hero-card', 'hmap-card', 'find-card', 'cut-card', 'setup-card', 'how-card'];
+const CARDS = ['cov-card', 'lev-card', 'av-card', 'sim-card', 'hero-card', 'hmap-card', 'cut-card', 'setup-card', 'how-card'];
 const OPEN0 = ['cov-card', 'lev-card'];
 
 let pass = 0, fail = 0;
@@ -86,9 +85,9 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     const fd = CARDS.filter((id) => S[id].folded);
     ok('a folded card is ONE row (under 60px), its body not painted', fd.every((id) => S[id].h > 0 && S[id].h < 60 && !S[id].body), fd.map((id) => [id, S[id].h, S[id].body]));
     ok('…and keeps a line saying what is in it, never an empty row', fd.every((id) => S[id].sumShown && S[id].sum.length > 8), fd.map((id) => [id, S[id].sum]));
-    ok('the lines read the card: markets and what Google is not sent; hero-size rules; product types mapped; findings; cut-offs; markets in view',
+    ok('the lines read the card: markets and what Google is not sent; the simulator\'s next step; hero-size rules; product types mapped; cut-offs; markets in view',
       /^· 2 markets/.test(S['av-card'].sum) && /held back from Google/.test(S['av-card'].sum) && /kept off/.test(S['av-card'].sum) && /hero-size rule/.test(S['hero-card'].sum) && /product types? mapped/.test(S['hmap-card'].sum)
-      && /finding/.test(S['find-card'].sum) && /cut-off/.test(S['cut-card'].sum) && /market/.test(S['setup-card'].sum) && /stock control/.test(S['how-card'].sum), fd.map((id) => S[id].sum));
+      && /read its products/.test(S['sim-card'].sum) && /cut-off/.test(S['cut-card'].sum) && /market/.test(S['setup-card'].sum) && /stock control/.test(S['how-card'].sum), fd.map((id) => S[id].sum));
     ok('an open card shows no line in its title (its content says it)', OPEN0.every((id) => !S[id].sumShown && !S[id].folded), OPEN0.map((id) => S[id]));
     ok('the page header offers ⊕ Expand all (some cards are folded)', (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊕ Expand all');
     const cv = await p.evaluate(() => { const c = document.getElementById('cov-card'); c.querySelector('.fold').click(); const f = c.querySelector('.fsum'); return { folded: c.classList.contains('folded'), t: f.textContent.trim() }; });
@@ -118,9 +117,6 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     ok('⊖ Collapse all folds every card — the overview and the levers too — and offers ⊕ Expand all again', CARDS.every((id) => S[id].folded) && (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊕ Expand all', CARDS.map((id) => S[id].folded));
     const ph = await p.evaluate(() => document.documentElement.scrollHeight);
     ok('…a page of nine cards folded stands about one screen tall', ph < 1400, ph);
-    await p.click('#cut-card .fold');
-    const pair = await p.evaluate(() => ['find-card', 'cut-card'].map((id) => Math.round(document.getElementById(id).getBoundingClientRect().height)));
-    ok('side by side, a folded card does not stretch to its open neighbour (findings folded beside open cut-offs)', pair[0] < 60 && pair[1] > 100, pair);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
@@ -155,16 +151,16 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     const t0 = await exp('av-card'); await p.tap('#av-card .fold'); await p.waitForTimeout(150);
     const t1 = [t0, await exp('av-card')];
     ok('a tap on the title opens the card — once', t1[0] === 'false' && t1[1] === 'true', t1);
-    // a tap at the far end of a short title's row ("Needs a look") — past its words. Whether that spot is the title's button
+    // a tap at the far end of a short title's row ("How a rule is placed") — past its words. Whether that spot is the title's button
     // (the phone layer may stretch it across the row) or the heading beside it (which the skim view hands to the button),
     // the card must end up toggled ONCE, never twice back to where it was
     // "its words" = the title's own text node, not the folded line's summary beside it (the summary is not the title)
-    await p.$eval('#find-card', (c) => c.scrollIntoView({ block: 'center' }));
+    await p.$eval('#how-card', (c) => c.scrollIntoView({ block: 'center' }));
     await p.waitForTimeout(150);
-    const row = await p.evaluate(() => { const h = document.querySelector('#find-card > .chead h3'), t = h.querySelector('.fold'), hr = h.getBoundingClientRect(), r = document.createRange(), w = Array.from(t.childNodes).find((n) => n.nodeType === 3 && n.textContent.trim()); r.selectNodeContents(w || t); const tr = r.getBoundingClientRect(); return { x: Math.round(hr.right - 8), y: Math.round(hr.top + hr.height / 2), past: Math.round(hr.right - 8 - tr.right), vh: innerHeight }; });
-    const f0 = await exp('find-card');
+    const row = await p.evaluate(() => { const h = document.querySelector('#how-card > .chead h3'), t = h.querySelector('.fold'), hr = h.getBoundingClientRect(), r = document.createRange(), w = Array.from(t.childNodes).find((n) => n.nodeType === 3 && n.textContent.trim()); r.selectNodeContents(w || t); const tr = r.getBoundingClientRect(); return { x: Math.round(hr.right - 8), y: Math.round(hr.top + hr.height / 2), past: Math.round(hr.right - 8 - tr.right), vh: innerHeight }; });
+    const f0 = await exp('how-card');
     await p.touchscreen.tap(row.x, row.y); await p.waitForTimeout(150);
-    const f1 = await exp('find-card');
+    const f1 = await exp('how-card');
     ok('…a tap at the far end of a title’s row, past its words, toggles it — once, never twice', row.past > 40 && row.y > 0 && row.y < row.vh && f0 === 'false' && f1 === 'true', [row, f0, f1]);
     const ov = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, vw: innerWidth }));
     ok('nothing scrolls sideways on the phone', ov.sw <= ov.vw, ov);

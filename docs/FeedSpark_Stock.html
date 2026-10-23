@@ -98,15 +98,12 @@ window.addEventListener('load',restore);
   .card.folded{padding-top:12px;padding-bottom:12px}
   .card.folded>.chead{margin-bottom:0}
   .card.folded>:not(.chead),.card.folded>.chead .ch,.card.folded>.chead .tools,.card.folded>.chead .instr-tgl{display:none!important}
-  .grid2>.card.folded{align-self:start}
   @media (prefers-reduced-motion:reduce){.card h3 .fold .fch{transition:none}}
   .chead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
   .chead .sp{flex:1;min-width:220px}
   .chead .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .q{font:inherit;font-size:13px;font-weight:700;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:200px;flex:1}
   .q:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
-  .grid2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:stretch}
-  .grid2>.card{margin:0}
   .row-gap{margin-top:16px}
   /* one-series horizontal bars (a count per category) — one hue, the picked bar in the second */
   .hb{display:grid;grid-template-columns:minmax(110px,190px) minmax(0,1fr) 52px;gap:6px 10px;align-items:center}
@@ -120,6 +117,57 @@ window.addEventListener('load',restore);
   .hb .r:hover .l{color:var(--orange-deep)}
   .hb .n{font-size:12.5px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
   @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  /* the stock-rule simulator */
+  .sim-st{font-size:12.5px;font-weight:700;color:var(--muted);margin:0 0 10px}
+  .sim-st:empty{display:none}
+  .sim{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:16px;align-items:start}
+  .sim-ctl{display:flex;flex-direction:column;gap:10px}
+  .sl{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--wash)}
+  .sl.off{opacity:.62}
+  .sl .slh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900}
+  .sl .slh label{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0}
+  .sl .slh .v{font-size:18px;font-weight:900;color:var(--orange-deep);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .sl .sld{font-size:11.5px;font-weight:700;color:var(--muted);margin:2px 0 6px}
+  .sl input[type=range]{width:100%;accent-color:var(--orange-deep);margin:4px 0}
+  .sl .pre{display:flex;flex-wrap:wrap;gap:5px}
+  .sl .pre button{font:inherit;font-size:11.5px;font-weight:800;height:26px;padding:0 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .sl .pre button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .sl .pre button.td{border-style:dashed}
+  .sl .num{width:64px;height:26px;font:inherit;font-size:12.5px;font-weight:800;border:1px solid var(--line);border-radius:8px;padding:0 6px;background:var(--paper);color:var(--ink)}
+  .sl .blk{display:flex;gap:6px;margin-bottom:6px}
+  .sl .blk .fld{height:30px;font-size:12.5px;flex:1;min-width:0}
+  .sl .blk .q{height:30px;font-size:12.5px;min-width:0}
+  .sl .vals{max-height:210px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+  .sl .vals label{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:12.5px;font-weight:700;border-bottom:1px solid var(--line);cursor:pointer}
+  .sl .vals label:last-child{border-bottom:none}
+  .sl .vals label span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sl .vals label i{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
+  .sl .na{font-size:12px;font-weight:700;color:var(--muted)}
+  .sim-out{min-width:0;display:flex;flex-direction:column;gap:12px}
+  .sim-out .sv-sum{margin:0}
+  .sim-cmp{font-size:12.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+  .sim-cmp:empty{display:none}
+  .sim-cmp b{font-weight:900}
+  .sim-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+  .sim-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+  .sim-h .seg{height:30px;margin-left:auto}
+  .sim-h .seg button{font-size:11.5px;padding:0 9px}
+  #sim-sweep svg{display:block;width:100%;height:auto}
+  #sim-sweep .bar{fill:var(--chart-2);opacity:.45;cursor:pointer}
+  #sim-sweep .bar.on{opacity:1}
+  #sim-sweep .bar:hover{opacity:.8}
+  #sim-sweep text{font:700 10px Lato,sans-serif;fill:var(--muted)}
+  #sim-sweep .tdl{stroke:var(--ink-2);stroke-dasharray:3 3;stroke-width:1.2}
+  #sim-sweep .tdt{fill:var(--ink-2);font-weight:900}
+  #sim-sweep .base{stroke:var(--line);stroke-width:1}
+  .sbar{height:8px;border-radius:4px;background:var(--wash);overflow:hidden;min-width:80px}
+  .sbar i{display:block;height:100%;background:var(--chart-2)}
+  .sbar-r{display:flex;align-items:center;gap:8px}
+  .sbar-r .sbar{flex:1}
+  .sbar-r b{font-size:12px;font-variant-numeric:tabular-nums;min-width:42px;text-align:right}
+  [data-theme=dark] .sl,[data-theme=dark] .sim-cmp{background:#181B22}
+  @media(max-width:1000px){.sim{grid-template-columns:minmax(0,1fr)}.sim-ctl{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+  @media(max-width:760px){.sim-ctl{grid-template-columns:minmax(0,1fr)}.sl .pre button{height:32px;padding:0 11px}.sl .num{height:32px}.sim-h .seg{margin-left:0}}
   /* findings */
   .fl{display:flex;flex-direction:column}
   .fd{border-bottom:1px solid var(--line);padding:10px 0}
@@ -132,10 +180,6 @@ window.addEventListener('load',restore);
   .fd .fb{padding:6px 0 2px}
   .set-top{margin:8px 0}
   .set-top .why{flex:1;min-width:220px;font-size:12.5px;color:var(--ink-2)}
-  #finds .fd summary{grid-template-columns:118px minmax(0,1fr) auto;align-items:center}
-  #finds .fd .sev{justify-self:start}
-  #finds .fd .fb{padding-left:128px}
-  @media(max-width:760px){#finds .fd summary{grid-template-columns:auto minmax(0,1fr)}#finds .fd .wh{grid-column:2;white-space:normal}#finds .fd .fb{padding-left:0}}
   .fd .rl{margin:8px 0 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
   .fd .rl li{font-size:12.5px;display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:4px 8px;border-radius:8px;background:var(--wash)}
   .fd .rl li b{font-weight:900}
@@ -208,7 +252,6 @@ window.addEventListener('load',restore);
   [data-theme=dark] .sev.s3{background:var(--risk);color:#14161C}
   [data-theme=dark] table.t th{background:#181B22}
   [data-theme=dark] table.t tr.cl:hover td,[data-theme=dark] table.t tr.sel td{background:#181B22}
-  @media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
   [data-theme=dark] a.fh{background:#20242E}
   @media(max-width:760px){a.fh{min-width:34px;height:34px}.hb{grid-template-columns:minmax(90px,130px) minmax(0,1fr) 44px}.q{min-width:0;width:100%}.ctl .q{flex:1 1 100%}}
   @media(prefers-reduced-motion:reduce){.hb .b i{animation:none}}
@@ -654,6 +697,28 @@ window.addEventListener('load',restore);
   </section>
 
 
+  <!-- SIMULATE THE STOCK RULES (Ray, 23 Oct 2026: "Within the stock module, create a range‑completion emulation. For example, if
+       the manager drags between range completions of 5 %, 10 %, 15 % or 20 % (or any other percentage), simulate the amount of
+       product that would be excluded. Add stock quantity, a category block, or any other element—almost like a volume
+       simulation of all the stock rules"). One market's master read once in the browser (the held-back join), then every
+       rule a slider: what each would hold back, together and on its own, against what the Google feed holds back today. -->
+  <section class="card" id="sim-card">
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Simulate the stock rules<span class="fsum"></span></button></h3><p class="ch">Move a range-completion line, a stock quantity or a category block and see how many in-stock products it would hold back.</p></div>
+      <div class="tools"><select class="fld" id="sim-mkt" aria-label="Market to simulate" data-no-keep></select><button class="btn" id="sim-load" type="button" title="Read this market's master feed and its Google feed in the browser — nothing is stored, nothing changes in FeedHero">⚡ Read products</button><button class="btn" id="sim-csv" type="button" disabled title="Every product these rules would hold back (CSV)">⬇ CSV</button></div></div>
+    <div class="sim-st" id="sim-st"></div>
+    <div class="sim" id="sim" hidden>
+      <div class="sim-ctl" id="sim-ctl"></div>
+      <div class="sim-out">
+        <div class="sv-sum" id="sim-sum"></div>
+        <div class="sim-cmp" id="sim-cmp"></div>
+        <div class="sim-box"><div class="sim-h"><b>Held back at each range-completion line</b><span class="lvc">the other rules as set · click a bar to set the line</span></div><div id="sim-sweep"></div></div>
+        <div class="sim-box"><div class="sim-h"><b>By rule, in run order</b><span class="lvc">a product counts once, against the first rule that holds it back</span></div><div class="tw"><table class="t" id="sim-rules"><thead><tr><th>Rule</th><th class="num">Held back</th><th class="num" title="What this rule would hold back if it were the only rule">On its own</th><th class="num">Share of in stock</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="sim-box"><div class="sim-h"><b>By category</b><span class="seg sim-tier" id="sim-tier" role="group" aria-label="Category tier"></span></div><div class="tw"><table class="t" id="sim-cats"><thead><tr><th>Category</th><th class="num">In stock</th><th class="num">Held back</th><th>Share held back</th></tr></thead><tbody></tbody></table></div><button class="btn more" id="sim-more" type="button" hidden>Show all</button></div>
+      </div>
+    </div>
+    <p class="note" id="sim-foot">A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes.</p>
+  </section>
+
   <section class="card" id="hero-card">
     <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Hero sizes — the rules that run, per market<span class="fsum"></span></button></h3><p class="ch">The rules that decide a market's hero sizes — its core, best-selling sizes. Split out from range completion, every one shown in FeedHero's own run order.</p></div></div>
     <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th>Rule</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
@@ -677,18 +742,10 @@ window.addEventListener('load',restore);
     <input type="file" id="hm-file" accept=".csv,.xlsx,.tsv,.txt" hidden>
   </section>
 
-  <div class="grid2 row-gap">
-    <section class="card" id="find-card">
-      <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Needs a look<span class="fsum"></span></button></h3><p class="ch">Stock rules that are broken, idle, overdue a review, temporary — and markets that skip a control the rest of the brand runs.</p></div>
-        <div class="tools seg" id="sevs" role="group" aria-label="Severity"></div></div>
-      <div class="fl" id="finds"></div>
-      <button class="btn more" id="find-more" type="button" hidden>Show all</button>
-    </section>
-    <section class="card" id="cut-card">
-      <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Cut-offs the rule names state<span class="fsum"></span></button></h3><p class="ch">A stock or range-completion level written into a rule's name. Read from the name — confirm in FeedHero before quoting it.</p></div></div>
-      <div class="tw"><table class="t" id="cuts"><thead><tr><th>Market</th><th>Rule</th><th>Does</th><th class="num">Cut-off</th><th class="num">Impacted</th></tr></thead><tbody></tbody></table></div>
-    </section>
-  </div>
+  <section class="card" id="cut-card">
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Cut-offs the rule names state<span class="fsum"></span></button></h3><p class="ch">A stock or range-completion level written into a rule's name. Read from the name — confirm in FeedHero before quoting it.</p></div></div>
+    <div class="tw"><table class="t" id="cuts"><thead><tr><th>Market</th><th>Rule</th><th>Does</th><th class="num">Cut-off</th><th class="num">Impacted</th></tr></thead><tbody></tbody></table></div>
+  </section>
 
   <section class="card" id="setup-card">
     <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Each market's stock setup<span class="fsum"></span></button></h3><p class="ch" id="setup-sub">In plain words, then every stock rule in run order.</p></div></div>
@@ -845,8 +902,8 @@ function mkCell(g, client, market) { return '<td>' + (g.first ? '<b>' + esc(clie
 function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() : '') + esc((MK[sk] || {}).label || sk) + '</span>'; }
 
   var Q = new URLSearchParams(location.search);
-  var S = { brand: Q.get('brand') || recall('fcc-stock-brand'), market: Q.get('market') || '', mech: Q.get('mech') || '', q: Q.get('q') || '', sev: 0, all: false, chan: recall('fcc-stock-chan') === '1', d: null };
-  var MK = {}, CH = {}, DR = {}, SEVL = { 3: 'Act now', 2: 'Review', 1: 'Worth knowing' };
+  var S = { brand: Q.get('brand') || recall('fcc-stock-brand'), market: Q.get('market') || '', mech: Q.get('mech') || '', q: Q.get('q') || '', chan: recall('fcc-stock-chan') === '1', d: null };
+  var MK = {}, CH = {}, DR = {};
   tipInit();
   $('#q').value = S.q; $('#chan').checked = S.chan;
 
@@ -1603,7 +1660,6 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       (d.mechanisms || []).forEach(function (m) { MK[m.k] = m; });
       (d.channels || []).forEach(function (c) { CH[c.k] = c.label; });
       DR = d.drivers || {};
-      if (d.sev) SEVL = d.sev;
       if (d.sv && d.sv.scenarios && d.sv.scenarios.length) { SCN = d.sv.scenarios; SVDAYS = d.sv.days || SVDAYS; }
       render();
     });
@@ -1616,7 +1672,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
-    renderChips(); renderLev(); renderAv(); renderSv(); renderCov(); renderHeroes(); renderHmap(); renderFinds(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderLev(); renderAv(); renderSv(); renderCov(); renderSim(); renderHeroes(); renderHmap(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
     foldBar(); foldHash();
   }
@@ -1789,24 +1845,6 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         + '<td class="num">' + impCell(c) + '</td>'
         + '<td>' + (c.mo ? dstr(c.mo) + '<span class="sub2 nw">' + esc(c.mb || '') + ' · ' + ago(c.mo) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
     }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
-  }
-  function findList(ignoreSev) {
-    return ((S.d && S.d.findings) || []).filter(function (f) {
-      if (S.brand && f.client !== S.brand) return false;
-      if (S.market && (f.market || '').split(' · ').indexOf(S.market) < 0) return false;
-      return ignoreSev || !S.sev || f.sev === S.sev;
-    });
-  }
-  function renderFinds() {
-    var all = findList(true), cnt = { 0: all.length, 3: 0, 2: 0, 1: 0 }; all.forEach(function (f) { cnt[f.sev]++; });
-    fsum('find-card', all.length ? nw(all.length, 'finding') + (cnt[3] ? ' · ' + cnt[3] + ' to act on now' : '') : 'nothing to look at');
-    $('#sevs').innerHTML = [0, 3, 2, 1].map(function (k) { return '<button type="button" data-s="' + k + '" class="' + (S.sev === k ? 'on' : '') + '">' + (k ? esc(SEVL[k]) : 'All') + ' ' + cnt[k] + '</button>'; }).join('');
-    var list = findList(false), cap = S.all ? list.length : 7;
-    $('#finds').innerHTML = list.length ? list.slice(0, cap).map(function (f) {
-      var rules = (f.rules || []).map(function (r) { return '<li><b>' + esc(r.n) + '</b>' + (r.market ? '<span class="m">' + esc(r.market) + '</span>' : '') + (r.t ? '<span class="m">→ ' + esc(r.t) + '</span>' : '') + (r.mo ? '<span class="m">changed ' + ago(r.mo) + (r.mb ? ' by ' + esc(r.mb) : '') + '</span>' : '') + (r.imp != null ? '<span class="m">' + n0(r.imp) + (r.of ? ' of ' + n0(r.of) : '') + ' items</span>' : '') + fhA(r.cmpid || f.cmpid, r.n, r.t) + '</li>'; }).join('');
-      return '<details class="fd"><summary><span class="sev s' + f.sev + '">' + esc(SEVL[f.sev] || '') + '</span><span class="tt"><span class="chev">▶</span>' + esc(f.t) + '</span><span class="wh">' + esc(f.k === 'gap' || f.k === 'cutoff' ? f.client : f.client + ' · ' + f.market) + '</span></summary><div class="fb"><div class="why">' + esc(f.why) + '</div>' + (rules ? '<ul class="rl">' + rules + '</ul>' : '') + '</div></details>';
-    }).join('') : '<div class="empty">' + (all.length ? 'Nothing at this severity.' : (S.d && S.d.tracked ? 'No stock findings — the stock rules read clean.' : 'No rules read yet.')) + '</div>';
-    var mb = $('#find-more'); mb.hidden = list.length <= 7; mb.textContent = S.all ? 'Show fewer' : 'Show all ' + list.length;
   }
   function renderCuts() {
     var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
@@ -2077,7 +2115,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         return x.j;
       });
   }
-  function hbMaster(q, feed, say, E, FA) {
+  function hbMaster(q, feed, say, E, FA, col) {
     return fetch('/api/catalog/master/file' + q, { credentials: 'same-origin' }).then(function (res) {
       if (!res.ok || !res.body) return hbFail(res, 'The master');
       var parts = [], got = 0;
@@ -2093,7 +2131,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         } else stream = new Blob([u8]).stream();
         say('Joining…');
         // Schuh's master is Windows-1252: at the first byte that is not UTF-8, switch for the rest of the file
-        var hb = E.heldBack(feed), rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null;
+        var hb = col || E.heldBack(feed), rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null;
         return (function pump() {
           return rd.read().then(function (x) {
             if (x.done) { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } return hb.finish(); }
@@ -2138,6 +2176,183 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       done();
     }).catch(function (e) { toast('Held-back list failed — ' + String((e && e.message) || e)); done(); });
   }
+
+  // ---- SIMULATE THE STOCK RULES (Ray, 23 Oct 2026: "Within the stock module, create a range‑completion emulation … drags
+  // between range completions of 5 %, 10 %, 15 % or 20 % (or any other percentage), simulate the amount of product that would
+  // be excluded. Add stock quantity, a category block, or any other element—almost like a volume simulation of all the
+  // stock rules"). The engine is docs/catalog_engine.js (stockRows / simulate / simSweep / simHeld); the data is ONE read
+  // of the market's master + Google feed — the held-back download's own path — kept in this tab only. The rules (on/off +
+  // value) are this device's (fcc-stock-sim); a block's picked values belong to the market read, so they reset with it.
+  var SIM = (function () {
+    var o = {}; try { o = JSON.parse(recall('fcc-stock-sim') || '{}') || {}; } catch (e) { o = {}; }
+    function r(k, on, v, lo, hi) { var x = o[k] || {}; var n = +x.v; return { on: x.on == null ? on : !!x.on, v: isFinite(n) && n >= lo && n <= hi ? n : v }; }
+    return { D: null, E: null, cmpid: '', busy: '', err: '', all: false, cat: /^c[123]$/.test(o.cat) ? o.cat : 'c1', q: '',
+      rules: { block: { on: true, f: /^(c[123]|br|gd)$/.test((o.block || {}).f) ? o.block.f : 'c1', v: [] }, qty: r('qty', false, 3, 1, 999), rc: r('rc', true, 20, 1, 100), sz: r('sz', false, 2, 1, 30) } };
+  })();
+  var SIM_RULES = {
+    block: { l: 'Category block', d: 'Hold back everything in the values ticked.' },
+    qty: { l: 'Stock quantity', d: 'Hold back a product with fewer units in stock than this.', pre: [1, 2, 3, 5, 10], max: 20, u: function (v) { return '< ' + v + ' units'; } },
+    rc: { l: 'Range completion', d: 'Hold back every product of a style whose sizes in stock are under this share of the sizes it is made in.', pre: [5, 10, 15, 20, 25, 30, 40, 50], max: 100, u: function (v) { return '< ' + v + '%'; } },
+    sz: { l: 'Sizes in stock', d: 'Hold back a style with fewer sizes in stock than this.', pre: [1, 2, 3, 4, 5], max: 10, u: function (v) { return '< ' + v + ' sizes'; } }
+  };
+  function simSave() {
+    var r = SIM.rules, o = { cat: SIM.cat, block: { f: r.block.f } };
+    ['qty', 'rc', 'sz'].forEach(function (k) { o[k] = { on: r[k].on, v: r[k].v }; });
+    remember('fcc-stock-sim', JSON.stringify(o));
+  }
+  function simMarkets() { return mkts().filter(function (m) { return m.wk && m.wk.g; }); }
+  function simMkt() { return mById(SIM.cmpid); }
+  function simLine() { var m = simMkt(), ln = m && m.av && m.av.held && m.av.held.line; return ln && isFinite(+ln.x) ? +ln.x : null; }
+  function renderSim() {
+    var ms = simMarkets(), sel = $('#sim-mkt');
+    if (!SIM.cmpid || !ms.some(function (m) { return m.cmpid === SIM.cmpid; })) {
+      var pick = ms.filter(function (m) { return S.market && m.market === S.market; })[0] || ms[0];
+      if (!SIM.D) SIM.cmpid = pick ? pick.cmpid : '';
+    }
+    sel.innerHTML = ms.map(function (m) { return '<option value="' + esc(m.cmpid) + '"' + (m.cmpid === SIM.cmpid ? ' selected' : '') + '>' + esc(m.client + ' ' + m.market) + '</option>'; }).join('')
+      || '<option value="">No market with a Google feed in view</option>';
+    sel.disabled = !ms.length || !!SIM.busy;
+    $('#sim-load').disabled = !SIM.cmpid || !!SIM.busy;
+    $('#sim-load').textContent = SIM.busy || (SIM.D && SIM.D.cmpid === SIM.cmpid ? '⟳ Read again' : '⚡ Read products');
+    simDraw();
+  }
+  function simLoad() {
+    var m = simMkt(); if (!m || SIM.busy) return;
+    var q = '?client=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.wk.g), cmpid = m.cmpid;
+    var say = function (t) { SIM.busy = t; $('#sim-load').textContent = t; $('#sim-st').textContent = 'Reading ' + m.client + ' ' + m.market + ' — ' + t; };
+    SIM.err = ''; say('Reading…'); renderSim();
+    Promise.all([engLoad('/catalog/engine.js', 'FeedCatalog'), engLoad('/feedlab/engine.js', 'FeedAudit')]).then(function (en) {
+      var E = en[0], FA = en[1]; SIM.E = E;
+      return hbFeed(q, say, E, FA).then(function (feed) {
+        if (!feed.n) throw new Error('the Google feed carries no products');
+        return hbInfo(q, 0, say).then(function (info) { return hbMaster(q, feed, say, E, FA, E.stockRows(feed)).then(function (D) { D.info = info; return D; }); });
+      });
+    }).then(function (D) {
+      if (!D.ok) throw new Error('the master carries no products');
+      if (!D.rows.st.some(function (x) { return x === 1; })) throw new Error('the master states no product in stock (no availability, no quantity), so there is nothing to hold back');
+      D.cmpid = cmpid; D.at = Date.now(); SIM.D = D; SIM.rules.block.v = []; SIM.q = ''; SIM.all = false;
+      SIM.busy = ''; renderSim();
+    }).catch(function (e) { SIM.busy = ''; SIM.err = String((e && e.message) || e); renderSim(); });
+  }
+  function simCtl() {
+    var D = SIM.D, E = SIM.E, r = SIM.rules, line = simLine();
+    function rng(k) {
+      var x = r[k], c = SIM_RULES[k], dis = k === 'qty' && !D.hasQty;
+      var pre = c.pre;
+      return '<div class="sl' + (x.on && !dis ? '' : ' off') + '" data-r="' + k + '"><div class="slh"><label><input type="checkbox" data-on="' + k + '"' + (x.on && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '> ' + esc(c.l) + '</label><span class="v">' + (x.on && !dis ? esc(c.u(x.v)) : 'off') + '</span></div>'
+        + '<div class="sld">' + esc(c.d) + '</div>'
+        + (dis ? '<div class="na">This master states no stock quantity — only an availability word — so a quantity rule cannot be judged.</div>'
+          : '<input type="range" min="1" max="' + Math.max(c.max, x.v) + '" step="1" value="' + x.v + '" data-rng="' + k + '" aria-label="' + esc(c.l) + '">'
+          + '<div class="pre">' + pre.map(function (v) { return '<button type="button" data-pre="' + k + '|' + v + '" class="' + (x.on && x.v === v ? 'on' : '') + '">' + (k === 'rc' ? v + '%' : v) + '</button>'; }).join('')
+          + (k === 'rc' && line != null ? '<button type="button" class="td' + (x.on && x.v === Math.round(line) ? ' on' : '') + '" data-pre="rc|' + Math.round(line) + '" title="The line this market’s held-back products sit under today, read off the products">today ≈' + Math.round(line) + '%</button>' : '')
+          + '<input class="num" type="number" min="1" max="' + (k === 'rc' ? 100 : 999) + '" value="' + x.v + '" data-num="' + k + '" aria-label="' + esc(c.l) + ' value"></div>')
+        + '</div>';
+    }
+    var vals = E.simValues(D, r.block.f), picked = {}; r.block.v.forEach(function (v) { picked[v] = 1; });
+    var ql = SIM.q.toLowerCase(), shown = vals.filter(function (v) { return !ql || v[0].toLowerCase().indexOf(ql) >= 0 || picked[v[0]]; });
+    shown.sort(function (a, b) { return (picked[b[0]] ? 1 : 0) - (picked[a[0]] ? 1 : 0); });
+    var blk = '<div class="sl' + (r.block.v.length ? '' : ' off') + '" data-r="block"><div class="slh"><label>' + esc(SIM_RULES.block.l) + '</label><span class="v">' + (r.block.v.length ? nw(r.block.v.length, 'value') : 'none') + '</span></div>'
+      + '<div class="sld">' + esc(SIM_RULES.block.d) + '</div>'
+      + '<div class="blk"><select class="fld" id="sim-bf" aria-label="Block by">' + E.SIM_FIELDS.map(function (f) { return '<option value="' + f.k + '"' + (f.k === r.block.f ? ' selected' : '') + '>' + esc(f.l) + '</option>'; }).join('') + '</select>'
+      + (r.block.v.length ? '<button class="btn" type="button" id="sim-bclr" style="height:30px;font-size:12px">Clear</button>' : '') + '</div>'
+      + (vals.length > 8 ? '<input class="q" id="sim-bq" type="search" placeholder="Find a value…" aria-label="Find a value to block" value="' + esc(SIM.q) + '" style="width:100%;margin-bottom:6px">' : '')
+      + '<div class="vals" id="sim-vals">' + (shown.map(function (v) { return '<label title="' + esc(v[0] + ' · ' + n0(v[1]) + ' products in stock') + '"><input type="checkbox" data-bv="' + esc(v[0]) + '"' + (picked[v[0]] ? ' checked' : '') + '><span>' + esc(v[0]) + '</span><i>' + n0(v[1]) + '</i></label>'; }).join('') || '<div class="na" style="padding:8px">No value matches.</div>') + '</div></div>';
+    return rng('rc') + rng('qty') + rng('sz') + blk;
+  }
+  function simSweepSvg(D, E) {
+    var r = SIM.rules, sw = E.simSweep(D, r, 5), W = 640, H = 170, pl = 40, pb = 22, pt = 14, top = Math.max(1, sw[sw.length - 1].held);
+    var bw = (W - pl - 6) / sw.length, cur = r.rc.on ? r.rc.v : 0, line = simLine();
+    var nice = Math.pow(10, Math.floor(Math.log10(top))), tick = top / nice > 5 ? nice * 2 : top / nice > 2 ? nice : nice / 2;
+    var y = function (v) { return pt + (H - pt - pb) * (1 - v / top); }, out = '';
+    for (var t = 0; t <= top; t += tick) out += '<line class="base" x1="' + pl + '" x2="' + W + '" y1="' + y(t) + '" y2="' + y(t) + '" opacity=".5"/><text x="' + (pl - 6) + '" y="' + (y(t) + 3) + '" text-anchor="end">' + (t >= 1000 ? Math.round(t / 100) / 10 + 'k' : t) + '</text>';
+    sw.forEach(function (p, i) {
+      var x = pl + i * bw + 2, hgt = Math.max(1, (H - pt - pb) - (y(p.held) - pt)), sel = cur && p.x === Math.round(cur / 5) * 5;
+      out += '<rect class="bar' + (sel ? ' on' : '') + '" data-sx="' + p.x + '" x="' + x.toFixed(1) + '" y="' + (y(p.held)).toFixed(1) + '" width="' + (bw - 4).toFixed(1) + '" height="' + hgt.toFixed(1) + '" data-tip="' + esc('<b>Range completion &lt; ' + p.x + '%</b><br>' + n0(p.held) + ' products held back') + '"/>';
+      if (p.x % 10 === 0) out += '<text x="' + (x + (bw - 4) / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + p.x + '%</text>';
+    });
+    if (line != null) { var lx = pl + (line / 5) * bw + 2 - 2; out += '<line class="tdl" x1="' + lx.toFixed(1) + '" x2="' + lx.toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><text class="tdt" x="' + (lx + 4).toFixed(1) + '" y="' + (pt + 8) + '">today ≈' + Math.round(line) + '%</text>'; }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Products held back at each range-completion line from 0 to 100%">' + out + '</svg>';
+  }
+  function simDraw() {
+    var D = SIM.D, m = simMkt(), box = $('#sim'), st = $('#sim-st');
+    $('#sim-csv').disabled = !D || D.cmpid !== SIM.cmpid || !!SIM.busy;
+    if (SIM.busy) { fsum('sim-card', 'reading products…'); return; }
+    if (!D || D.cmpid !== SIM.cmpid) {
+      box.hidden = true;
+      st.textContent = SIM.err ? 'Could not read the products — ' + SIM.err : m ? 'Read ' + m.client + ' ' + m.market + '’s products to simulate its stock rules — the master and the Google feed are read in this browser, nothing is stored.' : 'No market with a Google feed in view — pick a brand or market above.';
+      fsum('sim-card', SIM.err ? 'the read failed' : 'pick a market and read its products');
+      return;
+    }
+    var E = SIM.E, r = SIM.rules, res = E.simulate(D, r, { cat: SIM.cat }), share = function (n, of) { return of ? Math.round((n / of) * 1000) / 10 + '%' : '—'; };
+    box.hidden = false;
+    var info = D.info || {};
+    st.textContent = m.client + ' ' + m.market + ' · ' + n0(D.n) + ' master products, ' + n0(res.inStock) + ' in stock across ' + n0(D.styles) + ' styles'
+      + (D.join ? ' · joined to the Google feed on ' + D.join.h : ' · not joined to the Google feed') + (info.lastImport ? ' · master imported ' + String(info.lastImport).slice(0, 16) : '') + ' · read ' + since(D.at);
+    var foc = document.activeElement, fid = foc && (foc.getAttribute('data-rng') || foc.getAttribute('data-num') || foc.id), caret = foc && foc.id === 'sim-bq' ? foc.selectionStart : null;
+    if (!(foc && foc.getAttribute && foc.getAttribute('data-rng'))) $('#sim-ctl').innerHTML = simCtl();
+    else $$('#sim-ctl .sl').forEach(function (el) { var k = el.getAttribute('data-r'), x = r[k], c = SIM_RULES[k]; if (k === 'block' || !c) return; el.querySelector('.v').textContent = x.on ? c.u(x.v) : 'off'; el.classList.toggle('off', !x.on); var n = el.querySelector('[data-num]'); if (n) n.value = x.v; $$('[data-pre]', el).forEach(function (b) { b.classList.toggle('on', x.on && +b.getAttribute('data-pre').split('|')[1] === x.v); }); });
+    if (fid && fid !== (foc.getAttribute('data-rng') || '')) { var back = fid === 'sim-bq' ? $('#sim-bq') : $('#sim-ctl [data-num="' + fid + '"]'); if (back) { back.focus(); if (caret != null) try { back.setSelectionRange(caret, caret); } catch (e) {} } }
+    $('#sim-sum').innerHTML = '<div class="it"><span>In stock in the master</span><b>' + n0(res.inStock) + '</b></div>'
+      + '<div class="it"><span>Held back by these rules</span><b>' + n0(res.held) + '</b><span>' + share(res.held, res.inStock) + ' of in stock</span></div>'
+      + '<div class="it"><span>Stays live</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + '</span></div>'
+      + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ', not live in the Google feed' : 'not joined to the Google feed') + '</span></div>';
+    var t = res.today, dlt = t ? t.sim - t.held : 0;
+    $('#sim-cmp').innerHTML = t ? 'Against the Google feed today: these rules would hold back <b>' + n0(t.sim) + '</b> of the ' + n0(t.joined) + ' in-stock products read against it (today <b>' + n0(t.held) + '</b>, ' + (dlt === 0 ? 'the same' : (dlt > 0 ? n0(dlt) + ' more' : n0(-dlt) + ' fewer')) + ') — <b>' + n0(t.newly) + '</b> live today would go, <b>' + n0(t.released) + '</b> held back today would come back.' : '';
+    $('#sim-sweep').innerHTML = simSweepSvg(D, E);
+    var ord = E.SIM_ORDER.filter(function (k) { return k === 'block' ? r.block.v.length : r[k].on && !(k === 'qty' && !D.hasQty); });
+    $('#sim-rules tbody').innerHTML = ord.map(function (k) {
+      var lab = k === 'block' ? 'Block · ' + (E.SIM_FIELDS.filter(function (f) { return f.k === r.block.f; })[0] || {}).l + ' · ' + r.block.v.slice(0, 3).join(', ') + (r.block.v.length > 3 ? ' +' + (r.block.v.length - 3) : '') : SIM_RULES[k].l + ' ' + SIM_RULES[k].u(r[k].v);
+      var note = k === 'qty' && res.qtyUnread ? nw(res.qtyUnread, 'in-stock product') + ' with no quantity stated — never held back by it' : (k === 'rc' || k === 'sz') && res.noStyle ? nw(res.noStyle, 'in-stock product') + ' with no style — never held back by it' : '';
+      return '<tr><td class="nm">' + esc(lab) + (note ? '<span class="sub2">' + esc(note) + '</span>' : '') + '</td><td class="num"><b>' + n0(res.take[k]) + '</b></td><td class="num">' + n0(res.own[k]) + '</td><td class="num">' + share(res.take[k], res.inStock) + '</td></tr>';
+    }).join('') + (ord.length ? '<tr class="tot"><td><b>All the rules</b></td><td class="num"><b>' + n0(res.held) + '</b></td><td class="num"></td><td class="num"><b>' + share(res.held, res.inStock) + '</b></td></tr>' : '<tr><td class="empty" colspan="4">No rule is on — switch one on to the left.</td></tr>');
+    $('#sim-tier').innerHTML = [['c1', 'Tier 1'], ['c2', 'Tier 2'], ['c3', 'Tier 3']].map(function (x) { return '<button type="button" data-st="' + x[0] + '" class="' + (SIM.cat === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+    var cats = res.cats, cap = SIM.all ? cats.length : 12;
+    $('#sim-cats tbody').innerHTML = cats.slice(0, cap).map(function (c) {
+      var pc = c[1] ? (c[2] / c[1]) * 100 : 0;
+      return '<tr><td class="nm">' + esc(c[0]) + '</td><td class="num">' + n0(c[1]) + '</td><td class="num"><b>' + n0(c[2]) + '</b></td><td><div class="sbar-r"><div class="sbar"><i style="width:' + pc.toFixed(1) + '%"></i></div><b>' + (Math.round(pc * 10) / 10) + '%</b></div></td></tr>';
+    }).join('') || '<tr><td class="empty" colspan="4">Nothing in stock.</td></tr>';
+    var mb = $('#sim-more'); mb.hidden = cats.length <= 12; mb.textContent = SIM.all ? 'Show fewer' : 'Show all ' + cats.length;
+    fsum('sim-card', m.client + ' ' + m.market + ' · ' + n0(res.held) + ' of ' + n0(res.inStock) + ' in stock held back (' + share(res.held, res.inStock) + ')');
+    $('#sim-foot').textContent = 'A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes. Range completion = a style’s sizes in stock ÷ the sizes it is made in, read off the master. Categories are the Google feed’s product_type tree (' + n0(D.cat.feed) + ' products' + (D.cat.master ? ', ' + n0(D.cat.master) + ' by the master’s own type' : '') + (D.cat.none ? ', ' + n0(D.cat.none) + ' with none' : '') + ').';
+  }
+  var simRaf = 0;
+  function simLater() { if (simRaf) return; simRaf = requestAnimationFrame(function () { simRaf = 0; simDraw(); }); }
+  function simSet(k, v) {
+    var c = SIM_RULES[k]; v = Math.round(+v); if (!isFinite(v) || v < 1) return;
+    SIM.rules[k].v = Math.min(k === 'rc' ? 100 : 999, v); SIM.rules[k].on = true; simSave(); simLater();
+  }
+  $('#sim-mkt').addEventListener('change', function () { SIM.cmpid = this.value; renderSim(); });
+  $('#sim-load').addEventListener('click', simLoad);
+  $('#sim-more').addEventListener('click', function () { SIM.all = !SIM.all; simDraw(); });
+  $('#sim-tier').addEventListener('click', function (e) { var b = e.target.closest('[data-st]'); if (!b) return; SIM.cat = b.getAttribute('data-st'); SIM.all = false; simSave(); simDraw(); });
+  $('#sim-sweep').addEventListener('click', function (e) { var b = e.target.closest('[data-sx]'); if (!b) return; var x = +b.getAttribute('data-sx'); if (x < 1) return; simSet('rc', x); simDraw(); });
+  $('#sim-ctl').addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.getAttribute('data-rng')) { simSet(el.getAttribute('data-rng'), el.value); return; }
+    if (el.id === 'sim-bq') { SIM.q = el.value; simDraw(); return; }
+  });
+  $('#sim-ctl').addEventListener('change', function (e) {
+    var el = e.target, k;
+    if ((k = el.getAttribute('data-on'))) { SIM.rules[k].on = el.checked; simSave(); simDraw(); return; }
+    if ((k = el.getAttribute('data-num'))) { simSet(k, el.value); simDraw(); return; }
+    if (el.getAttribute('data-rng')) { simDraw(); return; }
+    if (el.id === 'sim-bf') { SIM.rules.block.f = el.value; SIM.rules.block.v = []; SIM.q = ''; simSave(); simDraw(); return; }
+    if (el.hasAttribute('data-bv')) { var v = el.getAttribute('data-bv'), a = SIM.rules.block.v, i = a.indexOf(v); if (el.checked && i < 0) a.push(v); else if (!el.checked && i >= 0) a.splice(i, 1); simDraw(); }
+  });
+  $('#sim-ctl').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pre]'); if (b) { var p = b.getAttribute('data-pre').split('|'); simSet(p[0], p[1]); simDraw(); return; }
+    if (e.target.id === 'sim-bclr') { SIM.rules.block.v = []; simDraw(); }
+  });
+  // a slider dragged off and released lands its control again (simDraw skips rebuilding the panel while one has focus)
+  $('#sim-ctl').addEventListener('focusout', function (e) { if (e.target.getAttribute && e.target.getAttribute('data-rng')) setTimeout(simDraw, 0); });
+  $('#sim-csv').addEventListener('click', function () {
+    var D = SIM.D, m = simMkt(); if (!D || !m) return;
+    var E = SIM.E, held = E.simHeld(D, SIM.rules), BY = { block: 'category block', qty: 'stock quantity', rc: 'range completion', sz: 'sizes in stock' }, TD = { 1: 'live', 2: 'sent out of stock', 3: 'not in the feed' };
+    csvDownload((m.client + '_' + m.market).toLowerCase().replace(/\W+/g, '_') + '_simulated_held_back.csv',
+      ['product id', 'title', 'size', 'style (item group)', 'master quantity', 'category', 'held back by', 'style sizes in stock', 'style sizes made', 'style range completion %', 'google feed today'],
+      held.map(function (h) { return [h.id, h.t, h.s, h.g >= 0 ? (D.groups ? D.groups[h.g] : '') : '', h.q == null ? '' : h.q, h.cat, BY[h.by] || h.by, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, TD[h.td] || '']; }));
+    toast(n0(held.length) + ' products these rules would hold back — CSV downloaded');
+  });
 
   // ---- HERO SIZES BY PRODUCT TYPE (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow
   // cross industry "guildlines" - (this is a document per brand or they can follow examples) - sit within stock
@@ -2619,8 +2834,6 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var o = {}; o['d:' + b] = { name: dd.name, mk: mk, rows: dd.rows }; hmPut(o);
   });
   $('#chan').addEventListener('change', function () { S.chan = this.checked; remember('fcc-stock-chan', S.chan ? '1' : ''); renderCov(); });
-  $('#sevs').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.sev = +b.getAttribute('data-s'); renderFinds(); });
-  $('#find-more').addEventListener('click', function () { S.all = !S.all; renderFinds(); });
   $('#mechs').addEventListener('click', function (e) { var b = e.target.closest('[data-mk]'); if (!b) return; S.mech = b.getAttribute('data-mk'); setQuery({ mech: S.mech }); renderMechChips(); renderSetups(); });
   var qt; $('#q').addEventListener('input', function () { var v = this.value; clearTimeout(qt); qt = setTimeout(function () { S.q = v.trim(); setQuery({ q: S.q }); renderSetups(); }, 150); });
   document.addEventListener('keydown', function (e) { if (e.key === '/' && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('#q').focus(); } });

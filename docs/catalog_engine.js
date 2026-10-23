@@ -855,7 +855,7 @@
   // finish() also returns rcH — every in-stock master product counted by its style's range completion, held and live
   // apart ([[rc, held, live], …], rc null = no style) — and src/rules.js › rcLine reads the line off it.
   function feedIndex() {
-    var hdr = null, pl = null, plN = 0, n = 0, o = new Map(), i = new Map(), live = 0;
+    var hdr = null, pl = null, plN = 0, n = 0, o = new Map(), i = new Map(), live = 0, pt = new Map();
     function onRow(row, h) {
       if (!hdr) { hdr = (h || row).slice(); pl = outPlan(hdr); plN = hdr.length; return; }
       if (h && h.length !== plN) { pl = outPlan(h); plN = h.length; }
@@ -866,8 +866,11 @@
       var a = idKey(p.oid), c = idKey(p.id);
       if (a && !o.has(a)) o.set(a, b);
       if (c && !i.has(c)) i.set(c, b);
+      // the product's place in the feed's own PT tree (g:product_type slot 1) — the stock simulator's category
+      var t = s0(p.f.product_type).trim();
+      if (t) { if (a && !pt.has(a)) pt.set(a, t); if (c && !pt.has(c)) pt.set(c, t); }
     }
-    function finish() { return { n: n, live: live, o: o, i: i }; }
+    function finish() { return { n: n, live: live, o: o, i: i, pt: pt }; }
     return { onRow: onRow, finish: finish };
   }
   function heldBack(feed) {
@@ -922,6 +925,169 @@
       return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '', rcH: rcH };
     }
     return { onRow: onRow, finish: finish };
+  }
+
+  // ---- STOCK-RULE SIMULATOR (Ray, 23 Oct 2026: "Within the stock module, create a range‑completion emulation. For example,
+  // if the manager drags between range completions of 5 %, 10 %, 15 % or 20 % (or any other percentage), simulate the amount
+  // of product that would be excluded. Add stock quantity, a category block, or any other element—almost like a volume
+  // simulation of all the stock rules"). stockRows(feed?) reads the MASTER once — the same join heldBack makes — and keeps
+  // every product compactly (column arrays, ~60k rows is a few MB); simulate(D, rules) then answers "what would these rules
+  // hold back" in one pass, as often as a slider moves. Nothing is stored and nothing reaches FeedHero: the rules are a
+  // what-if over the master as FeedHero last imported it. THE RULES RUN IN ONE ORDER (SIM_ORDER, the order a FeedHero
+  // stock setup usually runs them) and a product is counted ONCE, against the first rule that holds it back, so the
+  // totals never double count; `own` says what each rule would hold back on its own.
+  //   rc    — the style's range completion under X%              qty — fewer than N units in stock (the master's quantity)
+  //   sz    — the style has fewer than N sizes in stock          block — a category / brand / gender held back whole
+  // A product the master states no quantity for is never held back by qty (counted as `qtyUnread`), a product with no style
+  // is never held back by rc or sz (counted as `noStyle`) — a rule cannot be judged on a fact the master does not state.
+  // The category is the product's place in the GOOGLE feed's PT tree (by its own id, else its style's), else the master's
+  // own product type — the feed's tree is the one the rest of the FCC calls PT.
+  var SIM_ORDER = ['rc', 'qty', 'sz', 'block'];
+  function catTier(path, t) {
+    var p = s0(path).split(/\s*(?:>|›|»)\s*/).filter(Boolean);
+    return p.length ? p.slice(0, Math.max(1, t)).join(' > ') : '';
+  }
+  function stockRows(feed) {
+    var hdr = null, pl = null, qi = -1, sample = [], join = feed ? -1 : -3, map = null, on = '', joinH = '', rate = 0, n = 0;
+    var R = { id: [], t: [], s: [], g: [], st: [], q: [], c: [], cs: [], br: [], gd: [], td: [] };
+    var gi = new Map(), gn = [], run = [], gpt = [], hasQ = 0, catF = 0, catM = 0;
+    function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
+    function decide() {
+      var s = sample; sample = null;
+      if (join === -1) {
+        var jA = detectJoin(pl, s, new Set(feed.o.keys())), jB = detectJoin(pl, s, new Set(feed.i.keys()));
+        var useB = jB.hit > jA.hit * 1.2, j = useB ? jB : jA;
+        if (j.col >= 0) { join = j.col; joinH = j.h; rate = j.rate; map = useB ? feed.i : feed.o; on = useB ? 'g:id' : 'fs_data_original_id'; }
+        else join = -2;
+      }
+      s.forEach(take);
+    }
+    function take(row) {
+      n++;
+      var ac = cands('availability', row, pl), word = ac.length ? plain(Array.isArray(ac[0].v) ? ac[0].v[0] : ac[0].v) : '';
+      var qs = qi >= 0 ? s0(row[qi]).trim().replace(/,/g, '') : '', qv = qs !== '' && isFinite(+qs) ? +qs : null;
+      if (qv != null) hasQ++;
+      var st = stockOf(word, qs), grp = first('item_group_id', row).slice(0, 80), g = -1;
+      if (grp) { g = gi.get(grp); if (g == null) { g = gn.length; gi.set(grp, g); gn.push(grp); run.push([0, 0]); gpt.push(''); } if (st) { run[g][0]++; if (st === 'in') run[g][1]++; } }
+      var idv = join >= 0 ? s0(row[join]).trim() : first('id', row), key = idKey(idv), td = 0, fpt = '';
+      if (join >= 0 && key) {
+        var b = map.get(key); td = b === 'in' || b === 'pre' ? 1 : b == null ? 3 : 2;
+        fpt = (feed.pt && feed.pt.get(key)) || '';
+        if (fpt && g >= 0 && !gpt[g]) gpt[g] = fpt;
+      }
+      R.id.push(idv.slice(0, 120)); R.t.push(first('title', row).slice(0, 160)); R.s.push(first('size', row).slice(0, 40));
+      R.g.push(g); R.st.push(st === 'in' ? 1 : st === 'out' ? 0 : -1); R.q.push(qv);
+      R.c.push(fpt); R.cs.push(fpt ? '' : first('product_type', row).slice(0, 160));
+      R.br.push(first('brand', row).slice(0, 60)); R.gd.push(first('gender', row).slice(0, 30)); R.td.push(td);
+    }
+    function onRow(row, h) {
+      if (!hdr) { hdr = (Array.isArray(h) ? h : row).slice(); pl = plan(hdr); qi = qtyCol(hdr); return; }
+      if (Array.isArray(h) && h.length !== hdr.length) { hdr = h.slice(); pl = plan(hdr); }
+      if (!row || !row.some(function (x) { return has(x); })) return;
+      if (sample) { sample.push(row); if (sample.length >= 4000) decide(); return; }
+      take(row);
+    }
+    function finish() {
+      if (sample && hdr) decide();
+      // a product the feed never sends takes its style's place in the feed's tree, else the master's own type
+      for (var i = 0; i < R.c.length; i++) {
+        if (R.c[i]) { catF++; continue; }
+        var g = R.g[i];
+        if (g >= 0 && gpt[g]) { R.c[i] = gpt[g]; catF++; } else if (R.cs[i]) { R.c[i] = R.cs[i]; catM++; }
+      }
+      delete R.cs;
+      return { ok: n > 0, n: n, rows: R, run: run, groups: gn, styles: gn.length, hasQty: hasQ > 0, qtyRows: hasQ, qcol: qi >= 0 ? s0(hdr[qi]) : '',
+        join: join >= 0 ? { h: joinH, on: on, rate: rate } : null, joinWhy: join === -3 ? 'nofeed' : join === -2 ? 'nojoin' : '',
+        cat: { feed: catF, master: catM, none: R.c.length - catF - catM } };
+    }
+    return { onRow: onRow, finish: finish };
+  }
+  // the value a block rule reads off product i: category at tier 1 / 2 / 3, brand, gender
+  var SIM_FIELDS = [
+    { k: 'c1', l: 'Category · tier 1' }, { k: 'c2', l: 'Category · tier 2' }, { k: 'c3', l: 'Category · tier 3' },
+    { k: 'br', l: 'Brand' }, { k: 'gd', l: 'Gender' }
+  ];
+  function simVal(D, i, f) {
+    var R = D.rows;
+    if (f === 'br') return R.br[i] || '(no brand)';
+    if (f === 'gd') return R.gd[i] || '(no gender)';
+    return catTier(R.c[i], f === 'c3' ? 3 : f === 'c2' ? 2 : 1) || '(no category)';
+  }
+  function styleRc(D, g) { var c = g >= 0 ? D.run[g] : null; return c && c[0] ? (c[1] / c[0]) * 100 : null; }
+  // the values a block can pick from, biggest first, each with its in-stock products
+  function simValues(D, f) {
+    var m = new Map(), R = D.rows;
+    for (var i = 0; i < R.st.length; i++) { if (R.st[i] !== 1) continue; var v = simVal(D, i, f); m.set(v, (m.get(v) || 0) + 1); }
+    return Array.from(m.entries()).sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
+  }
+  function simOn(r, k) {
+    var x = r && r[k]; if (!x || x.on === false) return false;
+    if (k === 'block') return !!(x.v && x.v.length);
+    return isFinite(+x.v) && +x.v > 0;
+  }
+  // which rule holds product i back first (SIM_ORDER), or '' — `blk` is the block's value set, precomputed
+  function holdOf(D, i, rules, blk) {
+    var R = D.rows, g = R.g[i];
+    if (g >= 0 && simOn(rules, 'rc')) { var rc = styleRc(D, g); if (rc != null && rc < +rules.rc.v) return 'rc'; }
+    if (simOn(rules, 'qty') && R.q[i] != null && R.q[i] < +rules.qty.v) return 'qty';
+    if (g >= 0 && simOn(rules, 'sz') && D.run[g][1] < +rules.sz.v) return 'sz';
+    if (blk && blk.has(simVal(D, i, rules.block.f))) return 'block';
+    return '';
+  }
+  // simulate(D, rules, {cat}) → what these rules would hold back of the master's in-stock products
+  function simulate(D, rules, o) {
+    o = o || {}; rules = rules || {};
+    var R = D.rows, ct = o.cat || 'c1', blk = simOn(rules, 'block') ? new Set(rules.block.v) : null;
+    var take = { rc: 0, qty: 0, sz: 0, block: 0 }, own = { rc: 0, qty: 0, sz: 0, block: 0 };
+    var inS = 0, held = 0, qU = 0, noS = 0, cats = new Map();
+    var tj = 0, tNow = 0, tBoth = 0, tNew = 0, tRel = 0;
+    var solo = {}; SIM_ORDER.forEach(function (k) { if (simOn(rules, k)) { solo[k] = {}; solo[k][k] = rules[k]; } });
+    for (var i = 0; i < R.st.length; i++) {
+      if (R.st[i] !== 1) continue;
+      inS++;
+      if (R.q[i] == null) qU++;
+      if (R.g[i] < 0) noS++;
+      var h = holdOf(D, i, rules, blk);
+      if (h) { held++; take[h]++; }
+      for (var k in solo) if (holdOf(D, i, solo[k], k === 'block' ? blk : null)) own[k]++;
+      var cv = simVal(D, i, ct), ce = cats.get(cv); if (!ce) cats.set(cv, ce = [cv, 0, 0]); ce[1]++; if (h) ce[2]++;
+      if (R.td[i]) {
+        tj++; var now = R.td[i] !== 1;
+        if (now) tNow++;
+        if (now && h) tBoth++; else if (h) tNew++; else if (now) tRel++;
+      }
+    }
+    return { inStock: inS, held: held, live: inS - held, take: take, own: own, qtyUnread: qU, noStyle: noS,
+      today: tj ? { joined: tj, held: tNow, both: tBoth, newly: tNew, released: tRel, sim: tBoth + tNew } : null,
+      cats: Array.from(cats.values()).sort(function (a, b) { return b[2] - a[2] || b[1] - a[1]; }) };
+  }
+  // the held-back total at every range-completion line from 0 to 100% (step 5), the other rules as set — the sweep chart
+  function simSweep(D, rules, step) {
+    step = step || 5;
+    var R = D.rows, blk = simOn(rules, 'block') ? new Set(rules.block.v) : null, base = 0, rcs = [];
+    var rest = {}; ['block', 'qty', 'sz'].forEach(function (k) { if (rules && rules[k]) rest[k] = rules[k]; });
+    for (var i = 0; i < R.st.length; i++) {
+      if (R.st[i] !== 1) continue;
+      if (holdOf(D, i, rest, blk)) { base++; continue; }
+      var rc = styleRc(D, R.g[i]); if (rc != null) rcs.push(rc);
+    }
+    var out = [];
+    for (var x = 0; x <= 100; x += step) {
+      var c = 0; for (var j = 0; j < rcs.length; j++) if (rcs[j] < x) c++;
+      out.push({ x: x, held: base + c });
+    }
+    return out;
+  }
+  // every product these rules hold back, for the CSV — lowest range completion first
+  function simHeld(D, rules) {
+    var R = D.rows, blk = simOn(rules, 'block') ? new Set(rules.block.v) : null, out = [];
+    for (var i = 0; i < R.st.length; i++) {
+      if (R.st[i] !== 1) continue;
+      var h = holdOf(D, i, rules, blk); if (!h) continue;
+      var g = R.g[i], c = g >= 0 ? D.run[g] : null, rc = styleRc(D, g);
+      out.push({ id: R.id[i], t: R.t[i], s: R.s[i], g: g >= 0 ? g : -1, q: R.q[i], cat: R.c[i], by: h, rc: rc == null ? null : Math.round(rc * 10) / 10, rcIn: c ? c[1] : 0, rcN: c ? c[0] : 0, td: R.td[i] });
+    }
+    return out.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc); });
   }
 
   // ---- what the table shows about one product, worked out once when it arrives -------------------------------------
@@ -1184,6 +1350,7 @@
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
     availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack,
+    stockRows: stockRows, simulate: simulate, simSweep: simSweep, simHeld: simHeld, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,
