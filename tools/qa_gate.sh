@@ -665,6 +665,12 @@ else
   echo "   ✗ nav parity FAILED (the module menu drifted — see node tools/check_nav.js)"; FAIL=1
 fi
 
+if node tools/check_routes.js >/dev/null 2>&1; then
+  echo "   ✓ every /api route a sub-router answers is reachable from route()"
+else
+  echo "   ✗ route reachability FAILED (a route the router never reaches — see node tools/check_routes.js)"; FAIL=1
+fi
+
 if node tools/test_replyclass.mjs >/dev/null 2>&1; then
   echo "   ✓ reply classifier agrees across worker + page"
 else
