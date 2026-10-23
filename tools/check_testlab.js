@@ -26,16 +26,16 @@ const ok = (n, c, x) => { if (c) console.log('   ✓ ' + n); else { fail++; cons
 // a synthetic answer in the route's own shape — invented brands, invented figures
 const P = (k, n, surf, first, ev) => ({ k, n, surf, field: 'g:' + k, hyp: 'Hypothesis for ' + n + '.', how: 'Split by item group; four weeks.', metric: 'CTR', src: 'Google — spec',
   title: 'How about we A/B test ' + n.toLowerCase() + ' this month?', ev, evKind: first ? 'first' : 'peer', first, peers: [], ready: { ok: true, why: '' }, status: 'ready', score: 50, ranAt: 0, briefedAs: null,
-  say: 'Harbour saw +12.4% ctr on ' + n.toLowerCase() + ' in Aug 2026. We would split the catalogue by item group.',
+  say: 'A Footwear account saw +12.4% ctr on ' + n.toLowerCase() + ' in Aug 2026. We would split the catalogue by item group.',
   brief: { cat: 'test', task: 'A/B Test - ' + n + ' - Northwind - 1026', scope: 'Test: ' + n + '\nEvidence: a Fashion account saw +12.4% ctr.' } });
 const TLD = { ok: true, client: 'Northwind', industry: 'Fashion',
-  top: [P('img_lifestyle', 'Lifestyle main image', 'google', false, 'Harbour GB +12.4% ctr (Aug 2026) · 2 wins across the book in 3 months'),
-    P('ovl_price_meta', 'Price-tag overlay on Meta', 'meta', false, 'Linden GB +6.1% clicks (Sep 2026)'),
+  top: [P('img_lifestyle', 'Lifestyle main image', 'google', false, 'a Footwear account +12.4% ctr (Aug 2026) · 2 wins across the book in 3 months'),
+    P('ovl_price_meta', 'Price-tag overlay on Meta', 'meta', false, 'a Beauty account +6.1% clicks (Sep 2026)'),
     P('conv_qa', 'Q&A conversational attribute on best sellers', 'google', true, 'no FeedSpark result yet — this would be the book’s first, which is the point')],
   rest: [Object.assign(P('sale_badge', 'Sale price with strike-through', 'google', false, ''), { status: 'blocked', ready: { ok: false, why: 'no market carries sale prices on 5% of products' } }),
     Object.assign(P('hl_six', 'Six product highlights per product', 'google', false, ''), { status: 'briefed', briefedAs: 'A/B Test - Six product highlights per product - Northwind - 1026' }),
     Object.assign(P('title_mask', 'MASK title structure', 'google', false, ''), { status: 'ran', ranAt: Date.now() - 40 * 86400000 })],
-  counts: { ready: 3, blocked: 1, briefed: 1, ran: 1 }, evidence: {}, book: [{ brand: 'Harbour', n: 4 }], cold: [], ownArchive: true,
+  counts: { ready: 3, blocked: 1, briefed: 1, ran: 1 }, evidence: {}, book: [{ industry: 'Footwear', n: 4 }], cold: [], ownArchive: true,
   comp: { on: true, markets: { gb: { at: Date.now() - 3600000, n: 120, summary: { total: 120, queries: [{ q: 'womens dresses', n: 40 }, { q: 'mens jackets', n: 40 }, { q: 'kids shoes', n: 40 }],
     merchants: [{ m: 'Atelier', n: 40, share: 33.3, top3: 5, queries: 3, sale: 45, rated: 60, typeFirst: 70, priceMed: 55, lenMed: 62, img: 'https://x/a' }, { m: 'Harbour', n: 30, share: 25, top3: 2, queries: 2, sale: 10, rated: 0, typeFirst: 40, priceMed: 70, lenMed: 50, img: '' }],
     us: { n: 6, share: 5, top3: 0, posMed: 14, sale: 0, rated: 0, typeFirst: 20, priceMed: 89, lenMed: 38, thumbs: [{ img: 'https://x/us1', t: 'Northwind Midi Dress', q: 'womens dresses' }] },
@@ -96,8 +96,13 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
   ok('the section renders, headed with the count', !sec.err && /Test this month/.test(sec.head) && /3 proposals · 3 more/.test(sec.head), sec.head || sec.err);
   ok('it sits after the Top 3 actions', sec.afterActs);
   ok('three questions, each specific', sec.rows.length === 3 && sec.rows.every((r) => /^How about we A\/B test .+ this month\?/.test(r)), sec.rows);
-  ok('each carries the evidence the route gave — the peer, the figure, the month', sec.evs.length === 3 && /Harbour GB \+12\.4% ctr \(Aug 2026\)/.test(sec.evs[0]) && /book’s first/.test(sec.evs[2]), sec.evs);
-  ok('…the line to say, and the design with its field and metric', sec.says.length === 3 && /Harbour saw \+12\.4%/.test(sec.says[0]) && sec.hows.length === 3 && /g:img_lifestyle/.test(sec.hows[0]) && /Measure: CTR/.test(sec.hows[0]), sec.hows[0]);
+  ok('each carries the evidence the route gave — the peer’s INDUSTRY, the figure, the month', sec.evs.length === 3 && /a Footwear account \+12\.4% ctr \(Aug 2026\)/.test(sec.evs[0]) && /book’s first/.test(sec.evs[2]), sec.evs);
+  /* ANONYMISED ON THE RAIL (Ray, 23 Oct 2026: "ok on playbook, some other brand name would need to
+     be annonimize") — the proposals are read on the client call, so no other account of ours may be
+     named in one. The competitor block below is a different fact: those are the CLIENT'S own rivals
+     off the public Shopping results, and naming them is the point of reading them. */
+  ok('no other account of ours is named in a proposal — evidence, spoken line or design', [].concat(sec.evs, sec.says, sec.hows).every(function(x){ return !/Harbour|Linden|Atelier/.test(String(x)); }), [].concat(sec.evs, sec.says));
+  ok('…the line to say, and the design with its field and metric', sec.says.length === 3 && /A Footwear account saw \+12\.4%/.test(sec.says[0]) && sec.hows.length === 3 && /g:img_lifestyle/.test(sec.hows[0]) && /Measure: CTR/.test(sec.hows[0]), sec.hows[0]);
   ok('a first for the book wears its badge, once', sec.firsts === 1 && /first in the book/.test(sec.rows[2]), sec.rows[2]);
   ok('the surface is a pill on the row — Google, Meta', sec.pills.join() === 'tg,tm,tg', sec.pills);
   ok('one → Brief per proposal', sec.briefs === 3);
