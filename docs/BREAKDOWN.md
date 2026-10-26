@@ -217,5 +217,14 @@ an id) and returns findings, each COUNTED, never written by a model:
 Floors: a group of ≥ 20 products and a value of ≥ 10 on a feed of 1,000+, scaled to 2% (never under 5) on a small one.
 Each card names the group, the figures (share here vs the feed, or ROAS and spend), the action, **⌕ Filter to it** and
 **→ Brief** (Workflow in a new tab, task "Feed Opportunity - <kind> - … - <Brand> <MKT> - MMYY", the evidence in the
-scope). A selection shows its strongest nine; across the pivot every flagged cell shows, at most three per field and five per cell. Harness: the spotter block in
+scope). A selection shows its strongest nine; across the pivot every flagged cell shows, at most three per field and five per cell.
+
+**The mix follows the Measure** (Ray, 26 Oct 2026: "is the calculation based on the Measure KPI? instead of Layer?" →
+"option 1"). Over-indexes, Under-represented and Data gap compare a value's SHARE of the cell with its share of the
+whole feed — share of whatever the pivot's **Measure** counts: on Products the share of products, on Spend / Conv. value
+/ Clicks / Impressions / Conversions the share of that (`spot(..., {w})`, the per-product Google Ads figure); ROAS has no
+share, so it reads products and the ribbon says so ("· mix read on spend" / "· mix read on products (ROAS has no
+share)"). The product-count floors stay, and each card carries both — "60% of the spend in Q4 2026 is gender · male ·
+€62 of €103 spend · 313 of 769 products". Layer and Layer 2 never change a finding. Scale it / Fix or trim / funding
+always read Google Ads ROAS. Harness: the spotter block in
 `tools/test_breakdown.mjs` (an invented feed counted in the test) + `tools/check_breakdown.js` (the rendered cards).

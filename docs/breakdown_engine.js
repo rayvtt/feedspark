@@ -531,7 +531,7 @@
   // opts: groups(r) → keys of the groups product r sits in · base (mask) · ads {cost, value} · exclude [field] · top
   function spot(S, opts) {
     opts = opts || {};
-    var gk = opts.groups, base = opts.base || null, ads = opts.ads || null; if (!gk) return { groups: [], found: [] };
+    var gk = opts.groups, base = opts.base || null, ads = opts.ads || null, w = opts.w || null; if (!gk) return { groups: [], found: [] };
     var F = spotFields(S, opts.exclude), nf = F.length;
     // the floors scale DOWN on a small feed (a group is ≥ 2% of it) and never above SPOT_MIN on a big one
     var MIN = opts.min || Math.min(SPOT_MIN, Math.max(5, Math.round(S.n * 0.02))), VF = Math.max(3, Math.round(MIN / 2));
@@ -539,11 +539,13 @@
     for (var r = 0; r < S.n; r++) for (var i = 0; i < nf; i++) {
       var v = F[i].rd(r), c = dIdx[i].get(v); if (c == null) { c = dict[i].length; dict[i].push(v); dIdx[i].set(v, c); } codes[i][r] = c;
     }
-    var mk = function () { return { n: 0, cost: 0, val: 0, by: F.map(function () { return new Map(); }) }; };
+    // opts.w = the pivot's MEASURE as a per-product weight (spend, clicks …): the mix findings (over-index, under-represented,
+    // data gap) then read a value's share of THAT, not of the products; null = share of products. Floors stay product counts.
+    var mk = function () { return { n: 0, w: 0, cost: 0, val: 0, by: F.map(function () { return new Map(); }) }; };
     var B0 = mk(), G = new Map();
     var add = function (A, r) {
-      var c = ads ? ads.cost[r] : 0, v = ads ? ads.value[r] : 0; A.n++; A.cost += c; A.val += v;
-      for (var i = 0; i < nf; i++) { var k = codes[i][r], o = A.by[i].get(k); if (!o) { o = [0, 0, 0]; A.by[i].set(k, o); } o[0]++; o[1] += c; o[2] += v; }
+      var c = ads ? ads.cost[r] : 0, v = ads ? ads.value[r] : 0, ww = w ? +w[r] || 0 : 1; A.n++; A.w += ww; A.cost += c; A.val += v;
+      for (var i = 0; i < nf; i++) { var k = codes[i][r], o = A.by[i].get(k); if (!o) { o = [0, 0, 0, 0]; A.by[i].set(k, o); } o[0]++; o[1] += c; o[2] += v; o[3] += ww; }
     };
     for (var r2 = 0; r2 < S.n; r2++) {
       if (base && !base[r2]) continue;
@@ -561,11 +563,11 @@
         if (gRoas != null && bRoas && gRoas <= 0.7 * bRoas && ss > ps * 1.2 && ss >= 0.03) own.push({ k: 'drain', g: key, n: A.n, ps: ps, ss: ss, vs: vs, roas: gRoas, broas: bRoas, cost: A.cost, val: A.val, score: (bRoas / Math.max(gRoas, 0.05)) * (ss - ps + 0.05) * Math.sqrt(A.n) * 8 });
       }
       own.forEach(function (x) { found.push(x); });
-      for (var i = 0; i < nf; i++) {
+      for (var i = 0; i < nf && A.w > 0 && B0.w > 0; i++) {
         var by = A.by[i], bb = B0.by[i];
         bb.forEach(function (bo, code) {
-          var v = dict[i][code], go = by.get(code) || [0, 0, 0], s = go[0] / A.n, b = bo[0] / B0.n;
-          var common = { g: key, f: F[i].f, label: F[i].label, spec: F[i].spec, v: v, n: A.n, vn: go[0], s: s, b: b };
+          var v = dict[i][code], go = by.get(code) || [0, 0, 0, 0], s = go[3] / A.w, b = bo[3] / B0.w;
+          var common = { g: key, f: F[i].f, label: F[i].label, spec: F[i].spec, v: v, n: A.n, vn: go[0], s: s, b: b, vw: go[3], nw: A.w, bw: B0.w };
           if (v === BLANK) {
             if (s >= 0.25 && s >= 2 * b && go[0] >= VF) found.push(Object.assign({ k: 'blank', score: (s - b) * Math.sqrt(go[0]) }, common));
             return;
@@ -588,7 +590,7 @@
       if ((per[k1] || 0) >= 3 || (perG[k2] || 0) >= 5) continue;
       per[k1] = (per[k1] || 0) + 1; perG[k2] = (perG[k2] || 0) + 1; out.push(x2);
     }
-    return { found: out, total: found.length, min: MIN, base: { n: B0.n, cost: B0.cost, val: B0.val, roas: bRoas }, fields: F.map(function (x) { return x.label; }), groups: G.size };
+    return { found: out, total: found.length, min: MIN, w: !!w, base: { n: B0.n, w: B0.w, cost: B0.cost, val: B0.val, roas: bRoas }, fields: F.map(function (x) { return x.label; }), groups: G.size };
   }
 
   // ---- GOOGLE ADS PER PRODUCT: FeedHero's Ads Traffic read ({id: [impr, clicks, cost, conv, value]}) joined onto the
