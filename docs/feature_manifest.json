@@ -16973,7 +16973,7 @@
     {
       "name": "Stock: the simulator reads the master through the held-back join, keeping every product",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "hbMaster(q, feed, say, E, FA, E.stockRows(feed, src.ix || null))",
+      "pattern": "hbMaster(q, feed, say, E, FA, E.stockRows(feed))",
       "pr": 0
     },
     {
