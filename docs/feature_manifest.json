@@ -11889,7 +11889,7 @@
     {
       "name": "Stock availability: the master agent reads a zipped / 1252 / XML master",
       "file": "tools/master_stock.mjs",
-      "pattern": "export function tallyMaster(u8, tree, idx) {",
+      "pattern": "export function tallyMaster(u8, tree, idx, src) {",
       "pr": 0
     },
     {
@@ -12159,7 +12159,7 @@
     {
       "name": "Held back: in stock in the master, not live in the feed, with the style's range completion",
       "file": "docs/catalog_engine.js",
-      "pattern": "function heldBack(feed) {",
+      "pattern": "function heldBack(feed, src) {",
       "pr": 0
     },
     {
@@ -16961,7 +16961,7 @@
     {
       "name": "Stock: the simulator reads the master through the held-back join, keeping every product",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "hbMaster(q, feed, say, E, FA, E.stockRows(feed))",
+      "pattern": "hbMaster(q, feed, say, E, FA, E.stockRows(feed, src.ix || null))",
       "pr": 0
     },
     {
@@ -16975,6 +16975,42 @@
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "id=\"find-card\"",
       "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Stock source: FeedHero's suppfeed stock + range_comp read through the Data Editor, a chunk a call",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const SRC_FIELDS = ['source_availability', 'product_stock', 'suppfeed_avail', 'suppfeed_stock', 'range_comp'];",
+      "pr": 0
+    },
+    {
+      "name": "Stock source: /api/rules/stocksrc (roster + scope)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/rules/stocksrc' && request.method === 'GET') {",
+      "pr": 0
+    },
+    {
+      "name": "Stock source: the agent's push lane {stocksrc}",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (typeof body.stocksrc === 'string') {",
+      "pr": 0
+    },
+    {
+      "name": "Stock source: srcIndex — the suppfeed decides stock where it covers a product, range_comp everywhere",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function srcIndex(rows) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock source: the held-back list reads the suppfeed before the master",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function hbSrc(m, say, E, tries) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock source: the agent reads the suppfeed first and forces a master re-read where one exists",
+      "file": "tools/master_stock.mjs",
+      "pattern": "const got = await fetchMaster(m.cmpid, !!src);",
       "pr": 0
     }
   ]

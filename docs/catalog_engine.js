@@ -873,9 +873,27 @@
     function finish() { return { n: n, live: live, o: o, i: i, pt: pt }; }
     return { onRow: onRow, finish: finish };
   }
-  function heldBack(feed) {
+  // THE SOURCE STOCK AS FEEDHERO HOLDS IT (Ray, 26 Oct 2026: "The source stock quantity is not accurate within the master
+  // feed, but it actually sits within FeedHero that feeds a supplemental feed … [suppfeed stock]"). The worker's Data
+  // Editor read (/api/rules/stocksrc → rows {product id: [source avail, product stock, suppfeed avail, suppfeed stock,
+  // range completion %]}, avail coded i/o/p/x/'') becomes a Map(idKey → {st, q, w, rc}): where the supplemental feed
+  // covers a product its stock decides (in stock with a quantity of 0 is out), elsewhere st is null and the master's
+  // own word stands; rc is FeedHero's own range_comp — the figure its range-completion rules read — on every product.
+  var SRC_WORD = { i: 'IN_STOCK', o: 'NOT_AVAILABLE', p: 'PREORDER' };
+  function srcIndex(rows) {
+    var m = new Map(), supp = 0, rc = 0;
+    Object.keys(rows || {}).forEach(function (id) {
+      var a = rows[id], k = idKey(id); if (!k || !Array.isArray(a)) return;
+      var c = a[2], st = null, q = null, w = '';
+      if (c === 'i' || c === 'o' || c === 'p') { st = c === 'i' ? (a[3] === 0 ? 'out' : 'in') : c === 'p' ? 'pre' : 'out'; q = a[3] == null ? null : a[3]; w = SRC_WORD[c]; supp++; }
+      var r = a[4] == null || !isFinite(+a[4]) ? null : +a[4]; if (r != null) rc++;
+      m.set(k, { st: st, q: q, w: w, rc: r });
+    });
+    return { m: m, n: m.size, supp: supp, rc: rc };
+  }
+  function heldBack(feed, src) {
     var hdr = null, pl = null, qi = -1, sample = [], join = -1, map = null, on = '', joinH = '', rate = 0;
-    var n = 0, inStock = 0, stated = 0, held = [], run = new Map(), absent = 0, sentOut = 0, lv = new Map(), lvNone = 0;
+    var n = 0, inStock = 0, stated = 0, held = [], run = new Map(), absent = 0, sentOut = 0, lv = new Map(), lvNone = 0, lvR = new Map(), sSt = 0, sRc = 0;
     function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
     function decide() {
       var s = sample; sample = null;
@@ -889,18 +907,20 @@
       n++;
       var ac = cands('availability', row, pl), word = ac.length ? plain(Array.isArray(ac[0].v) ? ac[0].v[0] : ac[0].v) : '';
       var qty = qi >= 0 ? s0(row[qi]).trim() : '';
-      var st = stockOf(word, qty);
+      var st = stockOf(word, qty), key = idKey(row[join]), sk = src && key ? src.m.get(key) : null, from = 'm';
+      if (sk && sk.st) { st = sk.st; qty = sk.q == null ? '' : String(sk.q); word = sk.w; from = 's'; sSt++; }
+      if (sk && sk.rc != null) sRc++;
       if (st) stated++;
       var grp = first('item_group_id', row);
       if (grp) runAdd(run, grp, st);
       if (st !== 'in') return;
       inStock++;
-      var key = idKey(row[join]); if (!key) return;
-      var b = map.get(key);
-      if (b === 'in' || b === 'pre') { if (grp) lv.set(grp, (lv.get(grp) || 0) + 1); else lvNone++; return; }   // live in the feed
+      if (!key) return;
+      var b = map.get(key), frc = sk && sk.rc != null ? sk.rc : null;
+      if (b === 'in' || b === 'pre') { if (frc != null) lvR.set(frc, (lvR.get(frc) || 0) + 1); else if (grp) lv.set(grp, (lv.get(grp) || 0) + 1); else lvNone++; return; }   // live in the feed
       var why = b == null ? 'absent' : 'out';
       if (why === 'absent') absent++; else sentOut++;
-      held.push({ id: s0(row[join]).trim().slice(0, 120), t: first('title', row).slice(0, 200), s: first('size', row).slice(0, 40), av: word.slice(0, 40), q: qty.slice(0, 12), g: grp.slice(0, 80), why: why });
+      held.push({ id: s0(row[join]).trim().slice(0, 120), t: first('title', row).slice(0, 200), s: first('size', row).slice(0, 40), av: word.slice(0, 40), q: qty.slice(0, 12), g: grp.slice(0, 80), why: why, from: from, frc: frc });
     }
     function onRow(row, h) {
       if (!hdr) { hdr = (Array.isArray(h) ? h : row).slice(); pl = plan(hdr); qi = qtyCol(hdr); return; }
@@ -913,16 +933,17 @@
     function finish() {
       if (sample && hdr) decide();
       if (join < 0) return { ok: false, why: 'nojoin', n: n + (sample ? sample.length : 0) };
-      held.forEach(function (x) { var c = x.g ? run.get(x.g) : null; x.rcN = c ? c[0] : 0; x.rcIn = c ? c[1] : 0; x.rc = c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null; });
+      held.forEach(function (x) { var c = x.g ? run.get(x.g) : null; x.rcN = c ? c[0] : 0; x.rcIn = c ? c[1] : 0; x.rc = x.frc != null ? x.frc : c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null; delete x.frc; });
       // every in-stock product by its style's range completion, held and live apart — rc null = no style to read
       var h = new Map(), add = function (rc, i, k) { var e = h.get(rc); if (!e) h.set(rc, e = [rc, 0, 0]); e[i] += k; };
       held.forEach(function (x) { add(x.rc, 1, 1); });
       lv.forEach(function (k, g) { var c = run.get(g); add(c && c[0] ? Math.round((c[1] / c[0]) * 1000) / 10 : null, 2, k); });
+      lvR.forEach(function (k, rc) { add(rc, 2, k); });
       if (lvNone) add(null, 2, lvNone);
       var rcH = Array.from(h.values()).sort(function (a, b) { return (a[0] == null ? -1 : a[0]) - (b[0] == null ? -1 : b[0]); });
       // the lowest range completion first, then the style, so a broken run reads as one block
       held.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc) || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
-      return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '', rcH: rcH };
+      return { ok: true, n: n, inStock: inStock, stated: stated, held: held, absent: absent, out: sentOut, join: { h: joinH, on: on, rate: rate }, qcol: qi >= 0 ? s0(hdr[qi]) : '', rcH: rcH, src: src ? { st: sSt, rc: sRc } : null };
     }
     return { onRow: onRow, finish: finish };
   }
@@ -947,9 +968,9 @@
     var p = s0(path).split(/\s*(?:>|›|»)\s*/).filter(Boolean);
     return p.length ? p.slice(0, Math.max(1, t)).join(' > ') : '';
   }
-  function stockRows(feed) {
+  function stockRows(feed, src) {
     var hdr = null, pl = null, qi = -1, sample = [], join = feed ? -1 : -3, map = null, on = '', joinH = '', rate = 0, n = 0;
-    var R = { id: [], t: [], s: [], g: [], st: [], q: [], c: [], cs: [], br: [], gd: [], td: [] };
+    var R = { id: [], t: [], s: [], g: [], st: [], q: [], c: [], cs: [], br: [], gd: [], td: [], rc: [] }, sSt = 0, sRc = 0;
     var gi = new Map(), gn = [], run = [], gpt = [], hasQ = 0, catF = 0, catM = 0;
     function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
     function decide() {
@@ -965,11 +986,15 @@
     function take(row) {
       n++;
       var ac = cands('availability', row, pl), word = ac.length ? plain(Array.isArray(ac[0].v) ? ac[0].v[0] : ac[0].v) : '';
-      var qs = qi >= 0 ? s0(row[qi]).trim().replace(/,/g, '') : '', qv = qs !== '' && isFinite(+qs) ? +qs : null;
-      if (qv != null) hasQ++;
+      var qs = qi >= 0 ? s0(row[qi]).trim().replace(/,/g, '') : '';
       var st = stockOf(word, qs), grp = first('item_group_id', row).slice(0, 80), g = -1;
+      var idv = join >= 0 ? s0(row[join]).trim() : first('id', row), key = idKey(idv), sk = src && key ? src.m.get(key) : null;
+      if (sk && sk.st) { st = sk.st; qs = sk.q == null ? '' : String(sk.q); sSt++; }
+      if (sk && sk.rc != null) sRc++;
+      var qv = qs !== '' && isFinite(+qs) ? +qs : null;
+      if (qv != null) hasQ++;
       if (grp) { g = gi.get(grp); if (g == null) { g = gn.length; gi.set(grp, g); gn.push(grp); run.push([0, 0]); gpt.push(''); } if (st) { run[g][0]++; if (st === 'in') run[g][1]++; } }
-      var idv = join >= 0 ? s0(row[join]).trim() : first('id', row), key = idKey(idv), td = 0, fpt = '';
+      var td = 0, fpt = '';
       if (join >= 0 && key) {
         var b = map.get(key); td = b === 'in' || b === 'pre' ? 1 : b == null ? 3 : 2;
         fpt = (feed.pt && feed.pt.get(key)) || '';
@@ -978,7 +1003,7 @@
       R.id.push(idv.slice(0, 120)); R.t.push(first('title', row).slice(0, 160)); R.s.push(first('size', row).slice(0, 40));
       R.g.push(g); R.st.push(st === 'in' ? 1 : st === 'out' ? 0 : -1); R.q.push(qv);
       R.c.push(fpt); R.cs.push(fpt ? '' : first('product_type', row).slice(0, 160));
-      R.br.push(first('brand', row).slice(0, 60)); R.gd.push(first('gender', row).slice(0, 30)); R.td.push(td);
+      R.br.push(first('brand', row).slice(0, 60)); R.gd.push(first('gender', row).slice(0, 30)); R.td.push(td); R.rc.push(sk && sk.rc != null ? sk.rc : null);
     }
     function onRow(row, h) {
       if (!hdr) { hdr = (Array.isArray(h) ? h : row).slice(); pl = plan(hdr); qi = qtyCol(hdr); return; }
@@ -998,7 +1023,7 @@
       delete R.cs;
       return { ok: n > 0, n: n, rows: R, run: run, groups: gn, styles: gn.length, hasQty: hasQ > 0, qtyRows: hasQ, qcol: qi >= 0 ? s0(hdr[qi]) : '',
         join: join >= 0 ? { h: joinH, on: on, rate: rate } : null, joinWhy: join === -3 ? 'nofeed' : join === -2 ? 'nojoin' : '',
-        cat: { feed: catF, master: catM, none: R.c.length - catF - catM } };
+        cat: { feed: catF, master: catM, none: R.c.length - catF - catM }, src: src ? { st: sSt, rc: sRc } : null };
     }
     return { onRow: onRow, finish: finish };
   }
@@ -1014,6 +1039,8 @@
     return catTier(R.c[i], f === 'c3' ? 3 : f === 'c2' ? 2 : 1) || '(no category)';
   }
   function styleRc(D, g) { var c = g >= 0 ? D.run[g] : null; return c && c[0] ? (c[1] / c[0]) * 100 : null; }
+  // a product's range completion: FeedHero's own range_comp where the source read carries it, else its style's run
+  function rcAt(D, i) { var r = D.rows.rc && D.rows.rc[i]; return r != null ? r : styleRc(D, D.rows.g[i]); }
   // the values a block can pick from, biggest first, each with its in-stock products
   function simValues(D, f) {
     var m = new Map(), R = D.rows;
@@ -1028,7 +1055,7 @@
   // which rule holds product i back first (SIM_ORDER), or '' — `blk` is the block's value set, precomputed
   function holdOf(D, i, rules, blk) {
     var R = D.rows, g = R.g[i];
-    if (g >= 0 && simOn(rules, 'rc')) { var rc = styleRc(D, g); if (rc != null && rc < +rules.rc.v) return 'rc'; }
+    if (simOn(rules, 'rc')) { var rc = rcAt(D, i); if (rc != null && rc < +rules.rc.v) return 'rc'; }
     if (simOn(rules, 'qty') && R.q[i] != null && R.q[i] < +rules.qty.v) return 'qty';
     if (g >= 0 && simOn(rules, 'sz') && D.run[g][1] < +rules.sz.v) return 'sz';
     if (blk && blk.has(simVal(D, i, rules.block.f))) return 'block';
@@ -1069,7 +1096,7 @@
     for (var i = 0; i < R.st.length; i++) {
       if (R.st[i] !== 1) continue;
       if (holdOf(D, i, rest, blk)) { base++; continue; }
-      var rc = styleRc(D, R.g[i]); if (rc != null) rcs.push(rc);
+      var rc = rcAt(D, i); if (rc != null) rcs.push(rc);
     }
     var out = [];
     for (var x = 0; x <= 100; x += step) {
@@ -1084,7 +1111,7 @@
     for (var i = 0; i < R.st.length; i++) {
       if (R.st[i] !== 1) continue;
       var h = holdOf(D, i, rules, blk); if (!h) continue;
-      var g = R.g[i], c = g >= 0 ? D.run[g] : null, rc = styleRc(D, g);
+      var g = R.g[i], c = g >= 0 ? D.run[g] : null, rc = rcAt(D, i);
       out.push({ id: R.id[i], t: R.t[i], s: R.s[i], g: g >= 0 ? g : -1, q: R.q[i], cat: R.c[i], by: h, rc: rc == null ? null : Math.round(rc * 10) / 10, rcIn: c ? c[1] : 0, rcN: c ? c[0] : 0, td: R.td[i] });
     }
     return out.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc); });
@@ -1349,7 +1376,7 @@
     cands: cands, classify: classify, spec: spec, gtinOk: gtinOk, lineage: lineage, stageCounts: stageCounts, valueAt: valueAt,
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
-    availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack,
+    availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack, srcIndex: srcIndex,
     stockRows: stockRows, simulate: simulate, simSweep: simSweep, simHeld: simHeld, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,

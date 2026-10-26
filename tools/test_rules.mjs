@@ -412,7 +412,7 @@ console.log('· availability, master → feed — the join, both counters, the a
   const X1 = MS.tallyMaster(new Uint8Array(Buffer.from(xml)));
   t('master_stock: an XML master reads g:availability', X1.n === 3 && X1.in === 1 && X1.pre === 1 && X1.out === 1 && X1.fmt === 'XML');
   const MSRC = read('tools/master_stock.mjs');
-  t('master_stock: scope = the ROAS roster only; asks the worker for the file ({masterfile}) — never a FeedHero URL of its own', /import \{ rosterList \} from '\.\.\/cloudflare\/feedspark-deck\/src\/roas\.js';/.test(MSRC) && /body: JSON\.stringify\(\{ masterfile: cmpid, force: FORCE \}\)/.test(MSRC) && !/feedhero\.net/.test(MSRC));
+  t('master_stock: scope = the ROAS roster only; asks the worker for the file ({masterfile}) — never a FeedHero URL of its own', /import \{ rosterList \} from '\.\.\/cloudflare\/feedspark-deck\/src\/roas\.js';/.test(MSRC) && /body: JSON\.stringify\(\{ masterfile: cmpid, force: FORCE \|\| !!force \}\)/.test(MSRC) && !/feedhero\.net/.test(MSRC));
   t('master_stock: pushes counts only ({masterstock}), checks for the Access login page, runs only when executed', /post\(\{ masterstock: done\.slice\(b, b \+ BATCH\) \}\)/.test(MSRC) && /Access login page\?/.test(MSRC) && /import\.meta\.url === pathToFileURL\(process\.argv\[1\] \|\| ''\)\.href/.test(MSRC));
   const WF = read('.github/workflows/master-stock.yml');
   t('workflow: 3x a day after the morning imports, the xml-scan secret, a one-company + force dispatch', /cron: '40 7,13,19 \* \* \*'/.test(WF) && /FCC_PUSH_KEY: \$\{\{ secrets\.FCC_PUSH_KEY \}\}/.test(WF) && /run: node tools\/master_stock\.mjs/.test(WF) && /ONLY: \$\{\{ inputs\.only \}\}/.test(WF));
@@ -516,6 +516,14 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   t('agent: counts and the histogram only — no id, title or size leaves the process', JSON.stringify(Object.keys(HR).sort()) === JSON.stringify(['absent', 'feedLive', 'feedN', 'inStock', 'join', 'n', 'ok', 'out', 'rcH']) && !/A3|B2|Top|Tee/.test(JSON.stringify(HR)));
   t('agent: no feed index = no join; a master the feed\'s ids do not reach = nojoin, kept as such', MS.tallyMaster(new Uint8Array(Buffer.from(MCSV))).held === null && MS.heldRecord({ ok: false }, FD.idx).why === 'nojoin' && MS.heldRecord({ ok: true, stated: 0, held: [] }, FD.idx).why === 'nostock');
   t('agent: its log line names the count, the share, the join and the line (or that there is none)', /^held back — 2 in stock in the master, not live in Google \(25% of its 8 in stock · 2 not in the feed, 0 sent out of stock\) · join product_id → fs_data_original_id · no range-completion line in the data$/.test(MS.heldLine(HR)), MS.heldLine(HR));
+  // THE SUPPFEED (Ray, 26 Oct 2026: "the actual source stock quantity data sits in a field in FeedHero … [suppfeed stock]")
+  const CE = (await import('../docs/catalog_engine.js')).default || globalThis.FeedCatalog;
+  const SRCX = CE.srcIndex({ A3: ['i', 4, 'o', 0, 66.7], B2: ['i', 2, '', null, 20], B3: ['o', 0, 'i', 6, 20], C1: ['i', 9, '', null, 100] });
+  const TS = MS.tallyMaster(new Uint8Array(Buffer.from(MCSV)), FD.tree, FD.idx, SRCX), HS = MS.heldRecord(TS.held, FD.idx);
+  t('agent: with the suppfeed, its stock decides — A3 (suppfeed out) is no longer held, B3 (suppfeed in) is', HS.ok && HS.n === 2 && TS.held.held.map((h) => h.id).sort().join() === 'B2,B3' && HS.src.st === 2 && HS.src.rc === 4, JSON.stringify(HS));
+  t('agent: …the held products sit at FeedHero\'s range_comp, and the record passes the worker\'s check with its src counts', HS.rcH.some((x) => x[0] === 20 && x[1] === 2) && R.sanitizeHeld(HS).src.st === 2 && /stock from FeedHero's suppfeed on 2, range_comp on 4/.test(MS.heldLine(HS)));
+  t('agent: the suppfeed is read first and forces a master re-read where FeedHero carries one; none = the master stands', /const src = await fetchSrc\(m\.cmpid\);\n      const got = await fetchMaster\(m\.cmpid, !!src\);/.test(read('tools/master_stock.mjs')) && /if \(d\.nosupp\) return null;/.test(read('tools/master_stock.mjs')));
+  t('heldView passes the suppfeed counts to the card', R.heldView({ hbv: R.HELD_V, hb: R.sanitizeHeld(HS) }, [], { g: 1 }).src.st === 2);
   const AG = read('tools/master_stock.mjs');
   t('agent: hbv = HELD_V once settled (counted, or no Google feed to count against); a feed it could not read leaves it unset', /hbv: hb \|\| !feeds\[m\.cmpid\] \? HELD_V : 0, hb \}\);/.test(AG) && /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null;/.test(AG)
     && /import \{ feedKeys, HELD_V, rcLine \} from '\.\.\/cloudflare\/feedspark-deck\/src\/rules\.js';/.test(AG));

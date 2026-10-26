@@ -128,16 +128,16 @@ export function heldRecord(r, idx) {
   const feedN = (idx && idx.n) || 0;
   if (!r || !r.ok) return { ok: false, why: 'nojoin', feedN };
   if (!r.stated) return { ok: false, why: 'nostock', feedN };
-  return { ok: true, n: r.held.length, absent: r.absent, out: r.out, inStock: r.inStock, feedN, feedLive: (idx && idx.live) || 0,
-    join: r.join, rcH: r.rcH };
+  return Object.assign({ ok: true, n: r.held.length, absent: r.absent, out: r.out, inStock: r.inStock, feedN, feedLive: (idx && idx.live) || 0,
+    join: r.join, rcH: r.rcH }, r.src ? { src: r.src } : {});
 }
 
 // bytes -> the master's stock tally ({n, in, out, pre, none, other, via, col, qcol, ow} + fmt, enc) and, off the SAME
 // rows, its size census (census — docs/herosize_engine.js), placed on the feed's product_type tree when one is given, and
 // the held-back join against the feed's index when one is given (held — catalog_engine › heldBack's own result)
-export function tallyMaster(u8, tree, idx) {
+export function tallyMaster(u8, tree, idx, src) {
   const { bytes } = masterBytes(u8);
-  const t = E.stockTally(), c = H.census(E, tree || null), hb = idx ? E.heldBack(idx) : null;
+  const t = E.stockTally(), c = H.census(E, tree || null), hb = idx ? E.heldBack(idx, src || null) : null;
   const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); if (hb) hb.onRow(r, h); };
   let dec = new TextDecoder('utf-8', { fatal: true }), enc = 'UTF-8', parser = null, fmt = '';
   for (let o = 0; o < bytes.length; o += CHUNK) {
@@ -185,10 +185,10 @@ async function post(body) {
 }
 
 // one company's master through the worker: {bytes, file, imp} | {unchanged} | {preparing}
-async function fetchMaster(cmpid) {
+async function fetchMaster(cmpid, force) {
   const r = await fetch('https://' + HOST + '/api/gmail/push', {
     method: 'POST', headers: { 'X-FCC-Push-Key': KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({ masterfile: cmpid, force: FORCE }),
+    body: JSON.stringify({ masterfile: cmpid, force: FORCE || !!force }),
   });
   const ct = r.headers.get('content-type') || '';
   if (/octet-stream/i.test(ct)) {
@@ -200,6 +200,22 @@ async function fetchMaster(cmpid) {
   if (d.unchanged) return { unchanged: true, imp: d.imp || '' };
   if (d.state === 'preparing') return { preparing: true, note: String(d.note || '') };
   throw new Error(String(d.error || d.state || ('HTTP ' + r.status)).slice(0, 140));
+}
+
+// the source stock as FeedHero holds it ({stocksrc: cmpid} — the worker's Data Editor read, a chunk a post until whole):
+// srcIndex for the held-back join where FeedHero carries a supplemental stock feed (Superdry's suppfeed_stock), null where
+// it carries none — the master's own stock then stands, as before
+async function fetchSrc(cmpid) {
+  for (let k = 0; k < 60; k++) {
+    let d;
+    try { d = await post({ stocksrc: cmpid }); }
+    catch (e) { console.log('~ ' + cmpid + ' — source stock not read (' + String((e && e.message) || e).slice(0, 100) + '); the master\'s stock stands'); return null; }
+    if (d.nosupp) return null;
+    if (d.done) return d.rows ? E.srcIndex(d.rows) : null;
+    if (d.state === 'preparing') await new Promise((r) => setTimeout(r, 6000));
+  }
+  console.log('~ ' + cmpid + ' — source stock still reading after 60 calls; the master\'s stock stands this run');
+  return null;
 }
 
 const pct = (a, n) => (n ? Math.round((a / n) * 1000) / 10 + '%' : '—');
@@ -215,6 +231,7 @@ export function heldLine(h) {
   const ln = rcLine(h.rcH), n0 = (v) => (v || 0).toLocaleString('en-GB');
   return 'held back — ' + n0(h.n) + ' in stock in the master, not live in Google (' + pct(h.n, h.inStock) + ' of its ' + n0(h.inStock) + ' in stock · '
     + n0(h.absent) + ' not in the feed, ' + n0(h.out) + ' sent out of stock) · join ' + h.join.h + ' → ' + h.join.on
+    + (h.src ? ' · stock from FeedHero\'s suppfeed on ' + n0(h.src.st) + ', range_comp on ' + n0(h.src.rc) : '')
     + ' · ' + (ln ? 'RC line ≈' + ln.x + '% (held ≤ ' + ln.lo + '%, live ≥ ' + ln.hi + '% · ' + n0(ln.held) + ' of ' + n0(ln.heldN) + ' held under it)' : 'no range-completion line in the data');
 }
 
@@ -238,7 +255,10 @@ async function main() {
   const readOne = async (m, last) => {
     const tag = m.client + ' ' + m.market;
     try {
-      const got = await fetchMaster(m.cmpid);
+      // the supplemental stock first: where FeedHero carries one it moves daily while the master import may not, so the
+      // master is re-read (forced) to keep the held-back count on today's stock
+      const src = await fetchSrc(m.cmpid);
+      const got = await fetchMaster(m.cmpid, !!src);
       if (got.unchanged) { tally.same++; console.log('= ' + tag + ' — import unchanged since the last reading'); return; }
       if (got.preparing) {
         if (last) { tally.prep++; console.log('~ ' + tag + ' — FeedHero is still reading this master; next run'); }
@@ -252,7 +272,7 @@ async function main() {
         try { fd = await readFeed(feeds[m.cmpid].url); }
         catch (e) { console.log('~ ' + tag + ' — Google feed not read (' + String((e && e.message) || e).slice(0, 100) + '); types from the master, held back not counted'); }
       }
-      const t = tallyMaster(got.bytes, fd && fd.tree, fd && fd.idx);
+      const t = tallyMaster(got.bytes, fd && fd.tree, fd && fd.idx, src);
       if (!t.n) throw new Error('no rows read');
       // the size census goes first and on its own (one market per post — a census runs to tens of KB); a refusal is
       // logged and never costs the stock counts
