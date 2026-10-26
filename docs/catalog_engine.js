@@ -876,16 +876,18 @@
   // THE SOURCE STOCK AS FEEDHERO HOLDS IT (Ray, 26 Oct 2026: "The source stock quantity is not accurate within the master
   // feed, but it actually sits within FeedHero that feeds a supplemental feed … [suppfeed stock]"). The worker's Data
   // Editor read (/api/rules/stocksrc → rows {product id: [source avail, product stock, suppfeed avail, suppfeed stock,
-  // range completion %]}, avail coded i/o/p/x/'') becomes a Map(idKey → {st, q, w, rc}): where the supplemental feed
-  // covers a product its stock decides (in stock with a quantity of 0 is out), elsewhere st is null and the master's
-  // own word stands; rc is FeedHero's own range_comp — the figure its range-completion rules read — on every product.
+  // range completion %]}, avail coded i/o/p/x/'') becomes a Map(idKey → {st, q, w, rc}): the supplemental feed's
+  // stock decides every product the read lists (a figure above 0 = in stock; 0, blank or n/a = out — Ray's rule), a
+  // product the read does not list keeps the master's own word; rc is FeedHero's own range_comp — the figure its range-completion rules read — on every product.
   var SRC_WORD = { i: 'IN_STOCK', o: 'NOT_AVAILABLE', p: 'PREORDER' };
   function srcIndex(rows) {
     var m = new Map(), supp = 0, rc = 0;
     Object.keys(rows || {}).forEach(function (id) {
       var a = rows[id], k = idKey(id); if (!k || !Array.isArray(a)) return;
-      var c = a[2], st = null, q = null, w = '';
-      if (c === 'i' || c === 'o' || c === 'p') { st = c === 'i' ? (a[3] === 0 ? 'out' : 'in') : c === 'p' ? 'pre' : 'out'; q = a[3] == null ? null : a[3]; w = SRC_WORD[c]; supp++; }
+      // Ray, 26 Oct 2026: "blank and n/a can be counted as out of stock" — the suppfeed decides EVERY product it lists:
+      // a stock figure above 0 is in (pre-order / out where its word says so), 0 / blank / n/a is out
+      var c = a[2], q = a[3] == null ? null : a[3], st = q != null && q > 0 ? (c === 'o' ? 'out' : c === 'p' ? 'pre' : 'in') : 'out';
+      var w = st === 'in' ? SRC_WORD.i : st === 'pre' ? SRC_WORD.p : SRC_WORD.o; supp++;
       var r = a[4] == null || !isFinite(+a[4]) ? null : +a[4]; if (r != null) rc++;
       m.set(k, { st: st, q: q, w: w, rc: r });
     });

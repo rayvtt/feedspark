@@ -65,23 +65,30 @@ const count = (R) => IN.filter((p) => heldBy(p, R)).length;
 const todayHeld = IN.filter((p) => p.feed !== 'in stock').length;
 
 // ---- FeedHero's own stock (the Data Editor read, /api/rules/stocksrc — Ray, 26 Oct 2026: "the actual source stock quantity
-// data sits in … [suppfeed stock]"): the four styles the master says have NO size in stock (k = 0) are in stock on six sizes
-// in the supplemental feed (FeedHero range completion 60%); the k = 5 styles' size 4 is NOT_AVAILABLE there; and FeedHero's
-// range_comp reads the k = 1 styles at 30%, not the 10% their master run gives. Every other product: no suppfeed row,
-// range_comp = k × 10.
+// data sits in … [suppfeed stock]", then "blank and n/a can be counted as out of stock"): the read lists every styled product
+// and its suppfeed stock DECIDES it — a figure above 0 is in, 0 / blank / n/a is out. The four styles the master says have
+// NO size in stock (k = 0) carry 5 units on six sizes there (FeedHero range completion 60%); the k = 5 styles' size 4 reads
+// NOT_AVAILABLE; the k = 7 styles' size 4 has a BLANK suppfeed stock and the k = 8 styles' size 6 reads n/a — in stock in
+// the master, out by Ray's rule; FeedHero's range_comp reads the k = 1 styles at 30%. Every other product mirrors the master.
 const SRC = {};
 P.forEach((p) => {
   if (p.k == null) return;
-  let supp = '', sq = null, rc = p.k * 10;
+  let supp = p.inS ? 'i' : 'o', sq = p.inS ? p.q : 0, rc = p.k * 10;
   if (p.k === 0 && SIZES.indexOf(p.s) < 6) { supp = 'i'; sq = 5; }
   if (p.k === 0) rc = 60;
   if (p.k === 5 && p.s === '4') { supp = 'o'; sq = null; }
+  if (p.k === 7 && p.s === '4') { supp = ''; sq = null; }
+  if (p.k === 8 && p.s === '6') { supp = 'i'; sq = null; }
   if (p.k === 1) rc = 30;
   SRC[p.id] = [p.inS ? 'i' : 'o', p.q, supp, sq, rc];
 });
-const SRC_IN = IN.length + 4 * 6 - 4;
-const SRC_HELD20 = count({ rc: 20 }) - 4;
-const SRC_TODAY = todayHeld + 24;
+// counted here, off the rule as Ray stated it
+const srcIn = (p) => (p.k == null ? p.inS : SRC[p.id][3] != null && SRC[p.id][3] > 0 && SRC[p.id][2] !== 'o');
+const SIN = P.filter(srcIn);
+const SRC_IN = SIN.length;
+const SRC_HELD20 = SIN.filter((p) => p.k != null && SRC[p.id][4] < 20).length;
+const SRC_TODAY = SIN.filter((p) => p.feed !== 'in stock').length;
+const SRC_N = Object.keys(SRC).length;
 
 let pass = 0, fail = 0;
 const ok = (n, c, got) => {
@@ -207,11 +214,11 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'window.__SRC=' + JSON.stringify(SRC) + ';localStorage.removeItem("fcc-stock-sim");'));
     await read(p);
     k = await kpi(p);
-    ok('in stock = the suppfeed\'s word where it has one, the master\'s elsewhere: ' + SRC_IN, k[0] === SRC_IN, [k[0], SRC_IN]);
+    ok('in stock = the suppfeed\'s stock (blank and n/a out), the master only where the read lists nothing: ' + SRC_IN, k[0] === SRC_IN, [k[0], SRC_IN]);
     ok('range completion under 20% reads FeedHero\'s own range_comp (the k = 1 styles sit at 30%): ' + SRC_HELD20, k[1] === SRC_HELD20, [k[1], SRC_HELD20]);
     ok('held back today counts the suppfeed\'s in-stock products the feed never sends: ' + SRC_TODAY, k[3] === SRC_TODAY, [k[3], SRC_TODAY]);
     const foot = await p.$eval('#sim-foot', (e) => e.textContent);
-    ok('the card says where the stock came from (24 in + 4 out by the suppfeed) and the range completion', /suppfeed stock on 28 products/.test(foot) && /FeedHero’s own range_comp/.test(foot), foot);
+    ok('the card says where the stock came from (every product the read lists) and the range completion', new RegExp('suppfeed stock on ' + SRC_N + ' products').test(foot) && /FeedHero’s own range_comp/.test(foot), foot);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 

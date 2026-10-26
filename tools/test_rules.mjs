@@ -518,12 +518,12 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   t('agent: its log line names the count, the share, the join and the line (or that there is none)', /^held back — 2 in stock in the master, not live in Google \(25% of its 8 in stock · 2 not in the feed, 0 sent out of stock\) · join product_id → fs_data_original_id · no range-completion line in the data$/.test(MS.heldLine(HR)), MS.heldLine(HR));
   // THE SUPPFEED (Ray, 26 Oct 2026: "the actual source stock quantity data sits in a field in FeedHero … [suppfeed stock]")
   const CE = (await import('../docs/catalog_engine.js')).default || globalThis.FeedCatalog;
-  const SRCX = CE.srcIndex({ A3: ['i', 4, 'o', 0, 66.7], B2: ['i', 2, '', null, 20], B3: ['o', 0, 'i', 6, 20], C1: ['i', 9, '', null, 100] });
+  const SRCX = CE.srcIndex({ A3: ['i', 4, 'o', 0, 66.7], B2: ['i', 2, '', 3, 20], B3: ['o', 0, 'i', 6, 20], C1: ['i', 9, '', null, 100] });
   const TS = MS.tallyMaster(new Uint8Array(Buffer.from(MCSV)), FD.tree, FD.idx, SRCX), HS = MS.heldRecord(TS.held, FD.idx);
-  t('agent: with the suppfeed, its stock decides — A3 (suppfeed out) is no longer held, B3 (suppfeed in) is', HS.ok && HS.n === 2 && TS.held.held.map((h) => h.id).sort().join() === 'B2,B3' && HS.src.st === 2 && HS.src.rc === 4, JSON.stringify(HS));
-  t('agent: …the held products sit at FeedHero\'s range_comp, and the record passes the worker\'s check with its src counts', HS.rcH.some((x) => x[0] === 20 && x[1] === 2) && R.sanitizeHeld(HS).src.st === 2 && /stock from FeedHero's suppfeed on 2, range_comp on 4/.test(MS.heldLine(HS)));
+  t('agent: with the suppfeed, its stock decides — A3 (suppfeed out) is no longer held, B3 (suppfeed in) is, C1 (blank = out) leaves the in-stock count', HS.ok && HS.n === 2 && TS.held.held.map((h) => h.id).sort().join() === 'B2,B3' && HS.inStock === 7 && HS.src.st === 4 && HS.src.rc === 4, JSON.stringify(HS));
+  t('agent: …the held products sit at FeedHero\'s range_comp, and the record passes the worker\'s check with its src counts', HS.rcH.some((x) => x[0] === 20 && x[1] === 2) && R.sanitizeHeld(HS).src.st === 4 && /stock from FeedHero's suppfeed on 4, range_comp on 4/.test(MS.heldLine(HS)));
   t('agent: the suppfeed is read first and forces a master re-read where FeedHero carries one; none = the master stands', /const src = await fetchSrc\(m\.cmpid\);\n      const got = await fetchMaster\(m\.cmpid, !!src\);/.test(read('tools/master_stock.mjs')) && /if \(d\.nosupp\) return null;/.test(read('tools/master_stock.mjs')));
-  t('heldView passes the suppfeed counts to the card', R.heldView({ hbv: R.HELD_V, hb: R.sanitizeHeld(HS) }, [], { g: 1 }).src.st === 2);
+  t('heldView passes the suppfeed counts to the card', R.heldView({ hbv: R.HELD_V, hb: R.sanitizeHeld(HS) }, [], { g: 1 }).src.st === 4);
   const AG = read('tools/master_stock.mjs');
   t('agent: hbv = HELD_V once settled (counted, or no Google feed to count against); a feed it could not read leaves it unset', /hbv: hb \|\| !feeds\[m\.cmpid\] \? HELD_V : 0, hb \}\);/.test(AG) && /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null;/.test(AG)
     && /import \{ feedKeys, HELD_V, rcLine \} from '\.\.\/cloudflare\/feedspark-deck\/src\/rules\.js';/.test(AG));

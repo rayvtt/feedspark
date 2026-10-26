@@ -1124,8 +1124,10 @@ completion**, the figure its range-completion rules read, on every product.
   for the page, and `{stocksrc: cmpid}` on the key-gated push lane for the master-stock agent. Both answer progress
   until whole and the rows only then (`stockSrcAnswer`).
 - **The rewire** — `catalog_engine › srcIndex` turns the rows into a map; `heldBack(feed, src)` and
-  `stockRows(feed, src)` take it. Where the suppfeed covers a product **its stock decides** (in stock with 0 units is
-  out) and the quantity is its quantity; where it does not, the master's own word stands. A product's range completion
+  `stockRows(feed, src)` take it. The suppfeed's stock **decides every product the read lists**: a figure above 0 is in
+  stock (pre-order / out where its own word says so), and **0, blank or `n/a` is out of stock** (Ray, 26 Oct 2026:
+  *"blank and n/a can be counted as out of stock"* — on Superdry DE about half the rows carry no figure, some of them
+  products the master calls IN_STOCK). Only a product the read does not list keeps the master's own word. A product's range completion
   is FeedHero's `range_comp` where the read carries it, else its style's run off the master. So the held-back list,
   its range-completion cut, the simulator and the card's held-back count all compare the suppfeed's stock against the
   Google feed.
@@ -1135,8 +1137,8 @@ completion**, the figure its range-completion rules read, on every product.
   held-back cell's tooltip says so; the CSV gains *stock read from* (FeedHero suppfeed stock / master) and *source
   quantity*.
 
-Read live 26 Oct 2026 (in session, nothing committed): the suppfeed carries a stock figure on roughly a fifth of a
-Superdry market's rows — the rest are blank or `n/a`, where the master governs. Harness: `tools/test_catalog.mjs`
+Read live 26 Oct 2026 (in session, nothing committed): the suppfeed carries a stock figure on only part of a Superdry
+market's rows — the rest are blank or `n/a`, and those read as out of stock. Harness: `tools/test_catalog.mjs`
 (srcIndex, heldBack / stockRows with the source, srcRow + stockSrcRead lifted against a stub MCP — chunking, KV,
 nosupp, empty field, no token — and the route), `tools/test_rules.mjs` (the agent's join with the source, the record
 through `sanitizeHeld`, `heldView`), `tools/check_stocksim.js` (the simulator on a stubbed source read).
