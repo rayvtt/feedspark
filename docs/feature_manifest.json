@@ -16284,9 +16284,21 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: the opportunity mix follows the pivot's Measure (share of spend, not products, on Spend)",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function oppWm() { var k = meas(), M = MEAS[k]; return M.k && !M.ratio && adsReady() ? k : null; }",
+      "pr": 0
+    },
+    {
       "name": "Breakdown engine: spot() — over-index, gap, blank, scale/trim, funding, all counted",
       "file": "docs/breakdown_engine.js",
       "pattern": "function spot(S, opts) {",
+      "pr": 0
+    },
+    {
+      "name": "Breakdown engine: spot() weights the mix by opts.w",
+      "file": "docs/breakdown_engine.js",
+      "pattern": "ww = w ? +w[r] || 0 : 1;",
       "pr": 0
     },
     {

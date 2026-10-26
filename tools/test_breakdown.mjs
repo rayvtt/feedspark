@@ -282,11 +282,22 @@ console.log('· the split — what each cell is made of');
     const sc = ad.found.find((x) => x.k === 'scale' && x.v === 'male');
     t('…with Google Ads, a value earning well above the segment’s ROAS on a slice of its spend reads Scale, its ROAS a ratio of sums', !!sc && Math.abs(sc.roas - 8) < 1e-9 && Math.abs(sc.groas - (30 * 80 + 20 * 10) / 500) < 1e-9, sc);
     const scan = B.spot(S3, { groups: (r) => ['r\u0001' + S3.cols[1].vals[S3.cols[1].ids[r]]], exclude: ['g:custom_label_1'] });
+    // the mix follows the Measure: weighted by spend, the 30 male products in "Low" carry little of its spend (the 20
+    // female ones carry ten times as much each), so male no longer over-indexes there — on products it does
+    const wsp = new Float64Array(200); for (let i = 0; i < 200; i++) wsp[i] = i < 50 && i >= 30 ? 10 : 1;
+    const ws = B.spot(S3, { groups: (r) => m3[r] ? ['sel'] : null, exclude: ['g:custom_label_1'], w: wsp });
+    const wm = ws.found.find((x) => x.k === 'mix' && x.f === 'g:gender' && x.v === 'male');
+    const wrow = ws.found.find((x) => x.f === 'g:gender') || {};
+    t('…weighted by the Measure (spend), a value\'s share is its share of the weight — male, 60% of the products but 13% of the spend, no longer over-indexes',
+      ws.w === true && !wm && ws.base.w === 380 && (wrow.nw == null || wrow.nw === 230), { ws: ws.found.map((x) => [x.k, x.v, x.s, x.b]) });
+    const wcol = ws.found.find((x) => x.k === 'blank' && x.f === 'g:color');
+    t('…and every weighted share is its weight over the cell\'s weight, with the product counts kept beside it', !wcol || (Math.abs(wcol.s - wcol.vw / wcol.nw) < 1e-9 && wcol.vn === 17), wcol);
     t('…with no selection every row is read against the feed, the finding naming its row', scan.found.some((x) => x.g === 'r\u0001Low' && x.k === 'mix' && x.v === 'male'));
   }
   t('spotter page: the findings live IN the pivot — a flag per cell, a card, a ribbon — never a section of their own; briefs in a new tab',
     !/id="sec-opp"/.test(PG) && /id="pv-opp"/.test(PG) && /id="oppop"/.test(PG) && /function renderOpp\(rows\)/.test(PG) && /B\.spot\(S\.st, \{ groups:/.test(PG) && /class="opp" type="button" data-op="/.test(PG) && /wfTab\('\/workflow\?brief=' \+ b64url/.test(PG) && /renderSv3\(\); renderOpp\(rows\);/.test(PG)
     && /var pip = e\.target\.closest\('\.opp'\); if \(pip\) \{ e\.stopPropagation\(\);/.test(PG)
+    && /function oppWm\(\) \{ var k = meas\(\), M = MEAS\[k\]; return M\.k && !M\.ratio && adsReady\(\) \? k : null; \}/.test(PG) && /ads: ads, w: w, exclude: \[rs\.f, cs && cs\.f\]/.test(PG)
     && /var OP_TOP = 10,/.test(PG) && /if \(kept >= OP_TOP \|\| !cellOf\(x\.g\)\) return;/.test(PG));
   t('a field that is not there reads nothing rather than guessing', B.split(S2, { f: 'g:product_type', m: 'raw' }, null, 'g:nope', null) === null);
   t('the page: a Split by picker, its share-of choice, a strip per cell, the CSV block, and the layout default', /id="pv-spl"/.test(PG) && /id="pv-splw"/.test(PG) && /function spCell\(sp, a\)/.test(PG) && /'Split · % '/.test(PG) && /spl: '', splw: 'n'/.test(PG));
