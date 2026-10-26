@@ -1129,8 +1129,10 @@ completion**, the figure its range-completion rules read, on every product.
   *"blank and n/a can be counted as out of stock"* — on Superdry DE about half the rows carry no figure, some of them
   products the master calls IN_STOCK). Only a product the read does not list keeps the master's own word. A product's range completion
   is FeedHero's `range_comp` where the read carries it, else its style's run off the master. So the held-back list,
-  its range-completion cut, the simulator and the card's held-back count all compare the suppfeed's stock against the
-  Google feed.
+  its range-completion cut and the card's held-back count compare the suppfeed's stock against the Google feed.
+- **The simulator does NOT read it** (Ray, 26 Oct 2026: *"the supp feed is product quantity only so it shouldn't
+  impact the simulation at all"*): *Simulate the stock rules* stays on the master's own word, quantity and style runs,
+  and never asks `/api/rules/stocksrc`.
 - **The card follows daily stock** — the master-stock agent reads the suppfeed BEFORE the master and, where one exists,
   forces the master re-read (the import may not have moved while the suppfeed has), so the held-back count is today's.
   The record carries `src {st, rc}` (how many products the suppfeed decided, how many carried range_comp) and the
@@ -1141,7 +1143,7 @@ Read live 26 Oct 2026 (in session, nothing committed): the suppfeed carries a st
 market's rows — the rest are blank or `n/a`, and those read as out of stock. Harness: `tools/test_catalog.mjs`
 (srcIndex, heldBack / stockRows with the source, srcRow + stockSrcRead lifted against a stub MCP — chunking, KV,
 nosupp, empty field, no token — and the route), `tools/test_rules.mjs` (the agent's join with the source, the record
-through `sanitizeHeld`, `heldView`), `tools/check_stocksim.js` (the simulator on a stubbed source read).
+through `sanitizeHeld`, `heldView`), `tools/check_stocksim.js` (a contrary suppfeed read on offer moves no simulator count).
 
 ## 4. Findings
 

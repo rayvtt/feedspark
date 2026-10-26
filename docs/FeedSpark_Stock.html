@@ -2307,9 +2307,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var E = en[0], FA = en[1]; SIM.E = E;
       return hbFeed(q, say, E, FA).then(function (feed) {
         if (!feed.n) throw new Error('the Google feed carries no products');
-        return hbSrc(m, say, E).then(function (src) {
-          return hbInfo(q, 0, say).then(function (info) { return hbMaster(q, feed, say, E, FA, E.stockRows(feed, src.ix || null)).then(function (D) { D.info = info; D.srcRead = src; return D; }); });
-        });
+        // The simulator reads the master only (Ray, 26 Oct 2026: "the supp feed is product quantity only so it
+        // shouldn't impact the simulation at all") — no suppfeed stock and no range_comp here.
+        return hbInfo(q, 0, say).then(function (info) { return hbMaster(q, feed, say, E, FA, E.stockRows(feed)).then(function (D) { D.info = info; return D; }); });
       });
     }).then(function (D) {
       if (!D.ok) throw new Error('the master carries no products');
@@ -2397,7 +2397,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     }).join('') || '<tr><td class="empty" colspan="4">Nothing in stock.</td></tr>';
     var mb = $('#sim-more'); mb.hidden = cats.length <= 12; mb.textContent = SIM.all ? 'Show fewer' : 'Show all ' + cats.length;
     fsum('sim-card', m.client + ' ' + m.market + ' · ' + n0(res.held) + ' of ' + n0(res.inStock) + ' in stock held back (' + share(res.held, res.inStock) + ')');
-    $('#sim-foot').textContent = 'A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes. ' + (D.src && D.src.st ? 'Stock: FeedHero’s suppfeed stock on ' + n0(D.src.st) + ' products, the master on the rest. ' : '') + (D.src && D.src.rc ? 'Range completion = FeedHero’s own range_comp (' + n0(D.src.rc) + ' products), else a style’s sizes in stock ÷ sizes made. ' : 'Range completion = a style’s sizes in stock ÷ the sizes it is made in, read off the master. ') + 'Categories are the Google feed’s product_type tree (' + n0(D.cat.feed) + ' products' + (D.cat.master ? ', ' + n0(D.cat.master) + ' by the master’s own type' : '') + (D.cat.none ? ', ' + n0(D.cat.none) + ' with none' : '') + ').';
+    $('#sim-foot').textContent = 'A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes. Range completion = a style’s sizes in stock ÷ the sizes it is made in, read off the master. Categories are the Google feed’s product_type tree (' + n0(D.cat.feed) + ' products' + (D.cat.master ? ', ' + n0(D.cat.master) + ' by the master’s own type' : '') + (D.cat.none ? ', ' + n0(D.cat.none) + ' with none' : '') + ').';
   }
   var simRaf = 0;
   function simLater() { if (simRaf) return; simRaf = requestAnimationFrame(function () { simRaf = 0; simDraw(); }); }
