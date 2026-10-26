@@ -1433,7 +1433,7 @@ aside.ck[hidden]{display:none}
       <td class="af-feed" title="Auto-detected from the task">auto</td>
       <td><input id="af-task" placeholder="New task…" autocomplete="off"></td>
       <td><input id="af-owner" placeholder="Owner" autocomplete="off"></td>
-      <td><input id="af-due" placeholder="DDMM" inputmode="numeric" autocomplete="off"></td>
+      <td><input id="af-due" placeholder="DDMM" inputmode="numeric" autocomplete="off" title="DDMM for the next one that comes round (2707 = the next 27 July) — or DDMMYYYY for exactly that date, past included (27072027)"></td>
       <td><select id="af-status" aria-label="New task — status"></select></td>
       <td><span class="src-tag src-plan">Plan</span></td>
       <td class="c-act"><button class="af-add" id="af-save" type="button">Add</button><button class="del-btn" id="af-cancel" type="button" title="Cancel">✕</button></td>
@@ -3000,12 +3000,36 @@ aside.ck[hidden]{display:none}
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           esrc:(src.esrc||isEsrc(k,m.task))?1:0,csrc:CSRC[k]||null,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
   function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).concat(callTasks()).filter(function(r){ return !RMCL[r.client]&&inScopeClient(r.client); }); }
-  // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
-  function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
-    if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
-      var y=today().getFullYear(), d=new Date(y,mm-1,dd); if((d-today())/86400000<-60)d=new Date(y+1,mm-1,dd);
-      return d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
-    if(v.length===8)return v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); return ''; }
+  /* DDMM or DDMMYYYY -> ISO. FOUR DIGITS ALWAYS MEAN THE NEXT TIME THAT DAY COMES ROUND
+     (Ray, 26 Oct 2026, over setting 2027 due dates: "2 sounds good, it should roll forward to
+     future anw"). It used to keep the CURRENT year unless the date was more than 60 days past, so
+     in late October `1501` read as 15 Jan 2026 — ten months gone — and the roll began at a cliff
+     nobody could see or predict. A due date is a DEADLINE, so the short form resolves forward;
+     today itself is today, not a year away.
+     DDMMYYYY names a date OUTRIGHT, past included, and is the only way to record a deadline that
+     has already passed — which is what the 60-day grace was really for, so dropping it without
+     saying so would have taken a real entry away.
+     A DAY THE CALENDAR DOES NOT HAVE IS REFUSED, never rolled into a different real date: `3102`
+     built new Date(y,1,31), which IS 3 March, so a typo was round-tripped as a date nobody typed
+     (the rule KWCal's setDate already follows). Both halves are checked in the year they are
+     meant for, so 29 February is refused by name in a year that has no 29 February.
+     ONE reader: the Due cell and ＋ Add task each carried their own copy of this, and after
+     this change two copies would have disagreed about the YEAR. */
+  function ddmmToIso(v){
+    v=String(v||'').replace(/\D/g,'');
+    if(!v) return {iso:'',why:''};
+    var dd,mm,y,four=(v.length===4);
+    if(four||v.length===8){ dd=+v.slice(0,2); mm=+v.slice(2,4); y=four?today().getFullYear():+v.slice(4,8); }
+    else return {iso:'',why:'Type 4 digits (DDMM) or 8 (DDMMYYYY) — e.g. 2707 or 27072027'};
+    if(mm<1||mm>12) return {iso:'',why:'There is no month '+v.slice(2,4)};
+    var d=new Date(y,mm-1,dd), rolled=false;
+    if(d.getDate()!==dd||d.getMonth()!==mm-1) return {iso:'',why:dd+'/'+pad(mm)+'/'+y+' is not a day'};
+    if(four&&d<today()){ y++; d=new Date(y,mm-1,dd); rolled=true;   // a deadline resolves forward
+      if(d.getDate()!==dd||d.getMonth()!==mm-1) return {iso:'',why:dd+'/'+pad(mm)+'/'+y+' is not a day'}; }
+    return {iso:d.getFullYear()+'-'+pad(mm)+'-'+pad(dd),rolled:rolled,why:''}; }
+  // the date a toast says back, so a roll forward is never silent
+  function dueWords(iso){ if(!iso)return ''; var p=iso.split('-');
+    return dfmt(F_FULL).format(new Date(+p[0],+p[1]-1,+p[2])); }
   // ---- manual "Add task": an inline hovering row under the table (writes back via /api/sheets/append) ----
   function ensureAddRow(){
     var cs=document.getElementById('af-client'); if(cs && !cs.options.length){ Object.keys(PLANSHEET).sort().forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; cs.appendChild(o); }); }
@@ -3024,7 +3048,7 @@ aside.ck[hidden]{display:none}
     var status=document.getElementById('af-status').value||'Open';
     var dueRaw=(document.getElementById('af-due').value||'').replace(/\D/g,'');
     if(!task){ toast('Type the task first'); ti.focus(); return; }
-    var due=''; if(dueRaw){ var iso=ddmmToIso(dueRaw); if(!iso){ toast('Due — type DDMM, e.g. 2707'); return; } due=iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4); }
+    var due=''; if(dueRaw){ var dr=ddmmToIso(dueRaw); if(!dr.iso){ toast('Due — '+dr.why); return; } due=dr.iso.slice(8,10)+'/'+dr.iso.slice(5,7)+'/'+dr.iso.slice(0,4); }
     MANUAL.push({client:client,task:task,owner:owner,status:status,due:due}); saveManual();   // optimistic — show at once
     ti.value=''; document.getElementById('af-owner').value=''; document.getElementById('af-due').value='';   // clear for the next quick add; keep the row open + client/status sticky
     renderAll(); ti.focus();
@@ -3228,31 +3252,32 @@ aside.ck[hidden]{display:none}
       } else toast('Renamed locally · no plan sheet linked to write it back'); }
     else toast('Task updated');
     renderAll(); }
-  // edit a due date: input DDMM -> display "DD Mon" -> write back to PP as DD/MM/YYYY (2-way)
+  /* edit a due date: DDMM (the next one) or DDMMYYYY (exactly that date) -> write back to the
+     Project Plan as DD/MM/YYYY (2-way). The box is PREFILLED with all eight digits: on four it
+     would re-resolve on every OK, so re-confirming a date that had just gone past would quietly
+     move it a year. */
   function editDue(t){
-    var cur=taskDate(t), curv=cur?(pad(cur.getDate())+pad(cur.getMonth()+1)):'';
-    var v=prompt('Due date — type DDMM (e.g. 2707 = 27 Jul). Blank to clear:', curv);
-    if(v===null)return; v=(''+v).replace(/\D/g,''); var iso='';
-    if(v){ if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4);
-        if(dd<1||dd>31||mm<1||mm>12){ toast('Use DDMM — e.g. 2707'); return; }
-        var y=today().getFullYear(), d=new Date(y,mm-1,dd);
-        if((d-today())/86400000 < -60) d=new Date(y+1,mm-1,dd);   // a near-past DDMM rolls to next year
-        iso=d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
-      else if(v.length===8){ iso=v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); }   // DDMMYYYY
-      else { toast('Type 4 digits: DDMM'); return; } }
-    setDue(t, iso);
+    var cur=taskDate(t), curv=cur?(pad(cur.getDate())+pad(cur.getMonth()+1)+cur.getFullYear()):'';
+    var v=prompt('Due date — DDMM for the next one that comes round (2707 = the next 27 July), or '
+      + 'DDMMYYYY for exactly that date, past included (27072027). Blank to clear:', curv);
+    if(v===null)return;
+    v=(''+v).replace(/\D/g,'');
+    if(!v){ setDue(t,''); return; }
+    var r=ddmmToIso(v);
+    if(!r.iso){ toast(r.why); return; }
+    setDue(t, r.iso);
   }
   function setDue(t, iso){
     recPush({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
     saveDueLocal(t.client, t.task, iso);
     var ddmy = iso ? (iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)) : '';   // DD/MM/YYYY for the sheet
-    if(t.source==='call'){ callPatch(t.callid,{due:iso}); toast(iso?'Due updated':'Due cleared'); renderAll(); return; }   // the KV entry is the store
+    if(t.source==='call'){ callPatch(t.callid,{due:iso}); toast(iso?('Due → '+dueWords(iso)):'Due cleared'); renderAll(); return; }   // the KV entry is the store
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Writing due date to '+t.client+'’s plan…');
         fetch('/api/sheets/due',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:ddmy})})
-          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Due → '+d.cell):('Sheet: '+((d&&d.error)||'write failed'))); }).catch(function(){ toast('Due write failed — needs a Due column shared with the SA'); });
-      } else { toast('Saved · no plan sheet linked to write it back'); }
-    } else { toast(iso?'Due updated':'Due cleared'); }
+          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Due → '+(dueWords(iso)||'cleared')+' · '+d.cell):('Sheet: '+((d&&d.error)||'write failed'))); }).catch(function(){ toast('Due write failed — needs a Due column shared with the SA'); });
+      } else { toast((iso?('Due → '+dueWords(iso)+' · '):'Due cleared · ')+'no plan sheet linked to write it back'); }
+    } else { toast(iso?('Due → '+dueWords(iso)):'Due cleared'); }
     renderAll();
   }
   // Date.toLocaleDateString builds a whole formatter on every call. The board draws one date per
@@ -3444,7 +3469,7 @@ aside.ck[hidden]{display:none}
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt'||t.source==='call')
-           ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
+           ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set the due date — DDMM for the next one that comes round, DDMMYYYY for exactly that date">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td data-r="'+i+'" data-col="source"'+(t.only?(' title="Marked for '+esc(t.only)+' only in the shared project plan\u2019s brand column \u2014 every other row in this plan is both brands\u2019 work"'):'')+'>'+src+'</td><td class="c-act">'
         +(t.source!=='email'&&t.source!=='call'?'<button class="rec-btn'+(rec?' on':'')+'" data-i="'+i+'" title="'+(rec?('Repeats — '+REC_LBL[rec.every].toLowerCase()+'. The next occurrence is created when this one is marked Done'):'Repeat this task — weekly / monthly / every 3 months')+'">⟳</button>':'')

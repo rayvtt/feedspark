@@ -137,6 +137,12 @@ else
   echo "   ✗ AM-CC harness FAILED — see node tools/test_amcc.mjs"; FAIL=1
 fi
 
+if node tools/test_duedate.mjs >/dev/null 2>&1; then
+  echo "   ✓ a short due date resolves forward; an impossible day is refused, never written"
+else
+  echo "   ✗ due-date harness FAILED — see node tools/test_duedate.mjs"; FAIL=1
+fi
+
 if node tools/test_callwrap.mjs >/dev/null 2>&1; then
   echo "   ✓ call wrap-up: the red prompt, the tidy-up and the two draft exits hold"
 else

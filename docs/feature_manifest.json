@@ -17024,6 +17024,43 @@
       "file": "tools/master_stock.mjs",
       "pattern": "const got = await fetchMaster(m.cmpid, !!src);",
       "pr": 0
+    },
+    {
+      "name": "Workflow: a due date typed as DDMM resolves FORWARD (no 60-day grace)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(four&&d<today()){ y++;",
+      "pr": 738
+    },
+    {
+      "name": "Workflow: the 60-day due-date grace never comes back",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "/86400000<-60",
+      "forbidden": true,
+      "pr": 738
+    },
+    {
+      "name": "Workflow: an impossible due date is refused, never written as a day that does not exist",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "is not a day'};",
+      "pr": 738
+    },
+    {
+      "name": "Workflow: ONE due-date reader for the Due cell and ＋ Add task",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var dr=ddmmToIso(dueRaw);",
+      "pr": 738
+    },
+    {
+      "name": "Workflow: every due-date toast names the date it set",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function dueWords(iso)",
+      "pr": 738
+    },
+    {
+      "name": "Workflow: the due prompt is prefilled with all eight digits so OK cannot move a date a year",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "pad(cur.getMonth()+1)+cur.getFullYear()",
+      "pr": 738
     }
   ]
 }

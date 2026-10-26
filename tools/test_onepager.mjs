@@ -21,7 +21,10 @@ const { chromium } = require('playwright');
 import fsSync from 'node:fs';
 
 const PAGE = 'file://' + process.cwd() + '/docs/FeedSpark_Command_Center.html';
-const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+// the STABLE path every other harness here launches from. This one pinned a build number
+// (chromium-1194) and the sandbox now ships a different build, so it could not start at all
+// — a harness nobody can run is a harness nobody is gated by.
+const CHROME = '/opt/pw-browsers/chromium';
 
 let pass = 0, fail = 0;
 const ok = (name, cond, got) => {
