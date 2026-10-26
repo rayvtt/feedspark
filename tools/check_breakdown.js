@@ -300,6 +300,23 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       }
       await pg.evaluate(() => { document.getElementById('fclear') && document.getElementById('fclear').click(); });
       await pg.waitForTimeout(150);
+      // the mix findings follow the Measure: on Spend a share is of the cell's spend, and the ribbon says which it reads
+      ok('…the ribbon says the mix is read on products while the Measure is Products', await pg.evaluate(() => !!document.querySelector('#pv-opp [data-opw="n"]') && /mix read on products/.test(document.getElementById('pv-opp').textContent)));
+      await pg.selectOption('#pv-meas', 'cost'); await pg.waitForTimeout(300);
+      const wsp = await pg.evaluate(() => ({ w: (document.querySelector('#pv-opp [data-opw]') || {}).getAttribute ? document.querySelector('#pv-opp [data-opw]').getAttribute('data-opw') : null, t: document.getElementById('pv-opp').textContent, pips: document.querySelectorAll('#pv td.opx .opp').length }));
+      ok('…switch the Measure to Spend and the mix is read on spend, said on the ribbon', wsp.w === 'cost' && /mix read on spend/.test(wsp.t), wsp);
+      if (wsp.pips) {
+        const wc = [];
+        for (let i = 0; i < Math.min(wsp.pips, 6); i++) {
+          await pg.locator('#pv td.opx .opp').nth(i).hover(); await pg.waitForTimeout(200);
+          wc.push(...await pg.evaluate(() => Array.from(document.querySelectorAll('#oppop .opf')).filter((c) => /^(mix|gap|blank)$/.test(c.dataset.k)).map((c) => [+c.dataset.s, +c.dataset.vw, +c.dataset.nw, c.querySelector('h4').textContent])));
+        }
+        ok('…every mix card on Spend is its value\'s spend over the cell\'s spend, and its headline names the spend', wc.every(([s, vw, nw, h]) => nw > 0 && Math.abs(s - vw / nw) < 1e-9 && /spend/.test(h)), wc.slice(0, 4));
+        await pg.keyboard.press('Escape');
+      }
+      await pg.selectOption('#pv-meas', 'roas'); await pg.waitForTimeout(250);
+      ok('…ROAS has no share, so the mix reads products and says so', await pg.evaluate(() => /mix read on products \(ROAS has no share\)/.test(document.getElementById('pv-opp').textContent)));
+      await pg.selectOption('#pv-meas', 'n'); await pg.waitForTimeout(200);
     }
 
     console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');

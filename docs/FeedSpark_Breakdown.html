@@ -1466,12 +1466,16 @@ window.addEventListener('load',restore);
   function mmyy() { var d = new Date(); return ('0' + (d.getMonth() + 1)).slice(-2) + String(d.getFullYear()).slice(-2); }
   var OPK = { mix: 'Over-indexes', gap: 'Under-represented', blank: 'Data gap', scale: 'Scale it', trim: 'Fix or trim', fund: 'Under-funded', drain: 'Over-funded' };
   var OP = null;
+  // the mix findings (over-index, under-represented, data gap) follow the pivot's MEASURE (Ray, 26 Oct 2026: "is the
+  // calculation based on the Measure KPI?" → "option 1"): on Spend a value over-indexes when it takes more of the cell's
+  // SPEND than of the feed's; on Products it is the share of products. ROAS has no share, so it reads products and says so.
+  function oppWm() { var k = meas(), M = MEAS[k]; return M.k && !M.ratio && adsReady() ? k : null; }
   function oppData() {
     if (!S.st) return null;
-    var ads = adsReady() ? { cost: S.aj.f.cost, value: S.aj.f.value } : null;
+    var ads = adsReady() ? { cost: S.aj.f.cost, value: S.aj.f.value } : null, wm = oppWm(), w = wm ? S.aj.f[MEAS[wm].k] : null;
     if (S.filters.length) {
       var m = B.mask(S.st, S.filters);
-      return { mode: 'sel', R: B.spot(S.st, { groups: function (r) { return m[r] ? ['sel'] : null; }, ads: ads, exclude: S.filters.map(function (f) { return f.spec.f; }), top: 9 }) };
+      return { mode: 'sel', wm: wm, R: B.spot(S.st, { groups: function (r) { return m[r] ? ['sel'] : null; }, ads: ads, w: w, exclude: S.filters.map(function (f) { return f.spec.f; }), top: 9 }) };
     }
     var rs = B.resolve(S.st, S.L.pivot.r || {}); if (!rs) return null;
     var cs = B.resolve(S.st, S.L.pivot.c || {}), RR = B.reader(S.st, rs), RC = cs ? B.reader(S.st, cs) : null;
@@ -1482,7 +1486,7 @@ window.addEventListener('load',restore);
       if (b) a.forEach(function (v) { b.forEach(function (w) { out.push('c\u0001' + v + '\u0001' + w); }); });
       return out;
     };
-    return { mode: 'scan', rs: rs, cs: cs, R: B.spot(S.st, { groups: gk, ads: ads, exclude: [rs.f, cs && cs.f], top: 400 }) };
+    return { mode: 'scan', wm: wm, rs: rs, cs: cs, R: B.spot(S.st, { groups: gk, ads: ads, w: w, exclude: [rs.f, cs && cs.f], top: 400 }) };
   }
   function oppGroup(D, g) {
     if (g === 'sel') return 'this selection';
@@ -1491,10 +1495,12 @@ window.addEventListener('load',restore);
   }
   function oppText(D, x) {
     var G = oppGroup(D, x.g), V = x.v === B.BLANK ? 'not stated' : x.v, L = x.label, ev = '', op = '', h = '';
-    var pcs = function (a) { return pc(a); };
-    if (x.k === 'mix') { h = pcs(x.s) + ' of ' + G + ' is ' + L + ' · ' + V; ev = 'against ' + pcs(x.b) + ' across the feed — ' + (x.b ? (Math.round(x.s / x.b * 10) / 10) + '× the share' : 'nowhere else') + ' · ' + n0(x.vn) + ' of ' + n0(x.n) + ' products'; op = '<b>Lean in:</b> ' + L + ' · ' + V + ' defines this segment — give it its own custom label or listing group, and write titles, keywords and creative for it rather than for the catalogue average.'; }
-    else if (x.k === 'gap') { h = G + ' carries little ' + L + ' · ' + V; ev = pcs(x.s) + ' here against ' + pcs(x.b) + ' across the feed · ' + n0(x.vn) + ' of ' + n0(x.n) + ' products'; op = '<b>Check the range:</b> either the segment genuinely lacks ' + V + ' (a buying gap worth raising with the client) or the field is filled differently here — confirm before it skews targeting.'; }
-    else if (x.k === 'blank') { h = pcs(x.s) + ' of ' + G + ' has no ' + L; ev = 'against ' + pcs(x.b) + ' blank across the feed · ' + n0(x.vn) + ' products'; op = '<b>Fill the gap:</b> these products drop out of every split, label and filter that reads ' + L + ' — populate it (feed rule, supplemental, or SparkAI) before optimising this segment.'; }
+    var pcs = function (a) { return pc(a); }, M = D.wm ? MEAS[D.wm] : null, wl = M ? M.l.toLowerCase() : '';
+    var fw = function (v) { return M.money ? money(v) : M.dec ? (Math.round(v * 10) / 10).toLocaleString('en-GB') : n0(Math.round(v)); };
+    var of = M ? 'the ' + wl + ' in ' + G : G, tail = M ? fw(x.vw) + ' of ' + fw(x.nw) + ' ' + wl + ' · ' + n0(x.vn) + ' of ' + n0(x.n) + ' products' : n0(x.vn) + ' of ' + n0(x.n) + ' products';
+    if (x.k === 'mix') { h = pcs(x.s) + ' of ' + of + ' is ' + L + ' · ' + V; ev = 'against ' + pcs(x.b) + (M ? ' of the ' + wl : '') + ' across the feed — ' + (x.b ? (Math.round(x.s / x.b * 10) / 10) + '× the share' : 'nowhere else') + ' · ' + tail; op = '<b>Lean in:</b> ' + L + ' · ' + V + ' defines this segment — give it its own custom label or listing group, and write titles, keywords and creative for it rather than for the catalogue average.'; }
+    else if (x.k === 'gap') { h = M ? L + ' · ' + V + ' is only ' + pcs(x.s) + ' of ' + of : G + ' carries little ' + L + ' · ' + V; ev = (M ? 'against ' : pcs(x.s) + ' here against ') + pcs(x.b) + (M ? ' of the ' + wl : '') + ' across the feed · ' + tail; op = '<b>Check the range:</b> either the segment genuinely lacks ' + V + ' (a buying gap worth raising with the client) or the field is filled differently here — confirm before it skews targeting.'; }
+    else if (x.k === 'blank') { h = M ? pcs(x.s) + ' of ' + of + ' sits on products with no ' + L : pcs(x.s) + ' of ' + G + ' has no ' + L; ev = 'against ' + pcs(x.b) + ' blank across the feed · ' + (M ? tail : n0(x.vn) + ' products'); op = '<b>Fill the gap:</b> these products drop out of every split, label and filter that reads ' + L + ' — populate it (feed rule, supplemental, or SparkAI) before optimising this segment.'; }
     else if (x.k === 'scale') { h = L + ' · ' + V + ' earns ' + roasTxt(x.roas) + ' ROAS inside ' + G; ev = 'against ' + roasTxt(x.groas) + ' for the segment, on only ' + pcs(x.sh) + ' of its spend (' + money(x.cost) + ' → ' + money(x.val) + ') · ' + n0(x.vn) + ' products'; op = '<b>Scale it:</b> split ' + V + ' out of this segment (custom label / listing group) so it can carry a higher target and more budget, and prioritise its titles and keywords.'; }
     else if (x.k === 'trim') { h = L + ' · ' + V + ' drags ' + G + ' at ' + roasTxt(x.roas) + ' ROAS'; ev = 'against ' + roasTxt(x.groas) + ' for the segment, taking ' + pcs(x.sh) + ' of its spend (' + money(x.cost) + ' → ' + money(x.val) + ') · ' + n0(x.vn) + ' products'; op = '<b>Fix or trim:</b> check price, stock and titles on these products first; if the content is sound, label them to bid down rather than let them dilute the segment.'; }
     else if (x.k === 'fund') { h = G + ' returns ' + roasTxt(x.roas) + ' on ' + pcs(x.ss) + ' of spend'; ev = 'against ' + roasTxt(x.broas) + ' across the feed — it holds ' + pcs(x.ps) + ' of the products and ' + pcs(x.vs) + ' of conversion value (' + money(x.cost) + ' → ' + money(x.val) + ')'; op = '<b>Under-funded:</b> a segment out-earning the account on less than its share of spend — its own custom label and a higher-priority listing group would let it take more budget.'; }
@@ -1514,7 +1520,7 @@ window.addEventListener('load',restore);
     var bar = $('#pv-opp'), box = $('#pv'); if (!bar) return;
     oppClose(true);
     if (!S.st || !PV || !rows) { bar.hidden = true; bar.innerHTML = ''; OP = null; return; }
-    var sig = [S.gen, S.st.n, JSON.stringify(S.filters), JSON.stringify(S.L.pivot.r || null), JSON.stringify(S.L.pivot.c || null), adsReady() ? 1 : 0].join('|');
+    var sig = [S.gen, S.st.n, JSON.stringify(S.filters), JSON.stringify(S.L.pivot.r || null), JSON.stringify(S.L.pivot.c || null), adsReady() ? 1 : 0, oppWm() || 'n'].join('|');
     var D = OP && OP.sig === sig ? OP : oppData(); if (!D) { bar.hidden = true; bar.innerHTML = ''; OP = null; return; }
     D.sig = sig; OP = D;
     var F = D.R.found, pl = [];
@@ -1539,7 +1545,9 @@ window.addEventListener('load',restore);
       });
     }
     D.pl = pl;
-    var ads = adsReady() ? '' : '<span class="omu">· scale, trim and funding read once Google Ads is in</span>';
+    var mk0 = meas(), M0 = MEAS[mk0];
+    var ads = '<span class="omu" data-opw="' + (D.wm || 'n') + '" title="Over-index, under-represented and data gap compare a value\'s share of the cell with its share of the whole feed — share of whatever the Measure counts">· mix read on ' + (D.wm ? esc(M0.l.toLowerCase()) : 'products' + (M0.ratio ? ' (ROAS has no share)' : M0.k ? ' until Google Ads is in' : '')) + '</span>'
+      + (adsReady() ? '' : '<span class="omu">· scale, trim and funding read once Google Ads is in</span>');
     if (D.mode === 'sel') {
       var lbl = S.filters.map(function (f) { return B.specName(S.st, f.spec) + ' = ' + f.vals.join(' / '); }).join(' · ');
       bar.innerHTML = !F.length ? '<span class="omu">✦ Nothing stands out in this selection against the feed</span>' + ads
@@ -1566,7 +1574,7 @@ window.addEventListener('load',restore);
   }
   function oppCard(D, n) {
     var x = D.R.found[n], t = oppText(D, x);
-    return '<div class="opf k-' + x.k + '" data-k="' + x.k + '" data-f="' + esc(x.f || '') + '" data-v="' + esc(x.v == null ? '' : x.v) + '" data-s="' + (x.s != null ? x.s : '') + '" data-vn="' + (x.vn != null ? x.vn : '') + '" data-n="' + x.n + '"><span class="opk">' + esc(OPK[x.k]) + '</span><h4>' + esc(t.h) + '</h4><div class="ev">' + esc(t.ev) + '</div>' + oppBars(x) + '<div class="op">' + t.op + '</div>'
+    return '<div class="opf k-' + x.k + '" data-k="' + x.k + '" data-f="' + esc(x.f || '') + '" data-v="' + esc(x.v == null ? '' : x.v) + '" data-s="' + (x.s != null ? x.s : '') + '" data-vn="' + (x.vn != null ? x.vn : '') + '" data-n="' + x.n + '"' + (x.nw != null ? ' data-vw="' + x.vw + '" data-nw="' + x.nw + '"' : '') + '><span class="opk">' + esc(OPK[x.k]) + '</span><h4>' + esc(t.h) + '</h4><div class="ev">' + esc(t.ev) + '</div>' + oppBars(x) + '<div class="op">' + t.op + '</div>'
       + '<div class="acts"><button class="btn" type="button" data-opf="' + n + '" title="Filter the whole page to it">⌕ Filter to it</button><button class="btn" type="button" data-opb="' + n + '" title="Brief this in Workflow (opens a new tab)">→ Brief</button></div></div>';
   }
   function oppOpen(a, xs, title, sub, pin) {
