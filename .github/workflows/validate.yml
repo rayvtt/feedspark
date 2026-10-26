@@ -201,6 +201,8 @@ jobs:
         run: node tools/test_threadref.mjs
       - name: AM CC harness (name→address resolution, dedupe, never yourself, never guessed)
         run: node tools/test_amcc.mjs
+      - name: Due-date harness (DDMM resolves forward, DDMMYYYY exact, an impossible day refused)
+        run: node tools/test_duedate.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)
         run: node tools/test_xlsx.mjs
       - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)

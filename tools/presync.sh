@@ -239,6 +239,10 @@ echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null
 echo "   ✓ the AM's name resolves to a real address or none — never a guessed one"
 
+echo "── validating: a due date typed short resolves forward"
+node tools/test_duedate.mjs >/dev/null
+echo "   ✓ DDMM is the next one that comes round; DDMMYYYY names a past date; a typo is refused"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"
