@@ -1752,7 +1752,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var tip = '<b>' + esc(m.client + ' ' + m.market) + ' · in stock, not live in Google</b><br>' + n0(h.n) + ' of the ' + n0(h.inStock) + ' products the master states in stock'
       + '<br>' + n0(h.absent) + ' not in the Google feed' + (h.out ? ' · ' + n0(h.out) + ' sent out of stock' : '')
       + '<br><span class="m">matched product by product: the master’s ' + esc(h.join.h || 'id') + ' → the feed’s ' + esc(h.join.on) + ' · the Google feed carries ' + n0(h.feedN) + ' products · counted ' + since(h.t) + '</span>'
-      + '<br><span class="m">⬇ List downloads every one — id, title, size, availability and its style’s range completion.</span>';
+      + '<br><span class="m">⬇ List downloads the ones held back by range completion — styles under the line — with id, title, size, availability and the style’s range completion.</span>';
     return '<td class="num hbs"><div data-tip="' + esc(tip) + '"><span class="big">' + hbBtn(m, 'hb-dl') + n0(h.n) + '</span><span class="sub2">' + pctS(h.pct) + ' of in stock</span></div></td>';
   }
   function rcName(c) { return 'RC ' + esc(c.op) + ' ' + c.v + '%'; }
@@ -2073,9 +2073,53 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // master states in stock that the feed does not carry live, with its size, its availability and its style's range
   // completion — the column that tells a range-completion hold from any other exclusion. Nothing is stored anywhere.
   var HBD = {}, HBLBL = '⬇ List';
+  // ONLY THE RANGE-COMPLETION HOLD (Ray, 26 Oct 2026, over Superdry DE's file: "there are two groups of products with a
+  // size range of 62.5%, but only products under 25% should be included in the heldback product list"): an in-stock
+  // product missing from the feed is not always a range-completion hold — a 62.5% style is held for another reason — so
+  // the list keeps the products UNDER the market's line. The line is read off THIS download's own products first (the
+  // twin of src/rules.js rcLine, held equal by tools/test_rules.mjs — the rule may have moved since the agent's count),
+  // then the line the agent served, then a cut-off a Google rule's name states. No line → every held product, said so.
+  function roundIn(lo, hi) {
+    var steps = [25, 10, 5, 1, 0.5, 0.1];
+    for (var i = 0; i < steps.length; i++) {
+      var st = steps[i], v = Math.round((Math.floor(lo / st + 1e-9) + 1) * st * 10) / 10;
+      if (v > lo && v <= hi + 1e-9) return v;
+    }
+    return hi;
+  }
+  function rcLine(rcH) {
+    var pts = [], H = 0, L = 0;
+    (rcH || []).forEach(function (x) {
+      if (!Array.isArray(x) || x[0] == null || !isFinite(+x[0])) return;
+      var h = Math.max(0, +x[1] || 0), l = Math.max(0, +x[2] || 0);
+      pts.push([+x[0], h, l]); H += h; L += l;
+    });
+    if (H < 20 || L < 20) return null;
+    pts.sort(function (a, b) { return a[0] - b[0]; });
+    var hb = 0, lb = 0, best = null;
+    for (var k = 0; k <= pts.length; k++) {
+      var score = hb + (L - lb);
+      if (!best || score > best.score) best = { k: k, score: score, hb: hb, lb: lb };
+      if (k < pts.length) { hb += pts[k][1]; lb += pts[k][2]; }
+    }
+    if (!best || best.k === 0 || best.k === pts.length) return null;
+    var held = best.hb, live = L - best.lb;
+    if (held / H < 0.9 || live / L < 0.9) return null;
+    var lo = pts[best.k - 1][0], hi = pts[best.k][0];
+    return { x: roundIn(lo, hi), lo: lo, hi: hi, held: held, heldN: H, live: live, liveN: L };
+  }
+  // → { keep(rc) → bool, x: the figure to name, src } or null
+  function hbCut(m, rcH) {
+    var ln = rcLine(rcH), src = 'read';
+    if (!ln) { ln = m.av && m.av.held && m.av.held.state === 'ok' ? m.av.held.line : null; src = 'served'; }
+    if (ln) return { x: ln.x, src: src, keep: function (rc) { return rc != null && rc <= ln.lo; } };
+    var st = ((m.av && m.av.held && m.av.held.stated) || []).filter(function (c) { return (c.ch === 'google' || c.ch === 'all') && (c.op === '<' || c.op === '<=' || c.op === '≤'); })[0];
+    if (st) return { x: st.v, src: 'stated', rule: st.rule, keep: function (rc) { return rc != null && (st.op === '<' ? rc < st.v : rc <= st.v); } };
+    return null;
+  }
   function hbBtn(m, cls) {
     if (!m || !m.wk || !m.wk.g) return '';
-    return '<button class="' + cls + '" type="button" data-hbdl="' + esc(m.cmpid) + '"' + (HBD[m.cmpid] ? ' disabled' : '') + ' title="' + esc('Download ' + m.client + ' ' + m.market + '’s held-back products — in stock in the master, not live in the Google feed: ID, title, size, availability and the style’s range completion (CSV)') + '">' + esc(HBD[m.cmpid] || HBLBL) + '</button>';
+    return '<button class="' + cls + '" type="button" data-hbdl="' + esc(m.cmpid) + '"' + (HBD[m.cmpid] ? ' disabled' : '') + ' title="' + esc('Download ' + m.client + ' ' + m.market + '’s range-completion holds — in stock in the master, not live in the Google feed, from a style under the range-completion line: ID, title, size, availability and the style’s range completion (CSV)') + '">' + esc(HBD[m.cmpid] || HBLBL) + '</button>';
   }
   function engLoad(url, name) {
     if (window[name]) return Promise.resolve(window[name]);
@@ -2166,13 +2210,14 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       if (!r.stated) throw new Error('the master states no stock (no availability, no quantity), so nothing reads as held back');
       // within a style, the sizes in size order (the hero-size engine's ladder), not alphabetically
       if (HS) r.held.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc) || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || HS.cmpSize(HS.sizeKey(a.s), HS.sizeKey(b.s)); });
+      var cut = hbCut(m, r.rcH), keep = cut ? r.held.filter(function (h) { return cut.keep(h.rc); }) : r.held;
+      if (cut && !keep.length) { toast('None of the ' + n0(r.held.length) + ' held-back products sits under ' + m.client + ' ' + m.market + '’s range-completion line (' + cut.x + '%) — they are held back for other reasons'); done(); return; }
       csvDownload((m.client + '_' + m.market).toLowerCase().replace(/\W+/g, '_') + '_held_back_products.csv',
         ['product id', 'title', 'size', 'master availability', 'master quantity', 'style (item group)', 'style sizes in stock', 'style sizes made', 'style range completion %', 'google feed'],
-        r.held.map(function (h) { return [h.id, h.t, h.s, h.av, h.q, h.g, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.why === 'absent' ? 'not in the feed' : 'sent out of stock']; }));
-      // the range-completion line read off the products (RULES.rcLine, served on the market) — never a figure assumed here
-      var ln = m.av && m.av.held && m.av.held.line;
-      var low = ln ? r.held.filter(function (h) { return h.rc != null && h.rc < ln.x; }).length : 0;
-      toast(n0(r.held.length) + ' held back — in stock in the master, not live in the Google feed' + (r.held.length && ln ? ' · ' + n0(low) + ' from a style under ' + ln.x + '% range completion' : ''));
+        keep.map(function (h) { return [h.id, h.t, h.s, h.av, h.q, h.g, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.why === 'absent' ? 'not in the feed' : 'sent out of stock']; }));
+      var other = r.held.length - keep.length;
+      toast(cut ? n0(keep.length) + ' held back by range completion — styles under ' + (cut.src === 'stated' ? cut.x + '% (stated in “' + cut.rule + '”)' : '≈' + cut.x + '%, read off the products') + (other ? ' · ' + n0(other) + ' held for other reasons left out' : '')
+        : n0(r.held.length) + ' held back — no range-completion line reads off this market’s products or its rule names, so every in-stock product not live in Google is listed');
       done();
     }).catch(function (e) { toast('Held-back list failed — ' + String((e && e.message) || e)); done(); });
   }

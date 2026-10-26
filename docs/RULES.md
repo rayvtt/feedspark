@@ -363,6 +363,25 @@ never joined on a guess. Checked on the live Superdry GB feeds in-session (nothi
 held back against the "Range Completion by Availability" rule's own 3,735, 3,734 of them from a style
 under 75% range completion.
 
+**Only the range-completion hold** (Ray, 26 Oct 2026, over Superdry DE's file: *"there are two groups of
+products with a size range of 62.5%, but only products under 25% should be included in the heldback
+product list"*). An in-stock product the feed does not send is not always a range-completion hold —
+a style at 62.5% is held back for some other reason — so the file now keeps only the products **under
+the market's range-completion line**, and the toast counts how many were held back for other reasons
+and left out. The line comes, in this order, from:
+
+1. **this download's own products** — `rcLine` (a page twin of `src/rules.js › rcLine`, held equal by
+   `tools/test_rules.mjs`) read off the `rcH` histogram the join returns, so a rule changed since the
+   agent's last count is read as it runs now;
+2. **the line the master-stock agent served** (§3i);
+3. **a cut-off a Google or every-channel rule's name states** (`RC < 20%`; a Meta rule or a `>` never).
+
+A style's products count when the style sits at or under the line's lower edge (the products leave a
+gap between the held and the live, so nothing sits inside it); a product with no style is left out,
+since it cannot be shown to sit under any line. With none of the three, every held product is listed
+and the toast says why. Superdry DE runs "Range Completion based Availability" (edited 5 Oct 2026) next to
+"Range Completion < 0.2 (20% completion)", so the line read off the products — not the name — decides.
+
 ## 3g. Laid out for a client screen (`/stock`)
 
 Ray, 30 Sep 2026: *"Please ensure the presentation of the data is not too cluttered and is evenly
