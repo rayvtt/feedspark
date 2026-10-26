@@ -1198,6 +1198,14 @@ async function route(request, env, ctx) {
       // backup URL never leaves the server — or answers `unchanged` when the stored reading is of the same
       // import; {masterstock:[…]} files the counts in ONE index, masteravail (cmpid → counts), one write per
       // post. Roster companies only, named by cmpid — never a caller-supplied URL.
+      // {stocksrc: cmpid} — the source stock as FeedHero holds it (stockSrcRead), for the agent's held-back join: the
+      // same reader and KV record the page uses, a chunk a post until whole
+      if (typeof body.stocksrc === 'string') {
+        const cmpid = body.stocksrc.trim().toLowerCase().slice(0, 60);
+        if (!ROAS.cmpidBrand(cmpid)) return json({ ok: false, error: 'not a roster company' }, 404);
+        try { const a = stockSrcAnswer(cmpid, await stockSrcRead(env, cmpid, false)); return json(a.body, a.status); }
+        catch (e) { return json({ ok: false, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error', error: String((e && e.message) || e).slice(0, 160) }, 502); }
+      }
       if (typeof body.masterfile === 'string') {
         const cmpid = body.masterfile.trim().toLowerCase().slice(0, 60);
         if (!ROAS.cmpidBrand(cmpid)) return json({ ok: false, error: 'not a roster company' }, 404);
@@ -3277,6 +3285,23 @@ async function route(request, env, ctx) {
     //   GET /api/rules?client=&market=    → ONE market's full rule list in run order + its chains + findings
     //   GET /api/rules?pull=1             → OWNER-ONLY sync-now (≤6 markets a call; the page loops it)
     //   GET /api/rules/stock              → the stock view: coverage matrix, cut-offs, stock findings, every stock rule
+    // THE SOURCE STOCK AS FEEDHERO HOLDS IT (stockSrcRead): a chunk a call, the page calling again until whole — scoped
+    // to the signin's clients, roster companies only
+    if (path === '/api/rules/stocksrc' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const cmpid = String(url.searchParams.get('cmpid') || '').trim().toLowerCase().slice(0, 60);
+      const cb = ROAS.cmpidBrand(cmpid);
+      if (!cb) return json({ ok: false, error: 'not a roster company' }, 404);
+      if (!(acc.owner || clientMatch(acc.clients, cb.client))) return json({ ok: false, error: 'out of scope' }, 403);
+      try {
+        const rec = await stockSrcRead(env, cmpid, !!url.searchParams.get('fresh'));
+        const a = stockSrcAnswer(cmpid, rec);
+        if (rec.state === 'ok' && !rec.cached) logActivity(ctx, env, request, 'stock-source', cmpid + ' ' + a.body.got);
+        return json(a.body, a.status);
+      } catch (e) {
+        return json({ ok: false, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error', error: String((e && e.message) || e).slice(0, 160) }, 502);
+      }
+    }
     if ((path === '/api/rules' || path === '/api/rules/stock') && request.method === 'GET') {
       const acc = await accessOf(env, request);
       const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
@@ -4832,6 +4857,86 @@ async function catAdsRead(env, cmpid, fresh, period) {
   rec.cur = cs[0] || ''; rec.curMix = cs.length > 1;
   try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 2 * 86400 }); } catch (e) {}
   return Object.assign({ state: rec.done ? 'ok' : 'reading', restarted }, rec);
+}
+
+// ---- THE SOURCE STOCK, AS FEEDHERO HOLDS IT (Ray, 26 Oct 2026: "Just for Superdry specifically … The source stock
+// quantity is not accurate within the master feed, but it actually sits within FeedHero that feeds a supplemental feed …
+// a field called [suppfeed stock] … can you try getting that field data out from feedhero mcp ?"). FeedHero's Data Editor
+// (MCP tool data_editor) lists every product with its stored fields: suppfeed_avail + suppfeed_stock (the supplemental
+// stock feed — on the products it covers), source_availability + product_stock (what the master said) and range_comp
+// (FeedHero's OWN range completion, the figure its range-completion rules read). Read a chunk a call like the Ads lane
+// (catAdsRead) — Superdry DE is 280 pages of 200 — the page / agent calling again until whole; the finished read is kept
+// SRC_TTL in KV stocksrc:<cmpid>. A client whose Data Editor carries no suppfeed field is an ANSWER (nosupp), kept a day.
+// One product = [source avail, product stock, suppfeed avail, suppfeed stock, range completion %], avail as a code:
+// i in stock · o out · p pre/backorder · '' blank · x another word; a stock '' / 'n/a' is null.
+const SRC_FIELDS = ['source_availability', 'product_stock', 'suppfeed_avail', 'suppfeed_stock', 'range_comp'];
+const SRC_SIZE = 200, SRC_CHUNK = 24, SRC_CONC = 4;
+const SRC_TTL = 6 * 3600000, SRC_PART_TTL = 50 * 60000, SRC_NOSUPP_TTL = 24 * 3600000;
+function srcRow(r) {
+  if (!r) return null;
+  const id = String(r.foreign_product_id == null ? '' : r.foreign_product_id).trim();
+  if (!id) return null;
+  const av = (v) => { const w = String(v == null ? '' : v).trim().toLowerCase().replace(/[\s-]+/g, '_'); if (!w) return '';
+    if (/^in_?stock$|^available$/.test(w)) return 'i'; if (/pre_?order|back_?order|available_for_order/.test(w)) return 'p';
+    if (/not_?available|out_?of_?stock|sold_?out|discontinued|^unavailable$/.test(w)) return 'o'; return 'x'; };
+  const num = (v) => { const t = String(v == null ? '' : v).trim().replace(/,/g, ''); if (!t || !isFinite(+t)) return null; return Math.max(0, Math.round(+t)); };
+  const rc = String(r.range_comp == null ? '' : r.range_comp).trim(), rcv = rc && isFinite(+rc) ? Math.round(+rc * 1000) / 10 : null;
+  return [id.slice(0, 120), [av(r.source_availability), num(r.product_stock), av(r.suppfeed_avail), num(r.suppfeed_stock), rcv == null ? null : Math.max(0, Math.min(100, rcv))]];
+}
+async function stockSrcRead(env, cmpid, fresh) {
+  const key = 'stocksrc:' + cmpid, now = Date.now();
+  let rec = null;
+  try { rec = await env.EDITS.get(key, 'json'); } catch (e) { rec = null; }
+  if (rec && !fresh) {
+    if (rec.nosupp && now - rec.at < SRC_NOSUPP_TTL) return Object.assign({ state: 'nosupp', cached: true }, rec);
+    if (rec.done && now - rec.at < SRC_TTL) return Object.assign({ state: 'ok', cached: true }, rec);
+  }
+  if (!rec || rec.done || rec.nosupp || fresh || now - (rec.at0 || 0) > SRC_PART_TTL) rec = { v: 1, cmpid, at0: now, next: 1, pages: 0, total: 0, rows: {} };
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' };
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const call = (page) => mcp.call('data_editor', { company: cmpid, columns: SRC_FIELDS, page, page_size: SRC_SIZE });
+  const take = (p) => {
+    rec.total = +(p && p.total_rows) || rec.total; rec.pages = +(p && p.pages) || rec.pages;
+    TMM.rowsOf(p).forEach((r) => { const a = srcRow(r); if (a) rec.rows[a[0]] = a[1]; });
+  };
+  let first;
+  try { first = await call(rec.next); }
+  catch (e) {
+    const msg = String((e && e.message) || e);
+    // the Data Editor refuses a column the client does not have, listing the ones it does — no suppfeed field = an answer
+    if (/is not a field/i.test(msg)) {
+      const m = { v: 1, cmpid, nosupp: true, at: now, note: 'FeedHero holds no ' + ((/"([a-z_0-9]+)" is not a field/i.exec(msg) || [])[1] || 'suppfeed stock') + ' field for this client' };
+      try { await env.EDITS.put(key, JSON.stringify(m), { expirationTtl: 2 * 86400 }); } catch (e2) {}
+      return Object.assign({ state: 'nosupp' }, m);
+    }
+    throw e;
+  }
+  if (!first || (first.total_rows == null && !Array.isArray(first.rows))) return { state: 'preparing', note: String((first && (first.message || first.note)) || 'FeedHero is still preparing this client').slice(0, 200) };
+  take(first);
+  const want = []; for (let pg = rec.next + 1; pg <= Math.min(rec.pages, rec.next + SRC_CHUNK - 1); pg++) want.push(pg);
+  let i = 0;
+  const worker = async () => { while (i < want.length) { const pg = want[i++]; take(await call(pg)); } };
+  await Promise.all(Array.from({ length: Math.min(SRC_CONC, want.length) }, worker));
+  rec.next = want.length ? want[want.length - 1] + 1 : rec.next + 1;
+  if (rec.next > rec.pages) {
+    rec.done = true; rec.at = Date.now();
+    let s = 0; Object.keys(rec.rows).forEach((k) => { if (rec.rows[k][2]) s++; });
+    rec.supp = s;
+    if (!s) { rec = { v: 1, cmpid, nosupp: true, at: rec.at, note: 'the suppfeed stock field is empty on every product' }; }
+  }
+  try { await env.EDITS.put(key, JSON.stringify(rec), { expirationTtl: 2 * 86400 }); } catch (e) {}
+  if (rec.nosupp) return Object.assign({ state: 'nosupp' }, rec);
+  return Object.assign({ state: rec.done ? 'ok' : 'reading' }, rec);
+}
+// the answer both lanes give (the page's route and the agent's push lane): progress until whole, the rows only then
+function stockSrcAnswer(cmpid, rec) {
+  if (rec.state === 'no_token') return { status: 503, body: { ok: false, state: 'no_token', error: rec.error } };
+  if (rec.state === 'preparing') return { status: 202, body: { ok: false, state: 'preparing', note: rec.note } };
+  if (rec.state === 'nosupp') return { status: 200, body: { ok: true, cmpid, nosupp: true, done: true, note: rec.note, at: rec.at } };
+  const head = { ok: true, cmpid, total: rec.total, pages: rec.pages, next: rec.next, got: Object.keys(rec.rows || {}).length, cached: !!rec.cached };
+  if (rec.state !== 'ok') return { status: 200, body: Object.assign(head, { done: false }) };
+  return { status: 200, body: Object.assign(head, { done: true, at: rec.at, supp: rec.supp || 0, f: ['src', 'srcQ', 'supp', 'suppQ', 'rc'], rows: rec.rows }) };
 }
 
 // wins = { w7: {total, categories}, w30: …, w90: … } as splitClientRows returns them per window.

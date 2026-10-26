@@ -807,6 +807,8 @@ export function sanitizeHeld(raw) {
   });
   if (hs !== o.n) return null;
   o.rcH = H.sort((a, b) => (a[0] == null ? -1 : a[0]) - (b[0] == null ? -1 : b[0]));
+  // where FeedHero's supplemental stock (suppfeed) decided stock, and how many products carried its own range_comp
+  if (raw.src && typeof raw.src === 'object') o.src = { st: num(raw.src.st), rc: num(raw.src.rc) };
   return o;
 }
 // what /stock shows under "Held back from Google" for one market — m = its masteravail record (raw), w = which feeds
@@ -822,7 +824,7 @@ export function heldView(m, stock, w) {
   const ns = (h.rcH || []).filter((x) => x[0] == null)[0];
   return { state: 'ok', t: m.t || null, imp: m.imp || null, n: h.n, absent: h.absent, out: h.out, inStock: h.inStock,
     pct: h.inStock ? (h.n / h.inStock) * 100 : null, feedN: h.feedN, feedLive: h.feedLive, join: h.join,
-    noStyle: ns ? ns[1] : 0, line: rcLine(h.rcH), stated };
+    noStyle: ns ? ns[1] : 0, line: rcLine(h.rcH), stated, src: h.src || null };
 }
 // the held-back book: markets with a reading, their held and in-stock summed (a count carries no currency)
 export function heldBook(markets) {

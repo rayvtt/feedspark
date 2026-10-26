@@ -622,5 +622,66 @@ t('no FeedHero import URL (with its hash) is written into the code', !/import_fe
   t('with no feed it still simulates, and says it was not joined', ND.ok && !ND.join && ND.joinWhy === 'nofeed' && E.simulate(ND, { rc: { v: 50 } }).today === null);
 }
 
+// ---- the source stock as FeedHero holds it (Ray, 26 Oct 2026: "the actual source stock quantity data sits in a field in
+// FeedHero … [suppfeed stock] … You might have to rewire the comparisons")
+console.log('· the source stock — FeedHero\'s suppfeed stock + range_comp, read through the Data Editor');
+{
+  const SX = E.srcIndex({ A1: ['o', 0, 'i', 5, 60], A2: ['i', 3, 'o', null, 60], B1: ['i', 9, '', null, 33.3], X: ['i', 1, 'i', 0, null], bad: 'no' });
+  t('srcIndex: the suppfeed decides where it covers a product; in stock with 0 units is out', SX.m.get(E.adsKey('A1')).st === 'in' && SX.m.get(E.adsKey('A1')).q === 5 && SX.m.get(E.adsKey('A2')).st === 'out' && SX.m.get(E.adsKey('X')).st === 'out');
+  t('…a blank or n/a suppfeed stock is OUT (Ray, 26 Oct 2026), whatever the master says; its range_comp kept', SX.m.get(E.adsKey('B1')).st === 'out' && SX.m.get(E.adsKey('B1')).rc === 33.3 && E.srcIndex({ N: ['i', 9, 'i', null, 50] }).m.get(E.adsKey('N')).st === 'out');
+  t('…a stock figure above 0 is in even with no suppfeed word; every listed product is decided', E.srcIndex({ Q: ['o', 0, '', 7, 50] }).m.get(E.adsKey('Q')).st === 'in' && SX.n === 4 && SX.supp === 4 && SX.rc === 3);
+  // the master says b1 in / a1 out; the suppfeed says a1 in (5 units), b1 out — the comparison follows the suppfeed
+  const fi = E.feedIndex(); fi.onRow(['g:id', 'g:availability']); [['a2', 'in stock']].forEach((r) => fi.onRow(r)); const feed = fi.finish();
+  const SR = E.srcIndex({ a1: ['o', 0, 'i', 5, 25], a2: ['i', 2, '', 7, 80], b1: ['i', 9, 'o', 0, 10], c1: ['i', 4, '', null, null] });
+  const hbM = E.heldBack(feed), hbS = E.heldBack(feed, SR);
+  const MR = [['id', 'title', 'size', 'item_group_id', 'availability', 'quantity'], ['a1', 'Tee', 'S', 'A', 'out of stock', '0'], ['a2', 'Tee', 'M', 'A', 'in stock', '2'], ['b1', 'Coat', 'S', 'B', 'in stock', '9'], ['c1', 'Bag', '', 'C', 'in stock', '4'], ['d1', 'Cap', '', 'D', 'in stock', '3']];
+  MR.forEach((r) => { hbM.onRow(r); hbS.onRow(r); });
+  const m0 = hbM.finish(), s0 = hbS.finish();
+  t('heldBack on the master alone: b1 + c1 + d1 held (in stock, not in the feed)', m0.held.map((h) => h.id).sort().join() === 'b1,c1,d1' && m0.src === null);
+  t('heldBack with the source: a1 (suppfeed in stock) is held; b1 (suppfeed 0) and c1 (suppfeed blank) are out, not held', s0.held.map((h) => h.id).sort().join() === 'a1,d1' && s0.src.st === 4 && s0.src.rc === 3);
+  const a1 = s0.held.find((h) => h.id === 'a1'), d1 = s0.held.find((h) => h.id === 'd1');
+  t('…a held product says where its stock was read and carries FeedHero\'s range_comp; one the read does not list keeps the master and its style\'s run', a1.from === 's' && a1.q === '5' && a1.rc === 25 && d1.from === 'm' && d1.rc === 100);
+  t('…the live products count in rcH at FeedHero\'s range_comp', s0.rcH.some((e) => e[0] === 80 && e[2] === 1));
+  const sr = E.stockRows(feed, SR); MR.forEach((r) => sr.onRow(r)); const D = sr.finish();
+  t('stockRows with the source: stock and quantity follow the suppfeed, range completion is FeedHero\'s', D.rows.st.join() === '1,1,0,0,1' && D.rows.q[0] === 5 && D.rows.rc.join() === '25,80,10,,' && D.src.st === 4);
+  t('…the simulator reads FeedHero\'s range completion: under 30% holds a1 only (b1 and c1 are out, d1\'s style is whole)', E.simulate(D, { rc: { v: 30 } }).take.rc === 1 && E.simHeld(D, { rc: { v: 30 } }).map((h) => h.id).join() === 'a1');
+}
+{
+  // the worker: one Data Editor row → [id, codes], then the chunked read against a stub MCP
+  const SR = new Function(liftF('srcRow') + 'return srcRow;')();
+  const r = SR({ foreign_product_id: ' P-1 ', source_availability: 'NOT_AVAILABLE', product_stock: '0', suppfeed_avail: 'in stock', suppfeed_stock: '1,204', range_comp: '0.6250' });
+  t('srcRow keeps the product id and codes availability (o/i), stock as a number, range_comp as a %', r[0] === 'P-1' && r[1].join('|') === 'o|0|i|1204|62.5');
+  t('…"n/a" and blanks are null, never 0; a pre-order word is p; no id = dropped', JSON.stringify(SR({ foreign_product_id: 'x', suppfeed_stock: 'n/a', suppfeed_avail: '', source_availability: 'preorder' })[1]) === '["p",null,"",null,null]' && SR({ foreign_product_id: '' }) === null);
+  const consts = (WK.match(/^const SRC_[\s\S]*?;$/gm) || []).join('\n');
+  const TMM = { rowsOf: (p) => (p && Array.isArray(p.rows) ? p.rows : []) };
+  const kv = new Map(); const log = []; let mode = 'ok', total = 50;
+  const env = { ROAS_MCP_TOKEN: 'x', EDITS: { get: async (k) => (kv.has(k) ? JSON.parse(kv.get(k)) : null), put: async (k, v) => { kv.set(k, v); } } };
+  const roasMcp = () => ({ init: async () => ({}), call: async (tool, a) => {
+    log.push(a.page);
+    if (tool !== 'data_editor' || a.company !== 'northwind_uk' || a.columns.join() !== 'source_availability,product_stock,suppfeed_avail,suppfeed_stock,range_comp') throw new Error('bad call ' + JSON.stringify(a));
+    if (mode === 'nofield') throw new Error('"suppfeed_avail" is not a field of this client. Fields: id, title, …');
+    const size = a.page_size;
+    return { total_rows: total, pages: Math.ceil(total / size), rows: Array.from({ length: Math.max(0, Math.min(size, total - (a.page - 1) * size)) }, (_, j) => { const n = (a.page - 1) * size + j;
+      return { foreign_product_id: 'P' + n, source_availability: 'in stock', product_stock: '3', suppfeed_avail: mode === 'empty' ? '' : n % 2 ? 'in stock' : '', suppfeed_stock: n % 2 ? '7' : '', range_comp: '0.5' }; }) };
+  } });
+  const src = consts.replace('SRC_SIZE = 200', 'SRC_SIZE = 10').replace('SRC_CHUNK = 24', 'SRC_CHUNK = 2') + liftF('srcRow') + liftA('stockSrcRead') + liftF('stockSrcAnswer') + 'return { stockSrcRead, stockSrcAnswer };';
+  const S = new Function('roasMcp', 'fetch', 'TMM', src)(roasMcp, () => null, TMM);
+  const a1 = await S.stockSrcRead(env, 'northwind_uk', false);
+  t('a big client is read a CHUNK a call (2 of 5 pages), and the answer says it is not done', a1.state === 'reading' && log.join() === '1,2' && S.stockSrcAnswer('northwind_uk', a1).body.done === false && !S.stockSrcAnswer('northwind_uk', a1).body.rows);
+  await S.stockSrcRead(env, 'northwind_uk', false); const a3 = await S.stockSrcRead(env, 'northwind_uk', false);
+  t('…carries on until whole, then answers the rows and how many the suppfeed covers', a3.state === 'ok' && log.join() === '1,2,3,4,5' && Object.keys(a3.rows).length === 50 && a3.supp === 25 && S.stockSrcAnswer('northwind_uk', a3).body.rows.P1.join('|') === 'i|3|i|7|50');
+  const a4 = await S.stockSrcRead(env, 'northwind_uk', false);
+  t('a whole read is served from KV, no MCP call', a4.cached && log.length === 5);
+  mode = 'nofield'; kv.clear();
+  const n1 = await S.stockSrcRead(env, 'northwind_uk', false), n2 = await S.stockSrcRead(env, 'northwind_uk', false), nl = log.length;
+  t('a client with no suppfeed field is an ANSWER (nosupp), kept a day — the master stands', n1.state === 'nosupp' && n2.cached && log.length === nl && S.stockSrcAnswer('x', n1).body.nosupp === true);
+  mode = 'empty'; kv.clear(); total = 10;
+  t('a suppfeed field empty on every product reads as nosupp too', (await S.stockSrcRead(env, 'northwind_uk', false)).state === 'nosupp');
+  t('no token = says so (503)', S.stockSrcAnswer('x', await S.stockSrcRead({ EDITS: env.EDITS }, 'other_uk', false)).status === 503);
+  const rt = WK.slice(WK.indexOf("if (path === '/api/rules/stocksrc'"), WK.indexOf("if ((path === '/api/rules' || path === '/api/rules/stock')"));
+  t('/api/rules/stocksrc: roster companies only, scoped to the signin\'s clients', /if \(!cb\) return json\(\{ ok: false, error: 'not a roster company' \}, 404\);/.test(rt) && /if \(!\(acc\.owner \|\| clientMatch\(acc\.clients, cb\.client\)\)\) return json/.test(rt));
+  t('the agent\'s push lane answers the same reader ({stocksrc})', /if \(typeof body\.stocksrc === 'string'\) \{/.test(WK));
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

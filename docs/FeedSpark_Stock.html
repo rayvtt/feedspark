@@ -1751,6 +1751,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (st !== 'ok') { var w = HBWHY[st] || HBWHY.unread; return '<td class="num hbs"><span class="av-none" data-tip="' + esc('<b>' + esc(m.client + ' ' + m.market) + '</b><br>' + w[1]) + '">' + esc(w[0]) + '</span></td>'; }
     var tip = '<b>' + esc(m.client + ' ' + m.market) + ' · in stock, not live in Google</b><br>' + n0(h.n) + ' of the ' + n0(h.inStock) + ' products the master states in stock'
       + '<br>' + n0(h.absent) + ' not in the Google feed' + (h.out ? ' · ' + n0(h.out) + ' sent out of stock' : '')
+      + (h.src && h.src.st ? '<br><span class="m">stock read from FeedHero’s suppfeed on ' + n0(h.src.st) + ' products (the master on the rest) · range completion = FeedHero’s range_comp on ' + n0(h.src.rc) + '</span>' : '')
       + '<br><span class="m">matched product by product: the master’s ' + esc(h.join.h || 'id') + ' → the feed’s ' + esc(h.join.on) + ' · the Google feed carries ' + n0(h.feedN) + ' products · counted ' + since(h.t) + '</span>'
       + '<br><span class="m">⬇ List downloads the ones held back by range completion — styles under the line — with id, title, size, availability and the style’s range completion.</span>';
     return '<td class="num hbs"><div data-tip="' + esc(tip) + '"><span class="big">' + hbBtn(m, 'hb-dl') + n0(h.n) + '</span><span class="sub2">' + pctS(h.pct) + ' of in stock</span></div></td>';
@@ -2145,6 +2146,38 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       }, function (g, t) { say('Feed ' + hbPct(g, t)); }).then(function () { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } return fi.finish(); });
     });
   }
+  // THE SOURCE STOCK AS FEEDHERO HOLDS IT (Ray, 26 Oct 2026: "The source stock quantity is not accurate within the master
+  // feed, but it actually sits within FeedHero that feeds a supplemental feed … [suppfeed stock]"): the Data Editor read
+  // (/api/rules/stocksrc — a chunk a call, the worker keeping the whole read 6 h) → FeedCatalog.srcIndex. Where the
+  // supplemental feed covers a product its stock decides; FeedHero's own range_comp is every product's range completion.
+  // A client with no suppfeed field, or a read that fails, falls back to the master alone and says so — never blocks.
+  function hbSrc(m, say, E, tries) {
+    tries = tries || 0;
+    return fetch('/api/rules/stocksrc?cmpid=' + encodeURIComponent(m.cmpid), { credentials: 'same-origin' })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (x) {
+        var j = x.j || {};
+        if (x.s === 202 || j.state === 'preparing') {
+          if (tries >= 8) return { why: 'FeedHero is still preparing its stock fields' };
+          say('FeedHero stock…');
+          return new Promise(function (r) { setTimeout(r, 6000); }).then(function () { return hbSrc(m, say, E, tries + 1); });
+        }
+        if (!j.ok) return { why: j.error || ('HTTP ' + x.s) };
+        if (j.nosupp) return { why: j.note || 'no suppfeed stock field in FeedHero', none: true };
+        if (!j.done) {
+          if (tries >= 40) return { why: 'the FeedHero stock read did not finish' };
+          say('FeedHero stock ' + (j.pages ? Math.min(99, Math.round(((j.next - 1) / j.pages) * 100)) + '%' : '…'));
+          return hbSrc(m, say, E, tries + 1);
+        }
+        var ix = E.srcIndex(j.rows);
+        return { ix: ix, at: j.at, n: ix.n, supp: ix.supp };
+      }, function (e) { return { why: String((e && e.message) || e) }; });
+  }
+  function hbSrcNote(s, r) {
+    if (!s) return '';
+    if (!s.ix) return s.none ? '' : ' · stock from the master (FeedHero’s suppfeed stock not read — ' + s.why + ')';
+    return ' · stock from FeedHero’s suppfeed stock on ' + n0((r && r.st) || 0) + ' products, the master on the rest; range completion is FeedHero’s own';
+  }
   // FeedHero's first read of a big master outlasts a request: the info route answers 202 until it is ready
   function hbInfo(q, tries, say) {
     return fetch('/api/catalog/master' + q, { credentials: 'same-origin' })
@@ -2203,7 +2236,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var E = en[0], FA = en[1];
       return hbFeed(q, say, E, FA).then(function (feed) {
         if (!feed.n) throw new Error('the Google feed carries no products');
-        return hbInfo(q, 0, say).then(function () { return hbMaster(q, feed, say, E, FA); });
+        return hbSrc(m, say, E).then(function (src) {
+          return hbInfo(q, 0, say).then(function () { return hbMaster(q, feed, say, E, FA, E.heldBack(feed, src.ix || null)); })
+            .then(function (r) { r.srcRead = src; return r; });
+        });
       });
     }).then(function (r) {
       if (!r.ok) throw new Error('none of the master’s columns carries the IDs the Google feed was built from');
@@ -2213,11 +2249,12 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var cut = hbCut(m, r.rcH), keep = cut ? r.held.filter(function (h) { return cut.keep(h.rc); }) : r.held;
       if (cut && !keep.length) { toast('None of the ' + n0(r.held.length) + ' held-back products sits under ' + m.client + ' ' + m.market + '’s range-completion line (' + cut.x + '%) — they are held back for other reasons'); done(); return; }
       csvDownload((m.client + '_' + m.market).toLowerCase().replace(/\W+/g, '_') + '_held_back_products.csv',
-        ['product id', 'title', 'size', 'master availability', 'master quantity', 'style (item group)', 'style sizes in stock', 'style sizes made', 'style range completion %', 'google feed'],
-        keep.map(function (h) { return [h.id, h.t, h.s, h.av, h.q, h.g, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.why === 'absent' ? 'not in the feed' : 'sent out of stock']; }));
+        ['product id', 'title', 'size', 'source availability', 'source quantity', 'stock read from', 'style (item group)', 'style sizes in stock', 'style sizes made', 'range completion %', 'google feed'],
+        keep.map(function (h) { return [h.id, h.t, h.s, h.av, h.q, h.from === 's' ? 'FeedHero suppfeed stock' : 'master', h.g, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.why === 'absent' ? 'not in the feed' : 'sent out of stock']; }));
       var other = r.held.length - keep.length;
       toast(cut ? n0(keep.length) + ' held back by range completion — styles under ' + (cut.src === 'stated' ? cut.x + '% (stated in “' + cut.rule + '”)' : '≈' + cut.x + '%, read off the products') + (other ? ' · ' + n0(other) + ' held for other reasons left out' : '')
         : n0(r.held.length) + ' held back — no range-completion line reads off this market’s products or its rule names, so every in-stock product not live in Google is listed');
+      if (r.srcRead && (r.srcRead.ix || !r.srcRead.none)) setTimeout(function () { toast(hbSrcNote(r.srcRead, r.src).replace(/^ · /, '').replace(/^./, function (c) { return c.toUpperCase(); })); }, 3500);
       done();
     }).catch(function (e) { toast('Held-back list failed — ' + String((e && e.message) || e)); done(); });
   }
@@ -2270,7 +2307,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var E = en[0], FA = en[1]; SIM.E = E;
       return hbFeed(q, say, E, FA).then(function (feed) {
         if (!feed.n) throw new Error('the Google feed carries no products');
-        return hbInfo(q, 0, say).then(function (info) { return hbMaster(q, feed, say, E, FA, E.stockRows(feed)).then(function (D) { D.info = info; return D; }); });
+        return hbSrc(m, say, E).then(function (src) {
+          return hbInfo(q, 0, say).then(function (info) { return hbMaster(q, feed, say, E, FA, E.stockRows(feed, src.ix || null)).then(function (D) { D.info = info; D.srcRead = src; return D; }); });
+        });
       });
     }).then(function (D) {
       if (!D.ok) throw new Error('the master carries no products');
@@ -2358,7 +2397,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     }).join('') || '<tr><td class="empty" colspan="4">Nothing in stock.</td></tr>';
     var mb = $('#sim-more'); mb.hidden = cats.length <= 12; mb.textContent = SIM.all ? 'Show fewer' : 'Show all ' + cats.length;
     fsum('sim-card', m.client + ' ' + m.market + ' · ' + n0(res.held) + ' of ' + n0(res.inStock) + ' in stock held back (' + share(res.held, res.inStock) + ')');
-    $('#sim-foot').textContent = 'A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes. Range completion = a style’s sizes in stock ÷ the sizes it is made in, read off the master. Categories are the Google feed’s product_type tree (' + n0(D.cat.feed) + ' products' + (D.cat.master ? ', ' + n0(D.cat.master) + ' by the master’s own type' : '') + (D.cat.none ? ', ' + n0(D.cat.none) + ' with none' : '') + ').';
+    $('#sim-foot').textContent = 'A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes. ' + (D.src && D.src.st ? 'Stock: FeedHero’s suppfeed stock on ' + n0(D.src.st) + ' products, the master on the rest. ' : '') + (D.src && D.src.rc ? 'Range completion = FeedHero’s own range_comp (' + n0(D.src.rc) + ' products), else a style’s sizes in stock ÷ sizes made. ' : 'Range completion = a style’s sizes in stock ÷ the sizes it is made in, read off the master. ') + 'Categories are the Google feed’s product_type tree (' + n0(D.cat.feed) + ' products' + (D.cat.master ? ', ' + n0(D.cat.master) + ' by the master’s own type' : '') + (D.cat.none ? ', ' + n0(D.cat.none) + ' with none' : '') + ').';
   }
   var simRaf = 0;
   function simLater() { if (simRaf) return; simRaf = requestAnimationFrame(function () { simRaf = 0; simDraw(); }); }

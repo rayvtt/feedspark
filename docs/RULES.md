@@ -1104,6 +1104,45 @@ manifest marker keeps them out. The cut-offs card now stands on its own row. `/r
   rules and the phone. Every count is checked against a tally made in the test, never against the engine.
 - The engine block in `tools/test_catalog.mjs`.
 
+## 3q. The source stock as FeedHero holds it — Superdry's suppfeed (`/stock`)
+
+Ray, 26 Oct 2026: *"Just for Superdry specifically … The source stock quantity is not accurate within the master
+feed, but it actually sits within FeedHero that feeds a supplemental feed … a field called [suppfeed stock]. You might
+have to rewire the comparisons."*
+
+FeedHero's **Data Editor** (MCP tool `data_editor`, read-only, 200 rows a page) lists every product with its stored
+fields. On Superdry it carries `suppfeed_avail` + `suppfeed_stock` (the supplemental stock feed, on the products it
+covers), `source_availability` + `product_stock` (what the master said) and `range_comp` — **FeedHero's own range
+completion**, the figure its range-completion rules read, on every product.
+
+- **The read** — `stockSrcRead` in the worker: the five columns, a chunk of 24 pages a call (4 at a time, Superdry DE is
+  280 pages), progress in KV `stocksrc:<cmpid>`, the caller calling again until whole; a whole read kept 6 h. A client
+  whose Data Editor has no suppfeed field (FeedHero refuses the column) — or one where it is empty on every product —
+  is an ANSWER (`nosupp`), kept a day: the master's own stock stands, exactly as before. One product is stored as
+  `[source avail, product stock, suppfeed avail, suppfeed stock, range_comp %]`, availability coded i/o/p/x/blank.
+- **Two doors, one reader** — `GET /api/rules/stocksrc?cmpid=` (roster companies only, scoped to the signin's clients)
+  for the page, and `{stocksrc: cmpid}` on the key-gated push lane for the master-stock agent. Both answer progress
+  until whole and the rows only then (`stockSrcAnswer`).
+- **The rewire** — `catalog_engine › srcIndex` turns the rows into a map; `heldBack(feed, src)` and
+  `stockRows(feed, src)` take it. The suppfeed's stock **decides every product the read lists**: a figure above 0 is in
+  stock (pre-order / out where its own word says so), and **0, blank or `n/a` is out of stock** (Ray, 26 Oct 2026:
+  *"blank and n/a can be counted as out of stock"* — on Superdry DE about half the rows carry no figure, some of them
+  products the master calls IN_STOCK). Only a product the read does not list keeps the master's own word. A product's range completion
+  is FeedHero's `range_comp` where the read carries it, else its style's run off the master. So the held-back list,
+  its range-completion cut, the simulator and the card's held-back count all compare the suppfeed's stock against the
+  Google feed.
+- **The card follows daily stock** — the master-stock agent reads the suppfeed BEFORE the master and, where one exists,
+  forces the master re-read (the import may not have moved while the suppfeed has), so the held-back count is today's.
+  The record carries `src {st, rc}` (how many products the suppfeed decided, how many carried range_comp) and the
+  held-back cell's tooltip says so; the CSV gains *stock read from* (FeedHero suppfeed stock / master) and *source
+  quantity*.
+
+Read live 26 Oct 2026 (in session, nothing committed): the suppfeed carries a stock figure on only part of a Superdry
+market's rows — the rest are blank or `n/a`, and those read as out of stock. Harness: `tools/test_catalog.mjs`
+(srcIndex, heldBack / stockRows with the source, srcRow + stockSrcRead lifted against a stub MCP — chunking, KV,
+nosupp, empty field, no token — and the route), `tools/test_rules.mjs` (the agent's join with the source, the record
+through `sanitizeHeld`, `heldView`), `tools/check_stocksim.js` (the simulator on a stubbed source read).
+
 ## 4. Findings
 
 Every finding names the market and the rules.
@@ -1120,6 +1159,8 @@ least half of a brand's read markets run that this market does not (local invent
 first); a **cut-off** set to different values across a brand's markets.
 
 ## 5. Routes
+
+- `GET /api/rules/stocksrc?cmpid=` — FeedHero's source stock (suppfeed + range_comp) for one roster company, a chunk a call (§3q)
 
 | Route | What |
 |---|---|

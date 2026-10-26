@@ -64,6 +64,32 @@ function heldBy(p, R) {
 const count = (R) => IN.filter((p) => heldBy(p, R)).length;
 const todayHeld = IN.filter((p) => p.feed !== 'in stock').length;
 
+// ---- FeedHero's own stock (the Data Editor read, /api/rules/stocksrc — Ray, 26 Oct 2026: "the actual source stock quantity
+// data sits in … [suppfeed stock]", then "blank and n/a can be counted as out of stock"): the read lists every styled product
+// and its suppfeed stock DECIDES it — a figure above 0 is in, 0 / blank / n/a is out. The four styles the master says have
+// NO size in stock (k = 0) carry 5 units on six sizes there (FeedHero range completion 60%); the k = 5 styles' size 4 reads
+// NOT_AVAILABLE; the k = 7 styles' size 4 has a BLANK suppfeed stock and the k = 8 styles' size 6 reads n/a — in stock in
+// the master, out by Ray's rule; FeedHero's range_comp reads the k = 1 styles at 30%. Every other product mirrors the master.
+const SRC = {};
+P.forEach((p) => {
+  if (p.k == null) return;
+  let supp = p.inS ? 'i' : 'o', sq = p.inS ? p.q : 0, rc = p.k * 10;
+  if (p.k === 0 && SIZES.indexOf(p.s) < 6) { supp = 'i'; sq = 5; }
+  if (p.k === 0) rc = 60;
+  if (p.k === 5 && p.s === '4') { supp = 'o'; sq = null; }
+  if (p.k === 7 && p.s === '4') { supp = ''; sq = null; }
+  if (p.k === 8 && p.s === '6') { supp = 'i'; sq = null; }
+  if (p.k === 1) rc = 30;
+  SRC[p.id] = [p.inS ? 'i' : 'o', p.q, supp, sq, rc];
+});
+// counted here, off the rule as Ray stated it
+const srcIn = (p) => (p.k == null ? p.inS : SRC[p.id][3] != null && SRC[p.id][3] > 0 && SRC[p.id][2] !== 'o');
+const SIN = P.filter(srcIn);
+const SRC_IN = SIN.length;
+const SRC_HELD20 = SIN.filter((p) => p.k != null && SRC[p.id][4] < 20).length;
+const SRC_TODAY = SIN.filter((p) => p.feed !== 'in stock').length;
+const SRC_N = Object.keys(SRC).length;
+
 let pass = 0, fail = 0;
 const ok = (n, c, got) => {
   if (c) { pass++; console.log('  ✓ ' + n); }
@@ -78,10 +104,11 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
  if(url.indexOf('/api/feed/proxy')>=0){window.__simReads=(window.__simReads||[]).concat([url]);return tx(${JSON.stringify(FEED)},'application/xml');}
  if(url.indexOf('/api/catalog/master/file')>=0)return tx(${JSON.stringify(MASTER)},'text/csv');
  if(url.indexOf('/api/catalog/master')>=0)return j({ok:true,rows:${P.length},lastImport:'2026-10-22 05:00:00'});
+ if(url.indexOf('/api/rules/stocksrc')>=0)return window.__SRC?j({ok:true,done:true,cmpid:'superdry_gb',at:Date.now(),supp:1,rows:window.__SRC}):j({ok:true,nosupp:true,done:true,note:'no suppfeed stock field'});
 ${RS.stubLines()}
  return j({ok:false,error:'stub'},404);};`;
 
-async function open(browser, w, h, ctxOpts, keep) {
+async function open(browser, w, h, ctxOpts, keep, pre) {
   const ctx = keep || await browser.newContext(Object.assign({ viewport: { width: w, height: h || 1000 }, acceptDownloads: true }, ctxOpts || {}));
   const p = await ctx.newPage();
   const errs = [];
@@ -91,6 +118,7 @@ async function open(browser, w, h, ctxOpts, keep) {
     if (u.host !== 'fcc.test' || u.pathname !== '/stock') return r.abort();
     return r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML });
   });
+  if (pre) await p.addInitScript(pre);
   await p.addInitScript(STUB);
   await p.goto('http://fcc.test/stock?brand=Superdry');
   await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000, state: 'attached' });
@@ -179,6 +207,18 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('switching a rule off takes it out: ' + count({ rc: 20 }), k[1] === count({ rc: 20 }), k[1]);
     const fsum = await p.$eval('#sim-card .fsum', (e) => e.textContent);
     ok('folded, the card keeps its reading (market · held back of in stock)', /Superdry GB · \d+ of \d+ in stock held back/.test(fsum), fsum);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
+    console.log('· FeedHero\'s suppfeed stock where it covers a product, its own range completion everywhere');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'window.__SRC=' + JSON.stringify(SRC) + ';localStorage.removeItem("fcc-stock-sim");'));
+    await read(p);
+    k = await kpi(p);
+    ok('in stock = the suppfeed\'s stock (blank and n/a out), the master only where the read lists nothing: ' + SRC_IN, k[0] === SRC_IN, [k[0], SRC_IN]);
+    ok('range completion under 20% reads FeedHero\'s own range_comp (the k = 1 styles sit at 30%): ' + SRC_HELD20, k[1] === SRC_HELD20, [k[1], SRC_HELD20]);
+    ok('held back today counts the suppfeed\'s in-stock products the feed never sends: ' + SRC_TODAY, k[3] === SRC_TODAY, [k[3], SRC_TODAY]);
+    const foot = await p.$eval('#sim-foot', (e) => e.textContent);
+    ok('the card says where the stock came from (every product the read lists) and the range completion', new RegExp('suppfeed stock on ' + SRC_N + ' products').test(foot) && /FeedHero’s own range_comp/.test(foot), foot);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
