@@ -485,6 +485,21 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   const liftPg = (h, name) => { const a = h.indexOf('  function ' + name + '('); const b = h.indexOf('\n  }\n', a); if (a < 0 || b < 0) throw new Error('cannot lift ' + name); return h.slice(a, b + 4); };
   const hbTw = new Function(liftPg(SP, 'hbBook') + '\nreturn hbBook;')();
   t('page hbBook === engine heldBook', JSON.stringify(hbTw(BKM)) === JSON.stringify(R.heldBook(BKM)));
+  // ONLY THE RANGE-COMPLETION HOLD (Ray, 26 Oct 2026: Superdry DE's file carried two 62.5% styles — "only products under 25%
+  // should be included"): the page reads the line off the download's own products with a twin of rcLine, then falls back
+  const rcTw = new Function(liftPg(SP, 'roundIn') + '\n' + liftPg(SP, 'rcLine') + '\n' + liftPg(SP, 'hbCut') + '\nreturn { rcLine, hbCut };')();
+  const RCC = [SD, SD.concat([[null, 900, 900]]), [[20, 300, 1500], [40, 400, 3000], [60, 500, 5000]], [[10, 80, 0], [50, 20, 30], [90, 0, 100]], [[10, 95, 0], [50, 5, 10], [90, 0, 100]], [[10, 5, 0], [90, 0, 500]], [[10, 100, 0], [20, 100, 0]], [[12.5, 400, 0], [20, 900, 3], [25, 4, 600], [62.5, 10, 8000], [100, 0, 30000]]];
+  t('page rcLine === engine rcLine on every case (and the engine\'s thresholds are the page\'s 20 / 90%)', RCC.every((c) => JSON.stringify(rcTw.rcLine(c)) === JSON.stringify(R.rcLine(c))) && R.RC_LINE_MIN === 20 && R.RC_LINE_SHARE === 0.9);
+  const DE = [[12.5, 400, 0], [20, 900, 3], [25, 4, 600], [62.5, 10, 8000], [100, 0, 30000]];
+  const cutDE = rcTw.hbCut({ av: { held: { state: 'ok', line: null, stated: [] } } }, DE);
+  t('hbCut: the line read off the download itself — under 25% kept, a 62.5% style left out, a style-less product left out', cutDE && cutDE.src === 'read' && cutDE.x === 25 && cutDE.keep(20) && cutDE.keep(12.5) && !cutDE.keep(25) && !cutDE.keep(62.5) && !cutDE.keep(null), JSON.stringify(cutDE));
+  const SPREAD = [[20, 300, 1500], [40, 400, 3000], [60, 500, 5000]];
+  const cutSv = rcTw.hbCut({ av: { held: { state: 'ok', line: { x: 36, lo: 35.3, hi: 36.4 }, stated: [] } } }, SPREAD);
+  t('hbCut: no line in the download → the line the agent served', cutSv && cutSv.src === 'served' && cutSv.keep(35.3) && !cutSv.keep(36.4));
+  const cutSt = rcTw.hbCut({ av: { held: { state: 'ok', line: null, stated: [{ rule: 'Social RC > 65%', ch: 'meta', op: '>', v: 65 }, { rule: 'Range Completion < 0.2', ch: 'all', op: '<', v: 20 }] } } }, SPREAD);
+  t('hbCut: then a cut-off a Google / every-channel rule NAME states (a Meta rule or a ">" never)', cutSt && cutSt.src === 'stated' && cutSt.x === 20 && cutSt.keep(19.9) && !cutSt.keep(20));
+  t('hbCut: nothing to go on → null, and the page lists every held product saying why', rcTw.hbCut({ av: { held: { state: 'ok', line: null, stated: [] } } }, SPREAD) === null
+    && /var cut = hbCut\(m, r\.rcH\), keep = cut \? r\.held\.filter\(function \(h\) \{ return cut\.keep\(h\.rc\); \}\) : r\.held;/.test(SP) && /keep\.map\(function \(h\)/.test(SP) && /held for other reasons left out/.test(SP));
 
   // THE AGENT — the join on the same two reads, counts only out of the process
   const MS = await import('./master_stock.mjs');
@@ -532,7 +547,7 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   t('page: the scenario or period redraws the market rows too', /svSave\(\); renderAv\(\); renderSv\(\);/.test(SP));
   t('page: the summary tiles — each channel, then held back, then the ad spend book (hover for its working)', /pair\(avBook\(ms, 'g'\), 'Google'\) \+ pair\(avBook\(ms, 'fb'\), 'Meta'\) \+ held \+ spend/.test(SP) && /<div class="it av2" data-sv="book" tabindex="0"/.test(SP));
   t('page: the panel shows what was measured beside the rule\'s own count (the forecast stays on the rule)', /Measured — ' \+ esc\(m\.client \+ ' ' \+ m\.market\)/.test(SP) && /\+ meas\n/.test(SP) && /\+ ref \+ meas \+ acts;/.test(SP));
-  t('page: the download\'s message reads the products\' own line — never an assumed 75%', !/h\.rc < 75/.test(SP) && /r\.held\.filter\(function \(h\) \{ return h\.rc != null && h\.rc < ln\.x; \}\)/.test(SP));
+  t('page: the download reads the products\' own line — never an assumed 75%', !/h\.rc < 75/.test(SP) && /var ln = rcLine\(rcH\), src = 'read';/.test(SP));
   t('page: the CSV is one row per market — every feed, the held back, the line, the ad spend', /'in stock, not live in google', 'master in stock \(matched\)'/.test(SP) && /'range completion line %', 'held at or under %', 'live at or over %'/.test(SP) && /var rows = mkts\(\)\.map\(function \(m\) \{/.test(SP));
   t('page: the phone skim row names markets and the held back, not the folded tables\' rows', /\$\('#av-card'\)\.setAttribute\('data-m-digest', /.test(SP));
   t('page: the in-stock card names the held back in its own tile', /'<div class="it av2"><span class="h">Held back from Google<\/span><div class="r"><b>' \+ n0\(hb\.n\) \+ '<\/b><span>in stock, not live<\/span><\/div>'/.test(SP));

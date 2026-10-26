@@ -12812,9 +12812,15 @@
       "pr": 0
     },
     {
-      "name": "Stock: the held-back download's message reads the products' own line (no assumed 75%)",
+      "name": "Stock: the held-back download keeps only the range-completion hold — products under the market's line (Superdry DE's 62.5% styles left out)",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "return h.rc != null && h.rc < ln.x;",
+      "pattern": "var cut = hbCut(m, r.rcH), keep = cut ? r.held.filter(function (h) { return cut.keep(h.rc); }) : r.held;",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the held-back download reads the line off its own products first (rcLine twin)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "var ln = rcLine(rcH), src = 'read';",
       "pr": 0
     },
     {
