@@ -117,7 +117,8 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('"Needs a look" is gone from /stock', !st.find, st.find);
     ok('the simulator lists the markets with a Google feed and says what a read does — nothing drawn yet', st.hidden && /Read Superdry GB/.test(st.txt) && st.opts.indexOf('Superdry GB') >= 0, st);
     const order = await p.evaluate(() => Array.from(document.querySelectorAll('main > section.card')).map((c) => c.id));
-    ok('it sits right after the in-stock / held-back card', order.indexOf('sim-card') === order.indexOf('av-card') + 1, order);
+    // the suppfeed's own section (Ray, 27 Oct 2026) sits between them, beside the card it is the other reading of
+    ok('it sits right after the in-stock / held-back card and its suppfeed section', order.indexOf('supp-card') === order.indexOf('av-card') + 1 && order.indexOf('sim-card') === order.indexOf('supp-card') + 1, order);
 
     console.log('· a read, and range completion');
     await read(p);

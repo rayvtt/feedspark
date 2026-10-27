@@ -12165,7 +12165,7 @@
     {
       "name": "Held back: the download on /stock (feed + master joined in the browser)",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "function hbDownload(cmpid) {",
+      "pattern": "function hbDownload(key) {",
       "pr": 0
     },
     {
@@ -12736,7 +12736,7 @@
     {
       "name": "Held back from Google: one market's state (ok / nofeed / unread / nojoin / nostock) served on its av",
       "file": "cloudflare/feedspark-deck/src/rules.js",
-      "pattern": "export function heldView(m, stock, w) {",
+      "pattern": "export function heldView(m, stock, w, key) {",
       "pr": 0
     },
     {
@@ -12760,7 +12760,7 @@
     {
       "name": "Held back from Google: hbv only once the count is settled (a failed feed read re-reads next run)",
       "file": "tools/master_stock.mjs",
-      "pattern": "hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb });",
+      "pattern": "hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb }, hbs ? { hbs } : {}));",
       "pr": 0
     },
     {
@@ -12814,13 +12814,13 @@
     {
       "name": "Stock: the held-back download keeps only the range-completion hold — products under the market's line (Superdry DE's 62.5% styles left out)",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "var cut = hbCut(m, r.rcH), keep = cut ? r.held.filter(function (h) { return cut.keep(h.rc); }) : r.held;",
+      "pattern": "var cut = hbCut(m, r.rcH, supp), keep = cut ? r.held.filter(function (h) { return cut.keep(h.rc); }) : r.held;",
       "pr": 0
     },
     {
       "name": "Stock: the held-back download reads the line off its own products first (rcLine twin)",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "var ln = rcLine(rcH), src = 'read';",
+      "pattern": "var hv = m.av && (supp ? m.av.supp : m.av.held), ln = rcLine(rcH), src = 'read';",
       "pr": 0
     },
     {
@@ -17061,6 +17061,18 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "pad(cur.getMonth()+1)+cur.getFullYear()",
       "pr": 738
+    },
+    {
+      "name": "Stock: the in-stock card counts the master against Google; FeedHero's suppfeed join is its own card (Ray, 27 Oct 2026)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"supp-card\" hidden>",
+      "pr": 0
+    },
+    {
+      "name": "Stock: the agent posts the master's join (hb) and the suppfeed's (hbs) apart",
+      "file": "tools/master_stock.mjs",
+      "pattern": "hb = idx ? E.heldBack(idx) : null, hs = idx && src ? E.heldBack(idx, src) : null",
+      "pr": 0
     }
   ]
 }

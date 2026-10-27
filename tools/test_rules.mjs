@@ -499,7 +499,7 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   const cutSt = rcTw.hbCut({ av: { held: { state: 'ok', line: null, stated: [{ rule: 'Social RC > 65%', ch: 'meta', op: '>', v: 65 }, { rule: 'Range Completion < 0.2', ch: 'all', op: '<', v: 20 }] } } }, SPREAD);
   t('hbCut: then a cut-off a Google / every-channel rule NAME states (a Meta rule or a ">" never)', cutSt && cutSt.src === 'stated' && cutSt.x === 20 && cutSt.keep(19.9) && !cutSt.keep(20));
   t('hbCut: nothing to go on → null, and the page lists every held product saying why', rcTw.hbCut({ av: { held: { state: 'ok', line: null, stated: [] } } }, SPREAD) === null
-    && /var cut = hbCut\(m, r\.rcH\), keep = cut \? r\.held\.filter\(function \(h\) \{ return cut\.keep\(h\.rc\); \}\) : r\.held;/.test(SP) && /keep\.map\(function \(h\)/.test(SP) && /held for other reasons left out/.test(SP));
+    && /var cut = hbCut\(m, r\.rcH, supp\), keep = cut \? r\.held\.filter\(function \(h\) \{ return cut\.keep\(h\.rc\); \}\) : r\.held;/.test(SP) && /keep\.map\(function \(h\)/.test(SP) && /held for other reasons left out/.test(SP));
 
   // THE AGENT — the join on the same two reads, counts only out of the process
   const MS = await import('./master_stock.mjs');
@@ -519,18 +519,26 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   // THE SUPPFEED (Ray, 26 Oct 2026: "the actual source stock quantity data sits in a field in FeedHero … [suppfeed stock]")
   const CE = (await import('../docs/catalog_engine.js')).default || globalThis.FeedCatalog;
   const SRCX = CE.srcIndex({ A3: ['i', 4, 'o', 0, 66.7], B2: ['i', 2, '', 3, 20], B3: ['o', 0, 'i', 6, 20], C1: ['i', 9, '', null, 100] });
-  const TS = MS.tallyMaster(new Uint8Array(Buffer.from(MCSV)), FD.tree, FD.idx, SRCX), HS = MS.heldRecord(TS.held, FD.idx);
-  t('agent: with the suppfeed, its stock decides — A3 (suppfeed out) is no longer held, B3 (suppfeed in) is, C1 (blank = out) leaves the in-stock count', HS.ok && HS.n === 2 && TS.held.held.map((h) => h.id).sort().join() === 'B2,B3' && HS.inStock === 7 && HS.src.st === 4 && HS.src.rc === 4, JSON.stringify(HS));
-  t('agent: …the held products sit at FeedHero\'s range_comp, and the record passes the worker\'s check with its src counts', HS.rcH.some((x) => x[0] === 20 && x[1] === 2) && R.sanitizeHeld(HS).src.st === 4 && /stock from FeedHero's suppfeed on 4, range_comp on 4/.test(MS.heldLine(HS)));
-  t('agent: the suppfeed is read first and forces a master re-read where FeedHero carries one; none = the master stands', /const src = await fetchSrc\(m\.cmpid\);\n      const got = await fetchMaster\(m\.cmpid, !!src\);/.test(read('tools/master_stock.mjs')) && /if \(d\.nosupp\) return null;/.test(read('tools/master_stock.mjs')));
-  t('heldView passes the suppfeed counts to the card', R.heldView({ hbv: R.HELD_V, hb: R.sanitizeHeld(HS) }, [], { g: 1 }).src.st === 4);
+  const TS = MS.tallyMaster(new Uint8Array(Buffer.from(MCSV)), FD.tree, FD.idx, SRCX), HM = MS.heldRecord(TS.held, FD.idx), HS = MS.heldRecord(TS.heldSrc, FD.idx);
+  // Ray, 27 Oct 2026: "the volumes of in-stock not live should be deducted from Google Shopping versus the master feed
+  // in-stock product, instead of using the sub-feed logic. The sub-feed in-stock logic should be used in another section"
+  t('agent: with a suppfeed the MASTER\'s join is unchanged — A3, B2 held, 8 in stock, no src', HM.ok && HM.n === 2 && TS.held.held.map((h) => h.id).sort().join() === 'A3,B2' && HM.inStock === 8 && !HM.src && JSON.stringify(HM) === JSON.stringify(HR), JSON.stringify(HM));
+  t('agent: …and the suppfeed join rides beside it — A3 (suppfeed out) no longer held, B3 (suppfeed in) is, C1 (blank = out) leaves the in-stock count', HS.ok && HS.n === 2 && TS.heldSrc.held.map((h) => h.id).sort().join() === 'B2,B3' && HS.inStock === 7 && HS.src.st === 4 && HS.src.rc === 4, JSON.stringify(HS));
+  t('agent: …the suppfeed\'s held products sit at FeedHero\'s range_comp, and the record passes the worker\'s check with its src counts', HS.rcH.some((x) => x[0] === 20 && x[1] === 2) && R.sanitizeHeld(HS).src.st === 4 && /stock from FeedHero's suppfeed on 4, range_comp on 4/.test(MS.heldLine(HS)));
+  t('agent: no suppfeed = no second join', TH.heldSrc === null);
+  t('agent: the suppfeed is read first and forces a master re-read where FeedHero carries one; none = no suppfeed section', /const src = await fetchSrc\(m\.cmpid\);\n      const got = await fetchMaster\(m\.cmpid, !!src\);/.test(read('tools/master_stock.mjs')) && /if \(d\.nosupp\) return null;/.test(read('tools/master_stock.mjs')));
+  t('agent: hb is the master\'s join, hbs the suppfeed\'s, posted apart', /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null, hbs = fd && t\.heldSrc \? heldRecord\(t\.heldSrc, fd\.idx\) : null;/.test(read('tools/master_stock.mjs')) && /hb = idx \? E\.heldBack\(idx\) : null, hs = idx && src \? E\.heldBack\(idx, src\) : null/.test(read('tools/master_stock.mjs')));
+  const MV = { hbv: R.HELD_V, hb: R.sanitizeHeld(HM), hbs: R.sanitizeHeld(HS) };
+  t('heldView: the card\'s column is the master\'s count; the suppfeed\'s is its own view', R.heldView(MV, [], { g: 1 }).n === 2 && R.heldView(MV, [], { g: 1 }).inStock === 8 && !R.heldView(MV, [], { g: 1 }).src && R.heldView(MV, [], { g: 1 }, 'hbs').inStock === 7 && R.heldView(MV, [], { g: 1 }, 'hbs').src.st === 4);
+  t('availView: `supp` only where the suppfeed was joined', (() => { const a = R.availView({ master: Object.assign({}, MV, M0), wired: { g: true } }, []); const b = R.availView({ master: Object.assign({ hbv: R.HELD_V, hb: R.sanitizeHeld(HM) }, M0), wired: { g: true } }, []); return a.supp && a.supp.state === 'ok' && a.supp.inStock === 7 && a.held.inStock === 8 && b.supp === null; })());
+  t('HELD_V is 2 — every master is re-read, so no stored record keeps the suppfeed in the master\'s column', R.HELD_V === 2);
   const AG = read('tools/master_stock.mjs');
-  t('agent: hbv = HELD_V once settled (counted, or no Google feed to count against); a feed it could not read leaves it unset', /hbv: hb \|\| !feeds\[m\.cmpid\] \? HELD_V : 0, hb \}\);/.test(AG) && /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null;/.test(AG)
+  t('agent: hbv = HELD_V once settled (counted, or no Google feed to count against); a feed it could not read leaves it unset', /hbv: hb \|\| !feeds\[m\.cmpid\] \? HELD_V : 0, hb \}, hbs \? \{ hbs \} : \{\}\)\);/.test(AG) && /const hb = fd \? heldRecord\(t\.held, fd\.idx\) : null, hbs = /.test(AG)
     && /import \{ feedKeys, HELD_V, rcLine \} from '\.\.\/cloudflare\/feedspark-deck\/src\/rules\.js';/.test(AG));
 
   // THE WORKER — stored whole beside the counts; the master read again until it is
   t('worker {masterstock}: the record is checked by RULES.sanitizeHeld and stored beside the counts; a refused one leaves hbv unset', /if \(e\.hbv === RULES\.HELD_V\) \{/.test(WK) && /const hb = e\.hb == null \? null : RULES\.sanitizeHeld\(e\.hb\);/.test(WK)
-    && /if \(e\.hb != null && !hb\) held = 'refused';/.test(WK) && /else \{ idx\[cmpid\]\.hbv = RULES\.HELD_V; idx\[cmpid\]\.hb = hb; \}/.test(WK));
+    && /if \(\(e\.hb != null && !hb\) \|\| \(e\.hbs != null && !hbs\)\) held = 'refused';/.test(WK) && /else \{ idx\[cmpid\]\.hbv = RULES\.HELD_V; idx\[cmpid\]\.hb = hb; if \(hbs\) idx\[cmpid\]\.hbs = hbs; else delete idx\[cmpid\]\.hbs; \}/.test(WK));
   t('worker {masterfile}: "unchanged" needs the held-back count of this shape too', /have\.szv === HERO\.CENSUS_V && have\.hbv === RULES\.HELD_V && Date\.now\(\) - \(have\.t \|\| 0\) < HERO\.CENSUS_FRESH_MS/.test(WK));
   t('worker: the route serves the view, never the histogram', !/rcH/.test(/if \(path === '\/api\/rules\/stock'\) \{[\s\S]*?\n      \}\n/.exec(WK)[0]));
 
@@ -541,7 +549,7 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
     && (SP.match(/<section class="card" id="[a-z-]+"/g) || []).length >= 9 && /var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = \{ 'cov-card': 1, 'lev-card': 1 \}, FOLD = \{\};/.test(SP)
     && /if \(keep\) \{ FOLD\[c\.id\] = open \? 1 : 0; remember\(FOLD_KEY, JSON\.stringify\(FOLD\)\); \}/.test(SP) && /function foldOpen\(el\) \{ var c = el && el\.closest \? el\.closest\('section\.card\.folded'\) : null; if \(c\) foldSet\(c, true, false\); return c; \}/.test(SP)
     && /\.card\.folded>:not\(\.chead\),\.card\.folded>\.chead \.ch,\.card\.folded>\.chead \.tools,\.card\.folded>\.chead \.instr-tgl\{display:none!important\}/.test(SP));
-  t('page: …every card writes the line it keeps when folded', ['cov-card', 'lev-card', 'av-card', 'sim-card', 'hero-card', 'hmap-card', 'cut-card', 'setup-card', 'how-card'].every((id) => SP.indexOf("fsum('" + id + "'") > 0));
+  t('page: …every card writes the line it keeps when folded', ['cov-card', 'lev-card', 'av-card', 'supp-card', 'sim-card', 'hero-card', 'hmap-card', 'cut-card', 'setup-card', 'how-card'].every((id) => SP.indexOf("fsum('" + id + "'") > 0));
   t('page: ONE card — the ad-spend card is gone, its rule-by-rule detail lives in the in-stock card', !/id="sv-card"/.test(SP) && /<section class="card" id="av-card">[\s\S]*?id="av-csv"[\s\S]*?<details class="sv-rest sv-rules" id="sv-rules">[\s\S]*?id="sv-t"[\s\S]*?id="sv-rest"[\s\S]*?<\/section>/.test(SP));
   t('page: the scenario and period switches live in the forecast panel ONLY (Ray, 7 Oct 2026, crossing them out on the card: "these button doesnt apply/ make sense"); the column head names the forecast shown', !/<section class="card" id="av-card">[\s\S]*?id="sv-(scn|per)"[\s\S]*?<\/section>/.test(SP)
     && /\$\('#svp-bd'\)\.addEventListener\('click', svCtl\);/.test(SP) && /th\.innerHTML = 'Ad spend kept off<span class="thp">' \+ esc\(scnName\(SV\.pct\)\.toLowerCase\(\)\) \+ ' ' \+ SV\.pct \+ '% · ' \+ esc\(svPer\(\)\) \+ '<\/span>';/.test(SP));
@@ -555,7 +563,10 @@ console.log('· held back from Google + the range-completion line (Ray, 1 Oct 20
   t('page: the scenario or period redraws the market rows too', /svSave\(\); renderAv\(\); renderSv\(\);/.test(SP));
   t('page: the summary tiles — each channel, then held back, then the ad spend book (hover for its working)', /pair\(avBook\(ms, 'g'\), 'Google'\) \+ pair\(avBook\(ms, 'fb'\), 'Meta'\) \+ held \+ spend/.test(SP) && /<div class="it av2" data-sv="book" tabindex="0"/.test(SP));
   t('page: the panel shows what was measured beside the rule\'s own count (the forecast stays on the rule)', /Measured — ' \+ esc\(m\.client \+ ' ' \+ m\.market\)/.test(SP) && /\+ meas\n/.test(SP) && /\+ ref \+ meas \+ acts;/.test(SP));
-  t('page: the download reads the products\' own line — never an assumed 75%', !/h\.rc < 75/.test(SP) && /var ln = rcLine\(rcH\), src = 'read';/.test(SP));
+  t('page: the in-stock card counts the MASTER against Google (Ray, 27 Oct 2026: "instead of using the sub-feed logic"); the suppfeed join is its own card and its own ⬇ List', !/h\.src && h\.src\.st \? '<br><span class="m">stock read from FeedHero/.test(SP)
+    && /if \(!supp\) return hbInfo\(q, 0, say\)\.then\(function \(\) \{ return hbMaster\(q, feed, say, E, FA, E\.heldBack\(feed\)\); \}\);/.test(SP)
+    && /<section class="card" id="supp-card" hidden>/.test(SP) && /hbBtn\(m, 'hb-dl', true\)/.test(SP) && /var k = m\.cmpid \+ \(supp \? '\|s' : ''\);/.test(SP) && /renderAv\(\); renderSupp\(\);/.test(SP));
+  t('page: the download reads the products\' own line — never an assumed 75%', !/h\.rc < 75/.test(SP) && /var hv = m\.av && \(supp \? m\.av\.supp : m\.av\.held\), ln = rcLine\(rcH\), src = 'read';/.test(SP));
   t('page: the CSV is one row per market — every feed, the held back, the line, the ad spend', /'in stock, not live in google', 'master in stock \(matched\)'/.test(SP) && /'range completion line %', 'held at or under %', 'live at or over %'/.test(SP) && /var rows = mkts\(\)\.map\(function \(m\) \{/.test(SP));
   t('page: the phone skim row names markets and the held back, not the folded tables\' rows', /\$\('#av-card'\)\.setAttribute\('data-m-digest', /.test(SP));
   t('page: the in-stock card names the held back in its own tile', /'<div class="it av2"><span class="h">Held back from Google<\/span><div class="r"><b>' \+ n0\(hb\.n\) \+ '<\/b><span>in stock, not live<\/span><\/div>'/.test(SP));

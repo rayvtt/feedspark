@@ -721,7 +721,7 @@ export function availView(a, stock) {
   const master = availSide(a.master), g = availSide(a.g), fb = availSide(a.fb), m = master ? a.master : null, w = a.wired || {};
   return { master, g, fb, wired: { g: !!w.g, fb: !!w.fb },
     via: (m && m.via) || null, imp: (m && m.imp) || null, col: (m && m.col) || '', qcol: (m && m.qcol) || '',
-    held: heldView(m, stock, w) };
+    held: heldView(m, stock, w), supp: m && m.hbs ? heldView(m, stock, w, 'hbs') : null };
 }
 // ---- HELD BACK FROM GOOGLE, AND THE RANGE-COMPLETION LINE (Ray, 1 Oct 2026: "add in how many instock I have been
 // excluded from Masterfeed to Google Shopping as well, and indicate what the current range completion percentage is that
@@ -736,7 +736,11 @@ export function availView(a, stock) {
 //   live, 1 Oct 2026 (in session, nothing committed): Superdry GB — 3,863 held, 3,836 of them under a line between
 //   35.3% and 36.4% and 25,887 of 25,917 live products above it; Monsoon UK, Reiss GB and Schuh UK — no line, their
 //   held-back products spread across every range-completion level (held for other reasons), so none is claimed.
-export const HELD_V = 1;            // the record's shape — the worker re-reads a master whose stored record is older
+// HELD_V 2 (Ray, 27 Oct 2026: "the volumes of in-stock not live should be deducted from Google Shopping versus the master feed
+// in-stock product, instead of using the sub-feed logic. The sub-feed in-stock logic should be used in another section"):
+// `hb` is the MASTER's in-stock against the Google feed again, and the suppfeed's join rides beside it as `hbs` — its own
+// section on /stock. The bump re-reads every master, so no stored record keeps the suppfeed in the master's column.
+export const HELD_V = 2;            // the record's shape — the worker re-reads a master whose stored record is older
 export const RC_LINE_MIN = 20;      // held products with a style (and live ones) before a line is read at all
 export const RC_LINE_SHARE = 0.9;   // the line must put 90% of the held below it AND 90% of the live at or above it
 // the roundest figure in (lo, hi] — a person sets 75%, not 74.3%; every value in the gap separates the products alike
@@ -814,11 +818,12 @@ export function sanitizeHeld(raw) {
 // what /stock shows under "Held back from Google" for one market — m = its masteravail record (raw), w = which feeds
 // it has wired. state: ok · nofeed (no Google feed to hold anything back from) · unread (not counted yet, or the feed
 // could not be read on the last run) · nojoin (none of the master's columns carries the feed's ids) · nostock (the
-// master states no stock)
-export function heldView(m, stock, w) {
+// master states no stock). key 'hb' = the master's own stock (the card's column); 'hbs' = FeedHero's suppfeed stock (its
+// own section)
+export function heldView(m, stock, w, key) {
   const stated = rcStated(stock);
   if (!w || !w.g) return { state: 'nofeed', stated };
-  const h = m && m.hbv === HELD_V ? m.hb : null;
+  const h = m && m.hbv === HELD_V ? m[key === 'hbs' ? 'hbs' : 'hb'] : null;
   if (!h) return { state: 'unread', stated };
   if (h.ok === false) return { state: h.why || 'nojoin', stated, feedN: h.feedN || 0 };
   const ns = (h.rcH || []).filter((x) => x[0] == null)[0];

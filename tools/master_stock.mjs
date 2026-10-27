@@ -135,10 +135,12 @@ export function heldRecord(r, idx) {
 // bytes -> the master's stock tally ({n, in, out, pre, none, other, via, col, qcol, ow} + fmt, enc) and, off the SAME
 // rows, its size census (census — docs/herosize_engine.js), placed on the feed's product_type tree when one is given, and
 // the held-back join against the feed's index when one is given (held — catalog_engine › heldBack's own result)
+// — the master's OWN stock (held), and, where FeedHero carries a suppfeed (src), the same join on the suppfeed's stock
+// beside it (heldSrc): Ray, 27 Oct 2026 — the card counts the master's in-stock against Google, the suppfeed is its own section
 export function tallyMaster(u8, tree, idx, src) {
   const { bytes } = masterBytes(u8);
-  const t = E.stockTally(), c = H.census(E, tree || null), hb = idx ? E.heldBack(idx, src || null) : null;
-  const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); if (hb) hb.onRow(r, h); };
+  const t = E.stockTally(), c = H.census(E, tree || null), hb = idx ? E.heldBack(idx) : null, hs = idx && src ? E.heldBack(idx, src) : null;
+  const both = (r, h) => { t.onRow(r, h); c.onRow(r, h); if (hb) hb.onRow(r, h); if (hs) hs.onRow(r, h); };
   let dec = new TextDecoder('utf-8', { fatal: true }), enc = 'UTF-8', parser = null, fmt = '';
   for (let o = 0; o < bytes.length; o += CHUNK) {
     const part = bytes.subarray(o, Math.min(bytes.length, o + CHUNK));
@@ -160,7 +162,7 @@ export function tallyMaster(u8, tree, idx, src) {
   const tail = dec.decode();
   if (tail) parser.push(tail);
   parser.end();
-  return Object.assign(t.finish(), { fmt, enc, census: c.finish(), held: hb ? hb.finish() : null });
+  return Object.assign(t.finish(), { fmt, enc, census: c.finish(), held: hb ? hb.finish() : null, heldSrc: hs ? hs.finish() : null });
 }
 // the census in one line — where its types came from, the tiers, sized rows, styles, and the biggest type's run
 export function sizeLine(cs) {
@@ -203,8 +205,8 @@ async function fetchMaster(cmpid, force) {
 }
 
 // the source stock as FeedHero holds it ({stocksrc: cmpid} — the worker's Data Editor read, a chunk a post until whole):
-// srcIndex for the held-back join where FeedHero carries a supplemental stock feed (Superdry's suppfeed_stock), null where
-// it carries none — the master's own stock then stands, as before
+// srcIndex for the SUPPFEED join where FeedHero carries a supplemental stock feed (Superdry's suppfeed_stock), null where
+// it carries none — that market then has no suppfeed section; the master's own join is counted either way
 async function fetchSrc(cmpid) {
   for (let k = 0; k < 60; k++) {
     let d;
@@ -256,7 +258,7 @@ async function main() {
     const tag = m.client + ' ' + m.market;
     try {
       // the supplemental stock first: where FeedHero carries one it moves daily while the master import may not, so the
-      // master is re-read (forced) to keep the held-back count on today's stock
+      // master is re-read (forced) to keep the suppfeed section on today's stock
       const src = await fetchSrc(m.cmpid);
       const got = await fetchMaster(m.cmpid, !!src);
       if (got.unchanged) { tally.same++; console.log('= ' + tag + ' — import unchanged since the last reading'); return; }
@@ -284,12 +286,12 @@ async function main() {
         else console.log('✗ size census refused  ' + tag + ' — ' + (one.error || 'no reason given'));
       } catch (e) { console.log('✗ size census not stored  ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140)); }
       // held back from Google: settled when counted, or when the market has no Google feed to hold anything back from
-      const hb = fd ? heldRecord(t.held, fd.idx) : null;
-      done.push({ cmpid: m.cmpid, n: t.n, in: t.in, out: t.out, pre: t.pre, none: t.none, other: t.other,
+      const hb = fd ? heldRecord(t.held, fd.idx) : null, hbs = fd && t.heldSrc ? heldRecord(t.heldSrc, fd.idx) : null;
+      done.push(Object.assign({ cmpid: m.cmpid, n: t.n, in: t.in, out: t.out, pre: t.pre, none: t.none, other: t.other,
         via: t.via, col: t.col, qcol: t.qcol, ow: t.ow, fmt: t.fmt, enc: t.enc, imp: got.imp, rows: got.rows,
-        szv: sz ? H.CENSUS_V : 0, sz, hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb });
+        szv: sz ? H.CENSUS_V : 0, sz, hbv: hb || !feeds[m.cmpid] ? HELD_V : 0, hb }, hbs ? { hbs } : {}));
       tally.read++;
-      console.log('✓ ' + line(tag, t) + '\n    sizes — ' + sizeLine(t.census) + (feeds[m.cmpid] ? '\n    ' + heldLine(hb) : ''));
+      console.log('✓ ' + line(tag, t) + '\n    sizes — ' + sizeLine(t.census) + (feeds[m.cmpid] ? '\n    ' + heldLine(hb) : '') + (hbs ? '\n    suppfeed ' + heldLine(hbs) : ''));
     } catch (e) {
       tally.failed++;
       console.log('✗ ' + tag + ' — ' + String((e && e.message) || e).slice(0, 140));

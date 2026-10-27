@@ -119,7 +119,10 @@ function build(opts) {
   const MASTERAV = {
     superdry_gb: { n: 58000, in: 29100, out: 28900, pre: 0, none: 0, other: 0, via: 'availability', col: 'availability', imp: '2026-09-28 05:27:48', t: now - 7200000,
       hbv: E.HELD_V, hb: E.sanitizeHeld({ ok: true, n: 3800, absent: 3790, out: 10, inStock: 29100, feedN: 45210, feedLive: 45210, join: { h: 'product_id', on: 'fs_data_original_id', rate: 0.52 },
-        rcH: [[10, 400, 0], [20, 900, 0], [25, 1100, 4], [33.3, 1300, 0], [37.5, 5, 900], [50, 20, 4000], [66.7, 10, 8000], [100, 65, 9000]] }) },
+        rcH: [[10, 400, 0], [20, 900, 0], [25, 1100, 4], [33.3, 1300, 0], [37.5, 5, 900], [50, 20, 4000], [66.7, 10, 8000], [100, 65, 9000]] }),
+      // the suppfeed's own join — its own card (Ray, 27 Oct 2026), never the master's column
+      hbs: E.sanitizeHeld({ ok: true, n: 2600, absent: 2590, out: 10, inStock: 26400, feedN: 45210, feedLive: 45210, join: { h: 'product_id', on: 'fs_data_original_id', rate: 0.52 },
+        rcH: [[10, 500, 0], [20, 1900, 3], [40, 100, 6000], [100, 100, 17800]], src: { st: 31000, rc: 58000 } }) },
     reiss_gb: { n: 60000, in: 24900, out: 34790, pre: 300, none: 0, other: 10, via: 'availability', col: 'availability', imp: '2026-09-28 07:00:11', t: now - 7200000,
       hbv: E.HELD_V, hb: E.sanitizeHeld({ ok: true, n: 2100, absent: 2100, out: 0, inStock: 24900, feedN: 22657, feedLive: 22657, join: { h: 'id', on: 'fs_data_original_id', rate: 0.54 },
         rcH: [[20, 300, 1500], [40, 400, 3000], [60, 500, 5000], [80, 400, 6000], [100, 500, 7000]] }) },
