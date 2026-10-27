@@ -319,6 +319,19 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.selectOption('#pv-meas', 'n'); await pg.waitForTimeout(200);
     }
 
+    console.log('· ⛶ the pivot opens full screen and comes back');
+    {
+      await pg.click('#pv-full'); await pg.waitForTimeout(150);
+      const fs = await pg.evaluate(() => { const c = document.getElementById('sec-pivot').getBoundingClientRect(), t = document.getElementById('pv').getBoundingClientRect(); return { l: c.left, t: c.top, w: c.width, h: c.height, tw: t.height, ov: getComputedStyle(document.body).overflow, txt: document.getElementById('pv-full').textContent, pr: document.getElementById('pv-full').getAttribute('aria-pressed') }; });
+      ok('⛶ Full screen: the pivot card fills the window and the page behind it stops scrolling', fs.l === 0 && fs.t === 0 && fs.w === 1440 && fs.h === 900 && fs.ov === 'hidden' && fs.pr === 'true' && /Exit/.test(fs.txt), fs);
+      ok('…the table takes the room it was given (taller than the 620px it is capped at on the page)', fs.tw > 640, fs.tw);
+      await pg.click('#sec-pivot .fhd'); await pg.waitForTimeout(100);
+      ok('…its header does not fold it while it fills the window', await pg.evaluate(() => !document.getElementById('sec-pivot').classList.contains('folded') && document.getElementById('sec-pivot').classList.contains('pvfull')));
+      await pg.keyboard.press('Escape'); await pg.waitForTimeout(150);
+      const back = await pg.evaluate(() => ({ full: document.getElementById('sec-pivot').classList.contains('pvfull'), ov: getComputedStyle(document.body).overflow, txt: document.getElementById('pv-full').textContent, folded: document.getElementById('sec-pivot').classList.contains('folded') }));
+      ok('…Esc puts it back on the page, still open', !back.full && back.ov !== 'hidden' && /Full screen/.test(back.txt) && !back.folded, back);
+    }
+
     console.log('· the pivot\'s columns fit the card, and each one is dragged to its own width');
     {
       const fit = await pg.evaluate(() => { const w = document.getElementById('pv'), ths = Array.from(w.querySelectorAll('thead th')); return { sw: w.scrollWidth, cw: w.clientWidth, n: ths.length, grips: w.querySelectorAll('thead .crz').length, cut: ths.some((th) => th.scrollWidth > th.clientWidth + 1) }; });

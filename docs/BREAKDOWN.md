@@ -228,3 +228,11 @@ share)"). The product-count floors stay, and each card carries both — "60% of 
 €62 of €103 spend · 313 of 769 products". Layer and Layer 2 never change a finding. Scale it / Fix or trim / funding
 always read Google Ads ROAS. Harness: the spotter block in
 `tools/test_breakdown.mjs` (an invented feed counted in the test) + `tools/check_breakdown.js` (the rendered cards).
+
+## ⛶ Full screen (Ray, 27 Oct 2026)
+
+"Could you add feature to expand Pivot table full screen? so easier to spot data?" — **⛶ Full screen** beside ⤓ CSV
+turns the Pivot card into an overlay filling the window: the same controls, opportunity ribbon, flags and spend chart,
+with the table taking the full height rather than its 620px cap on the page. The page behind is locked; the card's
+header does not fold it while it is full; **Esc** (after any open opportunity card or the guidebook) or **✕ Exit full
+screen** puts it back where it was, still open. Print lays it out on the page as normal. Harness: tools/check_breakdown.js.

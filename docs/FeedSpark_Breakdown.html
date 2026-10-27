@@ -247,6 +247,17 @@ window.addEventListener('load',restore);
   table.pv td.c.ocur{box-shadow:inset 0 0 0 2px var(--k)!important;opacity:1!important}
   .oppop{position:absolute;z-index:70;width:min(380px,calc(100vw - 24px));max-height:min(70vh,560px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:12px;font-size:12.5px;color:var(--ink)}
   .oppop[hidden]{display:none}
+  /* ⛶ FULL SCREEN PIVOT (Ray, 27 Oct 2026: "could you add feature to expand Pivot table full screen ? so easier to spot data ?"): the card
+     itself takes the window — controls, ribbon, table and the spend chart unchanged — the table filling what is left; Esc or ✕ puts it back */
+  body.pvfs{overflow:hidden}
+  #sec-pivot.pvfull{position:fixed;inset:0;z-index:9000;margin:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;padding:12px 18px}
+  #sec-pivot.pvfull>div{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
+  #sec-pivot.pvfull .tw{max-height:none;flex:1 0 auto;min-height:calc(100vh - 220px)}
+  #sec-pivot.pvfull .fhd{cursor:default}
+  #sec-pivot.pvfull .fhd .chev{visibility:hidden}
+  body.pvfs .oppop{z-index:9100}
+  #pv-full[aria-pressed=true]{border-color:var(--orange);color:var(--ink)}
+  @media print{#sec-pivot.pvfull{position:static;display:block}body.pvfs{overflow:visible}}
   .oppop .oph{display:flex;align-items:flex-start;gap:8px}
   .oppop .oph b{font-size:13.5px;line-height:1.35}
   .oppop .oph span{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
@@ -432,7 +443,7 @@ window.addEventListener('load',restore);
         <div class="pvb" role="group" aria-label="Readings"><span class="pvh">Readings <em>what every cell shows</em></span>
           <div class="pv3"><div class="grp"><span class="lbl"><i class="lsw l0"></i>Measure</span><select class="fld" id="pv-meas" aria-label="Measure" data-no-keep><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw"></i>Layer</span><select class="fld" id="pv-lay" aria-label="A second reading layered in every cell" title="A second reading in every cell, under the first — e.g. ROAS shaded, products counted beneath" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw l2"></i>Layer 2</span><select class="fld" id="pv-lay2" aria-label="A third reading layered in every cell" title="A third reading under the second — its own green bar on its own scale, so three readings compare at once" data-no-keep><option value="">Nothing</option><option value="n">Products</option><optgroup label="Google Ads · last 30 days"><option value="cost">Spend</option><option value="value">Conv. value</option><option value="roas">ROAS</option><option value="clicks">Clicks</option><option value="impr">Impressions</option><option value="conv">Conversions</option></optgroup></select></div><div class="grp"><span class="lbl"><i class="lsw lsp"></i>Split by</span><select class="fld" id="pv-spl" aria-label="Split every cell by a field of two or three values" title="What each cell’s products are made of — a field with two or three values (e.g. on sale / full price), drawn as one strip that adds to 100%" data-no-keep><option value="">Nothing</option></select></div><div class="grp" id="pv-splw-g" hidden><span class="lbl">Split share of</span><select class="fld" id="pv-splw" aria-label="Split the share of products or of spend" data-no-keep><option value="n">Products</option><option value="cost">Spend · Google Ads</option></select></div></div>
           <div class="pvo"><div class="grp"><span class="lbl">Show</span><span class="seg" id="pv-show" role="group" aria-label="Show">
-          <button type="button" data-s="n" class="on">Count</button><button type="button" data-s="row">% of row</button><button type="button" data-s="col">% of column</button><button type="button" data-s="all">% of total</button></span></div><div class="grp"><span class="lbl">Rows shown</span><select class="fld" id="pv-top" aria-label="Rows shown" data-no-keep><option value="25">Top 25</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="0">All</option></select></div><div class="grp"><span class="lbl">&nbsp;</span><button class="btn" id="pv-csv" type="button">⤓ CSV</button></div></div>
+          <button type="button" data-s="n" class="on">Count</button><button type="button" data-s="row">% of row</button><button type="button" data-s="col">% of column</button><button type="button" data-s="all">% of total</button></span></div><div class="grp"><span class="lbl">Rows shown</span><select class="fld" id="pv-top" aria-label="Rows shown" data-no-keep><option value="25">Top 25</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="0">All</option></select></div><div class="grp"><span class="lbl">&nbsp;</span><button class="btn" id="pv-csv" type="button">⤓ CSV</button> <button class="btn" id="pv-full" type="button" aria-pressed="false" title="Open the pivot full screen — Esc to come back">⛶ Full screen</button></div></div>
         </div>
       </div>
       <p class="note adsl" id="pv-ads" hidden></p>
@@ -538,6 +549,24 @@ window.addEventListener('load',restore);
     applyFold(c.id, isOpen(c.id));
     c.querySelector('.fhd').addEventListener('click', function () { setFold(c.id, c.classList.contains('folded')); foldBtns(); });
   });
+  // ⛶ full screen: the card is opened first (a folded card would fill the window with nothing), its header cannot fold it
+  // while it fills the window, and Esc closes an open opportunity card before it leaves full screen
+  function pvFull(on) {
+    var c = $('#sec-pivot'), b = $('#pv-full'); if (!c || !b) return;
+    if (on) applyFold('sec-pivot', true);
+    c.classList.toggle('pvfull', !!on); document.body.classList.toggle('pvfs', !!on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = on ? '✕ Exit full screen' : '⛶ Full screen';
+    b.title = on ? 'Back to the page (Esc)' : 'Open the pivot full screen — Esc to come back';
+    if (!on) c.scrollIntoView({ block: 'start' });
+  }
+  $('#pv-full').addEventListener('click', function () { pvFull(!$('#sec-pivot').classList.contains('pvfull')); });
+  $('#sec-pivot').addEventListener('click', function (e) { if (this.classList.contains('pvfull') && e.target.closest('.fhd')) e.stopPropagation(); }, true);
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !$('#sec-pivot').classList.contains('pvfull')) return;
+    var op = $('#oppop'), gb = $('#gb');
+    if ((op && !op.hidden) || (gb && !gb.hidden)) return;
+    pvFull(false);
+  }, true);
   function foldBtns() {
     var all = Array.prototype.slice.call(document.querySelectorAll('section.fs'));
     $('#openall').disabled = all.every(function (c) { return !c.classList.contains('folded'); });

@@ -16284,6 +16284,12 @@
       "pr": 0
     },
     {
+      "name": "Breakdown: ⛶ the Pivot opens full screen and Esc puts it back",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function pvFull(on) {",
+      "pr": 0
+    },
+    {
       "name": "Breakdown: the opportunity mix follows the pivot's Measure (share of spend, not products, on Spend)",
       "file": "docs/FeedSpark_Breakdown.html",
       "pattern": "function oppWm() { var k = meas(), M = MEAS[k]; return M.k && !M.ratio && adsReady() ? k : null; }",
