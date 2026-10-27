@@ -1283,8 +1283,10 @@ async function route(request, env, ctx) {
           let held = null;
           if (e.hbv === RULES.HELD_V) {
             const hb = e.hb == null ? null : RULES.sanitizeHeld(e.hb);
-            if (e.hb != null && !hb) held = 'refused';
-            else { idx[cmpid].hbv = RULES.HELD_V; idx[cmpid].hb = hb; }
+            // the suppfeed's own join (Superdry): its own section on /stock, never the master's column
+            const hbs = e.hbs == null ? null : RULES.sanitizeHeld(e.hbs);
+            if ((e.hb != null && !hb) || (e.hbs != null && !hbs)) held = 'refused';
+            else { idx[cmpid].hbv = RULES.HELD_V; idx[cmpid].hb = hb; if (hbs) idx[cmpid].hbs = hbs; else delete idx[cmpid].hbs; }
           }
           results.push(held ? { cmpid, ok: true, held } : { cmpid, ok: true });
         }

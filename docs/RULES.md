@@ -1128,22 +1128,33 @@ completion**, the figure its range-completion rules read, on every product.
   stock (pre-order / out where its own word says so), and **0, blank or `n/a` is out of stock** (Ray, 26 Oct 2026:
   *"blank and n/a can be counted as out of stock"* — on Superdry DE about half the rows carry no figure, some of them
   products the master calls IN_STOCK). Only a product the read does not list keeps the master's own word. A product's range completion
-  is FeedHero's `range_comp` where the read carries it, else its style's run off the master. So the held-back list,
-  its range-completion cut and the card's held-back count compare the suppfeed's stock against the Google feed.
+  is FeedHero's `range_comp` where the read carries it, else its style's run off the master.
+- **Its own section, never the master's column** (Ray, 27 Oct 2026: *"The volumes of in-stock not live should be
+  deducted from Google Shopping versus the master feed in-stock product, instead of using the sub-feed logic. The
+  sub-feed in-stock logic should be used in another section"*): the In stock card's *In stock, not live*, its
+  range-completion line and its ⬇ List are the **master's** own stock against the Google feed. The agent runs the
+  suppfeed join **beside** it on the same pass (`tallyMaster` → `held` + `heldSrc`, posted as `hb` + `hbs`, each
+  checked by `sanitizeHeld`; `HELD_V` 2 re-reads every master so no stored record keeps the suppfeed in the master's
+  column) and `heldView(m, stock, w, 'hbs')` serves it as `av.supp` → the card **Source stock — FeedHero suppfeed →
+  Google** (`#supp-card`, right after the in-stock card, shown only where FeedHero carries a suppfeed): suppfeed
+  decides · in stock (against the master's) · in stock, not live with its own ⬇ List (`data-hbdl="<cmpid>|s"`) · the
+  line on `range_comp` · the difference against the master's count.
 - **The simulator does NOT read it** (Ray, 26 Oct 2026: *"the supp feed is product quantity only so it shouldn't
   impact the simulation at all"*): *Simulate the stock rules* stays on the master's own word, quantity and style runs,
   and never asks `/api/rules/stocksrc`.
-- **The card follows daily stock** — the master-stock agent reads the suppfeed BEFORE the master and, where one exists,
-  forces the master re-read (the import may not have moved while the suppfeed has), so the held-back count is today's.
-  The record carries `src {st, rc}` (how many products the suppfeed decided, how many carried range_comp) and the
-  held-back cell's tooltip says so; the CSV gains *stock read from* (FeedHero suppfeed stock / master) and *source
+- **The section follows daily stock** — the master-stock agent reads the suppfeed BEFORE the master and, where one exists,
+  forces the master re-read (the import may not have moved while the suppfeed has), so the suppfeed count is today's.
+  The `hbs` record carries `src {st, rc}` (how many products the suppfeed decided, how many carried range_comp) and the
+  section's tooltip says so; the CSV gains *stock read from* (FeedHero suppfeed stock / master) and *source
   quantity*.
 
 Read live 26 Oct 2026 (in session, nothing committed): the suppfeed carries a stock figure on only part of a Superdry
 market's rows — the rest are blank or `n/a`, and those read as out of stock. Harness: `tools/test_catalog.mjs`
 (srcIndex, heldBack / stockRows with the source, srcRow + stockSrcRead lifted against a stub MCP — chunking, KV,
 nosupp, empty field, no token — and the route), `tools/test_rules.mjs` (the agent's join with the source, the record
-through `sanitizeHeld`, `heldView`), `tools/check_stocksim.js` (a contrary suppfeed read on offer moves no simulator count).
+through `sanitizeHeld`, `heldView`, the master's join unchanged beside it), `tools/check_stocksim.js` (a contrary
+suppfeed read on offer moves no simulator count), `tools/check_stockeven.js` (the in-stock card reads the master's
+count and the suppfeed section its own, off the paint).
 
 ## 4. Findings
 

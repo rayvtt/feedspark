@@ -75,6 +75,28 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
 (async () => {
   const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
+  // Ray, 27 Oct 2026: "the volumes of in-stock not live should be deducted from Google Shopping versus the master feed
+  // in-stock product, instead of using the sub-feed logic. The sub-feed in-stock logic should be used in another section"
+  console.log('· the in-stock card counts the master; the suppfeed is its own section');
+  {
+    const { ctx, p, errs } = await open(browser, 1440);
+    const r = await p.evaluate(() => {
+      const row = (sel, mk) => Array.from(document.querySelectorAll(sel + ' tbody tr')).find((tr) => (tr.querySelector('td.nm') || {}).textContent === mk);
+      const av = row('#av-t', 'Superdry GB'), sp = row('#supp-t', 'Superdry GB'), card = document.getElementById('supp-card');
+      return { av: av && av.querySelector('td.hbs .big').textContent, avTip: av && av.querySelector('td.hbs [data-tip]').getAttribute('data-tip'),
+        shown: !!card && !card.hidden, rows: document.querySelectorAll('#supp-t tbody tr').length,
+        sp: sp && Array.from(sp.querySelectorAll('td')).map((td) => td.textContent.replace(/\s+/g, ' ').trim()),
+        dl: sp && sp.querySelector('[data-hbdl]').getAttribute('data-hbdl'), avdl: av && av.querySelector('[data-hbdl]').getAttribute('data-hbdl'),
+        after: card && card.previousElementSibling && card.previousElementSibling.id };
+    });
+    ok('the in-stock card\'s Superdry GB count is the master\'s (3,800), with no suppfeed line', /3,800$/.test(r.av || '') && !/suppfeed/.test(r.avTip || ''), r.av);
+    ok('the suppfeed section is shown, right after the in-stock card, one row per market FeedHero carries a suppfeed for', r.shown && r.after === 'av-card' && r.rows === 1, r);
+    ok('…its row: suppfeed decides 31,000 · in stock 26,400 against the master\'s 29,100 · 2,600 not live · ≈ 25% on range_comp · 1,200 fewer than the master', r.sp && /^31,000/.test(r.sp[1]) && /^26,400 ?master 29,100/.test(r.sp[2]) && /2,600/.test(r.sp[3]) && /≈25%/.test(r.sp[4]) && /^−1,200 ?against 3,800 by the master/.test(r.sp[5]), r.sp);
+    ok('…each card downloads its own list (the master\'s, the suppfeed\'s)', r.avdl === 'superdry_gb' && r.dl === 'superdry_gb|s', [r.avdl, r.dl]);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+  }
+
   console.log('· no KPI band — the page opens on its first card');
   {
     const { ctx, p, errs } = await open(browser, 1440);
