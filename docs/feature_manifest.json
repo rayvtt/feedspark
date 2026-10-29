@@ -11414,7 +11414,7 @@
     {
       "name": "Catalogue: ad spend kept off = the market's largest blocking rule",
       "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "best.n * a.spendDay * D",
+      "pattern": "d.ceil != null ? d.ceil : d.n * d.spendDay * D",
       "pr": 558
     },
     {
@@ -17078,6 +17078,30 @@
       "name": "Stock: the agent posts the master's join (hb) and the suppfeed's (hbs) apart",
       "file": "tools/master_stock.mjs",
       "pattern": "hb = idx ? E.heldBack(idx) : null, hs = idx && src ? E.heldBack(idx, src) : null",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: one market or all of them — the procurement cards add up every Google market",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function scAll() { return S.chan === 'google' && gMkts().length > 1 && scWant(); }",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: each market's card figures kept as a snapshot on the device",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "var SNAP_K = 'fcc-cat-snap', SNAP_V = 1,",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: money adds only inside one currency across markets",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function scCur(got) {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: ⚡ read every market walks the page's own loader",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function sweepStart(force) {",
       "pr": 0
     }
   ]
