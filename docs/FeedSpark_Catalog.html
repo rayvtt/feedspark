@@ -61,6 +61,10 @@ window.addEventListener('load',restore);
   .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
   .chip:disabled{opacity:.5;cursor:default}
   .chip.meta{border-style:dashed}
+  .chip.off{border-style:dashed;color:var(--muted);background:transparent}
+  .chip.off:hover{color:var(--ink-2);border-color:var(--line)}
+  .mk-sep{width:1px;height:18px;background:var(--line);margin:0 4px;align-self:center}
+  .mk-sum{font-size:11.5px;color:var(--muted);align-self:center;margin-left:6px;white-space:normal}
   .mkts{margin-top:10px}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
   .mute{color:var(--muted)}
@@ -1000,7 +1004,7 @@ window.addEventListener('load',restore);
       renderMatrixLegend();
       return fetch('/api/catalog/roster').then(function (r) { return r.json(); });
     }).then(function (j) {
-      S.roster = (j && j.clients) || {};
+      S.roster = (j && j.clients) || {}; S.fh = (j && j.feedhero) || {};
       fillBrands(); pickInitial();
     }).catch(function (e) {
       var msg = String((e && e.message) || e);
@@ -1021,9 +1025,20 @@ window.addEventListener('load',restore);
     if (!c) { var names = Object.keys(S.roster).sort(); c = names.filter(function (n) { return S.roster[n].some(function (e) { return e.kind === 'xml'; }); })[0] || names[0]; }
     if (c) choose(c, m);
   }
-  function mktsOf(c, ch) { return (S.roster[c] || []).filter(function (e) { return e.channel === ch; }); }
+  function mktsOf(c, ch) { return (S.roster[c] || []).filter(function (e) { return e.channel === ch && e.kind !== 'none'; }); }
+  // the brand's roster markets with no feed to read — named with what FeedHero really sends there (Stock's 19 for Superdry)
+  function offOf(c) { return (S.roster[c] || []).filter(function (e) { return e.kind === 'none'; }); }
+  var KIND_W = { google: 'Google Shopping', meta: 'Meta', metalang: 'Meta language', pinterest: 'Pinterest', rakuten: 'Rakuten', wunderkind: 'Wunderkind', tiktok: 'TikTok', audit: 'audit copy', other: 'other' };
+  function offWhy(e) {
+    var g = e.google || [], live = (e.kinds || []).filter(function (k, i, a) { return a.indexOf(k) === i; }).map(function (k) { return KIND_W[k] || k; });
+    var runs = live.length ? ' FeedHero sends ' + live.join(', ') + ' here.' : ' FeedHero sends no live feed here.';
+    if (e.why === 'paused') return 'Google Shopping feed paused in FeedHero' + (g[0] && g[0].lc ? ' — last delivered ' + g[0].lc.split(' at ')[0] : '') + '.' + runs;
+    if (e.why === 'nogoogle') return 'No Google Shopping feed in FeedHero for this market.' + runs;
+    if (e.why === 'unwired') return 'FeedHero has a live Google Shopping feed here that is not wired into the FCC yet.' + runs;
+    return 'FeedHero\'s feed list has not been read yet — no feed is wired for this market.';
+  }
   function choose(c, m) {
-    var list = S.roster[c] || []; if (!list.length) return;
+    var list = (S.roster[c] || []).filter(function (x) { return x.kind !== 'none'; }); if (!list.length) return;
     if (SW.on && !SW.inner) SW.on = false;   // a market or brand the reader picks stops a read of every market
     var e = list.filter(function (x) { return x.mkt === m; })[0] || list.filter(function (x) { return x.mkt === 'gb'; })[0] || mktsOf(c, 'google')[0] || list[0];
     S.client = c; S.mkt = e.mkt; S.entry = e; S.chan = e.channel;
@@ -1045,10 +1060,20 @@ window.addEventListener('load',restore);
   }
   function paintMkts() {
     var list = mktsOf(S.client, S.chan);
+    var off = S.chan === 'google' ? offOf(S.client) : [];
     $('mkts').innerHTML = list.map(function (e) {
       var lab = e.mkt.replace(/-fb$/, '').toUpperCase();
-      return '<button type="button" class="chip' + (e.mkt === S.mkt ? ' on' : '') + (e.channel === 'meta' ? ' meta' : '') + '" data-mkt="' + esc(e.mkt) + '" title="' + esc(S.client + ' ' + lab + (e.kind === 'sheet' ? ' — read from a Google Sheet (no FeedHero master)' : '')) + '">' + esc(lab) + (e.kind === 'sheet' ? '<span class="k">sheet</span>' : '') + '</button>';
-    }).join('');
+      var pz = e.paused ? ' — FeedHero has paused this feed' + (typeof e.paused === 'string' ? ' (last delivered ' + e.paused.split(' at ')[0] + ')' : '') + '; the file read is its last delivery' : '';
+      return '<button type="button" class="chip' + (e.mkt === S.mkt ? ' on' : '') + (e.channel === 'meta' ? ' meta' : '') + '" data-mkt="' + esc(e.mkt) + '" title="' + esc(S.client + ' ' + lab + (e.kind === 'sheet' ? ' — read from a Google Sheet (no FeedHero master)' : '') + pz) + '">' + esc(lab) + (e.kind === 'sheet' ? '<span class="k">sheet</span>' : '') + (e.paused ? '<span class="k">paused</span>' : '') + '</button>';
+    }).join('') + (off.length ? '<span class="mk-sep" aria-hidden="true"></span>' + off.map(function (e) {
+      var lab = (e.roas && e.roas.market) || e.mkt.toUpperCase();
+      return '<button type="button" class="chip off" data-off="' + esc(e.mkt) + '" title="' + esc(S.client + ' ' + lab + ' — ' + offWhy(e)) + '">' + esc(lab) + '<span class="k">' + (e.why === 'paused' ? 'paused' : 'no feed') + '</span></button>';
+    }).join('') : '') + mkSum();
+  }
+  function mkSum() {
+    var t = S.fh && S.fh[S.client]; if (!t || S.chan !== 'google') return '';
+    var live = mktsOf(S.client, 'google').length, off = offOf(S.client).length;
+    return '<span class="mk-sum" title="Read off FeedHero\'s own output-feeds report">' + t.markets + ' markets · ' + live + ' Google Shopping feed' + (live === 1 ? '' : 's') + ' to read' + (off ? ' · ' + off + ' with none live' : '') + ' · ' + t.live + ' live FeedHero feeds' + (t.paused ? ', ' + t.paused + ' paused' : '') + '</span>';
   }
   $('brand').addEventListener('change', function () { choose(this.value, null); });
   $('chan').addEventListener('click', function (ev) {
@@ -1058,7 +1083,11 @@ window.addEventListener('load',restore);
     var want = ch === 'meta' ? S.mkt + '-fb' : S.mkt.replace(/-fb$/, '');
     choose(S.client, list.some(function (e) { return e.mkt === want; }) ? want : list[0].mkt);
   });
-  $('mkts').addEventListener('click', function (ev) { var b = ev.target.closest('[data-mkt]'); if (b) choose(S.client, b.getAttribute('data-mkt')); });
+  $('mkts').addEventListener('click', function (ev) {
+    var o = ev.target.closest('[data-off]');
+    if (o) { var e = offOf(S.client).filter(function (x) { return x.mkt === o.getAttribute('data-off'); })[0]; if (e) toast(S.client + ' ' + ((e.roas && e.roas.market) || '') + ': ' + offWhy(e)); return; }
+    var b = ev.target.closest('[data-mkt]'); if (b) choose(S.client, b.getAttribute('data-mkt'));
+  });
 
   // ---- loading: three sources, one generation — a brand switch mid-stream abandons the old reads ----------------
   function sig() { return S.ctl ? { signal: S.ctl.signal } : {}; }

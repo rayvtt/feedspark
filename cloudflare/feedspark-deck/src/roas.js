@@ -142,6 +142,50 @@ export function cmpidBrand(cmpid) {
   return null;
 }
 
+// ---- WHAT FEEDHERO ACTUALLY SENDS PER MARKET (Ray, 29 Oct 2026: "Superdry has way more market than the
+// catalog shown … Mirror the stock management … go back into [FeedHero reports] MCP to actually get the real
+// feed output"). The Catalogue lists a market only when a feed is WIRED, so a roster market FeedHero sends no
+// Google Shopping feed for simply was not there. feedBookFrom reduces FeedHero's own output_feeds report
+// (status all) to, per company: every feed's KIND, name, status, products and last delivery — never its URL,
+// which stays FeedHero's — so the page can name what each market really runs, a paused Shopping feed as
+// paused, and a market with none as such rather than leaving it off the list.
+export function feedKind(name, link) {
+  const n = s0(name), l = s0(link);
+  if (/audit/i.test(n)) return 'audit';
+  if (/^google shopping/i.test(n) || /\/output_feeds\/gb\//.test(l)) return 'google';
+  if (/fb_lang_feed|language/i.test(n + ' ' + l)) return 'metalang';
+  if (/facebook|\/output_feeds\/fb(_tsv)?\//i.test(n + ' ' + l)) return 'meta';
+  if (/pinterest/i.test(n)) return 'pinterest';
+  if (/rakuten/i.test(n)) return 'rakuten';
+  if (/wunderkind/i.test(n)) return 'wunderkind';
+  if (/tiktok/i.test(n)) return 'tiktok';
+  return 'other';
+}
+const numOf = (v) => +s0(v).replace(/[^\d.-]/g, '') || 0;
+export function feedBookFrom(rows) {
+  const out = {};
+  (rows || []).forEach((r) => {
+    const cmpid = s0(r && r.cmpid).toLowerCase(); if (!cmpid) return;
+    const e = out[cmpid] || (out[cmpid] = { live: 0, paused: 0, feeds: [] });
+    const live = /^active$/i.test(s0(r.feed_status).trim());
+    e[live ? 'live' : 'paused']++;
+    e.feeds.push({ k: feedKind(r.feed_name, r.feed_link), n: s0(r.feed_name).slice(0, 60), st: live ? 'a' : 'p',
+      p: numOf(r.products), lc: s0(r.last_collected).slice(0, 24) });
+  });
+  return out;
+}
+// the brand's roster markets the wired list does not carry, each named with what FeedHero runs there
+export function rosterGaps(client, wiredCmpids, book) {
+  const have = new Set((wiredCmpids || []).map((c) => s0(c).toLowerCase()));
+  return rosterOf(client).filter((m) => !have.has(m.cmpid)).map((m) => {
+    const b = book ? book[m.cmpid] : null;
+    const g = b ? b.feeds.filter((f) => f.k === 'google') : [];
+    const why = !b ? 'unread' : !g.length ? 'nogoogle' : g.some((f) => f.st === 'a') ? 'unwired' : 'paused';
+    return { market: m.market, cmpid: m.cmpid, why, google: g, live: b ? b.live : null, paused: b ? b.paused : null,
+      kinds: b ? b.feeds.filter((f) => f.st === 'a').map((f) => f.k) : [] };
+  });
+}
+
 // ---- parsing (FeedHero formats everything for display — "£41,794.42", "1,148.65%", "64,469") ---
 // leading currency symbol + the number; a bare "0.00" with no symbol carries cur:null rather than a guessed one
 export function parseMoney(v) {

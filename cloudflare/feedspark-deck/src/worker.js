@@ -524,6 +524,8 @@ const DEFAULT_FEEDS = {
     gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_gb/b91629af3ebd82676817c3ddee95b591/superdry_gb_gb_output.xml' },
     ie: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_ie/65765952c07a37c035450df5af5c493f/superdry_ie_gb_output.xml' },
     de: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_de/0b8f38601b081416b5946b766a87a8b5/superdry_de_gb_output.xml' },
+    // FeedHero's second DE Shopping feed, in English (created 22 Oct 2026) — read off output_feeds 29 Oct 2026
+    'de-en': { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_de/bf958e824e56278f3d095ff133f3fa72/superdry_de_en_gb_output.xml' },
     fr: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_fr/763c26e4c54ba6d465648f12d7112d0c/superdry_fr_gb_output.xml' },
     nl: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_nl/f2dc77d9f615b5c90ab60cafe5112433/superdry_nl_gb_output.xml' },
     befr: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_befr/82f59dd7079b447e6fe5f1169f93e8d2/superdry_befr_gb_output.xml' },
@@ -3189,7 +3191,30 @@ async function route(request, env, ctx) {
           (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, channel: meta ? 'meta' : 'google', kind: r.src && r.src.xml ? 'xml' : 'sheet',
             cmpid, roas: rb ? { client: rb.client, market: rb.market } : null });
         });
-        return json({ ok: true, clients: out });
+        // MIRROR STOCK MANAGEMENT'S MARKETS (Ray, 29 Oct 2026): every roster market of a brand is listed — one with
+        // no wired feed says what FeedHero really runs there (a paused Shopping feed, none at all), never left off
+        const book = await catFeedBook(env, ctx);
+        const fh = {};
+        Object.keys(ROAS.ROAS_ROSTER).filter((c) => inScope(c)).forEach((c) => {
+          const list = out[c] || (out[c] = []);
+          list.forEach((e) => {
+            const b = book && e.cmpid ? book[e.cmpid] : null;
+            const g = b ? b.feeds.filter((f) => f.k === (e.channel === 'meta' ? 'meta' : 'google')) : [];
+            if (g.length && !g.some((f) => f.st === 'a')) e.paused = g[0].lc || true;   // FeedHero stopped sending it
+          });
+          ROAS.rosterGaps(c, list.map((e) => e.cmpid).filter(Boolean), book).forEach((m) => {
+            list.push({ mkt: m.market.toLowerCase().replace(/[^a-z0-9]/g, ''), channel: 'google', kind: 'none', cmpid: m.cmpid,
+              roas: { client: c, market: m.market }, why: m.why, google: m.google, kinds: m.kinds });
+          });
+          if (book) {
+            const t = { live: 0, paused: 0, google: 0 };
+            ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused;
+              t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length; });
+            t.markets = ROAS.rosterOf(c).length; fh[c] = t;
+          }
+          if (!list.length) delete out[c];
+        });
+        return json({ ok: true, clients: out, feedhero: fh, bookAt: book ? book._at || null : null });
       }
       const client = (url.searchParams.get('client') || '').slice(0, 60);
       if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
@@ -4620,6 +4645,37 @@ function roasMcp(env, fetchFn) {
     auth: auth ? auth.name : null,
     host: url.replace(/^https?:\/\//, '').split('/')[0],
   };
+}
+
+// ---- FeedHero's output_feeds report, reduced per company (ROAS.feedBookFrom) — what every roster market really
+// sends, paused feeds included. ONE read pages through the report (status all), kept 6 h in KV `catfeedbook`;
+// a cold read happens in the background so the roster never waits on FeedHero. No URL is kept.
+const CAT_BOOK_TTL = 6 * 3600 * 1000;
+async function catFeedBook(env, ctx) {
+  let rec = null;
+  try { rec = await env.EDITS.get('catfeedbook', 'json'); } catch (e) {}
+  const stale = !rec || !rec._at || Date.now() - rec._at > CAT_BOOK_TTL;
+  if (stale && env.ROAS_MCP_TOKEN) {
+    const job = catFeedBookRead(env).catch(() => null);
+    if (!rec) { const fresh = await job; return fresh; }   // first ever read: worth the wait, once
+    if (ctx && ctx.waitUntil) ctx.waitUntil(job);
+  }
+  return rec;
+}
+async function catFeedBookRead(env) {
+  const mcp = roasMcp(env, fetch);
+  try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }
+  const want = new Set(ROAS.rosterList().map((m) => m.cmpid));
+  const rows = [];
+  for (let page = 1; page <= 4; page++) {
+    const p = await mcp.call('output_feeds', { status: 'all', type: 'output', page_size: 200, page });
+    TMM.rowsOf(p).forEach((r) => { if (r && want.has(String(r.cmpid || '').toLowerCase())) rows.push(r); });
+    if (!p || !p.pages || page >= +p.pages) break;
+  }
+  const book = ROAS.feedBookFrom(rows);
+  book._at = Date.now();
+  await env.EDITS.put('catfeedbook', JSON.stringify(book));
+  return book;
 }
 
 // ---- THE CATALOGUE's master: FeedHero's master_feed tool, through roasMcp (same server + token).

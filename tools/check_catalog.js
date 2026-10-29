@@ -506,6 +506,9 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await tp.click('#proc-b'); await tp.waitForTimeout(400);
     const tile = () => tp.evaluate(() => { const t = document.querySelector('#scope-body .tiles .t b'); return t ? t.textContent : null; });
     const sc0 = await tp.evaluate(() => ({ hid: document.getElementById('scp').hidden, btn: Array.from(document.querySelectorAll('#scp [data-sc]')).map((x) => x.textContent), badge: (document.querySelector('#m-scope .scb') || {}).textContent }));
+    const off = await tp.evaluate(() => { const b = document.querySelector('#mkts [data-off]'); const s = document.querySelector('#mkts .mk-sum');
+      return { lab: b && b.textContent, tip: b && b.title, sum: s && s.textContent }; });
+    ok('a roster market with no Shopping feed is listed and says why, never read', off.lab === 'FIno feed' && /No Google Shopping feed in FeedHero/.test(off.tip) && /Wunderkind/.test(off.tip) && /3 markets · 2 Google Shopping feeds to read · 1 with none live/.test(off.sum || ''), off);
     ok('a brand with two Google markets gets the switch: this market or all of them', !sc0.hid && sc0.btn.join('|') === 'GB|All 2 markets' && sc0.badge === 'GB', sc0);
     ok('on one market the service card counts that market alone', num(await tile()) === want.n, await tile());
     await tp.click('#scp [data-sc="all"]');
