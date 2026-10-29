@@ -518,3 +518,27 @@ Shopping feeds (2023–24). FI and IT have never had one; every market sends Wun
 
 Harness: `tools/test_catalog.mjs` (the book, the gaps, the wiring) and `tools/check_catalog.js` (the stub's FI
 market is listed with its reason and never read).
+
+## How the Before-and-after score is worked out (29 Oct 2026)
+
+Ray: "the values before and after score, can there be an explanation pop up message on the scoring?" The two
+numbers on the Before-and-after card are now a button (ⓘ). Clicking it opens a pop-up — fixed to the window,
+because the card clips and the dashboard grid is a size container, so it lives on `<body>` — with three parts:
+
+1. **The method.** Each product is scored out of 100 on the fields Google asks of it, weighted like the Golden
+   Record (required ×3; brand and GTIN/MPN ×2; optimisation fields ×1). Colour, size, gender, age group and
+   pattern count only on apparel, and the pop-up says how many products that is. A value scores full in Google's
+   format, half when present but not in Google's format, and nothing when absent. The master is FeedHero's import
+   of the brand's own file; the feed is what FeedSpark sends.
+2. **A field-by-field table.** Each field's weight, the share of products holding it in Google's format (master
+   and sent, with the half credit shown apart), and the POINTS it adds to each score. The points are each
+   product's weighted credit ÷ its own total weight, summed over the products traced (`flAdd` on the lineage pass,
+   `sum.fl`), so the rows ADD UP to the two numbers on the card. A breakdown that did not add up would be a
+   second, different score.
+3. **The products counted.** The number of products traced, and on All markets every market's products together.
+   `scFix` sums the rows across the market snapshots. A snapshot kept before this shipped counts in the score but
+   not in the rows, and the pop-up says so.
+
+Esc, ✕ or a click outside closes it, and the pop-up stays open while the card repaints. On a phone it is a
+bottom sheet. Golden Record's ⬇ HTML copy of the card keeps the two numbers and drops the button. Harness:
+`tools/check_catalog.js` (the pop-up opens inside the window, its rows sum to the card's numbers, and Esc closes it).

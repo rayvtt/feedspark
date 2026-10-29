@@ -6440,6 +6440,8 @@ window.addEventListener('load',restore);
         if (ph && all > thumbs.length) ph.appendChild(document.createTextNode(' · ' + thumbs.length + ' shown'));
       } else if (ph) { ph.appendChild(document.createTextNode(' · pictures not embedded')); }
     }
+    // the Catalogue's Before-and-after score is a button (it opens how it is worked out) — keep the two numbers, drop the control
+    Array.prototype.forEach.call(c.querySelectorAll('button.bna'), function (b) { var d = document.createElement('div'); d.className = 'bna'; d.innerHTML = b.innerHTML; var i = d.querySelector('.bna-i'); if (i) i.parentNode.removeChild(i); b.parentNode.replaceChild(d, b); });
     Array.prototype.forEach.call(c.querySelectorAll('.grx,select,button,input,textarea,.pixctl,a.btn'), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
     var h = c.querySelector('.chead h3');
     if (h && vlabel && h.textContent.toLowerCase().indexOf(vlabel.toLowerCase()) < 0) h.appendChild(document.createTextNode(' · ' + vlabel));

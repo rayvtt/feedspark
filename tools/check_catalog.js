@@ -394,6 +394,22 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // before and after: the page's headline is the traced catalogue's own average, both ways
     const fx2 = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(), b = document.querySelectorAll('#fix-body .bna b'); return { page: [b[0] && b[0].textContent, b[1] && b[1].textContent], want: S.sum ? [Math.round(S.sum.cb / S.sum.n), Math.round(S.sum.ca / S.sum.n)] : null }; });
     ok('Before and after FeedSpark: master → feed completeness is the traced average both ways', fx2.want && +fx2.page[0] === fx2.want[0] && +fx2.page[1] === fx2.want[1], fx2);
+    // the score explains itself (Ray, 29 Oct 2026): a click on the two numbers opens how they are made, field by field,
+    // and the rows ADD UP to the two scores on the card — a breakdown that did not would be a second, different score
+    await pg.click('#fix-why');
+    const fp = await pg.evaluate(() => {
+      const p = document.getElementById('fix-pop'), r = p.getBoundingClientRect(), S = window.__FCCCatalogue.state();
+      const rows = Array.from(p.querySelectorAll('.fp-t tbody tr .pts')).map((t) => t.textContent.match(/(-?[\d.]+) → (-?[\d.]+)/)).filter(Boolean);
+      return { shown: !p.hidden && r.height > 40, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+        exp: document.getElementById('fix-why').getAttribute('aria-expanded'), n: rows.length,
+        b: rows.reduce((s, m) => s + +m[1], 0), a: rows.reduce((s, m) => s + +m[2], 0),
+        foot: (p.querySelector('.fp-t tfoot .pts') || {}).textContent, want: S.sum ? [S.sum.cb / S.sum.n, S.sum.ca / S.sum.n] : null, words: /half/.test(p.textContent) && /×3/.test(p.textContent) };
+    });
+    if (process.env.CAT_SHOT) await pg.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_fixpop.png') });
+    ok('Before and after: a click opens how the score is worked out, inside the window', fp.shown && fp.inView && fp.exp === 'true' && fp.words, fp);
+    ok('…field by field, and the rows add up to the card\'s two numbers', fp.n >= 6 && fp.want && Math.abs(fp.b - fp.want[0]) <= fp.n * 0.05 + 0.1 && Math.abs(fp.a - fp.want[1]) <= fp.n * 0.05 + 0.1, fp);
+    await pg.keyboard.press('Escape');
+    ok('…and Esc closes it', await pg.evaluate(() => document.getElementById('fix-pop').hidden && document.getElementById('fix-why').getAttribute('aria-expanded') === 'false'));
     // where the budget goes: the three buckets add up to every category's spend, each bucket by the category's own ROAS
     const roots = (DATA.market.tree || []).map((n) => n.row).filter((r) => r && r.category !== 'Total' && !/unlisted/i.test(r.category) && r.spend && r.spend.n > 0);
     const mk = DATA.market.total.roasPct, W = { lo: 0, mid: 0, hi: 0 }; let T = 0;
