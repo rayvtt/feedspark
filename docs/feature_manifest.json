@@ -17115,6 +17115,18 @@
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "e.channel === ch && e.kind !== 'none'",
       "pr": 0
+    },
+    {
+      "name": "Catalogue: the Before-and-after score opens how it is worked out, the rows adding up to it",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "function fixPop(d, before, after) {",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record: the Catalogue score button kept as its two numbers in the HTML copy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "querySelectorAll('button.bna')",
+      "pr": 0
     }
   ]
 }

@@ -231,6 +231,27 @@ window.addEventListener('load',restore);
   .bna .ar{font-size:18px;color:var(--muted);padding-bottom:3px}
   .bna .d{margin-left:auto;font-size:12.5px;font-weight:900;color:var(--good);padding-bottom:3px}
   .bna .d.dn{color:var(--risk)}
+  button.bna{width:100%;font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:10px;padding:4px 6px;margin:-2px -6px 10px;cursor:help;text-align:left;box-sizing:content-box}
+  button.bna:hover,button.bna[aria-expanded="true"]{border-color:var(--line);background:var(--wash,#F7F7F5)}
+  button.bna:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .bna .bna-i{font-size:12px;color:var(--muted);padding-bottom:5px}
+  .bna .d+.bna-i{margin-left:6px}
+  .fixpop{position:fixed;z-index:400;width:min(460px,calc(100vw - 24px));max-height:min(72vh,560px);overflow:auto;background:var(--paper,#fff);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.18);padding:12px 14px;font-size:12px;line-height:1.5}
+  .fixpop[hidden]{display:none!important}
+  .fixpop p{margin:0 0 8px}
+  .fp-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:13px}
+  .fp-x{font:inherit;border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:6px}
+  .fp-x:hover{background:var(--wash,#F7F7F5);color:var(--ink)}
+  .fp-t{width:100%;border-collapse:collapse;font-size:11.5px;margin:4px 0 8px}
+  .fp-t th{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 4px;border-bottom:1px solid var(--line)}
+  .fp-t th:first-child,.fp-t td:first-child{text-align:left}
+  .fp-t td{text-align:right;padding:4px 4px;border-bottom:1px dashed var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .fp-t td:first-child{white-space:normal;font-weight:700}
+  .fp-t td small{color:var(--muted);font-weight:700}
+  .fp-t .pts .up{color:var(--good);font-weight:900}.fp-t .pts .dn{color:var(--risk);font-weight:900}
+  .fp-t tfoot td{border-bottom:0;padding-top:6px;font-weight:900}
+  .fp-n{color:var(--muted);font-size:11.5px}
+  @media (max-width:760px){.fixpop{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-height:78vh}}
   .evl{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:5px 8px;font-size:12px;align-items:center}
   .evl .ic{font-weight:900;text-align:center}
   .evl .ic.y{color:var(--good)}
@@ -1307,7 +1328,7 @@ window.addEventListener('load',restore);
     var N = S.prods.length, i = 0, plan = S.m.plan, by = S.m.by, A = E.ATTRS.length;
     S.codes = new Array(N); S.comp = new Array(N); S.att = new Uint8Array(N); S.spw = new Array(N);
     S.mx = E.ATTRS.map(function () { return {}; }); S.mxw = new Uint32Array(A); S.mxN = 0;
-    var sum = { n: 0, ex: 0, pop: 0, opt: 0, enr: 0, kept: 0, drop: 0, cb: 0, ca: 0, vals: 0, touched: 0 };
+    var sum = { n: 0, ex: 0, pop: 0, opt: 0, enr: 0, kept: 0, drop: 0, cb: 0, ca: 0, vals: 0, touched: 0, fl: {}, app: 0 };
     (function step() {
       if (g !== S.gen) return;
       var end = Math.min(N, i + 700);
@@ -1322,6 +1343,7 @@ window.addEventListener('load',restore);
         var wv = null; for (var q = 0; q < lin.length; q++) if (lin[q].spec === 'warn') (wv = wv || []).push(q); S.spw[i] = wv;
         if (!cells) continue;
         S.mxN++; sum.n++; sum.cb += cm.before; sum.ca += cm.after;
+        flAdd(sum, cm);
         for (var a = 0; a < A; a++) {
           var c = code.charAt(a), bin = S.mx[a];
           bin[c] = (bin[c] || 0) + 1;
@@ -2718,16 +2740,32 @@ window.addEventListener('load',restore);
       if (f) fixed++; if (m) still++; if (sf) refmt++;
       for (var q = 0; q < ai.length; q++) { var x = c.charAt(ai[q]); if ('ksodg'.indexOf(x) >= 0) aiB[E.ATTRS[ai[q]].k] = 1; if ('klpsoeg'.indexOf(x) >= 0) aiA[E.ATTRS[ai[q]].k] = 1; }
     }
-    return { n: s.n, cb: s.cb, ca: s.ca, pop: s.pop, enr: s.enr, opt: s.opt, touched: s.touched, fixed: fixed, refmt: refmt, still: still, aiB: Object.keys(aiB), aiA: Object.keys(aiA), aiN: ai.length };
+    return { n: s.n, cb: s.cb, ca: s.ca, pop: s.pop, enr: s.enr, opt: s.opt, touched: s.touched, fixed: fixed, refmt: refmt, still: still, aiB: Object.keys(aiB), aiA: Object.keys(aiA), aiN: ai.length, fl: s.fl || {}, app: s.app || 0 };
+  }
+  // HOW THE SCORE IS MADE (Ray, 29 Oct 2026: "the values before and after score, can there be an explanation pop up message on
+  // the scoring?"): each product's score is split by field — weight × what Google would make of the value ÷ the weights that
+  // product is scored on — and those points are added up over the products traced, so the rows of the pop-up are the score
+  // itself, not a description of it: they add to the two numbers on the card (up to rounding)
+  function flAdd(sum, cm) {
+    var tot = 0; cm.list.forEach(function (r) { tot += r.w; }); if (!tot) return;
+    if (cm.apparel) sum.app++;
+    cm.list.forEach(function (r) {
+      var f = sum.fl[r.k] || (sum.fl[r.k] = { w: r.w, n: 0, b: 0, a: 0, fb: 0, fa: 0, hb: 0, ha: 0 });
+      f.n++; f.b += r.w * r.before / tot * 100; f.a += r.w * r.after / tot * 100;
+      if (r.before === 1) f.fb++; else if (r.before) f.hb++;
+      if (r.after === 1) f.fa++; else if (r.after) f.ha++;
+    });
   }
   function renderFix() { paintFix(scAll() ? scFix() : fixD()); }
   function paintFix(d) {
-    if (!d || d.why) { modEmpty('fix-body', d ? d.why : 'Tracing the master feed…'); return; }
+    if (!d || d.why) { modEmpty('fix-body', d ? d.why : 'Tracing the master feed…'); var op = $('fix-pop'); if (op) op.hidden = true; return; }
     var before = d.cb / d.n, after = d.ca / d.n, dl = after - before;
     var col = function (v) { var b = auditBand(v); return b ? 'color:var(--band-' + b + ')' : ''; };
-    var h = '<div class="bna"><div class="n"><small>Master</small><b style="' + col(before) + '">' + Math.round(before) + '</b></div><span class="ar">→</span>'
+    var h = '<div class="bna-w"><button type="button" class="bna" id="fix-why" aria-expanded="false" aria-controls="fix-pop" title="How these two scores are worked out">'
+      + '<div class="n"><small>Master</small><b style="' + col(before) + '">' + Math.round(before) + '</b></div><span class="ar">→</span>'
       + '<div class="n"><small>Sent to Google</small><b style="' + col(after) + '">' + Math.round(after) + '</b></div>'
-      + '<span class="d' + (dl < 0 ? ' dn' : '') + '">' + (dl >= 0 ? '+' : '') + (Math.round(dl * 10) / 10) + ' points</span></div>';
+      + '<span class="d' + (dl < 0 ? ' dn' : '') + '">' + (dl >= 0 ? '+' : '') + (Math.round(dl * 10) / 10) + ' points</span><span class="bna-i" aria-hidden="true">ⓘ</span></button></div>';
+    fixPopEl().innerHTML = fixPop(d, before, after);
     h += kvl([
       { k: 'Required fields filled', v: n0(d.fixed), s: pct1(d.fixed, d.n), tip: 'Google-required fields (title, description, link, image, availability, price) missing in the master and present in the feed' },
       { k: 'Required values put into Google’s format', v: n0(d.refmt), s: pct1(d.refmt, d.n), tip: 'Products whose master held a required value Google would not take as it stood (e.g. NOT_AVAILABLE, a price with no currency) — sent in Google’s format' },
@@ -2738,7 +2776,68 @@ window.addEventListener('load',restore);
     ]);
     h += '<div class="cfoot"><span>Google-ready out of 100, weighted as the Golden Record — a value not in Google’s format counts half · <b>' + n0(d.n) + '</b> products traced' + scNote(d) + '</span></div>';
     $('fix-body').innerHTML = h;
+    if (FIXOPEN) fixPopSet(true);
   }
+  var FIX_NAME = { title: 'Title', description: 'Description', link: 'Product page', image_link: 'Main image', availability: 'Availability', price: 'Price',
+    brand: 'Brand', 'gtin / mpn': 'GTIN / MPN', google_product_category: 'Google category', product_type: 'Product type', additional_image_link: 'More images',
+    product_highlight: 'Highlights', product_detail: 'Product details', material: 'Material', color: 'Colour', size: 'Size', gender: 'Gender', age_group: 'Age group', pattern: 'Pattern' };
+  var FIX_ORDER = ['title', 'description', 'link', 'image_link', 'availability', 'price', 'brand', 'gtin / mpn', 'color', 'size', 'gender', 'age_group',
+    'google_product_category', 'product_type', 'additional_image_link', 'product_highlight', 'product_detail', 'material', 'pattern'];
+  function fixPop(d, before, after) {
+    var fl = d.fl || {}, ks = FIX_ORDER.filter(function (k) { return fl[k] && fl[k].n; }), n = d.n || 1;
+    var one = function (v) { return (Math.round(v * 10) / 10).toFixed(1); };
+    var h = '<div class="fp-h"><b>How the score is worked out</b><button type="button" class="fp-x" data-fixx aria-label="Close">✕</button></div>'
+      + '<p>Each product is scored <b>out of 100</b> on the fields Google asks of it, weighted like the Golden Record: the six <b>required</b> fields (title, description, link, main image, availability, price) ×3, '
+      + 'brand and GTIN/MPN ×2, the optimisation fields ×1. Colour, size, gender and age group (×2) and pattern (×1) count only on apparel'
+      + (d.app != null && n ? ' — <b>' + n0(d.app) + '</b> of ' + n0(n) + ' products here' : '') + '.</p>'
+      + '<p>A value scores <b>full</b> when Google would take it as it stands, <b>half</b> when it is there but not in Google’s format (e.g. <i>NOT_AVAILABLE</i>, a price with no currency, HTML in a description), and <b>nothing</b> when it is missing or only buried in another column. '
+      + 'The <b>master</b> is the brand’s own file as FeedHero imported it; <b>sent to Google</b> is the output feed FeedSpark sends. The same rule scores both, so the gap is the work done.</p>'
+      + '<p>The card shows the average over the <b>' + n0(d.n) + '</b> products traced' + (d.mk ? ', every market’s products together' : '') + '.</p>';
+    if (ks.length) {
+      var tb = 0, ta = 0;
+      h += '<table class="fp-t"><thead><tr><th>Field</th><th title="Weight">×</th><th title="Products where the master holds it in Google’s format (half credit counted apart)">Master</th><th title="Products where the feed holds it in Google’s format">Sent</th><th title="Points this field adds to each score — the rows add up to the two numbers">Points</th></tr></thead><tbody>';
+      ks.forEach(function (k) {
+        var f = fl[k], pb = f.b / n, pa = f.a / n, dd = pa - pb; tb += pb; ta += pa;
+        var sh = function (full, half) { return pct1(full, f.n) + (half ? '<small> +' + pct1(half, f.n) + ' half</small>' : ''); };
+        h += '<tr><td>' + esc(FIX_NAME[k] || k) + (f.n < n ? '<small> · ' + n0(f.n) + ' products</small>' : '') + '</td><td>' + f.w + '</td><td>' + sh(f.fb, f.hb) + '</td><td>' + sh(f.fa, f.ha) + '</td>'
+          + '<td class="pts">' + one(pb) + ' → ' + one(pa) + (Math.abs(dd) >= 0.05 ? ' <span class="' + (dd < 0 ? 'dn' : 'up') + '">' + (dd > 0 ? '+' : '') + one(dd) + '</span>' : '') + '</td></tr>';
+      });
+      h += '</tbody><tfoot><tr><td colspan="4">Score</td><td class="pts"><b>' + one(tb) + ' → ' + one(ta) + '</b></td></tr></tfoot></table>';
+      if (d.flMiss) h += '<p class="fp-n">' + d.flMiss + ' market' + (d.flMiss === 1 ? ' was' : 's were') + ' read before this breakdown existed — counted in the score, not in the rows. ⚡ Re-read it to add it.</p>';
+    } else h += '<p class="fp-n">The field-by-field breakdown fills in once the market is read again.</p>';
+    return h;
+  }
+  var FIXOPEN = false;
+  // one pop-up on <body>: the dashboard grid is a size container, which makes it the box a fixed element is placed in
+  function fixPopEl() {
+    var p = $('fix-pop'); if (p) return p;
+    p = document.createElement('div'); p.className = 'fixpop'; p.id = 'fix-pop'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'How the score is worked out'); p.hidden = true;
+    document.body.appendChild(p); return p;
+  }
+  function fixPopSet(open) {
+    FIXOPEN = !!open;
+    var b = $('fix-why'), p = $('fix-pop'); if (!b || !p) return;
+    p.hidden = !open; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) fixPopPlace();
+  }
+  // the card clips what overflows it, so the pop-up is fixed to the window, under the score (above it when there is no room)
+  function fixPopPlace() {
+    var b = $('fix-why'), p = $('fix-pop'); if (!b || !p || p.hidden) return;
+    if (window.innerWidth <= 760) { p.style.left = ''; p.style.top = ''; return; }
+    var r = b.getBoundingClientRect(), w = p.offsetWidth, hgt = p.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    if (r.bottom < 0 || r.top > vh) { fixPopSet(false); return; }
+    var left = Math.max(12, Math.min(r.left, vw - w - 12)), top = r.bottom + 6;
+    if (top + hgt > vh - 12 && r.top - hgt - 6 > 12) top = r.top - hgt - 6;
+    p.style.left = left + 'px'; p.style.top = Math.max(12, Math.min(top, vh - hgt - 12)) + 'px';
+  }
+  window.addEventListener('scroll', fixPopPlace, true);
+  window.addEventListener('resize', fixPopPlace);
+  document.addEventListener('click', function (ev) {
+    if (ev.target.closest('[data-fixx]')) { fixPopSet(false); return; }
+    if (ev.target.closest('#fix-why')) { var p = $('fix-pop'); fixPopSet(p && p.hidden); return; }
+    if (!ev.target.closest('#fix-pop')) fixPopSet(false);
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { var p = $('fix-pop'); if (p && !p.hidden) { fixPopSet(false); var b = $('fix-why'); if (b) b.focus(); } } });
   // 12 · WHERE THE AD BUDGET GOES — the last 30 days of Google Ads spend split by what each top-level category returned:
   // less than it cost (ROAS under 100%), below the market's own ROAS, or at and above it. Category level, never a product's.
   function wasteD() {
@@ -2960,6 +3059,13 @@ window.addEventListener('load',restore);
     ['n', 'cb', 'ca', 'pop', 'enr', 'opt', 'touched', 'fixed', 'refmt', 'still'].forEach(function (k) { o[k] = 0; });
     L.forEach(function (d) { ['n', 'cb', 'ca', 'pop', 'enr', 'opt', 'touched', 'fixed', 'refmt', 'still'].forEach(function (k) { o[k] += d[k] || 0; }); d.aiA.forEach(function (k) { A[k] = 1; }); d.aiB.forEach(function (k) { B[k] = 1; }); });
     o.aiA = Object.keys(A); o.aiB = Object.keys(B); o.aiN = L[0].aiN;
+    o.fl = {}; o.app = 0; o.flMiss = 0;
+    L.forEach(function (d) {
+      if (!d.fl) { o.flMiss++; return; }   // a snapshot kept before the breakdown existed: its markets count in the score, not the rows
+      o.app += d.app || 0;
+      Object.keys(d.fl).forEach(function (k) { var f = d.fl[k], t = o.fl[k] || (o.fl[k] = { w: f.w, n: 0, b: 0, a: 0, fb: 0, fa: 0, hb: 0, ha: 0 });
+        ['n', 'b', 'a', 'fb', 'fa', 'hb', 'ha'].forEach(function (x) { t[x] += f[x] || 0; }); });
+    });
     return o;
   }
   function scWaste() {
