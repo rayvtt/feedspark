@@ -683,5 +683,34 @@ console.log('· the source stock — FeedHero\'s suppfeed stock + range_comp, re
   t('the agent\'s push lane answers the same reader ({stocksrc})', /if \(typeof body\.stocksrc === 'string'\) \{/.test(WK));
 }
 
+// ---- every roster market, with what FeedHero really sends (Ray, 29 Oct 2026: "Mirror the stock management") ----
+{
+  console.log('\nRoster markets mirror Stock management');
+  const row = (cmpid, name, st, link) => ({ cmpid, feed_name: name, feed_status: st, products: '1,000', last_collected: '06/10/2026 at 06:18 AM', feed_link: link || '' });
+  const book = ROAS.feedBookFrom([
+    row('superdry_gb', 'Google Shopping', 'Active', 'https://x.feedhero.net/output_feeds/gb/superdry_gb/h/f.xml'),
+    row('superdry_gb', 'Google Shopping Audit purpose', 'Active', 'https://x.feedhero.net/output_feeds/gb/superdry_gb/h2/a.xml'),
+    row('superdry_dk', 'Google Shopping', 'Paused'), row('superdry_dk', 'Wunderkind', 'Active'),
+    row('superdry_it', 'Wunderkind', 'Active'),
+    row('superdry_de', 'Facebook German', 'Active', 'https://x.feedhero.net/output_feeds/fb_lang_feed/superdry_de/h/x.xml'),
+  ]);
+  t('the audit copy is not a Shopping feed', book.superdry_gb.feeds.map((f) => f.k).join() === 'google,audit');
+  t('a Meta language override is its own kind, never a catalogue', book.superdry_de.feeds[0].k === 'metalang');
+  t('live / paused counted per company', book.superdry_dk.live === 1 && book.superdry_dk.paused === 1);
+  t('no feed URL is kept', !JSON.stringify(book).includes('http'));
+  const gaps = ROAS.rosterGaps('Superdry', ['superdry_gb', 'superdry_de'], book);
+  t('every roster market not wired is listed', gaps.length === ROAS.rosterOf('Superdry').length - 2);
+  const by = (c) => gaps.find((g) => g.cmpid === c);
+  t('a paused Shopping feed reads paused', by('superdry_dk').why === 'paused');
+  t('a market with no Shopping feed reads nogoogle, naming what it does send', by('superdry_it').why === 'nogoogle' && by('superdry_it').kinds.join() === 'wunderkind');
+  t('a company FeedHero never listed reads unread, never "none"', by('superdry_pl').why === 'unread');
+  const r0 = WK.indexOf("if (path === '/api/catalog/roster')"), rt = WK.slice(r0, WK.indexOf("return json({ ok: true, clients: out", r0) + 80);
+  t('the roster route adds the gaps for brands in scope only', /ROAS\.rosterGaps\(c,/.test(rt) && /filter\(\(c\) => inScope\(c\)\)/.test(rt));
+  t('a gap is never readable (kind none)', /kind: 'none'/.test(rt));
+  t('the book is read from output_feeds and kept without URLs', /mcp\.call\('output_feeds'/.test(WK) && /catfeedbook/.test(WK));
+  t('the page never loads a kind-none market', /e\.channel === ch && e\.kind !== 'none'/.test(PG) && /x\.kind !== 'none'/.test(PG));
+  t('the page names each market without a feed', /data-off=/.test(PG) && /function offWhy\(e\)/.test(PG));
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

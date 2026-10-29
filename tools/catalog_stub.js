@@ -125,7 +125,10 @@ function build() {
   // A SECOND GOOGLE MARKET, only when a harness asks for it (window.__catTwo — tools/check_catalog.js's All-markets pass):
   // Northwind IE carries the first IE_N products of the same feed and reports Google Ads in EUR, so adding markets up and
   // keeping money inside one currency are both tested; it has no stock rules on the roster
-  const roster2 = { ok: true, clients: { [CLIENT]: roster.clients[CLIENT].concat([{ mkt: 'ie', channel: 'google', kind: 'xml', cmpid: CMPID_IE, roas: { client: CLIENT, market: 'IE' } }]) } };
+  const roster2 = { ok: true, clients: { [CLIENT]: roster.clients[CLIENT].concat([{ mkt: 'ie', channel: 'google', kind: 'xml', cmpid: CMPID_IE, roas: { client: CLIENT, market: 'IE' } },
+    // a roster market FeedHero sends no Shopping feed for — listed, never read (Ray, 29 Oct 2026: mirror Stock's markets)
+    { mkt: 'fi', channel: 'google', kind: 'none', cmpid: 'northwind_fi', roas: { client: CLIENT, market: 'FI' }, why: 'nogoogle', google: [], kinds: ['wunderkind'] }]) },
+    feedhero: { [CLIENT]: { markets: 3, live: 5, paused: 1, google: 2 } } };
   const eur = (o) => JSON.parse(JSON.stringify(o).replace(/GBP/g, 'EUR').replace(/"market":"GB"/g, '"market":"IE"'));
   return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads, roster2, xmlIE: outputXml(IE_N), marketIE: eur(r.market), liveIE: eur(r.live) };
 }

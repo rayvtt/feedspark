@@ -17103,6 +17103,18 @@
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "function sweepStart(force) {",
       "pr": 0
+    },
+    {
+      "name": "Catalogue: every roster market listed, a market with no feed named with what FeedHero sends (never read)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ROAS.rosterGaps(c, list.map((e) => e.cmpid).filter(Boolean), book)",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue: a kind-none market is never loaded or swept",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "e.channel === ch && e.kind !== 'none'",
+      "pr": 0
     }
   ]
 }

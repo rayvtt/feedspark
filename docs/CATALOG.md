@@ -492,3 +492,29 @@ docs/LABELGUARD.md §9.12c). With `?embed=mods` the page shows its module grid a
 every preference through an in-memory layer and writes none to the device, keeps its own address, hides
 the Fee check, and marks its root `data-no-digest` + `data-no-collapse` so the phone's skim view and the
 ⓘ collapse leave the cards whole. Without the parameter nothing changes.
+
+## Every roster market, as FeedHero sends it (29 Oct 2026)
+
+Ray: "Superdry has way more market than the catalog shown … Mirror the stock management … go back into
+[FeedHero reports] MCP to actually get the real feed output." The Catalogue listed a market only when a feed
+was WIRED, so Superdry showed 10 of the 19 markets Stock management works over. The facts, read off FeedHero's
+own `output_feeds` report (status all) on 29 Oct 2026: 57 Superdry output feeds, 47 live and 10 paused. Live
+Google Shopping feeds go to nine markets (GB, IE, DE — plus a second, English DE feed created 22 Oct — FR, NL,
+BE-FR, BE-NL, ES, US). DK's was paused on 6 Oct 2026. CH-DE, CH-FR, NO, PL, SE, CA-EN and CA-FR have paused
+Shopping feeds (2023–24). FI and IT have never had one; every market sends Wunderkind.
+
+- `/api/catalog/roster` now lists every ROAS-roster market of a brand in scope. A market with no wired feed comes
+  back as `kind:'none'` with `why`: `paused` / `nogoogle` / `unwired` / `unread`, and the kinds of feed FeedHero
+  does send there. A wired feed FeedHero has paused carries `paused` (its last delivery). `feedhero` gives the
+  brand's live / paused feed counts.
+- The book comes from `catFeedBook`: one paged `output_feeds` read, cached 6 h in KV `catfeedbook` and refreshed
+  in the background. `ROAS.feedBookFrom` keeps each feed's kind, name, status, products and last delivery —
+  **never a URL**.
+- The page draws a market with no feed as a dashed "no feed" chip after a divider, with the reason in its tooltip
+  (a click shows it too). It never loads that market and never adds it to an All-markets read. A paused feed gets
+  a "paused" tag. One line sums up the brand: markets · Shopping feeds to read · with none live · live FeedHero
+  feeds.
+- `de-en` (Superdry's English DE Shopping feed) is wired in `DEFAULT_FEEDS`.
+
+Harness: `tools/test_catalog.mjs` (the book, the gaps, the wiring) and `tools/check_catalog.js` (the stub's FI
+market is listed with its reason and never read).
