@@ -291,6 +291,45 @@ Harness:
   "Non Optimized"), the registry, the preset and deep link, the fee never leaving the device, and the
   class collision.
 
+## One market or all of them (29 Oct 2026)
+
+Ray, 29 Oct 2026, over the procurement view: "for multi markets clients — can you please also allow
+these numbers especially for procurement view that to either dissect on 1 market or all their markets".
+
+A brand with more than one Google market gets a switch in the dashboard bar: **GB · All N markets**.
+Nine cards follow it: Data FeedSpark added, Custom labels, Ad spend kept off, Optimised vs not,
+Before and after, Where the ad budget goes, What the service does, The service in numbers and Fee
+check. Every card wears a badge naming what it reads: **All N markets** on those nine, and the market
+on the rest, which still read one market at a time.
+
+How it is read: every one of those figures is worked out in the browser off a market's own feed,
+master and FeedHero reads, so the estate is read the same way. Once a market has settled (feed
+streamed, master traced or refused, Google Ads and stock rules answered), each card's figures are kept
+as a **snapshot** on this device (`fcc-cat-snap`; fresh for 12 hours, kept for 3 days; never shared
+state). Each card is split into a reader (`gainD`, `clD`, `keptD`, `fixD`, `wasteD`, `venD`,
+`scopeD`, `feeD`, plus the two Optimised-vs-not cuts) and a painter, so one market and the whole
+estate are drawn by the same code. Switching to All, or **⚡ Read the other N**, walks the markets
+with no fresh snapshot through the page's own loader one at a time (the market on screen last), then
+puts the reader back where they were. ⏹ Stop keeps what was read. Picking a market or brand stops
+the walk.
+
+Three rules:
+- **Counts add; shares are re-worked from the summed counts**, never averaged across markets.
+- **Money adds only inside one currency.** When the estate reports in more than one, a currency
+  picker appears (`fcc-cat-sccur`), and every money card names the markets in another currency that
+  it left out.
+- **A market not read yet is named, never counted as zero** ("not read: DE, FR" on the card foot).
+
+In All mode a card lists no products on click, because its products belong to many markets.
+
+Harness: `tools/check_catalog.js` gives the stub a second Google market (IE: the first 14 products,
+Google Ads in EUR) and checks:
+- the walk reads both markets and returns to GB;
+- Products managed and products traced are the two markets added;
+- the budget card adds pounds only, then euros once EUR is picked;
+- a reload keeps the choice without a second walk;
+- going back to one market restores GB's own figures.
+
 ## Column filters (30 Sep 2026)
 
 Ray: *"in catalog - allow filtering by column values as well"*.

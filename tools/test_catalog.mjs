@@ -408,7 +408,7 @@ t('one chart failing never stops the master join', /\[counts, detectRoasField, r
 t('the dashboard is TWENTY-ONE modules of one size on an even grid that follows the page\'s own width (Image pixels spans its row, Product type depth two columns)', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 21 && /\.mod\[data-mod="pix"\]\{grid-column:1\/-1\}/.test(PG) && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
 t('stock control reads Stock management\'s OWN route and matches the market on the feed\'s FeedHero company id, never a name', /fetch\('\/api\/rules\/stock\?brand=/.test(PG) && /String\(x\.cmpid\) === String\(e\.cmpid\)/.test(PG) && /loadRoas\(g\); loadStock\(g\);/.test(PG));
 t('stock control is /stock\'s coverage matrix for this market — one hue, the count in the cell, — where none', /function covShade\(n, mx\)/.test(PG) && /<table class="covt/.test(PG) && /none: the market has no rule doing this/.test(PG) && /fcc-cat-stkch/.test(PG));
-t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /best\.n \* a\.spendDay \* D/.test(PG));
+t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /d\.n \* d\.spendDay \* D/.test(PG));
 t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability · image pixels · product type depth + path)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail' \|\| F\.k === 'pix' \|\| F\.k === 'ptd' \|\| F\.k === 'ptp'\) return passModFacet\(F, i, x\);/.test(PG));
 t('modules are the viewer\'s to hide and reorder, per device, never shared', /lsSet\('fcc-cat-mods', st\)/.test(PG) && PG.indexOf("/api/state?ns=catmods") < 0);
 t('a path cut names its leaf, not a truncated root repeated ten times', /var shortLab = function \(c\)/.test(PG));
@@ -472,10 +472,10 @@ console.log('· the commercial view (a buyer choosing between feed vendors)');
   t('twenty-one modules on the dashboard (the six commercial ones, Image pixels, Custom labels, Product type depth) registered', (mods.match(/\['[a-z]+', /g) || []).length === 21 && mods.indexOf("['pix'") >= 0 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
   t('👔 Procurement view is a preset of the same per-device module state, and ?view=procurement opens it', /var PROC = \['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'\]/.test(PG) && /v: 'proc'/.test(PG) && /qp\('view'\)/.test(PG));
   t('the fee a buyer types never leaves the device — no request in the fee check', !/fetch\(|api\(/.test(lift('renderFee') + lift('feeSet')) && /lsSet\('fcc-cat-fee'/.test(PG));
-  t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('renderLift')));
-  t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('renderVendor')) && /have == null/.test(lift('renderVendor')));
-  t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('renderWaste')) && /rv \/ sp \* 100/.test(lift('renderWaste')));
-  t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('renderLift')) && !/class="cmp"/.test(lift('renderLift')));
+  t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('liftHtml')));
+  t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('paintVendor')) && /have == null/.test(lift('paintVendor')));
+  t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('wasteD')) && /rv \/ sp \* 100/.test(lift('wasteD')));
+  t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('liftHtml')) && !/class="cmp"/.test(lift('liftHtml')));
 }
 
 console.log('· image pixels (docs/pixel_engine.js) — synthetic pictures, never a client\'s');
