@@ -17131,7 +17131,7 @@
     {
       "name": "Catalogue: What the service does prints the volume beside each share",
       "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "var vol = function (k) { return n0(st[k]) + ' products · ' + pct1(st[k], N); };",
+      "pattern": "var vol = function (k) { return n0(st[k]) + ' fields · ' + pct1(st[k], N); };",
       "pr": 0
     },
     {
