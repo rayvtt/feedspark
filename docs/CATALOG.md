@@ -554,7 +554,8 @@ channels", then over **What the service does**: "add the volumes of these as wel
   out; paused feeds are named in the tooltip, never counted. The roster's `feedhero[<brand>]` now carries
   `kinds` + `read` (markets the book covers). Until the book has been read the tile falls back to the feeds the FCC
   has wired and says so.
-- **What the service does** prints the count beside every share — `25,695 products · 100%` — for titles,
-  keywords, category mapping, image overlays and missing data filled; in All-markets mode the counts are the estate's
+- **What the service does** prints the count beside every share in FIELDS (Ray: "i prefer 'fields'") — `25,695 fields · 100%` — for titles,
+  keywords, category mapping and image overlays (one stamped field a product); missing data filled counts every field
+  FeedSpark filled that the master lacked, beside the share of products given at least one; in All-markets mode the counts are the estate's
   sums, the share re-worked from them.
 - Harness: `tools/check_catalog.js` (the volume read off the paint, the feed tile against the stub's book).
