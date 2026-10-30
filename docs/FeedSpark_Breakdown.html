@@ -289,6 +289,12 @@ window.addEventListener('load',restore);
   .sv3hd{font-size:10.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--line)}
   .sv3r{padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
   .sv3r:hover{background:var(--wash)}
+  #sec-cuts .q[type=number]{width:72px;text-align:right}
+  #sec-cuts tbody tr{cursor:pointer}
+  #sec-cuts tbody tr:hover{background:var(--wash,#F8FAFC)}
+  .pk{display:inline-block;min-width:22px;padding:1px 6px;border-radius:3px;font-weight:800}
+  .pk.bad{background:#FFF4E5;color:#B45309}
+  .pk.good{background:#ECFDF5;color:#059669}
   .sv3r .nm{font-size:12.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .sv3r.blank .nm{color:var(--muted);font-style:italic}
   .sv3r .bars{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -454,6 +460,22 @@ window.addEventListener('load',restore);
     </div>
   </section>
 
+  <section class="card fs" id="sec-cuts">
+    <button class="fhd" type="button" aria-expanded="false" aria-controls="sec-cuts"><span class="ft"><b>Find the cuts</b><span class="fl" id="ln-cuts">Which pairs of fields find the most</span></span><span class="chev" aria-hidden="true">▾</span></button>
+    <div>
+      <div class="toolbar">
+        <span class="lbl">Rank by</span><select class="fld" id="ck-rank" aria-label="Rank the cuts by" data-no-keep><option value="roas">ROAS</option><option value="cr">Conversion rate</option></select>
+        <span class="lbl">Min. products</span><input class="q nm" id="ck-n" type="number" min="1" step="1" value="25" aria-label="Minimum products in a pocket">
+        <span class="lbl">Min. spend</span><input class="q nm" id="ck-s" type="number" min="0" step="10" value="150" aria-label="Minimum spend in a pocket">
+        <button class="btn" id="ck-run" type="button">⚡ Scan every pair</button>
+        <button class="btn" id="ck-csv" type="button" hidden>⤓ CSV</button>
+        <span class="cnt" id="ck-cnt"></span>
+      </div>
+      <div id="ck-body"><div class="empty">Pick a Google Ads measure on the pivot first — the scan ranks every pair of fields by the spend it finds.</div></div>
+      <p class="note" id="ck-note"></p>
+    </div>
+  </section>
+
   <section class="card fs" id="sec-fields">
     <button class="fhd" type="button" aria-expanded="true" aria-controls="sec-fields"><span class="ft"><b>Every field in this feed</b><span class="fl" id="ln-fields">How full each field is and what it holds</span></span><span class="chev" aria-hidden="true">▾</span></button>
     <div>
@@ -535,7 +557,7 @@ window.addEventListener('load',restore);
   function mktLabel(m) { return m.mkt.replace(/-fb$/, '').toUpperCase() + (m.meta ? ' · Meta' : ''); }
 
   // ---- folds (Ray's standing rule): the head is the toggle, the device keeps the choice, a jump opens what it points at
-  var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 };
+  var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-cuts': 0, 'sec-fields': 0, 'sec-how': 0 };
   var FOLD = get('fcc-bd-fold', {});
   function isOpen(id) { return FOLD[id] == null ? !!FOLD_DEF[id] : !!FOLD[id]; }
   function applyFold(id, open) {
@@ -1674,7 +1696,102 @@ window.addEventListener('load',restore);
     var lines = ['Opportunity (Field Breakdown): ' + OPK[x.k], 'Segment: ' + sel, 'Finding: ' + t.h, 'Evidence: ' + t.ev, 'Action: ' + t.op.replace(/<[^>]+>/g, ''), 'Counted off the ' + S.brand + ' ' + mk + ' feed' + (adsReady() ? ' and Google Ads (last 30 days)' : '') + ' on ' + new Date().toLocaleDateString('en-GB') + '.'];
     wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Feed Opportunity - ' + OPK[x.k] + ' - ' + (x.label ? x.label + ' ' + t.V : t.G) + ' - ' + S.brand + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') }));
   });
-  function renderAll() { renderStatus(); renderUnit(); renderAddField(); renderViews(); renderPivotCtl(); renderData(); renderFields(); foldBtns(); }
+  // ---- FIND THE CUTS (Ray, 29 Oct 2026, on Matt Rogers' Superdry Pockets deck: "review / study / adapt / innovate
+  // these types of analysis"). The pivot answers a pair you already suspect; this answers WHICH PAIR to open. Every
+  // eligible pair is scanned (engine pairScan) and ranked by the spend sitting in its flagged pockets, so the reader
+  // is told where to look instead of guessing. Docs: docs/POCKETS_METHOD.md.
+  //
+  // A POCKET is one cell, judged only past BOTH floors (products and spend) — below that one sale flips the ROAS, so
+  // it is counted as small and never reported as a finding. The bands are RATIOS TO THIS ACCOUNT (0.65x waste,
+  // 1.5x star), never absolute figures, which is what lets the same thresholds serve any client.
+  //
+  // BOTH metrics are read on one pass and both are shown: smart bidding equalises ROAS, so a cut that finds nothing
+  // on ROAS routinely finds plenty on conversion. Ranking picks which one orders the list; neither is ever hidden.
+  var CK = null;
+  function ckAds() {
+    if (!adsReady()) return null;
+    var f = S.aj.f;
+    return { cost: function (r) { return f.cost[r]; }, value: function (r) { return f.value[r]; },
+             clicks: function (r) { return f.clicks[r]; }, conv: function (r) { return f.conv[r]; } };
+  }
+  function ckPct(x) { return x == null || !isFinite(x) ? '—' : Math.round(x * 100).toLocaleString('en-GB') + '%'; }
+  function ckRun() {
+    var ads = ckAds();
+    if (!S.st || !ads) { CK = null; renderCuts(); return; }
+    var btn = $('#ck-run'); if (btn) { btn.disabled = true; btn.textContent = 'Scanning…'; }
+    setTimeout(function () {
+      try {
+        CK = B.pairScan(S.st, {
+          ads: ads, base: S.filters.length ? B.mask(S.st, S.filters) : null,
+          rank: $('#ck-rank').value === 'cr' ? 'cr' : 'roas',
+          minN: Math.max(1, +$('#ck-n').value || B.PK_MIN_N),
+          minSpend: Math.max(0, +$('#ck-s').value || 0)
+        });
+      } catch (e) { CK = null; }
+      if (btn) { btn.disabled = false; btn.textContent = '⚡ Scan every pair'; }
+      renderCuts();
+    }, 10);
+  }
+  function renderCuts() {
+    var body = $('#ck-body'), note = $('#ck-note'), cnt = $('#ck-cnt'), csv = $('#ck-csv');
+    if (!body) return;
+    csv.hidden = !CK;
+    if (!adsReady()) {
+      body.innerHTML = '<div class="empty">Pick a Google Ads measure on the pivot first — the scan ranks every pair of fields by the spend it finds.</div>';
+      note.textContent = ''; cnt.textContent = ''; $('#ln-cuts').textContent = 'Which pairs of fields find the most'; return;
+    }
+    if (!CK) { body.innerHTML = '<div class="empty">Press ⚡ Scan every pair.</div>'; note.textContent = ''; cnt.textContent = ''; return; }
+    if (!CK.cuts.length) {
+      body.innerHTML = '<div class="empty">' + esc(CK.reason === 'no spend read' ? 'No spend read on this feed, so there is nothing to rank.' : 'No pair of fields clears the floors on this feed.') + '</div>';
+      note.textContent = ''; cnt.textContent = ''; return;
+    }
+    var rank = CK.rank, K = rank === 'cr' ? 'cr' : 'roas', wl = rank === 'cr' ? 'Poor converters' : 'Wasted spend', sl = rank === 'cr' ? 'Strong converters' : 'Stars';
+    var rows = CK.cuts.map(function (c, i) {
+      var t = c[K];
+      return '<tr data-ck="' + i + '"><td><b>' + esc(c.aLabel) + '</b> × <b>' + esc(c.bLabel) + '</b></td>'
+        + '<td class="num">' + n0(c.judged) + '</td>'
+        + '<td class="num">' + (t.waste.n ? '<span class="pk bad">' + n0(t.waste.n) + '</span>' : '—') + '</td>'
+        + '<td class="num">' + (t.waste.cost ? money(t.waste.cost) : '—') + '</td>'
+        + '<td class="num">' + (rank === 'cr' ? ckPct(t.waste.cr) : roasTxt(t.waste.roas)) + '</td>'
+        + '<td class="num">' + (t.star.n ? '<span class="pk good">' + n0(t.star.n) + '</span>' : '—') + '</td>'
+        + '<td class="num">' + (t.star.cost ? money(t.star.cost) : '—') + '</td>'
+        + '<td class="num">' + n0(c.small) + '</td></tr>';
+    }).join('');
+    body.innerHTML = '<div class="tw"><table class="st"><thead><tr><th>Cut</th><th class="num">Pockets judged</th>'
+      + '<th class="num">' + wl + '</th><th class="num">Spend in them</th><th class="num">' + (rank === 'cr' ? 'Their CR' : 'Their ROAS') + '</th>'
+      + '<th class="num">' + sl + '</th><th class="num">Spend in them</th><th class="num">Too small</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    var b = CK.base;
+    cnt.textContent = CK.pairs + ' pairs';
+    note.innerHTML = 'Account ' + roasTxt(b.roas) + ' ROAS · ' + ckPct(b.cr) + ' conversion · ' + money(b.cost) + ' spend. '
+      + 'A pocket is judged past ' + n0(CK.cfg.minN) + ' products and ' + money(CK.cfg.minSpend) + ' spend; '
+      + (rank === 'cr' ? 'poor under ' + ckPct(CK.cfg.cB.lo) + ', strong over ' + ckPct(CK.cfg.cB.hi)
+                       : 'wasted spend under ' + roasTxt(CK.cfg.rB.lo) + ', a star over ' + roasTxt(CK.cfg.rB.hi))
+      + ' — 0.65× and 1.5× this account. Click a cut to open it in the pivot.'
+      + (CK.dropped ? ' ' + n0(CK.dropped) + ' field' + (CK.dropped === 1 ? '' : 's') + ' had too many values to read as a cut.' : '');
+    $('#ln-cuts').textContent = CK.cuts[0].aLabel + ' × ' + CK.cuts[0].bLabel + ' finds the most';
+  }
+  $('#ck-run').onclick = ckRun;
+  $('#ck-rank').onchange = function () { if (CK) ckRun(); };
+  $('#ck-body').addEventListener('click', function (e) {
+    var tr = e.target.closest('[data-ck]'); if (!tr || !CK) return;
+    var c = CK.cuts[+tr.getAttribute('data-ck')]; if (!c) return;
+    S.L.pivot.r = c.aSpec || { f: c.a, m: 'raw' };
+    S.L.pivot.c = c.bSpec || { f: c.b, m: 'raw' };
+    S.L.pivot.meas = CK.rank === 'cr' ? 'conv' : 'roas';
+    saveLayout(); renderPivotCtl(); renderPivot(); reveal('sec-pivot');
+    toast(c.aLabel + ' × ' + c.bLabel);
+  });
+  $('#ck-csv').onclick = function () {
+    if (!CK) return;
+    var K = CK.rank === 'cr' ? 'cr' : 'roas';
+    var out = [['Cut', 'Pockets judged', 'Flagged low', 'Spend in them', 'Their ROAS', 'Flagged high', 'Spend in them', 'Too small']];
+    CK.cuts.forEach(function (c) {
+      var t = c[K];
+      out.push([c.aLabel + ' x ' + c.bLabel, c.judged, t.waste.n, Math.round(t.waste.cost), t.waste.roas == null ? '' : Math.round(t.waste.roas * 100) + '%', t.star.n, Math.round(t.star.cost), c.small]);
+    });
+    download(((S.brand || 'feed') + '-cuts-' + (S.mkt || '')).replace(/[^\w.-]+/g, '-') + '.csv', B.csv(out));
+  };
+  function renderAll() { renderStatus(); renderUnit(); renderAddField(); renderViews(); renderPivotCtl(); renderData(); renderFields(); renderCuts(); foldBtns(); }
   renderViews();
   boot();
 })();

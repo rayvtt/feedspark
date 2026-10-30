@@ -386,13 +386,13 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
 
     console.log('· folds');
     const fold = () => pg.evaluate(() => Array.from(document.querySelectorAll('section.fs')).map((c) => c.id + ':' + (c.classList.contains('folded') ? 0 : 1)).join(' '));
-    ok('a fresh device opens Breakdown and Pivot, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:0 sec-how:0', await fold());
+    ok('a fresh device opens Breakdown and Pivot, the catalogue and the method folded', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-cuts:0 sec-fields:0 sec-how:0', await fold());
     ok('…a folded body is not painted', await pg.evaluate(() => document.querySelector('#fd').getBoundingClientRect().height === 0));
     ok('…a folded head still says what is inside', /fields carry a value/.test(await pg.textContent('#ln-fields')));
     await pg.click('#sec-pivot .fhd');
     ok('a click on the head folds it', (await fold()).indexOf('sec-pivot:0') >= 0);
     await pg.click('#openall');
-    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-fields:1 sec-how:1');
+    ok('⊕ Open all opens every section', (await fold()) === 'sec-panes:1 sec-pivot:1 sec-cuts:1 sec-fields:1 sec-how:1');
     await pg.click('#sec-how .fhd');
 
     console.log('· 📖 Guidebook');
@@ -441,7 +441,7 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     await pg.reload(); await ready(pg); await pg.waitForTimeout(150);
     const after = await pg.evaluate(() => ({ panes: window.__FCCBreakdown.state().L.panes.map((p) => p.f), fold: Array.from(document.querySelectorAll('section.fs')).map((c) => c.classList.contains('folded') ? 0 : 1).join('') }));
     ok('the fields survive a reload', after.panes.join() === 'g:product_type,g:color,g:brand,g:availability,g:product_highlight*', after.panes);
-    ok('…and so does every fold the person set', after.fold === '1110', after.fold);
+    ok('…and so does every fold the person set', after.fold === '11110', after.fold);
     await pg.click('#mkts [data-mkt="gb-fb"]'); await ready(pg);
     const meta2 = await pg.evaluate(() => ({ reads: window.__bdReads, panes: window.__FCCBreakdown.state().L.panes.length, view: document.querySelector('#views').textContent }));
     ok('the Meta market reads its own feed, and the fields come with it', /market=gb-fb$/.test(meta2.reads[meta2.reads.length - 1]) && meta2.panes === 5, meta2);

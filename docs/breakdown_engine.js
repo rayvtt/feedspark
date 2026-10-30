@@ -667,11 +667,185 @@
     return nm;
   }
 
+  // ---- THE PAIR SCAN — which cuts find the most (Ray, 29 Oct 2026, on Matt Rogers' Superdry Pockets deck:
+  // "review / study / adapt / innovate these types of analysis"). The Pockets method (docs/POCKETS_METHOD.md) scans
+  // EVERY pair of attributes and ranks them by how much each one finds, which is the step that turns a pivot tool
+  // into an analysis — the reader is told which cut to open rather than having to guess it.
+  //
+  // A CUT is a pair of fields; a POCKET is one cell of it. A pocket is JUDGED only past both floors (≥25 products
+  // AND ≥ a spend minimum) — below that one sale flips the ROAS, so it is counted as `small`, never as a finding.
+  // Bands are RATIOS TO THE ACCOUNT, never absolute figures, which is what lets one set of thresholds serve any
+  // client: waste under 0.65×, star over 1.5× (PK_LOW / PK_HIGH).
+  //
+  // BOTH METRICS ARE READ ON ONE PASS, deliberately. Smart bidding equalises ROAS, so ROAS is where the bidder has
+  // already acted and CONVERSION is where it has not — a cut that finds nothing on ROAS routinely finds plenty on
+  // CR. Returning one without the other would hide half the account, so every cut carries `roas` and `cr` and the
+  // caller picks which to rank on.
+  var PK_MIN_N = 25, PK_MIN_SPEND = 150, PK_LOW = 0.65, PK_HIGH = 1.5, PK_MAXF = 18, PK_MAXV = 64;
+
+  function pkBands(base, lo, hi) { return { lo: base * lo, hi: base * hi }; }
+  // a cell's verdict on one metric: -1 waste/poor · 0 qualifying · 1 star/strong · null not measurable
+  function pkBand(v, b) { return v == null || !isFinite(v) ? null : v < b.lo ? -1 : v > b.hi ? 1 : 0; }
+
+  // Build the per-field code arrays ONCE and share them across every pair — the scan is O(pairs × products), so
+  // re-reading a field per pair is what would make it slow on a real catalogue.
+  function pkCodes(S, F) {
+    var nf = F.length, out = [];
+    for (var i = 0; i < nf; i++) {
+      var codes = new Int32Array(S.n), dict = [], idx = new Map();
+      for (var r = 0; r < S.n; r++) {
+        var v = F[i].rd(r), c = idx.get(v);
+        if (c == null) { c = dict.length; dict.push(v); idx.set(v, c); }
+        codes[r] = c;
+      }
+      out.push({ codes: codes, dict: dict });
+    }
+    return out;
+  }
+
+  function pkWeights(S, ads) {
+    var N = S.n, cost = new Float64Array(N), val = new Float64Array(N), clk = new Float64Array(N), cnv = new Float64Array(N);
+    var fc = ads.cost, fv = ads.value, fk = ads.clicks, fn = ads.conv;
+    for (var r = 0; r < N; r++) {
+      cost[r] = (fc ? +fc(r) : 0) || 0; val[r] = (fv ? +fv(r) : 0) || 0;
+      clk[r] = (fk ? +fk(r) : 0) || 0; cnv[r] = (fn ? +fn(r) : 0) || 0;
+    }
+    return { cost: cost, val: val, clk: clk, cnv: cnv };
+  }
+
+  function pkTotals(S, W, m) {
+    var t = { n: 0, cost: 0, val: 0, clk: 0, cnv: 0 };
+    for (var r = 0; r < S.n; r++) { if (m && !m[r]) continue; t.n++; t.cost += W.cost[r]; t.val += W.val[r]; t.clk += W.clk[r]; t.cnv += W.cnv[r]; }
+    t.roas = t.cost > 0 ? t.val / t.cost : null;
+    t.cr = t.clk > 0 ? t.cnv / t.clk : null;
+    return t;
+  }
+
+  // One cut, counted. Returns the cell list so `pockets()` can hand the flagged ones straight to the page.
+  function pkCut(S, W, A, B, m, cfg) {
+    var stride = B.dict.length, cells = new Map(), ac = A.codes, bc = B.codes;
+    for (var r = 0; r < S.n; r++) {
+      if (m && !m[r]) continue;
+      var k = ac[r] * stride + bc[r], c = cells.get(k);
+      if (!c) { c = { a: ac[r], b: bc[r], n: 0, cost: 0, val: 0, clk: 0, cnv: 0 }; cells.set(k, c); }
+      c.n++; c.cost += W.cost[r]; c.val += W.val[r]; c.clk += W.clk[r]; c.cnv += W.cnv[r];
+    }
+    var out = [], small = 0;
+    cells.forEach(function (c) {
+      c.roas = c.cost > 0 ? c.val / c.cost : null;
+      c.cr = c.clk > 0 ? c.cnv / c.clk : null;
+      c.judged = c.n >= cfg.minN && c.cost >= cfg.minSpend;
+      if (!c.judged) { small++; return; }
+      c.rb = pkBand(c.roas, cfg.rB); c.cb = pkBand(c.cr, cfg.cB);
+      out.push(c);
+    });
+    return { cells: out, small: small, total: cells.size };
+  }
+
+  function pkTally(cells, key) {
+    var z = function () { return { n: 0, cost: 0, val: 0, clk: 0, cnv: 0 }; };
+    var t = { waste: z(), star: z(), ok: 0 };
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i], b = c[key], g = b === -1 ? t.waste : b === 1 ? t.star : null;
+      if (!g) { if (b === 0) t.ok++; continue; }
+      g.n++; g.cost += c.cost; g.val += c.val; g.clk += c.clk; g.cnv += c.cnv;
+    }
+    // every rate is a ratio of two SUMS, never an average of the cells' own ratios
+    [t.waste, t.star].forEach(function (g) {
+      g.roas = g.cost > 0 ? g.val / g.cost : null;
+      g.cr = g.clk > 0 ? g.cnv / g.clk : null;
+    });
+    t.found = t.waste.cost + t.star.cost;
+    t.flagged = t.waste.n + t.star.n;
+    return t;
+  }
+
+  // opts: ads {cost,value,clicks,conv} (required) · base (mask) · exclude [field] · minN · minSpend · low · high
+  //       · rank 'roas'|'cr' (default roas) · top · maxF
+  function pairScan(S, opts) {
+    opts = opts || {};
+    var ads = opts.ads;
+    if (!ads || typeof ads.cost !== 'function') return null;
+    var all = spotFields(S, opts.exclude), maxF = opts.maxF || PK_MAXF;
+    // a field with more values than PK_MAXV makes cells nobody can read and pockets nobody can act on
+    var F = all.filter(function (x) { return true; });
+    var W = pkWeights(S, ads), m = opts.base || null, base = pkTotals(S, W, m);
+    if (!(base.cost > 0)) return { base: base, cuts: [], fields: [], fieldsTotal: all.length, reason: 'no spend read' };
+    var C = pkCodes(S, F);
+    // drop a field whose values are too many to read, THEN cap — so the cap keeps readable fields, not the first ones
+    var keep = [];
+    for (var i = 0; i < F.length; i++) if (C[i].dict.length >= 2 && C[i].dict.length <= PK_MAXV) keep.push(i);
+    var dropped = F.length - keep.length;
+    keep = keep.slice(0, maxF);
+    var cfg = {
+      minN: opts.minN == null ? PK_MIN_N : opts.minN,
+      minSpend: opts.minSpend == null ? PK_MIN_SPEND : opts.minSpend,
+      rB: pkBands(base.roas || 0, opts.low == null ? PK_LOW : opts.low, opts.high == null ? PK_HIGH : opts.high),
+      cB: pkBands(base.cr || 0, opts.low == null ? PK_LOW : opts.low, opts.high == null ? PK_HIGH : opts.high)
+    };
+    var cuts = [];
+    for (var x = 0; x < keep.length; x++) for (var y = x + 1; y < keep.length; y++) {
+      var i1 = keep[x], i2 = keep[y];
+      var R = pkCut(S, W, C[i1], C[i2], m, cfg);
+      var roas = pkTally(R.cells, 'rb'), cr = pkTally(R.cells, 'cb');
+      cuts.push({
+        a: F[i1].f, b: F[i2].f, aSpec: F[i1].spec, bSpec: F[i2].spec,
+        aLabel: F[i1].label, bLabel: F[i2].label,
+        judged: R.cells.length, small: R.small, cells: R.total,
+        roas: roas, cr: cr
+      });
+    }
+    var rank = opts.rank === 'cr' ? 'cr' : 'roas';
+    cuts.sort(function (p, q) {
+      var d = q[rank].found - p[rank].found; if (d) return d;
+      d = q[rank].flagged - p[rank].flagged; if (d) return d;
+      return q.judged - p.judged;
+    });
+    if (opts.top) cuts = cuts.slice(0, opts.top);
+    return {
+      base: base, cuts: cuts, rank: rank, cfg: { minN: cfg.minN, minSpend: cfg.minSpend, rB: cfg.rB, cB: cfg.cB },
+      fields: keep.map(function (i) { return { f: F[i].f, label: F[i].label, values: C[i].dict.length }; }),
+      fieldsTotal: all.length, dropped: dropped, pairs: cuts.length
+    };
+  }
+
+  // The flagged pockets of ONE cut, worst first — what the page lists under a chosen cut.
+  // metric 'roas' | 'cr'; returns every judged cell with its band, plus the two tallies.
+  function pockets(S, aSpec, bSpec, opts) {
+    opts = opts || {};
+    var ads = opts.ads; if (!ads || typeof ads.cost !== 'function') return null;
+    var RA = reader(S, aSpec), RB = reader(S, bSpec); if (!RA || !RB) return null;
+    var fa = { rd: function (r) { var v = RA.of(r); return v.length ? v[0] : BLANK; } };
+    var fb = { rd: function (r) { var v = RB.of(r); return v.length ? v[0] : BLANK; } };
+    var W = pkWeights(S, ads), m = opts.base || null, base = pkTotals(S, W, m);
+    var C = pkCodes(S, [fa, fb]);
+    var cfg = {
+      minN: opts.minN == null ? PK_MIN_N : opts.minN,
+      minSpend: opts.minSpend == null ? PK_MIN_SPEND : opts.minSpend,
+      rB: pkBands(base.roas || 0, opts.low == null ? PK_LOW : opts.low, opts.high == null ? PK_HIGH : opts.high),
+      cB: pkBands(base.cr || 0, opts.low == null ? PK_LOW : opts.low, opts.high == null ? PK_HIGH : opts.high)
+    };
+    var R = pkCut(S, W, C[0], C[1], m, cfg), key = opts.metric === 'cr' ? 'cb' : 'rb';
+    var list = R.cells.map(function (c) {
+      return { a: C[0].dict[c.a], b: C[1].dict[c.b], n: c.n, cost: c.cost, val: c.val, clicks: c.clk, conv: c.cnv,
+               roas: c.roas, cr: c.cr, band: c[key], rb: c.rb, cb: c.cb };
+    });
+    list.sort(function (p, q) {
+      var bp = p.band === -1 ? 0 : p.band === 1 ? 1 : 2, bq = q.band === -1 ? 0 : q.band === 1 ? 1 : 2;
+      if (bp !== bq) return bp - bq;
+      return q.cost - p.cost;
+    });
+    return { base: base, cfg: cfg, pockets: list, small: R.small, cells: R.total,
+             roas: pkTally(R.cells, 'rb'), cr: pkTally(R.cells, 'cb') };
+  }
+
   return { VERSION: VERSION, BLANK: BLANK, MAXLEN: MAXLEN, MODE_LBL: MODE_LBL, LEN_BANDS: LEN_BANDS, NUM_EDGES: NUM_EDGES,
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
     fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
     reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
     defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName,
     spot: spot, spotFields: spotFields, SPOT_MIN: SPOT_MIN,
+    pairScan: pairScan, pockets: pockets, pkBand: pkBand, pkBands: pkBands,
+    PK_MIN_N: PK_MIN_N, PK_MIN_SPEND: PK_MIN_SPEND, PK_LOW: PK_LOW, PK_HIGH: PK_HIGH, PK_MAXF: PK_MAXF, PK_MAXV: PK_MAXV,
     split: split, splitFields: splitFields, splitReader: splitReader, splitKey: splitKey, PRICE_TYPE: PRICE_TYPE, SALE: SALE, FULL: FULL, SPLIT_MAX: SPLIT_MAX };
 });
