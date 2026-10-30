@@ -154,6 +154,12 @@ echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger
 echo "── validating: Field breakdown (the column store, every reading, filters, the cross-tab, wiring)"
 node tools/test_breakdown.mjs >/dev/null
 echo "   ✓ any field of any feed: blanks as values, all slots, tiers, bands, styles, filters, the pivot"
+echo "── validating: the workflow files parse (a broken .yml creates NO run at all, not a red one)"
+node tools/check_workflows.js >/dev/null
+echo "   ✓ every .github/workflows/*.yml parses and declares its jobs"
+echo "── validating: Pair scan (the Pockets method: ratio-to-account bands, the floors, both metrics, the ranking)"
+node tools/test_pairscan.mjs >/dev/null
+echo "   ✓ every cut ranked by what it finds; a cell under either floor is small, never a finding"
 echo "── validating: Social DPA (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)"
 node tools/test_social.mjs >/dev/null
 node tools/test_retired.mjs >/dev/null || { echo "✗ retired-clients harness failed"; exit 1; }

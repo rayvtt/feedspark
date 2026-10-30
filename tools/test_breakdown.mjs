@@ -220,8 +220,8 @@ console.log('· the page');
 {
   t('loads the shared stylesheet and the two engines by fetch (so the tripwires can hand them over)', /<link rel="stylesheet" href="\/design\/fcc\.css">/.test(PG) && /\['\/feedlab\/engine\.js', 'FeedAudit'\], \['\/breakdown\/engine\.js', 'FeedBreakdown'\]/.test(PG));
   t('the feed streams through the proxy and the parser\'s header row is never counted', /fetch\('\/api\/feed\/proxy' \+ mq\(\)/.test(PG) && /if \(!hdr\) \{ hdr = h \|\| row; return; \}/.test(PG));
-  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 4 && (PG.match(/<button class="fhd"/g) || []).length === 4
-    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
+  t('every section folds: a tile head per section, the device keeps the choice, a fresh device opens the first two', (PG.match(/<section class="card fs/g) || []).length === 5 && (PG.match(/<button class="fhd"/g) || []).length === 5
+    && /var FOLD_DEF = \{ 'sec-panes': 1, 'sec-pivot': 1, 'sec-cuts': 0, 'sec-fields': 0, 'sec-how': 0 \};/.test(PG) && /fcc-bd-fold/.test(PG) && /\.card\.folded>:not\(\.fhd\)\{display:none!important\}/.test(PG));
   t('…⊕ Open all / ⊖ Fold all, and a #hash opens what it names', /id="openall"/.test(PG) && /id="foldall"/.test(PG) && /window\.addEventListener\('hashchange', hashOpen\)/.test(PG));
   t('a table is never filtered by its own selection', /function maskExcept\(spec\)/.test(PG) && /B\.pivot\(S\.st, spec, maskExcept\(spec\)/.test(PG));
   t('a view is the shape, never the brand: the layout per device, views per device, the filters reset with the feed', /put\('fcc-bd-layout', S\.L\)/.test(PG) && /fcc-bd-views/.test(PG) && /S\.st = null; S\.fields = \[\]; S\.filters = \[\];/.test(PG));
