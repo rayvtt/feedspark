@@ -2895,12 +2895,14 @@ window.addEventListener('load',restore);
     var N = d.N, st = d.st, stamped = d.stamped, all = !!d.mk;
     var row = function (k, have, v, tip) { return { k: k, have: have, v: v, tip: tip }; };
     var sv = function (k) { return !stamped ? null : st[k]; };
+    // the VOLUME beside the share (Ray, 30 Oct 2026: "add the volumes of these as well") — "25,695 products · 100%"
+    var vol = function (k) { return n0(st[k]) + ' products · ' + pct1(st[k], N); };
     var rows = [
-      row('Titles rewritten', sv('T'), stamped ? pct1(st.T, N) + ' of products' : 'no stamps in this feed', 'FeedSpark’s own title stamp (c:fs_data_opti) per product'),
-      row('Keyword optimisation', sv('Keywords'), stamped ? pct1(st.Keywords, N) + ' of products' : 'no stamps in this feed', 'Products carrying FeedSpark’s keyword stamp'),
-      row('Category mapping', sv('Cat'), stamped ? pct1(st.Cat, N) + ' of products' : 'no stamps in this feed', 'Products whose category FeedSpark mapped'),
-      row('Image overlays', sv('IMG'), stamped ? pct1(st.IMG, N) + ' of products' : 'no stamps in this feed', 'Products carrying a FeedSpark image'),
-      row('Missing data filled', d.lin && d.traced ? d.filled : null, d.lin && d.traced ? pct1(d.filled, d.traced) + ' of products' : (d.mnone ? 'no master to compare' : 'tracing…'), 'Products given at least one value their master did not carry'),
+      row('Titles rewritten', sv('T'), stamped ? vol('T') : 'no stamps in this feed', 'FeedSpark’s own title stamp (c:fs_data_opti) per product'),
+      row('Keyword optimisation', sv('Keywords'), stamped ? vol('Keywords') : 'no stamps in this feed', 'Products carrying FeedSpark’s keyword stamp'),
+      row('Category mapping', sv('Cat'), stamped ? vol('Cat') : 'no stamps in this feed', 'Products whose category FeedSpark mapped'),
+      row('Image overlays', sv('IMG'), stamped ? vol('IMG') : 'no stamps in this feed', 'Products carrying a FeedSpark image'),
+      row('Missing data filled', d.lin && d.traced ? d.filled : null, d.lin && d.traced ? n0(d.filled) + ' products · ' + pct1(d.filled, d.traced) : (d.mnone ? 'no master to compare' : 'tracing…'), 'Products given at least one value their master did not carry'),
       row('AI-shopping fields', d.lin ? d.aiA.length : null, d.lin ? d.aiA.length + ' of ' + d.aiN + ' carried' : 'tracing…', 'Google’s conversational attributes, read by AI Mode and shopping agents' + (all ? ' — carried in at least one market' : '')),
       row('Stock controls', d.stkSt === 'ok' ? d.mechs.length : null, d.stkSt === 'ok' ? d.mechs.length + ' kinds · ' + n0(d.rules) + ' rules' : (d.stkSt === 'loading' ? 'reading…' : 'not read'), 'Rules that stop ads showing on products the shopper cannot buy'),
       row('Rules maintained', d.stkSt === 'ok' ? d.rulesN : null, d.stkSt === 'ok' ? n0(d.rulesN) + ' in FeedHero' : (d.stkSt === 'loading' ? 'reading…' : 'not read'), all ? 'Active FeedHero rules running on these markets’ feeds' : 'Active FeedHero rules running on this market’s feed'),
@@ -2921,17 +2923,34 @@ window.addEventListener('load',restore);
   function renderScope() { paintScope(scAll() ? scScope() : scopeD()); }
   function paintScope(d) {
     if (!d || d.why) { modEmpty('scope-body', d ? d.why : 'Reading the feed…'); return; }
-    var mk = S.roster[S.client] || [], g = mk.filter(function (x) { return x.channel === 'google'; }).length, mt = mk.length - g, all = !!d.mk;
+    var all = !!d.mk, fd = feedsRun(S.client);
     var T = [
       { b: n0(d.N), l: 'Products managed', sm: all ? S.client + ' · ' + d.used + ' market' + (d.used === 1 ? '' : 's') : S.client + ' ' + mktLabel(S.mkt) },
-      { b: n0(mk.length), l: 'Feeds run for ' + S.client, sm: g + ' Google · ' + mt + ' Meta' },
+      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.sm, tip: fd.tip },
       { b: d.n ? (Math.round(d.touched / d.n * 10) / 10) : '—', l: 'Values set per product', sm: d.n ? 'by FeedSpark' : 'needs the master' },
       { b: d.rules != null ? n0(d.rules) : '—', l: 'FeedHero rules running', sm: d.rules != null ? (all ? 'across ' + d.rmk + ' market' + (d.rmk === 1 ? '' : 's') : 'this market') : 'not read' },
       { b: n0(d.nw), l: 'New products taken in', sm: 'last 30 days' },
       { b: d.touched != null ? n0(d.touched) : '—', l: 'Values maintained', sm: d.touched != null ? 'across the catalogue' : 'needs the master' }
     ];
-    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.sm) + '">' + esc(t.sm) + '</small></div>'; }).join('') + '</div>'
+    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small></div>'; }).join('') + '</div>'
       + '<div class="cfoot"><span>Read live from the feed, the master and FeedHero' + scNote(d) + '</span></div>';
+  }
+  // EVERY CHANNEL, NOT JUST GOOGLE AND META (Ray, 30 Oct 2026: "the complete list of feeds should be sourced, not just
+  // google and meta but all channels"): the count is FeedHero's own output_feeds report — every LIVE feed it sends for the
+  // brand's markets, by kind (Google, Meta, Pinterest, TikTok, Rakuten …; its audit feeds are not a channel). Until that
+  // report has been read the tile falls back to the feeds the FCC has wired, and says so.
+  var FEED_KIND = { google: 'Google', meta: 'Meta', metalang: 'Meta language', pinterest: 'Pinterest', tiktok: 'TikTok', rakuten: 'Rakuten', wunderkind: 'Wunderkind', other: 'Other' };
+  function feedsRun(c) {
+    var f = S.fh && S.fh[c];
+    if (f && f.kinds && f.read) {
+      var K = Object.keys(f.kinds).sort(function (a, b) { return f.kinds[b] - f.kinds[a]; }), n = 0;
+      K.forEach(function (k) { n += f.kinds[k]; });
+      var parts = K.map(function (k) { return f.kinds[k] + ' ' + (FEED_KIND[k] || k); });
+      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live',
+        tip: 'Live in FeedHero across ' + f.read + ' market' + (f.read === 1 ? '' : 's') + ': ' + (parts.join(' · ') || 'none') + (f.paused ? ' · ' + f.paused + ' paused not counted' : '') };
+    }
+    var mk = (S.roster[c] || []).filter(function (x) { return x.kind !== 'none'; }), g = mk.filter(function (x) { return x.channel === 'google'; }).length;
+    return { n: mk.length, sm: g + ' Google · ' + (mk.length - g) + ' Meta', tip: 'Feeds wired into the FCC — FeedHero’s full list of channels not read yet' };
   }
   function mktLabel(m) { return String(m || '').toUpperCase(); }
   // 15 · FEE CHECK — the buyer types a monthly fee (and, to compare, another vendor's); the card turns it into the units

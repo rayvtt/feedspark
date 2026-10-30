@@ -3207,9 +3207,12 @@ async function route(request, env, ctx) {
               roas: { client: c, market: m.market }, why: m.why, google: m.google, kinds: m.kinds });
           });
           if (book) {
-            const t = { live: 0, paused: 0, google: 0 };
-            ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused;
-              t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length; });
+            // every channel FeedHero sends for the brand (Ray, 30 Oct 2026: "the complete list of feeds should be sourced,
+            // not just google and meta but all channels") — live feeds by kind; FeedHero's own audit feeds are not a channel
+            const t = { live: 0, paused: 0, google: 0, kinds: {}, read: 0 };
+            ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused; t.read++;
+              t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length;
+              b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; }); });
             t.markets = ROAS.rosterOf(c).length; fh[c] = t;
           }
           if (!list.length) delete out[c];

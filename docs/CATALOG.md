@@ -542,3 +542,19 @@ because the card clips and the dashboard grid is a size container, so it lives o
 Esc, ✕ or a click outside closes it, and the pop-up stays open while the card repaints. On a phone it is a
 bottom sheet. Golden Record's ⬇ HTML copy of the card keeps the two numbers and drops the button. Harness:
 `tools/check_catalog.js` (the pop-up opens inside the window, its rows sum to the card's numbers, and Esc closes it).
+
+## Every channel, and the volume behind every share (30 Oct 2026)
+
+Ray: "the service in number tile — the complete list of feeds should be sourced, not just google and meta but all
+channels", then over **What the service does**: "add the volumes of these as well".
+
+- **Feeds run for <brand>** reads FeedHero's own `output_feeds` report (the book `/api/catalog/roster` already
+  holds, `catfeedbook`): every LIVE feed sent for the brand's roster markets, counted by kind — Google, Meta,
+  Meta language, Pinterest, TikTok, Rakuten, Wunderkind, other. FeedHero's audit feeds are not a channel and are left
+  out; paused feeds are named in the tooltip, never counted. The roster's `feedhero[<brand>]` now carries
+  `kinds` + `read` (markets the book covers). Until the book has been read the tile falls back to the feeds the FCC
+  has wired and says so.
+- **What the service does** prints the count beside every share — `25,695 products · 100%` — for titles,
+  keywords, category mapping, image overlays and missing data filled; in All-markets mode the counts are the estate's
+  sums, the share re-worked from them.
+- Harness: `tools/check_catalog.js` (the volume read off the paint, the feed tile against the stub's book).

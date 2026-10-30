@@ -17112,6 +17112,24 @@
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "querySelectorAll('button.bna')",
    "pr": 0
+  },
+  {
+   "name": "Catalogue: feeds run counts every channel FeedHero sends live, not only Google + Meta",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function feedsRun(c) {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: What the service does prints the volume beside each share",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "var vol = function (k) { return n0(st[k]) + ' products · ' + pct1(st[k], N); };",
+   "pr": 0
+  },
+  {
+   "name": "Worker: the catalogue roster carries FeedHero's live feeds by kind",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "if (f.st === 'a' && f.k !== 'audit') t.kinds[f.k] = (t.kinds[f.k] || 0) + 1;",
+   "pr": 0
   }
  ]
 }

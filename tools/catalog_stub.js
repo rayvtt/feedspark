@@ -95,7 +95,9 @@ function roasRead() {
 function build() {
   const xml = outputXml(), csv = masterCsv(), r = roasRead();
   const roster = { ok: true, clients: { [CLIENT]: [{ mkt: MKT, channel: 'google', kind: 'xml', cmpid: CMPID, roas: { client: CLIENT, market: 'GB' } },
-    { mkt: 'gb-fb', channel: 'meta', kind: 'xml', cmpid: CMPID, roas: null }] } };
+    { mkt: 'gb-fb', channel: 'meta', kind: 'xml', cmpid: CMPID, roas: null }] },
+    // FeedHero's own output_feeds book: every channel the brand runs live, not only the two the FCC wired
+    feedhero: { [CLIENT]: { markets: 1, live: 5, paused: 1, google: 2, read: 1, kinds: { google: 2, meta: 1, pinterest: 1, tiktok: 1 } } } };
   const info = { ok: true, state: 'ok', cmpid: CMPID, name: 'Northwind GB (synthetic)', rows: 30, lastImport: '2026-09-28 08:00:00', importStatus: 'Completed', file: 'northwind_gb_master.csv',
     web: 'https://mcp.feedhero.net/master-feed?company=' + CMPID, headers: [], hasFile: true };
   const row = { ok: true, rows: [{ id: 'M-NW100-M', title: 'Midi Dresse NAVY', price: '£28.00', colour: 'Navy (NAV)' }] };
@@ -128,7 +130,7 @@ function build() {
   const roster2 = { ok: true, clients: { [CLIENT]: roster.clients[CLIENT].concat([{ mkt: 'ie', channel: 'google', kind: 'xml', cmpid: CMPID_IE, roas: { client: CLIENT, market: 'IE' } },
     // a roster market FeedHero sends no Shopping feed for — listed, never read (Ray, 29 Oct 2026: mirror Stock's markets)
     { mkt: 'fi', channel: 'google', kind: 'none', cmpid: 'northwind_fi', roas: { client: CLIENT, market: 'FI' }, why: 'nogoogle', google: [], kinds: ['wunderkind'] }]) },
-    feedhero: { [CLIENT]: { markets: 3, live: 5, paused: 1, google: 2 } } };
+    feedhero: { [CLIENT]: { markets: 3, live: 5, paused: 1, google: 2, read: 3, kinds: { google: 2, meta: 1, pinterest: 1, tiktok: 1 } } } };
   const eur = (o) => JSON.parse(JSON.stringify(o).replace(/GBP/g, 'EUR').replace(/"market":"GB"/g, '"market":"IE"'));
   return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads, roster2, xmlIE: outputXml(IE_N), marketIE: eur(r.market), liveIE: eur(r.live) };
 }
