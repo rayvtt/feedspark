@@ -2880,12 +2880,12 @@ window.addEventListener('load',restore);
     if (!S.prods.length) return { why: 'Reading the feed…' };
     var N = S.prods.length, st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }, stamped = 0;
     S.prods.forEach(function (p) { var o = p.opti; if (!o) return; stamped++; Object.keys(st).forEach(function (k) { if (o[k]) st[k]++; }); });
-    var filled = 0, traced = 0, aiIx = [], aiA = {};
+    var filled = 0, fF = 0, traced = 0, aiIx = [], aiA = {};
     E.ATTRS.forEach(function (a, i) { if (a.tier === 'ai') aiIx.push(i); });
-    if (S.linDone) for (var i = 0; i < S.codes.length; i++) { var c = S.codes[i]; if (!c) continue; if (S.comp[i] && S.comp[i][0] >= 0) { traced++; if (/[lpe]/.test(c)) filled++; } for (var q = 0; q < aiIx.length; q++) if ('klpsoeg'.indexOf(c.charAt(aiIx[q])) >= 0) aiA[E.ATTRS[aiIx[q]].k] = 1; }
+    if (S.linDone) for (var i = 0; i < S.codes.length; i++) { var c = S.codes[i]; if (!c) continue; if (S.comp[i] && S.comp[i][0] >= 0) { traced++; var fm = c.match(/[lpe]/g); if (fm) { filled++; fF += fm.length; } } for (var q = 0; q < aiIx.length; q++) if ('klpsoeg'.indexOf(c.charAt(aiIx[q])) >= 0) aiA[E.ATTRS[aiIx[q]].k] = 1; }
     var stk = S.stk && S.stk.st === 'ok' ? S.stk.m : null, mechs = {};
     if (stk) (stk.stock || []).forEach(function (r) { mechs[r.sk] = 1; });
-    return { N: N, st: st, stamped: stamped, lin: !!S.linDone, traced: traced, filled: filled, aiA: Object.keys(aiA), aiN: aiIx.length,
+    return { N: N, st: st, stamped: stamped, lin: !!S.linDone, traced: traced, filled: filled, fF: fF, aiA: Object.keys(aiA), aiN: aiIx.length,
       mnone: S.m.st === 'none' || S.m.st === 'nojoin', mechs: Object.keys(mechs), rules: stk ? (stk.stock || []).length : null, rulesN: stk ? stk.n : null,
       stkSt: stk ? 'ok' : (S.stk && S.stk.st === 'loading' ? 'loading' : 'no'), roasSt: S.roas.st === 'ok' ? 'ok' : (S.roas.st === 'loading' ? 'loading' : 'no') };
   }
@@ -2895,14 +2895,15 @@ window.addEventListener('load',restore);
     var N = d.N, st = d.st, stamped = d.stamped, all = !!d.mk;
     var row = function (k, have, v, tip) { return { k: k, have: have, v: v, tip: tip }; };
     var sv = function (k) { return !stamped ? null : st[k]; };
-    // the VOLUME beside the share (Ray, 30 Oct 2026: "add the volumes of these as well") — "25,695 products · 100%"
-    var vol = function (k) { return n0(st[k]) + ' products · ' + pct1(st[k], N); };
+    // the VOLUME beside the share (Ray, 30 Oct 2026: "add the volumes of these as well", then "i prefer 'fields'") —
+    // "25,695 fields · 100%": one stamped field per product, the share still of products
+    var vol = function (k) { return n0(st[k]) + ' fields · ' + pct1(st[k], N); };
     var rows = [
       row('Titles rewritten', sv('T'), stamped ? vol('T') : 'no stamps in this feed', 'FeedSpark’s own title stamp (c:fs_data_opti) per product'),
       row('Keyword optimisation', sv('Keywords'), stamped ? vol('Keywords') : 'no stamps in this feed', 'Products carrying FeedSpark’s keyword stamp'),
       row('Category mapping', sv('Cat'), stamped ? vol('Cat') : 'no stamps in this feed', 'Products whose category FeedSpark mapped'),
       row('Image overlays', sv('IMG'), stamped ? vol('IMG') : 'no stamps in this feed', 'Products carrying a FeedSpark image'),
-      row('Missing data filled', d.lin && d.traced ? d.filled : null, d.lin && d.traced ? n0(d.filled) + ' products · ' + pct1(d.filled, d.traced) : (d.mnone ? 'no master to compare' : 'tracing…'), 'Products given at least one value their master did not carry'),
+      row('Missing data filled', d.lin && d.traced ? d.filled : null, d.lin && d.traced ? (d.fF != null ? n0(d.fF) + ' fields · ' : '') + pct1(d.filled, d.traced) + ' of products' : (d.mnone ? 'no master to compare' : 'tracing…'), 'Fields FeedSpark filled that the master did not carry, and the share of products given at least one'),
       row('AI-shopping fields', d.lin ? d.aiA.length : null, d.lin ? d.aiA.length + ' of ' + d.aiN + ' carried' : 'tracing…', 'Google’s conversational attributes, read by AI Mode and shopping agents' + (all ? ' — carried in at least one market' : '')),
       row('Stock controls', d.stkSt === 'ok' ? d.mechs.length : null, d.stkSt === 'ok' ? d.mechs.length + ' kinds · ' + n0(d.rules) + ' rules' : (d.stkSt === 'loading' ? 'reading…' : 'not read'), 'Rules that stop ads showing on products the shopper cannot buy'),
       row('Rules maintained', d.stkSt === 'ok' ? d.rulesN : null, d.stkSt === 'ok' ? n0(d.rulesN) + ' in FeedHero' : (d.stkSt === 'loading' ? 'reading…' : 'not read'), all ? 'Active FeedHero rules running on these markets’ feeds' : 'Active FeedHero rules running on this market’s feed'),
@@ -3097,11 +3098,11 @@ window.addEventListener('load',restore);
   }
   function scVen() {
     var X = scSet(), L = okOf(X, 'ven'); if (!L.length) return scNone(X, 'its feed read');
-    var o = scBase(X, L.length); o.N = 0; o.stamped = 0; o.st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }; o.traced = 0; o.filled = 0; o.lin = false; o.mnone = true;
+    var o = scBase(X, L.length); o.N = 0; o.stamped = 0; o.st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }; o.traced = 0; o.filled = 0; o.fF = 0; o.lin = false; o.mnone = true;
     var A = {}, M = {}, rules = 0, rulesN = 0, stk = false, roas = false;
     L.forEach(function (d) {
       o.N += d.N; o.stamped += d.stamped; Object.keys(o.st).forEach(function (k) { o.st[k] += d.st[k] || 0; });
-      if (d.lin) { o.lin = true; o.traced += d.traced; o.filled += d.filled; d.aiA.forEach(function (k) { A[k] = 1; }); }
+      if (d.lin) { o.lin = true; o.traced += d.traced; o.filled += d.filled; o.fF = o.fF == null || d.fF == null ? null : o.fF + d.fF; d.aiA.forEach(function (k) { A[k] = 1; }); }
       if (!d.mnone) o.mnone = false;
       if (d.stkSt === 'ok') { stk = true; rules += d.rules || 0; rulesN += d.rulesN || 0; d.mechs.forEach(function (k) { M[k] = 1; }); }
       if (d.roasSt === 'ok') roas = true;
