@@ -394,6 +394,22 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // before and after: the page's headline is the traced catalogue's own average, both ways
     const fx2 = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(), b = document.querySelectorAll('#fix-body .bna b'); return { page: [b[0] && b[0].textContent, b[1] && b[1].textContent], want: S.sum ? [Math.round(S.sum.cb / S.sum.n), Math.round(S.sum.ca / S.sum.n)] : null }; });
     ok('Before and after FeedSpark: master → feed completeness is the traced average both ways', fx2.want && +fx2.page[0] === fx2.want[0] && +fx2.page[1] === fx2.want[1], fx2);
+    // the score explains itself (Ray, 29 Oct 2026): a click on the two numbers opens how they are made, field by field,
+    // and the rows ADD UP to the two scores on the card — a breakdown that did not would be a second, different score
+    await pg.click('#fix-why');
+    const fp = await pg.evaluate(() => {
+      const p = document.getElementById('fix-pop'), r = p.getBoundingClientRect(), S = window.__FCCCatalogue.state();
+      const rows = Array.from(p.querySelectorAll('.fp-t tbody tr .pts')).map((t) => t.textContent.match(/(-?[\d.]+) → (-?[\d.]+)/)).filter(Boolean);
+      return { shown: !p.hidden && r.height > 40, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+        exp: document.getElementById('fix-why').getAttribute('aria-expanded'), n: rows.length,
+        b: rows.reduce((s, m) => s + +m[1], 0), a: rows.reduce((s, m) => s + +m[2], 0),
+        foot: (p.querySelector('.fp-t tfoot .pts') || {}).textContent, want: S.sum ? [S.sum.cb / S.sum.n, S.sum.ca / S.sum.n] : null, words: /half/.test(p.textContent) && /×3/.test(p.textContent) };
+    });
+    if (process.env.CAT_SHOT) await pg.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_fixpop.png') });
+    ok('Before and after: a click opens how the score is worked out, inside the window', fp.shown && fp.inView && fp.exp === 'true' && fp.words, fp);
+    ok('…field by field, and the rows add up to the card\'s two numbers', fp.n >= 6 && fp.want && Math.abs(fp.b - fp.want[0]) <= fp.n * 0.05 + 0.1 && Math.abs(fp.a - fp.want[1]) <= fp.n * 0.05 + 0.1, fp);
+    await pg.keyboard.press('Escape');
+    ok('…and Esc closes it', await pg.evaluate(() => document.getElementById('fix-pop').hidden && document.getElementById('fix-why').getAttribute('aria-expanded') === 'false'));
     // where the budget goes: the three buckets add up to every category's spend, each bucket by the category's own ROAS
     const roots = (DATA.market.tree || []).map((n) => n.row).filter((r) => r && r.category !== 'Total' && !/unlisted/i.test(r.category) && r.spend && r.spend.n > 0);
     const mk = DATA.market.total.roasPct, W = { lo: 0, mid: 0, hi: 0 }; let T = 0;
@@ -488,6 +504,54 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('the inspector opens on this product\'s own Google Ads · 22–28 Sep, above the segments', /This product · Google Ads · 22–28 Sep/.test(insp7) && insp7.indexOf('£' + v0[2].toFixed(2)) >= 0, insp7.slice(0, 200));
     ok('no page errors', aerrs.length === 0, aerrs.slice(0, 5));
     await ac.close();
+
+    // ---------------------------------------------------------------- one market or all of them
+    // (Ray, 29 Oct 2026: "for multi markets clients … allow these numbers especially for procurement view … to either
+    // dissect on 1 market or all their markets"). The stub gains a second Google market (window.__catTwo): IE carries the
+    // first IE_N products and reports Google Ads in EUR, so the sum and the one-currency rule are both counted here.
+    console.log('· All markets — the procurement cards add every market up, money inside one currency');
+    const spendOf = (tree) => (tree || []).map((nd) => nd && nd.row).filter((r) => r && r.category !== 'Total' && !/^unlisted skus in ads traffic$/i.test(r.category) && r.spend && r.spend.n > 0).reduce((t, r) => t + r.spend.n, 0);
+    const wantAll = { n: want.n + STUBS.IE_N, gbp: spendOf(DATA.market.tree), eur: spendOf(DATA.marketIE.tree) };
+    const num = (t) => +String(t || '').replace(/[^\d.]/g, '');
+    const tc = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+    const tp = await tc.newPage(); const terrs = [];
+    tp.on('pageerror', (e) => terrs.push(e.message)); tp.on('console', (m) => { if (m.type() === 'error' && !/ERR_NAME_NOT_RESOLVED|Failed to load resource/.test(m.text())) terrs.push(m.text()); });
+    await tp.addInitScript('window.__catTwo=1;'); await tp.addInitScript(STUB);
+    await tp.goto('file://' + tmp + '?client=Northwind&market=gb');
+    await tp.waitForFunction(() => window.__FCCCatalogue && window.__FCCCatalogue.state().linDone, null, { timeout: 30000 });
+    await tp.click('#proc-b'); await tp.waitForTimeout(400);
+    const tile = () => tp.evaluate(() => { const t = document.querySelector('#scope-body .tiles .t b'); return t ? t.textContent : null; });
+    const sc0 = await tp.evaluate(() => ({ hid: document.getElementById('scp').hidden, btn: Array.from(document.querySelectorAll('#scp [data-sc]')).map((x) => x.textContent), badge: (document.querySelector('#m-scope .scb') || {}).textContent }));
+    const off = await tp.evaluate(() => { const b = document.querySelector('#mkts [data-off]'); const s = document.querySelector('#mkts .mk-sum');
+      return { lab: b && b.textContent, tip: b && b.title, sum: s && s.textContent }; });
+    ok('a roster market with no Shopping feed is listed and says why, never read', off.lab === 'FIno feed' && /No Google Shopping feed in FeedHero/.test(off.tip) && /Wunderkind/.test(off.tip) && /3 markets · 2 Google Shopping feeds to read · 1 with none live/.test(off.sum || ''), off);
+    ok('a brand with two Google markets gets the switch: this market or all of them', !sc0.hid && sc0.btn.join('|') === 'GB|All 2 markets' && sc0.badge === 'GB', sc0);
+    ok('on one market the service card counts that market alone', num(await tile()) === want.n, await tile());
+    await tp.click('#scp [data-sc="all"]');
+    await tp.waitForFunction(() => { const S = window.__FCCCatalogue.state(), A = JSON.parse(localStorage.getItem('fcc-cat-snap') || '{}'); return !document.querySelector('#scp [data-sc-stop]') && Object.keys(A).length === 2 && S.mkt === 'gb' && S.linDone; }, null, { timeout: 60000 });
+    await tp.waitForTimeout(600);
+    const seen = await tp.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('fcc-cat-snap'))).sort());
+    ok('⚡ the read walks every market, then puts the reader back on GB', seen.join() === 'Northwind|gb,Northwind|ie' && await tp.evaluate(() => window.__FCCCatalogue.state().mkt) === 'gb', seen);
+    if (process.env.CAT_SHOT) { await tp.evaluate(() => document.querySelector('.modbar').scrollIntoView()); await tp.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_allmkts.png'), fullPage: false }); }
+    ok('Products managed adds both markets (' + wantAll.n + ')', num(await tile()) === wantAll.n, await tile());
+    const fixFoot = await tp.evaluate(() => (document.querySelector('#fix-body .cfoot') || {}).textContent || '');
+    ok('Before and after traces every market\'s products and says how many markets it read', /\b40\b products traced/.test(fixFoot) && /2 of 2 markets/.test(fixFoot), fixFoot);
+    const bdg = await tp.evaluate(() => ({ fix: (document.querySelector('#m-fix .scb') || {}).textContent, roas: (document.querySelector('#roas-card .scb') || {}).textContent }));
+    ok('the nine cards are badged All 2 markets, a one-market card keeps its market', bdg.fix === 'All 2 markets' && bdg.roas === 'GB', bdg);
+    const w1 = await tp.evaluate(() => ({ hl: (document.querySelector('#waste-body .hl b:last-of-type') || document.querySelector('#waste-body .hl b') || {}).textContent, foot: (document.querySelector('#waste-body .cfoot') || {}).textContent || '', cur: (document.getElementById('sc-cur') || {}).value }));
+    ok('money stays in one currency: the budget card adds GB\'s pounds only and names the EUR market it left out', w1.cur === 'GBP' && Math.abs(num(w1.hl) - wantAll.gbp) < 0.02 && /1 in another currency not added/.test(w1.foot), { w1, want: wantAll.gbp });
+    await tp.selectOption('#sc-cur', 'EUR'); await tp.waitForTimeout(300);
+    const w2 = await tp.evaluate(() => (document.querySelector('#waste-body .hl b:last-of-type') || document.querySelector('#waste-body .hl b') || {}).textContent);
+    ok('picking EUR reads the IE market\'s spend instead', Math.abs(num(w2) - wantAll.eur) < 0.02 && /€/.test(w2), { w2, want: wantAll.eur });
+    ok('the card lists no products in All-markets mode (they belong to one market)', await tp.evaluate(() => !document.querySelector('#m-gain [data-f], #m-cl [data-f], #m-waste [data-f]')));
+    // a reload keeps the choice and the readings — no second walk through the markets
+    await tp.reload(); await tp.waitForFunction(() => window.__FCCCatalogue && window.__FCCCatalogue.state().linDone, null, { timeout: 30000 }); await tp.waitForTimeout(500);
+    const rl = await tp.evaluate(() => ({ t: (document.querySelector('#scope-body .tiles .t b') || {}).textContent, s: (document.querySelector('#scp .scs') || {}).textContent, stop: !!document.querySelector('#scp [data-sc-stop]') }));
+    ok('after a reload the choice and the readings are kept — 2 of 2 read, nothing walked again', num(rl.t) === wantAll.n && /2 of 2 read/.test(rl.s) && !rl.stop, rl);
+    await tp.click('#scp [data-sc="one"]'); await tp.waitForTimeout(300);
+    ok('back to one market, the card reads GB alone again', num(await tile()) === want.n, await tile());
+    ok('no page errors in All-markets mode', terrs.length === 0, terrs.slice(0, 5));
+    await tc.close();
 
     // ---------------------------------------------------------------- phone
     console.log('· 390px — the inspector is a bottom sheet inside the screen');

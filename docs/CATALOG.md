@@ -291,6 +291,45 @@ Harness:
   "Non Optimized"), the registry, the preset and deep link, the fee never leaving the device, and the
   class collision.
 
+## One market or all of them (29 Oct 2026)
+
+Ray, 29 Oct 2026, over the procurement view: "for multi markets clients — can you please also allow
+these numbers especially for procurement view that to either dissect on 1 market or all their markets".
+
+A brand with more than one Google market gets a switch in the dashboard bar: **GB · All N markets**.
+Nine cards follow it: Data FeedSpark added, Custom labels, Ad spend kept off, Optimised vs not,
+Before and after, Where the ad budget goes, What the service does, The service in numbers and Fee
+check. Every card wears a badge naming what it reads: **All N markets** on those nine, and the market
+on the rest, which still read one market at a time.
+
+How it is read: every one of those figures is worked out in the browser off a market's own feed,
+master and FeedHero reads, so the estate is read the same way. Once a market has settled (feed
+streamed, master traced or refused, Google Ads and stock rules answered), each card's figures are kept
+as a **snapshot** on this device (`fcc-cat-snap`; fresh for 12 hours, kept for 3 days; never shared
+state). Each card is split into a reader (`gainD`, `clD`, `keptD`, `fixD`, `wasteD`, `venD`,
+`scopeD`, `feeD`, plus the two Optimised-vs-not cuts) and a painter, so one market and the whole
+estate are drawn by the same code. Switching to All, or **⚡ Read the other N**, walks the markets
+with no fresh snapshot through the page's own loader one at a time (the market on screen last), then
+puts the reader back where they were. ⏹ Stop keeps what was read. Picking a market or brand stops
+the walk.
+
+Three rules:
+- **Counts add; shares are re-worked from the summed counts**, never averaged across markets.
+- **Money adds only inside one currency.** When the estate reports in more than one, a currency
+  picker appears (`fcc-cat-sccur`), and every money card names the markets in another currency that
+  it left out.
+- **A market not read yet is named, never counted as zero** ("not read: DE, FR" on the card foot).
+
+In All mode a card lists no products on click, because its products belong to many markets.
+
+Harness: `tools/check_catalog.js` gives the stub a second Google market (IE: the first 14 products,
+Google Ads in EUR) and checks:
+- the walk reads both markets and returns to GB;
+- Products managed and products traced are the two markets added;
+- the budget card adds pounds only, then euros once EUR is picked;
+- a reload keeps the choice without a second walk;
+- going back to one market restores GB's own figures.
+
 ## Column filters (30 Sep 2026)
 
 Ray: *"in catalog - allow filtering by column values as well"*.
@@ -453,3 +492,53 @@ docs/LABELGUARD.md §9.12c). With `?embed=mods` the page shows its module grid a
 every preference through an in-memory layer and writes none to the device, keeps its own address, hides
 the Fee check, and marks its root `data-no-digest` + `data-no-collapse` so the phone's skim view and the
 ⓘ collapse leave the cards whole. Without the parameter nothing changes.
+
+## Every roster market, as FeedHero sends it (29 Oct 2026)
+
+Ray: "Superdry has way more market than the catalog shown … Mirror the stock management … go back into
+[FeedHero reports] MCP to actually get the real feed output." The Catalogue listed a market only when a feed
+was WIRED, so Superdry showed 10 of the 19 markets Stock management works over. The facts, read off FeedHero's
+own `output_feeds` report (status all) on 29 Oct 2026: 57 Superdry output feeds, 47 live and 10 paused. Live
+Google Shopping feeds go to nine markets (GB, IE, DE — plus a second, English DE feed created 22 Oct — FR, NL,
+BE-FR, BE-NL, ES, US). DK's was paused on 6 Oct 2026. CH-DE, CH-FR, NO, PL, SE, CA-EN and CA-FR have paused
+Shopping feeds (2023–24). FI and IT have never had one; every market sends Wunderkind.
+
+- `/api/catalog/roster` now lists every ROAS-roster market of a brand in scope. A market with no wired feed comes
+  back as `kind:'none'` with `why`: `paused` / `nogoogle` / `unwired` / `unread`, and the kinds of feed FeedHero
+  does send there. A wired feed FeedHero has paused carries `paused` (its last delivery). `feedhero` gives the
+  brand's live / paused feed counts.
+- The book comes from `catFeedBook`: one paged `output_feeds` read, cached 6 h in KV `catfeedbook` and refreshed
+  in the background. `ROAS.feedBookFrom` keeps each feed's kind, name, status, products and last delivery —
+  **never a URL**.
+- The page draws a market with no feed as a dashed "no feed" chip after a divider, with the reason in its tooltip
+  (a click shows it too). It never loads that market and never adds it to an All-markets read. A paused feed gets
+  a "paused" tag. One line sums up the brand: markets · Shopping feeds to read · with none live · live FeedHero
+  feeds.
+- `de-en` (Superdry's English DE Shopping feed) is wired in `DEFAULT_FEEDS`.
+
+Harness: `tools/test_catalog.mjs` (the book, the gaps, the wiring) and `tools/check_catalog.js` (the stub's FI
+market is listed with its reason and never read).
+
+## How the Before-and-after score is worked out (29 Oct 2026)
+
+Ray: "the values before and after score, can there be an explanation pop up message on the scoring?" The two
+numbers on the Before-and-after card are now a button (ⓘ). Clicking it opens a pop-up — fixed to the window,
+because the card clips and the dashboard grid is a size container, so it lives on `<body>` — with three parts:
+
+1. **The method.** Each product is scored out of 100 on the fields Google asks of it, weighted like the Golden
+   Record (required ×3; brand and GTIN/MPN ×2; optimisation fields ×1). Colour, size, gender, age group and
+   pattern count only on apparel, and the pop-up says how many products that is. A value scores full in Google's
+   format, half when present but not in Google's format, and nothing when absent. The master is FeedHero's import
+   of the brand's own file; the feed is what FeedSpark sends.
+2. **A field-by-field table.** Each field's weight, the share of products holding it in Google's format (master
+   and sent, with the half credit shown apart), and the POINTS it adds to each score. The points are each
+   product's weighted credit ÷ its own total weight, summed over the products traced (`flAdd` on the lineage pass,
+   `sum.fl`), so the rows ADD UP to the two numbers on the card. A breakdown that did not add up would be a
+   second, different score.
+3. **The products counted.** The number of products traced, and on All markets every market's products together.
+   `scFix` sums the rows across the market snapshots. A snapshot kept before this shipped counts in the score but
+   not in the rows, and the pop-up says so.
+
+Esc, ✕ or a click outside closes it, and the pop-up stays open while the card repaints. On a phone it is a
+bottom sheet. Golden Record's ⬇ HTML copy of the card keeps the two numbers and drops the button. Harness:
+`tools/check_catalog.js` (the pop-up opens inside the window, its rows sum to the card's numbers, and Esc closes it).

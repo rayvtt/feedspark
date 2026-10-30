@@ -698,12 +698,6 @@
    "pr": 141
   },
   {
-   "name": "wrangler: pricer engine bundled as Text (now covered by the **/*_engine.js pattern, not its own filename)",
-   "file": "wrangler.toml",
-   "pattern": "**/*_engine.js",
-   "pr": 141
-  },
-  {
    "name": "Pricer: actuals layer — tagged-brief averages price the quote",
    "file": "docs/pricer_engine.js",
    "pattern": "actualsFromBriefs",
@@ -3216,13 +3210,6 @@
    "pr": 317
   },
   {
-   "name": "wrangler: overlay_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
-   "file": "wrangler.toml",
-   "pattern": "**/*_engine.js",
-   "min": 1,
-   "pr": 317
-  },
-  {
    "name": "overlays page: type cards decode the URL recipe + rendered gallery + lightbox",
    "file": "docs/FeedSpark_Overlays.html",
    "pattern": "function typeCard",
@@ -4377,13 +4364,6 @@
    "min": 1
   },
   {
-   "name": "wrangler: pdp_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
-   "file": "wrangler.toml",
-   "pattern": "**/*_engine.js",
-   "pr": 361,
-   "min": 1
-  },
-  {
    "name": "Golden page: 🔎 PDP action on every attribute row + the scan button on the scorecard",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "data-pdp=\"",
@@ -4647,13 +4627,6 @@
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "ARRIVALS_ENGINE_SRC",
    "min": 2,
-   "pr": 369
-  },
-  {
-   "name": "wrangler: arrivals_engine.js imported as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
-   "file": "wrangler.toml",
-   "pattern": "**/*_engine.js",
-   "min": 1,
    "pr": 369
   },
   {
@@ -10193,12 +10166,6 @@
    "pr": 558
   },
   {
-   "name": "Text modules: a served engine is matched by pattern, never by a list of filenames",
-   "file": "wrangler.toml",
-   "pattern": "**/*_engine.js",
-   "pr": 558
-  },
-  {
    "name": "Tripwire: a worker-served docs/*.js that is not a Text module fails the build",
    "file": "tools/check_textmodules.js",
    "pattern": "will bundle as an ES module",
@@ -11409,12 +11376,6 @@
    "name": "Catalogue: stock control read off Stock management's own route",
    "file": "docs/FeedSpark_Catalog.html",
    "pattern": "fetch('/api/rules/stock?brand='",
-   "pr": 558
-  },
-  {
-   "name": "Catalogue: ad spend kept off = the market's largest blocking rule",
-   "file": "docs/FeedSpark_Catalog.html",
-   "pattern": "best.n * a.spendDay * D",
    "pr": 558
   },
   {
@@ -14332,12 +14293,6 @@
    "pr": 0
   },
   {
-   "name": "Guards: /golden's estate scan still reads content quality per feed",
-   "file": "docs/FeedSpark_GoldenRecord.html",
-   "pattern": "return qualityRun(f.client + '|' + f.mkt).then(function () { return r; }, function () { return r; });",
-   "pr": 0
-  },
-  {
    "name": "Guards: the scan-scope tripwire runs in presync",
    "file": "tools/presync.sh",
    "pattern": "node tools/check_scanscope.js",
@@ -16314,12 +16269,6 @@
    "pr": 0
   },
   {
-   "name": "Golden ✎ Edit report never flattens a unit's markup on open",
-   "file": "docs/FeedSpark_GoldenRecord.html",
-   "pattern": "el.__h = el.innerHTML",
-   "pr": 0
-  },
-  {
    "name": "Workflow: an internal brief stamps ASPL onto a row nobody owns",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "if(noOwner(row.owner)){ setOwner(row,'ASPL');",
@@ -17108,6 +17057,60 @@
    "name": "Breakdown: the page calls the engine's pairScan, never a second copy of the maths",
    "file": "docs/FeedSpark_Breakdown.html",
    "pattern": "CK = B.pairScan(S.st, {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: ad spend kept off = the market's largest blocking rule",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "d.ceil != null ? d.ceil : d.n * d.spendDay * D",
+   "pr": 558
+  },
+  {
+   "name": "Catalogue: one market or all of them — the procurement cards add up every Google market",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function scAll() { return S.chan === 'google' && gMkts().length > 1 && scWant(); }",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: each market's card figures kept as a snapshot on the device",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "var SNAP_K = 'fcc-cat-snap', SNAP_V = 1,",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: money adds only inside one currency across markets",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function scCur(got) {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: ⚡ read every market walks the page's own loader",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function sweepStart(force) {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: every roster market listed, a market with no feed named with what FeedHero sends (never read)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "ROAS.rosterGaps(c, list.map((e) => e.cmpid).filter(Boolean), book)",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: a kind-none market is never loaded or swept",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "e.channel === ch && e.kind !== 'none'",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: the Before-and-after score opens how it is worked out, the rows adding up to it",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function fixPop(d, before, after) {",
+   "pr": 0
+  },
+  {
+   "name": "Golden Record: the Catalogue score button kept as its two numbers in the HTML copy",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "querySelectorAll('button.bna')",
    "pr": 0
   }
  ]

@@ -408,7 +408,7 @@ t('one chart failing never stops the master join', /\[counts, detectRoasField, r
 t('the dashboard is TWENTY-ONE modules of one size on an even grid that follows the page\'s own width (Image pixels spans its row, Product type depth two columns)', (PG.match(/class="card mod" id="[a-z-]+" data-mod="/g) || []).length === 21 && /\.mod\[data-mod="pix"\]\{grid-column:1\/-1\}/.test(PG) && /\.mod\{display:flex;flex-direction:column;height:340px/.test(PG) && /\.ins\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(PG) && /main\.wrap\{container-type:inline-size;container-name:cat\}/.test(PG));
 t('stock control reads Stock management\'s OWN route and matches the market on the feed\'s FeedHero company id, never a name', /fetch\('\/api\/rules\/stock\?brand=/.test(PG) && /String\(x\.cmpid\) === String\(e\.cmpid\)/.test(PG) && /loadRoas\(g\); loadStock\(g\);/.test(PG));
 t('stock control is /stock\'s coverage matrix for this market — one hue, the count in the cell, — where none', /function covShade\(n, mx\)/.test(PG) && /<table class="covt/.test(PG) && /none: the market has no rule doing this/.test(PG) && /fcc-cat-stkch/.test(PG));
-t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /best\.n \* a\.spendDay \* D/.test(PG));
+t('ad spend kept off counts a market ONCE at its largest blocking rule (the /stock floor), never the sum of its rules', /h\.kind === 'blocked' && h\.n > 0 && \(!best \|\| h\.n > best\.n\)/.test(PG) && /d\.n \* d\.spendDay \* D/.test(PG));
 t('every module bar is a filter the table obeys (spec · price · size run · mix · depth · availability · image pixels · product type depth + path)', /if \(F\.k === 'spec' \|\| F\.k === 'price' \|\| F\.k === 'run' \|\| F\.k === 'mix' \|\| F\.k === 'depth' \|\| F\.k === 'avail' \|\| F\.k === 'pix' \|\| F\.k === 'ptd' \|\| F\.k === 'ptp'\) return passModFacet\(F, i, x\);/.test(PG));
 t('modules are the viewer\'s to hide and reorder, per device, never shared', /lsSet\('fcc-cat-mods', st\)/.test(PG) && PG.indexOf("/api/state?ns=catmods") < 0);
 t('a path cut names its leaf, not a truncated root repeated ten times', /var shortLab = function \(c\)/.test(PG));
@@ -472,10 +472,10 @@ console.log('· the commercial view (a buyer choosing between feed vendors)');
   t('twenty-one modules on the dashboard (the six commercial ones, Image pixels, Custom labels, Product type depth) registered', (mods.match(/\['[a-z]+', /g) || []).length === 21 && mods.indexOf("['pix'") >= 0 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
   t('👔 Procurement view is a preset of the same per-device module state, and ?view=procurement opens it', /var PROC = \['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'\]/.test(PG) && /v: 'proc'/.test(PG) && /qp\('view'\)/.test(PG));
   t('the fee a buyer types never leaves the device — no request in the fee check', !/fetch\(|api\(/.test(lift('renderFee') + lift('feeSet')) && /lsSet\('fcc-cat-fee'/.test(PG));
-  t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('renderLift')));
-  t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('renderVendor')) && /have == null/.test(lift('renderVendor')));
-  t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('renderWaste')) && /rv \/ sp \* 100/.test(lift('renderWaste')));
-  t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('renderLift')) && !/class="cmp"/.test(lift('renderLift')));
+  t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('liftHtml')));
+  t('a capability the page cannot read is shown as unreadable, not as a zero', /not readable here/.test(lift('paintVendor')) && /have == null/.test(lift('paintVendor')));
+  t('the budget card sizes spend by each category’s OWN return, top level only', /nd && nd\.row/.test(lift('wasteD')) && /rv \/ sp \* 100/.test(lift('wasteD')));
+  t('the comparison table does not reuse the completeness bar’s .cmp class (a flex row)', /class="vs"/.test(lift('liftHtml')) && !/class="cmp"/.test(lift('liftHtml')));
 }
 
 console.log('· image pixels (docs/pixel_engine.js) — synthetic pictures, never a client\'s');
@@ -681,6 +681,35 @@ console.log('· the source stock — FeedHero\'s suppfeed stock + range_comp, re
   const rt = WK.slice(WK.indexOf("if (path === '/api/rules/stocksrc'"), WK.indexOf("if ((path === '/api/rules' || path === '/api/rules/stock')"));
   t('/api/rules/stocksrc: roster companies only, scoped to the signin\'s clients', /if \(!cb\) return json\(\{ ok: false, error: 'not a roster company' \}, 404\);/.test(rt) && /if \(!\(acc\.owner \|\| clientMatch\(acc\.clients, cb\.client\)\)\) return json/.test(rt));
   t('the agent\'s push lane answers the same reader ({stocksrc})', /if \(typeof body\.stocksrc === 'string'\) \{/.test(WK));
+}
+
+// ---- every roster market, with what FeedHero really sends (Ray, 29 Oct 2026: "Mirror the stock management") ----
+{
+  console.log('\nRoster markets mirror Stock management');
+  const row = (cmpid, name, st, link) => ({ cmpid, feed_name: name, feed_status: st, products: '1,000', last_collected: '06/10/2026 at 06:18 AM', feed_link: link || '' });
+  const book = ROAS.feedBookFrom([
+    row('superdry_gb', 'Google Shopping', 'Active', 'https://x.feedhero.net/output_feeds/gb/superdry_gb/h/f.xml'),
+    row('superdry_gb', 'Google Shopping Audit purpose', 'Active', 'https://x.feedhero.net/output_feeds/gb/superdry_gb/h2/a.xml'),
+    row('superdry_dk', 'Google Shopping', 'Paused'), row('superdry_dk', 'Wunderkind', 'Active'),
+    row('superdry_it', 'Wunderkind', 'Active'),
+    row('superdry_de', 'Facebook German', 'Active', 'https://x.feedhero.net/output_feeds/fb_lang_feed/superdry_de/h/x.xml'),
+  ]);
+  t('the audit copy is not a Shopping feed', book.superdry_gb.feeds.map((f) => f.k).join() === 'google,audit');
+  t('a Meta language override is its own kind, never a catalogue', book.superdry_de.feeds[0].k === 'metalang');
+  t('live / paused counted per company', book.superdry_dk.live === 1 && book.superdry_dk.paused === 1);
+  t('no feed URL is kept', !JSON.stringify(book).includes('http'));
+  const gaps = ROAS.rosterGaps('Superdry', ['superdry_gb', 'superdry_de'], book);
+  t('every roster market not wired is listed', gaps.length === ROAS.rosterOf('Superdry').length - 2);
+  const by = (c) => gaps.find((g) => g.cmpid === c);
+  t('a paused Shopping feed reads paused', by('superdry_dk').why === 'paused');
+  t('a market with no Shopping feed reads nogoogle, naming what it does send', by('superdry_it').why === 'nogoogle' && by('superdry_it').kinds.join() === 'wunderkind');
+  t('a company FeedHero never listed reads unread, never "none"', by('superdry_pl').why === 'unread');
+  const r0 = WK.indexOf("if (path === '/api/catalog/roster')"), rt = WK.slice(r0, WK.indexOf("return json({ ok: true, clients: out", r0) + 80);
+  t('the roster route adds the gaps for brands in scope only', /ROAS\.rosterGaps\(c,/.test(rt) && /filter\(\(c\) => inScope\(c\)\)/.test(rt));
+  t('a gap is never readable (kind none)', /kind: 'none'/.test(rt));
+  t('the book is read from output_feeds and kept without URLs', /mcp\.call\('output_feeds'/.test(WK) && /catfeedbook/.test(WK));
+  t('the page never loads a kind-none market', /e\.channel === ch && e\.kind !== 'none'/.test(PG) && /x\.kind !== 'none'/.test(PG));
+  t('the page names each market without a feed', /data-off=/.test(PG) && /function offWhy\(e\)/.test(PG));
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

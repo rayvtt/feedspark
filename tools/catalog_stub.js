@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const D = path.join(__dirname, '..', 'docs');
-const CLIENT = 'Northwind', MKT = 'gb', CMPID = 'northwind_gb';
+const CLIENT = 'Northwind', MKT = 'gb', CMPID = 'northwind_gb', CMPID_IE = 'northwind_ie', IE_N = 14;
 const PATHS = ['Womens > Clothing > Dresses > Midi Dresses', 'Womens > Clothing > Dresses > Maxi Dresses', 'Womens > Clothing > Knitwear > Jumpers',
   'Womens > Accessories > Bags > Totes', 'Womens > Accessories > Scarves', 'Mens > Clothing > Shirts', 'Mens > Clothing > Knitwear > Cardigans',
   'Home > Cushions'];
@@ -35,8 +35,8 @@ function products() {
   }
   return out;
 }
-function outputXml() {
-  const items = products().map((p, i) => {
+function outputXml(n) {
+  const items = products().slice(0, n || undefined).map((p, i) => {
     const img = p.overlay ? 'https://lia.feedspark.com/feedspark-meta-dynamic-v2/meta_catelog_call.php?template_hash=t1&amp;img_url=' + p.img : p.img;
     return '<item>\n<g:id>' + p.id + '</g:id>\n<title>' + esc(p.title) + '</title>\n<description>' + esc('A ' + p.col.toLowerCase() + ' piece from the synthetic Northwind range, made for the catalogue tripwires.') + '</description>\n'
       + '<link>https://shop.northwind.invalid/p/' + p.grp.toLowerCase() + '</link>\n<g:image_link>' + img + '</g:image_link>\n'
@@ -122,7 +122,15 @@ function build() {
   adsRows['NW-GONE-1'] = [900, 30, 9.5, 2, 120];
   const ads = { ok: true, done: true, cmpid: CMPID, period: '7_days', from: '2026-09-22', to: '2026-09-28', range: 'Last 7 Days (22/09/2026 - 28/09/2026)',
     total: Object.keys(adsRows).length, pages: 2, next: 3, got: Object.keys(adsRows).length, cur: 'GBP', curMix: false, at: now, rows: adsRows };
-  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads };
+  // A SECOND GOOGLE MARKET, only when a harness asks for it (window.__catTwo — tools/check_catalog.js's All-markets pass):
+  // Northwind IE carries the first IE_N products of the same feed and reports Google Ads in EUR, so adding markets up and
+  // keeping money inside one currency are both tested; it has no stock rules on the roster
+  const roster2 = { ok: true, clients: { [CLIENT]: roster.clients[CLIENT].concat([{ mkt: 'ie', channel: 'google', kind: 'xml', cmpid: CMPID_IE, roas: { client: CLIENT, market: 'IE' } },
+    // a roster market FeedHero sends no Shopping feed for — listed, never read (Ray, 29 Oct 2026: mirror Stock's markets)
+    { mkt: 'fi', channel: 'google', kind: 'none', cmpid: 'northwind_fi', roas: { client: CLIENT, market: 'FI' }, why: 'nogoogle', google: [], kinds: ['wunderkind'] }]) },
+    feedhero: { [CLIENT]: { markets: 3, live: 5, paused: 1, google: 2 } } };
+  const eur = (o) => JSON.parse(JSON.stringify(o).replace(/GBP/g, 'EUR').replace(/"market":"GB"/g, '"market":"IE"'));
+  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads, roster2, xmlIE: outputXml(IE_N), marketIE: eur(r.market), liveIE: eur(r.live) };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs); every line
 // sits behind the Catalogue guard so no other page is served an engine or a feed it never asked for
@@ -158,16 +166,19 @@ function stubLines() {
     + "  if(url.indexOf('/catalog/pixels.js')>=0)" + txt(src('pixel_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/api/catalog/imgscan')>=0){if(opts&&opts.method==='PUT'){window.__pxPut=(window.__pxPut||[]).concat([JSON.parse(opts.body)]);return j({ok:true,n:1,t:Date.now()});}return j({ok:true,scan:null});}\n"
     + "  if(url.indexOf('/api/catalog/img')>=0){window.__pxGets=(window.__pxGets||0)+1;var uu=(url.match(/[?&]url=([^&]+)/)||[])[1]||'';return (" + PIX_JS + ")(uu).then(function(b){return new Response(b,{status:200,headers:{'content-type':'image/png'}});});}\n"
-    + "  if(url.indexOf('/api/catalog/roster')>=0)return j(" + JSON.stringify(d.roster) + ");\n"
+    + "  if(url.indexOf('/api/catalog/roster')>=0)return j(window.__catTwo?" + JSON.stringify(d.roster2) + ":" + JSON.stringify(d.roster) + ");\n"
+    + "  if(url.indexOf('/api/feed/proxy')>=0&&/market=ie(&|$)/.test(url))" + txt(JSON.stringify(d.xmlIE), 'application/xml', { 'x-feed-bytes': String(Buffer.byteLength(d.xmlIE)) }) + "\n"
     + "  if(url.indexOf('/api/feed/proxy')>=0)" + txt(JSON.stringify(d.xml), 'application/xml', { 'x-feed-bytes': String(Buffer.byteLength(d.xml)) }) + "\n"
     + "  if(url.indexOf('/api/catalog/master/file')>=0)" + txt(JSON.stringify(d.csv), 'text/csv', { 'x-feed-bytes': String(Buffer.byteLength(d.csv)) }) + "\n"
     + "  if(url.indexOf('/api/catalog/master/row')>=0)return j(" + JSON.stringify(d.row) + ");\n"
     + "  if(url.indexOf('/api/catalog/master')>=0)return j(" + JSON.stringify(d.info) + ");\n"
+    + "  if(url.indexOf('/api/roas/live')>=0&&url.indexOf('cmpid=" + CMPID_IE + "')>=0){var ag2=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L2=" + JSON.stringify(d.liveIE) + ";return j(L2[decodeURIComponent(ag2||'')]||{ok:false,error:'stub'});}\n"
     + "  if(url.indexOf('/api/roas/live')>=0){var ag=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L=" + JSON.stringify(d.live) + ";return j(L[decodeURIComponent(ag||'')]||{ok:false,error:'stub'});}\n"
     + "  if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
     // the read arrives in two calls — the first a chunk (done:false), the page calls again for the rest
     + "  if(url.indexOf('/api/catalog/ads')>=0){window.__adsCalls=(window.__adsCalls||0)+1;if(window.__adsCalls===1)return j({ok:true,done:false,cmpid:" + JSON.stringify(d.ads.cmpid) + ",got:3,total:" + d.ads.total + ",pages:2,next:2});return j(" + JSON.stringify(d.ads) + ");}\n"
+    + "  if(url.indexOf('/api/roas?client=')>=0&&/market=IE(&|$)/.test(url))return j(" + JSON.stringify(d.marketIE) + ");\n"
     + "  if(url.indexOf('/api/roas?client=')>=0)return j(" + JSON.stringify(d.market) + ");\n"
     + " }\n";
 }
-module.exports = { build, stubLines, CLIENT, MKT, CMPID, DROPPED, HELD, PIX, PIX_DEFAULT };
+module.exports = { build, stubLines, CLIENT, MKT, CMPID, CMPID_IE, IE_N, DROPPED, HELD, PIX, PIX_DEFAULT };
