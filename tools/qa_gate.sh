@@ -554,6 +554,12 @@ if node tools/test_breakdown.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ Field breakdown harness FAILED — see node tools/test_breakdown.mjs"; FAIL=1
 fi
+echo "── qa-gate 3h6h/7: Workflow files parse (a broken .yml creates NO run, not a red one)"
+if node tools/check_workflows.js >/dev/null 2>&1; then
+  echo "   ✓ every workflow file parses"
+else
+  echo "   ✗ A workflow file will NOT parse — GitHub would create no run at all; see node tools/check_workflows.js"; FAIL=1
+fi
 echo "── qa-gate 3h6g/7: Pair scan (the Pockets method: ratio bands, both floors, both metrics, the ranking)"
 if node tools/test_pairscan.mjs >/dev/null 2>&1; then
   echo "   ✓ Pair scan harness green"

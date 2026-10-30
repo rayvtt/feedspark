@@ -17130,6 +17130,18 @@
    "file": "docs/FeedSpark_Catalog.html",
    "pattern": "var vol = function (k) { return n0(st[k]) + ' fields · ' + pct1(st[k], N); };",
    "pr": 0
+  },
+  {
+   "name": "CI: a workflow file that will not parse is caught before it silently disables every run (PR #746)",
+   "file": "tools/check_workflows.js",
+   "pattern": "GitHub would create NO run at all",
+   "pr": 0
+  },
+  {
+   "name": "CI: the workflow-parse tripwire runs in presync, qa_gate and validate",
+   "file": ".github/workflows/validate.yml",
+   "pattern": "run: node tools/check_workflows.js",
+   "pr": 0
   }
  ]
 }
