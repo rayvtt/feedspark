@@ -17197,6 +17197,12 @@
    "name": "news skill: Step 3b — Show it (media rule)",
    "file": ".claude/skills/feedspark-news-digest/SKILL.md",
    "pattern": "## Step 3b — Show it (optional media)"
+  },
+  {
+   "name": "Workflow: the ASPL backfill is spent only once the brief store has landed (confirmBackfill's rule)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "if(_asplDone||!LIVE_CONN||!Object.keys(BRIEFS).length)return; _asplDone=true;",
+   "pr": 0
   }
  ]
 }

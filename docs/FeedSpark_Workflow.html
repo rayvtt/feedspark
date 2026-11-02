@@ -4641,7 +4641,10 @@ aside.ck[hidden]{display:none}
      rest go on the next open, and the toast says so. */
   var _asplDone=false, ASPL_CAP=40;
   function asplBackfill(){
-    if(_asplDone||!LIVE_CONN)return; _asplDone=true;
+    // spent only on a pass that could SEE the pipeline — confirmBackfill's own rule: the first
+    // reconcile can run with the plan live and the brief store still in flight, and spending the
+    // flag there left every historic row on a dash for the life of the tab, with nothing saying so
+    if(_asplDone||!LIVE_CONN||!Object.keys(BRIEFS).length)return; _asplDone=true;
     var rows=[], more=0, byKey={};
     allIntake().forEach(function(r){ byKey[rowKey(r)]=r; });
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
