@@ -17119,6 +17119,12 @@
    "pattern": "function feedsRun(c) {",
    "pr": 0
   },
+    {
+      "name": "Breakdown: Hide (blank) on the pivot's rows or columns, out of the table and its totals",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "if (S.L.pivot.nbC && cs) { var dc = B.dropBlank(S.st, cs, m); m = dc.m; hid.c = dc.n; }",
+      "pr": 0
+    },
   {
    "name": "Worker: the catalogue roster carries FeedHero's live feeds by kind",
    "file": "cloudflare/feedspark-deck/src/worker.js",

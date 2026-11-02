@@ -236,3 +236,11 @@ turns the Pivot card into an overlay filling the window: the same controls, oppo
 with the table taking the full height rather than its 620px cap on the page. The page behind is locked; the card's
 header does not fold it while it is full; **Esc** (after any open opportunity card or the guidebook) or **✕ Exit full
 screen** puts it back where it was, still open. Print lays it out on the page as normal. Harness: tools/check_breakdown.js.
+
+## Hide (blank) (2 Nov 2026)
+
+Ray: "in field-pivot - allow option to hide (blank) row or column". **Hide (blank) · Rows / Columns** beside Rows shown
+takes the products with NO value in that field out of the pivot — not just its row or column — so every row, column and
+grand total still adds up to what is on screen (engine `dropBlank`, a new mask; the filters are untouched). The note
+says how many products each switch hid; Columns is disabled with no column field; the spend chart drops its (blank) bar
+with it. Per device (fcc-bd-layout › pivot.nbR / nbC). Harness tools/check_breakdown.js.
