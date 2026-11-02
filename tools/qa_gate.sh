@@ -540,6 +540,11 @@ if node tools/test_testlab.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ Test Lab harness FAILED — see node tools/test_testlab.mjs"; FAIL=1
 fi
+if node tools/test_gmcvis.mjs >/dev/null 2>&1; then
+  echo "   ✓ visibility words, the rank ceiling, per-country views, the plan, the signals, the lifted pull + route hold"
+else
+  echo "   ✗ GMC visibility harness FAILED — see node tools/test_gmcvis.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3h6d/7: AI visibility (reading engine, surface adapters vs stub answers, the lifted /api/aivis route)"
 if node tools/test_aivis.mjs >/dev/null 2>&1; then

@@ -67,8 +67,12 @@ ok('sixteen themes render, one card each', cards.length === 16 && new Set(cards)
 ok('…and they are the sd_ themes, not another brand’s', cards.every((c) => c.startsWith('sd_')), cards.slice(0, 3));
 // the MONTH SECTIONS, not every child — the board also carries its own explanatory line, and
 // "> *" would just as happily count a stray div as a month
-const months = await page.$$eval('.road > .mo-sec', (n) => n.length);
-ok('the plan opens on its six-month window', months === 6, months);
+// The window is six months FROM NOW and only ever GROWS to keep a moment in view (v5): once the
+// calendar passes a seeded month, that month stays on the board as a past section rather than
+// hiding its themes — so the count is six ahead plus every past month that still carries one.
+const win = await page.$$eval('.road > .mo-sec', (n) => ({ all: n.length, past: n.filter((s) => s.classList.contains('mo-past')).length,
+  pastEmpty: n.filter((s) => s.classList.contains('mo-past') && !s.querySelector('[data-scope]')).length }));
+ok('the plan opens on its six-month window, grown only by past months that still carry a theme', win.all - win.past === 6 && win.pastEmpty === 0, win);
 
 console.log('\n2) a scope that is SET but not yet measurable says so');
 // Nobody has synced Superdry GB, so there is no ptidx: the eleven scoped themes must name what

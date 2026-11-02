@@ -43,7 +43,13 @@ const TLD = { ok: true, client: 'Northwind', industry: 'Fashion',
     signals: [{ k: 'sale_badge', why: 'competitors badge a sale on 35% of their Shopping results; you on 0%' }] },
     auction: { v: 1, at: Date.now() - 7200000, mkt: 'gb', range: '1 Oct 2026 - 14 Oct 2026', segmented: false, you: { d: 'You', you: true, n: 1, is: 23.4 },
       comps: [{ d: 'harbour.example', you: false, n: 1, is: 45.1, ov: 60, or: 31.2 }, { d: 'atelier.example', you: false, n: 1, is: 10, isLt: true, ov: 12, or: 70 }],
-      signals: [{ k: 'kw_theme', why: 'harbour.example wins 45.1% impression share against your 23.4% (Auction Insights, 1 Oct 2026 - 14 Oct 2026) — eligibility is what keywords lift' }] } }, de: null },
+      signals: [{ k: 'kw_theme', why: 'harbour.example wins 45.1% impression share against your 23.4% (Auction Insights, 1 Oct 2026 - 14 Oct 2026) — eligibility is what keywords lift' }] },
+    gmc: { at: Date.now() - 3600000, checked: '2026-11-02 09:45', note: '', cc: 'GB', has: true, countries: ['GB', 'US'],
+      src: { all: [{ c: 'GB', cat: 'Apparel & Accessories', rank: 5, ads: 96, n: 9, top: { d: 'tidewater.example', rank: 1, vis: { v: 1000, gt: true, t: '>+1,000%' }, higher: 70, overlap: 73 } },
+                   { c: 'GB', cat: 'Home & Garden', rank: 2, ads: 40, n: 4, top: { d: 'linden.example', rank: 1, vis: { v: 0, within: true, t: 'Within 2.5%' }, higher: 12, overlap: 5 } }],
+             organic: [{ c: 'GB', cat: 'Apparel & Accessories', rank: 5, ads: 0, n: 9, top: { d: 'oakmere.example', rank: 1, vis: { v: 25, t: '+25%' }, higher: 56, overlap: 11 } }], ads: [] },
+      signals: [{ k: 'kw_theme', why: 'tidewater.example is over 11× as visible as you in Apparel & Accessories and shows on 73% of the same pages (Merchant Center, last 28 days)' }] } },
+    de: { gmc: { at: Date.now() - 3600000, checked: '2026-11-02 09:45', note: '', cc: 'DE', has: false, countries: ['GB', 'US'], src: { all: [], organic: [], ads: [] }, signals: [] } } }, gmcOn: true,
     signals: [{ mkt: 'gb', k: 'sale_badge', why: 'competitors badge a sale on 35% of their Shopping results; you on 0%' }],
     meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } },
   feeds: [{ mkt: 'gb', fb: true, scanned: true }, { mkt: 'de', fb: false, scanned: false }] };
@@ -122,7 +128,7 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
     us: (n.querySelector('.ck-cwm .nm.us') || { textContent: '' }).textContent.trim(),
     usLine: (n.querySelector('.ck-cwm .nm.us') ? n.querySelector('.ck-cwm .nm.us').parentNode.textContent : '').replace(/\s+/g, ' ').trim(),
     thumbs: n.querySelectorAll('.ck-thumbs a').length, ours: n.querySelectorAll('.ck-thumbs a.us').length, sale: n.querySelectorAll('.ck-thumbs .s').length,
-    sig: [...n.querySelectorAll('.ck-sig')].filter((e) => !e.closest('.ck-au')).map((e) => e.textContent.trim()),
+    sig: [...n.querySelectorAll('.ck-sig')].filter((e) => !e.closest('.ck-au, .ck-gmc')).map((e) => e.textContent.trim()),
     read: n.querySelectorAll('[data-cw]').length, notYet: /not read yet/.test(n.textContent), meta: /Meta Ad Library/.test(n.textContent),
     bars: [...n.querySelectorAll('.ck-tlbar i')].map((i) => i.style.width),
   }));
@@ -148,6 +154,22 @@ const INIT = "window.__posts=[];(function(){var real=window.fetch;window.fetch=f
   ok('You first, then the domains by impression share, each a bar; "< 10%" drawn as the floor it is', au.youFirst && /^You.*23\.4%/.test(au.rows[0]) && /harbour\.example.*45\.1%.*overlap 60%.*you outrank 31\.2%/.test(au.rows[1]) && /atelier\.example.*<10%/.test(au.rows[2]) && au.lt && au.bars[0] === '23%' && au.bars[1] === '45%', au.rows);
   ok('the auction signal names the test and the figures; ⇪ Replace and ✕ offered on a read market', au.sig.length === 1 && /test kw theme/.test(au.sig[0]) && /45\.1%/.test(au.sig[0]) && au.replBtn && au.forget, au.sig);
   ok('the file input is a real file control, hidden until the button opens it', au.input && au.input.type === 'file' && au.input.hidden, au.input);
+
+  console.log('\n3c) Merchant Center visibility — Google’s own competitor read, per category, in the market’s own country');
+  const gm = await page.$eval('#ck-tl .ck-cw', (n) => {
+    const b = [...n.querySelectorAll('.ck-gmc')];
+    const txt = (e) => e.textContent.replace(/\s+/g, ' ').trim();
+    return { n: b.length, gbHead: txt(b[0].querySelector('.ck-cwm')), gbRows: [...b[0].querySelectorAll('.ck-cwm')].slice(1).map(txt),
+      srcs: [...b[0].querySelectorAll('.ck-gmcsrc')].map(txt), sig: [...b[0].querySelectorAll('.ck-sig')].map(txt), de: txt(b[1]),
+      order: (() => { const kids = [...n.querySelectorAll('.ck-gmc, .ck-au')].slice(0, 2).map((e) => e.className); return kids.join(); })() };
+  });
+  ok('one Merchant Center block per market, drawn before Auction Insights', gm.n === 2 && /^ck-gmc,ck-au/.test(gm.order), gm.order);
+  ok('the head says it is a 28-day read and when FeedHero checked it', /last 28 days/.test(gm.gbHead) && /2026-11-02 09:45/.test(gm.gbHead), gm.gbHead);
+  ok('all traffic and free listings are read apart; an empty Shopping-ads read draws no heading', gm.srcs.join() === 'All traffic,Free listings', gm.srcs);
+  ok('a row names the category, your rank as a ceiling, the one competitor and its figures in words', /Apparel & Accessories.*#5 or lower.*tidewater\.example #1 · over 11× as visible · above you 70% · same pages 73% · 96% of yours paid/.test(gm.gbRows[0] || ''), gm.gbRows[0]);
+  ok('a level competitor reads as level, never as a number', /linden\.example #1 · about as visible as you/.test(gm.gbRows[1] || ''), gm.gbRows[1]);
+  ok('the signal names the test and the source', gm.sig.length === 1 && /test kw theme/.test(gm.sig[0]) && /Merchant Center, last 28 days/.test(gm.sig[0]), gm.sig);
+  ok('a country the account does not report SAYS so, naming what it does report', /Merchant Center reports no DE market for this account \(it reports GB, US\)/.test(gm.de), gm.de);
   const csv = path.join(require('os').tmpdir(), 'fcc-auction-' + process.pid + '.csv');
   require('fs').writeFileSync(csv, '\ufeffAuction insights report\n1 Oct 2026 - 14 Oct 2026\n\nDisplay URL domain,Impression share,Overlap rate,Outranking share\nYou,23.40%,--,--\nharbour.example,45.10%,60.00%,31.20%\n"www.atelier.example",< 10%,12.00%,70.00%\nTotal,--,--,--\n');
   const hitsBefore = await page.evaluate(() => window.__tlhits || 0);

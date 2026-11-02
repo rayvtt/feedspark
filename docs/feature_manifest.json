@@ -17150,6 +17150,36 @@
    "pr": 0
   },
   {
+   "name": "GMC visibility: the ROAS firing shares one MCP session with the Merchant Center read",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "if (mcp) await gmcPull(env, { mcp });",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: Test Lab files Merchant Center signals beside Shopping + Auction Insights",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "addSig(f.mkt, 'gmc', sg)",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: /api/gmcvis is a rail path",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/api/compwatch/auction', '/api/gmcvis']",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: the rail's Merchant Center block",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function secGmc(m,g,brand,cw)",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: rank 5 reads as a ceiling, never an exact fifth",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "r>=5?'5 or lower'",
+   "pr": 0
+  },
+  {
    "name": "news: item media (image/video/chart) is validated by the gate",
    "file": "tools/check_news.js",
    "pattern": "function validateMedia(m, at, err)"
@@ -17173,6 +17203,12 @@
    "name": "news skill: Step 3b — Show it (media rule)",
    "file": ".claude/skills/feedspark-news-digest/SKILL.md",
    "pattern": "## Step 3b — Show it (optional media)"
+  },
+  {
+   "name": "Workflow: the ASPL backfill is spent only once the brief store has landed (confirmBackfill's rule)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "if(_asplDone||!LIVE_CONN||!Object.keys(BRIEFS).length)return; _asplDone=true;",
+   "pr": 0
   }
  ]
 }
