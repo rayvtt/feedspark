@@ -17142,6 +17142,36 @@
    "file": ".github/workflows/validate.yml",
    "pattern": "run: node tools/check_workflows.js",
    "pr": 0
+  },
+  {
+   "name": "GMC visibility: the ROAS firing shares one MCP session with the Merchant Center read",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "if (mcp) await gmcPull(env, { mcp });",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: Test Lab files Merchant Center signals beside Shopping + Auction Insights",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "addSig(f.mkt, 'gmc', sg)",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: /api/gmcvis is a rail path",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/api/compwatch/auction', '/api/gmcvis']",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: the rail's Merchant Center block",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function secGmc(m,g,brand,cw)",
+   "pr": 0
+  },
+  {
+   "name": "GMC visibility: rank 5 reads as a ceiling, never an exact fifth",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "r>=5?'5 or lower'",
+   "pr": 0
   }
  ]
 }

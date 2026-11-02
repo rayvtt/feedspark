@@ -1215,9 +1215,10 @@ aside.ck[hidden]{display:none}
 .ck-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .ck-thumbs a .s{position:absolute;left:0;bottom:0;right:0;font-size:8px;font-weight:900;color:#fff;background:rgba(192,57,43,.9);text-align:center;letter-spacing:.04em}
 .ck-sig{font-size:10.5px;color:var(--ink-2,#4a4a4a);padding:1px 0 1px 5px}
-.ck-au{margin:4px 0 2px;padding:4px 0 2px 5px;border-top:1px dashed var(--line,#E6E6E6)}
+.ck-au,.ck-gmc{margin:4px 0 2px;padding:4px 0 2px 5px;border-top:1px dashed var(--line,#E6E6E6)}
 .ck-au .ck-cwm.you .nm{color:var(--orange-deep,#ED6F0B)}
 .ck-au .lt{color:var(--muted,#8a94a0);font-weight:400}
+.ck-gmcsrc{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8a94a0);margin:5px 0 1px}
 #ck-au-file{display:none}
 .ck-sig b{color:var(--orange-deep,#ED6F0B)}
 .ck-raiserow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 0 7px 5px;margin:-1px 0 5px}
@@ -7378,7 +7379,7 @@ aside.ck[hidden]{display:none}
     mk.forEach(function(m){
       var r=cw.markets[m];
       h+='<div class="ck-cwm"><span class="nm">'+esc(m.toUpperCase())+'</span>';
-      if(!r||!r.summary){ h+='<span class="tag">not read yet</span>'+(cw.on?'<button type="button" class="ck-brief go" data-cw="'+esc(m)+'">⚡ Read now</button>':'')+'</div>'+secAuction(m,r&&r.auction); return; }
+      if(!r||!r.summary){ h+='<span class="tag">not read yet</span>'+(cw.on?'<button type="button" class="ck-brief go" data-cw="'+esc(m)+'">⚡ Read now</button>':'')+'</div>'+secGmc(m,r&&r.gmc,brand,cw)+secAuction(m,r&&r.auction); return; }
       var sm=r.summary||{},us=sm.us||{},th=sm.them||{};
       h+='<span class="tag">read '+esc(tlWhen(r.at))+' · '+esc(String(r.n))+' results · '+(sm.queries||[]).length+' queries</span>'+(cw.on?'<button type="button" class="ck-brief" data-cw="'+esc(m)+'" title="Read again (one SerpApi search per query)">⟳</button>':'')+'</div>';
       (sm.merchants||[]).slice(0,5).forEach(function(x){
@@ -7394,11 +7395,45 @@ aside.ck[hidden]{display:none}
           +ut.map(function(t){ return '<a href="#" tabindex="-1" class="us" title="'+esc(brand+' · '+t.t)+'"><img src="'+esc(t.img)+'" alt="" loading="lazy"></a>'; }).join('')+'</div>';
       }
       (sm.signals||[]).forEach(function(sg){ h+='<div class="ck-sig"><b>→ test '+esc(sg.k.replace(/_/g,' '))+':</b> '+esc(sg.why)+'</div>'; });
+      h+=secGmc(m,r.gmc,brand,cw);
       h+=secAuction(m,r.auction);
     });
     h+='<input type="file" id="ck-au-file" accept=".csv,.tsv,.txt,.xlsx" aria-hidden="true" tabindex="-1">';
     h+='<p class="ck-h">'+esc((cw.meta&&cw.meta.why)||'')+'</p></div>';
     return h;
+  }
+  /* MERCHANT CENTER VISIBILITY (Ray, 2 Nov 2026: "start importing competitors on Google Shopping via the
+     new data from Google Merchant Center"): Google's own competitive-visibility report, read by FeedHero
+     daily and pulled here by the worker (src/gmcvis.js) — no upload, no search spend. One row per Google
+     category in THIS market's country: your rank, the most visible competitor, how much more visible it
+     is, how often it sits above you and on how many of the same pages. The account reports per Merchant
+     Center account, so a market the account reports nothing for SAYS so instead of borrowing another
+     country; and the rank the source reads on almost every market is 5, so 5 reads "5 or lower". */
+  var GMC_SRC={all:'All traffic',organic:'Free listings',ads:'Shopping ads'};
+  function gmcRank(r){ return r==null?'–':(r>=5?'5 or lower':String(r)); }
+  function gmcVis(t){ var v=t&&t.vis; if(!v)return ''; if(v.within)return 'about as visible as you'; if(v.v<=0)return 'less visible than you'; var x=v.v/100+1; return (v.gt?'over ':'')+(x>=3?Math.round(x)+'× as visible':Math.round(v.v)+'% more visible'); }
+  function secGmc(m,g,brand,cw){
+    var h='<div class="ck-gmc"><div class="ck-cwm"><span class="nm">🛒 Merchant Center visibility'+(cw&&cw.gmcOn===false?' <span class="ck-chip" title="ROAS_MCP_TOKEN is not set on the worker">not connected</span>':'')+'</span>';
+    if(!g||g.unread){ return h+'<span class="tag">not read yet — the next FeedHero read fills it</span></div></div>'; }
+    h+='<span class="tag" title="A 28-day average ending 3 days ago, read by FeedHero from the Merchant API — never live">last 28 days'+(g.checked?' · FeedHero checked '+esc(g.checked):'')+'</span></div>';
+    if(!g.has){
+      var why=g.note?g.note:(g.cc?'Merchant Center reports no '+g.cc+' market for this account'+(g.countries&&g.countries.length?' (it reports '+g.countries.join(', ')+')':''):'this market has no single country to read');
+      return h+'<p class="ck-h">'+esc(why)+'.</p></div>';
+    }
+    ['all','organic','ads'].forEach(function(k){
+      var rows=(g.src&&g.src[k])||[]; if(!rows.length)return;
+      h+='<div class="ck-gmcsrc">'+esc(GMC_SRC[k])+'</div>';
+      rows.slice(0,6).forEach(function(r){
+        var t=r.top,tag=[];
+        if(t){ var vw=gmcVis(t); if(vw)tag.push(vw); if(typeof t.higher==='number')tag.push('above you '+t.higher+'%'); if(typeof t.overlap==='number')tag.push('same pages '+t.overlap+'%'); }
+        if(k==='all'&&typeof r.ads==='number')tag.push(r.ads+'% of yours paid');
+        h+='<div class="ck-cwm"><span class="nm" title="'+esc(r.cat+' · '+r.c+' · '+r.n+' competitor'+(r.n===1?'':'s')+' in this market')+'">'+esc(r.cat)+'</span>'
+          +'<span class="num" title="Your rank among the merchants Google shows here (1 = most visible)">#'+esc(gmcRank(r.rank))+'</span>'
+          +'<span class="tag">'+(t?'<b>'+esc(t.d)+'</b> #'+esc(gmcRank(t.rank))+' · ':'no competitor reported · ')+esc(tag.join(' · '))+'</span></div>';
+      });
+    });
+    (g.signals||[]).forEach(function(sg){ h+='<div class="ck-sig"><b>→ test '+esc(sg.k.replace(/_/g,' '))+':</b> '+esc(sg.why)+'</div>'; });
+    return h+'</div>';
   }
   /* AUCTION INSIGHTS, NO API (Ray, 14 Oct 2026: "is there a way to bypass the competitor mapping
      without API?" → "i think Google Ads Auction insight"): the AM downloads the report from the

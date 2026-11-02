@@ -147,6 +147,57 @@ Shopping read beside it) and unions its signals into `comp.signals` marked `src:
 proposals wear them like the Shopping read's. The rail draws You first, then the domains by
 impression share on a bar each, overlap and outranking beside them, the range and the upload date.
 
+## 3c. Merchant Center visibility — Google's own competitor read
+
+Ray, 2 Nov 2026: *"You can now start importing competitors on Google Shopping via the new data from
+Google Merchant Center. Inside [FeedHero] MCP, you can see GMC visibility and bring in whatever is
+necessary."*
+
+FeedHero's reports server gained `gmc_visibility`: the Merchant API's competitive-visibility report,
+refreshed daily, a **28-day average ending 3 days ago** (never live). Per client it returns one row per
+market — country × Google product category — with the client's rank, the share of its visibility that
+is paid, the **one** most visible competitor (its rank, how much more visible it is, how often it shows
+above the client, on how many of the same pages) and a count of the rest. Three traffic sources: all,
+Shopping ads, and free listings (organic). Free listings rank on the feed itself, which is why they are
+read apart.
+
+**What the source is, read off it on 2 Nov 2026, and how the module reads it:**
+
+1. **Per Merchant Center account, not per feed.** All 30 Reiss markets return the same rows (GB, AU,
+   US), and the same for Damson Madder and American Golf. So a market's view is the account's rows
+   **filtered to its own country**. A market the account reports nothing for says so, naming the
+   countries it does report ("Merchant Center reports no DE market for this account (it reports GB, AU,
+   US)"). EU has no single country and reads nothing.
+2. **One competitor per market, not a list.** The block names that one competitor, with the count of
+   the rest in the row's tooltip.
+3. **The rank looks capped at 5.** Almost every market reads "your rank 5" against a competitor at 1,
+   so 5 is read as **"5 or lower"**, never as an exact fifth place. Worth confirming with FeedHero.
+
+**The pull** (`gmcPull`, worker): the `10,40` ROAS firing opens ONE MCP session and hands it to both
+the ROAS rotation and `GMC_PULLS` (2) companies' visibility reads, three calls each, stalest first.
+A company read inside `GMC_STALE_MS` (20 h) is never re-read, so every roster company is read about
+once a day. The whole store is ONE KV key, `gmcvis` = `{cmpid: record}`: one get and one put a
+firing, one get for the Test Lab. A company that answers nothing is stored with the source's own
+reason ("No visibility data from Google for this account"), never as "no competitors". A rules firing
+never carries the GMC read. Competitor domains are client data, so they live in KV only.
+
+**On the rail** (between the Shopping read and Auction Insights, per market): 🛒 Merchant Center
+visibility · last 28 days · FeedHero checked …, then All traffic and Free listings (Shopping ads too
+when it has rows), each category one row: your rank, the competitor and its rank, "over 11× as
+visible" / "25% more visible" / "about as visible as you", above you %, same pages %, and on all
+traffic the share of yours that is paid.
+
+**Signals** (`gmcSignals`, filed as `src: 'gmc'` beside the Shopping and Auction Insights ones):
+
+| Signal | When | Test it promotes |
+|---|---|---|
+| A competitor at least twice as visible on ≥30% of the same pages | `kw_theme` | eligibility — keywords |
+| A competitor above you on ≥50% of the pages you share (overlap ≥10%) | `cl_perf` | performance-tier label |
+| ≥90% of your visibility in a category is paid | `title_mask` | free listings read the feed, the title first |
+
+The paid signal adds "the free listings report no X market of yours at all" only when the
+free-listings read returned rows. An empty read is not evidence.
+
 ## The ranking — aggressive by design, honest by design
 
 `proposeTests(brand, ctx, ev)` scores every test:
@@ -191,6 +242,7 @@ the Project Plan like every other brief.
 | `GET /api/compwatch?client=&market=` | the stored read + its summary |
 | `POST /api/compwatch` | `{client, market, force}` — read it now (money route) |
 | `GET\|PUT\|DELETE /api/compwatch/auction` | the uploaded Auction Insights report per market: stored / `{client, market, rows}` from the downloaded file / forget it |
+| `GET /api/gmcvis` | status across the roster (read, fresh, empty); `?client=` = every roster market of the brand, each its own country's rows + signals (scoped); `?pull=N` = OWNER-ONLY read now (≤4 companies a call), `&cmpid=` one company |
 
 ## Harness
 
@@ -204,9 +256,18 @@ the Project Plan like every other brief.
   Excel export with fractions), the sanitiser's idempotence, the signals, the upload route (scope,
   grant, a file with no header refused, nothing of the file stored, DELETE); the wiring.
   Every fixture is invented — Northwind, Harbour, Linden.
+- `tools/test_gmcvis.mjs` (qa_gate / presync / validate): the visibility words (`>+1,000%` a floor,
+  `Within 2.5%` level), the rank ceiling, per-country views and the unreported country, the plan
+  (never-read first, a fresh read never repeated), the three signals, `gmcPull` and `/api/gmcvis`
+  lifted out of `worker.js` against a stub MCP + KV (one put a firing, the shared session, a failure
+  mid-firing keeping what was read, a refused token, owner-only read now, scope), the wiring, and that
+  no competitor domain read off a live account is committed.
 - `tools/check_testlab.js` (Playwright, presync): the real Workflow rail — the three with their
   evidence, line and design; the badge; the surface pills; the folded rest with its states; the
   competitor block (merchants, our line, pictures, the signal, ⚡ Read now → one POST + a re-read);
   the Auction Insights block drawn from a stored report and a real CSV dropped on ⇪ Upload through
   the page's own file input — read into rows in the browser, one PUT, a re-read, ✕ → DELETE;
+  the Merchant Center block drawn before Auction Insights — the 28-day head, the sources apart, the
+  rank as a ceiling, the competitor in words, a level one as level, the signal, and DE saying what
+  the account does report;
   → Brief filling the composer as a test naming the industry, never the peer; the phone.

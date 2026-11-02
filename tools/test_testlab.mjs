@@ -19,6 +19,8 @@ import * as TL from '../cloudflare/feedspark-deck/src/testlab.js';
 import * as SEC from '../cloudflare/feedspark-deck/src/security.js';
 import * as AIVIS from '../cloudflare/feedspark-deck/src/aivis.js';
 import * as RET from '../cloudflare/feedspark-deck/src/retired.js';
+import * as GMC from '../cloudflare/feedspark-deck/src/gmcvis.js';
+import * as ROAS from '../cloudflare/feedspark-deck/src/roas.js';
 import { liftEnvelope } from '../cloudflare/feedspark-deck/src/kvmerge.js';
 import { industryOf } from '../cloudflare/feedspark-deck/src/labelguard.js';
 
@@ -155,7 +157,7 @@ const b2 = lift("  if (path === '/api/compwatch' && (request.method === 'GET' ||
 const b3 = lift("  if (path === '/api/compwatch/auction' && (request.method === 'GET' || request.method === 'PUT' || request.method === 'DELETE')) {");
 t('all three route blocks are found', b1.length > 500 && b2.length > 500 && b3.length > 500);
 const AsyncFn = Object.getPrototypeOf(async function () {}).constructor;
-const routeFn = new AsyncFn('path', 'url', 'request', 'env', 'ctx', 'accessOf', 'clientMatch', 'clientSlug', 'moduleAllowed', 'feedRoster', 'json', 'logActivity', 'TL', 'AIVIS', 'RET', 'retiredSetOf', 'PLAN_SHEETS', 'industryOf', 'liftEnvelope', 'lgKey', 'mktOf', 'fetch', b1 + '\n' + b3 + '\n' + b2 + '\nreturn null;');
+const routeFn = new AsyncFn('path', 'url', 'request', 'env', 'ctx', 'accessOf', 'clientMatch', 'clientSlug', 'moduleAllowed', 'feedRoster', 'json', 'logActivity', 'TL', 'AIVIS', 'RET', 'retiredSetOf', 'PLAN_SHEETS', 'industryOf', 'liftEnvelope', 'lgKey', 'mktOf', 'fetch', 'GMC', 'ROAS', b1 + '\n' + b3 + '\n' + b2 + '\nreturn null;');
 function kvStub() {
   const m = new Map();
   return { m, async get(k, type) { const v = m.get(k); if (v == null) return null; return type === 'json' ? JSON.parse(v) : v; }, async put(k, v) { m.set(k, v); }, async delete(k) { m.delete(k); } };
@@ -172,7 +174,7 @@ async function call(method, p, body, acc0, envX, fetch0) {
   const request = new Request(url, { method, body: body ? JSON.stringify(body) : undefined, headers: { 'content-type': 'application/json' } });
   const acc = acc0 || { owner: true, clients: null, modules: null };
   const res = await routeFn(url.pathname, url, request, Object.assign({ EDITS: KV }, envX || {}), {}, async () => acc, (cl, n) => !cl || cl.indexOf(n) >= 0, slug,
-    (mods, s) => !mods || mods.indexOf(s) >= 0, async () => ROSTER, jsonR, (c, e, rq, a, d) => logs.push(a + ' ' + (d || '')), TL, AIVIS, RET, async () => new Set(), PLAN, industryOf, liftEnvelope, (c, m) => c + '|' + m, (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb', fetch0 || stubFetch);
+    (mods, s) => !mods || mods.indexOf(s) >= 0, async () => ROSTER, jsonR, (c, e, rq, a, d) => logs.push(a + ' ' + (d || '')), TL, AIVIS, RET, async () => new Set(), PLAN, industryOf, liftEnvelope, (c, m) => c + '|' + m, (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb', fetch0 || stubFetch, GMC, ROAS);
   return res;
 }
 await KV.put('abtests:Northwind', JSON.stringify({ ok: true, v: 4, tests: BOOK[0].tests }));

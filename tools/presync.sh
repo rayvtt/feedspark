@@ -142,6 +142,7 @@ echo "   ✓ header keys, the join read off the data, every lineage status, comp
 
 echo "── validating: Test Lab (the test library, the book-wide evidence table, the competitor Shopping read, the lifted /api/testlab + /api/compwatch routes)"
 node tools/test_testlab.mjs >/dev/null || { echo "✗ Test Lab harness failed — see node tools/test_testlab.mjs"; exit 1; }
+node tools/test_gmcvis.mjs >/dev/null || { echo "✗ GMC visibility harness failed — see node tools/test_gmcvis.mjs"; exit 1; }
 node tools/test_spendlens.mjs >/dev/null || { echo "✗ Spend Lens harness failed — see node tools/test_spendlens.mjs"; exit 1; }
 echo "   ✓ families, uplift figures only as recorded, the 3-month window, ran-recently / blocked / briefed out of the three, one first for the book, industry-not-peer in the brief, the competitor signals, scope + money throttle"
 echo "── validating: AI visibility (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)"
