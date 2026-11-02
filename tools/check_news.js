@@ -33,9 +33,16 @@ const MAX_ITEMS = 8;          // the skill's cap — more than eight and the wea
 const WINDOW_DAYS = 90;       // Ray, 18 Sep 2026: nothing older than three months
 const FRESH_MS = 48 * 3600e3; // the landing lane lands TODAY's digest
 const DAY = 86400e3;
-const ITEM_KEYS = ['title', 'source', 'url', 'date', 'impact', 'tags', 'what', 'sowhat'];
+const ITEM_KEYS = ['title', 'source', 'url', 'date', 'impact', 'tags', 'what', 'sowhat', 'media'];
+// MEDIA (Ray, 2 Nov 2026: "bring in graphic / images / video if needed as well to demonstrate"):
+// an item MAY carry up to MEDIA_PER_ITEM visuals — a platform's own image, a platform's own video,
+// or a chart drawn by the page from numbers the item already states. Optional on purpose: most
+// items carry none, and a visual that does not demonstrate the point is clutter.
+const MEDIA_TYPES = ['image', 'video', 'chart'];
+const MEDIA_PER_ITEM = 3, MEDIA_PER_DIGEST = 10, CHART_BARS_MIN = 2, CHART_BARS_MAX = 8;
+const MEDIA_URL_KEYS = ['url', 'poster'];
 const TOP_KEYS = ['_comment', 'id', 'generated', 'headline', 'intro', 'items'];
-const MAX_BYTES = 65536, MAX_LINES = 320, WARN_LINES = 220; // "a pop-up, not a report"
+const MAX_BYTES = 65536, MAX_LINES = 400, WARN_LINES = 220; // "a pop-up, not a report" (lines raised 320→400 for media blocks, 2 Nov 2026)
 
 // YYYY-MM-DD → UTC ms, NaN for anything that is not a real calendar day (2026-02-31 included)
 function dayMs(s) {
@@ -47,6 +54,41 @@ function dayMs(s) {
 // prose the page prints through esc(): non-empty, bounded, and no angle brackets (nothing here is markup)
 function textOk(v, max) {
   return typeof v === 'string' && v.trim().length > 0 && v.length <= max && !/[<>]/.test(v);
+}
+
+function httpsOk(v) {
+  let u = null;
+  try { u = new URL(v); } catch (e) { return false; }
+  return u.protocol === 'https:' && /\./.test(u.hostname) && !/[\s"'<>]/.test(v);
+}
+// one media entry; `err` receives messages prefixed with where it sits
+function validateMedia(m, at, err) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) { err(at + ': not an object'); return; }
+  if (!MEDIA_TYPES.includes(m.type)) { err(at + ': `type` must be one of ' + MEDIA_TYPES.join('|') + ', got ' + JSON.stringify(m.type)); return; }
+  if (m.caption !== undefined && !textOk(m.caption, 200)) err(at + ': `caption`, when present, is under 200 chars with no < >');
+  if (m.credit !== undefined && !textOk(m.credit, 80)) err(at + ': `credit`, when present, is under 80 chars with no < >');
+  if (m.type === 'chart') {
+    if (!textOk(m.title, 120)) err(at + ': a chart needs a `title` (under 120 chars)');
+    if (m.unit !== undefined && !textOk(m.unit, 12)) err(at + ': `unit`, when present, is a short string (%, $, M …)');
+    if (!Array.isArray(m.bars) || m.bars.length < CHART_BARS_MIN || m.bars.length > CHART_BARS_MAX) err(at + ': `bars` is ' + CHART_BARS_MIN + '–' + CHART_BARS_MAX + ' {label, value} rows');
+    else m.bars.forEach((b, j) => {
+      const bat = at + '.bars[' + j + ']';
+      if (!b || typeof b !== 'object') { err(bat + ': not an object'); return; }
+      if (!textOk(b.label, 60)) err(bat + ': `label` missing or over 60 chars');
+      if (typeof b.value !== 'number' || !isFinite(b.value) || b.value < 0) err(bat + ': `value` must be a finite number ≥ 0 — a figure the item states, never estimated');
+      if (b.note !== undefined && !textOk(b.note, 60)) err(bat + ': `note`, when present, is under 60 chars');
+    });
+    if (m.source !== undefined && !textOk(m.source, 120)) err(at + ': `source`, when present, names where the numbers come from (under 120 chars)');
+    for (const k of MEDIA_URL_KEYS) if (m[k] !== undefined) err(at + ': a chart carries no `' + k + '` — the page draws it from `bars`');
+    return;
+  }
+  if (!httpsOk(m.url)) err(at + ': `url` must be a real https:// link to the ' + m.type + ' itself, got ' + JSON.stringify(m.url));
+  if (!textOk(m.alt, 160)) err(at + ': `alt` is required for a' + (m.type === 'image' ? 'n image' : ' video') + ' (what it shows, under 160 chars)');
+  if (m.poster !== undefined && !httpsOk(m.poster)) err(at + ': `poster`, when present, is an https:// image');
+  if (m.type === 'image' && m.poster !== undefined) err(at + ': an image carries no `poster`');
+  const allowed = ['type', 'url', 'alt', 'poster', 'caption', 'credit'];
+  const extra = Object.keys(m).filter((k) => !allowed.includes(k));
+  if (extra.length) err(at + ': unknown field(s) ' + extra.join(', '));
 }
 
 function validateDigest(d, opts) {
@@ -74,6 +116,7 @@ function validateDigest(d, opts) {
   if (d.items.length === 1) warn('one item — the bar is "a quiet day ships two or three"');
 
   const urls = new Map(), titles = new Map();
+  let mediaCount = 0;
   d.items.forEach((it, i) => {
     const at = 'items[' + i + ']' + (it && typeof it.title === 'string' ? ' "' + it.title.slice(0, 40) + '"' : '');
     if (!it || typeof it !== 'object' || Array.isArray(it)) { err(at + ': not an object'); return; }
@@ -104,9 +147,15 @@ function validateDigest(d, opts) {
     }
     if (!IMPACT.includes(it.impact)) err(at + ': `impact` must be one of ' + IMPACT.join('|') + ', got ' + JSON.stringify(it.impact));
     if (!Array.isArray(it.tags) || it.tags.length === 0 || it.tags.length > 6 || !it.tags.every((t) => textOk(t, 40))) err(at + ': `tags` is 1–6 short strings');
+    if (it.media !== undefined) {
+      if (!Array.isArray(it.media) || it.media.length === 0) err(at + ': `media`, when present, is a non-empty array (leave it out rather than empty)');
+      else if (it.media.length > MEDIA_PER_ITEM) err(at + ': ' + it.media.length + ' media entries — the cap is ' + MEDIA_PER_ITEM + ' per item');
+      else { mediaCount += it.media.length; it.media.forEach((m, j) => validateMedia(m, at + '.media[' + j + ']', err)); }
+    }
     const extra = Object.keys(it).filter((k) => !ITEM_KEYS.includes(k));
     if (extra.length) warn(at + ': unknown field(s) ' + extra.join(', ') + ' — the page ignores them');
   });
+  if (mediaCount > MEDIA_PER_DIGEST) err(mediaCount + ' media entries across the digest — the cap is ' + MEDIA_PER_DIGEST + '; a pop-up, not a gallery');
   const extraTop = Object.keys(d).filter((k) => !TOP_KEYS.includes(k));
   if (extraTop.length) warn('unknown top-level field(s) ' + extraTop.join(', '));
 
@@ -146,8 +195,13 @@ async function checkLinks(d, opts) {
   const timeoutMs = opts.timeoutMs || 12000;
   const out = { ok: [], blocked: [], dead: [], unverified: [] };
   const seen = new Set();
+  // every item link, then every media url (an image or video that 404s is a broken pop-up)
+  const todo = [];
   for (const it of (d && Array.isArray(d.items) ? d.items : [])) {
-    const url = it && typeof it.url === 'string' ? it.url : '';
+    todo.push(it && typeof it.url === 'string' ? it.url : '');
+    for (const m of (it && Array.isArray(it.media) ? it.media : [])) for (const k of MEDIA_URL_KEYS) if (m && typeof m[k] === 'string') todo.push(m[k]);
+  }
+  for (const url of todo) {
     if (!/^https:\/\//.test(url) || seen.has(url)) continue;
     seen.add(url);
     const ctl = new AbortController();
@@ -207,6 +261,6 @@ async function main() {
   console.log('✓ links: ' + l.ok.length + ' reachable' + (l.blocked.length ? ', ' + l.blocked.length + ' behind a bot wall' : '') + (l.unverified.length ? ', ' + l.unverified.length + ' unverified' : ''));
 }
 
-module.exports = { validateDigest, validateText, checkLinks, dayMs, parseArgs, ID_RE, IMPACT, MAX_ITEMS, WINDOW_DAYS, FRESH_MS };
+module.exports = { validateDigest, validateText, validateMedia, checkLinks, dayMs, parseArgs, ID_RE, IMPACT, MAX_ITEMS, WINDOW_DAYS, FRESH_MS, MEDIA_TYPES, MEDIA_PER_ITEM, MEDIA_PER_DIGEST, CHART_BARS_MAX };
 
 if (require.main === module) main().catch((e) => { console.error('✗ ' + (e && e.stack || e)); process.exit(1); });
