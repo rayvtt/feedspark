@@ -17172,6 +17172,31 @@
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "r>=5?'5 or lower'",
    "pr": 0
+  },
+  {
+   "name": "news: item media (image/video/chart) is validated by the gate",
+   "file": "tools/check_news.js",
+   "pattern": "function validateMedia(m, at, err)"
+  },
+  {
+   "name": "news: the link check fetches media urls too",
+   "file": "tools/check_news.js",
+   "pattern": "for (const k of MEDIA_URL_KEYS) if (m && typeof m[k] === 'string') todo.push(m[k]);"
+  },
+  {
+   "name": "CmdCenter: the digest pop-up renders item media (FCC-NEWS-MEDIA)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "FCC-NEWS-MEDIA"
+  },
+  {
+   "name": "CmdCenter: a digest video loads only when tapped",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "b.replaceWith(v); try{ v.play(); }catch(x){} });"
+  },
+  {
+   "name": "news skill: Step 3b — Show it (media rule)",
+   "file": ".claude/skills/feedspark-news-digest/SKILL.md",
+   "pattern": "## Step 3b — Show it (optional media)"
   }
  ]
 }

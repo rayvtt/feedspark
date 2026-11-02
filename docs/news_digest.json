@@ -1,9 +1,9 @@
 {
   "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once. Every item must be dated within the last 3 months (Ray's rule, 18 Sep 2026).",
-  "id": "2026-11-02",
-  "generated": "2026-11-02T10:09:58Z",
+  "id": "2026-11-02-2",
+  "generated": "2026-11-02T10:18:49Z",
   "headline": "Muse has 10M+ users in the US and Canada, a quarter of them shop with it, and the average basket is about $200 — Meta's first adoption numbers",
-  "intro": "Catch-up edition after a 20-day gap (the Routine that writes this had been deleted; recreated today). Muse adoption and shopping behaviour lead, as asked — Meta's own figures kept apart from third-party panels and traffic sensors.",
+  "intro": "Catch-up edition after a 20-day gap (the Routine that writes this had been deleted; recreated today). Muse adoption and shopping behaviour lead, as asked — Meta's own figures kept apart from third-party panels, with the platforms' own demo footage and a chart where the numbers earn one.",
   "items": [
     {
       "title": "Meta's Q3 call: Muse passes 10M users, ~25% use it daily, over a quarter shop with it, average purchase about $200",
@@ -11,9 +11,23 @@
       "url": "https://techcrunch.com/2026/10/21/meta-says-muse-has-over-10m-users-with-shopping-a-top-activity/",
       "date": "2026-10-21",
       "impact": "high",
-      "tags": ["Meta", "Muse", "Agentic commerce"],
+      "tags": [
+        "Meta",
+        "Muse",
+        "Agentic commerce"
+      ],
       "what": "On the 21 Oct earnings call Zuckerberg said more than 10 million people have set up a Muse agent, about 25% of them use it daily, and shopping is the top task — over a quarter of users shop with it, at an average purchase size of about $200 (Payments Dive, 23 Oct, reporting the same call). Muse is live only in the US and Canada; Zuckerberg said compute cost is holding back a wider rollout and that volumes through Stripe (Muse pays with Stripe's Link wallet, accounts linked via Plaid) ran above what either company expected. Sensor Tower counted 10.9M downloads in the first 40 days, 10.2M of them in the US.",
-      "sowhat": "The first adoption figures from Meta itself, and the ones to quote in a QBR: 10M+ users, a quarter shopping, ~$200 baskets — seven weeks after launch. Still a North-America-only story, so Reiss US and Superdry US are the only accounts a client can act on; UK markets are a 'when, not if' line. Meta has still published nothing on which product data Muse reads, so pair this with the 13 Oct edition's Profound finding (open web over the catalogue) rather than promise a feed lever."
+      "sowhat": "The first adoption figures from Meta itself, and the ones to quote in a QBR: 10M+ users, a quarter shopping, ~$200 baskets — seven weeks after launch. Still a North-America-only story, so Reiss US and Superdry US are the only accounts a client can act on; UK markets are a 'when, not if' line. Meta has still published nothing on which product data Muse reads, so pair this with the 13 Oct edition's Profound finding (open web over the catalogue) rather than promise a feed lever.",
+      "media": [
+        {
+          "type": "video",
+          "url": "https://about.fb.com/wp-content/uploads/2026/09/Muse_Shopping.mp4",
+          "poster": "https://about.fb.com/wp-content/uploads/2026/09/Introducing-Muse_-Personal-AI-Agent_SocialShare.jpg?w=1200",
+          "alt": "Meta's own demo clip of Muse finding and buying a product for a user",
+          "caption": "What the 10M users are actually doing: Meta's shopping demo from the 8 Sep launch post — note the agent browses the retailer's site, not a feed",
+          "credit": "Meta"
+        }
+      ]
     },
     {
       "title": "HUMAN Security: Muse is already the biggest agent on the open web, and 84% of its requests hit product and search pages",
@@ -21,7 +35,11 @@
       "url": "https://www.humansecurity.com/learn/blog/meta-muse-agentic-traffic/",
       "date": "2026-10-28",
       "impact": "med",
-      "tags": ["Meta", "Muse", "Analytics"],
+      "tags": [
+        "Meta",
+        "Muse",
+        "Analytics"
+      ],
       "what": "HUMAN's own sensor data: Muse debuted at No.1 in its September agentic-traffic report (40.3% of agent traffic; a 28 Sep snapshot had it at ~72% of daily agent requests), 84% of Muse requests target product pages and on-site search, and Muse traffic is 25% more likely to reach a checkout page than other agents' (HUMAN's own 'recent sample', size not stated). Cequence and Botify report the same behaviour independently: Muse presents as an ordinary Chrome browser, so its visits and orders show up in client analytics as direct traffic — or, when it checks out through Shop Pay or a connector, with no session at all.",
       "sowhat": "This is the part AMs will be asked about: a client's analytics cannot currently tell Muse orders from human ones. Worth a line in every US-facing monthly update — any unexplained rise in 'direct' revenue or in orders without a session since September may be agent-driven. Vendor data, early sample; cite HUMAN, do not restate as fact."
     },
@@ -31,9 +49,41 @@
       "url": "https://firstpagesage.com/seo-blog/meta-muse-usage-statistics/",
       "date": "2026-10-29",
       "impact": "watch",
-      "tags": ["Meta", "Muse", "Research"],
+      "tags": [
+        "Meta",
+        "Muse",
+        "Research"
+      ],
       "what": "A 4,180-user opt-in panel (8 Sep to 25 Oct, US and Canada) weighted to the user base: 11.2M accounts, 2.74M daily actives (24.5% daily-use rate, matching Meta's ~25%), shopping and product research the largest single task at 24.6%, 47.2% of weekly actives used it to shop and 22.8% completed a purchase through it at a $174 average order. Retention 71.8% day 1, 28.6% day 7, 16.4% day 30 — ahead of ChatGPT at day 7, behind it by day 30. 52% of users are 45+.",
-      "sowhat": "The only published shopping-behaviour breakdown so far, and it is a vendor panel, not Meta data — use it for directional slides (who shops with Muse, how often, how much) with the method stated, never as a headline figure. The 45+ skew and the day-30 retention drop are the two numbers that temper the hype for a client."
+      "sowhat": "The only published shopping-behaviour breakdown so far, and it is a vendor panel, not Meta data — use it for directional slides (who shops with Muse, how often, how much) with the method stated, never as a headline figure. The 45+ skew and the day-30 retention drop are the two numbers that temper the hype for a client.",
+      "media": [
+        {
+          "type": "chart",
+          "title": "Who shops with Muse — share of weekly active users (panel)",
+          "unit": "%",
+          "source": "First Page Sage opt-in panel, n=4,180, US + Canada, 8 Sep–25 Oct 2026 — vendor data, not Meta's",
+          "bars": [
+            {
+              "label": "Used it to shop",
+              "value": 47.2
+            },
+            {
+              "label": "Bought through it",
+              "value": 22.8
+            },
+            {
+              "label": "Daily-use rate",
+              "value": 24.5,
+              "note": "of all accounts"
+            },
+            {
+              "label": "Still active day 30",
+              "value": 16.4,
+              "note": "retention"
+            }
+          ]
+        }
+      ]
     },
     {
       "title": "Retailers split: Walmart opens an agent gateway and Agent Profiles for Muse, Amazon keeps it blocked — Jassy: shopping agents 'still not great'",
@@ -41,9 +91,22 @@
       "url": "https://fortune.com/2026/10/29/amazon-ceo-says-shopping-agents-like-metas-muse-not-great/",
       "date": "2026-10-29",
       "impact": "med",
-      "tags": ["Agentic commerce", "Retail", "Muse"],
+      "tags": [
+        "Agentic commerce",
+        "Retail",
+        "Muse"
+      ],
       "what": "On Amazon's Q3 call (29 Oct) Andy Jassy said outside shopping agents are 'still not great, nor more convenient than coming to a retailer directly' and that few customers buy through them; Amazon blocked Muse in September for not identifying itself. The same week Walmart went the other way (21 Oct): Agent Profiles that let a shopper set spending limits and approve agent purchases, due November, plus a Walmart Agent Gateway in beta for developers. Best Buy, Sephora and Shopify merchants also accept Muse.",
-      "sowhat": "Two retail strategies now exist and clients will pick one: gate the agent (Amazon) or build it a front door (Walmart). For our retailers the Walmart model is the pitch — an agent-readable catalogue plus controlled checkout — and it is the commercial frame for the AI-readiness work (Golden Record, conversational attributes) we already sell. Amazon's own numbers side with Jassy for now, so keep the tone measured."
+      "sowhat": "Two retail strategies now exist and clients will pick one: gate the agent (Amazon) or build it a front door (Walmart). For our retailers the Walmart model is the pitch — an agent-readable catalogue plus controlled checkout — and it is the commercial frame for the AI-readiness work (Golden Record, conversational attributes) we already sell. Amazon's own numbers side with Jassy for now, so keep the tone measured.",
+      "media": [
+        {
+          "type": "image",
+          "url": "https://corporate.walmart.com/content/dam/corporate/images/newsroom/2026/10/making-it-possible-for-agents-to-shop-on-behalf-of-customers/Lead-two-phones.webp",
+          "alt": "Walmart's Agent Profiles: an agent's purchases shown separately, with a spending limit the customer set",
+          "caption": "Walmart's front door for agents — a profile per agent, approval or a spending limit per purchase, due in November",
+          "credit": "Walmart"
+        }
+      ]
     },
     {
       "title": "Meta switched 'product browsing' on in existing Facebook and Instagram ads on 28 Oct — an in-app page built from the catalogue",
@@ -51,7 +114,11 @@
       "url": "https://commonthreadco.com/blogs/coachs-corner/meta-is-auto-enabling-product-browsing-in-your-existing-ads-on-october-28-what-ecommerce-brands-must-do-before-black-friday",
       "date": "2026-10-16",
       "impact": "med",
-      "tags": ["Meta", "Catalog", "DPA"],
+      "tags": [
+        "Meta",
+        "Catalog",
+        "DPA"
+      ],
       "what": "Meta notified advertisers mid-October that product browsing is auto-enabled on ads already running from 28 Oct 2026 unless opted out (per ad under Advantage+ Creative; no account-level bulk opt-out announced). Tapping the ad opens a Meta-built in-app page that pulls images, price and description straight from the product catalogue. Meta cites 3% more conversions in a 117,700-advertiser experiment run 6 to 21 Aug.",
       "sowhat": "Every Meta catalogue we run (Schuh, Monsoon, Accessorize, Superdry, Reiss -fb feeds) is now rendering its titles, descriptions and prices in a Meta-owned page before Black Friday. Check each account's opt-in state this week and treat catalogue copy quality as ad creative — a thin or truncated description now shows on the surface Meta sends the click to, not just in the feed."
     },
@@ -61,7 +128,11 @@
       "url": "https://www.seroundtable.com/google-merchant-api-update-42410.html",
       "date": "2026-10-29",
       "impact": "watch",
-      "tags": ["Google", "Merchant Center", "UCP"],
+      "tags": [
+        "Google",
+        "Merchant Center",
+        "UCP"
+      ],
       "what": "The 26 Oct Merchant API release adds UCP agentic performance reporting (v1alpha), offer-level video links, YouTube Shopping affiliate reporting, and deprecates YoutubeProductPerformanceView. The UCP integration hub in Merchant Center itself is rolling out gradually in the US first.",
       "sowhat": "First sign that Google will report agent-driven performance per offer, which is what makes a UCP opt-in measurable. US-first, API-only and alpha, so nothing to brief; note it for Reiss US and keep an eye on when the report surfaces in the Merchant Center UI."
     }
