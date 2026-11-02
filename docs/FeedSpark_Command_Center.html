@@ -3584,7 +3584,15 @@ window.addEventListener('load',restore);
 .nw-vid .nw-play i{width:46px;height:46px;border-radius:50%;background:var(--orange-deep);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:18px;padding-left:4px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .nw-ch{padding:10px 12px 8px}
 .nw-ch .nw-cht{font-size:12px;font-weight:800;color:var(--ink);margin:0 0 6px}
-.nw-ch svg{display:block;width:100%;height:auto;font-family:inherit}
+.nw-chg{display:grid;gap:6px}
+.nw-chr{display:grid;grid-template-columns:minmax(96px,34%) 1fr auto;align-items:center;gap:8px;font-size:12px}
+.nw-chl{font-weight:700;color:var(--ink);text-align:right;line-height:1.25}
+.nw-chb{height:20px;background:transparent}
+.nw-chb i{display:block;height:100%;border-radius:4px;background:#2563EB;min-width:3px}
+.nw-chv{font-weight:800;color:var(--ink);white-space:nowrap}
+.nw-chv small{font-weight:500;color:var(--muted);font-size:11px}
+[data-theme=dark] .nw-chb i{background:#4C82E0}
+@media (max-width:480px){.nw-chr{grid-template-columns:minmax(84px,38%) 1fr auto;font-size:11.5px;gap:6px}.nw-chv small{display:block;line-height:1.1}}
 .nw-ch .nw-chs{font-size:10.5px;color:var(--muted);margin:4px 0 0}
 [data-theme=dark] .nw-media figure{background:rgba(255,255,255,.04)}
 .nw-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
@@ -3615,7 +3623,6 @@ window.addEventListener('load',restore);
   // validated pair (light #2563EB / dark #4C82E0), the same blue /volume and /tasks draw with.
   function nwMedia(list){
     if(!Array.isArray(list)||!list.length) return '';
-    var dark=document.documentElement.getAttribute('data-theme')==='dark', bar=dark?'#4C82E0':'#2563EB';
     return '<div class="nw-media">'+list.slice(0,3).map(function(m){
       if(!m||typeof m!=='object') return '';
       var cap=(m.caption?esc(m.caption):'')+(m.credit?(m.caption?' · ':'')+'<b>'+esc(m.credit)+'</b>':'');
@@ -3624,14 +3631,13 @@ window.addEventListener('load',restore);
       if(m.type==='video'){ var vu=safe(m.url), pu=safe(m.poster); if(!vu) return '';
         return '<figure><button type="button" class="nw-vid" data-src="'+vu+'" aria-label="Play video: '+esc(m.alt||'')+'">'+(pu?'<img src="'+pu+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'')+'<span class="nw-play"><i>&#9654;</i>Play video</span></button>'+(cap?'<figcaption>'+cap+'</figcaption>':'')+'</figure>'; }
       if(m.type==='chart'&&Array.isArray(m.bars)&&m.bars.length){
+        // HTML rows, not SVG: an SVG scales its type with its viewBox, so a 560-unit chart read at 6px on a phone
         var bars=m.bars.slice(0,8), max=0; bars.forEach(function(b){ var v=+b.value; if(isFinite(v)&&v>max) max=v; }); if(!max) max=1;
-        var W=560, L=170, R=70, rh=22, gap=6, H=bars.length*(rh+gap)+4, unit=m.unit?String(m.unit):'';
-        var rows=bars.map(function(b,i){ var v=+b.value, w=Math.max(2,Math.round((W-L-R)*(isFinite(v)?v:0)/max)), y=2+i*(rh+gap);
+        var unit=m.unit?String(m.unit):'';
+        var rows=bars.map(function(b){ var v=+b.value, pct=Math.max(1,Math.round(100*(isFinite(v)?v:0)/max));
           var val=(unit==='$'||unit==='£'||unit==='€')?unit+v.toLocaleString('en-GB'):v.toLocaleString('en-GB')+(unit==='%'?'%':unit?' '+unit:'');
-          return '<text x="'+(L-10)+'" y="'+(y+rh/2+4)+'" text-anchor="end" font-size="12" font-weight="700" fill="currentColor">'+esc(String(b.label).slice(0,28))+'</text>'
-            +'<rect x="'+L+'" y="'+y+'" width="'+w+'" height="'+rh+'" rx="4" fill="'+bar+'"/>'
-            +'<text x="'+(L+w+8)+'" y="'+(y+rh/2+4)+'" font-size="12" font-weight="800" fill="currentColor">'+esc(val)+(b.note?' <tspan font-weight="500" fill="'+(dark?'#9aa3b2':'#6b7280')+'">'+esc(b.note)+'</tspan>':'')+'</text>'; }).join('');
-        return '<figure class="nw-ch"><p class="nw-cht">'+esc(m.title||'')+'</p><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.title||'')+'">'+rows+'</svg>'+(m.source||cap?'<p class="nw-chs">'+(m.source?esc(m.source):'')+(m.source&&cap?' · ':'')+cap+'</p>':'')+'</figure>'; }
+          return '<div class="nw-chr"><span class="nw-chl">'+esc(String(b.label).slice(0,40))+'</span><span class="nw-chb"><i style="width:'+pct+'%"></i></span><span class="nw-chv">'+esc(val)+(b.note?' <small>'+esc(b.note)+'</small>':'')+'</span></div>'; }).join('');
+        return '<figure class="nw-ch" role="img" aria-label="'+esc(m.title||'')+'"><p class="nw-cht">'+esc(m.title||'')+'</p><div class="nw-chg">'+rows+'</div>'+(m.source||cap?'<p class="nw-chs">'+(m.source?esc(m.source):'')+(m.source&&cap?' · ':'')+cap+'</p>':'')+'</figure>'; }
       return '';
     }).join('')+'</div>';
   }
