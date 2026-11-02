@@ -3568,6 +3568,25 @@ window.addEventListener('load',restore);
 .nw-what{font-size:13px;color:var(--ink-2);margin:0 0 8px}
 .nw-so{font-size:13px;color:var(--ink);background:var(--wash);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 12px;margin:0}
 .nw-so span{font-weight:900;color:var(--orange-ink);letter-spacing:.04em;font-size:10px;text-transform:uppercase;display:block;margin-bottom:3px}
+/* FCC-NEWS-MEDIA — Ray, 2 Nov 2026: "bring in graphic / images / video if needed as well to demonstrate".
+   An item may carry up to three visuals: a platform's own image, a platform's own video, or a chart the
+   page draws from figures the item already states. Images lazy-load and never send a referrer; a video
+   is a poster + play button until tapped (14MB clips must never download on open); a chart is inline SVG
+   in the validated data blue, value labels direct on the bars, no axis chrome. Everything stacks at phone width. */
+.nw-media{display:grid;gap:10px;margin:0 0 10px}
+.nw-media figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--wash)}
+.nw-media img,.nw-media video{display:block;width:100%;max-height:300px;object-fit:contain;background:#0f1724}
+.nw-media figcaption{font-size:11px;color:var(--muted);padding:6px 10px;line-height:1.4}
+.nw-media figcaption b{font-weight:800;color:var(--ink-2)}
+.nw-vid{position:relative;display:block;width:100%;border:none;padding:0;background:#0f1724;cursor:pointer;min-height:150px;font-family:inherit}
+.nw-vid img{opacity:.85}
+.nw-vid .nw-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:#fff;font-weight:800;font-size:13px;letter-spacing:.02em}
+.nw-vid .nw-play i{width:46px;height:46px;border-radius:50%;background:var(--orange-deep);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:18px;padding-left:4px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.nw-ch{padding:10px 12px 8px}
+.nw-ch .nw-cht{font-size:12px;font-weight:800;color:var(--ink);margin:0 0 6px}
+.nw-ch svg{display:block;width:100%;height:auto;font-family:inherit}
+.nw-ch .nw-chs{font-size:10.5px;color:var(--muted);margin:4px 0 0}
+[data-theme=dark] .nw-media figure{background:rgba(255,255,255,.04)}
 .nw-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
 .nw-foot .nw-note{font-size:11.5px;color:var(--muted);font-weight:700;margin:0}
 .nw-ok{border:none;border-radius:100px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;background:var(--orange-deep);color:#fff}
@@ -3592,6 +3611,34 @@ window.addEventListener('load',restore);
       sub=document.getElementById('nw-sub'), cur=null;
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function safe(u){return /^https:\/\//i.test(u||'')?esc(u):'';}
+  // media: image / video / chart — see .nw-media above. Chart colours are the dataviz palette's
+  // validated pair (light #2563EB / dark #4C82E0), the same blue /volume and /tasks draw with.
+  function nwMedia(list){
+    if(!Array.isArray(list)||!list.length) return '';
+    var dark=document.documentElement.getAttribute('data-theme')==='dark', bar=dark?'#4C82E0':'#2563EB';
+    return '<div class="nw-media">'+list.slice(0,3).map(function(m){
+      if(!m||typeof m!=='object') return '';
+      var cap=(m.caption?esc(m.caption):'')+(m.credit?(m.caption?' · ':'')+'<b>'+esc(m.credit)+'</b>':'');
+      if(m.type==='image'){ var iu=safe(m.url); if(!iu) return '';
+        return '<figure><img src="'+iu+'" alt="'+esc(m.alt||'')+'" loading="lazy" decoding="async" referrerpolicy="no-referrer">'+(cap?'<figcaption>'+cap+'</figcaption>':'')+'</figure>'; }
+      if(m.type==='video'){ var vu=safe(m.url), pu=safe(m.poster); if(!vu) return '';
+        return '<figure><button type="button" class="nw-vid" data-src="'+vu+'" aria-label="Play video: '+esc(m.alt||'')+'">'+(pu?'<img src="'+pu+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'')+'<span class="nw-play"><i>&#9654;</i>Play video</span></button>'+(cap?'<figcaption>'+cap+'</figcaption>':'')+'</figure>'; }
+      if(m.type==='chart'&&Array.isArray(m.bars)&&m.bars.length){
+        var bars=m.bars.slice(0,8), max=0; bars.forEach(function(b){ var v=+b.value; if(isFinite(v)&&v>max) max=v; }); if(!max) max=1;
+        var W=560, L=170, R=70, rh=22, gap=6, H=bars.length*(rh+gap)+4, unit=m.unit?String(m.unit):'';
+        var rows=bars.map(function(b,i){ var v=+b.value, w=Math.max(2,Math.round((W-L-R)*(isFinite(v)?v:0)/max)), y=2+i*(rh+gap);
+          var val=(unit==='$'||unit==='£'||unit==='€')?unit+v.toLocaleString('en-GB'):v.toLocaleString('en-GB')+(unit==='%'?'%':unit?' '+unit:'');
+          return '<text x="'+(L-10)+'" y="'+(y+rh/2+4)+'" text-anchor="end" font-size="12" font-weight="700" fill="currentColor">'+esc(String(b.label).slice(0,28))+'</text>'
+            +'<rect x="'+L+'" y="'+y+'" width="'+w+'" height="'+rh+'" rx="4" fill="'+bar+'"/>'
+            +'<text x="'+(L+w+8)+'" y="'+(y+rh/2+4)+'" font-size="12" font-weight="800" fill="currentColor">'+esc(val)+(b.note?' <tspan font-weight="500" fill="'+(dark?'#9aa3b2':'#6b7280')+'">'+esc(b.note)+'</tspan>':'')+'</text>'; }).join('');
+        return '<figure class="nw-ch"><p class="nw-cht">'+esc(m.title||'')+'</p><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.title||'')+'">'+rows+'</svg>'+(m.source||cap?'<p class="nw-chs">'+(m.source?esc(m.source):'')+(m.source&&cap?' · ':'')+cap+'</p>':'')+'</figure>'; }
+      return '';
+    }).join('')+'</div>';
+  }
+  // a video loads only when asked for: swap the poster button for a <video> on tap
+  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.nw-vid'); if(!b||!modal.contains(b)) return;
+    var v=document.createElement('video'); v.src=b.getAttribute('data-src'); v.controls=true; v.autoplay=true; v.playsInline=true; v.setAttribute('playsinline',''); v.preload='metadata';
+    b.replaceWith(v); try{ v.play(); }catch(x){} });
   var btn=document.createElement('button');
   btn.id='nw-btn'; btn.type='button'; btn.title='Industry news'; btn.setAttribute('aria-label','Industry news');
   btn.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.2L13 5.5v13l-5.8-4H4Z"/><path d="M16.5 9.6a3.6 3.6 0 0 1 0 4.8"/><path d="M19 7.2a7 7 0 0 1 0 9.6"/></svg><span class="nw-dot"></span>';
@@ -3618,6 +3665,7 @@ window.addEventListener('load',restore);
       return '<div class="nw-item"><div class="nw-h"><h4>'+esc(it.title)+'</h4><span class="nw-imp '+imp+'">'+lbl+'</span></div>'
         +'<div class="nw-meta">'+esc(it.source||'')+(it.date?' · '+esc(it.date):'')+(u?' · <a href="'+u+'" target="_blank" rel="noopener">Read source &rarr;</a>':'')+'</div>'
         +'<p class="nw-what">'+esc(it.what||'')+'</p>'
+        +nwMedia(it.media)
         +(it.sowhat?'<p class="nw-so"><span>What it means for us</span>'+esc(it.sowhat)+'</p>':'')+'</div>';
     }).join('');
     var last=''; try{ last=localStorage.getItem(KEY)||''; }catch(e){}

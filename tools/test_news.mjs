@@ -24,6 +24,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 let pass = 0, fail = 0;
 function ok(c, m) { if (c) pass++; else { fail++; console.error('  ✗ ' + m); } }
 const has = (arr, re) => arr.some((e) => re.test(e));
+let pending = Promise.resolve(); // the media section's link-check assertions are async; the summary waits on them
 
 // the COMMITTED digest changes every weekday (the Routine rewrites it), so it is validated as it
 // stands in §1 only; every mutation below runs on a PINNED specimen (the 18 Sep digest), whose dates
@@ -34,6 +35,44 @@ const src = read('tools/fixtures/news_digest_2026-09-18.json');
 const base = JSON.parse(src);
 const clone = () => JSON.parse(JSON.stringify(base));
 const errs = (d, o) => N.validateDigest(d, o).errors;
+
+// ── 0 · MEDIA (Ray, 2 Nov 2026: "bring in graphic / images / video if needed as well to demonstrate")
+{
+  const img = { type: 'image', url: 'https://about.fb.com/x.jpg', alt: 'Muse shopping demo', credit: 'Meta' };
+  const vid = { type: 'video', url: 'https://about.fb.com/x.mp4', poster: 'https://about.fb.com/x.jpg', alt: 'Demo clip' };
+  const ch = { type: 'chart', title: 'Who shops with Muse', unit: '%', source: 'Panel', bars: [{ label: 'Daily use', value: 24.5 }, { label: 'Bought', value: 22.8, note: 'weekly actives' }] };
+  let d = clone(); d.items[0].media = [img, vid, ch]; ok(errs(d).length === 0, 'image + video + chart on one item pass: ' + errs(d).join(' | '));
+  d = clone(); d.items[0].media = []; ok(has(errs(d), /non-empty array/), 'an empty media array is refused (leave it out)');
+  d = clone(); d.items[0].media = [img, img, img, img]; ok(has(errs(d), /cap is 3 per item/), 'four visuals on one item refused');
+  d = clone(); d.items.forEach((it) => { it.media = [img, img, img]; }); if (d.items.length * 3 > N.MEDIA_PER_DIGEST) ok(has(errs(d), /cap is 10/), 'more than ten across the digest refused'); else ok(true, 'n/a');
+  d = clone(); d.items[0].media = [{ type: 'gif', url: 'https://a.b/x.gif', alt: 'x' }]; ok(has(errs(d), /`type` must be one of image\|video\|chart/), 'unknown media type refused');
+  d = clone(); d.items[0].media = [{ type: 'image', url: 'http://a.b/x.jpg', alt: 'x' }]; ok(has(errs(d), /https:\/\/ link to the image/), 'http image refused');
+  d = clone(); d.items[0].media = [{ type: 'image', url: 'https://a.b/x.jpg' }]; ok(has(errs(d), /`alt` is required for an image/), 'image without alt refused');
+  d = clone(); d.items[0].media = [{ type: 'video', url: 'https://a.b/x.mp4' }]; ok(has(errs(d), /`alt` is required for a video/), 'video without alt refused');
+  d = clone(); d.items[0].media = [{ type: 'image', url: 'https://a.b/x.jpg', alt: 'x', poster: 'https://a.b/p.jpg' }]; ok(has(errs(d), /an image carries no `poster`/), 'poster on an image refused');
+  d = clone(); d.items[0].media = [{ type: 'chart', title: 't', bars: [{ label: 'a', value: 1 }] }]; ok(has(errs(d), /`bars` is 2–8/), 'a one-bar chart refused');
+  d = clone(); d.items[0].media = [{ type: 'chart', title: 't', bars: [{ label: 'a', value: '12%' }, { label: 'b', value: 2 }] }]; ok(has(errs(d), /finite number/), 'a string bar value refused');
+  d = clone(); d.items[0].media = [{ type: 'chart', title: 't', url: 'https://a.b/c.png', bars: [{ label: 'a', value: 1 }, { label: 'b', value: 2 }] }]; ok(has(errs(d), /a chart carries no `url`/), 'a chart with a url refused — the page draws it');
+  d = clone(); d.items[0].media = [{ type: 'image', url: 'https://a.b/x.jpg', alt: 'x', width: 3 }]; ok(has(errs(d), /unknown field\(s\) width/), 'unknown media field refused (errors, not warns — the page would silently drop it)');
+  // the link check covers media urls, blocked ≠ dead, the chart has no url to check
+  const hits = [];
+  const fakeFetch = async (u) => { hits.push(u); return { status: /x\.mp4$/.test(u) ? 403 : /gone/.test(u) ? 404 : 200 }; };
+  d = clone(); d.items[0].media = [img, vid, ch, ].slice(0, 3); d.items[1].media = [{ type: 'image', url: 'https://a.b/gone.jpg', alt: 'x' }];
+  pending = N.checkLinks(d, { fetch: fakeFetch }).then((r) => {
+    ok(hits.includes('https://about.fb.com/x.jpg') && hits.includes('https://about.fb.com/x.mp4'), 'media urls are fetched by the link check');
+    ok(hits.filter((u) => u === 'https://about.fb.com/x.jpg').length === 1, 'a url shared by an image and a poster is fetched once');
+    ok(r.blocked.some((b) => b.status === 403) && r.dead.some((x) => /gone/.test(x.url)), '403 media is blocked (warn), 404 media is dead');
+    // the page renders them
+    const CC = read('docs/FeedSpark_Command_Center.html');
+    ok(/function nwMedia\(list\)/.test(CC) && /\+nwMedia\(it\.media\)/.test(CC), 'the pop-up renders item media');
+    ok(/loading="lazy"/.test(CC) && /referrerpolicy="no-referrer"/.test(CC), 'images lazy-load without a referrer');
+    ok(/class="nw-vid" data-src=/.test(CC) && /b\.replaceWith\(v\)/.test(CC), 'a video is a poster + play button until tapped');
+    ok(/'#4C82E0':'#2563EB'/.test(CC), 'charts use the validated data blue, light and dark');
+    ok(/\.nw-media img,\.nw-media video\{display:block;width:100%/.test(CC), 'media stacks full-width (phone)');
+    const S = read('.claude/skills/feedspark-news-digest/SKILL.md');
+    ok(/Step 3b — Show it/.test(S) && /never hotlink a\s+publisher/i.test(S) && /"media"/.test(S), 'the skill teaches the media rule');
+  });
+}
 
 // ── 1 · the committed digest passes the schema as it stands (no --fresh: the repo's own file may age)
 {
@@ -149,10 +188,10 @@ const errs = (d, o) => N.validateDigest(d, o).errors;
 // ── 12 · the file as text: a pop-up, not a report
 {
   const body = JSON.stringify(clone(), null, 2), baseLines = body.split('\n').length;
-  const long = body + '\n'.repeat(340 - baseLines);
-  ok(has(N.validateText(long).errors, /lines — over 320/), 'over 320 lines refused');
+  const long = body + '\n'.repeat(420 - baseLines);
+  ok(has(N.validateText(long).errors, /lines — over 400/), 'over 400 lines refused');
   const mid = body + '\n'.repeat(300 - baseLines);
-  const r = N.validateText(mid); ok(r.errors.length === 0 && has(r.warnings, /keep it under ~200/), '221–320 lines warns');
+  const r = N.validateText(mid); ok(r.errors.length === 0 && has(r.warnings, /keep it under ~200/), '221–400 lines warns');
   const fat = JSON.stringify(Object.assign(clone(), { intro: 'x'.repeat(290) }), null, 2).replace('"items"', '"zz": "' + 'y'.repeat(70000) + '", "items"');
   ok(has(N.validateText(fat).errors, /bytes — over 65536/), 'over 64KB refused');
 }
@@ -226,5 +265,4 @@ const errs = (d, o) => N.validateDigest(d, o).errors;
   const M = read('CLAUDE.md'); ok(/news-digest\.yml/.test(M) && /claude\/news-digest/.test(M), 'CLAUDE.md names the lane');
 }
 
-console.log(`\ntest_news: ${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
+pending.then(() => { console.log(`\ntest_news: ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0); });
