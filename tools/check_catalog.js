@@ -545,6 +545,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('⚡ the read walks every market, then puts the reader back on GB', seen.join() === 'Northwind|gb,Northwind|ie' && await tp.evaluate(() => window.__FCCCatalogue.state().mkt) === 'gb', seen);
     if (process.env.CAT_SHOT) { await tp.evaluate(() => document.querySelector('.modbar').scrollIntoView()); await tp.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_allmkts.png'), fullPage: false }); }
     ok('Products managed adds both markets (' + wantAll.n + ')', num(await tile()) === wantAll.n, await tile());
+    const mk2 = await tp.evaluate(() => (document.querySelector('#scope-body .fm-mk') || {}).textContent || '');
+    ok('a Shopping market that also runs Wunderkind says so (Shopping + Wunderkind)', /^3 markets · 2 Shopping \+ Wunderkind · 1 Wunderkind only$/.test(mk2), mk2);
     const fixFoot = await tp.evaluate(() => (document.querySelector('#fix-body .cfoot') || {}).textContent || '');
     ok('Before and after traces every market\'s products and says how many markets it read', /\b40\b products traced/.test(fixFoot) && /2 of 2 markets/.test(fixFoot), fixFoot);
     const bdg = await tp.evaluate(() => ({ fix: (document.querySelector('#m-fix .scb') || {}).textContent, roas: (document.querySelector('#roas-card .scb') || {}).textContent }));
