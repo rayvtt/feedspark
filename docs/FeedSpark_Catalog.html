@@ -263,6 +263,13 @@ window.addEventListener('load',restore);
   .tiles .t{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--wash);min-width:0}
   .tiles .t b{display:block;font-size:22px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tiles .t span{display:block;font-size:11px;font-weight:800;color:var(--ink-2);margin-top:3px;line-height:1.25}
+  .fmix{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .fm-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+  .fm-g{display:grid;grid-template-columns:minmax(0,8.5em) minmax(40px,1fr) auto auto;gap:5px 10px;align-items:center;font-size:12px}
+  .fm-k{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fm-b{height:8px;border-radius:4px;background:var(--wash);overflow:hidden}.fm-b i{display:block;height:100%;border-radius:4px;background:var(--muted)}
+  .fm-n{font-variant-numeric:tabular-nums;text-align:right}.fm-m{color:var(--muted);font-size:11px;white-space:nowrap;text-align:right}
+  .fm-mk{margin-top:8px;font-size:11px;color:var(--muted)}
   .tiles .t small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fee-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
   .fee-in label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);min-width:0}
@@ -2931,14 +2938,32 @@ window.addEventListener('load',restore);
     var all = !!d.mk, fd = feedsRun(S.client);
     var T = [
       { b: n0(d.N), l: 'Products managed', sm: all ? S.client + ' · ' + d.used + ' market' + (d.used === 1 ? '' : 's') : S.client + ' ' + mktLabel(S.mkt) },
-      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.sm, tip: fd.tip, sm2: fd.mk },
+      // ALL THE BRAND'S MARKETS, SHOPPING OR NOT (Ray, 3 Nov 2026: "that tile should cover the 19 markets live whether or
+      // not they have shopping"): the count is FeedHero's whole book for the roster, so the tile says so; the channel split
+      // sits in the breakdown under the tiles, where it is not cut off
+      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.M ? 'across all ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') : fd.sm, tip: fd.tip },
       { b: d.n ? (Math.round(d.touched / d.n * 10) / 10) : '—', l: 'Values set per product', sm: d.n ? 'by FeedSpark' : 'needs the master' },
       { b: d.rules != null ? n0(d.rules) : '—', l: 'FeedHero rules running', sm: d.rules != null ? (all ? 'across ' + d.rmk + ' market' + (d.rmk === 1 ? '' : 's') : 'this market') : 'not read' },
       { b: n0(d.nw), l: 'New products taken in', sm: 'last 30 days' },
       { b: d.touched != null ? n0(d.touched) : '—', l: 'Values maintained', sm: d.touched != null ? 'across the catalogue' : 'needs the master' }
     ];
     $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small>' + (t.sm2 ? '<small class="mk" title="' + esc(t.sm2.tip) + '">' + esc(t.sm2.s) + '</small>' : '') + '</div>'; }).join('') + '</div>'
+      + feedMix(fd)
       + '<div class="cfoot"><span>Read live from the feed, the master and FeedHero' + scNote(d) + '</span></div>';
+  }
+  // EVERY FEED TYPE, AND WHERE IT RUNS (Ray, 3 Nov 2026, over the tile's cut-off "17 Wunderkind · 10 Go…": "more overview
+  // of these types"): one row per channel FeedHero sends live — how many feeds, a bar against the biggest, and how many of
+  // the brand's markets run it (named in the tooltip); then the markets by what they run. Nothing when the book is unread.
+  function feedMix(fd) {
+    if (!fd || !fd.K || !fd.K.length) return '';
+    var top = fd.K[0].n || 1;
+    var rows = fd.K.map(function (r) {
+      var mk = r.mk ? r.mk.length + ' of ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') : '';
+      return '<span class="fm-k">' + esc(r.l) + '</span><span class="fm-b"><i style="width:' + Math.max(4, Math.round(r.n / top * 100)) + '%"></i></span>'
+        + '<b class="fm-n">' + n0(r.n) + '</b><span class="fm-m" title="' + esc(r.mk ? r.l + ' runs in ' + r.mk.join(', ') : '') + '">' + esc(mk) + '</span>';
+    }).join('');
+    return '<div class="fmix"><div class="fm-h">Feeds by channel · all ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') + ', Shopping or not</div><div class="fm-g">' + rows + '</div>'
+      + (fd.mk ? '<div class="fm-mk" title="' + esc(fd.mk.tip) + '">' + esc(fd.mk.s) + '</div>' : '') + '</div>';
   }
   // EVERY CHANNEL, NOT JUST GOOGLE AND META (Ray, 30 Oct 2026: "the complete list of feeds should be sourced, not just
   // google and meta but all channels"): the count is FeedHero's own output_feeds report — every LIVE feed it sends for the
@@ -2951,7 +2976,7 @@ window.addEventListener('load',restore);
       var K = Object.keys(f.kinds).sort(function (a, b) { return f.kinds[b] - f.kinds[a]; }), n = 0;
       K.forEach(function (k) { n += f.kinds[k]; });
       var parts = K.map(function (k) { return f.kinds[k] + ' ' + (FEED_KIND[k] || k); });
-      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live', mk: mkLine(f),
+      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live', mk: mkLine(f), K: K.map(function (k) { return { k: k, l: FEED_KIND[k] || k, n: f.kinds[k], mk: (f.km && f.km[k]) || null }; }), M: f.markets || 0,
         tip: 'Live in FeedHero across ' + f.read + ' market' + (f.read === 1 ? '' : 's') + ': ' + (parts.join(' · ') || 'none') + (f.paused ? ' · ' + f.paused + ' paused not counted' : '') };
     }
     var mk = (S.roster[c] || []).filter(function (x) { return x.kind !== 'none'; }), g = mk.filter(function (x) { return x.channel === 'google'; }).length;

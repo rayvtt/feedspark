@@ -3213,7 +3213,7 @@ async function route(request, env, ctx) {
             const t = { live: 0, paused: 0, google: 0, kinds: {}, read: 0 };
             ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused; t.read++;
               t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length;
-              b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; }); });
+              b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') { t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; const km = t.km || (t.km = {}); const L = km[f.k] || (km[f.k] = []); if (L.indexOf(m.market) < 0) L.push(m.market); } }); });
             // WHAT EACH MARKET RUNS (Ray, 3 Nov 2026: "Superdry has 19 markets (7 live with Shopping) and rest is
             // Wunderkind (12 markets)"): a market is SHOPPING when FeedHero sends it a live Google Shopping feed, else
             // named by the one channel it runs (wunderkind) or 'other', 'paused' when every feed it has is paused, and

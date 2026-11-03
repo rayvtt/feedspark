@@ -426,9 +426,11 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('What the service does: "Image overlays" counts overlay images, not the IMG stamp (' + ovN + ' of ' + imgN + ' stamped)', ovN < imgN && vo === ovN.toLocaleString('en-GB') + ' images · ' + Math.round(ovN / prods.length * 100) + '%', { page: vo, want: ovN });
     // the service in numbers: feeds run = every LIVE feed FeedHero sends, every channel (the stub's book), never only the wired Google + Meta
     const fr = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1]; return t ? { b: t.querySelector('b').textContent, s: t.querySelector('small').textContent } : null; });
-    ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /Pinterest/.test(fr.s) && /TikTok/.test(fr.s), fr);
-    const mkl = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1], m = t && t.querySelector('small.mk'); return m ? { s: m.textContent, tip: m.title } : null; });
+    ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /^across all 1 market$/.test(fr.s), fr);
+    const mkl = await pg.evaluate(() => { const m = document.querySelector('#scope-body .fm-mk'); return m ? { s: m.textContent, tip: m.title } : null; });
     ok('…and names the brand’s markets by what they run (Shopping vs Wunderkind only), each listed in the tip', mkl && /^1 market · 1 Shopping$/.test(mkl.s) && /Shopping: GB/.test(mkl.tip), mkl);
+    const fmx = await pg.evaluate(() => Array.from(document.querySelectorAll('#scope-body .fm-g .fm-k')).map((k) => k.textContent + '=' + k.nextElementSibling.nextElementSibling.textContent));
+    ok('…and lists every channel with its feed count under the tiles', fmx.join('|') === 'Google=2|Meta=1|Pinterest=1|TikTok=1', fmx);
     ok('…a capability the page cannot read says so rather than scoring a zero', await pg.evaluate(() => /not readable here/.test(document.getElementById('vendor-body').textContent)));
     // fee check: empty until typed, then the buyer's own figure over the catalogue and the Ads revenue — kept on the device only
     ok('Fee check is empty until a fee is typed', await pg.evaluate(() => { localStorage.removeItem('fcc-cat-fee'); document.getElementById('fee-a').value = ''; document.getElementById('fee-a').dispatchEvent(new Event('input')); return !document.querySelector('#fee-out .kvl'); }));
