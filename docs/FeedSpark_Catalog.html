@@ -2987,7 +2987,15 @@ window.addEventListener('load',restore);
     var m = f.mk; if (!m) return null;
     var B = [['shop', 'Shopping'], ['wunderkind', 'Wunderkind only'], ['other', 'other channels'], ['paused', 'paused'], ['unread', 'not read']];
     var parts = [], tip = [];
-    B.forEach(function (b) { var L = m[b[0]] || []; if (!L.length) return; parts.push(L.length + ' ' + b[1]); tip.push(b[1] + ': ' + L.join(', ')); });
+    // A SHOPPING MARKET RUNS WUNDERKIND TOO (Ray, 3 Nov 2026: "technically all 9 Shopping market also has 9 Wunderkind
+    // feeds too"): the buckets are what sets a market apart, so the Shopping bucket names the Wunderkind feeds it also runs
+    var wk = (f.km && f.km.wunderkind) || [];
+    B.forEach(function (b) {
+      var L = m[b[0]] || []; if (!L.length) return;
+      var lab = b[1];
+      if (b[0] === 'shop') { var both = L.filter(function (x) { return wk.indexOf(x) >= 0; }).length; if (both) lab = both === L.length ? 'Shopping + Wunderkind' : 'Shopping (' + both + ' also Wunderkind)'; }
+      parts.push(L.length + ' ' + lab); tip.push(lab + ': ' + L.join(', '));
+    });
     return { s: (f.markets || 0) + ' market' + (f.markets === 1 ? '' : 's') + (parts.length ? ' · ' + parts.join(' · ') : ''),
       tip: 'Shopping = a live Google Shopping feed in FeedHero (paid or free listings — the feed does not say which). ' + tip.join(' · ') };
   }

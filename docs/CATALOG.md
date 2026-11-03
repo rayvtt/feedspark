@@ -568,6 +568,8 @@ channels", then over **What the service does**: "add the volumes of these as wel
   the 19 markets live whether or not they have shopping"): the feeds tile reads "across all N markets" (FeedHero's book
   for the whole roster), and a breakdown under the tiles lists every channel — feeds, a bar, how many markets run it
   (named in the tooltip; the roster carries `km` per kind) — then the markets by what they run.
+  A Shopping market that also runs Wunderkind reads as such ("9 Shopping + Wunderkind · 8 Wunderkind only · 2 paused";
+  Ray, 3 Nov 2026: "all 9 Shopping market also has 9 Wunderkind feeds too").
 - **Image overlays are read off the image** (Ray, 3 Nov 2026, over Superdry's "274,460 fields · 100%": "i dont think we
   did image overlays for SD UK"): the row counted c:fs_data_opti's `IMG` stamp, which marks image work on the product,
   not an overlay. It now counts the products whose main image is served from a FeedSpark image host (`E.isOverlay`,

@@ -17126,6 +17126,12 @@
    "pr": 0
   },
   {
+   "name": "Catalogue: a Shopping market names the Wunderkind feed it also runs",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "lab = both === L.length ? 'Shopping + Wunderkind'",
+   "pr": 0
+  },
+  {
    "name": "Catalogue: feeds by channel under the service tiles, every roster market, Shopping or not",
    "file": "docs/FeedSpark_Catalog.html",
    "pattern": "function feedMix(fd) {",
