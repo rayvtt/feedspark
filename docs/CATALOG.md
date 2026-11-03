@@ -564,6 +564,10 @@ channels", then over **What the service does**: "add the volumes of these as wel
   feed, **Wunderkind only** when that is its one live channel, **paused** when every feed it has is paused (Canada),
   **not read** when the book has no row. The feed cannot say whether Google runs it as paid Shopping or free
   listings, so a market whose Shopping feed only serves free listings still counts as Shopping (the tooltip says so).
+- **Feeds by channel, every market** (Ray, 3 Nov 2026: "more overview of these types", then "that tile should cover
+  the 19 markets live whether or not they have shopping"): the feeds tile reads "across all N markets" (FeedHero's book
+  for the whole roster), and a breakdown under the tiles lists every channel — feeds, a bar, how many markets run it
+  (named in the tooltip; the roster carries `km` per kind) — then the markets by what they run.
 - **Image overlays are read off the image** (Ray, 3 Nov 2026, over Superdry's "274,460 fields · 100%": "i dont think we
   did image overlays for SD UK"): the row counted c:fs_data_opti's `IMG` stamp, which marks image work on the product,
   not an overlay. It now counts the products whose main image is served from a FeedSpark image host (`E.isOverlay`,
