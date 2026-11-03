@@ -2927,13 +2927,13 @@ window.addEventListener('load',restore);
     var all = !!d.mk, fd = feedsRun(S.client);
     var T = [
       { b: n0(d.N), l: 'Products managed', sm: all ? S.client + ' · ' + d.used + ' market' + (d.used === 1 ? '' : 's') : S.client + ' ' + mktLabel(S.mkt) },
-      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.sm, tip: fd.tip },
+      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.sm, tip: fd.tip, sm2: fd.mk },
       { b: d.n ? (Math.round(d.touched / d.n * 10) / 10) : '—', l: 'Values set per product', sm: d.n ? 'by FeedSpark' : 'needs the master' },
       { b: d.rules != null ? n0(d.rules) : '—', l: 'FeedHero rules running', sm: d.rules != null ? (all ? 'across ' + d.rmk + ' market' + (d.rmk === 1 ? '' : 's') : 'this market') : 'not read' },
       { b: n0(d.nw), l: 'New products taken in', sm: 'last 30 days' },
       { b: d.touched != null ? n0(d.touched) : '—', l: 'Values maintained', sm: d.touched != null ? 'across the catalogue' : 'needs the master' }
     ];
-    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small></div>'; }).join('') + '</div>'
+    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small>' + (t.sm2 ? '<small class="mk" title="' + esc(t.sm2.tip) + '">' + esc(t.sm2.s) + '</small>' : '') + '</div>'; }).join('') + '</div>'
       + '<div class="cfoot"><span>Read live from the feed, the master and FeedHero' + scNote(d) + '</span></div>';
   }
   // EVERY CHANNEL, NOT JUST GOOGLE AND META (Ray, 30 Oct 2026: "the complete list of feeds should be sourced, not just
@@ -2947,11 +2947,20 @@ window.addEventListener('load',restore);
       var K = Object.keys(f.kinds).sort(function (a, b) { return f.kinds[b] - f.kinds[a]; }), n = 0;
       K.forEach(function (k) { n += f.kinds[k]; });
       var parts = K.map(function (k) { return f.kinds[k] + ' ' + (FEED_KIND[k] || k); });
-      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live',
+      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live', mk: mkLine(f),
         tip: 'Live in FeedHero across ' + f.read + ' market' + (f.read === 1 ? '' : 's') + ': ' + (parts.join(' · ') || 'none') + (f.paused ? ' · ' + f.paused + ' paused not counted' : '') };
     }
     var mk = (S.roster[c] || []).filter(function (x) { return x.kind !== 'none'; }), g = mk.filter(function (x) { return x.channel === 'google'; }).length;
     return { n: mk.length, sm: g + ' Google · ' + (mk.length - g) + ' Meta', tip: 'Feeds wired into the FCC — FeedHero’s full list of channels not read yet' };
+  }
+  // the brand's markets by what they run — "19 markets · 9 Shopping · 8 Wunderkind only · 2 paused", each bucket named in the tip
+  function mkLine(f) {
+    var m = f.mk; if (!m) return null;
+    var B = [['shop', 'Shopping'], ['wunderkind', 'Wunderkind only'], ['other', 'other channels'], ['paused', 'paused'], ['unread', 'not read']];
+    var parts = [], tip = [];
+    B.forEach(function (b) { var L = m[b[0]] || []; if (!L.length) return; parts.push(L.length + ' ' + b[1]); tip.push(b[1] + ': ' + L.join(', ')); });
+    return { s: (f.markets || 0) + ' market' + (f.markets === 1 ? '' : 's') + (parts.length ? ' · ' + parts.join(' · ') : ''),
+      tip: 'Shopping = a live Google Shopping feed in FeedHero (paid or free listings — the feed does not say which). ' + tip.join(' · ') };
   }
   function mktLabel(m) { return String(m || '').toUpperCase(); }
   // 15 · FEE CHECK — the buyer types a monthly fee (and, to compare, another vendor's); the card turns it into the units

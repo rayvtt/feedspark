@@ -17119,6 +17119,18 @@
    "pattern": "function feedsRun(c) {",
    "pr": 0
   },
+  {
+   "name": "Catalogue: the feeds tile names the brand's markets by what they run (Shopping / Wunderkind only / paused)",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function mkLine(f) {",
+   "pr": 0
+  },
+  {
+   "name": "Worker: catalog roster classifies each roster market by its live FeedHero feeds",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "t.mk = { shop: [], wunderkind: [], other: [], paused: [], unread: [] };",
+   "pr": 0
+  },
     {
       "name": "Breakdown: Hide (blank) on the pivot's rows or columns, out of the table and its totals",
       "file": "docs/FeedSpark_Breakdown.html",
