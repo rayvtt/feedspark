@@ -11561,13 +11561,13 @@
   {
    "name": "Catalogue: the commercial view — six buyer modules registered",
    "file": "docs/FeedSpark_Catalog.html",
-   "pattern": "['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];",
+   "pattern": "['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']",
    "pr": 569
   },
   {
    "name": "Catalogue: 👔 Procurement view is a preset of the module state",
    "file": "docs/FeedSpark_Catalog.html",
-   "pattern": "var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];",
+   "pattern": "'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];",
    "pr": 569
   },
   {
@@ -17123,6 +17123,18 @@
    "name": "Catalogue: the feeds tile names the brand's markets by what they run (Shopping / Wunderkind only / paused)",
    "file": "docs/FeedSpark_Catalog.html",
    "pattern": "function mkLine(f) {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: Keyword tests — measured uplift (FeedSpark's own kwresults read-outs, median per metric, cost metrics inverted)",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function renderKwr() {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: the procurement view puts the keyword tests under Optimised vs not",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "var PROC = ['lift', 'fix', 'waste', 'kwr',",
    "pr": 0
   },
   {

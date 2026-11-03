@@ -575,3 +575,32 @@ channels", then over **What the service does**: "add the volumes of these as wel
   not an overlay. It now counts the products whose main image is served from a FeedSpark image host (`E.isOverlay`,
   the Overlays module's own rule) — "N images · x%"; Superdry GB reads its real figure, nearly none.
 - Harness: `tools/check_catalog.js` (the volume read off the paint, the feed tile against the stub's book).
+
+## Keyword tests — measured uplift (3 Nov 2026)
+
+Ray: "address the keywords optimisation results because it more generally contributes towards the uplift
+that isolates FeedSpark vs. the PPC agency". *Optimised vs not* sets two groups of products side by side,
+and a buyer can fairly say that compares a choice of which products. The keyword tests are a different kind
+of evidence: FeedSpark's own read-outs (Dino's result rounds, KV `kwresults` via
+`/api/kwresults?client=`). Each one is a keyword change on a set of products and what it moved. That is
+the feed work measured on its own, because the bids and budgets stay with the PPC agency.
+
+A full-width card, `kwr`, sits after the twenty-one others. In the 👔 Procurement view it sits directly under
+the first row (Optimised vs not · Before and after · Where the ad budget goes). It shows:
+
+- **Headline:** how many decided rounds read out positive, and the median of the metric most rounds report.
+- **Table:** one row per metric, with the MEDIAN change across rounds (so one outlier never carries it) and how
+  many rounds improved it. CPC and cost count as improved when they fall.
+- **Latest rounds:** up to twelve, newest first, each with its verdict and the read-out's own lines.
+
+Rules:
+
+- Every figure is a number a read-out stated, signed by its own +/− or up/down wording. A line naming no
+  metric or no % is not counted.
+- A round with no figure still counts as a round and the footer says how many.
+- The card shows the rounds for the market on screen; a round naming no market belongs to the brand. In
+  All markets it reads every market, and each round names its market.
+- `?client=` matches loosely on the server, so the page keeps only this brand's rounds.
+
+Harness: `tools/check_catalog.js` re-counts the stub's synthetic rounds (GB, an IE round, a round with no
+figure, another brand's round) in node.
