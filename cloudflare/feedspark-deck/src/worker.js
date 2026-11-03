@@ -3214,6 +3214,18 @@ async function route(request, env, ctx) {
             ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused; t.read++;
               t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length;
               b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; }); });
+            // WHAT EACH MARKET RUNS (Ray, 3 Nov 2026: "Superdry has 19 markets (7 live with Shopping) and rest is
+            // Wunderkind (12 markets)"): a market is SHOPPING when FeedHero sends it a live Google Shopping feed, else
+            // named by the one channel it runs (wunderkind) or 'other', 'paused' when every feed it has is paused, and
+            // 'unread' when the book carries no row for it — never folded into another bucket
+            t.mk = { shop: [], wunderkind: [], other: [], paused: [], unread: [] };
+            ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid], lab = m.market;
+              if (!b) { t.mk.unread.push(lab); return; }
+              const live = b.feeds.filter((f) => f.st === 'a' && f.k !== 'audit');
+              if (live.some((f) => f.k === 'google')) t.mk.shop.push(lab);
+              else if (!live.length) t.mk.paused.push(lab);
+              else if (live.every((f) => f.k === 'wunderkind')) t.mk.wunderkind.push(lab);
+              else t.mk.other.push(lab); });
             t.markets = ROAS.rosterOf(c).length; fh[c] = t;
           }
           if (!list.length) delete out[c];

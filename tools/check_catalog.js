@@ -423,6 +423,8 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // the service in numbers: feeds run = every LIVE feed FeedHero sends, every channel (the stub's book), never only the wired Google + Meta
     const fr = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1]; return t ? { b: t.querySelector('b').textContent, s: t.querySelector('small').textContent } : null; });
     ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /Pinterest/.test(fr.s) && /TikTok/.test(fr.s), fr);
+    const mkl = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1], m = t && t.querySelector('small.mk'); return m ? { s: m.textContent, tip: m.title } : null; });
+    ok('…and names the brand’s markets by what they run (Shopping vs Wunderkind only), each listed in the tip', mkl && /^1 market · 1 Shopping$/.test(mkl.s) && /Shopping: GB/.test(mkl.tip), mkl);
     ok('…a capability the page cannot read says so rather than scoring a zero', await pg.evaluate(() => /not readable here/.test(document.getElementById('vendor-body').textContent)));
     // fee check: empty until typed, then the buyer's own figure over the catalogue and the Ads revenue — kept on the device only
     ok('Fee check is empty until a fee is typed', await pg.evaluate(() => { localStorage.removeItem('fcc-cat-fee'); document.getElementById('fee-a').value = ''; document.getElementById('fee-a').dispatchEvent(new Event('input')); return !document.querySelector('#fee-out .kvl'); }));

@@ -558,4 +558,10 @@ channels", then over **What the service does**: "add the volumes of these as wel
   keywords, category mapping and image overlays (one stamped field a product); missing data filled counts every field
   FeedSpark filled that the master lacked, beside the share of products given at least one; in All-markets mode the counts are the estate's
   sums, the share re-worked from them.
+- **Markets by what they run** (Ray, 3 Nov 2026: "Superdry has 19 markets (7 live with Shopping) and rest is
+  Wunderkind (12 markets)"): a second line on the feeds tile — `19 markets · 9 Shopping · 8 Wunderkind only · 2 paused`,
+  each bucket's markets named in the tooltip. A market is **Shopping** when FeedHero sends it a live Google Shopping
+  feed, **Wunderkind only** when that is its one live channel, **paused** when every feed it has is paused (Canada),
+  **not read** when the book has no row. The feed cannot say whether Google runs it as paid Shopping or free
+  listings, so a market whose Shopping feed only serves free listings still counts as Shopping (the tooltip says so).
 - Harness: `tools/check_catalog.js` (the volume read off the paint, the feed tile against the stub's book).
