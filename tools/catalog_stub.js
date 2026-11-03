@@ -49,7 +49,7 @@ function outputXml(n) {
       + '<g:color>' + p.col + '</g:color>\n<g:size>' + (i % 2 ? 'L' : 'M') + '</g:size>\n<g:gender>' + (/^Mens/.test(p.pt) ? 'male' : 'female') + '</g:gender>\n<g:age_group>adult</g:age_group>\n'
       + '<g:item_group_id>' + p.grp + '</g:item_group_id>\n' + (i % 2 ? '<g:product_highlight>Soft handle</g:product_highlight>\n<g:product_highlight>Easy care</g:product_highlight>\n' : '')
       + '<g:custom_label_0>' + (i % 4 ? 'Core' : 'New In') + '</g:custom_label_0>\n' + (i % 5 === 2 ? '<g:custom_label_1>Clearance</g:custom_label_1>\n' : '')
-      + '<c:fs_data_opti type="string">T:' + (i % 3 ? 'Y' : 'N') + '|Cat:Y|Keywords:' + (p.kw ? 'Y' : 'N') + '|D:N|IMG:' + (p.overlay ? 'Y' : 'N') + '|ID:N</c:fs_data_opti>\n'
+      + '<c:fs_data_opti type="string">T:' + (i % 3 ? 'Y' : 'N') + '|Cat:Y|Keywords:' + (p.kw ? 'Y' : 'N') + '|D:N|IMG:' + (p.overlay || i % 2 === 0 ? 'Y' : 'N') + '|ID:N</c:fs_data_opti>\n'
       + '<c:fs_data_original_title type="string">' + esc(p.otitle) + '</c:fs_data_original_title>\n<c:fs_data_original_id type="string">' + p.oid + '</c:fs_data_original_id>\n'
       + '<c:fs_date_of_birth type="string">' + p.dob + '</c:fs_date_of_birth>\n</item>';
   });

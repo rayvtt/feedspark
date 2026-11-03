@@ -564,4 +564,8 @@ channels", then over **What the service does**: "add the volumes of these as wel
   feed, **Wunderkind only** when that is its one live channel, **paused** when every feed it has is paused (Canada),
   **not read** when the book has no row. The feed cannot say whether Google runs it as paid Shopping or free
   listings, so a market whose Shopping feed only serves free listings still counts as Shopping (the tooltip says so).
+- **Image overlays are read off the image** (Ray, 3 Nov 2026, over Superdry's "274,460 fields · 100%": "i dont think we
+  did image overlays for SD UK"): the row counted c:fs_data_opti's `IMG` stamp, which marks image work on the product,
+  not an overlay. It now counts the products whose main image is served from a FeedSpark image host (`E.isOverlay`,
+  the Overlays module's own rule) — "N images · x%"; Superdry GB reads its real figure, nearly none.
 - Harness: `tools/check_catalog.js` (the volume read off the paint, the feed tile against the stub's book).

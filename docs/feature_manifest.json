@@ -17126,6 +17126,12 @@
    "pr": 0
   },
   {
+   "name": "Catalogue: Image overlays read off the image URL, never the IMG stamp",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "if (p.f && E.isOverlay(p.f.image_link)) ov++;",
+   "pr": 0
+  },
+  {
    "name": "Worker: catalog roster classifies each roster market by its live FeedHero feeds",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "t.mk = { shop: [], wunderkind: [], other: [], paused: [], unread: [] };",

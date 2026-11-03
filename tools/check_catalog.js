@@ -420,6 +420,10 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const tN = prods.filter((p) => p.opti && p.opti.T).length;
     const vd = await pg.evaluate(() => { const ks = Array.from(document.querySelectorAll('#vendor-body .evl .k')), vs = document.querySelectorAll('#vendor-body .evl .v'); const i = ks.findIndex((k) => k.textContent === 'Titles rewritten'); return i >= 0 ? vs[i].textContent : null; });
     ok('What the service does: "Titles rewritten" is FeedSpark’s own stamp over every product', vd === tN.toLocaleString('en-GB') + ' fields · ' + Math.round(tN / prods.length * 100) + '%', { page: vd, want: tN + '/' + prods.length });
+    // image overlays: read off the image URL (a FeedSpark image host), never the IMG stamp, which also marks plain image work
+    const ovN = prods.filter((p) => E.isOverlay(p.f.image_link)).length, imgN = prods.filter((p) => p.opti && p.opti.IMG).length;
+    const vo = await pg.evaluate(() => { const ks = Array.from(document.querySelectorAll('#vendor-body .evl .k')), vs = document.querySelectorAll('#vendor-body .evl .v'); const i = ks.findIndex((k) => k.textContent === 'Image overlays'); return i >= 0 ? vs[i].textContent : null; });
+    ok('What the service does: "Image overlays" counts overlay images, not the IMG stamp (' + ovN + ' of ' + imgN + ' stamped)', ovN < imgN && vo === ovN.toLocaleString('en-GB') + ' images · ' + Math.round(ovN / prods.length * 100) + '%', { page: vo, want: ovN });
     // the service in numbers: feeds run = every LIVE feed FeedHero sends, every channel (the stub's book), never only the wired Google + Meta
     const fr = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1]; return t ? { b: t.querySelector('b').textContent, s: t.querySelector('small').textContent } : null; });
     ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /Pinterest/.test(fr.s) && /TikTok/.test(fr.s), fr);
